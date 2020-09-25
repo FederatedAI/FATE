@@ -170,7 +170,7 @@ def get_job_configuration(job_id, role, party_id, tasks=None):
         for task in tasks:
             jobs = Job.select(Job.f_job_id, Job.f_runtime_conf, Job.f_description).where(Job.f_job_id == task.f_job_id)
             job = jobs[0]
-            jobs_run_conf[job.f_job_id] = job.f_runtime_conf["role_parameters"]["local"]["upload_0"]
+            jobs_run_conf[job.f_job_id] = job.f_runtime_conf["role_parameters"]["local"]["0"]["upload_0"]
             jobs_run_conf[job.f_job_id]["notes"] = job.f_description
         return jobs_run_conf
     else:
@@ -237,7 +237,7 @@ def check_job_is_timeout(job):
                                                                           role=job.f_initiator_role,
                                                                           party_id=job.f_initiator_party_id)
     job_parameters = job_runtime_conf.get('job_parameters', {})
-    timeout = get_timeout(job.f_job_id, job_parameters.get("timeout", None), job_runtime_conf, job_dsl)
+    timeout = job_parameters.get("timeout", JOB_DEFAULT_TIMEOUT)
     now_time = current_timestamp()
     running_time = (now_time - job.f_start_time)/1000
     if running_time > timeout:

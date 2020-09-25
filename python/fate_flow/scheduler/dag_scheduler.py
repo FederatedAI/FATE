@@ -13,13 +13,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import traceback
 
-from fate_arch.common import FederatedCommunicationType, FederatedMode
+from fate_arch.common import FederatedMode
 from fate_arch.common.base_utils import json_loads, current_timestamp
 from fate_arch.common.log import schedule_logger
 from fate_arch.common import WorkMode, Backend, EngineType
-from fate_arch.common import conf_utils, string_utils
+from fate_arch.common import string_utils
 from fate_flow.db.db_models import Job
 from fate_flow.scheduler import FederatedScheduler
 from fate_flow.scheduler import TaskScheduler
@@ -27,9 +26,8 @@ from fate_flow.operation import JobSaver
 from fate_flow.entity.types import JobStatus, TaskStatus, EndStatus, StatusSet, SchedulingStatusCode, ResourceOperation, FederatedSchedulingStatusCode, RunParameters
 from fate_flow.operation import Tracker
 from fate_flow.controller import JobController
-from fate_flow.settings import FATE_BOARD_DASHBOARD_ENDPOINT, DEFAULT_TASK_PARALLELISM, DEFAULT_TASK_CORES_PER_NODE, DEFAULT_TASK_MEMORY_PER_NODE, DEFAULT_FEDERATED_STATUS_COLLECT_TYPE
 from fate_flow.settings import FATE_BOARD_DASHBOARD_ENDPOINT, DEFAULT_TASK_PARALLELISM, DEFAULT_TASK_CORES_PER_NODE, \
-    DEFAULT_TASK_MEMORY_PER_NODE, ALIGN_TASK_INPUT_DATA_PARTITION_SWITCH
+    DEFAULT_TASK_MEMORY_PER_NODE, DEFAULT_FEDERATED_STATUS_COLLECT_TYPE
 from fate_flow.utils import detect_utils, job_utils, schedule_utils
 from fate_flow.utils.service_utils import ServiceUtils
 from fate_flow.utils import model_utils
@@ -50,7 +48,6 @@ class DAGScheduler(Cron):
         job_dsl = job_data.get('job_dsl', {})
         job_runtime_conf = job_data.get('job_runtime_conf', {})
         job_initiator = job_runtime_conf['initiator']
-        job_runtime_conf["job_parameters"]["align_task_input_data_partition"] = job_runtime_conf["job_parameters"].get("align_task_input_data_partition", ALIGN_TASK_INPUT_DATA_PARTITION_SWITCH)
         job_parameters = RunParameters(**job_runtime_conf['job_parameters'])
         cls.backend_compatibility(job_parameters=job_parameters)
 
@@ -97,10 +94,6 @@ class DAGScheduler(Cron):
                                                        runtime_conf=job_runtime_conf,
                                                        train_runtime_conf=train_runtime_conf)
 
-        """
-        if job_parameters.align_task_input_data_partition and int(initiator_party_id) != 0:
-            job_parameters.input_data_aligned_partitions = cls.align_input_data_partitions(job=job, dsl_parser=dsl_parser)
-        """
         cls.set_default_job_parameters(job_parameters=job_parameters)
 
         # update runtime conf
@@ -171,7 +164,7 @@ class DAGScheduler(Cron):
     def set_default_job_parameters(cls, job_parameters: RunParameters):
         if job_parameters.task_parallelism is None:
             job_parameters.task_parallelism = DEFAULT_TASK_PARALLELISM
-        computing_engine_info = ResourceManager.get_backend_registration_info(engine_type=EngineType.COMPUTING, engine_name=job_parameters.computing_engine)
+        computing_engine_info = ResourceManager.get_engine_registration_info(engine_type=EngineType.COMPUTING, engine_name=job_parameters.computing_engine)
         if job_parameters.task_nodes is None:
             job_parameters.task_nodes = computing_engine_info.f_nodes
         if job_parameters.task_cores_per_node is None:
@@ -181,17 +174,14 @@ class DAGScheduler(Cron):
         if job_parameters.federated_status_collect_type is None:
             job_parameters.federated_status_collect_type = DEFAULT_FEDERATED_STATUS_COLLECT_TYPE
 
-        """
-        if job_parameters.input_data_aligned_partitions:
-            if job_parameters.task_nodes * job_parameters.task_cores_per_node > job_parameters.input_data_aligned_partitions:
-                job_parameters.task_cores_per_node = int(max(job_parameters.input_data_aligned_partitions / job_parameters.task_nodes, 1))
-        """
-
     def run_do(self):
         schedule_logger().info("start schedule waiting jobs")
         events = JobQueue.get_event(job_status=JobStatus.WAITING)
         schedule_logger().info(f"have {len(events)} waiting jobs")
-        for event in events:
+        if len(events):
+            # FIFO
+            event = events[0]
+            schedule_logger().info(f"schedule waiting job {event.f_job_id}")
             try:
                 self.schedule_waiting_jobs(event=event)
             except Exception as e:
@@ -414,7 +404,7 @@ class DAGScheduler(Cron):
                 schedule_logger(job_id=job_id).info(f"job {job_id} has been finished, set waiting to rerun")
                 status, response = FederatedScheduler.sync_job_status(job=job)
                 if status == FederatedSchedulingStatusCode.SUCCESS:
-                    FederatedScheduler.sync_job(job=job, update_fields=["end_time", "elapsed"])
+                    FederatedScheduler.sync_job(job=job, update_fields=["end_time", "elapsed", "progress"])
                     JobQueue.create_event(job_id=job_id, initiator_role=initiator_role, initiator_party_id=initiator_party_id)
                     schedule_logger(job_id=job_id).info(f"job {job_id} set waiting to rerun successfully")
                 else:

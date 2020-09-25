@@ -13,9 +13,14 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import os
+import sys
 
+additional_path = os.path.realpath('../')
+if additional_path not in sys.path:
+    sys.path.append(additional_path)
 
-from examples.pipeline.hetero_pearson._common_component import run_pearson_pipeline, dataset
+from hetero_pearson._common_component import run_pearson_pipeline, dataset
 
 
 def main(config="../../config.yaml", namespace=""):

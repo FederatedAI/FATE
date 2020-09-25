@@ -15,13 +15,13 @@
 #
 import argparse
 
-from examples.util.config import Config
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component import HeteroPearson
 from pipeline.component.dataio import DataIO
 from pipeline.component.intersection import Intersection
 from pipeline.component.reader import Reader
 from pipeline.interface.data import Data
+from pipeline.utils.tools import load_job_config
 
 
 # noinspection PyPep8Naming
@@ -36,7 +36,7 @@ class dataset(object):
 
 def run_pearson_pipeline(config, namespace, data, common_param=None, guest_only_param=None, host_only_param=None):
     if isinstance(config, str):
-        config = Config.load(config)
+        config = load_job_config(config)
     guest_data = data["guest"]
     host_data = data["host"][0]
 

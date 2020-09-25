@@ -17,6 +17,7 @@ from fate_arch.common import WorkMode, Backend
 from enum import IntEnum
 
 
+
 class RunParameters(object):
     def __init__(self, **kwargs):
         self.job_type = "train"
@@ -39,7 +40,7 @@ class RunParameters(object):
         self.model_version = None
         self.dsl_version = None
         self.input_data_aligned_partitions = None
-
+        self.timeout = None
         for k, v in kwargs.items():
             if hasattr(self, k):
                 setattr(self, k, v)
@@ -147,7 +148,7 @@ class TaskStatus(BaseStatus):
 
     class StateTransitionRule(BaseStateTransitionRule):
         RULES = {
-            StatusSet.WAITING: [StatusSet.RUNNING, StatusSet.CANCELED, StatusSet.TIMEOUT],
+            StatusSet.WAITING: [StatusSet.RUNNING, StatusSet.CANCELED, StatusSet.TIMEOUT, StatusSet.FAILED, StatusSet.COMPLETE],
             StatusSet.RUNNING: [StatusSet.CANCELED, StatusSet.TIMEOUT, StatusSet.FAILED, StatusSet.COMPLETE],
             StatusSet.CANCELED: [],
             StatusSet.TIMEOUT: [StatusSet.FAILED, StatusSet.COMPLETE],

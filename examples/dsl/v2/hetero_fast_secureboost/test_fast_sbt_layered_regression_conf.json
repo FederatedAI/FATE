@@ -76,11 +76,8 @@
             "encrypt_param": {
                 "method": "iterativeAffine"
             },
-            "tree_param": {
-                "max_depth": 5
-            },
-            "guest_depth": 2,
-            "host_depth": 3,
+            "guest_depth": 1,
+            "host_depth": 2,
             "work_mode": "layered"
         },
         "evaluation_0": {

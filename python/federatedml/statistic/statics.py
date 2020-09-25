@@ -57,8 +57,8 @@ class SummaryStatistics(object):
 
         where i is the current count, and S_i is the current expectation of x
         """
-        rows = np.array(rows, dtype=float)
         if self.abnormal_list is None:
+            rows = np.array(rows, dtype=float)
             self.count += 1
             self.sum += rows
             self.sum_square += rows ** 2
@@ -72,6 +72,11 @@ class SummaryStatistics(object):
             for idx, value in enumerate(rows):
                 if value in self.abnormal_list:
                     continue
+                try:
+                    value = float(value)
+                except ValueError as e:
+                    raise ValueError(f"In add func, value should be either a numeric input or be listed in "
+                                     f"abnormal list. Error info: {e}")
                 self.count[idx] += 1
                 self.sum[idx] += value
                 self.sum_square[idx] += value ** 2
@@ -331,6 +336,9 @@ class MultivariateStatisticalSummary(object):
         # self.medians = None
         self.data_instances = data_instances
         self.cols_index = None
+        if not isinstance(abnormal_list, list):
+            abnormal_list = [abnormal_list]
+
         self.abnormal_list = abnormal_list
         self.__init_cols(data_instances, cols_index, stat_order, bias)
         self.label_summary = None
@@ -409,12 +417,14 @@ class MultivariateStatisticalSummary(object):
                 if isinstance(instances, Instance):
                     features = instances.features
                 else:
-                    try:
-                        features = np.array(instances, dtype=float)
-                    except ValueError as e:
-                        raise ValueError(f"Static Module accept numeric input only. Error info: {e}")
-                LOGGER.debug(f"In statics, features: {features}")
-                row_values = features[cols_index]
+                    features = instances
+                    # try:
+                    #     features = np.array(instances, dtype=float)
+                    # except ValueError as e:
+                    #     raise ValueError(f"Static Module accept numeric input only. Error info: {e}")
+                # LOGGER.debug(f"In statics, features: {features}")
+                row_values = [x for idx, x in enumerate(features) if idx in cols_index]
+                # row_values = features[cols_index]
             else:
                 sparse_data = instances.features.get_sparse_vector()
                 row_values = np.array([sparse_data.get(x, 0) for x in cols_index])
@@ -553,10 +563,9 @@ class MultivariateStatisticalSummary(object):
             result_row = getattr(self, data_type)
         else:
             raise ValueError(f"Statistic data type: {data_type} cannot be recognized")
-        LOGGER.debug(f"col_index: {self.cols_index}, result_row: {result_row},"
-                     f"header: {self.header}, data_type: {data_type}")
-        # result = {self.header[header_idx]: result_row[col_idx]
-        #           for col_idx, header_idx in enumerate(self.cols_index)}
+        # LOGGER.debug(f"col_index: {self.cols_index}, result_row: {result_row},"
+        #              f"header: {self.header}, data_type: {data_type}")
+
         result = {}
 
         result_row = result_row.tolist()

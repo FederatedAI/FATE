@@ -373,6 +373,8 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
 
         subsample_feature_rate : float, a float-number in [0, 1], default: 0.8
 
+        subsample_random_seed: seed that controls feature subsample
+
         n_iter_no_change : bool,
             when True and residual error less than tol, tree building process will stop. default: True
 
@@ -414,6 +416,10 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
 
         complete_secure: bool, if use complete_secure, when use complete secure, build first tree using only guest
                         features
+
+        run_fast_histogram: bool, Available when encrypted method is 'iterativeAffine'
+                            An optimized mode for high-dimension, sparse data.
+
         """
 
     def __init__(self, tree_param: DecisionTreeParam = DecisionTreeParam(), task_type=consts.CLASSIFICATION,
@@ -425,7 +431,8 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  validation_freqs=None, early_stopping_rounds=None, use_missing=False, zero_as_missing=False,
                  complete_secure=False, metrics=None, use_first_metric_only=False, subsample_random_seed=None,
-                 binning_error=consts.DEFAULT_RELATIVE_ERROR):
+                 binning_error=consts.DEFAULT_RELATIVE_ERROR,
+                 run_fast_histogram=True):
 
         super(HeteroSecureBoostParam, self).__init__(task_type, objective_param, learning_rate, num_trees,
                                                      subsample_feature_rate, n_iter_no_change, tol, encrypt_param,
@@ -439,6 +446,7 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         self.zero_as_missing = zero_as_missing
         self.use_missing = use_missing
         self.complete_secure = complete_secure
+        self.run_fast_histogram = run_fast_histogram
 
     def check(self):
 
@@ -448,6 +456,8 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
             raise ValueError('use missing should be bool type')
         if type(self.zero_as_missing) != bool:
             raise ValueError('zero as missing should be bool type')
+        self.check_boolean(self.complete_secure, 'complete_secure')
+        self.check_boolean(self.run_fast_histogram, 'run_fast_histogram')
 
         return True
 
@@ -479,7 +489,6 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
             layered
 
         other params are the same as HeteroSecureBoost
-
         """
 
         super(HeteroFastSecureBoostParam, self).__init__(tree_param, task_type, objective_param, learning_rate,

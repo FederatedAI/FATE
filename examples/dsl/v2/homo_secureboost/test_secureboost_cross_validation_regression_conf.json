@@ -58,14 +58,14 @@
             "objective_param": {
                 "objective": "lse"
             },
-            "num_trees": 1,
+            "num_trees": 3,
             "cv_param": {
                 "need_cv": true,
                 "shuffle": false,
                 "n_splits": 5
             },
             "tree_param": {
-                "max_depth": 5
+                "max_depth": 3
             }
         }
     }

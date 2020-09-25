@@ -1,16 +1,7 @@
 import numpy as np
-import pandas as pd
-import sys
-
 from sklearn.metrics import jaccard_similarity_score
 from sklearn.metrics import fowlkes_mallows_score
 from sklearn.metrics import adjusted_rand_score
-
-from fate_arch.session import computing_session as session
-from federatedml.feature.instance import Instance
-from federatedml.feature.sparse_vector import SparseVector
-
-import copy
 
 
 class JaccardSimilarityScore(object):
@@ -52,7 +43,7 @@ class ContengincyMatrix(object):
         unique_true_label = np.unique(labels)
         result_array = np.zeros([len(unique_true_label), len(unique_predicted_label)])
         for v1, v2 in label_predict:
-            result_array[list(unique_true_label).index(v1)][list(unique_predicted_label).index(v2)] += 1
+            result_array[v1][v2] += 1
         return result_array, unique_predicted_label, unique_true_label
 
 

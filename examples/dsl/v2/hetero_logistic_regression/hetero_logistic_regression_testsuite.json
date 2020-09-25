@@ -1,0 +1,98 @@
+{
+    "data": [
+        {
+            "file": "examples/data/breast_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/breast_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/breast_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_host",
+            "namespace": "experiment",
+            "role": "host_1"
+        },
+        {
+            "file": "examples/data/vehicle_scale_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "vehicle_scale_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/vehicle_scale_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "vehicle_scale_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        }
+    ],
+    "tasks": {
+        "cv": {
+            "conf": "hetero_lr_cv_conf.json",
+            "dsl": "hetero_lr_cv_dsl.json"
+        },
+        "one-vs-all": {
+            "conf": "hetero_lr_one_vs_all_conf.json",
+            "dsl": "hetero_lr_one_vs_all_dsl.json"
+        },
+        "normal": {
+            "conf": "hetero_lr_normal_conf.json",
+            "dsl": "hetero_lr_normal_dsl.json"
+        },
+        "validate": {
+            "conf": "hetero_lr_validate_conf.json",
+            "dsl": "hetero_lr_validate_dsl.json"
+        },
+        "feature-engineering": {
+            "conf": "hetero_lr_feature_engineering_conf.json",
+            "dsl": "hetero_lr_feature_engineering_dsl.json"
+        },
+        "multi-host": {
+            "conf": "hetero_lr_multi_host_conf.json",
+            "dsl": "hetero_lr_multi_host_dsl.json"
+        },
+        "sparse": {
+            "conf": "hetero_lr_sparse_conf.json",
+            "dsl": "hetero_lr_sparse_dsl.json"
+        },
+        "sparse-sqn": {
+            "conf": "hetero_lr_sparse_sqn_conf.json",
+            "dsl": "hetero_lr_sparse_sqn_dsl.json"
+        },
+        "ovr-cv": {
+            "conf": "hetero_lr_ovr_cv_conf.json",
+            "dsl": "hetero_lr_ovr_cv_dsl.json"
+        },
+        "sparse-cv": {
+            "conf": "hetero_lr_sparse_cv_conf.json",
+            "dsl": "hetero_lr_sparse_cv_dsl.json"
+        },
+        "ovr-sqn": {
+            "conf": "hetero_lr_ovr_sqn_conf.json",
+            "dsl": "hetero_lr_ovr_sqn_dsl.json"
+        },
+        "sqn": {
+            "conf": "hetero_lr_sqn_conf.json",
+            "dsl": "hetero_lr_sqn_dsl.json"
+        },
+        "early-stop": {
+            "conf": "hetero_lr_early_stop_conf.json",
+            "dsl": "hetero_lr_early_stop_dsl.json"
+        }
+    }
+}

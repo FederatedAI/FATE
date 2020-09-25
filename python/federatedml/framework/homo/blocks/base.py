@@ -22,7 +22,7 @@ class HomoTransferBase(BaseTransferVariables):
     def __init__(self, server=(consts.ARBITER,), clients=(consts.GUEST, consts.HOST), prefix=None):
         super().__init__()
         if prefix is None:
-            self.prefix = f"{self.__class__.__module__}${self.__class__.__name__}$"
+            self.prefix = f"{self.__class__.__module__}.{self.__class__.__name__}."
         else:
             self.prefix = f"{prefix}{self.__class__.__name__}."
         self.server = server

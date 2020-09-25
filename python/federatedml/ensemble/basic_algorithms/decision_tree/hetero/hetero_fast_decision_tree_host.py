@@ -124,7 +124,12 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
         LOGGER.debug('node plan at dep {} is {}'.format(dep, (tree_action, target_host_id)))
 
         if tree_action == plan.tree_actions['host_only'] and target_host_id == self.self_host_id:
-            acc_histograms = self.get_local_histograms(node_map, ret='tb')
+
+            if self.run_fast_hist:
+                acc_histograms = self.fast_get_histograms(node_map)
+            else:
+                acc_histograms = self.get_local_histograms(node_map, ret='tb')
+
             splitinfo_host, encrypted_splitinfo_host = self.splitter.find_split_host(histograms=acc_histograms,
                                                                                      node_map=node_map,
                                                                                      use_missing=self.use_missing,
@@ -195,7 +200,11 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
                                                use_missing=self.use_missing,
                                                zero_as_missing=self.zero_as_missing,)
 
-        assign_result = self.data_with_node_assignments.mapValues(assign_node_method)
+        if not self.run_fast_hist:
+            assign_result = self.data_with_node_assignments.mapValues(assign_node_method)
+        else:
+            assign_result = self.data_bin_dense_with_position.mapValues(assign_node_method)
+
         leaf = assign_result.filter(lambda key, value: isinstance(value, tuple) is False)
 
         if self.sample_leaf_pos is None:
@@ -287,7 +296,10 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
             if len(self.cur_layer_nodes) == 0:
                 break
 
-            self.data_with_node_assignments = self.data_bin.join(self.inst2node_idx, lambda v1, v2: (v1, v2))
+            if self.run_fast_hist:
+                self.data_bin_dense_with_position = self.data_bin_dense.join(self.inst2node_idx, lambda v1, v2: (v1, v2))
+            else:
+                self.data_with_node_assignments = self.data_bin.join(self.inst2node_idx, lambda v1, v2: (v1, v2))
 
             batch = 0
             split_info = []
@@ -331,8 +343,14 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
                 break
 
             if self.self_host_id == layer_target_host_id:
+
                 self.inst2node_idx = self.sync_node_positions(dep)
-                self.data_with_node_assignments = self.data_bin.join(self.inst2node_idx, lambda v1, v2: (v1, v2))
+
+                if self.run_fast_hist:
+                    self.data_bin_dense_with_position = self.data_bin_dense.join(self.inst2node_idx,
+                                                                                 lambda v1, v2: (v1, v2))
+                else:
+                    self.data_with_node_assignments = self.data_bin.join(self.inst2node_idx, lambda v1, v2: (v1, v2))
 
             batch = 0
             for i in range(0, len(self.cur_layer_nodes), self.max_split_nodes):

@@ -77,7 +77,10 @@
                 "method": "iterativeAffine"
             },
             "tree_num_per_party": 1,
-            "work_mode": "mix"
+            "work_mode": "mix",
+            "tree_param": {
+                "max_depth": 3
+            }
         },
         "evaluation_0": {
             "eval_type": "multi"

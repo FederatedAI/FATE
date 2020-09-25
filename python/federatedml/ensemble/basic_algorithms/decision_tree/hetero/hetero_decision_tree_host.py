@@ -8,6 +8,7 @@ from federatedml.transfer_variable.transfer_class.hetero_decision_tree_transfer_
     HeteroDecisionTreeTransferVariable
 from federatedml.util import consts
 from federatedml.feature.fate_element_type import NoneType
+from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.fast_feature_histogram import FastFeatureHistogram
 import functools
 
 
@@ -25,7 +26,21 @@ class HeteroDecisionTreeHost(DecisionTree):
         self.complete_secure_tree = False
         self.host_party_idlist = []
 
+        # For fast histogram
+        self.run_fast_hist = False
+        self.bin_num = None
+        self.data_bin_dense = None
+        self.data_bin_dense_with_position = None
+
         self.transfer_inst = HeteroDecisionTreeTransferVariable()
+
+    def activate_fast_histogram_mode(self, ):
+        self.run_fast_hist = True
+
+    def set_fast_hist_data(self, data_bin_dense, bin_num):
+        # a dense dtable and bin_num for fast hist computation
+        self.data_bin_dense = data_bin_dense
+        self.bin_num = bin_num
 
     def set_host_party_idlist(self, l):
         self.host_party_idlist = l
@@ -279,10 +294,31 @@ class HeteroDecisionTreeHost(DecisionTree):
                                                        idx=0,
                                                        suffix=(send_times,))
 
+    def fast_get_histograms(self, node_map):
+        LOGGER.info("start to get node histograms in fast mode")
+        acc_histograms = FastFeatureHistogram.calculate_histogram(
+            data_bin=self.data_bin_dense_with_position,
+            grad_and_hess=self.grad_and_hess,
+            bin_split_points=self.bin_split_points,
+            cipher_split_num=14,
+            node_map=node_map,
+            bin_num=self.bin_num,
+            valid_features=self.valid_features,
+            use_missing=self.use_missing,
+            zero_as_missing=self.zero_as_missing
+        )
+
+        return acc_histograms
+
     def compute_best_splits(self, node_map: dict, dep: int, batch: int):
 
         if not self.complete_secure_tree:
-            acc_histograms = self.get_local_histograms(node_map, ret='tb')
+
+            if self.run_fast_hist:
+                acc_histograms = self.fast_get_histograms(node_map)
+            else:
+                acc_histograms = self.get_local_histograms(node_map, ret='tb')
+
             splitinfo_host, encrypted_splitinfo_host = self.splitter.find_split_host(histograms=acc_histograms,
                                                                                      node_map=node_map,
                                                                                      use_missing=self.use_missing,
@@ -299,6 +335,15 @@ class HeteroDecisionTreeHost(DecisionTree):
         else:
             LOGGER.debug('skip splits computation')
 
+    def set_input_data(self, data_bin=None, grad_and_hess=None, bin_split_points=None,
+                       bin_sparse_points=None, data_bin_dense=None):
+        LOGGER.info("set input info")
+        self.data_bin = data_bin
+        self.grad_and_hess = grad_and_hess
+        self.bin_split_points = bin_split_points
+        self.bin_sparse_points = bin_sparse_points
+        self.data_bin_dense = data_bin_dense  # For fast histogram
+
     def fit(self):
         
         LOGGER.info("begin to fit host decision tree")
@@ -306,11 +351,15 @@ class HeteroDecisionTreeHost(DecisionTree):
 
         for dep in range(self.max_depth):
             self.sync_tree_node_queue(dep)
+
             if len(self.cur_layer_nodes) == 0:
                 break
 
             self.inst2node_idx = self.sync_node_positions(dep)
-            self.data_with_node_assignments = self.data_bin.join(self.inst2node_idx, lambda v1, v2: (v1, v2))
+            if self.run_fast_hist:
+                self.data_bin_dense_with_position = self.data_bin_dense.join(self.inst2node_idx, lambda v1, v2: (v1, v2))
+            else:
+                self.data_with_node_assignments = self.data_bin.join(self.inst2node_idx, lambda v1, v2: (v1, v2))
 
             batch = 0
             for i in range(0, len(self.cur_layer_nodes), self.max_split_nodes):
@@ -331,6 +380,7 @@ class HeteroDecisionTreeHost(DecisionTree):
         LOGGER.info("start to predict!")
         site_guest_send_times = 0
         while True:
+
             finish_tag = self.sync_predict_finish_tag(site_guest_send_times)
             if finish_tag is True:
                 break

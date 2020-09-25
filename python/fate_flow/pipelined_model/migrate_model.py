@@ -131,23 +131,7 @@ def migration(config_data: dict):
                                                    model_alias=v, model_buffers=modified_buffer)
 
         archive_path = migrate_model.packaging_model()
-
-        # with DB.connection_context():
-        #     MLModel.create(
-        #         f_role=config_data["local"]["role"],
-        #         f_party_id=config_data["local"]["migrate_party_id"],
-        #         f_roles=config_data["migrate_role"],
-        #         f_job_id=train_runtime_conf["job_parameters"]["model_version"],
-        #         f_model_id=train_runtime_conf["job_parameters"]["model_id"],
-        #         f_model_version=train_runtime_conf["job_parameters"]["model_version"],
-        #         f_initiator_role=config_data["migrate_initiator"]["role"],
-        #         f_initiator_party_id=config_data["migrate_initiator"]["party_id"],
-        #         f_runtime_conf=train_runtime_conf,
-        #         f_work_mode=train_runtime_conf["job_parameters"]["work_mode"],
-        #         f_dsl=json_loads(pipeline.train_dsl),
-        #         f_migrated=1,
-        #         f_job_status='complete'
-        #     )
+        shutil.rmtree(os.path.abspath(migrate_model.model_path))
 
         return (0, f"Migrating model successfully. " \
                   "The configuration of model has been modified automatically. " \
