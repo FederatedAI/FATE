@@ -303,11 +303,12 @@ class FederatedScheduler(object):
         for dest_role in federated_response.keys():
             for party_id in federated_response[dest_role].keys():
                 retcode_set.add(federated_response[dest_role][party_id]["retcode"])
-        if len(retcode_set) == 1:
-            if FederatedSchedulingStatusCode.SUCCESS in retcode_set:
-                federated_scheduling_status_code = FederatedSchedulingStatusCode.SUCCESS
-            else:
-                federated_scheduling_status_code = FederatedSchedulingStatusCode.FAILED
-        else:
+        if len(retcode_set) == 1 and RetCode.SUCCESS in retcode_set:
+            federated_scheduling_status_code = FederatedSchedulingStatusCode.SUCCESS
+        elif RetCode.EXCEPTION_ERROR in retcode_set:
+            federated_scheduling_status_code = FederatedSchedulingStatusCode.ERROR
+        elif RetCode.SUCCESS in retcode_set:
             federated_scheduling_status_code = FederatedSchedulingStatusCode.PARTIAL
+        else:
+            federated_scheduling_status_code = FederatedSchedulingStatusCode.FAILED
         return federated_scheduling_status_code, federated_response
