@@ -135,8 +135,7 @@ class BaseKmeansModel(ModelBase):
         #    return
 
     def reset_union(self):
-        def my_union(previews_data, name_list):
-            LOGGER.debug("mgq-debug, previews_data is {}, name_list is {}".format(previews_data, name_list))
+        def kmeans_union(previews_data, name_list):
             if len(previews_data) == 0:
                 return None
 
@@ -172,7 +171,7 @@ class BaseKmeansModel(ModelBase):
                 # LOGGER.debug("before out loop, one data: {}".format(result_data.first()))
             return result_data
 
-        self.component_properties.set_union_func(my_union)
+        self.component_properties.set_union_func(kmeans_union)
 
     def set_predict_data_schema(self, predict_datas, schemas):
         if predict_datas is None:
