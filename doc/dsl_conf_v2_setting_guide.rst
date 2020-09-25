@@ -80,51 +80,51 @@ Field Specification
 
     - Model: There are two possible model-input types:
 
-        - model: This is a model input by the same type of component. For example, hetero_binning_0 run as a fit component, and hetero_binning_1 takes model output of hetero_binning_0 as input so that can be used to transform or predict.
-          Here's an example showing this logic:
+      - model: This is a model input by the same type of component. For example, hetero_binning_0 run as a fit component, and hetero_binning_1 takes model output of hetero_binning_0 as input so that can be used to transform or predict.
+        Here's an example showing this logic:
 
-          .. code-block:: json
+      .. code-block:: json
 
-              "hetero_feature_binning_1": {
-                  "module": "HeteroFeatureBinning",
-                  "input": {
-                      "data": {
-                          "data": [
-                              "dataio_1.validate_data"
-                          ]
-                      },
-                      "model": [
-                          "hetero_feature_binning_0.fit_model"
-                      ]
-                  },
-                  "output": {
-                      "data": ["validate_data"],
-                    "model": ["eval_model"]
-                  }
-              }
+      "hetero_feature_binning_1": {
+          "module": "HeteroFeatureBinning",
+          "input": {
+              "data": {
+                  "data": [
+                      "dataio_1.validate_data"
+                  ]
+              },
+              "model": [
+                  "hetero_feature_binning_0.fit_model"
+              ]
+          },
+          "output": {
+              "data": ["validate_data"],
+            "model": ["eval_model"]
+          }
+      }
 
-        - isometric_model: This is used to specify the model input from upstream components.
-          For example, feature selection will take feature binning as upstream model, since it will use information value as feature importance. Here's an example of feature selection component:
+      - isometric_model: This is used to specify the model input from upstream components.
+        For example, feature selection will take feature binning as upstream model, since it will use information value as feature importance. Here's an example of feature selection component:
 
-          .. code-block:: json
+        .. code-block:: json
 
-              "hetero_feature_selection_0": {
-                  "module": "HeteroFeatureSelection",
-                  "input": {
-                      "data": {
-                          "data": [
-                              "hetero_feature_binning_0.train"
-                          ]
-                      },
-                      "isometric_model": [
-                          "hetero_feature_binning_0.output_model"
-                      ]
-                  },
-                  "output": {
-                      "data": ["train"],
-                      "model": ["output_model"]
-                  }
-              }
+        "hetero_feature_selection_0": {
+            "module": "HeteroFeatureSelection",
+            "input": {
+                "data": {
+                    "data": [
+                        "hetero_feature_binning_0.train"
+                    ]
+                },
+                "isometric_model": [
+                    "hetero_feature_binning_0.output_model"
+                ]
+            },
+            "output": {
+                "data": ["train"],
+                "model": ["output_model"]
+            }
+        }
 
 :output: Same as input, two types of output may occur which are data and model.
     
