@@ -13,7 +13,9 @@
 import os
 import sys
 
-sys.path.insert(0, os.path.abspath('.'))
+from recommonmark.parser import CommonMarkParser
+
+sys.path.insert(0, os.path.abspath('_build_temp/python'))
 
 # -- Project information -----------------------------------------------------
 
@@ -30,15 +32,19 @@ extensions = [
     'sphinx.ext.autosummary',
     'sphinx.ext.autodoc',
     'sphinx.ext.napoleon',
-    "autodocsumm"
+    'autodocsumm',
+    'recommonmark'
 ]
 
 autosummary_generate = True
 
-source_suffix = ['.rst']
+source_parsers = {
+    '.md': CommonMarkParser,
+}
+source_suffix = ['.rst', '.md']
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['doc/readthedoc/_templates']
+templates_path = ['_templates']
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -55,12 +61,12 @@ html_theme = 'sphinx_rtd_theme'
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['doc/readthedoc/_static']
+html_static_path = ['_static']
 html_context = {
     'css_files': [
         '_static/theme_overrides.css',  # override wide tables in RTD theme
-        ],
-     }
+    ],
+}
 add_module_names = False
 master_doc = 'index'
 
@@ -73,5 +79,14 @@ def ultimateReplace(app, docname, source):
 
 
 def setup(app):
+    if not os.path.exists("_build_temp"):
+        import shutil
+        import tempfile
+        from pathlib import Path
+
+        with tempfile.TemporaryDirectory() as d:
+            shutil.copytree("../..", Path(d).joinpath("_build_temp"))
+            shutil.copytree(Path(d).joinpath("_build_temp"), "_build_temp")
+
     app.add_config_value('ultimate_replacements', {}, True)
     app.connect('source-read', ultimateReplace)

@@ -96,6 +96,8 @@ class _Optimizer(object):
 
     def regularization_update(self, model_weights: LinearModelWeights, grad,
                               prev_round_weights: LinearModelWeights = None):
+        LOGGER.debug(f"In regularization_update, input model_weights: {model_weights.unboxed}")
+
         if self.penalty == consts.L1_PENALTY:
             model_weights = self._l1_updator(model_weights, grad)
         elif self.penalty == consts.L2_PENALTY:
@@ -123,6 +125,8 @@ class _Optimizer(object):
                 new_coef_ = coef_without_intercept
 
             model_weights = LinearModelWeights(new_coef_, model_weights.fit_intercept)
+        LOGGER.debug(f"In regularization_update, model_weights: {model_weights.unboxed},"
+                     f" grad: {grad}")
         return model_weights
 
     def __l1_loss_norm(self, model_weights: LinearModelWeights):

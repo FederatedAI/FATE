@@ -63,7 +63,7 @@ class TestFeatureHistogram(unittest.TestCase):
         histograms = copy.deepcopy(data)
         for i in range(len(data)):
             for j in range(len(data[i])):
-                histograms[i][j] = self.feature_histogram.accumulate_histogram(histograms[i][j])
+                histograms[i][j] = self.feature_histogram.tensor_histogram_cumsum(histograms[i][j])
                 for k in range(1, len(data[i][j])):
                     for r in range(len(data[i][j][k])):
                         data[i][j][k][r] += data[i][j][k - 1][r]
@@ -89,17 +89,21 @@ class TestFeatureHistogram(unittest.TestCase):
 
         for i in range(len(his2)):
             for j in range(len(his2[i])):
-                his2[i][j] = self.feature_histogram.accumulate_histogram(his2[i][j])
+                his2[i][j] = self.feature_histogram.tensor_histogram_cumsum(his2[i][j])
                 for k in range(len(his2[i][j])):
                     for r in range(len(his2[i][j][k])):
                         self.assertTrue(np.fabs(his2[i][j][k][r] - histograms[i][j][k][r]) < consts.FLOAT_ZERO)
 
     def test_aggregate_histogram(self):
+
+        fake_fid = 114
         data1 = [[random.randint(0, 10) for i in range(2)] for j in range(3)]
 
         data2 = [[random.randint(0, 10) for i in range(2)] for j in range(3)]
 
-        agg_histograms = self.feature_histogram.aggregate_histogram(data1, data2)
+        fid, agg_histograms = self.feature_histogram.aggregate_histogram((fake_fid, data1),
+                                                                         (fake_fid, data2),
+                                                                         node_map=None)
         for i in range(len(data1)):
             for j in range(len(data1[i])):
                 data1[i][j] += data2[i][j]

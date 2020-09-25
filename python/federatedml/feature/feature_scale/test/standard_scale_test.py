@@ -1,12 +1,11 @@
 import copy
-
-import numpy as np
 import time
 import unittest
 
+import numpy as np
+from fate_arch.session import computing_session as session
 from sklearn.preprocessing import StandardScaler as SSL
 
-from fate_arch.session import computing_session as session
 from federatedml.feature.feature_scale.standard_scale import StandardScale
 from federatedml.feature.instance import Instance
 from federatedml.param.scale_param import ScaleParam
@@ -28,20 +27,20 @@ class TestStandardScaler(unittest.TestCase):
             [0, 10, 1, 10.0, 10, 10]
         ]
         str_time = time.strftime("%Y%m%d%H%M%S", time.localtime())
+        session.init(str_time)
 
         self.test_instance = []
         for td in self.test_data:
             self.test_instance.append(Instance(features=np.array(td)))
-        self.table_instance = self.data_to_eggroll_table(self.test_instance, str_time)
+        self.table_instance = self.data_to_table(self.test_instance)
         self.table_instance.schema['header'] = ["fid" + str(i) for i in range(len(self.test_data[0]))]
 
     def print_table(self, table):
         for v in (list(table.collect())):
             print(v[1].features)
 
-    def data_to_eggroll_table(self, data, jobid, partition=1, work_mode=0):
-        session.init(jobid, mode=work_mode)
-        data_table = session.parallelize(data, include_key=False, partition=10)
+    def data_to_table(self, data, partition=10):
+        data_table = session.parallelize(data, include_key=False, partition=partition)
         return data_table
 
     def get_table_instance_feature(self, table_instance):
@@ -440,6 +439,9 @@ class TestStandardScaler(unittest.TestCase):
         std_scale_transform_data = standard_scaler.transform(self.table_instance)
         self.assertListEqual(self.get_table_instance_feature(std_scale_transform_data),
                              transform_data)
+
+    def tearDown(self):
+        session.stop()
 
 
 if __name__ == "__main__":

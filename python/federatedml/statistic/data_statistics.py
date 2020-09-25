@@ -150,9 +150,9 @@ class DataStatistics(ModelBase):
                 for k, v in res.items():
                     results[k][query_point] = v
         for k, v in results.items():
-            new_dict = {}
-            for stat_name, value in v.items():
-                LOGGER.debug(f"stat_name: {stat_name}, value: {value}, type: {type(value)}")
+            # new_dict = {}
+            # for stat_name, value in v.items():
+            #     LOGGER.debug(f"stat_name: {stat_name}, value: {value}, type: {type(value)}")
             self.add_summary(k, v)
         LOGGER.debug(f"Before return, summary: {self.summary()}")
         return data_instances

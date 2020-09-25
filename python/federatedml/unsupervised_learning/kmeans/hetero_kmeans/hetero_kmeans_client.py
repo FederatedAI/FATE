@@ -21,7 +21,7 @@ import numpy as np
 from fate_arch.session import computing_session as session
 from federatedml.framework.hetero.procedure import table_aggregator
 from federatedml.framework.weights import NumpyWeights
-from federatedml.unsupervise.kmeans.kmeans_model_base import BaseKmeansModel
+from federatedml.unsupervised_learning.kmeans.kmeans_model_base import BaseKmeansModel
 from federatedml.util import LOGGER
 from federatedml.util import consts
 
@@ -60,8 +60,8 @@ class HeteroKmeansClient(BaseKmeansModel):
         return cluster_result
 
     def centroid_cal(self, cluster_result, data_instances):
-        cluster_result_dtable = data_instances.join(cluster_result, lambda v1, v2: [v1.features, v2])
-        centroid_feature_sum = cluster_result_dtable.applyPartitions(self.cluster_sum).reduce(self.sum_dict)
+        cluster_result_table = data_instances.join(cluster_result, lambda v1, v2: [v1.features, v2])
+        centroid_feature_sum = cluster_result_table.applyPartitions(self.cluster_sum).reduce(self.sum_dict)
         cluster_count = cluster_result.applyPartitions(self.count).reduce(self.sum_dict)
         centroid_list = []
         cluster_count_list = []
@@ -75,7 +75,6 @@ class HeteroKmeansClient(BaseKmeansModel):
                 count = cluster_count[k]
                 centroid_list.append(centroid_feature_sum[k] / count)
                 cluster_count_list.append([k, count, count / count_all])
-        LOGGER.debug(f"centroid_list: {centroid_list}, cluster_count_list: {cluster_count_list}")
         return centroid_list, cluster_count_list
 
     def centroid_dist(self, centroid_list):
@@ -102,16 +101,16 @@ class HeteroKmeansClient(BaseKmeansModel):
         else:
             first_centroid_key = self.transfer_variable.centroid_list.get(idx=0)
             # rand = -np.random.rand(data_instances.count())
-        key_dtable = session.parallelize(tuple(zip(first_centroid_key, first_centroid_key)),
+        key_table = session.parallelize(tuple(zip(first_centroid_key, first_centroid_key)),
                                          partition=data_instances.partitions, include_key=True)
-        centroid_list = list(key_dtable.join(data_instances, lambda v1, v2: v2.features).collect())
+        centroid_list = list(key_table.join(data_instances, lambda v1, v2: v2.features).collect())
         self.centroid_list = [v[1] for v in centroid_list]
 
         while self.n_iter_ < self.max_iter:
             d = functools.partial(self.educl_dist, centroid_list=self.centroid_list)
-            dist_all_dtable = data_instances.mapValues(d)
+            dist_all_table = data_instances.mapValues(d)
 
-            cluster_result = self.aggregator.aggregate_then_get_table(dist_all_dtable, suffix=(self.n_iter_,))
+            cluster_result = self.aggregator.aggregate_then_get_table(dist_all_table, suffix=(self.n_iter_,))
             self.send_cluster_dist()
 
             centroid_new, self.cluster_count = self.centroid_cal(cluster_result, data_instances)
@@ -133,11 +132,11 @@ class HeteroKmeansClient(BaseKmeansModel):
                 break
         # Synchronize final model
         d = functools.partial(self.educl_dist, centroid_list=self.centroid_list)
-        dist_all_dtable = data_instances.mapValues(d)
-        self.aggregator.send_table(dist_all_dtable, suffix=(self.n_iter_,))
+        dist_all_table = data_instances.mapValues(d)
+        self.aggregator.send_table(dist_all_table, suffix=(self.n_iter_,))
         self.send_cluster_dist()
 
-        LOGGER.debug(f"Final centroid list: {self.centroid_list}")
+        #LOGGER.debug(f"Final centroid list: {self.centroid_list}")
 
     def send_cluster_dist(self):
         cluster_dist = self.centroid_dist(self.centroid_list)
@@ -147,10 +146,9 @@ class HeteroKmeansClient(BaseKmeansModel):
         LOGGER.info("Start predict ...")
         self.header = self.get_header(data_instances)
         self._abnormal_detection(data_instances)
-        LOGGER.debug(f"centroid_list: {self.centroid_list}")
         d = functools.partial(self.educl_dist, centroid_list=self.centroid_list)
-        dist_all_dtable = data_instances.mapValues(d)
-        cluster_result = self.aggregator.aggregate_then_get_table(dist_all_dtable, suffix='predict')
+        dist_all_table = data_instances.mapValues(d)
+        cluster_result = self.aggregator.aggregate_then_get_table(dist_all_table, suffix='predict')
         cluster_dist = self.centroid_dist(self.centroid_list)
         self.aggregator.send_model(NumpyWeights(np.array(cluster_dist)), suffix='predict')
         predict_result = data_instances.join(cluster_result, lambda v1, v2: [v1.label, int(v2)])

@@ -22,7 +22,7 @@ echo "PROJECT_BASE: "${PROJECT_BASE}
 # source init_env.sh
 INI_ENV_SCRIPT=${PROJECT_BASE}/bin/init_env.sh
 if test -f "${INI_ENV_SCRIPT}"; then
-  # source ${PROJECT_BASE}/bin/init_env.sh
+  source ${PROJECT_BASE}/bin/init_env.sh
   echo "PYTHONPATH: "${PYTHONPATH}
   echo "EGGROLL_HOME: "${EGGROLL_HOME}
   echo "SPARK_HOME: "${SPARK_HOME}
@@ -34,11 +34,6 @@ fi
 log_dir=${PROJECT_BASE}/logs
 
 module=fate_flow_server.py
-
-
-parse_yaml_python() {
-  python -c "from ruamel import yaml; yaml.load()"h
-}
 
 parse_yaml() {
    local prefix=$2
