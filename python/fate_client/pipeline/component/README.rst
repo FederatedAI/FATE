@@ -255,7 +255,7 @@ Below lists input and output elements of each component.
      - Acceptable Input Model
      - Acceptable Output Model
 
-   * - `Reader`_
+   * - Reader
      - Reader
      - This component is always the first component of a pipeline task(except for upload). It loads raw data from storage.
      - None

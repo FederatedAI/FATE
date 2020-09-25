@@ -268,7 +268,7 @@ def _load_testsuites(includes, excludes, glob, suffix="testsuite.json", suite_ty
     return suites
 
 
-def _upload_data(clients: Clients, suite: Testsuite):
+def _upload_data(clients: Clients, suite):
     with click.progressbar(length=len(suite.dataset),
                            label="dataset",
                            show_eta=False,
