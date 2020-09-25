@@ -4,9 +4,9 @@ import time
 import unittest
 
 import requests
-from fate_arch.common import file_utils
+from fate_arch.common import file_utils, conf_utils
 
-from fate_flow.settings import HTTP_PORT, API_VERSION, WORK_MODE
+from fate_flow.settings import HTTP_PORT, API_VERSION, WORK_MODE, FATEFLOW_SERVICE_NAME
 
 
 class TestTracking(unittest.TestCase):
@@ -16,7 +16,11 @@ class TestTracking(unittest.TestCase):
         self.dsl_path = 'fate_flow/examples/test_hetero_lr_job_dsl.json'
         self.config_path = 'fate_flow/examples/test_hetero_lr_job_conf.json'
         self.test_component_name = 'hetero_feature_selection_0'
-        self.server_url = "http://{}:{}/{}".format('127.0.0.1', HTTP_PORT, API_VERSION)
+        ip = conf_utils.get_base_config(FATEFLOW_SERVICE_NAME).get("host")
+        self.server_url = "http://{}:{}/{}".format(ip, HTTP_PORT, API_VERSION)
+        self.party_info = file_utils.load_json_conf(os.path.abspath(os.path.join('./jobs', 'party_info.json'))) if WORK_MODE else None
+        self.guest_party_id = self.party_info['guest'] if WORK_MODE else 9999
+        self.host_party_id = self.party_info['host'] if WORK_MODE else 10000
 
     def test_tracking(self):
         with open(os.path.join(file_utils.get_python_base_directory(), self.dsl_path), 'r') as f:
@@ -24,6 +28,12 @@ class TestTracking(unittest.TestCase):
         with open(os.path.join(file_utils.get_python_base_directory(), self.config_path), 'r') as f:
             config_data = json.load(f)
             config_data['job_parameters']['work_mode'] = WORK_MODE
+            config_data[ "initiator"]["party_id"] = self.guest_party_id
+            config_data["role"] = {
+                "guest": [self.guest_party_id],
+                "host": [self.host_party_id],
+                "arbiter": [self.host_party_id]
+            }
         response = requests.post("/".join([self.server_url, 'job', 'submit']),
                                  json={'job_dsl': dsl_data, 'job_runtime_conf': config_data})
         self.assertTrue(response.status_code in [200, 201])
@@ -34,11 +44,11 @@ class TestTracking(unittest.TestCase):
             response = requests.post("/".join([self.server_url, 'job', 'query']), json={'job_id': job_id, 'role': 'guest'})
             self.assertTrue(response.status_code in [200, 201])
             job_info = response.json()['data'][0]
-            if job_info['f_status'] in ['success', 'failed', 'canceled']:
+            if job_info['f_status'] in ['complete', 'failed', 'canceled']:
                 break
             time.sleep(self.sleep_time)
             print('waiting job run success, the job has been running for {}s'.format((i+1)*self.sleep_time))
-        self.assertTrue(job_info['f_status'] == 'success')
+        self.assertTrue(job_info['f_status'] == 'complete')
         os.makedirs(self.success_job_dir, exist_ok=True)
         with open(os.path.join(self.success_job_dir, job_id), 'w') as fw:
             json.dump(job_info, fw)

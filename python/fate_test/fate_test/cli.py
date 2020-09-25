@@ -27,8 +27,10 @@ from fate_test._config import create_config, priority_config
 from fate_test._flow_client import SubmitJobResponse, QueryJobResponse, JobProgress, DataProgress, \
     UploadDataResponse
 from fate_test._io import set_logger, LOGGER, echo
-from fate_test._parser import Testsuite, BenchmarkSuite, Config, DATA_JSON_HOOK, CONF_JSON_HOOK, DSL_JSON_HOOK, JSON_STRING
+from fate_test._parser import Testsuite, BenchmarkSuite, Config, DATA_JSON_HOOK, CONF_JSON_HOOK, DSL_JSON_HOOK, \
+    JSON_STRING
 from fate_test.utils import match_metrics
+
 
 @click.group(name="cli")
 def cli():
@@ -189,7 +191,8 @@ def run_benchmark(data_namespace_mangling, config, include, exclude, glob, skip_
                     except Exception as e:
                         raise RuntimeError(f"exception occur while uploading data for {suite.path}") from e
                 try:
-                    _run_benchmark_pairs(config_inst, suite, absolute_tol, relative_tol, namespace, data_namespace_mangling)
+                    _run_benchmark_pairs(config_inst, suite, absolute_tol, relative_tol, namespace,
+                                         data_namespace_mangling)
                 except Exception as e:
                     raise RuntimeError(f"exception occur while running benchmark jobs for {suite.path}") from e
 
@@ -392,7 +395,8 @@ def _run_pipeline_jobs(config: Config, suite: Testsuite, namespace: str, data_na
             mod.main(config)
 
 
-def _run_benchmark_pairs(config: Config, suite: BenchmarkSuite, absolute_tol: float, relative_tol: float, namespace: str, data_namespace_mangling: bool):
+def _run_benchmark_pairs(config: Config, suite: BenchmarkSuite, absolute_tol: float, relative_tol: float,
+                         namespace: str, data_namespace_mangling: bool):
     # pipeline demo goes here
     for pair in suite.pairs:
         results = {}
