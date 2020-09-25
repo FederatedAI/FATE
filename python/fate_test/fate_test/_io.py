@@ -16,7 +16,7 @@
 import click
 import loguru
 
-from fate_test._ascii import HEAD, TAIL
+from fate_test._ascii import HEAD, TAIL, BENCHMARK
 
 
 # noinspection PyPep8Naming
@@ -45,8 +45,11 @@ class echo(object):
         click.secho("")
 
     @classmethod
-    def welcome(cls):
-        cls.echo(HEAD)
+    def welcome(cls, banner_type="testsuite"):
+        if banner_type == "testsuite":
+            cls.echo(HEAD)
+        elif banner_type == "benchmark":
+            cls.echo(BENCHMARK)
 
     @classmethod
     def farewell(cls):

@@ -36,4 +36,4 @@ Initial Configuration
    .. code-block:: bash
 
       # configure values in pipeline/config.yaml
-      pipeline config --ip 172.0.0.1 --port 9380 --log-directory ./logs
+      pipeline config --ip 127.0.0.1 --port 9380 --log-directory ./logs

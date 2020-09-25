@@ -138,28 +138,25 @@ def run_suite(replace, data_namespace_mangling, config, include, exclude, glob,
 
 
 @LOGGER.catch
-@cli.command(name="benchmark-metrics")
+@cli.command(name="benchmark-quality")
 @click.option('--data-namespace-mangling', type=bool, is_flag=True, default=False,
               help="mangling data namespace")
 @click.option('-i', '--include', required=True, type=click.Path(exists=True), multiple=True, metavar="<include>",
-              help="include *match.json under these paths")
+              help="include *benchmark.json under these paths")
 @click.option('-e', '--exclude', type=click.Path(exists=True), multiple=True,
-              help="exclude *match.json under these paths")
+              help="exclude *benchmark.json under these paths")
 @click.option('-c', '--config', default=priority_config().__str__(), type=click.Path(exists=True),
               help=f"config path, defaults to {priority_config()}")
-@click.option("-g", '--glob', type=str,
+@click.option('-g', '--glob', type=str,
               help="glob string to filter sub-directory of path specified by <include>")
-@click.option('--absolute-tol', type=float,
+@click.option('-t', '--tol', type=float,
               help="tolerance (absolute error) for metrics to be considered almost equal. "
                    "Comparison is done by evaluating abs(a-b) <= max(relative_tol * max(abs(a), abs(b)), absolute_tol)")
-@click.option('--relative-tol', type=float,
-              help="tolerance (relative difference) for metrics to be considered almost equal."
-                   "Comparison is done by evaluating abs(a-b) <= max(relative_tol * max(abs(a), abs(b)), absolute_tol)")
-@click.option("--yes", is_flag=True,
+@click.option('--yes', is_flag=True,
               help="skip double check")
-@click.option("--skip-data", is_flag=True, default=False,
-              help="skip uploading data specified in match")
-def run_benchmark(data_namespace_mangling, config, include, exclude, glob, skip_data, absolute_tol, relative_tol, yes):
+@click.option('--skip-data', is_flag=True, default=False,
+              help="skip uploading data specified in benchmark conf")
+def run_benchmark(data_namespace_mangling, config, include, exclude, glob, skip_data, tol, yes):
     """
     process benchmark suite
     """
@@ -167,12 +164,12 @@ def run_benchmark(data_namespace_mangling, config, include, exclude, glob, skip_
     # prepare output dir and json hooks
     _prepare(data_namespace_mangling, namespace, replace={})
 
-    echo.welcome()
+    echo.welcome("benchmark")
     config_inst = _parse_config(config)
     echo.echo(f"testsuite namespace: {namespace}", fg='red')
     echo.echo("loading testsuites:")
     suites = _load_testsuites(includes=include, excludes=exclude, glob=glob,
-                              suffix="match.json", suite_type="benchmark")
+                              suffix="benchmark.json", suite_type="benchmark")
     for suite in suites:
         echo.echo(f"\tdataset({len(suite.dataset)}) benchmark pairs({len(suite.pairs)}) {suite.path}")
     if not yes and not click.confirm("running?"):
@@ -191,8 +188,7 @@ def run_benchmark(data_namespace_mangling, config, include, exclude, glob, skip_
                     except Exception as e:
                         raise RuntimeError(f"exception occur while uploading data for {suite.path}") from e
                 try:
-                    _run_benchmark_pairs(config_inst, suite, absolute_tol, relative_tol, namespace,
-                                         data_namespace_mangling)
+                    _run_benchmark_pairs(config_inst, suite, tol, namespace, data_namespace_mangling)
                 except Exception as e:
                     raise RuntimeError(f"exception occur while running benchmark jobs for {suite.path}") from e
 
@@ -274,7 +270,7 @@ def _load_testsuites(includes, excludes, glob, suffix="testsuite.json", suite_ty
     return suites
 
 
-def _upload_data(clients: Clients, suite: Testsuite):
+def _upload_data(clients: Clients, suite):
     with click.progressbar(length=len(suite.dataset),
                            label="dataset",
                            show_eta=False,
@@ -395,7 +391,7 @@ def _run_pipeline_jobs(config: Config, suite: Testsuite, namespace: str, data_na
             mod.main(config)
 
 
-def _run_benchmark_pairs(config: Config, suite: BenchmarkSuite, absolute_tol: float, relative_tol: float,
+def _run_benchmark_pairs(config: Config, suite: BenchmarkSuite, tol: float,
                          namespace: str, data_namespace_mangling: bool):
     # pipeline demo goes here
     for pair in suite.pairs:
@@ -417,7 +413,8 @@ def _run_benchmark_pairs(config: Config, suite: BenchmarkSuite, absolute_tol: fl
             else:
                 metric = mod.main()
             results[job_name] = metric
-        match_metrics(evaluate=True, abs_tol=absolute_tol, rel_tol=relative_tol, **results)
+        rel_tol = pair.compare_setting.get("relative_tol")
+        match_metrics(evaluate=True, abs_tol=tol, rel_tol=rel_tol, **results)
 
 
 def main():
