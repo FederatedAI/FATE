@@ -39,12 +39,20 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
      - 模型输入
      - 模型输出
 
+   * - Reader
+     - Reader
+     - 当输入数据的存储引擎当前计算引擎不支持时，会自动转存到FATE集群适配计算引擎的组件输出存储引擎；当输入数据的存储格式非FATE支持存储格式时，会自动转换格式，并存储到FATE集群的组件输出存储引擎
+     - 用户原始存储数据
+     - 转换后原始数据
+     -
+     -
+
    * - `DataIO`_
      - DataIO
-     - 该组件通常是建模任务的第一个组件。 它将用户上传的数据转换为Instance对象。
+     - 该组件将原始数据转换为Instance对象。
      - Table，值为原始数据
      - 转换后的数据表，值为在 : `federatedml/feature/instance.py` 中定义的Data Instance的实例
-     - 
+     -
      - DataIO模型
 
    * - `Intersect`_
@@ -52,7 +60,7 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
      - 计算两方的相交数据集，而不会泄漏任何差异数据集的信息。主要用于纵向任务。
      - Table
      - 两方Table中相交的部分
-     - 
+     -
      - Intersect模型
 
    * - `Federated Sampling`_
@@ -60,7 +68,7 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
      - 对数据进行联邦采样，使得数据分布在各方之间变得平衡。这一模块同时支持单机和集群版本。
      - Table
      - 采样后的数据，同时支持随机采样和分层采样
-     - 
+     -
      -
 
    * - `Feature Scale`_
@@ -76,7 +84,7 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
      - 使用分箱的输入数据，计算每个列的iv和woe，并根据合并后的信息转换数据。
      - Table，在guest中有标签y，在host中没有标签y
      - 转换后的Table
-     - 
+     -
      - 每列的iv/woe，分裂点，事件计数，非事件计数等
    
    * - `OneHot Encoder`_
@@ -84,7 +92,7 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
      - 将一列转换为One-Hot格式。
      - Table, 值为Instance
      - 转换了带有新列名的Table
-     - 
+     -
      - 原始列名和特征值到新列名的映射
     
    * - `Hetero Feature Selection`_
@@ -100,7 +108,7 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
      - 将多个数据表合并成一个。
      - Tables
      - 多个Tables合并后的Table
-     - 
+     -
      -
 
    * - `Hetero-LR`_
