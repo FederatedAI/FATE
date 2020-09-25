@@ -19,15 +19,15 @@ import os
 
 from federatedml.util.param_extract import ParamExtract
 from federatedml.param import InitParam
-from federatedml.param import BoostingTreeParam
+from federatedml.param.boosting_param import HeteroSecureBoostParam
 
 
 class TestParamExtract(unittest.TestCase):
     def setUp(self):
         self.init_param = InitParam()
-        self.boosting_tree_param = BoostingTreeParam()
+        self.boosting_tree_param = HeteroSecureBoostParam()
         self.config_dict = \
-                {"BoostingTreeParam": {
+                {"HeteroSecureBoostParam": {
                     "init_param": {"init_method": "test_init", "fit_intercept": False},
                     "tree_param": {"criterion_method": "test_decisiontree"},
                     "task_type": "test_boostingtree",
@@ -35,19 +35,19 @@ class TestParamExtract(unittest.TestCase):
                 }
 
     def test_directly_extract(self):
-        boosting_tree_param = BoostingTreeParam()
+        boosting_tree_param = HeteroSecureBoostParam()
         extractor = ParamExtract()
         boosting_tree_param = extractor.parse_param_from_config(boosting_tree_param, self.config_dict)
         self.assertTrue(boosting_tree_param.task_type == "test_boostingtree")
 
     def test_undefine_variable_extract(self):
-        boosting_tree_param = BoostingTreeParam()
+        boosting_tree_param = HeteroSecureBoostParam()
         extractor = ParamExtract()
         boosting_tree_param = extractor.parse_param_from_config(boosting_tree_param, self.config_dict)
         self.assertTrue(not hasattr(boosting_tree_param, "test_variable"))
 
     def test_param_embedding(self):
-        boosting_tree_param = BoostingTreeParam()
+        boosting_tree_param = HeteroSecureBoostParam()
         extractor = ParamExtract()
         boosting_tree_param = extractor.parse_param_from_config(boosting_tree_param, self.config_dict)
         print ("boosting_tree_param.tree_param.criterion_method {}".format(boosting_tree_param.tree_param.criterion_method))

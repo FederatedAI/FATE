@@ -122,14 +122,14 @@ class TestInstance(unittest.TestCase):
 
     def tearDown(self):
         session.stop()
-        try:
-            session.cleanup("*", self.job_id, True)
-        except EnvironmentError:
-            pass
-        try:
-            session.cleanup("*", self.job_id, False)
-        except EnvironmentError:
-            pass
+        # try:
+        #     session.cleanup("*", self.job_id, True)
+        # except EnvironmentError:
+        #     pass
+        # try:
+        #     session.cleanup("*", self.job_id, False)
+        # except EnvironmentError:
+        #     pass
 
 
 if __name__ == '__main__':

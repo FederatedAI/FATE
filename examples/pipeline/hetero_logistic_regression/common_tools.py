@@ -83,7 +83,7 @@ def make_normal_dsl(config, namespace, lr_param, is_multi_host=False, has_valida
     # get DataIO party instance of guest
     dataio_0_guest_party_instance = dataio_0.get_party_instance(role='guest', party_id=guest)
     # configure DataIO for guest
-    dataio_0_guest_party_instance.algorithm_param(with_label=True, output_format="dense")
+    dataio_0_guest_party_instance.algorithm_param(with_label=True)
     # get and configure DataIO party instance of host
     dataio_0.get_party_instance(role='host', party_id=hosts).algorithm_param(with_label=False)
 

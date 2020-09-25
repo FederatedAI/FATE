@@ -18,6 +18,7 @@ import asyncio
 import hashlib
 import pickle as c_pickle
 import shutil
+import time
 import typing
 import uuid
 from collections import Iterable
@@ -28,12 +29,12 @@ from heapq import heapify, heappop, heapreplace
 from operator import is_not
 from pathlib import Path
 
+import cloudpickle as f_pickle
 import lmdb
 import numpy as np
 
 from fate_arch.common import file_utils, Party
 from fate_arch.common.log import getLogger
-import cloudpickle as f_pickle
 
 LOGGER = getLogger()
 
@@ -617,8 +618,20 @@ def _get_env(*args, write=False):
 
 def _open_env(path, write=False):
     path.mkdir(parents=True, exist_ok=True)
-    return lmdb.open(path.as_posix(), create=True, max_dbs=1, max_readers=1024, lock=write, sync=True,
-                     map_size=10_737_418_240)
+
+    t = 0
+    while t < 100:
+        try:
+            env = lmdb.open(path.as_posix(), create=True, max_dbs=1, max_readers=1024, lock=write, sync=True,
+                            map_size=10_737_418_240)
+            return env
+        except lmdb.Error as e:
+            if 'No such file or directory' in e.args[0]:
+                time.sleep(0.01)
+                t += 1
+            else:
+                raise e
+    raise lmdb.Error(f"No such file or directory: {path}, with {t} times retry")
 
 
 def _hash_key_to_partition(key, partitions):

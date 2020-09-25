@@ -222,6 +222,9 @@ class FederatedIsoModelFilter(IsoModelFilter):
 
                 if v_idx in results:
                     host_prop.add_left_col_name(col_name[1])
+        for host_prop in self.host_selection_properties:
+            self._keep_one_feature(pick_high=self.take_high, selection_properties=host_prop,
+                                   feature_values=host_prop.feature_values)
 
         if self.select_federated:
             self.sync_obj.sync_select_results(self.host_selection_properties, suffix=suffix)

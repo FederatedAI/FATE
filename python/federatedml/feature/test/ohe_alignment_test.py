@@ -1,9 +1,8 @@
-import json
 import unittest
 import uuid
 
 from fate_arch.session import computing_session as session
-from federatedml.feature.homo_onehot.OHE_alignment_arbiter import OHEAlignmentArbiter
+from federatedml.feature.homo_onehot.homo_ohe_arbiter import HomoOneHotArbiter
 
 
 class TestOHE_alignment(unittest.TestCase):
@@ -12,7 +11,7 @@ class TestOHE_alignment(unittest.TestCase):
         session.init(self.job_id)
 
     def test_instance(self):
-        ohe_alignment_arbiter = OHEAlignmentArbiter()
+        ohe_alignment_arbiter = HomoOneHotArbiter()
 
         guest_columns = [
             {'race_black': ['0', '1'], 'race_hispanic': ['0'], 'race_asian': ['0', '1'], 'race_other': ['1'],
@@ -28,14 +27,6 @@ class TestOHE_alignment(unittest.TestCase):
 
     def tearDown(self):
         session.stop()
-        try:
-            session.cleanup("*", self.job_id, True)
-        except EnvironmentError:
-            pass
-        try:
-            session.cleanup("*", self.job_id, False)
-        except EnvironmentError:
-            pass
 
 
 if __name__ == '__main__':

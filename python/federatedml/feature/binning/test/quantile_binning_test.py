@@ -20,6 +20,8 @@ import uuid
 import numpy as np
 
 from fate_arch.session import computing_session as session
+from fate_arch.session import Session
+
 from federatedml.feature.binning.quantile_binning import QuantileBinning
 from federatedml.param.feature_binning_param import FeatureBinningParam
 from federatedml.feature.instance import Instance
@@ -37,6 +39,8 @@ TEST_LARGE_DATA = False
 class TestQuantileBinning(unittest.TestCase):
     def setUp(self):
         self.job_id = str(uuid.uuid1())
+
+        # session = Session.create(0, 0).init_computing("abc").computing
         session.init(self.job_id)
 
     def test_binning_correctness(self):
@@ -127,14 +131,14 @@ class TestQuantileBinning(unittest.TestCase):
 
     def tearDown(self):
         session.stop()
-        try:
-            session.cleanup("*", self.job_id, True)
-        except EnvironmentError:
-            pass
-        try:
-            session.cleanup("*", self.job_id, False)
-        except EnvironmentError:
-            pass
+    #     try:
+    #         session.cleanup("*", self.job_id, True)
+    #     except EnvironmentError:
+    #         pass
+    #     try:
+    #         session.cleanup("*", self.job_id, False)
+    #     except EnvironmentError:
+    #         pass
 
 
 if __name__ == '__main__':
