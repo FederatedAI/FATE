@@ -292,9 +292,12 @@ class FederatedScheduler(object):
                 if response["retcode"] != RetCode.SUCCESS:
                     exception = Exception(response["retmsg"])
                 else:
-                    return
+                    return True
             else:
-                raise exception
+                schedule_logger(job_id=task.f_job_id).error(f"report task to initiator error: {exception}")
+                return False
+        else:
+            return False
 
     # Utils
     @classmethod
