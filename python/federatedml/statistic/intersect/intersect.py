@@ -251,12 +251,19 @@ class RawIntersect(Intersect):
 
         if not self.only_output_key:
             intersect_ids = self._get_value_from_data(intersect_ids, data_instances)
+        
+        if self.task_id is not None:
+            from fate_arch import storage
+            storage_engine = "EGGROLL"
+            namespace = "#".join([str(self.guest_party_id), str(self.host_party_id), "mountain"])
+            for k, v in enumerate(recv_ids_list):
+                table_name = '_'.join([self.task_id, str(k)])
+                address_dict = {"name": table_name, "namespace": namespace, "storage_type": "LMDB"}
+                address = storage.StorageTableMeta.create_address(storage_engine=storage_engine, address_dict=address_dict)
+                with storage.Session.build(storage_engine=storage_engine) as storage_session:
+                    storage_session.create_table(address=address, name=table_name, namespace=namespace, partitions=v.partitions, count=v.count())
+                v.save(address, schema={}, partitions=v.partitions)
 
-        # if self.task_id is not None:
-        #     namespace = "#".join([str(self.guest_party_id), str(self.host_party_id), "mountain"])
-        #     for k, v in enumerate(recv_ids_list):
-        #         table_name = '_'.join([self.task_id, str(k)])
-        #         v.save_as(table_name, namespace)
-        #         LOGGER.info("save guest_{}'s id in name:{}, namespace:{}".format(k, table_name, namespace))
+                LOGGER.info("save guest_{}'s id in name:{}, namespace:{}".format(k, table_name, namespace))
 
         return intersect_ids
