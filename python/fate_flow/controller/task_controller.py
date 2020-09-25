@@ -85,7 +85,7 @@ class TaskController(object):
 
             if run_parameters.computing_engine in {ComputingEngine.EGGROLL, ComputingEngine.STANDALONE}:
                 process_cmd = [
-                    sys.executable,  # the python executable path
+                    sys.executable,
                     sys.modules[TaskExecutor.__module__].__file__,
                     '-j', job_id,
                     '-n', component_name,
@@ -94,17 +94,19 @@ class TaskController(object):
                     '-r', role,
                     '-p', party_id,
                     '-c', task_parameters_path,
-                    '--processors_per_node', str(run_parameters.task_cores_per_node if run_parameters.task_cores_per_node else 0),
                     '--run_ip', RuntimeConfig.JOB_SERVER_HOST,
                     '--job_server', '{}:{}'.format(RuntimeConfig.JOB_SERVER_HOST, RuntimeConfig.HTTP_PORT),
                 ]
+                # run configs
+                for k, v in run_parameters.eggroll_run.items():
+                    process_cmd.extend([f"--{k}", str(v)])
             elif run_parameters.computing_engine == ComputingEngine.SPARK:
                 if "SPARK_HOME" not in os.environ:
                     raise EnvironmentError("SPARK_HOME not found")
                 spark_home = os.environ["SPARK_HOME"]
 
                 # additional configs
-                spark_submit_config = task_parameters.get("spark_submit_config", dict())
+                spark_submit_config = run_parameters.spark_run
 
                 deploy_mode = spark_submit_config.get("deploy-mode", "client")
                 if deploy_mode not in ["client"]:
@@ -131,12 +133,6 @@ class TaskController(object):
                     '--run_ip', RuntimeConfig.JOB_SERVER_HOST,
                     '--job_server', '{}:{}'.format(RuntimeConfig.JOB_SERVER_HOST, RuntimeConfig.HTTP_PORT),
                 ])
-                if run_parameters.task_nodes:
-                    process_cmd.extend(["--num-executors", str(run_parameters.task_nodes)])
-                if run_parameters.task_cores_per_node:
-                    process_cmd.extend(["--executor-cores", str(run_parameters.task_cores_per_node)])
-                if run_parameters.task_memory_per_node:
-                    process_cmd.extend(["--executor-memory", f"{run_parameters.task_memory_per_node}m"])
             else:
                 raise ValueError(f"${run_parameters.computing_engine} is not supported")
 

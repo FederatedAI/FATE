@@ -29,17 +29,15 @@ class RunParameters(object):
         self.federated_mode = None
         self.federation_info = None
         self.task_parallelism = None
-        self.task_nodes = None
-        self.task_cores_per_node = None
-        self.task_memory_per_node = None
         self.federated_status_collect_type = None
         self.federated_data_exchange_type = None  # not use in v1.5.0
-        self.align_task_input_data_partition = None
         self.model_id = None
         self.model_version = None
         self.dsl_version = None
-        self.input_data_aligned_partitions = None
         self.timeout = None
+        self.eggroll_run = {}
+        self.spark_run = {}
+        self.adaptation_parameters = {}
         for k, v in kwargs.items():
             if hasattr(self, k):
                 setattr(self, k, v)

@@ -26,8 +26,7 @@ from fate_flow.operation import JobSaver
 from fate_flow.entity.types import JobStatus, TaskStatus, EndStatus, StatusSet, SchedulingStatusCode, ResourceOperation, FederatedSchedulingStatusCode, RunParameters, RetCode
 from fate_flow.operation import Tracker
 from fate_flow.controller import JobController
-from fate_flow.settings import FATE_BOARD_DASHBOARD_ENDPOINT, DEFAULT_TASK_PARALLELISM, DEFAULT_TASK_CORES_PER_NODE, \
-    DEFAULT_TASK_MEMORY_PER_NODE, DEFAULT_FEDERATED_STATUS_COLLECT_TYPE
+from fate_flow.settings import FATE_BOARD_DASHBOARD_ENDPOINT, DEFAULT_TASK_PARALLELISM, DEFAULT_FEDERATED_STATUS_COLLECT_TYPE
 from fate_flow.utils import detect_utils, job_utils, schedule_utils
 from fate_flow.utils.service_utils import ServiceUtils
 from fate_flow.utils import model_utils
@@ -94,7 +93,7 @@ class DAGScheduler(Cron):
                                                        runtime_conf=job_runtime_conf,
                                                        train_runtime_conf=train_runtime_conf)
 
-        cls.set_default_job_parameters(job_parameters=job_parameters)
+        cls.adapt_job_parameters(job_parameters=job_parameters)
 
         # update runtime conf
         job_runtime_conf["job_parameters"] = job_parameters.to_dict()
@@ -161,18 +160,12 @@ class DAGScheduler(Cron):
                 job_parameters.federated_mode = FederatedMode.SINGLE
 
     @classmethod
-    def set_default_job_parameters(cls, job_parameters: RunParameters):
+    def adapt_job_parameters(cls, job_parameters: RunParameters):
         if job_parameters.task_parallelism is None:
             job_parameters.task_parallelism = DEFAULT_TASK_PARALLELISM
-        computing_engine_info = ResourceManager.get_engine_registration_info(engine_type=EngineType.COMPUTING, engine_name=job_parameters.computing_engine)
-        if job_parameters.task_nodes is None:
-            job_parameters.task_nodes = computing_engine_info.f_nodes
-        if job_parameters.task_cores_per_node is None:
-            job_parameters.task_cores_per_node = DEFAULT_TASK_CORES_PER_NODE
-        if job_parameters.task_memory_per_node is None:
-            job_parameters.task_memory_per_node = DEFAULT_TASK_MEMORY_PER_NODE
         if job_parameters.federated_status_collect_type is None:
             job_parameters.federated_status_collect_type = DEFAULT_FEDERATED_STATUS_COLLECT_TYPE
+        ResourceManager.job_engine_support_parameters(job_parameters=job_parameters)
 
     def run_do(self):
         schedule_logger().info("start schedule waiting jobs")
