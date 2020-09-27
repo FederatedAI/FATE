@@ -41,7 +41,7 @@ use the following command to show help message
 
       fate_test benchmark-quality -i <path1 contains *benchmark.json>
 
-   will run benchmark testsuites in `path1`
+   will run benchmark testsuites in *path1*
 
 2. exclude:
 
@@ -49,7 +49,7 @@ use the following command to show help message
 
       fate_test benchmark-quality -i <path1 contains *benchmark.json> -e <path2 to exclude> -e <path3 to exclude> ...
 
-   will run benchmark testsuites in `path1` but not in `path2` and `path3`
+   will run benchmark testsuites in *path1* but not in *path2* and *path3*
 
 3. glob:
 
@@ -57,7 +57,7 @@ use the following command to show help message
 
       fate_test benchmark-quality -i <path1 contains *benchmark.json> -g "hetero*"
 
-   will run benchmark testsuites in sub directory start with `hetero` of `path1`
+   will run benchmark testsuites in sub directory start with *hetero* of *path1*
 
 4. config:
 
@@ -65,7 +65,7 @@ use the following command to show help message
 
       fate_test benchmark-quality -i <path1 contains *benchmark.json> -c <path2 to *.yaml>
 
-   will run benchmark testsuites in `path1` with config file at `path2`
+   will run benchmark testsuites in *path1* with config file at *path2*
 
 5. tol:
 
@@ -73,8 +73,8 @@ use the following command to show help message
 
       fate_test benchmark-quality -i <path1 contains *benchmark.json> -t 1e-3
 
-   will run benchmark testsuites in `path1` with absolute tolerance of difference between metrics set to 0.001.
-   If absolute difference between metrics is smaller than `tol`, then metrics are considered
+   will run benchmark testsuites in *path1* with absolute tolerance of difference between metrics set to 0.001.
+   If absolute difference between metrics is smaller than *tol*, then metrics are considered
    almost equal. Check benchmark testsuite `writing guide <#benchmark-testsuite>`_ on setting alternative tolerance.
 
 6. data-namespace-mangling:
@@ -83,7 +83,7 @@ use the following command to show help message
 
       fate_test benchmark-quality -i <path1 contains *benchmark.json> --data-namespace-mangling
 
-   will run benchmark testsuites in `path1` with uploaded data namespace modified to have a suffix of timestamp.
+   will run benchmark testsuites in *path1* with uploaded data namespace modified to have a suffix of timestamp.
    Timestamp is used for distinguishing data from different tetsuites.
    Uploaded data will be deleted after all benchmark jobs end.
 
@@ -93,7 +93,7 @@ use the following command to show help message
 
        fate_test benchmark-quality -i <path1 contains *benchmark.json> --skip-date
 
-   will run benchmark testsuites in `path1` without uploading data specified in `*benchmark.json`.
+   will run benchmark testsuites in *path1* without uploading data specified in *benchmark.json*.
    Note that data-namespace-mangling is ineffective when skipping data upload.
 
 8. yes
@@ -102,7 +102,7 @@ use the following command to show help message
 
       fate_test benchmark-quality -i <path1 contains *benchmark.json> --yes
 
-   will run benchmark testsuites in `path1` directly, skipping double check
+   will run benchmark testsuites in *path1* directly, skipping double check
 
 
 benchmark testsuite
@@ -153,11 +153,11 @@ A benchmark testsuite includes the following elements:
 
   - compare_setting: additional setting for quality metrics comparison, currently only takes ``relative_tol``
 
-    If metrics "a" and "b" satisfy `abs(a-b) <= max(relative_tol * max(abs(a), abs(b)), absolute_tol)`
+    If metrics *a* and *b* satisfy *abs(a-b) <= max(relative_tol \* max(abs(a), abs(b)), absolute_tol)*
     (from `math module <https://docs.python.org/3/library/math.html#math.isclose>`_),
     they are considered almost equal. In the below example, metrics from "local" and "pipeline" jobs are
     considered almost equal if their relative difference is smaller than
-    `0.05 * max(abs(local_metric), abs(pipeline_metric)`.
+    *0.05 \* max(abs(local_metric), abs(pipeline_metric)*.
 
   .. code-block:: json
 
@@ -182,13 +182,13 @@ testing script
 All job scripts need to have ``Main`` function as an entry point for executing jobs; scripts should
 return a dictionary with {metric_name}: {metric_value} key-value pairs for comparison.
 Returned quality metrics of the same key are to be compared.
-Note that only real-value metrics can be compared.
+Note that only **real-value** metrics can be compared.
 
 - FATE script: ``Main`` always has three inputs:
 
   - config: job configuration, `JobConfig <../fate_client/pipeline/utils/tools.py#L64>`_ object loaded from "fate_test_config.yaml"
   - param: job parameter setting, dictionary loaded from "conf" file specified in benchmark testsuite
-  - namespace: namespace suffix, generated timestamp string when using ``data-namespace-mangling``
+  - namespace: namespace suffix, generated timestamp string when using *data-namespace-mangling*
 
 - non-FATE script: ``Main`` always has one input:
 
