@@ -63,12 +63,14 @@ def stop_job():
     stop_status = request.json.get("stop_status", "canceled")
     jobs = JobSaver.query_job(job_id=job_id)
     if jobs:
+        stat_logger.info(f"request stop job {jobs[0]} to {stop_status}")
         status_code, response = FederatedScheduler.request_stop_job(job=jobs[0], stop_status=stop_status)
         if status_code == FederatedSchedulingStatusCode.SUCCESS:
             return get_json_result(retcode=RetCode.SUCCESS, retmsg="stop job success")
         else:
             return get_json_result(retcode=RetCode.OPERATING_ERROR, retmsg="stop job failed:\n{}".format(json_dumps(response)))
     else:
+        stat_logger.info(f"can not found job {jobs[0]} to stop, delete job event")
         JobQueue.delete_event(job_id=job_id)
         return get_json_result(retcode=RetCode.DATA_ERROR, retmsg="can not found job")
 

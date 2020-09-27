@@ -16,15 +16,18 @@
 
 import math
 import operator
+
 import peewee
-from fate_arch.computing import ComputingEngine
+
+from fate_arch.common import EngineType
 from fate_arch.common import base_utils
 from fate_arch.common.conf_utils import get_base_config
 from fate_arch.common.log import schedule_logger
-from fate_arch.common import EngineType
-from fate_flow.db.db_models import DB, EngineRegistry, ResourceRecord
+from fate_arch.computing import ComputingEngine
+from fate_flow.db.db_models import DB, EngineRegistry, ResourceRecord, Job
 from fate_flow.entity.types import ResourceOperation, RunParameters
-from fate_flow.settings import stat_logger, STANDALONE_BACKEND_VIRTUAL_CORES_PER_NODE, SUPPORT_ENGINES, MAX_CORES_PERCENT_PER_JOB
+from fate_flow.settings import stat_logger, STANDALONE_BACKEND_VIRTUAL_CORES_PER_NODE, SUPPORT_ENGINES, \
+    MAX_CORES_PERCENT_PER_JOB, DEFAULT_TASK_CORES_PER_NODE, DEFAULT_TASK_MEMORY_PER_NODE
 from fate_flow.utils import job_utils
 
 
@@ -63,8 +66,10 @@ class ResourceManager(object):
             update_fields[EngineRegistry.f_engine_address] = engine_address
             update_fields[EngineRegistry.f_cores] = cores
             update_fields[EngineRegistry.f_memory] = memory
-            update_fields[EngineRegistry.f_remaining_cores] = EngineRegistry.f_remaining_cores + (cores - resource.f_cores)
-            update_fields[EngineRegistry.f_remaining_memory] = EngineRegistry.f_remaining_memory + (memory - resource.f_memory)
+            update_fields[EngineRegistry.f_remaining_cores] = EngineRegistry.f_remaining_cores + (
+                    cores - resource.f_cores)
+            update_fields[EngineRegistry.f_remaining_memory] = EngineRegistry.f_remaining_memory + (
+                    memory - resource.f_memory)
             update_fields[EngineRegistry.f_nodes] = nodes
             operate = EngineRegistry.update(update_fields).where(*filters)
             update_status = operate.execute() > 0
@@ -91,7 +96,7 @@ class ResourceManager(object):
 
     @classmethod
     def check_resource_apply(cls, job_parameters: RunParameters, engines_info):
-        computing_engine, cores, memory = cls.calculate_job_resource(run_parameters=job_parameters)
+        computing_engine, cores, memory = cls.calculate_job_resource(job_parameters=job_parameters)
         max_cores_per_job = math.floor(engines_info[EngineType.COMPUTING].f_cores * MAX_CORES_PERCENT_PER_JOB)
         if cores > max_cores_per_job:
             return False, max_cores_per_job
@@ -102,23 +107,25 @@ class ResourceManager(object):
     @DB.connection_context()
     def create_resource_record(cls, job_id, role, party_id, engine_type, engine_name, cores, memory):
         try:
-            ResourceRecord.replace(f_job_id=job_id,
-                                   f_role=role,
-                                   f_party_id=party_id,
-                                   f_engine_type=engine_type,
-                                   f_engine_name=engine_name,
-                                   f_cores=cores,
-                                   f_memory=memory,
-                                   f_remaining_cores=cores,
-                                   f_remaining_memory=memory,
-                                   f_in_use=True,
-                                   f_create_time=base_utils.current_timestamp()
-                                   ).execute()
-            schedule_logger(job_id=job_id).info(f"create resource record for job {job_id} on {role} {party_id} successfully")
+            ResourceRecord.insert(f_job_id=job_id,
+                                  f_role=role,
+                                  f_party_id=party_id,
+                                  f_engine_type=engine_type,
+                                  f_engine_name=engine_name,
+                                  f_cores=cores,
+                                  f_memory=memory,
+                                  f_remaining_cores=cores,
+                                  f_remaining_memory=memory,
+                                  f_in_use=True,
+                                  f_create_time=base_utils.current_timestamp()
+                                  ).execute()
+            schedule_logger(job_id=job_id).info(
+                f"create resource record for job {job_id} on {role} {party_id} successfully")
             return True
         except peewee.IntegrityError as e:
             if e.args[0] == 1062:
-                schedule_logger(job_id=job_id).warning(f"job {job_id} on {role} {party_id} resource record already exists")
+                schedule_logger(job_id=job_id).warning(
+                    f"job {job_id} on {role} {party_id} resource record already exists")
             schedule_logger(job_id=job_id).exception(e)
             return False
 
@@ -138,12 +145,13 @@ class ResourceManager(object):
     @DB.connection_context()
     def disable_resource_record(cls, job_id, role, party_id):
         try:
-            rows = ResourceRecord.update({ResourceRecord.f_in_use: False,
-                                          ResourceRecord.f_update_time: base_utils.current_timestamp()}).where(ResourceRecord.f_job_id == job_id,
-                                                                                                               ResourceRecord.f_role == role,
-                                                                                                               ResourceRecord.f_party_id == party_id).execute()
+            rows = ResourceRecord.delete().where(
+                ResourceRecord.f_job_id == job_id,
+                ResourceRecord.f_role == role,
+                ResourceRecord.f_party_id == party_id).execute()
             if rows > 1:
-                schedule_logger(job_id=job_id).info(f"delete job {job_id} on {role} {party_id} resource record successfully")
+                schedule_logger(job_id=job_id).info(
+                    f"delete job {job_id} on {role} {party_id} resource record successfully")
                 return True
             else:
                 schedule_logger(job_id=job_id).info(f"delete job {job_id} on {role} {party_id} resource record failed")
@@ -173,10 +181,12 @@ class ResourceManager(object):
                                                                                   engine_name=engine_name,
                                                                                   )
             if apply_status:
-                schedule_logger(job_id=job_id).info(f"apply job {job_id} resource(cores {cores} memory {memory}) on {role} {party_id} successfully")
+                schedule_logger(job_id=job_id).info(
+                    f"apply job {job_id} resource(cores {cores} memory {memory}) on {role} {party_id} successfully")
                 return True
             else:
-                schedule_logger(job_id=job_id).warning(f"apply job {job_id} resource(cores {cores} memory {memory}) on {role} {party_id} failed, remaining_cores: {remaining_cores}, remaining_memory: {remaining_memory}")
+                schedule_logger(job_id=job_id).warning(
+                    f"apply job {job_id} resource(cores {cores} memory {memory}) on {role} {party_id} failed, remaining_cores: {remaining_cores}, remaining_memory: {remaining_memory}")
                 return False
         else:
             return False
@@ -187,7 +197,8 @@ class ResourceManager(object):
         engine_name, cores, memory = cls.calculate_job_resource(job_id=job_id, role=role, party_id=party_id)
         record = cls.get_resource_record(job_id=job_id, role=role, party_id=party_id)
         if not record:
-            schedule_logger(job_id=job_id).info(f"can not found job {job_id} on {role} {party_id} in use resource record, pass return resource")
+            schedule_logger(job_id=job_id).info(
+                f"can not found job {job_id} on {role} {party_id} in use resource record, pass return resource")
             return False
         return_status, remaining_cores, remaining_memory = cls.update_resource(model=EngineRegistry,
                                                                                cores=cores,
@@ -197,38 +208,66 @@ class ResourceManager(object):
                                                                                engine_name=engine_name,
                                                                                )
         if return_status:
-            schedule_logger(job_id=job_id).info(f"return job {job_id} resource(cores {cores} memory {memory}) on {role} {party_id} successfully")
+            schedule_logger(job_id=job_id).info(
+                f"return job {job_id} resource(cores {cores} memory {memory}) on {role} {party_id} successfully")
             cls.disable_resource_record(job_id=job_id, role=role, party_id=party_id)
             return True
         else:
-            schedule_logger(job_id=job_id).info(f"return job {job_id} resource(cores {cores} memory {memory}) on {role} {party_id} failed, remaining_cores: {remaining_cores}, remaining_memory: {remaining_memory}")
+            schedule_logger(job_id=job_id).info(
+                f"return job {job_id} resource(cores {cores} memory {memory}) on {role} {party_id} failed, remaining_cores: {remaining_cores}, remaining_memory: {remaining_memory}")
             return False
 
     @classmethod
-    def calculate_job_resource(cls, run_parameters: RunParameters = None, job_id=None, role=None, party_id=None):
-        if not run_parameters:
+    def job_engine_support_parameters(cls, job_parameters: RunParameters):
+        computing_engine_info = ResourceManager.get_engine_registration_info(engine_type=EngineType.COMPUTING,
+                                                                             engine_name=job_parameters.computing_engine)
+        job_parameters.adaptation_parameters = {
+            "task_nodes": 0,
+            "task_cores_per_node": 0,
+            "task_memory_per_node": 0,
+        }
+        if job_parameters.computing_engine in {ComputingEngine.STANDALONE, ComputingEngine.EGGROLL}:
+            job_parameters.adaptation_parameters["task_nodes"] = computing_engine_info.f_nodes
+            job_parameters.adaptation_parameters["task_cores_per_node"] = int(
+                job_parameters.eggroll_run.get("eggroll.session.processors.per.node", DEFAULT_TASK_CORES_PER_NODE))
+            job_parameters.eggroll_run["eggroll.session.processors.per.node"] = job_parameters.adaptation_parameters["task_cores_per_node"]
+        elif job_parameters.computing_engine == ComputingEngine.SPARK:
+            job_parameters.adaptation_parameters["task_nodes"] = min(int(job_parameters.spark_run.get("num-executors")), computing_engine_info.f_nodes) if "num-executors" in job_parameters.spark_run else computing_engine_info.f_nodes
+            job_parameters.spark_run["num-executors"] = job_parameters.adaptation_parameters["task_nodes"]
+
+            job_parameters.adaptation_parameters["task_cores_per_node"] = int(
+                job_parameters.spark_run.get("executor-cores", DEFAULT_TASK_CORES_PER_NODE))
+            job_parameters.spark_run["executor-cores"] = job_parameters.adaptation_parameters["task_cores_per_node"]
+
+            job_parameters.adaptation_parameters["task_memory_per_node"] = int(
+                job_parameters.spark_run.get("executor-memory", DEFAULT_TASK_MEMORY_PER_NODE))
+            if job_parameters.adaptation_parameters["task_memory_per_node"] > 0:
+                job_parameters.spark_run["executor-memory"] = job_parameters.adaptation_parameters["task_memory_per_node"]
+
+    @classmethod
+    def calculate_job_resource(cls, job_parameters: RunParameters = None, job_id=None, role=None, party_id=None):
+        if not job_parameters:
             dsl, runtime_conf, train_runtime_conf = job_utils.get_job_configuration(job_id=job_id,
                                                                                     role=role,
                                                                                     party_id=party_id)
-            run_parameters = RunParameters(**runtime_conf["job_parameters"])
-        cores = run_parameters.task_cores_per_node * run_parameters.task_nodes * run_parameters.task_parallelism
-        memory = run_parameters.task_memory_per_node * run_parameters.task_nodes * run_parameters.task_parallelism
-        computing_engine_info = cls.get_engine_registration_info(engine_type=EngineType.COMPUTING, engine_name=run_parameters.computing_engine)
-        if computing_engine_info.f_engine_name in {ComputingEngine.EGGROLL, ComputingEngine.STANDALONE}:
-            memory = 0
-        return run_parameters.computing_engine, cores, memory
+            job_parameters = RunParameters(**runtime_conf["job_parameters"])
+        cores = job_parameters.adaptation_parameters["task_cores_per_node"] * job_parameters.adaptation_parameters[
+            "task_nodes"] * job_parameters.task_parallelism
+        memory = job_parameters.adaptation_parameters["task_memory_per_node"] * job_parameters.adaptation_parameters[
+            "task_nodes"] * job_parameters.task_parallelism
+        return job_parameters.computing_engine, cores, memory
 
     @classmethod
-    def calculate_task_resource(cls, task_info):
-        dsl, runtime_conf, train_runtime_conf = job_utils.get_job_configuration(job_id=task_info["job_id"],
-                                                                                role=task_info["role"],
-                                                                                party_id=task_info["party_id"])
-        run_parameters = RunParameters(**runtime_conf["job_parameters"])
-        cores_per_task = run_parameters.task_cores_per_node * run_parameters.task_nodes
-        memory_per_task = run_parameters.task_memory_per_node * run_parameters.task_nodes
-        computing_engine_info = cls.get_engine_registration_info(engine_type=EngineType.COMPUTING, engine_name=run_parameters.computing_engine)
-        if computing_engine_info.f_engine_name in {ComputingEngine.EGGROLL, ComputingEngine.STANDALONE}:
-            memory_per_task = 0
+    def calculate_task_resource(cls, task_parameters: RunParameters = None, task_info: dict = None):
+        if not task_parameters:
+            dsl, runtime_conf, train_runtime_conf = job_utils.get_job_configuration(job_id=task_info["job_id"],
+                                                                                    role=task_info["role"],
+                                                                                    party_id=task_info["party_id"])
+            task_parameters = RunParameters(**runtime_conf["job_parameters"])
+        cores_per_task = task_parameters.adaptation_parameters["task_cores_per_node"] * \
+                         task_parameters.adaptation_parameters["task_nodes"]
+        memory_per_task = task_parameters.adaptation_parameters["task_memory_per_node"] * \
+                          task_parameters.adaptation_parameters["task_nodes"]
         return cores_per_task, memory_per_task
 
     @classmethod
@@ -296,7 +335,8 @@ class ResourceManager(object):
     @classmethod
     @DB.connection_context()
     def get_engine_registration_info(cls, engine_type, engine_name) -> EngineRegistry:
-        engines = EngineRegistry.select().where(EngineRegistry.f_engine_type == engine_type, EngineRegistry.f_engine_name == engine_name)
+        engines = EngineRegistry.select().where(EngineRegistry.f_engine_type == engine_type,
+                                                EngineRegistry.f_engine_name == engine_name)
         if engines:
             return engines[0]
         else:

@@ -13,7 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from fate_arch.common import base_utils
+from fate_arch.common.base_utils import current_timestamp
 from fate_flow.db.db_models import DB, ResourceRecord, Job
 from fate_arch.storage import StorageSessionBase
 from fate_arch.common.log import detect_logger
@@ -91,10 +91,10 @@ class Detector(cron.Cron):
     def detect_resource_record(cls):
         detect_logger().info('start detect resource recycle')
         try:
-            records = ResourceRecord.select().where(ResourceRecord.f_in_use == True)
+            records = ResourceRecord.select().where(current_timestamp() - ResourceRecord.f_create_time > 60 * 1000)
             job_ids = set([record.f_job_id for record in records])
             if job_ids:
-                jobs = Job.select().where(Job.f_job_id << job_ids, Job.f_status << EndStatus.status_list(), base_utils.current_timestamp() - Job.f_update_time > 10 * 60 * 1000)
+                jobs = Job.select().where(Job.f_job_id << job_ids, Job.f_status << EndStatus.status_list(), current_timestamp() - Job.f_update_time > 10 * 60 * 1000)
                 end_status_job_ids = set()
                 for job in jobs:
                     end_status_job_ids.add(job.f_job_id)
@@ -123,7 +123,7 @@ class Detector(cron.Cron):
     @classmethod
     @DB.connection_context()
     def query_start_timeout_job(cls, job_ids, timeout=JOB_START_TIMEOUT):
-        jobs = Job.select().where(Job.f_job_id << job_ids, Job.f_status == JobStatus.WAITING, base_utils.current_timestamp() - Job.f_update_time > timeout)
+        jobs = Job.select().where(Job.f_job_id << job_ids, Job.f_status == JobStatus.WAITING, current_timestamp() - Job.f_update_time > timeout)
         return [job for job in jobs]
 
     @classmethod

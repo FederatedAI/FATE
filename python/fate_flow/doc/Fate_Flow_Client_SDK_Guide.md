@@ -4,6 +4,7 @@
 
 ```python
 from flow_sdk.client import FlowClient
+# use real ip address to initialize SDK
 client = FlowClient('127.0.0.1', 9000, 'v1')
 ```
 
