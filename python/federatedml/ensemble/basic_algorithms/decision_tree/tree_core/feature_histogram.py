@@ -405,7 +405,7 @@ class FeatureHistogram(object):
         histograms = [[[] for j in range(feature_num)] for k in range(len(node_map))]
         for key in histograms_dict:
             nid, fid = key
-            histograms[int(nid)][int(fid)] = FeatureHistogram.tensor_histogram_cumsum(histograms_dict[key])
+            histograms[int(nid)][int(fid)] = FeatureHistogram.tensor_histogram_cumsum(histograms_dict[key][1])
 
         return histograms
 
@@ -414,6 +414,6 @@ class FeatureHistogram(object):
         buf = []
         for key in histograms_dict:
             nid, fid = key
-            buf.append((key, (fid, FeatureHistogram.tensor_histogram_cumsum(histograms_dict[key]))))
+            buf.append((key, (fid, FeatureHistogram.tensor_histogram_cumsum(histograms_dict[key][1]))))
 
         return session.parallelize(buf, include_key=True, partition=partition)
