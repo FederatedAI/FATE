@@ -105,7 +105,7 @@ command types
      fate_test suite -i <path contains *testsuite.json>
 
 - `benchmark-quality <./README_BENCHMARK.rst>`_: used for comparing modeling quality between FATE
-and other machine learning systems
+  and other machine learning systems
 
   .. code-block:: bash
 
