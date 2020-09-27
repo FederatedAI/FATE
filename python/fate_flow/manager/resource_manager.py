@@ -242,7 +242,8 @@ class ResourceManager(object):
 
             job_parameters.adaptation_parameters["task_memory_per_node"] = int(
                 job_parameters.spark_run.get("executor-memory", DEFAULT_TASK_MEMORY_PER_NODE))
-            job_parameters.spark_run["executor-memory"] = job_parameters.adaptation_parameters["task_memory_per_node"]
+            if job_parameters.adaptation_parameters["task_memory_per_node"] > 0:
+                job_parameters.spark_run["executor-memory"] = job_parameters.adaptation_parameters["task_memory_per_node"]
 
     @classmethod
     def calculate_job_resource(cls, job_parameters: RunParameters = None, job_id=None, role=None, party_id=None):
