@@ -186,6 +186,7 @@ class DAGScheduler(Cron):
         jobs = JobSaver.query_job(is_initiator=True, status=JobStatus.RUNNING)
         schedule_logger().info(f"have {len(jobs)} running jobs")
         for job in jobs:
+            schedule_logger().info(f"schedule running job {job.f_job_id}")
             try:
                 self.schedule_running_job(job=job)
             except Exception as e:
@@ -198,6 +199,7 @@ class DAGScheduler(Cron):
         events = JobQueue.get_event(job_status=JobStatus.READY)
         schedule_logger().info(f"have {len(events)} ready jobs")
         for event in events:
+            schedule_logger().info(f"schedule ready job {event.f_job_id}")
             try:
                 self.schedule_ready_jobs(event=event)
             except Exception as e:
@@ -210,6 +212,7 @@ class DAGScheduler(Cron):
         events = JobQueue.get_event(job_status=JobStatus.CANCELED)
         schedule_logger().info(f"have {len(events)} canceled jobs")
         for event in events:
+            schedule_logger().info(f"schedule canceled job {event.f_job_id}")
             try:
                 self.schedule_canceled_jobs(event=event)
             except Exception as e:
@@ -471,17 +474,23 @@ class DAGScheduler(Cron):
 
     @classmethod
     def stop_job(cls, job_id, role, party_id, stop_status):
+        schedule_logger(job_id=job_id).info(f"request stop job {job_id}")
         jobs = JobSaver.query_job(job_id=job_id, role=role, party_id=party_id, is_initiator=True)
         if len(jobs) > 0:
+            schedule_logger(job_id=job_id).info(f"initiator cancel job {job_id}")
             JobController.cancel_job(job_id=job_id, role=role, party_id=party_id)
             job = jobs[0]
             job.f_status = stop_status
+            schedule_logger(job_id=job_id).info(f"request cancel job {job_id} to all party")
             status_code, response = FederatedScheduler.stop_job(job=jobs[0], stop_status=stop_status)
             if status_code == FederatedSchedulingStatusCode.SUCCESS:
+                schedule_logger(job_id=job_id).info(f"cancel job {job_id} successfully")
                 return RetCode.SUCCESS, "success"
             else:
+                schedule_logger(job_id=job_id).info(f"cancel job {job_id} failed, {response}")
                 return RetCode.FEDERATED_ERROR, json_dumps(response)
         else:
+            schedule_logger(job_id=job_id).info(f"can not found job {job_id} to stop, delete event on {role} {party_id}")
             JobQueue.delete_event(job_id=job_id)
             return RetCode.SUCCESS, "can not found job, delete job waiting event"
 
