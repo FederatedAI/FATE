@@ -2,14 +2,14 @@ Benchmark Quality
 =================
 
 Benchmark-quality is used for comparing modeling quality between FATE
-and other machine learning systems. Benchmark produces a metrics summary
-for each benchmark task group.
+and other machine learning systems. Benchmark produces a metrics comparison
+summary for each benchmark job group.
 
 .. code-block:: bash
 
    fate_test benchmark-quality -i hetero_linr_sklearn_benchmark.json
 
-output comaprison result ::
+output comparison summary ::
 
         +------------+--------------------+---------------------+--------------------+-------------------------+
         | Model Name |      r2_score      |  mean_squared_error | explained_variance | root_mean_squared_error |
@@ -109,13 +109,14 @@ benchmark testsuite
 -------------------
 
 Configuration of jobs should be specified in a benchmark testsuite whose file name ends
-with "\*benchmark.json". For testsuite example, please refer `here <../../examples/benchmark_quality>`_.
+with "\*benchmark.json". For benchmark testsuite example,
+please refer `here <../../examples/benchmark_quality>`_.
 
 A benchmark testsuite includes the following elements:
 
 - data: list of local data to be uploaded before running FATE jobs
 
-  - file: path to original data file to be uploaded, should be relative to testsuite or to FATE base
+  - file: path to original data file to be uploaded, should be relative to testsuite or absolute path
   - head: whether file includes header
   - partition: number of partition for data storage
   - table_name: table name in storage
@@ -129,20 +130,19 @@ A benchmark testsuite includes the following elements:
             {
                 "file": "../../data/motor_hetero_host.csv",
                 "head": 1,
-                "partition": 16,
+                "partition": 8,
                 "table_name": "motor_hetero_host",
                 "namespace": "experiment",
                 "role": "host_0"
             }
         ]
 
-- job group list: list of job groups; each group includes a list of (script, configuration)
-  pairs
+- job group: each group includes arbitrary number of jobs with paths to corresponding script and configuration
 
   - job: name of job to be run, must be unique within each group list
 
-    - script: path to testing `script <#testing-script>`_, should be relative to testsuite
-    - conf: path to job configuration yaml file for script, should be relative to testsuite
+    - script: path to `testing script <#testing-script>`_, should be relative to testsuite
+    - conf: path to job configuration file for script, should be relative to testsuite
 
     .. code-block:: json
 
@@ -151,7 +151,7 @@ A benchmark testsuite includes the following elements:
             "conf": "./linr_config.yaml"
        }
 
-  - compare setting: additional setting for quality metrics comparison, currently only takes ``relative_tol``
+  - compare_setting: additional setting for quality metrics comparison, currently only takes ``relative_tol``
 
     If metrics "a" and "b" satisfy `abs(a-b) <= max(relative_tol * max(abs(a), abs(b)), absolute_tol)`
     (from `math module <https://docs.python.org/3/library/math.html#math.isclose>`_),
@@ -179,9 +179,10 @@ A benchmark testsuite includes the following elements:
 testing script
 --------------
 
-All job scripts need to have ``Main`` function as an entry point for running training task; scripts should
+All job scripts need to have ``Main`` function as an entry point for executing jobs; scripts should
 return a dictionary with {metric_name}: {metric_value} key-value pairs for comparison.
 Returned quality metrics of the same key are to be compared.
+Note that only real-value metrics can be compared.
 
 - FATE script: ``Main`` always has three inputs:
 
@@ -191,4 +192,4 @@ Returned quality metrics of the same key are to be compared.
 
 - non-FATE script: ``Main`` always has one input:
 
-  - param: job parameter setting, dict loaded from "conf" file specified in benchmark testsuite
+  - param: job parameter setting, dictionary loaded from "conf" file specified in benchmark testsuite
