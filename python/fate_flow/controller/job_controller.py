@@ -89,9 +89,11 @@ class JobController(object):
     @classmethod
     def special_role_parameters(cls, role, job_parameters: RunParameters):
         if role == "arbiter":
-            job_parameters.task_nodes = 1
             job_parameters.task_parallelism = 1
-            job_parameters.task_cores_per_node = 1
+            if job_parameters.adaptation_parameters["task_nodes"] > 0:
+                job_parameters.adaptation_parameters["task_nodes"] = 1
+            if job_parameters.adaptation_parameters["task_cores_per_node"] > 0:
+                job_parameters.adaptation_parameters["task_cores_per_node"] = 1
 
     @classmethod
     def check_parameters(cls, job_parameters: RunParameters, engines_info):

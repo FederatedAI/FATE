@@ -30,6 +30,7 @@ from fate_flow.scheduling_apps.client import ControllerClient
 from fate_flow.scheduling_apps.client import TrackerClient
 from fate_flow.db.db_models import TrackingOutputDataInfo, fill_db_model_object
 from fate_arch.computing import ComputingEngine
+from fate_flow.manager import ResourceManager
 
 LOGGER = getLogger()
 
@@ -258,8 +259,9 @@ class TaskExecutor(object):
                         args_from_component = this_type_args[search_component_name] = this_type_args.get(
                             search_component_name, {})
                         if storage_table_meta:
-                            # partitions = task_parameters.input_data_aligned_partitions if task_parameters.input_data_aligned_partitions else storage_table.get_partitions()
-                            computing_partitions = task_parameters.task_nodes * task_parameters.task_cores_per_node
+                            cores_per_task, memory_per_task = ResourceManager.calculate_task_resource(
+                                task_parameters=task_parameters)
+                            computing_partitions = cores_per_task
                             LOGGER.info(f"load computing table use {computing_partitions} partitions")
                             computing_table = session.get_latest_opened().computing.load(
                                 storage_table_meta.get_address(),
