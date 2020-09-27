@@ -1,3 +1,8 @@
+# Release 1.4.5
+## Major Features and Improvements
+> EggRoll
+* RollSite supports the communication certificates
+
 # Release 1.4.4
 ## Major Features and Improvements
 > FATE-Flow
