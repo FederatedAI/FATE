@@ -142,8 +142,17 @@ class OptimalBinning(BaseBinning):
                                          get_bin_num_func=self.get_bin_num)
         # bucket_table = data_instances.mapPartitions2(convert_func)
         # bucket_table = bucket_table.reduce(self.merge_bucket_list, key_func=lambda key: key[1])
-
-        bucket_table = data_instances.mapReducePartitions(convert_func, self.merge_bucket_list)
+        from fate_arch.common.versions import get_eggroll_version
+        version = get_eggroll_version()
+        if version.startswith('2.0'):
+            summary_dict = data_instances.mapPartitions(convert_func, use_previous_behavior=False)
+            # summary_dict = summary_dict.reduce(self.copy_merge, key_func=lambda key: key[1])
+            from federatedml.util.reduce_by_key import reduce
+            bucket_table = reduce(summary_dict, self.merge_bucket_list, key_func=lambda key: key[1])
+        elif version.startswith('2.2'):
+            bucket_table = data_instances.mapReducePartitions(convert_func, self.merge_bucket_list)
+        else:
+            raise RuntimeError(f"Cannot recognized eggroll version: {version}")
         bucket_table = dict(bucket_table.collect())
 
         for k, v in bucket_table.items():

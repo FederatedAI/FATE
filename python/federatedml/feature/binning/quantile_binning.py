@@ -26,6 +26,7 @@ from federatedml.feature.binning.quantile_summaries import quantile_summary_fact
 from federatedml.param.feature_binning_param import FeatureBinningParam
 from federatedml.statistic import data_overview
 from federatedml.util import consts
+from fate_arch.common.versions import get_eggroll_version
 
 
 class QuantileBinning(BaseBinning):
@@ -133,11 +134,18 @@ class QuantileBinning(BaseBinning):
                                   header=self.header,
                                   is_sparse=is_sparse)
             # LOGGER.debug("in _fit_split_point, cols_map: {}".format(self.bin_inner_param.bin_cols_map))
-            # summary_dict = data_instances.mapPartitions2(f)
-            #
-            # summary_dict = summary_dict.reduce(self.copy_merge, key_func=lambda key: key[1])
+            version = get_eggroll_version()
+            LOGGER.debug(f"eggroll_version: {version}")
+            if version.startswith("2.0"):
+                summary_dict = data_instances.mapPartitions(f, use_previous_behavior=False)
+                # summary_dict = summary_dict.reduce(self.copy_merge, key_func=lambda key: key[1])
+                from federatedml.util.reduce_by_key import reduce
+                reduce(summary_dict, self.copy_merge, key_func=lambda key: key[1])
+            elif version.startswith("2.2"):
+                summary_dict = data_instances.mapReducePartitions(f, self.copy_merge)
+            else:
+                raise RuntimeError(f"Cannot recognized eggroll version: {version}")
 
-            summary_dict = data_instances.mapReducePartitions(f, self.copy_merge)
             summary_dict = dict(summary_dict.collect())
             LOGGER.debug(f"new summary_dict: {summary_dict}")
             if is_sparse:
