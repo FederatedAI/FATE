@@ -7,7 +7,7 @@ for each benchmark task group.
 
 .. code-block:: bash
 
-    fate_test benchmark-quality -i hetero_linr_sklearn_benchmark.json
+   fate_test benchmark-quality -i hetero_linr_sklearn_benchmark.json
 
 output::
 
@@ -39,7 +39,7 @@ use the following command to show help message
 
     .. code-block:: bash
 
-      fate_test benchmark-quality -i <path1 contains *benchmark.json>
+       fate_test benchmark-quality -i <path1 contains *benchmark.json>
 
    will run benchmark testsuites in `path1`
 
@@ -71,17 +71,17 @@ use the following command to show help message
 
     .. code-block:: bash
 
-      fate_test benchmark-quality -i <path1 contains *benchmark.json> -t 1e-3
+       fate_test benchmark-quality -i <path1 contains *benchmark.json> -t 1e-3
 
    will run benchmark testsuites in `path1` with absolute tolerance of difference between metrics set to 0.001.
    If absolute difference between metrics is smaller than `tol`, then metrics are considered
-   almost equal. Check testing conf `writing guide <#testing conf>`_ on setting alternative tolerance.
+   almost equal. Check benchmark testsuite `writing guide <#benchmark-testsuite>`_ on setting alternative tolerance.
 
 6. data-namespace-mangling:
 
     .. code-block:: bash
 
-      fate_test benchmark-quality -i <path1 contains *benchmark.json> --data-namespace-mangling
+       fate_test benchmark-quality -i <path1 contains *benchmark.json> --data-namespace-mangling
 
     will run benchmark testsuites in `path1` with uploaded data namespace modified to have a suffix of timestamp.
     Timestamp is used for distinguishing data from different tetsuites.
@@ -91,7 +91,7 @@ use the following command to show help message
 
     .. code-block:: bash
 
-      fate_test benchmark-quality -i <path1 contains *benchmark.json> --skip-date
+       fate_test benchmark-quality -i <path1 contains *benchmark.json> --skip-date
 
     will run benchmark testsuites in `path1` without uploading data specified in `*benchmark.json`.
     Note that data-namespace-mangling is ineffective when skipping data upload.
@@ -100,17 +100,84 @@ use the following command to show help message
 
     .. code-block:: bash
 
-      fate_test benchmark-quality -i <path1 contains *benchmark.json> --yes
+       fate_test benchmark-quality -i <path1 contains *benchmark.json> --yes
 
     will run benchmark testsuites in `path1` directly, skipping double check
 
 
-testing conf
-------------
+benchmark testsuite
+-------------------
 
-Configuration of jobs need to be specified in a json file with ending "*benchmark.json".
-A benchmark testsuite file should include the following elements:
+Configuration of jobs should be specified in a benchmark testsuite whose file name ends
+with "\*benchmark.json". For testsuite example, please refer `here <../../examples/benchmark_quality>`_.
 
+A benchmark testsuite includes the following elements:
+
+- data: list of local data to be uploaded before running FATE jobs
+
+  - file: path to original data file to be uploaded, should be relative to testsuite or to FATE base
+  - head: whether file includes header
+  - partition: number of partition for data storage
+  - table_name: table name in storage
+  - namespace: table namespace in storage
+  - role: which role to upload the data, as specified in fate_test.config;
+    naming format is: "{role_type}_{role_index}", index starts at 0
+
+  .. code-block:: json
+
+        "data": [
+            {
+                "file": "../../data/motor_hetero_host.csv",
+                "head": 1,
+                "partition": 16,
+                "table_name": "motor_hetero_host",
+                "namespace": "experiment",
+                "role": "host_0"
+            }
+        ]
+
+- job group list: list of job groups; each group include a list of scripts and configuration
+  files for FATE & non-FATE jobs
+
+  - job: name of job to be run, must be unique within each group list
+
+    - script: path to testing `script <#testing-script>`_, should be relative to testsuite
+    - conf: path to job configuration yaml file for script, should be relative to testsuite
+
+    .. code-block:: json
+
+       "local": {
+            "script": "./sklearn-linr.py",
+            "conf": "./linr_config.yaml"
+       }
+
+  - compare setting: additional setting for quality metrics comparison, currently only takes ``relative_tol``
+
+    If metrics `a` and `b` satisfy `abs(a-b) <= max(relative_tol * max(abs(a), abs(b)), absolute_tol)`
+    (from `math module <https://docs.python.org/3/library/math.html#math.isclose>`_),
+    they are considered almost equal. In the below example, metrics from "local" and "pipeline" jobs are
+    considered almost equal if their relative difference is smaller than
+    `0.05 * max(abs(local_metric), abs(pipeline_metric)`.
+
+  .. code-block:: json
+
+     "binary": {
+         "local": {
+             "script": "./sklearn-linr.py",
+             "conf": "./linr_config.yaml"
+         },
+         "pipeline": {
+             "script": "./pipeline-linr.py",
+             "conf": "./linr_config.yaml"
+         },
+         "compare_setting": {
+             "relative_tol": 0.05
+         }
+     }
 
 testing script
 --------------
+
+All job scripts need to have ``main()`` function as an entry point for running training task; scripts should
+return a dictionary with {metric_name}: {metric_value} key-value pairs for comparison.
+Returned metrics of the same key are to be compared.

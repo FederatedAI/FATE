@@ -41,11 +41,11 @@ def cli():
 @click.argument("cmd", type=click.Choice(["new", "show", "edit"], case_sensitive=False))
 def _config(cmd):
     """
-    new|show|edit testsuite config
+    new|show|edit fate test config
     """
     if cmd == "new":
-        create_config(Path("testsuite_config.yaml"))
-        click.echo(f"create config file: testsuite_config.yaml")
+        create_config(Path("fate_test_config.yaml"))
+        click.echo(f"create config file: fate_test_config.yaml")
     if cmd == "show":
         click.echo(f"priority config path is {priority_config()}")
     if cmd == "edit":
