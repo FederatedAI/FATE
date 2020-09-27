@@ -116,6 +116,7 @@ class RawIntersect(Intersect):
         self.encode_params = intersect_params.encode_params
 
         self.task_id = None
+        self.tracker = None
 
     def intersect_send_id(self, data_instances):
         sid_encode_pair = None
@@ -253,6 +254,7 @@ class RawIntersect(Intersect):
             intersect_ids = self._get_value_from_data(intersect_ids, data_instances)
         
         if self.task_id is not None:
+            LOGGER.debug(self.tracker)
             from fate_arch import storage
             storage_engine = "EGGROLL"
             namespace = "#".join([str(self.guest_party_id), str(self.host_party_id), "mountain"])
