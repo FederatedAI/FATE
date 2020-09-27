@@ -7,8 +7,12 @@
         "work_mode": 1,
         "backend": 0,
         "task_parallelism": 1,
-        "task_nodes": 1,
-        "task_cores_per_node": 2,
+        "eggroll_run": {
+            "processors_per_node": 2
+        },
+        "spark_run": {
+            "executor-cores": 2
+        },
         "dsl_version": "2"
     },
     "role": {
