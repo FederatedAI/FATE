@@ -32,7 +32,7 @@ MODEL_STORE_ADDRESS = get_base_config("model_store_address", {})
 # storage engine is used for component output data
 SUPPORT_ENGINES = {
     EngineType.COMPUTING: [ComputingEngine.EGGROLL, ComputingEngine.SPARK],
-    EngineType.FEDERATION: [FederationEngine.EGGROLL, FederationEngine.RABBITMQ, FederationEngine.PROXY],
+    EngineType.FEDERATION: [FederationEngine.EGGROLL, FederationEngine.RABBITMQ],
     EngineType.STORAGE: [StorageEngine.EGGROLL, StorageEngine.HDFS]
 }
 

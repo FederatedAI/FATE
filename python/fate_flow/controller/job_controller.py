@@ -187,14 +187,6 @@ class JobController(object):
         return {'min_input_data_partition': min_partition}
 
     @classmethod
-    def apply_resource(cls, job_id, role, party_id):
-        return ResourceManager.apply_for_job_resource(job_id=job_id, role=role, party_id=party_id)
-
-    @classmethod
-    def return_resource(cls, job_id, role, party_id):
-        return ResourceManager.return_job_resource(job_id=job_id, role=role, party_id=party_id)
-
-    @classmethod
     def start_job(cls, job_id, role, party_id, extra_info=None):
         schedule_logger(job_id=job_id).info(f"try to start job {job_id} on {role} {party_id}")
         job_info = {

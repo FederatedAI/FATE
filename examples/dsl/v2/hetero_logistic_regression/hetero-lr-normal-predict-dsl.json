@@ -1,36 +1,10 @@
 {
     "components": {
-        "reader_0": {
-            "module": "Reader",
-            "output": {
-                "data": [
-                    "data"
-                ]
-            }
-        },
-        "column_expand_0": {
-            "input": {
-                "data": {
-                    "data": [
-                        "reader_0.data"
-                    ]
-                },
-                "model": [
-                    "pipeline.column_expand_0.model"
-                ]
-            },
-            "module": "ColumnExpand",
-            "output": {
-                "data": [
-                    "data"
-                ]
-            }
-        },
         "dataio_0": {
             "input": {
                 "data": {
                     "data": [
-                        "column_expand_0.data"
+                        "reader_0.data"
                     ]
                 },
                 "model": [
@@ -71,6 +45,14 @@
                 }
             },
             "module": "Intersection",
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
+        },
+        "reader_0": {
+            "module": "Reader",
             "output": {
                 "data": [
                     "data"

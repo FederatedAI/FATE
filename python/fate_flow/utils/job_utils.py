@@ -239,7 +239,7 @@ def check_job_is_timeout(job):
     job_parameters = job_runtime_conf.get('job_parameters', {})
     timeout = job_parameters.get("timeout", JOB_DEFAULT_TIMEOUT)
     now_time = current_timestamp()
-    running_time = (now_time - job.f_start_time)/1000
+    running_time = (now_time - job.f_create_time)/1000
     if running_time > timeout:
         schedule_logger(job_id=job.f_job_id).info('job {}  run time {}s timeout'.format(job.f_job_id, running_time))
         return True
