@@ -127,26 +127,33 @@ class QuantileBinning(BaseBinning):
 
     def _fit_split_point(self, data_instances, is_sparse, percentile_rate):
         if self.summary_dict is None:
-            f = functools.partial(self.feature_summary,
-                                  params=self.params,
-                                  abnormal_list=self.abnormal_list,
-                                  cols_dict=self.bin_inner_param.bin_cols_map,
-                                  header=self.header,
-                                  is_sparse=is_sparse)
+
             # LOGGER.debug("in _fit_split_point, cols_map: {}".format(self.bin_inner_param.bin_cols_map))
             version = get_eggroll_version()
             LOGGER.debug(f"eggroll_version: {version}")
             if version.startswith("2.0"):
+                f = functools.partial(self.feature_summary_old,
+                                      params=self.params,
+                                      abnormal_list=self.abnormal_list,
+                                      cols_dict=self.bin_inner_param.bin_cols_map,
+                                      header=self.header,
+                                      is_sparse=is_sparse)
                 summary_dict = data_instances.mapPartitions(f, use_previous_behavior=False)
                 # summary_dict = summary_dict.reduce(self.copy_merge, key_func=lambda key: key[1])
                 from federatedml.util.reduce_by_key import reduce
-                reduce(summary_dict, self.copy_merge, key_func=lambda key: key[1])
+                summary_dict = reduce(summary_dict, self.copy_merge, key_func=lambda key: key[1])
             elif version.startswith("2.2"):
+                f = functools.partial(self.feature_summary,
+                                      params=self.params,
+                                      abnormal_list=self.abnormal_list,
+                                      cols_dict=self.bin_inner_param.bin_cols_map,
+                                      header=self.header,
+                                      is_sparse=is_sparse)
                 summary_dict = data_instances.mapReducePartitions(f, self.copy_merge)
+                summary_dict = dict(summary_dict.collect())
             else:
                 raise RuntimeError(f"Cannot recognized eggroll version: {version}")
 
-            summary_dict = dict(summary_dict.collect())
             LOGGER.debug(f"new summary_dict: {summary_dict}")
             if is_sparse:
                 total_count = data_instances.count()
@@ -204,6 +211,45 @@ class QuantileBinning(BaseBinning):
             summary_obj.compress()
             # result.append(((_, features_name), summary_obj))
             result.append((features_name, summary_obj))
+
+        return result
+
+    @staticmethod
+    def feature_summary_old(data_iter, params, cols_dict, abnormal_list, header, is_sparse):
+        summary_dict = {}
+
+        summary_param = {'compress_thres': params.compress_thres,
+                         'head_size': params.head_size,
+                         'error': params.error,
+                         'abnormal_list': abnormal_list}
+
+        for col_name, col_index in cols_dict.items():
+            quantile_summaries = quantile_summary_factory(is_sparse=is_sparse, param_dict=summary_param)
+            summary_dict[col_name] = quantile_summaries
+        _ = str(uuid.uuid1())
+        for _, instant in data_iter:
+            if not is_sparse:
+                if type(instant).__name__ == 'Instance':
+                    features = instant.features
+                else:
+                    features = instant
+                for col_name, summary in summary_dict.items():
+                    col_index = cols_dict[col_name]
+                    summary.insert(features[col_index])
+            else:
+                data_generator = instant.features.get_all_data()
+                for col_idx, col_value in data_generator:
+                    col_name = header[col_idx]
+                    if col_name not in cols_dict:
+                        continue
+                    summary = summary_dict[col_name]
+                    summary.insert(col_value)
+
+        result = []
+        for features_name, summary_obj in summary_dict.items():
+            summary_obj.compress()
+            result.append(((_, features_name), summary_obj))
+            # result.append((features_name, summary_obj))
 
         return result
 
