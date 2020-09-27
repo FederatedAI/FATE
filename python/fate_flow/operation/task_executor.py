@@ -53,10 +53,6 @@ class TaskExecutor(object):
             parser.add_argument('-c', '--config', required=True, type=str, help="task parameters")
             parser.add_argument('--run_ip', help="run ip", type=str)
             parser.add_argument('--job_server', help="job server", type=str)
-            parser.add_argument('--processors_per_node', help="processors_per_node", type=int)
-            parser.add_argument('--num-executors', help="spark num executors", type=int)
-            parser.add_argument('--executor-cores', help="spark executor cores", type=int)
-            parser.add_argument('--executor-memory', help="spark executor memory", type=str)
             args = parser.parse_args()
             schedule_logger(args.job_id).info('enter task process')
             schedule_logger(args.job_id).info(args)
@@ -87,7 +83,6 @@ class TaskExecutor(object):
             job_conf = job_utils.get_job_conf(job_id)
             job_dsl = job_conf["job_dsl_path"]
             job_runtime_conf = job_conf["job_runtime_conf_path"]
-            job_parameters = RunParameters(**job_runtime_conf['job_parameters'])
             dsl_parser = schedule_utils.get_job_dsl_parser(dsl=job_dsl,
                                                            runtime_conf=job_runtime_conf,
                                                            train_runtime_conf=job_conf["train_runtime_conf_path"],
@@ -104,8 +99,8 @@ class TaskExecutor(object):
             task_input_dsl = component.get_input()
             task_output_dsl = component.get_output()
             component_parameters_on_party['output_data_name'] = task_output_dsl.get('data')
-            # task_parameters = file_utils.load_json_conf(args.config)
             task_parameters = RunParameters(**file_utils.load_json_conf(args.config))
+            job_parameters = task_parameters
             TaskExecutor.monkey_patch()
         except Exception as e:
             traceback.print_exc()
@@ -143,8 +138,8 @@ class TaskExecutor(object):
                                       FEDERATION_ENGINE=job_parameters.federation_engine,
                                       FEDERATED_MODE=job_parameters.federated_mode)
 
-            if args.processors_per_node and args.processors_per_node > 0 and RuntimeConfig.COMPUTING_ENGINE == ComputingEngine.EGGROLL:
-                session_options = {"eggroll.session.processors.per.node": args.processors_per_node}
+            if RuntimeConfig.COMPUTING_ENGINE == ComputingEngine.EGGROLL:
+                session_options = task_parameters.eggroll_run.copy()
             else:
                 session_options = {}
 

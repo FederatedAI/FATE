@@ -227,21 +227,11 @@ class ResourceManager(object):
             "task_cores_per_node": 0,
             "task_memory_per_node": 0,
         }
-        engine_parameters_map = {
-            "EGGROLL": {
-                "task_cores_per_node": "processors_per_node"
-            },
-            "SPARK": {
-                "task_nodes": "num-executors",
-                "task_cores_per_node": "executor-cores",
-                "task_memory_per_node": "executor-memory",
-            }
-        }
         if job_parameters.computing_engine in {ComputingEngine.STANDALONE, ComputingEngine.EGGROLL}:
             job_parameters.adaptation_parameters["task_nodes"] = computing_engine_info.f_nodes
             job_parameters.adaptation_parameters["task_cores_per_node"] = int(
-                job_parameters.eggroll_run.get("processors_per_node", DEFAULT_TASK_CORES_PER_NODE))
-            job_parameters.eggroll_run["processors_per_node"] = job_parameters.adaptation_parameters["task_cores_per_node"]
+                job_parameters.eggroll_run.get("eggroll.session.processors.per.node", DEFAULT_TASK_CORES_PER_NODE))
+            job_parameters.eggroll_run["eggroll.session.processors.per.node"] = job_parameters.adaptation_parameters["task_cores_per_node"]
         elif job_parameters.computing_engine == ComputingEngine.SPARK:
             job_parameters.adaptation_parameters["task_nodes"] = min(int(job_parameters.spark_run.get("num-executors")), computing_engine_info.f_nodes) if "num-executors" in job_parameters.spark_run else computing_engine_info.f_nodes
             job_parameters.spark_run["num-executors"] = job_parameters.adaptation_parameters["task_nodes"]

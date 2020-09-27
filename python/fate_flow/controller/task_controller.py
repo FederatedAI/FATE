@@ -97,9 +97,6 @@ class TaskController(object):
                     '--run_ip', RuntimeConfig.JOB_SERVER_HOST,
                     '--job_server', '{}:{}'.format(RuntimeConfig.JOB_SERVER_HOST, RuntimeConfig.HTTP_PORT),
                 ]
-                # run configs
-                for k, v in run_parameters.eggroll_run.items():
-                    process_cmd.extend([f"--{k}", str(v)])
             elif run_parameters.computing_engine == ComputingEngine.SPARK:
                 if "SPARK_HOME" not in os.environ:
                     raise EnvironmentError("SPARK_HOME not found")

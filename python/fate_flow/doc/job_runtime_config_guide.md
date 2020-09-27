@@ -77,7 +77,7 @@ job_parameters:{
     "timeout": 36000,
     "task_parallelism": 2,
     "eggroll_run": {
-        "processors_per_node": 2
+        "eggroll.session.processors.per.node": 2
     },
     "spark_run": {
         "num-executors": 1,
