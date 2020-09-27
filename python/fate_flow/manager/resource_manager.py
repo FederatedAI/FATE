@@ -24,7 +24,7 @@ from fate_arch.common import base_utils
 from fate_arch.common.conf_utils import get_base_config
 from fate_arch.common.log import schedule_logger
 from fate_arch.computing import ComputingEngine
-from fate_flow.db.db_models import DB, EngineRegistry, ResourceRecord
+from fate_flow.db.db_models import DB, EngineRegistry, ResourceRecord, Job
 from fate_flow.entity.types import ResourceOperation, RunParameters
 from fate_flow.settings import stat_logger, STANDALONE_BACKEND_VIRTUAL_CORES_PER_NODE, SUPPORT_ENGINES, \
     MAX_CORES_PERCENT_PER_JOB, DEFAULT_TASK_CORES_PER_NODE, DEFAULT_TASK_MEMORY_PER_NODE
@@ -107,18 +107,18 @@ class ResourceManager(object):
     @DB.connection_context()
     def create_resource_record(cls, job_id, role, party_id, engine_type, engine_name, cores, memory):
         try:
-            ResourceRecord.replace(f_job_id=job_id,
-                                   f_role=role,
-                                   f_party_id=party_id,
-                                   f_engine_type=engine_type,
-                                   f_engine_name=engine_name,
-                                   f_cores=cores,
-                                   f_memory=memory,
-                                   f_remaining_cores=cores,
-                                   f_remaining_memory=memory,
-                                   f_in_use=True,
-                                   f_create_time=base_utils.current_timestamp()
-                                   ).execute()
+            ResourceRecord.insert(f_job_id=job_id,
+                                  f_role=role,
+                                  f_party_id=party_id,
+                                  f_engine_type=engine_type,
+                                  f_engine_name=engine_name,
+                                  f_cores=cores,
+                                  f_memory=memory,
+                                  f_remaining_cores=cores,
+                                  f_remaining_memory=memory,
+                                  f_in_use=True,
+                                  f_create_time=base_utils.current_timestamp()
+                                  ).execute()
             schedule_logger(job_id=job_id).info(
                 f"create resource record for job {job_id} on {role} {party_id} successfully")
             return True
@@ -145,8 +145,7 @@ class ResourceManager(object):
     @DB.connection_context()
     def disable_resource_record(cls, job_id, role, party_id):
         try:
-            rows = ResourceRecord.update({ResourceRecord.f_in_use: False,
-                                          ResourceRecord.f_update_time: base_utils.current_timestamp()}).where(
+            rows = ResourceRecord.delete().where(
                 ResourceRecord.f_job_id == job_id,
                 ResourceRecord.f_role == role,
                 ResourceRecord.f_party_id == party_id).execute()

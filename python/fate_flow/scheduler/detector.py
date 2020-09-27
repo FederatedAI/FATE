@@ -91,7 +91,7 @@ class Detector(cron.Cron):
     def detect_resource_record(cls):
         detect_logger().info('start detect resource recycle')
         try:
-            records = ResourceRecord.select().where(ResourceRecord.f_in_use == True, current_timestamp() - ResourceRecord.f_create_time > 60 * 1000)
+            records = ResourceRecord.select().where(current_timestamp() - ResourceRecord.f_create_time > 60 * 1000)
             job_ids = set([record.f_job_id for record in records])
             if job_ids:
                 jobs = Job.select().where(Job.f_job_id << job_ids, Job.f_status << EndStatus.status_list(), current_timestamp() - Job.f_update_time > 10 * 60 * 1000)
