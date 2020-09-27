@@ -107,12 +107,10 @@ class HeteroKmeansClient(BaseKmeansModel):
         self.centroid_list = [v[1] for v in centroid_list]
 
         while self.n_iter_ < self.max_iter:
+            self.send_cluster_dist()
             d = functools.partial(self.educl_dist, centroid_list=self.centroid_list)
             dist_all_table = data_instances.mapValues(d)
-
             cluster_result = self.aggregator.aggregate_then_get_table(dist_all_table, suffix=(self.n_iter_,))
-            self.send_cluster_dist()
-
             centroid_new, self.cluster_count = self.centroid_cal(cluster_result, data_instances)
 
             # cluster_dist = self.centroid_dist(self.centroid_list)
@@ -149,7 +147,11 @@ class HeteroKmeansClient(BaseKmeansModel):
         d = functools.partial(self.educl_dist, centroid_list=self.centroid_list)
         dist_all_table = data_instances.mapValues(d)
         cluster_result = self.aggregator.aggregate_then_get_table(dist_all_table, suffix='predict')
-        cluster_dist = self.centroid_dist(self.centroid_list)
+        centroid_new, self.cluster_count = self.centroid_cal(cluster_result, data_instances)
+        d = functools.partial(self.educl_dist, centroid_list=self.centroid_new)
+        dist_all_table = data_instances.mapValues(d)
+        cluster_result_dbi = self.aggregator.aggregate_then_get_table(dist_all_table, suffix='predict_dbi')
+        cluster_dist = self.centroid_dist(centroid_new)
         self.aggregator.send_model(NumpyWeights(np.array(cluster_dist)), suffix='predict')
         predict_result = data_instances.join(cluster_result, lambda v1, v2: [v1.label, int(v2)])
         return predict_result
