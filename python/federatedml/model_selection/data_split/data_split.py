@@ -64,6 +64,9 @@ class DataSplitter(ModelBase):
         if train_size <= FLOAT_ZERO:
             return [], ids, [], y
         stratify = y if self.stratified else None
+        if not isinstance(test_size, int):
+            train_size = round(train_size * len(ids))
+            test_size = len(ids) - train_size
         id_train, id_test, y_train, y_test = train_test_split(ids, y,
                                                               test_size=test_size, train_size=train_size,
                                                               random_state=self.random_state,
@@ -71,7 +74,7 @@ class DataSplitter(ModelBase):
         return id_train, id_test, y_train, y_test
 
     def _get_ids(self, data_inst):
-        ids = [i for i, v in data_inst.mapValues(lambda v: None).collect()]
+        ids = sorted([i for i, v in data_inst.mapValues(lambda v: None).collect()])
         return ids
 
     def _get_y(self, data_inst):
@@ -96,12 +99,14 @@ class DataSplitter(ModelBase):
 
     @staticmethod
     def get_train_test_size(train_size, test_size):
+        LOGGER.debug(f"original train is {train_size}, original test_size is {test_size}")
         # return original set size if int
         if isinstance(test_size, int) and isinstance(train_size, int):
             return train_size, test_size
         total_size = test_size + train_size
         new_train_size = DataSplitter._safe_divide(train_size, total_size)
         new_test_size = DataSplitter._safe_divide(test_size, total_size)
+        LOGGER.debug(f"new_train_size is {new_train_size}, new_test_size is {new_test_size}")
         return new_train_size, new_test_size
 
     def param_validator(self, data_inst):
@@ -134,9 +139,12 @@ class DataSplitter(ModelBase):
         elif self.validate_size is None:
             if self.train_size is None:
                 self.train_size = total_size - self.test_size
-            else:
-                self.test_size = total_size - self.train_size
             self.validate_size = total_size - (self.test_size + self.train_size)
+
+        self.train_size = round(self.train_size, ROUND_NUM)
+        self.test_size = round(self.test_size, ROUND_NUM)
+        self.validate_size = round(self.validate_size, ROUND_NUM)
+
         if (self.train_size + self.test_size + self.validate_size) - total_size > FLOAT_ZERO:
             raise ValueError(f"train_size, test_size, validate_size should sum up to 1.0 or data count")
         return
