@@ -29,17 +29,66 @@ class TaskInfo(object):
 
     @LOGGER.catch(onerror=lambda _: sys.exit(1))
     def get_output_data(self, limits=None):
+        '''
+        gets downloaded data of arbitrary component
+        Parameters
+        ----------
+        limits: int, None, default None. Maximum number of lines returned, including header. If None, return all lines.
+
+        Returns
+        -------
+        dict
+        single output example:
+            {
+                data: [],
+                meta: []
+
+            }
+        multiple output example:
+            {
+            train_data: {
+                data: [],
+                meta: []
+                },
+            validate_data: {
+                data: [],
+                meta: []
+                }
+            test_data: {
+                data: [],
+                meta: []
+                }
+            }
+        '''
         return self._job_client.get_output_data(self._jobid, self._component.name, self._role, self._party_id, limits)
 
     @LOGGER.catch(onerror=lambda _: sys.exit(1))
     def get_model_param(self):
+        '''
+        get fitted model parameters
+        Returns
+        -------
+        dict
+        '''
         return self._job_client.get_model_param(self._jobid, self._component.name, self._role, self._party_id)
 
     @LOGGER.catch(onerror=lambda _: sys.exit(1))
     def get_output_data_table(self):
+        '''
+        get output data table information, including table name and namespace, as given by flow client
+        Returns
+        -------
+        dict
+        '''
         return self._job_client.get_output_data_table(self._jobid, self._component.name, self._role, self._party_id)
 
     @LOGGER.catch(onerror=lambda _: sys.exit(1))
     def get_summary(self):
+        '''
+        get module summary of arbitrary component
+        Returns
+        -------
+        dict
+        '''
         return self._job_client.get_summary(self._jobid, self._component.name, self._role, self._party_id)
 

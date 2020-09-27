@@ -83,13 +83,11 @@ class JobQueue(object):
 
     @classmethod
     @DB.connection_context()
-    def delete_event(cls, job_id, initiator_role, initiator_party_id, job_status=None):
+    def delete_event(cls, job_id, job_status=None):
         if job_status:
-            operate = DBQueue.delete().where(DBQueue.f_job_id == job_id, DBQueue.f_initiator_role == initiator_role,
-                                             DBQueue.f_initiator_party_id == initiator_party_id, DBQueue.f_job_status==job_status)
+            operate = DBQueue.delete().where(DBQueue.f_job_id == job_id, DBQueue.f_job_status == job_status)
         else:
-            operate = DBQueue.delete().where(DBQueue.f_job_id == job_id, DBQueue.f_initiator_role == initiator_role,
-                                             DBQueue.f_initiator_party_id == initiator_party_id)
+            operate = DBQueue.delete().where(DBQueue.f_job_id == job_id)
         return operate.execute() > 0
 
     @DB.connection_context()

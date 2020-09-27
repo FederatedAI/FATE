@@ -108,18 +108,10 @@ class TestPercentageValueFilter(unittest.TestCase):
         res_select_properties = filter_obj.fit(data_table, suffix='').selection_properties
         left_cols = [3, 4]
         self.assertEqual(res_select_properties.all_left_col_names, [self.header[x] for x in left_cols])
-        data_table.destroy()
 
     def tearDown(self):
         session.stop()
-        try:
-            session.cleanup("*", self.job_id, True)
-        except EnvironmentError:
-            pass
-        try:
-            session.cleanup("*", self.job_id, False)
-        except EnvironmentError:
-            pass
+
 
 
 if __name__ == '__main__':

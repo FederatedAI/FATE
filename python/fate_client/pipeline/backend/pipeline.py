@@ -211,13 +211,16 @@ class PipeLine(object):
                     self._components_input[component.name][attr.strip("_")] = [val]
 
     @LOGGER.catch(onerror=lambda _: sys.exit(1))
-    def add_upload_data(self, file, table_name, namespace, head=1, partition=16, id_delimiter=","):
+    def add_upload_data(self, file, table_name, namespace, head=1, partition=16,
+                        id_delimiter=",", backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE):
         data_conf = {"file": file,
                      "table_name": table_name,
                      "namespace": namespace,
                      "head": head,
                      "partition": partition,
-                     "id_delimiter": id_delimiter}
+                     "id_delimiter": id_delimiter,
+                     "backend": backend,
+                     "work_mode": work_mode}
         self._upload_conf.append(data_conf)
 
     def _get_task_inst(self, job_id, name, init_role, party_id):

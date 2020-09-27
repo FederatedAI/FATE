@@ -15,7 +15,6 @@
 #
 
 import concurrent.futures
-import functools
 import os
 import signal
 from enum import Enum
@@ -33,7 +32,8 @@ LOGGER = getLogger()
 class Federation(FederationABC):
 
     def __init__(self, rp_ctx, rs_session_id, party, proxy_endpoint):
-        LOGGER.debug(f"init eggroll federation: rp_session_id={rp_ctx.session_id}, rs_session_id={rs_session_id},"
+        LOGGER.debug(f"[federation.eggroll]init federation: "
+                     f"rp_session_id={rp_ctx.session_id}, rs_session_id={rs_session_id}, "
                      f"party={party}, proxy_endpoint={proxy_endpoint}")
 
         options = {
@@ -42,7 +42,7 @@ class Federation(FederationABC):
             'proxy_endpoint': proxy_endpoint
         }
         self._rsc = RollSiteContext(rs_session_id, rp_ctx=rp_ctx, options=options)
-        LOGGER.debug(f"init eggroll federation context done")
+        LOGGER.debug(f"[federation.eggroll]init federation context done")
 
     def get(self, name, tag, parties, gc):
         parties = [(party.role, party.party_id) for party in parties]
@@ -58,20 +58,22 @@ class Federation(FederationABC):
 
 
 def _remote(v, name, tag, parties, rsc, gc):
-    log_str = f"federation.remote(name={name}, tag={tag}, parties={parties})"
-    assert v is not None, \
-        f"[{log_str}]remote `None`"
-    assert _remote_tag_not_duplicate(name, tag, parties), \
-        f"[{log_str}]duplicate tag"
-    LOGGER.debug(f"[{log_str}]remote data, type={type(v)}")
+    log_str = f"federation.eggroll.remote.{name}.{tag}{parties})"
+    if v is None:
+        raise ValueError(f"[{log_str}]remote `None` to {parties}")
+    if not _remote_tag_not_duplicate(name, tag, parties):
+        raise ValueError(f"[{log_str}]remote to {parties} with duplicate tag")
 
     t = _get_type(v)
     if t == _FederationValueType.ROLL_PAIR:
+        LOGGER.debug(f"[{log_str}]remote "
+                     f"RollPair(namespace={v.get_namespace()}, name={v.get_name()}, partitions={v.get_partitions()})")
         gc.add_gc_action(tag, v, 'destroy', {})
         _push_with_exception_handle(rsc, v, name, tag, parties)
         return
 
     if t == _FederationValueType.SPLIT_OBJECT:
+        LOGGER.debug(f"[{log_str}]remote split object with type: {type(v)}")
         head, tails = _get_splits(v)
         _push_with_exception_handle(rsc, head, name, tag, parties)
 
@@ -81,6 +83,7 @@ def _remote(v, name, tag, parties, rsc, gc):
         return
 
     if t == _FederationValueType.OBJECT:
+        LOGGER.debug(f"[{log_str}]remote object with type: {type(v)}")
         _push_with_exception_handle(rsc, v, name, tag, parties)
         return
 
@@ -127,20 +130,27 @@ def _push_with_exception_handle(rsc, v, name, tag, parties):
     def _remote_exception_re_raise(f, p):
         try:
             f.result()
-            LOGGER.debug(f"[name={name}, tag={tag}, party={p}]remote done")
+            LOGGER.debug(f"[federation.eggroll.remote.{name}.{tag}]future to remote to party: {p} done")
         except Exception as e:
             pid = os.getpid()
-            LOGGER.exception(f"remote fail, terminating process(pid={pid})")
+            LOGGER.exception(f"[federation.eggroll.remote.{name}.{tag}]future to remote to party: {p} fail,"
+                             f" terminating process(pid={pid})")
+            import traceback
+            print(f"federation.eggroll.remote.{name}.{tag} future to remote to party: {p} fail,"
+                  f" terminating process {pid}, traceback: {traceback.format_exc()}")
             os.kill(pid, signal.SIGTERM)
             raise e
 
-    def _callback(p):
-        return functools.partial(_remote_exception_re_raise, p=p)
+    def _get_call_back_func(p):
+        def _callback(f):
+            return _remote_exception_re_raise(f, p)
+
+        return _callback
 
     rs = rsc.load(name=name, tag=tag)
     futures = rs.push(obj=v, parties=parties)
     for party, future in zip(parties, futures):
-        future.add_done_callback(_callback(party))
+        future.add_done_callback(_get_call_back_func(party))
     return rs
 
 
@@ -155,15 +165,16 @@ def _get_tag_not_duplicate(name, tag, party):
 
 
 def _get_value_post_process(v, name, tag, party, rsc, gc):
-    log_str = f"federation.get(name={name}, tag={tag}, party={party})"
-    assert v is not None, \
-        f"[{log_str}]get None"
-    assert _get_tag_not_duplicate(name, tag, party), \
-        f"[{log_str}]duplicate tag"
-    LOGGER.debug(f"[{log_str}]got data, type={type(v)}]")
+    log_str = f"federation.eggroll.get.{name}.{tag}"
+    if v is None:
+        raise ValueError(f"[{log_str}]get `None` from {party}")
+    if not _get_tag_not_duplicate(name, tag, party):
+        raise ValueError(f"[{log_str}]get from {party} with duplicate tag")
 
     # got a roll pair
     if isinstance(v, RollPair):
+        LOGGER.debug(f"[{log_str}] got "
+                     f"RollPair(namespace={v.get_namespace()}, name={v.get_name()}, partitions={v.get_partitions()})")
         gc.add_gc_action(tag, v, 'destroy', {})
         return v
 
@@ -177,7 +188,10 @@ def _get_value_post_process(v, name, tag, party, rsc, gc):
             LOGGER.debug(f"[{log_str}]got split ({k}/{num_split})")
             split_objs.append(split_obj)
         obj = _split_get(split_objs)
+
+        LOGGER.debug(f"[{log_str}] got split object with type: {type(obj)}")
         return obj
 
     # others
+    LOGGER.debug(f"[{log_str}] got object with type: {type(v)}")
     return v

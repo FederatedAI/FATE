@@ -57,3 +57,4 @@ Initial Configuration
       flow init -c /data/projects/fate/conf/service_conf.yaml
       # use real ip address to initialize cli
       flow init --ip 127.0.0.1 --port 9380
+

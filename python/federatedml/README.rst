@@ -37,6 +37,14 @@ Algorithm List
      - Model Input
      - Model Output
 
+   * - Reader
+     - Reader
+     - This component loads and transform data from storage engine so that data is compatible with FATE computing engine
+     - Original Data
+     - Transformed Data
+     -
+     -
+
    * - `DataIO`_
      - DataIO
      - This component transforms user-uploaded date into Instance object.

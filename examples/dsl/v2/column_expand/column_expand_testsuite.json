@@ -23,6 +23,7 @@
             "dsl": "./test_column_expand_job_dsl.json"
         },
         "column-expand-predict": {
+            "deps": "column-expand",
             "conf": "./test_column_expand_predict_job_conf.json",
             "dsl": "./test_column_expand_predict_job_dsl.json"
         }
