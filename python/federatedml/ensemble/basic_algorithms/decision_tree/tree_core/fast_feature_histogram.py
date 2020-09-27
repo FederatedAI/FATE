@@ -86,8 +86,9 @@ class FastFeatureHistogram(object):
         elif eggroll_version.startswith("2.0"):
 
             # old ver code
-            batch_histogram = batch_histogram_intermediate_rs.mapPartitions2(batch_histogram_cal)
-            node_histograms = batch_histogram.reduce(agg_histogram, key_func=lambda key: key[1])
+            batch_histogram = batch_histogram_intermediate_rs.mapPartitions(batch_histogram_cal, use_previous_behavior=False)
+            from federatedml.util.reduce_by_key import reduce
+            node_histograms = reduce(batch_histogram, agg_histogram, key_func=lambda key: key[1])
 
             # aggregate matrix phase
             multiplier_vector = np.array([10**(cipher_split_num*i) for i in range(phrase_num)])  # 1 X p
