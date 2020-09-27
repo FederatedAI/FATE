@@ -141,10 +141,6 @@ class DataSplitter(ModelBase):
                 self.train_size = total_size - self.test_size
             self.validate_size = total_size - (self.test_size + self.train_size)
 
-        self.train_size = round(self.train_size, ROUND_NUM)
-        self.test_size = round(self.test_size, ROUND_NUM)
-        self.validate_size = round(self.validate_size, ROUND_NUM)
-
         if (self.train_size + self.test_size + self.validate_size) - total_size > FLOAT_ZERO:
             raise ValueError(f"train_size, test_size, validate_size should sum up to 1.0 or data count")
         return
