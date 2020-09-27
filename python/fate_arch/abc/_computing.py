@@ -344,18 +344,24 @@ class CTableABC(metaclass=ABCMeta):
         ...
 
     @abc.abstractmethod
-    def sample(self, fraction, seed=None):
+    def sample(self, *, fraction: typing.Optional[float] = None, num: typing.Optional[int] = None, seed=None):
         """
         return a sampled subset of this Table.
 
         Parameters
         ----------
         fraction: float
-          Expected size of the sample as a fraction of this Table's size
+          Expected size of the sample as a fraction of this table's size
           without replacement: probability that each element is chosen.
           Fraction must be [0, 1] with replacement: expected number of times each element is chosen.
+        num: int
+          Exact number of the sample from this table's size
         seed: int
           Seed of the random number generator. Use current timestamp when `None` is passed.
+
+        Notes
+        ------
+        use one of ``fraction`` and ``num``, not both
 
         Returns
         -------

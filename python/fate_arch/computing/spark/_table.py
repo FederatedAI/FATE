@@ -17,6 +17,8 @@
 import uuid
 from itertools import chain
 
+import typing
+
 from fate_arch.abc import CTableABC
 from fate_arch.common import log, hdfs_utils
 from fate_arch.common.profile import computing_profile
@@ -78,8 +80,14 @@ class Table(CTableABC):
         return from_rdd(_glom(self._rdd))
 
     @computing_profile
-    def sample(self, fraction, seed=None, **kwargs):
-        return from_rdd(_sample(self._rdd, fraction, seed))
+    def sample(self, *, fraction: typing.Optional[float] = None, num: typing.Optional[int] = None, seed=None):
+        if fraction is not None:
+            return from_rdd(_sample(self._rdd, fraction, seed))
+
+        if num is not None:
+            raise NotImplementedError()
+
+        raise ValueError(f"exactly one of `fraction` or `num` required, fraction={fraction}, num={num}")
 
     @computing_profile
     def filter(self, func, **kwargs):
