@@ -254,7 +254,7 @@ class FederatedScheduler(object):
                         "retmsg": "Federated schedule error, {}".format(str(e))
                     }
                 if federated_response[dest_role][dest_party_id]["retcode"]:
-                    schedule_logger(job_id=job.f_job_id).error("An error occurred while {} the task to role {} party {}: \n{}".format(
+                    schedule_logger(job_id=job.f_job_id).warning("An error occurred while {} the task to role {} party {}: \n{}".format(
                         command,
                         dest_role,
                         dest_party_id,
