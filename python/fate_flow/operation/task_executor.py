@@ -83,6 +83,7 @@ class TaskExecutor(object):
             job_conf = job_utils.get_job_conf(job_id)
             job_dsl = job_conf["job_dsl_path"]
             job_runtime_conf = job_conf["job_runtime_conf_path"]
+            job_parameters = RunParameters(**job_runtime_conf['job_parameters'])
             dsl_parser = schedule_utils.get_job_dsl_parser(dsl=job_dsl,
                                                            runtime_conf=job_runtime_conf,
                                                            train_runtime_conf=job_conf["train_runtime_conf_path"],
@@ -100,7 +101,6 @@ class TaskExecutor(object):
             task_output_dsl = component.get_output()
             component_parameters_on_party['output_data_name'] = task_output_dsl.get('data')
             task_parameters = RunParameters(**file_utils.load_json_conf(args.config))
-            job_parameters = task_parameters
             TaskExecutor.monkey_patch()
         except Exception as e:
             traceback.print_exc()
@@ -150,6 +150,8 @@ class TaskExecutor(object):
             sess.init_federation(federation_session_id=federation_session_id,
                                  runtime_conf=component_parameters_on_party,
                                  service_conf=job_parameters.engines_address.get(EngineType.FEDERATION, {}))
+            print(job_parameters.federation_engine)
+            print(job_parameters.engines_address.get(EngineType.FEDERATION, {}))
             sess.as_default()
 
             schedule_logger().info('Run {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id))
