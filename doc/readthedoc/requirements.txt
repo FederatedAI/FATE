@@ -1,5 +1,4 @@
 sphinx-material
-ruamel-yaml
 sphinx>=2.4.4
 sphinx_rtd_theme>=0.4.3
 autodocsumm
@@ -22,7 +21,7 @@ pycryptodomex==3.6.6
 PyMySQL==0.9.3
 python-dotenv==0.13.0
 redis==3.0.1
-requests==2.23.0
+requests>=2.23.0
 requests_toolbelt==0.9.1
 ruamel-yaml==0.16.10
 scikit-learn==0.19.2
@@ -30,4 +29,4 @@ scipy==1.1.0
 tensorflow==1.15.2
 torch==1.4.0
 torchvision==0.5.0
-Werkzeug==0.15.3a
+Werkzeug==0.15.3
