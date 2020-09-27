@@ -337,7 +337,7 @@ class CTableABC(metaclass=ABCMeta):
         Examples
         --------
         >>> from fate_arch.session import computing_session
-        >>> a = computing_session.parallelize(range(5), partition=3).glom().collect()
+        >>> a = computing_session.parallelize(range(5), include_key=False, partition=3).glom().collect()
         >>> list(a)
         [(2, [(2, 2)]), (3, [(0, 0), (3, 3)]), (4, [(1, 1), (4, 4)])]
         """
@@ -371,8 +371,8 @@ class CTableABC(metaclass=ABCMeta):
         Examples
         --------
         >>> from fate_arch.session import computing_session
-        >>> x = computing_session.parallelize(range(100), partition=4)
-        >>>  6 <= x.sample(0.1, 81).count() <= 14
+        >>> x = computing_session.parallelize(range(100), include_key=False, partition=4)
+        >>>  6 <= x.sample(fraction=0.1, seed=81).count() <= 14
         True
         """
         ...
@@ -394,7 +394,7 @@ class CTableABC(metaclass=ABCMeta):
         Examples
         --------
         >>> from fate_arch.session import computing_session
-        >>> a = computing_session.parallelize([0, 1, 2])
+        >>> a = computing_session.parallelize([0, 1, 2], include_key=False, partition=2)
         >>> b = a.filter(lambda k, v : k % 2 == 0)
         >>> list(b.collect())
         [(0, 0), (2, 2)]
