@@ -31,9 +31,9 @@ https://fate.fedai.org
    :maxdepth: 3
    :caption: FATE FLOW
 
-   FATE FLOW Guide <_build_temp/fate_flow/README>
-   CLI API <_build_temp/fate_flow/doc/fate_flow_cli>
-   REST API <_build_temp/fate_flow/doc/fate_flow_rest_api>
+   FATE FLOW Guide <_build_temp/python/fate_flow/README>
+   CLI API <_build_temp/python/fate_flow/doc/fate_flow_cli>
+   REST API <_build_temp/python/fate_flow/doc/fate_flow_rest_api>
 
 .. toctree::
    :maxdepth: 3
