@@ -254,7 +254,6 @@ class RawIntersect(Intersect):
             intersect_ids = self._get_value_from_data(intersect_ids, data_instances)
         
         if self.task_id is not None:
-            LOGGER.debug(self.tracker)
             namespace = "#".join([str(self.guest_party_id), str(self.host_party_id), "mountain"])
             for k, v in enumerate(recv_ids_list):
                 table_name = '_'.join([self.task_id, str(k)])
