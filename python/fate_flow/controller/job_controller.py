@@ -89,9 +89,11 @@ class JobController(object):
     @classmethod
     def special_role_parameters(cls, role, job_parameters: RunParameters):
         if role == "arbiter":
-            job_parameters.task_nodes = 1
             job_parameters.task_parallelism = 1
-            job_parameters.task_cores_per_node = 1
+            if job_parameters.adaptation_parameters["task_nodes"] > 0:
+                job_parameters.adaptation_parameters["task_nodes"] = 1
+            if job_parameters.adaptation_parameters["task_cores_per_node"] > 0:
+                job_parameters.adaptation_parameters["task_cores_per_node"] = 1
 
     @classmethod
     def check_parameters(cls, job_parameters: RunParameters, engines_info):
@@ -185,14 +187,6 @@ class JobController(object):
         return {'min_input_data_partition': min_partition}
 
     @classmethod
-    def apply_resource(cls, job_id, role, party_id):
-        return ResourceManager.apply_for_job_resource(job_id=job_id, role=role, party_id=party_id)
-
-    @classmethod
-    def return_resource(cls, job_id, role, party_id):
-        return ResourceManager.return_job_resource(job_id=job_id, role=role, party_id=party_id)
-
-    @classmethod
     def start_job(cls, job_id, role, party_id, extra_info=None):
         schedule_logger(job_id=job_id).info(f"try to start job {job_id} on {role} {party_id}")
         job_info = {
@@ -263,16 +257,7 @@ class JobController(object):
     @classmethod
     def clean_job(cls, job_id, role, party_id, roles):
         schedule_logger(job_id).info('Job {} on {} {} start to clean'.format(job_id, role, party_id))
-        tasks = JobSaver.query_task(job_id=job_id, role=role, party_id=party_id, only_latest=False)
-        for task in tasks:
-            try:
-                Tracker(job_id=job_id, role=role, party_id=party_id, task_id=task.f_task_id, task_version=task.f_task_version).clean_task(roles)
-                schedule_logger(job_id).info(
-                    'Job {} component {} on {} {} clean done'.format(job_id, task.f_component_name, role, party_id))
-            except Exception as e:
-                schedule_logger(job_id).info(
-                    'Job {} component {} on {} {} clean failed'.format(job_id, task.f_component_name, role, party_id))
-                schedule_logger(job_id).exception(e)
+        # todo
         schedule_logger(job_id).info('job {} on {} {} clean done'.format(job_id, role, party_id))
 
     @classmethod

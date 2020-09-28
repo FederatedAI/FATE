@@ -32,7 +32,7 @@ MODEL_STORE_ADDRESS = get_base_config("model_store_address", {})
 # storage engine is used for component output data
 SUPPORT_ENGINES = {
     EngineType.COMPUTING: [ComputingEngine.EGGROLL, ComputingEngine.SPARK],
-    EngineType.FEDERATION: [FederationEngine.EGGROLL, FederationEngine.RABBITMQ, FederationEngine.PROXY],
+    EngineType.FEDERATION: [FederationEngine.EGGROLL, FederationEngine.RABBITMQ],
     EngineType.STORAGE: [StorageEngine.EGGROLL, StorageEngine.HDFS]
 }
 
@@ -64,7 +64,7 @@ _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 # abnormal condition parameter
 DEFAULT_GRPC_OVERALL_TIMEOUT = 2 * 60 * 1000  # ms
 DEFAULT_FEDERATED_COMMAND_TRYS = 3
-JOB_DEFAULT_TIMEOUT = 7 * 24 * 60 * 60
+JOB_DEFAULT_TIMEOUT = 3 * 24 * 60 * 60
 JOB_START_TIMEOUT = 60 * 1000  # ms
 
 '''

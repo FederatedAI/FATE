@@ -25,7 +25,7 @@ from functools import wraps
 from fate_arch.abc import CTableABC
 
 profile_logger = getLogger("PROFILING")
-_PROFILE_LOG_ENABLED = True
+_PROFILE_LOG_ENABLED = False
 
 
 class _TimerItem(object):
@@ -233,6 +233,11 @@ def federation_remote_timer(name, full_name, tag, local, parties):
 def federation_get_timer(name, full_name, tag, local, parties):
     profile_logger.debug(f"[federation.get.{full_name}.{tag}]{local}<-{parties} start")
     return _FederationGetTimer(name, full_name, tag, local, parties)
+
+
+def profile_start():
+    global _PROFILE_LOG_ENABLED
+    _PROFILE_LOG_ENABLED = True
 
 
 def profile_ends():

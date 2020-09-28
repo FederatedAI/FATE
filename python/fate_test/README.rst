@@ -64,7 +64,7 @@ fate_test_config.yaml examples
       services:
         - flow_services:
           - {address: service_a, parties: [9999]}
-            {address: service_b, parties: [10000]}
+          - {address: service_b, parties: [10000]}
 
 2. need ssh tunnel:
 
