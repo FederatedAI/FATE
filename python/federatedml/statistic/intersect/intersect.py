@@ -258,7 +258,7 @@ class RawIntersect(Intersect):
             namespace = "#".join([str(self.guest_party_id), str(self.host_party_id), "mountain"])
             for k, v in enumerate(recv_ids_list):
                 table_name = '_'.join([self.task_id, str(k)])
-                self.tracker.jobb_tracker.save_as_table(v, table_name, namespace)
+                self.tracker.job_tracker.save_as_table(v, table_name, namespace)
                 LOGGER.info("save guest_{}'s id in name:{}, namespace:{}".format(k, table_name, namespace))
 
         return intersect_ids
