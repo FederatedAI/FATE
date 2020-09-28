@@ -40,6 +40,8 @@ def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
 
     if isinstance(param, str):
         param = JobConfig.load_from_file(param)
+
+    assert isinstance(param, dict)
     """
     guest = 9999
     host = 10000
@@ -49,8 +51,8 @@ def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
     param = {"penalty": "L2", "max_iter": 5}
     """
 
-    guest_train_data = {"name": "vehicle_scale_hetero_guest", "namespace": f"experiment{namespace}"}
-    host_train_data = {"name": "vehicle_scale_hetero_host", "namespace": f"experiment{namespace}"}
+    guest_train_data = {"name": "default_credit_hetero_guest", "namespace": f"experiment{namespace}"}
+    host_train_data = {"name": "default_credit_hetero_host", "namespace": f"experiment{namespace}"}
 
     # initialize pipeline
     pipeline = PipeLine()
@@ -79,14 +81,19 @@ def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
     # define Intersection component
     intersection_0 = Intersection(name="intersection_0")
 
-    param = {
-        "penalty": param["penalty"],
+    lr_param = {
         "validation_freqs": None,
         "early_stopping_rounds": None,
-        "max_iter": param["max_iter"]
     }
 
-    hetero_lr_0 = HeteroLR(name='hetero_lr_0', **param)
+    config_param = {
+        "penalty": param["penalty"],
+        "max_iter": param["max_iter"],
+        "alpha": param["alpha"],
+        "learning_rate": param["learning_rate"]
+    }
+    lr_param.update(config_param)
+    hetero_lr_0 = HeteroLR(name='hetero_lr_0', **lr_param)
 
     evaluation_0 = Evaluation(name='evaluation_0', eval_type="multi")
 

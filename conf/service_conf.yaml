@@ -1,6 +1,5 @@
 work_mode: 1
 use_registry: false
-use_proxy: false
 fateflow:
   host: 0.0.0.0
   http_port: 9380

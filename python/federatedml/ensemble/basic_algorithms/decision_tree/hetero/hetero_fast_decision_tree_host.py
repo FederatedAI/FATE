@@ -76,7 +76,7 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
 
     def update_host_side_tree(self, split_info, reach_max_depth):
 
-        LOGGER.info("update tree node, splitlist length is {}, tree node queue size is".format(
+        LOGGER.info("update tree node, splitlist length is {}, tree node queue size is {}".format(
             len(split_info), len(self.cur_layer_nodes)))
 
         new_tree_node_queue = []
@@ -200,11 +200,7 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
                                                use_missing=self.use_missing,
                                                zero_as_missing=self.zero_as_missing,)
 
-        if not self.run_fast_hist:
-            assign_result = self.data_with_node_assignments.mapValues(assign_node_method)
-        else:
-            assign_result = self.data_bin_dense_with_position.mapValues(assign_node_method)
-
+        assign_result = self.data_with_node_assignments.mapValues(assign_node_method)
         leaf = assign_result.filter(lambda key, value: isinstance(value, tuple) is False)
 
         if self.sample_leaf_pos is None:
@@ -298,8 +294,7 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
 
             if self.run_fast_hist:
                 self.data_bin_dense_with_position = self.data_bin_dense.join(self.inst2node_idx, lambda v1, v2: (v1, v2))
-            else:
-                self.data_with_node_assignments = self.data_bin.join(self.inst2node_idx, lambda v1, v2: (v1, v2))
+            self.data_with_node_assignments = self.data_bin.join(self.inst2node_idx, lambda v1, v2: (v1, v2))
 
             batch = 0
             split_info = []

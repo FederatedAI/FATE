@@ -30,6 +30,7 @@ from fate_flow.scheduling_apps.client import ControllerClient
 from fate_flow.scheduling_apps.client import TrackerClient
 from fate_flow.db.db_models import TrackingOutputDataInfo, fill_db_model_object
 from fate_arch.computing import ComputingEngine
+from fate_flow.manager import ResourceManager
 
 LOGGER = getLogger()
 
@@ -52,10 +53,6 @@ class TaskExecutor(object):
             parser.add_argument('-c', '--config', required=True, type=str, help="task parameters")
             parser.add_argument('--run_ip', help="run ip", type=str)
             parser.add_argument('--job_server', help="job server", type=str)
-            parser.add_argument('--processors_per_node', help="processors_per_node", type=int)
-            parser.add_argument('--num-executors', help="spark num executors", type=int)
-            parser.add_argument('--executor-cores', help="spark executor cores", type=int)
-            parser.add_argument('--executor-memory', help="spark executor memory", type=str)
             args = parser.parse_args()
             schedule_logger(args.job_id).info('enter task process')
             schedule_logger(args.job_id).info(args)
@@ -103,7 +100,6 @@ class TaskExecutor(object):
             task_input_dsl = component.get_input()
             task_output_dsl = component.get_output()
             component_parameters_on_party['output_data_name'] = task_output_dsl.get('data')
-            # task_parameters = file_utils.load_json_conf(args.config)
             task_parameters = RunParameters(**file_utils.load_json_conf(args.config))
             TaskExecutor.monkey_patch()
         except Exception as e:
@@ -144,8 +140,8 @@ class TaskExecutor(object):
                                       FEDERATION_ENGINE=job_parameters.federation_engine,
                                       FEDERATED_MODE=job_parameters.federated_mode)
 
-            if args.processors_per_node and args.processors_per_node > 0 and RuntimeConfig.COMPUTING_ENGINE == ComputingEngine.EGGROLL:
-                session_options = {"eggroll.session.processors.per.node": args.processors_per_node}
+            if RuntimeConfig.COMPUTING_ENGINE == ComputingEngine.EGGROLL:
+                session_options = task_parameters.eggroll_run.copy()
             else:
                 session_options = {}
 
@@ -156,6 +152,8 @@ class TaskExecutor(object):
             sess.init_federation(federation_session_id=federation_session_id,
                                  runtime_conf=component_parameters_on_party,
                                  service_conf=job_parameters.engines_address.get(EngineType.FEDERATION, {}))
+            print(job_parameters.federation_engine)
+            print(job_parameters.engines_address.get(EngineType.FEDERATION, {}))
             sess.as_default()
 
             schedule_logger().info('Run {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id))
@@ -260,8 +258,9 @@ class TaskExecutor(object):
                         args_from_component = this_type_args[search_component_name] = this_type_args.get(
                             search_component_name, {})
                         if storage_table_meta:
-                            # partitions = task_parameters.input_data_aligned_partitions if task_parameters.input_data_aligned_partitions else storage_table.get_partitions()
-                            computing_partitions = task_parameters.task_nodes * task_parameters.task_cores_per_node
+                            cores_per_task, memory_per_task = ResourceManager.calculate_task_resource(
+                                task_parameters=task_parameters)
+                            computing_partitions = cores_per_task
                             LOGGER.info(f"load computing table use {computing_partitions} partitions")
                             computing_table = session.get_latest_opened().computing.load(
                                 storage_table_meta.get_address(),
