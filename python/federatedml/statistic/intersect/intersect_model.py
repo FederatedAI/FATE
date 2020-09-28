@@ -71,6 +71,7 @@ class IntersectModelBase(ModelBase):
                 self.intersection_obj = RawIntersectionGuest(self.model_param)
             else:
                 raise ValueError("role {} is not support".format(self.role))
+            self.intersection_obj.tracker = self.tracker
             self.intersection_obj.task_id = self.taskid
         else:
             raise ValueError("intersect_method {} is not support yet".format(self.model_param.intersect_method))

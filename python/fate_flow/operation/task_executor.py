@@ -77,8 +77,7 @@ class TaskExecutor(object):
                 "role": role,
                 "party_id": party_id,
                 "run_ip": args.run_ip,
-                "run_pid": executor_pid,
-                "start_time": current_timestamp(),
+                "run_pid": executor_pid
             })
             job_conf = job_utils.get_job_conf(job_id)
             job_dsl = job_conf["job_dsl_path"]
@@ -118,14 +117,16 @@ class TaskExecutor(object):
                               task_version=task_version,
                               model_id=job_parameters.model_id,
                               model_version=job_parameters.model_version,
-                              component_module_name=module_name)
+                              component_module_name=module_name,
+                              job_parameters=job_parameters)
             tracker_client = TrackerClient(job_id=job_id, role=role, party_id=party_id,
                                            component_name=component_name,
                                            task_id=task_id,
                                            task_version=task_version,
                                            model_id=job_parameters.model_id,
                                            model_version=job_parameters.model_version,
-                                           component_module_name=module_name)
+                                           component_module_name=module_name,
+                                           job_parameters=job_parameters)
             run_class_paths = component_parameters_on_party.get('CodePath').split('/')
             run_class_package = '.'.join(run_class_paths[:-2]) + '.' + run_class_paths[-2].replace('.py', '')
             run_class_name = run_class_paths[-1]
