@@ -88,8 +88,7 @@ class Table(CTableABC):
             return from_rdd(self._rdd.sample(fraction=fraction, withReplacement=False, seed=seed))
 
         if num is not None:
-            _exactly_sample(self._rdd, num, seed=seed)
-            raise NotImplementedError()
+            return from_rdd(_exactly_sample(self._rdd, num, seed=seed))
 
         raise ValueError(f"exactly one of `fraction` or `num` required, fraction={fraction}, num={num}")
 
