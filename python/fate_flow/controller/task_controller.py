@@ -25,7 +25,7 @@ from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.utils import job_utils
 import os
 from fate_flow.operation import JobSaver
-from fate_arch.common.base_utils import json_dumps
+from fate_arch.common.base_utils import json_dumps, current_timestamp
 from fate_arch.common import base_utils
 from fate_flow.entity.types import RunParameters
 from fate_flow.manager import ResourceManager
@@ -139,6 +139,7 @@ class TaskController(object):
             p = job_utils.run_subprocess(job_id=job_id, config_dir=task_dir, process_cmd=process_cmd, log_dir=task_log_dir)
             if p:
                 task_info["party_status"] = TaskStatus.RUNNING
+                task_info["start_time"]: current_timestamp()
                 task_info["run_pid"] = p.pid
                 task_executor_process_start_status = True
             else:

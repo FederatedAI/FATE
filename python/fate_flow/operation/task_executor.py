@@ -77,8 +77,7 @@ class TaskExecutor(object):
                 "role": role,
                 "party_id": party_id,
                 "run_ip": args.run_ip,
-                "run_pid": executor_pid,
-                "start_time": current_timestamp(),
+                "run_pid": executor_pid
             })
             job_conf = job_utils.get_job_conf(job_id)
             job_dsl = job_conf["job_dsl_path"]
