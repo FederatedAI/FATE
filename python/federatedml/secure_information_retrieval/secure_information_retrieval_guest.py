@@ -392,7 +392,6 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
         :return: Table
         """
         """
-        """
         data_inst_count = data_inst.count()
         rate = exact_num / data_inst_count
         while True:
