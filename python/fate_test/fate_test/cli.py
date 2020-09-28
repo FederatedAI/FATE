@@ -125,7 +125,8 @@ def run_suite(replace, data_namespace_mangling, config, include, exclude, glob,
                 if not skip_data:
                     _delete_data(client, suite)
                 echo.echo(f"[{i + 1}/{len(suites)}]elapse {timedelta(seconds=int(time.time() - start))}", fg='red')
-                echo.echo(suite.pretty_final_summary(), fg='red')
+                if not skip_dsl_jobs:
+                    echo.echo(suite.pretty_final_summary(), fg='red')
 
             except Exception:
                 exception_id = uuid.uuid1()

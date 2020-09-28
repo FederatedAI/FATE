@@ -41,7 +41,7 @@
             "script": "pipeline-homo-data-split.py"
         },
         "hetero_data_split_multi_model": {
-            "script": "pipeline-homo-data-split.py"s
+            "script": "pipeline-homo-data-split.py"
         }
     }
 }

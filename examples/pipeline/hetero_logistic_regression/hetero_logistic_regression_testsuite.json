@@ -1,0 +1,85 @@
+{
+    "data": [
+        {
+            "file": "examples/data/breast_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/breast_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/breast_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_host",
+            "namespace": "experiment",
+            "role": "host_1"
+        },
+        {
+            "file": "examples/data/vehicle_scale_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "vehicle_scale_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/vehicle_scale_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "vehicle_scale_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        }
+    ],
+    "pipeline_tasks": {
+        "cv": {
+            "script": "pipeline-hetero-lr-cv.py"
+        },
+        "one-vs-all": {
+            "script": "pipeline-hetero-lr-one-vs-all.py"
+        },
+        "normal": {
+            "script": "pipeline-hetero-lr-normal.py"
+        },
+        "validate": {
+            "script": "pipeline-hetero-lr-validate.py"
+        },
+        "feature-engineering": {
+            "script": "pipeline-hetero-lr-feature-engineering.py"
+        },
+        "multi-host": {
+            "script": "pipeline-hetero-lr-multi-host.py"
+        },
+        "sparse": {
+            "script": "pipeline-hetero-lr-sparse.py"
+        },
+        "sparse-sqn": {
+            "script": "pipeline-hetero-lr-sparse-sqn.py"
+        },
+        "ovr-cv": {
+            "script": "pipeline-hetero-lr-ovr-cv.py"
+        },
+        "sparse-cv": {
+            "script": "pipeline-hetero-lr-sparse-cv.py"
+        },
+        "ovr-sqn": {
+            "script": "pipeline-hetero-lr-ovr-sqn.py"
+        },
+        "sqn": {
+            "script": "pipeline-hetero-lr-sqn.py"
+        },
+        "early-stop": {
+            "script": "pipeline-hetero-lr-early-stop.py"
+        }
+    }
+}
