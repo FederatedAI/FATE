@@ -194,7 +194,7 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
             # this branch is for fast histogram
             # will get scipy sparse matrix if using fast histogram
             if not use_missing:
-                sample_feat = value[0].features[0, fid] # value.features is a scipy sparse matrix
+                sample_feat = value[0].features[0, fid]  # value.features is a scipy sparse matrix
                 return (1, tree_[nodeid].left_nodeid) if sample_feat <= bid else (1, tree_[nodeid].right_nodeid)
             else:
                 missing_dir = tree_[nodeid].missing_dir
