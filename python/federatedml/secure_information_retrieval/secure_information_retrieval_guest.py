@@ -391,6 +391,7 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
         :param exact_num: int
         :return: DTable
         """
+        """
         data_inst_count = data_inst.count()
         rate = exact_num / data_inst_count
         while True:
@@ -407,6 +408,8 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
             sample_inst = session.parallelize(sample_inst_list,
                                               partition=sample_inst.partitions,
                                               include_key=True)
+        """
+        sample_inst = data_inst.sample(num=exact_num)
         return sample_inst
 
     def _sync_block_num(self):
