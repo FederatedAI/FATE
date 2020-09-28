@@ -87,7 +87,7 @@ use the following command to show help message
    Timestamp is used for distinguishing data from different tetsuites.
    Uploaded data will be deleted after all benchmark jobs end.
 
-7. skip-data
+7. skip-data:
 
    .. code-block:: bash
 
@@ -96,7 +96,7 @@ use the following command to show help message
    will run benchmark testsuites in *path1* without uploading data specified in *benchmark.json*.
    Note that data-namespace-mangling is ineffective when skipping data upload.
 
-8. yes
+8. yes:
 
    .. code-block:: bash
 
@@ -116,7 +116,7 @@ A benchmark testsuite includes the following elements:
 
 - data: list of local data to be uploaded before running FATE jobs
 
-  - file: path to original data file to be uploaded, should be relative to testsuite or absolute path
+  - file: path to original data file to be uploaded, should be relative to testsuite or FATE installation path
   - head: whether file includes header
   - partition: number of partition for data storage
   - table_name: table name in storage
