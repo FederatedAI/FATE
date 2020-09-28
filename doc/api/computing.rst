@@ -1,7 +1,7 @@
 Table API
 ---------
 
-.. automodule:: arch.api.base.table
+.. automodule:: fate_arch.abc._computing
    :autosummary:
    :members:
    :member-order: bysource

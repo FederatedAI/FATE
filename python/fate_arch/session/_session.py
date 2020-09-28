@@ -235,11 +235,11 @@ class computing_session(object):
 
     @staticmethod
     def init(session_id, work_mode=0, backend=0):
-        Session.create(work_mode, backend).init_computing(session_id).as_default()
+        Session.create(work_mode=work_mode, backend=backend).init_computing(session_id).as_default()
 
     @staticmethod
     def parallelize(data: typing.Iterable, partition: int, include_key: bool, **kwargs) -> CTableABC:
-        return get_latest_opened().computing.parallelize(data, partition, include_key, **kwargs)
+        return get_latest_opened().computing.parallelize(data, partition=partition, include_key=include_key, **kwargs)
 
     @staticmethod
     def stop():
