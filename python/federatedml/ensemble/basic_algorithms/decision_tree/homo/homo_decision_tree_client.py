@@ -283,6 +283,9 @@ class HomoDecisionTreeClient(DecisionTree):
         best_splits = self.transfer_inst.best_split_points.get(idx=0, suffix=suffix)
         return best_splits
 
+    def update_instances_node_positions(self, ):
+        return self.data_bin.join(self.inst2node_idx, lambda inst, assignment: (inst, assignment))
+
     def fit(self):
         """
         start to fit
@@ -326,7 +329,7 @@ class HomoDecisionTreeClient(DecisionTree):
 
             LOGGER.debug('start to fit layer {}'.format(dep))
 
-            table_with_assignment = self.data_bin.join(self.inst2node_idx, lambda inst, assignment: (inst, assignment))
+            table_with_assignment = self.update_instances_node_positions()
 
             # send current layer node number:
             self.sync_cur_layer_node_num(len(self.cur_layer_node), suffix=(dep, self.epoch_idx, self.tree_idx))
