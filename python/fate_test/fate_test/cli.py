@@ -172,7 +172,7 @@ def run_benchmark(data_namespace_mangling, config, include, exclude, glob, skip_
     suites = _load_testsuites(includes=include, excludes=exclude, glob=glob,
                               suffix="benchmark.json", suite_type="benchmark")
     for suite in suites:
-        echo.echo(f"\tdataset({len(suite.dataset)}) benchmark pairs({len(suite.pairs)}) {suite.path}")
+        echo.echo(f"\tdataset({len(suite.dataset)}) benchmark groups({len(suite.pairs)}) {suite.path}")
     if not yes and not click.confirm("running?"):
         return
     with Clients(config_inst) as client:
@@ -395,9 +395,13 @@ def _run_pipeline_jobs(config: Config, suite: Testsuite, namespace: str, data_na
 def _run_benchmark_pairs(config: Config, suite: BenchmarkSuite, tol: float,
                          namespace: str, data_namespace_mangling: bool):
     # pipeline demo goes here
-    for pair in suite.pairs:
+    pair_n = len(suite.pairs)
+    for i, pair in enumerate(suite.pairs):
+        echo.echo(f"Running {i + 1} of {pair_n} groups: {pair.pair_name}")
         results = {}
+        job_n = len(pair.jobs)
         for job in pair.jobs:
+            echo.echo(f"Running {i + 1} of {job_n} jobs: {job.job_name}")
             job_name, script_path, conf_path = job.job_name, job.script_path, job.conf_path
             param = Config.load_from_file(conf_path)
             mod = _load_module_from_script(script_path)

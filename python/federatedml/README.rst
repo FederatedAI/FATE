@@ -16,7 +16,7 @@ FederatedML includes implementation of many common machine learning algorithms o
 
 5. Secure Protocol: Provides multiple security protocols for secure multi-party computing and interaction between participants.
 
-.. image:: ../doc/images/federatedml_structure.png
+.. image:: ../../doc/images/federatedml_structure.png
    :width: 800
    :align: center
    :alt: federatedml structure

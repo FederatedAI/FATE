@@ -16,7 +16,7 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
 
 5. 安全协议：提供了多种安全协议，以进行更安全的多方交互计算。
 
-.. figure:: ../doc/images/federatedml_structure.png
+.. figure:: ../../doc/images/federatedml_structure.png
    :align: center
    :width: 800
    :alt: 联邦学习结构
@@ -224,6 +224,14 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
      -
      - Column Expand模型
 
+   * - `Secure Information Retrieval`_
+     -
+     - 通过不经意传输协议安全取回所需数值
+     - Table, 值为Instance
+     - Table, 值为取回数值
+     -
+     -
+
 .. _DataIO: util/README.rst
 .. _Intersect: statistic/intersect/README.rst
 .. _Federated Sampling: feature/README.rst
@@ -246,6 +254,7 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
 .. _Data Split: model_selection/data_split/README.rst
 .. _Homo OneHot Encoder: feature/README.rst
 .. _Column Expand: feature/README.rst
+.. _Secure Information Retrieval: secure_information_retrieval
 
 
 安全协议
@@ -276,6 +285,13 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
 .. _Encode: secureprotol/README.rst#encode
 .. _Diffne Hellman Key Exchange: secureprotol/README.rst#diffne-hellman-key-exchange
 .. _SecretShare MPC Protocol(SPDZ): secureprotol/README.rst#secretshare-mpc-protocol-spdz
+.. _Oblivious Transfer: secureprotol/README.rst#oblivious-transfer
 
 
 
+Params
+-------
+
+.. automodule:: federatedml.param
+   :autosummary:
+   :members:
