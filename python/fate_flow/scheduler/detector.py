@@ -98,15 +98,16 @@ class Detector(cron.Cron):
             for job in jobs:
                 if job.f_status == JobStatus.WAITING:
                     stop_jobs.add(job)
-                try:
-                    detect_logger(job_id=job.f_job_id).info(f"start to return job {job.f_job_id} on {job.f_role} {job.f_party_id} resource")
-                    flag = ResourceManager.return_job_resource(job_id=job.f_job_id, role=job.f_role, party_id=job.f_party_id)
-                    if flag:
-                        detect_logger(job_id=job.f_job_id).info(f"return job {job.f_job_id} on {job.f_role} {job.f_party_id} resource successfully")
-                    else:
-                        detect_logger(job_id=job.f_job_id).info(f"return job {job.f_job_id} on {job.f_role} {job.f_party_id} resource failed")
-                except Exception as e:
-                    detect_logger(job_id=job.f_job_id).exception(e)
+                else:
+                    try:
+                        detect_logger(job_id=job.f_job_id).info(f"start to return job {job.f_job_id} on {job.f_role} {job.f_party_id} resource")
+                        flag = ResourceManager.return_job_resource(job_id=job.f_job_id, role=job.f_role, party_id=job.f_party_id)
+                        if flag:
+                            detect_logger(job_id=job.f_job_id).info(f"return job {job.f_job_id} on {job.f_role} {job.f_party_id} resource successfully")
+                        else:
+                            detect_logger(job_id=job.f_job_id).info(f"return job {job.f_job_id} on {job.f_role} {job.f_party_id} resource failed")
+                    except Exception as e:
+                        detect_logger(job_id=job.f_job_id).exception(e)
             cls.request_stop_jobs(jobs=stop_jobs, stop_msg="start timeout", stop_status=JobStatus.TIMEOUT)
         except Exception as e:
             detect_logger().exception(e)
