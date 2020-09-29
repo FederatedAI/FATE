@@ -59,6 +59,6 @@ if __name__ == "__main__":
     parser.add_argument("-param", type=str,
                         help="config file for params")
     args = parser.parse_args()
-    if args.config is not None:
+    if args.param is not None:
         main(args.param)
     main()
