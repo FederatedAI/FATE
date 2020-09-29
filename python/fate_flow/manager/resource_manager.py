@@ -24,7 +24,7 @@ from fate_arch.common import base_utils
 from fate_arch.common.conf_utils import get_base_config
 from fate_arch.common.log import schedule_logger
 from fate_arch.computing import ComputingEngine
-from fate_flow.db.db_models import DB, EngineRegistry, ResourceRecord, Job
+from fate_flow.db.db_models import DB, EngineRegistry, Job
 from fate_flow.entity.types import ResourceOperation, RunParameters
 from fate_flow.settings import stat_logger, STANDALONE_BACKEND_VIRTUAL_CORES_PER_NODE, SUPPORT_ENGINES, \
     MAX_CORES_PERCENT_PER_JOB, DEFAULT_TASK_CORES_PER_NODE, DEFAULT_TASK_MEMORY_PER_NODE
