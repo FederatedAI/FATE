@@ -55,7 +55,8 @@ def _get_transfer_conf():
     for a_conf in itertools.chain(*transfer_conf_files):
         try:
             with a_conf.open() as f:
-                _transfer_auth.update(json.load(f))
+                for module_class_name, variables in json.load(f).items():
+                    _transfer_auth.update({f"{module_class_name}.{k}": v for k, v in variables.items()})
         except Exception as e:
             raise RuntimeError(f"parse {a_conf} fail: {e.args}")
 
@@ -63,13 +64,9 @@ def _get_transfer_conf():
 
 
 def _check_variable_auth_conf(full_name):
-    module_name, class_name, variable_name = full_name.split("$")
-    variable_auth = _get_transfer_conf().get(f"{module_name}.{class_name}", {}).get(variable_name, None)
+    variable_auth = _get_transfer_conf().get(full_name, None)
     if variable_auth is None:
-        if f"{module_name}.{class_name}" not in _get_transfer_conf():
-            raise NameError(f"{module_name}.{class_name} not found")
-        else:
-            raise NameError(f"{variable_name} not found in {module_name}.{class_name}")
+        raise NameError(f"{full_name} not found")
 
     auth_src = variable_auth["src"]
     if not isinstance(auth_src, list):

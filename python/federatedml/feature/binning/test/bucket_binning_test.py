@@ -68,7 +68,7 @@ class TestBucketBinning(unittest.TestCase):
             assert abs(iv_attr.iv - 0.00364386529386804) < 1e-6
 
     def tearDown(self):
-        self.table.destroy()
+        # self.table.destroy()
         session.stop()
 
 

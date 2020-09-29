@@ -3,14 +3,20 @@ import typing
 from fate_arch._standalone import Federation as RawFederation, Table as RawTable
 from fate_arch.abc import FederationABC
 from fate_arch.abc import GarbageCollectionABC
-from fate_arch.common import Party
+from fate_arch.common import Party, log
 from fate_arch.computing.standalone import Table
+
+LOGGER = log.getLogger()
 
 
 class Federation(FederationABC):
 
     def __init__(self, standalone_session, federation_session_id, party):
+        LOGGER.debug(f"[federation.standalone]init federation: standalone_session={standalone_session}, "
+                     f"federation_session_id={federation_session_id}, "
+                     f"party={party}")
         self._federation = RawFederation(standalone_session, federation_session_id, party)
+        LOGGER.debug(f"[federation.standalone]init federation context done")
 
     def remote(self, v, name: str, tag: str, parties: typing.List[Party], gc: GarbageCollectionABC):
         if isinstance(v, Table):

@@ -17,14 +17,20 @@
 #  limitations under the License.
 
 import unittest
+import uuid
+
+import numpy as np
 
 from fate_arch.session import computing_session as session
-import numpy as np
 from federatedml.feature.feature_selection.filter_factory import get_filter
-from federatedml.param.feature_selection_param import FeatureSelectionParam
-from federatedml.util import consts
+from federatedml.feature.feature_selection.model_adapter.adapter_factory import adapter_factory
 from federatedml.feature.feature_selection.selection_properties import SelectionProperties
-import uuid
+from federatedml.feature.hetero_feature_selection.base_feature_selection import BaseHeteroFeatureSelection
+from federatedml.feature.instance import Instance
+from federatedml.param.feature_selection_param import FeatureSelectionParam
+from federatedml.param.statistics_param import StatisticsParam
+from federatedml.statistic.data_statistics import DataStatistics
+from federatedml.util import consts
 
 
 class TestVarianceCoeFilter(unittest.TestCase):
@@ -45,7 +51,7 @@ class TestVarianceCoeFilter(unittest.TestCase):
         outlier_data.extend(100 * np.ones(data_num - int(data_num * 0.8)))
         col_data.append(outlier_data)
         for key in range(data_num):
-            data.append((key, np.array([col[key] for col in col_data])))
+            data.append((key, Instance(features=np.array([col[key] for col in col_data]))))
 
         result = session.parallelize(data, include_key=True, partition=partition)
         result.schema = {'header': header}
@@ -58,7 +64,9 @@ class TestVarianceCoeFilter(unittest.TestCase):
         select_param = FeatureSelectionParam()
         select_param.outlier_param.percentile = 0.9
         select_param.outlier_param.upper_threshold = 99
-        filter_obj = get_filter(consts.OUTLIER_COLS, select_param)
+        selection_obj = self._make_selection_obj(data_table)
+
+        filter_obj = get_filter(consts.OUTLIER_COLS, select_param, model=selection_obj)
         select_properties = SelectionProperties()
         select_properties.set_header(self.header)
         select_properties.set_last_left_col_indexes([x for x in range(len(self.header))])
@@ -68,18 +76,28 @@ class TestVarianceCoeFilter(unittest.TestCase):
 
         self.assertEqual(res_select_properties.all_left_col_names, [self.header[x] for x in range(9)])
         self.assertEqual(len(res_select_properties.all_left_col_names), 9)
-        data_table.destroy()
+
+    def _make_selection_obj(self, data_table):
+        statistics_param = StatisticsParam(statistics="90%")
+        statistics_param.check()
+        print(statistics_param.statistics)
+        test_obj = DataStatistics()
+
+        test_obj.model_param = statistics_param
+        test_obj._init_model(statistics_param)
+        test_obj.fit(data_table)
+
+        adapter = adapter_factory(consts.STATISTIC_MODEL)
+        meta_obj = test_obj.export_model()['StatisticMeta']
+        param_obj = test_obj.export_model()['StatisticParam']
+
+        iso_model = adapter.convert(meta_obj, param_obj)
+        selection_obj = BaseHeteroFeatureSelection()
+        selection_obj.isometric_models = {consts.STATISTIC_MODEL: iso_model}
+        return selection_obj
 
     def tearDown(self):
         session.stop()
-        try:
-            session.cleanup("*", self.job_id, True)
-        except EnvironmentError:
-            pass
-        try:
-            session.cleanup("*", self.job_id, False)
-        except EnvironmentError:
-            pass
 
 
 if __name__ == '__main__':

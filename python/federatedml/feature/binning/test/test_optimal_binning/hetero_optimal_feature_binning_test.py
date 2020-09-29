@@ -22,7 +22,8 @@ import numpy as np
 
 from fate_arch.common import Party
 from fate_arch.session import PartiesInfo
-from fate_arch.session import Session, ComputingType
+from fate_arch.session import computing_session as session
+from fate_arch.session import Session
 from federatedml.feature.hetero_feature_binning.hetero_binning_guest import HeteroFeatureBinningGuest
 from federatedml.feature.hetero_feature_binning.hetero_binning_host import HeteroFeatureBinningHost
 from federatedml.feature.instance import Instance
@@ -210,8 +211,8 @@ class TestHeteroFeatureBinning():
         return fit_model, transform_obj
 
     def tearDown(self):
-        for table in self.table_list:
-            table.destroy()
+        # for table in self.table_list:
+        #     table.destroy()
         print("Finish testing")
 
 
@@ -230,8 +231,8 @@ if __name__ == '__main__':
     host_id = args.hid
     role = args.role
 
-    with Session() as session:
-        session.init_computing(job_id, computing_type=ComputingType.STANDALONE)
+    with Session.create(0, 0) as session:
+        session.init_computing(job_id)
         session.init_federation(federation_session_id=job_id,
                                 parties_info=PartiesInfo(
                                     local=Party(role, guest_id if role == GUEST else host_id),

@@ -196,7 +196,7 @@ class HomoLRHost(HomoLRBase):
 
         weight_dict = {}
         intercept = 0
-        if not self.use_encrypt:
+        if not self.use_encrypt and not self.component_properties.need_cv:
             lr_vars = self.model_weights.coef_
             for idx, header_name in enumerate(header):
                 coef_i = lr_vars[idx]

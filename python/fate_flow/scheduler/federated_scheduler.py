@@ -254,7 +254,7 @@ class FederatedScheduler(object):
                         "retmsg": "Federated schedule error, {}".format(str(e))
                     }
                 if federated_response[dest_role][dest_party_id]["retcode"]:
-                    schedule_logger(job_id=job.f_job_id).error("An error occurred while {} the task to role {} party {}: \n{}".format(
+                    schedule_logger(job_id=job.f_job_id).warning("An error occurred while {} the task to role {} party {}: \n{}".format(
                         command,
                         dest_role,
                         dest_party_id,
@@ -292,9 +292,12 @@ class FederatedScheduler(object):
                 if response["retcode"] != RetCode.SUCCESS:
                     exception = Exception(response["retmsg"])
                 else:
-                    return
+                    return True
             else:
-                raise exception
+                schedule_logger(job_id=task.f_job_id).error(f"report task to initiator error: {exception}")
+                return False
+        else:
+            return False
 
     # Utils
     @classmethod
@@ -303,11 +306,12 @@ class FederatedScheduler(object):
         for dest_role in federated_response.keys():
             for party_id in federated_response[dest_role].keys():
                 retcode_set.add(federated_response[dest_role][party_id]["retcode"])
-        if len(retcode_set) == 1:
-            if FederatedSchedulingStatusCode.SUCCESS in retcode_set:
-                federated_scheduling_status_code = FederatedSchedulingStatusCode.SUCCESS
-            else:
-                federated_scheduling_status_code = FederatedSchedulingStatusCode.FAILED
-        else:
+        if len(retcode_set) == 1 and RetCode.SUCCESS in retcode_set:
+            federated_scheduling_status_code = FederatedSchedulingStatusCode.SUCCESS
+        elif RetCode.EXCEPTION_ERROR in retcode_set:
+            federated_scheduling_status_code = FederatedSchedulingStatusCode.ERROR
+        elif RetCode.SUCCESS in retcode_set:
             federated_scheduling_status_code = FederatedSchedulingStatusCode.PARTIAL
+        else:
+            federated_scheduling_status_code = FederatedSchedulingStatusCode.FAILED
         return federated_scheduling_status_code, federated_response

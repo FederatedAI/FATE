@@ -218,9 +218,7 @@ def stop_task(job_id, component_name, task_id, task_version, role, party_id, sto
 
 @manager.route('/<job_id>/<component_name>/<task_id>/<task_version>/<role>/<party_id>/clean/<content_type>', methods=['POST'])
 def clean_task(job_id, component_name, task_id, task_version, role, party_id, content_type):
-    tasks = JobSaver.query_task(job_id=job_id, task_id=task_id, task_version=task_version, role=role, party_id=int(party_id))
-    for task in tasks:
-        TaskController.clean_task(task=task, content_type=content_type)
+    TaskController.clean_task(job_id=job_id, task_id=task_id, task_version=task_version, role=role, party_id=int(party_id), content_type=content_type)
     return get_json_result(retcode=0, retmsg='success')
 
 
