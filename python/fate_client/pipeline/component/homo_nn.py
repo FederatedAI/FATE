@@ -56,6 +56,7 @@ class HomoNN(Component):
 
     def add(self, layer):
         self._model.add(layer)
+        return self
 
     def compile(self, optimizer, loss=None, metrics=None):
         if metrics and not isinstance(metrics, list):
@@ -66,6 +67,7 @@ class HomoNN(Component):
         self.metrics = metrics
         self.config_type = self._model.get_layer_type()
         self.nn_define = self._model.get_network_config()
+        return self
 
     def __getstate__(self):
         state = dict(self.__dict__)
