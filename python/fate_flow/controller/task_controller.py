@@ -139,7 +139,7 @@ class TaskController(object):
             p = job_utils.run_subprocess(job_id=job_id, config_dir=task_dir, process_cmd=process_cmd, log_dir=task_log_dir)
             if p:
                 task_info["party_status"] = TaskStatus.RUNNING
-                task_info["start_time"]: current_timestamp()
+                task_info["start_time"] = current_timestamp()
                 task_info["run_pid"] = p.pid
                 task_executor_process_start_status = True
             else:
