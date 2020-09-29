@@ -1,7 +1,7 @@
-testsuite
-==============
+FATE Test
+=========
 
-A useful script to running FATE's test.
+A collection of useful tools to running FATE's test.
 
 quick start
 -----------
@@ -64,7 +64,7 @@ fate_test_config.yaml examples
       services:
         - flow_services:
           - {address: service_a, parties: [9999]}
-            {address: service_b, parties: [10000]}
+          - {address: service_b, parties: [10000]}
 
 2. need ssh tunnel:
 
@@ -95,10 +95,35 @@ fate_test_config.yaml examples
           ssh_priv_key: "~/.ssh/id_rsa"
 
 
+command types
+-------------
+
+- suite: used for running testsuites, collection of FATE jobs
+
+  .. code-block:: bash
+
+     fate_test suite -i <path contains *testsuite.json>
+
+- `benchmark-quality <./README_BENCHMARK.rst>`_: used for comparing modeling quality between FATE
+and other machine learning systems
+
+  .. code-block:: bash
+
+      fate_test benchmark-quality -i <path contains *testsuite.json>
+
+
 command options
 ---------------
 
-1. exclude:
+1. include:
+
+.. code-block:: bash
+
+      fate_test suite -i <path1 contains *testsuite.json>
+
+   will run testsuites in `path1`
+
+2. exclude:
 
    .. code-block:: bash
 
@@ -106,7 +131,7 @@ command options
 
    will run testsuites in `path1` but not in `path2` and `path3`
 
-2. replace:
+3. replace:
 
    .. code-block:: bash
 
@@ -114,10 +139,11 @@ command options
 
    will find all key-value pair with key "maxIter" in `data conf` or `conf` or `dsl` and replace the value with 5
 
-3. glob:
+4. glob:
 
    .. code-block:: bash
 
       fate_test suite -i <path1 contains *testsuite.json> -g "hetero*"
 
    will run testsuites in sub directory start with `hetero` of `path1`
+

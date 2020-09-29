@@ -84,7 +84,7 @@ class BaseSecureInformationRetrieval(ModelBase):
     def _exchange_id_list(self, id_list):
         """
 
-        :param id_list: DTable in the form (id, 0)
+        :param id_list: Table in the form (id, 0)
         :return:
         """
         pass
@@ -238,7 +238,7 @@ class BaseSecureInformationRetrieval(ModelBase):
     def _set_schema(data_instance, id_name=None, label_name=None, feature_name=None):
         """
 
-        :param data_instance: DTable
+        :param data_instance: Table
         :param id_name: str
         :param label_name: str
         :return:
@@ -258,7 +258,7 @@ class BaseSecureInformationRetrieval(ModelBase):
         mode = 0: k, v
         mode = 1: k, v.label
         :param mode:
-        :param tab: DTable
+        :param tab: Table
         :return:
         """
         tab_col = tab.collect()
@@ -286,7 +286,7 @@ class BaseSecureInformationRetrieval(ModelBase):
     def log_schema(tab):
         """
 
-        :param tab: DTable
+        :param tab: Table
         :return:
         """
         LOGGER.debug("tab schema = {}".format(tab.schema))
@@ -304,14 +304,14 @@ class CryptoExecutor(object):
 
     def map_encrypt(self, plaintable, mode):
         """
-        Process the input DTable as (k, v)
+        Process the input Table as (k, v)
         (k, enc_k) for mode == 0
         (enc_k, -1) for mode == 1
         (enc_k, v) for mode == 2
         (k, (enc_k, v)) for mode == 3
-        :param plaintable: DTable
+        :param plaintable: Table
         :param mode: int
-        :return: DTable
+        :return: Table
         """
         if mode == 0:
             return plaintable.map(lambda k, v: (k, self.cipher_core.encrypt(k)))
@@ -326,9 +326,9 @@ class CryptoExecutor(object):
 
     def map_values_encrypt(self, plaintable, mode):
         """
-        Process the input DTable as v
+        Process the input Table as v
         enc_v if mode == 0
-        :param plaintable: DTable
+        :param plaintable: Table
         :param mode: int
         :return:
         """
@@ -339,14 +339,14 @@ class CryptoExecutor(object):
 
     def map_decrypt(self, ciphertable, mode):
         """
-        Process the input DTable as (k, v)
+        Process the input Table as (k, v)
         (k, dec_k) for mode == 0
         (dec_k, -1) for mode == 1
         (dec_k, v) for mode == 2
         (k, (dec_k, v)) for mode == 3
-        :param ciphertable: DTable
+        :param ciphertable: Table
         :param mode: int
-        :return: DTable
+        :return: Table
         """
         if mode == 0:
             return ciphertable.map(lambda k, v: (k, self.cipher_core.decrypt(k)))
@@ -361,10 +361,10 @@ class CryptoExecutor(object):
 
     def map_values_decrypt(self, ciphertable, mode):
         """
-        Process the input DTable as v
+        Process the input Table as v
         dec_v if mode == 0
         decode(dec_v) if mode == 1
-        :param ciphertable: DTable
+        :param ciphertable: Table
         :param mode: int
         :return:
         """

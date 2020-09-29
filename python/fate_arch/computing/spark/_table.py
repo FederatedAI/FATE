@@ -17,10 +17,15 @@
 import uuid
 from itertools import chain
 
+import typing
+
+from pyspark.rddsampler import RDDSamplerBase
+
 from fate_arch.abc import CTableABC
 from fate_arch.common import log, hdfs_utils
 from fate_arch.common.profile import computing_profile
 from fate_arch.computing.spark._materialize import materialize
+from scipy.stats import hypergeom
 
 LOGGER = log.getLogger()
 
@@ -78,8 +83,14 @@ class Table(CTableABC):
         return from_rdd(_glom(self._rdd))
 
     @computing_profile
-    def sample(self, fraction, seed=None, **kwargs):
-        return from_rdd(_sample(self._rdd, fraction, seed))
+    def sample(self, *, fraction: typing.Optional[float] = None, num: typing.Optional[int] = None, seed=None):
+        if fraction is not None:
+            return from_rdd(self._rdd.sample(fraction=fraction, withReplacement=False, seed=seed))
+
+        if num is not None:
+            return from_rdd(_exactly_sample(self._rdd, num, seed=seed))
+
+        raise ValueError(f"exactly one of `fraction` or `num` required, fraction={fraction}, num={num}")
 
     @computing_profile
     def filter(self, func, **kwargs):
@@ -183,16 +194,44 @@ def _glom(rdd):
     return rdd.mapPartitionsWithIndex(_func)
 
 
-def _sample(rdd, fraction: float, seed: int):
-    assert fraction >= 0.0, "Negative fraction value: %s" % fraction
-    # noinspection PyPackageRequirements
-    from pyspark import rddsampler
-    _sample_func = rddsampler.RDDSampler(False, fraction, seed).func
+def _exactly_sample(rdd, num: int, seed: int):
+    split_size = rdd.mapPartitionsWithIndex(lambda s, it: [(s, sum(1 for _ in it))]).collectAsMap()
+    total = sum(split_size.values())
 
-    def _func(split, iterator):
-        return _sample_func(split, iterator)
+    if num > total:
+        raise ValueError(f"not enough data to sample, own {total} but required {num}")
+    # random the size of each split
+    sampled_size = {}
+    for split, size in split_size.items():
+        sampled_size[split] = hypergeom.rvs(M=total, n=size, N=num)
+        total = total - size
 
-    return rdd.mapPartitionsWithIndex(_func, preservesPartitioning=True)
+    return rdd.mapPartitionsWithIndex(_ReservoirSample(split_sample_size=sampled_size, seed=seed).func,
+                                      preservesPartitioning=True)
+
+
+class _ReservoirSample(RDDSamplerBase):
+
+    def __init__(self, split_sample_size, seed):
+        RDDSamplerBase.__init__(self, False, seed)
+        self._split_sample_size = split_sample_size
+        self._counter = 0
+        self._sample = []
+
+    def func(self, split, iterator):
+        self.initRandomGenerator(split)
+        size = self._split_sample_size[split]
+        for obj in iterator:
+            self._counter += 1
+            if len(self._sample) < size:
+                self._sample.append(obj)
+                continue
+
+            randint = self._random.randint(1, self._counter)
+            if randint <= size:
+                self._sample[randint - 1] = obj
+
+        return self._sample
 
 
 def _filter(rdd, func):

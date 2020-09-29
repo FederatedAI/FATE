@@ -76,7 +76,7 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
 
     def update_host_side_tree(self, split_info, reach_max_depth):
 
-        LOGGER.info("update tree node, splitlist length is {}, tree node queue size is".format(
+        LOGGER.info("update tree node, splitlist length is {}, tree node queue size is {}".format(
             len(split_info), len(self.cur_layer_nodes)))
 
         new_tree_node_queue = []
@@ -155,7 +155,7 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
             return None
 
     @staticmethod
-    def host_assign_a_instance(value, tree_, bin_sparse_points, use_missing, zero_as_missing):
+    def host_assign_an_instance(value, tree_, bin_sparse_points, use_missing, zero_as_missing, dense_format=False):
 
         unleaf_state, nodeid = value[1]
 
@@ -165,42 +165,61 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
         fid = tree_[nodeid].fid
         bid = tree_[nodeid].bid
 
-        if not use_missing:
-            if value[0].features.get_data(fid, bin_sparse_points[fid]) <= bid:
-                return 1, tree_[nodeid].left_nodeid
-            else:
-                return 1, tree_[nodeid].right_nodeid
-        else:
-            missing_dir = tree_[nodeid].missing_dir
-
-            missing_val = False
-            if zero_as_missing:
-                if value[0].features.get_data(fid, None) is None or \
-                        value[0].features.get_data(fid) == NoneType():
-                    missing_val = True
-            elif use_missing and value[0].features.get_data(fid) == NoneType():
-                missing_val = True
-
-            if missing_val:
-                if missing_dir == 1:
-                    return 1, tree_[nodeid].right_nodeid
-                else:
-                    return 1, tree_[nodeid].left_nodeid
-            else:
+        if not dense_format:
+            if not use_missing:
                 if value[0].features.get_data(fid, bin_sparse_points[fid]) <= bid:
                     return 1, tree_[nodeid].left_nodeid
                 else:
                     return 1, tree_[nodeid].right_nodeid
+            else:
+                missing_dir = tree_[nodeid].missing_dir
+                missing_val = False
+                if zero_as_missing:
+                    if value[0].features.get_data(fid, None) is None or \
+                            value[0].features.get_data(fid) == NoneType():
+                        missing_val = True
+                elif use_missing and value[0].features.get_data(fid) == NoneType():
+                    missing_val = True
+                if missing_val:
+                    if missing_dir == 1:
+                        return 1, tree_[nodeid].right_nodeid
+                    else:
+                        return 1, tree_[nodeid].left_nodeid
+                else:
+                    if value[0].features.get_data(fid, bin_sparse_points[fid]) <= bid:
+                        return 1, tree_[nodeid].left_nodeid
+                    else:
+                        return 1, tree_[nodeid].right_nodeid
+        else:
+            # this branch is for fast histogram
+            # will get scipy sparse matrix if using fast histogram
+            if not use_missing:
+                sample_feat = value[0].features[0, fid]  # value.features is a scipy sparse matrix
+                return (1, tree_[nodeid].left_nodeid) if sample_feat <= bid else (1, tree_[nodeid].right_nodeid)
+            else:
+                missing_dir = tree_[nodeid].missing_dir
+                sample_feat = value[0].features[0, fid]
+                if zero_as_missing:  # zero_as_missing and use_missing, 0 and missing value are marked as -1
+                    sample_feat -= 1  # remove offset
+                if sample_feat == -1:
+                    return (1, tree_[nodeid].right_nodeid) if missing_dir == 1 else (1, tree_[nodeid].left_nodeid)
+                else:
+                    return (1, tree_[nodeid].left_nodeid) if sample_feat <= bid else (1, tree_[nodeid].right_nodeid)
 
     def host_local_assign_instances_to_new_node(self):
 
-        assign_node_method = functools.partial(self.host_assign_a_instance,
+        assign_node_method = functools.partial(self.host_assign_an_instance,
                                                tree_=self.tree_node,
                                                bin_sparse_points=self.bin_sparse_points,
                                                use_missing=self.use_missing,
-                                               zero_as_missing=self.zero_as_missing,)
+                                               zero_as_missing=self.zero_as_missing,
+                                               dense_format=self.run_fast_hist
+                                               )
 
-        assign_result = self.data_with_node_assignments.mapValues(assign_node_method)
+        if not self.run_fast_hist:
+            assign_result = self.data_with_node_assignments.mapValues(assign_node_method)
+        else:
+            assign_result = self.data_bin_dense_with_position.mapValues(assign_node_method)
         leaf = assign_result.filter(lambda key, value: isinstance(value, tuple) is False)
 
         if self.sample_leaf_pos is None:
@@ -292,18 +311,14 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
             if len(self.cur_layer_nodes) == 0:
                 break
 
-            if self.run_fast_hist:
-                self.data_bin_dense_with_position = self.data_bin_dense.join(self.inst2node_idx, lambda v1, v2: (v1, v2))
-            else:
-                self.data_with_node_assignments = self.data_bin.join(self.inst2node_idx, lambda v1, v2: (v1, v2))
-
+            self.update_instances_node_positions()
             batch = 0
             split_info = []
             for i in range(0, len(self.cur_layer_nodes), self.max_split_nodes):
                 self.cur_to_split_nodes = self.cur_layer_nodes[i: i + self.max_split_nodes]
                 batch_split_info = self.compute_best_splits_with_node_plan(tree_action, layer_target_host_id,
                                                                            node_map=self.get_node_map(
-                                                                            self.cur_to_split_nodes),
+                                                                           self.cur_to_split_nodes),
                                                                            dep=dep, batch_idx=batch,
                                                                            mode=consts.MIX_TREE)
                 batch += 1
@@ -313,9 +328,9 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
             self.inst2node_idx = self.host_local_assign_instances_to_new_node()
 
         if self.cur_layer_nodes:
-            self.update_host_side_tree([], reach_max_depth=True)
-            self.data_with_node_assignments = self.data_bin.join(self.inst2node_idx, lambda v1, v2: (v1, v2))
-            self.host_local_assign_instances_to_new_node()
+            self.update_host_side_tree([], reach_max_depth=True)  # mark final layer nodes as leaves
+            self.update_instances_node_positions()  # update instances position
+            self.host_local_assign_instances_to_new_node()  # assign instances to final leaves
 
         self.sync_sample_leaf_pos(self.sample_leaf_pos)  # sync sample final leaf positions
         self.convert_bin_to_real2()  # convert bin num to val
@@ -341,12 +356,7 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
             if self.self_host_id == layer_target_host_id:
 
                 self.inst2node_idx = self.sync_node_positions(dep)
-
-                if self.run_fast_hist:
-                    self.data_bin_dense_with_position = self.data_bin_dense.join(self.inst2node_idx,
-                                                                                 lambda v1, v2: (v1, v2))
-                else:
-                    self.data_with_node_assignments = self.data_bin.join(self.inst2node_idx, lambda v1, v2: (v1, v2))
+                self.update_instances_node_positions()
 
             batch = 0
             for i in range(0, len(self.cur_layer_nodes), self.max_split_nodes):

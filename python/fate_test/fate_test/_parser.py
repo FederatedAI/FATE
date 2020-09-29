@@ -70,7 +70,13 @@ class Data(object):
         kwargs = {}
         for field_name in ['head', 'partition', 'table_name', 'namespace']:
             kwargs[field_name] = config[field_name]
-        kwargs['file'] = path.parent.joinpath(config['file']).resolve()
+
+        file_path = path.parent.joinpath(config['file']).resolve()
+        if not file_path.exists():
+            kwargs['file'] = config['file']
+            # raise ValueError(f"loading from data config: {config} in {path} failed, file: {file_path} not exists")
+        else:
+            kwargs['file'] = file_path
         role_str = config.get("role") if config.get("role") != "guest" else "guest_0"
         return Data(config=kwargs, role_str=role_str)
 
@@ -89,10 +95,10 @@ class JobConf(object):
             kwargs = json.load(f, object_hook=CONF_JSON_HOOK.hook)
         return JobConf(**kwargs)
 
-    def update(self, parties: Parties, work_mode):
+    def update(self, parties: Parties, work_mode, backend):
         self.initiator = parties.extract_initiator_role(self.initiator['role'])
         self.role = parties.extract_role({role: len(parties) for role, parties in self.role.items()})
-        self.job_parameters.update(dict(work_mode=work_mode))
+        self.job_parameters.update(dict(work_mode=work_mode, backend=backend))
 
 
 @dataclass
@@ -211,7 +217,7 @@ class Testsuite(object):
             data.config.update(dict(work_mode=config.work_mode, backend=config.backend))
 
         for job in self.jobs:
-            job.job_conf.update(config.parties, config.work_mode)
+            job.job_conf.update(config.parties, config.work_mode, config.backend)
         return self
 
     def update_status(self, job_name, job_id: str = None, status: str = None, exception_id: str = None):
@@ -246,6 +252,7 @@ class BenchmarkJob(object):
 class BenchmarkPair(object):
     pair_name: str
     jobs: typing.List[BenchmarkJob]
+    compare_setting: dict
 
 
 @dataclass
@@ -269,13 +276,18 @@ class BenchmarkSuite(object):
                 continue
             jobs = []
             for job_name, job_configs in pair_configs.items():
+                if job_name == "compare_setting":
+                    continue
                 script_path = path.parent.joinpath(job_configs["script"]).resolve()
                 if job_configs.get("conf"):
                     conf_path = path.parent.joinpath(job_configs["conf"]).resolve()
                 else:
                     conf_path = ""
                 jobs.append(BenchmarkJob(job_name=job_name, script_path=script_path, conf_path=conf_path))
-            pairs.append(BenchmarkPair(pair_name=pair_name, jobs=jobs))
+            compare_setting = pair_configs.get("compare_setting")
+            if compare_setting and not isinstance(compare_setting, dict):
+                raise ValueError(f"expected 'compare_setting' type is dict, received {type(compare_setting)} instead.")
+            pairs.append(BenchmarkPair(pair_name=pair_name, jobs=jobs, compare_setting=compare_setting))
         suite = BenchmarkSuite(dataset=dataset, pairs=pairs, path=path)
         return suite
 

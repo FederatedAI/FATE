@@ -72,6 +72,20 @@ class FLOWClient(object):
             raise RuntimeError(f"submit job failed") from e
         return response
 
+    def check_connection(self):
+        try:
+            version = self._http.request(method="POST", url=f"{self._base}version/get", json={"module": "FATE"},
+                                         timeout=2).json()
+        except Exception:
+            import traceback
+            traceback.print_exc()
+            raise
+        fate_version = version.get("data", {}).get("FATE")
+        if fate_version:
+            return fate_version, self.address
+
+        raise EnvironmentError(f"connection not ok")
+
     def _awaiting(self, job_id, role, callback=None):
         while True:
             response = self._query_job(job_id, role=role)

@@ -17,7 +17,7 @@ import argparse
 import importlib
 import os
 import traceback
-from fate_arch.common import file_utils, log, EngineType
+from fate_arch.common import file_utils, log, EngineType, profile
 from fate_arch.common.base_utils import current_timestamp, timestamp_to_date
 from fate_arch.common.log import schedule_logger, getLogger
 from fate_arch import session
@@ -36,7 +36,7 @@ LOGGER = getLogger()
 
 
 class TaskExecutor(object):
-    REPORT_TO_DRIVER_FIELDS = ["run_ip", "run_pid", "party_status", "start_time", "update_time", "end_time", "elapsed"]
+    REPORT_TO_DRIVER_FIELDS = ["run_ip", "run_pid", "party_status", "update_time", "end_time", "elapsed"]
 
     @classmethod
     def run_task(cls):
@@ -77,9 +77,9 @@ class TaskExecutor(object):
                 "role": role,
                 "party_id": party_id,
                 "run_ip": args.run_ip,
-                "run_pid": executor_pid,
-                "start_time": current_timestamp(),
+                "run_pid": executor_pid
             })
+            start_time = current_timestamp()
             job_conf = job_utils.get_job_conf(job_id)
             job_dsl = job_conf["job_dsl_path"]
             job_runtime_conf = job_conf["job_runtime_conf_path"]
@@ -118,14 +118,16 @@ class TaskExecutor(object):
                               task_version=task_version,
                               model_id=job_parameters.model_id,
                               model_version=job_parameters.model_version,
-                              component_module_name=module_name)
+                              component_module_name=module_name,
+                              job_parameters=job_parameters)
             tracker_client = TrackerClient(job_id=job_id, role=role, party_id=party_id,
                                            component_name=component_name,
                                            task_id=task_id,
                                            task_version=task_version,
                                            model_id=job_parameters.model_id,
                                            model_version=job_parameters.model_version,
-                                           component_module_name=module_name)
+                                           component_module_name=module_name,
+                                           job_parameters=job_parameters)
             run_class_paths = component_parameters_on_party.get('CodePath').split('/')
             run_class_package = '.'.join(run_class_paths[:-2]) + '.' + run_class_paths[-2].replace('.py', '')
             run_class_name = run_class_paths[-1]
@@ -171,7 +173,10 @@ class TaskExecutor(object):
             run_object = getattr(importlib.import_module(run_class_package), run_class_name)()
             run_object.set_tracker(tracker=tracker_client)
             run_object.set_taskid(taskid=job_utils.generate_federated_id(task_id, task_version))
+            # add profile logs
+            profile.profile_start()
             run_object.run(component_parameters_on_party, task_run_args)
+            profile.profile_ends()
             output_data = run_object.save_data()
             if not isinstance(output_data, list):
                 output_data = [output_data]
@@ -196,14 +201,14 @@ class TaskExecutor(object):
         finally:
             try:
                 task_info["end_time"] = current_timestamp()
-                task_info["elapsed"] = task_info["end_time"] - task_info["start_time"]
+                task_info["elapsed"] = task_info["end_time"] - start_time
                 cls.report_task_update_to_driver(task_info=task_info)
             except Exception as e:
                 task_info["party_status"] = TaskStatus.FAILED
                 traceback.print_exc()
                 schedule_logger().exception(e)
         schedule_logger().info(
-            'task {} {} {} start time: {}'.format(task_id, role, party_id, timestamp_to_date(task_info["start_time"])))
+            'task {} {} {} start time: {}'.format(task_id, role, party_id, timestamp_to_date(start_time)))
         schedule_logger().info(
             'task {} {} {} end time: {}'.format(task_id, role, party_id, timestamp_to_date(task_info["end_time"])))
         schedule_logger().info(

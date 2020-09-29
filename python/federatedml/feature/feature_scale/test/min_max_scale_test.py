@@ -1,12 +1,11 @@
 import copy
-
-import numpy as np
 import time
 import unittest
 
+import numpy as np
+from fate_arch.session import computing_session as session
 from sklearn.preprocessing import MinMaxScaler as MMS
 
-from fate_arch.session import computing_session as session
 from federatedml.feature.feature_scale.min_max_scale import MinMaxScale
 from federatedml.feature.instance import Instance
 from federatedml.param.scale_param import ScaleParam
@@ -33,15 +32,15 @@ class TestMinMaxScaler(unittest.TestCase):
         for td in self.test_data:
             # self.test_instance.append(Instance(features=td))
             self.test_instance.append(Instance(features=np.array(td, dtype=float)))
-        self.table_instance = self.data_to_eggroll_table(self.test_instance, str_time)
+        session.init(str_time)
+        self.table_instance = self.data_to_table(self.test_instance)
         self.table_instance.schema['header'] = ["fid" + str(i) for i in range(len(self.test_data[0]))]
 
     def print_table(self, table):
         for v in (list(table.collect())):
             print("id:{}, value:{}".format(v[0], v[1].features))
 
-    def data_to_eggroll_table(self, data, jobid, partition=1, work_mode=0):
-        session.init(jobid, mode=work_mode)
+    def data_to_table(self, data, partition=1):
         data_table = session.parallelize(data, include_key=False, partition=partition)
         return data_table
 
@@ -83,7 +82,7 @@ class TestMinMaxScaler(unittest.TestCase):
 
         scaler = MMS()
         scaler.fit(self.test_data)
-        self.assertListEqual(np.round(self.get_table_instance_feature(fit_instance),6).tolist(),
+        self.assertListEqual(np.round(self.get_table_instance_feature(fit_instance), 6).tolist(),
                              np.around(scaler.transform(self.test_data), 6).tolist())
         data_min = list(scaler.data_min_)
         data_max = list(scaler.data_max_)
@@ -306,7 +305,7 @@ class TestMinMaxScaler(unittest.TestCase):
 
     # test with (area="col", scale_column_idx=[1,2,4], upper=[2,2,2,2,2,2], lower=[1,1,1,1,1,1]):
     def test_fit5(self):
-        scale_column_idx = [1,2,4]
+        scale_column_idx = [1, 2, 4]
         scale_names = ['fid1', 'fid2', 'fid4', 'fid1000']
         scale_param = self.get_scale_param()
         scale_param.mode = "cap"
@@ -355,9 +354,10 @@ class TestMinMaxScaler(unittest.TestCase):
         transform_data = scale_obj.transform(self.table_instance)
         self.assertListEqual(self.get_table_instance_feature(fit_instance),
                              self.get_table_instance_feature(transform_data))
+
     # test with (area="col", scale_column_idx=[1,2,4], upper=[2,2,2,2,2,2], lower=[1,1,1,1,1,1]):
     def test_fit5(self):
-        scale_column_idx = [1,2,4]
+        scale_column_idx = [1, 2, 4]
         scale_names = ['fid1', 'fid2', 'fid1000']
         scale_param = self.get_scale_param()
         scale_param.mode = "cap"
@@ -365,7 +365,7 @@ class TestMinMaxScaler(unittest.TestCase):
         scale_param.feat_upper = 0.8
         scale_param.feat_lower = 0.2
         scale_param.scale_names = scale_names
-        scale_param.scale_col_indexes = [2,4]
+        scale_param.scale_col_indexes = [2, 4]
 
         scale_obj = MinMaxScale(scale_param)
         fit_instance = scale_obj.fit(self.table_instance)
@@ -390,8 +390,8 @@ class TestMinMaxScaler(unittest.TestCase):
             for j, cols in enumerate(line):
                 if j not in scale_column_idx:
                     sklearn_transform_data[i][j] = raw_data[i][j]
-        
-        fit_data = np.round(self.get_table_instance_feature(fit_instance),6).tolist()
+
+        fit_data = np.round(self.get_table_instance_feature(fit_instance), 6).tolist()
         self.assertListEqual(fit_data, sklearn_transform_data)
 
         for i, line in enumerate(sklearn_transform_data):
@@ -407,6 +407,10 @@ class TestMinMaxScaler(unittest.TestCase):
         transform_data = scale_obj.transform(self.table_instance)
         self.assertListEqual(self.get_table_instance_feature(fit_instance),
                              self.get_table_instance_feature(transform_data))
+
+    def tearDown(self):
+        session.stop()
+
 
 if __name__ == "__main__":
     unittest.main()

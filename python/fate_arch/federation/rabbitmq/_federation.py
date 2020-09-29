@@ -126,7 +126,7 @@ class Federation(FederationABC):
             LOGGER.debug(f"[{log_str}]start to remote RDD, total_size={total_size}, partitions={partitions}")
             send_func = _get_partition_send_func(name, tag, total_size, partitions, mq_names, mq=self._mq)
             # noinspection PyProtectedMember
-            v._rdd.mapPartitions(send_func).collect()
+            v._rdd.mapPartitions(send_func).count()
         else:
             LOGGER.debug(f"[{log_str}]start to remote obj")
             channel_infos = self._get_channels(mq_names=mq_names)
@@ -278,8 +278,10 @@ def _receive(channel_info, name, tag):
     for method, properties, body in channel_info.consume():
         LOGGER.debug(f"[rabbitmq._receive]count: {count}, method: {method}, properties: {properties}.")
         if properties.message_id != name or properties.correlation_id != tag:
-            raise RuntimeError(f"rabbitmq got unexpected message, "
-                               f"require {name}.{tag}, got {properties.message_id}.{properties.correlation_id}")
+            continue
+            # todo: fix this
+            # raise RuntimeError(f"rabbitmq got unexpected message, "
+            #                    f"require {name}.{tag}, got {properties.message_id}.{properties.correlation_id}")
 
         # object
         if properties.content_type == 'text/plain':
@@ -296,11 +298,12 @@ def _receive(channel_info, name, tag):
             sc = SparkContext.getOrCreate()
             partitions = properties.headers["partitions"]
             rdd = sc.parallelize(data_iter, partitions)
-            obj = rdd if obj is None else obj.union(rdd)
+            obj = rdd if obj is None else obj.union(rdd).coalesce(partitions)
 
             # trigger action
             obj.persist(get_storage_level())
-            LOGGER.debug(f"count: {obj.count()}")
+            count = obj.count()
+            LOGGER.debug(f"count: {count}")
             channel_info.basic_ack(delivery_tag=method.delivery_tag)
 
             if count == properties.headers["total_size"]:

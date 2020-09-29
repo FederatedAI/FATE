@@ -178,3 +178,6 @@ class HomoDecisionTreeArbiter(DecisionTree):
 
     def traverse_tree(self, *args):
         pass
+
+    def update_instances_node_positions(self, *args):
+        pass

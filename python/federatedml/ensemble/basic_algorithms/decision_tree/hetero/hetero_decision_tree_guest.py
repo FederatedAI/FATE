@@ -455,8 +455,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
     def assign_instance_to_leaves_and_update_weights(self):
         # re-assign samples to leaf nodes and update weights
         self.update_tree([], True)
-        self.data_with_node_assignments = self.data_bin.join(self.inst2node_idx, lambda data_inst, dispatch_info: (
-            data_inst, dispatch_info))
+        self.update_instances_node_positions()
         self.assign_instances_to_new_node(self.max_depth, reach_max_depth=True)
 
     def convert_bin_to_real(self):
@@ -469,6 +468,10 @@ class HeteroDecisionTreeGuest(DecisionTree):
                 bid = self.decode("feature_val", self.tree_node[i].bid, self.tree_node[i].id, self.split_maskdict)
                 real_splitval = self.encode("feature_val", self.bin_split_points[fid][bid], self.tree_node[i].id)
                 self.tree_node[i].bid = real_splitval
+
+    def update_instances_node_positions(self):
+        self.data_with_node_assignments = self.data_bin.join(self.inst2node_idx, lambda data_inst, dispatch_info: (
+            data_inst, dispatch_info))
 
     def fit(self):
 
@@ -486,8 +489,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
                 break
 
             self.sync_node_positions(dep)
-            self.data_with_node_assignments = self.data_bin.join(self.inst2node_idx, lambda data_inst, dispatch_info: (
-                                                                      data_inst, dispatch_info))
+            self.update_instances_node_positions()
 
             split_info = []
             for batch_idx, i in enumerate(range(0, len(self.cur_layer_nodes), self.max_split_nodes)):
