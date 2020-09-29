@@ -1,0 +1,127 @@
+{
+    "data": [
+        {
+            "file": "examples/data/breast_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/breast_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/vehicle_scale_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "vehicle_scale_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/vehicle_scale_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "vehicle_scale_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/student_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "student_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/student_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "student_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/ionosphere_scale_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "ionosphere_scale_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/ionosphere_scale_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "ionosphere_scale_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/motor_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "motor_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/motor_hetero_host_1.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "motor_hetero_host_1",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/motor_hetero_host_2.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "motor_hetero_host_2",
+            "namespace": "experiment",
+            "role": "host_1"
+        }
+    ],
+    "tasks": {
+        "train_binary": {
+            "scripts":"pipeline-hetero-sbt-binary.py"
+        },
+        "train_complete_secure": {
+            "scripts":"pipeline-hetero-sbt-binary-complete-secure.py"
+        },
+        "train_binary_predict": {
+            "scripts":"pipeline-hetero-sbt-binary-with-predict.py"
+        },
+        "train_multi": {
+            "scripts":"pipeline-hetero-sbt-multi.py"
+        },
+        "train_regression": {
+            "scripts":"pipeline-hetero-sbt-regression.py"
+        },
+        "cv_binary": {
+            "scripts":"pipeline-hetero-sbt-binary-cv.py"
+        },
+        "cv_multi": {
+            "scripts":"pipeline-hetero-sbt-multi-cv.py"
+        },
+        "cv_regression": {
+            "scripts":"pipeline-hetero-sbt-regression-cv.py"
+        },
+        "train_binary_with_missing_value": {
+            "scripts":"pipeline-hetero-sbt-with-missing-value.py"
+        },
+        "train_multi_host": {
+            "scripts":"pipeline-hetero-sbt-regression-multi-host.py"
+        },
+        "train_with_early_stopping": {
+            "scripts":"pipeline-hetero-sbt-early-stop.py"
+        }
+    }
+}

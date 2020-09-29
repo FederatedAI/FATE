@@ -1,0 +1,130 @@
+{
+    "data": [
+        {
+            "file": "data/vehicle_scale_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "vehicle_scale_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "data/vehicle_scale_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "vehicle_scale_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "data/breast_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "data/breast_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+                {
+            "file": "data/student_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "student_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "data/student_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "student_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        }
+    ],
+    "binary-mix": {
+        "local": {
+            "script": "./xgboost-sbt-binary.py",
+            "conf": "./xgb_config_binary.yaml"
+        },
+        "pipeline": {
+            "script": "./pipeline-hetero-sbt-mix-binary.py",
+            "conf": "./xgb_config_binary.yaml"
+        },
+        "compare_setting": {
+            "relative_tol": 1e-3
+        }
+    },
+    "multi-mix": {
+        "local": {
+            "script": "./xgboost-sbt-multi.py",
+            "conf": "./xgb_config_multi.yaml"
+        },
+        "pipeline": {
+            "script": "./pipeline-hetero-sbt-mix-multi.py",
+            "conf": "./xgb_config_multi.yaml"
+        },
+        "compare_setting": {
+            "relative_tol": 1e-3
+        }
+    },
+    "regression-mix": {
+        "local": {
+            "script": "./xgboost-sbt-regression.py",
+            "conf": "./xgb_config_reg.yaml"
+        },
+        "pipeline": {
+            "script": "./pipeline-hetero-sbt-mix-regression.py",
+            "conf": "./xgb_config_reg.yaml"
+        },
+        "compare_setting": {
+            "relative_tol": 1e-3
+        }
+    },
+    "binary-layered": {
+        "local": {
+            "script": "./xgboost-sbt-binary.py",
+            "conf": "./xgb_config_binary.yaml"
+        },
+        "pipeline": {
+            "script": "./pipeline-hetero-sbt-layered-binary.py",
+            "conf": "./xgb_config_binary.yaml"
+        },
+        "compare_setting": {
+            "relative_tol": 1e-3
+        }
+    },
+    "multi-layered": {
+        "local": {
+            "script": "./xgboost-sbt-multi.py",
+            "conf": "./xgb_config_multi.yaml"
+        },
+        "pipeline": {
+            "script": "./pipeline-hetero-sbt-layered-multi.py",
+            "conf": "./xgb_config_multi.yaml"
+        },
+        "compare_setting": {
+            "relative_tol": 1e-3
+        }
+    },
+    "regression-layered": {
+        "local": {
+            "script": "./xgboost-sbt-regression.py",
+            "conf": "./xgb_config_reg.yaml"
+        },
+        "pipeline": {
+            "script": "./pipeline-hetero-sbt-layered-regression.py",
+            "conf": "./xgb_config_reg.yaml"
+        },
+        "compare_setting": {
+            "relative_tol": 1e-3
+        }
+    }
+}
