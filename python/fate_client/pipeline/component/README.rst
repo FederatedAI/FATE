@@ -43,7 +43,7 @@ Here is an example to access a component's output:
    output_data = dataio_0.output.data
    output_model = dataio_0.output.model
 
-Meanwhile, to download components' output table or model, please use `task info <task-info>`_ interface.
+Meanwhile, to download components' output table or model, please use `task info <#task-info>`_ interface.
 
 Data
 ~~~~
@@ -80,7 +80,7 @@ data output from ``DataSplit`` module, which always has three data outputs:
 A special data type is ``predict_input``. ``predict_input`` is only used for specifying
 data input when running prediction task.
 
-Here is an example of running prediction by loading a model from the same job:
+Here is an example of running prediction with a upstream model within the same pipeline:
 
 .. code:: python
 
@@ -88,10 +88,10 @@ Here is an example of running prediction by loading a model from the same job:
                           data=Data(predict_input=hetero_data_split_0.output.data.test_data),
                           model=Model(model=hetero_lr_0))
 
-To use new data for prediction task with pre-trained model from a fitted job,
+To run prediction with with new data,
 data source needs to be updated in prediction job. Below is an example from
 `mini demo <../demo/pipeline-mini-demo.py>`__, where data input of original
-`dataio_0` component is set to be the new data from `reader_2`.
+`dataio_0` component is set to be the data output from `reader_2`.
 
 .. code:: python
 
