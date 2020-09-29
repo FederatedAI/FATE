@@ -216,7 +216,10 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
                                                dense_format=self.run_fast_hist
                                                )
 
-        assign_result = self.data_with_node_assignments.mapValues(assign_node_method)
+        if not self.run_fast_hist:
+            assign_result = self.data_with_node_assignments.mapValues(assign_node_method)
+        else:
+            assign_result = self.data_bin_dense_with_position.mapValues(assign_node_method)
         leaf = assign_result.filter(lambda key, value: isinstance(value, tuple) is False)
 
         if self.sample_leaf_pos is None:

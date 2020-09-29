@@ -116,6 +116,7 @@ class RawIntersect(Intersect):
         self.encode_params = intersect_params.encode_params
 
         self.task_id = None
+        self.tracker = None
 
     def intersect_send_id(self, data_instances):
         sid_encode_pair = None
@@ -251,12 +252,12 @@ class RawIntersect(Intersect):
 
         if not self.only_output_key:
             intersect_ids = self._get_value_from_data(intersect_ids, data_instances)
-
-        # if self.task_id is not None:
-        #     namespace = "#".join([str(self.guest_party_id), str(self.host_party_id), "mountain"])
-        #     for k, v in enumerate(recv_ids_list):
-        #         table_name = '_'.join([self.task_id, str(k)])
-        #         v.save_as(table_name, namespace)
-        #         LOGGER.info("save guest_{}'s id in name:{}, namespace:{}".format(k, table_name, namespace))
+        
+        if self.task_id is not None:
+            namespace = "#".join([str(self.guest_party_id), str(self.host_party_id), "mountain"])
+            for k, v in enumerate(recv_ids_list):
+                table_name = '_'.join([self.task_id, str(k)])
+                self.tracker.job_tracker.save_as_table(v, table_name, namespace)
+                LOGGER.info("save guest_{}'s id in name:{}, namespace:{}".format(k, table_name, namespace))
 
         return intersect_ids

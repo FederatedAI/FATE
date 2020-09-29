@@ -6,7 +6,7 @@
     "job_parameters": {
         "work_mode": 1,
         "backend": 0,
-        "task_parallelism": 1,
+        "task_parallelism": 2,
         "eggroll_run": {
             "eggroll.session.processors.per.node": 2
         },

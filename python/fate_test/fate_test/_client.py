@@ -66,3 +66,9 @@ class Clients(object):
                 tunnel.stop()
             except Exception as e:
                 LOGGER.exception(e)
+
+    def contains(self, role_str):
+        return role_str in self._role_str_to_service_id
+
+    def all_roles(self):
+        return sorted(self._role_str_to_service_id.keys())

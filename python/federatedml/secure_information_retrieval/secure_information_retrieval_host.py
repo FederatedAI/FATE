@@ -46,7 +46,7 @@ class SecureInformationRetrievalHost(BaseSecureInformationRetrieval):
     def fit(self, data_inst):
         """
 
-        :param data_inst: DTable, only the key and the value (Instance.label) are used
+        :param data_inst: Table, only the key and the value (Instance.label) are used
         :return:
         """
         LOGGER.info("data count = {}".format(data_inst.count()))
@@ -261,8 +261,8 @@ class SecureInformationRetrievalHost(BaseSecureInformationRetrieval):
 
     def _encrypt_id(self, data_instance, reserve_value=False):
         """
-        Encrypt the key (ID) column of the input DTable
-        :param data_instance: DTable
+        Encrypt the key (ID) column of the input Table
+        :param data_instance: Table
                 reserve_value: (k, (enc_k, v)) if reserve_value = True,
                     otherwise set all values to be minus one (enc_k, -1)
         :return:
@@ -322,7 +322,7 @@ class SecureInformationRetrievalHost(BaseSecureInformationRetrieval):
     def _iteratively_get_id_blocks(self):
         """
 
-        :return: List[DTable]
+        :return: List[Table]
         """
         id_blocks = [None for _ in range(self.block_num)]
         for i in range(self.block_num):
