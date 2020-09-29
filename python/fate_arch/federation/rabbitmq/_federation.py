@@ -298,12 +298,11 @@ def _receive(channel_info, name, tag):
             sc = SparkContext.getOrCreate()
             partitions = properties.headers["partitions"]
             rdd = sc.parallelize(data_iter, partitions)
-            obj = rdd if obj is None else obj.union(rdd).coalesce(partitions)
+            obj = rdd if obj is None else obj.union(rdd)
 
             # trigger action
             obj.persist(get_storage_level())
-            count = obj.count()
-            LOGGER.debug(f"count: {count}")
+            LOGGER.debug(f"count: {obj.count()}")
             channel_info.basic_ack(delivery_tag=method.delivery_tag)
 
             if count == properties.headers["total_size"]:
