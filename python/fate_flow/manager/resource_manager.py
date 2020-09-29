@@ -167,7 +167,8 @@ class ResourceManager(object):
 
     @classmethod
     def return_job_resource(cls, job_id, role, party_id):
-        return cls.resource_for_job(job_id=job_id, role=role, party_id=party_id, operation_type=ResourceOperation.RETURN)
+        return cls.resource_for_job(job_id=job_id, role=role, party_id=party_id,
+                                    operation_type=ResourceOperation.RETURN)
 
     @classmethod
     @DB.connection_context()
@@ -212,7 +213,8 @@ class ResourceManager(object):
                 operate = EngineRegistry.update(updates).where(*filters)
                 apply_status = operate.execute() > 0
                 if not apply_status:
-                    raise RuntimeError(f"{operation_type} resource from engine {engine_name} for job {job_id} resource {operation_type} failed on {role} {party_id}")
+                    raise RuntimeError(
+                        f"{operation_type} resource from engine {engine_name} for job {job_id} resource {operation_type} failed on {role} {party_id}")
             operate_status = True
         except Exception as e:
             schedule_logger(job_id=job_id).warning(e)
@@ -221,7 +223,9 @@ class ResourceManager(object):
             operate_status = False
         finally:
             remaining_cores, remaining_memory = cls.get_remaining_resource(EngineRegistry,
-                                                                           [EngineRegistry.f_engine_type == EngineType.COMPUTING, EngineRegistry.f_engine_name == engine_name])
+                                                                           [
+                                                                               EngineRegistry.f_engine_type == EngineType.COMPUTING,
+                                                                               EngineRegistry.f_engine_name == engine_name])
             operate_msg = "successfully" if operate_status else "failed"
             schedule_logger(job_id=job_id).info(
                 f"{operation_type} job {job_id} resource(cores {cores} memory {memory}) on {role} {party_id} {operate_msg}, remaining cores: {remaining_cores} remaining memory: {remaining_memory}")
@@ -240,9 +244,11 @@ class ResourceManager(object):
             job_parameters.adaptation_parameters["task_nodes"] = computing_engine_info.f_nodes
             job_parameters.adaptation_parameters["task_cores_per_node"] = int(
                 job_parameters.eggroll_run.get("eggroll.session.processors.per.node", DEFAULT_TASK_CORES_PER_NODE))
-            job_parameters.eggroll_run["eggroll.session.processors.per.node"] = job_parameters.adaptation_parameters["task_cores_per_node"]
+            job_parameters.eggroll_run["eggroll.session.processors.per.node"] = job_parameters.adaptation_parameters[
+                "task_cores_per_node"]
         elif job_parameters.computing_engine == ComputingEngine.SPARK:
-            job_parameters.adaptation_parameters["task_nodes"] = min(int(job_parameters.spark_run.get("num-executors")), computing_engine_info.f_nodes) if "num-executors" in job_parameters.spark_run else computing_engine_info.f_nodes
+            job_parameters.adaptation_parameters["task_nodes"] = min(int(job_parameters.spark_run.get("num-executors")),
+                                                                     computing_engine_info.f_nodes) if "num-executors" in job_parameters.spark_run else computing_engine_info.f_nodes
             job_parameters.spark_run["num-executors"] = job_parameters.adaptation_parameters["task_nodes"]
 
             job_parameters.adaptation_parameters["task_cores_per_node"] = int(
@@ -252,7 +258,8 @@ class ResourceManager(object):
             job_parameters.adaptation_parameters["task_memory_per_node"] = int(
                 job_parameters.spark_run.get("executor-memory", DEFAULT_TASK_MEMORY_PER_NODE))
             if job_parameters.adaptation_parameters["task_memory_per_node"] > 0:
-                job_parameters.spark_run["executor-memory"] = job_parameters.adaptation_parameters["task_memory_per_node"]
+                job_parameters.spark_run["executor-memory"] = job_parameters.adaptation_parameters[
+                    "task_memory_per_node"]
 
     @classmethod
     def calculate_job_resource(cls, job_parameters: RunParameters = None, job_id=None, role=None, party_id=None):
@@ -292,18 +299,14 @@ class ResourceManager(object):
     def resource_for_task(cls, task_info, operation_type):
         cores_per_task, memory_per_task = cls.calculate_task_resource(task_info=task_info)
 
-        schedule_logger(job_id=task_info["job_id"]).info(
-            "task {} {} try {} resource successfully".format(task_info["task_id"],
-                                                             task_info["task_version"], operation_type))
-
         filters, updates = cls.update_resource_sql(resource_model=Job,
                                                    cores=cores_per_task,
                                                    memory=memory_per_task,
                                                    operation_type=operation_type,
                                                    )
-        filters.append(Job.f_job_id==task_info["job_id"])
-        filters.append(Job.f_role==task_info["role"])
-        filters.append(Job.f_party_id==task_info["party_id"])
+        filters.append(Job.f_job_id == task_info["job_id"])
+        filters.append(Job.f_role == task_info["role"])
+        filters.append(Job.f_party_id == task_info["party_id"])
         operate = Job.update(updates).where(*filters)
         operate_status = operate.execute() > 0
         if operate_status:
@@ -338,7 +341,8 @@ class ResourceManager(object):
     def get_remaining_resource(cls, resource_model: typing.Union[EngineRegistry, Job], filters):
         remaining_cores, remaining_memory = None, None
         try:
-            objs = resource_model.select(resource_model.f_remaining_cores, resource_model.f_remaining_memory).where(*filters)
+            objs = resource_model.select(resource_model.f_remaining_cores, resource_model.f_remaining_memory).where(
+                *filters)
             if objs:
                 remaining_cores, remaining_memory = objs[0].f_remaining_cores, objs[0].f_remaining_memory
         except Exception as e:
