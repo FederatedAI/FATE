@@ -36,7 +36,7 @@ LOGGER = getLogger()
 
 
 class TaskExecutor(object):
-    REPORT_TO_DRIVER_FIELDS = ["run_ip", "run_pid", "party_status", "start_time", "update_time", "end_time", "elapsed"]
+    REPORT_TO_DRIVER_FIELDS = ["run_ip", "run_pid", "party_status", "update_time", "end_time", "elapsed"]
 
     @classmethod
     def run_task(cls):
@@ -79,6 +79,7 @@ class TaskExecutor(object):
                 "run_ip": args.run_ip,
                 "run_pid": executor_pid
             })
+            start_time = current_timestamp()
             job_conf = job_utils.get_job_conf(job_id)
             job_dsl = job_conf["job_dsl_path"]
             job_runtime_conf = job_conf["job_runtime_conf_path"]
@@ -200,14 +201,14 @@ class TaskExecutor(object):
         finally:
             try:
                 task_info["end_time"] = current_timestamp()
-                task_info["elapsed"] = task_info["end_time"] - task_info["start_time"]
+                task_info["elapsed"] = task_info["end_time"] - start_time
                 cls.report_task_update_to_driver(task_info=task_info)
             except Exception as e:
                 task_info["party_status"] = TaskStatus.FAILED
                 traceback.print_exc()
                 schedule_logger().exception(e)
         schedule_logger().info(
-            'task {} {} {} start time: {}'.format(task_id, role, party_id, timestamp_to_date(task_info["start_time"])))
+            'task {} {} {} start time: {}'.format(task_id, role, party_id, timestamp_to_date(start_time)))
         schedule_logger().info(
             'task {} {} {} end time: {}'.format(task_id, role, party_id, timestamp_to_date(task_info["end_time"])))
         schedule_logger().info(
