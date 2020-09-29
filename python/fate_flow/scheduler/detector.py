@@ -19,7 +19,6 @@ from fate_arch.storage import StorageSessionBase
 from fate_arch.common.log import detect_logger
 from fate_flow.scheduler import FederatedScheduler
 from fate_flow.entity.types import JobStatus, TaskStatus, EndStatus
-from fate_flow.settings import JOB_START_TIMEOUT
 from fate_flow.utils import cron, job_utils
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.operation import JobSaver
@@ -37,7 +36,7 @@ class Detector(cron.Cron):
         detect_logger().info('start to detect running task..')
         count = 0
         try:
-            running_tasks = JobSaver.query_task(party_status=TaskStatus.RUNNING, run_on=True, run_ip=RuntimeConfig.JOB_SERVER_HOST, only_latest=False)
+            running_tasks = JobSaver.query_task(party_status=TaskStatus.RUNNING, run_on_this_party=True, run_ip=RuntimeConfig.JOB_SERVER_HOST, only_latest=False)
             stop_job_ids = set()
             for task in running_tasks:
                 count += 1
@@ -62,7 +61,7 @@ class Detector(cron.Cron):
                 jobs = JobSaver.query_job(job_id=job_id)
                 if jobs:
                     stop_jobs.add(jobs[0])
-            cls.request_stop_jobs(jobs=stop_jobs, stop_msg="task executor process abort", stop_status=JobStatus.FAILED)
+            cls.request_stop_jobs(jobs=stop_jobs, stop_msg="task executor process abort", stop_status=JobStatus.CANCELED)
         except Exception as e:
             detect_logger().exception(e)
         finally:

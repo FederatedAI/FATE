@@ -160,7 +160,7 @@ class Task(DataBaseModel):
     # this party configuration
     f_role = CharField(max_length=50, index=True)
     f_party_id = CharField(max_length=10, index=True)
-    f_run_on = BooleanField(null=True, index=True, default=False)
+    f_run_on_this_party = BooleanField(null=True, index=True, default=False)
     f_run_ip = CharField(max_length=100, null=True)
     f_run_pid = IntegerField(null=True)
     f_party_status = CharField(max_length=50)
