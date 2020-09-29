@@ -126,7 +126,7 @@ class Federation(FederationABC):
             LOGGER.debug(f"[{log_str}]start to remote RDD, total_size={total_size}, partitions={partitions}")
             send_func = _get_partition_send_func(name, tag, total_size, partitions, mq_names, mq=self._mq)
             # noinspection PyProtectedMember
-            v._rdd.mapPartitions(send_func).collect()
+            v._rdd.mapPartitions(send_func).count()
         else:
             LOGGER.debug(f"[{log_str}]start to remote obj")
             channel_infos = self._get_channels(mq_names=mq_names)
@@ -261,7 +261,8 @@ def _partition_snd(kvs, name, tag, total_size, partitions, mq_names, mq):
             data.clear()
     _send_kv(name=name, tag=tag, data=data, channel_infos=channel_infos, total_size=total_size,
              partitions=partitions)
-    return data
+    
+    return True
 
 
 def _get_partition_send_func(name, tag, total_size, partitions, mq_names, mq):
