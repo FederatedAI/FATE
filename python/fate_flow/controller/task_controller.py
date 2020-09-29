@@ -37,13 +37,13 @@ class TaskController(object):
     INITIATOR_COLLECT_FIELDS = ["status", "party_status", "start_time", "update_time", "end_time", "elapsed"]
 
     @classmethod
-    def create_task(cls, role, party_id, run_on, task_info):
+    def create_task(cls, role, party_id, run_on_this_party, task_info):
         task_info["role"] = role
         task_info["party_id"] = party_id
         task_info["status"] = TaskStatus.WAITING
         task_info["party_status"] = TaskStatus.WAITING
         task_info["create_time"] = base_utils.current_timestamp()
-        task_info["run_on"] = run_on
+        task_info["run_on_this_party"] = run_on_this_party
         if "task_id" not in task_info:
             task_info["task_id"] = job_utils.generate_task_id(job_id=task_info["job_id"], component_name=task_info["component_name"])
         if "task_version" not in task_info:
@@ -139,8 +139,8 @@ class TaskController(object):
             p = job_utils.run_subprocess(job_id=job_id, config_dir=task_dir, process_cmd=process_cmd, log_dir=task_log_dir)
             if p:
                 task_info["party_status"] = TaskStatus.RUNNING
+                #task_info["run_pid"] = p.pid
                 task_info["start_time"] = current_timestamp()
-                task_info["run_pid"] = p.pid
                 task_executor_process_start_status = True
             else:
                 task_info["party_status"] = TaskStatus.FAILED

@@ -70,6 +70,8 @@ class TaskScheduler(object):
                     elif status_code == SchedulingStatusCode.FAILED:
                         scheduling_status_code = SchedulingStatusCode.FAILED
                         break
+            else:
+                schedule_logger(job_id=job.f_job_id).info("have cancel signal, pass start job {} tasks".format(job.f_job_id))
         schedule_logger(job_id=job.f_job_id).info("finish scheduling job {} tasks".format(job.f_job_id))
         return scheduling_status_code, initiator_tasks_group.values()
 
