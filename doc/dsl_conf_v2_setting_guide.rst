@@ -144,18 +144,18 @@ Besides the dsl conf, user also need to prepare a submit runtime conf to set the
 
   .. code-block:: json
 
-    "initiator": {
+     "initiator": {
         "role": "guest",
         "party_id": 10000
-    }
+     }
 
 
 :role: All the roles involved in this modeling task should be specified. Each role comes with role name and corresponding party id(s).
-Ids are always specified in the form of list since there may exist multiple parties of the same role.
+       Ids are always specified in the form of list since there may exist multiple parties of the same role.
 
   .. code-block:: json
 
-    "role": {
+     "role": {
         "guest": [
           10000
         ],
@@ -165,17 +165,130 @@ Ids are always specified in the form of list since there may exist multiple part
         "arbiter": [
           10000
         ]
-    }
+     }
 
+:job_parameters: job runtime parameters; please note that to enable DSL V2, **dsl_version** must be set to **2**.
 
-:job_parameters: to enable DSL V2, **dsl_version** must be set to 2.
-For information on other job parameters, please refer to FATE Flow `document <../python/fate_flow/README.rst>`_.
+.. list-table:: Job Parameters
+   :widths: 20 20 30 30
+   :header-rows: 1
 
-  .. code-block:: json
+   * - Parameter Name
+     - Default Value
+     - Acceptable Values
+     - Information
 
-    "job_parameters": {
-        "dsl_version": 2
-    }
+   * - job_type
+     - train
+     - train, predict
+     - job type
+
+   * - work_mode
+     - 0
+     - 0, 1
+     - 0 for standalone, 1 for cluster
+
+   * - backend
+     - 0
+     - 0, 1
+     - 0 for EGGROLL, 1 for SPARK
+
+   * - federated_mode
+     - MULTIPLE
+     - SINGLE, MULTIPLE
+     - federated mode
+
+   * - computing_mode
+     - EGGROLL
+     - EGGROLL, SPARK
+     - engine for computation
+
+   * - storage_engine
+     - EGGROLL
+     - STANDALONE, EGGROLL, HDFS, MYSQL
+     - engine for storage
+
+   * - engines_address
+     - please refer to the example below
+     - \-
+     - addresses for engines
+
+   * - dsl_version
+     - 1
+     - 1, 2
+     - version for dsl parser
+
+   * - federated_status_collect_type
+     - PUSH
+     - PUSH, PULL
+     - type of collecting federated status
+
+   * - timeout
+     - 604800
+     - positive int
+     - time elapse (in second) for a job to timeout
+
+   * - task_parallelism
+     - 2
+     - positive int
+     - maximum number of tasks allowed to run in parallel
+
+   * - task_nodes
+     - 1
+     - positive int
+     - number of computing nodes
+
+   * - task_cores_per_node
+     - 2
+     - positive int
+     - number of CPU cores used by every computing node
+
+   * - model_id
+     - \-
+     - \-
+     - if of model, needed for prediction task
+
+   * - model_version
+     - \-
+     - \-
+     - version of model, needed for prediction task
+
+conf example:
+
+.. code-block:: json
+
+     job_parameters:{
+        "job_type": "train",
+        "work_mode": 1,
+        "backend": 0,
+        "dsl_version": 2,
+        "computing_engine": "EGGROLL",
+        "federation_engine": "EGGROLL",
+        "storage_engine": "EGGROLL",
+        "engines_address": {
+            "computing": {
+                "host": "127.0.0.1",
+                "port": 9370
+            },
+            "federation": {
+                "host": "127.0.0.1",
+                "port": 9370
+            },
+            "storage": {
+                "host": "172.0.0.1",
+                "port": 9370
+            }
+        },
+     "federated_mode": "MULTIPLE",
+     "federated_status_collect_type": "PUSH",
+     "timeout": 36000,
+     "task_parallelism": 2,
+     "task_nodes": 1,
+     "task_cores_per_node": 2,
+     "task_memory_per_node": 512,
+     "model_id": "arbiter-10000#guest-9999#host-9999_10000#model",
+     "model_version": "2020092416160711633252"
+     }
 
 
 :role_parameters: Parameters that differ from party to party should be indicated here. Please note that role parameters need to be wrapped into a list.
