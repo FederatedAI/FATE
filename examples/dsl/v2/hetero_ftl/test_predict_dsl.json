@@ -1,0 +1,48 @@
+{
+    "components": {
+        "dataio_0": {
+            "input": {
+                "data": {
+                    "data": [
+                        "reader_0.data"
+                    ]
+                },
+                "model": [
+                    "pipeline.dataio_0.model"
+                ]
+            },
+            "module": "DataIO",
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
+        },
+        "reader_0": {
+            "module": "Reader",
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
+        },
+        "hetero_ftl_0": {
+            "input": {
+                "data": {
+                    "test_data": [
+                        "dataio_0.data"
+                    ]
+                },
+                "model": [
+                    "pipeline.hetero_ftl_0.model"
+                ]
+            },
+            "module": "FTL",
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
+        }
+    }
+}
