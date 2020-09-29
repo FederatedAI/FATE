@@ -278,9 +278,7 @@ def _receive(channel_info, name, tag):
     for method, properties, body in channel_info.consume():
         LOGGER.debug(f"[rabbitmq._receive]count: {count}, method: {method}, properties: {properties}.")
         if properties.message_id != name or properties.correlation_id != tag:
-            raise RuntimeError(f"rabbitmq got unexpected message, "
-                               f"require {name}.{tag}, got {properties.message_id}.{properties.correlation_id}")
-
+            continue
         # object
         if properties.content_type == 'text/plain':
             obj = p_loads(body)
