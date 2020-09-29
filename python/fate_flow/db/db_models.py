@@ -124,6 +124,17 @@ class Job(DataBaseModel):
     f_party_id = CharField(max_length=10, index=True)
     f_is_initiator = BooleanField(null=True, index=True, default=False)
     f_progress = IntegerField(null=True, default=0)
+
+    f_engine_name = CharField(max_length=50, null=True, index=True)
+    f_engine_type = CharField(max_length=10, null=True, index=True)
+    f_cores = IntegerField(index=True, default=0)
+    f_memory = IntegerField(index=True, default=0)  # MB
+    f_remaining_cores = IntegerField(index=True, default=0)
+    f_remaining_memory = IntegerField(index=True, default=0)  # MB
+    f_resource_in_use = BooleanField(index=True, default=False)
+    f_apply_resource_time = BigIntegerField(null=True)
+    f_return_resource_time = BigIntegerField(null=True)
+
     f_create_time = BigIntegerField()
     f_update_time = BigIntegerField(null=True)
     f_start_time = BigIntegerField(null=True)
@@ -350,25 +361,6 @@ class EngineRegistry(DataBaseModel):
     class Meta:
         db_table = "t_engine_registry"
         primary_key = CompositeKey('f_engine_name', 'f_engine_type')
-
-
-class ResourceRecord(DataBaseModel):
-    f_job_id = CharField(max_length=25)
-    f_role = CharField(max_length=50, index=True)
-    f_party_id = CharField(max_length=10, index=True)
-    f_engine_name = CharField(max_length=50, index=True)
-    f_engine_type = CharField(max_length=10, index=True)
-    f_cores = IntegerField(index=True)
-    f_memory = IntegerField(index=True)  # MB
-    f_remaining_cores = IntegerField(index=True, default=0)
-    f_remaining_memory = IntegerField(index=True, default=0)  # MB
-    f_in_use = BooleanField(index=True, default=True)
-    f_create_time = BigIntegerField()
-    f_update_time = BigIntegerField(null=True)
-
-    class Meta:
-        db_table = "t_resource_record"
-        primary_key = CompositeKey('f_job_id', 'f_role', 'f_party_id')
 
 
 class DBQueue(DataBaseModel):

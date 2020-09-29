@@ -15,7 +15,7 @@
 #
 
 import math
-import operator
+import typing
 
 import peewee
 
@@ -162,60 +162,70 @@ class ResourceManager(object):
             return False
 
     @classmethod
-    @DB.connection_context()
     def apply_for_job_resource(cls, job_id, role, party_id):
-        engine_name, cores, memory = cls.calculate_job_resource(job_id=job_id, role=role, party_id=party_id)
-        create = cls.create_resource_record(job_id=job_id,
-                                            role=role,
-                                            party_id=party_id,
-                                            engine_type=EngineType.COMPUTING,
-                                            engine_name=engine_name,
-                                            cores=cores,
-                                            memory=memory)
-        if create:
-            apply_status, remaining_cores, remaining_memory = cls.update_resource(model=EngineRegistry,
-                                                                                  cores=cores,
-                                                                                  memory=memory,
-                                                                                  operation_type=ResourceOperation.APPLY,
-                                                                                  engine_type=EngineType.COMPUTING,
-                                                                                  engine_name=engine_name,
-                                                                                  )
-            if apply_status:
-                schedule_logger(job_id=job_id).info(
-                    f"apply job {job_id} resource(cores {cores} memory {memory}) on {role} {party_id} successfully")
-                return True
-            else:
-                schedule_logger(job_id=job_id).warning(
-                    f"apply job {job_id} resource(cores {cores} memory {memory}) on {role} {party_id} failed, remaining_cores: {remaining_cores}, remaining_memory: {remaining_memory}")
-                return False
-        else:
-            return False
+        return cls.resource_for_job(job_id=job_id, role=role, party_id=party_id, operation_type=ResourceOperation.APPLY)
+
+    @classmethod
+    def return_job_resource(cls, job_id, role, party_id):
+        return cls.resource_for_job(job_id=job_id, role=role, party_id=party_id, operation_type=ResourceOperation.RETURN)
 
     @classmethod
     @DB.connection_context()
-    def return_job_resource(cls, job_id, role, party_id):
+    def resource_for_job(cls, job_id, role, party_id, operation_type):
+        operate_status = False
         engine_name, cores, memory = cls.calculate_job_resource(job_id=job_id, role=role, party_id=party_id)
-        record = cls.get_resource_record(job_id=job_id, role=role, party_id=party_id)
-        if not record:
+        try:
+            with DB.atomic():
+                updates = {
+                    Job.f_engine_type: EngineType.COMPUTING,
+                    Job.f_engine_name: engine_name,
+                    Job.f_cores: cores,
+                    Job.f_memory: memory,
+                }
+                filters = [
+                    Job.f_job_id == job_id,
+                    Job.f_role == role,
+                    Job.f_party_id == party_id,
+                ]
+                if operation_type == ResourceOperation.APPLY:
+                    updates[Job.f_remaining_cores] = cores
+                    updates[Job.f_remaining_memory] = memory
+                    updates[Job.f_resource_in_use] = True
+                    updates[Job.f_apply_resource_time] = base_utils.current_timestamp()
+                    filters.append(Job.f_resource_in_use == False)
+                elif operation_type == ResourceOperation.RETURN:
+                    updates[Job.f_resource_in_use] = False
+                    updates[Job.f_return_resource_time] = base_utils.current_timestamp()
+                    filters.append(Job.f_resource_in_use == True)
+                operate = Job.update(updates).where(*filters)
+                record_status = operate.execute() > 0
+                if not record_status:
+                    raise RuntimeError(f"record job {job_id} resource {operation_type} failed on {role} {party_id}")
+
+                filters, updates = cls.update_resource_sql(resource_model=EngineRegistry,
+                                                           cores=cores,
+                                                           memory=memory,
+                                                           operation_type=operation_type,
+                                                           )
+                filters.append(EngineRegistry.f_engine_type == EngineType.COMPUTING)
+                filters.append(EngineRegistry.f_engine_name == engine_name)
+                operate = EngineRegistry.update(updates).where(*filters)
+                apply_status = operate.execute() > 0
+                if not apply_status:
+                    raise RuntimeError(f"{operation_type} resource from engine {engine_name} for job {job_id} resource {operation_type} failed on {role} {party_id}")
+            operate_status = True
+        except Exception as e:
+            schedule_logger(job_id=job_id).warning(e)
+            schedule_logger(job_id=job_id).warning(
+                f"{operation_type} job {job_id} resource(cores {cores} memory {memory}) on {role} {party_id} failed")
+            operate_status = False
+        finally:
+            remaining_cores, remaining_memory = cls.get_remaining_resource(EngineRegistry,
+                                                                           [EngineRegistry.f_engine_type == EngineType.COMPUTING, EngineRegistry.f_engine_name == engine_name])
+            operate_msg = "successfully" if operate_status else "failed"
             schedule_logger(job_id=job_id).info(
-                f"can not found job {job_id} on {role} {party_id} in use resource record, pass return resource")
-            return False
-        return_status, remaining_cores, remaining_memory = cls.update_resource(model=EngineRegistry,
-                                                                               cores=cores,
-                                                                               memory=memory,
-                                                                               operation_type=ResourceOperation.RETURN,
-                                                                               engine_type=EngineType.COMPUTING,
-                                                                               engine_name=engine_name,
-                                                                               )
-        if return_status:
-            schedule_logger(job_id=job_id).info(
-                f"return job {job_id} resource(cores {cores} memory {memory}) on {role} {party_id} successfully")
-            cls.disable_resource_record(job_id=job_id, role=role, party_id=party_id)
-            return True
-        else:
-            schedule_logger(job_id=job_id).info(
-                f"return job {job_id} resource(cores {cores} memory {memory}) on {role} {party_id} failed, remaining_cores: {remaining_cores}, remaining_memory: {remaining_memory}")
-            return False
+                f"{operation_type} job {job_id} resource(cores {cores} memory {memory}) on {role} {party_id} {operate_msg}, remaining cores: {remaining_cores} remaining memory: {remaining_memory}")
+            return operate_status
 
     @classmethod
     def job_engine_support_parameters(cls, job_parameters: RunParameters):
@@ -286,51 +296,55 @@ class ResourceManager(object):
             "task {} {} try {} resource successfully".format(task_info["task_id"],
                                                              task_info["task_version"], operation_type))
 
-        update_status, remaining_cores, remaining_memory = cls.update_resource(model=ResourceRecord,
-                                                                               cores=cores_per_task,
-                                                                               memory=memory_per_task,
-                                                                               operation_type=operation_type,
-                                                                               job_id=task_info["job_id"],
-                                                                               role=task_info["role"],
-                                                                               party_id=task_info["party_id"],
-                                                                               )
-        if update_status:
+        filters, updates = cls.update_resource_sql(resource_model=Job,
+                                                   cores=cores_per_task,
+                                                   memory=memory_per_task,
+                                                   operation_type=operation_type,
+                                                   )
+        filters.append(Job.f_job_id==task_info["job_id"])
+        filters.append(Job.f_role==task_info["role"])
+        filters.append(Job.f_party_id==task_info["party_id"])
+        operate = Job.update(updates).where(*filters)
+        operate_status = operate.execute() > 0
+        if operate_status:
             schedule_logger(job_id=task_info["job_id"]).info(
                 "task {} {} {} resource successfully".format(task_info["task_id"],
                                                              task_info["task_version"], operation_type))
         else:
-            schedule_logger(job_id=task_info["job_id"]).info(
+            schedule_logger(job_id=task_info["job_id"]).warning(
                 "task {} {} {} resource failed".format(task_info["task_id"],
                                                        task_info["task_version"], operation_type))
-        return update_status
+        return operate_status
+
+    @classmethod
+    def update_resource_sql(cls, resource_model: typing.Union[EngineRegistry, Job], cores, memory, operation_type):
+        if operation_type == ResourceOperation.APPLY:
+            filters = [
+                resource_model.f_remaining_cores >= cores,
+                resource_model.f_remaining_memory >= memory
+            ]
+            updates = {resource_model.f_remaining_cores: resource_model.f_remaining_cores - cores,
+                       resource_model.f_remaining_memory: resource_model.f_remaining_memory - memory}
+        elif operation_type == ResourceOperation.RETURN:
+            filters = []
+            updates = {resource_model.f_remaining_cores: resource_model.f_remaining_cores + cores,
+                       resource_model.f_remaining_memory: resource_model.f_remaining_memory + memory}
+        else:
+            raise RuntimeError(f"can not support {operation_type} resource operation type")
+        return filters, updates
 
     @classmethod
     @DB.connection_context()
-    def update_resource(cls, model, cores, memory, operation_type, **kwargs):
-        filters = []
-        primary_filters = []
-        for p_k in model.get_primary_keys_name():
-            primary_filters.append(operator.attrgetter(p_k)(model) == kwargs[p_k.lstrip("f").lstrip("_")])
-        filters.extend(primary_filters)
-        if operation_type == ResourceOperation.APPLY:
-            filters.append(model.f_remaining_cores >= cores)
-            filters.append(model.f_remaining_memory >= memory)
-            operate = model.update({model.f_remaining_cores: model.f_remaining_cores - cores,
-                                    model.f_remaining_memory: model.f_remaining_memory - memory}
-                                   ).where(*filters)
-        elif operation_type == ResourceOperation.RETURN:
-            operate = model.update({model.f_remaining_cores: model.f_remaining_cores + cores,
-                                    model.f_remaining_memory: model.f_remaining_memory + memory}
-                                   ).where(*filters)
-        else:
-            raise RuntimeError(f"can not support {operation_type} resource operation type")
-        update_status = operate.execute() > 0
-        if not update_status:
-            objs = model.select(model.f_remaining_cores, model.f_remaining_memory).where(*primary_filters)
-            remaining_cores, remaining_memory = objs[0].f_remaining_cores, objs[0].f_remaining_memory
-        else:
-            remaining_cores, remaining_memory = None, None
-        return update_status, remaining_cores, remaining_memory
+    def get_remaining_resource(cls, resource_model: typing.Union[EngineRegistry, Job], filters):
+        remaining_cores, remaining_memory = None, None
+        try:
+            objs = resource_model.select(resource_model.f_remaining_cores, resource_model.f_remaining_memory).where(*filters)
+            if objs:
+                remaining_cores, remaining_memory = objs[0].f_remaining_cores, objs[0].f_remaining_memory
+        except Exception as e:
+            schedule_logger().exception(e)
+        finally:
+            return remaining_cores, remaining_memory
 
     @classmethod
     @DB.connection_context()
