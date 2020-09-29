@@ -385,55 +385,55 @@ Multi-host configuration
 
 For multi-host modeling case, all the host's party ids should be list in the role field.
 
-  .. code-block:: json
+.. code-block:: json
 
-      "role": {
-        "guest": [
-          10000
-        ],
-        "host": [
-          10000, 10001, 10002
-        ],
-        "arbiter": [
-          10000
-        ]
-      }
+   "role": {
+      "guest": [
+        10000
+      ],
+      "host": [
+        10000, 10001, 10002
+      ],
+      "arbiter": [
+        10000
+      ]
+   }
 
 Each parameter set for host should also be list in a list. The number of elements should match the number of hosts.
 
-  .. code-block:: json
-  
-      "host": {
-          "0": {
-            "reader_0": {
-              "table":
-                {
-                  "name": "hetero_breast_host_0",
-                  "namespace": "hetero_breast_host"
-                }
-              }
-            }
-          },
-          "1": {
-            "reader_0": {
-              "table":
-                {
-                  "name": "hetero_breast_host_1",
-                  "namespace": "hetero_breast_host"
-                }
-              }
-            }
-          },
-          "2": {
-            "reader_0": {
-              "table":
-                {
-                  "name": "hetero_breast_host_2",
-                  "namespace": "hetero_breast_host"
-                }
-              }
+.. code-block:: json
+
+   "host": {
+      "0": {
+        "reader_0": {
+          "table":
+            {
+              "name": "hetero_breast_host_0",
+              "namespace": "hetero_breast_host"
             }
           }
+        }
+      },
+      "1": {
+        "reader_0": {
+          "table":
+            {
+              "name": "hetero_breast_host_1",
+              "namespace": "hetero_breast_host"
+            }
+          }
+        }
+      },
+      "2": {
+        "reader_0": {
+          "table":
+            {
+              "name": "hetero_breast_host_2",
+              "namespace": "hetero_breast_host"
+            }
+          }
+        }
+      }
 
 The parameters set in algorithm parameters need not be copied into host role parameters.
 Algorithm parameters will be copied for every party.
