@@ -13,16 +13,18 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+
 import argparse
 
 from pipeline.backend.pipeline import PipeLine
-from pipeline.component.dataio import DataIO
-from pipeline.component.reader import Reader
-from pipeline.interface.data import Data
-from pipeline.utils.tools import load_job_config
+from pipeline.component import DataIO, HomoNN, Evaluation
+from pipeline.component import Reader
+from pipeline.interface import Data
+from pipeline.utils.tools import load_job_config, JobConfig
+from tensorflow.keras.layers import Dense
+from tensorflow.keras import optimizers
 
 
-# noinspection PyPep8Naming
 class dataset(object):
     breast = {
         "guest": {"name": "breast_homo_guest", "namespace": "experiment"},
@@ -40,9 +42,14 @@ class dataset(object):
     }
 
 
-def run_homo_nn_pipeline(config, namespace, data: dict, nn_component, num_host):
+def main(config="../../config.yaml", param="param_conf.yaml", namespace=""):
+    num_host = 1
+    data = dataset.vehicle
     if isinstance(config, str):
         config = load_job_config(config)
+
+    if isinstance(param, str):
+        param = JobConfig.load_from_file(param)
 
     guest_train_data = data["guest"]
     host_train_data = data["host"][:num_host]
@@ -65,29 +72,32 @@ def run_homo_nn_pipeline(config, namespace, data: dict, nn_component, num_host):
         .algorithm_param(with_label=True, output_format="dense")
     dataio_0.get_party_instance(role='host', party_id=hosts).algorithm_param(with_label=True)
 
+    homo_nn_0 = HomoNN(name="homo_nn_0", encode_label=True, max_iter=param["epoch"], batch_size=-1,
+                       early_stop={"early_stop": "diff", "eps": 0.0001}) \
+        .add(Dense(units=5, input_shape=(18,), activation="relu")) \
+        .add(Dense(units=4, activation="sigmoid")) \
+        .compile(optimizer=optimizers.Adam(learning_rate=param["lr"]), metrics=["accuracy"],
+                 loss="categorical_crossentropy")
+
+    evaluation_0 = Evaluation(name='evaluation_0', eval_type="multi", metrics=["accuracy", "precision", "recall"])
+
     pipeline.add_component(reader_0)
     pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
-    pipeline.add_component(nn_component, data=Data(train_data=dataio_0.output.data))
+    pipeline.add_component(homo_nn_0, data=Data(train_data=dataio_0.output.data))
+    pipeline.add_component(evaluation_0, data=Data(data=homo_nn_0.output.data))
     pipeline.compile()
     pipeline.fit(backend=config.backend, work_mode=config.work_mode)
-    print(pipeline.get_component("homo_nn_0").get_summary())
-    pipeline.deploy_component([dataio_0, nn_component])
-
-    # predict
-    predict_pipeline = PipeLine()
-    predict_pipeline.add_component(reader_0)
-    predict_pipeline.add_component(pipeline,
-                                   data=Data(predict_input={pipeline.dataio_0.input.data: reader_0.output.data}))
-    # run predict model
-    predict_pipeline.predict(backend=config.backend, work_mode=config.work_mode)
+    return pipeline.get_component("evaluation_0").get_summary()
 
 
-def runner(main_func):
-    parser = argparse.ArgumentParser("PIPELINE DEMO")
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser("BENCHMARK-QUALITY PIPELINE JOB")
     parser.add_argument("-config", type=str,
                         help="config file")
+    parser.add_argument("-param", type=str,
+                        help="config file for params")
     args = parser.parse_args()
     if args.config is not None:
-        main_func(args.config)
+        main(args.config, args.param)
     else:
-        main_func()
+        main(args.param)
