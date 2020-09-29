@@ -17,6 +17,7 @@ import uuid
 import operator
 from typing import List
 
+from fate_arch.common import EngineType
 from fate_arch.computing import ComputingEngine
 from fate_arch.storage import StorageEngine
 from fate_arch.common.base_utils import current_timestamp, serialize_b64, deserialize_b64
@@ -112,9 +113,11 @@ class Tracker(object):
             view_data[k] = v
         return view_data
 
-    def save_output_data(self, computing_table, output_storage_engine, output_storage_address: dict):
+    def save_output_data(self, computing_table, output_storage_engine, output_storage_address: dict,
+                         output_table_namespace=None, output_table_name=None):
         if computing_table:
-            output_table_namespace, output_table_name = data_utils.default_output_table_info(task_id=self.task_id, task_version=self.task_version)
+            if not output_table_namespace or not output_table_name:
+                output_table_namespace, output_table_name = data_utils.default_output_table_info(task_id=self.task_id, task_version=self.task_version)
             schedule_logger(self.job_id).info(
                 'persisting the component output temporary table to {} {}'.format(output_table_namespace,
                                                                                   output_table_name))
@@ -317,6 +320,12 @@ class Tracker(object):
         except Exception as e:
             schedule_logger(self.job_id).exception(e)
             return 0
+
+    def save_as_table(self, computing_table, name, namespace):
+        self.save_output_data(computing_table=computing_table,
+                              output_storage_engine=self.job_parameters.storage_engine,
+                              output_storage_address=self.job_parameters.engines_address.get(EngineType.STORAGE, {}),
+                              output_table_namespace=namespace, output_table_name=name)
 
     @DB.connection_context()
     def read_metrics_from_db(self, metric_namespace: str, metric_name: str, data_type, job_level=False):

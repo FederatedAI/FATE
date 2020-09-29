@@ -38,8 +38,9 @@ def cli():
 
 
 @cli.command(name="config")
-@click.argument("cmd", type=click.Choice(["new", "show", "edit"], case_sensitive=False))
-def _config(cmd):
+@click.argument("cmd", type=click.Choice(["new", "show", "edit", "check"], case_sensitive=False))
+@click.option('-r', '--role', required=False, type=str)
+def _config(cmd, role):
     """
     new|show|edit testsuite config
     """
@@ -50,6 +51,24 @@ def _config(cmd):
         click.echo(f"priority config path is {priority_config()}")
     if cmd == "edit":
         click.edit(filename=priority_config())
+    if cmd == "check":
+        if not role:
+            click.echo("use --role to specify role to check, "
+                       "such as --role guest_0 to check 0th guest, "
+                       "or --role all to check all roles in config")
+            return
+        config_inst = _parse_config(priority_config())
+        with Clients(config_inst) as clients:
+            if role != "all" and not clients.contains(role):
+                click.echo(f"[X]{role} not in config")
+                return
+            roles = clients.all_roles() if role == "all" else [role]
+            for r in roles:
+                try:
+                    version, address = clients[r].check_connection()
+                except Exception as e:
+                    click.echo(f"[X]connection {address} fail, role is {r}, exception is {e.args}")
+                click.echo(f"[✓]connection {address} ok, fate version is {version}, role is {r}")
 
 
 @LOGGER.catch
