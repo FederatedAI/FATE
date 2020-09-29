@@ -194,8 +194,7 @@ class HeteroFastDecisionTreeGuest(HeteroDecisionTreeGuest):
                 break
 
             if self.tree_type == plan.tree_type_dict['guest_feat_only']:
-                self.data_with_node_assignments = self.data_bin.join(self.inst2node_idx, lambda data_inst, dispatch_info:(
-                    data_inst, dispatch_info))
+                self.update_instances_node_positions()
 
             split_info = []
             for batch_idx, i in enumerate(range(0, len(self.cur_layer_nodes), self.max_split_nodes)):
@@ -211,15 +210,21 @@ class HeteroFastDecisionTreeGuest(HeteroDecisionTreeGuest):
                 self.assign_instances_to_new_node_with_node_plan(dep, tree_action, host_idx)
 
         if self.tree_type == plan.tree_type_dict['host_feat_only']:
-            target_idx = self.host_id_to_idx(self.get_node_plan(0)[1])
-            leaves = self.sync_host_leaf_nodes(target_idx)
-            self.tree_node = self.handle_leaf_nodes(leaves)
-            sample_pos = self.sync_sample_leaf_pos(idx=target_idx)
-            self.sample_weights = self.extract_sample_weights_from_node(sample_pos)
+            target_idx = self.host_id_to_idx(self.get_node_plan(0)[1])  # get host id
+            leaves = self.sync_host_leaf_nodes(target_idx)  # get leaves node from host
+            self.tree_node = self.handle_leaf_nodes(leaves)  # decrypt node info
+            sample_pos = self.sync_sample_leaf_pos(idx=target_idx)  # get final sample leaf id from host
+
+            # checking sample number
+            assert sample_pos.count() == self.data_bin.count(), 'numbers of sample positions failed to match, ' \
+                                                                'sample leaf pos number:{}, instance number {}'.\
+                format(sample_pos.count(), self.data_bin.count())
+
+            self.sample_weights = self.extract_sample_weights_from_node(sample_pos)  # extract leaf weights
         else:
             if self.cur_layer_nodes:
-                self.assign_instance_to_leaves_and_update_weights()
-            self.convert_bin_to_real()
+                self.assign_instance_to_leaves_and_update_weights() # guest local updates
+            self.convert_bin_to_real()  # convert bin id to real value features
 
     def layered_mode_fit(self):
 
@@ -245,8 +250,8 @@ class HeteroFastDecisionTreeGuest(HeteroDecisionTreeGuest):
 
             if layer_target_host_id != -1:
                 self.sync_node_positions(dep, idx=-1)
-            self.data_with_node_assignments = self.data_bin.join(self.inst2node_idx, lambda data_inst, dispatch_info: (
-                data_inst, dispatch_info))
+
+            self.update_instances_node_positions()
 
             split_info = []
             for batch_idx, i in enumerate(range(0, len(self.cur_layer_nodes), self.max_split_nodes)):

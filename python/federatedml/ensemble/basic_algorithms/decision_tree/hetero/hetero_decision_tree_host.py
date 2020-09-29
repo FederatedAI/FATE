@@ -190,6 +190,9 @@ class HeteroDecisionTreeHost(DecisionTree):
                                                             suffix=(dep,))
 
     def assign_instances_to_new_node(self, dispatch_node_host, dep=-1):
+
+        # assist inst2node_idx computation
+
         LOGGER.info("start to find host dispath of depth {}".format(dep))
         dispatch_node_method = functools.partial(self.assign_a_instance,
                                                  sitename=self.sitename,
@@ -344,6 +347,14 @@ class HeteroDecisionTreeHost(DecisionTree):
         self.bin_sparse_points = bin_sparse_points
         self.data_bin_dense = data_bin_dense  # For fast histogram
 
+    def update_instances_node_positions(self):
+
+        # join data and inst2node_idx to update current node positions of samples
+        if self.run_fast_hist:
+            self.data_bin_dense_with_position = self.data_bin_dense.join(self.inst2node_idx, lambda v1, v2: (v1, v2))
+        else:
+            self.data_with_node_assignments = self.data_bin.join(self.inst2node_idx, lambda v1, v2: (v1, v2))
+
     def fit(self):
         
         LOGGER.info("begin to fit host decision tree")
@@ -356,10 +367,7 @@ class HeteroDecisionTreeHost(DecisionTree):
                 break
 
             self.inst2node_idx = self.sync_node_positions(dep)
-            if self.run_fast_hist:
-                self.data_bin_dense_with_position = self.data_bin_dense.join(self.inst2node_idx, lambda v1, v2: (v1, v2))
-            else:
-                self.data_with_node_assignments = self.data_bin.join(self.inst2node_idx, lambda v1, v2: (v1, v2))
+            self.update_instances_node_positions()
 
             batch = 0
             for i in range(0, len(self.cur_layer_nodes), self.max_split_nodes):

@@ -46,7 +46,7 @@ class Guest(SqnSyncBase):
             sample_rate = 1.0
         else:
             sample_rate = sample_size / n
-        sampled_data = data_instances.sample(sample_rate, random_seed)
+        sampled_data = data_instances.sample(fraction=sample_rate, seed=random_seed)
 
         batch_index = sampled_data.mapValues(lambda x: None)
         self.batch_data_index_transfer.remote(obj=batch_index,

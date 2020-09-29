@@ -98,6 +98,8 @@ class HeteroFastSecureBoostingTreeHost(HeteroSecureBoostingTreeHost):
         tree.set_runtime_idx(self.component_properties.local_partyid)
 
         tree_type, target_host_id = self.get_tree_plan(epoch_idx)
+
+        # target_host_id and self_host_id and target_host_id are related to prediction
         tree.set_tree_work_mode(tree_type, target_host_id)
         tree.set_self_host_id(self.component_properties.local_partyid)
 
