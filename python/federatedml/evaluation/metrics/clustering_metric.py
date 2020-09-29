@@ -79,11 +79,13 @@ class DaviesBouldinIndex(object):
         if len(dist_table)==1:
             return np.nan
         max_dij_list = []
+        d=0
         for i in range(0, len(dist_table)):
             dij_list = []
             for j in range(0, len(dist_table)):
                 if j != i:
-                    dij_list.append((dist_table[i] + dist_table[j]) / (cluster_dist[i + j] ** 0.5))
+                    dij_list.append((dist_table[i] + dist_table[j]) / (cluster_dist[d] ** 0.5))
+                    d +=1
             max_dij = max(dij_list)
-        max_dij_list.append(max_dij)
+            max_dij_list.append(max_dij)
         return np.sum(max_dij_list) / len(dist_table)
