@@ -312,6 +312,11 @@ class DAGScheduler(Cron):
         dsl_parser = schedule_utils.get_job_dsl_parser(dsl=job.f_dsl,
                                                        runtime_conf=job.f_runtime_conf,
                                                        train_runtime_conf=job.f_train_runtime_conf)
+        if not canceled:
+            job_events = JobQueue.query_event(job_id=job.f_job_id, initiator_role=job.f_role, initiator_party_id=job.f_party_id)
+            if job_events and job_events[0].f_job_status == JobStatus.CANCELED:
+                canceled = True
+                schedule_logger(job_id=job.f_job_id).info("get cancel job {} event from queue".format(job.f_job_id))
         task_scheduling_status_code, tasks = TaskScheduler.schedule(job=job, dsl_parser=dsl_parser, canceled=canceled)
         tasks_status = [task.f_status for task in tasks]
         new_job_status = cls.calculate_job_status(task_scheduling_status_code=task_scheduling_status_code, tasks_status=tasks_status)
@@ -454,13 +459,16 @@ class DAGScheduler(Cron):
                 if task_scheduling_status_code == SchedulingStatusCode.HAVE_NEXT:
                     return JobStatus.RUNNING
                 else:
+                    # have waiting with no next
                     pass
-            # 3 with no next and 4
+            # have waiting with no next or 4
             for status in sorted(EndStatus.status_list(), key=lambda s: StatusSet.get_level(status=s), reverse=True):
                 if status == TaskStatus.COMPLETE:
                     continue
                 elif status in tmp_status_set:
                     return status
+            if len(tmp_status_set) == 2 and TaskStatus.WAITING in tmp_status_set and TaskStatus.COMPLETE in tmp_status_set and task_scheduling_status_code == SchedulingStatusCode.NO_NEXT:
+                return JobStatus.CANCELED
 
             raise Exception("Calculate job status failed: {}".format(tasks_status))
 
