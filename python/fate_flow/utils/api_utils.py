@@ -129,7 +129,7 @@ def local_api(job_id, method, endpoint, json_body, api_version=API_VERSION, try_
 def forward_api(role, request_config):
     endpoint = request_config.get('header', {}).get('endpoint')
     ip = get_base_config(role, {}).get("host", "127.0.0.1")
-    port = get_base_config(role, {}).get("http_port")
+    port = get_base_config(role, {}).get("port")
     url = "http://{}:{}{}".format(ip, port, endpoint)
     method = request_config.get('header', {}).get('method', 'post')
     audit_logger().info('api request: {}'.format(url))

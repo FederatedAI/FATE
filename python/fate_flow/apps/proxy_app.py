@@ -40,9 +40,9 @@ def start_proxy(role):
     else:
         response = federated_api(job_id=_job_id,
                                  method='POST',
-                                 endpoint='/{}/do'.format(role),
+                                 endpoint='/forward/{}/do'.format(role),
                                  src_party_id=request_config.get('header').get('src_party_id'),
-                                 dest_party_id=request_config.get('header').get('src_party_id'),
+                                 dest_party_id=request_config.get('header').get('dest_party_id'),
                                  src_role=None,
                                  json_body=request_config,
                                  federated_mode=FederatedMode.MULTIPLE)
