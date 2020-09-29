@@ -44,7 +44,7 @@ Job Runtime Conf用于设置各个参与方的信息,任务的参数及各个组
   | storage_engine | EGGROLL | STANDALONE、EGGROLL、HDFS、MYSQL | 存储引擎类型 |
   | engines_address | 见示例 | - | 各个引擎的地址 |
   | dsl_version | 1        | 1、2                             | dsl解析器的版本号 |
-  | ederated_status_collect_type | PUSH | PUSH、PULL | 状态收集模式 |
+  | federated_status_collect_type | PUSH | PUSH、PULL | 状态收集模式 |
   | timeout | 604800 | 正整数 | 任务超时时间,单位秒 |
   | task_parallelism | 2 | 正整数 | task并行度 |
   | task_nodes | 1 | 正整数 | 使用的计算节点数 |
