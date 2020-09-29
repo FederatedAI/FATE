@@ -312,7 +312,7 @@ class DAGScheduler(Cron):
         dsl_parser = schedule_utils.get_job_dsl_parser(dsl=job.f_dsl,
                                                        runtime_conf=job.f_runtime_conf,
                                                        train_runtime_conf=job.f_train_runtime_conf)
-        task_scheduling_status_code, tasks = TaskScheduler.schedule(job=job, dsl_parser=dsl_parser)
+        task_scheduling_status_code, tasks = TaskScheduler.schedule(job=job, dsl_parser=dsl_parser, canceled=canceled)
         tasks_status = [task.f_status for task in tasks]
         new_job_status = cls.calculate_job_status(task_scheduling_status_code=task_scheduling_status_code, tasks_status=tasks_status)
         if new_job_status == JobStatus.WAITING and canceled:
