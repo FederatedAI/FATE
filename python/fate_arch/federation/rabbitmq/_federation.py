@@ -261,7 +261,8 @@ def _partition_snd(kvs, name, tag, total_size, partitions, mq_names, mq):
             data.clear()
     _send_kv(name=name, tag=tag, data=data, channel_infos=channel_infos, total_size=total_size,
              partitions=partitions)
-    return data
+    
+    return 1
 
 
 def _get_partition_send_func(name, tag, total_size, partitions, mq_names, mq):
