@@ -24,7 +24,7 @@ class LongTextField(TextField):
     field_type = 'LONGTEXT'
 
 
-class JSONField(TextField):
+class JSONField(LongTextField):
     def db_value(self, value):
         if value is None:
             value = {}

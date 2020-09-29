@@ -221,7 +221,7 @@ class JobController(object):
 
     @classmethod
     def stop_job(cls, job, stop_status):
-        tasks = JobSaver.query_task(job_id=job.f_job_id, role=job.f_role, party_id=job.f_party_id)
+        tasks = JobSaver.query_task(job_id=job.f_job_id, role=job.f_role, party_id=job.f_party_id, reverse=True)
         for task in tasks:
             TaskController.stop_task(task=task, stop_status=stop_status)
         # Job status depends on the final operation result and initiator calculate
