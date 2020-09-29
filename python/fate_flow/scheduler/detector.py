@@ -37,7 +37,7 @@ class Detector(cron.Cron):
         detect_logger().info('start to detect running task..')
         count = 0
         try:
-            running_tasks = JobSaver.query_task(party_status=TaskStatus.RUNNING, run_on=True, run_ip=RuntimeConfig.JOB_SERVER_HOST, only_latest=False)
+            running_tasks = JobSaver.query_task(party_status=TaskStatus.RUNNING, run_on_this_party=True, run_ip=RuntimeConfig.JOB_SERVER_HOST, only_latest=False)
             stop_job_ids = set()
             for task in running_tasks:
                 count += 1
