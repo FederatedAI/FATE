@@ -131,7 +131,7 @@ def run_suite(replace, data_namespace_mangling, config, include, exclude, glob,
                 if not skip_dsl_jobs:
                     echo.stdout_newline()
                     try:
-                        _submit_job(client, suite)
+                        _submit_job(client, suite, namespace)
                     except Exception as e:
                         raise RuntimeError(f"exception occur while submit job for {suite.path}") from e
 
@@ -155,6 +155,7 @@ def run_suite(replace, data_namespace_mangling, config, include, exclude, glob,
                 echo.stdout_newline()
 
     echo.farewell()
+    echo.echo(f"testsuite namespace: {namespace}", fg='red')
 
 
 @LOGGER.catch
@@ -223,6 +224,7 @@ def run_benchmark(data_namespace_mangling, config, include, exclude, glob, skip_
             finally:
                 echo.stdout_newline()
     echo.farewell()
+    echo.echo(f"testsuite namespace: {namespace}", fg='red')
 
 
 def _parse_config(config):
@@ -344,7 +346,7 @@ def _delete_data(clients: Clients, suite: Testsuite):
             echo.stdout_newline()
 
 
-def _submit_job(clients: Clients, suite: Testsuite):
+def _submit_job(clients: Clients, suite: Testsuite, namespace: str):
     # submit jobs
     with click.progressbar(length=len(suite.jobs),
                            label="jobs   ",
@@ -368,6 +370,13 @@ def _submit_job(clients: Clients, suite: Testsuite):
                     echo.file(f"[jobs] {resp.job_id} ", nl=False)
                     suite.update_status(job_name=job.job_name, job_id=resp.job_id)
 
+                    # add notes
+                    notes = f"{job.job_name}@{suite.path}@{namespace}"
+                    for role, party_id_list in job.job_conf.role.items():
+                        for i, party_id in enumerate(party_id_list):
+                            clients[f"{role}_{i}"].add_notes(job_id=resp.job_id, role=role, party_id=party_id,
+                                                             notes=notes)
+
                 if isinstance(resp, QueryJobResponse):
                     job_progress.running(resp.status, resp.progress)
 
@@ -375,7 +384,8 @@ def _submit_job(clients: Clients, suite: Testsuite):
 
             # noinspection PyBroadException
             try:
-                response = clients["guest_0"].submit_job(job, _call_back)
+                response = clients["guest_0"].submit_job(job=job, callback=_call_back)
+
             except Exception:
                 exception_id = str(uuid.uuid1())
                 job_progress.exception(exception_id)
