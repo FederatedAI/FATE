@@ -439,6 +439,14 @@ Below lists input and output elements of each component.
      - model
      - model
 
+   * - `Hetero KMeans`_
+     - Hetero KMeans
+     - Build Hetero KMeans module through multiple parties
+     - train_data; validate_data; predict_input
+     - data
+     - model
+     - model
+
 .. _DataIO: ../../federatedml/util/README.rst
 .. _Intersect: ../../federatedml/statistic/intersect/README.rst
 .. _Federated Sampling: ../../federatedml/feature/README.rst
@@ -461,6 +469,7 @@ Below lists input and output elements of each component.
 .. _Data Split: ../../federatedml/model_selection/data_split/README.rst
 .. _Homo OneHot Encoder: ../../federatedml/feature/README.rst
 .. _Column Expand: ../../federatedml/feature/README.rst
+.. _Hetero KMeans: ../../federatedml/unsupervised_learning/kmeans/README.rst
 
 
 Params

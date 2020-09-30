@@ -200,8 +200,7 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
      - SecureBoost模型，由模型本身和模型参数组成
 
    * - `Homo OneHot Encoder`_
-     - 横向
-     - OneHotEncoder
+     - 横向 OneHotEncoder
      - 将一列转换为One-Hot格式。
      - Table, 值为Instance
      - 转换了带有新列名的Table
@@ -232,6 +231,14 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
      -
      -
 
+   * - `Hetero KMeans`_
+     - 纵向 K均值算法
+     - 构建K均值模块
+     - Table, 值为Instance
+     - Table, 值为Instance; Arbiter方输出2个Table
+     -
+     - Hetero KMeans模型
+
 .. _DataIO: util/README.rst
 .. _Intersect: statistic/intersect/README.rst
 .. _Federated Sampling: feature/README.rst
@@ -255,6 +262,7 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
 .. _Homo OneHot Encoder: feature/README.rst
 .. _Column Expand: feature/README.rst
 .. _Secure Information Retrieval: secure_information_retrieval
+.. _Hetero KMeans: unsupervised_learning/kmeans/README.rst
 
 
 安全协议
@@ -274,6 +282,8 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
 * `Diffne Hellman Key Exchange`_
 
 * `SecretShare MPC Protocol(SPDZ)`_
+
+* `Oblivious Transfer`_
 
 
 .. _Encrypt: secureprotol/README.rst#encrypt

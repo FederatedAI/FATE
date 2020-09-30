@@ -61,4 +61,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if args.config is not None:
         main(args.param)
-    main()
+    else:
+        main()

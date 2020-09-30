@@ -229,6 +229,14 @@ Algorithm List
      -
      -
 
+   * - `Hetero KMeans`_
+     - Hetero KMeans
+     - Build Hetero KMeans module through multiple parties
+     - Table, values are instance
+     - Table, values are instance; Arbier outputs 2 Tables
+     -
+     - Hetero KMeans Model
+
 .. _DataIO: util/README.rst
 .. _Intersect: statistic/intersect/README.rst
 .. _Federated Sampling: feature/README.rst
@@ -252,6 +260,7 @@ Algorithm List
 .. _Homo OneHot Encoder: feature/README.rst
 .. _Column Expand: feature/README.rst
 .. _Secure Information Retrieval: secure_information_retrieval
+.. _Hetero KMeans: unsupervised_learning/kmeans/README.rst
 
 
 Secure Protocol
