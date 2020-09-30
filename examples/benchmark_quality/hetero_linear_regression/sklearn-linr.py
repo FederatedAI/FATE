@@ -23,7 +23,7 @@ from sklearn.metrics import mean_squared_error, r2_score, explained_variance_sco
 from pipeline.utils.tools import JobConfig
 
 
-def main(param="./lr_config.yaml"):
+def main(param="./linr_config.yaml"):
     # obtain config
     if isinstance(param, str):
         param = JobConfig.load_from_file(param)
@@ -50,7 +50,7 @@ def main(param="./lr_config.yaml"):
     result = {"r2_score": r2,
               "mean_squared_error": mse,
               "root_mean_squared_error": rmse,
-              "explained_variance": explained_var,}
+              "explained_variance": explained_var}
     return result
 
 
@@ -61,4 +61,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if args.param is not None:
         main(args.param)
-    main()
+    else:
+        main()

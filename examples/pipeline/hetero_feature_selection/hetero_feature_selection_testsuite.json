@@ -1,0 +1,66 @@
+{
+    "data": [
+        {
+            "file": "examples/data/breast_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/breast_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/breast_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_host",
+            "namespace": "experiment",
+            "role": "host_1"
+        }
+    ],
+    "pipeline_tasks": {
+        "iv-top-k": {
+            "script": "pipeline-hetero-feature-selection-iv-top-k.py"
+        },
+        "iv-selection": {
+            "script": "pipeline-hetero-feature-selection-iv-selection.py"
+        },
+        "multi-host": {
+            "script": "pipeline-hetero-feature-selection-multi-host.py"
+        },
+        "selection": {
+            "script": "pipeline-hetero-feature-selection-selection.py"
+        },
+        "manually": {
+            "script": "pipeline-hetero-feature-selection-manually.py"
+        },
+        "select-cols": {
+            "script": "pipeline-hetero-feature-selection-select-cols.py"
+        },
+        "select-col-names": {
+             "script": "pipeline-hetero-feature-selection-select-col-names.py"
+        },
+        "percentage-value": {
+            "script": "pipeline-hetero-feature-selection-percentage-value.py"
+        },
+        "manually-left": {
+            "script": "pipeline-hetero-feature-selection-manually-left.py"
+        },
+        "multi-iso": {
+            "script": "pipeline-hetero-feature-selection-multi-iso.py"
+        },
+        "fast-sbt": {
+            "script": "pipeline-hetero-feature-selection-fast-sbt.py"
+        },
+        "single-predict": {
+            "script": "pipeline-hetero-feature-selection-single-predict.py"
+        }
+    }
+}

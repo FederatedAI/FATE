@@ -42,11 +42,11 @@ def cli():
 @click.option('-r', '--role', required=False, type=str)
 def _config(cmd, role):
     """
-    new|show|edit testsuite config
+    new|show|edit fate test config
     """
     if cmd == "new":
-        create_config(Path("testsuite_config.yaml"))
-        click.echo(f"create config file: testsuite_config.yaml")
+        create_config(Path("fate_test_config.yaml"))
+        click.echo(f"create config file: fate_test_config.yaml")
     if cmd == "show":
         click.echo(f"priority config path is {priority_config()}")
     if cmd == "edit":
@@ -80,7 +80,7 @@ def _config(cmd, role):
 @click.option('-e', '--exclude', type=click.Path(exists=True), multiple=True,
               help="exclude *testsuite.json under these paths")
 @click.option('-c', '--config', default=priority_config().__str__(), type=click.Path(exists=True),
-              help=f"config path, defaults to {priority_config()}")
+              help=f"specify config path")
 @click.option('-r', '--replace', default="{}", type=JSON_STRING,
               help="a json string represents mapping for replacing fields in data/conf/dsl")
 @click.option("-g", '--glob', type=str,
@@ -144,7 +144,8 @@ def run_suite(replace, data_namespace_mangling, config, include, exclude, glob,
                 if not skip_data:
                     _delete_data(client, suite)
                 echo.echo(f"[{i + 1}/{len(suites)}]elapse {timedelta(seconds=int(time.time() - start))}", fg='red')
-                echo.echo(suite.pretty_final_summary(), fg='red')
+                if not skip_dsl_jobs:
+                    echo.echo(suite.pretty_final_summary(), fg='red')
 
             except Exception:
                 exception_id = uuid.uuid1()
@@ -165,7 +166,7 @@ def run_suite(replace, data_namespace_mangling, config, include, exclude, glob,
 @click.option('-e', '--exclude', type=click.Path(exists=True), multiple=True,
               help="exclude *benchmark.json under these paths")
 @click.option('-c', '--config', default=priority_config().__str__(), type=click.Path(exists=True),
-              help=f"config path, defaults to {priority_config()}")
+              help=f"specify config path")
 @click.option('-g', '--glob', type=str,
               help="glob string to filter sub-directory of path specified by <include>")
 @click.option('-t', '--tol', type=float,
@@ -190,7 +191,7 @@ def run_benchmark(data_namespace_mangling, config, include, exclude, glob, skip_
     suites = _load_testsuites(includes=include, excludes=exclude, glob=glob,
                               suffix="benchmark.json", suite_type="benchmark")
     for suite in suites:
-        echo.echo(f"\tdataset({len(suite.dataset)}) benchmark pairs({len(suite.pairs)}) {suite.path}")
+        echo.echo(f"\tdataset({len(suite.dataset)}) benchmark groups({len(suite.pairs)}) {suite.path}")
     if not yes and not click.confirm("running?"):
         return
     with Clients(config_inst) as client:
@@ -413,9 +414,13 @@ def _run_pipeline_jobs(config: Config, suite: Testsuite, namespace: str, data_na
 def _run_benchmark_pairs(config: Config, suite: BenchmarkSuite, tol: float,
                          namespace: str, data_namespace_mangling: bool):
     # pipeline demo goes here
-    for pair in suite.pairs:
+    pair_n = len(suite.pairs)
+    for i, pair in enumerate(suite.pairs):
+        echo.echo(f"Running {i + 1} of {pair_n} groups: {pair.pair_name}")
         results = {}
+        job_n = len(pair.jobs)
         for job in pair.jobs:
+            echo.echo(f"Running {i + 1} of {job_n} jobs: {job.job_name}")
             job_name, script_path, conf_path = job.job_name, job.script_path, job.conf_path
             param = Config.load_from_file(conf_path)
             mod = _load_module_from_script(script_path)

@@ -1,0 +1,50 @@
+{
+    "data": [
+        {
+            "file": "examples/data/nus_wide_train_guest.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "nus_wide_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/nus_wide_train_host.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "nus_wide_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/nus_wide_validate_guest.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "nus_wide_guest_val",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/nus_wide_validate_host.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "nus_wide_host_val",
+            "namespace": "experiment",
+            "role": "host_0"
+        }
+    ],
+    "pipeline_tasks": {
+        "ftl": {
+            "script": "./pipeline-hetero-ftl-plain.py"
+        },
+        "ftl_predict": {
+            "script": ".//pipeline-hetero-ftl-with-predict.py"
+        },
+        "encrypted_ftl": {
+            "script": "./pipeline-hetero-ftl-encrypted.py"
+        },
+        "comm_eff_ftl": {
+            "script": ".//pipeline-hetero-ftl-communication-efficient.py"
+        }
+    }
+}

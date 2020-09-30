@@ -17,7 +17,7 @@
             "role": "guest_0"
         }
     ],
-    "binary": {
+    "linear-regression": {
         "local": {
             "script": "./sklearn-linr.py",
             "conf": "./linr_config.yaml"
