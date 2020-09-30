@@ -15,6 +15,9 @@
 --
 local ngx = ngx
 local new_timer = ngx.timer.at
+local yaml_parser = require "yaml_parser"
+local io = io
+
 local _M = {
     _VERSION = '0.1'
 }
@@ -30,8 +33,15 @@ if not route_cache then
 end
 
 local function reload_route_table()
-    route_cache:set("9999", { fateflow = "127.0.0.1:9360" })
-    route_cache:set("10000", { fateflow = "127.0.0.1:9362" })
+    --route_cache:set("9999", { fateflow = "127.0.0.1:9360" })
+    --route_cache:set("10000", { fateflow = "127.0.0.1:9362" })
+    local file = io.open("/Users/jarviszeng/Work/Project/FDN/FATE/c/proxy/conf/route_table.yaml", "r")    -- 使用 io.open() 函数，以只读模式打开文件
+    local content = file:read("*a")
+    file:close()
+    local yaml_table = yaml_parser.parse(content)
+    for k, v in pairs(yaml_table)do
+        route_cache:set(k, v)
+    end
     ngx.log(ngx.INFO, "reload route table")
 end
 

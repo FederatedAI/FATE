@@ -19,19 +19,27 @@ local _M = {
 
 local ngx = ngx
 local route_table = require "route_table"
+local math = require "math"
+local string = require "string"
 
-local function get_upstream_server(dest_party_id, dest_service)
-    ngx.log(ngx.INFO, string.format("try to get %s %s upstream", dest_party_id, dest_service))
+local function get_server_address(server)
+    return string.format("%s:%s", server["host"], server["port"])
+end
+
+local function get_dest_server(dest_party_id, dest_service)
+    ngx.log(ngx.INFO, string.format("try to get %s %s server", dest_party_id, dest_service))
 
     local route = route_table.get_route()
     local party_services = route:get(dest_party_id)
+    local server
     if party_services ~= nil then
-        local server = party_services[dest_service]
-        ngx.log(ngx.INFO, server)
-        return server
+        local service = party_services[dest_service]
+        server = get_server_address(service[math.random(1, #service)])
     else
-        local default_party_services = route:get("default")
+        local default_proxy = route:get("default")["proxy"]
+        server = get_server_address(default_proxy[math.random(1, #default_proxy)])
     end
+    ngx.log(ngx.INFO, string.format("get %s %s server: %s", dest_party_id, dest_service, server))
     return server
 end
 
@@ -42,8 +50,8 @@ end
 
 function routing()
     local request_headers = get_request_dest()
-    local forward_server = get_upstream_server(request_headers["dest-party-id"], request_headers["service"])
-    ngx.ctx.fate_cluster_server = forward_server
+    local dest_forward_server = get_dest_server(tonumber(request_headers["dest-party-id"]), request_headers["service"])
+    ngx.ctx.fate_cluster_server = dest_forward_server
 end
 
 routing()
