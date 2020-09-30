@@ -250,3 +250,10 @@ When tensor is created from a provided data, data is split into n shares and eve
 .. code-block:: python
    
    x.einsum(y, "ij,kj->ik")  # dot
+
+
+Oblivious Transfer
+==================
+
+FATE implements Oblivious Transfer(OT) protocol based on work by Eduard Hauck and Julian Loss.
+For more information, please refer `here <https://eprint.iacr.org/2017/1011>`_.

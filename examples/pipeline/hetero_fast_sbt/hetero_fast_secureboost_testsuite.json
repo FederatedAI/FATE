@@ -1,0 +1,83 @@
+{
+    "data": [
+        {
+            "file": "examples/data/breast_hetero_guest.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "breast_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/breast_hetero_host.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "breast_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/breast_hetero_host.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "breast_hetero_host",
+            "namespace": "experiment",
+            "role": "host_1"
+        },
+        {
+            "file": "examples/data/vehicle_scale_hetero_guest.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "vehicle_scale_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/vehicle_scale_hetero_host.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "vehicle_scale_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/student_hetero_guest.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "student_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/student_hetero_host.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "student_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        }
+    ],
+    "pipeline_tasks": {
+        "mix_train_binary": {
+            "script": "./pipeline-hetero-sbt-mix-binary.py"
+        },
+        "mix_train_multi": {
+            "script": "./pipeline-hetero-sbt-mix-multi.py"
+        },
+        "mix_train_regression": {
+            "script": "./pipeline-hetero-sbt-mix-regression.py"
+        },
+        "mix_train_multi_host": {
+            "script": "./pipeline-hetero-sbt-mix-binary-multihost.py"
+        },
+        "layered_train_binary": {
+            "script": "./pipeline-hetero-sbt-layered-binary.py"
+        },
+        "layered_train_multi": {
+            "script": "./pipeline-hetero-sbt-layered-multi.py"
+        },
+        "layered_train_regression": {
+            "script": "./pipeline-hetero-sbt-layered-regression.py"
+        }
+    }
+}
