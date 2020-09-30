@@ -402,7 +402,9 @@ def _load_module_from_script(script_path):
 
 def _run_pipeline_jobs(config: Config, suite: Testsuite, namespace: str, data_namespace_mangling: bool):
     # pipeline demo goes here
-    for pipeline_job in suite.pipeline_jobs:
+    job_n = len(suite.pipeline_jobs)
+    for i, pipeline_job in enumerate(suite.pipeline_jobs):
+        echo.echo(f"Running {i + 1} of {job_n} jobs: {pipeline_job.job_name}")
         job_name, script_path = pipeline_job.job_name, pipeline_job.script_path
         mod = _load_module_from_script(script_path)
         if data_namespace_mangling:
