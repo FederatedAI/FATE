@@ -131,7 +131,7 @@ summary for each benchmark job group.
 
    fate_test benchmark-quality -i hetero_linr_sklearn_benchmark.json
 
-output comparison summary ::
+.. code-block:: bash
 
     +------------+--------------------+---------------------+--------------------+-------------------------+
     | Model Name |      r2_score      |  mean_squared_error | explained_variance | root_mean_squared_error |
