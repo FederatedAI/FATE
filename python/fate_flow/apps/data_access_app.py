@@ -94,9 +94,9 @@ def download_upload(access_module):
 def upload_history():
     request_data = request.json
     if request_data.get('job_id'):
-        tasks = JobSaver.query_task(component_name='upload_0', status=StatusSet.COMPLETE, job_id=request_data.get('job_id'), run_on=True)
+        tasks = JobSaver.query_task(component_name='upload_0', status=StatusSet.COMPLETE, job_id=request_data.get('job_id'), run_on_this_party=True)
     else:
-        tasks = JobSaver.query_task(component_name='upload_0', status=StatusSet.COMPLETE, run_on=True)
+        tasks = JobSaver.query_task(component_name='upload_0', status=StatusSet.COMPLETE, run_on_this_party=True)
     limit = request_data.get('limit')
     if not limit:
         tasks = tasks[-1::-1]

@@ -62,7 +62,7 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
     def fit(self, data_inst):
         """
 
-        :param data_inst: DTable, only the key column of the DTable is used
+        :param data_inst: Table, only the key column of the Table is used
         :return:
         """
         # 0. Raw retrieval
@@ -257,10 +257,10 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
     def _fake_blocks(self, id_list_intersect, id_list_host, replacement=True):
         """
         Randomly sample self.block_num - 1 blocks with the same size as id_list_intersect from id_list_host
-        :param id_list_intersect: DTable in the form (intersect_ENC_id, -1)
-        :param id_list_host: DTable in the form (ENC_id, -1)
+        :param id_list_intersect: Table in the form (intersect_ENC_id, -1)
+        :param id_list_host: Table in the form (ENC_id, -1)
         :param replacement: bool
-        :return: id_list_array: List[DTable] with disjoint (ENC_id, -1) DTables
+        :return: id_list_array: List[Table] with disjoint (ENC_id, -1) Tables
         """
         intersect_count = id_list_intersect.count()
         self.target_block_index = random.randint(0, self.block_num - 1)
@@ -279,7 +279,7 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
     def _id_list_array_indexation(id_list_array):
         """
 
-        :param id_list_array: List(DTable)
+        :param id_list_array: List(Table)
         :return:
         """
         for i in range(len(id_list_array)):
@@ -290,9 +290,9 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
     def _find_intersection(id_list_guest, id_list_host):
         """
         Find the intersection set of ENC_id
-        :param id_list_guest: DTable in the form (EEg, -1)
-        :param id_list_host: DTable in the form (EEh, -1)
-        :return: DTable in the form (EEi, -1)
+        :param id_list_guest: Table in the form (EEg, -1)
+        :param id_list_host: Table in the form (EEh, -1)
+        :return: Table in the form (EEi, -1)
         """
         return id_list_guest.join(id_list_host, lambda v, u: -1)
 
@@ -335,8 +335,8 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
 
     def _encrypt_id(self, data_instance, reserve_original_key=False):
         """
-        Encrypt the key (ID) column of the input DTable
-        :param data_instance: DTable
+        Encrypt the key (ID) column of the input Table
+        :param data_instance: Table
                 reserve_original_key: (ori_key, enc_key) if reserve_original_key == True, otherwise (enc_key, -1)
         :return:
         """
@@ -386,10 +386,11 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
     @staticmethod
     def take_exact_sample(data_inst, exact_num):
         """
-        Sample an exact number of instances from a DTable
-        :param data_inst: DTable
+        Sample an exact number of instances from a Table
+        :param data_inst: Table
         :param exact_num: int
-        :return: DTable
+        :return: Table
+        """
         """
         data_inst_count = data_inst.count()
         rate = exact_num / data_inst_count
@@ -407,6 +408,8 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
             sample_inst = session.parallelize(sample_inst_list,
                                               partition=sample_inst.partitions,
                                               include_key=True)
+        """
+        sample_inst = data_inst.sample(num=exact_num)
         return sample_inst
 
     def _sync_block_num(self):
@@ -448,7 +451,7 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
     def _iteratively_get_encrypted_values(self):
         """
 
-        :return: DTable, bytes
+        :return: Table, bytes
         """
         id_block_ciphertext = None
         nonce = None
