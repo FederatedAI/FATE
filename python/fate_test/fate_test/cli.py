@@ -80,7 +80,7 @@ def _config(cmd, role):
 @click.option('-e', '--exclude', type=click.Path(exists=True), multiple=True,
               help="exclude *testsuite.json under these paths")
 @click.option('-c', '--config', default=priority_config().__str__(), type=click.Path(exists=True),
-              help=f"config path, defaults to {priority_config()}")
+              help=f"specify config path")
 @click.option('-r', '--replace', default="{}", type=JSON_STRING,
               help="a json string represents mapping for replacing fields in data/conf/dsl")
 @click.option("-g", '--glob', type=str,
@@ -165,7 +165,7 @@ def run_suite(replace, data_namespace_mangling, config, include, exclude, glob,
 @click.option('-e', '--exclude', type=click.Path(exists=True), multiple=True,
               help="exclude *benchmark.json under these paths")
 @click.option('-c', '--config', default=priority_config().__str__(), type=click.Path(exists=True),
-              help=f"config path, defaults to {priority_config()}")
+              help=f"specify config path")
 @click.option('-g', '--glob', type=str,
               help="glob string to filter sub-directory of path specified by <include>")
 @click.option('-t', '--tol', type=float,
