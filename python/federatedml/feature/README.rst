@@ -109,11 +109,12 @@ Federated Sampling
 ==================
 
 From Fate v0.2 supports sample method.
-Sample module supports two sample modes: Random sample mode and StratifiedSampler sample mode.
+Sample module supports two sample modes: random sample mode and stratified sample mode.
 
 - In random mode, "downsample" and "upsample" methods are provided. Users can set the sample parameter "fractions", which is the sample ratio within data.
 
-- In stratified mode, "downsample" and "upsample" methods are also provided. Users can set the sample parameter "fractions" too, but it should be a list of tuples in the form (label_i, ratio). Tuples in the list each specify the sample ratio of corresponding label. e.g.
+- In stratified mode, "downsample" and "upsample" methods are also provided. Users can set the sample parameter "fractions" too, but it should be a list of tuples in the form (label_i, ratio).
+Tuples in the list each specify the sample ratio of corresponding label. e.g.
 
    ::
 
@@ -128,7 +129,7 @@ Param
 
 Feature Scale
 =============
-Feature scale is a process that scales each feature along column. The feature scale module now supports min-max scale and standard scale.
+Feature scale is a process that scales each feature along column. Feature Scale module supports min-max scale and standard scale.
 
 1. min-max scale: this estimator scales and translates each feature individually such that it is in the given range on the training set, e.g. between min and max value of each feature.
 
@@ -154,7 +155,7 @@ Param
 
 Homo OneHot Encoder
 ==============
-OneHot encoding is a process by which category variables are converted to binary values. The detailed info could be found in `[OneHot wiki] <https://en.wikipedia.org/wiki/One-hot>`_
+OneHot Encoding is a process by which category variables are converted to binary values. The detailed info could be found in `[OneHot wiki] <https://en.wikipedia.org/wiki/One-hot>`_
 
 Param
 ------
