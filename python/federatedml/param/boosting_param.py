@@ -432,7 +432,7 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
                  validation_freqs=None, early_stopping_rounds=None, use_missing=False, zero_as_missing=False,
                  complete_secure=False, metrics=None, use_first_metric_only=False, subsample_random_seed=None,
                  binning_error=consts.DEFAULT_RELATIVE_ERROR,
-                 run_fast_histogram=True):
+                 run_fast_histogram=False):
 
         super(HeteroSecureBoostParam, self).__init__(task_type, objective_param, learning_rate, num_trees,
                                                      subsample_feature_rate, n_iter_no_change, tol, encrypt_param,
@@ -473,7 +473,7 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  validation_freqs=None, early_stopping=None, use_missing=False, zero_as_missing=False,
                  complete_secure=False, tree_num_per_party=1, guest_depth=1, host_depth=1, work_mode='mix', metrics=None,
-                 subsample_random_seed=None, binning_error=consts.DEFAULT_RELATIVE_ERROR):
+                 run_fast_histogram=False,subsample_random_seed=None, binning_error=consts.DEFAULT_RELATIVE_ERROR):
 
         """
         work_mode：
@@ -497,6 +497,7 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
                                                          predict_param, cv_param, validation_freqs, early_stopping,
                                                          use_missing, zero_as_missing, complete_secure, metrics=metrics,
                                                          subsample_random_seed=subsample_random_seed,
+                                                         run_fast_histogram=run_fast_histogram,
                                                          binning_error=binning_error)
 
         self.tree_num_per_party = tree_num_per_party
