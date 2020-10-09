@@ -17,13 +17,13 @@
             "role": "guest_0"
         }
     ],
-    "linear-regression": {
+    "linear_regression-regression": {
         "local": {
-            "script": "./sklearn-linr.py",
+            "script": "./local-linr.py",
             "conf": "./linr_config.yaml"
         },
-        "pipeline": {
-            "script": "./pipeline-linr.py",
+        "FATE": {
+            "script": "./fate-linr.py",
             "conf": "./linr_config.yaml"
         },
         "compare_setting": {

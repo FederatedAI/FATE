@@ -137,7 +137,7 @@ command options
 
    .. code-block:: bash
 
-      fate_test suite -i <path1 contains *benchmark.json>
+      fate_test suite -i <path1 contains *testsuite.json>
 
    will run testsuites in *path1*
 
@@ -145,7 +145,7 @@ command options
 
    .. code-block:: bash
 
-      fate_test suite -i <path1 contains *benchmark.json> -e <path2 to exclude> -e <path3 to exclude> ...
+      fate_test suite -i <path1 contains *testsuite.json> -e <path2 to exclude> -e <path3 to exclude> ...
 
    will run testsuites in *path1* but not in *path2* and *path3*
 
@@ -153,7 +153,7 @@ command options
 
    .. code-block:: bash
 
-      fate_test suite -i <path1 contains *benchmark.json> -g "hetero*"
+      fate_test suite -i <path1 contains *testsuite.json> -g "hetero*"
 
    will run testsuites in sub directory start with *hetero* of *path1*
 
@@ -161,7 +161,7 @@ command options
 
    .. code-block:: bash
 
-      fate_test suite -i <path1 contains *benchmark.json> -c <path2 to *.yaml>
+      fate_test suite -i <path1 contains *testsuite.json> -c <path2 to *.yaml>
 
    will run testsuites in *path1* with config file at *path2*
 
@@ -178,7 +178,7 @@ command options
 
    .. code-block:: bash
 
-      fate_test suite -i <path1 contains *benchmark.json> --data-namespace-mangling
+      fate_test suite -i <path1 contains *testsuite.json> --data-namespace-mangling
 
    will run testsuites in *path1* with uploaded data namespace modified to have a suffix of timestamp.
    Timestamp is used for distinguishing data from different tetsuites.
@@ -188,7 +188,7 @@ command options
 
    .. code-block:: bash
 
-       fate_test suite -i <path1 contains *benchmark.json> --skip-date
+       fate_test suite -i <path1 contains *testsuite.json> --skip-date
 
    will run testsuites in *path1* without uploading data specified in *benchmark.json*.
    Note that data-namespace-mangling is ineffective when skipping data upload.
@@ -197,7 +197,7 @@ command options
 
    .. code-block:: bash
 
-      fate_test suite -i <path1 contains *benchmark.json> --yes
+      fate_test suite -i <path1 contains *testsuite.json> --yes
 
    will run testsuites in *path1* directly, skipping double check
 
@@ -211,23 +211,29 @@ summary for each benchmark job group.
 
 .. code-block:: bash
 
-   fate_test benchmark-quality -i hetero_linr_sklearn_benchmark.json
+   fate_test benchmark-quality -i examples/benchmark_quality/hetero_linear_regression
 
 .. code-block:: bash
 
-    +------------+--------------------+---------------------+--------------------+-------------------------+
-    | Model Name |      r2_score      |  mean_squared_error | explained_variance | root_mean_squared_error |
-    +------------+--------------------+---------------------+--------------------+-------------------------+
-    |   local    | 0.8996802446941182 |  0.1021175724655836 | 0.899680245220208  |    0.3195584022766161   |
-    |  pipeline  | 0.9025618809878748 | 0.09918429474625605 | 0.9026740215636323 |    0.3149353818583362   |
-    +------------+--------------------+---------------------+--------------------+-------------------------+
+    +-------+--------------------------------------------------------------+
+    |  Data |                             Name                             |
+    +-------+--------------------------------------------------------------+
+    | train | {'guest': 'motor_hetero_guest', 'host': 'motor_hetero_host'} |
+    |  test | {'guest': 'motor_hetero_guest', 'host': 'motor_hetero_host'} |
+    +-------+--------------------------------------------------------------+
+    +------------------------------------+--------------------+--------------------+-------------------------+---------------------+
+    |             Model Name             | explained_variance |      r2_score      | root_mean_squared_error |  mean_squared_error |
+    +------------------------------------+--------------------+--------------------+-------------------------+---------------------+
+    | local-linear_regression-regression | 0.9035168452250094 | 0.9035070863155368 |   0.31340413289880553   | 0.09822215051805216 |
+    | FATE-linear_regression-regression  | 0.903146386539082  | 0.9031411831961411 |    0.3139977881119483   | 0.09859461093919596 |
+    +------------------------------------+--------------------+--------------------+-------------------------+---------------------+
     +-------------------------+-----------+
     |          Metric         | All Match |
     +-------------------------+-----------+
-    |         r2_score        |    True   |
-    |    mean_squared_error   |    True   |
     |    explained_variance   |    True   |
+    |         r2_score        |    True   |
     | root_mean_squared_error |    True   |
+    |    mean_squared_error   |    True   |
     +-------------------------+-----------+
 
 command options
@@ -332,7 +338,7 @@ A benchmark testsuite includes the following elements:
 
         "data": [
             {
-                "file": "../../data/motor_hetero_host.csv",
+                "file": "examples/data/motor_hetero_host.csv",
                 "head": 1,
                 "partition": 8,
                 "table_name": "motor_hetero_host",
@@ -351,7 +357,7 @@ A benchmark testsuite includes the following elements:
     .. code-block:: json
 
        "local": {
-            "script": "./sklearn-linr.py",
+            "script": "./local-linr.py",
             "conf": "./linr_config.yaml"
        }
 
@@ -359,23 +365,23 @@ A benchmark testsuite includes the following elements:
 
     If metrics *a* and *b* satisfy *abs(a-b) <= max(relative_tol \* max(abs(a), abs(b)), absolute_tol)*
     (from `math module <https://docs.python.org/3/library/math.html#math.isclose>`_),
-    they are considered almost equal. In the below example, metrics from "local" and "pipeline" jobs are
+    they are considered almost equal. In the below example, metrics from "local" and "FATE" jobs are
     considered almost equal if their relative difference is smaller than
     *0.05 \* max(abs(local_metric), abs(pipeline_metric)*.
 
   .. code-block:: json
 
-     "binary": {
+     "linear_regression-regression": {
          "local": {
-             "script": "./sklearn-linr.py",
+             "script": "./local-linr.py",
              "conf": "./linr_config.yaml"
          },
-         "pipeline": {
-             "script": "./pipeline-linr.py",
+         "FATE": {
+             "script": "./fate-linr.py",
              "conf": "./linr_config.yaml"
          },
          "compare_setting": {
-             "relative_tol": 0.05
+             "relative_tol": 0.01
          }
      }
 
@@ -384,7 +390,10 @@ testing script
 ~~~~~~~~~~~~~~
 
 All job scripts need to have ``Main`` function as an entry point for executing jobs; scripts should
-return a dictionary with {metric_name}: {metric_value} key-value pairs for comparison.
+return two dictionaries: first with data information key-value pairs: {data_name}: {table_name};
+the second contains {metric_name}: {metric_value} key-value pairs for metric comparison.
+By default, the final data summary shows the output from the job named "FATE"; if no such job exists,
+data information returned by the first job is shown.
 Returned quality metrics of the same key are to be compared.
 Note that only **real-value** metrics can be compared.
 
