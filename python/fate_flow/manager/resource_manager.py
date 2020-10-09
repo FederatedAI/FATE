@@ -255,8 +255,7 @@ class ResourceManager(object):
             job_parameters.spark_run["num-executors"] = job_parameters.adaptation_parameters["task_nodes"]
 
             job_parameters.adaptation_parameters["task_cores_per_node"] = int(
-                job_parameters.spark_run.get("executor-cores", DEFAULT_TASK_CORES_PER_NODE))
-            
+                job_parameters.spark_run.get("executor-cores", DEFAULT_TASK_CORES_PER_NODE))            
             job_parameters.spark_run["executor-cores"] = job_parameters.adaptation_parameters["task_cores_per_node"]
 
 #             job_parameters.adaptation_parameters["task_memory_per_node"] = int(
