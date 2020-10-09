@@ -22,7 +22,6 @@ from pipeline.component import Evaluation
 from pipeline.component import HomoLR
 from pipeline.component import Reader
 from pipeline.interface import Data
-
 from pipeline.utils.tools import load_job_config, JobConfig
 
 
@@ -53,17 +52,14 @@ def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
     if data_set == "default_credit_homo_guest.csv":
         guest_data_table = 'default_credit_guest'
         host_data_table = 'default_credit_host1'
-        test_data_table = 'default_credit_test'
 
     elif data_set == 'breast_homo_guest.csv':
         guest_data_table = 'breast_homo_guest'
         host_data_table = 'breast_homo_host'
-        test_data_table = 'breast_homo_test'
 
     elif data_set == 'give_credit_homo_guest.csv':
         guest_data_table = 'give_credit_hetero_guest'
         host_data_table = 'give_credit_hetero_host'
-
 
     elif data_set == 'epsilon_5k_hetero_guest.csv':
         guest_data_table = 'epsilon_5k_hetero_guest'
@@ -74,7 +70,6 @@ def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
 
     guest_train_data = {"name": guest_data_table, "namespace": f"experiment{namespace}"}
     host_train_data = {"name": host_data_table, "namespace": f"experiment{namespace}"}
-    test_data = {"name": test_data_table, "namespace": f"experiment{namespace}"}
     # initialize pipeline
     pipeline = PipeLine()
     # set job initiator
@@ -97,8 +92,7 @@ def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
     # configure DataIO for guest
     dataio_0_guest_party_instance.algorithm_param(with_label=True, output_format="dense")
     # get and configure DataIO party instance of host
-    dataio_0.get_party_instance(role='host', party_id=host).algorithm_param(with_label=False)
-
+    dataio_0.get_party_instance(role='host', party_id=host).algorithm_param(with_label=True)
 
     lr_param = {
     }
@@ -108,9 +102,9 @@ def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
         "max_iter": param["max_iter"],
         "alpha": param["alpha"],
         "learning_rate": param["learning_rate"],
-        "optimizer": "nesterov_momentum_sgd",
+        "optimizer": "sgd",
         "encrypt_param": {
-            "method": None
+            "method": "Paillier"
         }
     }
     lr_param.update(config_param)
@@ -118,6 +112,7 @@ def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
     homo_lr_0 = HomoLR(name='homo_lr_0', **lr_param)
 
     evaluation_0 = Evaluation(name='evaluation_0', eval_type="binary")
+    evaluation_0.get_party_instance(role='host', party_id=host).algorithm_param(need_run=False)
 
     # add components to pipeline, in order of task execution
     pipeline.add_component(reader_0)
