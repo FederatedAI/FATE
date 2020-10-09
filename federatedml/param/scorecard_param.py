@@ -62,7 +62,7 @@ class ScorecardParam(BaseParam):
         self.need_run = need_run
 
     def check(self):
-        descr = "credit score transform param's "
+        descr = "scorecard param"
         if not isinstance(self.method, str):
             raise ValueError(f"{descr}method {self.method} not supported, should be str type")
         else:
@@ -72,14 +72,21 @@ class ScorecardParam(BaseParam):
             else:
                 raise ValueError(f"{descr} method {user_input} not supported")
 
-        BaseParam.check_positive_integer(self.offset, descr=descr+"offset ")
+        if type(self.offset).__name__ not in ["int", "long", "float"]:
+            raise ValueError(f"{descr} offset must be numeric,"
+                             f"received {type(self.offset)} instead.")
 
-        BaseParam.check_positive_integer(self.factor, descr=descr+"factor ")
+        if type(self.factor).__name__ not in ["int", "long", "float"]:
+            raise ValueError(f"{descr} factor must be numeric,"
+                             f"received {type(self.factor)} instead.")
 
-        BaseParam.check_positive_integer(self.upper_limit_ratio, descr=descr+"upper limit ratio ")
+        if type(self.upper_limit_ratio).__name__ not in ["int", "long", "float"]:
+            raise ValueError(f"{descr} upper_limit_ratio must be numeric,"
+                             f"received {type(self.upper_limit_ratio)} instead.")
 
-        if type(self.lower_limit_value).__name__ not in ["int", "long"]:
-            raise ValueError(f"{descr} lower_limit_value must be int type, received {type(self.lower_limit_value)} instead.")
+        if type(self.lower_limit_value).__name__ not in ["int", "long", "float"]:
+            raise ValueError(f"{descr} lower_limit_value must be numeric,"
+                             f"received {type(self.lower_limit_value)} instead.")
 
         BaseParam.check_boolean(self.need_run, descr=descr+"need_run ")
 
