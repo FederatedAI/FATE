@@ -394,10 +394,20 @@ testing script
 ~~~~~~~~~~~~~~
 
 All job scripts need to have ``Main`` function as an entry point for executing jobs; scripts should
-return two dictionaries: first with data information key-value pairs: {data_name}: {table_name};
+return two dictionaries: first with data information key-value pairs: {data_type}: {data_name_dictionary};
 the second contains {metric_name}: {metric_value} key-value pairs for metric comparison.
+
 By default, the final data summary shows the output from the job named "FATE"; if no such job exists,
-data information returned by the first job is shown.
+data information returned by the first job is shown. For clear presentation, we suggest that user follow
+this general `guideline <../../examples/data/README.md>`_ for data set naming. In the case of multi-host
+training, consider numbering host as such:
+
+.. code-block:: json
+
+    {'guest': 'default_credit_homo_guest',
+     'host_1': 'default_credit_homo_host_1',
+     'host_2': 'default_credit_homo_host_2'}
+
 Returned quality metrics of the same key are to be compared.
 Note that only **real-value** metrics can be compared.
 

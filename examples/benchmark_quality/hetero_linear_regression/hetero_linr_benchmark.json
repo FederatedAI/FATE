@@ -17,7 +17,7 @@
             "role": "guest_0"
         }
     ],
-    "linear_regression-regression": {
+    "hetero_linear_regression-regression": {
         "local": {
             "script": "./local-linr.py",
             "conf": "./linr_config.yaml"
