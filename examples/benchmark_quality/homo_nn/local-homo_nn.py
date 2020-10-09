@@ -45,10 +45,11 @@ def main(param="param_conf.yaml"):
     t = time.time()
     model.fit(data, labels, epochs=param["epoch"], batch_size=846)
     evaluate = model.evaluate(data, labels)
-    result = {
+    metric_summary = {
         "accuracy": evaluate[1]
     }
-    return result
+    data_summary = {}
+    return data_summary, metric_summary
 
 
 if __name__ == "__main__":

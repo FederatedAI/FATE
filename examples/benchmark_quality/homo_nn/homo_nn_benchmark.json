@@ -41,13 +41,13 @@
       "role": "host_1"
     }
   ],
-  "binary": {
+  "homo_nn-binary": {
     "local": {
-      "script": "./keras_homo_nn.py",
+      "script": "./local-homo_nn.py",
       "conf": "./param_conf.yaml"
     },
     "pipeline": {
-      "script": "./pipeline_homo_nn.py",
+      "script": "./fate-homo_nn.py",
       "conf": "./param_conf.yaml"
     },
     "compare_setting": {

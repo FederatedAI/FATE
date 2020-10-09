@@ -87,7 +87,12 @@ def main(config="../../config.yaml", param="param_conf.yaml", namespace=""):
     pipeline.add_component(evaluation_0, data=Data(data=homo_nn_0.output.data))
     pipeline.compile()
     pipeline.fit(backend=config.backend, work_mode=config.work_mode)
-    return pipeline.get_component("evaluation_0").get_summary()
+    metric_summary = pipeline.get_component("evaluation_0").get_summary()
+    data_summary = dict(
+        train={"guest": guest_train_data["name"], **{f"host_{i}": host_train_data[1]["name"] for i in range(num_host)}},
+        test={"guest": guest_train_data["name"], **{f"host_{i}": host_train_data[1]["name"] for i in range(num_host)}}
+    )
+    return data_summary, metric_summary
 
 
 if __name__ == "__main__":
