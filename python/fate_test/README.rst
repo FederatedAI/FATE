@@ -399,10 +399,10 @@ the second contains {metric_name}: {metric_value} key-value pairs for metric com
 
 By default, the final data summary shows the output from the job named "FATE"; if no such job exists,
 data information returned by the first job is shown. For clear presentation, we suggest that user follow
-this general `guideline <../../examples/data/README.md>`_ for data set naming. In the case of multi-host
-training, consider numbering host as such:
+this general `guideline <../../examples/data/README.md#data-set-naming-rule>`_ for data set naming. In the case of multi-host
+task, consider numbering host as such:
 
-.. code-block:: json
+::
 
     {'guest': 'default_credit_homo_guest',
      'host_1': 'default_credit_homo_host_1',
