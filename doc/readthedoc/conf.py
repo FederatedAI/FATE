@@ -25,6 +25,8 @@ if not os.path.exists("_build_temp"):
 from recommonmark.parser import CommonMarkParser
 
 sys.path.insert(0, os.path.abspath('_build_temp/python'))
+sys.path.insert(0, os.path.abspath('_build_temp/python/fate_client'))
+sys.path.insert(0, os.path.abspath('_build_temp/python/fate_test'))
 
 # -- Project information -----------------------------------------------------
 
@@ -42,7 +44,8 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.napoleon',
     'autodocsumm',
-    'recommonmark'
+    'recommonmark',
+    'sphinx_click.ext'
 ]
 
 autosummary_generate = True

@@ -16,7 +16,7 @@ FederatedML includes implementation of many common machine learning algorithms o
 
 5. Secure Protocol: Provides multiple security protocols for secure multi-party computing and interaction between participants.
 
-.. image:: ../doc/images/federatedml_structure.png
+.. image:: ../../doc/images/federatedml_structure.png
    :width: 800
    :align: center
    :alt: federatedml structure
@@ -221,6 +221,22 @@ Algorithm List
      -
      - Column Expand Model
 
+   * - `Secure Information Retrieval`_
+     - Secure Information Retrieval
+     - Securely retrieves information from host through oblivious transfer
+     - Table, values are instance
+     - Table, values are instance
+     -
+     -
+
+   * - `Hetero KMeans`_
+     - Hetero KMeans
+     - Build Hetero KMeans module through multiple parties
+     - Table, values are instance
+     - Table, values are instance; Arbier outputs 2 Tables
+     -
+     - Hetero KMeans Model
+
 .. _DataIO: util/README.rst
 .. _Intersect: statistic/intersect/README.rst
 .. _Federated Sampling: feature/README.rst
@@ -243,6 +259,8 @@ Algorithm List
 .. _Data Split: model_selection/data_split/README.rst
 .. _Homo OneHot Encoder: feature/README.rst
 .. _Column Expand: feature/README.rst
+.. _Secure Information Retrieval: secure_information_retrieval
+.. _Hetero KMeans: unsupervised_learning/kmeans/README.rst
 
 
 Secure Protocol
@@ -262,6 +280,8 @@ Secure Protocol
 
 * `SecretShare MPC Protocol(SPDZ)`_
 
+* `Oblivious Transfer`_
+
 
 .. _Encrypt: secureprotol/README.rst#encrypt
 .. _Paillier encryption: secureprotol/README.rst#paillier-encryption
@@ -272,6 +292,7 @@ Secure Protocol
 .. _Encode: secureprotol/README.rst#encode
 .. _Diffne Hellman Key Exchange: secureprotol/README.rst#diffne-hellman-key-exchange
 .. _SecretShare MPC Protocol(SPDZ): secureprotol/README.rst#secretshare-mpc-protocol-spdz
+.. _Oblivious Transfer: secureprotol/README.rst#oblivious-transfer
 
 
 

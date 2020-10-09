@@ -19,7 +19,7 @@ For more pipeline demo, please refer to
 `examples <../../../examples/pipeline>`__.
 
 A FATE Job is A Directed Acyclic Graph
-------------------------
+--------------------------------------
 
 A FATE job is a dag consists of algorithm component nodes. FATE pipeline provides
 easy-to-use tools to configure order and setting of the tasks.
@@ -111,7 +111,7 @@ Model
 ~~~~~
 
 ``Model`` defines model input and output of components. Similar to ``Data``, the two
-types of ``model``s are used for different purposes.
+types of ``models`` are used for different purposes.
 For more information, please refer `here <./component/README.rst>`__.
 
 Build A Pipeline
@@ -216,7 +216,7 @@ In addition, since pipeline is modular, user may add new components to
 the original pipeline when running prediction.
 
 Save and Recovery of Pipeline
----------------------
+-----------------------------
 
 To save a pipeline, just use **dump** interface.
 
@@ -232,7 +232,7 @@ To save a pipeline, use **load_model_from_file** interface.
    PipeLine.load_model_from_file("pipeline_saved.pkl")
 
 Summary info of pipeline
----------------------
+-------------------------
 
 To get the detail of a pipeline, use **describe** interface, it will print the "create time"
 fit or predict state and the constructed dsl if exists.

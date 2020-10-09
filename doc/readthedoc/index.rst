@@ -37,6 +37,21 @@ https://fate.fedai.org
 
 .. toctree::
    :maxdepth: 3
+   :caption: FATE Clients
+
+   Flow SDK <_build_temp/python/fate_client/flow_sdk/README>
+   Flow Client <_build_temp/python/fate_client/flow_client/README>
+   Pipeline <_build_temp/python/fate_client/pipeline/README>
+
+.. toctree::
+   :maxdepth: 3
+   :caption: FATE Test
+
+   FATE TEST <_build_temp/python/fate_test/README>
+
+
+.. toctree::
+   :maxdepth: 3
    :caption: Develop
 
    Develop Guide <_build_temp/doc/develop_guide>
