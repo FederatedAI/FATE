@@ -33,8 +33,6 @@ class Scorecard(ModelBase):
         self.metric_name = "scorecard"
         self.metric_namespace = "train"
         self.metric_type = "SCORECARD"
-        self.repeated_ids = None
-        self.key = None
 
     def _init_model(self, params):
         self.model_param = params
@@ -71,14 +69,18 @@ class Scorecard(ModelBase):
         return [predict_result[0], predict_result[1], predict_score, credit_score]
 
     def _callback(self):
-        metas = {"credit_score_compute_formula": f"Score = {self.offset} + {self.factor} / ln2 * ln(Odds)"}
+        forumla = f"Score = {self.offset} + {self.factor} / ln2 * ln(Odds)"
+        metas = {"scorecard_compute_formula": forumla}
         self.tracker.set_metric_meta(metric_namespace=self.metric_namespace,
                                      metric_name=self.metric_name,
                                      metric_meta=MetricMeta(name=self.metric_name,
                                                             metric_type=self.metric_type,
                                                             extra_metas=metas))
+        LOGGER.info(f"Scorecard Computation Formula: {forumla}")
 
     def fit(self, prediction_result):
+        LOGGER.info(f"Start Scorecard Transform, method: {self.method}")
+
         offset, factor = self.offset, self.factor
         upper_limit_value, lower_limit_value = self.upper_limit_ratio * offset, self.lower_limit_value
         score_result = prediction_result.mapValues(lambda v: Scorecard.compute_credit_score(v, offset, factor,
@@ -90,4 +92,6 @@ class Scorecard(ModelBase):
         score_result.schema = result_schema
 
         self._callback()
+        LOGGER.info(f"Finish Scorecard Transform!")
+
         return score_result
