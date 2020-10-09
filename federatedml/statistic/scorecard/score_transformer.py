@@ -49,7 +49,7 @@ class Scorecard(ModelBase):
         odds = predict_result[3]["0"] / predict_score
 
         # deal with special predict score values
-        if abs(predict_score - 0) < FLOAT_ZERO and predict_score > 0:
+        if abs(predict_score - 0) < FLOAT_ZERO and predict_score >= 0:
             credit_score = upper_limit_value
         elif abs(predict_score - 1) < FLOAT_ZERO and predict_score > 0:
             credit_score = lower_limit_value
