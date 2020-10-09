@@ -27,7 +27,7 @@ from pipeline.interface import Data
 from pipeline.utils.tools import load_job_config, JobConfig
 
 
-def main(config="../../config.yaml", param="./lr_multi_config.yaml", namespace=""):
+def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
     # obtain config
     if isinstance(config, str):
         config = load_job_config(config)
@@ -42,18 +42,20 @@ def main(config="../../config.yaml", param="./lr_multi_config.yaml", namespace="
         param = JobConfig.load_from_file(param)
 
     assert isinstance(param, dict)
-    """
-    guest = 9999
-    host = 10000
-    arbiter = 9999
-    backend = 0
-    work_mode = 1
-    param = {"penalty": "L2", "max_iter": 5}
-    """
+
     data_set = param.get("data_guest").split('/')[-1]
-    if data_set == "vehicle_scale_hetero_guest.csv":
-        guest_data_table = 'vehicle_scale_hetero_guest'
-        host_data_table = 'vehicle_scale_hetero_host'
+    if data_set == "default_credit_hetero_guest.csv":
+        guest_data_table = 'default_credit_hetero_guest'
+        host_data_table = 'default_credit_hetero_host'
+    elif data_set == 'breast_hetero_guest.csv':
+        guest_data_table = 'breast_hetero_guest'
+        host_data_table = 'breast_hetero_host'
+    elif data_set == 'give_credit_hetero_guest.csv':
+        guest_data_table = 'give_credit_hetero_guest'
+        host_data_table = 'give_credit_hetero_host'
+    elif data_set == 'epsilon_5k_hetero_guest.csv':
+        guest_data_table = 'epsilon_5k_hetero_guest'
+        host_data_table = 'epsilon_5k_hetero_host'
     else:
         raise ValueError(f"Cannot recognized data_set: {data_set}")
 
@@ -97,13 +99,18 @@ def main(config="../../config.yaml", param="./lr_multi_config.yaml", namespace="
         "max_iter": param["max_iter"],
         "alpha": param["alpha"],
         "learning_rate": param["learning_rate"],
-        "optimizer": "nesterov_momentum_sgd"
+        "optimizer": param["optimizer"],
+        "batch_size": param["batch_size"],
+        "early_stop": "diff",
+        "init_param": {
+            "init_method": param.get("init_method", 'random_uniform')
+        }
     }
     lr_param.update(config_param)
     print(f"lr_param: {lr_param}, data_set: {data_set}")
     hetero_lr_0 = HeteroLR(name='hetero_lr_0', **lr_param)
 
-    evaluation_0 = Evaluation(name='evaluation_0', eval_type="multi")
+    evaluation_0 = Evaluation(name='evaluation_0', eval_type="binary")
 
     # add components to pipeline, in order of task execution
     pipeline.add_component(reader_0)
@@ -124,12 +131,10 @@ def main(config="../../config.yaml", param="./lr_multi_config.yaml", namespace="
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("BENCHMARK-QUALITY PIPELINE JOB")
-    parser.add_argument("-config", type=str,
-                        help="config file")
-    parser.add_argument("-param", type=str,
-                        help="config file for params")
+    parser.add_argument("-c", "--config", type=str,
+                        help="config file", default="../../config.yaml")
+    parser.add_argument("-p", "--param", type=str,
+                        help="config file for params", default="./breast_config.yaml")
     args = parser.parse_args()
-    if args.config is not None:
-        main(args.config, args.param)
-    else:
-        main()
+    main(args.config, args.param)
+

@@ -1,0 +1,10 @@
+data_guest: "/home/mingchao/python/examples/data/give_credit_homo_guest.csv"
+data_host: "/home/mingchao/python/examples/data/give_credit_homo_host.csv"
+data_test: "/home/mingchao/python/examples/data/give_credit_homo_test.csv"
+idx: "id"
+label_name: "y"
+penalty: "L2"
+max_iter: 15
+alpha: 1
+learning_rate: 0.15
+optimizer: "rmsprop"

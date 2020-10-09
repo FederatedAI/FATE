@@ -24,21 +24,21 @@ from sklearn.metrics import roc_auc_score, precision_score, accuracy_score, reca
 from pipeline.utils.tools import JobConfig
 
 
-def main(param="./lr_multi_config.yaml"):
+def main(param="./lr_config.yaml"):
     # obtain config
     if isinstance(param, str):
         param = JobConfig.load_from_file(param)
     assert isinstance(param, dict)
     data_guest = param["data_guest"]
     data_host = param["data_host"]
-
+    data_test = param["data_test"]
     idx = param["idx"]
     label_name = param["label_name"]
 
 
     config_param = {
         "penalty": param["penalty"],
-        "max_iter": param["max_iter"],
+        "max_iter": 100,
         "alpha": param["alpha"],
         "learning_rate": "optimal",
         "eta0": param["learning_rate"]
@@ -47,28 +47,49 @@ def main(param="./lr_multi_config.yaml"):
     # prepare data
     df_guest = pandas.read_csv(data_guest, index_col=idx)
     df_host = pandas.read_csv(data_host, index_col=idx)
-    df = df_guest.join(df_host, rsuffix="host")
-    y = df[label_name]
-    X = df.drop(label_name, axis=1)
+
+    df_test = pandas.read_csv(data_test, index_col=idx)
+
+    df = pandas.concat([df_guest, df_host], axis=0)
+
+    df_length = df.shape[0]
+    df_guest = df.iloc[: int(df_length * 0.4)]
+    df_host = df.iloc[int(df_length * 0.4): int(df_length * 0.8)]
+    df_test = df.iloc[int(df_length * 0.8):]
+    df_guest.to_csv("epsilon_5k_homo_guest.csv")
+    df_host.to_csv("epsilon_5k_homo_host.csv")
+    df_test.to_csv("epsilon_5k_homo_test.csv")
+
+
+    # df = df_guest.join(df_host, rsuffix="host")
+    y_train = df[label_name]
+    x_train = df.drop(label_name, axis=1)
+
+    y_test = df_test[label_name]
+    x_test = df_test.drop(label_name, axis=1)
+
     # lm = LogisticRegression(max_iter=20)
     lm = SGDClassifier(loss="log", **config_param)
-    lm_fit = lm.fit(X, y)
-    y_pred = lm_fit.predict(X)
-
-    recall = recall_score(y, y_pred, average="macro")
-    pr = precision_score(y, y_pred, average="macro")
-    acc = accuracy_score(y, y_pred)
-    result = {"recall": recall, "precision": pr, "accuracy": acc}
-    print(result)
+    lm_fit = lm.fit(x_train, y_train)
+    y_pred = lm_fit.predict(x_test)
+    y_prob = lm_fit.predict_proba(x_test)[:, 1]
+    auc_score = roc_auc_score(y_test, y_prob)
+    recall = recall_score(y_test, y_pred, average="macro")
+    pr = precision_score(y_test, y_pred, average="macro")
+    acc = accuracy_score(y_test, y_pred)
+    # y_predict_proba = est.predict_proba(X_test)[:, 1]
+    fpr, tpr, thresholds = roc_curve(y_test, y_prob)
+    ks = max(tpr - fpr)
+    result = {"auc": auc_score, "recall": recall, "precision": pr, "accuracy": acc, "ks": ks}
+    print(f"result: {result}")
     print(f"coef_: {lm_fit.coef_}, intercept_: {lm_fit.intercept_}, n_iter: {lm_fit.n_iter_}")
+
     return result
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("BENCHMARK-QUALITY SKLEARN JOB")
-    parser.add_argument("-param", type=str,
+    parser.add_argument("-p", "--param", type=str, default="./lr_config.yaml",
                         help="config file for params")
     args = parser.parse_args()
-    if args.param is not None:
-        main(args.param)
-    main()
+    main(args.param)
