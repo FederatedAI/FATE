@@ -68,9 +68,13 @@ class FLOWClient(object):
                 callback(response)
             status = self._awaiting(response.job_id, "guest", callback)
             response.status = status
+
         except Exception as e:
             raise RuntimeError(f"submit job failed") from e
         return response
+
+    def add_notes(self, job_id, role, party_id, notes):
+        self._add_notes(job_id=job_id, role=role, party_id=party_id, notes=notes)
 
     def check_connection(self):
         try:
@@ -133,6 +137,11 @@ class FLOWClient(object):
         response = QueryJobResponse(self._post(url='job/query', json=data))
         return response
 
+    def _add_notes(self, job_id, role, party_id, notes):
+        data = dict(job_id=job_id, role=role, party_id=party_id, notes=notes)
+        response = AddNotesResponse(self._post(url='job/update', json=data))
+        return response
+
     def _post(self, url, **kwargs) -> dict:
         request_url = self._base + url
         try:
@@ -189,6 +198,17 @@ class UploadDataResponse(object):
         except Exception as e:
             raise RuntimeError(f"upload error, response: {response}") from e
         self.status: typing.Optional[Status] = None
+
+
+class AddNotesResponse(object):
+    def __init__(self, response: dict):
+        try:
+            retcode = response['retcode']
+            retmsg = response['retmsg']
+            if retcode != 0 or retmsg != 'success':
+                raise RuntimeError(f"add notes error: {response}")
+        except Exception as e:
+            raise RuntimeError(f"add notes error: {response}") from e
 
 
 class SubmitJobResponse(object):

@@ -1,0 +1,68 @@
+{
+  "data": [
+    {
+      "file": "examples/data/breast_hetero_guest.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "breast_hetero_guest",
+      "namespace": "experiment",
+      "count": 569
+    },
+    {
+      "file": "examples/data/breast_hetero_host.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "breast_hetero_host",
+      "namespace": "experiment",
+      "count": 569
+    },
+    {
+      "file": "examples/data/default_credit_hetero_guest.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "default_credit_hetero_guest",
+      "namespace": "experiment",
+      "count": 30000
+    },
+    {
+      "file": "examples/data/default_credit_hetero_host.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "default_credit_hetero_host",
+      "namespace": "experiment",
+      "count": 30000
+    },
+    {
+      "file": "examples/data/give_credit_hetero_guest.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "give_credit_hetero_guest",
+      "namespace": "experiment",
+      "count": 150000
+    },
+    {
+      "file": "examples/data/give_credit_hetero_host.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "give_credit_hetero_host",
+      "namespace": "experiment",
+      "count": 150000
+    },
+    {
+      "file": "examples/data/epsilon_5k_hetero_guest.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "epsilon_5k_hetero_guest",
+      "namespace": "experiment",
+      "count": 5000
+    },
+    {
+      "file": "examples/data/epsilon_5k_hetero_host.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "epsilon_5k_hetero_host",
+      "namespace": "experiment",
+      "count": 5000
+    }
+  ]
+}
