@@ -35,11 +35,12 @@ local function get_dest_server(dest_party_id, dest_service)
     if party_services ~= nil then
         local service = party_services[dest_service]
         server = get_server_address(service[math.random(1, #service)])
+        ngx.log(ngx.INFO, string.format("get %s %s server: %s", dest_party_id, dest_service, server))
     else
         local default_proxy = route:get("default")["proxy"]
         server = get_server_address(default_proxy[math.random(1, #default_proxy)])
+        ngx.log(ngx.INFO, string.format("get %s %s default server: %s", dest_party_id, dest_service, server))
     end
-    ngx.log(ngx.INFO, string.format("get %s %s server: %s", dest_party_id, dest_service, server))
     return server
 end
 

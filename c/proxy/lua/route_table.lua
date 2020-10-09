@@ -33,9 +33,8 @@ if not route_cache then
 end
 
 local function reload_route_table()
-    --route_cache:set("9999", { fateflow = "127.0.0.1:9360" })
-    --route_cache:set("10000", { fateflow = "127.0.0.1:9362" })
-    local file = io.open("/Users/jarviszeng/Work/Project/FDN/FATE/c/proxy/conf/route_table.yaml", "r")    -- 使用 io.open() 函数，以只读模式打开文件
+    local prefix_path = ngx.config.prefix()
+    local file = io.open(prefix_path.."conf/route_table.yaml", "r")    -- 使用 io.open() 函数，以只读模式打开文件
     local content = file:read("*a")
     file:close()
     local yaml_table = yaml_parser.parse(content)
