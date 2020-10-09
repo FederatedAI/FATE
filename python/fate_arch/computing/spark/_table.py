@@ -271,4 +271,4 @@ def _flat_map(rdd, func):
     def _func(_, iterator):
         return chain.from_iterable(map(_fail_on_stopiteration(_fn), iterator))
 
-    rdd.mapPartitionsWithIndex(_func, preservesPartitioning=False)
+    return rdd.mapPartitionsWithIndex(_func, preservesPartitioning=False)
