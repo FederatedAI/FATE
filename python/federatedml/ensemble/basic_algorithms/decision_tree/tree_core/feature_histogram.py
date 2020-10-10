@@ -284,10 +284,10 @@ class FeatureHistogram(object):
                     feature_histogram_template.append([])
                     continue
                 else:
-                    # 0, 0, 0 -> grad, hess, sample number
+                    # 0, 0, 0 -> grad, hess, sample count
                     feature_histogram_template.append([[0, 0, 0]
                                                        for j in
-                                                       range(bin_split_points[fid].shape[0] + 1 + missing_bin)])
+                                                       range(bin_split_points[fid].shape[0] + missing_bin)])
 
             node_histograms.append(feature_histogram_template)
             # check feature num
