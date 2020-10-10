@@ -191,6 +191,13 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
      - 
      - SecureBoost模型，由模型本身和模型参数组成
 
+   * - `Scorecard`_
+     - 评分卡
+     - 转换二分类预测分数至信用分
+     - Table, 值为二分类预测结果
+     - Table, 值为转化后信用分结果
+     -
+     -
 
 
 .. _DataIO: util/README.rst
@@ -212,6 +219,7 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
 .. _Hetero Pearson: statistic/correlation/README.rst
 .. _Hetero-NN: nn/hetero_nn/README.rst
 .. _Homo Secure Boosting: tree/README.rst
+.. _Scorecard: statistic/scorecard/README.rst
 
 
 
