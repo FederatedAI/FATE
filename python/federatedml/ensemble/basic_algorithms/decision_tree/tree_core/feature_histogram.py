@@ -157,7 +157,7 @@ class FeatureHistogram(object):
 
     @staticmethod
     def tensor_histogram_cumsum(histograms):
-
+        # histogram cumsum, from left to right
         for i in range(1, len(histograms)):
             for j in range(len(histograms[i])):
                 histograms[i][j] += histograms[i - 1][j]
@@ -165,6 +165,8 @@ class FeatureHistogram(object):
 
     @staticmethod
     def dtable_histogram_cumsum(histograms):
+
+        # histogram cumsum, from left to right
 
         if len(histograms) == 0:
             return histograms
@@ -205,6 +207,7 @@ class FeatureHistogram(object):
             with_uuid=True if eggroll_version.startswith('2.0') else False)
 
         agg_histogram = functools.partial(FeatureHistogram.aggregate_histogram, node_map=node_map)
+        # reformat, now format is: key, ((data_instance, node position), (g, h))
         batch_histogram_intermediate_rs = data_bin.join(grad_and_hess, lambda data_inst, g_h: (data_inst, g_h))
 
         if batch_histogram_intermediate_rs.count() == 0:
@@ -258,7 +261,7 @@ class FeatureHistogram(object):
 
     @staticmethod
     def aggregate_histogram(fid_histogram1, fid_histogram2, node_map):
-
+        # add histograms with same key((node id, feature id)) together
         fid_1, histogram1 = fid_histogram1
         fid_2, histogram2 = fid_histogram2
         aggregated_res = [[] for i in range(len(histogram1))]
@@ -273,7 +276,6 @@ class FeatureHistogram(object):
                                     missing_bin):
 
         # for every feature, generate histograms containers (initialized val are 0s)
-
         node_num = len(node_map)
         node_histograms = []
         for k in range(node_num):
@@ -319,16 +321,17 @@ class FeatureHistogram(object):
         grad = []
         hess = []
 
-        data_record = 0
+        data_record = 0  # total instance number of this partition
 
+        # go through iterator to collect g/h feature instances/ node positions
         for _, value in kv_iterator:
             data_bin, nodeid_state = value[0]
             unleaf_state, nodeid = nodeid_state
             if unleaf_state == 0 or nodeid not in node_map:
                 continue
-            g, h = value[1]
-            data_bins.append(data_bin)
-            node_ids.append(nodeid)
+            g, h = value[1]  # encrypted text in host, plaintext in guest
+            data_bins.append(data_bin)  # features
+            node_ids.append(nodeid)  # current node position
             grad.append(g)
             hess.append(h)
 
@@ -338,6 +341,11 @@ class FeatureHistogram(object):
         node_num = len(node_map)
 
         missing_bin = 1 if use_missing else 0
+
+        # if the value of a feature is 0, the corresponding bin index will not appear in the sample sparse vector
+        # need to compute correct sparse point g_sum and s_sum by:
+        # (node total sum value) - (node feature total sum value) + (non 0 sparse point sum)
+        # [0, 0, 0] -> g, h, sample count
         zero_optim = [[[0 for i in range(3)]
                        for j in range(bin_split_points.shape[0])]
                       for k in range(node_num)]
@@ -349,20 +357,24 @@ class FeatureHistogram(object):
 
         for rid in range(data_record):
             nid = node_map.get(node_ids[rid])
+            # node total sum value
             zero_opt_node_sum[nid][0] += grad[rid]
             zero_opt_node_sum[nid][1] += hess[rid]
             zero_opt_node_sum[nid][2] += 1
+
             for fid, value in data_bins[rid].features.get_all_data():
                 if valid_features is not None and valid_features[fid] is False:
                     continue
 
                 if use_missing and value == NoneType():
+                    # missing value is set as -1
                     value = -1
 
                 node_histograms[nid][fid][value][0] += grad[rid]
                 node_histograms[nid][fid][value][1] += hess[rid]
                 node_histograms[nid][fid][value][2] += 1
 
+                # node feature total sum value
                 zero_optim[nid][fid][0] += grad[rid]
                 zero_optim[nid][fid][1] += hess[rid]
                 zero_optim[nid][fid][2] += 1
@@ -371,6 +383,7 @@ class FeatureHistogram(object):
             for fid in range(bin_split_points.shape[0]):
                 if valid_features is not None and valid_features[fid] is True:
                     if not use_missing or (use_missing and not zero_as_missing):
+                        # add 0 g/h sum to sparse point
                         sparse_point = bin_sparse_points[fid]
                         node_histograms[nid][fid][sparse_point][0] += zero_opt_node_sum[nid][0] - zero_optim[nid][fid][
                             0]
@@ -379,6 +392,7 @@ class FeatureHistogram(object):
                         node_histograms[nid][fid][sparse_point][2] += zero_opt_node_sum[nid][2] - zero_optim[nid][fid][
                             2]
                     else:
+                        # if 0 is regarded as missing value, add to missing bin
                         node_histograms[nid][fid][-1][0] += zero_opt_node_sum[nid][0] - zero_optim[nid][fid][0]
                         node_histograms[nid][fid][-1][1] += zero_opt_node_sum[nid][1] - zero_optim[nid][fid][1]
                         node_histograms[nid][fid][-1][2] += zero_opt_node_sum[nid][2] - zero_optim[nid][fid][2]

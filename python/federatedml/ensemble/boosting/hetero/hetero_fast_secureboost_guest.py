@@ -150,7 +150,6 @@ class HeteroFastSecureBoostingTreeGuest(HeteroSecureBoostingTreeGuest):
 
         return tree
 
-
     def get_model_meta(self):
 
         _, model_meta = super(HeteroFastSecureBoostingTreeGuest, self).get_model_meta()
