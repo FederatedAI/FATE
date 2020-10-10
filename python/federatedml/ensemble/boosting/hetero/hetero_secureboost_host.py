@@ -31,20 +31,21 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         self.complete_secure = False
 
         # for fast hist
-        self.fast_hist_parameter = False
-        self.run_fast_hist = False
+        self.sparse_opt_para = False
+        self.run_sparse_opt = False
         self.has_transformed_data = False
         self.data_bin_dense = None
 
         self.predict_transfer_inst = HeteroSecureBoostTransferVariable()
 
     def _init_model(self, param: HeteroSecureBoostParam):
+
         super(HeteroSecureBoostingTreeHost, self)._init_model(param)
         self.tree_param = param.tree_param
         self.use_missing = param.use_missing
         self.zero_as_missing = param.zero_as_missing
         self.complete_secure = param.complete_secure
-        self.fast_hist_parameter = param.run_fast_histogram
+        self.sparse_opt_para = param.sparse_optimization
 
         if self.use_missing:
             self.tree_param.use_missing = self.use_missing
@@ -72,14 +73,14 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
 
     def check_run_fast_hist(self):
         # if run fast hist, generate dense d_dtable and set related variables
-        self.run_fast_hist = (self.encrypt_param.method.lower() == consts.ITERATIVEAFFINE.lower()) and \
-                             self.fast_hist_parameter
+        self.run_sparse_opt = (self.encrypt_param.method.lower() == consts.ITERATIVEAFFINE.lower()) and \
+                              self.sparse_opt_para
 
-        if self.run_fast_hist:
+        if self.run_sparse_opt:
             LOGGER.info('host is running fast histogram mode')
 
         # for fast hist computation, data preparation
-        if self.run_fast_hist and not self.has_transformed_data:
+        if self.run_sparse_opt and not self.has_transformed_data:
             # start data transformation for fast histogram mode
             if not self.use_missing or (self.use_missing and not self.zero_as_missing):
                 feature_sparse_point_array = [self.bin_sparse_points[i] for i in range(len(self.bin_sparse_points))]
@@ -105,9 +106,9 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         tree.set_flowid(self.generate_flowid(epoch_idx, booster_dim))
         tree.set_runtime_idx(self.component_properties.local_partyid)
 
-        if self.run_fast_hist:
-            tree.activate_fast_histogram_mode()
-            tree.set_fast_hist_data(data_bin_dense=self.data_bin_dense, bin_num=self.bin_num)
+        if self.run_sparse_opt:
+            tree.activate_sparse_hist_opt()
+            tree.set_dense_data_for_sparse_opt(data_bin_dense=self.data_bin_dense, bin_num=self.bin_num)
 
         if self.complete_secure and epoch_idx == 0:
             tree.set_as_complete_secure_tree()
