@@ -15,6 +15,7 @@
 #
 
 import argparse
+import pathlib
 import time
 
 import pandas
@@ -36,9 +37,12 @@ def main(param="param_conf.yaml"):
                   loss="categorical_crossentropy",
                   metrics=["accuracy"])
 
+    data_path = pathlib.Path(__file__).parent.joinpath("../../data").resolve()
+    print(data_path)
+    print(data_path)
     data_with_label = pandas.concat([
-        pandas.read_csv("../../data/vehicle_scale_homo_guest.csv", index_col=0),
-        pandas.read_csv("../../data/vehicle_scale_homo_host.csv", index_col=0)
+        pandas.read_csv(data_path.joinpath("vehicle_scale_homo_guest.csv"), index_col=0),
+        pandas.read_csv(data_path.joinpath("vehicle_scale_homo_host.csv"), index_col=0)
     ]).values
     data = data_with_label[:, 1:]
     labels = to_categorical(data_with_label[:, 0])

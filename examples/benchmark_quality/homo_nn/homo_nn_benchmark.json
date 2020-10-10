@@ -46,7 +46,7 @@
       "script": "./local-homo_nn.py",
       "conf": "./param_conf.yaml"
     },
-    "pipeline": {
+    "FATE": {
       "script": "./fate-homo_nn.py",
       "conf": "./param_conf.yaml"
     },

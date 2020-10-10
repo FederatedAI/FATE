@@ -89,8 +89,8 @@ def main(config="../../config.yaml", param="param_conf.yaml", namespace=""):
     pipeline.fit(backend=config.backend, work_mode=config.work_mode)
     metric_summary = pipeline.get_component("evaluation_0").get_summary()
     data_summary = dict(
-        train={"guest": guest_train_data["name"], **{f"host_{i}": host_train_data[1]["name"] for i in range(num_host)}},
-        test={"guest": guest_train_data["name"], **{f"host_{i}": host_train_data[1]["name"] for i in range(num_host)}}
+        train={"guest": guest_train_data["name"], **{f"host_{i}": host_train_data[i]["name"] for i in range(num_host)}},
+        test={"guest": guest_train_data["name"], **{f"host_{i}": host_train_data[i]["name"] for i in range(num_host)}}
     )
     return data_summary, metric_summary
 
