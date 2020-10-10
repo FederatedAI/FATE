@@ -67,7 +67,7 @@ class Scorecard(ModelBase):
         return [predict_result[0], predict_result[1], predict_score, credit_score]
 
     def _callback(self):
-        formula = f"Score = {self.offset} + {self.factor} / ln2 * ln(Odds)"
+        formula = f"Score = {self.offset} + {self.factor} / ln(2) * ln(Odds)"
         metas = {"scorecard_compute_formula": formula}
         self.tracker.set_metric_meta(metric_namespace=self.metric_namespace,
                                      metric_name=self.metric_name,
