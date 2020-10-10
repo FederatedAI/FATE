@@ -69,14 +69,14 @@ class Scorecard(ModelBase):
         return [predict_result[0], predict_result[1], predict_score, credit_score]
 
     def _callback(self):
-        forumla = f"Score = {self.offset} + {self.factor} / ln2 * ln(Odds)"
-        metas = {"scorecard_compute_formula": forumla}
+        formula = f"Score = {self.offset} + {self.factor} / ln2 * ln(Odds)"
+        metas = {"scorecard_compute_formula": formula}
         self.tracker.set_metric_meta(metric_namespace=self.metric_namespace,
                                      metric_name=self.metric_name,
                                      metric_meta=MetricMeta(name=self.metric_name,
                                                             metric_type=self.metric_type,
                                                             extra_metas=metas))
-        LOGGER.info(f"Scorecard Computation Formula: {forumla}")
+        LOGGER.info(f"Scorecard Computation Formula: {formula}")
 
     def fit(self, prediction_result):
         LOGGER.info(f"Start Scorecard Transform, method: {self.method}")
