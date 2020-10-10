@@ -237,6 +237,14 @@ Algorithm List
      -
      - Hetero KMeans Model
 
+   * - `Scorecard`_
+     - Scorecard
+     - Scale predict score to credit score by given scaling parameters
+     - Table, values are predict score
+     - Table, values are score results
+     -
+     -
+
 .. _DataIO: util/README.rst
 .. _Intersect: statistic/intersect/README.rst
 .. _Federated Sampling: feature/README.rst
@@ -261,6 +269,7 @@ Algorithm List
 .. _Column Expand: feature/README.rst
 .. _Secure Information Retrieval: secure_information_retrieval
 .. _Hetero KMeans: unsupervised_learning/kmeans/README.rst
+.. _Scorecard: statistic/scorecard/README.rst
 
 
 Secure Protocol

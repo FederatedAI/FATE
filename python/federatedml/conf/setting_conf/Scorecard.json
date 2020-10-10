@@ -1,0 +1,11 @@
+{
+    "module_path":  "federatedml/statistic/scorecard",
+    "param_class" : "federatedml/param/scorecard_param.py/ScorecardParam",
+    "role":
+    {
+        "guest|host":
+        {
+            "program": "score_transformer.py/Scorecard"
+        }
+    }
+}
