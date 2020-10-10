@@ -19,3 +19,7 @@ python:
   version: 3.6
   install:
     - requirements: doc/readthedoc/requirements.txt
+    - method: pip
+      path: python/fate_client
+    - method: pip
+      path: python/fate_test

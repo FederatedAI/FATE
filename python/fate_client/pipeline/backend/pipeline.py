@@ -393,7 +393,7 @@ class PipeLine(object):
                 self._predict_dsl["components"][cpn]["input"]["data"][dataset] = val
 
     @staticmethod
-    def _feed_job_parameters(conf, backend, work_mode, job_type=None, model_info=None):
+    def _feed_job_parameters(conf, backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE, job_type=None, model_info=None, **kwargs):
         submit_conf = copy.deepcopy(conf)
         # print("submit conf' type {}".format(type(submit_conf)))
         LOGGER.debug(f"submit conf type is {type(submit_conf)}")
@@ -416,17 +416,27 @@ class PipeLine(object):
             submit_conf["job_parameters"]["model_id"] = model_info.model_id
             submit_conf["job_parameters"]["model_version"] = model_info.model_version
 
+        if kwargs:
+            submit_conf["job_parameters"].update(kwargs)
+
         return submit_conf
 
     @LOGGER.catch(onerror=lambda _: sys.exit(1))
-    def fit(self, backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE):
+    def fit(self, backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE, computing_engine=None,
+            federation_engine=None, storage_engine=None, engines_address=None, federated_mode=None,
+            federation_info=None, task_parallelism=None, federated_status_collect_type=None,
+            federated_data_exchange_type=None, timeout=None, eggroll_run=None, spark_run=None,
+            adaptation_parameters=None, **kwargs):
+
         if self._stage == "predict":
             raise ValueError("This pipeline is constructed for predicting, cannot use fit interface")
+
+        job_parameters = self._filter_job_parameters(locals().copy(), kwargs)
 
         # print("_train_conf {}".format(self._train_conf))
         LOGGER.debug(f"in fit, _train_conf is: \n {json.dumps(self._train_conf)}")
         self._set_state("fit")
-        training_conf = self._feed_job_parameters(self._train_conf, backend, work_mode)
+        training_conf = self._feed_job_parameters(self._train_conf, **job_parameters)
         self._train_conf = training_conf
         LOGGER.debug(f"train_conf is: \n {json.dumps(training_conf, indent=4, ensure_ascii=False)}")
         self._train_job_id, detail_info = self._job_invoker.submit_job(self._train_dsl, training_conf)
@@ -439,7 +449,12 @@ class PipeLine(object):
                                                                 self._initiator.party_id)
 
     @LOGGER.catch(onerror=lambda _: sys.exit(1))
-    def predict(self, backend=Backend.EGGROLL, work_mode=WorkMode.CLUSTER):
+    def predict(self, backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE, computing_engine=None,
+                federation_engine=None, storage_engine=None, engines_address=None, federated_mode=None,
+                federation_info=None, task_parallelism=None, federated_status_collect_type=None,
+                federated_data_exchange_type=None, timeout=None, eggroll_run=None, spark_run=None,
+                adaptation_parameters=None, **kwargs):
+
         if self._stage != "predict":
             raise ValueError(
                 "To use predict function, please deploy component(s) from training pipeline"
@@ -447,11 +462,12 @@ class PipeLine(object):
 
         self.compile()
 
+        job_parameters = self._filter_job_parameters(locals().copy(), kwargs)
+
         predict_conf = self._feed_job_parameters(self._train_conf,
-                                                 backend,
-                                                 work_mode,
                                                  job_type="predict",
-                                                 model_info=self._model_info)
+                                                 model_info=self._model_info,
+                                                 **job_parameters)
         self._predict_conf = copy.deepcopy(predict_conf)
         predict_dsl = copy.deepcopy(self._predict_dsl)
 
@@ -459,6 +475,20 @@ class PipeLine(object):
         self._job_invoker.monitor_job_status(self._predict_job_id,
                                              self._initiator.role,
                                              self._initiator.party_id)
+
+    @staticmethod
+    def _filter_job_parameters(parameters, kwargs):
+        del parameters["self"]
+        del parameters["kwargs"]
+        if kwargs:
+            parameters.update(kwargs)
+
+        job_parameters = {}
+        for k, v in parameters.items():
+            if v:
+                job_parameters[k] = v
+
+        return job_parameters
 
     @LOGGER.catch(onerror=lambda _: sys.exit(1))
     def upload(self, backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE, drop=0):

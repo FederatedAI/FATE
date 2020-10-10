@@ -247,19 +247,22 @@ class ResourceManager(object):
             job_parameters.eggroll_run["eggroll.session.processors.per.node"] = job_parameters.adaptation_parameters[
                 "task_cores_per_node"]
         elif job_parameters.computing_engine == ComputingEngine.SPARK:
-            job_parameters.adaptation_parameters["task_nodes"] = min(int(job_parameters.spark_run.get("num-executors")),
-                                                                     computing_engine_info.f_nodes) if "num-executors" in job_parameters.spark_run else computing_engine_info.f_nodes
+#             job_parameters.adaptation_parameters["task_nodes"] = min(int(job_parameters.spark_run.get("num-executors")),
+#                                                                      computing_engine_info.f_nodes) if "num-executors" in job_parameters.spark_run else computing_engine_info.f_nodes
+            
+            job_parameters.adaptation_parameters["task_nodes"] = int(job_parameters.spark_run.get("num-executors", computing_engine_info.f_nodes))
+                                                                                       
             job_parameters.spark_run["num-executors"] = job_parameters.adaptation_parameters["task_nodes"]
 
             job_parameters.adaptation_parameters["task_cores_per_node"] = int(
-                job_parameters.spark_run.get("executor-cores", DEFAULT_TASK_CORES_PER_NODE))
+                job_parameters.spark_run.get("executor-cores", DEFAULT_TASK_CORES_PER_NODE))            
             job_parameters.spark_run["executor-cores"] = job_parameters.adaptation_parameters["task_cores_per_node"]
 
-            job_parameters.adaptation_parameters["task_memory_per_node"] = int(
-                job_parameters.spark_run.get("executor-memory", DEFAULT_TASK_MEMORY_PER_NODE))
-            if job_parameters.adaptation_parameters["task_memory_per_node"] > 0:
-                job_parameters.spark_run["executor-memory"] = job_parameters.adaptation_parameters[
-                    "task_memory_per_node"]
+#             job_parameters.adaptation_parameters["task_memory_per_node"] = int(
+#                 job_parameters.spark_run.get("executor-memory", DEFAULT_TASK_MEMORY_PER_NODE))
+#             if job_parameters.adaptation_parameters["task_memory_per_node"] > 0:
+#                 job_parameters.spark_run["executor-memory"] = job_parameters.adaptation_parameters[
+#                     "task_memory_per_node"]
 
     @classmethod
     def calculate_job_resource(cls, job_parameters: RunParameters = None, job_id=None, role=None, party_id=None):
