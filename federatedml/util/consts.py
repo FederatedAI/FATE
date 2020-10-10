@@ -209,3 +209,6 @@ SHARE_INFO_COL_NAME = "share_info"
 
 # column_expand
 MANUAL = 'manual'
+
+# score transform
+CREDIT = 'credit'

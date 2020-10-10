@@ -143,7 +143,18 @@ Alogorithm List
 |                              |                           |                       |            |                |             | and model-   |
 |                              |                           |                       |            |                |             | param        |
 +------------------------------+---------------------------+-----------------------+------------+----------------+-------------+--------------+
-
+| `Scorecard`_                 | Scorecard                 | Scale predict score   | Table,     | Table,         | \           | \            |
+|                              |                           | to credit score       | values are | values are     |             |              |
+|                              |                           | by given scaling      | predict    | score result   |             |              |
+|                              |                           | parameters.           | score      |                |             |              |
++------------------------------+---------------------------+-----------------------+------------+----------------+-------------+--------------+
+| `Column Expand`_             | Column Expand             | Add arbitrary         | Table,     | Transformed    | \           | Column       |
+|                              |                           | number of columns     | values are | Table with     |             | Expand       |
+|                              |                           | with user-provided    | raw data   | added          |             | Model        |
+|                              |                           | values.               |            | columns(s)     |             |              |
+|                              |                           |                       |            | and new        |             |              |
+|                              |                           |                       |            | header.        |             |              |
++------------------------------+---------------------------+-----------------------+------------+----------------+-------------+--------------+
 
 
 
@@ -166,6 +177,8 @@ Alogorithm List
 .. _Hetero Pearson: statistic/correlation/README.rst
 .. _Hetero-NN: nn/hetero_nn/README.rst
 .. _Homo Secure Boosting: tree/README.rst
+.. _Scorecard: statistic/scorecard/README.rst
+.. _Column Expand: feature/README.rst
 
 
 
