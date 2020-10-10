@@ -3,6 +3,9 @@ data_host: "/home/mingchao/python/examples/data/default_credit_hetero_host.csv"
 idx: "id"
 label_name: "y"
 penalty: "L2"
-max_iter: 100
-alpha: 0.01
+max_iter: 30
+alpha: 0.001
 learning_rate: 0.15
+optimizer: "nesterov_momentum_sgd"
+batch_size: -1
+early_stop: "diff"

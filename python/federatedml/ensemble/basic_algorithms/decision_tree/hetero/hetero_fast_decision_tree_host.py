@@ -125,7 +125,7 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
 
         if tree_action == plan.tree_actions['host_only'] and target_host_id == self.self_host_id:
 
-            if self.run_fast_hist:
+            if self.run_sparse_opt:
                 acc_histograms = self.fast_get_histograms(node_map)
             else:
                 acc_histograms = self.get_local_histograms(node_map, ret='tb')
@@ -213,10 +213,10 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
                                                bin_sparse_points=self.bin_sparse_points,
                                                use_missing=self.use_missing,
                                                zero_as_missing=self.zero_as_missing,
-                                               dense_format=self.run_fast_hist
+                                               dense_format=self.run_sparse_opt
                                                )
 
-        if not self.run_fast_hist:
+        if not self.run_sparse_opt:
             assign_result = self.data_with_node_assignments.mapValues(assign_node_method)
         else:
             assign_result = self.data_bin_dense_with_position.mapValues(assign_node_method)

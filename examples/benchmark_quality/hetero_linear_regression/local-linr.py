@@ -47,15 +47,16 @@ def main(param="./linr_config.yaml"):
     rmse = np.sqrt(mse)
     r2 = r2_score(y, y_pred)
     explained_var = explained_variance_score(y, y_pred)
-    result = {"r2_score": r2,
+    metric_summary = {"r2_score": r2,
               "mean_squared_error": mse,
               "root_mean_squared_error": rmse,
               "explained_variance": explained_var}
-    return result
+    data_summary = {}
+    return data_summary, metric_summary
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser("BENCHMARK-QUALITY SKLEARN JOB")
+    parser = argparse.ArgumentParser("BENCHMARK-QUALITY LOCAL JOB")
     parser.add_argument("-param", type=str,
                         help="config file for params")
     args = parser.parse_args()

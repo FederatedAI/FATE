@@ -19,6 +19,15 @@ import math
 from prettytable import PrettyTable
 
 
+def show_data(data):
+    data_table = PrettyTable()
+    data_table.field_names = ["Data", "Information"]
+    for name, table_name in data.items():
+        row = [name, table_name]
+        data_table.add_row(row)
+    print(data_table.get_string(title="Data Summary"))
+
+
 def _get_common_metrics(**results):
     common_metrics = None
     for result in results.values():
@@ -70,13 +79,15 @@ def evaluate_almost_equal(metrics, results, abs_tol=None, rel_tol=None):
     return eval_summary
 
 
-def match_metrics(evaluate, abs_tol=None, rel_tol=None, **results):
+def match_metrics(evaluate, group_name, abs_tol=None, rel_tol=None, **results):
     """
     Get metrics
     Parameters
     ----------
     evaluate: bool, whether to evaluate metrics are almost equal, and include compare results in output report
-    tol: float, max tolerance of absolute error to consider two metrics are almost equal
+    group_name: str, group name of all models
+    abs_tol: float, max tolerance of absolute error to consider two metrics to be almost equal
+    rel_tol: float, max tolerance of relative difference to consider two metrics to be almost equal
     results: dict of model name: metrics
 
     Returns
@@ -90,7 +101,7 @@ def match_metrics(evaluate, abs_tol=None, rel_tol=None, **results):
     model_names = list(filtered_results.keys())
     table.field_names = ["Model Name"] + common_metrics
     for model_name in model_names:
-        row = [model_name] + filtered_results[model_name]
+        row = [f"{model_name}-{group_name}"] + filtered_results[model_name]
         table.add_row(row)
     print(table.get_string(title="Metrics Summary"))
 

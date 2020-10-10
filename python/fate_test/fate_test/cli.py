@@ -29,7 +29,7 @@ from fate_test._flow_client import SubmitJobResponse, QueryJobResponse, JobProgr
 from fate_test._io import set_logger, LOGGER, echo
 from fate_test._parser import Testsuite, BenchmarkSuite, Config, DATA_JSON_HOOK, CONF_JSON_HOOK, DSL_JSON_HOOK, \
     JSON_STRING
-from fate_test.utils import match_metrics
+from fate_test.utils import show_data, match_metrics
 
 
 @click.group(name="cli")
@@ -430,27 +430,33 @@ def _run_benchmark_pairs(config: Config, suite: BenchmarkSuite, tol: float,
     for i, pair in enumerate(suite.pairs):
         echo.echo(f"Running {i + 1} of {pair_n} groups: {pair.pair_name}")
         results = {}
+        data_summary = None
         job_n = len(pair.jobs)
-        for job in pair.jobs:
-            echo.echo(f"Running {i + 1} of {job_n} jobs: {job.job_name}")
+        for j, job in enumerate(pair.jobs):
+            echo.echo(f"Running {j + 1} of {job_n} jobs: {job.job_name}")
             job_name, script_path, conf_path = job.job_name, job.script_path, job.conf_path
             param = Config.load_from_file(conf_path)
             mod = _load_module_from_script(script_path)
             input_params = signature(mod.main).parameters
             # local script
             if len(input_params) == 1:
-                metric = mod.main(param=param)
+                data, metric = mod.main(param=param)
             # pipeline script
             elif len(input_params) == 3:
                 if data_namespace_mangling:
-                    metric = mod.main(config=config, param=param, namespace=f"_{namespace}")
+                    data, metric = mod.main(config=config, param=param, namespace=f"_{namespace}")
                 else:
-                    metric = mod.main(config=config, param=param)
+                    data, metric = mod.main(config=config, param=param)
             else:
-                metric = mod.main()
+                data, metric = mod.main()
             results[job_name] = metric
+            if job_name == "FATE":
+                data_summary = data
+            if data_summary is None:
+                data_summary = data
         rel_tol = pair.compare_setting.get("relative_tol")
-        match_metrics(evaluate=True, abs_tol=tol, rel_tol=rel_tol, **results)
+        show_data(data_summary)
+        match_metrics(evaluate=True, group_name=pair.pair_name, abs_tol=tol, rel_tol=rel_tol, **results)
 
 
 def main():
