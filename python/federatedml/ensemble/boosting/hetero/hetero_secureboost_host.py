@@ -29,13 +29,12 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         self.grad_and_hess = None
         self.model_param = HeteroSecureBoostParam()
         self.complete_secure = False
-
+        self.model_name = 'HeteroSecureBoost'
         # for fast hist
         self.fast_hist_parameter = False
         self.run_fast_hist = False
         self.has_transformed_data = False
         self.data_bin_dense = None
-
         self.predict_transfer_inst = HeteroSecureBoostTransferVariable()
 
     def _init_model(self, param: HeteroSecureBoostParam):

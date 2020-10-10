@@ -22,6 +22,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
 
     def __init__(self):
         super(HeteroSecureBoostingTreeGuest, self).__init__()
+
         self.tree_param = None  # decision tree param
         self.use_missing = False
         self.zero_as_missing = False
@@ -30,10 +31,9 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         self.feature_importances_ = {}
         self.model_param = HeteroSecureBoostParam()
         self.complete_secure = False
-
         self.data_alignment_map = {}
-
         self.predict_transfer_inst = HeteroSecureBoostTransferVariable()
+        self.model_name = 'HeteroSecureBoost'
 
     def _init_model(self, param: HeteroSecureBoostParam):
 
@@ -266,7 +266,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
 
         while True:
 
-            LOGGER.debug('cur predict round is {}'.format(comm_round))
+            LOGGER.info('cur predict round is {}'.format(comm_round))
 
             node_pos_tb = node_pos_tb.join(data_inst, traverse_func)
             node_pos_tb, final_leaf_pos = self.save_leaf_pos_and_mask_leaf_pos(node_pos_tb, final_leaf_pos)
@@ -289,7 +289,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
 
             comm_round += 1
 
-        LOGGER.debug('federation process done')
+        LOGGER.info('federated prediction process done')
 
         predict_result = self.get_predict_scores(leaf_pos=final_leaf_pos, learning_rate=self.learning_rate,
                                                  init_score=self.init_score, trees=trees,
@@ -321,7 +321,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         predict_cache = None
         if last_round != -1:
             predict_cache = self.predict_data_cache.predict_data_at(cache_dataset_key, last_round)
-            LOGGER.debug('load predict cache of round {}'.format(last_round))
+            LOGGER.info('load predict cache of round {}'.format(last_round))
 
         predict_rs = self.boosting_fast_predict(processed_data, trees=trees, predict_cache=predict_cache)
         self.predict_data_cache.add_data(cache_dataset_key, predict_rs)
