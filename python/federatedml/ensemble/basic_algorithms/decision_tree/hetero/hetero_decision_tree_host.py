@@ -38,11 +38,8 @@ class HeteroDecisionTreeHost(DecisionTree):
     Setting
     """
 
-    def activate_sparse_hist_opt(self, ):
+    def activate_sparse_hist_opt(self):
         self.run_sparse_opt = True
-
-    def activate_fast_histogram_mode(self, ):
-        self.run_fast_hist = True
 
     def set_dense_data_for_sparse_opt(self, data_bin_dense, bin_num):
         # a dense dtable and bin_num for fast hist computation
@@ -262,7 +259,7 @@ class HeteroDecisionTreeHost(DecisionTree):
     def update_instances_node_positions(self):
 
         # join data and inst2node_idx to update current node positions of samples
-        if self.run_fast_hist:
+        if self.run_sparse_opt:
             self.data_bin_dense_with_position = self.data_bin_dense.join(self.inst2node_idx, lambda v1, v2: (v1, v2))
         else:
             self.data_with_node_assignments = self.data_bin.join(self.inst2node_idx, lambda v1, v2: (v1, v2))

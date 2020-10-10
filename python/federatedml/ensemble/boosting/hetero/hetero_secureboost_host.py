@@ -70,7 +70,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         new_data.features = sp.csc_matrix(np.array(new_feature_sparse_point_array) + offset)
         return new_data
 
-    def check_run_fast_hist(self):
+    def check_run_sp_opt(self):
         # if run fast hist, generate dense d_dtable and set related variables
         self.run_sparse_opt = (self.encrypt_param.method.lower() == consts.ITERATIVEAFFINE.lower()) and \
                               self.sparse_opt_para
@@ -97,7 +97,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
 
     def fit_a_booster(self, epoch_idx: int, booster_dim: int):
 
-        self.check_run_fast_hist()
+        self.check_run_sp_opt()
         tree = HeteroDecisionTreeHost(tree_param=self.tree_param)
         tree.set_input_data(data_bin=self.data_bin, bin_split_points=self.bin_split_points, bin_sparse_points=
                             self.bin_sparse_points)

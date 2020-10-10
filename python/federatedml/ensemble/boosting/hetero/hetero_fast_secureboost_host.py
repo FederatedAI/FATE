@@ -65,7 +65,7 @@ class HeteroFastSecureBoostingTreeHost(HeteroSecureBoostingTreeHost):
 
         tree_type, target_host_id = self.get_tree_plan(epoch_idx)
         self.check_host_number(tree_type)
-        self.check_run_fast_hist()
+        self.check_run_sp_opt()
         tree = HeteroFastDecisionTreeHost(tree_param=self.tree_param)
         tree.set_input_data(data_bin=self.data_bin, bin_split_points=self.bin_split_points, bin_sparse_points=
                             self.bin_sparse_points)
