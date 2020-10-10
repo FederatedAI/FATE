@@ -44,7 +44,6 @@ class Scorecard(ModelBase):
     @staticmethod
     def compute_credit_score(predict_result, offset, factor, upper_limit_value, lower_limit_value):
         predict_score = predict_result[3]["1"]
-        odds = predict_result[3]["0"] / predict_score
 
         # deal with special predict score values
         if abs(predict_score - 0) < FLOAT_ZERO and predict_score >= 0:
@@ -54,6 +53,7 @@ class Scorecard(ModelBase):
         elif predict_score > 1 or predict_score < 0:
             credit_score = -1
         else:
+            odds = predict_result[3]["0"] / predict_score
             credit_score = offset + factor / np.log(2) * np.log(odds)
 
         # credit score should be within range
