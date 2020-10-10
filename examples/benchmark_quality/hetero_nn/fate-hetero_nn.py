@@ -89,7 +89,10 @@ def main(config="../../config.yaml", param="./hetero_nn_breast_config.yaml", nam
 
     pipeline.fit(backend=backend, work_mode=work_mode)
 
-    return pipeline.get_component("evaluation_0").get_summary()
+    data_summary = {"train": {"guest": guest_train_data["name"], "host": host_train_data["name"]},
+                    "test": {"guest": guest_train_data["name"], "host": host_train_data["name"]}
+                    }
+    return data_summary, pipeline.get_component("evaluation_0").get_summary()
 
 
 if __name__ == "__main__":
