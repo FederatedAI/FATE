@@ -184,16 +184,23 @@ class HeteroDecisionTreeGuest(DecisionTree):
     def federated_find_split(self, dep=-1, batch=-1, idx=-1):
 
         LOGGER.info("federated find split of depth {}, batch {}".format(dep, batch))
+        # get flatten split points from hosts
+        # [split points from host 1, split point from host 2, .... so on] ↓
         encrypted_splitinfo_host = self.sync_encrypted_splitinfo_host(dep, batch, idx=idx)
 
         for i in range(len(encrypted_splitinfo_host)):
+
             init_gain = self.min_impurity_split - consts.FLOAT_ZERO
             encrypted_init_gain = self.encrypter.encrypt(init_gain)
+            # init encrypted gain for every nodes in cur layer
             best_splitinfo_host = [[-1, encrypted_init_gain] for j in range(len(self.cur_to_split_nodes))]
+            # init best gain for every nodes in cur layer
             best_gains = [init_gain for j in range(len(self.cur_to_split_nodes))]
+            # max split points to compute at a time, to control memory consumption
             max_nodes = max(len(encrypted_splitinfo_host[i][j]) for j in range(len(self.cur_to_split_nodes)))
-            for k in range(0, max_nodes, consts.MAX_FEDERATED_NODES):
-                batch_splitinfo_host = [encrypted_splitinfo[k: k + consts.MAX_FEDERATED_NODES] for encrypted_splitinfo
+            # batch split point finding for every cur to split nodes
+            for k in range(0, max_nodes, consts.MAX_SPLITINFO_TO_COMPUTE):
+                batch_splitinfo_host = [encrypted_splitinfo[k: k + consts.MAX_SPLITINFO_TO_COMPUTE] for encrypted_splitinfo
                                         in encrypted_splitinfo_host[i]]
 
                 encrypted_splitinfo_host_table = session.parallelize(zip(self.cur_to_split_nodes, batch_splitinfo_host),
@@ -202,15 +209,16 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
                 splitinfos = encrypted_splitinfo_host_table.mapValues(self.find_host_split).collect()
 
-                for _, splitinfo in splitinfos:
-                    LOGGER.debug('_, splitinfo are {}, {}'.format(_, splitinfo))
-                    if best_splitinfo_host[_][0] == -1:
-                        best_splitinfo_host[_] = list(splitinfo[:2])
-                        best_gains[_] = splitinfo[2]
-                    elif splitinfo[0] != -1 and splitinfo[2] > best_gains[_] + consts.FLOAT_ZERO:
-                        best_splitinfo_host[_][0] = k + splitinfo[0]
-                        best_splitinfo_host[_][1] = splitinfo[1]
-                        best_gains[_] = splitinfo[2]
+                # update best splitinfo and gain for every cur to split nodes
+                for node_idx, splitinfo in splitinfos:
+                    LOGGER.debug('_, splitinfo are {}, {}'.format(node_idx, splitinfo))
+                    if best_splitinfo_host[node_idx][0] == -1:
+                        best_splitinfo_host[node_idx] = list(splitinfo[:2])
+                        best_gains[node_idx] = splitinfo[2]
+                    elif splitinfo[0] != -1 and splitinfo[2] > best_gains[node_idx] + consts.FLOAT_ZERO:
+                        best_splitinfo_host[node_idx][0] = k + splitinfo[0]
+                        best_splitinfo_host[node_idx][1] = splitinfo[1]
+                        best_gains[node_idx] = splitinfo[2]
 
             if idx != -1:
                 self.sync_federated_best_splitinfo_host(best_splitinfo_host, dep, batch, idx)
@@ -232,6 +240,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
         self.federated_find_split(dep, batch_idx)
         host_split_info = self.sync_final_split_host(dep, batch_idx)
 
+        # compare host best split points with guest split points
         cur_best_split = self.merge_splitinfo(splitinfo_guest=best_split_info_guest,
                                               splitinfo_host=host_split_info,
                                               merge_host_split_only=False)
