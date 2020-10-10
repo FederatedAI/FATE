@@ -106,7 +106,6 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
     # set data input sources of intersection components
     pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
-    # set train & validate data of hetero_lr_0 component
 
     pipeline.add_component(hetero_lr_0, data=Data(train_data=intersection_0.output.data))
 
@@ -120,7 +119,7 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.fit(backend=backend, work_mode=work_mode)
 
     # query component summary
-    print(pipeline.get_component("scorecard_0").get_summary())
+    # print(pipeline.get_component("scorecard_0").get_summary())
 
 
 if __name__ == "__main__":
