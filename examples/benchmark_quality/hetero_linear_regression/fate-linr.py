@@ -112,12 +112,16 @@ def main(config="../../config.yaml", param="./linr_config.yaml", namespace=""):
 
     # fit model
     pipeline.fit(backend=backend, work_mode=work_mode)
-    # query component summary
-    return pipeline.get_component("evaluation_0").get_summary()
+
+    metric_summary = pipeline.get_component("evaluation_0").get_summary()
+    data_summary = {"train": {"guest": guest_train_data["name"], "host": host_train_data["name"]},
+                    "test": {"guest": guest_train_data["name"], "host": host_train_data["name"]}
+                    }
+    return data_summary, metric_summary
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser("BENCHMARK-QUALITY PIPELINE JOB")
+    parser = argparse.ArgumentParser("BENCHMARK-QUALITY FATE JOB")
     parser.add_argument("-config", type=str,
                         help="config file")
     parser.add_argument("-param", type=str,

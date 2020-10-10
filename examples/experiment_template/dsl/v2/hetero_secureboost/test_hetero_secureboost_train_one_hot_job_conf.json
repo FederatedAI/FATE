@@ -1,0 +1,198 @@
+{
+    "initiator": {
+        "role": "guest",
+        "party_id": 10000
+    },
+    "role": {
+        "guest": [
+            10000
+        ],
+        "host": [
+            9999
+        ],
+        "arbiter": [
+            9999
+        ]
+    },
+    "job_parameters": {
+        "work_mode": 0,
+        "backend": 0,
+        "dsl_version": 2
+    },
+    "role_parameters": {
+        "host": {
+            "0": {
+                "reader_0": {
+                    "table": {
+                        "name": "mock_tag_hetero_host",
+                        "namespace": "experiment"
+                    }
+                },
+                "dataio_1": {
+                    "input_format": "tag",
+                    "delimitor": ",",
+                    "tag_with_value": false,
+                    "with_label": false,
+                    "output_format": "dense"
+                },
+                "dataio_0": {
+                    "input_format": "tag",
+                    "delimitor": ",",
+                    "tag_with_value": false,
+                    "with_label": false,
+                    "output_format": "dense"
+                },
+                "hetero_scale_0": {
+                    "need_run": false
+                },
+                "hetero_scale_1": {},
+                "reader_1": {
+                    "table": {
+                        "name": "mock_tag_hetero_host",
+                        "namespace": "experiment"
+                    }
+                }
+            }
+        },
+        "guest": {
+            "0": {
+                "reader_0": {
+                    "table": {
+                        "name": "breast_hetero_guest",
+                        "namespace": "experiment"
+                    }
+                },
+                "dataio_1": {
+                    "missing_fill": true,
+                    "missing_fill_method": "mean",
+                    "outlier_replace": false,
+                    "outlier_replace_method": "designated",
+                    "outlier_impute": "-9999",
+                    "outlier_replace_value": 0.66,
+                    "with_label": true,
+                    "label_name": "y",
+                    "label_type": "int",
+                    "output_format": "dense"
+                },
+                "dataio_0": {
+                    "missing_fill": true,
+                    "missing_fill_method": "mean",
+                    "outlier_replace": false,
+                    "outlier_replace_method": "designated",
+                    "outlier_impute": "-9999",
+                    "outlier_replace_value": 0.66,
+                    "with_label": true,
+                    "label_name": "y",
+                    "label_type": "int",
+                    "output_format": "dense"
+                },
+                "hetero_scale_0": {
+                    "need_run": false
+                },
+                "hetero_scale_1": {},
+                "reader_1": {
+                    "table": {
+                        "name": "breast_hetero_guest",
+                        "namespace": "experiment"
+                    }
+                }
+            }
+        }
+    },
+    "algorithm_parameters": {
+        "intersection_0": {
+            "intersect_method": "raw"
+        },
+        "intersection_1": {
+            "intersect_method": "raw"
+        },
+        "hetero_feature_binning_0": {
+            "method": "optimal",
+            "bin_indexes": -1,
+            "optimal_binning_param": {
+                "metric_method": "iv",
+                "init_bucket_method": "quantile"
+            }
+        },
+        "hetero_feature_selection_0": {
+            "select_col_indexes": -1,
+            "filter_methods": [
+                "unique_value",
+                "iv_filter",
+                "statistic_filter"
+            ],
+            "unique_param": {
+                "eps": 1e-06
+            },
+            "iv_param": {
+                "metrics": [
+                    "iv",
+                    "iv"
+                ],
+                "filter_type": [
+                    "top_k",
+                    "threshold"
+                ],
+                "take_high": [
+                    true,
+                    true
+                ],
+                "threshold": [
+                    10,
+                    0.1
+                ]
+            },
+            "statistic_param": {
+                "metrics": [
+                    "coefficient_of_variance",
+                    "skewness"
+                ],
+                "filter_type": [
+                    "threshold",
+                    "threshold"
+                ],
+                "take_high": [
+                    true,
+                    false
+                ],
+                "threshold": [
+                    0.001,
+                    -0.01
+                ]
+            }
+        },
+        "hetero_secureboost_0": {
+            "task_type": "classification",
+            "objective_param": {
+                "objective": "cross_entropy"
+            },
+            "learning_rate": 0.1,
+            "num_trees": 10,
+            "subsample_feature_rate": 0.5,
+            "n_iter_no_change": false,
+            "tol": 0.0002,
+            "bin_num": 50,
+            "predict_param": {
+                "threshold": 0.5
+            },
+            "cv_param": {
+                "n_splits": 5,
+                "shuffle": false,
+                "random_seed": 103,
+                "need_cv": false
+            },
+            "validation_freqs": 2,
+            "metrics": [
+                "auc",
+                "ks"
+            ],
+            "encrypt_param": {
+                "method": "iterativeAffine"
+            },
+            "early_stopping_rounds": 5,
+            "tree_param": {
+                "max_depth": 2
+            }
+        }
+    }
+}

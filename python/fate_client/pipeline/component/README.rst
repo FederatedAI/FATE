@@ -447,6 +447,14 @@ Below lists input and output elements of each component.
      - model
      - model
 
+   * - `Data Statistics`_
+     - Data Statistics
+     - Compute Data Statistics
+     - data
+     - data
+     - None
+     - model
+
 .. _DataIO: ../../federatedml/util/README.rst
 .. _Intersect: ../../federatedml/statistic/intersect/README.rst
 .. _Federated Sampling: ../../federatedml/feature/README.rst
@@ -470,6 +478,7 @@ Below lists input and output elements of each component.
 .. _Homo OneHot Encoder: ../../federatedml/feature/README.rst
 .. _Column Expand: ../../federatedml/feature/README.rst
 .. _Hetero KMeans: ../../federatedml/unsupervised_learning/kmeans/README.rst
+.. _Data Statistics: ../../federatedml/statistic/README.rst
 
 
 Params
