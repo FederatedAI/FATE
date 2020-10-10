@@ -77,7 +77,6 @@ class Scorecard(ModelBase):
         self.set_summary(metas)
         LOGGER.info(f"Scorecard Computation Formula: {formula}")
 
-
     def fit(self, prediction_result):
         LOGGER.info(f"Start Scorecard Transform, method: {self.method}")
 
@@ -88,7 +87,7 @@ class Scorecard(ModelBase):
                                                                                             lower_limit_value))
         schema = prediction_result.schema
         result_schema = {"header": ["label", "predict_result", "predict_score", "credit_score"],
-                                   "sid_name": schema.get('sid_name')}
+                         "sid_name": schema.get('sid_name')}
         score_result.schema = result_schema
 
         self._callback()
