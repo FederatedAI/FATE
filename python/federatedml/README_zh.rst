@@ -239,6 +239,14 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
      -
      - Hetero KMeans模型
 
+   * - `Scorecard`_
+     - 评分卡
+     - 转换二分类预测分数至信用分
+     - Table, 值为二分类预测结果
+     - Table, 值为转化后信用分结果
+     -
+     -
+
 .. _DataIO: util/README.rst
 .. _Intersect: statistic/intersect/README.rst
 .. _Federated Sampling: feature/README.rst
@@ -263,6 +271,7 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
 .. _Column Expand: feature/README.rst
 .. _Secure Information Retrieval: secure_information_retrieval
 .. _Hetero KMeans: unsupervised_learning/kmeans/README.rst
+.. _Scorecard: statistic/scorecard/README.rst
 
 
 安全协议

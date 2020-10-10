@@ -118,9 +118,7 @@ def main(config="../../config.yaml", namespace=""):
 
     # fit model
     pipeline.fit(backend=backend, work_mode=work_mode)
-    import json
-    print(f"\n {json.dumps(pipeline.get_train_conf(), indent=4)}")
-    print(f"\n {json.dumps(pipeline.get_train_dsl(), indent=4)}")
+
     # query component summary
     print(pipeline.get_component("scorecard_0").get_summary())
 

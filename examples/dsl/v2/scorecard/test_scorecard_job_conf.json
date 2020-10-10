@@ -1,17 +1,17 @@
- {
+{
     "initiator": {
         "role": "guest",
         "party_id": 10000
     },
     "role": {
-        "guest": [
-            10000
+        "arbiter": [
+            9999
         ],
         "host": [
             9999
         ],
-        "arbiter": [
-            9999
+        "guest": [
+            10000
         ]
     },
     "job_parameters": {
@@ -20,22 +20,6 @@
         "dsl_version": 2
     },
     "role_parameters": {
-        "host": {
-            "0": {
-                "scorecard_0": {
-                    "need_run": false
-                },
-                "dataio_0": {
-                    "with_label": false
-                },
-                "reader_0": {
-                    "table": {
-                        "name": "default_credit_hetero_guest",
-                        "namespace": "experiment"
-                    }
-                }
-            }
-        },
         "guest": {
             "0": {
                 "scorecard_0": {
@@ -46,15 +30,31 @@
                     "lower_limit_value": 0,
                     "need_run": true
                 },
+                "reader_0": {
+                    "table": {
+                        "name": "default_credit_hetero_guest",
+                        "namespace": "experiment"
+                    }
+                },
                 "dataio_0": {
                     "with_label": true,
                     "output_format": "dense"
+                }
+            }
+        },
+        "host": {
+            "0": {
+                "scorecard_0": {
+                    "need_run": false
                 },
                 "reader_0": {
                     "table": {
                         "name": "default_credit_hetero_guest",
                         "namespace": "experiment"
                     }
+                },
+                "dataio_0": {
+                    "with_label": false
                 }
             }
         }
