@@ -16,7 +16,6 @@
 
 import argparse
 import pathlib
-import time
 
 import pandas
 from pipeline.utils.tools import JobConfig
@@ -29,25 +28,30 @@ from tensorflow.keras.utils import to_categorical
 def main(param="param_conf.yaml"):
     if isinstance(param, str):
         param = JobConfig.load_from_file(param)
+
+    epoch = param["epoch"]
+    lr = param["lr"]
+    batch_size = param.get("batch_size", -1)
+    optimizer_name = param.get("optimizer", "Adam")
+
     model = Sequential([
         Dense(units=5, input_shape=(18,), activation="relu"),
-        Dense(units=4, activation="sigmoid")
+        Dense(units=4, activation="softmax")
     ])
-    model.compile(optimizer=optimizers.Adam(learning_rate=param["lr"]),
+    model.compile(optimizer=getattr(optimizers, optimizer_name)(learning_rate=lr),
                   loss="categorical_crossentropy",
                   metrics=["accuracy"])
 
     data_path = pathlib.Path(__file__).parent.joinpath("../../data").resolve()
-    print(data_path)
-    print(data_path)
     data_with_label = pandas.concat([
         pandas.read_csv(data_path.joinpath("vehicle_scale_homo_guest.csv"), index_col=0),
         pandas.read_csv(data_path.joinpath("vehicle_scale_homo_host.csv"), index_col=0)
     ]).values
     data = data_with_label[:, 1:]
     labels = to_categorical(data_with_label[:, 0])
-    t = time.time()
-    model.fit(data, labels, epochs=param["epoch"], batch_size=846)
+    if batch_size < 0:
+        batch_size = len(data_with_label)
+    model.fit(data, labels, epochs=epoch, batch_size=batch_size)
     evaluate = model.evaluate(data, labels)
     metric_summary = {
         "accuracy": evaluate[1]

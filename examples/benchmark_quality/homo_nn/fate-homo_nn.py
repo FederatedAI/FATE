@@ -48,6 +48,11 @@ def main(config="../../config.yaml", param="param_conf.yaml", namespace=""):
     if isinstance(config, str):
         config = load_job_config(config)
 
+    epoch = param["epoch"]
+    lr = param["lr"]
+    batch_size = param.get("batch_size", -1)
+    optimizer_name = param.get("optimizer", "Adam")
+
     if isinstance(param, str):
         param = JobConfig.load_from_file(param)
 
@@ -72,11 +77,11 @@ def main(config="../../config.yaml", param="param_conf.yaml", namespace=""):
         .algorithm_param(with_label=True, output_format="dense")
     dataio_0.get_party_instance(role='host', party_id=hosts).algorithm_param(with_label=True)
 
-    homo_nn_0 = HomoNN(name="homo_nn_0", encode_label=True, max_iter=param["epoch"], batch_size=-1,
+    homo_nn_0 = HomoNN(name="homo_nn_0", encode_label=True, max_iter=epoch, batch_size=batch_size,
                        early_stop={"early_stop": "diff", "eps": 0.0001}) \
         .add(Dense(units=5, input_shape=(18,), activation="relu")) \
-        .add(Dense(units=4, activation="sigmoid")) \
-        .compile(optimizer=optimizers.Adam(learning_rate=param["lr"]), metrics=["accuracy"],
+        .add(Dense(units=4, activation="softmax")) \
+        .compile(optimizer=getattr(optimizers, optimizer_name)(learning_rate=lr), metrics=["accuracy"],
                  loss="categorical_crossentropy")
 
     evaluation_0 = Evaluation(name='evaluation_0', eval_type="multi", metrics=["accuracy", "precision", "recall"])
