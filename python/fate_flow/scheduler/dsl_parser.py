@@ -234,7 +234,7 @@ class BaseDSLParser(object):
             self.components[i].set_upstream(self.component_upstream[i])
             self.components[i].set_downstream(self.component_downstream[i])
 
-    def _init_component_setting(self, setting_conf_prefix, runtime_conf, version=1):
+    def _init_component_setting(self, setting_conf_prefix, runtime_conf, version=1, redundant_param_check=True):
         """
         init top input
         """
@@ -247,12 +247,14 @@ class BaseDSLParser(object):
                     role_parameters = parameter_util.ParameterUtil.override_parameter(setting_conf_prefix,
                                                                                       runtime_conf,
                                                                                       module,
-                                                                                      name)
+                                                                                      name,
+                                                                                      redundant_param_check=redundant_param_check)
                 else:
                     role_parameters = parameter_util.ParameterUtilV2.override_parameter(setting_conf_prefix,
                                                                                         runtime_conf,
                                                                                         module,
-                                                                                        name)
+                                                                                        name,
+                                                                                        redundant_param_check=redundant_param_check)
 
                 self.components[idx].set_role_parameters(role_parameters)
             else:
@@ -828,7 +830,7 @@ class DSLParser(BaseDSLParser):
             self._init_component_setting(setting_conf_prefix, self.runtime_conf)
         else:
             predict_runtime_conf = self.merge_dict(pipeline_runtime_conf, runtime_conf)
-            self._init_component_setting(setting_conf_prefix, predict_runtime_conf)
+            self._init_component_setting(setting_conf_prefix, predict_runtime_conf, redundant_param_check=False)
 
         self.args_input, self.args_datakey = parameter_util.ParameterUtil.get_args_input(runtime_conf, module="args")
         self._check_args_input()
