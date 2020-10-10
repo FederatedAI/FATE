@@ -76,10 +76,12 @@ class HeteroFastSecureBoostingTreeHost(HeteroSecureBoostingTreeHost):
         tree.set_tree_work_mode(tree_type, target_host_id)
         tree.set_layered_depth(self.guest_depth, self.host_depth)
         tree.set_self_host_id(self.component_properties.local_partyid)
-        if self.run_fast_hist:
-            tree.activate_fast_histogram_mode()
-            tree.set_fast_hist_data(data_bin_dense=self.data_bin_dense, bin_num=self.bin_num)
-        LOGGER.info('tree work mode is {}'.format(tree_type))
+
+        if self.run_sparse_opt:
+            tree.activate_sparse_hist_opt()
+            tree.set_dense_data_for_sparse_opt(data_bin_dense=self.data_bin_dense, bin_num=self.bin_num)
+
+        LOGGER.debug('tree work mode is {}'.format(tree_type))
         tree.fit()
         self.update_feature_importance(tree.get_feature_importance())
         # tree.print_leafs()
