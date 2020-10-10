@@ -34,7 +34,7 @@ end
 
 local function reload_route_table()
     local prefix_path = ngx.config.prefix()
-    local file = io.open(prefix_path.."conf/route_table.yaml", "r")    -- 使用 io.open() 函数，以只读模式打开文件
+    local file = io.open(prefix_path.."conf/route_table.yaml", "r")
     local content = file:read("*a")
     file:close()
     local yaml_table = yaml_parser.parse(content)
