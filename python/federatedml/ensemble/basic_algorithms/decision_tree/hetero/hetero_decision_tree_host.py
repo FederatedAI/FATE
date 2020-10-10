@@ -27,17 +27,17 @@ class HeteroDecisionTreeHost(DecisionTree):
         self.host_party_idlist = []
 
         # For fast histogram
-        self.run_fast_hist = False
+        self.run_sparse_opt = False
         self.bin_num = None
         self.data_bin_dense = None
         self.data_bin_dense_with_position = None
 
         self.transfer_inst = HeteroDecisionTreeTransferVariable()
 
-    def activate_fast_histogram_mode(self, ):
-        self.run_fast_hist = True
+    def activate_sparse_hist_opt(self, ):
+        self.run_sparse_opt = True
 
-    def set_fast_hist_data(self, data_bin_dense, bin_num):
+    def set_dense_data_for_sparse_opt(self, data_bin_dense, bin_num):
         # a dense dtable and bin_num for fast hist computation
         self.data_bin_dense = data_bin_dense
         self.bin_num = bin_num
@@ -317,7 +317,7 @@ class HeteroDecisionTreeHost(DecisionTree):
 
         if not self.complete_secure_tree:
 
-            if self.run_fast_hist:
+            if self.run_sparse_opt:
                 acc_histograms = self.fast_get_histograms(node_map)
             else:
                 acc_histograms = self.get_local_histograms(node_map, ret='tb')
@@ -350,7 +350,7 @@ class HeteroDecisionTreeHost(DecisionTree):
     def update_instances_node_positions(self):
 
         # join data and inst2node_idx to update current node positions of samples
-        if self.run_fast_hist:
+        if self.run_sparse_opt:
             self.data_bin_dense_with_position = self.data_bin_dense.join(self.inst2node_idx, lambda v1, v2: (v1, v2))
         else:
             self.data_with_node_assignments = self.data_bin.join(self.inst2node_idx, lambda v1, v2: (v1, v2))
