@@ -19,6 +19,10 @@ class HeteroFastDecisionTreeGuest(HeteroDecisionTreeGuest):
         self.cur_dep = 0
         self.use_guest_feat_when_predict = False
 
+    """
+    Setting
+    """
+
     def use_guest_feat_only_predict_mode(self):
         self.use_guest_feat_when_predict = True
 
@@ -27,6 +31,10 @@ class HeteroFastDecisionTreeGuest(HeteroDecisionTreeGuest):
 
     def set_layered_depth(self, guest_depth, host_depth):
         self.guest_depth, self.host_depth = guest_depth, host_depth
+
+    """
+    Tree Plan
+    """
 
     def initialize_node_plan(self):
         if self.tree_type == plan.tree_type_dict['layered_tree']:
@@ -45,6 +53,10 @@ class HeteroFastDecisionTreeGuest(HeteroDecisionTreeGuest):
         if host_id == -1:
             return -1
         return self.host_party_idlist.index(host_id)
+
+    """
+    Compute split point
+    """
 
     def compute_best_splits_with_node_plan(self, tree_action, target_host_idx, node_map: dict, dep: int,
                                            batch_idx: int, mode=consts.MIX_TREE):
@@ -73,6 +85,10 @@ class HeteroFastDecisionTreeGuest(HeteroDecisionTreeGuest):
                                                       merge_host_split_only=True)
 
         return cur_best_split
+
+    """
+    Tree update
+    """
 
     def assign_instances_to_new_node_with_node_plan(self, dep, tree_action, mode=consts.MIX_TREE, ):
 
@@ -122,48 +138,58 @@ class HeteroFastDecisionTreeGuest(HeteroDecisionTreeGuest):
             LOGGER.debug('skip host only inst2node_idx computation')
             self.inst2node_idx = dispatch_guest_result
 
-    def sync_sample_leaf_pos(self, idx):
-        leaf_pos = self.transfer_inst.dispatch_node_host_result.get(idx=idx, suffix=('final sample pos',))
-        return leaf_pos
+    """
+    Layered Mode
+    """
 
-    @staticmethod
-    def get_node_weights(node_id, tree_nodes):
-        return tree_nodes[node_id].weight
+    def layered_mode_fit(self):
 
-    def extract_sample_weights_from_node(self, sample_leaf_pos):
-        """
-        Given a dtable contains leaf positions of samples, return leaf weights
-        """
-        func = functools.partial(self.get_node_weights, tree_nodes=self.tree_node)
-        sample_weights = sample_leaf_pos.mapValues(func)
-        return sample_weights
+        LOGGER.info('running layered mode')
 
-    def sync_host_cur_layer_nodes(self, dep, host_idx):
-        nodes = self.transfer_inst.host_cur_to_split_node_num.get(idx=host_idx, suffix=(dep, ))
-        for n in nodes:
-            n.sum_grad = self.decrypt(n.sum_grad)
-            n.sum_hess = self.decrypt(n.sum_hess)
-        return nodes
+        self.initialize_node_plan()
 
-    def sync_host_leaf_nodes(self, idx):
-        return self.transfer_inst.host_leafs.get(idx=idx)
+        self.sync_encrypted_grad_and_hess(idx=-1)
 
-    def handle_leaf_nodes(self, nodes):
-        """
-        decrypte hess and grad and return tree node list that only contains leaves
-        """
-        max_node_id = -1
-        for n in nodes:
-            n.sum_hess = self.decrypt(n.sum_hess)
-            n.sum_grad = self.decrypt(n.sum_grad)
-            n.weight = self.splitter.node_weight(n.sum_grad, n.sum_hess)
-            n.sitename = self.sitename
-            if n.id > max_node_id:
-                max_node_id = n.id
-        new_nodes = [Node() for i in range(max_node_id+1)]
-        for n in nodes:
-            new_nodes[n.id] = n
-        return new_nodes
+        root_node = self.initialize_root_node()
+        self.cur_layer_nodes = [root_node]
+        self.inst2node_idx = self.assign_instance_to_root_node(self.data_bin, root_node_id=root_node.id)
+
+        for dep in range(self.max_depth):
+
+            tree_action, layer_target_host_id = self.get_node_plan(dep)
+            host_idx = self.host_id_to_idx(layer_target_host_id)
+
+            self.sync_cur_to_split_nodes(self.cur_layer_nodes, dep, idx=-1)
+
+            if len(self.cur_layer_nodes) == 0:
+                break
+
+            if layer_target_host_id != -1:
+                self.sync_node_positions(dep, idx=-1)
+
+            self.update_instances_node_positions()
+
+            split_info = []
+            for batch_idx, i in enumerate(range(0, len(self.cur_layer_nodes), self.max_split_nodes)):
+                self.cur_to_split_nodes = self.cur_layer_nodes[i: i + self.max_split_nodes]
+                cur_splitinfos = self.compute_best_splits_with_node_plan(tree_action, host_idx, node_map=
+                                                                         self.get_node_map(self.cur_to_split_nodes),
+                                                                         dep=dep, batch_idx=batch_idx,
+                                                                         mode=consts.LAYERED_TREE)
+                split_info.extend(cur_splitinfos)
+
+            self.update_tree(split_info, False)
+            self.assign_instances_to_new_node_with_node_plan(dep, tree_action, mode=consts.LAYERED_TREE,)
+
+        if self.cur_layer_nodes:
+            self.assign_instance_to_leaves_and_update_weights()
+
+        self.convert_bin_to_real()
+        self.sync_tree(idx=-1)
+
+    """
+    Mix Mode
+    """
 
     def mix_mode_fit(self):
 
@@ -226,66 +252,6 @@ class HeteroFastDecisionTreeGuest(HeteroDecisionTreeGuest):
                 self.assign_instance_to_leaves_and_update_weights() # guest local updates
             self.convert_bin_to_real()  # convert bin id to real value features
 
-    def layered_mode_fit(self):
-
-        LOGGER.info('running layered mode')
-
-        self.initialize_node_plan()
-
-        self.sync_encrypted_grad_and_hess(idx=-1)
-
-        root_node = self.initialize_root_node()
-        self.cur_layer_nodes = [root_node]
-        self.inst2node_idx = self.assign_instance_to_root_node(self.data_bin, root_node_id=root_node.id)
-
-        for dep in range(self.max_depth):
-
-            tree_action, layer_target_host_id = self.get_node_plan(dep)
-            host_idx = self.host_id_to_idx(layer_target_host_id)
-
-            self.sync_cur_to_split_nodes(self.cur_layer_nodes, dep, idx=-1)
-
-            if len(self.cur_layer_nodes) == 0:
-                break
-
-            if layer_target_host_id != -1:
-                self.sync_node_positions(dep, idx=-1)
-
-            self.update_instances_node_positions()
-
-            split_info = []
-            for batch_idx, i in enumerate(range(0, len(self.cur_layer_nodes), self.max_split_nodes)):
-                self.cur_to_split_nodes = self.cur_layer_nodes[i: i + self.max_split_nodes]
-                cur_splitinfos = self.compute_best_splits_with_node_plan(tree_action, host_idx, node_map=
-                                                                         self.get_node_map(self.cur_to_split_nodes),
-                                                                         dep=dep, batch_idx=batch_idx,
-                                                                         mode=consts.LAYERED_TREE)
-                split_info.extend(cur_splitinfos)
-
-            self.update_tree(split_info, False)
-            self.assign_instances_to_new_node_with_node_plan(dep, tree_action, mode=consts.LAYERED_TREE,)
-
-        if self.cur_layer_nodes:
-            self.assign_instance_to_leaves_and_update_weights()
-
-        self.convert_bin_to_real()
-        self.sync_tree(idx=-1)
-
-    def fit(self):
-
-        LOGGER.info('fitting a hetero decision tree')
-
-        if self.tree_type == plan.tree_type_dict['host_feat_only'] or \
-           self.tree_type == plan.tree_type_dict['guest_feat_only']:
-
-            self.mix_mode_fit()
-
-        elif self.tree_type == plan.tree_type_dict['layered_tree']:
-
-            self.layered_mode_fit()
-
-        LOGGER.info("end to fit guest decision tree")
-
     def mix_mode_predict(self, data_inst):
 
         LOGGER.info("running mix mode predict")
@@ -311,6 +277,76 @@ class HeteroFastDecisionTreeGuest(HeteroDecisionTreeGuest):
 
         self.transfer_inst.sync_flag.remote(True, idx=-1)
         return predict_result
+
+    """
+    Federation Functions
+    """
+
+    def sync_sample_leaf_pos(self, idx):
+        leaf_pos = self.transfer_inst.dispatch_node_host_result.get(idx=idx, suffix=('final sample pos',))
+        return leaf_pos
+
+    def sync_host_cur_layer_nodes(self, dep, host_idx):
+        nodes = self.transfer_inst.host_cur_to_split_node_num.get(idx=host_idx, suffix=(dep, ))
+        for n in nodes:
+            n.sum_grad = self.decrypt(n.sum_grad)
+            n.sum_hess = self.decrypt(n.sum_hess)
+        return nodes
+
+    def sync_host_leaf_nodes(self, idx):
+        return self.transfer_inst.host_leafs.get(idx=idx)
+
+    """
+    Mix Functions
+    """
+
+    @staticmethod
+    def get_node_weights(node_id, tree_nodes):
+        return tree_nodes[node_id].weight
+
+    def extract_sample_weights_from_node(self, sample_leaf_pos):
+        """
+        Given a dtable contains leaf positions of samples, return leaf weights
+        """
+        func = functools.partial(self.get_node_weights, tree_nodes=self.tree_node)
+        sample_weights = sample_leaf_pos.mapValues(func)
+        return sample_weights
+
+    def handle_leaf_nodes(self, nodes):
+        """
+        decrypte hess and grad and return tree node list that only contains leaves
+        """
+        max_node_id = -1
+        for n in nodes:
+            n.sum_hess = self.decrypt(n.sum_hess)
+            n.sum_grad = self.decrypt(n.sum_grad)
+            n.weight = self.splitter.node_weight(n.sum_grad, n.sum_hess)
+            n.sitename = self.sitename
+            if n.id > max_node_id:
+                max_node_id = n.id
+        new_nodes = [Node() for i in range(max_node_id+1)]
+        for n in nodes:
+            new_nodes[n.id] = n
+        return new_nodes
+
+    """
+    Fit & Predict
+    """
+
+    def fit(self):
+
+        LOGGER.info('fitting a hetero decision tree')
+
+        if self.tree_type == plan.tree_type_dict['host_feat_only'] or \
+           self.tree_type == plan.tree_type_dict['guest_feat_only']:
+
+            self.mix_mode_fit()
+
+        elif self.tree_type == plan.tree_type_dict['layered_tree']:
+
+            self.layered_mode_fit()
+
+        LOGGER.info("end to fit guest decision tree")
 
     def predict(self, data_inst):
         LOGGER.info("start to predict!")

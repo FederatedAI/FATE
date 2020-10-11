@@ -233,7 +233,7 @@ class BoostingParam(BaseParam):
 
     def __init__(self,  task_type=consts.CLASSIFICATION,
                  objective_param=ObjectiveParam(),
-                 learning_rate=0.3, num_trees=5, subsample_feature_rate=0.8, n_iter_no_change=True,
+                 learning_rate=0.3, num_trees=5, subsample_feature_rate=1, n_iter_no_change=True,
                  tol=0.0001, bin_num=32,
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  validation_freqs=None, metrics=None, subsample_random_seed=None,
@@ -316,7 +316,7 @@ class HeteroBoostingParam(BoostingParam):
 
     def __init__(self, task_type=consts.CLASSIFICATION,
                  objective_param=ObjectiveParam(),
-                 learning_rate=0.3, num_trees=5, subsample_feature_rate=0.8, n_iter_no_change=True,
+                 learning_rate=0.3, num_trees=5, subsample_feature_rate=1, n_iter_no_change=True,
                  tol=0.0001, encrypt_param=EncryptParam(),
                  bin_num=32,
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
@@ -466,7 +466,7 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
 
     def __init__(self, tree_param: DecisionTreeParam = DecisionTreeParam(), task_type=consts.CLASSIFICATION,
                  objective_param=ObjectiveParam(),
-                 learning_rate=0.3, num_trees=5, subsample_feature_rate=0.8, n_iter_no_change=True,
+                 learning_rate=0.3, num_trees=5, subsample_feature_rate=1, n_iter_no_change=True,
                  tol=0.0001, encrypt_param=EncryptParam(),
                  bin_num=32,
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
@@ -527,7 +527,7 @@ class HomoSecureBoostParam(BoostingParam):
 
     def __init__(self, tree_param: DecisionTreeParam = DecisionTreeParam(), task_type=consts.CLASSIFICATION,
                  objective_param=ObjectiveParam(),
-                 learning_rate=0.3, num_trees=5, subsample_feature_rate=0.8, n_iter_no_change=True,
+                 learning_rate=0.3, num_trees=5, subsample_feature_rate=1, n_iter_no_change=True,
                  tol=0.0001, bin_num=32, predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  validation_freqs=None, use_missing=False, zero_as_missing=False, subsample_random_seed=None,
                  binning_error=consts.DEFAULT_RELATIVE_ERROR

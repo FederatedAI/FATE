@@ -178,6 +178,7 @@ class FastFeatureHistogram(object):
 
     @staticmethod
     def break_down_cipher(cipher_obj, cipher_split_num, pid):
+        # break ciper text into phases
         c_str = str(cipher_obj.cipher)
         c_len = len(c_str)
         if cipher_split_num * (pid + 1) <= c_len:

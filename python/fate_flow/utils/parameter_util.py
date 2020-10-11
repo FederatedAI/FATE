@@ -44,7 +44,7 @@ class BaseParameterUtil(object):
 
     @staticmethod
     def _override_parameter(setting_conf_prefix=None, submit_dict=None, module=None,
-                            module_alias=None, version=1):
+                            module_alias=None, version=1, redundant_param_check=True):
 
         _module_setting = ParameterUtil.get_setting_conf(setting_conf_prefix, module, module_alias)
 
@@ -90,7 +90,8 @@ class BaseParameterUtil(object):
                                                                     role_param_obj,
                                                                     component=module_alias,
                                                                     module=module,
-                                                                    version=version)
+                                                                    version=version,
+                                                                    redundant_param_check=redundant_param_check)
                         runtime_dict[param_class] = merge_dict
 
                 if "role_parameters" in submit_dict and role in submit_dict["role_parameters"]:
@@ -111,7 +112,8 @@ class BaseParameterUtil(object):
                                                                                 role_num=len(partyid_list),
                                                                                 component=module_alias,
                                                                                 module=module,
-                                                                                version=version)
+                                                                                version=version,
+                                                                                redundant_param_check=redundant_param_check)
 
                                     runtime_dict[param_class] = merge_dict
 
@@ -127,7 +129,8 @@ class BaseParameterUtil(object):
                                                                         role_num=len(partyid_list),
                                                                         component=module_alias,
                                                                         module=module,
-                                                                        version=version)
+                                                                        version=version,
+                                                                        redundant_param_check=redundant_param_check)
                             runtime_dict[param_class] = merge_dict
 
                 try:
@@ -149,11 +152,14 @@ class BaseParameterUtil(object):
 
     @classmethod
     def merge_parameters(cls, runtime_dict, role_parameters, param_obj, idx=-1, role=None, role_num=0, component=None,
-                         module=None, version=1):
+                         module=None, version=1, redundant_param_check=True):
         param_variables = param_obj.__dict__
         for key, val_list in role_parameters.items():
+            if not redundant_param_check:
+                if key not in param_variables:
+                    continue
+
             if key not in param_variables:
-                # continue
                 raise RedundantParameterError(component=component, module=module, other_info=key)
 
             attr = getattr(param_obj, key)
@@ -182,7 +188,8 @@ class BaseParameterUtil(object):
                                                                    role_num=role_num,
                                                                    component=component,
                                                                    module=module,
-                                                                   version=version)
+                                                                   version=version,
+                                                                   redundant_param_check=redundant_param_check)
                 setattr(param_obj, key, attr)
 
         return runtime_dict
@@ -237,16 +244,18 @@ class BaseParameterUtil(object):
 
         return param_class, param_obj
 
+
 class ParameterUtil(BaseParameterUtil):
     @staticmethod
     def override_parameter(setting_conf_prefix=None, submit_dict=None, module=None,
-                           module_alias=None):
+                           module_alias=None, redundant_param_check=True):
 
         return ParameterUtil()._override_parameter(setting_conf_prefix=setting_conf_prefix,
                                                    submit_dict=submit_dict,
                                                    module=module,
                                                    module_alias=module_alias,
-                                                   version=1)
+                                                   version=1,
+                                                   redundant_param_check=redundant_param_check)
 
     @classmethod
     def get_args_input(cls, submit_dict, module="args"):
@@ -295,12 +304,13 @@ class ParameterUtil(BaseParameterUtil):
 class ParameterUtilV2(BaseParameterUtil):
     @classmethod
     def override_parameter(cls, setting_conf_prefix=None, submit_dict=None, module=None,
-                           module_alias=None):
+                           module_alias=None, redundant_param_check=True):
         return ParameterUtil._override_parameter(setting_conf_prefix=setting_conf_prefix,
                                                  submit_dict=submit_dict,
                                                  module=module,
                                                  module_alias=module_alias,
-                                                 version=2)
+                                                 version=2,
+                                                 redundant_param_check=redundant_param_check)
 
     @classmethod
     def get_input_parameters(cls, submit_dict, components=None):
