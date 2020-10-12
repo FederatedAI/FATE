@@ -168,6 +168,7 @@
         },
         "train_binary_predict": {
             "conf": "./test_predict_conf.json",
+            "dsl": "./test_predict_dsl.json",
             "deps": "train_binary"
         },
         "train_multi": {

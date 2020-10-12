@@ -3,47 +3,89 @@
         "role": "guest",
         "party_id": 10000
     },
-    "job_parameters": {
-        "work_mode": 0,
-        "job_type": "predict",
-        "model_id": "arbiter-10000#guest-10000#host-10000#model",
-        "model_version": ""
-    },
     "role": {
-        "guest": [
-            10000
+        "arbiter": [
+            9999
         ],
         "host": [
-            10000
+            9999
         ],
-        "arbiter": [
+        "guest": [
             10000
         ]
     },
+    "job_parameters": {
+        "work_mode": 0,
+        "backend": 0,
+        "dsl_version": 2,
+        "job_type": "predict",
+        "model_id": "arbiter-9999#guest-10000#host-9999#model",
+        "model_version": "20200928191922241821123"
+    },
     "role_parameters": {
         "guest": {
-            "args": {
-                "data": {
-                    "eval_data": [
-                        {
-                            "name": "homo_breast_test",
-                            "namespace": "experiment"
-                        }
-                    ]
+            "0": {
+                "reader_1": {
+                    "table": {
+                        "name": "breast_homo_test",
+                        "namespace": "experiment"
+                    }
+                },
+                "dataio_0": {
+                    "with_label": true,
+                    "output_format": "dense"
+                },
+                "reader_0": {
+                    "table": {
+                        "name": "breast_homo_guest",
+                        "namespace": "experiment"
+                    }
+                },
+                "dataio_1": {
+                    "with_label": true,
+                    "output_format": "dense"
                 }
             }
         },
         "host": {
-            "args": {
-                "data": {
-                    "eval_data": [
-                        {
-                            "name": "homo_breast_test",
-                            "namespace": "experiment"
-                        }
-                    ]
+            "0": {
+                "reader_1": {
+                    "table": {
+                        "name": "breast_homo_test",
+                        "namespace": "experiment"
+                    }
+                },
+                "dataio_0": {
+                    "with_label": true,
+                    "output_format": "dense"
+                },
+                "reader_0": {
+                    "table": {
+                        "name": "breast_homo_host",
+                        "namespace": "experiment"
+                    }
+                },
+                "dataio_1": {
+                    "with_label": true,
+                    "output_format": "dense"
                 }
             }
+        }
+    },
+    "algorithm_parameters": {
+        "homo_secureboost_0": {
+            "task_type": "classification",
+            "objective_param": {
+                "objective": "cross_entropy"
+            },
+            "num_trees": 1,
+            "validation_freqs": 1,
+            "tree_param": {
+                "max_depth": 5
+            }
+        },
+        "evaluation_0": {
+            "eval_type": "binary"
         }
     }
 }
