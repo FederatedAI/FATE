@@ -287,7 +287,7 @@ def computing_profile(func):
     return _fn
 
 
-__META_REMOTE_ENABLE = True
+__META_REMOTE_ENABLE = False
 
 
 def enable_profile_remote():

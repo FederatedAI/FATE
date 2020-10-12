@@ -28,6 +28,10 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
         self.host_party_idlist = []
 
+    """
+    Node Encode/ Decode
+    """
+
     def encode(self, etype="feature_idx", val=None, nid=None):
         if etype == "feature_idx":
             return val
@@ -61,6 +65,10 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
         return TypeError("decode type %s is not support!" % (str(dtype)))
 
+    """
+    Setting
+    """
+
     def set_encrypter(self, encrypter):
         LOGGER.info("set encrypter")
         self.encrypter = encrypter
@@ -74,11 +82,19 @@ class HeteroDecisionTreeGuest(DecisionTree):
     def set_host_party_idlist(self, host_list):
         self.host_party_idlist = host_list
 
+    """
+    Encrypt/ Decrypt
+    """
+
     def encrypt(self, val):
         return self.encrypter.encrypt(val)
 
     def decrypt(self, val):
         return self.encrypter.decrypt(val)
+
+    """
+    Node Splitting
+    """
 
     def find_host_split(self, value):
 
@@ -137,6 +153,103 @@ class HeteroDecisionTreeGuest(DecisionTree):
             best_splitinfo.gain = best_gain_host
 
         return best_splitinfo
+
+    def merge_splitinfo(self, splitinfo_guest, splitinfo_host, merge_host_split_only=False):
+
+        LOGGER.info("merge splitinfo, merge_host_split_only is {}".format(merge_host_split_only))
+
+        if merge_host_split_only:
+            splitinfo_guest = [None for i in range(len(splitinfo_host[0]))]
+
+        merge_infos = []
+        for i in range(len(splitinfo_guest)):
+            splitinfo = [splitinfo_guest[i]]
+            for j in range(len(splitinfo_host)):
+                splitinfo.append(splitinfo_host[j][i])
+
+            merge_infos.append(splitinfo)
+
+        splitinfo_guest_host_table = session.parallelize(merge_infos,
+                                                         include_key=False,
+                                                         partition=self.data_bin.partitions)
+
+        best_splitinfo_table = splitinfo_guest_host_table.mapValues(self.find_best_split_guest_and_host)
+
+        best_splitinfos = [None for i in range(len(merge_infos))]
+        for _, best_splitinfo in best_splitinfo_table.collect():
+            best_splitinfos[_] = best_splitinfo
+
+        return best_splitinfos
+
+    def federated_find_split(self, dep=-1, batch=-1, idx=-1):
+
+        LOGGER.info("federated find split of depth {}, batch {}".format(dep, batch))
+        # get flatten split points from hosts
+        # [split points from host 1, split point from host 2, .... so on] ↓
+        encrypted_splitinfo_host = self.sync_encrypted_splitinfo_host(dep, batch, idx=idx)
+
+        for i in range(len(encrypted_splitinfo_host)):
+
+            init_gain = self.min_impurity_split - consts.FLOAT_ZERO
+            encrypted_init_gain = self.encrypter.encrypt(init_gain)
+            # init encrypted gain for every nodes in cur layer
+            best_splitinfo_host = [[-1, encrypted_init_gain] for j in range(len(self.cur_to_split_nodes))]
+            # init best gain for every nodes in cur layer
+            best_gains = [init_gain for j in range(len(self.cur_to_split_nodes))]
+            # max split points to compute at a time, to control memory consumption
+            max_nodes = max(len(encrypted_splitinfo_host[i][j]) for j in range(len(self.cur_to_split_nodes)))
+            # batch split point finding for every cur to split nodes
+            for k in range(0, max_nodes, consts.MAX_SPLITINFO_TO_COMPUTE):
+                batch_splitinfo_host = [encrypted_splitinfo[k: k + consts.MAX_SPLITINFO_TO_COMPUTE] for encrypted_splitinfo
+                                        in encrypted_splitinfo_host[i]]
+
+                encrypted_splitinfo_host_table = session.parallelize(zip(self.cur_to_split_nodes, batch_splitinfo_host),
+                                                                     include_key=False,
+                                                                     partition=self.data_bin.partitions)
+
+                splitinfos = encrypted_splitinfo_host_table.mapValues(self.find_host_split).collect()
+
+                # update best splitinfo and gain for every cur to split nodes
+                for node_idx, splitinfo in splitinfos:
+                    LOGGER.debug('_, splitinfo are {}, {}'.format(node_idx, splitinfo))
+                    if best_splitinfo_host[node_idx][0] == -1:
+                        best_splitinfo_host[node_idx] = list(splitinfo[:2])
+                        best_gains[node_idx] = splitinfo[2]
+                    elif splitinfo[0] != -1 and splitinfo[2] > best_gains[node_idx] + consts.FLOAT_ZERO:
+                        best_splitinfo_host[node_idx][0] = k + splitinfo[0]
+                        best_splitinfo_host[node_idx][1] = splitinfo[1]
+                        best_gains[node_idx] = splitinfo[2]
+
+            if idx != -1:
+                self.sync_federated_best_splitinfo_host(best_splitinfo_host, dep, batch, idx)
+                break
+
+            self.sync_federated_best_splitinfo_host(best_splitinfo_host, dep, batch, i)
+
+    def compute_best_splits(self, node_map, dep, batch_idx):
+
+        acc_histograms = self.get_local_histograms(node_map, ret='tensor')
+        best_split_info_guest = self.splitter.find_split(acc_histograms, self.valid_features,
+                                                         self.data_bin.partitions, self.sitename,
+                                                         self.use_missing, self.zero_as_missing)
+        LOGGER.debug('computing local splits done')
+
+        if self.complete_secure_tree:
+            return best_split_info_guest
+
+        self.federated_find_split(dep, batch_idx)
+        host_split_info = self.sync_final_split_host(dep, batch_idx)
+
+        # compare host best split points with guest split points
+        cur_best_split = self.merge_splitinfo(splitinfo_guest=best_split_info_guest,
+                                              splitinfo_host=host_split_info,
+                                              merge_host_split_only=False)
+
+        return cur_best_split
+
+    """
+    Federation Functions
+    """
 
     def sync_encrypted_grad_and_hess(self, idx=-1):
         encrypted_grad_and_hess = self.encrypted_mode_calculator.encrypt(self.grad_and_hess)
@@ -202,6 +315,38 @@ class HeteroDecisionTreeGuest(DecisionTree):
         ret = self.transfer_inst.dispatch_node_host_result.get(idx=idx, suffix=(dep,))
         return ret if idx == -1 else [ret]
 
+    def sync_tree(self, idx=-1):
+        LOGGER.info("sync tree to host")
+        tree_nodes = self.remove_sensitive_info()
+        self.transfer_inst.tree.remote(tree_nodes,
+                                       role=consts.HOST,
+                                       idx=idx)
+
+    def sync_predict_finish_tag(self, finish_tag, send_times):
+        LOGGER.info("send the {}-th predict finish tag {} to host".format(finish_tag, send_times))
+
+        self.transfer_inst.predict_finish_tag.remote(finish_tag,
+                                                     role=consts.HOST,
+                                                     idx=-1,
+                                                     suffix=(send_times,))
+
+    def sync_predict_data(self, predict_data, send_times):
+        LOGGER.info("send predict data to host, sending times is {}".format(send_times))
+        self.transfer_inst.predict_data.remote(predict_data,
+                                               role=consts.HOST,
+                                               idx=-1,
+                                               suffix=(send_times,))
+
+    def sync_data_predicted_by_host(self, send_times):
+        LOGGER.info("get predicted data by host, recv times is {}".format(send_times))
+        predict_data = self.transfer_inst.predict_data_by_host.get(idx=-1,
+                                                                   suffix=(send_times,))
+        return predict_data
+
+    """
+    Pre-porcess / Post-Process
+    """
+
     def remove_sensitive_info(self):
         """
         host is not allowed to get weights/g/h
@@ -214,102 +359,26 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
         return new_tree_
 
-    def sync_tree(self, idx=-1):
-        LOGGER.info("sync tree to host")
-        tree_nodes = self.remove_sensitive_info()
-        self.transfer_inst.tree.remote(tree_nodes,
-                                       role=consts.HOST,
-                                       idx=idx)
-
-    def merge_splitinfo(self, splitinfo_guest, splitinfo_host, merge_host_split_only=False):
-
-        LOGGER.info("merge splitinfo, merge_host_split_only is {}".format(merge_host_split_only))
-
-        if merge_host_split_only:
-            splitinfo_guest = [None for i in range(len(splitinfo_host[0]))]
-
-        merge_infos = []
-        for i in range(len(splitinfo_guest)):
-            splitinfo = [splitinfo_guest[i]]
-            for j in range(len(splitinfo_host)):
-                splitinfo.append(splitinfo_host[j][i])
-
-            merge_infos.append(splitinfo)
-
-        splitinfo_guest_host_table = session.parallelize(merge_infos,
-                                                         include_key=False,
-                                                         partition=self.data_bin.partitions)
-
-        best_splitinfo_table = splitinfo_guest_host_table.mapValues(self.find_best_split_guest_and_host)
-
-        best_splitinfos = [None for i in range(len(merge_infos))]
-        for _, best_splitinfo in best_splitinfo_table.collect():
-            best_splitinfos[_] = best_splitinfo
-
-        return best_splitinfos
-
-    def federated_find_split(self, dep=-1, batch=-1, idx=-1):
-
-        LOGGER.info("federated find split of depth {}, batch {}".format(dep, batch))
-        encrypted_splitinfo_host = self.sync_encrypted_splitinfo_host(dep, batch, idx=idx)
-
-        for i in range(len(encrypted_splitinfo_host)):
-            init_gain = self.min_impurity_split - consts.FLOAT_ZERO
-            encrypted_init_gain = self.encrypter.encrypt(init_gain)
-            best_splitinfo_host = [[-1, encrypted_init_gain] for j in range(len(self.cur_to_split_nodes))]
-            best_gains = [init_gain for j in range(len(self.cur_to_split_nodes))]
-            max_nodes = max(len(encrypted_splitinfo_host[i][j]) for j in range(len(self.cur_to_split_nodes)))
-            for k in range(0, max_nodes, consts.MAX_FEDERATED_NODES):
-                batch_splitinfo_host = [encrypted_splitinfo[k: k + consts.MAX_FEDERATED_NODES] for encrypted_splitinfo
-                                        in encrypted_splitinfo_host[i]]
-
-                encrypted_splitinfo_host_table = session.parallelize(zip(self.cur_to_split_nodes, batch_splitinfo_host),
-                                                                     include_key=False,
-                                                                     partition=self.data_bin.partitions)
-
-                splitinfos = encrypted_splitinfo_host_table.mapValues(self.find_host_split).collect()
-
-                for _, splitinfo in splitinfos:
-                    LOGGER.debug('_, splitinfo are {}, {}'.format(_, splitinfo))
-                    if best_splitinfo_host[_][0] == -1:
-                        best_splitinfo_host[_] = list(splitinfo[:2])
-                        best_gains[_] = splitinfo[2]
-                    elif splitinfo[0] != -1 and splitinfo[2] > best_gains[_] + consts.FLOAT_ZERO:
-                        best_splitinfo_host[_][0] = k + splitinfo[0]
-                        best_splitinfo_host[_][1] = splitinfo[1]
-                        best_gains[_] = splitinfo[2]
-
-            if idx != -1:
-                self.sync_federated_best_splitinfo_host(best_splitinfo_host, dep, batch, idx)
-                break
-
-            self.sync_federated_best_splitinfo_host(best_splitinfo_host, dep, batch, i)
-
     def initialize_root_node(self,):
         root_sum_grad, root_sum_hess = self.get_grad_hess_sum(self.grad_and_hess)
         root_node = Node(id=0, sitename=self.sitename, sum_grad=root_sum_grad, sum_hess=root_sum_hess,
                          weight=self.splitter.node_weight(root_sum_grad, root_sum_hess))
         return root_node
 
-    def compute_best_splits(self, node_map, dep, batch_idx):
+    def convert_bin_to_real(self):
+        LOGGER.info("convert tree node bins to real value")
+        for i in range(len(self.tree_node)):
+            if self.tree_node[i].is_leaf is True:
+                continue
+            if self.tree_node[i].sitename == self.sitename:
+                fid = self.decode("feature_idx", self.tree_node[i].fid, split_maskdict=self.split_maskdict)
+                bid = self.decode("feature_val", self.tree_node[i].bid, self.tree_node[i].id, self.split_maskdict)
+                real_splitval = self.encode("feature_val", self.bin_split_points[fid][bid], self.tree_node[i].id)
+                self.tree_node[i].bid = real_splitval
 
-        acc_histograms = self.get_local_histograms(node_map, ret='tensor')
-        best_split_info_guest = self.splitter.find_split(acc_histograms, self.valid_features,
-                                                         self.data_bin.partitions, self.sitename,
-                                                         self.use_missing, self.zero_as_missing)
-        LOGGER.debug('computing local splits done')
-
-        if self.complete_secure_tree:
-            return best_split_info_guest
-
-        self.federated_find_split(dep, batch_idx)
-        host_split_info = self.sync_final_split_host(dep, batch_idx)
-
-        cur_best_split = self.merge_splitinfo(splitinfo_guest=best_split_info_guest,
-                                              splitinfo_host=host_split_info,
-                                              merge_host_split_only=False)
-
-        return cur_best_split
+    """
+    Tree Updating
+    """
 
     def update_tree(self, split_info, reach_max_depth):
 
@@ -458,24 +527,17 @@ class HeteroDecisionTreeGuest(DecisionTree):
         self.update_instances_node_positions()
         self.assign_instances_to_new_node(self.max_depth, reach_max_depth=True)
 
-    def convert_bin_to_real(self):
-        LOGGER.info("convert tree node bins to real value")
-        for i in range(len(self.tree_node)):
-            if self.tree_node[i].is_leaf is True:
-                continue
-            if self.tree_node[i].sitename == self.sitename:
-                fid = self.decode("feature_idx", self.tree_node[i].fid, split_maskdict=self.split_maskdict)
-                bid = self.decode("feature_val", self.tree_node[i].bid, self.tree_node[i].id, self.split_maskdict)
-                real_splitval = self.encode("feature_val", self.bin_split_points[fid][bid], self.tree_node[i].id)
-                self.tree_node[i].bid = real_splitval
-
     def update_instances_node_positions(self):
         self.data_with_node_assignments = self.data_bin.join(self.inst2node_idx, lambda data_inst, dispatch_info: (
             data_inst, dispatch_info))
 
+    """
+    Fit & Predict
+    """
+
     def fit(self):
 
-        LOGGER.debug('fitting a hetero decision tree')
+        LOGGER.info('fitting a hetero decision tree')
 
         self.sync_encrypted_grad_and_hess()
         root_node = self.initialize_root_node()
@@ -506,29 +568,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
         self.convert_bin_to_real()
         self.sync_tree()
-        LOGGER.info("tree node num is %d" % len(self.tree_node))
         LOGGER.info("end to fit guest decision tree")
-
-    def sync_predict_finish_tag(self, finish_tag, send_times):
-        LOGGER.info("send the {}-th predict finish tag {} to host".format(finish_tag, send_times))
-
-        self.transfer_inst.predict_finish_tag.remote(finish_tag,
-                                                     role=consts.HOST,
-                                                     idx=-1,
-                                                     suffix=(send_times,))
-
-    def sync_predict_data(self, predict_data, send_times):
-        LOGGER.info("send predict data to host, sending times is {}".format(send_times))
-        self.transfer_inst.predict_data.remote(predict_data,
-                                               role=consts.HOST,
-                                               idx=-1,
-                                               suffix=(send_times,))
-
-    def sync_data_predicted_by_host(self, send_times):
-        LOGGER.info("get predicted data by host, recv times is {}".format(send_times))
-        predict_data = self.transfer_inst.predict_data_by_host.get(idx=-1,
-                                                                   suffix=(send_times,))
-        return predict_data
 
     @staticmethod
     def traverse_tree(predict_state, data_inst, tree_=None,
@@ -618,6 +658,10 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
         LOGGER.info("predict finish!")
         return predict_result
+
+    """
+    Tree output
+    """
 
     def get_model_meta(self):
 

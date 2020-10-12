@@ -65,7 +65,8 @@ def main(param="./hetero_nn_breast_config.yaml"):
             eval_result["accuracy"] = acc
 
     print (eval_result)
-    return eval_result
+    data_summary = {}
+    return data_summary, eval_result
 
 
 if __name__ == "__main__":

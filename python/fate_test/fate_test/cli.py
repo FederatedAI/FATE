@@ -93,8 +93,10 @@ def _config(cmd, role):
               help="skip pipeline jobs defined in testsuite")
 @click.option("--skip-data", is_flag=True, default=False,
               help="skip uploading data specified in testsuite")
+@click.option("--data-only", is_flag=True, default=False,
+              help="upload data only")
 def run_suite(replace, data_namespace_mangling, config, include, exclude, glob,
-              skip_dsl_jobs, skip_pipeline_jobs, skip_data, yes):
+              skip_dsl_jobs, skip_pipeline_jobs, skip_data, data_only, yes):
     """
     process testsuite
     """
@@ -127,6 +129,8 @@ def run_suite(replace, data_namespace_mangling, config, include, exclude, glob,
                         _upload_data(client, suite)
                     except Exception as e:
                         raise RuntimeError(f"exception occur while uploading data for {suite.path}") from e
+                if data_only:
+                    continue
 
                 if not skip_dsl_jobs:
                     echo.stdout_newline()
@@ -177,7 +181,9 @@ def run_suite(replace, data_namespace_mangling, config, include, exclude, glob,
               help="skip double check")
 @click.option('--skip-data', is_flag=True, default=False,
               help="skip uploading data specified in benchmark conf")
-def run_benchmark(data_namespace_mangling, config, include, exclude, glob, skip_data, tol, yes):
+@click.option("--data-only", is_flag=True, default=False,
+              help="upload data only")
+def run_benchmark(data_namespace_mangling, config, include, exclude, glob, skip_data, data_only, tol, yes):
     """
     process benchmark suite
     """
@@ -208,6 +214,8 @@ def run_benchmark(data_namespace_mangling, config, include, exclude, glob, skip_
                         _upload_data(client, suite)
                     except Exception as e:
                         raise RuntimeError(f"exception occur while uploading data for {suite.path}") from e
+                if data_only:
+                    continue
                 try:
                     _run_benchmark_pairs(config_inst, suite, tol, namespace, data_namespace_mangling)
                 except Exception as e:
@@ -283,12 +291,17 @@ def _load_testsuites(includes, excludes, glob, suffix="testsuite.json", suite_ty
                     suite_paths.add(suite_path)
     suites = []
     for suite_path in suite_paths:
-        if suite_type == "testsuite":
-            suites.append(Testsuite.load(suite_path.resolve()))
-        elif suite_type == "benchmark":
-            suites.append(BenchmarkSuite.load(suite_path.resolve()))
+        try:
+            if suite_type == "testsuite":
+                suite = Testsuite.load(suite_path.resolve())
+            elif suite_type == "benchmark":
+                suite = BenchmarkSuite.load(suite_path.resolve())
+            else:
+                raise ValueError(f"Unsupported suite type: {suite_type}. Only accept type 'testsuite' or 'benchmark'.")
+        except Exception as e:
+            echo.stdout(f"load suite {suite_path} failed: {e}")
         else:
-            raise ValueError(f"Unsupported suite type: {suite_type}. Only accept type 'testsuite' or 'benchmark'.")
+            suites.append(suite)
     return suites
 
 
@@ -299,7 +312,7 @@ def _upload_data(clients: Clients, suite):
                            show_pos=True,
                            width=24) as bar:
         for i, data in enumerate(suite.dataset):
-            data_progress = DataProgress(data.role_str)
+            data_progress = DataProgress(f"{data.role_str}<-{data.config['namespace']}.{data.config['table_name']}")
 
             def update_bar(n_step):
                 bar.item_show_func = lambda x: data_progress.show()

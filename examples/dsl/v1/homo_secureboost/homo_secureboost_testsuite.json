@@ -124,7 +124,7 @@
             "file": "examples/data/default_credit_homo_host_1.csv",
             "head": 1,
             "partition": 16,
-            "table_name": "default_credit_host1",
+            "table_name": "default_credit_host_1",
             "namespace": "experiment",
             "role": "host_0"
         },
@@ -132,7 +132,7 @@
             "file": "examples/data/default_credit_homo_host_2.csv",
             "head": 1,
             "partition": 16,
-            "table_name": "default_credit_host2",
+            "table_name": "default_credit_host_2",
             "namespace": "experiment",
             "role": "host_1"
         },

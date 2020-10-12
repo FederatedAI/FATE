@@ -385,7 +385,7 @@ class DAGScheduler(Cron):
                                                        runtime_conf=job.f_runtime_conf,
                                                        train_runtime_conf=job.f_train_runtime_conf)
         for task in tasks:
-            if task.f_status != TaskStatus.COMPLETE and task.f_party_status != TaskStatus.COMPLETE:
+            if task.f_status != TaskStatus.COMPLETE:
                 # stop old version task
                 FederatedScheduler.stop_task(job=job, task=task, stop_status=task.f_status)
                 FederatedScheduler.clean_task(job=job, task=task, content_type="metrics")
