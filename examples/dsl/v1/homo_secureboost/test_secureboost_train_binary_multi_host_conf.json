@@ -70,11 +70,11 @@
                 "data": {
                     "train_data": [
                         {
-                            "name": "default_credit_host1",
+                            "name": "default_credit_host_1",
                             "namespace": "experiment"
                         },
                         {
-                            "name": "default_credit_host2",
+                            "name": "default_credit_host_2",
                             "namespace": "experiment"
                         }
                     ],
