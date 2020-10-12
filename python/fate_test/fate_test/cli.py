@@ -283,12 +283,17 @@ def _load_testsuites(includes, excludes, glob, suffix="testsuite.json", suite_ty
                     suite_paths.add(suite_path)
     suites = []
     for suite_path in suite_paths:
-        if suite_type == "testsuite":
-            suites.append(Testsuite.load(suite_path.resolve()))
-        elif suite_type == "benchmark":
-            suites.append(BenchmarkSuite.load(suite_path.resolve()))
+        try:
+            if suite_type == "testsuite":
+                suite = Testsuite.load(suite_path.resolve())
+            elif suite_type == "benchmark":
+                suite = BenchmarkSuite.load(suite_path.resolve())
+            else:
+                raise ValueError(f"Unsupported suite type: {suite_type}. Only accept type 'testsuite' or 'benchmark'.")
+        except Exception as e:
+            echo.stdout(f"load suite {suite_path} failed: {e}")
         else:
-            raise ValueError(f"Unsupported suite type: {suite_type}. Only accept type 'testsuite' or 'benchmark'.")
+            suites.append(suite)
     return suites
 
 
