@@ -17,7 +17,6 @@
 
 import numpy as np
 
-from fate_flow.entity.metric import MetricMeta
 from federatedml.model_base import ModelBase
 from federatedml.param.scorecard_param import ScorecardParam
 from federatedml.util.consts import FLOAT_ZERO
@@ -66,15 +65,9 @@ class Scorecard(ModelBase):
 
         return [predict_result[0], predict_result[1], predict_score, credit_score]
 
-    def _callback(self):
+    def _set_summary(self):
         formula = f"Score = {self.offset} + {self.factor} / ln(2) * ln(Odds)"
-        metas = {"scorecard_compute_formula": formula}
-        self.tracker.set_metric_meta(metric_namespace=self.metric_namespace,
-                                     metric_name=self.metric_name,
-                                     metric_meta=MetricMeta(name=self.metric_name,
-                                                            metric_type=self.metric_type,
-                                                            extra_metas=metas))
-        self.set_summary(metas)
+        self.set_summary({"scorecard_compute_formula": formula})
         LOGGER.info(f"Scorecard Computation Formula: {formula}")
 
     def fit(self, prediction_result):
@@ -90,7 +83,7 @@ class Scorecard(ModelBase):
                          "sid_name": schema.get('sid_name')}
         score_result.schema = result_schema
 
-        self._callback()
+        self._set_summary()
         LOGGER.info(f"Finish Scorecard Transform!")
 
         return score_result
