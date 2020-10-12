@@ -357,7 +357,7 @@ conf example:
         "task_parallelism": 2,
         "eggroll_run": {
            "eggroll.session.processors.per.node": 2
-        }
+        },
         "spark_run": {
            "num-executors": 1,
            "executor-cores": 2
