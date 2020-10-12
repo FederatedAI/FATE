@@ -21,7 +21,7 @@ from pipeline.component import DataIO, HomoNN, Evaluation
 from pipeline.component import Reader
 from pipeline.interface import Data
 from pipeline.utils.tools import load_job_config, JobConfig
-from tensorflow.keras.layers import Dense
+import tensorflow.keras.layers
 from tensorflow.keras import optimizers
 
 
@@ -44,17 +44,22 @@ class dataset(object):
 
 def main(config="../../config.yaml", param="param_conf.yaml", namespace=""):
     num_host = 1
-    data = dataset.vehicle
+
     if isinstance(config, str):
         config = load_job_config(config)
+
+    if isinstance(param, str):
+        param = JobConfig.load_from_file(param)
 
     epoch = param["epoch"]
     lr = param["lr"]
     batch_size = param.get("batch_size", -1)
     optimizer_name = param.get("optimizer", "Adam")
-
-    if isinstance(param, str):
-        param = JobConfig.load_from_file(param)
+    encode_label = param.get("encode_label", True)
+    loss = param.get("loss", "categorical_crossentropy")
+    metrics = param.get("metrics", ["accuracy"])
+    layers = param["layers"]
+    data = getattr(dataset, param.get("dataset", "vehicle"))
 
     guest_train_data = data["guest"]
     host_train_data = data["host"][:num_host]
@@ -77,12 +82,14 @@ def main(config="../../config.yaml", param="param_conf.yaml", namespace=""):
         .algorithm_param(with_label=True, output_format="dense")
     dataio_0.get_party_instance(role='host', party_id=hosts).algorithm_param(with_label=True)
 
-    homo_nn_0 = HomoNN(name="homo_nn_0", encode_label=True, max_iter=epoch, batch_size=batch_size,
-                       early_stop={"early_stop": "diff", "eps": 0.0001}) \
-        .add(Dense(units=5, input_shape=(18,), activation="relu")) \
-        .add(Dense(units=4, activation="softmax")) \
-        .compile(optimizer=getattr(optimizers, optimizer_name)(learning_rate=lr), metrics=["accuracy"],
-                 loss="categorical_crossentropy")
+    homo_nn_0 = HomoNN(name="homo_nn_0", encode_label=encode_label, max_iter=epoch, batch_size=batch_size,
+                       early_stop={"early_stop": "diff", "eps": 0.0001})
+    for layer_config in layers:
+        layer = getattr(tensorflow.keras.layers, layer_config["name"])
+        layer_params = layer_config["params"]
+        homo_nn_0.add(layer(**layer_params))
+        homo_nn_0.compile(optimizer=getattr(optimizers, optimizer_name)(learning_rate=lr), metrics=metrics,
+                          loss=loss)
 
     evaluation_0 = Evaluation(name='evaluation_0', eval_type="multi", metrics=["accuracy", "precision", "recall"])
 

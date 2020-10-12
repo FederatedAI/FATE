@@ -44,11 +44,24 @@
   "homo_nn-binary": {
     "local": {
       "script": "./local-homo_nn.py",
-      "conf": "./param_conf.yaml"
+      "conf": "./param_conf_binary.yaml"
     },
     "FATE": {
       "script": "./fate-homo_nn.py",
-      "conf": "./param_conf.yaml"
+      "conf": "./param_conf_binary.yaml"
+    },
+    "compare_setting": {
+      "relative_tol": 0.05
+    }
+  },
+   "homo_nn-multi": {
+    "local": {
+      "script": "./local-homo_nn.py",
+      "conf": "./param_conf_multi.yaml"
+    },
+    "FATE": {
+      "script": "./fate-homo_nn.py",
+      "conf": "./param_conf_multi.yaml"
     },
     "compare_setting": {
       "relative_tol": 0.05
