@@ -77,6 +77,7 @@ class Splitter(object):
 
     def find_split_single_histogram_guest(self, histogram, valid_features, sitename, use_missing, zero_as_missing):
 
+        # default values
         best_fid = None
         best_gain = self.min_impurity_split - consts.FLOAT_ZERO
         best_bid = None
@@ -90,11 +91,14 @@ class Splitter(object):
         missing_dir = 1
 
         for fid in range(len(histogram)):
+
             if valid_features[fid] is False:
                 continue
             bin_num = len(histogram[fid])
             if bin_num == 0 + missing_bin:
                 continue
+
+            # last bin contains sum values (cumsum from left)
             sum_grad = histogram[fid][bin_num - 1][0]
             sum_hess = histogram[fid][bin_num - 1][1]
             node_cnt = histogram[fid][bin_num - 1][2]
@@ -102,11 +106,14 @@ class Splitter(object):
             if node_cnt < self.min_sample_split:
                 break
 
+            # last bin will not participate in split find, so bin_num - 1
             for bid in range(bin_num - missing_bin - 1):
+
+                # left gh
                 sum_grad_l = histogram[fid][bid][0]
                 sum_hess_l = histogram[fid][bid][1]
                 node_cnt_l = histogram[fid][bid][2]
-
+                # right gh
                 sum_grad_r = sum_grad - sum_grad_l
                 sum_hess_r = sum_hess - sum_hess_l
                 node_cnt_r = node_cnt - node_cnt_l
@@ -126,6 +133,8 @@ class Splitter(object):
 
                 """ missing value handle: dispatch to left child"""
                 if use_missing:
+
+                    # add sum of samples with missing features to left
                     sum_grad_l += histogram[fid][-1][0] - histogram[fid][-2][0]
                     sum_hess_l += histogram[fid][-1][1] - histogram[fid][-2][1]
                     node_cnt_l += histogram[fid][-1][2] - histogram[fid][-2][2]
@@ -134,11 +143,12 @@ class Splitter(object):
                     sum_hess_r -= histogram[fid][-1][1] - histogram[fid][-2][1]
                     node_cnt_r -= histogram[fid][-1][2] - histogram[fid][-2][2]
 
+                    # if have a better gain value, missing dir is left
                     if node_cnt_l >= self.min_leaf_node and node_cnt_r >= self.min_leaf_node:
                         gain = self.criterion.split_gain([sum_grad, sum_hess],
                                                          [sum_grad_l, sum_hess_l], [sum_grad_r, sum_hess_r])
 
-                        if gain > self.min_impurity_split and gain > best_gain:
+                        if gain > self.min_impurity_split and gain > best_gain + consts.FLOAT_ZERO:
                             best_gain = gain
                             best_fid = fid
                             best_bid = bid

@@ -25,7 +25,7 @@ from functools import wraps
 from fate_arch.abc import CTableABC
 
 profile_logger = getLogger("PROFILING")
-_PROFILE_LOG_ENABLED = True
+_PROFILE_LOG_ENABLED = False
 
 
 class _TimerItem(object):
@@ -118,14 +118,17 @@ class _ComputingTimer(object):
         for function_name, item in aggregate.items():
             function_table.rows.append([function_name, *item.as_list()])
 
-        base_table = beautifultable.BeautifulTable(120)
+        detailed_base_table = beautifultable.BeautifulTable(120)
         stack_table.rows.sort("sum(s)", reverse=True)
-        base_table.rows.append(["stack", stack_table])
+        detailed_base_table.rows.append(["stack", stack_table])
+        detailed_base_table.rows.append(["total", total])
+
+        base_table = beautifultable.BeautifulTable(120)
         function_table.rows.sort("sum(s)", reverse=True)
         base_table.rows.append(["function", function_table])
         base_table.rows.append(["total", total])
 
-        return base_table.get_string()
+        return base_table.get_string(), detailed_base_table.get_string()
 
 
 class _FederationTimer(object):
@@ -235,12 +238,16 @@ def federation_get_timer(name, full_name, tag, local, parties):
     return _FederationGetTimer(name, full_name, tag, local, parties)
 
 
+def profile_start():
+    global _PROFILE_LOG_ENABLED
+    _PROFILE_LOG_ENABLED = True
+
+
 def profile_ends():
-    profile_logger.info(f"\n"
-                        f"Computing:\n"
-                        f"{_ComputingTimer.computing_statistics_table()}\n\n"
-                        f"Federation:\n"
-                        f"{_FederationTimer.federation_statistics_table()}\n")
+    computing_base_table, computing_detailed_table = _ComputingTimer.computing_statistics_table()
+    federation_base_table = _FederationTimer.federation_statistics_table()
+    profile_logger.info(f"\nComputing:\n{computing_base_table}\n\nFederation:\n{federation_base_table}\n")
+    profile_logger.debug(f"\nDetailed Computing:\n{computing_detailed_table}\n")
     global _PROFILE_LOG_ENABLED
     _PROFILE_LOG_ENABLED = False
 
@@ -280,7 +287,7 @@ def computing_profile(func):
     return _fn
 
 
-__META_REMOTE_ENABLE = True
+__META_REMOTE_ENABLE = False
 
 
 def enable_profile_remote():

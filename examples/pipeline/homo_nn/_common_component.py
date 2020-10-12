@@ -80,8 +80,6 @@ def run_homo_nn_pipeline(config, namespace, data: dict, nn_component, num_host):
                                    data=Data(predict_input={pipeline.dataio_0.input.data: reader_0.output.data}))
     # run predict model
     predict_pipeline.predict(backend=config.backend, work_mode=config.work_mode)
-    pipeline.get_train_conf()
-    pipeline.get_train_dsl()
 
 
 def runner(main_func):

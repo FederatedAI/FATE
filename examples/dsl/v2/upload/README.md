@@ -15,4 +15,4 @@ This section introduces the dsl and conf for different types of tasks.
 
 Users can use following commands to run the task.
 
-    flow data upload -c ${runtime_config} -
+    flow data upload -c ${runtime_config}

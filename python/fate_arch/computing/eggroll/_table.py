@@ -86,10 +86,22 @@ class Table(CTableABC):
 
     @computing_profile
     def mapReducePartitions(self, mapper, reducer, **kwargs):
+
+        def _mapper_wrapper(it):
+            import uuid
+            puid = str(uuid.uuid1())
+            ret = {}
+            for _k, _v in mapper(it):
+                if _k not in ret:
+                    ret[_k] = _v
+                else:
+                    ret[_k] = reducer(ret[_k], _v)
+            return [((_k, puid), _v) for _k, _v in ret.items()]
+
         partitions = self._rp.get_partitions()
-        mapped = self._rp.map_partitions(mapper)
+        mapped = self._rp.map_partitions(_mapper_wrapper)
         reduced = {}
-        for k, v in mapped.get_all():
+        for (k, _), v in mapped.get_all():
             if k not in reduced:
                 reduced[k] = v
             else:
@@ -99,8 +111,9 @@ class Table(CTableABC):
         return computing_session.parallelize(reduced.items(), partition=partitions, include_key=True)
 
     @computing_profile
-    def reduce(self, func, **kwargs):
-        return self._rp.reduce(func)
+    def reduce(self, func, key_func=None, **kwargs):
+        if key_func is None:
+            return self._rp.reduce(func)
 
     @computing_profile
     def join(self, other: 'Table', func, **kwargs):
@@ -111,8 +124,32 @@ class Table(CTableABC):
         return Table(self._rp.glom())
 
     @computing_profile
-    def sample(self, fraction, seed=None, **kwargs):
-        return Table(self._rp.sample(fraction=fraction, seed=seed))
+    def sample(self, *, fraction: typing.Optional[float] = None, num: typing.Optional[int] = None, seed=None):
+        if fraction is not None:
+            return Table(self._rp.sample(fraction=fraction, seed=seed))
+
+        if num is not None:
+            total = self._rp.count()
+            if num > total:
+                raise ValueError(f"not enough data to sample, own {total} but required {num}")
+
+            frac = num / float(total)
+            while True:
+                sampled_table = self._rp.sample(fraction=frac, seed=seed)
+                sampled_count = sampled_table.count()
+                if sampled_count < num:
+                    frac += 0.1
+                else:
+                    break
+
+            if sampled_count > num:
+                drops = sampled_table.take(sampled_count - num)
+                for k, v in drops:
+                    sampled_table.delete(k)
+
+            return Table(sampled_table)
+
+        raise ValueError(f"exactly one of `fraction` or `num` required, fraction={fraction}, num={num}")
 
     @computing_profile
     def subtractByKey(self, other: 'Table', **kwargs):

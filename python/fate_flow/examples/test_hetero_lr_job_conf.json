@@ -6,9 +6,14 @@
     "job_parameters": {
         "work_mode": 1,
         "backend": 0,
-        "task_parallelism": 1,
-        "task_nodes": 1,
-        "task_cores_per_node": 2,
+        "task_parallelism": 2,
+        "eggroll_run": {
+            "eggroll.session.processors.per.node": 2
+        },
+        "spark_run": {
+            "num-executors": 1,
+            "executor-cores": 2
+        },
         "dsl_version": "2"
     },
     "role": {

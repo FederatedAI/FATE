@@ -89,9 +89,11 @@ class JobController(object):
     @classmethod
     def special_role_parameters(cls, role, job_parameters: RunParameters):
         if role == "arbiter":
-            job_parameters.task_nodes = 1
             job_parameters.task_parallelism = 1
-            job_parameters.task_cores_per_node = 1
+            if job_parameters.adaptation_parameters["task_nodes"] > 0:
+                job_parameters.adaptation_parameters["task_nodes"] = 1
+            if job_parameters.adaptation_parameters["task_cores_per_node"] > 0:
+                job_parameters.adaptation_parameters["task_cores_per_node"] = 1
 
     @classmethod
     def check_parameters(cls, job_parameters: RunParameters, engines_info):
@@ -100,7 +102,7 @@ class JobController(object):
             raise RuntimeError(f"max cores per job is {max_cores_per_job}, please modify job parameters")
 
     @classmethod
-    def initialize_tasks(cls, job_id, role, party_id, run_on, job_initiator, job_parameters: RunParameters, dsl_parser, component_name=None, task_version=None):
+    def initialize_tasks(cls, job_id, role, party_id, run_on_this_party, job_initiator, job_parameters: RunParameters, dsl_parser, component_name=None, task_version=None):
         common_task_info = {}
         common_task_info["job_id"] = job_id
         common_task_info["initiator_role"] = job_initiator['role']
@@ -122,7 +124,7 @@ class JobController(object):
                     task_info = {}
                     task_info.update(common_task_info)
                     task_info["component_name"] = component.get_name()
-                    TaskController.create_task(role=role, party_id=party_id, run_on=run_on, task_info=task_info)
+                    TaskController.create_task(role=role, party_id=party_id, run_on_this_party=run_on_this_party, task_info=task_info)
 
     @classmethod
     def initialize_job_tracker(cls, job_id, role, party_id, job_info, is_initiator, dsl_parser):
@@ -185,14 +187,6 @@ class JobController(object):
         return {'min_input_data_partition': min_partition}
 
     @classmethod
-    def apply_resource(cls, job_id, role, party_id):
-        return ResourceManager.apply_for_job_resource(job_id=job_id, role=role, party_id=party_id)
-
-    @classmethod
-    def return_resource(cls, job_id, role, party_id):
-        return ResourceManager.return_job_resource(job_id=job_id, role=role, party_id=party_id)
-
-    @classmethod
     def start_job(cls, job_id, role, party_id, extra_info=None):
         schedule_logger(job_id=job_id).info(f"try to start job {job_id} on {role} {party_id}")
         job_info = {
@@ -227,7 +221,7 @@ class JobController(object):
 
     @classmethod
     def stop_job(cls, job, stop_status):
-        tasks = JobSaver.query_task(job_id=job.f_job_id, role=job.f_role, party_id=job.f_party_id)
+        tasks = JobSaver.query_task(job_id=job.f_job_id, role=job.f_role, party_id=job.f_party_id, reverse=True)
         for task in tasks:
             TaskController.stop_task(task=task, stop_status=stop_status)
         # Job status depends on the final operation result and initiator calculate

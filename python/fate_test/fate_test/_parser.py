@@ -95,10 +95,10 @@ class JobConf(object):
             kwargs = json.load(f, object_hook=CONF_JSON_HOOK.hook)
         return JobConf(**kwargs)
 
-    def update(self, parties: Parties, work_mode):
+    def update(self, parties: Parties, work_mode, backend):
         self.initiator = parties.extract_initiator_role(self.initiator['role'])
         self.role = parties.extract_role({role: len(parties) for role, parties in self.role.items()})
-        self.job_parameters.update(dict(work_mode=work_mode))
+        self.job_parameters.update(dict(work_mode=work_mode, backend=backend))
 
 
 @dataclass
@@ -180,7 +180,7 @@ class Testsuite(object):
         testsuite = Testsuite(dataset, jobs, pipeline_jobs, path)
         return testsuite
 
-    def jobs_iter(self):
+    def jobs_iter(self) -> typing.Generator[Job, None, None]:
         while self._ready_jobs:
             yield self._ready_jobs.pop()
 
@@ -217,7 +217,7 @@ class Testsuite(object):
             data.config.update(dict(work_mode=config.work_mode, backend=config.backend))
 
         for job in self.jobs:
-            job.job_conf.update(config.parties, config.work_mode)
+            job.job_conf.update(config.parties, config.work_mode, config.backend)
         return self
 
     def update_status(self, job_name, job_id: str = None, status: str = None, exception_id: str = None):

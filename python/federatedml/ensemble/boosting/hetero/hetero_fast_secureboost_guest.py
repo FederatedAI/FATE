@@ -20,7 +20,7 @@ class HeteroFastSecureBoostingTreeGuest(HeteroSecureBoostingTreeGuest):
         self.work_mode = consts.MIX_TREE
         self.tree_plan = []
         self.model_param = HeteroFastSecureBoostParam()
-        self.model_name = 'fast secureboost'
+        self.model_name = 'HeteroFastSecureBoost'
 
     def _init_model(self, param: HeteroFastSecureBoostParam):
         super(HeteroFastSecureBoostingTreeGuest, self)._init_model(param)
@@ -48,12 +48,13 @@ class HeteroFastSecureBoostingTreeGuest(HeteroSecureBoostingTreeGuest):
 
     def fit_a_booster(self, epoch_idx: int, booster_dim: int):
 
-        # prepare
+        # prepare tree plan
         tree_type, target_host_id = self.get_tree_plan(epoch_idx)
         LOGGER.info('tree work mode is {}'.format(tree_type))
         self.check_host_number(tree_type)
 
         if self.cur_epoch_idx != epoch_idx:
+            # update g/h every epoch
             self.grad_and_hess = self.compute_grad_and_hess(self.y_hat, self.y)
             self.cur_epoch_idx = epoch_idx
 
@@ -68,17 +69,11 @@ class HeteroFastSecureBoostingTreeGuest(HeteroSecureBoostingTreeGuest):
         tree.set_flowid(self.generate_flowid(epoch_idx, booster_dim))
         tree.set_host_party_idlist(self.component_properties.host_party_idlist)
         tree.set_runtime_idx(self.component_properties.local_partyid)
-
         tree.set_tree_work_mode(tree_type, target_host_id)
         tree.set_layered_depth(self.guest_depth, self.host_depth)
-
-        LOGGER.debug('tree work mode is {}'.format(tree_type))
         tree.fit()
-
         self.update_feature_importance(tree.get_feature_importance())
-
-        tree.print_leafs()
-
+        # tree.print_leafs()
         return tree
 
     @staticmethod
@@ -154,7 +149,6 @@ class HeteroFastSecureBoostingTreeGuest(HeteroSecureBoostingTreeGuest):
             tree.use_guest_feat_only_predict_mode()
 
         return tree
-
 
     def get_model_meta(self):
 
