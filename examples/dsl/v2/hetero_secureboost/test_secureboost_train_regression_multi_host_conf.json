@@ -106,7 +106,7 @@
             }
         },
         "evaluation_0": {
-            "eval_type": "binary"
+            "eval_type": "regression"
         }
     }
 }
