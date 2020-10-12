@@ -295,7 +295,7 @@ Besides the dsl conf, user also need to prepare a submit runtime conf to set the
 
    * - eggroll_run
      -
-     - processors_per_node
+     - eggroll.session.processors.per.node
      - parameter for EGGROLL computing engine
 
    * - spark_run
@@ -342,22 +342,27 @@ Besides the dsl conf, user also need to prepare a submit runtime conf to set the
      - SINGLE, MULTIPLE
      - federation mode
 
-conf example:
+**EGGROLL** conf example:
 
 .. code-block:: json
 
      "job_parameters": {
-        "job_type": "train",
         "work_mode": 1,
         "backend": 0,
         "dsl_version": 2,
-        "federated_mode": "MULTIPLE",
-        "federated_status_collect_type": "PUSH",
-        "timeout": 36000,
-        "task_parallelism": 2,
         "eggroll_run": {
            "eggroll.session.processors.per.node": 2
-        },
+        }
+     }
+
+**SPARK** conf example:
+
+.. code-block:: json
+
+     "job_parameters": {
+        "work_mode": 1,
+        "backend": 1,
+        "dsl_version": 2,
         "spark_run": {
            "num-executors": 1,
            "executor-cores": 2
