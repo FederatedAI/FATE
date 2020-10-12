@@ -49,9 +49,9 @@ quick start
 
    .. code-block:: bash
 
-      fate_test benchmark-quality -i <path contains *testsuite.json>
+      fate_test benchmark-quality -i <path contains *benchmark.json>
 
-6. useful logs or exception will be saved to logs dir with namespace showed in last step
+6. useful logs or exception will be saved to logs dir with namespace shown in last step
 
 develop install
 ---------------
@@ -77,7 +77,7 @@ command types
 
   .. code-block:: bash
 
-      fate_test benchmark-quality -i <path contains *testsuite.json>
+      fate_test benchmark-quality -i <path contains *benchmark.json>
 
 
 
@@ -201,7 +201,7 @@ command options
 
    .. code-block:: bash
 
-       fate_test suite -i <path1 contains *testsuite.json> --skip-date
+       fate_test suite -i <path1 contains *testsuite.json> --skip-data
 
    will run testsuites in *path1* without uploading data specified in *benchmark.json*.
    Note that data-namespace-mangling is ineffective when skipping data upload.
@@ -314,7 +314,7 @@ use the following command to show help message
 
    .. code-block:: bash
 
-       fate_test benchmark-quality -i <path1 contains *benchmark.json> --skip-date
+       fate_test benchmark-quality -i <path1 contains *benchmark.json> --skip-data
 
    will run benchmark testsuites in *path1* without uploading data specified in *benchmark.json*.
    Note that data-namespace-mangling is ineffective when skipping data upload.
