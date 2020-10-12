@@ -87,10 +87,12 @@ class Scorecard(ModelBase):
                                                                                             upper_limit_value,
                                                                                             lower_limit_value))
         LOGGER.debug(f"predict_result metas is {prediction_result.get_metas()}")
-
-        result_schema = {"header": ["label", "predict_result", "predict_score", "credit_score"],
-                                   "sid_name": prediction_result.get_meta("schema").get("sid_name")}
-        score_result.schema = result_schema
+        if prediction_result.schema is None or len(prediction_result.schema) == 0:
+            schema = prediction_result.get_meta("schema")
+        else:
+            schema = prediction_result.schema
+        score_result.schema = {"header": ["label", "predict_result", "predict_score", "credit_score"],
+                               "sid_name": schema.get("sid_name")}
 
         self._callback()
         LOGGER.info(f"Finish Scorecard Transform!")
