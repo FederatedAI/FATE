@@ -16,6 +16,7 @@ quick start
 
       python -m venv venv
       source venv/bin/activate
+      pip install -U pip
 
 
 2. install fate_test
@@ -51,6 +52,14 @@ quick start
       fate_test benchmark-quality -i <path contains *testsuite.json>
 
 6. useful logs or exception will be saved to logs dir with namespace showed in last step
+
+develop install
+---------------
+It is more convenient to use the editable mode during development: replace step 2 with flowing steps
+
+.. code-block:: bash
+
+   pip install -e ${FATE}/python/fate_client && pip install -e ${FATE}/python/fate_test
 
 
 
