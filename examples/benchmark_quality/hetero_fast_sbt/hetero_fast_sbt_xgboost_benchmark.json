@@ -54,7 +54,7 @@
             "script": "./xgboost-sbt-binary.py",
             "conf": "./xgb_config_binary.yaml"
         },
-        "pipeline": {
+        "FATE": {
             "script": "./fate-fast-sbt.py",
             "conf": "./fate_fast_sbt_mix_binary.yaml"
         },
@@ -67,7 +67,7 @@
             "script": "./xgboost-sbt-binary.py",
             "conf": "./xgb_config_binary.yaml"
         },
-        "pipeline": {
+        "FATE": {
             "script": "./fate-fast-sbt.py",
             "conf": "./fate_fast_sbt_mix_epsilon_5k.yaml"
         },
@@ -80,7 +80,7 @@
             "script": "./xgboost-sbt-multi.py",
             "conf": "./xgb_config_multi.yaml"
         },
-        "pipeline": {
+        "FATE": {
             "script": "./fate-fast-sbt.py",
             "conf": "./fate_fast_sbt_mix_multi.yaml"
         },
@@ -93,7 +93,7 @@
             "script": "./xgboost-sbt-regression.py",
             "conf": "./xgb_config_reg.yaml"
         },
-        "pipeline": {
+        "FATE": {
             "script": "./fate-fast-sbt.py",
             "conf": "./fate_fast_sbt_mix_regression.yaml"
         },
@@ -106,7 +106,7 @@
             "script": "./xgboost-sbt-binary.py",
             "conf": "./xgb_config_binary.yaml"
         },
-        "pipeline": {
+        "FATE": {
             "script": "./fate-fast-sbt.py",
             "conf": "./fate_fast_sbt_layered_binary.yaml"
         },
@@ -119,7 +119,7 @@
             "script": "./xgboost-sbt-multi.py",
             "conf": "./xgb_config_multi.yaml"
         },
-        "pipeline": {
+        "FATE": {
             "script": "./fate-fast-sbt.py",
             "conf": "./fate_fast_sbt_layered_multi.yaml"
         },
@@ -132,7 +132,7 @@
             "script": "./xgboost-sbt-regression.py",
             "conf": "./xgb_config_reg.yaml"
         },
-        "pipeline": {
+        "FATE": {
             "script": "./fate-fast-sbt.py",
             "conf": "./fate_fast_sbt_layered_regression.yaml"
         },
@@ -145,7 +145,7 @@
             "script": "./xgboost-sbt-binary.py",
             "conf": "./xgb_config_binary.yaml"
         },
-        "pipeline": {
+        "FATE": {
             "script": "./fate-fast-sbt.py",
             "conf": "./fate_fast_sbt_layered_epsilon_5k.yaml"
         },
