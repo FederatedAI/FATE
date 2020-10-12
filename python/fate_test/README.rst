@@ -68,7 +68,7 @@ command types
 
   .. code-block:: bash
 
-      fate_test benchmark-quality -i <path contains *testsuite.json>
+      fate_test benchmark-quality -i <path contains *benchmark.json>
 
 
 

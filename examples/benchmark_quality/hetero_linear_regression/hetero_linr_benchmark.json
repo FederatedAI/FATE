@@ -1,7 +1,7 @@
 {
     "data": [
         {
-            "file": "examples/data/motor_hetero_host.csv",
+            "file": "../../data/motor_hetero_host.csv",
             "head": 1,
             "partition": 16,
             "table_name": "motor_hetero_host",
@@ -9,7 +9,7 @@
             "role": "host_0"
         },
         {
-            "file": "examples/data/motor_hetero_guest.csv",
+            "file": "../../data/motor_hetero_guest.csv",
             "head": 1,
             "partition": 16,
             "table_name": "motor_hetero_guest",

@@ -2,26 +2,26 @@ DataIO
 ======
 
 Data IO is the most basic component of Fate Algorithm module. 
-It transforms the input DTable to a DTable whose values are Instance Object defined in federatedml.feature.instance, 
-and what's more, the transformed Dtable is the input data format of all other algorithm module, such as intersect、
+It transforms the input Table to a Table whose values are Instance Object defined `here <../feature/instance.py>`_,
+and what's more, the transformed table is the input data format of all other algorithm module, such as intersect、
 homo LR and hetero LR、SecureBoost and so on.
 
-Data IO module accepts the following input data format and transforms them to desired output DTable.
+Data IO module accepts the following input data format and transforms them to desired output Table.
 
-:dense input format: input DTable's value item is a list of single element, e.g. 
+:dense input format: input Table's value item is a list of single element, e.g.
    ::
        
       1.0,2.0,3.0,4.5
       1.1,2.1,3.4,1.3
       2.4,6.3,1.5,9.0
 
-:svm-light input format: first item of input DTable's value is label, following by a list of complex "feature_id:value" items, e.g.
+:svm-light input format: first item of input Table's value is label, following by a list of complex "feature_id:value" items, e.g.
    ::
 
       1 1:0.5 2:0.6
       0 1:0.7 3:0.8 5:0.2
 
-:tag input format: the input DTable's value is a list of tag, data io module first aggregates all tags occurred in input table, then changes all input line to one-hot representation in sorting the occurred tags by lexicographic order, e.g. assume values is
+:tag input format: the input Table's value is a list of tag, data io module first aggregates all tags occurred in input table, then changes all input line to one-hot representation in sorting the occurred tags by lexicographic order, e.g. assume values is
    ::
 
       a c
@@ -33,7 +33,7 @@ Data IO module accepts the following input data format and transforms them to de
       1 0 1 0
       1 1 0 1
 
-:tag\:value input format: the input DTable's value is a list of tag:value, like a mixed svm-light and tag input-format. data io module first aggregates all tags occurred in input table, then changes all input line to one-hot representation in sorting the occurred tags by lexicographic order, then fill the occur item with value. e.g. assume values is
+:tag\:value input format: the input Table's value is a list of tag:value, like a mixed svm-light and tag input-format. data io module first aggregates all tags occurred in input table, then changes all input line to one-hot representation in sorting the occurred tags by lexicographic order, then fill the occur item with value. e.g. assume values is
    ::
 
       a:0.2 c:1.5
