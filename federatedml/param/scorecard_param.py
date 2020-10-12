@@ -35,16 +35,16 @@ class ScorecardParam(BaseParam):
     method : str, default: 'credit'
         score method, currently only supports "credit"
 
-    offset : int, default: 500
+    offset : int or float, default: 500
         score baseline
 
-    factor : int, default: 20
+    factor : int or float, default: 20
         scoring step, when odds double, result score increases by this factor
 
-    upper_limit_ratio : int, default: 3
+    upper_limit_ratio : int or float, default: 3
         upper bound for odds ratio, credit score upper bound is upper_limit_ratio * offset
 
-    lower_limit_value : int, default : 0
+    lower_limit_value : int or float, default : 0
         lower bound for result score
 
     need_run : bool, default: True
