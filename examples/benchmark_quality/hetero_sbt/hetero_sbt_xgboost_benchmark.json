@@ -70,7 +70,7 @@
             "script": "./xgboost-sbt-binary.py",
             "conf": "./xgb_config_binary.yaml"
         },
-        "pipeline": {
+        "FATE": {
             "script": "./fate-sbt.py",
             "conf": "./fate_sbt_binary.yaml"
         },
@@ -83,7 +83,7 @@
             "script": "./xgboost-sbt-binary.py",
             "conf": "./xgb_config_binary-epsilon-5k.yaml"
         },
-        "pipeline": {
+        "FATE": {
             "script": "./fate-sbt.py",
             "conf": "./fate_sbt_eplison_5k.yaml"
         },
@@ -96,7 +96,7 @@
             "script": "./xgboost-sbt-multi.py",
             "conf": "./xgb_config_multi.yaml"
         },
-        "pipeline": {
+        "FATE": {
             "script": "./fate-sbt.py",
             "conf": "./fate_sbt_multi.yaml"
         },
@@ -109,7 +109,7 @@
             "script": "./xgboost-sbt-regression.py",
             "conf": "./xgb_config_reg.yaml"
         },
-        "pipeline": {
+        "FATE": {
             "script": "./fate-sbt.py",
             "conf": "./fate_sbt_regression.yaml"
         },
