@@ -21,8 +21,19 @@ import pandas
 from pipeline.utils.tools import JobConfig
 from tensorflow.keras import Sequential
 from tensorflow.keras import optimizers
-from tensorflow.keras.layers import Dense
+import tensorflow.keras.layers
 from tensorflow.keras.utils import to_categorical
+
+dataset = {
+    "vehicle": {
+        "guest": "vehicle_scale_homo_guest.csv",
+        "host": "vehicle_scale_homo_host.csv"
+    },
+    "breast": {
+        "guest": "breast_homo_host.csv",
+        "host": "breast_homo_guest.csv"
+    }
+}
 
 
 def main(param="param_conf.yaml"):
@@ -33,22 +44,32 @@ def main(param="param_conf.yaml"):
     lr = param["lr"]
     batch_size = param.get("batch_size", -1)
     optimizer_name = param.get("optimizer", "Adam")
+    loss = param.get("loss", "categorical_crossentropy")
+    metrics = param.get("metrics", ["accuracy"])
+    layers = param["layers"]
+    is_multy = param["is_multy"]
+    data = dataset[param.get("dataset", "vehicle")]
 
-    model = Sequential([
-        Dense(units=5, input_shape=(18,), activation="relu"),
-        Dense(units=4, activation="softmax")
-    ])
+    model = Sequential()
+    for layer_config in layers:
+        layer = getattr(tensorflow.keras.layers, layer_config["name"])
+        layer_params = layer_config["params"]
+        model.add(layer(**layer_params))
+
     model.compile(optimizer=getattr(optimizers, optimizer_name)(learning_rate=lr),
-                  loss="categorical_crossentropy",
-                  metrics=["accuracy"])
+                  loss=loss,
+                  metrics=metrics)
 
     data_path = pathlib.Path(__file__).parent.joinpath("../../data").resolve()
     data_with_label = pandas.concat([
-        pandas.read_csv(data_path.joinpath("vehicle_scale_homo_guest.csv"), index_col=0),
-        pandas.read_csv(data_path.joinpath("vehicle_scale_homo_host.csv"), index_col=0)
+        pandas.read_csv(data_path.joinpath(data["guest"]), index_col=0),
+        pandas.read_csv(data_path.joinpath(data["host"]), index_col=0)
     ]).values
     data = data_with_label[:, 1:]
-    labels = to_categorical(data_with_label[:, 0])
+    if is_multy:
+        labels = to_categorical(data_with_label[:, 0])
+    else:
+        labels = data_with_label[:, 0]
     if batch_size < 0:
         batch_size = len(data_with_label)
     model.fit(data, labels, epochs=epoch, batch_size=batch_size)

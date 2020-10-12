@@ -39,7 +39,7 @@ Algorithm List
 
    * - Reader
      - Reader
-     - This component loads and transform data from storage engine so that data is compatible with FATE computing engine
+     - This component loads and transforms data from storage engine so that data is compatible with FATE computing engine
      - Original Data
      - Transformed Data
      -
@@ -49,7 +49,7 @@ Algorithm List
      - DataIO
      - This component transforms user-uploaded date into Instance object.
      - Table, values are raw data.
-     - Transformed Table, values are data instance define in `federatedml/feature/instance.py`
+     - Transformed Table, values are data instance defined `here <./feature/instance.py>`_
      -
      - DataIO Model
 
@@ -83,7 +83,7 @@ Algorithm List
      - Table, values are instances.
      - Transformed Table.
      -
-     - iv/woe, split points, event counts, non-event counts etc. of each column.
+     - iv/woe, split points, event count, non-event count etc. of each column.
 
    * - `OneHot Encoder`_
      - OneHotEncoder
@@ -119,7 +119,7 @@ Algorithm List
 
    * - `Local Baseline`_
      - LocalBaseline
-     - Wrapper that runs sklearn Logistic Regression model with local data.
+     - Wrapper that runs sklearn(scikit-learn) Logistic Regression model with local data.
      - Table, values are instances.
      - Table, values are instances.
      -
@@ -237,6 +237,14 @@ Algorithm List
      -
      - Hetero KMeans Model
 
+   * - `Data Statistics`_
+     - Data Statistics
+     - This component will do some statistical work on the data, including statistical mean, maximum and minimum, median, etc.
+     - Table, values are instance
+     - Table
+     -
+     - Statistic Result
+
 .. _DataIO: util/README.rst
 .. _Intersect: statistic/intersect/README.rst
 .. _Federated Sampling: feature/README.rst
@@ -261,6 +269,7 @@ Algorithm List
 .. _Column Expand: feature/README.rst
 .. _Secure Information Retrieval: secure_information_retrieval
 .. _Hetero KMeans: unsupervised_learning/kmeans/README.rst
+.. _Data Statistics: statistic/README.rst
 
 
 Secure Protocol

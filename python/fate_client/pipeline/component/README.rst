@@ -337,7 +337,7 @@ Below lists input and output elements of each component.
 
    * - `Local Baseline`_
      - LocalBaseline
-     - Wrapper that runs sklearn Logistic Regression model with local data.
+     - Wrapper that runs sklearn(scikit-learn) Logistic Regression model with local data.
      - train_data; validate_data; predict_input
      - data
      - None
