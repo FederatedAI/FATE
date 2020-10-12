@@ -60,13 +60,13 @@
                 "dataio_0": {
                     "with_label": true,
                     "label_name": "label",
-                    "label_type": "float",
+                    "label_type": "int",
                     "output_format": "dense"
                 },
                 "dataio_1": {
                     "with_label": true,
                     "label_name": "label",
-                    "label_type": "float",
+                    "label_type": "int",
                     "output_format": "dense"
                 },
                 "reader_0": {
