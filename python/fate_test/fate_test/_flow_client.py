@@ -184,10 +184,11 @@ class QueryJobResponse(object):
     def __init__(self, response: dict):
         try:
             status = Status(response.get('data')[0]["f_status"])
+            progress = response.get('data')[0]['f_progress']
         except Exception as e:
             raise RuntimeError(f"query job error, response: {response}") from e
         self.status = status
-        self.progress = None
+        self.progress = progress
 
 
 class UploadDataResponse(object):
