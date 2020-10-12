@@ -81,78 +81,65 @@
             "role": "guest_0"
         }
     ],
-    "give_credit-binary2": {
+    "hetero_nn-binary-0": {
         "local": {
-            "script": "./hetero_nn_keras.py",
-            "conf": "./hetero_nn_give_credit_config.yaml"
-        },
-        "pipeline": {
-            "script": "./pipeline-hetero-nn.py",
-            "conf": "./hetero_nn_give_credit_config.yaml"
-        },
-        "compare_setting": {
-            "relative_tol": 0.01
-        }
-    },
-    "breast-binary": {
-        "local": {
-            "script": "./hetero_nn_keras.py",
+            "script": "./local-hetero_nn.py",
             "conf": "./hetero_nn_breast_config.yaml"
         },
-        "pipeline": {
-            "script": "./pipeline-hetero-nn.py",
+        "FATE": {
+            "script": "./fate-hetero_nn.py",
             "conf": "./hetero_nn_breast_config.yaml"
         },
         "compare_setting": {
             "relative_tol": 0.01
         }
     },
-    "default_credit-binary": {
+    "hetero_nn-binary-1": {
         "local": {
-            "script": "./hetero_nn_keras.py",
+            "script": "./local-hetero_nn.py",
             "conf": "./hetero_nn_default_credit_config.yaml"
         },
-        "pipeline": {
-            "script": "./pipeline-hetero-nn.py",
+        "FATE": {
+            "script": "./fate-hetero_nn.py",
             "conf": "./hetero_nn_default_credit_config.yaml"
         },
         "compare_setting": {
             "relative_tol": 0.05
         }
     },
-    "give_credit-binary": {
+    "hetero_nn-binary-2": {
         "local": {
-            "script": "./hetero_nn_keras.py",
+            "script": "./local-hetero_nn.py",
             "conf": "./hetero_nn_give_credit_config.yaml"
         },
-        "pipeline": {
-            "script": "./pipeline-hetero-nn.py",
+        "FATE": {
+            "script": "./fate-hetero_nn.py",
             "conf": "./hetero_nn_give_credit_config.yaml"
         },
         "compare_setting": {
             "relative_tol": 0.01
         }
     },
-    "epsilon_5k-binary": {
+    "hetero_nn-binary-3": {
         "local": {
-            "script": "./hetero_nn_keras.py",
+            "script": "./local-hetero_nn.py",
             "conf": "./hetero_nn_epsilon_5k_config.yaml"
         },
-        "pipeline": {
-            "script": "./pipeline-hetero-nn.py",
+        "FATE": {
+            "script": "./fate-hetero_nn.py",
             "conf": "./hetero_nn_epsilon_5k_config.yaml"
         },
         "compare_setting": {
             "relative_tol": 0.01
         }
     },
-    "vehicle_scale-multi": {
+    "hetero_nn-multi-0": {
         "local": {
-            "script": "./hetero_nn_keras.py",
+            "script": "./local-hetero_nn.py",
             "conf": "./hetero_nn_vehicle_scale_config.yaml"
         },
-        "pipeline": {
-            "script": "./pipeline-hetero-nn.py",
+        "FATE": {
+            "script": "./fate-hetero_nn.py",
             "conf": "./hetero_nn_vehicle_scale_config.yaml"
         },
         "compare_setting": {

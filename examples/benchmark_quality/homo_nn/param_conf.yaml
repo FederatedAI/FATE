@@ -1,2 +1,4 @@
-epoch: 100
-lr: 0.01
+epoch: 1000
+lr: 0.05
+batch_size: -1
+optimizer: Adam
