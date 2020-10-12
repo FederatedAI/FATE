@@ -145,7 +145,7 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
 
         self.classes_, self.num_classes, self.booster_dim = self.check_label()
 
-        LOGGER.debug('self class index is {}'.format(self.classes_))
+        LOGGER.info('class index is {}'.format(self.classes_))
 
         self.loss = self.get_loss_function()
 
@@ -165,7 +165,7 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
 
         for epoch_idx in range(self.boosting_round):
 
-            LOGGER.debug('cur epoch idx is {}'.format(epoch_idx))
+            LOGGER.info('cur epoch idx is {}'.format(epoch_idx))
 
             for class_idx in range(self.booster_dim):
 
@@ -215,7 +215,7 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
                                       extra_metas={"Best": min(self.history_loss)}))
 
         if self.validation_strategy and self.validation_strategy.has_saved_best_model():
-            LOGGER.debug('best model exported')
+            LOGGER.info('best model exported')
             self.load_model(self.validation_strategy.cur_best_model)
 
         # get summary
@@ -321,7 +321,7 @@ class HeteroBoostingHost(HeteroBoosting, ABC):
 
         for epoch_idx in range(self.boosting_round):
 
-            LOGGER.debug('cur epoch idx is {}'.format(epoch_idx))
+            LOGGER.info('cur epoch idx is {}'.format(epoch_idx))
 
             for class_idx in range(self.booster_dim):
                 # fit a booster
@@ -345,7 +345,7 @@ class HeteroBoostingHost(HeteroBoosting, ABC):
                 break
 
         if self.validation_strategy and self.validation_strategy.has_saved_best_model():
-            LOGGER.debug('best model exported')
+            LOGGER.info('best model exported')
             self.load_model(self.validation_strategy.cur_best_model)
 
         self.set_summary(self.generate_summary())

@@ -29,7 +29,7 @@ from fate_test._flow_client import SubmitJobResponse, QueryJobResponse, JobProgr
 from fate_test._io import set_logger, LOGGER, echo
 from fate_test._parser import Testsuite, BenchmarkSuite, Config, DATA_JSON_HOOK, CONF_JSON_HOOK, DSL_JSON_HOOK, \
     JSON_STRING
-from fate_test.utils import match_metrics
+from fate_test.utils import show_data, match_metrics
 
 
 @click.group(name="cli")
@@ -38,18 +38,37 @@ def cli():
 
 
 @cli.command(name="config")
-@click.argument("cmd", type=click.Choice(["new", "show", "edit"], case_sensitive=False))
-def _config(cmd):
+@click.argument("cmd", type=click.Choice(["new", "show", "edit", "check"], case_sensitive=False))
+@click.option('-r', '--role', required=False, type=str)
+def _config(cmd, role):
     """
-    new|show|edit testsuite config
+    new|show|edit fate test config
     """
     if cmd == "new":
-        create_config(Path("testsuite_config.yaml"))
-        click.echo(f"create config file: testsuite_config.yaml")
+        create_config(Path("fate_test_config.yaml"))
+        click.echo(f"create config file: fate_test_config.yaml")
     if cmd == "show":
         click.echo(f"priority config path is {priority_config()}")
     if cmd == "edit":
         click.edit(filename=priority_config())
+    if cmd == "check":
+        if not role:
+            click.echo("use --role to specify role to check, "
+                       "such as --role guest_0 to check 0th guest, "
+                       "or --role all to check all roles in config")
+            return
+        config_inst = _parse_config(priority_config())
+        with Clients(config_inst) as clients:
+            if role != "all" and not clients.contains(role):
+                click.echo(f"[X]{role} not in config")
+                return
+            roles = clients.all_roles() if role == "all" else [role]
+            for r in roles:
+                try:
+                    version, address = clients[r].check_connection()
+                except Exception as e:
+                    click.echo(f"[X]connection {address} fail, role is {r}, exception is {e.args}")
+                click.echo(f"[✓]connection {address} ok, fate version is {version}, role is {r}")
 
 
 @LOGGER.catch
@@ -61,7 +80,7 @@ def _config(cmd):
 @click.option('-e', '--exclude', type=click.Path(exists=True), multiple=True,
               help="exclude *testsuite.json under these paths")
 @click.option('-c', '--config', default=priority_config().__str__(), type=click.Path(exists=True),
-              help=f"config path, defaults to {priority_config()}")
+              help=f"specify config path")
 @click.option('-r', '--replace', default="{}", type=JSON_STRING,
               help="a json string represents mapping for replacing fields in data/conf/dsl")
 @click.option("-g", '--glob', type=str,
@@ -112,7 +131,7 @@ def run_suite(replace, data_namespace_mangling, config, include, exclude, glob,
                 if not skip_dsl_jobs:
                     echo.stdout_newline()
                     try:
-                        _submit_job(client, suite)
+                        _submit_job(client, suite, namespace)
                     except Exception as e:
                         raise RuntimeError(f"exception occur while submit job for {suite.path}") from e
 
@@ -125,7 +144,8 @@ def run_suite(replace, data_namespace_mangling, config, include, exclude, glob,
                 if not skip_data:
                     _delete_data(client, suite)
                 echo.echo(f"[{i + 1}/{len(suites)}]elapse {timedelta(seconds=int(time.time() - start))}", fg='red')
-                echo.echo(suite.pretty_final_summary(), fg='red')
+                if not skip_dsl_jobs:
+                    echo.echo(suite.pretty_final_summary(), fg='red')
 
             except Exception:
                 exception_id = uuid.uuid1()
@@ -135,6 +155,7 @@ def run_suite(replace, data_namespace_mangling, config, include, exclude, glob,
                 echo.stdout_newline()
 
     echo.farewell()
+    echo.echo(f"testsuite namespace: {namespace}", fg='red')
 
 
 @LOGGER.catch
@@ -146,7 +167,7 @@ def run_suite(replace, data_namespace_mangling, config, include, exclude, glob,
 @click.option('-e', '--exclude', type=click.Path(exists=True), multiple=True,
               help="exclude *benchmark.json under these paths")
 @click.option('-c', '--config', default=priority_config().__str__(), type=click.Path(exists=True),
-              help=f"config path, defaults to {priority_config()}")
+              help=f"specify config path")
 @click.option('-g', '--glob', type=str,
               help="glob string to filter sub-directory of path specified by <include>")
 @click.option('-t', '--tol', type=float,
@@ -171,7 +192,7 @@ def run_benchmark(data_namespace_mangling, config, include, exclude, glob, skip_
     suites = _load_testsuites(includes=include, excludes=exclude, glob=glob,
                               suffix="benchmark.json", suite_type="benchmark")
     for suite in suites:
-        echo.echo(f"\tdataset({len(suite.dataset)}) benchmark pairs({len(suite.pairs)}) {suite.path}")
+        echo.echo(f"\tdataset({len(suite.dataset)}) benchmark groups({len(suite.pairs)}) {suite.path}")
     if not yes and not click.confirm("running?"):
         return
     with Clients(config_inst) as client:
@@ -203,6 +224,7 @@ def run_benchmark(data_namespace_mangling, config, include, exclude, glob, skip_
             finally:
                 echo.stdout_newline()
     echo.farewell()
+    echo.echo(f"testsuite namespace: {namespace}", fg='red')
 
 
 def _parse_config(config):
@@ -324,7 +346,7 @@ def _delete_data(clients: Clients, suite: Testsuite):
             echo.stdout_newline()
 
 
-def _submit_job(clients: Clients, suite: Testsuite):
+def _submit_job(clients: Clients, suite: Testsuite, namespace: str):
     # submit jobs
     with click.progressbar(length=len(suite.jobs),
                            label="jobs   ",
@@ -348,6 +370,13 @@ def _submit_job(clients: Clients, suite: Testsuite):
                     echo.file(f"[jobs] {resp.job_id} ", nl=False)
                     suite.update_status(job_name=job.job_name, job_id=resp.job_id)
 
+                    # add notes
+                    notes = f"{job.job_name}@{suite.path}@{namespace}"
+                    for role, party_id_list in job.job_conf.role.items():
+                        for i, party_id in enumerate(party_id_list):
+                            clients[f"{role}_{i}"].add_notes(job_id=resp.job_id, role=role, party_id=party_id,
+                                                             notes=notes)
+
                 if isinstance(resp, QueryJobResponse):
                     job_progress.running(resp.status, resp.progress)
 
@@ -355,7 +384,8 @@ def _submit_job(clients: Clients, suite: Testsuite):
 
             # noinspection PyBroadException
             try:
-                response = clients["guest_0"].submit_job(job, _call_back)
+                response = clients["guest_0"].submit_job(job=job, callback=_call_back)
+
             except Exception:
                 exception_id = str(uuid.uuid1())
                 job_progress.exception(exception_id)
@@ -382,7 +412,9 @@ def _load_module_from_script(script_path):
 
 def _run_pipeline_jobs(config: Config, suite: Testsuite, namespace: str, data_namespace_mangling: bool):
     # pipeline demo goes here
-    for pipeline_job in suite.pipeline_jobs:
+    job_n = len(suite.pipeline_jobs)
+    for i, pipeline_job in enumerate(suite.pipeline_jobs):
+        echo.echo(f"Running {i + 1} of {job_n} jobs: {pipeline_job.job_name}")
         job_name, script_path = pipeline_job.job_name, pipeline_job.script_path
         mod = _load_module_from_script(script_path)
         if data_namespace_mangling:
@@ -394,27 +426,37 @@ def _run_pipeline_jobs(config: Config, suite: Testsuite, namespace: str, data_na
 def _run_benchmark_pairs(config: Config, suite: BenchmarkSuite, tol: float,
                          namespace: str, data_namespace_mangling: bool):
     # pipeline demo goes here
-    for pair in suite.pairs:
+    pair_n = len(suite.pairs)
+    for i, pair in enumerate(suite.pairs):
+        echo.echo(f"Running {i + 1} of {pair_n} groups: {pair.pair_name}")
         results = {}
-        for job in pair.jobs:
+        data_summary = None
+        job_n = len(pair.jobs)
+        for j, job in enumerate(pair.jobs):
+            echo.echo(f"Running {j + 1} of {job_n} jobs: {job.job_name}")
             job_name, script_path, conf_path = job.job_name, job.script_path, job.conf_path
             param = Config.load_from_file(conf_path)
             mod = _load_module_from_script(script_path)
             input_params = signature(mod.main).parameters
             # local script
             if len(input_params) == 1:
-                metric = mod.main(param=param)
+                data, metric = mod.main(param=param)
             # pipeline script
             elif len(input_params) == 3:
                 if data_namespace_mangling:
-                    metric = mod.main(config=config, param=param, namespace=f"_{namespace}")
+                    data, metric = mod.main(config=config, param=param, namespace=f"_{namespace}")
                 else:
-                    metric = mod.main(config=config, param=param)
+                    data, metric = mod.main(config=config, param=param)
             else:
-                metric = mod.main()
+                data, metric = mod.main()
             results[job_name] = metric
+            if job_name == "FATE":
+                data_summary = data
+            if data_summary is None:
+                data_summary = data
         rel_tol = pair.compare_setting.get("relative_tol")
-        match_metrics(evaluate=True, abs_tol=tol, rel_tol=rel_tol, **results)
+        show_data(data_summary)
+        match_metrics(evaluate=True, group_name=pair.pair_name, abs_tol=tol, rel_tol=rel_tol, **results)
 
 
 def main():

@@ -15,6 +15,7 @@
 #
 
 import itertools
+import typing
 
 from fate_arch.abc import CTableABC
 from fate_arch.common import log
@@ -103,8 +104,32 @@ class Table(CTableABC):
         return Table(self._table.glom())
 
     @computing_profile
-    def sample(self, fraction, seed=None):
-        return Table(self._table.sample(fraction, seed))
+    def sample(self, *, fraction: typing.Optional[float] = None, num: typing.Optional[int] = None, seed=None):
+        if fraction is not None:
+            return Table(self._table.sample(fraction=fraction, seed=seed))
+
+        if num is not None:
+            total = self._table.count()
+            if num > total:
+                raise ValueError(f"not enough data to sample, own {total} but required {num}")
+
+            frac = num / float(total)
+            while True:
+                sampled_table = self._table.sample(fraction=frac, seed=seed)
+                sampled_count = sampled_table.count()
+                if sampled_count < num:
+                    frac += 0.1
+                else:
+                    break
+
+            if sampled_count > num:
+                drops = sampled_table.take(sampled_count - num)
+                for k, v in drops:
+                    sampled_table.delete(k)
+
+            return Table(sampled_table)
+
+        raise ValueError(f"exactly one of `fraction` or `num` required, fraction={fraction}, num={num}")
 
     @computing_profile
     def filter(self, func):

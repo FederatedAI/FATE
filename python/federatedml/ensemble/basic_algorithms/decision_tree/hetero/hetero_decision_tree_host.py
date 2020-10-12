@@ -27,17 +27,21 @@ class HeteroDecisionTreeHost(DecisionTree):
         self.host_party_idlist = []
 
         # For fast histogram
-        self.run_fast_hist = False
+        self.run_sparse_opt = False
         self.bin_num = None
         self.data_bin_dense = None
         self.data_bin_dense_with_position = None
 
         self.transfer_inst = HeteroDecisionTreeTransferVariable()
 
-    def activate_fast_histogram_mode(self, ):
-        self.run_fast_hist = True
+    """
+    Setting
+    """
 
-    def set_fast_hist_data(self, data_bin_dense, bin_num):
+    def activate_sparse_hist_opt(self):
+        self.run_sparse_opt = True
+
+    def set_dense_data_for_sparse_opt(self, data_bin_dense, bin_num):
         # a dense dtable and bin_num for fast hist computation
         self.data_bin_dense = data_bin_dense
         self.bin_num = bin_num
@@ -47,6 +51,19 @@ class HeteroDecisionTreeHost(DecisionTree):
 
     def set_as_complete_secure_tree(self):
         self.complete_secure_tree = True
+
+    def set_input_data(self, data_bin=None, grad_and_hess=None, bin_split_points=None,
+                       bin_sparse_points=None, data_bin_dense=None):
+        LOGGER.info("set input info")
+        self.data_bin = data_bin
+        self.grad_and_hess = grad_and_hess
+        self.bin_split_points = bin_split_points
+        self.bin_sparse_points = bin_sparse_points
+        self.data_bin_dense = data_bin_dense  # For fast histogram
+
+    """
+    Node encode/decode
+    """
 
     def encode(self, etype="feature_idx", val=None, nid=None):
         if etype == "feature_idx":
@@ -80,6 +97,10 @@ class HeteroDecisionTreeHost(DecisionTree):
                 raise ValueError("decode val %s cause error, can't recognize it!" % (str(val)))
 
         return TypeError("decode type %s is not support!" % (str(dtype)))
+
+    """
+    Federation Functions
+    """
 
     def sync_encrypted_grad_and_hess(self):
         LOGGER.info("get encrypted grad and hess")
@@ -142,6 +163,44 @@ class HeteroDecisionTreeHost(DecisionTree):
                                                                        suffix=(dep,))
         return dispatch_node_host
 
+    def sync_dispatch_node_host_result(self, dispatch_node_host_result, dep=-1):
+        LOGGER.info("send host dispatch result, depth is {}".format(dep))
+
+        self.transfer_inst.dispatch_node_host_result.remote(dispatch_node_host_result,
+                                                            role=consts.GUEST,
+                                                            idx=-1,
+                                                            suffix=(dep,))
+
+    def sync_tree(self,):
+        LOGGER.info("sync tree from guest")
+        self.tree_node = self.transfer_inst.tree.get(idx=0)
+
+    def sync_predict_finish_tag(self, recv_times):
+        LOGGER.info("get the {}-th predict finish tag from guest".format(recv_times))
+        finish_tag = self.transfer_inst.predict_finish_tag.get(idx=0,
+                                                               suffix=(recv_times,))
+
+        return finish_tag
+
+    def sync_predict_data(self, recv_times):
+        LOGGER.info("srecv predict data to host, recv times is {}".format(recv_times))
+        predict_data = self.transfer_inst.predict_data.get(idx=0,
+                                                           suffix=(recv_times,))
+
+        return predict_data
+
+    def sync_data_predicted_by_host(self, predict_data, send_times):
+        LOGGER.info("send predicted data by host, send times is {}".format(send_times))
+
+        self.transfer_inst.predict_data_by_host.remote(predict_data,
+                                                       role=consts.GUEST,
+                                                       idx=0,
+                                                       suffix=(send_times,))
+
+    """
+    Tree Updating
+    """
+
     @staticmethod
     def assign_a_instance(value1, value2, sitename=None, decoder=None,
                           split_maskdict=None, bin_sparse_points=None,
@@ -181,15 +240,10 @@ class HeteroDecisionTreeHost(DecisionTree):
                 else:
                     return unleaf_state, right_nodeid
 
-    def sync_dispatch_node_host_result(self, dispatch_node_host_result, dep=-1):
-        LOGGER.info("send host dispatch result, depth is {}".format(dep))
-
-        self.transfer_inst.dispatch_node_host_result.remote(dispatch_node_host_result,
-                                                            role=consts.GUEST,
-                                                            idx=-1,
-                                                            suffix=(dep,))
-
     def assign_instances_to_new_node(self, dispatch_node_host, dep=-1):
+
+        # assist inst2node_idx computation
+
         LOGGER.info("start to find host dispath of depth {}".format(dep))
         dispatch_node_method = functools.partial(self.assign_a_instance,
                                                  sitename=self.sitename,
@@ -202,9 +256,17 @@ class HeteroDecisionTreeHost(DecisionTree):
         dispatch_node_host_result = dispatch_node_host.join(self.data_bin, dispatch_node_method)
         self.sync_dispatch_node_host_result(dispatch_node_host_result, dep)
 
-    def sync_tree(self,):
-        LOGGER.info("sync tree from guest")
-        self.tree_node = self.transfer_inst.tree.get(idx=0)
+    def update_instances_node_positions(self):
+
+        # join data and inst2node_idx to update current node positions of samples
+        if self.run_sparse_opt:
+            self.data_bin_dense_with_position = self.data_bin_dense.join(self.inst2node_idx, lambda v1, v2: (v1, v2))
+        else:
+            self.data_with_node_assignments = self.data_bin.join(self.inst2node_idx, lambda v1, v2: (v1, v2))
+
+    """
+    Pre-Process / Post-Process
+    """
 
     def remove_duplicated_split_nodes(self, split_nid_used):
         LOGGER.info("remove duplicated nodes from split mask dict")
@@ -229,6 +291,88 @@ class HeteroDecisionTreeHost(DecisionTree):
                 split_nid_used.append(self.tree_node[i].id)
 
         self.remove_duplicated_split_nodes(split_nid_used)
+
+    """
+    Fast histogram
+    """
+
+    def fast_get_histograms(self, node_map):
+        LOGGER.info("start to get node histograms in fast mode")
+        acc_histograms = FastFeatureHistogram.calculate_histogram(
+            data_bin=self.data_bin_dense_with_position,
+            grad_and_hess=self.grad_and_hess,
+            bin_split_points=self.bin_split_points,
+            cipher_split_num=14,
+            node_map=node_map,
+            bin_num=self.bin_num,
+            valid_features=self.valid_features,
+            use_missing=self.use_missing,
+            zero_as_missing=self.zero_as_missing
+        )
+
+        return acc_histograms
+
+    """
+    Split finding
+    """
+
+    def compute_best_splits(self, node_map: dict, dep: int, batch: int):
+
+        if not self.complete_secure_tree:
+
+            if self.run_sparse_opt:
+                acc_histograms = self.fast_get_histograms(node_map)
+            else:
+                acc_histograms = self.get_local_histograms(node_map, ret='tb')
+
+            splitinfo_host, encrypted_splitinfo_host = self.splitter.find_split_host(histograms=acc_histograms,
+                                                                                     node_map=node_map,
+                                                                                     use_missing=self.use_missing,
+                                                                                     zero_as_missing=self.zero_as_missing,
+                                                                                     valid_features=self.valid_features,
+                                                                                     sitename=self.sitename
+                                                                                     )
+
+            LOGGER.debug('sending en_splitinfo {}'.format(encrypted_splitinfo_host))
+            self.sync_encrypted_splitinfo_host(encrypted_splitinfo_host, dep, batch)
+            federated_best_splitinfo_host = self.sync_federated_best_splitinfo_host(dep, batch)
+            self.sync_final_splitinfo_host(splitinfo_host, federated_best_splitinfo_host, dep, batch)
+            LOGGER.debug('computing host splits done')
+        else:
+            LOGGER.debug('skip splits computation')
+
+    """
+    Fit & Predict
+    """
+
+    def fit(self):
+        
+        LOGGER.info("begin to fit host decision tree")
+        self.sync_encrypted_grad_and_hess()
+
+        for dep in range(self.max_depth):
+            self.sync_tree_node_queue(dep)
+
+            if len(self.cur_layer_nodes) == 0:
+                break
+
+            self.inst2node_idx = self.sync_node_positions(dep)
+            self.update_instances_node_positions()
+
+            batch = 0
+            for i in range(0, len(self.cur_layer_nodes), self.max_split_nodes):
+                self.cur_to_split_nodes = self.cur_layer_nodes[i: i + self.max_split_nodes]
+                self.compute_best_splits(node_map=self.get_node_map(self.cur_to_split_nodes), dep=dep, batch=batch, )
+
+                batch += 1
+
+            dispatch_node_host = self.sync_dispatch_node_host(dep)
+            self.assign_instances_to_new_node(dispatch_node_host, dep)
+
+        self.sync_tree()
+        self.convert_bin_to_real()
+
+        LOGGER.info("end to fit guest decision tree")
 
     @staticmethod
     def traverse_tree(predict_state, data_inst, tree_=None,
@@ -272,110 +416,6 @@ class HeteroDecisionTreeHost(DecisionTree):
 
         return nid, 0
 
-    def sync_predict_finish_tag(self, recv_times):
-        LOGGER.info("get the {}-th predict finish tag from guest".format(recv_times))
-        finish_tag = self.transfer_inst.predict_finish_tag.get(idx=0,
-                                                               suffix=(recv_times,))
-
-        return finish_tag
-
-    def sync_predict_data(self, recv_times):
-        LOGGER.info("srecv predict data to host, recv times is {}".format(recv_times))
-        predict_data = self.transfer_inst.predict_data.get(idx=0,
-                                                           suffix=(recv_times,))
-
-        return predict_data
-
-    def sync_data_predicted_by_host(self, predict_data, send_times):
-        LOGGER.info("send predicted data by host, send times is {}".format(send_times))
-
-        self.transfer_inst.predict_data_by_host.remote(predict_data,
-                                                       role=consts.GUEST,
-                                                       idx=0,
-                                                       suffix=(send_times,))
-
-    def fast_get_histograms(self, node_map):
-        LOGGER.info("start to get node histograms in fast mode")
-        acc_histograms = FastFeatureHistogram.calculate_histogram(
-            data_bin=self.data_bin_dense_with_position,
-            grad_and_hess=self.grad_and_hess,
-            bin_split_points=self.bin_split_points,
-            cipher_split_num=14,
-            node_map=node_map,
-            bin_num=self.bin_num,
-            valid_features=self.valid_features,
-            use_missing=self.use_missing,
-            zero_as_missing=self.zero_as_missing
-        )
-
-        return acc_histograms
-
-    def compute_best_splits(self, node_map: dict, dep: int, batch: int):
-
-        if not self.complete_secure_tree:
-
-            if self.run_fast_hist:
-                acc_histograms = self.fast_get_histograms(node_map)
-            else:
-                acc_histograms = self.get_local_histograms(node_map, ret='tb')
-
-            splitinfo_host, encrypted_splitinfo_host = self.splitter.find_split_host(histograms=acc_histograms,
-                                                                                     node_map=node_map,
-                                                                                     use_missing=self.use_missing,
-                                                                                     zero_as_missing=self.zero_as_missing,
-                                                                                     valid_features=self.valid_features,
-                                                                                     sitename=self.sitename
-                                                                                     )
-
-            LOGGER.debug('sending en_splitinfo {}'.format(encrypted_splitinfo_host))
-            self.sync_encrypted_splitinfo_host(encrypted_splitinfo_host, dep, batch)
-            federated_best_splitinfo_host = self.sync_federated_best_splitinfo_host(dep, batch)
-            self.sync_final_splitinfo_host(splitinfo_host, federated_best_splitinfo_host, dep, batch)
-            LOGGER.debug('computing host splits done')
-        else:
-            LOGGER.debug('skip splits computation')
-
-    def set_input_data(self, data_bin=None, grad_and_hess=None, bin_split_points=None,
-                       bin_sparse_points=None, data_bin_dense=None):
-        LOGGER.info("set input info")
-        self.data_bin = data_bin
-        self.grad_and_hess = grad_and_hess
-        self.bin_split_points = bin_split_points
-        self.bin_sparse_points = bin_sparse_points
-        self.data_bin_dense = data_bin_dense  # For fast histogram
-
-    def fit(self):
-        
-        LOGGER.info("begin to fit host decision tree")
-        self.sync_encrypted_grad_and_hess()
-
-        for dep in range(self.max_depth):
-            self.sync_tree_node_queue(dep)
-
-            if len(self.cur_layer_nodes) == 0:
-                break
-
-            self.inst2node_idx = self.sync_node_positions(dep)
-            if self.run_fast_hist:
-                self.data_bin_dense_with_position = self.data_bin_dense.join(self.inst2node_idx, lambda v1, v2: (v1, v2))
-            else:
-                self.data_with_node_assignments = self.data_bin.join(self.inst2node_idx, lambda v1, v2: (v1, v2))
-
-            batch = 0
-            for i in range(0, len(self.cur_layer_nodes), self.max_split_nodes):
-                self.cur_to_split_nodes = self.cur_layer_nodes[i: i + self.max_split_nodes]
-                self.compute_best_splits(node_map=self.get_node_map(self.cur_to_split_nodes), dep=dep, batch=batch, )
-
-                batch += 1
-
-            dispatch_node_host = self.sync_dispatch_node_host(dep)
-            self.assign_instances_to_new_node(dispatch_node_host, dep)
-
-        self.sync_tree()
-        self.convert_bin_to_real()
-
-        LOGGER.info("end to fit guest decision tree")
-
     def predict(self, data_inst):
         LOGGER.info("start to predict!")
         site_guest_send_times = 0
@@ -402,6 +442,10 @@ class HeteroDecisionTreeHost(DecisionTree):
             site_guest_send_times += 1
 
         LOGGER.info("predict finish!")
+
+    """
+    Tree Output
+    """
 
     def get_model_meta(self):
         model_meta = DecisionTreeModelMeta()

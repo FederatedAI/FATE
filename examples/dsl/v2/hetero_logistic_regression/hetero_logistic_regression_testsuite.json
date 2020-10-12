@@ -93,6 +93,11 @@
         "early-stop": {
             "conf": "hetero_lr_early_stop_conf.json",
             "dsl": "hetero_lr_early_stop_dsl.json"
+        },
+        "predict": {
+            "conf": "hetero-lr-normal-predict-conf.json",
+            "dsl": "hetero-lr-normal-predict-dsl.json",
+            "deps": "normal"
         }
     }
 }

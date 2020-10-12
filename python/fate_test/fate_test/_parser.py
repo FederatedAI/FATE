@@ -180,7 +180,7 @@ class Testsuite(object):
         testsuite = Testsuite(dataset, jobs, pipeline_jobs, path)
         return testsuite
 
-    def jobs_iter(self):
+    def jobs_iter(self) -> typing.Generator[Job, None, None]:
         while self._ready_jobs:
             yield self._ready_jobs.pop()
 

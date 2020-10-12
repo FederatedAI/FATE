@@ -1,0 +1,10 @@
+data_guest: "/home/mingchao/python/examples/data/breast_homo_guest.csv"
+data_host: "/home/mingchao/python/examples/data/breast_homo_host.csv"
+data_test: "/home/mingchao/python/examples/data/breast_homo_test.csv"
+idx: "id"
+label_name: "y"
+penalty: "L2"
+max_iter: 3
+alpha: 0.01
+learning_rate: 0.15
+optimizer: "rmsprop"
