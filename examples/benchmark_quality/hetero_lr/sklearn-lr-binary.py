@@ -52,7 +52,8 @@ def main(param):
     y = df[label_name]
     X = df.drop(label_name, axis=1)
 
-    x_train, x_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=0)
+    # x_train, x_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=0)
+    x_train, x_test, y_train, y_test = X, X, y, y
 
     # lm = LogisticRegression(max_iter=20)
     lm = SGDClassifier(loss="log", **config_param)
