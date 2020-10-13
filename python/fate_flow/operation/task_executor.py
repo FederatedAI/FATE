@@ -167,7 +167,6 @@ class TaskExecutor(object):
                                                   task_parameters=task_parameters,
                                                   input_dsl=task_input_dsl,
                                                   )
-            schedule_logger().info(f"task run args: {task_run_args}")
             if module_name in {"Upload", "Download", "Reader", "Writer"}:
                 task_run_args["job_parameters"] = job_parameters
             run_object = getattr(importlib.import_module(run_class_package), run_class_name)()

@@ -23,11 +23,10 @@ from pipeline.component import HeteroLR
 from pipeline.component import Intersection
 from pipeline.component import Reader
 from pipeline.interface import Data
-
 from pipeline.utils.tools import load_job_config, JobConfig
 
 
-def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
+def main(config="../../config.yaml", param="./lr_multi_config.yaml", namespace=""):
     # obtain config
     if isinstance(config, str):
         config = load_job_config(config)
@@ -50,9 +49,15 @@ def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
     work_mode = 1
     param = {"penalty": "L2", "max_iter": 5}
     """
+    data_set = param.get("data_guest").split('/')[-1]
+    if data_set == "vehicle_scale_hetero_guest.csv":
+        guest_data_table = 'vehicle_scale_hetero_guest'
+        host_data_table = 'vehicle_scale_hetero_host'
+    else:
+        raise ValueError(f"Cannot recognized data_set: {data_set}")
 
-    guest_train_data = {"name": "default_credit_hetero_guest", "namespace": f"experiment{namespace}"}
-    host_train_data = {"name": "default_credit_hetero_host", "namespace": f"experiment{namespace}"}
+    guest_train_data = {"name": guest_data_table, "namespace": f"experiment{namespace}"}
+    host_train_data = {"name": host_data_table, "namespace": f"experiment{namespace}"}
 
     # initialize pipeline
     pipeline = PipeLine()
@@ -90,9 +95,11 @@ def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
         "penalty": param["penalty"],
         "max_iter": param["max_iter"],
         "alpha": param["alpha"],
-        "learning_rate": param["learning_rate"]
+        "learning_rate": param["learning_rate"],
+        "optimizer": "nesterov_momentum_sgd"
     }
     lr_param.update(config_param)
+    print(f"lr_param: {lr_param}, data_set: {data_set}")
     hetero_lr_0 = HeteroLR(name='hetero_lr_0', **lr_param)
 
     evaluation_0 = Evaluation(name='evaluation_0', eval_type="multi")
@@ -111,7 +118,11 @@ def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
     pipeline.fit(backend=backend, work_mode=work_mode)
     # query component summary
     print(pipeline.get_component("evaluation_0").get_summary())
-    return pipeline.get_component("evaluation_0").get_summary()
+    result_summary = pipeline.get_component("evaluation_0").get_summary()
+    data_summary = {"train": {"guest": guest_train_data["name"], "host": host_train_data["name"]},
+                    "test": {"guest": guest_train_data["name"], "host": host_train_data["name"]}
+                    }
+    return data_summary, result_summary
 
 
 if __name__ == "__main__":

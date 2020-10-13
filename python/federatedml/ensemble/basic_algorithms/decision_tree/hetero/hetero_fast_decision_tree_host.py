@@ -26,6 +26,10 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
         self.tree_node = []  # keep tree structure for faster node dispatch
         self.sample_leaf_pos = None  # record leaf position of samples
 
+    """
+    Setting
+    """
+
     def use_guest_feat_only_predict_mode(self):
         self.use_guest_feat_when_predict = True
 
@@ -37,6 +41,10 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
 
     def set_self_host_id(self, self_host_id):
         self.self_host_id = self_host_id
+
+    """
+    Node Plan
+    """
 
     def initialize_node_plan(self):
 
@@ -51,6 +59,10 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
 
     def get_node_plan(self, idx):
         return self.node_plan[idx]
+
+    """
+    Host local split computation
+    """
 
     def get_host_split_info(self, splitinfo_host, federated_best_splitinfo_host):
 
@@ -73,6 +85,46 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
             final_splitinfos.append(splitinfo)
 
         return final_splitinfos
+
+    def compute_best_splits_with_node_plan(self, tree_action, target_host_id, node_map: dict, dep: int, batch_idx: int,
+                                           mode=consts.LAYERED_TREE):
+
+        LOGGER.debug('node plan at dep {} is {}'.format(dep, (tree_action, target_host_id)))
+
+        if tree_action == plan.tree_actions['host_only'] and target_host_id == self.self_host_id:
+
+            if self.run_sparse_opt:
+                acc_histograms = self.fast_get_histograms(node_map)
+            else:
+                acc_histograms = self.get_local_histograms(node_map, ret='tb')
+
+            splitinfo_host, encrypted_splitinfo_host = self.splitter.find_split_host(histograms=acc_histograms,
+                                                                                     node_map=node_map,
+                                                                                     use_missing=self.use_missing,
+                                                                                     zero_as_missing=self.zero_as_missing,
+                                                                                     valid_features=self.valid_features,
+                                                                                     sitename=self.sitename
+                                                                                     )
+            LOGGER.debug('sending en_splitinfo {}'.format(encrypted_splitinfo_host))
+            self.sync_encrypted_splitinfo_host(encrypted_splitinfo_host, dep, batch_idx)
+            federated_best_splitinfo_host = self.sync_federated_best_splitinfo_host(dep, batch_idx)
+
+            host_split_info = self.get_host_split_info(copy.deepcopy(splitinfo_host),
+                                                       copy.deepcopy(federated_best_splitinfo_host))
+
+            if mode == consts.LAYERED_TREE:
+                LOGGER.debug('sending split info to guest')
+                self.sync_final_splitinfo_host(splitinfo_host, federated_best_splitinfo_host, dep, batch_idx)
+                LOGGER.debug('computing host splits done')
+
+            return host_split_info
+        else:
+            LOGGER.debug('skip best split computation')
+            return None
+
+    """
+    Host Local Tree update
+    """
 
     def update_host_side_tree(self, split_info, reach_max_depth):
 
@@ -117,42 +169,6 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
             self.tree_node.append(self.cur_layer_nodes[i])
 
         self.cur_layer_nodes = new_tree_node_queue
-
-    def compute_best_splits_with_node_plan(self, tree_action, target_host_id, node_map: dict, dep: int, batch_idx: int,
-                                           mode=consts.LAYERED_TREE):
-
-        LOGGER.debug('node plan at dep {} is {}'.format(dep, (tree_action, target_host_id)))
-
-        if tree_action == plan.tree_actions['host_only'] and target_host_id == self.self_host_id:
-
-            if self.run_fast_hist:
-                acc_histograms = self.fast_get_histograms(node_map)
-            else:
-                acc_histograms = self.get_local_histograms(node_map, ret='tb')
-
-            splitinfo_host, encrypted_splitinfo_host = self.splitter.find_split_host(histograms=acc_histograms,
-                                                                                     node_map=node_map,
-                                                                                     use_missing=self.use_missing,
-                                                                                     zero_as_missing=self.zero_as_missing,
-                                                                                     valid_features=self.valid_features,
-                                                                                     sitename=self.sitename
-                                                                                     )
-            LOGGER.debug('sending en_splitinfo {}'.format(encrypted_splitinfo_host))
-            self.sync_encrypted_splitinfo_host(encrypted_splitinfo_host, dep, batch_idx)
-            federated_best_splitinfo_host = self.sync_federated_best_splitinfo_host(dep, batch_idx)
-
-            host_split_info = self.get_host_split_info(copy.deepcopy(splitinfo_host),
-                                                       copy.deepcopy(federated_best_splitinfo_host))
-
-            if mode == consts.LAYERED_TREE:
-                LOGGER.debug('sending split info to guest')
-                self.sync_final_splitinfo_host(splitinfo_host, federated_best_splitinfo_host, dep, batch_idx)
-                LOGGER.debug('computing host splits done')
-
-            return host_split_info
-        else:
-            LOGGER.debug('skip best split computation')
-            return None
 
     @staticmethod
     def host_assign_an_instance(value, tree_, bin_sparse_points, use_missing, zero_as_missing, dense_format=False):
@@ -213,10 +229,10 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
                                                bin_sparse_points=self.bin_sparse_points,
                                                use_missing=self.use_missing,
                                                zero_as_missing=self.zero_as_missing,
-                                               dense_format=self.run_fast_hist
+                                               dense_format=self.run_sparse_opt
                                                )
 
-        if not self.run_fast_hist:
+        if not self.run_sparse_opt:
             assign_result = self.data_with_node_assignments.mapValues(assign_node_method)
         else:
             assign_result = self.data_bin_dense_with_position.mapValues(assign_node_method)
@@ -231,10 +247,31 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
 
         return assign_result
 
+    """
+    Federation Functions
+    """
+
     def sync_sample_leaf_pos(self, sample_leaf_pos):
         LOGGER.debug('final sample pos sent')
         self.transfer_inst.dispatch_node_host_result.remote(sample_leaf_pos, idx=0,
                                                             suffix=('final sample pos', ), role=consts.GUEST)
+
+    def sync_leaf_nodes(self):
+        leaves = []
+        for node in self.tree_node:
+            if node.is_leaf:
+                leaves.append(node)
+        to_send_leaves = copy.deepcopy(leaves)
+        self.transfer_inst.host_leafs.remote(to_send_leaves)
+
+    def sync_cur_layer_nodes(self, nodes, dep):
+        # self.mask_node_id(copy.deepcopy(nodes))
+        self.transfer_inst.host_cur_to_split_node_num. \
+            remote(nodes, idx=0, role=consts.GUEST, suffix=(dep,))
+
+    """
+    Pre/Post Process
+    """
 
     def process_leaves_info(self):
 
@@ -246,23 +283,10 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
             if node.is_leaf:
                 node.sitename = consts.GUEST
 
-    def sync_leaf_nodes(self):
-        leaves = []
-        for node in self.tree_node:
-            if node.is_leaf:
-                leaves.append(node)
-        to_send_leaves = copy.deepcopy(leaves)
-        self.transfer_inst.host_leafs.remote(to_send_leaves)
-
     def mask_node_id(self, nodes):
         for n in nodes:
             n.id = -1
         return nodes
-
-    def sync_cur_layer_nodes(self, nodes, dep):
-        # self.mask_node_id(copy.deepcopy(nodes))
-        self.transfer_inst.host_cur_to_split_node_num.\
-            remote(nodes, idx=0, role=consts.GUEST, suffix=(dep, ))
 
     def convert_bin_to_real(self):
         LOGGER.info("convert tree node bins to real value")
@@ -282,6 +306,10 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
         for node in self.tree_node:
             if not node.is_leaf:
                 node.bid = self.bin_split_points[node.fid][node.bid]
+
+    """
+    Mix Mode
+    """
 
     def mix_mode_fit(self):
 
@@ -337,56 +365,6 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
         self.sync_leaf_nodes()  # send leaf nodes to guest
         self.process_leaves_info()  # remove encrypted g/h
 
-    def layered_mode_fit(self):
-
-        LOGGER.info('running layered mode')
-
-        self.initialize_node_plan()
-
-        self.sync_encrypted_grad_and_hess()
-
-        for dep in range(self.max_depth):
-
-            tree_action, layer_target_host_id = self.get_node_plan(dep)
-
-            self.sync_tree_node_queue(dep)
-            if len(self.cur_layer_nodes) == 0:
-                break
-
-            if self.self_host_id == layer_target_host_id:
-
-                self.inst2node_idx = self.sync_node_positions(dep)
-                self.update_instances_node_positions()
-
-            batch = 0
-            for i in range(0, len(self.cur_layer_nodes), self.max_split_nodes):
-                self.cur_to_split_nodes = self.cur_layer_nodes[i: i + self.max_split_nodes]
-                self.compute_best_splits_with_node_plan(tree_action, layer_target_host_id,
-                                                        node_map=self.get_node_map(self.cur_to_split_nodes),
-                                                        dep=dep, batch_idx=batch, )
-                batch += 1
-
-            if layer_target_host_id == self.self_host_id:
-                dispatch_node_host = self.sync_dispatch_node_host(dep)
-                self.assign_instances_to_new_node(dispatch_node_host, dep)
-
-        self.sync_tree()
-        self.convert_bin_to_real()
-
-    def fit(self):
-
-        LOGGER.info("begin to fit fast host decision tree")
-
-        self.initialize_node_plan()
-
-        if self.tree_type == plan.tree_type_dict['guest_feat_only'] or \
-                self.tree_type == plan.tree_type_dict['host_feat_only']:
-            self.mix_mode_fit()
-        else:
-            self.layered_mode_fit()
-
-        LOGGER.info("end to fit host decision tree")
-
     @staticmethod
     def host_local_traverse_tree(data_inst, tree_node, use_missing=True, zero_as_missing=True):
 
@@ -438,6 +416,64 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
 
         # sync status
         _ = self.transfer_inst.sync_flag.get(idx=0)
+
+    """
+    Layered Mode
+    """
+
+    def layered_mode_fit(self):
+
+        LOGGER.info('running layered mode')
+
+        self.initialize_node_plan()
+
+        self.sync_encrypted_grad_and_hess()
+
+        for dep in range(self.max_depth):
+
+            tree_action, layer_target_host_id = self.get_node_plan(dep)
+
+            self.sync_tree_node_queue(dep)
+            if len(self.cur_layer_nodes) == 0:
+                break
+
+            if self.self_host_id == layer_target_host_id:
+
+                self.inst2node_idx = self.sync_node_positions(dep)
+                self.update_instances_node_positions()
+
+            batch = 0
+            for i in range(0, len(self.cur_layer_nodes), self.max_split_nodes):
+                self.cur_to_split_nodes = self.cur_layer_nodes[i: i + self.max_split_nodes]
+                self.compute_best_splits_with_node_plan(tree_action, layer_target_host_id,
+                                                        node_map=self.get_node_map(self.cur_to_split_nodes),
+                                                        dep=dep, batch_idx=batch, )
+                batch += 1
+
+            if layer_target_host_id == self.self_host_id:
+                dispatch_node_host = self.sync_dispatch_node_host(dep)
+                self.assign_instances_to_new_node(dispatch_node_host, dep)
+
+        self.sync_tree()
+        self.convert_bin_to_real()
+
+    """
+    Fit & Predict
+    """
+
+    def fit(self):
+
+        LOGGER.info("begin to fit fast host decision tree")
+
+        self.initialize_node_plan()
+
+        if self.tree_type == plan.tree_type_dict['guest_feat_only'] or \
+                self.tree_type == plan.tree_type_dict['host_feat_only']:
+            self.mix_mode_fit()
+        else:
+            self.layered_mode_fit()
+
+        LOGGER.info("end to fit host decision tree")
 
     def predict(self, data_inst):
 

@@ -17,7 +17,6 @@
 import json
 import time
 import typing
-from dataclasses import dataclass
 from datetime import timedelta
 from pathlib import Path
 
@@ -164,9 +163,9 @@ class FLOWClient(object):
         return response
 
 
-@dataclass
 class Status(object):
-    status: str
+    def __init__(self, status: str):
+        self.status = status
 
     def is_done(self):
         return self.status.lower() in ['complete', 'success', 'canceled', 'failed']
@@ -185,10 +184,11 @@ class QueryJobResponse(object):
     def __init__(self, response: dict):
         try:
             status = Status(response.get('data')[0]["f_status"])
+            progress = response.get('data')[0]['f_progress']
         except Exception as e:
             raise RuntimeError(f"query job error, response: {response}") from e
         self.status = status
-        self.progress = None
+        self.progress = progress
 
 
 class UploadDataResponse(object):
