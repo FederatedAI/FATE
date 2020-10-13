@@ -17,7 +17,7 @@
       "role": "host_0"
     },
     {
-      "file": "examples/data/default_credit_hetero_guest.csv",
+      "file": "../../data/default_credit_hetero_guest.csv",
       "head": 1,
       "partition": 16,
       "table_name": "default_credit_hetero_guest",
@@ -25,7 +25,7 @@
       "role": "guest_0"
     },
     {
-      "file": "examples/data/default_credit_hetero_host.csv",
+      "file": "../../data/default_credit_hetero_host.csv",
       "head": 1,
       "partition": 16,
       "table_name": "default_credit_hetero_host",
@@ -33,7 +33,7 @@
       "role": "host_0"
     },
     {
-      "file": "examples/data/give_credit_hetero_guest.csv",
+      "file": "../../data/give_credit_hetero_guest.csv",
       "head": 1,
       "partition": 16,
       "table_name": "give_credit_hetero_guest",
@@ -41,7 +41,7 @@
       "role": "guest_0"
     },
     {
-      "file": "examples/data/give_credit_hetero_host.csv",
+      "file": "../../data/give_credit_hetero_host.csv",
       "head": 1,
       "partition": 16,
       "table_name": "give_credit_hetero_host",
@@ -49,7 +49,7 @@
       "role": "host_0"
     },
     {
-      "file": "examples/data/epsilon_5k_hetero_guest.csv",
+      "file": "../../data/epsilon_5k_hetero_guest.csv",
       "head": 1,
       "partition": 16,
       "table_name": "epsilon_5k_hetero_guest",
@@ -57,7 +57,7 @@
       "role": "guest_0"
     },
     {
-      "file": "examples/data/epsilon_5k_hetero_host.csv",
+      "file": "../../data/epsilon_5k_hetero_host.csv",
       "head": 1,
       "partition": 16,
       "table_name": "epsilon_5k_hetero_host",
@@ -65,7 +65,7 @@
       "role": "host_0"
     },
     {
-      "file": "examples/data/vehicle_scale_hetero_guest.csv",
+      "file": "../../data/vehicle_scale_hetero_guest.csv",
       "head": 1,
       "partition": 16,
       "table_name": "vehicle_scale_hetero_guest",
@@ -73,7 +73,7 @@
       "role": "guest_0"
     },
     {
-      "file": "examples/data/vehicle_scale_hetero_host.csv",
+      "file": "../../data/vehicle_scale_hetero_host.csv",
       "head": 1,
       "partition": 16,
       "table_name": "vehicle_scale_hetero_host",
