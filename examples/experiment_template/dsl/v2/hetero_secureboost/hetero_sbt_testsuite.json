@@ -1,0 +1,54 @@
+{
+    "data": [
+        {
+            "file": "examples/data/breast_hetero_guest.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "breast_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/breast_hetero_host_tag_value.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "breast_hetero_host_tag_value",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/mock_tag_hetero_host.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "mock_tag_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        }
+    ],
+    "tasks": {
+        "sbt_train": {
+            "conf": "test_hetero_secureboost_train_job_conf.json",
+            "dsl": "test_hetero_secureboost_train_job_dsl.json"
+        },
+        "sbt_pearson": {
+            "conf": "test_hetero_secureboost_train_pearson_job_conf.json",
+            "dsl": "test_hetero_secureboost_train_pearson_job_dsl.json"
+        },
+        "sbt_manually": {
+            "conf": "test_hetero_secureboost_train_manually_job_conf.json",
+            "dsl": "test_hetero_secureboost_train_manually_job_dsl.json"
+        },
+        "sbt_union": {
+            "conf": "test_hetero_secureboost_train_union_job_conf.json",
+            "dsl": "test_hetero_secureboost_train_union_job_dsl.json"
+        },
+        "sbt_verify": {
+            "conf": "test_hetero_secureboost_train_verify_job_conf.json",
+            "dsl": "test_hetero_secureboost_train_verify_job_dsl.json"
+        },
+        "sbt_onehot": {
+            "conf": "test_hetero_secureboost_train_one_hot_job_conf.json",
+            "dsl": "test_hetero_secureboost_train_one_hot_job_dsl.json"
+        }
+    }
+}
