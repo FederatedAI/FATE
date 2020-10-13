@@ -1,4 +1,4 @@
-## Hetero Neural Network Pipeline Example Usage Guide.
+## Intersect Pipeline Example Usage Guide.
 
 #### Example Tasks
 
