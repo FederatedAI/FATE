@@ -61,7 +61,7 @@ def main(param="./lr_multi_config.yaml"):
     result = {"recall": recall, "precision": pr, "accuracy": acc}
     print(result)
     print(f"coef_: {lm_fit.coef_}, intercept_: {lm_fit.intercept_}, n_iter: {lm_fit.n_iter_}")
-    return result
+    return {}, result
 
 
 if __name__ == "__main__":
