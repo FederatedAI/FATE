@@ -1,0 +1,46 @@
+{
+    "data": [
+        {
+            "file": "examples/data/breast_hetero_guest.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "breast_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/breast_hetero_host_tag_value.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "breast_hetero_host_tag_value",
+            "namespace": "experiment",
+            "role": "host_0"
+        }
+    ],
+    "tasks": {
+        "lr_train": {
+            "conf": "test_hetero_lr_train_job_conf.json",
+            "dsl": "test_hetero_lr_train_job_dsl.json"
+        },
+        "lr_pearson": {
+            "conf": "test_hetero_lr_train_pearson_job_conf.json",
+            "dsl": "test_hetero_lr_train_pearson_job_dsl.json"
+        },
+        "lr_sample": {
+            "conf": "test_hetero_lr_train_sample_job_conf.json",
+            "dsl": "test_hetero_lr_train_sample_job_dsl.json"
+        },
+        "lr_union": {
+            "conf": "test_hetero_lr_train_union_job_conf.json",
+            "dsl": "test_hetero_lr_train_union_job_dsl.json"
+        },
+        "lr_manually": {
+            "conf": "test_hetero_lr_train_manually_job_conf.json",
+            "dsl": "test_hetero_lr_train_manually_job_dsl.json"
+        },
+        "lr_verify": {
+            "conf": "test_hetero_lr_train_verify_job_conf.json",
+            "dsl": "test_hetero_lr_train_verify_job_dsl.json"
+        }
+    }
+}
