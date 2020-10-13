@@ -286,6 +286,7 @@ Optimization in learning
 
 * Fast SBT uses guest features and host features alternately by trees/layers to reduce encryption and communication
 costs.
+
 * Prediction only needs one communication round.
 
 
