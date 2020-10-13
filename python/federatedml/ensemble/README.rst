@@ -220,7 +220,7 @@ to build the first decision tree. This can avoid label leakages, accord to `[Sec
 Hetero Fast SecureBoost
 -----------------------
 
-We support Hetero Fast SecureBoost(Fast SBT), in abbreviation, fast SBT, in FATE-1.5.
+We support Hetero Fast SecureBoost, in abbreviation, fast SBT, in FATE-1.5.
 The fast SBT uses guest features and host features alternately to build trees, in order to save encryption costs and
 communication costs. In fast SBT, we support **MIX** mode and **LAYERED** mode and they use different strategies
 while building decision trees.
@@ -244,7 +244,7 @@ are reduced by half. (If there are two parties)
           Figure 5: mix mode introduction
 
 While conducting inference, every party will traverse its trees locally. All hosts will send the final leaf id to
-guests and the guest retrieves leaf weights from received leaf id. The prediction only needs one communication in mix mode.
+guests and the guest retrieves leaf weights using received leaf id. The prediction only needs one communication in mix mode.
 
         .. figure:: images/mix_procedure.png
           :align: center
@@ -279,7 +279,7 @@ host layers locally.
 According to experiments on our standard data sets, mix mode and layered mode of Fast SBT can still give
 performances (sometimes even better) equivalent to standard Hetero SecureBoost,
 even the training data is unbalanced distributed in different parties or contains noise features. (Binary, multi-class,
-and regression tasks are tested)
+and regression tasks are tested). **At the same time, the time consumption of FAST SBT is reduced by 30% ~ 50% on average.**
 
 Optimization in learning
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -302,3 +302,4 @@ Other features
 * In mix mode, every host parties only keep their own tree models. Guest will only keep guest trees and host leaves.
 * In mix mode, host side support feature importance calculation (split type is supported, gain type is not supported)
 * In layered mode, model exporting setting is the same as the normal-SBT.
+* The time consumption of FAST SBT is reduced by 30% ~ 50% on average.
