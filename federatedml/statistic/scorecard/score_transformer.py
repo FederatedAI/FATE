@@ -39,24 +39,25 @@ class Scorecard(ModelBase):
         self.method = params.method
         self.offset = params.offset
         self.factor = params.factor
+        self.factor_base = params.factor_base
         self.upper_limit_ratio = params.upper_limit_ratio
         self.lower_limit_value = params.lower_limit_value
         self.need_run = params.need_run
 
     @staticmethod
-    def compute_credit_score(predict_result, offset, factor, upper_limit_value, lower_limit_value):
-        predict_score = predict_result[3]["1"]
+    def compute_credit_score(predict_result, offset, factor, factor_base, upper_limit_value, lower_limit_value):
+        predict_score = predict_result[2]
 
         # deal with special predict score values
-        if abs(predict_score - 0) < FLOAT_ZERO and predict_score >= 0:
+        if abs(predict_score - 0) <= FLOAT_ZERO and predict_score >= 0:
             credit_score = upper_limit_value
-        elif abs(predict_score - 1) < FLOAT_ZERO and predict_score > 0:
+        elif abs(predict_score - 1) <= FLOAT_ZERO and predict_score > 0:
             credit_score = lower_limit_value
         elif predict_score > 1 or predict_score < 0:
             credit_score = -1
         else:
-            odds = predict_result[3]["0"] / predict_score
-            credit_score = offset + factor / np.log(2) * np.log(odds)
+            odds = (1 - predict_score) / predict_score
+            credit_score = offset + factor / np.log(factor_base) * np.log(odds)
 
         # credit score should be within range
         if credit_score > upper_limit_value:
@@ -69,7 +70,7 @@ class Scorecard(ModelBase):
         return [predict_result[0], predict_result[1], predict_score, credit_score]
 
     def _callback(self):
-        formula = f"Score = {self.offset} + {self.factor} / ln(2) * ln(Odds)"
+        formula = f"Score = {self.offset} + {self.factor} / ln({self.factor_base}) * ln(Odds)"
         metas = {"scorecard_compute_formula": formula}
         self.tracker.set_metric_meta(metric_namespace=self.metric_namespace,
                                      metric_name=self.metric_name,
@@ -81,9 +82,12 @@ class Scorecard(ModelBase):
     def fit(self, prediction_result):
         LOGGER.info(f"Start Scorecard Transform, method: {self.method}")
 
-        offset, factor = self.offset, self.factor
+        offset, factor, factor_base = self.offset, self.factor, self.factor_base
+        if factor_base != 2:
+            LOGGER.warning(f"scorecard param 'factor_base' given is {factor_base}, which is not equal to 2.")
         upper_limit_value, lower_limit_value = self.upper_limit_ratio * offset, self.lower_limit_value
         score_result = prediction_result.mapValues(lambda v: Scorecard.compute_credit_score(v, offset, factor,
+                                                                                            factor_base,
                                                                                             upper_limit_value,
                                                                                             lower_limit_value))
         LOGGER.debug(f"predict_result metas is {prediction_result.get_metas()}")
