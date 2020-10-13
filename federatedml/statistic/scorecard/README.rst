@@ -29,7 +29,9 @@ How to Use
 
     :offset: score baseline, default 500
 
-    :factor: scoring step, when odds double, result score increases by this factor, default 20
+    :factor: scoring step, when odds increases by 1, result score increases by this factor / ln(factor_base), default 20
+
+    :factor_base: value ln(factor_base) is used for calculating result score
 
     :upper_limit_ratio: upper bound for odds ratio, credit score upper bound is upper_limit_ratio * offset, default 3
 
