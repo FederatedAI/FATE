@@ -49,7 +49,7 @@
             "role": "guest_0"
         }
     ],
-    "mix-binary": {
+    "fast_sbt_mix-binary-0": {
         "local": {
             "script": "./xgboost-sbt-binary.py",
             "conf": "./xgb_config_binary.yaml"
@@ -62,7 +62,7 @@
             "relative_tol": 1e-3
         }
     },
-    "mix-binary-epsilon-5k": {
+    "fast_sbt_mix-binary-1": {
         "local": {
             "script": "./xgboost-sbt-binary.py",
             "conf": "./xgb_config_binary.yaml"
@@ -75,7 +75,7 @@
             "relative_tol": 1e-3
         }
     },
-    "mix-multi": {
+    "fast_sbt_mix-multi-0": {
         "local": {
             "script": "./xgboost-sbt-multi.py",
             "conf": "./xgb_config_multi.yaml"
@@ -88,7 +88,7 @@
             "relative_tol": 1e-3
         }
     },
-    "mix-regression": {
+    "fast_sbt_mix-regression-0": {
         "local": {
             "script": "./xgboost-sbt-regression.py",
             "conf": "./xgb_config_reg.yaml"
@@ -101,7 +101,7 @@
             "relative_tol": 1e-3
         }
     },
-    "layered-binary": {
+    "fast_sbt_layered-binary-0": {
         "local": {
             "script": "./xgboost-sbt-binary.py",
             "conf": "./xgb_config_binary.yaml"
@@ -114,7 +114,7 @@
             "relative_tol": 1e-3
         }
     },
-    "layered-multi": {
+    "fast_sbt_layered-multi-0": {
         "local": {
             "script": "./xgboost-sbt-multi.py",
             "conf": "./xgb_config_multi.yaml"
@@ -127,7 +127,7 @@
             "relative_tol": 1e-3
         }
     },
-    "layered-regression": {
+    "fast_sbt_layered-regression-0": {
         "local": {
             "script": "./xgboost-sbt-regression.py",
             "conf": "./xgb_config_reg.yaml"
@@ -140,7 +140,7 @@
             "relative_tol": 1e-3
         }
     },
-    "mix-layered-epsilon-5k": {
+    "fast_sbt_layered-binary-1": {
         "local": {
             "script": "./xgboost-sbt-binary.py",
             "conf": "./xgb_config_binary.yaml"

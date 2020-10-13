@@ -30,13 +30,13 @@
                 },
                 "reader_0": {
                     "table": {
-                        "name": "breast_homo_guest",
+                        "name": "expect",
                         "namespace": "experiment"
                     }
                 },
                 "reader_1": {
                     "table": {
-                        "name": "breast_homo_guest",
+                        "name": "actual",
                         "namespace": "experiment"
                     }
                 }
@@ -54,13 +54,13 @@
                 },
                 "reader_0": {
                     "table": {
-                        "name": "breast_homo_host",
+                        "name": "expect",
                         "namespace": "experiment"
                     }
                 },
                 "reader_1": {
                     "table": {
-                        "name": "breast_homo_host",
+                        "name": "actual",
                         "namespace": "experiment"
                     }
                 }

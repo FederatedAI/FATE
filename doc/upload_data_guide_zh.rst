@@ -57,26 +57,38 @@ DataIO模块接受以下输入数据格式，并将其转换为所需的输出DT
 .. code-block:: json
 
   {
-    "file": "examples/data/breast_b.csv",
+    "file": "examples/data/breast_hetero_guest.csv",
+    "table_name": "hetero_breast_guest",
+    "namespace": "experiment",
     "head": 1,
-    "partition": 10,
+    "partition": 8,
     "work_mode": 0,
-    "table_name": "hetero_breast_b",
-    "namespace": "hetero_guest_breast"
+    "backend": 0
   }
 
 字段说明：
 
 1. file: 文件路径
-2. head: 指定数据文件是否包含表头
+2. table_name&namespace: 存储数据表的标识符号
+3. head: 指定数据文件是否包含表头
 3. partition: 指定用于存储数据的分区数
 4. work_mode: 指定工作模式，0代表单机版，1代表集群版
-5. table_name&namespace: 存储数据表的标识符号
+5. backend: 指定后端，0代表EGGROLL， 1代表SPARK
 
 上传命令
 --------
 
-使用fate-flow上传数据。命令如下：
+使用fate-flow上传数据。从FATE-1.5开始，推荐使用
+`FATE-Flow Client Command Line <../python/fate_client/flow_client/README.rst>`_
+执行FATE-Flow任务。
+
+上传数据命令如下：
+
+.. code-block:: bash
+
+   flow data upload -c dsl_test/upload_data.json
+
+同时，用户也可使用旧版的python脚本方式上传数据：
 
 .. code-block:: bash
 
@@ -90,16 +102,17 @@ DataIO模块接受以下输入数据格式，并将其转换为所需的输出DT
 .. code-block:: json
 
   {
-      "data": {
-          "namespace": "breast_hetero",
-          "pid": 74684,
-          "table_name": "breast_b"
-      },
-      "jobId": "20190801152750392991_436",
-      "meta": null,
-      "retcode": 0,
-      "retmsg": "success",
-      "created_at": "2019-08-01 15:27:50"
+    "data": {
+        "board_url": "http://127.0.0.1:8080/index.html#/dashboard?job_id=202010131102075363217&role=local&party_id=0",
+        "job_dsl_path": "/data/projects/fate/jobs/202010131102075363217/job_dsl.json",
+        "job_runtime_conf_path": "/data/projects/fate/jobs/202010131102075363217/job_runtime_conf.json",
+        "logs_directory": "/data/projects/fate/logs/202010131102075363217",
+        "namespace": "experiment",
+        "table_name": "breast_hetero_guest"
+    },
+    "jobId": "202010131102075363217",
+    "retcode": 0,
+    "retmsg": "success"
   }
 
 

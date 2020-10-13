@@ -214,6 +214,30 @@ command options
 
    will run testsuites in *path1* directly, skipping double check
 
+9. skip-dsl-jobs:
+
+   .. code-block:: bash
+
+      fate_test suite -i <path1 contains *testsuite.json> --skip-dsl-jobs
+
+   will run testsuites in *path1* but skip all *tasks* in testsuites. It's would be useful when only pipeline tasks needed.
+
+10. skip-pipeline-jobs:
+
+   .. code-block:: bash
+
+      fate_test suite -i <path1 contains *testsuite.json> --skip-pipeline-jobs
+
+   will run testsuites in *path1* but skip all *pipeline tasks* in testsuites. It's would be useful when only dsl tasks needed.
+
+11. data-only:
+
+   .. code-block:: bash
+
+      fate_test suite -i <path1 contains *testsuite.json> --data-only
+
+   will upload data in testsuite in *path1* and skip all tasks.
+
 
 Benchmark Quality
 ------------------

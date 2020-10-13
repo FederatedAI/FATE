@@ -126,7 +126,11 @@ def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
     pipeline.fit(backend=backend, work_mode=work_mode)
     # query component summary
     print(pipeline.get_component("evaluation_0").get_summary())
-    return pipeline.get_component("evaluation_0").get_summary()
+    data_summary = {"train": {"guest": guest_train_data["name"], "host": host_train_data["name"]},
+                    "test": {"guest": guest_train_data["name"], "host": host_train_data["name"]}
+                    }
+    result_summary = pipeline.get_component("evaluation_0").get_summary()
+    return data_summary, result_summary
 
 
 if __name__ == "__main__":

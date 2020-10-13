@@ -113,7 +113,7 @@
             "role": "host_0"
         }
     ],
-    "binary": {
+    "hetero_sbt-binary-0": {
         "local": {
             "script": "./xgboost-sbt-binary.py",
             "conf": "./xgb_config_binary.yaml"
@@ -126,7 +126,7 @@
             "relative_tol": 1e-3
         }
     },
-    "binary-epsilon-5k": {
+    "hetero_sbt-binary-1": {
         "local": {
             "script": "./xgboost-sbt-binary.py",
             "conf": "./xgb_config_binary-epsilon-5k.yaml"
@@ -139,7 +139,7 @@
             "relative_tol": 1e-3
         }
     },
-    "multi": {
+    "hetero_sbt-multi-0": {
         "local": {
             "script": "./xgboost-sbt-multi.py",
             "conf": "./xgb_config_multi.yaml"
@@ -152,7 +152,7 @@
             "relative_tol": 1e-3
         }
     },
-    "regression": {
+    "hetero_sbt-regression-0": {
         "local": {
             "script": "./xgboost-sbt-regression.py",
             "conf": "./xgb_config_reg.yaml"
