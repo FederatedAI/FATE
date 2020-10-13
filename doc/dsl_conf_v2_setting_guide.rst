@@ -286,7 +286,7 @@ Besides the dsl conf, user also need to prepare a submit runtime conf to set the
    * - federated_status_collect_type
      - PUSH
      - PUSH, PULL
-     - type of collecting job status status
+     - type of collecting job status
 
    * - timeout
      - 604800
@@ -322,25 +322,41 @@ Besides the dsl conf, user also need to prepare a submit runtime conf to set the
    :widths: 20 20 30 30
    :header-rows: 1
 
+   * - Parameter Name
+     - Default Value
+     - Acceptable Values
+     - Information
+
    * - computing_engine
-     - set automatically based on `work_mode` and `backend`
+     - set automatically based on ``work_mode`` and ``backend``
      - EGGROLL, SPARK, STANDALONE
      - engine for computation
 
    * - storage_engine
-     - set automatically based on `work_mode` and `backend`
+     - set automatically based on ``work_mode`` and ``backend``
      - EGGROLL, HDFS, STANDALONE
      - engine for storage
 
    * - federation_engine
-     - set automatically based on `work_mode` and `backend`
+     - set automatically based on ``work_mode`` and ``backend``
      - EGGROLL, RABBITMQ, STANDALONE
      - engine for communication among parties
 
    * - federated_mode
-     - set automatically based on `work_mode` and `backend`
+     - set automatically based on ``work_mode`` and ``backend``
      - SINGLE, MULTIPLE
      - federation mode
+
+.. note::
+   1. Some types of ``computing_engine``, ``storage_engine``, and ``federation_engine``
+   are only compatible with each other. For examples, SPARK
+   ``computing_engine`` only supports HDFS ``storage_engine``.
+
+   2. Combination of ``work_mode`` and ``backend`` automatically determines which
+   combination of engines will be used.
+
+   3. Developer may implement other types of engines and set new engine
+   combinations.
 
 **EGGROLL** conf example:
 
