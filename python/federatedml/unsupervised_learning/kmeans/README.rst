@@ -16,7 +16,7 @@ Heterogeneous Kmeans
 
 The process of HeteroKmeans training is shown below:
 
-.. image:: ./hetero_kmeans.png
+.. image:: ../kmeans/hetero_kmeans.png
    :width: 800hete
    :align: center
    :alt: federatedml structure
