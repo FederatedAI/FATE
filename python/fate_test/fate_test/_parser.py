@@ -334,11 +334,6 @@ class BenchmarkSuite(object):
         suite = BenchmarkSuite(dataset=dataset, pairs=pairs, path=path)
         return suite
 
-    def reflash_configs(self, config: Config):
-        for data in self.dataset:
-            data.config.update(dict(work_mode=config.work_mode, backend=config.backend))
-        return self
-
 
 def _namespace_hook(namespace):
     def _hook(d):

@@ -124,7 +124,7 @@ def run_suite(replace, data_namespace_mangling, config, include, exclude, glob,
                 echo.echo(f"[{i + 1}/{len(suites)}]start at {time.strftime('%Y-%m-%d %X')} {suite.path}", fg='red')
                 if not skip_data:
                     try:
-                        _upload_data(client, suite, config)
+                        _upload_data(client, suite, config_inst)
                     except Exception as e:
                         raise RuntimeError(f"exception occur while uploading data for {suite.path}") from e
                 if data_only:
@@ -133,7 +133,7 @@ def run_suite(replace, data_namespace_mangling, config, include, exclude, glob,
                 if not skip_dsl_jobs:
                     echo.stdout_newline()
                     try:
-                        _submit_job(client, suite, namespace, config)
+                        _submit_job(client, suite, namespace, config_inst)
                     except Exception as e:
                         raise RuntimeError(f"exception occur while submit job for {suite.path}") from e
 
@@ -207,7 +207,7 @@ def run_benchmark(data_namespace_mangling, config, include, exclude, glob, skip_
                 echo.echo(f"[{i + 1}/{len(suites)}]start at {time.strftime('%Y-%m-%d %X')} {suite.path}", fg='red')
                 if not skip_data:
                     try:
-                        _upload_data(client, suite, config)
+                        _upload_data(client, suite, config_inst)
                     except Exception as e:
                         raise RuntimeError(f"exception occur while uploading data for {suite.path}") from e
                 if data_only:
@@ -332,7 +332,11 @@ def _upload_data(clients: Clients, suite, config: Config):
                     raise RuntimeError(f"uploading {i + 1}th data for {suite.path} {response.status}")
                 bar.update(1)
             except Exception as e:
-                raise RuntimeError(f"exception uploading {i + 1}th data") from e
+                exception_id = str(uuid.uuid1())
+                echo.file(f"exception({exception_id})")
+                LOGGER.exception(f"exception id: {exception_id}")
+                echo.echo(f"upload {i + 1}th data {data.config} to {data.role_str} fail, exception_id: {exception_id}")
+                # raise RuntimeError(f"exception uploading {i + 1}th data") from e
 
 
 def _delete_data(clients: Clients, suite: Testsuite):
@@ -378,6 +382,7 @@ def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Conf
                 job.job_conf.update(config.parties, config.work_mode, config.backend)
             except Exception:
                 _raise()
+                continue
 
             def update_bar(n_step):
                 bar.item_show_func = lambda x: job_progress.show()
