@@ -228,10 +228,10 @@ yum install -y gcc gcc-c++ make openssl-devel gmp-devel mpfr-devel libmpc-devel 
 #如果有报错，需要解决yum源问题。
 
 #安装ansible和进程管理依赖包
-yum install -y ansible jq supervisor
+yum install -y ansible
 #如果有报错同时服务器有外网，没有外网的需要解决yum源不全的问题，执行：
 yum install -y epel-release
-#增加一个更全面的第三方的源，然后再重新安装ansible jq supervisor
+#增加一个更全面的第三方的源，然后再重新安装ansible
 ```
 
 4 项目部署
@@ -423,7 +423,6 @@ guest:
       grpcPort: 9360  ---服务grpc端口
       httpPort: 9380  ---服务http端口
       dbname: "fate_flow"  ---fate_flow服务使用的数据库名称，默认即可
-      core_per_node: 20
     fateboard:
       enable: True ---是否部署fateboard模块，True为部署，False为否
       ips:  ---只支持部署一台主机

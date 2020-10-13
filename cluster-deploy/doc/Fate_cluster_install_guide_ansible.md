@@ -52,7 +52,7 @@ Eggroll 是一个适用于机器学习和深度学习的大规模分布式架构
 | **类别** | **说明**                                                     |
 | -------- | ------------------------------------------------------------ |
 | 主机配置 | 不低于8C16G500G，千兆网卡                                    |
-| 操作系统 | CentOS linux 7.2及以上同时低于8/Ubuntu 16.04 或 Ubuntu 18.04 |
+| 操作系统 | CentOS linux 7.2及以上同时低于8                              |
 | 依赖包   | 需要安装如下依赖包：<br/>#centos<br/>gcc gcc-c++ make openssl-devel gmp-devel mpfr-devel libmpc-devel libaio <br/>numactl autoconf automake libtool libffi-devel ansible jq supervisor |
 | 用户     | 用户：app，属主：apps（app用户需可以sudo su root而无需密码） |
 | 文件系统 | 1、数据盘挂载在/data目录下。<br>2、创建/data/projects目录，目录属主为：app:apps。<br/>3、根目录空闲空间不低于20G。 |
@@ -233,10 +233,10 @@ yum install -y gcc gcc-c++ make openssl-devel gmp-devel mpfr-devel libmpc-devel 
 #如果有报错，需要解决yum源问题。
 
 #安装ansible和进程管理依赖包
-yum install -y ansible supervisor
+yum install -y ansible
 #如果有报错同时服务器有外网，没有外网的需要解决yum源不全的问题，执行：
 yum install -y epel-release
-#增加一个更全面的第三方的源，然后再重新安装ansible jq supervisor
+#增加一个更全面的第三方的源，然后再重新安装ansible
 ```
 
 4.项目部署
@@ -446,7 +446,6 @@ host:
       grpcPort: 9360
       httpPort: 9380
       dbname: "fate_flow"
-      core_per_node: 20
     fateboard:
       enable: True
       ips:
@@ -524,7 +523,6 @@ guest:
       grpcPort: 9360
       httpPort: 9380
       dbname: "fate_flow"
-      core_per_node: 20
     fateboard:
       enable: True
       ips:  ---只支持部署一台主机
