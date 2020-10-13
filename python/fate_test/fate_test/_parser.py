@@ -85,7 +85,8 @@ class JobConf(object):
                  role: dict,
                  job_parameters: dict,
                  role_parameters: dict,
-                 algorithm_parameters: dict = None):
+                 algorithm_parameters: dict = None,
+                 **kwargs):
         self.initiator = initiator
         self.role = role
         self.job_parameters = job_parameters

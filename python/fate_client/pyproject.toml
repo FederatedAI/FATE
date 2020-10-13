@@ -37,6 +37,7 @@ loguru = "^0.5.1"
 tensorflow = "1.15.2"
 torch = "1.4.0"
 flask = "^1.0.2"
+setuptools = "^50.0"
 
 [tool.poetry.dev-dependencies]
 
