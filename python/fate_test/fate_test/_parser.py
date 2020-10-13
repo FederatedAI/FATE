@@ -78,6 +78,9 @@ class Data(object):
         role_str = config.get("role") if config.get("role") != "guest" else "guest_0"
         return Data(config=kwargs, role_str=role_str)
 
+    def update(self, config: Config):
+        self.config.update(dict(work_mode=config.work_mode, backend=config.backend))
+
 
 class JobConf(object):
     def __init__(self,
@@ -237,9 +240,13 @@ class Testsuite(object):
         for data in self.dataset:
             data.config.update(dict(work_mode=config.work_mode, backend=config.backend))
 
+        failed = []
         for job in self.jobs:
-            job.job_conf.update(config.parties, config.work_mode, config.backend)
-        return self
+            try:
+                job.job_conf.update(config.parties, config.work_mode, config.backend)
+            except ValueError as e:
+                failed.append((job, e))
+        return failed
 
     def update_status(self, job_name, job_id: str = None, status: str = None, exception_id: str = None):
         for k, v in locals().items():

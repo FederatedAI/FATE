@@ -122,11 +122,9 @@ def run_suite(replace, data_namespace_mangling, config, include, exclude, glob,
             try:
                 start = time.time()
                 echo.echo(f"[{i + 1}/{len(suites)}]start at {time.strftime('%Y-%m-%d %X')} {suite.path}", fg='red')
-                suite.reflash_configs(config_inst)
-
                 if not skip_data:
                     try:
-                        _upload_data(client, suite)
+                        _upload_data(client, suite, config)
                     except Exception as e:
                         raise RuntimeError(f"exception occur while uploading data for {suite.path}") from e
                 if data_only:
@@ -135,7 +133,7 @@ def run_suite(replace, data_namespace_mangling, config, include, exclude, glob,
                 if not skip_dsl_jobs:
                     echo.stdout_newline()
                     try:
-                        _submit_job(client, suite, namespace)
+                        _submit_job(client, suite, namespace, config)
                     except Exception as e:
                         raise RuntimeError(f"exception occur while submit job for {suite.path}") from e
 
@@ -207,11 +205,9 @@ def run_benchmark(data_namespace_mangling, config, include, exclude, glob, skip_
             try:
                 start = time.time()
                 echo.echo(f"[{i + 1}/{len(suites)}]start at {time.strftime('%Y-%m-%d %X')} {suite.path}", fg='red')
-                suite.reflash_configs(config_inst)
-
                 if not skip_data:
                     try:
-                        _upload_data(client, suite)
+                        _upload_data(client, suite, config)
                     except Exception as e:
                         raise RuntimeError(f"exception occur while uploading data for {suite.path}") from e
                 if data_only:
@@ -305,13 +301,14 @@ def _load_testsuites(includes, excludes, glob, suffix="testsuite.json", suite_ty
     return suites
 
 
-def _upload_data(clients: Clients, suite):
+def _upload_data(clients: Clients, suite, config: Config):
     with click.progressbar(length=len(suite.dataset),
                            label="dataset",
                            show_eta=False,
                            show_pos=True,
                            width=24) as bar:
         for i, data in enumerate(suite.dataset):
+            data.update(config)
             data_progress = DataProgress(f"{data.role_str}<-{data.config['namespace']}.{data.config['table_name']}")
 
             def update_bar(n_step):
@@ -359,7 +356,7 @@ def _delete_data(clients: Clients, suite: Testsuite):
             echo.stdout_newline()
 
 
-def _submit_job(clients: Clients, suite: Testsuite, namespace: str):
+def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Config):
     # submit jobs
     with click.progressbar(length=len(suite.jobs),
                            label="jobs   ",
@@ -367,8 +364,20 @@ def _submit_job(clients: Clients, suite: Testsuite, namespace: str):
                            show_pos=True,
                            width=24) as bar:
         for job in suite.jobs_iter():
-
             job_progress = JobProgress(job.job_name)
+
+            def _raise():
+                exception_id = str(uuid.uuid1())
+                job_progress.exception(exception_id)
+                suite.update_status(job_name=job.job_name, exception_id=exception_id)
+                echo.file(f"exception({exception_id})")
+                LOGGER.exception(f"exception id: {exception_id}")
+
+            # noinspection PyBroadException
+            try:
+                job.job_conf.update(config.parties, config.work_mode, config.backend)
+            except Exception:
+                _raise()
 
             def update_bar(n_step):
                 bar.item_show_func = lambda x: job_progress.show()
@@ -398,13 +407,8 @@ def _submit_job(clients: Clients, suite: Testsuite, namespace: str):
             # noinspection PyBroadException
             try:
                 response = clients["guest_0"].submit_job(job=job, callback=_call_back)
-
             except Exception:
-                exception_id = str(uuid.uuid1())
-                job_progress.exception(exception_id)
-                suite.update_status(job_name=job.job_name, exception_id=exception_id)
-                echo.file(f"exception({exception_id})")
-                LOGGER.exception(f"exception id: {exception_id}")
+                _raise()
             else:
                 job_progress.final(response.status)
                 suite.update_status(job_name=job.job_name, status=response.status.status)
