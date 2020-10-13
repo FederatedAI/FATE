@@ -97,6 +97,7 @@ def main(config="../../config.yaml", namespace=""):
                                                                                  method="credit",
                                                                                  offset=500,
                                                                                  factor=20,
+                                                                                 factor_base=2,
                                                                                  upper_limit_ratio=3,
                                                                                  lower_limit_value=0)
     scorecard_0.get_party_instance(role="host", party_id=host).algorithm_param(need_run=False)

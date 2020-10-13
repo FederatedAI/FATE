@@ -31,6 +31,8 @@ How to Use
 
     :factor: scoring step, when odds double, result score increases by this factor, default 20
 
+    :factor_base: factor base, value ln(factor_base) is used for calculating result score, default 2
+
     :upper_limit_ratio: upper bound for odds ratio, credit score upper bound is upper_limit_ratio * offset, default 3
 
     :lower_limit_value: lower bound for result score, default 0

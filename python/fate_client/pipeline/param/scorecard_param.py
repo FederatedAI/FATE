@@ -38,6 +38,9 @@ class ScorecardParam(BaseParam):
     factor : int, default: 20
         scoring step, when odds double, result score increases by this factor
 
+    factor_base : int or float, default: 2
+        factor base, value ln(factor_base) is used for calculating result score
+
     upper_limit_ratio : int, default: 3
         upper bound for odds ratio, credit score upper bound is upper_limit_ratio * offset
 
@@ -49,11 +52,12 @@ class ScorecardParam(BaseParam):
 
     """
 
-    def __init__(self, method="credit", offset=500, factor=20, upper_limit_ratio=3, lower_limit_value=0, need_run=True):
+    def __init__(self, method="credit", offset=500, factor=20, factor_base=2, upper_limit_ratio=3, lower_limit_value=0, need_run=True):
         super(ScorecardParam, self).__init__()
         self.method = method
         self.offset = offset
         self.factor = factor
+        self.factor_base = factor_base
         self.upper_limit_ratio = upper_limit_ratio
         self.lower_limit_value = lower_limit_value
         self.need_run = need_run
@@ -76,6 +80,10 @@ class ScorecardParam(BaseParam):
         if type(self.factor).__name__ not in ["int", "long", "float"]:
             raise ValueError(f"{descr} factor must be numeric,"
                              f"received {type(self.factor)} instead.")
+
+        if type(self.factor_base).__name__ not in ["int", "long", "float"]:
+            raise ValueError(f"{descr} factor_base must be numeric,"
+                             f"received {type(self.factor_base)} instead.")
 
         if type(self.upper_limit_ratio).__name__ not in ["int", "long", "float"]:
             raise ValueError(f"{descr} upper_limit_ratio must be numeric,"
