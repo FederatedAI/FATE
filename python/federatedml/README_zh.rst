@@ -239,6 +239,14 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
      -
      - Hetero KMeans模型
 
+   * - `Data Statistics`_
+     - 数据统计
+     - 这个组件会对数据做一些统计工作，包括统计均值，最大最小值，中位数等
+     - Table, 值为Instance
+     - Table
+     -
+     - Statistic Result
+
 .. _DataIO: util/README.rst
 .. _Intersect: statistic/intersect/README.rst
 .. _Federated Sampling: feature/README.rst
@@ -263,6 +271,7 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
 .. _Column Expand: feature/README.rst
 .. _Secure Information Retrieval: secure_information_retrieval
 .. _Hetero KMeans: unsupervised_learning/kmeans/README.rst
+.. _Data Statistics: statistic/README.rst
 
 
 安全协议

@@ -13,14 +13,14 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import os
+import pathlib
 import sys
 
 from pipeline.component.homo_nn import HomoNN
 from tensorflow.keras import optimizers
 from tensorflow.keras.layers import Dense
 
-additional_path = os.path.realpath('../')
+additional_path = pathlib.Path(__file__).resolve().parent.parent.resolve().__str__()
 if additional_path not in sys.path:
     sys.path.append(additional_path)
 

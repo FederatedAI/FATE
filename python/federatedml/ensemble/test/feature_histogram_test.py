@@ -51,7 +51,7 @@ class TestFeatureHistogram(unittest.TestCase):
 
         bin_split_points = []
         for i in range(10):
-            bin_split_points.append(np.array([i for i in range(5)]))
+            bin_split_points.append(np.array([i for i in range(6)]))
         self.bin_split_points = np.array(bin_split_points)
         self.bin_sparse = [0 for i in range(10)]
 

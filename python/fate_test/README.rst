@@ -16,6 +16,7 @@ quick start
 
       python -m venv venv
       source venv/bin/activate
+      pip install -U pip
 
 
 2. install fate_test
@@ -48,9 +49,17 @@ quick start
 
    .. code-block:: bash
 
-      fate_test benchmark-quality -i <path contains *testsuite.json>
+      fate_test benchmark-quality -i <path contains *benchmark.json>
 
-6. useful logs or exception will be saved to logs dir with namespace showed in last step
+6. useful logs or exception will be saved to logs dir with namespace shown in last step
+
+develop install
+---------------
+It is more convenient to use the editable mode during development: replace step 2 with flowing steps
+
+.. code-block:: bash
+
+   pip install -e ${FATE}/python/fate_client && pip install -e ${FATE}/python/fate_test
 
 
 
@@ -68,7 +77,7 @@ command types
 
   .. code-block:: bash
 
-      fate_test benchmark-quality -i <path contains *testsuite.json>
+      fate_test benchmark-quality -i <path contains *benchmark.json>
 
 
 
@@ -192,7 +201,7 @@ command options
 
    .. code-block:: bash
 
-       fate_test suite -i <path1 contains *testsuite.json> --skip-date
+       fate_test suite -i <path1 contains *testsuite.json> --skip-data
 
    will run testsuites in *path1* without uploading data specified in *benchmark.json*.
    Note that data-namespace-mangling is ineffective when skipping data upload.
@@ -204,6 +213,30 @@ command options
       fate_test suite -i <path1 contains *testsuite.json> --yes
 
    will run testsuites in *path1* directly, skipping double check
+
+9. skip-dsl-jobs:
+
+   .. code-block:: bash
+
+      fate_test suite -i <path1 contains *testsuite.json> --skip-dsl-jobs
+
+   will run testsuites in *path1* but skip all *tasks* in testsuites. It's would be useful when only pipeline tasks needed.
+
+10. skip-pipeline-jobs:
+
+   .. code-block:: bash
+
+      fate_test suite -i <path1 contains *testsuite.json> --skip-pipeline-jobs
+
+   will run testsuites in *path1* but skip all *pipeline tasks* in testsuites. It's would be useful when only dsl tasks needed.
+
+11. data-only:
+
+   .. code-block:: bash
+
+      fate_test suite -i <path1 contains *testsuite.json> --data-only
+
+   will upload data in testsuite in *path1* and skip all tasks.
 
 
 Benchmark Quality
@@ -305,7 +338,7 @@ use the following command to show help message
 
    .. code-block:: bash
 
-       fate_test benchmark-quality -i <path1 contains *benchmark.json> --skip-date
+       fate_test benchmark-quality -i <path1 contains *benchmark.json> --skip-data
 
    will run benchmark testsuites in *path1* without uploading data specified in *benchmark.json*.
    Note that data-namespace-mangling is ineffective when skipping data upload.

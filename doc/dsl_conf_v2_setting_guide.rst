@@ -167,7 +167,7 @@ Besides the dsl conf, user also need to prepare a submit runtime conf to set the
         ]
      }
 
-:role_parameters: Parameters that differ from party to party should be indicated here. Please note that role parameters need to be wrapped into a list.
+:role_parameters: Parameters that differ from party to party should be specified here. Please note that role parameters need to be wrapped into a list.
   Inside the role_parameters, party names are used as key and parameters of these parties are values. Take the following structure as an example:
 
   .. code-block:: json
@@ -254,7 +254,7 @@ Besides the dsl conf, user also need to prepare a submit runtime conf to set the
 
 :job_parameters: job runtime parameters; please note that to enable DSL V2, **dsl_version** must be set to **2**.
 
-.. list-table:: Job Parameters
+.. list-table:: Configurable Job Parameters
    :widths: 20 20 30 30
    :header-rows: 1
 
@@ -278,26 +278,6 @@ Besides the dsl conf, user also need to prepare a submit runtime conf to set the
      - 0, 1
      - 0 for EGGROLL, 1 for SPARK
 
-   * - federated_mode
-     - MULTIPLE
-     - SINGLE, MULTIPLE
-     - federated mode
-
-   * - computing_mode
-     - EGGROLL
-     - EGGROLL, SPARK
-     - engine for computation
-
-   * - storage_engine
-     - EGGROLL
-     - STANDALONE, EGGROLL, HDFS, MYSQL
-     - engine for storage
-
-   * - engines_address
-     - please refer to the example below
-     - \-
-     - addresses for engines
-
    * - dsl_version
      - 1
      - 1, 2
@@ -306,27 +286,27 @@ Besides the dsl conf, user also need to prepare a submit runtime conf to set the
    * - federated_status_collect_type
      - PUSH
      - PUSH, PULL
-     - type of collecting federated status
+     - type of collecting job status
 
    * - timeout
      - 604800
      - positive int
      - time elapse (in second) for a job to timeout
 
+   * - eggroll_run
+     -
+     - eggroll.session.processors.per.node
+     - parameter for EGGROLL computing engine
+
+   * - spark_run
+     -
+     - num-executors, executor-cores
+     - parameter for SPARK computing engine
+
    * - task_parallelism
      - 2
      - positive int
      - maximum number of tasks allowed to run in parallel
-
-   * - task_nodes
-     - 1
-     - positive int
-     - number of computing nodes
-
-   * - task_cores_per_node
-     - 2
-     - positive int
-     - number of CPU cores used by every computing node
 
    * - model_id
      - \-
@@ -338,41 +318,71 @@ Besides the dsl conf, user also need to prepare a submit runtime conf to set the
      - \-
      - version of model, needed for prediction task
 
-conf example:
+.. list-table:: Non-configurable Job Parameters
+   :widths: 20 20 30 30
+   :header-rows: 1
+
+   * - Parameter Name
+     - Default Value
+     - Acceptable Values
+     - Information
+
+   * - computing_engine
+     - set automatically based on ``work_mode`` and ``backend``
+     - EGGROLL, SPARK, STANDALONE
+     - engine for computation
+
+   * - storage_engine
+     - set automatically based on ``work_mode`` and ``backend``
+     - EGGROLL, HDFS, STANDALONE
+     - engine for storage
+
+   * - federation_engine
+     - set automatically based on ``work_mode`` and ``backend``
+     - EGGROLL, RABBITMQ, STANDALONE
+     - engine for communication among parties
+
+   * - federated_mode
+     - set automatically based on ``work_mode`` and ``backend``
+     - SINGLE, MULTIPLE
+     - federation mode
+
+.. note::
+   1. Some types of ``computing_engine``, ``storage_engine``, and ``federation_engine``
+   are only compatible with each other. For examples, SPARK
+   ``computing_engine`` only supports HDFS ``storage_engine``.
+
+   2. Combination of ``work_mode`` and ``backend`` automatically determines which
+   combination of engines will be used.
+
+   3. Developer may implement other types of engines and set new engine
+   combinations.
+
+**EGGROLL** conf example:
 
 .. code-block:: json
 
-     job_parameters:{
-        "job_type": "train",
+     "job_parameters": {
         "work_mode": 1,
         "backend": 0,
         "dsl_version": 2,
-        "computing_engine": "EGGROLL",
-        "federation_engine": "EGGROLL",
-        "storage_engine": "EGGROLL",
-        "engines_address": {
-            "computing": {
-                "host": "127.0.0.1",
-                "port": 9370
-            },
-            "federation": {
-                "host": "127.0.0.1",
-                "port": 9370
-            },
-            "storage": {
-                "host": "172.0.0.1",
-                "port": 9370
-            }
-        },
-     "federated_mode": "MULTIPLE",
-     "federated_status_collect_type": "PUSH",
-     "timeout": 36000,
-     "task_parallelism": 2,
-     "task_nodes": 1,
-     "task_cores_per_node": 2,
-     "task_memory_per_node": 512,
-     "model_id": "arbiter-10000#guest-9999#host-9999_10000#model",
-     "model_version": "2020092416160711633252"
+        "eggroll_run": {
+           "eggroll.session.processors.per.node": 2
+        }
+     }
+
+**SPARK** conf example:
+
+.. code-block:: json
+
+     "job_parameters": {
+        "work_mode": 1,
+        "backend": 1,
+        "dsl_version": 2,
+        "spark_run": {
+           "num-executors": 1,
+           "executor-cores": 2
+        }
      }
 
 After setting config files and submitting the task, fate-flow will combine the parameter list in role-parameters and algorithm parameters.

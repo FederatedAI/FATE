@@ -1,7 +1,7 @@
 {
   "data": [
     {
-      "file": "examples/data/breast_homo_guest.csv",
+      "file": "../../data/breast_homo_guest.csv",
       "head": 1,
       "partition": 16,
       "table_name": "breast_homo_guest",
@@ -9,7 +9,7 @@
       "role": "guest_0"
     },
     {
-      "file": "examples/data/breast_homo_host.csv",
+      "file": "../../data/breast_homo_host.csv",
       "head": 1,
       "partition": 16,
       "table_name": "breast_homo_host",
@@ -17,15 +17,7 @@
       "role": "host_0"
     },
     {
-      "file": "examples/data/breast_homo_test.csv",
-      "head": 1,
-      "partition": 16,
-      "table_name": "breast_homo_test",
-      "namespace": "experiment",
-      "role": "guest_0"
-    },
-    {
-      "file": "examples/data/default_credit_homo_guest.csv",
+      "file": "../../data/default_credit_homo_guest.csv",
       "head": 1,
       "partition": 16,
       "table_name": "default_credit_guest",
@@ -33,7 +25,7 @@
       "role": "guest_0"
     },
     {
-      "file": "examples/data/default_credit_homo_host_1.csv",
+      "file": "../../data/default_credit_homo_host_1.csv",
       "head": 1,
       "partition": 16,
       "table_name": "default_credit_host1",
@@ -41,15 +33,7 @@
       "role": "host_0"
     },
     {
-      "file": "examples/data/default_credit_homo_test.csv",
-      "head": 1,
-      "partition": 16,
-      "table_name": "default_credit_test",
-      "namespace": "experiment",
-      "role": "guest_0"
-    },
-    {
-      "file": "examples/data/give_credit_homo_guest.csv",
+      "file": "../../data/give_credit_homo_guest.csv",
       "head": 1,
       "partition": 16,
       "table_name": "give_credit_homo_guest",
@@ -57,7 +41,7 @@
       "role": "guest_0"
     },
     {
-      "file": "examples/data/give_credit_homo_host.csv",
+      "file": "../../data/give_credit_homo_host.csv",
       "head": 1,
       "partition": 16,
       "table_name": "give_credit_homo_host",
@@ -65,15 +49,7 @@
       "role": "host_0"
     },
     {
-      "file": "examples/data/give_credit_homo_test.csv",
-      "head": 1,
-      "partition": 16,
-      "table_name": "give_credit_homo_test",
-      "namespace": "experiment",
-      "role": "guest_0"
-    },
-    {
-      "file": "examples/data/epsilon_5k_homo_guest.csv",
+      "file": "../../data/epsilon_5k_homo_guest.csv",
       "head": 1,
       "partition": 16,
       "table_name": "epsilon_5k_homo_guest",
@@ -81,30 +57,61 @@
       "role": "guest_0"
     },
     {
-      "file": "examples/data/epsilon_5k_homo_host.csv",
+      "file": "../../data/epsilon_5k_homo_host.csv",
       "head": 1,
       "partition": 16,
       "table_name": "epsilon_5k_homo_host",
       "namespace": "experiment",
       "role": "host_0"
-    },
-    {
-      "file": "examples/data/epsilon_5k_homo_test.csv",
-      "head": 1,
-      "partition": 16,
-      "table_name": "epsilon_5k_homo_test",
-      "namespace": "experiment",
-      "role": "guest_0"
     }
   ],
-  "binary": {
+  "homo_lr-binary-0": {
     "local": {
       "script": "./sklearn-lr-binary.py",
-      "conf": "./lr_config.yaml"
+      "conf": "./breast_lr_config.yaml"
     },
-    "pipeline": {
+    "FATE": {
       "script": "./pipeline-lr-binary.py",
-      "conf": "./lr_config.yaml"
+      "conf": "./breast_lr_config.yaml"
+    },
+    "compare_setting": {
+      "relative_tol": 1e-2
+    }
+  },
+  "homo_lr-binary-1": {
+    "local": {
+      "script": "./sklearn-lr-binary.py",
+      "conf": "./default_credit_lr_config.yaml"
+    },
+    "FATE": {
+      "script": "./pipeline-lr-binary.py",
+      "conf": "./default_credit_lr_config.yaml"
+    },
+    "compare_setting": {
+      "relative_tol": 1e-2
+    }
+  },
+  "homo_lr-binary-2": {
+    "local": {
+      "script": "./sklearn-lr-binary.py",
+      "conf": "./epsilon_5k_lr_config.yaml"
+    },
+    "FATE": {
+      "script": "./pipeline-lr-binary.py",
+      "conf": "./epsilon_5k_lr_config.yaml"
+    },
+    "compare_setting": {
+      "relative_tol": 1e-2
+    }
+  },
+  "homo_lr-binary-3": {
+    "local": {
+      "script": "./sklearn-lr-binary.py",
+      "conf": "./give_credit_lr_config.yaml"
+    },
+    "FATE": {
+      "script": "./pipeline-lr-binary.py",
+      "conf": "./give_credit_lr_config.yaml"
     },
     "compare_setting": {
       "relative_tol": 1e-2

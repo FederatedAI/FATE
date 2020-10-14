@@ -48,25 +48,24 @@ def main(param="./lr_config.yaml"):
     df_guest = pandas.read_csv(data_guest, index_col=idx)
     df_host = pandas.read_csv(data_host, index_col=idx)
 
-    df_test = pandas.read_csv(data_test, index_col=idx)
+    # df_test = pandas.read_csv(data_test, index_col=idx)
 
     df = pandas.concat([df_guest, df_host], axis=0)
 
-    df_length = df.shape[0]
-    df_guest = df.iloc[: int(df_length * 0.4)]
-    df_host = df.iloc[int(df_length * 0.4): int(df_length * 0.8)]
-    df_test = df.iloc[int(df_length * 0.8):]
-    df_guest.to_csv("epsilon_5k_homo_guest.csv")
-    df_host.to_csv("epsilon_5k_homo_host.csv")
-    df_test.to_csv("epsilon_5k_homo_test.csv")
-
+    # df_length = df.shape[0]
+    # df_guest = df.iloc[: int(df_length * 0.5)]
+    # df_host = df.iloc[int(df_length * 0.5): int(df_length * 1)]
+    # df_test = df.iloc[int(df_length * 0.8):]
+    # df_test = df_guest
 
     # df = df_guest.join(df_host, rsuffix="host")
     y_train = df[label_name]
     x_train = df.drop(label_name, axis=1)
 
-    y_test = df_test[label_name]
-    x_test = df_test.drop(label_name, axis=1)
+    # y_test = df_test[label_name]
+    # x_test = df_test.drop(label_name, axis=1)
+    x_test, y_test = x_train, y_train
+
 
     # lm = LogisticRegression(max_iter=20)
     lm = SGDClassifier(loss="log", **config_param)
@@ -84,7 +83,7 @@ def main(param="./lr_config.yaml"):
     print(f"result: {result}")
     print(f"coef_: {lm_fit.coef_}, intercept_: {lm_fit.intercept_}, n_iter: {lm_fit.n_iter_}")
 
-    return result
+    return {}, result
 
 
 if __name__ == "__main__":

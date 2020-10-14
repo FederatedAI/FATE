@@ -23,7 +23,6 @@ from pipeline.component import HeteroLR
 from pipeline.component import Intersection
 from pipeline.component import Reader
 from pipeline.interface import Data
-
 from pipeline.utils.tools import load_job_config, JobConfig
 
 
@@ -119,7 +118,11 @@ def main(config="../../config.yaml", param="./lr_multi_config.yaml", namespace="
     pipeline.fit(backend=backend, work_mode=work_mode)
     # query component summary
     print(pipeline.get_component("evaluation_0").get_summary())
-    return pipeline.get_component("evaluation_0").get_summary()
+    result_summary = pipeline.get_component("evaluation_0").get_summary()
+    data_summary = {"train": {"guest": guest_train_data["name"], "host": host_train_data["name"]},
+                    "test": {"guest": guest_train_data["name"], "host": host_train_data["name"]}
+                    }
+    return data_summary, result_summary
 
 
 if __name__ == "__main__":

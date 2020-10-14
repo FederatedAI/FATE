@@ -1,90 +1,85 @@
 {
     "initiator": {
         "role": "guest",
-        "party_id": 10000
-    },
-    "job_parameters": {
-        "work_mode": 0
+        "party_id": 9999
     },
     "role": {
-        "guest": [
-            10000
-        ],
         "host": [
-            10000
+            9998
+        ],
+        "guest": [
+            9999
         ],
         "arbiter": [
-            10000
+            9999
         ]
+    },
+    "job_parameters": {
+        "job_type": "train",
+        "backend": 0,
+        "work_mode": 0,
+        "dsl_version": 2
     },
     "role_parameters": {
         "guest": {
-            "args": {
-                "data": {
-                    "train_data": [
-                        {
-                            "name": "ionosphere_scale_guest",
-                            "namespace": "experiment"
-                        }
-                    ],
-                    "eval_data": [
-                        {
-                            "name": "ionosphere_scale_guest",
-                            "namespace": "experiment"
-                        }
-                    ]
+            "0": {
+                "reader_1": {
+                    "table": {
+                        "name": "ionosphere_scale_guest",
+                        "namespace": "experiment"
+                    }
+                },
+                "dataio_0": {
+                    "with_label": true,
+                    "label_name": "label",
+                    "label_type": "int",
+                    "output_format": "dense"
+                },
+                "dataio_1": {
+                    "with_label": true,
+                    "label_name": "label",
+                    "label_type": "int",
+                    "output_format": "dense"
+                },
+                "reader_0": {
+                    "table": {
+                        "name": "ionosphere_scale_guest",
+                        "namespace": "experiment"
+                    }
                 }
-            },
-            "dataio_0": {
-                "with_label": [
-                    true
-                ],
-                "label_name": [
-                    "label"
-                ],
-                "label_type": [
-                    "int"
-                ],
-                "output_format": [
-                    "dense"
-                ]
             }
         },
         "host": {
-            "args": {
-                "data": {
-                    "train_data": [
-                        {
-                            "name": "ionosphere_scale_host",
-                            "namespace": "experiment"
-                        }
-                    ],
-                    "eval_data": [
-                        {
-                            "name": "ionosphere_scale_host",
-                            "namespace": "experiment"
-                        }
-                    ]
+            "0": {
+                "reader_1": {
+                    "table": {
+                        "name": "ionosphere_scale_host",
+                        "namespace": "experiment"
+                    }
+                },
+                "dataio_0": {
+                    "with_label": true,
+                    "label_name": "label",
+                    "label_type": "int",
+                    "output_format": "dense"
+                },
+                "dataio_1": {
+                    "with_label": true,
+                    "label_name": "label",
+                    "label_type": "int",
+                    "output_format": "dense"
+                },
+                "reader_0": {
+                    "table": {
+                        "name": "ionosphere_scale_host",
+                        "namespace": "experiment"
+                    }
                 }
-            },
-            "dataio_0": {
-                "with_label": [
-                    true
-                ],
-                "label_name": [
-                    "label"
-                ],
-                "label_type": [
-                    "int"
-                ],
-                "output_format": [
-                    "dense"
-                ]
             }
         }
     },
     "algorithm_parameters": {
-        "secureboost_0": {
+        "homo_secureboost_0": {
             "task_type": "classification",
             "learning_rate": 0.1,
             "num_trees": 1,

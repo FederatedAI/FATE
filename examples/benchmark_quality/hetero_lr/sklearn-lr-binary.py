@@ -32,7 +32,6 @@ def main(param):
     assert isinstance(param, dict)
     data_guest = param["data_guest"]
     data_host = param["data_host"]
-
     idx = param["idx"]
     label_name = param["label_name"]
 
@@ -52,7 +51,8 @@ def main(param):
     y = df[label_name]
     X = df.drop(label_name, axis=1)
 
-    x_train, x_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=0)
+    # x_train, x_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=0)
+    x_train, x_test, y_train, y_test = X, X, y, y
 
     # lm = LogisticRegression(max_iter=20)
     lm = SGDClassifier(loss="log", **config_param)
@@ -74,12 +74,12 @@ def main(param):
     result = {"auc": auc_score, "recall": recall, "precision": pr, "accuracy": acc, "ks": ks}
     print(result)
     print(f"coef_: {lm_fit.coef_}, intercept_: {lm_fit.intercept_}, n_iter: {lm_fit.n_iter_}")
-    return result
+    return {}, result
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("BENCHMARK-QUALITY SKLEARN JOB")
-    parser.add_argument("-p", "--param", type=str, default="./lr_config.yaml",
+    parser.add_argument("-p", "--param", type=str, default="./breast_config.yaml",
                         help="config file for params")
     args = parser.parse_args()
     main(args.param)

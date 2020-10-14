@@ -24,7 +24,8 @@ local function balance()
     local fate_cluster_server = ngx.ctx.fate_cluster_server
     local ok, err = ngx_balancer.set_current_peer(fate_cluster_server)
     if not ok then
-        utils.exit_abnormally('failed to set current peer: ' .. err, ngx.HTTP_SERVICE_UNAVAILABLE)
+        ngx.log(ngx.INFO, 'failed to set current peer: ' .. err, ngx.HTTP_SERVICE_UNAVAILABLE)
+        return ngx.ERROR
     end
 end
 
