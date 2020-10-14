@@ -39,7 +39,7 @@ def main(config="../../config.yaml", namespace=""):
     lr_param = {
         "name": "hetero_lr_0",
         "penalty": "L2",
-        "optimizer": "nesterov_momentum_sgd",
+        "optimizer": "rmsprop",
         "tol": 0.0001,
         "alpha": 0.01,
         "max_iter": 10,
