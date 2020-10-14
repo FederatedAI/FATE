@@ -73,7 +73,7 @@ class StorageTable(StorageTableBase):
     def get_options(self):
         return self._options
 
-    def put_all(self, kv_list: Iterable, append=False, assume_file_exist=False, **kwargs):
+    def put_all(self, kv_list: Iterable, append=True, assume_file_exist=False, **kwargs):
         LOGGER.info(f"put in hdfs file: {self._path}")
         if append and (assume_file_exist or self._exist()):
             stream = self._hdfs_client.open_append_stream(path=self._path, compression=None)
