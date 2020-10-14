@@ -37,21 +37,29 @@ quick start
       # filling some field according to comments
       fate_test config edit
 
+4. configure FATE-Pipeline and FATE-Flow Commandline server setting
 
-4. run some fate_test suite
+.. code-block:: bash
+
+      # configure FATE-Pipeline server setting
+      pipeline config --port 9380 --ip 127.0.0.1
+      # configure FATE-Flow Commandline server setting
+      flow init --port 9380 --ip 127.0.0.1
+
+5. run some fate_test suite
 
    .. code-block:: bash
 
       fate_test suite -i <path contains *testsuite.json>
 
 
-5. run some fate_test benchmark
+6. run some fate_test benchmark
 
    .. code-block:: bash
 
       fate_test benchmark-quality -i <path contains *benchmark.json>
 
-6. useful logs or exception will be saved to logs dir with namespace shown in last step
+7. useful logs or exception will be saved to logs dir with namespace shown in last step
 
 develop install
 ---------------
