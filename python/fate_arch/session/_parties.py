@@ -25,7 +25,7 @@ class PartiesInfo(object):
     @staticmethod
     def from_conf(conf: typing.MutableMapping[str, dict]):
         try:
-            local = Party(role=conf["local"]['role'], party_id=conf['local']['party_id'])
+            local = Party(role=conf['initiator']['role'], party_id=conf['initiator']['party_id'])
             role_to_parties = {}
             for role, party_id_list in conf.get("role", {}).items():
                 role_to_parties[role] = [Party(role=role, party_id=party_id) for party_id in party_id_list]
