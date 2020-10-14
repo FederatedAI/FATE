@@ -74,7 +74,7 @@ def main(config="../../config.yaml", namespace=""):
                                               task_type="classification",
                                               objective_param={"objective": "cross_entropy"},
                                               encrypt_param={"method": "paillier"},
-                                              tree_param={"max_depth": 5},
+                                              tree_param={"max_depth": 3},
                                               complete_secure=True,
                                               validation_freqs=1)
 

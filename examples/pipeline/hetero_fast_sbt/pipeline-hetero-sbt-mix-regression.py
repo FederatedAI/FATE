@@ -75,6 +75,7 @@ def main(config="../../config.yaml", namespace=""):
                                                        objective_param={"objective": "lse"},
                                                        encrypt_param={"method": "iterativeAffine"},
                                                        validation_freqs=1,
+                                                       tree_param={"max_depth": 3},
                                                        work_mode='mix')
 
     # evaluation component

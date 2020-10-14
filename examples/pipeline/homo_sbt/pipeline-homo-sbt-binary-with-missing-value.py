@@ -21,6 +21,8 @@ from pipeline.component.dataio import DataIO
 from pipeline.component.homo_secureboost import HomoSecureBoost
 from pipeline.component.reader import Reader
 from pipeline.interface.data import Data
+from pipeline.component.evaluation import Evaluation
+from pipeline.interface.model import Model
 
 from pipeline.utils.tools import load_job_config
 
@@ -39,38 +41,53 @@ def main(config="../../config.yaml", namespace=""):
     backend = config.backend
     work_mode = config.work_mode
 
-    guest_train_data = {"name": "breast_homo_guest", "namespace": f"experiment{namespace}"}
-    host_train_data = {"name": "breast_homo_host", "namespace": f"experiment{namespace}"}
+    guest_train_data = {"name": "ionosphere_scale_guest", "namespace": f"experiment{namespace}"}
+    guest_validate_data = {"name": "ionosphere_scale_guest", "namespace": f"experiment{namespace}"}
+
+    host_train_data = {"name": "ionosphere_scale_host", "namespace": f"experiment{namespace}"}
+    host_validate_data = {"name": "ionosphere_scale_host", "namespace": f"experiment{namespace}"}
 
     pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=host, arbiter=arbiter)
 
-    dataio_0 = DataIO(name="dataio_0")
-    reader_0 = Reader(name="reader_0")
+    dataio_0, dataio_1 = DataIO(name="dataio_0"), DataIO(name='dataio_1')
+    reader_0, reader_1 = Reader(name="reader_0"), Reader(name='reader_1')
 
     reader_0.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_train_data)
     reader_0.get_party_instance(role='host', party_id=host).algorithm_param(table=host_train_data)
     dataio_0.get_party_instance(role='guest', party_id=guest).algorithm_param(with_label=True, output_format="dense",
-                                                                              label_type="float")
+                                                                              label_name="label")
     dataio_0.get_party_instance(role='host', party_id=host).algorithm_param(with_label=True, output_format="dense",
-                                                                            label_type="float")
+                                                                            label_name="label")
+
+    reader_1.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_validate_data)
+    reader_1.get_party_instance(role='host', party_id=host).algorithm_param(table=host_validate_data)
+    dataio_1.get_party_instance(role='guest', party_id=guest).algorithm_param(with_label=True, output_format="dense",
+                                                                              label_name="label")
+    dataio_1.get_party_instance(role='host', party_id=host).algorithm_param(with_label=True, output_format="dense",
+                                                                            label_name="label")
 
     homo_secureboost_0 = HomoSecureBoost(name="homo_secureboost_0",
-                                         num_trees=5,
-                                         task_type='regression',
-                                         objective_param={"objective": "lse"},
+                                         num_trees=3,
+                                         task_type='classification',
+                                         objective_param={"objective": "cross_entropy"},
+                                         use_missing=True,
                                          tree_param={
-                                             "max_depth": 3
+                                             "max_depth": 3,
+                                             "use_missing": True
                                          },
-                                         cv_param={
-                                             "need_cv": True,
-                                             "shuffle": False,
-                                             "n_splits": 5
-                                         }
+                                         validation_freqs=1
                                          )
+
+    evaluation_0 = Evaluation(name='evaluation_0', eval_type='binary')
 
     pipeline.add_component(reader_0)
     pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
-    pipeline.add_component(homo_secureboost_0, data=Data(train_data=dataio_0.output.data))
+    pipeline.add_component(reader_1)
+    pipeline.add_component(dataio_1, data=Data(data=reader_1.output.data), model=Model(dataio_0.output.model))
+    pipeline.add_component(homo_secureboost_0, data=Data(train_data=dataio_0.output.data,
+                                                         validate_data=dataio_1.output.data
+                                                         ))
+    pipeline.add_component(evaluation_0, data=Data(homo_secureboost_0.output.data))
 
     pipeline.compile()
     pipeline.fit(backend=backend, work_mode=work_mode)
