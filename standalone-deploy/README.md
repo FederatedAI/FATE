@@ -25,7 +25,7 @@ It is strongly recommended to use docker, which greatly reduces the possibility 
 
 2. Dependent on [docker](https://download.docker.com/linux/) and [docker-compose](https://github.com/docker/compose/releases/tag/1.24.0), docker recommended version is 18.09, docker-compose recommended version is 1.24.0, you can use the following command to verify the docker environment: docker --version and docker-compose --version, docker start and stop and other Please refer to: docker --help.
 
-3. Check whether the 8080, 9060, and 9080 ports are occupied before executing. If you want to execute again, please delete the previous container and image with the docker command.
+3. Check whether the 8080, 9360, and 9380 ports are occupied before executing. If you want to execute again, please delete the previous container and image with the docker command.
 
    please follow the below step:
 
