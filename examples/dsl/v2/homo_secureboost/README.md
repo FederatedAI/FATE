@@ -1,8 +1,6 @@
 ## Homo SecureBoost Configuration Usage Guide.
 
-This section introduces the dsl and conf relationships for usage.
-
-#### Training Task.
+#### Example Tasks.
 
 1. Binary-Class:  
 
@@ -55,6 +53,8 @@ This section introduces the dsl and conf relationships for usage.
 6. Predict:
     
     (1) test: breast_homo_test.csv
+       
+    dsl: test_predict_dsl.json
     
     runtime_config: test_predict_conf.json
     
@@ -85,10 +85,10 @@ This section introduces the dsl and conf relationships for usage.
     dsl: test_secureboost_cross_validation_dsl.json  
     
     runtime_config: test_secureboost_cross_validation_regression_conf.json
-
-Note: users should upload the data described above with specified table name and namespace in the runtime_config, 
-then use following commands to running the task.
     
-    python {fate_install_path}/fate_flow/fate_flow_client.py -f submit_job -c ${runtime_config{ -d ${dsl}
+
+Users can use following commands to run a task.
+
+    flow job submit -c ${runtime_config} -d ${dsl}
 
 Moreover, after successfully running the training task, you can use it to predict too.

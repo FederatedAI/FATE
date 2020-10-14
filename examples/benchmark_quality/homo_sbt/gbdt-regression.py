@@ -25,14 +25,15 @@ from sklearn.metrics import mean_squared_error
 from sklearn.metrics import median_absolute_error
 from sklearn.metrics import r2_score
 
-
+from sklearn.ensemble.gradient_boosting import GradientBoostingRegressor
 from pipeline.utils.tools import JobConfig
 
 
-def main(param="./xgb_config_reg.yaml"):
+def main(param=""):
     # obtain config
     if isinstance(param, str):
         param = JobConfig.load_from_file(param)
+
     data_guest = param["data_guest"]
     data_host = param["data_host"]
     data_test = param["data_test"]
@@ -47,25 +48,17 @@ def main(param="./xgb_config_reg.yaml"):
     df = pd.concat([df_guest, df_host], axis=0)
     y = df[label_name]
     X = df.drop(label_name, axis=1)
-    y_test = df_test[label_name]
-    X_test = df_test.drop(columns=[label_name])
+    X = df.drop(label_name, axis=1)
+    X_guest = df_guest.drop(label_name, axis=1)
+    y_guest = df_guest[label_name]
+    clf = GradientBoostingRegressor(n_estimators=50)
+    clf.fit(X, y)
+    y_predict = clf.predict(X_guest)
 
-    train_data = xgb.DMatrix(data=X, label=y)
-    validate_data = xgb.DMatrix(data=X_test, label=y_test)
-    xgb_param = {'max_depth': 3, "eta": 0.1, 'objective': 'reg:squarederror'}
-    eval_list = [(train_data, 'train')]
-    boosting_round = 10
-
-    xgb_model = xgb.train(xgb_param, train_data, num_boost_round=boosting_round, evals=eval_list)
-    y_predict = xgb_model.predict(train_data)
-
-    result = {"mean_squared_error": mean_squared_error(y, y_predict),
-              "mean_absolute_error": mean_absolute_error(y, y_predict),
-              "median_absolute_error": median_absolute_error(y, y_predict),
-              "r2_score": r2_score(y, y_predict),
-              "explained_variance": explained_variance_score(y, y_predict)
+    result = {"mean_squared_error": mean_squared_error(y_guest, y_predict),
+              "mean_absolute_error": mean_absolute_error(y_guest, y_predict)
               }
-
+    print(result)
     return {}, result
 
 

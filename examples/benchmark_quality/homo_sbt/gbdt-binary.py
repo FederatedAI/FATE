@@ -17,18 +17,19 @@
 import argparse
 
 import pandas as pd
-import xgboost as xgb
-from sklearn.metrics import roc_auc_score, precision_score, accuracy_score, recall_score
 
+from sklearn.metrics import roc_auc_score, precision_score, accuracy_score, recall_score
+from sklearn.ensemble.gradient_boosting import GradientBoostingClassifier
 from pipeline.utils.tools import JobConfig
 
 
-def main(param="./xgb_config_binary.yaml"):
+def main(param=""):
     # obtain config
     if isinstance(param, str):
         param = JobConfig.load_from_file(param)
     data_guest = param["data_guest"]
     data_host = param["data_host"]
+    data_test = param["data_test"]
 
     idx = param["idx"]
     label_name = param["label_name"]
@@ -36,26 +37,23 @@ def main(param="./xgb_config_binary.yaml"):
     # prepare data
     df_guest = pd.read_csv(data_guest, index_col=idx)
     df_host = pd.read_csv(data_host, index_col=idx)
-    df = df_guest.join(df_host, rsuffix='host')
+    df = pd.concat([df_guest, df_host], axis=0)
     y = df[label_name]
     X = df.drop(label_name, axis=1)
-
-    train_data = xgb.DMatrix(data=X, label=y)
-    xgb_param = {'max_depth': 3, "eta": 0.1, 'objective': 'binary:logistic'}
-    eval_list = [(train_data, 'train')]
-    boosting_round = 10
-
-    xgb_model = xgb.train(xgb_param, train_data, num_boost_round=boosting_round, evals=eval_list)
-    y_prob = xgb_model.predict(train_data)
+    X_guest = df_guest.drop(label_name, axis=1)
+    y_guest = df_guest[label_name]
+    clf = GradientBoostingClassifier(n_estimators=50)
+    clf.fit(X, y)
+    y_prob = clf.predict(X_guest)
 
     try:
-        auc_score = roc_auc_score(y, y_prob)
+        auc_score = roc_auc_score(y_guest, y_prob)
     except:
         print(f"no auc score available")
         return
 
     result = {"auc": auc_score}
-
+    print(result)
     return {}, result
 
 

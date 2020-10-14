@@ -1,7 +1,7 @@
 {
     "data": [
         {
-            "file": "examples/data/breast_homo_guest.csv",
+            "file": "data/breast_homo_guest.csv",
             "head": 1,
             "partition": 16,
             "table_name": "breast_homo_guest",
@@ -9,7 +9,7 @@
             "role": "guest_0"
         },
         {
-            "file": "examples/data/breast_homo_host.csv",
+            "file": "data/breast_homo_host.csv",
             "head": 1,
             "partition": 16,
             "table_name": "breast_homo_host",
@@ -17,7 +17,7 @@
             "role": "host_0"
         },
         {
-            "file": "examples/data/breast_homo_test.csv",
+            "file": "data/breast_homo_test.csv",
             "head": 1,
             "partition": 16,
             "table_name": "breast_homo_test",
@@ -25,7 +25,7 @@
             "role": "guest_0"
         },
         {
-            "file": "examples/data/breast_homo_test.csv",
+            "file": "data/breast_homo_test.csv",
             "head": 1,
             "partition": 16,
             "table_name": "breast_homo_test",
@@ -33,7 +33,7 @@
             "role": "host_0"
         },
         {
-            "file": "examples/data/vehicle_scale_homo_guest.csv",
+            "file": "data/vehicle_scale_homo_guest.csv",
             "head": 1,
             "partition": 16,
             "table_name": "vehicle_scale_homo_guest",
@@ -41,7 +41,7 @@
             "role": "guest_0"
         },
         {
-            "file": "examples/data/vehicle_scale_homo_host.csv",
+            "file": "data/vehicle_scale_homo_host.csv",
             "head": 1,
             "partition": 16,
             "table_name": "vehicle_scale_homo_host",
@@ -49,7 +49,7 @@
             "role": "host_0"
         },
         {
-            "file": "examples/data/vehicle_scale_homo_test.csv",
+            "file": "data/vehicle_scale_homo_test.csv",
             "head": 1,
             "partition": 16,
             "table_name": "vehicle_scale_homo_test",
@@ -57,7 +57,7 @@
             "role": "guest_0"
         },
         {
-            "file": "examples/data/vehicle_scale_homo_test.csv",
+            "file": "data/vehicle_scale_homo_test.csv",
             "head": 1,
             "partition": 16,
             "table_name": "vehicle_scale_homo_test",
@@ -65,7 +65,7 @@
             "role": "host_0"
         },
         {
-            "file": "examples/data/student_homo_guest.csv",
+            "file": "data/student_homo_guest.csv",
             "head": 1,
             "partition": 16,
             "table_name": "student_homo_guest",
@@ -73,7 +73,7 @@
             "role": "guest_0"
         },
         {
-            "file": "examples/data/student_homo_host.csv",
+            "file": "data/student_homo_host.csv",
             "head": 1,
             "partition": 16,
             "table_name": "student_homo_host",
@@ -81,7 +81,7 @@
             "role": "host_0"
         },
         {
-            "file": "examples/data/student_homo_test.csv",
+            "file": "data/student_homo_test.csv",
             "head": 1,
             "partition": 16,
             "table_name": "student_homo_test",
@@ -89,7 +89,7 @@
             "role": "guest_0"
         },
         {
-            "file": "examples/data/student_homo_test.csv",
+            "file": "data/student_homo_test.csv",
             "head": 1,
             "partition": 16,
             "table_name": "student_homo_test",
@@ -97,7 +97,7 @@
             "role": "host_0"
         },
         {
-            "file": "examples/data/epsilon_5k_homo_guest.csv",
+            "file": "data/epsilon_5k_homo_guest.csv",
             "head": 1,
             "partition": 16,
             "table_name": "epsilon_5k_homo_guest",
@@ -105,7 +105,7 @@
             "role": "guest_0"
         },
         {
-            "file": "examples/data/epsilon_5k_homo_host.csv",
+            "file": "data/epsilon_5k_homo_host.csv",
             "head": 1,
             "partition": 16,
             "table_name": "epsilon_5k_homo_host",
@@ -113,56 +113,56 @@
             "role": "host_0"
         }
     ],
-    "hetero_sbt-binary-0": {
+    "homo_sbt-binary-0": {
         "local": {
-            "script": "./xgboost-sbt-binary.py",
-            "conf": "./xgb_config_binary.yaml"
+            "script": "./gbdt-binary.py",
+            "conf": "./gbdt_config_binary.yaml"
         },
         "FATE": {
             "script": "./fate-sbt.py",
             "conf": "./fate_sbt_binary.yaml"
         },
         "compare_setting": {
-            "relative_tol": 1e-3
+            "relative_tol": 0.05
         }
     },
-    "hetero_sbt-binary-1": {
+    "homo_sbt-binary-1": {
         "local": {
-            "script": "./xgboost-sbt-binary.py",
-            "conf": "./xgb_config_binary-epsilon-5k.yaml"
+            "script": "./gbdt-binary.py",
+            "conf": "./gbdt_config_binary-epsilon-5k.yaml"
         },
         "FATE": {
             "script": "./fate-sbt.py",
             "conf": "./fate_sbt_eplison_5k.yaml"
         },
         "compare_setting": {
-            "relative_tol": 1e-3
+            "relative_tol": 0.05
         }
     },
-    "hetero_sbt-multi-0": {
+    "homo_sbt-multi-0": {
         "local": {
-            "script": "./xgboost-sbt-multi.py",
-            "conf": "./xgb_config_multi.yaml"
+            "script": "./gbdt-multi.py",
+            "conf": "./gbdt_config_multi.yaml"
         },
         "FATE": {
             "script": "./fate-sbt.py",
             "conf": "./fate_sbt_multi.yaml"
         },
         "compare_setting": {
-            "relative_tol": 1e-3
+            "relative_tol": 0.05
         }
     },
-    "hetero_sbt-regression-0": {
+    "homo_sbt-regression-0": {
         "local": {
-            "script": "./xgboost-sbt-regression.py",
-            "conf": "./xgb_config_reg.yaml"
+            "script": "./gbdt-regression.py",
+            "conf": "./gbdt_config_reg.yaml"
         },
         "FATE": {
             "script": "./fate-sbt.py",
             "conf": "./fate_sbt_regression.yaml"
         },
         "compare_setting": {
-            "relative_tol": 1e-3
+            "relative_tol": 0.05
         }
     }
 }

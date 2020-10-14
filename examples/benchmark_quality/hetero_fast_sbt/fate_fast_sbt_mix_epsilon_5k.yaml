@@ -6,7 +6,7 @@ eval_type: "binary"
 task_type: "classification"
 loss_func: "cross_entropy"
 tree_depth: 3
-tree_num: 10
+tree_num: 20
 learning_rate: 0.1
 work_mode: "mix"
 tree_num_per_party: 1

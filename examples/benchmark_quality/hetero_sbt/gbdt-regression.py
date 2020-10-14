@@ -17,8 +17,7 @@
 import argparse
 
 import pandas as pd
-import xgboost as xgb
-
+from sklearn.ensemble.gradient_boosting import GradientBoostingRegressor
 from sklearn.metrics import explained_variance_score
 from sklearn.metrics import mean_absolute_error
 from sklearn.metrics import mean_squared_error
@@ -29,7 +28,7 @@ from sklearn.metrics import r2_score
 from pipeline.utils.tools import JobConfig
 
 
-def main(param="./xgb_config_reg.yaml"):
+def main(param=""):
     # obtain config
     if isinstance(param, str):
         param = JobConfig.load_from_file(param)
@@ -45,22 +44,15 @@ def main(param="./xgb_config_reg.yaml"):
     df = df_guest.join(df_host, rsuffix='host')
     y = df[label_name]
     X = df.drop(label_name, axis=1)
+    clf = GradientBoostingRegressor(random_state=0, n_estimators=50)
+    clf.fit(X, y)
 
-    train_data = xgb.DMatrix(data=X, label=y)
-    xgb_param = {'max_depth': 3, "eta": 0.1, 'objective': 'reg:squarederror', }
-    eval_list = [(train_data, 'train')]
-    boosting_round = 10
-
-    xgb_model = xgb.train(xgb_param, train_data, num_boost_round=boosting_round, evals=eval_list)
-    y_predict = xgb_model.predict(train_data)
+    y_predict = clf.predict(X)
 
     result = {"mean_squared_error": mean_squared_error(y, y_predict),
               "mean_absolute_error": mean_absolute_error(y, y_predict),
-              "median_absolute_error": median_absolute_error(y, y_predict),
-              "r2_score": r2_score(y, y_predict),
-              "explained_variance": explained_variance_score(y, y_predict)
               }
-
+    print(result)
     return {}, result
 
 

@@ -17,19 +17,23 @@
 import argparse
 
 import pandas as pd
-import xgboost as xgb
-from sklearn.metrics import roc_auc_score, precision_score, accuracy_score, recall_score
+from sklearn.ensemble.gradient_boosting import GradientBoostingRegressor
+from sklearn.metrics import explained_variance_score
+from sklearn.metrics import mean_absolute_error
+from sklearn.metrics import mean_squared_error
+from sklearn.metrics import median_absolute_error
+from sklearn.metrics import r2_score
+
 
 from pipeline.utils.tools import JobConfig
 
 
-def main(param="./xgb_config_binary.yaml"):
+def main(param=""):
     # obtain config
     if isinstance(param, str):
         param = JobConfig.load_from_file(param)
     data_guest = param["data_guest"]
     data_host = param["data_host"]
-    data_test = param["data_test"]
 
     idx = param["idx"]
     label_name = param["label_name"]
@@ -37,31 +41,19 @@ def main(param="./xgb_config_binary.yaml"):
     # prepare data
     df_guest = pd.read_csv(data_guest, index_col=idx)
     df_host = pd.read_csv(data_host, index_col=idx)
-    df_test = pd.read_csv(data_test, index_col=idx)
-
-    df = pd.concat([df_guest, df_host], axis=0)
+    df = df_guest.join(df_host, rsuffix='host')
     y = df[label_name]
     X = df.drop(label_name, axis=1)
-    y_test = df_test[label_name]
-    X_test = df_test.drop(columns=[label_name])
 
-    train_data = xgb.DMatrix(data=X, label=y)
-    validate_data = xgb.DMatrix(data=X_test, label=y_test)
-    xgb_param = {'max_depth': 3, "eta": 0.1, 'objective': 'binary:logistic'}
-    eval_list = [(train_data, 'train')]
-    boosting_round = 8
+    clf = GradientBoostingRegressor(random_state=0, n_estimators=50)
+    clf.fit(X, y)
 
-    xgb_model = xgb.train(xgb_param, train_data, num_boost_round=boosting_round, evals=eval_list)
-    y_prob = xgb_model.predict(train_data)
+    y_predict = clf.predict(X)
 
-    try:
-        auc_score = roc_auc_score(y, y_prob)
-    except:
-        print(f"no auc score available")
-        return
-
-    result = {"auc": auc_score}
-
+    result = {"mean_squared_error": mean_squared_error(y, y_predict),
+              "mean_absolute_error": mean_absolute_error(y, y_predict),
+              }
+    print(result)
     return {}, result
 
 
