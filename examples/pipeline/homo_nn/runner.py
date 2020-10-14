@@ -13,13 +13,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
+import pathlib
 import sys
-import os
 import argparse
 from enum import Enum
 
-additional_path = os.path.realpath('../')
+additional_path = pathlib.Path(__file__).resolve().parent.parent.resolve().__str__()
 if additional_path not in sys.path:
     sys.path.append(additional_path)
 

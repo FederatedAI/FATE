@@ -78,6 +78,9 @@ class Data(object):
         role_str = config.get("role") if config.get("role") != "guest" else "guest_0"
         return Data(config=kwargs, role_str=role_str)
 
+    def update(self, config: Config):
+        self.config.update(dict(work_mode=config.work_mode, backend=config.backend))
+
 
 class JobConf(object):
     def __init__(self,
@@ -85,7 +88,8 @@ class JobConf(object):
                  role: dict,
                  job_parameters: dict,
                  role_parameters: dict,
-                 algorithm_parameters: dict = None):
+                 algorithm_parameters: dict = None,
+                 **kwargs):
         self.initiator = initiator
         self.role = role
         self.job_parameters = job_parameters
@@ -236,9 +240,13 @@ class Testsuite(object):
         for data in self.dataset:
             data.config.update(dict(work_mode=config.work_mode, backend=config.backend))
 
+        failed = []
         for job in self.jobs:
-            job.job_conf.update(config.parties, config.work_mode, config.backend)
-        return self
+            try:
+                job.job_conf.update(config.parties, config.work_mode, config.backend)
+            except ValueError as e:
+                failed.append((job, e))
+        return failed
 
     def update_status(self, job_name, job_id: str = None, status: str = None, exception_id: str = None):
         for k, v in locals().items():
@@ -325,11 +333,6 @@ class BenchmarkSuite(object):
             pairs.append(BenchmarkPair(pair_name=pair_name, jobs=jobs, compare_setting=compare_setting))
         suite = BenchmarkSuite(dataset=dataset, pairs=pairs, path=path)
         return suite
-
-    def reflash_configs(self, config: Config):
-        for data in self.dataset:
-            data.config.update(dict(work_mode=config.work_mode, backend=config.backend))
-        return self
 
 
 def _namespace_hook(namespace):

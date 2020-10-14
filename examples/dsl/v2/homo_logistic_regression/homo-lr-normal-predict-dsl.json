@@ -18,41 +18,44 @@
                 ]
             }
         },
-        "hetero_lr_0": {
-            "input": {
-                "data": {
-                    "test_data": [
-                        "intersection_0.data"
-                    ]
-                },
-                "model": [
-                    "pipeline.hetero_lr_0.model"
-                ]
-            },
-            "module": "HeteroLR",
+        "reader_0": {
+            "module": "Reader",
             "output": {
                 "data": [
                     "data"
                 ]
             }
         },
-        "intersection_0": {
+        "scale_0": {
             "input": {
                 "data": {
                     "data": [
                         "dataio_0.data"
                     ]
-                }
+                },
+                "model": [
+                    "pipeline.scale_0.model"
+                ]
             },
-            "module": "Intersection",
+            "module": "FeatureScale",
             "output": {
                 "data": [
                     "data"
                 ]
             }
         },
-        "reader_0": {
-            "module": "Reader",
+        "homo_lr_0": {
+            "input": {
+                "data": {
+                    "test_data": [
+                        "scale_0.data"
+                    ]
+                },
+                "model": [
+                    "pipeline.homo_lr_0.model"
+                ]
+            },
+            "module": "HomoLR",
             "output": {
                 "data": [
                     "data"
