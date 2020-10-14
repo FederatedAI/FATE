@@ -54,6 +54,10 @@
             "conf": "homo_lr_train_conf.json",
             "dsl": "homo_lr_train_dsl.json"
         },
+        "predict": {
+            "conf": "homo-lr-normal-predict-conf.json",
+            "dsl": "homo-lr-normal-predict-dsl.json"
+        },
         "train-eval": {
             "conf": "homo_lr_train_eval_conf.json",
             "dsl": "homo_lr_train_eval_dsl.json"
@@ -62,7 +66,7 @@
             "conf": "homo_lr_cv_conf.json",
             "dsl": "homo_lr_cv_dsl.json"
         },
-        "eval": {
+        "single_eval": {
             "conf": "homo_lr_eval_conf.json",
             "dsl": "homo_lr_eval_dsl.json"
         },

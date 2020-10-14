@@ -2,24 +2,7 @@
 
 This section introduces the dsl and conf for usage of different type of task.
 
-#### Upload data
-
-We have provided several upload config for you can upload example data conveniently.
-
-1. breast data set
-    1. Guest Party Data: upload_data_guest.json
-    2. Host Party Data: upload_data_host.json
-
-    This data set can be applied for train task, train & validation task, cv task and lr with feature engineering task that list below.
-
-2. vehicle data set
-    1. Guest Party Data: upload_vehicle_guest.json
-    2. Host Party Data: upload_vehicle_host.json
-
-    This data set can be applied for multi-class task.
-
-
-#### Training Task.
+#### Example Task.
 
 1. Train_task:
     dsl: hetero_lr_normal_dsl.json
