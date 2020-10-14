@@ -380,12 +380,14 @@ class DAGScheduler(Cron):
             tasks = JobSaver.query_task(job_id=job_id, role=initiator_role, party_id=initiator_party_id, component_name=component_name)
         else:
             tasks = JobSaver.query_task(job_id=job_id, role=initiator_role, party_id=initiator_party_id)
-        should_rerun = False
+        job_can_rerun = False
         dsl_parser = schedule_utils.get_job_dsl_parser(dsl=job.f_dsl,
                                                        runtime_conf=job.f_runtime_conf,
                                                        train_runtime_conf=job.f_train_runtime_conf)
         for task in tasks:
-            if task.f_status != TaskStatus.COMPLETE:
+            if task.f_status in {TaskStatus.WAITING, TaskStatus.COMPLETE}:
+                schedule_logger(job_id=job_id).info(f"task {task.f_task_id} {task.f_task_version} on {task.f_role} {task.f_party_id} is {task.f_status}, pass rerun")
+            else:
                 # stop old version task
                 FederatedScheduler.stop_task(job=job, task=task, stop_status=task.f_status)
                 FederatedScheduler.clean_task(job=job, task=task, content_type="metrics")
@@ -402,10 +404,8 @@ class DAGScheduler(Cron):
                             continue
                         JobController.initialize_tasks(job_id, _role, _party_id, False, job.f_runtime_conf["initiator"], RunParameters(**job.f_runtime_conf["job_parameters"]), dsl_parser, component_name=task.f_component_name, task_version=task.f_task_version)
                 schedule_logger(job_id=job_id).info(f"create task {task.f_task_id} new version {task.f_task_version} successfully")
-                should_rerun = True
-            else:
-                schedule_logger(job_id=job_id).info(f"task {task.f_task_id} {task.f_task_version} on {task.f_role} {task.f_party_id} is complete, pass rerun")
-        if should_rerun:
+                job_can_rerun = True
+        if job_can_rerun:
             if EndStatus.contains(job.f_status):
                 job.f_status = JobStatus.WAITING
                 job.f_end_time = None
