@@ -102,9 +102,10 @@ def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
         "max_iter": param["max_iter"],
         "alpha": param["alpha"],
         "learning_rate": param["learning_rate"],
-        "optimizer": "sgd",
+        "optimizer": param.get("optimizer", "sgd"),
+        "batch_size": param.get("batch_size", -1),
         "encrypt_param": {
-            "method": "Paillier"
+            "method": None
         }
     }
     lr_param.update(config_param)
