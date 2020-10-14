@@ -5,6 +5,5 @@
     "head": 1,
     "partition": 8,
     "work_mode": 0,
-    "backend": 0,
-    "id_delimiter": ","
+    "backend": 0
 }

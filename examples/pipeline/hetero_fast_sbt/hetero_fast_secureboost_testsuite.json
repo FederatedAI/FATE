@@ -68,7 +68,7 @@
             "script": "./pipeline-hetero-sbt-mix-regression.py"
         },
         "mix_train_multi_host": {
-            "script": "./pipeline-hetero-sbt-mix-binary-multihost.py"
+            "script": "./pipeline-hetero-sbt-mix-binary-multi-host.py"
         },
         "layered_train_binary": {
             "script": "./pipeline-hetero-sbt-layered-binary.py"

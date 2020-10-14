@@ -27,7 +27,7 @@
                 "reader_0": {
                     "table": {
                         "name": "breast_hetero_host",
-                        "namespac e": "experiment"
+                        "namespace": "experiment"
                     }
                 },
                 "dataio_1": {
