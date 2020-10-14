@@ -138,8 +138,8 @@ function packaging_proxy(){
     echo "[INFO] Package proxy start"
     cd ${source_dir}
     cd c/proxy
-    mkdir -p ${package_dir}/nginx
-    cp -r conf lua ${package_dir}/nginx
+    mkdir -p ${package_dir}/proxy/nginx
+    cp -r conf lua ${package_dir}/proxy/nginx
     echo "[INFO] Package proxy done"
 }
 
