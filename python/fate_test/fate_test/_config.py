@@ -63,7 +63,7 @@ services:
 
 """
 
-default_config = Path(__file__).parent.joinpath("fate_test_config.yaml").resolve()
+_default_config = Path(__file__).parent.joinpath("fate_test_config.yaml").resolve()
 
 
 def create_config(path: Path, override=False):
@@ -73,12 +73,10 @@ def create_config(path: Path, override=False):
         f.write(temperate)
 
 
-def priority_config():
-    if Path("fate_test_config.yaml").exists():
-        return Path("fate_test_config.yaml").resolve()
-    if not default_config.exists():
-        create_config(default_config)
-    return default_config
+def default_config():
+    if not _default_config.exists():
+        create_config(_default_config)
+    return _default_config
 
 
 class Parties(object):
@@ -206,3 +204,11 @@ class Config(object):
                 else:
                     raise ValueError(f"Cannot load conf from file type {file_type}")
         return config
+
+
+def parse_config(config):
+    try:
+        config_inst = Config.load(config)
+    except Exception as e:
+        raise RuntimeError(f"error parse config from {config}") from e
+    return config_inst
