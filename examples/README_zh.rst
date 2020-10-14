@@ -34,11 +34,12 @@ Benchmark Quality
 
 从FATE-v1.5开始，FATE将提供中心化训练和FATE联邦建模效果的正确性对比工具，用于算法的正确性对比。在v1.5版本中，
 我们优先提供了建模中最常用的算法的正确性对比脚本，包括以下模型类型：
-* 纵向： `logistic regression <./benchmark_quality/hetero_lr>`__,
-  `secureboost <./benchmark_quality/hetero_sbt>`__,
-  `secureboost <./benchmark_quality/hetero_fast_sbt>`__,
-  `NN <./benchmark_quality/hetero_nn>`__.
-* 横向： `logistic regression <./benchmark_quality/homo_lr>`__,
+* 纵向: LogisticRegression(`benchmark_quality/hetero_lr <./benchmark_quality/hetero_lr>`__),
+  SecureBoost(`benchmark_quality/hetero_sbt <./benchmark_quality/hetero_sbt>`__),
+  FastSecureBoost(`benchmark_quality/hetero_fast_sbt <./benchmark_quality/hetero_fast_sbt>`__),
+  NN(`benchmark_quality/hetero_nn <./benchmark_quality/hetero_nn>`__).
+* 横向: LogisticRegression(`benchmark_quality/homo_lr <./benchmark_quality/homo_lr>`__),
+  SecureBoost(`benchmark_quality/homo_sbt <./benchmark_quality/homo_sbt>`__), NN(`benchmark_quality/homo_nn <./benchmark_quality/homo_nn>`__.
 
 执行方法可参考\ `benchmark_quality使用文档 <../python/fate_test/README.rst>`__
 
