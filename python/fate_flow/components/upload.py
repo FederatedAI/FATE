@@ -138,7 +138,7 @@ class Upload(object):
                     save_progress = lines_count/input_feature_count*100//1
                     job_info = {'progress': save_progress, "job_id": job_id, "role": self.parameters["local"]['role'], "party_id": self.parameters["local"]['party_id']}
                     ControllerClient.update_job(job_info=job_info)
-                    self.table.put_all(data, destroy_if_exists=self.parameters.get("destroy", False))
+                    self.table.put_all(data)
                     if n == 0:
                         self.table.get_meta().update_metas(part_of_data=data)
                 else:
