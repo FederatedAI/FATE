@@ -29,11 +29,11 @@ install_requires = [
     'requests_toolbelt>=0.9.1,<0.10.0',
     'ruamel.yaml>=0.16.10,<0.17.0',
     'sshtunnel>=0.1.5,<0.2.0',
-    'pandas>=1.1.0'
+    'pandas>=0.23.4'
 ]
 
 entry_points = {
-    'console_scripts': ['fate_test = fate_test.cli:cli']
+    'console_scripts': ['fate_test = fate_test.scripts.cli:cli'],
 }
 
 setup_kwargs = {
