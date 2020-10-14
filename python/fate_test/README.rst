@@ -27,12 +27,10 @@ quick start
       fate_test --help
 
 
-3. new and edit the fate_test_config.yaml
+3. edit default fate_test_config.yaml
 
    .. code-block:: bash
 
-      # create a fate_test_config.yaml in current dir
-      fate_test config new
       # edit priority config file with system default editor
       # filling some field according to comments
       fate_test config edit
@@ -170,15 +168,7 @@ command options
 
    will run testsuites in sub directory start with *hetero* of *path1*
 
-4. config:
-
-   .. code-block:: bash
-
-      fate_test suite -i <path1 contains *testsuite.json> -c <path2 to *.yaml>
-
-   will run testsuites in *path1* with config file at *path2*
-
-5. replace:
+4. replace:
 
    .. code-block:: bash
 
@@ -187,17 +177,7 @@ command options
    will find all key-value pair with key "maxIter" in `data conf` or `conf` or `dsl` and replace the value with 5
 
 
-6. data-namespace-mangling:
-
-   .. code-block:: bash
-
-      fate_test suite -i <path1 contains *testsuite.json> --data-namespace-mangling
-
-   will run testsuites in *path1* with uploaded data namespace modified to have a suffix of timestamp.
-   Timestamp is used for distinguishing data from different tetsuites.
-   Uploaded data will be deleted after all benchmark jobs end.
-
-7. skip-data:
+5. skip-data:
 
    .. code-block:: bash
 
@@ -206,7 +186,7 @@ command options
    will run testsuites in *path1* without uploading data specified in *benchmark.json*.
    Note that data-namespace-mangling is ineffective when skipping data upload.
 
-8. yes:
+6. yes:
 
    .. code-block:: bash
 
@@ -214,7 +194,7 @@ command options
 
    will run testsuites in *path1* directly, skipping double check
 
-9. skip-dsl-jobs:
+7. skip-dsl-jobs:
 
    .. code-block:: bash
 
@@ -222,21 +202,13 @@ command options
 
    will run testsuites in *path1* but skip all *tasks* in testsuites. It's would be useful when only pipeline tasks needed.
 
-10. skip-pipeline-jobs:
+8. skip-pipeline-jobs:
 
    .. code-block:: bash
 
       fate_test suite -i <path1 contains *testsuite.json> --skip-pipeline-jobs
 
    will run testsuites in *path1* but skip all *pipeline tasks* in testsuites. It's would be useful when only dsl tasks needed.
-
-11. data-only:
-
-   .. code-block:: bash
-
-      fate_test suite -i <path1 contains *testsuite.json> --data-only
-
-   will upload data in testsuite in *path1* and skip all tasks.
 
 
 Benchmark Quality
@@ -306,15 +278,7 @@ use the following command to show help message
 
    will run benchmark testsuites in sub directory start with *hetero* of *path1*
 
-4. config:
-
-   .. code-block:: bash
-
-      fate_test benchmark-quality -i <path1 contains *benchmark.json> -c <path2 to *.yaml>
-
-   will run benchmark testsuites in *path1* with config file at *path2*
-
-5. tol:
+4. tol:
 
    .. code-block:: bash
 
@@ -324,17 +288,7 @@ use the following command to show help message
    If absolute difference between metrics is smaller than *tol*, then metrics are considered
    almost equal. Check benchmark testsuite `writing guide <#benchmark-testsuite>`_ on setting alternative tolerance.
 
-6. data-namespace-mangling:
-
-   .. code-block:: bash
-
-      fate_test benchmark-quality -i <path1 contains *benchmark.json> --data-namespace-mangling
-
-   will run benchmark testsuites in *path1* with uploaded data namespace modified to have a suffix of timestamp.
-   Timestamp is used for distinguishing data from different tetsuites.
-   Uploaded data will be deleted after all benchmark jobs end.
-
-7. skip-data:
+5. skip-data:
 
    .. code-block:: bash
 
@@ -343,7 +297,7 @@ use the following command to show help message
    will run benchmark testsuites in *path1* without uploading data specified in *benchmark.json*.
    Note that data-namespace-mangling is ineffective when skipping data upload.
 
-8. yes:
+6. yes:
 
    .. code-block:: bash
 
@@ -455,10 +409,46 @@ Note that only **real-value** metrics can be compared.
   - param: job parameter setting, dictionary loaded from "conf" file specified in benchmark testsuite
 
 
+data
+----
+
+`Data` sub-command is used for upload or delete dataset in suite's.
+
+command options
+~~~~~~~~~~~~~~~
+
+.. code-block:: bash
+
+      fate_test data --help
+
+1. include:
+
+   .. code-block:: bash
+
+      fate_test data [upload|delete] -i <path1 contains *testsuite.json>
+
+   will upload/delete dataset in testsuites in *path1*
+
+2. exclude:
+
+   .. code-block:: bash
+
+      fate_test data [upload|delete] -i <path1 contains *testsuite.json> -e <path2 to exclude> -e <path3 to exclude> ...
+
+   will upload/delete dataset in testsuites in *path1* but not in *path2* and *path3*
+
+3. glob:
+
+   .. code-block:: bash
+
+      fate_test data [upload|delete] -i <path1 contains *testsuite.json> -g "hetero*"
+
+   will upload/delete dataset in testsuites in sub directory start with *hetero* of *path1*
+
 
 full command options
 ---------------------
 
-.. click:: fate_test.cli:cli
+.. click:: fate_test.scripts.cli:cli
   :prog: fate_test
   :show-nested:
