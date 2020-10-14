@@ -445,7 +445,8 @@ class Tracker(object):
             if self.job_parameters.federation_engine == FederationEngine.RABBITMQ:
                 schedule_logger(self.job_id).info('rabbitmq start clean up')
                 parties = [Party(k, p) for k, v in runtime_conf['role'].items() for p in v]
-                sess.init_federation(federation_session_id=self.task_id,
+                federation_session_id = job_utils.generate_federated_id(self.task_id, self.task_version)
+                sess.init_federation(federation_session_id=federation_session_id,
                                      runtime_conf=runtime_conf,
                                      service_conf=self.job_parameters.engines_address.get(EngineType.FEDERATION, {}))
                 sess._federation_session._get_mq_names(parties=parties)
