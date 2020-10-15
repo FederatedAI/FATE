@@ -99,8 +99,8 @@ def main():
     # fit model
     pipeline.fit(backend=backend, work_mode=work_mode)
     # query component summary
-    print (pipeline.get_component("hetero_lr_0").get_summary())
-
+    import json
+    print(json.dumps(pipeline.get_component("hetero_lr_0").get_summary(), indent=4))
 
     # predict
     # deploy required components

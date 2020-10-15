@@ -69,7 +69,7 @@ if __name__ == "__main__":
                         help="data base, path to directory that contains examples/data")
 
     args = parser.parse_args()
-    if args.config is not None:
+    if args.base is not None:
         main(args.base)
     else:
         main()
