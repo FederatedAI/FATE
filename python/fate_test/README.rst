@@ -192,7 +192,7 @@ command options
        fate_test suite -i <path1 contains *testsuite.json> --skip-data
 
    will run testsuites in *path1* without uploading data specified in *benchmark.json*.
-   Note that data-namespace-mangling is ineffective when skipping data upload.
+
 
 6. yes:
 
@@ -303,7 +303,7 @@ use the following command to show help message
        fate_test benchmark-quality -i <path1 contains *benchmark.json> --skip-data
 
    will run benchmark testsuites in *path1* without uploading data specified in *benchmark.json*.
-   Note that data-namespace-mangling is ineffective when skipping data upload.
+
 
 6. yes:
 
@@ -410,7 +410,7 @@ Note that only **real-value** metrics can be compared.
 
   - config: job configuration, `JobConfig <../fate_client/pipeline/utils/tools.py#L64>`_ object loaded from "fate_test_config.yaml"
   - param: job parameter setting, dictionary loaded from "conf" file specified in benchmark testsuite
-  - namespace: namespace suffix, generated timestamp string when using *data-namespace-mangling*
+  - namespace: namespace suffix, user-given *namespace* or generated timestamp string when using *namespace-mangling*
 
 - non-FATE script: ``Main`` always has one input:
 

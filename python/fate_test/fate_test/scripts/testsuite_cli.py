@@ -184,10 +184,23 @@ def _run_pipeline_jobs(config: Config, suite: Testsuite, namespace: str, data_na
     # pipeline demo goes here
     job_n = len(suite.pipeline_jobs)
     for i, pipeline_job in enumerate(suite.pipeline_jobs):
-        echo.echo(f"Running {i + 1} of {job_n} jobs: {pipeline_job.job_name}")
+        echo.echo(f"Running [{i + 1}/{job_n}] job: {pipeline_job.job_name}")
+
+        def _raise(status):
+            exception_id = str(uuid.uuid1())
+            suite.update_status(job_name=job_name, exception_id=exception_id, status=status)
+            echo.file(f"exception({exception_id})")
+            LOGGER.exception(f"exception id: {exception_id}")
+
         job_name, script_path = pipeline_job.job_name, pipeline_job.script_path
         mod = _load_module_from_script(script_path)
         if data_namespace_mangling:
-            mod.main(config, f"_{namespace}")
+            try:
+                mod.main(config, f"_{namespace}")
+            except:
+                _raise("incomplete")
         else:
-            mod.main(config)
+            try:
+                mod.main(config)
+            except:
+                _raise("incomplete")
