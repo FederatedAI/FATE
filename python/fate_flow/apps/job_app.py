@@ -68,7 +68,7 @@ def stop_job():
         if status_code == FederatedSchedulingStatusCode.SUCCESS:
             return get_json_result(retcode=RetCode.SUCCESS, retmsg="stop job success")
         else:
-            return get_json_result(retcode=RetCode.OPERATING_ERROR, retmsg="stop job failed:\n{}".format(json_dumps(response)))
+            return get_json_result(retcode=RetCode.OPERATING_ERROR, retmsg="stop job failed:\n{}".format(json_dumps(response, indent=4)))
     else:
         stat_logger.info(f"can not found job {jobs[0]} to stop, delete job event")
         JobQueue.delete_event(job_id=job_id)
