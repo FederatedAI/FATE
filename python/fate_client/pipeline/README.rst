@@ -18,10 +18,10 @@ mode may need to be modified depending on the deployment setting.
 For more pipeline demo, please refer to
 `examples <../../../examples/pipeline>`__.
 
-A FATE Job is A Sequence
-------------------------
+A FATE Job is A Directed Acyclic Graph
+--------------------------------------
 
-A FATE job includes a sequence of tasks. FATE pipeline provides
+A FATE job is a dag consists of algorithm component nodes. FATE pipeline provides
 easy-to-use tools to configure order and setting of the tasks.
 
 FATE is written in a modular style. Modules are designed to have input
@@ -51,7 +51,14 @@ command for more information.
 
 .. code:: bash
 
-   pipeline config -h
+   pipeline config --help
+
+`FATE-Flow Commandline <../flow_client/README.rst>`_ needs to be initialized. Run the following
+command for more information.
+
+.. code:: bash
+
+   flow init --help
 
 Interface of Pipeline
 ---------------------
@@ -68,13 +75,12 @@ identifier, and so it must be unique within a pipeline. We suggest that
 each component name includes a numbering as suffix for easy tracking.
 
 Components each may have input and/or output `Data` and/or `Model`.
-For details on inputs and outputs of each component, please refer to
+For details on how to use component, please refer to this
 `guide <./component/README.rst>`__.
 
 An example of initializing a component with specified parameter values:
 
 .. code:: python
-   from pipeline.component import HeteroLR
 
    hetero_lr_0 = HeteroLR(name="hetero_lr_0", early_stop="weight_diff", max_iter=10,
                           early_stopping_rounds=2, validation_freqs=2)
@@ -83,14 +89,12 @@ Input
 ~~~~~~
 
 `Input <./component/README.rst>`__ encapsulates all input of a component, including
-``Data`` and ``Model`` input. To access ``input`` from a component,
+``Data`` and ``Model`` input. To access ``input`` of a component,
 reference its ``input`` attribute:
 
 .. code:: python
 
    input_all = dataio_0.input
-   input_data = dataio_0.input.data
-   input_model = dataio_0.input.model
 
 Output
 ~~~~~~
@@ -102,79 +106,20 @@ reference its ``output`` attribute:
 .. code:: python
 
    output_all = dataio_0.output
-   output_data = dataio_0.output.data
-   output_model = dataio_0.output.model
 
 Data
 ~~~~
 
-In most cases, data sets are wrapped into ``data`` when being passed
-between modules. For instance, in the mini demo, data output of
-``dataio_0`` is set as data input to ``intersection_0``.
+``Data`` wraps all data-type input and output of components.
+FATE Pipeline includes five types of ``data``, each is used for different scenario.
 For more information, please refer `here <./component/README.rst>`__.
-
-.. code:: python
-   from pipeline.interface import Data
-
-   pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
-
-For data sets used in different modeling stages (e.g., train & validate)
-of the same component, additional keywords ``train_data``,
-``validate_data`` and ``test_data`` are used to distinguish data sets.
-Also from mini demo, result from ``intersection_0`` and
-``intersection_1`` are set as train and validate data input to training
-component, respectively.
-
-.. code:: python
-   from pipeline.interface import Data
-
-   pipeline.add_component(hetero_lr_0, data=Data(train_data=intersection_0.output.data,
-                                                 validate_data=intersection_1.output.data))
-
-Another case of using keywords ``train_data``, ``validate_data``, and
-``test_data`` is to select from ``DataSplit`` module’s multiple outputs:
-
-.. code:: python
-   from pipeline.interface import Data
-
-   pipeline.add_component(hetero_linr_1, 
-                          data=Data(test_data=hetero_data_split_0.output.data.test_data),
-                          model=Model(model=hetero_linr_0))
 
 Model
 ~~~~~
 
-``Model`` defines model input and output of components. There are two
-types of ``Model``: ``model`` and\ ``isometric_model``. When the current
-component is of the same class as the previous component, if receiving
-``model``, the current component will replicate all model parameters from
-the previous component.
+``Model`` defines model input and output of components. Similar to ``Data``, the two
+types of ``models`` are used for different purposes.
 For more information, please refer `here <./component/README.rst>`__.
-
-Check below for a case from mini demo, where ``model`` from ``dataio_0``
-is passed to ``dataio_1``.
-
-.. code:: python
-   from pipeline.interface import Data
-   from pipeline.interface import Model
-
-   pipeline.add_component(dataio_1,
-                          data=Data(data=reader_1.output.data),
-                          model=Model(dataio_0.output.model))
-
-When a model from previous component is used but the current component
-is of different class from the previous component, ``isometric_model``
-is used. For instance, ``HeteroFeatureSelection`` can use
-``isometric_model`` from ``HeteroFeatureBinning`` to select most
-important features.
-
-.. code:: python
-   from pipeline.interface import Data
-   from pipeline.interface import Model
-
-   pipeline.add_component(hetero_feature_selection_0,
-                          data=Data(data=intersection_0.output.data),
-                          isometric_model=Model(hetero_feature_binning_0.output.model))
 
 Build A Pipeline
 ----------------
@@ -188,8 +133,8 @@ specified. Below is an example of initial setup of a pipeline:
 .. code:: python
 
    pipeline = PipeLine()
-   pipeline.set_initiator(role='guest', party_id=10000)
-   pipeline.set_roles(guest=10000, host=9999, arbiter=10002)
+   pipeline.set_initiator(role='guest', party_id=9999)
+   pipeline.set_roles(guest=9999, host=10000, arbiter=10000)
 
 ``Reader`` is required to read in data source so that other component(s)
 can process data. Define a ``Reader`` component:
@@ -210,7 +155,7 @@ component can be configured specifically for guest like this:
 .. code:: python
 
    dataio_0 = DataIO(name="dataio_0")
-   guest_component_instance = dataio_0.get_party_instance(role='guest', party_id=10000)
+   guest_component_instance = dataio_0.get_party_instance(role='guest', party_id=9999)
    guest_component_instance.algorithm_param(with_label=True, output_format="dense")
 
 To include a component in a pipeline, use ``add_component``. To add the
@@ -236,8 +181,8 @@ Query on Tasks
 --------------
 
 FATE Pipeline provides API to query component information,
-including data, model, and metrics. All query API have matching name to
-`FlowPy <../fate_sdk>`__, while Pipeline retrieves and returns
+including data, model, and summary. All query API have matching name to
+`FlowPy <../flow_sdk>`__, while Pipeline retrieves and returns
 query result directly to user.
 
 .. code:: python
@@ -276,6 +221,32 @@ Prediction can then be initiated on the new pipeline.
 
 In addition, since pipeline is modular, user may add new components to
 the original pipeline when running prediction.
+
+Save and Recovery of Pipeline
+-----------------------------
+
+To save a pipeline, just use **dump** interface.
+
+.. code:: python
+
+   pipeline.dump("pipeline_saved.pkl")
+
+To save a pipeline, use **load_model_from_file** interface.
+
+.. code:: python
+
+   from pipeline.backend.pipeline import PineLine
+   PipeLine.load_model_from_file("pipeline_saved.pkl")
+
+Summary info of pipeline
+-------------------------
+
+To get the detail of a pipeline, use **describe** interface, it will print the "create time"
+fit or predict state and the constructed dsl if exists.
+
+.. code:: python
+
+   pipeline.describe()
 
 Upload Data
 -----------

@@ -16,7 +16,7 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
 
 5. 安全协议：提供了多种安全协议，以进行更安全的多方交互计算。
 
-.. figure:: ../doc/images/federatedml_structure.png
+.. figure:: ../../doc/images/federatedml_structure.png
    :align: center
    :width: 800
    :alt: 联邦学习结构
@@ -39,12 +39,20 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
      - 模型输入
      - 模型输出
 
+   * - Reader
+     - Reader
+     - 当输入数据的存储引擎当前计算引擎不支持时，会自动转存到FATE集群适配计算引擎的组件输出存储引擎；当输入数据的存储格式非FATE支持存储格式时，会自动转换格式，并存储到FATE集群的组件输出存储引擎
+     - 用户原始存储数据
+     - 转换后原始数据
+     -
+     -
+
    * - `DataIO`_
      - DataIO
-     - 该组件通常是建模任务的第一个组件。 它将用户上传的数据转换为Instance对象。
+     - 该组件将原始数据转换为Instance对象。
      - Table，值为原始数据
      - 转换后的数据表，值为在 : `federatedml/feature/instance.py` 中定义的Data Instance的实例
-     - 
+     -
      - DataIO模型
 
    * - `Intersect`_
@@ -52,7 +60,7 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
      - 计算两方的相交数据集，而不会泄漏任何差异数据集的信息。主要用于纵向任务。
      - Table
      - 两方Table中相交的部分
-     - 
+     -
      - Intersect模型
 
    * - `Federated Sampling`_
@@ -60,7 +68,7 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
      - 对数据进行联邦采样，使得数据分布在各方之间变得平衡。这一模块同时支持单机和集群版本。
      - Table
      - 采样后的数据，同时支持随机采样和分层采样
-     - 
+     -
      -
 
    * - `Feature Scale`_
@@ -76,7 +84,7 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
      - 使用分箱的输入数据，计算每个列的iv和woe，并根据合并后的信息转换数据。
      - Table，在guest中有标签y，在host中没有标签y
      - 转换后的Table
-     - 
+     -
      - 每列的iv/woe，分裂点，事件计数，非事件计数等
    
    * - `OneHot Encoder`_
@@ -84,7 +92,7 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
      - 将一列转换为One-Hot格式。
      - Table, 值为Instance
      - 转换了带有新列名的Table
-     - 
+     -
      - 原始列名和特征值到新列名的映射
     
    * - `Hetero Feature Selection`_
@@ -100,7 +108,7 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
      - 将多个数据表合并成一个。
      - Tables
      - 多个Tables合并后的Table
-     - 
+     -
      -
 
    * - `Hetero-LR`_
@@ -192,8 +200,7 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
      - SecureBoost模型，由模型本身和模型参数组成
 
    * - `Homo OneHot Encoder`_
-     - 横向
-     - OneHotEncoder
+     - 横向 OneHotEncoder
      - 将一列转换为One-Hot格式。
      - Table, 值为Instance
      - 转换了带有新列名的Table
@@ -215,6 +222,30 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
      - 转换后带有新数列与列名的Table
      -
      - Column Expand模型
+
+   * - `Secure Information Retrieval`_
+     -
+     - 通过不经意传输协议安全取回所需数值
+     - Table, 值为Instance
+     - Table, 值为取回数值
+     -
+     -
+
+   * - `Hetero KMeans`_
+     - 纵向 K均值算法
+     - 构建K均值模块
+     - Table, 值为Instance
+     - Table, 值为Instance; Arbiter方输出2个Table
+     -
+     - Hetero KMeans模型
+
+   * - `Data Statistics`_
+     - 数据统计
+     - 这个组件会对数据做一些统计工作，包括统计均值，最大最小值，中位数等
+     - Table, 值为Instance
+     - Table
+     -
+     - Statistic Result
 
 .. _DataIO: util/README.rst
 .. _Intersect: statistic/intersect/README.rst
@@ -238,6 +269,9 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
 .. _Data Split: model_selection/data_split/README.rst
 .. _Homo OneHot Encoder: feature/README.rst
 .. _Column Expand: feature/README.rst
+.. _Secure Information Retrieval: secure_information_retrieval
+.. _Hetero KMeans: unsupervised_learning/kmeans/README.rst
+.. _Data Statistics: statistic/README.rst
 
 
 安全协议
@@ -258,6 +292,8 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
 
 * `SecretShare MPC Protocol(SPDZ)`_
 
+* `Oblivious Transfer`_
+
 
 .. _Encrypt: secureprotol/README.rst#encrypt
 .. _Paillier encryption: secureprotol/README.rst#paillier-encryption
@@ -268,6 +304,13 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
 .. _Encode: secureprotol/README.rst#encode
 .. _Diffne Hellman Key Exchange: secureprotol/README.rst#diffne-hellman-key-exchange
 .. _SecretShare MPC Protocol(SPDZ): secureprotol/README.rst#secretshare-mpc-protocol-spdz
+.. _Oblivious Transfer: secureprotol/README.rst#oblivious-transfer
 
 
 
+Params
+-------
+
+.. automodule:: federatedml.param
+   :autosummary:
+   :members:

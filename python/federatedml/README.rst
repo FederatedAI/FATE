@@ -16,7 +16,7 @@ FederatedML includes implementation of many common machine learning algorithms o
 
 5. Secure Protocol: Provides multiple security protocols for secure multi-party computing and interaction between participants.
 
-.. image:: ../doc/images/federatedml_structure.png
+.. image:: ../../doc/images/federatedml_structure.png
    :width: 800
    :align: center
    :alt: federatedml structure
@@ -37,11 +37,19 @@ Algorithm List
      - Model Input
      - Model Output
 
+   * - Reader
+     - Reader
+     - This component loads and transforms data from storage engine so that data is compatible with FATE computing engine
+     - Original Data
+     - Transformed Data
+     -
+     -
+
    * - `DataIO`_
      - DataIO
      - This component transforms user-uploaded date into Instance object.
      - Table, values are raw data.
-     - Transformed Table, values are data instance define in `federatedml/feature/instance.py`
+     - Transformed Table, values are data instance defined `here <./feature/instance.py>`_
      -
      - DataIO Model
 
@@ -75,7 +83,7 @@ Algorithm List
      - Table, values are instances.
      - Transformed Table.
      -
-     - iv/woe, split points, event counts, non-event counts etc. of each column.
+     - iv/woe, split points, event count, non-event count etc. of each column.
 
    * - `OneHot Encoder`_
      - OneHotEncoder
@@ -111,7 +119,7 @@ Algorithm List
 
    * - `Local Baseline`_
      - LocalBaseline
-     - Wrapper that runs sklearn Logistic Regression model with local data.
+     - Wrapper that runs sklearn(scikit-learn) Logistic Regression model with local data.
      - Table, values are instances.
      - Table, values are instances.
      -
@@ -213,6 +221,30 @@ Algorithm List
      -
      - Column Expand Model
 
+   * - `Secure Information Retrieval`_
+     - Secure Information Retrieval
+     - Securely retrieves information from host through oblivious transfer
+     - Table, values are instance
+     - Table, values are instance
+     -
+     -
+
+   * - `Hetero KMeans`_
+     - Hetero KMeans
+     - Build Hetero KMeans module through multiple parties
+     - Table, values are instance
+     - Table, values are instance; Arbier outputs 2 Tables
+     -
+     - Hetero KMeans Model
+
+   * - `Data Statistics`_
+     - Data Statistics
+     - This component will do some statistical work on the data, including statistical mean, maximum and minimum, median, etc.
+     - Table, values are instance
+     - Table
+     -
+     - Statistic Result
+
 .. _DataIO: util/README.rst
 .. _Intersect: statistic/intersect/README.rst
 .. _Federated Sampling: feature/README.rst
@@ -235,6 +267,9 @@ Algorithm List
 .. _Data Split: model_selection/data_split/README.rst
 .. _Homo OneHot Encoder: feature/README.rst
 .. _Column Expand: feature/README.rst
+.. _Secure Information Retrieval: secure_information_retrieval
+.. _Hetero KMeans: unsupervised_learning/kmeans/README.rst
+.. _Data Statistics: statistic/README.rst
 
 
 Secure Protocol
@@ -254,6 +289,8 @@ Secure Protocol
 
 * `SecretShare MPC Protocol(SPDZ)`_
 
+* `Oblivious Transfer`_
+
 
 .. _Encrypt: secureprotol/README.rst#encrypt
 .. _Paillier encryption: secureprotol/README.rst#paillier-encryption
@@ -264,6 +301,7 @@ Secure Protocol
 .. _Encode: secureprotol/README.rst#encode
 .. _Diffne Hellman Key Exchange: secureprotol/README.rst#diffne-hellman-key-exchange
 .. _SecretShare MPC Protocol(SPDZ): secureprotol/README.rst#secretshare-mpc-protocol-spdz
+.. _Oblivious Transfer: secureprotol/README.rst#oblivious-transfer
 
 
 

@@ -46,19 +46,15 @@ class HomoDecisionTreeArbiter(DecisionTree):
         LOGGER.info("set flowid, flowid is {}".format(flowid))
         self.transfer_inst.set_flowid(flowid)
 
+    """
+    Federation Functions
+    """
+
     def sync_node_sample_numbers(self, suffix):
         cur_layer_node_num = self.transfer_inst.cur_layer_node_num.get(-1, suffix=suffix)
         for num in cur_layer_node_num[1:]:
             assert num == cur_layer_node_num[0]
         return cur_layer_node_num[0]
-
-    def federated_find_best_split(self, node_histograms, parallel_partitions=10) -> List[SplitInfo]:
-
-        LOGGER.debug('aggregating histograms')
-        acc_histogram = node_histograms
-        best_splits = self.splitter.find_split(acc_histogram, self.valid_features, parallel_partitions,
-                                               self.sitename, self.use_missing, self.zero_as_missing)
-        return best_splits
 
     def sync_best_splits(self, split_info, suffix):
         LOGGER.debug('sending best split points')
@@ -69,6 +65,18 @@ class HomoDecisionTreeArbiter(DecisionTree):
         node_local_histogram = self.aggregator.aggregate_histogram(suffix=suffix)
         LOGGER.debug('num of histograms {}'.format(len(node_local_histogram)))
         return node_local_histogram
+
+    """
+    Split finding
+    """
+
+    def federated_find_best_split(self, node_histograms, parallel_partitions=10) -> List[SplitInfo]:
+
+        LOGGER.debug('aggregating histograms')
+        acc_histogram = node_histograms
+        best_splits = self.splitter.find_split(acc_histogram, self.valid_features, parallel_partitions,
+                                               self.sitename, self.use_missing, self.zero_as_missing)
+        return best_splits
 
     @staticmethod
     def histogram_subtraction(left_node_histogram, stored_histograms):
@@ -85,6 +93,10 @@ class HomoDecisionTreeArbiter(DecisionTree):
             all_histograms.append(right_hist)
 
         return all_histograms
+
+    """
+    Fit
+    """
 
     def fit(self):
 
@@ -177,4 +189,7 @@ class HomoDecisionTreeArbiter(DecisionTree):
         pass
 
     def traverse_tree(self, *args):
+        pass
+
+    def update_instances_node_positions(self, *args):
         pass

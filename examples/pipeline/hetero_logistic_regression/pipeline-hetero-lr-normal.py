@@ -64,10 +64,18 @@ def main(config="../../config.yaml", namespace=""):
     }
 
     pipeline = common_tools.make_normal_dsl(config, namespace, lr_param)
+    # dsl_json = predict_pipeline.get_predict_dsl()
+    # conf_json = predict_pipeline.get_predict_conf()
+    # import json
+    # json.dump(dsl_json, open('./hetero-lr-normal-predict-dsl.json', 'w'), indent=4)
+    # json.dump(conf_json, open('./hetero-lr-normal-predict-conf.json', 'w'), indent=4)
+
+
     # fit model
     pipeline.fit(backend=backend, work_mode=work_mode)
     # query component summary
     common_tools.prettify(pipeline.get_component("hetero_lr_0").get_summary())
+    common_tools.prettify(pipeline.get_component("evaluation_0").get_summary())
 
 
 if __name__ == "__main__":

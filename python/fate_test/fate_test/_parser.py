@@ -14,11 +14,9 @@
 #  limitations under the License.
 #
 
-import dataclasses
 import json
 import typing
 from collections import deque
-from dataclasses import dataclass, field
 from pathlib import Path
 
 import click
@@ -60,10 +58,10 @@ CONF_JSON_HOOK = chain_hook()
 DSL_JSON_HOOK = chain_hook()
 
 
-@dataclass
 class Data(object):
-    config: dict
-    role_str: str
+    def __init__(self, config: dict, role_str: str):
+        self.config = config
+        self.role_str = role_str
 
     @staticmethod
     def load(config, path: Path):
@@ -80,14 +78,32 @@ class Data(object):
         role_str = config.get("role") if config.get("role") != "guest" else "guest_0"
         return Data(config=kwargs, role_str=role_str)
 
+    def update(self, config: Config):
+        self.config.update(dict(work_mode=config.work_mode, backend=config.backend))
 
-@dataclass
+
 class JobConf(object):
-    initiator: dict
-    role: dict
-    job_parameters: dict
-    role_parameters: dict
-    algorithm_parameters: dict = field(default_factory=dict)
+    def __init__(self,
+                 initiator: dict,
+                 role: dict,
+                 job_parameters: dict,
+                 role_parameters: dict,
+                 algorithm_parameters: dict = None,
+                 **kwargs):
+        self.initiator = initiator
+        self.role = role
+        self.job_parameters = job_parameters
+        self.role_parameters = role_parameters
+        self.algorithm_parameters = algorithm_parameters or {}
+
+    def as_dict(self):
+        return dict(
+            initiator=self.initiator,
+            role=self.role,
+            job_parameters=self.job_parameters,
+            role_parameters=self.role_parameters,
+            algorithm_parameters=self.algorithm_parameters
+        )
 
     @staticmethod
     def load(path: Path):
@@ -95,15 +111,15 @@ class JobConf(object):
             kwargs = json.load(f, object_hook=CONF_JSON_HOOK.hook)
         return JobConf(**kwargs)
 
-    def update(self, parties: Parties, work_mode):
+    def update(self, parties: Parties, work_mode, backend):
         self.initiator = parties.extract_initiator_role(self.initiator['role'])
         self.role = parties.extract_role({role: len(parties) for role, parties in self.role.items()})
-        self.job_parameters.update(dict(work_mode=work_mode))
+        self.job_parameters.update(dict(work_mode=work_mode, backend=backend))
 
 
-@dataclass
 class JobDSL(object):
-    components: dict
+    def __init__(self, components: dict):
+        self.components = components
 
     @staticmethod
     def load(path: Path):
@@ -111,13 +127,17 @@ class JobDSL(object):
             kwargs = json.load(f, object_hook=DSL_JSON_HOOK.hook)
         return JobDSL(**kwargs)
 
+    def as_dict(self):
+        return dict(components=self.components)
 
-@dataclass
+
 class Job(object):
-    job_name: str
-    job_conf: JobConf
-    job_dsl: typing.Optional[JobDSL]
-    pre_works: typing.MutableSet[str]
+    def __init__(self, job_name: str, job_conf: JobConf, job_dsl: typing.Optional[JobDSL],
+                 pre_works: typing.MutableSet[str]):
+        self.job_name = job_name
+        self.job_conf = job_conf
+        self.job_dsl = job_dsl
+        self.pre_works = pre_works
 
     @classmethod
     def load(cls, job_name, job_configs, base: Path):
@@ -133,8 +153,8 @@ class Job(object):
 
     @property
     def submit_params(self):
-        return dict(conf=dataclasses.asdict(self.job_conf),
-                    dsl=dataclasses.asdict(self.job_dsl) if self.job_dsl else None)
+        return dict(conf=self.job_conf.as_dict(),
+                    dsl=self.job_dsl.as_dict() if self.job_dsl else None)
 
     def set_pre_work(self, name, **kwargs):
         if name not in self.pre_works:
@@ -146,18 +166,33 @@ class Job(object):
         return len(self.pre_works) == 0
 
 
-@dataclass
 class PipelineJob(object):
-    job_name: str
-    script_path: Path
+    def __init__(self, job_name: str, script_path: Path):
+        self.job_name = job_name
+        self.script_path = script_path
 
 
-@dataclass
 class Testsuite(object):
-    dataset: typing.List[Data]
-    jobs: typing.List[Job]
-    pipeline_jobs: typing.List[PipelineJob]
-    path: Path
+
+    def __init__(self,
+                 dataset: typing.List[Data],
+                 jobs: typing.List[Job],
+                 pipeline_jobs: typing.List[PipelineJob],
+                 path: Path):
+        self.dataset = dataset
+        self.jobs = jobs
+        self.pipeline_jobs = pipeline_jobs
+        self.path = path
+
+        self._dependency: typing.MutableMapping[str, typing.List[Job]] = {}
+        self._final_status: typing.MutableMapping[str, FinalStatus] = {}
+        self._ready_jobs = deque()
+        for job in self.jobs:
+            for name in job.pre_works:
+                self._dependency.setdefault(name, []).append(job)
+            self._final_status[job.job_name] = FinalStatus(job.job_name)
+            if job.is_submit_ready():
+                self._ready_jobs.appendleft(job)
 
     @staticmethod
     def load(path: Path):
@@ -180,7 +215,7 @@ class Testsuite(object):
         testsuite = Testsuite(dataset, jobs, pipeline_jobs, path)
         return testsuite
 
-    def jobs_iter(self):
+    def jobs_iter(self) -> typing.Generator[Job, None, None]:
         while self._ready_jobs:
             yield self._ready_jobs.pop()
 
@@ -190,17 +225,6 @@ class Testsuite(object):
             table.add_row(
                 [status.name, status.job_id, status.status, status.exception_id, ','.join(status.rest_dependency)])
         return table.get_string()
-
-    def __post_init__(self):
-        self._dependency: typing.MutableMapping[str, typing.List[Job]] = {}
-        self._final_status: typing.MutableMapping[str, FinalStatus] = {}
-        self._ready_jobs = deque()
-        for job in self.jobs:
-            for name in job.pre_works:
-                self._dependency.setdefault(name, []).append(job)
-            self._final_status[job.job_name] = FinalStatus(job.job_name)
-            if job.is_submit_ready():
-                self._ready_jobs.appendleft(job)
 
     def feed_success_model_info(self, name, model_info):
         if name not in self._dependency:
@@ -216,9 +240,13 @@ class Testsuite(object):
         for data in self.dataset:
             data.config.update(dict(work_mode=config.work_mode, backend=config.backend))
 
+        failed = []
         for job in self.jobs:
-            job.job_conf.update(config.parties, config.work_mode)
-        return self
+            try:
+                job.job_conf.update(config.parties, config.work_mode, config.backend)
+            except ValueError as e:
+                failed.append((job, e))
+        return failed
 
     def update_status(self, job_name, job_id: str = None, status: str = None, exception_id: str = None):
         for k, v in locals().items():
@@ -232,33 +260,48 @@ class Testsuite(object):
         return self._final_status
 
 
-@dataclass
 class FinalStatus(object):
-    name: str
-    job_id: str = "-"
-    status: str = "not submitted"
-    exception_id: str = "-"
-    rest_dependency: typing.List[str] = field(default_factory=list)
+    def __init__(self,
+                 name: str,
+                 job_id: str = "-",
+                 status: str = "not submitted",
+                 exception_id: str = "-",
+                 rest_dependency: typing.List[str] = None):
+        self.name = name
+        self.job_id = job_id
+        self.status = status
+        self.exception_id = exception_id
+        self.rest_dependency = rest_dependency or []
 
 
-@dataclass
 class BenchmarkJob(object):
-    job_name: str
-    script_path: Path
-    conf_path: Path
+    def __init__(self,
+                 job_name: str,
+                 script_path: Path,
+                 conf_path: Path):
+        self.job_name = job_name
+        self.script_path = script_path
+        self.conf_path = conf_path
 
 
-@dataclass
 class BenchmarkPair(object):
-    pair_name: str
-    jobs: typing.List[BenchmarkJob]
+    def __init__(self,
+                 pair_name: str,
+                 jobs: typing.List[BenchmarkJob],
+                 compare_setting: dict):
+        self.pair_name = pair_name
+        self.jobs = jobs
+        self.compare_setting = compare_setting
 
 
-@dataclass
 class BenchmarkSuite(object):
-    dataset: typing.List[Data]
-    pairs: typing.List[BenchmarkPair]
-    path: Path
+    def __init__(self,
+                 dataset: typing.List[Data],
+                 pairs: typing.List[BenchmarkPair],
+                 path: Path):
+        self.dataset = dataset
+        self.pairs = pairs
+        self.path = path
 
     @staticmethod
     def load(path: Path):
@@ -275,20 +318,21 @@ class BenchmarkSuite(object):
                 continue
             jobs = []
             for job_name, job_configs in pair_configs.items():
+                if job_name == "compare_setting":
+                    continue
                 script_path = path.parent.joinpath(job_configs["script"]).resolve()
                 if job_configs.get("conf"):
                     conf_path = path.parent.joinpath(job_configs["conf"]).resolve()
                 else:
                     conf_path = ""
                 jobs.append(BenchmarkJob(job_name=job_name, script_path=script_path, conf_path=conf_path))
-            pairs.append(BenchmarkPair(pair_name=pair_name, jobs=jobs))
+            compare_setting = pair_configs.get("compare_setting")
+            if compare_setting and not isinstance(compare_setting, dict):
+                raise ValueError(
+                    f"expected 'compare_setting' type is dict, received {type(compare_setting)} instead.")
+            pairs.append(BenchmarkPair(pair_name=pair_name, jobs=jobs, compare_setting=compare_setting))
         suite = BenchmarkSuite(dataset=dataset, pairs=pairs, path=path)
         return suite
-
-    def reflash_configs(self, config: Config):
-        for data in self.dataset:
-            data.config.update(dict(work_mode=config.work_mode, backend=config.backend))
-        return self
 
 
 def _namespace_hook(namespace):

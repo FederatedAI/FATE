@@ -24,6 +24,7 @@ from fate_flow.utils.api_utils import get_json_result
 from fate_flow.utils.authentication_utils import request_authority_certification
 from fate_flow.operation import JobSaver
 from fate_arch.common import log
+from fate_flow.manager import ResourceManager
 
 manager = Flask(__name__)
 
@@ -47,7 +48,7 @@ def create_job(job_id, role, party_id):
 
 @manager.route('/<job_id>/<role>/<party_id>/resource/apply', methods=['POST'])
 def apply_resource(job_id, role, party_id):
-    status = JobController.apply_resource(job_id=job_id, role=role, party_id=int(party_id))
+    status = ResourceManager.apply_for_job_resource(job_id=job_id, role=role, party_id=int(party_id))
     if status:
         return get_json_result(retcode=0, retmsg='success')
     else:
@@ -56,7 +57,7 @@ def apply_resource(job_id, role, party_id):
 
 @manager.route('/<job_id>/<role>/<party_id>/resource/return', methods=['POST'])
 def return_resource(job_id, role, party_id):
-    status = JobController.return_resource(job_id=job_id, role=role, party_id=int(party_id))
+    status = ResourceManager.return_job_resource(job_id=job_id, role=role, party_id=int(party_id))
     if status:
         return get_json_result(retcode=0, retmsg='success')
     else:
@@ -218,9 +219,7 @@ def stop_task(job_id, component_name, task_id, task_version, role, party_id, sto
 
 @manager.route('/<job_id>/<component_name>/<task_id>/<task_version>/<role>/<party_id>/clean/<content_type>', methods=['POST'])
 def clean_task(job_id, component_name, task_id, task_version, role, party_id, content_type):
-    tasks = JobSaver.query_task(job_id=job_id, task_id=task_id, task_version=task_version, role=role, party_id=int(party_id))
-    for task in tasks:
-        TaskController.clean_task(task=task, content_type=content_type)
+    TaskController.clean_task(job_id=job_id, task_id=task_id, task_version=task_version, role=role, party_id=int(party_id), content_type=content_type)
     return get_json_result(retcode=0, retmsg='success')
 
 

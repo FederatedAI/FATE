@@ -17,7 +17,6 @@
 import json
 import time
 import typing
-from dataclasses import dataclass
 from datetime import timedelta
 from pathlib import Path
 
@@ -68,9 +67,27 @@ class FLOWClient(object):
                 callback(response)
             status = self._awaiting(response.job_id, "guest", callback)
             response.status = status
+
         except Exception as e:
             raise RuntimeError(f"submit job failed") from e
         return response
+
+    def add_notes(self, job_id, role, party_id, notes):
+        self._add_notes(job_id=job_id, role=role, party_id=party_id, notes=notes)
+
+    def check_connection(self):
+        try:
+            version = self._http.request(method="POST", url=f"{self._base}version/get", json={"module": "FATE"},
+                                         timeout=2).json()
+        except Exception:
+            import traceback
+            traceback.print_exc()
+            raise
+        fate_version = version.get("data", {}).get("FATE")
+        if fate_version:
+            return fate_version, self.address
+
+        raise EnvironmentError(f"connection not ok")
 
     def _awaiting(self, job_id, role, callback=None):
         while True:
@@ -119,6 +136,11 @@ class FLOWClient(object):
         response = QueryJobResponse(self._post(url='job/query', json=data))
         return response
 
+    def _add_notes(self, job_id, role, party_id, notes):
+        data = dict(job_id=job_id, role=role, party_id=party_id, notes=notes)
+        response = AddNotesResponse(self._post(url='job/update', json=data))
+        return response
+
     def _post(self, url, **kwargs) -> dict:
         request_url = self._base + url
         try:
@@ -141,9 +163,9 @@ class FLOWClient(object):
         return response
 
 
-@dataclass
 class Status(object):
-    status: str
+    def __init__(self, status: str):
+        self.status = status
 
     def is_done(self):
         return self.status.lower() in ['complete', 'success', 'canceled', 'failed']
@@ -162,10 +184,11 @@ class QueryJobResponse(object):
     def __init__(self, response: dict):
         try:
             status = Status(response.get('data')[0]["f_status"])
+            progress = response.get('data')[0]['f_progress']
         except Exception as e:
             raise RuntimeError(f"query job error, response: {response}") from e
         self.status = status
-        self.progress = None
+        self.progress = progress
 
 
 class UploadDataResponse(object):
@@ -175,6 +198,17 @@ class UploadDataResponse(object):
         except Exception as e:
             raise RuntimeError(f"upload error, response: {response}") from e
         self.status: typing.Optional[Status] = None
+
+
+class AddNotesResponse(object):
+    def __init__(self, response: dict):
+        try:
+            retcode = response['retcode']
+            retmsg = response['retmsg']
+            if retcode != 0 or retmsg != 'success':
+                raise RuntimeError(f"add notes error: {response}")
+        except Exception as e:
+            raise RuntimeError(f"add notes error: {response}") from e
 
 
 class SubmitJobResponse(object):

@@ -23,6 +23,7 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
 
     def __init__(self):
         super(HomoSecureBoostingTreeClient, self).__init__()
+        self.model_name = 'HomoSecureBoost'
         self.tree_param = None  # decision tree param
         self.use_missing = False
         self.zero_as_missing = False
@@ -63,10 +64,7 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
     @staticmethod
     def get_subtree_grad_and_hess(g_h, t_idx: int):
         """
-        Args:
-            g_h of g_h val
-            t_idx: tree index
-        Returns: grad and hess of sub tree
+        grad and hess of sub tree
         """
         LOGGER.info("get grad and hess of tree {}".format(t_idx))
         grad_and_hess_subtree = g_h.mapValues(
@@ -83,12 +81,13 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
     def fit_a_booster(self, epoch_idx: int, booster_dim: int):
 
         valid_features = self.get_valid_features(epoch_idx, booster_dim)
+        LOGGER.debug('valid features are {}'.format(valid_features))
 
         if self.cur_epoch_idx != epoch_idx:
+            # update g/h every epoch
             self.grad_and_hess = self.compute_local_grad_and_hess(self.y_hat)
             self.cur_epoch_idx = epoch_idx
 
-        LOGGER.debug('valid features are {}'.format(valid_features))
         subtree_g_h = self.get_subtree_grad_and_hess(self.grad_and_hess, booster_dim)
         flow_id = self.generate_flowid(epoch_idx, booster_dim)
         new_tree = HomoDecisionTreeClient(self.tree_param, self.data_bin, self.bin_split_points,
@@ -119,7 +118,7 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
 
     def fast_homo_tree_predict(self, data_inst):
 
-        LOGGER.debug('running fast homo tree predict')
+        LOGGER.info('running fast homo tree predict')
         to_predict_data = self.data_and_header_alignment(data_inst)
         tree_list = []
         rounds = len(self.boosting_model_list) // self.booster_dim

@@ -187,9 +187,8 @@ class LoggerFactory(object):
                                                       log_dir=job_log_dir, log_type=log_type)
             logger.addHandler(handler)
             logger.addHandler(error_handler)
-        if job_id:
-            with LoggerFactory.lock:
-                LoggerFactory.schedule_logger_dict[job_id + log_type] = logger
+        with LoggerFactory.lock:
+            LoggerFactory.schedule_logger_dict[job_id + log_type] = logger
         return logger
 
 

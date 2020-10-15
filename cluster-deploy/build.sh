@@ -18,7 +18,7 @@
 
 set -e
 source_dir=$(cd `dirname $0`; cd ../;pwd)
-support_modules=(python examples fateboard eggroll)
+support_modules=(python examples fateboard eggroll proxy)
 packaging_modules=()
 echo ${source_dir}
 if [[ -n ${1} ]]; then
@@ -132,6 +132,15 @@ packaging_eggroll(){
     tar xzf eggroll.tar.gz
     rm -rf eggroll.tar.gz
     echo "[INFO] Package eggroll done"
+}
+
+function packaging_proxy(){
+    echo "[INFO] Package proxy start"
+    cd ${source_dir}
+    cd c/proxy
+    mkdir -p ${package_dir}/proxy/nginx
+    cp -r conf lua ${package_dir}/proxy/nginx
+    echo "[INFO] Package proxy done"
 }
 
 compress(){

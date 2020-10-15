@@ -18,11 +18,12 @@
         }
     ],
     "tasks": {
-        "poisson": {
+        "poisson-train": {
             "conf": "./test_hetero_poisson_train_job_conf.json",
             "dsl": "./test_hetero_poisson_train_job_dsl.json"
         },
         "poisson-predict": {
+            "deps": "poisson-train",
             "conf": "./test_hetero_poisson_predict_job_conf.json",
             "dsl": "./test_hetero_poisson_predict_job_dsl.json"
         },

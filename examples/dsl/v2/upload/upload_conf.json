@@ -4,5 +4,6 @@
     "namespace": "experiment",
     "head": 1,
     "partition": 8,
-    "id_delimiter": ","
+    "work_mode": 0,
+    "backend": 0
 }

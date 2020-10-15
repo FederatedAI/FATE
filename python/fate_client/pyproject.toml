@@ -37,6 +37,7 @@ loguru = "^0.5.1"
 tensorflow = "1.15.2"
 torch = "1.4.0"
 flask = "^1.0.2"
+setuptools = "^50.0"
 
 [tool.poetry.dev-dependencies]
 
@@ -45,5 +46,5 @@ flow = "flow_client.flow:flow_cli"
 pipeline = "pipeline.pipeline_cli:cli"
 
 [build-system]
-requires = ["poetry>=0.12"]
+requires = ["poetry>=0.12", "setuptools>=49.6.0,<50"]
 build-backend = "poetry.masonry.api"

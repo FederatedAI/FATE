@@ -119,12 +119,13 @@ class TaskManager(object):
 
 
 class TrainTask(TaskManager):
-    def __init__(self, data_type, guest_id, host_id, arbiter_id, work_mode):
+    def __init__(self, data_type, guest_id, host_id, arbiter_id, work_mode, backend):
         self.method = 'all'
         self.guest_id = guest_id
         self.host_id = host_id
         self.arbiter_id = arbiter_id
         self.work_mode = work_mode
+        self.backend = backend
         self._data_type = data_type
         self.model_id = None
         self.model_version = None
@@ -248,8 +249,8 @@ class TrainTask(TaskManager):
 
 
 class TrainLRTask(TrainTask):
-    def __init__(self, data_type, guest_id, host_id, arbiter_id, work_mode):
-        super().__init__(data_type, guest_id, host_id, arbiter_id, work_mode)
+    def __init__(self, data_type, guest_id, host_id, arbiter_id, work_mode, back_end):
+        super().__init__(data_type, guest_id, host_id, arbiter_id, work_mode, back_end)
         self.dsl_file = hetero_lr_dsl_file
         self.train_component_name = 'hetero_lr_0'
 
@@ -267,6 +268,7 @@ class TrainLRTask(TrainTask):
 
         json_info['initiator']['party_id'] = self.guest_id
         json_info['job_parameters']['work_mode'] = self.work_mode
+        json_info['job_parameters']['backend'] = self.backend
 
         if self.model_id is not None:
             json_info["job_parameters"]["model_id"] = self.model_id
@@ -305,8 +307,8 @@ class TrainLRTask(TrainTask):
 
 
 class TrainSBTTask(TrainTask):
-    def __init__(self, data_type, guest_id, host_id, arbiter_id, work_mode):
-        super().__init__(data_type, guest_id, host_id, arbiter_id, work_mode)
+    def __init__(self, data_type, guest_id, host_id, arbiter_id, work_mode, backend):
+        super().__init__(data_type, guest_id, host_id, arbiter_id, work_mode, backend)
         self.dsl_file = hetero_sbt_dsl_file
         self.train_component_name = 'secureboost_0'
 
@@ -323,6 +325,7 @@ class TrainSBTTask(TrainTask):
 
         json_info['initiator']['party_id'] = self.guest_id
         json_info['job_parameters']['work_mode'] = self.work_mode
+        json_info['job_parameters']['backend'] = self.backend
 
         if self.model_id is not None:
             json_info["job_parameters"]["model_id"] = self.model_id
@@ -374,6 +377,7 @@ def main():
     arg_parser.add_argument("-gid", "--guest_id", type=int, help="guest party id", required=True)
     arg_parser.add_argument("-hid", "--host_id", type=int, help="host party id", required=True)
     arg_parser.add_argument("-aid", "--arbiter_id", type=int, help="arbiter party id", required=True)
+    arg_parser.add_argument("-b", "--backend", type=int, help="backend", choices=[0, 1], default=0)
 
     arg_parser.add_argument("--add_sbt", help="test sbt or not", type=int,
                             default=1, choices=[0, 1])
@@ -386,12 +390,13 @@ def main():
     arbiter_id = args.arbiter_id
     file_type = args.file_type
     add_sbt = args.add_sbt
+    back_end = args.backend
 
-    task = TrainLRTask(file_type, guest_id, host_id, arbiter_id, work_mode)
+    task = TrainLRTask(file_type, guest_id, host_id, arbiter_id, work_mode, back_end)
     task.run()
 
     if add_sbt:
-        task = TrainSBTTask(file_type, guest_id, host_id, arbiter_id, work_mode)
+        task = TrainSBTTask(file_type, guest_id, host_id, arbiter_id, work_mode, back_end)
         task.run()
 
 

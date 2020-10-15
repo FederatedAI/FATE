@@ -74,7 +74,7 @@ def main(config="../../config.yaml", namespace=""):
                                               task_type="regression",
                                               objective_param={"objective": "lse"},
                                               encrypt_param={"method": "paillier"},
-                                              tree_param={"max_depth": 5},
+                                              tree_param={"max_depth": 3},
                                               validation_freqs=1,
                                               early_stopping_rounds=1)
 

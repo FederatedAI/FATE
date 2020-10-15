@@ -1,0 +1,10 @@
+data_guest_train: "breast_homo_guest"
+data_guest_val: "breast_homo_guest"
+data_host_train: "breast_homo_host"
+data_host_val: "breast_homo_host"
+eval_type: "binary"
+task_type: "classification"
+loss_func: "cross_entropy"
+tree_depth: 3
+tree_num: 50
+learning_rate: 0.1
