@@ -7,7 +7,7 @@ task_type: "classification"
 loss_func: "cross_entropy"
 tree_depth: 3
 tree_num: 50
-learning_rate: 0.1
+learning_rate: 0.3
 work_mode: "mix"
 tree_num_per_party: 1
 guest_depth: 1

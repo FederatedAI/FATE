@@ -79,6 +79,7 @@ def main(config="../../config.yaml", param="./xgb_config_binary.yaml", namespace
                                               encrypt_param={"method": "iterativeAffine"},
                                               tree_param={"max_depth": param['tree_depth']},
                                               validation_freqs=1,
+                                              subsample_feature_rate=1,
                                               learning_rate=param['learning_rate'],
                                               guest_depth=param['guest_depth'],
                                               host_depth=param['host_depth'],
