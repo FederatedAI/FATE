@@ -1,22 +1,18 @@
--- YAMLParserLite = class("YAMLParserLite")
-
--- function YAMLParserLite:initialize()
--- end
-
--- function YAMLParserLite:parse(yaml)
---     local lines = {}
---     for line in string.gmatch(yaml..'\n', '(.-)\n') do
---         table.insert(lines, line)
---     end
-
---     local docs = parse_documents(lines)
---     if #docs == 1 then
---         return docs[1]
---     end
---     return docs
--- end
-
--- 以上是为了 配合个人已有结构
+--
+--  Copyright 2019 The FATE Authors. All Rights Reserved.
+--
+--  Licensed under the Apache License, Version 2.0 (the "License");
+--  you may not use this file except in compliance with the License.
+--  You may obtain a copy of the License at
+--
+--      http://www.apache.org/licenses/LICENSE-2.0
+--
+--  Unless required by applicable law or agreed to in writing, software
+--  distributed under the License is distributed on an "AS IS" BASIS,
+--  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+--  See the License for the specific language governing permissions and
+--  limitations under the License.
+--
 
 local schar = string.char
 local ssub, gsub = string.sub, string.gsub
