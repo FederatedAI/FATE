@@ -308,7 +308,10 @@ class Tracker(object):
     @DB.connection_context()
     def bulk_insert_into_db(self, model, data_source):
         try:
-            DB.create_tables([model])
+            try:
+                DB.create_tables([model])
+            except Exception as e:
+                schedule_logger(self.job_id).exception(e)
             batch_size = 50 if RuntimeConfig.USE_LOCAL_DATABASE else 1000
             for i in range(0, len(data_source), batch_size):
                 with DB.atomic():
