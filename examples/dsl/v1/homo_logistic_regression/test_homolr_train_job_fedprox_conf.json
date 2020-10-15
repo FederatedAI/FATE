@@ -72,7 +72,7 @@
                 "init_method": "zeros"
             },
             "encrypt_param": {
-                "method": "Paillier"
+                "method": null
             },
             "cv_param": {
                 "n_splits": 4,

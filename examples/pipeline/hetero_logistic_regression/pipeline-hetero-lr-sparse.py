@@ -26,24 +26,24 @@ sys.path.append(cur_path)
 
 from examples.pipeline.hetero_logistic_regression import common_tools
 
-from examples.util.config import Config
+from pipeline.utils.tools import load_job_config
 
 
 def main(config="../../config.yaml", namespace=""):
     # obtain config
     if isinstance(config, str):
-        config = Config.load(config)
+        config = load_job_config(config)
     backend = config.backend
     work_mode = config.work_mode
 
     lr_param = {
         "name": "hetero_lr_0",
         "penalty": "L2",
-        "optimizer": "nesterov_momentum_sgd",
+        "optimizer": "rmsprop",
         "tol": 0.0001,
         "alpha": 0.01,
         "max_iter": 30,
-        "early_stop": "weight_diff",
+        "early_stop": "diff",
         "batch_size": -1,
         "learning_rate": 0.15,
         "init_param": {
