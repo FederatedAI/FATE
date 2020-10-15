@@ -53,12 +53,6 @@ command for more information.
 
    pipeline config --help
 
-`FATE-Flow Commandline <../flow_client/README.rst>`_ needs to be initialized. Run the following
-command for more information.
-
-.. code:: bash
-
-   flow init --help
 
 Interface of Pipeline
 ---------------------

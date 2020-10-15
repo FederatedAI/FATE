@@ -99,7 +99,7 @@ def run_suite(ctx, replace, include, exclude, glob,
                 if not skip_data:
                     _delete_data(client, suite)
                 echo.echo(f"[{i + 1}/{len(suites)}]elapse {timedelta(seconds=int(time.time() - start))}", fg='red')
-                if not skip_dsl_jobs:
+                if not skip_dsl_jobs or not skip_pipeline_jobs:
                     echo.echo(suite.pretty_final_summary(), fg='red')
 
             except Exception:
@@ -186,21 +186,27 @@ def _run_pipeline_jobs(config: Config, suite: Testsuite, namespace: str, data_na
     for i, pipeline_job in enumerate(suite.pipeline_jobs):
         echo.echo(f"Running [{i + 1}/{job_n}] job: {pipeline_job.job_name}")
 
-        def _raise(status):
+        def _raise():
             exception_id = str(uuid.uuid1())
-            suite.update_status(job_name=job_name, exception_id=exception_id, status=status)
+            suite.update_status(job_name=job_name, exception_id=exception_id)
             echo.file(f"exception({exception_id})")
             LOGGER.exception(f"exception id: {exception_id}")
 
         job_name, script_path = pipeline_job.job_name, pipeline_job.script_path
         mod = _load_module_from_script(script_path)
-        if data_namespace_mangling:
-            try:
-                mod.main(config, f"_{namespace}")
-            except:
-                _raise("incomplete")
-        else:
-            try:
-                mod.main(config)
-            except:
-                _raise("incomplete")
+        try:
+            if data_namespace_mangling:
+                try:
+                    mod.main(config, f"_{namespace}")
+                    suite.update_status(job_name=job_name, status="complete")
+                except Exception:
+                    pass
+            else:
+                try:
+                    mod.main(config)
+                    suite.update_status(job_name=job_name, status="complete")
+                except Exception:
+                    pass
+        except Exception:
+            _raise()
+            continue

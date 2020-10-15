@@ -78,7 +78,7 @@
             "script": "pipeline-hetero-binning-asymmetric.py"
         },
         "statistic": {
-            "script": "pipeline-hetero-binning-skip-statistics.py"
+            "script": "pipeline-hetero-binning-skip-statistic.py"
         }
     }
 }
