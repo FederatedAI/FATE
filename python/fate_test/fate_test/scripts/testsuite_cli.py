@@ -64,7 +64,8 @@ def run_suite(ctx, replace, include, exclude, glob,
     echo.echo("loading testsuites:")
     suites = _load_testsuites(includes=include, excludes=exclude, glob=glob)
     for suite in suites:
-        echo.echo(f"\tdataset({len(suite.dataset)}) jobs({len(suite.jobs)}) {suite.path}")
+        echo.echo(f"\tdataset({len(suite.dataset)}) dsl jobs({len(suite.jobs)}) "
+                  f"pipeline jobs ({len(suite.pipeline_jobs)}) {suite.path}")
     if not yes and not click.confirm("running?"):
         return
 
