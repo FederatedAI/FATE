@@ -38,7 +38,7 @@ entry_points = {
 
 setup_kwargs = {
     'name': 'fate-test',
-    'version': '0.1.dev3',
+    'version': '0.1.dev4',
     'description': '',
     'long_description': '',
     'author': 'FederatedAI',
