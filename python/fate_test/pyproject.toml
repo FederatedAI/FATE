@@ -32,7 +32,7 @@ click = "^7.1.2"
 loguru = "^0.5.1"
 prettytable = "^1.0.0"
 sshtunnel = "^0.1.5"
-fate_test = "^0.1.0"
+fate_client = "<0.2"
 pandas = "^0.23.4"
 
 [tool.poetry.dev-dependencies]
