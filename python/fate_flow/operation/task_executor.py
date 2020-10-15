@@ -67,7 +67,6 @@ class TaskExecutor(object):
             task_version = args.task_version
             role = args.role
             party_id = args.party_id
-            print(f"party id type {type(party_id)}")
             executor_pid = os.getpid()
             task_info.update({
                 "job_id": job_id,

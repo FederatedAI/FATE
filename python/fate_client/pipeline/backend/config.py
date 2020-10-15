@@ -48,7 +48,7 @@ class Role(object):
 class StatusCode(object):
     SUCCESS = 0
     FAIL = 1
-    Cancel = 2
+    CANCELED = 2
 
 
 class IODataType:

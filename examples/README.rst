@@ -47,12 +47,12 @@ quality of centralized training and FATE federated modeling.
 As of v1.5, we have provided quality comparison scripts for the
 following common models:
 
-* heterogeneous scenario: `logistic regression <./benchmark_quality/hetero_lr>`__,
-  `secureboost <./benchmark_quality/hetero_sbt>`__,
-  `secureboost <./benchmark_quality/hetero_fast_sbt>`__,
-  `NN <./benchmark_quality/hetero_nn>`__.
-* homogeneous scenario: `logistic regression <./benchmark_quality/homo_lr>`__,
-  `secureboost <./benchmark_quality/homo_sbt>`__, `NN <./benchmark_quality/homo_nn>`__.
+* heterogeneous scenario: LogisticRegression(`benchmark_quality/hetero_lr <./benchmark_quality/hetero_lr>`__),
+  SecureBoost(`benchmark_quality/hetero_sbt <./benchmark_quality/hetero_sbt>`__),
+  FastSecureBoost(`benchmark_quality/hetero_fast_sbt <./benchmark_quality/hetero_fast_sbt>`__),
+  NN(`benchmark_quality/hetero_nn <./benchmark_quality/hetero_nn>`__).
+* homogeneous scenario: LogisticRegression(`benchmark_quality/homo_lr <./benchmark_quality/homo_lr>`__),
+  SecureBoost(`benchmark_quality/homo_sbt <./benchmark_quality/homo_sbt>`__), NN(`benchmark_quality/homo_nn <./benchmark_quality/homo_nn>`__.
 
 To run the comparison, please refer to the guide on `benchmark_quality <../python/fate_test/README.rst>`__.
 
