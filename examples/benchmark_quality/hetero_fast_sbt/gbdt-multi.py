@@ -39,7 +39,7 @@ def main(param=""):
     y = df[label_name]
     X = df.drop(label_name, axis=1)
 
-    clf = GradientBoostingClassifier(random_state=0, n_estimators=50)
+    clf = GradientBoostingClassifier(random_state=0, n_estimators=50, learning_rate=0.3)
     clf.fit(X, y)
     y_pred = clf.predict(X)
 
