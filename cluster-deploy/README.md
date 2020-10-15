@@ -649,8 +649,8 @@ For this test you need to set 3 parameters: guest_partyid, host_partyid, work_mo
 **1) Execute on 192.168.0.1, guest_partyid and host_partyid are both set to 10000:**
 
 ```
-source /data/projects/fate/init_env.sh
-cd /data/projects/fate/python/examples/toy_example/
+source /data/projects/fate/bin/init_env.sh
+cd /data/projects/fate/examples/toy_example/
 python run_toy_example.py 10000 10000 1
 ```
 
@@ -663,8 +663,8 @@ A result similar to the following indicates success:
 **2) Execute on 192.168.0.2, guest_partyid and host_partyid are both set to 9999:**
 
 ```
-source /data/projects/fate/init_env.sh
-cd /data/projects/fate/python/examples/toy_example/
+source /data/projects/fate/bin/init_env.sh
+cd /data/projects/fate/examples/toy_example/
 python run_toy_example.py 9999 9999 1
 ```
 
@@ -679,8 +679,8 @@ A result similar to the following indicates success:
 **Select 9999 as the guest and execute on 192.168.0.2:**
 
 ```
-source /data/projects/fate/init_env.sh
-cd /data/projects/fate/python/examples/toy_example/
+source /data/projects/fate/bin/init_env.sh
+cd /data/projects/fate/examples/toy_example/
 python run_toy_example.py 9999 10000 1
 ```
 
@@ -695,8 +695,8 @@ A result similar to the following indicates success:
 **Execute on 192.168.0.1 and 192.168.0.2 respectively:**
 
 ```
-source /data/projects/fate/init_env.sh
-cd /data/projects/fate/python/examples/scripts/
+source /data/projects/fate/bin/init_env.sh
+cd /data/projects/fate/examples/toy_example/
 python upload_default_data.py -m 1
 ```
 
@@ -711,8 +711,8 @@ In the fast mode, the minimization test script will use a relatively small data 
 **Select 9999 as the guest and execute on 192.168.0.2:**
 
 ```
-source /data/projects/fate/init_env.sh
-cd /data/projects/fate/python/examples/min_test_task/
+source /data/projects/fate/bin/init_env.sh
+cd /data/projects/fate/examples/toy_example/
 python run_task.py -m 1 -gid 9999 -hid 10000 -aid 10000 -f fast
 ```
 
