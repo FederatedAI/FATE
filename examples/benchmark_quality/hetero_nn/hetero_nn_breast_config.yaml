@@ -14,3 +14,4 @@ top_layer_units: 1
 guest_table_name: "breast_hetero_guest"
 host_table_name: "breast_hetero_host"
 top_act: "sigmoid"
+opt: "SGD"

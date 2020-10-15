@@ -1,3 +1,4 @@
+import re
 import time
 import uuid
 
@@ -25,8 +26,10 @@ def data_group():
 @click.option('--yes', is_flag=True,
               help="skip double check")
 @click.option('-s', '--suite-type', required=True, type=click.Choice(["testsuite", "benchmark"]), help="suite type")
+@click.option('-r', '--role', type=str, help="role to process, default to `all`. "
+                                             "use option likes: `guest_0`, `host_0`, `host`")
 @click.pass_context
-def upload(ctx, include, exclude, glob, yes, suite_type):
+def upload(ctx, include, exclude, glob, yes, suite_type, role):
     namespace = ctx.obj["namespace"]
     config_inst = ctx.obj["config"]
 
@@ -35,8 +38,11 @@ def upload(ctx, include, exclude, glob, yes, suite_type):
     suffix = "benchmark.json" if suite_type == "benchmark" else "testsuite.json"
     suites = _load_testsuites(includes=include, excludes=exclude, glob=glob,
                               suffix=suffix, suite_type=suite_type)
+    role_filter = None if role == "all" else lambda x: re.match(role, x)
 
     for suite in suites:
+        if role != "all":
+            suite.dataset = [d for d in suite.dataset if re.match(d.role_str)]
         echo.echo(f"\tdataset({len(suite.dataset)}) {suite.path}")
     if not yes and not click.confirm("running?"):
         return

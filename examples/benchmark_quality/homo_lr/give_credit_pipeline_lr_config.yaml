@@ -5,8 +5,8 @@ idx: "id"
 label_name: "y"
 penalty: "L2"
 max_iter: 30
-alpha: 10
-batch_size: 5000
-learning_rate: 0.2
+alpha: 0.0001
+batch_size: 16
+learning_rate: 0.15
 optimizer: "rmsprop"
 init_method: "zeros"

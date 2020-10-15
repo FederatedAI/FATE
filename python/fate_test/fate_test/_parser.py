@@ -194,6 +194,9 @@ class Testsuite(object):
             if job.is_submit_ready():
                 self._ready_jobs.appendleft(job)
 
+        for job in self.pipeline_jobs:
+            self._final_status[job.job_name] = FinalStatus(job.job_name)
+
     @staticmethod
     def load(path: Path):
         with path.open("r") as f:

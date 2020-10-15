@@ -42,7 +42,7 @@ def main(param=""):
     X = df.drop(label_name, axis=1)
     X_guest = df_guest.drop(label_name, axis=1)
     y_guest = df_guest[label_name]
-    clf = GradientBoostingClassifier(n_estimators=50)
+    clf = GradientBoostingClassifier(n_estimators=120 if 'epsilon' in data_guest else 50, learning_rate=0.1)
     clf.fit(X, y)
     y_prob = clf.predict(X_guest)
 
@@ -53,7 +53,10 @@ def main(param=""):
         return
 
     result = {"auc": auc_score}
+    import time
     print(result)
+    print(data_guest)
+    time.sleep(3)
     return {}, result
 
 

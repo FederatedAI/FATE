@@ -150,13 +150,6 @@ def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Conf
                     echo.file(f"[jobs] {resp.job_id} ", nl=False)
                     suite.update_status(job_name=job.job_name, job_id=resp.job_id)
 
-                    # add notes
-                    notes = f"{job.job_name}@{suite.path}@{namespace}"
-                    for role, party_id_list in job.job_conf.role.items():
-                        for i, party_id in enumerate(party_id_list):
-                            clients[f"{role}_{i}"].add_notes(job_id=resp.job_id, role=role, party_id=party_id,
-                                                             notes=notes)
-
                 if isinstance(resp, QueryJobResponse):
                     job_progress.running(resp.status, resp.progress)
 
@@ -165,6 +158,17 @@ def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Conf
             # noinspection PyBroadException
             try:
                 response = clients["guest_0"].submit_job(job=job, callback=_call_back)
+
+                # noinspection PyBroadException
+                try:
+                    # add notes
+                    notes = f"{job.job_name}@{suite.path}@{namespace}"
+                    for role, party_id_list in job.job_conf.role.items():
+                        for i, party_id in enumerate(party_id_list):
+                            clients[f"{role}_{i}"].add_notes(job_id=response.job_id, role=role, party_id=party_id,
+                                                             notes=notes)
+                except Exception:
+                    pass
             except Exception:
                 _raise()
             else:
