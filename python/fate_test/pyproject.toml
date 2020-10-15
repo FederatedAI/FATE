@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fate_test"
-version = "0.1.0"
+version = "0.1.dev4"
 description = "test tools for FATE"
 authors = ["FederatedAI <contact@FedAI.org>"]
 license = "Apache-2.0"
@@ -32,13 +32,13 @@ click = "^7.1.2"
 loguru = "^0.5.1"
 prettytable = "^1.0.0"
 sshtunnel = "^0.1.5"
-fate_test = "^0.1.0"
-pandas = "^1.1.0"
+fate_client = "^0.1.dev"
+pandas = "^0.23.4"
 
 [tool.poetry.dev-dependencies]
 
 [tool.poetry.scripts]
-fate_test = "fate_test.cli:cli"
+fate_test = "fate_test.scripts.cli:cli"
 
 [build-system]
 requires = ["poetry>=0.12", "setuptools>=49.6,<50"]

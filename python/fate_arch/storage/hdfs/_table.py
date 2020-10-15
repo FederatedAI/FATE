@@ -73,10 +73,12 @@ class StorageTable(StorageTableBase):
     def get_options(self):
         return self._options
 
-    def put_all(self, kv_list: Iterable, append=False, **kwargs):
+    def put_all(self, kv_list: Iterable, append=True, assume_file_exist=False, **kwargs):
         LOGGER.info(f"put in hdfs file: {self._path}")
-        stream = self._hdfs_client.open_append_stream(path=self._path, compression=None) \
-            if append else self._hdfs_client.open_output_stream(path=self._path, compression=None)
+        if append and (assume_file_exist or self._exist()):
+            stream = self._hdfs_client.open_append_stream(path=self._path, compression=None)
+        else:
+            stream = self._hdfs_client.open_output_stream(path=self._path, compression=None)
 
         counter = 0
         with io.TextIOWrapper(stream) as writer:
@@ -116,6 +118,10 @@ class StorageTable(StorageTableBase):
     @property
     def _path(self) -> str:
         return f"{self._address.name_node}/{self._address.path}"
+
+    def _exist(self):
+        info = self._hdfs_client.get_file_info([self._path])[0]
+        return info.type != fs.FileType.NotFound
 
     def _as_generator(self):
         info = self._hdfs_client.get_file_info([self._path])[0]

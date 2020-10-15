@@ -17,8 +17,9 @@ import uuid
 import operator
 from typing import List
 
-from fate_arch.common import EngineType
+from fate_arch.common import EngineType, Party
 from fate_arch.computing import ComputingEngine
+from fate_arch.federation import FederationEngine
 from fate_arch.storage import StorageEngine
 from fate_arch.common.base_utils import current_timestamp, serialize_b64, deserialize_b64
 from fate_arch.common.log import schedule_logger
@@ -311,7 +312,10 @@ class Tracker(object):
     @DB.connection_context()
     def bulk_insert_into_db(self, model, data_source):
         try:
-            DB.create_tables([model])
+            try:
+                DB.create_tables([model])
+            except Exception as e:
+                schedule_logger(self.job_id).exception(e)
             batch_size = 50 if RuntimeConfig.USE_LOCAL_DATABASE else 1000
             for i in range(0, len(data_source), batch_size):
                 with DB.atomic():
@@ -413,7 +417,7 @@ class Tracker(object):
     def get_output_data_group_key(cls, task_id, data_name):
         return task_id + data_name
 
-    def clean_task(self):
+    def clean_task(self, runtime_conf):
         schedule_logger(self.job_id).info('clean task {} {} on {} {}'.format(self.task_id,
                                                                              self.task_version,
                                                                              self.role,
@@ -441,6 +445,16 @@ class Tracker(object):
                                                                                                  self.role,
                                                                                                  self.party_id))
             sess.computing.stop()
+            if self.job_parameters.federation_engine == FederationEngine.RABBITMQ:
+                schedule_logger(self.job_id).info('rabbitmq start clean up')
+                parties = [Party(k, p) for k, v in runtime_conf['role'].items() for p in v]
+                federation_session_id = job_utils.generate_federated_id(self.task_id, self.task_version)
+                sess.init_federation(federation_session_id=federation_session_id,
+                                     runtime_conf=runtime_conf,
+                                     service_conf=self.job_parameters.engines_address.get(EngineType.FEDERATION, {}))
+                sess._federation_session._get_mq_names(parties=parties)
+                sess._federation_session.cleanup()
+                schedule_logger(self.job_id).info('rabbitmq clean up success')
             return True
         except Exception as e:
             schedule_logger(self.job_id).exception(e)
