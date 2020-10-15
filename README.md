@@ -14,7 +14,7 @@ FATE (Federated AI Technology Enabler) is an open-source project initiated by We
 
 
 ## Federated Learning Algorithms In FATE
-FATE already supports a number of federated learning algorithms, including vertical federated learning, horizontal federated learning, and federated transfer learning. More details are available in [federatedml](./federatedml).
+FATE already supports a number of federated learning algorithms, including vertical federated learning, horizontal federated learning, and federated transfer learning. More details are available in [federatedml](./python/federatedml).
 
 
 ## Install
@@ -64,10 +64,10 @@ All the unittests shall pass if FATE is installed properly.
 
 ### Quick Start
 
-We have provided a python script for quick starting modeling task. This scrip is located at ["examples"](./examples/dsl/v2)
+We have provided a tutorial for quick starting modeling task. This tutorial is located at [python/fate_client/pipeline](./python/fate_client/pipeline)
 
 ###  Obtain Model and Check Out Results
-We provided functions such as tracking component output models or logs etc. through a tool called fate-flow. The deployment and usage of fate-flow can be found [here](./fate_flow/README.rst)
+We provided functions such as tracking component output models or logs etc. through a tool called fate-flow. The deployment and usage of fate-flow can be found [here](./python/fate_flow/README.rst)
 
 
 ## Doc
