@@ -144,18 +144,18 @@ Besides the dsl conf, user also need to prepare a submit runtime conf to set the
 
   .. code-block:: json
 
-    "initiator": {
+     "initiator": {
         "role": "guest",
         "party_id": 10000
-    }
+     }
 
 
 :role: All the roles involved in this modeling task should be specified. Each role comes with role name and corresponding party id(s).
-Ids are always specified in the form of list since there may exist multiple parties of the same role.
+       Ids are always specified in the form of list since there may exist multiple parties of the same role.
 
   .. code-block:: json
 
-    "role": {
+     "role": {
         "guest": [
           10000
         ],
@@ -165,24 +165,13 @@ Ids are always specified in the form of list since there may exist multiple part
         "arbiter": [
           10000
         ]
-    }
+     }
 
-
-:job_parameters: to enable DSL V2, **dsl_version** must be set to 2.
-For information on other job parameters, please refer to FATE Flow `document <../python/fate_flow/README.rst>`_.
-
-  .. code-block:: json
-
-    "job_parameters": {
-        "dsl_version": 2
-    }
-
-
-:role_parameters: Parameters that differ from party to party should be indicated here. Please note that role parameters need to be wrapped into a list.
+:role_parameters: Parameters that differ from party to party should be specified here. Please note that role parameters need to be wrapped into a list.
   Inside the role_parameters, party names are used as key and parameters of these parties are values. Take the following structure as an example:
 
   .. code-block:: json
-    
+
     "guest": {
       "0": {
         "reader_0": {
@@ -230,8 +219,7 @@ For information on other job parameters, please refer to FATE Flow `document <..
       }
     }
 
-:algorithm_parameters: If some parameters are the same among all parties, they can be set in algorithm_parameters.
-Here is an example showing how to do that.
+:algorithm_parameters: If some parameters are the same among all parties, they can be set in algorithm_parameters. Here is an example showing how to do that.
 
   .. code-block:: json
 
@@ -264,6 +252,139 @@ Here is an example showing how to do that.
 
   Same with the form in role parameters, each key of the parameters are names of components that are defined in dsl config file.
 
+:job_parameters: job runtime parameters; please note that to enable DSL V2, **dsl_version** must be set to **2**.
+
+.. list-table:: Configurable Job Parameters
+   :widths: 20 20 30 30
+   :header-rows: 1
+
+   * - Parameter Name
+     - Default Value
+     - Acceptable Values
+     - Information
+
+   * - job_type
+     - train
+     - train, predict
+     - job type
+
+   * - work_mode
+     - 0
+     - 0, 1
+     - 0 for standalone, 1 for cluster
+
+   * - backend
+     - 0
+     - 0, 1
+     - 0 for EGGROLL, 1 for SPARK
+
+   * - dsl_version
+     - 1
+     - 1, 2
+     - version for dsl parser
+
+   * - federated_status_collect_type
+     - PUSH
+     - PUSH, PULL
+     - type of collecting job status
+
+   * - timeout
+     - 604800
+     - positive int
+     - time elapse (in second) for a job to timeout
+
+   * - eggroll_run
+     -
+     - eggroll.session.processors.per.node
+     - parameter for EGGROLL computing engine
+
+   * - spark_run
+     -
+     - num-executors, executor-cores
+     - parameter for SPARK computing engine
+
+   * - task_parallelism
+     - 2
+     - positive int
+     - maximum number of tasks allowed to run in parallel
+
+   * - model_id
+     - \-
+     - \-
+     - if of model, needed for prediction task
+
+   * - model_version
+     - \-
+     - \-
+     - version of model, needed for prediction task
+
+.. list-table:: Non-configurable Job Parameters
+   :widths: 20 20 30 30
+   :header-rows: 1
+
+   * - Parameter Name
+     - Default Value
+     - Acceptable Values
+     - Information
+
+   * - computing_engine
+     - set automatically based on ``work_mode`` and ``backend``
+     - EGGROLL, SPARK, STANDALONE
+     - engine for computation
+
+   * - storage_engine
+     - set automatically based on ``work_mode`` and ``backend``
+     - EGGROLL, HDFS, STANDALONE
+     - engine for storage
+
+   * - federation_engine
+     - set automatically based on ``work_mode`` and ``backend``
+     - EGGROLL, RABBITMQ, STANDALONE
+     - engine for communication among parties
+
+   * - federated_mode
+     - set automatically based on ``work_mode`` and ``backend``
+     - SINGLE, MULTIPLE
+     - federation mode
+
+.. note::
+   1. Some types of ``computing_engine``, ``storage_engine``, and ``federation_engine``
+   are only compatible with each other. For examples, SPARK
+   ``computing_engine`` only supports HDFS ``storage_engine``.
+
+   2. Combination of ``work_mode`` and ``backend`` automatically determines which
+   combination of engines will be used.
+
+   3. Developer may implement other types of engines and set new engine
+   combinations.
+
+**EGGROLL** conf example:
+
+.. code-block:: json
+
+     "job_parameters": {
+        "work_mode": 1,
+        "backend": 0,
+        "dsl_version": 2,
+        "eggroll_run": {
+           "eggroll.session.processors.per.node": 2
+        }
+     }
+
+**SPARK** conf example:
+
+.. code-block:: json
+
+     "job_parameters": {
+        "work_mode": 1,
+        "backend": 1,
+        "dsl_version": 2,
+        "spark_run": {
+           "num-executors": 1,
+           "executor-cores": 2
+        }
+     }
+
 After setting config files and submitting the task, fate-flow will combine the parameter list in role-parameters and algorithm parameters.
 If there are still some undefined fields, default parameter values will be used.
 FATE Flow will send these config files to their corresponding parties and start federated task.
@@ -274,25 +395,25 @@ Multi-host configuration
 
 For multi-host modeling case, all the host's party ids should be list in the role field.
 
-  .. code-block:: json
+.. code-block:: json
 
-  "role": {
-    "guest": [
-      10000
-    ],
-    "host": [
-      10000, 10001, 10002
-    ],
-    "arbiter": [
-      10000
-    ]
-  }
+   "role": {
+      "guest": [
+        10000
+      ],
+      "host": [
+        10000, 10001, 10002
+      ],
+      "arbiter": [
+        10000
+      ]
+   }
 
 Each parameter set for host should also be list in a list. The number of elements should match the number of hosts.
 
-  .. code-block:: json
-  
-  "host": {
+.. code-block:: json
+
+   "host": {
       "0": {
         "reader_0": {
           "table":

@@ -25,33 +25,41 @@ from federatedml.util import consts
 class AutoReplace(object):
 
     def __init__(self, guest_mapping, host_mapping, arbiter_mapping):
-        self.g_map = guest_mapping
-        self.h_map = host_mapping
-        self.a_map = arbiter_mapping
+        self._mapping = {
+            consts.GUEST: guest_mapping,
+            consts.HOST: host_mapping,
+            consts.ARBITER: arbiter_mapping
+        }
 
-    def map_finder(self, role):
-        if consts.GUEST == role:
-            return self.g_map
-        elif consts.HOST == role:
-            return self.h_map
-        elif consts.ARBITER in role:
-            return self.a_map
-        else:
+    def get_mapping(self, role: str):
+        if role not in self._mapping:
             raise ValueError('this role contains no site name {}'.format(role))
+        return self._mapping[role]
 
-    def anonymous_format(self, string):
-
+    def anonymous_format(self, string: str):
+        """{role}_{party_id}_{idx}"""
         role, party_id, idx = string.split('_')
-        mapping = self.map_finder(role)
+        mapping = self.get_mapping(role)
         new_party_id = mapping[int(party_id)]
         return generate_anonymous(idx, new_party_id, role)
 
-    def colon_format(self, string: str):
+    def party_tuple_format(self, string: str):
+        """({role},{party_id})"""
+        role, party_id = string.strip("()").split(",")
+        return f"({role}, {self._mapping[role][int(party_id)]})"
 
+    def colon_format(self, string: str):
+        """{role}:{party_id}"""
         role, party_id = string.split(':')
-        mapping = self.map_finder(role)
+        mapping = self.get_mapping(role)
         new_party_id = mapping[int(party_id)]
         return role + ':' + str(new_party_id)
+
+    def maybe_anonymous_format(self, string: str):
+        try:
+            return self.anonymous_format(string)
+        except Exception:
+            return string
 
     def replace(self, string):
 

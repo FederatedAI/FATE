@@ -37,7 +37,7 @@ class JobQueue(object):
 
     @classmethod
     def get_event(cls, job_status):
-        events = cls.query_event(job_status=job_status)
+        events = cls.query_event(job_status=job_status, reverse=False)
         return events
 
     @classmethod
@@ -72,13 +72,20 @@ class JobQueue(object):
 
     @classmethod
     @DB.connection_context()
-    def query_event(cls, **kwargs):
+    def query_event(cls, reverse=None, order_by=None, **kwargs):
         query_filters = []
         for k, v in kwargs.items():
             attr_name = 'f_%s' % k
             if hasattr(DBQueue, attr_name):
                 query_filters.append(operator.attrgetter(attr_name)(DBQueue) == v)
         events = DBQueue.select().where(*query_filters)
+        if reverse is not None:
+            if not order_by or not hasattr(DBQueue, f"f_{order_by}"):
+                order_by = "create_time"
+            if reverse is True:
+                events = events.order_by(getattr(DBQueue, f"f_{order_by}").desc())
+            elif reverse is False:
+                events = events.order_by(getattr(DBQueue, f"f_{order_by}").asc())
         return [event for event in events]
 
     @classmethod

@@ -1,0 +1,120 @@
+{
+    "data": [
+        {
+            "file": "data/vehicle_scale_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "vehicle_scale_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "data/vehicle_scale_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "vehicle_scale_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "data/breast_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "data/breast_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+                {
+            "file": "data/student_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "student_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "data/student_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "student_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "data/epsilon_5k_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "epsilon_5k_hetero_guest",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "data/epsilon_5k_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "epsilon_5k_hetero_host",
+            "namespace": "experiment",
+            "role": "guest_0"
+        }
+    ],
+    "hetero_sbt-binary-0": {
+        "local": {
+            "script": "./gbdt-binary.py",
+            "conf": "./gbdt_config_binary.yaml"
+        },
+        "FATE": {
+            "script": "./fate-sbt.py",
+            "conf": "./fate_sbt_binary.yaml"
+        },
+        "compare_setting": {
+            "relative_tol": 0.05
+        }
+    },
+    "hetero_sbt-binary-1": {
+        "local": {
+            "script": "./gbdt-binary.py",
+            "conf": "./gbdt_config_binary-epsilon-5k.yaml"
+        },
+        "FATE": {
+            "script": "./fate-sbt.py",
+            "conf": "./fate_sbt_epsilon_5k.yaml"
+        },
+        "compare_setting": {
+            "relative_tol": 0.05
+        }
+    },
+    "hetero_sbt-multi-0": {
+        "local": {
+            "script": "./gbdt-multi.py",
+            "conf": "./gbdt_config_multi.yaml"
+        },
+        "FATE": {
+            "script": "./fate-sbt.py",
+            "conf": "./fate_sbt_multi.yaml"
+        },
+        "compare_setting": {
+            "relative_tol": 0.05
+        }
+    },
+    "hetero_sbt-regression-0": {
+        "local": {
+            "script": "./gbdt-regression.py",
+            "conf": "./gbdt_config_reg.yaml"
+        },
+        "FATE": {
+            "script": "./fate-sbt.py",
+            "conf": "./fate_sbt_regression.yaml"
+        },
+        "compare_setting": {
+            "relative_tol": 0.05
+        }
+    }
+}

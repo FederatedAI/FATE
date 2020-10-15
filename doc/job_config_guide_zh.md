@@ -1,4 +1,4 @@
-### JOB CONFIG配置说明
+### JOB RUNTIME CONFIG配置说明
 
 Job Runtime Conf用于设置各个参与方的信息,任务的参数及各个组件的参数。 内容包括如下：
 
@@ -8,7 +8,7 @@ Job Runtime Conf用于设置各个参与方的信息,任务的参数及各个组
 - **参考配置：**
 
 ```json
-"initiator":{
+"initiator": {
     "role": "guest",     
     "party_id": 9999 
 }
@@ -21,7 +21,7 @@ Job Runtime Conf用于设置各个参与方的信息,任务的参数及各个组
 - **参考配置：**
 
 ```json
-"role":{ 
+"role": { 
     "guest": [9999], 
     "host": [10000], 
     "arbiter": [10000]
@@ -37,62 +37,52 @@ Job Runtime Conf用于设置各个参与方的信息,任务的参数及各个组
   | 配置项       | 默认值     | 支持值  | 说明                                                       |
   | :-------------- | :----- | :----- | ------------------------------------------------------------ |
   | job_type | train | train、predict | 任务类型                      |
-  | work_mode | 0 | 0、1  | 0代表单机，1代表分布式                                |
+  | work_mode | 0 | 0、1  | 0代表单方单机版，1代表多方分布式版本                               |
   | backend   | 0    | 0、1 | 0代表EGGROLL，1代表SPARK |
-  | federated_mode               | MULTIPLE | SINGLE、MULTIPLE                 | 联邦合作模式               |
-  | computing_engine | EGGROLL | EGGROLL、SPARK | 计算引擎类型               |
-  | storage_engine | EGGROLL | STANDALONE、EGGROLL、HDFS、MYSQL | 存储引擎类型 |
-  | engines_address | 见示例 | - | 各个引擎的地址 |
   | dsl_version | 1        | 1、2                             | dsl解析器的版本号 |
-  | federated_status_collect_type | PUSH | PUSH、PULL | 状态收集模式 |
+  | federated_status_collect_type | PUSH | PUSH、PULL | 多方任务状态收集模式 |
   | timeout | 604800 | 正整数 | 任务超时时间,单位秒 |
+  | eggroll_run | 无| processors_per_node| eggroll计算引擎相关配置参数|
+  | spark_run | 无| num-executors、executor-cores |spark计算引擎相关配置参数 |
   | task_parallelism | 2 | 正整数 | task并行度 |
   | task_nodes | 1 | 正整数 | 使用的计算节点数 |
   | task_cores_per_node | 2 | 正整数 | 每个节点使用的CPU核数 |
   | model_id | - | - | 模型id，预测任务需要填入 |
   | model_version | - | - | 模型版本, 预测任务需要填入 |
-
   
+- **未开放参数**:
 
-​    **说明：**以下配置的参数仅允许配置一种:
-
-1. work_mode + backend
-2. federation_mode + computing_engine
+  | 配置项            | 默认值     | 支持值  | 说明                                                       |
+  | :--------------- | :----- | :----- | ------------------------------------------------------------ |
+  | computing_engine | 依据work_mode和backend, 自动得到 | EGGROLL、SPARK、STANDALONE | 计算引擎类型               |
+  | storage_engine   | 依据work_mode和backend, 自动得到 | EGGROLL、HDFS、STANDALONE  | 组件输出中间数据存储引擎类型 |
+  | federation_engine| 依据work_mode和backend, 自动得到 | EGGROLL、RABBITMQ、STANDALONE | 通信引擎类型 |
+  | federated_mode   | 依据work_mode和backend, 自动得到 | SINGLE、MULTIPLE     | 实际联邦合作模式: 多方或者单方模拟多方              |
+ 
+  **说明**:
+    1. 三大类引擎具有一定的支持依赖关系，例如Spark计算引擎当前仅支持使用HDFS作为中间数据存储引擎
+    2. work_mode + backend会自动依据支持依赖关系，产生对应的三大引擎配置computing、storage、federation
+    3. 开发者可自行实现适配的引擎，并在runtime config配置引擎
 
 - **参考配置：**
 
 ```json
-job_parameters:{
+"job_parameters": {
 	"job_type": "train",
     "work_mode": 1,
     "backend": 0,
     "dsl_version": 2,
-    "computing_engine": "EGGROLL",
-    "federation_engine": "EGGROLL",
-    "storage_engine": "EGGROLL",
-    "engines_address": {
-        "computing": {
-            "host": "127.0.0.1",
-            "port": 9370
-        },
-        "federation": {
-            "host": "127.0.0.1",
-            "port": 9370
-        },
-        "storage": {
-            "host": "172.0.0.1",
-            "port": 9370
-        }
-    },
     "federated_mode": "MULTIPLE",
     "federated_status_collect_type": "PUSH",
     "timeout": 36000,
     "task_parallelism": 2,
-    "task_nodes": 1,
-    "task_cores_per_node": 2,
-    "task_memory_per_node": 512,
-    "model_id": "arbiter-10000#guest-9999#host-9999_10000#model",
-    "model_version": "2020092416160711633252"
+    "eggroll_run": {
+        "eggroll.session.processors.per.node": 2
+    },
+    "spark_run": {
+        "num-executors": 1,
+        "executor-cores": 2
+    }
 }
 ```
 
@@ -179,4 +169,3 @@ job_parameters:{
     }
 }
 ```
-

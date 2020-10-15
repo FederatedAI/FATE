@@ -24,10 +24,14 @@ from fate_arch.federation.transfer_variable._cleaner import IterationGC
 from fate_arch.federation.transfer_variable._namespace import FederationTagNamespace
 from fate_arch.session import get_latest_opened
 
+__all__ = ["Variable", "BaseTransferVariables"]
 LOGGER = getLogger()
 
 
 class Variable(object):
+    """
+    variable to distinguish federation by name
+    """
     __disable_auth_check = False
     __instances: typing.MutableMapping[str, 'Variable'] = {}
 
@@ -100,6 +104,22 @@ class Variable(object):
                        obj,
                        parties: Union[typing.List[Party], Party],
                        suffix: Union[typing.Any, typing.Tuple] = tuple()):
+        """
+        remote object to specified parties
+
+        Parameters
+        ----------
+        obj: object or table
+           object or table to remote
+        parties: typing.List[Party]
+           parties to remote object/table to
+        suffix: str or tuple of str
+           suffix used to distinguish federation with in variable
+
+        Returns
+        -------
+        None
+        """
         session = get_latest_opened()
         if isinstance(parties, Party):
             parties = [parties]
@@ -125,6 +145,22 @@ class Variable(object):
     def get_parties(self,
                     parties: Union[typing.List[Party], Party],
                     suffix: Union[typing.Any, typing.Tuple] = tuple()):
+        """
+        get objects/tables from specified parties
+
+        Parameters
+        ----------
+        parties: typing.List[Party]
+           parties to remote object/table to
+        suffix: str or tuple of str
+           suffix used to distinguish federation with in variable
+
+        Returns
+        -------
+        list
+           a list of objects/tables get from parties with same order of ``parties``
+
+        """
         session = get_latest_opened()
         if not isinstance(parties, list):
             parties = [parties]
@@ -211,6 +247,19 @@ class BaseTransferVariables(object):
 
     @staticmethod
     def set_flowid(flowid):
+        """
+        set global namespace for federations.
+
+        Parameters
+        ----------
+        flowid: str
+           namespace
+
+        Returns
+        -------
+        None
+
+        """
         FederationTagNamespace.set_namespace(str(flowid))
 
     def _create_variable(self, name: str, src: typing.Iterable[str], dst: typing.Iterable[str]) -> Variable:
@@ -219,8 +268,26 @@ class BaseTransferVariables(object):
 
     @staticmethod
     def all_parties():
+        """
+        get all parties
+
+        Returns
+        -------
+        list
+           list of parties
+
+        """
         return get_latest_opened().parties.all_parties
 
     @staticmethod
     def local_party():
+        """
+        indicate local party
+
+        Returns
+        -------
+        Party
+           party this program running on
+
+        """
         return get_latest_opened().parties.local_party

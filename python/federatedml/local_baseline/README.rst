@@ -17,9 +17,9 @@ Local Baseline has the same output as matching FATE model, and so its visualizat
 Nonetheless, note that Local Baseline is run locally, so other parties will not show respective information like Logistic Regression module.
 In addition, note that loss history is not available for Guest when running homogeneous training.
 
-Currently local baseline does not support predict task from history job. This feature will be added in future updates.
+Currently local baseline does not support predict task from history job.
 
-For examples of using Local Baseline module, please refer `examples/dsl/v2/local_baseline`.
+For examples of using Local Baseline module, please refer `here <../../../../examples/dsl/v2/local_baseline>`__.
 
 Param
 ------

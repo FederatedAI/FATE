@@ -16,7 +16,7 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
 
 5. 安全协议：提供了多种安全协议，以进行更安全的多方交互计算。
 
-.. figure:: ../doc/images/federatedml_structure.png
+.. figure:: ../../doc/images/federatedml_structure.png
    :align: center
    :width: 800
    :alt: 联邦学习结构
@@ -200,8 +200,7 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
      - SecureBoost模型，由模型本身和模型参数组成
 
    * - `Homo OneHot Encoder`_
-     - 横向
-     - OneHotEncoder
+     - 横向 OneHotEncoder
      - 将一列转换为One-Hot格式。
      - Table, 值为Instance
      - 转换了带有新列名的Table
@@ -223,6 +222,30 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
      - 转换后带有新数列与列名的Table
      -
      - Column Expand模型
+
+   * - `Secure Information Retrieval`_
+     -
+     - 通过不经意传输协议安全取回所需数值
+     - Table, 值为Instance
+     - Table, 值为取回数值
+     -
+     -
+
+   * - `Hetero KMeans`_
+     - 纵向 K均值算法
+     - 构建K均值模块
+     - Table, 值为Instance
+     - Table, 值为Instance; Arbiter方输出2个Table
+     -
+     - Hetero KMeans模型
+
+   * - `Data Statistics`_
+     - 数据统计
+     - 这个组件会对数据做一些统计工作，包括统计均值，最大最小值，中位数等
+     - Table, 值为Instance
+     - Table
+     -
+     - Statistic Result
 
 .. _DataIO: util/README.rst
 .. _Intersect: statistic/intersect/README.rst
@@ -246,6 +269,9 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
 .. _Data Split: model_selection/data_split/README.rst
 .. _Homo OneHot Encoder: feature/README.rst
 .. _Column Expand: feature/README.rst
+.. _Secure Information Retrieval: secure_information_retrieval
+.. _Hetero KMeans: unsupervised_learning/kmeans/README.rst
+.. _Data Statistics: statistic/README.rst
 
 
 安全协议
@@ -266,6 +292,8 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
 
 * `SecretShare MPC Protocol(SPDZ)`_
 
+* `Oblivious Transfer`_
+
 
 .. _Encrypt: secureprotol/README.rst#encrypt
 .. _Paillier encryption: secureprotol/README.rst#paillier-encryption
@@ -276,6 +304,13 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
 .. _Encode: secureprotol/README.rst#encode
 .. _Diffne Hellman Key Exchange: secureprotol/README.rst#diffne-hellman-key-exchange
 .. _SecretShare MPC Protocol(SPDZ): secureprotol/README.rst#secretshare-mpc-protocol-spdz
+.. _Oblivious Transfer: secureprotol/README.rst#oblivious-transfer
 
 
 
+Params
+-------
+
+.. automodule:: federatedml.param
+   :autosummary:
+   :members:

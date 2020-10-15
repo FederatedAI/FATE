@@ -29,8 +29,9 @@ import functools
 import numpy as np
 from operator import add, sub
 from typing import List
-
+import uuid
 from fate_arch.session import computing_session as session
+from fate_arch.common.versions import get_eggroll_version
 from fate_arch.common import log
 from federatedml.feature.fate_element_type import NoneType
 from federatedml.framework.weights import Weights
@@ -156,7 +157,7 @@ class FeatureHistogram(object):
 
     @staticmethod
     def tensor_histogram_cumsum(histograms):
-
+        # histogram cumsum, from left to right
         for i in range(1, len(histograms)):
             for j in range(len(histograms[i])):
                 histograms[i][j] += histograms[i - 1][j]
@@ -164,6 +165,8 @@ class FeatureHistogram(object):
 
     @staticmethod
     def dtable_histogram_cumsum(histograms):
+
+        # histogram cumsum, from left to right
 
         if len(histograms) == 0:
             return histograms
@@ -191,15 +194,20 @@ class FeatureHistogram(object):
                             valid_features=None, node_map=None,
                             use_missing=False, zero_as_missing=False, ret="tensor"):
 
-        LOGGER.info("bin_shape is {}, node num is {}".format(bin_split_points.shape, len(node_map)))
+        eggroll_version = get_eggroll_version()
+        LOGGER.info("bin_shape is {}, node num is {}, eggroll version is {}".format(bin_split_points.shape,
+                                                                                    len(node_map),
+                                                                                    eggroll_version))
 
         batch_histogram_cal = functools.partial(
             FeatureHistogram.batch_calculate_histogram,
             bin_split_points=bin_split_points, bin_sparse_points=bin_sparse_points,
             valid_features=valid_features, node_map=node_map,
-            use_missing=use_missing, zero_as_missing=zero_as_missing)
+            use_missing=use_missing, zero_as_missing=zero_as_missing,
+            with_uuid=True if eggroll_version.startswith('2.0') else False)
 
         agg_histogram = functools.partial(FeatureHistogram.aggregate_histogram, node_map=node_map)
+        # reformat, now format is: key, ((data_instance, node position), (g, h))
         batch_histogram_intermediate_rs = data_bin.join(grad_and_hess, lambda data_inst, g_h: (data_inst, g_h))
 
         if batch_histogram_intermediate_rs.count() == 0:
@@ -216,20 +224,44 @@ class FeatureHistogram(object):
 
                 histograms_table = session.parallelize(hist_list, partition=data_bin.partitions, include_key=True)
                 return FeatureHistogram.construct_table(histograms_table)
-
         else:
-            histograms_table = batch_histogram_intermediate_rs.mapReducePartitions(batch_histogram_cal, agg_histogram)
-            if ret == "tensor":
-                feature_num = bin_split_points.shape[0]
-                histogram_list = list(histograms_table.collect())
-                rs = FeatureHistogram.recombine_histograms(histogram_list, node_map, feature_num)
-                return rs
+
+            if eggroll_version.startswith('2.0'):
+
+                # behavior of old eggroll
+
+                batch_histograms = batch_histogram_intermediate_rs.mapPartitions(batch_histogram_cal,
+                                                                                 use_previous_behavior=False)
+                from federatedml.util.reduce_by_key import reduce
+                histograms_dict = reduce(batch_histograms, agg_histogram, key_func=lambda key: (key[1], key[2]))
+
+                if ret == "tensor":
+                    feature_num = bin_split_points.shape[0]
+                    rs = FeatureHistogram.recombine_histograms_(histograms_dict, node_map, feature_num)
+                    return rs
+                else:
+                    return FeatureHistogram.construct_table_(histograms_dict, data_bin.partitions)
+
+            elif eggroll_version.startswith('2.2'):
+
+                # behaviour of eggroll 2.2
+
+                histograms_table = batch_histogram_intermediate_rs.mapReducePartitions(batch_histogram_cal,
+                                                                                       agg_histogram)
+                if ret == "tensor":
+                    feature_num = bin_split_points.shape[0]
+                    histogram_list = list(histograms_table.collect())
+                    rs = FeatureHistogram.recombine_histograms(histogram_list, node_map, feature_num)
+                    return rs
+                else:
+                    return FeatureHistogram.construct_table(histograms_table)
+
             else:
-                return FeatureHistogram.construct_table(histograms_table)
+                raise ValueError('unsupported eggroll version {}'.format(eggroll_version))
 
     @staticmethod
     def aggregate_histogram(fid_histogram1, fid_histogram2, node_map):
-
+        # add histograms with same key((node id, feature id)) together
         fid_1, histogram1 = fid_histogram1
         fid_2, histogram2 = fid_histogram2
         aggregated_res = [[] for i in range(len(histogram1))]
@@ -244,7 +276,6 @@ class FeatureHistogram(object):
                                     missing_bin):
 
         # for every feature, generate histograms containers (initialized val are 0s)
-
         node_num = len(node_map)
         node_histograms = []
         for k in range(node_num):
@@ -255,10 +286,10 @@ class FeatureHistogram(object):
                     feature_histogram_template.append([])
                     continue
                 else:
-                    # 0, 0, 0 -> grad, hess, sample number
+                    # 0, 0, 0 -> grad, hess, sample count
                     feature_histogram_template.append([[0, 0, 0]
                                                        for j in
-                                                       range(bin_split_points[fid].shape[0] + 1 + missing_bin)])
+                                                       range(bin_split_points[fid].shape[0] + missing_bin)])
 
             node_histograms.append(feature_histogram_template)
             # check feature num
@@ -267,35 +298,40 @@ class FeatureHistogram(object):
         return node_histograms
 
     @staticmethod
-    def generate_histogram_key_value_list(node_histograms, node_map, bin_split_points):
+    def generate_histogram_key_value_list(node_histograms, node_map, bin_split_points, with_uuid=False):
 
         # generate key_value hist list for DTable parallelization
+        _ = str(uuid.uuid1())
         ret = []
         for nid in range(len(node_map)):
             for fid in range(bin_split_points.shape[0]):
                 # key: (nid, fid), value: (fid, hist)
-                ret.append(((nid, fid), (fid, node_histograms[nid][fid])))
+                if not with_uuid:
+                    ret.append(((nid, fid), (fid, node_histograms[nid][fid])))
+                else:
+                    ret.append(((_, nid, fid), (fid, node_histograms[nid][fid])))
         return ret
 
     @staticmethod
     def batch_calculate_histogram(kv_iterator, bin_split_points=None,
                                   bin_sparse_points=None, valid_features=None,
-                                  node_map=None, use_missing=False, zero_as_missing=False):
+                                  node_map=None, use_missing=False, zero_as_missing=False, with_uuid=False):
         data_bins = []
         node_ids = []
         grad = []
         hess = []
 
-        data_record = 0
+        data_record = 0  # total instance number of this partition
 
+        # go through iterator to collect g/h feature instances/ node positions
         for _, value in kv_iterator:
             data_bin, nodeid_state = value[0]
             unleaf_state, nodeid = nodeid_state
             if unleaf_state == 0 or nodeid not in node_map:
                 continue
-            g, h = value[1]
-            data_bins.append(data_bin)
-            node_ids.append(nodeid)
+            g, h = value[1]  # encrypted text in host, plaintext in guest
+            data_bins.append(data_bin)  # features
+            node_ids.append(nodeid)  # current node position
             grad.append(g)
             hess.append(h)
 
@@ -305,6 +341,11 @@ class FeatureHistogram(object):
         node_num = len(node_map)
 
         missing_bin = 1 if use_missing else 0
+
+        # if the value of a feature is 0, the corresponding bin index will not appear in the sample sparse vector
+        # need to compute correct sparse point g_sum and s_sum by:
+        # (node total sum value) - (node feature total sum value) + (non 0 sparse point sum)
+        # [0, 0, 0] -> g, h, sample count
         zero_optim = [[[0 for i in range(3)]
                        for j in range(bin_split_points.shape[0])]
                       for k in range(node_num)]
@@ -316,20 +357,24 @@ class FeatureHistogram(object):
 
         for rid in range(data_record):
             nid = node_map.get(node_ids[rid])
+            # node total sum value
             zero_opt_node_sum[nid][0] += grad[rid]
             zero_opt_node_sum[nid][1] += hess[rid]
             zero_opt_node_sum[nid][2] += 1
+
             for fid, value in data_bins[rid].features.get_all_data():
                 if valid_features is not None and valid_features[fid] is False:
                     continue
 
                 if use_missing and value == NoneType():
+                    # missing value is set as -1
                     value = -1
 
                 node_histograms[nid][fid][value][0] += grad[rid]
                 node_histograms[nid][fid][value][1] += hess[rid]
                 node_histograms[nid][fid][value][2] += 1
 
+                # node feature total sum value
                 zero_optim[nid][fid][0] += grad[rid]
                 zero_optim[nid][fid][1] += hess[rid]
                 zero_optim[nid][fid][2] += 1
@@ -338,6 +383,7 @@ class FeatureHistogram(object):
             for fid in range(bin_split_points.shape[0]):
                 if valid_features is not None and valid_features[fid] is True:
                     if not use_missing or (use_missing and not zero_as_missing):
+                        # add 0 g/h sum to sparse point
                         sparse_point = bin_sparse_points[fid]
                         node_histograms[nid][fid][sparse_point][0] += zero_opt_node_sum[nid][0] - zero_optim[nid][fid][
                             0]
@@ -346,11 +392,12 @@ class FeatureHistogram(object):
                         node_histograms[nid][fid][sparse_point][2] += zero_opt_node_sum[nid][2] - zero_optim[nid][fid][
                             2]
                     else:
+                        # if 0 is regarded as missing value, add to missing bin
                         node_histograms[nid][fid][-1][0] += zero_opt_node_sum[nid][0] - zero_optim[nid][fid][0]
                         node_histograms[nid][fid][-1][1] += zero_opt_node_sum[nid][1] - zero_optim[nid][fid][1]
                         node_histograms[nid][fid][-1][2] += zero_opt_node_sum[nid][2] - zero_optim[nid][fid][2]
 
-        ret = FeatureHistogram.generate_histogram_key_value_list(node_histograms, node_map, bin_split_points)
+        ret = FeatureHistogram.generate_histogram_key_value_list(node_histograms, node_map, bin_split_points, with_uuid)
         return ret
 
     @staticmethod
@@ -367,4 +414,20 @@ class FeatureHistogram(object):
         histograms_table = histograms_table.mapValues(FeatureHistogram.host_accumulate_histogram_map_func)
         return histograms_table
 
+    @staticmethod
+    def recombine_histograms_(histograms_dict, node_map, feature_num):
+        histograms = [[[] for j in range(feature_num)] for k in range(len(node_map))]
+        for key in histograms_dict:
+            nid, fid = key
+            histograms[int(nid)][int(fid)] = FeatureHistogram.tensor_histogram_cumsum(histograms_dict[key][1])
 
+        return histograms
+
+    @staticmethod
+    def construct_table_(histograms_dict, partition):
+        buf = []
+        for key in histograms_dict:
+            nid, fid = key
+            buf.append((key, (fid, FeatureHistogram.tensor_histogram_cumsum(histograms_dict[key][1]))))
+
+        return session.parallelize(buf, include_key=True, partition=partition)

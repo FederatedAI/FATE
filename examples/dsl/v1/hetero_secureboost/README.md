@@ -11,7 +11,7 @@ This section introduces the dsl and conf relationships for usage.
      
 2. Multi-Class:  
     example-data: (1) guest: vehicle_scale_hetero_guest.csv
-                  (2) host: vehicle_scal_a.csv  
+                  (2) host: vehicle_scale_hetero_host.csv  
     dsl: test_secureboost_train_dsl.json  
     runtime_config: test_secureboost_train_multi_conf.json
    

@@ -5,4 +5,3 @@ class FederationEngine(object):
     EGGROLL = 'EGGROLL'
     RABBITMQ = 'RABBITMQ'
     STANDALONE = 'STANDALONE'
-    PROXY = 'PROXY'

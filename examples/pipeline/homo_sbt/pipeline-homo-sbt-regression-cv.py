@@ -59,7 +59,7 @@ def main(config="../../config.yaml", namespace=""):
                                          task_type='regression',
                                          objective_param={"objective": "lse"},
                                          tree_param={
-                                             "max_depth": 5
+                                             "max_depth": 3
                                          },
                                          cv_param={
                                              "need_cv": True,

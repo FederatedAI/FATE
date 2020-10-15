@@ -25,7 +25,7 @@ from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.utils import job_utils
 import os
 from fate_flow.operation import JobSaver
-from fate_arch.common.base_utils import json_dumps
+from fate_arch.common.base_utils import json_dumps, current_timestamp
 from fate_arch.common import base_utils
 from fate_flow.entity.types import RunParameters
 from fate_flow.manager import ResourceManager
@@ -37,13 +37,13 @@ class TaskController(object):
     INITIATOR_COLLECT_FIELDS = ["status", "party_status", "start_time", "update_time", "end_time", "elapsed"]
 
     @classmethod
-    def create_task(cls, role, party_id, run_on, task_info):
+    def create_task(cls, role, party_id, run_on_this_party, task_info):
         task_info["role"] = role
         task_info["party_id"] = party_id
         task_info["status"] = TaskStatus.WAITING
         task_info["party_status"] = TaskStatus.WAITING
         task_info["create_time"] = base_utils.current_timestamp()
-        task_info["run_on"] = run_on
+        task_info["run_on_this_party"] = run_on_this_party
         if "task_id" not in task_info:
             task_info["task_id"] = job_utils.generate_task_id(job_id=task_info["job_id"], component_name=task_info["component_name"])
         if "task_version" not in task_info:
@@ -97,9 +97,6 @@ class TaskController(object):
                     '--run_ip', RuntimeConfig.JOB_SERVER_HOST,
                     '--job_server', '{}:{}'.format(RuntimeConfig.JOB_SERVER_HOST, RuntimeConfig.HTTP_PORT),
                 ]
-                # run configs
-                for k, v in run_parameters.eggroll_run.items():
-                    process_cmd.extend([f"--{k}", str(v)])
             elif run_parameters.computing_engine == ComputingEngine.SPARK:
                 if "SPARK_HOME" not in os.environ:
                     raise EnvironmentError("SPARK_HOME not found")
@@ -142,7 +139,8 @@ class TaskController(object):
             p = job_utils.run_subprocess(job_id=job_id, config_dir=task_dir, process_cmd=process_cmd, log_dir=task_log_dir)
             if p:
                 task_info["party_status"] = TaskStatus.RUNNING
-                task_info["run_pid"] = p.pid
+                #task_info["run_pid"] = p.pid
+                task_info["start_time"] = current_timestamp()
                 task_executor_process_start_status = True
             else:
                 task_info["party_status"] = TaskStatus.FAILED
@@ -258,7 +256,7 @@ class TaskController(object):
                 job = jobs[0]
                 job_parameters = RunParameters(**job.f_runtime_conf["job_parameters"])
                 tracker = Tracker(job_id=job_id, role=role, party_id=party_id, task_id=task_id, task_version=task_version, job_parameters=job_parameters)
-                status.add(tracker.clean_task())
+                status.add(tracker.clean_task(job.f_runtime_conf))
         if len(status) == 1 and True in status:
             return True
         else:

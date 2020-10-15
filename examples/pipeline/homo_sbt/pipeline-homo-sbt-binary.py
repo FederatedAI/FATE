@@ -67,7 +67,7 @@ def main(config="../../config.yaml", namespace=""):
                                          task_type='classification',
                                          objective_param={"objective": "cross_entropy"},
                                          tree_param={
-                                             "max_depth": 5
+                                             "max_depth": 3
                                          },
                                          validation_freqs=1
                                          )

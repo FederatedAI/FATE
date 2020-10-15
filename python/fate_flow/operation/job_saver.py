@@ -35,7 +35,7 @@ class JobSaver(object):
 
     @classmethod
     def update_job_status(cls, job_info):
-        schedule_logger(job_id=job_info["job_id"]).info("try to update job {} status".format(job_info["job_id"]))
+        schedule_logger(job_id=job_info["job_id"]).info("try to update job {} status to {}".format(job_info["job_id"], job_info.get("status")))
         update_status = cls.update_status(Job, job_info)
         if update_status:
             schedule_logger(job_id=job_info["job_id"]).info("update job {} status successfully".format(job_info["job_id"]))
@@ -177,7 +177,7 @@ class JobSaver(object):
 
     @classmethod
     @DB.connection_context()
-    def query_job(cls, **kwargs):
+    def query_job(cls, reverse=None, order_by=None, **kwargs):
         filters = []
         for f_n, f_v in kwargs.items():
             attr_name = 'f_%s' % f_n
@@ -185,6 +185,13 @@ class JobSaver(object):
                 filters.append(operator.attrgetter('f_%s' % f_n)(Job) == f_v)
         if filters:
             jobs = Job.select().where(*filters)
+            if reverse is not None:
+                if not order_by or not hasattr(Job, f"f_{order_by}"):
+                    order_by = "create_time"
+                if reverse is True:
+                    jobs = jobs.order_by(getattr(Job, f"f_{order_by}").desc())
+                elif reverse is False:
+                    jobs = jobs.order_by(getattr(Job, f"f_{order_by}").asc())
             return [job for job in jobs]
         else:
             # not allow query all job
@@ -205,7 +212,7 @@ class JobSaver(object):
 
     @classmethod
     @DB.connection_context()
-    def query_task(cls, only_latest=True, **kwargs):
+    def query_task(cls, only_latest=True, reverse=None, order_by=None, **kwargs):
         filters = []
         for f_n, f_v in kwargs.items():
             attr_name = 'f_%s' % f_n
@@ -215,6 +222,13 @@ class JobSaver(object):
             tasks = Task.select().where(*filters)
         else:
             tasks = Task.select()
+        if reverse is not None:
+            if not order_by or not hasattr(Task, f"f_{order_by}"):
+                order_by = "create_time"
+            if reverse is True:
+                tasks = tasks.order_by(getattr(Task, f"f_{order_by}").desc())
+            elif reverse is False:
+                tasks = tasks.order_by(getattr(Task, f"f_{order_by}").asc())
         if only_latest:
             tasks_group = cls.get_latest_tasks(tasks=tasks)
             return list(tasks_group.values())

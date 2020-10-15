@@ -307,14 +307,21 @@ class DAGScheduler(Cron):
             schedule_logger(job_id=job_id).error("can not found job {} on initiator {} {}".format(job_id, initiator_role, initiator_party_id))
 
     @classmethod
-    def schedule_running_job(cls, job):
+    def schedule_running_job(cls, job, canceled=False):
         schedule_logger(job_id=job.f_job_id).info("scheduling job {}".format(job.f_job_id))
         dsl_parser = schedule_utils.get_job_dsl_parser(dsl=job.f_dsl,
                                                        runtime_conf=job.f_runtime_conf,
                                                        train_runtime_conf=job.f_train_runtime_conf)
-        task_scheduling_status_code, tasks = TaskScheduler.schedule(job=job, dsl_parser=dsl_parser)
+        if not canceled:
+            job_events = JobQueue.query_event(job_id=job.f_job_id, initiator_role=job.f_role, initiator_party_id=job.f_party_id)
+            if job_events and job_events[0].f_job_status == JobStatus.CANCELED:
+                canceled = True
+                schedule_logger(job_id=job.f_job_id).info("get cancel job {} event from queue".format(job.f_job_id))
+        task_scheduling_status_code, tasks = TaskScheduler.schedule(job=job, dsl_parser=dsl_parser, canceled=canceled)
         tasks_status = [task.f_status for task in tasks]
         new_job_status = cls.calculate_job_status(task_scheduling_status_code=task_scheduling_status_code, tasks_status=tasks_status)
+        if new_job_status == JobStatus.WAITING and canceled:
+            new_job_status = JobStatus.CANCELED
         total, finished_count = cls.calculate_job_progress(tasks_status=tasks_status)
         new_progress = float(finished_count) / total * 100
         schedule_logger(job_id=job.f_job_id).info("Job {} status is {}, calculate by task status list: {}".format(job.f_job_id, new_job_status, tasks_status))
@@ -340,7 +347,7 @@ class DAGScheduler(Cron):
         jobs = JobSaver.query_job(job_id=job_id, role=initiator_role, party_id=initiator_party_id, is_initiator=True)
         for job in jobs:
             # update canceled job status
-            cls.schedule_running_job(job=job)
+            cls.schedule_running_job(job=job, canceled=True)
 
     @classmethod
     def align_input_data_partitions(cls, job: Job, dsl_parser):
@@ -373,12 +380,14 @@ class DAGScheduler(Cron):
             tasks = JobSaver.query_task(job_id=job_id, role=initiator_role, party_id=initiator_party_id, component_name=component_name)
         else:
             tasks = JobSaver.query_task(job_id=job_id, role=initiator_role, party_id=initiator_party_id)
-        should_rerun = False
+        job_can_rerun = False
         dsl_parser = schedule_utils.get_job_dsl_parser(dsl=job.f_dsl,
                                                        runtime_conf=job.f_runtime_conf,
                                                        train_runtime_conf=job.f_train_runtime_conf)
         for task in tasks:
-            if task.f_status != TaskStatus.COMPLETE and task.f_party_status != TaskStatus.COMPLETE:
+            if task.f_status in {TaskStatus.WAITING, TaskStatus.COMPLETE}:
+                schedule_logger(job_id=job_id).info(f"task {task.f_task_id} {task.f_task_version} on {task.f_role} {task.f_party_id} is {task.f_status}, pass rerun")
+            else:
                 # stop old version task
                 FederatedScheduler.stop_task(job=job, task=task, stop_status=task.f_status)
                 FederatedScheduler.clean_task(job=job, task=task, content_type="metrics")
@@ -395,10 +404,8 @@ class DAGScheduler(Cron):
                             continue
                         JobController.initialize_tasks(job_id, _role, _party_id, False, job.f_runtime_conf["initiator"], RunParameters(**job.f_runtime_conf["job_parameters"]), dsl_parser, component_name=task.f_component_name, task_version=task.f_task_version)
                 schedule_logger(job_id=job_id).info(f"create task {task.f_task_id} new version {task.f_task_version} successfully")
-                should_rerun = True
-            else:
-                schedule_logger(job_id=job_id).info(f"task {task.f_task_id} {task.f_task_version} on {task.f_role} {task.f_party_id} is complete, pass rerun")
-        if should_rerun:
+                job_can_rerun = True
+        if job_can_rerun:
             if EndStatus.contains(job.f_status):
                 job.f_status = JobStatus.WAITING
                 job.f_end_time = None
@@ -452,13 +459,16 @@ class DAGScheduler(Cron):
                 if task_scheduling_status_code == SchedulingStatusCode.HAVE_NEXT:
                     return JobStatus.RUNNING
                 else:
+                    # have waiting with no next
                     pass
-            # 3 with no next and 4
+            # have waiting with no next or 4
             for status in sorted(EndStatus.status_list(), key=lambda s: StatusSet.get_level(status=s), reverse=True):
                 if status == TaskStatus.COMPLETE:
                     continue
                 elif status in tmp_status_set:
                     return status
+            if len(tmp_status_set) == 2 and TaskStatus.WAITING in tmp_status_set and TaskStatus.COMPLETE in tmp_status_set and task_scheduling_status_code == SchedulingStatusCode.NO_NEXT:
+                return JobStatus.CANCELED
 
             raise Exception("Calculate job status failed: {}".format(tasks_status))
 
