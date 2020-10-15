@@ -231,7 +231,7 @@ To save a pipeline, just use **dump** interface.
 
    pipeline.dump("pipeline_saved.pkl")
 
-To save a pipeline, use **load_model_from_file** interface.
+To restore a pipeline, use **load_model_from_file** interface.
 
 .. code:: python
 

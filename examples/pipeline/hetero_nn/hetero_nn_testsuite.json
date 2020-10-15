@@ -38,7 +38,7 @@
             "script": "./pipeline-hetero-nn-train-binary.py"
         },
         "train_multi": {
-            "script": "./pipeline-hetero-nn-multi.py"
+            "script": "./pipeline-hetero-nn-train-multi.py"
         },
         "train_with_early_stop": {
             "script": "./pipeline-hetero-nn-with-early-stop.py"

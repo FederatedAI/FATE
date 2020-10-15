@@ -146,7 +146,8 @@ def run_suite(replace, data_namespace_mangling, config, include, exclude, glob,
                 if not skip_data:
                     _delete_data(client, suite)
                 echo.echo(f"[{i + 1}/{len(suites)}]elapse {timedelta(seconds=int(time.time() - start))}", fg='red')
-                if not skip_dsl_jobs:
+
+                if not skip_dsl_jobs or not skip_pipeline_jobs:
                     echo.echo(suite.pretty_final_summary(), fg='red')
 
             except Exception:
@@ -438,12 +439,28 @@ def _run_pipeline_jobs(config: Config, suite: Testsuite, namespace: str, data_na
     for i, pipeline_job in enumerate(suite.pipeline_jobs):
         echo.echo(f"Running {i + 1} of {job_n} jobs: {pipeline_job.job_name}")
         job_name, script_path = pipeline_job.job_name, pipeline_job.script_path
-        mod = _load_module_from_script(script_path)
-        if data_namespace_mangling:
-            mod.main(config, f"_{namespace}")
-        else:
-            mod.main(config)
 
+        def _raise(status):
+            exception_id = str(uuid.uuid1())
+            suite.update_status(job_name=job_name, status=status, exception_id=exception_id)
+            echo.file(f"exception({exception_id})")
+            LOGGER.exception(f"exception id: {exception_id}")
+
+        try:
+            mod = _load_module_from_script(script_path)
+            if data_namespace_mangling:
+                try:
+                    mod.main(config, f"_{namespace}")
+                    suite.update_satus(job_name=job_name, status="complete")
+                except:
+                    _raise(status="incomplete")
+            else:
+                try:
+                    mod.main(config)
+                except:
+                    _raise(status="incomplete")
+        except:
+            _raise(status="not submitted")
 
 def _run_benchmark_pairs(config: Config, suite: BenchmarkSuite, tol: float,
                          namespace: str, data_namespace_mangling: bool):
