@@ -333,7 +333,7 @@ make && make install
 ## 5.8 部署rabbitmq
 --------
 ### 5.8.1
-请参阅部署指南：[RabbitMQ_deployment_guide_zh](./RabbitMQ_deployment_guide_zh.md)
+请参阅部署指南：[RabbitMQ_deployment_guide_zh](./RabitMQ_deployment_guide_zh.md)
 ### 5.8.2
 请参阅官方部署指南
 ### 5.8.3
