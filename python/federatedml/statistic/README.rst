@@ -33,9 +33,9 @@ This folder contains code for implementing algorithm based on [`RSA Intersection
 .. __: https://books.google.com.hk/books?id=zfvf37_YS8cC&pg=PA73&lpg=PA73&dq=rsa+commutative+encryption&source=bl&ots=LbOiyIlr3E&sig=IIWlTGeoU0C8dRiN10uH2OAwobQ&hl=zh-CN&sa=X&ved=0ahUKEwiLoozC1tbXAhVDnJQKHbP7DvAQ6AEIdTAJ#v=onepage&q&f=false.
 
 Our Intersection module is trying to solve the problem that Privacy-Preserving Entity Match. This module will help at least two parties to find the same user ids without leaking all their user ids
-to the other. This is illustrated in :ref:`figure 1`.
+to the other. This is illustrated in figure 1:
 
-.. figure:: images/rsa_intersection.png
+.. figure:: ./intersect/images/rsa_intersection.png
    :width: 500
    :align: center
    :name: figure 1
@@ -62,7 +62,7 @@ Multi-Host Intersection
 
 Both rsa and raw intersection support multi-host. It means a guest can do intersection with more than one host simultaneously and finally get the common ID with all hosts. 
 
-.. figure:: ./images/multi_hosts.png
+.. figure:: ./intersect/images/multi_hosts.png
    :align: center
    :width: 500
    :name: figure 2
