@@ -38,8 +38,8 @@ def main(param=""):
     df = df_guest.join(df_host, rsuffix='host')
     y = df[label_name]
     X = df.drop(label_name, axis=1)
-
-    clf = GradientBoostingClassifier(random_state=0, n_estimators=50)
+    print(data_guest)
+    clf = GradientBoostingClassifier(random_state=0, n_estimators=120 if 'epsilon' in data_guest else 50)
     clf.fit(X, y)
     y_prob = clf.predict(X)
 

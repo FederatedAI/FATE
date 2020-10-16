@@ -98,7 +98,7 @@ class _ComputingTimer(object):
         stack_table.set_style(beautifultable.STYLE_BOX_ROUNDED)
         stack_table.columns.header = ["function", "n", "sum(s)", "mean(s)", "max(s)", "stack_hash", "stack"]
         stack_table.columns.alignment["stack"] = beautifultable.ALIGN_LEFT
-        stack_table.column_headers.alignment = beautifultable.ALIGN_CENTER
+        stack_table.columns.header.alignment = beautifultable.ALIGN_CENTER
         stack_table.border.left = ''
         stack_table.border.right = ''
         stack_table.border.bottom = ''

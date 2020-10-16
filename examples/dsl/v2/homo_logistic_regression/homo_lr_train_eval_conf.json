@@ -66,11 +66,14 @@
             "penalty": "L2",
             "tol": 1e-05,
             "alpha": 0.01,
-            "optimizer": "sgd",
+            "optimizer": "rmsprop",
             "batch_size": 320,
             "learning_rate": 0.15,
             "init_param": {
                 "init_method": "zeros"
+            },
+            "encrypt_param": {
+                "method": null
             },
             "max_iter": 3,
             "early_stop": "diff",

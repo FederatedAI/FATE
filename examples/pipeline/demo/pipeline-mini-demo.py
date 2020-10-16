@@ -18,11 +18,11 @@
 from pipeline.backend.config import Backend, WorkMode
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component import DataIO
+from pipeline.component import Evaluation
 from pipeline.component import HeteroLR
 from pipeline.component import Intersection
 from pipeline.component import Reader
 from pipeline.interface import Data
-from pipeline.interface import Model
 
 
 def main():
@@ -58,13 +58,8 @@ def main():
     # configure Reader for host
     reader_0.get_party_instance(role="host", party_id=host).algorithm_param(table=host_train_data)
 
-    reader_1 = Reader(name="reader_1")
-    reader_1.get_party_instance(role="guest", party_id=guest).algorithm_param(table=guest_eval_data)
-    reader_1.get_party_instance(role="host", party_id=host).algorithm_param(table=host_eval_data)
-
-    # define DataIO components
+    # define DataIO component
     dataio_0 = DataIO(name="dataio_0")
-    dataio_1 = DataIO(name="dataio_1")
 
     # get DataIO party instance of guest
     dataio_0_guest_party_instance = dataio_0.get_party_instance(role="guest", party_id=guest)
@@ -75,23 +70,21 @@ def main():
 
     # define Intersection components
     intersection_0 = Intersection(name="intersection_0")
-    intersection_1 = Intersection(name="intersection_1")
 
     # define HeteroLR component
-    hetero_lr_0 = HeteroLR(name="hetero_lr_0", early_stop="diff", learning_rate=0.15, optimizer="rmsprop",
-                           max_iter=10, early_stopping_rounds=2, validation_freqs=1)
+    hetero_lr_0 = HeteroLR(name="hetero_lr_0",
+                           early_stop="diff",
+                           learning_rate=0.15,
+                           optimizer="rmsprop",
+                           max_iter=10)
 
     # add components to pipeline, in order of task execution
     pipeline.add_component(reader_0)
-    pipeline.add_component(reader_1)
     pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
-    # set dataio_1 to replicate model from dataio_0
-    pipeline.add_component(dataio_1, data=Data(data=reader_1.output.data), model=Model(dataio_0.output.model))
     # set data input sources of intersection components
     pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
-    pipeline.add_component(intersection_1, data=Data(data=dataio_1.output.data))
     # set train & validate data of hetero_lr_0 component
-    pipeline.add_component(hetero_lr_0, data=Data(train_data=intersection_0.output.data, validate_data=intersection_1.output.data))
+    pipeline.add_component(hetero_lr_0, data=Data(train_data=intersection_0.output.data))
 
     # compile pipeline once finished adding modules, this step will form conf and dsl files for running job
     pipeline.compile()
@@ -110,15 +103,24 @@ def main():
     # initiate predict pipeline
     predict_pipeline = PipeLine()
 
-    reader_2 = Reader(name="reader_2")
-    reader_2.get_party_instance(role="guest", party_id=guest).algorithm_param(table=guest_eval_data)
-    reader_2.get_party_instance(role="host", party_id=host).algorithm_param(table=host_eval_data)
+    # define new data reader
+    reader_1 = Reader(name="reader_1")
+    reader_1.get_party_instance(role="guest", party_id=guest).algorithm_param(table=guest_eval_data)
+    reader_1.get_party_instance(role="host", party_id=host).algorithm_param(table=host_eval_data)
+
+    # define evaluation component
+    evaluation_0 = Evaluation(name="evaluation_0")
+    evaluation_0.get_party_instance(role="guest", party_id=guest).algorithm_param(need_run=True, eval_type="binary")
+    evaluation_0.get_party_instance(role="host", party_id=host).algorithm_param(need_run=False)
+
     # add data reader onto predict pipeline
-    predict_pipeline.add_component(reader_2)
+    predict_pipeline.add_component(reader_1)
     # add selected components from train pipeline onto predict pipeline
     # specify data source
     predict_pipeline.add_component(pipeline,
-                                   data=Data(predict_input={pipeline.dataio_0.input.data: reader_2.output.data}))
+                                   data=Data(predict_input={pipeline.dataio_0.input.data: reader_1.output.data}))
+    # add evaluation component to predict pipeline
+    predict_pipeline.add_component(evaluation_0, data=Data(data=pipeline.hetero_lr_0.output.data))
     # run predict model
     predict_pipeline.predict(backend=backend, work_mode=work_mode)
 

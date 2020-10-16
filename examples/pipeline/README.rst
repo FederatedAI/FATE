@@ -11,8 +11,10 @@ Please refer to the document linked above for details on FATE-Pipeline and FATE-
 DSL version of provided Pipeline examples can be found `here <../dsl/v2>`_.
 
 
-Quick start
+Quick Start
 -----------
+
+Here is a general guide to quick start a FATE job.
 
 1. (optional) create virtual env
 
@@ -71,31 +73,29 @@ Quick start
 
    ::
 
-        2020-10-16 10:44:47.492 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:125 - Job id is 20201016104447123987592
+        2020-10-16 13:14:56.316 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:125 - Job id is 20201016131456016425640
         Job is still waiting, time elapse: 0:00:00
-        Running component reader_1, time elapse: 0:00:03
-        Running component reader_0, time elapse: 0:00:06
-        Running component dataio_0, time elapse: 0:00:09
-        Running component dataio_1, time elapse: 0:00:11
-        Running component intersection_1, time elapse: 0:00:17
-        Running component intersection_0, time elapse: 0:00:22
-        Running component hetero_lr_0, time elapse: 0:01:00
-        2020-10-16 10:45:49.165 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:133 - Job is complete!!! Job id is 20201016104447123987592
-        2020-10-16 10:45:49.165 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:134 - Total time: 0:01:01
+        Running component reader_0, time elapse: 0:00:03
+        Running component dataio_0, time elapse: 0:00:05
+        Running component intersection_0, time elapse: 0:00:10
+        Running component hetero_lr_0, time elapse: 0:00:36
+        2020-10-16 13:15:33.703 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:133 - Job is complete!!! Job id is 20201016131456016425640
+        2020-10-16 13:15:33.703 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:134 - Total time: 0:00:37
 
-   Once fit job completes, demo script will print coefficients & validation metrics of result model.
+   Once fit job completes, demo script will print coefficients and other training information of model.
 
-   After having completed a fit job, script will invoke a predict job with the model from previous fit job.
-   Note how only deployed modules are included in the predict job workflow. For more information on using
+   After having completed the fit job, script will invoke a predict job with the trained model.
+   Note that ``Evaluation`` component is added to the predict job workflow. For more information on using
    FATE-Pipeline, please refer to this `guide <../../python/fate_client/pipeline/README.rst>`_.
 
    ::
 
-        2020-10-16 10:45:49.765 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:125 - Job id is 20201016104549184225593
-        Job is still waiting, time elapse: 0:00:03
-        Running component reader_2, time elapse: 0:00:05
-        Running component dataio_0, time elapse: 0:00:08
-        Running component intersection_0, time elapse: 0:00:13
-        Running component hetero_lr_0, time elapse: 0:00:18
-        2020-10-16 10:46:09.349 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:133 - Job is complete!!! Job id is 20201016104549184225593
-        2020-10-16 10:46:09.350 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:134 - Total time: 0:00:19
+        2020-10-16 13:15:34.282 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:125 - Job id is 20201016131533727391641
+        Job is still waiting, time elapse: 0:00:02
+        Running component reader_1, time elapse: 0:00:05
+        Running component dataio_0, time elapse: 0:00:07
+        Running component intersection_0, time elapse: 0:00:12
+        Running component hetero_lr_0, time elapse: 0:00:17
+        Running component evaluation_0, time elapse: 0:00:23
+        2020-10-16 13:15:58.206 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:133 - Job is complete!!! Job id is 20201016131533727391641
+        2020-10-16 13:15:58.207 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:134 - Total time: 0:00:230-10-16 10:46:09.350 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:134 - Total time: 0:00:23
