@@ -64,7 +64,7 @@ Features
 
 -  Support plain/encrypted mode
 -  Support local layer define / optimizer define
--  Support communication-efficient mode
+-  Support communication-efficient mode. See test_ftl_comm_eff_conf.json in `here <../../../examples/dsl/v2/hetero_ftl>`__.
 
 Applications
 ^^^^^^^^^^^^
