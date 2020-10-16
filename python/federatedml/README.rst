@@ -12,7 +12,7 @@ FederatedML includes implementation of many common machine learning algorithms o
 
 3. Federated Machine Learning Algorithms: LR, GBDT, DNN, TransferLearning, which support Heterogeneous and Homogeneous styles.
 
-4. Model Evaluation: Binary | Multiclass | Regression Evaluation, Local vs Federated Comparison.
+4. Model Evaluation: Binary | Multiclass | Regression | Clustering Evaluation, Local vs Federated Comparison.
 
 5. Secure Protocol: Provides multiple security protocols for secure multi-party computing and interaction between participants.
 
@@ -165,6 +165,14 @@ Algorithm List
      -
      - SecureBoost Model, consists of model-meta and model-param.
 
+   * - `Hetero Fast Secure Boosting`_
+     - HeteroFastSecureBoost
+     - Build hetero secure boosting module through multiple parties in layered/mix manners.
+     - Table, values are instances.
+     - Table, values are instances.
+     -
+     - FastSecureBoost Model, consists of model-meta and model-param.
+
    * - `Evaluation`_
      - Evaluation
      - Output the model evaluation metrics for user.
@@ -229,6 +237,14 @@ Algorithm List
      -
      -
 
+   * - `Hetero Federated Transfer Learning`_
+     - Hetero FTL
+     - Build Hetero FTL Module Between 2 party
+     - Table, values are instance
+     -
+     -
+     - Hetero FTL Model
+
    * - `Hetero KMeans`_
      - Hetero KMeans
      - Build Hetero KMeans module through multiple parties
@@ -236,6 +252,14 @@ Algorithm List
      - Table, values are instance; Arbier outputs 2 Tables
      -
      - Hetero KMeans Model
+
+   * - `PSI`_
+     - PSI Module
+     - Compute PSI value of features between two table
+     - Table, values are instance
+     -
+     -
+     - PSI Results
 
    * - `Data Statistics`_
      - Data Statistics
@@ -259,18 +283,20 @@ Algorithm List
 .. _Hetero-Poisson: linear_model/poisson_regression/README.rst
 .. _Homo-LR: linear_model/logistic_regression/README.rst
 .. _Homo-NN: nn/homo_nn/README.rst
-.. _Hetero Secure Boosting: tree/README.rst
+.. _Hetero Secure Boosting: ensemble/README.rst
 .. _Evaluation: evaluation/README.rst
 .. _Hetero Pearson: statistic/correlation/README.rst
 .. _Hetero-NN: nn/hetero_nn/README.rst
-.. _Homo Secure Boosting: tree/README.rst
+.. _Homo Secure Boosting: ensemble/README.rst
 .. _Data Split: model_selection/data_split/README.rst
 .. _Homo OneHot Encoder: feature/README.rst
 .. _Column Expand: feature/README.rst
 .. _Secure Information Retrieval: secure_information_retrieval
 .. _Hetero KMeans: unsupervised_learning/kmeans/README.rst
 .. _Data Statistics: statistic/README.rst
-
+.. _PSI: statistic/psi/README.rst
+.. _Hetero Federated Transfer Learning: transfer_learning/hetero_ftl/README.rst
+.. _Hetero Fast Secure Boosting: ensemble/README.rst
 
 Secure Protocol
 ---------------

@@ -12,7 +12,7 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
 
 3. 联邦机器学习算法：包括横向和纵向的联邦LR, GBDT， DNN，迁移学习等
 
-4. 模型评估：提供对二分类，多分类，回归评估，联邦和单边对比评估
+4. 模型评估：提供对二分类，多分类，回归评估，聚类评估，联邦和单边对比评估
 
 5. 安全协议：提供了多种安全协议，以进行更安全的多方交互计算。
 
@@ -166,6 +166,14 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
      - 
      -
      - SecureBoost模型，由模型本身和模型参数组成
+
+   * - `Hetero Fast Secure Boosting`_
+     - HeteroFastSecureBoost
+     - 使用分层/混合模式快速构建树模型
+     - Table，值为Instance
+     - Table，值为Instance
+     -
+     - FastSecureBoost模型
     
    * - `Evaluation`_
      - Evaluation
@@ -231,6 +239,22 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
      -
      -
 
+   * - `Hetero Federated Transfer Learning`_
+     - 纵向联邦迁移学习
+     - 在两个party间构建联邦迁移模型
+     - Table, 值为Instance
+     -
+     -
+     - FTL神经网络模型参数等
+
+    * - `PSI`_
+     - PSI模块
+     - 计算两个表特征间的PSI值
+     - Table, 值为Instance
+     -
+     -
+     - PSI 结果
+
    * - `Hetero KMeans`_
      - 纵向 K均值算法
      - 构建K均值模块
@@ -272,7 +296,9 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
 .. _Secure Information Retrieval: secure_information_retrieval
 .. _Hetero KMeans: unsupervised_learning/kmeans/README.rst
 .. _Data Statistics: statistic/README.rst
-
+.. _PSI: statistic/psi/README.rst
+.. _Hetero Federated Transfer Learning: transfer_learning/hetero_ftl/README.rst
+.. _Hetero Fast Secure Boosting: ensemble/README.rst
 
 安全协议
 ---------
