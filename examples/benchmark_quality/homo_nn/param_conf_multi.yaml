@@ -1,0 +1,14 @@
+epoch: 150
+lr: 0.05
+batch_size: 32
+optimizer: Adam
+encode_label: true
+layers:
+  - name: Dense
+    params: { units: 5, input_shape: [ 18 ], activation: relu }
+  - name: Dense
+    params: { units: 4, activation: softmax }
+dataset: vehicle
+loss: categorical_crossentropy
+is_multy: true
+metrics: [ "accuracy" ]

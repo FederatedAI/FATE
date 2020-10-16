@@ -1,0 +1,15 @@
+{
+    "module_path":  "federatedml/model_selection/data_split",
+    "param_class" : "federatedml/param/data_split_param.py/DataSplitParam",
+    "role":
+    {
+        "guest":
+        {
+            "program": "homo_data_split.py/HomoDataSplitGuest"
+        },
+        "host":
+        {
+            "program": "homo_data_split.py/HomoDataSplitHost"
+        }
+    }
+}

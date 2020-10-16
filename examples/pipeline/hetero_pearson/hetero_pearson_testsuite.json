@@ -1,0 +1,36 @@
+{
+    "data": [
+        {
+            "file": "examples/data/breast_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "work_mode": 0,
+            "table_name": "breast_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/breast_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "work_mode": 0,
+            "table_name": "breast_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        }
+    ],
+    "pipeline_tasks": {
+        "default": {
+            "script": "./pipeline_hetero_pearson.py"
+        },
+        "host_only": {
+            "script": "./pipeline_hetero_pearson_host_only.py"
+        },
+        "sole": {
+            "script": "./pipeline_hetero_pearson_sole.py"
+        },
+        "mix_rand": {
+            "script": "./pipeline_hetero_pearson_mix_rand.py"
+        }
+    }
+}

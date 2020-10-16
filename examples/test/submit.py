@@ -42,7 +42,7 @@ class Submitter(object):
 
     @property
     def _flow_client_path(self):
-        return os.path.join(self._fate_home, "../fate_flow/fate_flow_client.py")
+        return os.path.join(self._fate_home, "../python/fate_flow/fate_flow_client.py")
 
     def set_fate_home(self, path):
         self._fate_home = path
@@ -81,13 +81,16 @@ class Submitter(object):
             raise ValueError(f"[submit_job]fail, status:{status}, stdout:{stdout}")
         return stdout
 
-    def upload(self, data_path, namespace, name, partition=10, head=1, remote_host=None):
+    def upload(self, data_path, namespace, name, partition=10, head=1, remote_host=None, backend=None):
+        if backend is None:
+            backend = self._backend
         conf = dict(
             file=data_path,
             head=head,
             partition=partition,
             work_mode=self._work_mode,
             table_name=name,
+            backend=backend,
             namespace=namespace
         )
         with tempfile.NamedTemporaryFile("w") as f:
@@ -95,7 +98,7 @@ class Submitter(object):
             f.flush()
             if remote_host:
                 self.run_cmd(["scp", f.name, f"{remote_host}:{f.name}"])
-                env_path = os.path.join(self._fate_home, "../../init_env.sh")
+                env_path = os.path.join(self._fate_home, "../bin/init_env.sh")
                 upload_cmd = f"source {env_path}"
                 upload_cmd = f"{upload_cmd} && python {self._flow_client_path} -f upload -c {f.name}"
                 if self._existing_strategy == 0 or self._existing_strategy == 1:

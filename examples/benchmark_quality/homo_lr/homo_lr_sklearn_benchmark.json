@@ -1,0 +1,120 @@
+{
+  "data": [
+    {
+      "file": "../../data/breast_homo_guest.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "breast_homo_guest",
+      "namespace": "experiment",
+      "role": "guest_0"
+    },
+    {
+      "file": "../../data/breast_homo_host.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "breast_homo_host",
+      "namespace": "experiment",
+      "role": "host_0"
+    },
+    {
+      "file": "../../data/default_credit_homo_guest.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "default_credit_guest",
+      "namespace": "experiment",
+      "role": "guest_0"
+    },
+    {
+      "file": "../../data/default_credit_homo_host_1.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "default_credit_host1",
+      "namespace": "experiment",
+      "role": "host_0"
+    },
+    {
+      "file": "../../data/give_credit_homo_guest.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "give_credit_homo_guest",
+      "namespace": "experiment",
+      "role": "guest_0"
+    },
+    {
+      "file": "../../data/give_credit_homo_host.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "give_credit_homo_host",
+      "namespace": "experiment",
+      "role": "host_0"
+    },
+    {
+      "file": "../../data/epsilon_5k_homo_guest.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "epsilon_5k_homo_guest",
+      "namespace": "experiment",
+      "role": "guest_0"
+    },
+    {
+      "file": "../../data/epsilon_5k_homo_host.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "epsilon_5k_homo_host",
+      "namespace": "experiment",
+      "role": "host_0"
+    }
+  ],
+  "homo_lr-binary-0": {
+    "local": {
+      "script": "./sklearn-lr-binary.py",
+      "conf": "./breast_lr_config.yaml"
+    },
+    "FATE": {
+      "script": "./pipeline-lr-binary.py",
+      "conf": "./breast_lr_config.yaml"
+    },
+    "compare_setting": {
+      "relative_tol": 1e-2
+    }
+  },
+  "homo_lr-binary-1": {
+    "local": {
+      "script": "./sklearn-lr-binary.py",
+      "conf": "./default_credit_lr_config.yaml"
+    },
+    "FATE": {
+      "script": "./pipeline-lr-binary.py",
+      "conf": "./default_credit_lr_config.yaml"
+    },
+    "compare_setting": {
+      "relative_tol": 1e-2
+    }
+  },
+  "homo_lr-binary-2": {
+    "local": {
+      "script": "./sklearn-lr-binary.py",
+      "conf": "./epsilon_5k_lr_config.yaml"
+    },
+    "FATE": {
+      "script": "./pipeline-lr-binary.py",
+      "conf": "./epsilon_5k_lr_config.yaml"
+    },
+    "compare_setting": {
+      "relative_tol": 1e-2
+    }
+  },
+  "homo_lr-binary-3": {
+    "local": {
+      "script": "./sklearn-lr-binary.py",
+      "conf": "./give_credit_lr_config.yaml"
+    },
+    "FATE": {
+      "script": "./pipeline-lr-binary.py",
+      "conf": "./give_credit_pipeline_lr_config.yaml"
+    },
+    "compare_setting": {
+      "relative_tol": 1e-2
+    }
+  }
+}

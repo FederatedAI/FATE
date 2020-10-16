@@ -1,0 +1,15 @@
+{
+    "module_path": "federatedml/secure_information_retrieval",
+    "param_class": "federatedml/param/sir_param.py/SecureInformationRetrievalParam",
+    "role":
+    {
+        "guest":
+        {
+            "program": "secure_information_retrieval_guest.py/SecureInformationRetrievalGuest"
+        },
+        "host":
+        {
+            "program": "secure_information_retrieval_host.py/SecureInformationRetrievalHost"
+        }
+    }
+}

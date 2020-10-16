@@ -1,0 +1,34 @@
+{
+    "data": [
+        {
+            "file": "examples/data/dvisits_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "dvisits_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/dvisits_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "dvisits_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        }
+    ],
+    "pipeline_tasks": {
+        "poisson-train": {
+            "script": "./pipeline-hetero-poisson.py"
+        },
+        "poisson-validate": {
+            "script": "./pipeline-hetero-poisson-validate.py"
+        },
+        "poisson-sparse": {
+            "script": "./pipeline-hetero-poisson-sparse.py"
+        },
+        "poisson-cv": {
+            "script": "./pipeline-hetero-poisson-cv.py"
+        }
+    }
+}

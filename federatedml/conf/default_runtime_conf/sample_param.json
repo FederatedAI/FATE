@@ -1,6 +1,0 @@
-{
-    "mode": "random",
-    "method": "downsample",
-    "fractions": 0.9,
-    "need_run": true
-}

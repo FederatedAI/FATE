@@ -1,0 +1,14 @@
+data_guest_train: "student_hetero_guest"
+data_guest_val: "student_hetero_guest"
+data_host_train: "student_hetero_host"
+data_host_val: "student_hetero_host"
+eval_type: "regression"
+task_type: "regression"
+loss_func: "lse"
+tree_depth: 3
+tree_num: 80
+learning_rate: 0.1
+work_mode: "mix"
+tree_num_per_party: 1
+guest_depth: 1
+host_depth: 2

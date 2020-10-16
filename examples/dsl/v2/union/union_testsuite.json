@@ -1,0 +1,62 @@
+{
+    "data": [
+        {
+            "file": "examples/data/breast_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/breast_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/tag_value_1000_140.csv",
+            "head": 0,
+            "partition": 16,
+            "table_name": "tag_value_1",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/tag_value_1000_140.csv",
+            "head": 0,
+            "partition": 16,
+            "table_name": "tag_value_2",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/tag_value_1000_140.csv",
+            "head": 0,
+            "partition": 16,
+            "table_name": "tag_value_3",
+            "namespace": "experiment",
+            "role": "guest_0"
+        }
+    ],
+    "tasks": {
+        "union": {
+            "conf": "./test_union_job_conf.json",
+            "dsl": "./test_union_job_dsl.json"
+        },
+        "union-basic": {
+            "conf": "./test_union_basic_job_conf.json",
+            "dsl": "./test_union_basic_job_dsl.json"
+        },
+        "union-dataio": {
+            "conf": "./test_union_dataio_job_conf.json",
+            "dsl": "./test_union_dataio_job_dsl.json"
+        },
+        "union-tag": {
+            "conf": "./test_union_tag_value_job_conf.json",
+            "dsl": "./test_union_tag_value_job_dsl.json"
+        }
+    }
+}

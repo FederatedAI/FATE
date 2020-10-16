@@ -1,0 +1,99 @@
+{
+    "initiator": {
+        "role": "guest",
+        "party_id": 10000
+    },
+    "job_parameters": {
+        "work_mode": 0
+    },
+    "role": {
+        "guest": [
+            10000
+        ],
+        "host": [
+            10000
+        ],
+        "arbiter": [
+            10000
+        ]
+    },
+    "role_parameters": {
+        "guest": {
+            "args": {
+                "data": {
+                    "train_data": [
+                        {
+                            "name": "breast_hetero_guest",
+                            "namespace": "experiment"
+                        }
+                    ],
+                    "eval_data": [
+                        {
+                            "name": "breast_hetero_guest",
+                            "namespace": "experiment"
+                        }
+                    ]
+                }
+            },
+            "dataio_0": {
+                "with_label": [
+                    true
+                ],
+                "label_name": [
+                    "y"
+                ],
+                "label_type": [
+                    "int"
+                ],
+                "output_format": [
+                    "dense"
+                ],
+                "missing_fill": [
+                    true
+                ],
+                "outlier_replace": [
+                    true
+                ]
+            }
+        },
+        "host": {
+            "args": {
+                "data": {
+                    "train_data": [
+                        {
+                            "name": "breast_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    ],
+                    "eval_data": [
+                        {
+                            "name": "breast_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    ]
+                }
+            },
+            "dataio_0": {
+                "with_label": [
+                    false
+                ],
+                "output_format": [
+                    "dense"
+                ],
+                "outlier_replace": [
+                    true
+                ]
+            }
+        }
+    },
+    "algorithm_parameters": {
+        "hetero_kmeans_0": {
+            "k":4,
+            "tol": 0.01,
+            "max_iter": 4
+        },
+        "evaluation_0":{
+            "eval_type":"clustering"
+        }
+    }
+}
