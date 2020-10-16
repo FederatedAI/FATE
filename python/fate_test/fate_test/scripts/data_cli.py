@@ -25,8 +25,8 @@ def data_group():
 @click.option('-g', '--glob', type=str,
               help="glob string to filter sub-directory of path specified by <include>")
 @click.option('-s', '--suite-type', required=True, type=click.Choice(["testsuite", "benchmark"]), help="suite type")
-@click.option('-r', '--role', type=str, help="role to process, default to `all`. "
-                                             "use option likes: `guest_0`, `host_0`, `host`")
+@click.option('-r', '--role', type=str, default='all', help="role to process, default to `all`. "
+                                                            "use option likes: `guest_0`, `host_0`, `host`")
 @SharedOptions.get_shared_options(hidden=True)
 @click.pass_context
 def upload(ctx, include, exclude, glob, suite_type, role, **kwargs):
