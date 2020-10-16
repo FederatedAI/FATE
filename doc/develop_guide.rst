@@ -206,10 +206,7 @@ In this section, we describe how to do 3-5. Many common interfaces are provided 
 
       def fit(self, train_data, validate_data):
 
-   Both train_data and validate_data are DTables from upstream components(DataIO for example).
-   You can develop your own federated ML algorithms by realizing fit functions of different roles (guest and host in hetero algorithms, for example). By importing transfer variable(introduced in section 4)
-   from federatedml/transfer_variable/transfer_class you can exchange data between roles.
-   Fit functions will be called simultaneously while running an algorithm module and all roles will build a model collaboratively.
+    Both train_data and validate_data(Optional) are Tables from upstream components(DataIO for example). This is the file where you fit logic of model or feature-engineering components located. When starting a training task, this function will be called by model_base automatically.
 
 
 :Override predict interface if needed:
@@ -217,9 +214,24 @@ In this section, we describe how to do 3-5. Many common interfaces are provided 
 
    .. code-block:: python
 
-      def predict(self, data_inst, ):
+      def predict(self, data_inst):
 
-   Data_inst is a DTable. Similar to fit function, you can define the prediction procedure in the predict function of different roles.
+    Data_inst is a DTable. Similar to fit function, you can define the prediction procedure in the predict function for different roles. When starting a predict task, this function will be called by model_base automatically. Meanwhile, in training task, this function will also be called to predict train data and validation data (if existed). If you are willing to use evaluation component to evaluate your predict result, it should be designed as the following format:
+
+    - for binary, multi-class classification task and regression task, result header should be: ["label", "predict_result", "predict_score", "predict_detail", "type"]
+        * label: Provided label
+        * predict_result: Your predict result.
+        * predict_score: For binary classification task, it is the score of label "1". For multi-class classification, it is the score of highest label. For regression task, it is your predict result.
+        * predict_detail: For classification task, it is the detail scores of each class. For regression task, it is your predict result.
+        * type: The source of you input data, eg. train or test. It will be added by model_base automatically.
+    - There are two Table return in clustering task.
+        The format of first Table: ["cluster_sample_count", "cluster_inner_dist", "inter_cluster_dist"]
+        * cluster_sample_count: The sample count of each cluster.
+        * cluster_inner_dist: The inner distance of each cluster.
+        * inter_cluster_dist: The inter distance between each clusters.
+        The format of second Table: ["predicted_cluster_index", "distance"]
+        * predicted_cluster_index: Your predict label
+        * distance: The distance between each sample to its center point.
 
 :Define your save_data interface:
    so that fate-flow can obtain output data through it when needed.
@@ -244,7 +256,7 @@ In this section, we describe how to do 3-5. Many common interfaces are provided 
           return result
 
 
-Step 6. Define Pipeline component for your module
+Step 5. Define Pipeline component for your module
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 One wrapped into a component, module can be used with FATE Pipeline API.
 To define a Pipeline component, follow these guidelines:
@@ -269,7 +281,7 @@ After finished developing, here is a simple example for starting a modeling task
    
    .. code-block:: bash
       
-      python ${your_install_path}/fate_flow/fate_flow_client.py -f upload -c dsl_test/upload_data.json
+      flow data upload -c upload_data.json
 
    .. Note::
      
@@ -280,9 +292,15 @@ After finished developing, here is a simple example for starting a modeling task
   
    .. code-block:: bash
 
-      python ${your_install_path}/fate_flow/fate_flow_client.py -f submitJob -d dsl_test/test_homolr_job_dsl.json -c dsl_test/${your_component_conf_json}
+      flow job submit -d ${your_dsl_file.json} -c ${your_component_conf_json}
+
+   If you have defined Pipeline component for your module, you can also make a pipeline script and start your task by:
+
+.. code-block:: bash
+
+      python ${your_pipeline.py}
 
 :3. Check log files:
    Now you can check out the log in the following path: `${your_install_path}/logs/{your jobid}`.
 
-For more detailed information about dsl configure file and parameter configure files, please check out `examples/dsl`.
+For more detailed information about dsl configure file and parameter configure files, please check out `examples/dsl/v2`.
