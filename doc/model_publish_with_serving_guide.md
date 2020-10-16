@@ -16,25 +16,19 @@ Online Cluster for Inference(FATE-Serving)，please refer to: https://github.com
 
 # 3. Configuration of Offline Cluster & Online Cluster with/without ZooKeeper (two different modes)
 
+configuration: conf/service_conf.yaml
+
 3.1 Online cluster without ZooKeeper mode
 
 **1) Modify Service Configuration**
 
-- Modify arch/conf/server_conf.json
+- Fill in ``servings:hosts`` with actual ip:port of serving-server service, for example:
 
-```json
-"servings": [
-         "127.0.0.1:8000"
-      ]
-```
-
-- Fill in actual ip:port of serving-server service, for example:
-
-```json
-"servings": [
-         "192.168.1.1:8000",
-         "192.168.1.2:8000"
-      ]
+```yaml
+servings:
+  hosts:
+    - 192.168.0.1:8000
+    - 192.168.0.2:8000
 ```
 
 **2) Running Service**
@@ -45,22 +39,20 @@ Online Cluster for Inference(FATE-Serving)，please refer to: https://github.com
 
 **1) Modify Service Configuration**
 
-- Modify arch/conf/base_conf.yaml under deploy directory
+Fill in ``zookeeper:hosts`` with actual ip:port of ZooKeeper of online inference cluster
 
-  ```yaml
-  use_registry: true
-  zookeeper:
-    hosts:
-      - 192.168.1.1:2181
-      - 192.168.1.2:2181
-    use_acl: true
-    user: fate_dev
-    password: fate_dev
-  ```
+- If ZooKeeper uses ACL, modify ``use_acl`` ``user`` ``password``; otherwise, skip the following step:
 
-Fill in ``hosts`` with actual ip:port of ZooKeeper of online inference cluster
-
-If zookeeper has ACL enabled, you need to set ``use_acl``to ``true`` and ``user``and ``password``to fill in the user name and password for the actual deployment of Zookeeper in the online reasoning cluster; otherwise, set `` use_acl``is ``false``
+```yaml
+use_registry: true
+zookeeper:
+  hosts:
+    - 192.168.0.1:2181
+    - 192.168.0.2:2181
+  use_acl: true
+  user: fate_dev
+  password: fate_dev
+```
 
 **2) Running Service**
 
@@ -74,11 +66,11 @@ Example of modified configuration:
 ```json
 {
     "initiator": {
-        "party_id": "9999",
+        "party_id": "10000",
         "role": "guest"
     },
     "role": {
-        "guest": ["9999"],
+        "guest": ["10000"],
         "host": ["10000"],
         "arbiter": ["10000"]
     },
