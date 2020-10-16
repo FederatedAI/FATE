@@ -275,8 +275,8 @@ ssh app@192.168.0.2
 ::
 
     cd /data/projects/
-    wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate-cluster-install-1.4.2-release-c7-u18.tar.gz
-    tar xzf fate-cluster-install-1.4.2-release-c7-u18.tar.gz
+    wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate-cluster-install-1.4.5-release-c7-u18.tar.gz
+    tar xzf fate-cluster-install-1.4.5-release-c7-u18.tar.gz
 
 5.2 部署前检查
 --------------
@@ -314,7 +314,7 @@ ssh app@192.168.0.2
 +======================+=================================================+==============================================================================+
 | roles                | 默认："host" "guest"                            | 部署的角色，有HOST端、GUEST端                                                |
 +----------------------+-------------------------------------------------+------------------------------------------------------------------------------+
-| version              | 默认：1.4.2                                     | Fate 版本号                                                                  |
+| version              | 默认：1.4.5                                     | Fate 版本号                                                                  |
 +----------------------+-------------------------------------------------+------------------------------------------------------------------------------+
 | pbase                | 默认： /data/projects                           | 项目根目录                                                                   |
 +----------------------+-------------------------------------------------+------------------------------------------------------------------------------+
@@ -366,7 +366,7 @@ ssh app@192.168.0.2
     #to install role
     roles=( "host" "guest" )
 
-    version="1.4.2"
+    version="1.4.5"
     #project base
     pbase="/data/projects"
 
@@ -421,7 +421,7 @@ ssh app@192.168.0.2
     #to install role
     roles=( "host" )
 
-    version="1.4.2"
+    version="1.4.5"
     #project base
     pbase="/data/projects"
 
@@ -483,7 +483,7 @@ ssh app@192.168.0.2
 
 ::
 
-    tail -f ./logs/boot.log （部署结束，查看一下即可）
+    tail -f ./logs/deploy.log （部署结束，查看一下即可）
     tail -f ./logs/deploy-guest.log （实时打印GUEST端的部署情况）
     tail -f ./logs/deploy-mysql-guest.log  （实时打印GUEST端mysql的部署情况）
     tail -f ./logs/deploy-host.log    （实时打印HOST端的部署情况）
