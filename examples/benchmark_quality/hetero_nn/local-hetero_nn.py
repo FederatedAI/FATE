@@ -51,7 +51,7 @@ def main(param="./hetero_nn_breast_config.yaml"):
 
     Xb = Xb.drop(label_name, axis=1)
     model = build(param, Xb.shape[1], Xa.shape[1])
-    model.fit([Xb, Xa], y, epochs=param["epochs"], verbose=0, batch_size=param["batch_size"], shuffle=False)
+    model.fit([Xb, Xa], y, epochs=param["epochs"], verbose=0, batch_size=param["batch_size"], shuffle=True)
 
     eval_result = {}
     for metric in param["metrics"]:

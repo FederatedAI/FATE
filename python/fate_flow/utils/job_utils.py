@@ -354,7 +354,7 @@ def kill_task_executor_process(task: Task, only_child=False):
             return KillProcessStatusCode.ERROR_PID
         for child in p.children(recursive=True):
             if check_job_process(child.pid) and is_task_executor_process(task=task, process=child):
-                child.stop_job()
+                child.kill()
         if not only_child:
             if check_job_process(p.pid) and is_task_executor_process(task=task, process=p):
                 p.kill()

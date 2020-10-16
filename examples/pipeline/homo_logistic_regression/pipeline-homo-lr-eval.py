@@ -82,6 +82,9 @@ def main(config="../../config.yaml", namespace=""):
         "init_param": {
             "init_method": "zeros"
         },
+        "encrypt_param": {
+            "method": None
+        },
         "cv_param": {
             "n_splits": 4,
             "shuffle": True,

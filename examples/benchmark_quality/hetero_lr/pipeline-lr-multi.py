@@ -26,7 +26,7 @@ from pipeline.interface import Data
 from pipeline.utils.tools import load_job_config, JobConfig
 
 
-def main(config="../../config.yaml", param="./lr_multi_config.yaml", namespace=""):
+def main(config="../../config.yaml", param="./vechile_config.yaml", namespace=""):
     # obtain config
     if isinstance(config, str):
         config = load_job_config(config)
@@ -96,7 +96,12 @@ def main(config="../../config.yaml", param="./lr_multi_config.yaml", namespace="
         "max_iter": param["max_iter"],
         "alpha": param["alpha"],
         "learning_rate": param["learning_rate"],
-        "optimizer": "nesterov_momentum_sgd"
+        "optimizer": param["optimizer"],
+        "batch_size": param["batch_size"],
+        "early_stop": "diff",
+        "init_param": {
+            "init_method": param.get("init_method", 'random_uniform')
+        }
     }
     lr_param.update(config_param)
     print(f"lr_param: {lr_param}, data_set: {data_set}")
