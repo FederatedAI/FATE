@@ -159,6 +159,40 @@ To include a component in a pipeline, use ``add_component``. To add the
 
    pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
 
+
+Build Fate NN Model In Keras Style
+``````````````````````````````````
+In pipeline, you can build NN structures in a keras style. Take Homo-NN as an example:
+
+Firstly, import keras and define your nn structures:
+
+.. code:: python
+    from tensorflow.keras import optimizers
+    from tensorflow.keras.layers import Dense
+
+    layer_0 = Dense(units=6, input_shape=(10,), activation="relu")
+    layer_1 = Dense(units=1, activation="sigmoid")
+
+Then, add nn layers into Homo-NN model like using Sequential class in keras:
+.. code:: python
+    from pipeline.component.homo_nn import HomoNN
+    # set parameter
+    homo_nn_0 = HomoNN(name="homo_nn_0", max_iter=10, batch_size=-1, early_stop={"early_stop": "diff", "eps": 0.0001})
+    homo_nn_0.add(layer_0)
+    homo_nn_0.add(layer_1)
+
+Set optimizer and compile Homo-NN model:
+
+.. code:: python
+    homo_nn_0.compile(optimizer=optimizers.Adam(learning_rate=0.05), metrics=["Hinge", "accuracy", "AUC"],
+                      loss="binary_crossentropy")
+
+Add it to pipeline:
+
+.. code:: python
+    pipeline.add_component(homo_nn, data=Data(train_data=dataio_0.output.data))
+
+
 Run A Pipeline
 --------------
 
