@@ -49,21 +49,16 @@ Quick start
       python demo/pipeline-upload.py --base /data/projects/fate
 
    If upload job is invoked correctly, job id will be printed to terminal and a upload bar is shown.
+   If FATE-Board is available, job progress can be monitored on Board as well.
 
    ::
 
-       UPLOADING:||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||100.00%
-       2020-10-15 21:27:48.889 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:125 - Job id is 20201015212748684073567
-       Job is still waiting, time elapse: 0:00:00
-       Running component upload_0, time elapse: 0:00:03
-       2020-10-15 21:27:52.238 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:133 - Job is complete!!! Job id is 20201015212748684073567
-       2020-10-15 21:27:52.238 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:134 - Total time: 0:00:03
-       UPLOADING:||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||100.00%
-       2020-10-15 21:27:52.450 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:125 - Job id is 20201015212752242218568
-       Job is still waiting, time elapse: 0:00:02
-       Running component upload_0, time elapse: 0:00:08
-       2020-10-15 21:28:00.945 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:133 - Job is complete!!! Job id is 20201015212752242218568
-       2020-10-15 21:28:00.946 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:134 - Total time: 0:00:08
+        UPLOADING:||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||100.00%
+        2020-10-16 10:44:26.578 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:125 - Job id is 20201016104426367594590
+        Job is still waiting, time elapse: 0:00:01
+        Running component upload_0, time elapse: 0:00:03
+        2020-10-16 10:44:31.042 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:133 - Job is complete!!! Job id is 20201016104426367594590
+        2020-10-16 10:44:31.043 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:134 - Total time: 0:00:04
 
 4. run FATE-Pipeline fit and predict jobs
 
@@ -75,53 +70,20 @@ Quick start
    A message indicating final status ("complete") will also be printed at the end of the job.
 
    ::
-        2020-10-15 21:29:15.388 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:125 - Job id is 20201015212915057697569
+
+        2020-10-16 10:44:47.492 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:125 - Job id is 20201016104447123987592
         Job is still waiting, time elapse: 0:00:00
-        Running component reader_1, time elapse: 0:00:02
-        Running component reader_0, time elapse: 0:00:05
-        Running component dataio_0, time elapse: 0:00:08
+        Running component reader_1, time elapse: 0:00:03
+        Running component reader_0, time elapse: 0:00:06
+        Running component dataio_0, time elapse: 0:00:09
         Running component dataio_1, time elapse: 0:00:11
-        Running component intersection_1, time elapse: 0:00:16
-        Running component intersection_0, time elapse: 0:00:21
-        Running component hetero_lr_0, time elapse: 0:00:44
-        2020-10-15 21:30:00.402 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:133 - Job is complete!!! Job id is 20201015212915057697569
-        2020-10-15 21:30:00.402 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:134 - Total time: 0:00:45
+        Running component intersection_1, time elapse: 0:00:17
+        Running component intersection_0, time elapse: 0:00:22
+        Running component hetero_lr_0, time elapse: 0:01:00
+        2020-10-16 10:45:49.165 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:133 - Job is complete!!! Job id is 20201016104447123987592
+        2020-10-16 10:45:49.165 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:134 - Total time: 0:01:01
 
-   Once fit job completes, demo script will print coefficients of result model:
-
-   ::
-
-        {
-            "best_iteration": 1,
-            "coef": {
-                "x0": 0.16838478819471825,
-                "x1": 0.05698790256408079,
-                "x2": 0.27731104498859516,
-                "x3": -0.01270254817885296,
-                "x4": -0.015313578736286405,
-                "x5": 0.7898765686442109,
-                "x6": 0.027314342334738492,
-                "x7": 0.8612655665270401,
-                "x8": 0.036424897390035474,
-                "x9": 0.411767957613962
-            },
-            "intercept": 0.9625916968372231,
-            "is_converged": false,
-            "one_vs_rest": false,
-            "validation_metrics": {
-                "auc": [
-                    0.08073040536969506,
-                    0.08309550235188416,
-                    0.08507742719729403
-                ],
-                "ks": [
-                    0.0,
-                    0.0,
-                    0.0
-                ]
-            }
-        }
-
+   Once fit job completes, demo script will print coefficients & validation metrics of result model.
 
    After having completed a fit job, script will invoke a predict job with the model from previous fit job.
    Note how only deployed modules are included in the predict job workflow. For more information on using
@@ -129,13 +91,11 @@ Quick start
 
    ::
 
-        2020-10-15 21:30:00.967 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:125 - Job id is 20201015213000425859570
+        2020-10-16 10:45:49.765 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:125 - Job id is 20201016104549184225593
         Job is still waiting, time elapse: 0:00:03
         Running component reader_2, time elapse: 0:00:05
         Running component dataio_0, time elapse: 0:00:08
         Running component intersection_0, time elapse: 0:00:13
         Running component hetero_lr_0, time elapse: 0:00:18
-        2020-10-15 21:30:20.306 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:133 - Job is complete!!! Job id is 20201015213000425859570
-        2020-10-15 21:30:20.306 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:134 - Total time: 0:00:19
-
-
+        2020-10-16 10:46:09.349 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:133 - Job is complete!!! Job id is 20201016104549184225593
+        2020-10-16 10:46:09.350 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:134 - Total time: 0:00:19
