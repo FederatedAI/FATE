@@ -20,7 +20,7 @@
     "dsl_version": 2,
     "job_type": "predict",
     "model_id": "arbiter-10000#guest-9999#host-10000#model",
-    "model_version": "2020091711252595516876"
+    "model_version": ""
   },
   "role_parameters": {
     "guest": {

@@ -20,7 +20,6 @@ import copy
 
 import numpy as np
 
-from fate_arch.common import profile
 from fate_arch.computing import is_table
 
 from federatedml.param.evaluation_param import EvaluateParam
@@ -110,7 +109,6 @@ class ModelBase(object):
         LOGGER.debug("saved_result is : {}, data_output: {}".format(saved_result, self.data_output))
         # self.check_consistency()
         self.save_summary()
-        profile.profile_ends()
 
     def get_metrics_param(self):
         return EvaluateParam(eval_type="binary",

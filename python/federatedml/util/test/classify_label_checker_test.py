@@ -29,7 +29,7 @@ class TeskClassifyLabelChecker(unittest.TestCase):
         self.small_label_set = [Instance(label=i % 5) for i in range(100)]
         self.classify_inst = session.parallelize(self.small_label_set, include_key=False, partition=16)
         self.regression_label = [Instance(label=random.random()) for i in range(100)]
-        self.regression_inst = session.parallelize(self.regression_label, partition=16)
+        self.regression_inst = session.parallelize(self.regression_label, partition=16, include_key=False)
         self.classify_checker = ClassifyLabelChecker()
         self.regression_checker = RegressionLabelChecker()
 

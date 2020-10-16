@@ -124,7 +124,7 @@
             "file": "examples/data/default_credit_homo_host_1.csv",
             "head": 1,
             "partition": 4,
-            "table_name": "default_credit_host1",
+            "table_name": "default_credit_host_1",
             "namespace": "experiment",
             "role": "host_0"
         },
@@ -132,7 +132,7 @@
             "file": "examples/data/default_credit_homo_host_2.csv",
             "head": 1,
             "partition": 4,
-            "table_name": "default_credit_host2",
+            "table_name": "default_credit_host_2",
             "namespace": "experiment",
             "role": "host_1"
         },
@@ -168,6 +168,7 @@
         },
         "train_binary_predict": {
             "conf": "./test_predict_conf.json",
+            "dsl": "./test_predict_dsl.json",
             "deps": "train_binary"
         },
         "train_multi": {

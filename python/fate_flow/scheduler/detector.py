@@ -13,13 +13,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from fate_arch.common import base_utils
-from fate_flow.db.db_models import DB, ResourceRecord, Job
+from fate_arch.common.base_utils import current_timestamp
+from fate_flow.db.db_models import DB, Job
 from fate_arch.storage import StorageSessionBase
-from fate_arch.common.log import schedule_logger, detect_logger
+from fate_arch.common.log import detect_logger
 from fate_flow.scheduler import FederatedScheduler
 from fate_flow.entity.types import JobStatus, TaskStatus, EndStatus
-from fate_flow.settings import JOB_START_TIMEOUT
 from fate_flow.utils import cron, job_utils
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.operation import JobSaver
@@ -34,11 +33,11 @@ class Detector(cron.Cron):
 
     @classmethod
     def detect_running_task(cls):
+        detect_logger().info('start to detect running task..')
         count = 0
         try:
-            running_tasks = JobSaver.query_task(party_status=TaskStatus.RUNNING, run_on=True, run_ip=RuntimeConfig.JOB_SERVER_HOST, only_latest=False)
+            running_tasks = JobSaver.query_task(party_status=TaskStatus.RUNNING, run_on_this_party=True, run_ip=RuntimeConfig.JOB_SERVER_HOST, only_latest=False)
             stop_job_ids = set()
-            detect_logger().info('start to detect running task..')
             for task in running_tasks:
                 count += 1
                 try:
@@ -57,11 +56,12 @@ class Detector(cron.Cron):
                     detect_logger(job_id=task.f_job_id).exception(e)
             if stop_job_ids:
                 detect_logger().info('start to stop jobs: {}'.format(stop_job_ids))
+            stop_jobs = set()
             for job_id in stop_job_ids:
                 jobs = JobSaver.query_job(job_id=job_id)
                 if jobs:
-                    FederatedScheduler.request_stop_job(job=jobs[0], stop_status=JobStatus.FAILED)
-                    detect_logger(job_id=job_id).info(f"detector request stop job success")
+                    stop_jobs.add(jobs[0])
+            cls.request_stop_jobs(jobs=stop_jobs, stop_msg="task executor process abort", stop_status=JobStatus.CANCELED)
         except Exception as e:
             detect_logger().exception(e)
         finally:
@@ -69,26 +69,17 @@ class Detector(cron.Cron):
 
     @classmethod
     def detect_running_job(cls):
+        detect_logger().info('start detect running job')
         try:
             running_jobs = JobSaver.query_job(status=JobStatus.RUNNING, is_initiator=True)
             stop_jobs = set()
             for job in running_jobs:
                 try:
-                    is_timeout = job_utils.check_job_is_timeout(job)
-                    if is_timeout:
-                        detect_logger(job_id=job.f_job_id).info('job {} timeout detected'.format(job.f_job_id))
-                        schedule_logger(job_id=job.f_job_id).info('job {} timeout detected'.format(job.f_job_id))
+                    if job_utils.check_job_is_timeout(job):
                         stop_jobs.add(job)
                 except Exception as e:
                     detect_logger(job_id=job.f_job_id).exception(e)
-            start_timeout_jobs = JobSaver.query_start_timeout_job(timeout=JOB_START_TIMEOUT)
-            for job in start_timeout_jobs:
-                detect_logger(job_id=job.f_job_id).info('job {} start timeout detected'.format(job.f_job_id))
-                stop_jobs.add(job)
-            for job in stop_jobs:
-                detect_logger(job_id=job.f_job_id).info('start to stop job {}'.format(job.f_job_id))
-                FederatedScheduler.request_stop_job(job=job, stop_status=JobStatus.TIMEOUT)
-                detect_logger(job_id=job.f_job_id).info(f"detector request stop job success")
+            cls.request_stop_jobs(jobs=stop_jobs, stop_msg="running timeout", stop_status=JobStatus.TIMEOUT)
         except Exception as e:
             detect_logger().exception(e)
         finally:
@@ -97,20 +88,46 @@ class Detector(cron.Cron):
     @classmethod
     @DB.connection_context()
     def detect_resource_record(cls):
-        records = ResourceRecord.select().where(ResourceRecord.f_in_use == True)
-        job_ids = set([record.f_job_id for record in records])
-        if job_ids:
-            jobs = Job.select().where(Job.f_job_id << job_ids, Job.f_status << EndStatus.status_list(), base_utils.current_timestamp() - Job.f_update_time > 10 * 60 * 1000)
+        detect_logger().info('start detect resource recycle')
+        try:
+            filter_status = EndStatus.status_list()
+            filter_status.append(JobStatus.WAITING)
+            jobs = Job.select().where(Job.f_resource_in_use == True, current_timestamp() - Job.f_apply_resource_time > 10 * 60 * 1000, Job.f_status << filter_status)
+            stop_jobs = set()
             for job in jobs:
-                detect_logger(job_id=job.f_job_id).info(f"start to return job {job.f_job_id} on {job.f_role} {job.f_party_id} resource")
-                flag = ResourceManager.return_job_resource(job_id=job.f_job_id, role=job.f_role, party_id=job.f_party_id)
-                if flag:
-                    detect_logger(job_id=job.f_job_id).info(f"return job {job.f_job_id} on {job.f_role} {job.f_party_id} resource successfully")
+                if job.f_status == JobStatus.WAITING:
+                    stop_jobs.add(job)
                 else:
-                    detect_logger(job_id=job.f_job_id).info(f"return job {job.f_job_id} on {job.f_role} {job.f_party_id} resource failed")
+                    try:
+                        detect_logger(job_id=job.f_job_id).info(f"start to return job {job.f_job_id} on {job.f_role} {job.f_party_id} resource")
+                        flag = ResourceManager.return_job_resource(job_id=job.f_job_id, role=job.f_role, party_id=job.f_party_id)
+                        if flag:
+                            detect_logger(job_id=job.f_job_id).info(f"return job {job.f_job_id} on {job.f_role} {job.f_party_id} resource successfully")
+                        else:
+                            detect_logger(job_id=job.f_job_id).info(f"return job {job.f_job_id} on {job.f_role} {job.f_party_id} resource failed")
+                    except Exception as e:
+                        detect_logger(job_id=job.f_job_id).exception(e)
+            cls.request_stop_jobs(jobs=stop_jobs, stop_msg="start timeout", stop_status=JobStatus.TIMEOUT)
+        except Exception as e:
+            detect_logger().exception(e)
+        finally:
+            detect_logger().info('finish detect resource recycle')
 
     @classmethod
     def detect_expired_session(cls):
         sessions_record = StorageSessionBase.query_expired_sessions_record(ttl=30 * 60 * 1000)
         for session_record in sessions_record:
             job_utils.start_session_stop()
+
+    @classmethod
+    def request_stop_jobs(cls, jobs: [Job], stop_msg, stop_status):
+        if not len(jobs):
+            return
+        detect_logger().info(f"have {len(jobs)} should be stopped, because of {stop_msg}")
+        for job in jobs:
+            try:
+                detect_logger(job_id=job.f_job_id).info(f"detector request start to stop job {job.f_job_id}, because of {stop_msg}")
+                FederatedScheduler.request_stop_job(job=job, stop_status=stop_status)
+                detect_logger(job_id=job.f_job_id).info(f"detector request stop job {job.f_job_id} successfully")
+            except Exception as e:
+                detect_logger(job_id=job.f_job_id).exception(e)

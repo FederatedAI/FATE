@@ -24,6 +24,7 @@ from fate_flow.utils.api_utils import get_json_result
 from fate_flow.utils.authentication_utils import request_authority_certification
 from fate_flow.operation import JobSaver
 from fate_arch.common import log
+from fate_flow.manager import ResourceManager
 
 manager = Flask(__name__)
 
@@ -38,13 +39,16 @@ def internal_server_error(e):
 @manager.route('/<job_id>/<role>/<party_id>/create', methods=['POST'])
 @request_authority_certification
 def create_job(job_id, role, party_id):
-    JobController.create_job(job_id=job_id, role=role, party_id=int(party_id), job_info=request.json)
-    return get_json_result(retcode=0, retmsg='success')
+    try:
+        JobController.create_job(job_id=job_id, role=role, party_id=int(party_id), job_info=request.json)
+        return get_json_result(retcode=0, retmsg='success')
+    except RuntimeError as e:
+        return get_json_result(retcode=RetCode.OPERATING_ERROR, retmsg=str(e))
 
 
 @manager.route('/<job_id>/<role>/<party_id>/resource/apply', methods=['POST'])
 def apply_resource(job_id, role, party_id):
-    status = JobController.apply_resource(job_id=job_id, role=role, party_id=int(party_id))
+    status = ResourceManager.apply_for_job_resource(job_id=job_id, role=role, party_id=int(party_id))
     if status:
         return get_json_result(retcode=0, retmsg='success')
     else:
@@ -53,7 +57,7 @@ def apply_resource(job_id, role, party_id):
 
 @manager.route('/<job_id>/<role>/<party_id>/resource/return', methods=['POST'])
 def return_resource(job_id, role, party_id):
-    status = JobController.return_resource(job_id=job_id, role=role, party_id=int(party_id))
+    status = ResourceManager.return_job_resource(job_id=job_id, role=role, party_id=int(party_id))
     if status:
         return get_json_result(retcode=0, retmsg='success')
     else:
@@ -110,9 +114,15 @@ def save_pipelined_model(job_id, role, party_id):
 @manager.route('/<job_id>/<role>/<party_id>/stop/<stop_status>', methods=['POST'])
 def stop_job(job_id, role, party_id, stop_status):
     jobs = JobSaver.query_job(job_id=job_id, role=role, party_id=party_id)
+    kill_status = True
+    kill_details = {}
     for job in jobs:
-        JobController.stop_job(job=job, stop_status=stop_status)
-    return get_json_result(retcode=0, retmsg='success')
+        kill_job_status, kill_job_details = JobController.stop_job(job=job, stop_status=stop_status)
+        kill_status = kill_status & kill_job_status
+        kill_details[job_id] = kill_job_details
+    return get_json_result(retcode=RetCode.SUCCESS if kill_status else RetCode.EXCEPTION_ERROR,
+                           retmsg='success' if kill_status else 'failed',
+                           data=kill_details)
 
 
 @manager.route('/<job_id>/<role>/<party_id>/cancel', methods=['POST'])
@@ -208,16 +218,16 @@ def task_status(job_id, component_name, task_id, task_version, role, party_id, s
 @manager.route('/<job_id>/<component_name>/<task_id>/<task_version>/<role>/<party_id>/stop/<stop_status>', methods=['POST'])
 def stop_task(job_id, component_name, task_id, task_version, role, party_id, stop_status):
     tasks = JobSaver.query_task(job_id=job_id, task_id=task_id, task_version=task_version, role=role, party_id=int(party_id))
+    kill_status = True
     for task in tasks:
-        TaskController.stop_task(task=task, stop_status=stop_status)
-    return get_json_result(retcode=0, retmsg='success')
+        kill_status = kill_status & TaskController.stop_task(task=task, stop_status=stop_status)
+    return get_json_result(retcode=RetCode.SUCCESS if kill_status else RetCode.EXCEPTION_ERROR,
+                           retmsg='success' if kill_status else 'failed')
 
 
 @manager.route('/<job_id>/<component_name>/<task_id>/<task_version>/<role>/<party_id>/clean/<content_type>', methods=['POST'])
 def clean_task(job_id, component_name, task_id, task_version, role, party_id, content_type):
-    tasks = JobSaver.query_task(job_id=job_id, task_id=task_id, task_version=task_version, role=role, party_id=int(party_id))
-    for task in tasks:
-        TaskController.clean_task(task=task, content_type=content_type)
+    TaskController.clean_task(job_id=job_id, task_id=task_id, task_version=task_version, role=role, party_id=int(party_id), content_type=content_type)
     return get_json_result(retcode=0, retmsg='success')
 
 

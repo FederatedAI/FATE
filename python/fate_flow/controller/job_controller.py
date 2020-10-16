@@ -20,7 +20,7 @@ from fate_arch.common import EngineType
 from fate_flow.entity.types import JobStatus, EndStatus, RunParameters
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.operation import Tracker
-from fate_flow.settings import USE_AUTHENTICATION, MAX_CORES_PERCENT_PER_JOB
+from fate_flow.settings import USE_AUTHENTICATION
 from fate_flow.utils import job_utils, schedule_utils, data_utils
 from fate_flow.operation import JobSaver, JobQueue
 from fate_arch.common.base_utils import json_dumps, current_timestamp
@@ -57,8 +57,9 @@ class JobController(object):
         job_info["party_id"] = party_id
         job_info["is_initiator"] = is_initiator
         job_info["progress"] = 0
-        cls.get_job_engines_address(job_parameters=job_parameters)
+        engines_info = cls.get_job_engines_address(job_parameters=job_parameters)
         cls.special_role_parameters(role=role, job_parameters=job_parameters)
+        cls.check_parameters(job_parameters=job_parameters, engines_info=engines_info)
         runtime_conf["job_parameters"] = job_parameters.to_dict()
 
         JobSaver.create_job(job_info=job_info)
@@ -73,22 +74,35 @@ class JobController(object):
 
     @classmethod
     def get_job_engines_address(cls, job_parameters: RunParameters):
-        backend_info = ResourceManager.get_backend_registration_info(engine_type=EngineType.COMPUTING, engine_name=job_parameters.computing_engine)
-        job_parameters.engines_address[EngineType.COMPUTING] = backend_info.f_engine_address
-        backend_info = ResourceManager.get_backend_registration_info(engine_type=EngineType.FEDERATION, engine_name=job_parameters.federation_engine)
-        job_parameters.engines_address[EngineType.FEDERATION] = backend_info.f_engine_address
-        backend_info = ResourceManager.get_backend_registration_info(engine_type=EngineType.STORAGE, engine_name=job_parameters.storage_engine)
-        job_parameters.engines_address[EngineType.STORAGE] = backend_info.f_engine_address
+        engines_info = {}
+        engine_list = [
+            (EngineType.COMPUTING, job_parameters.computing_engine),
+            (EngineType.FEDERATION, job_parameters.federation_engine),
+            (EngineType.STORAGE, job_parameters.storage_engine)
+        ]
+        for engine_type, engine_name in engine_list:
+            engine_info = ResourceManager.get_engine_registration_info(engine_type=engine_type, engine_name=engine_name)
+            job_parameters.engines_address[engine_type] = engine_info.f_engine_address
+            engines_info[engine_type] = engine_info
+        return engines_info
 
     @classmethod
     def special_role_parameters(cls, role, job_parameters: RunParameters):
         if role == "arbiter":
-            job_parameters.task_nodes = 1
             job_parameters.task_parallelism = 1
-            job_parameters.task_cores_per_node = 1
+            if job_parameters.adaptation_parameters["task_nodes"] > 0:
+                job_parameters.adaptation_parameters["task_nodes"] = 1
+            if job_parameters.adaptation_parameters["task_cores_per_node"] > 0:
+                job_parameters.adaptation_parameters["task_cores_per_node"] = 1
 
     @classmethod
-    def initialize_tasks(cls, job_id, role, party_id, run_on, job_initiator, job_parameters: RunParameters, dsl_parser, component_name=None, task_version=None):
+    def check_parameters(cls, job_parameters: RunParameters, engines_info):
+        status, max_cores_per_job = ResourceManager.check_resource_apply(job_parameters=job_parameters, engines_info=engines_info)
+        if not status:
+            raise RuntimeError(f"max cores per job is {max_cores_per_job}, please modify job parameters")
+
+    @classmethod
+    def initialize_tasks(cls, job_id, role, party_id, run_on_this_party, job_initiator, job_parameters: RunParameters, dsl_parser, component_name=None, task_version=None):
         common_task_info = {}
         common_task_info["job_id"] = job_id
         common_task_info["initiator_role"] = job_initiator['role']
@@ -110,7 +124,7 @@ class JobController(object):
                     task_info = {}
                     task_info.update(common_task_info)
                     task_info["component_name"] = component.get_name()
-                    TaskController.create_task(role=role, party_id=party_id, run_on=run_on, task_info=task_info)
+                    TaskController.create_task(role=role, party_id=party_id, run_on_this_party=run_on_this_party, task_info=task_info)
 
     @classmethod
     def initialize_job_tracker(cls, job_id, role, party_id, job_info, is_initiator, dsl_parser):
@@ -173,14 +187,6 @@ class JobController(object):
         return {'min_input_data_partition': min_partition}
 
     @classmethod
-    def apply_resource(cls, job_id, role, party_id):
-        return ResourceManager.apply_for_job_resource(job_id=job_id, role=role, party_id=party_id)
-
-    @classmethod
-    def return_resource(cls, job_id, role, party_id):
-        return ResourceManager.return_job_resource(job_id=job_id, role=role, party_id=party_id)
-
-    @classmethod
     def start_job(cls, job_id, role, party_id, extra_info=None):
         schedule_logger(job_id=job_id).info(f"try to start job {job_id} on {role} {party_id}")
         job_info = {
@@ -215,9 +221,14 @@ class JobController(object):
 
     @classmethod
     def stop_job(cls, job, stop_status):
-        tasks = JobSaver.query_task(job_id=job.f_job_id, role=job.f_role, party_id=job.f_party_id)
+        tasks = JobSaver.query_task(job_id=job.f_job_id, role=job.f_role, party_id=job.f_party_id, reverse=True)
+        kill_status = True
+        kill_details = {}
         for task in tasks:
-            TaskController.stop_task(task=task, stop_status=stop_status)
+            kill_task_status = TaskController.stop_task(task=task, stop_status=stop_status)
+            kill_status = kill_status & kill_task_status
+            kill_details[task.f_task_id] = 'success' if kill_task_status else 'failed'
+        return kill_status, kill_details
         # Job status depends on the final operation result and initiator calculate
 
     @classmethod
@@ -251,16 +262,7 @@ class JobController(object):
     @classmethod
     def clean_job(cls, job_id, role, party_id, roles):
         schedule_logger(job_id).info('Job {} on {} {} start to clean'.format(job_id, role, party_id))
-        tasks = JobSaver.query_task(job_id=job_id, role=role, party_id=party_id, only_latest=False)
-        for task in tasks:
-            try:
-                Tracker(job_id=job_id, role=role, party_id=party_id, task_id=task.f_task_id, task_version=task.f_task_version).clean_task(roles)
-                schedule_logger(job_id).info(
-                    'Job {} component {} on {} {} clean done'.format(job_id, task.f_component_name, role, party_id))
-            except Exception as e:
-                schedule_logger(job_id).info(
-                    'Job {} component {} on {} {} clean failed'.format(job_id, task.f_component_name, role, party_id))
-                schedule_logger(job_id).exception(e)
+        # todo
         schedule_logger(job_id).info('job {} on {} {} clean done'.format(job_id, role, party_id))
 
     @classmethod

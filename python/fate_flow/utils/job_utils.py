@@ -237,9 +237,9 @@ def check_job_is_timeout(job):
                                                                           role=job.f_initiator_role,
                                                                           party_id=job.f_initiator_party_id)
     job_parameters = job_runtime_conf.get('job_parameters', {})
-    timeout = get_timeout(job.f_job_id, job_parameters.get("timeout", None), job_runtime_conf, job_dsl)
+    timeout = job_parameters.get("timeout", JOB_DEFAULT_TIMEOUT)
     now_time = current_timestamp()
-    running_time = (now_time - job.f_start_time)/1000
+    running_time = (now_time - job.f_create_time)/1000
     if running_time > timeout:
         schedule_logger(job_id=job.f_job_id).info('job {}  run time {}s timeout'.format(job.f_job_id, running_time))
         return True
@@ -337,15 +337,15 @@ def is_task_executor_process(task: Task, process: psutil.Process):
 def kill_task_executor_process(task: Task, only_child=False):
     try:
         if not task.f_run_pid:
-            schedule_logger(task.f_job_id).info("job {} task {} {} {} no process pid".format(
-                task.f_job_id, task.f_task_id, task.f_role, task.f_party_id))
+            schedule_logger(task.f_job_id).info("job {} task {} {} {} with {} party status no process pid".format(
+                task.f_job_id, task.f_task_id, task.f_role, task.f_party_id, task.f_party_status))
             return KillProcessStatusCode.NOT_FOUND
         pid = int(task.f_run_pid)
-        schedule_logger(task.f_job_id).info("try to stop job {} task {} {} {} process pid:{}".format(
-            task.f_job_id, task.f_task_id, task.f_role, task.f_party_id, pid))
+        schedule_logger(task.f_job_id).info("try to stop job {} task {} {} {} with {} party status process pid:{}".format(
+            task.f_job_id, task.f_task_id, task.f_role, task.f_party_id, task.f_party_status, pid))
         if not check_job_process(pid):
-            schedule_logger(task.f_job_id).info("can not found job {} task {} {} {} process pid:{}".format(
-                task.f_job_id, task.f_task_id, task.f_role, task.f_party_id, pid))
+            schedule_logger(task.f_job_id).info("can not found job {} task {} {} {} with {} party status process pid:{}".format(
+                task.f_job_id, task.f_task_id, task.f_role, task.f_party_id, task.f_party_status, pid))
             return KillProcessStatusCode.NOT_FOUND
         p = psutil.Process(int(pid))
         if not is_task_executor_process(task=task, process=p):
@@ -354,7 +354,7 @@ def kill_task_executor_process(task: Task, only_child=False):
             return KillProcessStatusCode.ERROR_PID
         for child in p.children(recursive=True):
             if check_job_process(child.pid) and is_task_executor_process(task=task, process=child):
-                child.stop_job()
+                child.kill()
         if not only_child:
             if check_job_process(p.pid) and is_task_executor_process(task=task, process=p):
                 p.kill()

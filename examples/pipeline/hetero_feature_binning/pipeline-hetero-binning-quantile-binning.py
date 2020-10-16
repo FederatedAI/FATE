@@ -55,8 +55,10 @@ def main(config="../../config.yaml", namespace=""):
     }
     pipeline = common_tools.make_add_one_hot_dsl(config, namespace, param)
     pipeline.fit(backend=backend, work_mode=work_mode)
-    common_tools.prettify(pipeline.get_component("hetero_feature_binning_0").get_summary())
-
+    # common_tools.prettify(pipeline.get_component("hetero_feature_binning_0").get_summary())
+    # summary = pipeline.get_component("hetero_feature_binning_0").get_summary()
+    # ivs = {x[0]: x[1] for x in summary["iv"]}
+    # common_tools.prettify(ivs)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("PIPELINE DEMO")

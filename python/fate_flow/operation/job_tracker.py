@@ -17,7 +17,9 @@ import uuid
 import operator
 from typing import List
 
+from fate_arch.common import EngineType, Party
 from fate_arch.computing import ComputingEngine
+from fate_arch.federation import FederationEngine
 from fate_arch.storage import StorageEngine
 from fate_arch.common.base_utils import current_timestamp, serialize_b64, deserialize_b64
 from fate_arch.common.log import schedule_logger
@@ -29,6 +31,7 @@ from fate_flow.pipelined_model import pipelined_model
 from fate_arch import storage
 from fate_flow.utils import model_utils, job_utils, data_utils
 from fate_arch import session
+from fate_flow.entity.types import RunParameters
 
 
 class Tracker(object):
@@ -45,7 +48,8 @@ class Tracker(object):
                  component_name: str = None,
                  component_module_name: str = None,
                  task_id: str = None,
-                 task_version: int = None
+                 task_version: int = None,
+                 job_parameters: RunParameters = None
                  ):
         self.job_id = job_id
         self.role = role
@@ -62,6 +66,7 @@ class Tracker(object):
         self.module_name = component_module_name if component_module_name else job_utils.job_virtual_component_module_name()
         self.task_id = task_id
         self.task_version = task_version
+        self.job_parameters = job_parameters
 
     def save_metric_data(self, metric_namespace: str, metric_name: str, metrics: List[Metric], job_level=False):
         schedule_logger(self.job_id).info(
@@ -109,9 +114,11 @@ class Tracker(object):
             view_data[k] = v
         return view_data
 
-    def save_output_data(self, computing_table, output_storage_engine, output_storage_address: dict):
+    def save_output_data(self, computing_table, output_storage_engine, output_storage_address: dict,
+                         output_table_namespace=None, output_table_name=None):
         if computing_table:
-            output_table_namespace, output_table_name = data_utils.default_output_table_info(task_id=self.task_id, task_version=self.task_version)
+            if not output_table_namespace or not output_table_name:
+                output_table_namespace, output_table_name = data_utils.default_output_table_info(task_id=self.task_id, task_version=self.task_version)
             schedule_logger(self.job_id).info(
                 'persisting the component output temporary table to {} {}'.format(output_table_namespace,
                                                                                   output_table_name))
@@ -305,7 +312,10 @@ class Tracker(object):
     @DB.connection_context()
     def bulk_insert_into_db(self, model, data_source):
         try:
-            DB.create_tables([model])
+            try:
+                DB.create_tables([model])
+            except Exception as e:
+                schedule_logger(self.job_id).exception(e)
             batch_size = 50 if RuntimeConfig.USE_LOCAL_DATABASE else 1000
             for i in range(0, len(data_source), batch_size):
                 with DB.atomic():
@@ -314,6 +324,12 @@ class Tracker(object):
         except Exception as e:
             schedule_logger(self.job_id).exception(e)
             return 0
+
+    def save_as_table(self, computing_table, name, namespace):
+        self.save_output_data(computing_table=computing_table,
+                              output_storage_engine=self.job_parameters.storage_engine,
+                              output_storage_address=self.job_parameters.engines_address.get(EngineType.STORAGE, {}),
+                              output_table_namespace=namespace, output_table_name=name)
 
     @DB.connection_context()
     def read_metrics_from_db(self, metric_namespace: str, metric_name: str, data_type, job_level=False):
@@ -401,38 +417,48 @@ class Tracker(object):
     def get_output_data_group_key(cls, task_id, data_name):
         return task_id + data_name
 
-    def clean_task(self, roles):
-        schedule_logger(self.job_id).info('clean task {} on {} {}'.format(self.task_id,
-                                                                          self.role,
-                                                                          self.party_id))
-        if RuntimeConfig.COMPUTING_ENGINE != ComputingEngine.EGGROLL:
-            return
+    def clean_task(self, runtime_conf):
+        schedule_logger(self.job_id).info('clean task {} {} on {} {}'.format(self.task_id,
+                                                                             self.task_version,
+                                                                             self.role,
+                                                                             self.party_id))
         try:
-            for role, party_ids in roles.items():
-                for party_id in party_ids:
-                    # clean up temporary tables
-                    namespace_clean = job_utils.generate_session_id(task_id=self.task_id,
-                                                                    task_version=self.task_version,
-                                                                    role=role,
-                                                                    party_id=party_id,
-                                                                    suffix="computing")
-                    computing_session = session.get_latest_opened().computing
-                    computing_session.cleanup(namespace=namespace_clean, name="*")
-                    schedule_logger(self.job_id).info('clean table by namespace {} on {} {} done'.format(namespace_clean,
-                                                                                                         self.role,
-                                                                                                         self.party_id))
-                    # clean up the last tables of the federation
-                    namespace_clean = job_utils.generate_federated_id(self.task_id, self.task_version)
-                    computing_session.cleanup(namespace=namespace_clean, name="*")
-                    schedule_logger(self.job_id).info('clean table by namespace {} on {} {} done'.format(namespace_clean,
-                                                                                                         self.role,
-                                                                                                         self.party_id))
-
+            sess = session.Session(computing_type=self.job_parameters.computing_engine, federation_type=self.job_parameters.federation_engine)
+            # clean up temporary tables
+            computing_temp_namespace = job_utils.generate_session_id(task_id=self.task_id,
+                                                                     task_version=self.task_version,
+                                                                     role=self.role,
+                                                                     party_id=self.party_id)
+            if self.job_parameters.computing_engine == ComputingEngine.EGGROLL:
+                session_options = {"eggroll.session.processors.per.node": 1}
+            else:
+                session_options = {}
+            sess.init_computing(computing_session_id=f"{computing_temp_namespace}_clean", options=session_options)
+            sess.computing.cleanup(namespace=computing_temp_namespace, name="*")
+            schedule_logger(self.job_id).info('clean table by namespace {} on {} {} done'.format(computing_temp_namespace,
+                                                                                                 self.role,
+                                                                                                 self.party_id))
+            # clean up the last tables of the federation
+            federation_temp_namespace = job_utils.generate_federated_id(self.task_id, self.task_version)
+            sess.computing.cleanup(namespace=federation_temp_namespace, name="*")
+            schedule_logger(self.job_id).info('clean table by namespace {} on {} {} done'.format(federation_temp_namespace,
+                                                                                                 self.role,
+                                                                                                 self.party_id))
+            sess.computing.stop()
+            if self.job_parameters.federation_engine == FederationEngine.RABBITMQ:
+                schedule_logger(self.job_id).info('rabbitmq start clean up')
+                parties = [Party(k, p) for k, v in runtime_conf['role'].items() for p in v]
+                federation_session_id = job_utils.generate_federated_id(self.task_id, self.task_version)
+                sess.init_federation(federation_session_id=federation_session_id,
+                                     runtime_conf=runtime_conf,
+                                     service_conf=self.job_parameters.engines_address.get(EngineType.FEDERATION, {}))
+                sess._federation_session._get_mq_names(parties=parties)
+                sess._federation_session.cleanup()
+                schedule_logger(self.job_id).info('rabbitmq clean up success')
+            return True
         except Exception as e:
             schedule_logger(self.job_id).exception(e)
-        schedule_logger(self.job_id).info('clean task {} on {} {} done'.format(self.task_id,
-                                                                               self.role,
-                                                                               self.party_id))
+            return False
 
     @DB.connection_context()
     def save_machine_learning_model_info(self):

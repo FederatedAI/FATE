@@ -25,7 +25,7 @@ from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.utils import job_utils
 import os
 from fate_flow.operation import JobSaver
-from fate_arch.common.base_utils import json_dumps
+from fate_arch.common.base_utils import json_dumps, current_timestamp
 from fate_arch.common import base_utils
 from fate_flow.entity.types import RunParameters
 from fate_flow.manager import ResourceManager
@@ -37,13 +37,13 @@ class TaskController(object):
     INITIATOR_COLLECT_FIELDS = ["status", "party_status", "start_time", "update_time", "end_time", "elapsed"]
 
     @classmethod
-    def create_task(cls, role, party_id, run_on, task_info):
+    def create_task(cls, role, party_id, run_on_this_party, task_info):
         task_info["role"] = role
         task_info["party_id"] = party_id
         task_info["status"] = TaskStatus.WAITING
         task_info["party_status"] = TaskStatus.WAITING
         task_info["create_time"] = base_utils.current_timestamp()
-        task_info["run_on"] = run_on
+        task_info["run_on_this_party"] = run_on_this_party
         if "task_id" not in task_info:
             task_info["task_id"] = job_utils.generate_task_id(job_id=task_info["job_id"], component_name=task_info["component_name"])
         if "task_version" not in task_info:
@@ -85,7 +85,7 @@ class TaskController(object):
 
             if run_parameters.computing_engine in {ComputingEngine.EGGROLL, ComputingEngine.STANDALONE}:
                 process_cmd = [
-                    sys.executable,  # the python executable path
+                    sys.executable,
                     sys.modules[TaskExecutor.__module__].__file__,
                     '-j', job_id,
                     '-n', component_name,
@@ -94,7 +94,6 @@ class TaskController(object):
                     '-r', role,
                     '-p', party_id,
                     '-c', task_parameters_path,
-                    '--processors_per_node', str(run_parameters.task_cores_per_node if run_parameters.task_cores_per_node else 0),
                     '--run_ip', RuntimeConfig.JOB_SERVER_HOST,
                     '--job_server', '{}:{}'.format(RuntimeConfig.JOB_SERVER_HOST, RuntimeConfig.HTTP_PORT),
                 ]
@@ -104,7 +103,7 @@ class TaskController(object):
                 spark_home = os.environ["SPARK_HOME"]
 
                 # additional configs
-                spark_submit_config = task_parameters.get("spark_submit_config", dict())
+                spark_submit_config = run_parameters.spark_run
 
                 deploy_mode = spark_submit_config.get("deploy-mode", "client")
                 if deploy_mode not in ["client"]:
@@ -131,12 +130,6 @@ class TaskController(object):
                     '--run_ip', RuntimeConfig.JOB_SERVER_HOST,
                     '--job_server', '{}:{}'.format(RuntimeConfig.JOB_SERVER_HOST, RuntimeConfig.HTTP_PORT),
                 ])
-                if run_parameters.task_nodes:
-                    process_cmd.extend(["--num-executors", str(run_parameters.task_nodes)])
-                if run_parameters.task_cores_per_node:
-                    process_cmd.extend(["--executor-cores", str(run_parameters.task_cores_per_node)])
-                if run_parameters.task_memory_per_node:
-                    process_cmd.extend(["--executor-memory", f"{run_parameters.task_memory_per_node}m"])
             else:
                 raise ValueError(f"${run_parameters.computing_engine} is not supported")
 
@@ -146,7 +139,8 @@ class TaskController(object):
             p = job_utils.run_subprocess(job_id=job_id, config_dir=task_dir, process_cmd=process_cmd, log_dir=task_log_dir)
             if p:
                 task_info["party_status"] = TaskStatus.RUNNING
-                task_info["run_pid"] = p.pid
+                #task_info["run_pid"] = p.pid
+                task_info["start_time"] = current_timestamp()
                 task_executor_process_start_status = True
             else:
                 task_info["party_status"] = TaskStatus.FAILED
@@ -183,6 +177,13 @@ class TaskController(object):
         update_status = JobSaver.update_task_status(task_info=task_info)
         if update_status and EndStatus.contains(task_info.get("status")):
             ResourceManager.return_task_resource(task_info=task_info)
+            cls.clean_task(job_id=task_info["job_id"],
+                           task_id=task_info["task_id"],
+                           task_version=task_info["task_version"],
+                           role=task_info["role"],
+                           party_id=task_info["party_id"],
+                           content_type="table"
+                           )
         cls.report_task_to_initiator(task_info=task_info)
         return update_status
 
@@ -211,7 +212,7 @@ class TaskController(object):
         :param stop_status:
         :return:
         """
-        cls.kill_task(task=task)
+        kill_status = cls.kill_task(task=task)
         task_info = {
             "job_id": task.f_job_id,
             "task_id": task.f_task_id,
@@ -222,6 +223,7 @@ class TaskController(object):
         }
         cls.update_task_status(task_info=task_info)
         cls.update_task(task_info=task_info)
+        return kill_status
 
     @classmethod
     def kill_task(cls, task: Task):
@@ -234,6 +236,8 @@ class TaskController(object):
                 job_utils.start_session_stop(task)
         except Exception as e:
             schedule_logger(task.f_job_id).exception(e)
+        else:
+            kill_status = True
         finally:
             schedule_logger(task.f_job_id).info(
                 'job {} task {} {} on {} {} process {} kill {}'.format(task.f_job_id, task.f_task_id,
@@ -242,13 +246,21 @@ class TaskController(object):
                                                                        task.f_party_id,
                                                                        task.f_run_pid,
                                                                        'success' if kill_status else 'failed'))
+            return kill_status
 
     @classmethod
-    def clean_task(cls, task, content_type):
+    def clean_task(cls, job_id, task_id, task_version, role, party_id, content_type):
         status = set()
         if content_type == "metrics":
-            tracker = Tracker(job_id=task.f_job_id, role=task.f_role, party_id=task.f_party_id, task_id=task.f_task_id, task_version=task.f_task_version)
+            tracker = Tracker(job_id=job_id, role=role, party_id=party_id, task_id=task_id, task_version=task_version)
             status.add(tracker.clean_metrics())
+        elif content_type == "table":
+            jobs = JobSaver.query_job(job_id=job_id, role=role, party_id=party_id)
+            if jobs:
+                job = jobs[0]
+                job_parameters = RunParameters(**job.f_runtime_conf["job_parameters"])
+                tracker = Tracker(job_id=job_id, role=role, party_id=party_id, task_id=task_id, task_version=task_version, job_parameters=job_parameters)
+                status.add(tracker.clean_task(job.f_runtime_conf))
         if len(status) == 1 and True in status:
             return True
         else:

@@ -14,11 +14,11 @@
 #  limitations under the License.
 #
 
-import numpy as np
 import unittest
 
+import numpy as np
 from fate_arch.session import computing_session as session
-from fate_flow.operation.job_tracker import Tracker
+
 from federatedml.feature.instance import Instance
 from federatedml.feature.sampler import RandomSampler
 from federatedml.feature.sampler import StratifiedSampler
@@ -35,13 +35,13 @@ class TestRandomSampler(unittest.TestCase):
 
     def test_downsample(self):
         sampler = RandomSampler(fraction=0.3, method="downsample")
-        tracker = Tracker("jobid", "guest", 9999, "abc", "123")
+        tracker = TrackerMock()
         sampler.set_tracker(tracker)
         sample_data, sample_ids = sampler.sample(self.table)
-        
+
         self.assertTrue(sample_data.count() > 25 and sample_data.count() < 35)
         self.assertTrue(len(set(sample_ids)) == len(sample_ids))
-        
+
         new_data = list(sample_data.collect())
         data_dict = dict(self.data)
         for id, value in new_data:
@@ -55,7 +55,7 @@ class TestRandomSampler(unittest.TestCase):
         trans_sample_ids = [id for (id, value) in trans_data]
         data_to_trans_dict = dict(self.data_to_trans)
         sample_id_mapping = dict(zip(sample_ids, range(len(sample_ids))))
-        
+
         self.assertTrue(len(trans_data) == len(sample_ids))
         self.assertTrue(set(trans_sample_ids) == set(sample_ids))
 
@@ -65,12 +65,12 @@ class TestRandomSampler(unittest.TestCase):
 
     def test_upsample(self):
         sampler = RandomSampler(fraction=3, method="upsample")
-        tracker = Tracker("jobid", "guest", 9999, "abc", "123")
+        tracker = TrackerMock()
         sampler.set_tracker(tracker)
         sample_data, sample_ids = sampler.sample(self.table)
 
         self.assertTrue(sample_data.count() > 250 and sample_data.count() < 350)
-        
+
         data_dict = dict(self.data)
         new_data = list(sample_data.collect())
         for id, value in new_data:
@@ -81,7 +81,7 @@ class TestRandomSampler(unittest.TestCase):
         trans_sample_data = trans_sampler.sample(self.table_trans, sample_ids)
         trans_data = list(trans_sample_data.collect())
         data_to_trans_dict = dict(self.data_to_trans)
-        
+
         self.assertTrue(len(trans_data) == len(sample_ids))
         for id, value in trans_data:
             self.assertTrue(np.abs(value - data_to_trans_dict[sample_ids[id]]) < consts.FLOAT_ZERO)
@@ -97,7 +97,7 @@ class TestStratifiedSampler(unittest.TestCase):
         self.data_to_trans = []
         for i in range(1000):
             self.data.append((i, Instance(label=i % 4, features=i * i)))
-            self.data_to_trans.append((i, Instance(features = i ** 3)))
+            self.data_to_trans.append((i, Instance(features=i ** 3)))
 
         self.table = session.parallelize(self.data, include_key=True, partition=16)
         self.table_trans = session.parallelize(self.data_to_trans, include_key=True, partition=16)
@@ -105,7 +105,7 @@ class TestStratifiedSampler(unittest.TestCase):
     def test_downsample(self):
         fractions = [(0, 0.3), (1, 0.4), (2, 0.5), (3, 0.8)]
         sampler = StratifiedSampler(fractions=fractions, method="downsample")
-        tracker = Tracker("jobid", "guest", 9999, "abc", "123")
+        tracker = TrackerMock()
         sampler.set_tracker(tracker)
         sample_data, sample_ids = sampler.sample(self.table)
         count_label = [0 for i in range(4)]
@@ -127,15 +127,15 @@ class TestStratifiedSampler(unittest.TestCase):
         trans_data = list(trans_sample_data.collect())
         trans_sample_ids = [id for (id, value) in trans_data]
         data_to_trans_dict = dict(self.data_to_trans)
-     
+
         self.assertTrue(set(trans_sample_ids) == set(sample_ids))
         for id, inst in trans_data:
             self.assertTrue(inst.features == data_to_trans_dict.get(id).features)
-     
+
     def test_upsample(self):
         fractions = [(0, 1.3), (1, 0.5), (2, 0.8), (3, 9)]
         sampler = StratifiedSampler(fractions=fractions, method="upsample")
-        tracker = Tracker("jobid", "guest", 9999, "abc", "123")
+        tracker = TrackerMock()
         sampler.set_tracker(tracker)
         sample_data, sample_ids = sampler.sample(self.table)
         new_data = list(sample_data.collect())
@@ -151,7 +151,7 @@ class TestStratifiedSampler(unittest.TestCase):
 
         for i in range(4):
             self.assertTrue(np.abs(count_label[i] - 250 * fractions[i][1]) < 10)
-        
+
         trans_sampler = StratifiedSampler(method="upsample")
         trans_sampler.set_tracker(tracker)
         trans_sample_data = trans_sampler.sample(self.table_trans, sample_ids)
@@ -166,6 +166,17 @@ class TestStratifiedSampler(unittest.TestCase):
 
     def tearDown(self):
         session.stop()
+
+
+class TrackerMock(object):
+    def log_component_summary(self, *args, **kwargs):
+        pass
+
+    def log_metric_data(self, *args, **kwargs):
+        pass
+
+    def set_metric_meta(self, *args, **kwargs):
+        pass
 
 
 if __name__ == '__main__':

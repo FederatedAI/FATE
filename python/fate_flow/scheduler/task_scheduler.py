@@ -24,7 +24,7 @@ from fate_flow.manager import ResourceManager
 
 class TaskScheduler(object):
     @classmethod
-    def schedule(cls, job, dsl_parser):
+    def schedule(cls, job, dsl_parser, canceled=False):
         schedule_logger(job_id=job.f_job_id).info("scheduling job {} tasks".format(job.f_job_id))
         initiator_tasks_group = JobSaver.get_tasks_asc(job_id=job.f_job_id, role=job.f_role, party_id=job.f_party_id)
         waiting_tasks = []
@@ -48,27 +48,30 @@ class TaskScheduler(object):
                 FederatedScheduler.stop_task(job=job, task=initiator_task, stop_status=initiator_task.f_status)
 
         scheduling_status_code = SchedulingStatusCode.NO_NEXT
-        for waiting_task in waiting_tasks:
-            for component in dsl_parser.get_upstream_dependent_components(component_name=waiting_task.f_component_name):
-                dependent_task = initiator_tasks_group[
-                    JobSaver.task_key(task_id=job_utils.generate_task_id(job_id=job.f_job_id, component_name=component.get_name()),
-                                      role=job.f_role,
-                                      party_id=job.f_party_id
-                                      )
-                ]
-                if dependent_task.f_status != TaskStatus.COMPLETE:
-                    # can not start task
-                    break
+        if not canceled:
+            for waiting_task in waiting_tasks:
+                for component in dsl_parser.get_upstream_dependent_components(component_name=waiting_task.f_component_name):
+                    dependent_task = initiator_tasks_group[
+                        JobSaver.task_key(task_id=job_utils.generate_task_id(job_id=job.f_job_id, component_name=component.get_name()),
+                                          role=job.f_role,
+                                          party_id=job.f_party_id
+                                          )
+                    ]
+                    if dependent_task.f_status != TaskStatus.COMPLETE:
+                        # can not start task
+                        break
+                else:
+                    # can start task
+                    scheduling_status_code = SchedulingStatusCode.HAVE_NEXT
+                    status_code = cls.start_task(job=job, task=waiting_task)
+                    if status_code == SchedulingStatusCode.NO_RESOURCE:
+                        # Wait for the next round of scheduling
+                        break
+                    elif status_code == SchedulingStatusCode.FAILED:
+                        scheduling_status_code = SchedulingStatusCode.FAILED
+                        break
             else:
-                # can start task
-                scheduling_status_code = SchedulingStatusCode.HAVE_NEXT
-                status_code = cls.start_task(job=job, task=waiting_task)
-                if status_code == SchedulingStatusCode.NO_RESOURCE:
-                    # Wait for the next round of scheduling
-                    break
-                elif status_code == SchedulingStatusCode.FAILED:
-                    scheduling_status_code = SchedulingStatusCode.FAILED
-                    break
+                schedule_logger(job_id=job.f_job_id).info("have cancel signal, pass start job {} tasks".format(job.f_job_id))
         schedule_logger(job_id=job.f_job_id).info("finish scheduling job {} tasks".format(job.f_job_id))
         return scheduling_status_code, initiator_tasks_group.values()
 
@@ -88,6 +91,7 @@ class TaskScheduler(object):
             ResourceManager.return_task_resource(task_info=task.to_human_model_dict(only_primary_with=["status"]))
             return SchedulingStatusCode.PASS
         schedule_logger(job_id=task.f_job_id).info("start job {} task {} {} on {} {}".format(task.f_job_id, task.f_task_id, task.f_task_version, task.f_role, task.f_party_id))
+        FederatedScheduler.sync_task_status(job=job, task=task)
         task_parameters = {}
         task_parameters.update(job.f_runtime_conf["job_parameters"])
         status_code, response = FederatedScheduler.start_task(job=job, task=task, task_parameters=task_parameters)

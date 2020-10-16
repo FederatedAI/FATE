@@ -63,11 +63,9 @@ class HomoDecisionTreeClient(DecisionTree):
         initializing here
         """
         self.valid_features = valid_feature
-
         self.tree_node = []  # start from root node
         self.tree_node_num = 0
         self.cur_layer_node = []
-
         self.runtime_idx = 0
         self.sitename = consts.GUEST
         self.feature_importance = {}
@@ -85,16 +83,26 @@ class HomoDecisionTreeClient(DecisionTree):
         LOGGER.info("set flowid, flowid is {}".format(flowid))
         self.transfer_inst.set_flowid(flowid)
 
-    def get_grad_hess_sum(self, grad_and_hess_table):
-        LOGGER.info("calculate the sum of grad and hess")
-        grad, hess = grad_and_hess_table.reduce(
-            lambda value1, value2: (value1[0] + value2[0], value1[1] + value2[1]))
-        return grad, hess
+    """
+    Federation functions
+    """
 
     def sync_local_node_histogram(self, acc_histogram: List[HistogramBag], suffix):
         # sending local histogram
         self.aggregator.send_histogram(acc_histogram, suffix=suffix)
         LOGGER.debug('local histogram sent at layer {}'.format(suffix[0]))
+
+    def sync_cur_layer_node_num(self, node_num, suffix):
+        self.transfer_inst.cur_layer_node_num.remote(node_num, role=consts.ARBITER, idx=-1, suffix=suffix)
+
+    def sync_best_splits(self, suffix) -> List[SplitInfo]:
+
+        best_splits = self.transfer_inst.best_split_points.get(idx=0, suffix=suffix)
+        return best_splits
+
+    """
+    Computing functions
+    """
 
     def get_node_map(self, nodes: List[Node], left_node_only=True):
         node_map = {}
@@ -105,6 +113,12 @@ class HomoDecisionTreeClient(DecisionTree):
             node_map[node.id] = idx
             idx += 1
         return node_map
+
+    def get_grad_hess_sum(self, grad_and_hess_table):
+        LOGGER.info("calculate the sum of grad and hess")
+        grad, hess = grad_and_hess_table.reduce(
+            lambda value1, value2: (value1[0] + value2[0], value1[1] + value2[1]))
+        return grad, hess
 
     def get_local_histogram(self, cur_to_split: List[Node], g_h, table_with_assign,
                             split_points, sparse_point, valid_feature):
@@ -151,6 +165,10 @@ class HomoDecisionTreeClient(DecisionTree):
             hist_bag.p_hid = node.parent_nodeid
 
         return hist_bags
+
+    """
+    Tree Updating
+    """
 
     def update_tree(self, cur_to_split: List[Node], split_info: List[SplitInfo]):
         """
@@ -207,17 +225,6 @@ class HomoDecisionTreeClient(DecisionTree):
 
         return next_layer_node
 
-    def convert_bin_to_real(self):
-        """
-        convert current bid in tree nodes to real value
-        """
-        for node in self.tree_node:
-            if not node.is_leaf:
-                node.bid = self.bin_split_points[node.fid][node.bid]
-
-    def assign_instance_to_root_node(self, data_bin, root_node_id):
-        return data_bin.mapValues(lambda inst: (1, root_node_id))
-
     @staticmethod
     def assign_a_instance(row, tree: List[Node], bin_sparse_point, use_missing, use_zero_as_missing):
 
@@ -264,6 +271,13 @@ class HomoDecisionTreeClient(DecisionTree):
 
         return assign_result, leaf_val
 
+    def update_instances_node_positions(self, ):
+        return self.data_bin.join(self.inst2node_idx, lambda inst, assignment: (inst, assignment))
+
+    """
+    Pre/Post process
+    """
+
     @staticmethod
     def get_node_sample_weights(inst2node, tree_node: List[Node]):
         """
@@ -275,13 +289,20 @@ class HomoDecisionTreeClient(DecisionTree):
     def get_feature_importance(self):
         return self.feature_importance
 
-    def sync_cur_layer_node_num(self, node_num, suffix):
-        self.transfer_inst.cur_layer_node_num.remote(node_num, role=consts.ARBITER, idx=-1, suffix=suffix)
+    def convert_bin_to_real(self):
+        """
+        convert current bid in tree nodes to real value
+        """
+        for node in self.tree_node:
+            if not node.is_leaf:
+                node.bid = self.bin_split_points[node.fid][node.bid]
 
-    def sync_best_splits(self, suffix) -> List[SplitInfo]:
+    def assign_instance_to_root_node(self, data_bin, root_node_id):
+        return data_bin.mapValues(lambda inst: (1, root_node_id))
 
-        best_splits = self.transfer_inst.best_split_points.get(idx=0, suffix=suffix)
-        return best_splits
+    """
+    Fit & Predict
+    """
 
     def fit(self):
         """
@@ -326,7 +347,7 @@ class HomoDecisionTreeClient(DecisionTree):
 
             LOGGER.debug('start to fit layer {}'.format(dep))
 
-            table_with_assignment = self.data_bin.join(self.inst2node_idx, lambda inst, assignment: (inst, assignment))
+            table_with_assignment = self.update_instances_node_positions()
 
             # send current layer node number:
             self.sync_cur_layer_node_num(len(self.cur_layer_node), suffix=(dep, self.epoch_idx, self.tree_idx))
@@ -417,6 +438,10 @@ class HomoDecisionTreeClient(DecisionTree):
 
         return predicted_weights
 
+    """
+    Model Outputs
+    """
+
     def get_model_meta(self):
         model_meta = DecisionTreeModelMeta()
         model_meta.criterion_meta.CopyFrom(CriterionMeta(criterion_method=self.criterion_method,
@@ -489,24 +514,3 @@ class HomoDecisionTreeClient(DecisionTree):
     def initialize_root_node(self, *args):
         # not implemented in homo tree
         pass
-
-    """
-    For debug
-    """
-
-    def print_leafs(self):
-        LOGGER.debug('printing tree')
-        for node in self.tree_node:
-            LOGGER.debug(node)
-
-    @staticmethod
-    def print_split(split_infos: [SplitInfo]):
-        LOGGER.debug('printing split info')
-        for info in split_infos:
-            LOGGER.debug(info)
-
-    @staticmethod
-    def print_hist(hist_list: [HistogramBag]):
-        LOGGER.debug('printing histogramBag')
-        for bag in hist_list:
-            LOGGER.debug(bag)

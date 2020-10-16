@@ -99,7 +99,7 @@ class HomoBoostingClient(Boosting, ABC):
             self.check_label_starts_from_zero(self.classes_)
             # set labels
             self.num_classes = len(new_label_mapping)
-            LOGGER.debug('aligned labels are {}, num_classes is {}'.format(aligned_label, self.num_classes))
+            LOGGER.info('aligned labels are {}, num_classes is {}'.format(aligned_label, self.num_classes))
             self.y = self.data_bin.mapValues(lambda instance: new_label_mapping[instance.label])
             # set tree dimension
             self.booster_dim = self.num_classes if self.num_classes > 2 else 1
@@ -112,9 +112,10 @@ class HomoBoostingClient(Boosting, ABC):
         # set y_hat_val
         self.y_hat, self.init_score = self.get_init_score(self.y, self.num_classes)
 
-        total_time = 0
-
+        LOGGER.info('begin to fit a boosting tree')
         for epoch_idx in range(self.boosting_round):
+
+            LOGGER.info('cur epoch idx is {}'.format(epoch_idx))
 
             for class_idx in range(self.booster_dim):
 
@@ -141,7 +142,7 @@ class HomoBoostingClient(Boosting, ABC):
             if self.n_iter_no_change:
                 should_stop = self.aggregator.get_converge_status(suffix=(str(epoch_idx),))
                 if should_stop:
-                    LOGGER.debug('stop triggered')
+                    LOGGER.info('n_iter_no_change stop triggered')
                     break
 
         self.set_summary(self.generate_summary())
@@ -210,14 +211,16 @@ class HomoBoostingArbiter(Boosting, ABC):
 
         if self.task_type == consts.CLASSIFICATION:
             label_mapping = HomoLabelEncoderArbiter().label_alignment()
-            LOGGER.debug('label mapping is {}'.format(label_mapping))
+            LOGGER.info('label mapping is {}'.format(label_mapping))
             self.booster_dim = len(label_mapping) if len(label_mapping) > 2 else 1
 
         if self.n_iter_no_change:
             self.check_convergence_func = converge_func_factory("diff", self.tol)
 
-        LOGGER.debug('begin to fit a boosting tree')
+        LOGGER.info('begin to fit a boosting tree')
         for epoch_idx in range(self.boosting_round):
+
+            LOGGER.info('cur epoch idx is {}'.format(epoch_idx))
 
             for class_idx in range(self.booster_dim):
                 model = self.fit_a_booster(epoch_idx, class_idx)
@@ -246,7 +249,6 @@ class HomoBoostingArbiter(Boosting, ABC):
         self.set_summary(self.generate_summary())
 
     def predict(self, data_inst=None):
-
         LOGGER.debug('arbiter skip prediction')
 
     @abc.abstractmethod

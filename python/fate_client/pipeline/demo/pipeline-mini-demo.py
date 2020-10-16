@@ -78,8 +78,8 @@ def main():
     intersection_1 = Intersection(name="intersection_1")
 
     # define HeteroLR component
-    hetero_lr_0 = HeteroLR(name="hetero_lr_0", early_stop="weight_diff", max_iter=10,
-                           early_stopping_rounds=2, validation_freqs=2)
+    hetero_lr_0 = HeteroLR(name="hetero_lr_0", early_stop="weight_diff", learning_rate=0.15, optimizer="rmsprop",
+                           max_iter=10, early_stopping_rounds=2, validation_freqs=1)
 
     # add components to pipeline, in order of task execution
     pipeline.add_component(reader_0)
@@ -99,8 +99,8 @@ def main():
     # fit model
     pipeline.fit(backend=backend, work_mode=work_mode)
     # query component summary
-    print (pipeline.get_component("hetero_lr_0").get_summary())
-
+    import json
+    print(json.dumps(pipeline.get_component("hetero_lr_0").get_summary(), indent=4))
 
     # predict
     # deploy required components

@@ -25,7 +25,7 @@ from functools import wraps
 from fate_arch.abc import CTableABC
 
 profile_logger = getLogger("PROFILING")
-_PROFILE_LOG_ENABLED = True
+_PROFILE_LOG_ENABLED = False
 
 
 class _TimerItem(object):
@@ -98,7 +98,7 @@ class _ComputingTimer(object):
         stack_table.set_style(beautifultable.STYLE_BOX_ROUNDED)
         stack_table.columns.header = ["function", "n", "sum(s)", "mean(s)", "max(s)", "stack_hash", "stack"]
         stack_table.columns.alignment["stack"] = beautifultable.ALIGN_LEFT
-        stack_table.column_headers.alignment = beautifultable.ALIGN_CENTER
+        stack_table.columns.header.alignment = beautifultable.ALIGN_CENTER
         stack_table.border.left = ''
         stack_table.border.right = ''
         stack_table.border.bottom = ''
@@ -118,14 +118,17 @@ class _ComputingTimer(object):
         for function_name, item in aggregate.items():
             function_table.rows.append([function_name, *item.as_list()])
 
-        base_table = beautifultable.BeautifulTable(120)
+        detailed_base_table = beautifultable.BeautifulTable(120)
         stack_table.rows.sort("sum(s)", reverse=True)
-        base_table.rows.append(["stack", stack_table])
+        detailed_base_table.rows.append(["stack", stack_table])
+        detailed_base_table.rows.append(["total", total])
+
+        base_table = beautifultable.BeautifulTable(120)
         function_table.rows.sort("sum(s)", reverse=True)
         base_table.rows.append(["function", function_table])
         base_table.rows.append(["total", total])
 
-        return base_table.get_string()
+        return base_table.get_string(), detailed_base_table.get_string()
 
 
 class _FederationTimer(object):
@@ -179,8 +182,8 @@ class _FederationRemoteTimer(_FederationTimer):
     def done(self, federation):
         self._end_time = time.time()
         self._REMOTE_STATS[self._full_name].add(self.elapse)
-        profile_logger.debug(f"[federation.remote@{self._local_party}->{self._parties}]"
-                             f"done: name={self._full_name}, tag={self._tag}")
+        profile_logger.debug(f"[federation.remote.{self._full_name}.{self._tag}]"
+                             f"{self._local_party}->{self._parties} done")
 
         if is_profile_remote_enable():
             federation.remote(v={"start_time": self._start_time, "end_time": self._end_time},
@@ -210,15 +213,15 @@ class _FederationGetTimer(_FederationTimer):
     def done(self, federation):
         self._end_time = time.time()
         self._GET_STATS[self._full_name].add(self.elapse)
-        profile_logger.debug(f"[federation.get@{self._local_party}<-{self._parties}]"
-                             f"done: name={self._full_name}, tag={self._tag}")
+        profile_logger.debug(f"[federation.get.{self._full_name}.{self._tag}]"
+                             f"{self._local_party}<-{self._parties} done")
 
         if is_profile_remote_enable():
             remote_meta = federation.get(name=self._name, tag=profile_remote_tag(self._tag), parties=self._parties,
                                          gc=None)
             for party, meta in zip(self._parties, remote_meta):
-                profile_logger.debug(f"[federation.meta{self._local_party}<-{party}]"
-                                     f"name={self._full_name}, tag = {self._tag}, meta={meta}")
+                profile_logger.debug(f"[federation.meta.{self._full_name}.{self._tag}]{self._local_party}<-{party}]"
+                                     f"meta={meta}")
 
     @property
     def elapse(self):
@@ -226,21 +229,25 @@ class _FederationGetTimer(_FederationTimer):
 
 
 def federation_remote_timer(name, full_name, tag, local, parties):
-    profile_logger.debug(f"[federation.remote@{local}->{parties}]start: name={name}, tag={tag}")
+    profile_logger.debug(f"[federation.remote.{full_name}.{tag}]{local}->{parties} start")
     return _FederationRemoteTimer(name, full_name, tag, local, parties)
 
 
 def federation_get_timer(name, full_name, tag, local, parties):
-    profile_logger.debug(f"[federation.get@{local}<-{parties}]start: name={name}, tag={tag}")
+    profile_logger.debug(f"[federation.get.{full_name}.{tag}]{local}<-{parties} start")
     return _FederationGetTimer(name, full_name, tag, local, parties)
 
 
+def profile_start():
+    global _PROFILE_LOG_ENABLED
+    _PROFILE_LOG_ENABLED = True
+
+
 def profile_ends():
-    profile_logger.info(f"\n"
-                        f"Computing:\n"
-                        f"{_ComputingTimer.computing_statistics_table()}\n\n"
-                        f"Federation:\n"
-                        f"{_FederationTimer.federation_statistics_table()}\n")
+    computing_base_table, computing_detailed_table = _ComputingTimer.computing_statistics_table()
+    federation_base_table = _FederationTimer.federation_statistics_table()
+    profile_logger.info(f"\nComputing:\n{computing_base_table}\n\nFederation:\n{federation_base_table}\n")
+    profile_logger.debug(f"\nDetailed Computing:\n{computing_detailed_table}\n")
     global _PROFILE_LOG_ENABLED
     _PROFILE_LOG_ENABLED = False
 
@@ -280,7 +287,7 @@ def computing_profile(func):
     return _fn
 
 
-__META_REMOTE_ENABLE = True
+__META_REMOTE_ENABLE = False
 
 
 def enable_profile_remote():

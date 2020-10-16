@@ -63,7 +63,7 @@ class BaseFilterMethod(object):
         LOGGER.debug(f"In set_selection_properties, header: {selection_properties.header}")
         self.selection_properties = selection_properties
 
-    def _keep_one_feature(self, pick_high=True):
+    def _keep_one_feature(self, pick_high=True, selection_properties=None, feature_values=None):
         """
         Make sure at least one feature can be left after filtering.
 
@@ -73,24 +73,31 @@ class BaseFilterMethod(object):
             Set when none of value left, choose the highest one or lowest one. True means highest one while
             False means lowest one.
         """
-        if len(self.selection_properties.left_col_indexes) > 0:
+
+        if selection_properties is None:
+            selection_properties = self.selection_properties
+
+        if feature_values is None:
+            feature_values = self.feature_values
+
+        if len(selection_properties.left_col_indexes) > 0:
             return
 
         LOGGER.info("All features has been filtered, keep one without satisfying all the conditions")
 
-        LOGGER.debug("feature values: {}, select_col_names: {}, left_col_names: {}".format(
-            self.feature_values, self.selection_properties.select_col_names, self.selection_properties.left_col_names
-        ))
+        # LOGGER.debug("feature values: {}, select_col_names: {}, left_col_names: {}".format(
+        #     self.feature_values, self.selection_properties.select_col_names, self.selection_properties.left_col_names
+        # ))
 
         # random pick one
-        if len(self.feature_values) == 0:
-            left_col_name = random.choice(self.selection_properties.select_col_names)
+        if len(feature_values) == 0:
+            left_col_name = random.choice(selection_properties.select_col_names)
         else:
-            result = sorted(self.feature_values.items(), key=operator.itemgetter(1), reverse=pick_high)
+            result = sorted(feature_values.items(), key=operator.itemgetter(1), reverse=pick_high)
             left_col_name = result[0][0]
         # LOGGER.debug("feature values: {}, left_col_name: {}".format(self.feature_values, left_col_name))
 
-        self.selection_properties.add_left_col_name(left_col_name)
+        selection_properties.add_left_col_name(left_col_name)
 
     def set_statics_obj(self, statics_obj):
         # Re-write if needed

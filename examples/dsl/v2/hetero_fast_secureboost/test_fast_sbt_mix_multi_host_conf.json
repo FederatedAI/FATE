@@ -6,7 +6,7 @@
     "role": {
         "host": [
             9998,
-            10000
+            9999
         ],
         "guest": [
             9999
@@ -27,7 +27,7 @@
                 "reader_0": {
                     "table": {
                         "name": "breast_hetero_host",
-                        "namespac e": "experiment"
+                        "namespace": "experiment"
                     }
                 },
                 "dataio_1": {

@@ -69,7 +69,7 @@ def main(config="../../config.yaml", namespace=""):
     pipeline = common_tools.make_asymmetric_dsl(config, namespace, guest_param=guest_param,
                                                 host_param=host_param)
     pipeline.fit(backend=backend, work_mode=work_mode)
-    common_tools.prettify(pipeline.get_component("hetero_feature_binning_0").get_summary())
+    # common_tools.prettify(pipeline.get_component("hetero_feature_binning_0").get_summary())
 
 
 if __name__ == "__main__":

@@ -19,7 +19,14 @@
 import argparse
 import json
 import os
+import sys
 import time
+
+cur_path = os.path.realpath(__file__)
+for i in range(3):
+    cur_path = os.path.dirname(cur_path)
+print(f'fate_path: {cur_path}')
+sys.path.append(cur_path)
 
 from examples.test import submit
 
@@ -95,8 +102,7 @@ def main():
                             default=1)
 
     arg_parser.add_argument("-b", "--backend", type=int, help="backend", choices=[0, 1], default=0)
-    arg_parser.add_argument("-c", "--config_file", type=str, help="config file",
-                            choices=["all", "min-test"], default="min-test")
+    arg_parser.add_argument("-c", "--config_file", type=str, help="config file", default="min-test")
 
     args = arg_parser.parse_args()
 
@@ -112,7 +118,11 @@ def main():
                                  existing_strategy=existing_strategy,
                                  spark_submit_config=spark_submit_config)
 
-    upload_data = read_data(fate_home, config_file)
+    if config_file in ["all", "min-test"]:
+        upload_data = read_data(fate_home, config_file)
+    else:
+        with open(config_file, 'r', encoding='utf-8') as f:
+            upload_data = json.loads(f.read())
 
     data_upload(submitter, upload_data, interval, fate_home, backend=backend)
 

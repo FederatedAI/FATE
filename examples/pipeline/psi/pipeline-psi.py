@@ -29,6 +29,8 @@ from pipeline.utils.tools import load_job_config
 def main(config="../../config.yaml", namespace=""):
     # obtain config
     if isinstance(config, str):
+
+        config = load_job_config(config)
     parties = config.parties
     guest = parties.guest[0]
     host = parties.host[0]

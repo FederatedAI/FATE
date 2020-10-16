@@ -83,7 +83,7 @@ def make_normal_dsl(config, namespace, lr_param, is_multi_host=False, has_valida
     # get DataIO party instance of guest
     dataio_0_guest_party_instance = dataio_0.get_party_instance(role='guest', party_id=guest)
     # configure DataIO for guest
-    dataio_0_guest_party_instance.algorithm_param(with_label=True, output_format="dense")
+    dataio_0_guest_party_instance.algorithm_param(with_label=True)
     # get and configure DataIO party instance of host
     dataio_0.get_party_instance(role='host', party_id=hosts).algorithm_param(with_label=False)
 
@@ -137,6 +137,19 @@ def make_normal_dsl(config, namespace, lr_param, is_multi_host=False, has_valida
     pipeline.add_component(evaluation_0, data=Data(data=evaluation_data))
 
     pipeline.compile()
+    # pipeline.fit(backend=0, work_mode=0)
+    # deploy_components = [dataio_0, intersection_0, hetero_lr_0]
+    # pipeline.deploy_component(components=deploy_components)
+    #
+    # predict_pipeline = PipeLine()
+    # # add data reader onto predict pipeline
+    # predict_pipeline.add_component(reader_0)
+    # # add selected components from train pipeline onto predict pipeline
+    # # specify data source
+    # predict_pipeline.add_component(pipeline,
+    #                                data=Data(predict_input={pipeline.dataio_0.input.data: reader_0.output.data}))
+    # predict_pipeline.compile()
+    # predict_pipeline.predict(backend=0, work_mode=0)
     return pipeline
 
 

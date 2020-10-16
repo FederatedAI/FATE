@@ -32,7 +32,7 @@ MODEL_STORE_ADDRESS = get_base_config("model_store_address", {})
 # storage engine is used for component output data
 SUPPORT_ENGINES = {
     EngineType.COMPUTING: [ComputingEngine.EGGROLL, ComputingEngine.SPARK],
-    EngineType.FEDERATION: [FederationEngine.EGGROLL, FederationEngine.RABBITMQ, FederationEngine.PROXY],
+    EngineType.FEDERATION: [FederationEngine.EGGROLL, FederationEngine.RABBITMQ],
     EngineType.STORAGE: [StorageEngine.EGGROLL, StorageEngine.HDFS]
 }
 
@@ -55,16 +55,16 @@ FATE_SERVICES_REGISTERED_PATH = {
 
 # default parameters
 DEFAULT_TASK_PARALLELISM = 1
-DEFAULT_TASK_CORES_PER_NODE = 5
+DEFAULT_TASK_CORES_PER_NODE = 4
 DEFAULT_TASK_MEMORY_PER_NODE = 0  # mb
-MAX_CORES_PERCENT_PER_JOB = 20  # 0 means not limited
+MAX_CORES_PERCENT_PER_JOB = 0.5  # 1 means total
 STANDALONE_BACKEND_VIRTUAL_CORES_PER_NODE = 20
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 
 # abnormal condition parameter
 DEFAULT_GRPC_OVERALL_TIMEOUT = 2 * 60 * 1000  # ms
 DEFAULT_FEDERATED_COMMAND_TRYS = 3
-JOB_DEFAULT_TIMEOUT = 7 * 24 * 60 * 60
+JOB_DEFAULT_TIMEOUT = 3 * 24 * 60 * 60
 JOB_START_TIMEOUT = 60 * 1000  # ms
 
 '''

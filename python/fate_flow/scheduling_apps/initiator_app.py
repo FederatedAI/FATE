@@ -41,18 +41,8 @@ def internal_server_error(e):
 
 @manager.route('/<job_id>/<role>/<party_id>/stop/<stop_status>', methods=['POST'])
 def stop_job(job_id, role, party_id, stop_status):
-    jobs = JobSaver.query_job(job_id=job_id, role=role, party_id=party_id, is_initiator=True)
-    if len(jobs) > 0:
-        JobController.cancel_job(job_id=job_id, role=role, party_id=party_id)
-        job = jobs[0]
-        job.f_status = stop_status
-        status_code, response = FederatedScheduler.stop_job(job=jobs[0], stop_status=stop_status)
-        if status_code == FederatedSchedulingStatusCode.SUCCESS:
-            return get_json_result(retcode=0, retmsg='success')
-        else:
-            return get_json_result(retcode=RetCode.FEDERATED_ERROR, retmsg=json_dumps(response))
-    else:
-        return get_json_result(retcode=RetCode.OPERATING_ERROR, retmsg="can not found job")
+    retcode, retmsg = DAGScheduler.stop_job(job_id=job_id, role=role, party_id=party_id, stop_status=stop_status)
+    return get_json_result(retcode=retcode, retmsg=retmsg)
 
 
 @manager.route('/<job_id>/<role>/<party_id>/rerun', methods=['POST'])

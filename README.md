@@ -1,12 +1,12 @@
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) [![CodeStyle](https://img.shields.io/badge/Check%20Style-Google-brightgreen)](https://checkstyle.sourceforge.io/google_style.html) [![Style](https://img.shields.io/badge/Check%20Style-Black-black)](https://checkstyle.sourceforge.io/google_style.html) [![Build Status](https://travis-ci.org/FederatedAI/FATE.svg?branch=develop-1.4)](https://travis-ci.org/FederatedAI/FATE)
-[![codecov](https://codecov.io/gh/FederatedAI/FATE/branch/develop-1.4/graph/badge.svg)](https://codecov.io/gh/FederatedAI/FATE)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) [![CodeStyle](https://img.shields.io/badge/Check%20Style-Google-brightgreen)](https://checkstyle.sourceforge.io/google_style.html) [![Style](https://img.shields.io/badge/Check%20Style-Black-black)](https://checkstyle.sourceforge.io/google_style.html) [![Build Status](https://travis-ci.org/FederatedAI/FATE.svg?branch=develop-1.5-preview)](https://travis-ci.org/FederatedAI/FATE)
+[![codecov](https://codecov.io/gh/FederatedAI/FATE/branch/develop-1.5-preview/graph/badge.svg)](https://codecov.io/gh/FederatedAI/FATE)
 [![Documentation Status](https://readthedocs.org/projects/fate/badge/?version=latest)](https://fate.readthedocs.io/en/latest/?badge=latest)
 
 <div align="center">
   <img src="./doc/images/FATE_logo.png">
 </div>
 
-[DOC](./doc) | [Quick Start](../examples/dsl/v2) | [中文](./README_zh.md)
+[DOC](./doc) | [Quick Start](./examples/dsl/v2) | [中文](./README_zh.md)
 
 FATE (Federated AI Technology Enabler) is an open-source project initiated by Webank's AI Department to provide a secure computing framework to support the federated AI ecosystem. It implements secure computation protocols based on homomorphic encryption and multi-party computation (MPC). It supports federated learning architectures and secure computation of various machine learning algorithms, including logistic regression, tree-based algorithms, deep learning and transfer learning.
 
@@ -14,7 +14,7 @@ FATE (Federated AI Technology Enabler) is an open-source project initiated by We
 
 
 ## Federated Learning Algorithms In FATE
-FATE already supports a number of federated learning algorithms, including vertical federated learning, horizontal federated learning, and federated transfer learning. More details are available in [federatedml](./federatedml).
+FATE already supports a number of federated learning algorithms, including vertical federated learning, horizontal federated learning, and federated transfer learning. More details are available in [federatedml](./python/federatedml).
 
 
 ## Install
@@ -64,10 +64,10 @@ All the unittests shall pass if FATE is installed properly.
 
 ### Quick Start
 
-We have provided a python script for quick starting modeling task. This scrip is located at ["examples"](./examples/dsl/v2)
+We have provided a tutorial for quick starting modeling task. Please refer ["here"](./examples/pipeline/README.rst)
 
 ###  Obtain Model and Check Out Results
-We provided functions such as tracking component output models or logs etc. through a tool called fate-flow. The deployment and usage of fate-flow can be found [here](./fate_flow/README.rst)
+We provided functions such as tracking component output models or logs etc. through a tool called fate-flow. The deployment and usage of fate-flow can be found [here](./python/fate_flow/README.rst)
 
 
 ## Doc

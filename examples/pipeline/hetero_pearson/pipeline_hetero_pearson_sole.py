@@ -16,7 +16,7 @@
 import os
 import sys
 
-additional_path = os.path.realpath('../')
+additional_path = os.path.realpath(os.path.join(os.path.realpath(__file__), os.path.pardir, os.path.pardir))
 if additional_path not in sys.path:
     sys.path.append(additional_path)
 
