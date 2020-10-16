@@ -33,16 +33,16 @@ This folder contains code for implementing algorithm based on [`RSA Intersection
 .. __: https://books.google.com.hk/books?id=zfvf37_YS8cC&pg=PA73&lpg=PA73&dq=rsa+commutative+encryption&source=bl&ots=LbOiyIlr3E&sig=IIWlTGeoU0C8dRiN10uH2OAwobQ&hl=zh-CN&sa=X&ved=0ahUKEwiLoozC1tbXAhVDnJQKHbP7DvAQ6AEIdTAJ#v=onepage&q&f=false.
 
 Our Intersection module is trying to solve the problem that Privacy-Preserving Entity Match. This module will help at least two parties to find the same user ids without leaking all their user ids
-to the other. This is illustrated in :ref:`figure 1`.
+to the other. This is illustrated in `figure 1`.
 
-.. figure:: images/rsa_intersection.png
+.. figure:: ./intersect/images/rsa_intersection.png
    :width: 500
    :align: center
    :name: figure 1
 
    Figure 1 (RSA Intersection between party A and party B)
 
-In :ref:`figure 1` ,Party A has user id u1,u2,u3,u4, while Party B has u1,u2,u3,u5. After Intersection,
+In `figure 1` ,Party A has user id u1,u2,u3,u4, while Party B has u1,u2,u3,u5. After Intersection,
 party A and party B know their same user ids, which are u1,u2,u3, but party A know nothing about
 other user ids of party B, like u5, and party B know nothing about party A except u1,u2,u3 as well.
 While party A and party B transmit their processed id information to the other party, like :math:`Y-A` and :math:`Z-B`,
@@ -62,14 +62,14 @@ Multi-Host Intersection
 
 Both rsa and raw intersection support multi-host. It means a guest can do intersection with more than one host simultaneously and finally get the common ID with all hosts. 
 
-.. figure:: ./images/multi_hosts.png
+.. figure:: ./intersect/images/multi_hosts.png
    :align: center
    :width: 500
    :name: figure 2
 
    Figure 2 (multi-hosts Intersection)
 
-See in :ref:`figure 2`, this is a introduction to a guest intersect with two hosts, and it is the same as more than two hosts. Firstly, guest will intersect with each host and get overlapping IDs respectively. Secondly, guest will find common IDs from all intersection results. Finally,
+See in `figure 2`, this is a introduction to a guest intersect with two hosts, and it is the same as more than two hosts. Firstly, guest will intersect with each host and get overlapping IDs respectively. Secondly, guest will find common IDs from all intersection results. Finally,
 guest will send common IDs to every host if necessary.
 
 Repeated ID intersection
