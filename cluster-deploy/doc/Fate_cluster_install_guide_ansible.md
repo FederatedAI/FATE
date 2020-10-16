@@ -52,7 +52,7 @@ Eggroll 是一个适用于机器学习和深度学习的大规模分布式架构
 | **类别** | **说明**                                                     |
 | -------- | ------------------------------------------------------------ |
 | 主机配置 | 不低于8C16G500G，千兆网卡                                    |
-| 操作系统 | CentOS linux 7.2及以上同时低于8/Ubuntu 16.04 或 Ubuntu 18.04 |
+| 操作系统 | CentOS linux 7.2及以上同时低于8                              |
 | 依赖包   | 需要安装如下依赖包：<br/>#centos<br/>gcc gcc-c++ make openssl-devel gmp-devel mpfr-devel libmpc-devel libaio <br/>numactl autoconf automake libtool libffi-devel ansible jq supervisor |
 | 用户     | 用户：app，属主：apps（app用户需可以sudo su root而无需密码） |
 | 文件系统 | 1、数据盘挂载在/data目录下。<br>2、创建/data/projects目录，目录属主为：app:apps。<br/>3、根目录空闲空间不低于20G。 |
@@ -229,14 +229,14 @@ echo '/data/swapfile128G swap swap defaults 0 0' >> /etc/fstab
 
 ```
 #安装基础依赖包
-yum install -y gcc gcc-c++ make openssl-devel gmp-devel mpfr-devel libmpc-devel libaio numactl autoconf automake libtool libffi-devel 
+yum install -y gcc gcc-c++ make openssl-devel gmp-devel mpfr-devel libmpc-devel libaio numactl autoconf automake
 #如果有报错，需要解决yum源问题。
 
 #安装ansible和进程管理依赖包
-yum install -y ansible jq supervisor
+yum install -y ansible
 #如果有报错同时服务器有外网，没有外网的需要解决yum源不全的问题，执行：
 yum install -y epel-release
-#增加一个更全面的第三方的源，然后再重新安装ansible jq supervisor
+#增加一个更全面的第三方的源，然后再重新安装ansible
 ```
 
 4.项目部署
@@ -296,8 +296,8 @@ ls -lrt /data/projects/common/supervisord/supervisord.d/fate-*.conf
 ```
 #注意：URL链接有换行，拷贝的时候注意整理成一行
 cd /data/projects/
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/ansible_nfate_1.4.5_release-1.0.0.tar.gz
-tar xzf ansible_nfate_1.4.5_release-1.0.0.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/ansible_nfate_1.5.0_preview-1.0.0.tar.gz
+tar xzf ansible_nfate_1.5.0_preview-1.0.0.tar.gz
 ```
 
 ### 4.4 配置文件修改和示例
@@ -664,8 +664,8 @@ sh service.sh start fate-fateflow
 1）192.168.0.1上执行，guest_partyid和host_partyid都设为10000：
 
 ```
-source /data/projects/fate/init_env.sh
-cd /data/projects/fate/python/examples/toy_example/
+source /data/projects/fate/bin/init_env.sh
+cd /data/projects/fate/examples/toy_example/
 python run_toy_example.py 10000 10000 1
 ```
 
@@ -678,8 +678,8 @@ python run_toy_example.py 10000 10000 1
 2）192.168.0.2上执行，guest_partyid和host_partyid都设为9999：
 
 ```
-source /data/projects/fate/init_env.sh
-cd /data/projects/fate/python/examples/toy_example/
+source /data/projects/fate/bin/init_env.sh
+cd /data/projects/fate/examples/toy_example/
 python run_toy_example.py 9999 9999 1
 ```
 
@@ -694,8 +694,8 @@ python run_toy_example.py 9999 9999 1
 选定9999为guest方，在192.168.0.2上执行：
 
 ```
-source /data/projects/fate/init_env.sh
-cd /data/projects/fate/python/examples/toy_example/
+source /data/projects/fate/bin/init_env.sh
+cd /data/projects/fate/examples/toy_example/
 python run_toy_example.py 9999 10000 1
 ```
 
@@ -711,8 +711,8 @@ python run_toy_example.py 9999 10000 1
 分别在192.168.0.1和192.168.0.2上执行：
 
 ```
-source /data/projects/fate/init_env.sh
-cd /data/projects/fate/python/examples/scripts/
+source /data/projects/fate/bin/init_env.sh
+cd /data/projects/fate/examples/scripts/
 python upload_default_data.py -m 1
 ```
 
@@ -727,8 +727,8 @@ python upload_default_data.py -m 1
 选定9999为guest方，在192.168.0.2上执行：
 
 ```
-source /data/projects/fate/init_env.sh
-cd /data/projects/fate/python/examples/min_test_task/
+source /data/projects/fate/bin/init_env.sh
+cd /data/projects/fate/examples/min_test_task/
 python run_task.py -m 1 -gid 9999 -hid 10000 -aid 10000 -f fast
 ```
 
