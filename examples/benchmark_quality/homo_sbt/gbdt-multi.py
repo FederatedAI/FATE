@@ -44,7 +44,7 @@ def main(param=""):
     X = df.drop(label_name, axis=1)
     X_guest = df_guest.drop(label_name, axis=1)
     y_guest = df_guest[label_name]
-    clf = GradientBoostingClassifier(n_estimators=50)
+    clf = GradientBoostingClassifier(n_estimators=50, learning_rate=0.3,)
     clf.fit(X, y)
     y_pred = clf.predict(X_guest)
     acc = accuracy_score(y_guest, y_pred)

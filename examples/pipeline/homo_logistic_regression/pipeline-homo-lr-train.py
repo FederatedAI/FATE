@@ -74,7 +74,7 @@ def main(config="../../config.yaml", namespace=""):
             "init_method": "zeros"
         },
         "encrypt_param": {
-            "method": "Paillier"
+            "method": None
         },
         "cv_param": {
             "n_splits": 4,

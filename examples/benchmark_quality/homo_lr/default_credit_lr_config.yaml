@@ -4,7 +4,9 @@ data_test: "../../data/default_credit_homo_test.csv"
 idx: "id"
 label_name: "y"
 penalty: "L2"
-max_iter: 3
+max_iter: 30
 alpha: 0.01
+batch_size: 320
 learning_rate: 0.15
 optimizer: "rmsprop"
+

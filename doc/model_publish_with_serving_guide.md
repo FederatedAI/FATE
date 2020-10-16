@@ -16,25 +16,19 @@ Online Cluster for Inference(FATE-Serving)，please refer to: https://github.com
 
 # 3. Configuration of Offline Cluster & Online Cluster with/without ZooKeeper (two different modes)
 
+configuration: conf/service_conf.yaml
+
 3.1 Online cluster without ZooKeeper mode
 
 **1) Modify Service Configuration**
 
-- Modify arch/conf/server_conf.json
+- Fill in ``servings:hosts`` with actual ip:port of serving-server service, for example:
 
-```json
-"servings": [
-         "127.0.0.1:8000"
-      ]
-```
-
-- Fill in actual ip:port of serving-server service, for example:
-
-```json
-"servings": [
-         "192.168.1.1:8000",
-         "192.168.1.2:8000"
-      ]
+```yaml
+servings:
+  hosts:
+    - 192.168.0.1:8000
+    - 192.168.0.2:8000
 ```
 
 **2) Running Service**
@@ -45,24 +39,20 @@ Online Cluster for Inference(FATE-Serving)，please refer to: https://github.com
 
 **1) Modify Service Configuration**
 
-- Modify fate_flow/settings.py under deploy directory
+Fill in ``zookeeper:hosts`` with actual ip:port of ZooKeeper of online inference cluster
 
-```python
-USE_CONFIGURATION_CENTER = True 
-ZOOKEEPER_HOSTS = ['192.168.1.1:2181','192.168.1.2:2181','192.168.1.3:2182'] 
+- If ZooKeeper uses ACL, modify ``use_acl`` ``user`` ``password``; otherwise, skip the following step:
+
+```yaml
+use_registry: true
+zookeeper:
+  hosts:
+    - 192.168.0.1:2181
+    - 192.168.0.2:2181
+  use_acl: true
+  user: fate_dev
+  password: fate_dev
 ```
-
-Fill in ``ZOOKEEPER_HOSTS`` with actual ip:port of ZooKeeper of online inference cluster
-
-- If ZooKeeper uses ACL, modify fate_flow/utils/setting_utils.py; otherwise, skip the following step:
-
-```python
-USE_ACL = True
-ZK_USERNAME = 'fate'
-ZK_PASSWORD = 'fate'
-```
-
-Fill in ``ZK_USERNAME`` and ``ZK_PASSWORD`` with actual ZooKeeper user name and password of online inference cluster
 
 **2) Running Service**
 

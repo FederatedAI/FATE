@@ -103,6 +103,9 @@
             "early_stop": "diff",
             "batch_size": 320,
             "learning_rate": 0.15,
+            "encrypt_param": {
+                "method": null
+            },
             "init_param": {
                 "init_method": "zeros"
             },
