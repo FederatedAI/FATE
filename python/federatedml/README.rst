@@ -71,7 +71,7 @@ Algorithm List
 
    * - `Feature Scale`_
      - FeatureScale
-     - Module for feature scaling and standardization.
+     - module for feature scaling and standardization.
      - Table，values are instances.
      - Transformed Table.
      - Transform factors like min/max, mean/std.
@@ -111,7 +111,7 @@ Algorithm List
 
    * - `Hetero-LR`_
      - HeteroLR
-     - Build hetero logistic regression module through multiple parties.
+     - Build hetero logistic regression model through multiple parties.
      - Table, values are instances
      - Table, values are instances.
      -
@@ -127,7 +127,7 @@ Algorithm List
 
    * - `Hetero-LinR`_
      - HeteroLinR
-     - Build hetero linear regression module through multiple parties.
+     - Build hetero linear regression model through multiple parties.
      - Table, values are instances.
      - Table, values are instances.
      -
@@ -135,7 +135,7 @@ Algorithm List
 
    * - `Hetero-Poisson`_
      - HeteroPoisson
-     - Build hetero poisson regression module through multiple parties.
+     - Build hetero poisson regression model through multiple parties.
      - Table, values are instances.
      - Table, values are instances.
      -
@@ -143,7 +143,7 @@ Algorithm List
 
    * - `Homo-LR`_
      - HomoLR
-     - Build homo logistic regression module through multiple parties.
+     - Build homo logistic regression model through multiple parties.
      - Table, values are instances.
      - Table, values are instances.
      -
@@ -151,7 +151,7 @@ Algorithm List
 
    * - `Homo-NN`_
      - HomoNN
-     - Build homo neural network module through multiple parties.
+     - Build homo neural network model through multiple parties.
      - Table, values are instances.
      - Table, values are instances.
      -
@@ -159,7 +159,7 @@ Algorithm List
 
    * - `Hetero Secure Boosting`_
      - HeteroSecureBoost
-     - Build hetero secure boosting module through multiple parties
+     - Build hetero secure boosting model through multiple parties
      - Table, values are instances.
      - Table, values are instances.
      -
@@ -167,7 +167,7 @@ Algorithm List
 
    * - `Hetero Fast Secure Boosting`_
      - HeteroFastSecureBoost
-     - Build hetero secure boosting module through multiple parties in layered/mix manners.
+     - Build hetero secure boosting model through multiple parties in layered/mix manners.
      - Table, values are instances.
      - Table, values are instances.
      -
@@ -191,7 +191,7 @@ Algorithm List
 
    * - `Hetero-NN`_
      - HeteroNN
-     - Build hetero neural network module.
+     - Build hetero neural network model.
      - Table, values are instances.
      - Table, values are instances.
      -
@@ -199,7 +199,7 @@ Algorithm List
 
    * - `Homo Secure Boosting`_
      - HomoSecureBoost
-     - Build homo secure boosting module through multiple parties
+     - Build homo secure boosting model through multiple parties
      - Table, values are instances.
      - Table, values are instances.
      -
@@ -207,7 +207,7 @@ Algorithm List
 
    * - `Homo OneHot Encoder`_
      - HomoOneHotEncoder
-     - Build homo onehot encoder module through multiple parties.
+     - Build homo onehot encoder model through multiple parties.
      - Table, values are instances.
      - Transformed Table with new header.
      -
@@ -239,7 +239,7 @@ Algorithm List
 
    * - `Hetero Federated Transfer Learning`_
      - Hetero FTL
-     - Build Hetero FTL Module Between 2 party
+     - Build Hetero FTL Model Between 2 party
      - Table, values are instance
      -
      -
@@ -247,14 +247,14 @@ Algorithm List
 
    * - `Hetero KMeans`_
      - Hetero KMeans
-     - Build Hetero KMeans module through multiple parties
+     - Build Hetero KMeans model through multiple parties
      - Table, values are instance
      - Table, values are instance; Arbier outputs 2 Tables
      -
      - Hetero KMeans Model
 
    * - `PSI`_
-     - PSI Module
+     - PSI module
      - Compute PSI value of features between two table
      - Table, values are instance
      -
