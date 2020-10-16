@@ -23,6 +23,7 @@ from fate_test._config import Config
 from fate_test._flow_client import JobProgress, SubmitJobResponse, QueryJobResponse
 from fate_test._io import LOGGER, echo
 from fate_test._parser import JSON_STRING, Testsuite
+from fate_test.scripts._options import SharedOptions
 from fate_test.scripts._utils import _load_testsuites, _upload_data, _delete_data, _load_module_from_script, \
     _add_replace_hook
 
@@ -44,17 +45,18 @@ from fate_test.scripts._utils import _load_testsuites, _upload_data, _delete_dat
               help="skip uploading data specified in testsuite")
 @click.option("--data-only", is_flag=True, default=False,
               help="upload data only")
-@click.option("--yes", is_flag=True,
-              help="skip double check")
+@SharedOptions.get_shared_options(hidden=True)
 @click.pass_context
 def run_suite(ctx, replace, include, exclude, glob,
-              skip_dsl_jobs, skip_pipeline_jobs, skip_data, data_only, yes):
+              skip_dsl_jobs, skip_pipeline_jobs, skip_data, data_only, **kwargs):
     """
     process testsuite
     """
-
+    ctx.obj.update(**kwargs)
+    ctx.obj.post_process()
     config_inst = ctx.obj["config"]
     namespace = ctx.obj["namespace"]
+    yes = ctx.obj["yes"]
     data_namespace_mangling = ctx.obj["namespace_mangling"]
     # prepare output dir and json hooks
     _add_replace_hook(replace)
@@ -140,7 +142,7 @@ def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Conf
 
             def update_bar(n_step):
                 bar.item_show_func = lambda x: job_progress.show()
-                time.sleep(0.5)
+                time.sleep(0.1)
                 bar.update(n_step)
 
             update_bar(1)
