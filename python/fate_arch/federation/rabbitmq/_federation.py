@@ -241,7 +241,7 @@ def _get_channels(mq_names, mq):
     return channel_infos
 
 
-MESSAGE_MAX_SIZE = 200000
+MESSAGE_MAX_SIZE = 50
 
 
 def _partition_snd(kvs, name, tag, total_size, partitions, mq_names, mq):
