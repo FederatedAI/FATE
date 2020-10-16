@@ -124,8 +124,6 @@ def main():
     # run predict model
     predict_pipeline.predict(backend=backend, work_mode=work_mode)
 
-    print(json.dumps(predict_pipeline.get_component("evaluation_0").get_summary(), indent=4))
-
 
 if __name__ == "__main__":
     main()
