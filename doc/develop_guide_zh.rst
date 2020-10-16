@@ -17,9 +17,9 @@
 
 3. 定义模块的默认运行时（runtime）配置文件。
 
-4. 如果模块需要联邦，则需定义 transfer_variable.json 文件。
+4. 如果模块需要联邦，则需定义传输变量配置文件。
 
-5. 定义您的模块继承的 model_base 类。
+5. 您的算法模块需要继承model_base类，并完成几个指定的函数。
 
 在以下各节中，我们将通过 toy_example 详细描述这 5 个步骤。
 
@@ -30,14 +30,14 @@
 
 为定义可用的参数对象，需要三个步骤。
 
-a. 打开一个新的 python 文件，将其重命名为 xxx_param.py，其中xxx代表您模块的名称，并将其放置在 `federatedml/param/` 文件夹中。
-   在 xxx_param.py 中定义它的类对象，应该继承 `federatedml/param/base_param.py` 中定义的 BaseParam 类。
+a. 打开一个新的 python 文件，将其重命名为 xxx_param.py，其中xxx代表您模块的名称，并将其放置在 `python/federatedml/param/` 文件夹中。
+   在 xxx_param.py 中定义它的类对象，应该继承 `python/federatedml/param/base_param.py` 中定义的 BaseParam 类。
 
 b. 参数类的 `__init__` 方法应该指定模块使用的所有参数。
 
 c. 重载 BaseParam 的参数检查接口，否则将会抛出未实现的错误。检查方法被用于验证参数变量是否可用。
 
-以 hetero lr 的参数对象为例，python文件为:download:`federatedml/param/logistic_regression_param.py <../federatedml/param/logistic_regression_param.py>`
+以 hetero lr 的参数对象为例，python文件为 `federatedml/param/logistic_regression_param.py <../python/federatedml/param/logistic_regression_param.py>`_
 
 首先，它继承自 BaseParam：
 
