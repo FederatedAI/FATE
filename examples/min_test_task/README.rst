@@ -25,3 +25,4 @@ There are some more parameters that you may need:
 1. -f: file type. "fast" means breast data set, "normal" means default credit data set.
 2. --add_sbt: if set, it will test hetero-secureboost task after testing hetero-lr.
 3. -s: whether to load and bind model for fate-serving. Its default value is 1 which means do load and bind. To unset it, set it as 0.
+4. -b: indicate which backend you would like to use. 0 represent for eggroll and 1 represent for spark. The default value is 0.
