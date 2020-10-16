@@ -168,6 +168,7 @@ In pipeline, you can build NN structures in a keras style. Take Homo-NN as an ex
 Firstly, import keras and define your nn structures:
 
 .. code:: python
+
     from tensorflow.keras import optimizers
     from tensorflow.keras.layers import Dense
 
@@ -178,6 +179,7 @@ Then, add nn layers into Homo-NN model like using Sequential class in keras:
 
 .. code:: python
     from pipeline.component.homo_nn import HomoNN
+    
     # set parameter
     homo_nn_0 = HomoNN(name="homo_nn_0", max_iter=10, batch_size=-1, early_stop={"early_stop": "diff", "eps": 0.0001})
     homo_nn_0.add(layer_0)
@@ -186,12 +188,14 @@ Then, add nn layers into Homo-NN model like using Sequential class in keras:
 Set optimizer and compile Homo-NN model:
 
 .. code:: python
+
     homo_nn_0.compile(optimizer=optimizers.Adam(learning_rate=0.05), metrics=["Hinge", "accuracy", "AUC"],
                       loss="binary_crossentropy")
 
 Add it to pipeline:
 
 .. code:: python
+
     pipeline.add_component(homo_nn, data=Data(train_data=dataio_0.output.data))
 
 
