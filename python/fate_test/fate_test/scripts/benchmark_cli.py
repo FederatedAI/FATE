@@ -34,7 +34,7 @@ def run_benchmark(ctx, include, exclude, glob, skip_data, tol, yes):
 
     namespace = ctx.obj["namespace"]
     config_inst = ctx.obj["config"]
-    data_namespace_mangling = ctx.obj["data_namespace_mangling"]
+    data_namespace_mangling = ctx.obj["namespace_mangling"]
 
     echo.welcome("benchmark")
     echo.echo(f"testsuite namespace: {namespace}", fg='red')
@@ -81,12 +81,12 @@ def _run_benchmark_pairs(config: Config, suite: BenchmarkSuite, tol: float,
     # pipeline demo goes here
     pair_n = len(suite.pairs)
     for i, pair in enumerate(suite.pairs):
-        echo.echo(f"Running {i + 1} of {pair_n} groups: {pair.pair_name}")
+        echo.echo(f"Running [{i + 1}/{pair_n}] group: {pair.pair_name}")
         results = {}
         data_summary = None
         job_n = len(pair.jobs)
         for j, job in enumerate(pair.jobs):
-            echo.echo(f"Running {j + 1} of {job_n} jobs: {job.job_name}")
+            echo.echo(f"Running [{j + 1}/{job_n}] job: {job.job_name}")
             job_name, script_path, conf_path = job.job_name, job.script_path, job.conf_path
             param = Config.load_from_file(conf_path)
             mod = _load_module_from_script(script_path)

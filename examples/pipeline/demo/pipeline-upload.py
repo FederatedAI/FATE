@@ -15,6 +15,7 @@
 #
 
 import os
+import argparse
 
 from pipeline.backend.config import Backend, WorkMode
 from pipeline.backend.pipeline import PipeLine
@@ -28,7 +29,7 @@ DATA_BASE = "/data/projects/fate"
 # DATA_BASE = site.getsitepackages()[0]
 
 
-def main():
+def main(data_base=DATA_BASE):
     # parties config
     guest = 9999
     # 0 for eggroll, 1 for spark
@@ -43,24 +44,32 @@ def main():
 
     dense_data = {"name": "breast_hetero_guest", "namespace": f"experiment"}
 
-    tag_data = {"name": "tag_value_1", "namespace": f"experiment"}
+    tag_data = {"name": "breast_hetero_host", "namespace": f"experiment"}
 
     pipeline_upload = PipeLine().set_initiator(role="guest", party_id=guest).set_roles(guest=guest)
     # add upload data info
     # original csv file path
-    pipeline_upload.add_upload_data(file=os.path.join(DATA_BASE, "examples/data/breast_hetero_guest.csv"),
+    pipeline_upload.add_upload_data(file=os.path.join(data_base, "examples/data/breast_hetero_guest.csv"),
                                     table_name=dense_data["name"],             # table name
                                     namespace=dense_data["namespace"],         # namespace
                                     head=1, partition=partition)               # data info
 
-    pipeline_upload.add_upload_data(file=os.path.join(DATA_BASE, "examples/data/tag_value_1000_140.csv"),
+    pipeline_upload.add_upload_data(file=os.path.join(data_base, "examples/data/breast_hetero_host.csv"),
                                     table_name=tag_data["name"],
                                     namespace=tag_data["namespace"],
-                                    head=0, partition=partition)
+                                    head=1, partition=partition)
 
     # upload all data
     pipeline_upload.upload(work_mode=work_mode, backend=backend, drop=1)
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser("PIPELINE DEMO")
+    parser.add_argument("-base", type=str,
+                        help="data base, path to directory that contains examples/data")
+
+    args = parser.parse_args()
+    if args.base is not None:
+        main(args.base)
+    else:
+        main()

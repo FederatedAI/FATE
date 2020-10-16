@@ -53,12 +53,6 @@ command for more information.
 
    pipeline config --help
 
-`FATE-Flow Commandline <../flow_client/README.rst>`_ needs to be initialized. Run the following
-command for more information.
-
-.. code:: bash
-
-   flow init --help
 
 Interface of Pipeline
 ---------------------
@@ -231,7 +225,7 @@ To save a pipeline, just use **dump** interface.
 
    pipeline.dump("pipeline_saved.pkl")
 
-To save a pipeline, use **load_model_from_file** interface.
+To restore a pipeline, use **load_model_from_file** interface.
 
 .. code:: python
 

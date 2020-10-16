@@ -55,7 +55,7 @@ def run_suite(ctx, replace, include, exclude, glob,
 
     config_inst = ctx.obj["config"]
     namespace = ctx.obj["namespace"]
-    data_namespace_mangling = ctx.obj["data_namespace_mangling"]
+    data_namespace_mangling = ctx.obj["namespace_mangling"]
     # prepare output dir and json hooks
     _add_replace_hook(replace)
 
@@ -64,7 +64,8 @@ def run_suite(ctx, replace, include, exclude, glob,
     echo.echo("loading testsuites:")
     suites = _load_testsuites(includes=include, excludes=exclude, glob=glob)
     for suite in suites:
-        echo.echo(f"\tdataset({len(suite.dataset)}) jobs({len(suite.jobs)}) {suite.path}")
+        echo.echo(f"\tdataset({len(suite.dataset)}) dsl jobs({len(suite.jobs)}) "
+                  f"pipeline jobs ({len(suite.pipeline_jobs)}) {suite.path}")
     if not yes and not click.confirm("running?"):
         return
 
@@ -99,7 +100,7 @@ def run_suite(ctx, replace, include, exclude, glob,
                 if not skip_data:
                     _delete_data(client, suite)
                 echo.echo(f"[{i + 1}/{len(suites)}]elapse {timedelta(seconds=int(time.time() - start))}", fg='red')
-                if not skip_dsl_jobs:
+                if not skip_dsl_jobs or not skip_pipeline_jobs:
                     echo.echo(suite.pretty_final_summary(), fg='red')
 
             except Exception:
@@ -184,10 +185,29 @@ def _run_pipeline_jobs(config: Config, suite: Testsuite, namespace: str, data_na
     # pipeline demo goes here
     job_n = len(suite.pipeline_jobs)
     for i, pipeline_job in enumerate(suite.pipeline_jobs):
-        echo.echo(f"Running {i + 1} of {job_n} jobs: {pipeline_job.job_name}")
+        echo.echo(f"Running [{i + 1}/{job_n}] job: {pipeline_job.job_name}")
+
+        def _raise():
+            exception_id = str(uuid.uuid1())
+            suite.update_status(job_name=job_name, exception_id=exception_id)
+            echo.file(f"exception({exception_id})")
+            LOGGER.exception(f"exception id: {exception_id}")
+
         job_name, script_path = pipeline_job.job_name, pipeline_job.script_path
         mod = _load_module_from_script(script_path)
-        if data_namespace_mangling:
-            mod.main(config, f"_{namespace}")
-        else:
-            mod.main(config)
+        try:
+            if data_namespace_mangling:
+                try:
+                    mod.main(config, f"_{namespace}")
+                    suite.update_status(job_name=job_name, status="complete")
+                except Exception:
+                    pass
+            else:
+                try:
+                    mod.main(config)
+                    suite.update_status(job_name=job_name, status="complete")
+                except Exception:
+                    pass
+        except Exception:
+            _raise()
+            continue

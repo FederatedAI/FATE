@@ -20,7 +20,7 @@ from fate_test._config import default_config, parse_config
 from fate_test.scripts._utils import _set_namespace
 from fate_test.scripts.benchmark_cli import run_benchmark
 from fate_test.scripts.config_cli import config_group
-from fate_test.scripts.teetsuite_cli import run_suite
+from fate_test.scripts.testsuite_cli import run_suite
 from fate_test.scripts.data_cli import data_group
 
 commands = {
@@ -52,7 +52,7 @@ def cli(ctx, config, namespace, namespace_mangling):
     config_inst = parse_config(config)
     ctx.obj['config'] = config_inst
     ctx.obj['namespace'] = namespace
-    ctx.obj['data_namespace_mangling'] = namespace_mangling
+    ctx.obj['namespace_mangling'] = namespace_mangling
     _set_namespace(namespace_mangling, namespace)
 
 
