@@ -61,7 +61,6 @@ def main(config="../../config.yaml", namespace=""):
 
     pipeline.fit(backend=backend, work_mode=work_mode)
 
-    print(pipeline.get_component("dataio_0").get_model_param())
     print(pipeline.get_component("homo_data_split_0").get_summary())
 
 
