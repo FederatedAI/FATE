@@ -111,7 +111,7 @@ Other features
 * Support missing value in train and predict process
 * Support evaluate training and validate data during training process
 * Support another homomorphic encryption method called "Iterative Affine" since FATE-1.1 
-* Support early stopping in FATE-1.4, to use early stopping
+* Support early stopping in FATE-1.4, to use early stopping, see `[Boosting Tree Param] <../param/boosting_param.py>`_
 * Support sparse data optimization in FATE-1.5. You can activate it by setting "sparse_optimization" as true in conf.
   Notice that this feature may increase memory consumption. See `here <../../param/boosting_param.py>`__.
 * Support feature subsample random seed setting in FATE-1.5
