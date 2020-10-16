@@ -48,7 +48,7 @@ def main(data_base=DATA_BASE):
 
     pipeline_upload = PipeLine().set_initiator(role="guest", party_id=guest).set_roles(guest=guest)
     # add upload data info
-    # csv file name from python path & file name
+    # original csv file path
     pipeline_upload.add_upload_data(file=os.path.join(data_base, "examples/data/breast_hetero_guest.csv"),
                                     table_name=dense_data["name"],             # table name
                                     namespace=dense_data["namespace"],         # namespace
