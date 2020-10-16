@@ -182,7 +182,7 @@ wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/python-env-1.5.0
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/jdk-8u192-linux-x64.tar.gz
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/mysql-1.5.0-release.tar.gz
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/openresty-1.17.8.2.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_1.5.0-release.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_1.5.0_preview.tar.gz
 
 #scp packages to 192.168.0.1和192.168.0.2
 scp *.tar.gz app@192.168.0.1:/data/projects/install
@@ -676,7 +676,7 @@ cd /data/projects/fate/proxy
 ### 6.1 test deployment with toy-example
 
 
-Set 3 parameters before starting test: `guest_partyid`, `host_partyid`, `work_mode`
+Set 3 parameters before starting test: `guest_partyid`, `host_partyid`, `work_mode`, `backend`
 
 #### 6.1.1 Local Test
 
@@ -790,7 +790,7 @@ cd /data/projects/fate/fateboard
 sh service.sh start|stop|status|restart
 ```
 
-3) start/stop/restart NginX service
+3) start/stop/restart Nginx service
 
 ```bash
 cd /data/projects/fate/proxy
