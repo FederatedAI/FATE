@@ -4,6 +4,7 @@ import uuid
 import click
 from fate_test._client import Clients
 from fate_test._io import LOGGER, echo
+from fate_test.scripts._options import SharedOptions
 from fate_test.scripts._utils import _upload_data, _load_testsuites, _delete_data
 
 
@@ -25,8 +26,14 @@ def data_group():
 @click.option('--yes', is_flag=True,
               help="skip double check")
 @click.option('-s', '--suite-type', required=True, type=click.Choice(["testsuite", "benchmark"]), help="suite type")
+@SharedOptions.get_shared_options(hidden=True)
 @click.pass_context
-def upload(ctx, include, exclude, glob, yes, suite_type):
+def upload(ctx, include, exclude, glob, yes, suite_type, **kwargs):
+    """
+    upload data defined in suite config files
+    """
+    ctx.obj.update(**kwargs)
+    ctx.obj.post_process()
     namespace = ctx.obj["namespace"]
     config_inst = ctx.obj["config"]
 
@@ -67,8 +74,14 @@ def upload(ctx, include, exclude, glob, yes, suite_type):
 @click.option('-g', '--glob', type=str,
               help="glob string to filter sub-directory of path specified by <include>")
 @click.option('-s', '--suite-type', required=True, type=click.Choice(["testsuite", "benchmark"]), help="suite type")
+@SharedOptions.get_shared_options(hidden=True)
 @click.pass_context
-def delete(ctx, include, exclude, glob, yes, suite_type):
+def delete(ctx, include, exclude, glob, yes, suite_type, **kwargs):
+    """
+    delete data defined in suite config files
+    """
+    ctx.obj.update(**kwargs)
+    ctx.obj.post_process()
     namespace = ctx.obj["namespace"]
     config_inst = ctx.obj["config"]
 

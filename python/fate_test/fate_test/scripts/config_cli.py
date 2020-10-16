@@ -19,6 +19,7 @@ from pathlib import Path
 import click
 from fate_test._client import Clients
 from fate_test._config import create_config, default_config, parse_config
+from fate_test.scripts._options import SharedOptions
 
 
 @click.group("config", help="fate_test config")
@@ -31,28 +32,48 @@ def config_group():
 
 @config_group.command(name="new")
 def _new():
+    """
+    create new fate_test config temperate
+    """
     create_config(Path("fate_test_config.yaml"))
     click.echo(f"create config file: fate_test_config.yaml")
 
 
 @config_group.command(name="edit")
-def _edit():
-    click.edit(filename=default_config())
+@SharedOptions.get_shared_options(hidden=True)
+@click.pass_context
+def _edit(ctx, **kwargs):
+    """
+    edit fate_test config file
+    """
+    ctx.obj.update(**kwargs)
+    config = ctx.obj["config"]
+    click.edit(filename=config)
 
 
 @config_group.command(name="show")
 def _show():
+    """
+    show fate_test default config path
+    """
     click.echo(f"default config path is {default_config()}")
 
 
 @config_group.command(name="check")
-def _config():
-    config_inst = parse_config(default_config())
+@SharedOptions.get_shared_options(hidden=True)
+@click.pass_context
+def _config(ctx, **kwargs):
+    """
+    check connection
+    """
+    ctx.obj.update(**kwargs)
+    config_inst = parse_config(ctx.obj["config"])
     with Clients(config_inst) as clients:
         roles = clients.all_roles()
         for r in roles:
             try:
                 version, address = clients[r].check_connection()
             except Exception as e:
-                click.echo(f"[X]connection {address} fail, role is {r}, exception is {e.args}")
-            click.echo(f"[✓]connection {address} ok, fate version is {version}, role is {r}")
+                click.echo(f"[X]connection fail, role is {r}, exception is {e.args}")
+            else:
+                click.echo(f"[✓]connection {address} ok, fate version is {version}, role is {r}")
