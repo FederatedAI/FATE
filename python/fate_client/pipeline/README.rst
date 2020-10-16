@@ -26,14 +26,14 @@ easy-to-use tools to configure order and setting of the tasks.
 
 FATE is written in a modular style. Modules are designed to have input
 and output data and model. Therefore two modules are connected when
-output of one module is set to be input of another module. By tracing
+output of one module is set to be the input of another module. By tracing
 how one data set is processed through FATE modules, we can see that a
 FATE job is in fact formed by a sequence of sub-tasks. For example, in
 the `mini demo <./demo/pipeline-mini-demo.py>`__ above, guest’s data is
-first read in by ``Reader``, then loaded into ``DataIO``. Overlapping
+firstly read in by ``Reader``, then loaded into ``DataIO``. Overlapping
 ids between guest and host are then found by running data through
 ``Intersection``. Finally, ``HeteroLR`` model is fit on the data. Each
-of the listed modules run a small task with the data, and together they
+of the listed modules runs a small task with the data, and together they
 constitute a model training job.
 
 Beyond the given mini demo, a job may include multiple data sets and
