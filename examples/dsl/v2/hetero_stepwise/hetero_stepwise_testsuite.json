@@ -1,0 +1,66 @@
+{
+    "data": [
+        {
+            "file": "examples/data/breast_hetero_mini_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_mini_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/breast_hetero_mini_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_mini_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/motor_hetero_mini_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "motor_hetero_mini_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/motor_hetero_mini_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "motor_hetero_mini_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/dvisits_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "dvisits_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/dvisits_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "dvisits_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        }
+    ],
+    "tasks": {
+        "linr-stepwise": {
+            "conf": "./test_hetero_stepwise_linr_conf.json",
+            "dsl": "./test_hetero_stepwise_linr_dsl.json"
+        },
+        "lr-stepwise": {
+            "conf": "./test_hetero_stepwise_lr_conf.json",
+            "dsl": "./test_hetero_stepwise_lr_dsl.json"
+        },
+        "poisson-stepwise": {
+            "conf": "./test_hetero_stepwise_poisson_conf.json",
+            "dsl": "./test_hetero_stepwise_poisson_dsl.json"
+        }
+    }
+}

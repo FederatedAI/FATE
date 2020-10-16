@@ -54,6 +54,21 @@ Below lists example data sets and their information.
         * name: "defeault_credit_homo_test"
         * namespace: "experiment"
 
+#### give_credit_homo:
+- 10 features
+- label type: binary
+- [source](https://www.kaggle.com/c/GiveMeSomeCredit/data)
+- data sets:
+    1. "give_credit_homo_guest.csv"
+        * name: "give_credit_homo_guest"
+        * namespace: "experiment"
+    2. "give_credit_homo_host.csv"
+        * name: "give_credit_homo_host"
+        * namespace: "experiment"
+    3. "give_credit_homo_test.csv"
+        * name: "give_credit_homo_test"
+        * namespace: "experiment"
+
 #### student_homo:
 - 13 features
 - label type: continuous
@@ -121,6 +136,18 @@ Below lists example data sets and their information.
         * namespace: "experiment"
     2. "default_credit_hetero_host.csv"
         * name: "default_credit_hetero_host"
+        * namespace: "experiment"
+
+#### give_credit_hetero:
+- 10 features
+- label type: binary
+- [source](https://www.kaggle.com/c/GiveMeSomeCredit/data)
+- data sets:
+    1. "give_credit_hetero_guest.csv"
+        * name: "give_credit_hetero_guest"
+        * namespace: "experiment"
+    2. "give_credit_hetero_host.csv"
+        * name: "give_credit_hetero_host"
         * namespace: "experiment"
 
 #### dvisits_hetero:

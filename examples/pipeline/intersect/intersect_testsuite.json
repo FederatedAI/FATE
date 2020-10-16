@@ -1,0 +1,42 @@
+{
+    "data": [
+        {
+            "file": "examples/data/breast_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/breast_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/breast_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_host",
+            "namespace": "experiment",
+            "role": "host_1"
+        }
+    ],
+    "pipeline_tasks": {
+        "raw_intersect": {
+            "script": "./pipeline-intersect-raw.py"
+        },
+        "rsa_intersect": {
+            "script": "./pipeline-intersect-rsa.py"
+        },
+        "rsa_intersect_multi_host": {
+            "script": "./pipeline-intersect-multi-rsa.py"
+        },
+        "raw_intersect_multi_host": {
+            "script": "./pipeline-intersect-multi-raw.py"
+        }
+    }
+}

@@ -1,0 +1,75 @@
+{
+    "initiator": {
+        "role": "guest",
+        "party_id": 10000
+    },
+    "role": {
+        "host": [
+            9999
+        ],
+        "guest": [
+            10000
+        ]
+    },
+    "job_parameters": {
+        "job_type": "train",
+        "backend": 0,
+        "work_mode": 0,
+        "dsl_version": 2
+    },
+    "role_parameters": {
+        "guest": {
+            "0": {
+                "dataio_1": {
+                    "with_label": false,
+                    "output_format": "dense"
+                },
+                "dataio_0": {
+                    "with_label": false,
+                    "output_format": "dense"
+                },
+                "reader_0": {
+                    "table": {
+                        "name": "expect",
+                        "namespace": "experiment"
+                    }
+                },
+                "reader_1": {
+                    "table": {
+                        "name": "actual",
+                        "namespace": "experiment"
+                    }
+                }
+            }
+        },
+        "host": {
+            "0": {
+                "dataio_1": {
+                    "with_label": false,
+                    "output_format": "dense"
+                },
+                "dataio_0": {
+                    "with_label": false,
+                    "output_format": "dense"
+                },
+                "reader_0": {
+                    "table": {
+                        "name": "expect",
+                        "namespace": "experiment"
+                    }
+                },
+                "reader_1": {
+                    "table": {
+                        "name": "actual",
+                        "namespace": "experiment"
+                    }
+                }
+            }
+        }
+    },
+    "algorithm_parameters": {
+        "psi_0": {
+            "max_bin_num": 20
+        }
+    }
+}

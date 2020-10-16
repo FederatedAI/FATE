@@ -1,5 +1,4 @@
 sudo: required
-language: bash
 
 cache:
   directories:
@@ -13,16 +12,24 @@ matrix:
   include:
     - env: OS='centos:7'
 
+  include:
+    - language: python
+      python: 3.6
+
+install:
+  - pip install codecov
+
 script:
-  - wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/standalone-fate-master-1.4.5.tar.gz
-  - tar -xzf  standalone-fate-master-1.4.5.tar.gz
-  - cd standalone-fate-master-1.4.5
+  - wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/standalone-fate-master-1.5.0_preview.tar.gz
+  - tar -xzf  standalone-fate-master-1.5.0_preview.tar.gz
+  - cd standalone-fate-master-1.5.0_preview
   - sed -i.bak "s/sh  service.sh/bash service.sh/g" init.sh
-  - source init.sh init
+  - sh init.sh init
   - ls -alh
-  - bash ./federatedml/test/run_test.sh
+  - source bin/init_env.sh
+  - bash ./python/federatedml/test/run_test.sh
 after_success:
   - conda install -c conda-forge codecov --yes
-  - cd ./federatedml/test && codecov
+  - cd ./python/federatedml/test && codecov
 
 

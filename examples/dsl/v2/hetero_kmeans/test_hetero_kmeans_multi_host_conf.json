@@ -1,0 +1,91 @@
+{
+    "initiator": {
+        "role": "guest",
+        "party_id": 9999
+    },
+    "role": {
+        "arbiter": [
+            9999
+        ],
+        "host": [
+            9998,
+            10000
+        ],
+        "guest": [
+            9999
+        ]
+    },
+    "job_parameters": {
+        "job_type": "train",
+        "backend": 0,
+        "work_mode": 0,
+        "dsl_version": 2
+    },
+    "role_parameters": {
+        "host": {
+            "1": {
+                "reader_0": {
+                    "table": {
+                        "name": "breast_hetero_host",
+                        "namespace": "experiment"
+                    }
+                },
+                "reader_1": {
+                    "table": {
+                        "name": "breast_hetero_host",
+                        "namespace": "experiment"
+                    }
+                },
+                "dataio_0": {
+                    "with_label": false
+                }
+            },
+            "0": {
+                "reader_0": {
+                    "table": {
+                        "name": "breast_hetero_host",
+                        "namespace": "experiment"
+                    }
+                },
+                "reader_1": {
+                    "table": {
+                        "name": "breast_hetero_host",
+                        "namespace": "experiment"
+                    }
+                },
+                "dataio_0": {
+                    "with_label": false
+                }
+            }
+        },
+        "guest": {
+            "0": {
+                "reader_0": {
+                    "table": {
+                        "name": "breast_hetero_guest",
+                        "namespace": "experiment"
+                    }
+                },
+                "reader_1": {
+                    "table": {
+                        "name": "breast_hetero_guest",
+                        "namespace": "experiment"
+                    }
+                },
+                "dataio_0": {
+                    "with_label": true,
+                    "output_format": "dense"
+                }
+            }
+        }
+    },
+    "algorithm_parameters": {
+        "hetero_kmeans_0": {
+            "k": 3,
+            "max_iter": 10
+        },
+        "evaluation_0": {
+            "eval_type": "clustering"
+        }
+    }
+}

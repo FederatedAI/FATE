@@ -1,0 +1,44 @@
+{
+    "initiator": {
+        "role": "guest",
+        "party_id": 9999
+    },
+    "job_parameters": {
+        "work_mode": 1,
+        "job_type": "predict",
+        "model_id": "arbiter-10000#guest-9999#host-10000#model",
+        "model_version": "202010141805485048371",
+        "dsl_version": "2"
+    },
+    "role": {
+        "guest": [9999],
+        "host": [10000],
+        "arbiter": [10000]
+    },
+    "role_parameters": {
+        "guest": {
+            "0": {
+                "reader_0": {
+                    "table": {"name": "breast_hetero_guest", "namespace": "experiment"}
+                },
+                "dataio_0":{
+                    "with_label": true,
+                    "label_name": "y",
+                    "label_type": "int",
+                    "output_format": "dense"
+                }
+            }
+        },
+        "host": {
+            "0": {
+                "reader_0": {
+                    "table": {"name": "breast_hetero_host", "namespace": "experiment"}
+                },
+                "dataio_0":{
+                    "with_label": false,
+                    "output_format": "dense"
+                }
+            }
+        }
+    }
+}

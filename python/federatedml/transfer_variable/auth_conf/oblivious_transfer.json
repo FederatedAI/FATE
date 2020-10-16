@@ -1,0 +1,22 @@
+{
+  "federatedml.transfer_variable.transfer_class.oblivious_transfer_transfer_variable.ObliviousTransferTransferVariable": {
+    "s": {
+      "src": "host",
+      "dst": [
+        "guest"
+      ]
+    },
+    "s_legal": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    },
+    "r": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    }
+  }
+}

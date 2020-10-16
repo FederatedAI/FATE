@@ -1,0 +1,21 @@
+{
+  "federatedml.transfer_variable.transfer_class.one_vs_rest_transfer_variable.OneVsRestTransferVariable": {
+    "aggregate_classes": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "host",
+        "arbiter"
+      ]
+    },
+    "host_classes": {
+      "src": [
+        "host"
+      ],
+      "dst": [
+        "guest"
+      ]
+    }
+  }
+}

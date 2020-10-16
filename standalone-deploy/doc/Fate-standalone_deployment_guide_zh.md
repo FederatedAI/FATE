@@ -1,5 +1,14 @@
 ## ****FATE单机部署指南****
 
+服务器配置：
+
+| **数量**      |    1                                                  |
+| ------------ | ----------------------------------------------------- |
+| **配置**      | 8 core / 16G memory / 500G hard disk                  |
+| **操作系统**   | Version: CentOS Linux release 7                       |
+| **用户**      | User: app owner:apps                                  |
+
+
 单机版提供2种部署方式，可以根据实际情况选择：
 
 - 使用Docker镜像安装FATE（推荐）
@@ -15,17 +24,17 @@
 
 2. 依赖[docker](https://download.docker.com/linux/)和[docker-compose](https://github.com/docker/compose/releases/tag/1.24.0)，docker建议版本为18.09，docker-compose建议版本为1.24.0，您可以使用以下命令验证docker环境：docker --version和docker-compose --version，docker的起停和其他操作请参考docker --help。
 
-3. 执行之前，请检查8080、9060和9080端口是否已被占用。 如果要再次执行，请使用docker命令删除以前的容器和镜像。
+3. 执行之前，请检查8080、9360和9380端口是否已被占用。 如果要再次执行，请使用docker命令删除以前的容器和镜像。
 
    请按照以下步骤操作:
 
    ```
    #获取安装包
-   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/docker_standalone-fate-1.4.5.tar.gz
-   tar -xzvf docker_standalone-fate-1.4.5.tar.gz
+   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/docker_standalone-fate-1.5.0_preview.tar.gz
+   tar -xzvf docker_standalone-fate-1.5.0_preview.tar.gz
    
    #执行部署
-   cd docker_standalone-fate-1.4.5
+   cd docker_standalone-fate-1.5.0_preview
    bash install_standalone_docker.sh
    ```
 
@@ -36,7 +45,7 @@
    ```
    CONTAINER_ID=`docker ps -aqf "name=fate_python"`
    docker exec -t -i ${CONTAINER_ID} bash
-   bash ./federatedml/test/run_test.sh
+   bash ./python/federatedml/test/run_test.sh
    ```
 
    如果成功，屏幕显示类似下方的语句:
@@ -61,7 +70,7 @@
 
 
 
-有些用例算法在 [examples](../../examples/federatedml-1.x-examples) 文件夹下, 请尝试使用。
+有些用例算法在 [examples](../../examples/dsl/v2) 文件夹下, 请尝试使用。
 
 您还可以通过浏览器体验算法过程看板，访问：Http://hostip:8080。
 
@@ -80,15 +89,15 @@
 2. 下载独立版本的压缩包并解压缩。
 
    ```
-   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/standalone-fate-master-1.4.5.tar.gz
-   tar -xzvf  standalone-fate-master-1.4.5.tar.gz
+   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/standalone-fate-master-1.5.0_preview.tar.gz
+   tar -xzvf  standalone-fate-master-1.5.0_preview.tar.gz
    ```
 
 3. 进入FATE目录并执行init.sh。
 
    ```
-   cd standalone-fate-master-1.4.5
-   source init.sh init
+   cd standalone-fate-master-1.5.0_preview
+   sh init.sh init
    ```
 
 4. 测试
@@ -96,8 +105,9 @@
    - 单元测试
 
    ```
-   cd standalone-fate-master-1.4.5
-   bash ./federatedml/test/run_test.sh
+   cd standalone-fate-master-1.5.0_preview
+   source bin/init_env.sh
+   bash ./python/federatedml/test/run_test.sh
    ```
 
    如果成功，屏幕显示类似下方的语句:
@@ -109,7 +119,8 @@
    - Toy测试
 
    ```
-   cd standalone-fate-master-1.4.5
+   cd standalone-fate-master-1.5.0_preview
+   source bin/init_env.sh
    python ./examples/toy_example/run_toy_example.py 10000 10000 0
    ```
 
@@ -121,6 +132,6 @@
 
    
 
-有些用例算法在 [examples](../../examples/federatedml-1.x-examples) 文件夹下, 请尝试使用。
+有些用例算法在 [examples](../../examples/dsl/v2) 文件夹下, 请尝试使用。
 
 您还可以通过浏览器体验算法过程看板，访问：Http://hostip:8080。

@@ -1,0 +1,11 @@
+{
+    "module_path":  "fate_flow/components",
+    "param_class" : "fate_flow/components/param/download_param.py/DownloadParam",
+    "role":
+    {
+        "local":
+        {
+            "program": "download.py/Download"
+        }
+    }
+}

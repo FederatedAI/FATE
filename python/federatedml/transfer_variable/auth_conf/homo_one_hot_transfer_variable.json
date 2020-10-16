@@ -1,0 +1,29 @@
+{
+  "federatedml.transfer_variable.transfer_class.homo_onehot_transfer_variable.HomoOneHotTransferVariable": {
+    "aligned_columns": {
+      "src": [
+        "arbiter"
+      ],
+      "dst": [
+        "guest",
+        "host"
+      ]
+    },
+    "guest_columns": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "host_columns": {
+      "src": [
+        "host"
+      ],
+      "dst": [
+        "arbiter"
+      ]
+    }
+  }
+}

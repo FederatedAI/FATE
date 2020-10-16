@@ -1,0 +1,204 @@
+{
+    "components": {
+        "reader_0": {
+            "module": "Reader",
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
+        },
+        "reader_1": {
+            "module": "Reader",
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
+        },
+        "dataio_0": {
+            "module": "DataIO",
+            "input": {
+                "data": {
+                    "data": [
+                        "reader_0.data"
+                    ]
+                }
+            },
+            "output": {
+                "data": [
+                    "data"
+                ],
+                "model": [
+                    "model"
+                ]
+            }
+        },
+        "dataio_1": {
+            "module": "DataIO",
+            "input": {
+                "data": {
+                    "data": [
+                        "reader_1.data"
+                    ]
+                },
+                "model": [
+                    "dataio_0.model"
+                ]
+            },
+            "output": {
+                "data": [
+                    "data"
+                ],
+                "model": [
+                    "model"
+                ]
+            }
+        },
+        "intersection_0": {
+            "module": "Intersection",
+            "input": {
+                "data": {
+                    "data": [
+                        "dataio_0.data"
+                    ]
+                }
+            },
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
+        },
+        "intersection_1": {
+            "module": "Intersection",
+            "input": {
+                "data": {
+                    "data": [
+                        "dataio_1.data"
+                    ]
+                }
+            },
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
+        },
+        "hetero_feature_binning_0": {
+            "module": "HeteroFeatureBinning",
+            "input": {
+                "data": {
+                    "data": [
+                        "intersection_0.data"
+                    ]
+                }
+            },
+            "output": {
+                "data": [
+                    "data"
+                ],
+                "model": [
+                    "model"
+                ]
+            }
+        },
+        "statistic_0": {
+            "module": "DataStatistics",
+            "input": {
+                "data": {
+                    "data": [
+                        "intersection_0.data"
+                    ]
+                }
+            },
+            "output": {
+                "data": [
+                    "data"
+                ],
+                "model": [
+                    "model"
+                ]
+            }
+        },
+        "hetero_feature_selection_0": {
+            "module": "HeteroFeatureSelection",
+            "input": {
+                "data": {
+                    "data": [
+                        "intersection_0.data"
+                    ]
+                },
+                "isometric_model": [
+                    "hetero_feature_binning_0.model",
+                    "statistic_0.model"
+                ]
+            },
+            "output": {
+                "data": [
+                    "data"
+                ],
+                "model": [
+                    "model"
+                ]
+            }
+        },
+        "hetero_feature_selection_1": {
+            "module": "HeteroFeatureSelection",
+            "input": {
+                "data": {
+                    "data": [
+                        "intersection_1.data"
+                    ]
+                },
+                "model": [
+                    "hetero_feature_selection_0.model"
+                ]
+            },
+            "output": {
+                "data": [
+                    "data"
+                ],
+                "model": [
+                    "model"
+                ]
+            }
+        },
+        "hetero_secureboost_0": {
+            "module": "HeteroSecureBoost",
+            "input": {
+                "data": {
+                    "train_data": [
+                        "hetero_feature_selection_0.data"
+                    ],
+                    "validate_data": [
+                        "hetero_feature_selection_1.data"
+                    ]
+                }
+            },
+            "output": {
+                "data": [
+                    "data"
+                ],
+                "model": [
+                    "model"
+                ]
+            }
+        },
+        "evaluation_0": {
+            "module": "Evaluation",
+            "input": {
+                "data": {
+                    "data": [
+                        "hetero_secureboost_0.data"
+                    ]
+                }
+            },
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
+        }
+    }
+}

@@ -1,0 +1,15 @@
+{
+    "module_path":  "federatedml/statistic/intersect",
+    "param_class" : "federatedml/param/intersect_param.py/IntersectParam",
+    "role":
+    {
+        "guest":
+        {
+            "program": "intersect_model.py/IntersectGuest"
+        },
+        "host":
+        {
+            "program": "intersect_model.py/IntersectHost"
+        }
+    }
+}

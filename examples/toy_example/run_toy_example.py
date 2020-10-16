@@ -7,7 +7,7 @@ import sys
 import time
 
 home_dir = os.path.split(os.path.realpath(__file__))[0]
-fate_flow_path = os.path.join(home_dir, "..", "..", "fate_flow", "fate_flow_client.py")
+fate_flow_path = os.path.join(home_dir, "..", "..", "python", "fate_flow", "fate_flow_client.py")
 dsl_path = os.path.join(home_dir, "toy_example_dsl.json")
 conf_path = os.path.join(home_dir, "toy_example_conf.json")
 
@@ -15,6 +15,7 @@ guest_party_id = -1
 host_party_id = -1
 
 work_mode = 0
+backend = 0
 
 component_name = 'secure_add_example_0'
 
@@ -50,6 +51,7 @@ def create_new_runtime_config():
 
     conf_dict["initiator"]["party_id"] = guest_party_id
     conf_dict["job_parameters"]["work_mode"] = work_mode
+    conf_dict["job_parameters"]["backend"] = backend
     conf_dict["role"]["guest"] = [guest_party_id]
     conf_dict["role"]["host"] = [host_party_id]
 
@@ -170,7 +172,7 @@ def exec_toy_example(runtime_config):
         if status == "failed":
             show_log(jobid, "error")
             return
-        elif status == "success":
+        elif status == "complete":
             show_log(jobid, "info")
             return
         else:
@@ -185,12 +187,15 @@ if __name__ == "__main__":
     arg_parser.add_argument("host_party_id", type=int, help="please input host party id")
     arg_parser.add_argument("work_mode", type=int,
                             help="please input work_mode, 0 stands for standalone, 1  stands for cluster")
+    arg_parser.add_argument("-b", "--backend", type=int, default=0,
+                            help="please input backend, 0 stands for eggroll, 1 stands for spark")
 
     args = arg_parser.parse_args()
 
     guest_party_id = args.guest_party_id
     host_party_id = args.host_party_id
     work_mode = args.work_mode
+    backend = args.backend
 
     runtime_config = create_new_runtime_config()
 

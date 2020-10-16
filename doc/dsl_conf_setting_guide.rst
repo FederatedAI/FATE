@@ -60,7 +60,7 @@ Field Specification
 
         1. data: typically used in data_io, feature_engineering modules and evaluation.
         2. train_data: Used in homo_lr, hetero_lr and secure_boost. If this field is provided, the task will be parse as a **fit** task
-        3. eval_data: If train_data is provided, this field is optional. In this case, this data will be used as validation set. If train_data is not provided, this task will be parsed as a **predict** or **transform** task.
+        3. validate_data: If train_data is provided, this field is optional. In this case, this data will be used as validation set. If train_data is not provided, this task will be parsed as a **predict** or **transform** task.
 
   2. Model: There are two possible model-input types:
 
@@ -75,7 +75,7 @@ Field Specification
             "input": {
                 "data": {
                     "data": [
-                        "dataio_1.eval_data"
+                        "dataio_1.validate_data"
                     ]
                 },
                 "model": [
@@ -83,7 +83,7 @@ Field Specification
                 ]
             },
             "output": {
-                "data": ["eval_data"],
+                "data": ["validate_data"],
                 "model": ["eval_model"]
             }
           }
@@ -193,7 +193,7 @@ Besides the dsl conf, user also need to prepare a submit runtime conf to set the
     }
     
 
-  As this example shows, for each party, the input parameters such as train_data, eval_data and so on should be list in args. The name and namespace above are table indicators for uploaded data.
+  As this example shows, for each party, the input parameters such as train_data, validate_data and so on should be list in args. The name and namespace above are table indicators for uploaded data.
 
   Then, user can config parameters for each components. The component names should match names defined in the dsl config file. The content of each component parameters are defined in Param class located in federatedml/param.
 
