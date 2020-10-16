@@ -386,10 +386,12 @@ class DAGScheduler(Cron):
                                                        train_runtime_conf=job.f_train_runtime_conf)
         for task in tasks:
             if task.f_status in {TaskStatus.WAITING, TaskStatus.COMPLETE}:
+                if task.f_status == TaskStatus.WAITING:
+                    job_can_rerun = True
                 schedule_logger(job_id=job_id).info(f"task {task.f_task_id} {task.f_task_version} on {task.f_role} {task.f_party_id} is {task.f_status}, pass rerun")
             else:
                 # stop old version task
-                FederatedScheduler.stop_task(job=job, task=task, stop_status=task.f_status)
+                FederatedScheduler.stop_task(job=job, task=task, stop_status=TaskStatus.CANCELED)
                 FederatedScheduler.clean_task(job=job, task=task, content_type="metrics")
                 # create new version task
                 task.f_task_version = task.f_task_version + 1

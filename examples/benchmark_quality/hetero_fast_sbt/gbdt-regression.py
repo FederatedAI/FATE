@@ -45,14 +45,12 @@ def main(param=""):
     y = df[label_name]
     X = df.drop(label_name, axis=1)
 
-    clf = GradientBoostingRegressor(random_state=0, n_estimators=50)
+    clf = GradientBoostingRegressor(random_state=0, n_estimators=50, learning_rate=0.1)
     clf.fit(X, y)
 
     y_predict = clf.predict(X)
 
-    result = {"mean_squared_error": mean_squared_error(y, y_predict),
-              "mean_absolute_error": mean_absolute_error(y, y_predict),
-              }
+    result = {"mean_absolute_error": mean_absolute_error(y, y_predict),}
     print(result)
     return {}, result
 

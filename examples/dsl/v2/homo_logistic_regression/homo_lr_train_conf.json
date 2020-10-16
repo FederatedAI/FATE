@@ -63,7 +63,7 @@
             "max_iter": 30,
             "early_stop": "diff",
             "encrypt_param": {
-                "method": "Paillier"
+                "method": null
             },
             "cv_param": {
                 "n_splits": 4,

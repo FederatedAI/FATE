@@ -16,25 +16,19 @@
 
 # 3. 离线集群与在线集群链路配置(两种不同模式)
 
+配置文件: conf/service_conf.yaml
+
 3.1 在线集群不使用zookeeper模式
 
 **1) 修改服务配置**
 
-- 修改arch/conf/server_conf.json
-
-```json
-"servings": [
-         "127.0.0.1:8000"
-      ]
-```
-
 - 填入实际serving-server服务的ip:port，如：
 
-```json
-"servings": [
-         "192.168.1.1:8000",
-         "192.168.1.2:8000"
-      ]
+```yaml
+servings:
+  hosts:
+    - 192.168.0.1:8000
+    - 192.168.0.2:8000
 ```
 
 **2) 服务生效**
@@ -45,24 +39,20 @@
 
 **1) 修改服务配置**
 
-- 修改部署目录下fate_flow/settings.py
+其中``zookeeper:hosts``填入在线推理集群实际部署Zookeeper的ip:port
 
-```python
-USE_CONFIGURATION_CENTER = True 
-ZOOKEEPER_HOSTS = ['192.168.1.1:2181','192.168.1.2:2181','192.168.1.3:2182'] 
+- 若zookeeper开启了ACL，则需要修改``use_acl`` ``user`` ``password``，否则略过
+
+```yaml
+use_registry: true
+zookeeper:
+  hosts:
+    - 192.168.0.1:2181
+    - 192.168.0.2:2181
+  use_acl: true
+  user: fate_dev
+  password: fate_dev
 ```
-
-其中``ZOOKEEPER_HOSTS``填入在线推理集群实际部署Zookeeper的ip:port
-
-- 若zookeeper开启了ACL，则需要，否则略过此步骤。修改部署目录下fate_flow/utils/setting_utils.py
-
-```python
-USE_ACL = True
-ZK_USERNAME = 'fate'
-ZK_PASSWORD = 'fate'
-```
-
-其中``ZK_USERNAME``与``ZK_PASSWORD``填入在线推理集群实际部署Zookeeper的用户名与密码
 
 **2) 服务生效**
 

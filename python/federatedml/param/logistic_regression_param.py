@@ -244,7 +244,8 @@ class HomoLogisticParam(LogisticParam):
         Indicate how many iterations are aggregated once.
 
     use_proximal: bool, default: False
-        Whether to turn on additional proximial term.
+        Whether to turn on additional proximial term. For more details of FedProx, Please refer to
+        https://arxiv.org/abs/1812.06127
 
     mu: float, default 0.1
         To scale the proximal term

@@ -74,6 +74,9 @@
             },
             "max_iter": 3,
             "early_stop": "diff",
+            "encrypt_param": {
+                "method": null
+            },
             "cv_param": {
                 "n_splits": 4,
                 "shuffle": true,

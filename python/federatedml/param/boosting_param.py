@@ -111,15 +111,10 @@ class DecisionTreeParam(BaseParam):
     max_split_nodes: int, positive integer, we will use no more than max_split_nodes to
                       parallel finding their splits in a batch, for memory consideration. default is 65536
 
-    n_iter_no_change: bool, accepted True,False only, if set to True, tol will use to consider
-                      stop tree growth. default: True
-
     feature_importance_type: str, support 'split', 'gain' only.
                              if is 'split', feature_importances calculate by feature split times,
                              if is 'gain', feature_importances calculate by feature split gain.
                              default: 'split'
-
-    tol: float, only use when n_iter_no_change is set to True, default: 0.001
 
     use_missing: bool, accepted True, False only, use missing value in training process or not. default: False
 

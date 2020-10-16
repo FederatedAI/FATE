@@ -8,6 +8,9 @@ Upload Data
 
 We have already placed some public data sets in example/data. We also provide a script to upload these data into FATE through fate-flow interface.
 
+Description
+```````````
+
 You can use it as simple as running the following command:
 
   .. code-block:: bash
@@ -44,7 +47,7 @@ After that, you are expected to see the following feedback which showing the tab
     [2020-06-12 14:19:54]2020061214195123380833 success, elapse: 0:00:02
     [2020-06-12 14:19:54] check_data_out {'data': {'count': 30000, 'namespace': 'experiment', 'partition': 16, 'table_name': 'default_credit_hetero_host'}, 'retcode': 0, 'retmsg': 'success'}
 
-If you want to use this script to upload more data set, this could be set at the beginning of this script:
+If you want to set the data you want to upload, please give the configuration file in the following format.
 
     .. code-block:: json
 
@@ -85,9 +88,18 @@ If you want to use this script to upload more data set, this could be set at the
             ]
         }
 
-If these table name and namespace has been used and you want to delete them before upload, you can just add one parameter to achieve that.
+
+Parameters
+``````````
+-  -m --mode: Work mode, Required. 1 represent for cluster version while 0 means standalone version.
+-  -f --force: Whether force upload or not. When setting as 1, the table will be deleted before upload if it is already existed. Default: 0
+-  -b --backend: Backend of the task. 0 represent for eggroll while 1 represent for spark. Default: 0
+-  -c --config_file: The config file provided. If a file path is provided, it will upload the data list in the config file. We also provided some pre-set config file. Default: min-test
+    *  "all" means upload all data-set provided in example/data folder. If use this config file, the time consume for this upload task could be relatively long.
+    *  "min-test" means upload the data needed for min-test.
+
+An example of starting this script with all parameter could be:
 
   .. code-block:: bash
 
-     python upload_default_data.py -m {work_mode} -f 1
-
+     python upload_default_data.py -m 0 -f 1 -b 0 -c min-test

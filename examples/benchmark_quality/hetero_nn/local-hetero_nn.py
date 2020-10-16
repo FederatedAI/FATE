@@ -13,10 +13,10 @@ from sklearn.preprocessing import LabelEncoder
 
 def build(param, shape1, shape2):
     input1 = tf.keras.layers.Input(shape=(shape1,))
-    x1 = tf.keras.layers.Dense(units=param["bottom_layer_units"], activation='relu',
+    x1 = tf.keras.layers.Dense(units=param["bottom_layer_units"], activation='tanh',
                                kernel_initializer=keras.initializers.RandomUniform(minval=-1, maxval=1, seed=123))(input1)
     input2 = tf.keras.layers.Input(shape=(shape2,))
-    x2 = tf.keras.layers.Dense(units=param["bottom_layer_units"], activation='relu',
+    x2 = tf.keras.layers.Dense(units=param["bottom_layer_units"], activation='tanh',
                                kernel_initializer=keras.initializers.RandomUniform(minval=-1, maxval=1, seed=123))(input2)
 
     concat = tf.keras.layers.Concatenate(axis=-1)([x1, x2])
@@ -25,7 +25,8 @@ def build(param, shape1, shape2):
     out2 = tf.keras.layers.Dense(units=param["top_layer_units"], activation=param["top_act"],
                                  kernel_initializer=keras.initializers.RandomUniform(minval=-1, maxval=1, seed=123))(out1)
     model = tf.keras.models.Model(inputs=[input1, input2], outputs=out2)
-    model.compile(optimizer=optimizers.SGD(lr=param["learning_rate"]), loss=param["loss"])
+    opt = getattr(optimizers, param["opt"])(lr=param["learning_rate"])
+    model.compile(optimizer=opt, loss=param["loss"])
 
     return model
 

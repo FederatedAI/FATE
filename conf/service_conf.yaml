@@ -1,23 +1,24 @@
 work_mode: 1
+independent_scheduling_proxy: false
 use_registry: false
 fateflow:
-  host: 0.0.0.0
+  host: 192.168.0.1
   http_port: 9380
   grpc_port: 9360
 fateboard:
-  host: 127.0.0.1
+  host: 192.168.0.1
   port: 8080
 database:
-  name: fate
-  user: fate_dev
+  name: fate_flow
+  user: fate
   passwd: fate_dev
-  host: 127.0.0.1
+  host: 192.168.0.1
   port: 3306
   max_connections: 100
   stale_timeout: 30
 EGGROLL:
   address:
-    host: 127.0.0.1
+    host: 192.168.0.1
     port: 9370
   cores_per_node: 20
   nodes: 1
@@ -28,27 +29,27 @@ SPARK:
   nodes: 2
 HDFS:
   address:
-    name_node:
+    name_node: hdfs://fate-cluster
     path_prefix:
 RABBITMQ:
   address:
     self:
-      9999: 192.168.1.3
+      9999: 192.168.0.4
       mng_port: 12345
       port: 5672
       user: fate
       password: fate
     10000:
-      host: 192.168.1.2
+      host: 192.168.0.3
       port: 5672
 PROXY:
   address:
-    host: 127.0.0.1
+    host: 192.168.0.1
     port: 9373
 model_store_address:
   storage: mysql
   name: model
-  host: 127.0.0.1
+  host: 192.168.0.1
   port: 3306
   user: fate_dev
   passwd: fate_dev
@@ -57,19 +58,19 @@ model_store_address:
 data_storage_address:
   user: fate_dev
   passwd: fate_dev
-  host: 127.0.0.1
+  host: 192.168.0.1
   port: 3306
 servings:
   hosts:
-    - 127.0.0.1:8000
+    - 192.168.0.1:8000
 zookeeper:
   hosts:
-    - 127.0.0.1:2281
+    - 192.168.0.1:2281
   use_acl: true
   user: fate_dev
   password: fate_dev
 fatemanager:
-  host: 127.0.0.1
+  host: 192.168.0.1
   port: 8001
   federatedId: 0
 

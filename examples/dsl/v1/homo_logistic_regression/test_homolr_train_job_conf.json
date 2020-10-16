@@ -57,7 +57,7 @@
         },
         "homo_lr_0": {
             "penalty": "L2",
-            "optimizer": "sgd",
+            "optimizer": "rmsprop",
             "tol": 1e-05,
             "alpha": 0.01,
             "max_iter": 30,

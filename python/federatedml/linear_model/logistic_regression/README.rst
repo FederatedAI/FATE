@@ -112,6 +112,8 @@ Features
 
     3. Support aggregate for every arbitrary iterations.
 
+    4. Support FedProx mechanism. For more details, please refer to `[this paper] <https://arxiv.org/abs/1812.06127>`_
+
 
 :Hetero-LR extra features:
 

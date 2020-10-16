@@ -31,6 +31,7 @@ from pipeline.utils.tools import load_job_config
 def main(config="../../config.yaml", namespace=""):
     # obtain config
     if isinstance(config, str):
+        config = load_job_config(config)
     parties = config.parties
     guest = parties.guest[0]
     host = parties.host[0]
@@ -75,17 +76,6 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.compile()
 
     pipeline.fit(backend=backend, work_mode=work_mode)
-
-    print("linr output data table is: ")
-    print(pipeline.get_component("hetero_linr_0").get_output_data_table())
-    print("\ndata_split output data table is: ")
-    print(pipeline.get_component("hetero_data_split_0").get_output_data_table())
-    print("\ndata_split output data is: ")
-    print(pipeline.get_component("hetero_data_split_0").get_output_data(limits=10))
-    print("\nlinr output data is: ")
-    print(pipeline.get_component("hetero_linr_0").get_output_data(limits=10))
-    print("\n summary content is: ")
-    print(pipeline.get_component("hetero_data_split_0").get_summary())
 
 
 if __name__ == "__main__":
