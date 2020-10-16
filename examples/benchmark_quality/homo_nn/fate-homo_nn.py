@@ -83,7 +83,7 @@ def main(config="../../config.yaml", param="param_conf.yaml", namespace=""):
     dataio_0.get_party_instance(role='host', party_id=hosts).algorithm_param(with_label=True)
 
     homo_nn_0 = HomoNN(name="homo_nn_0", encode_label=encode_label, max_iter=epoch, batch_size=batch_size,
-                       early_stop={"early_stop": "diff", "eps": 0.0001})
+                       early_stop={"early_stop": "diff", "eps": 0.0})
     for layer_config in layers:
         layer = getattr(tensorflow.keras.layers, layer_config["name"])
         layer_params = layer_config["params"]
