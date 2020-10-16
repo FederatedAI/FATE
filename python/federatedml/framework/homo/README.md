@@ -2,7 +2,7 @@
 
 This module provides tools to help us implement homogeneous federated learning algorithms. Two levels of abstraction are provided:
 
-1. sync: implement communication interaction in a logically independent process, witch could be reused in different procedures.
+1. sync: implement communication interaction in a logically independent process, which could be reused in different procedures.
 2. procedure: use syncs to describe high-level logical. 
 
 #### procedure
