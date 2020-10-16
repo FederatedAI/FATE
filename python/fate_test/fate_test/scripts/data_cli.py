@@ -24,14 +24,12 @@ def data_group():
               help="exclude *benchmark.json under these paths")
 @click.option('-g', '--glob', type=str,
               help="glob string to filter sub-directory of path specified by <include>")
-@click.option('--yes', is_flag=True,
-              help="skip double check")
 @click.option('-s', '--suite-type', required=True, type=click.Choice(["testsuite", "benchmark"]), help="suite type")
 @click.option('-r', '--role', type=str, help="role to process, default to `all`. "
                                              "use option likes: `guest_0`, `host_0`, `host`")
 @SharedOptions.get_shared_options(hidden=True)
 @click.pass_context
-def upload(ctx, include, exclude, glob, yes, suite_type, role, **kwargs):
+def upload(ctx, include, exclude, glob, suite_type, role, **kwargs):
     """
     upload data defined in suite config files
     """
@@ -39,6 +37,7 @@ def upload(ctx, include, exclude, glob, yes, suite_type, role, **kwargs):
     ctx.obj.post_process()
     namespace = ctx.obj["namespace"]
     config_inst = ctx.obj["config"]
+    yes = ctx.obj["yes"]
 
     echo.echo(f"testsuite namespace: {namespace}", fg='red')
     echo.echo("loading testsuites:")

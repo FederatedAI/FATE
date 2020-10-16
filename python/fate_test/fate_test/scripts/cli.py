@@ -28,6 +28,10 @@ commands = {
     "data": data_group
 }
 
+commands_alias = {
+    "bq": "benchmark-quality"
+}
+
 
 class MultiCLI(click.MultiCommand):
 
@@ -35,6 +39,10 @@ class MultiCLI(click.MultiCommand):
         return list(commands)
 
     def get_command(self, ctx, name):
+        if name not in commands and name in commands_alias:
+            name = commands_alias[name]
+        if name not in commands:
+            ctx.fail("No such command '{}'.".format(name))
         return commands[name]
 
 

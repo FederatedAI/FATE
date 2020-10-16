@@ -25,19 +25,18 @@ from fate_test.utils import show_data, match_metrics
                    "Comparison is done by evaluating abs(a-b) <= max(relative_tol * max(abs(a), abs(b)), absolute_tol)")
 @click.option('--skip-data', is_flag=True, default=False,
               help="skip uploading data specified in benchmark conf")
-@click.option('--yes', is_flag=True,
-              help="skip double check")
 @SharedOptions.get_shared_options(hidden=True)
 @click.pass_context
-def run_benchmark(ctx, include, exclude, glob, skip_data, tol, yes, **kwargs):
+def run_benchmark(ctx, include, exclude, glob, skip_data, tol, **kwargs):
     """
-    process benchmark suite
+    process benchmark suite, alias: bq
     """
     ctx.obj.update(**kwargs)
     ctx.obj.post_process()
     namespace = ctx.obj["namespace"]
     config_inst = ctx.obj["config"]
     data_namespace_mangling = ctx.obj["namespace_mangling"]
+    yes = ctx.obj["yes"]
 
     echo.welcome("benchmark")
     echo.echo(f"testsuite namespace: {namespace}", fg='red')
