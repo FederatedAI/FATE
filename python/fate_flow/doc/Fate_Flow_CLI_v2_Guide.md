@@ -660,8 +660,8 @@ flow data download -c fate_flow/examples/download_host.json
 | No.  | Argument  | Flag_1 |    Flag_2     | Required |                         Description                          |
 | :--: | :-------: | :----: | :-----------: | :------: | :----------------------------------------------------------: |
 |  1   | conf_path |  `-c`  | `--conf-path` |   Yes    |                   Configuration file path                    |
-|  2   |  verbose  |  `-v`  |  `--verbose`  |    No    | If specified, verbose mode will be turn on. Users can have feedback on upload task in progress. (Default: False) |
-|  3   |   drop    |  `-d`  |   `--drop`    |    No    | If specified, data of old version would be replaced by the current version. Otherwise, current upload task would be rejected. (Default: False) |
+|  2   |  verbose  |        |  `--verbose`  |    No    | If specified, verbose mode will be turn on. Users can have feedback on upload task in progress. (Default: False) |
+|  3   |   drop    |        |   `--drop`    |    No    | If specified, data of old version would be replaced by the current version. Otherwise, current upload task would be rejected. (Default: False) |
 
 - *Examples*:
 

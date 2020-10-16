@@ -13,10 +13,10 @@ class SharedOptions(object):
         "namespace": (('-n', '--namespace'),
                       dict(type=str, help=f"Manual specify fate_test namespace", default=None),
                       time.strftime('%Y%m%d%H%M%S')),
-        "namespace_mangling": (('--namespace-mangling',),
+        "namespace_mangling": (('-nm', '--namespace-mangling',),
                                dict(type=bool, is_flag=True, help="mangling data namespace", default=None),
                                False),
-        "yes": (("--yes",), dict(type=bool, is_flag=True, help="skip double check", default=None),
+        "yes": (('-y', '--yes',), dict(type=bool, is_flag=True, help="skip double check", default=None),
                 False)
     }
 
