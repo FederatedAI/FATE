@@ -65,7 +65,7 @@ def main(config="../../config.yaml", namespace=""):
                                             is_multi_host=True, bin_param=param,
                                             host_dense_output=False)
     pipeline.fit(backend=backend, work_mode=work_mode)
-    common_tools.prettify(pipeline.get_component("hetero_feature_binning_0").get_summary())
+    # common_tools.prettify(pipeline.get_component("hetero_feature_binning_0").get_summary())
 
 
 if __name__ == "__main__":
