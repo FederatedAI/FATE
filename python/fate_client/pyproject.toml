@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fate_client"
-version = "0.1.0"
+version = "0.1.dev1"
 description = "Clients for FATE, including flow_client and pipeline"
 authors = ["FederatedAI <contact@FedAI.org>"]
 license = "Apache-2.0"

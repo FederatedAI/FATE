@@ -43,8 +43,7 @@ def main(config="../../config.yaml", namespace=""):
 
     # data sets
     guest_train_data = {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"}
-    host_train_data_0 = {"name": "breast_hetero_host", "namespac "
-                                                       "e": f"experiment{namespace}"}
+    host_train_data_0 = {"name": "breast_hetero_host", "namespace": f"experiment{namespace}"}
     host_train_data_1 = {"name": "breast_hetero_host", "namespace": f"experiment{namespace}"}
 
     guest_validate_data = {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"}
@@ -84,6 +83,7 @@ def main(config="../../config.yaml", namespace=""):
                                                        tree_num_per_party=1, task_type='classification',
                                                        objective_param={"objective": "cross_entropy"},
                                                        encrypt_param={"method": "iterativeAffine"},
+                                                       tree_param={"max_depth": 3},
                                                        validation_freqs=1,
                                                        work_mode='mix')
 

@@ -212,7 +212,7 @@ class TaskController(object):
         :param stop_status:
         :return:
         """
-        cls.kill_task(task=task)
+        kill_status = cls.kill_task(task=task)
         task_info = {
             "job_id": task.f_job_id,
             "task_id": task.f_task_id,
@@ -223,6 +223,7 @@ class TaskController(object):
         }
         cls.update_task_status(task_info=task_info)
         cls.update_task(task_info=task_info)
+        return kill_status
 
     @classmethod
     def kill_task(cls, task: Task):
@@ -235,6 +236,8 @@ class TaskController(object):
                 job_utils.start_session_stop(task)
         except Exception as e:
             schedule_logger(task.f_job_id).exception(e)
+        else:
+            kill_status = True
         finally:
             schedule_logger(task.f_job_id).info(
                 'job {} task {} {} on {} {} process {} kill {}'.format(task.f_job_id, task.f_task_id,
@@ -243,6 +246,7 @@ class TaskController(object):
                                                                        task.f_party_id,
                                                                        task.f_run_pid,
                                                                        'success' if kill_status else 'failed'))
+            return kill_status
 
     @classmethod
     def clean_task(cls, job_id, task_id, task_version, role, party_id, content_type):
@@ -256,7 +260,7 @@ class TaskController(object):
                 job = jobs[0]
                 job_parameters = RunParameters(**job.f_runtime_conf["job_parameters"])
                 tracker = Tracker(job_id=job_id, role=role, party_id=party_id, task_id=task_id, task_version=task_version, job_parameters=job_parameters)
-                status.add(tracker.clean_task())
+                status.add(tracker.clean_task(job.f_runtime_conf))
         if len(status) == 1 and True in status:
             return True
         else:

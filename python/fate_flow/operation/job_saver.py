@@ -35,7 +35,7 @@ class JobSaver(object):
 
     @classmethod
     def update_job_status(cls, job_info):
-        schedule_logger(job_id=job_info["job_id"]).info("try to update job {} status".format(job_info["job_id"]))
+        schedule_logger(job_id=job_info["job_id"]).info("try to update job {} status to {}".format(job_info["job_id"], job_info.get("status")))
         update_status = cls.update_status(Job, job_info)
         if update_status:
             schedule_logger(job_id=job_info["job_id"]).info("update job {} status successfully".format(job_info["job_id"]))

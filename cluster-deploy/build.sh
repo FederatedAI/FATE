@@ -18,7 +18,7 @@
 
 set -e
 source_dir=$(cd `dirname $0`; cd ../;pwd)
-support_modules=(python examples fateboard eggroll)
+support_modules=(python examples fateboard eggroll proxy)
 packaging_modules=()
 echo ${source_dir}
 if [[ -n ${1} ]]; then
@@ -134,20 +134,39 @@ packaging_eggroll(){
     echo "[INFO] Package eggroll done"
 }
 
+function packaging_proxy(){
+    echo "[INFO] Package proxy start"
+    cd ${source_dir}
+    cd c/proxy
+    mkdir -p ${package_dir}/proxy/nginx
+    cp -r conf lua ${package_dir}/proxy/nginx
+    echo "[INFO] Package proxy done"
+}
+
 compress(){
     echo "[INFO] Compress start"
     cd ${package_dir}
+    touch ./packages_md5.txt
+    os_kernel=`uname -s`
     for module in ${packaging_modules[@]};
     do
         tar czf ${module}.tar.gz ./${module}
+        case "${os_kernel}" in
+            Darwin)
+                md5_value=`md5 ${module}.tar.gz | awk '{print $4}'`
+                ;;
+            Linux)
+                md5_value=`md5sum ${module}.tar.gz | awk '{print $1}'`
+                ;;
+        esac
+        echo "${module} ${md5_value}" >> ./packages_md5.txt
+        rm -rf ./${module}
     done
-    rm -rf python examples fateboard eggroll
     echo "[INFO] Compress done"
     echo "[INFO] A total of `ls ${package_dir} | wc -l | awk '{print $1}'` packages:"
     ls -lrt ${package_dir}
     cd ${source_dir}/cluster-deploy/
     tar czf ${package_dir_name}-${version_tag}".tar.gz" ${package_dir_name}
-    #rm -rf ${package_dir}
 }
 
 
