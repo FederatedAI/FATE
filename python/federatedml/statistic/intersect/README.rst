@@ -102,10 +102,6 @@ Both RSA and RAW intersection supports the following features:
 
 2. Repeated ID intersection using ID expanding.
 
-RSA intersection support the following extra features:
-
-1. RSA support cache to speed up.
-
 RAW intersection support the following extra features:
 
 1. RAW support some encoders like md5 or sha256 to make it more safely.

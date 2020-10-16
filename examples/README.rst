@@ -14,8 +14,8 @@ FATE-Pipeline
 To enhance usability of FATE, starting at FATE-v1.5, FATE provides python APIs.
 User may develop federated learning models conveniently with
 `FATE-Pipeline <../python/fate_client/pipeline/README.rst>`__.
-We provide a host of Pipeline examples for each FATE module, please refer
-`pipeline <./pipeline>`__
+We provide a host of Pipeline examples for each FATE module and a quick start guide for Pipeline
+`here <./pipeline>`__
 
 DSL
 ---

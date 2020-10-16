@@ -5,6 +5,7 @@ import uuid
 import click
 from fate_test._client import Clients
 from fate_test._io import LOGGER, echo
+from fate_test.scripts._options import SharedOptions
 from fate_test.scripts._utils import _upload_data, _load_testsuites, _delete_data
 
 
@@ -23,26 +24,29 @@ def data_group():
               help="exclude *benchmark.json under these paths")
 @click.option('-g', '--glob', type=str,
               help="glob string to filter sub-directory of path specified by <include>")
-@click.option('--yes', is_flag=True,
-              help="skip double check")
 @click.option('-s', '--suite-type', required=True, type=click.Choice(["testsuite", "benchmark"]), help="suite type")
-@click.option('-r', '--role', type=str, help="role to process, default to `all`. "
-                                             "use option likes: `guest_0`, `host_0`, `host`")
+@click.option('-r', '--role', type=str, default='all', help="role to process, default to `all`. "
+                                                            "use option likes: `guest_0`, `host_0`, `host`")
+@SharedOptions.get_shared_options(hidden=True)
 @click.pass_context
-def upload(ctx, include, exclude, glob, yes, suite_type, role):
+def upload(ctx, include, exclude, glob, suite_type, role, **kwargs):
+    """
+    upload data defined in suite config files
+    """
+    ctx.obj.update(**kwargs)
+    ctx.obj.post_process()
     namespace = ctx.obj["namespace"]
     config_inst = ctx.obj["config"]
+    yes = ctx.obj["yes"]
 
     echo.echo(f"testsuite namespace: {namespace}", fg='red')
     echo.echo("loading testsuites:")
     suffix = "benchmark.json" if suite_type == "benchmark" else "testsuite.json"
     suites = _load_testsuites(includes=include, excludes=exclude, glob=glob,
                               suffix=suffix, suite_type=suite_type)
-    role_filter = None if role == "all" else lambda x: re.match(role, x)
-
     for suite in suites:
         if role != "all":
-            suite.dataset = [d for d in suite.dataset if re.match(d.role_str)]
+            suite.dataset = [d for d in suite.dataset if re.match(d.role_str, role)]
         echo.echo(f"\tdataset({len(suite.dataset)}) {suite.path}")
     if not yes and not click.confirm("running?"):
         return
@@ -73,8 +77,14 @@ def upload(ctx, include, exclude, glob, yes, suite_type, role):
 @click.option('-g', '--glob', type=str,
               help="glob string to filter sub-directory of path specified by <include>")
 @click.option('-s', '--suite-type', required=True, type=click.Choice(["testsuite", "benchmark"]), help="suite type")
+@SharedOptions.get_shared_options(hidden=True)
 @click.pass_context
-def delete(ctx, include, exclude, glob, yes, suite_type):
+def delete(ctx, include, exclude, glob, yes, suite_type, **kwargs):
+    """
+    delete data defined in suite config files
+    """
+    ctx.obj.update(**kwargs)
+    ctx.obj.post_process()
     namespace = ctx.obj["namespace"]
     config_inst = ctx.obj["config"]
 
