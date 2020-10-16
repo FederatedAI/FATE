@@ -52,7 +52,7 @@ def cli(ctx, config, namespace, namespace_mangling):
     config_inst = parse_config(config)
     ctx.obj['config'] = config_inst
     ctx.obj['namespace'] = namespace
-    ctx.obj['data_namespace_mangling'] = namespace_mangling
+    ctx.obj['namespace_mangling'] = namespace_mangling
     _set_namespace(namespace_mangling, namespace)
 
 

@@ -34,7 +34,7 @@ def run_benchmark(ctx, include, exclude, glob, skip_data, tol, yes):
 
     namespace = ctx.obj["namespace"]
     config_inst = ctx.obj["config"]
-    data_namespace_mangling = ctx.obj["data_namespace_mangling"]
+    data_namespace_mangling = ctx.obj["namespace_mangling"]
 
     echo.welcome("benchmark")
     echo.echo(f"testsuite namespace: {namespace}", fg='red')

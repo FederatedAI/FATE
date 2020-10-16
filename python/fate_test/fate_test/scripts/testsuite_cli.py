@@ -55,7 +55,7 @@ def run_suite(ctx, replace, include, exclude, glob,
 
     config_inst = ctx.obj["config"]
     namespace = ctx.obj["namespace"]
-    data_namespace_mangling = ctx.obj["data_namespace_mangling"]
+    data_namespace_mangling = ctx.obj["namespace_mangling"]
     # prepare output dir and json hooks
     _add_replace_hook(replace)
 
