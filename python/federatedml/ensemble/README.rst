@@ -112,8 +112,10 @@ Other features
 * Support evaluate training and validate data during training process
 * Support another homomorphic encryption method called "Iterative Affine" since FATE-1.1 
 * Support early stopping in FATE-1.4, to use early stopping, see `[Boosting Tree Param] <../param/boosting_param.py>`_
-
-
+* Support sparse data optimization in FATE-1.5. You can activate it by setting "sparse_optimization" as true in conf.
+  Notice that this feature may increase memory consumption. See `here <../../param/boosting_param.py>`__.
+* Support feature subsample random seed setting in FATE-1.5
+* Support feature binning error setting.
 
 Homo SecureBoost
 ----------------
@@ -195,7 +197,8 @@ Other features
 * Support Multi-host and single guest to build model
 * Support missing value in train and predict process
 * Support evaluate training and validate data during training process
-
+* Support feature subsample random seed setting in FATE-1.5
+* Support feature binning error setting.
 
 
 Param
@@ -215,6 +218,9 @@ to build the first decision tree. This can avoid label leakages, accord to `[Sec
           :width: 500
 
           Figure 4: complete secure boost
+
+Please refer to test_secureboost_train_complete_secure_conf.json in
+  `here <../../../examples/dsl/v2/hetero_secureboost>`__.
 
 
 Hetero Fast SecureBoost
