@@ -224,14 +224,14 @@ echo '/data/swapfile128G swap swap defaults 0 0' >> /etc/fstab
 
 ```
 #安装基础依赖包
-yum install -y gcc gcc-c++ make openssl-devel gmp-devel mpfr-devel libmpc-devel libaio numactl autoconf automake libtool libffi-devel 
+yum install -y gcc gcc-c++ make openssl-devel gmp-devel mpfr-devel libmpc-devel libaio numactl autoconf automake
 #如果有报错，需要解决yum源问题。
 
 #安装ansible和进程管理依赖包
-yum install -y ansible jq supervisor
+yum install -y ansible
 #如果有报错同时服务器有外网，没有外网的需要解决yum源不全的问题，执行：
 yum install -y epel-release
-#增加一个更全面的第三方的源，然后再重新安装ansible jq supervisor
+#增加一个更全面的第三方的源，然后再重新安装ansible
 ```
 
 4 项目部署
@@ -293,8 +293,8 @@ ls -lrt /data/projects/common/supervisord/supervisord.d/fate-*.conf
 ```
 #注意：URL链接有换行，拷贝的时候注意整理成一行
 cd /data/projects/
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/ansible_nfate_1.4.5_release-1.0.0.tar.gz
-tar xzf ansible_nfate_1.4.5_release-1.0.0.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/ansible_nfate_1.5.0_preview-1.0.0.tar.gz
+tar xzf ansible_nfate_1.5.0_preview-1.0.0.tar.gz
 ```
 
 4.4 配置文件修改和示例
@@ -418,7 +418,6 @@ guest:
       egg: 2 ---任务运行时默认每个nodemanager节点启动的并发计算进程数，默认即可。
     fate_flow:
       enable: True ---是否部署fate_flow模块，True为部署，False为否
-      type: install ---install是新安装；update则是升级，从低版本升级到当前版本；
       ips:  ---只支持部署一台主机
       - 192.168.0.1
       grpcPort: 9360  ---服务grpc端口
@@ -426,7 +425,6 @@ guest:
       dbname: "fate_flow"  ---fate_flow服务使用的数据库名称，默认即可
     fateboard:
       enable: True ---是否部署fateboard模块，True为部署，False为否
-      type: install ---install是新安装；update则是升级，从低版本升级到当前版本；
       ips:  ---只支持部署一台主机
       - 192.168.0.1
       port: 8080 ---服务端口
@@ -532,8 +530,8 @@ sh service.sh start fate-fateflow
 1）192.168.0.1上执行，guest_partyid和host_partyid都设为9999：
 
 ```
-source /data/projects/fate/init_env.sh
-cd /data/projects/fate/python/examples/toy_example/
+source /data/projects/fate/bin/init_env.sh
+cd /data/projects/fate/examples/toy_example/
 python run_toy_example.py 9999 9999 1
 ```
 
@@ -548,8 +546,8 @@ python run_toy_example.py 9999 9999 1
 需要和webank沟通获取host端partyid，选定本端9999为guest方，在192.168.0.1上执行：
 
 ```
-source /data/projects/fate/init_env.sh
-cd /data/projects/fate/python/examples/toy_example/
+source /data/projects/fate/bin/init_env.sh
+cd /data/projects/fate/examples/toy_example/
 python run_toy_example.py 9999 ${host_partyid} 1
 ```
 
@@ -565,8 +563,8 @@ python run_toy_example.py 9999 ${host_partyid} 1
 分别在192.168.0.1上执行：
 
 ```
-source /data/projects/fate/init_env.sh
-cd /data/projects/fate/python/examples/scripts/
+source /data/projects/fate/bin/init_env.sh
+cd /data/projects/fate/examples/scripts/
 python upload_default_data.py -m 1
 ```
 
@@ -581,8 +579,8 @@ python upload_default_data.py -m 1
 选定本端9999为guest方，在192.168.0.1上执行：
 
 ```
-source /data/projects/fate/init_env.sh
-cd /data/projects/fate/python/examples/min_test_task/
+source /data/projects/fate/bin/init_env.sh
+cd /data/projects/fate/examples/min_test_task/
 python run_task.py -m 1 -gid 9999 -hid ${host_partyid} -aid ${host_partyid} -f fast
 ```
 

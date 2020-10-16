@@ -1,10 +1,20 @@
 ## ****FATE Stand-alone Deployment Guide****
 
+Server Configuration;
+
+| **Quantity**           |    1                                                  |
+| ---------------------- | ----------------------------------------------------- |
+| **Configuration**      | 8 core / 16G memory / 500G hard disk                  |
+| **Operating System**   | Version: CentOS Linux release 7                       |
+| **Users**              | User: app owner:apps                                  |
+
 The stand-alone version provides 2 deployment methods, which can be selected according to your actual situation:
 
-- Install FATE using Docker [Chinese guide](./doc/Fate-standalone_deployment_guide_zh.md) *(Recommended)* 
+- Install FATE using Docker  *(Recommended)* 
 
-- Install FATE  in Host [Chinese guide](./doc/Fate-standalone_deployment_guide_zh.md) 
+- Install FATE  in Host 
+
+You can also refer to [Chinese guide](./doc/Fate-standalone_deployment_guide_zh.md) 
 
 
 #### 1) Install FATE using Docker*(Recommended)* 
@@ -15,18 +25,18 @@ It is strongly recommended to use docker, which greatly reduces the possibility 
 
 2. Dependent on [docker](https://download.docker.com/linux/) and [docker-compose](https://github.com/docker/compose/releases/tag/1.24.0), docker recommended version is 18.09, docker-compose recommended version is 1.24.0, you can use the following command to verify the docker environment: docker --version and docker-compose --version, docker start and stop and other Please refer to: docker --help.
 
-3. Check whether the 8080, 9060, and 9080 ports are occupied before executing. If you want to execute again, please delete the previous container and image with the docker command.
+3. Check whether the 8080, 9360, and 9380 ports are occupied before executing. If you want to execute again, please delete the previous container and image with the docker command.
 
    please follow the below step:
 
 
 ```
 #Get code
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/docker_standalone-fate-1.4.5.tar.gz
-tar -xzvf docker_standalone-fate-1.4.5.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/docker_standalone-fate-1.5.0_preview.tar.gz
+tar -xzvf docker_standalone-fate-1.5.0_preview.tar.gz
 
 #Execute the command
-cd docker_standalone-fate-1.4.5
+cd docker_standalone-fate-1.5.0_preview
 bash install_standalone_docker.sh
 ```
 
@@ -37,7 +47,7 @@ bash install_standalone_docker.sh
    ```
    CONTAINER_ID=`docker ps -aqf "name=fate_python"`
    docker exec -t -i ${CONTAINER_ID} bash
-   bash ./federatedml/test/run_test.sh
+   bash ./python/federatedml/test/run_test.sh
    ```
 
    If success,  the screen shows like blow:
@@ -82,15 +92,15 @@ Http://hostip:8080.
 2. Download the compressed package of stand-alone version and decompress it.
 
    ```
-   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/standalone-fate-master-1.4.5.tar.gz
-   tar -xzvf  standalone-fate-master-1.4.5.tar.gz
+   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/standalone-fate-master-1.5.0_preview.tar.gz
+   tar -xzvf  standalone-fate-master-1.5.0_preview.tar.gz
    ```
 
 3. Enter FATE directory and execute the init.sh.
 
    ```
-   cd standalone-fate-master-1.4.5
-   source init.sh init
+   cd standalone-fate-master-1.5.0_preview
+   sh init.sh init
    ```
 
 4. Test
@@ -98,8 +108,9 @@ Http://hostip:8080.
    - Unit Test
 
    ```
-   cd standalone-fate-master-1.4.5
-   bash ./federatedml/test/run_test.sh
+   cd standalone-fate-master-1.5.0_preview
+   source bin/init_env.sh
+   bash ./python/federatedml/test/run_test.sh
    ```
 
    If success,  the screen shows like blow:
@@ -111,7 +122,8 @@ Http://hostip:8080.
    - Toy_example Test
 
    ```
-   cd standalone-fate-master-1.4.5
+   cd standalone-fate-master-1.5.0_preview
+   source bin/init_env.sh
    python ./examples/toy_example/run_toy_example.py 10000 10000 0
    ```
 
