@@ -64,7 +64,7 @@ All the unittests shall pass if FATE is installed properly.
 
 ### Quick Start
 
-We have provided a python script for quick starting modeling task. This scrip is located at ["examples"](./examples/dsl/v2)
+We have provided a python script for quick starting modeling task. Please refer ["here"](./examples/pipeline/README.rst)
 
 ###  Obtain Model and Check Out Results
 We provided functions such as tracking component output models or logs etc. through a tool called fate-flow. The deployment and usage of fate-flow can be found [here](./fate_flow/README.rst)

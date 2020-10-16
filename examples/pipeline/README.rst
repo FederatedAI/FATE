@@ -11,8 +11,10 @@ Please refer to the document linked above for details on FATE-Pipeline and FATE-
 DSL version of provided Pipeline examples can be found `here <../dsl/v2>`_.
 
 
-Quick start
+Quick Start
 -----------
+
+Here is a general guide to quick start a FATE job.
 
 1. (optional) create virtual env
 
