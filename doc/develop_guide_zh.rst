@@ -157,7 +157,7 @@ b. 设置 conf.json 的字段规范。
 仅在此模块被联邦时（即不同参与方之间存在信息交互）才需要执行此步骤。
 
 .. Note::
-   应将其放在 `transfer_class <../python/federatedml/transfer_variables/transfer_class>`_ 文件夹中。
+   应将其放在 `transfer_class <../python/federatedml/transfer_variable/transfer_class>`_ 文件夹中。
 
 在该定义文件中，您需要创建需要的 transfer_variable 类，并继承BaseTransferVariables类，然后定义相应的变量，并为其赋予需要的传输权限。以 “HeteroBoostingTransferVariable”为例，可以参考一下代码：
 
@@ -182,7 +182,7 @@ b. 设置 conf.json 的字段规范。
 :dst: 应为 "guest"，"host"，"arbiter" 的某些组合列表，用于定义将交互信息发送到何处。
 
 
-在 python 文件编写完成后，运行以下程序，可在`auth_conf <../python/federatedml/transfer_variables/auth_conf>`_ 中生成对应的json配置文件。该配置文件将被fate_flow识别并用于后续权限判断。
+在 python 文件编写完成后，运行以下程序，可在 `auth_conf <../python/federatedml/transfer_variable/auth_conf>`_ 中生成对应的json配置文件。该配置文件将被fate_flow识别并用于后续权限判断。
 
 .. code-block:: bash
 

@@ -35,7 +35,7 @@ b. __init__ of your parameter class should specify all parameters that the modul
 
 c. Override the check interface of BaseParam, without which will cause not implemented error. Check method is use to validate the parameter variables.
 
-Take hetero lr's parameter object as example, the python file is `python/federatedml/param/logistic_regression_param.py <../python/federatedml/param/logistic_regression_param.py>`
+Take hetero lr's parameter object as example, the python file is `python/federatedml/param/logistic_regression_param.py <../python/federatedml/param/logistic_regression_param.py>`_
 
 firstly, it inherits BaseParam:
 
@@ -123,7 +123,7 @@ b. Field Specification of setting conf json.
       What's more, if this module does not need federation, which means all parties start a same program file, "guest|host|arbiter" is another way to define the role keys.
         
 
-Take hetero-lr to explain too, users can find it in `python/federatedml/conf/setting_conf/HeteroLR.json <../python/federatedml/conf/setting_conf/HeteroLR.json>`
+Take hetero-lr as an example, users can find it in `python/federatedml/conf/setting_conf/HeteroLR.json <../python/federatedml/conf/setting_conf/HeteroLR.json>`_
 
 .. code-block:: json
     
@@ -157,7 +157,7 @@ This step is needed only when this module is federated, which means there exists
 
 .. Note:: 
    
-   this json file should be put under the folder `transfer_class <../python/federatedml/transfer_variables/transfer_class>`_
+   this json file should be put under the folder `transfer_class <../python/federatedml/transfer_variable/transfer_class>`_
 
 In this python file, you would need to create a "transfer_variable" class and inherit the BaseTransferVariables class. Then, define each transfer variable as its attributes. Here is an example to make it more understandable:
 
@@ -179,7 +179,7 @@ In this python file, you would need to create a "transfer_variable" class and in
 :src: list, should be some combinations of "guest", "host", "arbiter", it stands for where interactive information is sending from.
 :dst: list, should be some combinations of "guest", "host", "arbiter", defines where the interactive information is sending to.
 
-After setting that, the following command would help you create corresponding json setting file in `auth_conf <../python/federatedml/transfer_variables/auth_conf>`_  folder where fate_flow can refer to.
+After setting that, the following command would help you create corresponding json setting file in `auth_conf <../python/federatedml/transfer_variable/auth_conf>`_  folder where fate_flow can refer to.
 
 .. code-block:: bash
 
