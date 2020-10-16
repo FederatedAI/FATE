@@ -1,6 +1,10 @@
 FATE-Flow Client Command Line Interface v2 Guide
 ================================================
 
+[`中文`_]
+
+.. _中文: README_zh.rst
+
 Usage
 -----
 
@@ -9,11 +13,11 @@ sure that you have activated the virtual environment of FATE. For more
 details about how to activate virtual environment, please read the
 documentation of deployment.
 
-In this version of client CLI, commands are seperated into serveral
+In this version of client CLI, commands are separated into several
 classes, including *job*, *data*, *model*, *component* and etc. And all
 of these classes have a common parent (CLI entry) named *'flow'*, which
 means you can type *'flow'* in your terminal window to find out all of
-these classes and also their subcommands.
+these classes and also their sub-commands.
 
 .. code:: bash
 
