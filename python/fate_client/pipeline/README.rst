@@ -161,7 +161,7 @@ To include a component in a pipeline, use ``add_component``. To add the
 
 
 Build Fate NN Model In Keras Style
-``````````````````````````````````
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 In pipeline, you can build NN structures in a keras style. Take Homo-NN as an example:
 
 Firstly, import keras and define your nn structures:
@@ -174,6 +174,7 @@ Firstly, import keras and define your nn structures:
     layer_1 = Dense(units=1, activation="sigmoid")
 
 Then, add nn layers into Homo-NN model like using Sequential class in keras:
+
 .. code:: python
     from pipeline.component.homo_nn import HomoNN
     # set parameter
