@@ -255,8 +255,8 @@ Swap:        131071           0      131071
 
 ```
 cd /data/projects/
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate-cluster-install-1.4.2-release-c7-u18.tar.gz
-tar xzf fate-cluster-install-1.4.2-release-c7-u18.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate-cluster-install-1.4.5-release-c7-u18.tar.gz
+tar xzf fate-cluster-install-1.4.5-release-c7-u18.tar.gz
 ```
 
 ## 5.2 部署前检查
@@ -292,7 +292,7 @@ vi fate-cluster-install/allInone/conf/setup.conf
 | 配置项           | 配置项值                                      | 说明                                                         |
 | ---------------- | --------------------------------------------- | ------------------------------------------------------------ |
 | roles            | 默认："host" "guest"                          | 部署的角色，有HOST端、GUEST端                                |
-| version          | 默认：1.4.2                                   | Fate 版本号                                                  |
+| version          | 默认：1.4.5                                   | Fate 版本号                                                  |
 | pbase            | 默认： /data/projects                         | 项目根目录                                                   |
 | lbase            | 默认：/data/logs                              | 保持默认不要修改                                             |
 | ssh_user         | 默认：app                                     | ssh连接目标机器的用户，也是部署后文件的属主                  |
@@ -321,7 +321,7 @@ vi fate-cluster-install/allInone/conf/setup.conf
 #to install role
 roles=( "host" "guest" )
 
-version="1.4.2"
+version="1.4.5"
 #project base
 pbase="/data/projects"
 
@@ -377,7 +377,7 @@ basemodules=( "base" "java" "python" "eggroll" "fate" )
 #to install role
 roles=( "host" )
 
-version="1.4.2"
+version="1.4.5"
 #project base
 pbase="/data/projects"
 
@@ -439,7 +439,7 @@ nohup sh ./deploy.sh > logs/boot.log 2>&1 &
 部署日志输出在fate-cluster-install/allInone/logs目录下,实时查看是否有报错：
 
 ```
-tail -f ./logs/boot.log （部署结束，查看一下即可）
+tail -f ./logs/deploy.log （部署结束，查看一下即可）
 tail -f ./logs/deploy-guest.log （实时打印GUEST端的部署情况）
 tail -f ./logs/deploy-mysql-guest.log  （实时打印GUEST端mysql的部署情况）
 tail -f ./logs/deploy-host.log    （实时打印HOST端的部署情况）

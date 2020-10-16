@@ -12,7 +12,7 @@ FederatedML includes implementation of many common machine learning algorithms o
 
 3. Federated Machine Learning Algorithms: LR, GBDT, DNN, TransferLearning, which support Heterogeneous and Homogeneous styles.
 
-4. Model Evaluation: Binary | Multiclass | Regression Evaluation, Local vs Federated Comparison.
+4. Model Evaluation: Binary | Multiclass | Regression | Clustering Evaluation, Local vs Federated Comparison.
 
 5. Secure Protocol: Provides multiple security protocols for secure multi-party computing and interaction between participants.
 
@@ -71,7 +71,7 @@ Algorithm List
 
    * - `Feature Scale`_
      - FeatureScale
-     - Module for feature scaling and standardization.
+     - module for feature scaling and standardization.
      - Table，values are instances.
      - Transformed Table.
      - Transform factors like min/max, mean/std.
@@ -111,7 +111,7 @@ Algorithm List
 
    * - `Hetero-LR`_
      - HeteroLR
-     - Build hetero logistic regression module through multiple parties.
+     - Build hetero logistic regression model through multiple parties.
      - Table, values are instances
      - Table, values are instances.
      -
@@ -127,7 +127,7 @@ Algorithm List
 
    * - `Hetero-LinR`_
      - HeteroLinR
-     - Build hetero linear regression module through multiple parties.
+     - Build hetero linear regression model through multiple parties.
      - Table, values are instances.
      - Table, values are instances.
      -
@@ -135,7 +135,7 @@ Algorithm List
 
    * - `Hetero-Poisson`_
      - HeteroPoisson
-     - Build hetero poisson regression module through multiple parties.
+     - Build hetero poisson regression model through multiple parties.
      - Table, values are instances.
      - Table, values are instances.
      -
@@ -143,7 +143,7 @@ Algorithm List
 
    * - `Homo-LR`_
      - HomoLR
-     - Build homo logistic regression module through multiple parties.
+     - Build homo logistic regression model through multiple parties.
      - Table, values are instances.
      - Table, values are instances.
      -
@@ -151,7 +151,7 @@ Algorithm List
 
    * - `Homo-NN`_
      - HomoNN
-     - Build homo neural network module through multiple parties.
+     - Build homo neural network model through multiple parties.
      - Table, values are instances.
      - Table, values are instances.
      -
@@ -159,11 +159,19 @@ Algorithm List
 
    * - `Hetero Secure Boosting`_
      - HeteroSecureBoost
-     - Build hetero secure boosting module through multiple parties
+     - Build hetero secure boosting model through multiple parties
      - Table, values are instances.
      - Table, values are instances.
      -
      - SecureBoost Model, consists of model-meta and model-param.
+
+   * - `Hetero Fast Secure Boosting`_
+     - HeteroFastSecureBoost
+     - Build hetero secure boosting model through multiple parties in layered/mix manners.
+     - Table, values are instances.
+     - Table, values are instances.
+     -
+     - FastSecureBoost Model, consists of model-meta and model-param.
 
    * - `Evaluation`_
      - Evaluation
@@ -183,7 +191,7 @@ Algorithm List
 
    * - `Hetero-NN`_
      - HeteroNN
-     - Build hetero neural network module.
+     - Build hetero neural network model.
      - Table, values are instances.
      - Table, values are instances.
      -
@@ -191,7 +199,7 @@ Algorithm List
 
    * - `Homo Secure Boosting`_
      - HomoSecureBoost
-     - Build homo secure boosting module through multiple parties
+     - Build homo secure boosting model through multiple parties
      - Table, values are instances.
      - Table, values are instances.
      -
@@ -199,7 +207,7 @@ Algorithm List
 
    * - `Homo OneHot Encoder`_
      - HomoOneHotEncoder
-     - Build homo onehot encoder module through multiple parties.
+     - Build homo onehot encoder model through multiple parties.
      - Table, values are instances.
      - Transformed Table with new header.
      -
@@ -229,13 +237,29 @@ Algorithm List
      -
      -
 
+   * - `Hetero Federated Transfer Learning`_
+     - Hetero FTL
+     - Build Hetero FTL Model Between 2 party
+     - Table, values are instance
+     -
+     -
+     - Hetero FTL Model
+
    * - `Hetero KMeans`_
      - Hetero KMeans
-     - Build Hetero KMeans module through multiple parties
+     - Build Hetero KMeans model through multiple parties
      - Table, values are instance
      - Table, values are instance; Arbier outputs 2 Tables
      -
      - Hetero KMeans Model
+
+   * - `PSI`_
+     - PSI module
+     - Compute PSI value of features between two table
+     - Table, values are instance
+     -
+     -
+     - PSI Results
 
    * - `Data Statistics`_
      - Data Statistics
@@ -259,18 +283,20 @@ Algorithm List
 .. _Hetero-Poisson: linear_model/poisson_regression/README.rst
 .. _Homo-LR: linear_model/logistic_regression/README.rst
 .. _Homo-NN: nn/homo_nn/README.rst
-.. _Hetero Secure Boosting: tree/README.rst
+.. _Hetero Secure Boosting: ensemble/README.rst
 .. _Evaluation: evaluation/README.rst
 .. _Hetero Pearson: statistic/correlation/README.rst
 .. _Hetero-NN: nn/hetero_nn/README.rst
-.. _Homo Secure Boosting: tree/README.rst
+.. _Homo Secure Boosting: ensemble/README.rst
 .. _Data Split: model_selection/data_split/README.rst
 .. _Homo OneHot Encoder: feature/README.rst
 .. _Column Expand: feature/README.rst
 .. _Secure Information Retrieval: secure_information_retrieval
 .. _Hetero KMeans: unsupervised_learning/kmeans/README.rst
 .. _Data Statistics: statistic/README.rst
-
+.. _PSI: statistic/psi/README.rst
+.. _Hetero Federated Transfer Learning: transfer_learning/hetero_ftl/README.rst
+.. _Hetero Fast Secure Boosting: ensemble/README.rst
 
 Secure Protocol
 ---------------

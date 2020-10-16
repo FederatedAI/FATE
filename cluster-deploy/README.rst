@@ -239,10 +239,10 @@ external network environment):
 
     mkdir -p /data/projects/install
     cd /data/projects/install
-    wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/python-env-1.4.2-release.tar.gz
+    wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/python-env-1.4.5-release.tar.gz
     wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/jdk-8u192-linux-x64.tar.gz
-    wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/mysql-1.4.2-release.tar.gz
-    wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_1.4.2-release.tar.gz
+    wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/mysql-1.4.5-release.tar.gz
+    wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_1.4.5-release.tar.gz
 
     #Send to 192.168.0.2和192.168.0.3
     scp *.tar.gz app@192.168.0.2:/data/projects/install
@@ -400,7 +400,7 @@ external network environment):
     tar xvf pip-packages-fate-*.tar.gz
     source /data/projects/fate/common/python/venv/bin/activate
     pip install setuptools-42.0.2-py2.py3-none-any.whl
-    pip install -r pip-packages-fate-1.4.2/requirements.txt -f ./pip-packages-fate-1.4.2 --no-index
+    pip install -r pip-packages-fate-1.4.5/requirements.txt -f ./pip-packages-fate-1.4.5 --no-index
     pip list | wc -l
     #The result should be 161
 

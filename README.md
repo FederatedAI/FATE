@@ -1,5 +1,5 @@
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) [![CodeStyle](https://img.shields.io/badge/Check%20Style-Google-brightgreen)](https://checkstyle.sourceforge.io/google_style.html) [![Style](https://img.shields.io/badge/Check%20Style-Black-black)](https://checkstyle.sourceforge.io/google_style.html) [![Build Status](https://travis-ci.org/FederatedAI/FATE.svg?branch=develop-1.4)](https://travis-ci.org/FederatedAI/FATE)
-[![codecov](https://codecov.io/gh/FederatedAI/FATE/branch/develop-1.4/graph/badge.svg)](https://codecov.io/gh/FederatedAI/FATE)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) [![CodeStyle](https://img.shields.io/badge/Check%20Style-Google-brightgreen)](https://checkstyle.sourceforge.io/google_style.html) [![Style](https://img.shields.io/badge/Check%20Style-Black-black)](https://checkstyle.sourceforge.io/google_style.html) [![Build Status](https://travis-ci.org/FederatedAI/FATE.svg?branch=develop-1.5-preview)](https://travis-ci.org/FederatedAI/FATE)
+[![codecov](https://codecov.io/gh/FederatedAI/FATE/branch/develop-1.5-preview/graph/badge.svg)](https://codecov.io/gh/FederatedAI/FATE)
 [![Documentation Status](https://readthedocs.org/projects/fate/badge/?version=latest)](https://fate.readthedocs.io/en/latest/?badge=latest)
 
 <div align="center">
@@ -64,7 +64,7 @@ All the unittests shall pass if FATE is installed properly.
 
 ### Quick Start
 
-We have provided a tutorial for quick starting modeling task. This tutorial is located at [python/fate_client/pipeline](./python/fate_client/pipeline)
+We have provided a tutorial for quick starting modeling task. Please refer ["here"](./examples/pipeline/README.rst)
 
 ###  Obtain Model and Check Out Results
 We provided functions such as tracking component output models or logs etc. through a tool called fate-flow. The deployment and usage of fate-flow can be found [here](./python/fate_flow/README.rst)
