@@ -1,0 +1,8 @@
+describe: This is the model definition meta
+component_define:
+  pipeline:
+    module_name: Pipeline
+model_proto:
+  pipeline:
+    pipeline:
+      Pipeline: Pipeline

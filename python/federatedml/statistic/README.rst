@@ -42,7 +42,7 @@ to the other. This is illustrated in figure 1:
 
    Figure 1 (RSA Intersection between party A and party B)
 
-In :ref:`figure 1` ,Party A has user id u1,u2,u3,u4, while Party B has u1,u2,u3,u5. After Intersection,
+In `figure 1` ,Party A has user id u1,u2,u3,u4, while Party B has u1,u2,u3,u5. After Intersection,
 party A and party B know their same user ids, which are u1,u2,u3, but party A know nothing about
 other user ids of party B, like u5, and party B know nothing about party A except u1,u2,u3 as well.
 While party A and party B transmit their processed id information to the other party, like :math:`Y-A` and :math:`Z-B`,
@@ -69,7 +69,7 @@ Both rsa and raw intersection support multi-host. It means a guest can do inters
 
    Figure 2 (multi-hosts Intersection)
 
-See in :ref:`figure 2`, this is a introduction to a guest intersect with two hosts, and it is the same as more than two hosts. Firstly, guest will intersect with each host and get overlapping IDs respectively. Secondly, guest will find common IDs from all intersection results. Finally,
+See in `figure 2`, this is a introduction to a guest intersect with two hosts, and it is the same as more than two hosts. Firstly, guest will intersect with each host and get overlapping IDs respectively. Secondly, guest will find common IDs from all intersection results. Finally,
 guest will send common IDs to every host if necessary.
 
 Repeated ID intersection

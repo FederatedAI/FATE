@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package com.webank.ai.fate.core.mlmodel.buffer;
+option java_outer_classname = "BoostTreeModelParamProto";
+
+message NodeParam {
+    int32 id = 1;
+    string sitename = 2;
+    int32 fid = 3;
+    double bid = 4;
+    double weight = 5;
+    bool is_leaf = 6;
+    int32 left_nodeid = 7;
+    int32 right_nodeid = 8;
+	int32 missing_dir = 9;
+}
+
+message DecisionTreeModelParam {
+    repeated NodeParam tree_ = 1;
+    map<int32, double> split_maskdict = 2;
+    map<int32, int32> missing_dir_maskdict = 3;
+}
+
+message FeatureImportanceInfo {
+	string sitename = 1;
+	int32 fid = 2;
+	double importance = 3;
+}
+
+message BoostingTreeModelParam {
+	int32 tree_num = 1;
+    repeated DecisionTreeModelParam trees_ = 2;
+    repeated double init_score = 3;
+    repeated double losses = 4;
+    int32 tree_dim = 5;
+    int32 num_classes = 6;
+    repeated string classes_ = 7;
+	repeated FeatureImportanceInfo feature_importances = 8;
+	map<int32, string> feature_name_fid_mapping = 9;
+    int32 best_iteration = 10;
+}
+

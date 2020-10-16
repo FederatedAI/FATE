@@ -1,0 +1,14 @@
+describe: This is the model definition meta
+component_define:
+  hetero_lr_0:
+    module_name: HeteroLR
+  pipeline:
+    module_name: Pipeline
+model_proto:
+  hetero_lr_0:
+    hetero_lr_model:
+      HeteroLogisticRegressionMeta: LRModelMeta
+      HeteroLogisticRegressionParam: LRModelParam
+  pipeline:
+    pipeline:
+      Pipeline: Pipeline

@@ -1,0 +1,51 @@
+/*
+ * Copyright 2019 The FATE Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+syntax = "proto3";
+
+package com.webank.ai.fate.core.mlmodel.buffer;
+option java_outer_classname = "FeatureSelectionParamProto";
+
+
+message FeatureValue {
+    map<string, double> feature_values = 1;
+}
+
+message LeftCols {
+    repeated string original_cols = 1;
+    map<string, bool> left_cols = 2;
+}
+
+message FeatureSelectionFilterParam{
+    map<string, double> feature_values = 1;
+    repeated FeatureValue host_feature_values = 2;
+    LeftCols left_cols = 3;
+    repeated LeftCols host_left_cols = 4;
+    string filter_name = 5;
+}
+
+message FeatureSelectionParam{
+    repeated FeatureSelectionFilterParam results = 1;
+    LeftCols final_left_cols = 2;
+    repeated string col_names = 3;
+    repeated HostColNames host_col_names = 4;
+    repeated string header = 5;
+}
+
+message HostColNames{
+    repeated string col_names = 1;
+    string party_id = 2;
+}

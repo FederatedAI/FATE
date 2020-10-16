@@ -1,0 +1,39 @@
+/*
+ * Copyright 2019 The FATE Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+syntax = "proto3";
+
+package com.webank.ai.fate.core.mlmodel.buffer;
+option java_outer_classname = "FeatureBinningMetaProto";
+
+
+message TransformMeta {
+    repeated int64 transform_cols = 1;
+    string transform_type = 2;
+}
+
+message FeatureBinningMeta {
+    bool need_run = 1;
+    string method = 10;
+    int64 compress_thres = 2;
+    int64 head_size = 3;
+    double error = 4;
+    int64 bin_num = 5;
+    repeated string cols = 6;
+    double adjustment_factor = 7;
+    bool local_only = 8;
+    TransformMeta transform_param = 9;
+}

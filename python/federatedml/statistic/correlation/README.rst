@@ -49,4 +49,4 @@ How to Use
     	if both params are provided, the union of columns indicated are used for calculation.  
 
 :examples:
-    There is an example :download:`[conf] <../../../../examples/dsl/v2/hetero_pearson/test_conf.json>` and :download:`[dsl] <../../../../examples/dsl/v2/hetero_pearson/test_conf.json>`
+    There is an example `[conf] <../../../../examples/dsl/v2/hetero_pearson/test_conf.json>` and `[dsl] <../../../../examples/dsl/v2/hetero_pearson/test_conf.json>`

@@ -1,4 +1,4 @@
-work_mode: 1
+work_mode: 0
 use_registry: false
 fateflow:
   host: 0.0.0.0

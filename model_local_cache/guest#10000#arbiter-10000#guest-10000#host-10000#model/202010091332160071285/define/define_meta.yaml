@@ -1,0 +1,26 @@
+describe: This is the model definition meta
+component_define:
+  dataio_0:
+    module_name: DataIO
+  dataio_1:
+    module_name: DataIO
+  hetero_lr_0:
+    module_name: HeteroLR
+  pipeline:
+    module_name: Pipeline
+model_proto:
+  dataio_0:
+    dataio:
+      DataIOMeta: DataIOMeta
+      DataIOParam: DataIOParam
+  dataio_1:
+    dataio:
+      DataIOMeta: DataIOMeta
+      DataIOParam: DataIOParam
+  hetero_lr_0:
+    hetero_lr_model:
+      HeteroLogisticRegressionMeta: LRModelMeta
+      HeteroLogisticRegressionParam: LRModelParam
+  pipeline:
+    pipeline:
+      Pipeline: Pipeline
