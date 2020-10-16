@@ -271,7 +271,7 @@ fate_flow_client 模块的运行规则是：
 第五步：开发Pipeline组件
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-若希望后续用户可以通过python脚本形式启动建模任务，需要在 `python/fate_client/pipeline/component <../python/fate_client/pipeline/component>`_ 中添加自己的组件。详情请参考Pipeline的 `README文件 <../python/fate_client/pipeline/README.rst`_
+若希望后续用户可以通过python脚本形式启动建模任务，需要在 `python/fate_client/pipeline/component <../python/fate_client/pipeline/component>`_ 中添加自己的组件。详情请参考Pipeline的 `README文件 <../python/fate_client/pipeline/README.rst>`_
 
 
 开始建模任务
