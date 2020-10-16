@@ -19,7 +19,7 @@ In addition, note that loss history is not available for Guest when running homo
 
 Currently local baseline does not support predict task from history job.
 
-For examples of using Local Baseline module, please refer `here <../../../../examples/dsl/v2/local_baseline>`__.
+For examples of using Local Baseline module, please refer `here <../../../../examples/dsl/v2/local_baseline>`_ .
 
 Param
 ------
