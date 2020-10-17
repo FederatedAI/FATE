@@ -10,6 +10,7 @@ class HomoSecureBoostingTreeArbiter(HomoBoostingArbiter):
 
     def __init__(self):
         super(HomoSecureBoostingTreeArbiter, self).__init__()
+        self.model_name = 'HomoSecureBoost'
         self.tree_param = None  # decision tree param
         self.use_missing = False
         self.zero_as_missing = False
@@ -48,7 +49,6 @@ class HomoSecureBoostingTreeArbiter(HomoBoostingArbiter):
         valid_feature = self.sample_valid_features()
         self.send_valid_features(valid_feature, epoch_idx, booster_dim)
         flow_id = self.generate_flowid(epoch_idx, booster_dim)
-        LOGGER.debug('flow id is {}'.format(flow_id))
         new_tree = HomoDecisionTreeArbiter(self.tree_param, valid_feature=valid_feature, epoch_idx=epoch_idx,
                                            flow_id=flow_id, tree_idx=booster_dim)
         new_tree.fit()
@@ -57,7 +57,7 @@ class HomoSecureBoostingTreeArbiter(HomoBoostingArbiter):
 
     def generate_summary(self) -> dict:
 
-        summary = {'loss_history':self.history_loss}
+        summary = {'loss_history': self.history_loss}
         return summary
 
     # homo tree arbiter doesnt save model

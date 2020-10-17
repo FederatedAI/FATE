@@ -84,15 +84,20 @@ Features
 
 1. unique_value: filter the columns if all values in this feature is the same
 
-2. iv_value_thres: Use information value to filter columns. Filter those columns whose iv is smaller than threshold.
+2. iv_filter: Use iv as criterion to selection features. Support three mode: threshold value, top-k and top-percentile.
+    * threshold value: Filter those columns whose iv is smaller than threshold. You can also set different threshold for each party.
+    * top-k: Sort features from larger iv to smaller and take top k features in the sorted result.
+    * top-percentile. Sort features from larger to smaller and take top percentile.
 
-3. iv_percentile: Use information value to filter columns. A float ratio threshold need to be provided. Pick floor(ratio * feature_num) features with higher iv. If multiple features around the threshold are same, all those columns will be keep.
+3. statistic_filter: Use statistic values calculate from DataStatistic component. Support coefficient of variance, missing value, percentile value etc. You can pick the columns with higher statistic values or smaller values as you need.
 
-4. coefficient_of_variation_value_thres: Use coefficient of variation to judge whether to filter or not.
+4. psi_filter: Take PSI component as input isometric model. Then, use its psi value as criterion of selection.
 
-5. outlier_cols: Filter columns whose percentile value is larger than the given threshold.
+5. hetero_sbt_filter/homo_sbt_filter/hetero_fast_sbt_filter: Take secureboost component as input isometric model. And use feature importance as criterion of selection.
 
 6. manually: Indicate features that need to be filtered.
+
+7. percentage_value: Filter the columns that have a value that exceeds a certain percentage.
 
 Besides, we support multi-host federated feature selection for iv filters. Hosts encode feature names and send the feature ids that are involved in feature selection. Guest use iv filters' logic to judge whether a feature is left or not. Then guest sends result back to hosts. Hosts decode feature ids back to feature names and obtain selection results.
 
@@ -109,11 +114,12 @@ Federated Sampling
 ==================
 
 From Fate v0.2 supports sample method.
-Sample module supports two sample modes: Random sample mode and StratifiedSampler sample mode.
+Sample module supports two sample modes: random sample mode and stratified sample mode.
 
 - In random mode, "downsample" and "upsample" methods are provided. Users can set the sample parameter "fractions", which is the sample ratio within data.
 
-- In stratified mode, "downsample" and "upsample" methods are also provided. Users can set the sample parameter "fractions" too, but it should be a list of tuples in the form (label_i, ratio). Tuples in the list each specify the sample ratio of corresponding label. e.g.
+- In stratified mode, "downsample" and "upsample" methods are also provided. Users can set the sample parameter "fractions" too, but it should be a list of tuples in the form (label_i, ratio).
+Tuples in the list each specify the sample ratio of corresponding label. e.g.
 
    ::
 
@@ -128,7 +134,7 @@ Param
 
 Feature Scale
 =============
-Feature scale is a process that scales each feature along column. The feature scale module now supports min-max scale and standard scale.
+Feature scale is a process that scales each feature along column. Feature Scale module supports min-max scale and standard scale.
 
 1. min-max scale: this estimator scales and translates each feature individually such that it is in the given range on the training set, e.g. between min and max value of each feature.
 
@@ -154,7 +160,7 @@ Param
 
 Homo OneHot Encoder
 ==============
-OneHot encoding is a process by which category variables are converted to binary values. The detailed info could be found in `[OneHot wiki] <https://en.wikipedia.org/wiki/One-hot>`_
+OneHot Encoding is a process by which category variables are converted to binary values. The detailed info could be found in `[OneHot wiki] <https://en.wikipedia.org/wiki/One-hot>`_
 
 Param
 ------

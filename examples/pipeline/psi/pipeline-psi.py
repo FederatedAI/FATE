@@ -29,45 +29,47 @@ from pipeline.utils.tools import load_job_config
 def main(config="../../config.yaml", namespace=""):
     # obtain config
     if isinstance(config, str):
-    parties = config.parties
-    guest = parties.guest[0]
-    host = parties.host[0]
-    backend = config.backend
-    work_mode = config.work_mode
 
-    guest_train_data = {"name": "breast_homo_guest", "namespace": f"experiment{namespace}"}
-    host_train_data = {"name": "breast_homo_host", "namespace": f"experiment{namespace}"}
+        config = load_job_config(config)
+        parties = config.parties
+        guest = parties.guest[0]
+        host = parties.host[0]
+        backend = config.backend
+        work_mode = config.work_mode
 
-    pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=host)
+        guest_train_data = {"name": "expect", "namespace": f"experiment{namespace}"}
+        host_train_data = {"name": "actual", "namespace": f"experiment{namespace}"}
 
-    reader_0 = Reader(name="reader_0")
-    reader_0.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_train_data)
-    reader_0.get_party_instance(role='host', party_id=host).algorithm_param(table=host_train_data)
+        pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=host)
 
-    reader_1 = Reader(name="reader_1")
-    reader_1.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_train_data)
-    reader_1.get_party_instance(role='host', party_id=host).algorithm_param(table=host_train_data)
+        reader_0 = Reader(name="reader_0")
+        reader_0.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_train_data)
+        reader_0.get_party_instance(role='host', party_id=host).algorithm_param(table=host_train_data)
 
-    dataio_0 = DataIO(name="dataio_0")
-    dataio_1 = DataIO(name="dataio_1")
+        reader_1 = Reader(name="reader_1")
+        reader_1.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_train_data)
+        reader_1.get_party_instance(role='host', party_id=host).algorithm_param(table=host_train_data)
 
-    dataio_0.get_party_instance(role='guest', party_id=guest).algorithm_param(with_label=False, output_format="dense")
-    dataio_1.get_party_instance(role='guest', party_id=guest).algorithm_param(with_label=False, output_format="dense")
+        dataio_0 = DataIO(name="dataio_0")
+        dataio_1 = DataIO(name="dataio_1")
 
-    dataio_0.get_party_instance(role='host', party_id=host).algorithm_param(with_label=False, output_format="dense")
-    dataio_1.get_party_instance(role='host', party_id=host).algorithm_param(with_label=False, output_format="dense")
+        dataio_0.get_party_instance(role='guest', party_id=guest).algorithm_param(with_label=False, output_format="dense")
+        dataio_1.get_party_instance(role='guest', party_id=guest).algorithm_param(with_label=False, output_format="dense")
 
-    psi_0 = PSI(name='psi_0', max_bin_num=20)
+        dataio_0.get_party_instance(role='host', party_id=host).algorithm_param(with_label=False, output_format="dense")
+        dataio_1.get_party_instance(role='host', party_id=host).algorithm_param(with_label=False, output_format="dense")
 
-    pipeline.add_component(reader_0)
-    pipeline.add_component(reader_1)
-    pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
-    pipeline.add_component(dataio_1, data=Data(data=reader_1.output.data), model=Model(dataio_0.output.model))
-    pipeline.add_component(psi_0, data=Data(train_data=dataio_0.output.data, validate_data=dataio_1.output.data))
+        psi_0 = PSI(name='psi_0', max_bin_num=20)
 
-    pipeline.compile()
+        pipeline.add_component(reader_0)
+        pipeline.add_component(reader_1)
+        pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
+        pipeline.add_component(dataio_1, data=Data(data=reader_1.output.data), model=Model(dataio_0.output.model))
+        pipeline.add_component(psi_0, data=Data(train_data=dataio_0.output.data, validate_data=dataio_1.output.data))
 
-    pipeline.fit(backend=backend, work_mode=work_mode)
+        pipeline.compile()
+
+        pipeline.fit(backend=backend, work_mode=work_mode)
 
 
 if __name__ == "__main__":

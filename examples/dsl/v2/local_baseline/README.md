@@ -10,7 +10,7 @@ This section introduces the dsl and conf for different types of tasks.
 
     runtime_config : test_local_baseline_job_conf.json
     
-    data type: multi-label
+    data type: multi-class label
 
 2.  Homo Train Task:
 
@@ -22,6 +22,6 @@ This section introduces the dsl and conf for different types of tasks.
 
 Users can use following commands to run the task.
 
-    bash flow job submit -c ${runtime_config} -d ${dsl}
+    flow job submit -c ${runtime_config} -d ${dsl}
 
 After having finished a successful training task, you can use FATE Board to check model output and evaluation results. 

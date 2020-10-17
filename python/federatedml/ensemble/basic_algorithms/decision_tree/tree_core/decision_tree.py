@@ -181,6 +181,10 @@ class DecisionTree(BasicAlgorithms):
         pass
 
     @abc.abstractmethod
+    def update_instances_node_positions(self, *args):
+        pass
+
+    @abc.abstractmethod
     def assign_a_instance(self, *args):
         pass
 

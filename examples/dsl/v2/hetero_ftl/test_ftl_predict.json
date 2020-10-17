@@ -1,46 +1,113 @@
 {
     "initiator": {
         "role": "guest",
-        "party_id": 10000
-    },
-    "job_parameters": {
-        "work_mode": 0,
-        "job_type": "predict",
-        "model_id": "guest-10000#host-10000#model",
-        "model_version": "201912251046319952634"
+        "party_id": 9999
     },
     "role": {
-        "guest": [
-            10000
-        ],
         "host": [
             10000
+        ],
+        "guest": [
+            9999
         ]
     },
+    "job_parameters": {
+        "work_mode": 1,
+        "backend": 0,
+        "dsl_version": 2,
+        "job_type": "predict",
+        "model_id": "guest-9999#host-10000#model",
+        "model_version": "20201013120134140299386"
+    },
     "role_parameters": {
-        "guest": {
-            "args": {
-                "data": {
-                    "eval_data": [
-                        {
-                            "name": "nus_wide_guest_val",
-                            "namespace": "experiment"
-                        }
-                    ]
+        "host": {
+            "0": {
+                "reader_0": {
+                    "table": {
+                        "name": "nus_wide_host",
+                        "namespace": "experiment"
+                    }
+                },
+                "dataio_0": {
+                    "with_label": false
                 }
             }
         },
-        "host": {
-            "args": {
-                "data": {
-                    "eval_data": [
-                        {
-                            "name": "nus_wide_host_val",
-                            "namespace": "experiment"
-                        }
-                    ]
+        "guest": {
+            "0": {
+                "reader_0": {
+                    "table": {
+                        "name": "nus_wide_guest",
+                        "namespace": "experiment"
+                    }
+                },
+                "dataio_0": {
+                    "with_label": true,
+                    "output_format": "dense"
                 }
             }
+        }
+    },
+    "algorithm_parameters": {
+        "hetero_ftl_0": {
+            "epochs": 1,
+            "alpha": 1,
+            "batch_size": -1,
+            "mode": "plain",
+            "optimizer": {
+                "learning_rate": 0.01,
+                "decay": 0.0,
+                "beta_1": 0.9,
+                "beta_2": 0.999,
+                "epsilon": 1e-07,
+                "amsgrad": false,
+                "optimizer": "Adam"
+            },
+            "nn_define": {
+                "class_name": "Sequential",
+                "config": {
+                    "name": "sequential",
+                    "layers": [
+                        {
+                            "class_name": "Dense",
+                            "config": {
+                                "name": "dense",
+                                "trainable": true,
+                                "dtype": null,
+                                "units": 32,
+                                "activation": "sigmoid",
+                                "use_bias": true,
+                                "kernel_initializer": {
+                                    "class_name": "RandomNormal",
+                                    "config": {
+                                        "mean": 0.0,
+                                        "stddev": 1.0,
+                                        "seed": null,
+                                        "dtype": "float32"
+                                    }
+                                },
+                                "bias_initializer": {
+                                    "class_name": "Zeros",
+                                    "config": {
+                                        "dtype": "float32"
+                                    }
+                                },
+                                "kernel_regularizer": null,
+                                "bias_regularizer": null,
+                                "activity_regularizer": null,
+                                "kernel_constraint": null,
+                                "bias_constraint": null
+                            }
+                        }
+                    ]
+                },
+                "keras_version": "2.2.4-tf",
+                "backend": "tensorflow"
+            },
+            "config_type": "keras"
+        },
+        "evaluation_0": {
+            "eval_type": "binary"
         }
     }
 }

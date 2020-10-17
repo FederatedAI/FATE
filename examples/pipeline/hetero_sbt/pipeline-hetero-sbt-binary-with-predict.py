@@ -73,8 +73,8 @@ def main(config="../../config.yaml", namespace=""):
                                               num_trees=5,
                                               task_type="classification",
                                               objective_param={"objective": "cross_entropy"},
-                                              encrypt_param={"method": "paillier"},
-                                              tree_param={"max_depth": 5},
+                                              encrypt_param={"method": "iterativeAffine"},
+                                              tree_param={"max_depth": 3},
                                               validation_freqs=1)
 
     # evaluation component

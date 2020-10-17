@@ -75,10 +75,10 @@ def main(config="../../config.yaml", namespace=""):
                                                        task_type="regression",
                                                        objective_param={"objective": "lse"},
                                                        encrypt_param={"method": "iterativeAffine"},
-                                                       guest_depth=2,
-                                                       host_depth=3,
+                                                       guest_depth=1,
+                                                       host_depth=2,
                                                        tree_param={
-                                                           "max_depth": 5
+                                                           "max_depth": 3
                                                        },
                                                        validation_freqs=1,
                                                        work_mode='layered'

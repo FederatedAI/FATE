@@ -74,7 +74,7 @@ def main(config="../../config.yaml", namespace=""):
             "init_method": "zeros"
         },
         "encrypt_param": {
-            "method": "Paillier"
+            "method": None
         },
         "cv_param": {
             "n_splits": 4,
@@ -101,6 +101,27 @@ def main(config="../../config.yaml", namespace=""):
 
     # fit model
     pipeline.fit(backend=backend, work_mode=work_mode)
+
+    deploy_components = [dataio_0, scale_0, homo_lr_0]
+    pipeline.deploy_component(components=deploy_components)
+    #
+    predict_pipeline = PipeLine()
+    # # add data reader onto predict pipeline
+    predict_pipeline.add_component(reader_0)
+    # # add selected components from train pipeline onto predict pipeline
+    # # specify data source
+    predict_pipeline.add_component(pipeline,
+                                   data=Data(predict_input={pipeline.dataio_0.input.data: reader_0.output.data}))
+    predict_pipeline.compile()
+    predict_pipeline.predict(backend=0, work_mode=0)
+
+    dsl_json = predict_pipeline.get_predict_dsl()
+    conf_json = predict_pipeline.get_predict_conf()
+    # import json
+    json.dump(dsl_json, open('./homo-lr-normal-predict-dsl.json', 'w'), indent=4)
+    json.dump(conf_json, open('./homo-lr-normal-predict-conf.json', 'w'), indent=4)
+
+
     # query component summary
     print(json.dumps(pipeline.get_component("homo_lr_0").get_summary(), indent=4, ensure_ascii=False))
     print(json.dumps(pipeline.get_component("evaluation_0").get_summary(), indent=4, ensure_ascii=False))

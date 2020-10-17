@@ -1,0 +1,48 @@
+{
+    "components": {
+        "reader_1": {
+            "module": "Reader",
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
+        },
+        "dataio_0": {
+            "input": {
+                "data": {
+                    "data": [
+                        "reader_1.data"
+                    ]
+                },
+                "model": [
+                    "pipeline.dataio_0.model"
+                ]
+            },
+            "module": "DataIO",
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
+        },
+        "homo_secureboost_0": {
+            "input": {
+                "data": {
+                    "test_data": [
+                        "dataio_0.data"
+                    ]
+                },
+                "model": [
+                    "pipeline.homo_secureboost_0.model"
+                ]
+            },
+            "module": "HomoSecureboost",
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
+        }
+    }
+}

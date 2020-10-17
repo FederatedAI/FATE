@@ -60,10 +60,10 @@ def main(config="../../config.yaml", namespace=""):
     dataio_0, dataio_1 = DataIO(name="dataio_0"), DataIO(name="dataio_1")
 
     dataio_0.get_party_instance(role="guest", party_id=guest).algorithm_param(with_label=True, output_format="dense",
-                                                                              label_name="label", label_type="float")
+                                                                              label_name="label", label_type="int")
     dataio_0.get_party_instance(role="host", party_id=host).algorithm_param(with_label=False)
     dataio_1.get_party_instance(role="guest", party_id=guest).algorithm_param(with_label=True, output_format="dense",
-                                                                              label_name="label", label_type="float")
+                                                                              label_name="label", label_type="int")
     dataio_1.get_party_instance(role="host", party_id=host).algorithm_param(with_label=False)
 
     # data intersect component
@@ -75,7 +75,7 @@ def main(config="../../config.yaml", namespace=""):
                                               num_trees=5,
                                               task_type="classification",
                                               objective_param={"objective": "cross_entropy"},
-                                              encrypt_param={"method": "paillier"},
+                                              encrypt_param={"method": "iterativeAffine"},
                                               tree_param={"max_depth": 5},
                                               use_missing=True,  # use missing
                                               validation_freqs=1)

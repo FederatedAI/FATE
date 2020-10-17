@@ -13,9 +13,20 @@
 import os
 import sys
 
+if not os.path.exists("_build_temp"):
+    import shutil
+    import tempfile
+    from pathlib import Path
+
+    with tempfile.TemporaryDirectory() as d:
+        shutil.copytree("../..", Path(d).joinpath("_build_temp"))
+        shutil.copytree(Path(d).joinpath("_build_temp"), "_build_temp")
+
 from recommonmark.parser import CommonMarkParser
 
 sys.path.insert(0, os.path.abspath('_build_temp/python'))
+sys.path.insert(0, os.path.abspath('_build_temp/python/fate_client'))
+sys.path.insert(0, os.path.abspath('_build_temp/python/fate_test'))
 
 # -- Project information -----------------------------------------------------
 
@@ -33,7 +44,8 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.napoleon',
     'autodocsumm',
-    'recommonmark'
+    'recommonmark',
+    'sphinx_click.ext'
 ]
 
 autosummary_generate = True
@@ -79,14 +91,5 @@ def ultimateReplace(app, docname, source):
 
 
 def setup(app):
-    if not os.path.exists("_build_temp"):
-        import shutil
-        import tempfile
-        from pathlib import Path
-
-        with tempfile.TemporaryDirectory() as d:
-            shutil.copytree("../..", Path(d).joinpath("_build_temp"))
-            shutil.copytree(Path(d).joinpath("_build_temp"), "_build_temp")
-
     app.add_config_value('ultimate_replacements', {}, True)
     app.connect('source-read', ultimateReplace)

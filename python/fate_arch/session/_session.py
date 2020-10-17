@@ -235,14 +235,52 @@ class computing_session(object):
 
     @staticmethod
     def init(session_id, work_mode=0, backend=0):
-        Session.create(work_mode, backend).init_computing(session_id).as_default()
+        """
+        initialize a computing session
+
+        Parameters
+        ----------
+        session_id: str
+           session id
+        work_mode: int
+           work mode, 0 for standalone, 1 for cluster
+        backend: int
+           computing backend, 0 for eggroll, 1 for spark
+
+        Returns
+        -------
+        instance of concrete subclass of ``CSessionABC``
+           computing session
+        """
+        Session.create(work_mode=work_mode, backend=backend).init_computing(session_id).as_default()
 
     @staticmethod
     def parallelize(data: typing.Iterable, partition: int, include_key: bool, **kwargs) -> CTableABC:
-        return get_latest_opened().computing.parallelize(data, partition, include_key, **kwargs)
+        """
+        create table from iterable data
+
+        Parameters
+        ----------
+        data: Iterable
+           data to create table from
+        partition: int
+           number of partitions of created table
+        include_key: bool
+           ``True`` for create table directly from data, ``False`` for create table with generated keys start from 0
+
+        Returns
+        -------
+        instance of concrete subclass fo ``CTableABC``
+           a table create from data
+
+        """
+        return get_latest_opened().computing.parallelize(data, partition=partition, include_key=include_key, **kwargs)
 
     @staticmethod
     def stop():
+        """
+        stop session
+        """
         get_latest_opened().computing.stop()
 
 

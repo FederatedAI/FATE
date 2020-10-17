@@ -114,8 +114,16 @@ class Boosting(ModelBase, ABC):
         self.subsample_random_seed = boosting_param.subsample_random_seed
         self.binning_error = boosting_param.binning_error
 
+    """
+    Data Processing
+    """
+
     @staticmethod
     def data_format_transform(row):
+
+        """
+        transform data into sparse format
+        """
 
         if type(row.features).__name__ != consts.SPARSE_VECTOR:
             feature_shape = row.features.shape[0]
@@ -151,22 +159,10 @@ class Boosting(ModelBase, ABC):
                     new_sparse_vec[key] = NoneType()
                 return new_row
 
-    def init_validation_strategy(self, train_data=None, validate_data=None):
-        validation_strategy = ValidationStrategy(self.role, self.mode, self.validation_freqs,
-                                                 self.early_stopping_rounds, self.use_first_metric_only)
-        validation_strategy.set_train_data(train_data)
-        validation_strategy.set_validate_data(validate_data)
-        return validation_strategy
-
-    def cross_validation(self, data_instances):
-        if not self.need_run:
-            return data_instances
-        kflod_obj = KFold()
-        cv_param = self._get_cv_param()
-        kflod_obj.run(cv_param, data_instances, self, host_do_evaluate=False)
-        return data_instances
-
     def convert_feature_to_bin(self, data_instance, handle_missing_value=False):
+        """
+        convert bin index to real value
+        """
         LOGGER.info("convert feature to bins")
         param_obj = FeatureBinningParam(bin_num=self.bin_num, error=self.binning_error)
 
@@ -195,6 +191,97 @@ class Boosting(ModelBase, ABC):
         for fid in choose_feature:
             valid_features[fid] = True
         return valid_features
+
+    @staticmethod
+    def data_alignment(data_inst):
+        """
+        align data: abnormal detection and transform data to sparse format
+        """
+        abnormal_detection.empty_table_detection(data_inst)
+        abnormal_detection.empty_feature_detection(data_inst)
+        schema = data_inst.schema
+        new_data_inst = data_inst.mapValues(lambda row: Boosting.data_format_transform(row))
+        new_data_inst.schema = schema
+        return new_data_inst
+
+    def data_and_header_alignment(self, data_inst):
+
+        """
+        turn data into sparse and align header/ algin data table header
+        """
+
+        cache_dataset_key = self.predict_data_cache.get_data_key(data_inst)
+
+        if cache_dataset_key in self.data_alignment_map:
+            processed_data = self.data_alignment_map[cache_dataset_key]
+        else:
+            data_inst_tmp = self.data_alignment(data_inst)
+            header = [None] * len(self.feature_name_fid_mapping)
+            for idx, col in self.feature_name_fid_mapping.items():
+                header[idx] = col
+            processed_data = data_overview.header_alignment(data_inst_tmp, header)
+            self.data_alignment_map[cache_dataset_key] = processed_data
+
+        return processed_data
+
+    @staticmethod
+    def gen_feature_fid_mapping(schema):
+        """
+        generate {idx: feature_name} mapping
+        """
+        header = schema.get("header")
+        feature_name_fid_mapping = dict(zip(range(len(header)), header))
+        LOGGER.debug("fid_mapping is {}".format(feature_name_fid_mapping))
+        return feature_name_fid_mapping
+
+    def prepare_data(self, data_inst):
+
+        """
+        prepare data: data alignment, and transform feature to bin id
+        Args:
+            data_inst: training data
+        Returns: data_bin, data_split_points, data_sparse_point
+        """
+        self.feature_name_fid_mapping = self.gen_feature_fid_mapping(data_inst.schema)
+        data_inst = self.data_alignment(data_inst)
+        return self.convert_feature_to_bin(data_inst, self.use_missing)
+
+    @abc.abstractmethod
+    def check_label(self, *args) -> typing.Tuple[typing.List[int], int, int]:
+        """
+        Returns: get classes indices, class number and booster dimension and class
+        """
+        raise NotImplementedError()
+
+    @staticmethod
+    def get_label(data_bin):
+        """
+        extract y label from DTable
+        """
+        y = data_bin.mapValues(lambda instance: instance.label)
+        return y
+
+    """
+    Functions
+    """
+
+    def init_validation_strategy(self, train_data=None, validate_data=None):
+        """
+        initialize validation_strategy
+        """
+        validation_strategy = ValidationStrategy(self.role, self.mode, self.validation_freqs,
+                                                 self.early_stopping_rounds, self.use_first_metric_only)
+        validation_strategy.set_train_data(train_data)
+        validation_strategy.set_validate_data(validate_data)
+        return validation_strategy
+
+    def cross_validation(self, data_instances):
+        if not self.need_run:
+            return data_instances
+        kflod_obj = KFold()
+        cv_param = self._get_cv_param()
+        kflod_obj.run(cv_param, data_instances, self, host_do_evaluate=False)
+        return data_instances
 
     def get_loss_function(self):
         loss_type = self.objective_param.objective
@@ -229,6 +316,9 @@ class Boosting(ModelBase, ABC):
         return loss_func
 
     def get_metrics_param(self):
+        """
+        this interface gives evaluation type. Will be called by validation strategy
+        """
         if self.task_type == consts.CLASSIFICATION:
             if self.num_classes == 2:
                 return EvaluateParam(eval_type="binary",
@@ -239,6 +329,9 @@ class Boosting(ModelBase, ABC):
             return EvaluateParam(eval_type="regression", metrics=self.metrics)
 
     def compute_loss(self, y_hat, y):
+        """
+        compute loss given predicted y and real y
+        """
         LOGGER.info("compute loss")
         if self.task_type == consts.CLASSIFICATION:
             loss_method = self.loss
@@ -256,30 +349,36 @@ class Boosting(ModelBase, ABC):
         return float(loss)
 
     def check_convergence(self, loss):
+        """
+        check if the loss converges
+        """
         LOGGER.info("check convergence")
         if self.convergence is None:
             self.convergence = converge_func_factory("diff", self.tol)
 
         return self.convergence.is_converge(loss)
 
-    @staticmethod
-    def data_alignment(data_inst):
-        abnormal_detection.empty_table_detection(data_inst)
-        abnormal_detection.empty_feature_detection(data_inst)
+    def check_stop_condition(self, loss):
 
-        schema = data_inst.schema
-        new_data_inst = data_inst.mapValues(lambda row: Boosting.data_format_transform(row))
+        """
+        check early stopping and loss convergence
+        """
 
-        new_data_inst.schema = schema
+        should_stop_a, should_stop_b = False, False
 
-        return new_data_inst
+        if self.validation_strategy is not None:
+            if self.validation_strategy.need_stop():
+                should_stop_a = True
 
-    @staticmethod
-    def gen_feature_fid_mapping(schema):
-        header = schema.get("header")
-        feature_name_fid_mapping = dict(zip(range(len(header)), header))
-        LOGGER.debug("fid_mapping is {}".format(feature_name_fid_mapping))
-        return feature_name_fid_mapping
+        if self.n_iter_no_change and self.check_convergence(loss):
+            should_stop_b = True
+            self.is_converged = True
+
+        if should_stop_a or should_stop_b:
+            LOGGER.debug('stop triggered, stop triggered by {}'.
+                         format('early stop' if should_stop_a else 'n_iter_no change'))
+
+        return should_stop_a or should_stop_b
 
     @staticmethod
     def accumulate_y_hat(val, new_val, lr=0.1, idx=0):
@@ -299,15 +398,6 @@ class Boosting(ModelBase, ABC):
         self.model_param.cv_param.mode = self.mode
         return self.model_param.cv_param
 
-    def predict_proba(self, data_inst):
-        pass
-
-    def save_data(self):
-        return self.data_output
-
-    def save_model(self):
-        pass
-
     """
     fit and predict
     """
@@ -322,30 +412,14 @@ class Boosting(ModelBase, ABC):
 
     @abc.abstractmethod
     def generate_summary(self) -> dict:
+        """
+        return model summary
+        """
         raise NotImplementedError()
 
     """
     Training Procedure
     """
-
-    def prepare_data(self, data_inst):
-
-        """
-        prepare data: data alignment, and transform feature to bin id
-        Args:
-            data_inst: training data
-        Returns: data_bin, data_split_points, data_sparse_point
-        """
-        self.feature_name_fid_mapping = self.gen_feature_fid_mapping(data_inst.schema)
-        data_inst = self.data_alignment(data_inst)
-        return self.convert_feature_to_bin(data_inst, self.use_missing)
-
-    @abc.abstractmethod
-    def check_label(self, *args) -> typing.Tuple[typing.List[int], int, int]:
-        """
-        Returns: get classes indices, class number and booster dimension and class
-        """
-        raise NotImplementedError()
 
     def get_init_score(self, y, num_classes: int):
 
@@ -356,39 +430,12 @@ class Boosting(ModelBase, ABC):
 
         return y_hat, init_score
 
-    @ staticmethod
-    def get_label(data_bin):
-        """
-        Args:
-            data_inst: extract y label from DTable
-        """
-        y = data_bin.mapValues(lambda instance: instance.label)
-        return y
-
     @abc.abstractmethod
     def fit_a_booster(self, *args) -> BasicAlgorithms:
         """
-        Returns: get a booster model instance
+        fit a booster and return it
         """
         raise NotImplementedError()
-
-    def check_stop_condition(self, loss):
-
-        should_stop_a, should_stop_b = False, False
-
-        if self.validation_strategy is not None:
-            if self.validation_strategy.need_stop():
-                should_stop_a = True
-
-        if self.n_iter_no_change and self.check_convergence(loss):
-            should_stop_b = True
-            self.is_converged = True
-
-        if should_stop_a or should_stop_b:
-            LOGGER.debug('stop triggered, stop triggered by {}'.
-                         format('early stop' if should_stop_a else 'n_iter_no change'))
-
-        return should_stop_a or should_stop_b
 
     """
     Prediction Procedure
@@ -396,10 +443,15 @@ class Boosting(ModelBase, ABC):
 
     @abc.abstractmethod
     def load_booster(self, *args):
+        """
+        load a booster
+        """
         raise NotImplementedError()
 
     def score_to_predict_result(self, data_inst, y_hat):
-
+        """
+        given binary/multi-class/regression prediction scores, outputs result in standard format
+        """
         predicts = None
         if self.task_type == consts.CLASSIFICATION:
             loss_method = self.loss
@@ -427,26 +479,6 @@ class Boosting(ModelBase, ABC):
             raise NotImplementedError("task type {} not supported yet".format(self.task_type))
         return predict_result
 
-
-    def data_and_header_alignment(self, data_inst):
-
-        """
-        turn data into sparse and align header
-        """
-
-        cache_dataset_key = self.predict_data_cache.get_data_key(data_inst)
-
-        if cache_dataset_key in self.data_alignment_map:
-            processed_data = self.data_alignment_map[cache_dataset_key]
-        else:
-            data_inst_tmp = self.data_alignment(data_inst)
-            header = [None] * len(self.feature_name_fid_mapping)
-            for idx, col in self.feature_name_fid_mapping.items():
-                header[idx] = col
-            processed_data = data_overview.header_alignment(data_inst_tmp, header)
-            self.data_alignment_map[cache_dataset_key] = processed_data
-
-        return processed_data
     """
     Model IO
     """
@@ -494,6 +526,14 @@ class Boosting(ModelBase, ABC):
         self.set_model_param(model_param)
         self.loss = self.get_loss_function()
 
+    def predict_proba(self, data_inst):
+        pass
+
+    def save_data(self):
+        return self.data_output
+
+    def save_model(self):
+        pass
 
 
 

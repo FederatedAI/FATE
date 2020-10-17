@@ -17,7 +17,6 @@
 import json
 import typing
 from collections import namedtuple
-from dataclasses import dataclass, field
 from pathlib import Path
 
 from ruamel import yaml
@@ -64,7 +63,7 @@ services:
 
 """
 
-default_config = Path(__file__).parent.joinpath("fate_test_config.yaml").resolve()
+_default_config = Path(__file__).parent.joinpath("fate_test_config.yaml").resolve()
 
 
 def create_config(path: Path, override=False):
@@ -74,32 +73,32 @@ def create_config(path: Path, override=False):
         f.write(temperate)
 
 
-def priority_config():
-    if Path("fate_test_config.yaml").exists():
-        return Path("fate_test_config.yaml").resolve()
-    if not default_config.exists():
-        create_config(default_config)
-    return default_config
+def default_config():
+    if not _default_config.exists():
+        create_config(_default_config)
+    return _default_config
 
 
-@dataclass
 class Parties(object):
-    guest: typing.List[int]
-    host: typing.List[int]
-    arbiter: typing.List[int] = field(default_factory=list)
+    def __init__(self,
+                 guest: typing.List[int],
+                 host: typing.List[int],
+                 arbiter: typing.List[int] = None):
+        self.guest = guest
+        self.host = host
+        self.arbiter = arbiter or []
 
-    @staticmethod
-    def from_dict(d: dict):
-        return Parties(**d)
-
-    def __post_init__(self):
         self._party_to_role_string = {}
-        for role in self.__class__.__annotations__:
+        for role in ["guest", "host", "arbiter"]:
             parties = getattr(self, role)
             for i, party in enumerate(parties):
                 if party not in self._party_to_role_string:
                     self._party_to_role_string[party] = set()
                 self._party_to_role_string[party].add(f"{role.lower()}_{i}")
+
+    @staticmethod
+    def from_dict(d: dict):
+        return Parties(**d)
 
     def party_to_role_string(self, party):
         return self._party_to_role_string[party]
@@ -123,7 +122,6 @@ class Parties(object):
         return dict(role=initiator_role, party_id=party_id)
 
 
-@dataclass
 class Config(object):
     service = namedtuple("service", ["address"])
     tunnel_service = namedtuple("tunnel_service", ["tunnel_id", "index"])
@@ -206,3 +204,11 @@ class Config(object):
                 else:
                     raise ValueError(f"Cannot load conf from file type {file_type}")
         return config
+
+
+def parse_config(config):
+    try:
+        config_inst = Config.load(config)
+    except Exception as e:
+        raise RuntimeError(f"error parse config from {config}") from e
+    return config_inst
