@@ -91,7 +91,7 @@ class Federation(FederationABC):
 
         self._queue_map: typing.MutableMapping[Party, _QueueNames] = {}
         self._channels_map = {}
-
+     
     def get(self, name, tag, parties: typing.List[Party], gc: GarbageCollectionABC) -> typing.List:
         log_str = f"rabbitmq.get(name={name}, tag={tag}, parties={parties})"
         LOGGER.debug(f"[{log_str}]start to get")
@@ -103,14 +103,19 @@ class Federation(FederationABC):
 
         rtn = []
         for i, info in enumerate(channel_infos):
-            obj = _receive(info, name, tag)
-
+            obj = _receive(info, name, tag)  
+            
             if isinstance(obj, RDD):
                 rtn.append(Table(obj))
                 LOGGER.debug(f"[{log_str}]received rdd({i + 1}/{len(parties)}), party: {parties[i]} ")
             else:
                 rtn.append(obj)
                 LOGGER.debug(f"[{log_str}]received obj({i + 1}/{len(parties)}), party: {parties[i]} ")
+            
+            cache_key = _get_message_cache_key(name, tag, info._party_id, info._role)
+            if cache_key in message_cache:
+                del message_cache[cache_key]
+
         LOGGER.debug(f"[{log_str}]finish to get")
         return rtn
 
@@ -195,15 +200,16 @@ class Federation(FederationABC):
         for party, names in mq_names.items():
             info = self._channels_map.get(party)
             if info is None:
-                info = _get_channel(self._mq, names, party_id=party.party_id)
+                info = _get_channel(self._mq, names, party_id=party.party_id, role=party.role)
                 self._channels_map[party] = info
             channel_infos.append(info)
         return channel_infos
 
 
-def _get_channel(mq, names: _QueueNames, party_id):
+def _get_channel(mq, names: _QueueNames, party_id, role):
     return MQChannel(host=mq.host, port=mq.port, user=mq.union_name, password=mq.policy_id,
-                     vhost=names.vhost, send_queue_name=names.send, receive_queue_name=names.receive, party_id=party_id)
+                     vhost=names.vhost, send_queue_name=names.send, receive_queue_name=names.receive, 
+                     party_id=party_id, role=role)
 
 
 def _send_kv(name, tag, data, channel_infos, total_size, partitions):
@@ -236,12 +242,12 @@ def _send_obj(name, tag, data, channel_infos):
 def _get_channels(mq_names, mq):
     channel_infos = []
     for party, names in mq_names.items():
-        info = _get_channel(mq, names, party_id=party.party_id)
+        info = _get_channel(mq, names, party_id=party.party_id, role=party.role)
         channel_infos.append(info)
     return channel_infos
 
 
-MESSAGE_MAX_SIZE = 50
+MESSAGE_MAX_SIZE = 500
 
 
 def _partition_snd(kvs, name, tag, total_size, partitions, mq_names, mq):
@@ -272,44 +278,60 @@ def _get_partition_send_func(name, tag, total_size, partitions, mq_names, mq):
     return _fn
 
 
-def _receive(channel_info, name, tag):
-    count = 0
-    obj: typing.Optional[RDD] = None
+message_cache = {}
+
+
+def _get_message_cache_key(name, tag, party_id, role):
+    cache_key = "^".join([name, tag, str(party_id), role])
+    return cache_key
+
+
+def _receive(channel_info, name, tag):     
     partitions = -1
+    party_id = channel_info._party_id 
+    role = channel_info._role   
+    wish_cache_key = _get_message_cache_key(name, tag, party_id, role)
+    
+    if wish_cache_key in message_cache:
+        return message_cache[wish_cache_key]
+    
     for method, properties, body in channel_info.consume():
-        LOGGER.debug(f"[rabbitmq._receive]count: {count}, method: {method}, properties: {properties}.")
+        LOGGER.debug(f"[rabbitmq._receive] method: {method}, properties: {properties}.")
         if properties.message_id != name or properties.correlation_id != tag:
             # todo: fix this
             LOGGER.warning(f"[rabbitmq._receive]: require {name}.{tag}, got {properties.message_id}.{properties.correlation_id}")
-            continue
-
+        
+        cache_key = _get_message_cache_key(properties.message_id, properties.correlation_id, party_id, role)
         # object
         if properties.content_type == 'text/plain':
-            obj = p_loads(body)
-            channel_info.basic_ack(delivery_tag=method.delivery_tag)
-            channel_info.cancel()
-            return obj
-
+            message_cache[cache_key] = p_loads(body)
+            channel_info.basic_ack(delivery_tag=method.delivery_tag)                
+           
         # rdd
         if properties.content_type == 'application/json':
-            data = json.loads(body)
-            count += len(data)
+            data = json.loads(body)                
             data_iter = ((p_loads(bytes.fromhex(el['k'])), p_loads(bytes.fromhex(el['v']))) for el in data)
             sc = SparkContext.getOrCreate()
             partitions = properties.headers["partitions"]
             rdd = sc.parallelize(data_iter, partitions)
-            obj = rdd if obj is None else obj.union(rdd).coalesce(partitions)
+            if cache_key not in message_cache:
+                message_cache[cache_key] = rdd
+            else:
+                message_cache[cache_key] = message_cache[cache_key].union(rdd).coalesce(partitions)        
 
             # trigger action
-            obj.persist(get_storage_level())
-            count = obj.count()
+            message_cache[cache_key].persist(get_storage_level())
+            count = message_cache[cache_key].count()
             LOGGER.debug(f"count: {count}")
             channel_info.basic_ack(delivery_tag=method.delivery_tag)
-
-            if count == properties.headers["total_size"]:
-                break
-
-    channel_info.cancel()
-    obj = obj.coalesce(partitions)
-
-    return obj
+            
+        # object
+        if properties.content_type == 'text/plain':
+            if cache_key == wish_cache_key:
+                channel_info.cancel()
+                return message_cache[cache_key]       
+        # rdd
+        if properties.content_type == 'application/json':
+            if cache_key == wish_cache_key and message_cache[cache_key].count() == properties.headers["total_size"]:
+                channel_info.cancel()
+                return message_cache[cache_key]
