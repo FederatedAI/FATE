@@ -50,7 +50,7 @@
                 },
                 "reader_0": {
                     "table": {
-                        "name": "default_credit_hetero_guest",
+                        "name": "default_credit_hetero_host",
                         "namespace": "experiment"
                     }
                 },

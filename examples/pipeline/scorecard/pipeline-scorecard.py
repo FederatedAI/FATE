@@ -39,7 +39,7 @@ def main(config="../../config.yaml", namespace=""):
     work_mode = config.work_mode
 
     guest_train_data = {"name": "default_credit_hetero_guest", "namespace": f"experiment{namespace}"}
-    host_train_data = {"name": "default_credit_hetero_guest", "namespace": f"experiment{namespace}"}
+    host_train_data = {"name": "default_credit_hetero_host", "namespace": f"experiment{namespace}"}
 
     # initialize pipeline
     pipeline = PipeLine()
