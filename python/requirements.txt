@@ -20,7 +20,7 @@ requests_toolbelt==0.9.1
 ruamel-yaml==0.16.10
 scikit-learn==0.19.2
 scipy==1.1.0
-tensorflow==1.15.2
+tensorflow==1.15.4
 torch==1.4.0
 torchvision==0.5.0
 Werkzeug==0.15.3
