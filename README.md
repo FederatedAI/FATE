@@ -49,6 +49,10 @@ Using KubeFATE, FATE can be deployed by either docker-compose or Kubernetes:
 
 More instructions can be found in [KubeFATE](https://github.com/FederatedAI/KubeFATE).
 
+### FATE-Client Installation
+FATE-client is a easy tool for interacting with FATE. We strongly recommend you install FATE-client and take advantage to use FATE conveniently. Please refer to this [document](./python/fate_client/README.rst) for more details of FATE-client.
+
+
 ## Running Tests
 
 A script to run all the unittests has been provided in ./federatedml/test folder.
