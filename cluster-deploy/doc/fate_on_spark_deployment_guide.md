@@ -8,7 +8,7 @@
 |   Specs  | 8 core /16GB memory / 500GB hard disk/10M bandwidth       |
 |   OS     | CentOS linux 7.2 & above/Ubuntu 16.04 & above        |
 |  Dependency| Please refer section 4.5                                   |
-|   User   | user: app, user group: apps (app user should be ablee to execute sudo su root without password) |
+|   User   | user: app, user group: apps (app user should be able to execute sudo su root without password) |
 | File System | 1. mount 500G hard disk to /data 2. make /data/projects directory, ownership to app:apps |
 
 ## 2.Cluster Information
@@ -451,7 +451,7 @@ EOF
 
 - Fate-Flow access url
 
-  fateflow.url，host：http://192.168.0.1:9380，guest：http://192.168.0.2:9380
+  fateflow.url, host: http://192.168.0.1:9380, guest: http://192.168.0.2:9380
 
 - Database source name, username, and password
 
@@ -666,7 +666,7 @@ cd /data/projects/fate/proxy
 
 /data/projects/fate/fateboard/logs
 
-3) Nginx日志
+3) NginX Logs
 
 /data/projects/fate/proxy/nginx/logs
 
