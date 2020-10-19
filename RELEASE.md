@@ -1,4 +1,4 @@
-# Release 1.5.0-preview
+# Release 1.5.0（LTS）-preview
 ## Major Features and Improvements
 
 > FederatedML
