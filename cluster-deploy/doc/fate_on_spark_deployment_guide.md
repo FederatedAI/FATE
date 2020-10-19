@@ -25,7 +25,7 @@
 Architecture:
 
 <div style="text-align:center", align=center>
-<img src="../images/arch_zh.png" />
+<img src="../images/fate_on_spark_architecture.png" />
 </div>
 
 ## 3.Module Information
@@ -338,13 +338,13 @@ make && make install
 ### 5.7 Deploy Spark & HDFS
 
 #### 5.7.1
-Please refer: [Hadoop_Spark_deployment_guide](./Hadoop_Spark_deployment_guide.md)
+Please refer: [Hadoop_Spark_deployment_guide](hadoop_spark_deployment_guide.md)
 
 
 ### 5.8 Deploy RabbitMQ
 
 #### 5.8.1
-Please refer: [RabbitMQ_deployment_guide](./RabbitMQ_deployment_guide.md)
+Please refer: [RabbitMQ_deployment_guide](rabbitmq_deployment_guide.md)
 
 ### 5.9 Deploy FATE
 

@@ -25,7 +25,7 @@
 架构图：
 
 <div style="text-align:center", align=center>
-<img src="../images/arch_zh.png" />
+<img src="../images/fate_on_spark_architecture.png" />
 </div>
 
 ## 3.组件说明
@@ -334,13 +334,13 @@ make && make install
 ### 5.7 部署Spark & HDFS
 
 #### 5.7.1
-请参阅部署指南：[Hadoop_Spark_deployment_guide_zh](./Hadoop_Spark_deployment_guide_zh.md)
+请参阅部署指南：[Hadoop_Spark_deployment_guide_zh](hadoop_spark_deployment_guide_zh.md)
 
 
 ### 5.8 部署RabbitMQ
 
 #### 5.8.1
-请参阅部署指南：[RabbitMQ_deployment_guide_zh](./RabbitMQ_deployment_guide_zh.md)
+请参阅部署指南：[RabbitMQ_deployment_guide_zh](rabbitmq_deployment_guide_zh.md)
 
 
 ### 5.9 部署FATE
