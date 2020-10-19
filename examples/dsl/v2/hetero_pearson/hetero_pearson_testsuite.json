@@ -21,20 +21,20 @@
     ],
     "tasks": {
         "default": {
-            "conf": "./test_homo_nn_default_conf.json",
-            "dsl": "./test_homo_nn_default_dsl.json"
+            "conf": "./test_hetero_pearson_default_conf.json",
+            "dsl": "./test_hetero_pearson_default_dsl.json"
         },
         "host_only": {
-            "conf": "./test_homo_nn_host_only_conf.json",
-            "dsl": "./test_homo_nn_host_only_dsl.json"
+            "conf": "./test_hetero_pearson_host_only_conf.json",
+            "dsl": "./test_hetero_pearson_host_only_dsl.json"
         },
         "sole": {
-            "conf": "./test_homo_nn_sole_conf.json",
-            "dsl": "./test_homo_nn_sole_dsl.json"
+            "conf": "./test_hetero_pearson_sole_conf.json",
+            "dsl": "./test_hetero_pearson_sole_dsl.json"
         },
         "mix_rand": {
-            "conf": "./test_homo_nn_mix_rand_conf.json",
-            "dsl": "./test_homo_nn_mix_rand_dsl.json"
+            "conf": "./test_hetero_pearson_mix_rand_conf.json",
+            "dsl": "./test_hetero_pearson_mix_rand_dsl.json"
         }
     }
 }

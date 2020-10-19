@@ -1,19 +1,19 @@
-# FATE ON Spark 部署指南
+# FATE ON Spark Deploy Guide
 
-## 1.服务器配置
+## 1.Server Information
 
-|  服务器  |                                                              |
+|  Server  |                                                              |
 | :------: | ------------------------------------------------------------ |
-|   数量   | >1（根据实际情况配置）                                       |
-|   配置   | 8 core /16GB memory / 500GB硬盘/10M带宽                      |
-| 操作系统 | CentOS linux 7.2及以上/Ubuntu 16.04 以上                     |
-|  依赖包  | （参见4.5 软件环境初始化）                                   |
-|   用户   | 用户：app，属主：apps（app用户需可以sudo su root而无需密码） |
-| 文件系统 | 1.  500G硬盘挂载在/ data目录下； 2.创建/ data / projects目录，目录属主为：app:apps |
+|   Number | >1 (Depending on user needs)                                       |
+|   Specs  | 8 core /16GB memory / 500GB hard disk/10M bandwidth       |
+|   OS     | CentOS linux 7.2 & above/Ubuntu 16.04 & above        |
+|  Dependency| Please refer section 4.5                                   |
+|   User   | user: app, user group: apps (app user should be able to execute sudo su root without password) |
+| File System | 1. mount 500G hard disk to /data 2. make /data/projects directory, ownership to app:apps |
 
-## 2.集群规划
+## 2.Cluster Information
 
-| party  | partyid | 主机名        | IP地址      | 操作系统                | 安装软件    | 服务                              |
+| party  | partyid | Host name     | IP Address  | OS                      | Software    | Service                              |
 | ------ | ------- | ------------- | ----------- | ----------------------- | ----------- | --------------------------------- |
 | PartyA | 10000   | VM-0-1-centos | 192.168.0.1 | CentOS 7.2/Ubuntu 16.04 | fate，mysql, nginx | fateflow，fateboard，mysql，nginx |
 | PartyA | 10000   |               |             |                         | Spark、HDFS |                                   |
@@ -22,45 +22,45 @@
 | PartyB | 9999    |               |             |                         | Spark、HDFS |                                   |
 | PartyB | 9999    |               |             |                         | RabbitMQ    |                                   |
 
-架构图：
+Architecture:
 
 <div style="text-align:center", align=center>
-<img src="../images/arch_zh.png" />
+<img src="../images/fate_on_spark_architecture.png" />
 </div>
 
-## 3.组件说明
+## 3.Module Information
 
-| 软件产品 | 组件      | 端口      | 说明                                                  |
+| Product  | Module    | Port     | Information                                               |
 | -------- | --------- | --------- | ----------------------------------------------------- |
-| fate     | fate_flow | 9360;9380 | 联合学习任务流水线管理模块，每个party只能有一个此服务 |
-| fate     | fateboard | 8080      | 联合学习过程可视化模块，每个party只能有一个此服务     |
-| nginx    | nginx     | 9370      | 跨站点(party)调度协调代理                             |
-| mysql    | mysql     | 3306      | 元数据存储                                            |
-| Spark    |           |           | 计算引擎                                              |
-| HDFS     |           |           | 存储引擎                                              |
-| RabbitMQ |           |           | 跨站点(party)数据交换代理                             |
+| fate     | fate_flow | 9360;9380 | Manages workflow of federated learning jobs, one service instance per party |
+| fate     | fateboard | 8080      | Visualizes federated learning process, one service instance per party     |
+| nginx    | nginx     | 9370      | proxy for cross-party scheduling                 |
+| mysql    | mysql     | 3306      | meta table storage                                            |
+| Spark    |           |           | compute engine                                              |
+| HDFS     |           |           | storage engine                                            |
+| RabbitMQ |           |           | proxy for cross-party data exchange                             |
 
-## 4.基础环境配置
+## 4.Base Environment Configuration
 
-### 4.1 hostname配置(可选)
+### 4.1 configure hostname(optional)
 
-**1）修改主机名**
+**1) Modify Hostname**
 
-**在192.168.0.1 root用户下执行：**
+**Execute on 192.168.0.1 as the root user**:
 
 ```bash
 hostnamectl set-hostname VM-0-1-centos
 ```
 
-**在192.168.0.2 root用户下执行：**
+**Execute on 192.168.0.2 as the root user**:
 
 ```bash
 hostnamectl set-hostname VM-0-2-centos
 ```
 
-**2）加入主机映射**
+**2) Add Host Mapping**
 
-**在目标服务器（192.168.0.1 192.168.0.2 ）root用户下执行：**
+**Execute on 192.168.0.1 192.168.0.2 as the root user**:
 
 ```bash
 vim /etc/hosts
@@ -68,34 +68,35 @@ vim /etc/hosts
 192.168.0.2 VM-0-2-centos
 ```
 
-### 4.2 关闭SELinux(可选)
+### 4.2 Disable SELinux(Optional)
 
 
-**在目标服务器（192.168.0.1 192.168.0.2）root用户下执行：**
+**Execute on 192.168.0.1 192.168.0.2 as the root user**:
 
-确认是否已安装SELinux
+Check if SELinux is available:
 
-CentOS系统执行：
+CentOS:
 
 ```bash
 rpm -qa | grep selinux
 ```
 
-Ubuntu系统执行：
+Ubuntu:
 
 ```bash
 apt list --installed | grep selinux
 ```
 
-如果已安装了SELinux就执行：
+Is SELinux is already installed, run:
 
 ```bash
 setenforce 0
 ```
 
-### 4.3 修改Linux系统参数
 
-**在目标服务器（192.168.0.1 192.168.0.2 192.168.0.3）root用户下执行：**
+### 4.3 Set Linux resource limit
+
+**Execute on 192.168.0.1 192.168.0.2 as the root user**:
 
 ```bash
 vim /etc/security/limits.conf
@@ -108,12 +109,12 @@ vim /etc/security/limits.d/20-nproc.conf
 * soft nproc unlimited
 ```
 
-### 4.4 关闭防火墙(可选)
+### 4.4 Disable & Stop Firewall(Optional)
 
 
-**在目标服务器（192.168.0.1 192.168.0.2 192.168.0.3）root用户下执行**
+**Execute on 192.168.0.1 192.168.0.2 as the root user**:
 
-如果是CentOS系统：
+CentOS:
 
 ```bash
 systemctl disable firewalld.service
@@ -121,18 +122,18 @@ systemctl stop firewalld.service
 systemctl status firewalld.service
 ```
 
-如果是Ubuntu系统：
+Ubuntu：
 
 ```bash
 ufw disable
 ufw status
 ```
 
-### 4.5 软件环境初始化
+### 4.5 Initialize Software Environment
 
-**在目标服务器（192.168.0.1 192.168.0.2 192.168.0.3）root用户下执行**
+**Execute on 192.168.0.1 192.168.0.2 as the root user**:
 
-**1）创建用户**
+**1) Create User**
 
 ```bash
 groupadd -g 6000 apps
@@ -140,7 +141,7 @@ useradd -s /bin/bash -g apps -d /home/app app
 passwd app
 ```
 
-**2）创建目录**
+**2) Create**
 
 ```bash
 mkdir -p /data/projects/fate
@@ -148,7 +149,7 @@ mkdir -p /data/projects/install
 chown -R app:apps /data/projects
 ```
 
-**3）安装依赖**
+**3) Install Dependencies**
 
 ```bash
 #centos
@@ -162,14 +163,17 @@ if [ ! -f "libssl.so.10" ];then
 fi
 ```
 
-## 5.项目部署
+## 5.Install FATE
 
-注：此指导安装目录默认为/data/projects/install，执行用户为app，安装时根据具体实际情况修改。
+**NOTE**
 
-### 5.1 获取安装包
+This guide assumes that installation path is /data/projects/install, all commands executed by user app. 
+User may modify the given comments as needed.
+
+### 5.1 Obtain packages
 
 
-在目标服务器（192.168.0.1 具备外网环境）app用户下执行:
+**Execute on 192.168.0.1 (with Internet access) as user app**:
 
 ```bash
 mkdir -p /data/projects/install
@@ -180,90 +184,90 @@ wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/mysql-1.5.0-rele
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/openresty-1.17.8.2.tar.gz
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_1.5.0_preview.tar.gz
 
-#传输到192.168.0.1和192.168.0.2
+#scp packages to 192.168.0.1和192.168.0.2
 scp *.tar.gz app@192.168.0.1:/data/projects/install
 scp *.tar.gz app@192.168.0.2:/data/projects/install
 ```
 
-### 5.2 操作系统参数检查
+### 5.2 Check Settings of OS
 
-**在目标服务器（192.168.0.1 192.168.0.2 192.168.0.3）app用户下执行**
+**Execute on 192.168.0.1 192.168.0.2 as user app**:
 
 ```bash
-#文件句柄数，不低于65535，如不满足需参考4.3章节重新设置
+#number of open files limit should be no lower than 65535; refer to section 4.3 to set
 ulimit -n
 65535
 
-#用户进程数，不低于64000，如不满足需参考4.3章节重新设置
+#max user process limit should be no lower than 64000; refer to section 4.3 to set
 ulimit -u
 65535
 ```
 
-### 5.3 部署MySQL
+### 5.3 Deploy MySQL
 
-**在目标服务器（192.168.0.1 192.168.0.2）app用户下执行**
+**Execute on 192.168.0.1 192.168.0.2 as user app**:
 
-**1）MySQL安装：**
+**1）Install MySQL：**
 
 ```bash
-#建立mysql根目录
+#make mysql home directory
 mkdir -p /data/projects/fate/common/mysql
 mkdir -p /data/projects/fate/data/mysql
 
-#解压缩软件包
+#extract package
 cd /data/projects/install
 tar xzvf mysql-*.tar.gz
 cd mysql
 tar xf mysql-8.0.13.tar.gz -C /data/projects/fate/common/mysql
 
-#配置设置
+#configure
 mkdir -p /data/projects/fate/common/mysql/mysql-8.0.13/{conf,run,logs}
 cp service.sh /data/projects/fate/common/mysql/mysql-8.0.13/
 cp my.cnf /data/projects/fate/common/mysql/mysql-8.0.13/conf
 
-#初始化
+#initialize
 cd /data/projects/fate/common/mysql/mysql-8.0.13/
 ./bin/mysqld --initialize --user=app --basedir=/data/projects/fate/common/mysql/mysql-8.0.13 --datadir=/data/projects/fate/data/mysql > logs/init.log 2>&1
 cat logs/init.log |grep root@localhost
-#注意输出信息中root@localhost:后的是mysql用户root的初始密码，需要记录，后面修改密码需要用到
+#User should record passowrd from terminal output 'root@localhost:{$password}', which is password for MySQL root user and is needed later
 
-#启动服务
+#Start Service
 cd /data/projects/fate/common/mysql/mysql-8.0.13/
 nohup ./bin/mysqld_safe --defaults-file=./conf/my.cnf --user=app >>logs/mysqld.log 2>&1 &
 
-#修改mysql root用户密码
+#Change MySQL root user password to 'fate_dev'
 cd /data/projects/fate/common/mysql/mysql-8.0.13/
 ./bin/mysqladmin -h 127.0.0.1 -P 3306 -S ./run/mysql.sock -u root -p password "fate_dev"
-Enter Password:【输入root初始密码】
+Enter Password: {$password}
 
-#验证登陆
+#Login
 cd /data/projects/fate/common/mysql/mysql-8.0.13/
 ./bin/mysql -u root -p -S ./run/mysql.sock
-Enter Password:【输入root修改后密码:fate_dev】
+Enter Password: fate_dev
 ```
 
-**2）建库授权和业务配置**
+**2) Create Database & Configure User**
 
 ```bash
 cd /data/projects/fate/common/mysql/mysql-8.0.13/
 ./bin/mysql -u root -p -S ./run/mysql.sock
-Enter Password:【fate_dev】
+Enter Password: fate_dev
 
-#创建fate_flow库
+#create fate_flow database
 mysql>CREATE DATABASE IF NOT EXISTS fate_flow;
 
-#创建远程用户和授权
-1) 192.168.0.1执行
+#create remote user and grant privileges
+1) execute on 192.168.0.1
 mysql>CREATE USER 'fate'@'192.168.0.1' IDENTIFIED BY 'fate_dev';
 mysql>GRANT ALL ON *.* TO 'fate'@'192.168.0.1';
 mysql>flush privileges;
 
-2) 192.168.0.2执行
+2) execute on 192.168.0.2:
 mysql>CREATE USER 'fate'@'192.168.0.2' IDENTIFIED BY 'fate_dev';
 mysql>GRANT ALL ON *.* TO 'fate'@'192.168.0.2';
 mysql>flush privileges;
 
-#校验
+#Check
 mysql>select User,Host from mysql.user;
 mysql>show databases;
 mysql>use eggroll_meta;
@@ -272,40 +276,40 @@ mysql>select * from server_node;
 
 ```
 
-### 5.4 部署JDK
+### 5.4 Deploy JDK
 
-**在目标服务器（192.168.0.1 192.168.0.2）app用户下执行**:
+**Execute on 192.168.0.1 192.168.0.2 as user app**:
 
 ```bash
-#创建jdk安装目录
+#make jdk home base
 mkdir -p /data/projects/fate/common/jdk
-#解压缩
+#extarct
 cd /data/projects/install
 tar xzf jdk-8u192-linux-x64.tar.gz -C /data/projects/fate/common/jdk
 cd /data/projects/fate/common/jdk
 mv jdk1.8.0_192 jdk-8u192
 ```
 
-### 5.5 部署python
+### 5.5 Deploy python
 
-**在目标服务器（192.168.0.1 192.168.0.2）app用户下执行**:
+**Execute on 192.168.0.1 192.168.0.2 as user app**:
 
 ```bash
-#创建python虚拟化安装目录
+#make python virtual env home base
 mkdir -p /data/projects/fate/common/python
 
-#安装miniconda3
+#install miniconda3
 cd /data/projects/install
 tar xvf python-env-*.tar.gz
 cd python-env
 sh Miniconda3-4.5.4-Linux-x86_64.sh -b -p /data/projects/fate/common/miniconda3
 
-#安装virtualenv和创建虚拟化环境
+#install virtualenv and create virtual environment
 /data/projects/fate/common/miniconda3/bin/pip install virtualenv-20.0.18-py2.py3-none-any.whl -f . --no-index
 
 /data/projects/fate/common/miniconda3/bin/virtualenv -p /data/projects/fate/common/miniconda3/bin/python3.6 --no-wheel --no-setuptools --no-download /data/projects/fate/common/python/venv
 
-#安装依赖包
+#install dependencies
 tar xvf pip-packages-fate-*.tar.gz
 source /data/projects/fate/common/python/venv/bin/activate
 pip install setuptools-42.0.2-py2.py3-none-any.whl
@@ -313,9 +317,9 @@ pip install -r pip-packages-fate-1.5.0/requirements.txt -f ./pip-packages-fate-1
 pip list | wc -l
 ```
 
-### 5.6 部署NginX
+### 5.6 Install NginX
 
-**在目标服务器（192.168.0.1 192.168.0.2）app用户下执行**:
+**Execute on 192.168.0.1 192.168.0.2 as user app**:
 
 ```bash
 cd /data/projects/install
@@ -331,25 +335,24 @@ cd openresty-*
 make && make install
 ```
 
-### 5.7 部署Spark & HDFS
+### 5.7 Deploy Spark & HDFS
 
 #### 5.7.1
-请参阅部署指南：[Hadoop_Spark_deployment_guide_zh](./Hadoop_Spark_deployment_guide_zh.md)
+Please refer: [Hadoop_Spark_deployment_guide](hadoop_spark_deployment_guide.md)
 
 
-### 5.8 部署RabbitMQ
+### 5.8 Deploy RabbitMQ
 
 #### 5.8.1
-请参阅部署指南：[RabbitMQ_deployment_guide_zh](./RabbitMQ_deployment_guide_zh.md)
+Please refer: [RabbitMQ_deployment_guide](rabbitmq_deployment_guide.md)
 
+### 5.9 Deploy FATE
 
-### 5.9 部署FATE
-
-#### 5.9.1 软件部署
+#### 5.9.1 Deploy Software
 
 ```
-#部署软件
-#在目标服务器（192.168.0.1 192.168.0.2）app用户下执行:
+#deploy software
+#Execute on 192.168.0.1 192.168.0.2 as user app:
 cd /data/projects/install
 tar xf FATE_install_*.tar.gz
 cd FATE_install_*
@@ -360,8 +363,8 @@ tar xvf python.tar.gz -C /data/projects/fate/
 tar xvf fateboard.tar.gz -C /data/projects/fate
 tar xvf proxy.tar.gz -C /data/projects/fate
 
-#设置环境变量文件
-#在目标服务器（192.168.0.1 192.168.0.2）app用户下执行:
+#Set Environemnt Variable
+#Execute on 192.168.0.1 192.168.0.2 as user app:
 cat >/data/projects/fate/bin/init_env.sh <<EOF
 export PYTHONPATH=/data/projects/fate/python
 export SPARK_HOME=/data/projects/common/spark/spark-2.4.1-bin-hadoop2.7
@@ -372,20 +375,28 @@ export PATH=\$PATH:\$JAVA_HOME/bin
 EOF
 ```
 
-#### 5.9.2 NginX配置文件修改
-配置文件:  /data/projects/fate/proxy/nginx/conf/nginx.conf
-此配置文件NginX使用，配置服务基础设置以及lua代码，可以参考默认nginx.conf手工修改，修改完成后使用命令检测
-```
+#### 5.9.2 Modify NginX Configuration
+
+conf file:  /data/projects/fate/proxy/nginx/conf/nginx.conf
+
+This conf file is used by NginX for service base setting and lua code.
+Please refer to Nginx.conf to manually edit conf; use the following command to check modified conf: 
+
+```bash
 /data/projects/fate/proxy/nginx/sbin/nginx -t
 ```
 
-#### 5.9.3 NginX路由配置文件修改
+#### 5.9.3 Modify NginX Proxy Setting
 
-配置文件:  /data/projects/fate/proxy/nginx/conf/route_table.yaml
-此配置文件NginX使用，配置路由信息，可以参考如下例子手工配置，也可以使用以下指令完成：
+conf file:  /data/projects/fate/proxy/nginx/conf/route_table.yaml
+
+This conf file is used NginX for proxy information.
+User may refer to the example below to manually modify the file.
+Configuration may also be done through commands:
+
 
 ```
-#在目标服务器（192.168.0.1）app用户下修改执行
+#Execute on 192.168.0.1 as user app
 cat > /data/projects/fate/proxy/nginx/conf/route_table.yaml << EOF
 default:
   proxy:
@@ -407,7 +418,7 @@ default:
       port: 9360
 EOF
 
-#在目标服务器（192.168.0.2）app用户下修改执行
+#Execute on 192.168.0.2 as user app
 cat > /data/projects/fate/proxy/nginx/conf/route_table.yaml << EOF
 default:
   proxy:
@@ -430,19 +441,19 @@ default:
 EOF
 ```
 
-#### 5.9.4 FATE-Board配置文件修改
+#### 5.9.4 Modify FATE-Board Configuration
 
 1）conf/application.properties
 
-- 服务端口
+- Service Port
 
-  server.port---默认
+  server.port---default
 
-- fateflow的访问url
+- Fate-Flow access url
 
-  fateflow.url，host：http://192.168.0.1:9380，guest：http://192.168.0.2:9380
+  fateflow.url, host: http://192.168.0.1:9380, guest: http://192.168.0.2:9380
 
-- 数据库连接串、账号和密码
+- Database source name, username, and password
 
   fateboard.datasource.jdbc-url，host：mysql://192.168.0.1:3306，guest：mysql://192.168.0.2:3306
 
@@ -450,12 +461,16 @@ EOF
 
   fateboard.datasource.password：fate_dev
   
-  以上参数调整可以参考如下例子手工配置，也可以使用以下指令完成：
-  
-  配置文件：/data/projects/fate/fateboard/conf/application.properties
 
-```
-#在目标服务器（192.168.0.1）app用户下修改执行
+All above parameters may be modified manually by referring to the example below:
+  
+- example conf file: /data/projects/fate/fateboard/conf/application.properties
+
+
+Configuration may also be done through commands:  
+  
+```bash
+#Execute on 192.168.0.1 as user app
 cat > /data/projects/fate/fateboard/conf/application.properties <<EOF
 server.port=8080
 fateflow.url=http://192.168.0.1:9380
@@ -470,7 +485,7 @@ server.tomcat.max-threads=1000
 server.tomcat.max-connections=20000
 EOF
 
-#在目标服务器（192.168.0.2）app用户下修改执行
+#Execute on 192.168.0.2 as user ap
 cat > /data/projects/fate/fateboard/conf/application.properties <<EOF
 server.port=8080
 fateflow.url=http://192.168.0.2:9380
@@ -486,50 +501,54 @@ server.tomcat.max-connections=20000
 EOF
 ```
 
-2）service.sh
+2) service.sh
 
 ```
-#在目标服务器（192.168.0.1 192.168.0.2）app用户下修改执行
+#Execute on 192.168.0.1 192.168.0.2 as user ap
 cd /data/projects/fate/fateboard
 vi service.sh
 export JAVA_HOME=/data/projects/fate/common/jdk/jdk-8u192
 ```
 
-#### 5.9.5 FATE配置文件修改
+#### 5.9.5 Modify FATE Configuration
  
-  配置文件：/data/projects/fate/python/conf/server_conf.yaml
+  conf file: /data/projects/fate/python/conf/server_conf.yaml
   
-##### 运行配置
-- work_mode(为1表示集群模式，默认)
+##### Runtime Configuration
+- work_mode(1 fot cluster, default 1)
 
-- independent_scheduling_proxy(使用nginx作为Fate-Flow调度协调代理服务，FATE on Spark下需要设置为true)
+- independent_scheduling_proxy(use NginX for FATE-Flow scheduling proxy service; needs to be True for FATE on Spark)
 
-- FATE-Flow的监听ip、端口
+- FATE-Flow ip address and port
 
-- FATE-Board的监听ip、端口
+- FATE-Board ip address and port
 
-- db的连接ip、端口、账号和密码
+- db ip address, port, username, and password
 
-##### 依赖服务配置
-- Spark的相关配置
-    - address:home为Spark home绝对路径
-    - cores_per_node为Spark集群每个节点的cpu核数
-    - nodes为Spark集群节点数量
+##### Dependent Service Configuration
+- Spark
+    - `address:home`: absolute path to Spark home
+    - `cores_per_node`: cpu cores per node in Spark cluster
+    - `nodes`: number of nodes in Spark cluster
 
-- HDFS的相关配置
-    - address:name_node为hdfs的namenode完整地址
-    - address:path_prefix为默认存储路径前缀，若不配置则默认为/
+- HDFS
+    - `address:name_node`: complete address of HDFS namenode
+    - `address:path_prefix`: default prefix for storage path, default `/`
 
-- RabbitMQ相关配置
-    - address:self为本方站点配置
-    - address:$partyid为对方站点配置
+- RabbitMQ
+    - `address:self`: home site address
+    - `address:$partyid`: remote site address
 
-- proxy相关配置，监听ip及端口
+- proxy configuration, address ip & port
 
-  此配置文件格式要按照yaml格式配置，不然解析报错，可以参考如下例子手工配置，也可以使用以下指令完成。
+ 
+ This configuration file should be formatted following yaml format.
+ Please refer to the example below to manually configure. 
+ Configuration may also be done through commands. 
+
 
 ```
-#在目标服务器（192.168.0.1）app用户下修改执行
+#Execute on 192.168.0.1 as user ap
 cat > /data/projects/fate/python/conf/server_conf.yaml <<EOF
 work_mode: 1
 independent_scheduling_proxy: true
@@ -575,7 +594,7 @@ PROXY:
     port: 9390
 EOF
 
-#在目标服务器（192.168.0.2）app用户下修改执行
+#Execute on 192.168.0.2 as user ap
 cat > /data/projects/fate/python/conf/server_conf.yaml <<EOF
 work_mode: 1
 independent_scheduling_proxy: true
@@ -622,12 +641,12 @@ PROXY:
 EOF
 ```
 
-### 5.10 启动服务
+### 5.10 Start Service
 
-**在目标服务器（192.168.0.1 192.168.0.2）app用户下执行**
+**#Execute on 192.168.0.1 192.168.0.2 as user ap**
 
 ```
-#启动FATE服务，FATE-Flow依赖MySQL的启动
+#start FATE service, FATE-Flow depennds on MytSQL to start
 source /data/projects/fate/bin/init_env.sh
 cd /data/projects/fate/python/fate_flow
 sh service.sh start
@@ -637,31 +656,31 @@ cd /data/projects/fate/proxy
 ./nginx/sbin/nginx -c /data/projects/fate/proxy/nginx/conf/nginx.conf
 ```
 
-### 5.11 问题定位
+### 5.11 Debug
 
-1）FATE-Flow日志
+1）FATE-Flow Logs
 
 /data/projects/fate/logs/fate_flow/
 
-2）FATE-Board日志
+2）FATE-Board Logs
 
 /data/projects/fate/fateboard/logs
 
-3) NginX日志
+3) NginX Logs
 
 /data/projects/fate/proxy/nginx/logs
 
-## 6.测试
+## 6.Test
 
 
-### 6.1 Toy_example部署验证
+### 6.1 test deployment with toy-example
 
 
-此测试您需要设置3个参数：`guest_partyid`, `host_partyid`, `work_mode`, `backend`
+Set 3 parameters before starting test: `guest_partyid`, `host_partyid`, `work_mode`, `backend`
 
-#### 6.1.1 单边测试
+#### 6.1.1 Local Test
 
-1）192.168.0.1上执行，guest_partyid和host_partyid都设为10000：
+1) Execute on 192.168.0.1, set guest_partyid & host_partyid to 10000：
 
 ```bash
 source /data/projects/fate/bin/init_env.sh
@@ -669,42 +688,41 @@ cd /data/projects/fate/examples/toy_example/
 python run_toy_example.py 10000 10000 1 -b 1
 ```
 
-类似如下结果表示成功：
+If test succeeds, terminal should print similar results:
 
 "2020-04-28 18:26:20,789 - secure_add_guest.py[line:126] - INFO: success to calculate secure_sum, it is 1999.9999999999998"
 
-2）192.168.0.2上执行，guest_partyid和host_partyid都设为9999:
+2) Execute on 192.168.0.2, set guest_partyid & host_partyid to 9999:
 
-```
+```bash
 source /data/projects/fate/bin/init_env.sh
 cd /data/projects/fate/examples/toy_example/
 python run_toy_example.py 9999 9999 1 -b 1
 ```
 
-类似如下结果表示成功：
+If test succeeds, terminal should print similar results:
 
 "2020-04-28 18:26:20,789 - secure_add_guest.py[line:126] - INFO: success to calculate secure_sum, it is 1999.9999999999998"
 
-#### 6.1.2 双边测试
+#### 6.1.2 Federated Test
 
-选定9999为guest方，在192.168.0.2上执行：
+Set 9999 to be guest, execute on 192.168.0.2:
 
-```
+```bash
 source /data/projects/fate/bin/init_env.sh
 cd /data/projects/fate/examples/toy_example/
 python run_toy_example.py 9999 10000 1 -b 1
 ```
 
-类似如下结果表示成功：
+If test succeeds, terminal should print similar results:
 
 "2020-04-28 18:26:20,789 - secure_add_guest.py[line:126] - INFO: success to calculate secure_sum, it is 1999.9999999999998"
 
-### 6.2 最小化测试
+### 6.2 Min-Test
 
+#### 6.2.1 Upload Pre-set Data
 
-#### **6.2.1 上传预设数据：**
-
-分别在192.168.0.1和192.168.0.2上执行：
+Execute on 192.168.0.1 & 192.168.0.2:
 
 ```bash
 source /data/projects/fate/bin/init_env.sh
@@ -712,15 +730,15 @@ cd /data/projects/fate/examples/scripts/
 python upload_default_data.py -m 1
 ```
 
-更多细节信息，敬请参考[脚本README](../../examples/scripts/README.rst)
+For more details on uploadind data, please refer to, [script README](../../examples/scripts/README.rst)
 
-#### 6.2.2 快速模式
+#### 6.2.2 Fast Mode
 
-请确保guest和host两方均已分别通过给定脚本上传了预设数据。
+Please make sure that guest and host already upload pre-set data through scripts.
 
-快速模式下，最小化测试脚本将使用一个相对较小的数据集，即包含了569条数据的breast数据集。
+With fast mode, min test runs with a small data set--`breast` with 569 entries.
 
-选定9999为guest方，在192.168.0.2上执行：
+Set 9999 to be guest, execute on 192.168.0.2:
 
 ```bash
 source /data/projects/fate/bin/init_env.sh
@@ -728,31 +746,34 @@ cd /data/projects/fate/examples/min_test_task/
 python run_task.py -m 1 -gid 9999 -hid 10000 -aid 10000 -f fast -b 1
 ```
 
-其他一些可能有用的参数包括：
+Other parameters for min-test include:
 
-1. -f: 使用的文件类型. "fast" 代表 breast数据集, "normal" 代表 default credit 数据集.
-2. --add_sbt: 如果被设置为1, 将在运行完lr以后，启动secureboost任务，设置为0则不启动secureboost任务，不设置此参数系统默认为1。
+1. -f: data type to be used. "fast" mean `breast` data, "normal" means `default credit` data.
+2. --add_sbt: if set to 1, a SecureBoost training job will be invoked after LR task completes; if set to 0, SecureBoost task will not be invoked. Default to 1.
 
-若数分钟后在结果中显示了“success”字样则表明该操作已经运行成功了。若出现“FAILED”或者程序卡住，则意味着测试失败。
+If the word "success" is displayed in the result after a few minutes, it indicates that the operation has run successfully. If "FAILED" appears or the program is stuck, it means the test has failed.
 
-#### 6.2.3 正常模式
+#### 6.2.3 Normal Mode
 
-只需在命令中将“fast”替换为“normal”，其余部分与快速模式相同。
+Replace “fast” to “normal” in the command above.
 
-### 6.3. FateBoard testing
+### 6.3. FATE-Board testing
 
-Fate-Voard是一项Web服务。如果成功启动了fateboard服务，则可以通过访问 http://192.168.0.1:8080 和 http://192.168.0.2:8080 来查看任务信息，如果有防火墙需开通。如果fateboard和fateflow没有部署再同一台服务器，需在fateboard页面设置fateflow所部署主机的登陆信息：页面右上侧齿轮按钮--》add--》填写fateflow主机ip，os用户，ssh端口，密码。
+Fate-Board is a Web service. 
+Once FATE-Board service is started successfully, job information can be found on http://192.168.0.1:8080 and http://192.168.0.2:8080.
+Port needs to be opened in presence of firewall. 
+IF Fate-Board and Fate-Flow are deployed to different servers, login information for FATE-Flow server
+needs to be specified on FATE-Board web page: click the gear button on the top right corner --> add --> fill ip, os user, ssh port, and password for FATE-Flow server.
 
-## 7.系统运维
-================
+## 7.System Management
 
-### 7.1 服务管理
+### 7.1 Service Management
 
-**在目标服务器（192.168.0.1 192.168.0.2）app用户下执行**
+**Execute on 192.168.0.1 & 192.168.0.2 as user app**
 
-####  7.1.1 FATE服务管理
+####  7.1.1 FATE Service Management
 
-1) 启动/关闭/查看/重启fate_flow服务
+1) start/stop/check/restart fate_flow service
 
 ```bash
 source /data/projects/fate/init_env.sh
@@ -760,49 +781,49 @@ cd /data/projects/fate/python/fate_flow
 sh service.sh start|stop|status|restart
 ```
 
-如果逐个模块启动，需要先启动eggroll再启动fateflow，fateflow依赖eggroll的启动。
+If modules are started manually, EGGROLL should be first started before FATE-Flow.
 
-2) 启动/关闭/重启FATE-Board服务
+2) start/stop/restart FATE-Board service
 
 ```bash
 cd /data/projects/fate/fateboard
 sh service.sh start|stop|status|restart
 ```
 
-3) 启动/关闭/重启NginX服务
+3) start/stop/restart Nginx service
 
-```
+```bash
 cd /data/projects/fate/proxy
 ./nginx/sbin/nginx -s reload
 ./nginx/sbin/nginx -s stop
 ```
 
-#### 7.1.2 MySQL服务管理
+#### 7.1.2 MySQL Service Management
 
-启动/关闭/查看/重启MySQL服务
+start/stop/check/restart MySQL service
 
 ```bash
 cd /data/projects/fate/common/mysql/mysql-8.0.13
 sh ./service.sh start|stop|status|restart
 ```
 
-### 7.2 查看进程和端口
+### 7.2 Check Proess and Port
 
-**在目标服务器（192.168.0.1 192.168.0.2）app用户下执行**
+**Execute on 192.168.0.1 & 192.168.0.2 as user app**
 
-##### 7.2.1 查看进程
+#### 7.2.1 Check Process
 
 ```
-#根据部署规划查看进程是否启动
+#check if processes are started
 ps -ef | grep -i fate_flow_server.py
 ps -ef | grep -i fateboard
 ps -ef | grep -i nginx
 ```
 
-### 7.2.2 查看进程端口
+#### 7.2.2 Check Process Port
 
 ```
-#根据部署规划查看进程端口是否存在
+#check if processes are active
 #fate_flow_server
 netstat -tlnp | grep 9360
 #fateboard
@@ -812,17 +833,17 @@ netstat -tlnp | grep 9390
 ```
 
 
-### 7.3 服务日志
+### 7.3 Service Logs
 
-| 服务               | 日志路径                                           |
+| Service            | logs path                                           |
 | ------------------ | -------------------------------------------------- |
-| fate_flow&任务日志 | /data/projects/fate/python/logs                    |
+| fate_flow&service logs | /data/projects/fate/python/logs                    |
 | fateboard          | /data/projects/fate/fateboard/logs                 |
 | nginx | /data/projects/fate/proxy/nginx/logs                 |
 | mysql              | /data/projects/fate/common/mysql/mysql-8.0.13/logs |
 
-## 8. 附录
+## 8. Appendix
 
-### 8.1 打包构建
+### 8.1 Build Structure
 
-参见[build指导](../build.md) 
+Please refer to [build guide](../build.md) 

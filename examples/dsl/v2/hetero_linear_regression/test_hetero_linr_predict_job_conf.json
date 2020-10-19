@@ -25,12 +25,6 @@
     "role_parameters": {
         "guest": {
             "0": {
-                "dataio_0": {
-                    "with_label": true,
-                    "label_name": "motor_speed",
-                    "label_type": "float",
-                    "output_format": "dense"
-                },
                 "reader_0": {
                     "table": {
                         "name": "motor_hetero_guest",
@@ -41,9 +35,6 @@
         },
         "host": {
             "0": {
-                "dataio_0": {
-                    "with_label": false
-                },
                 "reader_0": {
                     "table": {
                         "name": "motor_hetero_host",
@@ -51,30 +42,6 @@
                     }
                 }
             }
-        }
-    },
-    "algorithm_parameters": {
-        "hetero_linr_0": {
-            "penalty": "L2",
-            "tol": 0.001,
-            "alpha": 0.01,
-            "optimizer": "sgd",
-            "batch_size": -1,
-            "learning_rate": 0.15,
-            "init_param": {
-                "init_method": "zeros"
-            },
-            "max_iter": 20,
-            "early_stop": "weight_diff",
-            "encrypted_mode_calculator_param": {
-                "mode": "fast"
-            },
-            "decay": 0.0,
-            "decay_sqrt": false
-        },
-        "evaluation_0": {
-            "eval_type": "regression",
-            "pos_label": 1
         }
     }
 }
