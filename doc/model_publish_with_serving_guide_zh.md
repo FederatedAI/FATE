@@ -16,25 +16,19 @@
 
 # 3. 离线集群与在线集群链路配置(两种不同模式)
 
+配置文件: conf/service_conf.yaml
+
 3.1 在线集群不使用zookeeper模式
 
 **1) 修改服务配置**
 
-- 修改arch/conf/server_conf.json
-
-```json
-"servings": [
-         "127.0.0.1:8000"
-      ]
-```
-
 - 填入实际serving-server服务的ip:port，如：
 
-```json
-"servings": [
-         "192.168.1.1:8000",
-         "192.168.1.2:8000"
-      ]
+```yaml
+servings:
+  hosts:
+    - 192.168.0.1:8000
+    - 192.168.0.2:8000
 ```
 
 **2) 服务生效**
@@ -45,22 +39,20 @@
 
 **1) 修改服务配置**
 
-- 修改部署目录下arch/conf/base_conf.yaml
+其中``zookeeper:hosts``填入在线推理集群实际部署Zookeeper的ip:port
 
-  ```yaml
-  use_registry: true
-  zookeeper:
-    hosts:
-      - 192.168.1.1:2181
-      - 192.168.1.2:2181
-    use_acl: true
-    user: fate_dev
-    password: fate_dev
-  ```
+- 若zookeeper开启了ACL，则需要修改``use_acl`` ``user`` ``password``，否则略过
 
-其中``hosts``填入在线推理集群实际部署Zookeeper的ip:port
-
-若zookeeper开启了ACL，则需要设置``use_acl``为``true``且``user``及``password``填入在线推理集群实际部署Zookeeper的用户名与密码；否则设置``use_acl``为``false``
+```yaml
+use_registry: true
+zookeeper:
+  hosts:
+    - 192.168.0.1:2181
+    - 192.168.0.2:2181
+  use_acl: true
+  user: fate_dev
+  password: fate_dev
+```
 
 **2) 服务生效**
 
@@ -74,11 +66,11 @@
 ```json
 {
     "initiator": {
-        "party_id": "9999",
+        "party_id": "10000",
         "role": "guest"
     },
     "role": {
-        "guest": ["9999"],
+        "guest": ["10000"],
         "host": ["10000"],
         "arbiter": ["10000"]
     },

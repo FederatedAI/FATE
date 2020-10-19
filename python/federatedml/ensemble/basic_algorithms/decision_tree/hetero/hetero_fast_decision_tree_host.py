@@ -360,10 +360,10 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
             self.update_instances_node_positions()  # update instances position
             self.host_local_assign_instances_to_new_node()  # assign instances to final leaves
 
-        self.sync_sample_leaf_pos(self.sample_leaf_pos)  # sync sample final leaf positions
         self.convert_bin_to_real2()  # convert bin num to val
         self.sync_leaf_nodes()  # send leaf nodes to guest
         self.process_leaves_info()  # remove encrypted g/h
+        self.sync_sample_leaf_pos(self.sample_leaf_pos)  # sync sample final leaf positions
 
     @staticmethod
     def host_local_traverse_tree(data_inst, tree_node, use_missing=True, zero_as_missing=True):

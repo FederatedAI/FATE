@@ -241,7 +241,7 @@ def _get_channels(mq_names, mq):
     return channel_infos
 
 
-MESSAGE_MAX_SIZE = 200000
+MESSAGE_MAX_SIZE = 50
 
 
 def _partition_snd(kvs, name, tag, total_size, partitions, mq_names, mq):
@@ -279,10 +279,9 @@ def _receive(channel_info, name, tag):
     for method, properties, body in channel_info.consume():
         LOGGER.debug(f"[rabbitmq._receive]count: {count}, method: {method}, properties: {properties}.")
         if properties.message_id != name or properties.correlation_id != tag:
-            continue
             # todo: fix this
-            # raise RuntimeError(f"rabbitmq got unexpected message, "
-            #                    f"require {name}.{tag}, got {properties.message_id}.{properties.correlation_id}")
+            LOGGER.warning(f"[rabbitmq._receive]: require {name}.{tag}, got {properties.message_id}.{properties.correlation_id}")
+            continue
 
         # object
         if properties.content_type == 'text/plain':

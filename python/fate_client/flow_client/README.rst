@@ -1,6 +1,10 @@
 FATE-Flow Client Command Line Interface v2 Guide
 ================================================
 
+[`中文`_]
+
+.. _中文: README_zh.rst
+
 Usage
 -----
 
