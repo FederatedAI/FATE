@@ -1,83 +1,66 @@
 {
-    "initiator": {
-        "role": "guest",
-        "party_id": 10000
-    },
-    "role": {
-        "guest": [
-            10000
-        ],
-        "host": [
-            9999
-        ],
-        "arbiter": [
-            9999
-        ]
-    },
-    "job_parameters": {
-        "work_mode": 0,
-        "backend": 0,
-        "dsl_version": 2,
-        "job_type": "predict",
-        "model_id": "arbiter-9999#guest-10000#host-9999#model",
-        "model_version": "2020101008251441870347"
-    },
-    "role_parameters": {
-        "guest": {
-            "0": {
-                "reader_0": {
-                    "table": {
-                        "name": "breast_homo_guest",
-                        "namespace": "experiment"
-                    }
-                }
+    "components": {
+        "dataio_0": {
+            "input": {
+                "data": {
+                    "data": [
+                        "reader_0.data"
+                    ]
+                },
+                "model": [
+                    "pipeline.dataio_0.model"
+                ]
+            },
+            "module": "DataIO",
+            "output": {
+                "data": [
+                    "data"
+                ]
             }
         },
-        "host": {
-            "0": {
-                "evaluation_0": {
-                    "need_run": false
-                },
-                "reader_0": {
-                    "table": {
-                        "name": "breast_homo_host",
-                        "namespace": "experiment"
-                    }
-                }
+        "reader_0": {
+            "module": "Reader",
+            "output": {
+                "data": [
+                    "data"
+                ]
             }
-        }
-    },
-    "algorithm_parameters": {
-        "dataio_0": {
-            "with_label": true,
-            "output_format": "dense"
+        },
+        "scale_0": {
+            "input": {
+                "data": {
+                    "data": [
+                        "dataio_0.data"
+                    ]
+                },
+                "model": [
+                    "pipeline.scale_0.model"
+                ]
+            },
+            "module": "FeatureScale",
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
         },
         "homo_lr_0": {
-            "penalty": "L2",
-            "tol": 1e-05,
-            "alpha": 0.01,
-            "optimizer": "rmsprop",
-            "batch_size": -1,
-            "learning_rate": 0.15,
-            "init_param": {
-                "init_method": "zeros"
+            "input": {
+                "data": {
+                    "test_data": [
+                        "scale_0.data"
+                    ]
+                },
+                "model": [
+                    "pipeline.homo_lr_0.model"
+                ]
             },
-            "max_iter": 30,
-            "early_stop": "diff",
-            "encrypt_param": {
-                "method": null
-            },
-            "cv_param": {
-                "n_splits": 4,
-                "shuffle": true,
-                "random_seed": 33,
-                "need_cv": false
-            },
-            "decay": 1,
-            "decay_sqrt": true
-        },
-        "evaluation_0": {
-            "eval_type": "binary"
+            "module": "HomoLR",
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
         }
     }
 }

@@ -35,7 +35,7 @@ install_requires = \
      'requests>=2.24.0,<3.0.0',
      'requests_toolbelt>=0.9.1,<0.10.0',
      'ruamel.yaml>=0.16.10,<0.17.0',
-     'tensorflow==1.15.2',
+     'tensorflow==1.15.4',
      'torch==1.4.0',
      'setuptools>50.0']
 
