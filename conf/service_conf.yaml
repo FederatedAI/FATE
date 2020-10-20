@@ -15,7 +15,7 @@ fateboard:
 database:
   name: fate_flow
   user: fate
-  passwd: fate_dev
+  passwd: fate
   host: 127.0.0.1
   port: 3306
   max_connections: 100
@@ -47,14 +47,14 @@ fate_on_spark:
     route_table:
   nginx:
     host: 127.0.0.1
-    port: 9373
+    port: 9390
 model_store_address:
   storage: mysql
   name: model
   host: 127.0.0.1
   port: 3306
-  user: fate_dev
-  passwd: fate_dev
+  user: fate
+  passwd: fate
   max_connections: 10
   stale_timeout: 10
 servings:
@@ -64,8 +64,8 @@ zookeeper:
   hosts:
     - 127.0.0.1:2281
   use_acl: true
-  user: fate_dev
-  password: fate_dev
+  user: fate
+  password: fate
 fatemanager:
   host: 127.0.0.1
   port: 8001

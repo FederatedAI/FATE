@@ -78,7 +78,9 @@ class Federation(FederationABC):
 
         rabbit_manager = RabbitManager(base_user, base_password, f"{host}:{mng_port}")
         rabbit_manager.create_user(union_name, policy_id)
-        route_table_path = conf_utils.get_base_config("fate_on_spark", {}).get("rabbitmq", {}).get("route_table", "conf/rabbitmq_route_table.yaml")
+        route_table_path = rabbitmq_config.get("route_table")
+        if route_table_path is None:
+            route_table_path = "conf/rabbitmq_route_table.yaml"
         route_table = file_utils.load_yaml_conf(conf_path=route_table_path)
         mq = MQ(host, port, union_name, policy_id, route_table)
         return Federation(federation_session_id, party, mq, rabbit_manager)
