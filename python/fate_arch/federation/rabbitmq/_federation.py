@@ -187,8 +187,8 @@ class Federation(FederationABC):
         return names
 
     def _upstream_uri(self, party_id):
-        host = self._mq.route_table.get(str(party_id)).get("host")
-        port = self._mq.route_table.get(str(party_id)).get("port")
+        host = self._mq.route_table.get(int(party_id)).get("host")
+        port = self._mq.route_table.get(int(party_id)).get("port")
         upstream_uri = f"amqp://{self._mq.union_name}:{self._mq.policy_id}@{host}:{port}"
         return upstream_uri
 
