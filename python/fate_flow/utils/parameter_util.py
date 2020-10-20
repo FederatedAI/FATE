@@ -101,7 +101,10 @@ class BaseParameterUtil(object):
                         role_idxs = role_parameters.keys()
                         for role_id in role_idxs:
                             if role_id == "all" or str(idx) in role_id.split("|"):
-                                role_dict = role_parameters[role_id]
+                                if "algorithm_parameters" not in role_parameters[role_id]:
+                                    continue
+                                role_dict = role_parameters[role_id]["algorithm_parameters"]
+
                                 if module_alias in role_dict:
                                     parameters = role_dict.get(module_alias)
                                     merge_dict = ParameterUtil.merge_parameters(runtime_dict[param_class],
@@ -244,6 +247,29 @@ class BaseParameterUtil(object):
 
         return param_class, param_obj
 
+    @staticmethod
+    def get_job_parameters(submit_dict):
+        raise NotImplementedError
+
+    @staticmethod
+    def merge_dict(dict1, dict2):
+        merge_ret = {}
+        keyset = dict1.keys() | dict2.keys()
+        for key in keyset:
+            if key in dict1 and key in dict2:
+                val1 = dict1.get(key)
+                val2 = dict2.get(key)
+                if isinstance(val1, dict):
+                    merge_ret[key] = BaseParameterUtil.merge_dict(val1, val2)
+                else:
+                    merge_ret[key] = val2
+            elif key in dict1:
+                merge_ret[key] = dict1.get(key)
+            else:
+                merge_ret[key] = dict2.get(key)
+
+        return merge_ret
+
 
 class ParameterUtil(BaseParameterUtil):
     @staticmethod
@@ -300,6 +326,16 @@ class ParameterUtil(BaseParameterUtil):
 
         return args_input, args_datakey
 
+    @staticmethod
+    def get_job_parameters(submit_dict):
+        ret = {}
+        job_parameters = submit_dict.get("job_parameters", {})
+        for role in submit_dict["role"]:
+            partyid_list = submit_dict["role"][role]
+            ret[role] = [copy.deepcopy(job_parameters) for i in range(len(partyid_list))]
+
+        return ret
+
 
 class ParameterUtilV2(BaseParameterUtil):
     @classmethod
@@ -331,7 +367,10 @@ class ParameterUtilV2(BaseParameterUtil):
             input_parameters[role] = [copy.deepcopy(cpn_dict) for i in range(len(submit_dict["role"][role]))]
 
             for idx in role_parameters.keys():
-                parameters = role_parameters[idx]
+                if "algorithm_parameters" not in role_parameters[idx]:
+                    continue
+
+                parameters = role_parameters[idx]["algorithm_parameters"]
                 for reader in components:
                     if reader not in parameters:
                         continue
@@ -348,3 +387,33 @@ class ParameterUtilV2(BaseParameterUtil):
                             input_parameters[role][_id][reader] = parameters[reader]
 
         return input_parameters
+
+
+    @staticmethod
+    def get_job_parameters(submit_dict):
+        ret = {}
+        job_parameters = submit_dict.get("job_parameters", {})
+        for role in submit_dict["role"]:
+            partyid_list = submit_dict["role"][role]
+            if "role_parameters" not in submit_dict:
+                ret[role] = [copy.deepcopy(job_parameters) for i in range(len(partyid_list))]
+                continue
+
+            ret[role] = []
+            role_parameters = submit_dict["role_parameters"][role]
+            for idx in range(len(partyid_list)):
+                role_idxs = role_parameters.keys()
+                role_job_parameters = copy.deepcopy(job_parameters)
+                for role_id in role_idxs:
+                    if role_id == "all" or str(idx) in role_id.split("|"):
+                        if "job_parameters" not in role_parameters[role_id]:
+                            continue
+
+                        parameters = role_parameters[role_id]["job_parameters"]
+                        role_job_parameters = ParameterUtilV2.merge_dict(role_job_parameters, parameters)
+
+                ret[role].append(role_job_parameters)
+
+        return ret
+
+
