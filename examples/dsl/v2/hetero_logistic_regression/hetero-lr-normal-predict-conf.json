@@ -25,9 +25,6 @@
     "role_parameters": {
         "host": {
             "0": {
-                "dataio_0": {
-                    "with_label": false
-                },
                 "reader_0": {
                     "table": {
                         "name": "breast_hetero_host",
@@ -38,9 +35,6 @@
         },
         "guest": {
             "0": {
-                "dataio_0": {
-                    "with_label": true
-                },
                 "reader_0": {
                     "table": {
                         "name": "breast_hetero_guest",
@@ -48,39 +42,6 @@
                     }
                 }
             }
-        }
-    },
-    "algorithm_parameters": {
-        "dataio_0": {
-            "output_format": "dense"
-        },
-        "hetero_lr_0": {
-            "penalty": "L2",
-            "tol": 0.0001,
-            "alpha": 0.01,
-            "optimizer": "rmsprop",
-            "batch_size": -1,
-            "learning_rate": 0.15,
-            "init_param": {
-                "init_method": "zeros"
-            },
-            "max_iter": 2,
-            "early_stop": "diff",
-            "cv_param": {
-                "n_splits": 5,
-                "shuffle": false,
-                "random_seed": 103,
-                "need_cv": false
-            },
-            "sqn_param": {
-                "update_interval_L": 3,
-                "memory_M": 5,
-                "sample_size": 5000,
-                "random_seed": null
-            }
-        },
-        "evaluation_0": {
-            "eval_type": "binary"
         }
     }
 }
