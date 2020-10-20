@@ -22,6 +22,7 @@ import pika
 # noinspection PyPackageRequirements
 from pyspark import SparkContext, RDD
 
+from fate_arch.common import conf_utils, file_utils
 from fate_arch.abc import FederationABC, GarbageCollectionABC
 from fate_arch.common import Party
 from fate_arch.common.log import getLogger
@@ -33,16 +34,16 @@ LOGGER = getLogger()
 
 
 class MQ(object):
-    def __init__(self, host, port, union_name, policy_id, mq_conf):
+    def __init__(self, host, port, union_name, policy_id, route_table):
         self.host = host
         self.port = port
         self.union_name = union_name
         self.policy_id = policy_id
-        self.mq_conf = mq_conf
+        self.route_table = route_table
 
     def __str__(self):
         return f"MQ(host={self.host}, port={self.port}, union_name={self.union_name}, " \
-               f"policy_id={self.policy_id}, mq_conf={self.mq_conf})"
+               f"policy_id={self.policy_id}, route_table={self.route_table})"
 
     def __repr__(self):
         return self.__str__()
@@ -62,17 +63,14 @@ class Federation(FederationABC):
     def from_conf(federation_session_id: str,
                   party: Party,
                   runtime_conf: dict,
-                  service_conf: dict):
+                  rabbitmq_config: dict):
 
-        mq_address = service_conf
-        LOGGER.debug(f'mq_address: {mq_address}')
-        rabbitmq_conf = mq_address.get("self")
-
-        host = rabbitmq_conf.get("host")
-        port = rabbitmq_conf.get("port")
-        mng_port = rabbitmq_conf.get("mng_port")
-        base_user = rabbitmq_conf.get('user')
-        base_password = rabbitmq_conf.get('password')
+        LOGGER.debug(f"rabbitmq_config: {rabbitmq_config}")
+        host = rabbitmq_config.get("host")
+        port = rabbitmq_config.get("port")
+        mng_port = rabbitmq_config.get("mng_port")
+        base_user = rabbitmq_config.get('user')
+        base_password = rabbitmq_config.get('password')
 
         federation_info = runtime_conf.get("job_parameters", {}).get("federation_info", {})
         union_name = federation_info.get('union_name')
@@ -80,7 +78,9 @@ class Federation(FederationABC):
 
         rabbit_manager = RabbitManager(base_user, base_password, f"{host}:{mng_port}")
         rabbit_manager.create_user(union_name, policy_id)
-        mq = MQ(host, port, union_name, policy_id, mq_address)
+        route_table_path = conf_utils.get_base_config("fate_on_spark", {}).get("rabbitmq", {}).get("route_table", "conf/rabbitmq_route_table.yaml")
+        route_table = file_utils.load_yaml_conf(conf_path=route_table_path)
+        mq = MQ(host, port, union_name, policy_id, route_table)
         return Federation(federation_session_id, party, mq, rabbit_manager)
 
     def __init__(self, session_id, party: Party, mq: MQ, rabbit_manager: RabbitManager):
@@ -185,8 +185,8 @@ class Federation(FederationABC):
         return names
 
     def _upstream_uri(self, party_id):
-        host = self._mq.mq_conf.get(str(party_id)).get("host")
-        port = self._mq.mq_conf.get(str(party_id)).get("port")
+        host = self._mq.route_table.get(str(party_id)).get("host")
+        port = self._mq.route_table.get(str(party_id)).get("port")
         upstream_uri = f"amqp://{self._mq.union_name}:{self._mq.policy_id}@{host}:{port}"
         return upstream_uri
 
