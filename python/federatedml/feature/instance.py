@@ -51,3 +51,15 @@ class Instance(object):
 
     def set_feature(self, features):
         self.features = features
+
+    def __copy__(self):
+        return Instance(inst_id=self.inst_id,
+                        weight=self.weight,
+                        features=self.features,
+                        label=self.label)
+
+    def __deepcopy__(self, memo):
+        return Instance(inst_id=self.inst_id,
+                        weight=self.weight,
+                        features=self.features[::],
+                        label=self.label)
