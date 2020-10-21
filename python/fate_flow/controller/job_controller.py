@@ -82,7 +82,7 @@ class JobController(object):
         ]
         for engine_type, engine_name in engine_list:
             engine_info = ResourceManager.get_engine_registration_info(engine_type=engine_type, engine_name=engine_name)
-            job_parameters.engines_address[engine_type] = engine_info.f_engine_address
+            job_parameters.engines_address[engine_type] = engine_info.f_engine_config
             engines_info[engine_type] = engine_info
         return engines_info
 
