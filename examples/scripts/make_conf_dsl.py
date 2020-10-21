@@ -2,6 +2,7 @@ import argparse
 import importlib
 import json
 import os
+import sys
 
 cur_dir = os.path.abspath(os.path.dirname(__file__))
 config_yaml_file = os.path.join(cur_dir, '../config.yaml')
@@ -58,8 +59,15 @@ class ConfDSLGenerator(object):
 
         return pipeline
 
+    @staticmethod
+    def __inject_pathon_path(path):
+        additional_path = os.path.realpath(os.path.join(os.path.curdir, path, os.pardir, os.pardir))
+        if additional_path not in sys.path:
+            sys.path.append(additional_path)
+
     def convert(self, pipeline_file):
         self.__make_temp_pipeline(pipeline_file)
+        self.__inject_pathon_path(pipeline_file)
         my_pipeline = self.__run_pipeline()
         conf = my_pipeline.get_train_conf()
         dsl = my_pipeline.get_train_dsl()
