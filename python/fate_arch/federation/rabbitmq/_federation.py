@@ -158,8 +158,7 @@ class Federation(FederationABC):
         mq_names = {"^".join([name, party.role, party.party_id]): self._get_or_create_queue(party, name) for party in parties}
         return mq_names
 
-    def _get_or_create_queue(self, party: Party, name) -> _QueueNames:
-        
+    def _get_or_create_queue(self, party: Party, name) -> _QueueNames:        
         name_party = "^".join([name, party.role, party.party_id])
         
         if name_party not in self._queue_map:
