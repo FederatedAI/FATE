@@ -92,7 +92,7 @@ def __compute_partition_gradient(data, fit_intercept=True, is_sparse=False):
         return np.array(gradient)
 
 
-def compute_gradient(data_instances, fore_gradient, fit_intercept, need_sample_weight):
+def compute_gradient(data_instances, fore_gradient, fit_intercept):
     """
     Compute hetero-regression gradient
     Parameters
@@ -100,18 +100,13 @@ def compute_gradient(data_instances, fore_gradient, fit_intercept, need_sample_w
     data_instances: Table, input data
     fore_gradient: Table, fore_gradient
     fit_intercept: bool, if model has intercept or not
-    need_sample_weight: bool, whether use sample weight for computation
 
     Returns
     ----------
     Table
         the hetero regression model's gradient
     """
-    if need_sample_weight:
-        feat_join_grad = data_instances.join(fore_gradient,
-                                             lambda d, g: (d.features, g * d.weight))
-    else:
-        feat_join_grad = data_instances.join(fore_gradient,
+    feat_join_grad = data_instances.join(fore_gradient,
                                              lambda d, g: (d.features, g))
     is_sparse = data_overview.is_sparse_data(data_instances)
     f = functools.partial(__compute_partition_gradient,
@@ -150,11 +145,12 @@ class Guest(HeteroGradientBase):
         self.unilateral_optim_gradient_transfer = guest_optim_gradient_transfer
 
     def compute_and_aggregate_forwards(self, data_instances, model_weights,
-                                       encrypted_calculator, batch_index, current_suffix, offset=None):
+                                       encrypted_calculator, batch_index, current_suffix, offset=None,
+                                       use_sample_weight=False):
         raise NotImplementedError("Function should not be called here")
 
     def compute_gradient_procedure(self, data_instances, encrypted_calculator, model_weights, optimizer,
-                                   n_iter_, batch_index, offset=None, need_sample_weight=None):
+                                   n_iter_, batch_index, offset=None, use_sample_weight=False):
         """
           Linear model gradient procedure
           Step 1: get host forwards which differ from different algorithm
@@ -171,14 +167,13 @@ class Guest(HeteroGradientBase):
         # self.host_forwards = self.get_host_forward(suffix=current_suffix)
 
         fore_gradient = self.compute_and_aggregate_forwards(data_instances, model_weights, encrypted_calculator,
-                                                            batch_index, current_suffix, offset)
+                                                            batch_index, current_suffix, offset, use_sample_weight)
 
         self.remote_fore_gradient(fore_gradient, suffix=current_suffix)
 
         unilateral_gradient = compute_gradient(data_instances,
                                                fore_gradient,
-                                               model_weights.fit_intercept,
-                                               need_sample_weight)
+                                               model_weights.fit_intercept)
         if optimizer is not None:
             unilateral_gradient = optimizer.add_regular_to_grad(unilateral_gradient, model_weights)
 
@@ -236,8 +231,7 @@ class Host(HeteroGradientBase):
 
         unilateral_gradient = compute_gradient(data_instances,
                                                fore_gradient,
-                                               model_weights.fit_intercept,
-                                               False)
+                                               model_weights.fit_intercept)
         if optimizer is not None:
             unilateral_gradient = optimizer.add_regular_to_grad(unilateral_gradient, model_weights)
 
@@ -265,8 +259,7 @@ class Host(HeteroGradientBase):
         """
         hess_vector = compute_gradient(data_instances,
                                        forward_hess,
-                                       delta_s.fit_intercept,
-                                       False)
+                                       delta_s.fit_intercept)
         return np.array(hess_vector)
 
     def remote_host_forward(self, host_forward, suffix=tuple()):

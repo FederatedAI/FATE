@@ -67,8 +67,9 @@
             "init_param": {
                 "init_method": "random_uniform"
             },
-            "max_iter": 3,
-            "early_stop": "weight_diff"
+            "max_iter": 30,
+            "early_stop": "weight_diff",
+            "use_sample_weight": true
         },
         "evaluation_0": {
             "eval_type": "binary",

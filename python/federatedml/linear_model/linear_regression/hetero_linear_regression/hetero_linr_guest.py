@@ -96,7 +96,7 @@ class HeteroLinRGuest(HeteroLinRBase):
                     self.optimizer,
                     self.n_iter_,
                     batch_index,
-                    need_sample_weight=self.need_sample_weight
+                    use_sample_weight=self.use_sample_weight
                 )
 
                 loss_norm = self.optimizer.loss_norm(self.model_weights)

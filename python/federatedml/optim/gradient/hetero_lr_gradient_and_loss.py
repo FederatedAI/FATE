@@ -36,7 +36,7 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
                                  transfer_variables.loss_intermediate)
 
     def compute_and_aggregate_forwards(self, data_instances, model_weights, encrypted_calculator, batch_index,
-                                       current_suffix, offset=None):
+                                       current_suffix, offset=None, use_sample_weight=False):
         """
         gradient = (1/N)*∑(1/2*ywx-1)*1/2yx = (1/N)*∑(0.25 * wx - 0.5 * y) * x, where y = 1 or -1
         Define wx as guest_forward or host_forward
@@ -52,6 +52,10 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
 
         for host_forward in self.host_forwards:
             self.aggregated_forwards = self.aggregated_forwards.join(host_forward, lambda g, h: g + h)
+
+        if use_sample_weight:
+            self.aggregated_forwards = self.aggregated_forwards.join(data_instances, lambda wx, d: wx * d.weight)
+
         fore_gradient = self.aggregated_forwards.join(data_instances, lambda wx, d: 0.25 * wx - 0.5 * d.label)
         return fore_gradient
 
@@ -94,7 +98,7 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
         LOGGER.debug("In compute_loss, loss list are: {}".format(loss_list))
         self.sync_loss_info(loss_list, suffix=current_suffix)
 
-    def compute_forward_hess(self, data_instances, delta_s, host_forwards):
+    def compute_forward_hess(self, data_instances, delta_s, host_forwards, use_sample_weight=False):
         """
         To compute Hessian matrix, y, s are needed.
         g = (1/N)*∑(0.25 * wx - 0.5 * y) * x
@@ -105,6 +109,10 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
             lambda v: (vec_dot(v.features, delta_s.coef_) + delta_s.intercept_) * 0.25)
         for host_forward in host_forwards:
             forwards = forwards.join(host_forward, lambda g, h: g + (h * 0.25))
+
+        if use_sample_weight:
+            forwards = forwards.join(data_instances, lambda g, d: g * d.weight)
+
         # forward_hess = forwards.mapValues(lambda x: 0.25 * x / sample_size)
         hess_vector = hetero_linear_model_gradient.compute_gradient(data_instances,
                                                                     forwards,

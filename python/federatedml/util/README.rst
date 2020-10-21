@@ -74,7 +74,7 @@ Sample Weight
 Sample Weight assigns weight to input sample.
 Weight may be specified by input param ``class_weight`` or ``sample_weight_name``.
 Output data instances will each have a weight value,
-which may be used for training when setting ``need_sample_weight`` to True.
+which may be used for training when setting ``use_sample_weight`` to True.
 
 How to Use
 ----------

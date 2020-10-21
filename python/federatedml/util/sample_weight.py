@@ -21,16 +21,21 @@ import numpy as np
 from collections import Counter
 
 from federatedml.model_base import ModelBase
+from federatedml.param.sample_weight_param import SampleWeightParam
 from federatedml.protobuf.generated import sample_weight_meta_pb2, sample_weight_param_pb2
 from federatedml.util import consts, LOGGER
 
 
 class SampleWeight(ModelBase):
     def __init__(self):
-        super(SampleWeight, self).__init__()
+        super().__init__()
+        self.model_param = SampleWeightParam()
+        self.model_name = 'SampleWeight'
+        self.model_param_name = 'SampleWeightParam'
+        self.model_meta_name = 'SampleWeightMeta'
 
     def _init_model(self, params):
-        self.params = params
+        self.model_param = params
         self.class_weight = params.class_weight
         self.sample_weight_name = params.sample_weight_name
         self.need_run = params.need_run
@@ -93,12 +98,6 @@ class SampleWeight(ModelBase):
         return weight_loc
 
     @staticmethod
-    def transform_weighted_instance(data_instances, class_weight=None, weight_loc=None):
-        if class_weight and class_weight == 'balanced':
-            class_weight = SampleWeight.get_class_weight(data_instances)
-        return SampleWeight.assign_sample_weight(data_instances, class_weight, weight_loc)
-
-    @staticmethod
     def compute_weight_array(data_instances, class_weight='balanced'):
         if class_weight is None:
             class_weight = {}
@@ -107,11 +106,18 @@ class SampleWeight(ModelBase):
         weight_inst = data_instances.mapValues(lambda v: class_weight.get(v.label, 1))
         return np.array([v[1] for v in list(weight_inst.collect())])
 
+    def transform_weighted_instance(self, data_instances, weight_loc):
+        if self.class_weight and self.class_weight == 'balanced':
+            self.class_weight = SampleWeight.get_class_weight(data_instances)
+        return SampleWeight.assign_sample_weight(data_instances, self.class_weight, weight_loc)
+
     def export_model(self):
-        class_weight = {str(k): v for k, v in self.class_weight.items()}
-        meta_obj = sample_weight_meta_pb2.SampleWeightModelMeta(sample_weight_name=self.sample_weight_name,
+        class_weight=None
+        if self.class_weight:
+            class_weight = {str(k): v for k, v in self.class_weight.items()}
+        meta_obj = sample_weight_meta_pb2.SampleWeightMeta(sample_weight_name=self.sample_weight_name,
                                                                       need_run=self.need_run)
-        param_obj = sample_weight_param_pb2.SampleWeightModelParam(class_weight=class_weight)
+        param_obj = sample_weight_param_pb2.SampleWeightParam(class_weight=class_weight)
         result = {
             self.model_meta_name: meta_obj,
             self.model_param_name: param_obj
@@ -136,10 +142,14 @@ class SampleWeight(ModelBase):
             self.class_weight = {int(k): v for k, v in self.class_weight.items()}
 
         if self.sample_weight_name and self.class_weight:
-            LOGGER.warning(f"both 'sample_weight_name' and 'class_weight' provided,"
-                           f"only 'sample_weight_name' is used")
+            LOGGER.warning(f"Both 'sample_weight_name' and 'class_weight' provided."
+                           f"Only 'sample_weight_name' is used.")
 
+        new_schema = copy.deepcopy(data_instances.schema)
         weight_loc = None
         if self.sample_weight_name:
             weight_loc = SampleWeight.get_weight_loc(data_instances, self.sample_weight_name)
-        return SampleWeight.transform_weighted_instance(data_instances, self.class_weight, weight_loc)
+            new_schema["header"] = new_schema["header"].pop(weight_loc)
+        result_instances = self.transform_weighted_instance(data_instances, weight_loc)
+        result_instances.schema = new_schema
+        return result_instances
