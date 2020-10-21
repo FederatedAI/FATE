@@ -95,7 +95,8 @@ class ConfDSLGenerator(object):
 if __name__ == '__main__':
     arg_parser = argparse.ArgumentParser()
 
-    arg_parser.add_argument("-c", "--config_file", type=str, help="config file", required=True)
+    arg_parser.add_argument("-c", "--config_file", type=str, help="pipeline py file",
+                            required=True)
 
     args = arg_parser.parse_args()
     config_file = args.config_file
