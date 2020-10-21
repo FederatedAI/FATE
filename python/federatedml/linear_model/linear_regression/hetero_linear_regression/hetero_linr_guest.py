@@ -95,7 +95,8 @@ class HeteroLinRGuest(HeteroLinRBase):
                     self.model_weights,
                     self.optimizer,
                     self.n_iter_,
-                    batch_index
+                    batch_index,
+                    need_sample_weight=self.need_sample_weight
                 )
 
                 loss_norm = self.optimizer.loss_norm(self.model_weights)
@@ -143,8 +144,7 @@ class HeteroLinRGuest(HeteroLinRBase):
 
         self._abnormal_detection(data_instances)
         data_instances = self.align_data_header(data_instances, self.header)
-        data_features = self.transform(data_instances)
-        pred = self.compute_wx(data_features, self.model_weights.coef_, self.model_weights.intercept_)
+        pred = self.compute_wx(data_instances, self.model_weights.coef_, self.model_weights.intercept_)
         host_preds = self.transfer_variable.host_partial_prediction.get(idx=-1)
         LOGGER.info("Get prediction from Host")
 

@@ -137,7 +137,7 @@ class Host(hetero_linear_model_gradient.Host, loss_sync.Host):
 
     def compute_loss(self, model_weights, optimizer, n_iter_, batch_index, cipher_operator):
         '''
-        Compute htero linr loss for:
+        Compute hetero linr loss for:
             loss = (1/2N)*\sum(wx-y)^2 where y is label, w is model weight and x is features
 
             Note: (wx - y)^2 = (wx_h)^2 + (wx_g - y)^2 + 2*(wx_h + (wx_g - y))

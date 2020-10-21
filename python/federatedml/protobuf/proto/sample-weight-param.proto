@@ -16,18 +16,10 @@
 
 syntax = "proto3";
 
-package com.webank.ai.fate.core.mlmodel.buffer;
-option java_outer_classname = "LinRModelMetaProto";
+package com.webank.ai.fate.common.mlmodel.buffer;
+option java_outer_classname = "SampleWeightParamProto";
 
-message LinRModelMeta {
-    string penalty = 1;
-    double tol = 2;
-    double alpha = 3;
-    string optimizer = 4;
-    int64 batch_size = 5;
-    double learning_rate = 6;
-    int64 max_iter = 7;
-    string early_stop = 8;
-    bool fit_intercept = 9;
-    bool use_sample_weight = 10;
+
+message SampleWeightParam {
+    map<string, double> class_weight = 1;
 }

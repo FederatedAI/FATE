@@ -76,6 +76,7 @@ class BaseLinearModel(ModelBase):
         self.early_stopping_rounds = params.early_stopping_rounds
         self.metrics = params.metrics
         self.use_first_metric_only = params.use_first_metric_only
+        self.use_sample_weight = params.use_sample_weight
 
     def get_features_shape(self, data_instances):
         if self.feature_shape is not None:

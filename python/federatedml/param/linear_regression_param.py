@@ -99,12 +99,8 @@ class LinearParam(BaseParam):
     use_first_metric_only: bool, default: False
         Indicate whether to use the first metric in `metrics` as the only criterion for early stopping judgement.
 
-    class_weight: str or dict, default: None
-        sample weight used for training, either None or 'balanced'; if using 'balanced',
-        label is used for obtaining sample weight
-
-    sample_weight_name: str, default: None
-        feature name of sample weight.
+    use_sample_weight: bool, default: False
+        whether to use sample weight for training
 
     """
 
@@ -116,7 +112,7 @@ class LinearParam(BaseParam):
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
                  cv_param=CrossValidationParam(), decay=1, decay_sqrt=True, validation_freqs=None,
                  early_stopping_rounds=None, stepwise_param=StepwiseParam(), metrics=None, use_first_metric_only=False,
-                 class_weight=None, sample_weight_name=None):
+                 use_sample_weight=False):
         super(LinearParam, self).__init__()
         self.penalty = penalty
         self.tol = tol
@@ -139,8 +135,7 @@ class LinearParam(BaseParam):
         self.stepwise_param = copy.deepcopy(stepwise_param)
         self.metrics = metrics or []
         self.use_first_metric_only = use_first_metric_only
-        self.class_weight = class_weight
-        self.sample_weight = sample_weight_name
+        self.use_sample_weight = use_sample_weight
 
     def check(self):
         descr = "linear_regression_param's "
@@ -246,12 +241,8 @@ class LinearParam(BaseParam):
         if not isinstance(self.use_first_metric_only, bool):
             raise ValueError("use_first_metric_only should be a boolean")
 
-        if self.class_weight:
-            if isinstance(self.class_weight, str):
-                if self.class_weight.lower() != consts.BALANCED:
-                    raise ValueError(f"class_weight only accepts 'balanced' as string value")
-            elif isinstance(self.class_weight, dict):
-                pass
-            else:
-                raise ValueError(f"class_weight only accepts str or dict")
+        if self.use_sample_weight:
+            if not isinstance(self.use_sample_weight, bool):
+                raise ValueError("use_sample_weight should be boolean")
+
         return True

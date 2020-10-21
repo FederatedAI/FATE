@@ -112,7 +112,8 @@ class HeteroLRBase(BaseLogisticRegression):
                                                           max_iter=self.max_iter,
                                                           early_stop=self.model_param.early_stop,
                                                           fit_intercept=self.fit_intercept,
-                                                          need_one_vs_rest=self.need_one_vs_rest)
+                                                          need_one_vs_rest=self.need_one_vs_rest,
+                                                          use_sample_weight=self.use_sample_weight)
         return meta_protobuf_obj
 
     def get_model_summary(self):

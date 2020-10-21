@@ -1,0 +1,11 @@
+{
+    "module_path":  "federatedml/util",
+    "param_class" : "federatedml/param/sample_weight_param.py/SampleWeightParam",
+    "role":
+    {
+        "guest|host":
+        {
+            "program": "sample_weight.py/SampleWeight"
+        }
+    }
+}

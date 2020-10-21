@@ -115,6 +115,8 @@ class BaseLogisticRegression(BaseLinearModel):
             self.load_single_model(result_obj)
             self.need_one_vs_rest = False
 
+        self.use_sample_weight = meta_obj.use_sample_weight
+
     def load_single_model(self, single_model_obj):
         LOGGER.info("It's a binary task, start to load single model")
         feature_shape = len(self.header)

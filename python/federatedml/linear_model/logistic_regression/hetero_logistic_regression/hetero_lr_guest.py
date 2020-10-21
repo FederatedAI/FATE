@@ -123,7 +123,8 @@ class HeteroLRGuest(HeteroLRBase):
                     self.model_weights,
                     self.optimizer,
                     self.n_iter_,
-                    batch_index
+                    batch_index,
+                    need_sample_weight=self.need_sample_weight
                 )
                 # LOGGER.debug('optim_guest_gradient: {}'.format(optim_guest_gradient))
                 training_info = {"iteration": self.n_iter_, "batch_index": batch_index}

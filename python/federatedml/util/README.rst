@@ -67,3 +67,26 @@ Please check out federatedmd/feature/imputer.py for more details.
    :linenos:
    :pyobject: Imputer.__init__
 
+
+Sample Weight
+=============
+
+Sample Weight assigns weight to input sample.
+Weight may be specified by input param ``class_weight`` or ``sample_weight_name``.
+Output data instances will each have a weight value,
+which may be used for training when setting ``need_sample_weight`` to True.
+
+How to Use
+----------
+
+:params:
+
+    :class_weight: str or dict, class weight dictionary or class weight computation mode. String value only accepts 'balanced'. If dict provided, key should be class(label), and weight will not be standardized.
+
+    :sample_weight_name: str, name of column which specifies sample weight. Obtained weight values extracted will be standardized.
+
+    :need_run: bool, whether to run this module or not
+
+    .. Note::
+
+        If both ``class_weight`` and ``sample_weight_name`` are provided, values from column of ``sample_weight_name`` will be used.
