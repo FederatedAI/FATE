@@ -64,7 +64,7 @@ def stop_job():
     jobs = JobSaver.query_job(job_id=job_id)
     if jobs:
         stat_logger.info(f"request stop job {jobs[0]} to {stop_status}")
-        status_code, response = FederatedScheduler.request_stop_job(job=jobs[0], stop_status=stop_status)
+        status_code, response = FederatedScheduler.request_stop_job(job=jobs[0], stop_status=stop_status, command_body=jobs[0].to_json())
         if status_code == FederatedSchedulingStatusCode.SUCCESS:
             return get_json_result(retcode=RetCode.SUCCESS, retmsg="stop job success")
         else:

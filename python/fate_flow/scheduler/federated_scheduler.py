@@ -94,8 +94,8 @@ class FederatedScheduler(object):
         return status_code, response
 
     @classmethod
-    def request_stop_job(cls, job, stop_status):
-        return cls.job_command(job=job, command="stop/{}".format(stop_status), dest_only_initiator=True)
+    def request_stop_job(cls, job, stop_status, command_body=None):
+        return cls.job_command(job=job, command="stop/{}".format(stop_status), dest_only_initiator=True, command_body=command_body)
 
     @classmethod
     def request_rerun_job(cls, job, command_body):

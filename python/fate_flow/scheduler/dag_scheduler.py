@@ -13,6 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+from playhouse.shortcuts import dict_to_model
 
 from fate_arch.common import FederatedMode
 from fate_arch.common.base_utils import json_loads, json_dumps, current_timestamp
@@ -483,9 +484,12 @@ class DAGScheduler(Cron):
         return total, finished_count
 
     @classmethod
-    def stop_job(cls, job_id, role, party_id, stop_status):
+    def stop_job(cls, job_id, role, party_id, stop_status, job_info=None):
         schedule_logger(job_id=job_id).info(f"request stop job {job_id}")
-        jobs = JobSaver.query_job(job_id=job_id, role=role, party_id=party_id, is_initiator=True)
+        if job_info:
+            jobs = [dict_to_model(Job, job_info)]
+        else:
+            jobs = JobSaver.query_job(job_id=job_id, role=role, party_id=party_id, is_initiator=True)
         if len(jobs) > 0:
             schedule_logger(job_id=job_id).info(f"initiator cancel job {job_id}")
             JobController.cancel_job(job_id=job_id, role=role, party_id=party_id)

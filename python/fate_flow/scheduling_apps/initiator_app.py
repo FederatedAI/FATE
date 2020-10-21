@@ -41,7 +41,7 @@ def internal_server_error(e):
 
 @manager.route('/<job_id>/<role>/<party_id>/stop/<stop_status>', methods=['POST'])
 def stop_job(job_id, role, party_id, stop_status):
-    retcode, retmsg = DAGScheduler.stop_job(job_id=job_id, role=role, party_id=party_id, stop_status=stop_status)
+    retcode, retmsg = DAGScheduler.stop_job(job_id=job_id, role=role, party_id=party_id, stop_status=stop_status, job_info=request.json)
     return get_json_result(retcode=retcode, retmsg=retmsg)
 
 
