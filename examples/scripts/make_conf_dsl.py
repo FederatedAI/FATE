@@ -3,15 +3,9 @@ import importlib
 import json
 import os
 
-# cur_path = os.path.realpath(__file__)
-# for i in range(4):
-#     cur_path = os.path.dirname(cur_path)
-# print(f'fate_path: {cur_path}')
-# sys.path.append(cur_path)
-#
 cur_dir = os.path.abspath(os.path.dirname(__file__))
-config_yaml_file = cur_dir + '/../config.yaml'
-TEMP_FILE_PATH = './temp_pipeline.py'
+config_yaml_file = os.path.join(cur_dir, '../config.yaml')
+TEMP_FILE_PATH = os.path.join(cur_dir, 'temp_pipeline.py')
 
 
 class ConfDSLGenerator(object):
@@ -61,8 +55,7 @@ class ConfDSLGenerator(object):
         mod = importlib.util.module_from_spec(spec)
         loader.exec_module(mod)
         pipeline = mod.main(config_yaml_file)
-        # summary = pipeline.get_component("hetero_feature_binning_0").get_summary()
-        # print(json.dumps(summary, indent=4, ensure_ascii=False))
+
         return pipeline
 
     def convert(self, pipeline_file):
@@ -71,19 +64,19 @@ class ConfDSLGenerator(object):
         conf = my_pipeline.get_train_conf()
         dsl = my_pipeline.get_train_dsl()
 
-        folder_name = pipeline_file.split('/')
-        path = '/'.join(folder_name[:-1])
-        if path == '':
-            path = '.'
-        conf_name = folder_name[-1].replace('.py', '_conf.json')
-        dsl_name = folder_name[-1].replace('.py', '_dsl.json')
+        folder_name, file_name = os.path.split(pipeline_file)
+        print(f"folder_name: {folder_name}, file_name: {file_name}")
+        conf_name = file_name.replace('.py', '_conf.json')
+        dsl_name = file_name.replace('.py', '_dsl.json')
+        conf_name = os.path.join(folder_name, conf_name)
+        dsl_name = os.path.join(folder_name, dsl_name)
 
-        conf_name = '{}/{}'.format(path, conf_name)
-        dsl_name = '{}/{}'.format(path, dsl_name)
-        json.dump(conf, open(conf_name, 'w'), indent=4)
-        print('conf name is {}'.format(conf_name))
-        json.dump(dsl, open(dsl_name, 'w'), indent=4)
-        print('dsl name is {}'.format(dsl_name))
+        with open(conf_name, 'w') as f:
+            json.dump(conf, f, indent=4)
+            print('conf name is {}'.format(conf_name))
+        with open(dsl_name, 'w') as f:
+            json.dump(dsl, f, indent=4)
+            print('dsl name is {}'.format(dsl_name))
 
         self.__delete_temp_file()
 
@@ -94,7 +87,7 @@ class ConfDSLGenerator(object):
 if __name__ == '__main__':
     arg_parser = argparse.ArgumentParser()
 
-    arg_parser.add_argument("-c", "--config_file", type=str, help="config file", default="min-test")
+    arg_parser.add_argument("-c", "--config_file", type=str, help="config file", required=True)
 
     args = arg_parser.parse_args()
     config_file = args.config_file
