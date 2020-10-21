@@ -293,8 +293,8 @@ ls -lrt /data/projects/common/supervisord/supervisord.d/fate-*.conf
 ```
 #注意：URL链接有换行，拷贝的时候注意整理成一行
 cd /data/projects/
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/ansible_nfate_1.4.5_release-1.0.0.tar.gz
-tar xzf ansible_nfate_1.4.5_release-1.0.0.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/ansible_nfate_1.4.6_release-1.0.0.tar.gz
+tar xzf ansible_nfate_1.4.6_release-1.0.0.tar.gz
 ```
 
 4.4 配置文件修改和示例
