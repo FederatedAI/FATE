@@ -330,7 +330,7 @@ class ParameterUtil(BaseParameterUtil):
         job_parameters = submit_dict.get("job_parameters", {})
         for role in submit_dict["role"]:
             partyid_list = submit_dict["role"][role]
-            ret[role] = [copy.deepcopy(job_parameters) for i in range(len(partyid_list))]
+            ret[role] = {party_id: copy.deepcopy(job_parameters) for party_id in partyid_list}
 
         return ret
 
@@ -395,10 +395,10 @@ class ParameterUtilV2(BaseParameterUtil):
         for role in submit_dict["role"]:
             partyid_list = submit_dict["role"][role]
             if not role_job_parameters:
-                ret[role] = [copy.deepcopy(job_parameters) for i in range(len(partyid_list))]
+                ret[role] = {party_id: copy.deepcopy(job_parameters) for party_id in partyid_list}
                 continue
 
-            ret[role] = []
+            ret[role] = {}
             for idx in range(len(partyid_list)):
                 role_idxs = role_job_parameters.keys()
                 parameters = copy.deepcopy(common_job_parameters)
@@ -406,6 +406,6 @@ class ParameterUtilV2(BaseParameterUtil):
                     if role_id == "all" or str(idx) in role_id.split("|"):
                         parameters = ParameterUtilV2.merge_dict(parameters, role_job_parameters[role_id])
 
-                ret[role].append(parameters)
+                ret[role][partyid_list[idx]] = parameters
 
         return ret
