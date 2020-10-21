@@ -82,59 +82,57 @@ class BaseParameterUtil(object):
 
                 role_param_obj = copy.deepcopy(param_obj)
 
-                if "algorithm_parameters" in submit_dict:
-                    if module_alias in submit_dict["algorithm_parameters"]:
-                        common_parameters = submit_dict["algorithm_parameters"].get(module_alias)
+                common_parameters = submit_dict.get("component_parameters", {}).get("common", {}) if version == 2 \
+                    else submit_dict.get("algorithm_parameters", {})
+                if module_alias in common_parameters:
+                    parameters = common_parameters.get(module_alias)
+                    merge_dict = ParameterUtil.merge_parameters(runtime_dict[param_class],
+                                                                parameters,
+                                                                role_param_obj,
+                                                                component=module_alias,
+                                                                module=module,
+                                                                version=version,
+                                                                redundant_param_check=redundant_param_check)
+                    runtime_dict[param_class] = merge_dict
+
+                if version == 2:
+                    component_parameters = submit_dict.get("component_parameters", {}).get("role", {})
+                    role_parameters = component_parameters[role]
+                    role_idxs = role_parameters.keys()
+                    for role_id in role_idxs:
+                        if role_id == "all" or str(idx) in role_id.split("|"):
+                            role_dict = role_parameters[role_id]
+
+                            if module_alias in role_dict:
+                                parameters = role_dict.get(module_alias)
+                                merge_dict = ParameterUtil.merge_parameters(runtime_dict[param_class],
+                                                                            parameters,
+                                                                            role_param_obj,
+                                                                            role_id,
+                                                                            role,
+                                                                            role_num=len(partyid_list),
+                                                                            component=module_alias,
+                                                                            module=module,
+                                                                            version=version,
+                                                                            redundant_param_check=redundant_param_check)
+
+                                runtime_dict[param_class] = merge_dict
+
+                else:
+                    role_dict = submit_dict["role_parameters"][role]
+                    if module_alias in role_dict:
+                        role_parameters = role_dict.get(module_alias)
                         merge_dict = ParameterUtil.merge_parameters(runtime_dict[param_class],
-                                                                    common_parameters,
+                                                                    role_parameters,
                                                                     role_param_obj,
+                                                                    idx,
+                                                                    role,
+                                                                    role_num=len(partyid_list),
                                                                     component=module_alias,
                                                                     module=module,
                                                                     version=version,
                                                                     redundant_param_check=redundant_param_check)
                         runtime_dict[param_class] = merge_dict
-
-                if "role_parameters" in submit_dict and role in submit_dict["role_parameters"]:
-                    if version == 2:
-                        role_parameters = submit_dict["role_parameters"][role]
-
-                        role_idxs = role_parameters.keys()
-                        for role_id in role_idxs:
-                            if role_id == "all" or str(idx) in role_id.split("|"):
-                                if "algorithm_parameters" not in role_parameters[role_id]:
-                                    continue
-                                role_dict = role_parameters[role_id]["algorithm_parameters"]
-
-                                if module_alias in role_dict:
-                                    parameters = role_dict.get(module_alias)
-                                    merge_dict = ParameterUtil.merge_parameters(runtime_dict[param_class],
-                                                                                parameters,
-                                                                                role_param_obj,
-                                                                                role_id,
-                                                                                role,
-                                                                                role_num=len(partyid_list),
-                                                                                component=module_alias,
-                                                                                module=module,
-                                                                                version=version,
-                                                                                redundant_param_check=redundant_param_check)
-
-                                    runtime_dict[param_class] = merge_dict
-
-                    if version == 1:
-                        role_dict = submit_dict["role_parameters"][role]
-                        if module_alias in role_dict:
-                            role_parameters = role_dict.get(module_alias)
-                            merge_dict = ParameterUtil.merge_parameters(runtime_dict[param_class],
-                                                                        role_parameters,
-                                                                        role_param_obj,
-                                                                        idx,
-                                                                        role,
-                                                                        role_num=len(partyid_list),
-                                                                        component=module_alias,
-                                                                        module=module,
-                                                                        version=version,
-                                                                        redundant_param_check=redundant_param_check)
-                            runtime_dict[param_class] = merge_dict
 
                 try:
                     role_param_obj.check()
@@ -388,32 +386,26 @@ class ParameterUtilV2(BaseParameterUtil):
 
         return input_parameters
 
-
     @staticmethod
     def get_job_parameters(submit_dict):
         ret = {}
         job_parameters = submit_dict.get("job_parameters", {})
+        common_job_parameters = job_parameters.get("common", {})
+        role_job_parameters = job_parameters.get("role", {})
         for role in submit_dict["role"]:
             partyid_list = submit_dict["role"][role]
-            if "role_parameters" not in submit_dict:
+            if not role_job_parameters:
                 ret[role] = [copy.deepcopy(job_parameters) for i in range(len(partyid_list))]
                 continue
 
             ret[role] = []
-            role_parameters = submit_dict["role_parameters"][role]
             for idx in range(len(partyid_list)):
-                role_idxs = role_parameters.keys()
-                role_job_parameters = copy.deepcopy(job_parameters)
+                role_idxs = role_job_parameters.keys()
+                parameters = copy.deepcopy(common_job_parameters)
                 for role_id in role_idxs:
                     if role_id == "all" or str(idx) in role_id.split("|"):
-                        if "job_parameters" not in role_parameters[role_id]:
-                            continue
+                        parameters = ParameterUtilV2.merge_dict(parameters, role_job_parameters[role_id])
 
-                        parameters = role_parameters[role_id]["job_parameters"]
-                        role_job_parameters = ParameterUtilV2.merge_dict(role_job_parameters, parameters)
-
-                ret[role].append(role_job_parameters)
+                ret[role].append(parameters)
 
         return ret
-
-
