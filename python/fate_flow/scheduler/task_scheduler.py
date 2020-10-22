@@ -61,11 +61,11 @@ class TaskScheduler(object):
                         # can not start task
                         break
                 else:
-                    # can start task
+                    # all upstream dependent tasks have been complete, can start this task
                     scheduling_status_code = SchedulingStatusCode.HAVE_NEXT
                     status_code = cls.start_task(job=job, task=waiting_task)
                     if status_code == SchedulingStatusCode.NO_RESOURCE:
-                        # Wait for the next round of scheduling
+                        # wait for the next round of scheduling
                         break
                     elif status_code == SchedulingStatusCode.FAILED:
                         scheduling_status_code = SchedulingStatusCode.FAILED

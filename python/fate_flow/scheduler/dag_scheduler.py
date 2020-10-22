@@ -17,9 +17,9 @@
 from fate_arch.common import FederatedMode
 from fate_arch.common.base_utils import json_loads, json_dumps, current_timestamp
 from fate_arch.common.log import schedule_logger
-from fate_arch.common import WorkMode, Backend, EngineType
+from fate_arch.common import WorkMode, Backend
 from fate_arch.common import string_utils
-from fate_flow.db.db_models import Job
+from fate_flow.db.db_models import DB, Job
 from fate_flow.scheduler import FederatedScheduler
 from fate_flow.scheduler import TaskScheduler
 from fate_flow.operation import JobSaver
@@ -30,7 +30,6 @@ from fate_flow.settings import FATE_BOARD_DASHBOARD_ENDPOINT, DEFAULT_TASK_PARAL
 from fate_flow.utils import detect_utils, job_utils, schedule_utils
 from fate_flow.utils.service_utils import ServiceUtils
 from fate_flow.utils import model_utils
-from fate_flow.operation import JobQueue
 from fate_flow.utils.cron import Cron
 from fate_flow.manager import ResourceManager
 from fate_arch.computing import ComputingEngine
@@ -111,12 +110,6 @@ class DAGScheduler(Cron):
                         continue
                     JobController.initialize_tasks(job_id, role, party_id, False, job_initiator, job_parameters, dsl_parser)
 
-        # push into queue
-        try:
-            JobQueue.create_event(job_id=job_id, initiator_role=initiator_role, initiator_party_id=initiator_party_id)
-        except Exception as e:
-            raise Exception(f'push job into queue failed:\n{e}')
-
         schedule_logger(job_id).info(
             'submit job successfully, job id is {}, model id is {}'.format(job.f_job_id, job_parameters.model_id))
         board_url = "http://{}:{}{}".format(
@@ -169,21 +162,21 @@ class DAGScheduler(Cron):
 
     def run_do(self):
         schedule_logger().info("start schedule waiting jobs")
-        events = JobQueue.get_event(job_status=JobStatus.WAITING)
-        schedule_logger().info(f"have {len(events)} waiting jobs")
-        if len(events):
+        jobs = JobSaver.query_job(is_initiator=True, status=JobStatus.WAITING, order_by="create_time", reverse=False)
+        schedule_logger().info(f"have {len(jobs)} waiting jobs")
+        if len(jobs):
             # FIFO
-            event = events[0]
-            schedule_logger().info(f"schedule waiting job {event.f_job_id}")
+            job = jobs[0]
+            schedule_logger().info(f"schedule waiting job {job.f_job_id}")
             try:
-                self.schedule_waiting_jobs(event=event)
+                self.schedule_waiting_jobs(job=job)
             except Exception as e:
-                schedule_logger(event.f_job_id).exception(e)
-                schedule_logger(event.f_job_id).error(f"schedule waiting job {event.f_job_id} failed")
+                schedule_logger(job.f_job_id).exception(e)
+                schedule_logger(job.f_job_id).error(f"schedule waiting job {job.f_job_id} failed")
         schedule_logger().info("schedule waiting jobs finished")
 
         schedule_logger().info("start schedule running jobs")
-        jobs = JobSaver.query_job(is_initiator=True, status=JobStatus.RUNNING)
+        jobs = JobSaver.query_job(is_initiator=True, status=JobStatus.RUNNING, order_by="create_time", reverse=False)
         schedule_logger().info(f"have {len(jobs)} running jobs")
         for job in jobs:
             schedule_logger().info(f"schedule running job {job.f_job_id}")
@@ -196,53 +189,44 @@ class DAGScheduler(Cron):
 
         # some ready job exit before start
         schedule_logger().info("start schedule ready jobs")
-        events = JobQueue.get_event(job_status=JobStatus.READY)
-        schedule_logger().info(f"have {len(events)} ready jobs")
-        for event in events:
-            schedule_logger().info(f"schedule ready job {event.f_job_id}")
+        jobs = JobSaver.query_job(is_initiator=True, ready_signal=True, order_by="create_time", reverse=False)
+        schedule_logger().info(f"have {len(jobs)} ready jobs")
+        for job in jobs:
+            schedule_logger().info(f"schedule ready job {job.f_job_id}")
             try:
-                self.schedule_ready_jobs(event=event)
+                self.schedule_ready_job(job=job)
             except Exception as e:
-                schedule_logger(event.f_job_id).exception(e)
-                schedule_logger(event.f_job_id).error(f"schedule ready job {event.f_job_id} failed:\n{e}")
+                schedule_logger(job.f_job_id).exception(e)
+                schedule_logger(job.f_job_id).error(f"schedule ready job {job.f_job_id} failed:\n{e}")
         schedule_logger().info("schedule ready jobs finished")
 
-        # update canceled job status
-        schedule_logger().info("start schedule canceled jobs")
-        events = JobQueue.get_event(job_status=JobStatus.CANCELED)
-        schedule_logger().info(f"have {len(events)} canceled jobs")
-        for event in events:
-            schedule_logger().info(f"schedule canceled job {event.f_job_id}")
+        schedule_logger().info("start schedule rerun jobs")
+        jobs = JobSaver.query_job(is_initiator=True, rerun_signal=True, order_by="create_time", reverse=False)
+        schedule_logger().info(f"have {len(jobs)} rerun jobs")
+        for job in jobs:
+            schedule_logger().info(f"schedule rerun job {job.f_job_id}")
             try:
-                self.schedule_canceled_jobs(event=event)
+                self.schedule_rerun_job(job=job)
             except Exception as e:
-                schedule_logger(event.f_job_id).exception(e)
-                schedule_logger(event.f_job_id).error(f"schedule canceled job {event.f_job_id} failed:\n{e}")
-        schedule_logger().info("schedule canceled jobs finished")
+                schedule_logger(job.f_job_id).exception(e)
+                schedule_logger(job.f_job_id).error(f"schedule job {job.f_job_id} failed")
+        schedule_logger().info("schedule rerun jobs finished")
 
     @classmethod
-    def schedule_waiting_jobs(cls, event):
-        job_id, initiator_role, initiator_party_id, = event.f_job_id, event.f_initiator_role, event.f_initiator_party_id,
-        update_status = JobQueue.update_event(job_id=job_id,
-                                              initiator_role=initiator_role,
-                                              initiator_party_id=initiator_party_id,
-                                              job_status=JobStatus.READY)
-        if not update_status:
+    def schedule_waiting_jobs(cls, job):
+        job_id, initiator_role, initiator_party_id, = job.f_job_id, job.f_initiator_role, job.f_initiator_party_id,
+        if not cls.ready_signal(job_id=job_id, set_or_cancel=True):
             schedule_logger(job_id).info(f"job {job_id} may be handled by another scheduler")
             return
         # apply resource on all party
         jobs = JobSaver.query_job(job_id=job_id, role=initiator_role, party_id=initiator_party_id)
         if not jobs:
-            JobQueue.delete_event(job_id=job_id)
             return
         job = jobs[0]
         apply_status_code, federated_response = FederatedScheduler.resource_for_job(job=job, operation_type=ResourceOperation.APPLY)
         if apply_status_code == FederatedSchedulingStatusCode.SUCCESS:
             cls.start_job(job_id=job_id, initiator_role=initiator_role, initiator_party_id=initiator_party_id)
-            JobQueue.update_event(job_id=job_id,
-                                  initiator_role=initiator_role,
-                                  initiator_party_id=initiator_party_id,
-                                  job_status=JobStatus.RUNNING)
+            cls.ready_signal(job_id=job_id, set_or_cancel=False)
         else:
             # rollback resource
             rollback_party = {}
@@ -271,21 +255,36 @@ class DAGScheduler(Cron):
                 cls.stop_job(job_id=job_id, role=initiator_role, party_id=initiator_party_id, stop_status=JobStatus.FAILED)
                 schedule_logger(job_id).info(f"apply resource error, stop job {job_id}")
             else:
-                update_status = JobQueue.update_event(job_id=job_id,
-                                                      initiator_role=initiator_role,
-                                                      initiator_party_id=initiator_party_id,
-                                                      job_status=JobStatus.WAITING)
+                update_status = cls.ready_signal(job_id=job_id, set_or_cancel=False)
                 schedule_logger(job_id).info(f"update job {job_id} status to waiting {update_status}")
 
     @classmethod
-    def schedule_ready_jobs(cls, event):
-        job_id, initiator_role, initiator_party_id, = event.f_job_id, event.f_initiator_role, event.f_initiator_party_id,
-        update_status = JobQueue.update_event(job_id=job_id,
-                                              initiator_role=initiator_role,
-                                              initiator_party_id=initiator_party_id,
-                                              job_status=JobStatus.WAITING,
-                                              ttl=5*60*1000)
-        schedule_logger(job_id).info(f"update job {job_id} ready status to waiting {update_status}")
+    def schedule_ready_job(cls, job):
+        job_id, initiator_role, initiator_party_id, = job.f_job_id, job.f_initiator_role, job.f_initiator_party_id
+        update_status = cls.ready_signal(job_id=job_id, set_or_cancel=False, ready_timeout_ttl=5 * 60 * 1000)
+        schedule_logger(job_id).info(f"cancel job {job_id} ready signal {update_status}")
+
+    @classmethod
+    def schedule_rerun_job(cls, job):
+        if EndStatus.contains(job.f_status):
+            job.f_status = JobStatus.WAITING
+            job.f_ready_signal = False
+            job.f_ready_time = None
+            job.f_rerun_signal = False
+            job.f_progress = 0
+            job.f_end_time = None
+            job.f_elapsed = None
+            schedule_logger(job_id=job.f_job_id).info(f"job {job.f_job_id} has been finished, set waiting to rerun")
+            status, response = FederatedScheduler.sync_job_status(job=job)
+            if status == FederatedSchedulingStatusCode.SUCCESS:
+                cls.rerun_signal(job_id=job.f_job_id, set_or_cancel=False)
+                FederatedScheduler.sync_job(job=job, update_fields=["ready_signal", "ready_time", "rerun_signal", "progress", "end_time", "elapsed"])
+                schedule_logger(job_id=job.f_job_id).info(f"job {job.f_job_id} set waiting to rerun successfully")
+            else:
+                schedule_logger(job_id=job.f_job_id).info(f"job {job.f_job_id} set waiting to rerun failed")
+        else:
+            cls.rerun_signal(job_id=job.f_job_id, set_or_cancel=False)
+            cls.schedule_running_job(job)
 
     @classmethod
     def start_job(cls, job_id, initiator_role, initiator_party_id):
@@ -307,20 +306,15 @@ class DAGScheduler(Cron):
             schedule_logger(job_id=job_id).error("can not found job {} on initiator {} {}".format(job_id, initiator_role, initiator_party_id))
 
     @classmethod
-    def schedule_running_job(cls, job, canceled=False):
+    def schedule_running_job(cls, job):
         schedule_logger(job_id=job.f_job_id).info("scheduling job {}".format(job.f_job_id))
         dsl_parser = schedule_utils.get_job_dsl_parser(dsl=job.f_dsl,
                                                        runtime_conf=job.f_runtime_conf,
                                                        train_runtime_conf=job.f_train_runtime_conf)
-        if not canceled:
-            job_events = JobQueue.query_event(job_id=job.f_job_id, initiator_role=job.f_role, initiator_party_id=job.f_party_id)
-            if job_events and job_events[0].f_job_status == JobStatus.CANCELED:
-                canceled = True
-                schedule_logger(job_id=job.f_job_id).info("get cancel job {} event from queue".format(job.f_job_id))
-        task_scheduling_status_code, tasks = TaskScheduler.schedule(job=job, dsl_parser=dsl_parser, canceled=canceled)
+        task_scheduling_status_code, tasks = TaskScheduler.schedule(job=job, dsl_parser=dsl_parser, canceled=job.f_cancel_signal)
         tasks_status = [task.f_status for task in tasks]
         new_job_status = cls.calculate_job_status(task_scheduling_status_code=task_scheduling_status_code, tasks_status=tasks_status)
-        if new_job_status == JobStatus.WAITING and canceled:
+        if new_job_status == JobStatus.WAITING and job.f_cancel_signal:
             new_job_status = JobStatus.CANCELED
         total, finished_count = cls.calculate_job_progress(tasks_status=tasks_status)
         new_progress = float(finished_count) / total * 100
@@ -340,33 +334,6 @@ class DAGScheduler(Cron):
         if EndStatus.contains(job.f_status):
             cls.finish(job=job, end_status=job.f_status)
         schedule_logger(job_id=job.f_job_id).info("finish scheduling job {}".format(job.f_job_id))
-
-    @classmethod
-    def schedule_canceled_jobs(cls, event):
-        job_id, initiator_role, initiator_party_id = event.f_job_id, event.f_initiator_role, event.f_initiator_party_id
-        jobs = JobSaver.query_job(job_id=job_id, role=initiator_role, party_id=initiator_party_id, is_initiator=True)
-        for job in jobs:
-            # update canceled job status
-            cls.schedule_running_job(job=job, canceled=True)
-
-    @classmethod
-    def align_input_data_partitions(cls, job: Job, dsl_parser):
-        job_args = dsl_parser.get_args_input()
-        dataset = JobController.get_dataset(is_initiator=True,
-                                            role=job.f_initiator_role,
-                                            party_id=job.f_initiator_party_id,
-                                            roles=job.f_roles, job_args=job_args)
-        input_data_aligned_partitions = 0  # Large integers are not used
-        status, partys_response = FederatedScheduler.align_args(job=job, command_body=dataset)
-        schedule_logger(job_id=job.f_job_id).info("align partition partys response: {}".format(partys_response))
-        for role, party_args in partys_response.items():
-            for party_id, response in party_args.items():
-                if not response["retcode"]:
-                    partitions = response.get('data').get('min_input_data_partition')
-                    if partitions:
-                        if input_data_aligned_partitions == 0 or partitions < input_data_aligned_partitions:
-                            input_data_aligned_partitions = partitions
-        return input_data_aligned_partitions
 
     @classmethod
     def rerun_job(cls, job_id, initiator_role, initiator_party_id, component_name):
@@ -408,22 +375,12 @@ class DAGScheduler(Cron):
                 schedule_logger(job_id=job_id).info(f"create task {task.f_task_id} new version {task.f_task_version} successfully")
                 job_can_rerun = True
         if job_can_rerun:
-            if EndStatus.contains(job.f_status):
-                job.f_status = JobStatus.WAITING
-                job.f_end_time = None
-                job.f_elapsed = None
-                job.f_progress = 0
-                schedule_logger(job_id=job_id).info(f"job {job_id} has been finished, set waiting to rerun")
-                status, response = FederatedScheduler.sync_job_status(job=job)
-                if status == FederatedSchedulingStatusCode.SUCCESS:
-                    FederatedScheduler.sync_job(job=job, update_fields=["end_time", "elapsed", "progress"])
-                    JobQueue.create_event(job_id=job_id, initiator_role=initiator_role, initiator_party_id=initiator_party_id)
-                    schedule_logger(job_id=job_id).info(f"job {job_id} set waiting to rerun successfully")
-                else:
-                    schedule_logger(job_id=job_id).info(f"job {job_id} set waiting to rerun failed")
+            schedule_logger(job_id=job_id).info(f"job {job_id} set rerun signal")
+            status = cls.rerun_signal(job_id=job_id, set_or_cancel=True)
+            if status:
+                schedule_logger(job_id=job_id).info(f"job {job_id} set rerun signal successfully")
             else:
-                # status updates may be delayed, and in a very small probability they will be executed after the rerun command
-                schedule_logger(job_id=job_id).info(f"job {job_id} status is {job.f_status}, will be run new version waiting task")
+                schedule_logger(job_id=job_id).info(f"job {job_id} set rerun signal failed")
         else:
             schedule_logger(job_id=job_id).info(f"job {job_id} no task to rerun")
 
@@ -486,11 +443,12 @@ class DAGScheduler(Cron):
 
     @classmethod
     def stop_job(cls, job_id, role, party_id, stop_status):
-        schedule_logger(job_id=job_id).info(f"request stop job {job_id}")
+        schedule_logger(job_id=job_id).info(f"request stop job {job_id} with {stop_status}")
         jobs = JobSaver.query_job(job_id=job_id, role=role, party_id=party_id, is_initiator=True)
         if len(jobs) > 0:
             schedule_logger(job_id=job_id).info(f"initiator cancel job {job_id}")
-            JobController.cancel_job(job_id=job_id, role=role, party_id=party_id)
+            set_cancel_status = cls.cancel_signal(job_id=job_id, set_or_cancel=True)
+            schedule_logger(job_id=job_id).info(f"initiator set job {job_id} cancel signal {set_cancel_status}")
             job = jobs[0]
             job.f_status = stop_status
             schedule_logger(job_id=job_id).info(f"request cancel job {job_id} to all party")
@@ -502,14 +460,39 @@ class DAGScheduler(Cron):
                 schedule_logger(job_id=job_id).info(f"cancel job {job_id} failed, {response}")
                 return RetCode.FEDERATED_ERROR, json_dumps(response)
         else:
-            schedule_logger(job_id=job_id).info(f"can not found job {job_id} to stop, delete event on {role} {party_id}")
-            JobQueue.delete_event(job_id=job_id)
-            return RetCode.SUCCESS, "can not found job, delete job waiting event"
+            return RetCode.SUCCESS, "can not found job"
+
+    @classmethod
+    @DB.connection_context()
+    def ready_signal(cls, job_id, set_or_cancel: bool, ready_timeout_ttl=None):
+        filters = [Job.f_job_id == job_id]
+        if set_or_cancel:
+            update_fields = {Job.f_ready_signal: True, Job.f_ready_time: current_timestamp()}
+            filters.append(Job.f_ready_signal == False)
+        else:
+            update_fields = {Job.f_ready_signal: False, Job.f_ready_time: None}
+            filters.append(Job.f_ready_signal == True)
+            if ready_timeout_ttl:
+                filters.append(current_timestamp() - Job.f_ready_time > ready_timeout_ttl)
+        update_status = Job.update(update_fields).where(*filters).execute() > 0
+        return update_status
+
+    @classmethod
+    @DB.connection_context()
+    def cancel_signal(cls, job_id, set_or_cancel: bool):
+        update_status = Job.update({Job.f_cancel_signal: set_or_cancel}).where(Job.f_job_id == job_id).execute() > 0
+        return update_status
+
+    @classmethod
+    @DB.connection_context()
+    def rerun_signal(cls, job_id, set_or_cancel: bool):
+        update_status = Job.update({Job.f_rerun_signal: set_or_cancel}).where(Job.f_job_id == job_id).execute() > 0
+        return update_status
 
     @classmethod
     def finish(cls, job, end_status):
         schedule_logger(job_id=job.f_job_id).info("Job {} finished with {}, do something...".format(job.f_job_id, end_status))
-        FederatedScheduler.stop_job(job=job, stop_status=end_status)
+        cls.stop_job(job_id=job.f_job_id, role=job.f_initiator_role, party_id=job.f_initiator_party_id, stop_status=end_status)
         FederatedScheduler.clean_job(job=job)
-        JobQueue.delete_event(job_id=job.f_job_id)
+        cls.cancel_signal(job_id=job.f_job_id, set_or_cancel=False)
         schedule_logger(job_id=job.f_job_id).info("Job {} finished with {}, done".format(job.f_job_id, end_status))
