@@ -27,6 +27,7 @@ from fate_flow.entity.types import ResourceOperation, RunParameters
 from fate_flow.settings import stat_logger, STANDALONE_BACKEND_VIRTUAL_CORES_PER_NODE, SUPPORT_ENGINES, \
     MAX_CORES_PERCENT_PER_JOB, DEFAULT_TASK_CORES_PER_NODE
 from fate_flow.utils import job_utils
+from fate_flow.utils.config_adapter import JobRuntimeConfigAdapter
 
 
 class ResourceManager(object):
@@ -207,7 +208,8 @@ class ResourceManager(object):
             dsl, runtime_conf, train_runtime_conf = job_utils.get_job_configuration(job_id=job_id,
                                                                                     role=role,
                                                                                     party_id=party_id)
-            job_parameters = RunParameters(**runtime_conf["job_parameters"])
+            job_parameters = JobRuntimeConfigAdapter(runtime_conf).get_job_parameters_dict()
+            job_parameters = RunParameters(**job_parameters)
         cores = job_parameters.adaptation_parameters["task_cores_per_node"] * job_parameters.adaptation_parameters[
             "task_nodes"] * job_parameters.task_parallelism
         memory = job_parameters.adaptation_parameters["task_memory_per_node"] * job_parameters.adaptation_parameters[
