@@ -395,7 +395,7 @@ class ParameterUtilV2(BaseParameterUtil):
         for role in submit_dict["role"]:
             partyid_list = submit_dict["role"][role]
             if not role_job_parameters:
-                ret[role] = {party_id: copy.deepcopy(job_parameters) for party_id in partyid_list}
+                ret[role] = {party_id: copy.deepcopy(common_job_parameters) for party_id in partyid_list}
                 continue
 
             ret[role] = {}
