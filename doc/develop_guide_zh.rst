@@ -13,13 +13,14 @@
 
 1. 定义将在此模块中使用的 python 参数对象。
 
-2. 定义模块的 json 配置文件。
+2. 定义模块的 Setting conf json 配置文件。
 
-3. 定义模块的默认运行时（runtime）配置文件。
+3. 如果模块需要联邦，则需定义传输变量配置文件。
 
-4. 如果模块需要联邦，则需定义 transfer_variable.json 文件。
+4. 您的算法模块需要继承model_base类，并完成几个指定的函数。
 
-5. 定义您的模块继承的 model_base 类。
+5. 若希望通过python脚本直接启动组件，需要在fate_client中定义Pipeline组件。
+
 
 在以下各节中，我们将通过 toy_example 详细描述这 5 个步骤。
 
@@ -30,14 +31,14 @@
 
 为定义可用的参数对象，需要三个步骤。
 
-a. 打开一个新的 python 文件，将其重命名为 xxx_param.py，其中xxx代表您模块的名称，并将其放置在 `federatedml/param/` 文件夹中。
-   在 xxx_param.py 中定义它的类对象，应该继承 `federatedml/param/base_param.py` 中定义的 BaseParam 类。
+a. 打开一个新的 python 文件，将其重命名为 xxx_param.py，其中xxx代表您模块的名称，并将其放置在 `python/federatedml/param/` 文件夹中。
+   在 xxx_param.py 中定义它的类对象，应该继承 `python/federatedml/param/base_param.py` 中定义的 BaseParam 类。
 
 b. 参数类的 `__init__` 方法应该指定模块使用的所有参数。
 
 c. 重载 BaseParam 的参数检查接口，否则将会抛出未实现的错误。检查方法被用于验证参数变量是否可用。
 
-以 hetero lr 的参数对象为例，python文件为:download:`federatedml/param/logistic_regression_param.py <../federatedml/param/logistic_regression_param.py>`
+以 hetero lr 的参数对象为例，python文件为 `federatedml/param/logistic_regression_param.py <../python/federatedml/param/logistic_regression_param.py>`_
 
 首先，它继承自 BaseParam：
 
@@ -105,34 +106,31 @@ c. 重载 BaseParam 的参数检查接口，否则将会抛出未实现的错误
 
 定义配置文件是为了使 `fate_flow` 模块通过该文件以获取有关如何启动模块程序的信息。
 
-a. 在 `federatedml/conf/setting_conf/` 中定义名为 xxx.json 的配置文件，其中 xxx 是您要开发的模块。请注意，xxx.json 的名称 “xxx” 要求非常严格，因为当 fate_flow dsl 解析器在作业 dsl 中提取模块 “xxx” 时，它只是将模块名称 “xxx” 与 “.json” 连接起来，并在 `federatedml/conf/setting_conf/xxx.json` 中检索配置文件。
+a. 在 `python/federatedml/conf/setting_conf/` 中定义名为 xxx.json 的配置文件，其中 xxx 是您要开发的模块。请注意，xxx.json 的名称 “xxx” 要求非常严格，因为当 fate_flow dsl 解析器在作业 dsl 中提取模块 “xxx” 时，它只是将模块名称 “xxx” 与 “.json” 连接起来，并在 `python/federatedml/conf/setting_conf/xxx.json` 中检索配置文件。
 
 b. 设置 conf.json 的字段规范。
 
    :module_path:
       您开发的模块的路径前缀。
-   :default_runtime_conf:
-      参数变量的缺省配置文件，将在本文第 3 步中详细描述。
    :param_class:
       在步骤 1 中定义的 param_class 的路径，它是参数 python 文件和参数对象名称的路径的连结。
    :role:
        ::
 
             "role": {
-                "guest": 启动客户机程序的路径后缀
-                "host":  启动主机程序的路径后缀
-                "arbiter": 启动仲裁程序的路径后缀
+                "guest": 启动Guest端程序的路径后缀
+                "host":  启动Host端程序的路径后缀
+                "arbiter": 启动Arbiter端程序的路径后缀
             }
 
        另外，如果该模块不需要联邦，即各方都可以启动同一个程序文件，那么 `"guest | host | arbiter"` 可以作为定义角色密钥的另一种方法。
 
-也可以用 hetero-lr 来说明，您可以在 :download:`federatedml/conf/setting_conf/HeteroLR.json <../federatedml/conf/setting_conf/HeteroLR.json>` 中找到它。
+也可以用 hetero-lr 来说明，您可以在 `federatedml/conf/setting_conf/HeteroLR.json <../python/federatedml/conf/setting_conf/HeteroLR.json>`_ 中找到它。
 
 .. code-block:: json
 
     {
         "module_path":  "federatedml/logistic_regression/hetero_logistic_regression",
-        "default_runtime_conf": "logistic_regression_param.json",
         "param_class" : "federatedml/param/logistic_regression_param.py/LogisticParam",
         "role":
         {
@@ -151,76 +149,47 @@ b. 设置 conf.json 的字段规范。
         }
     }
 
-我们来看一下在 HeteroLR.json 里上面这部分内容：HeteroLR 是一个联邦模块，它的Guest程序在 `federatedml/logistic_regression/hetero_logistic_regression/hetero_lr_guest.py` 中定义，并且 HeteroLRGuest 是一个Guest类对象，对于Host和Arbiter类对象也有类似的定义。fate_flow 会结合 module_path 和角色程序来运行该模块。"param_class" 指在 `federatedml/param/logistic_regression_param.py` 中定义了 HeteroLR 的参数类对象，并且类名称为 LogisticParam。默认的运行时配置文件位于 :download:`federatedml/param/logistic_regression_param.py <../federatedml/param/logistic_regression_param.py>` 中。
+我们来看一下在 HeteroLR.json 里上面这部分内容：HeteroLR 是一个联邦模块，它的Guest程序在 `python/federatedml/logistic_regression/hetero_logistic_regression/hetero_lr_guest.py` 中定义，并且 HeteroLRGuest 是一个Guest类对象，对于Host和Arbiter类对象也有类似的定义。fate_flow 会结合 module_path 和角色程序来运行该模块。"param_class" 指在 `python/federatedml/param/logistic_regression_param.py` 中定义了 HeteroLR 的参数类对象，并且类名称为 LogisticParam。
 
-第三步：定义此模块的默认运行时配置（可选）
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-缺省运行时配置为参数类中定义的变量设置缺省值。若用户没有配置这些参数，则将使用这些缺省值。应将其放在`federatedml/conf/default_runtime_conf`（与 setting_conf 的 "default_runtime_conf" 字段匹配）。这是编写这些 json 文件时可选项。
-
-例如，HeteroLR 的缺省变量在`federatedml/conf/default_runtime_conf/logistic_regression_param.json`中给出。
-
-.. code-block:: json
-
-    {
-      "penalty": "L2",
-      "optimizer": "sgd",
-      "eps": 1e-5,
-      "alpha": 0.01,
-      "max_iter": 100,
-      "converge_func": "diff",
-      "re_encrypt_batches": 2,
-      "party_weight": 1,
-      "batch_size": 320,
-      "learning_rate": 0.01,
-      "init_param": {
-          "init_method": "random_normal"
-      }
-    }
-
-第四步：定义此模块的传递变量 json 文件并生成传递变量对象（可选）
+第三步：定义此模块的传递变量py文件并生成传递变量对象（可选）
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 仅在此模块被联邦时（即不同参与方之间存在信息交互）才需要执行此步骤。
 
 .. Note::
-   应将其放在 "arch/transfer_variables/auth_conf/federatedml" 文件夹中。
+   应将其放在 `transfer_class <../python/federatedml/transfer_variable/transfer_class>`_ 文件夹中。
 
-在 json 文件中，您需要做的第一件事就是定义 transfer_variable 对象的名称，例如 “HeteroLRTransferVariable”。然后，定义 transfer_variables。transfer_variable 包含三个字段：
-
-:variable name: 变量名
-:src: 应为 "guest"，"host"，"arbiter" 之一，它表示发送交互信息从何处发出。
-:dst: 应为 "guest"，"host"，"arbiter" 的某些组合列表，用于定义将交互信息发送到何处。
-
-
-以下是 “hetero_lr.json” 的内容。
+在该定义文件中，您需要创建需要的 transfer_variable 类，并继承BaseTransferVariables类，然后定义相应的变量，并为其赋予需要的传输权限。以 “HeteroBoostingTransferVariable”为例，可以参考一下代码：
 
 .. code-block:: json
 
-    {
-      "HeteroLRTransferVariable": {
-        "paillier_pubkey": {
-          "src": "arbiter",
-          "dst": [
-            "host",
-            "guest"
-          ]
-        },
-        "batch_data_index": {
-          "src": "guest",
-          "dst": [
-            "host"
-          ]
-        }
-      }
-    }
+    from federatedml.transfer_variable.base_transfer_variable import BaseTransferVariables
 
 
-在 json 文件编写完成后，运行 arch/transfer_variables/transfer_variable_generate.py 程序，
-您将在 :download:`arch/transfer_variables/transfer_variable_generate.py <../arch/transfer_variables/transfer_variable_generate.py>` 中获得一个 transfer_variable python 类对象，xxx 是此 json 文件的文件名。
+    # noinspection PyAttributeOutsideInit
+    class HeteroBoostingTransferVariable(BaseTransferVariables):
+        def __init__(self, flowid=0):
+            super().__init__(flowid)
+            self.booster_dim = self._create_variable(name='booster_dim', src=['guest'], dst=['host'])
+            self.stop_flag = self._create_variable(name='stop_flag', src=['guest'], dst=['host'])
+            self.predict_start_round = self._create_variable(name='predict_start_round', src=['guest'], dst=['host'])
 
 
-第五步：定义您的模块（应继承 model_base）
+其中，需要设定的属性为：
+
+:name: 变量名
+:src: 应为 "guest"，"host"，"arbiter" 的某些组合，它表示发送交互信息从何处发出。
+:dst: 应为 "guest"，"host"，"arbiter" 的某些组合列表，用于定义将交互信息发送到何处。
+
+
+在 python 文件编写完成后，运行以下程序，可在 `auth_conf <../python/federatedml/transfer_variable/auth_conf>`_ 中生成对应的json配置文件。该配置文件将被fate_flow识别并用于后续权限判断。
+
+.. code-block:: bash
+
+   python fate_arch/federation/transfer_variable/scripts/generate_auth_conf.py federatedml federatedml/transfer_variable/auth_conf
+
+
+第四步：定义您的模块（应继承 model_base）
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 fate_flow_client 模块的运行规则是：
@@ -231,16 +200,17 @@ fate_flow_client 模块的运行规则是：
 4. 如果需要，调用 save_data 方法。
 5. 如果需要，调用 export_model 方法。
 
-在本节中，我们讲解如何执行规则 3 至 5 。:download:`federatedml/model_base.py <../federatedml/model_base.py>`.
+在本节中，我们讲解如何执行规则 3 至 5 。需要被继承的model_base类位于：`python/federatedml/model_base.py <../python/federatedml/model_base.py>`_ .
 
-:在需要时重载 run 接口:
-   run 函数具有以下形式。
+:在需要时重载 fit 接口:
+   fit 函数具有以下形式。
 
    .. code-block:: python
 
-      def fit(self, train_data, validate_data):
+      def fit(self, train_data, validate_data=None):
 
-   component_parameters 和 args 都是 dict 对象。“args”包含 DTable 形式的模块输入数据集和输入模型。每个元素的命名都在用户的 dsl 配置文件中定义。另一方面，“component_parameters” 是此模块的参数变量，该变量在步骤 1 中提到的模块参数类中定义。这些配置的参数是用户定义的，或取自配置文件中的默认值设置。
+
+    fit 函数是启动建模组件的训练，或者特征工程组件的fit功能的入口。接受训练数据和验证集数据，validate数据可不提供。该函数在用户启动训练任务时，被model_base自动调起，您只需在该函数完成自身需要的fit任务即可。
 
 
 :在需要的时候重载 predict 接口:
@@ -248,9 +218,33 @@ fate_flow_client 模块的运行规则是：
 
    .. code-block:: python
 
-      def predict(self, data_inst, ):
+      def predict(self, data_inst):
 
-   Data_inst 是一个 DTable. 跟fit函数类似, 你可以在不同role的predict函数中定义predict过程
+   Data_inst 是一个 Table. 用于建模组件的预测功能。在用户启动预测任务时，将被model_base自动调起。另外，在训练任务中，建模组件也会调用predict函数对训练数据和验证集数据（如果有）进行预测，并输出预测结果。该函数的返回结果，如果后续希望接入evaluation，需要输出符合下列格式的Table：
+
+    - 二分类，多分类，回归任务: ["label", "predict_result", "predict_score", "predict_detail", "type"]
+        * label:提供的标签
+        * predict_result: 模型预测的结果
+        * predict_score: 对于2分类为1的预测分数，对于多分类为概率最高的那一类的分数，对于回归任务，与predict_result相同
+        * predict_detail: 对于分类任务，列出各分类的得分，对于回归任务，列出回归预测值
+        * type: 表明该结果来源（是训练数据或者是验证及数据）,该结果model_base会自动拼接。
+    - 聚类任务返回两张表
+        第一张的格式为: ["cluster_sample_count", "cluster_inner_dist", "inter_cluster_dist"]
+        * cluster_sample_count: 每个类别下的样本个数
+        * cluster_inner_dist: 类内距离
+        * inter_cluster_dist: 类间距离
+        第二张表的格式为: ["predicted_cluster_index", "distance"]
+        * predicted_cluster_index: 预测的所属类别
+        * distance: 该样本到中心点的距离
+
+:在需要的时候重载 transform 接口:
+   transform 函数具有如下形式.
+
+   .. code-block:: python
+
+      def transform(self, data_inst):
+
+   Data_inst 是一个 Table. 用于特征工程组件对数据进行转化功能。在用户启动预测任务时，将被model_base自动调起。
 
 :定义您的 save_data 接口:
    以便 fate-flow 可以在需要时通过它获取输出数据。
@@ -274,6 +268,12 @@ fate_flow_client 模块的运行规则是：
           }
           return result
 
+第五步：开发Pipeline组件
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+若希望后续用户可以通过python脚本形式启动建模任务，需要在 `python/fate_client/pipeline/component <../python/fate_client/pipeline/component>`_ 中添加自己的组件。详情请参考Pipeline的 `README文件 <../python/fate_client/pipeline/README.rst>`_
+
+
 开始建模任务
 -------------
 
@@ -284,7 +284,7 @@ fate_flow_client 模块的运行规则是：
 
 .. code-block:: bash
 
-      python ${your_install_path}/fate_flow/fate_flow_client.py -f upload -c dsl_test/upload_data.json
+      flow data upload -c upload_data.json
 
 ..Note::
    每个数据提供节点（即来宾和主机）都需要执行此步骤。
@@ -294,7 +294,13 @@ fate_flow_client 模块的运行规则是：
 
 .. code-block:: bash
 
-      python ${your_install_path}/fate_flow/fate_flow_client.py -f submitJob -d dsl_test/test_homolr_job_dsl.json -c dsl_test/${your_component_conf_json}
+      flow job submit -d ${your_dsl_file.json} -c ${your_component_conf_json}
+
+   若您已在fate_client中添加了自己的组件，也可以准备好自己的pipeline脚本，然后使用python命令直接启动：
+
+.. code-block:: bash
+
+      python ${your_pipeline.py}
 
 :3.检查日志文件:
    现在，您可以在以下路径中检查日志：`${your_install_path}/logs/{your jobid}`.

@@ -6,7 +6,7 @@ eval_type: "regression"
 task_type: "regression"
 loss_func: "lse"
 tree_depth: 3
-tree_num: 50
+tree_num: 80
 learning_rate: 0.1
 work_mode: "mix"
 tree_num_per_party: 1

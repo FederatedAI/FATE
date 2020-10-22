@@ -82,7 +82,7 @@ class JobController(object):
         ]
         for engine_type, engine_name in engine_list:
             engine_info = ResourceManager.get_engine_registration_info(engine_type=engine_type, engine_name=engine_name)
-            job_parameters.engines_address[engine_type] = engine_info.f_engine_address
+            job_parameters.engines_address[engine_type] = engine_info.f_engine_config
             engines_info[engine_type] = engine_info
         return engines_info
 
@@ -222,8 +222,13 @@ class JobController(object):
     @classmethod
     def stop_job(cls, job, stop_status):
         tasks = JobSaver.query_task(job_id=job.f_job_id, role=job.f_role, party_id=job.f_party_id, reverse=True)
+        kill_status = True
+        kill_details = {}
         for task in tasks:
-            TaskController.stop_task(task=task, stop_status=stop_status)
+            kill_task_status = TaskController.stop_task(task=task, stop_status=stop_status)
+            kill_status = kill_status & kill_task_status
+            kill_details[task.f_task_id] = 'success' if kill_task_status else 'failed'
+        return kill_status, kill_details
         # Job status depends on the final operation result and initiator calculate
 
     @classmethod

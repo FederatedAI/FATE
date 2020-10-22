@@ -8,6 +8,7 @@ from fate_test._client import Clients
 from fate_test._config import Config
 from fate_test._io import LOGGER, echo
 from fate_test._parser import BenchmarkSuite
+from fate_test.scripts._options import SharedOptions
 from fate_test.scripts._utils import _upload_data, _delete_data, _load_testsuites, _load_module_from_script
 from fate_test.utils import show_data, match_metrics
 
@@ -24,17 +25,18 @@ from fate_test.utils import show_data, match_metrics
                    "Comparison is done by evaluating abs(a-b) <= max(relative_tol * max(abs(a), abs(b)), absolute_tol)")
 @click.option('--skip-data', is_flag=True, default=False,
               help="skip uploading data specified in benchmark conf")
-@click.option('--yes', is_flag=True,
-              help="skip double check")
+@SharedOptions.get_shared_options(hidden=True)
 @click.pass_context
-def run_benchmark(ctx, include, exclude, glob, skip_data, tol, yes):
+def run_benchmark(ctx, include, exclude, glob, skip_data, tol, **kwargs):
     """
-    process benchmark suite
+    process benchmark suite, alias: bq
     """
-
+    ctx.obj.update(**kwargs)
+    ctx.obj.post_process()
     namespace = ctx.obj["namespace"]
     config_inst = ctx.obj["config"]
-    data_namespace_mangling = ctx.obj["data_namespace_mangling"]
+    data_namespace_mangling = ctx.obj["namespace_mangling"]
+    yes = ctx.obj["yes"]
 
     echo.welcome("benchmark")
     echo.echo(f"testsuite namespace: {namespace}", fg='red')
@@ -81,12 +83,12 @@ def _run_benchmark_pairs(config: Config, suite: BenchmarkSuite, tol: float,
     # pipeline demo goes here
     pair_n = len(suite.pairs)
     for i, pair in enumerate(suite.pairs):
-        echo.echo(f"Running {i + 1} of {pair_n} groups: {pair.pair_name}")
+        echo.echo(f"Running [{i + 1}/{pair_n}] group: {pair.pair_name}")
         results = {}
         data_summary = None
         job_n = len(pair.jobs)
         for j, job in enumerate(pair.jobs):
-            echo.echo(f"Running {j + 1} of {job_n} jobs: {job.job_name}")
+            echo.echo(f"Running [{j + 1}/{job_n}] job: {job.job_name}")
             job_name, script_path, conf_path = job.job_name, job.script_path, job.conf_path
             param = Config.load_from_file(conf_path)
             mod = _load_module_from_script(script_path)

@@ -34,7 +34,7 @@ Below is an example of stepwise parameter setting in job configuration file.
  
 
 For examples of using stepwise with linear models, please refer `here <../../../../examples/dsl/v2/hetero_stepwise>`__.
-For explanation on stepwise module parameters, please refer to :download:`stepwise_param <../../param/stepwise_param.py>`.
+For explanation on stepwise module parameters, please refer to `stepwise_param <../../param/stepwise_param.py>`_.
 
 Please note that on FATE Board, shown model information (max iters & coefficient/intercept values) are of the final result model.
 

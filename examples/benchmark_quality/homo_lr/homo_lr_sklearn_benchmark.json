@@ -111,7 +111,7 @@
     },
     "FATE": {
       "script": "./pipeline-lr-binary.py",
-      "conf": "./give_credit_lr_config.yaml"
+      "conf": "./give_credit_pipeline_lr_config.yaml"
     },
     "compare_setting": {
       "relative_tol": 1e-2

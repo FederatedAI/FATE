@@ -123,20 +123,7 @@
             "conf": "./fate_sbt_binary.yaml"
         },
         "compare_setting": {
-            "relative_tol": 0.05
-        }
-    },
-    "homo_sbt-binary-1": {
-        "local": {
-            "script": "./gbdt-binary.py",
-            "conf": "./gbdt_config_binary-epsilon-5k.yaml"
-        },
-        "FATE": {
-            "script": "./fate-sbt.py",
-            "conf": "./fate_sbt_eplison_5k.yaml"
-        },
-        "compare_setting": {
-            "relative_tol": 0.05
+            "relative_tol": 0.01
         }
     },
     "homo_sbt-multi-0": {
@@ -149,7 +136,20 @@
             "conf": "./fate_sbt_multi.yaml"
         },
         "compare_setting": {
-            "relative_tol": 0.05
+            "relative_tol": 0.01
+        }
+    },
+    "homo_sbt-binary-1": {
+        "local": {
+            "script": "./gbdt-binary.py",
+            "conf": "./gbdt_config_binary-epsilon-5k.yaml"
+        },
+        "FATE": {
+            "script": "./fate-sbt.py",
+            "conf": "./fate_sbt_eplison_5k.yaml"
+        },
+        "compare_setting": {
+            "relative_tol": 0.01
         }
     },
     "homo_sbt-regression-0": {
@@ -162,7 +162,7 @@
             "conf": "./fate_sbt_regression.yaml"
         },
         "compare_setting": {
-            "relative_tol": 0.05
+            "relative_tol": 0.01
         }
     }
 }

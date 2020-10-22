@@ -50,35 +50,62 @@
         }
     ],
     "pipeline_tasks": {
-        "bin": {
+        "large_bin": {
             "script": "pipeline-hetero-binning-large-bin.py"
         },
-        "gini": {
+        "optimal_gini": {
             "script": "pipeline-hetero-binning-optim-gini.py"
         },
-        "iv": {
+        "optimal_sparse_gini": {
+            "script": "pipeline-hetero-binning-sparse-optimal-gini.py"
+        },
+        "optimal_iv": {
             "script": "pipeline-hetero-binning-optim-iv.py"
         },
-        "ks": {
+        "optimal_sparse_iv": {
+            "script": "pipeline-hetero-binning-sparse-optimal-iv.py"
+        },
+        "optimal_ks": {
             "script": "pipeline-hetero-binning-optim-ks.py"
         },
-        "binning": {
+        "optimal_sparse_ks": {
+            "script": "pipeline-hetero-binning-sparse-optimal-ks.py"
+        },
+        "quantile_binning": {
             "script": "pipeline-hetero-binning-quantile-binning.py"
         },
-        "optimal": {
+        "bucket_binning": {
+            "script": "pipeline-hetero-binning-bucket-binning.py"
+        },
+        "sparse_bucket_binning": {
             "script": "pipeline-hetero-binning-sparse-bucket-binning.py"
         },
-        "square": {
+        "woe_binning": {
+            "script": "pipeline-hetero-binning-woe-binning.py"
+        },
+        "category": {
+            "script": "pipeline-hetero-binning-category-binning.py"
+        },
+        "optimal_sparse_chi_square": {
             "script": "pipeline-hetero-binning-sparse-optimal-chi-square.py"
         },
-        "host": {
+        "optimal_chi_square": {
+            "script": "pipeline-hetero-binning-optim-chi-square.py"
+        },
+        "multi_host": {
             "script": "pipeline-hetero-binning-multi-host.py"
+        },
+        "multi_host_optimal": {
+            "script": "pipeline-hetero-binning-multi-host-optimal.py"
+        },
+        "multi_host_sparse_optimal": {
+            "script": "pipeline-hetero-binning-multi-host-sparse-optimal.py"
         },
         "asymmetric": {
             "script": "pipeline-hetero-binning-asymmetric.py"
         },
-        "statistic": {
-            "script": "pipeline-hetero-binning-skip-statistics.py"
+        "skip_statistic": {
+            "script": "pipeline-hetero-binning-skip-statistic.py"
         }
     }
 }

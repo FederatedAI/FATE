@@ -25,7 +25,7 @@ from pipeline.interface import Data
 from pipeline.utils.tools import load_job_config, JobConfig
 
 
-def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
+def main(config="../../config.yaml", param="./breast_lr_config.yaml", namespace=""):
     # obtain config
     if isinstance(config, str):
         config = load_job_config(config)
@@ -102,9 +102,13 @@ def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
         "max_iter": param["max_iter"],
         "alpha": param["alpha"],
         "learning_rate": param["learning_rate"],
-        "optimizer": "sgd",
+        "optimizer": param.get("optimizer", "sgd"),
+        "batch_size": param.get("batch_size", -1),
+        "init_param": {
+            "init_method": param.get("init_method", 'random_uniform')
+        },
         "encrypt_param": {
-            "method": "Paillier"
+            "method": None
         }
     }
     lr_param.update(config_param)

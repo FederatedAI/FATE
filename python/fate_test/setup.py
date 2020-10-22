@@ -22,7 +22,7 @@ package_data = {'': ['*']}
 
 install_requires = [
     'click>=7.1.2,<8.0.0',
-    'fate_client>=0.1.0,<0.2.0',
+    'fate_client>=0.1,<0.2',
     'loguru>=0.5.1,<0.6.0',
     'prettytable>=1.0.0',
     'requests>=2.24.0,<3.0.0',
@@ -38,7 +38,7 @@ entry_points = {
 
 setup_kwargs = {
     'name': 'fate-test',
-    'version': '0.1.0',
+    'version': '0.1',
     'description': '',
     'long_description': '',
     'author': 'FederatedAI',
