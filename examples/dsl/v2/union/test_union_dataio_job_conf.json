@@ -1,4 +1,5 @@
- {
+{
+    "dsl_version": 2,
     "initiator": {
         "role": "guest",
         "party_id": 9999
@@ -9,39 +10,42 @@
         ]
     },
     "job_parameters": {
-        "work_mode": 0,
-        "backend": 0,
-        "dsl_version": 2
+        "common": {
+            "work_mode": 0,
+            "backend": 0
+        }
     },
-    "role_parameters": {
-        "guest": {
-            "0": {
-                "reader_0": {
-                    "table": {
-                        "name": "breast_hetero_guest",
-                        "namespace": "experiment"
-                    }
-                },
-                "reader_1": {
-                    "table": {
-                        "name": "breast_hetero_guest",
-                        "namespace": "experiment"
+    "component_parameters": {
+        "common": {
+            "union_0": {
+                "allow_missing": false,
+                "keep_duplicate": true
+            },
+            "dataio_0": {
+                "missing_fill": false,
+                "outlier_replace": false,
+                "with_label": true,
+                "label_name": "y",
+                "output_format": "dense"
+            }
+        },
+        "role": {
+            "guest": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_guest",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "reader_1": {
+                        "table": {
+                            "name": "breast_hetero_guest",
+                            "namespace": "experiment"
+                        }
                     }
                 }
             }
-        }
-    },
-    "algorithm_parameters": {
-        "union_0": {
-            "allow_missing": false,
-            "keep_duplicate": true
-        },
-        "dataio_0": {
-            "missing_fill": false,
-            "outlier_replace": false,
-            "with_label": true,
-            "label_name": "y",
-            "output_format": "dense"
         }
     }
 }
