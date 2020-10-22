@@ -25,6 +25,7 @@ from pipeline.component import Reader
 from pipeline.interface import Data
 
 from pipeline.utils.tools import load_job_config, JobConfig
+from pipeline.runtime.entity import JobParameters
 
 
 def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
@@ -123,7 +124,8 @@ def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
     pipeline.compile()
 
     # fit model
-    pipeline.fit(backend=backend, work_mode=work_mode)
+    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
+    pipeline.fit(job_parameters)
     # query component summary
     print(pipeline.get_component("evaluation_0").get_summary())
     data_summary = {"train": {"guest": guest_train_data["name"], "host": host_train_data["name"]},
