@@ -219,7 +219,7 @@ install_requires = \
  'ruamel-yaml==0.16.10',
  'scikit-learn==0.19.2',
  'scipy==1.1.0',
- 'tensorflow==1.15.2',
+ 'tensorflow==1.15.4',
  'torch==1.4.0',
  'torchvision==0.5.0',
  'werkzeug==0.15.3']

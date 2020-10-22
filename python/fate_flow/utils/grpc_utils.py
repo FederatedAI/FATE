@@ -17,6 +17,7 @@ import requests
 import json
 
 from fate_arch.common.log import audit_logger
+from fate_arch.common import CoordinateProxyService
 from fate_flow.utils.proto_compatibility import basic_meta_pb2
 from fate_flow.utils.proto_compatibility import proxy_pb2, proxy_pb2_grpc
 import grpc
@@ -24,16 +25,25 @@ import grpc
 from fate_flow.settings import FATEFLOW_SERVICE_NAME, IP, GRPC_PORT, HEADERS, DEFAULT_GRPC_OVERALL_TIMEOUT, stat_logger
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.utils.node_check_utils import nodes_check
-from fate_arch.common import conf_utils
 from fate_arch.common.conf_utils import get_base_config
 
 
 def get_command_federation_channel():
-    engine = "PROXY" if get_base_config("independent_scheduling_proxy", False) else "EGGROLL"
-    address = conf_utils.get_base_config(engine).get("address")
+    proxy_config = get_base_config("fateflow", {}).get("proxy", None)
+    if isinstance(proxy_config, str):
+        if proxy_config == CoordinateProxyService.rollsite:
+            address = get_base_config("fate_on_eggroll", {}).get(proxy_config)
+        elif proxy_config == CoordinateProxyService.nginx:
+            address = get_base_config("fate_on_spark", {}).get(proxy_config)
+        else:
+            raise RuntimeError(f"can not support coordinate proxy {proxy_config}")
+    elif isinstance(proxy_config, dict):
+        address = proxy_config
+    else:
+        raise RuntimeError(f"can not support coordinate proxy config {proxy_config}")
     channel = grpc.insecure_channel('{}:{}'.format(address.get("host"), address.get("port")))
     stub = proxy_pb2_grpc.DataTransferServiceStub(channel)
-    return engine, channel, stub
+    return channel, stub
 
 
 def get_routing_metadata(src_party_id, dest_party_id):

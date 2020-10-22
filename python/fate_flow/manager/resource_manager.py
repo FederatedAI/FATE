@@ -24,7 +24,7 @@ from fate_arch.common.log import schedule_logger
 from fate_arch.computing import ComputingEngine
 from fate_flow.db.db_models import DB, EngineRegistry, Job
 from fate_flow.entity.types import ResourceOperation, RunParameters
-from fate_flow.settings import stat_logger, STANDALONE_BACKEND_VIRTUAL_CORES_PER_NODE, SUPPORT_ENGINES, \
+from fate_flow.settings import stat_logger, STANDALONE_BACKEND_VIRTUAL_CORES_PER_NODE, SUPPORT_BACKENDS_ENTRANCE, \
     MAX_CORES_PERCENT_PER_JOB, DEFAULT_TASK_CORES_PER_NODE
 from fate_flow.utils import job_utils
 
@@ -32,36 +32,35 @@ from fate_flow.utils import job_utils
 class ResourceManager(object):
     @classmethod
     def initialize(cls):
-        for engine_type, engines_name in SUPPORT_ENGINES.items():
-            for engine_name in engines_name:
-                engine_info = get_base_config(engine_name, {})
-                if engine_info:
-                    engine_info["engine"] = engine_name
-                    cls.register_engine(engine_type=engine_type, engine_info=engine_info)
+        for backend_name, backend_engines in SUPPORT_BACKENDS_ENTRANCE.items():
+            for engine_type, engine_keys in backend_engines.items():
+                engine_config = get_base_config(backend_name, {}).get(engine_keys[1], {})
+                if engine_config:
+                    cls.register_engine(engine_type=engine_type, engine_name=engine_keys[0], engine_entrance=engine_keys[1], engine_config=engine_config)
+
         # initialize standalone engine
-        for engine_type in SUPPORT_ENGINES.keys():
-            engine_name = "STANDALONE"
-            engine_info = {
-                "engine": engine_name,
-                "nodes": 1,
-                "cores_per_node": STANDALONE_BACKEND_VIRTUAL_CORES_PER_NODE,
-            }
-            cls.register_engine(engine_type=engine_type, engine_info=engine_info)
+        for backend_engines in SUPPORT_BACKENDS_ENTRANCE.values():
+            for engine_type in backend_engines.keys():
+                engine_name = "STANDALONE"
+                engine_entrance = "fateflow"
+                engine_config = {
+                    "nodes": 1,
+                    "cores_per_node": STANDALONE_BACKEND_VIRTUAL_CORES_PER_NODE,
+                }
+                cls.register_engine(engine_type=engine_type, engine_name=engine_name, engine_entrance=engine_entrance, engine_config=engine_config)
 
     @classmethod
     @DB.connection_context()
-    def register_engine(cls, engine_type, engine_info):
-        nodes = engine_info.get("nodes", 1)
-        cores = engine_info.get("cores_per_node", 0) * nodes
-        memory = engine_info.get("memory_per_node", 0) * nodes
-        engine_name = engine_info.get("engine", "UNKNOWN")
-        engine_address = engine_info.get("address", {})
-        filters = [EngineRegistry.f_engine_name == engine_name, EngineRegistry.f_engine_type == engine_type]
+    def register_engine(cls, engine_type, engine_name, engine_entrance, engine_config):
+        nodes = engine_config.get("nodes", 1)
+        cores = engine_config.get("cores_per_node", 0) * nodes
+        memory = engine_config.get("memory_per_node", 0) * nodes
+        filters = [EngineRegistry.f_engine_type == engine_type, EngineRegistry.f_engine_name == engine_name]
         resources = EngineRegistry.select().where(*filters)
         if resources:
             resource = resources[0]
             update_fields = {}
-            update_fields[EngineRegistry.f_engine_address] = engine_address
+            update_fields[EngineRegistry.f_engine_config] = engine_config
             update_fields[EngineRegistry.f_cores] = cores
             update_fields[EngineRegistry.f_memory] = memory
             update_fields[EngineRegistry.f_remaining_cores] = EngineRegistry.f_remaining_cores + (
@@ -72,15 +71,17 @@ class ResourceManager(object):
             operate = EngineRegistry.update(update_fields).where(*filters)
             update_status = operate.execute() > 0
             if update_status:
-                stat_logger.info(f"update {engine_type} engine {engine_name} registration information")
+                stat_logger.info(f"update {engine_type} engine {engine_name} {engine_entrance} registration information")
             else:
-                stat_logger.info(f"update {engine_type} engine {engine_name} registration information takes no effect")
+                stat_logger.info(f"update {engine_type} engine {engine_name} {engine_entrance} registration information takes no effect")
         else:
             resource = EngineRegistry()
             resource.f_create_time = base_utils.current_timestamp()
-            resource.f_engine_name = engine_name
             resource.f_engine_type = engine_type
-            resource.f_engine_address = engine_address
+            resource.f_engine_name = engine_name
+            resource.f_engine_entrance = engine_entrance
+            resource.f_engine_config = engine_config
+
             resource.f_cores = cores
             resource.f_memory = memory
             resource.f_remaining_cores = cores
@@ -90,7 +91,7 @@ class ResourceManager(object):
                 resource.save(force_insert=True)
             except Exception as e:
                 stat_logger.warning(e)
-            stat_logger.info(f"create {engine_type} engine {engine_name} registration information")
+            stat_logger.info(f"create {engine_type} engine {engine_name} {engine_entrance} registration information")
 
     @classmethod
     def check_resource_apply(cls, job_parameters: RunParameters, engines_info):

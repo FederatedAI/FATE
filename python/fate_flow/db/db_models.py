@@ -347,9 +347,10 @@ class ModelOperationLog(DataBaseModel):
 
 
 class EngineRegistry(DataBaseModel):
-    f_engine_name = CharField(max_length=50, index=True)
     f_engine_type = CharField(max_length=10, index=True)
-    f_engine_address = JSONField()
+    f_engine_name = CharField(max_length=50, index=True)
+    f_engine_entrance = CharField(max_length=50, index=True)
+    f_engine_config = JSONField()
     f_cores = IntegerField(index=True)
     f_memory = IntegerField(index=True)  # MB
     f_remaining_cores = IntegerField(index=True)

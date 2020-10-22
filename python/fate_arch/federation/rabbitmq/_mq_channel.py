@@ -23,7 +23,7 @@ LOGGER = log.getLogger()
 
 class MQChannel(object):
 
-    def __init__(self, host, port, user, password, vhost, send_queue_name, receive_queue_name, party_id):
+    def __init__(self, host, port, user, password, vhost, send_queue_name, receive_queue_name, party_id, role):
         self._host = host
         self._port = port
         self._credentials = pika.PlainCredentials(user, password)
@@ -33,6 +33,7 @@ class MQChannel(object):
         self._conn = None
         self._channel = None
         self._party_id = party_id
+        self._role = role
 
     @property
     def party_id(self):

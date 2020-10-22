@@ -151,8 +151,6 @@ class TaskExecutor(object):
             sess.init_federation(federation_session_id=federation_session_id,
                                  runtime_conf=component_parameters_on_party,
                                  service_conf=job_parameters.engines_address.get(EngineType.FEDERATION, {}))
-            print(job_parameters.federation_engine)
-            print(job_parameters.engines_address.get(EngineType.FEDERATION, {}))
             sess.as_default()
 
             schedule_logger().info('Run {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id))
