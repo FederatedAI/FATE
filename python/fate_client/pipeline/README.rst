@@ -198,6 +198,14 @@ Add it to pipeline:
 
     pipeline.add_component(homo_nn, data=Data(train_data=dataio_0.output.data))
 
+Init Runtime JobParameters
+--------------
+
+To fit or predict, user needs to initialize the runtime environment, like 'backend' and 'work_mode',
+
+.. code:: python
+    from pipeline.runtime.entity import JobParameters
+    job_parameters = JobParameters(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE)
 
 Run A Pipeline
 --------------
@@ -209,7 +217,7 @@ train job) with appropriate ``Backend`` and ``WorkMode``.
 .. code:: python
 
    pipeline.compile()
-   pipeline.fit(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE)
+   pipeline.fit(job_parameters)
 
 Query on Tasks
 --------------
