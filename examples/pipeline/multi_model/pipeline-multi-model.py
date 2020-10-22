@@ -16,6 +16,7 @@
 
 import argparse
 from pipeline.utils.tools import load_job_config
+from pipeline.runtime.entity import JobParameters
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component import DataIO
 from pipeline.component import Evaluation
@@ -97,7 +98,8 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.add_component(evaluation_1, data=Data(data=hetero_lr_1.output.data))
     pipeline.compile()
 
-    pipeline.fit(backend=backend, work_mode=work_mode)
+    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
+    pipeline.fit(job_parameters)
 
     print(pipeline.get_component("evaluation_0").get_summary())
 

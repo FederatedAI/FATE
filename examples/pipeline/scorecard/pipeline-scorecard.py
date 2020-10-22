@@ -17,7 +17,7 @@
 import argparse
 
 from pipeline.backend.pipeline import PipeLine
-from pipeline.component import ColumnExpand
+from pipeline.component import Scorecard
 from pipeline.component import DataIO
 from pipeline.component import HeteroLR
 from pipeline.component import Intersection
@@ -39,8 +39,8 @@ def main(config="../../config.yaml", namespace=""):
     backend = config.backend
     work_mode = config.work_mode
 
-    guest_train_data = {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"}
-    host_train_data = {"name": "breast_hetero_host", "namespace": f"experiment{namespace}"}
+    guest_train_data = {"name": "default_credit_hetero_guest", "namespace": f"experiment{namespace}"}
+    host_train_data = {"name": "default_credit_hetero_host", "namespace": f"experiment{namespace}"}
 
     # initialize pipeline
     pipeline = PipeLine()
@@ -55,14 +55,6 @@ def main(config="../../config.yaml", namespace=""):
     reader_0.get_party_instance(role="guest", party_id=guest).algorithm_param(table=guest_train_data)
     # configure Reader for host
     reader_0.get_party_instance(role="host", party_id=host).algorithm_param(table=host_train_data)
-
-    # define ColumnExpand components
-    column_expand_0 = ColumnExpand(name="column_expand_0")
-    column_expand_0.get_party_instance(role="guest", party_id=guest).algorithm_param(need_run=True,
-                                                                                     method="manual",
-                                                                                     append_header=["x_0", "x_1", "x_2", "x_3"],
-                                                                                     fill_value=[0, 0.2, 0.5, 1])
-    column_expand_0.get_party_instance(role="host", party_id=host).algorithm_param(need_run=False)
 
     # define DataIO components
     dataio_0 = DataIO(name="dataio_0")  # start component numbering at 0
@@ -80,34 +72,47 @@ def main(config="../../config.yaml", namespace=""):
 
     param = {
         "penalty": "L2",
-        "optimizer": "nesterov_momentum_sgd",
-        "tol": 0.0001,
-        "alpha": 0.01,
-        "max_iter": 20,
-        "early_stop": "weight_diff",
-        "batch_size": -1,
-        "learning_rate": 0.15,
-        "init_param": {
+          "optimizer": "nesterov_momentum_sgd",
+          "tol": 0.0001,
+          "alpha": 0.01,
+          "max_iter": 5,
+          "early_stop": "weight_diff",
+          "batch_size": -1,
+          "learning_rate": 0.15,
+          "init_param": {
             "init_method": "random_uniform"
-        },
-        "sqn_param": {
+          },
+          "sqn_param": {
             "update_interval_L": 3,
             "memory_M": 5,
             "sample_size": 5000,
             "random_seed": None
-        }
+          }
     }
 
     hetero_lr_0 = HeteroLR(name="hetero_lr_0", **param)
 
+    # define Scorecard component
+    scorecard_0 = Scorecard(name="scorecard_0")
+    scorecard_0.get_party_instance(role="guest", party_id=guest).algorithm_param(need_run=True,
+                                                                                 method="credit",
+                                                                                 offset=500,
+                                                                                 factor=20,
+                                                                                 factor_base=2,
+                                                                                 upper_limit_ratio=3,
+                                                                                 lower_limit_value=0)
+    scorecard_0.get_party_instance(role="host", party_id=host).algorithm_param(need_run=False)
+
     # add components to pipeline, in order of task execution
     pipeline.add_component(reader_0)
-    pipeline.add_component(column_expand_0, data=Data(data=reader_0.output.data))
-    pipeline.add_component(dataio_0, data=Data(data=column_expand_0.output.data))
+    pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
     # set data input sources of intersection components
     pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
 
     pipeline.add_component(hetero_lr_0, data=Data(train_data=intersection_0.output.data))
+
+    pipeline.add_component(scorecard_0, data=Data(data=hetero_lr_0.output.data))
+
 
     # compile pipeline once finished adding modules, this step will form conf and dsl files for running job
     pipeline.compile()
@@ -115,22 +120,9 @@ def main(config="../../config.yaml", namespace=""):
     # fit model
     job_parameters = JobParameters(backend=backend, work_mode=work_mode)
     pipeline.fit(job_parameters)
+
     # query component summary
-    print(pipeline.get_component("hetero_lr_0").get_summary())
-
-    # predict
-    # deploy required components
-    pipeline.deploy_component([column_expand_0, dataio_0, intersection_0, hetero_lr_0])
-
-    predict_pipeline = PipeLine()
-    # add data reader onto predict pipeline
-    predict_pipeline.add_component(reader_0)
-    # add selected components from train pipeline onto predict pipeline
-    # specify data source
-    predict_pipeline.add_component(pipeline,
-                                   data=Data(predict_input={pipeline.column_expand_0.input.data: reader_0.output.data}))
-    # run predict model
-    predict_pipeline.predict(job_parameters)
+    # print(pipeline.get_component("scorecard_0").get_summary())
 
 
 if __name__ == "__main__":
