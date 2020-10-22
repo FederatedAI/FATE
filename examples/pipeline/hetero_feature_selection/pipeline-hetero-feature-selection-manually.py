@@ -31,7 +31,7 @@ from pipeline.utils.tools import load_job_config
 def main(config="../../config.yaml", namespace=""):
     # obtain config
     if isinstance(config, str):
-        config = Config.load(config)
+        config = load_job_config(config)
     backend = config.backend
     work_mode = config.work_mode
 
