@@ -1,4 +1,4 @@
-# Release 1.5.0
+# Release 1.5.0（LTS）-preview
 ## Major Features and Improvements
 
 > FederatedML
@@ -18,7 +18,6 @@
 * Add DataStatistic module: compute min/max, mean, median, skewness, kurtosis, coefficient of variance, percentile, etc.
 * Add PSI module for computing population stability index
 * Add Homo OneHot module for one-hot encoding in homogeneous scenario
-* Add Scorecard module: Compute credit score based on predict score
 * Evaluation module adds metrics for clustering
 * Optional FedProx mechanism for Homo LR, useful for training with non-iid data
 * Add Oblivious Transfer Protocol and OT-based module Secure Information Retrieval
