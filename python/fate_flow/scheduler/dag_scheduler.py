@@ -28,6 +28,7 @@ from fate_flow.operation import Tracker
 from fate_flow.controller import JobController
 from fate_flow.settings import FATE_BOARD_DASHBOARD_ENDPOINT, DEFAULT_TASK_PARALLELISM, DEFAULT_FEDERATED_STATUS_COLLECT_TYPE
 from fate_flow.utils import detect_utils, job_utils, schedule_utils
+from fate_flow.utils.config_adapter import JobRuntimeConfigAdapter
 from fate_flow.utils.service_utils import ServiceUtils
 from fate_flow.utils import model_utils
 from fate_flow.operation import JobQueue
@@ -47,7 +48,9 @@ class DAGScheduler(Cron):
         job_dsl = job_data.get('job_dsl', {})
         job_runtime_conf = job_data.get('job_runtime_conf', {})
         job_initiator = job_runtime_conf['initiator']
-        job_parameters = RunParameters(**job_runtime_conf['job_parameters'])
+        # job_parameters = RunParameters(**job_runtime_conf['job_parameters'])
+        conf_adapter = JobRuntimeConfigAdapter(job_runtime_conf)
+        job_parameters = conf_adapter.get_common_parameters()
         cls.backend_compatibility(job_parameters=job_parameters)
 
         job_utils.check_job_runtime_conf(job_runtime_conf)
@@ -75,8 +78,6 @@ class DAGScheduler(Cron):
         job = Job()
         job.f_job_id = job_id
         job.f_dsl = job_dsl
-        job_runtime_conf["job_parameters"] = job_parameters.to_dict()
-        job.f_runtime_conf = job_runtime_conf
         job.f_train_runtime_conf = train_runtime_conf
         job.f_roles = job_runtime_conf['role']
         job.f_work_mode = job_parameters.work_mode
@@ -96,7 +97,8 @@ class DAGScheduler(Cron):
         cls.adapt_job_parameters(job_parameters=job_parameters)
 
         # update runtime conf
-        job_runtime_conf["job_parameters"] = job_parameters.to_dict()
+        # job_runtime_conf["job_parameters"] = job_parameters.to_dict()
+        job_runtime_conf["job_parameters"] = conf_adapter.get_job_parameters_dict(job_parameters)
         job.f_runtime_conf = job_runtime_conf
 
         status_code, response = FederatedScheduler.create_job(job=job)
