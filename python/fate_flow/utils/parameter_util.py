@@ -97,7 +97,7 @@ class BaseParameterUtil(object):
 
                 if version == 2:
                     component_parameters = submit_dict.get("component_parameters", {}).get("role", {})
-                    role_parameters = component_parameters[role]
+                    role_parameters = component_parameters.get(role, {})
                     role_idxs = role_parameters.keys()
                     for role_id in role_idxs:
                         if role_id == "all" or str(idx) in role_id.split("|"):
