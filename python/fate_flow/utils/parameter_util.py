@@ -119,7 +119,7 @@ class BaseParameterUtil(object):
                                 runtime_dict[param_class] = merge_dict
 
                 else:
-                    role_dict = submit_dict["role_parameters"][role]
+                    role_dict = submit_dict.get("role_parameters", {}).get(role, {})
                     if module_alias in role_dict:
                         role_parameters = role_dict.get(module_alias)
                         merge_dict = ParameterUtil.merge_parameters(runtime_dict[param_class],
