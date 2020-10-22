@@ -311,6 +311,7 @@ class DAGScheduler(Cron):
     @classmethod
     def schedule_running_job(cls, job, canceled=False):
         schedule_logger(job_id=job.f_job_id).info("scheduling job {}".format(job.f_job_id))
+
         dsl_parser = schedule_utils.get_job_dsl_parser(dsl=job.f_dsl,
                                                        runtime_conf=job.f_runtime_conf,
                                                        train_runtime_conf=job.f_train_runtime_conf)
