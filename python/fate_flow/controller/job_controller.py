@@ -22,7 +22,7 @@ from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.operation import Tracker
 from fate_flow.settings import USE_AUTHENTICATION
 from fate_flow.utils import job_utils, schedule_utils, data_utils
-from fate_flow.operation import JobSaver, JobQueue
+from fate_flow.operation import JobSaver
 from fate_arch.common.base_utils import json_dumps, current_timestamp
 from fate_flow.controller import TaskController
 from fate_flow.manager import ResourceManager
