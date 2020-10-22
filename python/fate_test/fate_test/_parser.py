@@ -87,34 +87,37 @@ class JobConf(object):
                  initiator: dict,
                  role: dict,
                  job_parameters: dict,
-                 role_parameters: dict,
-                 algorithm_parameters: dict = None,
                  **kwargs):
         self.initiator = initiator
         self.role = role
         self.job_parameters = job_parameters
-        self.role_parameters = role_parameters
-        self.algorithm_parameters = algorithm_parameters or {}
+        self.others_kwargs = kwargs
 
     def as_dict(self):
         return dict(
             initiator=self.initiator,
             role=self.role,
             job_parameters=self.job_parameters,
-            role_parameters=self.role_parameters,
-            algorithm_parameters=self.algorithm_parameters
+            **self.others_kwargs
         )
 
     @staticmethod
     def load(path: Path):
         with path.open("r") as f:
             kwargs = json.load(f, object_hook=CONF_JSON_HOOK.hook)
+
         return JobConf(**kwargs)
 
     def update(self, parties: Parties, work_mode, backend):
         self.initiator = parties.extract_initiator_role(self.initiator['role'])
         self.role = parties.extract_role({role: len(parties) for role, parties in self.role.items()})
-        self.job_parameters.update(dict(work_mode=work_mode, backend=backend))
+
+        dsl_version = self.job_parameters.get("dsl_version", 1)
+        kwargs = dict(work_mode=work_mode, backend=backend)
+        if dsl_version == 1:
+            self.job_parameters.update(**kwargs)
+        else:
+            self.job_parameters.setdefault("common", {}).update(**kwargs)
 
 
 class JobDSL(object):
