@@ -26,14 +26,14 @@ easy-to-use tools to configure order and setting of the tasks.
 
 FATE is written in a modular style. Modules are designed to have input
 and output data and model. Therefore two modules are connected when
-output of one module is set to be input of another module. By tracing
+output of one module is set to be the input of another module. By tracing
 how one data set is processed through FATE modules, we can see that a
 FATE job is in fact formed by a sequence of sub-tasks. For example, in
 the `mini demo <./demo/pipeline-mini-demo.py>`__ above, guest’s data is
-first read in by ``Reader``, then loaded into ``DataIO``. Overlapping
+firstly read in by ``Reader``, then loaded into ``DataIO``. Overlapping
 ids between guest and host are then found by running data through
 ``Intersection``. Finally, ``HeteroLR`` model is fit on the data. Each
-of the listed modules run a small task with the data, and together they
+of the listed modules runs a small task with the data, and together they
 constitute a model training job.
 
 Beyond the given mini demo, a job may include multiple data sets and
@@ -53,12 +53,6 @@ command for more information.
 
    pipeline config --help
 
-`FATE-Flow Commandline <../flow_client/README.rst>`_ needs to be initialized. Run the following
-command for more information.
-
-.. code:: bash
-
-   flow init --help
 
 Interface of Pipeline
 ---------------------
@@ -165,6 +159,46 @@ To include a component in a pipeline, use ``add_component``. To add the
 
    pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
 
+
+Build Fate NN Model In Keras Style
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In pipeline, you can build NN structures in a keras style. Take Homo-NN as an example:
+
+Firstly, import keras and define your nn structures:
+
+.. code:: python
+
+    from tensorflow.keras import optimizers
+    from tensorflow.keras.layers import Dense
+
+    layer_0 = Dense(units=6, input_shape=(10,), activation="relu")
+    layer_1 = Dense(units=1, activation="sigmoid")
+
+Then, add nn layers into Homo-NN model like using Sequential class in keras:
+
+.. code:: python
+    from pipeline.component.homo_nn import HomoNN
+    
+    # set parameter
+    homo_nn_0 = HomoNN(name="homo_nn_0", max_iter=10, batch_size=-1, early_stop={"early_stop": "diff", "eps": 0.0001})
+    homo_nn_0.add(layer_0)
+    homo_nn_0.add(layer_1)
+
+Set optimizer and compile Homo-NN model:
+
+.. code:: python
+
+    homo_nn_0.compile(optimizer=optimizers.Adam(learning_rate=0.05), metrics=["Hinge", "accuracy", "AUC"],
+                      loss="binary_crossentropy")
+
+Add it to pipeline:
+
+.. code:: python
+
+    pipeline.add_component(homo_nn, data=Data(train_data=dataio_0.output.data))
+
+
 Run A Pipeline
 --------------
 
@@ -231,7 +265,7 @@ To save a pipeline, just use **dump** interface.
 
    pipeline.dump("pipeline_saved.pkl")
 
-To save a pipeline, use **load_model_from_file** interface.
+To restore a pipeline, use **load_model_from_file** interface.
 
 .. code:: python
 

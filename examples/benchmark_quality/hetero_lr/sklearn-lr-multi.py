@@ -24,7 +24,7 @@ from sklearn.metrics import roc_auc_score, precision_score, accuracy_score, reca
 from pipeline.utils.tools import JobConfig
 
 
-def main(param="./lr_multi_config.yaml"):
+def main(param="./vechile_config.yaml"):
     # obtain config
     if isinstance(param, str):
         param = JobConfig.load_from_file(param)
@@ -51,16 +51,16 @@ def main(param="./lr_multi_config.yaml"):
     y = df[label_name]
     X = df.drop(label_name, axis=1)
     # lm = LogisticRegression(max_iter=20)
-    lm = SGDClassifier(loss="log", **config_param)
+    lm = SGDClassifier(loss="log", **config_param, shuffle=False)
     lm_fit = lm.fit(X, y)
     y_pred = lm_fit.predict(X)
 
     recall = recall_score(y, y_pred, average="macro")
     pr = precision_score(y, y_pred, average="macro")
     acc = accuracy_score(y, y_pred)
+
     result = {"recall": recall, "precision": pr, "accuracy": acc}
     print(result)
-    print(f"coef_: {lm_fit.coef_}, intercept_: {lm_fit.intercept_}, n_iter: {lm_fit.n_iter_}")
     return {}, result
 
 
@@ -71,4 +71,3 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if args.param is not None:
         main(args.param)
-    main()

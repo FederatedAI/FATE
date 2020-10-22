@@ -1,15 +1,16 @@
 work_mode: 1
+independent_scheduling_proxy: false
 use_registry: false
 fateflow:
-  host: 0.0.0.0
+  host: 127.0.0.1
   http_port: 9380
   grpc_port: 9360
 fateboard:
   host: 127.0.0.1
   port: 8080
 database:
-  name: fate
-  user: fate_dev
+  name: fate_flow
+  user: fate
   passwd: fate_dev
   host: 127.0.0.1
   port: 3306
@@ -28,18 +29,18 @@ SPARK:
   nodes: 2
 HDFS:
   address:
-    name_node:
+    name_node: hdfs://fate-cluster
     path_prefix:
 RABBITMQ:
   address:
     self:
-      9999: 192.168.1.3
+      9999: 192.168.0.4
       mng_port: 12345
       port: 5672
       user: fate
       password: fate
     10000:
-      host: 192.168.1.2
+      host: 192.168.0.3
       port: 5672
 PROXY:
   address:

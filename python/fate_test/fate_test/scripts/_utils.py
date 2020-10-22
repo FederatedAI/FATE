@@ -59,6 +59,7 @@ def _load_testsuites(includes, excludes, glob, suffix="testsuite.json", suite_ty
     return suites
 
 
+@LOGGER.catch
 def _upload_data(clients: Clients, suite, config: Config):
     with click.progressbar(length=len(suite.dataset),
                            label="dataset",

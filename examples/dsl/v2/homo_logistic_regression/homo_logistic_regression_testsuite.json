@@ -56,7 +56,8 @@
         },
         "predict": {
             "conf": "homo-lr-normal-predict-conf.json",
-            "dsl": "homo-lr-normal-predict-dsl.json"
+            "dsl": "homo-lr-normal-predict-dsl.json",
+            "deps": "train"
         },
         "train-eval": {
             "conf": "homo_lr_train_eval_conf.json",

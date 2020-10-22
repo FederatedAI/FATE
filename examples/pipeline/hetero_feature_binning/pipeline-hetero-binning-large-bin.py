@@ -55,7 +55,7 @@ def main(config="../../config.yaml", namespace=""):
     }
     pipeline = common_tools.make_normal_dsl(config, namespace, param, dataset='default_credit')
     pipeline.fit(backend=backend, work_mode=work_mode)
-    common_tools.prettify(pipeline.get_component("hetero_feature_binning_0").get_summary())
+    # common_tools.prettify(pipeline.get_component("hetero_feature_binning_0").get_summary())
 
 
 if __name__ == "__main__":

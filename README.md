@@ -1,5 +1,5 @@
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) [![CodeStyle](https://img.shields.io/badge/Check%20Style-Google-brightgreen)](https://checkstyle.sourceforge.io/google_style.html) [![Style](https://img.shields.io/badge/Check%20Style-Black-black)](https://checkstyle.sourceforge.io/google_style.html) [![Build Status](https://travis-ci.org/FederatedAI/FATE.svg?branch=develop-1.4)](https://travis-ci.org/FederatedAI/FATE)
-[![codecov](https://codecov.io/gh/FederatedAI/FATE/branch/develop-1.4/graph/badge.svg)](https://codecov.io/gh/FederatedAI/FATE)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) [![CodeStyle](https://img.shields.io/badge/Check%20Style-Google-brightgreen)](https://checkstyle.sourceforge.io/google_style.html) [![Style](https://img.shields.io/badge/Check%20Style-Black-black)](https://checkstyle.sourceforge.io/google_style.html) [![Build Status](https://travis-ci.org/FederatedAI/FATE.svg?branch=develop-1.5-preview)](https://travis-ci.org/FederatedAI/FATE)
+[![codecov](https://codecov.io/gh/FederatedAI/FATE/branch/develop-1.5-preview/graph/badge.svg)](https://codecov.io/gh/FederatedAI/FATE)
 [![Documentation Status](https://readthedocs.org/projects/fate/badge/?version=latest)](https://fate.readthedocs.io/en/latest/?badge=latest)
 
 <div align="center">
@@ -14,7 +14,7 @@ FATE (Federated AI Technology Enabler) is an open-source project initiated by We
 
 
 ## Federated Learning Algorithms In FATE
-FATE already supports a number of federated learning algorithms, including vertical federated learning, horizontal federated learning, and federated transfer learning. More details are available in [federatedml](./federatedml).
+FATE already supports a number of federated learning algorithms, including vertical federated learning, horizontal federated learning, and federated transfer learning. More details are available in [federatedml](./python/federatedml).
 
 
 ## Install
@@ -30,7 +30,7 @@ FATE can be installed on Linux or Mac. Now, FATE can support：
 	- Cluster (multi-node) deployment by Kubernetes
 
 ### Native installation:
-Software environment :jdk1.8+、Python3.6、python virtualenv、mysql5.6+、redis-5.0.2
+Software environment :jdk1.8+、Python3.6、python virtualenv、mysql5.6+
 
 ##### Standalone
 FATE provides Standalone runtime architecture for developers. It can help developers quickly test FATE. Standalone support two types of deployment: Docker version and Manual version. Please refer to Standalone deployment guide: [standalone-deploy](./standalone-deploy/)
@@ -39,7 +39,6 @@ FATE provides Standalone runtime architecture for developers. It can help develo
 FATE also provides a distributed runtime architecture for Big Data scenario. Migration from standalone to cluster requires configuration change only. No algorithm change is needed.
 
 To deploy FATE on a cluster, please refer to cluster deployment guide: [cluster-deploy](./cluster-deploy).
-
 
 ### KubeFATE installation:
 Using KubeFATE, FATE can be deployed by either docker-compose or Kubernetes:
@@ -64,10 +63,10 @@ All the unittests shall pass if FATE is installed properly.
 
 ### Quick Start
 
-We have provided a python script for quick starting modeling task. This scrip is located at ["examples"](./examples/dsl/v2)
+We have provided a tutorial for quick starting modeling task. Please refer ["here"](./examples/pipeline/README.rst)
 
 ###  Obtain Model and Check Out Results
-We provided functions such as tracking component output models or logs etc. through a tool called fate-flow. The deployment and usage of fate-flow can be found [here](./fate_flow/README.rst)
+We provided functions such as tracking component output models or logs etc. through a tool called fate-flow. The deployment and usage of fate-flow can be found [here](./python/fate_flow/README.md)
 
 
 ## Doc

@@ -105,7 +105,6 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.add_component(dataio_0, data=Data(data=column_expand_0.output.data))
     # set data input sources of intersection components
     pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
-    # set train & validate data of hetero_lr_0 component
 
     pipeline.add_component(hetero_lr_0, data=Data(train_data=intersection_0.output.data))
 

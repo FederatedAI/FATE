@@ -49,7 +49,7 @@ data/model privacy. For detail on how this can be achieved, please refer
 to `Secure Federated Transfer
 Learning <https://arxiv.org/abs/1812.03337>`__.
 
-We support two mode of the FTL algorithms: plain mode and encrypted
+We support two mode for the FTL algorithms: plain mode and encrypted
 mode. In plain mode, data are computed and transferred in plaintext,
 while in encrypted mode intermediate results will be encrypted using
 Paillier.
@@ -57,19 +57,19 @@ Paillier.
 What is more, in the latest Hetero FTL, we add an option: communication
 efficient mode. Once communication efficient mode is enabled, for every
 epoch, intermediate components are preserved and are used to conduct
-several local updates, thus communication cost is saved.
+several local model weights updates, thus communication cost is reduced.
 
 Features
 ^^^^^^^^
 
 -  Support plain/encrypted mode
 -  Support local layer define / optimizer define
--  Support communication-efficient mode
+-  Support communication-efficient mode. See test_ftl_comm_eff_conf.json in `here <../../../examples/dsl/v2/hetero_ftl>`__.
 
 Applications
 ^^^^^^^^^^^^
 
-Now Hetero FTL supports binary classification.
+Now Hetero FTL only supports binary classification.
 
 Quick Start
 ~~~~~~~~~~~

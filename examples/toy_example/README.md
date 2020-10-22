@@ -8,6 +8,7 @@
     ${guest_party_id}: the party id of role "guest", the role who launch the task.
     ${host_party_id}: the party id of role "host", the coordinator 
     ${work_mode}: 0 for standalone version, 1 for cluster.
+    -b: Optional parameter. Indicate the backend. 0 represent for eggroll and 1 represent for spark. Default value is 0. 
     
 2. Check logs in screen.
 

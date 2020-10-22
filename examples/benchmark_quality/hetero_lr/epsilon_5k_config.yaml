@@ -3,9 +3,10 @@ data_host: "../../data/epsilon_5k_hetero_host.csv"
 idx: "id"
 label_name: "y"
 penalty: "L2"
-max_iter: 15
-alpha: 0.001
+max_iter: 30
+alpha: 0.0001
 learning_rate: 0.15
 optimizer: "rmsprop"
-batch_size: 3200
+batch_size: 800
 early_stop: "diff"
+init_method: "zeros"

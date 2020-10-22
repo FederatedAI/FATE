@@ -29,7 +29,7 @@ from fate_arch.common.conf_utils import get_base_config
 
 
 def get_command_federation_channel():
-    engine = "PROXY" if get_base_config("use_proxy", False) else "EGGROLL"
+    engine = "PROXY" if get_base_config("independent_scheduling_proxy", False) else "EGGROLL"
     address = conf_utils.get_base_config(engine).get("address")
     channel = grpc.insecure_channel('{}:{}'.format(address.get("host"), address.get("port")))
     stub = proxy_pb2_grpc.DataTransferServiceStub(channel)

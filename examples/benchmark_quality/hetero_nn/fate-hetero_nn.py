@@ -61,15 +61,16 @@ def main(config="../../config.yaml", param="./hetero_nn_breast_config.yaml", nam
 
     hetero_nn_0 = HeteroNN(name="hetero_nn_0", epochs=param["epochs"],
                            interactive_layer_lr=param["learning_rate"], batch_size=param["batch_size"], early_stop="diff")
-    hetero_nn_0.add_bottom_model(Dense(units=param["bottom_layer_units"], input_shape=(10,), activation="relu",
+    hetero_nn_0.add_bottom_model(Dense(units=param["bottom_layer_units"], input_shape=(10,), activation="tanh",
                                        kernel_initializer=initializers.RandomUniform(minval=-1, maxval=1, seed=123)))
     hetero_nn_0.set_interactve_layer(
-        Dense(units=param["interactive_layer_units"], input_shape=(param["bottom_layer_units"],),
+        Dense(units=param["interactive_layer_units"], input_shape=(param["bottom_layer_units"],), activation="relu",
               kernel_initializer=initializers.RandomUniform(minval=-1, maxval=1, seed=123)))
     hetero_nn_0.add_top_model(
         Dense(units=param["top_layer_units"], input_shape=(param["interactive_layer_units"],), activation=param["top_act"],
               kernel_initializer=initializers.RandomUniform(minval=-1, maxval=1, seed=123)))
-    hetero_nn_0.compile(optimizer=optimizers.SGD(lr=param["learning_rate"]), metrics=param["metrics"],
+    opt = getattr(optimizers, param["opt"])(lr=param["learning_rate"])
+    hetero_nn_0.compile(optimizer=opt, metrics=param["metrics"],
                         loss=param["loss"])
 
     if param["loss"] == "categorical_crossentropy":
@@ -102,6 +103,8 @@ if __name__ == "__main__":
     parser.add_argument("-param", type=str,
                         help="config file for params")
     args = parser.parse_args()
+
+    assert 1 == 2
     if args.config is not None:
         main(args.config, args.param)
     else:

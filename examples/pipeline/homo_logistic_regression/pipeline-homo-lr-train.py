@@ -74,7 +74,7 @@ def main(config="../../config.yaml", namespace=""):
             "init_method": "zeros"
         },
         "encrypt_param": {
-            "method": "Paillier"
+            "method": None
         },
         "cv_param": {
             "n_splits": 4,
@@ -113,7 +113,7 @@ def main(config="../../config.yaml", namespace=""):
     predict_pipeline.add_component(pipeline,
                                    data=Data(predict_input={pipeline.dataio_0.input.data: reader_0.output.data}))
     predict_pipeline.compile()
-    predict_pipeline.predict(backend=0, work_mode=0)
+    predict_pipeline.predict(backend=backend, work_mode=work_mode)
 
     dsl_json = predict_pipeline.get_predict_dsl()
     conf_json = predict_pipeline.get_predict_conf()

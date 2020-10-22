@@ -56,7 +56,7 @@
             "penalty": "L2",
             "tol": 1e-05,
             "alpha": 0.01,
-            "optimizer": "sgd",
+            "optimizer": "rmsprop",
             "batch_size": -1,
             "learning_rate": 0.15,
             "init_param": {
@@ -65,7 +65,7 @@
             "max_iter": 30,
             "early_stop": "diff",
             "encrypt_param": {
-                "method": "Paillier"
+                "method": null
             },
             "cv_param": {
                 "n_splits": 4,

@@ -13,15 +13,13 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import time
 
 import click
-from fate_test._config import default_config, parse_config
-from fate_test.scripts._utils import _set_namespace
+from fate_test.scripts._options import SharedOptions
 from fate_test.scripts.benchmark_cli import run_benchmark
 from fate_test.scripts.config_cli import config_group
-from fate_test.scripts.teetsuite_cli import run_suite
 from fate_test.scripts.data_cli import data_group
+from fate_test.scripts.testsuite_cli import run_suite
 
 commands = {
     "config": config_group,
@@ -30,31 +28,32 @@ commands = {
     "data": data_group
 }
 
+commands_alias = {
+    "bq": "benchmark-quality"
+}
+
 
 class MultiCLI(click.MultiCommand):
+
     def list_commands(self, ctx):
         return list(commands)
 
     def get_command(self, ctx, name):
+        if name not in commands and name in commands_alias:
+            name = commands_alias[name]
+        if name not in commands:
+            ctx.fail("No such command '{}'.".format(name))
         return commands[name]
 
 
-@click.command(cls=MultiCLI, help="A collection of useful tools to running FATE's test.")
-@click.option('-c', '--config', default=default_config().__str__(), type=click.Path(exists=True),
-              help=f"Manual specify config file")
-@click.option('-n', '--namespace', default=time.strftime('%Y%m%d%H%M%S'), type=str,
-              help=f"Manual specify fate_test namespace")
-@click.option('--namespace-mangling', type=bool, is_flag=True, default=False,
-              help="mangling data namespace")
+@click.command(cls=MultiCLI, help="A collection of useful tools to running FATE's test.",
+               context_settings=dict(help_option_names=["-h", "--help"]))
+@SharedOptions.get_shared_options()
 @click.pass_context
-def cli(ctx, config, namespace, namespace_mangling):
-    ctx.ensure_object(dict)
-    config_inst = parse_config(config)
-    ctx.obj['config'] = config_inst
-    ctx.obj['namespace'] = namespace
-    ctx.obj['data_namespace_mangling'] = namespace_mangling
-    _set_namespace(namespace_mangling, namespace)
+def cli(ctx, **kwargs):
+    ctx.ensure_object(SharedOptions)
+    ctx.obj.update(**kwargs)
 
 
 if __name__ == '__main__':
-    cli(obj={})
+    cli(obj=SharedOptions())

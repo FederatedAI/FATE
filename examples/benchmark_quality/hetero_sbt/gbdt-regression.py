@@ -49,9 +49,7 @@ def main(param=""):
 
     y_predict = clf.predict(X)
 
-    result = {"mean_squared_error": mean_squared_error(y, y_predict),
-              "mean_absolute_error": mean_absolute_error(y, y_predict),
-              }
+    result = {"mean_absolute_error": mean_absolute_error(y, y_predict)}
     print(result)
     return {}, result
 

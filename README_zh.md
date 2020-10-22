@@ -12,7 +12,7 @@ FATE官方网站：<https://fate.fedai.org/>
 
 ## FATE中的联邦学习算法
 
-FATE目前支持三种类型联邦学习算法：横向联邦学习、纵向联邦学习以及迁移学习。算法细节请参考文档 [federatedml](./federatedml) 。
+FATE目前支持三种类型联邦学习算法：横向联邦学习、纵向联邦学习以及迁移学习。算法细节请参考文档 [python/federatedml](./python/federatedml) 。
 
 
 ## 安装教程
@@ -24,7 +24,7 @@ FATE支持Linux或Mac操作系统，当前FATE支持：
 * KubeFATE部署
 
 ### Native部署
-运行环境: jdk1.8+、Python3.6、python virtualenv、mysql5.6+、redis-5.0.2
+运行环境: jdk1.8+、Python3.6、python virtualenv、mysql5.6+
 ##### 单机部署
 
 FATE为开发人员提供了单机部署架构版本。单机部署版本可以帮助开发人员快速开发以及测试FATE。该版本支持两种类型：1）Docker；2）手动编译。
@@ -60,10 +60,10 @@ FATE同样为大数据场景提供了分布式运行部署架构版本。从单�
 
 ### 快速开始
 
-我们提供了一个用于快速搭建训练任务的python脚本作为示例。该脚本位于：["./examples"](./examples/dsl/v2)
+我们提供了一个用于快速搭建训练任务的python脚本作为示例。请参考：["./examples"](./examples/pipeline/README.rst)
 
 ###  获取模型并检查结果
-FATE提供了名为 fate-flow 的工具用来跟踪组件输出模型或日志。fate-flow的部署和使用可以在 [这里](./fate_flow/README.rst) 找到。
+FATE提供了名为 fate-flow 的工具用来跟踪组件输出模型或日志。fate-flow的部署和使用可以在 [这里](./python/fate_flow/README_zh.md) 找到。
 
 
 ## 文档资料
