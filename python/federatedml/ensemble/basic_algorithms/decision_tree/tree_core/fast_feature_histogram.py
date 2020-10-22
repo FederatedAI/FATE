@@ -28,7 +28,6 @@ import functools
 from federatedml.util import LOGGER
 from fate_arch.session import computing_session as session
 from federatedml.secureprotol.iterative_affine import DeterministicIterativeAffineCiphertext
-from fate_arch.common.versions import get_eggroll_version
 import numpy as np
 import scipy.sparse as sp
 import uuid
@@ -42,11 +41,7 @@ class FastFeatureHistogram(object):
     def calculate_histogram(data_bin, grad_and_hess, bin_split_points, cipher_split_num,
                             bin_num, node_map, valid_features, use_missing, zero_as_missing):
 
-        eggroll_version = get_eggroll_version()
-        LOGGER.info("bin_shape is {}, node num is {}, eggroll version {}".format(bin_split_points.shape,
-                                                                                 len(node_map),
-                                                                                 eggroll_version
-                                                                                 ))
+        LOGGER.info("bin_shape is {}, node num is {}".format(bin_split_points.shape, len(node_map)))
         # Detect length of cipher
         g, h = grad_and_hess.first()[1]
         ghlist = grad_and_hess.take(100)
@@ -60,62 +55,24 @@ class FastFeatureHistogram(object):
             node_map=node_map, bin_num=bin_num,
             phrase_num=phrase_num, cipher_split_num=cipher_split_num,
             valid_features=valid_features, use_missing=use_missing, zero_as_missing=zero_as_missing,
-            with_uuid=True if eggroll_version.startswith("2.0") else False
+            with_uuid=False
         )
         agg_histogram = functools.partial(FastFeatureHistogram.aggregate_histogram)
 
         # Map-Reduce Execution
         batch_histogram_intermediate_rs = data_bin.join(grad_and_hess, lambda data_inst, g_h: (data_inst, g_h))
-
-        if eggroll_version.startswith("2.2"):
-            histogram_table = batch_histogram_intermediate_rs.mapReducePartitions(batch_histogram_cal, agg_histogram)
-            map_value_func = functools.partial(FastFeatureHistogram.aggregate_matrix_phase,
-                                               cipher_split_num=cipher_split_num,
-                                               phrase_num=phrase_num)
-            histogram_table = histogram_table.mapValues(map_value_func)
-
-            transform_func = functools.partial(FastFeatureHistogram.table_format_transform,
-                                               bin_split_points=bin_split_points,
-                                               valid_features=valid_features,
-                                               use_missing=use_missing,
-                                               n_final=n_final)
-
-            histogram_table = histogram_table.mapPartitions(transform_func, use_previous_behavior=False)
-            return histogram_table
-
-        elif eggroll_version.startswith("2.0"):
-
-            # old ver code
-            batch_histogram = batch_histogram_intermediate_rs.mapPartitions(batch_histogram_cal,
-                                                                            use_previous_behavior=False)
-            from federatedml.util.reduce_by_key import reduce
-            node_histograms = reduce(batch_histogram, agg_histogram, key_func=lambda key: key[1])
-
-            # aggregate matrix phase
-            multiplier_vector = np.array([10**(cipher_split_num*i) for i in range(phrase_num)])  # 1 X p
-            for nid in node_histograms:
-                b, f, p, t = node_histograms[nid][2]
-                bin_sum_matrix4d = node_histograms[nid][0].toarray().reshape((b, f, p, t))
-                bin_cnt_matrix = node_histograms[nid][1].toarray()
-
-                # b X f X p X t -> b X f X t X p : multiply along the p-axis
-                bin_sum_matrix4d_mul = bin_sum_matrix4d.transpose((0, 1, 3, 2))*multiplier_vector
-                # b X f X t x p -> b x f x t
-                bin_sum_matrix3d = bin_sum_matrix4d_mul.sum(axis=3)
-
-                left_node_sum_matrix3d = np.cumsum(bin_sum_matrix3d, axis=0)  # accumulate : b X f X t
-                left_node_cnt_matrix = np.cumsum(bin_cnt_matrix, axis=0)  # accumulate : b X f
-
-                node_histograms[nid] = [left_node_sum_matrix3d, left_node_cnt_matrix]
-
-            return FastFeatureHistogram.construct_table(node_histograms,
-                                                        bin_split_points=bin_split_points,
-                                                        valid_features=valid_features,
-                                                        partition=data_bin.partitions,
-                                                        use_missing=use_missing,
-                                                        n_final=n_final)
-        else:
-            raise ValueError('unsupported eggroll version {}'.format(eggroll_version))
+        histogram_table = batch_histogram_intermediate_rs.mapReducePartitions(batch_histogram_cal, agg_histogram)
+        map_value_func = functools.partial(FastFeatureHistogram.aggregate_matrix_phase,
+                                           cipher_split_num=cipher_split_num,
+                                           phrase_num=phrase_num)
+        histogram_table = histogram_table.mapValues(map_value_func)
+        transform_func = functools.partial(FastFeatureHistogram.table_format_transform,
+                                           bin_split_points=bin_split_points,
+                                           valid_features=valid_features,
+                                           use_missing=use_missing,
+                                           n_final=n_final)
+        histogram_table = histogram_table.mapPartitions(transform_func, use_previous_behavior=False)
+        return histogram_table
 
     @staticmethod
     def aggregate_matrix_phase(value, cipher_split_num, phrase_num):
