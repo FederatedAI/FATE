@@ -303,6 +303,11 @@ Besides the dsl conf, user also need to prepare a submit runtime conf to set the
      - num-executors, executor-cores
      - parameter for SPARK computing engine
 
+   * - rabbitmq_run
+     -
+     - queue, exchange etc.
+     - parameters for creation of queue, exchange in rabbitmq
+
    * - task_parallelism
      - 2
      - positive int

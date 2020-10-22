@@ -44,6 +44,7 @@ Job Runtime Conf用于设置各个参与方的信息,任务的参数及各个组
   | timeout | 604800 | 正整数 | 任务超时时间,单位秒 |
   | eggroll_run | 无| processors_per_node| eggroll计算引擎相关配置参数|
   | spark_run | 无| num-executors、executor-cores |spark计算引擎相关配置参数 |
+  | rabbitmq_run | 无| queue、exchange| rabbitmq 创建queue、exchange的相关配置参数|
   | task_parallelism | 2 | 正整数 | task并行度 |
   | task_nodes | 1 | 正整数 | 使用的计算节点数 |
   | task_cores_per_node | 2 | 正整数 | 每个节点使用的CPU核数 |
@@ -82,6 +83,11 @@ Job Runtime Conf用于设置各个参与方的信息,任务的参数及各个组
     "spark_run": {
         "num-executors": 1,
         "executor-cores": 2
+    },
+    "rabbitmq_run": {
+        "queue": {
+            "durable": true
+        }
     }
 }
 ```

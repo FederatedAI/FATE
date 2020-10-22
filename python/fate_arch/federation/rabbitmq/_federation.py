@@ -76,9 +76,9 @@ class Federation(FederationABC):
         union_name = federation_info.get('union_name')
         policy_id = federation_info.get("policy_id")
 
-        rabbit_mq_run = runtime_conf.get('job_parameters', {}).get('rabbit_mq_run', {})
+        rabbitmq_run = runtime_conf.get('job_parameters', {}).get('rabbitmq_run', {})
 
-        rabbit_manager = RabbitManager(base_user, base_password, f"{host}:{mng_port}", rabbit_mq_run)
+        rabbit_manager = RabbitManager(base_user, base_password, f"{host}:{mng_port}", rabbitmq_run)
         rabbit_manager.create_user(union_name, policy_id)
         route_table_path = rabbitmq_config.get("route_table")
         if route_table_path is None:
