@@ -103,3 +103,15 @@ An example of starting this script with all parameter could be:
   .. code-block:: bash
 
      python upload_default_data.py -m 0 -f 1 -b 0 -c min-test
+
+
+Make Conf & DSL from Pipeline file
+----------------------------------
+
+If you already have a pipeline py file and want to generate conf & dsl files, this tool would be a good helper. Please make sure your pipeline file have a "main" function and a "pipeline" variable. This script will make conf based on the "pipeline" variable in main function.
+
+To use it, the command is as simple as:
+
+  .. code-block:: bash
+
+     python make_conf_dsl.py -c ${your pipeline file}
