@@ -1,4 +1,5 @@
- {
+{
+    "dsl_version": 2,
     "initiator": {
         "role": "guest",
         "party_id": 9999
@@ -15,87 +16,90 @@
         ]
     },
     "job_parameters": {
-        "work_mode": 0,
-        "backend": 0,
-        "dsl_version": 2
-    },
-    "role_parameters": {
-        "host": {
-            "0": {
-                "evaluation_0": {
-                    "need_run": false
-                },
-                "local_baseline_0": {
-                    "need_run": false
-                },
-                "reader_0": {
-                    "table": {
-                        "name": "vehicle_scale_hetero_host",
-                        "namespace": "experiment"
-                    }
-                },
-                "dataio_0": {
-                    "with_label": false
-                }
-            }
-        },
-        "guest": {
-            "0": {
-                "evaluation_0": {
-                    "need_run": true
-                },
-                "local_baseline_0": {
-                    "need_run": true
-                },
-                "reader_0": {
-                    "table": {
-                        "name": "vehicle_scale_hetero_guest",
-                        "namespace": "experiment"
-                    }
-                },
-                "dataio_0": {
-                    "with_label": true,
-                    "label_name": "y",
-                    "label_type": "int",
-                    "output_format": "dense"
-                }
-            }
+        "common": {
+            "work_mode": 0,
+            "backend": 0
         }
     },
-    "algorithm_parameters": {
-        "intersection_0": {
-            "intersect_method": "rsa",
-            "sync_intersect_ids": true,
-            "only_output_key": false
-        },
-        "hetero_lr_0": {
-            "penalty": "L2",
-            "tol": 0.0001,
-            "alpha": 0.0001,
-            "optimizer": "nesterov_momentum_sgd",
-            "batch_size": -1,
-            "learning_rate": 0.15,
-            "init_param": {
-                "init_method": "zeros"
+    "component_parameters": {
+        "common": {
+            "intersection_0": {
+                "intersect_method": "rsa",
+                "sync_intersect_ids": true,
+                "only_output_key": false
             },
-            "max_iter": 30,
-            "early_stop": "diff"
-        },
-        "local_baseline_0": {
-            "model_name": "LogisticRegression",
-            "model_opts": {
-                "penalty": "l2",
+            "hetero_lr_0": {
+                "penalty": "L2",
                 "tol": 0.0001,
-                "C": 1.0,
-                "fit_intercept": true,
-                "solver": "lbfgs",
-                "max_iter": 5,
-                "multi_class": "ovr"
+                "alpha": 0.0001,
+                "optimizer": "nesterov_momentum_sgd",
+                "batch_size": -1,
+                "learning_rate": 0.15,
+                "init_param": {
+                    "init_method": "zeros"
+                },
+                "max_iter": 30,
+                "early_stop": "diff"
+            },
+            "local_baseline_0": {
+                "model_name": "LogisticRegression",
+                "model_opts": {
+                    "penalty": "l2",
+                    "tol": 0.0001,
+                    "C": 1.0,
+                    "fit_intercept": true,
+                    "solver": "lbfgs",
+                    "max_iter": 5,
+                    "multi_class": "ovr"
+                }
+            },
+            "evaluation_0": {
+                "eval_type": "multi",
+                "pos_label": 1
             }
         },
-        "evaluation_0": {
-            "eval_type": "multi",
-            "pos_label": 1
+        "role": {
+            "host": {
+                "0": {
+                    "evaluation_0": {
+                        "need_run": false
+                    },
+                    "local_baseline_0": {
+                        "need_run": false
+                    },
+                    "reader_0": {
+                        "table": {
+                            "name": "vehicle_scale_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "dataio_0": {
+                        "with_label": false
+                    }
+                }
+            },
+            "guest": {
+                "0": {
+                    "evaluation_0": {
+                        "need_run": true
+                    },
+                    "local_baseline_0": {
+                        "need_run": true
+                    },
+                    "reader_0": {
+                        "table": {
+                            "name": "vehicle_scale_hetero_guest",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "dataio_0": {
+                        "with_label": true,
+                        "label_name": "y",
+                        "label_type": "int",
+                        "output_format": "dense"
+                    }
+                }
+            }
         }
     }
 }
