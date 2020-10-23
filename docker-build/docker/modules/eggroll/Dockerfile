@@ -19,3 +19,8 @@ ENV PYTHONPATH=/data/projects/fate/python:/data/projects/fate/eggroll/python
 ENV EGGROLL_HOME=/data/projects/fate/eggroll/
 
 CMD sh ./bin/eggroll.sh clustermanager start
+
+ENV TINI_VERSION v0.18.0
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
+RUN chmod +x /tini
+ENTRYPOINT ["/tini", "--"]
