@@ -100,6 +100,7 @@ class DAGScheduler(Cron):
         # job_runtime_conf["job_parameters"] = job_parameters.to_dict()
         job_runtime_conf["job_parameters"] = conf_adapter.get_job_parameters_dict(job_parameters)
         job.f_runtime_conf = job_runtime_conf
+        job.f_submit_conf = job_runtime_conf
 
         status_code, response = FederatedScheduler.create_job(job=job)
         if status_code != FederatedSchedulingStatusCode.SUCCESS:

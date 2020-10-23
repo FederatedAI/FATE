@@ -112,6 +112,7 @@ class Job(DataBaseModel):
     f_description = TextField(null=True, default='')
     f_tag = CharField(max_length=50, null=True, index=True, default='')
     f_dsl = JSONField()
+    f_submit_conf = JSONField()
     f_runtime_conf = JSONField()
     f_train_runtime_conf = JSONField(null=True)
     f_roles = JSONField()

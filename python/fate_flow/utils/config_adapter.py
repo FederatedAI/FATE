@@ -20,43 +20,43 @@ from fate_flow.entity.types import RunParameters
 
 
 class JobRuntimeConfigAdapter(object):
-    def __init__(self, job_runtime_conf):
-        self.job_runtime_conf = job_runtime_conf
+    def __init__(self, job_submit_conf):
+        self.job_submit_conf = job_submit_conf
 
     def get_common_parameters(self):
-        if int(self.job_runtime_conf.get('dsl_version', 1)) == 2:
-            if 'common' in self.job_runtime_conf['job_parameters']:
-                job_parameters = RunParameters(**self.job_runtime_conf['job_parameters']['common'])
+        if int(self.job_submit_conf.get('dsl_version', 1)) == 2:
+            if 'common' in self.job_submit_conf['job_parameters']:
+                job_parameters = RunParameters(**self.job_submit_conf['job_parameters']['common'])
             else:
-                job_parameters = RunParameters(**self.job_runtime_conf['job_parameters'])
-            self.job_runtime_conf['job_parameters']['common'] = job_parameters.to_dict()
+                job_parameters = RunParameters(**self.job_submit_conf['job_parameters'])
+            self.job_submit_conf['job_parameters']['common'] = job_parameters.to_dict()
         else:
-            job_parameters = RunParameters(**self.job_runtime_conf['job_parameters'])
-            self.job_runtime_conf['job_parameters'] = job_parameters.to_dict()
+            job_parameters = RunParameters(**self.job_submit_conf['job_parameters'])
+            self.job_submit_conf['job_parameters'] = job_parameters.to_dict()
         return job_parameters
 
     def get_job_parameters_dict(self, job_parameters=None):
         if job_parameters:
-            if int(self.job_runtime_conf.get('dsl_version', 1)) == 2:
-                self.job_runtime_conf['job_parameters']['common'] = job_parameters.to_dict()
+            if int(self.job_submit_conf.get('dsl_version', 1)) == 2:
+                self.job_submit_conf['job_parameters']['common'] = job_parameters.to_dict()
             else:
-                self.job_runtime_conf['job_parameters'] = job_parameters.to_dict()
-        return self.job_runtime_conf['job_parameters']
+                self.job_submit_conf['job_parameters'] = job_parameters.to_dict()
+        return self.job_submit_conf['job_parameters']
 
     def get_job_work_mode(self):
-        if int(self.job_runtime_conf.get('dsl_version', 1)) == 2:
-            work_mode = self.job_runtime_conf['job_parameters'].get('common', {}).get('work_mode')
+        if int(self.job_submit_conf.get('dsl_version', 1)) == 2:
+            work_mode = self.job_submit_conf['job_parameters'].get('common', {}).get('work_mode')
         else:
-            work_mode = self.job_runtime_conf['job_parameters'].get('work_mode')
+            work_mode = self.job_submit_conf['job_parameters'].get('work_mode')
         return work_mode
 
     def get_job_type(self):
-        if int(self.job_runtime_conf.get('dsl_version', 1)) == 2:
-            job_type = self.job_runtime_conf['job_parameters'].get('common', {}).get('job_type')
+        if int(self.job_submit_conf.get('dsl_version', 1)) == 2:
+            job_type = self.job_submit_conf['job_parameters'].get('common', {}).get('job_type')
             if not job_type:
-                job_type = self.job_runtime_conf['job_parameters'].get('job_type', 'train')
+                job_type = self.job_submit_conf['job_parameters'].get('job_type', 'train')
         else:
-            job_type = self.job_runtime_conf['job_parameters'].get('job_type', 'train')
+            job_type = self.job_submit_conf['job_parameters'].get('job_type', 'train')
         return job_type
 
 

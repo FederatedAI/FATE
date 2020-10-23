@@ -120,7 +120,7 @@ class FederatedScheduler(object):
     def job_command(cls, job, command, command_body=None, dest_only_initiator=False, specific_dest=None):
         federated_response = {}
         roles, job_initiator = job.f_runtime_conf["role"], job.f_runtime_conf['initiator']
-        conf_adapter = JobRuntimeConfigAdapter(job.f_runtime_conf)
+        conf_adapter = JobRuntimeConfigAdapter(job.f_submit_conf)
         job_parameters = conf_adapter.get_common_parameters().to_dict()
         if dest_only_initiator:
             dest_partys = [(job_initiator["role"], [job_initiator["party_id"]])]
@@ -226,7 +226,7 @@ class FederatedScheduler(object):
     def task_command(cls, job, task, command, command_body=None):
         federated_response = {}
         roles, job_initiator = job.f_runtime_conf["role"], job.f_runtime_conf['initiator']
-        conf_adapter = JobRuntimeConfigAdapter(job.f_runtime_conf)
+        conf_adapter = JobRuntimeConfigAdapter(job.f_submit_conf)
         job_parameters = conf_adapter.get_common_parameters().to_dict()
         dsl_parser = schedule_utils.get_job_dsl_parser(dsl=job.f_dsl, runtime_conf=job.f_runtime_conf, train_runtime_conf=job.f_train_runtime_conf)
         component = dsl_parser.get_component_info(component_name=task.f_component_name)
