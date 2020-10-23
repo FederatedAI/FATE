@@ -27,7 +27,8 @@ DSL是FATE提供的第一代配置和构建联邦建模任务的方式，具体�
 3. 统一算法参数配置风格，role_parameter和algorithm_parameter规范统一
 
 关于最新的DSL各算法组件样例可参考 `dsl/v2 <./dsl/v2>`__\ ，旧的DSL可参考
-`dsl/v1 <./dsl/v1>`__\ ，需要注意的是，在FATE-v1.6或者以后的版本里面，旧版本的DSL将会被逐步移除。
+`dsl/v1 <./dsl/v1>`__\ ，此文件夹是在过去版本中对应的"federatedml-1.x-examples"文件夹。
+需要注意的是，在FATE-v1.6或者以后的版本里面，旧版本的DSL将会被逐步移除。
 
 Benchmark Quality
 -----------------
