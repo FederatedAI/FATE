@@ -129,10 +129,18 @@ class RabbitManager:
 
         queue_runtime_config = self.runtime_config.get("queue", {})
         basic_config.update(queue_runtime_config)
+        LOGGER.debug(basic_config)
 
         result = requests.put(url, headers=C_COMMON_HTTP_HEADER,
                               json=basic_config, auth=(self.user, self.password))
         LOGGER.debug(result)
+        return result
+
+    def get_queue(self, vhost, queue_name):
+        url = C_HTTP_TEMPLATE.format(
+          self.endpoint, "{}/{}/{}".format("queues", vhost, queue_name))
+
+        result = requests.get(url, header=C_COMMON_HTTP_HEADER, auth=(self.user, self.password))
         return result
 
     def delete_queue(self, vhost, queue_name):

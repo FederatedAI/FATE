@@ -87,6 +87,9 @@ Job Runtime Conf用于设置各个参与方的信息,任务的参数及各个组
     "rabbitmq_run": {
         "queue": {
             "durable": true
+        },
+        "connection": {
+            "heartbeat": 10000
         }
     }
 }
