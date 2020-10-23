@@ -261,8 +261,12 @@ class TaskExecutor(object):
                         if storage_table_meta:
                             cores_per_task, memory_per_task = ResourceManager.calculate_task_resource(
                                 task_parameters=task_parameters)
-                            computing_partitions = cores_per_task
-                            LOGGER.info(f"load computing table use {computing_partitions} partitions")
+                            if task_parameters.computing_partitions:
+                                computing_partitions = task_parameters.computing_partitions
+                                LOGGER.info(f"load computing table use {computing_partitions} partitions base on job parameter: computing_partitions")
+                            else:
+                                computing_partitions = cores_per_task
+                                LOGGER.info(f"load computing table use {computing_partitions} partitions base on cores_per_task")
                             computing_table = session.get_latest_opened().computing.load(
                                 storage_table_meta.get_address(),
                                 schema=storage_table_meta.get_schema(),

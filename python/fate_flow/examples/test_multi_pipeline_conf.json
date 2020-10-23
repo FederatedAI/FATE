@@ -19,6 +19,7 @@
         "common": {
             "work_mode": 1,
             "task_parallelism": 2,
+            "computing_partitions": 8,
             "eggroll_run": {
                 "eggroll.session.processors.per.node": 2
             },
