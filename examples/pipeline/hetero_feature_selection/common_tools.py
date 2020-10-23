@@ -63,9 +63,9 @@ def make_normal_dsl(config, namespace, selection_param, is_multi_host=False,
     # define Reader components to read in data
     reader_0 = Reader(name="reader_0")
     # configure Reader for guest
-    reader_0.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_train_data)
+    reader_0.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data)
     # configure Reader for host
-    reader_0.get_party_instance(role='host', party_id=hosts).algorithm_param(table=host_train_data)
+    reader_0.get_party_instance(role='host', party_id=hosts).component_param(table=host_train_data)
 
     # define DataIO components
     dataio_0 = DataIO(name="dataio_0")  # start component numbering at 0
@@ -73,9 +73,9 @@ def make_normal_dsl(config, namespace, selection_param, is_multi_host=False,
     # get DataIO party instance of guest
     dataio_0_guest_party_instance = dataio_0.get_party_instance(role='guest', party_id=guest)
     # configure DataIO for guest
-    dataio_0_guest_party_instance.algorithm_param(with_label=True, output_format="dense")
+    dataio_0_guest_party_instance.component_param(with_label=True, output_format="dense")
     # get and configure DataIO party instance of host
-    dataio_0.get_party_instance(role='host', party_id=hosts).algorithm_param(with_label=False)
+    dataio_0.get_party_instance(role='host', party_id=hosts).component_param(with_label=False)
 
     # define Intersection components
     intersection_0 = Intersection(name="intersection_0")
@@ -100,8 +100,8 @@ def make_normal_dsl(config, namespace, selection_param, is_multi_host=False,
 
     if 'psi_param' in kwargs:
         reader_1 = Reader(name="reader_1")
-        reader_1.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_eval_data)
-        reader_1.get_party_instance(role='host', party_id=hosts).algorithm_param(table=host_eval_data)
+        reader_1.get_party_instance(role='guest', party_id=guest).component_param(table=guest_eval_data)
+        reader_1.get_party_instance(role='host', party_id=hosts).component_param(table=host_eval_data)
         dataio_1 = DataIO(name="dataio_1")
         intersection_1 = Intersection(name="intersection_1")
         pipeline.add_component(reader_1)
@@ -159,9 +159,9 @@ def make_single_predict_pipeline(config, namespace, selection_param, is_multi_ho
     # define Reader components to read in data
     reader_0 = Reader(name="reader_0")
     # configure Reader for guest
-    reader_0.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_train_data)
+    reader_0.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data)
     # configure Reader for host
-    reader_0.get_party_instance(role='host', party_id=hosts).algorithm_param(table=host_train_data)
+    reader_0.get_party_instance(role='host', party_id=hosts).component_param(table=host_train_data)
 
     # define DataIO components
     dataio_0 = DataIO(name="dataio_0")  # start component numbering at 0
@@ -169,9 +169,9 @@ def make_single_predict_pipeline(config, namespace, selection_param, is_multi_ho
     # get DataIO party instance of guest
     dataio_0_guest_party_instance = dataio_0.get_party_instance(role='guest', party_id=guest)
     # configure DataIO for guest
-    dataio_0_guest_party_instance.algorithm_param(with_label=True, output_format="dense")
+    dataio_0_guest_party_instance.component_param(with_label=True, output_format="dense")
     # get and configure DataIO party instance of host
-    dataio_0.get_party_instance(role='host', party_id=hosts).algorithm_param(with_label=False)
+    dataio_0.get_party_instance(role='host', party_id=hosts).component_param(with_label=False)
 
     # define Intersection components
     intersection_0 = Intersection(name="intersection_0")
@@ -180,8 +180,8 @@ def make_single_predict_pipeline(config, namespace, selection_param, is_multi_ho
     pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
 
     reader_1 = Reader(name="reader_1")
-    reader_1.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_eval_data)
-    reader_1.get_party_instance(role='host', party_id=hosts).algorithm_param(table=host_eval_data)
+    reader_1.get_party_instance(role='guest', party_id=guest).component_param(table=guest_eval_data)
+    reader_1.get_party_instance(role='host', party_id=hosts).component_param(table=host_eval_data)
     dataio_1 = DataIO(name="dataio_1")
     intersection_1 = Intersection(name="intersection_1")
 

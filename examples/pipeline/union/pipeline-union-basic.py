@@ -41,10 +41,10 @@ def main(config="../../config.yaml", namespace=""):
     pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest)
 
     reader_0 = Reader(name="reader_0")
-    reader_0.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_train_data)
+    reader_0.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data)
 
     reader_1 = Reader(name="reader_1")
-    reader_1.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_train_data)
+    reader_1.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data)
 
     dataio_0 = DataIO(name="dataio_0", with_label=True, output_format="dense", label_name="y",
                       missing_fill=False, outlier_replace=False)

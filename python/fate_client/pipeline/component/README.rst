@@ -96,8 +96,8 @@ data source needs to be updated in prediction job. Below is an example from
 .. code:: python
 
     reader_2 = Reader(name="reader_2")
-    reader_2.get_party_instance(role="guest", party_id=guest).algorithm_param(table=guest_eval_data)
-    reader_2.get_party_instance(role="host", party_id=host).algorithm_param(table=host_eval_data)
+    reader_2.get_party_instance(role="guest", party_id=guest).component_param(table=guest_eval_data)
+    reader_2.get_party_instance(role="host", party_id=host).component_param(table=host_eval_data)
     # add data reader onto predict pipeline
     predict_pipeline.add_component(reader_2)
     predict_pipeline.add_component(pipeline,
@@ -217,9 +217,9 @@ Parameters of underlying module can be set for all job participants or per indiv
 
    # set guest dataio_0 component parameters
    guest_dataio_0 = dataio_0.get_party_instance(role='guest', party_id=9999)
-   guest_dataio_0.algorithm_param(with_label=True)
+   guest_dataio_0.component_param(with_label=True)
    # directly set host dataio_0 component parameters
-   dataio_0.get_party_instance(role='host', party_id=10000).algorithm_param(with_label=False)
+   dataio_0.get_party_instance(role='host', party_id=10000).component_param(with_label=False)
 
 Task Info
 ~~~~~~~~~
