@@ -19,7 +19,9 @@
 
 4. 您的算法模块需要继承model_base类，并完成几个指定的函数。
 
-5. 若希望通过python脚本直接启动组件，需要在fate_client中定义Pipeline组件。
+5. 定义模型保存所需的protobuf文件。
+
+6. 若希望通过python脚本直接启动组件，需要在fate_client中定义Pipeline组件。
 
 
 在以下各节中，我们将通过 toy_example 详细描述这 5 个步骤。
@@ -246,6 +248,9 @@ fate_flow_client 模块的运行规则是：
 
    Data_inst 是一个 Table. 用于特征工程组件对数据进行转化功能。在用户启动预测任务时，将被model_base自动调起。
 
+第五步： 定义模型保存所需的protobuf
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 :定义您的 save_data 接口:
    以便 fate-flow 可以在需要时通过它获取输出数据。
 
@@ -253,6 +258,20 @@ fate_flow_client 模块的运行规则是：
 
       def save_data(self):
           return self.data_output
+
+
+:定义模型保存所需的protobuf文件:
+   为了方便模型跨平台保存和读取模型，FATE使用protobuf文件定义每个模型所需的参数和模型内容。当您开发自己的模块时，需要定义本模块中需要保存的内容并创建相应的protobuf文件。protobuf文件所在的位置为 `这个目录 <python/federatedml/protobuf/proto> `_ 。
+
+更多使用protobuf的细节，请参考 `这个教程 <https://developers.google.com/protocol-buffers/docs/pythontutorial>`_
+
+每个模型一般需要两个proto文件，其中后缀为meta的文件中保存某一次任务的配置，后缀为param的文件中保存某次任务的模型结果。
+
+在完成proto文件的定义后，可执行protobuf目录下的 `proto_generate.sh 文件 <python/federatedml/protobuf/proto_generate.sh>`_ 生成对应的python文件。之后，您可在自己的项目中引用自己设计的proto类型，并进行保存：
+
+   .. code-block:: bash
+
+      bash proto_generate.sh
 
 :定义 export_model 接口:
    以便 fate-flow 可以在需要时通过它获取输出的模型。应为同时包含 “Meta” 和 “Param” 包含了产生的proto buffer类的 dict 格式。这里展示了如何导出模型。
@@ -268,7 +287,7 @@ fate_flow_client 模块的运行规则是：
           }
           return result
 
-第五步：开发Pipeline组件
+第六步：开发Pipeline组件
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 若希望后续用户可以通过python脚本形式启动建模任务，需要在 `python/fate_client/pipeline/component <../python/fate_client/pipeline/component>`_ 中添加自己的组件。详情请参考Pipeline的 `README文件 <../python/fate_client/pipeline/README.rst>`_
