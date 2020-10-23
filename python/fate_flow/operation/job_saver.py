@@ -34,6 +34,11 @@ class JobSaver(object):
         cls.create_job_family_entity(Task, task_info)
 
     @classmethod
+    @DB.connection_context()
+    def delete_job(cls, job_id):
+        Job.delete().where(Job.f_job_id == job_id)
+
+    @classmethod
     def update_job_status(cls, job_info):
         schedule_logger(job_id=job_info["job_id"]).info("try to update job {} status to {}".format(job_info["job_id"], job_info.get("status")))
         update_status = cls.update_status(Job, job_info)
@@ -111,7 +116,7 @@ class JobSaver(object):
         if objs:
             obj = objs[0]
         else:
-            raise Exception("can not found the {}".format(entity_model.__class__.__name__))
+            raise Exception("can not found the obj to update")
         update_filters = query_filters[:]
         update_info = {}
         for status_field in cls.STATUS_FIELDS:

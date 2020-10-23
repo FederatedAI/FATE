@@ -200,11 +200,10 @@ class ResourceManager(object):
     @classmethod
     def calculate_job_resource(cls, job_parameters: RunParameters = None, job_id=None, role=None, party_id=None):
         if not job_parameters:
-            dsl, submit_conf, train_runtime_conf = job_utils.get_job_configuration(job_id=job_id,
-                                                                                   role=role,
-                                                                                   party_id=party_id)
-            job_parameters = JobRuntimeConfigAdapter(submit_conf).get_job_parameters_dict()
-            job_parameters = RunParameters(**job_parameters)
+            dsl, runtime_conf, train_runtime_conf = job_utils.get_job_configuration(job_id=job_id,
+                                                                                    role=role,
+                                                                                    party_id=party_id)
+            job_parameters = RunParameters(**runtime_conf["job_parameters"])
         cores = job_parameters.adaptation_parameters["task_cores_per_node"] * job_parameters.adaptation_parameters[
             "task_nodes"] * job_parameters.task_parallelism
         memory = job_parameters.adaptation_parameters["task_memory_per_node"] * job_parameters.adaptation_parameters[
