@@ -124,14 +124,9 @@ class Federation(FederationABC):
 
         self._queue_map: typing.MutableMapping[Party, _QueueNames] = {}
         self._channels_map = {}
-<<<<<<< HEAD
-     
-    def get(self, name: str, tag: str, parties: typing.List[Party], gc: GarbageCollectionABC) -> typing.List:
-=======
         self._max_message_size = max_message_size
 
-    def get(self, name, tag, parties: typing.List[Party], gc: GarbageCollectionABC) -> typing.List:
->>>>>>> Finish the Update of RabbitMQ manager
+    def get(self, name: str, tag: str, parties: typing.List[Party], gc: GarbageCollectionABC) -> typing.List:
         log_str = f"rabbitmq.get(name={name}, tag={tag}, parties={parties})"
         LOGGER.debug(f"[{log_str}]start to get")
 
@@ -224,15 +219,9 @@ class Federation(FederationABC):
             self._rabbit_manager.federate_queue(upstream_host=upstream_uri, vhost=names.vhost,
                                                 send_queue_name=names.send, receive_queue_name=names.receive)
 
-<<<<<<< HEAD
             self._queue_map[name_party] = names
-            LOGGER.debug(f"[rabbitmq.get_or_create_queue]queue for name: {name}, party:{party} created, names: {names}")
-=======
             # TODO: check federated queue status
-
-            self._queue_map[party] = names
-            LOGGER.debug(f"[rabbitmq.get_or_create_queue]queue for party:{party} created, names: {names}")
->>>>>>> Finish the Update of RabbitMQ manager
+            LOGGER.debug(f"[rabbitmq.get_or_create_queue]queue for name: {name}, party:{party} created, names: {names}")
 
         names = self._queue_map[name_party]
         LOGGER.debug(f"[rabbitmq.get_or_create_queue]get queue: names: {names}")
@@ -250,13 +239,8 @@ class Federation(FederationABC):
             name, role, party_id = name_party.split("^")
             info = self._channels_map.get(name_party)
             if info is None:
-<<<<<<< HEAD
-                info = _get_channel(self._mq, names, party_id=party_id, role=role)
+                info = _get_channel(self._mq, names, party_id=party_id, role=role, connection_conf=self._rabbit_manager.runtime_config.get('connection', {}))
                 self._channels_map[name_party] = info
-=======
-                info = _get_channel(self._mq, names, party_id=party.party_id, role=party.role, connection_conf=self._rabbit_manager.runtime_config.get('connection', {}))
-                self._channels_map[party] = info
->>>>>>> Finish the Update of RabbitMQ manager
             channel_infos.append(info)
         return channel_infos
 
@@ -264,21 +248,7 @@ class Federation(FederationABC):
 def _get_channel(mq, names: _QueueNames, party_id, role, connection_conf: dict):
     return MQChannel(host=mq.host, port=mq.port, user=mq.union_name, password=mq.policy_id,
                      vhost=names.vhost, send_queue_name=names.send, receive_queue_name=names.receive, 
-<<<<<<< HEAD
-                     party_id=party_id, role=role)
-
-# can't pickle _thread.lock objects
-def _get_channels(mq_names, mq):
-    channel_infos = []
-    for name_party, names in mq_names.items():
-        name, role, party_id = name_party.split("^")
-        info = _get_channel(mq, names, party_id=party_id, role=role)
-        channel_infos.append(info)
-    return channel_infos
-
-=======
                      party_id=party_id, role=role, extra_args=connection_conf)
->>>>>>> Finish the Update of RabbitMQ manager
 
 def _send_kv(name, tag, data, channel_infos, total_size, partitions):
     headers = {"total_size": total_size, "partitions": partitions}
@@ -311,16 +281,11 @@ MESSAGE_MAX_SIZE = 50000
 # can't pickle _thread.lock objects
 def _get_channels(mq_names, mq, connection_conf: dict):
     channel_infos = []
-    for party, names in mq_names.items():
-        info = _get_channel(mq, names, party_id=party.party_id, role=party.role, connection_conf=connection_conf)
+    for name_party, names in mq_names.items():
+        name, role, party_id = name_party.split("^")
+        info = _get_channel(mq, names, party_id=party_id, role=role, connection_conf=connection_conf)
         channel_infos.append(info)
     return channel_infos
-
-
-<<<<<<< HEAD
-=======
-
->>>>>>> Finish the Update of RabbitMQ manager
 
 def _partition_snd(kvs, name, tag, total_size, partitions, mq_names, mq, maximun_message_size, connection_conf: dict):
     LOGGER.debug(
