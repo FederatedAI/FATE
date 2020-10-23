@@ -22,6 +22,7 @@ from pipeline.component.intersection import Intersection
 from pipeline.component.reader import Reader
 from pipeline.interface.data import Data
 from pipeline.utils.tools import load_job_config
+from pipeline.runtime.entity import JobParameters
 
 
 # noinspection PyPep8Naming
@@ -74,7 +75,8 @@ def run_pearson_pipeline(config, namespace, data, common_param=None, guest_only_
     pipeline.add_component(hetero_pearson_component, data=Data(train_data=intersect_0.output.data))
 
     pipeline.compile()
-    pipeline.fit(backend=config.backend, work_mode=config.work_mode)
+    job_parameters = JobParameters(backend=config.backend, work_mode=config.work_mode)
+    pipeline.fit(job_parameters)
     return pipeline
 
 

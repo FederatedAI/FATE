@@ -20,6 +20,7 @@ from pipeline.component.dataio import DataIO
 from pipeline.component.reader import Reader
 from pipeline.interface.data import Data
 from pipeline.utils.tools import load_job_config
+from pipeline.runtime.entity import JobParameters
 
 
 # noinspection PyPep8Naming
@@ -69,7 +70,8 @@ def run_homo_nn_pipeline(config, namespace, data: dict, nn_component, num_host):
     pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
     pipeline.add_component(nn_component, data=Data(train_data=dataio_0.output.data))
     pipeline.compile()
-    pipeline.fit(backend=config.backend, work_mode=config.work_mode)
+    job_parameters = JobParameters(backend=config.backend, work_mode=config.work_mode)
+    pipeline.fit(job_parameters)
     print(pipeline.get_component("homo_nn_0").get_summary())
     pipeline.deploy_component([dataio_0, nn_component])
 
@@ -79,7 +81,7 @@ def run_homo_nn_pipeline(config, namespace, data: dict, nn_component, num_host):
     predict_pipeline.add_component(pipeline,
                                    data=Data(predict_input={pipeline.dataio_0.input.data: reader_0.output.data}))
     # run predict model
-    predict_pipeline.predict(backend=config.backend, work_mode=config.work_mode)
+    predict_pipeline.predict(job_parameters)
 
 
 def runner(main_func):

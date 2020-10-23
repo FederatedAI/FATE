@@ -111,9 +111,10 @@ class JobConf(object):
     def update(self, parties: Parties, work_mode, backend):
         self.initiator = parties.extract_initiator_role(self.initiator['role'])
         self.role = parties.extract_role({role: len(parties) for role, parties in self.role.items()})
+        self.update_job_common_parameters(work_mode=work_mode, backend=backend)
 
-        dsl_version = self.job_parameters.get("dsl_version", 1)
-        kwargs = dict(work_mode=work_mode, backend=backend)
+    def update_job_common_parameters(self, **kwargs):
+        dsl_version = self.others_kwargs.get("dsl_version", 1)
         if dsl_version == 1:
             self.job_parameters.update(**kwargs)
         else:
@@ -162,7 +163,7 @@ class Job(object):
     def set_pre_work(self, name, **kwargs):
         if name not in self.pre_works:
             raise RuntimeError(f"{self} not dependents on {name} right now")
-        self.job_conf.job_parameters.update(**kwargs)
+        self.job_conf.update_job_common_parameters(**kwargs)
         self.pre_works.remove(name)
 
     def is_submit_ready(self):

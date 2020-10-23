@@ -25,8 +25,8 @@ from pipeline.interface.data import Data
 from pipeline.component.evaluation import Evaluation
 from pipeline.interface.model import Model
 
-
 from pipeline.utils.tools import load_job_config
+from pipeline.runtime.entity import JobParameters
 
 
 def main(config="../../config.yaml", param="./xgb_config_binary.yaml", namespace=""):
@@ -96,7 +96,8 @@ def main(config="../../config.yaml", param="./xgb_config_binary.yaml", namespace
     pipeline.add_component(evaluation_0, data=Data(data=hetero_fast_sbt.output.data))
 
     pipeline.compile()
-    pipeline.fit(backend=backend, work_mode=work_mode)
+    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
+    pipeline.fit(job_parameters)
 
     return {}, pipeline.get_component("evaluation_0").get_summary()
 

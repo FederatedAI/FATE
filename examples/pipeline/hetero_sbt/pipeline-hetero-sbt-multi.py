@@ -26,6 +26,7 @@ from pipeline.component.evaluation import Evaluation
 from pipeline.interface.model import Model
 
 from pipeline.utils.tools import load_job_config
+from pipeline.runtime.entity import JobParameters
 
 
 def main(config="../../config.yaml", namespace=""):
@@ -91,6 +92,7 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.add_component(evaluation_0, data=Data(data=hetero_secure_boost_0.output.data))
 
     pipeline.compile()
+    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
     pipeline.fit(backend=backend, work_mode=work_mode)
 
     print("fitting hetero secureboost done, result:")
