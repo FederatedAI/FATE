@@ -30,10 +30,10 @@ class SampleWeightParam(BaseParam):
 
     class_weight : str or dict, default None
         class weight dictionary or class weight computation mode, string value only accepts 'balanced';
-        If dict provided, key should be class(label), and weight will not be standardized.
+        If dict provided, key should be class(label), and weight will not be normalized.
         if both class_weight and sample_weight_name are None, return original input data
 
-    sample_weight_name : str, name of column which specifies sample weight. Obtained weight values extracted will be standardized.
+    sample_weight_name : str, name of column which specifies sample weight. Obtained weight values extracted will be normalized.
         feature name of sample weight; if both class_weight and sample_weight_name are None, return original input data
 
     need_run : bool, default True

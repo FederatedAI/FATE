@@ -26,6 +26,23 @@ from federatedml.protobuf.generated import sample_weight_meta_pb2, sample_weight
 from federatedml.util import consts, LOGGER
 
 
+def compute_weight_array(data_instances):
+    weight_inst = data_instances.mapValues(lambda v: v.weight)
+    return np.array([v[1] for v in list(weight_inst.collect())])
+
+
+def compute_class_weight(kv_iterator):
+    class_dict = {}
+    for _, inst in kv_iterator:
+        count = class_dict.get(inst.label, 0)
+        class_dict[inst.label] = count + 1
+
+    if len(class_dict.keys()) > consts.MAX_CLASSNUM:
+        raise ValueError("In Classify Task, max dif classes should no more than %d" % (consts.MAX_CLASSNUM))
+
+    return class_dict
+
+
 class SampleWeight(ModelBase):
     def __init__(self):
         super().__init__()
@@ -42,7 +59,7 @@ class SampleWeight(ModelBase):
 
     @staticmethod
     def get_class_weight(data_instances):
-        class_weight = data_instances.mapPartitions(SampleWeight.compute_class_weight).reduce(
+        class_weight = data_instances.mapPartitions(compute_class_weight).reduce(
             lambda x, y: dict(Counter(x) + Counter(y)))
         n_samples = data_instances.count()
         n_classes = len(class_weight.keys())
@@ -51,24 +68,12 @@ class SampleWeight(ModelBase):
         return class_weight
 
     @staticmethod
-    def compute_class_weight(kv_iterator):
-        class_dict = {}
-        for _, inst in kv_iterator:
-            count = class_dict.get(inst.label, 0)
-            class_dict[inst.label] = count + 1
-
-        if len(class_dict.keys()) > consts.MAX_CLASSNUM:
-            raise ValueError("In Classify Task, max dif classes should no more than %d" % (consts.MAX_CLASSNUM))
-
-        return class_dict
-
-    @staticmethod
     def replace_weight(data_instance, class_weight, weight_loc=None, weight_base=None):
         weighted_data_instance = copy.copy(data_instance)
         original_features = weighted_data_instance.features
         if weight_loc:
             weighted_data_instance.set_weight(original_features[weight_loc] / weight_base)
-            weighted_data_instance.features = original_features[np.arange(original_features) != weight_loc]
+            weighted_data_instance.features = original_features[np.arange(original_features.shape[0]) != weight_loc]
         else:
             weighted_data_instance.set_weight(class_weight.get(data_instance.label, 1))
         return weighted_data_instance
@@ -96,15 +101,6 @@ class SampleWeight(ModelBase):
             except ValueError:
                 return
         return weight_loc
-
-    @staticmethod
-    def compute_weight_array(data_instances, class_weight='balanced'):
-        if class_weight is None:
-            class_weight = {}
-        elif class_weight == 'balanced':
-            class_weight = SampleWeight.compute_class_weight(data_instances)
-        weight_inst = data_instances.mapValues(lambda v: class_weight.get(v.label, 1))
-        return np.array([v[1] for v in list(weight_inst.collect())])
 
     def transform_weighted_instance(self, data_instances, weight_loc):
         if self.class_weight and self.class_weight == 'balanced':
@@ -149,7 +145,11 @@ class SampleWeight(ModelBase):
         weight_loc = None
         if self.sample_weight_name:
             weight_loc = SampleWeight.get_weight_loc(data_instances, self.sample_weight_name)
-            new_schema["header"] = new_schema["header"].pop(weight_loc)
+            if weight_loc:
+                new_schema["header"].pop(weight_loc)
+            else:
+                LOGGER.warning(f"Cannot find weight column of given sample_weight_name '{self.sample_weight_name}'."
+                               f"Original data returned.")
         result_instances = self.transform_weighted_instance(data_instances, weight_loc)
         result_instances.schema = new_schema
         return result_instances
