@@ -124,6 +124,11 @@ class Job(DataBaseModel):
     f_party_id = CharField(max_length=10, index=True)
     f_is_initiator = BooleanField(null=True, index=True, default=False)
     f_progress = IntegerField(null=True, default=0)
+    f_ready_signal = BooleanField(index=True, default=False)
+    f_ready_time = BigIntegerField(null=True)
+    f_cancel_signal = BooleanField(index=True, default=False)
+    f_cancel_time = BooleanField(index=True, default=False)
+    f_rerun_signal = BooleanField(index=True, default=False)
 
     f_engine_name = CharField(max_length=50, null=True, index=True)
     f_engine_type = CharField(max_length=10, null=True, index=True)

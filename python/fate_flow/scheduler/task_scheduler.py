@@ -61,17 +61,18 @@ class TaskScheduler(object):
                         # can not start task
                         break
                 else:
-                    # can start task
+                    # all upstream dependent tasks have been complete, can start this task
                     scheduling_status_code = SchedulingStatusCode.HAVE_NEXT
                     status_code = cls.start_task(job=job, task=waiting_task)
                     if status_code == SchedulingStatusCode.NO_RESOURCE:
-                        # Wait for the next round of scheduling
+                        # wait for the next round of scheduling
+                        schedule_logger(job_id=job.f_job_id).info(f"job {waiting_task.f_job_id} task {waiting_task.f_task_id} can not apply resource, wait for the next round of scheduling")
                         break
                     elif status_code == SchedulingStatusCode.FAILED:
                         scheduling_status_code = SchedulingStatusCode.FAILED
                         break
-            else:
-                schedule_logger(job_id=job.f_job_id).info("have cancel signal, pass start job {} tasks".format(job.f_job_id))
+        else:
+            schedule_logger(job_id=job.f_job_id).info("have cancel signal, pass start job {} tasks".format(job.f_job_id))
         schedule_logger(job_id=job.f_job_id).info("finish scheduling job {} tasks".format(job.f_job_id))
         return scheduling_status_code, initiator_tasks_group.values()
 

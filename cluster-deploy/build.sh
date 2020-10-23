@@ -170,7 +170,7 @@ compress(){
                 md5_value=`md5sum ${module}.tar.gz | awk '{print $1}'`
                 ;;
         esac
-        echo "${module} ${md5_value}" >> ./packages_md5.txt
+        echo "${module}:${md5_value}" >> ./packages_md5.txt
         rm -rf ./${module}
     done
     echo "[INFO] Compress done"
