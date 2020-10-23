@@ -26,7 +26,7 @@ from fate_flow.scheduler import DAGScheduler
 from fate_flow.scheduler import FederatedScheduler
 from fate_flow.settings import stat_logger, TEMP_DIRECTORY
 from fate_flow.utils import job_utils, detect_utils, schedule_utils
-from fate_flow.utils.api_utils import get_json_result, error_response
+from fate_flow.utils.api_utils import get_json_result, error_response, server_error_response
 from fate_flow.entity.types import FederatedSchedulingStatusCode, RetCode, JobStatus
 from fate_flow.operation import Tracker
 from fate_flow.operation import JobSaver
@@ -38,8 +38,7 @@ manager = Flask(__name__)
 
 @manager.errorhandler(500)
 def internal_server_error(e):
-    stat_logger.exception(e)
-    return get_json_result(retcode=100, retmsg=str(e))
+    return server_error_response(e)
 
 
 @manager.route('/submit', methods=['POST'])
