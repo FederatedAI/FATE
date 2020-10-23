@@ -216,7 +216,6 @@ def _get_channel(mq, names: _QueueNames, party_id, role):
                      vhost=names.vhost, send_queue_name=names.send, receive_queue_name=names.receive, 
                      party_id=party_id, role=role)
 
-
 # can't pickle _thread.lock objects
 def _get_channels(mq_names, mq):
     channel_infos = []
@@ -254,6 +253,15 @@ def _send_obj(name, tag, data, channel_infos):
 
 
 MESSAGE_MAX_SIZE = 50000
+
+# can't pickle _thread.lock objects
+def _get_channels(mq_names, mq):
+    channel_infos = []
+    for party, names in mq_names.items():
+        info = _get_channel(mq, names, party_id=party.party_id, role=party.role)
+        channel_infos.append(info)
+    return channel_infos
+
 
 
 def _partition_snd(kvs, name, tag, total_size, partitions, mq_names, mq):
@@ -326,7 +334,9 @@ def _receive(channel_info, name, tag):
                 message_cache[cache_key] = message_cache[cache_key].union(rdd).coalesce(partitions)        
 
             # trigger action
+
             message_cache[cache_key] = message_cache[cache_key].persist(get_storage_level())
+
             count = message_cache[cache_key].count()
             LOGGER.debug(f"count: {count}")
             channel_info.basic_ack(delivery_tag=method.delivery_tag)

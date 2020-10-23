@@ -155,6 +155,6 @@ class HeteroKmeansArbiter(BaseKmeansModel):
             result.append(tuple(
                 [int(c_key),
                  [dist_table[i][1], dist_table_dbi[i][2], cluster_max_radius[c_key], list(cluster_dist._weights)]]))
-        predict_result1 = session.parallelize(result, partition=res_dict.partitions, include_key=True)
-        predict_result2 = dist_cluster_table_out
+        predict_result1 = dist_cluster_table_out
+        predict_result2 = session.parallelize(result, partition=res_dict.partitions, include_key=True)
         return predict_result1, predict_result2

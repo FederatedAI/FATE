@@ -9,7 +9,7 @@ services:
 
         volumes:
             - "../fate/log:/fate/logs"
-            - "../fate/data:/fate/fate_flow"
+            - "../fate/data:/fate/python/fate_flow"
 
         command: bash docker-entrypoint.sh
         container_name: fate_python
@@ -22,9 +22,8 @@ services:
         depends_on:
             - python
         volumes:
-            - "../fate/log:/data/projects/fate/python/logs"
-            - "../fate/data:/fate/fate_flow"
-
+            - "../fate/log:/fate/logs"
+            - "../fate/data:/fate/python/fate_flow"
 
         command: bash docker-entrypoint.sh
         container_name: fate_fateboard

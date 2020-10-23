@@ -30,16 +30,10 @@ FROM python:3.6
 
 WORKDIR /fate
 
-#COPY . /fate
 ADD fate.tar /fate
 ADD docker-entrypoint.sh /fate
-#ADD requirements.txt /fate
 
 RUN rm /bin/sh && ln -sf /bin/bash /bin/sh
-
-#RUN tar -xf fate.tar
-
-#RUN rm fate.tar
 
 COPY docker-entrypoint.sh /usr/local/bin/
 
@@ -48,8 +42,8 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 RUN apt-get update && apt-get install libgmp3-dev -y && apt-get install -y libmpfr-dev libmpfr-doc libmpfr6 && apt-get install libmpc-dev -y
 
 #RUN pip install -r requirements.txt -f ./pip-dependedocker ncies --no-index
-RUN pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r requirements.txt
+RUN pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r /fate/python/requirements.txt
 
-ENV PYTHONPATH /fate
+ENV PYTHONPATH /fate/python
 
 ENTRYPOINT ["docker-entrypoint.sh"]

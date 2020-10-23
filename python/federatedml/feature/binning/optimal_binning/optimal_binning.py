@@ -75,9 +75,7 @@ class OptimalBinning(BaseBinning):
         result_bucket = bucket_table.mapValues(optimal_binning_method)
         for col_name, (bucket_list, non_mixture_num, small_size_num) in result_bucket.collect():
             split_points = np.unique([bucket.right_bound for bucket in bucket_list]).tolist()
-            # if col_name == 'x0':
-            #     for bucket in bucket_list:
-            #         LOGGER.debug("bucket info: {}".format(bucket.__dict__))
+
             self.bin_results.put_col_split_points(col_name, split_points)
             self.__cal_single_col_result(col_name, bucket_list)
             if self.optimal_param.mixture and non_mixture_num > 0:
@@ -116,8 +114,6 @@ class OptimalBinning(BaseBinning):
         bucket_dict = dict()
         for col_name, sps in init_split_points.items():
 
-            # bucket_list = [bucket_info.Bucket(idx, self.adjustment_factor, right_bound=sp)
-            #                for idx, sp in enumerate(sps)]
             bucket_list = []
             for idx, sp in enumerate(sps):
                 bucket = bucket_info.Bucket(idx, self.adjustment_factor, right_bound=sp)
@@ -134,32 +130,14 @@ class OptimalBinning(BaseBinning):
             LOGGER.debug(f"col_name: {col_name}, length of sps: {len(sps)}, "
                          f"length of list: {len(bucket_list)}")
 
-        # bucket_table = data_instances.mapPartitions2(convert_func)
-        # bucket_table = bucket_table.reduce(self.merge_bucket_list, key_func=lambda key: key[1])
-        from fate_arch.common.versions import get_eggroll_version
-        version = get_eggroll_version()
-        if version.startswith('2.0'):
-            convert_func = functools.partial(self.convert_data_to_bucket_old,
-                                             split_points=init_split_points,
-                                             headers=self.header,
-                                             bucket_dict=copy.deepcopy(bucket_dict),
-                                             is_sparse=is_sparse,
-                                             get_bin_num_func=self.get_bin_num)
-            summary_dict = data_instances.mapPartitions(convert_func, use_previous_behavior=False)
-            # summary_dict = summary_dict.reduce(self.copy_merge, key_func=lambda key: key[1])
-            from federatedml.util.reduce_by_key import reduce
-            bucket_table = reduce(summary_dict, self.merge_bucket_list, key_func=lambda key: key[1])
-        elif version.startswith('2.2'):
-            convert_func = functools.partial(self.convert_data_to_bucket,
-                                             split_points=init_split_points,
-                                             headers=self.header,
-                                             bucket_dict=copy.deepcopy(bucket_dict),
-                                             is_sparse=is_sparse,
-                                             get_bin_num_func=self.get_bin_num)
-            bucket_table = data_instances.mapReducePartitions(convert_func, self.merge_bucket_list)
-            bucket_table = dict(bucket_table.collect())
-        else:
-            raise RuntimeError(f"Cannot recognized eggroll version: {version}")
+        convert_func = functools.partial(self.convert_data_to_bucket,
+                                         split_points=init_split_points,
+                                         headers=self.header,
+                                         bucket_dict=copy.deepcopy(bucket_dict),
+                                         is_sparse=is_sparse,
+                                         get_bin_num_func=self.get_bin_num)
+        bucket_table = data_instances.mapReducePartitions(convert_func, self.merge_bucket_list)
+        bucket_table = dict(bucket_table.collect())
 
         for k, v in bucket_table.items():
             LOGGER.debug(f"[feature] {k}, length of list: {len(v)}")
@@ -225,7 +203,6 @@ class OptimalBinning(BaseBinning):
                 bucket.add(label, col_value)
         result = []
         for col_name, bucket_list in bucket_dict.items():
-            # result.append(((data_key, col_name), bucket_list))
             result.append((col_name, bucket_list))
         return result
 
@@ -255,7 +232,6 @@ class OptimalBinning(BaseBinning):
         result = []
         for col_name, bucket_list in bucket_dict.items():
             result.append(((data_key, col_name), bucket_list))
-            # result.append((col_name, bucket_list))
         return result
 
     @staticmethod
@@ -342,8 +318,6 @@ class OptimalBinning(BaseBinning):
                     b_dict[i].set_left_neighbor(i - 1)
                     b_dict[i].set_right_neighbor(i + 1)
             b_dict[bucket_num - 1].set_right_neighbor(None)
-            # for b_dict_idx, bucket in b_dict.items():
-            #     LOGGER.debug("After _update_bucket_info, b_dict_idx: {}, b_idx: {}".format(b_dict_idx, bucket.idx))
             return b_dict
 
         def _merge_heap(constraint=None, aim_var=0):
@@ -568,11 +542,9 @@ class OptimalBinning(BaseBinning):
             return best_ks, start + best_index, res_dict
 
         def _merge_buckets(start_idx, end_idx, bucket_idx):
-            # new_bucket = bucket_info.Bucket(idx=bucket_idx, adjustment_factor=optimal_param.adjustment_factor)
             res_bucket = copy.deepcopy(bucket_list[start_idx])
             res_bucket.idx = bucket_idx
-            # new_bucket.event_total = event_total
-            # new_bucket.non_event_total = non_event_total
+
             for bucket in bucket_list[start_idx + 1: end_idx]:
                 res_bucket = res_bucket.merge(bucket)
             return res_bucket
@@ -644,10 +616,7 @@ class OptimalBinning(BaseBinning):
         """
         bucket_dict = dict()
         for col_name, bin_res_list in bin_sum.items():
-            # bucket_list = [bucket_info.Bucket(idx, self.adjustment_factor) for idx in range(len(bin_res_list))]
-            # bucket_list[0].set_left_neighbor(None)
-            # bucket_list[-1].set_right_neighbor(None)
-            # for b_idx, bucket in enumerate(bucket_list):
+
             bucket_list = []
             for b_idx in range(len(bin_res_list)):
                 bucket = bucket_info.Bucket(b_idx, self.adjustment_factor)
