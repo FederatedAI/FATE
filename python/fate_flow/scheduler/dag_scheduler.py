@@ -264,7 +264,7 @@ class DAGScheduler(Cron):
     @classmethod
     def schedule_ready_job(cls, job):
         job_id, initiator_role, initiator_party_id, = job.f_job_id, job.f_initiator_role, job.f_initiator_party_id
-        update_status = cls.ready_signal(job_id=job_id, set_or_reset=False, ready_timeout_ttl=5 * 60 * 1000)
+        update_status = cls.ready_signal(job_id=job_id, set_or_reset=False, ready_timeout_ttl=60 * 1000)
         schedule_logger(job_id).info(f"reset job {job_id} ready signal {update_status}")
 
     @classmethod
