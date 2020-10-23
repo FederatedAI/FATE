@@ -48,20 +48,20 @@ def main(config="../../config.yaml", namespace=""):
     pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=host, arbiter=arbiter)
 
     reader_0 = Reader(name="reader_0")
-    reader_0.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_train_data[0])
-    reader_0.get_party_instance(role='host', party_id=host).algorithm_param(table=host_train_data[0])
+    reader_0.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data[0])
+    reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data[0])
 
     reader_1 = Reader(name="reader_1")
-    reader_1.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_train_data[1])
-    reader_1.get_party_instance(role='host', party_id=host).algorithm_param(table=host_train_data[1])
+    reader_1.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data[1])
+    reader_1.get_party_instance(role='host', party_id=host).component_param(table=host_train_data[1])
 
 
     dataio_0 = DataIO(name="dataio_0")
     dataio_1 = DataIO(name="dataio_1")
 
-    dataio_0.get_party_instance(role='guest', party_id=guest).algorithm_param(with_label=True, label_name="doctorco",
+    dataio_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True, label_name="doctorco",
                                                                              label_type="float", output_format="dense")
-    dataio_0.get_party_instance(role='host', party_id=host).algorithm_param(with_label=False)
+    dataio_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
 
     intersection_0 = Intersection(name="intersection_0")
     intersect_1 = Intersection(name="intersection_1")

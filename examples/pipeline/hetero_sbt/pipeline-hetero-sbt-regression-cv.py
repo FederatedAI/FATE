@@ -48,12 +48,12 @@ def main(config="../../config.yaml", namespace=""):
     # set data reader and data-io
 
     reader_0 = Reader(name="reader_0")
-    reader_0.get_party_instance(role="guest", party_id=guest).algorithm_param(table=guest_train_data)
-    reader_0.get_party_instance(role="host", party_id=host).algorithm_param(table=host_train_data)
+    reader_0.get_party_instance(role="guest", party_id=guest).component_param(table=guest_train_data)
+    reader_0.get_party_instance(role="host", party_id=host).component_param(table=host_train_data)
     dataio_0 = DataIO(name="dataio_0")
-    dataio_0.get_party_instance(role="guest", party_id=guest).algorithm_param(with_label=True, output_format="dense",
+    dataio_0.get_party_instance(role="guest", party_id=guest).component_param(with_label=True, output_format="dense",
                                                                               label_type="float")
-    dataio_0.get_party_instance(role="host", party_id=host).algorithm_param(with_label=False)
+    dataio_0.get_party_instance(role="host", party_id=host).component_param(with_label=False)
 
     # data intersect component
     intersect_0 = Intersection(name="intersection_0")

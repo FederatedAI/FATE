@@ -56,15 +56,15 @@ def run_homo_nn_pipeline(config, namespace, data: dict, nn_component, num_host):
         .set_roles(guest=config.parties.guest[0], host=hosts, arbiter=config.parties.arbiter)
 
     reader_0 = Reader(name="reader_0")
-    reader_0.get_party_instance(role='guest', party_id=config.parties.guest[0]).algorithm_param(table=guest_train_data)
+    reader_0.get_party_instance(role='guest', party_id=config.parties.guest[0]).component_param(table=guest_train_data)
     for i in range(num_host):
         reader_0.get_party_instance(role='host', party_id=hosts[i]) \
-            .algorithm_param(table=host_train_data[i])
+            .component_param(table=host_train_data[i])
 
     dataio_0 = DataIO(name="dataio_0", with_label=True)
     dataio_0.get_party_instance(role='guest', party_id=config.parties.guest[0]) \
-        .algorithm_param(with_label=True, output_format="dense")
-    dataio_0.get_party_instance(role='host', party_id=hosts).algorithm_param(with_label=True)
+        .component_param(with_label=True, output_format="dense")
+    dataio_0.get_party_instance(role='host', party_id=hosts).component_param(with_label=True)
 
     pipeline.add_component(reader_0)
     pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))

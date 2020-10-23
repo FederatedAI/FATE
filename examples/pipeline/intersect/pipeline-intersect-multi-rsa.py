@@ -42,16 +42,16 @@ def main(config="../../config.yaml", namespace=""):
     pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=hosts)
 
     reader_0 = Reader(name="reader_0")
-    reader_0.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_train_data)
-    reader_0.get_party_instance(role='host', party_id=hosts[0]).algorithm_param(table=host_train_data[0])
-    reader_0.get_party_instance(role='host', party_id=hosts[1]).algorithm_param(table=host_train_data[1])
+    reader_0.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data)
+    reader_0.get_party_instance(role='host', party_id=hosts[0]).component_param(table=host_train_data[0])
+    reader_0.get_party_instance(role='host', party_id=hosts[1]).component_param(table=host_train_data[1])
 
 
     dataio_0 = DataIO(name="dataio_0")
 
-    dataio_0.get_party_instance(role='guest', party_id=guest).algorithm_param(with_label=False, output_format="dense")
-    dataio_0.get_party_instance(role='host', party_id=hosts[0]).algorithm_param(with_label=False, output_format="dense")
-    dataio_0.get_party_instance(role='host', party_id=hosts[1]).algorithm_param(with_label=False, output_format="dense")
+    dataio_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=False, output_format="dense")
+    dataio_0.get_party_instance(role='host', party_id=hosts[0]).component_param(with_label=False, output_format="dense")
+    dataio_0.get_party_instance(role='host', party_id=hosts[1]).component_param(with_label=False, output_format="dense")
 
     param = {
         "intersect_method": "rsa",
