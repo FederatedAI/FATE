@@ -369,8 +369,10 @@ def kill_task_executor_process(task: Task, only_child=False):
 
 
 def start_session_stop(task):
-    job_conf_dict = get_job_conf(task.f_job_id)
-    job_parameters = RunParameters(**job_conf_dict['job_runtime_conf_path']["job_parameters"])
+    dsl, runtime_conf, train_runtime_conf = get_job_configuration(job_id=task.f_job_id,
+                                                                  role=task.f_role,
+                                                                  party_id=task.f_party_id)
+    job_parameters = RunParameters(**runtime_conf["job_parameters"])
     computing_session_id = generate_session_id(task.f_task_id, task.f_task_version, task.f_role, task.f_party_id)
     if task.f_status != TaskStatus.WAITING:
         schedule_logger(task.f_job_id).info(f'start run subprocess to stop task session {computing_session_id}')
