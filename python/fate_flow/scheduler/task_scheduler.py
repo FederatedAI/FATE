@@ -66,6 +66,7 @@ class TaskScheduler(object):
                     status_code = cls.start_task(job=job, task=waiting_task)
                     if status_code == SchedulingStatusCode.NO_RESOURCE:
                         # wait for the next round of scheduling
+                        schedule_logger(job_id=job.f_job_id).info(f"job {waiting_task.f_job_id} task {waiting_task.f_task_id} can not apply resource, wait for the next round of scheduling")
                         break
                     elif status_code == SchedulingStatusCode.FAILED:
                         scheduling_status_code = SchedulingStatusCode.FAILED

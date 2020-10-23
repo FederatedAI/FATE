@@ -127,6 +127,7 @@ class Job(DataBaseModel):
     f_ready_signal = BooleanField(index=True, default=False)
     f_ready_time = BigIntegerField(null=True)
     f_cancel_signal = BooleanField(index=True, default=False)
+    f_cancel_time = BooleanField(index=True, default=False)
     f_rerun_signal = BooleanField(index=True, default=False)
 
     f_engine_name = CharField(max_length=50, null=True, index=True)

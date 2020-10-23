@@ -333,6 +333,8 @@ class DAGScheduler(Cron):
                 cls.update_job_on_initiator(initiator_job=job, update_fields=["status"])
         if EndStatus.contains(job.f_status):
             cls.finish(job=job, end_status=job.f_status)
+        if job.f_cancel_signal:
+            cls.cancel_signal(job_id=job.f_job_id, set_or_reset=False)
         schedule_logger(job_id=job.f_job_id).info("finish scheduling job {}".format(job.f_job_id))
 
     @classmethod
@@ -454,9 +456,6 @@ class DAGScheduler(Cron):
             job.f_status = stop_status
             schedule_logger(job_id=job_id).info(f"request stop job {job_id} with {stop_status} to all party")
             status_code, response = FederatedScheduler.stop_job(job=jobs[0], stop_status=stop_status)
-            if stop_status == JobStatus.CANCELED:
-                set_cancel_status = cls.cancel_signal(job_id=job_id, set_or_reset=False)
-                schedule_logger(job_id=job_id).info(f"reset job {job_id} cancel signal {set_cancel_status}")
             if status_code == FederatedSchedulingStatusCode.SUCCESS:
                 schedule_logger(job_id=job_id).info(f"stop job {job_id} with {stop_status} successfully")
                 return RetCode.SUCCESS, "success"
@@ -484,7 +483,7 @@ class DAGScheduler(Cron):
     @classmethod
     @DB.connection_context()
     def cancel_signal(cls, job_id, set_or_reset: bool):
-        update_status = Job.update({Job.f_cancel_signal: set_or_reset}).where(Job.f_job_id == job_id).execute() > 0
+        update_status = Job.update({Job.f_cancel_signal: set_or_reset, Job.f_cancel_time: current_timestamp()}).where(Job.f_job_id == job_id).execute() > 0
         return update_status
 
     @classmethod
