@@ -103,6 +103,9 @@ class DAGScheduler(Cron):
 
         status_code, response = FederatedScheduler.create_job(job=job)
         if status_code != FederatedSchedulingStatusCode.SUCCESS:
+            job.f_status = JobStatus.FAILED
+            job.f_tag = "submit_failed"
+            FederatedScheduler.sync_job_status(job=job)
             raise Exception("create job failed", response)
 
         if job_parameters.work_mode == WorkMode.CLUSTER:

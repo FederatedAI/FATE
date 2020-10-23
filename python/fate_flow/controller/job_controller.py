@@ -102,7 +102,7 @@ class JobController(object):
     def check_parameters(cls, job_parameters: RunParameters, engines_info):
         status, max_cores_per_job = ResourceManager.check_resource_apply(job_parameters=job_parameters, engines_info=engines_info)
         if not status:
-            raise RuntimeError(f"max cores per job is {max_cores_per_job}, please modify job parameters")
+            raise RuntimeError(f"max cores per job is {max_cores_per_job}, please modify job parameter eggroll_run/spark_run or fate_flow/settings.py#DEFAULT_TASK_CORES_PER_NODE")
 
     @classmethod
     def initialize_tasks(cls, job_id, role, party_id, run_on_this_party, job_initiator, job_parameters: RunParameters, dsl_parser, component_name=None, task_version=None):
