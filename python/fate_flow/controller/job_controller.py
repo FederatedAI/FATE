@@ -22,7 +22,7 @@ from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.operation import Tracker
 from fate_flow.settings import USE_AUTHENTICATION
 from fate_flow.utils import job_utils, schedule_utils, data_utils
-from fate_flow.operation import JobSaver, JobQueue
+from fate_flow.operation import JobSaver
 from fate_arch.common.base_utils import json_dumps, current_timestamp
 from fate_flow.controller import TaskController
 from fate_flow.manager import ResourceManager
@@ -85,7 +85,7 @@ class JobController(object):
         ]
         for engine_type, engine_name in engine_list:
             engine_info = ResourceManager.get_engine_registration_info(engine_type=engine_type, engine_name=engine_name)
-            job_parameters.engines_address[engine_type] = engine_info.f_engine_address
+            job_parameters.engines_address[engine_type] = engine_info.f_engine_config
             engines_info[engine_type] = engine_info
         return engines_info
 
@@ -267,23 +267,3 @@ class JobController(object):
         schedule_logger(job_id).info('Job {} on {} {} start to clean'.format(job_id, role, party_id))
         # todo
         schedule_logger(job_id).info('job {} on {} {} clean done'.format(job_id, role, party_id))
-
-    @classmethod
-    def cancel_job(cls, job_id, role, party_id):
-        schedule_logger(job_id).info('{} {} get cancel waiting job {} command'.format(role, party_id, job_id))
-        jobs = JobSaver.query_job(job_id=job_id)
-        if jobs:
-            job = jobs[0]
-            try:
-                # You cannot delete an event directly, otherwise the status might not be updated
-                status = JobQueue.update_event(job_id=job.f_job_id, initiator_role=job.f_initiator_role, initiator_party_id=job.f_initiator_party_id, job_status=JobStatus.CANCELED)
-                if not status:
-                    return False
-            except:
-                return False
-            schedule_logger(job_id).info('cancel {} job successfully, job id is {}'.format(job.f_status, job.f_job_id))
-            return True
-        else:
-            schedule_logger(job_id).warning('role {} party id {} cancel job failed, no find jod {}'.format(role, party_id, job_id))
-            raise Exception('role {} party id {} cancel job failed, no find jod {}'.format(role, party_id, job_id))
-

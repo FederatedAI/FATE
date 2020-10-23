@@ -103,10 +103,6 @@ class FederatedScheduler(object):
         return cls.job_command(job=job, command="rerun", command_body=command_body, dest_only_initiator=True)
 
     @classmethod
-    def request_cancel_job(cls, job):
-        return cls.job_command(job=job, command="cancel", dest_only_initiator=True)
-
-    @classmethod
     def clean_job(cls, job):
         schedule_logger(job_id=job.f_job_id).info("try to clean job {}".format(job.f_job_id))
         status_code, response = cls.job_command(job=job, command="clean", command_body=job.f_runtime_conf["role"].copy())

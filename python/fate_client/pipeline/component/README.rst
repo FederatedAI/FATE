@@ -455,6 +455,15 @@ Below lists input and output elements of each component.
      - None
      - model
 
+   * - `Scorecard`_
+     - Scorecard
+     - Scale predict score to credit score by given scaling parameters
+     - data
+     - data
+     - None
+     - None
+
+
 .. _DataIO: ../../federatedml/util/README.rst
 .. _Intersect: ../../federatedml/statistic/intersect/README.rst
 .. _Federated Sampling: ../../federatedml/feature/README.rst
@@ -479,6 +488,7 @@ Below lists input and output elements of each component.
 .. _Column Expand: ../../federatedml/feature/README.rst
 .. _Hetero KMeans: ../../federatedml/unsupervised_learning/kmeans/README.rst
 .. _Data Statistics: ../../federatedml/statistic/README.rst
+.. _Scorecard: ../../federatedml/statistic/scorecard/README.rst
 
 
 Params

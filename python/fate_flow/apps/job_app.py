@@ -31,7 +31,6 @@ from fate_flow.entity.types import FederatedSchedulingStatusCode, RetCode, JobSt
 from fate_flow.operation import Tracker
 from fate_flow.operation import JobSaver
 from fate_flow.operation import JobClean
-from fate_flow.operation import JobQueue
 from fate_flow.utils.config_adapter import JobRuntimeConfigAdapter
 
 manager = Flask(__name__)
@@ -71,8 +70,7 @@ def stop_job():
         else:
             return get_json_result(retcode=RetCode.OPERATING_ERROR, retmsg="stop job failed:\n{}".format(json_dumps(response, indent=4)))
     else:
-        stat_logger.info(f"can not found job {jobs[0]} to stop, delete job event")
-        JobQueue.delete_event(job_id=job_id)
+        stat_logger.info(f"can not found job {jobs[0]} to stop")
         return get_json_result(retcode=RetCode.DATA_ERROR, retmsg="can not found job")
 
 

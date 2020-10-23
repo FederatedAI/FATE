@@ -1,7 +1,7 @@
 apsw==3.9.2.post1
 beautifultable==1.0.0
 cachetools==3.0.0
-cloudpickle==1.6.0
+cloudpickle==0.6.1
 cos-python-sdk-v5==1.8.0
 Flask==1.0.2
 gmpy2==2.0.8
@@ -27,8 +27,8 @@ Werkzeug==0.15.3
 coverage==4.5.2
 
 # addtional requirements for eggroll
-grpcio>=1.22.0
-grpcio-tools>=1.22.0
+grpcio==1.24.3
+grpcio-tools==1.24.3
 numba>=0.40.1
 phe>=1.4.0
 protobuf==3.6.1

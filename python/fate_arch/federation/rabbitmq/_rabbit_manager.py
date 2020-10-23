@@ -207,7 +207,7 @@ class RabbitManager:
     # Create federate queue with upstream
     def federate_queue(self, upstream_host, vhost, send_queue_name, receive_queue_name):
         import time
-        time.sleep(5)
+        time.sleep(1)
         LOGGER.debug(f"create federate_queue {send_queue_name} {receive_queue_name}")
 
         result_set_upstream = self._set_federated_upstream(upstream_host, vhost, receive_queue_name)

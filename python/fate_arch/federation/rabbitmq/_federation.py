@@ -22,6 +22,7 @@ import pika
 # noinspection PyPackageRequirements
 from pyspark import SparkContext, RDD
 
+from fate_arch.common import conf_utils, file_utils
 from fate_arch.abc import FederationABC, GarbageCollectionABC
 from fate_arch.common import Party
 from fate_arch.common.log import getLogger
@@ -33,16 +34,16 @@ LOGGER = getLogger()
 
 
 class MQ(object):
-    def __init__(self, host, port, union_name, policy_id, mq_conf):
+    def __init__(self, host, port, union_name, policy_id, route_table):
         self.host = host
         self.port = port
         self.union_name = union_name
         self.policy_id = policy_id
-        self.mq_conf = mq_conf
+        self.route_table = route_table
 
     def __str__(self):
         return f"MQ(host={self.host}, port={self.port}, union_name={self.union_name}, " \
-               f"policy_id={self.policy_id}, mq_conf={self.mq_conf})"
+               f"policy_id={self.policy_id}, route_table={self.route_table})"
 
     def __repr__(self):
         return self.__str__()
@@ -62,17 +63,14 @@ class Federation(FederationABC):
     def from_conf(federation_session_id: str,
                   party: Party,
                   runtime_conf: dict,
-                  service_conf: dict):
+                  rabbitmq_config: dict):
 
-        mq_address = service_conf
-        LOGGER.debug(f'mq_address: {mq_address}')
-        rabbitmq_conf = mq_address.get("self")
-
-        host = rabbitmq_conf.get("host")
-        port = rabbitmq_conf.get("port")
-        mng_port = rabbitmq_conf.get("mng_port")
-        base_user = rabbitmq_conf.get('user')
-        base_password = rabbitmq_conf.get('password')
+        LOGGER.debug(f"rabbitmq_config: {rabbitmq_config}")
+        host = rabbitmq_config.get("host")
+        port = rabbitmq_config.get("port")
+        mng_port = rabbitmq_config.get("mng_port")
+        base_user = rabbitmq_config.get('user')
+        base_password = rabbitmq_config.get('password')
 
         federation_info = runtime_conf.get("job_parameters", {}).get("federation_info", {})
         union_name = federation_info.get('union_name')
@@ -80,7 +78,11 @@ class Federation(FederationABC):
 
         rabbit_manager = RabbitManager(base_user, base_password, f"{host}:{mng_port}")
         rabbit_manager.create_user(union_name, policy_id)
-        mq = MQ(host, port, union_name, policy_id, mq_address)
+        route_table_path = rabbitmq_config.get("route_table")
+        if route_table_path is None:
+            route_table_path = "conf/rabbitmq_route_table.yaml"
+        route_table = file_utils.load_yaml_conf(conf_path=route_table_path)
+        mq = MQ(host, port, union_name, policy_id, route_table)
         return Federation(federation_session_id, party, mq, rabbit_manager)
 
     def __init__(self, session_id, party: Party, mq: MQ, rabbit_manager: RabbitManager):
@@ -91,33 +93,38 @@ class Federation(FederationABC):
 
         self._queue_map: typing.MutableMapping[Party, _QueueNames] = {}
         self._channels_map = {}
-
-    def get(self, name, tag, parties: typing.List[Party], gc: GarbageCollectionABC) -> typing.List:
+     
+    def get(self, name: str, tag: str, parties: typing.List[Party], gc: GarbageCollectionABC) -> typing.List:
         log_str = f"rabbitmq.get(name={name}, tag={tag}, parties={parties})"
         LOGGER.debug(f"[{log_str}]start to get")
 
-        mq_names = self._get_mq_names(parties)
+        mq_names = self._get_mq_names(parties, name)
         LOGGER.debug(f"[rabbitmq.get]mq_names: {mq_names}")
         channel_infos = self._get_channels(mq_names=mq_names)
         LOGGER.debug(f"[rabbitmq.get]got channel infos: {channel_infos}")
 
         rtn = []
         for i, info in enumerate(channel_infos):
-            obj = _receive(info, name, tag)
-
+            obj = _receive(info, name, tag)  
+            
             if isinstance(obj, RDD):
                 rtn.append(Table(obj))
                 LOGGER.debug(f"[{log_str}]received rdd({i + 1}/{len(parties)}), party: {parties[i]} ")
             else:
                 rtn.append(obj)
                 LOGGER.debug(f"[{log_str}]received obj({i + 1}/{len(parties)}), party: {parties[i]} ")
+            
+            cache_key = _get_message_cache_key(name, tag, info._party_id, info._role)
+            if cache_key in message_cache:
+                del message_cache[cache_key]
+
         LOGGER.debug(f"[{log_str}]finish to get")
         return rtn
 
     def remote(self, v, name: str, tag: str, parties: typing.List[Party],
                gc: GarbageCollectionABC) -> typing.NoReturn:
         log_str = f"rabbitmq.remote(name={name}, tag={tag}, parties={parties})"
-        mq_names = self._get_mq_names(parties)
+        mq_names = self._get_mq_names(parties, name)
         LOGGER.debug(f"[rabbitmq.remote]mq_names: {mq_names}")
 
         if isinstance(v, Table):
@@ -147,20 +154,22 @@ class Federation(FederationABC):
             LOGGER.debug(f"[rabbitmq.cleanup]clean user {self._mq.union_name}.")
             self._rabbit_manager.delete_user(user=self._mq.union_name)
 
-    def _get_mq_names(self, parties: typing.List[Party]):
-        mq_names = {party: self._get_or_create_queue(party) for party in parties}
+    def _get_mq_names(self, parties: typing.List[Party], name: str):
+        mq_names = {"^".join([name, party.role, party.party_id]): self._get_or_create_queue(party, name) for party in parties}
         return mq_names
 
-    def _get_or_create_queue(self, party: Party) -> _QueueNames:
-        if party not in self._queue_map:
+    def _get_or_create_queue(self, party: Party, name) -> _QueueNames:        
+        name_party = "^".join([name, party.role, party.party_id])
+        
+        if name_party not in self._queue_map:
             LOGGER.debug(f"[rabbitmq.get_or_create_queue]queue for party:{party} not found, start to create")
             # gen names
             low, high = (self._party, party) if self._party < party else (party, self._party)
             # union_name = f"{low.role}-{low.party_id}-{high.role}-{high.party_id}"
             vhost_name = f"{self._session_id}-{low.role}-{low.party_id}-{high.role}-{high.party_id}"
 
-            send_queue_name = f"send-{self._party.role}-{self._party.party_id}-{party.role}-{party.party_id}"
-            receive_queue_name = f"receive-{party.role}-{party.party_id}-{self._party.role}-{self._party.party_id}"
+            send_queue_name = f"send-{self._party.role}-{self._party.party_id}-{party.role}-{party.party_id}-{name}"
+            receive_queue_name = f"receive-{party.role}-{party.party_id}-{self._party.role}-{self._party.party_id}-{name}"
             names = _QueueNames(vhost_name, send_queue_name, receive_queue_name)
 
             # initial vhost
@@ -177,33 +186,44 @@ class Federation(FederationABC):
             self._rabbit_manager.federate_queue(upstream_host=upstream_uri, vhost=names.vhost,
                                                 send_queue_name=names.send, receive_queue_name=names.receive)
 
-            self._queue_map[party] = names
-            LOGGER.debug(f"[rabbitmq.get_or_create_queue]queue for party:{party} created, names: {names}")
+            self._queue_map[name_party] = names
+            LOGGER.debug(f"[rabbitmq.get_or_create_queue]queue for name: {name}, party:{party} created, names: {names}")
 
-        names = self._queue_map[party]
+        names = self._queue_map[name_party]
         LOGGER.debug(f"[rabbitmq.get_or_create_queue]get queue: names: {names}")
         return names
 
     def _upstream_uri(self, party_id):
-        host = self._mq.mq_conf.get(str(party_id)).get("host")
-        port = self._mq.mq_conf.get(str(party_id)).get("port")
+        host = self._mq.route_table.get(int(party_id)).get("host")
+        port = self._mq.route_table.get(int(party_id)).get("port")
         upstream_uri = f"amqp://{self._mq.union_name}:{self._mq.policy_id}@{host}:{port}"
         return upstream_uri
 
-    def _get_channels(self, mq_names: typing.MutableMapping[Party, _QueueNames]):
+    def _get_channels(self, mq_names):
         channel_infos = []
-        for party, names in mq_names.items():
-            info = self._channels_map.get(party)
+        for name_party, names in mq_names.items():
+            name, role, party_id = name_party.split("^")
+            info = self._channels_map.get(name_party)
             if info is None:
-                info = _get_channel(self._mq, names, party_id=party.party_id)
-                self._channels_map[party] = info
+                info = _get_channel(self._mq, names, party_id=party_id, role=role)
+                self._channels_map[name_party] = info
             channel_infos.append(info)
         return channel_infos
 
 
-def _get_channel(mq, names: _QueueNames, party_id):
+def _get_channel(mq, names: _QueueNames, party_id, role):
     return MQChannel(host=mq.host, port=mq.port, user=mq.union_name, password=mq.policy_id,
-                     vhost=names.vhost, send_queue_name=names.send, receive_queue_name=names.receive, party_id=party_id)
+                     vhost=names.vhost, send_queue_name=names.send, receive_queue_name=names.receive, 
+                     party_id=party_id, role=role)
+
+# can't pickle _thread.lock objects
+def _get_channels(mq_names, mq):
+    channel_infos = []
+    for name_party, names in mq_names.items():
+        name, role, party_id = name_party.split("^")
+        info = _get_channel(mq, names, party_id=party_id, role=role)
+        channel_infos.append(info)
+    return channel_infos
 
 
 def _send_kv(name, tag, data, channel_infos, total_size, partitions):
@@ -232,16 +252,16 @@ def _send_obj(name, tag, data, channel_infos):
         info.basic_publish(body=data, properties=properties)
 
 
+MESSAGE_MAX_SIZE = 50000
+
 # can't pickle _thread.lock objects
 def _get_channels(mq_names, mq):
     channel_infos = []
     for party, names in mq_names.items():
-        info = _get_channel(mq, names, party_id=party.party_id)
+        info = _get_channel(mq, names, party_id=party.party_id, role=party.role)
         channel_infos.append(info)
     return channel_infos
 
-
-MESSAGE_MAX_SIZE = 50
 
 
 def _partition_snd(kvs, name, tag, total_size, partitions, mq_names, mq):
@@ -272,44 +292,62 @@ def _get_partition_send_func(name, tag, total_size, partitions, mq_names, mq):
     return _fn
 
 
-def _receive(channel_info, name, tag):
-    count = 0
-    obj: typing.Optional[RDD] = None
+message_cache = {}
+
+
+def _get_message_cache_key(name, tag, party_id, role):
+    cache_key = "^".join([name, tag, str(party_id), role])
+    return cache_key
+
+
+def _receive(channel_info, name, tag):     
     partitions = -1
+    party_id = channel_info._party_id 
+    role = channel_info._role   
+    wish_cache_key = _get_message_cache_key(name, tag, party_id, role)
+    
+    if wish_cache_key in message_cache:
+        return message_cache[wish_cache_key]
+    
     for method, properties, body in channel_info.consume():
-        LOGGER.debug(f"[rabbitmq._receive]count: {count}, method: {method}, properties: {properties}.")
+        LOGGER.debug(f"[rabbitmq._receive] method: {method}, properties: {properties}.")
         if properties.message_id != name or properties.correlation_id != tag:
             # todo: fix this
             LOGGER.warning(f"[rabbitmq._receive]: require {name}.{tag}, got {properties.message_id}.{properties.correlation_id}")
-            continue
-
+        
+        cache_key = _get_message_cache_key(properties.message_id, properties.correlation_id, party_id, role)
         # object
         if properties.content_type == 'text/plain':
-            obj = p_loads(body)
-            channel_info.basic_ack(delivery_tag=method.delivery_tag)
-            channel_info.cancel()
-            return obj
-
+            message_cache[cache_key] = p_loads(body)
+            channel_info.basic_ack(delivery_tag=method.delivery_tag)                
+           
         # rdd
         if properties.content_type == 'application/json':
-            data = json.loads(body)
-            count += len(data)
+            data = json.loads(body)                
             data_iter = ((p_loads(bytes.fromhex(el['k'])), p_loads(bytes.fromhex(el['v']))) for el in data)
             sc = SparkContext.getOrCreate()
             partitions = properties.headers["partitions"]
             rdd = sc.parallelize(data_iter, partitions)
-            obj = rdd if obj is None else obj.union(rdd).coalesce(partitions)
+            if cache_key not in message_cache:
+                message_cache[cache_key] = rdd
+            else:
+                message_cache[cache_key] = message_cache[cache_key].union(rdd).coalesce(partitions)        
 
             # trigger action
-            obj.persist(get_storage_level())
-            count = obj.count()
+
+            message_cache[cache_key] = message_cache[cache_key].persist(get_storage_level())
+
+            count = message_cache[cache_key].count()
             LOGGER.debug(f"count: {count}")
             channel_info.basic_ack(delivery_tag=method.delivery_tag)
-
-            if count == properties.headers["total_size"]:
-                break
-
-    channel_info.cancel()
-    obj = obj.coalesce(partitions)
-
-    return obj
+            
+        # object
+        if properties.content_type == 'text/plain':
+            if cache_key == wish_cache_key:
+                channel_info.cancel()
+                return message_cache[cache_key]       
+        # rdd
+        if properties.content_type == 'application/json':
+            if cache_key == wish_cache_key and message_cache[cache_key].count() == properties.headers["total_size"]:
+                channel_info.cancel()
+                return message_cache[cache_key]
