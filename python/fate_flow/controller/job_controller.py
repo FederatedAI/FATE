@@ -100,6 +100,7 @@ class JobController(object):
 
     @classmethod
     def check_parameters(cls, job_parameters: RunParameters, engines_info):
+        return
         status, max_cores_per_job = ResourceManager.check_resource_apply(job_parameters=job_parameters, engines_info=engines_info)
         if not status:
             raise RuntimeError(f"max cores per job is {max_cores_per_job}, please modify job parameters")

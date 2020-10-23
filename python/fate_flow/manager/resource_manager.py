@@ -197,19 +197,12 @@ class ResourceManager(object):
                 job_parameters.spark_run.get("executor-cores", DEFAULT_TASK_CORES_PER_NODE))            
             job_parameters.spark_run["executor-cores"] = job_parameters.adaptation_parameters["task_cores_per_node"]
 
-#             job_parameters.adaptation_parameters["task_memory_per_node"] = int(
-#                 job_parameters.spark_run.get("executor-memory", DEFAULT_TASK_MEMORY_PER_NODE))
-#             if job_parameters.adaptation_parameters["task_memory_per_node"] > 0:
-#                 job_parameters.spark_run["executor-memory"] = job_parameters.adaptation_parameters[
-#                     "task_memory_per_node"]
-
     @classmethod
     def calculate_job_resource(cls, job_parameters: RunParameters = None, job_id=None, role=None, party_id=None):
         if not job_parameters:
             dsl, submit_conf, train_runtime_conf = job_utils.get_job_configuration(job_id=job_id,
                                                                                    role=role,
-                                                                                   party_id=party_id,
-                                                                                   is_submit_conf=True)
+                                                                                   party_id=party_id)
             job_parameters = JobRuntimeConfigAdapter(submit_conf).get_job_parameters_dict()
             job_parameters = RunParameters(**job_parameters)
         cores = job_parameters.adaptation_parameters["task_cores_per_node"] * job_parameters.adaptation_parameters[
