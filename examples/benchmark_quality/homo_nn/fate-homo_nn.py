@@ -23,6 +23,7 @@ from pipeline.interface import Data
 from pipeline.utils.tools import load_job_config, JobConfig
 import tensorflow.keras.layers
 from tensorflow.keras import optimizers
+from pipeline.runtime.entity import JobParameters
 
 
 class dataset(object):
@@ -98,7 +99,8 @@ def main(config="../../config.yaml", param="param_conf.yaml", namespace=""):
     pipeline.add_component(homo_nn_0, data=Data(train_data=dataio_0.output.data))
     pipeline.add_component(evaluation_0, data=Data(data=homo_nn_0.output.data))
     pipeline.compile()
-    pipeline.fit(backend=config.backend, work_mode=config.work_mode)
+    job_parameters = JobParameters(backend=config.backend, work_mode=config.work_mode)
+    pipeline.fit(job_parameters)
     metric_summary = pipeline.get_component("evaluation_0").get_summary()
     data_summary = dict(
         train={"guest": guest_train_data["name"], **{f"host_{i}": host_train_data[i]["name"] for i in range(num_host)}},

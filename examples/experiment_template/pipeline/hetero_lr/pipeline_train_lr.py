@@ -26,6 +26,7 @@ from pipeline.component.reader import Reader
 from pipeline.interface.data import Data
 from pipeline.interface.model import Model
 from pipeline.utils.tools import load_job_config
+from pipeline.runtime.entity import JobParameters
 
 
 def main(config="../../config.yaml", namespace=""):
@@ -189,7 +190,8 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.compile()
 
     # fit model
-    pipeline.fit(backend=backend, work_mode=work_mode)
+    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
+    pipeline.fit(job_parameters)
     # query component summary
     print(pipeline.get_component("hetero_lr_0").get_summary())
 

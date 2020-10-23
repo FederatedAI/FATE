@@ -164,7 +164,7 @@ def get_job_conf(job_id):
 
 
 @DB.connection_context()
-def get_job_configuration(job_id, role, party_id, tasks=None):
+def get_job_configuration(job_id, role, party_id, tasks=None, is_submit_conf=False):
     if tasks:
         jobs_run_conf = {}
         for task in tasks:
@@ -174,12 +174,15 @@ def get_job_configuration(job_id, role, party_id, tasks=None):
             jobs_run_conf[job.f_job_id]["notes"] = job.f_description
         return jobs_run_conf
     else:
-        jobs = Job.select(Job.f_dsl, Job.f_runtime_conf, Job.f_train_runtime_conf).where(Job.f_job_id == job_id,
+        jobs = Job.select(Job.f_dsl, Job.f_submit_conf, Job.f_runtime_conf, Job.f_train_runtime_conf).where(Job.f_job_id == job_id,
                                                                                          Job.f_role == role,
                                                                                          Job.f_party_id == party_id)
     if jobs:
         job = jobs[0]
-        return job.f_dsl, job.f_runtime_conf, job.f_train_runtime_conf
+        if not is_submit_conf:
+            return job.f_dsl, job.f_runtime_conf, job.f_train_runtime_conf
+        else:
+            return job.f_dsl, job.f_submit_conf, job.f_train_runtime_conf
     else:
         return {}, {}, {}
 
@@ -366,8 +369,10 @@ def kill_task_executor_process(task: Task, only_child=False):
 
 
 def start_session_stop(task):
-    job_conf_dict = get_job_conf(task.f_job_id)
-    job_parameters = RunParameters(**job_conf_dict['job_runtime_conf_path']["job_parameters"])
+    dsl, runtime_conf, train_runtime_conf = get_job_configuration(job_id=task.f_job_id,
+                                                                  role=task.f_role,
+                                                                  party_id=task.f_party_id)
+    job_parameters = RunParameters(**runtime_conf["job_parameters"])
     computing_session_id = generate_session_id(task.f_task_id, task.f_task_version, task.f_role, task.f_party_id)
     if task.f_status != TaskStatus.WAITING:
         schedule_logger(task.f_job_id).info(f'start run subprocess to stop task session {computing_session_id}')

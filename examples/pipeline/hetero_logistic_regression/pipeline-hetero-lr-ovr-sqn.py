@@ -27,6 +27,7 @@ sys.path.append(cur_path)
 from examples.pipeline.hetero_logistic_regression import common_tools
 
 from pipeline.utils.tools import load_job_config
+from pipeline.runtime.entity import JobParameters
 
 
 def main(config="../../config.yaml", namespace=""):

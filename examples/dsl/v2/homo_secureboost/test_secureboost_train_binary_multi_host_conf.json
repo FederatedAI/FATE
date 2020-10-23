@@ -1,4 +1,5 @@
 {
+    "dsl_version": 2,
     "initiator": {
         "role": "guest",
         "party_id": 9999
@@ -16,97 +17,100 @@
         ]
     },
     "job_parameters": {
-        "job_type": "train",
-        "backend": 0,
-        "work_mode": 0,
-        "dsl_version": 2
-    },
-    "role_parameters": {
-        "host": {
-            "0": {
-                "dataio_1": {
-                    "with_label": true,
-                    "output_format": "dense"
-                },
-                "dataio_0": {
-                    "with_label": true,
-                    "output_format": "dense"
-                },
-                "reader_0": {
-                    "table": {
-                        "name": "default_credit_host_1",
-                        "namespace": "experiment"
-                    }
-                },
-                "reader_1": {
-                    "table": {
-                        "name": "default_credit_test",
-                        "namespace": "experiment"
-                    }
-                }
-            },
-            "1": {
-                "dataio_1": {
-                    "with_label": true,
-                    "output_format": "dense"
-                },
-                "dataio_0": {
-                    "with_label": true,
-                    "output_format": "dense"
-                },
-                "reader_0": {
-                    "table": {
-                        "name": "default_credit_host_2",
-                        "namespace": "experiment"
-                    }
-                },
-                "reader_1": {
-                    "table": {
-                        "name": "default_credit_test",
-                        "namespace": "experiment"
-                    }
-                }
-            }
-        },
-        "guest": {
-            "0": {
-                "dataio_1": {
-                    "with_label": true,
-                    "output_format": "dense"
-                },
-                "dataio_0": {
-                    "with_label": true,
-                    "output_format": "dense"
-                },
-                "reader_0": {
-                    "table": {
-                        "name": "default_credit_guest",
-                        "namespace": "experiment"
-                    }
-                },
-                "reader_1": {
-                    "table": {
-                        "name": "default_credit_test",
-                        "namespace": "experiment"
-                    }
-                }
-            }
+        "common": {
+            "job_type": "train",
+            "backend": 0,
+            "work_mode": 0
         }
     },
-    "algorithm_parameters": {
-        "homo_secureboost_0": {
-            "task_type": "classification",
-            "objective_param": {
-                "objective": "cross_entropy"
+    "component_parameters": {
+        "common": {
+            "homo_secureboost_0": {
+                "task_type": "classification",
+                "objective_param": {
+                    "objective": "cross_entropy"
+                },
+                "num_trees": 3,
+                "validation_freqs": 1,
+                "tree_param": {
+                    "max_depth": 3
+                }
             },
-            "num_trees": 3,
-            "validation_freqs": 1,
-            "tree_param": {
-                "max_depth": 3
+            "evaluation_0": {
+                "eval_type": "binary"
             }
         },
-        "evaluation_0": {
-            "eval_type": "binary"
+        "role": {
+            "host": {
+                "0": {
+                    "dataio_1": {
+                        "with_label": true,
+                        "output_format": "dense"
+                    },
+                    "dataio_0": {
+                        "with_label": true,
+                        "output_format": "dense"
+                    },
+                    "reader_0": {
+                        "table": {
+                            "name": "default_credit_host_1",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "reader_1": {
+                        "table": {
+                            "name": "default_credit_test",
+                            "namespace": "experiment"
+                        }
+                    }
+                },
+                "1": {
+                    "dataio_1": {
+                        "with_label": true,
+                        "output_format": "dense"
+                    },
+                    "dataio_0": {
+                        "with_label": true,
+                        "output_format": "dense"
+                    },
+                    "reader_0": {
+                        "table": {
+                            "name": "default_credit_host_2",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "reader_1": {
+                        "table": {
+                            "name": "default_credit_test",
+                            "namespace": "experiment"
+                        }
+                    }
+                }
+            },
+            "guest": {
+                "0": {
+                    "dataio_1": {
+                        "with_label": true,
+                        "output_format": "dense"
+                    },
+                    "dataio_0": {
+                        "with_label": true,
+                        "output_format": "dense"
+                    },
+                    "reader_0": {
+                        "table": {
+                            "name": "default_credit_guest",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "reader_1": {
+                        "table": {
+                            "name": "default_credit_test",
+                            "namespace": "experiment"
+                        }
+                    }
+                }
+            }
         }
     }
 }

@@ -29,6 +29,7 @@ from pipeline.component import Intersection
 from pipeline.component import Reader
 from pipeline.interface import Data
 from pipeline.interface import Model
+from pipeline.runtime.entity import JobParameters
 
 
 def main(config="../../config.yaml", namespace=""):
@@ -94,7 +95,8 @@ def main(config="../../config.yaml", namespace=""):
 
     pipeline.compile()
 
-    pipeline.fit(backend=backend, work_mode=work_mode)
+    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
+    pipeline.fit(job_parameters)
 
     print(pipeline.get_component("hetero_nn_0").get_summary())
     print(pipeline.get_component("evaluation_0").get_summary())

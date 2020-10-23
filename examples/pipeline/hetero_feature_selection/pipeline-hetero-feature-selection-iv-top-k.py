@@ -26,6 +26,7 @@ sys.path.append(cur_path)
 
 from examples.pipeline.hetero_feature_selection import common_tools
 from pipeline.utils.tools import load_job_config
+from pipeline.runtime.entity import JobParameters
 
 
 def main(config="../../config.yaml", namespace=""):
@@ -66,7 +67,8 @@ def main(config="../../config.yaml", namespace=""):
         }}
     pipeline = common_tools.make_normal_dsl(config, namespace, selection_param,
                                             binning_param=binning_param)
-    pipeline.fit(backend=backend, work_mode=work_mode)
+    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
+    pipeline.fit(job_parameters)
     common_tools.prettify(pipeline.get_component("hetero_feature_selection_0").get_summary())
 
 

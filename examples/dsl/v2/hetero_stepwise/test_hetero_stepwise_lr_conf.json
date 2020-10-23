@@ -1,4 +1,5 @@
- {
+{
+    "dsl_version": 2,
     "initiator": {
         "role": "guest",
         "party_id": 9999
@@ -15,62 +16,65 @@
         ]
     },
     "job_parameters": {
-        "work_mode": 1,
-        "backend": 1,
-        "dsl_version": 2
+        "common": {
+            "work_mode": 1,
+            "backend": 1
+        }
     },
-    "role_parameters": {
-        "host": {
-            "0": {
-                "reader_0": {
-                    "table": {
-                        "name": "breast_hetero_mini_host",
-                        "namespace": "experiment"
-                    }
+    "component_parameters": {
+        "common": {
+            "hetero_lr_0": {
+                "penalty": "None",
+                "tol": 0.001,
+                "optimizer": "sgd",
+                "batch_size": -1,
+                "learning_rate": 0.15,
+                "init_param": {
+                    "init_method": "zeros"
                 },
-                "dataio_0": {
-                    "with_label": false
+                "max_iter": 5,
+                "early_stop": "diff",
+                "decay": 0.0,
+                "decay_sqrt": false,
+                "stepwise_param": {
+                    "score_name": "AIC",
+                    "direction": "backward",
+                    "need_stepwise": true,
+                    "max_step": 2,
+                    "nvmin": 2
+                },
+                "encrypted_mode_calculator_param": {
+                    "mode": "fast"
                 }
             }
         },
-        "guest": {
-            "0": {
-                "reader_0": {
-                    "table": {
-                        "name": "breast_hetero_mini_guest",
-                        "namespace": "experiment"
+        "role": {
+            "host": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_mini_host",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "dataio_0": {
+                        "with_label": false
                     }
-                },
-                "dataio_0": {
-                    "with_label": true,
-                    "output_format": "dense"
                 }
-            }
-        }
-    },
-    "algorithm_parameters": {
-        "hetero_lr_0": {
-            "penalty": "None",
-            "tol": 0.001,
-            "optimizer": "sgd",
-            "batch_size": -1,
-            "learning_rate": 0.15,
-            "init_param": {
-                "init_method": "zeros"
             },
-            "max_iter": 5,
-            "early_stop": "diff",
-            "decay": 0.0,
-            "decay_sqrt": false,
-            "stepwise_param": {
-                "score_name": "AIC",
-                "direction": "backward",
-                "need_stepwise": true,
-                "max_step": 2,
-                "nvmin": 2
-            },
-            "encrypted_mode_calculator_param": {
-                "mode": "fast"
+            "guest": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_mini_guest",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "dataio_0": {
+                        "with_label": true,
+                        "output_format": "dense"
+                    }
+                }
             }
         }
     }

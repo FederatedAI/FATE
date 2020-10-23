@@ -27,6 +27,7 @@ from tensorflow.keras import initializers
 from pipeline.component.evaluation import Evaluation
 
 from pipeline.utils.tools import load_job_config
+from pipeline.runtime.entity import JobParameters
 
 
 def main(config="../../config.yaml", namespace=""):
@@ -73,7 +74,8 @@ def main(config="../../config.yaml", namespace=""):
 
     pipeline.compile()
 
-    pipeline.fit(backend=backend, work_mode=work_mode)
+    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
+    pipeline.fit(job_parameters)
 
     """
     # predict
