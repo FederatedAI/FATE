@@ -277,7 +277,7 @@ def _send_kv(name, tag, data, channel_infos, total_size, partitions, message_key
             delivery_mode=1           
         )
         LOGGER.debug(f"[rabbitmq._send_kv]info: {info}, properties: {properties}.")
-        info.basic_publish(body=json.dumps(data), properties=properties)
+        info.basic_publish(body=data, properties=properties)
 
 
 def _send_obj(name, tag, data, channel_infos):
@@ -372,8 +372,7 @@ def _receive(channel_info, name, tag):
             
             message_key_cache[cache_key].add(message_key)            
                 
-            data = json.loads(body) 
-            data = json.loads(data)               
+            data = json.loads(body)                            
             data_iter = ((p_loads(bytes.fromhex(el['k'])), p_loads(bytes.fromhex(el['v']))) for el in data)
             sc = SparkContext.getOrCreate()
             partitions = properties.headers["partitions"]
