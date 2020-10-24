@@ -19,23 +19,31 @@
 from fate_flow.entity.types import RunParameters
 
 
-class JobRuntimeConfigAdapter(object):
+class JobSubmitConfigAdapter(object):
     def __init__(self, job_submit_conf):
         self.job_submit_conf = job_submit_conf
 
     def get_common_parameters(self):
         if int(self.job_submit_conf.get('dsl_version', 1)) == 2:
-            if 'common' in self.job_submit_conf['job_parameters']:
-                job_parameters = RunParameters(**self.job_submit_conf['job_parameters']['common'])
-            else:
-                job_parameters = RunParameters(**self.job_submit_conf['job_parameters'])
+            if "common" not in self.job_submit_conf["job_parameters"]:
+                raise RuntimeError("the configuration format for v2 version must be job_parameters:common")
+            job_parameters = RunParameters(**self.job_submit_conf['job_parameters']['common'])
             self.job_submit_conf['job_parameters']['common'] = job_parameters.to_dict()
         else:
             job_parameters = RunParameters(**self.job_submit_conf['job_parameters'])
             self.job_submit_conf['job_parameters'] = job_parameters.to_dict()
         return job_parameters
 
-    def get_job_parameters_dict(self, job_parameters=None):
+    def update_common_parameters(self, common_parameters: RunParameters):
+        if int(self.job_submit_conf.get("dsl_version", 1)) == 2:
+            if "common" not in self.job_submit_conf["job_parameters"]:
+                raise RuntimeError("the configuration format for v2 version must be job_parameters:common")
+            self.job_submit_conf["job_parameters"]["common"] = common_parameters.to_dict()
+        else:
+            self.job_submit_conf["job_parameters"] = common_parameters.to_dict()
+        return self.job_submit_conf
+
+    def get_job_parameters_dict(self, job_parameters: RunParameters = None):
         if job_parameters:
             if int(self.job_submit_conf.get('dsl_version', 1)) == 2:
                 self.job_submit_conf['job_parameters']['common'] = job_parameters.to_dict()

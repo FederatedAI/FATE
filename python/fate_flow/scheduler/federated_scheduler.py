@@ -14,13 +14,13 @@
 #  limitations under the License.
 #
 
-from fate_flow.settings import API_VERSION, DEFAULT_FEDERATED_COMMAND_TRYS
+from fate_flow.settings import DEFAULT_FEDERATED_COMMAND_TRYS
 from fate_flow.utils.api_utils import federated_api
 from fate_arch.common.log import schedule_logger
 from fate_flow.entity.types import RetCode, FederatedSchedulingStatusCode
 from fate_flow.db.db_models import Job, Task
 from fate_flow.utils import schedule_utils
-from fate_flow.utils.config_adapter import JobRuntimeConfigAdapter
+from fate_flow.utils.config_adapter import JobSubmitConfigAdapter
 
 
 class FederatedScheduler(object):
@@ -115,17 +115,15 @@ class FederatedScheduler(object):
     @classmethod
     def job_command(cls, job, command, command_body=None, dest_only_initiator=False, specific_dest=None):
         federated_response = {}
-        roles, job_initiator = job.f_runtime_conf["role"], job.f_runtime_conf['initiator']
-        conf_adapter = JobRuntimeConfigAdapter(job.f_submit_conf)
-        job_parameters = conf_adapter.get_common_parameters().to_dict()
+        job_parameters = job.f_runtime_conf["job_parameters"]
         if dest_only_initiator:
-            dest_partys = [(job_initiator["role"], [job_initiator["party_id"]])]
+            dest_partys = [(job.f_initiator_role, [job.f_initiator_party_id])]
             api_type = "initiator"
         elif specific_dest:
             dest_partys = specific_dest.items()
             api_type = "party"
         else:
-            dest_partys = roles.items()
+            dest_partys = job.f_roles.items()
             api_type = "party"
         for dest_role, dest_party_ids in dest_partys:
             federated_response[dest_role] = {}
@@ -140,9 +138,9 @@ class FederatedScheduler(object):
                                                  dest_party_id,
                                                  command
                                              ),
-                                             src_party_id=job_initiator['party_id'],
+                                             src_party_id=job.f_initiator_party_id,
                                              dest_party_id=dest_party_id,
-                                             src_role=job_initiator['role'],
+                                             src_role=job.f_initiator_role,
                                              json_body=command_body if command_body else {},
                                              federated_mode=job_parameters["federated_mode"])
                     federated_response[dest_role][dest_party_id] = response
@@ -221,9 +219,7 @@ class FederatedScheduler(object):
     @classmethod
     def task_command(cls, job, task, command, command_body=None):
         federated_response = {}
-        roles, job_initiator = job.f_runtime_conf["role"], job.f_runtime_conf['initiator']
-        conf_adapter = JobRuntimeConfigAdapter(job.f_submit_conf)
-        job_parameters = conf_adapter.get_common_parameters().to_dict()
+        job_parameters = job.f_runtime_conf["job_parameters"]
         dsl_parser = schedule_utils.get_job_dsl_parser(dsl=job.f_dsl, runtime_conf=job.f_runtime_conf, train_runtime_conf=job.f_train_runtime_conf)
         component = dsl_parser.get_component_info(component_name=task.f_component_name)
         component_parameters = component.get_role_parameters()
@@ -243,9 +239,9 @@ class FederatedScheduler(object):
                                                  dest_party_id,
                                                  command
                                              ),
-                                             src_party_id=job_initiator['party_id'],
+                                             src_party_id=job.f_initiator_party_id,
                                              dest_party_id=dest_party_id,
-                                             src_role=job_initiator['role'],
+                                             src_role=job.f_initiator_role,
                                              json_body=command_body if command_body else {},
                                              federated_mode=job_parameters["federated_mode"])
                     federated_response[dest_role][dest_party_id] = response

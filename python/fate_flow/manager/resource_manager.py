@@ -27,7 +27,6 @@ from fate_flow.entity.types import ResourceOperation, RunParameters
 from fate_flow.settings import stat_logger, STANDALONE_BACKEND_VIRTUAL_CORES_PER_NODE, SUPPORT_BACKENDS_ENTRANCE, \
     MAX_CORES_PERCENT_PER_JOB, DEFAULT_TASK_CORES_PER_NODE
 from fate_flow.utils import job_utils
-from fate_flow.utils.config_adapter import JobRuntimeConfigAdapter
 
 
 class ResourceManager(object):

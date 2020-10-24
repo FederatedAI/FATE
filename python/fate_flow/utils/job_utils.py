@@ -164,7 +164,7 @@ def get_job_conf(job_id):
 
 
 @DB.connection_context()
-def get_job_configuration(job_id, role, party_id, tasks=None, is_submit_conf=False):
+def get_job_configuration(job_id, role, party_id, tasks=None):
     if tasks:
         jobs_run_conf = {}
         for task in tasks:
@@ -174,15 +174,12 @@ def get_job_configuration(job_id, role, party_id, tasks=None, is_submit_conf=Fal
             jobs_run_conf[job.f_job_id]["notes"] = job.f_description
         return jobs_run_conf
     else:
-        jobs = Job.select(Job.f_dsl, Job.f_submit_conf, Job.f_runtime_conf, Job.f_train_runtime_conf).where(Job.f_job_id == job_id,
+        jobs = Job.select(Job.f_dsl, Job.f_runtime_conf, Job.f_train_runtime_conf).where(Job.f_job_id == job_id,
                                                                                          Job.f_role == role,
                                                                                          Job.f_party_id == party_id)
     if jobs:
         job = jobs[0]
-        if not is_submit_conf:
-            return job.f_dsl, job.f_runtime_conf, job.f_train_runtime_conf
-        else:
-            return job.f_dsl, job.f_submit_conf, job.f_train_runtime_conf
+        return job.f_dsl, job.f_runtime_conf, job.f_train_runtime_conf
     else:
         return {}, {}, {}
 

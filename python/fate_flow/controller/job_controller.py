@@ -33,33 +33,30 @@ class JobController(object):
     def create_job(cls, job_id, role, party_id, job_info):
         # parse job configuration
         dsl = job_info['dsl']
-        runtime_conf = job_info['runtime_conf']
+        submit_conf = job_info['submit_conf']
         train_runtime_conf = job_info['train_runtime_conf']
         job_utils.save_job_conf(job_id=job_id,
                                 job_dsl=dsl,
-                                job_runtime_conf=runtime_conf,
+                                job_runtime_conf=submit_conf,
                                 train_runtime_conf=train_runtime_conf,
                                 pipeline_dsl=None)
         if USE_AUTHENTICATION:
             authentication_check(src_role=job_info.get('src_role', None), src_party_id=job_info.get('src_party_id', None),
-                                 dsl=dsl, runtime_conf=runtime_conf, role=role, party_id=party_id)
-        # job_parameters = RunParameters(**runtime_conf['job_parameters'])
-        job_initiator = runtime_conf['initiator']
+                                 dsl=dsl, submit_conf=submit_conf, role=role, party_id=party_id)
 
         dsl_parser = schedule_utils.get_job_dsl_parser(dsl=dsl,
-                                                       runtime_conf=runtime_conf,
+                                                       runtime_conf=submit_conf,
                                                        train_runtime_conf=train_runtime_conf)
         job_parameters = dsl_parser.get_job_parameters().get(role, {}).get(party_id, {})
         schedule_logger(job_id).info('job parameters:{}'.format(job_parameters))
         job_parameters = RunParameters(**job_parameters)
 
         # save new job into db
-        if role == job_initiator['role'] and party_id == job_initiator['party_id']:
+        if role == job_info["initiator_role"] and party_id == job_info["initiator_party_id"]:
             is_initiator = True
         else:
             is_initiator = False
         job_info["status"] = JobStatus.WAITING
-        roles = job_info['roles']
         # this party configuration
         job_info["role"] = role
         job_info["party_id"] = party_id
@@ -68,11 +65,11 @@ class JobController(object):
         engines_info = cls.get_job_engines_address(job_parameters=job_parameters)
         cls.special_role_parameters(role=role, job_parameters=job_parameters)
         cls.check_parameters(job_parameters=job_parameters, engines_info=engines_info)
-        runtime_conf["job_parameters"] = job_parameters.to_dict()
+        job_info["runtime_conf"]["job_parameters"] = job_parameters.to_dict()
 
         JobSaver.create_job(job_info=job_info)
 
-        cls.initialize_tasks(job_id, role, party_id, True, job_initiator, job_parameters, dsl_parser)
+        cls.initialize_tasks(job_id=job_id, role=role, party_id=party_id, run_on_this_party=True, initiator_role=job_info["initiator_role"], initiator_party_id=job_info["initiator_party_id"], job_parameters=job_parameters, dsl_parser=dsl_parser)
         cls.initialize_job_tracker(job_id=job_id, role=role, party_id=party_id, job_info=job_info, is_initiator=is_initiator, dsl_parser=dsl_parser)
 
     @classmethod
@@ -105,11 +102,11 @@ class JobController(object):
             raise RuntimeError(f"max cores per job is {max_cores_per_job}, please modify job parameter eggroll_run/spark_run or fate_flow/settings.py#DEFAULT_TASK_CORES_PER_NODE")
 
     @classmethod
-    def initialize_tasks(cls, job_id, role, party_id, run_on_this_party, job_initiator, job_parameters: RunParameters, dsl_parser, component_name=None, task_version=None):
+    def initialize_tasks(cls, job_id, role, party_id, run_on_this_party, initiator_role, initiator_party_id, job_parameters: RunParameters, dsl_parser, component_name=None, task_version=None):
         common_task_info = {}
         common_task_info["job_id"] = job_id
-        common_task_info["initiator_role"] = job_initiator['role']
-        common_task_info["initiator_party_id"] = job_initiator['party_id']
+        common_task_info["initiator_role"] = initiator_role
+        common_task_info["initiator_party_id"] = initiator_party_id
         common_task_info["role"] = role
         common_task_info["party_id"] = party_id
         common_task_info["federated_mode"] = job_parameters.federated_mode
