@@ -23,10 +23,10 @@ LOGGER = log.getLogger()
 
 
 def connection_retry(func):
-    """ 网络连接异常捕捉装饰器；
+    """retry connection
     """
     def wrapper(self, *args, **kwargs):
-        """外部封装；
+        """wrapper
         """
         res = None
         for ntry in range(60):
@@ -54,7 +54,10 @@ class MQChannel(object):
         self._party_id = party_id
         self._role = role
         self._extra_args = extra_args
-
+        
+        if "heartbeat" not in self._extra_args:
+            self._extra_args["heartbeat"] = 3600
+       
     @property
     def party_id(self):
         return self._party_id
@@ -80,27 +83,24 @@ class MQChannel(object):
     @connection_retry    
     def cancel(self):
         self._get_channel()
-        return self._channel.cancel()       
-
+        return self._channel.cancel() 
+    
+    @connection_retry
     def _get_channel(self):
-        try:
-            if self._check_alive():
-                return
-            else:
-                self._clear()
+        if self._check_alive():
+            return
+        else:
+            self._clear()
 
-            if not self._conn:
-                self._conn = pika.BlockingConnection(pika.ConnectionParameters(host=self._host, port=self._port,
-                                                                               virtual_host=self._vhost,
-                                                                               credentials=self._credentials,
+        if not self._conn:
+            self._conn = pika.BlockingConnection(pika.ConnectionParameters(host=self._host, port=self._port,
+                                                                           virtual_host=self._vhost,
+                                                                           credentials=self._credentials,
+                                                                           **self._extra_args))
 
-                                                                               **self._extra_args))
-
-            if not self._channel:
-                self._channel = self._conn.channel()
-                self._channel.confirm_delivery()
-        except Exception as e:
-            LOGGER.error("get channel fail, exception:{}.".format(e))
+        if not self._channel:
+            self._channel = self._conn.channel()
+            self._channel.confirm_delivery()             
 
     def _clear(self):
         try:
