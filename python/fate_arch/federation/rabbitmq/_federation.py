@@ -30,6 +30,7 @@ from fate_arch.abc import FederationABC, GarbageCollectionABC
 from fate_arch.common import Party
 from fate_arch.common.log import getLogger
 from fate_arch.computing.spark import get_storage_level, Table
+from fate_arch.computing.spark._materialize import materialize
 from fate_arch.federation.rabbitmq._mq_channel import MQChannel
 from fate_arch.federation.rabbitmq._rabbit_manager import RabbitManager
 
@@ -357,6 +358,7 @@ def _get_message_cache_key(name, tag, party_id, role):
 
 def _receive(channel_info, name, tag):     
     partitions = -1
+    count = 0
     obj: typing.Optional[RDD] = None
     party_id = channel_info._party_id 
     role = channel_info._role   
@@ -399,8 +401,8 @@ def _receive(channel_info, name, tag):
             obj = rdd if obj is None else obj.union(rdd).coalesce(partitions)
             
             # trigger action
-            obj.persist(get_storage_level())
-            count = obj.count()
+            obj = materialize(obj)
+            count += len(data)
             LOGGER.debug(f"count: {count}")
             channel_info.basic_ack(delivery_tag=method.delivery_tag)
 
