@@ -173,18 +173,29 @@ class ResourceManager(object):
             return operate_status
 
     @classmethod
-    def job_engine_support_parameters(cls, job_parameters: RunParameters):
+    def adapt_engine_parameters(cls, role, job_parameters: RunParameters, create_initiator_baseline=False):
         computing_engine_info = ResourceManager.get_engine_registration_info(engine_type=EngineType.COMPUTING,
                                                                              engine_name=job_parameters.computing_engine)
-        job_parameters.adaptation_parameters = {
-            "task_nodes": 0,
-            "task_cores_per_node": 0,
-            "task_memory_per_node": 0,
-        }
+        if create_initiator_baseline:
+            job_parameters.adaptation_parameters = {
+                "task_nodes": 0,
+                "task_cores_per_node": 0,
+                "task_memory_per_node": 0,
+            }
+            task_cores = 0
+        else:
+            # use initiator baseline
+            if role == "arbiter":
+                task_cores = 1
+            else:
+                task_cores = job_parameters.adaptation_parameters["task_nodes"] * job_parameters.adaptation_parameters["task_cores_per_node"]
         if job_parameters.computing_engine in {ComputingEngine.STANDALONE, ComputingEngine.EGGROLL}:
             job_parameters.adaptation_parameters["task_nodes"] = computing_engine_info.f_nodes
             job_parameters.adaptation_parameters["task_cores_per_node"] = int(
-                job_parameters.eggroll_run.get("eggroll.session.processors.per.node", DEFAULT_TASK_CORES_PER_NODE))
+                job_parameters.eggroll_run.get("eggroll.session.processors.per.node",
+                                               cls.adapt_task_cores_per_node(create_initiator_baseline, task_cores, job_parameters.adaptation_parameters["task_nodes"])
+                                               )
+            )
             job_parameters.eggroll_run["eggroll.session.processors.per.node"] = job_parameters.adaptation_parameters[
                 "task_cores_per_node"]
         elif job_parameters.computing_engine == ComputingEngine.SPARK:
@@ -193,8 +204,18 @@ class ResourceManager(object):
             job_parameters.spark_run["num-executors"] = job_parameters.adaptation_parameters["task_nodes"]
 
             job_parameters.adaptation_parameters["task_cores_per_node"] = int(
-                job_parameters.spark_run.get("executor-cores", DEFAULT_TASK_CORES_PER_NODE))            
+                job_parameters.spark_run.get("executor-cores",
+                                             cls.adapt_task_cores_per_node(create_initiator_baseline, task_cores, job_parameters.adaptation_parameters["task_nodes"])
+                                             )
+            )
             job_parameters.spark_run["executor-cores"] = job_parameters.adaptation_parameters["task_cores_per_node"]
+
+    @classmethod
+    def adapt_task_cores_per_node(cls, create_initiator_baseline, initiator_baseline, task_nodes):
+        if create_initiator_baseline:
+            return DEFAULT_TASK_CORES_PER_NODE
+        else:
+            return max(1, int(initiator_baseline / task_nodes))
 
     @classmethod
     def calculate_job_resource(cls, job_parameters: RunParameters = None, job_id=None, role=None, party_id=None):

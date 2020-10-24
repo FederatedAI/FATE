@@ -78,7 +78,6 @@ def remote_api(job_id, method, endpoint, src_party_id, dest_party_id, src_role, 
     for t in range(try_times):
         try:
             channel, stub = get_command_federation_channel()
-            # _return = stub.unaryCall(_packet)
             _return, _call = stub.unaryCall.with_call(_packet, metadata=_routing_metadata, timeout=(overall_timeout/1000))
             audit_logger(job_id).info("grpc api response: {}".format(_return))
             channel.close()

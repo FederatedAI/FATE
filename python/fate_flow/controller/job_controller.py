@@ -16,16 +16,21 @@
 from fate_flow.utils.authentication_utils import authentication_check
 from federatedml.protobuf.generated import pipeline_pb2
 from fate_arch.common.log import schedule_logger
-from fate_arch.common import EngineType
+from fate_arch.common import EngineType, string_utils
 from fate_flow.entity.types import JobStatus, EndStatus, RunParameters
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.operation import Tracker
-from fate_flow.settings import USE_AUTHENTICATION
+from fate_flow.settings import USE_AUTHENTICATION, DEFAULT_TASK_PARALLELISM, DEFAULT_FEDERATED_STATUS_COLLECT_TYPE
 from fate_flow.utils import job_utils, schedule_utils, data_utils
 from fate_flow.operation import JobSaver
 from fate_arch.common.base_utils import json_dumps, current_timestamp
 from fate_flow.controller import TaskController
 from fate_flow.manager import ResourceManager
+from fate_arch.common import WorkMode, Backend
+from fate_arch.common import FederatedMode
+from fate_arch.computing import ComputingEngine
+from fate_arch.federation import FederationEngine
+from fate_arch.storage import StorageEngine
 
 
 class JobController(object):
@@ -47,6 +52,8 @@ class JobController(object):
         dsl_parser = schedule_utils.get_job_dsl_parser(dsl=dsl,
                                                        runtime_conf=submit_conf,
                                                        train_runtime_conf=train_runtime_conf)
+        print("submit conf")
+        print(json_dumps(submit_conf, indent=4))
         job_parameters = dsl_parser.get_job_parameters().get(role, {}).get(party_id, {})
         schedule_logger(job_id).info('job parameters:{}'.format(job_parameters))
         job_parameters = RunParameters(**job_parameters)
@@ -62,8 +69,8 @@ class JobController(object):
         job_info["party_id"] = party_id
         job_info["is_initiator"] = is_initiator
         job_info["progress"] = 0
+        cls.adapt_job_parameters(role=role, job_parameters=job_parameters)
         engines_info = cls.get_job_engines_address(job_parameters=job_parameters)
-        cls.special_role_parameters(role=role, job_parameters=job_parameters)
         cls.check_parameters(job_parameters=job_parameters, engines_info=engines_info)
         job_info["runtime_conf"]["job_parameters"] = job_parameters.to_dict()
 
@@ -71,6 +78,49 @@ class JobController(object):
 
         cls.initialize_tasks(job_id=job_id, role=role, party_id=party_id, run_on_this_party=True, initiator_role=job_info["initiator_role"], initiator_party_id=job_info["initiator_party_id"], job_parameters=job_parameters, dsl_parser=dsl_parser)
         cls.initialize_job_tracker(job_id=job_id, role=role, party_id=party_id, job_info=job_info, is_initiator=is_initiator, dsl_parser=dsl_parser)
+
+    @classmethod
+    def backend_compatibility(cls, job_parameters: RunParameters):
+        # compatible with previous 1.5 versions
+        if job_parameters.computing_engine is None or job_parameters.federation_engine is None:
+            if job_parameters.work_mode is None or job_parameters.backend is None:
+                raise RuntimeError("unable to find compatible backend engines")
+            work_mode = WorkMode(job_parameters.work_mode)
+            backend = Backend(job_parameters.backend)
+            if backend == Backend.EGGROLL:
+                if work_mode == WorkMode.CLUSTER:
+                    job_parameters.computing_engine = ComputingEngine.EGGROLL
+                    job_parameters.federation_engine = FederationEngine.EGGROLL
+                    job_parameters.storage_engine = StorageEngine.EGGROLL
+                else:
+                    job_parameters.computing_engine = ComputingEngine.STANDALONE
+                    job_parameters.federation_engine = FederationEngine.STANDALONE
+                    job_parameters.storage_engine = StorageEngine.STANDALONE
+            elif backend == Backend.SPARK:
+                job_parameters.computing_engine = ComputingEngine.SPARK
+                job_parameters.federation_engine = FederationEngine.RABBITMQ
+                job_parameters.storage_engine = StorageEngine.HDFS
+                # add mq info
+                federation_info = {}
+                federation_info['union_name'] = string_utils.random_string(4)
+                federation_info['policy_id'] = string_utils.random_string(10)
+                job_parameters.federation_info = federation_info
+        if job_parameters.federated_mode is None:
+            if job_parameters.computing_engine in [ComputingEngine.EGGROLL, ComputingEngine.SPARK]:
+                job_parameters.federated_mode = FederatedMode.MULTIPLE
+            elif job_parameters.computing_engine in [ComputingEngine.STANDALONE]:
+                job_parameters.federated_mode = FederatedMode.SINGLE
+
+    @classmethod
+    def adapt_job_parameters(cls, role, job_parameters: RunParameters, create_initiator_baseline=False):
+        ResourceManager.adapt_engine_parameters(role=role, job_parameters=job_parameters, create_initiator_baseline=create_initiator_baseline)
+        if create_initiator_baseline:
+            if job_parameters.task_parallelism is None:
+                job_parameters.task_parallelism = DEFAULT_TASK_PARALLELISM
+            if job_parameters.federated_status_collect_type is None:
+                job_parameters.federated_status_collect_type = DEFAULT_FEDERATED_STATUS_COLLECT_TYPE
+        if create_initiator_baseline and not job_parameters.computing_partitions:
+            job_parameters.computing_partitions = job_parameters.adaptation_parameters["task_cores_per_node"] * job_parameters.adaptation_parameters["task_nodes"]
 
     @classmethod
     def get_job_engines_address(cls, job_parameters: RunParameters):
@@ -85,15 +135,6 @@ class JobController(object):
             job_parameters.engines_address[engine_type] = engine_info.f_engine_config
             engines_info[engine_type] = engine_info
         return engines_info
-
-    @classmethod
-    def special_role_parameters(cls, role, job_parameters: RunParameters):
-        if role == "arbiter":
-            job_parameters.task_parallelism = 1
-            if job_parameters.adaptation_parameters["task_nodes"] > 0:
-                job_parameters.adaptation_parameters["task_nodes"] = 1
-            if job_parameters.adaptation_parameters["task_cores_per_node"] > 0:
-                job_parameters.adaptation_parameters["task_cores_per_node"] = 1
 
     @classmethod
     def check_parameters(cls, job_parameters: RunParameters, engines_info):

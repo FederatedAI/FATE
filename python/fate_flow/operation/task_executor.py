@@ -259,18 +259,11 @@ class TaskExecutor(object):
                         args_from_component = this_type_args[search_component_name] = this_type_args.get(
                             search_component_name, {})
                         if storage_table_meta:
-                            cores_per_task, memory_per_task = ResourceManager.calculate_task_resource(
-                                task_parameters=task_parameters)
-                            if task_parameters.computing_partitions:
-                                computing_partitions = task_parameters.computing_partitions
-                                LOGGER.info(f"load computing table use {computing_partitions} partitions base on job parameter: computing_partitions")
-                            else:
-                                computing_partitions = cores_per_task
-                                LOGGER.info(f"load computing table use {computing_partitions} partitions base on cores_per_task")
+                            LOGGER.info(f"load computing table use {task_parameters.computing_partitions} partitions base on cores_per_task")
                             computing_table = session.get_latest_opened().computing.load(
                                 storage_table_meta.get_address(),
                                 schema=storage_table_meta.get_schema(),
-                                partitions=computing_partitions)
+                                partitions=task_parameters.computing_partitions)
                         else:
                             computing_table = None
 
