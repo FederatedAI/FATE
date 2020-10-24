@@ -85,6 +85,22 @@ class _QueueNames(object):
         self.receive = receive
 
 
+class _QueueKey(object):
+    def __init__(self, name, role, party_id):
+        self.name = name
+        self.role = str(role)
+        self.party_id = str(party_id)
+    
+    def __hash__(self):
+        return (self.name, self.role, self.party_id).__hash__()
+        
+    def __str__(self):
+        return f"_QueueKey(name={self.name}, role={self.role}, party_id={self.party_id}"
+    
+    def __repr__(self):
+        return self.__str__()
+
+
 class Federation(FederationABC):
 
     @staticmethod
@@ -92,7 +108,6 @@ class Federation(FederationABC):
                   party: Party,
                   runtime_conf: dict,
                   rabbitmq_config: dict):
-
         LOGGER.debug(f"rabbitmq_config: {rabbitmq_config}")
         host = rabbitmq_config.get("host")
         port = rabbitmq_config.get("port")
@@ -124,8 +139,8 @@ class Federation(FederationABC):
         self._mq = mq
         self._rabbit_manager = rabbit_manager
 
-        self._queue_map: typing.MutableMapping[Party, _QueueNames] = {}
-        self._channels_map = {}
+        self._queue_map: typing.MutableMapping[_QueueKey, _QueueNames] = {}
+        self._channels_map: typing.MutableMapping[_QueueKey, MQChannel] = {}
         self._max_message_size = max_message_size
 
     def get(self, name: str, tag: str, parties: typing.List[Party], gc: GarbageCollectionABC) -> typing.List:
@@ -191,13 +206,15 @@ class Federation(FederationABC):
             LOGGER.debug(f"[rabbitmq.cleanup]clean user {self._mq.union_name}.")
             self._rabbit_manager.delete_user(user=self._mq.union_name)
 
-    def _get_mq_names(self, parties: typing.List[Party], name: str):
-        mq_names = {"^".join([name, party.role, party.party_id]): self._get_or_create_queue(party, name) for party in parties}
+    def _get_mq_names(self, parties: typing.List[Party], name: str) -> typing.List:
+        mq_names = [self._get_or_create_queue(party, name) for party in parties]
         return mq_names
 
-    def _get_or_create_queue(self, party: Party, name) -> _QueueNames:        
-        name_party = "^".join([name, party.role, party.party_id])        
-        if name_party not in self._queue_map:
+    def _get_or_create_queue(self, party: Party, name) -> typing.Tuple:        
+#         name_party = "^".join([name, party.role, party.party_id]) 
+        queue_key = _QueueKey(name, party.role, party.party_id)
+               
+        if queue_key not in self._queue_map:
             LOGGER.debug(f"[rabbitmq.get_or_create_queue]queue for party:{party} not found, start to create")
             # gen names
             low, high = (self._party, party) if self._party < party else (party, self._party)
@@ -206,29 +223,29 @@ class Federation(FederationABC):
 
             send_queue_name = f"send-{self._party.role}-{self._party.party_id}-{party.role}-{party.party_id}-{name}"
             receive_queue_name = f"receive-{party.role}-{party.party_id}-{self._party.role}-{self._party.party_id}-{name}"
-            names = _QueueNames(vhost_name, send_queue_name, receive_queue_name)
+            queue_names = _QueueNames(vhost_name, send_queue_name, receive_queue_name)
 
             # initial vhost
-            self._rabbit_manager.create_vhost(names.vhost)
-            self._rabbit_manager.add_user_to_vhost(self._mq.union_name, names.vhost)
+            self._rabbit_manager.create_vhost(queue_names.vhost)
+            self._rabbit_manager.add_user_to_vhost(self._mq.union_name, queue_names.vhost)
 
             # initial send queue, the name is send-${vhost}
-            self._rabbit_manager.create_queue(names.vhost, names.send)
+            self._rabbit_manager.create_queue(queue_names.vhost, queue_names.send)
 
             # initial receive queue, the name is receive-${vhost}
-            self._rabbit_manager.create_queue(names.vhost, names.receive)
+            self._rabbit_manager.create_queue(queue_names.vhost, queue_names.receive)
 
             upstream_uri = self._upstream_uri(party_id=party.party_id)
-            self._rabbit_manager.federate_queue(upstream_host=upstream_uri, vhost=names.vhost,
-                                                send_queue_name=names.send, receive_queue_name=names.receive)
+            self._rabbit_manager.federate_queue(upstream_host=upstream_uri, vhost=queue_names.vhost,
+                                                send_queue_name=queue_names.send, receive_queue_name=queue_names.receive)
 
-            self._queue_map[name_party] = names
+            self._queue_map[queue_key] = queue_names
             # TODO: check federated queue status
-            LOGGER.debug(f"[rabbitmq.get_or_create_queue]queue for name: {name}, party:{party} created, names: {names}")
+            LOGGER.debug(f"[rabbitmq.get_or_create_queue]queue for name: {name}, party:{party} created, queue_names: {queue_names}")
 
-        names = self._queue_map[name_party]
-        LOGGER.debug(f"[rabbitmq.get_or_create_queue]get queue: names: {names}")
-        return names
+        queue_names = self._queue_map[queue_key]
+        LOGGER.debug(f"[rabbitmq.get_or_create_queue]get queue: queue_names: {queue_names}")
+        return (queue_key, queue_names)
 
     def _upstream_uri(self, party_id):
         host = self._mq.route_table.get(int(party_id)).get("host")
@@ -238,13 +255,14 @@ class Federation(FederationABC):
 
     def _get_channels(self, mq_names):
         channel_infos = []
-        for name_party, names in mq_names.items():
-            name, role, party_id = name_party.split("^")
-            info = self._channels_map.get(name_party)
+        for queue_key, queue_names in mq_names:            
+            role = queue_key.role
+            party_id = queue_key.party_id            
+            info = self._channels_map.get(queue_key)
             if info is None:
-                info = _get_channel(self._mq, names, party_id=party_id, role=role, 
+                info = _get_channel(self._mq, queue_names, party_id=party_id, role=role, 
                                     connection_conf=self._rabbit_manager.runtime_config.get('connection', {}))
-                self._channels_map[name_party] = info
+                self._channels_map[queue_key] = info
             channel_infos.append(info)
         return channel_infos
 
@@ -258,9 +276,10 @@ def _get_channel(mq, names: _QueueNames, party_id, role, connection_conf: dict):
 # can't pickle _thread.lock objects
 def _get_channels(mq_names, mq, connection_conf: dict):
     channel_infos = []
-    for name_party, names in mq_names.items():
-        name, role, party_id = name_party.split("^")
-        info = _get_channel(mq, names, party_id=party_id, role=role, connection_conf=connection_conf)
+    for queue_key, queue_names in mq_names:            
+        role = queue_key.role
+        party_id = queue_key.party_id
+        info = _get_channel(mq, queue_names, party_id=party_id, role=role, connection_conf=connection_conf)
         channel_infos.append(info)
     return channel_infos
 
@@ -315,7 +334,7 @@ def _partition_send(index, kvs, name, tag, total_size, partitions, mq_names, mq,
         datastream.append(el)
         
     message_key_idx += 1
-    message_key = base_message_key + "_" + str(message_key_idx)
+    message_key = base_message_key + "^" + str(message_key_idx)
     _send_kv(name=name, tag=tag, data=datastream.get_data(), channel_infos=channel_infos, total_size=total_size,
              partitions=partitions, message_key=message_key)
     
