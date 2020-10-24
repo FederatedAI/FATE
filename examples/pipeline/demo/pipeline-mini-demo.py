@@ -23,6 +23,7 @@ from pipeline.component import HeteroLR
 from pipeline.component import Intersection
 from pipeline.component import Reader
 from pipeline.interface import Data
+from pipeline.runtime.entity import JobParameters
 
 
 def main():
@@ -54,9 +55,9 @@ def main():
     # define Reader components to read in data
     reader_0 = Reader(name="reader_0")
     # configure Reader for guest
-    reader_0.get_party_instance(role="guest", party_id=guest).algorithm_param(table=guest_train_data)
+    reader_0.get_party_instance(role="guest", party_id=guest).component_param(table=guest_train_data)
     # configure Reader for host
-    reader_0.get_party_instance(role="host", party_id=host).algorithm_param(table=host_train_data)
+    reader_0.get_party_instance(role="host", party_id=host).component_param(table=host_train_data)
 
     # define DataIO component
     dataio_0 = DataIO(name="dataio_0")
@@ -64,9 +65,9 @@ def main():
     # get DataIO party instance of guest
     dataio_0_guest_party_instance = dataio_0.get_party_instance(role="guest", party_id=guest)
     # configure DataIO for guest
-    dataio_0_guest_party_instance.algorithm_param(with_label=True, output_format="dense")
+    dataio_0_guest_party_instance.component_param(with_label=True, output_format="dense")
     # get and configure DataIO party instance of host
-    dataio_0.get_party_instance(role="host", party_id=host).algorithm_param(with_label=False)
+    dataio_0.get_party_instance(role="host", party_id=host).component_param(with_label=False)
 
     # define Intersection components
     intersection_0 = Intersection(name="intersection_0")
@@ -90,7 +91,8 @@ def main():
     pipeline.compile()
 
     # fit model
-    pipeline.fit(backend=backend, work_mode=work_mode)
+    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
+    pipeline.fit(job_parameters)
     # query component summary
     import json
     print (json.dumps(pipeline.get_component("hetero_lr_0").get_summary(), indent=4))
@@ -105,13 +107,13 @@ def main():
 
     # define new data reader
     reader_1 = Reader(name="reader_1")
-    reader_1.get_party_instance(role="guest", party_id=guest).algorithm_param(table=guest_eval_data)
-    reader_1.get_party_instance(role="host", party_id=host).algorithm_param(table=host_eval_data)
+    reader_1.get_party_instance(role="guest", party_id=guest).component_param(table=guest_eval_data)
+    reader_1.get_party_instance(role="host", party_id=host).component_param(table=host_eval_data)
 
     # define evaluation component
     evaluation_0 = Evaluation(name="evaluation_0")
-    evaluation_0.get_party_instance(role="guest", party_id=guest).algorithm_param(need_run=True, eval_type="binary")
-    evaluation_0.get_party_instance(role="host", party_id=host).algorithm_param(need_run=False)
+    evaluation_0.get_party_instance(role="guest", party_id=guest).component_param(need_run=True, eval_type="binary")
+    evaluation_0.get_party_instance(role="host", party_id=host).component_param(need_run=False)
 
     # add data reader onto predict pipeline
     predict_pipeline.add_component(reader_1)
@@ -122,7 +124,7 @@ def main():
     # add evaluation component to predict pipeline
     predict_pipeline.add_component(evaluation_0, data=Data(data=pipeline.hetero_lr_0.output.data))
     # run predict model
-    predict_pipeline.predict(backend=backend, work_mode=work_mode)
+    predict_pipeline.predict(job_parameters)
 
 
 if __name__ == "__main__":

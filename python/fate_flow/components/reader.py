@@ -40,7 +40,7 @@ class Reader(object):
         self.parameters = component_parameters["ReaderParam"]
         output_storage_address = args["job_parameters"].engines_address[EngineType.STORAGE]
         table_key = [key for key in self.parameters.keys()][0]
-        computing_engine = component_parameters["job_parameters"]["computing_engine"]
+        computing_engine = args["job_parameters"].computing_engine
         output_table_namespace, output_table_name = data_utils.default_output_table_info(task_id=self.task_id,
                                                                                          task_version=self.tracker.task_version)
         input_table_meta, output_table_address, output_table_engine = self.convert_check(

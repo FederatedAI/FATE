@@ -25,6 +25,7 @@ from pipeline.component.evaluation import Evaluation
 from pipeline.interface.model import Model
 from pipeline.utils.tools import JobConfig
 from pipeline.utils.tools import load_job_config
+from pipeline.runtime.entity import JobParameters
 
 
 def main(config="../../config.yaml", param='./xgb_config_binary.yaml', namespace=""):
@@ -55,15 +56,15 @@ def main(config="../../config.yaml", param='./xgb_config_binary.yaml', namespace
     dataio_0, dataio_1 = DataIO(name="dataio_0"), DataIO(name='dataio_1')
     reader_0, reader_1 = Reader(name="reader_0"), Reader(name='reader_1')
 
-    reader_0.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_train_data)
-    reader_0.get_party_instance(role='host', party_id=host).algorithm_param(table=host_train_data)
-    dataio_0.get_party_instance(role='guest', party_id=guest).algorithm_param(with_label=True, output_format="dense")
-    dataio_0.get_party_instance(role='host', party_id=host).algorithm_param(with_label=True, output_format="dense")
+    reader_0.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data)
+    reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
+    dataio_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True, output_format="dense")
+    dataio_0.get_party_instance(role='host', party_id=host).component_param(with_label=True, output_format="dense")
 
-    reader_1.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_validate_data)
-    reader_1.get_party_instance(role='host', party_id=host).algorithm_param(table=host_validate_data)
-    dataio_1.get_party_instance(role='guest', party_id=guest).algorithm_param(with_label=True, output_format="dense")
-    dataio_1.get_party_instance(role='host', party_id=host).algorithm_param(with_label=True, output_format="dense")
+    reader_1.get_party_instance(role='guest', party_id=guest).component_param(table=guest_validate_data)
+    reader_1.get_party_instance(role='host', party_id=host).component_param(table=host_validate_data)
+    dataio_1.get_party_instance(role='guest', party_id=guest).component_param(with_label=True, output_format="dense")
+    dataio_1.get_party_instance(role='host', party_id=host).component_param(with_label=True, output_format="dense")
 
     homo_secureboost_0 = HomoSecureBoost(name="homo_secureboost_0",
                                          num_trees=param['tree_num'],
@@ -90,7 +91,8 @@ def main(config="../../config.yaml", param='./xgb_config_binary.yaml', namespace
     pipeline.add_component(evaluation_0, data=Data(homo_secureboost_0.output.data))
 
     pipeline.compile()
-    pipeline.fit(backend=backend, work_mode=work_mode)
+    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
+    pipeline.fit(job_parameters)
 
     return {}, pipeline.get_component('evaluation_0').get_summary()
 

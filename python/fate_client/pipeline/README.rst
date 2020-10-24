@@ -150,7 +150,7 @@ component can be configured specifically for guest like this:
 
    dataio_0 = DataIO(name="dataio_0")
    guest_component_instance = dataio_0.get_party_instance(role='guest', party_id=9999)
-   guest_component_instance.algorithm_param(with_label=True, output_format="dense")
+   guest_component_instance.component_param(with_label=True, output_format="dense")
 
 To include a component in a pipeline, use ``add_component``. To add the
 ``DataIO`` component to the previously created pipeline, try this:
@@ -198,6 +198,14 @@ Add it to pipeline:
 
     pipeline.add_component(homo_nn, data=Data(train_data=dataio_0.output.data))
 
+Init Runtime JobParameters
+--------------
+
+To fit or predict, user needs to initialize the runtime environment, like 'backend' and 'work_mode',
+
+.. code:: python
+    from pipeline.runtime.entity import JobParameters
+    job_parameters = JobParameters(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE)
 
 Run A Pipeline
 --------------
@@ -209,7 +217,7 @@ train job) with appropriate ``Backend`` and ``WorkMode``.
 .. code:: python
 
    pipeline.compile()
-   pipeline.fit(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE)
+   pipeline.fit(job_parameters)
 
 Query on Tasks
 --------------

@@ -58,17 +58,17 @@ def make_add_one_hot_dsl(config, namespace, bin_param, is_multi_host=False):
     # define Reader components to read in data
     reader_0 = Reader(name="reader_0")
     # configure Reader for guest
-    reader_0.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_train_data)
+    reader_0.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data)
     # configure Reader for host
-    reader_0.get_party_instance(role='host', party_id=hosts[0]).algorithm_param(table=host_train_data)
+    reader_0.get_party_instance(role='host', party_id=hosts[0]).component_param(table=host_train_data)
     if is_multi_host:
-        reader_0.get_party_instance(role='host', party_id=hosts[1]).algorithm_param(table=host_train_data)
+        reader_0.get_party_instance(role='host', party_id=hosts[1]).component_param(table=host_train_data)
 
     reader_1 = Reader(name="reader_1")
-    reader_1.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_eval_data)
-    reader_1.get_party_instance(role='host', party_id=hosts[0]).algorithm_param(table=host_eval_data)
+    reader_1.get_party_instance(role='guest', party_id=guest).component_param(table=guest_eval_data)
+    reader_1.get_party_instance(role='host', party_id=hosts[0]).component_param(table=host_eval_data)
     if is_multi_host:
-        reader_1.get_party_instance(role='host', party_id=hosts[1]).algorithm_param(table=host_eval_data)
+        reader_1.get_party_instance(role='host', party_id=hosts[1]).component_param(table=host_eval_data)
 
     # define DataIO components
     dataio_0 = DataIO(name="dataio_0")  # start component numbering at 0
@@ -77,11 +77,11 @@ def make_add_one_hot_dsl(config, namespace, bin_param, is_multi_host=False):
     # get DataIO party instance of guest
     dataio_0_guest_party_instance = dataio_0.get_party_instance(role='guest', party_id=guest)
     # configure DataIO for guest
-    dataio_0_guest_party_instance.algorithm_param(with_label=True, output_format="dense")
+    dataio_0_guest_party_instance.component_param(with_label=True, output_format="dense")
     # get and configure DataIO party instance of host
-    dataio_0.get_party_instance(role='host', party_id=hosts[0]).algorithm_param(with_label=False)
+    dataio_0.get_party_instance(role='host', party_id=hosts[0]).component_param(with_label=False)
     if is_multi_host:
-        dataio_0.get_party_instance(role='host', party_id=hosts[1]).algorithm_param(with_label=False)
+        dataio_0.get_party_instance(role='host', party_id=hosts[1]).component_param(with_label=False)
 
     # define Intersection components
     intersection_0 = Intersection(name="intersection_0")
@@ -150,11 +150,11 @@ def make_normal_dsl(config, namespace, bin_param, dataset='breast', is_multi_hos
     # define Reader components to read in data
     reader_0 = Reader(name="reader_0")
     # configure Reader for guest
-    reader_0.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_train_data)
+    reader_0.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data)
     # configure Reader for host
-    reader_0.get_party_instance(role='host', party_id=hosts[0]).algorithm_param(table=host_train_data)
+    reader_0.get_party_instance(role='host', party_id=hosts[0]).component_param(table=host_train_data)
     if is_multi_host:
-        reader_0.get_party_instance(role='host', party_id=hosts[1]).algorithm_param(table=host_train_data)
+        reader_0.get_party_instance(role='host', party_id=hosts[1]).component_param(table=host_train_data)
 
     # define DataIO components
     dataio_0 = DataIO(name="dataio_0")  # start component numbering at 0
@@ -162,7 +162,7 @@ def make_normal_dsl(config, namespace, bin_param, dataset='breast', is_multi_hos
     # get DataIO party instance of guest
     dataio_0_guest_party_instance = dataio_0.get_party_instance(role='guest', party_id=guest)
     # configure DataIO for guest
-    dataio_0_guest_party_instance.algorithm_param(with_label=True, output_format="dense")
+    dataio_0_guest_party_instance.component_param(with_label=True, output_format="dense")
     # get and configure DataIO party instance of host
     if host_dense_output:
         output_format = 'dense'
@@ -170,11 +170,11 @@ def make_normal_dsl(config, namespace, bin_param, dataset='breast', is_multi_hos
         output_format = 'sparse'
     if is_multi_host:
         dataio_0.get_party_instance(role='host', party_id=hosts). \
-            algorithm_param(with_label=False,
+            component_param(with_label=False,
                             output_format=output_format)
     else:
         dataio_0.get_party_instance(role='host', party_id=hosts[0]). \
-            algorithm_param(with_label=False,
+            component_param(with_label=False,
                             output_format=output_format)
 
     # define Intersection components
@@ -229,11 +229,11 @@ def make_asymmetric_dsl(config, namespace, guest_param, host_param, dataset='bre
     # define Reader components to read in data
     reader_0 = Reader(name="reader_0")
     # configure Reader for guest
-    reader_0.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_train_data)
+    reader_0.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data)
     # configure Reader for host
-    reader_0.get_party_instance(role='host', party_id=hosts[0]).algorithm_param(table=host_train_data)
+    reader_0.get_party_instance(role='host', party_id=hosts[0]).component_param(table=host_train_data)
     if is_multi_host:
-        reader_0.get_party_instance(role='host', party_id=hosts[1]).algorithm_param(table=host_train_data)
+        reader_0.get_party_instance(role='host', party_id=hosts[1]).component_param(table=host_train_data)
 
     # define DataIO components
     dataio_0 = DataIO(name="dataio_0")  # start component numbering at 0
@@ -241,7 +241,7 @@ def make_asymmetric_dsl(config, namespace, guest_param, host_param, dataset='bre
     # get DataIO party instance of guest
     dataio_0_guest_party_instance = dataio_0.get_party_instance(role='guest', party_id=guest)
     # configure DataIO for guest
-    dataio_0_guest_party_instance.algorithm_param(with_label=True, output_format="dense")
+    dataio_0_guest_party_instance.component_param(with_label=True, output_format="dense")
     # get and configure DataIO party instance of host
     if host_dense_output:
         output_format = 'dense'
@@ -249,22 +249,22 @@ def make_asymmetric_dsl(config, namespace, guest_param, host_param, dataset='bre
         output_format = 'sparse'
     if is_multi_host:
         dataio_0.get_party_instance(role='host', party_id=hosts). \
-            algorithm_param(with_label=False,
+            component_param(with_label=False,
                             output_format=output_format)
     else:
         dataio_0.get_party_instance(role='host', party_id=hosts[0]). \
-            algorithm_param(with_label=False,
+            component_param(with_label=False,
                             output_format=output_format)
 
     # define Intersection components
     intersection_0 = Intersection(name="intersection_0")
 
     hetero_feature_binning_0 = HeteroFeatureBinning(name="hetero_feature_binning_0")
-    hetero_feature_binning_0.get_party_instance(role='guest', party_id=guest).algorithm_param(**guest_param)
+    hetero_feature_binning_0.get_party_instance(role='guest', party_id=guest).component_param(**guest_param)
     if is_multi_host:
-        hetero_feature_binning_0.get_party_instance(role='host', party_id=hosts).algorithm_param(**host_param)
+        hetero_feature_binning_0.get_party_instance(role='host', party_id=hosts).component_param(**host_param)
     else:
-        hetero_feature_binning_0.get_party_instance(role='host', party_id=hosts[0]).algorithm_param(**host_param)
+        hetero_feature_binning_0.get_party_instance(role='host', party_id=hosts[0]).component_param(**host_param)
 
     # add components to pipeline, in order of task execution
     pipeline.add_component(reader_0)

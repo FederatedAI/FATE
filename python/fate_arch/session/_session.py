@@ -129,7 +129,7 @@ class Session(object):
             self._federation_session = Federation.from_conf(federation_session_id=federation_session_id,
                                                             party=parties_info.local_party,
                                                             runtime_conf=runtime_conf,
-                                                            service_conf=service_conf)
+                                                            rabbitmq_config=service_conf)
             return self
 
         if self._federation_type == FederationEngine.STANDALONE:

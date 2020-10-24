@@ -18,6 +18,7 @@ import os
 from fate_arch.common import file_utils
 from fate_flow.db.db_models import DB, Job
 from fate_flow.scheduler.dsl_parser import DSLParser, DSLParserV2
+from fate_flow.utils.config_adapter import JobRuntimeConfigAdapter
 
 
 @DB.connection_context()
@@ -33,12 +34,12 @@ def get_job_dsl_parser_by_job_id(job_id):
 
 
 def get_job_dsl_parser(dsl=None, runtime_conf=None, pipeline_dsl=None, train_runtime_conf=None):
-    parser_version = str(runtime_conf.get('job_parameters', {}).get('dsl_version', '1'))
+    parser_version = str(runtime_conf.get('dsl_version', '1'))
     dsl_parser = get_dsl_parser_by_version(parser_version)
     default_runtime_conf_path = os.path.join(file_utils.get_python_base_directory(),
                                              *['federatedml', 'conf', 'default_runtime_conf'])
     setting_conf_path = os.path.join(file_utils.get_python_base_directory(), *['federatedml', 'conf', 'setting_conf'])
-    job_type = runtime_conf.get('job_parameters', {}).get('job_type', 'train')
+    job_type = JobRuntimeConfigAdapter(runtime_conf).get_job_type()
     dsl_parser.run(dsl=dsl,
                    runtime_conf=runtime_conf,
                    pipeline_dsl=pipeline_dsl,

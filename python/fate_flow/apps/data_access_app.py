@@ -132,9 +132,9 @@ def get_upload_info(jobs_run_conf):
 def gen_data_access_job_config(config_data, access_module):
     job_runtime_conf = {
         "initiator": {},
-        "job_parameters": {},
+        "job_parameters": {"common": {}},
         "role": {},
-        "role_parameters": {"local": {"0": {}}}
+        "component_parameters": {"role": {"local": {"0": {}}}}
     }
     initiator_role = "local"
     initiator_party_id = config_data.get('party_id', 0)
@@ -142,7 +142,8 @@ def gen_data_access_job_config(config_data, access_module):
     job_runtime_conf["initiator"]["party_id"] = initiator_party_id
     for _ in ["work_mode", "backend"]:
         if _ in config_data:
-            job_runtime_conf["job_parameters"][_] = config_data[_]
+            # job_runtime_conf["job_parameters"] = config_data[_]
+            job_runtime_conf["job_parameters"]["common"][_] = config_data[_]
     job_runtime_conf["role"][initiator_role] = [initiator_party_id]
     job_dsl = {
         "components": {}
@@ -160,11 +161,11 @@ def gen_data_access_job_config(config_data, access_module):
                 "storage_address",
                 "destroy",
             }
-        job_runtime_conf["role_parameters"][initiator_role]["0"]["upload_0"] = {}
+        job_runtime_conf["component_parameters"]["role"][initiator_role]["0"]["upload_0"] = {}
         for p in parameters:
             if p in config_data:
-                job_runtime_conf["role_parameters"][initiator_role]["0"]["upload_0"][p] = config_data[p]
-        job_runtime_conf['job_parameters']['dsl_version'] = 2
+                job_runtime_conf["component_parameters"]["role"][initiator_role]["0"]["upload_0"][p] = config_data[p]
+        job_runtime_conf['dsl_version'] = 2
         job_dsl["components"]["upload_0"] = {
             "module": "Upload"
         }
@@ -176,11 +177,11 @@ def gen_data_access_job_config(config_data, access_module):
                 "namespace",
                 "name"
         }
-        job_runtime_conf["role_parameters"][initiator_role]["0"]["download_0"] = {}
+        job_runtime_conf["component_parameters"]['role'][initiator_role]["0"]["download_0"] = {}
         for p in parameters:
             if p in config_data:
-                job_runtime_conf["role_parameters"][initiator_role]["0"]["download_0"][p] = config_data[p]
-        job_runtime_conf['job_parameters']['dsl_version'] = 2
+                job_runtime_conf["component_parameters"]['role'][initiator_role]["0"]["download_0"][p] = config_data[p]
+        job_runtime_conf['dsl_version'] = 2
         job_dsl["components"]["download_0"] = {
             "module": "Download"
         }

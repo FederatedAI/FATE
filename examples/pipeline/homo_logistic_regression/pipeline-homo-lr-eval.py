@@ -26,6 +26,7 @@ from pipeline.component.scale import FeatureScale
 from pipeline.interface.data import Data
 from pipeline.interface.model import Model
 from pipeline.utils.tools import load_job_config
+from pipeline.runtime.entity import JobParameters
 
 
 def main(config="../../config.yaml", namespace=""):
@@ -55,13 +56,13 @@ def main(config="../../config.yaml", namespace=""):
     # define Reader components to read in data
     reader_0 = Reader(name="reader_0")
     # configure Reader for guest
-    reader_0.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_train_data)
+    reader_0.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data)
     # configure Reader for host
-    reader_0.get_party_instance(role='host', party_id=host).algorithm_param(table=host_train_data)
+    reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
 
     reader_1 = Reader(name="reader_1")
-    reader_1.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_eval_data)
-    reader_1.get_party_instance(role='host', party_id=host).algorithm_param(table=host_eval_data)
+    reader_1.get_party_instance(role='guest', party_id=guest).component_param(table=guest_eval_data)
+    reader_1.get_party_instance(role='host', party_id=host).component_param(table=host_eval_data)
     # define DataIO components
     dataio_0 = DataIO(name="dataio_0", with_label=True, output_format="dense")  # start component numbering at 0
     dataio_1 = DataIO(name="dataio_1")  # start component numbering at 0
@@ -114,7 +115,7 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.add_component(homo_lr_1, data=Data(test_data=scale_1.output.data),
                            model=Model(homo_lr_0.output.model))
     evaluation_0 = Evaluation(name="evaluation_0", eval_type="binary")
-    evaluation_0.get_party_instance(role='host', party_id=host).algorithm_param(need_run=False)
+    evaluation_0.get_party_instance(role='host', party_id=host).component_param(need_run=False)
     pipeline.add_component(evaluation_0, data=Data(data=[homo_lr_0.output.data,
                                                          homo_lr_1.output.data]))
 
@@ -122,7 +123,8 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.compile()
 
     # fit model
-    pipeline.fit(backend=backend, work_mode=work_mode)
+    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
+    pipeline.fit(job_parameters)
     # query component summary
     print(json.dumps(pipeline.get_component("homo_lr_0").get_summary(), indent=4, ensure_ascii=False))
     print(json.dumps(pipeline.get_component("evaluation_0").get_summary(), indent=4, ensure_ascii=False))

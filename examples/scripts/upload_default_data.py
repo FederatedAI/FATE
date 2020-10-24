@@ -28,7 +28,7 @@ for i in range(3):
 print(f'fate_path: {cur_path}')
 sys.path.append(cur_path)
 
-from examples.test import submit
+from examples.scripts import submit
 
 
 def check_data_count(submitter, fate_home, table_name, namespace, expect_count):

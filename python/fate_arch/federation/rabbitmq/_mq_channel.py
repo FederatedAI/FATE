@@ -42,7 +42,7 @@ def connection_retry(func):
 
 class MQChannel(object):
 
-    def __init__(self, host, port, user, password, vhost, send_queue_name, receive_queue_name, party_id, role):
+    def __init__(self, host, port, user, password, vhost, send_queue_name, receive_queue_name, party_id, role, extra_args: dict):
         self._host = host
         self._port = port
         self._credentials = pika.PlainCredentials(user, password)
@@ -53,6 +53,7 @@ class MQChannel(object):
         self._channel = None
         self._party_id = party_id
         self._role = role
+        self._extra_args = extra_args
 
     @property
     def party_id(self):
@@ -92,7 +93,9 @@ class MQChannel(object):
                 self._conn = pika.BlockingConnection(pika.ConnectionParameters(host=self._host, port=self._port,
                                                                                virtual_host=self._vhost,
                                                                                credentials=self._credentials,
-                                                                               heartbeat=3600))
+
+                                                                               **self._extra_args))
+
             if not self._channel:
                 self._channel = self._conn.channel()
                 self._channel.confirm_delivery()

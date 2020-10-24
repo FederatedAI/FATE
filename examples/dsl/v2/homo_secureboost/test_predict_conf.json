@@ -1,4 +1,5 @@
 {
+    "dsl_version": 2,
     "initiator": {
         "role": "guest",
         "party_id": 10000
@@ -15,30 +16,33 @@
         ]
     },
     "job_parameters": {
-        "work_mode": 0,
-        "backend": 0,
-        "dsl_version": 2,
-        "job_type": "predict",
-        "model_id": "arbiter-9999#guest-10000#host-9999#model",
-        "model_version": "20200928191922241821123"
+        "common": {
+            "work_mode": 0,
+            "backend": 0,
+            "job_type": "predict",
+            "model_id": "arbiter-9999#guest-10000#host-9999#model",
+            "model_version": "20200928191922241821123"
+        }
     },
-    "role_parameters": {
-        "guest": {
-            "0": {
-                "reader_0": {
-                    "table": {
-                        "name": "breast_homo_guest",
-                        "namespace": "experiment"
+    "component_parameters": {
+        "role": {
+            "guest": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_homo_guest",
+                            "namespace": "experiment"
+                        }
                     }
                 }
-            }
-        },
-        "host": {
-            "0": {
-                "reader_0": {
-                    "table": {
-                        "name": "breast_homo_host",
-                        "namespace": "experiment"
+            },
+            "host": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_homo_host",
+                            "namespace": "experiment"
+                        }
                     }
                 }
             }

@@ -279,3 +279,6 @@ HETERO_FAST_SBT_LAYERED = 'hetero_fast_sbt_layered'
 
 # column_expand
 MANUAL = 'manual'
+
+# scorecard
+CREDIT = 'credit'

@@ -1,4 +1,5 @@
 {
+    "dsl_version": 2,
     "initiator": {
         "role": "guest",
         "party_id": 9999
@@ -12,30 +13,33 @@
         ]
     },
     "job_parameters": {
-        "work_mode": 1,
-        "backend": 0,
-        "dsl_version": 2,
-        "job_type": "predict",
-        "model_id": "guest-9999#host-10000#model",
-        "model_version": "20201013120134140299386"
+        "common": {
+            "work_mode": 1,
+            "backend": 0,
+            "job_type": "predict",
+            "model_id": "guest-9999#host-10000#model",
+            "model_version": "20201013120134140299386"
+        }
     },
-    "role_parameters": {
-        "host": {
-            "0": {
-                "reader_0": {
-                    "table": {
-                        "name": "nus_wide_host",
-                        "namespace": "experiment"
+    "component_parameters": {
+        "role": {
+            "host": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "nus_wide_host",
+                            "namespace": "experiment"
+                        }
                     }
                 }
-            }
-        },
-        "guest": {
-            "0": {
-                "reader_0": {
-                    "table": {
-                        "name": "nus_wide_guest",
-                        "namespace": "experiment"
+            },
+            "guest": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "nus_wide_guest",
+                            "namespace": "experiment"
+                        }
                     }
                 }
             }
