@@ -54,7 +54,7 @@ class Datastream(object):
     def append(self, kv: dict):
         # add ',' if not the first element
         if self._string.getvalue() != '[':
-            self._string.write(', ')
+            self._string.write(',')
         json.dump(kv, self._string)
 
     def clear(self):
@@ -86,20 +86,20 @@ class _QueueNames(object):
         self.receive = receive
 
 
-class _QueueKey(object):
-    def __init__(self, name, role, party_id):
-        self.name = name
-        self.role = str(role)
-        self.party_id = str(party_id)
-    
-    def __hash__(self):
-        return (self.name, self.role, self.party_id).__hash__()
-        
-    def __str__(self):
-        return f"_QueueKey(name={self.name}, role={self.role}, party_id={self.party_id}"
-    
-    def __repr__(self):
-        return self.__str__()
+# class _QueueKey(object):
+#     def __init__(self, name, role, party_id):
+#         self.name = name
+#         self.role = str(role)
+#         self.party_id = str(party_id)
+#     
+#     def __hash__(self):
+#         return (self.name, self.role, self.party_id).__hash__()
+#         
+#     def __str__(self):
+#         return f"_QueueKey(name={self.name}, role={self.role}, party_id={self.party_id}"
+#     
+#     def __repr__(self):
+#         return self.__str__()
 
 
 class Federation(FederationABC):
@@ -212,8 +212,8 @@ class Federation(FederationABC):
         return mq_names
 
     def _get_or_create_queue(self, party: Party, name) -> typing.Tuple:        
-#         name_party = "^".join([name, party.role, party.party_id]) 
-        queue_key = _QueueKey(name, party.role, party.party_id)
+        queue_key = "^".join([name, party.role, party.party_id]) 
+#         queue_key = _QueueKey(name, party.role, party.party_id)
                
         if queue_key not in self._queue_map:
             LOGGER.debug(f"[rabbitmq.get_or_create_queue]queue for party:{party} not found, start to create")
@@ -256,9 +256,10 @@ class Federation(FederationABC):
 
     def _get_channels(self, mq_names):
         channel_infos = []
-        for queue_key, queue_names in mq_names:            
-            role = queue_key.role
-            party_id = queue_key.party_id            
+        for queue_key, queue_names in mq_names:  
+            name, role, party_id = queue_key.split("^")          
+#             role = queue_key.role
+#             party_id = queue_key.party_id            
             info = self._channels_map.get(queue_key)
             if info is None:
                 info = _get_channel(self._mq, queue_names, party_id=party_id, role=role, 
@@ -278,8 +279,9 @@ def _get_channel(mq, names: _QueueNames, party_id, role, connection_conf: dict):
 def _get_channels(mq_names, mq, connection_conf: dict):
     channel_infos = []
     for queue_key, queue_names in mq_names:            
-        role = queue_key.role
-        party_id = queue_key.party_id
+        name, role, party_id = queue_key.split("^")          
+#         role = queue_key.role
+#         party_id = queue_key.party_id
         info = _get_channel(mq, queue_names, party_id=party_id, role=role, connection_conf=connection_conf)
         channel_infos.append(info)
     return channel_infos
