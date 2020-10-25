@@ -180,12 +180,12 @@ class Federation(FederationABC):
 
     def cleanup(self):
         LOGGER.debug("[rabbitmq.cleanup]start to cleanup...")
-        for party_id, names in self._queue_map.items():
-            LOGGER.debug(f"[rabbitmq.cleanup]cleanup party_id={party_id}, names={names}.")
-            self._rabbit_manager.de_federate_queue(vhost=names.vhost, receive_queue_name=names.receive)
-            self._rabbit_manager.delete_queue(vhost=names.vhost, queue_name=names.send)
-            self._rabbit_manager.delete_queue(vhost=names.vhost, queue_name=names.receive)
-            self._rabbit_manager.delete_vhost(vhost=names.vhost)
+        for queue_key, queue_names in self._queue_map.items():
+            LOGGER.debug(f"[rabbitmq.cleanup]cleanup queue_key={queue_key}, queue_names={queue_names}.")
+            self._rabbit_manager.de_federate_queue(vhost=queue_names.vhost, receive_queue_name=queue_names.receive)
+            self._rabbit_manager.delete_queue(vhost=queue_names.vhost, queue_name=queue_names.send)
+            self._rabbit_manager.delete_queue(vhost=queue_names.vhost, queue_name=queue_names.receive)
+            self._rabbit_manager.delete_vhost(vhost=queue_names.vhost)
         self._queue_map.clear()
         if self._mq.union_name:
             LOGGER.debug(f"[rabbitmq.cleanup]clean user {self._mq.union_name}.")
