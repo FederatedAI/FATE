@@ -35,8 +35,8 @@ from fate_arch.federation.rabbitmq._mq_channel import MQChannel
 from fate_arch.federation.rabbitmq._rabbit_manager import RabbitManager
 
 LOGGER = getLogger()
-# default message max size in bytes = 128MB
-DEFAULT_MESSAGE_MAX_SIZE = 134217728
+# default message max size in bytes = 1MB
+DEFAULT_MESSAGE_MAX_SIZE = 1048576
 
 # Datastream is a wraper of StringIO, it receives kv pairs and dump it to json string
 class Datastream(object):
