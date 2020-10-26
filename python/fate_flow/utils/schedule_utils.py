@@ -18,15 +18,15 @@ import os
 from fate_arch.common import file_utils
 from fate_flow.db.db_models import DB, Job
 from fate_flow.scheduler.dsl_parser import DSLParser, DSLParserV2
-from fate_flow.utils.config_adapter import JobSubmitConfigAdapter
+from fate_flow.utils.config_adapter import JobRuntimeConfigAdapter
 
 
 @DB.connection_context()
 def get_job_dsl_parser_by_job_id(job_id):
-    jobs = Job.select(Job.f_dsl, Job.f_runtime_conf, Job.f_train_runtime_conf).where(Job.f_job_id == job_id)
+    jobs = Job.select(Job.f_dsl, Job.f_runtime_conf_on_party, Job.f_train_runtime_conf).where(Job.f_job_id == job_id)
     if jobs:
         job = jobs[0]
-        job_dsl_parser = get_job_dsl_parser(dsl=job.f_dsl, runtime_conf=job.f_runtime_conf,
+        job_dsl_parser = get_job_dsl_parser(dsl=job.f_dsl, runtime_conf=job.f_runtime_conf_on_party,
                                             train_runtime_conf=job.f_train_runtime_conf)
         return job_dsl_parser
     else:
@@ -39,7 +39,7 @@ def get_job_dsl_parser(dsl=None, runtime_conf=None, pipeline_dsl=None, train_run
     default_runtime_conf_path = os.path.join(file_utils.get_python_base_directory(),
                                              *['federatedml', 'conf', 'default_runtime_conf'])
     setting_conf_path = os.path.join(file_utils.get_python_base_directory(), *['federatedml', 'conf', 'setting_conf'])
-    job_type = JobSubmitConfigAdapter(runtime_conf).get_job_type()
+    job_type = JobRuntimeConfigAdapter(runtime_conf).get_job_type()
     dsl_parser.run(dsl=dsl,
                    runtime_conf=runtime_conf,
                    pipeline_dsl=pipeline_dsl,

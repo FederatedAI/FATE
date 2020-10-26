@@ -27,11 +27,11 @@ class JobSaver(object):
 
     @classmethod
     def create_job(cls, job_info):
-        cls.create_job_family_entity(Job, job_info)
+        return cls.create_job_family_entity(Job, job_info)
 
     @classmethod
     def create_task(cls, task_info):
-        cls.create_job_family_entity(Task, task_info)
+        return cls.create_job_family_entity(Task, task_info)
 
     @classmethod
     @DB.connection_context()
@@ -97,6 +97,7 @@ class JobSaver(object):
             rows = obj.save(force_insert=True)
             if rows != 1:
                 raise Exception("Create {} failed".format(entity_model))
+            return obj
         except peewee.IntegrityError as e:
             if e.args[0] == 1062:
                 sql_logger(job_id=entity_info.get("job_id", "fate_flow")).warning(e)

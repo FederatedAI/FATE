@@ -220,10 +220,10 @@ class ResourceManager(object):
     @classmethod
     def calculate_job_resource(cls, job_parameters: RunParameters = None, job_id=None, role=None, party_id=None):
         if not job_parameters:
-            dsl, runtime_conf, train_runtime_conf = job_utils.get_job_configuration(job_id=job_id,
-                                                                                    role=role,
-                                                                                    party_id=party_id)
-            job_parameters = RunParameters(**runtime_conf["job_parameters"])
+            job_parameters = job_utils.get_job_parameters(job_id=job_id,
+                                                          role=role,
+                                                          party_id=party_id)
+            job_parameters = RunParameters(**job_parameters)
         cores = job_parameters.adaptation_parameters["task_cores_per_node"] * job_parameters.adaptation_parameters[
             "task_nodes"] * job_parameters.task_parallelism
         memory = job_parameters.adaptation_parameters["task_memory_per_node"] * job_parameters.adaptation_parameters[
@@ -233,10 +233,10 @@ class ResourceManager(object):
     @classmethod
     def calculate_task_resource(cls, task_parameters: RunParameters = None, task_info: dict = None):
         if not task_parameters:
-            dsl, runtime_conf, train_runtime_conf = job_utils.get_job_configuration(job_id=task_info["job_id"],
-                                                                                    role=task_info["role"],
-                                                                                    party_id=task_info["party_id"])
-            task_parameters = RunParameters(**runtime_conf["job_parameters"])
+            job_parameters = job_utils.get_job_parameters(job_id=task_info["job_id"],
+                                                          role=task_info["role"],
+                                                          party_id=task_info["party_id"])
+            task_parameters = RunParameters(**job_parameters)
         cores_per_task = task_parameters.adaptation_parameters["task_cores_per_node"] * \
                          task_parameters.adaptation_parameters["task_nodes"]
         memory_per_task = task_parameters.adaptation_parameters["task_memory_per_node"] * \

@@ -30,7 +30,7 @@ class TaskScheduler(object):
         waiting_tasks = []
         for initiator_task in initiator_tasks_group.values():
             # collect all party task party status
-            if job.f_runtime_conf["job_parameters"]["federated_status_collect_type"] == FederatedCommunicationType.PULL:
+            if job.f_runtime_conf_on_party["job_parameters"]["federated_status_collect_type"] == FederatedCommunicationType.PULL:
                 tasks_on_all_party = JobSaver.query_task(task_id=initiator_task.f_task_id, task_version=initiator_task.f_task_version)
                 tasks_status_on_all = set([task.f_status for task in tasks_on_all_party])
                 if len(tasks_status_on_all) > 1 or TaskStatus.RUNNING in tasks_status_on_all:
@@ -94,7 +94,7 @@ class TaskScheduler(object):
         schedule_logger(job_id=task.f_job_id).info("start job {} task {} {} on {} {}".format(task.f_job_id, task.f_task_id, task.f_task_version, task.f_role, task.f_party_id))
         FederatedScheduler.sync_task_status(job=job, task=task)
         task_parameters = {}
-        task_parameters.update(job.f_runtime_conf["job_parameters"])
+        task_parameters.update(job.f_runtime_conf_on_party["job_parameters"])
         status_code, response = FederatedScheduler.start_task(job=job, task=task, task_parameters=task_parameters)
         if status_code == FederatedSchedulingStatusCode.SUCCESS:
             return SchedulingStatusCode.SUCCESS

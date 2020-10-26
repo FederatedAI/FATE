@@ -129,13 +129,13 @@ def new_runtime_conf(job_dir, method, module, role, party_id):
     return os.path.join(conf_path_dir, 'runtime_conf.json')
 
 
-def save_job_conf(job_id, role, job_dsl, job_submit_conf, job_runtime_conf, train_runtime_conf, pipeline_dsl=None):
+def save_job_conf(job_id, role, job_dsl, job_runtime_conf, job_runtime_conf_on_party, train_runtime_conf, pipeline_dsl=None):
     path_dict = get_job_conf_path(job_id=job_id, role=role)
     os.makedirs(os.path.dirname(path_dict.get('job_dsl_path')), exist_ok=True)
-    os.makedirs(os.path.dirname(path_dict.get('job_runtime_conf_path')), exist_ok=True)
+    os.makedirs(os.path.dirname(path_dict.get('job_runtime_conf_on_party_path')), exist_ok=True)
     for data, conf_path in [(job_dsl, path_dict['job_dsl_path']),
-                            (job_submit_conf, path_dict['job_submit_conf_path']),
                             (job_runtime_conf, path_dict['job_runtime_conf_path']),
+                            (job_runtime_conf_on_party, path_dict['job_runtime_conf_on_party_path']),
                             (train_runtime_conf, path_dict['train_runtime_conf_path']),
                             (pipeline_dsl, path_dict['pipeline_dsl_path'])]:
         with open(conf_path, 'w+') as f:
@@ -150,13 +150,13 @@ def save_job_conf(job_id, role, job_dsl, job_submit_conf, job_runtime_conf, trai
 def get_job_conf_path(job_id, role):
     job_dir = get_job_directory(job_id)
     job_dsl_path = os.path.join(job_dir, 'job_dsl.json')
-    job_submit_conf_path = os.path.join(job_dir, 'job_submit_conf.json')
-    job_runtime_conf_path = os.path.join(job_dir, role, 'job_runtime_conf.json')
+    job_runtime_conf_path = os.path.join(job_dir, 'job_runtime_conf.json')
+    job_runtime_conf_on_party_path = os.path.join(job_dir, role, 'job_runtime_on_party_conf.json')
     train_runtime_conf_path = os.path.join(job_dir, 'train_runtime_conf.json')
     pipeline_dsl_path = os.path.join(job_dir, 'pipeline_dsl.json')
     return {'job_dsl_path': job_dsl_path,
-            'job_submit_conf_path': job_submit_conf_path,
             'job_runtime_conf_path': job_runtime_conf_path,
+            'job_runtime_conf_on_party_path': job_runtime_conf_on_party_path,
             'train_runtime_conf_path': train_runtime_conf_path,
             'pipeline_dsl_path': pipeline_dsl_path}
 
@@ -174,20 +174,32 @@ def get_job_configuration(job_id, role, party_id, tasks=None):
     if tasks:
         jobs_run_conf = {}
         for task in tasks:
-            jobs = Job.select(Job.f_job_id, Job.f_runtime_conf, Job.f_description).where(Job.f_job_id == task.f_job_id)
+            jobs = Job.select(Job.f_job_id, Job.f_runtime_conf_on_party, Job.f_description).where(Job.f_job_id == task.f_job_id)
             job = jobs[0]
-            jobs_run_conf[job.f_job_id] = job.f_runtime_conf["role_parameters"]["local"]["0"]["upload_0"]
+            jobs_run_conf[job.f_job_id] = job.f_runtime_conf_on_party["role_parameters"]["local"]["0"]["upload_0"]
             jobs_run_conf[job.f_job_id]["notes"] = job.f_description
         return jobs_run_conf
     else:
-        jobs = Job.select(Job.f_dsl, Job.f_runtime_conf, Job.f_train_runtime_conf).where(Job.f_job_id == job_id,
-                                                                                         Job.f_role == role,
-                                                                                         Job.f_party_id == party_id)
+        jobs = Job.select(Job.f_dsl, Job.f_runtime_conf, Job.f_train_runtime_conf, Job.f_runtime_conf_on_party).where(Job.f_job_id == job_id,
+                                                                                                                      Job.f_role == role,
+                                                                                                                      Job.f_party_id == party_id)
     if jobs:
         job = jobs[0]
-        return job.f_dsl, job.f_runtime_conf, job.f_train_runtime_conf
+        return job.f_dsl, job.f_runtime_conf, job.f_runtime_conf_on_party, job.f_train_runtime_conf
     else:
-        return {}, {}, {}
+        return {}, {}, {}, {}
+
+
+@DB.connection_context()
+def get_job_parameters(job_id, role, party_id):
+    jobs = Job.select(Job.f_runtime_conf_on_party).where(Job.f_job_id == job_id,
+                                                         Job.f_role == role,
+                                                         Job.f_party_id == party_id)
+    if jobs:
+        job = jobs[0]
+        return job.f_runtime_conf_on_party.get("job_parameters")
+    else:
+        return {}
 
 
 def job_virtual_component_name():
@@ -238,11 +250,8 @@ def check_job_process(pid):
         return True
 
 
-def check_job_is_timeout(job):
-    job_dsl, job_runtime_conf, train_runtime_conf = get_job_configuration(job_id=job.f_job_id,
-                                                                          role=job.f_initiator_role,
-                                                                          party_id=job.f_initiator_party_id)
-    job_parameters = job_runtime_conf.get('job_parameters', {})
+def check_job_is_timeout(job: Job):
+    job_parameters = job.f_runtime_conf_on_party["job_parameters"]
     timeout = job_parameters.get("timeout", JOB_DEFAULT_TIMEOUT)
     now_time = current_timestamp()
     running_time = (now_time - job.f_create_time)/1000
@@ -372,10 +381,7 @@ def kill_task_executor_process(task: Task, only_child=False):
 
 
 def start_session_stop(task):
-    dsl, runtime_conf, train_runtime_conf = get_job_configuration(job_id=task.f_job_id,
-                                                                  role=task.f_role,
-                                                                  party_id=task.f_party_id)
-    job_parameters = RunParameters(**runtime_conf["job_parameters"])
+    job_parameters = RunParameters(**get_job_parameters(job_id=task.f_job_id, role=task.f_role, party_id=task.f_party_id))
     computing_session_id = generate_session_id(task.f_task_id, task.f_task_version, task.f_role, task.f_party_id)
     if task.f_status != TaskStatus.WAITING:
         schedule_logger(task.f_job_id).info(f'start run subprocess to stop task session {computing_session_id}')
@@ -427,7 +433,7 @@ def federation_cleanup(job, task):
     from fate_arch.common import Backend
     from fate_arch.common import Party
 
-    runtime_conf = json_loads(job.f_runtime_conf)
+    runtime_conf = json_loads(job.f_runtime_conf_on_party)
     job_parameters = runtime_conf['job_parameters']
     backend = Backend(job_parameters.get('backend', 0))
     store_engine = StoreEngine(job_parameters.get('store_engine', 0))

@@ -20,7 +20,7 @@ from fate_arch.common.log import schedule_logger
 from fate_flow.entity.types import RetCode, FederatedSchedulingStatusCode
 from fate_flow.db.db_models import Job, Task
 from fate_flow.utils import schedule_utils
-from fate_flow.utils.config_adapter import JobSubmitConfigAdapter
+from fate_flow.utils.config_adapter import JobRuntimeConfigAdapter
 
 
 class FederatedScheduler(object):
@@ -105,7 +105,7 @@ class FederatedScheduler(object):
     @classmethod
     def clean_job(cls, job):
         schedule_logger(job_id=job.f_job_id).info("try to clean job {}".format(job.f_job_id))
-        status_code, response = cls.job_command(job=job, command="clean", command_body=job.f_runtime_conf["role"].copy())
+        status_code, response = cls.job_command(job=job, command="clean", command_body=job.f_runtime_conf_on_party["role"].copy())
         if status_code == FederatedSchedulingStatusCode.SUCCESS:
             schedule_logger(job_id=job.f_job_id).info("clean job {} success".format(job.f_job_id))
         else:
@@ -115,7 +115,7 @@ class FederatedScheduler(object):
     @classmethod
     def job_command(cls, job, command, command_body=None, dest_only_initiator=False, specific_dest=None):
         federated_response = {}
-        job_parameters = job.f_runtime_conf["job_parameters"]
+        job_parameters = job.f_runtime_conf_on_party["job_parameters"]
         if dest_only_initiator:
             dest_partys = [(job.f_initiator_role, [job.f_initiator_party_id])]
             api_type = "initiator"
@@ -219,8 +219,8 @@ class FederatedScheduler(object):
     @classmethod
     def task_command(cls, job, task, command, command_body=None):
         federated_response = {}
-        job_parameters = job.f_runtime_conf["job_parameters"]
-        dsl_parser = schedule_utils.get_job_dsl_parser(dsl=job.f_dsl, runtime_conf=job.f_runtime_conf, train_runtime_conf=job.f_train_runtime_conf)
+        job_parameters = job.f_runtime_conf_on_party["job_parameters"]
+        dsl_parser = schedule_utils.get_job_dsl_parser(dsl=job.f_dsl, runtime_conf=job.f_runtime_conf_on_party, train_runtime_conf=job.f_train_runtime_conf)
         component = dsl_parser.get_component_info(component_name=task.f_component_name)
         component_parameters = component.get_role_parameters()
         for dest_role, parameters_on_partys in component_parameters.items():

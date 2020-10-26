@@ -31,7 +31,7 @@ from fate_flow.entity.types import FederatedSchedulingStatusCode, RetCode, JobSt
 from fate_flow.operation import Tracker
 from fate_flow.operation import JobSaver
 from fate_flow.operation import JobClean
-from fate_flow.utils.config_adapter import JobSubmitConfigAdapter
+from fate_flow.utils.config_adapter import JobRuntimeConfigAdapter
 
 manager = Flask(__name__)
 
@@ -43,7 +43,7 @@ def internal_server_error(e):
 
 @manager.route('/submit', methods=['POST'])
 def submit_job():
-    work_mode = JobSubmitConfigAdapter(request.json.get('job_runtime_conf', {})).get_job_work_mode()
+    work_mode = JobRuntimeConfigAdapter(request.json.get('job_runtime_conf', {})).get_job_work_mode()
     detect_utils.check_config({'work_mode': work_mode}, required_arguments=[('work_mode', (WorkMode.CLUSTER, WorkMode.STANDALONE))])
     submit_result = DAGScheduler.submit(request.json)
     return get_json_result(retcode=0, retmsg='success',

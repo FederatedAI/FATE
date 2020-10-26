@@ -26,7 +26,7 @@ from fate_flow.operation import Tracker
 from fate_flow.controller import JobController
 from fate_flow.settings import FATE_BOARD_DASHBOARD_ENDPOINT
 from fate_flow.utils import detect_utils, job_utils, schedule_utils
-from fate_flow.utils.config_adapter import JobSubmitConfigAdapter
+from fate_flow.utils.config_adapter import JobRuntimeConfigAdapter
 from fate_flow.utils.service_utils import ServiceUtils
 from fate_flow.utils import model_utils
 from fate_flow.utils.cron import Cron
@@ -39,16 +39,16 @@ class DAGScheduler(Cron):
             job_id = job_utils.generate_job_id()
         schedule_logger(job_id).info('submit job, job_id {}, body {}'.format(job_id, job_data))
         job_dsl = job_data.get('job_dsl', {})
-        job_submit_conf = job_data.get('job_runtime_conf', {})
-        job_utils.check_job_runtime_conf(job_submit_conf)
+        job_runtime_conf = job_data.get('job_runtime_conf', {})
+        job_utils.check_job_runtime_conf(job_runtime_conf)
 
-        job_initiator = job_submit_conf['initiator']
-        conf_adapter = JobSubmitConfigAdapter(job_submit_conf)
+        job_initiator = job_runtime_conf['initiator']
+        conf_adapter = JobRuntimeConfigAdapter(job_runtime_conf)
         common_job_parameters = conf_adapter.get_common_parameters()
 
         if common_job_parameters.job_type != 'predict':
             # generate job model info
-            common_job_parameters.model_id = model_utils.gen_model_id(job_submit_conf['role'])
+            common_job_parameters.model_id = model_utils.gen_model_id(job_runtime_conf['role'])
             common_job_parameters.model_version = job_id
             train_runtime_conf = {}
         else:
@@ -66,7 +66,7 @@ class DAGScheduler(Cron):
         job.f_job_id = job_id
         job.f_dsl = job_dsl
         job.f_train_runtime_conf = train_runtime_conf
-        job.f_roles = job_submit_conf['role']
+        job.f_roles = job_runtime_conf['role']
         job.f_work_mode = common_job_parameters.work_mode
         job.f_initiator_role = job_initiator['role']
         job.f_initiator_party_id = job_initiator['party_id']
@@ -74,12 +74,12 @@ class DAGScheduler(Cron):
         path_dict = job_utils.save_job_conf(job_id=job_id,
                                             role=job.f_initiator_role,
                                             job_dsl=job_dsl,
-                                            job_submit_conf=job_submit_conf,
-                                            job_runtime_conf={},
+                                            job_runtime_conf=job_runtime_conf,
+                                            job_runtime_conf_on_party={},
                                             train_runtime_conf=train_runtime_conf,
                                             pipeline_dsl=None)
 
-        if job.f_initiator_party_id not in job_submit_conf['role'][job.f_initiator_role]:
+        if job.f_initiator_party_id not in job_runtime_conf['role'][job.f_initiator_role]:
             schedule_logger(job_id).info("initiator party id error:{}".format(job.f_initiator_party_id))
             raise Exception("initiator party id error {}".format(job.f_initiator_party_id))
 
@@ -87,14 +87,14 @@ class DAGScheduler(Cron):
         JobController.backend_compatibility(job_parameters=common_job_parameters)
         JobController.adapt_job_parameters(role=job.f_initiator_role, job_parameters=common_job_parameters, create_initiator_baseline=True)
 
-        job.f_submit_conf = conf_adapter.update_common_parameters(common_parameters=common_job_parameters)
+        job.f_runtime_conf = conf_adapter.update_common_parameters(common_parameters=common_job_parameters)
         dsl_parser = schedule_utils.get_job_dsl_parser(dsl=job.f_dsl,
-                                                       runtime_conf=job.f_submit_conf,
+                                                       runtime_conf=job.f_runtime_conf,
                                                        train_runtime_conf=job.f_train_runtime_conf)
 
         # initiator runtime conf as template
-        job.f_runtime_conf = job.f_submit_conf.copy()
-        job.f_runtime_conf["job_parameters"] = common_job_parameters.to_dict()
+        job.f_runtime_conf_on_party = job.f_runtime_conf.copy()
+        job.f_runtime_conf_on_party["job_parameters"] = common_job_parameters.to_dict()
 
         status_code, response = FederatedScheduler.create_job(job=job)
         if status_code != FederatedSchedulingStatusCode.SUCCESS:
@@ -279,7 +279,7 @@ class DAGScheduler(Cron):
         schedule_logger(job_id=job.f_job_id).info("scheduling job {}".format(job.f_job_id))
 
         dsl_parser = schedule_utils.get_job_dsl_parser(dsl=job.f_dsl,
-                                                       runtime_conf=job.f_runtime_conf,
+                                                       runtime_conf=job.f_runtime_conf_on_party,
                                                        train_runtime_conf=job.f_train_runtime_conf)
         task_scheduling_status_code, tasks = TaskScheduler.schedule(job=job, dsl_parser=dsl_parser, canceled=job.f_cancel_signal)
         tasks_status = [task.f_status for task in tasks]
@@ -321,7 +321,7 @@ class DAGScheduler(Cron):
             tasks = JobSaver.query_task(job_id=job_id, role=initiator_role, party_id=initiator_party_id)
         job_can_rerun = False
         dsl_parser = schedule_utils.get_job_dsl_parser(dsl=job.f_dsl,
-                                                       runtime_conf=job.f_runtime_conf,
+                                                       runtime_conf=job.f_runtime_conf_on_party,
                                                        train_runtime_conf=job.f_train_runtime_conf)
         for task in tasks:
             if task.f_status in {TaskStatus.WAITING, TaskStatus.COMPLETE}:
@@ -339,11 +339,11 @@ class DAGScheduler(Cron):
                 FederatedScheduler.create_task(job=job, task=task)
                 # Save the status information of all participants in the initiator for scheduling
                 schedule_logger(job_id=job_id).info(f"create task {task.f_task_id} new version {task.f_task_version}")
-                for _role, _party_ids in job.f_runtime_conf["role"].items():
+                for _role, _party_ids in job.f_runtime_conf_on_party["role"].items():
                     for _party_id in _party_ids:
                         if _role == initiator_role and _party_id == initiator_party_id:
                             continue
-                        JobController.initialize_tasks(job_id, _role, _party_id, False, job.f_initiator_role, job.f_initiator_party_id, RunParameters(**job.f_runtime_conf["job_parameters"]), dsl_parser, component_name=task.f_component_name, task_version=task.f_task_version)
+                        JobController.initialize_tasks(job_id, _role, _party_id, False, job.f_initiator_role, job.f_initiator_party_id, RunParameters(**job.f_runtime_conf_on_party["job_parameters"]), dsl_parser, component_name=task.f_component_name, task_version=task.f_task_version)
                 schedule_logger(job_id=job_id).info(f"create task {task.f_task_id} new version {task.f_task_version} successfully")
                 job_can_rerun = True
         if job_can_rerun:

@@ -224,9 +224,9 @@ def search_component(path):
     PrivilegeAuth.ALL_PERMISSION['privilege_component'].extend(component_list)
 
 
-def authentication_check(src_role, src_party_id, dsl, submit_conf, role, party_id):
-    initiator = submit_conf['initiator']
-    roles = submit_conf['role']
+def authentication_check(src_role, src_party_id, dsl, runtime_conf, role, party_id):
+    initiator = runtime_conf['initiator']
+    roles = runtime_conf['role']
     if 'local' not in roles or str(party_id) != str(src_party_id):
         if set(roles['host']) & set(roles['guest']):
             stat_logger.info('host {} became guest'.format(set(roles['host']) & set(roles['guest'])))

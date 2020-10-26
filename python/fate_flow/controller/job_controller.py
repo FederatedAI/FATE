@@ -31,6 +31,7 @@ from fate_arch.common import FederatedMode
 from fate_arch.computing import ComputingEngine
 from fate_arch.federation import FederationEngine
 from fate_arch.storage import StorageEngine
+from fate_flow.db.db_models import Job
 
 
 class JobController(object):
@@ -38,14 +39,14 @@ class JobController(object):
     def create_job(cls, job_id, role, party_id, job_info):
         # parse job configuration
         dsl = job_info['dsl']
-        submit_conf = job_info['submit_conf']
+        runtime_conf = job_info['runtime_conf']
         train_runtime_conf = job_info['train_runtime_conf']
         if USE_AUTHENTICATION:
             authentication_check(src_role=job_info.get('src_role', None), src_party_id=job_info.get('src_party_id', None),
-                                 dsl=dsl, submit_conf=submit_conf, role=role, party_id=party_id)
+                                 dsl=dsl, runtime_conf=runtime_conf, role=role, party_id=party_id)
 
         dsl_parser = schedule_utils.get_job_dsl_parser(dsl=dsl,
-                                                       runtime_conf=submit_conf,
+                                                       runtime_conf=runtime_conf,
                                                        train_runtime_conf=train_runtime_conf)
         job_parameters = dsl_parser.get_job_parameters().get(role, {}).get(party_id, {})
         schedule_logger(job_id).info('job parameters:{}'.format(job_parameters))
@@ -65,20 +66,20 @@ class JobController(object):
         cls.adapt_job_parameters(role=role, job_parameters=job_parameters)
         engines_info = cls.get_job_engines_address(job_parameters=job_parameters)
         cls.check_parameters(job_parameters=job_parameters, engines_info=engines_info)
-        job_info["runtime_conf"]["job_parameters"] = job_parameters.to_dict()
+        job_info["runtime_conf_on_party"]["job_parameters"] = job_parameters.to_dict()
 
-        JobSaver.create_job(job_info=job_info)
+        job = JobSaver.create_job(job_info=job_info)
 
         job_utils.save_job_conf(job_id=job_id,
                                 role=role,
                                 job_dsl=dsl,
-                                job_submit_conf=submit_conf,
-                                job_runtime_conf=job_info["runtime_conf"],
+                                job_runtime_conf=runtime_conf,
+                                job_runtime_conf_on_party=job_info["runtime_conf_on_party"],
                                 train_runtime_conf=train_runtime_conf,
                                 pipeline_dsl=None)
 
         cls.initialize_tasks(job_id=job_id, role=role, party_id=party_id, run_on_this_party=True, initiator_role=job_info["initiator_role"], initiator_party_id=job_info["initiator_party_id"], job_parameters=job_parameters, dsl_parser=dsl_parser)
-        cls.initialize_job_tracker(job_id=job_id, role=role, party_id=party_id, job_info=job_info, is_initiator=is_initiator, dsl_parser=dsl_parser)
+        cls.initialize_job_tracker(job_id=job_id, role=role, party_id=party_id, job=job, is_initiator=is_initiator, dsl_parser=dsl_parser)
 
     @classmethod
     def backend_compatibility(cls, job_parameters: RunParameters):
@@ -169,9 +170,9 @@ class JobController(object):
                     TaskController.create_task(role=role, party_id=party_id, run_on_this_party=run_on_this_party, task_info=task_info)
 
     @classmethod
-    def initialize_job_tracker(cls, job_id, role, party_id, job_info, is_initiator, dsl_parser):
-        job_parameters = job_info['runtime_conf']['job_parameters']
-        roles = job_info['roles']
+    def initialize_job_tracker(cls, job_id, role, party_id, job: Job, is_initiator, dsl_parser):
+        job_parameters = job.f_runtime_conf_on_party['job_parameters']
+        roles = job.f_roles
         tracker = Tracker(job_id=job_id, role=role, party_id=party_id,
                           model_id=job_parameters["model_id"],
                           model_version=job_parameters["model_version"])
@@ -276,9 +277,9 @@ class JobController(object):
     @classmethod
     def save_pipelined_model(cls, job_id, role, party_id):
         schedule_logger(job_id).info('job {} on {} {} start to save pipeline'.format(job_id, role, party_id))
-        job_dsl, job_runtime_conf, train_runtime_conf = job_utils.get_job_configuration(job_id=job_id, role=role,
-                                                                                        party_id=party_id)
-        job_parameters = job_runtime_conf.get('job_parameters', {})
+        job_dsl, job_runtime_conf, runtime_conf_on_party, train_runtime_conf = job_utils.get_job_configuration(job_id=job_id, role=role,
+                                                                                                               party_id=party_id)
+        job_parameters = runtime_conf_on_party.get('job_parameters', {})
         model_id = job_parameters['model_id']
         model_version = job_parameters['model_version']
         job_type = job_parameters.get('job_type', '')
