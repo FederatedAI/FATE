@@ -415,12 +415,9 @@ class DAGScheduler(Cron):
         return total, finished_count
 
     @classmethod
-    def stop_job(cls, job_id, role, party_id, stop_status, job_info=None):
+    def stop_job(cls, job_id, role, party_id, stop_status):
         schedule_logger(job_id=job_id).info(f"request stop job {job_id} with {stop_status}")
-        if job_info:
-            jobs = [dict_to_model(Job, job_info)]
-        else:
-            jobs = JobSaver.query_job(job_id=job_id, role=role, party_id=party_id, is_initiator=True)
+        jobs = JobSaver.query_job(job_id=job_id, role=role, party_id=party_id, is_initiator=True)
         if len(jobs) > 0:
             if stop_status == JobStatus.CANCELED:
                 schedule_logger(job_id=job_id).info(f"cancel job {job_id}")

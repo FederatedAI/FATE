@@ -119,20 +119,21 @@ class JobSaver(object):
         else:
             raise Exception("can not found the obj to update")
         update_filters = query_filters[:]
-        update_info = {}
+        update_info = {"job_id": entity_info["job_id"]}
         for status_field in cls.STATUS_FIELDS:
             if entity_info.get(status_field) and hasattr(entity_model, f"f_{status_field}"):
                 if status_field in ["status", "party_status"]:
                     update_info[status_field] = entity_info[status_field]
                     old_status = getattr(obj, f"f_{status_field}")
+                    new_status = update_info[status_field]
                     if_pass = False
                     if isinstance(obj, Task):
-                        if TaskStatus.StateTransitionRule.if_pass(src_status=old_status, dest_status=update_info[status_field]):
+                        if TaskStatus.StateTransitionRule.if_pass(src_status=old_status, dest_status=new_status):
                             if_pass = True
                     elif isinstance(obj, Job):
-                        if JobStatus.StateTransitionRule.if_pass(src_status=old_status, dest_status=update_info[status_field]):
+                        if JobStatus.StateTransitionRule.if_pass(src_status=old_status, dest_status=new_status):
                             if_pass = True
-                        if EndStatus.contains(old_status) and old_status != JobStatus.CANCELED:
+                        if EndStatus.contains(new_status) and new_status not in {JobStatus.SUCCESS, JobStatus.CANCELED}:
                             update_filters.append(Job.f_rerun_signal == False)
                     if if_pass:
                         update_filters.append(operator.attrgetter(f"f_{status_field}")(type(obj)) == old_status)
