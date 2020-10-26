@@ -26,6 +26,7 @@ from pipeline.component.reader import Reader
 from pipeline.interface.data import Data
 from pipeline.interface.model import Model
 from pipeline.utils.tools import load_job_config
+from pipeline.runtime.entity import JobParameters
 
 
 def main(config="../../config.yaml", namespace=""):
@@ -55,11 +56,11 @@ def main(config="../../config.yaml", namespace=""):
     reader_0 = Reader(name="reader_0")
     reader_1 = Reader(name="reader_1")
     # configure Reader for guest
-    reader_0.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_train_data)
-    reader_1.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_test_data)
+    reader_0.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data)
+    reader_1.get_party_instance(role='guest', party_id=guest).component_param(table=guest_test_data)
     # configure Reader for host
-    reader_0.get_party_instance(role='host', party_id=host).algorithm_param(table=host_train_data)
-    reader_1.get_party_instance(role='host', party_id=host).algorithm_param(table=host_test_data)
+    reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
+    reader_1.get_party_instance(role='host', party_id=host).component_param(table=host_test_data)
 
     # define DataIO components
     dataio_0 = DataIO(name="dataio_0")  # start component numbering at 0
@@ -80,9 +81,9 @@ def main(config="../../config.yaml", namespace=""):
     # get DataIO party instance of guest
     dataio_0_guest_party_instance = dataio_0.get_party_instance(role='guest', party_id=guest)
     # configure DataIO for guest
-    dataio_0_guest_party_instance.algorithm_param(**param)
+    dataio_0_guest_party_instance.component_param(**param)
     # get and configure DataIO party instance of host
-    dataio_1.get_party_instance(role='guest', party_id=guest).algorithm_param(**param)
+    dataio_1.get_party_instance(role='guest', party_id=guest).component_param(**param)
 
     param = {
         "input_format": "tag",
@@ -91,8 +92,8 @@ def main(config="../../config.yaml", namespace=""):
         "delimitor": ",",
         "output_format": "dense"
     }
-    dataio_0.get_party_instance(role='host', party_id=host).algorithm_param(**param)
-    dataio_1.get_party_instance(role='host', party_id=host).algorithm_param(**param)
+    dataio_0.get_party_instance(role='host', party_id=host).component_param(**param)
+    dataio_1.get_party_instance(role='host', party_id=host).component_param(**param)
 
     # define Intersection components
     intersection_0 = Intersection(name="intersection_0", intersect_method="raw")
@@ -134,8 +135,8 @@ def main(config="../../config.yaml", namespace=""):
 
     one_hot_encoder_0 = OneHotEncoder(name="hetero_scale_0")
     one_hot_encoder_1 = OneHotEncoder(name="hetero_scale_1")
-    one_hot_encoder_0.get_party_instance(role='guest', party_id=guest).algorithm_param(need_run=False, **param)
-    one_hot_encoder_0.get_party_instance(role='host', party_id=host).algorithm_param(need_run=False, **param)
+    one_hot_encoder_0.get_party_instance(role='guest', party_id=guest).component_param(need_run=False, **param)
+    one_hot_encoder_0.get_party_instance(role='host', party_id=host).component_param(need_run=False, **param)
     one_hot_encoder_1.get_party_instance(role='guest', party_id=guest)
     one_hot_encoder_1.get_party_instance(role='host', party_id=host)
     param = {
@@ -204,7 +205,8 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.compile()
 
     # fit model
-    pipeline.fit(backend=backend, work_mode=work_mode)
+    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
+    pipeline.fit(job_parameters)
     # query component summary
     print(pipeline.get_component("hetero_secureboost_0").get_summary())
 

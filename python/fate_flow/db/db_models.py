@@ -112,6 +112,7 @@ class Job(DataBaseModel):
     f_description = TextField(null=True, default='')
     f_tag = CharField(max_length=50, null=True, index=True, default='')
     f_dsl = JSONField()
+    f_submit_conf = JSONField()
     f_runtime_conf = JSONField()
     f_train_runtime_conf = JSONField(null=True)
     f_roles = JSONField()
@@ -124,6 +125,11 @@ class Job(DataBaseModel):
     f_party_id = CharField(max_length=10, index=True)
     f_is_initiator = BooleanField(null=True, index=True, default=False)
     f_progress = IntegerField(null=True, default=0)
+    f_ready_signal = BooleanField(index=True, default=False)
+    f_ready_time = BigIntegerField(null=True)
+    f_cancel_signal = BooleanField(index=True, default=False)
+    f_cancel_time = BooleanField(index=True, default=False)
+    f_rerun_signal = BooleanField(index=True, default=False)
 
     f_engine_name = CharField(max_length=50, null=True, index=True)
     f_engine_type = CharField(max_length=10, null=True, index=True)
@@ -347,9 +353,10 @@ class ModelOperationLog(DataBaseModel):
 
 
 class EngineRegistry(DataBaseModel):
-    f_engine_name = CharField(max_length=50, index=True)
     f_engine_type = CharField(max_length=10, index=True)
-    f_engine_address = JSONField()
+    f_engine_name = CharField(max_length=50, index=True)
+    f_engine_entrance = CharField(max_length=50, index=True)
+    f_engine_config = JSONField()
     f_cores = IntegerField(index=True)
     f_memory = IntegerField(index=True)  # MB
     f_remaining_cores = IntegerField(index=True)

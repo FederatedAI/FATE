@@ -125,15 +125,6 @@ def stop_job(job_id, role, party_id, stop_status):
                            data=kill_details)
 
 
-@manager.route('/<job_id>/<role>/<party_id>/cancel', methods=['POST'])
-def cancel_job(job_id, role, party_id):
-    status = JobController.cancel_job(job_id=job_id, role=role, party_id=int(party_id))
-    if status:
-        return get_json_result(retcode=0, retmsg='cancel job success')
-    else:
-        return get_json_result(retcode=RetCode.OPERATING_ERROR, retmsg='cancel job failed')
-
-
 @manager.route('/<job_id>/<role>/<party_id>/clean', methods=['POST'])
 @request_authority_certification
 def clean(job_id, role, party_id):

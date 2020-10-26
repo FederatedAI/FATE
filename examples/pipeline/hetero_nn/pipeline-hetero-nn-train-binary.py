@@ -29,6 +29,7 @@ from pipeline.component import Intersection
 from pipeline.component import Reader
 from pipeline.interface import Data
 from pipeline.interface import Model
+from pipeline.runtime.entity import JobParameters
 
 
 def main(config="../../config.yaml", namespace=""):
@@ -47,12 +48,12 @@ def main(config="../../config.yaml", namespace=""):
     pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=host)
 
     reader_0 = Reader(name="reader_0")
-    reader_0.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_train_data)
-    reader_0.get_party_instance(role='host', party_id=host).algorithm_param(table=host_train_data)
+    reader_0.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data)
+    reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
 
     dataio_0 = DataIO(name="dataio_0")
-    dataio_0.get_party_instance(role='guest', party_id=guest).algorithm_param(with_label=True)
-    dataio_0.get_party_instance(role='host', party_id=host).algorithm_param(with_label=False)
+    dataio_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True)
+    dataio_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
 
     intersection_0 = Intersection(name="intersection_0")
 
@@ -79,7 +80,8 @@ def main(config="../../config.yaml", namespace=""):
 
     pipeline.compile()
 
-    pipeline.fit(backend=backend, work_mode=work_mode)
+    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
+    pipeline.fit(job_parameters)
 
     print(pipeline.get_component("hetero_nn_0").get_summary())
     print(pipeline.get_component("evaluation_0").get_summary())

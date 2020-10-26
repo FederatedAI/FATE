@@ -94,8 +94,6 @@ class BaseDSLParser(object):
         self.component_name_index = {}
         self.component_upstream = []
         self.component_downstream = []
-        # self.component_upstream_data_relation_set = set()
-        # self.component_upstream_model_relation_set = set()
         self.train_input_model = {}
         self.in_degree = []
         self.topo_rank = []
@@ -108,6 +106,7 @@ class BaseDSLParser(object):
         self.args_datakey = None
         self.args_input_to_check = set()
         self.next_component_to_topo = set()
+        self.job_parameters = {}
 
     def _init_components(self, mode="train", version=1, **kwargs):
         if not self.dsl:
@@ -725,28 +724,12 @@ class BaseDSLParser(object):
     def get_need_deploy_parameter(self, name, setting_conf_prefix=None, deploy_cpns=None):
         raise NotImplementedError
 
+    def get_job_parameters(self):
+        return self.job_parameters
+
     @staticmethod
     def _gen_predict_data_mapping():
         return None, None
-
-    @staticmethod
-    def merge_dict(dict1, dict2):
-        merge_ret = {}
-        keyset = dict1.keys() | dict2.keys()
-        for key in keyset:
-            if key in dict1 and key in dict2:
-                val1 = dict1.get(key)
-                val2 = dict2.get(key)
-                if isinstance(val1, dict):
-                    merge_ret[key] = DSLParser.merge_dict(val1, val2)
-                else:
-                    merge_ret[key] = val2
-            elif key in dict1:
-                merge_ret[key] = dict1.get(key)
-            else:
-                merge_ret[key] = dict2.get(key)
-
-        return merge_ret
 
 
 class DSLParser(BaseDSLParser):
@@ -828,9 +811,11 @@ class DSLParser(BaseDSLParser):
 
         if mode == "train":
             self._init_component_setting(setting_conf_prefix, self.runtime_conf)
+            self.job_parameters = parameter_util.ParameterUtil.get_job_parameters(self.runtime_conf)
         else:
-            predict_runtime_conf = self.merge_dict(pipeline_runtime_conf, runtime_conf)
+            predict_runtime_conf = parameter_util.ParameterUtil.merge_dict(pipeline_runtime_conf, runtime_conf)
             self._init_component_setting(setting_conf_prefix, predict_runtime_conf, redundant_param_check=False)
+            self.job_parameters = parameter_util.ParameterUtil.get_job_parameters(predict_runtime_conf)
 
         self.args_input, self.args_datakey = parameter_util.ParameterUtil.get_args_input(runtime_conf, module="args")
         self._check_args_input()
@@ -917,9 +902,11 @@ class DSLParserV2(BaseDSLParser):
 
         if mode == "train":
             self._init_component_setting(setting_conf_prefix, self.runtime_conf, version=2)
+            self.job_parameters = parameter_util.ParameterUtilV2.get_job_parameters(self.runtime_conf)
         else:
-            predict_runtime_conf = self.merge_dict(pipeline_runtime_conf, runtime_conf)
+            predict_runtime_conf = parameter_util.ParameterUtilV2.merge_dict(pipeline_runtime_conf, runtime_conf)
             self._init_component_setting(setting_conf_prefix, predict_runtime_conf, version=2)
+            self.job_parameters = parameter_util.ParameterUtilV2.get_job_parameters(predict_runtime_conf)
 
         self.args_input = parameter_util.ParameterUtilV2.get_input_parameters(runtime_conf,
                                                                               components=self._get_reader_components())

@@ -79,15 +79,17 @@ class TaskExecutor(object):
                 "run_pid": executor_pid
             })
             start_time = current_timestamp()
+            _, runtime_conf, _ = job_utils.get_job_configuration(job_id, role, party_id)
+            job_parameters = RunParameters(**runtime_conf['job_parameters'])
             job_conf = job_utils.get_job_conf(job_id)
             job_dsl = job_conf["job_dsl_path"]
             job_runtime_conf = job_conf["job_runtime_conf_path"]
-            job_parameters = RunParameters(**job_runtime_conf['job_parameters'])
             dsl_parser = schedule_utils.get_job_dsl_parser(dsl=job_dsl,
                                                            runtime_conf=job_runtime_conf,
                                                            train_runtime_conf=job_conf["train_runtime_conf_path"],
                                                            pipeline_dsl=job_conf["pipeline_dsl_path"]
                                                            )
+            # job_parameters = RunParameters(**dsl_parser.get_job_parameters().get(role, {}).get(party_id, {}))
             party_index = job_runtime_conf["role"][role].index(party_id)
             job_args = dsl_parser.get_args_input()
             job_args_on_party = job_args[role][party_index].get('args') if role in job_args else {}
@@ -151,8 +153,6 @@ class TaskExecutor(object):
             sess.init_federation(federation_session_id=federation_session_id,
                                  runtime_conf=component_parameters_on_party,
                                  service_conf=job_parameters.engines_address.get(EngineType.FEDERATION, {}))
-            print(job_parameters.federation_engine)
-            print(job_parameters.engines_address.get(EngineType.FEDERATION, {}))
             sess.as_default()
 
             schedule_logger().info('Run {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id))

@@ -26,6 +26,7 @@ from pipeline.component.reader import Reader
 from pipeline.interface.data import Data
 from pipeline.interface.model import Model
 from pipeline.utils.tools import load_job_config
+from pipeline.runtime.entity import JobParameters
 
 
 def main(config="../../config.yaml", namespace=""):
@@ -61,15 +62,15 @@ def main(config="../../config.yaml", namespace=""):
     reader_2 = Reader(name="reader_2")
     reader_3 = Reader(name="reader_3")
     # configure Reader for guest
-    reader_0.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_train_data_0)
-    reader_1.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_train_data_1)
-    reader_2.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_test_data_0)
-    reader_3.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_test_data_1)
+    reader_0.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data_0)
+    reader_1.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data_1)
+    reader_2.get_party_instance(role='guest', party_id=guest).component_param(table=guest_test_data_0)
+    reader_3.get_party_instance(role='guest', party_id=guest).component_param(table=guest_test_data_1)
     # configure Reader for host
-    reader_0.get_party_instance(role='host', party_id=host).algorithm_param(table=host_train_data_0)
-    reader_1.get_party_instance(role='host', party_id=host).algorithm_param(table=host_train_data_1)
-    reader_2.get_party_instance(role='host', party_id=host).algorithm_param(table=host_test_data_0)
-    reader_3.get_party_instance(role='host', party_id=host).algorithm_param(table=host_test_data_1)
+    reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data_0)
+    reader_1.get_party_instance(role='host', party_id=host).component_param(table=host_train_data_1)
+    reader_2.get_party_instance(role='host', party_id=host).component_param(table=host_test_data_0)
+    reader_3.get_party_instance(role='host', party_id=host).component_param(table=host_test_data_1)
 
     param = {
         "name": "union_0",
@@ -97,11 +98,11 @@ def main(config="../../config.yaml", namespace=""):
     # get DataIO party instance of guest
     dataio_0_guest_party_instance = dataio_0.get_party_instance(role='guest', party_id=guest)
     # configure DataIO for guest
-    dataio_0_guest_party_instance.algorithm_param(with_label=True, output_format="dense")
+    dataio_0_guest_party_instance.component_param(with_label=True, output_format="dense")
     # get and configure DataIO party instance of host
-    dataio_0.get_party_instance(role='host', party_id=host).algorithm_param(**param)
-    dataio_1.get_party_instance(role='guest', party_id=guest).algorithm_param(with_label=True)
-    dataio_1.get_party_instance(role='host', party_id=host).algorithm_param(**param)
+    dataio_0.get_party_instance(role='host', party_id=host).component_param(**param)
+    dataio_1.get_party_instance(role='guest', party_id=guest).component_param(with_label=True)
+    dataio_1.get_party_instance(role='host', party_id=host).component_param(**param)
 
     # define Intersection components
     intersection_0 = Intersection(name="intersection_0")
@@ -207,7 +208,8 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.compile()
 
     # fit model
-    pipeline.fit(backend=backend, work_mode=work_mode)
+    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
+    pipeline.fit(job_parameters)
     # query component summary
     print(pipeline.get_component("hetero_secureboost_0").get_summary())
 

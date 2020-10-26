@@ -20,6 +20,7 @@ from fate_arch.common.log import schedule_logger
 from fate_flow.entity.types import RetCode, FederatedSchedulingStatusCode
 from fate_flow.db.db_models import Job, Task
 from fate_flow.utils import schedule_utils
+from fate_flow.utils.config_adapter import JobRuntimeConfigAdapter
 
 
 class FederatedScheduler(object):
@@ -102,10 +103,6 @@ class FederatedScheduler(object):
         return cls.job_command(job=job, command="rerun", command_body=command_body, dest_only_initiator=True)
 
     @classmethod
-    def request_cancel_job(cls, job):
-        return cls.job_command(job=job, command="cancel", dest_only_initiator=True)
-
-    @classmethod
     def clean_job(cls, job):
         schedule_logger(job_id=job.f_job_id).info("try to clean job {}".format(job.f_job_id))
         status_code, response = cls.job_command(job=job, command="clean", command_body=job.f_runtime_conf["role"].copy())
@@ -118,7 +115,9 @@ class FederatedScheduler(object):
     @classmethod
     def job_command(cls, job, command, command_body=None, dest_only_initiator=False, specific_dest=None):
         federated_response = {}
-        roles, job_initiator, job_parameters = job.f_runtime_conf["role"], job.f_runtime_conf['initiator'], job.f_runtime_conf['job_parameters']
+        roles, job_initiator = job.f_runtime_conf["role"], job.f_runtime_conf['initiator']
+        conf_adapter = JobRuntimeConfigAdapter(job.f_submit_conf)
+        job_parameters = conf_adapter.get_common_parameters().to_dict()
         if dest_only_initiator:
             dest_partys = [(job_initiator["role"], [job_initiator["party_id"]])]
             api_type = "initiator"
@@ -222,7 +221,9 @@ class FederatedScheduler(object):
     @classmethod
     def task_command(cls, job, task, command, command_body=None):
         federated_response = {}
-        roles, job_initiator, job_parameters = job.f_runtime_conf["role"], job.f_runtime_conf['initiator'], job.f_runtime_conf['job_parameters']
+        roles, job_initiator = job.f_runtime_conf["role"], job.f_runtime_conf['initiator']
+        conf_adapter = JobRuntimeConfigAdapter(job.f_submit_conf)
+        job_parameters = conf_adapter.get_common_parameters().to_dict()
         dsl_parser = schedule_utils.get_job_dsl_parser(dsl=job.f_dsl, runtime_conf=job.f_runtime_conf, train_runtime_conf=job.f_train_runtime_conf)
         component = dsl_parser.get_component_info(component_name=task.f_component_name)
         component_parameters = component.get_role_parameters()

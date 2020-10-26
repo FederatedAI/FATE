@@ -1,4 +1,5 @@
 {
+    "dsl_version": 2,
     "initiator": {
         "role": "guest",
         "party_id": 10000
@@ -12,77 +13,41 @@
         ]
     },
     "job_parameters": {
-        "work_mode": 0,
-        "backend": 0,
-        "dsl_version": 2,
-        "job_type": "predict",
-        "model_id": "guest-10000#host-9999#model",
-        "model_version": "20200928195003184918140"
-    },
-    "role_parameters": {
-        "host": {
-            "0": {
-                "reader_1": {
-                    "table": {
-                        "name": "breast_hetero_host",
-                        "namespace": "experiment"
-                    }
-                },
-                "dataio_1": {
-                    "with_label": false
-                },
-                "dataio_0": {
-                    "with_label": false
-                },
-                "reader_0": {
-                    "table": {
-                        "name": "breast_hetero_host",
-                        "namespace": "experiment"
-                    }
-                }
-            }
-        },
-        "guest": {
-            "0": {
-                "reader_1": {
-                    "table": {
-                        "name": "breast_hetero_guest",
-                        "namespace": "experiment"
-                    }
-                },
-                "dataio_1": {
-                    "with_label": true,
-                    "output_format": "dense"
-                },
-                "dataio_0": {
-                    "with_label": true,
-                    "output_format": "dense"
-                },
-                "reader_0": {
-                    "table": {
-                        "name": "breast_hetero_guest",
-                        "namespace": "experiment"
-                    }
-                }
-            }
+        "common": {
+            "work_mode": 0,
+            "backend": 0,
+            "job_type": "predict",
+            "model_id": "guest-10000#host-9999#model",
+            "model_version": "20200928195003184918140"
         }
     },
-    "algorithm_parameters": {
-        "hetero_fast_secure_boost_0": {
-            "task_type": "classification",
-            "objective_param": {
-                "objective": "cross_entropy"
-            },
-            "num_trees": 2,
-            "validation_freqs": 1,
-            "encrypt_param": {
-                "method": "iterativeAffine"
-            },
-            "tree_num_per_party": 1,
-            "work_mode": "mix"
+    "component_parameters": {
+        "common": {
+            "evaluation_0": {
+                "eval_type": "binary"
+            }
         },
-        "evaluation_0": {
-            "eval_type": "binary"
+        "role": {
+            "host": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    }
+                }
+            },
+            "guest": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_guest",
+                            "namespace": "experiment"
+                        }
+                    }
+                }
+            }
         }
     }
 }
