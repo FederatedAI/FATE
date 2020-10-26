@@ -62,12 +62,6 @@ class DAGScheduler(Cron):
                 job_dsl = json_loads(pipeline_model['Pipeline'].inference_dsl)
             train_runtime_conf = json_loads(pipeline_model['Pipeline'].train_runtime_conf)
 
-        path_dict = job_utils.save_job_conf(job_id=job_id,
-                                            job_dsl=job_dsl,
-                                            job_runtime_conf=job_submit_conf,
-                                            train_runtime_conf=train_runtime_conf,
-                                            pipeline_dsl=None)
-
         job = Job()
         job.f_job_id = job_id
         job.f_dsl = job_dsl
@@ -76,6 +70,14 @@ class DAGScheduler(Cron):
         job.f_work_mode = common_job_parameters.work_mode
         job.f_initiator_role = job_initiator['role']
         job.f_initiator_party_id = job_initiator['party_id']
+
+        path_dict = job_utils.save_job_conf(job_id=job_id,
+                                            role=job.f_initiator_role,
+                                            job_dsl=job_dsl,
+                                            job_submit_conf=job_submit_conf,
+                                            job_runtime_conf={},
+                                            train_runtime_conf=train_runtime_conf,
+                                            pipeline_dsl=None)
 
         if job.f_initiator_party_id not in job_submit_conf['role'][job.f_initiator_role]:
             schedule_logger(job_id).info("initiator party id error:{}".format(job.f_initiator_party_id))
@@ -118,8 +120,14 @@ class DAGScheduler(Cron):
             ServiceUtils.get_item("fateboard", "port"),
             FATE_BOARD_DASHBOARD_ENDPOINT).format(job_id, job_initiator['role'], job_initiator['party_id'])
         logs_directory = job_utils.get_job_log_directory(job_id)
-        return job_id, path_dict['job_dsl_path'], path_dict['job_runtime_conf_path'], logs_directory, \
-               {'model_id': common_job_parameters.model_id, 'model_version': common_job_parameters.model_version}, board_url
+        submit_result = {
+            "job_id": job_id,
+            "model_info": {"model_id": common_job_parameters.model_id, "model_version": common_job_parameters.model_version},
+            "logs_directory": logs_directory,
+            "board_url": board_url
+        }
+        submit_result.update(path_dict)
+        return submit_result
 
     def run_do(self):
         schedule_logger().info("start schedule waiting jobs")

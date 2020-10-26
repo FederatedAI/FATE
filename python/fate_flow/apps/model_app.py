@@ -360,10 +360,8 @@ def operate_model(model_operation):
     else:
         data = {}
         job_dsl, job_runtime_conf = gen_model_operation_job_config(request_config, model_operation)
-        job_id, job_dsl_path, job_runtime_conf_path, logs_directory, model_info, board_url = DAGScheduler.submit(
-            {'job_dsl': job_dsl, 'job_runtime_conf': job_runtime_conf}, job_id=job_id)
-        data.update({'job_dsl_path': job_dsl_path, 'job_runtime_conf_path': job_runtime_conf_path,
-                     'board_url': board_url, 'logs_directory': logs_directory})
+        submit_result = DAGScheduler.submit({'job_dsl': job_dsl, 'job_runtime_conf': job_runtime_conf}, job_id=job_id)
+        data.update(submit_result)
         operation_record(data=job_runtime_conf, oper_type=model_operation, oper_status='')
         return get_json_result(job_id=job_id, data=data)
 

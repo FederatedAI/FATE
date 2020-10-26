@@ -45,15 +45,10 @@ def internal_server_error(e):
 def submit_job():
     work_mode = JobSubmitConfigAdapter(request.json.get('job_runtime_conf', {})).get_job_work_mode()
     detect_utils.check_config({'work_mode': work_mode}, required_arguments=[('work_mode', (WorkMode.CLUSTER, WorkMode.STANDALONE))])
-    job_id, job_dsl_path, job_runtime_conf_path, logs_directory, model_info, board_url = DAGScheduler.submit(request.json)
+    submit_result = DAGScheduler.submit(request.json)
     return get_json_result(retcode=0, retmsg='success',
-                           job_id=job_id,
-                           data={'job_dsl_path': job_dsl_path,
-                                 'job_runtime_conf_path': job_runtime_conf_path,
-                                 'model_info': model_info,
-                                 'board_url': board_url,
-                                 'logs_directory': logs_directory
-                                 })
+                           job_id=submit_result.get("job_id"),
+                           data=submit_result)
 
 
 @manager.route('/stop', methods=['POST'])

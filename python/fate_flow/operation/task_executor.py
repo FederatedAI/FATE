@@ -81,11 +81,12 @@ class TaskExecutor(object):
             start_time = current_timestamp()
             _, runtime_conf, _ = job_utils.get_job_configuration(job_id, role, party_id)
             job_parameters = RunParameters(**runtime_conf['job_parameters'])
-            job_conf = job_utils.get_job_conf(job_id)
+            job_conf = job_utils.get_job_conf(job_id, role)
             job_dsl = job_conf["job_dsl_path"]
             job_runtime_conf = job_conf["job_runtime_conf_path"]
+            job_submit_conf = job_conf["job_submit_conf_path"]
             dsl_parser = schedule_utils.get_job_dsl_parser(dsl=job_dsl,
-                                                           runtime_conf=job_runtime_conf,
+                                                           runtime_conf=job_submit_conf,
                                                            train_runtime_conf=job_conf["train_runtime_conf_path"],
                                                            pipeline_dsl=job_conf["pipeline_dsl_path"]
                                                            )

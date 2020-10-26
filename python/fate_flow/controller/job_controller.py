@@ -40,11 +40,6 @@ class JobController(object):
         dsl = job_info['dsl']
         submit_conf = job_info['submit_conf']
         train_runtime_conf = job_info['train_runtime_conf']
-        job_utils.save_job_conf(job_id=job_id,
-                                job_dsl=dsl,
-                                job_runtime_conf=submit_conf,
-                                train_runtime_conf=train_runtime_conf,
-                                pipeline_dsl=None)
         if USE_AUTHENTICATION:
             authentication_check(src_role=job_info.get('src_role', None), src_party_id=job_info.get('src_party_id', None),
                                  dsl=dsl, submit_conf=submit_conf, role=role, party_id=party_id)
@@ -52,8 +47,6 @@ class JobController(object):
         dsl_parser = schedule_utils.get_job_dsl_parser(dsl=dsl,
                                                        runtime_conf=submit_conf,
                                                        train_runtime_conf=train_runtime_conf)
-        print("submit conf")
-        print(json_dumps(submit_conf, indent=4))
         job_parameters = dsl_parser.get_job_parameters().get(role, {}).get(party_id, {})
         schedule_logger(job_id).info('job parameters:{}'.format(job_parameters))
         job_parameters = RunParameters(**job_parameters)
@@ -75,6 +68,14 @@ class JobController(object):
         job_info["runtime_conf"]["job_parameters"] = job_parameters.to_dict()
 
         JobSaver.create_job(job_info=job_info)
+
+        job_utils.save_job_conf(job_id=job_id,
+                                role=role,
+                                job_dsl=dsl,
+                                job_submit_conf=submit_conf,
+                                job_runtime_conf=job_info["runtime_conf"],
+                                train_runtime_conf=train_runtime_conf,
+                                pipeline_dsl=None)
 
         cls.initialize_tasks(job_id=job_id, role=role, party_id=party_id, run_on_this_party=True, initiator_role=job_info["initiator_role"], initiator_party_id=job_info["initiator_party_id"], job_parameters=job_parameters, dsl_parser=dsl_parser)
         cls.initialize_job_tracker(job_id=job_id, role=role, party_id=party_id, job_info=job_info, is_initiator=is_initiator, dsl_parser=dsl_parser)
@@ -284,8 +285,8 @@ class JobController(object):
         if job_type == 'predict':
             return
         dag = schedule_utils.get_job_dsl_parser(dsl=job_dsl,
-                                           runtime_conf=job_runtime_conf,
-                                           train_runtime_conf=train_runtime_conf)
+                                                runtime_conf=job_runtime_conf,
+                                                train_runtime_conf=train_runtime_conf)
         predict_dsl = dag.get_predict_dsl(role=role)
         pipeline = pipeline_pb2.Pipeline()
         pipeline.inference_dsl = json_dumps(predict_dsl, byte=True)
