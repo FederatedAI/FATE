@@ -36,6 +36,7 @@ from fate_flow.utils.detect_utils import check_config
 from fate_flow.utils.model_utils import gen_party_model_id
 from fate_flow.entity.types import ModelOperation, TagOperation
 from fate_arch.common import file_utils, WorkMode, FederatedMode
+from fate_flow.entity.types import JobStatus
 
 manager = Flask(__name__)
 
@@ -328,7 +329,7 @@ def operate_model(model_operation):
                                 f_work_mode=train_runtime_conf["job_parameters"]["work_mode"],
                                 f_dsl=json_loads(pipeline.train_dsl),
                                 f_imported=1,
-                                f_job_status='complete'
+                                f_job_status=JobStatus.SUCCESS
                             )
                         else:
                             stat_logger.info(f'job id: {train_runtime_conf["job_parameters"]["model_version"]}, '

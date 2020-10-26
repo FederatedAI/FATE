@@ -189,7 +189,7 @@ class TaskExecutor(object):
             # There is only one model output at the current dsl version.
             tracker.save_output_model(output_model,
                                       task_output_dsl['model'][0] if task_output_dsl.get('model') else 'default')
-            task_info["party_status"] = TaskStatus.COMPLETE
+            task_info["party_status"] = TaskStatus.SUCCESS
         except Exception as e:
             task_info["party_status"] = TaskStatus.FAILED
             schedule_logger().exception(e)

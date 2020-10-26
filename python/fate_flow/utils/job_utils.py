@@ -397,7 +397,7 @@ def start_session_stop(task):
         '--computing', job_parameters.computing_engine,
         '--federation', job_parameters.federation_engine,
         '--storage', job_parameters.storage_engine,
-        '-c', 'stop' if task.f_status == JobStatus.COMPLETE else 'kill'
+        '-c', 'stop' if task.f_status == JobStatus.SUCCESS else 'kill'
     ]
     p = run_subprocess(job_id=task.f_job_id, config_dir=task_dir, process_cmd=process_cmd, log_dir=None)
 

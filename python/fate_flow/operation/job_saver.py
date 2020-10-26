@@ -133,7 +133,7 @@ class JobSaver(object):
                         if JobStatus.StateTransitionRule.if_pass(src_status=old_status, dest_status=update_info[status_field]):
                             if_pass = True
                         if EndStatus.contains(old_status) and old_status != JobStatus.CANCELED:
-                            update_filters.append(operator.attrgetter(f"f_rerun_signal")(type(obj)) == False)
+                            update_filters.append(Job.f_rerun_signal == False)
                     if if_pass:
                         update_filters.append(operator.attrgetter(f"f_{status_field}")(type(obj)) == old_status)
                     else:

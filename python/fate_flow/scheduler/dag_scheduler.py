@@ -325,7 +325,7 @@ class DAGScheduler(Cron):
                                                        runtime_conf=job.f_runtime_conf_on_party,
                                                        train_runtime_conf=job.f_train_runtime_conf)
         for task in tasks:
-            if task.f_status in {TaskStatus.WAITING, TaskStatus.COMPLETE}:
+            if task.f_status in {TaskStatus.WAITING, TaskStatus.SUCCESS}:
                 if task.f_status == TaskStatus.WAITING:
                     job_can_rerun = True
                 schedule_logger(job_id=job_id).info(f"task {task.f_task_id} {task.f_task_version} on {task.f_role} {task.f_party_id} is {task.f_status}, pass rerun")
@@ -395,11 +395,11 @@ class DAGScheduler(Cron):
                     pass
             # have waiting with no next or 4
             for status in sorted(EndStatus.status_list(), key=lambda s: StatusSet.get_level(status=s), reverse=True):
-                if status == TaskStatus.COMPLETE:
+                if status == TaskStatus.SUCCESS:
                     continue
                 elif status in tmp_status_set:
                     return status
-            if len(tmp_status_set) == 2 and TaskStatus.WAITING in tmp_status_set and TaskStatus.COMPLETE in tmp_status_set and task_scheduling_status_code == SchedulingStatusCode.NO_NEXT:
+            if len(tmp_status_set) == 2 and TaskStatus.WAITING in tmp_status_set and TaskStatus.SUCCESS in tmp_status_set and task_scheduling_status_code == SchedulingStatusCode.NO_NEXT:
                 return JobStatus.CANCELED
 
             raise Exception("Calculate job status failed: {}".format(tasks_status))

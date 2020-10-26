@@ -97,7 +97,7 @@ class StatusSet(BaseStatus):
     CANCELED = "canceled"
     TIMEOUT = "timeout"
     FAILED = "failed"
-    COMPLETE = "complete"
+    SUCCESS = "success"
 
     @classmethod
     def get_level(cls, status):
@@ -124,17 +124,17 @@ class JobStatus(BaseStatus):
     CANCELED = StatusSet.CANCELED
     TIMEOUT = StatusSet.TIMEOUT
     FAILED = StatusSet.FAILED
-    COMPLETE = StatusSet.COMPLETE
+    SUCCESS = StatusSet.SUCCESS
 
     class StateTransitionRule(BaseStateTransitionRule):
         RULES = {
-            StatusSet.WAITING: [StatusSet.READY, StatusSet.RUNNING, StatusSet.CANCELED, StatusSet.TIMEOUT, StatusSet.FAILED, StatusSet.COMPLETE],
+            StatusSet.WAITING: [StatusSet.READY, StatusSet.RUNNING, StatusSet.CANCELED, StatusSet.TIMEOUT, StatusSet.FAILED, StatusSet.SUCCESS],
             StatusSet.READY: [StatusSet.WAITING, StatusSet.RUNNING, StatusSet.CANCELED, StatusSet.TIMEOUT, StatusSet.FAILED],
-            StatusSet.RUNNING: [StatusSet.CANCELED, StatusSet.TIMEOUT, StatusSet.FAILED, StatusSet.COMPLETE],
+            StatusSet.RUNNING: [StatusSet.CANCELED, StatusSet.TIMEOUT, StatusSet.FAILED, StatusSet.SUCCESS],
             StatusSet.CANCELED: [StatusSet.WAITING],
-            StatusSet.TIMEOUT: [StatusSet.FAILED, StatusSet.COMPLETE, StatusSet.WAITING],
+            StatusSet.TIMEOUT: [StatusSet.FAILED, StatusSet.SUCCESS, StatusSet.WAITING],
             StatusSet.FAILED: [StatusSet.WAITING],
-            StatusSet.COMPLETE: [StatusSet.WAITING],
+            StatusSet.SUCCESS: [StatusSet.WAITING],
         }
 
 
@@ -144,16 +144,16 @@ class TaskStatus(BaseStatus):
     CANCELED = StatusSet.CANCELED
     TIMEOUT = StatusSet.TIMEOUT
     FAILED = StatusSet.FAILED
-    COMPLETE = StatusSet.COMPLETE
+    SUCCESS = StatusSet.SUCCESS
 
     class StateTransitionRule(BaseStateTransitionRule):
         RULES = {
-            StatusSet.WAITING: [StatusSet.RUNNING, StatusSet.COMPLETE],
-            StatusSet.RUNNING: [StatusSet.CANCELED, StatusSet.TIMEOUT, StatusSet.FAILED, StatusSet.COMPLETE],
+            StatusSet.WAITING: [StatusSet.RUNNING, StatusSet.SUCCESS],
+            StatusSet.RUNNING: [StatusSet.CANCELED, StatusSet.TIMEOUT, StatusSet.FAILED, StatusSet.SUCCESS],
             StatusSet.CANCELED: [StatusSet.WAITING],
-            StatusSet.TIMEOUT: [StatusSet.FAILED, StatusSet.COMPLETE],
+            StatusSet.TIMEOUT: [StatusSet.FAILED, StatusSet.SUCCESS],
             StatusSet.FAILED: [],
-            StatusSet.COMPLETE: [],
+            StatusSet.SUCCESS: [],
         }
 
 
@@ -172,7 +172,7 @@ class EndStatus(BaseStatus):
     CANCELED = StatusSet.CANCELED
     TIMEOUT = StatusSet.TIMEOUT
     FAILED = StatusSet.FAILED
-    COMPLETE = StatusSet.COMPLETE
+    SUCCESS = StatusSet.SUCCESS
 
 
 class ModelStorage(object):

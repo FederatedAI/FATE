@@ -57,11 +57,11 @@ class TaskScheduler(object):
                                           party_id=job.f_party_id
                                           )
                     ]
-                    if dependent_task.f_status != TaskStatus.COMPLETE:
+                    if dependent_task.f_status != TaskStatus.SUCCESS:
                         # can not start task
                         break
                 else:
-                    # all upstream dependent tasks have been complete, can start this task
+                    # all upstream dependent tasks have been successful, can start this task
                     scheduling_status_code = SchedulingStatusCode.HAVE_NEXT
                     status_code = cls.start_task(job=job, task=waiting_task)
                     if status_code == SchedulingStatusCode.NO_RESOURCE:
@@ -125,7 +125,7 @@ class TaskScheduler(object):
         # 1. all waiting
         # 2. have end status, should be interrupted
         # 3. have running
-        # 4. waiting + complete
+        # 4. waiting + success
         # 5. all the same end status
         tmp_status_set = set(tasks_party_status)
         if len(tmp_status_set) == 1:
@@ -134,11 +134,11 @@ class TaskScheduler(object):
         else:
             # 2
             for status in sorted(EndStatus.status_list(), key=lambda s: StatusSet.get_level(status=s), reverse=True):
-                if status == TaskStatus.COMPLETE:
+                if status == TaskStatus.SUCCESS:
                     continue
                 if status in tmp_status_set:
                     return status
             # 3
-            if TaskStatus.RUNNING in tmp_status_set or TaskStatus.COMPLETE in tmp_status_set:
+            if TaskStatus.RUNNING in tmp_status_set or TaskStatus.SUCCESS in tmp_status_set:
                 return StatusSet.RUNNING
             raise Exception("Calculate task status failed: {}".format(tasks_party_status))
