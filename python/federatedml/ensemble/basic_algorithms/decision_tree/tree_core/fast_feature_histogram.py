@@ -267,35 +267,3 @@ class FastFeatureHistogram(object):
                     ret.append(((nid, fid), (fid, [])))
 
         return ret
-
-    # @staticmethod
-    # def construct_table(histograms_dict, bin_split_points, valid_features, partition, use_missing, n_final):
-    #
-    #     get_obj = functools.partial(FastFeatureHistogram.get_obj, n_final=n_final)
-    #     buf = []
-    #     for nid in histograms_dict:
-    #         valid_fid = 0
-    #         for fid in range(len(valid_features)):
-    #             if valid_features[fid]:
-    #                 feature_bin_num = len(bin_split_points[fid]) + int(use_missing)
-    #                 histogram = [[] for _ in range(feature_bin_num)]
-    #                 for bid in range(len(bin_split_points[fid])):
-    #                     grad = histograms_dict[nid][0][bid, valid_fid, 0]
-    #                     hess = histograms_dict[nid][0][bid, valid_fid, 1]
-    #                     cnt = histograms_dict[nid][1][bid, valid_fid]
-    #                     histogram[bid].append(get_obj(grad))
-    #                     histogram[bid].append(get_obj(hess))
-    #                     histogram[bid].append(cnt)
-    #
-    #                 if use_missing:
-    #                     grad = histograms_dict[nid][0][-1, valid_fid, 0]
-    #                     hess = histograms_dict[nid][0][-1, valid_fid, 1]
-    #                     cnt = histograms_dict[nid][1][-1, valid_fid]
-    #                     histogram[-1].append(get_obj(grad))
-    #                     histogram[-1].append(get_obj(hess))
-    #                     histogram[-1].append(cnt)
-    #
-    #                 buf.append(((nid, fid), (fid, histogram)))
-    #                 valid_fid += 1
-    #
-    #     return session.parallelize(buf, include_key=True, partition=partition)
