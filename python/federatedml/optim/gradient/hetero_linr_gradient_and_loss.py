@@ -100,7 +100,7 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
             wxy = self.forwards.join(data_instances, lambda wx, d: wx - d.label)
             wxy_square = wxy.mapValues(lambda x: np.square(x)).reduce(reduce_add)
 
-            loss_gh = wxy.join(host_forward, lambda g, h: g * h).reduce(reduce_add)
+            loss_gh = wxy.join(host_forward, lambda g, h: g + h).reduce(reduce_add)
             loss = (wxy_square + host_wx_square + 2 * loss_gh) / (2 * n)
             if loss_norm is not None:
                 loss = loss + loss_norm + host_loss_regular[0]
