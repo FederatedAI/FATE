@@ -83,20 +83,26 @@ class DAGScheduler(Cron):
             schedule_logger(job_id).info("initiator party id error:{}".format(job.f_initiator_party_id))
             raise Exception("initiator party id error {}".format(job.f_initiator_party_id))
 
-        job_submit_conf = conf_adapter.update_common_parameters(common_parameters=common_job_parameters)
+        # create common parameters on initiator
+        JobController.backend_compatibility(job_parameters=common_job_parameters)
+        JobController.adapt_job_parameters(role=job.f_initiator_role, job_parameters=common_job_parameters, create_initiator_baseline=True)
+
+        job.f_submit_conf = conf_adapter.update_common_parameters(common_parameters=common_job_parameters)
         dsl_parser = schedule_utils.get_job_dsl_parser(dsl=job.f_dsl,
-                                                       runtime_conf=job_submit_conf,
+                                                       runtime_conf=job.f_submit_conf,
                                                        train_runtime_conf=job.f_train_runtime_conf)
 
         # job parameters
+        """
         initiator_job_parameters = RunParameters(**dsl_parser.get_job_parameters().get(job.f_initiator_role, {}).get(job.f_initiator_party_id, {}))
         JobController.backend_compatibility(job_parameters=initiator_job_parameters)
         JobController.adapt_job_parameters(role=job.f_initiator_role, job_parameters=initiator_job_parameters, create_initiator_baseline=True)
-        # initiator runtime conf as template
         job.f_submit_conf = conf_adapter.update_common_parameters(common_parameters=initiator_job_parameters)
         common_job_parameters = initiator_job_parameters
+        """
+        # initiator runtime conf as template
         job.f_runtime_conf = job.f_submit_conf.copy()
-        job.f_runtime_conf["job_parameters"] = initiator_job_parameters.to_dict()
+        job.f_runtime_conf["job_parameters"] = common_job_parameters.to_dict()
 
         status_code, response = FederatedScheduler.create_job(job=job)
         if status_code != FederatedSchedulingStatusCode.SUCCESS:
