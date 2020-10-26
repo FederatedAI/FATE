@@ -400,11 +400,11 @@ class ParameterUtilV2(BaseParameterUtil):
 
             ret[role] = {}
             for idx in range(len(partyid_list)):
-                role_idxs = role_job_parameters.keys()
+                role_idxs = role_job_parameters.get(role, {}).keys()
                 parameters = copy.deepcopy(common_job_parameters)
                 for role_id in role_idxs:
                     if role_id == "all" or str(idx) in role_id.split("|"):
-                        parameters = ParameterUtilV2.merge_dict(parameters, role_job_parameters[role_id])
+                        parameters = ParameterUtilV2.merge_dict(parameters, role_job_parameters.get(role, {})[role_id])
 
                 ret[role][partyid_list[idx]] = parameters
 

@@ -92,14 +92,6 @@ class DAGScheduler(Cron):
                                                        runtime_conf=job.f_submit_conf,
                                                        train_runtime_conf=job.f_train_runtime_conf)
 
-        # job parameters
-        """
-        initiator_job_parameters = RunParameters(**dsl_parser.get_job_parameters().get(job.f_initiator_role, {}).get(job.f_initiator_party_id, {}))
-        JobController.backend_compatibility(job_parameters=initiator_job_parameters)
-        JobController.adapt_job_parameters(role=job.f_initiator_role, job_parameters=initiator_job_parameters, create_initiator_baseline=True)
-        job.f_submit_conf = conf_adapter.update_common_parameters(common_parameters=initiator_job_parameters)
-        common_job_parameters = initiator_job_parameters
-        """
         # initiator runtime conf as template
         job.f_runtime_conf = job.f_submit_conf.copy()
         job.f_runtime_conf["job_parameters"] = common_job_parameters.to_dict()
