@@ -154,6 +154,18 @@ class StorageSessionBase(StorageSessionABC):
             else:
                 LOGGER.warning(f"failed delete session {self._session_id} record")
 
+    def destroy_session(self):
+        try:
+            self.close()
+        except:
+            pass
+        with DB.connection_context():
+            rows = SessionRecord.delete().where(SessionRecord.f_session_id == self._session_id).execute()
+            if rows > 0:
+                LOGGER.debug(f"delete session {self._session_id} record")
+            else:
+                LOGGER.warning(f"failed delete session {self._session_id} record")
+
     @DB.connection_context()
     def query_expired_sessions_record(self, ttl) -> [SessionRecord]:
         sessions_record = SessionRecord.select().where(SessionRecord.f_create_time < (current_timestamp() - ttl))

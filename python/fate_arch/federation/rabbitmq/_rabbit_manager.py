@@ -18,10 +18,12 @@ APIs are refered to https://rawcdn.githack.com/rabbitmq/rabbitmq-management/v3.8
 
 
 class RabbitManager:
-    def __init__(self, user, password, endpoint):
+    def __init__(self, user, password, endpoint, runtime_config=None):
         self.user = user
         self.password = password
         self.endpoint = endpoint
+        # The runtime_config defines the parameters to create queue, exchange .etc
+        self.runtime_config = runtime_config if runtime_config is not None else {}
 
     # return a requests.Response object in case someone need more info about the Response
     def create_user(self, user, password):
@@ -30,7 +32,8 @@ class RabbitManager:
             "password": password,
             "tags": ""
         }
-        result = requests.put(url, headers=C_COMMON_HTTP_HEADER, json=body, auth=(self.user, self.password))
+        result = requests.put(url, headers=C_COMMON_HTTP_HEADER,
+                              json=body, auth=(self.user, self.password))
         LOGGER.debug(result)
         return result
 
@@ -42,7 +45,8 @@ class RabbitManager:
 
     def create_vhost(self, vhost):
         url = C_HTTP_TEMPLATE.format(self.endpoint, "vhosts/" + vhost)
-        result = requests.put(url, headers=C_COMMON_HTTP_HEADER, auth=(self.user, self.password))
+        result = requests.put(
+            url, headers=C_COMMON_HTTP_HEADER, auth=(self.user, self.password))
         LOGGER.debug(result)
         self.add_user_to_vhost(self.user, vhost)
         return result
@@ -60,19 +64,22 @@ class RabbitManager:
         return result
 
     def add_user_to_vhost(self, user, vhost):
-        url = C_HTTP_TEMPLATE.format(self.endpoint, "{}/{}/{}".format("permissions", vhost, user))
+        url = C_HTTP_TEMPLATE.format(
+            self.endpoint, "{}/{}/{}".format("permissions", vhost, user))
         body = {
             "configure": ".*",
             "write": ".*",
             "read": ".*"
         }
 
-        result = requests.put(url, headers=C_COMMON_HTTP_HEADER, json=body, auth=(self.user, self.password))
+        result = requests.put(url, headers=C_COMMON_HTTP_HEADER,
+                              json=body, auth=(self.user, self.password))
         LOGGER.debug(result)
         return result
 
     def remove_user_from_vhost(self, user, vhost):
-        url = C_HTTP_TEMPLATE.format(self.endpoint, "{}/{}/{}".format("permissions", vhost, user))
+        url = C_HTTP_TEMPLATE.format(
+            self.endpoint, "{}/{}/{}".format("permissions", vhost, user))
         result = requests.delete(url, auth=(self.user, self.password))
         LOGGER.debug(result)
         return result
@@ -84,9 +91,10 @@ class RabbitManager:
         return result
 
     def create_exchange(self, vhost, exchange_name):
-        url = C_HTTP_TEMPLATE.format(self.endpoint, "{}/{}/{}".format("exchanges", vhost, exchange_name))
+        url = C_HTTP_TEMPLATE.format(
+            self.endpoint, "{}/{}/{}".format("exchanges", vhost, exchange_name))
 
-        body = {
+        basic_config = {
             "type": "direct",
             "auto_delete": False,
             "durable": True,
@@ -94,31 +102,50 @@ class RabbitManager:
             "arguments": {}
         }
 
-        result = requests.put(url, headers=C_COMMON_HTTP_HEADER, json=body, auth=(self.user, self.password))
+        exchange_runtime_config = self.runtime_config.get("exchange", {})
+        basic_config.update(exchange_runtime_config)
+
+        result = requests.put(url, headers=C_COMMON_HTTP_HEADER,
+                              json=basic_config, auth=(self.user, self.password))
         LOGGER.debug(result)
         return result
 
     def delete_exchange(self, vhost, exchange_name):
-        url = C_HTTP_TEMPLATE.format(self.endpoint, "{}/{}/{}".format("exchanges", vhost, exchange_name))
+        url = C_HTTP_TEMPLATE.format(
+            self.endpoint, "{}/{}/{}".format("exchanges", vhost, exchange_name))
         result = requests.delete(url, auth=(self.user, self.password))
         LOGGER.debug(result)
         return result
 
     def create_queue(self, vhost, queue_name):
-        url = C_HTTP_TEMPLATE.format(self.endpoint, "{}/{}/{}".format("queues", vhost, queue_name))
+        url = C_HTTP_TEMPLATE.format(
+            self.endpoint, "{}/{}/{}".format("queues", vhost, queue_name))
 
-        body = {
+        basic_config = {
             "auto_delete": False,
             "durable": True,
             "arguments": {}
         }
 
-        result = requests.put(url, headers=C_COMMON_HTTP_HEADER, json=body, auth=(self.user, self.password))
+        queue_runtime_config = self.runtime_config.get("queue", {})
+        basic_config.update(queue_runtime_config)
+        LOGGER.debug(basic_config)
+
+        result = requests.put(url, headers=C_COMMON_HTTP_HEADER,
+                              json=basic_config, auth=(self.user, self.password))
         LOGGER.debug(result)
         return result
 
+    def get_queue(self, vhost, queue_name):
+        url = C_HTTP_TEMPLATE.format(
+          self.endpoint, "{}/{}/{}".format("queues", vhost, queue_name))
+
+        result = requests.get(url, header=C_COMMON_HTTP_HEADER, auth=(self.user, self.password))
+        return result
+
     def delete_queue(self, vhost, queue_name):
-        url = C_HTTP_TEMPLATE.format(self.endpoint, "{}/{}/{}".format("queues", vhost, queue_name))
+        url = C_HTTP_TEMPLATE.format(
+            self.endpoint, "{}/{}/{}".format("queues", vhost, queue_name))
         result = requests.delete(url, auth=(self.user, self.password))
         LOGGER.debug(result)
         return result
@@ -134,7 +161,8 @@ class RabbitManager:
             "arguments": {}
         }
 
-        result = requests.post(url, headers=C_COMMON_HTTP_HEADER, json=body, auth=(self.user, self.password))
+        result = requests.post(
+            url, headers=C_COMMON_HTTP_HEADER, json=body, auth=(self.user, self.password))
         LOGGER.debug(result)
         return result
 
@@ -154,16 +182,19 @@ class RabbitManager:
                                                                          "federation-upstream",
                                                                          vhost,
                                                                          receive_queue_name))
+        upstream_runtime_config = self.runtime_config.get("upstream", {})
+
+        upstream_runtime_config['uri'] = upstream_host
+        upstream_runtime_config['queue'] = receive_queue_name.replace(
+            "receive", "send")
+
         body = {
-            "value":
-                {
-                    "uri": upstream_host,
-                    "queue": receive_queue_name.replace("receive", "send")
-                }
+            "value": upstream_runtime_config
         }
         LOGGER.debug(f"set_federated_upstream, url: {url} body: {body}")
 
-        result = requests.put(url, headers=C_COMMON_HTTP_HEADER, json=body, auth=(self.user, self.password))
+        result = requests.put(url, headers=C_COMMON_HTTP_HEADER,
+                              json=body, auth=(self.user, self.password))
         LOGGER.debug(result)
         return result
 
@@ -191,7 +222,8 @@ class RabbitManager:
         }
         LOGGER.debug(f"set_federated_queue_policy, url: {url} body: {body}")
 
-        result = requests.put(url, headers=C_COMMON_HTTP_HEADER, json=body, auth=(self.user, self.password))
+        result = requests.put(url, headers=C_COMMON_HTTP_HEADER,
+                              json=body, auth=(self.user, self.password))
         LOGGER.debug(result)
         return result
 
@@ -210,16 +242,18 @@ class RabbitManager:
         time.sleep(1)
         LOGGER.debug(f"create federate_queue {send_queue_name} {receive_queue_name}")
 
-        result_set_upstream = self._set_federated_upstream(upstream_host, vhost, receive_queue_name)
+        result_set_upstream = self._set_federated_upstream(
+            upstream_host, vhost, receive_queue_name)
 
-        result_set_policy = self._set_federated_queue_policy(vhost, receive_queue_name)
+        result_set_policy = self._set_federated_queue_policy(
+            vhost, receive_queue_name)
 
         if result_set_upstream.status_code != requests.codes.created:
             # should be loogged
             print("result_set_upstream fail.")
             print(result_set_upstream.text)
             # caller need to check None
-            # return None 
+            # return None
         elif result_set_policy.status_code != requests.codes.created:
             print("result_set_policy fail.")
             print(result_set_policy.text)
@@ -227,9 +261,11 @@ class RabbitManager:
 
     def de_federate_queue(self, vhost, receive_queue_name):
         result = self._unset_federated_queue_policy(receive_queue_name, vhost)
-        LOGGER.debug(f"delete federate queue policy status code: {result.status_code}")
+        LOGGER.debug(
+            f"delete federate queue policy status code: {result.status_code}")
 
         result = self._unset_federated_upstream(receive_queue_name, vhost)
-        LOGGER.debug(f"delete federate queue upstream status code: {result.status_code}")
+        LOGGER.debug(
+            f"delete federate queue upstream status code: {result.status_code}")
 
         return True
