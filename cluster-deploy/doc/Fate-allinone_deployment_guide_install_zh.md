@@ -7,7 +7,7 @@
 | :------: | ------------------------------------------------------------ |
 |   数量   | 1 or 2                                                       |
 |   配置   | 8 core /16GB memory / 500GB硬盘/10M带宽                      |
-| 操作系统 | CentOS linux 7.2及以上/Ubuntu 16.04 以上                     |
+| 操作系统 | CentOS linux 7.2及以上/Ubuntu 18.04                          |
 |  依赖包  | （部署时自动安装）                                           |
 |   用户   | 用户：app，属主：apps（app用户需可以sudo su root而无需密码） |
 | 文件系统 | 1.  500G硬盘挂载在/ data目录下； 2.创建/ data / projects目录，目录属主为：app:apps |
@@ -17,8 +17,8 @@
 
 | party  | 主机名        | IP地址      | 操作系统                | 安装软件           | 服务                                                         |
 | ------ | ------------- | ----------- | ----------------------- | ------------------ | ------------------------------------------------------------ |
-| PartyA | VM_0_1_centos | 192.168.0.1 | CentOS 7.2/Ubuntu 16.04 | fate,eggroll,mysql | fate_flow，fateboard，clustermanager，nodemanager，rollsite，mysql |
-| PartyB | VM_0_2_centos | 192.168.0.2 | CentOS 7.2/Ubuntu 16.04 | fate,eggroll,mysql | fate_flow，fateboard，clustermanager，nodemanager，rollsite，mysql |
+| PartyA | VM_0_1_centos | 192.168.0.1 | CentOS 7.2/Ubuntu 18.04 | fate,eggroll,mysql | fate_flow，fateboard，clustermanager，nodemanager，rollsite，mysql |
+| PartyB | VM_0_2_centos | 192.168.0.2 | CentOS 7.2/Ubuntu 18.04 | fate,eggroll,mysql | fate_flow，fateboard，clustermanager，nodemanager，rollsite，mysql |
 
 架构图：
 
@@ -265,8 +265,8 @@ Swap:        131071           0      131071
 
 ```
 cd /data/projects/
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate_cluster_install_1.5.0_preview-c7-u18.tar.gz
-tar xzf fate_cluster_install_1.5.0_preview-c7-u18.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate_cluster_install_1.5.0_release-c7-u18.tar.gz
+tar xzf fate_cluster_install_1.5.0_release-c7-u18.tar.gz
 ```
 
 ## 5.2 部署前检查
@@ -506,6 +506,8 @@ python run_toy_example.py 10000 10000 1
 类似如下结果表示成功：
 
 "2020-04-28 18:26:20,789 - secure_add_guest.py[line:126] - INFO: success to calculate secure_sum, it is 1999.9999999999998"
+
+提示：如出现max cores per job is 1, please modify job parameters报错提示，需要修改当前目录下文件toy_example_conf.json中参数eggroll.session.processors.per.node为1.
 
 2）192.168.0.2上执行，guest_partyid和host_partyid都设为9999：
 

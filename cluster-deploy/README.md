@@ -54,10 +54,10 @@ Example deployment in two parties
 
 In this example, there is only one host on each end, and multiple hosts on each end. Currently, only nodemanager multi-node deployment is supported, and other components are single-node.
 
-| Role  | Partyid | Ip Address                    | Operating System | Host Configuration | Storage | Deployment Module                                            |
-| ----- | ------- | ----------------------------- | ---------------- | ------------------ | ------- | ------------------------------------------------------------ |
-| HOST  | 10000   | 192.168.0.1(Can be networked) | CentOS 7.2       | 8C16G              | 500G    | fate_flow，fateboard，clustermanager，nodemanger，rollsite，mysql |
-| Guest | 9999    | 192.168.0.2                   | CentOS 7.2       | 8C16G              | 500G    | fate_flow，fateboard，clustermanager，nodemanger，rollsite，mysql |
+| Role  | Partyid | Ip Address                    | Operating System        | Host Configuration | Storage | Deployment Module                                            |
+| ----- | ------- | ----------------------------- | ----------------------- | ------------------ | ------- | ------------------------------------------------------------ |
+| HOST  | 10000   | 192.168.0.1(Can be networked) | CentOS 7.2/Ubuntu 18.04 | 8C16G              | 500G    | fate_flow，fateboard，clustermanager，nodemanger，rollsite，mysql |
+| Guest | 9999    | 192.168.0.2                   | CentOS 7.2/Ubuntu 18.04 | 8C16G              | 500G    | fate_flow，fateboard，clustermanager，nodemanger，rollsite，mysql |
 
 **Remarks:Involving exchange instructions will use 192.168.0.88 to represent its IP, but this example does not involve exchange deployment.**
 
@@ -67,7 +67,7 @@ In this example, there is only one host on each end, and multiple hosts on each 
 | ------------------ | ------------------------------------------------------------ |
 | Host Configuration | No less than 8C16G500G, 1G network card                      |
 | Operating System   | CentOS linux 7.2 and above are also lower than 8             |
-| Dependent Package  | The following dependency packages need to be installed:<br />#centos<br />gcc gcc-c++ make openssl-devel gmp-devel mpfr-devel libmpc-devel libaio <br/>numactl autoconf automake libtool libffi-devel ansible jq supervisor |
+| Dependent Package  | The following dependency packages need to be installed:<br />#centos<br />gcc gcc-c++ make openssl-devel gmp-devel mpfr-devel libmpc-devel libaio <br/>numactl autoconf automake libtool libffi-devel ansible<br/>#ubuntu<br/>gcc g++ make openssl ansible libgmp-dev libmpfr-dev libmpc-dev <br/>libaio1 libaio-dev numactl autoconf automake libtool libffi-dev <br/>cd /usr/lib/x86_64-linux-gnu<br/>if [ ! -f "libssl.so.10" ];then<br/>   ln -s libssl.so.1.0.0 libssl.so.10<br/>   ln -s libcrypto.so.1.0.0 libcrypto.so.10<br/>fi |
 | User               | User: app, owner: apps (app users need to be able to sudo su root without a password) |
 | File System        | 1. The data disk is mounted in the /data directory. <br/>2. Create a /data/projects directory, the owner of the directory is app:apps. <br/>3. The free space of the root directory is not less than 20G. |
 | Virtual Memory     | Not less than 128G                                           |
@@ -212,12 +212,20 @@ echo '/data/swapfile128G swap swap defaults 0 0' >> /etc/fstab
 
 ```
 #Install basic dependencies
+#centos
 yum install -y gcc gcc-c++ make openssl-devel gmp-devel mpfr-devel libmpc-devel libaio numactl autoconf automake libtool libffi-devel
+#ubuntu
+apt-get install -y gcc g++ make openssl libgmp-dev libmpfr-dev libmpc-dev libaio1 libaio-dev numactl autoconf automake libtool libffi-dev
 #If there is an error, you need to solve the yum source problem.
 
 #Install ansible and process management dependency packages
-yum install -y ansible jq supervisor
+#centos
+yum install -y ansible
+#ubuntu
+apt-get install -y ansible
+
 #If there is an error and the server has an external network, there is no need to solve the problem of incomplete yum source, execute:
+#centos
 yum install -y epel-release
 #Add a more comprehensive third-party source, and then reinstall ansible jq supervisor
 ```
@@ -283,8 +291,8 @@ Enter the /data/projects/ directory of the execution node and execute:
 ```
 #Note: URL links have line breaks, please make sure to arrange them in one line when copying
 cd /data/projects/
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/ansible_nfate_1.5.0_preview-1.0.0.tar.gz
-tar xzf ansible_nfate_1.5.0_preview-1.0.0.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/ansible_nfate_1.5.0_release-1.0.0.tar.gz
+tar xzf ansible_nfate_1.5.0_release-1.0.0.tar.gz
 ```
 
 ### 4.4 Configuration File Modification And Example
