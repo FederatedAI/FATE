@@ -124,15 +124,18 @@ class JobSaver(object):
             if entity_info.get(status_field) and hasattr(entity_model, f"f_{status_field}"):
                 if status_field in ["status", "party_status"]:
                     update_info[status_field] = entity_info[status_field]
+                    old_status = getattr(obj, f"f_{status_field}")
                     if_pass = False
                     if isinstance(obj, Task):
-                        if TaskStatus.StateTransitionRule.if_pass(src_status=getattr(obj, f"f_{status_field}"), dest_status=update_info[status_field]):
+                        if TaskStatus.StateTransitionRule.if_pass(src_status=old_status, dest_status=update_info[status_field]):
                             if_pass = True
                     elif isinstance(obj, Job):
-                        if JobStatus.StateTransitionRule.if_pass(src_status=getattr(obj, f"f_{status_field}"), dest_status=update_info[status_field]):
+                        if JobStatus.StateTransitionRule.if_pass(src_status=old_status, dest_status=update_info[status_field]):
                             if_pass = True
+                        if EndStatus.contains(old_status) and old_status != JobStatus.CANCELED:
+                            update_filters.append(operator.attrgetter(f"f_rerun_signal")(type(obj)) == False)
                     if if_pass:
-                        update_filters.append(operator.attrgetter(f"f_{status_field}")(type(obj)) == getattr(obj, f"f_{status_field}"))
+                        update_filters.append(operator.attrgetter(f"f_{status_field}")(type(obj)) == old_status)
                     else:
                         # not allow update status
                         update_info.pop(status_field)
