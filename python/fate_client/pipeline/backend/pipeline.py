@@ -163,7 +163,7 @@ class PipeLine(object):
             meta = component.get_predict_meta()
             self.restore_roles(meta.get("initiator"), meta.get("roles"))
 
-            return
+            return self
 
         if not isinstance(component, Component):
             raise ValueError(
@@ -210,6 +210,7 @@ class PipeLine(object):
                     self._components_input[component.name][attr.strip("_")] = val
                 else:
                     self._components_input[component.name][attr.strip("_")] = [val]
+        return self
 
     @LOGGER.catch(onerror=lambda _: sys.exit(1))
     def add_upload_data(self, file, table_name, namespace, head=1, partition=16,
@@ -386,6 +387,7 @@ class PipeLine(object):
                     val = [val]
 
                 self._predict_dsl["components"][cpn]["input"]["data"][dataset] = val
+        return self
 
     def _feed_job_parameters(self, conf, job_type=None,
                              model_info=None, job_parameters=None):
