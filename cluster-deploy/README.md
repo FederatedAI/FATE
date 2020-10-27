@@ -769,7 +769,7 @@ sh service.sh start fate-fateflow
 Start/stop/restart/view a single module (optional: clustermanager, nodemanager, rollsite, fateflow, fateboard, mysql):
 
 ```
-sh service.sh start/stop/rsstart/status fate-clustermanager
+sh service.sh start/stop/restart/status fate-clustermanager
 ```
 
 ## 6.2 View Process And Port

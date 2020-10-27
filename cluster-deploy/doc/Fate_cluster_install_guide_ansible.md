@@ -788,7 +788,7 @@ sh service.sh start fate-fateflow
 启动/关闭/重启/查看单个模块(可选：clustermanager，nodemanager，rollsite，fateflow，fateboard，mysql)：
 
 ```
-sh service.sh start/stop/rsstart/status fate-clustermanager
+sh service.sh start/stop/restart/status fate-clustermanager
 ```
 
 
