@@ -97,17 +97,17 @@ def remote_api(job_id, method, endpoint, src_party_id, dest_party_id, src_role, 
 
 
 def proxy_api(role, _job_id, request_config):
-    job_id = request_config.get('header').get('job_id', _job_id),
-    method = request_config.get('header').get('method', 'POST'),
-    endpoint = request_config.get('header').get('endpoint'),
-    src_party_id = request_config.get('header').get('src_party_id'),
-    dest_party_id = request_config.get('header').get('dest_party_id'),
+    job_id = request_config.get('header').get('job_id', _job_id)
+    method = request_config.get('header').get('method', 'POST')
+    endpoint = request_config.get('header').get('endpoint')
+    src_party_id = request_config.get('header').get('src_party_id')
+    dest_party_id = request_config.get('header').get('dest_party_id')
     json_body = request_config.get('body')
     _packet = forward_grpc_packet(json_body, method, endpoint, src_party_id, dest_party_id, job_id=job_id, role=role,
                                   overall_timeout=DEFAULT_GRPC_OVERALL_TIMEOUT)
     _routing_metadata = get_routing_metadata(src_party_id=src_party_id, dest_party_id=dest_party_id)
 
-    engine, channel, stub = get_command_federation_channel()
+    channel, stub = get_command_federation_channel()
     _return, _call = stub.unaryCall.with_call(_packet, metadata=_routing_metadata)
     channel.close()
     json_body = json.loads(_return.body.value)
