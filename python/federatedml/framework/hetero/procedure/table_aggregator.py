@@ -16,7 +16,6 @@
 import numpy as np
 
 from fate_arch.session import computing_session
-from federatedml.framework.hetero.procedure import table_random_padding_cipher
 from federatedml.framework.homo.blocks import aggregator
 from federatedml.framework.homo.blocks import secure_mean_aggregator
 from federatedml.framework.homo.blocks import secure_sum_aggregator
@@ -79,9 +78,9 @@ class Server(secure_sum_aggregator.Server, secure_mean_aggregator.Server):
         super().__init__(trans_var=trans_var, enable_secure_aggregate=enable_secure_aggregate)
 
         self.enable_secure_aggregate = enable_secure_aggregate
-        if enable_secure_aggregate:
-            table_random_padding_cipher.Server(trans_var=trans_var.random_padding_cipher_trans_var) \
-                .exchange_secret_keys()
+        # if enable_secure_aggregate:
+            # table_random_padding_cipher.Server(trans_var=trans_var.random_padding_cipher_trans_var) \
+            #     .exchange_secret_keys()
         self._table_sync = TableTransferServer()
 
     def aggregate_tables(self, suffix=tuple()):
@@ -120,9 +119,9 @@ class Client(secure_sum_aggregator.Client, secure_mean_aggregator.Client):
         self.enable_secure_aggregate = enable_secure_aggregate
 
         if enable_secure_aggregate:
-            self._table_random_padding_cipher = table_random_padding_cipher.Client(
-                trans_var=trans_var.random_padding_cipher_trans_var).create_cipher()
-            self._table_random_padding_cipher.set_amplify_factor(consts.SECURE_AGG_AMPLIFY_FACTOR)
+            # self._table_random_padding_cipher = table_random_padding_cipher.Client(
+            #     trans_var=trans_var.random_padding_cipher_trans_var).create_cipher()
+            self._random_padding_cipher.set_amplify_factor(consts.SECURE_AGG_AMPLIFY_FACTOR)
 
     def secure_aggregate_table(self, send_func, table, enable_secure_aggregate=True):
         """
@@ -132,7 +131,7 @@ class Client(secure_sum_aggregator.Client, secure_mean_aggregator.Client):
         """
         LOGGER.debug(f"In secure aggregate, enable_secure_aggregate: {enable_secure_aggregate}")
         if enable_secure_aggregate:
-            table = self._table_random_padding_cipher.encrypt(table)
+            table = self._random_padding_cipher.encrypt_table(table)
             LOGGER.debug("Finish add random numbers")
 
         send_func(table)
