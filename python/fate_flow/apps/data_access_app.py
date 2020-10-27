@@ -83,10 +83,8 @@ def download_upload(access_module):
                                           ' 0 means not to delete and continue uploading, '
                                           '1 means to upload again after deleting the table')
     job_dsl, job_runtime_conf = gen_data_access_job_config(job_config, access_module)
-    job_id, job_dsl_path, job_runtime_conf_path, logs_directory, model_info, board_url = DAGScheduler.submit(
-        {'job_dsl': job_dsl, 'job_runtime_conf': job_runtime_conf}, job_id=job_id)
-    data.update({'job_dsl_path': job_dsl_path, 'job_runtime_conf_path': job_runtime_conf_path,
-                 'board_url': board_url, 'logs_directory': logs_directory})
+    submit_result = DAGScheduler.submit({'job_dsl': job_dsl, 'job_runtime_conf': job_runtime_conf}, job_id=job_id)
+    data.update(submit_result)
     return get_json_result(job_id=job_id, data=data)
 
 
@@ -94,9 +92,9 @@ def download_upload(access_module):
 def upload_history():
     request_data = request.json
     if request_data.get('job_id'):
-        tasks = JobSaver.query_task(component_name='upload_0', status=StatusSet.COMPLETE, job_id=request_data.get('job_id'), run_on_this_party=True)
+        tasks = JobSaver.query_task(component_name='upload_0', status=StatusSet.SUCCESS, job_id=request_data.get('job_id'), run_on_this_party=True)
     else:
-        tasks = JobSaver.query_task(component_name='upload_0', status=StatusSet.COMPLETE, run_on_this_party=True)
+        tasks = JobSaver.query_task(component_name='upload_0', status=StatusSet.SUCCESS, run_on_this_party=True)
     limit = request_data.get('limit')
     if not limit:
         tasks = tasks[-1::-1]
