@@ -201,13 +201,13 @@ def _run_pipeline_jobs(config: Config, suite: Testsuite, namespace: str, data_na
             if data_namespace_mangling:
                 try:
                     mod.main(config, f"_{namespace}")
-                    suite.update_status(job_name=job_name, status="complete")
+                    suite.update_status(job_name=job_name, status="success")
                 except Exception:
                     pass
             else:
                 try:
                     mod.main(config)
-                    suite.update_status(job_name=job_name, status="complete")
+                    suite.update_status(job_name=job_name, status="success")
                 except Exception:
                     pass
         except Exception:

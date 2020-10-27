@@ -27,7 +27,6 @@ from fate_flow.entity.types import ResourceOperation, RunParameters
 from fate_flow.settings import stat_logger, STANDALONE_BACKEND_VIRTUAL_CORES_PER_NODE, SUPPORT_BACKENDS_ENTRANCE, \
     MAX_CORES_PERCENT_PER_JOB, DEFAULT_TASK_CORES_PER_NODE
 from fate_flow.utils import job_utils
-from fate_flow.utils.config_adapter import JobRuntimeConfigAdapter
 
 
 class ResourceManager(object):
@@ -174,36 +173,56 @@ class ResourceManager(object):
             return operate_status
 
     @classmethod
-    def job_engine_support_parameters(cls, job_parameters: RunParameters):
+    def adapt_engine_parameters(cls, role, job_parameters: RunParameters, create_initiator_baseline=False):
         computing_engine_info = ResourceManager.get_engine_registration_info(engine_type=EngineType.COMPUTING,
                                                                              engine_name=job_parameters.computing_engine)
-        job_parameters.adaptation_parameters = {
-            "task_nodes": 0,
-            "task_cores_per_node": 0,
-            "task_memory_per_node": 0,
-        }
+        if create_initiator_baseline:
+            job_parameters.adaptation_parameters = {
+                "task_nodes": 0,
+                "task_cores_per_node": 0,
+                "task_memory_per_node": 0,
+            }
+            task_cores = 0
+        else:
+            # use initiator baseline
+            if role == "arbiter":
+                task_cores = 1
+            else:
+                task_cores = job_parameters.adaptation_parameters["task_nodes"] * job_parameters.adaptation_parameters["task_cores_per_node"]
+
         if job_parameters.computing_engine in {ComputingEngine.STANDALONE, ComputingEngine.EGGROLL}:
             job_parameters.adaptation_parameters["task_nodes"] = computing_engine_info.f_nodes
             job_parameters.adaptation_parameters["task_cores_per_node"] = int(
-                job_parameters.eggroll_run.get("eggroll.session.processors.per.node", DEFAULT_TASK_CORES_PER_NODE))
-            job_parameters.eggroll_run["eggroll.session.processors.per.node"] = job_parameters.adaptation_parameters[
-                "task_cores_per_node"]
+                job_parameters.eggroll_run.get("eggroll.session.processors.per.node",
+                                               cls.adapt_task_cores_per_node(create_initiator_baseline, task_cores, job_parameters.adaptation_parameters["task_nodes"])
+                                               )
+            )
+            if not create_initiator_baseline:
+                job_parameters.eggroll_run["eggroll.session.processors.per.node"] = job_parameters.adaptation_parameters["task_cores_per_node"]
         elif job_parameters.computing_engine == ComputingEngine.SPARK:
             job_parameters.adaptation_parameters["task_nodes"] = int(job_parameters.spark_run.get("num-executors", computing_engine_info.f_nodes))
-                                                                                       
-            job_parameters.spark_run["num-executors"] = job_parameters.adaptation_parameters["task_nodes"]
-
             job_parameters.adaptation_parameters["task_cores_per_node"] = int(
-                job_parameters.spark_run.get("executor-cores", DEFAULT_TASK_CORES_PER_NODE))            
-            job_parameters.spark_run["executor-cores"] = job_parameters.adaptation_parameters["task_cores_per_node"]
+                job_parameters.spark_run.get("executor-cores",
+                                             cls.adapt_task_cores_per_node(create_initiator_baseline, task_cores, job_parameters.adaptation_parameters["task_nodes"])
+                                             )
+            )
+            if not create_initiator_baseline:
+                job_parameters.spark_run["num-executors"] = job_parameters.adaptation_parameters["task_nodes"]
+                job_parameters.spark_run["executor-cores"] = job_parameters.adaptation_parameters["task_cores_per_node"]
+
+    @classmethod
+    def adapt_task_cores_per_node(cls, create_initiator_baseline, initiator_baseline, task_nodes):
+        if create_initiator_baseline:
+            return DEFAULT_TASK_CORES_PER_NODE
+        else:
+            return max(1, int(initiator_baseline / task_nodes))
 
     @classmethod
     def calculate_job_resource(cls, job_parameters: RunParameters = None, job_id=None, role=None, party_id=None):
         if not job_parameters:
-            dsl, submit_conf, train_runtime_conf = job_utils.get_job_configuration(job_id=job_id,
-                                                                                   role=role,
-                                                                                   party_id=party_id)
-            job_parameters = JobRuntimeConfigAdapter(submit_conf).get_job_parameters_dict()
+            job_parameters = job_utils.get_job_parameters(job_id=job_id,
+                                                          role=role,
+                                                          party_id=party_id)
             job_parameters = RunParameters(**job_parameters)
         cores = job_parameters.adaptation_parameters["task_cores_per_node"] * job_parameters.adaptation_parameters[
             "task_nodes"] * job_parameters.task_parallelism
@@ -214,10 +233,10 @@ class ResourceManager(object):
     @classmethod
     def calculate_task_resource(cls, task_parameters: RunParameters = None, task_info: dict = None):
         if not task_parameters:
-            dsl, runtime_conf, train_runtime_conf = job_utils.get_job_configuration(job_id=task_info["job_id"],
-                                                                                    role=task_info["role"],
-                                                                                    party_id=task_info["party_id"])
-            task_parameters = RunParameters(**runtime_conf["job_parameters"])
+            job_parameters = job_utils.get_job_parameters(job_id=task_info["job_id"],
+                                                          role=task_info["role"],
+                                                          party_id=task_info["party_id"])
+            task_parameters = RunParameters(**job_parameters)
         cores_per_task = task_parameters.adaptation_parameters["task_cores_per_node"] * \
                          task_parameters.adaptation_parameters["task_nodes"]
         memory_per_task = task_parameters.adaptation_parameters["task_memory_per_node"] * \

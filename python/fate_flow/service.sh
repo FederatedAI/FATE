@@ -97,7 +97,11 @@ start() {
     getpid
     if [[ ${pid} == "" ]]; then
         mklogsdir
-        nohup python ${PROJECT_BASE}/python/fate_flow/fate_flow_server.py >> "${log_dir}/console.log" 2>>"${log_dir}/error.log" &
+        if [[ $1x == "front"x ]];then
+          python ${PROJECT_BASE}/python/fate_flow/fate_flow_server.py >> "${log_dir}/console.log" 2>>"${log_dir}/error.log"
+        else
+          nohup python ${PROJECT_BASE}/python/fate_flow/fate_flow_server.py >> "${log_dir}/console.log" 2>>"${log_dir}/error.log" &
+        fi
         for((i=1;i<=100;i++));
         do
             sleep 0.1
@@ -149,9 +153,14 @@ case "$1" in
         status
         ;;
 
+    starting)
+        start front
+        ;;
+
     stop)
         stop
         ;;
+
     status)
         status
         ;;

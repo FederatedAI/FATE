@@ -153,7 +153,7 @@ class HeteroFastSecureBoostingTreeGuest(HeteroSecureBoostingTreeGuest):
     def get_model_meta(self):
 
         _, model_meta = super(HeteroFastSecureBoostingTreeGuest, self).get_model_meta()
-        meta_name = "HeteroFastSecureBoostGuestMeta"
+        meta_name = "HeteroFastSecureBoostingTreeGuestMeta"
         model_meta.work_mode = self.work_mode
 
         return meta_name, model_meta
@@ -161,7 +161,7 @@ class HeteroFastSecureBoostingTreeGuest(HeteroSecureBoostingTreeGuest):
     def get_model_param(self):
 
         _, model_param = super(HeteroFastSecureBoostingTreeGuest, self).get_model_param()
-        param_name = "HeteroFastSecureBoostGuestParam"
+        param_name = "HeteroFastSecureBoostingTreeGuestParam"
         model_param.tree_plan.extend(plan.encode_plan(self.tree_plan))
         model_param.model_name = consts.HETERO_FAST_SBT_MIX if self.work_mode == consts.MIX_TREE else \
                                  consts.HETERO_FAST_SBT_LAYERED
