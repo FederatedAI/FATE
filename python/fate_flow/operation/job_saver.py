@@ -27,11 +27,16 @@ class JobSaver(object):
 
     @classmethod
     def create_job(cls, job_info):
-        cls.create_job_family_entity(Job, job_info)
+        return cls.create_job_family_entity(Job, job_info)
 
     @classmethod
     def create_task(cls, task_info):
-        cls.create_job_family_entity(Task, task_info)
+        return cls.create_job_family_entity(Task, task_info)
+
+    @classmethod
+    @DB.connection_context()
+    def delete_job(cls, job_id):
+        Job.delete().where(Job.f_job_id == job_id)
 
     @classmethod
     def update_job_status(cls, job_info):
@@ -92,6 +97,7 @@ class JobSaver(object):
             rows = obj.save(force_insert=True)
             if rows != 1:
                 raise Exception("Create {} failed".format(entity_model))
+            return obj
         except peewee.IntegrityError as e:
             if e.args[0] == 1062:
                 sql_logger(job_id=entity_info.get("job_id", "fate_flow")).warning(e)
@@ -111,22 +117,26 @@ class JobSaver(object):
         if objs:
             obj = objs[0]
         else:
-            raise Exception("can not found the {}".format(entity_model.__class__.__name__))
+            raise Exception("can not found the obj to update")
         update_filters = query_filters[:]
-        update_info = {}
+        update_info = {"job_id": entity_info["job_id"]}
         for status_field in cls.STATUS_FIELDS:
             if entity_info.get(status_field) and hasattr(entity_model, f"f_{status_field}"):
                 if status_field in ["status", "party_status"]:
                     update_info[status_field] = entity_info[status_field]
+                    old_status = getattr(obj, f"f_{status_field}")
+                    new_status = update_info[status_field]
                     if_pass = False
                     if isinstance(obj, Task):
-                        if TaskStatus.StateTransitionRule.if_pass(src_status=getattr(obj, f"f_{status_field}"), dest_status=update_info[status_field]):
+                        if TaskStatus.StateTransitionRule.if_pass(src_status=old_status, dest_status=new_status):
                             if_pass = True
                     elif isinstance(obj, Job):
-                        if JobStatus.StateTransitionRule.if_pass(src_status=getattr(obj, f"f_{status_field}"), dest_status=update_info[status_field]):
+                        if JobStatus.StateTransitionRule.if_pass(src_status=old_status, dest_status=new_status):
                             if_pass = True
+                        if EndStatus.contains(new_status) and new_status not in {JobStatus.SUCCESS, JobStatus.CANCELED}:
+                            update_filters.append(Job.f_rerun_signal == False)
                     if if_pass:
-                        update_filters.append(operator.attrgetter(f"f_{status_field}")(type(obj)) == getattr(obj, f"f_{status_field}"))
+                        update_filters.append(operator.attrgetter(f"f_{status_field}")(type(obj)) == old_status)
                     else:
                         # not allow update status
                         update_info.pop(status_field)

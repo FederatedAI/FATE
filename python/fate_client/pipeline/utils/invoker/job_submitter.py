@@ -122,11 +122,11 @@ class JobInvoker(object):
         while True:
             ret_code, ret_msg, data = self.query_job(job_id, role, party_id)
             status = data["f_status"]
-            if status == JobStatus.COMPLETE:
+            if status == JobStatus.SUCCESS:
                 # print("job is success!!!")
                 elapse_seconds = timedelta(seconds=int(time.time() - start_time))
                 sys.stdout.write(f"\n\r")
-                LOGGER.info(f"Job is complete!!! Job id is {job_id}")
+                LOGGER.info(f"Job is success!!! Job id is {job_id}")
                 LOGGER.info(f"Total time: {elapse_seconds}")
                 return StatusCode.SUCCESS
 
