@@ -161,16 +161,16 @@ def component_parameters():
 def component_output_model():
     request_data = request.json
     check_request_parameters(request_data)
-    job_dsl, job_runtime_conf, train_runtime_conf = job_utils.get_job_configuration(job_id=request_data['job_id'],
-                                                                                    role=request_data['role'],
-                                                                                    party_id=request_data['party_id'])
-    model_id = job_runtime_conf['job_parameters']['model_id']
-    model_version = job_runtime_conf['job_parameters']['model_version']
+    job_dsl, job_runtime_conf, runtime_conf_on_party, train_runtime_conf = job_utils.get_job_configuration(job_id=request_data['job_id'],
+                                                                                                           role=request_data['role'],
+                                                                                                           party_id=request_data['party_id'])
+    model_id = runtime_conf_on_party['job_parameters']['model_id']
+    model_version = runtime_conf_on_party['job_parameters']['model_version']
     tracker = Tracker(job_id=request_data['job_id'], component_name=request_data['component_name'],
                       role=request_data['role'], party_id=request_data['party_id'], model_id=model_id,
                       model_version=model_version)
     dag = schedule_utils.get_job_dsl_parser(dsl=job_dsl, runtime_conf=job_runtime_conf,
-                                       train_runtime_conf=train_runtime_conf)
+                                            train_runtime_conf=train_runtime_conf)
     component = dag.get_component_info(request_data['component_name'])
     output_model_json = {}
     # There is only one model output at the current dsl version.
@@ -397,11 +397,11 @@ def get_component_output_data_schema(output_table_meta, have_data_label, is_str=
 @DB.connection_context()
 def check_request_parameters(request_data):
     if 'role' not in request_data and 'party_id' not in request_data:
-        jobs = Job.select(Job.f_runtime_conf).where(Job.f_job_id == request_data.get('job_id', ''),
-                                                    Job.f_is_initiator == True)
+        jobs = Job.select(Job.f_runtime_conf_on_party).where(Job.f_job_id == request_data.get('job_id', ''),
+                                                             Job.f_is_initiator == True)
         if jobs:
             job = jobs[0]
-            job_runtime_conf = job.f_runtime_conf
+            job_runtime_conf = job.f_runtime_conf_on_party
             job_initiator = job_runtime_conf.get('initiator', {})
             role = job_initiator.get('role', '')
             party_id = job_initiator.get('party_id', 0)

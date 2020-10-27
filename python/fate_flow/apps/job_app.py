@@ -26,7 +26,7 @@ from fate_flow.scheduler import DAGScheduler
 from fate_flow.scheduler import FederatedScheduler
 from fate_flow.settings import stat_logger, TEMP_DIRECTORY
 from fate_flow.utils import job_utils, detect_utils, schedule_utils
-from fate_flow.utils.api_utils import get_json_result, error_response
+from fate_flow.utils.api_utils import get_json_result, error_response, server_error_response
 from fate_flow.entity.types import FederatedSchedulingStatusCode, RetCode, JobStatus
 from fate_flow.operation import Tracker
 from fate_flow.operation import JobSaver
@@ -38,23 +38,17 @@ manager = Flask(__name__)
 
 @manager.errorhandler(500)
 def internal_server_error(e):
-    stat_logger.exception(e)
-    return get_json_result(retcode=100, retmsg=str(e))
+    return server_error_response(e)
 
 
 @manager.route('/submit', methods=['POST'])
 def submit_job():
     work_mode = JobRuntimeConfigAdapter(request.json.get('job_runtime_conf', {})).get_job_work_mode()
     detect_utils.check_config({'work_mode': work_mode}, required_arguments=[('work_mode', (WorkMode.CLUSTER, WorkMode.STANDALONE))])
-    job_id, job_dsl_path, job_runtime_conf_path, logs_directory, model_info, board_url = DAGScheduler.submit(request.json)
+    submit_result = DAGScheduler.submit(request.json)
     return get_json_result(retcode=0, retmsg='success',
-                           job_id=job_id,
-                           data={'job_dsl_path': job_dsl_path,
-                                 'job_runtime_conf_path': job_runtime_conf_path,
-                                 'model_info': model_info,
-                                 'board_url': board_url,
-                                 'logs_directory': logs_directory
-                                 })
+                           job_id=submit_result.get("job_id"),
+                           data=submit_result)
 
 
 @manager.route('/stop', methods=['POST'])

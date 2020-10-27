@@ -30,7 +30,6 @@ from fate_flow.scheduling_apps.client import ControllerClient
 from fate_flow.scheduling_apps.client import TrackerClient
 from fate_flow.db.db_models import TrackingOutputDataInfo, fill_db_model_object
 from fate_arch.computing import ComputingEngine
-from fate_flow.manager import ResourceManager
 
 LOGGER = getLogger()
 
@@ -79,9 +78,8 @@ class TaskExecutor(object):
                 "run_pid": executor_pid
             })
             start_time = current_timestamp()
-            _, runtime_conf, _ = job_utils.get_job_configuration(job_id, role, party_id)
-            job_parameters = RunParameters(**runtime_conf['job_parameters'])
-            job_conf = job_utils.get_job_conf(job_id)
+            job_parameters = RunParameters(**job_utils.get_job_parameters(job_id, role, party_id))
+            job_conf = job_utils.get_job_conf(job_id, role)
             job_dsl = job_conf["job_dsl_path"]
             job_runtime_conf = job_conf["job_runtime_conf_path"]
             dsl_parser = schedule_utils.get_job_dsl_parser(dsl=job_dsl,
@@ -89,7 +87,6 @@ class TaskExecutor(object):
                                                            train_runtime_conf=job_conf["train_runtime_conf_path"],
                                                            pipeline_dsl=job_conf["pipeline_dsl_path"]
                                                            )
-            # job_parameters = RunParameters(**dsl_parser.get_job_parameters().get(role, {}).get(party_id, {}))
             party_index = job_runtime_conf["role"][role].index(party_id)
             job_args = dsl_parser.get_args_input()
             job_args_on_party = job_args[role][party_index].get('args') if role in job_args else {}
@@ -192,7 +189,7 @@ class TaskExecutor(object):
             # There is only one model output at the current dsl version.
             tracker.save_output_model(output_model,
                                       task_output_dsl['model'][0] if task_output_dsl.get('model') else 'default')
-            task_info["party_status"] = TaskStatus.COMPLETE
+            task_info["party_status"] = TaskStatus.SUCCESS
         except Exception as e:
             task_info["party_status"] = TaskStatus.FAILED
             schedule_logger().exception(e)
@@ -259,14 +256,11 @@ class TaskExecutor(object):
                         args_from_component = this_type_args[search_component_name] = this_type_args.get(
                             search_component_name, {})
                         if storage_table_meta:
-                            cores_per_task, memory_per_task = ResourceManager.calculate_task_resource(
-                                task_parameters=task_parameters)
-                            computing_partitions = cores_per_task
-                            LOGGER.info(f"load computing table use {computing_partitions} partitions")
+                            LOGGER.info(f"load computing table use {task_parameters.computing_partitions}")
                             computing_table = session.get_latest_opened().computing.load(
                                 storage_table_meta.get_address(),
                                 schema=storage_table_meta.get_schema(),
-                                partitions=computing_partitions)
+                                partitions=task_parameters.computing_partitions)
                         else:
                             computing_table = None
 
