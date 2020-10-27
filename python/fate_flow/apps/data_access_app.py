@@ -110,11 +110,11 @@ def get_upload_info(jobs_run_conf):
 
     for job_id, job_run_conf in jobs_run_conf.items():
         info = {}
-        table_name = job_run_conf["name"][0]
-        namespace = job_run_conf["namespace"][0]
+        table_name = job_run_conf["name"]
+        namespace = job_run_conf["namespace"]
         table_meta = storage.StorageTableMeta(name=table_name, namespace=namespace)
         if table_meta:
-            partition = job_run_conf["partition"][0]
+            partition = job_run_conf["partition"]
             info["upload_info"] = {
                 "table_name": table_name,
                 "namespace": namespace,
