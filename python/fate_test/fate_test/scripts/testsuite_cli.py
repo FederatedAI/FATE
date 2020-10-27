@@ -189,27 +189,29 @@ def _run_pipeline_jobs(config: Config, suite: Testsuite, namespace: str, data_na
     for i, pipeline_job in enumerate(suite.pipeline_jobs):
         echo.echo(f"Running [{i + 1}/{job_n}] job: {pipeline_job.job_name}")
 
-        def _raise():
+        def _raise(err_msg, status="failed"):
             exception_id = str(uuid.uuid1())
-            suite.update_status(job_name=job_name, exception_id=exception_id)
-            echo.file(f"exception({exception_id})")
-            LOGGER.exception(f"exception id: {exception_id}")
+            suite.update_status(job_name=job_name, exception_id=exception_id, status=status)
+            echo.file(f"exception({exception_id}), error message:\n{err_msg}")
+            # LOGGER.exception(f"exception id: {exception_id}")
 
         job_name, script_path = pipeline_job.job_name, pipeline_job.script_path
         mod = _load_module_from_script(script_path)
         try:
             if data_namespace_mangling:
                 try:
-                    mod.main(config, f"_{namespace}")
-                    suite.update_status(job_name=job_name, status="complete")
-                except Exception:
-                    pass
+                    mod.main(config=config, namespace=f"_{namespace}")
+                    suite.update_status(job_name=job_name, status="success")
+                except Exception as e:
+                    _raise(e)
+                    continue
             else:
                 try:
-                    mod.main(config)
-                    suite.update_status(job_name=job_name, status="complete")
-                except Exception:
-                    pass
-        except Exception:
-            _raise()
+                    mod.main(config=config)
+                    suite.update_status(job_name=job_name, status="success")
+                except Exception as e:
+                    _raise(e)
+                    continue
+        except Exception as e:
+            _raise(e, status="not submitted")
             continue
