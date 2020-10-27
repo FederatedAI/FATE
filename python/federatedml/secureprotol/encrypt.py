@@ -21,6 +21,7 @@ import numpy as np
 import torch
 from Cryptodome import Random
 from Cryptodome.PublicKey import RSA
+import hashlib
 
 from federatedml.feature.instance import Instance
 from federatedml.secureprotol import gmpy_math
@@ -274,9 +275,11 @@ class TablePadsCipher(Encrypt):
         # self._rands = {uid: RandomPads(v & 0xffffffff) for uid, v in keys.items() if uid != self._uuid}
 
     def encrypt(self, table):
-
         def _pad(key, value, seeds, amplify_factor):
-            cur_seeds = {uid: hash(f"{key}_{seed}") for uid, seed in seeds.items()}
+            has_key = int(hashlib.md5(f"{key}".encode("ascii")).hexdigest(), 16)
+            # LOGGER.debug(f"hash_key: {has_key}")
+            cur_seeds = {uid: has_key + seed for uid, seed in seeds.items()}
+            # LOGGER.debug(f"cur_seeds: {cur_seeds}")
             rands = {uid: RandomPads(v & 0xffffffff) for uid, v in cur_seeds.items()}
 
             if isinstance(value, np.ndarray):

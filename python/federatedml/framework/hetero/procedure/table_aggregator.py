@@ -132,33 +132,17 @@ class Client(secure_sum_aggregator.Client, secure_mean_aggregator.Client):
         """
         LOGGER.debug(f"In secure aggregate, enable_secure_aggregate: {enable_secure_aggregate}")
         if enable_secure_aggregate:
-            # LOGGER.debug(f"Before mapValues, type of table: {type(table)}")
-
-            # key_table = table.mapValues(lambda v: None)
-            # LOGGER.debug("After mapValues")
-
-            # list_key = list(key_table.collect())
-            # list_key = sorted([x[0] for x in list_key])
-            # zeros_table = np.zeros(len(list_key))
-            # LOGGER.debug("Before cipher encrypted")
-
             table = self._table_random_padding_cipher.encrypt(table)
-            # LOGGER.debug(f"rand_table: {rand_table}")
-            # rand_table = computing_session.parallelize(tuple(zip(list_key, rand_table)),
-            #                                            include_key=True,
-            #                                            partition=table.partitions)
-            # table = table.join(rand_table, lambda x, y: x + y)
-
             LOGGER.debug("Finish add random numbers")
 
         send_func(table)
 
     def send_table(self, table, suffix=tuple()):
         def _func(_table):
-            LOGGER.debug(f"cipher table content: {list(_table.collect())[0]}")
+            # LOGGER.debug(f"cipher table content: {list(_table.collect())[0]}")
             self._table_sync.send_tables(_table, suffix=suffix)
 
-        LOGGER.debug(f"plantext table content: {list(table.collect())[0]}")
+        # LOGGER.debug(f"plantext table content: {list(table.collect())[0]}")
 
         return self.secure_aggregate_table(send_func=_func,
                                            table=table,
