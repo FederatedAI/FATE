@@ -1,6 +1,10 @@
 FATE-Flow Client Command Line Interface v2 Guide
 ================================================
 
+[`中文`_]
+
+.. _中文: README_zh.rst
+
 Usage
 -----
 
@@ -9,11 +13,11 @@ sure that you have activated the virtual environment of FATE. For more
 details about how to activate virtual environment, please read the
 documentation of deployment.
 
-In this version of client CLI, commands are seperated into serveral
+In this version of client CLI, commands are separated into several
 classes, including *job*, *data*, *model*, *component* and etc. And all
 of these classes have a common parent (CLI entry) named *'flow'*, which
 means you can type *'flow'* in your terminal window to find out all of
-these classes and also their subcommands.
+these classes and also their sub-commands.
 
 .. code:: bash
 
@@ -786,9 +790,9 @@ Data
 +=======+==============+===========+===================+============+==================================================================================================================================================+
 | 1     | conf\_path   | ``-c``    | ``--conf-path``   | Yes        | Configuration file path                                                                                                                          |
 +-------+--------------+-----------+-------------------+------------+--------------------------------------------------------------------------------------------------------------------------------------------------+
-| 2     | verbose      | ``-v``    | ``--verbose``     | No         | If specified, verbose mode will be turn on. Users can have feedback on upload task in progress. (Default: False)                                 |
+| 2     | verbose      |           | ``--verbose``     | No         | If specified, verbose mode will be turn on. Users can have feedback on upload task in progress. (Default: False)                                 |
 +-------+--------------+-----------+-------------------+------------+--------------------------------------------------------------------------------------------------------------------------------------------------+
-| 3     | drop         | ``-d``    | ``--drop``        | No         | If specified, data of old version would be replaced by the current version. Otherwise, current upload task would be rejected. (Default: False)   |
+| 3     | drop         |           | ``--drop``        | No         | If specified, data of old version would be replaced by the current version. Otherwise, current upload task would be rejected. (Default: False)   |
 +-------+--------------+-----------+-------------------+------------+--------------------------------------------------------------------------------------------------------------------------------------------------+
 
 -  *Examples*:

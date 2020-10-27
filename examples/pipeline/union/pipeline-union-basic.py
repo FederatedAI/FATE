@@ -24,6 +24,7 @@ from pipeline.interface import Data
 from pipeline.interface import Model
 
 from pipeline.utils.tools import load_job_config
+from pipeline.runtime.entity import JobParameters
 
 
 def main(config="../../config.yaml", namespace=""):
@@ -40,10 +41,10 @@ def main(config="../../config.yaml", namespace=""):
     pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest)
 
     reader_0 = Reader(name="reader_0")
-    reader_0.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_train_data)
+    reader_0.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data)
 
     reader_1 = Reader(name="reader_1")
-    reader_1.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_train_data)
+    reader_1.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data)
 
     dataio_0 = DataIO(name="dataio_0", with_label=True, output_format="dense", label_name="y",
                       missing_fill=False, outlier_replace=False)
@@ -59,9 +60,8 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.add_component(union_0, data=Data(data=[dataio_0.output.data, dataio_1.output.data]))
     pipeline.compile()
 
-    pipeline.fit(backend=backend, work_mode=work_mode)
-
-    print(pipeline.get_component("union_0").get_summary())
+    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
+    pipeline.fit(job_parameters)
 
 
 if __name__ == "__main__":

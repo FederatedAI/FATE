@@ -27,6 +27,7 @@ from pipeline.interface import Data
 from pipeline.interface import Model
 
 from pipeline.utils.tools import load_job_config
+from pipeline.runtime.entity import JobParameters
 
 
 def main(config="../../config.yaml", namespace=""):
@@ -46,21 +47,21 @@ def main(config="../../config.yaml", namespace=""):
     pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=host, arbiter=arbiter)
 
     reader_0 = Reader(name="reader_0")
-    reader_0.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_train_data)
-    reader_0.get_party_instance(role='host', party_id=host).algorithm_param(table=host_train_data)
+    reader_0.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data)
+    reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
 
     reader_1 = Reader(name="reader_1")
-    reader_1.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_train_data)
-    reader_1.get_party_instance(role='host', party_id=host).algorithm_param(table=host_train_data)
+    reader_1.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data)
+    reader_1.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
 
     dataio_0 = DataIO(name="dataio_0")
     dataio_1 = DataIO(name="dataio_1")
 
-    dataio_0.get_party_instance(role='guest', party_id=guest).algorithm_param(with_label=True, output_format="dense")
-    dataio_0.get_party_instance(role='host', party_id=host).algorithm_param(with_label=False)
+    dataio_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True, output_format="dense")
+    dataio_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
 
-    dataio_1.get_party_instance(role='guest', party_id=guest).algorithm_param(with_label=True, output_format="dense")
-    dataio_1.get_party_instance(role='host', party_id=host).algorithm_param(with_label=False)
+    dataio_1.get_party_instance(role='guest', party_id=guest).component_param(with_label=True, output_format="dense")
+    dataio_1.get_party_instance(role='host', party_id=host).component_param(with_label=False)
 
     intersect_0 = Intersection(name="intersection_0")
     intersect_1 = Intersection(name="intersection_1")
@@ -71,7 +72,7 @@ def main(config="../../config.yaml", namespace=""):
                            learning_rate=0.15, init_param={"init_method": "random_uniform"})
 
     evaluation_0 = Evaluation(name="evaluation_0", eval_type="binary", pos_label=1)
-    evaluation_0.get_party_instance(role='host', party_id=host).algorithm_param(need_run=False)
+    evaluation_0.get_party_instance(role='host', party_id=host).component_param(need_run=False)
 
     pipeline.add_component(reader_0)
     pipeline.add_component(reader_1)
@@ -85,11 +86,8 @@ def main(config="../../config.yaml", namespace=""):
 
     pipeline.compile()
 
-    pipeline.fit(backend=backend, work_mode=work_mode)
-
-    print(pipeline.get_component("union_0").get_summary())
-    print(pipeline.get_component("hetero_lr_0").get_summary())
-    print(pipeline.get_component("evaluation_0").get_summary())
+    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
+    pipeline.fit(job_parameters)
 
 
 if __name__ == "__main__":

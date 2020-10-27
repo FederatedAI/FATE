@@ -25,6 +25,7 @@ from pipeline.component import Reader
 from pipeline.interface import Data
 
 from pipeline.utils.tools import load_job_config
+from pipeline.runtime.entity import JobParameters
 
 
 def main(config="../../config.yaml", namespace=""):
@@ -51,17 +52,17 @@ def main(config="../../config.yaml", namespace=""):
     # define Reader components to read in data
     reader_0 = Reader(name="reader_0")
     # configure Reader for guest
-    reader_0.get_party_instance(role="guest", party_id=guest).algorithm_param(table=guest_train_data)
+    reader_0.get_party_instance(role="guest", party_id=guest).component_param(table=guest_train_data)
     # configure Reader for host
-    reader_0.get_party_instance(role="host", party_id=host).algorithm_param(table=host_train_data)
+    reader_0.get_party_instance(role="host", party_id=host).component_param(table=host_train_data)
 
     # define ColumnExpand components
     column_expand_0 = ColumnExpand(name="column_expand_0")
-    column_expand_0.get_party_instance(role="guest", party_id=guest).algorithm_param(need_run=True,
+    column_expand_0.get_party_instance(role="guest", party_id=guest).component_param(need_run=True,
                                                                                      method="manual",
                                                                                      append_header=["x_0", "x_1", "x_2", "x_3"],
                                                                                      fill_value=[0, 0.2, 0.5, 1])
-    column_expand_0.get_party_instance(role="host", party_id=host).algorithm_param(need_run=False)
+    column_expand_0.get_party_instance(role="host", party_id=host).component_param(need_run=False)
 
     # define DataIO components
     dataio_0 = DataIO(name="dataio_0")  # start component numbering at 0
@@ -69,9 +70,9 @@ def main(config="../../config.yaml", namespace=""):
     # get DataIO party instance of guest
     dataio_0_guest_party_instance = dataio_0.get_party_instance(role="guest", party_id=guest)
     # configure DataIO for guest
-    dataio_0_guest_party_instance.algorithm_param(with_label=True, output_format="dense")
+    dataio_0_guest_party_instance.component_param(with_label=True, output_format="dense")
     # get and configure DataIO party instance of host
-    dataio_0.get_party_instance(role="host", party_id=host).algorithm_param(with_label=False)
+    dataio_0.get_party_instance(role="host", party_id=host).component_param(with_label=False)
 
     # define Intersection components
     intersection_0 = Intersection(name="intersection_0", intersect_method="rsa",
@@ -105,7 +106,6 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.add_component(dataio_0, data=Data(data=column_expand_0.output.data))
     # set data input sources of intersection components
     pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
-    # set train & validate data of hetero_lr_0 component
 
     pipeline.add_component(hetero_lr_0, data=Data(train_data=intersection_0.output.data))
 
@@ -113,7 +113,8 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.compile()
 
     # fit model
-    pipeline.fit(backend=backend, work_mode=work_mode)
+    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
+    pipeline.fit(job_parameters)
     # query component summary
     print(pipeline.get_component("hetero_lr_0").get_summary())
 
@@ -129,7 +130,7 @@ def main(config="../../config.yaml", namespace=""):
     predict_pipeline.add_component(pipeline,
                                    data=Data(predict_input={pipeline.column_expand_0.input.data: reader_0.output.data}))
     # run predict model
-    predict_pipeline.predict(backend=backend, work_mode=work_mode)
+    predict_pipeline.predict(job_parameters)
 
 
 if __name__ == "__main__":

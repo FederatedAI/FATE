@@ -1,6 +1,10 @@
 Fate Flow Client SDK Guide
 ===========================
 
+[`中文`_]
+
+.. _中文: README_zh.rst
+
 Usage
 -----
 

@@ -14,8 +14,8 @@ FATE-Pipeline
 To enhance usability of FATE, starting at FATE-v1.5, FATE provides python APIs.
 User may develop federated learning models conveniently with
 `FATE-Pipeline <../python/fate_client/pipeline/README.rst>`__.
-We provide a host of Pipeline examples for each FATE module, please refer
-`pipeline <./pipeline>`__
+We provide a host of Pipeline examples for each FATE module and a quick start guide for Pipeline
+`here <./pipeline>`__
 
 DSL
 ---
@@ -35,7 +35,7 @@ Upgraded DSL(DSL v2) by FATE-v1.5 comes with the following major features:
 3. Standardize style of ``role_parameter`` and ``algorithm_parameter``.
 
 For DSL v2 examples, please refer `dsl/v2 <./dsl/v2>`__. For examples of
-the older version, please refer `dsl/v1 <./dsl/v1>`__. Please note that
+the older version, please refer `dsl/v1 <./dsl/v1>`__. This is the "federatedml-1.x-examples" in older version. Please note that
 starting at version 1.6, FATE may no longer support DSL v1.
 
 

@@ -15,6 +15,7 @@ class WorkMode(IntEnum):
 class Backend(IntEnum):
     EGGROLL = 0
     SPARK = 1
+    STANDALONE = 1
 
     def is_spark(self):
         return self.value == self.SPARK
@@ -25,8 +26,13 @@ class Backend(IntEnum):
 
 class EngineType(object):
     COMPUTING = "computing"
-    FEDERATION = "federation"
     STORAGE = "storage"
+    FEDERATION = "federation"
+
+
+class CoordinateProxyService(object):
+    rollsite = "rollsite"
+    nginx = 'nginx'
 
 
 class FederatedMode(object):

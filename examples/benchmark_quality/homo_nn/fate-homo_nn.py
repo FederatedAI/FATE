@@ -23,6 +23,7 @@ from pipeline.interface import Data
 from pipeline.utils.tools import load_job_config, JobConfig
 import tensorflow.keras.layers
 from tensorflow.keras import optimizers
+from pipeline.runtime.entity import JobParameters
 
 
 class dataset(object):
@@ -72,18 +73,18 @@ def main(config="../../config.yaml", param="param_conf.yaml", namespace=""):
         .set_roles(guest=config.parties.guest[0], host=hosts, arbiter=config.parties.arbiter)
 
     reader_0 = Reader(name="reader_0")
-    reader_0.get_party_instance(role='guest', party_id=config.parties.guest[0]).algorithm_param(table=guest_train_data)
+    reader_0.get_party_instance(role='guest', party_id=config.parties.guest[0]).component_param(table=guest_train_data)
     for i in range(num_host):
         reader_0.get_party_instance(role='host', party_id=hosts[i]) \
-            .algorithm_param(table=host_train_data[i])
+            .component_param(table=host_train_data[i])
 
     dataio_0 = DataIO(name="dataio_0", with_label=True)
     dataio_0.get_party_instance(role='guest', party_id=config.parties.guest[0]) \
-        .algorithm_param(with_label=True, output_format="dense")
-    dataio_0.get_party_instance(role='host', party_id=hosts).algorithm_param(with_label=True)
+        .component_param(with_label=True, output_format="dense")
+    dataio_0.get_party_instance(role='host', party_id=hosts).component_param(with_label=True)
 
     homo_nn_0 = HomoNN(name="homo_nn_0", encode_label=encode_label, max_iter=epoch, batch_size=batch_size,
-                       early_stop={"early_stop": "diff", "eps": 0.0001})
+                       early_stop={"early_stop": "diff", "eps": 0.0})
     for layer_config in layers:
         layer = getattr(tensorflow.keras.layers, layer_config["name"])
         layer_params = layer_config["params"]
@@ -98,7 +99,8 @@ def main(config="../../config.yaml", param="param_conf.yaml", namespace=""):
     pipeline.add_component(homo_nn_0, data=Data(train_data=dataio_0.output.data))
     pipeline.add_component(evaluation_0, data=Data(data=homo_nn_0.output.data))
     pipeline.compile()
-    pipeline.fit(backend=config.backend, work_mode=config.work_mode)
+    job_parameters = JobParameters(backend=config.backend, work_mode=config.work_mode)
+    pipeline.fit(job_parameters)
     metric_summary = pipeline.get_component("evaluation_0").get_summary()
     data_summary = dict(
         train={"guest": guest_train_data["name"], **{f"host_{i}": host_train_data[i]["name"] for i in range(num_host)}},

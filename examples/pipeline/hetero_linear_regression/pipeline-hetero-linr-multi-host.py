@@ -21,6 +21,7 @@ from pipeline.component import Reader
 from pipeline.interface import Data
 
 from pipeline.utils.tools import load_job_config
+from pipeline.runtime.entity import JobParameters
 
 
 def main(config="../../config.yaml", namespace=""):
@@ -42,14 +43,14 @@ def main(config="../../config.yaml", namespace=""):
     pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=hosts, arbiter=arbiter)
 
     reader_0 = Reader(name="reader_0")
-    reader_0.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_train_data)
-    reader_0.get_party_instance(role='host', party_id=hosts[0]).algorithm_param(table=host_train_data[0])
-    reader_0.get_party_instance(role='host', party_id=hosts[1]).algorithm_param(table=host_train_data[1])
+    reader_0.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data)
+    reader_0.get_party_instance(role='host', party_id=hosts[0]).component_param(table=host_train_data[0])
+    reader_0.get_party_instance(role='host', party_id=hosts[1]).component_param(table=host_train_data[1])
 
     dataio_0 = DataIO(name="dataio_0")
-    dataio_0.get_party_instance(role='guest', party_id=guest).algorithm_param(with_label=True, label_name="motor_speed",
+    dataio_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True, label_name="motor_speed",
                                                                              label_type="float", output_format="dense")
-    dataio_0.get_party_instance(role='host', party_id=hosts).algorithm_param(with_label=False)
+    dataio_0.get_party_instance(role='host', party_id=hosts).component_param(with_label=False)
 
     intersection_0 = Intersection(name="intersection_0")
     hetero_linr_0 = HeteroLinR(name="hetero_linr_0", penalty="L2", optimizer="sgd", tol=0.001,
@@ -59,8 +60,8 @@ def main(config="../../config.yaml", namespace=""):
                                encrypted_mode_calculator_param={"mode": "fast"})
 
     evaluation_0 = Evaluation(name="evaluation_0", eval_type="regression", pos_label=1)
-    # evaluation_0.get_party_instance(role='host', party_id=hosts[0]).algorithm_param(need_run=False)
-    # evaluation_0.get_party_instance(role='host', party_id=hosts[1]).algorithm_param(need_run=False)
+    # evaluation_0.get_party_instance(role='host', party_id=hosts[0]).component_param(need_run=False)
+    # evaluation_0.get_party_instance(role='host', party_id=hosts[1]).component_param(need_run=False)
 
     pipeline.add_component(reader_0)
     pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
@@ -68,14 +69,10 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.add_component(hetero_linr_0, data=Data(train_data=intersection_0.output.data))
     pipeline.add_component(evaluation_0, data=Data(data=hetero_linr_0.output.data))
 
-
     pipeline.compile()
 
-    pipeline.fit(backend=backend, work_mode=work_mode)
-
-    print (pipeline.get_component("hetero_linr_0").get_summary())
-    print (pipeline.get_component("evaluation_0").get_summary())
-
+    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
+    pipeline.fit(job_parameters)
 
     # predict
     # deploy required components
@@ -89,7 +86,7 @@ def main(config="../../config.yaml", namespace=""):
     predict_pipeline.add_component(pipeline,
                                    data=Data(predict_input={pipeline.dataio_0.input.data: reader_0.output.data}))
     # run predict model
-    predict_pipeline.predict(backend=backend, work_mode=work_mode)
+    predict_pipeline.predict(job_parameters)
 
 
 if __name__ == "__main__":

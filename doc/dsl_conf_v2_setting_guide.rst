@@ -303,6 +303,11 @@ Besides the dsl conf, user also need to prepare a submit runtime conf to set the
      - num-executors, executor-cores
      - parameter for SPARK computing engine
 
+   * - rabbitmq_run
+     -
+     - queue, exchange etc.
+     - parameters for creation of queue, exchange in rabbitmq
+
    * - task_parallelism
      - 2
      - positive int
@@ -449,3 +454,194 @@ The parameters set in algorithm parameters need not be copied into host role par
 Algorithm parameters will be copied for every party.
 
 
+Prediction configuration
+------------------------
+
+Please note that in dsl v2，predict dsl is nnot automatically generated after training.
+User should first deploy needed components.
+Please refer to`FATE-Flow CLI <../python/fate_flow/doc/Fate_Flow_CLI_v2_Guide.rst#dsl>`__'
+for details on using deploy command:
+
+.. code-block:: bash
+
+    flow job dsl --cpn-list ...
+
+Note that because Reader component only reads data from storage engine, it should not be deployed but added.
+
+**Examples**
+Use a training dsl:
+
+.. code-block:: json
+
+    "components": {
+        "reader_0": {
+            "module": "Reader",
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
+        },
+        "dataio_0": {
+            "module": "DataIO",
+            "input": {
+                "data": {
+                    "data": [
+                        "reader_0.data"
+                    ]
+                }
+            },
+            "output": {
+                "data": [
+                    "data"
+                ],
+                "model": [
+                    "model"
+                ]
+            }
+        },
+        "intersection_0": {
+            "module": "Intersection",
+            "input": {
+                "data": {
+                    "data": [
+                        "dataio_0.data"
+                    ]
+                }
+            },
+            "output": {
+                "data": ["data": [
+                    "data"
+                ]
+            }
+        },
+        "hetero_nn_0": {
+            "module": "HeteroNN",
+            "input": {
+                "data": {
+                    "train_data": [
+                        "intersection_0.data"
+                    ]
+                }
+            },
+            "output": {
+                "data": [
+                    "data"
+                ],
+                "model": [
+                    "model"
+                ]
+            }
+        }
+    }
+
+Use the following command to generate predict dsl:
+
+.. code-block:: bash
+
+    flow job dsl --train-dsl-path $job_dsl --cpn-list "dataio_0, intersection_0, hetero_nn_0" --version 2 -o ./
+
+Generated dsl:
+
+.. code-block::: json
+
+    "components": {
+        "dataio_0": {
+            "module": "DataIO",
+            "input": {
+                "model": [
+                    "pipeline.dataio_0.model"
+                ],
+                "data": {
+                    "data": [
+                        "reader_0.data"
+                    ]
+                }
+            },
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
+        },
+        "intersection_0": {
+            "module": "Intersection",
+            "output": {
+                "data": [
+                    "data"
+                ]
+            },
+            "input": {
+                "data": {
+                    "data": [
+                        "dataio_0.data"
+                    ]
+                }
+            }
+        },
+        "hetero_nn_0": {
+            "module": "HeteroNN",
+            "input": {
+                "model": [
+                    "pipeline.hetero_nn_0.model"
+                ],
+                "data": {
+                    "test_data": [
+                        "intersection_0.data"
+                    ]
+                }
+            },
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
+        }
+    }
+
+To prepare generated dsl for prediction, user should add "reader" component to this dsl and edit dataio_0's input data:
+
+.. code-block:: json
+
+    "reader_predict": {
+        "module": "Reader",
+        "output": {
+            "data": [
+                "data"
+            ]
+        }
+     },
+     "dataio_0": {
+        "module": "DataIO",
+        "input": {
+             ...
+             "data": {
+                 "data": [
+                     "reader_0.data"
+                 ]
+              }
+         },
+         ...
+        },
+        ...
+     }
+
+Optionally, use can add additional component(s) to predict dsl, like ``Evaluation``:
+
+.. code-block:: json
+
+    "evaluation_0": {
+        "module": "Evaluation",
+        "input": {
+            "data": {
+                "data": [
+                    "hetero_nn_0.data"
+                ]
+            }
+         },
+         "output": {
+             "data": [
+                 "data"
+             ]
+          }
+    }

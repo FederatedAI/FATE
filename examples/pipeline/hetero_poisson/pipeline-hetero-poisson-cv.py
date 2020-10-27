@@ -24,6 +24,7 @@ from pipeline.component import Reader
 from pipeline.interface import Data
 
 from pipeline.utils.tools import load_job_config
+from pipeline.runtime.entity import JobParameters
 
 
 def main(config="../../config.yaml", namespace=""):
@@ -43,14 +44,14 @@ def main(config="../../config.yaml", namespace=""):
 
     pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=host, arbiter=arbiter)
     reader_0 = Reader(name="reader_0")
-    reader_0.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_train_data)
-    reader_0.get_party_instance(role='host', party_id=host).algorithm_param(table=host_train_data)
+    reader_0.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data)
+    reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
 
     dataio_0 = DataIO(name="dataio_0")
-    dataio_0.get_party_instance(role='guest', party_id=guest).algorithm_param(with_label=True, label_name="doctorco",
+    dataio_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True, label_name="doctorco",
                                                                              label_type="float", output_format="dense",
                                                                               missing_fill=True, outlier_replace=False)
-    dataio_0.get_party_instance(role='host', party_id=host).algorithm_param(with_label=False, output_format="dense",
+    dataio_0.get_party_instance(role='host', party_id=host).component_param(with_label=False, output_format="dense",
                                                                             outlier_replace=False)
 
     intersection_0 = Intersection(name="intersection_0")
@@ -74,11 +75,8 @@ def main(config="../../config.yaml", namespace=""):
 
     pipeline.compile()
 
-    pipeline.fit(backend=backend, work_mode=work_mode)
-
-    print (pipeline.get_component("hetero_poisson_0").get_model_param())
-    print (pipeline.get_component("hetero_poisson_0").get_summary())
-    print (pipeline.get_component("evaluation_0").get_summary())
+    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
+    pipeline.fit(job_parameters)
 
 
 if __name__ == "__main__":

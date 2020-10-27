@@ -114,18 +114,15 @@ def save_pipelined_model(job_id, role, party_id):
 @manager.route('/<job_id>/<role>/<party_id>/stop/<stop_status>', methods=['POST'])
 def stop_job(job_id, role, party_id, stop_status):
     jobs = JobSaver.query_job(job_id=job_id, role=role, party_id=party_id)
+    kill_status = True
+    kill_details = {}
     for job in jobs:
-        JobController.stop_job(job=job, stop_status=stop_status)
-    return get_json_result(retcode=0, retmsg='success')
-
-
-@manager.route('/<job_id>/<role>/<party_id>/cancel', methods=['POST'])
-def cancel_job(job_id, role, party_id):
-    status = JobController.cancel_job(job_id=job_id, role=role, party_id=int(party_id))
-    if status:
-        return get_json_result(retcode=0, retmsg='cancel job success')
-    else:
-        return get_json_result(retcode=RetCode.OPERATING_ERROR, retmsg='cancel job failed')
+        kill_job_status, kill_job_details = JobController.stop_job(job=job, stop_status=stop_status)
+        kill_status = kill_status & kill_job_status
+        kill_details[job_id] = kill_job_details
+    return get_json_result(retcode=RetCode.SUCCESS if kill_status else RetCode.EXCEPTION_ERROR,
+                           retmsg='success' if kill_status else 'failed',
+                           data=kill_details)
 
 
 @manager.route('/<job_id>/<role>/<party_id>/clean', methods=['POST'])
@@ -212,9 +209,11 @@ def task_status(job_id, component_name, task_id, task_version, role, party_id, s
 @manager.route('/<job_id>/<component_name>/<task_id>/<task_version>/<role>/<party_id>/stop/<stop_status>', methods=['POST'])
 def stop_task(job_id, component_name, task_id, task_version, role, party_id, stop_status):
     tasks = JobSaver.query_task(job_id=job_id, task_id=task_id, task_version=task_version, role=role, party_id=int(party_id))
+    kill_status = True
     for task in tasks:
-        TaskController.stop_task(task=task, stop_status=stop_status)
-    return get_json_result(retcode=0, retmsg='success')
+        kill_status = kill_status & TaskController.stop_task(task=task, stop_status=stop_status)
+    return get_json_result(retcode=RetCode.SUCCESS if kill_status else RetCode.EXCEPTION_ERROR,
+                           retmsg='success' if kill_status else 'failed')
 
 
 @manager.route('/<job_id>/<component_name>/<task_id>/<task_version>/<role>/<party_id>/clean/<content_type>', methods=['POST'])

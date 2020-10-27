@@ -13,11 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import os
-import dotenv
 
-from fate_arch.common.file_utils import get_project_base_directory
-from fate_flow.entity.types import ProcessRole
+from fate_arch.common.versions import get_versions
 
 
 class RuntimeConfig(object):
@@ -43,7 +40,7 @@ class RuntimeConfig(object):
 
     @classmethod
     def init_env(cls):
-        RuntimeConfig.ENV.update(dotenv.dotenv_values(dotenv_path=os.path.join(get_project_base_directory(), "fate.env")))
+        RuntimeConfig.ENV.update(get_versions())
 
     @classmethod
     def get_env(cls, key):
@@ -52,4 +49,3 @@ class RuntimeConfig(object):
     @classmethod
     def set_process_role(cls, process_role: PROCESS_ROLE):
         RuntimeConfig.PROCESS_ROLE = process_role
-
