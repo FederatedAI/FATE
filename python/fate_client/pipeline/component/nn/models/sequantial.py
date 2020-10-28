@@ -21,6 +21,9 @@ class Sequential(object):
         self.__config_type = None
         self._model = None
 
+    def is_empty(self):
+        return self._model is None
+
     def add(self, layer):
         if isinstance(layer, base_layer.Layer):
             layer_type = "keras"
