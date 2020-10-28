@@ -53,7 +53,7 @@ Then each component should be defined on the second level. Here is an example of
 As the example shows, user define the component name as key of this module.
 
 Please note that in DSL V2, all modeling task config should contain a **Reader** component to reader data from storage service,
-this component has "output" filed only, like the following:
+this component has "output" field only, like the following:
 
 .. code-block:: json
 
@@ -140,7 +140,7 @@ Submit Runtime Conf
 Besides the dsl conf, user also need to prepare a submit runtime conf to set parameters for each component.
 
 :dsl_version:
-  To enabled using of dsl V2, this filed should be set.
+  To enabled using of dsl V2, this field should be set.
 
   .. code-block::json
 
@@ -180,7 +180,7 @@ Besides the dsl conf, user also need to prepare a submit runtime conf to set par
 
   It contains two sub-fields ``common`` and ``role``:
 
-  * parameter specification under ``common`` filed applies to all parties
+  * parameter specification under ``common`` field applies to all parties
   * parameter values under ``role`` field are only taken by each corresponding party
 
   .. code-block:: json
@@ -303,7 +303,7 @@ Besides the dsl conf, user also need to prepare a submit runtime conf to set par
 
   Same as component_parameters, it also has two sub-fields ``common`` and ``role``:
 
-  * parameter specification under ``common`` filed applies to all parties
+  * parameter specification under ``common`` field applies to all parties
   * parameter values under ``role`` field are only taken by each corresponding party
 
   .. code-block:: json
