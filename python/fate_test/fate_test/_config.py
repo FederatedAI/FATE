@@ -29,6 +29,7 @@ backend: 0
 # base dir for data upload conf eg
 # examples/data/breast_hetero_guest.csv -> $data_base_dir/examples/data/breast_hetero_guest.csv
 data_base_dir: ../../../
+clean_data: true
 parties:
   guest: [10000]
   host: [9999, 10000]
@@ -131,6 +132,7 @@ class Config(object):
         self.work_mode = config["work_mode"]
         self.backend = config["backend"]
         self.data_base_dir = config["data_base_dir"]
+        self.clean_data = config.get("clean_data", True)
         self.parties = Parties.from_dict(config["parties"])
         self.party_to_service_id = {}
         self.service_id_to_service = {}
