@@ -708,7 +708,7 @@ cd /data/projects/fate/examples/toy_example/
 python upload_default_data.py -m 1
 ```
 
-**For more details, please refer to**[Script README](../../examples/scripts/README.rst)
+**For more details, please refer to**[Script README](../examples/scripts/README.rst)
 
 ### 5.2.2 Fast Mode:
 
