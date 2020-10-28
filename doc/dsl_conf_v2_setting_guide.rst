@@ -429,7 +429,7 @@ Besides the dsl conf, user also need to prepare a submit runtime conf to set par
      "job_parameters": {
         "common": {
            "work_mode": 1,
-           "dsl_version": 2,
+           "backend": 0,
            "eggroll_run": {
               "eggroll.session.processors.per.node": 2
            }
