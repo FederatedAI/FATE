@@ -108,7 +108,7 @@ flow job stop -j $JOB_ID
 
 - *Examples*:
 ```bash
-flow job query -r guest -p 9999 -s complete
+flow job query -r guest -p 9999 -s success
 flow job query -j $JOB_ID
 ```
 
@@ -150,7 +150,7 @@ flow job clean -j $JOB_ID -cpn hetero_feature_binning_0
 - *Examples*:
 ```bash
 flow job view -r guest -p 9999
-flow job view -j $JOB_ID -s complete
+flow job view -j $JOB_ID -s success
 ```
 
 
@@ -712,7 +712,7 @@ flow data upload-history --job-id $JOB_ID
 
 ```bash
 flow task query -j $JOB_ID -p 9999 -r guest
-flow task query -cpn hetero_feature_binning_0 -s complete
+flow task query -cpn hetero_feature_binning_0 -s success
 ```
 
 

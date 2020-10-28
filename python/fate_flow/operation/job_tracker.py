@@ -439,7 +439,7 @@ class Tracker(object):
                                                                                                  self.role,
                                                                                                  self.party_id))
             # clean up the last tables of the federation
-            federation_temp_namespace = job_utils.generate_federated_id(self.task_id, self.task_version)
+            federation_temp_namespace = job_utils.generate_task_version_id(self.task_id, self.task_version)
             sess.computing.cleanup(namespace=federation_temp_namespace, name="*")
             schedule_logger(self.job_id).info('clean table by namespace {} on {} {} done'.format(federation_temp_namespace,
                                                                                                  self.role,
@@ -448,7 +448,7 @@ class Tracker(object):
             if self.job_parameters.federation_engine == FederationEngine.RABBITMQ and self.role != "local":
                 schedule_logger(self.job_id).info('rabbitmq start clean up')
                 parties = [Party(k, p) for k, v in runtime_conf['role'].items() for p in v]
-                federation_session_id = job_utils.generate_federated_id(self.task_id, self.task_version)
+                federation_session_id = job_utils.generate_task_version_id(self.task_id, self.task_version)
                 component_parameters_on_party = copy.deepcopy(runtime_conf)
                 component_parameters_on_party["local"] = component_parameters_on_party["initiator"]
                 sess.init_federation(federation_session_id=federation_session_id,

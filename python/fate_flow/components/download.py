@@ -20,15 +20,15 @@ from fate_flow.entity.metric import Metric, MetricMeta
 from fate_arch import storage
 from fate_flow.utils import job_utils
 from fate_flow.scheduling_apps.client import ControllerClient
+from fate_flow.components.component_base import ComponentBase
 
 
 LOGGER = log.getLogger()
 
 
-class Download(object):
+class Download(ComponentBase):
     def __init__(self):
-        self.taskid = ''
-        self.tracker = None
+        super(Download, self).__init__()
         self.parameters = {}
 
     def run(self, component_parameters=None, args=None):
@@ -67,18 +67,6 @@ class Download(object):
             LOGGER.info("===== export {} lines totally =====".format(lines))
             LOGGER.info('===== export data finish =====')
             LOGGER.info('===== export data file path:{} ====='.format(os.path.abspath(self.parameters["output_path"])))
-
-    def set_taskid(self, taskid):
-        self.taskid = taskid
-
-    def set_tracker(self, tracker):
-        self.tracker = tracker
-
-    def save_data(self):
-        return None
-
-    def export_model(self):
-        return None
 
     def callback_metric(self, metric_name, metric_namespace, metric_data):
         self.tracker.log_metric_data(metric_name=metric_name,

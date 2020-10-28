@@ -19,18 +19,23 @@ LOGGER = log.getLogger()
 
 
 class ComponentBase(object):
+    def __init__(self):
+        self.task_version_id = ''
+        self.tracker = None
+        self.model_output = None
+        self.data_output = None
+
     def run(self, component_parameters: dict = None, run_args: dict = None):
         pass
 
     def set_tracker(self, tracker):
-        pass
+        self.tracker = tracker
 
     def save_data(self):
-        pass
+        return self.data_output
 
     def export_model(self):
-        pass
+        return self.model_output
 
-    def set_taskid(self, taskid):
-        pass
-
+    def set_task_version_id(self, task_version_id):
+        self.task_version_id = task_version_id
