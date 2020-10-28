@@ -10,9 +10,6 @@
         ],
         "host": [
             9999
-        ],
-        "arbiter": [
-            9999
         ]
     },
     "job_parameters": {
