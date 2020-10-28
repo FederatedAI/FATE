@@ -139,6 +139,11 @@ Submit Runtime Conf
 
 Besides the dsl conf, user also need to prepare a submit runtime conf to set the parameters of each component.
 
+:dsl_version:
+  To enabled using of dsl V2, this filed should be set.
+  .. code-block::json
+    "dsl_version": 2
+
 :initiator:
   To begin with, the initiator should be specified in this runtime conf. Here is an example of setting initiator:
 
@@ -167,92 +172,121 @@ Besides the dsl conf, user also need to prepare a submit runtime conf to set the
         ]
      }
 
-:role_parameters: Parameters that differ from party to party should be specified here. Please note that role parameters need to be wrapped into a list.
-  Inside the role_parameters, party names are used as key and parameters of these parties are values. Take the following structure as an example:
-
+:component_parameters: Running parameters for component specified in dsl should be specified here. It contains two subfields "common" and "role",
+parameters under "common" filed means that every party use those parameters, under "role" means only the config party use them.
   .. code-block:: json
 
-    "guest": {
-      "0": {
-        "reader_0": {
-            "table": {"namespace": "guest",
-                      "name": "table"}
-        },
-        "dataio_0": {
-            "input_format": "dense",
-            "with_label": true
-        }
-      }
-    },
-    "host": {
-      "0": {
-        "reader_0": {
-            "table": {"namespace": "host",
-                      "name": "table"}
-        },
-        "dataio_0": {
-            "input_format": "tag",
-            "with_label": false
-        }
-      }
-    }
-
-  The "0" indicates that it is the 0_th party of some role(0-based). User can config parameters for each component.
-  The component names should match those defined in the dsl config file.
-  The parameters of each component are defined in `Param <../python/federatedml/param>`_ class.
-  Parties can be packed together and share configuration, for examples:
-
-  .. code-block:: json
-
-    "host": {
-      "0|2": {
-        "dataio_0": {
-            "input_format": "tag",
-            "with_label": false
-        }
+   "component_parameters": {
+      "common": {
+          "component_x": {
+          },
+          ...
       },
-      "1": {
-        "dataio_0": {
-           "input_format": "dense",
-           "with_label": false
-        }
+      "role" {
+         ...
       }
-    }
+   }
 
-:algorithm_parameters: If some parameters are the same among all parties, they can be set in algorithm_parameters. Here is an example showing how to do that.
+  :role: Inside the role, party names are used as key and parameters of these parties are values. Take the following structure as an example:
 
   .. code-block:: json
-
-    "hetero_feature_binning_0": {
-        ...
-    },
-    "hetero_feature_selection_0": {
-        ...
-    },
-    "hetero_lr_0": {
-      "penalty": "L2",
-      "optimizer": "rmsprop",
-      "eps": 1e-5,
-      "alpha": 0.01,
-      "max_iter": 10,
-      "converge_func": "diff",
-      "batch_size": 320,
-      "learning_rate": 0.15,
-      "init_param": {
-        "init_method": "random_uniform"
+   "role": {
+       "guest": {
+         "0": {
+            "reader_0": {
+               "table": {"namespace": "guest",
+                         "name": "table"}
+               },
+            "dataio_0": {
+               "input_format": "dense",
+               "with_label": true
+            }
+         }
       },
-      "cv_param": {
-        "n_splits": 5,
-        "shuffle": false,
-        "random_seed": 103,
-        "need_cv": false,
-
+      "host": {
+         "0": {
+            "reader_0": {
+               "table": {"namespace": "host",
+                         "name": "table"}
+            },
+            "dataio_0": {
+               "input_format": "tag",
+               "with_label": false
+           }
+         }
       }
-    }
+   }
 
-  Same with the form in role parameters, each key of the parameters are names of components that are defined in dsl config file.
+    The "0" indicates that it is the 0_th party of some role(0-based). User can config parameters for each component.
+    The component names should match those defined in the dsl config file.
+    The parameters of each component are defined in `Param <../python/federatedml/param>`_ class.
+    Parties can be packed together and share configuration, for examples:
+
+    .. code-block:: json
+     "role": {
+        "host": {
+           "0|2": {
+              "dataio_0": {
+                 "input_format": "tag",
+                 "with_label": false
+              }
+           },
+           "1": {
+              "dataio_0": {
+                 "input_format": "dense",
+                 "with_label": false
+              }
+           }
+        }
+     }
+
+  :common: If some parameters are the same among all parties, they can be set in algorithm_parameters. Here is an example showing how to do that.
+
+  .. code-block:: json
+   "common": {
+      "hetero_feature_binning_0": {
+         ...
+      },
+      "hetero_feature_selection_0": {
+         ...
+      },
+      "hetero_lr_0": {
+         "penalty": "L2",
+         "optimizer": "rmsprop",
+         "eps": 1e-5,
+         "alpha": 0.01,
+         "max_iter": 10,
+         "converge_func": "diff",
+         "batch_size": 320,
+         "learning_rate": 0.15,
+         "init_param": {
+            "init_method": "random_uniform"
+         },
+         "cv_param": {
+            "n_splits": 5,
+            "shuffle": false,
+            "random_seed": 103,
+            "need_cv": false,
+
+         }
+      }
+   }
+
+  Same with the form in role, each key of the parameters are names of components that are defined in dsl config file.
 
 :job_parameters: job runtime parameters; please note that to enable DSL V2, **dsl_version** must be set to **2**.
+Same with component_parameters, it also has two subfields "common" and "role", "common" means that every party use those job parameters,
+"role" means only the config party use them.
+
+   .. code-block:: json
+   "job_parameters": {
+      "common": {
+         ...
+      },
+      "role": {
+         ...
+      }
+   }
 
 .. list-table:: Configurable Job Parameters
    :widths: 20 20 30 30
@@ -277,11 +311,6 @@ Besides the dsl conf, user also need to prepare a submit runtime conf to set the
      - 0
      - 0, 1
      - 0 for EGGROLL, 1 for SPARK
-
-   * - dsl_version
-     - 1
-     - 1, 2
-     - version for dsl parser
 
    * - federated_status_collect_type
      - PUSH
@@ -368,11 +397,12 @@ Besides the dsl conf, user also need to prepare a submit runtime conf to set the
 .. code-block:: json
 
      "job_parameters": {
-        "work_mode": 1,
-        "backend": 0,
-        "dsl_version": 2,
-        "eggroll_run": {
-           "eggroll.session.processors.per.node": 2
+        "common": {
+           "work_mode": 1,
+           "dsl_version": 2,
+           "eggroll_run": {
+              "eggroll.session.processors.per.node": 2
+           }
         }
      }
 
@@ -381,12 +411,13 @@ Besides the dsl conf, user also need to prepare a submit runtime conf to set the
 .. code-block:: json
 
      "job_parameters": {
-        "work_mode": 1,
-        "backend": 1,
-        "dsl_version": 2,
-        "spark_run": {
-           "num-executors": 1,
-           "executor-cores": 2
+        "common": {
+            "work_mode": 1,
+            "backend": 1,
+            "spark_run": {
+               "num-executors": 1,
+               "executor-cores": 2
+            }
         }
      }
 
@@ -414,44 +445,45 @@ For multi-host modeling case, all the host's party ids should be list in the rol
       ]
    }
 
-Each parameter set for host should also be list in a list. The number of elements should match the number of hosts.
+Each parameter set for host should also be config The number of elements should match the number of hosts.
 
 .. code-block:: json
-
-   "host": {
-      "0": {
-        "reader_0": {
-          "table":
-            {
-              "name": "hetero_breast_host_0",
-              "namespace": "hetero_breast_host"
+   "component_parameters": {
+      "role": {
+         "host": {
+            "0": {
+               "reader_0": {
+                  "table":
+                   {
+                     "name": "hetero_breast_host_0",
+                     "namespace": "hetero_breast_host"
+                   }
+               }
+            },
+            "1": {
+               "reader_0": {
+                  "table":
+                  {
+                     "name": "hetero_breast_host_1",
+                     "namespace": "hetero_breast_host"
+                  }
+               }
+            },
+            "2": {
+               "reader_0": {
+                  "table":
+                  {
+                     "name": "hetero_breast_host_2",
+                     "namespace": "hetero_breast_host"
+                  }
+               }
             }
-          }
-        }
-      },
-      "1": {
-        "reader_0": {
-          "table":
-            {
-              "name": "hetero_breast_host_1",
-              "namespace": "hetero_breast_host"
-            }
-          }
-        }
-      },
-      "2": {
-        "reader_0": {
-          "table":
-            {
-              "name": "hetero_breast_host_2",
-              "namespace": "hetero_breast_host"
-            }
-          }
-        }
+         }
       }
+   }
 
-The parameters set in algorithm parameters need not be copied into host role parameters.
-Algorithm parameters will be copied for every party.
+The parameters set in common parameters need not be copied into host role parameters.
+Common parameters will be copied for every party.
 
 
 Prediction configuration
