@@ -106,7 +106,8 @@ class Table(CTableABC):
 
     @computing_profile
     def collect(self, **kwargs):
-        return iter(self._rdd.collect())
+#         return iter(self._rdd.collect())
+        return self._rdd.toLocalIterator()
 
     @computing_profile
     def take(self, n=1, **kwargs):
