@@ -142,7 +142,7 @@ Besides the dsl conf, user also need to prepare a submit runtime conf to set par
 :dsl_version:
   To enabled using of dsl V2, this field should be set.
 
-  .. code-block::json
+  .. code-block:: json
 
      "dsl_version": 2
 
