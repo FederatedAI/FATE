@@ -67,7 +67,7 @@ this component has "output" filed only, like the following:
 Field Specification
 ^^^^^^^^^^^^^^^^^^^
 
-:module: Specify which component to use. This field should strictly match the file name in federatedml/conf/setting_conf except the .json suffix.
+:module: Specify which component to use. This field should strictly match the file name in federatedml/conf/setting_conf except the ``.json`` suffix.
 
 :input: There are two types of input, data and model.
 
@@ -137,12 +137,14 @@ Field Specification
 Submit Runtime Conf
 -------------------
 
-Besides the dsl conf, user also need to prepare a submit runtime conf to set the parameters of each component.
+Besides the dsl conf, user also need to prepare a submit runtime conf to set parameters for each component.
 
 :dsl_version:
   To enabled using of dsl V2, this filed should be set.
+
   .. code-block::json
-    "dsl_version": 2
+
+     "dsl_version": 2
 
 :initiator:
   To begin with, the initiator should be specified in this runtime conf. Here is an example of setting initiator:
@@ -155,138 +157,151 @@ Besides the dsl conf, user also need to prepare a submit runtime conf to set the
      }
 
 
-:role: All the roles involved in this modeling task should be specified. Each role comes with role name and corresponding party id(s).
-       Ids are always specified in the form of list since there may exist multiple parties of the same role.
+:role:
+  All the roles involved in this modeling task should be specified. Each role comes with role name and corresponding party id(s).
+  Ids are always specified in the form of list since there may exist multiple parties of the same role.
 
   .. code-block:: json
 
      "role": {
-        "guest": [
-          10000
-        ],
-        "host": [
-          10000
-        ],
-        "arbiter": [
-          10000
-        ]
+         "guest": [
+             10000
+         ],
+         "host": [
+             10000
+         ],
+         "arbiter": [
+             10000
+         ]
      }
 
-:component_parameters: Running parameters for component specified in dsl should be specified here. It contains two subfields "common" and "role",
-parameters under "common" filed means that every party use those parameters, under "role" means only the config party use them.
-  .. code-block:: json
-
-   "component_parameters": {
-      "common": {
-          "component_x": {
-          },
-          ...
-      },
-      "role" {
-         ...
-      }
-   }
-
-  :role: Inside the role, party names are used as key and parameters of these parties are values. Take the following structure as an example:
+:component_parameters:
+  Running parameters for components included in dsl should be specified here. It contains two sub-fields ``common`` and ``role``:
+  parameter specification under ``common`` filed applies to all parties, while parameter values under ``role`` field are only taken by the corresponding party.
 
   .. code-block:: json
-   "role": {
-       "guest": {
-         "0": {
-            "reader_0": {
-               "table": {"namespace": "guest",
-                         "name": "table"}
-               },
-            "dataio_0": {
-               "input_format": "dense",
-               "with_label": true
-            }
-         }
-      },
-      "host": {
-         "0": {
-            "reader_0": {
-               "table": {"namespace": "host",
-                         "name": "table"}
-            },
-            "dataio_0": {
-               "input_format": "tag",
-               "with_label": false
-           }
-         }
-      }
-   }
 
-    The "0" indicates that it is the 0_th party of some role(0-based). User can config parameters for each component.
-    The component names should match those defined in the dsl config file.
-    The parameters of each component are defined in `Param <../python/federatedml/param>`_ class.
-    Parties can be packed together and share configuration, for examples:
+     "component_parameters": {
+         "common": {
+             "component_x": {
+                 ...
+             },
+             ...
+         },
+         "role": {
+             ...
+         }
+     }
+
+  :role:
+    Inside the ``role`` field, party names are used as key, parameter specification as values. Take the following json as an example:
 
     .. code-block:: json
-     "role": {
-        "host": {
-           "0|2": {
-              "dataio_0": {
-                 "input_format": "tag",
-                 "with_label": false
-              }
-           },
-           "1": {
-              "dataio_0": {
-                 "input_format": "dense",
-                 "with_label": false
-              }
-           }
+
+       "role": {
+            "guest": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                                    "namespace": "guest",
+                                    "name": "table"
+                        }
+                    },
+                    "dataio_0": {
+                        "input_format": "dense",
+                        "with_label": true
+                    }
+                }
+            },
+            "host": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                                    "namespace": "host",
+                                    "name": "table"}
+                        },
+                    "dataio_0": {
+                        "input_format": "tag",
+                        "with_label": false
+                    }
+                }
+            }
         }
-     }
 
-  :common: If some parameters are the same among all parties, they can be set in algorithm_parameters. Here is an example showing how to do that.
+    "0" indicates that it is the 0_th party of some role(indexing starts at 0). User can config parameters for each component.
+    Component names should match those defined in the dsl config file.
+    Parameters of each component are defined in `Param <../python/federatedml/param>`_ class.
+    Parties can be packed together and share configuration, for example:
 
-  .. code-block:: json
-   "common": {
-      "hetero_feature_binning_0": {
-         ...
-      },
-      "hetero_feature_selection_0": {
-         ...
-      },
-      "hetero_lr_0": {
-         "penalty": "L2",
-         "optimizer": "rmsprop",
-         "eps": 1e-5,
-         "alpha": 0.01,
-         "max_iter": 10,
-         "converge_func": "diff",
-         "batch_size": 320,
-         "learning_rate": 0.15,
-         "init_param": {
-            "init_method": "random_uniform"
-         },
-         "cv_param": {
-            "n_splits": 5,
-            "shuffle": false,
-            "random_seed": 103,
-            "need_cv": false,
+    .. code-block:: json
 
-         }
-      }
-   }
+       "role": {
+            "host": {
+                "0|2": {
+                    "dataio_0": {
+                        "input_format": "tag",
+                        "with_label": false
+                    }
+                },
+                "1": {
+                    "dataio_0": {
+                        "input_format": "dense",
+                        "with_label": false
+                    }
+                }
+            }
+        }
 
-  Same with the form in role, each key of the parameters are names of components that are defined in dsl config file.
+  :common:
+    If some parameters are the same among all parties, they can be set in ``common``. Here is an example:
 
-:job_parameters: job runtime parameters; please note that to enable DSL V2, **dsl_version** must be set to **2**.
-Same with component_parameters, it also has two subfields "common" and "role", "common" means that every party use those job parameters,
-"role" means only the config party use them.
+    .. code-block:: json
+
+        "common": {
+            "hetero_feature_binning_0": {
+                ...
+            },
+            "hetero_feature_selection_0": {
+                ...
+            },
+            "hetero_lr_0": {
+                "penalty": "L2",
+                "optimizer": "rmsprop",
+                "eps": 1e-5,
+                "alpha": 0.01,
+                 "max_iter": 10,
+                 "converge_func": "diff",
+                 "batch_size": 320,
+                 "learning_rate": 0.15,
+                 "init_param": {
+                    "init_method": "random_uniform"
+                 },
+            "cv_param": {
+                "n_splits": 5,
+                "shuffle": false,
+                "random_seed": 103,
+                "need_cv": false,
+                }
+            }
+        }
+
+    Same as the form in role, keys are the names of components defined in dsl config file and values parameter configuration.
+
+:job_parameters:
+  Please note that to enable DSL V2, **dsl_version** must be set to **2**.
+  Same as component_parameters, it also has two sub-fields ``common`` and ``role``. Setting under ``common`` applies to all parties,
+  while ``role`` includes parameter values for each individual party.
 
    .. code-block:: json
-   "job_parameters": {
-      "common": {
-         ...
-      },
-      "role": {
-         ...
-      }
-   }
+
+    "job_parameters": {
+          "common": {
+             ...
+          },
+          "role": {
+             ...
+          }
+       }
 
 .. list-table:: Configurable Job Parameters
    :widths: 20 20 30 30
@@ -448,6 +463,7 @@ For multi-host modeling case, all the host's party ids should be list in the rol
 Each parameter set for host should also be config The number of elements should match the number of hosts.
 
 .. code-block:: json
+
    "component_parameters": {
       "role": {
          "host": {
@@ -642,8 +658,8 @@ To prepare generated dsl for prediction, user should add "reader" component to t
                 "data"
             ]
         }
-     },
-     "dataio_0": {
+    },
+    "dataio_0": {
         "module": "DataIO",
         "input": {
              ...
@@ -656,7 +672,7 @@ To prepare generated dsl for prediction, user should add "reader" component to t
          ...
         },
         ...
-     }
+    }
 
 Optionally, use can add additional component(s) to predict dsl, like ``Evaluation``:
 
