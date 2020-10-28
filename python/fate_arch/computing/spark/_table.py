@@ -37,6 +37,10 @@ class Table(CTableABC):
 
     def __getstate__(self):
         pass
+    
+    def __del__(self):
+        self._rdd.unpersist()
+        del self._rdd
 
     @computing_profile
     def save(self, address, partitions, schema, **kwargs):
