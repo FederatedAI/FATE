@@ -52,14 +52,6 @@ def main(config="../../config.yaml", namespace=""):
         "bin_num": 10,
         "bin_indexes": -1,
         "bin_names": None,
-        "category_indexes": [
-            3,
-            7
-        ],
-        "category_names": [
-            "x3",
-            "x7"
-        ],
         "adjustment_factor": 0.5,
         "local_only": False,
         "transform_param": {
