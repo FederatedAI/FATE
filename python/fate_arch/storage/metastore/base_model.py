@@ -13,11 +13,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import datetime
 import json
+import operator
 
-from peewee import Model, TextField, CompositeKey
-from fate_arch.common.base_utils import current_timestamp, serialize_b64, deserialize_b64
+from peewee import Model
+from peewee import (BigIntegerField, TextField, CompositeKey, DateTimeField)
+from fate_arch.common.base_utils import current_timestamp, serialize_b64, deserialize_b64, timestamp_to_date
 
 
 class LongTextField(TextField):
@@ -45,6 +46,11 @@ class SerializedField(LongTextField):
 
 
 class BaseModel(Model):
+    f_create_time = BigIntegerField(null=True)
+    f_create_date = DateTimeField(null=True)
+    f_update_time = BigIntegerField(null=True)
+    f_update_date = DateTimeField(null=True)
+
     def to_json(self):
         return self.__dict__['__data__']
 
@@ -66,11 +72,18 @@ class BaseModel(Model):
         return cls._meta.primary_key.field_names if isinstance(cls._meta.primary_key, CompositeKey) else [cls._meta.primary_key.name]
 
     def save(self, *args, **kwargs):
-        if hasattr(self, "f_update_date"):
-            self.f_update_date = datetime.datetime.now()
-        if hasattr(self, "f_update_time"):
-            self.f_update_time = current_timestamp()
+        if self.f_create_time:
+            self.f_create_date = timestamp_to_date(self.f_create_time)
+
+        self.f_update_time = current_timestamp()
+        self.f_update_date = timestamp_to_date(self.f_update_time)
         return super(BaseModel, self).save(*args, **kwargs)
 
-
-
+    @classmethod
+    def update(cls, __data=None, **update):
+        for f_n in {"start", "end"}:
+            if hasattr(cls, f"f_{f_n}_time") and hasattr(cls, f"f_{f_n}_date"):
+                k = operator.attrgetter(f"f_{f_n}_time")(cls)
+                if k in __data and __data[k]:
+                    __data[operator.attrgetter(f"f_{f_n}_date")(cls)] = timestamp_to_date(__data[k])
+        return super().update(__data, **update)
