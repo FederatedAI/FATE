@@ -176,8 +176,12 @@ Besides the dsl conf, user also need to prepare a submit runtime conf to set par
      }
 
 :component_parameters:
-  Running parameters for components included in dsl should be specified here. It contains two sub-fields ``common`` and ``role``:
-  parameter specification under ``common`` filed applies to all parties, while parameter values under ``role`` field are only taken by the corresponding party.
+  Running parameters for components included in dsl should be specified here.
+
+  It contains two sub-fields ``common`` and ``role``:
+
+  * parameter specification under ``common`` filed applies to all parties
+  * parameter values under ``role`` field are only taken by each corresponding party
 
   .. code-block:: json
 
@@ -194,7 +198,9 @@ Besides the dsl conf, user also need to prepare a submit runtime conf to set par
      }
 
   :role:
-    Inside the ``role`` field, party names are used as key, parameter specification as values. Take the following json as an example:
+    Inside the ``role`` field, party names are used as key, parameter specification as values.
+
+    Take the following json as an example:
 
     .. code-block:: json
 
@@ -228,9 +234,14 @@ Besides the dsl conf, user also need to prepare a submit runtime conf to set par
             }
         }
 
-    "0" indicates that it is the 0_th party of some role(indexing starts at 0). User can config parameters for each component.
+    "0" indicates that it is the 0_th party of some role(indexing starts at 0).
+
+    User can config parameters for each component.
+
     Component names should match those defined in the dsl config file.
+
     Parameters of each component are defined in `Param <../python/federatedml/param>`_ class.
+
     Parties can be packed together and share configuration, for example:
 
     .. code-block:: json
@@ -285,23 +296,26 @@ Besides the dsl conf, user also need to prepare a submit runtime conf to set par
             }
         }
 
-    Same as the form in role, keys are the names of components defined in dsl config file and values parameter configuration.
+    Same ``role``, keys are the names of components defined in dsl config file and values parameter configuration.
 
 :job_parameters:
   Please note that to enable DSL V2, **dsl_version** must be set to **2**.
-  Same as component_parameters, it also has two sub-fields ``common`` and ``role``. Setting under ``common`` applies to all parties,
-  while ``role`` includes parameter values for each individual party.
 
-   .. code-block:: json
+  Same as component_parameters, it also has two sub-fields ``common`` and ``role``:
 
-    "job_parameters": {
+  * parameter specification under ``common`` filed applies to all parties
+  * parameter values under ``role`` field are only taken by each corresponding party
+
+  .. code-block:: json
+
+     "job_parameters": {
           "common": {
              ...
           },
           "role": {
              ...
           }
-       }
+     }
 
 .. list-table:: Configurable Job Parameters
    :widths: 20 20 30 30
