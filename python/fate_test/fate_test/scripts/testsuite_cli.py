@@ -45,16 +45,20 @@ from fate_test.scripts._utils import _load_testsuites, _upload_data, _delete_dat
               help="skip uploading data specified in testsuite")
 @click.option("--data-only", is_flag=True, default=False,
               help="upload data only")
+@click.option("--disable-clean-data", "clean_data", flag_value=False, default=None)
+@click.option("--enable-clean-data", "clean_data", flag_value=True, default=None)
 @SharedOptions.get_shared_options(hidden=True)
 @click.pass_context
 def run_suite(ctx, replace, include, exclude, glob,
-              skip_dsl_jobs, skip_pipeline_jobs, skip_data, data_only, **kwargs):
+              skip_dsl_jobs, skip_pipeline_jobs, skip_data, data_only, clean_data, **kwargs):
     """
     process testsuite
     """
     ctx.obj.update(**kwargs)
     ctx.obj.post_process()
     config_inst = ctx.obj["config"]
+    if clean_data is None:
+        clean_data = config_inst.clean_data
     namespace = ctx.obj["namespace"]
     yes = ctx.obj["yes"]
     data_namespace_mangling = ctx.obj["namespace_mangling"]
@@ -99,7 +103,7 @@ def run_suite(ctx, replace, include, exclude, glob,
                     except Exception as e:
                         raise RuntimeError(f"exception occur while running pipeline jobs for {suite.path}") from e
 
-                if not skip_data:
+                if not skip_data and clean_data:
                     _delete_data(client, suite)
                 echo.echo(f"[{i + 1}/{len(suites)}]elapse {timedelta(seconds=int(time.time() - start))}", fg='red')
                 if not skip_dsl_jobs or not skip_pipeline_jobs:

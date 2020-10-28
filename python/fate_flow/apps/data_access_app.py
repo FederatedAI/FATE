@@ -45,7 +45,7 @@ def download_upload(access_module):
         try:
             file.save(filename)
         except Exception as e:
-            shutil.rmtree(os.path.join(job_utils.get_job_directory(job_id), 'tmp'))
+            shutil.rmtree(os.path.join(job_utils.get_job_directory(job_id), 'fate_upload_tmp'))
             raise e
         job_config = request.args.to_dict()
         job_config['file'] = filename
