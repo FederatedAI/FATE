@@ -30,6 +30,9 @@ class JobRuntimeConfigAdapter(object):
             job_parameters = RunParameters(**self.job_runtime_conf['job_parameters']['common'])
             self.job_runtime_conf['job_parameters']['common'] = job_parameters.to_dict()
         else:
+            if "processors_per_node" in self.job_runtime_conf['job_parameters']:
+                self.job_runtime_conf['job_parameters']["eggroll_run"] = \
+                    {"eggroll.session.processors.per.node": self.job_runtime_conf['job_parameters']["processors_per_node"]}
             job_parameters = RunParameters(**self.job_runtime_conf['job_parameters'])
             self.job_runtime_conf['job_parameters'] = job_parameters.to_dict()
         return job_parameters
