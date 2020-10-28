@@ -66,7 +66,7 @@ def main(config="../../config.yaml", namespace=""):
     intersection_0 = Intersection(name="intersection_0")
     intersection_1 = Intersection(name="intersection_1")
 
-    hetero_nn_0 = HeteroNN(name="hetero_nn_0", epochs=1, validation_freqs=1,
+    hetero_nn_0 = HeteroNN(name="hetero_nn_0", epochs=100, validation_freqs=1,
                            interactive_layer_lr=0.15, batch_size=-1, early_stop="diff",
                            early_stopping_rounds=15, use_first_metric_only=True)
 
