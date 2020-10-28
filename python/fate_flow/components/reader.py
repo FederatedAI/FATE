@@ -202,8 +202,8 @@ class Reader(object):
             temp.clear()
         return count + 1
 
-    def set_taskid(self, taskid):
-        self.task_id = taskid
+    def set_task_version_id(self, task_version_id):
+        self.task_id = task_version_id
 
     def set_tracker(self, tracker):
         self.tracker = tracker

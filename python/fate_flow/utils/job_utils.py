@@ -60,7 +60,7 @@ def generate_task_id(job_id, component_name):
     return '{}_{}'.format(job_id, component_name)
 
 
-def generate_federated_id(task_id, task_version):
+def generate_task_version_id(task_id, task_version):
     return "{}_{}".format(task_id, task_version)
 
 
