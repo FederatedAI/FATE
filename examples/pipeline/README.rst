@@ -59,17 +59,38 @@ Here is a general guide to quick start a FATE job.
         2020-10-16 10:44:26.578 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:125 - Job id is 20201016104426367594590
         Job is still waiting, time elapse: 0:00:01
         Running component upload_0, time elapse: 0:00:03
-        2020-10-16 10:44:31.042 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:133 - Job is complete!!! Job id is 20201016104426367594590
+        2020-10-16 10:44:31.042 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:133 - Job is success!!! Job id is 20201016104426367594590
         2020-10-16 10:44:31.043 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:134 - Total time: 0:00:04
 
-4. run FATE-Pipeline fit and predict jobs
+4. run a FATE-Pipeline fit job
+
+   .. code-block:: bash
+
+      python demo/pipeline-quick-demo.py
+
+   This quick demo shows how to build to a heterogeneous SecureBoost job.
+   Progress of job execution will be printed as modules run.
+   A message indicating final status ("success") will be printed when job finishes.
+   The script queries final model information when model training completes.
+
+   ::
+
+        2020-10-27 10:59:43.727 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:125 - Job id is 202010271059435183861
+        Job is still waiting, time elapse: 0:00:00
+        Running component reader_0, time elapse: 0:00:02
+        Running component dataio_0, time elapse: 0:00:05
+        Running component intersection_0, time elapse: 0:00:09
+        Running component hetero_secureboost_0, time elapse: 0:00:47
+        2020-10-27 11:00:31.206 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:133 - Job is success!!! Job id is 202010271059435183861
+        2020-10-27 11:00:31.206 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:134 - Total time: 0:00:47
+
+5. (another example) run FATE-Pipeline fit and predict jobs
 
    .. code-block:: bash
 
       python demo/pipeline-mini-demo.py
 
-   As job runs, progress of job execution will also be printed as modules are executed.
-   A message indicating final status ("complete") will also be printed at the end of the job.
+   This script trains a heterogeneous logistic regression model and then runs prediction with the trained model.
 
    ::
 
@@ -79,13 +100,13 @@ Here is a general guide to quick start a FATE job.
         Running component dataio_0, time elapse: 0:00:05
         Running component intersection_0, time elapse: 0:00:10
         Running component hetero_lr_0, time elapse: 0:00:36
-        2020-10-16 13:15:33.703 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:133 - Job is complete!!! Job id is 20201016131456016425640
+        2020-10-16 13:15:33.703 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:133 - Job is success!!! Job id is 20201016131456016425640
         2020-10-16 13:15:33.703 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:134 - Total time: 0:00:37
 
    Once fit job completes, demo script will print coefficients and other training information of model.
 
    After having completed the fit job, script will invoke a predict job with the trained model.
-   Note that ``Evaluation`` component is added to the predict job workflow. For more information on using
+   Note that ``Evaluation`` component is added to the prediction workflow. For more information on using
    FATE-Pipeline, please refer to this `guide <../../python/fate_client/pipeline/README.rst>`_.
 
    ::
@@ -97,5 +118,5 @@ Here is a general guide to quick start a FATE job.
         Running component intersection_0, time elapse: 0:00:12
         Running component hetero_lr_0, time elapse: 0:00:17
         Running component evaluation_0, time elapse: 0:00:23
-        2020-10-16 13:15:58.206 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:133 - Job is complete!!! Job id is 20201016131533727391641
+        2020-10-16 13:15:58.206 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:133 - Job is success!!! Job id is 20201016131533727391641
         2020-10-16 13:15:58.207 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:134 - Total time: 0:00:230-10-16 10:46:09.350 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:134 - Total time: 0:00:23
