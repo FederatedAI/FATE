@@ -98,9 +98,9 @@ class ResourceManager(object):
         computing_engine, cores, memory = cls.calculate_job_resource(job_parameters=job_parameters)
         max_cores_per_job = math.floor(engines_info[EngineType.COMPUTING].f_cores * MAX_CORES_PERCENT_PER_JOB)
         if cores > max_cores_per_job:
-            return False, max_cores_per_job
+            return False, cores, max_cores_per_job
         else:
-            return True, max_cores_per_job
+            return True, cores, max_cores_per_job
 
     @classmethod
     def apply_for_job_resource(cls, job_id, role, party_id):
