@@ -31,6 +31,7 @@ from fate_flow.settings import stat_logger, MODEL_STORE_ADDRESS, TEMP_DIRECTORY
 from fate_flow.pipelined_model import migrate_model, pipelined_model, publish_model
 from fate_flow.utils.api_utils import get_json_result, federated_api, error_response
 from fate_flow.utils import job_utils
+from fate_flow.utils.config_adapter import JobRuntimeConfigAdapter
 from fate_flow.utils.service_utils import ServiceUtils
 from fate_flow.utils.detect_utils import check_config
 from fate_flow.utils.model_utils import gen_party_model_id
@@ -302,6 +303,7 @@ def operate_model(model_operation):
 
                 pipeline = model.read_component_model('pipeline', 'pipeline')['Pipeline']
                 train_runtime_conf = json_loads(pipeline.train_runtime_conf)
+                runtime_conf_adapter = JobRuntimeConfigAdapter(train_runtime_conf)
                 permitted_party_id = []
                 for key, value in train_runtime_conf.get('role', {}).items():
                     for v in value:
@@ -326,7 +328,7 @@ def operate_model(model_operation):
                                 f_initiator_role=train_runtime_conf["initiator"]["role"],
                                 f_initiator_party_id=train_runtime_conf["initiator"]["party_id"],
                                 f_runtime_conf=train_runtime_conf,
-                                f_work_mode=train_runtime_conf["job_parameters"]["work_mode"],
+                                f_work_mode=runtime_conf_adapter.get_job_work_mode(),
                                 f_dsl=json_loads(pipeline.train_dsl),
                                 f_imported=1,
                                 f_job_status=JobStatus.SUCCESS
