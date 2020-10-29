@@ -44,10 +44,10 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
         """
         if use_sample_weight:
             half_wx = data_instances.mapValues(
-                lambda v: vec_dot(v.features, model_weights.coef_) + model_weights.intercept_)
+                lambda v: (vec_dot(v.features, model_weights.coef_) + model_weights.intercept_) * v.weight)
         else:
             half_wx = data_instances.mapValues(
-                lambda v: (vec_dot(v.features, model_weights.coef_) + model_weights.intercept_) * v.weight)
+                lambda v: vec_dot(v.features, model_weights.coef_) + model_weights.intercept_)
         self.forwards = half_wx
         # LOGGER.debug("half_wx: {}".format(half_wx.take(20)))
         self.aggregated_forwards = encrypted_calculator[batch_index].encrypt(half_wx)
@@ -61,7 +61,10 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
             else:
                 self.aggregated_forwards = self.aggregated_forwards.join(host_forward, lambda g, h: g + h)
 
-        fore_gradient = self.aggregated_forwards.join(data_instances, lambda wx, d: 0.25 * wx - 0.5 * d.label)
+        if use_sample_weight:
+            fore_gradient = self.aggregated_forwards.join(data_instances, lambda wx, d: 0.25 * wx - 0.5 * d.label * d.weight)
+        else:
+            fore_gradient = self.aggregated_forwards.join(data_instances, lambda wx, d: 0.25 * wx - 0.5 * d.label)
         return fore_gradient
 
     def compute_loss(self, data_instances, n_iter_, batch_index, loss_norm=None):

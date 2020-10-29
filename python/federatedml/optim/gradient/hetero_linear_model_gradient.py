@@ -92,7 +92,14 @@ def __compute_partition_gradient(data, fit_intercept=True, is_sparse=False):
         return np.array(gradient)
 
 
-def compute_gradient(data_instances, fore_gradient, fit_intercept):
+def sum_sample_weight(kv_iterator):
+    res = 0
+    for _, inst in kv_iterator:
+        res += inst.weight
+    return res
+
+
+def compute_gradient(data_instances, fore_gradient, fit_intercept, use_sample_weight=False):
     """
     Compute hetero-regression gradient
     Parameters
@@ -100,6 +107,7 @@ def compute_gradient(data_instances, fore_gradient, fit_intercept):
     data_instances: Table, input data
     fore_gradient: Table, fore_gradient
     fit_intercept: bool, if model has intercept or not
+    use_sample_weight: bool, if use sample weight
 
     Returns
     ----------
@@ -115,7 +123,11 @@ def compute_gradient(data_instances, fore_gradient, fit_intercept):
     gradient_partition = feat_join_grad.applyPartitions(f)
     gradient_partition = gradient_partition.reduce(lambda x, y: x + y)
 
-    gradient = gradient_partition / data_instances.count()
+    if use_sample_weight:
+        sample_weight_sum = data_instances.mapPartitions(sum_sample_weight).reduce(lambda x, y: x + y)
+        gradient = gradient_partition / sample_weight_sum
+    else:
+        gradient = gradient_partition / data_instances.count()
 
     return gradient
 
@@ -173,7 +185,8 @@ class Guest(HeteroGradientBase):
 
         unilateral_gradient = compute_gradient(data_instances,
                                                fore_gradient,
-                                               model_weights.fit_intercept)
+                                               model_weights.fit_intercept,
+                                               use_sample_weight)
         if optimizer is not None:
             unilateral_gradient = optimizer.add_regular_to_grad(unilateral_gradient, model_weights)
 
