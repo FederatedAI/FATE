@@ -161,8 +161,8 @@ class JobSaver(object):
             # not allow update status fields by this function
             update_info.pop(_, None)
         if update_info.get("tag") == "job_end" and hasattr(entity_model, "f_tag"):
-            update_info["end_time"] = current_timestamp()
             if obj.f_start_time:
+                update_info["end_time"] = current_timestamp()
                 update_info['elapsed'] = update_info['end_time'] - obj.f_start_time
         if update_info.get("progress") and hasattr(entity_model, "f_progress") and update_info["progress"] > 0:
             update_filters.append(operator.attrgetter("f_progress")(entity_model) <= update_info["progress"])
