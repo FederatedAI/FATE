@@ -51,7 +51,7 @@ class TaskController(object):
         JobSaver.create_task(task_info=task_info)
 
     @classmethod
-    def start_task(cls, job_id, component_name, task_id, task_version, role, party_id, task_parameters):
+    def start_task(cls, job_id, component_name, task_id, task_version, role, party_id):
         """
         Start task, update status and party status
         :param job_id:
@@ -60,13 +60,11 @@ class TaskController(object):
         :param task_version:
         :param role:
         :param party_id:
-        :param task_parameters:
         :return:
         """
         schedule_logger(job_id).info(
             'try to start job {} task {} {} on {} {} executor subprocess'.format(job_id, task_id, task_version, role, party_id))
         task_executor_process_start_status = False
-        run_parameters = RunParameters(**task_parameters)
         task_info = {
             "job_id": job_id,
             "task_id": task_id,
@@ -78,8 +76,11 @@ class TaskController(object):
             task_dir = os.path.join(job_utils.get_job_directory(job_id=job_id), role, party_id, component_name, task_id, task_version)
             os.makedirs(task_dir, exist_ok=True)
             task_parameters_path = os.path.join(task_dir, 'task_parameters.json')
+            run_parameters_dict = job_utils.get_job_parameters(job_id, role, party_id)
             with open(task_parameters_path, 'w') as fw:
-                fw.write(json_dumps(task_parameters))
+                fw.write(json_dumps(run_parameters_dict))
+
+            run_parameters = RunParameters(**run_parameters_dict)
 
             schedule_logger(job_id=job_id).info(f"use computing engine {run_parameters.computing_engine}")
 

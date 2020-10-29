@@ -304,8 +304,6 @@ class DAGScheduler(Cron):
                 cls.update_job_on_initiator(initiator_job=job, update_fields=["status"])
         if EndStatus.contains(job.f_status):
             cls.finish(job=job, end_status=job.f_status)
-        if job.f_cancel_signal:
-            cls.cancel_signal(job_id=job.f_job_id, set_or_reset=False)
         schedule_logger(job_id=job.f_job_id).info("finish scheduling job {}".format(job.f_job_id))
 
     @classmethod
@@ -460,7 +458,13 @@ class DAGScheduler(Cron):
     @classmethod
     @DB.connection_context()
     def rerun_signal(cls, job_id, set_or_reset: bool):
-        update_status = Job.update({Job.f_rerun_signal: set_or_reset}).where(Job.f_job_id == job_id).execute() > 0
+        if set_or_reset is True:
+            update_fields = {Job.f_rerun_signal: True, Job.f_cancel_signal: False}
+        elif set_or_reset is False:
+            update_fields = {Job.f_rerun_signal: False}
+        else:
+            raise RuntimeError(f"can not support rereun signal {set_or_reset}")
+        update_status = Job.update(update_fields).where(Job.f_job_id == job_id).execute() > 0
         return update_status
 
     @classmethod

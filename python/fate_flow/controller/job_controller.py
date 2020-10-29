@@ -140,9 +140,15 @@ class JobController(object):
 
     @classmethod
     def check_parameters(cls, job_parameters: RunParameters, engines_info):
-        status, max_cores_per_job = ResourceManager.check_resource_apply(job_parameters=job_parameters, engines_info=engines_info)
+        status, cores_submit, max_cores_per_job = ResourceManager.check_resource_apply(job_parameters=job_parameters, engines_info=engines_info)
         if not status:
-            raise RuntimeError(f"max cores per job is {max_cores_per_job}, please modify job parameter eggroll_run/spark_run or fate_flow/settings.py#DEFAULT_TASK_CORES_PER_NODE")
+            msg = ""
+            msg2 = "default value is fate_flow/settings.py#DEFAULT_TASK_CORES_PER_NODE, refer fate_flow/examples/test_hetero_lr_job_conf.json"
+            if job_parameters.computing_engine in {ComputingEngine.EGGROLL, ComputingEngine.STANDALONE}:
+                msg = "please use eggroll_run: eggroll.session.processors.per.node job parameters to set task_cores_per_node"
+            elif job_parameters.computing_engine in {ComputingEngine.SPARK}:
+                msg = "please use spark_run: executor-cores and num-executors job parameters to set task_cores_per_node"
+            raise RuntimeError(f"max cores per job is {max_cores_per_job} base on (fate_flow/settings#MAX_CORES_PERCENT_PER_JOB * conf/service_conf.yaml#nodes * conf/service_conf.yaml#cores_per_node), expect {cores_submit} cores, {msg}, {msg2}")
 
     @classmethod
     def initialize_tasks(cls, job_id, role, party_id, run_on_this_party, initiator_role, initiator_party_id, job_parameters: RunParameters, dsl_parser, component_name=None, task_version=None):
