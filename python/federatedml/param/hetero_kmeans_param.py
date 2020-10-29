@@ -49,6 +49,9 @@ class KmeansParam(BaseParam):
         elif self.k <= 1:
             raise ValueError(
                 descr + "k {} not supported, should be larger than 1")
+        elif self.k > 100:
+            raise ValueError(
+                descr + "k {} not supported, should be less than 100 in this version")
 
         if not isinstance(self.max_iter, int):
             raise ValueError(
