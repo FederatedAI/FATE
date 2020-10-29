@@ -78,7 +78,6 @@ class TaskExecutor(object):
                 "run_pid": executor_pid
             })
             start_time = current_timestamp()
-            job_parameters = RunParameters(**job_utils.get_job_parameters(job_id, role, party_id))
             job_conf = job_utils.get_job_conf(job_id, role)
             job_dsl = job_conf["job_dsl_path"]
             job_runtime_conf = job_conf["job_runtime_conf_path"]
@@ -99,6 +98,7 @@ class TaskExecutor(object):
             task_output_dsl = component.get_output()
             component_parameters_on_party['output_data_name'] = task_output_dsl.get('data')
             task_parameters = RunParameters(**file_utils.load_json_conf(args.config))
+            job_parameters = task_parameters
             TaskExecutor.monkey_patch()
         except Exception as e:
             traceback.print_exc()
