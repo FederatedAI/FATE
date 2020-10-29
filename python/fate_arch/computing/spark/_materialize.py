@@ -25,6 +25,10 @@ def materialize(rdd):
     return rdd
 
 
+def unmaterialize(rdd):
+    rdd.unpersist()
+
+
 # noinspection PyUnresolvedReferences
 def get_storage_level():
     return StorageLevel.MEMORY_AND_DISK
