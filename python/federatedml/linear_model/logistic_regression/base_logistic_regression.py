@@ -37,7 +37,7 @@ class BaseLogisticRegression(BaseLinearModel):
         self.model_param_name = 'LogisticRegressionParam'
         self.model_meta_name = 'LogisticRegressionMeta'
 
-        # one_ve_rest parameter
+        # one_vs_rest parameter
         self.need_one_vs_rest = None
         self.one_vs_rest_classes = []
         self.one_vs_rest_obj = None
