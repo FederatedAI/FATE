@@ -24,7 +24,7 @@ class KmeansParam(BaseParam):
     """
     Parameters used for K-means.
     ----------
-    k : int, should be larger than 1 ,default 5.
+    k : int, should be larger than 1 and less than 100 in this version, default 5.
         The number of the centroids to generate.
     max_iter : int, default 300.
         Maximum number of iterations of the hetero-k-means algorithm to run.
