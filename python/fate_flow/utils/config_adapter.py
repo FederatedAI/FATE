@@ -70,6 +70,21 @@ class JobRuntimeConfigAdapter(object):
             job_type = self.job_runtime_conf['job_parameters'].get('job_type', 'train')
         return job_type
 
+    def update_model_id_version(self, model_id=None, model_version=None):
+        if int(self.job_runtime_conf.get('dsl_version', 1)) == 2:
+            if model_id:
+                self.job_runtime_conf['job_parameters'].get('common', {})['model_id'] = model_id
+            if model_version:
+                self.job_runtime_conf['job_parameters'].get('common', {})['model_version'] = model_version
+        else:
+            if model_id:
+                self.job_runtime_conf['job_parameters']['model_id'] = model_id
+            if model_version:
+                self.job_runtime_conf['job_parameters']['model_version'] = model_version
+        return self.job_runtime_conf
+
+
+
 
 
 

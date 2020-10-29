@@ -30,6 +30,7 @@ from fate_flow.operation import Tracker
 from fate_flow.settings import stat_logger, TEMP_DIRECTORY
 from fate_flow.utils import job_utils, data_utils, detect_utils, schedule_utils
 from fate_flow.utils.api_utils import get_json_result, error_response
+from fate_flow.utils.config_adapter import JobRuntimeConfigAdapter
 from federatedml.feature.instance import Instance
 
 manager = Flask(__name__)
@@ -172,8 +173,9 @@ def component_output_model():
                                                                                           role=request_data['role'],
                                                                                           party_id=request_data['party_id'])
         if any([job_dsl, job_runtime_conf, train_runtime_conf]):
-            model_id = job_runtime_conf['job_parameters']['model_id']
-            model_version = job_runtime_conf['job_parameters']['model_version']
+            adapter = JobRuntimeConfigAdapter(job_runtime_conf)
+            model_id = adapter.get_common_parameters()['model_id']
+            model_version = adapter.get_common_parameters()['model_version']
         else:
             stat_logger.exception(e)
             stat_logger.error(f"Can not find model info by filters: job id: {request_data.get('job_id')}, "
