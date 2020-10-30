@@ -26,12 +26,13 @@ import psutil
 from fate_arch.common import file_utils
 from fate_arch.common.base_utils import json_loads, json_dumps, fate_uuid, current_timestamp
 from fate_arch.common.log import schedule_logger
-from fate_flow.db.db_models import DB, Job, Task
+from fate_flow.db.db_models import DB, Job, Task, MachineLearningModelInfo as MLModel
 from fate_flow.entity.types import JobStatus
 from fate_flow.entity.types import TaskStatus, RunParameters, KillProcessStatusCode
 from fate_flow.settings import stat_logger, JOB_DEFAULT_TIMEOUT, WORK_MODE
 from fate_flow.utils import detect_utils
 from fate_flow.utils import session_utils
+
 
 
 class IdCounter(object):
@@ -188,6 +189,19 @@ def get_job_configuration(job_id, role, party_id, tasks=None):
         return job.f_dsl, job.f_runtime_conf, job.f_runtime_conf_on_party, job.f_train_runtime_conf
     else:
         return {}, {}, {}, {}
+
+
+@DB.connection_context()
+def get_model_configuration(job_id, role, party_id):
+    models = MLModel.select(MLModel.f_dsl, MLModel.f_runtime_conf,
+                            MLModel.f_train_runtime_conf).where(MLModel.f_job_id == job_id,
+                                                                MLModel.f_role == role,
+                                                                MLModel.f_party_id == party_id)
+    if models:
+        model = models[0]
+        return model.f_dsl, model.f_runtime_conf, model.f_train_runtime_conf
+    else:
+        return {}, {}, {}
 
 
 @DB.connection_context()

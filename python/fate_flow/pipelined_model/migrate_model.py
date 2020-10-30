@@ -24,6 +24,7 @@ from fate_arch.common.base_utils import json_loads, json_dumps
 from fate_arch.common.file_utils import get_project_base_directory
 from fate_flow.utils import model_utils
 from federatedml.protobuf.model_migrate.model_migrate import model_migration
+from fate_flow.utils.config_adapter import JobRuntimeConfigAdapter
 
 
 def gen_model_file_path(model_id, model_version):
@@ -95,14 +96,16 @@ def migration(config_data: dict):
         # Utilize Pipeline_model collect model data. And modify related inner information of model
         train_runtime_conf = json_loads(pipeline.train_runtime_conf)
         train_runtime_conf["role"] = config_data["migrate_role"]
-        train_runtime_conf["job_parameters"]["model_id"] = model_utils.gen_model_id(train_runtime_conf["role"])
-        train_runtime_conf["job_parameters"]["model_version"] = migrate_model.model_version
         train_runtime_conf["initiator"] = config_data["migrate_initiator"]
+
+        adapter = JobRuntimeConfigAdapter(train_runtime_conf)
+        train_runtime_conf = adapter.update_model_id_version(model_id=model_utils.gen_model_id(train_runtime_conf["role"]),
+                                                             model_version=migrate_model.model_version)
 
         # update pipeline.pb file
         pipeline.train_runtime_conf = json_dumps(train_runtime_conf, byte=True)
-        pipeline.model_id = bytes(train_runtime_conf["job_parameters"]["model_id"], "utf-8")
-        pipeline.model_version = bytes(train_runtime_conf["job_parameters"]["model_version"], "utf-8")
+        pipeline.model_id = bytes(adapter.get_common_parameters()["model_id"], "utf-8")
+        pipeline.model_version = bytes(adapter.get_common_parameters()["model_version"], "utf-8")
 
         # save updated pipeline.pb file
         migrate_model.save_pipeline(pipeline)
@@ -136,7 +139,7 @@ def migration(config_data: dict):
         return (0, f"Migrating model successfully. " \
                   "The configuration of model has been modified automatically. " \
                   "New model id is: {}, model version is: {}. " \
-                  "Model files can be found at '{}'.".format(train_runtime_conf["job_parameters"]["model_id"],
+                  "Model files can be found at '{}'.".format(adpater.get_common_parameters()["model_id"],
                                                              migrate_model.model_version,
                                                              os.path.abspath(archive_path)),
                 {"model_id": migrate_model.model_id,
