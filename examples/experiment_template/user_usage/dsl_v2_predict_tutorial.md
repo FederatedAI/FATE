@@ -93,4 +93,4 @@ with model_id and model_version returned by training job.
 ## Submit a predict job
 Then we can submit a new predict job:
     
-    >> flow job submit -c ./examples/dsl/v2/hetero_secureboost/test_predict_conf.json -d ./predict_dsl_20201030164751.json
+    >> flow job submit -c ./examples/dsl/v2/hetero_secureboost/test_predict_conf.json -d ./predict_dsl/predict_dsl_20201030164751.json
