@@ -137,6 +137,7 @@ class HeteroLRGuest(HeteroLRBase):
                 # LOGGER.debug("lr_weight, iters: {}, update_model: {}".format(self.n_iter_, self.model_weights.unboxed))
 
             self.is_converged = self.converge_procedure.sync_converge_info(suffix=(self.n_iter_,))
+            LOGGER.info("iter: {},  is_converged: {}".format(self.n_iter_, self.is_converged))
 
             if self.validation_strategy:
                 LOGGER.debug('LR guest running validation')
@@ -145,7 +146,6 @@ class HeteroLRGuest(HeteroLRBase):
                     LOGGER.debug('early stopping triggered')
                     break
 
-            LOGGER.info("iter: {},  is_converged: {}".format(self.n_iter_, self.is_converged))
             self.n_iter_ += 1
 
             if self.is_converged:

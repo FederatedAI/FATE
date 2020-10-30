@@ -142,6 +142,7 @@ class HeteroLRHost(HeteroLRBase):
             self.is_converged = self.converge_procedure.sync_converge_info(suffix=(self.n_iter_,))
 
             LOGGER.info("Get is_converged flag from arbiter:{}".format(self.is_converged))
+            LOGGER.info("iter: {}, is_converged: {}".format(self.n_iter_, self.is_converged))
 
             if self.validation_strategy:
                 LOGGER.debug('LR host running validation')
@@ -149,7 +150,6 @@ class HeteroLRHost(HeteroLRBase):
                 if self.validation_strategy.need_stop():
                     LOGGER.debug('early stopping triggered')
                     break
-            LOGGER.info("iter: {}, is_converged: {}".format(self.n_iter_, self.is_converged))
             self.n_iter_ += 1
             if self.is_converged:
                 break
