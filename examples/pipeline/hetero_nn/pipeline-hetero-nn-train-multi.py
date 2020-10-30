@@ -59,13 +59,20 @@ def main(config="../../config.yaml", namespace=""):
 
     hetero_nn_0 = HeteroNN(name="hetero_nn_0", epochs=100,
                            interactive_layer_lr=0.15, batch_size=-1, early_stop="diff")
-    hetero_nn_0.add_bottom_model(Dense(units=3, input_shape=(10,), activation="relu",
-                                       kernel_initializer=initializers.Constant(value=1)))
-    hetero_nn_0.set_interactve_layer(Dense(units=2, input_shape=(2,),
-                                           kernel_initializer=initializers.Constant(value=1)))
-    hetero_nn_0.add_top_model(Dense(units=4, input_shape=(2,), activation="softmax",
-                                    kernel_initializer=initializers.Constant(value=1)))
+    guest_nn_0 = hetero_nn_0.get_party_instance(role='guest', party_id=guest)
+    guest_nn_0.add_bottom_model(Dense(units=3, input_shape=(9,), activation="relu",
+                                      kernel_initializer=initializers.Constant(value=1)))
+    guest_nn_0.set_interactve_layer(Dense(units=2, input_shape=(2,),
+                                          kernel_initializer=initializers.Constant(value=1)))
+    guest_nn_0.add_top_model(Dense(units=4, input_shape=(2,), activation="softmax",
+                                   kernel_initializer=initializers.Constant(value=1)))
+    host_nn_0 = hetero_nn_0.get_party_instance(role='host', party_id=host)
+    host_nn_0.add_bottom_model(Dense(units=3, input_shape=(9,), activation="relu",
+                                     kernel_initializer=initializers.Constant(value=1)))
+    host_nn_0.set_interactve_layer(Dense(units=2, input_shape=(2,),
+                                         kernel_initializer=initializers.Constant(value=1)))
     hetero_nn_0.compile(optimizer=optimizers.Adam(lr=0.15), metrics=["accuracy"], loss="categorical_crossentropy")
+
     hetero_nn_1 = HeteroNN(name="hetero_nn_1")
 
     evaluation_0 = Evaluation(name="evaluation_0", eval_type="multi")

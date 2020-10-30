@@ -420,18 +420,18 @@ class Federation(object):
         if isinstance(v, Table):
             LOGGER.debug(f"[{log_str}]remote "
                          f"Table(namespace={v.namespace}, name={v.name}, partitions={v.partitions})")
-            # noinspection PyProtectedMember
-            saved_name = str(uuid.uuid1())
-            LOGGER.debug(f"[{log_str}]save Table(namespace={v.namespace}, name={v.name}, partitions={v.partitions}) as "
-                         f"Table(namespace={v.namespace}, name={saved_name}, partitions={v.partitions})")
-            v = v.save_as(name=saved_name, namespace=v.namespace, need_cleanup=False)
         else:
             LOGGER.debug(f"[{log_str}]remote object with type: {type(v)}")
 
         for party in parties:
             _tagged_key = self._federation_object_key(name, tag, self._party, party)
             if isinstance(v, Table):
-                self._put_status(party, _tagged_key, (v.name, v.namespace))
+                saved_name = str(uuid.uuid1())
+                LOGGER.debug(
+                    f"[{log_str}]save Table(namespace={v.namespace}, name={v.name}, partitions={v.partitions}) as "
+                    f"Table(namespace={v.namespace}, name={saved_name}, partitions={v.partitions})")
+                _v = v.save_as(name=saved_name, namespace=v.namespace, need_cleanup=False)
+                self._put_status(party, _tagged_key, (_v.name, _v.namespace))
             else:
                 self._put_object(party, _tagged_key, v)
                 self._put_status(party, _tagged_key, _tagged_key)

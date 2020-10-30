@@ -25,6 +25,7 @@ from federatedml.param.hetero_kmeans_param import KmeansParam
 from federatedml.unsupervised_learning.kmeans.kmeans_model_base import BaseKmeansModel
 from federatedml.util import LOGGER
 from federatedml.util import consts
+from federatedml.framework.weights import NumpyWeights
 
 
 class HeteroKmeansArbiter(BaseKmeansModel):

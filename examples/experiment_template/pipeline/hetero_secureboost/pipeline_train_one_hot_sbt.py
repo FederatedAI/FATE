@@ -36,7 +36,6 @@ def main(config="../../config.yaml", namespace=""):
     parties = config.parties
     guest = parties.guest[0]
     host = parties.host[0]
-    arbiter = parties.arbiter[0]
     backend = config.backend
     work_mode = config.work_mode
 
@@ -50,7 +49,7 @@ def main(config="../../config.yaml", namespace=""):
     # set job initiator
     pipeline.set_initiator(role='guest', party_id=guest)
     # set participants information
-    pipeline.set_roles(guest=guest, host=host, arbiter=arbiter)
+    pipeline.set_roles(guest=guest, host=host)
 
     # define Reader components to read in data
     reader_0 = Reader(name="reader_0")
@@ -133,11 +132,11 @@ def main(config="../../config.yaml", namespace=""):
     hetero_feature_selection_0 = HeteroFeatureSelection(**param)
     hetero_feature_selection_1 = HeteroFeatureSelection(name='hetero_feature_selection_1')
 
-    one_hot_encoder_0 = OneHotEncoder(name="hetero_scale_0")
-    one_hot_encoder_1 = OneHotEncoder(name="hetero_scale_1")
-    one_hot_encoder_0.get_party_instance(role='guest', party_id=guest).component_param(need_run=False, **param)
-    one_hot_encoder_0.get_party_instance(role='host', party_id=host).component_param(need_run=False, **param)
-    one_hot_encoder_1.get_party_instance(role='guest', party_id=guest)
+    one_hot_encoder_0 = OneHotEncoder(name="one_hot_encoder_0")
+    one_hot_encoder_1 = OneHotEncoder(name="one_hot_encoder_1")
+    one_hot_encoder_0.get_party_instance(role='guest', party_id=guest).component_param(need_run=False)
+    one_hot_encoder_0.get_party_instance(role='host', party_id=host)
+    one_hot_encoder_1.get_party_instance(role='guest', party_id=guest).component_param(need_run=False)
     one_hot_encoder_1.get_party_instance(role='host', party_id=host)
     param = {
         "task_type": "classification",
@@ -198,7 +197,7 @@ def main(config="../../config.yaml", namespace=""):
 
     # set train & validate data of hetero_secureboost_0 component
     pipeline.add_component(hetero_secureboost_0, data=Data(train_data=one_hot_encoder_0.output.data,
-                                                           validate_data=one_hot_encoder_0.output.data))
+                                                           validate_data=one_hot_encoder_1.output.data))
 
     pipeline.add_component(evaluation_0, data=Data(data=[hetero_secureboost_0.output.data]))
     # compile pipeline once finished adding modules, this step will form conf and dsl files for running job

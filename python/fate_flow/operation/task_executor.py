@@ -78,7 +78,6 @@ class TaskExecutor(object):
                 "run_pid": executor_pid
             })
             start_time = current_timestamp()
-            job_parameters = RunParameters(**job_utils.get_job_parameters(job_id, role, party_id))
             job_conf = job_utils.get_job_conf(job_id, role)
             job_dsl = job_conf["job_dsl_path"]
             job_runtime_conf = job_conf["job_runtime_conf_path"]
@@ -99,6 +98,7 @@ class TaskExecutor(object):
             task_output_dsl = component.get_output()
             component_parameters_on_party['output_data_name'] = task_output_dsl.get('data')
             task_parameters = RunParameters(**file_utils.load_json_conf(args.config))
+            job_parameters = task_parameters
             TaskExecutor.monkey_patch()
         except Exception as e:
             traceback.print_exc()
@@ -146,7 +146,7 @@ class TaskExecutor(object):
             sess = session.Session(computing_type=job_parameters.computing_engine, federation_type=job_parameters.federation_engine)
             computing_session_id = job_utils.generate_session_id(task_id, task_version, role, party_id)
             sess.init_computing(computing_session_id=computing_session_id, options=session_options)
-            federation_session_id = job_utils.generate_federated_id(task_id, task_version)
+            federation_session_id = job_utils.generate_task_version_id(task_id, task_version)
             sess.init_federation(federation_session_id=federation_session_id,
                                  runtime_conf=component_parameters_on_party,
                                  service_conf=job_parameters.engines_address.get(EngineType.FEDERATION, {}))
@@ -167,7 +167,7 @@ class TaskExecutor(object):
                 task_run_args["job_parameters"] = job_parameters
             run_object = getattr(importlib.import_module(run_class_package), run_class_name)()
             run_object.set_tracker(tracker=tracker_client)
-            run_object.set_taskid(taskid=job_utils.generate_federated_id(task_id, task_version))
+            run_object.set_task_version_id(task_version_id=job_utils.generate_task_version_id(task_id, task_version))
             # add profile logs
             profile.profile_start()
             run_object.run(component_parameters_on_party, task_run_args)

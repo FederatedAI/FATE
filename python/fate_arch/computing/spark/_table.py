@@ -24,7 +24,7 @@ from pyspark.rddsampler import RDDSamplerBase
 from fate_arch.abc import CTableABC
 from fate_arch.common import log, hdfs_utils
 from fate_arch.common.profile import computing_profile
-from fate_arch.computing.spark._materialize import materialize
+from fate_arch.computing.spark._materialize import materialize, unmaterialize
 from scipy.stats import hypergeom
 
 LOGGER = log.getLogger()
@@ -37,6 +37,10 @@ class Table(CTableABC):
 
     def __getstate__(self):
         pass
+    
+    def __del__(self):
+        unmaterialize(self._rdd)
+        del self._rdd
 
     @computing_profile
     def save(self, address, partitions, schema, **kwargs):

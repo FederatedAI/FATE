@@ -45,16 +45,20 @@ from fate_test.scripts._utils import _load_testsuites, _upload_data, _delete_dat
               help="skip uploading data specified in testsuite")
 @click.option("--data-only", is_flag=True, default=False,
               help="upload data only")
+@click.option("--disable-clean-data", "clean_data", flag_value=False, default=None)
+@click.option("--enable-clean-data", "clean_data", flag_value=True, default=None)
 @SharedOptions.get_shared_options(hidden=True)
 @click.pass_context
 def run_suite(ctx, replace, include, exclude, glob,
-              skip_dsl_jobs, skip_pipeline_jobs, skip_data, data_only, **kwargs):
+              skip_dsl_jobs, skip_pipeline_jobs, skip_data, data_only, clean_data, **kwargs):
     """
     process testsuite
     """
     ctx.obj.update(**kwargs)
     ctx.obj.post_process()
     config_inst = ctx.obj["config"]
+    if clean_data is None:
+        clean_data = config_inst.clean_data
     namespace = ctx.obj["namespace"]
     yes = ctx.obj["yes"]
     data_namespace_mangling = ctx.obj["namespace_mangling"]
@@ -99,7 +103,7 @@ def run_suite(ctx, replace, include, exclude, glob,
                     except Exception as e:
                         raise RuntimeError(f"exception occur while running pipeline jobs for {suite.path}") from e
 
-                if not skip_data:
+                if not skip_data and clean_data:
                     _delete_data(client, suite)
                 echo.echo(f"[{i + 1}/{len(suites)}]elapse {timedelta(seconds=int(time.time() - start))}", fg='red')
                 if not skip_dsl_jobs or not skip_pipeline_jobs:
@@ -189,27 +193,29 @@ def _run_pipeline_jobs(config: Config, suite: Testsuite, namespace: str, data_na
     for i, pipeline_job in enumerate(suite.pipeline_jobs):
         echo.echo(f"Running [{i + 1}/{job_n}] job: {pipeline_job.job_name}")
 
-        def _raise():
+        def _raise(err_msg, status="failed"):
             exception_id = str(uuid.uuid1())
-            suite.update_status(job_name=job_name, exception_id=exception_id)
-            echo.file(f"exception({exception_id})")
-            LOGGER.exception(f"exception id: {exception_id}")
+            suite.update_status(job_name=job_name, exception_id=exception_id, status=status)
+            echo.file(f"exception({exception_id}), error message:\n{err_msg}")
+            # LOGGER.exception(f"exception id: {exception_id}")
 
         job_name, script_path = pipeline_job.job_name, pipeline_job.script_path
         mod = _load_module_from_script(script_path)
         try:
             if data_namespace_mangling:
                 try:
-                    mod.main(config, f"_{namespace}")
+                    mod.main(config=config, namespace=f"_{namespace}")
                     suite.update_status(job_name=job_name, status="success")
-                except Exception:
-                    pass
+                except Exception as e:
+                    _raise(e)
+                    continue
             else:
                 try:
-                    mod.main(config)
+                    mod.main(config=config)
                     suite.update_status(job_name=job_name, status="success")
-                except Exception:
-                    pass
-        except Exception:
-            _raise()
+                except Exception as e:
+                    _raise(e)
+                    continue
+        except Exception as e:
+            _raise(e, status="not submitted")
             continue

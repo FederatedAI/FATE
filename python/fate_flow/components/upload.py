@@ -23,14 +23,14 @@ from fate_flow.entity.metric import Metric, MetricMeta
 from fate_flow.utils import job_utils, data_utils
 from fate_flow.scheduling_apps.client import ControllerClient
 from fate_arch import storage
+from fate_flow.components.component_base import ComponentBase
 
 LOGGER = log.getLogger()
 
 
-class Upload(object):
+class Upload(ComponentBase):
     def __init__(self):
-        self.taskid = ''
-        self.tracker = None
+        super(Upload, self).__init__()
         self.MAX_PARTITIONS = 1024
         self.MAX_BYTES = 1024*1024*8
         self.parameters = {}
@@ -49,7 +49,7 @@ class Upload(object):
             storage_engine = args["job_parameters"].storage_engine
         if not storage_address:
             storage_address = args["job_parameters"].engines_address[EngineType.STORAGE]
-        job_id = self.taskid.split("_")[0]
+        job_id = self.task_version_id.split("_")[0]
         if not os.path.isabs(self.parameters.get("file", "")):
             self.parameters["file"] = os.path.join(file_utils.get_project_base_directory(), self.parameters["file"])
         if not os.path.exists(self.parameters["file"]):
@@ -111,12 +111,6 @@ class Upload(object):
         LOGGER.info("total data_count: {}".format(data_table_count))
         LOGGER.info("table name: {}, table namespace: {}".format(name, namespace))
 
-    def set_taskid(self, taskid):
-        self.taskid = taskid
-
-    def set_tracker(self, tracker):
-        self.tracker = tracker
-
     def save_data_table(self, job_id, dst_table_name, dst_table_namespace, head=True):
         input_file = self.parameters["file"]
         input_feature_count = self.get_count(input_file)
@@ -169,9 +163,3 @@ class Upload(object):
         file_name = input_file_path.split(".")[0]
         file_name = file_name.split("/")[-1]
         return file_name, str_time
-
-    def save_data(self):
-        return None
-
-    def export_model(self):
-        return None
