@@ -571,7 +571,7 @@ Use a training dsl:
                 }
             },
             "output": {
-                "data": ["data": [
+                "data":[
                     "data"
                 ]
             }
