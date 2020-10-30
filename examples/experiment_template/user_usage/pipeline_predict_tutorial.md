@@ -70,6 +70,7 @@ fate components in the training step. We load training pipeline from 'pipeline_s
     from pipeline.component.reader import Reader
     from pipeline.interface.data import Data
     from pipeline.backend.config import Backend, WorkMode # configs
+    from pipeline.runtime.entity import JobParameters # parameter class
     
     # load train pipeline
     pipeline = PipeLine.load_model_from_file('pipeline_saved.pkl')
@@ -90,7 +91,7 @@ fate components in the training step. We load training pipeline from 'pipeline_s
     # add selected components from train pipeline onto predict pipeline
     predict_pipeline.add_component(pipeline,data=Data(predict_input={pipeline.dataio_0.input.data: reader_0.output.data}))
     # run predict model
-    predict_pipeline.predict(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE)
+    predict_pipeline.predict(JobParameters(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE))
 ```
 
 

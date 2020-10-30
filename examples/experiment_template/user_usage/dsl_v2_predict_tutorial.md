@@ -30,11 +30,11 @@ Then we can get a return message contains model_id and model_version.
 
 We use flow_client to deploy components we needed in the predicting task:
 
-    flow job dsl --train-dsl-path ./examples/dsl/v2/hetero_secureboost/test_secureboost_train_dsl.json --cpn-list "reader_0, dataio_0, intersection_0, hetero_secure_boost_0" --version 2 -o ./
+    flow job dsl --train-dsl-path ./examples/dsl/v2/hetero_secureboost/test_secureboost_train_dsl.json --cpn-list "reader_0, dataio_0, intersection_0, hetero_secure_boost_0" --version 2 -o ./predict_dsl
 
-Then wo got an generated dsl in the output folder:
+Then we got a generated dsl named with a timestamp in the output folder:
 
-    >> predict_dsl_20201030164751.json
+    >> ls predict_dsl
 
 We can modify existing predict conf by replacing model_id, model_version and data set name with yours to make a new 
 predict conf.
