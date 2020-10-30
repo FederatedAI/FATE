@@ -6,7 +6,7 @@ cos-python-sdk-v5==1.8.0
 Flask==1.0.2
 gmpy2==2.0.8
 kazoo==2.6.1
-lmdb==0.94
+lmdb==0.98
 numpy==1.18.4
 pandas==0.23.4
 peewee==3.9.3
@@ -32,4 +32,5 @@ grpcio-tools==1.24.3
 numba>=0.40.1
 phe>=1.4.0
 protobuf==3.6.1
-pyarrow==0.11.1
+pyarrow==0.17.1
+python-rocksdb==0.7.0
