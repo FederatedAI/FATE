@@ -6,6 +6,12 @@ DSL conf files, and modeling quality comparison tasks
 
 We suggest that user use example-runner tool `FATE-Test <../python/fate_test/README.rst>`__.
 
+To quickly start model training and predictions using dsl & pipeline, you are welcomed to refer to：
+
+1. `DSL v1 train and predict quick tutorial <./experiment_template/user_usage/dsl_v1_predict_tutorial.md>`__.
+2. `DSL v2 train and predict quick tutorial <./experiment_template/user_usage/dsl_v2_predict_tutorial.md>`__.
+3. `Pipeline train and predict quick tutorial <./experiment_template/user_usage/pipeline_predict_tutorial.md>`__.
+
 Below lists included types of examples.
 
 FATE-Pipeline
