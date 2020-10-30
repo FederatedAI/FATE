@@ -35,7 +35,6 @@ def main(config="../../config.yaml", namespace=""):
     parties = config.parties
     guest = parties.guest[0]
     host = parties.host[0]
-    arbiter = parties.arbiter[0]
     backend = config.backend
     work_mode = config.work_mode
 
@@ -51,7 +50,7 @@ def main(config="../../config.yaml", namespace=""):
     # set job initiator
     pipeline.set_initiator(role='guest', party_id=guest)
     # set participants information
-    pipeline.set_roles(guest=guest, host=host, arbiter=arbiter)
+    pipeline.set_roles(guest=guest, host=host)
 
     # define Reader components to read in data
     reader_0 = Reader(name="reader_0")

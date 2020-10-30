@@ -128,7 +128,7 @@ Job
 
    .. code:: bash
 
-       flow job query -r guest -p 9999 -s complete
+       flow job query -r guest -p 9999 -s success
        flow job query -j $JOB_ID
 
 ``clean``
@@ -180,7 +180,7 @@ Job
    .. code:: bash
 
        flow job view -r guest -p 9999
-       flow job view -j $JOB_ID -s complete
+       flow job view -j $JOB_ID -s success
 
 ``config``
 ~~~~~~~~~~
@@ -841,7 +841,7 @@ Task
 .. code:: bash
 
     flow task query -j $JOB_ID -p 9999 -r guest
-    flow task query -cpn hetero_feature_binning_0 -s complete
+    flow task query -cpn hetero_feature_binning_0 -s success
 
 ``list``
 ~~~~~~~~

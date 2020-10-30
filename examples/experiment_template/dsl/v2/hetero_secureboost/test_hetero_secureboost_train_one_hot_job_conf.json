@@ -10,9 +10,6 @@
         ],
         "host": [
             9999
-        ],
-        "arbiter": [
-            9999
         ]
     },
     "job_parameters": {
@@ -141,10 +138,6 @@
                         "with_label": false,
                         "output_format": "dense"
                     },
-                    "hetero_scale_0": {
-                        "need_run": false
-                    },
-                    "hetero_scale_1": {},
                     "reader_1": {
                         "table": {
                             "name": "mock_tag_hetero_host",
@@ -185,10 +178,12 @@
                         "label_type": "int",
                         "output_format": "dense"
                     },
-                    "hetero_scale_0": {
+                    "one_hot_encoder_0": {
                         "need_run": false
                     },
-                    "hetero_scale_1": {},
+                    "one_hot_encoder_1": {
+                        "need_run": false
+                    },
                     "reader_1": {
                         "table": {
                             "name": "breast_hetero_guest",

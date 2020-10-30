@@ -136,4 +136,8 @@ class BaseLogisticRegression(BaseLinearModel):
         LOGGER.debug(f"Final summary: {self.summary()}")
 
     def get_metrics_param(self):
-        return EvaluateParam(eval_type="binary", metrics=self.metrics)
+        if self.need_one_vs_rest:
+            eval_type = 'multi'
+        else:
+            eval_type = "binary"
+        return EvaluateParam(eval_type=eval_type)

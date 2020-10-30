@@ -14,19 +14,21 @@
 #  limitations under the License.
 #
 
+import functools
+from collections import Iterable
+
 import numpy as np
 import torch
-from collections import Iterable
 from Cryptodome import Random
 from Cryptodome.PublicKey import RSA
+import hashlib
 
+from federatedml.feature.instance import Instance
 from federatedml.secureprotol import gmpy_math
 from federatedml.secureprotol.affine import AffineCipher
 from federatedml.secureprotol.fate_paillier import PaillierKeypair
-from federatedml.secureprotol.random import RandomPads
-
-
 from federatedml.secureprotol.iterative_affine import IterativeAffineCipher
+from federatedml.secureprotol.random import RandomPads
 
 
 class Encrypt(object):
@@ -249,6 +251,44 @@ class PadsCipher(Encrypt):
                 else:
                     ret -= rand.rand(1)[0] * self._amplify_factor
             return ret
+
+    def encrypt_table(self, table):
+        def _pad(key, value, seeds, amplify_factor):
+            has_key = int(hashlib.md5(f"{key}".encode("ascii")).hexdigest(), 16)
+            # LOGGER.debug(f"hash_key: {has_key}")
+            cur_seeds = {uid: has_key + seed for uid, seed in seeds.items()}
+            # LOGGER.debug(f"cur_seeds: {cur_seeds}")
+            rands = {uid: RandomPads(v & 0xffffffff) for uid, v in cur_seeds.items()}
+
+            if isinstance(value, np.ndarray):
+                ret = value
+                for uid, rand in rands.items():
+                    if uid > self._uuid:
+                        ret = rand.add_rand_pads(ret, 1.0 * amplify_factor)
+                    else:
+                        ret = rand.add_rand_pads(ret, -1.0 * amplify_factor)
+                return key, ret
+            elif isinstance(value, Instance):
+                ret = value.features
+                for uid, rand in rands.items():
+                    if uid > self._uuid:
+                        ret = rand.add_rand_pads(ret, 1.0 * amplify_factor)
+                    else:
+                        ret = rand.add_rand_pads(ret, -1.0 * amplify_factor)
+                value.features = ret
+                return key, value
+            else:
+                ret = value
+                for uid, rand in rands.items():
+                    if uid > self._uuid:
+                        ret += rand.rand(1)[0] * self._amplify_factor
+                    else:
+                        ret -= rand.rand(1)[0] * self._amplify_factor
+                return key, ret
+
+        f = functools.partial(_pad, seeds=self._seeds, amplify_factor=self._amplify_factor)
+        return table.map(f)
+
 
     def decrypt(self, value):
         return value

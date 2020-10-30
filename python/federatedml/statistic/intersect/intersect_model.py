@@ -72,7 +72,7 @@ class IntersectModelBase(ModelBase):
             else:
                 raise ValueError("role {} is not support".format(self.role))
             self.intersection_obj.tracker = self.tracker
-            self.intersection_obj.task_id = self.taskid
+            self.intersection_obj.task_id = self.task_version_id
         else:
             raise ValueError("intersect_method {} is not support yet".format(self.model_param.intersect_method))
 

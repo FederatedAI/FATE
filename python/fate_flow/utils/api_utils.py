@@ -19,12 +19,14 @@ import requests
 from flask import jsonify
 from flask import Response
 
+from fate_arch.common.conf_utils import get_base_config
 from fate_arch.common.log import audit_logger
 from fate_arch.common import FederatedMode
 from fate_arch.common import conf_utils
 from fate_flow.settings import DEFAULT_GRPC_OVERALL_TIMEOUT, CHECK_NODES_IDENTITY,\
-    FATE_MANAGER_GET_NODE_INFO_ENDPOINT, HEADERS, API_VERSION
-from fate_flow.utils.grpc_utils import wrap_grpc_packet, get_command_federation_channel, get_routing_metadata
+    FATE_MANAGER_GET_NODE_INFO_ENDPOINT, HEADERS, API_VERSION, stat_logger
+from fate_flow.utils.grpc_utils import wrap_grpc_packet, get_command_federation_channel, get_routing_metadata, \
+    forward_grpc_packet
 from fate_flow.utils.service_utils import ServiceUtils
 from fate_flow.entity.runtime_config import RuntimeConfig
 
@@ -38,6 +40,14 @@ def get_json_result(retcode=0, retmsg='success', data=None, job_id=None, meta=No
         else:
             response[key] = value
     return jsonify(response)
+
+
+def server_error_response(e):
+    stat_logger.exception(e)
+    if len(e.args) > 1:
+        return get_json_result(retcode=100, retmsg=str(e.args[0]), data=e.args[1])
+    else:
+        return get_json_result(retcode=100, retmsg=str(e))
 
 
 def error_response(response_code, retmsg):
@@ -70,7 +80,6 @@ def remote_api(job_id, method, endpoint, src_party_id, dest_party_id, src_role, 
     for t in range(try_times):
         try:
             channel, stub = get_command_federation_channel()
-            # _return = stub.unaryCall(_packet)
             _return, _call = stub.unaryCall.with_call(_packet, metadata=_routing_metadata, timeout=(overall_timeout/1000))
             audit_logger(job_id).info("grpc api response: {}".format(_return))
             channel.close()
@@ -85,6 +94,24 @@ def remote_api(job_id, method, endpoint, src_party_id, dest_party_id, src_role, 
         if 'failed to connect to all addresses' in str(exception):
             tips = 'Please check whether the rollsite service(port: 9370) is started. '
         raise Exception('{}rpc request error: {}'.format(tips, exception))
+
+
+def proxy_api(role, _job_id, request_config):
+    job_id = request_config.get('header').get('job_id', _job_id)
+    method = request_config.get('header').get('method', 'POST')
+    endpoint = request_config.get('header').get('endpoint')
+    src_party_id = request_config.get('header').get('src_party_id')
+    dest_party_id = request_config.get('header').get('dest_party_id')
+    json_body = request_config.get('body')
+    _packet = forward_grpc_packet(json_body, method, endpoint, src_party_id, dest_party_id, job_id=job_id, role=role,
+                                  overall_timeout=DEFAULT_GRPC_OVERALL_TIMEOUT)
+    _routing_metadata = get_routing_metadata(src_party_id=src_party_id, dest_party_id=dest_party_id)
+
+    channel, stub = get_command_federation_channel()
+    _return, _call = stub.unaryCall.with_call(_packet, metadata=_routing_metadata)
+    channel.close()
+    json_body = json.loads(_return.body.value)
+    return json_body
 
 
 def local_api(job_id, method, endpoint, json_body, api_version=API_VERSION, try_times=3):
@@ -104,6 +131,20 @@ def local_api(job_id, method, endpoint, json_body, api_version=API_VERSION, try_
             exception = e
     else:
         raise Exception('local request error: {}'.format(exception))
+
+
+def forward_api(role, request_config):
+    endpoint = request_config.get('header', {}).get('endpoint')
+    ip = get_base_config(role, {}).get("host", "127.0.0.1")
+    port = get_base_config(role, {}).get("port")
+    url = "http://{}:{}{}".format(ip, port, endpoint)
+    method = request_config.get('header', {}).get('method', 'post')
+    audit_logger().info('api request: {}'.format(url))
+    action = getattr(requests, method.lower(), None)
+    http_response = action(url=url, json=request_config.get('body'), headers=HEADERS)
+    response = http_response.json()
+    audit_logger().info(response)
+    return response
 
 
 def get_node_identity(json_body, src_party_id):

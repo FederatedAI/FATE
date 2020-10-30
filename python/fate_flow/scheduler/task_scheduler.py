@@ -30,7 +30,7 @@ class TaskScheduler(object):
         waiting_tasks = []
         for initiator_task in initiator_tasks_group.values():
             # collect all party task party status
-            if job.f_runtime_conf["job_parameters"]["federated_status_collect_type"] == FederatedCommunicationType.PULL:
+            if job.f_runtime_conf_on_party["job_parameters"]["federated_status_collect_type"] == FederatedCommunicationType.PULL:
                 tasks_on_all_party = JobSaver.query_task(task_id=initiator_task.f_task_id, task_version=initiator_task.f_task_version)
                 tasks_status_on_all = set([task.f_status for task in tasks_on_all_party])
                 if len(tasks_status_on_all) > 1 or TaskStatus.RUNNING in tasks_status_on_all:
@@ -57,11 +57,11 @@ class TaskScheduler(object):
                                           party_id=job.f_party_id
                                           )
                     ]
-                    if dependent_task.f_status != TaskStatus.COMPLETE:
+                    if dependent_task.f_status != TaskStatus.SUCCESS:
                         # can not start task
                         break
                 else:
-                    # all upstream dependent tasks have been complete, can start this task
+                    # all upstream dependent tasks have been successful, can start this task
                     scheduling_status_code = SchedulingStatusCode.HAVE_NEXT
                     status_code = cls.start_task(job=job, task=waiting_task)
                     if status_code == SchedulingStatusCode.NO_RESOURCE:
@@ -94,7 +94,6 @@ class TaskScheduler(object):
         schedule_logger(job_id=task.f_job_id).info("start job {} task {} {} on {} {}".format(task.f_job_id, task.f_task_id, task.f_task_version, task.f_role, task.f_party_id))
         FederatedScheduler.sync_task_status(job=job, task=task)
         task_parameters = {}
-        task_parameters.update(job.f_runtime_conf["job_parameters"])
         status_code, response = FederatedScheduler.start_task(job=job, task=task, task_parameters=task_parameters)
         if status_code == FederatedSchedulingStatusCode.SUCCESS:
             return SchedulingStatusCode.SUCCESS
@@ -125,7 +124,7 @@ class TaskScheduler(object):
         # 1. all waiting
         # 2. have end status, should be interrupted
         # 3. have running
-        # 4. waiting + complete
+        # 4. waiting + success
         # 5. all the same end status
         tmp_status_set = set(tasks_party_status)
         if len(tmp_status_set) == 1:
@@ -134,11 +133,11 @@ class TaskScheduler(object):
         else:
             # 2
             for status in sorted(EndStatus.status_list(), key=lambda s: StatusSet.get_level(status=s), reverse=True):
-                if status == TaskStatus.COMPLETE:
+                if status == TaskStatus.SUCCESS:
                     continue
                 if status in tmp_status_set:
                     return status
             # 3
-            if TaskStatus.RUNNING in tmp_status_set or TaskStatus.COMPLETE in tmp_status_set:
+            if TaskStatus.RUNNING in tmp_status_set or TaskStatus.SUCCESS in tmp_status_set:
                 return StatusSet.RUNNING
             raise Exception("Calculate task status failed: {}".format(tasks_party_status))

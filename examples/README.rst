@@ -6,6 +6,14 @@ DSL conf files, and modeling quality comparison tasks
 
 We suggest that user use example-runner tool `FATE-Test <../python/fate_test/README.rst>`__.
 
+Also, for the ease of submitting conf/dsl, we suggest that user install flow-client `FATE-Test <../python/fate_client/README.rst>`__.
+
+To quickly start model training and predictions using dsl & pipeline, you are welcomed to refer to：
+
+1. `DSL v1 train and predict quick tutorial <./experiment_template/user_usage/dsl_v1_predict_tutorial.md>`__.
+2. `DSL v2 train and predict quick tutorial <./experiment_template/user_usage/dsl_v2_predict_tutorial.md>`__.
+3. `Pipeline train and predict quick tutorial <./experiment_template/user_usage/pipeline_predict_tutorial.md>`__.
+
 Below lists included types of examples.
 
 FATE-Pipeline
@@ -16,6 +24,49 @@ User may develop federated learning models conveniently with
 `FATE-Pipeline <../python/fate_client/pipeline/README.rst>`__.
 We provide a host of Pipeline examples for each FATE module and a quick start guide for Pipeline
 `here <./pipeline>`__
+
+Below code shows how to build and fit a hetero SecureBoost model with FATE-Pipeline in few lines.
+
+.. code-block:: python
+
+    from pipeline.backend.config import Backend, WorkMode
+    from pipeline.backend.pipeline import PipeLine
+    from pipeline.component import Reader, DataIO, Intersection, HeteroSecureBoost
+    from pipeline.interface import Data
+    from pipeline.runtime.entity import JobParameters
+
+    guest_train_data = {"name": "breast_hetero_guest", "namespace": "experiment"}
+    host_train_data = {"name": "breast_hetero_host", "namespace": "experiment"}
+
+    # initialize pipeline
+    pipeline = PipeLine().set_initiator(role="guest", party_id=9999).set_roles(guest=9999, host=10000)
+
+    # define components
+    reader_0 = Reader(name="reader_0")
+    reader_0.get_party_instance(role="guest", party_id=9999).component_param(table=guest_train_data)
+    reader_0.get_party_instance(role="host", party_id=10000).component_param(table=host_train_data)
+    dataio_0 = DataIO(name="dataio_0", with_label=True)
+    dataio_0.get_party_instance(role="host", party_id=10000).component_param(with_label=False)
+    intersect_0 = Intersection(name="intersection_0")
+    hetero_secureboost_0 = HeteroSecureBoost(name="hetero_secureboost_0",
+                                             num_trees=5,
+                                             bin_num=16,
+                                             task_type="classification",
+                                             objective_param={"objective": "cross_entropy"},
+                                             encrypt_param={"method": "iterativeAffine"},
+                                             tree_param={"max_depth": 3})
+
+    # add components to pipeline, in order of task execution
+    pipeline.add_component(reader_0)\
+        .add_component(dataio_0, data=Data(data=reader_0.output.data))\
+        .add_component(intersect_0, data=Data(data=dataio_0.output.data))\
+        .add_component(hetero_secureboost_0, data=Data(train_data=intersect_0.output.data))
+
+    # compile & fit pipeline
+    pipeline.compile().fit(JobParameters(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE))
+
+
+Code for the above job can also be found `here <./pipeline/demo/pipeline-quick-demo.py>`_.
 
 DSL
 ---

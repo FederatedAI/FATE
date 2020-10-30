@@ -34,7 +34,7 @@
                     "y"
                 ],
                 "input_format": [
-                    "tag"
+                    "dense"
                 ],
                 "label_type": [
                     "int"

@@ -60,7 +60,7 @@ class PipeLine(object):
         self._predict_pipeline = []
         self._deploy = False
 
-    @LOGGER.catch(onerror=lambda _: sys.exit(1))
+    @LOGGER.catch(reraise=True)
     def set_initiator(self, role, party_id):
         self._initiator = SimpleNamespace(role=role, party_id=party_id)
 
@@ -70,7 +70,7 @@ class PipeLine(object):
         self._initiator = initiator
         self._roles = roles
 
-    @LOGGER.catch(onerror=lambda _: sys.exit(1))
+    @LOGGER.catch(reraise=True)
     def get_predict_meta(self):
         if self._fit_status != StatusCode.SUCCESS:
             raise ValueError("To get predict meta, please fit successfully")
@@ -108,7 +108,7 @@ class PipeLine(object):
 
         return initiator_conf
 
-    @LOGGER.catch(onerror=lambda _: sys.exit(1))
+    @LOGGER.catch(reraise=True)
     def set_roles(self, guest=None, host=None, arbiter=None, **kwargs):
         local_parameters = locals()
         support_roles = Role.support_roles()
@@ -145,7 +145,7 @@ class PipeLine(object):
 
         return self._roles[role].index(party_id)
 
-    @LOGGER.catch(onerror=lambda _: sys.exit(1))
+    @LOGGER.catch(reraise=True)
     def add_component(self, component, data=None, model=None):
         if isinstance(component, PipeLine):
             if component.is_deploy() is False:
@@ -163,7 +163,7 @@ class PipeLine(object):
             meta = component.get_predict_meta()
             self.restore_roles(meta.get("initiator"), meta.get("roles"))
 
-            return
+            return self
 
         if not isinstance(component, Component):
             raise ValueError(
@@ -210,8 +210,9 @@ class PipeLine(object):
                     self._components_input[component.name][attr.strip("_")] = val
                 else:
                     self._components_input[component.name][attr.strip("_")] = [val]
+        return self
 
-    @LOGGER.catch(onerror=lambda _: sys.exit(1))
+    @LOGGER.catch(reraise=True)
     def add_upload_data(self, file, table_name, namespace, head=1, partition=16,
                         id_delimiter=",", backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE):
         data_conf = {"file": file,
@@ -231,7 +232,7 @@ class PipeLine(object):
                         role=init_role,
                         party_id=party_id)
 
-    @LOGGER.catch(onerror=lambda _: sys.exit(1))
+    @LOGGER.catch(reraise=True)
     def get_component(self, component_names=None):
         job_id = self._train_job_id
         if self._cur_state != "fit":
@@ -328,7 +329,7 @@ class PipeLine(object):
     def _set_state(self, state):
         self._cur_state = state
 
-    @LOGGER.catch(onerror=lambda _: sys.exit(1))
+    @LOGGER.catch(reraise=True)
     def compile(self):
         self._construct_train_dsl()
         self._train_conf = self._construct_train_conf()
@@ -386,6 +387,7 @@ class PipeLine(object):
                     val = [val]
 
                 self._predict_dsl["components"][cpn]["input"]["data"][dataset] = val
+        return self
 
     def _feed_job_parameters(self, conf, job_type=None,
                              model_info=None, job_parameters=None):
@@ -437,7 +439,7 @@ class PipeLine(object):
 
         return predict_conf
 
-    @LOGGER.catch(onerror=lambda _: sys.exit(1))
+    @LOGGER.catch(reraise=True)
     def fit(self, job_parameters=None):
 
         if self._stage == "predict":
@@ -460,7 +462,7 @@ class PipeLine(object):
                                                                 self._initiator.role,
                                                                 self._initiator.party_id)
 
-    @LOGGER.catch(onerror=lambda _: sys.exit(1))
+    @LOGGER.catch(reraise=True)
     def predict(self, job_parameters=None):
         if self._stage != "predict":
             raise ValueError(
@@ -485,7 +487,7 @@ class PipeLine(object):
                                              self._initiator.role,
                                              self._initiator.party_id)
 
-    @LOGGER.catch(onerror=lambda _: sys.exit(1))
+    @LOGGER.catch(reraise=True)
     def upload(self, backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE, drop=0):
         for data_conf in self._upload_conf:
             upload_conf = self._construct_upload_conf(data_conf, backend, work_mode)
@@ -496,6 +498,7 @@ class PipeLine(object):
                                                  "local",
                                                  0)
 
+    @LOGGER.catch(reraise=True)
     def dump(self, file_path=None):
         pkl = pickle.dumps(self)
 
@@ -514,7 +517,7 @@ class PipeLine(object):
         with open(file_path, "rb") as fin:
             return pickle.loads(fin.read())
 
-    @LOGGER.catch(onerror=lambda _: sys.exit(1))
+    @LOGGER.catch(reraise=True)
     def deploy_component(self, components):
         if self._train_dsl is None:
             raise ValueError("Before deploy model, training should be finish!!!")
@@ -549,7 +552,7 @@ class PipeLine(object):
     def is_deploy(self):
         return self._deploy
 
-    @LOGGER.catch(onerror=lambda _: sys.exit(1))
+    @LOGGER.catch(reraise=True)
     def init_predict_config(self, config):
         if isinstance(config, PipeLine):
             config = config.get_predict_meta()
@@ -561,7 +564,7 @@ class PipeLine(object):
         self._initiator = config["initiator"]
         self._train_components = config["train_components"]
 
-    @LOGGER.catch(onerror=lambda _: sys.exit(1))
+    @LOGGER.catch(reraise=True)
     def get_component_input_msg(self):
         if VERSION != 2:
             raise ValueError("In DSL Version 1，only need to config data from args, no need special component")
@@ -588,7 +591,7 @@ class PipeLine(object):
 
         return need_input
 
-    @LOGGER.catch(onerror=lambda _: sys.exit(1))
+    @LOGGER.catch(reraise=True)
     def get_input_reader_placeholder(self):
         input_info = self.get_component_input_msg()
         input_placeholder = set()
@@ -599,7 +602,7 @@ class PipeLine(object):
 
         return input_placeholder
 
-    @LOGGER.catch(onerror=lambda _: sys.exit(1))
+    @LOGGER.catch(reraise=True)
     def set_inputs(self, data_dict):
         if not isinstance(data_dict, dict):
             raise ValueError(
@@ -611,14 +614,14 @@ class PipeLine(object):
 
         self._data_to_feed_in_prediction = data_dict
 
-    @LOGGER.catch(onerror=lambda _: sys.exit(1))
+    @LOGGER.catch(reraise=True)
     def __getattr__(self, attr):
         if attr in self._components:
             return self._components[attr]
 
         return self.__getattribute__(attr)
 
-    @LOGGER.catch(onerror=lambda _: sys.exit(1))
+    @LOGGER.catch(reraise=True)
     def __getitem__(self, item):
         if item not in self._components:
             raise ValueError("Pipeline does not has component }{}".format(item))

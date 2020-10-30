@@ -86,7 +86,7 @@ class StatusSet(BaseStatus):
     CANCELED = "canceled"
     TIMEOUT = "timeout"
     FAILED = "failed"
-    COMPLETE = "complete"
+    SUCCESS = "success"
 
     @classmethod
     def get_level(cls, status):
@@ -99,7 +99,7 @@ class JobStatus(BaseStatus):
     CANCELED = StatusSet.CANCELED
     TIMEOUT = StatusSet.TIMEOUT
     FAILED = StatusSet.FAILED
-    COMPLETE = StatusSet.COMPLETE
+    SUCCESS = StatusSet.SUCCESS
 
 
 class TaskSetStatus(BaseStatus):
@@ -108,7 +108,7 @@ class TaskSetStatus(BaseStatus):
     CANCELED = StatusSet.CANCELED
     TIMEOUT = StatusSet.TIMEOUT
     FAILED = StatusSet.FAILED
-    COMPLETE = StatusSet.COMPLETE
+    SUCCESS = StatusSet.SUCCESS
 
 
 class TaskStatus(BaseStatus):
@@ -117,7 +117,7 @@ class TaskStatus(BaseStatus):
     CANCELED = StatusSet.CANCELED
     TIMEOUT = StatusSet.TIMEOUT
     FAILED = StatusSet.FAILED
-    COMPLETE = StatusSet.COMPLETE
+    SUCCESS = StatusSet.SUCCESS
 
 
 class OngoingStatus(BaseStatus):
@@ -135,7 +135,7 @@ class EndStatus(BaseStatus):
     CANCELED = StatusSet.CANCELED
     TIMEOUT = StatusSet.TIMEOUT
     FAILED = StatusSet.FAILED
-    COMPLETE = StatusSet.COMPLETE
+    SUCCESS = StatusSet.SUCCESS
 
     @staticmethod
     def is_end_status(status):

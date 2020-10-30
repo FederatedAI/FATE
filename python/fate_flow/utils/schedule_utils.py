@@ -23,10 +23,10 @@ from fate_flow.utils.config_adapter import JobRuntimeConfigAdapter
 
 @DB.connection_context()
 def get_job_dsl_parser_by_job_id(job_id):
-    jobs = Job.select(Job.f_dsl, Job.f_runtime_conf, Job.f_train_runtime_conf).where(Job.f_job_id == job_id)
+    jobs = Job.select(Job.f_dsl, Job.f_runtime_conf_on_party, Job.f_train_runtime_conf).where(Job.f_job_id == job_id)
     if jobs:
         job = jobs[0]
-        job_dsl_parser = get_job_dsl_parser(dsl=job.f_dsl, runtime_conf=job.f_runtime_conf,
+        job_dsl_parser = get_job_dsl_parser(dsl=job.f_dsl, runtime_conf=job.f_runtime_conf_on_party,
                                             train_runtime_conf=job.f_train_runtime_conf)
         return job_dsl_parser
     else:

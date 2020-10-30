@@ -31,11 +31,13 @@ from fate_flow.settings import stat_logger, MODEL_STORE_ADDRESS, TEMP_DIRECTORY
 from fate_flow.pipelined_model import migrate_model, pipelined_model, publish_model
 from fate_flow.utils.api_utils import get_json_result, federated_api, error_response
 from fate_flow.utils import job_utils
+from fate_flow.utils.config_adapter import JobRuntimeConfigAdapter
 from fate_flow.utils.service_utils import ServiceUtils
 from fate_flow.utils.detect_utils import check_config
 from fate_flow.utils.model_utils import gen_party_model_id
 from fate_flow.entity.types import ModelOperation, TagOperation
 from fate_arch.common import file_utils, WorkMode, FederatedMode
+from fate_flow.entity.types import JobStatus
 
 manager = Flask(__name__)
 
@@ -301,6 +303,7 @@ def operate_model(model_operation):
 
                 pipeline = model.read_component_model('pipeline', 'pipeline')['Pipeline']
                 train_runtime_conf = json_loads(pipeline.train_runtime_conf)
+                runtime_conf_adapter = JobRuntimeConfigAdapter(train_runtime_conf)
                 permitted_party_id = []
                 for key, value in train_runtime_conf.get('role', {}).items():
                     for v in value:
@@ -325,10 +328,10 @@ def operate_model(model_operation):
                                 f_initiator_role=train_runtime_conf["initiator"]["role"],
                                 f_initiator_party_id=train_runtime_conf["initiator"]["party_id"],
                                 f_runtime_conf=train_runtime_conf,
-                                f_work_mode=train_runtime_conf["job_parameters"]["work_mode"],
+                                f_work_mode=runtime_conf_adapter.get_job_work_mode(),
                                 f_dsl=json_loads(pipeline.train_dsl),
                                 f_imported=1,
-                                f_job_status='complete'
+                                f_job_status=JobStatus.SUCCESS
                             )
                         else:
                             stat_logger.info(f'job id: {train_runtime_conf["job_parameters"]["model_version"]}, '
@@ -360,10 +363,8 @@ def operate_model(model_operation):
     else:
         data = {}
         job_dsl, job_runtime_conf = gen_model_operation_job_config(request_config, model_operation)
-        job_id, job_dsl_path, job_runtime_conf_path, logs_directory, model_info, board_url = DAGScheduler.submit(
-            {'job_dsl': job_dsl, 'job_runtime_conf': job_runtime_conf}, job_id=job_id)
-        data.update({'job_dsl_path': job_dsl_path, 'job_runtime_conf_path': job_runtime_conf_path,
-                     'board_url': board_url, 'logs_directory': logs_directory})
+        submit_result = DAGScheduler.submit({'job_dsl': job_dsl, 'job_runtime_conf': job_runtime_conf}, job_id=job_id)
+        data.update(submit_result)
         operation_record(data=job_runtime_conf, oper_type=model_operation, oper_status='')
         return get_json_result(job_id=job_id, data=data)
 
@@ -532,6 +533,7 @@ def gen_model_operation_job_config(config_data: dict, model_operation: ModelOper
 @DB.connection_context()
 def operation_record(data: dict, oper_type, oper_status):
     try:
+        adapter = JobRuntimeConfigAdapter(data)
         if oper_type == 'migrate':
             OperLog.create(f_operation_type=oper_type,
                            f_operation_status=oper_status,
@@ -546,15 +548,15 @@ def operation_record(data: dict, oper_type, oper_status):
                            f_initiator_role=data.get("initiator").get("role"),
                            f_initiator_party_id=data.get("initiator").get("party_id"),
                            f_request_ip=request.remote_addr,
-                           f_model_id=data.get("job_parameters").get("model_id"),
-                           f_model_version=data.get("job_parameters").get("model_version"))
+                           f_model_id=adapter.get_common_parameters().to_dict().get("model_id"),
+                           f_model_version=adapter.get_common_parameters().to_dict().get("model_version"))
         else:
             OperLog.create(f_operation_type=oper_type,
                            f_operation_status=oper_status,
                            f_initiator_role=data.get("role") if data.get("role") else data.get("initiator").get("role"),
                            f_initiator_party_id=data.get("party_id") if data.get("party_id") else data.get("initiator").get("party_id"),
                            f_request_ip=request.remote_addr,
-                           f_model_id=data.get("model_id") if data.get("model_id") else data.get("job_parameters").get("model_id"),
-                           f_model_version=data.get("model_version") if data.get("model_version") else data.get("job_parameters").get("model_version"))
+                           f_model_id=data.get("model_id") if data.get("model_id") else adapter.get_common_parameters().to_dict().get("model_id"),
+                           f_model_version=data.get("model_version") if data.get("model_version") else adapter.get_common_parameters().to_dict().get("model_version"))
     except Exception:
         stat_logger.error(traceback.format_exc())
