@@ -104,8 +104,8 @@ def migration(config_data: dict):
 
         # update pipeline.pb file
         pipeline.train_runtime_conf = json_dumps(train_runtime_conf, byte=True)
-        pipeline.model_id = bytes(adapter.get_common_parameters()["model_id"], "utf-8")
-        pipeline.model_version = bytes(adapter.get_common_parameters()["model_version"], "utf-8")
+        pipeline.model_id = bytes(adapter.get_common_parameters().to_dict.get("model_id"), "utf-8")
+        pipeline.model_version = bytes(adapter.get_common_parameters().to_dict().get("model_version"), "utf-8")
 
         # save updated pipeline.pb file
         migrate_model.save_pipeline(pipeline)
@@ -139,7 +139,7 @@ def migration(config_data: dict):
         return (0, f"Migrating model successfully. " \
                   "The configuration of model has been modified automatically. " \
                   "New model id is: {}, model version is: {}. " \
-                  "Model files can be found at '{}'.".format(adpater.get_common_parameters()["model_id"],
+                  "Model files can be found at '{}'.".format(adapter.get_common_parameters()["model_id"],
                                                              migrate_model.model_version,
                                                              os.path.abspath(archive_path)),
                 {"model_id": migrate_model.model_id,

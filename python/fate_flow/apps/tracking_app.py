@@ -174,8 +174,8 @@ def component_output_model():
                                                                                           party_id=request_data['party_id'])
         if any([job_dsl, job_runtime_conf, train_runtime_conf]):
             adapter = JobRuntimeConfigAdapter(job_runtime_conf)
-            model_id = adapter.get_common_parameters()['model_id']
-            model_version = adapter.get_common_parameters()['model_version']
+            model_id = adapter.get_common_parameters().to_dict().get('model_id')
+            model_version = adapter.get_common_parameters().to_dict.get('model_version')
         else:
             stat_logger.exception(e)
             stat_logger.error(f"Can not find model info by filters: job id: {request_data.get('job_id')}, "
