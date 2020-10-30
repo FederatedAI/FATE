@@ -6,7 +6,7 @@ DSL conf files, and modeling quality comparison tasks
 
 We suggest that user use example-runner tool `FATE-Test <../python/fate_test/README.rst>`__.
 Also, for the ease of submitting conf/dsl, we suggest that user install flow-client
-    `FATE-Test <../python/flow_client/README.rst>`__.
+    `FATE-Test <../python/fate_client/README.rst>`__.
 
 To quickly start model training and predictions using dsl & pipeline, you are welcomed to refer to：
 
