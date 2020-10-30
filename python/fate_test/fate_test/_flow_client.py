@@ -19,11 +19,17 @@ import time
 import typing
 from datetime import timedelta
 from pathlib import Path
+import click
 
 import requests
 from requests_toolbelt import MultipartEncoderMonitor, MultipartEncoder
 
 from fate_test._parser import Data, Job
+
+from fate_client.flow_sdk.client import FlowClient
+
+# use real ip address to initialize SDK
+client = FlowClient('172.16.153.42', 9380, 'v1')
 
 
 class FLOWClient(object):
@@ -38,10 +44,6 @@ class FLOWClient(object):
 
     def set_address(self, address):
         self.address = address
-
-    @property
-    def _base(self):
-        return f"http://{self.address}/{self.version}/"
 
     def upload_data(self, data: Data, callback=None) -> 'UploadDataResponse':
         try:
@@ -109,37 +111,43 @@ class FLOWClient(object):
             raise Exception('The file is obtained from the fate flow client machine, but it does not exist, '
                             f'please check the path: {path}')
 
-        with path.open("rb") as fp:
-            data = MultipartEncoder(
-                fields={'file': (path.name, fp, 'application/octet-stream')}
-            )
-            data = MultipartEncoderMonitor(data)
-            upload_response = self._post(url='data/upload', data=data, params=conf,
-                                         headers={'Content-Type': data.content_type})
-            response = UploadDataResponse(upload_response)
+        upload_response = self.flow_client(request='data/upload', param=path)
+
+        response = UploadDataResponse(upload_response)
         return response
 
     def _delete_data(self, table_name, namespace):
-        response = self._post(url='table/delete', json={'table_name': table_name, 'namespace': namespace})
+        param = {
+            'table_name': table_name,
+            'namespace': namespace
+        }
+        response = self.flow_client(request='table/delete', param=param)
         return response
 
     def _submit_job(self, conf, dsl):
-        post_data = {
+        param = {
             'job_dsl': dsl,
             'job_runtime_conf': conf
         }
-        response = SubmitJobResponse(self._post(url='job/submit', json=post_data))
+        response = SubmitJobResponse(self.flow_client(request='job/submit', param=param))
         return response
 
     def _query_job(self, job_id, role):
-        data = {"local": {"role": role}, "job_id": str(job_id)}
-        response = QueryJobResponse(self._post(url='job/query', json=data))
+        param = {
+            'job_id': job_id,
+            'role': role
+        }
+        response = QueryJobResponse(self.flow_client(request='job/query', param=param))
         return response
 
     def _add_notes(self, job_id, role, party_id, notes):
         data = dict(job_id=job_id, role=role, party_id=party_id, notes=notes)
         response = AddNotesResponse(self._post(url='job/update', json=data))
         return response
+
+    @property
+    def _base(self):
+        return f"http://{self.address}/{self.version}/"
 
     def _post(self, url, **kwargs) -> dict:
         request_url = self._base + url
@@ -161,6 +169,28 @@ class FLOWClient(object):
                         'retmsg': "Internal server error. Nothing in response. You may check out the configuration in "
                                   "'FATE/arch/conf/server_conf.json' and restart fate flow server."}
         return response
+
+    def flow_client(self, request, param):
+        client = FlowClient(self.address.split(':')[0], self.address.split(':')[1], self.version)
+
+        if request == 'data/upload':
+            stdout = client.data.upload(conf_path=param)
+        elif request == 'table/delete':
+            stdout = client.table.delete(table_name=param['table_name'], namespace=param['namespace'])
+        elif request == 'job/submit':
+            stdout = client.job.submit(conf_path=param['conf'], dsl_path=param['dsl'])
+        elif request == 'job/query':
+            stdout = client.job.query(job_id=param['job_id'], role=param['role'])
+        else:
+            stdout = {"retcode": None}
+
+        status = stdout["retcode"]
+        if status != 0:
+            raise ValueError({'retcode': 100,
+                              'retmsg': "Internal server error. Nothing in response. You may check out the configuration in "
+                                        "'FATE/conf/server_conf.yaml' and restart fate flow server."})
+
+        return stdout
 
 
 class Status(object):
