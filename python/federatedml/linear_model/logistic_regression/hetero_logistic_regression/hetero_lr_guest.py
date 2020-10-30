@@ -145,8 +145,8 @@ class HeteroLRGuest(HeteroLRBase):
                     LOGGER.debug('early stopping triggered')
                     break
 
-            self.n_iter_ += 1
             LOGGER.info("iter: {},  is_converged: {}".format(self.n_iter_, self.is_converged))
+            self.n_iter_ += 1
 
             if self.is_converged:
                 break

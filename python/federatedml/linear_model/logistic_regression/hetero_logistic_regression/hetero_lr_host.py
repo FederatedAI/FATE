@@ -149,8 +149,8 @@ class HeteroLRHost(HeteroLRBase):
                 if self.validation_strategy.need_stop():
                     LOGGER.debug('early stopping triggered')
                     break
-            self.n_iter_ += 1
             LOGGER.info("iter: {}, is_converged: {}".format(self.n_iter_, self.is_converged))
+            self.n_iter_ += 1
             if self.is_converged:
                 break
         if self.validation_strategy and self.validation_strategy.has_saved_best_model():
