@@ -33,4 +33,3 @@ numba>=0.40.1
 phe>=1.4.0
 protobuf==3.6.1
 pyarrow==0.17.1
-python-rocksdb==0.7.0
