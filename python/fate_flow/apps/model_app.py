@@ -533,6 +533,7 @@ def gen_model_operation_job_config(config_data: dict, model_operation: ModelOper
 @DB.connection_context()
 def operation_record(data: dict, oper_type, oper_status):
     try:
+        adapter = JobRuntimeConfigAdapter(data)
         if oper_type == 'migrate':
             OperLog.create(f_operation_type=oper_type,
                            f_operation_status=oper_status,
@@ -547,15 +548,15 @@ def operation_record(data: dict, oper_type, oper_status):
                            f_initiator_role=data.get("initiator").get("role"),
                            f_initiator_party_id=data.get("initiator").get("party_id"),
                            f_request_ip=request.remote_addr,
-                           f_model_id=data.get("job_parameters").get("model_id"),
-                           f_model_version=data.get("job_parameters").get("model_version"))
+                           f_model_id=adapter.get_common_parameters().to_dict().get("model_id"),
+                           f_model_version=adapter.get_common_parameters().to_dict().get("model_version"))
         else:
             OperLog.create(f_operation_type=oper_type,
                            f_operation_status=oper_status,
                            f_initiator_role=data.get("role") if data.get("role") else data.get("initiator").get("role"),
                            f_initiator_party_id=data.get("party_id") if data.get("party_id") else data.get("initiator").get("party_id"),
                            f_request_ip=request.remote_addr,
-                           f_model_id=data.get("model_id") if data.get("model_id") else data.get("job_parameters").get("model_id"),
-                           f_model_version=data.get("model_version") if data.get("model_version") else data.get("job_parameters").get("model_version"))
+                           f_model_id=data.get("model_id") if data.get("model_id") else adapter.get_common_parameters().to_dict().get("model_id"),
+                           f_model_version=data.get("model_version") if data.get("model_version") else adapter.get_common_parameters().to_dict().get("model_version"))
     except Exception:
         stat_logger.error(traceback.format_exc())
