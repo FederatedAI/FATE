@@ -1,9 +1,9 @@
 import argparse
 import numpy as np
-import keras
+from tensorflow import keras
 import pandas
 import tensorflow as tf
-from keras.utils import np_utils
+from tensorflow.keras.utils import to_categorical
 from tensorflow.keras import optimizers
 
 from sklearn import metrics
@@ -47,7 +47,7 @@ def main(param="./hetero_nn_breast_config.yaml"):
         labels = y.copy()
         label_encoder = LabelEncoder()
         y = label_encoder.fit_transform(y)
-        y = np_utils.to_categorical(y)
+        y = to_categorical(y)
 
     Xb = Xb.drop(label_name, axis=1)
     model = build(param, Xb.shape[1], Xa.shape[1])
