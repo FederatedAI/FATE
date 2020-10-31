@@ -97,13 +97,6 @@ class DAGScheduler(Cron):
         job.f_runtime_conf_on_party = job.f_runtime_conf.copy()
         job.f_runtime_conf_on_party["job_parameters"] = common_job_parameters.to_dict()
 
-        status_code, response = FederatedScheduler.create_job(job=job)
-        if status_code != FederatedSchedulingStatusCode.SUCCESS:
-            job.f_status = JobStatus.FAILED
-            job.f_tag = "submit_failed"
-            FederatedScheduler.sync_job_status(job=job)
-            raise Exception("create job failed", response)
-
         if common_job_parameters.work_mode == WorkMode.CLUSTER:
             # Save the status information of all participants in the initiator for scheduling
             for role, party_ids in job.f_roles.items():
@@ -111,6 +104,13 @@ class DAGScheduler(Cron):
                     if role == job.f_initiator_role and party_id == job.f_initiator_party_id:
                         continue
                     JobController.initialize_tasks(job_id, role, party_id, False, job.f_initiator_role, job.f_initiator_party_id, common_job_parameters, dsl_parser)
+
+        status_code, response = FederatedScheduler.create_job(job=job)
+        if status_code != FederatedSchedulingStatusCode.SUCCESS:
+            job.f_status = JobStatus.FAILED
+            job.f_tag = "submit_failed"
+            FederatedScheduler.sync_job_status(job=job)
+            raise Exception("create job failed", response)
 
         schedule_logger(job_id).info(
             'submit job successfully, job id is {}, model id is {}'.format(job.f_job_id, common_job_parameters.model_id))

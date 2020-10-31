@@ -50,6 +50,25 @@ def get_job_dsl_parser(dsl=None, runtime_conf=None, pipeline_dsl=None, train_run
     return dsl_parser
 
 
+def federated_order_reset(dest_partys, scheduler_partys_info):
+    dest_partys_new = []
+    scheduler = []
+    dest_party_ids_dict = {}
+    for dest_role, dest_party_ids in dest_partys:
+        from copy import deepcopy
+        new_dest_party_ids = deepcopy(dest_party_ids)
+        dest_party_ids_dict[dest_role] = new_dest_party_ids
+        for scheduler_role, scheduler_party_id in scheduler_partys_info:
+            if dest_role == scheduler_role and scheduler_party_id in dest_party_ids:
+                dest_party_ids_dict[dest_role].remove(scheduler_party_id)
+                scheduler.append((scheduler_role, [scheduler_party_id]))
+        if dest_party_ids_dict[dest_role]:
+            dest_partys_new.append((dest_role, dest_party_ids_dict[dest_role]))
+    if scheduler:
+        dest_partys_new.extend(scheduler)
+    return dest_partys_new
+
+
 def get_parser_version_mapping():
     return {
         "1": DSLParser(),
