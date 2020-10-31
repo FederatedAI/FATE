@@ -37,6 +37,9 @@
         },
         "raw_intersect_multi_host": {
             "script": "./pipeline-intersect-multi-raw.py"
+        },
+        "raw_intersect_200c_with_union": {
+            "script": "./pipeline-intersect-with-union.py"
         }
     }
 }
