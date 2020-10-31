@@ -67,9 +67,6 @@ class JobController(object):
         engines_info = cls.get_job_engines_address(job_parameters=job_parameters)
         cls.check_parameters(job_parameters=job_parameters, engines_info=engines_info)
         job_info["runtime_conf_on_party"]["job_parameters"] = job_parameters.to_dict()
-
-        job = JobSaver.create_job(job_info=job_info)
-
         job_utils.save_job_conf(job_id=job_id,
                                 role=role,
                                 job_dsl=dsl,
@@ -79,7 +76,10 @@ class JobController(object):
                                 pipeline_dsl=None)
 
         cls.initialize_tasks(job_id=job_id, role=role, party_id=party_id, run_on_this_party=True, initiator_role=job_info["initiator_role"], initiator_party_id=job_info["initiator_party_id"], job_parameters=job_parameters, dsl_parser=dsl_parser)
-        cls.initialize_job_tracker(job_id=job_id, role=role, party_id=party_id, job=job, is_initiator=is_initiator, dsl_parser=dsl_parser)
+        job_parameters = job_info['runtime_conf_on_party']['job_parameters']
+        roles = job_info['roles']
+        cls.initialize_job_tracker(job_id=job_id, role=role, party_id=party_id, job_parameters=job_parameters, roles=roles, is_initiator=is_initiator, dsl_parser=dsl_parser)
+        JobSaver.create_job(job_info=job_info)
 
     @classmethod
     def backend_compatibility(cls, job_parameters: RunParameters):
@@ -176,9 +176,7 @@ class JobController(object):
                     TaskController.create_task(role=role, party_id=party_id, run_on_this_party=run_on_this_party, task_info=task_info)
 
     @classmethod
-    def initialize_job_tracker(cls, job_id, role, party_id, job: Job, is_initiator, dsl_parser):
-        job_parameters = job.f_runtime_conf_on_party['job_parameters']
-        roles = job.f_roles
+    def initialize_job_tracker(cls, job_id, role, party_id, job_parameters, roles, is_initiator, dsl_parser):
         tracker = Tracker(job_id=job_id, role=role, party_id=party_id,
                           model_id=job_parameters["model_id"],
                           model_version=job_parameters["model_version"])
