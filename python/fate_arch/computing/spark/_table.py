@@ -132,10 +132,10 @@ class Table(CTableABC):
     @computing_profile
     def subtractByKey(self, other: 'Table', **kwargs):
         return from_rdd(_subtract_by_key(self._rdd, other._rdd))
-
+    
     @computing_profile
-    def union(self, other: 'Table', func=lambda v1, v2: v1, **kwargs):
-        return from_rdd(_union(self._rdd, other._rdd, func))
+    def union(self, other: 'Table', **kwargs):
+        return from_rdd(_union(self._rdd, other._rdd))
 
 
 def from_hdfs(paths: str, partitions):
@@ -253,21 +253,10 @@ def _subtract_by_key(rdd, other):
     return rdd.subtractByKey(other, rdd.getNumPartitions())
 
 
-def _union(rdd, other, func):
+def _union(rdd, other):
     num_partition = max(rdd.getNumPartitions(), other.getNumPartitions())
-
-    def _func(pair):
-        iter1, iter2 = pair
-        val1 = list(iter1)
-        val2 = list(iter2)
-        if not val1:
-            return val2[0]
-        if not val2:
-            return val1[0]
-        return func(val1[0], val2[0])
-
-    return _map_value(rdd.cogroup(other, num_partition), _func)
-
+    return rdd.union(other).coalesce(num_partition)
+  
 
 def _flat_map(rdd, func):
     def _fn(x):
