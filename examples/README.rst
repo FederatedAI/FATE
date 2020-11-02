@@ -29,6 +29,7 @@ Below code shows how to build and fit a hetero SecureBoost model with FATE-Pipel
 
 .. code-block:: python
 
+    import json
     from pipeline.backend.config import Backend, WorkMode
     from pipeline.backend.pipeline import PipeLine
     from pipeline.component import Reader, DataIO, Intersection, HeteroSecureBoost, Evaluation
@@ -67,6 +68,14 @@ Below code shows how to build and fit a hetero SecureBoost model with FATE-Pipel
     # compile & fit pipeline
     pipeline.compile().fit(JobParameters(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE))
 
+    # query component summary
+    print(f"Evaluation summary:\n{json.dumps(pipeline.get_component('evaluation_0').get_summary(), indent=4)}")
+
+    # Evaluation summary:
+    # {
+    #   "auc": 0.9971790603033666,
+    #   "ks": 0.9624094920987263
+    # }
 
 Code for the above job can also be found `here <./pipeline/demo/pipeline-quick-demo.py>`_.
 

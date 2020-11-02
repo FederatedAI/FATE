@@ -55,4 +55,4 @@ pipeline.add_component(reader_0)\
 pipeline.compile().fit(JobParameters(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE))
 
 # query component summary
-print(json.dumps(pipeline.get_component("evaluation_0").get_summary(), indent=4))
+print(f"Evaluation summary:\n{json.dumps(pipeline.get_component('evaluation_0').get_summary(), indent=4)}")
