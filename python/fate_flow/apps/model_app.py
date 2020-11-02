@@ -313,8 +313,9 @@ def operate_model(model_operation):
                     raise Exception("party id {} is not in model roles, please check if the party id is valid.")
                 try:
                     with DB.connection_context():
+                        job_parameters = runtime_conf_adapter.get_common_parameters().to_dict()
                         model = MLModel.get_or_none(
-                            MLModel.f_job_id == train_runtime_conf["job_parameters"]["model_version"],
+                            MLModel.f_job_id == job_parameters.get('model_version'),
                             MLModel.f_role == request_config["role"]
                         )
                         if not model:
@@ -322,9 +323,9 @@ def operate_model(model_operation):
                                 f_role=request_config["role"],
                                 f_party_id=request_config["party_id"],
                                 f_roles=train_runtime_conf["role"],
-                                f_job_id=train_runtime_conf["job_parameters"]["model_version"],
-                                f_model_id=train_runtime_conf["job_parameters"]["model_id"],
-                                f_model_version=train_runtime_conf["job_parameters"]["model_version"],
+                                f_job_id=job_parameters.get('model_version'),
+                                f_model_id=job_parameters.get('model_id'),
+                                f_model_version=job_parameters.get('model_version'),
                                 f_initiator_role=train_runtime_conf["initiator"]["role"],
                                 f_initiator_party_id=train_runtime_conf["initiator"]["party_id"],
                                 f_runtime_conf=train_runtime_conf,
@@ -334,7 +335,7 @@ def operate_model(model_operation):
                                 f_job_status=JobStatus.SUCCESS
                             )
                         else:
-                            stat_logger.info(f'job id: {train_runtime_conf["job_parameters"]["model_version"]}, '
+                            stat_logger.info(f'job id: {runtime_conf_adapter.get_common_parameters().to_dict().get("model_version")}, '
                                              f'role: {request_config["role"]} model info already existed in database.')
                 except peewee.IntegrityError as e:
                     stat_logger.exception(e)
@@ -534,6 +535,7 @@ def gen_model_operation_job_config(config_data: dict, model_operation: ModelOper
 def operation_record(data: dict, oper_type, oper_status):
     try:
         adapter = JobRuntimeConfigAdapter(data)
+        job_parameters = adapter.get_common_parameters().to_dict()
         if oper_type == 'migrate':
             OperLog.create(f_operation_type=oper_type,
                            f_operation_status=oper_status,
@@ -548,15 +550,15 @@ def operation_record(data: dict, oper_type, oper_status):
                            f_initiator_role=data.get("initiator").get("role"),
                            f_initiator_party_id=data.get("initiator").get("party_id"),
                            f_request_ip=request.remote_addr,
-                           f_model_id=adapter.get_common_parameters().to_dict().get("model_id"),
-                           f_model_version=adapter.get_common_parameters().to_dict().get("model_version"))
+                           f_model_id=job_parameters.get("model_id"),
+                           f_model_version=job_parameters.get("model_version"))
         else:
             OperLog.create(f_operation_type=oper_type,
                            f_operation_status=oper_status,
                            f_initiator_role=data.get("role") if data.get("role") else data.get("initiator").get("role"),
                            f_initiator_party_id=data.get("party_id") if data.get("party_id") else data.get("initiator").get("party_id"),
                            f_request_ip=request.remote_addr,
-                           f_model_id=data.get("model_id") if data.get("model_id") else adapter.get_common_parameters().to_dict().get("model_id"),
-                           f_model_version=data.get("model_version") if data.get("model_version") else adapter.get_common_parameters().to_dict().get("model_version"))
+                           f_model_id=data.get("model_id") if data.get("model_id") else job_parameters.get("model_id"),
+                           f_model_version=data.get("model_version") if data.get("model_version") else job_parameters.get("model_version"))
     except Exception:
         stat_logger.error(traceback.format_exc())
