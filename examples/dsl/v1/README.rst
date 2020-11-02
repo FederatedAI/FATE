@@ -142,15 +142,16 @@ There are three config files need to be prepared to build a algorithm model in F
 Step1: Define upload data config file
 -------------------------------------
 
-To make FATE be able to use your data, you need to upload them. Thus, a upload-data conf is needed. A sample file named "upload_data.json" has been provided in current folder.
+To enable FATE to use your data, you need to upload them. Thus, a upload-data conf is needed. A sample file named "upload_data.json" has been provided in current folder.
 
-:Field Specification:
+Field Specification
+^^^^^^^^^^^^^^^^^^^
 
-    1. file: file path
-    2. head: Specify whether your data file include a header or not
-    3. partition: Specify how many partitions used to store the data
-    4. table_name & namespace: Indicators for stored data table.
-    5. work_mode: Indicate if using standalone version or cluster version. 0 represent for standalone version and 1 stand for cluster version.
+:file: file path
+:head: Specify whether your data file include a header or not
+:partition: Specify how many partitions used to store the data
+:table_name & namespace: Indicators for stored data table.
+:work_mode: Indicate if using standalone version or cluster version. 0 represent for standalone version and 1 stand for cluster version.
 
 .. Note::
     We suggest you fully consider the resource of modeling machines before setting partition number.
