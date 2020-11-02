@@ -40,7 +40,7 @@ class LinearParam(BaseParam):
         Penalty method used in LinR. Please note that, when using encrypted version in HeteroLinR,
         'L1' is not supported.
 
-    tol : float, default: 1e-5
+    tol : float, default: 1e-4
         The tolerance of convergence
 
     alpha : float, default: 1.0
@@ -55,7 +55,7 @@ class LinearParam(BaseParam):
     learning_rate : float, default: 0.01
         Learning rate
 
-    max_iter : int, default: 100
+    max_iter : int, default: 20
         The maximum iteration for training.
 
     init_param: InitParam object, default: default InitParam object
@@ -102,9 +102,9 @@ class LinearParam(BaseParam):
     """
 
     def __init__(self, penalty='L2',
-                 tol=1e-5, alpha=1.0, optimizer='sgd',
+                 tol=1e-4, alpha=1.0, optimizer='sgd',
                  batch_size=-1, learning_rate=0.01, init_param=InitParam(),
-                 max_iter=100, early_stop='diff', predict_param=PredictParam(),
+                 max_iter=20, early_stop='diff', predict_param=PredictParam(),
                  encrypt_param=EncryptParam(), sqn_param=StochasticQuasiNewtonParam(),
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
                  cv_param=CrossValidationParam(), decay=1, decay_sqrt=True, validation_freqs=None,
