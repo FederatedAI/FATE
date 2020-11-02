@@ -31,7 +31,7 @@ Here is a general guide to quick start a FATE job.
 
       # this step installs FATE-Pipeline, FATE-Flow CLI v2, and FATE-Flow SDK
       pip install fate_client
-      pipeline config --help
+      pipeline init --help
 
 
 3. configure server information
@@ -40,7 +40,7 @@ Here is a general guide to quick start a FATE job.
 
       # provide ip and port information
       # optionally, set logs directory
-      pipeline config --ip 127.0.0.1 --port 9380
+      pipeline init --ip 127.0.0.1 --port 9380
 
 4. upload data with FATE-Pipeline
 
