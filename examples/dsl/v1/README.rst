@@ -37,7 +37,7 @@ Standalone Version
 
     ::
 
-        stdout:{
+        stdout: {
             "data": {
                 "board_url": "http://localhost:8080/index.html#/dashboard?job_id=20190815211211735986134&role=guest&party_id=10000",
                 "job_dsl_path": "${your install path}/jobs/20190815211211735986134/job_dsl.json",
@@ -57,7 +57,7 @@ Standalone Version
     
 3. You can view the job on the url above or check out the log through the log file path.
 
-4. You can also define your own task through editing the following variables in :download:`quick_run.py`:
+4. You can also define your own task through editing the following variables in `quick_run.py`:
     
     .. code-block:: python
 
@@ -171,34 +171,36 @@ Currently, FATE provide a kind of domain-specific language(DSL) to define whatev
 
 The DSL config file will define input data and(or) model as well as output data and(or) model for each component. The downstream components take output data and(or) model of upstream components as input. In this way, a DAG can be constructed by the config file.
 
-We have provided several example dsl files located in the corresponding algorithm folder. For example, hetero-lr dsl files are located in :download:`[hetero_logistic_regression/test_hetero_lr_train_job_dsl.json] <hetero_logistic_regression/test_hetero_lr_train_job_dsl.json>`
+We have provided several example dsl files located in the corresponding algorithm folder. For example, hetero-lr dsl files are located `here <hetero_logistic_regression/test_hetero_lr_train_job_dsl.json>`_.
 
 
-:Field Specification:
+Field Specification
+^^^^^^^^^^^^^^^^^^^
 
-    1. component_name: key of a component. This name should end with a "_num" such as "_0", "_1" etc. And the number should start with 0. This is used to distinguish multiple same kind of components that may exist.
+:component_name: key of a component. This name should end with a "_num" such as "_0", "_1" etc. And the number should start with 0. This is used to distinguish multiple same kind of components that may exist.
 
-    2. module: Specify which component use. This field should be one of the algorithm modules FATE supported.
-       The supported algorithms can be referred to `here <../../federatedml/README.rst>`__
+:module: Specify which component use. This field should be one of the algorithm modules FATE supported.
+         The supported algorithms can be referred to `here <../../federatedml/README.rst>`__
 
-        1. input: There are two type of input, data and model.
+    - input: There are two type of input, data and model.
 
-            1. data: There are three possible data_input type:
+      - data: There are three possible data_input type:
 
-                1. data: typically used in data_io, feature_engineering modules and evaluation.
-                2. train_data: Used in homo_lr, hetero_lr and secure_boost. If this field is provided, the task will be parse as a **fit** task
-                3. validate_data: If train_data is provided, this field is optional. In this case, this data will be used as validation set. If train_data is not provided, this task will be parse as a **predict** or **transform** task.
-            2. model: There are two possible model-input type:
+        * data: typically used in data_io, feature_engineering modules and evaluation.
+        * train_data: Used in homo_lr, hetero_lr and secure_boost. If this field is provided, the task will be parse as a **fit** task
+        * validate_data: If train_data is provided, this field is optional. In this case, this data will be used as validation set. If train_data is not provided, this task will be parse as a **predict** or **transform** task.
 
-                1. model: This is a model input by same type of component, used in prediction or transform stage. For example, hetero_binning_0 run as a fit component, and hetero_binning_1 take model output of hetero_binning_0 as input so that can be used to transform or predict.
-                2. isometric_model: This is used to specify the model input from upstream components, only used by HeteroFeatureSelection module in FATE-1.x. HeteroFeatureSelection can take the model output of HetereFeatureBinning and use information value calculated as filter criterion.
-        2. output: Same as input, two type of output may occur which are data and model.
+      - model: There are two possible model-input type:
 
+        * model: This is a model input by same type of component, used in prediction or transform stage. For example, hetero_binning_0 run as a fit component, and hetero_binning_1 take model output of hetero_binning_0 as input so that can be used to transform or predict.
+        * isometric_model: This is used to specify the model input from upstream components, only used by HeteroFeatureSelection module in FATE-1.x. HeteroFeatureSelection can take the model output of HetereFeatureBinning and use information value calculated as filter criterion.
 
-            1. data: Specify the output data name
-            2. model: Specify the output model name
+    - output: Same as input, two type of output may occur which are data and model.
 
-    3. need_deploy: true or false. This field is used to specify whether the component need to deploy for online inference or not. This field just use for online-inference dsl deduction.
+      - data: Specify the output data name
+      - model: Specify the output model name
+
+:need_deploy: true or false. This field is used to specify whether the component need to deploy for online inference or not. This field just use for online-inference dsl deduction.
 
 
 Step3: Define Submit Runtime Configuration for Each Specific Component.
@@ -213,33 +215,33 @@ This config file is used to config parameters for all components among every par
 
 An example of config files can be shown as:
 
-    .. code-block::
+.. code-block::
 
-        {
-            "initiator": {
-                "role": "guest",
-                "party_id": 10000
-            },
-            "job_parameters": {
-                "work_mode": 1
-                "processor_per_node": 6
-            },
-            "role": {
-                "guest": [
-                    10000
-                ],
-                "host": [
-                    10000
-                ],
-                "arbiter": [
-                    10000
-                ]
-            },
-            "role_parameters": {"Your role parameters"},
-            "algorithm_parameters": {"Your algorithm parameters"},
-        }
+    {
+        "initiator": {
+            "role": "guest",
+            "party_id": 10000
+        },
+        "job_parameters": {
+            "work_mode": 1
+            "processor_per_node": 6
+        },
+        "role": {
+            "guest": [
+                10000
+            ],
+            "host": [
+                10000
+            ],
+            "arbiter": [
+                10000
+            ]
+        },
+        "role_parameters": {"Your role parameters"},
+        "algorithm_parameters": {"Your algorithm parameters"},
+    }
 
-    You can set processor_per_node in job_parameters.
+You can set processor_per_node in job_parameters.
 
 Step4: Start Modeling Task
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -305,7 +307,7 @@ FATE now provide "FATE-BOARD" for showing modeling log-metrics and evaluation re
 
 Use your browser to open a website: `http://{Your fate-board ip}:{your fate-board port}/index.html#/history`.
 
-.. figure:: ../image/JobList.png
+.. figure:: ../../image/JobList.png
    :height: 250
    :align: center
    
@@ -313,7 +315,7 @@ Use your browser to open a website: `http://{Your fate-board ip}:{your fate-boar
 
 There will be all your job history list here. Your latest job will be list in the first page. Use JOBID to find out the modeling task you want to check.
 
-.. figure:: ../image/JobOverview.png
+.. figure:: ../../image/JobOverview.png
    :height: 250
    :align: center
    
@@ -328,7 +330,7 @@ In the task page, all the components will be shown as a DAG. We use different co
 
 You can click each component to get their running parameters on the right side. Below those parameters, there exist a **View the outputs** button. You may check out model output, data output and logs for this component.
 
-.. figure:: ../image/Component_Output.png
+.. figure:: ../../image/Component_Output.png
    :height: 250
    :align: center
    
@@ -336,7 +338,7 @@ You can click each component to get their running parameters on the right side. 
 
 If you want a big picture of the whole task, there is a **dashboard** button on the right upper corner. Get in the Dashboard, there list three windows showing different information.
 
-.. figure:: ../image/DashBoard.png
+.. figure:: ../../image/DashBoard.png
    :height: 250
    :align: center
    
@@ -440,13 +442,13 @@ Pay attention to following points to enable predicting:
 
 1. you should add or modify "need_deploy" field for those modules that need to deploy in predict stage. All modules have set True as their default value except FederatedmSample and Evaluation, which typically will not run in predict stage. The "need_deploy" field is True means this module should run a "fit" process and the fitted model need to be deployed in predict stage.
 
-2. Besiedes setting those model as "need_deploy", they should also config to have a model output except Intersect module. Only in this way can fate-flow store the trained model and make it usable in inference stage.
+2. Besides setting those model as "need_deploy", they should also config to have a model output except Intersect module. Only in this way can fate-flow store the trained model and make it usable in inference stage.
 
 3. Get training model's model_id and model_version. There are two ways to get this.
 
    a. After submit a job, there will be some model information output in which "model_id" and "model_version" are our interested field.
 
-   b. Beside that, you can also obtain these information through the following command directly:
+   b. Besides that, you can also obtain these information through the following command directly:
 
       .. code-block:: bash
           
@@ -454,8 +456,8 @@ Pay attention to following points to enable predicting:
        
       where
 
-         :guest_partyid: the partyid of guest (the party submitted the job)
-         :job_config_output_path: path to store the job_config
+      :guest_partyid: the partyid of guest (the party submitted the job)
+      :job_config_output_path: path to store the job_config
 
       After that, a json file including model info will be download to ${job_config_output_path}/model_info.json in which you can find "model_id" and "model_version".
 
@@ -468,11 +470,11 @@ This config file is used to config parameters for predicting.
 1. initiator: Specify the initiator's role and party id, it should be same with training process.
 2. job_parameters:
 
-    - work_mode: cluster or standalone, it should be same with training process.
-    - model_id or model_version: model indicator which mentioned in Step1.
-    - job_type: type of job. In this case, it should be "predict".
+   - work_mode: cluster or standalone, it should be same with training process.
+   - model_id or model_version: model indicator which mentioned in Step1.
+   - job_type: type of job. In this case, it should be "predict".
 
-   There is an example test config file located in :download:`["./test_predict_conf.json"] <./test_predict_conf.json>`
+   There is an example test `config file <./test_predict_conf.json>`_
 3. role: Indicate all the party ids for all roles, it should be same with training process.
 4. role_parameters: Set parameters for each roles. In this case, the "validate_data", which means data going to be predicted, should be filled for both Guest and Host parties.
 
