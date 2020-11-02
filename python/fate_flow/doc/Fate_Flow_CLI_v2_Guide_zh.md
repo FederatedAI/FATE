@@ -112,27 +112,6 @@ flow job query -j $JOB_ID
 
 
 
-### ```clean```
-
-- *介绍*：  清理任务处理器，数据表及metric数据。
-- *参数*：
-
-| 编号 |      参数      | Flag_1 |       Flag_2       | 必要参数 | 参数介绍 |
-| :--: | :------------: | :----: | :----------------: | :------: | :------: |
-|  1   |     job_id     |  `-j`  |     `--job_id`     |    否    |  Job ID  |
-|  2   |      role      |  `-r`  |      `--role`      |    否    |   角色   |
-|  3   |    party_id    |  `-p`  |    `--party_id`    |    否    | Party ID |
-|  4   | component_name | `-cpn` | `--component_name` |    否    |  组件名  |
-
-- *示例*：
-
-```bash
-flow job clean -r guest -p 9999
-flow job clean -j $JOB_ID -cpn hetero_feature_binning_0
-```
-
-
-
 ### ```view```
 
 - *介绍*： 检索任务数据视图。
