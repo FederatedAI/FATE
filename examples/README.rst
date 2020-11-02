@@ -31,7 +31,7 @@ Below code shows how to build and fit a hetero SecureBoost model with FATE-Pipel
 
     from pipeline.backend.config import Backend, WorkMode
     from pipeline.backend.pipeline import PipeLine
-    from pipeline.component import Reader, DataIO, Intersection, HeteroSecureBoost
+    from pipeline.component import Reader, DataIO, Intersection, HeteroSecureBoost, Evaluation
     from pipeline.interface import Data
     from pipeline.runtime.entity import JobParameters
 
@@ -55,12 +55,14 @@ Below code shows how to build and fit a hetero SecureBoost model with FATE-Pipel
                                              objective_param={"objective": "cross_entropy"},
                                              encrypt_param={"method": "iterativeAffine"},
                                              tree_param={"max_depth": 3})
+    evaluation_0 = Evaluation(name="evaluation_0", eval_type="binary")
 
     # add components to pipeline, in order of task execution
     pipeline.add_component(reader_0)\
         .add_component(dataio_0, data=Data(data=reader_0.output.data))\
         .add_component(intersect_0, data=Data(data=dataio_0.output.data))\
-        .add_component(hetero_secureboost_0, data=Data(train_data=intersect_0.output.data))
+        .add_component(hetero_secureboost_0, data=Data(train_data=intersect_0.output.data))\
+        .add_component(evaluation_0, data=Data(data=hetero_secureboost_0.output.data))
 
     # compile & fit pipeline
     pipeline.compile().fit(JobParameters(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE))
