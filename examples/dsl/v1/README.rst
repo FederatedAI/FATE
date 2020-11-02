@@ -28,14 +28,14 @@ Standalone Version
 
 1. Start standalone version hetero-lr task (default) by running this command:
     
-  .. code-block:: bash
+   .. code-block:: bash
 
-     python quick_run.py
-    
+        python quick_run.py
+
 
 2. Then you are supposed to see the output as follows:
 
-    ::
+   ::
 
         stdout: {
             "data": {
@@ -53,13 +53,13 @@ Standalone Version
             "retmsg": "success"
         }
 
-    Please check your task in fate-board, url is : http://localhost:8080/index.html#/dashboard?job_id=20190815211211735986134&role=guest&party_id=10000. The log info is located in ${your install path}/examples/dsl/v1/../../logs/20190815211211735986134
+   Please check your task in fate-board, url is : http://localhost:8080/index.html#/dashboard?job_id=20190815211211735986134&role=guest&party_id=10000. The log info is located in ${your install path}/examples/dsl/v1/../../logs/20190815211211735986134
     
 3. You can view the job on the url above or check out the log through the log file path.
 
 4. You can also define your own task through editing the following variables in `quick_run.py`:
     
-    .. code-block:: python
+   .. code-block:: python
 
         # You can set up your own configuration files here
         DSL_PATH = 'hetero_logistic_regression/test_hetero_lr_train_job_dsl.json'
