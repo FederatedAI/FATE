@@ -56,7 +56,7 @@ def main(config="../../config.yaml", namespace=""):
                                                                             label_type="float")
 
     homo_secureboost_0 = HomoSecureBoost(name="homo_secureboost_0",
-                                         num_trees=5,
+                                         num_trees=3,
                                          task_type='regression',
                                          objective_param={"objective": "lse"},
                                          tree_param={

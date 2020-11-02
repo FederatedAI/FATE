@@ -406,15 +406,18 @@ task, consider numbering host as such:
 Returned quality metrics of the same key are to be compared.
 Note that only **real-value** metrics can be compared.
 
-- FATE script: ``Main`` always has three inputs:
+- FATE script: ``Main`` should have three inputs:
 
   - config: job configuration, `JobConfig <../fate_client/pipeline/utils/tools.py#L64>`_ object loaded from "fate_test_config.yaml"
   - param: job parameter setting, dictionary loaded from "conf" file specified in benchmark testsuite
   - namespace: namespace suffix, user-given *namespace* or generated timestamp string when using *namespace-mangling*
 
-- non-FATE script: ``Main`` always has one input:
+- non-FATE script: ``Main`` should have one or two inputs:
 
   - param: job parameter setting, dictionary loaded from "conf" file specified in benchmark testsuite
+  - (optional) config: job configuration, `JobConfig <../fate_client/pipeline/utils/tools.py#L64>`_ object loaded from "fate_test_config.yaml"
+
+Note that ``Main`` in FATE & non-FATE scripts can also be set to take zero input argument.
 
 
 data

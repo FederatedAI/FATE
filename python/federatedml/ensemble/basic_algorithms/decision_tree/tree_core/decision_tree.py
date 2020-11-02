@@ -61,7 +61,7 @@ class DecisionTree(BasicAlgorithms):
         self.tree_node_num = 0
         self.runtime_idx = None
         self.valid_features = None
-        self.sample_weights = Node
+        self.sample_weights = None
         self.splitter = Splitter(self.criterion_method, self.criterion_params, self.min_impurity_split,
                                  self.min_sample_split, self.min_leaf_node)
         self.inst2node_idx = None  # record the node id an instance belongs to
