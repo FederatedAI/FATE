@@ -372,7 +372,7 @@ host_id="10000"
 host_ip="192.168.0.1"
 #host mysql ip
 host_mysql_ip="${host_ip}"
-host_mysql_pass="fate_dev"
+host_mysql_pass="fate_deV2999"
 
 #guest party id
 guest_id="9999"
@@ -380,7 +380,7 @@ guest_id="9999"
 guest_ip="192.168.0.2"
 #guest mysql ip
 guest_mysql_ip="${guest_ip}"
-guest_mysql_pass="fate_dev"
+guest_mysql_pass="fate_deV2999"
 
 #db module lists
 dbmodules=( "mysql" )
@@ -437,7 +437,7 @@ host_id="10000"
 host_ip="192.168.0.1"
 #host mysql ip
 host_mysql_ip="${host_ip}"
-host_mysql_pass="fate_dev"
+host_mysql_pass="fate_deV2999"
 
 #guest party id
 guest_id=""
