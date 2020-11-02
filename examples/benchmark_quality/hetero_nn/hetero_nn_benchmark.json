@@ -70,7 +70,7 @@
             "partition": 16,
             "table_name": "vehicle_scale_hetero_guest",
             "namespace": "experiment",
-            "role": "host_0"
+            "role": "guest_0"
         },
         {
             "file": "../../data/vehicle_scale_hetero_host.csv",
@@ -78,7 +78,7 @@
             "partition": 16,
             "table_name": "vehicle_scale_hetero_host",
             "namespace": "experiment",
-            "role": "guest_0"
+            "role": "host_0"
         }
     ],
     "hetero_nn-binary-0": {
@@ -117,7 +117,7 @@
             "conf": "./hetero_nn_give_credit_config.yaml"
         },
         "compare_setting": {
-            "relative_tol": 0.01
+            "relative_tol": 0.05
         }
     },
     "hetero_nn-binary-3": {
