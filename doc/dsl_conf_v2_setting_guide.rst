@@ -16,6 +16,8 @@ of [`V1`_]
 
 .. _V1: dsl_conf_setting_guide.rst
 
+Please note that dsl V2 will not support online serving in fate-1.5.0，it will be support in later version.
+
 DSL Configure File
 ------------------
 
