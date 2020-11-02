@@ -41,8 +41,8 @@ You can query the corresponding model_id and model_version of a job using the "f
                 "train_runtime_conf": {}
             },
             "retcode": 0,
-            "retmsg": "download successfully, please check /fate/job_2020110210415854150330_config directory",
-            "directory": "/fate/job_2020110210415854150330_config"
+            "retmsg": "download successfully, please check /fate/job_2020103015490073208469_config directory",
+            "directory": "/fate/job_2020103015490073208469_config"
         }
 
 ## Make a predict conf
