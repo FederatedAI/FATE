@@ -122,9 +122,11 @@ def job_config():
         response_data['dsl'] = job.f_dsl
         response_data['runtime_conf'] = job.f_runtime_conf
         response_data['train_runtime_conf'] = job.f_train_runtime_conf
-        response_data['model_info'] = {'model_id': response_data['runtime_conf']['job_parameters']['model_id'],
-                                       'model_version': response_data['runtime_conf']['job_parameters'][
-                                           'model_version']}
+
+        adapter = JobRuntimeConfigAdapter(job.f_runtime_conf)
+        job_parameters = adapter.get_common_parameters().to_dict()
+        response_data['model_info'] = {'model_id': job_parameters.get('model_id'),
+                                       'model_version': job_parameters.get('model_version')}
         return get_json_result(retcode=0, retmsg='success', data=response_data)
 
 
