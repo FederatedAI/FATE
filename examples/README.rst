@@ -77,7 +77,7 @@ Below code shows how to build and fit a hetero SecureBoost model with FATE-Pipel
     #   "ks": 0.9624094920987263
     # }
 
-Code for the above job can also be found `here <./pipeline/demo/pipeline-quick-demo.py>`_.
+Code for the above job can also be found `here <./pipeline/demo/pipeline-quick-demo.py>`__.
 
 DSL
 ---
