@@ -44,8 +44,8 @@ def main(config="../../config.yaml", namespace=""):
     work_mode = config.work_mode
 
     guest_train_data = {"name": "default_credit_guest", "namespace": f"experiment{namespace}"}
-    host_train_data_0 = {"name": "default_credit_host_1", "namespace": f"experiment{namespace}"}
-    host_train_data_1 = {"name": "default_credit_host_2", "namespace": f"experiment{namespace}"}
+    host_train_data_0 = {"name": "default_credit_host1", "namespace": f"experiment{namespace}"}
+    host_train_data_1 = {"name": "default_credit_host2", "namespace": f"experiment{namespace}"}
 
     guest_validate_data = {"name": "default_credit_test", "namespace": f"experiment{namespace}"}
     host_validate_data_0 = {"name": "default_credit_test", "namespace": f"experiment{namespace}"}

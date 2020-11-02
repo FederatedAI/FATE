@@ -573,13 +573,14 @@ class BaseDSLParser(object):
             if module == "Reader":
                 if version != 2:
                     raise ValueError("Reader component can only be set in dsl_version 2")
-                if self.get_need_deploy_parameter(name=name,
-                                                  setting_conf_prefix=setting_conf_prefix,
-                                                  deploy_cpns=deploy_cpns):
-                    raise ValueError(
-                        "Reader component should not be include in predict process, it should be just as an input placeholder")
 
-                continue
+                # if self.get_need_deploy_parameter(name=name,
+                #                                   setting_conf_prefix=setting_conf_prefix,
+                #                                   deploy_cpns=deploy_cpns):
+                #     raise ValueError(
+                #         "Reader component should not be include in predict process, it should be just as an input placeholder")
+
+                # continue
 
             if self.get_need_deploy_parameter(name=name,
                                               setting_conf_prefix=setting_conf_prefix,

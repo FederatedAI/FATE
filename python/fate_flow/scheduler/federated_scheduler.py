@@ -32,7 +32,7 @@ class FederatedScheduler(object):
     # Job
     @classmethod
     def create_job(cls, job: Job):
-        return cls.job_command(job=job, command="create", command_body=job.to_human_model_dict())
+        return cls.job_command(job=job, command="create", command_body=job.to_human_model_dict(), order_federated=True)
 
     @classmethod
     def resource_for_job(cls, job, operation_type, specific_dest=None):
@@ -113,7 +113,7 @@ class FederatedScheduler(object):
         return status_code, response
 
     @classmethod
-    def job_command(cls, job, command, command_body=None, dest_only_initiator=False, specific_dest=None):
+    def job_command(cls, job, command, command_body=None, dest_only_initiator=False, specific_dest=None, order_federated=False):
         federated_response = {}
         job_parameters = job.f_runtime_conf_on_party["job_parameters"]
         if dest_only_initiator:
@@ -125,6 +125,8 @@ class FederatedScheduler(object):
         else:
             dest_partys = job.f_roles.items()
             api_type = "party"
+        if order_federated:
+            dest_partys = schedule_utils.federated_order_reset(dest_partys, scheduler_partys_info=[(job.f_initiator_role, job.f_initiator_party_id)])
         for dest_role, dest_party_ids in dest_partys:
             federated_response[dest_role] = {}
             for dest_party_id in dest_party_ids:

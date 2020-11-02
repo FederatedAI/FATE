@@ -20,13 +20,12 @@ import sys
 
 import __main__
 from peewee import (CharField, IntegerField, BigIntegerField,
-                    TextField, CompositeKey, BigAutoField, BooleanField, DateTimeField)
+                    TextField, CompositeKey, BigAutoField, BooleanField)
 from playhouse.apsw_ext import APSWDatabase
 from playhouse.pool import PooledMySQLDatabase
 
 from fate_arch.common import log
-from fate_arch.common.base_utils import timestamp_to_date
-from fate_arch.storage.metastore.base_model import JSONField, BaseModel, LongTextField
+from fate_arch.storage.metastore.base_model import JSONField, BaseModel, LongTextField, DateTimeField
 from fate_arch.common import WorkMode
 from fate_flow.settings import DATABASE, WORK_MODE, stat_logger
 from fate_flow.entity.runtime_config import RuntimeConfig

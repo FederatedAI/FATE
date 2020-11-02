@@ -529,8 +529,6 @@ for details on using deploy command:
 
     flow job dsl --cpn-list ...
 
-Note that because Reader component only reads data from storage engine, it should not be deployed but added.
-
 **Examples**
 Use a training dsl:
 
@@ -573,7 +571,7 @@ Use a training dsl:
                 }
             },
             "output": {
-                "data": ["data": [
+                "data":[
                     "data"
                 ]
             }
@@ -602,13 +600,21 @@ Use the following command to generate predict dsl:
 
 .. code-block:: bash
 
-    flow job dsl --train-dsl-path $job_dsl --cpn-list "dataio_0, intersection_0, hetero_nn_0" --version 2 -o ./
+    flow job dsl --train-dsl-path $job_dsl --cpn-list "reader_0, dataio_0, intersection_0, hetero_nn_0" --version 2 -o ./
 
 Generated dsl:
 
 .. code-block::: json
 
     "components": {
+        "reader_0": {
+            "module": "Reader",
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
+        },
         "dataio_0": {
             "module": "DataIO",
             "input": {
@@ -660,33 +666,6 @@ Generated dsl:
                 ]
             }
         }
-    }
-
-To prepare generated dsl for prediction, user should add "reader" component to this dsl and edit dataio_0's input data:
-
-.. code-block:: json
-
-    "reader_predict": {
-        "module": "Reader",
-        "output": {
-            "data": [
-                "data"
-            ]
-        }
-    },
-    "dataio_0": {
-        "module": "DataIO",
-        "input": {
-             ...
-             "data": {
-                 "data": [
-                     "reader_0.data"
-                 ]
-              }
-         },
-         ...
-        },
-        ...
     }
 
 Optionally, use can add additional component(s) to predict dsl, like ``Evaluation``:

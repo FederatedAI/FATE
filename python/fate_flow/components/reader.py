@@ -24,16 +24,15 @@ from fate_arch.computing import ComputingEngine
 from fate_arch.storage import StorageTableMeta, StorageEngine, Relationship
 from fate_flow.entity.metric import MetricMeta
 from fate_flow.utils import job_utils, data_utils
+from fate_flow.components.component_base import ComponentBase
 
 LOGGER = log.getLogger()
 MAX_NUM = 10000
 
 
-class Reader(object):
+class Reader(ComponentBase):
     def __init__(self):
-        self.data_output = None
-        self.task_id = ''
-        self.tracker = None
+        super(Reader, self).__init__()
         self.parameters = None
 
     def run(self, component_parameters=None, args=None):
@@ -41,7 +40,7 @@ class Reader(object):
         output_storage_address = args["job_parameters"].engines_address[EngineType.STORAGE]
         table_key = [key for key in self.parameters.keys()][0]
         computing_engine = args["job_parameters"].computing_engine
-        output_table_namespace, output_table_name = data_utils.default_output_table_info(task_id=self.task_id,
+        output_table_namespace, output_table_name = data_utils.default_output_table_info(task_id=self.tracker.task_id,
                                                                                          task_version=self.tracker.task_version)
         input_table_meta, output_table_address, output_table_engine = self.convert_check(
             input_name=self.parameters[table_key]['name'],
@@ -201,15 +200,3 @@ class Reader(object):
             table.put_all(temp)
             temp.clear()
         return count + 1
-
-    def set_task_version_id(self, task_version_id):
-        self.task_id = task_version_id
-
-    def set_tracker(self, tracker):
-        self.tracker = tracker
-
-    def save_data(self):
-        return None
-
-    def export_model(self):
-        return None
