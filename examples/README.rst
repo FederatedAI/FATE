@@ -6,7 +6,7 @@ DSL conf files, and modeling quality comparison tasks
 
 We suggest that user use example-runner tool `FATE-Test <../python/fate_test/README.rst>`__.
 
-Also, for the ease of submitting conf/dsl, we suggest that user install flow-client `FATE-Test <../python/fate_client/README.rst>`__.
+Also, for the ease of submitting conf/dsl, we suggest that user install flow-client `FATE-Client <../python/fate_client/README.rst>`__.
 
 To quickly start model training and predictions using dsl & pipeline, you are welcomed to refer to：
 
@@ -77,7 +77,7 @@ Below code shows how to build and fit a hetero SecureBoost model with FATE-Pipel
     #   "ks": 0.9624094920987263
     # }
 
-Code for the above job can also be found `here <./pipeline/demo/pipeline-quick-demo.py>`_.
+Code for the above job can also be found `here <./pipeline/demo/pipeline-quick-demo.py>`__.
 
 DSL
 ---
