@@ -106,7 +106,6 @@ if __name__ == "__main__":
                         help="config file for params")
     args = parser.parse_args()
 
-    assert 1 == 2
     if args.config is not None:
         main(args.config, args.param)
     else:
