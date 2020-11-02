@@ -15,8 +15,8 @@ folder.](../../dsl/v1/hetero_secureboost)
                 "job_runtime_conf_path": "/home/cwj/FATE/standalone-fate-master-1.4.5/jobs/2020103015490073208469/job_runtime_conf.json",
                 "logs_directory": "/home/cwj/FATE/standalone-fate-master-1.4.5/logs/2020103015490073208469",
                 "model_info": {
-                    "model_id": "guest-10000#host-10000#model",
-                    "model_version": "2020103015490073208469"
+                    "model_id": "guest-10000#host-10000#model",  <<- model_id needed for prediction tasks
+                    "model_version": "2020103015490073208469"  <<- model_version needed for prediction tasks
                 }
             },
             "jobId": "2020103015490073208469",
@@ -24,7 +24,12 @@ folder.](../../dsl/v1/hetero_secureboost)
             "retmsg": "success"
         }
 
-Then we can get a return message contains model_id and model_version.
+Then we can get a return message contains model_id and model_version. They are needed for making a prediction conf.
+
+## Retrieve model_id and model_version
+Forget to save model_id and model_version in the returned message ? That's OK. You can query corresponding model_id
+and model_version of a job using 
+
 
 ## Make a predict conf
 We can modify existing predict conf by replacing model_id, model_version and data set name with yours to make a new 
