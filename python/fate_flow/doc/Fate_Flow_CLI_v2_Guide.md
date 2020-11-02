@@ -114,27 +114,6 @@ flow job query -j $JOB_ID
 
 
 
-### ```clean```
-
-- *Description*:  Clean processor,data table and metric data.
-- *Arguments*:
-
-| No.  |    Argument    | Flag_1 |       Flag_2       | Required |   Description   |
-| :--: | :------------: | :----: | :----------------: | :------: | :-------------: |
-|  1   |     job_id     |  `-j`  |     `--job_id`     |    No    | A valid job id. |
-|  2   |      role      |  `-r`  |      `--role`      |    No    |      Role       |
-|  3   |    party_id    |  `-p`  |    `--party_id`    |    No    |    Party ID     |
-|  4   | component_name | `-cpn` | `--component_name` |    No    | Component Name  |
-
-- *Examples*:
-
-```bash
-flow job clean -r guest -p 9999
-flow job clean -j $JOB_ID -cpn hetero_feature_binning_0
-```
-
-
-
 ### ```view```
 
 - *Description*: Query data view information by filters.

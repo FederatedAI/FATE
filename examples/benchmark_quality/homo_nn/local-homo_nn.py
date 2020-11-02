@@ -26,19 +26,24 @@ from tensorflow.keras.utils import to_categorical
 
 dataset = {
     "vehicle": {
-        "guest": "vehicle_scale_homo_guest.csv",
-        "host": "vehicle_scale_homo_host.csv"
+        "guest": "examples/data/vehicle_scale_homo_guest.csv",
+        "host": "examples/data/vehicle_scale_homo_host.csv",
     },
     "breast": {
-        "guest": "breast_homo_guest.csv",
-        "host": "breast_homo_host.csv"
-    }
+        "guest": "examples/data/breast_homo_guest.csv",
+        "host": "examples/data/breast_homo_host.csv",
+    },
 }
 
 
-def main(param="param_conf.yaml"):
+def main(config="../../config.yaml", param="param_conf.yaml"):
     if isinstance(param, str):
         param = JobConfig.load_from_file(param)
+    if isinstance(config, str):
+        config = JobConfig.load_from_file(config)
+        data_base_dir = config["data_base_dir"]
+    else:
+        data_base_dir = config.data_base_dir
 
     epoch = param["epoch"]
     lr = param["lr"]
@@ -56,15 +61,19 @@ def main(param="param_conf.yaml"):
         layer_params = layer_config["params"]
         model.add(layer(**layer_params))
 
-    model.compile(optimizer=getattr(optimizers, optimizer_name)(learning_rate=lr),
-                  loss=loss,
-                  metrics=metrics)
+    model.compile(
+        optimizer=getattr(optimizers, optimizer_name)(learning_rate=lr),
+        loss=loss,
+        metrics=metrics,
+    )
 
-    data_path = pathlib.Path(__file__).parent.joinpath("../../data").resolve()
-    data_with_label = pandas.concat([
-        pandas.read_csv(data_path.joinpath(data["guest"]), index_col=0),
-        pandas.read_csv(data_path.joinpath(data["host"]), index_col=0)
-    ]).values
+    data_path = pathlib.Path(data_base_dir)
+    data_with_label = pandas.concat(
+        [
+            pandas.read_csv(data_path.joinpath(data["guest"]), index_col=0),
+            pandas.read_csv(data_path.joinpath(data["host"]), index_col=0),
+        ]
+    ).values
     data = data_with_label[:, 1:]
     if is_multy:
         labels = to_categorical(data_with_label[:, 0])
@@ -74,17 +83,14 @@ def main(param="param_conf.yaml"):
         batch_size = len(data_with_label)
     model.fit(data, labels, epochs=epoch, batch_size=batch_size)
     evaluate = model.evaluate(data, labels)
-    metric_summary = {
-        "accuracy": evaluate[1]
-    }
+    metric_summary = {"accuracy": evaluate[1]}
     data_summary = {}
     return data_summary, metric_summary
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("BENCHMARK-QUALITY SKLEARN JOB")
-    parser.add_argument("-param", type=str,
-                        help="config file for params")
+    parser.add_argument("-param", type=str, help="config file for params")
     args = parser.parse_args()
     if args.param is not None:
         main(args.param)

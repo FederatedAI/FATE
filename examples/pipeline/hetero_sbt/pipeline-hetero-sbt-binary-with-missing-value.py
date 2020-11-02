@@ -73,11 +73,11 @@ def main(config="../../config.yaml", namespace=""):
 
     # secure boost component
     hetero_secure_boost_0 = HeteroSecureBoost(name="hetero_secure_boost_0",
-                                              num_trees=5,
+                                              num_trees=3,
                                               task_type="classification",
                                               objective_param={"objective": "cross_entropy"},
                                               encrypt_param={"method": "iterativeAffine"},
-                                              tree_param={"max_depth": 5},
+                                              tree_param={"max_depth": 3},
                                               use_missing=True,  # use missing
                                               validation_freqs=1)
 
