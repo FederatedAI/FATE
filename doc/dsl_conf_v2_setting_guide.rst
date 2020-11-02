@@ -14,7 +14,7 @@ This guide will show you how to create such a configure file.
 In FATE's version since 1.5.0, V2 of dsl and submit conf will be recommend, but user can still use old configuration method
 of [`V1`_]
 
-.. _V1: dsl_conf_setting_guide.rst
+.. _V1: dsl_conf_v1_setting_guide.rst
 
 Please note that dsl V2 will not support online serving in fate-1.5.0，it will be support in later version.
 
