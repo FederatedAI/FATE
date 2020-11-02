@@ -11,9 +11,9 @@ folder.](../../dsl/v2/hetero_secureboost)
     >> {
             "data": {
                 "board_url": "http://127.0.0.1:8080/index.html#/dashboard?job_id=2020103015490073208469&role=guest&party_id=10000",
-                "job_dsl_path": "/home/cwj/FATE/standalone-fate-master-1.4.5/jobs/2020103015490073208469/job_dsl.json",
-                "job_runtime_conf_path": "/home/cwj/FATE/standalone-fate-master-1.4.5/jobs/2020103015490073208469/job_runtime_conf.json",
-                "logs_directory": "/home/cwj/FATE/standalone-fate-master-1.4.5/logs/2020103015490073208469",
+                "job_dsl_path": "/fate/jobs/2020103015490073208469/job_dsl.json",
+                "job_runtime_conf_path": "/fate/jobs/2020103015490073208469/job_runtime_conf.json",
+                "logs_directory": "/fate/logs/2020103015490073208469",
                 "model_info": {
                     "model_id": "guest-10000#host-10000#model",
                     "model_version": "2020103015490073208469"
@@ -25,6 +25,25 @@ folder.](../../dsl/v2/hetero_secureboost)
         }
 
 Then we can get a return message contains model_id and model_version.
+
+## Retrieve model_id and model_version
+Forget to save model_id and model_version in the returned message? No worry. 
+You can query the corresponding model_id and model_version of a job using the "flow job config" command.
+
+    >> flow job config -j 2020103015490073208469 -r guest -p 9999 -o ./
+    >> {
+            "data": {
+                "job_id": "2020103015490073208469",
+                "model_info": {
+                    "model_id": "guest-10000#host-10000#model", <<- model_id needed for prediction tasks
+                    "model_version": "2020103015490073208469" <<- model_version needed for prediction tasks
+                },
+                "train_runtime_conf": {}
+            },
+            "retcode": 0,
+            "retmsg": "download successfully, please check /fate/job_2020103015490073208469_config directory",
+            "directory": "/fate/job_2020103015490073208469_config"
+        }
 
 ## Make a predict conf and generate predict dsl
 
