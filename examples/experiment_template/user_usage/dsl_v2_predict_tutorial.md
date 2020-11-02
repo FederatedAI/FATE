@@ -26,6 +26,25 @@ folder.](../../dsl/v2/hetero_secureboost)
 
 Then we can get a return message contains model_id and model_version.
 
+## Retrieve model_id and model_version
+Forget to save model_id and model_version in the returned message? No worry. 
+You can query the corresponding model_id and model_version of a job using the "flow job config" command.
+
+    >> flow job config -j 2020103015490073208469 -r guest -p 9999 -o ./
+    >> {
+            "data": {
+                "job_id": "2020103015490073208469",
+                "model_info": {
+                    "model_id": "guest-10000#host-10000#model", <<- model_id needed for prediction tasks
+                    "model_version": "2020103015490073208469" <<- model_version needed for prediction tasks
+                },
+                "train_runtime_conf": {}
+            },
+            "retcode": 0,
+            "retmsg": "download successfully, please check /fate/job_2020110210415854150330_config directory",
+            "directory": "/fate/job_2020110210415854150330_config"
+        }
+
 ## Make a predict conf and generate predict dsl
 
 We use flow_client to deploy components we needed in the predicting task:
