@@ -51,7 +51,7 @@ command for more information.
 
 .. code:: bash
 
-   pipeline config --help
+   pipeline init --help
 
 
 Interface of Pipeline

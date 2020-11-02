@@ -40,7 +40,7 @@ quick start
 .. code-block:: bash
 
       # configure FATE-Pipeline server setting
-      pipeline config --port 9380 --ip 127.0.0.1
+      pipeline init --port 9380 --ip 127.0.0.1
       # configure FATE-Flow Commandline server setting
       flow init --port 9380 --ip 127.0.0.1
 
