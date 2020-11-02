@@ -17,24 +17,31 @@
 import argparse
 import pandas
 import numpy as np
+import os
 from sklearn.linear_model import SGDRegressor
 from sklearn.metrics import mean_squared_error, r2_score, explained_variance_score
 
 from pipeline.utils.tools import JobConfig
 
 
-def main(param="./linr_config.yaml"):
+def main(config="../../config.yaml", param="./linr_config.yaml"):
     # obtain config
     if isinstance(param, str):
         param = JobConfig.load_from_file(param)
     data_guest = param["data_guest"]
     data_host = param["data_host"]
-
     idx = param["idx"]
     label_name = param["label_name"]
+
+    if isinstance(config, str):
+        config = JobConfig.load_from_file(config)
+        data_base = config["data_base"]
+    else:
+        data_base = config.data_base
+
     # prepare data
-    df_guest = pandas.read_csv(data_guest, index_col=idx)
-    df_host = pandas.read_csv(data_host, index_col=idx)
+    df_guest = pandas.read_csv(os.path.join(data_base, data_guest), index_col=idx)
+    df_host = pandas.read_csv(os.path.join(data_base, data_host), index_col=idx)
     df = df_guest.join(df_host, rsuffix="host")
     y = df[label_name]
     X = df.drop(label_name, axis=1)
