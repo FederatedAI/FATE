@@ -35,13 +35,13 @@ def main(config="../../config.yaml", param="./linr_config.yaml"):
 
     if isinstance(config, str):
         config = JobConfig.load_from_file(config)
-        data_base = config["data_base"]
+        data_base_dir = config["data_base_dir"]
     else:
-        data_base = config.data_base
+        data_base_dir = config.data_base_dir
 
     # prepare data
-    df_guest = pandas.read_csv(os.path.join(data_base, data_guest), index_col=idx)
-    df_host = pandas.read_csv(os.path.join(data_base, data_host), index_col=idx)
+    df_guest = pandas.read_csv(os.path.join(data_base_dir, data_guest), index_col=idx)
+    df_host = pandas.read_csv(os.path.join(data_base_dir, data_host), index_col=idx)
     df = df_guest.join(df_host, rsuffix="host")
     y = df[label_name]
     X = df.drop(label_name, axis=1)
