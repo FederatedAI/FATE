@@ -73,7 +73,7 @@ def main(config="../../config.yaml", namespace=""):
     dataio_1.get_party_instance(role='host', party_id=host_1).component_param(with_label=True, output_format="dense")
 
     homo_secureboost_0 = HomoSecureBoost(name="homo_secureboost_0",
-                                         num_trees=5,
+                                         num_trees=3,
                                          task_type='classification',
                                          objective_param={"objective": "cross_entropy"},
                                          tree_param={
