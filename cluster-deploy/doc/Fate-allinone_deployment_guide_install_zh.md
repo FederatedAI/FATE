@@ -387,6 +387,7 @@ dbmodules=( "mysql" )
 
 #base module lists
 basemodules=( "tools" "base" "java" "python" "eggroll" "fate" )
+
 fateflow_grpc_port=9360
 fateflow_http_port=9380
 fateboard_port=8080
@@ -451,6 +452,7 @@ dbmodules=( "mysql" )
 
 #base module lists
 basemodules=( "tools" "base" "java" "python" "eggroll" "fate" )
+
 fateflow_grpc_port=9360
 fateflow_http_port=9380
 fateboard_port=8080
