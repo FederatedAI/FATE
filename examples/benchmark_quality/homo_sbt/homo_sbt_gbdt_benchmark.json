@@ -1,5 +1,5 @@
 {
-    "examples/data": [
+    "data": [
         {
             "file": "examples/data/breast_homo_guest.csv",
             "head": 1,
