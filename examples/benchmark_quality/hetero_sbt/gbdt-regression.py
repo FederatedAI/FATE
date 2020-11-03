@@ -33,7 +33,7 @@ def main(config="../../config.yaml", param="./gbdt_config_reg.yaml"):
     # obtain config
     if isinstance(param, str):
         param = JobConfig.load_from_file(param)
-    assert isinstance(param, dict)
+
     data_guest = param["data_guest"]
     data_host = param["data_host"]
     idx = param["idx"]
