@@ -74,6 +74,7 @@ Backward Propagation Process also consists of three parts.
 	1. Party B calculates the error delta of interactive layer output, then updates top model.
 
 :Part II: Backward Propagation of Interactive layer.
+
 	1. Party B calculates the error delta_act of activation function's output by delta.
 
 	2. Party B propagates delta_bottomB = delta_act * W_B to bottom model, then updates W_B(W_B -= eta * delta_act * alpha_B).
@@ -88,6 +89,7 @@ Backward Propagation Process also consists of three parts.
 
 
 :Part III: Backward Propagation of Bottom Model.
+
 	1. Party B and party A updates their bottom model separately. The following figure shows the backward propagation of Federated Heterogeneous Neural Network framework.
 
 	.. figure:: images/hetero_nn_backward_propagation.png
