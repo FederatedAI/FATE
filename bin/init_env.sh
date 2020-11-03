@@ -16,9 +16,9 @@
 #  limitations under the License.
 #
 
-export PYTHONPATH=
+export PYTHONPATH=/Users/sage/workspace/FATE/python
 export EGGROLL_HOME=
-venv=
+venv=/Users/sage/workspace/venvs/FATE
 export JAVA_HOME=
 export PATH=$PATH:$JAVA_HOME/bin
 source ${venv}/bin/activate
