@@ -74,19 +74,3 @@ class Party(object):
 
     def __eq__(self, other):
         return self.party_id == other.party_id and self.role == other.role
-    def cleanup(self, party):
-        LOGGER.debug("[rabbitmq.cleanup]start to cleanup...")
-        low, high = (self._party, party) if self._party < party else (party, self._party)
-        vhost = f"{self._session_id}-{low.role}-{low.party_id}-{high.role}-{high.party_id}"
-
-        queues = self._rabbit_manager.get_all_queue(vhost=vhost)
-        for queue in queues:
-            try:
-                self._rabbit_manager.delete_queue(vhost=vhost, queue_name=queue.get('name'))
-            except:
-                pass
-        self._rabbit_manager.delete_vhost(vhost=vhost)
-        self._queue_map.clear()
-        if self._mq.union_name:
-            LOGGER.debug(f"[rabbitmq.cleanup]clean user {self._mq.union_name}.")
-            self._rabbit_manager.delete_user(user=self._mq.union_name)
