@@ -54,7 +54,7 @@
             "partition": 16,
             "table_name": "epsilon_5k_hetero_guest",
             "namespace": "experiment",
-            "role": "host_0"
+            "role": "guest_0"
         },
         {
             "file": "examples/data/epsilon_5k_hetero_host.csv",
@@ -62,7 +62,7 @@
             "partition": 16,
             "table_name": "epsilon_5k_hetero_host",
             "namespace": "experiment",
-            "role": "guest_0"
+            "role": "host_0"
         }
     ],
     "fast_sbt_mix-regression-0": {
