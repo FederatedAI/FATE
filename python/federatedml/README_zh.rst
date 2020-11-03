@@ -316,11 +316,11 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
 
 * `Encrypt`_
 
-   - `Paillier encryption`_
-   - `Affine Homomorphic Encryption`_
-   - `IterativeAffine Homomorphic Encryption`_
-   - `RSA encryption`_
-   - `Fake encryption`_
+  - `Paillier encryption`_
+  - `Affine Homomorphic Encryption`_
+  - `IterativeAffine Homomorphic Encryption`_
+  - `RSA encryption`_
+  - `Fake encryption`_
 
 * `Encode`_
 

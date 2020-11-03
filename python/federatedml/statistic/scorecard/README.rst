@@ -33,11 +33,11 @@ How to Use
 
     :factor_base: factor base, value ln(factor_base) is used for calculating result score, default 2
 
-    :upper_limit_ratio: upper bound for odds ratio, credit score upper bound is upper_limit_ratio * offset, default 3
+    :upper_limit_ratio: upper bound for odds, credit score upper bound is upper_limit_ratio * offset, default 3
 
     :lower_limit_value: lower bound for result score, default 0
 
-    :need_run: Indicate if this module needed to be run, default True
+    :need_run: Indicate if this module needs to be run, default True
 
 :examples:
     There is an example `[conf] <../../../../examples/dsl/v2/scorecard/test_scorecard_job_conf.json>`_

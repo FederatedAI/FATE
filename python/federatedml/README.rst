@@ -314,11 +314,11 @@ Secure Protocol
 
 * `Encrypt`_
 
-   - `Paillier encryption`_
-   - `Affine Homomorphic Encryption`_
-   - `IterativeAffine Homomorphic Encryption`_
-   - `RSA encryption`_
-   - `Fake encryption`_
+  - `Paillier encryption`_
+  - `Affine Homomorphic Encryption`_
+  - `IterativeAffine Homomorphic Encryption`_
+  - `RSA encryption`_
+  - `Fake encryption`_
 
 * `Encode`_
 

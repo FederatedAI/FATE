@@ -50,7 +50,7 @@ Using KubeFATE, FATE can be deployed by either docker-compose or Kubernetes:
 More instructions can be found in [KubeFATE](https://github.com/FederatedAI/KubeFATE).
 
 ### FATE-Client Installation
-FATE-client is a easy tool for interacting with FATE. We strongly recommend you install FATE-client and take advantage to use FATE conveniently. Please refer to this [document](./python/fate_client/README.rst) for more details of FATE-client.
+FATE-client is an easy tool for interacting with FATE. We strongly recommend you install FATE-client and take its advantage to use FATE conveniently. Please refer to this [document](./python/fate_client/README.rst) for more details on FATE-Client.
 
 
 ## Running Tests
@@ -67,7 +67,7 @@ All the unittests shall pass if FATE is installed properly.
 
 ### Quick Start
 
-We have provided a tutorial for quick starting modeling task. Please refer ["here"](./examples/pipeline/README.rst)
+We have provided a tutorial for quick starting modeling task. Please refer [here](./examples/pipeline/README.rst)
 
 ###  Obtain Model and Check Out Results
 We provided functions such as tracking component output models or logs etc. through a tool called fate-flow. The deployment and usage of fate-flow can be found [here](./python/fate_flow/README.md)
