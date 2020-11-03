@@ -34,9 +34,10 @@ def main():
 def build_conf(nn_define):
     nn_define_dict = json.loads(nn_define)
     conf_dict = {
+        "dsl_version": 2,
         "initiator": {"role": "guest", "party_id": 9999},
         "role": {"guest": [10000], "host": [10000], "arbiter": [10000]},
-        "job_parameters": {"common": {"work_mode": 1, "backend": 0, "dsl_version": 2}},
+        "job_parameters": {"common": {"work_mode": 1, "backend": 0}},
         "component_parameters": {
             "role": {
                 "host": {
