@@ -55,11 +55,11 @@ FATE-client is an easy tool for interacting with FATE. We strongly recommend you
 
 ## Running Tests
 
-A script to run all the unittests has been provided in ./federatedml/test folder.
+A script to run all the unittests has been provided in ./python/federatedml/test folder.
 
 Once FATE is installed, tests can be run using:
 
-> sh ./federatedml/test/run_test.sh
+> sh ./python/federatedml/test/run_test.sh
 
 All the unittests shall pass if FATE is installed properly.
 
