@@ -247,7 +247,7 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
      -
      - FTL神经网络模型参数等
 
-    * - `PSI`_
+   * - `PSI`_
      - PSI模块
      - 计算两个表特征间的PSI值
      - Table, 值为Instance
