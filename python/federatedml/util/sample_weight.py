@@ -111,8 +111,9 @@ class SampleWeight(ModelBase):
         class_weight=None
         if self.class_weight:
             class_weight = {str(k): v for k, v in self.class_weight.items()}
+        LOGGER.debug(f"class weight exported is: {class_weight}")
         meta_obj = sample_weight_meta_pb2.SampleWeightMeta(sample_weight_name=self.sample_weight_name,
-                                                                      need_run=self.need_run)
+                                                           need_run=self.need_run)
         param_obj = sample_weight_param_pb2.SampleWeightParam(class_weight=class_weight)
         result = {
             self.model_meta_name: meta_obj,
@@ -139,7 +140,7 @@ class SampleWeight(ModelBase):
 
         if self.sample_weight_name and self.class_weight:
             LOGGER.warning(f"Both 'sample_weight_name' and 'class_weight' provided."
-                           f"Only 'sample_weight_name' is used.")
+                           f"Only weight from 'sample_weight_name' is used.")
 
         new_schema = copy.deepcopy(data_instances.schema)
         weight_loc = None
