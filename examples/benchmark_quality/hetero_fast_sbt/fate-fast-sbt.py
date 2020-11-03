@@ -105,7 +105,11 @@ def main(config="../../config.yaml", param="./xgb_config_binary.yaml", namespace
     job_parameters = JobParameters(backend=backend, work_mode=work_mode)
     pipeline.fit(job_parameters)
 
-    return {}, pipeline.get_component("evaluation_0").get_summary()
+    data_summary = {"train": {"guest": guest_train_data["name"], "host": host_train_data["name"]},
+                    "test": {"guest": guest_train_data["name"], "host": host_train_data["name"]}
+                    }
+
+    return data_summary, pipeline.get_component("evaluation_0").get_summary()
 
 
 if __name__ == "__main__":
