@@ -83,7 +83,7 @@ How to Use
 
     :class_weight: str or dict, class weight dictionary or class weight computation mode. String value only accepts 'balanced'. If dict provided, key should be class(label), and weight will not be normalized.
 
-    :sample_weight_name: str, name of column which specifies sample weight. Obtained weight values extracted will be normalized.
+    :sample_weight_name: str, name of column which specifies sample weight. Extracted weight values will be normalized.
 
     :need_run: bool, whether to run this module or not
 
