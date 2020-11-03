@@ -73,7 +73,14 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
         if use_sample_weight:
             self.aggregated_forwards = self.aggregated_forwards.join(data_instances, lambda wx, d: wx * d.weight)
 
-        fore_gradient = self.aggregated_forwards.join(data_instances, lambda wx, d: wx - d.label)
+        if use_sample_weight:
+            weight_sum = data_instances.mapPartitions(hetero_linear_model_gradient.Guest.sum_sample_weight).reduce(
+                lambda x, y: x + y)
+            sample_count = data_instances.count()
+            fore_gradient = self.aggregated_forwards.join(data_instances,
+                                                          lambda wx, d: (wx - d.label * d.weight) * (sample_count / weight_sum))
+        else:
+            fore_gradient = self.aggregated_forwards.join(data_instances, lambda wx, d: wx - d.label)
         return fore_gradient
 
     def compute_loss(self, data_instances, n_iter_, batch_index, loss_norm=None):
