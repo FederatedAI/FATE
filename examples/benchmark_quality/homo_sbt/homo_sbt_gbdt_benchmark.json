@@ -162,7 +162,7 @@
             "conf": "./fate_sbt_regression.yaml"
         },
         "compare_setting": {
-            "relative_tol": 0.01
+            "relative_tol": 0.05
         }
     }
 }
