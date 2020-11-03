@@ -124,7 +124,8 @@ class HeteroLRGuest(HeteroLRBase):
                     self.optimizer,
                     self.n_iter_,
                     batch_index,
-                    use_sample_weight=self.use_sample_weight
+                    None,
+                    self.use_sample_weight
                 )
                 # LOGGER.debug('optim_guest_gradient: {}'.format(optim_guest_gradient))
                 training_info = {"iteration": self.n_iter_, "batch_index": batch_index}

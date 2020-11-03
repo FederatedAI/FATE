@@ -92,13 +92,6 @@ def __compute_partition_gradient(data, fit_intercept=True, is_sparse=False):
         return np.array(gradient)
 
 
-def sum_sample_weight(kv_iterator):
-    res = 0
-    for _, inst in kv_iterator:
-        res += inst.weight
-    return res
-
-
 def compute_gradient(data_instances, fore_gradient, fit_intercept, use_sample_weight=False):
     """
     Compute hetero-regression gradient
@@ -148,6 +141,13 @@ class Guest(HeteroGradientBase):
         self.host_forwards = None
         self.forwards = None
         self.aggregated_forwards = None
+
+    @staticmethod
+    def sum_sample_weight(kv_iterator):
+        res = 0
+        for _, inst in kv_iterator:
+            res += inst.weight
+        return res
 
     def _register_gradient_sync(self, host_forward_transfer, fore_gradient_transfer,
                                 guest_gradient_transfer, guest_optim_gradient_transfer):
