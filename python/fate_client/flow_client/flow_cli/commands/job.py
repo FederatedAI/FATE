@@ -111,7 +111,7 @@ def query(ctx, **kwargs):
     prettify(response)
 
 
-@job.command("clean", short_help="Clean Job Command")
+# @job.command("clean", short_help="Clean Job Command")
 @cli_args.JOBID_REQUIRED
 @cli_args.ROLE
 @cli_args.PARTYID

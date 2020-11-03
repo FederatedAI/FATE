@@ -17,7 +17,7 @@
 import json
 from pipeline.backend.config import Backend, WorkMode
 from pipeline.backend.pipeline import PipeLine
-from pipeline.component import Reader, DataIO, Intersection, HeteroSecureBoost
+from pipeline.component import Reader, DataIO, Intersection, HeteroSecureBoost, Evaluation
 from pipeline.interface import Data
 from pipeline.runtime.entity import JobParameters
 
@@ -42,15 +42,17 @@ hetero_secureboost_0 = HeteroSecureBoost(name="hetero_secureboost_0",
                                          objective_param={"objective": "cross_entropy"},
                                          encrypt_param={"method": "iterativeAffine"},
                                          tree_param={"max_depth": 3})
+evaluation_0 = Evaluation(name="evaluation_0", eval_type="binary")
 
 # add components to pipeline, in order of task execution
 pipeline.add_component(reader_0)\
     .add_component(dataio_0, data=Data(data=reader_0.output.data))\
     .add_component(intersect_0, data=Data(data=dataio_0.output.data))\
-    .add_component(hetero_secureboost_0, data=Data(train_data=intersect_0.output.data))
+    .add_component(hetero_secureboost_0, data=Data(train_data=intersect_0.output.data))\
+    .add_component(evaluation_0, data=Data(data=hetero_secureboost_0.output.data))
 
 # compile & fit pipeline
 pipeline.compile().fit(JobParameters(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE))
 
 # query component summary
-print(json.dumps(pipeline.get_component("hetero_secureboost_0").get_summary(), indent=4))
+print(f"Evaluation summary:\n{json.dumps(pipeline.get_component('evaluation_0').get_summary(), indent=4)}")

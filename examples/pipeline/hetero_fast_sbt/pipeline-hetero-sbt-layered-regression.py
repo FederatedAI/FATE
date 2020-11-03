@@ -77,9 +77,6 @@ def main(config="../../config.yaml", namespace=""):
                                                        encrypt_param={"method": "iterativeAffine"},
                                                        guest_depth=1,
                                                        host_depth=2,
-                                                       tree_param={
-                                                           "max_depth": 3
-                                                       },
                                                        validation_freqs=1,
                                                        work_mode='layered'
                                                        )

@@ -1,5 +1,5 @@
-data_guest: "/home/cwj/FATE/standalone-fate-master-1.4.5/examples/data/student_homo_guest.csv"
-data_host: "/home/cwj/FATE/standalone-fate-master-1.4.5/examples/data/student_homo_host.csv"
-data_test: "/home/cwj/FATE/standalone-fate-master-1.4.5/examples/data/student_homo_test.csv"
+data_guest: "examples/data/student_homo_guest.csv"
+data_host: "examples/data/student_homo_host.csv"
+data_test: "examples/data/student_homo_test.csv"
 idx: "id"
 label_name: "y"

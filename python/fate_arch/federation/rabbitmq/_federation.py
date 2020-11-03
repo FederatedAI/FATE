@@ -242,18 +242,25 @@ class Federation(FederationABC):
             
         LOGGER.debug(f"[{log_str}]finish to remote")
 
-    def cleanup(self):
+    def cleanup(self, party):
         LOGGER.debug("[rabbitmq.cleanup]start to cleanup...")
-        for queue_key, queue_names in self._queue_map.items():
-            LOGGER.debug(f"[rabbitmq.cleanup]cleanup queue_key={queue_key}, queue_names={queue_names}.")
-            self._rabbit_manager.de_federate_queue(vhost=queue_names.vhost, receive_queue_name=queue_names.receive)
-            self._rabbit_manager.delete_queue(vhost=queue_names.vhost, queue_name=queue_names.send)
-            self._rabbit_manager.delete_queue(vhost=queue_names.vhost, queue_name=queue_names.receive)
-            self._rabbit_manager.delete_vhost(vhost=queue_names.vhost)
+        vhost = self._get_vhost(party)
+        queues = self._rabbit_manager.get_all_queue(vhost=vhost)
+        for queue in queues:
+            try:
+                self._rabbit_manager.delete_queue(vhost=vhost, queue_name=queue.get('name'))
+            except:
+                pass
+        self._rabbit_manager.delete_vhost(vhost=vhost)
         self._queue_map.clear()
         if self._mq.union_name:
             LOGGER.debug(f"[rabbitmq.cleanup]clean user {self._mq.union_name}.")
             self._rabbit_manager.delete_user(user=self._mq.union_name)
+
+    def _get_vhost(self, party):
+        low, high = (self._party, party) if self._party < party else (party, self._party)
+        vhost = f"{self._session_id}-{low.role}-{low.party_id}-{high.role}-{high.party_id}"
+        return vhost
 
     def _get_mq_names(self, parties: typing.List[Party], name=None, partitions=None, dtype=None) -> typing.List:
         mq_names = [self._get_or_create_queue(party, name, partitions, dtype) for party in parties]

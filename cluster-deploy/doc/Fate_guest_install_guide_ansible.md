@@ -37,10 +37,10 @@ Eggroll 是一个适用于机器学习和深度学习的大规模分布式架构
 
 ## 2.1.部署规划
 
-| role  | partyid                | IP地址                | 操作系统   | 主机配置 | 存储 | 外网IP      | 外网带宽 | 部署模块                                              |
-| ----- | ---------------------- | --------------------- | ---------- | -------- | ---- | ----------- | -------- | ----------------------------------------------------- |
-| guest | 9999(根据实际规划修改) | 192.168.0.1 （有外网) | CentOS 7.2 | 8C16G    | 500G | xx.xx.xx.xx | >=20Mb   | fate_flow，fateboard，clustermanager，rollsite，mysql |
-| guest | 9999(根据实际规划修改) | 192.168.0.2           | CentOS 7.2 | 16C32G   | 2T   |             |          | nodemanger                                            |
+| role  | partyid                | IP地址                | 操作系统                | 主机配置 | 存储 | 外网IP      | 外网带宽 | 部署模块                                              |
+| ----- | ---------------------- | --------------------- | ----------------------- | -------- | ---- | ----------- | -------- | ----------------------------------------------------- |
+| guest | 9999(根据实际规划修改) | 192.168.0.1 （有外网) | CentOS 7.2/Ubuntu 18.04 | 8C16G    | 500G | xx.xx.xx.xx | >=20Mb   | fate_flow，fateboard，clustermanager，rollsite，mysql |
+| guest | 9999(根据实际规划修改) | 192.168.0.2           | CentOS 7.2/Ubuntu 18.04 | 16C32G   | 2T   |             |          | nodemanger                                            |
 
 备注：涉及exchange说明会用192.168.0.88表示其IP，但本次示例不涉及exchange的部署。
 
@@ -50,7 +50,7 @@ Eggroll 是一个适用于机器学习和深度学习的大规模分布式架构
 | -------- | ------------------------------------------------------------ |
 | 主机配置 | 不低于8C16G500G，千兆网卡                                    |
 | 操作系统 | CentOS linux 7.2及以上同时低于8                              |
-| 依赖包   | 需要安装如下依赖包：<br/>#centos<br/>gcc gcc-c++ make openssl-devel gmp-devel mpfr-devel libmpc-devel libaio <br/>numactl autoconf automake libtool libffi-devel ansible jq supervisor |
+| 依赖包   | 需要安装如下依赖包：<br/>#centos<br/>gcc gcc-c++ make openssl-devel gmp-devel mpfr-devel libmpc-devel libaio <br/>numactl autoconf automake libtool libffi-devel ansible jq supervisor<br/>#ubuntu<br/>gcc g++ make openssl ansible libgmp-dev libmpfr-dev libmpc-dev <br/>libaio1 libaio-dev numactl autoconf automake libtool libffi-dev <br/>cd /usr/lib/x86_64-linux-gnu<br/>if [ ! -f "libssl.so.10" ];then<br/>   ln -s libssl.so.1.0.0 libssl.so.10<br/>   ln -s libcrypto.so.1.0.0 libcrypto.so.10<br/>fi |
 | 用户     | 用户：app，属主：apps（app用户需可以sudo su root而无需密码） |
 | 文件系统 | 1、数据盘挂载在/data目录下。<br/>2、创建/data/projects目录，目录属主为：app:apps。<br/>3、根目录空闲空间不低于20G。 |
 | 虚拟内存 | 不低于128G                                                   |
@@ -224,12 +224,20 @@ echo '/data/swapfile128G swap swap defaults 0 0' >> /etc/fstab
 
 ```
 #安装基础依赖包
+#centos
 yum install -y gcc gcc-c++ make openssl-devel gmp-devel mpfr-devel libmpc-devel libaio numactl autoconf automake
-#如果有报错，需要解决yum源问题。
+#ubuntu
+apt-get install -y gcc g++ make openssl libgmp-dev libmpfr-dev libmpc-dev libaio1 libaio-dev numactl autoconf automake libtool libffi-dev
+#如果有报错，需要解决依赖安装源问题。
 
 #安装ansible和进程管理依赖包
+#centos
 yum install -y ansible
-#如果有报错同时服务器有外网，没有外网的需要解决yum源不全的问题，执行：
+#ubuntu
+apt-get install -y ansible
+
+#如果centos安装有报错同时服务器有外网，没有外网的需要解决yum源不全的问题，执行：
+#centos
 yum install -y epel-release
 #增加一个更全面的第三方的源，然后再重新安装ansible
 ```
@@ -293,8 +301,8 @@ ls -lrt /data/projects/common/supervisord/supervisord.d/fate-*.conf
 ```
 #注意：URL链接有换行，拷贝的时候注意整理成一行
 cd /data/projects/
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/ansible_nfate_1.5.0_preview-1.0.0.tar.gz
-tar xzf ansible_nfate_1.5.0_preview-1.0.0.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/ansible_nfate_1.5.0_release-1.0.0.tar.gz
+tar xzf ansible_nfate_1.5.0_release-1.0.0.tar.gz
 ```
 
 4.4 配置文件修改和示例
@@ -362,16 +370,7 @@ ansible_become_pass=   ---各个主机未做免密sudo需填写root密码
 
 ```
 
-**2）修改部署模式**
-
-```
-vi /data/projects/ansible-nfate-1.*/var_files/prod/fate_init
-
-#只修改如下参数，其他参数默认不变
-deploy_mode: "install" ---默认为空，修改为install，表示新部署
-```
-
-**3）修改guest参数**
+**2）修改guest参数**
 
 **注意：默认是不启用安全证书的配置，如果启用安全证书通讯需把server_secure，client_secure，is_secure设置为true，以及is_secure对应的port设置为9371**。
 
@@ -391,6 +390,8 @@ guest:
       max_memory: 12G   ---rollsite进程JVM内存参数，默认是物理内存的1/4，可根据实际情况设置,如12G，如果是rollsite专用的机器，配置成物理内存的75%。
       server_secure: False ---作为服务端，开启安全证书验证，不使用安全证书默认即可
       client_secure: False ---作为客户端，使用证书发起安全请求，不使用安全证书默认即可
+      polling:  ---是否使用单向模式，不使用默认为false即可，如果需要使用单向模式，需提前和wenbank确认对齐，适用只允许单方向网络的场景
+        enable: False
       default_rules:  ---默认路由，本party指向exchange或者其他party的IP，端口
       - name: default ---名称，默认即可
         ip: 192.168.0.88 ---exchange或者对端party rollsite IP，和webank确认后修改。
@@ -423,6 +424,7 @@ guest:
       grpcPort: 9360  ---服务grpc端口
       httpPort: 9380  ---服务http端口
       dbname: "fate_flow"  ---fate_flow服务使用的数据库名称，默认即可
+      proxy: rollsite ---fate_flow通讯服务的前置代理是rollsite还是nginx，默认即可
     fateboard:
       enable: True ---是否部署fateboard模块，True为部署，False为否
       ips:  ---只支持部署一台主机
@@ -540,6 +542,8 @@ python run_toy_example.py 9999 9999 1
 类似如下结果表示成功：
 
 "2020-04-28 18:26:20,789 - secure_add_guest.py[line:126] - INFO: success to calculate secure_sum, it is 1999.9999999999998"
+
+提示：如出现max cores per job is 1, please modify job parameters报错提示，需要修改当前目录下文件toy_example_conf.json中参数eggroll.session.processors.per.node为1.
 
 ### 5.1.2 双边联调测试
 

@@ -51,7 +51,7 @@ command for more information.
 
 .. code:: bash
 
-   pipeline config --help
+   pipeline init --help
 
 
 Interface of Pipeline
@@ -260,7 +260,7 @@ Prediction can then be initiated on the new pipeline.
 
 .. code:: python
 
-   predict_pipeline.predict(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE)
+   predict_pipeline.predict(job_parameters)
 
 In addition, since pipeline is modular, user may add new components to
 the original pipeline when running prediction.
