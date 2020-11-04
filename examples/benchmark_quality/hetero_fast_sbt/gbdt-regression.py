@@ -15,7 +15,7 @@
 #
 
 import argparse
-
+import os
 import pandas as pd
 from sklearn.ensemble.gradient_boosting import GradientBoostingRegressor
 from sklearn.metrics import explained_variance_score
@@ -28,29 +28,37 @@ from sklearn.metrics import r2_score
 from pipeline.utils.tools import JobConfig
 
 
-def main(param=""):
+def main(config="../../config.yaml", param="./gbdt_config_reg.yaml"):
+
     # obtain config
     if isinstance(param, str):
         param = JobConfig.load_from_file(param)
+
     data_guest = param["data_guest"]
     data_host = param["data_host"]
-
     idx = param["idx"]
     label_name = param["label_name"]
 
+    print('config is {}'.format(config))
+    if isinstance(config, str):
+        config = JobConfig.load_from_file(config)
+        data_base_dir = config["data_base_dir"]
+        print('data base dir is', data_base_dir)
+    else:
+        data_base_dir = config.data_base_dir
+
     # prepare data
-    df_guest = pd.read_csv(data_guest, index_col=idx)
-    df_host = pd.read_csv(data_host, index_col=idx)
+    df_guest = pd.read_csv(os.path.join(data_base_dir, data_guest), index_col=idx)
+    df_host = pd.read_csv(os.path.join(data_base_dir, data_host), index_col=idx)
     df = df_guest.join(df_host, rsuffix='host')
     y = df[label_name]
     X = df.drop(label_name, axis=1)
-
-    clf = GradientBoostingRegressor(random_state=0, n_estimators=50, learning_rate=0.1)
+    clf = GradientBoostingRegressor(random_state=0, n_estimators=50)
     clf.fit(X, y)
 
     y_predict = clf.predict(X)
 
-    result = {"mean_absolute_error": mean_absolute_error(y, y_predict),}
+    result = {"mean_absolute_error": mean_absolute_error(y, y_predict)}
     print(result)
     return {}, result
 

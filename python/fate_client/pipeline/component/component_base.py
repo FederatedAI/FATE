@@ -22,15 +22,14 @@ class Component(object):
     __instance = {}
 
     def __init__(self, *args, **kwargs):
-        # print ("kwargs : ", kwargs)
         LOGGER.debug(f"kwargs: {kwargs}")
         if "name" in kwargs:
             self._component_name = kwargs["name"]
         self.__party_instance = {}
-        self._algorithm_parameter_keywords = set(kwargs.keys())
+        self._component_parameter_keywords = set(kwargs.keys())
         self._role_parameter_keywords = set()
         self._module_name = None
-        self._algorithm_param = {}
+        self._component_param = {}
 
     def __new__(cls, *args, **kwargs):
         if cls.__name__.lower() not in cls.__instance:
@@ -44,7 +43,6 @@ class Component(object):
 
     def set_name(self, idx):
         self._component_name = self.__class__.__name__.lower() + "_" + str(idx)
-        # print("enter set name func", self._component_name)
         LOGGER.debug(f"enter set name func {self._component_name}")
 
     def reset_name(self, name):
@@ -79,7 +77,6 @@ class Component(object):
             self._decrease_instance_count()
 
             self.__party_instance[role]["party"][party_key] = party_instance
-            # print ("enter init")
             LOGGER.debug(f"enter init")
 
         return self.__party_instance[role]["party"][party_key]
@@ -87,7 +84,6 @@ class Component(object):
     @classmethod
     def _decrease_instance_count(cls):
         cls.__instance[cls.__name__.lower()] -= 1
-        # print ("decrease instance count")
         LOGGER.debug(f"decrease instance count")
 
     @property
@@ -98,30 +94,29 @@ class Component(object):
     def module(self):
         return self._module_name
 
-    def algorithm_param(self, **kwargs):
+    def component_param(self, **kwargs):
         new_kwargs = copy.deepcopy(kwargs)
         for attr in self.__dict__:
             if attr in new_kwargs:
                 setattr(self, attr, new_kwargs[attr])
-                self._algorithm_param[attr] = new_kwargs[attr]
+                self._component_param[attr] = new_kwargs[attr]
                 del new_kwargs[attr]
 
         for attr in new_kwargs:
-            # print ("key {}, value {} not use".format(attr, new_kwargs[attr]))
             LOGGER.warning(f"key {attr}, value {new_kwargs[attr]} not use")
 
         self._role_parameter_keywords |= set(kwargs.keys())
 
-    def get_algorithm_param(self):
-        return self._algorithm_param
+    def get_component_param(self):
+        return self._component_param
 
-    def get_algorithm_param_conf(self):
+    def get_common_param_conf(self):
         """
         exclude_attr = ["_component_name", "__party_instance",
-                        "_algorithm_parameter_keywords", "_role_parameter_keywords"]
+                        "_component_parameter_keywords", "_role_parameter_keywords"]
         """
 
-        algorithm_param_conf = {}
+        common_param_conf = {}
         for attr in self.__dict__:
             if attr.startswith("_"):
                 continue
@@ -129,12 +124,12 @@ class Component(object):
             if attr in self._role_parameter_keywords:
                 continue
 
-            if attr not in self._algorithm_parameter_keywords:
+            if attr not in self._component_parameter_keywords:
                 continue
 
-            algorithm_param_conf[attr] = getattr(self, attr)
+            common_param_conf[attr] = getattr(self, attr)
 
-        return algorithm_param_conf
+        return common_param_conf
 
     def get_role_param_conf(self, roles=None):
         role_param_conf = {}
@@ -145,7 +140,7 @@ class Component(object):
         for role in self.__party_instance:
             role_param_conf[role] = {}
             if None in self.__party_instance[role]["party"]:
-                role_all_party_conf = self.__party_instance[role]["party"][None].get_algorithm_param()
+                role_all_party_conf = self.__party_instance[role]["party"][None].get_component_param()
                 if "all" not in role_param_conf:
                     role_param_conf[role]["all"] = {}
                     role_param_conf[role]["all"][self._component_name] = role_all_party_conf
@@ -166,7 +161,7 @@ class Component(object):
                 if party_key not in role_param_conf:
                     role_param_conf[role][party_key] = {}
 
-                role_param_conf[role][party_key][self._component_name] = party_inst.get_algorithm_param()
+                role_param_conf[role][party_key][self._component_name] = party_inst.get_component_param()
 
         # print ("role_param_conf {}".format(role_param_conf))
         LOGGER.debug(f"role_param_conf {role_param_conf}")
@@ -185,17 +180,20 @@ class Component(object):
 
         roles = kwargs["roles"]
 
-        algorithm_param_conf = self.get_algorithm_param_conf()
+        common_param_conf = self.get_common_param_conf()
         role_param_conf = self.get_role_param_conf(roles)
 
         conf = {}
-        if algorithm_param_conf:
-            conf['algorithm_parameters'] = {self._component_name: algorithm_param_conf}
+        if common_param_conf:
+            conf['common'] = {self._component_name: common_param_conf}
 
         if role_param_conf:
-            conf["role_parameters"] = role_param_conf
+            conf["role"] = role_param_conf
 
         return conf
+
+    def _get_all_party_instance(self):
+        return self.__party_instance
 
 
 class PlaceHolder(object):

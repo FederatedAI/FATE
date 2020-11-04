@@ -39,13 +39,13 @@ class LogisticParam(BaseParam):
         Penalty method used in LR. Please note that, when using encrypted version in HomoLR,
         'L1' is not supported.
 
-    tol : float, default: 1e-5
+    tol : float, default: 1e-4
         The tolerance of convergence
 
     alpha : float, default: 1.0
         Regularization strength coefficient.
 
-    optimizer : str, 'sgd', 'rmsprop', 'adam', 'nesterov_momentum_sgd', 'sqn' or 'adagrad', default: 'sgd'
+    optimizer : str, 'sgd', 'rmsprop', 'adam', 'nesterov_momentum_sgd', 'sqn' or 'adagrad', default: 'rmsprop'
         Optimize method, if 'sqn' has been set, sqn_param will take effect. Currently, 'sqn' support hetero mode only.
 
     batch_size : int, default: -1
@@ -102,7 +102,7 @@ class LogisticParam(BaseParam):
     """
 
     def __init__(self, penalty='L2',
-                 tol=1e-5, alpha=1.0, optimizer='sgd',
+                 tol=1e-4, alpha=1.0, optimizer='rmsprop',
                  batch_size=-1, learning_rate=0.01, init_param=InitParam(),
                  max_iter=100, early_stop='diff', encrypt_param=EncryptParam(),
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
@@ -252,7 +252,7 @@ class HomoLogisticParam(LogisticParam):
 
     """
     def __init__(self, penalty='L2',
-                 tol=1e-5, alpha=1.0, optimizer='sgd',
+                 tol=1e-4, alpha=1.0, optimizer='rmsprop',
                  batch_size=-1, learning_rate=0.01, init_param=InitParam(),
                  max_iter=100, early_stop='diff',
                  encrypt_param=EncryptParam(), re_encrypt_batches=2,
@@ -310,7 +310,7 @@ class HomoLogisticParam(LogisticParam):
 
 class HeteroLogisticParam(LogisticParam):
     def __init__(self, penalty='L2',
-                 tol=1e-5, alpha=1.0, optimizer='sgd',
+                 tol=1e-4, alpha=1.0, optimizer='rmsprop',
                  batch_size=-1, learning_rate=0.01, init_param=InitParam(),
                  max_iter=100, early_stop='diff',
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),

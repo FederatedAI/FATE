@@ -1,4 +1,5 @@
 {
+    "dsl_version": 2,
     "initiator": {
         "role": "guest",
         "party_id": 9999
@@ -15,57 +16,60 @@
         ]
     },
     "job_parameters": {
-        "job_type": "train",
-        "backend": 0,
-        "work_mode": 0,
-        "dsl_version": 2
+        "common": {
+            "job_type": "train",
+            "backend": 0,
+            "work_mode": 0
+        }
     },
-    "role_parameters": {
-        "host": {
-            "0": {
-                "reader_0": {
-                    "table": {
-                        "name": "breast_homo_host",
-                        "namespace": "experiment"
-                    }
+    "component_parameters": {
+        "common": {
+            "homo_secureboost_0": {
+                "task_type": "regression",
+                "objective_param": {
+                    "objective": "lse"
                 },
-                "dataio_0": {
-                    "with_label": true,
-                    "label_type": "float",
-                    "output_format": "dense"
+                "num_trees": 3,
+                "cv_param": {
+                    "need_cv": true,
+                    "shuffle": false,
+                    "n_splits": 5
+                },
+                "tree_param": {
+                    "max_depth": 3
                 }
             }
         },
-        "guest": {
-            "0": {
-                "reader_0": {
-                    "table": {
-                        "name": "breast_homo_guest",
-                        "namespace": "experiment"
+        "role": {
+            "host": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_homo_host",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "dataio_0": {
+                        "with_label": true,
+                        "label_type": "float",
+                        "output_format": "dense"
                     }
-                },
-                "dataio_0": {
-                    "with_label": true,
-                    "label_type": "float",
-                    "output_format": "dense"
                 }
-            }
-        }
-    },
-    "algorithm_parameters": {
-        "homo_secureboost_0": {
-            "task_type": "regression",
-            "objective_param": {
-                "objective": "lse"
             },
-            "num_trees": 3,
-            "cv_param": {
-                "need_cv": true,
-                "shuffle": false,
-                "n_splits": 5
-            },
-            "tree_param": {
-                "max_depth": 3
+            "guest": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_homo_guest",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "dataio_0": {
+                        "with_label": true,
+                        "label_type": "float",
+                        "output_format": "dense"
+                    }
+                }
             }
         }
     }

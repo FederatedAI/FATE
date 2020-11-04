@@ -7,6 +7,7 @@ import requests
 from fate_arch.common import file_utils, conf_utils
 
 from fate_flow.settings import HTTP_PORT, API_VERSION, WORK_MODE, FATEFLOW_SERVICE_NAME
+from fate_flow.entity.types import EndStatus, JobStatus
 
 
 class TestTracking(unittest.TestCase):
@@ -44,11 +45,11 @@ class TestTracking(unittest.TestCase):
             response = requests.post("/".join([self.server_url, 'job', 'query']), json={'job_id': job_id, 'role': 'guest'})
             self.assertTrue(response.status_code in [200, 201])
             job_info = response.json()['data'][0]
-            if job_info['f_status'] in ['complete', 'failed', 'canceled']:
+            if EndStatus.contains(job_info['f_status']):
                 break
             time.sleep(self.sleep_time)
             print('waiting job run success, the job has been running for {}s'.format((i+1)*self.sleep_time))
-        self.assertTrue(job_info['f_status'] == 'complete')
+        self.assertTrue(job_info['f_status'] == JobStatus.SUCCESS)
         os.makedirs(self.success_job_dir, exist_ok=True)
         with open(os.path.join(self.success_job_dir, job_id), 'w') as fw:
             json.dump(job_info, fw)

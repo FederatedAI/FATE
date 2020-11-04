@@ -17,15 +17,17 @@ https://fate.fedai.org
    :caption: Quick Start
    :maxdepth: 3
 
-   Quick Start <_build_temp/examples/dsl/v2/README>
+   Quick Start <_build_temp/examples/pipeline/README>
    Data Upload <_build_temp/doc/upload_data_guide>
-   Configuration <_build_temp/doc/dsl_conf_setting_guide>
+   V1 Configuration <_build_temp/doc/dsl_conf_v1_setting_guide>
+   V2 Configuration <_build_temp/doc/dsl_conf_v2_setting_guide>
 
 .. toctree::
    :maxdepth: 3
    :caption: Algorithms
 
    FederatedML <_build_temp/python/federatedml/README>
+   Examples <_build_temp/examples/README>
 
 .. toctree::
    :maxdepth: 3
@@ -33,7 +35,7 @@ https://fate.fedai.org
 
    FATE FLOW Guide <_build_temp/python/fate_flow/README>
    CLI API <_build_temp/python/fate_flow/doc/fate_flow_cli>
-   REST API <_build_temp/python/fate_flow/doc/fate_flow_rest_api>
+   REST API <_build_temp/python/fate_flow/doc/fate_flow_http_api>
 
 .. toctree::
    :maxdepth: 3

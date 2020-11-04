@@ -20,9 +20,13 @@ from pyspark import StorageLevel
 
 # noinspection PyUnresolvedReferences
 def materialize(rdd):
-    rdd = rdd.persist(get_storage_level())
+    rdd.persist(get_storage_level())
     rdd.count()
     return rdd
+
+
+def unmaterialize(rdd):
+    rdd.unpersist()
 
 
 # noinspection PyUnresolvedReferences

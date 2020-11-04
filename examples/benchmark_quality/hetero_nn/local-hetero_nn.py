@@ -1,9 +1,10 @@
 import argparse
 import numpy as np
-import keras
+import os
+from tensorflow import keras
 import pandas
 import tensorflow as tf
-from keras.utils import np_utils
+from tensorflow.keras.utils import to_categorical
 from tensorflow.keras import optimizers
 
 from sklearn import metrics
@@ -31,7 +32,13 @@ def build(param, shape1, shape2):
     return model
 
 
-def main(param="./hetero_nn_breast_config.yaml"):
+def main(config="../../config.yaml", param="./hetero_nn_breast_config.yaml"):
+    if isinstance(config, str):
+        config = JobConfig.load_from_file(config)
+        data_base_dir = config["data_base_dir"]
+    else:
+        data_base_dir = config.data_base_dir
+
     if isinstance(param, str):
         param = JobConfig.load_from_file(param)
     data_guest = param["data_guest"]
@@ -40,14 +47,14 @@ def main(param="./hetero_nn_breast_config.yaml"):
     idx = param["idx"]
     label_name = param["label_name"]
     # prepare data
-    Xb = pandas.read_csv(data_guest, index_col=idx)
-    Xa = pandas.read_csv(data_host, index_col=idx)
+    Xb = pandas.read_csv(os.path.join(data_base_dir, data_guest), index_col=idx)
+    Xa = pandas.read_csv(os.path.join(data_base_dir, data_host), index_col=idx)
     y = Xb[label_name]
     if param["loss"] == "categorical_crossentropy":
         labels = y.copy()
         label_encoder = LabelEncoder()
         y = label_encoder.fit_transform(y)
-        y = np_utils.to_categorical(y)
+        y = to_categorical(y)
 
     Xb = Xb.drop(label_name, axis=1)
     model = build(param, Xb.shape[1], Xa.shape[1])

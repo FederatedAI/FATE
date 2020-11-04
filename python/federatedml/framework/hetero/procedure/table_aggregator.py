@@ -16,8 +16,8 @@
 import numpy as np
 
 from fate_arch.session import computing_session
+from federatedml.framework.homo.blocks import aggregator
 from federatedml.framework.homo.blocks import secure_mean_aggregator
-# from federatedml.framework.homo.procedure import aggregator
 from federatedml.framework.homo.blocks import secure_sum_aggregator
 from federatedml.util import LOGGER
 from federatedml.util import consts
@@ -76,6 +76,11 @@ class Server(secure_sum_aggregator.Server, secure_mean_aggregator.Server):
         if trans_var is None:
             trans_var = TableScatterTransVar()
         super().__init__(trans_var=trans_var, enable_secure_aggregate=enable_secure_aggregate)
+
+        self.enable_secure_aggregate = enable_secure_aggregate
+        # if enable_secure_aggregate:
+            # table_random_padding_cipher.Server(trans_var=trans_var.random_padding_cipher_trans_var) \
+            #     .exchange_secret_keys()
         self._table_sync = TableTransferServer()
 
     def aggregate_tables(self, suffix=tuple()):
@@ -83,7 +88,7 @@ class Server(secure_sum_aggregator.Server, secure_mean_aggregator.Server):
         result = tables[0]
         for table in tables[1:]:
             result = result.join(table, lambda x1, x2: x1 + x2)
-        LOGGER.debug(f"aggregate_result: {list(result.collect())[0]}")
+        # LOGGER.debug(f"aggregate_result: {list(result.collect())[0]}")
         return result
 
     def send_aggregated_tables(self, table, suffix=tuple()):
@@ -110,7 +115,12 @@ class Client(secure_sum_aggregator.Client, secure_mean_aggregator.Client):
             trans_var = TableScatterTransVar()
         super().__init__(trans_var, enable_secure_aggregate)
         self._table_sync = TableTransferClient()
+
+        self.enable_secure_aggregate = enable_secure_aggregate
+
         if enable_secure_aggregate:
+            # self._table_random_padding_cipher = table_random_padding_cipher.Client(
+            #     trans_var=trans_var.random_padding_cipher_trans_var).create_cipher()
             self._random_padding_cipher.set_amplify_factor(consts.SECURE_AGG_AMPLIFY_FACTOR)
 
     def secure_aggregate_table(self, send_func, table, enable_secure_aggregate=True):
@@ -121,33 +131,17 @@ class Client(secure_sum_aggregator.Client, secure_mean_aggregator.Client):
         """
         LOGGER.debug(f"In secure aggregate, enable_secure_aggregate: {enable_secure_aggregate}")
         if enable_secure_aggregate:
-            LOGGER.debug(f"Before mapValues, type of table: {type(table)}")
-
-            key_table = table.mapValues(lambda v: None)
-            LOGGER.debug("After mapValues")
-
-            list_key = list(key_table.collect())
-            list_key = sorted([x[0] for x in list_key])
-            zeros_table = np.zeros(len(list_key))
-            LOGGER.debug("Before cipher encrypted")
-
-            rand_table = self._random_padding_cipher.encrypt(zeros_table)
-            LOGGER.debug(f"rand_table: {rand_table}")
-            rand_table = computing_session.parallelize(tuple(zip(list_key, rand_table)),
-                                                       include_key=True,
-                                                       partition=table.partitions)
-            table = table.join(rand_table, lambda x, y: x + y)
-
+            table = self._random_padding_cipher.encrypt_table(table)
             LOGGER.debug("Finish add random numbers")
 
         send_func(table)
 
     def send_table(self, table, suffix=tuple()):
         def _func(_table):
-            LOGGER.debug(f"cipher table content: {list(_table.collect())[0]}")
+            # LOGGER.debug(f"cipher table content: {list(_table.collect())[0]}")
             self._table_sync.send_tables(_table, suffix=suffix)
 
-        LOGGER.debug(f"plantext table content: {list(table.collect())[0]}")
+        # LOGGER.debug(f"plantext table content: {list(table.collect())[0]}")
 
         return self.secure_aggregate_table(send_func=_func,
                                            table=table,
@@ -159,4 +153,3 @@ class Client(secure_sum_aggregator.Client, secure_mean_aggregator.Client):
     def aggregate_then_get_table(self, table, suffix=tuple()):
         self.send_table(table=table, suffix=suffix)
         return self.get_aggregated_table(suffix=suffix)
-

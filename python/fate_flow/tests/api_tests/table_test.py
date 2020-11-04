@@ -6,6 +6,7 @@ import requests
 from fate_arch.common import file_utils, conf_utils
 
 from fate_flow.settings import HTTP_PORT, API_VERSION, WORK_MODE, FATEFLOW_SERVICE_NAME
+from fate_flow.entity.types import JobStatus
 
 ip = conf_utils.get_base_config(FATEFLOW_SERVICE_NAME).get("host")
 server_url = "http://{}:{}/{}".format(ip, HTTP_PORT, API_VERSION)
@@ -26,10 +27,10 @@ class TestTable(unittest.TestCase):
         for i in range(60):
             response = requests.post("/".join([server_url, 'job', 'query']), json={'job_id': job_id})
             self.assertTrue(int(response.json()['retcode']) == 0)
-            if response.json()['data'][0]['f_status'] == 'complete':
+            if response.json()['data'][0]['f_status'] == JobStatus.SUCCESS:
                 break
             time.sleep(1)
-        self.assertTrue(response.json()['data'][0]['f_status'] == 'complete')
+        self.assertTrue(response.json()['data'][0]['f_status'] == JobStatus.SUCCESS)
 
         response = test_table_info()
         self.assertTrue(response.status_code in [200, 201])

@@ -24,6 +24,7 @@ from pipeline.component.reader import Reader
 from pipeline.interface.data import Data
 
 from pipeline.utils.tools import load_job_config
+from pipeline.runtime.entity import JobParameters
 
 
 def main(config="../../config.yaml", namespace=""):
@@ -47,19 +48,19 @@ def main(config="../../config.yaml", namespace=""):
     # set data reader and data-io
 
     reader_0 = Reader(name="reader_0")
-    reader_0.get_party_instance(role="guest", party_id=guest).algorithm_param(table=guest_train_data)
-    reader_0.get_party_instance(role="host", party_id=host).algorithm_param(table=host_train_data)
+    reader_0.get_party_instance(role="guest", party_id=guest).component_param(table=guest_train_data)
+    reader_0.get_party_instance(role="host", party_id=host).component_param(table=host_train_data)
     dataio_0 = DataIO(name="dataio_0")
-    dataio_0.get_party_instance(role="guest", party_id=guest).algorithm_param(with_label=True, output_format="dense",
+    dataio_0.get_party_instance(role="guest", party_id=guest).component_param(with_label=True, output_format="dense",
                                                                               label_type="float")
-    dataio_0.get_party_instance(role="host", party_id=host).algorithm_param(with_label=False)
+    dataio_0.get_party_instance(role="host", party_id=host).component_param(with_label=False)
 
     # data intersect component
     intersect_0 = Intersection(name="intersection_0")
 
     # secure boost component
     hetero_secure_boost_0 = HeteroSecureBoost(name="hetero_secure_boost_0",
-                                              num_trees=5,
+                                              num_trees=3,
                                               task_type="regression",
                                               objective_param={"objective": "lse"},
                                               encrypt_param={"method": "iterativeAffine"},
@@ -79,7 +80,8 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.add_component(hetero_secure_boost_0, data=Data(train_data=intersect_0.output.data))
 
     pipeline.compile()
-    pipeline.fit(backend=backend, work_mode=work_mode)
+    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
+    pipeline.fit(job_parameters)
 
     print("fitting hetero secureboost done, result:")
     print(pipeline.get_component("hetero_secure_boost_0").get_summary())

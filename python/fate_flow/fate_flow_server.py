@@ -35,6 +35,7 @@ from fate_flow.apps.table_app import manager as table_app_manager
 from fate_flow.apps.tracking_app import manager as tracking_app_manager
 from fate_flow.apps.permission_app import manager as permission_app_manager
 from fate_flow.apps.version_app import manager as version_app_manager
+from fate_flow.apps.proxy_app import manager as proxy_app_manager
 from fate_flow.scheduling_apps.initiator_app import manager as initiator_app_manager
 from fate_flow.scheduling_apps.party_app import manager as party_app_manager
 from fate_flow.scheduling_apps.tracker_app import manager as tracker_app_manager
@@ -81,11 +82,11 @@ if __name__ == '__main__':
             '/{}/party'.format(API_VERSION): party_app_manager,
             '/{}/initiator'.format(API_VERSION): initiator_app_manager,
             '/{}/tracker'.format(API_VERSION): tracker_app_manager,
+            '/{}/forward'.format(API_VERSION): proxy_app_manager
         }
     )
     # init
-    signal.signal(signal.SIGTERM, job_utils.cleaning)
-    signal.signal(signal.SIGCHLD, job_utils.wait_child_process)
+    # signal.signal(signal.SIGTERM, job_utils.cleaning)
     # init db
     init_flow_db()
     init_arch_db()

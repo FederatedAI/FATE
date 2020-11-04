@@ -164,7 +164,7 @@
                 ]
             }
         },
-        "hetero_scale_0": {
+        "one_hot_encoder_0": {
             "module": "OneHotEncoder",
             "input": {
                 "data": {
@@ -182,7 +182,7 @@
                 ]
             }
         },
-        "hetero_scale_1": {
+        "one_hot_encoder_1": {
             "module": "OneHotEncoder",
             "input": {
                 "data": {
@@ -191,7 +191,7 @@
                     ]
                 },
                 "model": [
-                    "hetero_scale_0.model"
+                    "one_hot_encoder_0.model"
                 ]
             },
             "output": {
@@ -208,10 +208,10 @@
             "input": {
                 "data": {
                     "train_data": [
-                        "hetero_scale_0.data"
+                        "one_hot_encoder_0.data"
                     ],
                     "validate_data": [
-                        "hetero_scale_0.data"
+                        "one_hot_encoder_1.data"
                     ]
                 }
             },

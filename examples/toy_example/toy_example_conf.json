@@ -5,7 +5,10 @@
   },
   "job_parameters": {
     "work_mode": 0,
-    "backend": 0
+    "backend": 0,
+    "eggroll_run": {
+      "eggroll.session.processors.per.node": 2
+    }
   },
   "role": {
     "guest": [
@@ -33,8 +36,8 @@
   },
   "algorithm_parameters": {
     "secure_add_example_0": {
-        "partition": 48,
-        "data_num": 1000
+      "partition": 48,
+      "data_num": 1000
     }
   }
 }

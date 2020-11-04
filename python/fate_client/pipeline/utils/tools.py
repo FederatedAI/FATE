@@ -66,7 +66,7 @@ class JobConfig(object):
         self.parties = Parties(config.get("parties", {}))
         self.backend = config.get("backend", 0)
         self.work_mode = config.get("work_mode", 0)
-        self.data_base = config.get("data_base", 0)
+        self.data_base_dir = config.get("data_base_dir", "")
 
     @staticmethod
     def load(path: typing.Union[str, Path]):

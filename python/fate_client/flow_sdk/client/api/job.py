@@ -58,12 +58,6 @@ class Job(BaseFlowAPI):
         config_data, dsl_data = preprocess(**kwargs)
         return self._post(url='job/query', json=config_data)
 
-    def clean(self, job_id=None, role=None, party_id=None, component_name=None):
-        kwargs = locals()
-        config_data, dsl_data = preprocess(**kwargs)
-        check_config(config=config_data, required_arguments=['job_id'])
-        return self._post(url='job/clean', json=config_data)
-
     def config(self, job_id, role, party_id, output_path):
         kwargs = locals()
         config_data, dsl_data = preprocess(**kwargs)
@@ -130,3 +124,10 @@ class Job(BaseFlowAPI):
         if not res.get("data"):
             res["data"] = {}
         return res
+
+    # TODO complete it in next version
+    # def clean(self, job_id=None, role=None, party_id=None, component_name=None):
+    #     kwargs = locals()
+    #     config_data, dsl_data = preprocess(**kwargs)
+    #     check_config(config=config_data, required_arguments=['job_id'])
+    #     return self._post(url='job/clean', json=config_data)

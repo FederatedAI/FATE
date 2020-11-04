@@ -96,6 +96,8 @@ def _run_benchmark_pairs(config: Config, suite: BenchmarkSuite, tol: float,
             # local script
             if len(input_params) == 1:
                 data, metric = mod.main(param=param)
+            elif len(input_params) == 2:
+                data, metric = mod.main(config=config, param=param)
             # pipeline script
             elif len(input_params) == 3:
                 if data_namespace_mangling:

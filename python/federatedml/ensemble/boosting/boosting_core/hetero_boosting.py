@@ -223,44 +223,8 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
 
     @assert_io_num_rows_equal
     def predict(self, data_inst):
-
-        LOGGER.info('using default lazy prediction')
-        return self.lazy_predict(data_inst)
-
-    def lazy_predict(self, data_inst):
-
-        LOGGER.info('running guest lazy prediction')
-        processed_data = self.data_alignment(data_inst)
-        rounds = len(self.boosting_model_list) // self.booster_dim
-
-        cache_dataset_key = self.predict_data_cache.get_data_key(data_inst)
-        last_round = self.predict_data_cache.predict_data_last_round(cache_dataset_key)
-        LOGGER.debug('last round is {}, dataset_key_is {}'.format(last_round, cache_dataset_key))
-
-        if last_round == -1:
-            init_score = self.init_score
-            self.predict_y_hat = processed_data.mapValues(lambda v: init_score)
-        else:
-            LOGGER.debug("hit cache, cached round is {}".format(last_round))
-            if last_round >= rounds - 1:
-                LOGGER.debug("predict data cached, rounds is {}, total cached round is {}".format(rounds, last_round))
-            self.predict_y_hat = self.predict_data_cache.predict_data_at(cache_dataset_key, min(rounds - 1, last_round))
-
-        self.sync_predict_round(last_round + 1)
-
-        for idx in range(last_round + 1, rounds):
-            for booster_idx in range(self.booster_dim):
-                model = self.load_booster(self.booster_meta,
-                                          self.boosting_model_list[idx * self.booster_dim + booster_idx],
-                                          idx, booster_idx)
-                score = model.predict(processed_data)
-                self.predict_y_hat = self.get_new_predict_score(self.predict_y_hat, score, booster_idx)
-
-            self.predict_data_cache.add_data(cache_dataset_key, self.predict_y_hat)
-
-        LOGGER.debug('lazy prediction finished')
-
-        return self.score_to_predict_result(data_inst, self.predict_y_hat)
+        # predict is implemented in hetero_secureboost
+        raise NotImplementedError('predict func is not implemented')
 
     @abc.abstractmethod
     def fit_a_booster(self, epoch_idx: int, booster_dim: int):

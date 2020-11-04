@@ -99,8 +99,7 @@ class HomoLRGuest(HomoLRBase):
                 grad /= n
                 # LOGGER.debug('iter: {}, batch_index: {}, grad: {}, n: {}'.format(
                 #     self.n_iter_, batch_num, grad, n))
-                LOGGER.debug('iter: {}, batch_index: {}, grad: {}, n: {}'.format(
-                    self.n_iter_, batch_num, grad, n))
+
                 if self.use_proximal:  # use proximal term
                     model_weights = self.optimizer.update_model(model_weights, grad=grad,
                                                                 has_applied=False,

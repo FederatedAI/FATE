@@ -183,8 +183,7 @@ def get_filter(filter_name, model_param: FeatureSelectionParam, role=consts.GUES
         iso_model = model.isometric_models.get(consts.HOMO_SBT)
         if iso_model is None:
             raise ValueError("None of sbt model has provided when using sbt filter")
-        return FederatedIsoModelFilter(this_param, iso_model,
-                                       role=role, cpp=model.component_properties)
+        return IsoModelFilter(this_param, iso_model)
 
     elif filter_name == consts.STATISTIC_FILTER:
         statistic_param = model_param.statistic_param
