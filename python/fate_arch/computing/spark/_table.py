@@ -38,8 +38,11 @@ class Table(CTableABC):
         pass
 
     def __del__(self):
-        unmaterialize(self._rdd)
-        del self._rdd
+        try:
+            unmaterialize(self._rdd)
+            del self._rdd            
+        except:
+            return 
 
     @computing_profile
     def save(self, address, partitions, schema, **kwargs):
