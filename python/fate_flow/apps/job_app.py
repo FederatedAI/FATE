@@ -26,35 +26,29 @@ from fate_flow.scheduler import DAGScheduler
 from fate_flow.scheduler import FederatedScheduler
 from fate_flow.settings import stat_logger, TEMP_DIRECTORY
 from fate_flow.utils import job_utils, detect_utils, schedule_utils
-from fate_flow.utils.api_utils import get_json_result, error_response
+from fate_flow.utils.api_utils import get_json_result, error_response, server_error_response
 from fate_flow.entity.types import FederatedSchedulingStatusCode, RetCode, JobStatus
 from fate_flow.operation import Tracker
 from fate_flow.operation import JobSaver
 from fate_flow.operation import JobClean
-from fate_flow.operation import JobQueue
+from fate_flow.utils.config_adapter import JobRuntimeConfigAdapter
 
 manager = Flask(__name__)
 
 
 @manager.errorhandler(500)
 def internal_server_error(e):
-    stat_logger.exception(e)
-    return get_json_result(retcode=100, retmsg=str(e))
+    return server_error_response(e)
 
 
 @manager.route('/submit', methods=['POST'])
 def submit_job():
-    work_mode = request.json.get('job_runtime_conf', {}).get('job_parameters', {}).get('work_mode', None)
+    work_mode = JobRuntimeConfigAdapter(request.json.get('job_runtime_conf', {})).get_job_work_mode()
     detect_utils.check_config({'work_mode': work_mode}, required_arguments=[('work_mode', (WorkMode.CLUSTER, WorkMode.STANDALONE))])
-    job_id, job_dsl_path, job_runtime_conf_path, logs_directory, model_info, board_url = DAGScheduler.submit(request.json)
+    submit_result = DAGScheduler.submit(request.json)
     return get_json_result(retcode=0, retmsg='success',
-                           job_id=job_id,
-                           data={'job_dsl_path': job_dsl_path,
-                                 'job_runtime_conf_path': job_runtime_conf_path,
-                                 'model_info': model_info,
-                                 'board_url': board_url,
-                                 'logs_directory': logs_directory
-                                 })
+                           job_id=submit_result.get("job_id"),
+                           data=submit_result)
 
 
 @manager.route('/stop', methods=['POST'])
@@ -64,14 +58,13 @@ def stop_job():
     jobs = JobSaver.query_job(job_id=job_id)
     if jobs:
         stat_logger.info(f"request stop job {jobs[0]} to {stop_status}")
-        status_code, response = FederatedScheduler.request_stop_job(job=jobs[0], stop_status=stop_status)
+        status_code, response = FederatedScheduler.request_stop_job(job=jobs[0], stop_status=stop_status, command_body=jobs[0].to_json())
         if status_code == FederatedSchedulingStatusCode.SUCCESS:
             return get_json_result(retcode=RetCode.SUCCESS, retmsg="stop job success")
         else:
             return get_json_result(retcode=RetCode.OPERATING_ERROR, retmsg="stop job failed:\n{}".format(json_dumps(response, indent=4)))
     else:
-        stat_logger.info(f"can not found job {jobs[0]} to stop, delete job event")
-        JobQueue.delete_event(job_id=job_id)
+        stat_logger.info(f"can not found job {jobs[0]} to stop")
         return get_json_result(retcode=RetCode.DATA_ERROR, retmsg="can not found job")
 
 
@@ -129,9 +122,11 @@ def job_config():
         response_data['dsl'] = job.f_dsl
         response_data['runtime_conf'] = job.f_runtime_conf
         response_data['train_runtime_conf'] = job.f_train_runtime_conf
-        response_data['model_info'] = {'model_id': response_data['runtime_conf']['job_parameters']['model_id'],
-                                       'model_version': response_data['runtime_conf']['job_parameters'][
-                                           'model_version']}
+
+        adapter = JobRuntimeConfigAdapter(job.f_runtime_conf)
+        job_parameters = adapter.get_common_parameters().to_dict()
+        response_data['model_info'] = {'model_id': job_parameters.get('model_id'),
+                                       'model_version': job_parameters.get('model_version')}
         return get_json_result(retcode=0, retmsg='success', data=response_data)
 
 

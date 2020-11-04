@@ -39,7 +39,7 @@ class ModelBase(object):
         self.model_param = None
         self.transfer_variable = None
         self.flowid = ''
-        self.taskid = ''
+        self.task_version_id = ''
         self.need_one_vs_rest = False
         self.tracker = None
         self.cv_fold = 0
@@ -153,7 +153,7 @@ class ModelBase(object):
         return self.model_output
 
     def set_flowid(self, flowid):
-        # self.flowid = '.'.join([self.taskid, str(flowid)])
+        # self.flowid = '.'.join([self.task_version_id, str(flowid)])
         self.flowid = flowid
         self.set_transfer_variable()
 
@@ -162,9 +162,9 @@ class ModelBase(object):
             LOGGER.debug("set flowid to transfer_variable, flowid: {}".format(self.flowid))
             self.transfer_variable.set_flowid(self.flowid)
 
-    def set_taskid(self, taskid):
-        """ taskid: jobid + component_name, reserved variable """
-        self.taskid = taskid
+    def set_task_version_id(self, task_version_id):
+        """ task_version_id: jobid + component_name, reserved variable """
+        self.task_version_id = task_version_id
 
     def get_metric_name(self, name_prefix):
         if not self.need_cv:

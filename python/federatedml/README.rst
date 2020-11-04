@@ -269,6 +269,15 @@ Algorithm List
      -
      - Statistic Result
 
+   * - `Scorecard`_
+     - Scorecard
+     - Scale predict score to credit score by given scaling parameters
+     - Table, values are predict score
+     - Table, values are score results
+     -
+     -
+
+
 .. _DataIO: util/README.rst
 .. _Intersect: statistic/intersect/README.rst
 .. _Federated Sampling: feature/README.rst
@@ -297,17 +306,19 @@ Algorithm List
 .. _PSI: statistic/psi/README.rst
 .. _Hetero Federated Transfer Learning: transfer_learning/hetero_ftl/README.rst
 .. _Hetero Fast Secure Boosting: ensemble/README.rst
+.. _Scorecard: statistic/scorecard/README.rst
+
 
 Secure Protocol
 ---------------
 
 * `Encrypt`_
 
-   - `Paillier encryption`_
-   - `Affine Homomorphic Encryption`_
-   - `IterativeAffine Homomorphic Encryption`_
-   - `RSA encryption`_
-   - `Fake encryption`_
+  - `Paillier encryption`_
+  - `Affine Homomorphic Encryption`_
+  - `IterativeAffine Homomorphic Encryption`_
+  - `RSA encryption`_
+  - `Fake encryption`_
 
 * `Encode`_
 

@@ -37,7 +37,7 @@ class BaseLogisticRegression(BaseLinearModel):
         self.model_param_name = 'LogisticRegressionParam'
         self.model_meta_name = 'LogisticRegressionMeta'
 
-        # one_ve_rest parameter
+        # one_vs_rest parameter
         self.need_one_vs_rest = None
         self.one_vs_rest_classes = []
         self.one_vs_rest_obj = None
@@ -136,4 +136,8 @@ class BaseLogisticRegression(BaseLinearModel):
         LOGGER.debug(f"Final summary: {self.summary()}")
 
     def get_metrics_param(self):
-        return EvaluateParam(eval_type="binary", metrics=self.metrics)
+        if self.need_one_vs_rest:
+            eval_type = 'multi'
+        else:
+            eval_type = "binary"
+        return EvaluateParam(eval_type=eval_type)

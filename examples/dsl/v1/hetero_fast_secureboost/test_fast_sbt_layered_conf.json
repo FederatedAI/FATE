@@ -42,7 +42,7 @@
         "fast_secureboost_0": {
             "task_type": "classification",
             "learning_rate": 0.1, 
-            "num_trees": 4,
+            "num_trees": 3,
             "subsample_feature_rate": 1,
             "n_iter_no_change": false,
             "work_mode": "layered",

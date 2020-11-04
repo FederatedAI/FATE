@@ -32,6 +32,7 @@ from pipeline.interface import Model
 from pipeline.utils import tools
 from pipeline.utils.invoker.job_submitter import JobInvoker
 from pipeline.utils.logger import LOGGER
+from pipeline.runtime.entity import JobParameters
 
 
 class PipeLine(object):
@@ -59,7 +60,7 @@ class PipeLine(object):
         self._predict_pipeline = []
         self._deploy = False
 
-    @LOGGER.catch(onerror=lambda _: sys.exit(1))
+    @LOGGER.catch(reraise=True)
     def set_initiator(self, role, party_id):
         self._initiator = SimpleNamespace(role=role, party_id=party_id)
 
@@ -69,7 +70,7 @@ class PipeLine(object):
         self._initiator = initiator
         self._roles = roles
 
-    @LOGGER.catch(onerror=lambda _: sys.exit(1))
+    @LOGGER.catch(reraise=True)
     def get_predict_meta(self):
         if self._fit_status != StatusCode.SUCCESS:
             raise ValueError("To get predict meta, please fit successfully")
@@ -107,7 +108,7 @@ class PipeLine(object):
 
         return initiator_conf
 
-    @LOGGER.catch(onerror=lambda _: sys.exit(1))
+    @LOGGER.catch(reraise=True)
     def set_roles(self, guest=None, host=None, arbiter=None, **kwargs):
         local_parameters = locals()
         support_roles = Role.support_roles()
@@ -144,7 +145,7 @@ class PipeLine(object):
 
         return self._roles[role].index(party_id)
 
-    @LOGGER.catch(onerror=lambda _: sys.exit(1))
+    @LOGGER.catch(reraise=True)
     def add_component(self, component, data=None, model=None):
         if isinstance(component, PipeLine):
             if component.is_deploy() is False:
@@ -162,7 +163,7 @@ class PipeLine(object):
             meta = component.get_predict_meta()
             self.restore_roles(meta.get("initiator"), meta.get("roles"))
 
-            return
+            return self
 
         if not isinstance(component, Component):
             raise ValueError(
@@ -209,8 +210,9 @@ class PipeLine(object):
                     self._components_input[component.name][attr.strip("_")] = val
                 else:
                     self._components_input[component.name][attr.strip("_")] = [val]
+        return self
 
-    @LOGGER.catch(onerror=lambda _: sys.exit(1))
+    @LOGGER.catch(reraise=True)
     def add_upload_data(self, file, table_name, namespace, head=1, partition=16,
                         id_delimiter=",", backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE):
         data_conf = {"file": file,
@@ -230,7 +232,7 @@ class PipeLine(object):
                         role=init_role,
                         party_id=party_id)
 
-    @LOGGER.catch(onerror=lambda _: sys.exit(1))
+    @LOGGER.catch(reraise=True)
     def get_component(self, component_names=None):
         job_id = self._train_job_id
         if self._cur_state != "fit":
@@ -272,41 +274,35 @@ class PipeLine(object):
         if not self._train_dsl:
             raise ValueError("there are no components to train")
 
-        # print("train_dsl: ", self._train_dsl)
         LOGGER.debug(f"train_dsl: {self._train_dsl}")
 
     def _construct_train_conf(self):
+        self._train_conf["dsl_version"] = VERSION
         self._train_conf["initiator"] = self._get_initiator_conf()
         self._train_conf["role"] = self._roles
-        self._train_conf["job_parameters"] = self._get_job_parameters(job_type="train", version=2)
-        self._train_conf["role_parameters"] = {}
+        self._train_conf["job_parameters"] = {"common": {"job_type": "train"}}
         for name, component in self._components.items():
             param_conf = component.get_config(version=VERSION, roles=self._roles)
+            if "common" in param_conf:
+                common_param_conf = param_conf["common"]
+                if "component_parameters" not in self._train_conf:
+                    self._train_conf["component_parameters"] = {}
+                if "common" not in self._train_conf["component_parameters"]:
+                    self._train_conf["component_parameters"]["common"] = {}
 
-            if "algorithm_parameters" in param_conf:
-                algorithm_param_conf = param_conf["algorithm_parameters"]
-                if "algorithm_parameters" not in self._train_conf:
-                    self._train_conf["algorithm_parameters"] = {}
-                self._train_conf["algorithm_parameters"].update(algorithm_param_conf)
+                self._train_conf["component_parameters"]["common"].update(common_param_conf)
 
-            if "role_parameters" in param_conf:
-                role_param_conf = param_conf["role_parameters"]
-                self._train_conf["role_parameters"] = tools.merge_dict(role_param_conf,
-                                                                       self._train_conf["role_parameters"])
+            if "role" in param_conf:
+                role_param_conf = param_conf["role"]
+                if "component_parameters" not in self._train_conf:
+                    self._train_conf["component_parameters"] = {}
+                if "role" not in self._train_conf["component_parameters"]:
+                    self._train_conf["component_parameters"]["role"] = {}
+                self._train_conf["component_parameters"]["role"] = tools.merge_dict(role_param_conf,
+                                                                                               self._train_conf["component_parameters"]["role"])
 
-        # pprint.pprint(self._train_conf)
         LOGGER.debug(f"self._train_conf: \n {json.dumps(self._train_conf, indent=4, ensure_ascii=False)}")
         return self._train_conf
-
-    def _get_job_parameters(self, job_type="train", backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE, version=2):
-        job_parameters = {
-            "job_type": job_type,
-            "backend": backend,
-            "work_mode": work_mode,
-            "dsl_version": version
-        }
-
-        return job_parameters
 
     def _construct_upload_conf(self, data_conf, backend, work_mode):
         upload_conf = copy.deepcopy(data_conf)
@@ -333,7 +329,7 @@ class PipeLine(object):
     def _set_state(self, state):
         self._cur_state = state
 
-    @LOGGER.catch(onerror=lambda _: sys.exit(1))
+    @LOGGER.catch(reraise=True)
     def compile(self):
         self._construct_train_dsl()
         self._train_conf = self._construct_train_conf()
@@ -391,52 +387,70 @@ class PipeLine(object):
                     val = [val]
 
                 self._predict_dsl["components"][cpn]["input"]["data"][dataset] = val
+        return self
 
-    @staticmethod
-    def _feed_job_parameters(conf, backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE, job_type=None, model_info=None, **kwargs):
+    def _feed_job_parameters(self, conf, job_type=None,
+                             model_info=None, job_parameters=None):
         submit_conf = copy.deepcopy(conf)
-        # print("submit conf' type {}".format(type(submit_conf)))
         LOGGER.debug(f"submit conf type is {type(submit_conf)}")
 
-        #if not isinstance(work_mode, int):
-        #    work_mode = work_mode.value
-        #if not isinstance(backend, int):
-        #    backend = backend.value
+        if job_parameters:
+            submit_conf["job_parameters"] = job_parameters.get_config(roles=self._roles)
 
-        submit_conf["job_parameters"] = {
-            "work_mode": work_mode,
-            "backend": backend,
-            "dsl_version": VERSION
-        }
+        if "common" not in submit_conf["job_parameters"]:
+            submit_conf["job_parameters"]["common"] = {}
 
-        if job_type is not None:
-            submit_conf["job_parameters"]["job_type"] = job_type
+        submit_conf["job_parameters"]["common"]["job_type"] = job_type
 
         if model_info is not None:
-            submit_conf["job_parameters"]["model_id"] = model_info.model_id
-            submit_conf["job_parameters"]["model_version"] = model_info.model_version
-
-        if kwargs:
-            submit_conf["job_parameters"].update(kwargs)
+            submit_conf["job_parameters"]["common"]["model_id"] = model_info.model_id
+            submit_conf["job_parameters"]["common"]["model_version"] = model_info.model_version
 
         return submit_conf
 
-    @LOGGER.catch(onerror=lambda _: sys.exit(1))
-    def fit(self, backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE, computing_engine=None,
-            federation_engine=None, storage_engine=None, engines_address=None, federated_mode=None,
-            federation_info=None, task_parallelism=None, federated_status_collect_type=None,
-            federated_data_exchange_type=None, timeout=None, eggroll_run=None, spark_run=None,
-            adaptation_parameters=None, **kwargs):
+    def _filter_out_deploy_component(self, predict_conf):
+        if "component_parameters" not in predict_conf:
+            return predict_conf
+
+        if "common" in predict_conf["component_parameters"]:
+            cpns = list(predict_conf["component_parameters"]["common"])
+            for cpn in cpns:
+                if cpn not in self._components.keys():
+                    del predict_conf["component_parameters"]["common"]
+
+        if "role" in predict_conf["component_parameters"]:
+            roles = predict_conf["component_parameters"]["role"].keys()
+            for role in roles:
+                role_params = predict_conf["component_parameters"]["role"].get(role)
+                indexs = role_params.keys()
+                for idx in indexs:
+                    cpns = role_params[idx].keys()
+                    for cpn in cpns:
+                        if cpn not in self._components.keys():
+                            del role_params[idx][cpn]
+
+                    if not role_params[idx]:
+                        del role_params[idx]
+
+                if role_params:
+                    predict_conf["component_parameters"]["role"][role] = role_params
+                else:
+                    del predict_conf["component_parameters"]["role"][role]
+
+        return predict_conf
+
+    @LOGGER.catch(reraise=True)
+    def fit(self, job_parameters=None):
 
         if self._stage == "predict":
             raise ValueError("This pipeline is constructed for predicting, cannot use fit interface")
 
-        job_parameters = self._filter_job_parameters(locals().copy(), kwargs)
+        if job_parameters and not isinstance(job_parameters, JobParameters):
+            raise ValueError("input parameter of fit function should be JobParameters object")
 
-        # print("_train_conf {}".format(self._train_conf))
         LOGGER.debug(f"in fit, _train_conf is: \n {json.dumps(self._train_conf)}")
         self._set_state("fit")
-        training_conf = self._feed_job_parameters(self._train_conf, **job_parameters)
+        training_conf = self._feed_job_parameters(self._train_conf, job_type="train", job_parameters=job_parameters)
         self._train_conf = training_conf
         LOGGER.debug(f"train_conf is: \n {json.dumps(training_conf, indent=4, ensure_ascii=False)}")
         self._train_job_id, detail_info = self._job_invoker.submit_job(self._train_dsl, training_conf)
@@ -448,26 +462,23 @@ class PipeLine(object):
                                                                 self._initiator.role,
                                                                 self._initiator.party_id)
 
-    @LOGGER.catch(onerror=lambda _: sys.exit(1))
-    def predict(self, backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE, computing_engine=None,
-                federation_engine=None, storage_engine=None, engines_address=None, federated_mode=None,
-                federation_info=None, task_parallelism=None, federated_status_collect_type=None,
-                federated_data_exchange_type=None, timeout=None, eggroll_run=None, spark_run=None,
-                adaptation_parameters=None, **kwargs):
-
+    @LOGGER.catch(reraise=True)
+    def predict(self, job_parameters=None):
         if self._stage != "predict":
             raise ValueError(
                 "To use predict function, please deploy component(s) from training pipeline"
                 "and construct a new predict pipeline with data reader and training pipeline.")
 
-        self.compile()
+        if job_parameters and not isinstance(job_parameters, JobParameters):
+            raise ValueError("input parameter of fit function should be JobParameters object")
 
-        job_parameters = self._filter_job_parameters(locals().copy(), kwargs)
+        self.compile()
 
         predict_conf = self._feed_job_parameters(self._train_conf,
                                                  job_type="predict",
                                                  model_info=self._model_info,
-                                                 **job_parameters)
+                                                 job_parameters=job_parameters)
+        predict_conf = self._filter_out_deploy_component(predict_conf)
         self._predict_conf = copy.deepcopy(predict_conf)
         predict_dsl = copy.deepcopy(self._predict_dsl)
 
@@ -476,21 +487,7 @@ class PipeLine(object):
                                              self._initiator.role,
                                              self._initiator.party_id)
 
-    @staticmethod
-    def _filter_job_parameters(parameters, kwargs):
-        del parameters["self"]
-        del parameters["kwargs"]
-        if kwargs:
-            parameters.update(kwargs)
-
-        job_parameters = {}
-        for k, v in parameters.items():
-            if v:
-                job_parameters[k] = v
-
-        return job_parameters
-
-    @LOGGER.catch(onerror=lambda _: sys.exit(1))
+    @LOGGER.catch(reraise=True)
     def upload(self, backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE, drop=0):
         for data_conf in self._upload_conf:
             upload_conf = self._construct_upload_conf(data_conf, backend, work_mode)
@@ -501,6 +498,7 @@ class PipeLine(object):
                                                  "local",
                                                  0)
 
+    @LOGGER.catch(reraise=True)
     def dump(self, file_path=None):
         pkl = pickle.dumps(self)
 
@@ -519,7 +517,7 @@ class PipeLine(object):
         with open(file_path, "rb") as fin:
             return pickle.loads(fin.read())
 
-    @LOGGER.catch(onerror=lambda _: sys.exit(1))
+    @LOGGER.catch(reraise=True)
     def deploy_component(self, components):
         if self._train_dsl is None:
             raise ValueError("Before deploy model, training should be finish!!!")
@@ -554,7 +552,7 @@ class PipeLine(object):
     def is_deploy(self):
         return self._deploy
 
-    @LOGGER.catch(onerror=lambda _: sys.exit(1))
+    @LOGGER.catch(reraise=True)
     def init_predict_config(self, config):
         if isinstance(config, PipeLine):
             config = config.get_predict_meta()
@@ -566,7 +564,7 @@ class PipeLine(object):
         self._initiator = config["initiator"]
         self._train_components = config["train_components"]
 
-    @LOGGER.catch(onerror=lambda _: sys.exit(1))
+    @LOGGER.catch(reraise=True)
     def get_component_input_msg(self):
         if VERSION != 2:
             raise ValueError("In DSL Version 1，only need to config data from args, no need special component")
@@ -593,7 +591,7 @@ class PipeLine(object):
 
         return need_input
 
-    @LOGGER.catch(onerror=lambda _: sys.exit(1))
+    @LOGGER.catch(reraise=True)
     def get_input_reader_placeholder(self):
         input_info = self.get_component_input_msg()
         input_placeholder = set()
@@ -604,7 +602,7 @@ class PipeLine(object):
 
         return input_placeholder
 
-    @LOGGER.catch(onerror=lambda _: sys.exit(1))
+    @LOGGER.catch(reraise=True)
     def set_inputs(self, data_dict):
         if not isinstance(data_dict, dict):
             raise ValueError(
@@ -616,14 +614,14 @@ class PipeLine(object):
 
         self._data_to_feed_in_prediction = data_dict
 
-    @LOGGER.catch(onerror=lambda _: sys.exit(1))
+    @LOGGER.catch(reraise=True)
     def __getattr__(self, attr):
         if attr in self._components:
             return self._components[attr]
 
         return self.__getattribute__(attr)
 
-    @LOGGER.catch(onerror=lambda _: sys.exit(1))
+    @LOGGER.catch(reraise=True)
     def __getitem__(self, item):
         if item not in self._components:
             raise ValueError("Pipeline does not has component }{}".format(item))

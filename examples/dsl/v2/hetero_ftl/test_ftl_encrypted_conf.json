@@ -1,4 +1,5 @@
 {
+    "dsl_version": 2,
     "initiator": {
         "role": "guest",
         "party_id": 9999
@@ -12,100 +13,103 @@
         ]
     },
     "job_parameters": {
-        "job_type": "train",
-        "backend": 0,
-        "work_mode": 0,
-        "dsl_version": 2
-    },
-    "role_parameters": {
-        "host": {
-            "0": {
-                "dataio_0": {
-                    "with_label": false
-                },
-                "reader_0": {
-                    "table": {
-                        "name": "nus_wide_host",
-                        "namespace": "experiment"
-                    }
-                }
-            }
-        },
-        "guest": {
-            "0": {
-                "dataio_0": {
-                    "with_label": true,
-                    "output_format": "dense"
-                },
-                "reader_0": {
-                    "table": {
-                        "name": "nus_wide_guest",
-                        "namespace": "experiment"
-                    }
-                }
-            }
+        "common": {
+            "job_type": "train",
+            "backend": 0,
+            "work_mode": 0
         }
     },
-    "algorithm_parameters": {
-        "hetero_ftl_0": {
-            "epochs": 10,
-            "alpha": 1,
-            "batch_size": -1,
-            "mode": "encrypted",
-            "optimizer": {
-                "learning_rate": 0.01,
-                "decay": 0.0,
-                "beta_1": 0.9,
-                "beta_2": 0.999,
-                "epsilon": 1e-07,
-                "amsgrad": false,
-                "optimizer": "Adam"
-            },
-            "nn_define": {
-                "class_name": "Sequential",
-                "config": {
-                    "name": "sequential",
-                    "layers": [
-                        {
-                            "class_name": "Dense",
-                            "config": {
-                                "name": "dense",
-                                "trainable": true,
-                                "dtype": null,
-                                "units": 32,
-                                "activation": "sigmoid",
-                                "use_bias": true,
-                                "kernel_initializer": {
-                                    "class_name": "RandomNormal",
-                                    "config": {
-                                        "mean": 0.0,
-                                        "stddev": 1.0,
-                                        "seed": null,
-                                        "dtype": "float32"
-                                    }
-                                },
-                                "bias_initializer": {
-                                    "class_name": "Zeros",
-                                    "config": {
-                                        "dtype": "float32"
-                                    }
-                                },
-                                "kernel_regularizer": null,
-                                "bias_regularizer": null,
-                                "activity_regularizer": null,
-                                "kernel_constraint": null,
-                                "bias_constraint": null
-                            }
-                        }
-                    ]
+    "component_parameters": {
+        "common": {
+            "hetero_ftl_0": {
+                "epochs": 10,
+                "alpha": 1,
+                "batch_size": -1,
+                "mode": "encrypted",
+                "optimizer": {
+                    "learning_rate": 0.01,
+                    "decay": 0.0,
+                    "beta_1": 0.9,
+                    "beta_2": 0.999,
+                    "epsilon": 1e-07,
+                    "amsgrad": false,
+                    "optimizer": "Adam"
                 },
-                "keras_version": "2.2.4-tf",
-                "backend": "tensorflow"
+                "nn_define": {
+                    "class_name": "Sequential",
+                    "config": {
+                        "name": "sequential",
+                        "layers": [
+                            {
+                                "class_name": "Dense",
+                                "config": {
+                                    "name": "dense",
+                                    "trainable": true,
+                                    "dtype": null,
+                                    "units": 32,
+                                    "activation": "sigmoid",
+                                    "use_bias": true,
+                                    "kernel_initializer": {
+                                        "class_name": "RandomNormal",
+                                        "config": {
+                                            "mean": 0.0,
+                                            "stddev": 1.0,
+                                            "seed": null,
+                                            "dtype": "float32"
+                                        }
+                                    },
+                                    "bias_initializer": {
+                                        "class_name": "Zeros",
+                                        "config": {
+                                            "dtype": "float32"
+                                        }
+                                    },
+                                    "kernel_regularizer": null,
+                                    "bias_regularizer": null,
+                                    "activity_regularizer": null,
+                                    "kernel_constraint": null,
+                                    "bias_constraint": null
+                                }
+                            }
+                        ]
+                    },
+                    "keras_version": "2.2.4-tf",
+                    "backend": "tensorflow"
+                },
+                "config_type": "keras"
             },
-            "config_type": "keras"
+            "evaluation_0": {
+                "eval_type": "binary"
+            }
         },
-        "evaluation_0": {
-            "eval_type": "binary"
+        "role": {
+            "host": {
+                "0": {
+                    "dataio_0": {
+                        "with_label": false
+                    },
+                    "reader_0": {
+                        "table": {
+                            "name": "nus_wide_host",
+                            "namespace": "experiment"
+                        }
+                    }
+                }
+            },
+            "guest": {
+                "0": {
+                    "dataio_0": {
+                        "with_label": true,
+                        "output_format": "dense"
+                    },
+                    "reader_0": {
+                        "table": {
+                            "name": "nus_wide_guest",
+                            "namespace": "experiment"
+                        }
+                    }
+                }
+            }
         }
     }
 }

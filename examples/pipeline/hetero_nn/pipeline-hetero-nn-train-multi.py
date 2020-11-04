@@ -29,6 +29,7 @@ from tensorflow.keras import initializers
 from tensorflow.keras.layers import Dense
 
 from pipeline.utils.tools import load_job_config
+from pipeline.runtime.entity import JobParameters
 
 
 def main(config="../../config.yaml", namespace=""):
@@ -47,24 +48,31 @@ def main(config="../../config.yaml", namespace=""):
     pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=host)
 
     reader_0 = Reader(name="reader_0")
-    reader_0.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_train_data)
-    reader_0.get_party_instance(role='host', party_id=host).algorithm_param(table=host_train_data)
+    reader_0.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data)
+    reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
 
     dataio_0 = DataIO(name="dataio_0")
-    dataio_0.get_party_instance(role='guest', party_id=guest).algorithm_param(with_label=True)
-    dataio_0.get_party_instance(role='host', party_id=host).algorithm_param(with_label=False)
+    dataio_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True)
+    dataio_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
 
     intersection_0 = Intersection(name="intersection_0")
 
     hetero_nn_0 = HeteroNN(name="hetero_nn_0", epochs=100,
                            interactive_layer_lr=0.15, batch_size=-1, early_stop="diff")
-    hetero_nn_0.add_bottom_model(Dense(units=3, input_shape=(10,), activation="relu",
-                                       kernel_initializer=initializers.Constant(value=1)))
-    hetero_nn_0.set_interactve_layer(Dense(units=2, input_shape=(2,),
-                                           kernel_initializer=initializers.Constant(value=1)))
-    hetero_nn_0.add_top_model(Dense(units=4, input_shape=(2,), activation="softmax",
-                                    kernel_initializer=initializers.Constant(value=1)))
+    guest_nn_0 = hetero_nn_0.get_party_instance(role='guest', party_id=guest)
+    guest_nn_0.add_bottom_model(Dense(units=3, input_shape=(9,), activation="relu",
+                                      kernel_initializer=initializers.Constant(value=1)))
+    guest_nn_0.set_interactve_layer(Dense(units=2, input_shape=(2,),
+                                          kernel_initializer=initializers.Constant(value=1)))
+    guest_nn_0.add_top_model(Dense(units=4, input_shape=(2,), activation="softmax",
+                                   kernel_initializer=initializers.Constant(value=1)))
+    host_nn_0 = hetero_nn_0.get_party_instance(role='host', party_id=host)
+    host_nn_0.add_bottom_model(Dense(units=3, input_shape=(9,), activation="relu",
+                                     kernel_initializer=initializers.Constant(value=1)))
+    host_nn_0.set_interactve_layer(Dense(units=2, input_shape=(2,),
+                                         kernel_initializer=initializers.Constant(value=1)))
     hetero_nn_0.compile(optimizer=optimizers.Adam(lr=0.15), metrics=["accuracy"], loss="categorical_crossentropy")
+
     hetero_nn_1 = HeteroNN(name="hetero_nn_1")
 
     evaluation_0 = Evaluation(name="evaluation_0", eval_type="multi")
@@ -79,7 +87,8 @@ def main(config="../../config.yaml", namespace=""):
 
     pipeline.compile()
 
-    pipeline.fit(backend=backend, work_mode=work_mode)
+    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
+    pipeline.fit(job_parameters)
 
     print(pipeline.get_component("hetero_nn_0").get_summary())
     print(pipeline.get_component("evaluation_0").get_summary())

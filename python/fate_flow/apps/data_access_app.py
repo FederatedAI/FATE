@@ -45,7 +45,7 @@ def download_upload(access_module):
         try:
             file.save(filename)
         except Exception as e:
-            shutil.rmtree(os.path.join(job_utils.get_job_directory(job_id), 'tmp'))
+            shutil.rmtree(os.path.join(job_utils.get_job_directory(job_id), 'fate_upload_tmp'))
             raise e
         job_config = request.args.to_dict()
         job_config['file'] = filename
@@ -83,10 +83,8 @@ def download_upload(access_module):
                                           ' 0 means not to delete and continue uploading, '
                                           '1 means to upload again after deleting the table')
     job_dsl, job_runtime_conf = gen_data_access_job_config(job_config, access_module)
-    job_id, job_dsl_path, job_runtime_conf_path, logs_directory, model_info, board_url = DAGScheduler.submit(
-        {'job_dsl': job_dsl, 'job_runtime_conf': job_runtime_conf}, job_id=job_id)
-    data.update({'job_dsl_path': job_dsl_path, 'job_runtime_conf_path': job_runtime_conf_path,
-                 'board_url': board_url, 'logs_directory': logs_directory})
+    submit_result = DAGScheduler.submit({'job_dsl': job_dsl, 'job_runtime_conf': job_runtime_conf}, job_id=job_id)
+    data.update(submit_result)
     return get_json_result(job_id=job_id, data=data)
 
 
@@ -94,9 +92,9 @@ def download_upload(access_module):
 def upload_history():
     request_data = request.json
     if request_data.get('job_id'):
-        tasks = JobSaver.query_task(component_name='upload_0', status=StatusSet.COMPLETE, job_id=request_data.get('job_id'), run_on_this_party=True)
+        tasks = JobSaver.query_task(component_name='upload_0', status=StatusSet.SUCCESS, job_id=request_data.get('job_id'), run_on_this_party=True)
     else:
-        tasks = JobSaver.query_task(component_name='upload_0', status=StatusSet.COMPLETE, run_on_this_party=True)
+        tasks = JobSaver.query_task(component_name='upload_0', status=StatusSet.SUCCESS, run_on_this_party=True)
     limit = request_data.get('limit')
     if not limit:
         tasks = tasks[-1::-1]
@@ -112,11 +110,11 @@ def get_upload_info(jobs_run_conf):
 
     for job_id, job_run_conf in jobs_run_conf.items():
         info = {}
-        table_name = job_run_conf["name"][0]
-        namespace = job_run_conf["namespace"][0]
+        table_name = job_run_conf["name"]
+        namespace = job_run_conf["namespace"]
         table_meta = storage.StorageTableMeta(name=table_name, namespace=namespace)
         if table_meta:
-            partition = job_run_conf["partition"][0]
+            partition = job_run_conf["partition"]
             info["upload_info"] = {
                 "table_name": table_name,
                 "namespace": namespace,
@@ -132,9 +130,9 @@ def get_upload_info(jobs_run_conf):
 def gen_data_access_job_config(config_data, access_module):
     job_runtime_conf = {
         "initiator": {},
-        "job_parameters": {},
+        "job_parameters": {"common": {}},
         "role": {},
-        "role_parameters": {"local": {"0": {}}}
+        "component_parameters": {"role": {"local": {"0": {}}}}
     }
     initiator_role = "local"
     initiator_party_id = config_data.get('party_id', 0)
@@ -142,7 +140,8 @@ def gen_data_access_job_config(config_data, access_module):
     job_runtime_conf["initiator"]["party_id"] = initiator_party_id
     for _ in ["work_mode", "backend"]:
         if _ in config_data:
-            job_runtime_conf["job_parameters"][_] = config_data[_]
+            # job_runtime_conf["job_parameters"] = config_data[_]
+            job_runtime_conf["job_parameters"]["common"][_] = config_data[_]
     job_runtime_conf["role"][initiator_role] = [initiator_party_id]
     job_dsl = {
         "components": {}
@@ -160,11 +159,11 @@ def gen_data_access_job_config(config_data, access_module):
                 "storage_address",
                 "destroy",
             }
-        job_runtime_conf["role_parameters"][initiator_role]["0"]["upload_0"] = {}
+        job_runtime_conf["component_parameters"]["role"][initiator_role]["0"]["upload_0"] = {}
         for p in parameters:
             if p in config_data:
-                job_runtime_conf["role_parameters"][initiator_role]["0"]["upload_0"][p] = config_data[p]
-        job_runtime_conf['job_parameters']['dsl_version'] = 2
+                job_runtime_conf["component_parameters"]["role"][initiator_role]["0"]["upload_0"][p] = config_data[p]
+        job_runtime_conf['dsl_version'] = 2
         job_dsl["components"]["upload_0"] = {
             "module": "Upload"
         }
@@ -176,11 +175,11 @@ def gen_data_access_job_config(config_data, access_module):
                 "namespace",
                 "name"
         }
-        job_runtime_conf["role_parameters"][initiator_role]["0"]["download_0"] = {}
+        job_runtime_conf["component_parameters"]['role'][initiator_role]["0"]["download_0"] = {}
         for p in parameters:
             if p in config_data:
-                job_runtime_conf["role_parameters"][initiator_role]["0"]["download_0"][p] = config_data[p]
-        job_runtime_conf['job_parameters']['dsl_version'] = 2
+                job_runtime_conf["component_parameters"]['role'][initiator_role]["0"]["download_0"][p] = config_data[p]
+        job_runtime_conf['dsl_version'] = 2
         job_dsl["components"]["download_0"] = {
             "module": "Download"
         }

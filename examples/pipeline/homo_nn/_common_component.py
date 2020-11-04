@@ -20,6 +20,7 @@ from pipeline.component.dataio import DataIO
 from pipeline.component.reader import Reader
 from pipeline.interface.data import Data
 from pipeline.utils.tools import load_job_config
+from pipeline.runtime.entity import JobParameters
 
 
 # noinspection PyPep8Naming
@@ -55,21 +56,22 @@ def run_homo_nn_pipeline(config, namespace, data: dict, nn_component, num_host):
         .set_roles(guest=config.parties.guest[0], host=hosts, arbiter=config.parties.arbiter)
 
     reader_0 = Reader(name="reader_0")
-    reader_0.get_party_instance(role='guest', party_id=config.parties.guest[0]).algorithm_param(table=guest_train_data)
+    reader_0.get_party_instance(role='guest', party_id=config.parties.guest[0]).component_param(table=guest_train_data)
     for i in range(num_host):
         reader_0.get_party_instance(role='host', party_id=hosts[i]) \
-            .algorithm_param(table=host_train_data[i])
+            .component_param(table=host_train_data[i])
 
     dataio_0 = DataIO(name="dataio_0", with_label=True)
     dataio_0.get_party_instance(role='guest', party_id=config.parties.guest[0]) \
-        .algorithm_param(with_label=True, output_format="dense")
-    dataio_0.get_party_instance(role='host', party_id=hosts).algorithm_param(with_label=True)
+        .component_param(with_label=True, output_format="dense")
+    dataio_0.get_party_instance(role='host', party_id=hosts).component_param(with_label=True)
 
     pipeline.add_component(reader_0)
     pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
     pipeline.add_component(nn_component, data=Data(train_data=dataio_0.output.data))
     pipeline.compile()
-    pipeline.fit(backend=config.backend, work_mode=config.work_mode)
+    job_parameters = JobParameters(backend=config.backend, work_mode=config.work_mode)
+    pipeline.fit(job_parameters)
     print(pipeline.get_component("homo_nn_0").get_summary())
     pipeline.deploy_component([dataio_0, nn_component])
 
@@ -79,7 +81,7 @@ def run_homo_nn_pipeline(config, namespace, data: dict, nn_component, num_host):
     predict_pipeline.add_component(pipeline,
                                    data=Data(predict_input={pipeline.dataio_0.input.data: reader_0.output.data}))
     # run predict model
-    predict_pipeline.predict(backend=config.backend, work_mode=config.work_mode)
+    predict_pipeline.predict(job_parameters)
 
 
 def runner(main_func):

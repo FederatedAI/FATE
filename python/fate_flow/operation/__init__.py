@@ -16,4 +16,3 @@
 from fate_flow.operation.job_saver import JobSaver
 from fate_flow.operation.job_tracker import Tracker
 from fate_flow.operation.job_clean import JobClean
-from fate_flow.operation.job_queue import JobQueue

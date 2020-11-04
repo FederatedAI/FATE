@@ -2,6 +2,7 @@ from abc import ABC
 import abc
 from numpy import random
 import numpy as np
+import copy
 from federatedml.param.boosting_param import BoostingParam
 from federatedml.param.feature_binning_param import FeatureBinningParam
 from federatedml.model_selection.k_fold import KFold
@@ -382,8 +383,9 @@ class Boosting(ModelBase, ABC):
 
     @staticmethod
     def accumulate_y_hat(val, new_val, lr=0.1, idx=0):
-        val[idx] += lr * new_val
-        return val
+        copied_val = copy.deepcopy(val)
+        copied_val[idx] += lr * new_val
+        return copied_val
 
     def generate_flowid(self, round_num, dim):
         LOGGER.info("generate flowid, flowid {}".format(self.flowid))

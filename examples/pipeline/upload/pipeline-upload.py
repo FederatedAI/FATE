@@ -27,7 +27,7 @@ def main(config="../../config.yaml", namespace=""):
     guest = parties.guest[0]
     backend = config.backend
     work_mode = config.work_mode
-    data_base = config.data_base
+    data_base = config.data_base_dir
 
     # partition for data storage
     partition = 4

@@ -6,6 +6,7 @@ import requests
 from fate_arch.common import file_utils, conf_utils
 
 from fate_flow.settings import HTTP_PORT, API_VERSION, WORK_MODE, FATEFLOW_SERVICE_NAME
+from fate_flow.entity.types import JobStatus
 
 
 class TestDataAccess(unittest.TestCase):
@@ -32,7 +33,7 @@ class TestDataAccess(unittest.TestCase):
         for i in range(60):
             response = requests.post("/".join([self.server_url, 'job', 'query']), json={'job_id': job_id})
             self.assertTrue(int(response.json()['retcode']) == 0)
-            if response.json()['data'][0]['f_status'] == 'complete':
+            if response.json()['data'][0]['f_status'] == JobStatus.SUCCESS:
                 break
             time.sleep(1)
 
@@ -44,7 +45,7 @@ class TestDataAccess(unittest.TestCase):
         for i in range(60):
             response = requests.post("/".join([self.server_url, 'job', 'query']), json={'job_id': job_id})
             self.assertTrue(int(response.json()['retcode']) == 0)
-            if response.json()['data'][0]['f_status'] == 'complete':
+            if response.json()['data'][0]['f_status'] == JobStatus.SUCCESS:
                 break
             time.sleep(1)
 

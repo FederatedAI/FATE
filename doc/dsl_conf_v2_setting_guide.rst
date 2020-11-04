@@ -1,4 +1,4 @@
-DSL & Task Submit Runtime Conf Setting
+DSL & Task Submit Runtime Conf Setting V2
 ======================================
 
 To make the modeling task more flexible, currently, FATE uses its own domain-specific language(DSL)
@@ -14,7 +14,9 @@ This guide will show you how to create such a configure file.
 In FATE's version since 1.5.0, V2 of dsl and submit conf will be recommend, but user can still use old configuration method
 of [`V1`_]
 
-.. _V1: dsl_conf_setting_guide.rst
+.. _V1: dsl_conf_v1_setting_guide.rst
+
+Please note that dsl V2 will not support online serving in fate-1.5.0，it will be support in later version.
 
 DSL Configure File
 ------------------
@@ -53,7 +55,7 @@ Then each component should be defined on the second level. Here is an example of
 As the example shows, user define the component name as key of this module.
 
 Please note that in DSL V2, all modeling task config should contain a **Reader** component to reader data from storage service,
-this component has "output" filed only, like the following:
+this component has "output" field only, like the following:
 
 .. code-block:: json
 
@@ -67,7 +69,7 @@ this component has "output" filed only, like the following:
 Field Specification
 ^^^^^^^^^^^^^^^^^^^
 
-:module: Specify which component to use. This field should strictly match the file name in federatedml/conf/setting_conf except the .json suffix.
+:module: Specify which component to use. This field should strictly match the file name in federatedml/conf/setting_conf except the ``.json`` suffix.
 
 :input: There are two types of input, data and model.
 
@@ -137,7 +139,14 @@ Field Specification
 Submit Runtime Conf
 -------------------
 
-Besides the dsl conf, user also need to prepare a submit runtime conf to set the parameters of each component.
+Besides the dsl conf, user also need to prepare a submit runtime conf to set parameters for each component.
+
+:dsl_version:
+  To enabled using of dsl V2, this field should be set.
+
+  .. code-block:: json
+
+     "dsl_version": 2
 
 :initiator:
   To begin with, the initiator should be specified in this runtime conf. Here is an example of setting initiator:
@@ -150,109 +159,165 @@ Besides the dsl conf, user also need to prepare a submit runtime conf to set the
      }
 
 
-:role: All the roles involved in this modeling task should be specified. Each role comes with role name and corresponding party id(s).
-       Ids are always specified in the form of list since there may exist multiple parties of the same role.
+:role:
+  All the roles involved in this modeling task should be specified. Each role comes with role name and corresponding party id(s).
+  Ids are always specified in the form of list since there may exist multiple parties of the same role.
 
   .. code-block:: json
 
      "role": {
-        "guest": [
-          10000
-        ],
-        "host": [
-          10000
-        ],
-        "arbiter": [
-          10000
-        ]
+         "guest": [
+             10000
+         ],
+         "host": [
+             10000
+         ],
+         "arbiter": [
+             10000
+         ]
      }
 
-:role_parameters: Parameters that differ from party to party should be specified here. Please note that role parameters need to be wrapped into a list.
-  Inside the role_parameters, party names are used as key and parameters of these parties are values. Take the following structure as an example:
+:component_parameters:
+  Running parameters for components included in dsl should be specified here.
+
+  It contains two sub-fields ``common`` and ``role``:
+
+  * parameter specification under ``common`` field applies to all parties
+  * parameter values under ``role`` field are only taken by each corresponding party
 
   .. code-block:: json
 
-    "guest": {
-      "0": {
-        "reader_0": {
-            "table": {"namespace": "guest",
-                      "name": "table"}
-        },
-        "dataio_0": {
-            "input_format": "dense",
-            "with_label": true
-        }
-      }
-    },
-    "host": {
-      "0": {
-        "reader_0": {
-            "table": {"namespace": "host",
-                      "name": "table"}
-        },
-        "dataio_0": {
-            "input_format": "tag",
-            "with_label": false
-        }
-      }
-    }
+     "component_parameters": {
+         "common": {
+             "component_x": {
+                 ...
+             },
+             ...
+         },
+         "role": {
+             ...
+         }
+     }
 
-  The "0" indicates that it is the 0_th party of some role(0-based). User can config parameters for each component.
-  The component names should match those defined in the dsl config file.
-  The parameters of each component are defined in `Param <../python/federatedml/param>`_ class.
-  Parties can be packed together and share configuration, for examples:
+  :role:
+    Inside the ``role`` field, party names are used as key, parameter specification as values.
+
+    Take the following json as an example:
+
+    .. code-block:: json
+
+       "role": {
+            "guest": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                                    "namespace": "guest",
+                                    "name": "table"
+                        }
+                    },
+                    "dataio_0": {
+                        "input_format": "dense",
+                        "with_label": true
+                    }
+                }
+            },
+            "host": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                                    "namespace": "host",
+                                    "name": "table"}
+                        },
+                    "dataio_0": {
+                        "input_format": "tag",
+                        "with_label": false
+                    }
+                }
+            }
+        }
+
+    "0" indicates that it is the 0_th party of some role(indexing starts at 0).
+
+    User can config parameters for each component.
+
+    Component names should match those defined in the dsl config file.
+
+    Parameters of each component are defined in `Param <../python/federatedml/param>`_ class.
+
+    Parties can be packed together and share configuration, for example:
+
+    .. code-block:: json
+
+       "role": {
+            "host": {
+                "0|2": {
+                    "dataio_0": {
+                        "input_format": "tag",
+                        "with_label": false
+                    }
+                },
+                "1": {
+                    "dataio_0": {
+                        "input_format": "dense",
+                        "with_label": false
+                    }
+                }
+            }
+        }
+
+  :common:
+    If some parameters are the same among all parties, they can be set in ``common``. Here is an example:
+
+    .. code-block:: json
+
+        "common": {
+            "hetero_feature_binning_0": {
+                ...
+            },
+            "hetero_feature_selection_0": {
+                ...
+            },
+            "hetero_lr_0": {
+                "penalty": "L2",
+                "optimizer": "rmsprop",
+                "eps": 1e-5,
+                "alpha": 0.01,
+                 "max_iter": 10,
+                 "converge_func": "diff",
+                 "batch_size": 320,
+                 "learning_rate": 0.15,
+                 "init_param": {
+                    "init_method": "random_uniform"
+                 },
+            "cv_param": {
+                "n_splits": 5,
+                "shuffle": false,
+                "random_seed": 103,
+                "need_cv": false,
+                }
+            }
+        }
+
+    Same ``role``, keys are the names of components defined in dsl config file and values parameter configuration.
+
+:job_parameters:
+  Please note that to enable DSL V2, **dsl_version** must be set to **2**.
+
+  Same as component_parameters, it also has two sub-fields ``common`` and ``role``:
+
+  * parameter specification under ``common`` field applies to all parties
+  * parameter values under ``role`` field are only taken by each corresponding party
 
   .. code-block:: json
 
-    "host": {
-      "0|2": {
-        "dataio_0": {
-            "input_format": "tag",
-            "with_label": false
-        }
-      },
-      "1": {
-        "dataio_0": {
-           "input_format": "dense",
-           "with_label": false
-        }
-      }
-    }
-
-:algorithm_parameters: If some parameters are the same among all parties, they can be set in algorithm_parameters. Here is an example showing how to do that.
-
-  .. code-block:: json
-
-    "hetero_feature_binning_0": {
-        ...
-    },
-    "hetero_feature_selection_0": {
-        ...
-    },
-    "hetero_lr_0": {
-      "penalty": "L2",
-      "optimizer": "rmsprop",
-      "eps": 1e-5,
-      "alpha": 0.01,
-      "max_iter": 10,
-      "converge_func": "diff",
-      "batch_size": 320,
-      "learning_rate": 0.15,
-      "init_param": {
-        "init_method": "random_uniform"
-      },
-      "cv_param": {
-        "n_splits": 5,
-        "shuffle": false,
-        "random_seed": 103,
-        "need_cv": false,
-
-      }
-    }
-
-  Same with the form in role parameters, each key of the parameters are names of components that are defined in dsl config file.
-
-:job_parameters: job runtime parameters; please note that to enable DSL V2, **dsl_version** must be set to **2**.
+     "job_parameters": {
+          "common": {
+             ...
+          },
+          "role": {
+             ...
+          }
+     }
 
 .. list-table:: Configurable Job Parameters
    :widths: 20 20 30 30
@@ -278,11 +343,6 @@ Besides the dsl conf, user also need to prepare a submit runtime conf to set the
      - 0, 1
      - 0 for EGGROLL, 1 for SPARK
 
-   * - dsl_version
-     - 1
-     - 1, 2
-     - version for dsl parser
-
    * - federated_status_collect_type
      - PUSH
      - PUSH, PULL
@@ -302,6 +362,11 @@ Besides the dsl conf, user also need to prepare a submit runtime conf to set the
      -
      - num-executors, executor-cores
      - parameter for SPARK computing engine
+
+   * - rabbitmq_run
+     -
+     - queue, exchange etc.
+     - parameters for creation of queue, exchange in rabbitmq
 
    * - task_parallelism
      - 2
@@ -348,6 +413,7 @@ Besides the dsl conf, user also need to prepare a submit runtime conf to set the
      - federation mode
 
 .. note::
+
    1. Some types of ``computing_engine``, ``storage_engine``, and ``federation_engine``
    are only compatible with each other. For examples, SPARK
    ``computing_engine`` only supports HDFS ``storage_engine``.
@@ -363,11 +429,12 @@ Besides the dsl conf, user also need to prepare a submit runtime conf to set the
 .. code-block:: json
 
      "job_parameters": {
-        "work_mode": 1,
-        "backend": 0,
-        "dsl_version": 2,
-        "eggroll_run": {
-           "eggroll.session.processors.per.node": 2
+        "common": {
+           "work_mode": 1,
+           "backend": 0,
+           "eggroll_run": {
+              "eggroll.session.processors.per.node": 2
+           }
         }
      }
 
@@ -376,12 +443,13 @@ Besides the dsl conf, user also need to prepare a submit runtime conf to set the
 .. code-block:: json
 
      "job_parameters": {
-        "work_mode": 1,
-        "backend": 1,
-        "dsl_version": 2,
-        "spark_run": {
-           "num-executors": 1,
-           "executor-cores": 2
+        "common": {
+            "work_mode": 1,
+            "backend": 1,
+            "spark_run": {
+               "num-executors": 1,
+               "executor-cores": 2
+            }
         }
      }
 
@@ -409,44 +477,46 @@ For multi-host modeling case, all the host's party ids should be list in the rol
       ]
    }
 
-Each parameter set for host should also be list in a list. The number of elements should match the number of hosts.
+Each parameter set for host should also be config The number of elements should match the number of hosts.
 
 .. code-block:: json
 
-   "host": {
-      "0": {
-        "reader_0": {
-          "table":
-            {
-              "name": "hetero_breast_host_0",
-              "namespace": "hetero_breast_host"
+   "component_parameters": {
+      "role": {
+         "host": {
+            "0": {
+               "reader_0": {
+                  "table":
+                   {
+                     "name": "hetero_breast_host_0",
+                     "namespace": "hetero_breast_host"
+                   }
+               }
+            },
+            "1": {
+               "reader_0": {
+                  "table":
+                  {
+                     "name": "hetero_breast_host_1",
+                     "namespace": "hetero_breast_host"
+                  }
+               }
+            },
+            "2": {
+               "reader_0": {
+                  "table":
+                  {
+                     "name": "hetero_breast_host_2",
+                     "namespace": "hetero_breast_host"
+                  }
+               }
             }
-          }
-        }
-      },
-      "1": {
-        "reader_0": {
-          "table":
-            {
-              "name": "hetero_breast_host_1",
-              "namespace": "hetero_breast_host"
-            }
-          }
-        }
-      },
-      "2": {
-        "reader_0": {
-          "table":
-            {
-              "name": "hetero_breast_host_2",
-              "namespace": "hetero_breast_host"
-            }
-          }
-        }
+         }
       }
+   }
 
-The parameters set in algorithm parameters need not be copied into host role parameters.
-Algorithm parameters will be copied for every party.
+The parameters set in common parameters need not be copied into host role parameters.
+Common parameters will be copied for every party.
 
 
 Prediction configuration
@@ -460,8 +530,6 @@ for details on using deploy command:
 .. code-block:: bash
 
     flow job dsl --cpn-list ...
-
-Note that because Reader component only reads data from storage engine, it should not be deployed but added.
 
 **Examples**
 Use a training dsl:
@@ -505,7 +573,7 @@ Use a training dsl:
                 }
             },
             "output": {
-                "data": ["data": [
+                "data":[
                     "data"
                 ]
             }
@@ -534,13 +602,21 @@ Use the following command to generate predict dsl:
 
 .. code-block:: bash
 
-    flow job dsl --train-dsl-path $job_dsl --cpn-list "dataio_0, intersection_0, hetero_nn_0" --version 2 -o ./
+    flow job dsl --train-dsl-path $job_dsl --cpn-list "reader_0, dataio_0, intersection_0, hetero_nn_0" --version 2 -o ./
 
 Generated dsl:
 
 .. code-block::: json
 
     "components": {
+        "reader_0": {
+            "module": "Reader",
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
+        },
         "dataio_0": {
             "module": "DataIO",
             "input": {
@@ -593,33 +669,6 @@ Generated dsl:
             }
         }
     }
-
-To prepare generated dsl for prediction, user should add "reader" component to this dsl and edit dataio_0's input data:
-
-.. code-block:: json
-
-    "reader_predict": {
-        "module": "Reader",
-        "output": {
-            "data": [
-                "data"
-            ]
-        }
-     },
-     "dataio_0": {
-        "module": "DataIO",
-        "input": {
-             ...
-             "data": {
-                 "data": [
-                     "reader_0.data"
-                 ]
-              }
-         },
-         ...
-        },
-        ...
-     }
 
 Optionally, use can add additional component(s) to predict dsl, like ``Evaluation``:
 

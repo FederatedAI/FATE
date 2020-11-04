@@ -39,13 +39,13 @@ class PoissonParam(BaseParam):
         Penalty method used in Poisson. Please note that, when using encrypted version in HeteroPoisson,
         'L1' is not supported.
 
-    tol : float, default: 1e-5
+    tol : float, default: 1e-4
         The tolerance of convergence
 
     alpha : float, default: 1.0
         Regularization strength coefficient.
 
-    optimizer : str, 'sgd', 'rmsprop', 'adam' or 'adagrad', default: 'sgd'
+    optimizer : str, 'sgd', 'rmsprop', 'adam' or 'adagrad', default: 'rmsprop'
         Optimize method
 
     batch_size : int, default: -1
@@ -54,7 +54,7 @@ class PoissonParam(BaseParam):
     learning_rate : float, default: 0.01
         Learning rate
 
-    max_iter : int, default: 100
+    max_iter : int, default: 20
         The maximum iteration for training.
 
     init_param: InitParam object, default: default InitParam object
@@ -106,9 +106,9 @@ class PoissonParam(BaseParam):
     """
 
     def __init__(self, penalty='L2',
-                 tol=1e-5, alpha=1.0, optimizer='sgd',
+                 tol=1e-4, alpha=1.0, optimizer='rmsprop',
                  batch_size=-1, learning_rate=0.01, init_param=InitParam(),
-                 max_iter=100, early_stop='diff',
+                 max_iter=20, early_stop='diff',
                  exposure_colname = None, predict_param=PredictParam(),
                  encrypt_param=EncryptParam(),
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),

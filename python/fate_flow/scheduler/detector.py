@@ -13,6 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+from fate_arch import storage
 from fate_arch.common.base_utils import current_timestamp
 from fate_flow.db.db_models import DB, Job
 from fate_arch.storage import StorageSessionBase
@@ -30,6 +31,7 @@ class Detector(cron.Cron):
         self.detect_running_task()
         self.detect_running_job()
         self.detect_resource_record()
+        self.detect_expired_session()
 
     @classmethod
     def detect_running_task(cls):
@@ -115,9 +117,13 @@ class Detector(cron.Cron):
 
     @classmethod
     def detect_expired_session(cls):
-        sessions_record = StorageSessionBase.query_expired_sessions_record(ttl=30 * 60 * 1000)
+        detect_logger().info('start detect expired session')
+        sessions_record = StorageSessionBase.query_expired_sessions_record(ttl=5 * 60 * 60 * 1000)
         for session_record in sessions_record:
-            job_utils.start_session_stop()
+            detect_logger().info('start stop session id {}'.format(session_record.f_session_id))
+            session = storage.Session.build(session_id=session_record.f_session_id, storage_engine=session_record.f_engine_name)
+            session.destroy_session()
+            detect_logger().info('session id {} success'.format(session_record.f_session_id))
 
     @classmethod
     def request_stop_jobs(cls, jobs: [Job], stop_msg, stop_status):
