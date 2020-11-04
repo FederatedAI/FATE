@@ -69,7 +69,7 @@ this component has "output" field only, like the following:
 Field Specification
 ^^^^^^^^^^^^^^^^^^^
 
-:module: Specify which component to use. This field should strictly match the file name in federatedml/conf/setting_conf except the ``.json`` suffix.
+:module: Specify which component to use. This field should strictly match the file name in python/federatedml/conf/setting_conf except the ``.json`` suffix.
 
 :input: There are two types of input, data and model.
 
@@ -355,7 +355,7 @@ Besides the dsl conf, user also need to prepare a submit runtime conf to set par
 
    * - eggroll_run
      -
-     - eggroll.session.processors.per.node
+     - most commonly used is "eggroll.session.processors.per.node", details can be find in `EggRoll configuration  <https://github.com/WeBankFinTech/eggroll/wiki/eggroll.properties:-Eggroll's-Main-Configuration-File>`_.
      - parameter for EGGROLL computing engine
 
    * - spark_run
