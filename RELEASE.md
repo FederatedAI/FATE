@@ -1,4 +1,4 @@
-# Release 1.5.0（LTS）-preview
+# Release 1.5.0（LTS）
 ## Major Features and Improvements
 
 > FederatedML
@@ -32,6 +32,7 @@
 * Enhanced resource scheduling: remove limit on job number, base on cores, memory and working node according to different computing engine supports
 * Add model registry, supports model query, import/export, model transfer between clusters
 * Add Reader component: automatically dump input data to FATE-compatible format and cluster storage engine; now data from HDFS
+* Refactor submit job configuration's parameters setting, support different parties use different job parameters.
 
 > System Architecture
 
@@ -39,6 +40,7 @@
 * Support new engine combination: Spark、HDFS、RabbitMQ
 * New data table management, standardized API for all different storage engines
 * Rearrange FATE code structure, conf setting at one place, streamlined user experiment
+* Support one-way network communication between parties, only one party needs to open the entrance network strategy
 
 > FATE-Client
 
