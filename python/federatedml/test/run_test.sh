@@ -54,7 +54,7 @@ traverse_folder() {
 }
 
 traverse_folder $cur_dir/..
-traverse_folder $cur_dir/../../fate_flow/tests/api_tests
+# traverse_folder $cur_dir/../../fate_flow/tests/api_tests
 
 echo "there are "$failed_count" failed test"
 
