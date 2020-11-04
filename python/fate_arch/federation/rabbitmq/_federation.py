@@ -242,19 +242,21 @@ class Federation(FederationABC):
             
         LOGGER.debug(f"[{log_str}]finish to remote")
 
-    def cleanup(self):
+    def cleanup(self, parties):
         LOGGER.debug("[rabbitmq.cleanup]start to cleanup...")
-        for queue_key, queue_names in self._queue_map.items():
-            LOGGER.debug(f"[rabbitmq.cleanup]cleanup queue_key={queue_key}, queue_names={queue_names}.")
-            LOGGER.debug(f"[rabbitmq.cleanup]cleanup vhost={queue_names.vhost}, send_queue_name={queue_names.send}, receive_queue_name={queue_names.receive}")
-            self._rabbit_manager.de_federate_queue(vhost=queue_names.vhost, receive_queue_name=queue_names.receive)
-            self._rabbit_manager.delete_queue(vhost=queue_names.vhost, queue_name=queue_names.send)
-            self._rabbit_manager.delete_queue(vhost=queue_names.vhost, queue_name=queue_names.receive)
-            self._rabbit_manager.delete_vhost(vhost=queue_names.vhost)
-        self._queue_map.clear()
+        for party in parties:
+            vhost = self._get_vhost(party)
+            LOGGER.debug(f"[rabbitmq.cleanup]start to cleanup vhost {vhost}...")
+            self._rabbit_manager.delete_vhost(vhost=vhost)
+            LOGGER.debug(f"[rabbitmq.cleanup]cleanup vhost {vhost} done")
         if self._mq.union_name:
             LOGGER.debug(f"[rabbitmq.cleanup]clean user {self._mq.union_name}.")
             self._rabbit_manager.delete_user(user=self._mq.union_name)
+
+    def _get_vhost(self, party):
+        low, high = (self._party, party) if self._party < party else (party, self._party)
+        vhost = f"{self._session_id}-{low.role}-{low.party_id}-{high.role}-{high.party_id}"
+        return vhost
 
     def _get_mq_names(self, parties: typing.List[Party], name=None, partitions=None, dtype=None) -> typing.List:
         mq_names = [self._get_or_create_queue(party, name, partitions, dtype) for party in parties]
@@ -274,18 +276,16 @@ class Federation(FederationABC):
                     queue_key_list.append(queue_key)
             elif name is not None:
                 queue_key = _SPLIT_.join([party.role, party.party_id, name])
-                queue_key_list.append(queue_key)  
+                queue_key_list.append(queue_key)
             else:
                 queue_key = _SPLIT_.join([party.role, party.party_id])
-                queue_key_list.append(queue_key)                          
+                queue_key_list.append(queue_key)
         
         for queue_key in queue_key_list:  
             if queue_key not in self._queue_map:
                 LOGGER.debug(f"[rabbitmq.get_or_create_queue]queue: {queue_key} for party:{party} not found, start to create")
                 # gen names
-                low, high = (self._party, party) if self._party < party else (party, self._party)
-                # union_name = f"{low.role}-{low.party_id}-{high.role}-{high.party_id}"
-                vhost_name = f"{self._session_id}-{low.role}-{low.party_id}-{high.role}-{high.party_id}"
+                vhost_name = self._get_vhost(party)
                 
                 queue_key_splits = queue_key.split(_SPLIT_)
                 queue_suffix = "-".join(queue_key_splits[2:])
