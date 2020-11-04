@@ -348,10 +348,10 @@ class ParameterUtilV2(BaseParameterUtil):
 
     @classmethod
     def get_input_parameters(cls, submit_dict, components=None):
-        if "role_parameters" not in submit_dict or components is None:
+        if submit_dict.get("component_parameters", {}).get("role") is None or components is None:
             return {}
 
-        roles = submit_dict["role_parameters"].keys()
+        roles = submit_dict["component_parameters"]["role"].keys()
         if not roles:
             return {}
 
@@ -361,14 +361,11 @@ class ParameterUtilV2(BaseParameterUtil):
         for reader_cpn in components:
             cpn_dict[reader_cpn] = {}
         for role in roles:
-            role_parameters = submit_dict["role_parameters"][role]
+            role_parameters = submit_dict["component_parameters"]["role"][role]
             input_parameters[role] = [copy.deepcopy(cpn_dict) for i in range(len(submit_dict["role"][role]))]
 
             for idx in role_parameters.keys():
-                if "algorithm_parameters" not in role_parameters[idx]:
-                    continue
-
-                parameters = role_parameters[idx]["algorithm_parameters"]
+                parameters = role_parameters[idx]
                 for reader in components:
                     if reader not in parameters:
                         continue

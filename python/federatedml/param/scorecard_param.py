@@ -42,13 +42,13 @@ class ScorecardParam(BaseParam):
         factor base, value ln(factor_base) is used for calculating result score
 
     upper_limit_ratio : int or float, default: 3
-        upper bound for odds ratio, credit score upper bound is upper_limit_ratio * offset
+        upper bound for odds, credit score upper bound is upper_limit_ratio * offset
 
     lower_limit_value : int or float, default: 0
         lower bound for result score
 
     need_run : bool, default: True
-        Indicate if this module needed to be run.
+        Indicate if this module needs to be run.
 
     """
 

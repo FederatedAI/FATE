@@ -79,7 +79,7 @@ def main(config="../../config.yaml", param="./lr_config.yaml"):
     # y_predict_proba = est.predict_proba(X_test)[:, 1]
     fpr, tpr, thresholds = roc_curve(y_test, y_prob)
     ks = max(tpr - fpr)
-    result = {"auc": auc_score, "recall": recall, "precision": pr, "accuracy": acc, "ks": ks}
+    result = {"auc": auc_score}
     print(f"result: {result}")
     print(f"coef_: {lm_fit.coef_}, intercept_: {lm_fit.intercept_}, n_iter: {lm_fit.n_iter_}")
 

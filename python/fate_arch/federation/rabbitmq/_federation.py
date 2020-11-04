@@ -274,9 +274,12 @@ class Federation(FederationABC):
                 for i in range(partitions):
                     queue_key = _SPLIT_.join([party.role, party.party_id, name, str(i)])
                     queue_key_list.append(queue_key)
-            else:
+            elif name is not None:
                 queue_key = _SPLIT_.join([party.role, party.party_id, name])
-                queue_key_list.append(queue_key)            
+                queue_key_list.append(queue_key)
+            else:
+                queue_key = _SPLIT_.join([party.role, party.party_id])
+                queue_key_list.append(queue_key)
         
         for queue_key in queue_key_list:  
             if queue_key not in self._queue_map:

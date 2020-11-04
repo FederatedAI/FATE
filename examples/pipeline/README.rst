@@ -50,7 +50,7 @@ Here is a general guide to quick start a FATE job.
 
       python demo/pipeline-upload.py --base /data/projects/fate
 
-   If upload job is invoked correctly, job id will be printed to terminal and a upload bar is shown.
+   If upload job is invoked correctly, job id will be printed to terminal and an upload bar is shown.
    If FATE-Board is available, job progress can be monitored on Board as well.
 
    ::
