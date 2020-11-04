@@ -355,7 +355,7 @@ Besides the dsl conf, user also need to prepare a submit runtime conf to set par
 
    * - eggroll_run
      -
-     - most commonly used is "eggroll.session.processors.per.node", details can be find in `EggRoll configuration  <https://github.com/WeBankFinTech/eggroll/wiki/eggroll.properties:-Eggroll's-Main-Configuration-File>`_.
+     - most commonly used is "eggroll.session.processors.per.node", details can be found in `EggRoll configuration  <https://github.com/WeBankFinTech/eggroll/wiki/eggroll.properties:-Eggroll's-Main-Configuration-File>`_.
      - parameter for EGGROLL computing engine
 
    * - spark_run
