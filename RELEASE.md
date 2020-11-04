@@ -32,7 +32,7 @@
 * Enhanced resource scheduling: remove limit on job number, base on cores, memory and working node according to different computing engine supports
 * Add model registry, supports model query, import/export, model transfer between clusters
 * Add Reader component: automatically dump input data to FATE-compatible format and cluster storage engine; now data from HDFS
-* Refactor submit job configuration's parameters setting, support different parties use different job parameters.
+* Refactor submit job configuration's parameters setting, support different parties use different job parameters when using dsl V2.
 
 > System Architecture
 
