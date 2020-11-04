@@ -450,12 +450,11 @@ class Tracker(object):
                 parties = [Party(k, p) for k, v in runtime_conf['role'].items() for p in v]
                 federation_session_id = job_utils.generate_task_version_id(self.task_id, self.task_version)
                 component_parameters_on_party = copy.deepcopy(runtime_conf)
-                component_parameters_on_party["local"] = component_parameters_on_party["initiator"]
+                component_parameters_on_party["local"] = {"role": self.role, "party_id": self.party_id}
                 sess.init_federation(federation_session_id=federation_session_id,
                                      runtime_conf=component_parameters_on_party,
                                      service_conf=self.job_parameters.engines_address.get(EngineType.FEDERATION, {}))
-                sess._federation_session._get_mq_names(parties=parties)
-                sess._federation_session.cleanup()
+                sess._federation_session.cleanup(parties)
                 schedule_logger(self.job_id).info('rabbitmq clean up success')
             return True
         except Exception as e:

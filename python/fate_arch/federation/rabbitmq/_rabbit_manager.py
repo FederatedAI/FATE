@@ -143,6 +143,12 @@ class RabbitManager:
         result = requests.get(url, header=C_COMMON_HTTP_HEADER, auth=(self.user, self.password))
         return result
 
+    def get_all_queue(self, vhost):
+        url = C_HTTP_TEMPLATE.format(
+            self.endpoint, "{}/{}".format("queues", vhost))
+        result = requests.get(url, header=C_COMMON_HTTP_HEADER, auth=(self.user, self.password))
+        return result
+
     def delete_queue(self, vhost, queue_name):
         url = C_HTTP_TEMPLATE.format(
             self.endpoint, "{}/{}/{}".format("queues", vhost, queue_name))
