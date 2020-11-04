@@ -432,7 +432,7 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
                  validation_freqs=None, early_stopping_rounds=None, use_missing=False, zero_as_missing=False,
                  complete_secure=False, metrics=None, use_first_metric_only=False, subsample_random_seed=None,
                  binning_error=consts.DEFAULT_RELATIVE_ERROR,
-                 sparse_optimization=True):
+                 sparse_optimization=False):
 
         super(HeteroSecureBoostParam, self).__init__(task_type, objective_param, learning_rate, num_trees,
                                                      subsample_feature_rate, n_iter_no_change, tol, encrypt_param,
