@@ -96,7 +96,7 @@ class _Optimizer(object):
 
     def regularization_update(self, model_weights: LinearModelWeights, grad,
                               prev_round_weights: LinearModelWeights = None):
-        LOGGER.debug(f"In regularization_update, input model_weights: {model_weights.unboxed}")
+        # LOGGER.debug(f"In regularization_update, input model_weights: {model_weights.unboxed}")
 
         if self.penalty == consts.L1_PENALTY:
             model_weights = self._l1_updator(model_weights, grad)
@@ -114,10 +114,7 @@ class _Optimizer(object):
             else:
                 coef_without_intercept = coef_
 
-            LOGGER.debug("before applying additional proximal terms, weights {}".format(coef_without_intercept))
             coef_without_intercept -= self.mu * (model_weights.coef_ - prev_round_weights.coef_)
-            LOGGER.debug("after applying additional proximal terms, new weights {}, with difference {}".format(
-                coef_without_intercept, model_weights.coef_ - prev_round_weights.coef_))
 
             if model_weights.fit_intercept:
                 new_coef_ = np.append(coef_without_intercept, coef_[-1])
@@ -125,8 +122,6 @@ class _Optimizer(object):
                 new_coef_ = coef_without_intercept
 
             model_weights = LinearModelWeights(new_coef_, model_weights.fit_intercept)
-        LOGGER.debug(f"In regularization_update, model_weights: {model_weights.unboxed},"
-                     f" grad: {grad}")
         return model_weights
 
     def __l1_loss_norm(self, model_weights: LinearModelWeights):
@@ -288,7 +283,7 @@ class _StochasticQuansiNewtonOptimizer(_Optimizer):
 
     def apply_gradients(self, grad):
         learning_rate = self.decay_learning_rate()
-        LOGGER.debug("__opt_hess is: {}".format(self.__opt_hess))
+        # LOGGER.debug("__opt_hess is: {}".format(self.__opt_hess))
         if self.__opt_hess is None:
             delta_grad = learning_rate * grad
         else:

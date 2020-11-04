@@ -91,5 +91,5 @@ class Initializer(object):
             w = self.constant(model_shape, const=init_const)
         else:
             raise NotImplementedError("Initial method cannot be recognized: {}".format(init_method))
-        LOGGER.debug("Inited model is :{}".format(w))
+        # LOGGER.debug("Inited model is :{}".format(w))
         return w

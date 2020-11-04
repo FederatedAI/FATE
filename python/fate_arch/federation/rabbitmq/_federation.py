@@ -242,17 +242,13 @@ class Federation(FederationABC):
             
         LOGGER.debug(f"[{log_str}]finish to remote")
 
-    def cleanup(self, party):
+    def cleanup(self, parties):
         LOGGER.debug("[rabbitmq.cleanup]start to cleanup...")
-        vhost = self._get_vhost(party)
-        queues = self._rabbit_manager.get_all_queue(vhost=vhost)
-        for queue in queues:
-            try:
-                self._rabbit_manager.delete_queue(vhost=vhost, queue_name=queue.get('name'))
-            except:
-                pass
-        self._rabbit_manager.delete_vhost(vhost=vhost)
-        self._queue_map.clear()
+        for party in parties:
+            vhost = self._get_vhost(party)
+            LOGGER.debug(f"[rabbitmq.cleanup]start to cleanup vhost {vhost}...")
+            self._rabbit_manager.delete_vhost(vhost=vhost)
+            LOGGER.debug(f"[rabbitmq.cleanup]cleanup vhost {vhost} done")
         if self._mq.union_name:
             LOGGER.debug(f"[rabbitmq.cleanup]clean user {self._mq.union_name}.")
             self._rabbit_manager.delete_user(user=self._mq.union_name)
@@ -278,17 +274,18 @@ class Federation(FederationABC):
                 for i in range(partitions):
                     queue_key = _SPLIT_.join([party.role, party.party_id, name, str(i)])
                     queue_key_list.append(queue_key)
-            else:
+            elif name is not None:
                 queue_key = _SPLIT_.join([party.role, party.party_id, name])
-                queue_key_list.append(queue_key)            
+                queue_key_list.append(queue_key)
+            else:
+                queue_key = _SPLIT_.join([party.role, party.party_id])
+                queue_key_list.append(queue_key)
         
         for queue_key in queue_key_list:  
             if queue_key not in self._queue_map:
                 LOGGER.debug(f"[rabbitmq.get_or_create_queue]queue: {queue_key} for party:{party} not found, start to create")
                 # gen names
-                low, high = (self._party, party) if self._party < party else (party, self._party)
-                # union_name = f"{low.role}-{low.party_id}-{high.role}-{high.party_id}"
-                vhost_name = f"{self._session_id}-{low.role}-{low.party_id}-{high.role}-{high.party_id}"
+                vhost_name = self._get_vhost(party)
                 
                 queue_key_splits = queue_key.split(_SPLIT_)
                 queue_suffix = "-".join(queue_key_splits[2:])
