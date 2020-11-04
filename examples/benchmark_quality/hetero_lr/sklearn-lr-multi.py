@@ -64,7 +64,7 @@ def main(config="../../config.yaml", param="./vechile_config.yaml"):
     pr = precision_score(y, y_pred, average="macro")
     acc = accuracy_score(y, y_pred)
 
-    result = {"recall": recall, "precision": pr, "accuracy": acc}
+    result = {"accuracy": acc}
     print(result)
     return {}, result
 
