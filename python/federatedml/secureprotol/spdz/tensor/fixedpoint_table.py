@@ -124,7 +124,7 @@ class FixedPointTensor(TensorBase):
         return FixedPointTensor(share, spdz.q_field, encoder, tensor_name)
 
     def get(self, tensor_name=None):
-        return self.rescontruct(tensor_name)
+        return self.endec.decode(rescontruct(tensor_name))
 
     def rescontruct(self, tensor_name=None):
         from federatedml.secureprotol.spdz import SPDZ

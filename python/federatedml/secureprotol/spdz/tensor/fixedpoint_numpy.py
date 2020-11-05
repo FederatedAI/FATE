@@ -29,13 +29,22 @@ class FixedPointEndec(object):
         self.base = base
         self.precision_fractional = precision_fractional
 
-    def decode(self, integer_tensor: np.ndarray):
-        value = integer_tensor % self.field
-        gate = value > self.field / 2
-        neg_nums = (value - self.field) * gate
-        pos_nums = value * (1 - gate)
-        result = (neg_nums + pos_nums) / (self.base ** self.precision_fractional)
-        return result
+    def decode(self, integer_tensor):
+        def decode_value(integer_tensor):
+            value = integer_tensor % self.field
+            gate = value > self.field / 2
+            neg_nums = (value - self.field) * gate
+            pos_nums = value * (1 - gate)
+            result = (neg_nums + pos_nums) / (self.base ** self.precision_fractional)
+            return result
+      
+        if isinstance(integer_tensor, np.ndarray):
+            result = decode_value(integer_tensor)
+            return result
+
+        if isinstance(integer_tensor, Table):
+            result = integer_tensor.mapValues(lambda v: decode_value(v))
+            return result
 
     def encode(self, float_tensor, check_range=True):
         if isinstance(float_tensor, np.ndarray):
