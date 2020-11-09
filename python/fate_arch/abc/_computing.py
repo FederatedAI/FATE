@@ -407,7 +407,7 @@ class CTableABC(metaclass=ABCMeta):
     @abc.abstractmethod
     def join(self, other, func):
         """
-        returns union of this table and the other table.
+        returns intersection of this table and the other table.
 
         function ``func`` will be applied to values of keys that exist in both table.
 
@@ -428,10 +428,10 @@ class CTableABC(metaclass=ABCMeta):
         --------
         >>> from fate_arch.session import computing_session
         >>> a = computing_session.parallelize([1, 2, 3], include_key=False, partition=2)	# [(0, 1), (1, 2), (2, 3)]
-        >>> b = computing_session.parallelize([(1, 1), (2, 2), (3, 3)], include_key=False, partition=2)
-        >>> c = a.union(b, lambda v1, v2 : v1 + v2)
+        >>> b = computing_session.parallelize([(1, 1), (2, 2), (3, 3)], include_key=True, partition=2)
+        >>> c = a.join(b, lambda v1, v2 : v1 + v2)
         >>> list(c.collect())
-        [(0, 1), (1, 3), (2, 5), (3, 3)]
+        [(1, 3), (2, 5)]
         """
         ...
 
@@ -459,7 +459,7 @@ class CTableABC(metaclass=ABCMeta):
         --------
         >>> from fate_arch.session import computing_session
         >>> a = computing_session.parallelize([1, 2, 3], include_key=False, partition=2)	# [(0, 1), (1, 2), (2, 3)]
-        >>> b = computing_session.parallelize([(1, 1), (2, 2), (3, 3)], include_key=False, partition=2)
+        >>> b = computing_session.parallelize([(1, 1), (2, 2), (3, 3)], include_key=True, partition=2)
         >>> c = a.union(b, lambda v1, v2 : v1 + v2)
         >>> list(c.collect())
         [(0, 1), (1, 3), (2, 5), (3, 3)]
