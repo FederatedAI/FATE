@@ -100,7 +100,7 @@ class LinearParam(BaseParam):
         Indicate whether to use the first metric in `metrics` as the only criterion for early stopping judgement.
 
     use_sample_weight: bool, default: False
-        whether to use sample weight for training
+        whether to use sample weight for training, when set to True, early_stop must be 'weight_diff'
 
     """
 
@@ -241,8 +241,9 @@ class LinearParam(BaseParam):
         if not isinstance(self.use_first_metric_only, bool):
             raise ValueError("use_first_metric_only should be a boolean")
 
-        if self.use_sample_weight:
-            if not isinstance(self.use_sample_weight, bool):
-                raise ValueError("use_sample_weight should be boolean")
+        if not isinstance(self.use_sample_weight, bool):
+            raise ValueError("use_sample_weight should be boolean")
+        if self.use_sample_weight and self.early_stop != 'weight_diff':
+            raise ValueError("when use_sample_weight, early_stop method must be 'weight_diff'")
 
         return True
