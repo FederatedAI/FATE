@@ -37,5 +37,4 @@ message LRModelMeta {
     bool fit_intercept=11;
     bool need_one_vs_rest = 12;
     PredictMeta predict_param = 13;
-    bool use_sample_weight = 14;
 }

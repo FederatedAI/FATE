@@ -99,9 +99,6 @@ class LinearParam(BaseParam):
     use_first_metric_only: bool, default: False
         Indicate whether to use the first metric in `metrics` as the only criterion for early stopping judgement.
 
-    use_sample_weight: bool, default: False
-        whether to use sample weight for training, when set to True, early_stop must be 'weight_diff'
-
     """
 
     def __init__(self, penalty='L2',
@@ -111,8 +108,7 @@ class LinearParam(BaseParam):
                  encrypt_param=EncryptParam(), sqn_param=StochasticQuasiNewtonParam(),
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
                  cv_param=CrossValidationParam(), decay=1, decay_sqrt=True, validation_freqs=None,
-                 early_stopping_rounds=None, stepwise_param=StepwiseParam(), metrics=None, use_first_metric_only=False,
-                 use_sample_weight=False):
+                 early_stopping_rounds=None, stepwise_param=StepwiseParam(), metrics=None, use_first_metric_only=False):
         super(LinearParam, self).__init__()
         self.penalty = penalty
         self.tol = tol
@@ -135,7 +131,6 @@ class LinearParam(BaseParam):
         self.stepwise_param = copy.deepcopy(stepwise_param)
         self.metrics = metrics or []
         self.use_first_metric_only = use_first_metric_only
-        self.use_sample_weight = use_sample_weight
 
     def check(self):
         descr = "linear_regression_param's "
@@ -240,10 +235,5 @@ class LinearParam(BaseParam):
 
         if not isinstance(self.use_first_metric_only, bool):
             raise ValueError("use_first_metric_only should be a boolean")
-
-        if not isinstance(self.use_sample_weight, bool):
-            raise ValueError("use_sample_weight should be boolean")
-        if self.use_sample_weight and self.early_stop != 'weight_diff':
-            raise ValueError("when use_sample_weight, early_stop method must be 'weight_diff'")
 
         return True

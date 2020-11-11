@@ -96,9 +96,6 @@ class LogisticParam(BaseParam):
     use_first_metric_only: bool, default: False
         Indicate whether use the first metric only for early stopping judgement.
 
-    use_sample_weight: bool, default: False
-        whether to use sample weight for training, when set to True, early_stop must be 'weight_diff'
-
     """
 
     def __init__(self, penalty='L2',
@@ -110,8 +107,7 @@ class LogisticParam(BaseParam):
                  multi_class='ovr', validation_freqs=None, early_stopping_rounds=None,
                  stepwise_param=StepwiseParam(),
                  metrics=None,
-                 use_first_metric_only=False,
-                 use_sample_weight=False
+                 use_first_metric_only=False
                  ):
         super(LogisticParam, self).__init__()
         self.penalty = penalty
@@ -134,7 +130,6 @@ class LogisticParam(BaseParam):
         self.early_stopping_rounds = early_stopping_rounds
         self.metrics = metrics or []
         self.use_first_metric_only = use_first_metric_only
-        self.use_sample_weight = use_sample_weight
 
     def check(self):
         descr = "logistic_param's"
@@ -229,11 +224,6 @@ class LogisticParam(BaseParam):
 
         if not isinstance(self.use_first_metric_only, bool):
             raise ValueError("use_first_metric_only should be a boolean")
-
-        if not isinstance(self.use_sample_weight, bool):
-            raise ValueError("use_sample_weight should be boolean")
-        if self.use_sample_weight and self.early_stop != 'weight_diff':
-            raise ValueError("when use_sample_weight, early_stop method must be 'weight_diff'")
 
         return True
 

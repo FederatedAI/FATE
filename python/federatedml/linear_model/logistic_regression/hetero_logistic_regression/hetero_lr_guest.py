@@ -23,6 +23,7 @@ from federatedml.linear_model.logistic_regression.hetero_logistic_regression.het
 from federatedml.optim import activation
 from federatedml.optim.gradient import hetero_lr_gradient_and_loss
 from federatedml.secureprotol import EncryptModeCalculator
+from federatedml.statistic.data_overview import with_weight
 from federatedml.util import LOGGER
 from federatedml.util import consts
 from federatedml.util.io_check import assert_io_num_rows_equal
@@ -67,6 +68,7 @@ class HeteroLRGuest(HeteroLRBase):
         self.check_abnormal_values(data_instances)
         self.check_abnormal_values(validate_data)
         self.header = self.get_header(data_instances)
+        self.use_sample_weight = with_weight(data_instances)
 
         classes = self.one_vs_rest_obj.get_data_classes(data_instances)
 

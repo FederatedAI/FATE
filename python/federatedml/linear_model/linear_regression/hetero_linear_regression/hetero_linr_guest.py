@@ -20,6 +20,7 @@ from federatedml.linear_model.linear_model_weight import LinearModelWeights
 from federatedml.linear_model.linear_regression.hetero_linear_regression.hetero_linr_base import HeteroLinRBase
 from federatedml.optim.gradient import hetero_linr_gradient_and_loss
 from federatedml.secureprotol import EncryptModeCalculator
+from federatedml.statistic.data_overview import with_weight
 from federatedml.util import LOGGER
 from federatedml.util import consts
 from federatedml.util.io_check import assert_io_num_rows_equal
@@ -58,6 +59,8 @@ class HeteroLinRGuest(HeteroLinRBase):
         LOGGER.info("Enter hetero_linR_guest fit")
         self._abnormal_detection(data_instances)
         self.header = self.get_header(data_instances)
+
+        self.use_sample_weight = with_weight(data_instances)
 
         self.validation_strategy = self.init_validation_strategy(data_instances, validate_data)
 

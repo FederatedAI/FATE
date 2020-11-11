@@ -69,8 +69,7 @@ class BaseLinearRegression(BaseLinearModel):
                                                               learning_rate=self.model_param.learning_rate,
                                                               max_iter=self.max_iter,
                                                               early_stop=self.model_param.early_stop,
-                                                              fit_intercept=self.fit_intercept,
-                                                              use_sample_weight=self.use_sample_weight)
+                                                              fit_intercept=self.fit_intercept)
         return meta_protobuf_obj
 
     def _get_param(self):
@@ -115,7 +114,7 @@ class BaseLinearRegression(BaseLinearModel):
             tmp_vars = np.append(tmp_vars, result_obj.intercept)
         self.model_weights = LinearRegressionWeights(l=tmp_vars, fit_intercept=fit_intercept)
         self.n_iter_ = result_obj.iters
-        self.use_sample_weight = meta_obj.use_sample_weight
+        # self.use_sample_weight = meta_obj.use_sample_weight
     
     def get_metrics_param(self):
         return EvaluateParam(eval_type="regression", metrics=self.metrics)
