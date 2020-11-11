@@ -91,7 +91,7 @@ package() {
   ln -s fateboard-${fateboard_version}.jar fateboard.jar
   echo "[INFO] Package fateboard done"
   
-  echo "[INFO] Package fateboard start"
+  echo "[INFO] Package eggroll start"
   cd ${source_dir}
   echo "[INFO] Git clone eggroll submodule source code from ${eggroll_git_url} branch ${eggroll_git_branch}"
   if [[ -e "eggroll" ]];then
