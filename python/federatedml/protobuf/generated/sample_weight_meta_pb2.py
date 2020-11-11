@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='com.webank.ai.fate.common.mlmodel.buffer',
   syntax='proto3',
   serialized_options=_b('B\025SampleWeightMetaProto'),
-  serialized_pb=_b('\n\x18sample-weight-meta.proto\x12(com.webank.ai.fate.common.mlmodel.buffer\"@\n\x10SampleWeightMeta\x12\x10\n\x08need_run\x18\x01 \x01(\x08\x12\x1a\n\x12sample_weight_name\x18\x02 \x01(\tB\x17\x42\x15SampleWeightMetaProtob\x06proto3')
+  serialized_pb=_b('\n\x18sample-weight-meta.proto\x12(com.webank.ai.fate.common.mlmodel.buffer\"S\n\x10SampleWeightMeta\x12\x10\n\x08need_run\x18\x01 \x01(\x08\x12\x1a\n\x12sample_weight_name\x18\x02 \x01(\t\x12\x11\n\tnormalize\x18\x03 \x01(\x08\x42\x17\x42\x15SampleWeightMetaProtob\x06proto3')
 )
 
 
@@ -47,6 +47,13 @@ _SAMPLEWEIGHTMETA = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='normalize', full_name='com.webank.ai.fate.common.mlmodel.buffer.SampleWeightMeta.normalize', index=2,
+      number=3, type=8, cpp_type=7, label=1,
+      has_default_value=False, default_value=False,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -60,7 +67,7 @@ _SAMPLEWEIGHTMETA = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=70,
-  serialized_end=134,
+  serialized_end=153,
 )
 
 DESCRIPTOR.message_types_by_name['SampleWeightMeta'] = _SAMPLEWEIGHTMETA

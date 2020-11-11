@@ -114,7 +114,8 @@ class SampleWeight(ModelBase):
             class_weight = {str(k): v for k, v in self.class_weight.items()}
         LOGGER.debug(f"class weight exported is: {class_weight}")
         meta_obj = sample_weight_meta_pb2.SampleWeightMeta(sample_weight_name=self.sample_weight_name,
-                                                           need_run=self.need_run)
+                                                           need_run=self.need_run,
+                                                           normalize=self.normalize)
         param_obj = sample_weight_param_pb2.SampleWeightParam(class_weight=class_weight)
         result = {
             self.model_meta_name: meta_obj,
@@ -123,12 +124,11 @@ class SampleWeight(ModelBase):
         return result
 
     def load_model(self, model_dict):
-        result_obj = list(model_dict.get('model').values())[0].get(
-            self.model_param_name)
-
         meta_obj = list(model_dict.get('model').values())[0].get(self.model_meta_name)
-
         self.need_run, self.sample_weight_name = meta_obj.need_run, meta_obj.sample_weight_name
+        self.normalize = meta_obj.normalize
+
+        result_obj = list(model_dict.get('model').values())[0].get(self.model_param_name)
         tmp_class_weight = dict(result_obj.class_weight)
         self.class_weight = {int(k): v for k, v in tmp_class_weight.items()}
 

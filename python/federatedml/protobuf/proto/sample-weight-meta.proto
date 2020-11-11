@@ -22,4 +22,5 @@ option java_outer_classname = "SampleWeightMetaProto";
 message SampleWeightMeta {
     bool need_run = 1;
     string sample_weight_name = 2;
+    bool normalize = 3;
 }
