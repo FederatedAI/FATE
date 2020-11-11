@@ -55,6 +55,7 @@ class SampleWeight(ModelBase):
         self.model_param = params
         self.class_weight = params.class_weight
         self.sample_weight_name = params.sample_weight_name
+        self.normalize = params.normalize
         self.need_run = params.need_run
 
     @staticmethod
@@ -79,9 +80,9 @@ class SampleWeight(ModelBase):
         return weighted_data_instance
 
     @staticmethod
-    def assign_sample_weight(data_instances, class_weight, weight_loc):
-        weight_base = None
-        if weight_loc:
+    def assign_sample_weight(data_instances, class_weight, weight_loc, normalize):
+        weight_base = 1
+        if weight_loc and normalize:
             def sum_sample_weight(kv_iterator):
                 sample_weight = 0
                 for _, inst in kv_iterator:
@@ -105,7 +106,7 @@ class SampleWeight(ModelBase):
     def transform_weighted_instance(self, data_instances, weight_loc):
         if self.class_weight and self.class_weight == 'balanced':
             self.class_weight = SampleWeight.get_class_weight(data_instances)
-        return SampleWeight.assign_sample_weight(data_instances, self.class_weight, weight_loc)
+        return SampleWeight.assign_sample_weight(data_instances, self.class_weight, weight_loc, self.normalize)
 
     def export_model(self):
         class_weight=None

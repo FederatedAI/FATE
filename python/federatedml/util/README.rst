@@ -86,6 +86,8 @@ How to Use
 
     :sample_weight_name: str, name of column which specifies sample weight. Extracted weight values will be normalized.
 
+    :normalize: bool, default False. Whether to normalize sample weight from sample_weight_name
+
     :need_run: bool, whether to run this module or not
 
     .. Note::

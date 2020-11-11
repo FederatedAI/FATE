@@ -30,20 +30,24 @@ class SampleWeightParam(BaseParam):
 
     class_weight : str or dict, default None
         class weight dictionary or class weight computation mode, string value only accepts 'balanced';
-        If dict provided, key should be class(label), and weight will not be normalized.
+        If dict provided, key should be class(label), and weight will not be normalize.
         if both class_weight and sample_weight_name are None, return original input data.
 
-    sample_weight_name : str, name of column which specifies sample weight. Extracted weight values will be normalized.
+    sample_weight_name : str, name of column which specifies sample weight.
         feature name of sample weight; if both class_weight and sample_weight_name are None, return original input data
+
+    normalize : bool, default False
+        whether to normalize sample weight from sample_weight_name
 
     need_run : bool, default True
         whether to run this module or not
 
     """
 
-    def __init__(self, class_weight=None, sample_weight_name=None, need_run=True):
+    def __init__(self, class_weight=None, sample_weight_name=None, normalize=False, need_run=True):
         self.class_weight = class_weight
         self.sample_weight_name = sample_weight_name
+        self.normalize = normalize
         self.need_run = need_run
 
     def check(self):
@@ -62,5 +66,7 @@ class SampleWeightParam(BaseParam):
             self.check_string(self.sample_weight_name, descr+" sample_weight_name")
 
         self.check_boolean(self.need_run, descr+" need_run")
+
+        self.check_boolean(self.normalize, descr+" normalize")
 
         return True
