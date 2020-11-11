@@ -17,10 +17,9 @@
             "role": "guest_0"
         }
     ],
-    "tasks": {
+    "pipeline_tasks": {
         "sample-weight": {
-            "conf": "./sample_weight_job_conf.json",
-            "dsl": "./sample_weight_job_dsl.json"
+            "script": "./pipeline-sample-weight.py"
         }
     }
 }

@@ -60,16 +60,16 @@
     },
     "algorithm_parameters": {
         "hetero_lr_0": {
-            "tol": 0.0001,
+            "tol": 0.001,
             "alpha": 0.01,
             "optimizer": "nesterov_momentum_sgd",
             "learning_rate": 0.15,
+            "batch_size": -1,
             "init_param": {
-                "init_method": "random_uniform"
+                "init_method": "zeros"
             },
-            "max_iter": 30,
-            "early_stop": "weight_diff",
-            "use_sample_weight": true
+            "max_iter": 20,
+            "early_stop": "weight_diff"
         },
         "evaluation_0": {
             "eval_type": "binary",

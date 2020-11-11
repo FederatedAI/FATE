@@ -6,13 +6,11 @@ This section introduces the dsl and conf for different types of tasks.
 
 1. Task:
 
-    dsl: sample_weight_job_dsl.json
-
-    runtime_config : sample_weight_job_conf.json
+    script: pipeline-sample-weight.py
 
 
-Users can use following commands to run the task.
+Users can use following commands to run pipeline job directly.
 
-    flow job submit -c ${runtime_config} -d ${dsl}
+    python ${pipeline_script}
 
 After having finished a successful training task, you can use FATE Board to check output. 
