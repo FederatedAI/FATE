@@ -151,6 +151,7 @@ class SampleWeight(ModelBase):
             else:
                 LOGGER.warning(f"Cannot find weight column of given sample_weight_name '{self.sample_weight_name}'."
                                f"Original data returned.")
+                return data_instances
         result_instances = self.transform_weighted_instance(data_instances, weight_loc)
         result_instances.schema = new_schema
         return result_instances
