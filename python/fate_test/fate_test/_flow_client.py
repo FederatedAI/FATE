@@ -13,34 +13,30 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
+import os
 import json
 import time
 import typing
 from datetime import timedelta
 from pathlib import Path
-import click
 
 import requests
-from requests_toolbelt import MultipartEncoderMonitor, MultipartEncoder
-
 from fate_test._parser import Data, Job
-
-from fate_client.flow_sdk.client import FlowClient
-
-# use real ip address to initialize SDK
-client = FlowClient('172.16.153.42', 9380, 'v1')
-
+from flow_sdk.client import FlowClient
+from fate_test import _config
 
 class FLOWClient(object):
 
     def __init__(self,
                  address: typing.Optional[str],
-                 data_base_dir: typing.Optional[Path]):
+                 data_base_dir: typing.Optional[Path],
+                 cache_directory: typing.Optional[Path]):
         self.address = address
         self.version = "v1"
         self._http = requests.Session()
         self._data_base_dir = data_base_dir
+        self._cache_directory = cache_directory
+        self.data_size = 0
 
     def set_address(self, address):
         self.address = address
@@ -100,19 +96,31 @@ class FLOWClient(object):
                 callback(response)
             time.sleep(1)
 
+    def _save_json(self, file, file_name):
+        file = json.dumps(file, indent=4)
+        file_path = os.path.join(str(self._cache_directory), file_name)
+        try:
+            with open(file_path, "w", encoding='utf-8') as f:
+                f.write(file)
+        except Exception as e:
+            raise Exception(f"write error==>{e}")
+        return file_path
+
     def _upload_data(self, conf, verbose, drop):
         conf['drop'] = drop
         conf['verbose'] = verbose
         path = Path(conf.get('file'))
         if not path.is_file():
             path = self._data_base_dir.joinpath(conf.get('file')).resolve()
-
         if not path.exists():
             raise Exception('The file is obtained from the fate flow client machine, but it does not exist, '
                             f'please check the path: {path}')
-
-        upload_response = self.flow_client(request='data/upload', param=path)
-
+        if _config.DATA_SIZE:
+            conf['file'] = os.path.join(str(self._cache_directory), os.path.basename(conf.get('file')))
+        else:
+            conf['file'] = os.path.join(str(self._data_base_dir), conf.get('file'))
+        upload_response = self.flow_client(request='data/upload', param=self._save_json(conf, 'upload_conf.json'),
+                                           verbose=verbose, drop=drop)
         response = UploadDataResponse(upload_response)
         return response
 
@@ -126,8 +134,8 @@ class FLOWClient(object):
 
     def _submit_job(self, conf, dsl):
         param = {
-            'job_dsl': dsl,
-            'job_runtime_conf': conf
+            'job_dsl': self._save_json(dsl, 'submit_dsl.json'),
+            'job_runtime_conf': self._save_json(conf, 'submit_conf.json')
         }
         response = SubmitJobResponse(self.flow_client(request='job/submit', param=param))
         return response
@@ -170,15 +178,15 @@ class FLOWClient(object):
                                   "'FATE/arch/conf/server_conf.json' and restart fate flow server."}
         return response
 
-    def flow_client(self, request, param):
+    def flow_client(self, request, param, verbose=0, drop=0):
         client = FlowClient(self.address.split(':')[0], self.address.split(':')[1], self.version)
 
         if request == 'data/upload':
-            stdout = client.data.upload(conf_path=param)
+            stdout = client.data.upload(conf_path=param, verbose=verbose, drop=drop)
         elif request == 'table/delete':
             stdout = client.table.delete(table_name=param['table_name'], namespace=param['namespace'])
         elif request == 'job/submit':
-            stdout = client.job.submit(conf_path=param['conf'], dsl_path=param['dsl'])
+            stdout = client.job.submit(conf_path=param['job_runtime_conf'], dsl_path=param['job_dsl'])
         elif request == 'job/query':
             stdout = client.job.query(job_id=param['job_id'], role=param['role'])
         else:

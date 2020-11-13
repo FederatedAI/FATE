@@ -9,6 +9,30 @@ from fate_test._config import Config
 from fate_test._flow_client import DataProgress, UploadDataResponse, QueryJobResponse
 from fate_test._io import echo, LOGGER, set_logger
 from fate_test._parser import Testsuite, BenchmarkSuite, DATA_JSON_HOOK, CONF_JSON_HOOK, DSL_JSON_HOOK
+from fate_test.scripts.generate_mock_data import _get_big_data
+
+
+def _big_data_task(guest_data_size, host_data_size, guest_feature_num, host_feature_num, includes, config_inst,
+                   encryption_type, match_rate, suffix="testsuite.json"):
+    def _find_testsuite_files(path):
+        if isinstance(path, str):
+            path = Path(path)
+        if path.is_file():
+            if path.name.endswith(suffix):
+                paths = [path]
+            else:
+                LOGGER.warning(f"{path} is file, but not end with `{suffix}`, skip")
+                paths = []
+        else:
+            paths = path.glob(f"**/*{suffix}")
+        return [p.resolve() for p in paths]
+
+    include = includes[0]
+    if isinstance(include, str):
+        include_path = Path(include)
+        include_path = _find_testsuite_files(include_path)[0]
+        _get_big_data(guest_data_size, host_data_size, guest_feature_num, host_feature_num, include_path, config_inst,
+                      encryption_type, match_rate)
 
 
 def _load_testsuites(includes, excludes, glob, suffix="testsuite.json", suite_type="testsuite"):
