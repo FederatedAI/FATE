@@ -32,9 +32,8 @@ Eggroll 是一个适用于机器学习和深度学习的大规模分布式架构
 
 ### 1.3.系统架构
 
-<div style="text-align:center", align=center>
-<img src="../images/arch_zh.png" />
-</div>
+![aaa](../images/arch_zh.png)
+<img align=center, src="../images/arch_zh.png"/>
 
 # 2.详细设计
 
