@@ -32,8 +32,7 @@ Eggroll 是一个适用于机器学习和深度学习的大规模分布式架构
 
 ### 1.3.系统架构
 
-![aaa](../images/arch_zh.png)
-<img align=center, src="../images/arch_zh.png"/>
+![](../images/arch_zh.png)
 
 # 2.详细设计
 
@@ -253,9 +252,7 @@ yum install -y epel-release
 
 ### 4.1 部署示意图
 
-<div style="text-align:center;width:500px",align=center>
-<img src="../images/deploy_cluster.png" />
-</div>
+![](../images/deploy_cluster.png)
 
 ### 4.2 系统检查
 
