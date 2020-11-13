@@ -199,7 +199,7 @@ def do_migrate_model():
 @manager.route('/load/do', methods=['POST'])
 def do_load_model():
     request_data = request.json
-    request_data["servings"] = ServiceUtils.get("servings", {}).get('hosts', [])
+    adapter_servings_config(request_data)
     retcode, retmsg = publish_model.load_model(config_data=request_data)
     try:
         if not retcode:
@@ -257,7 +257,7 @@ def bind_model_service():
                                           "Please check if the model version is valid.".format(request_config.get('job_id')))
     if not request_config.get('servings'):
         # get my party all servings
-        request_config['servings'] = ServiceUtils.get("servings", {}).get('hosts', [])
+        adapter_servings_config(request_config)
     service_id = request_config.get('service_id')
     if not service_id:
         return get_json_result(retcode=101, retmsg='no service id')
@@ -568,3 +568,13 @@ def operation_record(data: dict, oper_type, oper_status):
                            f_model_version=data.get("model_version") if data.get("model_version") else data.get('job_parameters').get("model_version"))
     except Exception:
         stat_logger.error(traceback.format_exc())
+
+
+def adapter_servings_config(request_data):
+    servings_conf = ServiceUtils.get("servings", {})
+    if isinstance(servings_conf, dict):
+        request_data["servings"] = servings_conf.get('hosts', [])
+    elif isinstance(servings_conf, list):
+        request_data["servings"] = servings_conf
+    else:
+        raise Exception('Please check the servings config')
