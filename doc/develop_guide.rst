@@ -292,7 +292,7 @@ To define a Pipeline component, follow these guidelines:
 1. all components reside in ``fate_client/pipeline/component`` directory
 2. components should inherit common base ``Component``
 3. as a good practice, components should have the same names as their corresponding modules
-4. components take in parameters at initialization as defined in pipeline/param, where a BaseParam and consts file are provided
+4. components take in parameters at initialization as defined in `pipeline/param <../python/fate_client/pipeline/param>`_, where a BaseParam and consts file are provided
 5. set attributes of component input and output,
    including whether module has output model, or type of data output('single' vs. 'multi')
 
