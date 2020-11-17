@@ -289,15 +289,15 @@ Step 6. Define Pipeline component for your module
 One wrapped into a component, module can be used with FATE Pipeline API.
 To define a Pipeline component, follow these guidelines:
 
-1. all components reside in ``fate_client/pipeline/component`` directory
+1. all components reside in `fate_client/pipeline/component <../python/fate_client/pipeline/component>`_ directory
 2. components should inherit common base ``Component``
 3. as a good practice, components should have the same names as their corresponding modules
-4. components take in module parameters at initialization
+4. components take in parameters at initialization as defined in `fate_client/pipeline/param <../python/fate_client/pipeline/param>`_, where a BaseParam and consts file are provided
 5. set attributes of component input and output,
    including whether module has output model, or type of data output('single' vs. 'multi')
 
 Then you may use Pipeline to construct and initiate a job with the newly defined component.
-For guide on Pipeline usage, please refer to `fate_client/pipeline`.
+For guide on Pipeline usage, please refer to `fate_client/pipeline <../python/fate_client/pipeline>`_.
 
 Start a modeling task
 ---------------------
