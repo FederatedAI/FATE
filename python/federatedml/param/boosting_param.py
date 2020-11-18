@@ -480,7 +480,7 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  validation_freqs=None, early_stopping=None, use_missing=False, zero_as_missing=False,
                  complete_secure=False, tree_num_per_party=1, guest_depth=1, host_depth=1, work_mode='mix', metrics=None,
-                 sparse_optmization=False, subsample_random_seed=None, binning_error=consts.DEFAULT_RELATIVE_ERROR,):
+                 sparse_optimization=False, subsample_random_seed=None, binning_error=consts.DEFAULT_RELATIVE_ERROR,):
 
         """
         work_mode：
@@ -504,7 +504,7 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
                                                          predict_param, cv_param, validation_freqs, early_stopping,
                                                          use_missing, zero_as_missing, complete_secure, metrics=metrics,
                                                          subsample_random_seed=subsample_random_seed,
-                                                         sparse_optmization=sparse_optmization,
+                                                         sparse_optimization=sparse_optimization,
                                                          binning_error=binning_error)
 
         self.tree_num_per_party = tree_num_per_party
@@ -565,11 +565,3 @@ class HomoSecureBoostParam(BoostingParam):
         if type(self.zero_as_missing) != bool:
             raise ValueError('zero as missing should be bool type')
         return True
-
-
-
-
-
-
-
-
