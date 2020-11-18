@@ -37,7 +37,7 @@ class Instance(object):
     label: None of float, data label
 
     """
-    def __init__(self, inst_id=None, weight=None, features=None, label=None):
+    def __init__(self, inst_id=None, weight=1.0, features=None, label=None):
         self.inst_id = inst_id
         self.weight = weight
         self.features = features
@@ -51,15 +51,3 @@ class Instance(object):
 
     def set_feature(self, features):
         self.features = features
-
-    # def __copy__(self):
-    #     return Instance(inst_id=self.inst_id,
-    #                     weight=self.weight,
-    #                     features=self.features,
-    #                     label=self.label)
-    #
-    # def __deepcopy__(self, memo):
-    #     return Instance(inst_id=self.inst_id,
-    #                     weight=self.weight,
-    #                     features=self.features[::],
-    #                     label=self.label)

@@ -136,18 +136,6 @@ def count_labels(data_instance):
     # return True
 
 
-def with_weight(data_instance):
-    first_data = data_instance.first()
-    if type(first_data[1]).__name__ in ['ndarray', 'list']:
-        return False
-
-    data_weight = first_data[1].weight
-    if data_weight is None:
-        return False
-    else:
-        return True
-
-
 def rubbish_clear(rubbish_list):
     """
     Temporary procession for resource recovery. This will be discarded in next version because of our new resource recovery plan

@@ -21,8 +21,6 @@
 # DecisionTree Base Class
 # =============================================================================
 import abc
-import numpy as np
-import functools
 from federatedml.ensemble.basic_algorithms.algorithm_prototype import BasicAlgorithms
 from federatedml.util import LOGGER
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.splitter import \
@@ -131,29 +129,6 @@ class DecisionTree(BasicAlgorithms):
             node_map[node.id] = idx
             idx += 1
         return node_map
-
-    @staticmethod
-    def sample_count_map_func(kv, node_map):
-
-        # record node sample number in count_arr
-        count_arr = np.zeros(len(node_map))
-        for k, v in kv:
-            node_idx = node_map[v[1]]  # node position
-            count_arr[node_idx] += 1
-        return count_arr
-
-    @staticmethod
-    def sample_count_reduce_func(v1, v2):
-        return v1 + v2
-
-    def count_leaf_sample_num(self, inst2node_idx, node_map):
-        """
-        count sample number in every leaf node
-        """
-        LOGGER.debug('node map is {}'.format(node_map))
-        count_func = functools.partial(self.sample_count_map_func, node_map=node_map)
-        rs = inst2node_idx.applyPartitions(count_func).reduce(self.sample_count_reduce_func)
-        return rs
 
     def get_sample_weights(self):
         return self.sample_weights

@@ -26,7 +26,7 @@
 # =============================================================================
 
 import warnings
-from typing import List
+
 from fate_arch.session import computing_session as session
 from fate_arch.common import log
 from fate_arch.federation import segment_transfer_enabled
@@ -231,102 +231,8 @@ class Splitter(object):
 
         return node_splitinfo, node_grad_hess
 
-    def construct_split_points(self, fid_with_histogram, valid_features, sitename, use_missing=False):
-
-        node_splitinfo = []
-        missing_bin = 0
-        if use_missing:
-            missing_bin = 1
-
-        fid, histogram = fid_with_histogram
-        if valid_features[fid] is False:
-            return [], []
-        bin_num = len(histogram)
-        if bin_num == 0:
-            return [], []
-
-        node_cnt = histogram[bin_num - 1][2]
-
-        if node_cnt < self.min_sample_split:
-            return [], []
-
-        for bid in range(bin_num - missing_bin - 1):
-            sum_grad_l = histogram[bid][0]
-            sum_hess_l = histogram[bid][1]
-            node_cnt_l = histogram[bid][2]
-
-            node_cnt_r = node_cnt - node_cnt_l
-
-            if node_cnt_l >= self.min_leaf_node and node_cnt_r >= self.min_leaf_node:
-                splitinfo = SplitInfo(sitename=sitename, best_fid=fid,
-                                      best_bid=bid, sum_grad=sum_grad_l, sum_hess=sum_hess_l,
-                                      missing_dir=1)
-
-                node_splitinfo.append(splitinfo)
-
-            if use_missing:
-                sum_grad_l += histogram[-1][0] - histogram[-2][0]
-                sum_hess_l += histogram[-1][1] - histogram[-2][1]
-                node_cnt_l += histogram[-1][2] - histogram[-2][2]
-
-                splitinfo = SplitInfo(sitename=sitename, best_fid=fid,
-                                      best_bid=bid, sum_grad=sum_grad_l, sum_hess=sum_hess_l,
-                                      missing_dir=-1)
-
-                node_splitinfo.append(splitinfo)
-
-        return node_splitinfo
-
-    def find_host_best_splits_map_func(self, split_info_list: List[SplitInfo], sum_g, sum_h,
-                                       decrypter):
-
-        # find best split points in a node for every host feature
-
-        best_gain = self.min_impurity_split - consts.FLOAT_ZERO
-        best_idx = -1
-        best_split_info = SplitInfo(best_fid=-1, best_bid=-1, gain=best_gain)
-        sitename = consts.HOST
-
-        for idx, split_info in enumerate(split_info_list):
-
-            en_g, en_h = split_info.sum_grad, split_info.sum_hess
-            l_g, l_h = decrypter.decrypt(en_g), decrypter.decrypt(en_h)
-            r_g, r_h = sum_g - l_g, sum_h - l_h
-            gain = self.split_gain(sum_g, sum_h, l_g, l_h, r_g, r_h)
-            sitename = split_info.sitename
-
-            if gain > self.min_impurity_split and gain > best_gain + consts.FLOAT_ZERO:
-                best_gain = gain
-                best_idx = idx
-                best_split_info = split_info
-
-        best_split_info.sitename = sitename
-
-        return best_idx, best_split_info, best_gain
-
-    @staticmethod
-    def merge_host_best_split_info(kv_iter):
-
-        best_split_dict = {}
-        best_gain_dict = {}
-        for k, v in kv_iter:
-
-            node_id, fid = k
-            best_idx, best_split_info, best_gain = v
-            if node_id not in best_split_dict:
-                best_split_dict[node_id] = best_split_info
-                best_gain_dict[node_id] = best_gain
-
-    def host_prepare_split_points(self, histograms, valid_features, sitename=consts.HOST, use_missing=False):
-
-        LOGGER.info("splitter find split of host")
-        host_splitinfo_table = histograms.mapValues(lambda fid_with_hist:
-                                                    self.construct_split_points(fid_with_hist, valid_features,
-                                                                                sitename, use_missing))
-        return host_splitinfo_table
-
     def find_split_host(self, histograms, valid_features, node_map, sitename=consts.HOST,
-                        use_missing=False, zero_as_missing=False, map_node_id_to_idx=False):
+                        use_missing=False, zero_as_missing=False):
         LOGGER.info("splitter find split of host")
         tree_node_splitinfo = [[] for i in range(len(node_map))]
         encrypted_node_grad_hess = [[] for i in range(len(node_map))]
@@ -336,12 +242,9 @@ class Splitter(object):
                                                                                           use_missing,
                                                                                           zero_as_missing))
 
-        # idx could be node_id or node index in the node map, if is node_id, map it to node index
-        for (idx, fid), splitinfo in host_splitinfo_table.collect():
-            if map_node_id_to_idx:
-                idx = node_map[idx]
-            tree_node_splitinfo[idx].extend(splitinfo[0])
-            encrypted_node_grad_hess[idx].extend(splitinfo[1])
+        for (nid, fid), splitinfo in host_splitinfo_table.collect():
+            tree_node_splitinfo[nid].extend(splitinfo[0])
+            encrypted_node_grad_hess[nid].extend(splitinfo[1])
 
         return tree_node_splitinfo, BigObjectTransfer(encrypted_node_grad_hess)
 

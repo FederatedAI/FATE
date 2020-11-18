@@ -1,6 +1,5 @@
 import copy
 import functools
-import numpy as np
 from fate_arch.session import computing_session as session
 from federatedml.util import LOGGER
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.decision_tree import DecisionTree
@@ -11,7 +10,6 @@ from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import Decision
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import DecisionTreeModelParam
 from federatedml.transfer_variable.transfer_class.hetero_decision_tree_transfer_variable import \
     HeteroDecisionTreeTransferVariable
-from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.feature_histogram import FeatureHistogram
 from federatedml.util import consts
 
 
@@ -27,10 +25,8 @@ class HeteroDecisionTreeGuest(DecisionTree):
         self.complete_secure_tree = False
         self.split_maskdict = {}
         self.missing_dir_maskdict = {}
-        self.host_party_idlist = []
 
-        # histogram subtraction for faster computation
-        self.hist_computer = FeatureHistogram()
+        self.host_party_idlist = []
 
     """
     Node Encode/ Decode
@@ -232,26 +228,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
     def compute_best_splits(self, node_map, dep, batch_idx):
 
-        # histogram subtraction
-        # leaf_sample_count = self.count_leaf_sample_num(self.inst2node_idx, node_map)
-        # LOGGER.debug('sample count is {}'.format(leaf_sample_count))
-
-        # half_acc_histograms = self.get_local_histograms(new_node_map, ret='tensor')
-        # full_hist = self.hist_sub.histogram_subtraction(dep, new_node_map, half_acc_histograms)
-        #
-        # acc_histograms = self.hist_computer.get_histograms_with_hist_sub(dep, self.data_with_node_assignments,
-        #                                                                  self.grad_and_hess, self.bin_split_points,
-        #                                                                  self.bin_sparse_points, self.valid_features,
-        #                                                                  node_map, leaf_sample_count,
-        #                                                                  self.use_missing,
-        #                                                                  self.zero_as_missing,
-        #                                                                  ret='tensor')
-
         acc_histograms = self.get_local_histograms(node_map, ret='tensor')
-
-        # LOGGER.debug('full hist is {}'.format(full_hist))
-        # LOGGER.debug('acc hist is {}'.format(acc_histograms))
-
         best_split_info_guest = self.splitter.find_split(acc_histograms, self.valid_features,
                                                          self.data_bin.partitions, self.sitename,
                                                          self.use_missing, self.zero_as_missing)
@@ -284,8 +261,8 @@ class HeteroDecisionTreeGuest(DecisionTree):
     def sync_cur_to_split_nodes(self, cur_to_split_node, dep=-1, idx=-1):
         LOGGER.info("send tree node queue of depth {}".format(dep))
         mask_tree_node_queue = copy.deepcopy(cur_to_split_node)
-        # for i in range(len(mask_tree_node_queue)):
-        #     mask_tree_node_queue[i] = Node(id=mask_tree_node_queue[i].id)
+        for i in range(len(mask_tree_node_queue)):
+            mask_tree_node_queue[i] = Node(id=mask_tree_node_queue[i].id)
 
         self.transfer_inst.tree_node_queue.remote(mask_tree_node_queue,
                                                   role=consts.HOST,
@@ -412,10 +389,9 @@ class HeteroDecisionTreeGuest(DecisionTree):
             sum_grad = self.cur_layer_nodes[i].sum_grad
             sum_hess = self.cur_layer_nodes[i].sum_hess
             if reach_max_depth or split_info[i].gain <= \
-                    self.min_impurity_split + consts.FLOAT_ZERO:  # if reach max_depth, only convert nodes to leaves
+                    self.min_impurity_split + consts.FLOAT_ZERO:  # if reach max_depth, only conver nodes to leaves
                 self.cur_layer_nodes[i].is_leaf = True
             else:
-                pid = self.cur_layer_nodes[i].id
                 self.cur_layer_nodes[i].left_nodeid = self.tree_node_num + 1
                 self.cur_layer_nodes[i].right_nodeid = self.tree_node_num + 2
                 self.tree_node_num += 2
@@ -424,19 +400,14 @@ class HeteroDecisionTreeGuest(DecisionTree):
                                  sitename=self.sitename,
                                  sum_grad=split_info[i].sum_grad,
                                  sum_hess=split_info[i].sum_hess,
-                                 weight=self.splitter.node_weight(split_info[i].sum_grad, split_info[i].sum_hess),
-                                 is_left_node=True,
-                                 parent_nodeid=pid)
-
+                                 weight=self.splitter.node_weight(split_info[i].sum_grad, split_info[i].sum_hess))
                 right_node = Node(id=self.cur_layer_nodes[i].right_nodeid,
                                   sitename=self.sitename,
                                   sum_grad=sum_grad - split_info[i].sum_grad,
                                   sum_hess=sum_hess - split_info[i].sum_hess,
                                   weight=self.splitter.node_weight(
                                       sum_grad - split_info[i].sum_grad,
-                                      sum_hess - split_info[i].sum_hess),
-                                  is_left_node=False,
-                                  parent_nodeid=pid)
+                                      sum_hess - split_info[i].sum_hess))
 
                 new_tree_node_queue.append(left_node)
                 new_tree_node_queue.append(right_node)
@@ -576,20 +547,17 @@ class HeteroDecisionTreeGuest(DecisionTree):
         for dep in range(self.max_depth):
 
             self.sync_cur_to_split_nodes(self.cur_layer_nodes, dep)
-
             if len(self.cur_layer_nodes) == 0:
                 break
 
             self.sync_node_positions(dep)
             self.update_instances_node_positions()
-            self.hist_computer.update_node_info(self.cur_layer_nodes)
 
             split_info = []
             for batch_idx, i in enumerate(range(0, len(self.cur_layer_nodes), self.max_split_nodes)):
 
                 self.cur_to_split_nodes = self.cur_layer_nodes[i: i + self.max_split_nodes]
-                node_map = self.get_node_map(self.cur_to_split_nodes)
-                cur_splitinfos = self.compute_best_splits(node_map, dep, batch_idx)
+                cur_splitinfos = self.compute_best_splits(self.get_node_map(self.cur_to_split_nodes), dep, batch_idx, )
                 split_info.extend(cur_splitinfos)
 
             self.update_tree(split_info, False)
