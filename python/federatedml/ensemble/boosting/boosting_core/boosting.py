@@ -62,6 +62,7 @@ class Boosting(ModelBase, ABC):
         # running variable
 
         # data
+        self.data_inst = None  # original input data
         self._set_random_seed = False
         self.binning_class = None  # class used for data binning
         self.binning_obj = None  # instance of self.binning_class
@@ -173,8 +174,9 @@ class Boosting(ModelBase, ABC):
             self.binning_obj = self.binning_class(param_obj)
 
         self.binning_obj.fit_split_points(data_instance)
+        rs = self.binning_obj.convert_feature_to_bin(data_instance)
         LOGGER.info("convert feature to bins over")
-        return self.binning_obj.convert_feature_to_bin(data_instance)
+        return rs
 
     def sample_valid_features(self):
 
@@ -245,6 +247,7 @@ class Boosting(ModelBase, ABC):
         """
         self.feature_name_fid_mapping = self.gen_feature_fid_mapping(data_inst.schema)
         data_inst = self.data_alignment(data_inst)
+        LOGGER.info('running data alignment')
         return self.convert_feature_to_bin(data_inst, self.use_missing)
 
     @abc.abstractmethod

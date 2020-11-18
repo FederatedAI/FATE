@@ -9,6 +9,7 @@ from federatedml.transfer_variable.transfer_class.hetero_decision_tree_transfer_
 from federatedml.util import consts
 from federatedml.feature.fate_element_type import NoneType
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.fast_feature_histogram import FastFeatureHistogram
+from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.feature_histogram import FeatureHistogram
 import functools
 
 
@@ -33,6 +34,9 @@ class HeteroDecisionTreeHost(DecisionTree):
         self.data_bin_dense_with_position = None
 
         self.transfer_inst = HeteroDecisionTreeTransferVariable()
+
+        # histogram subtraction
+        self.hist_computer = FeatureHistogram()
 
     """
     Setting
@@ -323,17 +327,34 @@ class HeteroDecisionTreeHost(DecisionTree):
             if self.run_sparse_opt:
                 acc_histograms = self.fast_get_histograms(node_map)
             else:
-                acc_histograms = self.get_local_histograms(node_map, ret='tb')
+                acc_histograms = self.get_local_histograms(node_map, ret='tb')  # return table
 
+                # leaf_sample_count = self.count_leaf_sample_num(self.inst2node_idx, node_map)
+                # LOGGER.debug('sample count is {}'.format(leaf_sample_count))
+                # acc_histograms = self.hist_computer.get_histograms_with_hist_sub(dep, self.data_with_node_assignments,
+                #                                                                  self.grad_and_hess, self.bin_split_points,
+                #                                                                  self.bin_sparse_points, self.valid_features,
+                #                                                                  node_map, leaf_sample_count,
+                #                                                                  self.use_missing,
+                #                                                                  self.zero_as_missing,
+                #                                                                  ret='tb')
+
+            # histogram subtraction
             splitinfo_host, encrypted_splitinfo_host = self.splitter.find_split_host(histograms=acc_histograms,
                                                                                      node_map=node_map,
                                                                                      use_missing=self.use_missing,
                                                                                      zero_as_missing=self.zero_as_missing,
                                                                                      valid_features=self.valid_features,
-                                                                                     sitename=self.sitename
-                                                                                     )
+                                                                                     sitename=self.sitename,
+                                                                                     map_node_id_to_idx=True)
 
-            LOGGER.debug('sending en_splitinfo {}'.format(encrypted_splitinfo_host))
+            split_info_table = self.splitter.host_prepare_split_points(histograms=acc_histograms,
+                                                                       use_missing=self.use_missing,
+                                                                       valid_features=self.valid_features,
+                                                                       sitename=self.sitename,)
+
+            LOGGER.debug('split info table is {}'.format(list(split_info_table.collect())))
+
             self.sync_encrypted_splitinfo_host(encrypted_splitinfo_host, dep, batch)
             federated_best_splitinfo_host = self.sync_federated_best_splitinfo_host(dep, batch)
             self.sync_final_splitinfo_host(splitinfo_host, federated_best_splitinfo_host, dep, batch)
@@ -358,7 +379,7 @@ class HeteroDecisionTreeHost(DecisionTree):
 
             self.inst2node_idx = self.sync_node_positions(dep)
             self.update_instances_node_positions()
-
+            self.hist_computer.update_node_info(self.cur_layer_nodes)
             batch = 0
             for i in range(0, len(self.cur_layer_nodes), self.max_split_nodes):
                 self.cur_to_split_nodes = self.cur_layer_nodes[i: i + self.max_split_nodes]

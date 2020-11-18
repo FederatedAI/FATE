@@ -16,6 +16,8 @@ from federatedml.transfer_variable.transfer_class.hetero_secure_boosting_predict
     HeteroSecureBoostTransferVariable
 from federatedml.util.io_check import assert_io_num_rows_equal
 from federatedml.util.anonymous_generator import generate_anonymous
+from fate_arch.session import computing_session
+from federatedml.statistic.data_overview import with_weight
 
 
 class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
@@ -35,6 +37,10 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         self.predict_transfer_inst = HeteroSecureBoostTransferVariable()
         self.model_name = 'HeteroSecureBoost'
 
+        self.enable_goss = False  # GOSS
+        self.top_rate = None
+        self.other_rate = None
+
     def _init_model(self, param: HeteroSecureBoostParam):
 
         super(HeteroSecureBoostingTreeGuest, self)._init_model(param)
@@ -42,12 +48,16 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         self.use_missing = param.use_missing
         self.zero_as_missing = param.zero_as_missing
         self.complete_secure = param.complete_secure
+        self.enable_goss = param.run_goss
+        self.top_rate = param.top_rate
+        self.other_rate = param.other_rate
 
         if self.use_missing:
             self.tree_param.use_missing = self.use_missing
             self.tree_param.zero_as_missing = self.zero_as_missing
 
-    def compute_grad_and_hess(self, y_hat, y):
+    def compute_grad_and_hess(self, y_hat, y, data_inst=None):
+
         LOGGER.info("compute grad and hess")
         loss_method = self.loss
         if self.task_type == consts.CLASSIFICATION:
@@ -59,6 +69,15 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
             (loss_method.compute_grad(y, f_val),
              loss_method.compute_hess(y, f_val)))
 
+        # add sample weights to gradient and hessian
+        if data_inst is not None:
+            if with_weight(data_inst):
+                LOGGER.info('weighted sample detected, multiply g/h by weights')
+                # l = list(data_inst.collect())
+                # LOGGER.debug('weights are {}'.format([i[1].weight for i in l]))
+                grad_and_hess = grad_and_hess.join(data_inst, lambda v1, v2: (v1[0]*v2.weight, v1[1]*v2.weight))
+                # LOGGER.debug('weighted grad_and_hess {}'.format(list(grad_and_hess.collect())))
+
         return grad_and_hess
 
     @staticmethod
@@ -67,6 +86,46 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         grad_and_hess_subtree = g_h.mapValues(
             lambda grad_and_hess: (grad_and_hess[0][dim], grad_and_hess[1][dim]))
         return grad_and_hess_subtree
+
+    @staticmethod
+    def goss_sampling(grad_and_hess, top_rate, other_rate):
+
+        sample_num = grad_and_hess.count()
+        g_h_generator = grad_and_hess.collect()
+        id_list, g_list, h_list = [], [], []
+        for id_, g_h in g_h_generator:
+            id_list.append(id_)
+            g_list.append(g_h[0])
+            h_list.append(g_h[1])
+
+        id_list = np.array(id_list)
+
+        g_arr = np.array(g_list)
+        h_arr = np.array(h_list)
+        abs_g_list_arr = np.abs(g_arr)
+        sorted_idx = abs_g_list_arr.argsort()
+
+        a_part_num = int(sample_num * top_rate)
+        b_part_num = int((sample_num - a_part_num) * other_rate)
+
+        # sample index of a part
+        a_sample_idx = sorted_idx[:a_part_num]
+
+        # get sample index of b part
+        rest_sample_idx = sorted_idx[a_part_num:]
+        b_sample_idx = np.random.choice(rest_sample_idx, size=b_part_num, replace=False)
+
+        # get selected sample
+        a_idx_set, b_idx_set = set(list(a_sample_idx)), set(list(b_sample_idx))
+        idx_set = a_idx_set.union(b_idx_set)
+        selected_idx = np.array(list(idx_set))
+        selected_g, selected_h = g_arr[selected_idx], h_arr[selected_idx]
+        selected_id = id_list[selected_idx]
+
+        data = [(id_, (g, h)) for id_, g, h in zip(selected_id, selected_g, selected_h)]
+        new_g_h_table = computing_session.parallelize(data, include_key=True, partition=grad_and_hess.partitions)
+
+        return new_g_h_table
 
     def update_feature_importance(self, tree_feature_importance):
         for fid in tree_feature_importance:
@@ -78,10 +137,16 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
     def fit_a_booster(self, epoch_idx: int, booster_dim: int):
 
         if self.cur_epoch_idx != epoch_idx:
-            self.grad_and_hess = self.compute_grad_and_hess(self.y_hat, self.y)
+            self.grad_and_hess = self.compute_grad_and_hess(self.y_hat, self.y, self.data_inst)
             self.cur_epoch_idx = epoch_idx
 
         g_h = self.get_grad_and_hess(self.grad_and_hess, booster_dim)
+
+        if self.enable_goss:
+            LOGGER.info('running goss')
+            g_h = self.goss_sampling(grad_and_hess=g_h, top_rate=self.top_rate, other_rate=self.other_rate)
+            LOGGER.info('sampled g_h count is {}, total sample num is {}'.format(g_h.count(),
+                                                                                 self.data_bin.count()))
 
         tree = HeteroDecisionTreeGuest(tree_param=self.tree_param)
         tree.set_input_data(self.data_bin, self.bin_split_points, self.bin_sparse_points)

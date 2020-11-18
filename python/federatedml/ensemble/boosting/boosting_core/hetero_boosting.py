@@ -139,6 +139,10 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
 
         LOGGER.info('begin to fit a hetero boosting model, model is {}'.format(self.model_name))
 
+        LOGGER.debug('data is {}'.format([i[1].features for i in list(data_inst.collect())]))
+
+        self.data_inst = data_inst
+
         self.data_bin, self.bin_split_points, self.bin_sparse_points = self.prepare_data(data_inst)
 
         self.y = self.get_label(self.data_bin)
