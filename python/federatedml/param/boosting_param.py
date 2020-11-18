@@ -415,12 +415,6 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         sparse_optimization: bool, Available when encrypted method is 'iterativeAffine'
                             An optimized mode for high-dimension, sparse data.
 
-        run_goss: bool, actiavate Gradient-based One-Side Sampling, which selects large gradient and small
-                   gradient samples using top_rate and other_rate.
-
-        top_rate: float, the retain ratio of large gradient data, used when run_goss is True
-
-        other_rate: float, the retain ratio of small gradient data, used when run_goss is True
         """
 
     def __init__(self, tree_param: DecisionTreeParam = DecisionTreeParam(), task_type=consts.CLASSIFICATION,
@@ -433,7 +427,7 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
                  validation_freqs=None, early_stopping_rounds=None, use_missing=False, zero_as_missing=False,
                  complete_secure=False, metrics=None, use_first_metric_only=False, subsample_random_seed=None,
                  binning_error=consts.DEFAULT_RELATIVE_ERROR,
-                 sparse_optimization=False, run_goss=False, top_rate=0.2, other_rate=0.1):
+                 sparse_optimization=False):
 
         super(HeteroSecureBoostParam, self).__init__(task_type, objective_param, learning_rate, num_trees,
                                                      subsample_feature_rate, n_iter_no_change, tol, encrypt_param,
@@ -448,9 +442,6 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         self.use_missing = use_missing
         self.complete_secure = complete_secure
         self.sparse_optimization = sparse_optimization
-        self.run_goss = run_goss
-        self.top_rate = top_rate
-        self.other_rate = other_rate
 
     def check(self):
 
@@ -462,9 +453,6 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
             raise ValueError('zero as missing should be bool type')
         self.check_boolean(self.complete_secure, 'complete_secure')
         self.check_boolean(self.sparse_optimization, 'sparse optimization')
-        self.check_boolean(self.run_goss, 'run goss')
-        self.check_decimal_float(self.top_rate, 'top rate')
-        self.check_decimal_float(self.other_rate, 'other rate')
 
         return True
 
@@ -480,7 +468,7 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  validation_freqs=None, early_stopping=None, use_missing=False, zero_as_missing=False,
                  complete_secure=False, tree_num_per_party=1, guest_depth=1, host_depth=1, work_mode='mix', metrics=None,
-                 sparse_optimization=False, subsample_random_seed=None, binning_error=consts.DEFAULT_RELATIVE_ERROR,):
+                 sparse_optimization=False, subsample_random_seed=None, binning_error=consts.DEFAULT_RELATIVE_ERROR):
 
         """
         work_mode：
@@ -565,3 +553,11 @@ class HomoSecureBoostParam(BoostingParam):
         if type(self.zero_as_missing) != bool:
             raise ValueError('zero as missing should be bool type')
         return True
+
+
+
+
+
+
+
+
