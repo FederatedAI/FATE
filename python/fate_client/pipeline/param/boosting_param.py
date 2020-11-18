@@ -473,7 +473,7 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  validation_freqs=None, early_stopping=None, use_missing=False, zero_as_missing=False,
                  complete_secure=False, tree_num_per_party=1, guest_depth=1, host_depth=1, work_mode='mix', metrics=None,
-                 subsample_random_seed=None, binning_error=consts.DEFAULT_RELATIVE_ERROR):
+                 subsample_random_seed=None, binning_error=consts.DEFAULT_RELATIVE_ERROR, sparse_optimization=False):
 
         """
         work_mode：
@@ -497,7 +497,7 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
                                                          predict_param, cv_param, validation_freqs, early_stopping,
                                                          use_missing, zero_as_missing, complete_secure, metrics=metrics,
                                                          subsample_random_seed=subsample_random_seed,
-                                                         binning_error=binning_error)
+                                                         binning_error=binning_error, sparse_optimization=sparse_optimization)
 
         self.tree_num_per_party = tree_num_per_party
         self.guest_depth = guest_depth
