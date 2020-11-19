@@ -376,7 +376,7 @@ Besides the dsl conf, user also need to prepare a submit runtime conf to set par
    * - model_id
      - \-
      - \-
-     - if of model, needed for prediction task
+     - id of model, needed for prediction task
 
    * - model_version
      - \-

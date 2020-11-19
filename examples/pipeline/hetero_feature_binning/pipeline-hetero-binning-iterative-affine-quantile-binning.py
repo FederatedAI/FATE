@@ -24,8 +24,7 @@ for i in range(4):
 print(f'fate_path: {cur_path}')
 sys.path.append(cur_path)
 
-from examples.pipeline.hetero_logistic_regression import common_tools
-
+from examples.pipeline.hetero_feature_binning import common_tools
 from pipeline.utils.tools import load_job_config
 from pipeline.runtime.entity import JobParameters
 
@@ -36,32 +35,35 @@ def main(config="../../config.yaml", namespace=""):
         config = load_job_config(config)
     backend = config.backend
     work_mode = config.work_mode
-
-    lr_param = {
-        "name": "hetero_lr_0",
-        "penalty": "L2",
-        "optimizer": "nesterov_momentum_sgd",
-        "tol": 1e-05,
-        "alpha": 0.0001,
-        "max_iter": 10,
-        "early_stop": "diff",
-        "validation_freqs": 1,
-        "early_stopping_rounds": 3,
-        "multi_class": "ovr",
-        "batch_size": -1,
-        "learning_rate": 0.15,
-        "init_param": {
-            "init_method": "zeros"
+    param = {
+        "name": "hetero_feature_binning_0",
+        "method": "quantile",
+        "compress_thres": 10000,
+        "head_size": 10000,
+        "error": 0.001,
+        "bin_num": 10,
+        "bin_indexes": -1,
+        "bin_names": None,
+        "category_indexes": None,
+        "category_names": None,
+        "adjustment_factor": 0.5,
+        "encrypt_param": {
+            "method": "IterativeAffine"
+        },
+        "local_only": False,
+        "transform_param": {
+            "transform_cols": -1,
+            "transform_names": None,
+            "transform_type": "bin_num"
         }
     }
-
-    pipeline = common_tools.make_normal_dsl(config, namespace, lr_param, is_ovr=True, has_validate=True)
-    # fit model
+    pipeline = common_tools.make_add_one_hot_dsl(config, namespace, param)
     job_parameters = JobParameters(backend=backend, work_mode=work_mode)
     pipeline.fit(job_parameters)
-    # query component summary
-    common_tools.prettify(pipeline.get_component("hetero_lr_0").get_summary())
-
+    # common_tools.prettify(pipeline.get_component("hetero_feature_binning_0").get_summary())
+    # summary = pipeline.get_component("hetero_feature_binning_0").get_summary()
+    # ivs = {x[0]: x[1] for x in summary["iv"]}
+    # common_tools.prettify(ivs)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("PIPELINE DEMO")
