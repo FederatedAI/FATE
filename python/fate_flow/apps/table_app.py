@@ -86,7 +86,15 @@ def table_api(table_func):
             table_key_count = table_meta.get_count()
             table_partition = table_meta.get_partitions()
             table_schema = table_meta.get_schema()
-        return get_json_result(data={'table_name': table_name, 'namespace': namespace, 'count': table_key_count, 'partition': table_partition, "schema": table_schema})
+            exist = 1
+        else:
+            exist = 0
+        return get_json_result(data={"table_name": table_name,
+                                     "namespace": namespace,
+                                     "exist": exist,
+                                     "count": table_key_count,
+                                     "partition": table_partition,
+                                     "schema": table_schema})
     else:
         return get_json_result()
 
