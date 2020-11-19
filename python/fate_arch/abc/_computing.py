@@ -84,6 +84,7 @@ class CTableABC(metaclass=ABCMeta):
     def take(self, n=1, **kwargs):
         """
         take ``n`` data from table
+
         Parameters
         ----------
         n: int
@@ -93,6 +94,10 @@ class CTableABC(metaclass=ABCMeta):
         -------
         list
            a list of ``n`` data
+
+        Notes
+        ------
+        no order guarantee
         """
         ...
 
@@ -105,6 +110,10 @@ class CTableABC(metaclass=ABCMeta):
         -------
         object
           a data from table
+
+        Notes
+        ------
+        no order guarantee
         """
         ...
 
@@ -275,6 +284,7 @@ class CTableABC(metaclass=ABCMeta):
     def flatMap(self, func):
         """
         apply a flat ``func`` to each data of table
+
         Parameters
         ----------
         func: ``typing.Callable[[object, object], typing.List[object, object]]``
@@ -381,6 +391,7 @@ class CTableABC(metaclass=ABCMeta):
     def filter(self, func):
         """
         returns a new table containing only those keys which satisfy a predicate passed in via ``func``.
+
         Parameters
         ----------
         func: typing.Callable[[object, object], bool]

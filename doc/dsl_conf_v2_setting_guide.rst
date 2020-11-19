@@ -78,7 +78,7 @@ Field Specification
       1. data: typically used in data_io, feature_engineering modules and evaluation.
       2. train_data: uses in training components like HeteroLR、HeteroSBT and so on. If this field is provided, the task will be parse as a **fit** task
       3. validate_data: If train_data is provided, this field is optional. In this case, this data will be used as validation set.
-      4. test_input: specify the data used to predict, if this field is set up, the **model** also needs.
+      4. test_data: specify the data used to predict, if this field is set up, the **model** also needs.
 
     - Model: There are two possible model-input types:
 

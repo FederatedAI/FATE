@@ -1,4 +1,4 @@
-#                     Fate cluster部署指南
+# Fate cluster部署指南
 
 # 1.总体介绍
 
@@ -6,7 +6,9 @@
 
 1）FATE
 
-FATE (Federated AI Technology Enabler) 是微众银行AI部门发起的开源项目，提供了一种基于数据隐私保护的安全计算框架，为机器学习、深度学习、迁移学习算法提供强有力的安全计算支持。 安全底层支持同态加密、秘密共享、哈希散列等多种多方安全计算机制，算法层支持多方安全计算模式下的逻辑回归、Boosting、联邦迁移学习等。
+FATE (Federated AI Technology Enabler) 是微众银行AI部门发起的开源项目，
+提供了一种基于数据隐私保护的安全计算框架，为机器学习、深度学习、迁移学习算法提供强有力的安全计算支持。
+安全底层支持同态加密、秘密共享、哈希散列等多种多方安全计算机制，算法层支持多方安全计算模式下的逻辑回归、Boosting、联邦迁移学习等。
 
 2）EggRoll
 
@@ -30,9 +32,7 @@ Eggroll 是一个适用于机器学习和深度学习的大规模分布式架构
 
 ### 1.3.系统架构
 
-<div style="text-align:center", align=center>
-<img src="../images/arch_zh.png" />
-</div>
+![](../images/arch_zh.png)
 
 # 2.详细设计
 
@@ -252,9 +252,7 @@ yum install -y epel-release
 
 ### 4.1 部署示意图
 
-<div style="text-align:center;width:500px",align=center>
-<img src="../images/deploy_cluster.png" />
-</div>
+![](../images/deploy_cluster.png)
 
 ### 4.2 系统检查
 
