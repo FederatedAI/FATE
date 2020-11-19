@@ -18,14 +18,15 @@ import os
 from fate_arch.common import file_utils
 from fate_flow.db.db_models import DB, Job
 from fate_flow.scheduler.dsl_parser import DSLParser, DSLParserV2
+from fate_flow.utils.config_adapter import JobRuntimeConfigAdapter
 
 
 @DB.connection_context()
 def get_job_dsl_parser_by_job_id(job_id):
-    jobs = Job.select(Job.f_dsl, Job.f_runtime_conf, Job.f_train_runtime_conf).where(Job.f_job_id == job_id)
+    jobs = Job.select(Job.f_dsl, Job.f_runtime_conf_on_party, Job.f_train_runtime_conf).where(Job.f_job_id == job_id)
     if jobs:
         job = jobs[0]
-        job_dsl_parser = get_job_dsl_parser(dsl=job.f_dsl, runtime_conf=job.f_runtime_conf,
+        job_dsl_parser = get_job_dsl_parser(dsl=job.f_dsl, runtime_conf=job.f_runtime_conf_on_party,
                                             train_runtime_conf=job.f_train_runtime_conf)
         return job_dsl_parser
     else:
@@ -33,12 +34,12 @@ def get_job_dsl_parser_by_job_id(job_id):
 
 
 def get_job_dsl_parser(dsl=None, runtime_conf=None, pipeline_dsl=None, train_runtime_conf=None):
-    parser_version = str(runtime_conf.get('job_parameters', {}).get('dsl_version', '1'))
+    parser_version = str(runtime_conf.get('dsl_version', '1'))
     dsl_parser = get_dsl_parser_by_version(parser_version)
     default_runtime_conf_path = os.path.join(file_utils.get_python_base_directory(),
                                              *['federatedml', 'conf', 'default_runtime_conf'])
     setting_conf_path = os.path.join(file_utils.get_python_base_directory(), *['federatedml', 'conf', 'setting_conf'])
-    job_type = runtime_conf.get('job_parameters', {}).get('job_type', 'train')
+    job_type = JobRuntimeConfigAdapter(runtime_conf).get_job_type()
     dsl_parser.run(dsl=dsl,
                    runtime_conf=runtime_conf,
                    pipeline_dsl=pipeline_dsl,
@@ -47,6 +48,25 @@ def get_job_dsl_parser(dsl=None, runtime_conf=None, pipeline_dsl=None, train_run
                    setting_conf_prefix=setting_conf_path,
                    mode=job_type)
     return dsl_parser
+
+
+def federated_order_reset(dest_partys, scheduler_partys_info):
+    dest_partys_new = []
+    scheduler = []
+    dest_party_ids_dict = {}
+    for dest_role, dest_party_ids in dest_partys:
+        from copy import deepcopy
+        new_dest_party_ids = deepcopy(dest_party_ids)
+        dest_party_ids_dict[dest_role] = new_dest_party_ids
+        for scheduler_role, scheduler_party_id in scheduler_partys_info:
+            if dest_role == scheduler_role and scheduler_party_id in dest_party_ids:
+                dest_party_ids_dict[dest_role].remove(scheduler_party_id)
+                scheduler.append((scheduler_role, [scheduler_party_id]))
+        if dest_party_ids_dict[dest_role]:
+            dest_partys_new.append((dest_role, dest_party_ids_dict[dest_role]))
+    if scheduler:
+        dest_partys_new.extend(scheduler)
+    return dest_partys_new
 
 
 def get_parser_version_mapping():

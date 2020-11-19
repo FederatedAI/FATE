@@ -20,12 +20,13 @@ import pandas
 from sklearn.linear_model.logistic import LogisticRegression
 from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import roc_auc_score, precision_score, accuracy_score, recall_score, roc_curve
+import os
 
 from sklearn.model_selection import train_test_split
 from pipeline.utils.tools import JobConfig
 
 
-def main(param):
+def main(config="../../config.yaml", param="./vechile_config.yaml"):
     # obtain config
     if isinstance(param, str):
         param = JobConfig.load_from_file(param)
@@ -35,6 +36,11 @@ def main(param):
     idx = param["idx"]
     label_name = param["label_name"]
 
+    if isinstance(config, str):
+        config = JobConfig.load_from_file(config)
+        data_base_dir = config["data_base_dir"]
+    else:
+        data_base_dir = config.data_base_dir
 
     config_param = {
         "penalty": param["penalty"],
@@ -45,8 +51,8 @@ def main(param):
     }
 
     # prepare data
-    df_guest = pandas.read_csv(data_guest, index_col=idx)
-    df_host = pandas.read_csv(data_host, index_col=idx)
+    df_guest = pandas.read_csv(os.path.join(data_base_dir, data_guest), index_col=idx)
+    df_host = pandas.read_csv(os.path.join(data_base_dir, data_host), index_col=idx)
     df = df_guest.join(df_host, rsuffix="host")
     y = df[label_name]
     X = df.drop(label_name, axis=1)
@@ -71,7 +77,7 @@ def main(param):
     fpr, tpr, thresholds = roc_curve(y_test, y_prob)
 
     ks = max(tpr - fpr)
-    result = {"auc": auc_score, "recall": recall, "precision": pr, "accuracy": acc, "ks": ks}
+    result = {"auc": auc_score, "recall": recall, "precision": pr, "accuracy": acc}
     print(result)
     print(f"coef_: {lm_fit.coef_}, intercept_: {lm_fit.intercept_}, n_iter: {lm_fit.n_iter_}")
     return {}, result

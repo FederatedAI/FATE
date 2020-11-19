@@ -194,17 +194,14 @@ class FeatureHistogram(object):
                             valid_features=None, node_map=None,
                             use_missing=False, zero_as_missing=False, ret="tensor"):
 
-        eggroll_version = get_eggroll_version()
-        LOGGER.info("bin_shape is {}, node num is {}, eggroll version is {}".format(bin_split_points.shape,
-                                                                                    len(node_map),
-                                                                                    eggroll_version))
+        LOGGER.info("bin_shape is {}, node num is {}".format(bin_split_points.shape, len(node_map)))
 
         batch_histogram_cal = functools.partial(
             FeatureHistogram.batch_calculate_histogram,
             bin_split_points=bin_split_points, bin_sparse_points=bin_sparse_points,
             valid_features=valid_features, node_map=node_map,
             use_missing=use_missing, zero_as_missing=zero_as_missing,
-            with_uuid=True if eggroll_version.startswith('2.0') else False)
+            with_uuid=False)
 
         agg_histogram = functools.partial(FeatureHistogram.aggregate_histogram, node_map=node_map)
         # reformat, now format is: key, ((data_instance, node position), (g, h))
@@ -224,40 +221,17 @@ class FeatureHistogram(object):
 
                 histograms_table = session.parallelize(hist_list, partition=data_bin.partitions, include_key=True)
                 return FeatureHistogram.construct_table(histograms_table)
+
         else:
-
-            if eggroll_version.startswith('2.0'):
-
-                # behavior of old eggroll
-
-                batch_histograms = batch_histogram_intermediate_rs.mapPartitions(batch_histogram_cal,
-                                                                                 use_previous_behavior=False)
-                from federatedml.util.reduce_by_key import reduce
-                histograms_dict = reduce(batch_histograms, agg_histogram, key_func=lambda key: (key[1], key[2]))
-
-                if ret == "tensor":
-                    feature_num = bin_split_points.shape[0]
-                    rs = FeatureHistogram.recombine_histograms_(histograms_dict, node_map, feature_num)
-                    return rs
-                else:
-                    return FeatureHistogram.construct_table_(histograms_dict, data_bin.partitions)
-
-            elif eggroll_version.startswith('2.2'):
-
-                # behaviour of eggroll 2.2
-
-                histograms_table = batch_histogram_intermediate_rs.mapReducePartitions(batch_histogram_cal,
-                                                                                       agg_histogram)
-                if ret == "tensor":
-                    feature_num = bin_split_points.shape[0]
-                    histogram_list = list(histograms_table.collect())
-                    rs = FeatureHistogram.recombine_histograms(histogram_list, node_map, feature_num)
-                    return rs
-                else:
-                    return FeatureHistogram.construct_table(histograms_table)
-
+            histograms_table = batch_histogram_intermediate_rs.mapReducePartitions(batch_histogram_cal,
+                                                                                   agg_histogram)
+            if ret == "tensor":
+                feature_num = bin_split_points.shape[0]
+                histogram_list = list(histograms_table.collect())
+                rs = FeatureHistogram.recombine_histograms(histogram_list, node_map, feature_num)
+                return rs
             else:
-                raise ValueError('unsupported eggroll version {}'.format(eggroll_version))
+                return FeatureHistogram.construct_table(histograms_table)
 
     @staticmethod
     def aggregate_histogram(fid_histogram1, fid_histogram2, node_map):
@@ -413,21 +387,3 @@ class FeatureHistogram(object):
     def construct_table(histograms_table):
         histograms_table = histograms_table.mapValues(FeatureHistogram.host_accumulate_histogram_map_func)
         return histograms_table
-
-    @staticmethod
-    def recombine_histograms_(histograms_dict, node_map, feature_num):
-        histograms = [[[] for j in range(feature_num)] for k in range(len(node_map))]
-        for key in histograms_dict:
-            nid, fid = key
-            histograms[int(nid)][int(fid)] = FeatureHistogram.tensor_histogram_cumsum(histograms_dict[key][1])
-
-        return histograms
-
-    @staticmethod
-    def construct_table_(histograms_dict, partition):
-        buf = []
-        for key in histograms_dict:
-            nid, fid = key
-            buf.append((key, (fid, FeatureHistogram.tensor_histogram_cumsum(histograms_dict[key][1]))))
-
-        return session.parallelize(buf, include_key=True, partition=partition)

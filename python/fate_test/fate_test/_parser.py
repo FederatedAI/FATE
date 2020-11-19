@@ -87,34 +87,38 @@ class JobConf(object):
                  initiator: dict,
                  role: dict,
                  job_parameters: dict,
-                 role_parameters: dict,
-                 algorithm_parameters: dict = None,
                  **kwargs):
         self.initiator = initiator
         self.role = role
         self.job_parameters = job_parameters
-        self.role_parameters = role_parameters
-        self.algorithm_parameters = algorithm_parameters or {}
+        self.others_kwargs = kwargs
 
     def as_dict(self):
         return dict(
             initiator=self.initiator,
             role=self.role,
             job_parameters=self.job_parameters,
-            role_parameters=self.role_parameters,
-            algorithm_parameters=self.algorithm_parameters
+            **self.others_kwargs
         )
 
     @staticmethod
     def load(path: Path):
         with path.open("r") as f:
             kwargs = json.load(f, object_hook=CONF_JSON_HOOK.hook)
+
         return JobConf(**kwargs)
 
     def update(self, parties: Parties, work_mode, backend):
         self.initiator = parties.extract_initiator_role(self.initiator['role'])
         self.role = parties.extract_role({role: len(parties) for role, parties in self.role.items()})
-        self.job_parameters.update(dict(work_mode=work_mode, backend=backend))
+        self.update_job_common_parameters(work_mode=work_mode, backend=backend)
+
+    def update_job_common_parameters(self, **kwargs):
+        dsl_version = self.others_kwargs.get("dsl_version", 1)
+        if dsl_version == 1:
+            self.job_parameters.update(**kwargs)
+        else:
+            self.job_parameters.setdefault("common", {}).update(**kwargs)
 
 
 class JobDSL(object):
@@ -159,7 +163,7 @@ class Job(object):
     def set_pre_work(self, name, **kwargs):
         if name not in self.pre_works:
             raise RuntimeError(f"{self} not dependents on {name} right now")
-        self.job_conf.job_parameters.update(**kwargs)
+        self.job_conf.update_job_common_parameters(**kwargs)
         self.pre_works.remove(name)
 
     def is_submit_ready(self):

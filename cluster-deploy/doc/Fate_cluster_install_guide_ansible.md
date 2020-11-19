@@ -1,4 +1,4 @@
-#                     Fate cluster部署指南
+# Fate cluster部署指南
 
 # 1.总体介绍
 
@@ -6,7 +6,9 @@
 
 1）FATE
 
-FATE (Federated AI Technology Enabler) 是微众银行AI部门发起的开源项目，提供了一种基于数据隐私保护的安全计算框架，为机器学习、深度学习、迁移学习算法提供强有力的安全计算支持。 安全底层支持同态加密、秘密共享、哈希散列等多种多方安全计算机制，算法层支持多方安全计算模式下的逻辑回归、Boosting、联邦迁移学习等。
+FATE (Federated AI Technology Enabler) 是微众银行AI部门发起的开源项目，
+提供了一种基于数据隐私保护的安全计算框架，为机器学习、深度学习、迁移学习算法提供强有力的安全计算支持。
+安全底层支持同态加密、秘密共享、哈希散列等多种多方安全计算机制，算法层支持多方安全计算模式下的逻辑回归、Boosting、联邦迁移学习等。
 
 2）EggRoll
 
@@ -30,9 +32,7 @@ Eggroll 是一个适用于机器学习和深度学习的大规模分布式架构
 
 ### 1.3.系统架构
 
-<div style="text-align:center", align=center>
-<img src="../images/arch_zh.png" />
-</div>
+![](../images/arch_zh.png)
 
 # 2.详细设计
 
@@ -40,10 +40,10 @@ Eggroll 是一个适用于机器学习和深度学习的大规模分布式架构
 
  本示例是每端只有一台主机，每端可以多台主机，目前只支持nodemanager多节点部署，其他组件都是单节点。
 
-| role  | partyid | IP地址                | 操作系统   | 主机配置 | 存储 | 部署模块                                                     |
-| ----- | ------- | --------------------- | ---------- | -------- | ---- | ------------------------------------------------------------ |
-| host  | 10000   | 192.168.0.1 （有外网) | CentOS 7.2 | 8C16G    | 500G | fate_flow，fateboard，clustermanager，nodemanger，rollsite，mysql |
-| guest | 9999    | 192.168.0.2           | CentOS 7.2 | 8C16G    | 500G | fate_flow，fateboard，clustermanager，nodemanger，rollsite，mysql |
+| role  | partyid | IP地址                | 操作系统                | 主机配置 | 存储 | 部署模块                                                     |
+| ----- | ------- | --------------------- | ----------------------- | -------- | ---- | ------------------------------------------------------------ |
+| host  | 10000   | 192.168.0.1 （有外网) | CentOS 7.2/Ubuntu 18.04 | 8C16G    | 500G | fate_flow，fateboard，clustermanager，nodemanger，rollsite，mysql |
+| guest | 9999    | 192.168.0.2           | CentOS 7.2/Ubuntu 18.04 | 8C16G    | 500G | fate_flow，fateboard，clustermanager，nodemanger，rollsite，mysql |
 
 备注：涉及exchange说明会用192.168.0.88表示其IP，但本次示例不涉及exchange的部署。
 
@@ -52,8 +52,8 @@ Eggroll 是一个适用于机器学习和深度学习的大规模分布式架构
 | **类别** | **说明**                                                     |
 | -------- | ------------------------------------------------------------ |
 | 主机配置 | 不低于8C16G500G，千兆网卡                                    |
-| 操作系统 | CentOS linux 7.2及以上同时低于8                              |
-| 依赖包   | 需要安装如下依赖包：<br/>#centos<br/>gcc gcc-c++ make openssl-devel gmp-devel mpfr-devel libmpc-devel libaio <br/>numactl autoconf automake libtool libffi-devel ansible jq supervisor |
+| 操作系统 | CentOS linux 7.2及以上同时低于8/Ubuntu 18.04                 |
+| 依赖包   | 需要安装如下依赖包：<br/>#centos<br/>gcc gcc-c++ make openssl-devel gmp-devel mpfr-devel libmpc-devel libaio <br/>numactl autoconf automake libtool libffi-devel ansible<br/>#ubuntu<br/>gcc g++ make openssl ansible libgmp-dev libmpfr-dev libmpc-dev <br/>libaio1 libaio-dev numactl autoconf automake libtool libffi-dev <br/>cd /usr/lib/x86_64-linux-gnu<br/>if [ ! -f "libssl.so.10" ];then<br/>   ln -s libssl.so.1.0.0 libssl.so.10<br/>   ln -s libcrypto.so.1.0.0 libcrypto.so.10<br/>fi |
 | 用户     | 用户：app，属主：apps（app用户需可以sudo su root而无需密码） |
 | 文件系统 | 1、数据盘挂载在/data目录下。<br>2、创建/data/projects目录，目录属主为：app:apps。<br/>3、根目录空闲空间不低于20G。 |
 | 虚拟内存 | 不低于128G                                                   |
@@ -229,12 +229,20 @@ echo '/data/swapfile128G swap swap defaults 0 0' >> /etc/fstab
 
 ```
 #安装基础依赖包
+#centos
 yum install -y gcc gcc-c++ make openssl-devel gmp-devel mpfr-devel libmpc-devel libaio numactl autoconf automake
-#如果有报错，需要解决yum源问题。
+#ubuntu
+apt-get install -y gcc g++ make openssl libgmp-dev libmpfr-dev libmpc-dev libaio1 libaio-dev numactl autoconf automake libtool libffi-dev
+#如果有报错，需要解决依赖安装源问题。
 
 #安装ansible和进程管理依赖包
+#centos
 yum install -y ansible
-#如果有报错同时服务器有外网，没有外网的需要解决yum源不全的问题，执行：
+#ubuntu
+apt-get install -y ansible
+
+#如果安装有报错同时服务器有外网，没有外网的需要解决yum源不全的问题，执行：
+#centos
 yum install -y epel-release
 #增加一个更全面的第三方的源，然后再重新安装ansible
 ```
@@ -244,9 +252,7 @@ yum install -y epel-release
 
 ### 4.1 部署示意图
 
-<div style="text-align:center;width:500px",align=center>
-<img src="../images/deploy_cluster.png" />
-</div>
+![](../images/deploy_cluster.png)
 
 ### 4.2 系统检查
 
@@ -296,8 +302,8 @@ ls -lrt /data/projects/common/supervisord/supervisord.d/fate-*.conf
 ```
 #注意：URL链接有换行，拷贝的时候注意整理成一行
 cd /data/projects/
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/ansible_nfate_1.5.0_preview-1.0.0.tar.gz
-tar xzf ansible_nfate_1.5.0_preview-1.0.0.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/ansible_nfate_1.5.0_release-1.0.0.tar.gz
+tar xzf ansible_nfate_1.5.0_release-1.0.0.tar.gz
 ```
 
 ### 4.4 配置文件修改和示例
@@ -383,16 +389,7 @@ ansible_become_pass=   ---各个主机未做免密sudo需填写root密码
 
 ```
 
-**2）修改部署模式**
-
-```
-vi /data/projects/ansible-nfate-1.*/var_files/prod/fate_init
-
-#只修改如下参数，其他参数默认不变
-deploy_mode: "install" ---默认为空，修改为install，表示新部署
-```
-
-**3）修改host方参数**
+**2）修改host方参数**
 
 **注意：默认是不启用安全证书的配置，如果启用安全证书通讯需把server_secure，client_secure，is_secure设置为true，以及is_secure对应的port设置为9371**。
 
@@ -413,6 +410,8 @@ host:
       max_memory:    ---rollsite进程JVM内存参数，默认是物理内存的1/4，可根据实际情况设置,如12G，如果是rollsite专用的机器，配置成物理内存的75%。
       server_secure: False ---作为服务端，开启安全证书验证，不使用安全证书默认即可
       client_secure: False ---作为客户端，使用证书发起安全请求，不使用安全证书默认即可
+      polling: ---是否使用单向模式，本示例不支持，默认false即可
+        enable: False
       default_rules: ---本party指向exchange或者其他party的IP、端口路由配置
       - name: default
         ip: 192.168.0.2 ---exchange或者对端party rollsite IP
@@ -446,6 +445,7 @@ host:
       grpcPort: 9360
       httpPort: 9380
       dbname: "fate_flow"
+      proxy: rollsite ---fate_flow通讯服务的前置代理是rollsite还是nginx，默认即可
     fateboard:
       enable: True
       ips:
@@ -490,6 +490,8 @@ guest:
       max_memory:    ---rollsite进程JVM内存参数，默认是物理内存的1/4，可根据实际情况设置,如12G，如果是rollsite专用的机器，配置成物理内存的75%。
       server_secure: False ---作为服务端，开启安全证书验证，不使用安全证书默认即可
       client_secure: False ---作为客户端，使用证书发起安全请求，不使用安全证书默认即可
+      polling: ---是否使用单向模式，本示例不支持，默认false即可
+        enable: False
       default_rules:  ---本party指向exchange或者其他party的IP、端口路由配置
       - name: default
         ip: 192.168.0.1 ---exchange或者对端party rollsite IP
@@ -523,6 +525,7 @@ guest:
       grpcPort: 9360
       httpPort: 9380
       dbname: "fate_flow"
+      proxy: rollsite  ---fate_flow通讯服务的前置代理是rollsite还是nginx，默认即可
     fateboard:
       enable: True
       ips:  ---只支持部署一台主机
@@ -565,6 +568,9 @@ exchange:
     max_memory:    ---rollsite进程JVM内存参数，默认是物理内存的1/4，可根据实际情况设置,如12G，如果是rollsite专用的机器，配置成物理内存的75%。
     server_secure: False ---作为服务端，开启安全证书验证，不使用安全证书默认即可
     client_secure: False ---作为客户端，使用证书发起安全请求，不使用安全证书默认即可
+    polling:  ---是否使用单向模式，本示例不支持，默认false即可
+      enable: False
+      id: 10000
   partys:  ---指向各party的路由配置
   - id: 10000
     rules:
@@ -675,6 +681,8 @@ python run_toy_example.py 10000 10000 1
 
 "2020-04-28 18:26:20,789 - secure_add_guest.py[line:126] - INFO: success to calculate secure_sum, it is 1999.9999999999998"
 
+提示：如出现max cores per job is 1, please modify job parameters报错提示，需要修改当前目录下文件toy_example_conf.json中参数eggroll.session.processors.per.node为1.
+
 2）192.168.0.2上执行，guest_partyid和host_partyid都设为9999：
 
 ```
@@ -778,7 +786,7 @@ sh service.sh start fate-fateflow
 启动/关闭/重启/查看单个模块(可选：clustermanager，nodemanager，rollsite，fateflow，fateboard，mysql)：
 
 ```
-sh service.sh start/stop/rsstart/status fate-clustermanager
+sh service.sh start/stop/restart/status fate-clustermanager
 ```
 
 

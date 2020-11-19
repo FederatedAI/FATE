@@ -18,7 +18,7 @@
 
 set -e
 source_dir=$(cd `dirname $0`; cd ../;pwd)
-support_modules=(python examples fateboard eggroll proxy)
+support_modules=(bin conf python examples fateboard eggroll proxy)
 packaging_modules=()
 echo ${source_dir}
 if [[ -n ${1} ]]; then
@@ -38,12 +38,23 @@ echo "[INFO] Package output dir is "${package_dir}
 rm -rf ${package_dir} ${package_dir}-${version_tag}".tar.gz"
 mkdir -p ${package_dir}
 
+function packaging_bin() {
+    echo "[INFO] Package bin start"
+    cp -r bin ${package_dir}/
+    echo "[INFO] Package bin done"
+}
+
+function packaging_conf() {
+    echo "[INFO] Package conf start"
+    cp fate.env RELEASE.md python/requirements.txt ${package_dir}/
+    cp -r conf ${package_dir}/
+    echo "[INFO] Package bin done"
+}
 
 function packaging_python(){
-    echo "[INFO] Package fate start"
-    cp fate.env RELEASE.md ${package_dir}/
-    cp -r bin conf python ${package_dir}/
-    echo "[INFO] Package fate done"
+    echo "[INFO] Package python start"
+    cp -r python ${package_dir}/
+    echo "[INFO] Package python done"
 }
 
 function packaging_examples(){
@@ -159,7 +170,7 @@ compress(){
                 md5_value=`md5sum ${module}.tar.gz | awk '{print $1}'`
                 ;;
         esac
-        echo "${module} ${md5_value}" >> ./packages_md5.txt
+        echo "${module}:${md5_value}" >> ./packages_md5.txt
         rm -rf ./${module}
     done
     echo "[INFO] Compress done"

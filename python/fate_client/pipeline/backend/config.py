@@ -24,7 +24,7 @@ __all__ = ["Backend", "WorkMode", "JobStatus", "VERSION", "SERVER_VERSION", "TIM
 
 VERSION = 2
 SERVER_VERSION = "v1"
-TIME_QUERY_FREQS = 0.01
+TIME_QUERY_FREQS = 0.5
 
 
 class Role(object):

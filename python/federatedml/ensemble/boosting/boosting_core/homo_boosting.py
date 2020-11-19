@@ -147,31 +147,10 @@ class HomoBoostingClient(Boosting, ABC):
 
         self.set_summary(self.generate_summary())
 
-    def lazy_predict(self, data_inst):
-
-        LOGGER.debug('running lazy predict')
-        to_predict_data = self.data_alignment(data_inst)
-
-        init_score = self.init_score
-        self.predict_y_hat = data_inst.mapValues(lambda x: init_score)
-        rounds = len(self.boosting_model_list) // self.booster_dim
-
-        for idx in range(0, rounds):
-            for booster_idx in range(self.booster_dim):
-                model = self.load_booster(self.booster_meta,
-                                          self.boosting_model_list[idx * self.booster_dim + booster_idx],
-                                          idx, booster_idx)
-                score = model.predict(to_predict_data)
-                self.predict_y_hat = self.get_new_predict_score(self.predict_y_hat, score, dim=booster_idx)
-
-        LOGGER.debug('prediction finished')
-
-        return self.score_to_predict_result(data_inst, self.predict_y_hat)
-
     @assert_io_num_rows_equal
     def predict(self, data_inst):
-        rs = self.lazy_predict(data_inst)
-        return rs
+        # predict is implemented in homo_secureboost
+        raise NotImplementedError('predict func is not implemented')
 
     @abc.abstractmethod
     def fit_a_booster(self, epoch_idx: int, booster_dim: int):

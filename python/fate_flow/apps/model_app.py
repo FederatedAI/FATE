@@ -36,6 +36,7 @@ from fate_flow.utils.detect_utils import check_config
 from fate_flow.utils.model_utils import gen_party_model_id
 from fate_flow.entity.types import ModelOperation, TagOperation
 from fate_arch.common import file_utils, WorkMode, FederatedMode
+from fate_flow.entity.types import JobStatus
 
 manager = Flask(__name__)
 
@@ -198,7 +199,7 @@ def do_migrate_model():
 @manager.route('/load/do', methods=['POST'])
 def do_load_model():
     request_data = request.json
-    request_data["servings"] = ServiceUtils.get("servings", {}).get('hosts', [])
+    adapter_servings_config(request_data)
     retcode, retmsg = publish_model.load_model(config_data=request_data)
     try:
         if not retcode:
@@ -256,7 +257,7 @@ def bind_model_service():
                                           "Please check if the model version is valid.".format(request_config.get('job_id')))
     if not request_config.get('servings'):
         # get my party all servings
-        request_config['servings'] = ServiceUtils.get("servings", {}).get('hosts', [])
+        adapter_servings_config(request_config)
     service_id = request_config.get('service_id')
     if not service_id:
         return get_json_result(retcode=101, retmsg='no service id')
@@ -309,9 +310,12 @@ def operate_model(model_operation):
                     shutil.rmtree(model.model_path)
                     raise Exception("party id {} is not in model roles, please check if the party id is valid.")
                 try:
+                    from fate_flow.utils.config_adapter import JobRuntimeConfigAdapter
+                    adapter = JobRuntimeConfigAdapter(train_runtime_conf)
+                    job_parameters = adapter.get_common_parameters().to_dict()
                     with DB.connection_context():
                         model = MLModel.get_or_none(
-                            MLModel.f_job_id == train_runtime_conf["job_parameters"]["model_version"],
+                            MLModel.f_job_id == job_parameters.get("model_version"),
                             MLModel.f_role == request_config["role"]
                         )
                         if not model:
@@ -328,10 +332,10 @@ def operate_model(model_operation):
                                 f_work_mode=train_runtime_conf["job_parameters"]["work_mode"],
                                 f_dsl=json_loads(pipeline.train_dsl),
                                 f_imported=1,
-                                f_job_status='complete'
+                                f_job_status=JobStatus.SUCCESS
                             )
                         else:
-                            stat_logger.info(f'job id: {train_runtime_conf["job_parameters"]["model_version"]}, '
+                            stat_logger.info(f'job id: {job_parameters.get("model_version")}, '
                                              f'role: {request_config["role"]} model info already existed in database.')
                 except peewee.IntegrityError as e:
                     stat_logger.exception(e)
@@ -360,10 +364,8 @@ def operate_model(model_operation):
     else:
         data = {}
         job_dsl, job_runtime_conf = gen_model_operation_job_config(request_config, model_operation)
-        job_id, job_dsl_path, job_runtime_conf_path, logs_directory, model_info, board_url = DAGScheduler.submit(
-            {'job_dsl': job_dsl, 'job_runtime_conf': job_runtime_conf}, job_id=job_id)
-        data.update({'job_dsl_path': job_dsl_path, 'job_runtime_conf_path': job_runtime_conf_path,
-                     'board_url': board_url, 'logs_directory': logs_directory})
+        submit_result = DAGScheduler.submit({'job_dsl': job_dsl, 'job_runtime_conf': job_runtime_conf}, job_id=job_id)
+        data.update(submit_result)
         operation_record(data=job_runtime_conf, oper_type=model_operation, oper_status='')
         return get_json_result(job_id=job_id, data=data)
 
@@ -546,15 +548,33 @@ def operation_record(data: dict, oper_type, oper_status):
                            f_initiator_role=data.get("initiator").get("role"),
                            f_initiator_party_id=data.get("initiator").get("party_id"),
                            f_request_ip=request.remote_addr,
-                           f_model_id=data.get("job_parameters").get("model_id"),
-                           f_model_version=data.get("job_parameters").get("model_version"))
+                           f_model_id=data.get('job_parameters').get("model_id"),
+                           f_model_version=data.get('job_parameters').get("model_version"))
+        elif oper_type == 'bind':
+            OperLog.create(f_operation_type=oper_type,
+                           f_operation_status=oper_status,
+                           f_initiator_role=data.get("initiator").get("role"),
+                           f_initiator_party_id=data.get("party_id") if data.get("party_id") else data.get("initiator").get("party_id"),
+                           f_request_ip=request.remote_addr,
+                           f_model_id=data.get("model_id") if data.get("model_id") else data.get('job_parameters').get("model_id"),
+                           f_model_version=data.get("model_version") if data.get("model_version") else data.get('job_parameters').get("model_version"))
         else:
             OperLog.create(f_operation_type=oper_type,
                            f_operation_status=oper_status,
                            f_initiator_role=data.get("role") if data.get("role") else data.get("initiator").get("role"),
                            f_initiator_party_id=data.get("party_id") if data.get("party_id") else data.get("initiator").get("party_id"),
                            f_request_ip=request.remote_addr,
-                           f_model_id=data.get("model_id") if data.get("model_id") else data.get("job_parameters").get("model_id"),
-                           f_model_version=data.get("model_version") if data.get("model_version") else data.get("job_parameters").get("model_version"))
+                           f_model_id=data.get("model_id") if data.get("model_id") else data.get('job_parameters').get("model_id"),
+                           f_model_version=data.get("model_version") if data.get("model_version") else data.get('job_parameters').get("model_version"))
     except Exception:
         stat_logger.error(traceback.format_exc())
+
+
+def adapter_servings_config(request_data):
+    servings_conf = ServiceUtils.get("servings", {})
+    if isinstance(servings_conf, dict):
+        request_data["servings"] = servings_conf.get('hosts', [])
+    elif isinstance(servings_conf, list):
+        request_data["servings"] = servings_conf
+    else:
+        raise Exception('Please check the servings config')

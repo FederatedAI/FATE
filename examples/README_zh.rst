@@ -3,9 +3,18 @@ Example Usage Guide
 
 本章节介绍examples目录，它提供了pipeline样例、dsl的配置、
 以及正确性对比验证回归的样例、常规建模模版等。
+
 为方便用户快速使用样例，FATE提供样例执行工具`FATE-Test <../python/fate_test/README.rst>`__.
 
-下面将具体介绍主要的功能模块。
+为方便使用dsl/conf，我们建议用户安装使用`FATE-Client <../python/fate_client/README.rst>`__.
+
+欢迎参考以下文档，快速上手DSL/Pipeline。
+
+1. `DSL v1 train and predict quick tutorial <./experiment_template/user_usage/dsl_v1_predict_tutorial.md>`__.
+2. `DSL v2 train and predict quick tutorial <./experiment_template/user_usage/dsl_v2_predict_tutorial.md>`__.
+3. `Pipeline train and predict quick tutorial <./experiment_template/user_usage/pipeline_predict_tutorial.md>`__.
+
+下面将具体介绍主要的样例模块。
 
 FATE-Pipeline
 -------------
@@ -14,6 +23,60 @@ FATE-Pipeline
 用户可通过python编程快速搭建联邦学习模型，具体教程可参考
 `FATE-Pipeline <../python/fate_client/pipeline/README.rst>`__.
 我们对于每个算法模块也提供了大量的Pipeline搭建联邦学习模型的样例，具体可参考\ `pipeline <./pipeline>`__.
+
+下面样例为使用FATE-Pipeline快速建模纵向SecureBoost模型：
+
+.. code-block:: python
+
+    import json
+    from pipeline.backend.config import Backend, WorkMode
+    from pipeline.backend.pipeline import PipeLine
+    from pipeline.component import Reader, DataIO, Intersection, HeteroSecureBoost, Evaluation
+    from pipeline.interface import Data
+    from pipeline.runtime.entity import JobParameters
+
+    guest_train_data = {"name": "breast_hetero_guest", "namespace": "experiment"}
+    host_train_data = {"name": "breast_hetero_host", "namespace": "experiment"}
+
+    # initialize pipeline
+    pipeline = PipeLine().set_initiator(role="guest", party_id=9999).set_roles(guest=9999, host=10000)
+
+    # define components
+    reader_0 = Reader(name="reader_0")
+    reader_0.get_party_instance(role="guest", party_id=9999).component_param(table=guest_train_data)
+    reader_0.get_party_instance(role="host", party_id=10000).component_param(table=host_train_data)
+    dataio_0 = DataIO(name="dataio_0", with_label=True)
+    dataio_0.get_party_instance(role="host", party_id=10000).component_param(with_label=False)
+    intersect_0 = Intersection(name="intersection_0")
+    hetero_secureboost_0 = HeteroSecureBoost(name="hetero_secureboost_0",
+                                             num_trees=5,
+                                             bin_num=16,
+                                             task_type="classification",
+                                             objective_param={"objective": "cross_entropy"},
+                                             encrypt_param={"method": "iterativeAffine"},
+                                             tree_param={"max_depth": 3})
+    evaluation_0 = Evaluation(name="evaluation_0", eval_type="binary")
+
+    # add components to pipeline, in order of task execution
+    pipeline.add_component(reader_0)\
+        .add_component(dataio_0, data=Data(data=reader_0.output.data))\
+        .add_component(intersect_0, data=Data(data=dataio_0.output.data))\
+        .add_component(hetero_secureboost_0, data=Data(train_data=intersect_0.output.data))\
+        .add_component(evaluation_0, data=Data(data=hetero_secureboost_0.output.data))
+
+    # compile & fit pipeline
+    pipeline.compile().fit(JobParameters(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE))
+
+    # query component summary
+    print(f"Evaluation summary:\n{json.dumps(pipeline.get_component('evaluation_0').get_summary(), indent=4)}")
+
+    # Evaluation summary:
+    # {
+    #   "auc": 0.9971790603033666,
+    #   "ks": 0.9624094920987263
+    # }
+
+以上样例代码可在`此处 <./pipeline/demo/pipeline-quick-demo.py>`__\获取。
 
 DSL
 ---
@@ -27,7 +90,8 @@ DSL是FATE提供的第一代配置和构建联邦建模任务的方式，具体�
 3. 统一算法参数配置风格，role_parameter和algorithm_parameter规范统一
 
 关于最新的DSL各算法组件样例可参考 `dsl/v2 <./dsl/v2>`__\ ，旧的DSL可参考
-`dsl/v1 <./dsl/v1>`__\ ，需要注意的是，在FATE-v1.6或者以后的版本里面，旧版本的DSL将会被逐步移除。
+`dsl/v1 <./dsl/v1>`__\ ，此文件夹是在过去版本中对应的"federatedml-1.x-examples"文件夹。
+需要注意的是，在FATE-v1.6或者以后的版本里面，旧版本的DSL将会被逐步移除。
 
 Benchmark Quality
 -----------------

@@ -15,16 +15,15 @@
 #
 
 import argparse
+import os
 
 import pandas
-from sklearn.linear_model.logistic import LogisticRegression
-from sklearn.linear_model import SGDClassifier
-from sklearn.metrics import roc_auc_score, precision_score, accuracy_score, recall_score, roc_curve
-
 from pipeline.utils.tools import JobConfig
+from sklearn.linear_model import SGDClassifier
+from sklearn.metrics import precision_score, accuracy_score, recall_score
 
 
-def main(param="./vechile_config.yaml"):
+def main(config="../../config.yaml", param="./vechile_config.yaml"):
     # obtain config
     if isinstance(param, str):
         param = JobConfig.load_from_file(param)
@@ -35,6 +34,11 @@ def main(param="./vechile_config.yaml"):
     idx = param["idx"]
     label_name = param["label_name"]
 
+    if isinstance(config, str):
+        config = JobConfig.load_from_file(config)
+        data_base_dir = config["data_base_dir"]
+    else:
+        data_base_dir = config.data_base_dir
 
     config_param = {
         "penalty": param["penalty"],
@@ -45,8 +49,9 @@ def main(param="./vechile_config.yaml"):
     }
 
     # prepare data
-    df_guest = pandas.read_csv(data_guest, index_col=idx)
-    df_host = pandas.read_csv(data_host, index_col=idx)
+    df_guest = pandas.read_csv(os.path.join(data_base_dir, data_guest), index_col=idx)
+    df_host = pandas.read_csv(os.path.join(data_base_dir, data_host), index_col=idx)
+
     df = df_guest.join(df_host, rsuffix="host")
     y = df[label_name]
     X = df.drop(label_name, axis=1)
@@ -59,7 +64,7 @@ def main(param="./vechile_config.yaml"):
     pr = precision_score(y, y_pred, average="macro")
     acc = accuracy_score(y, y_pred)
 
-    result = {"recall": recall, "precision": pr, "accuracy": acc}
+    result = {"accuracy": acc}
     print(result)
     return {}, result
 

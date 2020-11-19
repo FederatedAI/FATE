@@ -59,20 +59,6 @@ client.job.submit(conf_path, dsl_path)
 
 
 
-#### ```clean(job_id, role=None, party_id=None, component_name=None)```
-
-- 介绍： 清理任务处理器，数据表及metric数据。
-- 参数：
-
-| 编号 |      参数      | 参数类型 | 必要参数 | 参数介绍 |
-| :--: | :------------: | :------: | :------: | :------: |
-|  1   |     job_id     | integer  |    是    |  Job ID  |
-|  2   |      role      |  string  |    否    |   角色   |
-|  3   |    party_id    | integer  |    否    | Party id |
-|  4   | component_name |  string  |    否    |  组件名  |
-
-
-
 #### ```config(job_id, role, party_id, output_path)```
 
 - 介绍：下载指定任务的配置文件到指定目录。

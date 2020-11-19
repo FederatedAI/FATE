@@ -27,12 +27,12 @@ def pipeline_dag_dependency(job_info):
                 raise Exception('query job {} failed'.format(job_info.get('job_id', '')))
             job = jobs[0]
             job_dsl_parser = schedule_utils.get_job_dsl_parser(dsl=job.f_dsl,
-                                                          runtime_conf=job.f_runtime_conf,
-                                                          train_runtime_conf=job.f_train_runtime_conf)
+                                                               runtime_conf=job.f_runtime_conf_on_party,
+                                                               train_runtime_conf=job.f_train_runtime_conf)
         else:
             job_dsl_parser = schedule_utils.get_job_dsl_parser(dsl=job_info.get('job_dsl', {}),
-                                                          runtime_conf=job_info.get('job_runtime_conf', {}),
-                                                          train_runtime_conf=job_info.get('job_train_runtime_conf', {}))
+                                                               runtime_conf=job_info.get('job_runtime_conf', {}),
+                                                               train_runtime_conf=job_info.get('job_train_runtime_conf', {}))
         return job_dsl_parser.get_dependency(role=job_info["role"], party_id=int(job_info["party_id"]))
     except Exception as e:
         stat_logger.exception(e)

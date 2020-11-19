@@ -16,16 +16,22 @@
 from fate_flow.utils.authentication_utils import authentication_check
 from federatedml.protobuf.generated import pipeline_pb2
 from fate_arch.common.log import schedule_logger
-from fate_arch.common import EngineType
+from fate_arch.common import EngineType, string_utils
 from fate_flow.entity.types import JobStatus, EndStatus, RunParameters
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.operation import Tracker
-from fate_flow.settings import USE_AUTHENTICATION
+from fate_flow.settings import USE_AUTHENTICATION, DEFAULT_TASK_PARALLELISM, DEFAULT_FEDERATED_STATUS_COLLECT_TYPE
 from fate_flow.utils import job_utils, schedule_utils, data_utils
-from fate_flow.operation import JobSaver, JobQueue
+from fate_flow.operation import JobSaver
 from fate_arch.common.base_utils import json_dumps, current_timestamp
 from fate_flow.controller import TaskController
 from fate_flow.manager import ResourceManager
+from fate_arch.common import WorkMode, Backend
+from fate_arch.common import FederatedMode
+from fate_arch.computing import ComputingEngine
+from fate_arch.federation import FederationEngine
+from fate_arch.storage import StorageEngine
+from fate_flow.db.db_models import Job
 
 
 class JobController(object):
@@ -38,39 +44,85 @@ class JobController(object):
         if USE_AUTHENTICATION:
             authentication_check(src_role=job_info.get('src_role', None), src_party_id=job_info.get('src_party_id', None),
                                  dsl=dsl, runtime_conf=runtime_conf, role=role, party_id=party_id)
-        job_parameters = RunParameters(**runtime_conf['job_parameters'])
-        job_initiator = runtime_conf['initiator']
 
         dsl_parser = schedule_utils.get_job_dsl_parser(dsl=dsl,
                                                        runtime_conf=runtime_conf,
                                                        train_runtime_conf=train_runtime_conf)
+        job_parameters = dsl_parser.get_job_parameters().get(role, {}).get(party_id, {})
+        schedule_logger(job_id).info('job parameters:{}'.format(job_parameters))
+        job_parameters = RunParameters(**job_parameters)
 
         # save new job into db
-        if role == job_initiator['role'] and party_id == job_initiator['party_id']:
+        if role == job_info["initiator_role"] and party_id == job_info["initiator_party_id"]:
             is_initiator = True
         else:
             is_initiator = False
         job_info["status"] = JobStatus.WAITING
-        roles = job_info['roles']
         # this party configuration
         job_info["role"] = role
         job_info["party_id"] = party_id
         job_info["is_initiator"] = is_initiator
         job_info["progress"] = 0
+        cls.adapt_job_parameters(role=role, job_parameters=job_parameters)
         engines_info = cls.get_job_engines_address(job_parameters=job_parameters)
-        cls.special_role_parameters(role=role, job_parameters=job_parameters)
         cls.check_parameters(job_parameters=job_parameters, engines_info=engines_info)
-        runtime_conf["job_parameters"] = job_parameters.to_dict()
-
-        JobSaver.create_job(job_info=job_info)
+        job_info["runtime_conf_on_party"]["job_parameters"] = job_parameters.to_dict()
         job_utils.save_job_conf(job_id=job_id,
+                                role=role,
                                 job_dsl=dsl,
                                 job_runtime_conf=runtime_conf,
+                                job_runtime_conf_on_party=job_info["runtime_conf_on_party"],
                                 train_runtime_conf=train_runtime_conf,
                                 pipeline_dsl=None)
 
-        cls.initialize_tasks(job_id, role, party_id, True, job_initiator, job_parameters, dsl_parser)
-        cls.initialize_job_tracker(job_id=job_id, role=role, party_id=party_id, job_info=job_info, is_initiator=is_initiator, dsl_parser=dsl_parser)
+        cls.initialize_tasks(job_id=job_id, role=role, party_id=party_id, run_on_this_party=True, initiator_role=job_info["initiator_role"], initiator_party_id=job_info["initiator_party_id"], job_parameters=job_parameters, dsl_parser=dsl_parser)
+        job_parameters = job_info['runtime_conf_on_party']['job_parameters']
+        roles = job_info['roles']
+        cls.initialize_job_tracker(job_id=job_id, role=role, party_id=party_id, job_parameters=job_parameters, roles=roles, is_initiator=is_initiator, dsl_parser=dsl_parser)
+        JobSaver.create_job(job_info=job_info)
+
+    @classmethod
+    def backend_compatibility(cls, job_parameters: RunParameters):
+        # compatible with previous 1.5 versions
+        if job_parameters.computing_engine is None or job_parameters.federation_engine is None:
+            if job_parameters.work_mode is None or job_parameters.backend is None:
+                raise RuntimeError("unable to find compatible backend engines")
+            work_mode = WorkMode(job_parameters.work_mode)
+            backend = Backend(job_parameters.backend)
+            if backend == Backend.EGGROLL:
+                if work_mode == WorkMode.CLUSTER:
+                    job_parameters.computing_engine = ComputingEngine.EGGROLL
+                    job_parameters.federation_engine = FederationEngine.EGGROLL
+                    job_parameters.storage_engine = StorageEngine.EGGROLL
+                else:
+                    job_parameters.computing_engine = ComputingEngine.STANDALONE
+                    job_parameters.federation_engine = FederationEngine.STANDALONE
+                    job_parameters.storage_engine = StorageEngine.STANDALONE
+            elif backend == Backend.SPARK:
+                job_parameters.computing_engine = ComputingEngine.SPARK
+                job_parameters.federation_engine = FederationEngine.RABBITMQ
+                job_parameters.storage_engine = StorageEngine.HDFS
+                # add mq info
+                federation_info = {}
+                federation_info['union_name'] = string_utils.random_string(4)
+                federation_info['policy_id'] = string_utils.random_string(10)
+                job_parameters.federation_info = federation_info
+        if job_parameters.federated_mode is None:
+            if job_parameters.computing_engine in [ComputingEngine.EGGROLL, ComputingEngine.SPARK]:
+                job_parameters.federated_mode = FederatedMode.MULTIPLE
+            elif job_parameters.computing_engine in [ComputingEngine.STANDALONE]:
+                job_parameters.federated_mode = FederatedMode.SINGLE
+
+    @classmethod
+    def adapt_job_parameters(cls, role, job_parameters: RunParameters, create_initiator_baseline=False):
+        ResourceManager.adapt_engine_parameters(role=role, job_parameters=job_parameters, create_initiator_baseline=create_initiator_baseline)
+        if create_initiator_baseline:
+            if job_parameters.task_parallelism is None:
+                job_parameters.task_parallelism = DEFAULT_TASK_PARALLELISM
+            if job_parameters.federated_status_collect_type is None:
+                job_parameters.federated_status_collect_type = DEFAULT_FEDERATED_STATUS_COLLECT_TYPE
+        if create_initiator_baseline and not job_parameters.computing_partitions:
+            job_parameters.computing_partitions = job_parameters.adaptation_parameters["task_cores_per_node"] * job_parameters.adaptation_parameters["task_nodes"]
 
     @classmethod
     def get_job_engines_address(cls, job_parameters: RunParameters):
@@ -82,31 +134,28 @@ class JobController(object):
         ]
         for engine_type, engine_name in engine_list:
             engine_info = ResourceManager.get_engine_registration_info(engine_type=engine_type, engine_name=engine_name)
-            job_parameters.engines_address[engine_type] = engine_info.f_engine_address
+            job_parameters.engines_address[engine_type] = engine_info.f_engine_config
             engines_info[engine_type] = engine_info
         return engines_info
 
     @classmethod
-    def special_role_parameters(cls, role, job_parameters: RunParameters):
-        if role == "arbiter":
-            job_parameters.task_parallelism = 1
-            if job_parameters.adaptation_parameters["task_nodes"] > 0:
-                job_parameters.adaptation_parameters["task_nodes"] = 1
-            if job_parameters.adaptation_parameters["task_cores_per_node"] > 0:
-                job_parameters.adaptation_parameters["task_cores_per_node"] = 1
-
-    @classmethod
     def check_parameters(cls, job_parameters: RunParameters, engines_info):
-        status, max_cores_per_job = ResourceManager.check_resource_apply(job_parameters=job_parameters, engines_info=engines_info)
+        status, cores_submit, max_cores_per_job = ResourceManager.check_resource_apply(job_parameters=job_parameters, engines_info=engines_info)
         if not status:
-            raise RuntimeError(f"max cores per job is {max_cores_per_job}, please modify job parameters")
+            msg = ""
+            msg2 = "default value is fate_flow/settings.py#DEFAULT_TASK_CORES_PER_NODE, refer fate_flow/examples/test_hetero_lr_job_conf.json"
+            if job_parameters.computing_engine in {ComputingEngine.EGGROLL, ComputingEngine.STANDALONE}:
+                msg = "please use eggroll_run: eggroll.session.processors.per.node job parameters to set task_cores_per_node"
+            elif job_parameters.computing_engine in {ComputingEngine.SPARK}:
+                msg = "please use spark_run: executor-cores and num-executors job parameters to set task_cores_per_node"
+            raise RuntimeError(f"max cores per job is {max_cores_per_job} base on (fate_flow/settings#MAX_CORES_PERCENT_PER_JOB * conf/service_conf.yaml#nodes * conf/service_conf.yaml#cores_per_node), expect {cores_submit} cores, {msg}, {msg2}")
 
     @classmethod
-    def initialize_tasks(cls, job_id, role, party_id, run_on_this_party, job_initiator, job_parameters: RunParameters, dsl_parser, component_name=None, task_version=None):
+    def initialize_tasks(cls, job_id, role, party_id, run_on_this_party, initiator_role, initiator_party_id, job_parameters: RunParameters, dsl_parser, component_name=None, task_version=None):
         common_task_info = {}
         common_task_info["job_id"] = job_id
-        common_task_info["initiator_role"] = job_initiator['role']
-        common_task_info["initiator_party_id"] = job_initiator['party_id']
+        common_task_info["initiator_role"] = initiator_role
+        common_task_info["initiator_party_id"] = initiator_party_id
         common_task_info["role"] = role
         common_task_info["party_id"] = party_id
         common_task_info["federated_mode"] = job_parameters.federated_mode
@@ -127,9 +176,7 @@ class JobController(object):
                     TaskController.create_task(role=role, party_id=party_id, run_on_this_party=run_on_this_party, task_info=task_info)
 
     @classmethod
-    def initialize_job_tracker(cls, job_id, role, party_id, job_info, is_initiator, dsl_parser):
-        job_parameters = job_info['runtime_conf']['job_parameters']
-        roles = job_info['roles']
+    def initialize_job_tracker(cls, job_id, role, party_id, job_parameters, roles, is_initiator, dsl_parser):
         tracker = Tracker(job_id=job_id, role=role, party_id=party_id,
                           model_id=job_parameters["model_id"],
                           model_version=job_parameters["model_version"])
@@ -234,17 +281,17 @@ class JobController(object):
     @classmethod
     def save_pipelined_model(cls, job_id, role, party_id):
         schedule_logger(job_id).info('job {} on {} {} start to save pipeline'.format(job_id, role, party_id))
-        job_dsl, job_runtime_conf, train_runtime_conf = job_utils.get_job_configuration(job_id=job_id, role=role,
-                                                                                        party_id=party_id)
-        job_parameters = job_runtime_conf.get('job_parameters', {})
+        job_dsl, job_runtime_conf, runtime_conf_on_party, train_runtime_conf = job_utils.get_job_configuration(job_id=job_id, role=role,
+                                                                                                               party_id=party_id)
+        job_parameters = runtime_conf_on_party.get('job_parameters', {})
         model_id = job_parameters['model_id']
         model_version = job_parameters['model_version']
         job_type = job_parameters.get('job_type', '')
         if job_type == 'predict':
             return
         dag = schedule_utils.get_job_dsl_parser(dsl=job_dsl,
-                                           runtime_conf=job_runtime_conf,
-                                           train_runtime_conf=train_runtime_conf)
+                                                runtime_conf=job_runtime_conf,
+                                                train_runtime_conf=train_runtime_conf)
         predict_dsl = dag.get_predict_dsl(role=role)
         pipeline = pipeline_pb2.Pipeline()
         pipeline.inference_dsl = json_dumps(predict_dsl, byte=True)
@@ -264,23 +311,3 @@ class JobController(object):
         schedule_logger(job_id).info('Job {} on {} {} start to clean'.format(job_id, role, party_id))
         # todo
         schedule_logger(job_id).info('job {} on {} {} clean done'.format(job_id, role, party_id))
-
-    @classmethod
-    def cancel_job(cls, job_id, role, party_id):
-        schedule_logger(job_id).info('{} {} get cancel waiting job {} command'.format(role, party_id, job_id))
-        jobs = JobSaver.query_job(job_id=job_id)
-        if jobs:
-            job = jobs[0]
-            try:
-                # You cannot delete an event directly, otherwise the status might not be updated
-                status = JobQueue.update_event(job_id=job.f_job_id, initiator_role=job.f_initiator_role, initiator_party_id=job.f_initiator_party_id, job_status=JobStatus.CANCELED)
-                if not status:
-                    return False
-            except:
-                return False
-            schedule_logger(job_id).info('cancel {} job successfully, job id is {}'.format(job.f_status, job.f_job_id))
-            return True
-        else:
-            schedule_logger(job_id).warning('role {} party id {} cancel job failed, no find jod {}'.format(role, party_id, job_id))
-            raise Exception('role {} party id {} cancel job failed, no find jod {}'.format(role, party_id, job_id))
-

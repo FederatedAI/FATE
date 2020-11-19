@@ -28,6 +28,7 @@ from pipeline.component import Intersection
 from pipeline.component import Reader
 from pipeline.interface import Data
 from pipeline.utils.tools import load_job_config, JobConfig
+from pipeline.runtime.entity import JobParameters
 
 
 def main(config="../../config.yaml", param="./hetero_nn_breast_config.yaml", namespace=""):
@@ -50,12 +51,12 @@ def main(config="../../config.yaml", param="./hetero_nn_breast_config.yaml", nam
     pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=host)
 
     reader_0 = Reader(name="reader_0")
-    reader_0.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_train_data)
-    reader_0.get_party_instance(role='host', party_id=host).algorithm_param(table=host_train_data)
+    reader_0.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data)
+    reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
 
     dataio_0 = DataIO(name="dataio_0")
-    dataio_0.get_party_instance(role='guest', party_id=guest).algorithm_param(with_label=True)
-    dataio_0.get_party_instance(role='host', party_id=host).algorithm_param(with_label=False)
+    dataio_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True)
+    dataio_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
 
     intersection_0 = Intersection(name="intersection_0")
 
@@ -88,7 +89,8 @@ def main(config="../../config.yaml", param="./hetero_nn_breast_config.yaml", nam
 
     pipeline.compile()
 
-    pipeline.fit(backend=backend, work_mode=work_mode)
+    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
+    pipeline.fit(job_parameters)
 
     data_summary = {"train": {"guest": guest_train_data["name"], "host": host_train_data["name"]},
                     "test": {"guest": guest_train_data["name"], "host": host_train_data["name"]}
@@ -104,7 +106,6 @@ if __name__ == "__main__":
                         help="config file for params")
     args = parser.parse_args()
 
-    assert 1 == 2
     if args.config is not None:
         main(args.config, args.param)
     else:

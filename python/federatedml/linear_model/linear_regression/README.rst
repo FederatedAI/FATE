@@ -74,4 +74,4 @@ Features
 10. Support stepwise. For details on stepwise mode, please refer `stepwise`_ .
 
 .. _stepwise: ../../model_selection/stepwise/README.rst
-.. _guide: ../../../doc/dsl_conf_setting_guide.rst
+.. _guide: ../../../../doc/dsl_conf_v2_setting_guide.rst

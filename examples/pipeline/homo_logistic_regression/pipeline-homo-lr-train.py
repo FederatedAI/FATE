@@ -25,6 +25,7 @@ from pipeline.component.reader import Reader
 from pipeline.component.scale import FeatureScale
 from pipeline.interface.data import Data
 from pipeline.utils.tools import load_job_config
+from pipeline.runtime.entity import JobParameters
 
 
 def main(config="../../config.yaml", namespace=""):
@@ -51,9 +52,9 @@ def main(config="../../config.yaml", namespace=""):
     # define Reader components to read in data
     reader_0 = Reader(name="reader_0")
     # configure Reader for guest
-    reader_0.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_train_data)
+    reader_0.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data)
     # configure Reader for host
-    reader_0.get_party_instance(role='host', party_id=host).algorithm_param(table=host_train_data)
+    reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
 
     # define DataIO components
     dataio_0 = DataIO(name="dataio_0", with_label=True, output_format="dense")  # start component numbering at 0
@@ -93,14 +94,15 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.add_component(scale_0, data=Data(data=dataio_0.output.data))
     pipeline.add_component(homo_lr_0, data=Data(train_data=scale_0.output.data))
     evaluation_0 = Evaluation(name="evaluation_0", eval_type="binary")
-    evaluation_0.get_party_instance(role='host', party_id=host).algorithm_param(need_run=False)
+    evaluation_0.get_party_instance(role='host', party_id=host).component_param(need_run=False)
     pipeline.add_component(evaluation_0, data=Data(data=homo_lr_0.output.data))
 
     # compile pipeline once finished adding modules, this step will form conf and dsl files for running job
     pipeline.compile()
 
     # fit model
-    pipeline.fit(backend=backend, work_mode=work_mode)
+    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
+    pipeline.fit(job_parameters)
 
     deploy_components = [dataio_0, scale_0, homo_lr_0]
     pipeline.deploy_component(components=deploy_components)
@@ -113,7 +115,7 @@ def main(config="../../config.yaml", namespace=""):
     predict_pipeline.add_component(pipeline,
                                    data=Data(predict_input={pipeline.dataio_0.input.data: reader_0.output.data}))
     predict_pipeline.compile()
-    predict_pipeline.predict(backend=backend, work_mode=work_mode)
+    predict_pipeline.predict(job_parameters)
 
     dsl_json = predict_pipeline.get_predict_dsl()
     conf_json = predict_pipeline.get_predict_conf()

@@ -39,12 +39,12 @@ class ContengincyMatrix(object):
     def compute(self, labels, pred_scores):
         #total_count = len(labels)
         label_predict = list(zip(labels, pred_scores))
-        unique_predicted_label = np.unique(pred_scores)
+        predicted_label = list(range(0, max(pred_scores) + 1))
         unique_true_label = np.unique(labels)
-        result_array = np.zeros([len(unique_true_label), len(unique_predicted_label)])
+        result_array = np.zeros([len(unique_true_label), max(pred_scores) + 1])
         for v1, v2 in label_predict:
             result_array[v1][v2] += 1
-        return result_array, unique_predicted_label, unique_true_label
+        return result_array, predicted_label, unique_true_label
 
 
 class DistanceMeasure(object):
@@ -55,11 +55,11 @@ class DistanceMeasure(object):
     def compute(self, dist_table, inter_cluster_dist, max_radius):
         max_radius_result = max_radius
         cluster_nearest_result = []
-        if len(dist_table)==1:
+        if len(dist_table) == 1:
             cluster_nearest_result.append(0)
         else:
             for j in range(0, len(dist_table)):
-                arr = inter_cluster_dist[j * (len(dist_table)-1): (j+1) * (len(dist_table)-1)]
+                arr = inter_cluster_dist[j * (len(dist_table) - 1): (j + 1) * (len(dist_table) - 1)]
                 smallest_index = list(arr).index(min(arr))
                 if smallest_index > j:
                     smallest_index += 1
@@ -76,16 +76,16 @@ class DaviesBouldinIndex(object):
     """
 
     def compute(self, dist_table, cluster_dist):
-        if len(dist_table)==1:
+        if len(dist_table) == 1:
             return np.nan
         max_dij_list = []
-        d=0
+        d = 0
         for i in range(0, len(dist_table)):
             dij_list = []
             for j in range(0, len(dist_table)):
                 if j != i:
                     dij_list.append((dist_table[i] + dist_table[j]) / (cluster_dist[d] ** 0.5))
-                    d +=1
+                    d += 1
             max_dij = max(dij_list)
             max_dij_list.append(max_dij)
         return np.sum(max_dij_list) / len(dist_table)

@@ -7,7 +7,7 @@
 | :------: | ------------------------------------------------------------ |
 |   数量   | 1 or 2                                                       |
 |   配置   | 8 core /16GB memory / 500GB硬盘/10M带宽                      |
-| 操作系统 | CentOS linux 7.2及以上/Ubuntu 16.04 以上                     |
+| 操作系统 | CentOS linux 7.2及以上/Ubuntu 18.04                          |
 |  依赖包  | （部署时自动安装）                                           |
 |   用户   | 用户：app，属主：apps（app用户需可以sudo su root而无需密码） |
 | 文件系统 | 1.  500G硬盘挂载在/ data目录下； 2.创建/ data / projects目录，目录属主为：app:apps |
@@ -17,8 +17,8 @@
 
 | party  | 主机名        | IP地址      | 操作系统                | 安装软件           | 服务                                                         |
 | ------ | ------------- | ----------- | ----------------------- | ------------------ | ------------------------------------------------------------ |
-| PartyA | VM_0_1_centos | 192.168.0.1 | CentOS 7.2/Ubuntu 16.04 | fate,eggroll,mysql | fate_flow，fateboard，clustermanager，nodemanager，rollsite，mysql |
-| PartyB | VM_0_2_centos | 192.168.0.2 | CentOS 7.2/Ubuntu 16.04 | fate,eggroll,mysql | fate_flow，fateboard，clustermanager，nodemanager，rollsite，mysql |
+| PartyA | VM_0_1_centos | 192.168.0.1 | CentOS 7.2/Ubuntu 18.04 | fate,eggroll,mysql | fate_flow，fateboard，clustermanager，nodemanager，rollsite，mysql |
+| PartyB | VM_0_2_centos | 192.168.0.2 | CentOS 7.2/Ubuntu 18.04 | fate,eggroll,mysql | fate_flow，fateboard，clustermanager，nodemanager，rollsite，mysql |
 
 架构图：
 
@@ -265,8 +265,8 @@ Swap:        131071           0      131071
 
 ```
 cd /data/projects/
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate_cluster_install_1.5.0_preview-c7-u18.tar.gz
-tar xzf fate_cluster_install_1.5.0_preview-c7-u18.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate_cluster_install_1.5.0_release-c7-u18.tar.gz
+tar xzf fate_cluster_install_1.5.0_release-c7-u18.tar.gz
 ```
 
 ## 5.2 部署前检查
@@ -300,31 +300,37 @@ vi fate-cluster-install/allInone/conf/setup.conf
 
 配置文件setup.conf说明：
 
-| 配置项           | 配置项值                                              | 说明                                                         |
-| ---------------- | ----------------------------------------------------- | ------------------------------------------------------------ |
-| roles            | 默认："host" "guest"                                  | 部署的角色，有HOST端、GUEST端                                |
-| version          | 默认：1.5.0                                           | Fate 版本号                                                  |
-| pbase            | 默认： /data/projects                                 | 项目根目录                                                   |
-| lbase            | 默认：/data/logs                                      | 保持默认不要修改                                             |
-| ssh_user         | 默认：app                                             | ssh连接目标机器的用户，也是部署后文件的属主                  |
-| ssh_group        | 默认：apps                                            | ssh连接目标的用户的属组，也是部署后文件的属组                |
-| ssh_port         | 默认：22,根据实际情况修改                             | ssh连接端口，部署前确认好端口，不然会报连接错误              |
-| eggroll_dbname   | 默认：eggroll_meta                                    | eggroll连接的DB名字                                          |
-| fate_flow_dbname | 默认：fate_flow                                       | fate_flow、fateboard等连接的DB名字                           |
-| mysql_admin_pass | 可设置为fate_dev                                      | mysql的管理员（root）密码                                    |
-| redis_pass       | 默认                                                  | redis密码，暂未使用                                          |
-| mysql_user       | 默认：fate                                            | msyql的应用连接账号                                          |
-| mysql_port       | 默认：3306，根据实际情况修改                          | msql服务监听的端口                                           |
-| host_id          | 默认 : 10000，根据实施规划修改                        | HOST端的party id。                                           |
-| host_ip          | 192.168.0.1                                           | HOST端的ip                                                   |
-| host_mysql_ip    | 默认和host_ip保持一致                                 | HOST端mysql的ip                                              |
-| host_mysql_pass  | 可设置为fate_dev                                      | HOST端msyql的应用连接账号                                    |
-| guest_id         | 默认 : 9999，根据实施规划修改                         | GUEST端的party id                                            |
-| guest_ip         | 192.168.0.2                                           | GUEST端的ip                                                  |
-| guest_mysql_ip   | 默认和guest_ip保持一致                                | GUEST端mysql的ip                                             |
-| guest_mysql_pass | 可设置为fate_dev                                      | GUEST端msyql的应用连接账号                                   |
-| dbmodules        | 默认："mysql"                                         | DB组件的部署模块列表，如mysql                                |
-| basemodules      | 默认："tools" "base" "java" "python" "eggroll" "fate" | 非DB组件的部署模块列表，如 "tools" "base"、 "java"、 "python" 、"eggroll" 、"fate" |
+| 配置项              | 配置项值                                              | 说明                                                         |
+| ------------------- | ----------------------------------------------------- | ------------------------------------------------------------ |
+| roles               | 默认："host" "guest"                                  | 部署的角色，有HOST端、GUEST端                                |
+| version             | 默认：1.5.0                                           | Fate 版本号                                                  |
+| pbase               | 默认： /data/projects                                 | 项目根目录                                                   |
+| lbase               | 默认：/data/logs                                      | 保持默认不要修改                                             |
+| ssh_user            | 默认：app                                             | ssh连接目标机器的用户，也是部署后文件的属主                  |
+| ssh_group           | 默认：apps                                            | ssh连接目标的用户的属组，也是部署后文件的属组                |
+| ssh_port            | 默认：22,根据实际情况修改                             | ssh连接端口，部署前确认好端口，不然会报连接错误              |
+| eggroll_dbname      | 默认：eggroll_meta                                    | eggroll连接的DB名字                                          |
+| fate_flow_dbname    | 默认：fate_flow                                       | fate_flow、fateboard等连接的DB名字                           |
+| mysql_admin_pass    | 默认                                                  | mysql的管理员（root）密码                                    |
+| redis_pass          | 默认                                                  | redis密码，暂未使用                                          |
+| mysql_user          | 默认：fate                                            | msyql的应用连接账号                                          |
+| mysql_port          | 默认：3306，根据实际情况修改                          | msql服务监听的端口                                           |
+| host_id             | 默认 : 10000，根据实施规划修改                        | HOST端的party id。                                           |
+| host_ip             | 192.168.0.1                                           | HOST端的ip                                                   |
+| host_mysql_ip       | 默认和host_ip保持一致                                 | HOST端mysql的ip                                              |
+| host_mysql_pass     | 默认                                                  | HOST端msyql的应用连接账号                                    |
+| guest_id            | 默认 : 9999，根据实施规划修改                         | GUEST端的party id                                            |
+| guest_ip            | 192.168.0.2                                           | GUEST端的ip                                                  |
+| guest_mysql_ip      | 默认和guest_ip保持一致                                | GUEST端mysql的ip                                             |
+| guest_mysql_pass    | 默认                                                  | GUEST端msyql的应用连接账号                                   |
+| dbmodules           | 默认："mysql"                                         | DB组件的部署模块列表，如mysql                                |
+| basemodules         | 默认："tools" "base" "java" "python" "eggroll" "fate" | 非DB组件的部署模块列表，如 "tools" "base"、 "java"、 "python" 、"eggroll" 、"fate" |
+| fateflow_grpc_port  | 默认：9360                                            | fateflow grpc服务端口                                        |
+| fateflow_http_port  | 默认：9380                                            | fateflow http服务端口                                        |
+| fateboard_port      | 默认：8080                                            | fateboard服务端口                                            |
+| rollsite_port       | 默认：9370                                            | rollsite服务端口                                             |
+| clustermanager_port | 默认：4670                                            | clustermanager服务端口                                       |
+| nodemanager_port    | 默认：4671                                            | nodemanager服务端口                                          |
 
 **1）两台主机partyA+partyB同时部署****
 
@@ -366,7 +372,7 @@ host_id="10000"
 host_ip="192.168.0.1"
 #host mysql ip
 host_mysql_ip="${host_ip}"
-host_mysql_pass="fate_dev"
+host_mysql_pass="fate_deV2999"
 
 #guest party id
 guest_id="9999"
@@ -374,7 +380,7 @@ guest_id="9999"
 guest_ip="192.168.0.2"
 #guest mysql ip
 guest_mysql_ip="${guest_ip}"
-guest_mysql_pass="fate_dev"
+guest_mysql_pass="fate_deV2999"
 
 #db module lists
 dbmodules=( "mysql" )
@@ -382,6 +388,13 @@ dbmodules=( "mysql" )
 #base module lists
 basemodules=( "tools" "base" "java" "python" "eggroll" "fate" )
 
+fateflow_grpc_port=9360
+fateflow_http_port=9380
+fateboard_port=8080
+
+rollsite_port=9370
+clustermanager_port=4670
+nodemanager_port=4671
 ```
 
 **2）只部署一个party**
@@ -424,7 +437,7 @@ host_id="10000"
 host_ip="192.168.0.1"
 #host mysql ip
 host_mysql_ip="${host_ip}"
-host_mysql_pass="fate_dev"
+host_mysql_pass="fate_deV2999"
 
 #guest party id
 guest_id=""
@@ -439,6 +452,14 @@ dbmodules=( "mysql" )
 
 #base module lists
 basemodules=( "tools" "base" "java" "python" "eggroll" "fate" )
+
+fateflow_grpc_port=9360
+fateflow_http_port=9380
+fateboard_port=8080
+
+rollsite_port=9370
+clustermanager_port=4670
+nodemanager_port=4671
 ```
 
 5.4 部署
@@ -506,6 +527,8 @@ python run_toy_example.py 10000 10000 1
 类似如下结果表示成功：
 
 "2020-04-28 18:26:20,789 - secure_add_guest.py[line:126] - INFO: success to calculate secure_sum, it is 1999.9999999999998"
+
+提示：如出现max cores per job is 1, please modify job parameters报错提示，需要修改当前目录下文件toy_example_conf.json中参数eggroll.session.processors.per.node为1.
 
 2）192.168.0.2上执行，guest_partyid和host_partyid都设为9999：
 

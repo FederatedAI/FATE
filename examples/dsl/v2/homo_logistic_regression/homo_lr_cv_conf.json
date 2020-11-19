@@ -1,4 +1,5 @@
 {
+    "dsl_version": 2,
     "initiator": {
         "role": "guest",
         "party_id": 10000
@@ -15,61 +16,64 @@
         ]
     },
     "job_parameters": {
-        "job_type": "train",
-        "backend": 0,
-        "work_mode": 0,
-        "dsl_version": 2
-    },
-    "role_parameters": {
-        "guest": {
-            "0": {
-                "reader_0": {
-                    "table": {
-                        "name": "breast_homo_guest",
-                        "namespace": "experiment"
-                    }
-                }
-            }
-        },
-        "host": {
-            "0": {
-                "reader_0": {
-                    "table": {
-                        "name": "breast_homo_host",
-                        "namespace": "experiment"
-                    }
-                }
-            }
+        "common": {
+            "job_type": "train",
+            "backend": 0,
+            "work_mode": 0
         }
     },
-    "algorithm_parameters": {
-        "dataio_0": {
-            "with_label": true,
-            "output_format": "dense"
+    "component_parameters": {
+        "common": {
+            "dataio_0": {
+                "with_label": true,
+                "output_format": "dense"
+            },
+            "homo_lr_0": {
+                "penalty": "L2",
+                "tol": 1e-05,
+                "alpha": 0.01,
+                "optimizer": "sgd",
+                "batch_size": 320,
+                "learning_rate": 0.15,
+                "init_param": {
+                    "init_method": "zeros"
+                },
+                "max_iter": 3,
+                "early_stop": "diff",
+                "encrypt_param": {
+                    "method": null
+                },
+                "cv_param": {
+                    "n_splits": 5,
+                    "shuffle": true,
+                    "random_seed": 33,
+                    "need_cv": true
+                },
+                "decay": 1.0,
+                "decay_sqrt": true
+            }
         },
-        "homo_lr_0": {
-            "penalty": "L2",
-            "tol": 1e-05,
-            "alpha": 0.01,
-            "optimizer": "sgd",
-            "batch_size": 320,
-            "learning_rate": 0.15,
-            "init_param": {
-                "init_method": "zeros"
+        "role": {
+            "guest": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_homo_guest",
+                            "namespace": "experiment"
+                        }
+                    }
+                }
             },
-            "max_iter": 3,
-            "early_stop": "diff",
-            "encrypt_param": {
-                "method": null
-            },
-            "cv_param": {
-                "n_splits": 5,
-                "shuffle": true,
-                "random_seed": 33,
-                "need_cv": true
-            },
-            "decay": 1.0,
-            "decay_sqrt": true
+            "host": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_homo_host",
+                            "namespace": "experiment"
+                        }
+                    }
+                }
+            }
         }
     }
 }

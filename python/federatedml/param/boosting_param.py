@@ -100,7 +100,7 @@ class DecisionTreeParam(BaseParam):
 
     criterion_params: list, should be non empty and first element is float-number, default: 0.1.
 
-    max_depth: int, positive integer, the max depth of a decision tree, default: 5
+    max_depth: int, positive integer, the max depth of a decision tree, default: 3
 
     min_sample_split: int, least quantity of nodes to split, default: 2
 
@@ -123,7 +123,7 @@ class DecisionTreeParam(BaseParam):
 
     """
 
-    def __init__(self, criterion_method="xgboost", criterion_params=[0.1], max_depth=5,
+    def __init__(self, criterion_method="xgboost", criterion_params=[0.1], max_depth=3,
                  min_sample_split=2, min_imputiry_split=1e-3, min_leaf_node=1,
                  max_split_nodes=consts.MAX_SPLIT_NODES, feature_importance_type="split",
                  n_iter_no_change=True, tol=0.001,
@@ -427,7 +427,7 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
                  validation_freqs=None, early_stopping_rounds=None, use_missing=False, zero_as_missing=False,
                  complete_secure=False, metrics=None, use_first_metric_only=False, subsample_random_seed=None,
                  binning_error=consts.DEFAULT_RELATIVE_ERROR,
-                 sparse_optmization=False):
+                 sparse_optimization=False):
 
         super(HeteroSecureBoostParam, self).__init__(task_type, objective_param, learning_rate, num_trees,
                                                      subsample_feature_rate, n_iter_no_change, tol, encrypt_param,
@@ -441,7 +441,7 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         self.zero_as_missing = zero_as_missing
         self.use_missing = use_missing
         self.complete_secure = complete_secure
-        self.sparse_optimization = sparse_optmization
+        self.sparse_optimization = sparse_optimization
 
     def check(self):
 
@@ -468,7 +468,7 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  validation_freqs=None, early_stopping=None, use_missing=False, zero_as_missing=False,
                  complete_secure=False, tree_num_per_party=1, guest_depth=1, host_depth=1, work_mode='mix', metrics=None,
-                 sparse_optmization=False, subsample_random_seed=None, binning_error=consts.DEFAULT_RELATIVE_ERROR):
+                 sparse_optimization=False, subsample_random_seed=None, binning_error=consts.DEFAULT_RELATIVE_ERROR):
 
         """
         work_mode：
@@ -492,7 +492,7 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
                                                          predict_param, cv_param, validation_freqs, early_stopping,
                                                          use_missing, zero_as_missing, complete_secure, metrics=metrics,
                                                          subsample_random_seed=subsample_random_seed,
-                                                         sparse_optmization=sparse_optmization,
+                                                         sparse_optimization=sparse_optimization,
                                                          binning_error=binning_error)
 
         self.tree_num_per_party = tree_num_per_party

@@ -25,6 +25,7 @@ from pipeline.component import Reader
 from pipeline.interface import Data
 
 from pipeline.utils.tools import load_job_config
+from pipeline.runtime.entity import JobParameters
 
 
 def main(config="../../config.yaml", namespace=""):
@@ -43,8 +44,8 @@ def main(config="../../config.yaml", namespace=""):
 
     pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=host, arbiter=arbiter)
     reader_0 = Reader(name="reader_0")
-    reader_0.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_train_data)
-    reader_0.get_party_instance(role='host', party_id=host).algorithm_param(table=host_train_data)
+    reader_0.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data)
+    reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
 
     dataio_0 = DataIO(name="dataio_0", with_label=True, output_format="dense",
                       label_type="int", label_name="y")
@@ -56,12 +57,12 @@ def main(config="../../config.yaml", namespace=""):
     local_baseline_0 = LocalBaseline(name="local_baseline_0", model_name="LogisticRegression",
                                      model_opts={"penalty": "l2", "tol": 0.0001, "C": 1.0, "fit_intercept": True,
                                                  "solver": "saga", "max_iter": 2})
-    local_baseline_0.get_party_instance(role='guest', party_id=guest).algorithm_param(need_run=True)
-    local_baseline_0.get_party_instance(role='host', party_id=host).algorithm_param(need_run=False)
+    local_baseline_0.get_party_instance(role='guest', party_id=guest).component_param(need_run=True)
+    local_baseline_0.get_party_instance(role='host', party_id=host).component_param(need_run=False)
 
     evaluation_0 = Evaluation(name="evaluation_0", eval_type="binary", pos_label=1)
-    evaluation_0.get_party_instance(role='guest', party_id=guest).algorithm_param(need_run=True)
-    evaluation_0.get_party_instance(role='host', party_id=host).algorithm_param(need_run=False)
+    evaluation_0.get_party_instance(role='guest', party_id=guest).component_param(need_run=True)
+    evaluation_0.get_party_instance(role='host', party_id=host).component_param(need_run=False)
 
     pipeline.add_component(reader_0)
     pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
@@ -71,7 +72,8 @@ def main(config="../../config.yaml", namespace=""):
 
     pipeline.compile()
 
-    pipeline.fit(backend=backend, work_mode=work_mode)
+    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
+    pipeline.fit(job_parameters)
 
 
 if __name__ == "__main__":

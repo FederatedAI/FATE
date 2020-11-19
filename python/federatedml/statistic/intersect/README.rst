@@ -98,7 +98,7 @@ Feature
 
 Both RSA and RAW intersection supports the following features:
 
-1. Support multi-host modeling task. The detail configuration for multi-host modeling task is located `here. <../../../../doc/dsl_conf_setting_guide.rst>`_
+1. Support multi-host modeling task. The detail configuration for multi-host modeling task is located `here. <../../../../doc/dsl_conf_v2_setting_guide.rst>`_
 
 2. Repeated ID intersection using ID expanding.
 

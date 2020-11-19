@@ -24,6 +24,7 @@ from pipeline.component.reader import Reader
 from pipeline.component.scale import FeatureScale
 from pipeline.interface.data import Data
 from pipeline.utils.tools import load_job_config
+from pipeline.runtime.entity import JobParameters
 
 
 def main(config="../../config.yaml", namespace=""):
@@ -50,9 +51,9 @@ def main(config="../../config.yaml", namespace=""):
     # define Reader components to read in data
     reader_0 = Reader(name="reader_0")
     # configure Reader for guest
-    reader_0.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_train_data)
+    reader_0.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data)
     # configure Reader for host
-    reader_0.get_party_instance(role='host', party_id=host).algorithm_param(table=host_train_data)
+    reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
 
     # define DataIO components
     dataio_0 = DataIO(name="dataio_0", with_label=True, output_format="dense")  # start component numbering at 0
@@ -96,7 +97,8 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.compile()
 
     # fit model
-    pipeline.fit(backend=backend, work_mode=work_mode)
+    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
+    pipeline.fit(job_parameters)
     # query component summary
     print(json.dumps(pipeline.get_component("homo_lr_0").get_summary(), indent=4, ensure_ascii=False))
 

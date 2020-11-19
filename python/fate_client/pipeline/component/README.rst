@@ -80,7 +80,7 @@ data output from ``DataSplit`` module, which always has three data outputs:
 A special data type is ``predict_input``. ``predict_input`` is only used for specifying
 data input when running prediction task.
 
-Here is an example of running prediction with a upstream model within the same pipeline:
+Here is an example of running prediction with an upstream model within the same pipeline:
 
 .. code:: python
 
@@ -96,8 +96,8 @@ data source needs to be updated in prediction job. Below is an example from
 .. code:: python
 
     reader_2 = Reader(name="reader_2")
-    reader_2.get_party_instance(role="guest", party_id=guest).algorithm_param(table=guest_eval_data)
-    reader_2.get_party_instance(role="host", party_id=host).algorithm_param(table=host_eval_data)
+    reader_2.get_party_instance(role="guest", party_id=guest).component_param(table=guest_eval_data)
+    reader_2.get_party_instance(role="host", party_id=host).component_param(table=host_eval_data)
     # add data reader onto predict pipeline
     predict_pipeline.add_component(reader_2)
     predict_pipeline.add_component(pipeline,
@@ -142,7 +142,7 @@ Below lists all five types of ``data`` and whether ``Input`` and ``Output`` incl
 
 All input and output data of components need to be wrapped into ``Data``
 objects when being passed between components. For information on valid data
-types of each components, check the `list <#component-list>`_ below.
+types of each component, check the `list <#component-list>`_ below.
 Here is a an example of chaining components with different types of data input and output:
 
 .. code:: python
@@ -183,7 +183,7 @@ is passed to ``dataio_1``.
                           model=Model(dataio_0.output.model))
 
 Here is a case of using ``isometric model``. ``HeteroFeatureSelection`` uses
-``isometric_model`` from ``HeteroFeatureBinning`` to select most
+``isometric_model`` from ``HeteroFeatureBinning`` to select the most
 important features.
 
 .. code:: python
@@ -195,7 +195,7 @@ important features.
 .. warning::
 
    Please note that when using `stepwise` or `cross validation` method, components do
-   not have ``model`` output. For information on valid data
+   not have ``model`` output. For information on valid model
    types of each components, check the `list <#component-list>`_ below.
 
 Parameter
@@ -217,26 +217,26 @@ Parameters of underlying module can be set for all job participants or per indiv
 
    # set guest dataio_0 component parameters
    guest_dataio_0 = dataio_0.get_party_instance(role='guest', party_id=9999)
-   guest_dataio_0.algorithm_param(with_label=True)
-   # directly set host dataio_0 component parameters
-   dataio_0.get_party_instance(role='host', party_id=10000).algorithm_param(with_label=False)
+   guest_dataio_0.component_param(with_label=True)
+   # set host dataio_0 component parameters
+   dataio_0.get_party_instance(role='host', party_id=10000).component_param(with_label=False)
 
 Task Info
 ~~~~~~~~~
 
 Output data and model information of ``Components`` can be retrieved with
-Pipeline task info API. Currently Pipeline support these four requests on components:
+Pipeline task info API. Currently Pipeline support these four types of query on components:
 
 1. get_output_data: returns downloaded output data; use parameter `limits` to limit output lines
 2. get_output_data_table: returns output data table information(including table name and namespace)
 3. get_model_param: returns fitted model parameters
 4. get_summary: returns model summary
 
-To extract output of a component, the component needs to be first obtained from pipeline:
+To obtain output of a component, the component needs to be first extracted from pipeline:
 
 .. code:: python
 
-   print (pipeline.get_component("dataio_0").get_output_data(limits=10))
+   print(pipeline.get_component("dataio_0").get_output_data(limits=10))
 
 Component List
 --------------
@@ -455,6 +455,15 @@ Below lists input and output elements of each component.
      - None
      - model
 
+   * - `Scorecard`_
+     - Scorecard
+     - Scale predict score to credit score by given scaling parameters
+     - data
+     - data
+     - None
+     - None
+
+
 .. _DataIO: ../../federatedml/util/README.rst
 .. _Intersect: ../../federatedml/statistic/intersect/README.rst
 .. _Federated Sampling: ../../federatedml/feature/README.rst
@@ -479,6 +488,7 @@ Below lists input and output elements of each component.
 .. _Column Expand: ../../federatedml/feature/README.rst
 .. _Hetero KMeans: ../../federatedml/unsupervised_learning/kmeans/README.rst
 .. _Data Statistics: ../../federatedml/statistic/README.rst
+.. _Scorecard: ../../federatedml/statistic/scorecard/README.rst
 
 
 Params

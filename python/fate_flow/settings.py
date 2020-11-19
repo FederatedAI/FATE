@@ -30,10 +30,17 @@ DATABASE = get_base_config("database", {})
 MODEL_STORE_ADDRESS = get_base_config("model_store_address", {})
 
 # storage engine is used for component output data
-SUPPORT_ENGINES = {
-    EngineType.COMPUTING: [ComputingEngine.EGGROLL, ComputingEngine.SPARK],
-    EngineType.FEDERATION: [FederationEngine.EGGROLL, FederationEngine.RABBITMQ],
-    EngineType.STORAGE: [StorageEngine.EGGROLL, StorageEngine.HDFS]
+SUPPORT_BACKENDS_ENTRANCE = {
+    "fate_on_eggroll": {
+        EngineType.COMPUTING: (ComputingEngine.EGGROLL, "clustermanager"),
+        EngineType.STORAGE: (StorageEngine.EGGROLL, "clustermanager"),
+        EngineType.FEDERATION: (FederationEngine.EGGROLL, "rollsite"),
+    },
+    "fate_on_spark": {
+        EngineType.COMPUTING: (ComputingEngine.SPARK, "spark"),
+        EngineType.STORAGE: (StorageEngine.HDFS, "hdfs"),
+        EngineType.FEDERATION: (FederationEngine.RABBITMQ, "rabbitmq"),
+    },
 }
 
 # upload data

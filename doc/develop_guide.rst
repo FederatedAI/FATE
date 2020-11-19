@@ -19,7 +19,9 @@ To develop a module, the following 5 steps are needed.
 
 4. define your module which should inherit model_base class.
 
-5. (optional) define Pipeline component for your module.
+5. Define the protobuf file required for model saving.
+
+6. (optional) define Pipeline component for your module.
 
 In the following sections we will describe the 5 steps in detail, with toy_example.
 
@@ -233,6 +235,18 @@ In this section, we describe how to do 3-5. Many common interfaces are provided 
         * predicted_cluster_index: Your predict label
         * distance: The distance between each sample to its center point.
 
+:Override transform interface if needed:
+   The transform function holds the form of following.
+
+   .. code-block:: python
+
+      def transform(self, data_inst):
+
+   This function is used for feature-engineering components in predict task.
+
+Step 5. Define the protobuf file required for model saving
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 :Define your save_data interface:
    so that fate-flow can obtain output data through it when needed.
 
@@ -240,6 +254,20 @@ In this section, we describe how to do 3-5. Many common interfaces are provided 
       
       def save_data(self):
           return self.data_output
+
+To use the trained model through different platform, FATE use protobuf files to save the parameters and model result of a task. When developing your own module, you are supposed to create two proto files which defined your model content in `this folder <python/federatedml/protobuf/proto>`_.
+
+For more details of protobuf, please refer to `this tutorial <https://developers.google.com/protocol-buffers/docs/pythontutorial>`_
+
+The two proto files are
+1. File with "meta" as suffix: Save the parameters of a task.
+2. File with "param" as suffix: Save the model result of a task.
+
+After defining your proto files, you can use the following script named `proto_generate.sh <python/federatedml/protobuf/proto_generate.sh>`_ to create the corresponding python file:
+
+   .. code-block:: bash
+
+      bash proto_generate.sh
 
 :Define export_model interface:
    Similar with part b, define your export_model interface so that fate-flow can obtain output model when needed. The format should be a dict contains both "Meta" and "Param" proto buffer generated. Here is an example showing how to export model.
@@ -256,20 +284,20 @@ In this section, we describe how to do 3-5. Many common interfaces are provided 
           return result
 
 
-Step 5. Define Pipeline component for your module
+Step 6. Define Pipeline component for your module
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 One wrapped into a component, module can be used with FATE Pipeline API.
 To define a Pipeline component, follow these guidelines:
 
-1. all components reside in ``fate_client/pipeline/component`` directory
+1. all components reside in `fate_client/pipeline/component <../python/fate_client/pipeline/component>`_ directory
 2. components should inherit common base ``Component``
 3. as a good practice, components should have the same names as their corresponding modules
-4. components take in module parameters at initialization
+4. components take in parameters at initialization as defined in `fate_client/pipeline/param <../python/fate_client/pipeline/param>`_, where a BaseParam and consts file are provided
 5. set attributes of component input and output,
    including whether module has output model, or type of data output('single' vs. 'multi')
 
 Then you may use Pipeline to construct and initiate a job with the newly defined component.
-For guide on Pipeline usage, please refer to `fate_client/pipeline`.
+For guide on Pipeline usage, please refer to `fate_client/pipeline <../python/fate_client/pipeline>`_.
 
 Start a modeling task
 ---------------------

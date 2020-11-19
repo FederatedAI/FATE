@@ -37,7 +37,7 @@ Initial Configuration
 
       # configure values in pipeline/config.yaml
       # use real ip address to configure pipeline
-      pipeline config --ip 127.0.0.1 --port 9380 --log-directory ./logs
+      pipeline init --ip 127.0.0.1 --port 9380 --log-directory ./logs
 
 
 FATE Flow Command Line Interface (CLI) v2
