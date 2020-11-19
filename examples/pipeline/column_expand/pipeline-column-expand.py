@@ -70,9 +70,6 @@ def main(config="../../config.yaml", namespace=""):
     # fit model
     job_parameters = JobParameters(backend=backend, work_mode=work_mode)
     pipeline.fit(job_parameters)
-    import json
-    print(f"{json.dumps(pipeline.get_train_conf(), indent=4)}")
-    print(f"\n{json.dumps(pipeline.get_train_dsl(), indent=4)}")
 
 
 if __name__ == "__main__":
