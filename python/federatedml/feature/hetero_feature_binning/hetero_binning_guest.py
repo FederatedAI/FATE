@@ -22,7 +22,6 @@ from federatedml.feature.binning.optimal_binning.optimal_binning import OptimalB
 from federatedml.feature.hetero_feature_binning.base_feature_binning import BaseHeteroFeatureBinning
 from federatedml.secureprotol import IterativeAffineEncrypt
 from federatedml.secureprotol import PaillierEncrypt
-from federatedml.secureprotol.fate_paillier import PaillierEncryptedNumber
 from federatedml.statistic import data_overview
 from federatedml.statistic import statics
 from federatedml.util import LOGGER
