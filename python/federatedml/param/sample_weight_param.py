@@ -18,7 +18,7 @@
 #
 
 from federatedml.param.base_param import BaseParam
-from federatedml.util import consts
+from federatedml.util import consts, LOGGER
 
 
 class SampleWeightParam(BaseParam):
@@ -61,6 +61,10 @@ class SampleWeightParam(BaseParam):
                 self.class_weight = self.input_format = self.check_and_change_lower(self.class_weight,
                                                         [consts.BALANCED],
                                                         descr + " class_weight")
+            if isinstance(self.class_weight, dict):
+                for k, v in self.class_weight.items():
+                    if v < 0:
+                        LOGGER.warning(f"Negative value {v} for class {k} provided as class_weight.")
 
         if self.sample_weight_name:
             self.check_string(self.sample_weight_name, descr+" sample_weight_name")
