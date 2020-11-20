@@ -1,10 +1,11 @@
 import base64
 import hashlib
+from gmssl import sm3, func
 
 from federatedml.util import LOGGER
 
 
-class Encode:
+class Hash:
     def __init__(self, method, base64=0):
         self.method = method
         self.base64 = base64
@@ -16,6 +17,7 @@ class Encode:
             "sha256": self.__compute_sha256,
             "sha384": self.__compute_sha384,
             "sha512": self.__compute_sha512,
+            "sm3": self.__compute_sm3
         }
 
     @staticmethod
@@ -59,9 +61,15 @@ class Encode:
         else:
             return hashlib.sha384(bytes(value, encoding='utf-8')).hexdigest()
 
+    def __compute_sm3(self, value):
+        if self.base64 == 1:
+            return str(base64.b64encode(sm3.sm3_hash(func.bytes_to_list(bytes(value, encoding='utf-8'))).encode('utf-8')), "utf-8")
+        else:
+            sm3.sm3_hash(func.bytes_to_list(bytes(value, encoding='utf-8')))
+
     def compute(self, value, pre_salt=None, postfit_salt=None):
-        if not Encode.is_support(self.method):
-            LOGGER.warning("Encode module do not support method:{}".format(self.method))
+        if not Hash.is_support(self.method):
+            LOGGER.warning("Hash module do not support method:{}".format(self.method))
             return value
 
         if pre_salt is not None:

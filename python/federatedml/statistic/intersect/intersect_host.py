@@ -168,14 +168,17 @@ class RsaIntersectionHost(RsaIntersect):
 
     def run(self, data_instances):
         LOGGER.info("Start rsa intersection")
+        # generate rsa keys
         self.e, self.d, self.n = self.get_rsa_key()
         LOGGER.info("Get rsa key!")
         public_key = {"e": self.e, "n": self.n}
 
+        # sends public key e & n to guest
         self.transfer_variable.rsa_pubkey.remote(public_key,
                                                  role=consts.GUEST,
                                                  idx=0)
         LOGGER.info("Remote public key to Guest.")
+        # hash host ids
         host_ids_process_pair = self.host_ids_process(data_instances)
 
         if self.intersect_cache_param.use_cache and not self.is_version_match or not self.intersect_cache_param.use_cache:
@@ -189,7 +192,7 @@ class RsaIntersectionHost(RsaIntersect):
         guest_ids = self.transfer_variable.intersect_guest_ids.get(idx=0)
         LOGGER.info("Get guest_ids from guest")
 
-        # Process guest ids and return to guest
+        # Process(signs) guest ids and return to guest
         guest_ids_process = guest_ids.map(lambda k, v: (k, gmpy_math.powmod(int(k), self.d, self.n)))
         self.transfer_variable.intersect_guest_ids_process.remote(guest_ids_process,
                                                                   role=consts.GUEST,

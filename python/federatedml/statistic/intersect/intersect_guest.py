@@ -133,6 +133,7 @@ class RsaIntersectionGuest(RsaIntersect):
     def run(self, data_instances):
         LOGGER.info("Start rsa intersection")
 
+        # receives public key e & n
         public_keys = self.transfer_variable.rsa_pubkey.get(-1)
         LOGGER.info("Get RSA public_key:{} from Host".format(public_keys))
         self.e = [int(public_key["e"]) for public_key in public_keys]
@@ -141,10 +142,12 @@ class RsaIntersectionGuest(RsaIntersect):
         cache_version_match_info = self.get_cache_version_match_info()
 
         # table (r^e % n * hash(sid), sid, r)
+        # encrypt hash(ids)
         guest_id_process_list = [ data_instances.map(
                 lambda k, v: self.guest_id_process(k, random_bit=self.random_bit, rsa_e=self.e[i], rsa_n=self.n[i])) for i in range(len(self.e)) ]
 
         # table(r^e % n *hash(sid), 1)
+        # mask values in table & remote to host
         for i, guest_id in enumerate(guest_id_process_list):
             mask_guest_id = guest_id.mapValues(lambda v: 1)
             self.transfer_variable.intersect_guest_ids.remote(mask_guest_id,
@@ -161,6 +164,7 @@ class RsaIntersectionGuest(RsaIntersect):
         LOGGER.info("Get guest_ids_process from Host")
 
         # table(r^e % n *hash(sid), sid, hash(guest_ids_process/r))
+        # g[0]=sid, g[1]=random bits
         guest_ids_process_final = [v.join(recv_guest_ids_process[i], lambda g, r: (g[0], RsaIntersectionGuest.hash(gmpy2.divm(int(r), int(g[1]), self.n[i]))))
                                    for i, v in enumerate(guest_id_process_list)]
 
