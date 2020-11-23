@@ -13,7 +13,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import hashlib
 
 from federatedml.secureprotol.hash.hash_factory import Hash
 from federatedml.util import consts
@@ -96,23 +95,24 @@ class Intersect(object):
 
         return intersect_ids
 
+    @staticmethod
+    def hash(value, hash_operator, salt=None):
+        h_value = hash_operator.compute(value, postfit_salt=salt)
+        return h_value
+
 
 class RsaIntersect(Intersect):
     def __init__(self, intersect_params):
         super().__init__(intersect_params)
         self.intersect_cache_param = intersect_params.intersect_cache_param
-        self.rsa_params = intersect_params.rsa_param
-
-    @staticmethod
-    def hash(value):
-        return hashlib.sha256(bytes(str(value), encoding='utf-8')).hexdigest()
+        self.rsa_params = intersect_params.rsa_params
 
 
 class RawIntersect(Intersect):
     def __init__(self, intersect_params):
         super().__init__(intersect_params)
         self.role = None
-        self.with_hash = intersect_params.with_hash
+        self.with_encode = intersect_params.with_encode
         self.transfer_variable = RawIntersectTransferVariable()
         self.encode_params = intersect_params.encode_params
 
@@ -121,14 +121,14 @@ class RawIntersect(Intersect):
 
     def intersect_send_id(self, data_instances):
         sid_hash_pair = None
-        if self.with_hash and self.encode_params.encode_method != "none":
+        if self.with_encode and self.encode_params.encode_method != "none":
             if Hash.is_support(self.encode_params.encode_method):
                 hash_operator = Hash(self.encode_params.encode_method, self.encode_params.base64)
                 sid_hash_pair = data_instances.map(
                     lambda k, v: (hash_operator.compute(k, postfit_salt=self.encode_params.salt), k))
                 data_sid = sid_hash_pair.mapValues(lambda v: 1)
             else:
-                raise ValueError("Unknown encode_method, please check the configure of hash_param")
+                raise ValueError("Unknown encode_method, please check the configuration of encode_param")
         else:
             data_sid = data_instances.mapValues(lambda v: 1)
 
@@ -190,7 +190,7 @@ class RawIntersect(Intersect):
         LOGGER.info("Join id role is {}".format(self.role))
 
         sid_hash_pair = None
-        if self.with_hash and self.encode_params.encode_method != "none":
+        if self.with_encode and self.encode_params.encode_method != "none":
             if Hash.is_support(self.encode_params.encode_method):
                 hash_operator = Hash(self.encode_params.encode_method, self.encode_params.base64)
                 sid_hash_pair = data_instances.map(

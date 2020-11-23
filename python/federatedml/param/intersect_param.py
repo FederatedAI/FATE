@@ -70,7 +70,7 @@ class RSAParam(BaseParam):
 
     Parameters
     ----------
-    salt: the src data string will be str = str + salt, default by empty string
+    salt: the src data string will be str = str + salt, default ''
 
     hash_method: str, the hash method of src data string, it support sha256, sha384, sha512, sm3, default sha256
 

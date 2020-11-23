@@ -20,6 +20,7 @@ import random
 
 from fate_arch.session import computing_session as session
 from federatedml.secureprotol import gmpy_math
+from federatedml.secureprotol.hash.hash_factory import Hash
 from federatedml.statistic.intersect import RawIntersect
 from federatedml.statistic.intersect import RsaIntersect
 #from federatedml.statistic.intersect.rsa_cache import cache_utils
@@ -125,9 +126,9 @@ class RsaIntersectionGuest(RsaIntersect):
         return host_ids_process_list
 
     @staticmethod
-    def guest_id_process(sid, random_bit, rsa_e, rsa_n):
+    def guest_id_process(sid, random_bit, rsa_e, rsa_n, hash_operator, salt):
         r = random.SystemRandom().getrandbits(random_bit)
-        re_hash = gmpy_math.powmod(r, rsa_e, rsa_n) * int(RsaIntersectionGuest.hash(sid), 16) % rsa_n
+        re_hash = gmpy_math.powmod(r, rsa_e, rsa_n) * int(RsaIntersectionGuest.hash(sid, hash_operator, salt), 16) % rsa_n
         return re_hash, (sid, r)
 
     def run(self, data_instances):
@@ -143,8 +144,14 @@ class RsaIntersectionGuest(RsaIntersect):
 
         # table (r^e % n * hash(sid), sid, r)
         # encrypt hash(ids)
+        hash_operator = Hash(self.rsa_params.hash_method, self.rsa_params.base64)
         guest_id_process_list = [ data_instances.map(
-                lambda k, v: self.guest_id_process(k, random_bit=self.random_bit, rsa_e=self.e[i], rsa_n=self.n[i])) for i in range(len(self.e)) ]
+                lambda k, v: self.guest_id_process(k,
+                                                   random_bit=self.random_bit,
+                                                   rsa_e=self.e[i],
+                                                   rsa_n=self.n[i],
+                                                   hash_operator=hash_operator,
+                                                   salt=self.rsa_params.salt)) for i in range(len(self.e)) ]
 
         # table(r^e % n *hash(sid), 1)
         # mask values in table & remote to host
@@ -164,8 +171,10 @@ class RsaIntersectionGuest(RsaIntersect):
         LOGGER.info("Get guest_ids_process from Host")
 
         # table(r^e % n *hash(sid), sid, hash(guest_ids_process/r))
-        # g[0]=sid, g[1]=random bits
-        guest_ids_process_final = [v.join(recv_guest_ids_process[i], lambda g, r: (g[0], RsaIntersectionGuest.hash(gmpy2.divm(int(r), int(g[1]), self.n[i]))))
+        # g[0]=(r^e % n *hash(sid), sid), g[1]=random bits r
+        final_hash_operator = Hash(self.rsa_params.final_hash_method, self.rsa_params.base64)
+        guest_ids_process_final = [v.join(recv_guest_ids_process[i], lambda g, r: (g[0], RsaIntersectionGuest.hash(gmpy2.divm(int(r), int(g[1]),self.n[i]),
+                                                                                                                   final_hash_operator, self.rsa_params.salt)))
                                    for i, v in enumerate(guest_id_process_list)]
 
         # table(hash(guest_ids_process/r), sid))

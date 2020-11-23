@@ -19,6 +19,7 @@ import hashlib
 from fate_arch.session import computing_session as session
 from federatedml.secureprotol import gmpy_math
 from federatedml.secureprotol.encrypt import RsaEncrypt
+from federatedml.secureprotol.hash.hash_factory import Hash
 #from federatedml.statistic.intersect.rsa_cache import cache_utils
 from federatedml.statistic.intersect import RawIntersect
 from federatedml.statistic.intersect import RsaIntersect
@@ -41,9 +42,13 @@ class RsaIntersectionHost(RsaIntersect):
         self.has_cache_version = True
 
     def cal_host_ids_process_pair(self, data_instances):
+        hash_operator = Hash(self.rsa_params.hash_method, self.rsa_params.base64)
+        final_hash_operator = Hash(self.rsa_params.final_hash_method, self.rsa_params.base64)
         return data_instances.map(
             lambda k, v: (
-                RsaIntersectionHost.hash(gmpy_math.powmod(int(RsaIntersectionHost.hash(k), 16), self.d, self.n)), k)
+                RsaIntersectionHost.hash(gmpy_math.powmod(int(RsaIntersectionHost.hash(k, hash_operator, self.rsa_params.salt), 16), self.d, self.n),
+                                         final_hash_operator,
+                                         self.rsa_params.salt), k)
         )
 
     def generate_rsa_key(self, rsa_bit=1024):
