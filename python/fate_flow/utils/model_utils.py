@@ -55,7 +55,7 @@ def all_party_key(all_party):
 
 
 @DB.connection_context()
-def query_job(reverse=None, order_by=None, **kwargs):
+def query_model(reverse=None, order_by=None, **kwargs):
     filters = []
     for f_n, f_v in kwargs.items():
         attr_name = 'f_%s' % f_n

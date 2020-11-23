@@ -572,7 +572,7 @@ def operation_record(data: dict, oper_type, oper_status):
 
 @manager.route('/query', methods=['POST'])
 def query_model():
-    models = model_utils.query_job(**request.json)
+    models = model_utils.query_model(**request.json)
     if not models:
         return get_json_result(retcode=0, retmsg='no model found', data=[])
     return get_json_result(retcode=0, retmsg='success', data=[model.to_json() for model in models])
