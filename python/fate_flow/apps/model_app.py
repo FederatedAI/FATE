@@ -30,7 +30,7 @@ from fate_flow.scheduler import DAGScheduler
 from fate_flow.settings import stat_logger, MODEL_STORE_ADDRESS, TEMP_DIRECTORY
 from fate_flow.pipelined_model import migrate_model, pipelined_model, publish_model
 from fate_flow.utils.api_utils import get_json_result, federated_api, error_response
-from fate_flow.utils import job_utils
+from fate_flow.utils import job_utils, model_utils
 from fate_flow.utils.service_utils import ServiceUtils
 from fate_flow.utils.detect_utils import check_config
 from fate_flow.utils.model_utils import gen_party_model_id
@@ -568,6 +568,14 @@ def operation_record(data: dict, oper_type, oper_status):
                            f_model_version=data.get("model_version") if data.get("model_version") else data.get('job_parameters').get("model_version"))
     except Exception:
         stat_logger.error(traceback.format_exc())
+
+
+@manager.route('/query', methods=['POST'])
+def query_model():
+    models = model_utils.query_job(**request.json)
+    if not models:
+        return get_json_result(retcode=0, retmsg='no model found', data=[])
+    return get_json_result(retcode=0, retmsg='success', data=[model.to_json() for model in models])
 
 
 def adapter_servings_config(request_data):

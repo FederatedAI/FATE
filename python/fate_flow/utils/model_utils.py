@@ -13,6 +13,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import operator
+
+from fate_flow.db.db_models import DB, MachineLearningModelInfo as MLModel
+
 gen_key_string_separator = '#'
 
 
@@ -48,3 +52,26 @@ def all_party_key(all_party):
     else:
         all_party_key = None
     return all_party_key
+
+
+@DB.connection_context()
+def query_job(reverse=None, order_by=None, **kwargs):
+    filters = []
+    for f_n, f_v in kwargs.items():
+        attr_name = 'f_%s' % f_n
+        if hasattr(MLModel, attr_name):
+            filters.append(operator.attrgetter('f_%s' % f_n)(MLModel) == f_v)
+    if filters:
+        models = MLModel.select().where(*filters)
+        if reverse is not None:
+            if not order_by or not hasattr(MLModel, f"f_{order_by}"):
+                order_by = "create_time"
+            if reverse is True:
+                models = models.order_by(getattr(MLModel, f"f_{order_by}").desc())
+            elif reverse is False:
+                models = models.order_by(getattr(MLModel, f"f_{order_by}").asc())
+        return [model for model in models]
+    else:
+        # not allow query all models
+        return []
+
