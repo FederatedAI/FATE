@@ -37,6 +37,7 @@ class KFold(BaseCrossValidator):
         self.n_splits = 1
         self.shuffle = True
         self.random_seed = 1
+        self.fold_history = None
 
     def _init_model(self, param):
         self.model_param = param
@@ -45,6 +46,8 @@ class KFold(BaseCrossValidator):
         self.role = param.role
         self.shuffle = param.shuffle
         self.random_seed = param.random_seed
+        self.output_fold_history = param.output_fold_history
+        self.history_with_value = param.history_with_value
         # self.evaluate_param = param.evaluate_param
         # np.random.seed(self.random_seed)
 
@@ -87,6 +90,17 @@ class KFold(BaseCrossValidator):
             train_data.schema = schema
             test_data.schema = schema
             yield train_data, test_data
+
+    @staticmethod
+    def generate_new_id(id, fold_num, data_type):
+        return f"{id}#fold{fold_num}#{data_type}"
+
+    def transform_history_data(self, data, fold_num, data_type):
+        if self.history_with_value:
+            history_data = data.map(lambda k, v: (KFold.generate_new_id(k, fold_num, data_type), v))
+        else:
+            history_data = data.map(lambda k, v: (KFold.generate_new_id(k, fold_num, data_type), 1))
+        return history_data
 
     def run(self, component_parameters, data_inst, original_model, host_do_evaluate):
         self._init_model(component_parameters)
@@ -149,12 +163,24 @@ class KFold(BaseCrossValidator):
                 self.evaluate(pred_res, fold_name, model)
             LOGGER.debug("Finish fold: {}".format(fold_num))
 
+            if self.output_fold_history:
+                fold_train_data = self.transform_history_data(train_data, fold_num, "train")
+                fold_validate_data = self.transform_history_data(test_data, fold_num, "validate")
+                fold_history_data = fold_train_data.union(fold_validate_data)
+                if self.fold_history is None:
+                    self.fold_history = fold_history_data
+                else:
+                    self.fold_history = self.fold_history.union(fold_history_data)
+
             summary_res[f"fold_{fold_num}"] = model.summary()
             fold_num += 1
         summary_res['fold_num'] = fold_num
         LOGGER.debug("Finish all fold running")
         original_model.set_summary(summary_res)
-        return
+        if self.output_fold_history:
+            return self.fold_history
+        else:
+            return data_inst
 
     def _arbiter_run(self, original_model):
         for fold_num in range(self.n_splits):
