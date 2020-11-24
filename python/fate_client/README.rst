@@ -35,8 +35,10 @@ Initial Configuration
 
    .. code-block:: bash
 
-      # configure values in pipeline/config.yaml
-      # use real ip address to configure pipeline
+      # configure by conf file
+      pipeline init -c pipeline/config.yaml
+      # alternatively, input real ip address and port info to initialize pipeline
+      # optionally, set log directory for Pipeline
       pipeline init --ip 127.0.0.1 --port 9380 --log-directory ./logs
 
 
@@ -55,6 +57,6 @@ Initial Configuration
 
       # configure values in conf/service_conf.yaml
       flow init -c /data/projects/fate/conf/service_conf.yaml
-      # use real ip address to initialize cli
+      # alternatively, input real ip address and port info to initialize cli
       flow init --ip 127.0.0.1 --port 9380
 
