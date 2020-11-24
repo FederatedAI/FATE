@@ -46,7 +46,7 @@ Here is a general guide to quick start a FATE job.
 
    .. code-block:: bash
 
-      #  upload data used by demo, optionally provides directory where examples/data locates
+      #  upload demo data to FATE data storage, optionally provide path to where deployed examples/data locates
 
       python demo/pipeline-upload.py --base /data/projects/fate
 
