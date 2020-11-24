@@ -89,16 +89,16 @@ class RSAParam(BaseParam):
     def check(self):
         if type(self.salt).__name__ != "str":
             raise ValueError(
-                "hash param's salt {} not supported, should be str type".format(
+                "rsa param's salt {} not supported, should be str type".format(
                     self.salt))
 
-        descr = "hash param's hash_method"
+        descr = "rsa param's hash_method "
 
         self.hash_method = self.check_and_change_lower(self.hash_method,
                                                        [consts.SHA256, consts.SHA384, consts.SM3],
                                                        descr)
 
-        descr = "hash param's final_hash_method"
+        descr = "rsa param's final_hash_method "
 
         self.final_hash_method = self.check_and_change_lower(self.final_hash_method,
                                                        [consts.MD5, consts.SHA1, consts.SHA224,
@@ -107,7 +107,7 @@ class RSAParam(BaseParam):
 
         if type(self.base64).__name__ != "bool":
             raise ValueError(
-                "hash param's base64 {} not supported, should be bool type".format(self.base64))
+                "rsa param's base64 {} not supported, should be bool type".format(self.base64))
 
         LOGGER.debug("Finish RSAParam parameter check!")
         return True
@@ -122,7 +122,7 @@ class IntersectCache(BaseParam):
     def check(self):
         if type(self.use_cache).__name__ != "bool":
             raise ValueError(
-                "hash param's salt {} not supported, should be bool type".format(
+                "IntersectCache param's use_cache {} not supported, should be bool type".format(
                     self.use_cache))
 
         descr = "intersect cache param's "
