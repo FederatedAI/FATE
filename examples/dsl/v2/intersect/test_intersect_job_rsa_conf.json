@@ -44,7 +44,7 @@
                         "output_format": "dense"
                     }
                 }
-            },tes_
+            },
             "host": {
                 "0": {
                     "reader_0": {
