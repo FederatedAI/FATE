@@ -77,7 +77,6 @@ class KFold(BaseCrossValidator):
 
             train_sids_table = [(key_type(x), 1) for x in train_sids]
             test_sids_table = [(key_type(x), 1) for x in test_sids]
-            # print(train_sids_table)
             train_table = session.parallelize(train_sids_table,
                                               include_key=True,
                                               partition=data_inst.partitions)
@@ -171,6 +170,7 @@ class KFold(BaseCrossValidator):
             LOGGER.debug("Finish fold: {}".format(fold_num))
 
             if self.output_fold_history:
+                LOGGER.debug(f"generating fold history for fold {fold_num}")
                 fold_train_data = self.transform_history_data(train_data, fold_num, "train")
                 fold_validate_data = self.transform_history_data(test_data, fold_num, "validate")
                 fold_history_data = fold_train_data.union(fold_validate_data)
