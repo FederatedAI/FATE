@@ -98,8 +98,12 @@ class KFold(BaseCrossValidator):
     def transform_history_data(self, data, fold_num, data_type):
         if self.history_with_value:
             history_data = data.map(lambda k, v: (KFold.generate_new_id(k, fold_num, data_type), v))
+            history_data.schema = copy.deepcopy(data.schema)
         else:
-            history_data = data.map(lambda k, v: (KFold.generate_new_id(k, fold_num, data_type), 1))
+            history_data = data.map(lambda k, v: (KFold.generate_new_id(k, fold_num, data_type), fold_num))
+            schema = copy.deepcopy(data.schema)
+            schema["header"] = ["fold_num"]
+            history_data.schema = schema
         return history_data
 
     def run(self, component_parameters, data_inst, original_model, host_do_evaluate):
@@ -110,6 +114,9 @@ class KFold(BaseCrossValidator):
             return
         total_data_count = data_inst.count()
         LOGGER.debug("data_inst count: {}".format(data_inst.count()))
+        if self.output_fold_history and self.history_with_value:
+            if total_data_count * self.n_splits > consts.MAX_SAMPLE_OUTPUT_LIMIT:
+                raise ValueError(f"max sample output limit {consts.MAX_SAMPLE_OUTPUT_LIMIT} exceeded with n_splits ({self.n_splits}) * instance_count ({total_data_count})")
         if self.mode == consts.HOMO or self.role == consts.GUEST:
             data_generator = self.split(data_inst)
         else:
@@ -167,10 +174,13 @@ class KFold(BaseCrossValidator):
                 fold_train_data = self.transform_history_data(train_data, fold_num, "train")
                 fold_validate_data = self.transform_history_data(test_data, fold_num, "validate")
                 fold_history_data = fold_train_data.union(fold_validate_data)
+                fold_history_data.schema = fold_train_data.schema
                 if self.fold_history is None:
                     self.fold_history = fold_history_data
                 else:
-                    self.fold_history = self.fold_history.union(fold_history_data)
+                    new_fold_history = self.fold_history.union(fold_history_data)
+                    new_fold_history.schema = fold_history_data.schema
+                    self.fold_history = new_fold_history
 
             summary_res[f"fold_{fold_num}"] = model.summary()
             fold_num += 1

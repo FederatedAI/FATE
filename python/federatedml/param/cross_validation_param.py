@@ -16,7 +16,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-import copy
 
 from federatedml.param.base_param import BaseParam
 # from federatedml.param.evaluation_param import EvaluateParam
@@ -47,9 +46,9 @@ class CrossValidationParam(BaseParam):
     need_cv: bool, default False
         Indicate if this module needed to be run
 
-    output_fold_hisotry: bool, default False
-        Indicate whether to table of ids used by each fold, else return original input data
-        returned ids are formatted as: {original_id}#{fold_num}#{train/validate}
+    output_fold_history: bool, default True
+        Indicate whether to output table of ids used by each fold, else return original input data
+        returned ids are formatted as: {original_id}#fold{fold_num}#{train/validate}
 
     history_with_value: bool, default False
         Indicate whether to include original feature values in the output fold history,
@@ -58,7 +57,7 @@ class CrossValidationParam(BaseParam):
     """
 
     def __init__(self, n_splits=5, mode=consts.HETERO, role=consts.GUEST, shuffle=True, random_seed=1,
-                 need_cv=False, output_fold_history=False, history_with_value=False):
+                 need_cv=False, output_fold_history=True, history_with_value=False):
         super(CrossValidationParam, self).__init__()
         self.n_splits = n_splits
         self.mode = mode

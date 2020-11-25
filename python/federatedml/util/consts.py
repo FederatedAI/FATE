@@ -286,3 +286,5 @@ MANUAL = 'manual'
 
 # scorecard
 CREDIT = 'credit'
+
+MAX_SAMPLE_OUTPUT_LIMIT = 10 ** 6
