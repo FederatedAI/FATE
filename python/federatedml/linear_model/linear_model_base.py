@@ -17,6 +17,7 @@
 #  limitations under the License.
 
 import numpy as np
+import copy
 
 from fate_flow.entity.metric import Metric
 from fate_flow.entity.metric import MetricMeta
@@ -171,7 +172,7 @@ class BaseLinearModel(ModelBase):
     def init_schema(self, data_instance):
         if data_instance is None:
             return
-        self.schema = data_instance.schema
+        self.schema = copy.deepcopy(data_instance.schema)
         self.header = self.schema.get('header')
 
     def get_weight_intercept_dict(self, header):
