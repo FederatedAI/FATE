@@ -115,7 +115,7 @@ class KFold(BaseCrossValidator):
         LOGGER.debug("data_inst count: {}".format(data_inst.count()))
         if self.output_fold_history and self.history_with_value:
             if total_data_count * self.n_splits > consts.MAX_SAMPLE_OUTPUT_LIMIT:
-                raise ValueError(f"max sample output limit {consts.MAX_SAMPLE_OUTPUT_LIMIT} exceeded with n_splits ({self.n_splits}) * instance_count ({total_data_count})")
+                LOGGER.warning(f"max sample output limit {consts.MAX_SAMPLE_OUTPUT_LIMIT} exceeded with n_splits ({self.n_splits}) * instance_count ({total_data_count})")
         if self.mode == consts.HOMO or self.role == consts.GUEST:
             data_generator = self.split(data_inst)
         else:
