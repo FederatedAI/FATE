@@ -21,12 +21,13 @@ from pathlib import Path
 
 from ruamel import yaml
 
-DATA_SIZE = 0
+DATA_SIZE = False
 upload_dir = 'performance/hetero_task_upload_testsuite.json'
-intersect_dir = 'performance/hetero_task_intersect_testsuite.json'
+intersect_dir = 'performance/hetero_task_intersect_single_testsuite.json'
+intersect_multi_dir = 'performance/hetero_task_intersect_multi_testsuite.json'
 hetero_lr_dir = 'performance/hetero_task_lr_testsuite.json'
 hetero_sbt_dir = 'performance/hetero_task_sbt_testsuite.json'
-emperate = """\
+temperate = """\
 # 0 for standalone, 1 for cluster
 work_mode: 0
 # 0 for eggroll, 1 for spark
@@ -36,7 +37,7 @@ backend: 0
 data_base_dir: ../../../../
 # fate_test job Dedicated directory, File storage location,cache_directory={FATE}/python/fate_test/cache/
 cache_directory: /data/projects/fate/python/fate_test/cache/
-
+clean_data: true
 parties:
   guest: [10000]
   host: [9999, 10000]
@@ -79,7 +80,7 @@ def create_config(path: Path, override=False):
         raise FileExistsError(f"{path} exists")
     with path.open("w") as f:
         f.write(temperate)
-
+        
 
 def default_config():
     if not _default_config.exists():
@@ -144,7 +145,6 @@ class Config(object):
         self.party_to_service_id = {}
         self.service_id_to_service = {}
         self.tunnel_id_to_tunnel = {}
-
 
         tunnel_id = 0
         service_id = 0

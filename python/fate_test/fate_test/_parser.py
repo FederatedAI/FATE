@@ -87,10 +87,12 @@ class JobConf(object):
                  initiator: dict,
                  role: dict,
                  job_parameters: dict,
+                 component_parameters: dict,
                  **kwargs):
         self.initiator = initiator
         self.role = role
         self.job_parameters = job_parameters
+        self.component_parameters = component_parameters
         self.others_kwargs = kwargs
 
     def as_dict(self):
@@ -98,6 +100,7 @@ class JobConf(object):
             initiator=self.initiator,
             role=self.role,
             job_parameters=self.job_parameters,
+            component_parameters=self.component_parameters,
             **self.others_kwargs
         )
 
@@ -108,10 +111,14 @@ class JobConf(object):
 
         return JobConf(**kwargs)
 
-    def update(self, parties: Parties, work_mode, backend):
+    def update(self, parties: Parties, work_mode, backend, timeout, job_parameters, component_parameters):
         self.initiator = parties.extract_initiator_role(self.initiator['role'])
         self.role = parties.extract_role({role: len(parties) for role, parties in self.role.items()})
-        self.update_job_common_parameters(work_mode=work_mode, backend=backend)
+        self.update_job_common_parameters(work_mode=work_mode, backend=backend, timeout=timeout)
+        for key, value in job_parameters.items():
+            self.update_job_common_parameters(key=value)
+        for key, value in component_parameters.items():
+            self.update_component_common_parameters(key=value)
 
     def update_job_common_parameters(self, **kwargs):
         dsl_version = self.others_kwargs.get("dsl_version", 1)
@@ -119,6 +126,13 @@ class JobConf(object):
             self.job_parameters.update(**kwargs)
         else:
             self.job_parameters.setdefault("common", {}).update(**kwargs)
+
+    def update_component_common_parameters(self, **kwargs):
+        dsl_version = self.others_kwargs.get("dsl_version", 1)
+        if dsl_version == 1:
+            self.component_parameters.update(**kwargs)
+        else:
+            self.component_parameters.setdefault("common", {}).update(**kwargs)
 
 
 class JobDSL(object):
@@ -250,7 +264,7 @@ class Testsuite(object):
         failed = []
         for job in self.jobs:
             try:
-                job.job_conf.update(config.parties, config.work_mode, config.backend)
+                job.job_conf.update(config.parties, config.work_mode, config.backend, None, None, None)
             except ValueError as e:
                 failed.append((job, e))
         return failed

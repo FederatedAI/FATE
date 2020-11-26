@@ -6,12 +6,14 @@ import numpy as np
 from fate_test._config import Config
 
 
-def _get_big_data(guest_data_size, host_data_size, guest_feature_num, host_feature_num, include_path, conf: Config,
-                  encryption_type, match_rate):
-    def generate_tag_float_value_data(id_value, feature_nums):
-        if len(id_value) != host_data_size:
-            raise ValueError("len ids should equal to sample number")
+def remove_file(path):
+    if os.path.exists(path) and os.path.isfile(path):
+        os.remove(path)
 
+
+def get_big_data(task, guest_data_size, host_data_size, guest_feature_num, host_feature_num, include_path, conf: Config,
+                 encryption_type, match_rate):
+    def _generate_tag_float_value_data(id_value, feature_nums):
         counter = 0
         for sample_i in range(host_data_size):
             one_data = [id_value[sample_i]]
@@ -22,10 +24,7 @@ def _get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featu
             counter += 1
             yield one_data
 
-    def generate_tag_data(id_value, feature_nums):
-        if len(id_value) != host_data_size:
-            raise ValueError("len ids should equal to sample number")
-
+    def _generate_tag_data(id_value, feature_nums):
         counter = 0
         for sample_i in range(host_data_size):
             one_data = [id_value[sample_i]]
@@ -39,19 +38,16 @@ def _get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featu
 
             yield one_data
 
-    def generate_label_data(id_value, feature_nums):
-        if len(id_value) != guest_data_size:
-            raise ValueError("len ids should equal to sample number")
-
+    def _generate_label_data(id_value, feature_nums):
         header = ['id', 'y'] + ['x' + str(i) for i in range(feature_nums)]
         yield header
         counter = 0
-        for sample_i in range(guest_data_size):
+        for sample_i in range(len(id_value)):
             one_data = [id_value[sample_i], round(random.random())] + list(np.random.random(feature_nums))
             counter += 1
             yield one_data
 
-    def save_file(file, data, header=None, delimitor=','):
+    def _save_file(file, data, header=None, delimitor=','):
         try:
             if not os.path.exists(file):
                 with open(file, 'w') as f_out:
@@ -96,17 +92,20 @@ def _get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featu
         os.mkdir(big_data_dir)
     date_set = [os.path.basename(upload_dict['file']) for upload_dict in testsuite_config['data']]
     for idx, data_name in enumerate(date_set):
-
+        if task == 'intersect_multi' and 'guest' in data_name or task == 'intersect_multi' and 'label' in data_name:
+            guest_id_list = guest_ids[np.math.floor(guest_data_size / len(date_set)) * idx:
+                                      np.math.floor(guest_data_size / len(date_set)) * (idx + 1)]
+        else:
+            guest_id_list = guest_ids
         data_path = os.path.join(str(big_data_dir), data_name)
-        if os.path.exists(data_path) and os.path.isfile(data_path):
-            os.remove(data_path)
+        remove_file(data_path)
         try:
             if 'tag' in data_name and 'tag_value' not in data_name:
-                save_file(data_path, generate_tag_data(host_ids, host_feature_num), delimitor=',')
+                _save_file(data_path, _generate_tag_data(host_ids, host_feature_num), delimitor=',')
             elif 'tag_value' in data_name:
-                save_file(data_path, generate_tag_float_value_data(host_ids, host_feature_num), delimitor=';')
+                _save_file(data_path, _generate_tag_float_value_data(host_ids, host_feature_num), delimitor=';')
             elif 'guest' in data_name or 'label' in data_name:
-                save_file(data_path, generate_label_data(guest_ids, guest_feature_num), delimitor=',')
+                _save_file(data_path, _generate_label_data(guest_id_list, guest_feature_num), delimitor=',')
             else:
                 raise Exception(
                     f'The host file name contains "tag" or "tag_value", and the guest file name contains "guest" or "label". Please check your file name: {data_name}')

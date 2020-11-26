@@ -19,7 +19,6 @@ import time
 import typing
 from datetime import timedelta
 from pathlib import Path
-
 import requests
 from fate_test._parser import Data, Job
 from flow_sdk.client import FlowClient
@@ -41,16 +40,17 @@ class FLOWClient(object):
     def set_address(self, address):
         self.address = address
 
-    def upload_data(self, data: Data, callback=None) -> 'UploadDataResponse':
+    def upload_data(self, data: Data, callback=None):
         try:
-            response = self._upload_data(conf=data.config, verbose=0, drop=1)
+            response, data_path = self._upload_data(conf=data.config, verbose=0, drop=1)
             if callback is not None:
                 callback(response)
             status = self._awaiting(response.job_id, "local")
+            print('status:', status)
             response.status = status
         except Exception as e:
             raise RuntimeError(f"upload data failed") from e
-        return response
+        return response, data_path
 
     def delete_data(self, data: Data):
         try:
@@ -107,22 +107,20 @@ class FLOWClient(object):
         return file_path
 
     def _upload_data(self, conf, verbose, drop):
-        conf['drop'] = drop
-        conf['verbose'] = verbose
+        if _config.DATA_SIZE:
+            conf['file'] = os.path.join(str(self._cache_directory), os.path.basename(conf.get('file')))
+        else:
+            conf['file'] = os.path.join(str(self._data_base_dir), conf.get('file'))
         path = Path(conf.get('file'))
         if not path.is_file():
             path = self._data_base_dir.joinpath(conf.get('file')).resolve()
         if not path.exists():
             raise Exception('The file is obtained from the fate flow client machine, but it does not exist, '
                             f'please check the path: {path}')
-        if _config.DATA_SIZE:
-            conf['file'] = os.path.join(str(self._cache_directory), os.path.basename(conf.get('file')))
-        else:
-            conf['file'] = os.path.join(str(self._data_base_dir), conf.get('file'))
         upload_response = self.flow_client(request='data/upload', param=self._save_json(conf, 'upload_conf.json'),
                                            verbose=verbose, drop=drop)
         response = UploadDataResponse(upload_response)
-        return response
+        return response, conf['file']
 
     def _delete_data(self, table_name, namespace):
         param = {

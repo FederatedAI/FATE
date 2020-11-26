@@ -37,6 +37,12 @@ from fate_test.scripts._utils import _load_testsuites, _upload_data, _delete_dat
               help="a json string represents mapping for replacing fields in data/conf/dsl")
 @click.option("-g", '--glob', type=str,
               help="glob string to filter sub-directory of path specified by <include>")
+@click.option('-time', '--timeout', type=int, default=3600,
+              help="Task timeout duration")
+@click.option('--update_job_parameters', default="{}", type=JSON_STRING,
+              help="a json string represents mapping for replacing fields in conf.job_parameters")
+@click.option('--update_component_parameters', default="{}", type=JSON_STRING,
+              help="a json string represents mapping for replacing fields in conf.component_parameters")
 @click.option("--skip-dsl-jobs", is_flag=True, default=False,
               help="skip dsl jobs defined in testsuite")
 @click.option("--skip-pipeline-jobs", is_flag=True, default=False,
@@ -47,7 +53,7 @@ from fate_test.scripts._utils import _load_testsuites, _upload_data, _delete_dat
               help="upload data only")
 @SharedOptions.get_shared_options(hidden=True)
 @click.pass_context
-def run_suite(ctx, replace, include, exclude, glob,
+def run_suite(ctx, replace, include, exclude, glob, timeout, update_job_parameters, update_component_parameters,
               skip_dsl_jobs, skip_pipeline_jobs, skip_data, data_only, **kwargs):
     """
     process testsuite
@@ -89,7 +95,8 @@ def run_suite(ctx, replace, include, exclude, glob,
                 if not skip_dsl_jobs:
                     echo.stdout_newline()
                     try:
-                        _submit_job(client, suite, namespace, config_inst)
+                        _submit_job(client, suite, namespace, config_inst, timeout, update_job_parameters,
+                                    update_component_parameters)
                     except Exception as e:
                         raise RuntimeError(f"exception occur while submit job for {suite.path}") from e
 
@@ -116,7 +123,8 @@ def run_suite(ctx, replace, include, exclude, glob,
     echo.echo(f"testsuite namespace: {namespace}", fg='red')
 
 
-def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Config):
+def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Config, timeout, update_job_parameters,
+                update_component_parameters):
     # submit jobs
     with click.progressbar(length=len(suite.jobs),
                            label="jobs   ",
@@ -135,7 +143,8 @@ def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Conf
 
             # noinspection PyBroadException
             try:
-                job.job_conf.update(config.parties, config.work_mode, config.backend)
+                job.job_conf.update(config.parties, config.work_mode, config.backend, timeout, update_job_parameters,
+                                    update_component_parameters)
             except Exception:
                 _raise()
                 continue

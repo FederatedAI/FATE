@@ -31,7 +31,8 @@ from fate_test.scripts._utils import _load_testsuites, _upload_data, _delete_dat
 
 
 @click.command("performance")
-@click.option('-t', '--task', required=True, type=click.Choice(['upload', 'intersect', 'hetero_lr', 'hetero_sbt']),
+@click.option('-t', '--task', required=True, type=click.Choice(['upload', 'intersect', 'intersect_multi', 'hetero_lr',
+                                                                'hetero_sbt']),
               help="Select the task type, you can also set through include")
 @click.option('-i', '--include', type=click.Path(exists=True), multiple=True, metavar="<include>",
               help="include *testsuite.json under these paths")
@@ -41,6 +42,13 @@ from fate_test.scripts._utils import _load_testsuites, _upload_data, _delete_dat
               help="Intersection rate relative to guest, The value is between (0-1)")
 @click.option('-r', '--replace', default="{}", type=JSON_STRING,
               help="a json string represents mapping for replacing fields in data/conf/dsl")
+@click.option('-time', '--timeout', type=int, default=3600,
+              help="Task timeout duration")
+@click.option('--update_job_parameters', default="{}", type=JSON_STRING,
+              help="a json string represents mapping for replacing fields in conf.job_parameters")
+@click.option('--update_component_parameters', default="{}", type=JSON_STRING,
+              help="a json string represents mapping for replacing fields in conf.component_parameters")
+
 @click.option('-n-guest', '--guest_data_size', required=True, type=int,
               help="Set guest data set size")
 @click.option('-n-host', '--host_data_size', type=int, default=0,
@@ -51,8 +59,8 @@ from fate_test.scripts._utils import _load_testsuites, _upload_data, _delete_dat
               help="Set host feature dimensions")
 @SharedOptions.get_shared_options(hidden=True)
 @click.pass_context
-def run_task(ctx, task, include, encryption_type, match_rate, replace, guest_data_size, host_data_size,
-             guest_feature_num, host_feature_num, **kwargs):
+def run_task(ctx, task, include, encryption_type, match_rate, guest_data_size, host_data_size, guest_feature_num,
+             host_feature_num, replace, timeout, update_job_parameters, update_component_parameters,  **kwargs):
     """
     Test the performance of big data tasks
     """
@@ -68,19 +76,21 @@ def run_task(ctx, task, include, encryption_type, match_rate, replace, guest_dat
     if not include:
         if task == 'intersect':
             include = os.path.join(str(get_cache_directory(config_inst)), _config.intersect_dir)
+        if task == 'intersect_multi':
+            include = os.path.join(str(get_cache_directory(config_inst)), _config.intersect_multi_dir)
         elif task == 'hetero_lr':
             include = os.path.join(str(get_cache_directory(config_inst)), _config.hetero_lr_dir)
         elif task == 'hetero_sbt':
             include = os.path.join(str(get_cache_directory(config_inst)), _config.hetero_sbt_dir)
         elif task == 'upload':
             include = os.path.join(str(get_cache_directory(config_inst)), _config.upload_dir)
-        include = (include,)    
+        include = (include,)
     if not host_data_size:
         host_data_size = guest_data_size
-    _config.DATA_SIZE = guest_data_size != 0 and host_data_size != 0
-    if guest_data_size != 0 and host_data_size != 0:
-        _big_data_task(guest_data_size, host_data_size, guest_feature_num, host_feature_num, include, config_inst,
-                       encryption_type, match_rate)
+    if guest_data_size < 0 or host_data_size < 0:
+        raise Exception('The number of samples in the dataset must not be less than 0')
+    else:
+        _config.DATA_SIZE = guest_data_size != 0 and host_data_size != 0
     # prepare output dir and json hooks
     _add_replace_hook(replace)
 
@@ -95,6 +105,9 @@ def run_task(ctx, task, include, encryption_type, match_rate, replace, guest_dat
         return
 
     echo.stdout_newline()
+    if _config.DATA_SIZE:
+        _big_data_task(task, guest_data_size, host_data_size, guest_feature_num, host_feature_num, include, config_inst,
+                       encryption_type, match_rate)
     with Clients(config_inst) as client:
 
         for i, suite in enumerate(suites):
@@ -110,7 +123,8 @@ def run_task(ctx, task, include, encryption_type, match_rate, replace, guest_dat
 
                 echo.stdout_newline()
                 try:
-                    _submit_job(client, suite, namespace, config_inst)
+                    _submit_job(client, suite, namespace, config_inst, timeout, update_job_parameters,
+                                update_component_parameters)
                 except Exception as e:
                     raise RuntimeError(f"exception occur while submit job for {suite.path}") from e
 
@@ -135,7 +149,8 @@ def run_task(ctx, task, include, encryption_type, match_rate, replace, guest_dat
     echo.echo(f"testsuite namespace: {namespace}", fg='red')
 
 
-def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Config):
+def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Config, timeout, update_job_parameters,
+                update_component_parameters):
     # submit jobs
     with click.progressbar(length=len(suite.jobs),
                            label="jobs   ",
@@ -154,7 +169,8 @@ def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Conf
 
             # noinspection PyBroadException
             try:
-                job.job_conf.update(config.parties, config.work_mode, config.backend)
+                job.job_conf.update(config.parties, config.work_mode, config.backend, timeout, update_job_parameters,
+                                    update_component_parameters)
             except Exception:
                 _raise()
                 continue

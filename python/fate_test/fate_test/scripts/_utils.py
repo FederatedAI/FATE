@@ -4,15 +4,16 @@ import uuid
 from pathlib import Path
 
 import click
+from fate_test import _config
 from fate_test._client import Clients
 from fate_test._config import Config
 from fate_test._flow_client import DataProgress, UploadDataResponse, QueryJobResponse
 from fate_test._io import echo, LOGGER, set_logger
 from fate_test._parser import Testsuite, BenchmarkSuite, DATA_JSON_HOOK, CONF_JSON_HOOK, DSL_JSON_HOOK
-from fate_test.scripts.generate_mock_data import _get_big_data
+from fate_test.scripts import generate_mock_data
 
 
-def _big_data_task(guest_data_size, host_data_size, guest_feature_num, host_feature_num, includes, config_inst,
+def _big_data_task(task, guest_data_size, host_data_size, guest_feature_num, host_feature_num, includes, config_inst,
                    encryption_type, match_rate, suffix="testsuite.json"):
     def _find_testsuite_files(path):
         if isinstance(path, str):
@@ -31,8 +32,8 @@ def _big_data_task(guest_data_size, host_data_size, guest_feature_num, host_feat
     if isinstance(include, str):
         include_path = Path(include)
         include_path = _find_testsuite_files(include_path)[0]
-        _get_big_data(guest_data_size, host_data_size, guest_feature_num, host_feature_num, include_path, config_inst,
-                      encryption_type, match_rate)
+        generate_mock_data.get_big_data(task, guest_data_size, host_data_size, guest_feature_num, host_feature_num,
+                                         include_path, config_inst, encryption_type, match_rate)
 
 
 def _load_testsuites(includes, excludes, glob, suffix="testsuite.json", suite_type="testsuite"):
@@ -109,12 +110,14 @@ def _upload_data(clients: Clients, suite, config: Config):
 
             try:
                 echo.stdout_newline()
-                response = clients[data.role_str].upload_data(data, _call_back)
+                response, data_path = clients[data.role_str].upload_data(data, _call_back)
                 data_progress.update()
                 if not response.status.is_success():
                     raise RuntimeError(f"uploading {i + 1}th data for {suite.path} {response.status}")
                 bar.update(1)
-            except Exception as e:
+                if _config.DATA_SIZE:
+                    generate_mock_data.remove_file(data_path)
+            except Exception:
                 exception_id = str(uuid.uuid1())
                 echo.file(f"exception({exception_id})")
                 LOGGER.exception(f"exception id: {exception_id}")
