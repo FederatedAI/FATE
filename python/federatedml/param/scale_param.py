@@ -27,7 +27,7 @@ class ScaleParam(BaseParam):
     Parameters
     ----------
         method : str, like scale in sklearn, now it support "min_max_scale" and "standard_scale", and will support other scale method soon.
-                 Default None, which will do nothing for scale
+                 Default standard_scale, which will do nothing for scale
 
         mode: str, the mode support "normal" and "cap". for mode is "normal", the feat_upper and feat_lower is the normal value like "10" or "3.1" and for "cap", feat_upper and
               feature_lower will between 0 and 1, which means the percentile of the column. Default "normal"
@@ -47,7 +47,7 @@ class ScaleParam(BaseParam):
 
     """
 
-    def __init__(self, method=None, mode="normal", scale_col_indexes=-1, scale_names=None, feat_upper=None, feat_lower=None,
+    def __init__(self, method="standard_scale", mode="normal", scale_col_indexes=-1, scale_names=None, feat_upper=None, feat_lower=None,
                  with_mean=True, with_std=True, need_run=True):
         super().__init__()
         if scale_names is None:
