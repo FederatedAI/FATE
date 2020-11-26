@@ -84,6 +84,7 @@ class CTableABC(metaclass=ABCMeta):
     def take(self, n=1, **kwargs):
         """
         take ``n`` data from table
+
         Parameters
         ----------
         n: int
@@ -93,6 +94,10 @@ class CTableABC(metaclass=ABCMeta):
         -------
         list
            a list of ``n`` data
+
+        Notes
+        ------
+        no order guarantee
         """
         ...
 
@@ -105,6 +110,10 @@ class CTableABC(metaclass=ABCMeta):
         -------
         object
           a data from table
+
+        Notes
+        ------
+        no order guarantee
         """
         ...
 
@@ -275,6 +284,7 @@ class CTableABC(metaclass=ABCMeta):
     def flatMap(self, func):
         """
         apply a flat ``func`` to each data of table
+
         Parameters
         ----------
         func: ``typing.Callable[[object, object], typing.List[object, object]]``
@@ -381,6 +391,7 @@ class CTableABC(metaclass=ABCMeta):
     def filter(self, func):
         """
         returns a new table containing only those keys which satisfy a predicate passed in via ``func``.
+
         Parameters
         ----------
         func: typing.Callable[[object, object], bool]
@@ -407,7 +418,7 @@ class CTableABC(metaclass=ABCMeta):
     @abc.abstractmethod
     def join(self, other, func):
         """
-        returns union of this table and the other table.
+        returns intersection of this table and the other table.
 
         function ``func`` will be applied to values of keys that exist in both table.
 
@@ -428,10 +439,10 @@ class CTableABC(metaclass=ABCMeta):
         --------
         >>> from fate_arch.session import computing_session
         >>> a = computing_session.parallelize([1, 2, 3], include_key=False, partition=2)	# [(0, 1), (1, 2), (2, 3)]
-        >>> b = computing_session.parallelize([(1, 1), (2, 2), (3, 3)], include_key=False, partition=2)
-        >>> c = a.union(b, lambda v1, v2 : v1 + v2)
+        >>> b = computing_session.parallelize([(1, 1), (2, 2), (3, 3)], include_key=True, partition=2)
+        >>> c = a.join(b, lambda v1, v2 : v1 + v2)
         >>> list(c.collect())
-        [(0, 1), (1, 3), (2, 5), (3, 3)]
+        [(1, 3), (2, 5)]
         """
         ...
 
@@ -459,7 +470,7 @@ class CTableABC(metaclass=ABCMeta):
         --------
         >>> from fate_arch.session import computing_session
         >>> a = computing_session.parallelize([1, 2, 3], include_key=False, partition=2)	# [(0, 1), (1, 2), (2, 3)]
-        >>> b = computing_session.parallelize([(1, 1), (2, 2), (3, 3)], include_key=False, partition=2)
+        >>> b = computing_session.parallelize([(1, 1), (2, 2), (3, 3)], include_key=True, partition=2)
         >>> c = a.union(b, lambda v1, v2 : v1 + v2)
         >>> list(c.collect())
         [(0, 1), (1, 3), (2, 5), (3, 3)]

@@ -1,5 +1,5 @@
 # DSL version 2 predict tutorial
-	This documentation will give a breif tutorial of how to run a predict task after a trainning task.
+	This documentation will give a brief tutorial of how to run a predict task after a trainning task.
 	We will take hetero-secureboost as an example.
 	
 ## Submit a training task

@@ -45,7 +45,8 @@ extensions = [
     'sphinx.ext.napoleon',
     'autodocsumm',
     'recommonmark',
-    'sphinx_click.ext'
+    'sphinx_click.ext',
+    'sphinx_markdown_tables'
 ]
 
 autosummary_generate = True

@@ -6,7 +6,8 @@ FATE (Federated AI Technology Enabler) is an open-source project initiated by We
 https://fate.fedai.org
 
 .. toctree::
-   :caption: Install
+   :caption: Deploy
+   :glob:
    :maxdepth: 2
 
    Standalone <_build_temp/standalone-deploy/README>

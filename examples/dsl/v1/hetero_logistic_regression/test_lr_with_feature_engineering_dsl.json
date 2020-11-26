@@ -53,8 +53,7 @@
             "output": {
                 "data": ["transform_data"],
                 "model": ["binning_model"]
-            },
-            "need_deploy": false
+            }
         },
         "hetero_feature_selection_0": {
             "module": "HeteroFeatureSelection",
