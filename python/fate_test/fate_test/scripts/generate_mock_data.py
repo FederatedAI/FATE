@@ -91,10 +91,13 @@ def get_big_data(task, guest_data_size, host_data_size, guest_feature_num, host_
     if not os.path.isdir(big_data_dir):
         os.mkdir(big_data_dir)
     date_set = [os.path.basename(upload_dict['file']) for upload_dict in testsuite_config['data']]
-    for idx, data_name in enumerate(date_set):
-        if task == 'intersect_multi' and 'guest' in data_name or task == 'intersect_multi' and 'label' in data_name:
-            guest_id_list = guest_ids[np.math.floor(guest_data_size / len(date_set)) * idx:
-                                      np.math.floor(guest_data_size / len(date_set)) * (idx + 1)]
+    data_count = 0
+    for data_name in date_set:
+        if task == 'intersect_multi' and ('guest' in data_name or 'label' in data_name):
+            right = np.ceil(guest_data_size / len(date_set)) * (data_count + 1) if np.ceil(
+                guest_data_size / len(date_set)) * (data_count + 1) <= guest_data_size else guest_data_size
+            guest_id_list = guest_ids[np.ceil(guest_data_size / len(date_set)) * data_count: right]
+            data_count += 1
         else:
             guest_id_list = guest_ids
         data_path = os.path.join(str(big_data_dir), data_name)
