@@ -33,6 +33,7 @@ class BaseSecretSharingSum(ModelBase):
         self.g = 2
         self.secret_sharing = []  # (x,f(x))
         self.commitments = []  # (x,g(ai))
+        self.commitments_recv = []  # (party_id,[commitments])
         self.share_amount = None
         self.partition = None
         self.coefficients = None
@@ -44,8 +45,8 @@ class BaseSecretSharingSum(ModelBase):
 
     def generate_coefficients(self, x):
         coefficients = [x[1]]
-        for i in range(self.share_amount-1):
-            random_coefficients = np.random.randint(0, self.prime-1)
+        for i in range(self.share_amount - 1):
+            random_coefficients = np.random.randint(0, self.prime - 1)
             coefficients.append(random_coefficients)
         res = (x[0], coefficients)
         return res
@@ -53,7 +54,7 @@ class BaseSecretSharingSum(ModelBase):
     def calculate_polynomial(self, coefficients):
         uid, coefficient = coefficients[0], coefficients[1]
         fx = []
-        for x in range(1, self.share_amount+1):
+        for x in range(1, self.share_amount + 1):
             y = 0
             for index, c in enumerate(coefficient):
                 exponentiation = (x ** index) % self.prime
@@ -79,14 +80,26 @@ class BaseSecretSharingSum(ModelBase):
         res = (uid, commitment)
         return res
 
+    def verify(self, fx, commitments):
+        for idx, xy in enumerate(fx):
+            x, y = xy[1][0], xy[1][1]
+            commitment = commitments[idx][1]
+            v1 = (self.g ** y) % self.prime
+            v2 = 1
+            for i in range(len(commitment)):
+                v2 *= (commitment[i] ** (x ** i) % self.prime)
+            v2 = v2 % self.prime
+            if v1 != v2:
+                raise ValueError("error sharing")
+
     def sharing_sum(self):
         for recv in self.y_recv:
-            self.x_plus_y = self.x_plus_y.union(recv, lambda x, y: (x[0], x[1]+y[1]))
+            self.x_plus_y = self.x_plus_y.union(recv, lambda x, y: (x[0], x[1] + y[1]))
 
     def reconstruct(self):
         self.x_plus_y = self.x_plus_y.mapValues(lambda x: [x])
         for recv in self.host_sum_recv:
-            self.x_plus_y = self.x_plus_y.union(recv, lambda x, y: x+[y])
+            self.x_plus_y = self.x_plus_y.union(recv, lambda x, y: x + [y])
         free_coefficient = map(self.modular_lagrange_interpolation, list(self.x_plus_y.collect()))
         self.secret_sum = list(free_coefficient)
 
@@ -105,6 +118,24 @@ class BaseSecretSharingSum(ModelBase):
             f_x = (self.prime + f_x + (y_values[i] * lagrange_polynomial)) % self.prime
         res = (uid, f_x)
         return res
+
+    def verify_all(self):
+        recv = []
+        for i in range(len(self.parties)):
+            res = list(map(lambda x: (x[0], x[1][i]), self.secret_sharing))
+            recv.append(res)
+
+        self.verify(recv[0], self.commitments)
+
+    def verify(self, fx, commitments):
+        for idx, xy in enumerate(fx):
+            x, y = xy[1][0], xy[1][1]
+            commitment = commitments[idx][1]
+            v1 = (self.g ** y) % self.prime
+            v2 = 1
+            for i in range(len(commitment)):
+                v2 *= (commitment[i] ** (x ** i) % self.prime)
+            v2 = v2 % self.prime
 
     def egcd(self, a, b):
         if a == 0:

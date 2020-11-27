@@ -73,11 +73,15 @@ class SecretSharingSumGuest(BaseSecretSharingSum):
             self.transfer_inst.guest_share_secret.remote(self.secret_sharing[i],
                                                          role="host",
                                                          idx=i)
+            self.transfer_inst.guest_commitments.remote(self.commitments,
+                                                        role="host",
+                                                        idx=i)
         self.x_plus_y = self.secret_sharing[-1]
 
     def recv_share_from_host(self):
         for i in range(self.share_amount - 1):
             self.y_recv.append(self.transfer_inst.host_share_to_guest.get(idx=i))
+            self.commitments_recv.append((self.transfer_inst.host_commitments.get(idx=i)))
 
     def recv_host_sum_from_host(self):
         for i in range(self.share_amount - 1):
