@@ -3,7 +3,7 @@
     "param_class" : "federatedml/param/column_expand_param.py/ColumnExpandParam",
     "role":
     {
-        "guest|host":
+        "guest":
         {
             "program": "column_expand.py/ColumnExpand"
         }
