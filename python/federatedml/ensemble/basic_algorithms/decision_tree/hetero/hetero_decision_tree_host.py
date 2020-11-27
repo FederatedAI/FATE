@@ -325,13 +325,13 @@ class HeteroDecisionTreeHost(DecisionTree):
             else:
                 acc_histograms = self.get_local_histograms(node_map, ret='tb')
 
-            splitinfo_host, encrypted_splitinfo_host = self.splitter.find_split_host(histograms=acc_histograms,
-                                                                                     node_map=node_map,
-                                                                                     use_missing=self.use_missing,
-                                                                                     zero_as_missing=self.zero_as_missing,
-                                                                                     valid_features=self.valid_features,
-                                                                                     sitename=self.sitename
-                                                                                     )
+            splitinfo_host, encrypted_splitinfo_host = self.splitter.construct_host_split_info(histograms=acc_histograms,
+                                                                                               node_map=node_map,
+                                                                                               use_missing=self.use_missing,
+                                                                                               zero_as_missing=self.zero_as_missing,
+                                                                                               valid_features=self.valid_features,
+                                                                                               sitename=self.sitename
+                                                                                               )
 
             LOGGER.debug('sending en_splitinfo {}'.format(encrypted_splitinfo_host))
             self.sync_encrypted_splitinfo_host(encrypted_splitinfo_host, dep, batch)

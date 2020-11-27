@@ -48,6 +48,7 @@ class DecisionTree(BasicAlgorithms):
         self.tol = tree_param.tol
         self.use_missing = tree_param.use_missing
         self.zero_as_missing = tree_param.zero_as_missing
+        self.min_child_weight = tree_param.min_child_weight
         self.sitename = ''
 
         # transfer var
@@ -63,7 +64,7 @@ class DecisionTree(BasicAlgorithms):
         self.valid_features = None
         self.sample_weights = None
         self.splitter = Splitter(self.criterion_method, self.criterion_params, self.min_impurity_split,
-                                 self.min_sample_split, self.min_leaf_node)
+                                 self.min_sample_split, self.min_leaf_node, self.min_child_weight)
         self.inst2node_idx = None  # record the node id an instance belongs to
 
         # data

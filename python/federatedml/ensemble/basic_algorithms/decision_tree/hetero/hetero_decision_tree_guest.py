@@ -96,36 +96,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
     Node Splitting
     """
 
-    def find_host_split(self, value):
-
-        cur_split_node, encrypted_splitinfo_host = value
-        sum_grad = cur_split_node.sum_grad
-        sum_hess = cur_split_node.sum_hess
-        best_gain = self.min_impurity_split - consts.FLOAT_ZERO
-        best_idx = -1
-
-        perform_recorder = {}
-        gains = []
-
-        for i in range(len(encrypted_splitinfo_host)):
-            sum_grad_l, sum_hess_l = encrypted_splitinfo_host[i]
-            sum_grad_l = self.decrypt(sum_grad_l)
-            sum_hess_l = self.decrypt(sum_hess_l)
-            sum_grad_r = sum_grad - sum_grad_l
-            sum_hess_r = sum_hess - sum_hess_l
-            gain = self.splitter.split_gain(sum_grad, sum_hess, sum_grad_l,
-                                            sum_hess_l, sum_grad_r, sum_hess_r)
-
-            perform_recorder[i] = gain
-            gains.append(gain)
-
-            if gain > self.min_impurity_split and gain > best_gain + consts.FLOAT_ZERO:
-                best_gain = gain
-                best_idx = i
-
-        encrypted_best_gain = self.encrypt(best_gain)
-        return best_idx, encrypted_best_gain, best_gain
-
     def find_best_split_guest_and_host(self, splitinfo_guest_host):
 
         best_gain_host = self.decrypt(splitinfo_guest_host[1].gain)
@@ -207,7 +177,8 @@ class HeteroDecisionTreeGuest(DecisionTree):
                                                                      include_key=False,
                                                                      partition=self.data_bin.partitions)
 
-                splitinfos = encrypted_splitinfo_host_table.mapValues(self.find_host_split).collect()
+                splitinfos = self.splitter.find_host_best_split(encrypted_splitinfo_host_table,
+                                                                decrypter=self.encrypter)
 
                 # update best splitinfo and gain for every cur to split nodes
                 for node_idx, splitinfo in splitinfos:
@@ -391,6 +362,11 @@ class HeteroDecisionTreeGuest(DecisionTree):
             if reach_max_depth or split_info[i].gain <= \
                     self.min_impurity_split + consts.FLOAT_ZERO:  # if reach max_depth, only conver nodes to leaves
                 self.cur_layer_nodes[i].is_leaf = True
+            # checking min_child_weight
+            elif split_info[i].sum_hess < self.min_child_weight or \
+                    sum_hess - split_info[i].sum_hess < self.min_child_weight:
+                self.cur_to_split_nodes[i].is_leaf = True
+                continue
             else:
                 self.cur_layer_nodes[i].left_nodeid = self.tree_node_num + 1
                 self.cur_layer_nodes[i].right_nodeid = self.tree_node_num + 2

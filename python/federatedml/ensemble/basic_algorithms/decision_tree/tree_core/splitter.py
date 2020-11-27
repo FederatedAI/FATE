@@ -26,7 +26,7 @@
 # =============================================================================
 
 import warnings
-
+import functools
 from fate_arch.session import computing_session as session
 from fate_arch.common import log
 from fate_arch.federation import segment_transfer_enabled
@@ -55,7 +55,7 @@ class SplitInfo(object):
 class Splitter(object):
 
     def __init__(self, criterion_method, criterion_params=[0, 1], min_impurity_split=1e-2, min_sample_split=2,
-                 min_leaf_node=1):
+                 min_leaf_node=1, min_child_weight=1):
         LOGGER.info("splitter init!")
         if not isinstance(criterion_method, str):
             raise TypeError("criterion_method type should be str, but %s find" % (type(criterion_method).__name__))
@@ -74,8 +74,15 @@ class Splitter(object):
         self.min_impurity_split = min_impurity_split
         self.min_sample_split = min_sample_split
         self.min_leaf_node = min_leaf_node
+        self.min_child_weight = min_child_weight
 
-    def find_split_single_histogram_guest(self, histogram, valid_features, sitename, use_missing, zero_as_missing):
+    def _check_min_child_weight(self, l_h, r_h):
+        return l_h >= self.min_child_weight and r_h >= self.min_child_weight
+
+    def _check_sample_num(self, l_cnt, r_cnt):
+        return l_cnt >= self.min_leaf_node and r_cnt >= self.min_leaf_node
+
+    def _find_split_single_histogram_guest(self, histogram, valid_features, sitename, use_missing, zero_as_missing):
 
         # default values
         best_fid = None
@@ -118,7 +125,8 @@ class Splitter(object):
                 sum_hess_r = sum_hess - sum_hess_l
                 node_cnt_r = node_cnt - node_cnt_l
 
-                if node_cnt_l >= self.min_leaf_node and node_cnt_r >= self.min_leaf_node:
+                if self._check_sample_num(node_cnt_l, node_cnt_r) and self._check_min_child_weight(sum_hess_l, sum_hess_r):
+
                     gain = self.criterion.split_gain([sum_grad, sum_hess],
                                                      [sum_grad_l, sum_hess_l], [sum_grad_r, sum_hess_r])
 
@@ -144,7 +152,8 @@ class Splitter(object):
                     node_cnt_r -= histogram[fid][-1][2] - histogram[fid][-2][2]
 
                     # if have a better gain value, missing dir is left
-                    if node_cnt_l >= self.min_leaf_node and node_cnt_r >= self.min_leaf_node:
+                    if self._check_sample_num(node_cnt_l, node_cnt_r) and self._check_min_child_weight(sum_hess_l,
+                                                                                                       sum_hess_r):
                         gain = self.criterion.split_gain([sum_grad, sum_hess],
                                                          [sum_grad_l, sum_hess_l], [sum_grad_r, sum_hess_r])
 
@@ -167,11 +176,11 @@ class Splitter(object):
         LOGGER.info("splitter find split of raw data")
         histogram_table = session.parallelize(histograms, include_key=False, partition=partitions)
         splitinfo_table = histogram_table.mapValues(lambda sub_hist:
-                                                    self.find_split_single_histogram_guest(sub_hist,
-                                                                                           valid_features,
-                                                                                           sitename,
-                                                                                           use_missing,
-                                                                                           zero_as_missing))
+                                                    self._find_split_single_histogram_guest(sub_hist,
+                                                                                            valid_features,
+                                                                                            sitename,
+                                                                                            use_missing,
+                                                                                            zero_as_missing))
 
         tree_node_splitinfo = [None for i in range(len(histograms))]
         for id, splitinfo in splitinfo_table.collect():
@@ -209,7 +218,7 @@ class Splitter(object):
 
             node_cnt_r = node_cnt - node_cnt_l
 
-            if node_cnt_l >= self.min_leaf_node and node_cnt_r >= self.min_leaf_node:
+            if self._check_sample_num(node_cnt_l, node_cnt_r):
                 splitinfo = SplitInfo(sitename=sitename, best_fid=fid,
                                       best_bid=bid, sum_grad=sum_grad_l, sum_hess=sum_hess_l,
                                       missing_dir=1)
@@ -231,8 +240,8 @@ class Splitter(object):
 
         return node_splitinfo, node_grad_hess
 
-    def find_split_host(self, histograms, valid_features, node_map, sitename=consts.HOST,
-                        use_missing=False, zero_as_missing=False):
+    def construct_host_split_info(self, histograms, valid_features, node_map, sitename=consts.HOST,
+                                  use_missing=False, zero_as_missing=False):
         LOGGER.info("splitter find split of host")
         tree_node_splitinfo = [[] for i in range(len(node_map))]
         encrypted_node_grad_hess = [[] for i in range(len(node_map))]
@@ -247,6 +256,41 @@ class Splitter(object):
             encrypted_node_grad_hess[nid].extend(splitinfo[1])
 
         return tree_node_splitinfo, BigObjectTransfer(encrypted_node_grad_hess)
+
+    def _find_host_split_func(self, value, decrypter):
+
+        cur_split_node, encrypted_splitinfo_host = value
+        sum_grad = cur_split_node.sum_grad
+        sum_hess = cur_split_node.sum_hess
+        best_gain = self.min_impurity_split - consts.FLOAT_ZERO
+        best_idx = -1
+
+        perform_recorder = {}
+        gains = []
+
+        for i in range(len(encrypted_splitinfo_host)):
+            sum_grad_l, sum_hess_l = encrypted_splitinfo_host[i]
+            sum_grad_l = decrypter.decrypt(sum_grad_l)
+            sum_hess_l = decrypter.decrypt(sum_hess_l)
+            sum_grad_r = sum_grad - sum_grad_l
+            sum_hess_r = sum_hess - sum_hess_l
+            gain = self.split_gain(sum_grad, sum_hess, sum_grad_l, sum_hess_l, sum_grad_r, sum_hess_r)
+            perform_recorder[i] = gain
+            gains.append(gain)
+
+            # check gain and min child weight
+            if self._check_min_child_weight(sum_hess_l, sum_hess_r) \
+                and gain > self.min_impurity_split and gain > best_gain + consts.FLOAT_ZERO:
+                best_gain = gain
+                best_idx = i
+
+        encrypted_best_gain = decrypter.encrypt(best_gain)
+        return best_idx, encrypted_best_gain, best_gain
+
+    def find_host_best_split(self, encrypted_splitinfo_host_table, decrypter):
+        split_finding_func = functools.partial(self._find_host_split_func, decrypter=decrypter)
+        best_split_info_list = encrypted_splitinfo_host_table.mapValues(split_finding_func).collect()
+        return best_split_info_list
 
     def node_gain(self, grad, hess):
         return self.criterion.node_gain(grad, hess)
