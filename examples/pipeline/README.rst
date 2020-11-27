@@ -38,19 +38,17 @@ Here is a general guide to quick start a FATE job.
 
    .. code-block:: bash
 
-      # configure by conf file
-      pipeline init -c pipeline/config.yaml
-      # alternatively, input real ip address and port info to initialize pipeline
-      # optionally, set log directory for Pipeline
-      pipeline init --ip 127.0.0.1 --port 9380 --log-directory ./logs
+      # provide ip and port information
+      # optionally, set logs directory
+      pipeline init --ip 127.0.0.1 --port 9380
 
 4. upload data with FATE-Pipeline
 
    .. code-block:: bash
 
-      #  upload demo data to FATE data storage, optionally provide path to where deployed examples/data locates
+      #  upload demo data to FATE data storage, optionally provide directory where deployed examples/data locates
 
-      python demo/pipeline-upload.py --base /data/projects/fate
+      python examples/pipeline/demo/pipeline-upload.py --base /data/projects/fate
 
    If upload job is invoked correctly, job id will be printed to terminal and an upload bar is shown.
    If FATE-Board is available, job progress can be monitored on Board as well.
@@ -67,7 +65,7 @@ Here is a general guide to quick start a FATE job.
 
    .. code-block:: bash
 
-      python demo/pipeline-quick-demo.py
+      python examples/pipeline/demo/pipeline-quick-demo.py
 
    This quick demo shows how to build to a heterogeneous SecureBoost job.
    Progress of job execution will be printed as modules run.

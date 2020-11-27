@@ -19,6 +19,7 @@ predict_task_file = home_dir + "/config/test_predict_conf.json"
 
 guest_import_data_file = home_dir + "/config/data/breast_b.csv"
 fate_flow_path = home_dir + "/../../python/fate_flow/fate_flow_client.py"
+fate_flow_home = home_dir + "/../../python/fate_flow"
 
 evaluation_component_name = 'evaluation_0'
 
@@ -160,7 +161,7 @@ class TrainTask(TaskManager):
     def _check_status(self, jobid):
         pass
 
-    def run(self):
+    def run(self, start_serving=0):
         config_dir_path = self._make_runtime_conf()
         start_task_cmd = ['python', fate_flow_path, "-f", "submit_job", "-c",
                           config_dir_path, "-d", self.dsl_file]
@@ -184,6 +185,11 @@ class TrainTask(TaskManager):
         else:
             time_print("[Train] train auc:{}".format(auc))
         time.sleep(WAIT_UPLOAD_TIME / 100)
+
+        if start_serving:
+            self._load_model()
+            self._bind_model()
+
         self.start_predict_task()
 
     def start_predict_task(self):
@@ -246,6 +252,66 @@ class TrainTask(TaskManager):
             if metric_name == 'auc':
                 auc = metric_value
         return auc
+
+    def _bind_model(self):
+        bind_template = fate_flow_home + "/examples/bind_model_service.json"
+        config_path = self.__config_bind_load(bind_template)
+
+        bind_cmd = ['python', fate_flow_path, "-f", "bind", "-c", config_path]
+        stdout = self.start_task(bind_cmd)
+        status = stdout["retcode"]
+        if status != 0:
+            raise ValueError(
+                "Bind model failed, status:{}, stdout:{}".format(status, stdout))
+        time_print("Bind model Success")
+        return True
+
+    def __config_bind_load(self, template):
+        with open(template, 'r', encoding='utf-8') as f:
+            json_info = json.loads(f.read())
+        json_info["service_id"] = self.model_id
+        json_info["initiator"]["party_id"] = str(self.guest_id)
+        json_info["role"]["guest"] = [str(self.guest_id)]
+        json_info["role"]["host"] = [str(self.host_id)]
+        json_info["role"]["arbiter"] = [str(self.arbiter_id)]
+        json_info["job_parameters"]["work_mode"] = self.work_mode
+        json_info["job_parameters"]["model_id"] = self.model_id
+        json_info["job_parameters"]["model_version"] = self.model_version
+
+        if 'servings' in json_info:
+            del json_info['servings']
+
+        config = json.dumps(json_info)
+        config_path = gen_unique_path('bind_model')
+        config_dir_path = os.path.dirname(config_path)
+        os.makedirs(config_dir_path, exist_ok=True)
+        with open(config_path, "w") as fout:
+            fout.write(config + "\n")
+        return config_path
+
+    def _load_model(self):
+        load_template = fate_flow_home + "/examples/publish_load_model.json"
+        config_path = self.__config_bind_load(load_template)
+        bind_cmd = ['python', fate_flow_path, "-f", "load", "-c", config_path]
+        stdout = self.start_task(bind_cmd)
+        status = stdout["retcode"]
+        if status != 0:
+            raise ValueError(
+                "Load model failed, status:{}, stdout:{}".format(status, stdout))
+
+        data = stdout["data"]
+        try:
+            guest_retcode = data["detail"]["guest"][str(self.guest_id)]["retcode"]
+            host_retcode = data["detail"]["host"][str(self.host_id)]["retcode"]
+        except KeyError:
+            raise ValueError(
+                "Load model failed, status:{}, stdout:{}".format(status, stdout))
+        if guest_retcode != 0 or host_retcode != 0:
+            raise ValueError(
+                "Load model failed, status:{}, stdout:{}".format(status, stdout))
+        time_print("Load model Success")
+
+        return True
 
 
 class TrainLRTask(TrainTask):
@@ -382,6 +448,9 @@ def main():
     arg_parser.add_argument("--add_sbt", help="test sbt or not", type=int,
                             default=1, choices=[0, 1])
 
+    arg_parser.add_argument("-s", "--serving", type=int, help="Test Serving process",
+                            default=0, choices=[0, 1])
+
     args = arg_parser.parse_args()
 
     work_mode = args.mode
@@ -391,9 +460,10 @@ def main():
     file_type = args.file_type
     add_sbt = args.add_sbt
     back_end = args.backend
+    start_serving = args.serving
 
     task = TrainLRTask(file_type, guest_id, host_id, arbiter_id, work_mode, back_end)
-    task.run()
+    task.run(start_serving)
 
     if add_sbt:
         task = TrainSBTTask(file_type, guest_id, host_id, arbiter_id, work_mode, back_end)
