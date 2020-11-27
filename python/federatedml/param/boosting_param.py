@@ -199,7 +199,7 @@ class DecisionTreeParam(BaseParam):
                                                                     ["split", "gain"],
                                                                     descr)
 
-        self.check_positive_number(self.min_child_weight, 'min_child_weight')
+        self.check_nonnegative_number(self.min_child_weight, 'min_child_weight')
 
         return True
 
