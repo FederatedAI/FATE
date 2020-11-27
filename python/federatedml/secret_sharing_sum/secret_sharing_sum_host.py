@@ -67,18 +67,26 @@ class SecretSharingSumHost(BaseSecretSharingSum):
                 self.transfer_inst.host_share_to_host.remote(self.secret_sharing[idx],
                                                              role="host",
                                                              idx=idx)
+                self.transfer_inst.host_commitments.remote(self.commitments,
+                                                           role="host",
+                                                           idx=idx)
             else:
                 self.x_plus_y = self.secret_sharing[idx]
                 self.transfer_inst.host_share_to_guest.remote(self.secret_sharing[-1],
                                                               role="guest",
                                                               idx=0)
+                self.transfer_inst.host_commitments.remote(self.commitments,
+                                                           role="guest",
+                                                           idx=idx)
 
     def recv_share_from_parties(self):
         for idx, party_id in enumerate(self.host_party_idlist):
             if self.local_partyid != party_id:
                 self.y_recv.append(self.transfer_inst.host_share_to_host.get(idx=idx))
+                self.commitments_recv.append(self.transfer_inst.host_commitments.get(idx=idx))
             else:
                 self.y_recv.append(self.transfer_inst.guest_share_secret.get(idx=0))
+                self.commitments_recv.append(self.transfer_inst.guest_commitments.get(idx=idx))
 
     def sync_host_sum_to_guest(self):
         self.transfer_inst.host_sum.remote(self.x_plus_y,
