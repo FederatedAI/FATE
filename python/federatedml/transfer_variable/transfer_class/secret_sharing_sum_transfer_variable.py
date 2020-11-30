@@ -23,7 +23,7 @@
 #
 ################################################################################
 
-from python.federatedml.transfer_variable.base_transfer_variable import BaseTransferVariables
+from federatedml.transfer_variable.base_transfer_variable import BaseTransferVariables
 
 
 # noinspection PyAttributeOutsideInit
