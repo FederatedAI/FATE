@@ -121,9 +121,7 @@ class HomoBoostingClient(Boosting, ABC):
 
                 # fit a booster
                 model = self.fit_a_booster(epoch_idx, class_idx)
-
                 booster_meta, booster_param = model.get_model()
-
                 if booster_meta is not None and booster_param is not None:
                     self.booster_meta = booster_meta
                     self.boosting_model_list.append(booster_param)
