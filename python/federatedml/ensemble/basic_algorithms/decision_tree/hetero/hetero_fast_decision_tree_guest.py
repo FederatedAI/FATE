@@ -58,15 +58,18 @@ class HeteroFastDecisionTreeGuest(HeteroDecisionTreeGuest):
     Compute split point
     """
 
-    def compute_best_splits_with_node_plan(self, tree_action, target_host_idx, node_map: dict, dep: int,
-                                           batch_idx: int, mode=consts.MIX_TREE):
+    def compute_best_splits_with_node_plan(self, tree_action, target_host_idx, cur_to_split_nodes, node_map: dict,
+                                           dep: int, batch_idx: int, mode=consts.MIX_TREE):
 
         LOGGER.debug('node plan at dep {} is {}'.format(dep, (tree_action, target_host_idx)))
 
         cur_best_split = []
 
         if tree_action == plan.tree_actions['guest_only']:
-            acc_histograms = self.get_local_histograms(node_map, ret='tensor')
+            acc_histograms = self.get_local_histograms(dep, self.data_with_node_assignments, self.grad_and_hess,
+                                                       cur_to_split_nodes=cur_to_split_nodes,
+                                                       node_map=node_map, ret='tensor', hist_sub=True)
+
             cur_best_split = self.splitter.find_split(acc_histograms, self.valid_features,
                                                       self.data_bin.partitions, self.sitename,
                                                       self.use_missing, self.zero_as_missing)
@@ -93,7 +96,7 @@ class HeteroFastDecisionTreeGuest(HeteroDecisionTreeGuest):
     def assign_instances_to_new_node_with_node_plan(self, dep, tree_action, mode=consts.MIX_TREE, ):
 
         LOGGER.info("redispatch node of depth {}".format(dep))
-        dispatch_node_method = functools.partial(self.assign_a_instance,
+        dispatch_node_method = functools.partial(self.assign_an_instance,
                                                  tree_=self.tree_node,
                                                  decoder=self.decode,
                                                  sitename=self.sitename,
@@ -174,6 +177,7 @@ class HeteroFastDecisionTreeGuest(HeteroDecisionTreeGuest):
                 self.cur_to_split_nodes = self.cur_layer_nodes[i: i + self.max_split_nodes]
                 cur_splitinfos = self.compute_best_splits_with_node_plan(tree_action, host_idx, node_map=
                                                                          self.get_node_map(self.cur_to_split_nodes),
+                                                                         cur_to_split_nodes=self.cur_to_split_nodes,
                                                                          dep=dep, batch_idx=batch_idx,
                                                                          mode=consts.LAYERED_TREE)
                 split_info.extend(cur_splitinfos)
@@ -227,6 +231,7 @@ class HeteroFastDecisionTreeGuest(HeteroDecisionTreeGuest):
                 self.cur_to_split_nodes = self.cur_layer_nodes[i: i + self.max_split_nodes]
                 cur_splitinfos = self.compute_best_splits_with_node_plan(tree_action, host_idx, node_map=
                                                                          self.get_node_map(self.cur_to_split_nodes),
+                                                                         cur_to_split_nodes=self.cur_to_split_nodes,
                                                                          dep=dep, batch_idx=batch_idx,
                                                                          mode=consts.MIX_TREE)
                 split_info.extend(cur_splitinfos)
