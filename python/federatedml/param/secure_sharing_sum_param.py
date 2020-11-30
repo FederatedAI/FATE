@@ -16,7 +16,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from python.federatedml.param.base_param import BaseParam
+from federatedml.param.base_param import BaseParam
 
 
 class SecureSharingSumParam(BaseParam):
