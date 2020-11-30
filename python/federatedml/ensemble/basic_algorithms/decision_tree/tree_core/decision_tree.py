@@ -21,6 +21,8 @@
 # DecisionTree Base Class
 # =============================================================================
 import abc
+import numpy as np
+import functools
 from federatedml.ensemble.basic_algorithms.algorithm_prototype import BasicAlgorithms
 from federatedml.util import LOGGER
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.splitter import \
@@ -80,6 +82,9 @@ class DecisionTree(BasicAlgorithms):
         self.split_maskdict = {}
         self.missing_dir_maskdict = {}
 
+        # histogram
+        self.hist_computer = FeatureHistogram()
+
     def get_feature_importance(self):
         return self.feature_importance
 
@@ -111,13 +116,26 @@ class DecisionTree(BasicAlgorithms):
         self.bin_split_points = bin_split_points
         self.bin_sparse_points = bin_sparse_points
 
-    def get_local_histograms(self, node_map, ret='tensor'):
-        LOGGER.info("start to get node histograms")
-        acc_histograms = FeatureHistogram.calculate_histogram(
-            self.data_with_node_assignments, self.grad_and_hess,
-            self.bin_split_points, self.bin_sparse_points,
-            self.valid_features, node_map,
-            self.use_missing, self.zero_as_missing, ret=ret)
+    def get_local_histograms(self, dep, data_with_pos, g_h, cur_to_split_nodes, node_map, ret='tensor', sparse_opt=False
+                             , hist_sub=True, bin_num=None):
+
+        LOGGER.info("start to compute node histograms")
+        leaf_sample_count = self.count_leaf_sample_num(self.inst2node_idx, node_map)
+        LOGGER.debug('sample count is {}'.format(leaf_sample_count))
+        acc_histograms = self.hist_computer.compute_histogram(dep,
+                                                              data_with_pos,
+                                                              g_h,
+                                                              self.bin_split_points,
+                                                              self.bin_sparse_points,
+                                                              self.valid_features,
+                                                              node_map, leaf_sample_count,
+                                                              use_missing=self.use_missing,
+                                                              zero_as_missing=self.zero_as_missing,
+                                                              ret=ret,
+                                                              hist_sub=hist_sub,
+                                                              sparse_optimization=sparse_opt,
+                                                              cur_to_split_nodes=cur_to_split_nodes,
+                                                              bin_num=bin_num)
         return acc_histograms
 
     @staticmethod
@@ -130,6 +148,29 @@ class DecisionTree(BasicAlgorithms):
             node_map[node.id] = idx
             idx += 1
         return node_map
+
+    @staticmethod
+    def sample_count_map_func(kv, node_map):
+
+        # record node sample number in count_arr
+        count_arr = np.zeros(len(node_map))
+        for k, v in kv:
+            node_idx = node_map[v[1]]  # node position
+            count_arr[node_idx] += 1
+        return count_arr
+
+    @staticmethod
+    def sample_count_reduce_func(v1, v2):
+        return v1 + v2
+
+    def count_leaf_sample_num(self, inst2node_idx, node_map):
+        """
+        count sample number in every leaf node
+        """
+        LOGGER.debug('node map is {}'.format(node_map))
+        count_func = functools.partial(self.sample_count_map_func, node_map=node_map)
+        rs = inst2node_idx.applyPartitions(count_func).reduce(self.sample_count_reduce_func)
+        return rs
 
     def get_sample_weights(self):
         return self.sample_weights
@@ -185,7 +226,7 @@ class DecisionTree(BasicAlgorithms):
         pass
 
     @abc.abstractmethod
-    def assign_a_instance(self, *args):
+    def assign_an_instance(self, *args):
         pass
 
     @abc.abstractmethod
