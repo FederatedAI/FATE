@@ -87,8 +87,8 @@ init() {
 
     cd ${basepath}
     wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/jdk-8u192.tar.gz
-    tar -cf ./docker/fate/fate.tar bin conf examples fate.env python RELEASE.md fateboard  jdk-8u121-linux-x64.tar.gz
-    rm -rf bin conf examples fate.env python RELEASE.md fateboard jdk-8u121-linux-x64.tar.gz
+    tar -cf ./docker/fate/fate.tar bin conf examples fate.env python RELEASE.md fateboard  jdk-8u192.tar.gz
+    rm -rf bin conf examples fate.env python RELEASE.md fateboard jdk-8u192.tar.gz
 
     cd ${basepath}/docker/fate
     docker build -t fate:latest .
