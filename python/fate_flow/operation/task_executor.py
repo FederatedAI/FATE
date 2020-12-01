@@ -218,7 +218,7 @@ class TaskExecutor(object):
 
     @classmethod
     def get_job_args_on_party(cls, dsl_parser, job_runtime_conf, role, party_id):
-        party_index = job_runtime_conf["role"][role].index(party_id)
+        party_index = job_runtime_conf["role"][role].index(int(party_id))
         job_args = dsl_parser.get_args_input()
         job_args_on_party = job_args[role][party_index].get('args') if role in job_args else {}
         return job_args_on_party
@@ -264,8 +264,9 @@ class TaskExecutor(object):
                         args_from_component = this_type_args[search_component_name] = this_type_args.get(
                             search_component_name, {})
                         if get_input_table and storage_table_meta:
-                            input_table[data_key_item] = {'namespace': storage_table_meta.get_namespace(),
-                                                          'name': storage_table_meta.get_name()}
+                            input_table[data_key] = {'namespace': storage_table_meta.get_namespace(),
+                                                     'name': storage_table_meta.get_name()}
+                            computing_table = None
                         elif storage_table_meta:
                             LOGGER.info(f"load computing table use {task_parameters.computing_partitions}")
                             computing_table = session.get_latest_opened().computing.load(

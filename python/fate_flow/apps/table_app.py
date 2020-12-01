@@ -119,19 +119,19 @@ def get_job_all_table(job):
                                                    train_runtime_conf=job.f_train_runtime_conf
                                                    )
     _, hierarchical_structure = dsl_parser.get_dsl_hierarchical_structure()
-    component_names = hierarchical_structure[0]
     component_table = {}
     component_output_tables = Tracker.query_output_data_infos(job_id=job.f_job_id, role=job.f_role,
-                                                             party_id=job.f_party_id)
+                                                              party_id=job.f_party_id)
     for component_name_list in hierarchical_structure:
         for component_name in component_name_list:
+            component_table[component_name] = {}
             component_input_table = get_component_input_table(dsl_parser, job, component_name)
-            component_input_table[component_name] = {'input': component_input_table}
-            component_input_table[component_name] = {'output': {}}
+            component_table[component_name]['input'] = component_input_table
+            component_table[component_name]['output'] = {}
             for output_table in component_output_tables:
                 if output_table.f_component_name == component_name:
-                    component_input_table[component_name] = {'output': {output_table.f_data_name: {
-                        'name': output_table.f_table_name, 'namespace': output_table.f_table_namespace}}}
+                    component_table[component_name]['output'][output_table.f_data_name] = \
+                        {'name': output_table.f_table_name, 'namespace': output_table.f_table_namespace}
     return component_table
 
 
@@ -139,7 +139,7 @@ def get_component_input_table(dsl_parser, job, component_name):
     component = dsl_parser.get_component_info(component_name=component_name)
     task_input_dsl = component.get_input()
     job_args_on_party = TaskExecutor.get_job_args_on_party(dsl_parser=dsl_parser,
-                                                           job_runtime_conf=job.f_job_runtime_conf, role=job.f_role,
+                                                           job_runtime_conf=job.f_runtime_conf, role=job.f_role,
                                                            party_id=job.f_party_id)
     config = job_utils.get_job_parameters(job.f_job_id, job.f_role, job.f_party_id)
     task_parameters = RunParameters(**config)
