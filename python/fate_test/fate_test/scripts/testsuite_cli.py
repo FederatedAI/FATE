@@ -182,7 +182,17 @@ def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Conf
                 job_progress.final(response.status)
                 suite.update_status(job_name=job.job_name, status=response.status.status)
                 if response.status.is_success():
-                    suite.feed_success_model_info(job.job_name, response.model_info)
+                    if suite.model_in_dep(job.job_name):
+                        dependent_jobs = suite.get_dependent_jobs(job.job_name)
+                        for predict_job in dependent_jobs:
+                            if predict_job.dsl_version == 2:
+                                model_info = clients["guest_0"].deploy_model(model_id=response.model_info["model_id"],
+                                                                             model_version=response.model_info["model_version"],
+                                                                             dsl=predict_job.job_dsl.as_dict())
+                            else:
+                                model_info = response.model_info
+                            suite.feed_dep_model_info(predict_job, job.job_name, model_info)
+                        suite.remove_dependency(job.job_name)
             update_bar(0)
             echo.stdout_newline()
 

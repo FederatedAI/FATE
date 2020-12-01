@@ -242,7 +242,10 @@ step marks selected components to be used by prediction pipeline.
 
 .. code:: python
 
+   # deploy select components
    pipeline.deploy_component([dataio_0, hetero_lr_0])
+   # deploy all components
+   pipeline.deploy_component()
 
 Predict with Pipeline
 ---------------------
