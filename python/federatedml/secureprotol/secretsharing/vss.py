@@ -10,23 +10,22 @@ class Vss(object):
         self.prime = None
         self.prime_gen = Primes()
         self.g = 2
-        self.rand_gen = random.SystemRandom()
         self.share_amount = -1
 
     def set_share_amount(self, share_amount):
         self.share_amount = share_amount
 
     def generate_prime(self, n):
-        r = self.rand_gen.randint(n, 2*n)
+        r = random.SystemRandom().randint(1, n)
         self.prime = int(gmpy2.next_prime(r))
 
     def set_prime(self, prime):
         self.prime = prime
 
     def encrypt(self, x):
-        coefficients = [x]
+        coefficients = [int(x)]
         for i in range(self.share_amount - 1):
-            random_coefficients = self.rand_gen.randint(0, self.prime - 1)
+            random_coefficients = random.SystemRandom().randint(1, self.prime - 1)
             coefficients.append(random_coefficients)
 
         f_x = []
