@@ -19,15 +19,14 @@
 
 from federatedml.util import LOGGER
 from federatedml.param.secure_sharing_sum_param import SecureSharingSumParam
-from federatedml.transfer_variable.transfer_class.secret_sharing_sum_transfer_variable import \
-    SecretSharingSumTransferVariables
+from federatedml.transfer_variable.transfer_class import secret_sharing_sum_transfer_variable
 from federatedml.secret_sharing_sum.base_secret_sharing_sum import BaseSecretSharingSum
 
 
 class SecretSharingSumGuest(BaseSecretSharingSum):
     def __init__(self):
         super(SecretSharingSumGuest, self).__init__()
-        self.transfer_inst = SecretSharingSumTransferVariables()
+        self.transfer_inst = secret_sharing_sum_transfer_variable.SecretSharingSumTransferVariables()
         self.model_param = SecureSharingSumParam()
 
     def _init_model(self, model_param: SecureSharingSumParam):
@@ -55,7 +54,7 @@ class SecretSharingSumGuest(BaseSecretSharingSum):
 
     def recv_share_from_host(self):
         for i in range(self.share_amount - 1):
-            self.y_recv.append(self.transfer_inst.host_share_to_host.get(idx=i))
+            self.y_recv.append(self.transfer_inst.host_share_to_guest.get(idx=i))
 
     def recv_host_sum_from_host(self):
         for i in range(self.share_amount - 1):
@@ -85,7 +84,7 @@ class SecretSharingSumGuest(BaseSecretSharingSum):
 
         self.reconstruct()
 
-        LOGGER.info("success to calculate privacy sum, it is {}".format(self.secret_sum))
+        LOGGER.info("success to calculate privacy sum, it is {}".format(list(self.secret_sum.collect())))
 
         data_output = self.secret_sum
 
