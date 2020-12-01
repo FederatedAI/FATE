@@ -47,6 +47,6 @@ RUN pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r /fate/python/requ
 ENV PYTHONPATH /fate/python
 
 RUN tar -xzf /fate/jdk-8u192.tar.gz
-ENV JAVA_PATH /fate/jdk-8u129/bin
+ENV JAVA_PATH /fate/jdk-8u192/bin
 
 ENTRYPOINT ["docker-entrypoint.sh"]

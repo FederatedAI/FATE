@@ -93,7 +93,8 @@ init() {
     cd ${basepath}/docker/fate
     docker build -t fate:latest .
     docker run -d -p 8888:8080 fate:latest /bin/bash
-    rm docker/fate/fate.tar
+
+    rm fate.tar
 
     docker ps -a
 
