@@ -26,7 +26,7 @@ from fate_flow.entity.types import JobStatus, TaskStatus, EndStatus, StatusSet, 
 from fate_flow.operation import Tracker
 from fate_flow.controller import JobController
 from fate_flow.settings import FATE_BOARD_DASHBOARD_ENDPOINT
-from fate_flow.utils import detect_utils, job_utils, schedule_utils
+from fate_flow.utils import detect_utils, job_utils, schedule_utils, authentication_utils
 from fate_flow.utils.config_adapter import JobRuntimeConfigAdapter
 from fate_flow.utils.service_utils import ServiceUtils
 from fate_flow.utils import model_utils
@@ -42,6 +42,7 @@ class DAGScheduler(Cron):
         job_dsl = job_data.get('job_dsl', {})
         job_runtime_conf = job_data.get('job_runtime_conf', {})
         job_utils.check_job_runtime_conf(job_runtime_conf)
+        authentication_utils.check_constraint(job_runtime_conf, job_dsl)
 
         job_initiator = job_runtime_conf['initiator']
         conf_adapter = JobRuntimeConfigAdapter(job_runtime_conf)
