@@ -35,6 +35,5 @@ class SecretSharingSumTransferVariables(BaseTransferVariables):
         self.host_share_to_guest = self._create_variable(name='host_share_to_guest', src=['host'], dst=['guest'])
         self.host_share_to_host = self._create_variable(name='host_share_to_host', src=['host'], dst=['host'])
         self.host_sum = self._create_variable(name='host_sum', src=['host'], dst=['guest'])
-        self.primes_share = self._create_variable(name='primes_share', src=['guest'], dst=['host'])
         self.guest_commitments = self._create_variable(name='guest_commitments', src=['guest'], dst=['host'])
         self.host_commitments = self._create_variable(name='host_commitments', src=['host'], dst=['guest', 'host'])
