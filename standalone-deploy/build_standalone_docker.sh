@@ -92,7 +92,7 @@ init() {
 
     cd ${basepath}/docker/fate
     docker build -t fate:latest .
-    docker run -d -p 8888:8080 fate:latest /bin/bash
+    docker run -d --name fate -p 8888:8080 fate:latest /bin/bash
 
     rm fate.tar
 
@@ -101,11 +101,11 @@ init() {
 }
 
 start() {
-    docker start `docker ps -a | grep -i "docker_fate" | awk '{print $1}'`
+    docker start `docker ps -a | grep -i "fate" | awk '{print $1}'`
 }
 
 stop(){
-    docker stop `docker ps -a | grep -i "docker_fate" | awk '{print $1}'`
+    docker stop `docker ps -a | grep -i "fate" | awk '{print $1}'`
 }
 
 case "$1" in
