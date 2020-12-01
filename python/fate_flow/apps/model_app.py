@@ -28,7 +28,7 @@ from flask import Flask, request, send_file
 from fate_flow.pipelined_model.migrate_model import compare_roles
 from fate_flow.scheduler import DAGScheduler
 from fate_flow.settings import stat_logger, MODEL_STORE_ADDRESS, TEMP_DIRECTORY
-from fate_flow.pipelined_model import migrate_model, pipelined_model, publish_model
+from fate_flow.pipelined_model import migrate_model, pipelined_model, publish_model, deploy_model
 from fate_flow.utils.api_utils import get_json_result, federated_api, error_response
 from fate_flow.utils import job_utils, model_utils
 from fate_flow.utils.service_utils import ServiceUtils
@@ -37,6 +37,7 @@ from fate_flow.utils.model_utils import gen_party_model_id
 from fate_flow.entity.types import ModelOperation, TagOperation
 from fate_arch.common import file_utils, WorkMode, FederatedMode
 from fate_flow.entity.types import JobStatus
+from fate_flow.utils.config_adapter import JobRuntimeConfigAdapter
 
 manager = Flask(__name__)
 
@@ -310,7 +311,6 @@ def operate_model(model_operation):
                     shutil.rmtree(model.model_path)
                     raise Exception("party id {} is not in model roles, please check if the party id is valid.")
                 try:
-                    from fate_flow.utils.config_adapter import JobRuntimeConfigAdapter
                     adapter = JobRuntimeConfigAdapter(train_runtime_conf)
                     job_parameters = adapter.get_common_parameters().to_dict()
                     with DB.connection_context():
@@ -572,10 +572,120 @@ def operation_record(data: dict, oper_type, oper_status):
 
 @manager.route('/query', methods=['POST'])
 def query_model():
-    models = model_utils.query_model(**request.json)
-    if not models:
-        return get_json_result(retcode=0, retmsg='no model found', data=[])
-    return get_json_result(retcode=0, retmsg='success', data=[model.to_json() for model in models])
+    retcode, retmsg, data = model_utils.query_model_info(**request.json)
+    return get_json_result(retcode=retcode, retmsg=retmsg, data=data)
+
+
+@manager.route('/deploy', methods=['POST'])
+def deploy_model():
+    request_data = request.json
+    require_parameters = ['model_id', 'model_version']
+    check_config(request_data, require_parameters)
+
+    if not (request_data.get('cpn_list') or request_data.get('dsl')):
+        raise Exception('Deploy model failed, component list or custom predict dsl are required.')
+    if not (isinstance(request_data.get('cpn_list'), list) or isinstance(request_data.get('dsl'), dict)):
+        raise Exception('Deploy model failed, illegal data type. '
+                        'Component list should be instance of list, dsl should be instance of dict')
+
+    model_id = request_data.get("model_id")
+    model_version = request_data.get("model_version")
+    retcode, retmsg, model_info = model_utils.fuzzy_search_from_file(model_id=model_id,
+                                                                     model_version=model_version,
+                                                                     check=True)
+    if not model_info:
+        raise Exception(f'Deploy model failed, no model {model_id} {model_version} found.')
+    else:
+        for key, value in model_info.items():
+            version_check = model_utils.compare_version(value.fate_version, '1.5.0')
+            if version_check == 'lt':
+                continue
+            else:
+                init_role = key.split('/')[-2].split('#')[0]
+                init_party_id = key.split('/')[-2].split('#')[1]
+                model_init_role = value.get('initiator_role') if value.get('initiator_role') else value.get('train_runtime_conf', {}).get('initiator', {}).get('role', '')
+                model_init_party_id = value.get('initiator_role_party_id') if value.get('initiator_role_party_id') else value.get('train_runtime_conf', {}).get('initiator', {}).get('party_id', '')
+                if (init_role == model_init_role) and (init_party_id == str(model_init_party_id)):
+                    break
+        else:
+            raise Exception("Deploy model failed, can not found model of initiator role")
+
+        if request_data.get('cpn_list'):
+            predict_dsl = job_utils.generate_predict_dsl(train_dsl=value.get('train_dsl'),
+                                                         cpn_list=request_data.pop('cpn_list'),
+                                                         parser_version=value.get('train_runtime_conf', {}).get('dsl_version', '1'))
+        else:
+            predict_dsl = request_data.pop('dsl')
+
+        # distribute federated deploy task
+        _job_id = job_utils.generate_job_id()
+        request_data['child_model_version'] = _job_id
+        request_data['predict_dsl'] = predict_dsl
+
+        initiator_party_id = model_init_party_id
+        initiator_role = model_init_role
+        deploy_status = True
+        deploy_status_info = {}
+        deploy_status_msg = 'success'
+        deploy_status_info['detail'] = {}
+
+        for role_name, role_partys in value.get("train_runtime_conf", {}).get('role', {}).items():
+            deploy_status_info[role_name] = deploy_status_info.get(role_name, {})
+            deploy_status_info['detail'][role_name] = {}
+            for _party_id in role_partys:
+                request_data['local'] = {'role': role_name, 'party_id': _party_id}
+                try:
+                    response = federated_api(job_id=_job_id,
+                                             method='POST',
+                                             endpoint='/model/deploy/do',
+                                             src_party_id=initiator_party_id,
+                                             dest_party_id=_party_id,
+                                             src_role = initiator_role,
+                                             json_body=request_data,
+                                             federated_mode=FederatedMode.MULTIPLE)
+                    deploy_status_info[role_name][_party_id] = response['retcode']
+                    detail = {_party_id: {}}
+                    detail[_party_id]['retcode'] = response['retcode']
+                    detail[_party_id]['retmsg'] = response['retmsg']
+                    deploy_status_info['detail'][role_name].update(detail)
+                    if response['retcode']:
+                        deploy_status = False
+                        deploy_status_msg = 'failed'
+                except Exception as e:
+                    stat_logger.exception(e)
+                    deploy_status = False
+                    deploy_status_msg = 'failed'
+                    deploy_status_info[role_name][_party_id] = 100
+
+        deploy_status_info['model_id'] = request_data['model_id']
+        deploy_status_info['model_version'] = _job_id
+        return get_json_result(retcode=(0 if deploy_status else 101),
+                               retmsg=deploy_status_msg, data=deploy_status_info)
+
+@manager.route('/deploy/do', methods=['POST'])
+def do_deploy():
+    retcode, retmsg = deploy_model.deploy(request.json)
+
+    # TODO operation record
+    # operation_record(request.json, "deploy", "success" if not retcode else "failed")
+
+    return get_json_result(retcode=retcode, retmsg=retmsg)
+
+
+@manager.route('/get/predict/dsl', methods=['POST'])
+def get_predict_dsl():
+    request_data = request.json
+    request_data['query_filters'] = ['inference_dsl']
+    retcode, retmsg, data = model_utils.query_model_info_from_file(**request_data)
+    if not retcode:
+        return get_json_result(data=data[0]['inference_dsl'])
+    return retcode, retmsg
+
+
+@manager.route('/get/predict/conf', methods=['POST'])
+def get_predict_conf():
+    pass
+
 
 
 def adapter_servings_config(request_data):
@@ -586,3 +696,5 @@ def adapter_servings_config(request_data):
         request_data["servings"] = servings_conf
     else:
         raise Exception('Please check the servings config')
+
+
