@@ -13,7 +13,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import os
+import glob
 import operator
+from fate_arch.common.base_utils import json_loads
+from fate_arch.common.file_utils import get_project_base_directory
+from fate_flow.pipelined_model.pipelined_model import PipelinedModel
 
 from fate_flow.db.db_models import DB, MachineLearningModelInfo as MLModel
 
@@ -55,23 +60,133 @@ def all_party_key(all_party):
 
 
 @DB.connection_context()
-def query_model(reverse=None, order_by=None, **kwargs):
+def query_model_info_from_db(model_version, role=None, party_id=None, model_id=None, query_filters=None):
+    conditions = []
     filters = []
-    for f_n, f_v in kwargs.items():
-        attr_name = 'f_%s' % f_n
-        if hasattr(MLModel, attr_name):
-            filters.append(operator.attrgetter('f_%s' % f_n)(MLModel) == f_v)
-    if filters:
-        models = MLModel.select().where(*filters)
-        if reverse is not None:
-            if not order_by or not hasattr(MLModel, f"f_{order_by}"):
-                order_by = "create_time"
-            if reverse is True:
-                models = models.order_by(getattr(MLModel, f"f_{order_by}").desc())
-            elif reverse is False:
-                models = models.order_by(getattr(MLModel, f"f_{order_by}").asc())
-        return [model for model in models]
-    else:
-        # not allow query all models
-        return []
+    aruments = locals()
+    cond_attrs = [attr for attr in ['model_version', 'model_id', 'role', 'party_id'] if aruments[attr]]
+    for f_n in cond_attrs:
+        conditions.append(operator.attrgetter('f_%s' % f_n)(MLModel) == aruments[f_n])
 
+    if query_filters and isinstance(query_filters, list):
+        for attr in query_filters:
+            attr_name = 'f_%s' % attr
+            if hasattr(MLModel, attr_name):
+                filters.append(operator.attrgetter(attr_name)(MLModel))
+
+    if conditions:
+        if filters:
+            models = MLModel.select(*filters).where(*conditions)
+        else:
+            models = MLModel.select().where(*conditions)
+
+        if models:
+            return 0, 'Query model info from db success.', [model.to_json() for model in models]
+        else:
+            return 100, 'Query model info failed, cannot find model from db. ', []
+
+
+def query_model_info_from_file(model_id, model_version, role=None, party_id=None, query_filters=None, check=False):
+    if role and party_id:
+        res = advanced_search_from_file(model_id=model_id, model_version=model_version, role=role,
+                                        party_id=party_id, query_filters=query_filters, check=check)
+    else:
+        res = fuzzy_search_from_file(model_id=model_id, model_version=model_version,
+                                     query_filters=query_filters, check=check)
+    if res:
+        return 0, 'Query model info from local model success.', res
+    return 100, 'Query model info failed, cannot find model from local model files.', []
+
+
+def advanced_search_from_file(model_id, model_version, role=None, party_id=None, query_filters=None, check=False):
+    res = []
+    party_model_id = gen_party_model_id(model_id=model_id, role=role, party_id=party_id)
+    pipeline_model = PipelinedModel(model_id=party_model_id, model_version=model_version)
+    model_info = gather_model_info_data(pipeline_model, query_filters=query_filters, check=check)
+    if model_info:
+        res.append(model_info)
+    return res
+
+
+def fuzzy_search_from_file(model_id, model_version, query_filters=None, check=False):
+    res = {} if check else []
+    model_dir = os.path.join(get_project_base_directory(), 'model_local_cache')
+    model_fp_list = glob.glob(model_dir + f'/*#{model_id}/{model_version}')
+    if model_fp_list:
+        for fp in model_fp_list:
+            pipeline_model = PipelinedModel(model_id=fp.split('/')[-2], model_version=fp.split('/')[-1])
+            model_info = gather_model_info_data(pipeline_model, query_filters=query_filters, check=check)
+            if model_info:
+                if isinstance(res, dict):
+                    res[fp] = model_info
+                else:
+                    res.append(model_info)
+    return res
+
+
+def gather_model_info_data(model: PipelinedModel, query_filters=None, check=False):
+    if model.exists():
+        pipeline = model.read_component_model('pipeline', 'pipeline')['Pipeline']
+        if check:
+            ver_list = pipeline.fate_version.split('.')
+            if not (int(ver_list[1]) > 5 or (int(ver_list[1]) >= 5 and int(ver_list[2]) >= 1)):
+                raise Exception(f"fate version ({pipeline.fate_version}) of model {pipeline.model_id} {pipeline.model_version} is older than 1.5.1")
+        model_info = {}
+        if query_filters and isinstance(query_filters, list):
+            for attr, field in pipeline.ListFields():
+                if attr.name in query_filters:
+                    if isinstance(field, bytes):
+                        model_info[attr.name] = json_loads(field)
+                    else:
+                        model_info[attr.name] = field
+        else:
+            for attr, field in pipeline.ListFields():
+                if isinstance(field, bytes):
+                    model_info[attr.name] = json_loads(field)
+                else:
+                    model_info[attr.name] = field
+        return model_info
+    return []
+
+
+def query_model_info(model_version, role=None, party_id=None, model_id=None, query_filters=None):
+    retcode, retmsg, data = query_model_info_from_db(role=role, party_id=party_id, model_id=model_id,
+                                                     model_version=model_version, query_filters=query_filters)
+    if not retcode:
+        return retcode, retmsg, data
+    else:
+        aruments = locals()
+        cond_attrs = [attr for attr in ['model_version', 'model_id'] if aruments[attr]]
+        if 'model_version' in cond_attrs and 'model_id' in cond_attrs:
+            retcode, retmsg, data = query_model_info_from_file(role=role, party_id=party_id, model_id=model_id,
+                                                               model_version=model_version, query_filters=query_filters)
+            if not retcode:
+                return retcode, retmsg, data
+            return retcode, 'Query model info failed, cannot find model neither from db nor local models', data
+        else:
+            return 100, 'Query model info failed, cannot find model from db. ' \
+                        'Try use both model id and model version to query model info from local models', []
+
+
+@DB.connection_context()
+def sink_model_info_to_db():
+    # TODO insert data of model info into model table
+    pass
+
+
+def compare_version(version: str, target_version: str):
+    ver_list = version.split('.')
+    tar_ver_list = target_version.split('.')
+    if int(ver_list[0]) >= int(tar_ver_list[0]):
+        if int(ver_list[1]) > int(tar_ver_list[1]):
+            return 'gt'
+        elif int(ver_list[1]) < int(tar_ver_list[1]):
+            return 'lt'
+        else:
+            if int(ver_list[2]) > int(tar_ver_list[2]):
+                return 'gt'
+            elif int(ver_list[2]) == int(tar_ver_list[2]):
+                return 'eq'
+            else:
+                return 'lt'
+    return 'lt'

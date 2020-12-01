@@ -30,7 +30,7 @@ from fate_flow.db.db_models import DB, Job, Task, MachineLearningModelInfo as ML
 from fate_flow.entity.types import JobStatus
 from fate_flow.entity.types import TaskStatus, RunParameters, KillProcessStatusCode
 from fate_flow.settings import stat_logger, JOB_DEFAULT_TIMEOUT, WORK_MODE
-from fate_flow.utils import detect_utils
+from fate_flow.utils import detect_utils, schedule_utils
 from fate_flow.utils import session_utils
 
 
@@ -462,3 +462,7 @@ def federation_cleanup(job, task):
         ssn._get_federation().cleanup()
 
 
+def generate_predict_dsl(train_dsl, cpn_list, parser_version='1'):
+    train_dsl = json_loads(train_dsl)
+    parser = schedule_utils.get_dsl_parser_by_version(parser_version)
+    return parser.deploy_component(cpn_list, train_dsl)
