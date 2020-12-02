@@ -144,8 +144,8 @@ class IntersectParam(BaseParam):
                             while in raw, 'synchronize_intersect_ids' is True means the role of "join_role" will send intersect results and the others will get them.
                             Default by True.
 
-    join_role: str, it supports "guest" and "host" only and effective only for raw. If it is "guest", the host will send its ids to guest and find the intersection of
-                ids in guest; if it is "host", the guest will send its ids. Default by "guest".
+    join_role: str, role who joins ids, supports "guest" and "host" only and effective only for raw. If it is "guest", the host will send its ids to guest and find the intersection of
+               ids in guest; if it is "host", the guest will send its ids to host. Default by "guest".
 
     with_encode: bool, if True, it will use hash method for intersect ids. Effective only for "raw".
 
