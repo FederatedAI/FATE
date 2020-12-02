@@ -154,10 +154,6 @@ class DecisionTreeParam(BaseParam):
                                                              ["xgboost"],
                                                              descr)
 
-        if type(self.criterion_params).__name__ != "list":
-            raise ValueError("decision tree param's criterion_params {} not supported, should be list".format(
-                self.criterion_params))
-
         if len(self.criterion_params) == 0:
             raise ValueError("decisition tree param's criterio_params should be non empty")
 
@@ -170,6 +166,7 @@ class DecisionTreeParam(BaseParam):
         elif type(self.criterion_params) == dict:
             assert 'l1' in self.criterion_params and 'l2' in self.criterion_params, 'l1 and l2 keys are needed in ' \
                                                                                     'criterion_params dict'
+            self.criterion_params = [self.criterion_params['l2'], self.criterion_params['l1']]
         else:
             raise ValueError('criterion_params should be a dict or a list contains l1, l2 reg value')
 

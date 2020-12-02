@@ -75,8 +75,10 @@ class XgboostCriterion(Criterion):
                self.node_gain(sum_grad, sum_hess)
 
     def node_gain(self, sum_grad, sum_hess):
-        return -(self._g_alpha_cmp(sum_grad, self.reg_alpha)) / (sum_hess + self.reg_lambda)
-
-    def node_weight(self, sum_grad, sum_hess):
+        # return sum_grad * sum_grad / (sum_hess + self.reg_lambda)
         num = self._g_alpha_cmp(sum_grad, self.reg_alpha)
         return num * num / (sum_hess + self.reg_lambda)
+
+    def node_weight(self, sum_grad, sum_hess):
+        # return -sum_grad / (self.reg_lambda + sum_hess)
+        return -(self._g_alpha_cmp(sum_grad, self.reg_alpha)) / (sum_hess + self.reg_lambda)
