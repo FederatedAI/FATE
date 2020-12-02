@@ -220,3 +220,8 @@ def dsl_generator():
                                    "please check logs/fate_flow/fate_flow_stat.log.")
 
 
+@manager.route('/url/get', methods=['POST'])
+def get_url():
+    request_data = request.json
+    board_url = job_utils.get_board_url(request_data.get('job_id'), request_data.get('role'), request_data.get('party_id'))
+    return get_json_result(data={'board_url': board_url})

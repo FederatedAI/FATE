@@ -29,10 +29,10 @@ from fate_arch.common.log import schedule_logger
 from fate_flow.db.db_models import DB, Job, Task, MachineLearningModelInfo as MLModel
 from fate_flow.entity.types import JobStatus
 from fate_flow.entity.types import TaskStatus, RunParameters, KillProcessStatusCode
-from fate_flow.settings import stat_logger, JOB_DEFAULT_TIMEOUT, WORK_MODE
+from fate_flow.settings import stat_logger, JOB_DEFAULT_TIMEOUT, WORK_MODE, FATE_BOARD_DASHBOARD_ENDPOINT
 from fate_flow.utils import detect_utils, schedule_utils
 from fate_flow.utils import session_utils
-
+from fate_flow.utils.service_utils import ServiceUtils
 
 
 class IdCounter(object):
@@ -439,27 +439,12 @@ def job_default_timeout(runtime_conf, dsl):
     return timeout
 
 
-def cleaning(signum, frame):
-    sys.exit(0)
-
-
-def federation_cleanup(job, task):
-    from fate_arch.common import Backend
-    from fate_arch.common import Party
-
-    runtime_conf = json_loads(job.f_runtime_conf_on_party)
-    job_parameters = runtime_conf['job_parameters']
-    backend = Backend(job_parameters.get('backend', 0))
-    store_engine = StoreEngine(job_parameters.get('store_engine', 0))
-
-    if backend.is_spark() and store_engine.is_hdfs():
-        runtime_conf['local'] = {'role': job.f_role, 'party_id': job.f_party_id}
-        parties = [Party(k, p) for k,v in runtime_conf['role'].items() for p in v ]
-        from fate_arch.session.spark import Session
-        ssn = Session(session_id=task.f_task_id)
-        ssn.init_federation(federation_session_id=task.f_task_id, runtime_conf=runtime_conf)
-        ssn._get_federation().generate_mq_names(parties=parties)
-        ssn._get_federation().cleanup()
+def get_board_url(job_id, role, party_id):
+    board_url = "http://{}:{}{}".format(
+        ServiceUtils.get_item("fateboard", "host"),
+        ServiceUtils.get_item("fateboard", "port"),
+        FATE_BOARD_DASHBOARD_ENDPOINT).format(job_id, role, party_id)
+    return board_url
 
 
 def generate_predict_dsl(train_dsl, cpn_list, parser_version='1'):

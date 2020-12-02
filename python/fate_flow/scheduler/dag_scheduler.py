@@ -116,16 +116,12 @@ class DAGScheduler(Cron):
 
         schedule_logger(job_id).info(
             'submit job successfully, job id is {}, model id is {}'.format(job.f_job_id, common_job_parameters.model_id))
-        board_url = "http://{}:{}{}".format(
-            ServiceUtils.get_item("fateboard", "host"),
-            ServiceUtils.get_item("fateboard", "port"),
-            FATE_BOARD_DASHBOARD_ENDPOINT).format(job_id, job_initiator['role'], job_initiator['party_id'])
         logs_directory = job_utils.get_job_log_directory(job_id)
         submit_result = {
             "job_id": job_id,
             "model_info": {"model_id": common_job_parameters.model_id, "model_version": common_job_parameters.model_version},
             "logs_directory": logs_directory,
-            "board_url": board_url
+            "board_url": job_utils.get_board_url(job_id, job_initiator['role'], job_initiator['party_id'])
         }
         submit_result.update(path_dict)
         return submit_result
