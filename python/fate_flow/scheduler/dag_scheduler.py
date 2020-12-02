@@ -72,6 +72,8 @@ class DAGScheduler(Cron):
         job.f_work_mode = common_job_parameters.work_mode
         job.f_initiator_role = job_initiator['role']
         job.f_initiator_party_id = job_initiator['party_id']
+        job.f_role = job_initiator['role']
+        job.f_party_id = job_initiator['party_id']
 
         path_dict = job_utils.save_job_conf(job_id=job_id,
                                             role=job.f_initiator_role,

@@ -16,7 +16,6 @@
 import functools
 import json
 import os
-import re
 
 from flask import request
 
@@ -35,6 +34,9 @@ class PrivilegeAuth(object):
 
     @classmethod
     def authentication_privilege(cls, src_party_id, src_role, request_path, party_id_index, role_index, command):
+        if not src_party_id:
+            return
+        src_party_id = str(src_party_id)
         if src_party_id == PrivilegeAuth.get_dest_party_id(request_path, party_id_index):
             return
         stat_logger.info("party {} role {} start authentication".format(src_party_id, src_role))
@@ -194,7 +196,7 @@ def request_authority_certification(party_id_index, role_index, command):
         @functools.wraps(func)
         def _wrapper(*args, **kwargs):
             if USE_AUTHENTICATION:
-                PrivilegeAuth.authentication_privilege(src_party_id=str(request.json.get('src_party_id')),
+                PrivilegeAuth.authentication_privilege(src_party_id=request.json.get('src_party_id'),
                                                        src_role=request.json.get('src_role'),
                                                        request_path=request.path,
                                                        party_id_index=party_id_index,
