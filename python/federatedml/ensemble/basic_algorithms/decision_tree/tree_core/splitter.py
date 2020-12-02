@@ -54,8 +54,9 @@ class SplitInfo(object):
 
 class Splitter(object):
 
-    def __init__(self, criterion_method, criterion_params=[0, 1], min_impurity_split=1e-2, min_sample_split=2,
+    def __init__(self, criterion_method, criterion_params, min_impurity_split=1e-2, min_sample_split=2,
                  min_leaf_node=1):
+
         LOGGER.info("splitter init!")
         if not isinstance(criterion_method, str):
             raise TypeError("criterion_method type should be str, but %s find" % (type(criterion_method).__name__))
@@ -65,8 +66,13 @@ class Splitter(object):
                 self.criterion = XgboostCriterion()
             else:
                 try:
-                    reg_lambda = float(criterion_params[0])
-                    self.criterion = XgboostCriterion(reg_lambda)
+                    if type(criterion_params) is list:
+                        reg_lambda = float(criterion_params[0])
+                        reg_alpha = float(criterion_params[1])
+                    else:
+                        reg_lambda = float(criterion_params['l2'])
+                        reg_alpha = float(criterion_params['l1'])
+                    self.criterion = XgboostCriterion(reg_lambda=reg_lambda, reg_alpha=reg_alpha)
                 except:
                     warnings.warn("criterion_params' first criterion_params should be numeric")
                     self.criterion = XgboostCriterion()
