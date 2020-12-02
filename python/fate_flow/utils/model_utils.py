@@ -21,6 +21,7 @@ from fate_arch.common.file_utils import get_project_base_directory
 from fate_flow.pipelined_model.pipelined_model import PipelinedModel
 
 from fate_flow.db.db_models import DB, MachineLearningModelInfo as MLModel
+from fate_flow.utils import schedule_utils
 
 gen_key_string_separator = '#'
 
@@ -60,13 +61,16 @@ def all_party_key(all_party):
 
 
 @DB.connection_context()
-def query_model_info_from_db(model_version, role=None, party_id=None, model_id=None, query_filters=None):
+def query_model_info_from_db(model_version, role=None, party_id=None, model_id=None, query_filters=None, **kwargs):
     conditions = []
     filters = []
     aruments = locals()
     cond_attrs = [attr for attr in ['model_version', 'model_id', 'role', 'party_id'] if aruments[attr]]
     for f_n in cond_attrs:
         conditions.append(operator.attrgetter('f_%s' % f_n)(MLModel) == aruments[f_n])
+    for f_n in kwargs:
+        if hasattr(MLModel, 'f_%s' % f_n):
+            conditions.append(operator.attrgetter('f_%s' % f_n)(MLModel))
 
     if query_filters and isinstance(query_filters, list):
         for attr in query_filters:
@@ -74,16 +78,15 @@ def query_model_info_from_db(model_version, role=None, party_id=None, model_id=N
             if hasattr(MLModel, attr_name):
                 filters.append(operator.attrgetter(attr_name)(MLModel))
 
-    if conditions:
-        if filters:
-            models = MLModel.select(*filters).where(*conditions)
-        else:
-            models = MLModel.select().where(*conditions)
+    if filters:
+        models = MLModel.select(*filters).where(*conditions)
+    else:
+        models = MLModel.select().where(*conditions)
 
-        if models:
-            return 0, 'Query model info from db success.', [model.to_json() for model in models]
-        else:
-            return 100, 'Query model info failed, cannot find model from db. ', []
+    if models:
+        return 0, 'Query model info from db success.', [model.to_json() for model in models]
+    else:
+        return 100, 'Query model info failed, cannot find model from db. ', []
 
 
 def query_model_info_from_file(model_id, model_version, role=None, party_id=None, query_filters=None, check=False):
@@ -190,3 +193,21 @@ def compare_version(version: str, target_version: str):
             else:
                 return 'lt'
     return 'lt'
+
+
+def get_predict_conf(model_id, model_version):
+    model_dir = os.path.join(get_project_base_directory(), 'model_local_cache')
+    model_fp_list = glob.glob(model_dir + f'/guest#*#{model_id}/{model_version}')
+    if model_fp_list:
+        fp = model_fp_list[0]
+        pipeline_model = PipelinedModel(model_id=fp.split('/')[-2], model_version=fp.split('/')[-1])
+        pipeline = pipeline_model.read_component_model('pipeline', 'pipeline')['Pipeline']
+        predict_dsl = json_loads(pipeline.inference_dsl)
+
+        train_runtime_conf = json_loads(pipeline.train_runtime_conf)
+        parser = schedule_utils.get_dsl_parser_by_version(train_runtime_conf.get('dsl_version', '1') )
+        return parser.generate_predict_conf_template(predict_dsl=predict_dsl, train_conf=train_runtime_conf,
+                                                     model_id=model_id, model_version=model_version)
+    else:
+        return ''
+

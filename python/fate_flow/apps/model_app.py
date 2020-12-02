@@ -20,13 +20,13 @@ import traceback
 import peewee
 from copy import deepcopy
 
-from fate_arch.common.base_utils import json_loads
+from fate_arch.common.base_utils import json_loads, json_dumps
 from fate_flow.db.db_models import MachineLearningModelInfo as MLModel
 from fate_flow.db.db_models import Tag, DB, ModelTag, ModelOperationLog as OperLog
 from flask import Flask, request, send_file
 
 from fate_flow.pipelined_model.migrate_model import compare_roles
-from fate_flow.scheduler import DAGScheduler
+from fate_flow.scheduler import DAGScheduler, dsl_parser
 from fate_flow.settings import stat_logger, MODEL_STORE_ADDRESS, TEMP_DIRECTORY
 from fate_flow.pipelined_model import migrate_model, pipelined_model, publish_model, deploy_model
 from fate_flow.utils.api_utils import get_json_result, federated_api, error_response
@@ -689,8 +689,23 @@ def get_predict_dsl():
 
 @manager.route('/get/predict/conf', methods=['POST'])
 def get_predict_conf():
-    pass
+    request_data = request.json
+    required_parameters = ['model_id', 'model_version']
+    check_config(request_data, required_parameters)
+    predict_conf = model_utils.get_predict_conf(model_id=request_data['model_id'],
+                                                model_version=request_data['model_version'])
+    if predict_conf:
+        if request_data.get("filename"):
+            os.makedirs(TEMP_DIRECTORY, exist_ok=True)
+            temp_filepath = os.path.join(TEMP_DIRECTORY, request_data.get("filename"))
+            with open(temp_filepath, "w") as fout:
 
+                fout.write(json_dumps(predict_conf, indent=4))
+            return send_file(open(temp_filepath, "rb"), as_attachment=True,
+                             attachment_filename=request_data.get("filename"))
+        else:
+            return get_json_result(data=predict_conf)
+    return error_response(210, "No model found, please check if arguments are specified correctly.")
 
 
 def adapter_servings_config(request_data):
