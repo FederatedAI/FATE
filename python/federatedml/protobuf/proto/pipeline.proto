@@ -30,8 +30,9 @@ message Pipeline {
     bool parent = 7;
     int32 loaded_times = 8;
     bytes roles = 9;
-    int32 wokemode = 10;
+    int32 woke_mode = 10;
     string initiator_role = 11;
-    string initiator_role_party_id = 12;
+    int32 initiator_party_id = 12;
     bytes runtime_conf_on_party = 13;
+    bytes parent_info = 14;
 }
