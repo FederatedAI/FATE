@@ -185,10 +185,14 @@ def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Conf
                     if suite.model_in_dep(job.job_name):
                         dependent_jobs = suite.get_dependent_jobs(job.job_name)
                         for predict_job in dependent_jobs:
-                            if predict_job.dsl_version == 2:
-                                model_info = clients["guest_0"].deploy_model(model_id=response.model_info["model_id"],
-                                                                             model_version=response.model_info["model_version"],
-                                                                             dsl=predict_job.job_dsl.as_dict())
+                            if predict_job.job_conf.dsl_version == 2:
+                                # noinspection PyBroadException
+                                try:
+                                    model_info = clients["guest_0"].deploy_model(model_id=response.model_info["model_id"],
+                                                                                 model_version=response.model_info["model_version"],
+                                                                                 dsl=predict_job.job_dsl.as_dict())
+                                except Exception:
+                                    _raise()
                             else:
                                 model_info = response.model_info
                             suite.feed_dep_model_info(predict_job, job.job_name, model_info)
