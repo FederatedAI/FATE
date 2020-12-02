@@ -38,7 +38,7 @@ def check_data_count(submitter, fate_home, table_name, namespace, expect_count):
     try:
         stdout = json.loads(stdout)
         count = stdout["data"]["count"]
-        if count != expect_count:
+        if 0 < expect_count != count:
             raise AssertionError("Count of upload file is not as expect, count is: {},"
                                  "expect is: {}".format(count, expect_count))
     except:
@@ -67,7 +67,8 @@ def data_upload(submitter, upload_config, check_interval, fate_home, backend):
             continue
 
         submitter.await_finish(job_id, check_interval=check_interval)
-        check_data_count(submitter, fate_home, data["table_name"], data["namespace"], data["count"])
+        check_data_count(submitter, fate_home, data["table_name"], data["namespace"],
+                         data["count"] if ("count" in data) else 0)
 
 
 def read_data(fate_home, config_type):
