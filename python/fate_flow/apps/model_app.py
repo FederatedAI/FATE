@@ -201,6 +201,13 @@ def do_migrate_model():
 def do_load_model():
     request_data = request.json
     adapter_servings_config(request_data)
+    if not deploy_model.check_if_deployed(role=request_data['local']['role'],
+                                          party_id=request_data['local']['party_id'],
+                                          model_id=request_data['job_parameters']['model_id'],
+                                          model_version=request_data['job_parameters']['model_version']):
+        return get_json_result(retcode=100,
+                               retmsg="Only deployed models could be used to execute process of loading. "
+                                      "Please deploy model before loading.")
     retcode, retmsg = publish_model.load_model(config_data=request_data)
     try:
         if not retcode:
@@ -624,6 +631,7 @@ def deploy_model():
 
         initiator_party_id = model_init_party_id
         initiator_role = model_init_role
+        request_data['initiator'] = {'role': initiator_role, 'party_id': initiator_party_id}
         deploy_status = True
         deploy_status_info = {}
         deploy_status_msg = 'success'
@@ -665,10 +673,7 @@ def deploy_model():
 @manager.route('/deploy/do', methods=['POST'])
 def do_deploy():
     retcode, retmsg = deploy_model.deploy(request.json)
-
-    # TODO operation record
-    # operation_record(request.json, "deploy", "success" if not retcode else "failed")
-
+    operation_record(request.json, "deploy", "success" if not retcode else "failed")
     return get_json_result(retcode=retcode, retmsg=retmsg)
 
 

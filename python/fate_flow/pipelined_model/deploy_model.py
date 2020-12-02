@@ -57,9 +57,8 @@ def deploy(config_data):
         if model_utils.compare_version(pipeline.fate_version, '1.5.0') == 'gt':
             pipeline.parent_info = json_dumps({'parent_model_id': model_id, 'parent_model_version': model_version}, byte=True)
             pipeline.parent = False
-            # TODO check if it is correct way to modify runtime_conf_on_party
             runtime_conf_on_party = json_loads(pipeline.runtime_conf_on_party)
-            runtime_conf_on_party['model_version'] = child_model_version
+            runtime_conf_on_party['job_parameters']['model_version'] = child_model_version
             pipeline.runtime_conf_on_party = json_dumps(runtime_conf_on_party, byte=True)
 
         # save model file
@@ -74,16 +73,29 @@ def deploy(config_data):
         return 0, f"deploy model of role {local_role} {local_party_id} success"
 
 
-def check_before_deploy(pipeline_model: PipelinedModel):
-    check_status = True
-
-    pipeline = pipeline_model.read_component_model('pipeline', 'pipeline')['Pipeline']
+def check_if_parent_model(pipeline):
     if model_utils.compare_version(pipeline.fate_version, '1.5.0') == 'gt':
-        if not pipeline.parent:
-            check_status = False
+        if pipeline.parent:
+            return True
+    elif model_utils.compare_version(pipeline.fate_version, '1.5.0') == 'eq':
+        if not json_loads(pipeline.inference_dsl):
+            return True
     else:
-        if json_loads(pipeline.inference_dsl):
-            check_status = False
+        return False
 
+
+def check_before_deploy(pipeline_model: PipelinedModel):
+    pipeline = pipeline_model.read_component_model('pipeline', 'pipeline')['Pipeline']
+    check_status = check_if_parent_model(pipeline)
     if not check_status:
         raise Exception('Child model not be deployed.')
+
+
+def check_if_deployed(role, party_id, model_id, model_version):
+    party_model_id = model_utils.gen_party_model_id(model_id=model_id, role=role, party_id=party_id)
+    pipeline_model = PipelinedModel(model_id=party_model_id, model_version=model_version)
+    if not pipeline_model.exists():
+        raise Exception(f"Model {party_model_id} {model_version} not exists in model local cache.")
+    else:
+        pipeline = pipeline_model.read_component_model('pipeline', 'pipeline')['Pipeline']
+        return not check_if_parent_model(pipeline)
