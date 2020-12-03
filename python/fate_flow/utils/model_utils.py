@@ -21,7 +21,6 @@ from fate_arch.common.file_utils import get_project_base_directory
 from fate_flow.pipelined_model.pipelined_model import PipelinedModel
 
 from fate_flow.db.db_models import DB, MachineLearningModelInfo as MLModel
-from fate_flow.utils import schedule_utils
 
 gen_key_string_separator = '#'
 
@@ -89,36 +88,36 @@ def query_model_info_from_db(model_version, role=None, party_id=None, model_id=N
         return 100, 'Query model info failed, cannot find model from db. ', []
 
 
-def query_model_info_from_file(model_id, model_version, role=None, party_id=None, query_filters=None, check=False):
+def query_model_info_from_file(model_id, model_version, role=None, party_id=None, query_filters=None):
     if role and party_id:
         res = advanced_search_from_file(model_id=model_id, model_version=model_version, role=role,
-                                        party_id=party_id, query_filters=query_filters, check=check)
+                                        party_id=party_id, query_filters=query_filters)
     else:
         res = fuzzy_search_from_file(model_id=model_id, model_version=model_version,
-                                     query_filters=query_filters, check=check)
+                                     query_filters=query_filters)
     if res:
         return 0, 'Query model info from local model success.', res
     return 100, 'Query model info failed, cannot find model from local model files.', []
 
 
-def advanced_search_from_file(model_id, model_version, role=None, party_id=None, query_filters=None, check=False):
+def advanced_search_from_file(model_id, model_version, role=None, party_id=None, query_filters=None):
     res = []
     party_model_id = gen_party_model_id(model_id=model_id, role=role, party_id=party_id)
     pipeline_model = PipelinedModel(model_id=party_model_id, model_version=model_version)
-    model_info = gather_model_info_data(pipeline_model, query_filters=query_filters, check=check)
+    model_info = gather_model_info_data(pipeline_model, query_filters=query_filters)
     if model_info:
         res.append(model_info)
     return res
 
 
-def fuzzy_search_from_file(model_id, model_version, query_filters=None, check=False):
-    res = {} if check else []
+def fuzzy_search_from_file(model_id, model_version, query_filters=None, to_dict=False):
+    res = {} if to_dict else []
     model_dir = os.path.join(get_project_base_directory(), 'model_local_cache')
     model_fp_list = glob.glob(model_dir + f'/*#{model_id}/{model_version}')
     if model_fp_list:
         for fp in model_fp_list:
             pipeline_model = PipelinedModel(model_id=fp.split('/')[-2], model_version=fp.split('/')[-1])
-            model_info = gather_model_info_data(pipeline_model, query_filters=query_filters, check=check)
+            model_info = gather_model_info_data(pipeline_model, query_filters=query_filters)
             if model_info:
                 if isinstance(res, dict):
                     res[fp] = model_info
@@ -127,13 +126,9 @@ def fuzzy_search_from_file(model_id, model_version, query_filters=None, check=Fa
     return res
 
 
-def gather_model_info_data(model: PipelinedModel, query_filters=None, check=False):
+def gather_model_info_data(model: PipelinedModel, query_filters=None):
     if model.exists():
         pipeline = model.read_component_model('pipeline', 'pipeline')['Pipeline']
-        if check:
-            ver_list = pipeline.fate_version.split('.')
-            if not (int(ver_list[1]) > 5 or (int(ver_list[1]) >= 5 and int(ver_list[2]) >= 1)):
-                raise Exception(f"fate version ({pipeline.fate_version}) of model {pipeline.model_id} {pipeline.model_version} is older than 1.5.1")
         model_info = {}
         if query_filters and isinstance(query_filters, list):
             for attr, field in pipeline.ListFields():
@@ -193,21 +188,3 @@ def compare_version(version: str, target_version: str):
             else:
                 return 'lt'
     return 'lt'
-
-
-def get_predict_conf(model_id, model_version):
-    model_dir = os.path.join(get_project_base_directory(), 'model_local_cache')
-    model_fp_list = glob.glob(model_dir + f'/guest#*#{model_id}/{model_version}')
-    if model_fp_list:
-        fp = model_fp_list[0]
-        pipeline_model = PipelinedModel(model_id=fp.split('/')[-2], model_version=fp.split('/')[-1])
-        pipeline = pipeline_model.read_component_model('pipeline', 'pipeline')['Pipeline']
-        predict_dsl = json_loads(pipeline.inference_dsl)
-
-        train_runtime_conf = json_loads(pipeline.train_runtime_conf)
-        parser = schedule_utils.get_dsl_parser_by_version(train_runtime_conf.get('dsl_version', '1') )
-        return parser.generate_predict_conf_template(predict_dsl=predict_dsl, train_conf=train_runtime_conf,
-                                                     model_id=model_id, model_version=model_version)
-    else:
-        return ''
-

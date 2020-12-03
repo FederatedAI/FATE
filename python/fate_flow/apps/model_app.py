@@ -13,6 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import glob
 import os
 import shutil
 import traceback
@@ -21,16 +22,18 @@ import peewee
 from copy import deepcopy
 
 from fate_arch.common.base_utils import json_loads, json_dumps
+from fate_arch.common.file_utils import get_project_base_directory
 from fate_flow.db.db_models import MachineLearningModelInfo as MLModel
 from fate_flow.db.db_models import Tag, DB, ModelTag, ModelOperationLog as OperLog
 from flask import Flask, request, send_file
 
 from fate_flow.pipelined_model.migrate_model import compare_roles
+from fate_flow.pipelined_model.pipelined_model import PipelinedModel
 from fate_flow.scheduler import DAGScheduler, dsl_parser
 from fate_flow.settings import stat_logger, MODEL_STORE_ADDRESS, TEMP_DIRECTORY
 from fate_flow.pipelined_model import migrate_model, pipelined_model, publish_model, deploy_model
 from fate_flow.utils.api_utils import get_json_result, federated_api, error_response
-from fate_flow.utils import job_utils, model_utils
+from fate_flow.utils import job_utils, model_utils, schedule_utils
 from fate_flow.utils.service_utils import ServiceUtils
 from fate_flow.utils.detect_utils import check_config
 from fate_flow.utils.model_utils import gen_party_model_id
@@ -584,27 +587,18 @@ def query_model():
 
 
 @manager.route('/deploy', methods=['POST'])
-def deploy_model():
+def deploy():
     request_data = request.json
     require_parameters = ['model_id', 'model_version']
     check_config(request_data, require_parameters)
-
-    if not (request_data.get('cpn_list') or request_data.get('dsl')):
-        raise Exception('Deploy model failed, component list or custom predict dsl are required.')
-    if not (isinstance(request_data.get('cpn_list'), list) or isinstance(request_data.get('dsl'), dict)):
-        raise Exception('Deploy model failed, illegal data type. '
-                        'Component list should be instance of list, dsl should be instance of dict')
-
     model_id = request_data.get("model_id")
     model_version = request_data.get("model_version")
-    retcode, retmsg, model_info = model_utils.fuzzy_search_from_file(model_id=model_id,
-                                                                     model_version=model_version,
-                                                                     check=True)
+    model_info = model_utils.fuzzy_search_from_file(model_id=model_id, model_version=model_version, to_dict=True)
     if not model_info:
         raise Exception(f'Deploy model failed, no model {model_id} {model_version} found.')
     else:
         for key, value in model_info.items():
-            version_check = model_utils.compare_version(value.fate_version, '1.5.0')
+            version_check = model_utils.compare_version(value.get('fate_version'), '1.5.0')
             if version_check == 'lt':
                 continue
             else:
@@ -615,14 +609,17 @@ def deploy_model():
                 if (init_role == model_init_role) and (init_party_id == str(model_init_party_id)):
                     break
         else:
-            raise Exception("Deploy model failed, can not found model of initiator role")
+            raise Exception("Deploy model failed, can not found model of initiator role or the fate version of model is older than 1.5.0")
 
-        if request_data.get('cpn_list'):
-            predict_dsl = job_utils.generate_predict_dsl(train_dsl=value.get('train_dsl'),
-                                                         cpn_list=request_data.pop('cpn_list'),
-                                                         parser_version=value.get('train_runtime_conf', {}).get('dsl_version', '1'))
-        else:
+        if request_data.get('dsl'):
             predict_dsl = request_data.pop('dsl')
+        else:
+            if request_data.get('cpn_list', None):
+                cpn_list = request_data.pop('cpn_list')
+            else:
+                cpn_list = list(value.get('train_dsl', {}).get('components', {}).keys())
+            parser = schedule_utils.get_dsl_parser_by_version(value.get('train_runtime_conf', {}).get('dsl_version', '1'))
+            predict_dsl = parser.deploy_component(cpn_list, value.get('train_dsl'))
 
         # distribute federated deploy task
         _job_id = job_utils.generate_job_id()
@@ -640,6 +637,9 @@ def deploy_model():
         for role_name, role_partys in value.get("train_runtime_conf", {}).get('role', {}).items():
             deploy_status_info[role_name] = deploy_status_info.get(role_name, {})
             deploy_status_info['detail'][role_name] = {}
+            adapter = JobRuntimeConfigAdapter(value.get("train_runtime_conf", {}))
+            work_mode = adapter.get_job_work_mode()
+
             for _party_id in role_partys:
                 request_data['local'] = {'role': role_name, 'party_id': _party_id}
                 try:
@@ -650,7 +650,7 @@ def deploy_model():
                                              dest_party_id=_party_id,
                                              src_role = initiator_role,
                                              json_body=request_data,
-                                             federated_mode=FederatedMode.MULTIPLE)
+                                             federated_mode=FederatedMode.MULTIPLE if work_mode else FederatedMode.SINGLE)
                     deploy_status_info[role_name][_party_id] = response['retcode']
                     detail = {_party_id: {}}
                     detail[_party_id]['retcode'] = response['retcode']
@@ -692,8 +692,21 @@ def get_predict_conf():
     request_data = request.json
     required_parameters = ['model_id', 'model_version']
     check_config(request_data, required_parameters)
-    predict_conf = model_utils.get_predict_conf(model_id=request_data['model_id'],
-                                                model_version=request_data['model_version'])
+    model_dir = os.path.join(get_project_base_directory(), 'model_local_cache')
+    model_fp_list = glob.glob(model_dir + f"/guest#*#{request_data['model_id']}/{request_data['model_version']}")
+    if model_fp_list:
+        fp = model_fp_list[0]
+        pipeline_model = PipelinedModel(model_id=fp.split('/')[-2], model_version=fp.split('/')[-1])
+        pipeline = pipeline_model.read_component_model('pipeline', 'pipeline')['Pipeline']
+        predict_dsl = json_loads(pipeline.inference_dsl)
+
+        train_runtime_conf = json_loads(pipeline.train_runtime_conf)
+        parser = schedule_utils.get_dsl_parser_by_version(train_runtime_conf.get('dsl_version', '1') )
+        predict_conf = parser.generate_predict_conf_template(predict_dsl=predict_dsl, train_conf=train_runtime_conf,
+                                                     model_id=request_data['model_id'],
+                                                     model_version=request_data['model_version'])
+    else:
+        predict_conf = ''
     if predict_conf:
         if request_data.get("filename"):
             os.makedirs(TEMP_DIRECTORY, exist_ok=True)

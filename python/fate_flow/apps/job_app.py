@@ -203,9 +203,9 @@ def dsl_generator():
                 raise Exception("Component list string should not contain '/' or '\\'.")
             cpn_str = cpn_str.replace(" ", "").replace("\n", "").strip(",[]")
             cpn_list = cpn_str.split(",")
-        predict_dsl = job_utils.generate_predict_dsl(train_dsl=data.get('train_dsl'),
-                                                     cpn_list=cpn_list,
-                                                     parser_version=data.get("version", "1"))
+        train_dsl = json_loads(data.get("train_dsl"))
+        parser = schedule_utils.get_dsl_parser_by_version(data.get("version", "1"))
+        predict_dsl = parser.deploy_component(cpn_list, train_dsl)
 
         if data.get("filename"):
             os.makedirs(TEMP_DIRECTORY, exist_ok=True)

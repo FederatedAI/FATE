@@ -40,7 +40,7 @@ def deploy(config_data):
         check_before_deploy(model)
 
         # copy proto content from parent model and generate a child model
-        deploy_model = PipelinedModel(model_id=model_id, model_version=child_model_version)
+        deploy_model = PipelinedModel(model_id=party_model_id, model_version=child_model_version)
         shutil.copytree(src=model.model_path, dst=deploy_model.model_path)
         pipeline = deploy_model.read_component_model('pipeline', 'pipeline')['Pipeline']
 

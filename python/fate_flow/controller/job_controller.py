@@ -308,7 +308,7 @@ class JobController(object):
         pipeline.parent = True
         pipeline.loaded_times = 0
         pipeline.roles = json_dumps(roles, byte=True)
-        pipeline.work_code = work_mode
+        pipeline.work_mode = work_mode
         pipeline.initiator_role = initiator_role
         pipeline.initiator_party_id = initiator_party_id
         pipeline.runtime_conf_on_party = json_dumps(runtime_conf_on_party, byte=True)
