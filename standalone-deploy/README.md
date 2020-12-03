@@ -70,6 +70,16 @@ bash install_standalone_docker.sh
    success to calculate secure_sum, it is 2000.0
    ```
 
+5. Install FATE-Client and FATE-Test
+
+   To conveniently interact with FATE, we provide tools [FATE-Client](../python/fate_client) and [FATE-Test](../python/fate_test).
+
+   Install FATE-Client and FATE-Test with the following commands:
+
+   ```
+   python -m pip install fate-client
+   python -m pip install fate-test
+   ```
    
 
 There are a few algorithms under [examples](../examples/dsl/v2) folder, try them out!
@@ -79,7 +89,7 @@ Http://hostip:8080.
 
 
 
-#### 2) Install FATE  in Host
+#### 2) Install FATE in Host
 
 1. Check whether the local 8080,9360,9380 port is occupied.
 
@@ -133,7 +143,17 @@ Http://hostip:8080.
    success to calculate secure_sum, it is 2000.0
    ```
 
-   
+5. Install FATE-Client and FATE-Test
+
+   To conveniently interact with FATE, we provide tools [FATE-Client](../python/fate_client) and [FATE-Test](../python/fate_test).
+
+   Install FATE-Client and FATE-Test with the following commands:
+
+   ```
+   python -m pip install fate-client
+   python -m pip install fate-test
+   ```
+
 
 There are a few algorithms under [examples](../examples/dsl/v2) folder, try them out!
 
