@@ -70,7 +70,7 @@
 
 5. 安装FATE-Client和FATE-Test
    
-   为方便使用FATE，我们提供了便捷的交互工具[FATE-Client](../python/fate_client)以及测试工具[FATE-Test](../python/fate_test).
+   为方便使用FATE，我们提供了便捷的交互工具[FATE-Client](../../python/fate_client)以及测试工具[FATE-Test](../../python/fate_test).
    
    请在环境内使用以下指令安装：
    
@@ -142,7 +142,7 @@
 
 5. 安装FATE-Client和FATE-Test
    
-   为方便使用FATE，我们提供了便捷的交互工具[FATE-Client](../python/fate_client)以及测试工具[FATE-Test](../python/fate_test).
+   为方便使用FATE，我们提供了便捷的交互工具[FATE-Client](../../python/fate_client)以及测试工具[FATE-Test](../../python/fate_test).
    
    请在环境内使用以下指令安装：
    
