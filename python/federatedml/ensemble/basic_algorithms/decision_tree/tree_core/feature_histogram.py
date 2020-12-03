@@ -332,10 +332,6 @@ class FeatureHistogram(object):
     def _tensor_histogram_cumsum(histograms):
         # histogram cumsum, from left to right
         for i in range(1, len(histograms)):
-            # cumsum skipping
-            if histograms[i][2] == 0:
-                histograms[i] = histograms[i - 1]
-                continue
             for j in range(len(histograms[i])):
                 histograms[i][j] += histograms[i - 1][j]
 
@@ -356,7 +352,7 @@ class FeatureHistogram(object):
         for i in range(1, len(histograms)):
             # cumsum skipping
             if histograms[i][2] == 0:
-                histograms[i] = histograms[i - 1]
+                new_hist[i] = new_hist[i - 1]
                 continue
 
             for j in range(len(histograms[i])):
