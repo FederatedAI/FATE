@@ -409,11 +409,11 @@ class JobInvoker(object):
         except:
             raise ValueError("Cannot get output model, err msg: ")
 
-    def model_deploy(self, model_id, model_version, cpn_list=None, dsl=None):
+    def model_deploy(self, model_id, model_version, cpn_list=None, predict_dsl=None):
         if cpn_list:
             result = self.client.model.deploy(model_id=model_id, model_version=model_version, cpn_list=cpn_list)
-        elif dsl:
-            result = self.client.model.deploy(model_id=model_id, model_version=model_version, dsl=dsl)
+        elif predict_dsl:
+            result = self.client.model.deploy(model_id=model_id, model_version=model_version, predict_dsl=predict_dsl)
         else:
             result = self.client.model.deploy(model_id=model_id, model_version=model_version)
 

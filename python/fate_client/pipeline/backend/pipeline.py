@@ -477,7 +477,7 @@ class PipeLine(object):
 
         res_dict = self._job_invoker.model_deploy(model_id=self._model_info.model_id,
                                                   model_version=self._model_info.model_version,
-                                                  dsl=self._predict_dsl)
+                                                  predict_dsl=self._predict_dsl)
         self._predict_model_info = SimpleNamespace(model_id=res_dict["model_id"],
                                                    model_version=res_dict["model_version"])
         predict_conf = self._feed_job_parameters(self._train_conf,
@@ -529,27 +529,25 @@ class PipeLine(object):
             raise ValueError("Before deploy model, training should be finish!!!")
 
         if components is None:
-            res_dict = self._job_invoker.model_deploy(model_id=self._model_info.model_id,
-                                                      model_version=self._model_info.model_version)
-        else:
-            deploy_cpns = []
-            for cpn in components:
-                if isinstance(cpn, str):
-                    deploy_cpns.append(cpn)
-                elif isinstance(cpn, Component):
-                    deploy_cpns.append(cpn.name)
-                else:
-                    raise ValueError(
-                        "deploy component parameters is wrong, expect str or Component object, but {} find".format(type(cpn)))
+            components = self._components
+        deploy_cpns = []
+        for cpn in components:
+            if isinstance(cpn, str):
+                deploy_cpns.append(cpn)
+            elif isinstance(cpn, Component):
+                deploy_cpns.append(cpn.name)
+            else:
+                raise ValueError(
+                    "deploy component parameters is wrong, expect str or Component object, but {} find".format(type(cpn)))
 
-                if deploy_cpns[-1] not in self._components:
-                    raise ValueError("Component {} does not exist in pipeline".format(deploy_cpns[-1]))
+            if deploy_cpns[-1] not in self._components:
+                raise ValueError("Component {} does not exist in pipeline".format(deploy_cpns[-1]))
 
-                if isinstance(self._components.get(deploy_cpns[-1]), Reader):
-                    raise ValueError("Reader should not be include in predict pipeline")
-            res_dict = self._job_invoker.model_deploy(model_id=self._model_info.model_id,
-                                                      model_version=self._model_info.model_version,
-                                                      cpn_list=deploy_cpns)
+            if isinstance(self._components.get(deploy_cpns[-1]), Reader):
+                raise ValueError("Reader should not be include in predict pipeline")
+        res_dict = self._job_invoker.model_deploy(model_id=self._model_info.model_id,
+                                                  model_version=self._model_info.model_version,
+                                                  cpn_list=deploy_cpns)
 
         self._predict_dsl = self._job_invoker.get_predict_dsl(model_id=res_dict["model_id"],
                                                               model_version=res_dict["model_version"])
