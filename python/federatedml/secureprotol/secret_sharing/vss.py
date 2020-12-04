@@ -34,8 +34,7 @@ class Vss(object):
             f_x.append((x, y))
         return f_x
 
-    def decrypt(self, points):
-        x_values, y_values = zip(*points)
+    def decrypt(self, x_values, y_values):
         k = len(x_values)
         assert k == len(set(x_values)), 'x_values points must be distinct'
         nums = []
