@@ -15,9 +15,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import numpy as np
 
 from federatedml.model_base import ModelBase
-from federatedml.secureprotol.secretsharing.vss import Vss
+from federatedml.secureprotol.secret_sharing.vss import Vss
 
 
 class BaseSecretSharingSum(ModelBase):
@@ -41,16 +42,33 @@ class BaseSecretSharingSum(ModelBase):
         self.generate_shares()
 
     def generate_shares(self):
-        fx_table = self.x.mapValues(self.vss.encrypt)
+        fx_table = self.x.mapValues(self.split_secret)
         for i in range(self.share_amount):
-            self.secret_sharing.append(fx_table.mapValues(lambda y: y[i]))
+            share = fx_table.mapValues(lambda y: np.array(y)[:, i])
+            self.secret_sharing.append(share)
+
+    def split_secret(self, values):
+        secrets = values.features
+        shares = []
+        for s in secrets:
+            shares.append(self.vss.encrypt(s))
+        return shares
 
     def sharing_sum(self):
         for recv in self.y_recv:
-            self.x_plus_y = self.x_plus_y.union(recv, lambda x, y: (x[0], x[1]+y[1]))
+            self.x_plus_y = self.x_plus_y.union(recv, lambda x, y: np.column_stack((x[:, 0], np.add(x[:, 1], y[:, 1]))))
 
     def reconstruct(self):
-        self.x_plus_y = self.x_plus_y.mapValues(lambda x: [x])
         for recv in self.host_sum_recv:
-            self.x_plus_y = self.x_plus_y.union(recv, lambda x, y: x+[y])
-        self.secret_sum = self.x_plus_y.mapValues(self.vss.decrypt)
+            self.x_plus_y = self.x_plus_y.union(recv, lambda x, y: np.column_stack((x, y)))
+        self.secret_sum = self.x_plus_y.mapValues(self.combine)
+
+    def combine(self, values):
+        secret_sum = []
+        for v in values:
+            x_values = v[::2]
+            y_values = v[1::2]
+            secret_sum.append(self.vss.decrypt(x_values, y_values))
+        return secret_sum
+
+
