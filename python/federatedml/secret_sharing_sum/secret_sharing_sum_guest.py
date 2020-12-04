@@ -31,13 +31,11 @@ class SecretSharingSumGuest(BaseSecretSharingSum):
 
     def _init_model(self, model_param: SecureSharingSumParam):
         self.need_verify = model_param.need_verify
-        self.partition = model_param.partition
 
     def _init_data(self, data_inst):
         self.share_amount = len(self.component_properties.host_party_idlist)+1
         self.vss.set_share_amount(self.share_amount)
-        self.vss.generate_prime(n=100000000)
-
+        self.vss.generate_prime()
         self.x = data_inst
 
     def sync_primes_to_host(self):
@@ -84,7 +82,7 @@ class SecretSharingSumGuest(BaseSecretSharingSum):
 
         self.reconstruct()
 
-        LOGGER.info("success to calculate privacy sum, it is {}".format(list(self.secret_sum.collect())))
+        LOGGER.info("success to calculate privacy sum")
 
         data_output = self.secret_sum
 

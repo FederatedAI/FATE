@@ -35,7 +35,6 @@ class SecretSharingSumHost(BaseSecretSharingSum):
 
     def _init_model(self, model_param: SecureSharingSumParam):
         self.need_verify = model_param.need_verify
-        self.partition = model_param.partition
 
     def _init_data(self, data_inst):
         self.local_partyid = self.component_properties.local_partyid
