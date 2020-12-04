@@ -20,9 +20,8 @@ from federatedml.param.base_param import BaseParam
 
 
 class SecureSharingSumParam(BaseParam):
-    def __init__(self, need_verify=False, partition=1):
+    def __init__(self, need_verify=False):
         self.need_verify = need_verify
-        self.partition = partition
 
     def check(self):
         if type(self.need_verify).__name__ not in ['bool']:
@@ -30,6 +29,4 @@ class SecureSharingSumParam(BaseParam):
                 "need_verify should be 'bool'".format(
                     self.need_verify))
 
-        if type(self.partition).__name__ != "int" or self.partition < 1:
-            raise ValueError("partition should be an integer large than 0")
 
