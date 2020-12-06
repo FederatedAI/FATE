@@ -32,7 +32,7 @@ class BaseSecretSharingSum(ModelBase):
         self.g = 2
         self.secret_sharing = []  # (x,f(x))
         self.commitments = []  # (x,g(ai))
-        self.share_amount = None
+        self.host_count = None
         self.need_verify = None
         self.partition = None
         self.coefficients = None
@@ -43,7 +43,7 @@ class BaseSecretSharingSum(ModelBase):
 
     def generate_shares(self):
         fx_table = self.x.mapValues(self.split_secret)
-        for i in range(self.share_amount):
+        for i in range(self.host_count+1):
             share = fx_table.mapValues(lambda y: np.array(y)[:, i])
             self.secret_sharing.append(share)
 

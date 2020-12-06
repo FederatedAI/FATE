@@ -39,8 +39,8 @@ class SecretSharingSumHost(BaseSecretSharingSum):
     def _init_data(self, data_inst):
         self.local_partyid = self.component_properties.local_partyid
         self.host_party_idlist = self.component_properties.host_party_idlist
-        self.share_amount = len(self.host_party_idlist)+1
-        self.vss.set_share_amount(self.share_amount)
+        self.host_count = len(self.host_party_idlist)
+        self.vss.set_share_amount(self.host_count+1)
         self.x = data_inst
 
     def recv_primes_from_guest(self):
