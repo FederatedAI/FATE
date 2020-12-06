@@ -51,20 +51,3 @@ class Vss(object):
             secret = (self.prime + secret + (y_values[i] * lagrange_polynomial)) % self.prime
 
         return secret
-
-    def egcd(self, a, b):
-        if a == 0:
-            res = (b, 0, 1)
-        else:
-            g, y, x = self.egcd(b % a, a)
-            res = (g, x - (b // a) * y, y)
-        return res
-
-    def mod_inverse(self, k):
-        k = k % self.prime
-        if k < 0:
-            r = self.egcd(self.prime, -k)[2]
-        else:
-            r = self.egcd(self.prime, k)[2]
-        res = (self.prime + r) % self.prime
-        return res

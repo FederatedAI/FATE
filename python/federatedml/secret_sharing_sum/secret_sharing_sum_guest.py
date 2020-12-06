@@ -33,8 +33,8 @@ class SecretSharingSumGuest(BaseSecretSharingSum):
         self.need_verify = model_param.need_verify
 
     def _init_data(self, data_inst):
-        self.share_amount = len(self.component_properties.host_party_idlist)+1
-        self.vss.set_share_amount(self.share_amount)
+        self.host_count = len(self.component_properties.host_party_idlist)
+        self.vss.set_share_amount(self.host_count+1)
         self.vss.generate_prime()
         self.x = data_inst
 
@@ -44,18 +44,18 @@ class SecretSharingSumGuest(BaseSecretSharingSum):
                                                      idx=-1)
 
     def sync_share_to_host(self):
-        for i in range(self.share_amount - 1):
+        for i in range(self.host_count):
             self.transfer_inst.guest_share_secret.remote(self.secret_sharing[i],
                                                          role="host",
                                                          idx=i)
         self.x_plus_y = self.secret_sharing[-1]
 
     def recv_share_from_host(self):
-        for i in range(self.share_amount - 1):
+        for i in range(self.host_count):
             self.y_recv.append(self.transfer_inst.host_share_to_guest.get(idx=i))
 
     def recv_host_sum_from_host(self):
-        for i in range(self.share_amount - 1):
+        for i in range(self.host_count):
             self.host_sum_recv.append(self.transfer_inst.host_sum.get(idx=i))
 
     def fit(self, data_inst):
@@ -87,5 +87,4 @@ class SecretSharingSumGuest(BaseSecretSharingSum):
         data_output = self.secret_sum
 
         return data_output
-
 
