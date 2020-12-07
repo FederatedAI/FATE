@@ -287,10 +287,9 @@ class Federation(FederationABC):
                 LOGGER.debug(f"[rabbitmq.get_or_create_queue]queue: {queue_key} for party:{party} not found, start to create")
                 # gen names
                 vhost_name = self._get_vhost(party)
-                
+                                
                 queue_key_splits = queue_key.split(_SPLIT_)
                 queue_suffix = "-".join(queue_key_splits[2:])
-                self._session_id
                 send_queue_name = f"send-{self._session_id}-{self._party.role}-{self._party.party_id}-{party.role}-{party.party_id}-{queue_suffix}"
                 receive_queue_name = f"receive-{self._session_id}-{party.role}-{party.party_id}-{self._party.role}-{self._party.party_id}-{queue_suffix}"
                 
