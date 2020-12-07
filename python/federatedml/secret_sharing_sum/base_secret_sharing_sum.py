@@ -18,6 +18,7 @@
 import numpy as np
 
 from federatedml.model_base import ModelBase
+from federatedml.param.secure_sharing_sum_param import SecureSharingSumParam
 from federatedml.secureprotol.secret_sharing.vss import Vss
 
 
@@ -32,9 +33,10 @@ class BaseSecretSharingSum(ModelBase):
         self.secret_sharing = []  # (x,f(x))
         self.commitments = []  # (x,g(ai))
         self.host_count = None
-        self.need_verify = None
         self.coefficients = None
         self.secret_sum = None
+        self.model_param = SecureSharingSumParam()
+        self.sum_cols = None
 
     def secure(self):
         self.generate_shares()
@@ -46,9 +48,8 @@ class BaseSecretSharingSum(ModelBase):
             self.secret_sharing.append(share)
 
     def split_secret(self, values):
-        secrets = values.features
         shares = []
-        for s in secrets:
+        for s in values:
             shares.append(self.vss.encrypt(s))
         return shares
 

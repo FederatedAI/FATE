@@ -18,8 +18,8 @@
 #
 
 from federatedml.util import LOGGER
-from federatedml.param.secure_sharing_sum_param import SecureSharingSumParam
 from federatedml.transfer_variable.transfer_class import secret_sharing_sum_transfer_variable
+from federatedml.param.secure_sharing_sum_param import SecureSharingSumParam
 from federatedml.secret_sharing_sum.base_secret_sharing_sum import BaseSecretSharingSum
 
 
@@ -27,16 +27,25 @@ class SecretSharingSumGuest(BaseSecretSharingSum):
     def __init__(self):
         super(SecretSharingSumGuest, self).__init__()
         self.transfer_inst = secret_sharing_sum_transfer_variable.SecretSharingSumTransferVariables()
-        self.model_param = SecureSharingSumParam()
 
     def _init_model(self, model_param: SecureSharingSumParam):
-        self.need_verify = model_param.need_verify
+        self.sum_cols = model_param.sum_cols
 
     def _init_data(self, data_inst):
         self.host_count = len(self.component_properties.host_party_idlist)
         self.vss.set_share_amount(self.host_count+1)
         self.vss.generate_prime()
-        self.x = data_inst
+        if not self.model_param.sum_cols:
+            self.x = data_inst.mapValues(lambda x: x.features)
+        else:
+            self.x = data_inst.mapValues(self.select_data_by_idx)
+
+    def select_data_by_idx(self, values):
+        data = []
+        for idx, feature in enumerate(values.features):
+            if idx in self.sum_cols:
+                data.append(feature)
+        return data
 
     def sync_primes_to_host(self):
         self.transfer_inst.guest_share_primes.remote(self.vss.prime,

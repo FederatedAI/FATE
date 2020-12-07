@@ -19,9 +19,9 @@
 
 
 from federatedml.util import LOGGER
-from federatedml.param.secure_sharing_sum_param import SecureSharingSumParam
 from federatedml.transfer_variable.transfer_class.secret_sharing_sum_transfer_variable import \
     SecretSharingSumTransferVariables
+from federatedml.param.secure_sharing_sum_param import SecureSharingSumParam
 from federatedml.secret_sharing_sum.base_secret_sharing_sum import BaseSecretSharingSum
 
 
@@ -29,19 +29,28 @@ class SecretSharingSumHost(BaseSecretSharingSum):
     def __init__(self):
         super(SecretSharingSumHost, self).__init__()
         self.transfer_inst = SecretSharingSumTransferVariables()
-        self.model_param = SecureSharingSumParam()
         self.host_party_idlist = []
         self.local_partyid = -1
 
     def _init_model(self, model_param: SecureSharingSumParam):
-        self.need_verify = model_param.need_verify
+        self.sum_cols = model_param.sum_cols
 
     def _init_data(self, data_inst):
         self.local_partyid = self.component_properties.local_partyid
         self.host_party_idlist = self.component_properties.host_party_idlist
         self.host_count = len(self.host_party_idlist)
         self.vss.set_share_amount(self.host_count+1)
-        self.x = data_inst
+        if not self.sum_cols:
+            self.x = data_inst.mapValues(lambda x: x.features)
+        else:
+            self.x = data_inst.mapValues(self.select_data_by_idx)
+
+    def select_data_by_idx(self, values):
+        data = []
+        for idx, feature in enumerate(values.features):
+            if idx in self.model_param.sum_cols:
+                data.append(feature)
+        return data
 
     def recv_primes_from_guest(self):
         prime = self.transfer_inst.guest_share_primes.get(idx=0)

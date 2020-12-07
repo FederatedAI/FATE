@@ -18,15 +18,27 @@
 #
 from federatedml.param.base_param import BaseParam
 
+"""
+Define how to transfer the cols
+
+Parameters
+----------
+sum_cols : list of column index, default: None
+    Specify which columns need to be sum. If column index is None, each of columns will be sum.
+
+"""
+
 
 class SecureSharingSumParam(BaseParam):
-    def __init__(self, need_verify=False):
-        self.need_verify = need_verify
+    def __init__(self, sum_cols=None):
+        self.sum_cols = sum_cols
+        if sum_cols is None:
+            self.sum_cols = []
 
     def check(self):
-        if type(self.need_verify).__name__ not in ['bool']:
-            raise ValueError(
-                "need_verify should be 'bool'".format(
-                    self.need_verify))
+        if isinstance(self.sum_cols, list):
+            for idx in self.sum_cols:
+                if not isinstance(idx, int):
+                    raise ValueError(f"type mismatch, column_indexes with element {idx}(type is {type(idx)})")
 
 
