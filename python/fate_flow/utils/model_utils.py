@@ -16,7 +16,10 @@
 import os
 import glob
 import operator
-from fate_arch.common.base_utils import json_loads
+import peewee
+from fate_arch.common.log import sql_logger
+from fate_flow.settings import stat_logger
+from fate_arch.common.base_utils import json_loads, current_timestamp
 from fate_arch.common.file_utils import get_project_base_directory
 from fate_flow.pipelined_model.pipelined_model import PipelinedModel
 
@@ -88,42 +91,32 @@ def query_model_info_from_db(model_version, role=None, party_id=None, model_id=N
         return 100, 'Query model info failed, cannot find model from db. ', []
 
 
-def query_model_info_from_file(model_id, model_version, role=None, party_id=None, query_filters=None):
-    if role and party_id:
-        res = advanced_search_from_file(model_id=model_id, model_version=model_version, role=role,
-                                        party_id=party_id, query_filters=query_filters)
-    else:
-        res = fuzzy_search_from_file(model_id=model_id, model_version=model_version,
-                                     query_filters=query_filters)
-    if res:
-        return 0, 'Query model info from local model success.', res
-    return 100, 'Query model info failed, cannot find model from local model files.', []
-
-
-def advanced_search_from_file(model_id, model_version, role=None, party_id=None, query_filters=None):
-    res = []
-    party_model_id = gen_party_model_id(model_id=model_id, role=role, party_id=party_id)
-    pipeline_model = PipelinedModel(model_id=party_model_id, model_version=model_version)
-    model_info = gather_model_info_data(pipeline_model, query_filters=query_filters)
-    if model_info:
-        res.append(model_info)
-    return res
-
-
-def fuzzy_search_from_file(model_id, model_version, query_filters=None, to_dict=False):
+def query_model_info_from_file(model_id=None, model_version=None, role=None, party_id=None, query_filters=None, to_dict=False, **kwargs):
     res = {} if to_dict else []
     model_dir = os.path.join(get_project_base_directory(), 'model_local_cache')
-    model_fp_list = glob.glob(model_dir + f'/*#{model_id}/{model_version}')
+    glob_dir = f"{model_dir}{os.sep}{role if role else '*'}#{party_id if party_id else '*'}#{model_id if model_id else '*'}{os.sep}{model_version if model_version else '*'}"
+    stat_logger.info(f'glob model dir: {glob_dir}')
+    model_fp_list = glob.glob(glob_dir)
     if model_fp_list:
         for fp in model_fp_list:
             pipeline_model = PipelinedModel(model_id=fp.split('/')[-2], model_version=fp.split('/')[-1])
             model_info = gather_model_info_data(pipeline_model, query_filters=query_filters)
             if model_info:
+                if not to_dict:
+                    try:
+                        insert_info = model_info.copy()
+                        insert_info['role'] = fp.split('/')[-2].split('#')[0]
+                        insert_info['party_id'] = fp.split('/')[-2].split('#')[1]
+                        save_model_info(insert_info)
+                    except Exception as e:
+                        stat_logger.exception(e)
                 if isinstance(res, dict):
                     res[fp] = model_info
                 else:
                     res.append(model_info)
-    return res
+    if res:
+        return 0, 'Query model info from local model success.', res
+    return 100, 'Query model info failed, cannot find model from local model files.', res
 
 
 def gather_model_info_data(model: PipelinedModel, query_filters=None):
@@ -134,42 +127,52 @@ def gather_model_info_data(model: PipelinedModel, query_filters=None):
             for attr, field in pipeline.ListFields():
                 if attr.name in query_filters:
                     if isinstance(field, bytes):
-                        model_info[attr.name] = json_loads(field)
+                        model_info["f_" + attr.name] = json_loads(field)
                     else:
-                        model_info[attr.name] = field
+                        model_info["f_" + attr.name] = field
         else:
             for attr, field in pipeline.ListFields():
                 if isinstance(field, bytes):
-                    model_info[attr.name] = json_loads(field)
+                    model_info["f_" + attr.name] = json_loads(field)
                 else:
-                    model_info[attr.name] = field
+                    model_info["f_" + attr.name] = field
         return model_info
     return []
 
 
-def query_model_info(model_version, role=None, party_id=None, model_id=None, query_filters=None):
-    retcode, retmsg, data = query_model_info_from_db(role=role, party_id=party_id, model_id=model_id,
-                                                     model_version=model_version, query_filters=query_filters)
+def query_model_info(model_version, role=None, party_id=None, model_id=None, query_filters=None, **kwargs):
+    arguments = locals()
+    retcode, retmsg, data = query_model_info_from_db(**arguments)
     if not retcode:
         return retcode, retmsg, data
     else:
-        aruments = locals()
-        cond_attrs = [attr for attr in ['model_version', 'model_id'] if aruments[attr]]
-        if 'model_version' in cond_attrs and 'model_id' in cond_attrs:
-            retcode, retmsg, data = query_model_info_from_file(role=role, party_id=party_id, model_id=model_id,
-                                                               model_version=model_version, query_filters=query_filters)
-            if not retcode:
-                return retcode, retmsg, data
-            return retcode, 'Query model info failed, cannot find model neither from db nor local models', data
-        else:
-            return 100, 'Query model info failed, cannot find model from db. ' \
-                        'Try use both model id and model version to query model info from local models', []
+        retcode, retmsg, data = query_model_info_from_file(**arguments)
+        if not retcode:
+            return retcode, retmsg, data
+        return 100, 'Query model info failed, cannot find model from db. ' \
+                    'Try use both model id and model version to query model info from local models', []
 
 
 @DB.connection_context()
-def sink_model_info_to_db():
-    # TODO insert data of model info into model table
-    pass
+def save_model_info(model_info):
+    model = MLModel()
+    model.f_create_time = current_timestamp()
+    for k, v in model_info.items():
+        attr_name = 'f_%s' % k
+        if hasattr(MLModel, attr_name):
+            setattr(model, attr_name, v)
+    try:
+        rows = model.save(force_insert=True)
+        if rows != 1:
+            raise Exception("Create {} failed".format(MLModel))
+        return model
+    except peewee.IntegrityError as e:
+        if e.args[0] == 1062:
+            sql_logger(job_id=model_info.get("job_id", "fate_flow")).warning(e)
+        else:
+            raise Exception("Create {} failed:\n{}".format(MLModel, e))
+    except Exception as e:
+        raise Exception("Create {} failed:\n{}".format(MLModel, e))
 
 
 def compare_version(version: str, target_version: str):

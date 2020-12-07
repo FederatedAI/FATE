@@ -55,18 +55,18 @@ def internal_server_error(e):
 def load_model():
     request_config = request.json
     if request_config.get('job_id', None):
-        with DB.connection_context():
-            model = MLModel.get_or_none(
-                MLModel.f_job_id == request_config.get("job_id"),
-                MLModel.f_role == 'guest'
-            )
-        if model:
-            model_info = model.to_json()
+        retcode, retmsg, res_data = model_utils.query_model_info(model_version=request_config['job_id'], role='guest')
+        if res_data:
+            model_info = res_data[0]
             request_config['initiator'] = {}
             request_config['initiator']['party_id'] = str(model_info.get('f_initiator_party_id'))
             request_config['initiator']['role'] = model_info.get('f_initiator_role')
-            request_config['job_parameters'] = model_info.get('f_runtime_conf').get('job_parameters')
-            request_config['role'] = model_info.get('f_runtime_conf').get('role')
+            # request_config['job_parameters'] = model_info.get('f_runtime_conf').get('job_parameters')
+            # request_config['role'] = model_info.get('f_runtime_conf').get('role')
+            job_parameters = model_info.get('f_runtime_conf', {}).get('job_parameters')
+            roles = model_info.get('f_runtime_conf', {}).get('role')
+            request_config['job_parameters'] = job_parameters if job_parameters else model_info.get('f_train_runtime_conf', {}).get('job_parameters')
+            request_config['role'] = roles if roles else model_info.get('f_train_runtime_conf', {}).get('role')
             for key, value in request_config['role'].items():
                 for i, v in enumerate(value):
                     value[i] = str(v)
@@ -246,18 +246,15 @@ def do_load_model():
 def bind_model_service():
     request_config = request.json
     if request_config.get('job_id', None):
-        with DB.connection_context():
-            model = MLModel.get_or_none(
-                MLModel.f_job_id == request_config.get("job_id"),
-                MLModel.f_role == 'guest'
-            )
-        if model:
-            model_info = model.to_json()
+        retcode, retmsg, res_data = model_utils.query_model_info(model_version=request_config['job_id'], role='guest')
+        if res_data:
+            model_info = res_data[0]
             request_config['initiator'] = {}
             request_config['initiator']['party_id'] = str(model_info.get('f_initiator_party_id'))
             request_config['initiator']['role'] = model_info.get('f_initiator_role')
             request_config['job_parameters'] = model_info.get('f_runtime_conf').get('job_parameters')
-            request_config['role'] = model_info.get('f_runtime_conf').get('role')
+            roles = model_info.get('f_runtime_conf').get('role')
+            request_config['role'] = roles if roles else model_info.get('f_train_runtime_conf', {}).get('role')
             for key, value in request_config['role'].items():
                 for i, v in enumerate(value):
                     value[i] = str(v)
@@ -328,25 +325,20 @@ def operate_model(model_operation):
                             MLModel.f_job_id == job_parameters.get("model_version"),
                             MLModel.f_role == request_config["role"]
                         )
-                        if not model:
-                            MLModel.create(
-                                f_role=request_config["role"],
-                                f_party_id=request_config["party_id"],
-                                f_roles=train_runtime_conf["role"],
-                                f_job_id=train_runtime_conf["job_parameters"]["model_version"],
-                                f_model_id=train_runtime_conf["job_parameters"]["model_id"],
-                                f_model_version=train_runtime_conf["job_parameters"]["model_version"],
-                                f_initiator_role=train_runtime_conf["initiator"]["role"],
-                                f_initiator_party_id=train_runtime_conf["initiator"]["party_id"],
-                                f_runtime_conf=train_runtime_conf,
-                                f_work_mode=train_runtime_conf["job_parameters"]["work_mode"],
-                                f_dsl=json_loads(pipeline.train_dsl),
-                                f_imported=1,
-                                f_job_status=JobStatus.SUCCESS
-                            )
-                        else:
-                            stat_logger.info(f'job id: {job_parameters.get("model_version")}, '
-                                             f'role: {request_config["role"]} model info already existed in database.')
+                    if not model:
+                        model_info = {}
+                        for attr, field in pipeline.ListFields():
+                            if isinstance(field, bytes):
+                                model_info[attr.name] = json_loads(field)
+                            else:
+                                model_info[attr.name] = field
+                        model_info['imported'] = 1
+                        model_info['job_status'] = JobStatus.SUCCESS
+                        model_info['job_id'] = model_info['model_version']
+                        model_utils.save_model_info(model_info)
+                    else:
+                        stat_logger.info(f'job id: {job_parameters.get("model_version")}, '
+                                         f'role: {request_config["role"]} model info already existed in database.')
                 except peewee.IntegrityError as e:
                     stat_logger.exception(e)
                 operation_record(request_config, "import", "success")
@@ -593,7 +585,7 @@ def deploy():
     check_config(request_data, require_parameters)
     model_id = request_data.get("model_id")
     model_version = request_data.get("model_version")
-    model_info = model_utils.fuzzy_search_from_file(model_id=model_id, model_version=model_version, to_dict=True)
+    model_info = model_utils.query_model_info_from_file(model_id=model_id, model_version=model_version, to_dict=True)
     if not model_info:
         raise Exception(f'Deploy model failed, no model {model_id} {model_version} found.')
     else:
@@ -611,8 +603,8 @@ def deploy():
         else:
             raise Exception("Deploy model failed, can not found model of initiator role or the fate version of model is older than 1.5.0")
 
-        if request_data.get('dsl'):
-            predict_dsl = request_data.pop('dsl')
+        if request_data.get('dsl') or request_data.get('predict_dsl'):
+            predict_dsl = request_data.get('dsl') if request_data.get('dsl') else request_data.get('predict_dsl')
         else:
             if request_data.get('cpn_list', None):
                 cpn_list = request_data.pop('cpn_list')

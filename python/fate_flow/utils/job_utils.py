@@ -30,7 +30,7 @@ from fate_flow.db.db_models import DB, Job, Task, MachineLearningModelInfo as ML
 from fate_flow.entity.types import JobStatus
 from fate_flow.entity.types import TaskStatus, RunParameters, KillProcessStatusCode
 from fate_flow.settings import stat_logger, JOB_DEFAULT_TIMEOUT, WORK_MODE, FATE_BOARD_DASHBOARD_ENDPOINT
-from fate_flow.utils import detect_utils
+from fate_flow.utils import detect_utils, model_utils
 from fate_flow.utils import session_utils
 from fate_flow.utils.service_utils import ServiceUtils
 
@@ -193,15 +193,25 @@ def get_job_configuration(job_id, role, party_id, tasks=None):
 
 @DB.connection_context()
 def get_model_configuration(job_id, role, party_id):
-    models = MLModel.select(MLModel.f_dsl, MLModel.f_runtime_conf,
-                            MLModel.f_train_runtime_conf).where(MLModel.f_job_id == job_id,
-                                                                MLModel.f_role == role,
-                                                                MLModel.f_party_id == party_id)
-    if models:
-        model = models[0]
-        return model.f_dsl, model.f_runtime_conf, model.f_train_runtime_conf
-    else:
-        return {}, {}, {}
+    res = model_utils.query_model_info(model_version=job_id, role=role, party_id=party_id,
+                                       query_filters=['train_dsl', 'dsl', 'train_runtime_conf', 'runtime_conf'])
+    if res:
+        dsl = res[0].get('train_dsl') if res[0].get('train_dsl') else res[0].get('dsl')
+        runtime_conf = res[0].get('runtime_conf')
+        train_runtime_conf = res[0].get('train_runtime_conf')
+        return dsl, runtime_conf, train_runtime_conf
+    return {}, {}, {}
+
+
+    # models = MLModel.select(MLModel.f_dsl, MLModel.f_runtime_conf,
+    #                         MLModel.f_train_runtime_conf).where(MLModel.f_job_id == job_id,
+    #                                                             MLModel.f_role == role,
+    #                                                             MLModel.f_party_id == party_id)
+    # if models:
+    #     model = models[0]
+    #     return model.f_dsl, model.f_runtime_conf, model.f_train_runtime_conf
+    # else:
+    #     return {}, {}, {}
 
 
 @DB.connection_context()

@@ -31,7 +31,6 @@ from fate_arch.common import FederatedMode
 from fate_arch.computing import ComputingEngine
 from fate_arch.federation import FederationEngine
 from fate_arch.storage import StorageEngine
-from fate_flow.db.db_models import Job
 
 
 class JobController(object):

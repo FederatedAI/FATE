@@ -15,6 +15,8 @@
 #
 import os
 import shutil
+
+from fate_client.pipeline.constant import JobStatus
 from fate_flow.utils import model_utils
 from fate_flow.settings import stat_logger
 from fate_arch.common.base_utils import json_loads, json_dumps
@@ -65,6 +67,17 @@ def deploy(config_data):
         deploy_model.save_pipeline(pipeline)
         shutil.copyfile(os.path.join(deploy_model.model_path, "pipeline.pb"),
                         os.path.join(deploy_model.model_path, "variables", "data", "pipeline", "pipeline", "Pipeline"))
+
+        model_info = {}
+        for attr, field in pipeline.ListFields():
+            if isinstance(field, bytes):
+                model_info[attr.name] = json_loads(field)
+            else:
+                model_info[attr.name] = field
+        model_info['imported'] = 1
+        model_info['job_status'] = JobStatus.SUCCESS
+        model_info['job_id'] = model_info['model_version']
+        model_utils.save_model_info(model_info)
 
     except Exception as e:
         stat_logger.exception(e)
