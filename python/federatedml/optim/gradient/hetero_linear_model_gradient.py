@@ -20,6 +20,7 @@ import functools
 
 import numpy as np
 import scipy.sparse as sp
+import copy
 
 from federatedml.feature.sparse_vector import SparseVector
 from federatedml.statistic import data_overview
@@ -92,6 +93,19 @@ def __compute_partition_gradient(data, fit_intercept=True, is_sparse=False):
         return np.array(gradient)
 
 
+def __compute_gradient_one_by_one(instance, d, is_sparse):
+    feature = instance.features
+    if is_sparse:
+        feature_shape = feature.get_shape()
+        g = [0] * feature_shape
+        for idx, v in feature.get_all_data():
+            g[idx] = v * d
+        g = np.array(g)
+    else:
+        g = feature * d
+    return g
+
+
 def compute_gradient(data_instances, fore_gradient, fit_intercept):
     """
     Compute hetero-regression gradient
@@ -106,16 +120,30 @@ def compute_gradient(data_instances, fore_gradient, fit_intercept):
     DTable
         the hetero regression model's gradient
     """
-    feat_join_grad = data_instances.join(fore_gradient,
-                                         lambda d, g: (d.features, g))
-    is_sparse = data_overview.is_sparse_data(data_instances)
-    f = functools.partial(__compute_partition_gradient,
-                          fit_intercept=fit_intercept,
-                          is_sparse=is_sparse)
-    gradient_partition = feat_join_grad.applyPartitions(f)
-    gradient_partition = gradient_partition.reduce(lambda x, y: x + y)
 
-    gradient = gradient_partition / data_instances.count()
+    feature_num = data_overview.get_features_shape(data_instances)
+    data_count = data_instances.count()
+    is_sparse = data_overview.is_sparse_data(data_instances)
+    if data_count * feature_num > 10:
+        f = functools.partial(__compute_gradient_one_by_one, is_sparse=is_sparse)
+        feat_grad = data_instances.join(fore_gradient, f)
+        gradient_sum = feat_grad.reduce(lambda x, y: x + y)
+        if fit_intercept:
+            # bias_grad = np.sum(fore_gradient)
+            bias_grad = fore_gradient.reduce(lambda x, y: x + y)
+            gradient_sum = np.append(gradient_sum, bias_grad)
+
+        gradient = gradient_sum / data_count
+    else:
+        feat_join_grad = data_instances.join(fore_gradient,
+                                             lambda d, g: (d.features, g))
+        f = functools.partial(__compute_partition_gradient,
+                              fit_intercept=fit_intercept,
+                              is_sparse=is_sparse)
+        gradient_partition = feat_join_grad.applyPartitions(f)
+        gradient_partition = gradient_partition.reduce(lambda x, y: x + y)
+
+        gradient = gradient_partition / data_count
 
     return gradient
 
@@ -125,14 +153,15 @@ class HeteroGradientBase(object):
         raise NotImplementedError("Should not call here")
 
     def set_total_batch_nums(self, total_batch_nums):
-        """	
-        Use for sqn gradient.	
+        """
+        Use for sqn gradient.
         """
         pass
 
 
 class Guest(HeteroGradientBase):
     def __init__(self):
+        self.half_d = None
         self.host_forwards = None
         self.forwards = None
         self.aggregated_forwards = None
@@ -194,6 +223,7 @@ class Guest(HeteroGradientBase):
 
 class Host(HeteroGradientBase):
     def __init__(self):
+        self.half_d = None
         self.forwards = None
         self.fore_gradient = None
 
