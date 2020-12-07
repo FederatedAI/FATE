@@ -103,11 +103,11 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
 
         g_arr = np.array(g_list)
         h_arr = np.array(h_list)
-        abs_g_list_arr = np.abs(g_arr)
-        sorted_idx = abs_g_list_arr.argsort()
+        abs_g_list_arr = np.abs(g_arr) # *np.abs(h_arr)
+        sorted_idx = np.argsort(-abs_g_list_arr)
 
         a_part_num = int(sample_num * top_rate)
-        b_part_num = int((sample_num - a_part_num) * other_rate)
+        b_part_num = int((sample_num) * other_rate)
 
         # index of a part
         a_sample_idx = sorted_idx[:a_part_num]
