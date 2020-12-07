@@ -29,12 +29,10 @@ class BaseSecretSharingSum(ModelBase):
         self.x_plus_y = None
         self.host_sum_recv = []
         self.vss = Vss()
-        self.g = 2
         self.secret_sharing = []  # (x,f(x))
         self.commitments = []  # (x,g(ai))
         self.host_count = None
         self.need_verify = None
-        self.partition = None
         self.coefficients = None
         self.secret_sum = None
 

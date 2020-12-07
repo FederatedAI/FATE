@@ -5,7 +5,6 @@ from federatedml.secureprotol import gmpy_math
 class Vss(object):
     def __init__(self):
         self.prime = None
-        self.g = 2
         self.share_amount = -1
 
     def set_share_amount(self, share_amount):
