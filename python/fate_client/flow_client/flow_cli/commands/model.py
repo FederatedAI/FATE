@@ -237,7 +237,7 @@ def list_tag(ctx, **kwargs):
 @cli_args.MODEL_VERSION_REQUIRED
 @cli_args.OUTPUT_PATH_REQUIRED
 @click.pass_context
-def list_tag(ctx, **kwargs):
+def get_predict_dsl(ctx, **kwargs):
     """
     \b
     - DESCRIPTION:
@@ -256,7 +256,7 @@ def list_tag(ctx, **kwargs):
 @cli_args.MODEL_VERSION_REQUIRED
 @cli_args.OUTPUT_PATH_REQUIRED
 @click.pass_context
-def list_tag(ctx, **kwargs):
+def get_predict_conf(ctx, **kwargs):
     """
     \b
     - DESCRIPTION:
@@ -281,7 +281,7 @@ def list_tag(ctx, **kwargs):
 @click.option("--dsl-path", type=click.Path(exists=True),
               help="User specified predict dsl file")
 @click.pass_context
-def list_tag(ctx, **kwargs):
+def deploy(ctx, **kwargs):
     """
     \b
     - DESCRIPTION:
@@ -319,3 +319,29 @@ def list_tag(ctx, **kwargs):
 
     config_data, dsl_data = preprocess(**request_data)
     access_server('post', ctx, 'model/deploy', config_data)
+
+
+@model.command("get-model-info", short_help="Deploy model")
+@cli_args.MODEL_ID
+@cli_args.MODEL_VERSION_REQUIRED
+@cli_args.ROLE
+@cli_args.PARTYID
+@click.option('--detail', is_flag=True, default=False,
+              help="If specified, details of model would be shown.")
+@click.pass_context
+def model_info(ctx, **kwargs):
+    """
+    \b
+    - DESCRIPTION:
+        Get information of model.
+
+    \b
+    - USAGE:
+        flow model model-info --model_id $MODEL_ID --model_version $MODEL_VERSION
+        flow model model-info --model_id $MODEL_ID --model_version $MODEL_VERSION --detail
+    """
+    config_data, dsl_data = preprocess(**kwargs)
+    if not config_data.pop('detail'):
+        config_data['query_filters'] = ['create_date', 'role', 'party_id', 'roles', 'model_id',
+                                        'model_version', 'loaded_times', 'size', 'description', 'parent', 'parent_info']
+    access_server('post', ctx, 'model/query', config_data)

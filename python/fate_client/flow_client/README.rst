@@ -700,6 +700,35 @@ Model
 
     flow model get-predict-conf --model_id $MODEL_ID --model_version $MODEL_VERSION -o ./examples/
 
+
+``get-model-info``
+~~~~~~~~~~~~~~~~~~~~
+
+-  *Description*: Get information of model.
+-  *Arguments*:
+
++-------+--------------------+-----------+--------------------+------------+--------------------------+
+| No.   | Argument           | Flag\_1   | Flag\_2            | Required   | Description              |
++=======+====================+===========+====================+============+==========================+
+| 1     | model\_id          |           | ``--model-id``     | No         | Model id                 |
++-------+--------------------+-----------+--------------------+------------+--------------------------+
+| 2     | model\_version     |           | ``--model-version``| Yes        | Model version            |
++-------+--------------------+-----------+--------------------+------------+--------------------------+
+| 3     | role               | ``-r``    | ``--role``         | No         | Role                     |
++-------+--------------------+-----------+--------------------+------------+--------------------------+
+| 2     | party\_id          | ``-p``    | ``--party-id``     | No         | Party ID                 |
++-------+--------------------+-----------+--------------------+------------+--------------------------+
+| 3     | detail             |           | ``--detail``       | No         | Show details             |
++-------+--------------------+-----------+--------------------+------------+--------------------------+
+
+-  *Examples*:
+
+.. code:: bash
+
+    flow model model-info --model_id $MODEL_ID --model_version $MODEL_VERSION
+    flow model model-info --model_id $MODEL_ID --model_version $MODEL_VERSION --detail
+
+
 Tag
 ---
 
