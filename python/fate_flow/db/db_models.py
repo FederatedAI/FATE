@@ -278,7 +278,7 @@ class MachineLearningModelInfo(DataBaseModel):
     f_job_status = CharField(max_length=50, null=True)
     f_runtime_conf_on_party = JSONField(default={})
     f_fate_version = CharField(null=True, default='')
-    f_parent = BooleanField(default=True)
+    f_parent = BooleanField(null=True, default=None)
     f_parent_info = JSONField(default={})
     f_inference_dsl = JSONField(default={})
 

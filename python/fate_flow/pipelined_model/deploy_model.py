@@ -68,15 +68,17 @@ def deploy(config_data):
         shutil.copyfile(os.path.join(deploy_model.model_path, "pipeline.pb"),
                         os.path.join(deploy_model.model_path, "variables", "data", "pipeline", "pipeline", "Pipeline"))
 
-        model_info = {}
-        for attr, field in pipeline.ListFields():
-            if isinstance(field, bytes):
-                model_info[attr.name] = json_loads(field)
-            else:
-                model_info[attr.name] = field
-        model_info['imported'] = 1
-        model_info['job_status'] = JobStatus.SUCCESS
+        model_info = model_utils.gather_model_info_data(deploy_model)
         model_info['job_id'] = model_info['model_version']
+        model_info['size'] = deploy_model.calculate_model_file_size()
+        model_info['role'] = local_role
+        model_info['party_id'] = local_party_id
+        if model_utils.compare_version(model_info['f_fate_version'], '1.5.0') == 'eq':
+            model_info['roles'] = model_info.get('f_train_runtime_conf', {}).get('role', {})
+            model_info['initiator_role'] = model_info.get('f_train_runtime_conf', {}).get('initiator', {}).get('role')
+            model_info['initiator_party_id'] = model_info.get('f_train_runtime_conf', {}).get('initiator', {}).get('party_id')
+            model_info['work_mode'] = adapter.get_job_work_mode()
+            model_info['parent'] = False if model_info.get('f_inference_dsl') else True
         model_utils.save_model_info(model_info)
 
     except Exception as e:

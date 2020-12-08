@@ -39,7 +39,6 @@ from fate_flow.utils.detect_utils import check_config
 from fate_flow.utils.model_utils import gen_party_model_id
 from fate_flow.entity.types import ModelOperation, TagOperation
 from fate_arch.common import file_utils, WorkMode, FederatedMode
-from fate_flow.entity.types import JobStatus
 from fate_flow.utils.config_adapter import JobRuntimeConfigAdapter
 
 manager = Flask(__name__)
@@ -328,8 +327,7 @@ def operate_model(model_operation):
                     if not db_model:
                         model_info = model_utils.gather_model_info_data(model)
                         model_info['imported'] = 1
-                        model_info['job_status'] = JobStatus.SUCCESS
-                        model_info['job_id'] = model_info['model_version']
+                        model_info['job_id'] = model_info['f_model_version']
                         model_info['size'] = model.calculate_model_file_size()
                         model_info['role'] = request_config["model_id"].split('#')[0]
                         model_info['party_id'] = request_config["model_id"].split('#')[1]
@@ -337,6 +335,8 @@ def operate_model(model_operation):
                             model_info['roles'] = model_info.get('f_train_runtime_conf', {}).get('role', {})
                             model_info['initiator_role'] = model_info.get('f_train_runtime_conf', {}).get('initiator', {}).get('role')
                             model_info['initiator_party_id'] = model_info.get('f_train_runtime_conf', {}).get( 'initiator', {}).get('party_id')
+                            model_info['work_mode'] = adapter.get_job_work_mode()
+                            model_info['parent'] = False if model_info.get('f_inference_dsl') else True
                         model_utils.save_model_info(model_info)
                     else:
                         stat_logger.info(f'job id: {job_parameters.get("model_version")}, '
