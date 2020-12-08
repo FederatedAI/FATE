@@ -35,10 +35,10 @@ local function get_dest_server(dest_env, dest_service)
     end
 
     local route = route_table.get_route()
-    local party_services = route:get(dest_env)
+    local env_services = route:get(dest_env)
     local server
-    if party_services ~= nil then
-        local service = party_services[dest_service]
+    if env_services ~= nil then
+        local service = env_services[dest_service]
         server = get_server_address(service[math.random(1, #service)])
         ngx.log(ngx.INFO, string.format("get %s %s server: %s", dest_env, dest_service, server))
     else
@@ -54,7 +54,7 @@ local function get_request_dest()
     return headers
 end
 
-function routing()
+local function routing()
     local request_headers = get_request_dest()
     local dest_env = request_headers["dest-party-id"]
     if dest_env == nil then
