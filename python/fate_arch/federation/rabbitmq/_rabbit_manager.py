@@ -247,7 +247,8 @@ class RabbitManager:
         LOGGER.debug(f"[rabbitmanager.get_connections] {result}")
         return result
         
-    def delete_connections(self, vhost=None):                
+    def delete_connections(self, vhost=None):  
+        time.sleep(2)              
         result = self.get_connections()
         names = None
         try:
