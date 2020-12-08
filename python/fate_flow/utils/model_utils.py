@@ -107,8 +107,15 @@ def query_model_info_from_file(model_id=None, model_version=None, role=None, par
                         insert_info = model_info.copy()
                         insert_info['role'] = fp.split('/')[-2].split('#')[0]
                         insert_info['party_id'] = fp.split('/')[-2].split('#')[1]
+                        insert_info['job_id'] = model_info.get('f_model_version')
+                        insert_info['size'] = pipeline_model.calculate_model_file_size()
+                        if compare_version(insert_info['f_fate_version'], '1.5.1') == 'lt':
+                            insert_info['roles'] = model_info.get('f_train_runtime_conf', {}).get('role', {})
+                            insert_info['initiator_role'] = model_info.get('f_train_runtime_conf', {}).get('initiator', {}).get('role')
+                            insert_info['initiator_party_id'] = model_info.get('f_train_runtime_conf', {}).get('initiator', {}).get('party_id')
                         save_model_info(insert_info)
                     except Exception as e:
+                        raise
                         stat_logger.exception(e)
                 if isinstance(res, dict):
                     res[fp] = model_info
@@ -161,6 +168,8 @@ def save_model_info(model_info):
         attr_name = 'f_%s' % k
         if hasattr(MLModel, attr_name):
             setattr(model, attr_name, v)
+        elif hasattr(MLModel, k):
+            setattr(model, k, v)
     try:
         rows = model.save(force_insert=True)
         if rows != 1:

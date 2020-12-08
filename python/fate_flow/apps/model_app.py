@@ -321,20 +321,22 @@ def operate_model(model_operation):
                     adapter = JobRuntimeConfigAdapter(train_runtime_conf)
                     job_parameters = adapter.get_common_parameters().to_dict()
                     with DB.connection_context():
-                        model = MLModel.get_or_none(
+                        db_model = MLModel.get_or_none(
                             MLModel.f_job_id == job_parameters.get("model_version"),
                             MLModel.f_role == request_config["role"]
                         )
-                    if not model:
-                        model_info = {}
-                        for attr, field in pipeline.ListFields():
-                            if isinstance(field, bytes):
-                                model_info[attr.name] = json_loads(field)
-                            else:
-                                model_info[attr.name] = field
+                    if not db_model:
+                        model_info = model_utils.gather_model_info_data(model)
                         model_info['imported'] = 1
                         model_info['job_status'] = JobStatus.SUCCESS
                         model_info['job_id'] = model_info['model_version']
+                        model_info['size'] = model.calculate_model_file_size()
+                        model_info['role'] = request_config["model_id"].split('#')[0]
+                        model_info['party_id'] = request_config["model_id"].split('#')[1]
+                        if model_utils.compare_version(model_info['f_fate_version'], '1.5.1') == 'lt':
+                            model_info['roles'] = model_info.get('f_train_runtime_conf', {}).get('role', {})
+                            model_info['initiator_role'] = model_info.get('f_train_runtime_conf', {}).get('initiator', {}).get('role')
+                            model_info['initiator_party_id'] = model_info.get('f_train_runtime_conf', {}).get( 'initiator', {}).get('party_id')
                         model_utils.save_model_info(model_info)
                     else:
                         stat_logger.info(f'job id: {job_parameters.get("model_version")}, '

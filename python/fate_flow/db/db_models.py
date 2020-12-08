@@ -261,7 +261,7 @@ class MachineLearningModelInfo(DataBaseModel):
     f_id = BigAutoField(primary_key=True)
     f_role = CharField(max_length=50, index=True)
     f_party_id = CharField(max_length=10, index=True)
-    f_roles = JSONField()
+    f_roles = JSONField(default={})
     f_job_id = CharField(max_length=25, index=True)
     f_model_id = CharField(max_length=100, index=True)
     f_model_version = CharField(max_length=100, index=True)
@@ -275,7 +275,7 @@ class MachineLearningModelInfo(DataBaseModel):
     f_train_dsl = JSONField(default={})
     f_train_runtime_conf = JSONField(default={})
     f_imported = IntegerField(default=0)
-    f_job_status = CharField(max_length=50)
+    f_job_status = CharField(max_length=50, null=True)
     f_runtime_conf_on_party = JSONField(default={})
     f_fate_version = CharField(null=True, default='')
     f_parent = BooleanField(default=True)
@@ -283,7 +283,7 @@ class MachineLearningModelInfo(DataBaseModel):
     f_inference_dsl = JSONField(default={})
 
     class Meta:
-        db_table = "t_machine_learning_model_info"
+        db_table = "t_machine_learning_model_info_ryan"
 
 
 class ModelTag(DataBaseModel):
