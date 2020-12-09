@@ -2,8 +2,9 @@ import unittest
 import uuid
 
 from fate_arch.session import computing_session as session
-
 from federatedml.param.intersect_param import IntersectParam
+from federatedml.secureprotol.hash.hash_factory import Hash
+
 
 
 class TestRsaIntersectGuest(unittest.TestCase):
@@ -32,7 +33,8 @@ class TestRsaIntersectGuest(unittest.TestCase):
         self.assertListEqual(list(res.collect()), gt)
 
     def test_hash(self):
-        res = str(self.rsa_op2.hash("1"))
+        hash_operator = Hash("sha256")
+        res = str(self.rsa_op2.hash("1", hash_operator))
         self.assertEqual(res, "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b")
 
     def tearDown(self):

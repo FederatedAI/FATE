@@ -13,9 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import hashlib
 
-from federatedml.secureprotol.encode import Encode
+from federatedml.secureprotol.hash.hash_factory import Hash
 from federatedml.util import consts
 from federatedml.util import LOGGER
 from federatedml.transfer_variable.transfer_class.raw_intersect_transfer_variable import RawIntersectTransferVariable
@@ -96,15 +95,17 @@ class Intersect(object):
 
         return intersect_ids
 
+    @staticmethod
+    def hash(value, hash_operator, salt=None):
+        h_value = hash_operator.compute(value, postfit_salt=salt)
+        return h_value
+
 
 class RsaIntersect(Intersect):
     def __init__(self, intersect_params):
         super().__init__(intersect_params)
         self.intersect_cache_param = intersect_params.intersect_cache_param
-
-    @staticmethod
-    def hash(value):
-        return hashlib.sha256(bytes(str(value), encoding='utf-8')).hexdigest()
+        self.rsa_params = intersect_params.rsa_params
 
 
 class RawIntersect(Intersect):
@@ -119,15 +120,15 @@ class RawIntersect(Intersect):
         self.tracker = None
 
     def intersect_send_id(self, data_instances):
-        sid_encode_pair = None
+        sid_hash_pair = None
         if self.with_encode and self.encode_params.encode_method != "none":
-            if Encode.is_support(self.encode_params.encode_method):
-                encode_operator = Encode(self.encode_params.encode_method, self.encode_params.base64)
-                sid_encode_pair = data_instances.map(
-                    lambda k, v: (encode_operator.compute(k, postfit_salt=self.encode_params.salt), k))
-                data_sid = sid_encode_pair.mapValues(lambda v: 1)
+            if Hash.is_support(self.encode_params.encode_method):
+                hash_operator = Hash(self.encode_params.encode_method, self.encode_params.base64)
+                sid_hash_pair = data_instances.map(
+                    lambda k, v: (hash_operator.compute(k, postfit_salt=self.encode_params.salt), k))
+                data_sid = sid_hash_pair.mapValues(lambda v: 1)
             else:
-                raise ValueError("Unknown encode_method, please check the configure of encode_param")
+                raise ValueError("Unknown encode_method, please check the configuration of encode_param")
         else:
             data_sid = data_instances.mapValues(lambda v: 1)
 
@@ -172,9 +173,9 @@ class RawIntersect(Intersect):
                                                                              role=consts.HOST,
                                                                              idx=-1)
 
-            if sid_encode_pair and recv_intersect_ids is not None:
-                encode_intersect_ids_map = recv_intersect_ids.join(sid_encode_pair, lambda r, s: s)
-                intersect_ids = encode_intersect_ids_map.map(lambda k, v: (v, 'intersect_id'))
+            if sid_hash_pair and recv_intersect_ids is not None:
+                hash_intersect_ids_map = recv_intersect_ids.join(sid_hash_pair, lambda r, s: s)
+                intersect_ids = hash_intersect_ids_map.map(lambda k, v: (v, 'intersect_id'))
             else:
                 intersect_ids = recv_intersect_ids
         else:
@@ -188,15 +189,15 @@ class RawIntersect(Intersect):
     def intersect_join_id(self, data_instances):
         LOGGER.info("Join id role is {}".format(self.role))
 
-        sid_encode_pair = None
+        sid_hash_pair = None
         if self.with_encode and self.encode_params.encode_method != "none":
-            if Encode.is_support(self.encode_params.encode_method):
-                encode_operator = Encode(self.encode_params.encode_method, self.encode_params.base64)
-                sid_encode_pair = data_instances.map(
-                    lambda k, v: (encode_operator.compute(k, postfit_salt=self.encode_params.salt), k))
-                data_sid = sid_encode_pair.mapValues(lambda v: 1)
+            if Hash.is_support(self.encode_params.encode_method):
+                hash_operator = Hash(self.encode_params.encode_method, self.encode_params.base64)
+                sid_hash_pair = data_instances.map(
+                    lambda k, v: (hash_operator.compute(k, postfit_salt=self.encode_params.salt), k))
+                data_sid = sid_hash_pair.mapValues(lambda v: 1)
             else:
-                raise ValueError("Unknown encode_method, please check the configure of encode_param")
+                raise ValueError("Unknown encode_method, please check the configure of hash_param")
         else:
             data_sid = data_instances.mapValues(lambda v: 1)
 
@@ -213,14 +214,14 @@ class RawIntersect(Intersect):
         LOGGER.info("Get ids_list from role-send, ids_list size is {}".format(len(recv_ids_list)))
 
         if ids_list_size == 1:
-            encode_intersect_ids = recv_ids_list[0].join(data_sid, lambda i, d: "intersect_id")
+            hash_intersect_ids = recv_ids_list[0].join(data_sid, lambda i, d: "intersect_id")
         elif ids_list_size > 1:
-            encode_intersect_ids_list = []
+            hash_intersect_ids_list = []
             for ids in recv_ids_list:
-                encode_intersect_ids_list.append(ids.join(data_sid, lambda i, d: "intersect_id"))
-            encode_intersect_ids = self.get_common_intersection(encode_intersect_ids_list)
+                hash_intersect_ids_list.append(ids.join(data_sid, lambda i, d: "intersect_id"))
+            hash_intersect_ids = self.get_common_intersection(hash_intersect_ids_list)
         else:
-            encode_intersect_ids = None
+            hash_intersect_ids = None
         LOGGER.info("Finish intersect_ids computing")
 
         if self.sync_intersect_ids:
@@ -233,7 +234,7 @@ class RawIntersect(Intersect):
             else:
                 raise ValueError("Unknown intersect role, please check the code")
 
-            intersect_ids_federation.remote(encode_intersect_ids,
+            intersect_ids_federation.remote(hash_intersect_ids,
                                             role=send_role,
                                             idx=-1)
             LOGGER.info("Remote intersect ids to role-send")
@@ -242,13 +243,13 @@ class RawIntersect(Intersect):
                 LOGGER.info(
                     "raw intersect join role is host, and has {} hosts, get the final intersect_ids from guest".format(
                         len(self.host_party_id_list)))
-                encode_intersect_ids = self.transfer_variable.sync_intersect_ids_multi_hosts.get(idx=0)
+                hash_intersect_ids = self.transfer_variable.sync_intersect_ids_multi_hosts.get(idx=0)
 
-        if sid_encode_pair:
-            encode_intersect_ids_map = encode_intersect_ids.join(sid_encode_pair, lambda r, s: s)
-            intersect_ids = encode_intersect_ids_map.map(lambda k, v: (v, 'intersect_id'))
+        if sid_hash_pair:
+            hash_intersect_ids_map = hash_intersect_ids.join(sid_hash_pair, lambda r, s: s)
+            intersect_ids = hash_intersect_ids_map.map(lambda k, v: (v, 'intersect_id'))
         else:
-            intersect_ids = encode_intersect_ids
+            intersect_ids = hash_intersect_ids
 
         if not self.only_output_key:
             intersect_ids = self._get_value_from_data(intersect_ids, data_instances)
