@@ -34,9 +34,9 @@ FATE-Flow关键点:
 用法
 ====
 
-##### [命令行](./doc/fate_flow_cli_v2_guide.md)
+##### [命令行](./doc/Fate_Flow_CLI_v2_Guide_zh.rst)
 
-##### [Python SDK](./doc/Fate_Flow_Client_SDK_Guide.md)
+##### [Python SDK](./doc/Fate_Flow_Client_SDK_Guide_zh.rst)
 
 ##### [HTTP API](./doc/fate_flow_http_api.rst)
 
