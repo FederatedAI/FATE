@@ -162,7 +162,7 @@ buildModule() {
 
   cd ${source_dir}
 
-  for module in "python" "fateboard" "eggroll"
+  for module in "python" "fateboard" "eggroll" "python-nn"
   do
       echo "### START BUILDING ${module} ###"
       docker build --build-arg version=${version} --build-arg fateboard_version=${fateboard_version} --build-arg PREFIX=${PREFIX} --build-arg BASE_TAG=${BASE_TAG} --no-cache -t ${PREFIX}/${module}:${TAG} -f ${source_dir}/docker-build/docker/modules/${module}/Dockerfile ${source_dir}/docker-build/docker/modules/${module}
@@ -182,7 +182,7 @@ buildModule() {
 
 pushImage() {
   ## push image
-  for module in "python" "eggroll" "fateboard"
+  for module in "python" "eggroll" "fateboard" "python-nn"
   do
       echo "### START PUSH ${module} ###"
       docker push ${PREFIX}/${module}:${TAG}
