@@ -105,6 +105,17 @@ def __compute_gradient_one_by_one(instance, d, is_sparse):
     return g
 
 
+def __apply_cal_gradient(data):
+    all_g = None
+    for key, (feature, d) in data:
+        g = feature * d
+        if all_g is None:
+            all_g = g
+        else:
+            all_g += g
+    return all_g
+
+
 def compute_gradient(data_instances, fore_gradient, fit_intercept):
     """
     Compute hetero-regression gradient
@@ -123,7 +134,7 @@ def compute_gradient(data_instances, fore_gradient, fit_intercept):
     feature_num = data_overview.get_features_shape(data_instances)
     data_count = data_instances.count()
     is_sparse = data_overview.is_sparse_data(data_instances)
-    if data_count * feature_num > 10:
+    if data_count * feature_num > 10000000000:
         f = functools.partial(__compute_gradient_one_by_one, is_sparse=is_sparse)
         feat_grad = data_instances.join(fore_gradient, f)
         gradient_sum = feat_grad.reduce(lambda x, y: x + y)
@@ -133,6 +144,19 @@ def compute_gradient(data_instances, fore_gradient, fit_intercept):
             gradient_sum = np.append(gradient_sum, bias_grad)
 
         gradient = gradient_sum / data_count
+    elif data_count * feature_num > 1:
+        LOGGER.debug("Use apply partitions")
+        feat_join_grad = data_instances.join(fore_gradient,
+                                             lambda d, g: (d.features, g))
+        f = functools.partial(__apply_cal_gradient)
+        gradient_sum = feat_join_grad.applyPartitions(f)
+        gradient_sum = gradient_sum.reduce(lambda x, y: x + y)
+        if fit_intercept:
+            # bias_grad = np.sum(fore_gradient)
+            bias_grad = fore_gradient.reduce(lambda x, y: x + y)
+            gradient_sum = np.append(gradient_sum, bias_grad)
+        gradient = gradient_sum / data_count
+
     else:
         feat_join_grad = data_instances.join(fore_gradient,
                                              lambda d, g: (d.features, g))
@@ -149,7 +173,7 @@ def compute_gradient(data_instances, fore_gradient, fit_intercept):
 
 class HeteroGradientBase(object):
     def __init__(self):
-        self.is_multi_host = False
+        self.use_async = False
 
     def compute_gradient_procedure(self, *args):
         raise NotImplementedError("Should not call here")
@@ -160,8 +184,8 @@ class HeteroGradientBase(object):
         """
         pass
 
-    def set_is_multi_host(self):
-        self.is_multi_host = True
+    def set_use_async(self):
+        self.use_async = True
 
 
 class Guest(HeteroGradientBase):
@@ -192,8 +216,13 @@ class Guest(HeteroGradientBase):
 
         half_g = compute_gradient(data_instances, self.half_d, False)
         self.host_forwards = self.get_host_forward(suffix=current_suffix)
+        # d = self.half_d
+        # for h_wx in self.host_forwards:
+        #     d = d.join(h_wx, lambda x, y: x + y)
         host_forward = self.host_forwards[0]
+
         host_half_g = compute_gradient(data_instances, host_forward, False)
+        # unilateral_gradient = compute_gradient(data_instances, d, model_weights.fit_intercept)
         unilateral_gradient = half_g + host_half_g
         if model_weights.fit_intercept:
             n = data_instances.count()
@@ -208,6 +237,8 @@ class Guest(HeteroGradientBase):
             fore_gradient = fore_gradient.join(host_forward, lambda x, y: x + y)
         self.remote_fore_gradient(fore_gradient, suffix=current_suffix)
         unilateral_gradient = compute_gradient(data_instances, fore_gradient, model_weights.fit_intercept)
+        LOGGER.debug(f"_centralized_compute_gradient, Before return, unilateral_gradient: {unilateral_gradient}")
+
         return unilateral_gradient
 
     def compute_gradient_procedure(self, data_instances, encrypted_calculator, model_weights, optimizer,
@@ -230,7 +261,7 @@ class Guest(HeteroGradientBase):
         # Compute Guest's partial d
         self.compute_half_d(data_instances, model_weights, encrypted_calculator,
                             batch_index, current_suffix)
-        if not self.is_multi_host:
+        if self.use_async:
             unilateral_gradient = self._asynchronous_compute_gradient(data_instances, model_weights,
                                                                       cipher=encrypted_calculator[batch_index],
                                                                       current_suffix=current_suffix)
@@ -312,7 +343,7 @@ class Host(HeteroGradientBase):
 
         self.forwards = self.compute_forwards(data_instances, model_weights)
 
-        if not self.is_multi_host:
+        if self.use_async:
             unilateral_gradient = self._asynchronous_compute_gradient(data_instances,
                                                                       encrypted_calculator[batch_index],
                                                                       current_suffix)

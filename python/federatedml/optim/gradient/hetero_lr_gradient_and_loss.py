@@ -57,26 +57,6 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
         # fore_gradient = self.aggregated_forwards.join(data_instances, lambda wx, d: 0.25 * wx - 0.5 * d.label)
         return self.host_forwards
 
-    def compute_and_aggregate_forwards2(self, data_instances, model_weights, encrypted_calculator, batch_index,
-                                       current_suffix, offset=None):
-        """
-        gradient = (1/N)*∑(1/2*ywx-1)*1/2yx = (1/N)*∑(0.25 * wx - 0.5 * y) * x, where y = 1 or -1
-        Define wx as guest_forward or host_forward
-        Define (0.25 * wx - 0.5 * y) as fore_gradient
-        """
-        half_wx = data_instances.mapValues(
-            lambda v: vec_dot(v.features, model_weights.coef_) + model_weights.intercept_)
-        self.forwards = half_wx
-        # LOGGER.debug("half_wx: {}".format(half_wx.take(20)))
-        self.aggregated_forwards = encrypted_calculator[batch_index].encrypt(half_wx)
-
-        self.host_forwards = self.get_host_forward(suffix=current_suffix)
-
-        for host_forward in self.host_forwards:
-            self.aggregated_forwards = self.aggregated_forwards.join(host_forward, lambda g, h: g + h)
-        fore_gradient = self.aggregated_forwards.join(data_instances, lambda wx, d: 0.25 * wx - 0.5 * d.label)
-        return fore_gradient
-
     def compute_loss(self, data_instances, w, n_iter_, batch_index, loss_norm=None):
         """
         Compute hetero-lr loss for:
