@@ -59,21 +59,32 @@ class SecretSharingSumHost(BaseSecretSharingSum):
     def sync_share_to_parties(self):
         for idx, party_id in enumerate(self.host_party_idlist):
             if self.local_partyid != party_id:
-                self.transfer_inst.host_share_to_host.remote(self.secret_sharing[idx],
+                self.transfer_inst.host_share_to_host.remote(self.sub_key[idx],
                                                              role="host",
                                                              idx=idx)
             else:
-                self.x_plus_y = self.secret_sharing[idx]
-                self.transfer_inst.host_share_to_guest.remote(self.secret_sharing[-1],
+                self.x_plus_y = self.sub_key[idx]
+                self.transfer_inst.host_share_to_guest.remote(self.sub_key[-1],
                                                               role="guest",
                                                               idx=0)
+                self.transfer_inst.host_commitments.remote(self.commitments,
+                                                           role="host",
+                                                           idx=-1)
+        self.transfer_inst.host_commitments.remote(self.commitments, role="host", idx=-1)
+        self.transfer_inst.host_commitments.remote(self.commitments, role="guest", idx=-1)
 
     def recv_share_from_parties(self):
         for idx, party_id in enumerate(self.host_party_idlist):
             if self.local_partyid != party_id:
-                self.y_recv.append(self.transfer_inst.host_share_to_host.get(idx=idx))
+                sub_key = self.transfer_inst.host_share_to_host.get(idx=idx)
+                commitment = self.transfer_inst.host_commitments.get(idx=idx)
+                self.verify_subkey(sub_key, commitment)
+                self.y_recv.append(sub_key)
             else:
-                self.y_recv.append(self.transfer_inst.guest_share_secret.get(idx=0))
+                sub_key = self.transfer_inst.guest_share_secret.get(idx=0)
+                commitment = self.transfer_inst.guest_commitments.get(idx=0)
+                self.verify_subkey(sub_key, commitment)
+                self.y_recv.append(sub_key)
 
     def sync_host_sum_to_guest(self):
         self.transfer_inst.host_sum.remote(self.x_plus_y,
@@ -97,8 +108,8 @@ class SecretSharingSumHost(BaseSecretSharingSum):
         LOGGER.info("get share of one random part data from multiple parties")
         self.recv_share_from_parties()
 
-        LOGGER.info("begin to get sum of host and guest")
-        self.sharing_sum()
+        LOGGER.info("begin to get sum of multiple party")
+        self.sub_key_sum()
 
         LOGGER.info("send host sum to guest")
         self.sync_host_sum_to_guest()

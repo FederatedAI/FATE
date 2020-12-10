@@ -6,6 +6,8 @@ class Vss(object):
     def __init__(self):
         self.prime = None
         self.share_amount = -1
+        self.g = 2
+        self.commitments = []
 
     def set_share_amount(self, share_amount):
         self.share_amount = share_amount
@@ -16,21 +18,23 @@ class Vss(object):
     def set_prime(self, prime):
         self.prime = prime
 
-    def encrypt(self, x):
-        coefficients = [int(x)]
+    def encrypt(self, secret):
+        coefficient = [int(secret)]
         for i in range(self.share_amount - 1):
-            random_coefficients = random.SystemRandom().randint(1, self.prime - 1)
-            coefficients.append(random_coefficients)
+            random_coefficient = random.SystemRandom().randint(0, self.prime - 1)
+            coefficient.append(random_coefficient)
 
         f_x = []
         for x in range(1, self.share_amount+1):
             y = 0
-            for c in reversed(coefficients):
+            for c in reversed(coefficient):
                 y *= x
                 y += c
-                y %= self.prime
             f_x.append((x, y))
-        return f_x
+
+        commitment = list(map(self.calculate_commitment, coefficient))
+
+        return f_x, commitment
 
     def decrypt(self, x_values, y_values):
         k = len(x_values)
@@ -50,3 +54,16 @@ class Vss(object):
             secret = (self.prime + secret + (y_values[i] * lagrange_polynomial)) % self.prime
 
         return secret
+
+    def calculate_commitment(self, coefficient):
+        return gmpy_math.powmod(self.g, coefficient, self.prime)
+
+    def verify(self, f_x, commitment):
+        x, y = f_x[0], f_x[1]
+        v1 = gmpy_math.powmod(self.g, y, self.prime)
+        v2 = 1
+        for i in range(len(commitment)):
+            v2 *= gmpy_math.powmod(commitment[i], (x**i), self.prime)
+        v2 = v2 % self.prime
+        if v1 != v2:
+            raise ValueError("error sharing")

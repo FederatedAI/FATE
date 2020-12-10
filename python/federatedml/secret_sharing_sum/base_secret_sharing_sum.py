@@ -25,44 +25,47 @@ from federatedml.secureprotol.secret_sharing.vss import Vss
 class BaseSecretSharingSum(ModelBase):
     def __init__(self):
         super(BaseSecretSharingSum, self).__init__()
-        self.x = None
-        self.y_recv = []
-        self.x_plus_y = None
-        self.host_sum_recv = []
         self.vss = Vss()
-        self.secret_sharing = []  # (x,f(x))
-        self.commitments = []  # (x,g(ai))
         self.host_count = None
-        self.coefficients = None
-        self.secret_sum = None
         self.model_param = SecureSharingSumParam()
         self.sum_cols = None
+        self.x = None
+        self.sub_key = []  # (x,f(x))
+        self.commitments = None  # (x,g(ai))
+        self.y_recv = []
+        self.commitments_recv = []
+        self.host_sum_recv = []
+        self.x_plus_y = None
+        self.secret_sum = None
 
     def secure(self):
-        self.generate_shares()
-
-    def generate_shares(self):
-        fx_table = self.x.mapValues(self.split_secret)
+        encrypt_result = self.x.mapValues(self.generate_shares)
+        sub_key_table = encrypt_result.mapValues(lambda x: x[0])
+        self.commitments = encrypt_result.mapValues(lambda x: x[1])
         for i in range(self.host_count+1):
-            share = fx_table.mapValues(lambda y: np.array(y)[:, i])
-            self.secret_sharing.append(share)
+            sub_key = sub_key_table.mapValues(lambda y: np.array(y)[:, i])
+            self.sub_key.append(sub_key)
 
-    def split_secret(self, values):
-        shares = []
+    def generate_shares(self, values):
+        keys = []
+        commitments = []
         for s in values:
-            shares.append(self.vss.encrypt(s))
-        return shares
+            sub_key, commitment = self.vss.encrypt(s)
+            keys.append(sub_key)
+            commitments.append(commitment)
+        res = (keys, commitments)
+        return res
 
-    def sharing_sum(self):
+    def sub_key_sum(self):
         for recv in self.y_recv:
             self.x_plus_y = self.x_plus_y.union(recv, lambda x, y: np.column_stack((x[:, 0], np.add(x[:, 1], y[:, 1]))))
 
     def reconstruct(self):
         for recv in self.host_sum_recv:
             self.x_plus_y = self.x_plus_y.union(recv, lambda x, y: np.column_stack((x, y)))
-        self.secret_sum = self.x_plus_y.mapValues(self.combine)
+        self.secret_sum = self.x_plus_y.mapValues(self.decrypt)
 
-    def combine(self, values):
+    def decrypt(self, values):
         secret_sum = []
         for v in values:
             x_values = v[::2]
@@ -70,4 +73,16 @@ class BaseSecretSharingSum(ModelBase):
             secret_sum.append(self.vss.decrypt(x_values, y_values))
         return secret_sum
 
+    def verify_sumkey(self, sum_key, commitment):
+        for recv in self.commitments_recv:
+            commitment = commitment.union(recv, lambda x, y: np.array(x) * np.array(y))
+        sum_key.union(commitment, lambda x, y: self.verify(x, y))
+
+    def verify_subkey(self, sub_key, commitment):
+        sub_key.union(commitment, lambda x, y: self.verify(x, y))
+
+    def verify(self, sub_key, commitment):
+        for idx, key in enumerate(sub_key):
+            self.vss.verify(key, commitment[idx])
+        return True
 

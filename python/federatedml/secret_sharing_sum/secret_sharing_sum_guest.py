@@ -53,19 +53,29 @@ class SecretSharingSumGuest(BaseSecretSharingSum):
                                                      idx=-1)
 
     def sync_share_to_host(self):
-        for i in range(self.host_count):
-            self.transfer_inst.guest_share_secret.remote(self.secret_sharing[i],
+        for idx in range(self.host_count):
+            self.transfer_inst.guest_share_secret.remote(self.sub_key[idx],
                                                          role="host",
-                                                         idx=i)
-        self.x_plus_y = self.secret_sharing[-1]
+                                                         idx=idx)
+        self.transfer_inst.guest_commitments.remote(self.commitments,
+                                                    role="host",
+                                                    idx=-1)
+        self.x_plus_y = self.sub_key[-1]
 
     def recv_share_from_host(self):
-        for i in range(self.host_count):
-            self.y_recv.append(self.transfer_inst.host_share_to_guest.get(idx=i))
+        for idx in range(self.host_count):
+            sub_key = self.transfer_inst.host_share_to_guest.get(idx=idx)
+            commitment = self.transfer_inst.host_commitments.get(idx=idx)
+
+            self.verify_subkey(sub_key, commitment)
+            self.y_recv.append(sub_key)
+            self.commitments_recv.append(commitment)
 
     def recv_host_sum_from_host(self):
-        for i in range(self.host_count):
-            self.host_sum_recv.append(self.transfer_inst.host_sum.get(idx=i))
+        for idx in range(self.host_count):
+            host_sum = self.transfer_inst.host_sum.get(idx=idx)
+            self.verify_sumkey(host_sum, self.commitments)
+            self.host_sum_recv.append(host_sum)
 
     def fit(self, data_inst):
         LOGGER.info("begin to make guest data")
@@ -84,7 +94,7 @@ class SecretSharingSumGuest(BaseSecretSharingSum):
         self.recv_share_from_host()
 
         LOGGER.info("begin to get sum of multiple party")
-        self.sharing_sum()
+        self.sub_key_sum()
 
         LOGGER.info("receive host sum from host")
         self.recv_host_sum_from_host()
