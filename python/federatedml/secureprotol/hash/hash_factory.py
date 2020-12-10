@@ -1,6 +1,6 @@
 import base64
 import hashlib
-from gmssl import sm3, func
+from pysmx import SM3
 
 from federatedml.util import LOGGER
 
@@ -64,9 +64,11 @@ class Hash:
 
     def __compute_sm3(self, value):
         if self.base64 == 1:
-            return str(base64.b64encode(sm3.sm3_hash(func.bytes_to_list(bytes(value, encoding='utf-8'))).encode('utf-8')), "utf-8")
+            sm3 = SM3.SM3()
+            sm3.update(value)
+            return str(base64.b64encode(sm3.digest()), "utf-8")
         else:
-            return sm3.sm3_hash(func.bytes_to_list(bytes(value, encoding='utf-8')))
+            return SM3.hash_msg(value)
 
     def __compute_no_hash(self, value):
         if self.base64 == 1:
