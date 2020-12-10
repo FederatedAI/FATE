@@ -62,18 +62,15 @@ def table_delete():
     request_data = request.json
     table_name = request_data.get('table_name')
     namespace = request_data.get('namespace')
+    data = None
     with storage.Session.build(name=table_name, namespace=namespace) as storage_session:
         table = storage_session.get_table()
         if table:
             table.destroy()
             data = {'table_name': table_name, 'namespace': namespace}
-            try:
-                table.close()
-            except Exception as e:
-                stat_logger.exception(e)
-            return get_json_result(data=data)
-        else:
-            return get_json_result(retcode=101, retmsg='no find table')
+    if data:
+        return get_json_result(data=data)
+    return get_json_result(retcode=101, retmsg='no find table')
 
 
 @manager.route('/list', methods=['post'])

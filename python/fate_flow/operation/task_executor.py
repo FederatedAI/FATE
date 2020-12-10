@@ -98,7 +98,8 @@ class TaskExecutor(object):
             component_parameters_on_party['output_data_name'] = task_output_dsl.get('data')
             task_parameters = RunParameters(**file_utils.load_json_conf(args.config))
             job_parameters = task_parameters
-            TaskExecutor.monkey_patch()
+            if job_parameters.assistant_role:
+                TaskExecutor.monkey_patch()
         except Exception as e:
             traceback.print_exc()
             schedule_logger().exception(e)
@@ -323,7 +324,8 @@ class TaskExecutor(object):
         if not os.path.exists(package_path):
             return
         for f in os.listdir(package_path):
-            if not os.path.isdir(f) or f == "__pycache__":
+            f_path = os.path.join(file_utils.get_python_base_directory(), "fate_flow", package_name, f)
+            if not os.path.isdir(f_path) or "__pycache__" in f_path:
                 continue
             patch_module = importlib.import_module("fate_flow." + package_name + '.' + f + '.monkey_patch')
             patch_module.patch_all()

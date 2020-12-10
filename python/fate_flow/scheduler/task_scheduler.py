@@ -114,7 +114,7 @@ class TaskScheduler(object):
     @classmethod
     def federated_task_status(cls, job_id, task_id, task_version):
         tasks_on_all_party = JobSaver.query_task(task_id=task_id, task_version=task_version)
-        tasks_party_status = [task.f_party_status for task in tasks_on_all_party]
+        tasks_party_status = [task.f_party_status for task in tasks_on_all_party if 'idmapping' not in task.f_role]
         status = cls.calculate_multi_party_task_status(tasks_party_status)
         schedule_logger(job_id=job_id).info("job {} task {} {} status is {}, calculate by task party status list: {}".format(job_id, task_id, task_version, status, tasks_party_status))
         return status
