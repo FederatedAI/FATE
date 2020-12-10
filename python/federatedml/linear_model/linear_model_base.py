@@ -224,3 +224,27 @@ class BaseLinearModel(ModelBase):
             raise OverflowError("The input data is too large for GLM, please have "
                                 "a check for input data")
         LOGGER.info("Check for abnormal value passed")
+
+    def check_and_remote_sample_weights(self, data_instances):
+        one_sample = data_instances.first()[1]
+        if one_sample.weight is None:
+            sample_table = None
+        else:
+            sample_table = data_instances.mapValues(lambda x: x.weight)
+        if not hasattr(self.transfer_variable, "sample_weights"):
+            return sample_table
+        if not self.cipher_operator:
+            raise ValueError("Cipher_operator is not existed when remoting sample weights")
+
+        if sample_table:
+            encrypted_sample_table = sample_table.mapValues(lambda x: self.cipher_operator.encrypt(x))
+        else:
+            encrypted_sample_table = None
+        self.transfer_variable.sample_weights.remote(encrypted_sample_table, suffix=self.flowid)
+        return sample_table
+
+    def get_sample_weight(self):
+        if not hasattr(self.transfer_variable, "sample_weights"):
+            return None
+        sample_table = self.transfer_variable.sample_weights.get(suffix=self.flowid)
+        return sample_table

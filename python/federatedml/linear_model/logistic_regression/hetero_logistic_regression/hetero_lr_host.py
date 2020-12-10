@@ -86,6 +86,7 @@ class HeteroLRHost(HeteroLRBase):
             self.need_call_back_loss = False
             self.one_vs_rest_fit(train_data=data_instances, validate_data=validate_data)
         else:
+            sample_weights = self.get_sample_weight()
             self.need_one_vs_rest = False
             self.fit_binary(data_instances, validate_data)
 
@@ -122,16 +123,13 @@ class HeteroLRHost(HeteroLRBase):
             self.optimizer.set_iters(self.n_iter_)
             for batch_data in batch_data_generator:
                 # transforms features of raw input 'batch_data_inst' into more representative features 'batch_feat_inst'
-                batch_feat_inst = self.transform(batch_data)
-                LOGGER.debug(f"MODEL_STEP In Batch {batch_index}, batch data count: {batch_feat_inst.count()}")
+                batch_feat_inst = batch_data
+                # LOGGER.debug(f"MODEL_STEP In Batch {batch_index}, batch data count: {batch_feat_inst.count()}")
 
-                optim_host_gradient, fore_gradient = self.gradient_loss_operator.compute_gradient_procedure(
+                optim_host_gradient = self.gradient_loss_operator.compute_gradient_procedure(
                     batch_feat_inst, self.encrypted_calculator, self.model_weights, self.optimizer, self.n_iter_,
                     batch_index)
                 # LOGGER.debug('optim_host_gradient: {}'.format(optim_host_gradient))
-
-                training_info = {"iteration": self.n_iter_, "batch_index": batch_index}
-                self.update_local_model(fore_gradient, data_instances, self.model_weights.coef_, **training_info)
 
                 self.gradient_loss_operator.compute_loss(self.model_weights, self.optimizer,
                                                          self.n_iter_, batch_index, self.cipher_operator)
@@ -168,8 +166,6 @@ class HeteroLRHost(HeteroLRBase):
             self.one_vs_rest_obj.predict(data_instances)
             return
 
-        data_features = self.transform(data_instances)
-
-        prob_host = self.compute_wx(data_features, self.model_weights.coef_, self.model_weights.intercept_)
+        prob_host = self.compute_wx(data_instances, self.model_weights.coef_, self.model_weights.intercept_)
         self.transfer_variable.host_prob.remote(prob_host, role=consts.GUEST, idx=0)
         LOGGER.info("Remote probability to Guest")

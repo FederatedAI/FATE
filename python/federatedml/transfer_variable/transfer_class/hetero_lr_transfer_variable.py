@@ -38,6 +38,8 @@ class HeteroLRTransferVariable(BaseTransferVariables):
         self.guest_gradient = self._create_variable(name='guest_gradient', src=['guest'], dst=['arbiter'])
         self.guest_hess_vector = self._create_variable(name='guest_hess_vector', src=['guest'], dst=['arbiter'])
         self.guest_optim_gradient = self._create_variable(name='guest_optim_gradient', src=['arbiter'], dst=['guest'])
+
+        # self.half_g = self._create_variable(name='half_g', src=["guest"], dst=['host'])
         self.host_forward_dict = self._create_variable(name='host_forward_dict', src=['host'], dst=['guest'])
         self.host_gradient = self._create_variable(name='host_gradient', src=['host'], dst=['arbiter'])
         self.host_hess_vector = self._create_variable(name='host_hess_vector', src=['host'], dst=['arbiter'])

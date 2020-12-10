@@ -20,7 +20,6 @@ import functools
 
 import numpy as np
 import scipy.sparse as sp
-import copy
 
 from federatedml.feature.sparse_vector import SparseVector
 from federatedml.statistic import data_overview
@@ -149,6 +148,9 @@ def compute_gradient(data_instances, fore_gradient, fit_intercept):
 
 
 class HeteroGradientBase(object):
+    def __init__(self):
+        self.is_multi_host = False
+
     def compute_gradient_procedure(self, *args):
         raise NotImplementedError("Should not call here")
 
@@ -158,9 +160,13 @@ class HeteroGradientBase(object):
         """
         pass
 
+    def set_is_multi_host(self):
+        self.is_multi_host = True
+
 
 class Guest(HeteroGradientBase):
     def __init__(self):
+        super().__init__()
         self.half_d = None
         self.host_forwards = None
         self.forwards = None
@@ -176,6 +182,33 @@ class Guest(HeteroGradientBase):
     def compute_and_aggregate_forwards(self, data_instances, model_weights,
                                        encrypted_calculator, batch_index, current_suffix, offset=None):
         raise NotImplementedError("Function should not be called here")
+
+    def compute_half_d(self, data_instances, w, cipher, batch_index, current_suffix):
+        raise NotImplementedError("Function should not be called here")
+
+    def _asynchronous_compute_gradient(self, data_instances, model_weights, cipher, current_suffix):
+        encrypted_half_d = cipher.encrypt(self.half_d)
+        self.remote_fore_gradient(encrypted_half_d, suffix=current_suffix)
+
+        half_g = compute_gradient(data_instances, self.half_d, False)
+        self.host_forwards = self.get_host_forward(suffix=current_suffix)
+        host_forward = self.host_forwards[0]
+        host_half_g = compute_gradient(data_instances, host_forward, False)
+        unilateral_gradient = half_g + host_half_g
+        if model_weights.fit_intercept:
+            n = data_instances.count()
+            intercept = host_forward.reduce(lambda x, y: x + y) + self.half_d.reduce(lambda x, y: x + y) / n
+            unilateral_gradient = np.append(unilateral_gradient, intercept)
+        return unilateral_gradient
+
+    def _centralized_compute_gradient(self, data_instances, model_weights, cipher, current_suffix):
+        self.host_forwards = self.get_host_forward(suffix=current_suffix)
+        fore_gradient = self.half_d
+        for host_forward in self.host_forwards:
+            fore_gradient = fore_gradient.join(host_forward, lambda x, y: x + y)
+        self.remote_fore_gradient(fore_gradient, suffix=current_suffix)
+        unilateral_gradient = compute_gradient(data_instances, fore_gradient, model_weights.fit_intercept)
+        return unilateral_gradient
 
     def compute_gradient_procedure(self, data_instances, encrypted_calculator, model_weights, optimizer,
                                    n_iter_, batch_index, offset=None):
@@ -194,19 +227,24 @@ class Guest(HeteroGradientBase):
         current_suffix = (n_iter_, batch_index)
         # self.host_forwards = self.get_host_forward(suffix=current_suffix)
 
-        fore_gradient = self.compute_and_aggregate_forwards(data_instances, model_weights, encrypted_calculator,
-                                                            batch_index, current_suffix, offset)
+        # Compute Guest's partial d
+        self.compute_half_d(data_instances, model_weights, encrypted_calculator,
+                            batch_index, current_suffix)
+        if not self.is_multi_host:
+            unilateral_gradient = self._asynchronous_compute_gradient(data_instances, model_weights,
+                                                                      cipher=encrypted_calculator[batch_index],
+                                                                      current_suffix=current_suffix)
+        else:
+            unilateral_gradient = self._centralized_compute_gradient(data_instances, model_weights,
+                                                                     cipher=encrypted_calculator[batch_index],
+                                                                     current_suffix=current_suffix)
 
-        self.remote_fore_gradient(fore_gradient, suffix=current_suffix)
-
-        unilateral_gradient = compute_gradient(data_instances,
-                                               fore_gradient,
-                                               model_weights.fit_intercept)
         if optimizer is not None:
             unilateral_gradient = optimizer.add_regular_to_grad(unilateral_gradient, model_weights)
 
         optimized_gradient = self.update_gradient(unilateral_gradient, suffix=current_suffix)
-        return optimized_gradient, fore_gradient, self.host_forwards
+        LOGGER.debug(f"Before return, optimized_gradient: {optimized_gradient}")
+        return optimized_gradient
 
     def get_host_forward(self, suffix=tuple()):
         host_forward = self.host_forward_transfer.get(idx=-1, suffix=suffix)
@@ -223,7 +261,7 @@ class Guest(HeteroGradientBase):
 
 class Host(HeteroGradientBase):
     def __init__(self):
-        self.half_d = None
+        super().__init__()
         self.forwards = None
         self.fore_gradient = None
 
@@ -240,6 +278,26 @@ class Host(HeteroGradientBase):
     def compute_unilateral_gradient(self, data_instances, fore_gradient, model_weights, optimizer):
         raise NotImplementedError("Function should not be called here")
 
+    def _asynchronous_compute_gradient(self, data_instances, cipher, current_suffix):
+        encrypted_forward = cipher.encrypt(self.forwards)
+        self.remote_host_forward(encrypted_forward, suffix=current_suffix)
+
+        half_g = compute_gradient(data_instances, self.forwards, False)
+        guest_half_d = self.get_fore_gradient(suffix=current_suffix)
+        guest_half_g = compute_gradient(data_instances, guest_half_d, False)
+        unilateral_gradient = half_g + guest_half_g
+        return unilateral_gradient
+
+    def _centralized_compute_gradient(self, data_instances, cipher, current_suffix):
+        encrypted_forward = cipher.encrypt(self.forwards)
+        self.remote_host_forward(encrypted_forward, suffix=current_suffix)
+
+        fore_gradient = self.fore_gradient_transfer.get(idx=0, suffix=current_suffix)
+
+        # Host case, never fit-intercept
+        unilateral_gradient = compute_gradient(data_instances, fore_gradient, False)
+        return unilateral_gradient
+
     def compute_gradient_procedure(self, data_instances, encrypted_calculator, model_weights,
                                    optimizer,
                                    n_iter_, batch_index):
@@ -253,19 +311,22 @@ class Host(HeteroGradientBase):
         current_suffix = (n_iter_, batch_index)
 
         self.forwards = self.compute_forwards(data_instances, model_weights)
-        encrypted_forward = encrypted_calculator[batch_index].encrypt(self.forwards)
 
-        self.remote_host_forward(encrypted_forward, suffix=current_suffix)
-        fore_gradient = self.get_fore_gradient(suffix=current_suffix)
+        if not self.is_multi_host:
+            unilateral_gradient = self._asynchronous_compute_gradient(data_instances,
+                                                                      encrypted_calculator[batch_index],
+                                                                      current_suffix)
+        else:
+            unilateral_gradient = self._centralized_compute_gradient(data_instances,
+                                                                     encrypted_calculator[batch_index],
+                                                                     current_suffix)
 
-        unilateral_gradient = compute_gradient(data_instances,
-                                               fore_gradient,
-                                               model_weights.fit_intercept)
         if optimizer is not None:
             unilateral_gradient = optimizer.add_regular_to_grad(unilateral_gradient, model_weights)
 
         optimized_gradient = self.update_gradient(unilateral_gradient, suffix=current_suffix)
-        return optimized_gradient, fore_gradient
+        LOGGER.debug(f"Before return compute_gradient_procedure")
+        return optimized_gradient
 
     def compute_sqn_forwards(self, data_instances, delta_s, cipher_operator):
         """
@@ -306,6 +367,7 @@ class Host(HeteroGradientBase):
 
 class Arbiter(HeteroGradientBase):
     def __init__(self):
+        super().__init__()
         self.has_multiple_hosts = False
 
     def _register_gradient_sync(self, guest_gradient_transfer, host_gradient_transfer,
