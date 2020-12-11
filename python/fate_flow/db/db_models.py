@@ -216,7 +216,7 @@ class TrackingMetric(DataBaseModel):
     f_metric_namespace = CharField(max_length=180, index=True)
     f_metric_name = CharField(max_length=180, index=True)
     f_key = CharField(max_length=200)
-    f_value = TextField()
+    f_value = LongTextField()
     f_type = IntegerField(index=True)  # 0 is data, 1 is meta
 
 
