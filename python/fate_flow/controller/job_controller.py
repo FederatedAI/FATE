@@ -64,7 +64,7 @@ class JobController(object):
         job_info["progress"] = 0
         cls.adapt_job_parameters(role=role, job_parameters=job_parameters)
         engines_info = cls.get_job_engines_address(job_parameters=job_parameters)
-        cls.check_parameters(job_parameters=job_parameters, engines_info=engines_info)
+        cls.check_parameters(job_parameters=job_parameters, role=role, party_id=party_id, engines_info=engines_info)
         job_info["runtime_conf_on_party"]["job_parameters"] = job_parameters.to_dict()
         job_utils.save_job_conf(job_id=job_id,
                                 role=role,
@@ -138,8 +138,8 @@ class JobController(object):
         return engines_info
 
     @classmethod
-    def check_parameters(cls, job_parameters: RunParameters, engines_info):
-        status, cores_submit, max_cores_per_job = ResourceManager.check_resource_apply(job_parameters=job_parameters, engines_info=engines_info)
+    def check_parameters(cls, job_parameters: RunParameters, role, party_id, engines_info):
+        status, cores_submit, max_cores_per_job = ResourceManager.check_resource_apply(job_parameters=job_parameters, role=role, party_id=party_id, engines_info=engines_info)
         if not status:
             msg = ""
             msg2 = "default value is fate_flow/settings.py#DEFAULT_TASK_CORES_PER_NODE, refer fate_flow/examples/test_hetero_lr_job_conf.json"

@@ -1,18 +1,22 @@
 default:
   proxy:
     - host: 127.0.0.1
-      port: 9373
+      port: 9390
+local:
+  test_proxy:
+    - host: 127.0.0.1
+      port: 9302
 9999:
   proxy:
     - host: 127.0.0.1
-      port: 9373
+      port: 9390
   fateflow:
     - host: 127.0.0.1
       port: 9360
 10000:
   proxy:
     - host: 127.0.0.1
-      port: 9373
+      port: 9390
   fateflow:
     - host: 127.0.0.1
-      port: 9362
+      port: 9360

@@ -354,6 +354,7 @@ class DAGScheduler(Cron):
             else:
                 schedule_logger(job_id=job_id).info(f"job {job_id} set rerun signal failed")
         else:
+            FederatedScheduler.sync_job_status(job=job)
             schedule_logger(job_id=job_id).info(f"job {job_id} no task to rerun")
 
     @classmethod
