@@ -222,6 +222,12 @@ def dsl_generator():
 
 @manager.route('/url/get', methods=['POST'])
 def get_url():
-    request_data = request.json
-    board_url = job_utils.get_board_url(request_data.get('job_id'), request_data.get('role'), request_data.get('party_id'))
-    return get_json_result(data={'board_url': board_url})
+    jobs = JobSaver.query_job(**request.json)
+    if jobs:
+        board_urls = []
+        for job in jobs:
+            board_url = job_utils.get_board_url(job.f_job_id, job.f_role, job.f_party_id)
+            board_urls.append(board_url)
+        return get_json_result(data={'board_url': board_urls})
+    else:
+        return get_json_result(retcode=101, retmsg='no found job')

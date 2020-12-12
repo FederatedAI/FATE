@@ -283,6 +283,8 @@ class JobController(object):
         job_dsl, job_runtime_conf, runtime_conf_on_party, train_runtime_conf = job_utils.get_job_configuration(job_id=job_id, role=role,
                                                                                                                party_id=party_id)
         job_parameters = runtime_conf_on_party.get('job_parameters', {})
+        if role in job_parameters.get("assistant_role", []):
+            return
         model_id = job_parameters['model_id']
         model_version = job_parameters['model_version']
         job_type = job_parameters.get('job_type', '')
