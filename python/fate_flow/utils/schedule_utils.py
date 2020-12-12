@@ -78,6 +78,8 @@ def get_parser_version_mapping():
 
 def get_dsl_parser_by_version(version: str = "1"):
     mapping = get_parser_version_mapping()
+    if isinstance(version, int):
+        version = str(version)
     if version not in mapping:
         raise Exception("{} version of dsl parser is not currently supported.".format(version))
     return mapping[version]

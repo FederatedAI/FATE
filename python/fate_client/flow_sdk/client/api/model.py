@@ -111,3 +111,23 @@ class Model(BaseFlowAPI):
         config_data, dsl_data = preprocess(**kwargs)
         return self._post(url='model/model_tag/retrieve', json=config_data)
 
+    def deploy(self, model_id, model_version, cpn_list=None, predict_dsl=None):
+        kwargs = locals()
+        config_data, dsl_data = preprocess(**kwargs)
+        return self._post(url='model/deploy', json=config_data)
+
+    def get_predict_dsl(self, model_id, model_version):
+        kwargs = locals()
+        config_data, dsl_data = preprocess(**kwargs)
+        return self._post(url='model/get/predict/dsl', json=config_data)
+
+    def get_predict_conf(self, model_id, model_version):
+        kwargs = locals()
+        config_data, dsl_data = preprocess(**kwargs)
+        return self._post(url='model/get/predict/conf', json=config_data)
+
+    def get_model_info(self, model_id=None, model_version=None, role=None, party_id=None, query_filters=None, **kwargs):
+        kwargs = locals()
+        config_data, dsl_data = preprocess(**kwargs)
+        return self._post(url='model/query', json=config_data)
+

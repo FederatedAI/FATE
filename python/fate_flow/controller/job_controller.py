@@ -31,7 +31,6 @@ from fate_arch.common import FederatedMode
 from fate_arch.computing import ComputingEngine
 from fate_arch.federation import FederationEngine
 from fate_arch.storage import StorageEngine
-from fate_flow.db.db_models import Job
 
 
 class JobController(object):
@@ -289,6 +288,10 @@ class JobController(object):
         model_id = job_parameters['model_id']
         model_version = job_parameters['model_version']
         job_type = job_parameters.get('job_type', '')
+        work_mode = job_parameters['work_mode']
+        roles = runtime_conf_on_party['role']
+        initiator_role = runtime_conf_on_party['initiator']['role']
+        initiator_party_id = runtime_conf_on_party['initiator']['party_id']
         if job_type == 'predict':
             return
         dag = schedule_utils.get_job_dsl_parser(dsl=job_dsl,
@@ -302,6 +305,16 @@ class JobController(object):
         pipeline.fate_version = RuntimeConfig.get_env("FATE")
         pipeline.model_id = model_id
         pipeline.model_version = model_version
+
+        pipeline.parent = True
+        pipeline.loaded_times = 0
+        pipeline.roles = json_dumps(roles, byte=True)
+        pipeline.work_mode = work_mode
+        pipeline.initiator_role = initiator_role
+        pipeline.initiator_party_id = initiator_party_id
+        pipeline.runtime_conf_on_party = json_dumps(runtime_conf_on_party, byte=True)
+        pipeline.parent_info = json_dumps({}, byte=True)
+
         tracker = Tracker(job_id=job_id, role=role, party_id=party_id, model_id=model_id, model_version=model_version)
         tracker.save_pipelined_model(pipelined_buffer_object=pipeline)
         if role != 'local':

@@ -732,6 +732,10 @@ class BaseDSLParser(object):
     def _gen_predict_data_mapping():
         return None, None
 
+    @staticmethod
+    def generate_predict_conf_template(train_dsl, train_conf, model_id, model_version):
+        raise NotImplementedError
+
 
 class DSLParser(BaseDSLParser):
     def _check_component_valid_names(self):
@@ -797,7 +801,7 @@ class DSLParser(BaseDSLParser):
         return dsl_parser.predict_dsl
 
     def run(self, pipeline_dsl=None, pipeline_runtime_conf=None, dsl=None, runtime_conf=None,
-            setting_conf_prefix=None, mode="train",  *args, **kwargs):
+            setting_conf_prefix=None, mode="train", *args, **kwargs):
 
         if mode not in ["train", "predict"]:
             raise ModeError()
@@ -860,6 +864,45 @@ class DSLParser(BaseDSLParser):
 
         for data_key, data_value in data_mapping:
             yield data_key, data_value
+
+    @staticmethod
+    def generate_predict_conf_template(predict_dsl, train_conf, model_id, model_version):
+        if not train_conf.get("role") or not train_conf.get("initiator"):
+            raise ValueError("role and initiator should be contain in job's trainconf")
+
+        predict_conf = dict()
+        predict_conf["initiator"] = train_conf.get("initiator")
+        predict_conf["role"] = train_conf.get("role")
+
+        predict_conf["job_parameters"] = train_conf.get("job_parameters", {})
+        predict_conf["job_parameters"]["job_type"] = "predict"
+        predict_conf["job_parameters"]["model_id"] = model_id
+        predict_conf["job_parameters"]["model_version"] = model_version
+
+        predict_conf["role_parameters"] = {}
+
+        for role in predict_conf["role"]:
+            if role not in ["guest", "host"]:
+                continue
+
+            args_input = set()
+            for _, module_info in predict_dsl.get("components", {}).items():
+                data_set = module_info.get("input", {}).get("data", {})
+                for data_key in data_set:
+                    for data in data_set[data_key]:
+                        if data.split(".", -1)[0] == "args":
+                            args_input.add(data.split(".", -1)[1])
+
+            predict_conf["role_parameters"][role] = {"args": {"data": {}}}
+            fill_template = {}
+            for data_key in args_input:
+                fill_template[data_key] = [{"name": "name_to_be_filled_" + str(i),
+                                            "namespace": "namespace_to_be_filled_" + str(i)}
+                                           for i in range(len(predict_conf["role"].get(role)))]
+
+            predict_conf["role_parameters"][role] = {"args": {"data": fill_template}}
+
+        return predict_conf
 
 
 class DSLParserV2(BaseDSLParser):
@@ -937,3 +980,41 @@ class DSLParserV2(BaseDSLParser):
 
         for data_key, data_value in data_mapping:
             yield data_key, data_value
+
+    @staticmethod
+    def generate_predict_conf_template(predict_dsl, train_conf, model_id, model_version):
+        if not train_conf.get("role") or not train_conf.get("initiator"):
+            raise ValueError("role and initiator should be contain in job's trainconf")
+
+        predict_conf = dict()
+        predict_conf["dsl_version"] = 2
+        predict_conf["role"] = train_conf.get("role")
+        predict_conf["initiator"] = train_conf.get("initiator")
+
+        predict_conf["job_parameters"] = train_conf.get("job_parameters", {})
+        predict_conf["job_parameters"]["common"].update({"model_id": model_id,
+                                                         "model_version": model_version,
+                                                         "job_type": "predict"})
+
+        predict_conf["component_parameters"] = {"role": {}}
+
+        for role in predict_conf["role"]:
+            if role not in ["guest", "host"]:
+                continue
+
+            reader_components = []
+            for module_alias, module_info in predict_dsl.get("components", {}).items():
+                if module_info["module"] == "Reader":
+                    reader_components.append(module_alias)
+
+            predict_conf["component_parameters"]["role"][role] = dict()
+            fill_template = {}
+            for idx, reader_alias in enumerate(reader_components):
+                fill_template[reader_alias] = {"table": {"name": "name_to_be_filled_" + str(idx),
+                                                         "namespace": "namespace_to_be_filled_" + str(idx)}}
+
+            for idx in range(len(predict_conf["role"][role])):
+                predict_conf["component_parameters"]["role"][role][str(idx)] = fill_template
+
+        return predict_conf
+

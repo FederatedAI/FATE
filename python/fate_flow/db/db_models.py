@@ -261,26 +261,29 @@ class MachineLearningModelInfo(DataBaseModel):
     f_id = BigAutoField(primary_key=True)
     f_role = CharField(max_length=50, index=True)
     f_party_id = CharField(max_length=10, index=True)
-    f_roles = JSONField()
+    f_roles = JSONField(default={})
     f_job_id = CharField(max_length=25, index=True)
     f_model_id = CharField(max_length=100, index=True)
     f_model_version = CharField(max_length=100, index=True)
     f_loaded_times = IntegerField(default=0)
     f_size = BigIntegerField(default=0)
-    f_create_time = BigIntegerField(default=0)
-    f_update_time = BigIntegerField(default=0)
     f_description = TextField(null=True, default='')
     f_initiator_role = CharField(max_length=50, index=True)
     f_initiator_party_id = CharField(max_length=50, index=True, default=-1)
-    f_runtime_conf = JSONField()
+    f_runtime_conf = JSONField(default={})
     f_work_mode = IntegerField()
-    f_dsl = JSONField()
+    f_train_dsl = JSONField(default={})
     f_train_runtime_conf = JSONField(default={})
     f_imported = IntegerField(default=0)
-    f_job_status = CharField(max_length=50)
+    f_job_status = CharField(max_length=50, null=True)
+    f_runtime_conf_on_party = JSONField(default={})
+    f_fate_version = CharField(null=True, default='')
+    f_parent = BooleanField(null=True, default=None)
+    f_parent_info = JSONField(default={})
+    f_inference_dsl = JSONField(default={})
 
     class Meta:
-        db_table = "t_machine_learning_model_info"
+        db_table = "t_machine_learning_model_info_ryan"
 
 
 class ModelTag(DataBaseModel):
