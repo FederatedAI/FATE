@@ -16,10 +16,11 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import numpy
 
 from federatedml.util import LOGGER
 from federatedml.transfer_variable.transfer_class import secret_sharing_sum_transfer_variable
-from federatedml.param.secure_sharing_sum_param import SecureSharingSumParam
+from federatedml.param.secret_sharing_sum_param import SecretSharingSumParam
 from federatedml.secret_sharing_sum.base_secret_sharing_sum import BaseSecretSharingSum
 
 
@@ -27,25 +28,32 @@ class SecretSharingSumGuest(BaseSecretSharingSum):
     def __init__(self):
         super(SecretSharingSumGuest, self).__init__()
         self.transfer_inst = secret_sharing_sum_transfer_variable.SecretSharingSumTransferVariables()
+        self.output_schema = None
 
-    def _init_model(self, model_param: SecureSharingSumParam):
+    def _init_model(self, model_param: SecretSharingSumParam):
         self.sum_cols = model_param.sum_cols
 
     def _init_data(self, data_inst):
         self.host_count = len(self.component_properties.host_party_idlist)
-        self.vss.set_share_amount(self.host_count+1)
+        self.vss.set_share_amount(self.host_count)
         self.vss.generate_prime()
         if not self.model_param.sum_cols:
             self.x = data_inst.mapValues(lambda x: x.features)
+            self.output_schema = data_inst.schema
         else:
             self.x = data_inst.mapValues(self.select_data_by_idx)
+            header = []
+            for idx, label in enumerate(data_inst.schema.get('header')):
+                if idx in self.sum_cols:
+                    header.append(label)
+            self.output_schema = {"header": header, "sid_name": data_inst.schema.get('sid_name')}
 
     def select_data_by_idx(self, values):
         data = []
         for idx, feature in enumerate(values.features):
             if idx in self.sum_cols:
                 data.append(feature)
-        return data
+        return numpy.array(data)
 
     def sync_primes_to_host(self):
         self.transfer_inst.guest_share_primes.remote(self.vss.prime,
@@ -67,14 +75,14 @@ class SecretSharingSumGuest(BaseSecretSharingSum):
             sub_key = self.transfer_inst.host_share_to_guest.get(idx=idx)
             commitment = self.transfer_inst.host_commitments.get(idx=idx)
 
-            self.verify_subkey(sub_key, commitment)
+            self.verify_subkey(sub_key, commitment, self.component_properties.host_party_idlist[idx])
             self.y_recv.append(sub_key)
             self.commitments_recv.append(commitment)
 
     def recv_host_sum_from_host(self):
         for idx in range(self.host_count):
             host_sum = self.transfer_inst.host_sum.get(idx=idx)
-            self.verify_sumkey(host_sum, self.commitments)
+            self.verify_sumkey(host_sum, self.commitments, self.component_properties.host_party_idlist[idx])
             self.host_sum_recv.append(host_sum)
 
     def fit(self, data_inst):
@@ -102,6 +110,8 @@ class SecretSharingSumGuest(BaseSecretSharingSum):
         self.reconstruct()
 
         LOGGER.info("success to calculate privacy sum")
+
+        self.secret_sum.schema = self.output_schema
 
         data_output = self.secret_sum
 
