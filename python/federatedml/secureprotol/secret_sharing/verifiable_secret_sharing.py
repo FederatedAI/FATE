@@ -2,15 +2,15 @@ import random
 from federatedml.secureprotol import gmpy_math
 
 
-class Vss(object):
+class VerifiableSecretSharing(object):
     def __init__(self):
         self.prime = None
         self.share_amount = -1
         self.g = 2
         self.commitments = []
 
-    def set_share_amount(self, share_amount):
-        self.share_amount = share_amount
+    def set_share_amount(self, host_count):
+        self.share_amount = host_count+1
 
     def generate_prime(self):
         self.prime = gmpy_math.getprimeover(512)
@@ -66,4 +66,5 @@ class Vss(object):
             v2 *= gmpy_math.powmod(commitment[i], (x**i), self.prime)
         v2 = v2 % self.prime
         if v1 != v2:
-            raise ValueError("error sharing")
+            return False
+        return True
