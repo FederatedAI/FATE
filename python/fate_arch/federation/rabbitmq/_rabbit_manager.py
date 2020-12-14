@@ -305,7 +305,7 @@ class RabbitManager:
 
         upstream_runtime_config['uri'] = upstream_host
         upstream_runtime_config['queue'] = receive_queue_name.replace(
-            "receive", "send")
+            "receive", "send", 1)
 
         body = {
             "value": upstream_runtime_config
@@ -337,7 +337,7 @@ class RabbitManager:
                                                                       vhost,
                                                                       receive_queue_name))
         body = {
-            "pattern": receive_queue_name,
+            "pattern": '^' + receive_queue_name + '$',
             "apply-to": "queues",
             "definition":
                 {
@@ -367,7 +367,7 @@ class RabbitManager:
     # Create federate queue with upstream 
     def federate_queue(self, upstream_host, vhost, send_queue_name, receive_queue_name):        
         time.sleep(1)
-        LOGGER.debug(f"[rabbitmanager.federate_queue] create federate_queue {send_queue_name} {receive_queue_name}")
+        LOGGER.debug(f"[rabbitmanager.federate_queue] create federate_queue {receive_queue_name}")
 
         result = self._set_federated_upstream(
             upstream_host, vhost, receive_queue_name)
