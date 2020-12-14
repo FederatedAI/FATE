@@ -16,6 +16,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import copy
 import numpy as np
 
 from fate_flow.entity.metric import Metric
@@ -234,7 +235,7 @@ class BaseLinearModel(ModelBase):
         if not hasattr(self.transfer_variable, "sample_weights"):
             return sample_table
         if not self.cipher_operator:
-            raise ValueError("Cipher_operator is not existed when remoting sample weights")
+            raise ValueError("Cipher_operator does not exist when remoting sample weights")
 
         if sample_table:
             encrypted_sample_table = sample_table.mapValues(lambda x: self.cipher_operator.encrypt(x))
@@ -248,3 +249,10 @@ class BaseLinearModel(ModelBase):
             return None
         sample_table = self.transfer_variable.sample_weights.get(suffix=self.flowid)
         return sample_table
+
+    @staticmethod
+    def load_sample_weight(data_instance, weight):
+        weighted_data_instance = copy.deepcopy(data_instance)
+        weighted_data_instance.weight = weight
+        return weighted_data_instance
+

@@ -58,6 +58,9 @@ class HeteroLinRGuest(HeteroLinRBase):
         LOGGER.info("Enter hetero_linR_guest fit")
         self._abnormal_detection(data_instances)
         self.header = self.get_header(data_instances)
+        sample_weights = self.check_and_remote_sample_weights(data_instances)
+        if sample_weights:
+            self.gradient_loss_operator.set_use_sample_weight()
 
         self.validation_strategy = self.init_validation_strategy(data_instances, validate_data)
 
@@ -155,3 +158,4 @@ class HeteroLinRGuest(HeteroLinRBase):
         predict_result = self.predict_score_to_output(data_instances=data_instances, predict_score=pred,
                                                       classes=None)
         return predict_result
+

@@ -174,6 +174,7 @@ def compute_gradient(data_instances, fore_gradient, fit_intercept):
 class HeteroGradientBase(object):
     def __init__(self):
         self.use_async = False
+        self.use_sample_weight = False
 
     def compute_gradient_procedure(self, *args):
         raise NotImplementedError("Should not call here")
@@ -186,6 +187,9 @@ class HeteroGradientBase(object):
 
     def set_use_async(self):
         self.use_async = True
+
+    def set_use_sample_weight(self):
+        self.use_sample_weight = True
 
 
 class Guest(HeteroGradientBase):

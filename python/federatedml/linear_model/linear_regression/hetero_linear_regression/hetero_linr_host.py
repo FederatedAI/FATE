@@ -47,6 +47,11 @@ class HeteroLinRHost(HeteroLinRBase):
 
         LOGGER.info("Enter hetero_linR host")
         self._abnormal_detection(data_instances)
+        sample_weights = self.get_sample_weight()
+
+        if sample_weights:
+            self.gradient_loss_operator.set_use_sample_weight()
+            data_instances = data_instances.mapValues(lambda v: self.load_sample_weight(v, sample_weights))
 
         self.validation_strategy = self.init_validation_strategy(data_instances, validate_data)
 
