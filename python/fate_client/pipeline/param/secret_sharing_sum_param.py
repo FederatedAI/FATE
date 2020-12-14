@@ -29,7 +29,7 @@ sum_cols : list of column index, default: None
 """
 
 
-class SecureSharingSumParam(BaseParam):
+class SecretSharingSumParam(BaseParam):
     def __init__(self, sum_cols=None):
         self.sum_cols = sum_cols
         if sum_cols is None:

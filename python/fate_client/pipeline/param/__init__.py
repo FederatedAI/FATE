@@ -25,8 +25,9 @@ from pipeline.param.boosting_param import DecisionTreeParam
 from pipeline.param.predict_param import PredictParam
 from pipeline.param.evaluation_param import EvaluateParam
 from pipeline.param.feature_binning_param import FeatureBinningParam
+from pipeline.param.secret_sharing_sum_param import SecretSharingSumParam
 
 
 __all__ = ["DataIOParam", "DecisionTreeParam", "InitParam", "LogisticParam", "ObjectiveParam",
            "EncryptParam", "EvaluateParam", "PredictParam", 'FeatureBinningParam',
-           "LinearParam"]
+           "LinearParam", "SecretSharingSumParam"]
