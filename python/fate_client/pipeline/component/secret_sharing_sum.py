@@ -14,21 +14,21 @@
 #  limitations under the License.
 #
 
-from pipeline.param.secret_sharing_sum_param import SecureSharingSumParam
+from pipeline.param.secret_sharing_sum_param import SecretSharingSumParam
 from pipeline.component.component_base import Component
 from pipeline.interface import Input
 from pipeline.interface import Output
 from pipeline.utils.logger import LOGGER
 
 
-class SecretSharingSum(Component, SecureSharingSumParam):
+class SecretSharingSum(Component, SecretSharingSumParam):
     def __init__(self, **kwargs):
         Component.__init__(self, **kwargs)
 
         LOGGER.debug(f"{self.name} component created")
         new_kwargs = self.erase_component_base_param(**kwargs)
 
-        SecureSharingSumParam.__init__(self, **new_kwargs)
+        SecretSharingSumParam.__init__(self, **new_kwargs)
 
         self.input = Input(self.name)
         self.output = Output(self.name, has_model=False)
