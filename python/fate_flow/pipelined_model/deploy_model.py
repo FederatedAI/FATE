@@ -15,8 +15,6 @@
 #
 import os
 import shutil
-
-from fate_client.pipeline.constant import JobStatus
 from fate_flow.utils import model_utils
 from fate_flow.settings import stat_logger
 from fate_arch.common.base_utils import json_loads, json_dumps
@@ -69,16 +67,16 @@ def deploy(config_data):
                         os.path.join(deploy_model.model_path, "variables", "data", "pipeline", "pipeline", "Pipeline"))
 
         model_info = model_utils.gather_model_info_data(deploy_model)
-        model_info['job_id'] = model_info['model_version']
+        model_info['job_id'] = model_info['f_model_version']
         model_info['size'] = deploy_model.calculate_model_file_size()
         model_info['role'] = local_role
         model_info['party_id'] = local_party_id
+        model_info['work_mode'] = adapter.get_job_work_mode()
+        model_info['parent'] = False if model_info.get('f_inference_dsl') else True
         if model_utils.compare_version(model_info['f_fate_version'], '1.5.0') == 'eq':
             model_info['roles'] = model_info.get('f_train_runtime_conf', {}).get('role', {})
             model_info['initiator_role'] = model_info.get('f_train_runtime_conf', {}).get('initiator', {}).get('role')
             model_info['initiator_party_id'] = model_info.get('f_train_runtime_conf', {}).get('initiator', {}).get('party_id')
-            model_info['work_mode'] = adapter.get_job_work_mode()
-            model_info['parent'] = False if model_info.get('f_inference_dsl') else True
         model_utils.save_model_info(model_info)
 
     except Exception as e:

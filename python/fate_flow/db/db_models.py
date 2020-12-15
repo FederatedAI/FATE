@@ -258,7 +258,6 @@ class TrackingOutputDataInfo(DataBaseModel):
 
 
 class MachineLearningModelInfo(DataBaseModel):
-    f_id = BigAutoField(primary_key=True)
     f_role = CharField(max_length=50, index=True)
     f_party_id = CharField(max_length=10, index=True)
     f_roles = JSONField(default={})
@@ -283,7 +282,8 @@ class MachineLearningModelInfo(DataBaseModel):
     f_inference_dsl = JSONField(default={})
 
     class Meta:
-        db_table = "t_machine_learning_model_info_ryan"
+        db_table = "t_machine_learning_model_info"
+        primary_key = CompositeKey('f_role', 'f_party_id', 'f_model_id', 'f_model_version')
 
 
 class ModelTag(DataBaseModel):
