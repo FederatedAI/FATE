@@ -49,8 +49,8 @@ class HeteroLRBase(BaseLogisticRegression):
         self.converge_procedure.register_convergence(self.transfer_variable)
         self.batch_generator.register_batch_generator(self.transfer_variable)
         self.gradient_loss_operator.register_gradient_procedure(self.transfer_variable)
-        # if len(self.component_properties.host_party_idlist) == 1:
-        #     self.gradient_loss_operator.set_use_async()
+        if len(self.component_properties.host_party_idlist) == 1:
+            self.gradient_loss_operator.set_use_async()
 
         if params.optimizer == 'sqn':
             gradient_loss_operator = sqn_factory(self.role, params.sqn_param)

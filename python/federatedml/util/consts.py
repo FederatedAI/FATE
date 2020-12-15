@@ -208,6 +208,8 @@ SECURE_AGG_AMPLIFY_FACTOR = 1000
 QUANTILE = 'quantile'
 BUCKET = 'bucket'
 OPTIMAL = 'optimal'
+VIRTUAL_SUMMARY = 'virtual_summary'
+RECURSIVE_QUERY = 'recursive_query'
 
 # Feature selection methods
 UNIQUE_VALUE = 'unique_value'
