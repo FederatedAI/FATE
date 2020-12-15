@@ -86,8 +86,9 @@ TAG_DESCRIPTION = click.option("-d", "--tag-desc", type=click.STRING,
                                help="The description of tag. Note that if there are some whitespaces in description, "
                                "please make sure the description text is enclosed in double quotation marks.")
 
-MODEL_VERSION = click.option("-m", "--model-version", type=click.STRING,
-                             help="Model version.")
+MODEL_ID = click.option("--model-id", type=click.STRING, help="Model id.")
+
+MODEL_VERSION = click.option("--model-version", type=click.STRING, help="Model version.")
 
 MODEL_VERSION_REQUIRED = click.option("--model-version", type=click.STRING, required=True, help="Model version.")
 
