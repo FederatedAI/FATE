@@ -15,11 +15,14 @@
 #
 import os
 import re
+from datetime import datetime
+
 import click
 import requests
 from flow_client.flow_cli.utils import cli_args
 from contextlib import closing
-from flow_client.flow_cli.utils.cli_utils import preprocess, access_server, prettify, get_project_base_directory
+from flow_client.flow_cli.utils.cli_utils import preprocess, access_server, prettify, get_project_base_directory, \
+    check_abs_path
 
 
 @click.group(short_help="Model Operations")
@@ -245,10 +248,31 @@ def get_predict_dsl(ctx, **kwargs):
 
     \b
     - USAGE:
-        flow model get-predict-dsl --model_id $MODEL_ID --model_version $MODEL_VERSION
+        flow model get-predict-dsl --model_id $MODEL_ID --model_version $MODEL_VERSION -o ./examples/
     """
     config_data, dsl_data = preprocess(**kwargs)
-    access_server('post', ctx, 'model/get/predict/dsl', config_data)
+    dsl_filename = "predict_dsl_{}.json".format(datetime.now().strftime('%Y%m%d%H%M%S'))
+    output_path = os.path.join(check_abs_path(kwargs.get("output_path")), dsl_filename)
+    config_data["filename"] = dsl_filename
+
+    with closing(access_server('post', ctx, 'model/get/predict/dsl', config_data, False, stream=True)) as response:
+        if response.status_code == 200:
+            os.makedirs(os.path.dirname(output_path), exist_ok=True)
+            with open(output_path, "wb") as fw:
+                for chunk in response.iter_content(1024):
+                    if chunk:
+                        fw.write(chunk)
+            res = {'retcode': 0,
+                   'retmsg': "Query predict dsl successfully. "
+                             "File path is: {}".format(output_path)}
+        else:
+            try:
+                res = response.json() if isinstance(response, requests.models.Response) else response
+            except Exception:
+                res = {'retcode': 100,
+                       'retmsg': "Query predict dsl failed."
+                                 "For more details, please check logs/fate_flow/fate_flow_stat.log"}
+    prettify(res)
 
 
 @model.command("get-predict-conf", short_help="Get predict conf template")
@@ -264,11 +288,32 @@ def get_predict_conf(ctx, **kwargs):
 
     \b
     - USAGE:
-        flow model get-predict-conf --model_id $MODEL_ID --model_version $MODEL_VERSION
+        flow model get-predict-conf --model_id $MODEL_ID --model_version $MODEL_VERSION -o ./examples/
 
     """
     config_data, dsl_data = preprocess(**kwargs)
-    access_server('post', ctx, 'model/get/predict/conf', config_data)
+    conf_filename = "predict_conf_{}.json".format(datetime.now().strftime('%Y%m%d%H%M%S'))
+    output_path = os.path.join(check_abs_path(kwargs.get("output_path")), conf_filename)
+    config_data["filename"] = conf_filename
+
+    with closing(access_server('post', ctx, 'model/get/predict/conf', config_data, False, stream=True)) as response:
+        if response.status_code == 200:
+            os.makedirs(os.path.dirname(output_path), exist_ok=True)
+            with open(output_path, "wb") as fw:
+                for chunk in response.iter_content(1024):
+                    if chunk:
+                        fw.write(chunk)
+            res = {'retcode': 0,
+                   'retmsg': "Query predict conf successfully. "
+                             "File path is: {}".format(output_path)}
+        else:
+            try:
+                res = response.json() if isinstance(response, requests.models.Response) else response
+            except Exception:
+                res = {'retcode': 100,
+                       'retmsg': "Query predict conf failed."
+                                 "For more details, please check logs/fate_flow/fate_flow_stat.log"}
+    prettify(res)
 
 
 @model.command("deploy", short_help="Deploy model")

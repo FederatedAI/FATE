@@ -587,19 +587,19 @@ def deploy():
     check_config(request_data, require_parameters)
     model_id = request_data.get("model_id")
     model_version = request_data.get("model_version")
-    model_info = model_utils.query_model_info_from_file(model_id=model_id, model_version=model_version, to_dict=True)
+    retcode, retmsg, model_info = model_utils.query_model_info_from_file(model_id=model_id, model_version=model_version, to_dict=True)
     if not model_info:
         raise Exception(f'Deploy model failed, no model {model_id} {model_version} found.')
     else:
         for key, value in model_info.items():
-            version_check = model_utils.compare_version(value.get('fate_version'), '1.5.0')
+            version_check = model_utils.compare_version(value.get('f_fate_version'), '1.5.0')
             if version_check == 'lt':
                 continue
             else:
                 init_role = key.split('/')[-2].split('#')[0]
                 init_party_id = key.split('/')[-2].split('#')[1]
-                model_init_role = value.get('initiator_role') if value.get('initiator_role') else value.get('train_runtime_conf', {}).get('initiator', {}).get('role', '')
-                model_init_party_id = value.get('initiator_role_party_id') if value.get('initiator_role_party_id') else value.get('train_runtime_conf', {}).get('initiator', {}).get('party_id', '')
+                model_init_role = value.get('f_initiator_role') if value.get('f_initiator_role') else value.get('f_train_runtime_conf', {}).get('initiator', {}).get('role', '')
+                model_init_party_id = value.get('f_initiator_role_party_id') if value.get('f_initiator_role_party_id') else value.get('f_train_runtime_conf', {}).get('initiator', {}).get('party_id', '')
                 if (init_role == model_init_role) and (init_party_id == str(model_init_party_id)):
                     break
         else:
@@ -611,9 +611,9 @@ def deploy():
             if request_data.get('cpn_list', None):
                 cpn_list = request_data.pop('cpn_list')
             else:
-                cpn_list = list(value.get('train_dsl', {}).get('components', {}).keys())
-            parser = schedule_utils.get_dsl_parser_by_version(value.get('train_runtime_conf', {}).get('dsl_version', '1'))
-            predict_dsl = parser.deploy_component(cpn_list, value.get('train_dsl'))
+                cpn_list = list(value.get('f_train_dsl', {}).get('components', {}).keys())
+            parser = schedule_utils.get_dsl_parser_by_version(value.get('f_train_runtime_conf', {}).get('dsl_version', '1'))
+            predict_dsl = parser.deploy_component(cpn_list, value.get('f_train_dsl'))
 
         # distribute federated deploy task
         _job_id = job_utils.generate_job_id()
@@ -628,10 +628,10 @@ def deploy():
         deploy_status_msg = 'success'
         deploy_status_info['detail'] = {}
 
-        for role_name, role_partys in value.get("train_runtime_conf", {}).get('role', {}).items():
+        for role_name, role_partys in value.get("f_train_runtime_conf", {}).get('role', {}).items():
             deploy_status_info[role_name] = deploy_status_info.get(role_name, {})
             deploy_status_info['detail'][role_name] = {}
-            adapter = JobRuntimeConfigAdapter(value.get("train_runtime_conf", {}))
+            adapter = JobRuntimeConfigAdapter(value.get("f_train_runtime_conf", {}))
             work_mode = adapter.get_job_work_mode()
 
             for _party_id in role_partys:
@@ -674,11 +674,20 @@ def do_deploy():
 @manager.route('/get/predict/dsl', methods=['POST'])
 def get_predict_dsl():
     request_data = request.json
-    request_data['query_filters'] = ['inference_dsl']
+    request_data['query_filters'] = ['f_inference_dsl']
     retcode, retmsg, data = model_utils.query_model_info_from_file(**request_data)
-    if not retcode:
-        return get_json_result(data=data[0]['inference_dsl'])
-    return retcode, retmsg
+    if data:
+        if request_data.get("filename"):
+            os.makedirs(TEMP_DIRECTORY, exist_ok=True)
+            temp_filepath = os.path.join(TEMP_DIRECTORY, request_data.get("filename"))
+            with open(temp_filepath, "w") as fout:
+                fout.write(json_dumps(data[0]['f_inference_dsl'], indent=4))
+            return send_file(open(temp_filepath, "rb"), as_attachment=True,
+                             attachment_filename=request_data.get("filename"))
+        else:
+            return get_json_result(data=data[0]['inference_dsl'])
+    return error_response(210, "No model found, please check if arguments are specified correctly.")
+
 
 
 @manager.route('/get/predict/conf', methods=['POST'])
