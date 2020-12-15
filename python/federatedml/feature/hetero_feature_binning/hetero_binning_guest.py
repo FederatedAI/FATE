@@ -118,7 +118,6 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
         self.transform(data_instances)
         LOGGER.info("Finish feature binning fit and transform")
         self.set_summary(total_summary)
-        LOGGER.debug(f"Summary is: {self.summary()}")
         return self.data_output
 
     # @staticmethod

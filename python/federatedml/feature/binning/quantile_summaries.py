@@ -18,8 +18,10 @@
 #
 
 import math
+import time
 
 from federatedml.util import consts
+from federatedml.util import LOGGER
 
 
 class Stats(object):
@@ -71,6 +73,7 @@ class QuantileSummaries(object):
                 self.compress()
 
     def _insert_head_buffer(self):
+        t0 = time.time()
         if not len(self.head_sampled):  # If empty
             return
         current_count = self.count
@@ -100,6 +103,7 @@ class QuantileSummaries(object):
         self.sampled = new_sampled
         self.head_sampled = []
         self.count = current_count
+        LOGGER.debug(f"_insert_head_buffer took {time.time() - t0}s")
 
     def compress(self):
         self._insert_head_buffer()
@@ -116,6 +120,7 @@ class QuantileSummaries(object):
         other : QuantileSummaries
             The summaries to be merged
         """
+        t0 = time.time()
         if other.head_sampled:
             # other._insert_head_buffer()
             other.compress()
@@ -151,6 +156,8 @@ class QuantileSummaries(object):
         merge_threshold = 2 * self.error * self.count
 
         self.sampled = self._compress_immut(merge_threshold)
+        LOGGER.debug(f"merge took {time.time() - t0}s")
+
         return self
 
     def query(self, quantile):
@@ -194,7 +201,69 @@ class QuantileSummaries(object):
             i += 1
         return self.sampled[-1].value
 
+    def query_quantile_list(self, q_list):
+        """
+        Given the queried quantile, return the approximation guaranteed result
+        Parameters
+        ----------
+        quantile : float [0.0, 1.0]
+            The target quantile
+
+        Returns
+        -------
+        float, the corresponding value result.
+        """
+        if self.head_sampled:
+            # self._insert_head_buffer()
+            self.compress()
+
+        if self.count == 0:
+            return [0] * len(q_list)
+
+
+
+    def value_to_rank(self, value):
+        min_rank, max_rank = 0, 0
+        for sample in self.sampled:
+            if sample.value < value:
+                min_rank += sample.g
+                max_rank = min_rank + sample.delta
+            else:
+                return (min_rank + max_rank) // 2
+        return (min_rank + max_rank) // 2
+
+    def query_value_list(self, values):
+        self.compress()
+        res = []
+        min_rank, max_rank = 0, 0
+        idx = 0
+        sample_idx = 0
+        from federatedml.util import LOGGER
+        LOGGER.debug(f"sampled: {[x.value for x in self.sampled]}")
+        # for sample in self.sampled:
+        while sample_idx < len(self.sampled):
+            v = values[idx]
+            sample = self.sampled[sample_idx]
+            if sample.value < v:
+                min_rank += sample.g
+                max_rank = min_rank + sample.delta
+                sample_idx += 1
+            else:
+                res.append((min_rank + max_rank) // 2)
+                idx += 1
+                if idx >= len(values):
+                    break
+                LOGGER.debug(f"value: {v}, sample_value: {sample.value}, min_rank: {min_rank}"
+                             f"max_rank: {max_rank}, res: {(min_rank + max_rank) // 2}")
+
+        while idx < len(values):
+            res.append((min_rank + max_rank) // 2)
+            idx += 1
+        return res
+
     def _compress_immut(self, merge_threshold):
+        t0 = time.time()
+
         if not self.sampled:
             return self.sampled
 
@@ -222,6 +291,7 @@ class QuantileSummaries(object):
 
         # Python do not support prepend, thus, use reverse instead
         res.reverse()
+        LOGGER.debug(f"_compress_immut took {time.time() - t0}s")
         return res
 
 
@@ -257,7 +327,19 @@ class SparseQuantileSummaries(QuantileSummaries):
         result = super(SparseQuantileSummaries, self).query(non_zero_quantile)
         return result
 
+    def value_to_rank(self, value):
+        quantile_rank = super().value_to_rank(value)
+        zeros_count = self._total_count - self.count
+
+        if value > 0:
+            return quantile_rank + zeros_count
+        elif value < 0:
+            return quantile_rank
+        else:
+            return quantile_rank + zeros_count // 2
+
     def merge(self, other):
+        assert isinstance(other, SparseQuantileSummaries)
         self.smaller_num += other.smaller_num
         self.bigger_num += other.bigger_num
         super(SparseQuantileSummaries, self).merge(other)

@@ -299,3 +299,43 @@ class QuantileBinningTool(QuantileBinning):
         if param_obj is None:
             param_obj = FeatureBinningParam(bin_num=bin_nums)
         super().__init__(params=param_obj, abnormal_list=abnormal_list, allow_duplicate=allow_duplicate)
+
+    def fit_summary(self, data_instances, is_sparse=None):
+        if is_sparse is None:
+            is_sparse = data_overview.is_sparse_data(data_instances)
+
+        f = functools.partial(self.feature_summary,
+                              params=self.params,
+                              abnormal_list=self.abnormal_list,
+                              cols_dict=self.bin_inner_param.bin_cols_map,
+                              header=self.header,
+                              is_sparse=is_sparse)
+        summary_dict_table = data_instances.mapReducePartitions(f, self.copy_merge)
+        # summary_dict = dict(summary_dict.collect())
+
+        if is_sparse:
+            total_count = data_instances.count()
+            summary_dict_table = summary_dict_table.mapValues(lambda x: x.set_total_count(total_count))
+        return summary_dict_table
+
+    def get_quantile_point(self, quantile):
+        """
+        Return the specific quantile point value
+
+        Parameters
+        ----------
+        quantile : float, 0 <= quantile <= 1
+            Specify which column(s) need to apply statistic.
+
+        Returns
+        -------
+        return a dict of result quantile points.
+        eg.
+        quantile_point = {"x1": 3, "x2": 5... }
+        """
+
+        if self.binning_obj is None:
+            self._static_quantile_summaries()
+        quantile_points = self.binning_obj.query_quantile_point(quantile)
+        return quantile_points
+
