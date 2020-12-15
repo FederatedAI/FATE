@@ -700,7 +700,7 @@ A result similar to the following indicates success:
 
 ```
 source /data/projects/fate/bin/init_env.sh
-cd /data/projects/fate/examples/toy_example/
+cd /data/projects/fate/examples/scripts/
 python upload_default_data.py -m 1
 ```
 
