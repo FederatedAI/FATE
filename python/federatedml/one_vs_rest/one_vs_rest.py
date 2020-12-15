@@ -135,7 +135,7 @@ class OneVsRest(object):
                 LOGGER.info("finish mask label:{}".format(label))
 
                 LOGGER.info("start classifier fit")
-                classifier.fit_binary(data_instances_mask_label)
+                classifier.fit_binary(data_instances_mask_label, validate_data=validate_data)
             else:
                 LOGGER.info("start classifier fit")
                 classifier.fit_binary(data_instances, validate_data=validate_data)

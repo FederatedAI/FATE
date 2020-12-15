@@ -20,8 +20,8 @@ import functools
 from federatedml.feature.binning.base_binning import BaseBinning
 from federatedml.feature.binning.optimal_binning.optimal_binning import OptimalBinning
 from federatedml.feature.hetero_feature_binning.base_feature_binning import BaseHeteroFeatureBinning
+from federatedml.secureprotol import IterativeAffineEncrypt
 from federatedml.secureprotol import PaillierEncrypt
-from federatedml.secureprotol.fate_paillier import PaillierEncryptedNumber
 from federatedml.statistic import data_overview
 from federatedml.statistic import statics
 from federatedml.util import LOGGER
@@ -61,8 +61,19 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
             LOGGER.debug(f"Summary is: {self.summary()}")
             return self.data_output
 
-        cipher = PaillierEncrypt()
-        cipher.generate_key()
+        if self.model_param.encrypt_param.method == consts.PAILLIER:
+            cipher = PaillierEncrypt()
+            cipher.generate_key(self.model_param.encrypt_param.key_length)
+        elif self.model_param.encrypt_param.method == consts.ITERATIVEAFFINE:
+            cipher = IterativeAffineEncrypt()
+            cipher.generate_key(key_size=self.model_param.encrypt_param.key_length,
+                                randomized=False)
+        elif self.model_param.encrypt_param.method == consts.RANDOM_ITERATIVEAFFINE:
+            cipher = IterativeAffineEncrypt()
+            cipher.generate_key(key_size=self.model_param.encrypt_param.key_length,
+                                randomized=True)
+        else:
+            raise NotImplementedError("encrypt method not supported yet")
 
         f = functools.partial(self.encrypt, cipher=cipher)
         encrypted_label_table = label_table.mapValues(f)
@@ -149,12 +160,12 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
         decrypted_list = {}
         for col_name, count_list in encrypted_bin_sum.items():
             new_list = []
-            for event_count, non_event_count in count_list:
-                if isinstance(event_count, PaillierEncryptedNumber):
+            for event_count, total_count in count_list:
+                if not isinstance(event_count, (float, int)):
                     event_count = cipher.decrypt(event_count)
-                if isinstance(non_event_count, PaillierEncryptedNumber):
-                    non_event_count = cipher.decrypt(non_event_count)
-                new_list.append((event_count, non_event_count))
+                if not isinstance(total_count, (float, int)):
+                    total_count = cipher.decrypt(total_count)
+                new_list.append((int(event_count), int(total_count - event_count)))
             decrypted_list[col_name] = new_list
         return decrypted_list
 

@@ -74,12 +74,14 @@ class HeteroLRGuest(HeteroLRBase):
             self.need_one_vs_rest = True
             self.need_call_back_loss = False
             self.one_vs_rest_fit(train_data=data_instances, validate_data=validate_data)
-        else:
+        elif len(classes) == 2:
             sample_weights = self.check_and_remote_sample_weights(data_instances)
             if sample_weights:
                 self.gradient_loss_operator.set_use_sample_weight()
             self.need_one_vs_rest = False
             self.fit_binary(data_instances, validate_data)
+        else:
+            raise ValueError("Number of classes should be greater or equal to 2")
         LOGGER.debug(f"Final summary: {self.summary()}")
 
     def fit_binary(self, data_instances, validate_data=None):

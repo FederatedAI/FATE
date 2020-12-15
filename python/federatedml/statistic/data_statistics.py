@@ -157,6 +157,9 @@ class DataStatistics(ModelBase):
         LOGGER.debug(f"Before return, summary: {self.summary()}")
         return data_instances
 
+    def transform(self, data_inst):
+        self.fit(data_inst)
+
     def _convert_pb(self, stat_res, stat_name):
         values = [stat_res[col_name] for col_name in self.inner_param.static_names]
         return statistic_param_pb2.StatisticSingleFeatureValue(

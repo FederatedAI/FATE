@@ -18,6 +18,7 @@
 import copy
 
 from federatedml.param.base_param import BaseParam
+from federatedml.param.encrypt_param import EncryptParam
 from federatedml.util import consts
 
 
@@ -191,6 +192,7 @@ class FeatureBinningParam(BaseParam):
                  bin_num=consts.G_BIN_NUM, bin_indexes=-1, bin_names=None, adjustment_factor=0.5,
                  transform_param=TransformParam(), optimal_binning_param=OptimalBinningParam(),
                  local_only=False, category_indexes=None, category_names=None,
+                 encrypt_param=EncryptParam(),
                  need_run=True, skip_static=False):
         super(FeatureBinningParam, self).__init__()
         self.method = method
@@ -206,6 +208,7 @@ class FeatureBinningParam(BaseParam):
         self.local_only = local_only
         self.transform_param = copy.deepcopy(transform_param)
         self.optimal_binning_param = copy.deepcopy(optimal_binning_param)
+        self.encrypt_param = encrypt_param
         self.need_run = need_run
         self.skip_static = skip_static
 
@@ -228,3 +231,4 @@ class FeatureBinningParam(BaseParam):
             raise ValueError("When skip_static, optimal binning is not supported.")
         self.transform_param.check()
         self.optimal_binning_param.check()
+        self.encrypt_param.check()
