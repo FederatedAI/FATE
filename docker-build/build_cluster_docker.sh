@@ -25,7 +25,7 @@ package_dir=${SOURCE_DIR}/cluster-deploy/${package_dir_name}
 
 PREFIX="federatedai"
 if [ -z "$TAG" ]; then
-    TAG="${version}-release"
+        TAG="${version}-release"
 fi
 
 BASE_TAG=${TAG}
@@ -146,55 +146,53 @@ buildBase() {
 }
 
 buildModule() {
-  # handle python
-  [ -d ${source_dir}/docker-build/docker/modules/python/python ] && rm -rf ${source_dir}/docker-build/docker/modules/python/python
-  [ -d ${source_dir}/docker-build/docker/modules/python/eggroll ] && rm -rf ${source_dir}/docker-build/docker/modules/python/eggroll
-  [ -d ${source_dir}/docker-build/docker/modules/python/examples ] && rm -rf ${source_dir}/docker-build/docker/modules/python/examples
-  [ -d ${source_dir}/docker-build/docker/modules/python/fate.env ] && rm -rf ${source_dir}/docker-build/docker/modules/python/fate.env
-  cp -r ${package_dir}/python ${source_dir}/docker-build/docker/modules/python/python
-  cp -r ${package_dir}/eggroll ${source_dir}/docker-build/docker/modules/python/eggroll
-  cp -r ${package_dir}/examples ${source_dir}/docker-build/docker/modules/python/examples
-  cp -r ${package_dir}/fate.env ${source_dir}/docker-build/docker/modules/python/fate.env
+        # handle python
+        [ -d ${source_dir}/docker-build/docker/modules/python/python ] && rm -rf ${source_dir}/docker-build/docker/modules/python/python
+        [ -d ${source_dir}/docker-build/docker/modules/python/eggroll ] && rm -rf ${source_dir}/docker-build/docker/modules/python/eggroll
+        [ -d ${source_dir}/docker-build/docker/modules/python/examples ] && rm -rf ${source_dir}/docker-build/docker/modules/python/examples
+        [ -d ${source_dir}/docker-build/docker/modules/python/fate.env ] && rm -rf ${source_dir}/docker-build/docker/modules/python/fate.env
+        cp -r ${package_dir}/python ${source_dir}/docker-build/docker/modules/python/python
+        cp -r ${package_dir}/eggroll ${source_dir}/docker-build/docker/modules/python/eggroll
+        cp -r ${package_dir}/examples ${source_dir}/docker-build/docker/modules/python/examples
+        cp -r ${package_dir}/fate.env ${source_dir}/docker-build/docker/modules/python/fate.env
 
-  # handle fateboard
-  [ -d ${source_dir}/docker-build/docker/modules/fateboard/fateboard ] && rm -rf ${source_dir}/docker-build/docker/modules/fateboard/fateboard
-  cp -r ${package_dir}/fateboard ${source_dir}/docker-build/docker/modules/fateboard/fateboard
+        # handle fateboard
+        [ -d ${source_dir}/docker-build/docker/modules/fateboard/fateboard ] && rm -rf ${source_dir}/docker-build/docker/modules/fateboard/fateboard
+        cp -r ${package_dir}/fateboard ${source_dir}/docker-build/docker/modules/fateboard/fateboard
 
-  # handle eggroll
-  [ -d ${source_dir}/docker-build/docker/modules/eggroll/python ] && rm -rf ${source_dir}/docker-build/docker/modules/eggroll/python
-  [ -d ${source_dir}/docker-build/docker/modules/eggroll/eggroll ] && rm -rf ${source_dir}/docker-build/docker/modules/eggroll/eggroll
-  cp -r ${package_dir}/python ${source_dir}/docker-build/docker/modules/eggroll/python
-  cp -r ${package_dir}/eggroll/ ${source_dir}/docker-build/docker/modules/eggroll/eggroll
+        # handle eggroll
+        [ -d ${source_dir}/docker-build/docker/modules/eggroll/python ] && rm -rf ${source_dir}/docker-build/docker/modules/eggroll/python
+        [ -d ${source_dir}/docker-build/docker/modules/eggroll/eggroll ] && rm -rf ${source_dir}/docker-build/docker/modules/eggroll/eggroll
+        cp -r ${package_dir}/python ${source_dir}/docker-build/docker/modules/eggroll/python
+        cp -r ${package_dir}/eggroll/ ${source_dir}/docker-build/docker/modules/eggroll/eggroll
 
-  cd ${source_dir}
+        cd ${source_dir}
 
-  for module in "python" "fateboard" "eggroll" "python-nn"
-  do
-      echo "### START BUILDING ${module} ###"
-      docker build --build-arg version=${version} --build-arg fateboard_version=${fateboard_version} --build-arg PREFIX=${PREFIX} --build-arg BASE_TAG=${BASE_TAG} --no-cache -t ${PREFIX}/${module}:${TAG} -f ${source_dir}/docker-build/docker/modules/${module}/Dockerfile ${source_dir}/docker-build/docker/modules/${module}
-      echo "### FINISH BUILDING ${module} ###"
-      echo ""
-  done;
+        for module in "python" "fateboard" "eggroll" "python-nn"; do
+                echo "### START BUILDING ${module} ###"
+                docker build --build-arg version=${version} --build-arg fateboard_version=${fateboard_version} --build-arg PREFIX=${PREFIX} --build-arg BASE_TAG=${BASE_TAG} --no-cache -t ${PREFIX}/${module}:${TAG} -f ${source_dir}/docker-build/docker/modules/${module}/Dockerfile ${source_dir}/docker-build/docker/modules/${module}
+                echo "### FINISH BUILDING ${module} ###"
+                echo ""
+        done
 
-  # clean up
-  rm -rf ${source_dir}/docker-build/docker/modules/python/python
-  rm -rf ${source_dir}/docker-build/docker/modules/python/eggroll
-  rm -rf ${source_dir}/docker-build/docker/modules/fateboard/fateboard
-  rm -rf ${source_dir}/docker-build/docker/modules/eggroll/eggroll
-  rm -rf ${source_dir}/docker-build/docker/modules/eggroll/python
+        # clean up
+        rm -rf ${source_dir}/docker-build/docker/modules/python/python
+        rm -rf ${source_dir}/docker-build/docker/modules/python/eggroll
+        rm -rf ${source_dir}/docker-build/docker/modules/fateboard/fateboard
+        rm -rf ${source_dir}/docker-build/docker/modules/eggroll/eggroll
+        rm -rf ${source_dir}/docker-build/docker/modules/eggroll/python
 
-  echo ""
+        echo ""
 }
 
 pushImage() {
-  ## push image
-  for module in "python" "eggroll" "fateboard" "python-nn"
-  do
-      echo "### START PUSH ${module} ###"
-      docker push ${PREFIX}/${module}:${TAG}
-      echo "### FINISH PUSH ${module} ###"
-      echo ""
-  done;
+        ## push image
+        for module in "python" "eggroll" "fateboard" "python-nn"; do
+                echo "### START PUSH ${module} ###"
+                docker push ${PREFIX}/${module}:${TAG}
+                echo "### FINISH PUSH ${module} ###"
+                echo ""
+        done
 }
 
 while [ "$1" != "" ]; do
