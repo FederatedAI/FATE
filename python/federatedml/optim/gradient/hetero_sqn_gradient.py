@@ -81,10 +81,6 @@ class HeteroStochasticQuansiNewton(hetero_linear_model_gradient.HeteroGradientBa
         self.batch_index = args[5]
         self.n_iter = args[4]
         cipher_operator = encrypted_calculator[0].encrypter
-        # one_data = data_instances.first()
-        # LOGGER.debug("data shape: {}, model weights shape: {}, model weights coef: {}, intercept: {}".format(
-        #     one_data[1].features.shape, model_weights.unboxed.shape, model_weights.coef_, model_weights.intercept_
-        # ))
 
         gradient_results = self.gradient_computer.compute_gradient_procedure(*args)
         self._update_w_tilde(model_weights)

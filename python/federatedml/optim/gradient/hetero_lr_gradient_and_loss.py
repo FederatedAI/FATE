@@ -78,7 +78,7 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
         ywx = quarter_wx.join(data_instances, lambda wx, d: wx * (4 * d.label) + 2).reduce(reduce_add)
         # self_wx_square = self.forwards.mapValues(lambda x: np.square(x)).reduce(reduce_add)
         self_wx_square = data_instances.mapValues(
-            lambda v:  np.square(vec_dot(v.features, w.coef_) + w.intercept_)).reduce(reduce_add)
+            lambda v: np.square(vec_dot(v.features, w.coef_) + w.intercept_)).reduce(reduce_add)
         half_wx = data_instances.mapValues(
             lambda v: vec_dot(v.features, w.coef_) + w.intercept_)
 
@@ -118,9 +118,9 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
         for host_forward in host_forwards:
             forwards = forwards.join(host_forward, lambda g, h: g + (h * 0.25))
         # forward_hess = forwards.mapValues(lambda x: 0.25 * x / sample_size)
-        hess_vector = hetero_linear_model_gradient.compute_gradient(data_instances,
-                                                                    forwards,
-                                                                    delta_s.fit_intercept)
+        hess_vector = self.compute_gradient(data_instances,
+                                            forwards,
+                                            delta_s.fit_intercept)
         return forwards, np.array(hess_vector)
 
 
@@ -141,7 +141,8 @@ class Host(hetero_linear_model_gradient.Host, loss_sync.Host):
         """
         # wx = data_instances.mapValues(lambda v: vec_dot(v.features, model_weights.coef_) + model_weights.intercept_)
         if self.use_sample_weight:
-            self.forwards = data_instances.mapValues(lambda v: 0.25 * vec_dot(v.features, model_weights.coef_) * v.weight)
+            self.forwards = data_instances.mapValues(
+                lambda v: 0.25 * vec_dot(v.features, model_weights.coef_) * v.weight)
         else:
             self.forwards = data_instances.mapValues(lambda v: 0.25 * vec_dot(v.features, model_weights.coef_))
         return self.forwards
