@@ -674,7 +674,7 @@ def do_deploy():
 @manager.route('/get/predict/dsl', methods=['POST'])
 def get_predict_dsl():
     request_data = request.json
-    request_data['query_filters'] = ['f_inference_dsl']
+    request_data['query_filters'] = ['inference_dsl']
     retcode, retmsg, data = model_utils.query_model_info_from_file(**request_data)
     if data:
         if request_data.get("filename"):
@@ -685,7 +685,7 @@ def get_predict_dsl():
             return send_file(open(temp_filepath, "rb"), as_attachment=True,
                              attachment_filename=request_data.get("filename"))
         else:
-            return get_json_result(data=data[0]['inference_dsl'])
+            return get_json_result(data=data[0]['f_inference_dsl'])
     return error_response(210, "No model found, please check if arguments are specified correctly.")
 
 
