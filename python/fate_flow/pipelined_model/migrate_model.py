@@ -22,6 +22,7 @@ from fate_flow.db.db_models import DB, MachineLearningModelInfo as MLModel
 from fate_flow.pipelined_model import pipelined_model
 from fate_arch.common.base_utils import json_loads, json_dumps
 from fate_arch.common.file_utils import get_project_base_directory
+from fate_flow.settings import stat_logger
 from fate_flow.utils import model_utils
 from federatedml.protobuf.model_migrate.model_migrate import model_migration
 from fate_flow.utils.config_adapter import JobRuntimeConfigAdapter
@@ -147,4 +148,5 @@ def migration(config_data: dict):
                  "path": os.path.abspath(archive_path)})
 
     except Exception as e:
+        stat_logger.exception(e)
         return 100, str(e), {}
