@@ -139,7 +139,7 @@ def migration(config_data: dict):
         return (0, f"Migrating model successfully. " \
                   "The configuration of model has been modified automatically. " \
                   "New model id is: {}, model version is: {}. " \
-                  "Model files can be found at '{}'.".format(adapter.get_common_parameters()["model_id"],
+                  "Model files can be found at '{}'.".format(adapter.get_common_parameters().to_dict().get("model_id"),
                                                              migrate_model.model_version,
                                                              os.path.abspath(archive_path)),
                 {"model_id": migrate_model.model_id,
