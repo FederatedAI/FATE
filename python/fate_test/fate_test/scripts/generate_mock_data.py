@@ -1,9 +1,52 @@
-import random
+import hashlib
 import json
 import os
-import hashlib
+import random
+import threading
+import sys
+import time
+import pandas as pd
 import numpy as np
 from fate_test._config import Config
+
+sys.setrecursionlimit(1000000)
+
+
+class data_progress:
+    def __init__(self, down_load, time_start):
+        self.time_start = time_start
+        self.down_load = down_load
+        self.time_percent = 0
+        self.switch = True
+
+    def set_switch(self, switch):
+        self.switch = switch
+
+    def get_switch(self):
+        return self.switch
+
+    def set_time_percent(self, time_percent):
+        self.time_percent = time_percent
+
+    def get_time_percent(self):
+        return self.time_percent
+
+    def progress(self, percent):
+        if percent > 100:
+            percent = 100
+        end = time.time()
+        if percent != 100:
+            print(f"\r{self.down_load}  %.f%s  [%s]  running" % (percent, '%', self.timer(end - self.time_start)),
+                  flush=True, end='')
+        else:
+            print(f"\r{self.down_load}  %.f%s  [%s]  success" % (percent, '%', self.timer(end - self.time_start)),
+                  flush=True, end='')
+
+    @staticmethod
+    def timer(times):
+        hours, rem = divmod(times, 3600)
+        minutes, seconds = divmod(rem, 60)
+        return "{:0>2}:{:0>2}:{:02}".format(int(hours), int(minutes), int(seconds))
 
 
 def remove_file(path):
@@ -12,64 +55,87 @@ def remove_file(path):
 
 
 def get_big_data(task, guest_data_size, host_data_size, guest_feature_num, host_feature_num, include_path, conf: Config,
-                 encryption_type, match_rate):
-    def _generate_tag_float_value_data(id_value, feature_nums):
-        counter = 0
-        for sample_i in range(host_data_size):
-            one_data = [id_value[sample_i]]
-            valid_set = ['x' + str(i) for i in range(feature_nums)]
-            tags = np.random.choice(valid_set, feature_nums, replace=False)
-            values = np.random.random(feature_nums)
-            one_data += [":".join([str(tags[i]), str(round(values[i], 2))]) for i in range(feature_nums)]
-            counter += 1
-            yield one_data
-
-    def _generate_tag_data(id_value, feature_nums):
-        counter = 0
-        for sample_i in range(host_data_size):
-            one_data = [id_value[sample_i]]
-            valid_set = [x for x in range(2019120799, 2019121299)]
-            tags = np.random.choice(valid_set, feature_nums, replace=False)
-            one_data += [str(tag) for tag in tags]
-
-            counter += 1
-            if counter % 10000 == 0:
-                print("generate data {}".format(counter))
-
-            yield one_data
-
-    def _generate_label_data(id_value, feature_nums):
-        header = ['id', 'y'] + ['x' + str(i) for i in range(feature_nums)]
-        yield header
-        counter = 0
-        for sample_i in range(len(id_value)):
-            one_data = [id_value[sample_i], round(random.random())] + list(np.random.random(feature_nums))
-            counter += 1
-            yield one_data
-
-    def _save_file(file, data, header=None, delimitor=','):
-        try:
-            if not os.path.exists(file):
-                with open(file, 'w') as f_out:
-                    if header:
-                        f_out.write("".join([header, '\n']))
-
-                    for d in data:
-                        d = list(map(str, d))
-                        f_out.write(d[0] + ',' + delimitor.join(d[1:]) + "\n")
+                 encryption_type, match_rate, sparsity):
+    def _generate_tag_value_data(data_path, data_num, id_value, feature_nums):
+        feature_list = ['x' + str(i) for i in range(feature_nums)]
+        section_data_size = round(data_num / 100)
+        iteration = round(data_num / section_data_size)
+        sectioning = round(data_num / (iteration + 1))
+        for batch in range(iteration + 1):
+            progress.set_time_percent(batch)
+            output_data = pd.DataFrame(columns=["id"])
+            if section_data_size * (batch + 1) <= data_num:
+                output_data['id'] = id_value[sectioning * batch: sectioning * (batch + 1)]
+                data_size = sectioning
+            elif section_data_size * batch <= data_num:
+                output_data['id'] = id_value[sectioning * batch: data_num]
+                data_size = data_num - sectioning * batch
             else:
-                raise Exception(f"His file already exists.")
-        except Exception as e:
-            raise Exception(f"write error==>{e}")
+                break
+            for feature_i in range(feature_nums):
+                feature = [":".join([feature_list[feature_i], str(round(np.random.random(), 2))]) for i in
+                           range(data_size)]
+                output_data[feature_list[feature_i]] = feature
+            output_data.to_csv(data_path, mode='a+', index=False, header=False)
 
-    if not match_rate:
-        intersect_count = guest_data_size
-        non_intersect_count = 0
-    else:
-        if not match_rate > 0 or not match_rate < 1:
-            raise Exception(f"The value is between (0-1), Please check match_rate:{match_rate}")
-        intersect_count = int(guest_data_size * match_rate)
-        non_intersect_count = guest_data_size - intersect_count
+    def _generate_label_data(data_path, data_num, id_value, feature_nums):
+        section_data_size = round(data_num / 100)
+        feature_list = ['id', 'y'] + ['x' + str(i) for i in range(feature_nums)]
+        output_data = pd.DataFrame(columns=feature_list)
+        output_data.to_csv(data_path, mode='a+', index=False)
+
+        iteration = round(data_num / section_data_size)
+        sectioning = round(data_num / (iteration + 1))
+        for batch in range(iteration + 1):
+            progress.set_time_percent(batch)
+            output_data = pd.DataFrame()
+            if section_data_size * (batch + 1) <= data_num:
+                output_data[0] = id_value[sectioning * batch: sectioning * (batch + 1)]
+                output_data[1] = [round(np.random.random()) for x in range(sectioning)]
+                data_size = sectioning
+            elif section_data_size * batch <= data_num:
+                output_data[0] = id_value[sectioning * batch: data_num]
+                data_size = data_num - sectioning * batch
+                output_data[1] = [round(np.random.random()) for x in range(data_size)]
+            else:
+                break
+            for feature_i in range(feature_nums):
+                feature = [",".join([str(round(np.random.random(), 2))]) for i in range(data_size)]
+                output_data[feature_list[feature_i]] = feature
+            output_data.to_csv(data_path, mode='a+', index=False, header=False)
+
+    def _generate_tag_data(data_path, data_num, id_value, feature_nums, sparsity):
+        section_data_size = round(data_num / 100)
+        feature_list = ['id'] + ['x' + str(i) for i in range(feature_nums)]
+        iteration = round(data_num / section_data_size)
+        sectioning = round(data_num / (iteration + 1))
+        valid_set = [x for x in range(2019120799, 2019120799 + round(feature_nums / sparsity))]
+        data = list(map(str, valid_set))
+        for batch in range(iteration + 1):
+            progress.set_time_percent(batch)
+            output_data = pd.DataFrame()
+            if section_data_size * (batch + 1) <= data_num:
+                output_data[0] = id_value[sectioning * batch: sectioning * (batch + 1)]
+                data_size = sectioning
+            elif section_data_size * batch <= data_num:
+                output_data[0] = id_value[sectioning * batch: data_num]
+                data_size = data_num - sectioning * batch
+            else:
+                break
+            for feature_i in range(feature_nums):
+                feature = ["".join(random.choice(data)) for i in range(data_size)]
+                output_data[feature_list[feature_i]] = feature
+            output_data.to_csv(data_path, mode='a+', index=False, header=False)
+
+    def run(p):
+        while p.get_switch():
+            time.sleep(1)
+            p.progress(p.get_time_percent())
+
+    if not match_rate > 0 or not match_rate <= 1:
+        raise Exception(f"The value is between (0-1), Please check match_rate:{match_rate}")
+    intersect_count = int(guest_data_size * match_rate)
+    non_intersect_count = guest_data_size - intersect_count
 
     guest_ids = [str(x) for x in range(intersect_count)]
     non_intersect_ids = [str(x) for x in range(host_data_size, host_data_size + non_intersect_count)]
@@ -92,25 +158,36 @@ def get_big_data(task, guest_data_size, host_data_size, guest_feature_num, host_
         os.mkdir(big_data_dir)
     date_set = [os.path.basename(upload_dict['file']) for upload_dict in testsuite_config['data']]
     data_count = 0
-    for data_name in date_set:
+    for idx, data_name in enumerate(date_set):
         if task == 'intersect_multi' and ('guest' in data_name or 'label' in data_name):
-            right = np.ceil(guest_data_size / len(date_set)) * (data_count + 1) if np.ceil(
+            right = int(np.ceil(guest_data_size / len(date_set))) * (data_count + 1) if np.ceil(
                 guest_data_size / len(date_set)) * (data_count + 1) <= guest_data_size else guest_data_size
-            guest_id_list = guest_ids[np.ceil(guest_data_size / len(date_set)) * data_count: right]
+            guest_id_list = guest_ids[int(np.ceil(guest_data_size / len(date_set))) * data_count: right]
             data_count += 1
         else:
             guest_id_list = guest_ids
-        data_path = os.path.join(str(big_data_dir), data_name)
-        remove_file(data_path)
+        out_path = os.path.join(str(big_data_dir), data_name)
+        remove_file(out_path)
+        data_i = (idx + 1) / len(date_set)
+        downLoad = f'dataget  [{"#" * int(24 * data_i)}{"-" * (24 - int(24 * data_i))}]  {idx + 1}/{len(date_set)}'
+        start = time.time()
+        progress = data_progress(downLoad, start)
+        thread = threading.Thread(target=run, args=[progress])
+        thread.start()
         try:
             if 'tag' in data_name and 'tag_value' not in data_name:
-                _save_file(data_path, _generate_tag_data(host_ids, host_feature_num), delimitor=',')
+                _generate_tag_data(out_path, host_data_size, host_ids, host_feature_num, sparsity)
             elif 'tag_value' in data_name:
-                _save_file(data_path, _generate_tag_float_value_data(host_ids, host_feature_num), delimitor=';')
+                _generate_tag_value_data(out_path, host_data_size, host_ids, host_feature_num)
             elif 'guest' in data_name or 'label' in data_name:
-                _save_file(data_path, _generate_label_data(guest_id_list, guest_feature_num), delimitor=',')
+                _generate_label_data(out_path, guest_data_size, guest_id_list, guest_feature_num)
             else:
+                progress.set_switch(False)
                 raise Exception(
                     f'The host file name contains "tag" or "tag_value", and the guest file name contains "guest" or "label". Please check your file name: {data_name}')
-        except Exception as e:
-            raise Exception(f"Output file failed: {e}")
+            progress.set_switch(False)
+            time.sleep(1)
+            print()
+        except Exception:
+            progress.set_switch(False)
+            raise Exception(f"Output file failed")

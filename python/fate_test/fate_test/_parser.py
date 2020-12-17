@@ -115,10 +115,19 @@ class JobConf(object):
         self.initiator = parties.extract_initiator_role(self.initiator['role'])
         self.role = parties.extract_role({role: len(parties) for role, parties in self.role.items()})
         self.update_job_common_parameters(work_mode=work_mode, backend=backend, timeout=timeout)
+
         for key, value in job_parameters.items():
-            self.update_job_common_parameters(key=value)
+            self.update_parameters(parameters=self.job_parameters, key=key, value=value)
         for key, value in component_parameters.items():
-            self.update_component_common_parameters(key=value)
+            self.update_parameters(parameters=self.component_parameters, key=key, value=value)
+
+    def update_parameters(self, parameters, key, value):
+        if isinstance(parameters, dict):
+            for keys in parameters:
+                if keys == key:
+                    parameters.get(key).update(value),
+                elif isinstance(parameters[keys], dict):
+                    self.update_parameters(parameters[keys], key, value)
 
     def update_job_common_parameters(self, **kwargs):
         dsl_version = self.others_kwargs.get("dsl_version", 1)
@@ -127,12 +136,15 @@ class JobConf(object):
         else:
             self.job_parameters.setdefault("common", {}).update(**kwargs)
 
-    def update_component_common_parameters(self, **kwargs):
-        dsl_version = self.others_kwargs.get("dsl_version", 1)
-        if dsl_version == 1:
-            self.component_parameters.update(**kwargs)
-        else:
-            self.component_parameters.setdefault("common", {}).update(**kwargs)
+    def update_component_parameters(self, key, value, parameters=None):
+        if parameters is None:
+            parameters = self.component_parameters
+        if isinstance(parameters, dict):
+            for keys in parameters:
+                if keys == key:
+                    parameters.update({key: value}),
+                elif isinstance(parameters[keys], dict) and parameters[keys] is not None:
+                    self.update_component_parameters(key, value, parameters[keys])
 
 
 class JobDSL(object):

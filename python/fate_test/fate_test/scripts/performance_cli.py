@@ -17,7 +17,6 @@ import os
 import time
 import uuid
 from datetime import timedelta
-
 import click
 from fate_test import _config
 from fate_test._client import Clients
@@ -38,29 +37,39 @@ from fate_test.scripts._utils import _load_testsuites, _upload_data, _delete_dat
               help="include *testsuite.json under these paths")
 @click.option('-et', '--encryption_type', type=click.Choice(['sha256', 'md5']),
               help="Encryption types include sha256 and md5")
-@click.option('-mr', '--match_rate', default=0, type=float,
+@click.option('-mr', '--match_rate', default=1.0, type=float,
               help="Intersection rate relative to guest, The value is between (0-1)")
+@click.option('-s', '--sparsity', default=0.2, type=float,
+              help="The sparsity of tag data, The value is between (0-1)")
 @click.option('-r', '--replace', default="{}", type=JSON_STRING,
               help="a json string represents mapping for replacing fields in data/conf/dsl")
 @click.option('-time', '--timeout', type=int, default=3600,
               help="Task timeout duration")
-@click.option('--update_job_parameters', default="{}", type=JSON_STRING,
+@click.option('-iter', '--max_iter', type=int, default=100,
+              help="Task timeout duration")
+@click.option('-depth', '--max_depth', type=int, default=4,
+              help="Task timeout duration")
+@click.option('-trees', '--num_trees', type=int, default=100,
+              help="Task timeout duration")
+@click.option('-node', '--processors_per_node', type=int, default=4,
+              help="Task timeout duration")
+@click.option('-jp', '--update_job_parameters', default="{}", type=JSON_STRING,
               help="a json string represents mapping for replacing fields in conf.job_parameters")
-@click.option('--update_component_parameters', default="{}", type=JSON_STRING,
+@click.option('-cp', '--update_component_parameters', default="{}", type=JSON_STRING,
               help="a json string represents mapping for replacing fields in conf.component_parameters")
-
-@click.option('-n-guest', '--guest_data_size', required=True, type=int,
+@click.option('-ng', '--guest_data_size', required=True, type=int,
               help="Set guest data set size")
-@click.option('-n-host', '--host_data_size', type=int, default=0,
-              help="Set host data set size")
-@click.option('-f-guest', '--guest_feature_num', type=int, default=20,
+@click.option('-nh', '--host_data_size', type=int, default=0,
+              help="Set host data set size, The default is equal to the number of guests")
+@click.option('-fg', '--guest_feature_num', type=int, default=20,
               help="Set guest feature dimensions")
-@click.option('-f-host', '--host_feature_num', type=int, default=200,
-              help="Set host feature dimensions")
+@click.option('-fh', '--host_feature_num', type=int, default=200,
+              help="Set host feature dimensions, The default is equal to the number of guests")
 @SharedOptions.get_shared_options(hidden=True)
 @click.pass_context
-def run_task(ctx, task, include, encryption_type, match_rate, guest_data_size, host_data_size, guest_feature_num,
-             host_feature_num, replace, timeout, update_job_parameters, update_component_parameters,  **kwargs):
+def run_task(ctx, task, include, encryption_type, match_rate, sparsity, guest_data_size, host_data_size,
+             guest_feature_num, host_feature_num, replace, timeout, update_job_parameters,
+             update_component_parameters, max_iter, max_depth, num_trees, processors_per_node, **kwargs):
     """
     Test the performance of big data tasks
     """
@@ -70,9 +79,10 @@ def run_task(ctx, task, include, encryption_type, match_rate, guest_data_size, h
     namespace = ctx.obj["namespace"]
     yes = ctx.obj["yes"]
     data_namespace_mangling = ctx.obj["namespace_mangling"]
-   
+
     def get_cache_directory(conf: Config):
         return conf.cache_directory
+
     if not include:
         if task == 'intersect':
             include = os.path.join(str(get_cache_directory(config_inst)), _config.intersect_dir)
@@ -99,7 +109,7 @@ def run_task(ctx, task, include, encryption_type, match_rate, guest_data_size, h
     echo.echo("loading testsuites:")
     suites = _load_testsuites(includes=include, excludes=tuple(), glob=None)
     for suite in suites:
-        echo.echo(f"\tdataset({len(suite.dataset)}) dsl jobs({len(suite.jobs)}) "
+        echo.echo(f"\tdataget({len(suite.dataset)}) dataset({len(suite.dataset)}) dsl jobs({len(suite.jobs)}) "
                   f"pipeline jobs ({len(suite.pipeline_jobs)}) {suite.path}")
     if not yes and not click.confirm("running?"):
         return
@@ -107,7 +117,7 @@ def run_task(ctx, task, include, encryption_type, match_rate, guest_data_size, h
     echo.stdout_newline()
     if _config.DATA_SIZE:
         _big_data_task(task, guest_data_size, host_data_size, guest_feature_num, host_feature_num, include, config_inst,
-                       encryption_type, match_rate)
+                       encryption_type, match_rate, sparsity)
     with Clients(config_inst) as client:
 
         for i, suite in enumerate(suites):
@@ -124,7 +134,7 @@ def run_task(ctx, task, include, encryption_type, match_rate, guest_data_size, h
                 echo.stdout_newline()
                 try:
                     _submit_job(client, suite, namespace, config_inst, timeout, update_job_parameters,
-                                update_component_parameters)
+                                update_component_parameters, task, max_iter, max_depth, num_trees, processors_per_node)
                 except Exception as e:
                     raise RuntimeError(f"exception occur while submit job for {suite.path}") from e
 
@@ -150,10 +160,10 @@ def run_task(ctx, task, include, encryption_type, match_rate, guest_data_size, h
 
 
 def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Config, timeout, update_job_parameters,
-                update_component_parameters):
+                update_component_parameters, task, max_iter, max_depth, num_trees, processors_per_node):
     # submit jobs
     with click.progressbar(length=len(suite.jobs),
-                           label="jobs   ",
+                           label="jobs",
                            show_eta=False,
                            show_pos=True,
                            width=24) as bar:
@@ -169,6 +179,13 @@ def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Conf
 
             # noinspection PyBroadException
             try:
+                if task == "hetero_lr":
+                    job.job_conf.update_component_parameters('max_iter', max_iter)
+                elif task == "hetero_sbt":
+                    job.job_conf.update_component_parameters('max_depth', max_depth)
+                    job.job_conf.update_component_parameters('num_trees', num_trees)
+                job.job_conf.update_job_common_parameters(
+                    eggroll_run={"eggroll.session.processors.per.node": processors_per_node})
                 job.job_conf.update(config.parties, config.work_mode, config.backend, timeout, update_job_parameters,
                                     update_component_parameters)
             except Exception:

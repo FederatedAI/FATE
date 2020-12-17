@@ -14,7 +14,7 @@ from fate_test.scripts import generate_mock_data
 
 
 def _big_data_task(task, guest_data_size, host_data_size, guest_feature_num, host_feature_num, includes, config_inst,
-                   encryption_type, match_rate, suffix="testsuite.json"):
+                   encryption_type, match_rate, sparsity, suffix="testsuite.json"):
     def _find_testsuite_files(path):
         if isinstance(path, str):
             path = Path(path)
@@ -33,7 +33,7 @@ def _big_data_task(task, guest_data_size, host_data_size, guest_feature_num, hos
         include_path = Path(include)
         include_path = _find_testsuite_files(include_path)[0]
         generate_mock_data.get_big_data(task, guest_data_size, host_data_size, guest_feature_num, host_feature_num,
-                                         include_path, config_inst, encryption_type, match_rate)
+                                        include_path, config_inst, encryption_type, match_rate, sparsity)
 
 
 def _load_testsuites(includes, excludes, glob, suffix="testsuite.json", suite_type="testsuite"):

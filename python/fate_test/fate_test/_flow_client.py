@@ -46,7 +46,6 @@ class FLOWClient(object):
             if callback is not None:
                 callback(response)
             status = self._awaiting(response.job_id, "local")
-            print('status:', status)
             response.status = status
         except Exception as e:
             raise RuntimeError(f"upload data failed") from e
