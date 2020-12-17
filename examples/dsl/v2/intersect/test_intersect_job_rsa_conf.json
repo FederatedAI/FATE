@@ -23,7 +23,11 @@
             "intersect_0": {
                 "intersect_method": "rsa",
                 "sync_intersect_ids": true,
-                "only_output_key": true
+                "only_output_key": true,
+                "rsa_params": {
+                    "hash_method": "sha256",
+                    "final_hash_method": "sha256"
+                }
             }
         },
         "role": {

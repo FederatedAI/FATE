@@ -1,10 +1,11 @@
 import base64
 import hashlib
+from gmssl import sm3, func
 
 from federatedml.util import LOGGER
 
 
-class Encode:
+class Hash:
     def __init__(self, method, base64=0):
         self.method = method
         self.base64 = base64
@@ -16,11 +17,13 @@ class Encode:
             "sha256": self.__compute_sha256,
             "sha384": self.__compute_sha384,
             "sha512": self.__compute_sha512,
+            "sm3": self.__compute_sm3,
+            "none": self.__compute_no_hash
         }
 
     @staticmethod
     def is_support(method):
-        support_encode_method = ["md5", "sha1", "sha224", "sha256", "sha384", "sha512"]
+        support_encode_method = ["md5", "sha1", "sha224", "sha256", "sha384", "sha512", "sm3", "none"]
         return method in support_encode_method
 
     def __compute_md5(self, value):
@@ -59,14 +62,27 @@ class Encode:
         else:
             return hashlib.sha384(bytes(value, encoding='utf-8')).hexdigest()
 
+    def __compute_sm3(self, value):
+        if self.base64 == 1:
+            return str(base64.b64encode(sm3.sm3_hash(func.bytes_to_list(bytes(value, encoding='utf-8'))).encode('utf-8')), "utf-8")
+        else:
+            return sm3.sm3_hash(func.bytes_to_list(bytes(value, encoding='utf-8')))
+
+    def __compute_no_hash(self, value):
+        if self.base64 == 1:
+            return str(base64.b64encode(bytes(value, encoding='utf-8')), 'utf-8')
+        else:
+            return str(value)
+
     def compute(self, value, pre_salt=None, postfit_salt=None):
-        if not Encode.is_support(self.method):
-            LOGGER.warning("Encode module do not support method:{}".format(self.method))
+        if not Hash.is_support(self.method):
+            LOGGER.warning("Hash module do not support method:{}".format(self.method))
             return value
 
-        if pre_salt is not None:
+        value = str(value)
+        if pre_salt is not None and len(pre_salt) > 0:
             value = pre_salt + value
 
-        if postfit_salt is not None:
+        if postfit_salt is not None and len(postfit_salt) > 0:
             value = value + postfit_salt
         return self.dist_encode_function[self.method](value)

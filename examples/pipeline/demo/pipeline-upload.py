@@ -65,7 +65,7 @@ def main(data_base=DATA_BASE):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("PIPELINE DEMO")
-    parser.add_argument("--base", "-b", type=str,
+    parser.add_argument("--base", type=str,
                         help="data base, path to directory that contains examples/data")
 
     args = parser.parse_args()
