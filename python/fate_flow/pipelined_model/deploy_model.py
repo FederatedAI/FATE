@@ -37,7 +37,8 @@ def deploy(config_data):
             raise Exception("Can not found pipeline file in model.")
 
         # check if the model could be executed the deploy process (parent/child)
-        check_before_deploy(model)
+        if not check_before_deploy(model):
+            raise Exception('Child model could not be deployed.')
 
         # copy proto content from parent model and generate a child model
         deploy_model = PipelinedModel(model_id=party_model_id, model_version=child_model_version)
@@ -90,18 +91,18 @@ def check_if_parent_model(pipeline):
     if model_utils.compare_version(pipeline.fate_version, '1.5.0') == 'gt':
         if pipeline.parent:
             return True
-    elif model_utils.compare_version(pipeline.fate_version, '1.5.0') == 'eq':
-        if not json_loads(pipeline.inference_dsl):
-            return True
-    else:
-        return False
+    return False
 
 
 def check_before_deploy(pipeline_model: PipelinedModel):
     pipeline = pipeline_model.read_component_model('pipeline', 'pipeline')['Pipeline']
-    check_status = check_if_parent_model(pipeline)
-    if not check_status:
-        raise Exception('Child model not be deployed.')
+
+    if model_utils.compare_version(pipeline.fate_version, '1.5.0') == 'gt':
+        if pipeline.parent:
+            return True
+    elif model_utils.compare_version(pipeline.fate_version, '1.5.0') == 'eq':
+        return True
+    return False
 
 
 def check_if_deployed(role, party_id, model_id, model_version):
