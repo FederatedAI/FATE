@@ -81,7 +81,7 @@ class HeteroLinRHost(HeteroLinRBase):
             batch_index = 0
             for batch_data in batch_data_generator:
                 batch_feat_inst = self.transform(batch_data)
-                optim_host_gradient, _ = self.gradient_loss_operator.compute_gradient_procedure(
+                optim_host_gradient = self.gradient_loss_operator.compute_gradient_procedure(
                     batch_feat_inst,
                     self.encrypted_calculator,
                     self.model_weights,
