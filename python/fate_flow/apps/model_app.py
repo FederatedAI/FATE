@@ -614,7 +614,8 @@ def deploy():
 
         if request_data.get('dsl') or request_data.get('predict_dsl'):
             predict_dsl = request_data.get('dsl') if request_data.get('dsl') else request_data.get('predict_dsl')
-            predict_dsl = json_loads(predict_dsl)
+            if not isinstance(predict_dsl, str):
+                predict_dsl = json_loads(predict_dsl)
         else:
             if request_data.get('cpn_list', None):
                 cpn_list = request_data.pop('cpn_list')
