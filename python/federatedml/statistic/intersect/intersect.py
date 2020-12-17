@@ -14,21 +14,33 @@
 #  limitations under the License.
 #
 
+import random
+
+from federatedml.model_base import ModelBase
+from federatedml.param.intersect_param import IntersectParam
+from federatedml.secureprotol import gmpy_math
+from federatedml.secureprotol.encrypt import RsaEncrypt
 from federatedml.secureprotol.hash.hash_factory import Hash
 from federatedml.util import consts
 from federatedml.util import LOGGER
 from federatedml.transfer_variable.transfer_class.raw_intersect_transfer_variable import RawIntersectTransferVariable
+from federatedml.transfer_variable.transfer_class.rsa_intersect_transfer_variable import RsaIntersectTransferVariable
 
 
-class Intersect(object):
-    def __init__(self, intersect_params):
+class Intersect(ModelBase):
+    def __init__(self):
+        super().__init__()
+        self.model_param = IntersectParam()
         self.transfer_variable = None
-        self.only_output_key = intersect_params.only_output_key
-        self.sync_intersect_ids = intersect_params.sync_intersect_ids
+        self._summary = {}
 
         self._guest_id = None
         self._host_id = None
         self._host_id_list = None
+
+    def _init_model(self, param):
+        self.only_output_key = param.only_output_key
+        self.sync_intersect_ids = param.sync_intersect_ids
 
     @property
     def guest_party_id(self):
@@ -82,7 +94,8 @@ class Intersect(object):
 
         return intersect_ids
 
-    def get_common_intersection(self, intersect_ids_list: list):
+    @staticmethod
+    def get_common_intersection(intersect_ids_list: list):
         if len(intersect_ids_list) == 1:
             return intersect_ids_list[0]
 
@@ -102,22 +115,92 @@ class Intersect(object):
 
 
 class RsaIntersect(Intersect):
-    def __init__(self, intersect_params):
-        super().__init__(intersect_params)
-        self.intersect_cache_param = intersect_params.intersect_cache_param
-        self.rsa_params = intersect_params.rsa_params
+    def __init__(self):
+        super().__init__()
+        # self.intersect_cache_param = intersect_params.intersect_cache_param
+        self.pub_e = None
+        self.pub_n = None
+        self.e = None
+        self.d = None
+        self.n = None
+        self.r = None
+        self.transfer_variable = RsaIntersectTransferVariable()
+
+    def _init_model(self, param):
+        self.random_bit = param.random_bit
+        self.rsa_params = param.rsa_params
+        self.split_calculation = self.rsa_params.split_calculation
+        self.random_base_fraction = self.rsa_params.random_base_fraction
+        self.first_hash_operator = Hash(self.rsa_params.hash_method, self.rsa_params.base64)
+        self.final_hash_operator = Hash(self.rsa_params.final_hash_method, self.rsa_params.base64)
+
+    @staticmethod
+    def generate_r_base(random_bit, count, fraction):
+        if fraction:
+            if isinstance(fraction, int):
+                r_count = fraction
+            else:
+                r_count = round(count * fraction)
+            if r_count >= count:
+                r_count = count
+        else:
+            r_count = count
+        return [random.SystemRandom().getrandbits(random_bit) for i in range(r_count)]
+
+    def generate_rsa_key(self, rsa_bit=1024):
+        encrypt_operator = RsaEncrypt()
+        encrypt_operator.generate_key(rsa_bit)
+        return encrypt_operator.get_key_pair()
+
+    def get_rsa_key(self):
+        LOGGER.info("Generate rsa keys.")
+        e, d, n = self.generate_rsa_key()
+        return e, d, n
+
+    @staticmethod
+    def pubkey_id_process(hash_sid, v, random_bit, rsa_e, rsa_n, rsa_r=None):
+        # return (r^e % n *hash(sid), (sid, r))
+        if rsa_r:
+            r = rsa_r[hash_sid % len(rsa_r)]
+        else:
+            r = random.SystemRandom().getrandbits(random_bit)
+        processed_id = gmpy_math.powmod(r, rsa_e, rsa_n) * hash_sid % rsa_n
+        return processed_id, (v[0], r)
+
+    @staticmethod
+    def prvkey_id_process(hash_sid, v, rsa_d, rsa_n, final_hash_operator, salt):
+        processed_id = RsaIntersect.hash(gmpy_math.powmod(hash_sid, rsa_d, rsa_n), final_hash_operator, salt)
+        return processed_id, v[0]
+
+    def cal_prvkey_ids_process_pair(self, data_instances):
+        return data_instances.map(
+            lambda k, v: self.prvkey_id_process(k, v, self.d, self.n,
+                                                self.final_hash_operator,
+                                                self.rsa_params.salt)
+        )
+
+    @staticmethod
+    def sign_id(hash_sid, rsa_d, rsa_n):
+        return gmpy_math.powmod(hash_sid, rsa_d, rsa_n)
+
+    def split_calculation_process(self, data_instances):
+        raise NotImplementedError("This method should not be called here")
+
+    def unified_calculation_process(self, data_instances):
+        raise NotImplementedError("This method should not be called here")
 
 
 class RawIntersect(Intersect):
-    def __init__(self, intersect_params):
-        super().__init__(intersect_params)
+    def __init__(self):
+        super().__init__()
         self.role = None
-        self.with_encode = intersect_params.with_encode
         self.transfer_variable = RawIntersectTransferVariable()
-        self.encode_params = intersect_params.encode_params
+        # self.task_version_id = None
+        # self.tracker = None
 
-        self.task_version_id = None
-        self.tracker = None
+    def _init_model(self, param):
+        self.with_encode = param.with_encode
+        self.encode_params = param.encode_params
 
     def intersect_send_id(self, data_instances):
         sid_hash_pair = None
@@ -253,12 +336,13 @@ class RawIntersect(Intersect):
 
         if not self.only_output_key:
             intersect_ids = self._get_value_from_data(intersect_ids, data_instances)
-        
+
+        """
         if self.task_version_id is not None:
             namespace = "#".join([str(self.guest_party_id), str(self.host_party_id), "mountain"])
             for k, v in enumerate(recv_ids_list):
                 table_name = '_'.join([self.task_version_id, str(k)])
                 self.tracker.job_tracker.save_as_table(v, table_name, namespace)
                 LOGGER.info("save guest_{}'s id in name:{}, namespace:{}".format(k, table_name, namespace))
-
+        """
         return intersect_ids

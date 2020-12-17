@@ -18,29 +18,26 @@ from collections import Iterable
 import gmpy2
 import random
 
-from fate_arch.session import computing_session as session
+# from fate_arch.session import computing_session as session
 from federatedml.secureprotol import gmpy_math
 from federatedml.secureprotol.hash.hash_factory import Hash
 from federatedml.statistic.intersect import RawIntersect
 from federatedml.statistic.intersect import RsaIntersect
-#from federatedml.statistic.intersect.rsa_cache import cache_utils
+# from federatedml.statistic.intersect.rsa_cache import cache_utils
 from federatedml.util import consts
 from federatedml.util import LOGGER
-from federatedml.transfer_variable.transfer_class.rsa_intersect_transfer_variable import RsaIntersectTransferVariable
+# from federatedml.transfer_variable.transfer_class.rsa_intersect_transfer_variable import RsaIntersectTransferVariable
 
 
 class RsaIntersectionGuest(RsaIntersect):
-    def __init__(self, intersect_params):
-        super().__init__(intersect_params)
+    def __init__(self):
+        super().__init__()
 
-        self.random_bit = intersect_params.random_bit
-
-        self.e = None
-        self.n = None
-        self.transfer_variable = RsaIntersectTransferVariable()
-
+        #self.random_bit = intersect_params.random_bit
+        # self.e = None
+        # self.n = None
         # parameter for intersection cache
-        self.intersect_cache_param = intersect_params.intersect_cache_param
+        # self.intersect_cache_param = intersect_params.intersect_cache_param
 
     def map_raw_id_to_encrypt_id(self, raw_id_data, encrypt_id_data):
         encrypt_id_data_exchange_kv = encrypt_id_data.map(lambda k, v: (v, k))
@@ -49,133 +46,69 @@ class RsaIntersectionGuest(RsaIntersect):
 
         return encrypt_common_id
 
-    def get_cache_version_match_info(self):
-        if self.intersect_cache_param.use_cache:
-            LOGGER.info("Use cache is true")
-            # check local cache version for each host
-            for i, host_party_id in enumerate(self.host_party_id_list):
-                current_version = cache_utils.guest_get_current_version(host_party_id=host_party_id,
-                                                                        guest_party_id=None,
-                                                                        id_type=self.intersect_cache_param.id_type,
-                                                                        encrypt_type=self.intersect_cache_param.encrypt_type,
-                                                                        tag='Za'
-                                                                        )
-                LOGGER.info("host_id:{}, current_version:{}".format(host_party_id, current_version))
-                if current_version is None:
-                    current_version = {"table_name": None, "namespace": None}
+    def get_host_sign_ids(self):
+        host_sign_ids_list = self.transfer_variable.host_sign_ids.get(idx=-1)
+        LOGGER.info("Not using cache, get host_sign_ids from all host")
 
-                self.transfer_variable.cache_version_info.remote(current_version,
-                                                                 role=consts.HOST,
-                                                                 idx=i)
-                LOGGER.info("Remote current version to host:{}".format(host_party_id))
+        return host_sign_ids_list
 
-            cache_version_match_info = self.transfer_variable.cache_version_match_info.get(idx=-1)
-            LOGGER.info("Get cache version match info:{}".format(cache_version_match_info))
-        else:
-            cache_version_match_info = None
-            LOGGER.info("Not using cache, cache_version_match_info is None")
+    def split_calculation_process(self, data_instances):
+        # split data
+        sid_hash_odd = data_instances.filter(lambda k, v: k & 1)
+        sid_hash_even = data_instances.filter(lambda k, v: not k & 1)
 
-        return cache_version_match_info
+        self.e, self.d, self.n = self.get_rsa_key()
+        LOGGER.info("Generated guest rsa key!")
+        guest_public_key = {"e": self.e, "n": self.n}
 
-    def get_host_id_process(self, cache_version_match_info):
-        if self.intersect_cache_param.use_cache:
-            host_ids_process_list = [None for _ in self.host_party_id_list]
+        # sends public key e & n to host
+        self.transfer_variable.guest_rsa_pubkey.remote(guest_public_key,
+                                                      role=consts.HOST,
+                                                      idx=0)
+        LOGGER.info("Remote public key to Host.")
 
-            if isinstance(cache_version_match_info, Iterable):
-                for i, version_info in enumerate(cache_version_match_info):
-                    if version_info.get('version_match'):
-                        host_ids_process_list[i] = session.table(name=version_info.get('version'),
-                                                                 namespace=version_info.get('namespace'),
-                                                                 create_if_missing=True,
-                                                                 error_if_exist=False)
-                        LOGGER.info("Read host {} 's host_ids_process from cache".format(self.host_party_id_list[i]))
-            else:
-                LOGGER.info("cache_version_match_info is not iterable, not use cache_version_match_info")
+        # generate ri
+        count = sid_hash_odd.count()
+        self.r = self.generate_r_base(self.random_bit, count, self.random_base_fraction)
 
-            # check which host_id_process is not receive yet
-            host_ids_process_rev_idx_list = [ i for i, e in enumerate(host_ids_process_list) if e is None ]
+        host_public_keys = self.transfer_variable.host_rsa_pubkey.get(-1)
+        LOGGER.info("Get RSA host_public_key:{} from Host".format(host_public_keys))
+        self.pub_e = [int(public_key["e"]) for public_key in host_public_keys]
+        self.pub_n = [int(public_key["n"]) for public_key in host_public_keys]
 
-            if len(host_ids_process_rev_idx_list) > 0:
-                # Recv host_ids_process
-                # table(host_id_process, 1)
-                host_ids_process = []
-                for rev_idx in host_ids_process_rev_idx_list:
-                    host_ids_process.append(self.transfer_variable.intersect_host_ids_process.get(idx=rev_idx))
-                    LOGGER.info("Get host_ids_process from host {}".format(self.host_party_id_list[rev_idx]))
+        prvkey_process_ids_pair = self.cal_prvkey_ids_process_pair(sid_hash_even)
+        prvkey_process_ids = prvkey_process_ids_pair.mapValues(lambda v: 1)
+        self.transfer_variable.guest_sign_ids.remote(prvkey_process_ids,
+                                                     role=consts.HOST,
+                                                     idx=-1)
 
-                for i, host_idx in enumerate(host_ids_process_rev_idx_list):
-                    host_ids_process_list[host_idx] = host_ids_process[i]
-
-                    version = cache_version_match_info[host_idx].get('version')
-                    namespace = cache_version_match_info[host_idx].get('namespace')
-
-                    cache_utils.store_cache(dtable=host_ids_process[i],
-                                            guest_party_id=self.guest_party_id,
-                                            host_party_id=self.host_party_id_list[i],
-                                            version=version,
-                                            id_type=self.intersect_cache_param.id_type,
-                                            encrypt_type=self.intersect_cache_param.encrypt_type,
-                                            tag=consts.INTERSECT_CACHE_TAG,
-                                            namespace=namespace
-                                            )
-                    LOGGER.info("Store host {}'s host_ids_process to cache.".format(self.host_party_id_list[host_idx]))
-        else:
-            host_ids_process_list = self.transfer_variable.intersect_host_ids_process.get(idx=-1)
-            LOGGER.info("Not using cache, get host_ids_process from all host")
-
-        return host_ids_process_list
-
-    @staticmethod
-    def guest_id_process(sid, random_bit, rsa_e, rsa_n, hash_operator, salt):
-        r = random.SystemRandom().getrandbits(random_bit)
-        re_hash = gmpy_math.powmod(r, rsa_e, rsa_n) * int(RsaIntersectionGuest.hash(sid, hash_operator, salt), 16) % rsa_n
-        return re_hash, (sid, r)
-
-    def run(self, data_instances):
-        LOGGER.info("Start rsa intersection")
-
-        # receives public key e & n
-        public_keys = self.transfer_variable.rsa_pubkey.get(-1)
-        LOGGER.info("Get RSA public_key:{} from Host".format(public_keys))
-        self.e = [int(public_key["e"]) for public_key in public_keys]
-        self.n = [int(public_key["n"]) for public_key in public_keys]
-
-        cache_version_match_info = self.get_cache_version_match_info()
-
-        # table (r^e % n * hash(sid), sid, r)
-        # encrypt hash(ids)
-        hash_operator = Hash(self.rsa_params.hash_method, self.rsa_params.base64)
-        guest_id_process_list = [ data_instances.map(
-                lambda k, v: self.guest_id_process(k,
-                                                   random_bit=self.random_bit,
-                                                   rsa_e=self.e[i],
-                                                   rsa_n=self.n[i],
-                                                   hash_operator=hash_operator,
-                                                   salt=self.rsa_params.salt)) for i in range(len(self.e)) ]
-
-        # table(r^e % n *hash(sid), 1)
-        # mask values in table & remote to host
-        for i, guest_id in enumerate(guest_id_process_list):
+        pubkey_id_process_list = [data_instances.map(
+            lambda k, v: self.pubkey_id_process(k,
+                                                v,
+                                                random_bit=self.random_bit,
+                                                rsa_e=self.pub_e[i],
+                                                rsa_n=self.pub_n[i],
+                                                rsa_r=self.r)) for i in range(len(self.pub_e))]
+        for i, guest_id in enumerate(pubkey_id_process_list):
             mask_guest_id = guest_id.mapValues(lambda v: 1)
-            self.transfer_variable.intersect_guest_ids.remote(mask_guest_id,
-                                                              role=consts.HOST,
-                                                              idx=i)
-            LOGGER.info("Remote guest_id to Host {}".format(i))
+            self.transfer_variable.guest_pubkey_ids.remote(mask_guest_id,
+                                                         role=consts.HOST,
+                                                         idx=i)
+            LOGGER.info("Remote guest_mask_ids to Host {}".format(i))
 
-        host_ids_process_list = self.get_host_id_process(cache_version_match_info)
-        LOGGER.info("Get host_ids_process")
-
-        # Recv process guest ids
+        host_sign_ids_list = self.get_host_sign_ids()
+        LOGGER.info("Get host_sign_ids")
+        # Recv signed guest ids
         # table(r^e % n *hash(sid), guest_id_process)
-        recv_guest_ids_process = self.transfer_variable.intersect_guest_ids_process.get(idx=-1)
-        LOGGER.info("Get guest_ids_process from Host")
+        recv_host_sign_guest_ids_list = self.transfer_variable.host_sign_guest_ids.get(idx=-1)
+        LOGGER.info("Get host_sign_guest_ids from Host")
 
         # table(r^e % n *hash(sid), sid, hash(guest_ids_process/r))
         # g[0]=(r^e % n *hash(sid), sid), g[1]=random bits r
-        final_hash_operator = Hash(self.rsa_params.final_hash_method, self.rsa_params.base64)
-        guest_ids_process_final = [v.join(recv_guest_ids_process[i], lambda g, r: (g[0], RsaIntersectionGuest.hash(gmpy2.divm(int(r), int(g[1]),self.n[i]),
-                                                                                                                   final_hash_operator, self.rsa_params.salt)))
-                                   for i, v in enumerate(guest_id_process_list)]
+        guest_ids_process_final = [v.join(recv_host_sign_guest_ids_list[i], lambda g, r: (
+        g[0], RsaIntersectionGuest.hash(gmpy2.divm(int(r), int(g[1]), self.n[i]),
+                                        self.final_hash_operator, self.rsa_params.salt)))
+                                   for i, v in enumerate(host_sign_ids_list)]
 
         # table(hash(guest_ids_process/r), sid))
         sid_guest_ids_process_final = [
@@ -183,7 +116,88 @@ class RsaIntersectionGuest(RsaIntersect):
             for i, g in enumerate(guest_ids_process_final)]
 
         # intersect table(hash(guest_ids_process/r), sid)
-        encrypt_intersect_ids = [v.join(host_ids_process_list[i], lambda sid, h: sid) for i, v in
+        encrypt_intersect_ids = [v.join(host_sign_ids_list[i], lambda sid, h: sid) for i, v in
+                                 enumerate(sid_guest_ids_process_final)]
+
+        if len(self.host_party_id_list) > 1:
+            raw_intersect_ids = [e.map(lambda k, v: (v, 1)) for e in encrypt_intersect_ids]
+            intersect_ids = self.get_common_intersection(raw_intersect_ids)
+
+            # send intersect id
+            if self.sync_intersect_ids:
+                for i, host_party_id in enumerate(self.host_party_id_list):
+                    remote_intersect_id = self.map_raw_id_to_encrypt_id(intersect_ids, encrypt_intersect_ids[i])
+                    self.transfer_variable.intersect_ids.remote(remote_intersect_id,
+                                                                role=consts.HOST,
+                                                                idx=i)
+                    LOGGER.info("Remote intersect ids to Host {}!".format(host_party_id))
+            else:
+                LOGGER.info("Not send intersect ids to Host!")
+        else:
+            intersect_ids = encrypt_intersect_ids[0]
+            if self.sync_intersect_ids:
+                remote_intersect_id = intersect_ids.mapValues(lambda v: 1)
+                self.transfer_variable.intersect_ids.remote(remote_intersect_id,
+                                                            role=consts.HOST,
+                                                            idx=0)
+
+            intersect_ids = intersect_ids.map(lambda k, v: (v, 1))
+
+        LOGGER.info("Finish intersect_ids computing")
+
+        if not self.only_output_key:
+            intersect_ids = self._get_value_from_data(intersect_ids, data_instances)
+        #@todo: union odd & even intersect_ids
+        return intersect_ids
+
+
+    def unified_calculation_process(self, data_instances):
+        # generate r
+        count = data_instances.count()
+        self.r = self.generate_r_base(self.random_bit, count, self.random_base_fraction)
+
+        # receives public key e & n
+        host_public_keys = self.transfer_variable.host_rsa_pubkey.get(-1)
+        LOGGER.info("Get RSA host_public_key:{} from Host".format(host_public_keys))
+        self.pub_e = [int(public_key["e"]) for public_key in host_public_keys]
+        self.pub_n = [int(public_key["n"]) for public_key in host_public_keys]
+
+        pubkey_id_process_list = [data_instances.map(
+            lambda k, v: self.pubkey_id_process(k,
+                                                v,
+                                                random_bit=self.random_bit,
+                                                rsa_e=self.pub_e[i],
+                                                rsa_n=self.pub_n[i],
+                                                rsa_r=self.r)) for i in range(len(self.pub_e))]
+
+        for i, guest_id in enumerate(pubkey_id_process_list):
+            mask_guest_id = guest_id.mapValues(lambda v: 1)
+            self.transfer_variable.guest_pubkey_ids.remote(mask_guest_id,
+                                                         role=consts.HOST,
+                                                         idx=i)
+            LOGGER.info("Remote guest_mask_ids to Host {}".format(i))
+
+        host_sign_ids_list = self.get_host_sign_ids()
+        LOGGER.info("Get host_sign_ids")
+
+        # Recv signed guest ids
+        # table(r^e % n *hash(sid), guest_id_process)
+        recv_host_sign_guest_ids_list = self.transfer_variable.host_sign_guest_ids.get(idx=-1)
+        LOGGER.info("Get host_sign_guest_ids from Host")
+
+        # table(r^e % n *hash(sid), sid, hash(guest_ids_process/r))
+        # g[0]=(r^e % n *hash(sid), sid), g[1]=random bits r
+        guest_ids_process_final = [v.join(recv_host_sign_guest_ids_list[i], lambda g, r: (g[0], RsaIntersectionGuest.hash(gmpy2.divm(int(r), int(g[1]),self.n[i]),
+                                                                                                                   self.final_hash_operator, self.rsa_params.salt)))
+                                   for i, v in enumerate(host_sign_ids_list)]
+
+        # table(hash(guest_ids_process/r), sid))
+        sid_guest_ids_process_final = [
+            g.map(lambda k, v: (v[1], v[0]))
+            for i, g in enumerate(guest_ids_process_final)]
+
+        # intersect table(hash(guest_ids_process/r), sid)
+        encrypt_intersect_ids = [v.join(host_sign_ids_list[i], lambda sid, h: sid) for i, v in
                                  enumerate(sid_guest_ids_process_final)]
 
         if len(self.host_party_id_list) > 1:
@@ -216,6 +230,14 @@ class RsaIntersectionGuest(RsaIntersect):
             intersect_ids = self._get_value_from_data(intersect_ids, data_instances)
 
         return intersect_ids
+
+    def fit(self, data_instances):
+        LOGGER.info("Start rsa intersection")
+        # hash k
+        data_instances = data_instances.map(lambda k, v: (self.hash_operator(k), (k, v)))
+        if self.split_calculation:
+            return self.split_calculation_process(data_instances)
+        return self._calculation_process(data_instances)
 
 
 class RawIntersectionGuest(RawIntersect):
