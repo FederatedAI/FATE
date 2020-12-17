@@ -117,9 +117,14 @@ class HeteroGradientBase(object):
             return np.array(gradient)
 
     @staticmethod
-    def __apply_cal_gradient(data, fixed_float_precision):
+    def __apply_cal_gradient(data, fixed_float_precision, is_sparse):
         all_g = None
         for key, (feature, d) in data:
+            if is_sparse:
+                x = np.zeros(feature.get_shape())
+                for idx, v in feature.get_all_data():
+                    x[idx] = v
+                feature = x
             if fixed_float_precision:
                 g = (feature * 1e6).astype("int") * d
             else:
@@ -157,7 +162,9 @@ class HeteroGradientBase(object):
             LOGGER.debug("Use apply partitions")
             feat_join_grad = data_instances.join(fore_gradient,
                                                  lambda d, g: (d.features, g))
-            f = functools.partial(self.__apply_cal_gradient, fixed_float_precision=self.fixed_float_precision)
+            f = functools.partial(self.__apply_cal_gradient,
+                                  fixed_float_precision=self.fixed_float_precision,
+                                  is_sparse=is_sparse)
             gradient_sum = feat_join_grad.applyPartitions(f)
             gradient_sum = gradient_sum.reduce(lambda x, y: x + y)
             if fit_intercept:
