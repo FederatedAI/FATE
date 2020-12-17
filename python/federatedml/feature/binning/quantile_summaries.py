@@ -20,8 +20,8 @@
 import math
 import time
 
-from federatedml.util import consts
 from federatedml.util import LOGGER
+from federatedml.util import consts
 
 
 class Stats(object):
@@ -73,7 +73,6 @@ class QuantileSummaries(object):
                 self.compress()
 
     def _insert_head_buffer(self):
-        t0 = time.time()
         if not len(self.head_sampled):  # If empty
             return
         current_count = self.count
@@ -103,7 +102,6 @@ class QuantileSummaries(object):
         self.sampled = new_sampled
         self.head_sampled = []
         self.count = current_count
-        LOGGER.debug(f"_insert_head_buffer took {time.time() - t0}s")
 
     def compress(self):
         self._insert_head_buffer()
@@ -150,15 +148,22 @@ class QuantileSummaries(object):
         new_sample += self.sampled[i:]
         new_sample += other.sampled[j:]
 
-        self.sampled = new_sample
-        self.count += other.count
+        res_summary = self.__class__(compress_thres=self.compress_thres,
+                                     head_size=self.head_size,
+                                     error=self.error,
+                                     abnormal_list=self.abnormal_list)
+        res_summary.count = self.count + other.count
+        res_summary.sampled = new_sample
+        # self.sampled = new_sample
+        # self.count += other.count
         # merge_threshold = math.floor(2 * self.error * self.count) - 1
         merge_threshold = 2 * self.error * self.count
 
-        self.sampled = self._compress_immut(merge_threshold)
-        LOGGER.debug(f"merge took {time.time() - t0}s")
-
-        return self
+        res_summary.sampled = res_summary._compress_immut(merge_threshold)
+        t1 = time.time()
+        if t1 - t0 > 1:
+            LOGGER.debug(f"merge took {t1 - t0}s")
+        return res_summary
 
     def query(self, quantile):
         """
@@ -200,27 +205,6 @@ class QuantileSummaries(object):
                 return cur_sample.value
             i += 1
         return self.sampled[-1].value
-
-    def query_quantile_list(self, q_list):
-        """
-        Given the queried quantile, return the approximation guaranteed result
-        Parameters
-        ----------
-        quantile : float [0.0, 1.0]
-            The target quantile
-
-        Returns
-        -------
-        float, the corresponding value result.
-        """
-        if self.head_sampled:
-            # self._insert_head_buffer()
-            self.compress()
-
-        if self.count == 0:
-            return [0] * len(q_list)
-
-
 
     def value_to_rank(self, value):
         min_rank, max_rank = 0, 0
@@ -291,7 +275,9 @@ class QuantileSummaries(object):
 
         # Python do not support prepend, thus, use reverse instead
         res.reverse()
-        LOGGER.debug(f"_compress_immut took {time.time() - t0}s")
+        t1 = time.time()
+        if t1 - t0 > 1:
+            LOGGER.debug(f"_compress_immut took {time.time() - t0}s")
         return res
 
 

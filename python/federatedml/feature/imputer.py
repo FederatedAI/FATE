@@ -4,6 +4,7 @@ import numpy as np
 
 from federatedml.statistic.data_overview import get_header
 from federatedml.statistic.statics import MultivariateStatisticalSummary
+from federatedml.feature.binning.quantile_tool import QuantileBinningTool
 from federatedml.util import consts
 from federatedml.util import LOGGER
 from federatedml.statistic import data_overview
@@ -109,6 +110,7 @@ class Imputer(object):
 
     def __get_cols_transform_value(self, data, replace_method, quantile=None):
         summary_obj = MultivariateStatisticalSummary(data, -1, abnormal_list=self.missing_value_list)
+        binning_tool = QuantileBinningTool(abnormal_list=self.missing_value_list)
         header = get_header(data)
 
         if replace_method == consts.MIN:
@@ -118,11 +120,11 @@ class Imputer(object):
         elif replace_method == consts.MEAN:
             cols_transform_value = summary_obj.get_mean()
         elif replace_method == consts.MEDIAN:
-            cols_transform_value = summary_obj.get_median()
+            cols_transform_value = binning_tool.get_median()
         elif replace_method == consts.QUANTILE:
             if quantile > 1 or quantile < 0:
                 raise ValueError("quantile should between 0 and 1, but get:{}".format(quantile))
-            cols_transform_value = summary_obj.get_quantile_point(quantile)
+            cols_transform_value = binning_tool.get_quantile_point(quantile)
         else:
             raise ValueError("Unknown replace method:{}".format(replace_method))
 

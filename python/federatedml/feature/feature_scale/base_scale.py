@@ -21,6 +21,7 @@ from collections import Iterable
 from federatedml.statistic import data_overview
 from federatedml.statistic.data_overview import get_header
 from federatedml.statistic.statics import MultivariateStatisticalSummary
+from federatedml.feature.binning.quantile_tool import QuantileBinningTool
 from federatedml.util import consts
 from federatedml.util import LOGGER
 
@@ -38,7 +39,7 @@ class BaseScale(object):
         self.scale_column_idx = []
 
         self.summary_obj = None
-
+        self.quantile_tool = None
         self.model_param_name = 'ScaleParam'
         self.model_meta_name = 'ScaleMeta'
 
@@ -160,7 +161,9 @@ class BaseScale(object):
 
     def __get_min_max_value_by_cap(self, data):
         data_shape = self._get_data_shape(data)
-        self.summary_obj = MultivariateStatisticalSummary(data, -1)
+        # self.summary_obj = MultivariateStatisticalSummary(data, -1)
+        self.binning_tool = QuantileBinningTool()
+        self.binning_tool.fit_split_points(data)
         header = data.schema.get("header")
 
         if self.feat_upper is None:
@@ -172,10 +175,11 @@ class BaseScale(object):
         if self.feat_upper < self.feat_lower:
             raise ValueError("feat_upper should not less than feat_lower")
 
-        column_min_value = self.summary_obj.get_quantile_point(self.feat_lower)
+        LOGGER.debug(f"feat_lower: {self.feat_lower}, type: {type(self.feat_lower)} feat_upper: {self.feat_upper}")
+        column_min_value = self.binning_tool.get_quantile_point(self.feat_lower)
         column_min_value = [column_min_value[key] for key in header]
 
-        column_max_value = self.summary_obj.get_quantile_point(self.feat_upper)
+        column_max_value = self.binning_tool.get_quantile_point(self.feat_upper)
         column_max_value = [column_max_value[key] for key in header]
 
         self.__check_equal(data_shape, len(column_min_value))

@@ -484,38 +484,38 @@ class MultivariateStatisticalSummary(object):
             new_dict[col_name] = static_1
         return new_dict
 
-    def get_median(self):
-        if self.binning_obj is None:
-            self._static_quantile_summaries()
+    # def get_median(self):
+    #     if self.binning_obj is None:
+    #         self._static_quantile_summaries()
+    #
+    #     medians = self.binning_obj.query_quantile_point(query_points=0.5)
+    #     return medians
 
-        medians = self.binning_obj.query_quantile_point(query_points=0.5)
-        return medians
+    # @property
+    # def median(self):
+        # median_dict = self.get_median()
+        # return np.array([median_dict[self.header[idx]] for idx in self.cols_index])
 
-    @property
-    def median(self):
-        median_dict = self.get_median()
-        return np.array([median_dict[self.header[idx]] for idx in self.cols_index])
-
-    def get_quantile_point(self, quantile):
-        """
-        Return the specific quantile point value
-
-        Parameters
-        ----------
-        quantile : float, 0 <= quantile <= 1
-            Specify which column(s) need to apply statistic.
-
-        Returns
-        -------
-        return a dict of result quantile points.
-        eg.
-        quantile_point = {"x1": 3, "x2": 5... }
-        """
-
-        if self.binning_obj is None:
-            self._static_quantile_summaries()
-        quantile_points = self.binning_obj.query_quantile_point(quantile)
-        return quantile_points
+    # def get_quantile_point(self, quantile):
+    #     """
+    #     Return the specific quantile point value
+    #
+    #     Parameters
+    #     ----------
+    #     quantile : float, 0 <= quantile <= 1
+    #         Specify which column(s) need to apply statistic.
+    #
+    #     Returns
+    #     -------
+    #     return a dict of result quantile points.
+    #     eg.
+    #     quantile_point = {"x1": 3, "x2": 5... }
+    #     """
+    #
+    #     if self.binning_obj is None:
+    #         self._static_quantile_summaries()
+    #     quantile_points = self.binning_obj.query_quantile_point(quantile)
+    #     return quantile_points
 
     def get_mean(self):
         """

@@ -30,7 +30,7 @@ from federatedml.feature.binning.base_binning import BaseBinning
 from federatedml.feature.binning.bucket_binning import BucketBinning
 from federatedml.feature.binning.optimal_binning import bucket_info
 from federatedml.feature.binning.optimal_binning import heap
-from federatedml.feature.binning.quantile_binning import QuantileBinningTool
+from federatedml.feature.binning.quantile_tool import QuantileBinningTool
 from federatedml.param.feature_binning_param import FeatureBinningParam, OptimalBinningParam
 from federatedml.statistic import data_overview
 from federatedml.statistic import statics

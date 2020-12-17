@@ -16,11 +16,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-import copy
 import functools
+import time
 import uuid
 
-from fate_arch.common.versions import get_eggroll_version
 from federatedml.feature.binning.base_binning import BaseBinning
 from federatedml.feature.binning.quantile_summaries import quantile_summary_factory
 from federatedml.param.feature_binning_param import FeatureBinningParam
@@ -83,7 +82,7 @@ class QuantileBinning(BaseBinning):
         percentile_rate = [i * percent_value for i in range(1, self.bin_num)]
         percentile_rate.append(1.0)
         is_sparse = data_overview.is_sparse_data(data_instances)
-    
+
         self._fit_split_point(data_instances, is_sparse, percentile_rate)
 
         self.fit_category_features(data_instances)
@@ -91,8 +90,14 @@ class QuantileBinning(BaseBinning):
 
     @staticmethod
     def copy_merge(s1, s2):
-        new_s1 = copy.deepcopy(s1)
-        return new_s1.merge(s2)
+        t0 = time.time()
+        # new_s1 = copy.deepcopy(s1[0])
+        new_s1 = s1[0]
+        t1 = time.time()
+
+        res = [new_s1.merge(s2[0]), s1[1] + s2[1] + (t1 - t0)]
+
+        return res
 
     def _fit_split_point(self, data_instances, is_sparse, percentile_rate):
         if self.summary_dict is None:
@@ -102,7 +107,10 @@ class QuantileBinning(BaseBinning):
                                   cols_dict=self.bin_inner_param.bin_cols_map,
                                   header=self.header,
                                   is_sparse=is_sparse)
-            summary_dict_table = data_instances.mapReducePartitions(f, self.copy_merge)
+            t0 = time.time()
+            # summary_dict_table = data_instances.mapReducePartitions(f, self.copy_merge)
+            summary_dict_table = data_instances.mapReducePartitions(f, lambda s1, s2: s1.merge(s2))
+            LOGGER.debug(f"mapReducePartition took: {time.time() - t0}")
             # summary_dict = dict(summary_dict.collect())
 
             if is_sparse:
@@ -135,6 +143,7 @@ class QuantileBinning(BaseBinning):
 
     @staticmethod
     def feature_summary(data_iter, params, cols_dict, abnormal_list, header, is_sparse):
+        t0 = time.time()
         summary_dict = {}
 
         summary_param = {'compress_thres': params.compress_thres,
@@ -146,6 +155,7 @@ class QuantileBinning(BaseBinning):
             quantile_summaries = quantile_summary_factory(is_sparse=is_sparse, param_dict=summary_param)
             summary_dict[col_name] = quantile_summaries
         _ = str(uuid.uuid1())
+        t1 = time.time()
         for _, instant in data_iter:
             if not is_sparse:
                 if type(instant).__name__ == 'Instance':
@@ -163,13 +173,15 @@ class QuantileBinning(BaseBinning):
                         continue
                     summary = summary_dict[col_name]
                     summary.insert(col_value)
-
+        t2 = time.time()
         result = []
         for features_name, summary_obj in summary_dict.items():
             summary_obj.compress()
             # result.append(((_, features_name), summary_obj))
             result.append((features_name, summary_obj))
-
+        t3 = time.time()
+        LOGGER.debug(f"In feature_summary took: t1: {t1 - t0}, for loop: {t2 - t1}, compress: {t3 - t2},"
+                     f"all: {t3 - t0}")
         return result
 
     def query_quantile_point(self, query_points, col_names=None):
@@ -198,53 +210,4 @@ class QuantileBinning(BaseBinning):
         return result
 
 
-class QuantileBinningTool(QuantileBinning):
-    """
-    Use for quantile binning data directly.
-    """
-
-    def __init__(self, bin_nums=consts.G_BIN_NUM, param_obj: FeatureBinningParam = None,
-                 abnormal_list=None, allow_duplicate=False):
-        if param_obj is None:
-            param_obj = FeatureBinningParam(bin_num=bin_nums)
-        super().__init__(params=param_obj, abnormal_list=abnormal_list, allow_duplicate=allow_duplicate)
-
-    def fit_summary(self, data_instances, is_sparse=None):
-        if is_sparse is None:
-            is_sparse = data_overview.is_sparse_data(data_instances)
-
-        f = functools.partial(self.feature_summary,
-                              params=self.params,
-                              abnormal_list=self.abnormal_list,
-                              cols_dict=self.bin_inner_param.bin_cols_map,
-                              header=self.header,
-                              is_sparse=is_sparse)
-        summary_dict_table = data_instances.mapReducePartitions(f, self.copy_merge)
-        # summary_dict = dict(summary_dict.collect())
-
-        if is_sparse:
-            total_count = data_instances.count()
-            summary_dict_table = summary_dict_table.mapValues(lambda x: x.set_total_count(total_count))
-        return summary_dict_table
-
-    def get_quantile_point(self, quantile):
-        """
-        Return the specific quantile point value
-
-        Parameters
-        ----------
-        quantile : float, 0 <= quantile <= 1
-            Specify which column(s) need to apply statistic.
-
-        Returns
-        -------
-        return a dict of result quantile points.
-        eg.
-        quantile_point = {"x1": 3, "x2": 5... }
-        """
-
-        if self.binning_obj is None:
-            self._static_quantile_summaries()
-        quantile_points = self.binning_obj.query_quantile_point(quantile)
-        return quantile_points
 

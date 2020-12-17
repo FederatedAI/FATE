@@ -21,6 +21,8 @@ from federatedml.param.statistics_param import StatisticsParam
 from federatedml.protobuf.generated import statistic_meta_pb2, statistic_param_pb2
 from federatedml.statistic.data_overview import get_header
 from federatedml.statistic.statics import MultivariateStatisticalSummary
+from federatedml.feature.binning.quantile_tool import QuantileBinningTool
+from federatedml.param.feature_binning_param import FeatureBinningParam
 from federatedml.util import LOGGER
 from federatedml.util import abnormal_detection
 from federatedml.util import consts
@@ -77,6 +79,7 @@ class DataStatistics(ModelBase):
         self.inner_param = None
         self.schema = None
         self.statistic_obj: MultivariateStatisticalSummary = None
+        self.quantile_tool: QuantileBinningTool = None
         self._result_dict = {}
 
         self._numeric_statics = []
@@ -87,7 +90,7 @@ class DataStatistics(ModelBase):
     def _init_model(self, model_param):
         self.model_param = model_param
         for stat_name in self.model_param.statistics:
-            if stat_name in self.model_param.LEGAL_STAT:
+            if stat_name in self.model_param.LEGAL_STAT and stat_name != consts.MEDIAN:
                 self._numeric_statics.append(stat_name)
             else:
                 self._quantile_statics.append(stat_name)
@@ -123,36 +126,46 @@ class DataStatistics(ModelBase):
         else:
             stat_order = 2
 
-        self.statistic_obj = MultivariateStatisticalSummary(data_instances,
-                                                            cols_index=self.inner_param.static_indices,
-                                                            abnormal_list=self.model_param.abnormal_list,
-                                                            error=self.model_param.quantile_error,
-                                                            stat_order=stat_order,
-                                                            bias=self.model_param.bias)
         results = None
-        for stat_name in self._numeric_statics:
-            stat_res = self.statistic_obj.get_statics(stat_name)
-            LOGGER.debug(f"state_name: {stat_name}, stat_res: {stat_res}")
-            self.feature_value_pb.append(self._convert_pb(stat_res, stat_name))
-            if results is None:
-                results = {k: {stat_name: v} for k, v in stat_res.items()}
-            else:
-                for k, v in results.items():
-                    results[k] = dict(**v, **{stat_name: stat_res[k]})
 
-        for query_point in self._quantile_statics:
-            q = float(query_point[:-1]) / 100
-            res = self.statistic_obj.get_quantile_point(q)
-            self.feature_value_pb.append(self._convert_pb(res, query_point))
-            if results is None:
-                results = res
-            else:
-                for k, v in res.items():
-                    results[k][query_point] = v
+        if len(self._numeric_statics) > 0:
+            self.statistic_obj = MultivariateStatisticalSummary(data_instances,
+                                                                cols_index=self.inner_param.static_indices,
+                                                                abnormal_list=self.model_param.abnormal_list,
+                                                                error=self.model_param.quantile_error,
+                                                                stat_order=stat_order,
+                                                                bias=self.model_param.bias)
+            for stat_name in self._numeric_statics:
+                LOGGER.debug(f"state_name: {stat_name}")
+                stat_res = self.statistic_obj.get_statics(stat_name)
+                self.feature_value_pb.append(self._convert_pb(stat_res, stat_name))
+                if results is None:
+                    results = {k: {stat_name: v} for k, v in stat_res.items()}
+                else:
+                    for k, v in results.items():
+                        results[k] = dict(**v, **{stat_name: stat_res[k]})
+
+        if len(self._quantile_statics) > 0:
+
+            bin_param = FeatureBinningParam(bin_num=2, bin_indexes=self.inner_param.static_indices,
+                                            error=self.model_param.quantile_error)
+            self.quantile_tool = QuantileBinningTool(param_obj=bin_param,
+                                                     abnormal_list=self.model_param.abnormal_list)
+            self.quantile_tool.fit_split_points(data_instances)
+            for query_point in self._quantile_statics:
+                if query_point == consts.MEDIAN:
+                    q = 0.5
+                else:
+                    q = float(query_point[:-1]) / 100
+                res = self.quantile_tool.get_quantile_point(q)
+                self.feature_value_pb.append(self._convert_pb(res, query_point))
+                if results is None:
+                    results = res
+                else:
+                    for k, v in res.items():
+                        results[k][query_point] = v
+
         for k, v in results.items():
-            # new_dict = {}
-            # for stat_name, value in v.items():
-            #     LOGGER.debug(f"stat_name: {stat_name}, value: {value}, type: {type(value)}")
             self.add_summary(k, v)
         LOGGER.debug(f"Before return, summary: {self.summary()}")
         return data_instances
