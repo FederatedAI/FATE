@@ -32,6 +32,7 @@ class SecretSharingSumGuest(BaseSecretSharingSum):
 
     def _init_model(self, model_param: SecretSharingSumParam):
         self.sum_cols = model_param.sum_cols
+        self.vss.Q_n = model_param.q_n
 
     def _init_data(self, data_inst):
         self.host_count = len(self.component_properties.host_party_idlist)
