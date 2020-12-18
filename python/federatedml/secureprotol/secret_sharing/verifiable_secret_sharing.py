@@ -4,6 +4,7 @@ from federatedml.secureprotol import gmpy_math
 
 class VerifiableSecretSharing(object):
     def __init__(self):
+        self.Q_n = 0
         self.prime = None
         self.share_amount = -1
         self.g = 2
@@ -19,7 +20,7 @@ class VerifiableSecretSharing(object):
         self.prime = prime
 
     def encrypt(self, secret):
-        coefficient = [int(secret)]
+        coefficient = [self.encode(secret)]
         for i in range(self.share_amount - 1):
             random_coefficient = random.SystemRandom().randint(0, self.prime - 1)
             coefficient.append(random_coefficient)
@@ -52,8 +53,9 @@ class VerifiableSecretSharing(object):
             lagrange_polynomial = numerator * gmpy_math.invert(denominator, self.prime)
             # multiply the current y & the evaluated polynomial & add it to f(x)
             secret = (self.prime + secret + (y_values[i] * lagrange_polynomial)) % self.prime
-
-        return secret
+            if secret > (2 ** 64):
+                secret -= self.prime
+        return self.decode(secret)
 
     def calculate_commitment(self, coefficient):
         return gmpy_math.powmod(self.g, coefficient, self.prime)
@@ -68,3 +70,9 @@ class VerifiableSecretSharing(object):
         if v1 != v2:
             return False
         return True
+
+    def encode(self, x):
+        return int(x*(10**self.Q_n))
+
+    def decode(self, s):
+        return float(round(s/(10**self.Q_n), self.Q_n))
