@@ -26,17 +26,27 @@ Parameters
 sum_cols : list of column index, default: None
     Specify which columns need to be sum. If column index is None, each of columns will be sum.
 
+q_n : int, default: 6
+    q_n is the number of significant decimal places
+
 """
 
 
 class SecretSharingSumParam(BaseParam):
-    def __init__(self, sum_cols=None):
+    def __init__(self, sum_cols=None, q_n=6):
         self.sum_cols = sum_cols
         if sum_cols is None:
             self.sum_cols = []
+
+        self.q_n = q_n
 
     def check(self):
         if isinstance(self.sum_cols, list):
             for idx in self.sum_cols:
                 if not isinstance(idx, int):
                     raise ValueError(f"type mismatch, column_indexes with element {idx}(type is {type(idx)})")
+
+        if not isinstance(self.q_n, int):
+            raise ValueError(f"Init param's q_n {self.q_n} not supported, should be int type", type is {type(self.q_n)})
+
+
