@@ -182,9 +182,9 @@ class BaseParameterUtil(object):
                     runtime_dict[key] = {}
 
                 runtime_dict[key] = ParameterUtil.merge_parameters(runtime_dict.get(key),
-                                                                   val_list,
+                                                                   val_list[idx],
                                                                    attr,
-                                                                   idx,
+                                                                   -1,
                                                                    role=role,
                                                                    role_num=role_num,
                                                                    component=component,
