@@ -147,40 +147,40 @@ buildBase() {
 
 buildModule() {
         # handle python
-        [ -d ${source_dir}/docker-build/docker/modules/python/python ] && rm -rf ${source_dir}/docker-build/docker/modules/python/python
-        [ -d ${source_dir}/docker-build/docker/modules/python/eggroll ] && rm -rf ${source_dir}/docker-build/docker/modules/python/eggroll
-        [ -d ${source_dir}/docker-build/docker/modules/python/examples ] && rm -rf ${source_dir}/docker-build/docker/modules/python/examples
-        [ -d ${source_dir}/docker-build/docker/modules/python/fate.env ] && rm -rf ${source_dir}/docker-build/docker/modules/python/fate.env
-        cp -r ${package_dir}/python ${source_dir}/docker-build/docker/modules/python/python
-        cp -r ${package_dir}/eggroll ${source_dir}/docker-build/docker/modules/python/eggroll
-        cp -r ${package_dir}/examples ${source_dir}/docker-build/docker/modules/python/examples
-        cp -r ${package_dir}/fate.env ${source_dir}/docker-build/docker/modules/python/fate.env
+        [ -d ${SOURCE_DIR}/docker-build/docker/modules/python/python ] && rm -rf ${SOURCE_DIR}/docker-build/docker/modules/python/python
+        [ -d ${SOURCE_DIR}/docker-build/docker/modules/python/eggroll ] && rm -rf ${SOURCE_DIR}/docker-build/docker/modules/python/eggroll
+        [ -d ${SOURCE_DIR}/docker-build/docker/modules/python/examples ] && rm -rf ${SOURCE_DIR}/docker-build/docker/modules/python/examples
+        [ -d ${SOURCE_DIR}/docker-build/docker/modules/python/fate.env ] && rm -rf ${SOURCE_DIR}/docker-build/docker/modules/python/fate.env
+        cp -r ${package_dir}/python ${SOURCE_DIR}/docker-build/docker/modules/python/python
+        cp -r ${package_dir}/eggroll ${SOURCE_DIR}/docker-build/docker/modules/python/eggroll
+        cp -r ${package_dir}/examples ${SOURCE_DIR}/docker-build/docker/modules/python/examples
+        cp -r ${package_dir}/fate.env ${SOURCE_DIR}/docker-build/docker/modules/python/fate.env
 
         # handle fateboard
-        [ -d ${source_dir}/docker-build/docker/modules/fateboard/fateboard ] && rm -rf ${source_dir}/docker-build/docker/modules/fateboard/fateboard
-        cp -r ${package_dir}/fateboard ${source_dir}/docker-build/docker/modules/fateboard/fateboard
+        [ -d ${SOURCE_DIR}/docker-build/docker/modules/fateboard/fateboard ] && rm -rf ${SOURCE_DIR}/docker-build/docker/modules/fateboard/fateboard
+        cp -r ${package_dir}/fateboard ${SOURCE_DIR}/docker-build/docker/modules/fateboard/fateboard
 
         # handle eggroll
-        [ -d ${source_dir}/docker-build/docker/modules/eggroll/python ] && rm -rf ${source_dir}/docker-build/docker/modules/eggroll/python
-        [ -d ${source_dir}/docker-build/docker/modules/eggroll/eggroll ] && rm -rf ${source_dir}/docker-build/docker/modules/eggroll/eggroll
-        cp -r ${package_dir}/python ${source_dir}/docker-build/docker/modules/eggroll/python
-        cp -r ${package_dir}/eggroll/ ${source_dir}/docker-build/docker/modules/eggroll/eggroll
+        [ -d ${SOURCE_DIR}/docker-build/docker/modules/eggroll/python ] && rm -rf ${SOURCE_DIR}/docker-build/docker/modules/eggroll/python
+        [ -d ${SOURCE_DIR}/docker-build/docker/modules/eggroll/eggroll ] && rm -rf ${SOURCE_DIR}/docker-build/docker/modules/eggroll/eggroll
+        cp -r ${package_dir}/python ${SOURCE_DIR}/docker-build/docker/modules/eggroll/python
+        cp -r ${package_dir}/eggroll/ ${SOURCE_DIR}/docker-build/docker/modules/eggroll/eggroll
 
-        cd ${source_dir}
+        cd ${SOURCE_DIR}
 
         for module in "python" "fateboard" "eggroll" "python-nn"; do
                 echo "### START BUILDING ${module} ###"
-                docker build --build-arg version=${version} --build-arg fateboard_version=${fateboard_version} --build-arg PREFIX=${PREFIX} --build-arg BASE_TAG=${BASE_TAG} --no-cache -t ${PREFIX}/${module}:${TAG} -f ${source_dir}/docker-build/docker/modules/${module}/Dockerfile ${source_dir}/docker-build/docker/modules/${module}
+                docker build --build-arg version=${version} --build-arg fateboard_version=${fateboard_version} --build-arg PREFIX=${PREFIX} --build-arg BASE_TAG=${BASE_TAG} --no-cache -t ${PREFIX}/${module}:${TAG} -f ${SOURCE_DIR}/docker-build/docker/modules/${module}/Dockerfile ${SOURCE_DIR}/docker-build/docker/modules/${module}
                 echo "### FINISH BUILDING ${module} ###"
                 echo ""
         done
 
         # clean up
-        rm -rf ${source_dir}/docker-build/docker/modules/python/python
-        rm -rf ${source_dir}/docker-build/docker/modules/python/eggroll
-        rm -rf ${source_dir}/docker-build/docker/modules/fateboard/fateboard
-        rm -rf ${source_dir}/docker-build/docker/modules/eggroll/eggroll
-        rm -rf ${source_dir}/docker-build/docker/modules/eggroll/python
+        rm -rf ${SOURCE_DIR}/docker-build/docker/modules/python/python
+        rm -rf ${SOURCE_DIR}/docker-build/docker/modules/python/eggroll
+        rm -rf ${SOURCE_DIR}/docker-build/docker/modules/fateboard/fateboard
+        rm -rf ${SOURCE_DIR}/docker-build/docker/modules/eggroll/eggroll
+        rm -rf ${SOURCE_DIR}/docker-build/docker/modules/eggroll/python
 
         echo ""
 }
