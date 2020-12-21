@@ -642,6 +642,8 @@ def deploy():
         deploy_status_info['detail'] = {}
 
         for role_name, role_partys in value.get("f_train_runtime_conf", {}).get('role', {}).items():
+            if role_name not in ['arbiter', 'host', 'guest']:
+                continue
             deploy_status_info[role_name] = deploy_status_info.get(role_name, {})
             deploy_status_info['detail'][role_name] = {}
             adapter = JobRuntimeConfigAdapter(value.get("f_train_runtime_conf", {}))
