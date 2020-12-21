@@ -15,6 +15,7 @@
 #
 import base64
 import datetime
+import io
 import json
 import os
 import pickle
@@ -87,7 +88,30 @@ def serialize_b64(src, to_str=False):
 
 
 def deserialize_b64(src):
-    return pickle.loads(base64.b64decode(string_to_bytes(src) if isinstance(src, str) else src))
+    return restricted_loads(src)
+
+
+safe_module= {
+    'federatedml',
+    'numpy'
+}
+
+
+class RestrictedUnpickler(pickle.Unpickler):
+    def find_class(self, module, name):
+        import importlib
+        if module.split('.')[0] in safe_module:
+            _module = importlib.import_module(module)
+            return getattr(_module, name)
+        # Forbid everything else.
+        raise pickle.UnpicklingError("global '%s.%s' is forbidden" %
+                                     (module, name))
+
+
+def restricted_loads(src):
+    """Helper function analogous to pickle.loads()."""
+    s = base64.b64decode(string_to_bytes(src) if isinstance(src, str) else src)
+    return RestrictedUnpickler(io.BytesIO(s)).load()
 
 
 def get_lan_ip():
