@@ -20,6 +20,7 @@ import numpy as np
 from federatedml.feature.binning.quantile_tool import QuantileBinningTool
 from federatedml.feature.homo_feature_binning import homo_binning_base
 from federatedml.param.feature_binning_param import HomoFeatureBinningParam
+from federatedml.framework.homo.blocks import secure_sum_aggregator
 from federatedml.util import LOGGER
 from federatedml.util import consts
 
@@ -29,6 +30,8 @@ class Server(homo_binning_base.Server):
         super().__init__(params, abnormal_list)
 
     def fit_split_points(self, data=None):
+        if self.aggregator is None:
+            self.aggregator = secure_sum_aggregator.Server(enable_secure_aggregate=True)
         self.get_total_count()
         self.get_min_max()
         self.query_values()
@@ -61,6 +64,8 @@ class Client(homo_binning_base.Client):
         # self.total_count = data_inst.count()
 
     def fit_split_points(self, data_instances):
+        if self.aggregator is None:
+            self.aggregator = secure_sum_aggregator.Client(enable_secure_aggregate=True)
         self.fit(data_instances)
 
         percent_value = 1.0 / self.bin_num

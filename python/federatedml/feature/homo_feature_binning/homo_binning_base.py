@@ -29,8 +29,10 @@ from federatedml.transfer_variable.transfer_class.homo_binning_transfer_variable
 class Server(BaseBinning):
     def __init__(self, params=None, abnormal_list=None):
         super().__init__(params, abnormal_list)
-        self.aggregator = secure_sum_aggregator.Server(enable_secure_aggregate=True)
-        self.transfer_variable: HomoBinningTransferVariable() = None
+        # self.aggregator = secure_sum_aggregator.Server(enable_secure_aggregate=True)
+        self.aggregator = None
+
+        self.transfer_variable = HomoBinningTransferVariable()
         self.suffix = None
 
     def set_suffix(self, suffix):
@@ -38,6 +40,9 @@ class Server(BaseBinning):
 
     def set_transfer_variable(self, variable):
         self.transfer_variable = variable
+
+    def set_aggregator(self, aggregator):
+        self.aggregator = aggregator
 
     def get_total_count(self):
         total_count = self.aggregator.sum_model(suffix=(self.suffix, 'total_count'))
@@ -64,8 +69,9 @@ class Server(BaseBinning):
 class Client(BaseBinning):
     def __init__(self, params: HomoFeatureBinningParam = None, abnormal_list=None):
         super().__init__(params, abnormal_list)
-        self.aggregator = secure_sum_aggregator.Client(enable_secure_aggregate=True)
-        self.transfer_variable: HomoBinningTransferVariable() = None
+        # self.aggregator = secure_sum_aggregator.Client(enable_secure_aggregate=True)
+        self.aggregator = None
+        self.transfer_variable = HomoBinningTransferVariable()
         self.max_values, self.min_values = None, None
         self.suffix = None
 
@@ -74,6 +80,9 @@ class Client(BaseBinning):
 
     def set_transfer_variable(self, variable):
         self.transfer_variable = variable
+
+    def set_aggregator(self, aggregator):
+        self.aggregator = aggregator
 
     def get_total_count(self, data_inst):
         count = data_inst.count()
