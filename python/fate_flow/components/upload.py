@@ -104,7 +104,8 @@ class Upload(ComponentBase):
         try:
             if '{}/fate_upload_tmp'.format(job_id) in self.parameters['file']:
                 LOGGER.info("remove tmp upload file")
-                shutil.rmtree(os.path.join(self.parameters["file"].split('tmp')[0], 'tmp'))
+                LOGGER.info(os.path.dirname(self.parameters["file"]))
+                shutil.rmtree(os.path.dirname(self.parameters["file"]))
         except:
             LOGGER.info("remove tmp file failed")
         LOGGER.info("file: {}".format(self.parameters["file"]))

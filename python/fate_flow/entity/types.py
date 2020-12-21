@@ -40,6 +40,9 @@ class RunParameters(object):
         self.spark_run = {}
         self.rabbitmq_run = {}
         self.adaptation_parameters = {}
+        self.assistant_role = None
+        self.map_table_name = None
+        self.map_namespace = None
         for k, v in kwargs.items():
             if hasattr(self, k):
                 setattr(self, k, v)

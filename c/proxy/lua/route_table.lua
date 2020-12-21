@@ -39,7 +39,7 @@ local function reload_route_table()
     file:close()
     local yaml_table = yaml_parser.parse(content)
     for k, v in pairs(yaml_table)do
-        route_cache:set(k, v)
+        route_cache:set(tostring(k), v)
     end
     ngx.log(ngx.INFO, "reload route table")
 end
