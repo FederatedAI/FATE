@@ -90,14 +90,7 @@ class QuantileBinning(BaseBinning):
 
     @staticmethod
     def copy_merge(s1, s2):
-        t0 = time.time()
-        # new_s1 = copy.deepcopy(s1[0])
-        new_s1 = s1[0]
-        t1 = time.time()
-
-        res = [new_s1.merge(s2[0]), s1[1] + s2[1] + (t1 - t0)]
-
-        return res
+        return s1.merge(s2)
 
     def _fit_split_point(self, data_instances, is_sparse, percentile_rate):
         if self.summary_dict is None:

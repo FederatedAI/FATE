@@ -34,3 +34,5 @@ class HomoBinningTransferVariable(BaseTransferVariables):
                                                          dst=['arbiter'])
         self.global_static_values = self._create_variable(name='global_static_values', src=["arbiter"],
                                                           dst=['guest', 'host'])
+        self.query_array = self._create_variable(name='query_array', src=["arbiter"],
+                                                 dst=['guest', 'host'])

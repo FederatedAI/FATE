@@ -88,5 +88,5 @@ if __name__ == "__main__":
     parser.add_argument("-p", "--param", type=str, default="./breast_config.yaml",
                         help="config file for params")
     args = parser.parse_args()
-    main(args.param)
+    main(param=args.param)
 

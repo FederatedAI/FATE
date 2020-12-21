@@ -232,3 +232,53 @@ class FeatureBinningParam(BaseParam):
         self.transform_param.check()
         self.optimal_binning_param.check()
         self.encrypt_param.check()
+
+
+class HomoFeatureBinningParam(BaseParam):
+    def __init__(self, method=consts.VIRTUAL_SUMMARY,
+                 compress_thres=consts.DEFAULT_COMPRESS_THRESHOLD,
+                 head_size=consts.DEFAULT_HEAD_SIZE,
+                 error=consts.DEFAULT_RELATIVE_ERROR,
+                 sample_bins=100,
+                 bin_num=consts.G_BIN_NUM, bin_indexes=-1, bin_names=None, adjustment_factor=0.5,
+                 transform_param=TransformParam(),
+                 local_only=False, category_indexes=None, category_names=None,
+                 encrypt_param=EncryptParam(),
+                 need_run=True, skip_static=False):
+        super(HomoFeatureBinningParam, self).__init__()
+        self.sample_bins = sample_bins
+        self.category_names = category_names
+        self.category_indexes = category_indexes
+        self.skip_static = skip_static
+        self.need_run = need_run
+        self.encrypt_param = encrypt_param
+        self.local_only = local_only
+        self.adjustment_factor = adjustment_factor
+        self.bin_names = bin_names
+        self.bin_indexes = bin_indexes
+        self.transform_param = transform_param
+        self.bin_num = bin_num
+        self.error = error
+        self.head_size = head_size
+        self.compress_thres = compress_thres
+        self.method = method
+
+    def check(self):
+        descr = "homo binning param's"
+        self.check_string(self.method, descr)
+        self.method = self.method.lower()
+        self.check_valid_value(self.method, descr, [consts.VIRTUAL_SUMMARY, consts.RECURSIVE_QUERY])
+        self.check_positive_integer(self.compress_thres, descr)
+        self.check_positive_integer(self.head_size, descr)
+        self.check_decimal_float(self.error, descr)
+        self.check_positive_integer(self.bin_num, descr)
+        if self.bin_indexes != -1:
+            self.check_defined_type(self.bin_indexes, descr, ['list', 'RepeatedScalarContainer', "NoneType"])
+        self.check_defined_type(self.bin_names, descr, ['list', "NoneType"])
+        self.check_defined_type(self.category_indexes, descr, ['list', "NoneType"])
+        self.check_defined_type(self.category_names, descr, ['list', "NoneType"])
+        self.check_open_unit_interval(self.adjustment_factor, descr)
+        # if self.skip_static and self.method == consts.OPTIMAL:
+        #     raise ValueError("When skip_static, optimal binning is not supported.")
+        self.transform_param.check()
+        self.encrypt_param.check()
