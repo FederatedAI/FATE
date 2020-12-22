@@ -477,12 +477,12 @@ Below lists input and output elements of each component.
 .. _Hetero-LinR: ../../../federatedml/linear_model/linear_regression/README.rst
 .. _Hetero-Poisson: ../../../federatedml/linear_model/poisson_regression/README.rst
 .. _Homo-LR: ../../../federatedml/linear_model/logistic_regression/README.rst
-.. _Homo-NN: ../../../federatedml/nn/../homo_nn/README.rst
-.. _Hetero Secure Boosting: ../../../federatedml/tree/README.rst
+.. _Homo-NN: ../../../federatedml/nn/homo_nn/README.rst
+.. _Hetero Secure Boosting: ../../../federatedml/ensemble/README.rst
 .. _Evaluation: ../../../federatedml/evaluation/README.rst
 .. _Hetero Pearson: ../../../federatedml/statistic/correlation/README.rst
-.. _Hetero-NN: ../../../federatedml/nn/../hetero_nn/README.rst
-.. _Homo Secure Boosting: ../../../federatedml/tree/README.rst
+.. _Hetero-NN: ../../../federatedml/nn/hetero_nn/README.rst
+.. _Homo Secure Boosting: ../../../federatedml/ensemble/README.rst
 .. _Data Split: ../../../federatedml/model_selection/data_split/README.rst
 .. _Homo OneHot Encoder: ../../../federatedml/feature/README.rst
 .. _Column Expand: ../../../federatedml/feature/README.rst
