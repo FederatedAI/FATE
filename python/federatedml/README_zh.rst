@@ -293,11 +293,11 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
 .. _Hetero-Poisson: linear_model/poisson_regression/README.rst
 .. _Homo-LR: linear_model/logistic_regression/README.rst
 .. _Homo-NN: nn/homo_nn/README.rst
-.. _Hetero Secure Boosting: tree/README.rst
+.. _Hetero Secure Boosting: ensemble/README.rst
 .. _Evaluation: evaluation/README.rst
 .. _Hetero Pearson: statistic/correlation/README.rst
 .. _Hetero-NN: nn/hetero_nn/README.rst
-.. _Homo Secure Boosting: tree/README.rst
+.. _Homo Secure Boosting: ensemble/README.rst
 .. _Data Split: model_selection/data_split/README.rst
 .. _Homo OneHot Encoder: feature/README.rst
 .. _Column Expand: feature/README.rst
