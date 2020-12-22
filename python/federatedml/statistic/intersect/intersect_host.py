@@ -33,69 +33,53 @@ class RsaIntersectionHost(RsaIntersect):
         # self.is_version_match = False
         # self.has_cache_version = True
 
-    def cal_host_ids_process_pair(self, data_instances):
-        hash_operator = Hash(self.rsa_params.hash_method, self.rsa_params.base64)
-        final_hash_operator = Hash(self.rsa_params.final_hash_method, self.rsa_params.base64)
-        return data_instances.map(
-            lambda k, v: (
-                RsaIntersectionHost.hash(gmpy_math.powmod(int(RsaIntersectionHost.hash(k, hash_operator, self.rsa_params.salt), 16), self.d, self.n),
-                                         final_hash_operator,
-                                         self.rsa_params.salt), k)
-        )
+    def get_host_prvkey_ids(self):
+        host_prvkey_ids_list = self.transfer_variable.host_prvkey_ids.get(idx=-1)
+        LOGGER.info("Not using cache, get host_prvkey_ids from all host")
 
-    def host_ids_process(self, data_instances):
-        # (host_id_process, 1)
-        LOGGER.info("Not using cache, calculate Za using raw id")
-        host_ids_process_pair = self.cal_host_ids_process_pair(data_instances)
-
-        return host_ids_process_pair
+        return host_prvkey_ids_list
 
     def split_calculation_process(self, data_instances):
         pass
 
     def unified_calculation_process(self, data_instances):
-        pass
-
-    def fit(self, data_instances):
         LOGGER.info("Start rsa intersection")
         # generate rsa keys
-        self.e, self.d, self.n = self.get_rsa_key()
-        LOGGER.info("Generated host rsa key!")
-        host_public_key = {"e": self.e, "n": self.n}
-        if self.split_calculation and self.random_base_fraction:
-            count = data_instances.count()
-            self.r  = self.generate_r_base(self.random_bit, count, self.random_base_fraction)
+        self.e, self.d, self.n = self.generate_protocol_key()
+        LOGGER.info("Get protocol key!")
+        public_key = {"e": self.e, "n": self.n}
 
         # sends public key e & n to guest
-        self.transfer_variable.host_rsa_pubkey.remote(host_public_key,
-                                                 role=consts.GUEST,
-                                                 idx=0)
+        self.transfer_variable.host_pubkey.remote(public_key,
+                                                  role=consts.GUEST,
+                                                  idx=0)
         LOGGER.info("Remote public key to Guest.")
         # hash host ids
-        host_ids_process_pair = self.host_ids_process(data_instances)
+        prvkey_ids_process_pair = self.cal_prvkey_ids_process_pair(data_instances)
 
-        host_ids_process = host_ids_process_pair.mapValues(lambda v: 1)
-        self.transfer_variable.intersect_host_ids_process.remote(host_ids_process,
-                                                                 role=consts.GUEST,
-                                                                 idx=0)
-        LOGGER.info("Remote host_ids_process to Guest.")
+        if self.intersect_cache_param.use_cache and not self.is_version_match or not self.intersect_cache_param.use_cache:
+            prvkey_ids_process = prvkey_ids_process_pair.mapValues(lambda v: 1)
+            self.transfer_variable.host_prvkey_ids.remote(prvkey_ids_process,
+                                                                     role=consts.GUEST,
+                                                                     idx=0)
+            LOGGER.info("Remote host_ids_process to Guest.")
 
         # Recv guest ids
-        guest_ids = self.transfer_variable.intersect_guest_ids.get(idx=0)
-        LOGGER.info("Get guest_ids from guest")
+        guest_pubkey_ids = self.transfer_variable.guest_pubkey_ids.get(idx=0)
+        LOGGER.info("Get guest_pubkey_ids from guest")
 
         # Process(signs) guest ids and return to guest
-        guest_ids_process = guest_ids.map(lambda k, v: (k, gmpy_math.powmod(int(k), self.d, self.n)))
-        self.transfer_variable.intersect_guest_ids_process.remote(guest_ids_process,
+        host_sign_guest_ids = guest_pubkey_ids.map(lambda k, v: (k, gmpy_math.powmod(int(k), self.d, self.n)))
+        self.transfer_variable.intersect_guest_ids_process.remote(host_sign_guest_ids,
                                                                   role=consts.GUEST,
                                                                   idx=0)
-        LOGGER.info("Remote guest_ids_process to Guest.")
+        LOGGER.info("Remote host_sign_guest_ids_process to Guest.")
 
         # recv intersect ids
         intersect_ids = None
         if self.sync_intersect_ids:
             encrypt_intersect_ids = self.transfer_variable.intersect_ids.get(idx=0)
-            intersect_ids_pair = encrypt_intersect_ids.join(host_ids_process_pair, lambda e, h: h)
+            intersect_ids_pair = encrypt_intersect_ids.join(host_sign_guest_ids, lambda e, h: h)
             intersect_ids = intersect_ids_pair.map(lambda k, v: (v, "id"))
             LOGGER.info("Get intersect ids from Guest")
 
@@ -111,7 +95,7 @@ class RawIntersectionHost(RawIntersect):
         self.join_role = intersect_params.join_role
         self.role = consts.HOST
 
-    def run(self, data_instances):
+    def run_intersect(self, data_instances):
         LOGGER.info("Start raw intersection")
 
         if self.join_role == consts.GUEST:
@@ -119,6 +103,6 @@ class RawIntersectionHost(RawIntersect):
         elif self.join_role == consts.HOST:
             intersect_ids = self.intersect_join_id(data_instances)
         else:
-            raise ValueError("Unknown intersect join role, please check the configure of host")
+            raise ValueError("Unknown intersect join role, please check job configuration")
 
         return intersect_ids

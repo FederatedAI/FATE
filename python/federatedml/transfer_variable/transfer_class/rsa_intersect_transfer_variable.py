@@ -35,12 +35,12 @@ class RsaIntersectTransferVariable(BaseTransferVariables):
         self.guest_pubkey_ids = self._create_variable(name='guest_pubkey_ids', src=['guest'], dst=['host'])
         self.host_pubkey_ids = self._create_variable(name='host_pubkey_ids', src=['host'], dst=['guest'])
 
-        self.host_sign_ids = self._create_variable(name='host_sign_ids', src=['host'], dst=['guest'])
-        self.guest_sign_ids = self._create_variable(name='guest_sign_ids', src=['guest'], dst=['host'])
+        self.host_prvkey_ids = self._create_variable(name='host_sign_ids', src=['host'], dst=['guest'])
+        self.guest_prvkey_ids = self._create_variable(name='guest_sign_ids', src=['guest'], dst=['host'])
 
         self.host_sign_guest_ids = self._create_variable(name='host_sign_guest_ids', src=['host'], dst=['guest'])
         self.guest_sign_host_ids = self._create_variable(name='guest_sign_host_ids', src=['guest'], dst=['host'])
 
         self.intersect_ids = self._create_variable(name='intersect_ids', src=['guest'], dst=['host'])
-        self.host_rsa_pubkey = self._create_variable(name='host_rsa_pubkey', src=['host'], dst=['guest'])
-        self.guest_rsa_pubkey = self._create_variable(name='guest_rsa_pubkey', src=['guest'], dst=['host'])
+        self.host_pubkey = self._create_variable(name='host_pubkey', src=['host'], dst=['guest'])
+        self.guest_pubkey = self._create_variable(name='guest_pubkey', src=['guest'], dst=['host'])

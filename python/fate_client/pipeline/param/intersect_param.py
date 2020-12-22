@@ -76,7 +76,7 @@ class RSAParam(BaseParam):
     base64: bool, if True, the result of hash will be changed to base64, default by False
     split_calculation: bool, if True, Host & Guest split operations for faster performance
 
-    random_base_fraction: float or int, if not None, generate specified number of r for encryption and reuse generated r
+    random_base_fraction: float, if not None, generate specified number of r for encryption and reuse generated r
     """
 
     def __init__(self, salt='', hash_method='sha256',  final_hash_method='sha256', base64=False,
@@ -110,8 +110,7 @@ class RSAParam(BaseParam):
                                                        descr)
 
         if type(self.base64).__name__ != "bool":
-            raise ValueError(
-                "rsa param's base64 {} not supported, should be bool type".format(self.base64))
+            raise ValueError("rsa param's base64 {} not supported, should be bool type".format(self.base64))
 
         descr = "rsa param's swap_opeartion"
         self.check_boolean(self.split_calculation, descr)
@@ -119,6 +118,7 @@ class RSAParam(BaseParam):
         descr = "rsa param's random_base_fraction"
         if self.random_base_fraction:
             self.check_positive_number(self.random_base_fraction, descr)
+            self.check_decimal_float(self.random_base_fraction, descr)
 
         return True
 
