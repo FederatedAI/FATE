@@ -37,7 +37,7 @@ class Instance(object):
     label: None of float, data label
 
     """
-    def __init__(self, inst_id=None, weight=1.0, features=None, label=None):
+    def __init__(self, inst_id=None, weight=None, features=None, label=None):
         self.inst_id = inst_id
         self.weight = weight
         self.features = features

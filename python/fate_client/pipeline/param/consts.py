@@ -282,3 +282,6 @@ MANUAL = 'manual'
 
 # scorecard
 CREDIT = 'credit'
+
+# sample weight
+BALANCED = 'balanced'
