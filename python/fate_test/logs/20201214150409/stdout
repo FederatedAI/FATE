@@ -1,0 +1,46 @@
+
+████████╗███████╗███████╗████████╗███████╗██╗   ██╗██╗████████╗███████╗
+╚══██╔══╝██╔════╝██╔════╝╚══██╔══╝██╔════╝██║   ██║██║╚══██╔══╝██╔════╝
+   ██║   █████╗  ███████╗   ██║   ███████╗██║   ██║██║   ██║   █████╗  
+   ██║   ██╔══╝  ╚════██║   ██║   ╚════██║██║   ██║██║   ██║   ██╔══╝  
+   ██║   ███████╗███████║   ██║   ███████║╚██████╔╝██║   ██║   ███████╗
+   ╚═╝   ╚══════╝╚══════╝   ╚═╝   ╚══════╝ ╚═════╝ ╚═╝   ╚═╝   ╚══════╝
+                                                                       
+
+testsuite namespace: 20201214150409
+loading testsuites:
+	dataset(3) dsl jobs(6) pipeline jobs (0) /data/projects/standalone-fate-master-1.5.0/examples/experiment_template/dsl/v2/hetero_secureboost/hetero_sbt_testsuite.json
+[1/1]start at 2020-12-14 15:04:11 /data/projects/standalone-fate-master-1.5.0/examples/experiment_template/dsl/v2/hetero_secureboost/hetero_sbt_testsuite.json
+exception(91373ebc-3dda-11eb-997d-5254009c6d10)
+upload 1th data {'head': 1, 'partition': 4, 'table_name': 'breast_hetero_guest', 'namespace': 'experiment', 'file': '/data/projects/standalone-fate-master-1.5.0/examples/data/breast_hetero_guest.csv', 'work_mode': 0, 'backend': 0} to guest_0 fail, exception_id: 91373ebc-3dda-11eb-997d-5254009c6d10
+exception(913908dc-3dda-11eb-997d-5254009c6d10)
+upload 2th data {'head': 1, 'partition': 4, 'table_name': 'breast_hetero_host_tag_value', 'namespace': 'experiment', 'file': '/data/projects/standalone-fate-master-1.5.0/examples/data/breast_hetero_host_tag_value.csv', 'work_mode': 0, 'backend': 0} to host_0 fail, exception_id: 913908dc-3dda-11eb-997d-5254009c6d10
+exception(9139d4b0-3dda-11eb-997d-5254009c6d10)
+upload 3th data {'head': 1, 'partition': 4, 'table_name': 'mock_tag_hetero_host', 'namespace': 'experiment', 'file': '/data/projects/standalone-fate-master-1.5.0/examples/data/mock_tag_hetero_host.csv', 'work_mode': 0, 'backend': 0} to host_0 fail, exception_id: 9139d4b0-3dda-11eb-997d-5254009c6d10
+exception(914a197e-3dda-11eb-997d-5254009c6d10)
+exception(91699cfe-3dda-11eb-997d-5254009c6d10)
+exception(91895274-3dda-11eb-997d-5254009c6d10)
+exception(91a8d554-3dda-11eb-997d-5254009c6d10)
+exception(91c86ae0-3dda-11eb-997d-5254009c6d10)
+exception(91e7e104-3dda-11eb-997d-5254009c6d10)
+[1/1]elapse 0:00:02
++--------------+--------+---------------+--------------------------------------+-----------------+
+|   job_name   | job_id |     status    |             exception_id             | rest_dependency |
++--------------+--------+---------------+--------------------------------------+-----------------+
+|  sbt_train   |   -    | not submitted | 914a197e-3dda-11eb-997d-5254009c6d10 |                 |
+| sbt_pearson  |   -    | not submitted | 91699cfe-3dda-11eb-997d-5254009c6d10 |                 |
+| sbt_manually |   -    | not submitted | 91895274-3dda-11eb-997d-5254009c6d10 |                 |
+|  sbt_union   |   -    | not submitted | 91a8d554-3dda-11eb-997d-5254009c6d10 |                 |
+|  sbt_verify  |   -    | not submitted | 91c86ae0-3dda-11eb-997d-5254009c6d10 |                 |
+|  sbt_onehot  |   -    | not submitted | 91e7e104-3dda-11eb-997d-5254009c6d10 |                 |
++--------------+--------+---------------+--------------------------------------+-----------------+
+
+    ██╗  ██╗ █████╗ ██╗   ██╗███████╗    ███████╗██╗   ██╗███╗   ██╗
+    ██║  ██║██╔══██╗██║   ██║██╔════╝    ██╔════╝██║   ██║████╗  ██║
+    ███████║███████║██║   ██║█████╗      █████╗  ██║   ██║██╔██╗ ██║
+    ██╔══██║██╔══██║╚██╗ ██╔╝██╔══╝      ██╔══╝  ██║   ██║██║╚██╗██║
+    ██║  ██║██║  ██║ ╚████╔╝ ███████╗    ██║     ╚██████╔╝██║ ╚████║
+    ╚═╝  ╚═╝╚═╝  ╚═╝  ╚═══╝  ╚══════╝    ╚═╝      ╚═════╝ ╚═╝  ╚═══╝
+
+
+testsuite namespace: 20201214150409

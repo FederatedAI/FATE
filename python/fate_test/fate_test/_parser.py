@@ -21,7 +21,7 @@ from pathlib import Path
 
 import click
 import prettytable
-
+from fate_test import _config
 from fate_test._config import Parties, Config
 
 
@@ -66,7 +66,7 @@ class Data(object):
     @staticmethod
     def load(config, path: Path):
         kwargs = {}
-        for field_name in ['head', 'partition', 'table_name', 'namespace']:
+        for field_name in ['head', 'partition', 'table_name', 'namespace', 'use_local_data']:
             kwargs[field_name] = config[field_name]
 
         file_path = path.parent.joinpath(config['file']).resolve()
@@ -234,6 +234,7 @@ class Testsuite(object):
 
         dataset = []
         for d in testsuite_config.get("data"):
+            d.update({"use_local_data": _config.use_local_data})
             dataset.append(Data.load(d, path))
 
         jobs = []

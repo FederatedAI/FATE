@@ -46,13 +46,13 @@ from fate_test.scripts._utils import _load_testsuites, _upload_data, _delete_dat
 @click.option('-time', '--timeout', type=int, default=3600,
               help="Task timeout duration")
 @click.option('-iter', '--max_iter', type=int, default=100,
-              help="Task timeout duration")
+              help="When the algorithm model is LR, the number of iterations is set")
 @click.option('-depth', '--max_depth', type=int, default=4,
-              help="Task timeout duration")
+              help="When the algorithm model is SecureBoost, set the number of model layers")
 @click.option('-trees', '--num_trees', type=int, default=100,
-              help="Task timeout duration")
+              help="When the algorithm model is SecureBoost, set the number of trees")
 @click.option('-node', '--processors_per_node', type=int, default=4,
-              help="Task timeout duration")
+              help="processors per node")
 @click.option('-jp', '--update_job_parameters', default="{}", type=JSON_STRING,
               help="a json string represents mapping for replacing fields in conf.job_parameters")
 @click.option('-cp', '--update_component_parameters', default="{}", type=JSON_STRING,
@@ -65,10 +65,12 @@ from fate_test.scripts._utils import _load_testsuites, _upload_data, _delete_dat
               help="Set guest feature dimensions")
 @click.option('-fh', '--host_feature_num', type=int, default=200,
               help="Set host feature dimensions, The default is equal to the number of guests")
+@click.option('-u', '--use_local_data', type=int, default=1,
+              help="When guest, host and flow are deployed on the same machine, the parameter 0 is more appropriate")
 @SharedOptions.get_shared_options(hidden=True)
 @click.pass_context
 def run_task(ctx, task, include, encryption_type, match_rate, sparsity, guest_data_size, host_data_size,
-             guest_feature_num, host_feature_num, replace, timeout, update_job_parameters,
+             guest_feature_num, host_feature_num, replace, timeout, update_job_parameters, use_local_data,
              update_component_parameters, max_iter, max_depth, num_trees, processors_per_node, **kwargs):
     """
     Test the performance of big data tasks
@@ -79,6 +81,9 @@ def run_task(ctx, task, include, encryption_type, match_rate, sparsity, guest_da
     namespace = ctx.obj["namespace"]
     yes = ctx.obj["yes"]
     data_namespace_mangling = ctx.obj["namespace_mangling"]
+    if use_local_data not in [0, 1]:
+        raise Exception("'use_local_data 'can only be 0 or 1")
+    _config.use_local_data = use_local_data
 
     def get_cache_directory(conf: Config):
         return conf.cache_directory

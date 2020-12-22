@@ -1,0 +1,17 @@
+
+████████╗███████╗███████╗████████╗███████╗██╗   ██╗██╗████████╗███████╗
+╚══██╔══╝██╔════╝██╔════╝╚══██╔══╝██╔════╝██║   ██║██║╚══██╔══╝██╔════╝
+   ██║   █████╗  ███████╗   ██║   ███████╗██║   ██║██║   ██║   █████╗  
+   ██║   ██╔══╝  ╚════██║   ██║   ╚════██║██║   ██║██║   ██║   ██╔══╝  
+   ██║   ███████╗███████║   ██║   ███████║╚██████╔╝██║   ██║   ███████╗
+   ╚═╝   ╚══════╝╚══════╝   ╚═╝   ╚══════╝ ╚═════╝ ╚═╝   ╚═╝   ╚══════╝
+                                                                       
+
+testsuite namespace: 20201214150933
+loading testsuites:
+	dataset(3) dsl jobs(6) pipeline jobs (0) /data/projects/standalone-fate-master-1.5.0/examples/experiment_template/dsl/v2/hetero_secureboost/hetero_sbt_testsuite.json
+[1/1]start at 2020-12-14 15:09:39 /data/projects/standalone-fate-master-1.5.0/examples/experiment_template/dsl/v2/hetero_secureboost/hetero_sbt_testsuite.json
+[dataset]202012141509391984634
+[dataset]202012141509434570065
+[dataset]202012141509477462146
+[jobs] 202012141509521113577 [jobs] 202012141511429524518 [jobs] 202012141513425747259 [jobs] 2020121415153543628010 [jobs] 2020121415174617887911 

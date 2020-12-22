@@ -46,7 +46,7 @@ class data_progress:
     def timer(times):
         hours, rem = divmod(times, 3600)
         minutes, seconds = divmod(rem, 60)
-        return "{:0>2}:{:0>2}:{:02}".format(int(hours), int(minutes), int(seconds))
+        return "{:0>2}:{:0>2}:{:0>2}".format(int(hours), int(minutes), int(seconds))
 
 
 def remove_file(path):
@@ -56,75 +56,79 @@ def remove_file(path):
 
 def get_big_data(task, guest_data_size, host_data_size, guest_feature_num, host_feature_num, include_path, conf: Config,
                  encryption_type, match_rate, sparsity):
+    def list_tag_value(feature_nums):
+        data = ''
+        for f in range(feature_nums):
+            data += ('x' + str(f)) + ':' + str(round(np.random.random(), 2)) + ";"
+        return data[:-1]
+
+    def list_tag(feature_nums, data_list):
+        data = ''
+        for f in range(feature_nums):
+            data += random.choice(data_list) + ";"
+        return data[:-1]
+
     def _generate_tag_value_data(data_path, data_num, id_value, feature_nums):
-        feature_list = ['x' + str(i) for i in range(feature_nums)]
         section_data_size = round(data_num / 100)
         iteration = round(data_num / section_data_size)
-        sectioning = round(data_num / (iteration + 1))
         for batch in range(iteration + 1):
             progress.set_time_percent(batch)
             output_data = pd.DataFrame(columns=["id"])
             if section_data_size * (batch + 1) <= data_num:
-                output_data['id'] = id_value[sectioning * batch: sectioning * (batch + 1)]
-                data_size = sectioning
+                output_data['id'] = id_value[section_data_size * batch: section_data_size * (batch + 1)]
+                data_size = section_data_size
             elif section_data_size * batch <= data_num:
-                output_data['id'] = id_value[sectioning * batch: data_num]
-                data_size = data_num - sectioning * batch
+                output_data['id'] = id_value[section_data_size * batch: data_num]
+                data_size = data_num - section_data_size * batch
             else:
                 break
-            for feature_i in range(feature_nums):
-                feature = [":".join([feature_list[feature_i], str(round(np.random.random(), 2))]) for i in
-                           range(data_size)]
-                output_data[feature_list[feature_i]] = feature
+            feature = [list_tag_value(feature_nums) for i in range(data_size)]
+            output_data['feature'] = feature
             output_data.to_csv(data_path, mode='a+', index=False, header=False)
 
     def _generate_label_data(data_path, data_num, id_value, feature_nums):
+        head_1 = ['id', 'y']
+        head_2 = ['x' + str(i) for i in range(feature_nums)]
+        df_data_1 = pd.DataFrame(columns=head_1)
+        head_data = pd.DataFrame(columns=head_1 + head_2)
+        head_data.to_csv(data_path, mode='a+', index=False)
         section_data_size = round(data_num / 100)
-        feature_list = ['id', 'y'] + ['x' + str(i) for i in range(feature_nums)]
-        output_data = pd.DataFrame(columns=feature_list)
-        output_data.to_csv(data_path, mode='a+', index=False)
-
         iteration = round(data_num / section_data_size)
-        sectioning = round(data_num / (iteration + 1))
         for batch in range(iteration + 1):
             progress.set_time_percent(batch)
-            output_data = pd.DataFrame()
             if section_data_size * (batch + 1) <= data_num:
-                output_data[0] = id_value[sectioning * batch: sectioning * (batch + 1)]
-                output_data[1] = [round(np.random.random()) for x in range(sectioning)]
-                data_size = sectioning
-            elif section_data_size * batch <= data_num:
-                output_data[0] = id_value[sectioning * batch: data_num]
-                data_size = data_num - sectioning * batch
-                output_data[1] = [round(np.random.random()) for x in range(data_size)]
+                df_data_1["id"] = id_value[section_data_size * batch: section_data_size * (batch + 1)]
+                df_data_1["y"] = [round(np.random.random()) for x in range(section_data_size)]
+                data_size = section_data_size
+            elif section_data_size * batch < data_num:
+                df_data_1["id"] = id_value[section_data_size * batch: data_num]
+                data_size = data_num - section_data_size * batch
+                df_data_1["y"] = [round(np.random.random()) for x in range(data_size)]
             else:
                 break
-            for feature_i in range(feature_nums):
-                feature = [",".join([str(round(np.random.random(), 2))]) for i in range(data_size)]
-                output_data[feature_list[feature_i]] = feature
+            feature = np.random.randint(0, 100, size=[data_size, feature_nums]) / 100
+            df_data_2 = pd.DataFrame(feature, columns=head_2)
+            output_data = pd.concat([df_data_1, df_data_2], axis=1)
             output_data.to_csv(data_path, mode='a+', index=False, header=False)
 
     def _generate_tag_data(data_path, data_num, id_value, feature_nums, sparsity):
         section_data_size = round(data_num / 100)
-        feature_list = ['id'] + ['x' + str(i) for i in range(feature_nums)]
         iteration = round(data_num / section_data_size)
-        sectioning = round(data_num / (iteration + 1))
         valid_set = [x for x in range(2019120799, 2019120799 + round(feature_nums / sparsity))]
         data = list(map(str, valid_set))
         for batch in range(iteration + 1):
             progress.set_time_percent(batch)
             output_data = pd.DataFrame()
             if section_data_size * (batch + 1) <= data_num:
-                output_data[0] = id_value[sectioning * batch: sectioning * (batch + 1)]
-                data_size = sectioning
+                output_data[0] = id_value[section_data_size * batch: section_data_size * (batch + 1)]
+                data_size = section_data_size
             elif section_data_size * batch <= data_num:
-                output_data[0] = id_value[sectioning * batch: data_num]
-                data_size = data_num - sectioning * batch
+                output_data[0] = id_value[section_data_size * batch: data_num]
+                data_size = data_num - section_data_size * batch
             else:
                 break
-            for feature_i in range(feature_nums):
-                feature = ["".join(random.choice(data)) for i in range(data_size)]
-                output_data[feature_list[feature_i]] = feature
+            feature = [list_tag(feature_nums, data_list=data) for i in range(data_size)]
+            output_data['feature'] = feature
             output_data.to_csv(data_path, mode='a+', index=False, header=False)
 
     def run(p):

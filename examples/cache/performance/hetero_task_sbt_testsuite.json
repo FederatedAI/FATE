@@ -10,7 +10,7 @@
         },
         {
             "file": "examples/data/breast_hetero_host_tag_value.csv",
-            "head": 1,
+            "head": 0,
             "partition": 4,
             "table_name": "breast_hetero_host_tag_value",
             "namespace": "experiment",

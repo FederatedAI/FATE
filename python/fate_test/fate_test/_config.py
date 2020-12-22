@@ -22,6 +22,7 @@ from pathlib import Path
 from ruamel import yaml
 
 DATA_SIZE = False
+use_local_data = 1
 upload_dir = 'performance/hetero_task_upload_testsuite.json'
 intersect_dir = 'performance/hetero_task_intersect_single_testsuite.json'
 intersect_multi_dir = 'performance/hetero_task_intersect_multi_testsuite.json'
@@ -36,7 +37,7 @@ backend: 0
 # examples/data/breast_hetero_guest.csv -> $data_base_dir/examples/data/breast_hetero_guest.csv
 data_base_dir: ../../../../
 # fate_test job Dedicated directory, File storage location,cache_directory={FATE}/python/fate_test/cache/
-cache_directory: /data/projects/fate/python/fate_test/cache/
+cache_directory: /data/projects/fate/examples/cache/
 clean_data: true
 parties:
   guest: [10000]
