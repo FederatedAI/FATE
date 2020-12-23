@@ -37,7 +37,6 @@ class SecretSharingSumGuest(BaseSecretSharingSum):
     def _init_data(self, data_inst):
         self.host_count = len(self.component_properties.host_party_idlist)
         self.vss.set_share_amount(self.host_count)
-        self.vss.generate_prime()
         if not self.model_param.sum_cols:
             self.x = data_inst.mapValues(lambda x: x.features)
             self.output_schema = data_inst.schema

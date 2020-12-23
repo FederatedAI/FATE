@@ -5,16 +5,13 @@ from federatedml.secureprotol import gmpy_math
 class VerifiableSecretSharing(object):
     def __init__(self):
         self.Q_n = 0
-        self.prime = None
+        self.prime = gmpy_math.getprimeover(512)
         self.share_amount = -1
         self.g = 2
         self.commitments = []
 
     def set_share_amount(self, host_count):
         self.share_amount = host_count+1
-
-    def generate_prime(self):
-        self.prime = gmpy_math.getprimeover(512)
 
     def set_prime(self, prime):
         self.prime = prime
