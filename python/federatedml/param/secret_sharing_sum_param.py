@@ -26,7 +26,7 @@ Parameters
 sum_cols : list of column index, default: None
     Specify which columns need to be sum. If column index is None, each of columns will be sum.
 
-q_n : int, default: 6
+q_n : int, positive integer less than or equal to 16, default: 6
     q_n is the number of significant decimal places
 
 """
@@ -48,5 +48,13 @@ class SecretSharingSumParam(BaseParam):
 
         if not isinstance(self.q_n, int):
             raise ValueError(f"Init param's q_n {self.q_n} not supported, should be int type", type is {type(self.q_n)})
+
+        if self.q_n < 0:
+            raise ValueError(f"param's q_n {self.q_n} not supported, should be non-negative int value")
+        elif self.q_n > 16:
+            raise ValueError(f"param's q_n {self.q_n} not supported, should be less than or equal to 16")
+
+
+
 
 
