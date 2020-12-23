@@ -50,6 +50,7 @@ class SampleWeight(ModelBase):
         self.model_name = 'SampleWeight'
         self.model_param_name = 'SampleWeightParam'
         self.model_meta_name = 'SampleWeightMeta'
+        self.weight_mode = None
 
     def _init_model(self, params):
         self.model_param = params
@@ -115,7 +116,8 @@ class SampleWeight(ModelBase):
         LOGGER.debug(f"class weight exported is: {class_weight}")
         meta_obj = sample_weight_meta_pb2.SampleWeightMeta(sample_weight_name=self.sample_weight_name,
                                                            need_run=self.need_run,
-                                                           normalize=self.normalize)
+                                                           normalize=self.normalize,
+                                                           weight_mode=self.weight_mode)
         param_obj = sample_weight_param_pb2.SampleWeightParam(class_weight=class_weight)
         result = {
             self.model_meta_name: meta_obj,
@@ -138,10 +140,12 @@ class SampleWeight(ModelBase):
 
         if self.class_weight and isinstance(self.class_weight, dict):
             self.class_weight = {int(k): v for k, v in self.class_weight.items()}
+            self.weight_mode = "class weight"
 
         if self.sample_weight_name and self.class_weight:
             LOGGER.warning(f"Both 'sample_weight_name' and 'class_weight' provided."
                            f"Only weight from 'sample_weight_name' is used.")
+            self.weight_mode = "sample weight name"
 
         new_schema = copy.deepcopy(data_instances.schema)
         weight_loc = None
