@@ -69,10 +69,10 @@ class RsaIntersectionHost(RsaIntersect):
         LOGGER.info("Get guest_pubkey_ids from guest")
 
         # Process(signs) guest ids and return to guest
-        host_sign_guest_ids = guest_pubkey_ids.map(lambda k, v: (k, gmpy_math.powmod(int(k), self.d, self.n)))
-        self.transfer_variable.intersect_guest_ids_process.remote(host_sign_guest_ids,
-                                                                  role=consts.GUEST,
-                                                                  idx=0)
+        host_sign_guest_ids = guest_pubkey_ids.map(lambda k, v: (k, self.sign_id(k, self.d, self.n)))
+        self.transfer_variable.host_sign_guest_ids.remote(host_sign_guest_ids,
+                                                          role=consts.GUEST,
+                                                          idx=0)
         LOGGER.info("Remote host_sign_guest_ids_process to Guest.")
 
         # recv intersect ids

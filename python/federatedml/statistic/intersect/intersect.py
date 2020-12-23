@@ -118,6 +118,7 @@ class RsaIntersect(Intersect):
         self.n = None
         self.r = None
         self.transfer_variable = RsaIntersectTransferVariable()
+        self.role = None
 
     def _load_params(self, param):
         self.random_bit = param.random_bit
@@ -146,7 +147,15 @@ class RsaIntersect(Intersect):
         return encrypt_operator.get_key_pair()
 
     def generate_protocol_key(self):
-        e, d, n = self.generate_rsa_key()
+        if self.role == consts.HOST:
+            e, d, n = self.generate_rsa_key()
+        else:
+            e, d, n = [], [], []
+            for i in range(len(self.host_party_id_list)):
+                e_i, d_i, n_i = self.generate_rsa_key()
+                e.append(e_i)
+                d.append(d_i)
+                n.append(n_i)
         return e, d, n
 
     @staticmethod
@@ -173,7 +182,15 @@ class RsaIntersect(Intersect):
 
     @staticmethod
     def sign_id(hash_sid, rsa_d, rsa_n):
-        return gmpy_math.powmod(hash_sid, rsa_d, rsa_n)
+        return gmpy_math.powmod(int(hash_sid), rsa_d, rsa_n)
+
+    @staticmethod
+    def map_raw_id_to_encrypt_id(raw_id_data, encrypt_id_data):
+        encrypt_id_data_exchange_kv = encrypt_id_data.map(lambda k, v: (v, k))
+        encrypt_raw_id = raw_id_data.join(encrypt_id_data_exchange_kv, lambda r, e: e)
+        encrypt_common_id = encrypt_raw_id.map(lambda k, v: (v, "id"))
+
+        return encrypt_common_id
 
     def split_calculation_process(self, data_instances):
         raise NotImplementedError("This method should not be called here")

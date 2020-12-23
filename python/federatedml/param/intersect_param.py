@@ -78,7 +78,7 @@ class RSAParam(BaseParam):
 
     base64: bool, if True, the result of hash will be changed to base64, default by False
 
-    split_calculation: bool, if True, Host & Guest split operations for faster performance
+    split_calculation: bool, if True, Host & Guest split operations for faster performance, recommended on large data set
 
     random_base_fraction: float or int, if not None, generate specified number of r for encryption and reuse generated r
     """
