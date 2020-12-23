@@ -145,11 +145,11 @@ class SampleWeight(ModelBase):
         if self.sample_weight_name and self.class_weight:
             LOGGER.warning(f"Both 'sample_weight_name' and 'class_weight' provided."
                            f"Only weight from 'sample_weight_name' is used.")
-            self.weight_mode = "sample weight name"
 
         new_schema = copy.deepcopy(data_instances.schema)
         weight_loc = None
         if self.sample_weight_name:
+            self.weight_mode = "sample weight name"
             weight_loc = SampleWeight.get_weight_loc(data_instances, self.sample_weight_name)
             if weight_loc:
                 new_schema["header"].pop(weight_loc)
