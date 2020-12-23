@@ -203,7 +203,8 @@ class JobSaver(object):
                         b_timestamp = str_to_time_stamp(f_v[0])
                         e_timestamp = str_to_time_stamp(f_v[1])
                     filters.append(getattr(Job, attr_name).between(b_timestamp, e_timestamp))
-                continue
+                else:
+                    raise Exception('{} need is a list'.format(f_n))
             if hasattr(Job, attr_name):
                 filters.append(operator.attrgetter('f_%s' % f_n)(Job) == f_v)
         if filters:

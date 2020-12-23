@@ -316,6 +316,7 @@ def component_output_data_download():
 @manager.route('/component/output/data/table', methods=['post'])
 def component_output_data_table():
     request_data = request.json
+    detect_utils.check_config(config=request_data, required_arguments=['job_id', 'role', 'party_id', 'component_name'])
     jobs = JobSaver.query_job(job_id=request_data.get('job_id'))
     if jobs:
         job = jobs[0]

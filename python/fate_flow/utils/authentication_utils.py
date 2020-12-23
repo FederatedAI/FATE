@@ -33,14 +33,14 @@ class PrivilegeAuth(object):
     command_whitelist = None
 
     @classmethod
-    def authentication_privilege(cls, src_party_id, src_role, request_path, party_id_index, role_index, command):
+    def authentication_privilege(cls, src_party_id, src_role, request_path, party_id_index, role_index, command, component_index=None):
         if not src_party_id:
             return
         src_party_id = str(src_party_id)
         if src_party_id == PrivilegeAuth.get_dest_party_id(request_path, party_id_index):
             return
         stat_logger.info("party {} role {} start authentication".format(src_party_id, src_role))
-        privilege_dic = PrivilegeAuth.get_authentication_items(request_path, role_index, command)
+        privilege_dic = PrivilegeAuth.get_authentication_items(request_path, role_index, command, component_index)
         for privilege_type, value in privilege_dic.items():
             if value in PrivilegeAuth.command_whitelist:
                 continue
@@ -140,9 +140,9 @@ class PrivilegeAuth(object):
         pass
 
     @classmethod
-    def get_authentication_items(cls, request_path, role_index, command):
+    def get_authentication_items(cls, request_path, role_index, command, component_index):
         dest_role = request_path.split('/')[role_index]
-        component = request.json.get('module_name').lower() if command == 'run' else None
+        component = request_path.split('/')[component_index] if command == 'run' else None
         return PrivilegeAuth.get_privilege_dic(dest_role, command, component)
 
     @classmethod
@@ -191,7 +191,7 @@ def modify_permission(permission_info, delete=False):
         PrivilegeAuth.rewrite_local_storage(new_json)
 
 
-def request_authority_certification(party_id_index, role_index, command):
+def request_authority_certification(party_id_index, role_index, command, component_index=None):
     def request_authority_certification_do(func):
         @functools.wraps(func)
         def _wrapper(*args, **kwargs):
@@ -201,7 +201,8 @@ def request_authority_certification(party_id_index, role_index, command):
                                                        request_path=request.path,
                                                        party_id_index=party_id_index,
                                                        role_index=role_index,
-                                                       command=command
+                                                       command=command,
+                                                       component_index=component_index
                                                        )
             return func(*args, **kwargs)
         return _wrapper
