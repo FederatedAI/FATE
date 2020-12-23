@@ -37,8 +37,8 @@ def main(config="../../config.yaml", namespace=""):
     backend = config.backend
     work_mode = config.work_mode
 
-    guest_train_data = {"name": "student_hetero_guest", "namespace": f"experiment{namespace}"}
-    host_train_data = {"name": "student_hetero_host", "namespace": f"experiment{namespace}"}
+    guest_train_data = {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"}
+    host_train_data = {"name": "breast_hetero_host", "namespace": f"experiment{namespace}"}
 
     # initialize pipeline
     pipeline = PipeLine()
@@ -55,17 +55,19 @@ def main(config="../../config.yaml", namespace=""):
     reader_0.get_party_instance(role="host", party_id=hosts).component_param(table=host_train_data)
 
     dataio_0 = DataIO(name="dataio_0")
-    # get DataIO party instance of guest
-    dataio_0_guest_party_instance = dataio_0.get_party_instance(role="guest", party_id=guest)
-    # configure DataIO for guest
-    dataio_0_guest_party_instance.component_param(with_label=False, output_format="dense")
+    # get and configure DataIO party instance of guest
+    dataio_0.get_party_instance(role="guest", party_id=guest).component_param(with_label=False, output_format="dense")
     # get and configure DataIO party instance of host
     dataio_0.get_party_instance(role="host", party_id=hosts).component_param(with_label=False)
 
     # define SecretSharingSum components
     secretsharingsum_0 = SecretSharingSum(name="secretsharingsum_0")
 
-    # add components to pipeline, in order of task execution
+    secretsharingsum_0.get_party_instance(role="guest", party_id=guest).component_param(sum_cols=[1, 2, 3], q_n=6)
+
+    secretsharingsum_0.get_party_instance(role="host", party_id=hosts).component_param(sum_cols=[1, 2, 3], q_n=6)
+
+    # add components to pipeline, in order of task execution.
     pipeline.add_component(reader_0)
     pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
     pipeline.add_component(secretsharingsum_0, data=Data(data=dataio_0.output.data))
