@@ -20,9 +20,9 @@ import copy
 import numpy as np
 from collections import Counter
 
+from fate_flow.entity.metric import Metric, MetricMeta
 from federatedml.model_base import ModelBase
 from federatedml.param.sample_weight_param import SampleWeightParam
-from federatedml.protobuf.generated import sample_weight_meta_pb2, sample_weight_param_pb2
 from federatedml.util import consts, LOGGER
 
 
@@ -47,9 +47,9 @@ class SampleWeight(ModelBase):
     def __init__(self):
         super().__init__()
         self.model_param = SampleWeightParam()
-        self.model_name = 'SampleWeight'
-        self.model_param_name = 'SampleWeightParam'
-        self.model_meta_name = 'SampleWeightMeta'
+        self.metric_name = "sample_weight"
+        self.metric_namespace = "train"
+        self.metric_type = "SAMPLE_WEIGHT"
         self.weight_mode = None
 
     def _init_model(self, params):
@@ -109,30 +109,29 @@ class SampleWeight(ModelBase):
             self.class_weight = SampleWeight.get_class_weight(data_instances)
         return SampleWeight.assign_sample_weight(data_instances, self.class_weight, weight_loc, self.normalize)
 
-    def export_model(self):
-        class_weight=None
+    def callback_info(self):
+        class_weight = None
+        classes = None
         if self.class_weight:
             class_weight = {str(k): v for k, v in self.class_weight.items()}
-        LOGGER.debug(f"class weight exported is: {class_weight}")
-        meta_obj = sample_weight_meta_pb2.SampleWeightMeta(sample_weight_name=self.sample_weight_name,
-                                                           need_run=self.need_run,
-                                                           normalize=self.normalize,
-                                                           weight_mode=self.weight_mode)
-        param_obj = sample_weight_param_pb2.SampleWeightParam(class_weight=class_weight)
-        result = {
-            self.model_meta_name: meta_obj,
-            self.model_param_name: param_obj
-        }
-        return result
+            classes = sorted([str(k) for k in self.class_weight.keys()])
+        LOGGER.debug(f"final class weight is: {class_weight}")
 
-    def load_model(self, model_dict):
-        meta_obj = list(model_dict.get('model').values())[0].get(self.model_meta_name)
-        self.need_run, self.sample_weight_name = meta_obj.need_run, meta_obj.sample_weight_name
-        self.normalize = meta_obj.normalize
+        metric_meta = MetricMeta(name='train',
+                                 metric_type=self.metric_type,
+                                 extra_metas={
+                                     "weight_mode": self.weight_mode,
+                                     "class_weight": class_weight,
+                                     "classes": classes,
+                                     "sample_weight_name": self.sample_weight_name
+                                 })
 
-        result_obj = list(model_dict.get('model').values())[0].get(self.model_param_name)
-        tmp_class_weight = dict(result_obj.class_weight)
-        self.class_weight = {int(k): v for k, v in tmp_class_weight.items()}
+        self.callback_metric(metric_name=self.metric_name,
+                             metric_namespace=self.metric_namespace,
+                             metric_data=[Metric(self.metric_name, 0)])
+        self.tracker.set_metric_meta(metric_namespace=self.metric_namespace,
+                                     metric_name=self.metric_name,
+                                     metric_meta=metric_meta)
 
     def fit(self, data_instances):
         if self.sample_weight_name is None and self.class_weight is None:
@@ -154,9 +153,10 @@ class SampleWeight(ModelBase):
             if weight_loc:
                 new_schema["header"].pop(weight_loc)
             else:
-                LOGGER.warning(f"Cannot find weight column of given sample_weight_name '{self.sample_weight_name}'."
+                raise ValueError(f"Cannot find weight column of given sample_weight_name '{self.sample_weight_name}'."
                                f"Original data returned.")
-                return data_instances
         result_instances = self.transform_weighted_instance(data_instances, weight_loc)
         result_instances.schema = new_schema
+
+        self.callback_info()
         return result_instances

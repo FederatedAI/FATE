@@ -468,8 +468,8 @@ Below lists input and output elements of each component.
      - Sample Weight assigns weight to instances according to user-specified parameters
      - data
      - data
-     - model
-     - model
+     - None
+     - None
 
 
 .. _DataIO: ../../federatedml/util/README.rst
