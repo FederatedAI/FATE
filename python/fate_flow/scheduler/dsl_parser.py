@@ -129,7 +129,7 @@ class BaseDSLParser(object):
             self.component_name_index[name] = len(self.component_name_index)
             self.components.append(new_component)
 
-        if version == 2 or mode == "train":
+        if version != 2 and mode == "train":
             self._check_component_valid_names()
 
     def _check_component_valid_names(self):
@@ -554,6 +554,10 @@ class BaseDSLParser(object):
         return self.graph_dependency[role][party_id]
 
     @staticmethod
+    def verify_dsl(dsl, mode="train"):
+        raise NotImplementedError("verify dsl interface should be implemented")
+
+    @staticmethod
     def deploy_component(*args, **kwargs):
         pass
 
@@ -696,9 +700,6 @@ class BaseDSLParser(object):
             if key not in self.args_datakey:
                 raise DataNotExistInSubmitConfError(msg=key)
 
-    def get_predict_dsl(self, role):
-        return self.gen_predict_dsl_by_role(role)
-
     def gen_predict_dsl_by_role(self, role):
         if not self.predict_dsl:
             return self.predict_dsl
@@ -786,6 +787,13 @@ class DSLParser(BaseDSLParser):
         return json_dict
 
     @staticmethod
+    def verify_dsl(dsl, mode="train"):
+        dsl_parser = DSLParser()
+        dsl_parser.dsl = dsl
+        dsl_parser._init_components(mode=mode, version=1)
+        dsl_parser._find_dependencies(version=1)
+
+    @staticmethod
     def deploy_component(components, train_dsl):
         training_cpns = set(train_dsl.get("components").keys())
         deploy_cpns = set(components)
@@ -857,6 +865,25 @@ class DSLParser(BaseDSLParser):
 
         return need_deploy
 
+    def get_predict_dsl(self, role, predict_dsl=None, setting_conf_prefix=None):
+        if predict_dsl is not None:
+            return predict_dsl
+        return self.gen_predict_dsl_by_role(role)
+
+    def gen_predict_dsl_by_role(self, role):
+        if not self.predict_dsl:
+            return self.predict_dsl
+
+        role_predict_dsl = copy.deepcopy(self.predict_dsl)
+        component_list = list(self.predict_dsl.get("components").keys())
+        for component in component_list:
+            idx = self.component_name_index.get(component)
+            role_parameters = self.components[idx].get_role_parameters()
+            if role in role_parameters:
+                role_predict_dsl["components"][component]["CodePath"] = role_parameters[role][0].get("CodePath")
+
+        return role_predict_dsl
+
     @staticmethod
     def _gen_predict_data_mapping():
         data_mapping = [("data", "data"), ("train_data", "test_data"),
@@ -916,6 +943,13 @@ class DSLParserV2(BaseDSLParser):
                     raise NamingFormatError(component=name)
 
     @staticmethod
+    def verify_dsl(dsl, mode="train"):
+        dsl_parser = DSLParserV2()
+        dsl_parser.dsl = dsl
+        dsl_parser._init_components(mode=mode, version=2)
+        dsl_parser._find_dependencies(version=2)
+
+    @staticmethod
     def deploy_component(components, train_dsl):
         training_cpns = set(train_dsl.get("components").keys())
         deploy_cpns = set(components)
@@ -972,6 +1006,22 @@ class DSLParserV2(BaseDSLParser):
             return name in deploy_cpns
 
         return False
+
+    def get_predict_dsl(self, role, predict_dsl=None, setting_conf_prefix=None):
+        if not predict_dsl:
+            return {}
+
+        role_predict_dsl = copy.deepcopy(predict_dsl)
+        component_list = list(predict_dsl.get("components").keys())
+        for component in component_list:
+            code_path= parameter_util.ParameterUtilV2.get_code_path(role=role,
+                                                                    module=predict_dsl["components"][component]["module"],
+                                                                    module_alias=component,
+                                                                    setting_conf_prefix=setting_conf_prefix)
+            if code_path:
+                role_predict_dsl["components"][component]["CodePath"] = code_path
+
+        return role_predict_dsl
 
     @staticmethod
     def _gen_predict_data_mapping():
