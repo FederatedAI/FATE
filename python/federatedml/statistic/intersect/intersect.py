@@ -82,7 +82,7 @@ class Intersect(object):
         if intersect_ids is not None:
             intersect_ids = intersect_ids.join(data_instances, lambda i, d: d)
             intersect_ids.schema = data_instances.schema
-            LOGGER.info("get intersect data_instances!")
+            LOGGER.info("obtain intersect data_instances!")
 
         return intersect_ids
 
@@ -110,8 +110,8 @@ class RsaIntersect(Intersect):
     def __init__(self):
         super().__init__()
         # self.intersect_cache_param = intersect_params.intersect_cache_param
-        self.pub_e = None
-        self.pub_n = None
+        self.rcv_e = None
+        self.rcv_n = None
         self.e = None
         self.d = None
         self.n = None
@@ -126,8 +126,8 @@ class RsaIntersect(Intersect):
         self.rsa_params = param.rsa_params
         self.split_calculation = self.rsa_params.split_calculation
         self.random_base_fraction = self.rsa_params.random_base_fraction
-        self.first_hash_operator = Hash(self.rsa_params.hash_method, self.rsa_params.base64)
-        self.final_hash_operator = Hash(self.rsa_params.final_hash_method, self.rsa_params.base64)
+        self.first_hash_operator = Hash(self.rsa_params.hash_method, False)
+        self.final_hash_operator = Hash(self.rsa_params.final_hash_method, False)
         self.salt = self.rsa_params.salt
 
     @staticmethod
@@ -163,20 +163,20 @@ class RsaIntersect(Intersect):
     def pubkey_id_process(hash_sid, v, random_bit, rsa_e, rsa_n, rsa_r=None):
         # return (r^e % n *hash(sid), (sid, r))
         if rsa_r:
-            r = rsa_r[int(hash_sid, 16) % len(rsa_r)]
+            r = rsa_r[hash_sid % len(rsa_r)]
         else:
             r = random.SystemRandom().getrandbits(random_bit)
-        processed_id = gmpy_math.powmod(r, rsa_e, rsa_n) * int(hash_sid, 16) % rsa_n
+        processed_id = gmpy_math.powmod(r, rsa_e, rsa_n) * hash_sid % rsa_n
         return processed_id, (v[0], r)
 
     @staticmethod
     def prvkey_id_process(hash_sid, v, rsa_d, rsa_n, final_hash_operator, salt):
-        processed_id = Intersect.hash(gmpy_math.powmod(int(hash_sid, 16), rsa_d, rsa_n), final_hash_operator, salt)
+        processed_id = Intersect.hash(gmpy_math.powmod(hash_sid, rsa_d, rsa_n), final_hash_operator, salt)
         return processed_id, v[0]
 
-    def cal_prvkey_ids_process_pair(self, data_instances):
+    def cal_prvkey_ids_process_pair(self, data_instances, d, n):
         return data_instances.map(
-            lambda k, v: self.prvkey_id_process(k, v, self.d, self.n,
+            lambda k, v: self.prvkey_id_process(k, v, d, n,
                                                 self.final_hash_operator,
                                                 self.rsa_params.salt)
         )
@@ -193,6 +193,20 @@ class RsaIntersect(Intersect):
 
         return encrypt_common_id
 
+    def filter_intersect_ids(self, encrypt_intersect_ids):
+        if len(encrypt_intersect_ids) > 1:
+            raw_intersect_ids = [e.map(lambda k, v: (v, 1)) for e in encrypt_intersect_ids]
+            intersect_ids = self.get_common_intersection(raw_intersect_ids)
+        else:
+            intersect_ids = encrypt_intersect_ids[0]
+            intersect_ids = intersect_ids.map(lambda k, v: (v, 1))
+        return intersect_ids
+
+    @staticmethod
+    def extract_intersect_ids(intersect_ids, all_ids):
+        intersect_ids = intersect_ids.join(all_ids,lambda e, h: h)
+        return intersect_ids
+
     def split_calculation_process(self, data_instances):
         raise NotImplementedError("This method should not be called here")
 
@@ -202,11 +216,11 @@ class RsaIntersect(Intersect):
     def run_intersect(self, data_instances):
         LOGGER.info("Start RSA Intersection")
         # H(k), (k, v)
-        hash_data_instances = data_instances.map(lambda k, v: (Intersect.hash(k, self.first_hash_operator, self.salt), (k, v)))
+        hash_data_instances = data_instances.map(lambda k, v: (int(Intersect.hash(k, self.first_hash_operator, self.salt), 16), (k, v)))
         if self.split_calculation:
             intersect_ids = self.split_calculation_process(hash_data_instances)
         else:
-            intersect_ids =  self.unified_calculation_process(hash_data_instances)
+            intersect_ids = self.unified_calculation_process(hash_data_instances)
         if not self.only_output_key:
             intersect_ids = self._get_value_from_data(intersect_ids, data_instances)
         return intersect_ids

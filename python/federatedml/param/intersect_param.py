@@ -76,20 +76,17 @@ class RSAParam(BaseParam):
 
     final_hash_method: str, the hash method of result data string, it support md5, sha1, sha224, sha256, sha384, sha512, sm3, default sha256
 
-    base64: bool, if True, the result of hash will be changed to base64, default by False
-
     split_calculation: bool, if True, Host & Guest split operations for faster performance, recommended on large data set
 
-    random_base_fraction: float or int, if not None, generate specified number of r for encryption and reuse generated r
+    random_base_fraction: positive float, if not None, generate specified number of r for encryption and reuse generated r
     """
 
-    def __init__(self, salt='', hash_method='sha256',  final_hash_method='sha256', base64=False,
+    def __init__(self, salt='', hash_method='sha256',  final_hash_method='sha256',
                  split_calculation=False, random_base_fraction=None):
         super().__init__()
         self.salt = salt
         self.hash_method = hash_method
         self.final_hash_method = final_hash_method
-        self.base64 = base64
         self.split_calculation = split_calculation
         self.random_base_fraction = random_base_fraction
 
@@ -100,21 +97,15 @@ class RSAParam(BaseParam):
                     self.salt))
 
         descr = "rsa param's hash_method "
-
         self.hash_method = self.check_and_change_lower(self.hash_method,
                                                        [consts.SHA256, consts.SHA384, consts.SM3],
                                                        descr)
 
         descr = "rsa param's final_hash_method "
-
         self.final_hash_method = self.check_and_change_lower(self.final_hash_method,
                                                        [consts.MD5, consts.SHA1, consts.SHA224,
                                                         consts.SHA256, consts.SHA384, consts.SM3],
                                                        descr)
-
-        if type(self.base64).__name__ != "bool":
-            raise ValueError(
-                "rsa param's base64 {} not supported, should be bool type".format(self.base64))
 
         descr = "rsa param's swap_opeartion"
         self.check_boolean(self.split_calculation, descr)
@@ -122,6 +113,7 @@ class RSAParam(BaseParam):
         descr = "rsa param's random_base_fraction"
         if self.random_base_fraction:
             self.check_positive_number(self.random_base_fraction, descr)
+            self.check_decimal_float(self.random_base_fraction, descr)
 
         LOGGER.debug("Finish RSAParam parameter check!")
         return True

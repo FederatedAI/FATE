@@ -107,7 +107,7 @@ class IntersectModelBase(ModelBase):
                 raise ValueError("While multi-host, repeated_id_owner should be guest.")
 
             proc_obj = RepeatedIDIntersect(repeated_id_owner=self.model_param.repeated_id_owner, role=self.role)
-            data = proc_obj.run_intersect(data=data)
+            data = proc_obj.run(data=data)
 
         if self.model_param.allow_info_share:
             if self.model_param.intersect_method == consts.RSA and self.model_param.info_owner == consts.GUEST \
