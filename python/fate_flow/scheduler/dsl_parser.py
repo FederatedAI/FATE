@@ -129,7 +129,7 @@ class BaseDSLParser(object):
             self.component_name_index[name] = len(self.component_name_index)
             self.components.append(new_component)
 
-        if version != 2 and mode == "train":
+        if version == 2 or mode == "train":
             self._check_component_valid_names()
 
     def _check_component_valid_names(self):
