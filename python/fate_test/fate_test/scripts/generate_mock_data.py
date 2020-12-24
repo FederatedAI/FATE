@@ -56,10 +56,10 @@ def remove_file(path):
 
 def get_big_data(task, guest_data_size, host_data_size, guest_feature_num, host_feature_num, include_path, conf: Config,
                  encryption_type, match_rate, sparsity):
-    def list_tag_value(feature_nums):
+    def list_tag_value(feature_nums, head):
         data = ''
         for f in range(feature_nums):
-            data += ('x' + str(f)) + ':' + str(round(np.random.random(), 2)) + ";"
+            data += head[f] + ':' + str(round(np.random.random(), 2)) + ";"
         return data[:-1]
 
     def list_tag(feature_nums, data_list):
@@ -71,6 +71,7 @@ def get_big_data(task, guest_data_size, host_data_size, guest_feature_num, host_
     def _generate_tag_value_data(data_path, data_num, id_value, feature_nums):
         section_data_size = round(data_num / 100)
         iteration = round(data_num / section_data_size)
+        head = ['x' + str(i) for i in range(feature_nums)]
         for batch in range(iteration + 1):
             progress.set_time_percent(batch)
             output_data = pd.DataFrame(columns=["id"])
@@ -82,7 +83,7 @@ def get_big_data(task, guest_data_size, host_data_size, guest_feature_num, host_
                 data_size = data_num - section_data_size * batch
             else:
                 break
-            feature = [list_tag_value(feature_nums) for i in range(data_size)]
+            feature = [list_tag_value(feature_nums, head) for i in range(data_size)]
             output_data['feature'] = feature
             output_data.to_csv(data_path, mode='a+', index=False, header=False)
 
@@ -118,12 +119,12 @@ def get_big_data(task, guest_data_size, host_data_size, guest_feature_num, host_
         data = list(map(str, valid_set))
         for batch in range(iteration + 1):
             progress.set_time_percent(batch)
-            output_data = pd.DataFrame()
+            output_data = pd.DataFrame(columns=["id"])
             if section_data_size * (batch + 1) <= data_num:
-                output_data[0] = id_value[section_data_size * batch: section_data_size * (batch + 1)]
+                output_data["id"] = id_value[section_data_size * batch: section_data_size * (batch + 1)]
                 data_size = section_data_size
             elif section_data_size * batch <= data_num:
-                output_data[0] = id_value[section_data_size * batch: data_num]
+                output_data["id"] = id_value[section_data_size * batch: data_num]
                 data_size = data_num - section_data_size * batch
             else:
                 break

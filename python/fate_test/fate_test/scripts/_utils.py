@@ -115,7 +115,7 @@ def _upload_data(clients: Clients, suite, config: Config):
                 if not response.status.is_success():
                     raise RuntimeError(f"uploading {i + 1}th data for {suite.path} {response.status}")
                 bar.update(1)
-                if _config.DATA_SIZE:
+                if _config.data_switch:
                     generate_mock_data.remove_file(data_path)
             except Exception:
                 exception_id = str(uuid.uuid1())

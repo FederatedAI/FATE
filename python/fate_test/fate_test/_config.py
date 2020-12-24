@@ -21,7 +21,7 @@ from pathlib import Path
 
 from ruamel import yaml
 
-DATA_SIZE = False
+data_switch = False
 use_local_data = 1
 upload_dir = 'performance/hetero_task_upload_testsuite.json'
 intersect_dir = 'performance/hetero_task_intersect_single_testsuite.json'
@@ -36,7 +36,7 @@ backend: 0
 # base dir for data upload conf eg, data_base_dir={FATE}
 # examples/data/breast_hetero_guest.csv -> $data_base_dir/examples/data/breast_hetero_guest.csv
 data_base_dir: ../../../../
-# fate_test job Dedicated directory, File storage location,cache_directory={FATE}/python/fate_test/cache/
+# fate_test job Dedicated directory, File storage location,cache_directory={FATE}/examples/cache/
 cache_directory: /data/projects/fate/examples/cache/
 clean_data: true
 parties:

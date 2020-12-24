@@ -106,7 +106,7 @@ class FLOWClient(object):
         return file_path
 
     def _upload_data(self, conf, verbose, drop):
-        if _config.DATA_SIZE:
+        if _config.data_switch:
             conf['file'] = os.path.join(str(self._cache_directory), os.path.basename(conf.get('file')))
         else:
             conf['file'] = os.path.join(str(self._data_base_dir), conf.get('file'))

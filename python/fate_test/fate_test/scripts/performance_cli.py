@@ -105,7 +105,7 @@ def run_task(ctx, task, include, encryption_type, match_rate, sparsity, guest_da
     if guest_data_size < 0 or host_data_size < 0:
         raise Exception('The number of samples in the dataset must not be less than 0')
     else:
-        _config.DATA_SIZE = guest_data_size != 0 and host_data_size != 0
+        _config.data_switch = guest_data_size != 0 and host_data_size != 0
     # prepare output dir and json hooks
     _add_replace_hook(replace)
 
@@ -120,7 +120,7 @@ def run_task(ctx, task, include, encryption_type, match_rate, sparsity, guest_da
         return
 
     echo.stdout_newline()
-    if _config.DATA_SIZE:
+    if _config.data_switch:
         _big_data_task(task, guest_data_size, host_data_size, guest_feature_num, host_feature_num, include, config_inst,
                        encryption_type, match_rate, sparsity)
     with Clients(config_inst) as client:
