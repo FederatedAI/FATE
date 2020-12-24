@@ -324,7 +324,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
             LOGGER.info('load predict cache of round {}'.format(last_round))
 
         predict_rs = self.boosting_fast_predict(processed_data, trees=trees, predict_cache=predict_cache)
-        self.predict_data_cache.add_data(cache_dataset_key, predict_rs)
+        self.predict_data_cache.add_data(cache_dataset_key, predict_rs, cur_boosting_round=rounds)
 
         return self.score_to_predict_result(data_inst, predict_rs)
 

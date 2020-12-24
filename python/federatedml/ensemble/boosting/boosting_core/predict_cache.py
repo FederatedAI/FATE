@@ -37,32 +37,37 @@ class PredictDataCache(object):
     def get_data_key(data):
         return id(data)
 
-    def add_data(self, dataset_key, f):
+    def add_data(self, dataset_key, f, cur_boosting_round):
         if dataset_key not in self._data_map:
             self._data_map[dataset_key] = DataNode()
 
-        self._data_map[dataset_key].add_data(f)
+        self._data_map[dataset_key].add_data(f, cur_boosting_round)
 
 
 class DataNode(object):
+
     def __init__(self):
         self._boost_round = None
         self._f = None
+        self._round_idx_map = {}
+        self._idx = 0
 
     def get_last_round(self):
         return self._boost_round
 
     def data_at(self, round):
-        if round > self._boost_round:
+        if round > self._boost_round or round not in self._round_idx_map:
             return None
+        return self._f.mapValues(lambda f_list: f_list[self._round_idx_map[round]])
 
-        return self._f.mapValues(lambda f_list: f_list[round])
-
-    def add_data(self, f):
+    def add_data(self, f, cur_round_num):
         if self._boost_round is None:
             self._boost_round = 0
+            self._idx = 0
             self._f = f.mapValues(lambda pred: [pred])
         else:
-            self._boost_round += 1
+            self._boost_round = cur_round_num
+            self._idx += 1
             self._f = self._f.join(f, lambda pre_scores, score: pre_scores + [score])
+        self._round_idx_map[self._idx] = self._boost_round
 
