@@ -126,7 +126,7 @@
                     },
                     "dataio_1": {
                         "input_format": "tag",
-                        "delimitor": ",",
+                        "delimitor": ";",
                         "tag_with_value": false,
                         "with_label": false,
                         "output_format": "dense"
