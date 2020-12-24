@@ -45,7 +45,7 @@ class IntersectModelBase(ModelBase):
 
         self.transfer_variable = IntersectionFuncTransferVariable()
 
-    def __init_intersect_method(self):
+    def init_intersect_method(self):
         LOGGER.info("Using {} intersection, role is {}".format(self.model_param.intersect_method, self.role))
         self.host_party_id_list = self.component_properties.host_party_idlist
         self.guest_party_id = self.component_properties.guest_partyid
@@ -97,7 +97,7 @@ class IntersectModelBase(ModelBase):
         return self.intersect_ids
 
     def fit(self, data):
-        self.__init_intersect_method()
+        self.init_intersect_method()
 
         if self.model_param.repeated_id_process:
             if self.model_param.intersect_cache_param.use_cache is True and self.model_param.intersect_method == consts.RSA:
@@ -150,15 +150,15 @@ class IntersectHost(IntersectModelBase):
         super().__init__()
         self.role = consts.HOST
 
-    def __init_intersect_method(self):
-        super(IntersectHost).__init_intersect_method()
+    def init_intersect_method(self):
+        super().init_intersect_method()
         self.host_party_id = self.component_properties.local_partyid
 
         if self.model_param.intersect_method == "rsa":
-            self.intersection_obj = RsaIntersectionHost(self.model_param)
+            self.intersection_obj = RsaIntersectionHost()
 
         elif self.model_param.intersect_method == "raw":
-            self.intersection_obj = RawIntersectionHost(self.model_param)
+            self.intersection_obj = RawIntersectionHost()
             self.intersection_obj.tracker = self.tracker
             self.intersection_obj.task_version_id = self.task_version_id
         else:
@@ -175,15 +175,15 @@ class IntersectGuest(IntersectModelBase):
         super().__init__()
         self.role = consts.GUEST
 
-    def __init_intersect_method(self):
-        super(IntersectGuest).__init_intersect_method()
+    def init_intersect_method(self):
+        super().init_intersect_method()
 
         if self.model_param.intersect_method == "rsa":
-            self.intersection_obj = RsaIntersectionGuest(self.model_param)
+            self.intersection_obj = RsaIntersectionGuest()
             self.intersection_obj.guest_party_id = self.guest_party_id
 
         elif self.model_param.intersect_method == "raw":
-            self.intersection_obj = RawIntersectionGuest(self.model_param)
+            self.intersection_obj = RawIntersectionGuest()
             self.intersection_obj.tracker = self.tracker
             self.intersection_obj.task_version_id = self.task_version_id
         else:

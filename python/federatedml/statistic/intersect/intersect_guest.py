@@ -26,6 +26,7 @@ from federatedml.util import LOGGER
 class RsaIntersectionGuest(RsaIntersect):
     def __init__(self):
         super().__init__()
+        self.role = consts.GUEST
 
     def get_host_prvkey_ids(self):
         host_prvkey_ids_list = self.transfer_variable.host_prvkey_ids.get(idx=-1)
@@ -150,7 +151,7 @@ class RsaIntersectionGuest(RsaIntersect):
         host_sign_guest_ids_list = [v.join(recv_host_sign_guest_ids_list[i],
                                            lambda g, r: (g[0], RsaIntersectionGuest.hash(gmpy2.divm(int(r),
                                                                                                     int(g[1]),
-                                                                                                    self.n[i]),
+                                                                                                    self.pub_n[i]),
                                                                                          self.final_hash_operator,
                                                                                          self.rsa_params.salt)))
                                     for i, v in enumerate(pubkey_id_process_list)]
@@ -165,9 +166,6 @@ class RsaIntersectionGuest(RsaIntersect):
         intersect_odd_ids = self.filter_intersect_ids(encrypt_intersect_odd_ids)
         intersect_even_ids = self.get_host_intersect_ids(guest_sign_host_ids_list)
         intersect_ids = intersect_odd_ids.union(intersect_even_ids)
-
-        if not self.only_output_key:
-            intersect_ids = self._get_value_from_data(intersect_ids, data_instances)
 
         return intersect_ids
 
@@ -209,7 +207,7 @@ class RsaIntersectionGuest(RsaIntersect):
         host_sign_guest_ids_list = [v.join(recv_host_sign_guest_ids_list[i],
                                           lambda g, r: (g[0], RsaIntersectionGuest.hash(gmpy2.divm(int(r),
                                                                                                    int(g[1]),
-                                                                                                   self.n[i]),
+                                                                                                   self.pub_n[i]),
                                                                                         self.final_hash_operator,
                                                                                         self.rsa_params.salt)))
                                    for i, v in enumerate(pubkey_id_process_list)]
@@ -229,17 +227,13 @@ class RsaIntersectionGuest(RsaIntersect):
         else:
             LOGGER.info("Skip sync intersect ids with Host(s).")
 
-        if not self.only_output_key:
-            intersect_ids = self._get_value_from_data(intersect_ids, data_instances)
-
         return intersect_ids
 
 
 class RawIntersectionGuest(RawIntersect):
-    def __init__(self, intersect_params):
-        super().__init__(intersect_params)
+    def __init__(self):
+        super().__init__()
         self.role = consts.GUEST
-        self.join_role = intersect_params.join_role
 
     def run_intersect(self, data_instances):
         LOGGER.info("Start raw intersection")

@@ -36,9 +36,8 @@ class Intersect(object):
         self._host_id = None
         self._host_id_list = None
 
-    def _load_params(self, param):
-        self.only_output_key = param.only_output_key
-        self.sync_intersect_ids = param.sync_intersect_ids
+    def load_params(self, param):
+        raise NotImplementedError("this method should not be called here")
 
     @property
     def guest_party_id(self):
@@ -120,7 +119,9 @@ class RsaIntersect(Intersect):
         self.transfer_variable = RsaIntersectTransferVariable()
         self.role = None
 
-    def _load_params(self, param):
+    def load_params(self, param):
+        self.only_output_key = param.only_output_key
+        self.sync_intersect_ids = param.sync_intersect_ids
         self.random_bit = param.random_bit
         self.rsa_params = param.rsa_params
         self.split_calculation = self.rsa_params.split_calculation
@@ -162,15 +163,15 @@ class RsaIntersect(Intersect):
     def pubkey_id_process(hash_sid, v, random_bit, rsa_e, rsa_n, rsa_r=None):
         # return (r^e % n *hash(sid), (sid, r))
         if rsa_r:
-            r = rsa_r[hash_sid % len(rsa_r)]
+            r = rsa_r[int(hash_sid, 16) % len(rsa_r)]
         else:
             r = random.SystemRandom().getrandbits(random_bit)
-        processed_id = gmpy_math.powmod(r, rsa_e, rsa_n) * hash_sid % rsa_n
+        processed_id = gmpy_math.powmod(r, rsa_e, rsa_n) * int(hash_sid, 16) % rsa_n
         return processed_id, (v[0], r)
 
     @staticmethod
     def prvkey_id_process(hash_sid, v, rsa_d, rsa_n, final_hash_operator, salt):
-        processed_id = Intersect.hash(gmpy_math.powmod(hash_sid, rsa_d, rsa_n), final_hash_operator, salt)
+        processed_id = Intersect.hash(gmpy_math.powmod(int(hash_sid, 16), rsa_d, rsa_n), final_hash_operator, salt)
         return processed_id, v[0]
 
     def cal_prvkey_ids_process_pair(self, data_instances):
@@ -182,7 +183,7 @@ class RsaIntersect(Intersect):
 
     @staticmethod
     def sign_id(hash_sid, rsa_d, rsa_n):
-        return gmpy_math.powmod(int(hash_sid), rsa_d, rsa_n)
+        return gmpy_math.powmod(hash_sid, rsa_d, rsa_n)
 
     @staticmethod
     def map_raw_id_to_encrypt_id(raw_id_data, encrypt_id_data):
@@ -201,11 +202,14 @@ class RsaIntersect(Intersect):
     def run_intersect(self, data_instances):
         LOGGER.info("Start RSA Intersection")
         # H(k), (k, v)
-        data_instances = data_instances.map(lambda k, v: (Intersect.hash(k, self.first_hash_operator, self.salt), (k, v)))
+        hash_data_instances = data_instances.map(lambda k, v: (Intersect.hash(k, self.first_hash_operator, self.salt), (k, v)))
         if self.split_calculation:
-            return self.split_calculation_process(data_instances)
+            intersect_ids = self.split_calculation_process(hash_data_instances)
         else:
-            return self.unified_calculation_process(data_instances)
+            intersect_ids =  self.unified_calculation_process(hash_data_instances)
+        if not self.only_output_key:
+            intersect_ids = self._get_value_from_data(intersect_ids, data_instances)
+        return intersect_ids
 
 
 class RawIntersect(Intersect):
@@ -216,10 +220,13 @@ class RawIntersect(Intersect):
         self.task_version_id = None
         self.tracker = None
 
-    def _load_params(self, param):
+    def load_params(self, param):
+        self.only_output_key = param.only_output_key
+        self.sync_intersect_ids = param.sync_intersect_ids
         self.with_encode = param.with_encode
         self.encode_params = param.encode_params
-        self.hash_operator = Hash(param.raw_params.hash_method, param.raw_params.base64)
+        self.join_role = param.join_role
+        self.hash_operator = Hash(param.encode_params.encode_method, param.encode_params.base64)
         self.salt = self.encode_params.salt
 
     def intersect_send_id(self, data_instances):

@@ -43,5 +43,6 @@ class RsaIntersectTransferVariable(BaseTransferVariables):
 
         self.intersect_ids = self._create_variable(name='intersect_ids', src=['guest'], dst=['host'])
         self.host_intersect_ids = self._create_variable(name='host_intersect_ids', src=['host'], dst=['guest'])
+
         self.host_pubkey = self._create_variable(name='host_pubkey', src=['host'], dst=['guest'])
         self.guest_pubkey = self._create_variable(name='guest_pubkey', src=['guest'], dst=['host'])

@@ -28,10 +28,7 @@ from federatedml.util import LOGGER
 class RsaIntersectionHost(RsaIntersect):
     def __init__(self):
         super().__init__()
-        # self.transfer_variable = RsaIntersectTransferVariable()
-        # parameter for intersection cache
-        # self.is_version_match = False
-        # self.has_cache_version = True
+        self.role = consts.HOST
 
     def get_host_prvkey_ids(self):
         host_prvkey_ids_list = self.transfer_variable.host_prvkey_ids.get(idx=-1)
@@ -57,12 +54,11 @@ class RsaIntersectionHost(RsaIntersect):
         # hash host ids
         prvkey_ids_process_pair = self.cal_prvkey_ids_process_pair(data_instances)
 
-        if self.intersect_cache_param.use_cache and not self.is_version_match or not self.intersect_cache_param.use_cache:
-            prvkey_ids_process = prvkey_ids_process_pair.mapValues(lambda v: 1)
-            self.transfer_variable.host_prvkey_ids.remote(prvkey_ids_process,
+        prvkey_ids_process = prvkey_ids_process_pair.mapValues(lambda v: 1)
+        self.transfer_variable.host_prvkey_ids.remote(prvkey_ids_process,
                                                                      role=consts.GUEST,
                                                                      idx=0)
-            LOGGER.info("Remote host_ids_process to Guest.")
+        LOGGER.info("Remote host_ids_process to Guest.")
 
         # Recv guest ids
         guest_pubkey_ids = self.transfer_variable.guest_pubkey_ids.get(idx=0)
@@ -83,16 +79,12 @@ class RsaIntersectionHost(RsaIntersect):
             intersect_ids = intersect_ids_pair.map(lambda k, v: (v, "id"))
             LOGGER.info("Get intersect ids from Guest")
 
-            if not self.only_output_key:
-                intersect_ids = self._get_value_from_data(intersect_ids, data_instances)
-
         return intersect_ids
 
 
 class RawIntersectionHost(RawIntersect):
-    def __init__(self, intersect_params):
-        super().__init__(intersect_params)
-        self.join_role = intersect_params.join_role
+    def __init__(self):
+        super().__init__()
         self.role = consts.HOST
 
     def run_intersect(self, data_instances):
