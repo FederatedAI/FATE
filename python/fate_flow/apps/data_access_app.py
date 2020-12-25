@@ -49,7 +49,7 @@ def download_upload(access_module):
             shutil.rmtree(os.path.join(job_utils.get_job_directory(job_id), 'fate_upload_tmp'))
             raise e
         job_config = request.args.to_dict()
-        if "config" in job_config:
+        if "namespace" in job_config and "table_name" in job_config:
             pass
         else:
             # higher than version 1.5.1, support eggroll run parameters
