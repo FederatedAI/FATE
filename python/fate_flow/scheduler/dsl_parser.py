@@ -791,7 +791,7 @@ class DSLParser(BaseDSLParser):
         dsl_parser = DSLParser()
         dsl_parser.dsl = dsl
         dsl_parser._init_components(mode=mode, version=1)
-        dsl_parser._find_dependencies(version=1)
+        dsl_parser._find_dependencies(mode=mode, version=1)
 
     @staticmethod
     def deploy_component(components, train_dsl):
@@ -947,7 +947,7 @@ class DSLParserV2(BaseDSLParser):
         dsl_parser = DSLParserV2()
         dsl_parser.dsl = dsl
         dsl_parser._init_components(mode=mode, version=2)
-        dsl_parser._find_dependencies(version=2)
+        dsl_parser._find_dependencies(mode=mode, version=2)
 
     @staticmethod
     def deploy_component(components, train_dsl):
