@@ -28,4 +28,4 @@ specified. The module takes either int (instance count) or float
 (fraction) value for set sizes, but mixed-type inputs cannot be used.
 
 For examples of using Data Split module, please refer
-`here <../../../examples/dsl/v2/data_split>`__.
+`here <../../../../examples/dsl/v2/data_split>`__.

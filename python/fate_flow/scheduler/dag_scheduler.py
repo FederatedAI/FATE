@@ -19,6 +19,7 @@ from fate_arch.common.base_utils import json_loads, json_dumps, current_timestam
 from fate_arch.common.log import schedule_logger
 from fate_arch.common import WorkMode
 from fate_flow.db.db_models import DB, Job
+from fate_flow.pipelined_model import deploy_model
 from fate_flow.scheduler import FederatedScheduler
 from fate_flow.scheduler import TaskScheduler
 from fate_flow.operation import JobSaver
@@ -60,9 +61,10 @@ class DAGScheduler(Cron):
             tracker = Tracker(job_id=job_id, role=job_initiator['role'], party_id=job_initiator['party_id'],
                               model_id=common_job_parameters.model_id, model_version=common_job_parameters.model_version)
             pipeline_model = tracker.get_output_model('pipeline')
-            if not job_dsl:
-                job_dsl = json_loads(pipeline_model['Pipeline'].inference_dsl)
             train_runtime_conf = json_loads(pipeline_model['Pipeline'].train_runtime_conf)
+            if deploy_model.check_if_parent_model(pipeline=pipeline_model['Pipeline']):
+                raise Exception(f"Model {common_job_parameters.model_id} {common_job_parameters.model_version} has not been deployed yet.")
+            job_dsl = json_loads(pipeline_model['Pipeline'].inference_dsl)
 
         job = Job()
         job.f_job_id = job_id
@@ -352,6 +354,7 @@ class DAGScheduler(Cron):
             else:
                 schedule_logger(job_id=job_id).info(f"job {job_id} set rerun signal failed")
         else:
+            FederatedScheduler.sync_job_status(job=job)
             schedule_logger(job_id=job_id).info(f"job {job_id} no task to rerun")
 
     @classmethod

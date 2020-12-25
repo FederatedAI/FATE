@@ -27,4 +27,12 @@ message Pipeline {
     string fate_version = 4;
     string model_id = 5;
     string model_version = 6;
+    bool parent = 7;
+    int32 loaded_times = 8;
+    bytes roles = 9;
+    int32 work_mode = 10;
+    string initiator_role = 11;
+    int32 initiator_party_id = 12;
+    bytes runtime_conf_on_party = 13;
+    bytes parent_info = 14;
 }
