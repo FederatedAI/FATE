@@ -257,3 +257,45 @@ Oblivious Transfer
 
 FATE implements Oblivious Transfer(OT) protocol based on work by Eduard Hauck and Julian Loss.
 For more information, please refer `here <https://eprint.iacr.org/2017/1011>`_.
+
+Verifiable secret sharing
+=========================
+
+Verifiable secret sharing `[VSS] <https://www.cs.umd.edu/~gasarch/TOPICS/secretsharing/feldmanVSS.pdf>`_ is an
+information-theoretic secure method to share secrets between multi-parties.
+
+Protocol
+------------------
+
+1. Initialize
+
+    a. generate 512-bits prime number :math:`p` and :math:`g`, where :math:`g` is a primitive root modulo :math:`p`
+
+    b. set share_amount, it is the number of pieces the secret will be split into.
+
+2. Encrypt
+
+    a. generate :math:`k-1` random numbers, which is :math:`{a_0, a_1, a_2, ... ,a_{k-1}}`, denotes a polynomial of degree :math:`k-1`,
+       which is shown as :math:`f(x)=a_0+a_1x+a_2x^2+...+a_{k-1}x^{k-1}`. Where :math:`a_0` is the secret number, which requires a number of :math:`k` points to calculate.
+
+    b. Take :math:`k` points on the polynomial, generate :math:`k` sub-keys, such as :math:`{<1, f(1)>, <2,f(2)>... ,}`.
+
+    c. Generate commitments :math:`c_i` according to the :math:`k` coefficients, :math:`c_i=g^{a_i}`
+
+3. Sub-key holder performs validation: :math:`g^y=c_0c_1c_2c_3...c_{k-1}`, verifies that the sub-key is valid.
+
+4. Using Lagrange interpolation to recover secret.
+
+How to use
+----------
+
+.. code-block:: python
+
+    from federatedml.secureprotol.secret_sharing.verifiable_secret_sharing import VerifiableSecretSharing
+    vss = VerifiableSecretSharing()
+    vss.set_share_amount(3)
+    s = -5.98
+    sub_key, commitment = vss.encrypt(s) # generate sub-key and commitment
+    vss.verify(sub_key[i], commitment) # return True or False
+    x, y = zip(*sub_key)
+    secret = vss.decrypt(x,y) # assert s == secret

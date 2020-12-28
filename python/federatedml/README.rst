@@ -351,7 +351,7 @@ Secure Protocol
 .. _Diffne Hellman Key Exchange: secureprotol/README.rst#diffne-hellman-key-exchange
 .. _SecretShare MPC Protocol(SPDZ): secureprotol/README.rst#secretshare-mpc-protocol-spdz
 .. _Oblivious Transfer: secureprotol/README.rst#oblivious-transfer
-.. _Verifiable Secret Sharing: secureprotol/README.rst#verifiable-secret_sharing
+.. _Verifiable Secret Sharing: secureprotol/README.rst#verifiable-secret-sharing
 
 
 Params
