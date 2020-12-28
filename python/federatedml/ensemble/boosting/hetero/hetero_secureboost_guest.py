@@ -307,11 +307,14 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
 
         last_round = self.predict_data_cache.predict_data_last_round(cache_dataset_key)
 
-        self.sync_predict_round(last_round + 1)
+        self.sync_predict_round(last_round)
 
         rounds = len(self.boosting_model_list) // self.booster_dim
         trees = []
-        for idx in range(last_round + 1, rounds):
+        LOGGER.debug('round involved in prediction {}, last round is {}, data key {}'
+                     .format(list(range(last_round, rounds)), last_round, cache_dataset_key))
+
+        for idx in range(last_round, rounds):
             for booster_idx in range(self.booster_dim):
                 tree = self.load_booster(self.booster_meta,
                                          self.boosting_model_list[idx * self.booster_dim + booster_idx],
@@ -319,7 +322,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
                 trees.append(tree)
 
         predict_cache = None
-        if last_round != -1:
+        if last_round != 0:
             predict_cache = self.predict_data_cache.predict_data_at(cache_dataset_key, last_round)
             LOGGER.info('load predict cache of round {}'.format(last_round))
 
