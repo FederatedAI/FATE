@@ -19,14 +19,15 @@ import os
 import shutil
 import tarfile
 
-from flask import Flask, request, send_file
+from flask import Flask, request, send_file, jsonify
 from google.protobuf import json_format
 
 from fate_arch.common.base_utils import fate_uuid
 from fate_arch import storage
 from fate_flow.db.db_models import Job, DB
 from fate_flow.manager.data_manager import delete_metric_data
-from fate_flow.operation import Tracker
+from fate_flow.operation import Tracker, JobSaver
+from fate_flow.scheduler import FederatedScheduler
 from fate_flow.settings import stat_logger, TEMP_DIRECTORY
 from fate_flow.utils import job_utils, data_utils, detect_utils, schedule_utils
 from fate_flow.utils.api_utils import get_json_result, error_response
@@ -314,14 +315,13 @@ def component_output_data_download():
 
 @manager.route('/component/output/data/table', methods=['post'])
 def component_output_data_table():
-    output_data_infos = Tracker.query_output_data_infos(**request.json)
-    if output_data_infos:
-        return get_json_result(retcode=0, retmsg='success', data=[{'table_name': output_data_info.f_table_name,
-                                                                  'table_namespace': output_data_info.f_table_namespace,
-                                                                   "data_name": output_data_info.f_data_name
-                                                                   } for output_data_info in output_data_infos])
+    request_data = request.json
+    jobs = JobSaver.query_job(job_id=request_data.get('job_id'))
+    if jobs:
+        job = jobs[0]
+        return jsonify(FederatedScheduler.tracker_command(job, request_data, 'output/table'))
     else:
-        return get_json_result(retcode=100, retmsg='No found table, please check if the parameters are correct')
+        return get_json_result(retcode=100, retmsg='No found job')
 
 
 @manager.route('/component/summary/download', methods=['POST'])

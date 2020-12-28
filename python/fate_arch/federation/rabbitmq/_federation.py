@@ -136,6 +136,7 @@ class Federation(FederationABC):
 
         self._queue_map: typing.MutableMapping[_QueueKey, _QueueNames] = {}
         self._channels_map: typing.MutableMapping[_QueueKey, MQChannel] = {}
+        self._vhost_set = set()
         self._name_dtype_map = {}
         self._message_cache = {}
         self._max_message_size = max_message_size
@@ -221,7 +222,7 @@ class Federation(FederationABC):
                     self._name_dtype_map[k] = body
              
         if isinstance(v, Table): 
-            total_size = v.count()           
+            total_size = v.count()         
             partitions = v.partitions
             LOGGER.debug(f"[{log_str}]start to remote RDD, total_size={total_size}, partitions={partitions}")
             
@@ -247,7 +248,7 @@ class Federation(FederationABC):
         for party in parties:
             vhost = self._get_vhost(party)
             LOGGER.debug(f"[rabbitmq.cleanup]start to cleanup vhost {vhost}...")
-            self._rabbit_manager.delete_vhost(vhost=vhost)
+            self._rabbit_manager.clean(vhost)           
             LOGGER.debug(f"[rabbitmq.cleanup]cleanup vhost {vhost} done")
         if self._mq.union_name:
             LOGGER.debug(f"[rabbitmq.cleanup]clean user {self._mq.union_name}.")
@@ -286,17 +287,19 @@ class Federation(FederationABC):
                 LOGGER.debug(f"[rabbitmq.get_or_create_queue]queue: {queue_key} for party:{party} not found, start to create")
                 # gen names
                 vhost_name = self._get_vhost(party)
-                
+                                
                 queue_key_splits = queue_key.split(_SPLIT_)
                 queue_suffix = "-".join(queue_key_splits[2:])
-                send_queue_name = f"send-{self._party.role}-{self._party.party_id}-{party.role}-{party.party_id}-{queue_suffix}"
-                receive_queue_name = f"receive-{party.role}-{party.party_id}-{self._party.role}-{self._party.party_id}-{queue_suffix}"
+                send_queue_name = f"send-{self._session_id}-{self._party.role}-{self._party.party_id}-{party.role}-{party.party_id}-{queue_suffix}"
+                receive_queue_name = f"receive-{self._session_id}-{party.role}-{party.party_id}-{self._party.role}-{self._party.party_id}-{queue_suffix}"
                 
                 queue_names = _QueueNames(vhost_name, send_queue_name, receive_queue_name)
     
                 # initial vhost
-                self._rabbit_manager.create_vhost(queue_names.vhost)
-                self._rabbit_manager.add_user_to_vhost(self._mq.union_name, queue_names.vhost)
+                if queue_names.vhost not in self._vhost_set:
+                    self._rabbit_manager.create_vhost(queue_names.vhost)
+                    self._rabbit_manager.add_user_to_vhost(self._mq.union_name, queue_names.vhost)
+                    self._vhost_set.add(queue_names.vhost)
     
                 # initial send queue, the name is send-${vhost}
                 self._rabbit_manager.create_queue(queue_names.vhost, queue_names.send)

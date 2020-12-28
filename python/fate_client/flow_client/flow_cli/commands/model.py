@@ -15,11 +15,14 @@
 #
 import os
 import re
+from datetime import datetime
+
 import click
 import requests
 from flow_client.flow_cli.utils import cli_args
 from contextlib import closing
-from flow_client.flow_cli.utils.cli_utils import preprocess, access_server, prettify, get_project_base_directory
+from flow_client.flow_cli.utils.cli_utils import preprocess, access_server, prettify, get_project_base_directory, \
+    check_abs_path
 
 
 @click.group(short_help="Model Operations")
@@ -230,3 +233,160 @@ def list_tag(ctx, **kwargs):
     """
     config_data, dsl_data = preprocess(**kwargs)
     access_server('post', ctx, 'model/model_tag/retrieve', config_data)
+
+
+@model.command("get-predict-dsl", short_help="Get predict dsl of model")
+@cli_args.MODEL_ID_REQUIRED
+@cli_args.MODEL_VERSION_REQUIRED
+@cli_args.OUTPUT_PATH_REQUIRED
+@click.pass_context
+def get_predict_dsl(ctx, **kwargs):
+    """
+    \b
+    - DESCRIPTION:
+        Get predict dsl of model.
+
+    \b
+    - USAGE:
+        flow model get-predict-dsl --model_id $MODEL_ID --model_version $MODEL_VERSION -o ./examples/
+    """
+    config_data, dsl_data = preprocess(**kwargs)
+    dsl_filename = "predict_dsl_{}.json".format(datetime.now().strftime('%Y%m%d%H%M%S'))
+    output_path = os.path.join(check_abs_path(kwargs.get("output_path")), dsl_filename)
+    config_data["filename"] = dsl_filename
+
+    with closing(access_server('post', ctx, 'model/get/predict/dsl', config_data, False, stream=True)) as response:
+        if response.status_code == 200:
+            os.makedirs(os.path.dirname(output_path), exist_ok=True)
+            with open(output_path, "wb") as fw:
+                for chunk in response.iter_content(1024):
+                    if chunk:
+                        fw.write(chunk)
+            res = {'retcode': 0,
+                   'retmsg': "Query predict dsl successfully. "
+                             "File path is: {}".format(output_path)}
+        else:
+            try:
+                res = response.json() if isinstance(response, requests.models.Response) else response
+            except Exception:
+                res = {'retcode': 100,
+                       'retmsg': "Query predict dsl failed."
+                                 "For more details, please check logs/fate_flow/fate_flow_stat.log"}
+    prettify(res)
+
+
+@model.command("get-predict-conf", short_help="Get predict conf template")
+@cli_args.MODEL_ID_REQUIRED
+@cli_args.MODEL_VERSION_REQUIRED
+@cli_args.OUTPUT_PATH_REQUIRED
+@click.pass_context
+def get_predict_conf(ctx, **kwargs):
+    """
+    \b
+    - DESCRIPTION:
+        Get predict conf template.
+
+    \b
+    - USAGE:
+        flow model get-predict-conf --model_id $MODEL_ID --model_version $MODEL_VERSION -o ./examples/
+
+    """
+    config_data, dsl_data = preprocess(**kwargs)
+    conf_filename = "predict_conf_{}.json".format(datetime.now().strftime('%Y%m%d%H%M%S'))
+    output_path = os.path.join(check_abs_path(kwargs.get("output_path")), conf_filename)
+    config_data["filename"] = conf_filename
+
+    with closing(access_server('post', ctx, 'model/get/predict/conf', config_data, False, stream=True)) as response:
+        if response.status_code == 200:
+            os.makedirs(os.path.dirname(output_path), exist_ok=True)
+            with open(output_path, "wb") as fw:
+                for chunk in response.iter_content(1024):
+                    if chunk:
+                        fw.write(chunk)
+            res = {'retcode': 0,
+                   'retmsg': "Query predict conf successfully. "
+                             "File path is: {}".format(output_path)}
+        else:
+            try:
+                res = response.json() if isinstance(response, requests.models.Response) else response
+            except Exception:
+                res = {'retcode': 100,
+                       'retmsg': "Query predict conf failed."
+                                 "For more details, please check logs/fate_flow/fate_flow_stat.log"}
+    prettify(res)
+
+
+@model.command("deploy", short_help="Deploy model")
+@cli_args.MODEL_ID_REQUIRED
+@cli_args.MODEL_VERSION_REQUIRED
+@click.option("--cpn-list", type=click.STRING,
+              help="User inputs a string to specify component list")
+@click.option("--cpn-path", type=click.Path(exists=True),
+              help="User specifies a file path which records the component list.")
+@click.option("--dsl-path", type=click.Path(exists=True),
+              help="User specified predict dsl file")
+@click.pass_context
+def deploy(ctx, **kwargs):
+    """
+    \b
+    - DESCRIPTION:
+        Deploy model.
+
+    \b
+    - USAGE:
+        flow model deploy --model_id $MODEL_ID --model_version $MODEL_VERSION
+
+    """
+    request_data = {}
+    request_data['model_id'] = kwargs.get('model_id')
+    request_data['model_version'] = kwargs.get('model_version')
+    if kwargs.get("cpn_list") or kwargs.get("cpn_path"):
+        if kwargs.get("cpn_list"):
+            cpn_str = kwargs.get("cpn_list")
+        elif kwargs.get("cpn_path"):
+            with open(kwargs.get("cpn_path"), "r") as fp:
+                cpn_str = fp.read()
+        else:
+            cpn_str = ""
+
+        if isinstance(cpn_str, list):
+            cpn_list = cpn_str
+        else:
+            if (cpn_str.find("/") and cpn_str.find("\\")) != -1:
+                raise Exception("Component list string should not contain '/' or '\\'.")
+            cpn_str = cpn_str.replace(" ", "").replace("\n", "").strip(",[]")
+            cpn_list = cpn_str.split(",")
+        request_data['cpn_list'] = cpn_list
+    elif kwargs.get("dsl_path"):
+        with open(kwargs.get("dsl_path"), "r") as ft:
+            predict_dsl = ft.read()
+        request_data['dsl'] = predict_dsl
+
+    config_data, dsl_data = preprocess(**request_data)
+    access_server('post', ctx, 'model/deploy', config_data)
+
+
+@model.command("get-model-info", short_help="Deploy model")
+@cli_args.MODEL_ID
+@cli_args.MODEL_VERSION_REQUIRED
+@cli_args.ROLE
+@cli_args.PARTYID
+@click.option('--detail', is_flag=True, default=False,
+              help="If specified, details of model would be shown.")
+@click.pass_context
+def model_info(ctx, **kwargs):
+    """
+    \b
+    - DESCRIPTION:
+        Get information of model.
+
+    \b
+    - USAGE:
+        flow model model-info --model_id $MODEL_ID --model_version $MODEL_VERSION
+        flow model model-info --model_id $MODEL_ID --model_version $MODEL_VERSION --detail
+    """
+    config_data, dsl_data = preprocess(**kwargs)
+    if not config_data.pop('detail'):
+        config_data['query_filters'] = ['create_date', 'role', 'party_id', 'roles', 'model_id',
+                                        'model_version', 'loaded_times', 'size', 'description', 'parent', 'parent_info']
+    access_server('post', ctx, 'model/query', config_data)

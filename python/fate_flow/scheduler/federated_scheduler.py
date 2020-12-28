@@ -140,9 +140,9 @@ class FederatedScheduler(object):
                                                  dest_party_id,
                                                  command
                                              ),
-                                             src_party_id=job.f_initiator_party_id,
+                                             src_party_id=job.f_party_id,
                                              dest_party_id=dest_party_id,
-                                             src_role=job.f_initiator_role,
+                                             src_role=job.f_role,
                                              json_body=command_body if command_body else {},
                                              federated_mode=job_parameters["federated_mode"])
                     federated_response[dest_role][dest_party_id] = response
@@ -297,6 +297,24 @@ class FederatedScheduler(object):
                 return False
         else:
             return False
+
+    @classmethod
+    def tracker_command(cls, job, request_data, command, json_body=None):
+        job_parameters = job.f_runtime_conf_on_party["job_parameters"]
+        response = federated_api(job_id=request_data['job_id'],
+                                 method='POST',
+                                 endpoint='/tracker/{}/{}/{}/{}/{}'.format(
+                                     request_data['job_id'],
+                                     request_data['component_name'],
+                                     request_data['role'],
+                                     request_data['party_id'],
+                                     command),
+                                 src_party_id=job.f_party_id,
+                                 dest_party_id=request_data['party_id'],
+                                 src_role=job.f_role,
+                                 json_body=json_body if json_body else {},
+                                 federated_mode=job_parameters["federated_mode"])
+        return response
 
     # Utils
     @classmethod

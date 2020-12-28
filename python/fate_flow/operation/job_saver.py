@@ -15,6 +15,8 @@
 #
 
 import operator
+import time
+
 from fate_arch.common.base_utils import current_timestamp
 from fate_flow.db.db_models import DB, Job, Task
 from fate_flow.entity.types import JobStatus, TaskStatus, EndStatus
@@ -191,6 +193,17 @@ class JobSaver(object):
         filters = []
         for f_n, f_v in kwargs.items():
             attr_name = 'f_%s' % f_n
+            if attr_name in ['f_start_time', 'f_end_time', 'f_elapsed']:
+                if isinstance(f_v, list):
+                    if attr_name == 'f_elapsed':
+                        b_timestamp = f_v[0]
+                        e_timestamp = f_v[1]
+                    else:
+                        # time type: %Y-%m-%d %H:%M:%S
+                        b_timestamp = str_to_time_stamp(f_v[0])
+                        e_timestamp = str_to_time_stamp(f_v[1])
+                    filters.append(getattr(Job, attr_name).between(b_timestamp, e_timestamp))
+                continue
             if hasattr(Job, attr_name):
                 filters.append(operator.attrgetter('f_%s' % f_n)(Job) == f_v)
         if filters:
@@ -204,7 +217,6 @@ class JobSaver(object):
                     jobs = jobs.order_by(getattr(Job, f"f_{order_by}").asc())
             return [job for job in jobs]
         else:
-            # not allow query all job
             return []
 
     @classmethod
@@ -254,3 +266,9 @@ class JobSaver(object):
     @classmethod
     def task_key(cls, task_id, role, party_id):
         return f"{task_id}_{role}_{party_id}"
+
+
+def str_to_time_stamp(time_str):
+    time_array = time.strptime(time_str, "%Y-%m-%d %H:%M:%S")
+    time_stamp = int(time.mktime(time_array) * 1000)
+    return time_stamp
