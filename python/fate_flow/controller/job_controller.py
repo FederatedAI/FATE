@@ -267,6 +267,20 @@ class JobController(object):
         return update_status
 
     @classmethod
+    def stop_jobs(cls, job_id, stop_status, role=None, party_id=None):
+        if role and party_id:
+            jobs = JobSaver.query_job(job_id=job_id, role=role, party_id=party_id)
+        else:
+            jobs = JobSaver.query_job(job_id=job_id)
+        kill_status = True
+        kill_details = {}
+        for job in jobs:
+            kill_job_status, kill_job_details = cls.stop_job(job=job, stop_status=stop_status)
+            kill_status = kill_status & kill_job_status
+            kill_details[job_id] = kill_job_details
+        return kill_status, kill_details
+
+    @classmethod
     def stop_job(cls, job, stop_status):
         tasks = JobSaver.query_task(job_id=job.f_job_id, role=job.f_role, party_id=job.f_party_id, reverse=True)
         kill_status = True
@@ -275,6 +289,10 @@ class JobController(object):
             kill_task_status = TaskController.stop_task(task=task, stop_status=stop_status)
             kill_status = kill_status & kill_task_status
             kill_details[task.f_task_id] = 'success' if kill_task_status else 'failed'
+        if kill_status:
+            job_info = job.to_human_model_dict(only_primary_with=["status"])
+            job_info["status"] = stop_status
+            JobController.update_job_status(job_info)
         return kill_status, kill_details
         # Job status depends on the final operation result and initiator calculate
 

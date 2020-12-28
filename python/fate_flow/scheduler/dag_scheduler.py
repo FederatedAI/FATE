@@ -430,6 +430,9 @@ class DAGScheduler(Cron):
                 schedule_logger(job_id=job_id).info(f"stop job {job_id} with {stop_status} successfully")
                 return RetCode.SUCCESS, "success"
             else:
+                initiator_tasks_group = JobSaver.get_tasks_asc(job_id=job.f_job_id, role=job.f_role, party_id=job.f_party_id)
+                for initiator_task in initiator_tasks_group.values():
+                    TaskScheduler.collect_task_of_all_party(job, initiator_task=initiator_task, set_status=stop_status)
                 schedule_logger(job_id=job_id).info(f"stop job {job_id} with {stop_status} failed, {response}")
                 return RetCode.FEDERATED_ERROR, json_dumps(response)
         else:

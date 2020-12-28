@@ -267,6 +267,7 @@ class ResourceManager(object):
             filters.append(Job.f_job_id == task_info["job_id"])
             filters.append(Job.f_role == task_info["role"])
             filters.append(Job.f_party_id == task_info["party_id"])
+            filters.append(Job.f_resource_in_use == True)
             operate = Job.update(updates).where(*filters)
             operate_status = operate.execute() > 0
         else:

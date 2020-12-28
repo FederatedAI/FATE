@@ -32,6 +32,8 @@ from fate_flow.operation import Tracker
 from fate_flow.operation import JobSaver
 from fate_flow.operation import JobClean
 from fate_flow.utils.config_adapter import JobRuntimeConfigAdapter
+from fate_arch.common.log import schedule_logger
+from fate_flow.controller import JobController
 
 manager = Flask(__name__)
 
@@ -57,14 +59,19 @@ def stop_job():
     stop_status = request.json.get("stop_status", "canceled")
     jobs = JobSaver.query_job(job_id=job_id)
     if jobs:
-        stat_logger.info(f"request stop job {jobs[0]} to {stop_status}")
+        schedule_logger(job_id).info(f"stop job on this party")
+        kill_status, kill_details = JobController.stop_jobs(job_id=job_id, stop_status=stop_status)
+        schedule_logger(job_id).info(f"stop job on this party status {kill_status}")
+        schedule_logger(job_id).info(f"request stop job {jobs[0]} to {stop_status}")
         status_code, response = FederatedScheduler.request_stop_job(job=jobs[0], stop_status=stop_status, command_body=jobs[0].to_json())
         if status_code == FederatedSchedulingStatusCode.SUCCESS:
-            return get_json_result(retcode=RetCode.SUCCESS, retmsg="stop job success")
+            return get_json_result(retcode=RetCode.SUCCESS, retmsg=f"stop job on this party {kill_status};\n"
+                                                                   f"stop job on all party success")
         else:
-            return get_json_result(retcode=RetCode.OPERATING_ERROR, retmsg="stop job failed:\n{}".format(json_dumps(response, indent=4)))
+            return get_json_result(retcode=RetCode.OPERATING_ERROR, retmsg="stop job on this party {};\n"
+                                                                           "stop job failed:\n{}".format(kill_status, json_dumps(response, indent=4)))
     else:
-        stat_logger.info(f"can not found job {jobs[0]} to stop")
+        schedule_logger(job_id).info(f"can not found job {jobs[0]} to stop")
         return get_json_result(retcode=RetCode.DATA_ERROR, retmsg="can not found job")
 
 

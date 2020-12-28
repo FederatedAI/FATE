@@ -268,33 +268,30 @@ class FederatedScheduler(object):
         :return:
         """
         if task.f_role != task.f_initiator_role and task.f_party_id != task.f_initiator_party_id:
-            exception = None
-            for t in range(DEFAULT_FEDERATED_COMMAND_TRYS):
-                try:
-                    response = federated_api(job_id=task.f_job_id,
-                                             method='POST',
-                                             endpoint='/initiator/{}/{}/{}/{}/{}/{}/report'.format(
-                                                 task.f_job_id,
-                                                 task.f_component_name,
-                                                 task.f_task_id,
-                                                 task.f_task_version,
-                                                 task.f_role,
-                                                 task.f_party_id),
-                                             src_party_id=task.f_party_id,
-                                             dest_party_id=task.f_initiator_party_id,
-                                             src_role=task.f_role,
-                                             json_body=task.to_human_model_dict(only_primary_with=cls.REPORT_TO_INITIATOR_FIELDS),
-                                             federated_mode=task.f_federated_mode)
-                except Exception as e:
-                    exception = e
-                    continue
-                if response["retcode"] != RetCode.SUCCESS:
-                    exception = Exception(response["retmsg"])
-                else:
-                    return True
-            else:
-                schedule_logger(job_id=task.f_job_id).error(f"report task to initiator error: {exception}")
+            try:
+                response = federated_api(job_id=task.f_job_id,
+                                         method='POST',
+                                         endpoint='/initiator/{}/{}/{}/{}/{}/{}/report'.format(
+                                             task.f_job_id,
+                                             task.f_component_name,
+                                             task.f_task_id,
+                                             task.f_task_version,
+                                             task.f_role,
+                                             task.f_party_id),
+                                         src_party_id=task.f_party_id,
+                                         dest_party_id=task.f_initiator_party_id,
+                                         src_role=task.f_role,
+                                         json_body=task.to_human_model_dict(only_primary_with=cls.REPORT_TO_INITIATOR_FIELDS),
+                                         federated_mode=task.f_federated_mode)
+            except Exception as e:
+                schedule_logger(job_id=task.f_job_id).error(f"report task to initiator error: {e}")
                 return False
+            if response["retcode"] != RetCode.SUCCESS:
+                retmsg = response["retmsg"]
+                schedule_logger(job_id=task.f_job_id).error(f"report task to initiator error: {retmsg}")
+                return False
+            else:
+                return True
         else:
             return False
 
