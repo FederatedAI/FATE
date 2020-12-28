@@ -73,6 +73,7 @@ def remote_api(job_id, method, endpoint, src_party_id, dest_party_id, src_role, 
                overall_timeout=DEFAULT_GRPC_OVERALL_TIMEOUT, try_times=3):
     endpoint = f"/{api_version}{endpoint}"
     json_body['src_role'] = src_role
+    json_body['src_party_id'] = src_party_id
     if CHECK_NODES_IDENTITY:
         get_node_identity(json_body, src_party_id)
     _packet = wrap_grpc_packet(json_body, method, endpoint, src_party_id, dest_party_id, job_id,

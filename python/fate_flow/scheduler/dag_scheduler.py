@@ -19,6 +19,7 @@ from fate_arch.common.base_utils import json_loads, json_dumps, current_timestam
 from fate_arch.common.log import schedule_logger
 from fate_arch.common import WorkMode
 from fate_flow.db.db_models import DB, Job
+from fate_flow.pipelined_model import deploy_model
 from fate_flow.scheduler import FederatedScheduler
 from fate_flow.scheduler import TaskScheduler
 from fate_flow.operation import JobSaver
@@ -26,7 +27,7 @@ from fate_flow.entity.types import JobStatus, TaskStatus, EndStatus, StatusSet, 
 from fate_flow.operation import Tracker
 from fate_flow.controller import JobController
 from fate_flow.settings import FATE_BOARD_DASHBOARD_ENDPOINT
-from fate_flow.utils import detect_utils, job_utils, schedule_utils
+from fate_flow.utils import detect_utils, job_utils, schedule_utils, authentication_utils
 from fate_flow.utils.config_adapter import JobRuntimeConfigAdapter
 from fate_flow.utils.service_utils import ServiceUtils
 from fate_flow.utils import model_utils
@@ -42,6 +43,7 @@ class DAGScheduler(Cron):
         job_dsl = job_data.get('job_dsl', {})
         job_runtime_conf = job_data.get('job_runtime_conf', {})
         job_utils.check_job_runtime_conf(job_runtime_conf)
+        authentication_utils.check_constraint(job_runtime_conf, job_dsl)
 
         job_initiator = job_runtime_conf['initiator']
         conf_adapter = JobRuntimeConfigAdapter(job_runtime_conf)
@@ -59,9 +61,10 @@ class DAGScheduler(Cron):
             tracker = Tracker(job_id=job_id, role=job_initiator['role'], party_id=job_initiator['party_id'],
                               model_id=common_job_parameters.model_id, model_version=common_job_parameters.model_version)
             pipeline_model = tracker.get_output_model('pipeline')
-            if not job_dsl:
-                job_dsl = json_loads(pipeline_model['Pipeline'].inference_dsl)
             train_runtime_conf = json_loads(pipeline_model['Pipeline'].train_runtime_conf)
+            if deploy_model.check_if_parent_model(pipeline=pipeline_model['Pipeline']):
+                raise Exception(f"Model {common_job_parameters.model_id} {common_job_parameters.model_version} has not been deployed yet.")
+            job_dsl = json_loads(pipeline_model['Pipeline'].inference_dsl)
 
         job = Job()
         job.f_job_id = job_id
@@ -71,6 +74,8 @@ class DAGScheduler(Cron):
         job.f_work_mode = common_job_parameters.work_mode
         job.f_initiator_role = job_initiator['role']
         job.f_initiator_party_id = job_initiator['party_id']
+        job.f_role = job_initiator['role']
+        job.f_party_id = job_initiator['party_id']
 
         path_dict = job_utils.save_job_conf(job_id=job_id,
                                             role=job.f_initiator_role,
@@ -114,16 +119,12 @@ class DAGScheduler(Cron):
 
         schedule_logger(job_id).info(
             'submit job successfully, job id is {}, model id is {}'.format(job.f_job_id, common_job_parameters.model_id))
-        board_url = "http://{}:{}{}".format(
-            ServiceUtils.get_item("fateboard", "host"),
-            ServiceUtils.get_item("fateboard", "port"),
-            FATE_BOARD_DASHBOARD_ENDPOINT).format(job_id, job_initiator['role'], job_initiator['party_id'])
         logs_directory = job_utils.get_job_log_directory(job_id)
         submit_result = {
             "job_id": job_id,
             "model_info": {"model_id": common_job_parameters.model_id, "model_version": common_job_parameters.model_version},
             "logs_directory": logs_directory,
-            "board_url": board_url
+            "board_url": job_utils.get_board_url(job_id, job_initiator['role'], job_initiator['party_id'])
         }
         submit_result.update(path_dict)
         return submit_result
