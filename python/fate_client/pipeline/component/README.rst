@@ -463,6 +463,14 @@ Below lists input and output elements of each component.
      - None
      - None
 
+   * - `Secret Sharing Sum`_
+     - Secret Sharing Sum
+     - This component will sum multiple privacy values without exposing data
+     - Table, values are addend
+     - Table, values are sum results
+     -
+     -
+
 
 .. _DataIO: ../../federatedml/util/README.rst
 .. _Intersect: ../../federatedml/statistic/intersect/README.rst
@@ -489,6 +497,7 @@ Below lists input and output elements of each component.
 .. _Hetero KMeans: ../../federatedml/unsupervised_learning/kmeans/README.rst
 .. _Data Statistics: ../../federatedml/statistic/README.rst
 .. _Scorecard: ../../federatedml/statistic/scorecard/README.rst
+.. _Secret Sharing Sum: ../../federatedml/statistic/secret_sharing_sum/README.rst
 
 
 Params
