@@ -230,7 +230,7 @@ class ModelBase(object):
                                                                               float(np.max(y)),
                                                                               dict(zip(classes, list(y)))])
         else:
-            raise ValueError(f"Model's classes type is {type(classes)}, classes must be None or list.")
+            raise ValueError(f"Model's classes type is {type(classes)}, classes must be None or list of length no less than 2.")
 
         return predict_result
 

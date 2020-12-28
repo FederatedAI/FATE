@@ -26,7 +26,7 @@ from fate_arch.common import FederatedMode
 from fate_arch.common import conf_utils
 from fate_flow.settings import DEFAULT_GRPC_OVERALL_TIMEOUT, CHECK_NODES_IDENTITY,\
     FATE_MANAGER_GET_NODE_INFO_ENDPOINT, HEADERS, API_VERSION, stat_logger
-from fate_flow.utils.grpc_utils import wrap_grpc_packet, get_command_federation_channel, get_routing_metadata, \
+from fate_flow.utils.grpc_utils import wrap_grpc_packet, get_command_federation_channel, gen_routing_metadata, \
     forward_grpc_packet
 from fate_flow.utils.service_utils import ServiceUtils
 from fate_flow.entity.runtime_config import RuntimeConfig
@@ -72,11 +72,12 @@ def remote_api(job_id, method, endpoint, src_party_id, dest_party_id, src_role, 
                overall_timeout=DEFAULT_GRPC_OVERALL_TIMEOUT, try_times=3):
     endpoint = f"/{api_version}{endpoint}"
     json_body['src_role'] = src_role
+    json_body['src_party_id'] = src_party_id
     if CHECK_NODES_IDENTITY:
         get_node_identity(json_body, src_party_id)
     _packet = wrap_grpc_packet(json_body, method, endpoint, src_party_id, dest_party_id, job_id,
                                overall_timeout=overall_timeout)
-    _routing_metadata = get_routing_metadata(src_party_id=src_party_id, dest_party_id=dest_party_id)
+    _routing_metadata = gen_routing_metadata(src_party_id=src_party_id, dest_party_id=dest_party_id)
     exception = None
     for t in range(try_times):
         try:
@@ -106,7 +107,7 @@ def proxy_api(role, _job_id, request_config):
     json_body = request_config.get('body')
     _packet = forward_grpc_packet(json_body, method, endpoint, src_party_id, dest_party_id, job_id=job_id, role=role,
                                   overall_timeout=DEFAULT_GRPC_OVERALL_TIMEOUT)
-    _routing_metadata = get_routing_metadata(src_party_id=src_party_id, dest_party_id=dest_party_id)
+    _routing_metadata = gen_routing_metadata(src_party_id=src_party_id, dest_party_id=dest_party_id)
 
     channel, stub = get_command_federation_channel()
     _return, _call = stub.unaryCall.with_call(_packet, metadata=_routing_metadata)

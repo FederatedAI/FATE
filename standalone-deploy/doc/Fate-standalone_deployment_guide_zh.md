@@ -68,6 +68,16 @@
    success to calculate secure_sum, it is 2000.0
    ```
 
+5. 安装FATE-Client和FATE-Test
+   
+   为方便使用FATE，我们提供了便捷的交互工具[FATE-Client](../../python/fate_client)以及测试工具[FATE-Test](../../python/fate_test).
+   
+   请在环境内使用以下指令安装：
+   
+   ```
+   python -m pip install fate-client
+   python -m pip install fate-test
+   ```
 
 
 有些用例算法在 [examples](../../examples/dsl/v2) 文件夹下, 请尝试使用。
@@ -130,6 +140,16 @@
    success to calculate secure_sum, it is 2000.0
    ```
 
+5. 安装FATE-Client和FATE-Test
+   
+   为方便使用FATE，我们提供了便捷的交互工具[FATE-Client](../../python/fate_client)以及测试工具[FATE-Test](../../python/fate_test).
+   
+   请在环境内使用以下指令安装：
+   
+   ```
+   python -m pip install fate-client
+   python -m pip install fate-test
+   ```
    
 
 有些用例算法在 [examples](../../examples/dsl/v2) 文件夹下, 请尝试使用。

@@ -25,7 +25,7 @@ from fate_arch.computing import ComputingEngine
 from fate_flow.db.db_models import DB, EngineRegistry, Job
 from fate_flow.entity.types import ResourceOperation, RunParameters
 from fate_flow.settings import stat_logger, STANDALONE_BACKEND_VIRTUAL_CORES_PER_NODE, SUPPORT_BACKENDS_ENTRANCE, \
-    MAX_CORES_PERCENT_PER_JOB, DEFAULT_TASK_CORES_PER_NODE
+    MAX_CORES_PERCENT_PER_JOB, DEFAULT_TASK_CORES_PER_NODE, IGNORE_RESOURCE_ROLES
 from fate_flow.utils import job_utils
 
 
@@ -94,8 +94,8 @@ class ResourceManager(object):
             stat_logger.info(f"create {engine_type} engine {engine_name} {engine_entrance} registration information")
 
     @classmethod
-    def check_resource_apply(cls, job_parameters: RunParameters, engines_info):
-        computing_engine, cores, memory = cls.calculate_job_resource(job_parameters=job_parameters)
+    def check_resource_apply(cls, job_parameters: RunParameters, role, party_id, engines_info):
+        computing_engine, cores, memory = cls.calculate_job_resource(job_parameters=job_parameters, role=role, party_id=party_id)
         max_cores_per_job = math.floor(engines_info[EngineType.COMPUTING].f_cores * MAX_CORES_PERCENT_PER_JOB)
         if cores > max_cores_per_job:
             return False, cores, max_cores_per_job
@@ -144,15 +144,18 @@ class ResourceManager(object):
                 if not record_status:
                     raise RuntimeError(f"record job {job_id} resource {operation_type} failed on {role} {party_id}")
 
-                filters, updates = cls.update_resource_sql(resource_model=EngineRegistry,
-                                                           cores=cores,
-                                                           memory=memory,
-                                                           operation_type=operation_type,
-                                                           )
-                filters.append(EngineRegistry.f_engine_type == EngineType.COMPUTING)
-                filters.append(EngineRegistry.f_engine_name == engine_name)
-                operate = EngineRegistry.update(updates).where(*filters)
-                apply_status = operate.execute() > 0
+                if cores or memory:
+                    filters, updates = cls.update_resource_sql(resource_model=EngineRegistry,
+                                                               cores=cores,
+                                                               memory=memory,
+                                                               operation_type=operation_type,
+                                                               )
+                    filters.append(EngineRegistry.f_engine_type == EngineType.COMPUTING)
+                    filters.append(EngineRegistry.f_engine_name == engine_name)
+                    operate = EngineRegistry.update(updates).where(*filters)
+                    apply_status = operate.execute() > 0
+                else:
+                    apply_status = True
                 if not apply_status:
                     raise RuntimeError(
                         f"{operation_type} resource from engine {engine_name} for job {job_id} resource {operation_type} failed on {role} {party_id}")
@@ -224,10 +227,14 @@ class ResourceManager(object):
                                                           role=role,
                                                           party_id=party_id)
             job_parameters = RunParameters(**job_parameters)
-        cores = job_parameters.adaptation_parameters["task_cores_per_node"] * job_parameters.adaptation_parameters[
-            "task_nodes"] * job_parameters.task_parallelism
-        memory = job_parameters.adaptation_parameters["task_memory_per_node"] * job_parameters.adaptation_parameters[
-            "task_nodes"] * job_parameters.task_parallelism
+        if role not in IGNORE_RESOURCE_ROLES:
+            cores = job_parameters.adaptation_parameters["task_cores_per_node"] * job_parameters.adaptation_parameters[
+                "task_nodes"] * job_parameters.task_parallelism
+            memory = job_parameters.adaptation_parameters["task_memory_per_node"] * job_parameters.adaptation_parameters[
+                "task_nodes"] * job_parameters.task_parallelism
+        else:
+            cores = 0
+            memory = 0
         return job_parameters.computing_engine, cores, memory
 
     @classmethod
@@ -237,10 +244,14 @@ class ResourceManager(object):
                                                           role=task_info["role"],
                                                           party_id=task_info["party_id"])
             task_parameters = RunParameters(**job_parameters)
-        cores_per_task = task_parameters.adaptation_parameters["task_cores_per_node"] * \
-                         task_parameters.adaptation_parameters["task_nodes"]
-        memory_per_task = task_parameters.adaptation_parameters["task_memory_per_node"] * \
-                          task_parameters.adaptation_parameters["task_nodes"]
+        if task_info["role"] not in IGNORE_RESOURCE_ROLES:
+            cores_per_task = task_parameters.adaptation_parameters["task_cores_per_node"] * \
+                             task_parameters.adaptation_parameters["task_nodes"]
+            memory_per_task = task_parameters.adaptation_parameters["task_memory_per_node"] * \
+                              task_parameters.adaptation_parameters["task_nodes"]
+        else:
+            cores_per_task = 0
+            memory_per_task = 0
         return cores_per_task, memory_per_task
 
     @classmethod
@@ -255,16 +266,19 @@ class ResourceManager(object):
     def resource_for_task(cls, task_info, operation_type):
         cores_per_task, memory_per_task = cls.calculate_task_resource(task_info=task_info)
 
-        filters, updates = cls.update_resource_sql(resource_model=Job,
-                                                   cores=cores_per_task,
-                                                   memory=memory_per_task,
-                                                   operation_type=operation_type,
-                                                   )
-        filters.append(Job.f_job_id == task_info["job_id"])
-        filters.append(Job.f_role == task_info["role"])
-        filters.append(Job.f_party_id == task_info["party_id"])
-        operate = Job.update(updates).where(*filters)
-        operate_status = operate.execute() > 0
+        if cores_per_task or memory_per_task:
+            filters, updates = cls.update_resource_sql(resource_model=Job,
+                                                       cores=cores_per_task,
+                                                       memory=memory_per_task,
+                                                       operation_type=operation_type,
+                                                       )
+            filters.append(Job.f_job_id == task_info["job_id"])
+            filters.append(Job.f_role == task_info["role"])
+            filters.append(Job.f_party_id == task_info["party_id"])
+            operate = Job.update(updates).where(*filters)
+            operate_status = operate.execute() > 0
+        else:
+            operate_status = True
         if operate_status:
             schedule_logger(job_id=task_info["job_id"]).info(
                 "task {} {} {} resource successfully".format(task_info["task_id"],
