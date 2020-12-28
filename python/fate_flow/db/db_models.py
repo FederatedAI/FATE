@@ -131,6 +131,7 @@ class Job(DataBaseModel):
     f_cancel_signal = BooleanField(index=True, default=False)
     f_cancel_time = BooleanField(index=True, default=False)
     f_rerun_signal = BooleanField(index=True, default=False)
+    f_finished_scheduling_trys = IntegerField(null=True, default=0)
 
     f_engine_name = CharField(max_length=50, null=True, index=True)
     f_engine_type = CharField(max_length=10, null=True, index=True)

@@ -92,11 +92,13 @@ def remote_api(job_id, method, endpoint, src_party_id, dest_party_id, src_role, 
             schedule_logger(job_id).warning(f"remote request {endpoint} error, sleep and try again")
             time.sleep(2 * (t+1))
     else:
-        tips = ''
+        tips = 'Please check rollSite and fateflow network connectivity'
+        """
         if 'Error received from peer' in str(exception):
             tips = 'Please check if the fate flow server of the other party is started. '
         if 'failed to connect to all addresses' in str(exception):
             tips = 'Please check whether the rollsite service(port: 9370) is started. '
+        """
         raise Exception('{}rpc request error: {}'.format(tips, exception))
 
 
