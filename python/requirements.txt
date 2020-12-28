@@ -31,7 +31,7 @@ cryptography==3.2.1
 # addtional requirements for eggroll
 grpcio==1.24.3
 grpcio-tools==1.24.3
-numba>=0.40.1
+numba==0.40.1
 phe>=1.4.0
 protobuf==3.6.1
 pyarrow==0.17.1
