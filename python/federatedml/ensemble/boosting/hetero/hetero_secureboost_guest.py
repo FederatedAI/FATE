@@ -260,7 +260,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         tree_num = len(trees)
         generate_func = functools.partial(self.generate_leaf_pos_dict, tree_num=tree_num)
         node_pos_tb = data_inst.mapValues(generate_func)  # record node pos
-        final_leaf_pos = data_inst.mapValues(lambda x: np.zeros(tree_num, dtype=np.int64) - 1)  # record final leaf pos
+        final_leaf_pos = data_inst.mapValues(lambda x: np.zeros(tree_num, dtype=np.int64) + np.nan)  # record final leaf pos
         traverse_func = functools.partial(self.traverse_trees, trees=trees)
         comm_round = 0
 
