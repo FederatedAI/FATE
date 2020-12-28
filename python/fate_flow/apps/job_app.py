@@ -64,7 +64,6 @@ def stop_job():
         else:
             return get_json_result(retcode=RetCode.OPERATING_ERROR, retmsg="stop job failed:\n{}".format(json_dumps(response, indent=4)))
     else:
-        stat_logger.info(f"can not found job {jobs[0]} to stop")
         return get_json_result(retcode=RetCode.DATA_ERROR, retmsg="can not found job")
 
 

@@ -70,6 +70,8 @@ class TaskScheduler(object):
                         break
                     elif status_code == SchedulingStatusCode.FAILED:
                         scheduling_status_code = SchedulingStatusCode.FAILED
+                        waiting_task.f_status = StatusSet.FAILED
+                        FederatedScheduler.sync_task_status(job, waiting_task)
                         break
         else:
             schedule_logger(job_id=job.f_job_id).info("have cancel signal, pass start job {} tasks".format(job.f_job_id))
@@ -114,7 +116,15 @@ class TaskScheduler(object):
     @classmethod
     def federated_task_status(cls, job_id, task_id, task_version):
         tasks_on_all_party = JobSaver.query_task(task_id=task_id, task_version=task_version)
-        tasks_party_status = [task.f_party_status for task in tasks_on_all_party if 'idmapping' not in task.f_role]
+        status_flag = 0
+        for task in tasks_on_all_party:
+            if 'idmapping' not in task.f_role and task.f_party_status != TaskStatus.SUCCESS:
+                status_flag = 1
+                break
+        if status_flag:
+            tasks_party_status = [task.f_party_status for task in tasks_on_all_party]
+        else:
+            tasks_party_status = [task.f_party_status for task in tasks_on_all_party if 'idmapping' not in task.f_role]
         status = cls.calculate_multi_party_task_status(tasks_party_status)
         schedule_logger(job_id=job_id).info("job {} task {} {} status is {}, calculate by task party status list: {}".format(job_id, task_id, task_version, status, tasks_party_status))
         return status

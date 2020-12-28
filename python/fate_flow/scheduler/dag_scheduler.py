@@ -23,7 +23,8 @@ from fate_flow.pipelined_model import deploy_model
 from fate_flow.scheduler import FederatedScheduler
 from fate_flow.scheduler import TaskScheduler
 from fate_flow.operation import JobSaver
-from fate_flow.entity.types import JobStatus, TaskStatus, EndStatus, StatusSet, SchedulingStatusCode, ResourceOperation, FederatedSchedulingStatusCode, RunParameters, RetCode
+from fate_flow.entity.types import JobStatus, TaskStatus, EndStatus, StatusSet, SchedulingStatusCode, ResourceOperation, \
+    FederatedSchedulingStatusCode, RunParameters, RetCode, InterruptStatus
 from fate_flow.operation import Tracker
 from fate_flow.controller import JobController
 from fate_flow.settings import FATE_BOARD_DASHBOARD_ENDPOINT

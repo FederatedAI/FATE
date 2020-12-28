@@ -42,6 +42,8 @@ class PrivilegeAuth(object):
         stat_logger.info("party {} role {} start authentication".format(src_party_id, src_role))
         privilege_dic = PrivilegeAuth.get_authentication_items(request_path, role_index, command, component_index)
         for privilege_type, value in privilege_dic.items():
+            if value and privilege_type == 'privilege_component':
+                value = ''.join(value.split('_')[:-1]).lower()
             if value in PrivilegeAuth.command_whitelist:
                 continue
             if value:
@@ -233,8 +235,8 @@ def authentication_check(src_role, src_party_id, dsl, runtime_conf, role, party_
     if str(party_id) == str(src_party_id):
         return
     need_run_commond = list(set(PrivilegeAuth.ALL_PERMISSION['privilege_command'])-set(PrivilegeAuth.command_whitelist))
-    if need_run_commond != PrivilegeAuth.privilege_cache.get(src_party_id, {}).get(src_role, {}).get('privilege_command', []):
-        if need_run_commond != PrivilegeAuth.get_permission_config(src_party_id, src_role).get('privilege_command', []):
+    if set(need_run_commond) != set(PrivilegeAuth.privilege_cache.get(src_party_id, {}).get(src_role, {}).get('privilege_command', [])):
+        if set(need_run_commond) != set(PrivilegeAuth.get_permission_config(src_party_id, src_role).get('privilege_command', [])):
             stat_logger.info('src_role {} src_party_id {} commond authentication that needs to be run failed:{}'.format(
                     src_role, src_party_id, set(need_run_commond) - set(PrivilegeAuth.privilege_cache.get(src_party_id,
                         {}).get(src_role, {}).get('privilege_command', []))))
