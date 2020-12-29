@@ -200,12 +200,15 @@ class JobSaver(object):
                         e_timestamp = f_v[1]
                     else:
                         # time type: %Y-%m-%d %H:%M:%S
-                        b_timestamp = str_to_time_stamp(f_v[0])
-                        e_timestamp = str_to_time_stamp(f_v[1])
+                        b_timestamp = str_to_time_stamp(f_v[0]) if isinstance(f_v[0], str) else f_v[0]
+                        e_timestamp = str_to_time_stamp(f_v[1]) if isinstance(f_v[1], str) else f_v[1]
                     filters.append(getattr(Job, attr_name).between(b_timestamp, e_timestamp))
                 continue
             if hasattr(Job, attr_name):
-                filters.append(operator.attrgetter('f_%s' % f_n)(Job) == f_v)
+                if isinstance(f_v, set):
+                    filters.append(operator.attrgetter('f_%s' % f_n)(Job) << f_v)
+                else:
+                    filters.append(operator.attrgetter('f_%s' % f_n)(Job) == f_v)
         if filters:
             jobs = Job.select().where(*filters)
             if reverse is not None:

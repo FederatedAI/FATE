@@ -13,7 +13,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from playhouse.shortcuts import dict_to_model
 
 from fate_arch.common.base_utils import json_loads, json_dumps, current_timestamp
 from fate_arch.common.log import schedule_logger
@@ -26,12 +25,11 @@ from fate_flow.operation import JobSaver
 from fate_flow.entity.types import JobStatus, TaskStatus, EndStatus, StatusSet, SchedulingStatusCode, ResourceOperation, FederatedSchedulingStatusCode, RunParameters, RetCode
 from fate_flow.operation import Tracker
 from fate_flow.controller import JobController
-from fate_flow.settings import FATE_BOARD_DASHBOARD_ENDPOINT
 from fate_flow.utils import detect_utils, job_utils, schedule_utils, authentication_utils
 from fate_flow.utils.config_adapter import JobRuntimeConfigAdapter
-from fate_flow.utils.service_utils import ServiceUtils
 from fate_flow.utils import model_utils
 from fate_flow.utils.cron import Cron
+from fate_flow.settings import END_STATUS_JOB_SCHEDULING_TIME_LIMIT, END_STATUS_JOB_SCHEDULING_UPDATES
 
 
 class DAGScheduler(Cron):
@@ -181,6 +179,22 @@ class DAGScheduler(Cron):
                 schedule_logger(job.f_job_id).error(f"schedule job {job.f_job_id} failed")
         schedule_logger().info("schedule rerun jobs finished")
 
+        schedule_logger().info("start schedule end status jobs to update status")
+        jobs = JobSaver.query_job(is_initiator=True, status=set(EndStatus.status_list()), end_time=[current_timestamp() - END_STATUS_JOB_SCHEDULING_TIME_LIMIT, current_timestamp()])
+        schedule_logger().info(f"have {len(jobs)} end status jobs")
+        for job in jobs:
+            schedule_logger().info(f"schedule end status job {job.f_job_id}")
+            try:
+                update_status = self.end_scheduling_updates(job_id=job.f_job_id)
+                if not update_status:
+                    schedule_logger(job.f_job_id).info(f"the number of updates has been exceeded")
+                    continue
+                self.schedule_running_job(job=job)
+            except Exception as e:
+                schedule_logger(job.f_job_id).exception(e)
+                schedule_logger(job.f_job_id).error(f"schedule job {job.f_job_id} failed")
+        schedule_logger().info("schedule end status jobs finished")
+
     @classmethod
     def schedule_waiting_jobs(cls, job):
         job_id, initiator_role, initiator_party_id, = job.f_job_id, job.f_initiator_role, job.f_initiator_party_id,
@@ -259,7 +273,7 @@ class DAGScheduler(Cron):
 
     @classmethod
     def start_job(cls, job_id, initiator_role, initiator_party_id):
-        schedule_logger(job_id=job_id).info("Try to start job {} on initiator {} {}".format(job_id, initiator_role, initiator_party_id))
+        schedule_logger(job_id=job_id).info("try to start job {} on initiator {} {}".format(job_id, initiator_role, initiator_party_id))
         job_info = {}
         job_info["job_id"] = job_id
         job_info["role"] = initiator_role
@@ -470,6 +484,14 @@ class DAGScheduler(Cron):
         else:
             raise RuntimeError(f"can not support rereun signal {set_or_reset}")
         update_status = Job.update(update_fields).where(Job.f_job_id == job_id).execute() > 0
+        return update_status
+
+    @classmethod
+    @DB.connection_context()
+    def end_scheduling_updates(cls, job_id):
+        operate = Job.update({Job.f_end_scheduling_updates: Job.f_end_scheduling_updates + 1}).where(Job.f_job_id == job_id,
+                                                                                                     Job.f_end_scheduling_updates < END_STATUS_JOB_SCHEDULING_UPDATES)
+        update_status = operate.execute() > 0
         return update_status
 
     @classmethod
