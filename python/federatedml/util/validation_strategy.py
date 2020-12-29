@@ -20,7 +20,7 @@
 #
 #
 ################################################################################
-
+import copy
 from federatedml.util import LOGGER
 from federatedml.util import consts
 from federatedml.evaluation.evaluation import Evaluation
@@ -146,7 +146,9 @@ class ValidationStrategy(object):
         sync synchronize self.performance_recorder
         """
         if self.mode == consts.HETERO and self.role == consts.GUEST:
-            self.transfer_inst.validation_status.remote(self.performance_recorder, idx=-1, suffix=(epoch,))
+            recorder_to_send = copy.deepcopy(self.performance_recorder)
+            recorder_to_send.cur_best_performance = None
+            self.transfer_inst.validation_status.remote(recorder_to_send, idx=-1, suffix=(epoch,))
 
         elif self.mode == consts.HETERO:
             self.performance_recorder = self.transfer_inst.validation_status.get(idx=-1, suffix=(epoch,))[0]
