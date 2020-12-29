@@ -263,12 +263,14 @@ def check_constraint(job_runtime_conf, job_dsl):
 def check_component_constraint(job_runtime_conf, job_dsl):
     if job_dsl:
         all_components = get_all_components(job_dsl)
-        if 'glm' in all_components:
-            roles = job_runtime_conf.get('role')
-            if 'guest' in roles.keys() and 'arbiter' in roles.keys() and 'host' in roles.keys():
-                for party_id in set(roles['guest']) & set(roles['arbiter']):
-                    if party_id in job_runtime_conf['host']:
-                        raise Exception("GLM component constraint party id, please check role config")
+        glm = ['heterolr', 'heterolinr', 'heteropoisson']
+        for cpn in glm:
+            if cpn in all_components:
+                roles = job_runtime_conf.get('role')
+                if 'guest' in roles.keys() and 'arbiter' in roles.keys() and 'host' in roles.keys():
+                    for party_id in set(roles['guest']) & set(roles['arbiter']):
+                        if party_id in roles['host']:
+                            raise Exception("{} component constraint party id, please check role config:{}".format(cpn, job_runtime_conf.get('role')))
 
 
 def get_all_components(dsl):
