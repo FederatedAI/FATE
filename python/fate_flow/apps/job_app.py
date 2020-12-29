@@ -64,7 +64,6 @@ def stop_job():
         else:
             return get_json_result(retcode=RetCode.OPERATING_ERROR, retmsg="stop job failed:\n{}".format(json_dumps(response, indent=4)))
     else:
-        stat_logger.info(f"can not found job {jobs[0]} to stop")
         return get_json_result(retcode=RetCode.DATA_ERROR, retmsg="can not found job")
 
 
@@ -222,7 +221,10 @@ def dsl_generator():
 
 @manager.route('/url/get', methods=['POST'])
 def get_url():
-    jobs = JobSaver.query_job(**request.json)
+    request_data = request.json
+    detect_utils.check_config(config=request_data, required_arguments=['job_id', 'role', 'party_id'])
+    jobs = JobSaver.query_job(job_id=request_data.get('job_id'), role=request_data.get('role'),
+                              party_id=request_data.get('party_id'))
     if jobs:
         board_urls = []
         for job in jobs:
