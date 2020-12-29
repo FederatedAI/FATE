@@ -206,7 +206,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         # finally node pos will hold weights
         weights = []
         for leaf_idx, tree in zip(leaf_pos, trees):
-            weights.append(tree.tree_node[leaf_idx].weight)
+            weights.append(tree.tree_node[int(leaf_idx)].weight)
         weights = np.array(weights)
         if multi_class_num > 2:
             weights = weights.reshape((-1, multi_class_num))
@@ -260,7 +260,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         tree_num = len(trees)
         generate_func = functools.partial(self.generate_leaf_pos_dict, tree_num=tree_num)
         node_pos_tb = data_inst.mapValues(generate_func)  # record node pos
-        final_leaf_pos = data_inst.mapValues(lambda x: np.zeros(tree_num, dtype=np.int64) - 1)  # record final leaf pos
+        final_leaf_pos = data_inst.mapValues(lambda x: np.zeros(tree_num, dtype=np.int64) + np.nan)  # record final leaf pos
         traverse_func = functools.partial(self.traverse_trees, trees=trees)
         comm_round = 0
 
@@ -290,11 +290,6 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
             comm_round += 1
 
         LOGGER.info('federated prediction process done')
-
-        if np.isnan(final_leaf_pos.any()):
-            raise ValueError('nan exists in final leaf pos: {}'.format(final_leaf_pos))
-        else:
-            final_leaf_pos = final_leaf_pos.astype(np.int)
 
         predict_result = self.get_predict_scores(leaf_pos=final_leaf_pos, learning_rate=self.learning_rate,
                                                  init_score=self.init_score, trees=trees,

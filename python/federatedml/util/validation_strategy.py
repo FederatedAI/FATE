@@ -210,7 +210,7 @@ class ValidationStrategy(object):
         epoch_summary = eval_obj.summary()
         self.update_metric_summary(epoch_summary)
         eval_obj.save_data()
-        LOGGER.debug("end to eval")
+        LOGGER.debug("end of eval")
 
         return eval_result_dict
 
