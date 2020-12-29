@@ -307,7 +307,7 @@ class DAGScheduler(Cron):
         schedule_logger(job_id=job.f_job_id).info("Job {} status is {}, calculate by task status list: {}".format(job.f_job_id, new_job_status, tasks_status))
         if new_job_status != job.f_status or new_progress != job.f_progress:
             # Make sure to update separately, because these two fields update with anti-weight logic
-            if new_progress != job.f_progress:
+            if new_progress - job.f_progress > 0:
                 job.f_progress = new_progress
                 FederatedScheduler.sync_job(job=job, update_fields=["progress"])
                 cls.update_job_on_initiator(initiator_job=job, update_fields=["progress"])
