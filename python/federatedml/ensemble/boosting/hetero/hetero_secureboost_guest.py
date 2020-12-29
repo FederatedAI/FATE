@@ -291,6 +291,11 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
 
         LOGGER.info('federated prediction process done')
 
+        if np.isnan(final_leaf_pos.any()):
+            raise ValueError('nan exists in final leaf pos: {}'.format(final_leaf_pos))
+        else:
+            final_leaf_pos = final_leaf_pos.astype(np.int)
+
         predict_result = self.get_predict_scores(leaf_pos=final_leaf_pos, learning_rate=self.learning_rate,
                                                  init_score=self.init_score, trees=trees,
                                                  multi_class_num=self.booster_dim, predict_cache=predict_cache)
