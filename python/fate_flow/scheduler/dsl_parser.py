@@ -29,6 +29,7 @@ import copy
 import json
 import os
 
+from fate_flow.settings import stat_logger
 from fate_flow.utils import parameter_util
 from fate_flow.utils.dsl_exception import *
 
@@ -194,8 +195,13 @@ class BaseDSLParser(object):
 
                 for data_set in data_dict:
                     if not isinstance(data_dict.get(data_set), list):
-                        raise ComponentInputDataValueTypeError(component=name, other_info=data_dict.get(data_key))
+                        raise ComponentInputDataValueTypeError(component=name, other_info=data_dict.get(data_set))
 
+                    if version == 2 and data_set not in ["data", "train_data", "validate_data", "test_data",
+                                                         "eval_data"]:
+                        stat_logger.warning(
+                            "DSLParser Warning: make sure that input data's data key should be in {}, but {} found".format(
+                                ["data", "train_data", "validate_data", "test_data", "eval_data"], data_set))
                     for data_key in data_dict.get(data_set):
                         module_name = data_key.split(".", -1)[0]
                         input_data_name = data_key.split(".", -1)[-1]
@@ -1014,10 +1020,11 @@ class DSLParserV2(BaseDSLParser):
         role_predict_dsl = copy.deepcopy(predict_dsl)
         component_list = list(predict_dsl.get("components").keys())
         for component in component_list:
-            code_path= parameter_util.ParameterUtilV2.get_code_path(role=role,
-                                                                    module=predict_dsl["components"][component]["module"],
-                                                                    module_alias=component,
-                                                                    setting_conf_prefix=setting_conf_prefix)
+            code_path = parameter_util.ParameterUtilV2.get_code_path(role=role,
+                                                                     module=predict_dsl["components"][component][
+                                                                         "module"],
+                                                                     module_alias=component,
+                                                                     setting_conf_prefix=setting_conf_prefix)
             if code_path:
                 role_predict_dsl["components"][component]["CodePath"] = code_path
 
@@ -1067,4 +1074,3 @@ class DSLParserV2(BaseDSLParser):
                 predict_conf["component_parameters"]["role"][role][str(idx)] = fill_template
 
         return predict_conf
-
