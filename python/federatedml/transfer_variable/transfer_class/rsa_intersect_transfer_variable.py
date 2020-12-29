@@ -30,8 +30,6 @@ from federatedml.transfer_variable.base_transfer_variable import BaseTransferVar
 class RsaIntersectTransferVariable(BaseTransferVariables):
     def __init__(self, flowid=0):
         super().__init__(flowid)
-        # self.cache_version_info = self._create_variable(name='cache_version_info', src=['guest'], dst=['host'])
-        # self.cache_version_match_info = self._create_variable(name='cache_version_match_info', src=['host'], dst=['guest'])
         self.guest_pubkey_ids = self._create_variable(name='guest_pubkey_ids', src=['guest'], dst=['host'])
         self.host_pubkey_ids = self._create_variable(name='host_pubkey_ids', src=['host'], dst=['guest'])
 
@@ -46,3 +44,14 @@ class RsaIntersectTransferVariable(BaseTransferVariables):
 
         self.host_pubkey = self._create_variable(name='host_pubkey', src=['host'], dst=['guest'])
         self.guest_pubkey = self._create_variable(name='guest_pubkey', src=['guest'], dst=['host'])
+
+        self.cache_version_info = self._create_variable(name='cache_version_info', src=['guest'], dst=['host'])
+        self.cache_version_match_info = self._create_variable(name='cache_version_match_info', src=['host'],
+                                                              dst=['guest'])
+
+        self.intersect_guest_ids = self._create_variable(name='intersect_guest_ids', src=['guest'], dst=['host'])
+        self.intersect_guest_ids_process = self._create_variable(name='intersect_guest_ids_process', src=['host'],
+                                                                 dst=['guest'])
+        self.intersect_host_ids_process = self._create_variable(name='intersect_host_ids_process', src=['host'],
+                                                                dst=['guest'])
+        self.rsa_pubkey = self._create_variable(name='rsa_pubkey', src=['host'], dst=['guest'])
