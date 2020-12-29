@@ -37,13 +37,13 @@ class RsaIntersectionHost(RsaIntersect):
 
         # receive guest key for even ids
         guest_public_key = self.transfer_variable.guest_pubkey.get(0)
-        LOGGER.info("Get RSA guest_public_key:{} from Guest".format(guest_public_key))
+        LOGGER.info("Get guest_public_key:{} from Guest".format(guest_public_key))
         self.rcv_e = int(guest_public_key["e"])
         self.rcv_n = int(guest_public_key["n"])
 
         # generate rsa keys
         self.e, self.d, self.n = self.generate_protocol_key()
-        LOGGER.info("Get host protocol key!")
+        LOGGER.info("Generate host protocol key!")
         public_key = {"e": self.e, "n": self.n}
 
         # sends public key e & n to guest
@@ -79,8 +79,10 @@ class RsaIntersectionHost(RsaIntersect):
 
         # get & sign guest pubkey-encrypted odd ids
         guest_pubkey_ids = self.transfer_variable.guest_pubkey_ids.get(idx=0)
-        LOGGER.info("Get guest_pubkey_ids from guest")
+        LOGGER.info(f"Get guest_pubkey_ids from guest")
         host_sign_guest_ids = guest_pubkey_ids.map(lambda k, v: (k, self.sign_id(k, self.d, self.n)))
+        LOGGER.debug(f"host sign guest_pubkey_ids")
+
         # send signed guest odd ids
         self.transfer_variable.host_sign_guest_ids.remote(host_sign_guest_ids,
                                                           role=consts.GUEST,
@@ -97,9 +99,12 @@ class RsaIntersectionHost(RsaIntersect):
                                                                                             self.final_hash_operator,
                                                                                             self.rsa_params.salt)))
         sid_guest_sign_host_ids = guest_sign_host_ids.map(lambda k, v: (v[1], v[0]))
+
         encrypt_intersect_even_ids = sid_guest_sign_host_ids.join(guest_prvkey_ids, lambda sid, h: sid)
+
         # filter & send intersect even ids
         intersect_even_ids = self.filter_intersect_ids([encrypt_intersect_even_ids])
+
         remote_intersect_even_ids = encrypt_intersect_even_ids.mapValues(lambda v: 1)
         self.transfer_variable.host_intersect_ids.remote(remote_intersect_even_ids, role=consts.GUEST, idx=0)
         LOGGER.info(f"Remote host intersect ids to Guest")

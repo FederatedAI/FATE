@@ -76,7 +76,8 @@ class RsaIntersectionGuest(RsaIntersect):
 
         # generate pub keys for even ids
         self.e, self.d, self.n = self.generate_protocol_key()
-        LOGGER.info("Generated guest protocol key!")
+        LOGGER.info("Generate guest protocol key!")
+
         # send public key e & n to all host
         for i, host_party_id in enumerate(self.host_party_id_list):
             guest_public_key = {"e": self.e[i], "n": self.n[i]}
@@ -88,10 +89,11 @@ class RsaIntersectionGuest(RsaIntersect):
         # generate ri for odd ids
         count = sid_hash_odd.count()
         self.r = self.generate_r_base(self.random_bit, count, self.random_base_fraction)
+        LOGGER.info(f"Generate {count} r values.")
 
         # receive host pub keys for odd ids
         host_public_keys = self.transfer_variable.host_pubkey.get(-1)
-        LOGGER.info("Get RSA host_public_key:{} from Host".format(host_public_keys))
+        LOGGER.info("Get host_public_key:{} from Host".format(host_public_keys))
         self.rcv_e = [int(public_key["e"]) for public_key in host_public_keys]
         self.rcv_n = [int(public_key["n"]) for public_key in host_public_keys]
 
@@ -104,6 +106,7 @@ class RsaIntersectionGuest(RsaIntersect):
                                                            role=consts.HOST,
                                                            idx=i)
             prvkey_ids_process_pair_list.append(prvkey_ids_process_pair)
+            LOGGER.info(f"Remote guest_prvkey_ids to host {host_party_id}")
         # get prvkey encrypted odd ids from host
         host_prvkey_ids_list = self.get_host_prvkey_ids()
         LOGGER.info("Get host_prvkey_ids")
@@ -147,7 +150,6 @@ class RsaIntersectionGuest(RsaIntersect):
                                                                                          self.final_hash_operator,
                                                                                          self.rsa_params.salt)))
                                     for i, v in enumerate(pubkey_ids_process_list)]
-
         # table(hash(guest_ids_process/r), sid))
         sid_host_sign_guest_ids_list = [g.map(lambda k, v: (v[1], v[0])) for g in host_sign_guest_ids_list]
 
