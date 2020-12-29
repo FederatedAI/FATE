@@ -129,7 +129,7 @@ class Job(DataBaseModel):
     f_ready_signal = BooleanField(index=True, default=False)
     f_ready_time = BigIntegerField(null=True)
     f_cancel_signal = BooleanField(index=True, default=False)
-    f_cancel_time = BooleanField(index=True, default=False)
+    f_cancel_time = BigIntegerField(null=True)
     f_rerun_signal = BooleanField(index=True, default=False)
 
     f_engine_name = CharField(max_length=50, null=True, index=True)
@@ -276,7 +276,7 @@ class MachineLearningModelInfo(DataBaseModel):
     f_imported = IntegerField(default=0)
     f_job_status = CharField(max_length=50, null=True)
     f_runtime_conf_on_party = JSONField(default={})
-    f_fate_version = CharField(null=True, default='')
+    f_fate_version = CharField(max_length=10, null=True, default='')
     f_parent = BooleanField(null=True, default=None)
     f_parent_info = JSONField(default={})
     f_inference_dsl = JSONField(default={})
