@@ -89,7 +89,6 @@ class UnaryService(proxy_pb2_grpc.DataTransferServiceServicer):
         source_routing_header = []
         for key, value in context.invocation_metadata():
             source_routing_header.append((key, value))
-        stat_logger.info(f"grpc request routing header: {source_routing_header}")
 
         _routing_metadata = gen_routing_metadata(src_party_id=src.partyId, dest_party_id=dst.partyId)
         context.set_trailing_metadata(trailing_metadata=_routing_metadata)
