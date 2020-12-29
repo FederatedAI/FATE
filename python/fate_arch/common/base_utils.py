@@ -60,11 +60,11 @@ def json_dumps(src, byte=False, indent=None):
         return json.dumps(src, indent=indent, cls=CustomJSONEncoder)
 
 
-def json_loads(src):
+def json_loads(src, object_pairs_hook=None):
     if isinstance(src, bytes):
-        return json.loads(bytes_to_string(src))
+        return json.loads(bytes_to_string(src), object_pairs_hook=object_pairs_hook)
     else:
-        return json.loads(src)
+        return json.loads(src, object_pairs_hook=object_pairs_hook)
 
 
 def current_timestamp():
