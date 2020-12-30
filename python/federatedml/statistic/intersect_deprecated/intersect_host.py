@@ -19,10 +19,9 @@ import hashlib
 from fate_arch.session import computing_session as session
 from federatedml.secureprotol import gmpy_math
 from federatedml.secureprotol.encrypt import RsaEncrypt
-from federatedml.secureprotol.hash.hash_factory import Hash
 #from federatedml.statistic.intersect.rsa_cache import cache_utils
-from federatedml.statistic.intersect import RawIntersect
-from federatedml.statistic.intersect import RsaIntersect
+from federatedml.statistic.intersect_deprecated import RawIntersect
+from federatedml.statistic.intersect_deprecated import RsaIntersect
 from federatedml.util import consts
 from federatedml.util import LOGGER
 from federatedml.transfer_variable.transfer_class.rsa_intersect_transfer_variable import RsaIntersectTransferVariable
@@ -42,13 +41,9 @@ class RsaIntersectionHost(RsaIntersect):
         self.has_cache_version = True
 
     def cal_host_ids_process_pair(self, data_instances):
-        hash_operator = Hash(self.rsa_params.hash_method, self.rsa_params.base64)
-        final_hash_operator = Hash(self.rsa_params.final_hash_method, self.rsa_params.base64)
         return data_instances.map(
             lambda k, v: (
-                RsaIntersectionHost.hash(gmpy_math.powmod(int(RsaIntersectionHost.hash(k, hash_operator, self.rsa_params.salt), 16), self.d, self.n),
-                                         final_hash_operator,
-                                         self.rsa_params.salt), k)
+                RsaIntersectionHost.hash(gmpy_math.powmod(int(RsaIntersectionHost.hash(k), 16), self.d, self.n)), k)
         )
 
     def generate_rsa_key(self, rsa_bit=1024):
@@ -173,17 +168,14 @@ class RsaIntersectionHost(RsaIntersect):
 
     def run(self, data_instances):
         LOGGER.info("Start rsa intersection")
-        # generate rsa keys
         self.e, self.d, self.n = self.get_rsa_key()
         LOGGER.info("Get rsa key!")
         public_key = {"e": self.e, "n": self.n}
 
-        # sends public key e & n to guest
         self.transfer_variable.rsa_pubkey.remote(public_key,
                                                  role=consts.GUEST,
                                                  idx=0)
         LOGGER.info("Remote public key to Guest.")
-        # hash host ids
         host_ids_process_pair = self.host_ids_process(data_instances)
 
         if self.intersect_cache_param.use_cache and not self.is_version_match or not self.intersect_cache_param.use_cache:
@@ -197,7 +189,7 @@ class RsaIntersectionHost(RsaIntersect):
         guest_ids = self.transfer_variable.intersect_guest_ids.get(idx=0)
         LOGGER.info("Get guest_ids from guest")
 
-        # Process(signs) guest ids and return to guest
+        # Process guest ids and return to guest
         guest_ids_process = guest_ids.map(lambda k, v: (k, gmpy_math.powmod(int(k), self.d, self.n)))
         self.transfer_variable.intersect_guest_ids_process.remote(guest_ids_process,
                                                                   role=consts.GUEST,

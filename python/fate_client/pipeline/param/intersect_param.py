@@ -104,7 +104,7 @@ class RSAParam(BaseParam):
                                                         consts.SHA256, consts.SHA384, consts.SM3],
                                                        descr)
 
-        descr = "rsa param's swap_opeartion"
+        descr = "rsa param's split_calculation"
         self.check_boolean(self.split_calculation, descr)
 
         descr = "rsa param's random_base_fraction"
