@@ -25,7 +25,7 @@ from fate_arch.computing import ComputingEngine
 from fate_flow.db.db_models import DB, EngineRegistry, Job
 from fate_flow.entity.types import ResourceOperation, RunParameters
 from fate_flow.settings import stat_logger, STANDALONE_BACKEND_VIRTUAL_CORES_PER_NODE, SUPPORT_BACKENDS_ENTRANCE, \
-    MAX_CORES_PERCENT_PER_JOB, DEFAULT_TASK_CORES_PER_NODE, IGNORE_RESOURCE_ROLES
+    MAX_CORES_PERCENT_PER_JOB, DEFAULT_TASK_CORES, IGNORE_RESOURCE_ROLES, SUPPORT_IGNORE_RESOURCE_ENGINES
 from fate_flow.utils import job_utils
 
 
@@ -158,7 +158,7 @@ class ResourceManager(object):
                     apply_status = True
                 if not apply_status:
                     raise RuntimeError(
-                        f"{operation_type} resource from engine {engine_name} for job {job_id} resource {operation_type} failed on {role} {party_id}")
+                        f"update engine {engine_name} record for job {job_id} resource {operation_type} on {role} {party_id} failed")
             operate_status = True
         except Exception as e:
             schedule_logger(job_id=job_id).warning(e)
@@ -184,41 +184,33 @@ class ResourceManager(object):
                 "task_nodes": 0,
                 "task_cores_per_node": 0,
                 "task_memory_per_node": 0,
+                "request_task_cores": int(job_parameters.task_cores) if job_parameters.task_cores else DEFAULT_TASK_CORES,  # use default value on initiator settings
+                "if_initiator_baseline": True
             }
-            task_cores = 0
         else:
             # use initiator baseline
             if role == "arbiter":
-                task_cores = 1
-            else:
-                task_cores = job_parameters.adaptation_parameters["task_nodes"] * job_parameters.adaptation_parameters["task_cores_per_node"]
+                job_parameters.adaptation_parameters["request_task_cores"] = 1
+            job_parameters.adaptation_parameters["if_initiator_baseline"] = False
+        adaptation_parameters = job_parameters.adaptation_parameters
 
         if job_parameters.computing_engine in {ComputingEngine.STANDALONE, ComputingEngine.EGGROLL}:
-            job_parameters.adaptation_parameters["task_nodes"] = computing_engine_info.f_nodes
-            job_parameters.adaptation_parameters["task_cores_per_node"] = int(
-                job_parameters.eggroll_run.get("eggroll.session.processors.per.node",
-                                               cls.adapt_task_cores_per_node(create_initiator_baseline, task_cores, job_parameters.adaptation_parameters["task_nodes"])
-                                               )
-            )
+            adaptation_parameters["task_nodes"] = computing_engine_info.f_nodes
+            if int(job_parameters.eggroll_run.get("eggroll.session.processors.per.node", 0)) > 0:
+                adaptation_parameters["task_cores_per_node"] = int(job_parameters.eggroll_run["eggroll.session.processors.per.node"])
+            else:
+                adaptation_parameters["task_cores_per_node"] = max(1, int(adaptation_parameters["request_task_cores"] / adaptation_parameters["task_nodes"]))
             if not create_initiator_baseline:
-                job_parameters.eggroll_run["eggroll.session.processors.per.node"] = job_parameters.adaptation_parameters["task_cores_per_node"]
+                job_parameters.eggroll_run["eggroll.session.processors.per.node"] = adaptation_parameters["task_cores_per_node"]
         elif job_parameters.computing_engine == ComputingEngine.SPARK:
-            job_parameters.adaptation_parameters["task_nodes"] = int(job_parameters.spark_run.get("num-executors", computing_engine_info.f_nodes))
-            job_parameters.adaptation_parameters["task_cores_per_node"] = int(
-                job_parameters.spark_run.get("executor-cores",
-                                             cls.adapt_task_cores_per_node(create_initiator_baseline, task_cores, job_parameters.adaptation_parameters["task_nodes"])
-                                             )
-            )
+            adaptation_parameters["task_nodes"] = int(job_parameters.spark_run.get("num-executors", computing_engine_info.f_nodes))
+            if int(job_parameters.spark_run.get("executor-cores", 0)) > 0:
+                adaptation_parameters["task_cores_per_node"] = int(job_parameters.spark_run["executor-cores"])
+            else:
+                adaptation_parameters["task_cores_per_node"] = max(1, int(adaptation_parameters["request_task_cores"] / adaptation_parameters["task_nodes"]))
             if not create_initiator_baseline:
-                job_parameters.spark_run["num-executors"] = job_parameters.adaptation_parameters["task_nodes"]
-                job_parameters.spark_run["executor-cores"] = job_parameters.adaptation_parameters["task_cores_per_node"]
-
-    @classmethod
-    def adapt_task_cores_per_node(cls, create_initiator_baseline, initiator_baseline, task_nodes):
-        if create_initiator_baseline:
-            return DEFAULT_TASK_CORES_PER_NODE
-        else:
-            return max(1, int(initiator_baseline / task_nodes))
+                job_parameters.spark_run["num-executors"] = adaptation_parameters["task_nodes"]
+                job_parameters.spark_run["executor-cores"] = adaptation_parameters["task_cores_per_node"]
 
     @classmethod
     def calculate_job_resource(cls, job_parameters: RunParameters = None, job_id=None, role=None, party_id=None):
@@ -227,14 +219,14 @@ class ResourceManager(object):
                                                           role=role,
                                                           party_id=party_id)
             job_parameters = RunParameters(**job_parameters)
-        if role not in IGNORE_RESOURCE_ROLES:
+        if role in IGNORE_RESOURCE_ROLES and job_parameters.computing_engine in SUPPORT_IGNORE_RESOURCE_ENGINES:
+            cores = 0
+            memory = 0
+        else:
             cores = job_parameters.adaptation_parameters["task_cores_per_node"] * job_parameters.adaptation_parameters[
                 "task_nodes"] * job_parameters.task_parallelism
             memory = job_parameters.adaptation_parameters["task_memory_per_node"] * job_parameters.adaptation_parameters[
                 "task_nodes"] * job_parameters.task_parallelism
-        else:
-            cores = 0
-            memory = 0
         return job_parameters.computing_engine, cores, memory
 
     @classmethod
@@ -244,14 +236,14 @@ class ResourceManager(object):
                                                           role=task_info["role"],
                                                           party_id=task_info["party_id"])
             task_parameters = RunParameters(**job_parameters)
-        if task_info["role"] not in IGNORE_RESOURCE_ROLES:
+        if task_info["role"] in IGNORE_RESOURCE_ROLES and task_parameters.computing_engine in SUPPORT_IGNORE_RESOURCE_ENGINES:
+            cores_per_task = 0
+            memory_per_task = 0
+        else:
             cores_per_task = task_parameters.adaptation_parameters["task_cores_per_node"] * \
                              task_parameters.adaptation_parameters["task_nodes"]
             memory_per_task = task_parameters.adaptation_parameters["task_memory_per_node"] * \
                               task_parameters.adaptation_parameters["task_nodes"]
-        else:
-            cores_per_task = 0
-            memory_per_task = 0
         return cores_per_task, memory_per_task
 
     @classmethod
@@ -275,6 +267,7 @@ class ResourceManager(object):
             filters.append(Job.f_job_id == task_info["job_id"])
             filters.append(Job.f_role == task_info["role"])
             filters.append(Job.f_party_id == task_info["party_id"])
+            filters.append(Job.f_resource_in_use == True)
             operate = Job.update(updates).where(*filters)
             operate_status = operate.execute() > 0
         else:

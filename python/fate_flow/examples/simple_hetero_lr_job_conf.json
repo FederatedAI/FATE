@@ -14,8 +14,8 @@
             "work_mode": 1,
             "backend": 0,
             "task_parallelism": 2,
-            "computing_partitions": 8,
-            "task_cores": 4
+            "task_cores": 2,
+            "computing_partitions": 8
         }
     },
     "component_parameters": {

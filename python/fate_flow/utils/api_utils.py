@@ -16,6 +16,7 @@
 import json
 
 import requests
+import time
 from flask import jsonify
 from flask import Response
 from fate_arch.common.base_utils import json_loads, json_dumps
@@ -89,12 +90,16 @@ def remote_api(job_id, method, endpoint, src_party_id, dest_party_id, src_role, 
             return response
         except Exception as e:
             exception = e
+            schedule_logger(job_id).warning(f"remote request {endpoint} error, sleep and try again")
+            time.sleep(2 * (t+1))
     else:
-        tips = ''
+        tips = 'Please check rollSite and fateflow network connectivity'
+        """
         if 'Error received from peer' in str(exception):
             tips = 'Please check if the fate flow server of the other party is started. '
         if 'failed to connect to all addresses' in str(exception):
             tips = 'Please check whether the rollsite service(port: 9370) is started. '
+        """
         raise Exception('{}rpc request error: {}'.format(tips, exception))
 
 
@@ -130,8 +135,9 @@ def local_api(job_id, method, endpoint, json_body, api_version=API_VERSION, try_
             audit_logger(job_id).info('local api response: {} {}'.format(endpoint, response))
             return response
         except Exception as e:
-            schedule_logger(job_id).exception(e)
             exception = e
+            schedule_logger(job_id).warning(f"local request {endpoint} error, sleep and try again")
+            time.sleep(2 * (t+1))
     else:
         raise Exception('local request error: {}'.format(exception))
 

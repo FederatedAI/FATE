@@ -142,11 +142,11 @@ class JobController(object):
         status, cores_submit, max_cores_per_job = ResourceManager.check_resource_apply(job_parameters=job_parameters, role=role, party_id=party_id, engines_info=engines_info)
         if not status:
             msg = ""
-            msg2 = "default value is fate_flow/settings.py#DEFAULT_TASK_CORES_PER_NODE, refer fate_flow/examples/test_hetero_lr_job_conf.json"
+            msg2 = "default value is fate_flow/settings.py#DEFAULT_TASK_CORES_PER_NODE, refer fate_flow/examples/simple_hetero_lr_job_conf.json"
             if job_parameters.computing_engine in {ComputingEngine.EGGROLL, ComputingEngine.STANDALONE}:
-                msg = "please use eggroll_run: eggroll.session.processors.per.node job parameters to set task_cores_per_node"
+                msg = "please use task_cores job parameters to set request task cores or you can customize it with eggroll_run job parameters"
             elif job_parameters.computing_engine in {ComputingEngine.SPARK}:
-                msg = "please use spark_run: executor-cores and num-executors job parameters to set task_cores_per_node"
+                msg = "please use task_cores job parameters to set request task cores or you can customize it with spark_run job parameters"
             raise RuntimeError(f"max cores per job is {max_cores_per_job} base on (fate_flow/settings#MAX_CORES_PERCENT_PER_JOB * conf/service_conf.yaml#nodes * conf/service_conf.yaml#cores_per_node), expect {cores_submit} cores, {msg}, {msg2}")
 
     @classmethod
@@ -266,6 +266,20 @@ class JobController(object):
         return update_status
 
     @classmethod
+    def stop_jobs(cls, job_id, stop_status, role=None, party_id=None):
+        if role and party_id:
+            jobs = JobSaver.query_job(job_id=job_id, role=role, party_id=party_id)
+        else:
+            jobs = JobSaver.query_job(job_id=job_id)
+        kill_status = True
+        kill_details = {}
+        for job in jobs:
+            kill_job_status, kill_job_details = cls.stop_job(job=job, stop_status=stop_status)
+            kill_status = kill_status & kill_job_status
+            kill_details[job_id] = kill_job_details
+        return kill_status, kill_details
+
+    @classmethod
     def stop_job(cls, job, stop_status):
         tasks = JobSaver.query_task(job_id=job.f_job_id, role=job.f_role, party_id=job.f_party_id, reverse=True)
         kill_status = True
@@ -274,6 +288,10 @@ class JobController(object):
             kill_task_status = TaskController.stop_task(task=task, stop_status=stop_status)
             kill_status = kill_status & kill_task_status
             kill_details[task.f_task_id] = 'success' if kill_task_status else 'failed'
+        if kill_status:
+            job_info = job.to_human_model_dict(only_primary_with=["status"])
+            job_info["status"] = stop_status
+            JobController.update_job_status(job_info)
         return kill_status, kill_details
         # Job status depends on the final operation result and initiator calculate
 
