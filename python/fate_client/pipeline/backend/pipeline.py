@@ -387,7 +387,14 @@ class PipeLine(object):
                 if not isinstance(val, list):
                     val = [val]
 
+                if "input" not in self._predict_dsl["components"][cpn]:
+                    self._predict_dsl["components"][cpn]["input"] = {}
+
+                if 'data' not in self._predict_dsl["components"][cpn]["input"]:
+                    self._predict_dsl["components"][cpn]["input"]["data"] = {}
+
                 self._predict_dsl["components"][cpn]["input"]["data"][dataset] = val
+
         return self
 
     def _feed_job_parameters(self, conf, job_type=None,

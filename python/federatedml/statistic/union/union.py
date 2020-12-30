@@ -98,7 +98,7 @@ class Union(ModelBase):
     @assert_schema_consistent
     def fit(self, data):
         LOGGER.debug(f"fit receives data is {data}")
-        if not isinstance(data, dict):
+        if not isinstance(data, dict) or len(data) <= 1:
             raise ValueError("Union module must receive more than one table as input.")
         empty_count = 0
         combined_table = None
@@ -160,12 +160,13 @@ class Union(ModelBase):
                 combined_table.mapValues(self.check_feature_length)
 
         if combined_table is None:
-            num_data = 0
             LOGGER.warning("All tables provided are empty or have empty features.")
-        else:
-            num_data = combined_table.count()
+            first_table = list(data.values())[0]
+            combined_table = first_table.join(first_table)
+        num_data = combined_table.count()
         metrics.append(Metric("Total", num_data))
         self.add_summary("Total", num_data)
+        LOGGER.info(f"Result total data entry count: {num_data}")
 
         self.callback_metric(metric_name=self.metric_name,
                              metric_namespace=self.metric_namespace,
@@ -183,4 +184,3 @@ class Union(ModelBase):
 
     def obtain_data(self, data_list):
         return data_list
-

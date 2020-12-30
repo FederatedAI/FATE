@@ -464,7 +464,10 @@ class Tracker(object):
     @DB.connection_context()
     def save_machine_learning_model_info(self):
         try:
-            record = MLModel.get_or_none(MLModel.f_model_version == self.job_id)
+            record = MLModel.get_or_none(MLModel.f_model_version == self.job_id,
+                                         MLModel.f_role == self.role,
+                                         MLModel.f_model_id == self.model_id,
+                                         MLModel.f_party_id == self.party_id)
             if not record:
                 job = Job.get_or_none(Job.f_job_id == self.job_id)
                 pipeline = self.pipelined_model.read_component_model('pipeline', 'pipeline')['Pipeline']

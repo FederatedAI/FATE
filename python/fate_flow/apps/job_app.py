@@ -229,7 +229,10 @@ def dsl_generator():
 
 @manager.route('/url/get', methods=['POST'])
 def get_url():
-    jobs = JobSaver.query_job(**request.json)
+    request_data = request.json
+    detect_utils.check_config(config=request_data, required_arguments=['job_id', 'role', 'party_id'])
+    jobs = JobSaver.query_job(job_id=request_data.get('job_id'), role=request_data.get('role'),
+                              party_id=request_data.get('party_id'))
     if jobs:
         board_urls = []
         for job in jobs:

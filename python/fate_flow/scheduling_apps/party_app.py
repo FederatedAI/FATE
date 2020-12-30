@@ -132,7 +132,7 @@ def create_task(job_id, component_name, task_id, task_version, role, party_id):
 
 
 @manager.route('/<job_id>/<component_name>/<task_id>/<task_version>/<role>/<party_id>/start', methods=['POST'])
-@request_authority_certification(party_id_index=-2, role_index=-3, command='run')
+@request_authority_certification(party_id_index=-2, role_index=-3, command='run', component_index=-6)
 def start_task(job_id, component_name, task_id, task_version, role, party_id):
     TaskController.start_task(job_id, component_name, task_id, task_version, role, party_id)
     return get_json_result(retcode=0, retmsg='success')

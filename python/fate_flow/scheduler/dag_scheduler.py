@@ -18,11 +18,11 @@ from fate_arch.common.base_utils import json_loads, json_dumps, current_timestam
 from fate_arch.common.log import schedule_logger
 from fate_arch.common import WorkMode
 from fate_flow.db.db_models import DB, Job
-from fate_flow.pipelined_model import deploy_model
 from fate_flow.scheduler import FederatedScheduler
 from fate_flow.scheduler import TaskScheduler
 from fate_flow.operation import JobSaver
-from fate_flow.entity.types import JobStatus, TaskStatus, EndStatus, StatusSet, SchedulingStatusCode, ResourceOperation, FederatedSchedulingStatusCode, RunParameters, RetCode
+from fate_flow.entity.types import JobStatus, TaskStatus, EndStatus, StatusSet, SchedulingStatusCode, ResourceOperation, \
+    FederatedSchedulingStatusCode, RunParameters, RetCode
 from fate_flow.operation import Tracker
 from fate_flow.controller import JobController
 from fate_flow.utils import detect_utils, job_utils, schedule_utils, authentication_utils
@@ -60,7 +60,7 @@ class DAGScheduler(Cron):
                               model_id=common_job_parameters.model_id, model_version=common_job_parameters.model_version)
             pipeline_model = tracker.get_output_model('pipeline')
             train_runtime_conf = json_loads(pipeline_model['Pipeline'].train_runtime_conf)
-            if deploy_model.check_if_parent_model(pipeline=pipeline_model['Pipeline']):
+            if model_utils.check_if_parent_model(pipeline=pipeline_model['Pipeline']):
                 raise Exception(f"Model {common_job_parameters.model_id} {common_job_parameters.model_version} has not been deployed yet.")
             job_dsl = json_loads(pipeline_model['Pipeline'].inference_dsl)
 

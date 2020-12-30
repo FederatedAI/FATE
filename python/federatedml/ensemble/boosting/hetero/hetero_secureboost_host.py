@@ -172,6 +172,9 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
 
             guest_node_pos = self.predict_transfer_inst.guest_predict_data.get(idx=0, suffix=(comm_round, ))
             host_node_pos = guest_node_pos.join(data_inst, traverse_func)
+            if guest_node_pos.count() != host_node_pos.count():
+                raise ValueError('sample count mismatch: guest table {}, host table {}'.format(guest_node_pos.count(),
+                                                                                               host_node_pos.count()))
             self.predict_transfer_inst.host_predict_data.remote(host_node_pos, idx=-1, suffix=(comm_round, ))
 
             comm_round += 1
@@ -193,6 +196,10 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
                                          self.boosting_model_list[idx * self.booster_dim + booster_idx],
                                          idx, booster_idx)
                 trees.append(tree)
+
+        if len(trees) == 0:
+            LOGGER.info('no tree for predicting, prediction done')
+            return
 
         self.boosting_fast_predict(processed_data, trees=trees)
 

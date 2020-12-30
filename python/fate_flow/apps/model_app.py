@@ -19,13 +19,15 @@ import shutil
 import traceback
 
 import peewee
+import json
 from copy import deepcopy
+from datetime import date, datetime
 
 from fate_arch.common.base_utils import json_loads, json_dumps
 from fate_arch.common.file_utils import get_project_base_directory
 from fate_flow.db.db_models import MachineLearningModelInfo as MLModel
 from fate_flow.db.db_models import Tag, DB, ModelTag, ModelOperationLog as OperLog
-from flask import Flask, request, send_file
+from flask import Flask, request, send_file, Response
 
 from fate_flow.pipelined_model.migrate_model import compare_roles
 from fate_flow.pipelined_model.pipelined_model import PipelinedModel
@@ -36,7 +38,7 @@ from fate_flow.utils.api_utils import get_json_result, federated_api, error_resp
 from fate_flow.utils import job_utils, model_utils, schedule_utils
 from fate_flow.utils.service_utils import ServiceUtils
 from fate_flow.utils.detect_utils import check_config
-from fate_flow.utils.model_utils import gen_party_model_id
+from fate_flow.utils.model_utils import gen_party_model_id, check_if_deployed
 from fate_flow.entity.types import ModelOperation, TagOperation
 from fate_arch.common import file_utils, WorkMode, FederatedMode
 from fate_flow.utils.config_adapter import JobRuntimeConfigAdapter
@@ -203,10 +205,10 @@ def do_migrate_model():
 def do_load_model():
     request_data = request.json
     adapter_servings_config(request_data)
-    if not deploy_model.check_if_deployed(role=request_data['local']['role'],
-                                          party_id=request_data['local']['party_id'],
-                                          model_id=request_data['job_parameters']['model_id'],
-                                          model_version=request_data['job_parameters']['model_version']):
+    if not check_if_deployed(role=request_data['local']['role'],
+                             party_id=request_data['local']['party_id'],
+                             model_id=request_data['job_parameters']['model_id'],
+                             model_version=request_data['job_parameters']['model_version']):
         return get_json_result(retcode=100,
                                retmsg="Only deployed models could be used to execute process of loading. "
                                       "Please deploy model before loading.")
@@ -584,7 +586,8 @@ def operation_record(data: dict, oper_type, oper_status):
 @manager.route('/query', methods=['POST'])
 def query_model():
     retcode, retmsg, data = model_utils.query_model_info(**request.json)
-    return get_json_result(retcode=retcode, retmsg=retmsg, data=data)
+    result = {"retcode": retcode, "retmsg": retmsg, "data": data}
+    return Response(json.dumps(result, sort_keys=False, cls=DatetimeEncoder), mimetype="application/json")
 
 
 @manager.route('/deploy', methods=['POST'])
@@ -612,21 +615,24 @@ def deploy():
         else:
             raise Exception("Deploy model failed, can not found model of initiator role or the fate version of model is older than 1.5.0")
 
-        if request_data.get('dsl') or request_data.get('predict_dsl'):
-            predict_dsl = request_data.get('dsl') if request_data.get('dsl') else request_data.get('predict_dsl')
-            if not isinstance(predict_dsl, dict):
-                predict_dsl = json_loads(predict_dsl)
+        if str(value.get('f_train_runtime_conf', {}).get('dsl_version', '1')) == '1':
+            predict_dsl = value.get('f_inference_dsl')
         else:
-            if request_data.get('cpn_list', None):
-                cpn_list = request_data.pop('cpn_list')
+            if request_data.get('dsl') or request_data.get('predict_dsl'):
+                predict_dsl = request_data.get('dsl') if request_data.get('dsl') else request_data.get('predict_dsl')
+                if not isinstance(predict_dsl, dict):
+                    predict_dsl = json_loads(predict_dsl)
             else:
-                cpn_list = list(value.get('f_train_dsl', {}).get('components', {}).keys())
-            parser_version = value.get('f_train_runtime_conf', {}).get('dsl_version', '1')
-            if str(parser_version) == '1':
-                predict_dsl = value.get('f_inference_dsl')
-            else:
-                parser = schedule_utils.get_dsl_parser_by_version(parser_version)
-                predict_dsl = parser.deploy_component(cpn_list, value.get('f_train_dsl'))
+                if request_data.get('cpn_list', None):
+                    cpn_list = request_data.pop('cpn_list')
+                else:
+                    cpn_list = list(value.get('f_train_dsl', {}).get('components', {}).keys())
+                parser_version = value.get('f_train_runtime_conf', {}).get('dsl_version', '1')
+                if str(parser_version) == '1':
+                    predict_dsl = value.get('f_inference_dsl')
+                else:
+                    parser = schedule_utils.get_dsl_parser_by_version(parser_version)
+                    predict_dsl = parser.deploy_component(cpn_list, value.get('f_train_dsl'))
 
         # distribute federated deploy task
         _job_id = job_utils.generate_job_id()
@@ -642,6 +648,8 @@ def deploy():
         deploy_status_info['detail'] = {}
 
         for role_name, role_partys in value.get("f_train_runtime_conf", {}).get('role', {}).items():
+            if role_name not in ['arbiter', 'host', 'guest']:
+                continue
             deploy_status_info[role_name] = deploy_status_info.get(role_name, {})
             deploy_status_info['detail'][role_name] = {}
             adapter = JobRuntimeConfigAdapter(value.get("f_train_runtime_conf", {}))
@@ -747,3 +755,11 @@ def adapter_servings_config(request_data):
         raise Exception('Please check the servings config')
 
 
+class DatetimeEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, datetime):
+            return obj.strftime('%Y-%m-%d %H:%M:%S')
+        elif isinstance(obj, date):
+            return obj.strftime('%Y-%m-%d')
+        else:
+            return json.JSONEncoder.default(self, obj)

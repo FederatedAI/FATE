@@ -33,15 +33,17 @@ class PrivilegeAuth(object):
     command_whitelist = None
 
     @classmethod
-    def authentication_privilege(cls, src_party_id, src_role, request_path, party_id_index, role_index, command):
+    def authentication_privilege(cls, src_party_id, src_role, request_path, party_id_index, role_index, command, component_index=None):
         if not src_party_id:
             return
         src_party_id = str(src_party_id)
         if src_party_id == PrivilegeAuth.get_dest_party_id(request_path, party_id_index):
             return
         stat_logger.info("party {} role {} start authentication".format(src_party_id, src_role))
-        privilege_dic = PrivilegeAuth.get_authentication_items(request_path, role_index, command)
+        privilege_dic = PrivilegeAuth.get_authentication_items(request_path, role_index, command, component_index)
         for privilege_type, value in privilege_dic.items():
+            if value and privilege_type == 'privilege_component':
+                value = ''.join(value.split('_')[:-1]).lower()
             if value in PrivilegeAuth.command_whitelist:
                 continue
             if value:
@@ -140,9 +142,9 @@ class PrivilegeAuth(object):
         pass
 
     @classmethod
-    def get_authentication_items(cls, request_path, role_index, command):
+    def get_authentication_items(cls, request_path, role_index, command, component_index):
         dest_role = request_path.split('/')[role_index]
-        component = request.json.get('module_name').lower() if command == 'run' else None
+        component = request_path.split('/')[component_index] if command == 'run' else None
         return PrivilegeAuth.get_privilege_dic(dest_role, command, component)
 
     @classmethod
@@ -191,7 +193,7 @@ def modify_permission(permission_info, delete=False):
         PrivilegeAuth.rewrite_local_storage(new_json)
 
 
-def request_authority_certification(party_id_index, role_index, command):
+def request_authority_certification(party_id_index, role_index, command, component_index=None):
     def request_authority_certification_do(func):
         @functools.wraps(func)
         def _wrapper(*args, **kwargs):
@@ -201,7 +203,8 @@ def request_authority_certification(party_id_index, role_index, command):
                                                        request_path=request.path,
                                                        party_id_index=party_id_index,
                                                        role_index=role_index,
-                                                       command=command
+                                                       command=command,
+                                                       component_index=component_index
                                                        )
             return func(*args, **kwargs)
         return _wrapper
@@ -232,8 +235,8 @@ def authentication_check(src_role, src_party_id, dsl, runtime_conf, role, party_
     if str(party_id) == str(src_party_id):
         return
     need_run_commond = list(set(PrivilegeAuth.ALL_PERMISSION['privilege_command'])-set(PrivilegeAuth.command_whitelist))
-    if need_run_commond != PrivilegeAuth.privilege_cache.get(src_party_id, {}).get(src_role, {}).get('privilege_command', []):
-        if need_run_commond != PrivilegeAuth.get_permission_config(src_party_id, src_role).get('privilege_command', []):
+    if set(need_run_commond) != set(PrivilegeAuth.privilege_cache.get(src_party_id, {}).get(src_role, {}).get('privilege_command', [])):
+        if set(need_run_commond) != set(PrivilegeAuth.get_permission_config(src_party_id, src_role).get('privilege_command', [])):
             stat_logger.info('src_role {} src_party_id {} commond authentication that needs to be run failed:{}'.format(
                     src_role, src_party_id, set(need_run_commond) - set(PrivilegeAuth.privilege_cache.get(src_party_id,
                         {}).get(src_role, {}).get('privilege_command', []))))
@@ -260,12 +263,14 @@ def check_constraint(job_runtime_conf, job_dsl):
 def check_component_constraint(job_runtime_conf, job_dsl):
     if job_dsl:
         all_components = get_all_components(job_dsl)
-        if 'glm' in all_components:
-            roles = job_runtime_conf.get('role')
-            if 'guest' in roles.keys() and 'arbiter' in roles.keys() and 'host' in roles.keys():
-                for party_id in set(roles['guest']) & set(roles['arbiter']):
-                    if party_id in job_runtime_conf['host']:
-                        raise Exception("GLM component constraint party id, please check role config")
+        glm = ['heterolr', 'heterolinr', 'heteropoisson']
+        for cpn in glm:
+            if cpn in all_components:
+                roles = job_runtime_conf.get('role')
+                if 'guest' in roles.keys() and 'arbiter' in roles.keys() and 'host' in roles.keys():
+                    for party_id in set(roles['guest']) & set(roles['arbiter']):
+                        if party_id in roles['host']:
+                            raise Exception("{} component constraint party id, please check role config:{}".format(cpn, job_runtime_conf.get('role')))
 
 
 def get_all_components(dsl):
