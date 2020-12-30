@@ -204,7 +204,7 @@ class RsaIntersect(Intersect):
 
     @staticmethod
     def extract_intersect_ids(intersect_ids, all_ids):
-        intersect_ids = intersect_ids.join(all_ids,lambda e, h: h)
+        intersect_ids = intersect_ids.join(all_ids, lambda e, h: h)
         return intersect_ids
 
     def split_calculation_process(self, data_instances):
@@ -216,7 +216,8 @@ class RsaIntersect(Intersect):
     def run_intersect(self, data_instances):
         LOGGER.info("Start RSA Intersection")
         # H(k), (k, v)
-        hash_data_instances = data_instances.map(lambda k, v: (int(Intersect.hash(k, self.first_hash_operator, self.salt), 16), (k, v)))
+        hash_data_instances = data_instances.map(
+            lambda k, v: (int(Intersect.hash(k, self.first_hash_operator, self.salt), 16), (k, v)))
         if self.split_calculation:
             intersect_ids = self.split_calculation_process(hash_data_instances)
         else:

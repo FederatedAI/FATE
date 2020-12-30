@@ -41,8 +41,8 @@ class RsaIntersectionGuest(RsaIntersect):
         LOGGER.info("Get host_pubkey_ids from host")
         # Process(signs) host ids to host
         guest_sign_host_ids_list = [host_pubkey_ids.map(lambda k, v:
-                                                   (k, self.sign_id(k, self.d[i], self.n[i])))
-                               for i, host_pubkey_ids in enumerate(host_pubkey_ids_list)]
+                                                        (k, self.sign_id(k, self.d[i], self.n[i])))
+                                    for i, host_pubkey_ids in enumerate(host_pubkey_ids_list)]
         return guest_sign_host_ids_list
 
     def send_intersect_ids(self, encrypt_intersect_ids_list, intersect_ids):
@@ -64,7 +64,8 @@ class RsaIntersectionGuest(RsaIntersect):
         encrypt_intersect_ids_list = self.transfer_variable.host_intersect_ids.get(idx=-1)
         LOGGER.info("Get intersect ids from Host")
         intersect_ids_pair_list = [self.extract_intersect_ids(ids,
-                                                              guest_prvkey_ids_list[i]) for i, ids in enumerate(encrypt_intersect_ids_list)]
+                                                              guest_prvkey_ids_list[i]) for i, ids in
+                                   enumerate(encrypt_intersect_ids_list)]
         intersect_ids = self.filter_intersect_ids(intersect_ids_pair_list)
         return intersect_ids
 
@@ -156,7 +157,7 @@ class RsaIntersectionGuest(RsaIntersect):
         # get intersect odd ids
         # intersect table(hash(guest_ids_process/r), sid)
         encrypt_intersect_odd_ids_list = [v.join(host_prvkey_ids_list[i], lambda sid, h: sid) for i, v in
-                                     enumerate(sid_host_sign_guest_ids_list)]
+                                          enumerate(sid_host_sign_guest_ids_list)]
         intersect_odd_ids = self.filter_intersect_ids(encrypt_intersect_odd_ids_list)
         intersect_even_ids = self.get_host_intersect_ids(prvkey_ids_process_pair_list)
         intersect_ids = intersect_odd_ids.union(intersect_even_ids)
@@ -188,8 +189,8 @@ class RsaIntersectionGuest(RsaIntersect):
         for i, guest_id in enumerate(pubkey_ids_process_list):
             mask_guest_id = guest_id.mapValues(lambda v: 1)
             self.transfer_variable.guest_pubkey_ids.remote(mask_guest_id,
-                                                         role=consts.HOST,
-                                                         idx=i)
+                                                           role=consts.HOST,
+                                                           idx=i)
             LOGGER.info("Remote guest_pubkey_ids to Host {}".format(i))
 
         host_prvkey_ids_list = self.get_host_prvkey_ids()
@@ -203,19 +204,19 @@ class RsaIntersectionGuest(RsaIntersect):
         # table(r^e % n *hash(sid), sid, hash(guest_ids_process/r))
         # g[0]=(r^e % n *hash(sid), sid), g[1]=random bits r
         host_sign_guest_ids_list = [v.join(recv_host_sign_guest_ids_list[i],
-                                          lambda g, r: (g[0], RsaIntersectionGuest.hash(gmpy2.divm(int(r),
-                                                                                                   int(g[1]),
-                                                                                                   self.rcv_n[i]),
-                                                                                        self.final_hash_operator,
-                                                                                        self.rsa_params.salt)))
-                                   for i, v in enumerate(pubkey_ids_process_list)]
+                                           lambda g, r: (g[0], RsaIntersectionGuest.hash(gmpy2.divm(int(r),
+                                                                                                    int(g[1]),
+                                                                                                    self.rcv_n[i]),
+                                                                                         self.final_hash_operator,
+                                                                                         self.rsa_params.salt)))
+                                    for i, v in enumerate(pubkey_ids_process_list)]
 
         # table(hash(guest_ids_process/r), sid))
         sid_host_sign_guest_ids_list = [g.map(lambda k, v: (v[1], v[0])) for g in host_sign_guest_ids_list]
 
         # intersect table(hash(guest_ids_process/r), sid)
         encrypt_intersect_ids_list = [v.join(host_prvkey_ids_list[i], lambda sid, h: sid) for i, v in
-                                 enumerate(sid_host_sign_guest_ids_list)]
+                                      enumerate(sid_host_sign_guest_ids_list)]
 
         intersect_ids = self.filter_intersect_ids(encrypt_intersect_ids_list)
         if self.sync_intersect_ids:
