@@ -18,9 +18,7 @@ import os
 import sys
 from flow_sdk.client.api.base import BaseFlowAPI
 from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
-from flow_sdk.utils import preprocess, start_cluster_standalone_job_server, get_project_base_directory
-
-from fate_arch.common.base_utils import json_dumps
+from flow_sdk.utils import preprocess, start_cluster_standalone_job_server, get_project_base_directory, json_dumps
 
 
 class Data(BaseFlowAPI):
