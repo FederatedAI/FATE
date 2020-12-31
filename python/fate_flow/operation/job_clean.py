@@ -14,19 +14,16 @@
 #  limitations under the License.
 #
 
-import operator
-from fate_arch.common.base_utils import current_timestamp
-from fate_arch.common import base_utils
-from fate_flow.db.db_models import DB, Job, Task
-from fate_flow.entity.types import StatusSet, JobStatus, TaskStatus, EndStatus
-from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_arch.common.log import schedule_logger, sql_logger
-import peewee
+
+from fate_flow.manager.data_manager import delete_tables_by_table_infos, delete_metric_data
+from fate_flow.operation import Tracker, JobSaver
+from fate_flow.utils.job_utils import start_session_stop
+from fate_flow.settings import stat_logger
 
 
 class JobClean(object):
     @classmethod
-    def clean_table(job_id, role, party_id, component_name):
+    def clean_table(cls,job_id, role, party_id, component_name):
         # clean data table
         stat_logger.info('start delete {} {} {} {} data table'.format(job_id, role, party_id, component_name))
 
@@ -36,10 +33,9 @@ class JobClean(object):
             delete_tables_by_table_infos(output_data_table_infos)
             stat_logger.info('delete {} {} {} {} data table success'.format(job_id, role, party_id, component_name))
 
-
     @classmethod
-    def start_clean_job(**kwargs):
-        tasks = query_task(**kwargs)
+    def start_clean_job(cls, **kwargs):
+        tasks = JobSaver.query_task(**kwargs)
         if tasks:
             for task in tasks:
                 task_info = get_task_info(task.f_job_id, task.f_role, task.f_party_id, task.f_component_name)
@@ -54,7 +50,7 @@ class JobClean(object):
                     pass
                 try:
                     # clean data table
-                    clean_table(job_id=task.f_job_id, role=task.f_role, party_id=task.f_party_id,
+                    cls.clean_table(job_id=task.f_job_id, role=task.f_role, party_id=task.f_party_id,
                                 component_name=task.f_component_name)
                 except Exception as e:
                     stat_logger.info('delete {} {} {} {} data table failed'.format(task.f_job_id, task.f_role,
@@ -75,3 +71,13 @@ class JobClean(object):
                     stat_logger.exception(e)
         else:
             raise Exception('no found task')
+
+
+def get_task_info(f_job_id, f_role, f_party_id, f_component_name):
+    task_info = {
+        "job_id": f_job_id,
+        "component_name": f_component_name,
+        "role": f_role,
+        "party_id": f_party_id,
+    }
+    return task_info
