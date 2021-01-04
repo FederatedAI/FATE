@@ -431,10 +431,10 @@ class HeteroDecisionTreeGuest(DecisionTree):
         self.cur_layer_nodes = new_tree_node_queue
 
     @staticmethod
-    def assign_a_instance(value, tree_=None, decoder=None, sitename=consts.GUEST,
-                      split_maskdict=None, bin_sparse_points=None,
-                      use_missing=False, zero_as_missing=False,
-                      missing_dir_maskdict=None):
+    def assign_an_instance(value, tree_=None, decoder=None, sitename=consts.GUEST,
+                           split_maskdict=None, bin_sparse_points=None,
+                           use_missing=False, zero_as_missing=False,
+                           missing_dir_maskdict=None):
 
         unleaf_state, nodeid = value[1]
 
@@ -479,7 +479,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
     def assign_instances_to_new_node(self, dep, reach_max_depth=False):
 
         LOGGER.info("redispatch node of depth {}".format(dep))
-        dispatch_node_method = functools.partial(self.assign_a_instance,
+        dispatch_node_method = functools.partial(self.assign_an_instance,
                                                  tree_=self.tree_node,
                                                  decoder=self.decode,
                                                  sitename=self.sitename,

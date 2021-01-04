@@ -202,10 +202,10 @@ class HeteroDecisionTreeHost(DecisionTree):
     """
 
     @staticmethod
-    def assign_a_instance(value1, value2, sitename=None, decoder=None,
-                          split_maskdict=None, bin_sparse_points=None,
-                          use_missing=False, zero_as_missing=False,
-                          missing_dir_maskdict=None):
+    def assign_an_instance(value1, value2, sitename=None, decoder=None,
+                           split_maskdict=None, bin_sparse_points=None,
+                           use_missing=False, zero_as_missing=False,
+                           missing_dir_maskdict=None):
 
         unleaf_state, fid, bid, node_sitename, nodeid, left_nodeid, right_nodeid = value1
         if node_sitename != sitename:
@@ -245,7 +245,7 @@ class HeteroDecisionTreeHost(DecisionTree):
         # assist inst2node_idx computation
 
         LOGGER.info("start to find host dispath of depth {}".format(dep))
-        dispatch_node_method = functools.partial(self.assign_a_instance,
+        dispatch_node_method = functools.partial(self.assign_an_instance,
                                                  sitename=self.sitename,
                                                  decoder=self.decode,
                                                  split_maskdict=self.split_maskdict,
