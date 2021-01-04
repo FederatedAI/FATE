@@ -9,7 +9,7 @@ from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import Quantile
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import BoostingTreeModelParam
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import FeatureImportanceInfo
 from federatedml.ensemble.boosting.boosting_core import HeteroBoostingGuest
-from federatedml.param.boosting_param import HeteroSecureBoostParam
+from federatedml.param.boosting_param import HeteroSecureBoostParam, DecisionTreeParam
 from federatedml.ensemble.basic_algorithms import HeteroDecisionTreeGuest
 from federatedml.util import consts
 from federatedml.transfer_variable.transfer_class.hetero_secure_boosting_predict_transfer_variable import \
@@ -30,6 +30,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         self.grad_and_hess = None
         self.feature_importances_ = {}
         self.model_param = HeteroSecureBoostParam()
+        self.tree_param = DecisionTreeParam()  # decision tree param
         self.complete_secure = False
         self.data_alignment_map = {}
         self.predict_transfer_inst = HeteroSecureBoostTransferVariable()
@@ -256,7 +257,8 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
 
         return node_pos_tb, final_leaf_pos
 
-    def boosting_fast_predict(self, data_inst, trees: List[HeteroDecisionTreeGuest], predict_cache=None):
+    def boosting_fast_predict(self, data_inst, trees: List[HeteroDecisionTreeGuest], predict_cache=None,
+                              pred_leaf=False):
 
         tree_num = len(trees)
         generate_func = functools.partial(self.generate_leaf_pos_dict, tree_num=tree_num)
@@ -291,15 +293,18 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
             comm_round += 1
 
         LOGGER.info('federated prediction process done')
-        LOGGER.debug('leaf pos is {}'.format(final_leaf_pos.take(5)))
-        predict_result = self.get_predict_scores(leaf_pos=final_leaf_pos, learning_rate=self.learning_rate,
-                                                 init_score=self.init_score, trees=trees,
-                                                 multi_class_num=self.booster_dim, predict_cache=predict_cache)
 
-        return predict_result
+        if pred_leaf:  # return leaf position only
+            return final_leaf_pos
+
+        else:  # get final predict scores from leaf pos
+            predict_result = self.get_predict_scores(leaf_pos=final_leaf_pos, learning_rate=self.learning_rate,
+                                                     init_score=self.init_score, trees=trees,
+                                                     multi_class_num=self.booster_dim, predict_cache=predict_cache)
+            return predict_result
 
     @assert_io_num_rows_equal
-    def predict(self, data_inst):
+    def predict(self, data_inst, pred_leaf=False):
 
         LOGGER.info('running prediction')
         cache_dataset_key = self.predict_data_cache.get_data_key(data_inst)
@@ -331,7 +336,12 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         predict_rs = self.boosting_fast_predict(processed_data, trees=trees, predict_cache=predict_cache)
         self.predict_data_cache.add_data(cache_dataset_key, predict_rs)
 
-        return self.score_to_predict_result(data_inst, predict_rs)
+        if pred_leaf:
+            return predict_rs  # predict result is leaf position
+
+        else:
+            self.predict_data_cache.add_data(cache_dataset_key, predict_rs)
+            return self.score_to_predict_result(data_inst, predict_rs)
 
     def get_model_meta(self):
         model_meta = BoostingTreeModelMeta()
@@ -344,7 +354,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         model_meta.task_type = self.task_type
         model_meta.n_iter_no_change = self.n_iter_no_change
         model_meta.tol = self.tol
-        meta_name = "HeteroSecureBoostingTreeGuestMeta"
+        meta_name = consts.HETERO_SBT_GUEST_MODEL + "Meta"
 
         return meta_name, model_meta
 
@@ -382,7 +392,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         LOGGER.debug('feat importance param {}'.format(feature_importance_param))
         model_param.feature_name_fid_mapping.update(self.feature_name_fid_mapping)
 
-        param_name = "HeteroSecureBoostingTreeGuestParam"
+        param_name = consts.HETERO_SBT_GUEST_MODEL + "Param"
 
         return param_name, model_param
 
@@ -396,6 +406,9 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         self.task_type = model_meta.task_type
         self.n_iter_no_change = model_meta.n_iter_no_change
         self.tol = model_meta.tol
+
+        # initialize loss function
+        self.loss = self.get_loss_function()
 
     def set_model_param(self, model_param):
         self.boosting_model_list = list(model_param.trees_)

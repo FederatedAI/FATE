@@ -9,7 +9,7 @@ from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import Boosting
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import QuantileMeta
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import BoostingTreeModelParam
 from federatedml.ensemble.boosting.boosting_core import HeteroBoostingHost
-from federatedml.param.boosting_param import HeteroSecureBoostParam
+from federatedml.param.boosting_param import HeteroSecureBoostParam, DecisionTreeParam
 from federatedml.ensemble.basic_algorithms import HeteroDecisionTreeHost
 from federatedml.transfer_variable.transfer_class.hetero_secure_boosting_predict_transfer_variable import \
     HeteroSecureBoostTransferVariable
@@ -22,11 +22,11 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
 
     def __init__(self):
         super(HeteroSecureBoostingTreeHost, self).__init__()
-        self.tree_param = None  # decision tree param
         self.use_missing = False
         self.zero_as_missing = False
         self.cur_epoch_idx = -1
         self.grad_and_hess = None
+        self.tree_param = DecisionTreeParam()  # decision tree param
         self.model_param = HeteroSecureBoostParam()
         self.complete_secure = False
         self.model_name = 'HeteroSecureBoost'

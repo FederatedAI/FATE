@@ -93,7 +93,7 @@ class HeteroFastDecisionTreeGuest(HeteroDecisionTreeGuest):
     def assign_instances_to_new_node_with_node_plan(self, dep, tree_action, mode=consts.MIX_TREE, ):
 
         LOGGER.info("redispatch node of depth {}".format(dep))
-        dispatch_node_method = functools.partial(self.assign_a_instance,
+        dispatch_node_method = functools.partial(self.assign_an_instance,
                                                  tree_=self.tree_node,
                                                  decoder=self.decode,
                                                  sitename=self.sitename,

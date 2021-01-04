@@ -164,7 +164,7 @@ class HomoDecisionTreeArbiter(DecisionTree):
     def compute_best_splits(self, *args):
         pass
 
-    def assign_a_instance(self, *args):
+    def assign_an_instance(self, *args):
         pass
 
     def assign_instances_to_new_node(self, *args):
