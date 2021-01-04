@@ -20,7 +20,7 @@
     },
     "component_parameters": {
         "common": {
-            "intersect_0": {
+            "intersection_0": {
                 "intersect_method": "raw",
                 "sync_intersect_ids": true,
                 "only_output_key": false

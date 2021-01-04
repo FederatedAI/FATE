@@ -317,7 +317,7 @@ def component_output_data_download():
 def component_output_data_table():
     request_data = request.json
     detect_utils.check_config(config=request_data, required_arguments=['job_id', 'role', 'party_id', 'component_name'])
-    jobs = JobSaver.query_job(job_id=request_data.get('job_id'))
+    jobs = JobSaver.query_job(job_id=str(request_data.get('job_id')))
     if jobs:
         job = jobs[0]
         return jsonify(FederatedScheduler.tracker_command(job, request_data, 'output/table'))
