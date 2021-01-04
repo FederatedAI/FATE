@@ -10,6 +10,10 @@ from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import Decision
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import DecisionTreeModelParam
 from federatedml.transfer_variable.transfer_class.hetero_decision_tree_transfer_variable import \
     HeteroDecisionTreeTransferVariable
+from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.splitinfo_cipher_compressor import \
+    GuestSplitInfoDecompressor, GuestGradHessEncoder
+from federatedml.secureprotol import PaillierEncrypt, IterativeAffineEncrypt
+from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.subsample import goss_sampling
 from federatedml.util import consts
 
 
@@ -25,8 +29,20 @@ class HeteroDecisionTreeGuest(DecisionTree):
         self.complete_secure_tree = False
         self.split_maskdict = {}
         self.missing_dir_maskdict = {}
-
         self.host_party_idlist = []
+        self.compressor = None
+
+        # goss subsample
+        self.run_goss = False
+        self.top_rate, self.other_rate = 0.2, 0.1  # goss sampling rate
+
+        # cipher compressing
+        self.cipher_encoder = None
+        self.cipher_decompressor = None
+        self.run_cipher_compressing = False
+        self.key_length = None
+        self.round_decimal = 7
+        self.max_sample_weight = 1
 
     """
     Node Encode/ Decode
@@ -69,18 +85,43 @@ class HeteroDecisionTreeGuest(DecisionTree):
     Setting
     """
 
-    def set_encrypter(self, encrypter):
-        LOGGER.info("set encrypter")
+    def set_host_party_idlist(self, id_list):
+        self.host_party_idlist = id_list
+
+    def init(self, flowid, runtime_idx, data_bin, bin_split_points, bin_sparse_points, valid_features,
+             grad_and_hess,
+             encrypter, encrypted_mode_calculator,
+             host_party_list,
+             complete_secure=False,
+             goss_subsample=False,
+             top_rate=0.1,
+             other_rate=0.2,
+             cipher_compressing=False,
+             encrypt_key_length=None,
+             round_decimal=7,
+             max_sample_weight=1):
+
+        super(HeteroDecisionTreeGuest, self).init_data_and_variable(flowid, runtime_idx, data_bin, bin_split_points,
+                                                                    bin_sparse_points, valid_features, grad_and_hess)
+
         self.encrypter = encrypter
-
-    def set_encrypted_mode_calculator(self, encrypted_mode_calculator):
         self.encrypted_mode_calculator = encrypted_mode_calculator
+        self.complete_secure_tree = complete_secure
+        self.host_party_idlist = host_party_list
 
-    def set_as_complete_secure_tree(self):
-        self.complete_secure_tree = True
+        self.run_goss = goss_subsample
+        self.top_rate = top_rate
+        self.other_rate = other_rate
 
-    def set_host_party_idlist(self, host_list):
-        self.host_party_idlist = host_list
+        self.run_cipher_compressing = cipher_compressing
+        self.key_length = encrypt_key_length
+        self.round_decimal = round_decimal
+        self.max_sample_weight = max_sample_weight
+
+        if self.run_goss:
+            self.goss_sampling()
+            self.max_sample_weight = self.max_sample_weight * ((1 - top_rate) / other_rate)
+            LOGGER.info('max sample weight reset to {}'.format(self.max_sample_weight))
 
     """
     Encrypt/ Decrypt
@@ -92,15 +133,30 @@ class HeteroDecisionTreeGuest(DecisionTree):
     def decrypt(self, val):
         return self.encrypter.decrypt(val)
 
+    def get_encrypt_type(self):
+
+        if type(self.encrypter) == PaillierEncrypt:
+            return consts.PAILLIER
+        elif type(self.encrypter) == IterativeAffineEncrypt:
+            return consts.ITERATIVEAFFINE
+        else:
+            raise ValueError('unknown encrypter type: {}'.format(type(self.encrypter)))
+
     """
     Node Splitting
     """
+
+    def get_host_sitename(self, host_idx):
+        host_party_id = self.host_party_idlist[host_idx]
+        host_sitename = ":".join([consts.HOST, str(host_party_id)])
+        return host_sitename
 
     def find_host_split(self, value):
 
         cur_split_node, encrypted_splitinfo_host = value
         sum_grad = cur_split_node.sum_grad
         sum_hess = cur_split_node.sum_hess
+        LOGGER.debug('compute 1 node {} g {} h {}'.format(cur_split_node.id, sum_grad, sum_hess))
         best_gain = self.min_impurity_split - consts.FLOAT_ZERO
         best_idx = -1
 
@@ -126,12 +182,12 @@ class HeteroDecisionTreeGuest(DecisionTree):
         encrypted_best_gain = self.encrypt(best_gain)
         return best_idx, encrypted_best_gain, best_gain
 
-    def find_best_split_guest_and_host(self, splitinfo_guest_host):
+    def find_best_split_guest_and_host(self, splitinfo_guest_host, need_decrypt=True):
 
-        best_gain_host = self.decrypt(splitinfo_guest_host[1].gain)
+        best_gain_host = self.decrypt(splitinfo_guest_host[1].gain) if need_decrypt else splitinfo_guest_host[1].gain
         best_gain_host_idx = 1
         for i in range(1, len(splitinfo_guest_host)):
-            gain_host_i = self.decrypt(splitinfo_guest_host[i].gain)
+            gain_host_i = self.decrypt(splitinfo_guest_host[i].gain) if need_decrypt else splitinfo_guest_host[i].gain
             if best_gain_host < gain_host_i - consts.FLOAT_ZERO:
                 best_gain_host = gain_host_i
                 best_gain_host_idx = i
@@ -146,15 +202,16 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
             # when this node can not be further split, host sum_grad and sum_hess is not an encrypted number but 0
             # so need type checking here
-            best_splitinfo.sum_grad = self.decrypt(best_splitinfo.sum_grad) \
-                if type(best_splitinfo.sum_grad) != int else best_splitinfo.sum_grad
-            best_splitinfo.sum_hess = self.decrypt(best_splitinfo.sum_hess) \
-                if type(best_splitinfo.sum_hess) != int else best_splitinfo.sum_hess
-            best_splitinfo.gain = best_gain_host
+            if need_decrypt:
+                best_splitinfo.sum_grad = self.decrypt(best_splitinfo.sum_grad) \
+                    if type(best_splitinfo.sum_grad) != int else best_splitinfo.sum_grad
+                best_splitinfo.sum_hess = self.decrypt(best_splitinfo.sum_hess) \
+                    if type(best_splitinfo.sum_hess) != int else best_splitinfo.sum_hess
+                best_splitinfo.gain = best_gain_host
 
         return best_splitinfo
 
-    def merge_splitinfo(self, splitinfo_guest, splitinfo_host, merge_host_split_only=False):
+    def merge_splitinfo(self, splitinfo_guest, splitinfo_host, merge_host_split_only=False, need_decrypt=True):
 
         LOGGER.info("merge splitinfo, merge_host_split_only is {}".format(merge_host_split_only))
 
@@ -173,7 +230,8 @@ class HeteroDecisionTreeGuest(DecisionTree):
                                                          include_key=False,
                                                          partition=self.data_bin.partitions)
 
-        best_splitinfo_table = splitinfo_guest_host_table.mapValues(self.find_best_split_guest_and_host)
+        find_split_func = functools.partial(self.find_best_split_guest_and_host, need_decrypt=need_decrypt)
+        best_splitinfo_table = splitinfo_guest_host_table.mapValues(find_split_func)
 
         best_splitinfos = [None for i in range(len(merge_infos))]
         for _, best_splitinfo in best_splitinfo_table.collect():
@@ -188,7 +246,9 @@ class HeteroDecisionTreeGuest(DecisionTree):
         # [split points from host 1, split point from host 2, .... so on] ↓
         encrypted_splitinfo_host = self.sync_encrypted_splitinfo_host(dep, batch, idx=idx)
 
-        for i in range(len(encrypted_splitinfo_host)):
+        for host_idx in range(len(encrypted_splitinfo_host)):
+
+            LOGGER.debug('host index is {}'.format(self.get_host_sitename(host_idx)))
 
             init_gain = self.min_impurity_split - consts.FLOAT_ZERO
             encrypted_init_gain = self.encrypter.encrypt(init_gain)
@@ -197,11 +257,11 @@ class HeteroDecisionTreeGuest(DecisionTree):
             # init best gain for every nodes in cur layer
             best_gains = [init_gain for j in range(len(self.cur_to_split_nodes))]
             # max split points to compute at a time, to control memory consumption
-            max_nodes = max(len(encrypted_splitinfo_host[i][j]) for j in range(len(self.cur_to_split_nodes)))
+            max_nodes = max(len(encrypted_splitinfo_host[host_idx][j]) for j in range(len(self.cur_to_split_nodes)))
             # batch split point finding for every cur to split nodes
             for k in range(0, max_nodes, consts.MAX_SPLITINFO_TO_COMPUTE):
                 batch_splitinfo_host = [encrypted_splitinfo[k: k + consts.MAX_SPLITINFO_TO_COMPUTE] for encrypted_splitinfo
-                                        in encrypted_splitinfo_host[i]]
+                                        in encrypted_splitinfo_host[host_idx]]
 
                 encrypted_splitinfo_host_table = session.parallelize(zip(self.cur_to_split_nodes, batch_splitinfo_host),
                                                                      include_key=False,
@@ -224,11 +284,74 @@ class HeteroDecisionTreeGuest(DecisionTree):
                 self.sync_federated_best_splitinfo_host(best_splitinfo_host, dep, batch, idx)
                 break
 
-            self.sync_federated_best_splitinfo_host(best_splitinfo_host, dep, batch, i)
+            self.sync_federated_best_splitinfo_host(best_splitinfo_host, dep, batch, host_idx)
 
-    def compute_best_splits(self, node_map, dep, batch_idx):
+    def compute_best_splits2(self, cur_to_split_nodes, node_map, dep, batch_idx):
 
-        acc_histograms = self.get_local_histograms(node_map, ret='tensor')
+        if self.run_goss:
+            inst2node_idx = self.inst2node_idx.join(self.grad_and_hess, lambda x1, x2: x1)
+        else:
+            inst2node_idx = self.inst2node_idx
+
+        node_sample_count = self.count_node_sample_num(inst2node_idx, node_map)
+        LOGGER.debug('sample count is {}'.format(node_sample_count))
+        acc_histograms = self.get_local_histograms(dep, self.data_with_node_assignments, self.grad_and_hess,
+                                                   node_sample_count, cur_to_split_nodes, node_map, ret='tensor',
+                                                   hist_sub=True)
+
+        best_split_info_guest = self.splitter.find_split(acc_histograms, self.valid_features,
+                                                         self.data_bin.partitions, self.sitename,
+                                                         self.use_missing, self.zero_as_missing)
+
+        if self.complete_secure_tree:
+            return best_split_info_guest
+
+        host_split_info_table = self.transfer_inst.encrypted_splitinfo_host.get(idx=-1, suffix=(dep, batch_idx))
+        best_splits_of_all_hosts = []
+
+        if self.run_cipher_compressing:
+            self.cipher_decompressor.renew_decompressor(node_map)
+        cipher_decompressor = self.cipher_decompressor if self.run_cipher_compressing else None
+
+        for split_info_table in host_split_info_table:
+
+            host_split_info = self.splitter.find_host_best_split_info(split_info_table, self.get_host_sitename(0),
+                                                                      self.encrypter,
+                                                                      cipher_decompressor=cipher_decompressor)
+            LOGGER.debug('best host split info {} at dep {}'.format(host_split_info, dep))
+            split_info_list = [None for i in range(len(host_split_info))]
+            for key in host_split_info:
+                split_info_list[node_map[key]] = host_split_info[key]
+            return_split_info = copy.deepcopy(split_info_list)
+            for split_info in return_split_info:
+                split_info.sum_grad, split_info.sum_hess, split_info.gain = None, None, None
+            self.transfer_inst.federated_best_splitinfo_host.remote(return_split_info,
+                                                                    suffix=(dep, batch_idx))
+            best_splits_of_all_hosts.append(split_info_list)
+
+        final_host_split_info = self.sync_final_split_host(dep, batch_idx)
+        for masked_split_info, encoded_split_info in zip(best_splits_of_all_hosts, final_host_split_info):
+            for s1, s2 in zip(masked_split_info, encoded_split_info):
+                s2.gain = s1.gain
+                s2.sum_grad = s1.sum_grad
+                s2.sum_hess = s1.sum_hess
+
+        final_best_splits = self.merge_splitinfo(best_split_info_guest, final_host_split_info, need_decrypt=False)
+
+        LOGGER.debug('compute 2 rs {}'.format(final_host_split_info))
+        LOGGER.debug('best splits 2 {}'.format(final_best_splits))
+        LOGGER.debug('computing local splits done')
+
+        return final_best_splits
+
+    def compute_best_splits(self, cur_to_split_nodes, node_map, dep, batch_idx):
+
+        leaf_sample_count = self.count_node_sample_num(self.inst2node_idx, node_map)
+        LOGGER.debug('sample count is {}'.format(leaf_sample_count))
+        acc_histograms = self.get_local_histograms(dep, self.data_with_node_assignments, self.grad_and_hess,
+                                                   leaf_sample_count, cur_to_split_nodes, node_map, ret='tensor',
+                                                   hist_sub=True)
+
         best_split_info_guest = self.splitter.find_split(acc_histograms, self.valid_features,
                                                          self.data_bin.partitions, self.sitename,
                                                          self.use_missing, self.zero_as_missing)
@@ -240,10 +363,25 @@ class HeteroDecisionTreeGuest(DecisionTree):
         self.federated_find_split(dep, batch_idx)
         host_split_info = self.sync_final_split_host(dep, batch_idx)
 
+        # from federatedml.secureprotol.fate_paillier import PaillierEncryptedNumber
+        # new_host_split = []
+        # for i in host_split_info[0]:
+        #     s = copy.deepcopy(i)
+        #     if type(s.gain) == PaillierEncryptedNumber:
+        #         s.gain = self.decrypt(s.gain)
+        #     if type(s.sum_grad) == PaillierEncryptedNumber:
+        #         s.sum_grad = self.decrypt(s.sum_grad)
+        #     if type(s.sum_hess) == PaillierEncryptedNumber:
+        #         s.sum_hess = self.decrypt(s.sum_hess)
+        #     new_host_split.append(s)
+        # LOGGER.debug('compute 1 rs {}'.format(new_host_split))
+
         # compare host best split points with guest split points
         cur_best_split = self.merge_splitinfo(splitinfo_guest=best_split_info_guest,
                                               splitinfo_host=host_split_info,
                                               merge_host_split_only=False)
+
+        LOGGER.debug('best splits 1 {}'.format(cur_best_split))
 
         return cur_best_split
 
@@ -251,10 +389,8 @@ class HeteroDecisionTreeGuest(DecisionTree):
     Federation Functions
     """
 
-    def sync_encrypted_grad_and_hess(self, idx=-1):
-        encrypted_grad_and_hess = self.encrypted_mode_calculator.encrypt(self.grad_and_hess)
-
-        self.transfer_inst.encrypted_grad_and_hess.remote(encrypted_grad_and_hess,
+    def sync_encrypted_grad_and_hess(self, en_grad_hess, idx=-1):
+        self.transfer_inst.encrypted_grad_and_hess.remote(en_grad_hess,
                                                           role=consts.HOST,
                                                           idx=idx)
 
@@ -262,7 +398,9 @@ class HeteroDecisionTreeGuest(DecisionTree):
         LOGGER.info("send tree node queue of depth {}".format(dep))
         mask_tree_node_queue = copy.deepcopy(cur_to_split_node)
         for i in range(len(mask_tree_node_queue)):
-            mask_tree_node_queue[i] = Node(id=mask_tree_node_queue[i].id)
+            mask_tree_node_queue[i] = Node(id=mask_tree_node_queue[i].id,
+                                           parent_nodeid=mask_tree_node_queue[i].parent_nodeid,
+                                           is_left_node=mask_tree_node_queue[i].is_left_node,)
 
         self.transfer_inst.tree_node_queue.remote(mask_tree_node_queue,
                                                   role=consts.HOST,
@@ -306,7 +444,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
     def sync_dispatch_node_host(self, dispatch_guest_data, dep=-1, idx=-1):
 
-        LOGGER.info("send node to host to dispath, depth is {}".format(dep))
+        LOGGER.info("send node to host to dispatch, depth is {}".format(dep))
         self.transfer_inst.dispatch_node_host.remote(dispatch_guest_data,
                                                      role=consts.HOST,
                                                      idx=idx,
@@ -347,6 +485,28 @@ class HeteroDecisionTreeGuest(DecisionTree):
     Pre-porcess / Post-Process
     """
 
+    def init_compressor(self):
+
+        LOGGER.info('running cipher compressing mode')
+
+        self.cipher_encoder = GuestGradHessEncoder(self.encrypter, self.encrypted_mode_calculator, task_type=consts.CLASSIFICATION,
+                                                   round_decimal=self.round_decimal, max_sample_weights=self.max_sample_weight)
+
+        self.cipher_decompressor = GuestSplitInfoDecompressor(self.encrypter, task_type=consts.CLASSIFICATION,
+                                                              max_sample_weight=self.max_sample_weight)
+
+        para = {'key_length': self.key_length, 'en_type': self.get_encrypt_type(),
+                'max_sample_weight': self.max_sample_weight}
+
+        self.transfer_inst.cipher_compressor_para.remote(para, idx=-1)
+
+    def goss_sampling(self,):
+        new_g_h = goss_sampling(self.grad_and_hess, self.top_rate, self.other_rate)
+        LOGGER.info('running goss')
+        LOGGER.info('sampled g_h count is {}, total sample num is {}'.format(new_g_h.count(),
+                                                                             self.data_bin.count()))
+        self.grad_and_hess = new_g_h
+
     def remove_sensitive_info(self):
         """
         host is not allowed to get weights/g/h
@@ -373,8 +533,8 @@ class HeteroDecisionTreeGuest(DecisionTree):
             if self.tree_node[i].sitename == self.sitename:
                 fid = self.decode("feature_idx", self.tree_node[i].fid, split_maskdict=self.split_maskdict)
                 bid = self.decode("feature_val", self.tree_node[i].bid, self.tree_node[i].id, self.split_maskdict)
-                real_splitval = self.encode("feature_val", self.bin_split_points[fid][bid], self.tree_node[i].id)
-                self.tree_node[i].bid = real_splitval
+                real_split_val = self.encode("feature_val", self.bin_split_points[fid][bid], self.tree_node[i].id)
+                self.tree_node[i].bid = real_split_val
 
     """
     Tree Updating
@@ -389,9 +549,10 @@ class HeteroDecisionTreeGuest(DecisionTree):
             sum_grad = self.cur_layer_nodes[i].sum_grad
             sum_hess = self.cur_layer_nodes[i].sum_hess
             if reach_max_depth or split_info[i].gain <= \
-                    self.min_impurity_split + consts.FLOAT_ZERO:  # if reach max_depth, only conver nodes to leaves
+                    self.min_impurity_split + consts.FLOAT_ZERO:  # if reach max_depth, only convert nodes to leaves
                 self.cur_layer_nodes[i].is_leaf = True
             else:
+                pid = self.cur_layer_nodes[i].id
                 self.cur_layer_nodes[i].left_nodeid = self.tree_node_num + 1
                 self.cur_layer_nodes[i].right_nodeid = self.tree_node_num + 2
                 self.tree_node_num += 2
@@ -400,14 +561,19 @@ class HeteroDecisionTreeGuest(DecisionTree):
                                  sitename=self.sitename,
                                  sum_grad=split_info[i].sum_grad,
                                  sum_hess=split_info[i].sum_hess,
-                                 weight=self.splitter.node_weight(split_info[i].sum_grad, split_info[i].sum_hess))
+                                 weight=self.splitter.node_weight(split_info[i].sum_grad, split_info[i].sum_hess),
+                                 is_left_node=True,
+                                 parent_nodeid=pid)
+
                 right_node = Node(id=self.cur_layer_nodes[i].right_nodeid,
                                   sitename=self.sitename,
                                   sum_grad=sum_grad - split_info[i].sum_grad,
                                   sum_hess=sum_hess - split_info[i].sum_hess,
                                   weight=self.splitter.node_weight(
                                       sum_grad - split_info[i].sum_grad,
-                                      sum_hess - split_info[i].sum_hess))
+                                      sum_hess - split_info[i].sum_hess),
+                                  is_left_node=False,
+                                  parent_nodeid=pid)
 
                 new_tree_node_queue.append(left_node)
                 new_tree_node_queue.append(right_node)
@@ -431,10 +597,10 @@ class HeteroDecisionTreeGuest(DecisionTree):
         self.cur_layer_nodes = new_tree_node_queue
 
     @staticmethod
-    def assign_a_instance(value, tree_=None, decoder=None, sitename=consts.GUEST,
-                      split_maskdict=None, bin_sparse_points=None,
-                      use_missing=False, zero_as_missing=False,
-                      missing_dir_maskdict=None):
+    def assign_an_instance(value, tree_=None, decoder=None, sitename=consts.GUEST,
+                           split_maskdict=None, bin_sparse_points=None,
+                           use_missing=False, zero_as_missing=False,
+                           missing_dir_maskdict=None):
 
         unleaf_state, nodeid = value[1]
 
@@ -479,7 +645,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
     def assign_instances_to_new_node(self, dep, reach_max_depth=False):
 
         LOGGER.info("redispatch node of depth {}".format(dep))
-        dispatch_node_method = functools.partial(self.assign_a_instance,
+        dispatch_node_method = functools.partial(self.assign_an_instance,
                                                  tree_=self.tree_node,
                                                  decoder=self.decode,
                                                  sitename=self.sitename,
@@ -539,7 +705,13 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
         LOGGER.info('fitting a hetero decision tree')
 
-        self.sync_encrypted_grad_and_hess()
+        if self.run_cipher_compressing:
+            self.init_compressor()
+            encrypted_grad_and_hess = self.cipher_encoder.encode_g_h_and_encrypt(self.grad_and_hess)
+        else:
+            encrypted_grad_and_hess = self.encrypted_mode_calculator.encrypt(self.grad_and_hess)
+        self.sync_encrypted_grad_and_hess(encrypted_grad_and_hess)
+
         root_node = self.initialize_root_node()
         self.cur_layer_nodes = [root_node]
         self.inst2node_idx = self.assign_instance_to_root_node(self.data_bin, root_node_id=root_node.id)
@@ -547,6 +719,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
         for dep in range(self.max_depth):
 
             self.sync_cur_to_split_nodes(self.cur_layer_nodes, dep)
+
             if len(self.cur_layer_nodes) == 0:
                 break
 
@@ -557,9 +730,13 @@ class HeteroDecisionTreeGuest(DecisionTree):
             for batch_idx, i in enumerate(range(0, len(self.cur_layer_nodes), self.max_split_nodes)):
 
                 self.cur_to_split_nodes = self.cur_layer_nodes[i: i + self.max_split_nodes]
-                cur_splitinfos = self.compute_best_splits(self.get_node_map(self.cur_to_split_nodes), dep, batch_idx, )
+                node_map = self.get_node_map(self.cur_to_split_nodes)
+                # cur_splitinfos = self.compute_best_splits(self.cur_to_split_nodes, node_map, dep, batch_idx)
+                cur_splitinfos = self.compute_best_splits2(self.cur_to_split_nodes, node_map, dep, batch_idx)
+                LOGGER.debug('cur split info is {}'.format(cur_splitinfos))
                 split_info.extend(cur_splitinfos)
 
+            LOGGER.debug('final split info is {}'.format(split_info))
             self.update_tree(split_info, False)
             self.assign_instances_to_new_node(dep)
 

@@ -106,6 +106,8 @@ class DecisionTreeParam(BaseParam):
 
     min_impurity_split: float, least gain of a single split need to reach, default: 1e-3
 
+    min_child_weight: float, sum of hessian needed in child nodes. default is 1
+
     min_leaf_node: int, when samples no more than min_leaf_node, it becomes a leave, default: 1
 
     max_split_nodes: int, positive integer, we will use no more than max_split_nodes to
@@ -124,17 +126,20 @@ class DecisionTreeParam(BaseParam):
     """
 
     def __init__(self, criterion_method="xgboost", criterion_params=[0.1], max_depth=3,
-                 min_sample_split=2, min_imputiry_split=1e-3, min_leaf_node=1,
+                 min_sample_split=2, min_impurity_split=1e-3, min_leaf_node=1,
                  max_split_nodes=consts.MAX_SPLIT_NODES, feature_importance_type="split",
-                 n_iter_no_change=True, tol=0.001,
+                 n_iter_no_change=True, tol=0.001, min_child_weight=1,
                  use_missing=False, zero_as_missing=False,):
+
+        super(DecisionTreeParam, self).__init__()
 
         self.criterion_method = criterion_method
         self.criterion_params = criterion_params
         self.max_depth = max_depth
         self.min_sample_split = min_sample_split
-        self.min_impurity_split = min_imputiry_split
+        self.min_impurity_split = min_impurity_split
         self.min_leaf_node = min_leaf_node
+        self.min_child_weight = min_child_weight
         self.max_split_nodes = max_split_nodes
         self.feature_importance_type = feature_importance_type
         self.n_iter_no_change = n_iter_no_change
@@ -194,6 +199,8 @@ class DecisionTreeParam(BaseParam):
                                                                     ["split", "gain"],
                                                                     descr)
 
+        self.check_nonnegative_number(self.min_child_weight, 'min_child_weight')
+
         return True
 
 
@@ -231,7 +238,7 @@ class BoostingParam(BaseParam):
                  learning_rate=0.3, num_trees=5, subsample_feature_rate=1, n_iter_no_change=True,
                  tol=0.0001, bin_num=32,
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
-                 validation_freqs=None, metrics=None, subsample_random_seed=None,
+                 validation_freqs=None, metrics=None, random_seed=100,
                  binning_error=consts.DEFAULT_RELATIVE_ERROR):
 
         super(BoostingParam, self).__init__()
@@ -248,7 +255,7 @@ class BoostingParam(BaseParam):
         self.cv_param = copy.deepcopy(cv_param)
         self.validation_freqs = validation_freqs
         self.metrics = metrics
-        self.subsample_random_seed = subsample_random_seed
+        self.random_seed = random_seed
         self.binning_error = binning_error
 
     def check(self):
@@ -292,8 +299,8 @@ class BoostingParam(BaseParam):
         if self.metrics is not None and not isinstance(self.metrics, list):
             raise ValueError("metrics should be a list")
 
-        if self.subsample_random_seed is not None:
-            assert type(self.subsample_random_seed) == int and self.subsample_random_seed >= 0, 'random seed must be an integer >= 0'
+        if self.random_seed is not None:
+            assert type(self.random_seed) == int and self.random_seed >= 0, 'random seed must be an integer >= 0'
 
         self.check_decimal_float(self.binning_error, descr)
 
@@ -317,12 +324,12 @@ class HeteroBoostingParam(BoostingParam):
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  validation_freqs=None, early_stopping_rounds=None, metrics=None, use_first_metric_only=False,
-                 subsample_random_seed=None, binning_error=consts.DEFAULT_RELATIVE_ERROR):
+                 random_seed=100, binning_error=consts.DEFAULT_RELATIVE_ERROR):
 
         super(HeteroBoostingParam, self).__init__(task_type, objective_param, learning_rate, num_trees,
                                                   subsample_feature_rate, n_iter_no_change, tol, bin_num,
                                                   predict_param, cv_param, validation_freqs, metrics=metrics,
-                                                  subsample_random_seed=subsample_random_seed,
+                                                  random_seed=random_seed,
                                                   binning_error=binning_error)
 
         self.encrypt_param = copy.deepcopy(encrypt_param)
@@ -368,7 +375,7 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
 
         subsample_feature_rate : float, a float-number in [0, 1], default: 0.8
 
-        subsample_random_seed: seed that controls feature subsample
+        random_seed: seed that controls all random functions
 
         n_iter_no_change : bool,
             when True and residual error less than tol, tree building process will stop. default: True
@@ -412,9 +419,15 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         complete_secure: bool, if use complete_secure, when use complete secure, build first tree using only guest
                         features
 
-        sparse_optmization: bool, Available when encrypted method is 'iterativeAffine'
+        sparse_optimization: bool, Available when encrypted method is 'iterativeAffine'
                             An optimized mode for high-dimension, sparse data.
 
+        run_goss: bool, activate Gradient-based One-Side Sampling, which selects large gradient and small
+                   gradient samples using top_rate and other_rate.
+
+        top_rate: float, the retain ratio of large gradient data, used when run_goss is True
+
+        other_rate: float, the retain ratio of small gradient data, used when run_goss is True
         """
 
     def __init__(self, tree_param: DecisionTreeParam = DecisionTreeParam(), task_type=consts.CLASSIFICATION,
@@ -425,16 +438,16 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  validation_freqs=None, early_stopping_rounds=None, use_missing=False, zero_as_missing=False,
-                 complete_secure=False, metrics=None, use_first_metric_only=False, subsample_random_seed=None,
+                 complete_secure=False, metrics=None, use_first_metric_only=False, random_seed=100,
                  binning_error=consts.DEFAULT_RELATIVE_ERROR,
-                 sparse_optimization=False):
+                 sparse_optimization=False, run_goss=False, top_rate=0.2, other_rate=0.1):
 
         super(HeteroSecureBoostParam, self).__init__(task_type, objective_param, learning_rate, num_trees,
                                                      subsample_feature_rate, n_iter_no_change, tol, encrypt_param,
                                                      bin_num, encrypted_mode_calculator_param, predict_param, cv_param,
                                                      validation_freqs, early_stopping_rounds, metrics=metrics,
                                                      use_first_metric_only=use_first_metric_only,
-                                                     subsample_random_seed=subsample_random_seed,
+                                                     random_seed=random_seed,
                                                      binning_error=binning_error)
 
         self.tree_param = tree_param
@@ -442,6 +455,9 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         self.use_missing = use_missing
         self.complete_secure = complete_secure
         self.sparse_optimization = sparse_optimization
+        self.run_goss = run_goss
+        self.top_rate = top_rate
+        self.other_rate = other_rate
 
     def check(self):
 
@@ -453,6 +469,9 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
             raise ValueError('zero as missing should be bool type')
         self.check_boolean(self.complete_secure, 'complete_secure')
         self.check_boolean(self.sparse_optimization, 'sparse optimization')
+        self.check_boolean(self.run_goss, 'run goss')
+        self.check_decimal_float(self.top_rate, 'top rate')
+        self.check_decimal_float(self.other_rate, 'other rate')
 
         return True
 
@@ -468,7 +487,7 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  validation_freqs=None, early_stopping=None, use_missing=False, zero_as_missing=False,
                  complete_secure=False, tree_num_per_party=1, guest_depth=1, host_depth=1, work_mode='mix', metrics=None,
-                 sparse_optimization=False, subsample_random_seed=None, binning_error=consts.DEFAULT_RELATIVE_ERROR):
+                 sparse_optimization=False, random_seed=100, binning_error=consts.DEFAULT_RELATIVE_ERROR,):
 
         """
         work_mode：
@@ -491,7 +510,7 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
                                                          encrypt_param, bin_num, encrypted_mode_calculator_param,
                                                          predict_param, cv_param, validation_freqs, early_stopping,
                                                          use_missing, zero_as_missing, complete_secure, metrics=metrics,
-                                                         subsample_random_seed=subsample_random_seed,
+                                                         random_seed=random_seed,
                                                          sparse_optimization=sparse_optimization,
                                                          binning_error=binning_error)
 
@@ -524,7 +543,7 @@ class HomoSecureBoostParam(BoostingParam):
                  objective_param=ObjectiveParam(),
                  learning_rate=0.3, num_trees=5, subsample_feature_rate=1, n_iter_no_change=True,
                  tol=0.0001, bin_num=32, predict_param=PredictParam(), cv_param=CrossValidationParam(),
-                 validation_freqs=None, use_missing=False, zero_as_missing=False, subsample_random_seed=None,
+                 validation_freqs=None, use_missing=False, zero_as_missing=False, random_seed=100,
                  binning_error=consts.DEFAULT_RELATIVE_ERROR
                  ):
         super(HomoSecureBoostParam, self).__init__(task_type=task_type,
@@ -538,7 +557,7 @@ class HomoSecureBoostParam(BoostingParam):
                                                    predict_param=predict_param,
                                                    cv_param=cv_param,
                                                    validation_freqs=validation_freqs,
-                                                   subsample_random_seed=subsample_random_seed,
+                                                   random_seed=random_seed,
                                                    binning_error=binning_error
                                                    )
         self.use_missing = use_missing

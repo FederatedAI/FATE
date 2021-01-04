@@ -136,6 +136,38 @@ def count_labels(data_instance):
     # return True
 
 
+def with_weight(data_instance):
+    first_data = data_instance.first()
+    if type(first_data[1]).__name__ in ['ndarray', 'list']:
+        return False
+
+    data_weight = first_data[1].weight
+    if data_weight is None:
+        return False
+    else:
+        return True
+
+
+def max_sample_weight_map_func(kv_iter):
+
+    max_weight = -1
+    for k, inst in kv_iter:
+        if inst.weight > max_weight:
+            max_weight = inst.weight
+
+    return max_weight
+
+
+def max_sample_weight_cmp(v1, v2):
+    return v1 if v1 > v2 else v2
+
+
+def get_max_sample_weight(data_inst_with_weight):
+    inter_rs = data_inst_with_weight.applyPartitions(max_sample_weight_map_func)
+    max_weight = inter_rs.reduce(max_sample_weight_cmp)
+    return max_weight
+
+
 def rubbish_clear(rubbish_list):
     """
     Temporary procession for resource recovery. This will be discarded in next version because of our new resource recovery plan

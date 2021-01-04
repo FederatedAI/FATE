@@ -53,7 +53,6 @@ class Boosting(ModelBase, ABC):
         self.mode = None
         self.model_param = BoostingParam()
         self.subsample_feature_rate = 0.8
-        self.subsample_random_seed = None
         self.model_name = 'default'  # model name
         self.early_stopping_rounds = None
         self.use_first_metric_only = False
@@ -61,8 +60,11 @@ class Boosting(ModelBase, ABC):
 
         # running variable
 
+        # random seed
+        self.random_seed = 100
+
         # data
-        self._set_random_seed = False
+        self.data_inst = None  # original input data
         self.binning_class = None  # class used for data binning
         self.binning_obj = None  # instance of self.binning_class
         self.data_bin = None  # data with transformed features
@@ -112,8 +114,14 @@ class Boosting(ModelBase, ABC):
         self.validation_freqs = boosting_param.validation_freqs
         self.metrics = boosting_param.metrics
         self.subsample_feature_rate = boosting_param.subsample_feature_rate
-        self.subsample_random_seed = boosting_param.subsample_random_seed
         self.binning_error = boosting_param.binning_error
+
+        if boosting_param.random_seed is not None:
+            self.random_seed = 100
+
+            # initialize random seed here
+        LOGGER.debug('setting random seed done, random seed is {}'.format(self.random_seed))
+        np.random.seed(self.random_seed)
 
     """
     Data Processing
@@ -173,16 +181,13 @@ class Boosting(ModelBase, ABC):
             self.binning_obj = self.binning_class(param_obj)
 
         self.binning_obj.fit_split_points(data_instance)
+        rs = self.binning_obj.convert_feature_to_bin(data_instance)
         LOGGER.info("convert feature to bins over")
-        return self.binning_obj.convert_feature_to_bin(data_instance)
+        return rs
 
     def sample_valid_features(self):
 
         LOGGER.info("sample valid features")
-
-        if not self._set_random_seed and self.subsample_random_seed is not None:
-            np.random.seed(self.subsample_random_seed)
-            self._set_random_seed = True
 
         self.feature_num = self.bin_split_points.shape[0]
         choose_feature = random.choice(range(0, self.feature_num), \
@@ -245,6 +250,7 @@ class Boosting(ModelBase, ABC):
         """
         self.feature_name_fid_mapping = self.gen_feature_fid_mapping(data_inst.schema)
         data_inst = self.data_alignment(data_inst)
+        LOGGER.info('running data alignment')
         return self.convert_feature_to_bin(data_inst, self.use_missing)
 
     @abc.abstractmethod

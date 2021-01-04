@@ -28,7 +28,8 @@ class PaillierKeypair(object):
 
     @staticmethod
     def generate_keypair(n_length=1024):
-        """return a new :class:`PaillierPublicKey` and :class:`PaillierPrivateKey`.
+        """
+        return a new :class:`PaillierPublicKey` and :class:`PaillierPrivateKey`.
         """
         p = q = n = None
         n_len = 0

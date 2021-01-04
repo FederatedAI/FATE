@@ -30,6 +30,10 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         self.model_param = HeteroSecureBoostParam()
         self.complete_secure = False
         self.model_name = 'HeteroSecureBoost'
+        self.enable_goss = False
+        self.cipher_compressing = False
+        self.max_sample_weight = None
+
         # for fast hist
         self.sparse_opt_para = False
         self.run_sparse_opt = False
@@ -42,6 +46,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         super(HeteroSecureBoostingTreeHost, self)._init_model(param)
         self.tree_param = param.tree_param
         self.use_missing = param.use_missing
+        self.enable_goss = param.run_goss
         self.zero_as_missing = param.zero_as_missing
         self.complete_secure = param.complete_secure
         self.sparse_opt_para = param.sparse_optimization
@@ -99,21 +104,20 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
 
         self.check_run_sp_opt()
         tree = HeteroDecisionTreeHost(tree_param=self.tree_param)
-        tree.set_input_data(data_bin=self.data_bin, bin_split_points=self.bin_split_points, bin_sparse_points=
-                            self.bin_sparse_points)
-        tree.set_valid_features(self.sample_valid_features())
-        tree.set_flowid(self.generate_flowid(epoch_idx, booster_dim))
-        tree.set_runtime_idx(self.component_properties.local_partyid)
-
-        if self.run_sparse_opt:
-            tree.activate_sparse_hist_opt()
-            tree.set_dense_data_for_sparse_opt(data_bin_dense=self.data_bin_dense, bin_num=self.bin_num)
-
-        if self.complete_secure and epoch_idx == 0:
-            tree.set_as_complete_secure_tree()
+        tree.init(flowid=self.generate_flowid(epoch_idx, booster_dim),
+                  valid_features=self.sample_valid_features(),
+                  data_bin=self.data_bin, bin_split_points=self.bin_split_points,
+                  bin_sparse_points=self.bin_sparse_points,
+                  data_bin_dense=self.data_bin_dense,
+                  runtime_idx=self.component_properties.local_partyid,
+                  goss_subsample=self.enable_goss,
+                  bin_num=self.bin_num,
+                  complete_secure=True if (self.complete_secure and epoch_idx == 0) else False,
+                  cipher_compressing=False,
+                  round_decimal=7
+                  )
 
         tree.fit()
-
         return tree
 
     def load_booster(self, model_meta, model_param, epoch_idx, booster_idx):

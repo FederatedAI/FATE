@@ -16,6 +16,7 @@ from federatedml.transfer_variable.transfer_class.hetero_secure_boosting_predict
     HeteroSecureBoostTransferVariable
 from federatedml.util.io_check import assert_io_num_rows_equal
 from federatedml.util.anonymous_generator import generate_anonymous
+from federatedml.statistic.data_overview import with_weight, get_max_sample_weight
 
 
 class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
@@ -34,6 +35,13 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         self.data_alignment_map = {}
         self.predict_transfer_inst = HeteroSecureBoostTransferVariable()
         self.model_name = 'HeteroSecureBoost'
+        self.max_sample_weight = 1
+        self.max_sample_weight_computed = False
+        self.cipher_compressing = False
+
+        self.enable_goss = False  # GOSS
+        self.top_rate = None
+        self.other_rate = None
 
     def _init_model(self, param: HeteroSecureBoostParam):
 
@@ -42,12 +50,30 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         self.use_missing = param.use_missing
         self.zero_as_missing = param.zero_as_missing
         self.complete_secure = param.complete_secure
+        self.enable_goss = param.run_goss
+        self.top_rate = param.top_rate
+        self.other_rate = param.other_rate
 
         if self.use_missing:
             self.tree_param.use_missing = self.use_missing
             self.tree_param.zero_as_missing = self.zero_as_missing
 
-    def compute_grad_and_hess(self, y_hat, y):
+    def process_sample_weights(self, grad_and_hess, data_with_sample_weight=None):
+
+        # add sample weights to gradient and hessian
+        if data_with_sample_weight is not None:
+            if with_weight(data_with_sample_weight):
+                LOGGER.info('weighted sample detected, multiply g/h by weights')
+                grad_and_hess = grad_and_hess.join(data_with_sample_weight,
+                                                   lambda v1, v2: (v1[0] * v2.weight, v1[1] * v2.weight))
+                if not self.max_sample_weight_computed:
+                    self.max_sample_weight = get_max_sample_weight(data_with_sample_weight)
+                    self.max_sample_weight_computed = True
+
+        return grad_and_hess
+
+    def compute_grad_and_hess(self, y_hat, y, data_with_sample_weight=None):
+
         LOGGER.info("compute grad and hess")
         loss_method = self.loss
         if self.task_type == consts.CLASSIFICATION:
@@ -58,6 +84,8 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
             grad_and_hess = y.join(y_hat, lambda y, f_val:
             (loss_method.compute_grad(y, f_val),
              loss_method.compute_hess(y, f_val)))
+
+        grad_and_hess = self.process_sample_weights(grad_and_hess, data_with_sample_weight)
 
         return grad_and_hess
 
@@ -78,26 +106,29 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
     def fit_a_booster(self, epoch_idx: int, booster_dim: int):
 
         if self.cur_epoch_idx != epoch_idx:
-            self.grad_and_hess = self.compute_grad_and_hess(self.y_hat, self.y)
+            self.grad_and_hess = self.compute_grad_and_hess(self.y_hat, self.y, self.data_inst)
             self.cur_epoch_idx = epoch_idx
 
         g_h = self.get_grad_and_hess(self.grad_and_hess, booster_dim)
 
         tree = HeteroDecisionTreeGuest(tree_param=self.tree_param)
-        tree.set_input_data(self.data_bin, self.bin_split_points, self.bin_sparse_points)
-        tree.set_grad_and_hess(g_h)
-        tree.set_encrypter(self.encrypter)
-        tree.set_encrypted_mode_calculator(self.encrypted_calculator)
-        tree.set_valid_features(self.sample_valid_features())
-        tree.set_flowid(self.generate_flowid(epoch_idx, booster_dim))
-        tree.set_host_party_idlist(self.component_properties.host_party_idlist)
-        tree.set_runtime_idx(self.component_properties.local_partyid)
-
-        if self.cur_epoch_idx == 0 and self.complete_secure:
-            tree.set_as_complete_secure_tree()
+        tree.init(flowid=self.generate_flowid(epoch_idx, booster_dim),
+                  data_bin=self.data_bin, bin_split_points=self.bin_split_points, bin_sparse_points=self.bin_sparse_points,
+                  grad_and_hess=g_h,
+                  encrypter=self.encrypter, encrypted_mode_calculator=self.encrypted_calculator,
+                  valid_features=self.sample_valid_features(),
+                  host_party_list=self.component_properties.host_party_idlist,
+                  runtime_idx=self.component_properties.local_partyid,
+                  goss_subsample=self.enable_goss,
+                  top_rate=self.top_rate, other_rate=self.other_rate,
+                  complete_secure=True if (self.cur_epoch_idx == 0 and self.complete_secure) else False,
+                  cipher_compressing=False,
+                  round_decimal=7,
+                  encrypt_key_length=self.encrypt_param.key_length,
+                  max_sample_weight=self.max_sample_weight
+                  )
 
         tree.fit()
-
         self.update_feature_importance(tree.get_feature_importance())
 
         return tree
@@ -135,7 +166,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
     def traverse_a_tree(tree: HeteroDecisionTreeGuest, sample, cur_node_idx):
 
         reach_leaf = False
-                                                      # only need nid here, predict state is not needed
+        # only need nid here, predict state is not needed
         rs = tree.traverse_tree(tree_=tree.tree_node, data_inst=sample, predict_state=(cur_node_idx, -1),
                                 decoder=tree.decode, sitename=tree.sitename, use_missing=tree.use_missing,
                                 split_maskdict=tree.split_maskdict, missing_dir_maskdict=tree.missing_dir_maskdict,
@@ -158,7 +189,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         for id_ in feature_importances:
 
             if type(id_) == tuple:
-                if 'guest' in id_[0]:
+                if consts.GUEST in id_[0]:
                     new_fi[fid_mapping[id_[1]]] = feature_importances[id_]
                 else:
                     role, party_id = id_[0].split(':')

@@ -90,6 +90,7 @@ class IterativeAffineCipher(object):
 
 
 class IterativeAffineCipherKey(object):
+
     def __init__(self, a_array, n_array, encode_precision=2 ** 100):
         if len(a_array) != len(n_array):
             raise ValueError("a_array length must be equal to n_array")

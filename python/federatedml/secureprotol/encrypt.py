@@ -137,6 +137,7 @@ class RsaEncrypt(Encrypt):
 
 
 class PaillierEncrypt(Encrypt):
+
     def __init__(self):
         super(PaillierEncrypt, self).__init__()
 
@@ -289,12 +290,12 @@ class PadsCipher(Encrypt):
         f = functools.partial(_pad, seeds=self._seeds, amplify_factor=self._amplify_factor)
         return table.map(f)
 
-
     def decrypt(self, value):
         return value
 
 
 class IterativeAffineEncrypt(SymmetricEncrypt):
+
     def __init__(self):
         super(IterativeAffineEncrypt, self).__init__()
 
