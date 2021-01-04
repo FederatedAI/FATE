@@ -71,9 +71,10 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
     def update_feature_importance(self, tree_feature_importance):
         for fid in tree_feature_importance:
             if fid not in self.feature_importances_:
-                self.feature_importances_[fid] = 0
-
-            self.feature_importances_[fid] += tree_feature_importance[fid]
+                self.feature_importances_[fid] = tree_feature_importance[fid]
+            else:
+                self.feature_importances_[fid] += tree_feature_importance[fid]
+        LOGGER.debug('cur feature importance {}'.format(self.feature_importances_))
 
     def fit_a_booster(self, epoch_idx: int, booster_dim: int):
 
@@ -159,12 +160,12 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
 
             if type(id_) == tuple:
                 if 'guest' in id_[0]:
-                    new_fi[fid_mapping[id_[1]]] = feature_importances[id_]
+                    new_fi[fid_mapping[id_[1]]] = feature_importances[id_].importance
                 else:
                     role, party_id = id_[0].split(':')
-                    new_fi[generate_anonymous(role=role, fid=id_[1], party_id=party_id)] = feature_importances[id_]
+                    new_fi[generate_anonymous(role=role, fid=id_[1], party_id=party_id)] = feature_importances[id_].importance
             else:
-                new_fi[fid_mapping[id_]] = feature_importances[id_]
+                new_fi[fid_mapping[id_]] = feature_importances[id_].importance
 
         return new_fi
 
@@ -206,7 +207,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         # finally node pos will hold weights
         weights = []
         for leaf_idx, tree in zip(leaf_pos, trees):
-            weights.append(tree.tree_node[leaf_idx].weight)
+            weights.append(tree.tree_node[int(leaf_idx)].weight)
         weights = np.array(weights)
         if multi_class_num > 2:
             weights = weights.reshape((-1, multi_class_num))
@@ -260,7 +261,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         tree_num = len(trees)
         generate_func = functools.partial(self.generate_leaf_pos_dict, tree_num=tree_num)
         node_pos_tb = data_inst.mapValues(generate_func)  # record node pos
-        final_leaf_pos = data_inst.mapValues(lambda x: np.zeros(tree_num, dtype=np.int64) - 1)  # record final leaf pos
+        final_leaf_pos = data_inst.mapValues(lambda x: np.zeros(tree_num, dtype=np.int64) + np.nan)  # record final leaf pos
         traverse_func = functools.partial(self.traverse_trees, trees=trees)
         comm_round = 0
 
@@ -290,7 +291,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
             comm_round += 1
 
         LOGGER.info('federated prediction process done')
-
+        LOGGER.debug('leaf pos is {}'.format(final_leaf_pos.take(5)))
         predict_result = self.get_predict_scores(leaf_pos=final_leaf_pos, learning_rate=self.learning_rate,
                                                  init_score=self.init_score, trees=trees,
                                                  multi_class_num=self.booster_dim, predict_cache=predict_cache)
@@ -320,11 +321,15 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
 
         predict_cache = None
         if last_round != -1:
-            predict_cache = self.predict_data_cache.predict_data_at(cache_dataset_key, last_round)
-            LOGGER.info('load predict cache of round {}'.format(last_round))
+            predict_cache = self.predict_data_cache.predict_data_at(cache_dataset_key, min(last_round, rounds))
+            LOGGER.info('load predict cache of round {}'.format(min(last_round, rounds)))
+
+        tree_num = len(trees)
+        if tree_num == 0 and predict_cache is not None:
+            return self.score_to_predict_result(data_inst, predict_cache)
 
         predict_rs = self.boosting_fast_predict(processed_data, trees=trees, predict_cache=predict_cache)
-        # self.predict_data_cache.add_data(cache_dataset_key, predict_rs)
+        self.predict_data_cache.add_data(cache_dataset_key, predict_rs)
 
         return self.score_to_predict_result(data_inst, predict_rs)
 
@@ -359,18 +364,22 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         feature_importances = list(self.feature_importances_.items())
         feature_importances = sorted(feature_importances, key=itemgetter(1), reverse=True)
         feature_importance_param = []
-        for (sitename, fid), _importance in feature_importances:
+        for (sitename, fid), importance in feature_importances:
             if consts.GUEST in sitename:
                 fullname = self.feature_name_fid_mapping[fid]
             else:
                 role_name, party_id = sitename.split(':')
                 fullname = generate_anonymous(fid=fid, party_id=party_id, role=role_name)
+
             feature_importance_param.append(FeatureImportanceInfo(sitename=sitename,
                                                                   fid=fid,
-                                                                  importance=_importance,
-                                                                  fullname=fullname))
+                                                                  importance=importance.importance,
+                                                                  fullname=fullname,
+                                                                  importance2=importance.importance_2,
+                                                                  main=importance.main_type
+                                                                  ))
         model_param.feature_importances.extend(feature_importance_param)
-
+        LOGGER.debug('feat importance param {}'.format(feature_importance_param))
         model_param.feature_name_fid_mapping.update(self.feature_name_fid_mapping)
 
         param_name = "HeteroSecureBoostingTreeGuestParam"
