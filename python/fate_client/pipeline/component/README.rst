@@ -466,10 +466,11 @@ Below lists input and output elements of each component.
    * - `Secret Sharing Sum`_
      - Secret Sharing Sum
      - This component will sum multiple privacy values without exposing data
-     - Table, values are addend
-     - Table, values are sum results
-     -
-     -
+     - data
+     - data
+     - None
+     - None
+
 
 
 .. _DataIO: ../../federatedml/util/README.rst
