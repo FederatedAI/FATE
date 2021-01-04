@@ -72,6 +72,7 @@ class Evaluation(ModelBase):
         self.model_param = model
         self.eval_type = self.model_param.eval_type
         self.pos_label = self.model_param.pos_label
+        self.need_unfold_multi_result = self.model_param.multi_result_unfold
         self.metrics = model.metrics
         self.metric_interface = MetricInterface(pos_label=self.pos_label, eval_type=self.eval_type, )
 
@@ -311,7 +312,6 @@ class Evaluation(ModelBase):
                 eval_result = self.evaluate_metrics(mode, data)
                 self.eval_results[key].append(eval_result)
 
-            self.need_unfold_multi_result = True
             if self.need_unfold_multi_result and self.eval_type == consts.MULTY:
                 unfold_binary_eval_result = defaultdict(list)
 
