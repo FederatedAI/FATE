@@ -19,9 +19,10 @@ import typing
 from collections import deque
 from pathlib import Path
 
+from fate_test import _config
 import click
 import prettytable
-from fate_test import _config
+
 from fate_test._config import Parties, Config
 
 
@@ -87,12 +88,10 @@ class JobConf(object):
                  initiator: dict,
                  role: dict,
                  job_parameters: dict,
-                 component_parameters: dict,
                  **kwargs):
         self.initiator = initiator
         self.role = role
         self.job_parameters = job_parameters
-        self.component_parameters = component_parameters
         self.others_kwargs = kwargs
 
     def as_dict(self):
@@ -100,7 +99,6 @@ class JobConf(object):
             initiator=self.initiator,
             role=self.role,
             job_parameters=self.job_parameters,
-            component_parameters=self.component_parameters,
             **self.others_kwargs
         )
 
@@ -119,7 +117,11 @@ class JobConf(object):
         for key, value in job_parameters.items():
             self.update_parameters(parameters=self.job_parameters, key=key, value=value)
         for key, value in component_parameters.items():
-            self.update_parameters(parameters=self.component_parameters, key=key, value=value)
+            dsl_version = self.others_kwargs.get("dsl_version", 1)
+            if dsl_version == 1:
+                self.update_parameters(parameters=self.others_kwargs.get("algorithm_parameters"), key=key, value=value)
+            else:
+                self.update_parameters(parameters=self.others_kwargs.get("component_parameters"), key=key, value=value)
 
     def update_parameters(self, parameters, key, value):
         if isinstance(parameters, dict):
@@ -138,11 +140,15 @@ class JobConf(object):
 
     def update_component_parameters(self, key, value, parameters=None):
         if parameters is None:
-            parameters = self.component_parameters
+            dsl_version = self.others_kwargs.get("dsl_version", 1)
+            if dsl_version == 1:
+                parameters=self.others_kwargs.get("algorithm_parameters")
+            else:
+                parameters = self.others_kwargs.get("component_parameters")
         if isinstance(parameters, dict):
             for keys in parameters:
                 if keys == key:
-                    parameters.update({key: value}),
+                    parameters.update({key: value})
                 elif isinstance(parameters[keys], dict) and parameters[keys] is not None:
                     self.update_component_parameters(key, value, parameters[keys])
 
