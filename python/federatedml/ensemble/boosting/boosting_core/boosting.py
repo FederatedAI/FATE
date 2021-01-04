@@ -2,8 +2,8 @@ from abc import ABC
 import abc
 from numpy import random
 import numpy as np
-import copy
-from federatedml.param.boosting_param import BoostingParam
+from federatedml.param.boosting_param import BoostingParam, ObjectiveParam
+from federatedml.param.predict_param import PredictParam
 from federatedml.param.feature_binning_param import FeatureBinningParam
 from federatedml.model_selection.k_fold import KFold
 from federatedml.util import abnormal_detection
@@ -39,20 +39,20 @@ class Boosting(ModelBase, ABC):
 
         # input hyper parameter
         self.task_type = None
-        self.objective_param = None
         self.learning_rate = None
         self.boosting_round = None
         self.n_iter_no_change = None
         self.tol = 0.0
         self.bin_num = None
         self.calculated_mode = None
-        self.predict_param = None
         self.cv_param = None
         self.validation_freqs = None
         self.feature_name_fid_mapping = {}
         self.mode = None
+        self.predict_param = PredictParam()
+        self.objective_param = ObjectiveParam()
         self.model_param = BoostingParam()
-        self.subsample_feature_rate = 0.8
+        self.subsample_feature_rate = 1.0
         self.subsample_random_seed = None
         self.model_name = 'default'  # model name
         self.early_stopping_rounds = None
@@ -383,9 +383,8 @@ class Boosting(ModelBase, ABC):
 
     @staticmethod
     def accumulate_y_hat(val, new_val, lr=0.1, idx=0):
-        copied_val = copy.deepcopy(val)
-        copied_val[idx] += lr * new_val
-        return copied_val
+        val[idx] += lr * new_val
+        return val
 
     def generate_flowid(self, round_num, dim):
         LOGGER.info("generate flowid, flowid {}".format(self.flowid))
@@ -513,10 +512,10 @@ class Boosting(ModelBase, ABC):
             return None
         return self.get_cur_model()
 
-    def load_model(self, model_dict):
+    def load_model(self, model_dict, model_key="model"):
         model_param = None
         model_meta = None
-        for _, value in model_dict["model"].items():
+        for _, value in model_dict[model_key].items():
             for model in value:
                 if model.endswith("Meta"):
                     model_meta = value[model]
@@ -526,7 +525,6 @@ class Boosting(ModelBase, ABC):
 
         self.set_model_meta(model_meta)
         self.set_model_param(model_param)
-        self.loss = self.get_loss_function()
 
     def predict_proba(self, data_inst):
         pass
