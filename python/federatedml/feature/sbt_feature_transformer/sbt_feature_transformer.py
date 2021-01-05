@@ -24,6 +24,7 @@ from federatedml.util import LOGGER
 from federatedml.util import consts
 from federatedml.ensemble import HeteroSecureBoostingTreeGuest, HeteroSecureBoostingTreeHost
 from federatedml.ensemble import HeteroFastSecureBoostingTreeGuest, HeteroFastSecureBoostingTreeHost
+from fate_flow.entity.metric import MetricMeta
 from federatedml.util import abnormal_detection
 from federatedml.param.sbt_feature_transformer_param import SBTTransformerParam
 from federatedml.feature.sparse_vector import SparseVector
@@ -113,6 +114,9 @@ class HeteroSBTFeatureTransformerGuest(HeteroSBTFeatureTransformerBase):
     def __init__(self):
         super(HeteroSBTFeatureTransformerGuest, self).__init__()
         self.role = consts.GUEST
+        self.leaf_mapping_list = []
+        self.vec_len = -1
+        self.feature_title = consts.SECUREBOOST
 
     @staticmethod
     def join_feature_with_label(inst, leaf_indices, leaf_mapping_list, vec_len, dense):
@@ -135,14 +139,33 @@ class HeteroSBTFeatureTransformerGuest(HeteroSBTFeatureTransformerBase):
                 offset += len(leaf_mapping_list[tree_idx])
             return Instance(features=SparseVector(indices=indices, data=value), label=label)
 
+    def _generate_header(self, leaf_mapping):
+
+        header = []
+        for tree_idx, mapping in enumerate(leaf_mapping):
+            feat_name_prefix = self.feature_title + '_' + str(tree_idx) + '_'
+            sorted_leaf_ids = sorted(list(mapping.keys()))
+            for leaf_id in sorted_leaf_ids:
+                header.append(feat_name_prefix+str(leaf_id))
+
+        return header
+
+    def _generate_callback_result(self, header):
+
+        index = []
+        for i in header:
+            split_list = i.split('_')
+            index.append(split_list[-1])
+        return {'feat_name': header, 'index': index}
+
     def _transform_pred_result(self, data_inst, pred_result):
 
-        leaf_mapping_list, vec_len = self._extract_leaf_mapping()
-        LOGGER.debug('cwj leaf mapping is {}'.format(leaf_mapping_list))
-        join_func = functools.partial(self.join_feature_with_label, vec_len=vec_len, leaf_mapping_list=leaf_mapping_list,
+        self.leaf_mapping_list, self.vec_len = self._extract_leaf_mapping()
+        LOGGER.debug('cwj leaf mapping is {}'.format(self.leaf_mapping_list))
+        join_func = functools.partial(self.join_feature_with_label, vec_len=self.vec_len, leaf_mapping_list=self.leaf_mapping_list,
                                       dense=self.dense_format)
         rs = data_inst.join(pred_result, join_func)
-        rs.schema['header'] = [str(i) for i in range(vec_len)]
+        rs.schema['header'] = self._generate_header(self.leaf_mapping_list)
         return rs
 
     def _extract_leaf_mapping(self):
@@ -165,25 +188,26 @@ class HeteroSBTFeatureTransformerGuest(HeteroSBTFeatureTransformerBase):
 
         return leaf_mapping_list, vec_len
 
+    def _callback_leaf_id_mapping(self, mapping):
+
+        metric_namespace = 'sbt_transformer'
+        metric_name = 'leaf_mapping'
+        self.tracker.set_metric_meta(metric_namespace, metric_name,
+                                     MetricMeta(name=metric_name, metric_type=metric_name, extra_metas=mapping))
+
     def fit(self, data_inst):
 
         self._abnormal_detection(data_inst)
         # predict instances to get leaf indexes
         LOGGER.info('tree model running prediction')
         predict_rs = self.tree_model.predict(data_inst, pred_leaf=True)
+        LOGGER.debug('pred rs is {}'.format(predict_rs.take(5)))
         LOGGER.info('tree model prediction done')
-
-        LOGGER.debug('cwj predict rs is {}'.format(list(predict_rs.collect())))
         LOGGER.debug('use dense is {}'.format(self.dense_format))
-
         rs = self._transform_pred_result(data_inst, predict_rs)
-
-        # debug_rs = rs.collect()
-        # for i in debug_rs:
-        #     LOGGER.debug('cwj rs {}'.format(i[1].features.sparse_vec))
-
         LOGGER.debug('header is {}'.format(rs.schema))
-
+        LOGGER.debug('extra meta is {}'.format(self._generate_callback_result(rs.schema['header'])))
+        self._callback_leaf_id_mapping(self._generate_callback_result(rs.schema['header']))
         return rs
 
     def transform(self, data_inst):

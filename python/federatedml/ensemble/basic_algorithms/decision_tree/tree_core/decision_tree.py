@@ -183,7 +183,7 @@ class DecisionTree(BasicAlgorithms):
         pass
 
     @abc.abstractmethod
-    def assign_a_instance(self, *args):
+    def assign_an_instance(self, *args):
         pass
 
     @abc.abstractmethod
