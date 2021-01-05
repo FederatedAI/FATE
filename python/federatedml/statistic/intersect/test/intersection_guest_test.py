@@ -15,8 +15,10 @@ class TestRsaIntersectGuest(unittest.TestCase):
         from federatedml.statistic.intersect.intersect_guest import RsaIntersectionGuest
         from federatedml.statistic.intersect.intersect import RsaIntersect
         intersect_param = IntersectParam()
-        self.rsa_operator = RsaIntersectionGuest(intersect_param)
-        self.rsa_op2 = RsaIntersect(intersect_param)
+        self.rsa_operator = RsaIntersectionGuest()
+        self.rsa_operator.load_params(intersect_param)
+        self.rsa_op2 = RsaIntersect()
+        self.rsa_op2.load_params(intersect_param)
 
     def data_to_table(self, data):
         return session.parallelize(data, include_key=True, partition=2)

@@ -77,8 +77,7 @@ class Intersect(object):
         if self.transfer_variable is not None:
             self.transfer_variable.set_flowid(flowid)
 
-    @staticmethod
-    def _get_value_from_data(intersect_ids, data_instances):
+    def _get_value_from_data(self, intersect_ids, data_instances):
         if intersect_ids is not None:
             intersect_ids = intersect_ids.join(data_instances, lambda i, d: d)
             intersect_ids.schema = data_instances.schema
