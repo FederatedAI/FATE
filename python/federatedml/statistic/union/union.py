@@ -139,15 +139,19 @@ class Union(ModelBase):
                 # first table to combine
                 combined_table = local_table
                 combined_schema = local_table.schema
+                if self.keep_duplicate:
+                    combined_table = combined_table.map(lambda k, v: (f"{k}_{key}", v))
+                    combined_table.schema = combined_schema
             else:
                 self.check_id(local_table, combined_table)
                 self.check_label_name(local_table, combined_table)
                 self.check_header(local_table, combined_table)
                 if self.keep_duplicate:
-                    repeated_ids = combined_table.join(local_table, lambda v1, v2: 1)
-                    self.repeated_ids = [v[0] for v in repeated_ids.collect()]
-                    self.key = key
-                    local_table = local_table.flatMap(self._renew_id)
+                    # repeated_ids = combined_table.join(local_table, lambda v1, v2: 1)
+                    # self.repeated_ids = [v[0] for v in repeated_ids.collect()]
+                    # self.key = key
+                    # local_table = local_table.flatMap(self._renew_id)
+                    local_table = local_table.map(lambda k, v: (f"{k}_{key}", v))
 
                 combined_table = combined_table.union(local_table, self._keep_first)
 
