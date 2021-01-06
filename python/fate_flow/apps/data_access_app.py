@@ -144,7 +144,7 @@ def gen_data_access_job_config(config_data, access_module):
     initiator_party_id = config_data.get('party_id', 0)
     job_runtime_conf["initiator"]["role"] = initiator_role
     job_runtime_conf["initiator"]["party_id"] = initiator_party_id
-    job_parameters_fields = {"work_mode", "backend", "eggroll_run", "spark_run"}
+    job_parameters_fields = {"work_mode", "backend", "task_cores", "eggroll_run", "spark_run"}
     for _ in job_parameters_fields:
         if _ in config_data:
             job_runtime_conf["job_parameters"]["common"][_] = config_data[_]
