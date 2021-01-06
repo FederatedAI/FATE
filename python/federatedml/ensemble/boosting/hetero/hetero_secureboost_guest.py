@@ -340,7 +340,6 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
             return predict_rs  # predict result is leaf position
 
         else:
-            self.predict_data_cache.add_data(cache_dataset_key, predict_rs)
             return self.score_to_predict_result(data_inst, predict_rs)
 
     def get_model_meta(self):
