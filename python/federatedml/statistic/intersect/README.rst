@@ -6,12 +6,13 @@ This module provide some method of PSI(Private Set Intersection)
 RSA Intersection
 ----------------
 
-This folder contains code for implementing algorithm based on [`RSA Intersection`__]. This work is built on FATE, eggroll and federation API that construct the secure, distributed and parallel infrastructure.
+This mode implements algorithm based on [`RSA Intersection`__]. This work is built on FATE, eggroll and federation API that construct the secure, distributed and parallel infrastructure.
 
 .. __: https://books.google.com.hk/books?id=zfvf37_YS8cC&pg=PA73&lpg=PA73&dq=rsa+commutative+encryption&source=bl&ots=LbOiyIlr3E&sig=IIWlTGeoU0C8dRiN10uH2OAwobQ&hl=zh-CN&sa=X&ved=0ahUKEwiLoozC1tbXAhVDnJQKHbP7DvAQ6AEIdTAJ#v=onepage&q&f=false.
 
-Our Intersection module is trying to solve the problem that Privacy-Preserving Entity Match. This module will help at least two parties to find the same user ids without leaking all their user ids
-to the other. This is illustrated in `figure 1`.
+Our Intersection module tries to solve Privacy-Preserving Entity Match problem.
+This module helps two and more parties to find common entry ids without leaking non-overlapping ids.
+The process is illustrated below in `figure 1`.
 
 .. figure:: images/rsa_intersection.png
    :width: 500
@@ -21,24 +22,29 @@ to the other. This is illustrated in `figure 1`.
    Figure 1 (RSA Intersection between party A and party B)
 
 In `figure 1` ,Party A has user id u1,u2,u3,u4, while Party B has u1,u2,u3,u5. After Intersection,
-party A and party B know their same user ids, which are u1,u2,u3, but party A know nothing about
-other user ids of party B, like u5, and party B know nothing about party A except u1,u2,u3 as well.
-While party A and party B transmit their processed id information to the other party, like :math:`Y-A` and :math:`Z-B`,
-it will not leak any raw ids. :math:`Z-B` can be safe because of the privacy key of party B.
+party A and party B both learn their common user ids, which are u1,u2,u3, while neither party A nor B could decrypt
+each other's non-overlapping user ids.
+Transmission parties' processed id to the other party, like :math:`Y-A` and :math:`Z-B`,
+will not reveal raw ids. Processed :math:`Z-B` is safe due to the privacy key of party B.
 Each :math:`Y-A` includes different random value which binds to each value in :math:`X-A` and will be safe as well.
 
-Using this module, we can get the intersection ids between two parties in security and efficiently.  
+Introduced in FATE version 1.6, `split_calculation` option is available for improved efficiency.
+Different from unified process described above, `split_calculation` process first splits hash-processed ids
+into even and odd groups; each group then runs through the RSA intersection process with either host or guest as the joining role.
+Note than with `split_calculation`, host(s) always know about their common even ids with guest since they are responsible for finding common even ids.
+
+With RSA intersection, participants can get their intersection ids securely and efficiently.
 
 RAW Intersection
 ----------------
 
-This intersection module implements the simple intersection method that A or B as a sender will sends all his ids to another, and another one 
-will find the sample ids according to it's ids. Finally it will send the intersection ids to the sender.
+This intersection mode implements the simple intersection method in which a participant sends all its ids to another participant, and the other
+participant finds their common ids. Finally, the joining role will send the intersection ids to the sender.
 
 Multi-Host Intersection
 -----------------------
 
-Both rsa and raw intersection support multi-host. It means a guest can do intersection with more than one host simultaneously and finally get the common ID with all hosts. 
+Both RSA and RAW intersection support multi-host scenario. It means a guest can perform intersection with more than one host simultaneously and get the common ids among all participants.
 
 .. figure:: ./images/multi_hosts.png
    :align: center
@@ -47,14 +53,18 @@ Both rsa and raw intersection support multi-host. It means a guest can do inters
 
    Figure 2 (multi-hosts Intersection)
 
-See in `figure 2`, this is a introduction to a guest intersect with two hosts, and it is the same as more than two hosts. Firstly, guest will intersect with each host and get overlapping IDs respectively. Secondly, guest will find common IDs from all intersection results. Finally,
-guest will send common IDs to every host if necessary.
+Refer to `figure 2` for a demonstration of one guest running intersection with two hosts; the same process applies to cases with more than two hosts.
+First, guest will run intersection with each host and get respective overlapping ids.
+Then, guest will find common IDs from all intersection results. Optionally,
+guest will send common IDs to every host.
 
 Repeated ID intersection
 ------------------------
 
-We support repeated id intersection for some applications. For this case, one should provide the mask id which map to the repeated ids.   
+We support repeated id intersection for some applications.
+In this case, one should provide the mask id to be mapped to repeated ids.
 For instances, in Guest, your data is
+
 ::
 
    mask_id, id, value
@@ -63,13 +73,15 @@ For instances, in Guest, your data is
    bob, bob, 4
 
 In Host, you data is
+
 ::
 
    id, value
    alice, 5
    bob, 6
 
-After intersecting, guest will get the intersection results:  
+After intersection, guest will get the intersection results:
+
 ::
 
    mask_id, value
@@ -78,6 +90,7 @@ After intersecting, guest will get the intersection results:
    bob, 4
 
 And in host:
+
 ::
 
    id, value
@@ -85,7 +98,7 @@ And in host:
    alice_2, 5
    bob, 4
 
-This switch is "repeated_id_process" in the parameter of intersection, set it to true if you want to use this function.
+Set parameter `repeated_id_process` to true if you wish to use this mapping function for repeated ids.
 
 Param
 ------
@@ -96,12 +109,14 @@ Param
 Feature
 -------
 
-Both RSA and RAW intersection supports the following features:
+Both RSA and RAW intersection supports:
 
-1. Support multi-host modeling task. The detail configuration for multi-host modeling task is located `here. <../../../../doc/dsl_conf_v2_setting_guide.rst>`_
+1. Multi-host modeling task. The detailed configuration for multi-host modeling task is located `here. <../../../../doc/dsl_conf_v2_setting_guide.rst>`_
 
 2. Repeated ID intersection using ID expanding.
 
-RAW intersection support the following extra features:
+3. Configurable hashing methods, including sha256, md5, and sm3; hash operators of RSA intersection can be configured separately, please refer `here <../../param/intersect_param.py>`_ for more details.
 
-1. RAW support some encoders like md5 or sha256 to make it more safely.
+RAW intersection supports the following extra feature:
+
+1. base64 encoding may be used for all hashing methods.
