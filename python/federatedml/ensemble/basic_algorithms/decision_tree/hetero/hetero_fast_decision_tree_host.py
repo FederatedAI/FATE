@@ -34,13 +34,13 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
         self.use_guest_feat_when_predict = True
 
     def set_tree_work_mode(self, tree_type, target_host_id):
-        self.tree_type, self.target_host_id = tree_type, str(target_host_id)
+        self.tree_type, self.target_host_id = tree_type, target_host_id
 
     def set_layered_depth(self, guest_depth, host_depth):
         self.guest_depth, self.host_depth = guest_depth, host_depth
 
     def set_self_host_id(self, self_host_id):
-        self.self_host_id = str(self_host_id)
+        self.self_host_id = self_host_id
 
     """
     Node Plan
