@@ -39,7 +39,7 @@ class RsaIntersectionGuest(RsaIntersect):
 
     def sign_host_ids(self, host_pubkey_ids_list):
         LOGGER.info("Get host_pubkey_ids from host")
-        # Process(signs) host ids to host
+        # Process(signs) hosts' ids
         guest_sign_host_ids_list = [host_pubkey_ids.map(lambda k, v:
                                                         (k, self.sign_id(k, self.d[i], self.n[i])))
                                     for i, host_pubkey_ids in enumerate(host_pubkey_ids_list)]
@@ -70,7 +70,7 @@ class RsaIntersectionGuest(RsaIntersect):
         return intersect_ids
 
     def split_calculation_process(self, data_instances):
-        LOGGER.info("Start RSA intersect")
+        LOGGER.info("RSA intersect using split calculation.")
         # split data
         sid_hash_odd = data_instances.filter(lambda k, v: k & 1)
         sid_hash_even = data_instances.filter(lambda k, v: not k & 1)
@@ -169,6 +169,7 @@ class RsaIntersectionGuest(RsaIntersect):
         return intersect_ids
 
     def unified_calculation_process(self, data_instances):
+        LOGGER.info("RSA intersect using unified calculation.")
         # generate r
         count = data_instances.count()
         self.r = self.generate_r_base(self.random_bit, count, self.random_base_fraction)

@@ -26,7 +26,7 @@ class RsaIntersectionHost(RsaIntersect):
         self.role = consts.HOST
 
     def split_calculation_process(self, data_instances):
-        LOGGER.info(f"Start RSA intersect")
+        LOGGER.info("RSA intersect using split calculation.")
         # split data
         sid_hash_odd = data_instances.filter(lambda k, v: k & 1)
         sid_hash_even = data_instances.filter(lambda k, v: not k & 1)
@@ -120,10 +120,10 @@ class RsaIntersectionHost(RsaIntersect):
         return intersect_ids
 
     def unified_calculation_process(self, data_instances):
-        LOGGER.info("Start rsa intersection")
+        LOGGER.info("RSA intersect using unified calculation.")
         # generate rsa keys
         self.e, self.d, self.n = self.generate_protocol_key()
-        LOGGER.info("Get protocol key!")
+        LOGGER.info("Generate protocol key!")
         public_key = {"e": self.e, "n": self.n}
 
         # sends public key e & n to guest
