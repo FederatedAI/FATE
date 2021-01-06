@@ -98,7 +98,12 @@ class DecisionTreeParam(BaseParam):
     ----------
     criterion_method : str, accepted "xgboost" only, the criterion function to use, default: 'xgboost'
 
-    criterion_params: list, should be non empty and first element is float-number, default: 0.1.
+    criterion_params: list or dict, should be non empty and elements are float-numbers,
+                      if a list is offered, the first one is l2 regularization value, and the second one is
+                      l1 regularization value.
+                      if a dict is offered, make sure it contains key 'l1', and 'l2'.
+                      l1, l2 regularization values are non-negative floats.
+                      default: [0.1, 0] or {'l1':0, 'l2':0,1}
 
     max_depth: int, positive integer, the max depth of a decision tree, default: 3
 
@@ -149,15 +154,21 @@ class DecisionTreeParam(BaseParam):
                                                              ["xgboost"],
                                                              descr)
 
-        if type(self.criterion_params).__name__ != "list":
-            raise ValueError("decision tree param's criterion_params {} not supported, should be list".format(
-                self.criterion_params))
-
         if len(self.criterion_params) == 0:
             raise ValueError("decisition tree param's criterio_params should be non empty")
 
-        if type(self.criterion_params[0]).__name__ not in ["int", "long", "float"]:
-            raise ValueError("decision tree param's criterion_params element shoubld be numeric")
+        if type(self.criterion_params) == list:
+            assert len(self.criterion_params) == 2, 'length of criterion_param should be 2: l1, l2 regularization ' \
+                                                    'values are needed'
+            self.check_nonnegative_number(self.criterion_params[0], 'l2 reg value')
+            self.check_nonnegative_number(self.criterion_params[1], 'l1 reg value')
+
+        elif type(self.criterion_params) == dict:
+            assert 'l1' in self.criterion_params and 'l2' in self.criterion_params, 'l1 and l2 keys are needed in ' \
+                                                                                    'criterion_params dict'
+            self.criterion_params = [self.criterion_params['l2'], self.criterion_params['l1']]
+        else:
+            raise ValueError('criterion_params should be a dict or a list contains l1, l2 reg value')
 
         if type(self.max_depth).__name__ not in ["int", "long"]:
             raise ValueError("decision tree param's max_depth {} not supported, should be integer".format(
