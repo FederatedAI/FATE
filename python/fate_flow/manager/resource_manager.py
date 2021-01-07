@@ -25,7 +25,7 @@ from fate_arch.computing import ComputingEngine
 from fate_flow.db.db_models import DB, EngineRegistry, Job
 from fate_flow.entity.types import ResourceOperation, RunParameters
 from fate_flow.settings import stat_logger, STANDALONE_BACKEND_VIRTUAL_CORES_PER_NODE, SUPPORT_BACKENDS_ENTRANCE, \
-    MAX_CORES_PERCENT_PER_JOB, DEFAULT_TASK_CORES, IGNORE_RESOURCE_ROLES, SUPPORT_IGNORE_RESOURCE_ENGINES
+    MAX_CORES_PERCENT_PER_JOB, DEFAULT_TASK_CORES, IGNORE_RESOURCE_ROLES, SUPPORT_IGNORE_RESOURCE_ENGINES, TOTAL_CORES_OVERWEIGHT_PERCENT, TOTAL_MEMORY_OVERWEIGHT_PERCENT
 from fate_flow.utils import job_utils
 
 
@@ -53,8 +53,8 @@ class ResourceManager(object):
     @DB.connection_context()
     def register_engine(cls, engine_type, engine_name, engine_entrance, engine_config):
         nodes = engine_config.get("nodes", 1)
-        cores = engine_config.get("cores_per_node", 0) * nodes
-        memory = engine_config.get("memory_per_node", 0) * nodes
+        cores = engine_config.get("cores_per_node", 0) * nodes * TOTAL_CORES_OVERWEIGHT_PERCENT
+        memory = engine_config.get("memory_per_node", 0) * nodes * TOTAL_MEMORY_OVERWEIGHT_PERCENT
         filters = [EngineRegistry.f_engine_type == engine_type, EngineRegistry.f_engine_name == engine_name]
         resources = EngineRegistry.select().where(*filters)
         if resources:
