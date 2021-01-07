@@ -67,17 +67,21 @@ from fate_test.scripts._utils import _load_testsuites, _upload_data, _delete_dat
               help="Set host feature dimensions, The default is equal to the number of guests")
 @click.option('-u', '--use_local_data', type=int, default=1,
               help="When guest, host and flow are deployed on the same machine, the parameter 0 is more appropriate")
+@click.option("--disable-clean-data", "clean_data", flag_value=False, default=None)
+@click.option("--enable-clean-data", "clean_data", flag_value=True, default=None)
 @SharedOptions.get_shared_options(hidden=True)
 @click.pass_context
 def run_task(ctx, task, include, encryption_type, match_rate, sparsity, guest_data_size, host_data_size,
              guest_feature_num, host_feature_num, replace, timeout, update_job_parameters, use_local_data,
-             update_component_parameters, max_iter, max_depth, num_trees, processors_per_node, **kwargs):
+             update_component_parameters, max_iter, max_depth, num_trees, processors_per_node, clean_data, **kwargs):
     """
     Test the performance of big data tasks
     """
     ctx.obj.update(**kwargs)
     ctx.obj.post_process()
     config_inst = ctx.obj["config"]
+    if clean_data is None:
+        clean_data = config_inst.clean_data
     namespace = ctx.obj["namespace"]
     yes = ctx.obj["yes"]
     data_namespace_mangling = ctx.obj["namespace_mangling"]
@@ -147,7 +151,7 @@ def run_task(ctx, task, include, encryption_type, match_rate, sparsity, guest_da
                     _run_pipeline_jobs(config_inst, suite, namespace, data_namespace_mangling)
                 except Exception as e:
                     raise RuntimeError(f"exception occur while running pipeline jobs for {suite.path}") from e
-                if task != 'upload':
+                if task != 'upload' and clean_data:
                     _delete_data(client, suite)
                 echo.echo(f"[{i + 1}/{len(suites)}]elapse {timedelta(seconds=int(time.time() - start))}", fg='red')
 
@@ -235,10 +239,24 @@ def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Conf
                 job_progress.final(response.status)
                 suite.update_status(job_name=job.job_name, status=response.status.status)
                 if response.status.is_success():
-                    suite.feed_success_model_info(job.job_name, response.model_info)
+                    if suite.model_in_dep(job.job_name):
+                        dependent_jobs = suite.get_dependent_jobs(job.job_name)
+                        for predict_job in dependent_jobs:
+                            if predict_job.job_conf.dsl_version == 2:
+                                # noinspection PyBroadException
+                                try:
+                                    model_info = clients["guest_0"].deploy_model(
+                                        model_id=response.model_info["model_id"],
+                                        model_version=response.model_info["model_version"],
+                                        dsl=predict_job.job_dsl.as_dict())
+                                except Exception:
+                                    _raise()
+                            else:
+                                model_info = response.model_info
+                            suite.feed_dep_model_info(predict_job, job.job_name, model_info)
+                        suite.remove_dependency(job.job_name)
             update_bar(0)
             echo.stdout_newline()
-
 
 def _run_pipeline_jobs(config: Config, suite: Testsuite, namespace: str, data_namespace_mangling: bool):
     # pipeline demo goes here
@@ -246,27 +264,29 @@ def _run_pipeline_jobs(config: Config, suite: Testsuite, namespace: str, data_na
     for i, pipeline_job in enumerate(suite.pipeline_jobs):
         echo.echo(f"Running [{i + 1}/{job_n}] job: {pipeline_job.job_name}")
 
-        def _raise():
+        def _raise(err_msg, status="failed"):
             exception_id = str(uuid.uuid1())
-            suite.update_status(job_name=job_name, exception_id=exception_id)
-            echo.file(f"exception({exception_id})")
-            LOGGER.exception(f"exception id: {exception_id}")
+            suite.update_status(job_name=job_name, exception_id=exception_id, status=status)
+            echo.file(f"exception({exception_id}), error message:\n{err_msg}")
+            # LOGGER.exception(f"exception id: {exception_id}")
 
         job_name, script_path = pipeline_job.job_name, pipeline_job.script_path
         mod = _load_module_from_script(script_path)
         try:
             if data_namespace_mangling:
                 try:
-                    mod.main(config, f"_{namespace}")
-                    suite.update_status(job_name=job_name, status="complete")
-                except Exception:
-                    pass
+                    mod.main(config=config, namespace=f"_{namespace}")
+                    suite.update_status(job_name=job_name, status="success")
+                except Exception as e:
+                    _raise(e)
+                    continue
             else:
                 try:
-                    mod.main(config)
-                    suite.update_status(job_name=job_name, status="complete")
-                except Exception:
-                    pass
-        except Exception:
-            _raise()
+                    mod.main(config=config)
+                    suite.update_status(job_name=job_name, status="success")
+                except Exception as e:
+                    _raise(e)
+                    continue
+        except Exception as e:
+            _raise(e, status="not submitted")
             continue

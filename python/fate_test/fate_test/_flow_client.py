@@ -19,10 +19,12 @@ import time
 import typing
 from datetime import timedelta
 from pathlib import Path
+
 import requests
 from fate_test._parser import Data, Job
 from flow_sdk.client import FlowClient
 from fate_test import _config
+
 
 class FLOWClient(object):
 
@@ -69,6 +71,10 @@ class FLOWClient(object):
             raise RuntimeError(f"submit job failed") from e
         return response
 
+    def deploy_model(self, model_id, model_version, dsl=None):
+        result = self._deploy_model(model_id=model_id, model_version=model_version, dsl=dsl)
+        return result
+
     def add_notes(self, job_id, role, party_id, notes):
         self._add_notes(job_id=job_id, role=role, party_id=party_id, notes=notes)
 
@@ -113,6 +119,7 @@ class FLOWClient(object):
         path = Path(conf.get('file'))
         if not path.is_file():
             path = self._data_base_dir.joinpath(conf.get('file')).resolve()
+
         if not path.exists():
             raise Exception('The file is obtained from the fate flow client machine, but it does not exist, '
                             f'please check the path: {path}')
@@ -136,6 +143,24 @@ class FLOWClient(object):
         }
         response = SubmitJobResponse(self.flow_client(request='job/submit', param=param))
         return response
+
+    def _deploy_model(self, model_id, model_version, dsl=None):
+        post_data = {'model_id': model_id,
+                     'model_version': model_version,
+                     'predict_dsl': dsl}
+        response = self.flow_client(request='model/deploy', param=post_data)
+        result = {}
+        try:
+            retcode = response['retcode']
+            retmsg = response['retmsg']
+            if retcode != 0 or retmsg != 'success':
+                raise RuntimeError(f"deploy model error: {response}")
+            result["model_id"] = response["data"]["model_id"]
+            result["model_version"] = response["data"]["model_version"]
+        except Exception as e:
+            raise RuntimeError(f"deploy model error: {response}") from e
+
+        return result
 
     def _query_job(self, job_id, role):
         param = {
@@ -177,7 +202,6 @@ class FLOWClient(object):
 
     def flow_client(self, request, param, verbose=0, drop=0):
         client = FlowClient(self.address.split(':')[0], self.address.split(':')[1], self.version)
-
         if request == 'data/upload':
             stdout = client.data.upload(conf_path=param, verbose=verbose, drop=drop)
         elif request == 'table/delete':
@@ -186,6 +210,10 @@ class FLOWClient(object):
             stdout = client.job.submit(conf_path=param['job_runtime_conf'], dsl_path=param['job_dsl'])
         elif request == 'job/query':
             stdout = client.job.query(job_id=param['job_id'], role=param['role'])
+        elif request == 'model/deploy':
+            stdout = client.job.query(model_id=param['model_id'], model_version=param['model_version'],
+                                      predict_dsl=param['predict_dsl'])
+
         else:
             stdout = {"retcode": None}
 
