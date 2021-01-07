@@ -50,9 +50,9 @@ class EncodeParam(BaseParam):
         descr = "encode param's "
 
         self.encode_method = self.check_and_change_lower(self.encode_method,
-                                                       ["none", consts.MD5, consts.SHA1, consts.SHA224,
-                                                        consts.SHA256, consts.SHA384, consts.SM3],
-                                                       descr)
+                                                         ["none", consts.MD5, consts.SHA1, consts.SHA224,
+                                                          consts.SHA256, consts.SHA384, consts.SM3],
+                                                         descr)
 
         if type(self.base64).__name__ != "bool":
             raise ValueError(
@@ -60,7 +60,7 @@ class EncodeParam(BaseParam):
 
         LOGGER.debug("Finish EncodeParam check!")
         LOGGER.warning(f"'EncodeParam' will be renamed to 'RawParam' in future release."
-                       f"Please do not rely on current param naming for implementation.")
+                       f"Please do not rely on current param naming in application.")
         return True
 
 
@@ -103,9 +103,9 @@ class RSAParam(BaseParam):
 
         descr = "rsa param's final_hash_method "
         self.final_hash_method = self.check_and_change_lower(self.final_hash_method,
-                                                       [consts.MD5, consts.SHA1, consts.SHA224,
-                                                        consts.SHA256, consts.SHA384, consts.SM3],
-                                                       descr)
+                                                             [consts.MD5, consts.SHA1, consts.SHA224,
+                                                              consts.SHA256, consts.SHA384, consts.SM3],
+                                                             descr)
 
         descr = "rsa param's split_calculation"
         self.check_boolean(self.split_calculation, descr)
@@ -117,6 +117,7 @@ class RSAParam(BaseParam):
 
         LOGGER.debug("Finish RSAParam parameter check!")
         return True
+
 
 class IntersectCache(BaseParam):
     def __init__(self, use_cache=False, id_type=consts.PHONE, encrypt_type=consts.SHA256):

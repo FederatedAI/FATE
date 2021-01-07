@@ -109,9 +109,9 @@ Param
 Feature
 -------
 
-Both RSA and RAW intersection supports:
+Both RSA and RAW intersection support:
 
-1. Multi-host modeling task. The detailed configuration for multi-host modeling task is located `here. <../../../../doc/dsl_conf_v2_setting_guide.rst>`_
+1. Multi-host modeling task. The detailed configuration for multi-host modeling task is located `here. <../../../../doc/dsl_conf_v2_setting_guide.rst#multi-host-configuration>`_
 
 2. Repeated ID intersection using ID expanding.
 

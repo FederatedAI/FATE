@@ -31,16 +31,6 @@ class RsaIntersectionHost(RsaIntersect):
         sid_hash_odd = data_instances.filter(lambda k, v: k & 1)
         sid_hash_even = data_instances.filter(lambda k, v: not k & 1)
 
-        # generate ri for even ids
-        count = sid_hash_even.count()
-        self.r = self.generate_r_base(self.random_bit, count, self.random_base_fraction)
-
-        # receive guest key for even ids
-        guest_public_key = self.transfer_variable.guest_pubkey.get(0)
-        LOGGER.info("Get guest_public_key:{} from Guest".format(guest_public_key))
-        self.rcv_e = int(guest_public_key["e"])
-        self.rcv_n = int(guest_public_key["n"])
-
         # generate rsa keys
         self.e, self.d, self.n = self.generate_protocol_key()
         LOGGER.info("Generate host protocol key!")
@@ -51,6 +41,16 @@ class RsaIntersectionHost(RsaIntersect):
                                                   role=consts.GUEST,
                                                   idx=0)
         LOGGER.info("Remote public key to Guest.")
+
+        # generate ri for even ids
+        count = sid_hash_even.count()
+        self.r = self.generate_r_base(self.random_bit, count, self.random_base_fraction)
+
+        # receive guest key for even ids
+        guest_public_key = self.transfer_variable.guest_pubkey.get(0)
+        LOGGER.info("Get guest_public_key:{} from Guest".format(guest_public_key))
+        self.rcv_e = int(guest_public_key["e"])
+        self.rcv_n = int(guest_public_key["n"])
 
         # encrypt & send privkey-encrypted host odd ids to guest
         prvkey_ids_process_pair = self.cal_prvkey_ids_process_pair(sid_hash_odd, self.d, self.n)
