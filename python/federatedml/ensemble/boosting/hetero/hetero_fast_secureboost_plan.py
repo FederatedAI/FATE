@@ -78,7 +78,7 @@ def create_layered_tree_node_plan(guest_depth=0, host_depth=0, host_list=None):
     return one_round
 
 
-def encode_plan(p, split_token='-'):
+def encode_plan(p, split_token='_'):
 
     result = []
     for tree_type_or_action, host_id in p:
@@ -86,11 +86,11 @@ def encode_plan(p, split_token='-'):
     return result
 
 
-def decode_plan(s, split_token='-'):
+def decode_plan(s, split_token='_'):
 
     result = []
     for string in s:
         t = string.split(split_token)
-        result.append((t[0], t[1]))
+        result.append((int(t[0]), int(t[1])))
 
     return result

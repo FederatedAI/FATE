@@ -61,6 +61,13 @@ class AutoReplace(object):
         except Exception:
             return string
 
+    def plain_replace(self, old_party_id, role):
+        old_party_id = int(old_party_id)
+        mapping = self._mapping[role]
+        if old_party_id in mapping:
+            return str(mapping[int(old_party_id)])
+        return str(old_party_id)
+
     def replace(self, string):
 
         if ':' in string:
