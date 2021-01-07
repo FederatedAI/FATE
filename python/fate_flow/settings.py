@@ -27,13 +27,13 @@ import __main__
 
 # Server
 API_VERSION = "v1"
-FATEFLOW_SERVICE_NAME = 'fateflow'
+FATEFLOW_SERVICE_NAME = "fateflow"
 MAIN_MODULE = os.path.relpath(__main__.__file__)
-SERVER_MODULE = 'fate_flow_server.py'
+SERVER_MODULE = "fate_flow_server.py"
 TEMP_DIRECTORY = os.path.join(file_utils.get_project_base_directory(), "temp", "fate_flow")
 HEADERS = {
-    'Content-Type': 'application/json',
-    'Connection': 'close'
+    "Content-Type": "application/json",
+    "Connection": "close"
 }
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 GRPC_SERVER_MAX_WORKERS = None
@@ -42,7 +42,7 @@ IP = get_base_config(FATEFLOW_SERVICE_NAME, {}).get("host", "127.0.0.1")
 HTTP_PORT = get_base_config(FATEFLOW_SERVICE_NAME, {}).get("http_port")
 GRPC_PORT = get_base_config(FATEFLOW_SERVICE_NAME, {}).get("grpc_port")
 
-WORK_MODE = get_base_config('work_mode', 0)
+WORK_MODE = get_base_config("work_mode", 0)
 DATABASE = get_base_config("database", {})
 MODEL_STORE_ADDRESS = get_base_config("model_store_address", {})
 
@@ -87,15 +87,15 @@ END_STATUS_JOB_SCHEDULING_TIME_LIMIT = 5 * 60 * 1000 # ms
 END_STATUS_JOB_SCHEDULING_UPDATES = 1
 
 # Endpoint
-FATE_FLOW_MODEL_TRANSFER_ENDPOINT = '/v1/model/transfer'
-FATE_MANAGER_GET_NODE_INFO_ENDPOINT = '/fate-manager/api/site/secretinfo'
-FATE_MANAGER_NODE_CHECK_ENDPOINT = '/fate-manager/api/site/checksite'
-FATE_BOARD_DASHBOARD_ENDPOINT = '/index.html#/dashboard?job_id={}&role={}&party_id={}'
+FATE_FLOW_MODEL_TRANSFER_ENDPOINT = "/v1/model/transfer"
+FATE_MANAGER_GET_NODE_INFO_ENDPOINT = "/fate-manager/api/site/secretinfo"
+FATE_MANAGER_NODE_CHECK_ENDPOINT = "/fate-manager/api/site/checksite"
+FATE_BOARD_DASHBOARD_ENDPOINT = "/index.html#/dashboard?job_id={}&role={}&party_id={}"
 
 # Logger
 log.LoggerFactory.LEVEL = 10
 # {CRITICAL: 50, FATAL:50, ERROR:40, WARNING:30, WARN:30, INFO:20, DEBUG:10, NOTSET:0}
-log.LoggerFactory.set_directory(os.path.join(file_utils.get_project_base_directory(), 'logs', 'fate_flow'))
+log.LoggerFactory.set_directory(os.path.join(file_utils.get_project_base_directory(), "logs", "fate_flow"))
 stat_logger = log.getLogger("fate_flow_stat")
 detect_logger = log.getLogger("fate_flow_detect")
 access_logger = log.getLogger("fate_flow_access")
