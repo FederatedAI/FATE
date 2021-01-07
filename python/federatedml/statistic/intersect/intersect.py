@@ -129,6 +129,7 @@ class RsaIntersect(Intersect):
         self.final_hash_operator = Hash(self.rsa_params.final_hash_method, False)
         self.salt = self.rsa_params.salt
 
+    """
     @staticmethod
     def generate_r_base(random_bit, count, fraction):
         if fraction:
@@ -138,6 +139,34 @@ class RsaIntersect(Intersect):
         else:
             r_count = count
         return [random.SystemRandom().getrandbits(random_bit) for _ in range(r_count)]
+    """
+
+    @staticmethod
+    def extend_pair(v1, v2):
+        return v1 + v2
+
+    @staticmethod
+    def pubkey_id_process(data, fraction, random_bit, rsa_e, rsa_n):
+        count = data.count()
+        if fraction:
+            count = round(count * max(fraction, consts.MIN_BASE_FRACTION))
+
+        def group_kv(kv_iterator):
+            res = []
+            for k, v in kv_iterator:
+                res.append((k % count, [(k, v)]))
+            return res
+
+        reduced_pair_group = data.mapReducePartitions(group_kv, RsaIntersect.extend_pair)
+
+        def pubkey_id_generate(k, pair):
+            r = random.SystemRandom().getrandbits(random_bit)
+            r_e = gmpy_math.powmod(r, rsa_e, rsa_n)
+            for hash_sid, v in pair:
+                processed_id = r_e * hash_sid % rsa_n
+                yield processed_id, (v[0], r)
+
+        return reduced_pair_group.flatMap(pubkey_id_generate)
 
     @staticmethod
     def generate_rsa_key(rsa_bit=1024):
@@ -158,6 +187,7 @@ class RsaIntersect(Intersect):
                 n.append(n_i)
         return e, d, n
 
+    """
     @staticmethod
     def pubkey_id_process(hash_sid, v, random_bit, rsa_e, rsa_n, rsa_r=None):
         # return (r^e % n *hash(sid), (sid, r))
@@ -167,6 +197,7 @@ class RsaIntersect(Intersect):
             r = random.SystemRandom().getrandbits(random_bit)
         processed_id = gmpy_math.powmod(r, rsa_e, rsa_n) * hash_sid % rsa_n
         return processed_id, (v[0], r)
+    """
 
     @staticmethod
     def prvkey_id_process(hash_sid, v, rsa_d, rsa_n, final_hash_operator, salt):

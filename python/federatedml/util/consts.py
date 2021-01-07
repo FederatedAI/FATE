@@ -290,3 +290,6 @@ MANUAL = 'manual'
 
 # scorecard
 CREDIT = 'credit'
+
+# min r base fraction
+MIN_BASE_FRACTION = 0.01

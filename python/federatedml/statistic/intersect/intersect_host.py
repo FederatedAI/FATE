@@ -43,8 +43,9 @@ class RsaIntersectionHost(RsaIntersect):
         LOGGER.info("Remote public key to Guest.")
 
         # generate ri for even ids
-        count = sid_hash_even.count()
-        self.r = self.generate_r_base(self.random_bit, count, self.random_base_fraction)
+        # count = sid_hash_even.count()
+        # self.r = self.generate_r_base(self.random_bit, count, self.random_base_fraction)
+        # LOGGER.info(f"Generate {len(self.r)} r values.")
 
         # receive guest key for even ids
         guest_public_key = self.transfer_variable.guest_pubkey.get(0)
@@ -64,13 +65,11 @@ class RsaIntersectionHost(RsaIntersect):
         guest_prvkey_ids = self.transfer_variable.guest_prvkey_ids.get(idx=0)
 
         # encrypt & send guest pubkey-encrypted odd ids
-        pubkey_ids_process = sid_hash_even.map(
-            lambda k, v: self.pubkey_id_process(k,
-                                                v,
-                                                random_bit=self.random_bit,
-                                                rsa_e=self.rcv_e,
-                                                rsa_n=self.rcv_n,
-                                                rsa_r=self.r))
+        pubkey_ids_process = self.pubkey_id_process(sid_hash_even,
+                                                    fraction=self.random_base_fraction,
+                                                    random_bit=self.random_bit,
+                                                    rsa_e=self.rcv_e,
+                                                    rsa_n=self.rcv_n)
         mask_host_id = pubkey_ids_process.mapValues(lambda v: 1)
         self.transfer_variable.host_pubkey_ids.remote(mask_host_id,
                                                       role=consts.GUEST,

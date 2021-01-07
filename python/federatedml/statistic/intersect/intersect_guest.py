@@ -87,11 +87,6 @@ class RsaIntersectionGuest(RsaIntersect):
                                                        idx=i)
             LOGGER.info(f"Remote public key to Host {host_party_id}.")
 
-        # generate ri for odd ids
-        count = sid_hash_odd.count()
-        self.r = self.generate_r_base(self.random_bit, count, self.random_base_fraction)
-        LOGGER.info(f"Generate {count} r values.")
-
         # receive host pub keys for odd ids
         host_public_keys = self.transfer_variable.host_pubkey.get(-1)
         LOGGER.info("Get host_public_key:{} from Host".format(host_public_keys))
@@ -113,13 +108,11 @@ class RsaIntersectionGuest(RsaIntersect):
         LOGGER.info("Get host_prvkey_ids")
 
         # encrypt own odd ids with pub keys from host
-        pubkey_ids_process_list = [sid_hash_odd.map(
-            lambda k, v: self.pubkey_id_process(k,
-                                                v,
-                                                random_bit=self.random_bit,
-                                                rsa_e=self.rcv_e[i],
-                                                rsa_n=self.rcv_n[i],
-                                                rsa_r=self.r)) for i in range(len(self.rcv_e))]
+        pubkey_ids_process_list = [self.pubkey_id_process(sid_hash_odd,
+                                                          fraction=self.random_base_fraction,
+                                                          random_bit=self.random_bit,
+                                                          rsa_e=self.rcv_e[i],
+                                                          rsa_n=self.rcv_n[i]) for i in range(len(self.rcv_e))]
         for i, guest_id in enumerate(pubkey_ids_process_list):
             mask_guest_id = guest_id.mapValues(lambda v: 1)
             self.transfer_variable.guest_pubkey_ids.remote(mask_guest_id,
@@ -171,8 +164,9 @@ class RsaIntersectionGuest(RsaIntersect):
     def unified_calculation_process(self, data_instances):
         LOGGER.info("RSA intersect using unified calculation.")
         # generate r
-        count = data_instances.count()
-        self.r = self.generate_r_base(self.random_bit, count, self.random_base_fraction)
+        # count = data_instances.count()
+        # self.r = self.generate_r_base(self.random_bit, count, self.random_base_fraction)
+        # LOGGER.info(f"Generate {len(self.r)} r values.")
 
         # receives public key e & n
         public_keys = self.transfer_variable.host_pubkey.get(-1)
@@ -180,12 +174,11 @@ class RsaIntersectionGuest(RsaIntersect):
         self.rcv_e = [int(public_key["e"]) for public_key in public_keys]
         self.rcv_n = [int(public_key["n"]) for public_key in public_keys]
 
-        pubkey_ids_process_list = [data_instances.map(
-            lambda k, v: self.pubkey_id_process(k, v,
-                                                random_bit=self.random_bit,
-                                                rsa_e=self.rcv_e[i],
-                                                rsa_n=self.rcv_n[i],
-                                                rsa_r=self.r)) for i in range(len(self.rcv_e))]
+        pubkey_ids_process_list = [self.pubkey_id_process(data_instances,
+                                                          fraction=self.random_base_fraction,
+                                                          random_bit=self.random_bit,
+                                                          rsa_e=self.rcv_e[i],
+                                                          rsa_n=self.rcv_n[i]) for i in range(len(self.rcv_e))]
 
         for i, guest_id in enumerate(pubkey_ids_process_list):
             mask_guest_id = guest_id.mapValues(lambda v: 1)
