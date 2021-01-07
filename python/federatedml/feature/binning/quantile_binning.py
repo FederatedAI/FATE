@@ -111,7 +111,6 @@ class QuantileBinning(BaseBinning):
                 summary_dict_table = summary_dict_table.mapValues(lambda x: x.set_total_count(total_count))
 
             self.summary_dict = summary_dict_table
-            LOGGER.debug()
         else:
             summary_dict_table = self.summary_dict
 
