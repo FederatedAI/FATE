@@ -33,6 +33,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         self.enable_goss = False
         self.cipher_compressing = False
         self.max_sample_weight = None
+        self.round_decimal = None
 
         # for fast hist
         self.sparse_opt_para = False
@@ -50,6 +51,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         self.zero_as_missing = param.zero_as_missing
         self.complete_secure = param.complete_secure
         self.sparse_opt_para = param.sparse_optimization
+        self.round_decimal = param.cipher_compress_error
 
         if self.use_missing:
             self.tree_param.use_missing = self.use_missing
@@ -113,11 +115,12 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
                   goss_subsample=self.enable_goss,
                   bin_num=self.bin_num,
                   complete_secure=True if (self.complete_secure and epoch_idx == 0) else False,
-                  cipher_compressing=False,
-                  round_decimal=7
+                  cipher_compressing=self.round_decimal is not None,
+                  round_decimal=self.round_decimal
                   )
 
         tree.fit()
+        
         return tree
 
     def load_booster(self, model_meta, model_param, epoch_idx, booster_idx):

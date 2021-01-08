@@ -428,6 +428,13 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         top_rate: float, the retain ratio of large gradient data, used when run_goss is True
 
         other_rate: float, the retain ratio of small gradient data, used when run_goss is True
+
+        cipher_compress_error： int between [0-15], default is None. The parameter to control pallier cipher compressing.
+                        When cipher compressing is enabled, communication cost will be reduced, algorithms may run f
+                        aster due to lower decrypt cost. However, performance will be influenced by the precision
+                        loss caused by cipher compress.
+                        'None' means disable cipher compress.
+                        A specified integer indicates the rounding decimal precision.
         """
 
     def __init__(self, tree_param: DecisionTreeParam = DecisionTreeParam(), task_type=consts.CLASSIFICATION,
@@ -440,7 +447,8 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
                  validation_freqs=None, early_stopping_rounds=None, use_missing=False, zero_as_missing=False,
                  complete_secure=False, metrics=None, use_first_metric_only=False, random_seed=100,
                  binning_error=consts.DEFAULT_RELATIVE_ERROR,
-                 sparse_optimization=False, run_goss=False, top_rate=0.2, other_rate=0.1):
+                 sparse_optimization=False, run_goss=False, top_rate=0.2, other_rate=0.1,
+                 cipher_compress_error=None):
 
         super(HeteroSecureBoostParam, self).__init__(task_type, objective_param, learning_rate, num_trees,
                                                      subsample_feature_rate, n_iter_no_change, tol, encrypt_param,
@@ -458,6 +466,7 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         self.run_goss = run_goss
         self.top_rate = top_rate
         self.other_rate = other_rate
+        self.cipher_compress_error = cipher_compress_error
 
     def check(self):
 
@@ -473,6 +482,10 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         self.check_decimal_float(self.top_rate, 'top rate')
         self.check_decimal_float(self.other_rate, 'other rate')
 
+        self.check_positive_integer(self.cipher_compress_error, 'cipher_compress_error')
+        if self.cipher_compress_error > 15:
+            raise ValueError('cipher compress error exceeds max value 15.')
+
         return True
 
 
@@ -487,7 +500,8 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  validation_freqs=None, early_stopping=None, use_missing=False, zero_as_missing=False,
                  complete_secure=False, tree_num_per_party=1, guest_depth=1, host_depth=1, work_mode='mix', metrics=None,
-                 sparse_optimization=False, random_seed=100, binning_error=consts.DEFAULT_RELATIVE_ERROR,):
+                 sparse_optimization=False, random_seed=100, binning_error=consts.DEFAULT_RELATIVE_ERROR,
+                 cipher_compress_error=None):
 
         """
         work_mode：
@@ -512,7 +526,8 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
                                                          use_missing, zero_as_missing, complete_secure, metrics=metrics,
                                                          random_seed=random_seed,
                                                          sparse_optimization=sparse_optimization,
-                                                         binning_error=binning_error)
+                                                         binning_error=binning_error,
+                                                         cipher_compress_error=cipher_compress_error)
 
         self.tree_num_per_party = tree_num_per_party
         self.guest_depth = guest_depth
@@ -572,11 +587,3 @@ class HomoSecureBoostParam(BoostingParam):
         if type(self.zero_as_missing) != bool:
             raise ValueError('zero as missing should be bool type')
         return True
-
-
-
-
-
-
-
-
