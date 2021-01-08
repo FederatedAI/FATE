@@ -81,7 +81,7 @@ In this example, there is only one host on each end, and multiple hosts on each 
 
 ## 3. Basic Environment Configuration
 
-### 3.1 Hostname Configuration (optional)
+### 3.1 Hostname Configuration
 
 ------
 
@@ -105,7 +105,7 @@ vim /etc/hosts
 
 192.168.0.2 VM_0_2_centos
 
-### 3.2 Close selinux (optional)
+### 3.2 Close selinux
 
 ------
 
