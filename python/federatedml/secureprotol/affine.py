@@ -16,7 +16,7 @@
 
 import random
 import math
-import numpy as np
+
 from federatedml.secureprotol.affine_encoder import AffineEncoder
 from federatedml.secureprotol import gmpy_math
 
@@ -61,10 +61,7 @@ class AffineCipherKey(object):
         plaintext = (self.a_inv * (ciphertext.cipher % self.n - ciphertext.multiplier * self.b)) % self.n
         if plaintext / self.n > 0.9:
             return plaintext - self.n
-        if ciphertext.mult_times is 0:
-            return plaintext
-        else:
-            return plaintext / np.power(ciphertext.multiple, ciphertext.mult_times)
+        return plaintext
 
     def mod_inverse(self):
         return gmpy_math.invert(self.a, self.n)
