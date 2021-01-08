@@ -79,6 +79,25 @@ class FixedPointTensor(TensorBase):
     def dot(self, other, target_name=None):
         return self.einsum(other, "ij,ik->jk", target_name)
 
+    def sub_matrix(self, tensor_name: str, row_indices=None, col_indices=None, rm_row_indices=None, rm_col_indices=None):
+        if row_indices is not None:
+            x_indices = list(row_indices)
+        elif row_indices is None and rm_row_indices is not None:
+            x_indices = [i for i in range(self.value.shape[0]) if i not in rm_row_indices]
+        else:
+            raise RuntimeError(f"invalid argument")
+
+        if col_indices is not None:
+            y_indices = list(col_indices)
+        elif row_indices is None and rm_col_indices is not None:
+            y_indices = [i for i in range(self.value.shape[0]) if i not in rm_col_indices]
+        else:
+            raise RuntimeError(f"invalid argument")
+
+        value = self.value[x_indices, :][:, y_indices]
+
+        return FixedPointTensor(value=value, q_field=self.q_field, endec=self.endec, tensor_name=tensor_name)
+
     @classmethod
     def from_source(cls, tensor_name, source, **kwargs):
         spdz = cls.get_spdz()
