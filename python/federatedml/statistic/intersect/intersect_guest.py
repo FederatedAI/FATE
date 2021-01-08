@@ -93,7 +93,21 @@ class RsaIntersectionGuest(RsaIntersect):
         self.rcv_e = [int(public_key["e"]) for public_key in host_public_keys]
         self.rcv_n = [int(public_key["n"]) for public_key in host_public_keys]
 
-        # encrypt & send prvkey encrypted even ids to host
+        # encrypt own odd ids with pub keys from host
+        pubkey_ids_process_list = [self.pubkey_id_process(sid_hash_odd,
+                                                          fraction=self.random_base_fraction,
+                                                          random_bit=self.random_bit,
+                                                          rsa_e=self.rcv_e[i],
+                                                          rsa_n=self.rcv_n[i]) for i in range(len(self.rcv_e))]
+        LOGGER.info(f"Perform pubkey_ids_process")
+        for i, guest_id in enumerate(pubkey_ids_process_list):
+            mask_guest_id = guest_id.mapValues(lambda v: 1)
+            self.transfer_variable.guest_pubkey_ids.remote(mask_guest_id,
+                                                           role=consts.HOST,
+                                                           idx=i)
+            LOGGER.info(f"Remote guest_pubkey_ids to Host {i}")
+
+        # encrypt & send prvkey encrypted guest even ids to host
         prvkey_ids_process_pair_list = []
         for i, host_party_id in enumerate(self.host_party_id_list):
             prvkey_ids_process_pair = self.cal_prvkey_ids_process_pair(sid_hash_even, self.d[i], self.n[i])
@@ -107,19 +121,6 @@ class RsaIntersectionGuest(RsaIntersect):
         host_prvkey_ids_list = self.get_host_prvkey_ids()
         LOGGER.info("Get host_prvkey_ids")
 
-        # encrypt own odd ids with pub keys from host
-        pubkey_ids_process_list = [self.pubkey_id_process(sid_hash_odd,
-                                                          fraction=self.random_base_fraction,
-                                                          random_bit=self.random_bit,
-                                                          rsa_e=self.rcv_e[i],
-                                                          rsa_n=self.rcv_n[i]) for i in range(len(self.rcv_e))]
-        for i, guest_id in enumerate(pubkey_ids_process_list):
-            mask_guest_id = guest_id.mapValues(lambda v: 1)
-            self.transfer_variable.guest_pubkey_ids.remote(mask_guest_id,
-                                                           role=consts.HOST,
-                                                           idx=i)
-            LOGGER.info(f"Remote guest_pubkey_ids to Host {i}")
-
         # get & sign host pub key encrypted even ids
         host_pubkey_ids_list = self.get_host_pubkey_ids()
         guest_sign_host_ids_list = self.sign_host_ids(host_pubkey_ids_list)
@@ -128,7 +129,7 @@ class RsaIntersectionGuest(RsaIntersect):
             self.transfer_variable.guest_sign_host_ids.remote(guest_sign_host_ids_list[i],
                                                               role=consts.HOST,
                                                               idx=i)
-            LOGGER.info(f"Remote host_sign_guest_ids_process to Host {host_party_id}.")
+            LOGGER.info(f"Remote guest_sign_host_ids_process to Host {host_party_id}.")
 
         # Recv host signed odd ids
         # table(guest_pubkey_id, host signed odd ids)
@@ -179,6 +180,7 @@ class RsaIntersectionGuest(RsaIntersect):
                                                           random_bit=self.random_bit,
                                                           rsa_e=self.rcv_e[i],
                                                           rsa_n=self.rcv_n[i]) for i in range(len(self.rcv_e))]
+        LOGGER.info(f"Finish pubkey_ids_process")
 
         for i, guest_id in enumerate(pubkey_ids_process_list):
             mask_guest_id = guest_id.mapValues(lambda v: 1)
@@ -186,9 +188,6 @@ class RsaIntersectionGuest(RsaIntersect):
                                                            role=consts.HOST,
                                                            idx=i)
             LOGGER.info("Remote guest_pubkey_ids to Host {}".format(i))
-
-        host_prvkey_ids_list = self.get_host_prvkey_ids()
-        LOGGER.info("Get host_prvkey_ids")
 
         # Recv signed guest ids
         # table(r^e % n *hash(sid), guest_id_process)
@@ -207,6 +206,9 @@ class RsaIntersectionGuest(RsaIntersect):
 
         # table(hash(guest_ids_process/r), sid))
         sid_host_sign_guest_ids_list = [g.map(lambda k, v: (v[1], v[0])) for g in host_sign_guest_ids_list]
+
+        host_prvkey_ids_list = self.get_host_prvkey_ids()
+        LOGGER.info("Get host_prvkey_ids")
 
         # intersect table(hash(guest_ids_process/r), sid)
         encrypt_intersect_ids_list = [v.join(host_prvkey_ids_list[i], lambda sid, h: sid) for i, v in

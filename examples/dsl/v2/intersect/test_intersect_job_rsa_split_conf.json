@@ -15,7 +15,10 @@
     "job_parameters": {
         "common": {
             "work_mode": 0,
-            "backend": 0
+            "backend": 0,
+            "eggroll_run": {
+                "eggroll.session.processors.per.node": 16
+            }
         }
     },
     "component_parameters": {
@@ -27,7 +30,8 @@
                 "rsa_params": {
                     "hash_method": "sha256",
                     "final_hash_method": "sha256",
-                    "split_calculation": false
+                    "split_calculation": true,
+                    "random_base_fraction": 0.5
                 }
             }
         },

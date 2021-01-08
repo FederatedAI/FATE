@@ -59,10 +59,7 @@ class RsaIntersectionHost(RsaIntersect):
         self.transfer_variable.host_prvkey_ids.remote(prvkey_ids_process,
                                                       role=consts.GUEST,
                                                       idx=0)
-        LOGGER.info("Remote host_ids_process to Guest.")
-
-        # recv guest privkey-encrypted even ids
-        guest_prvkey_ids = self.transfer_variable.guest_prvkey_ids.get(idx=0)
+        LOGGER.info("Remote host_prvkey_ids to Guest.")
 
         # encrypt & send guest pubkey-encrypted odd ids
         pubkey_ids_process = self.pubkey_id_process(sid_hash_even,
@@ -98,6 +95,10 @@ class RsaIntersectionHost(RsaIntersect):
                                                                                              self.final_hash_operator,
                                                                                              self.rsa_params.salt)))
         sid_guest_sign_host_ids = guest_sign_host_ids.map(lambda k, v: (v[1], v[0]))
+
+        # recv guest privkey-encrypted even ids
+        guest_prvkey_ids = self.transfer_variable.guest_prvkey_ids.get(idx=0)
+        LOGGER.info("Get guest_prvkey_ids")
 
         encrypt_intersect_even_ids = sid_guest_sign_host_ids.join(guest_prvkey_ids, lambda sid, h: sid)
 

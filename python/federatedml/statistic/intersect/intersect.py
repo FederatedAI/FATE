@@ -114,7 +114,7 @@ class RsaIntersect(Intersect):
         self.e = None
         self.d = None
         self.n = None
-        self.r = None
+        # self.r = None
         self.transfer_variable = RsaIntersectTransferVariable()
         self.role = None
 
@@ -147,26 +147,27 @@ class RsaIntersect(Intersect):
 
     @staticmethod
     def pubkey_id_process(data, fraction, random_bit, rsa_e, rsa_n):
-        count = data.count()
-        if fraction:
-            count = round(count * max(fraction, consts.MIN_BASE_FRACTION))
+        if fraction and fraction <= consts.MAX_BASE_FRACTION:
+            count = round(data.count() * max(fraction, consts.MIN_BASE_FRACTION))
 
-        def group_kv(kv_iterator):
-            res = []
-            for k, v in kv_iterator:
-                res.append((k % count, [(k, v)]))
-            return res
+            def group_kv(kv_iterator):
+                res = []
+                for k, v in kv_iterator:
+                    res.append((k % count, [(k, v)]))
+                return res
 
-        reduced_pair_group = data.mapReducePartitions(group_kv, RsaIntersect.extend_pair)
+            reduced_pair_group = data.mapReducePartitions(group_kv, RsaIntersect.extend_pair)
 
-        def pubkey_id_generate(k, pair):
-            r = random.SystemRandom().getrandbits(random_bit)
-            r_e = gmpy_math.powmod(r, rsa_e, rsa_n)
-            for hash_sid, v in pair:
-                processed_id = r_e * hash_sid % rsa_n
-                yield processed_id, (v[0], r)
+            def pubkey_id_generate(k, pair):
+                r = random.SystemRandom().getrandbits(random_bit)
+                r_e = gmpy_math.powmod(r, rsa_e, rsa_n)
+                for hash_sid, v in pair:
+                    processed_id = r_e * hash_sid % rsa_n
+                    yield processed_id, (v[0], r)
 
-        return reduced_pair_group.flatMap(pubkey_id_generate)
+            return reduced_pair_group.flatMap(pubkey_id_generate)
+        else:
+            return data.map(lambda k, v: RsaIntersect.pubkey_id_process_per(k, v, random_bit, rsa_e, rsa_n))
 
     @staticmethod
     def generate_rsa_key(rsa_bit=1024):
@@ -187,17 +188,11 @@ class RsaIntersect(Intersect):
                 n.append(n_i)
         return e, d, n
 
-    """
     @staticmethod
-    def pubkey_id_process(hash_sid, v, random_bit, rsa_e, rsa_n, rsa_r=None):
-        # return (r^e % n *hash(sid), (sid, r))
-        if rsa_r:
-            r = rsa_r[hash_sid % len(rsa_r)]
-        else:
-            r = random.SystemRandom().getrandbits(random_bit)
+    def pubkey_id_process_per(hash_sid, v, random_bit, rsa_e, rsa_n):
+        r = random.SystemRandom().getrandbits(random_bit)
         processed_id = gmpy_math.powmod(r, rsa_e, rsa_n) * hash_sid % rsa_n
         return processed_id, (v[0], r)
-    """
 
     @staticmethod
     def prvkey_id_process(hash_sid, v, rsa_d, rsa_n, final_hash_operator, salt):

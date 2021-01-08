@@ -32,6 +32,9 @@
         "rsa_intersect": {
             "script": "./pipeline-intersect-rsa.py"
         },
+        "rsa_intersect_split": {
+            "script": "./pipeline-intersect-rsa-split.py"
+        },
         "rsa_intersect_multi_host": {
             "script": "./pipeline-intersect-multi-rsa.py"
         },

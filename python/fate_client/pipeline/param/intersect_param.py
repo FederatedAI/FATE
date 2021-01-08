@@ -75,7 +75,8 @@ class RSAParam(BaseParam):
 
     split_calculation: bool, if True, Host & Guest split operations for faster performance, recommended on large data set
 
-    random_base_fraction: positive float, if not None, generate specified number of r for encryption and reuse generated r
+    random_base_fraction: positive float, if not None, generate specified number of r for encryption and reuse generated r;
+        note that value greater than 0.99 will be taken as 1, and value less than 0.01 will be rounded up to 0.01
     """
 
     def __init__(self, salt='', hash_method='sha256',  final_hash_method='sha256',
