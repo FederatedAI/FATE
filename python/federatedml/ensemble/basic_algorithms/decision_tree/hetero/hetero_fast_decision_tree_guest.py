@@ -67,8 +67,8 @@ class HeteroFastDecisionTreeGuest(HeteroDecisionTreeGuest):
 
         if tree_action == plan.tree_actions['guest_only']:
             acc_histograms = self.get_local_histograms(dep, self.data_with_node_assignments, self.grad_and_hess,
-                                                       cur_to_split_nodes=cur_to_split_nodes,
-                                                       node_map=node_map, ret='tensor', hist_sub=True)
+                                                       None, cur_to_split_nodes, node_map, ret='tensor',
+                                                       hist_sub=False)
 
             cur_best_split = self.splitter.find_split(acc_histograms, self.valid_features,
                                                       self.data_bin.partitions, self.sitename,

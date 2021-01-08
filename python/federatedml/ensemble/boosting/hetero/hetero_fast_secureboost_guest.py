@@ -61,19 +61,25 @@ class HeteroFastSecureBoostingTreeGuest(HeteroSecureBoostingTreeGuest):
         g_h = self.get_grad_and_hess(self.grad_and_hess, booster_dim)
 
         tree = HeteroFastDecisionTreeGuest(tree_param=self.tree_param)
-        tree.set_input_data(self.data_bin, self.bin_split_points, self.bin_sparse_points)
-        tree.set_grad_and_hess(g_h)
-        tree.set_encrypter(self.encrypter)
-        tree.set_encrypted_mode_calculator(self.encrypted_calculator)
-        tree.set_valid_features(self.sample_valid_features())
-        tree.set_flowid(self.generate_flowid(epoch_idx, booster_dim))
-        tree.set_host_party_idlist(self.component_properties.host_party_idlist)
-        tree.set_runtime_idx(self.component_properties.local_partyid)
+        tree.init(flowid=self.generate_flowid(epoch_idx, booster_dim),
+                  data_bin=self.data_bin, bin_split_points=self.bin_split_points, bin_sparse_points=self.bin_sparse_points,
+                  grad_and_hess=g_h,
+                  encrypter=self.encrypter, encrypted_mode_calculator=self.encrypted_calculator,
+                  valid_features=self.sample_valid_features(),
+                  host_party_list=self.component_properties.host_party_idlist,
+                  runtime_idx=self.component_properties.local_partyid,
+                  goss_subsample=self.enable_goss,
+                  top_rate=self.top_rate, other_rate=self.other_rate,
+                  complete_secure=True if (self.cur_epoch_idx == 0 and self.complete_secure) else False,
+                  cipher_compressing=self.round_decimal is not None,
+                  round_decimal=self.round_decimal,
+                  encrypt_key_length=self.encrypt_param.key_length,
+                  max_sample_weight=self.max_sample_weight
+                  )
         tree.set_tree_work_mode(tree_type, target_host_id)
         tree.set_layered_depth(self.guest_depth, self.host_depth)
         tree.fit()
         self.update_feature_importance(tree.get_feature_importance())
-        # tree.print_leafs()
         return tree
 
     @staticmethod

@@ -346,11 +346,9 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
     def compute_best_splits(self, cur_to_split_nodes, node_map, dep, batch_idx):
 
-        leaf_sample_count = self.count_node_sample_num(self.inst2node_idx, node_map)
-        LOGGER.debug('sample count is {}'.format(leaf_sample_count))
         acc_histograms = self.get_local_histograms(dep, self.data_with_node_assignments, self.grad_and_hess,
-                                                   leaf_sample_count, cur_to_split_nodes, node_map, ret='tensor',
-                                                   hist_sub=True)
+                                                   None, cur_to_split_nodes, node_map, ret='tensor',
+                                                   hist_sub=False)
 
         best_split_info_guest = self.splitter.find_split(acc_histograms, self.valid_features,
                                                          self.data_bin.partitions, self.sitename,
@@ -362,19 +360,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
         self.federated_find_split(dep, batch_idx)
         host_split_info = self.sync_final_split_host(dep, batch_idx)
-
-        # from federatedml.secureprotol.fate_paillier import PaillierEncryptedNumber
-        # new_host_split = []
-        # for i in host_split_info[0]:
-        #     s = copy.deepcopy(i)
-        #     if type(s.gain) == PaillierEncryptedNumber:
-        #         s.gain = self.decrypt(s.gain)
-        #     if type(s.sum_grad) == PaillierEncryptedNumber:
-        #         s.sum_grad = self.decrypt(s.sum_grad)
-        #     if type(s.sum_hess) == PaillierEncryptedNumber:
-        #         s.sum_hess = self.decrypt(s.sum_hess)
-        #     new_host_split.append(s)
-        # LOGGER.debug('compute 1 rs {}'.format(new_host_split))
 
         # compare host best split points with guest split points
         cur_best_split = self.merge_splitinfo(splitinfo_guest=best_split_info_guest,

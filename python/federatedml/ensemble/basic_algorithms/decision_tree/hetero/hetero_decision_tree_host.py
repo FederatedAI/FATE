@@ -512,11 +512,9 @@ class HeteroDecisionTreeHost(DecisionTree):
             if self.run_sparse_opt:
                 data = self.data_bin_dense_with_position
 
-            leaf_sample_count = self.count_node_sample_num(self.inst2node_idx, node_map)
-            LOGGER.debug('sample count is {}'.format(leaf_sample_count))
             acc_histograms = self.get_local_histograms(dep, data, self.grad_and_hess,
-                                                       leaf_sample_count, cur_to_split_nodes, node_map, ret='tensor',
-                                                       hist_sub=True)
+                                                       None, cur_to_split_nodes, node_map, ret='tb',
+                                                       hist_sub=False)
 
             splitinfo_host, encrypted_splitinfo_host = self.splitter.find_split_host(histograms=acc_histograms,
                                                                                      node_map=node_map,

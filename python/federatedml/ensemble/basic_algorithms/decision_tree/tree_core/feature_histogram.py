@@ -164,7 +164,7 @@ class FeatureHistogram(object):
 
     def compute_histogram(self, dep, data_bin, grad_and_hess, bin_split_points, bin_sparse_points,
                           valid_features, node_map,
-                          leaf_sample_count,
+                          node_sample_count,
                           use_missing=False,
                           zero_as_missing=False,
                           ret="tensor",
@@ -183,7 +183,7 @@ class FeatureHistogram(object):
             # if run histogram subtraction, need to trim node map, and get parent/sibling node info for computation
             LOGGER.info('get histogram using histogram subtraction')
             self._update_node_info(cur_to_split_nodes)
-            to_compute_node_map, sibling_node_id_map = self._trim_node_map(node_map, leaf_sample_count)
+            to_compute_node_map, sibling_node_id_map = self._trim_node_map(node_map, node_sample_count)
             parent_node_id_map = self._get_parent_nid_map()
             LOGGER.debug('histogram subtraction at dep {}, new node map is {}, sibling node map is {}, '
                          'cur to split node info is {}, parent node id map is {}'.

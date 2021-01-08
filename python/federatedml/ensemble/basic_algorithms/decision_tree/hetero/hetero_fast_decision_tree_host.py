@@ -98,9 +98,9 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
             if self.run_sparse_opt:
                 data = self.data_bin_dense_with_position
 
-            acc_histograms = self.get_local_histograms(dep, data, self.grad_and_hess, cur_to_split_nodes,
-                                                       node_map, ret='tb', sparse_opt=self.run_sparse_opt,
-                                                       hist_sub=False, bin_num=self.bin_num)
+            acc_histograms = self.get_local_histograms(dep, data, self.grad_and_hess,
+                                                       None, cur_to_split_nodes, node_map, ret='tb',
+                                                       hist_sub=False)
 
             splitinfo_host, encrypted_splitinfo_host = self.splitter.find_split_host(histograms=acc_histograms,
                                                                                      node_map=node_map,

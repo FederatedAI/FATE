@@ -67,24 +67,25 @@ class HeteroFastSecureBoostingTreeHost(HeteroSecureBoostingTreeHost):
         self.check_host_number(tree_type)
         self.check_run_sp_opt()
         tree = HeteroFastDecisionTreeHost(tree_param=self.tree_param)
-        tree.set_input_data(data_bin=self.data_bin, bin_split_points=self.bin_split_points, bin_sparse_points=
-                            self.bin_sparse_points)
-        tree.set_valid_features(self.sample_valid_features())
-        tree.set_flowid(self.generate_flowid(epoch_idx, booster_dim))
-        tree.set_runtime_idx(self.component_properties.local_partyid)
-        tree.set_host_party_idlist(self.component_properties.host_party_idlist)
+        tree.init(flowid=self.generate_flowid(epoch_idx, booster_dim),
+                  valid_features=self.sample_valid_features(),
+                  data_bin=self.data_bin, bin_split_points=self.bin_split_points,
+                  bin_sparse_points=self.bin_sparse_points,
+                  run_sprase_opt=self.run_sparse_opt,
+                  data_bin_dense=self.data_bin_dense,
+                  runtime_idx=self.component_properties.local_partyid,
+                  goss_subsample=self.enable_goss,
+                  bin_num=self.bin_num,
+                  complete_secure=True if (self.complete_secure and epoch_idx == 0) else False,
+                  cipher_compressing=self.round_decimal is not None,
+                  round_decimal=self.round_decimal
+                  )
         tree.set_tree_work_mode(tree_type, target_host_id)
         tree.set_layered_depth(self.guest_depth, self.host_depth)
         tree.set_self_host_id(self.component_properties.local_partyid)
-
-        if self.run_sparse_opt:
-            tree.activate_sparse_hist_opt()
-            tree.set_dense_data_for_sparse_opt(data_bin_dense=self.data_bin_dense, bin_num=self.bin_num)
-
         LOGGER.debug('tree work mode is {}'.format(tree_type))
         tree.fit()
         self.update_feature_importance(tree.get_feature_importance())
-        # tree.print_leafs()
         return tree
 
     def load_booster(self, model_meta, model_param, epoch_idx, booster_idx):

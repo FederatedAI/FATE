@@ -110,6 +110,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
                   valid_features=self.sample_valid_features(),
                   data_bin=self.data_bin, bin_split_points=self.bin_split_points,
                   bin_sparse_points=self.bin_sparse_points,
+                  run_sprase_opt=self.run_sparse_opt,
                   data_bin_dense=self.data_bin_dense,
                   runtime_idx=self.component_properties.local_partyid,
                   goss_subsample=self.enable_goss,
@@ -120,7 +121,6 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
                   )
 
         tree.fit()
-        
         return tree
 
     def load_booster(self, model_meta, model_param, epoch_idx, booster_idx):
