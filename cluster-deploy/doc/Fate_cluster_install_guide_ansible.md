@@ -302,8 +302,8 @@ ls -lrt /data/projects/common/supervisord/supervisord.d/fate-*.conf
 ```
 #注意：URL链接有换行，拷贝的时候注意整理成一行
 cd /data/projects/
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/ansible_nfate_1.5.0_release-1.0.0.tar.gz
-tar xzf ansible_nfate_1.5.0_release-1.0.0.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/ansible_nfate_1.5.1_release-1.0.0.tar.gz
+tar xzf ansible_nfate_1.5.1_release-1.0.0.tar.gz
 ```
 
 ### 4.4 配置文件修改和示例
@@ -406,7 +406,7 @@ host:
       - 192.168.0.1  
       port: 9370 ---grpc端口
       secure_port: 9371 ---grpcs端口
-      pool_size: 600 ---线程池大小
+      pool_size: 600 ---线程池大小，推荐设为：min(1000 + len(party_ids) * 200, 5000)
       max_memory:    ---rollsite进程JVM内存参数，默认是物理内存的1/4，可根据实际情况设置,如12G，如果是rollsite专用的机器，配置成物理内存的75%。
       server_secure: False ---作为服务端，开启安全证书验证，不使用安全证书默认即可
       client_secure: False ---作为客户端，使用证书发起安全请求，不使用安全证书默认即可
@@ -486,7 +486,7 @@ guest:
       - 192.168.0.2
       port: 9370 ---grpc端口
       secure_port: 9371 ---grpcs端口
-      pool_size: 600 ---线程池大小
+      pool_size: 600 ---线程池大小，推荐设为：min(1000 + len(party_ids) * 200, 5000)
       max_memory:    ---rollsite进程JVM内存参数，默认是物理内存的1/4，可根据实际情况设置,如12G，如果是rollsite专用的机器，配置成物理内存的75%。
       server_secure: False ---作为服务端，开启安全证书验证，不使用安全证书默认即可
       client_secure: False ---作为客户端，使用证书发起安全请求，不使用安全证书默认即可
@@ -564,7 +564,7 @@ exchange:
     - 192.168.0.88
     port: 9370
     secure_port: 9371 ---grpcs端口
-    pool_size: 600
+    pool_size: 600，推荐设为：min(1000 + len(party_ids) * 200, 5000)
     max_memory:    ---rollsite进程JVM内存参数，默认是物理内存的1/4，可根据实际情况设置,如12G，如果是rollsite专用的机器，配置成物理内存的75%。
     server_secure: False ---作为服务端，开启安全证书验证，不使用安全证书默认即可
     client_secure: False ---作为客户端，使用证书发起安全请求，不使用安全证书默认即可
@@ -737,6 +737,9 @@ python upload_default_data.py -m 1
 ```
 source /data/projects/fate/bin/init_env.sh
 cd /data/projects/fate/examples/min_test_task/
+#单边测试
+python run_task.py -m 1 -gid 9999 -hid 9999 -aid 9999 -f fast
+#两边测试
 python run_task.py -m 1 -gid 9999 -hid 10000 -aid 10000 -f fast
 ```
 
@@ -842,9 +845,27 @@ netstat -tlnp | grep 8080
 | /data/logs                        | 日志路径                       |
 | /data/projects/common/supervisord | 进程管理工具supervisor安装路径 |
 
-# 7. 附录
+# 7. 卸载
 
-## 7.1 Eggroll参数调优
+#### 7.1 概述
+
+支持所有服务服务的卸载以及单个服务的卸载。
+
+#### 7.2 执行卸载
+
+```
+cd /data/projects/ansible-nfate-1.*
+sh ./uninstall.sh prod all
+
+#卸载命令说明
+sh ./uninstall.sh $arg1 $arg2
+- $arg1参数同4.4.1步骤init执行的参数，为test|prod。
+- $arg2参数为选择的服务，可选参数为（all|mysql|eggroll|fate_flow|fateboard），all代表卸载所有服务。
+```
+
+# 8. 附录
+
+## 8.1 Eggroll参数调优
 
 配置文件路径：/data/projects/fate/eggroll/conf/eggroll.properties
 
