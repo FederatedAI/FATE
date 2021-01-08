@@ -59,7 +59,7 @@ def main(config="../../config.yaml", namespace=""):
     # define DataIO components
     dataio_0 = DataIO(name="dataio_0", with_label=True, output_format="dense")  # start component numbering at 0
 
-    homo_binning_0 = HomoFeatureBinning(name='homo_binning_0', sample_bins=1000)
+    homo_binning_0 = HomoFeatureBinning(name='homo_binning_0', sample_bins=1000, method="recursive_query")
 
     # add components to pipeline, in order of task execution
     pipeline.add_component(reader_0)

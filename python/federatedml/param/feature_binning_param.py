@@ -244,7 +244,7 @@ class HomoFeatureBinningParam(FeatureBinningParam):
                  transform_param=TransformParam(),
                  local_only=False, category_indexes=None, category_names=None,
                  encrypt_param=EncryptParam(),
-                 need_run=True, skip_static=False):
+                 need_run=True, skip_static=False, max_iter=100):
         super(HomoFeatureBinningParam, self).__init__(method=method, compress_thres=compress_thres,
                                                       head_size=head_size, error=error,
                                                       bin_num=bin_num, bin_indexes=bin_indexes,
@@ -254,7 +254,6 @@ class HomoFeatureBinningParam(FeatureBinningParam):
                                                       encrypt_param=encrypt_param, need_run=need_run,
                                                       skip_static=skip_static)
         self.sample_bins = sample_bins
-
         self.local_only = local_only
         self.adjustment_factor = adjustment_factor
         self.bin_names = bin_names
@@ -265,6 +264,7 @@ class HomoFeatureBinningParam(FeatureBinningParam):
         self.head_size = head_size
         self.compress_thres = compress_thres
         self.method = method
+        self.max_iter = max_iter
 
     def check(self):
         descr = "homo binning param's"

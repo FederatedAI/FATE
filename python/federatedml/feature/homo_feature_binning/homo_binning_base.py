@@ -20,10 +20,68 @@ from federatedml.util import LOGGER
 
 from federatedml.feature.binning.base_binning import BaseBinning
 from federatedml.framework import weights
+from fate_arch.session import computing_session as session
 from federatedml.framework.homo.blocks import secure_sum_aggregator
 from federatedml.param.feature_binning_param import HomoFeatureBinningParam
 from federatedml.statistic.data_statistics import MultivariateStatisticalSummary
 from federatedml.transfer_variable.transfer_class.homo_binning_transfer_variable import HomoBinningTransferVariable
+from federatedml.framework.weights import Weights
+
+
+class SplitPointNode(object):
+    def __init__(self, value, min_value, max_value, aim_rank, allow_error_rank, last_rank=-1):
+        self.value = value
+        self.min_value = min_value
+        self.max_value = max_value
+        self.aim_rank = aim_rank
+        self.allow_error_rank = allow_error_rank
+        self.last_rank = last_rank
+        self.fixed = False
+
+    def create_right_new(self):
+        value = (self.value + self.max_value) / 2
+        min_value = self.value
+        return SplitPointNode(value, min_value, self.max_value, self.aim_rank, self.allow_error_rank)
+
+    def create_left_new(self):
+        value = (self.value + self.min_value) / 2
+        max_value = self.max_value
+        return SplitPointNode(value, self.min_value, max_value, self.aim_rank, self.allow_error_rank)
+
+
+class RankArray(object):
+    def __init__(self, rank_array, error_rank, last_rank_array=None):
+        self.rank_array = rank_array
+        self.last_rank_array = last_rank_array
+        self.error_rank = error_rank
+        self.all_fix = False
+        self.fixed_array = np.zeros(len(self.rank_array), dtype=bool)
+        self._compare()
+
+    def _compare(self):
+        if self.last_rank_array is None:
+            return
+        else:
+            self.fixed_array = abs(self.rank_array - self.last_rank_array) < self.error_rank
+            assert isinstance(self.fixed_array, np.ndarray)
+            if (self.fixed_array == True).all():
+                self.all_fix = True
+
+    def __iadd__(self, other: 'RankArray'):
+        for idx, is_fixed in enumerate(self.fixed_array):
+            if not is_fixed:
+                self.rank_array[idx] += other.rank_array[idx]
+        self._compare()
+        return self
+
+    def __add__(self, other: 'RankArray'):
+        res_array = []
+        for idx, is_fixed in enumerate(self.fixed_array):
+            if not is_fixed:
+                res_array.append(self.rank_array[idx] + other.rank_array[idx])
+            else:
+                res_array.append(self.rank_array[idx])
+        return RankArray(np.array(res_array), self.error_rank, self.last_rank_array)
 
 
 class Server(BaseBinning):
@@ -62,8 +120,8 @@ class Server(BaseBinning):
         return min_values, max_values
 
     def query_values(self):
-        rank_weight = self.aggregator.sum_model(suffix=(self.suffix, 'rank'))
-        self.aggregator.send_aggregated_model(rank_weight, suffix=(self.suffix, 'rank'))
+        rank_weight = self.aggregator.aggregate_tables(suffix=(self.suffix, 'rank'))
+        self.aggregator.send_aggregated_tables(rank_weight, suffix=(self.suffix, 'rank'))
 
 
 class Client(BaseBinning):
@@ -74,6 +132,7 @@ class Client(BaseBinning):
         self.transfer_variable = HomoBinningTransferVariable()
         self.max_values, self.min_values = None, None
         self.suffix = None
+        self.total_count = 0
 
     def set_suffix(self, suffix):
         self.suffix = suffix
@@ -115,30 +174,47 @@ class Client(BaseBinning):
                                                           suffix=(self.suffix, "min-max"))
         self.max_values, self.min_values = self.transfer_variable.global_static_values.get(
                                         idx=0, suffix=(self.suffix, "min-max"))
+        LOGGER.debug(f"global_max_values: {self.max_values}, min_value: {self.min_values}")
         return self.max_values, self.min_values
+
+    def init_query_points(self, partitions, split_num, error_rank=1, need_first=True):
+        query_points = []
+        for idx, col_name in enumerate(self.bin_inner_param.bin_names):
+            max_value = self.max_values[idx]
+            min_value = self.min_values[idx]
+            sps = np.linspace(min_value, max_value, split_num)
+            aim_ranks = [np.floor(x * self.total_count)
+                         for x in np.linspace(0, 1, split_num)]
+            if not need_first:
+                sps = sps[1:]
+                aim_ranks = aim_ranks[1:]
+            split_point_array = [SplitPointNode(sps[i], min_value, max_value, aim_ranks[i], error_rank)
+                                 for i in range(len(sps))]
+            query_points.append((col_name, split_point_array))
+        query_points_table = session.parallelize(query_points,
+                                                 include_key=True,
+                                                 partition=partitions)
+        return query_points_table
 
     def query_values(self, summary_table, query_points):
         LOGGER.debug(f"In query_values, query_points: {query_points}")
-        f = functools.partial(self._query_table,
-                              query_points=query_points)
-        local_ranks = dict(summary_table.map(f).collect())
-        rank_arr = []
-        for col_name in self.bin_inner_param.bin_names:
-            LOGGER.debug(f"local_ranks: {local_ranks[col_name]}")
-            rank_arr.append(local_ranks[col_name])
-        rank_weight = weights.NumpyWeights(np.array(rank_arr))
-        self.aggregator.send_model(rank_weight, suffix=(self.suffix, 'rank'))
-        global_rank_weights = self.aggregator.get_aggregated_model(suffix=(self.suffix, 'rank')).unboxed
-        res = {}
-        for idx, col_name in enumerate(self.bin_inner_param.bin_names):
-            if col_name == 'x0':
-                LOGGER.debug(f"global_ranks: {global_rank_weights[idx]}")
-            res[col_name] = global_rank_weights[idx]
-        return res
+
+        local_ranks = summary_table.join(query_points, self._query_table)
+
+        self.aggregator.send_table(local_ranks, suffix=(self.suffix, 'rank'))
+        global_rank = self.aggregator.get_aggregated_table(suffix=(self.suffix, 'rank'))
+        global_rank = global_rank.mapValues(lambda x: np.array(x, dtype=int))
+        return global_rank
 
     @staticmethod
-    def _query_table(col_name, summary, query_points):
-        queries = query_points.get(col_name)
+    def _query_table(summary, query_points):
+        queries = [x.value for x in query_points]
+        LOGGER.debug(f"in query_table, queries: {queries}")
+
+        original_idx = np.argsort(np.argsort(queries))
+        queries = np.sort(queries)
         ranks = summary.query_value_list(queries)
-        return col_name, ranks
+        ranks = np.array(ranks)[original_idx]
+        LOGGER.debug(f"in query_table, ranks: {ranks}")
+        return np.array(ranks, dtype=int)
 

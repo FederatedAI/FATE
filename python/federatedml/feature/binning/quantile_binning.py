@@ -17,7 +17,7 @@
 #  limitations under the License.
 
 import functools
-import time
+# import time
 import uuid
 
 from federatedml.feature.binning.base_binning import BaseBinning
@@ -100,10 +100,8 @@ class QuantileBinning(BaseBinning):
                                   cols_dict=self.bin_inner_param.bin_cols_map,
                                   header=self.header,
                                   is_sparse=is_sparse)
-            t0 = time.time()
             # summary_dict_table = data_instances.mapReducePartitions(f, self.copy_merge)
             summary_dict_table = data_instances.mapReducePartitions(f, lambda s1, s2: s1.merge(s2))
-            LOGGER.debug(f"mapReducePartition took: {time.time() - t0}")
             # summary_dict = dict(summary_dict.collect())
 
             if is_sparse:
@@ -136,7 +134,6 @@ class QuantileBinning(BaseBinning):
 
     @staticmethod
     def feature_summary(data_iter, params, cols_dict, abnormal_list, header, is_sparse):
-        t0 = time.time()
         summary_dict = {}
 
         summary_param = {'compress_thres': params.compress_thres,
@@ -148,7 +145,6 @@ class QuantileBinning(BaseBinning):
             quantile_summaries = quantile_summary_factory(is_sparse=is_sparse, param_dict=summary_param)
             summary_dict[col_name] = quantile_summaries
         _ = str(uuid.uuid1())
-        t1 = time.time()
         for _, instant in data_iter:
             if not is_sparse:
                 if type(instant).__name__ == 'Instance':
@@ -166,15 +162,12 @@ class QuantileBinning(BaseBinning):
                         continue
                     summary = summary_dict[col_name]
                     summary.insert(col_value)
-        t2 = time.time()
         result = []
         for features_name, summary_obj in summary_dict.items():
             summary_obj.compress()
             # result.append(((_, features_name), summary_obj))
             result.append((features_name, summary_obj))
-        t3 = time.time()
-        LOGGER.debug(f"In feature_summary took: t1: {t1 - t0}, for loop: {t2 - t1}, compress: {t3 - t2},"
-                     f"all: {t3 - t0}")
+
         return result
 
     def query_quantile_point(self, query_points, col_names=None):

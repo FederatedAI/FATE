@@ -26,6 +26,14 @@
         "guest",
         "host"
       ]
+    },
+    "is_converge": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "arbiter"
+      ]
     }
   }
 }

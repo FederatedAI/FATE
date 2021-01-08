@@ -36,3 +36,4 @@ class HomoBinningTransferVariable(BaseTransferVariables):
                                                           dst=['guest', 'host'])
         self.query_array = self._create_variable(name='query_array', src=["arbiter"],
                                                  dst=['guest', 'host'])
+        self.is_converge = self._create_variable(name='is_converge', src=['guest'], dst=['arbiter'])

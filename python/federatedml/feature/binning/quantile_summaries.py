@@ -223,7 +223,7 @@ class QuantileSummaries(object):
         idx = 0
         sample_idx = 0
         from federatedml.util import LOGGER
-        LOGGER.debug(f"sampled: {[x.value for x in self.sampled]}")
+        # LOGGER.debug(f"sampled: {[x.value for x in self.sampled]}")
         # for sample in self.sampled:
         while sample_idx < len(self.sampled):
             v = values[idx]
@@ -237,8 +237,8 @@ class QuantileSummaries(object):
                 idx += 1
                 if idx >= len(values):
                     break
-                LOGGER.debug(f"value: {v}, sample_value: {sample.value}, min_rank: {min_rank}"
-                             f"max_rank: {max_rank}, res: {(min_rank + max_rank) // 2}")
+                # LOGGER.debug(f"value: {v}, sample_value: {sample.value}, min_rank: {min_rank}"
+                #              f"max_rank: {max_rank}, res: {(min_rank + max_rank) // 2}")
 
         while idx < len(values):
             res.append((min_rank + max_rank) // 2)

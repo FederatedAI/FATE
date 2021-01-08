@@ -15,7 +15,7 @@
 
 from federatedml.model_base import ModelBase
 from federatedml.param.feature_binning_param import HomoFeatureBinningParam
-from federatedml.feature.homo_feature_binning import virtual_summary_binning
+from federatedml.feature.homo_feature_binning import virtual_summary_binning, recursive_query_binning
 from federatedml.util import consts
 from federatedml.feature.hetero_feature_binning.base_feature_binning import BaseHeteroFeatureBinning
 from federatedml.transfer_variable.transfer_class.homo_binning_transfer_variable import HomoBinningTransferVariable
@@ -32,8 +32,8 @@ class HomoBinningArbiter(BaseHeteroFeatureBinning):
         self.model_param = model_param
         if self.model_param.method == consts.VIRTUAL_SUMMARY:
             self.binning_obj = virtual_summary_binning.Server(self.model_param)
-        # elif self.model_param.method == consts.RECURSIVE_QUERY:
-        #     self.binning_obj = recursive_query_binning.Server(self.model_param)
+        elif self.model_param.method == consts.RECURSIVE_QUERY:
+            self.binning_obj = recursive_query_binning.Server(self.model_param)
         else:
             raise ValueError(f"Method: {self.model_param.method} cannot be recognized")
 
@@ -53,8 +53,9 @@ class HomoBinningClient(BaseHeteroFeatureBinning):
         self.model_param = model_param
         if self.model_param.method == consts.VIRTUAL_SUMMARY:
             self.binning_obj = virtual_summary_binning.Client(self.model_param)
-        # elif self.model_param.method == consts.RECURSIVE_QUERY:
-        #     self.binning_obj = recursive_query_binning.Client(self.model_param)
+        elif self.model_param.method == consts.RECURSIVE_QUERY:
+            self.binning_obj = recursive_query_binning.Client(role=self.component_properties.role,
+                                                              params=self.model_param)
         else:
             raise ValueError(f"Method: {self.model_param.method} cannot be recognized")
 
@@ -64,7 +65,9 @@ class HomoBinningClient(BaseHeteroFeatureBinning):
         self.binning_obj.set_bin_inner_param(self.bin_inner_param)
         self.binning_obj.set_transfer_variable(self.transfer_variable)
         split_points = self.binning_obj.fit_split_points(data_instances)
+        data_out = self.transform(data_instances)
         summary = {}
         for k, v in split_points.items():
             summary[k] = list(v)
         self.set_summary({"split_points": summary})
+        return data_out
