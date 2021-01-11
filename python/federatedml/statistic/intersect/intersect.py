@@ -129,18 +129,6 @@ class RsaIntersect(Intersect):
         self.final_hash_operator = Hash(self.rsa_params.final_hash_method, False)
         self.salt = self.rsa_params.salt
 
-    """
-    @staticmethod
-    def generate_r_base(random_bit, count, fraction):
-        if fraction:
-            r_count = round(count * fraction)
-            if r_count >= count:
-                r_count = count
-        else:
-            r_count = count
-        return [random.SystemRandom().getrandbits(random_bit) for _ in range(r_count)]
-    """
-
     @staticmethod
     def extend_pair(v1, v2):
         return v1 + v2

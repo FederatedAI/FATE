@@ -129,7 +129,7 @@ class RsaIntersectionGuest(RsaIntersect):
             self.transfer_variable.guest_sign_host_ids.remote(guest_sign_host_ids_list[i],
                                                               role=consts.HOST,
                                                               idx=i)
-            LOGGER.info(f"Remote guest_sign_host_ids_process to Host {host_party_id}.")
+            LOGGER.info(f"Remote guest_sign_host_ids to Host {host_party_id}.")
 
         # Recv host signed odd ids
         # table(guest_pubkey_id, host signed odd ids)

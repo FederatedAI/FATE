@@ -87,6 +87,7 @@ class RsaIntersectionHost(RsaIntersect):
 
         # receive guest-signed host even ids
         recv_guest_sign_host_ids = self.transfer_variable.guest_sign_host_ids.get(idx=0)
+        LOGGER.info(f"Get guest_sign_host_ids from Guest.")
         guest_sign_host_ids = pubkey_ids_process.join(recv_guest_sign_host_ids,
                                                       lambda g, r: (g[0],
                                                                     RsaIntersectionHost.hash(gmpy2.divm(int(r),
