@@ -22,7 +22,7 @@ class CipherPackage(ABC):
 
 class NormalCipherPackage(CipherPackage):
 
-    def __init__(self, padding_length, max_capacity, cipher_type=consts.PAILLIER, round_decimal=7):
+    def __init__(self, padding_length, max_capacity, round_decimal=7):
 
         self._round_decimal = round_decimal
         self._padding_num = 2 ** padding_length
@@ -30,7 +30,6 @@ class NormalCipherPackage(CipherPackage):
         self._cipher_text = None
         self._capacity_left = max_capacity
         self._has_space = True
-        self._cipher_type = cipher_type
 
     def add(self, cipher_text):
 

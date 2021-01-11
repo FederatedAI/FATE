@@ -21,6 +21,8 @@
 # DecisionTree Base Class
 # =============================================================================
 import abc
+from abc import ABC
+
 import numpy as np
 import functools
 from federatedml.ensemble.basic_algorithms.algorithm_prototype import BasicAlgorithms
@@ -33,7 +35,7 @@ from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.feature_histo
 from typing import List
 
 
-class DecisionTree(BasicAlgorithms):
+class DecisionTree(BasicAlgorithms, ABC):
 
     def __init__(self, tree_param):
 
@@ -182,7 +184,6 @@ class DecisionTree(BasicAlgorithms):
         """
         count sample number in every leaf node
         """
-        LOGGER.debug('node map is {}'.format(node_map))
         count_func = functools.partial(self.sample_count_map_func, node_map=node_map)
         rs = inst2node_idx.applyPartitions(count_func).reduce(self.sample_count_reduce_func)
         return rs

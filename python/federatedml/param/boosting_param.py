@@ -482,9 +482,22 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         self.check_decimal_float(self.top_rate, 'top rate')
         self.check_decimal_float(self.other_rate, 'other rate')
 
-        self.check_positive_integer(self.cipher_compress_error, 'cipher_compress_error')
-        if self.cipher_compress_error > 15:
-            raise ValueError('cipher compress error exceeds max value 15.')
+        if self.cipher_compress_error is not None:
+            self.check_positive_integer(self.cipher_compress_error, 'cipher_compress_error')
+            if self.cipher_compress_error > 15:
+                raise ValueError('cipher compress error exceeds max value 15.')
+
+            # safety check
+            if self.encrypt_param.method != consts.PAILLIER:
+                LOGGER.warning('cipher compressing only supports Paillier, however, encrypt method is {}, '
+                               'this function will be disabled automatically'.
+                               format(self.encrypt_param.method))
+                self.cipher_compress_error = None
+
+            if self.task_type != consts.CLASSIFICATION:
+                LOGGER.warning('cipher compressing only supports classification tasks'
+                               'this function will be disabled automatically')
+                self.cipher_compress_error = None
 
         return True
 

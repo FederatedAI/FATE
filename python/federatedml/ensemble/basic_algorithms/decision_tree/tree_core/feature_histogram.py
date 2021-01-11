@@ -41,6 +41,7 @@ LOGGER = log.getLogger()
 
 
 class HistogramBag(object):
+
     """
     holds histograms
     """
@@ -220,7 +221,7 @@ class FeatureHistogram(object):
             LOGGER.debug('maps are {} {}'.format(parent_node_id_map, sibling_node_id_map))
 
             if not sparse_optimization:
-                LOGGER.debug('computing histogram table using normal setting')
+                LOGGER.info('computing histogram table using normal mode')
                 histogram_table = self.calculate_histogram(data_bin, grad_and_hess,
                                                            bin_split_points, bin_sparse_points,
                                                            valid_features, to_compute_node_map,
@@ -229,7 +230,7 @@ class FeatureHistogram(object):
                                                            parent_node_id_map=parent_node_id_map,
                                                            sibling_node_id_map=sibling_node_id_map)
             else:  # go to sparse optimization codes
-                LOGGER.debug('computing histogram table using sparse optimization')
+                LOGGER.info('computing histogram table using sparse optimization')
                 histogram_table = self.calculate_histogram_sp_opt(data_bin=data_bin,
                                                                   grad_and_hess=grad_and_hess,
                                                                   bin_split_points=bin_split_points,
@@ -282,7 +283,7 @@ class FeatureHistogram(object):
         ret: return type, if 'tb', return histograms stored in DTable
         """
 
-        LOGGER.info("bin_shape is {}, node num is {}".format(bin_split_points.shape, len(node_map)))
+        LOGGER.debug("bin_shape is {}, node num is {}".format(bin_split_points.shape, len(node_map)))
 
         batch_histogram_cal = functools.partial(
             FeatureHistogram._batch_calculate_histogram,
@@ -450,7 +451,7 @@ class FeatureHistogram(object):
             hess.append(h)
             data_record += 1
 
-        LOGGER.info("begin batch calculate histogram, data count is {}".format(data_record))
+        LOGGER.debug("begin batch calculate histogram, data count is {}".format(data_record))
         node_num = len(node_map)
 
         missing_bin = 1 if use_missing else 0
@@ -546,7 +547,7 @@ class FeatureHistogram(object):
                                    bin_num, node_map, valid_features, use_missing, zero_as_missing,
                                    parent_node_id_map=None, sibling_node_id_map=None):
 
-        LOGGER.info("bin_shape is {}, node num is {}".format(bin_split_points.shape, len(node_map)))
+        LOGGER.debug("bin_shape is {}, node num is {}".format(bin_split_points.shape, len(node_map)))
         # Detect length of cipher
         g, h = grad_and_hess.first()[1]
         cipher_length = len(str(g.cipher))
@@ -702,7 +703,7 @@ class FeatureHistogram(object):
                 hess_phrase_dict[nid][pid].append(hess_cipher_phase)
 
             data_record += 1
-        LOGGER.info("begin batch calculate histogram, data count is {}".format(data_record))
+        LOGGER.debug("begin batch calculate histogram, data count is {}".format(data_record))
 
         # calculate histogram matrix
         ret = []

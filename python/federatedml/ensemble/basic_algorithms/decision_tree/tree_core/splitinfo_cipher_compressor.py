@@ -16,8 +16,8 @@ def get_g_h_info(task_type, max_sample_weight):
 
 class SplitInfoPackage(NormalCipherPackage):
 
-    def __init__(self, max_float, key_length, cipher_type=consts.PAILLIER, round_decimal=7):
-        super(SplitInfoPackage, self).__init__(max_float, key_length, cipher_type, round_decimal)
+    def __init__(self, max_float, key_length, round_decimal):
+        super(SplitInfoPackage, self).__init__(max_float, key_length, round_decimal)
         self._split_info_without_gh = []
         self._cur_splitinfo_contains = 0
 
@@ -67,9 +67,6 @@ class GuestGradHessEncoder(object):
         decimal_keeping_num = (10**self.round_decimal)
         g_h_table = g_h_table.mapValues(lambda x: (int((x[0]+g_offset)*decimal_keeping_num),
                                                    int((x[1]+h_offset)*decimal_keeping_num)))
-        LOGGER.debug('offsets g:{} h:{} are added to origin g/h and are multiplied by {}'.format(self.g_offset,
-                                                                                                self.h_offset,
-                                                                                                decimal_keeping_num))
         return self.encrypt_mode_calculator.encrypt(g_h_table)
 
 
@@ -123,8 +120,8 @@ class HostSplitInfoCompressor(object):
                                                          round_decimal=self.round_decimal,
                                                          max_float=max_float)
             _, capacity = CipherCompressor.advise(max_float, self.key_length, self.encrypt_type, self.round_decimal)
-            LOGGER.info('compressor info of node {}: sample num {}, max capacity of a package {}'
-                        ', max_float is {}'.format(node_id, sample_num, capacity, max_float))
+            LOGGER.debug('compressor info of node {}: sample num {}, max capacity of a package {}'
+                         ', max_float is {}'.format(node_id, sample_num, capacity, max_float))
 
     def compress_split_info(self, node_id, split_info_list, g_h_sum_info):
         split_info_list.append(g_h_sum_info)  # append to end

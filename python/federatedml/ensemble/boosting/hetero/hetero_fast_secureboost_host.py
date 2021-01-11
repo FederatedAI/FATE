@@ -80,9 +80,11 @@ class HeteroFastSecureBoostingTreeHost(HeteroSecureBoostingTreeHost):
                   cipher_compressing=self.round_decimal is not None,
                   round_decimal=self.round_decimal
                   )
+
         tree.set_tree_work_mode(tree_type, target_host_id)
         tree.set_layered_depth(self.guest_depth, self.host_depth)
         tree.set_self_host_id(self.component_properties.local_partyid)
+        tree.set_host_party_idlist(self.component_properties.host_party_idlist)
         LOGGER.debug('tree work mode is {}'.format(tree_type))
         tree.fit()
         self.update_feature_importance(tree.get_feature_importance())

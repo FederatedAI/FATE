@@ -363,13 +363,11 @@ class Splitter(object):
             for split_info in split_info_list:
                 split_info.sum_grad, split_info.sum_hess = decrypter.decrypt(split_info.sum_grad), decrypter.decrypt(split_info.sum_hess)
             g_sum, h_sum = decrypter.decrypt(g_h_info.sum_grad), decrypter.decrypt(g_h_info.sum_hess)
-            LOGGER.debug('split info list is {}')
         else:
             nid, package = value
             split_info_list = cipher_decompressor.unpack_split_info(nid, package)  # unpack and decrypt
-            g_sum, h_sum = split_info_list[-1].sum_grad, split_info_list[-1].sum_hess
+            g_sum, h_sum = split_info_list[-1].sum_grad, split_info_list[-1].sum_hess  # g/h is at last index
             split_info_list = split_info_list[:-1]
-            LOGGER.debug('split info list is {}'.format(split_info_list))
 
         for idx, split_info in enumerate(split_info_list):
 
@@ -419,7 +417,6 @@ class Splitter(object):
         host_feature_best_split_table = host_split_info_table.mapValues(map_func)
         feature_best_splits = list(host_feature_best_split_table.collect())
         sorted_list = sorted(feature_best_splits, key=functools.cmp_to_key(self.key_sort_func))
-        # LOGGER.debug('sorted list is {}'.format(sorted_list))
 
         node_best_splits = {}
         for key, result in sorted_list:

@@ -42,7 +42,7 @@ class HeteroFastDecisionTreeGuest(HeteroDecisionTreeGuest):
                                                                 host_depth=self.host_depth,
                                                                 host_list=self.host_party_idlist)
             self.max_depth = len(self.node_plan)
-            LOGGER.debug('max depth reset to {}, cur node plan is {}'.format(self.max_depth, self.node_plan))
+            LOGGER.info('max depth reset to {}, cur node plan is {}'.format(self.max_depth, self.node_plan))
         else:
             self.node_plan = plan.create_node_plan(self.tree_type, self.target_host_id, self.max_depth)
 
@@ -87,7 +87,69 @@ class HeteroFastDecisionTreeGuest(HeteroDecisionTreeGuest):
                                                       splitinfo_host=host_split_info,
                                                       merge_host_split_only=True)
 
+        LOGGER.debug('split is {}'.format(cur_best_split))
         return cur_best_split
+
+    def compute_best_splits_with_node_plan2(self, tree_action, target_host_idx, cur_to_split_nodes, node_map: dict,
+                                            dep: int, batch_idx: int, mode=consts.MIX_TREE):
+
+        LOGGER.debug('node plan at dep {} is {}'.format(dep, (tree_action, target_host_idx)))
+
+        if tree_action == plan.tree_actions['guest_only']:
+            inst2node_idx = self.get_computing_inst2node_idx()
+            node_sample_count = self.count_node_sample_num(inst2node_idx, node_map)
+            LOGGER.debug('sample count is {}'.format(node_sample_count))
+            acc_histograms = self.get_local_histograms(dep, self.data_with_node_assignments, self.grad_and_hess,
+                                                       node_sample_count, cur_to_split_nodes, node_map, ret='tensor',
+                                                       hist_sub=True)
+
+            best_split_info_guest = self.splitter.find_split(acc_histograms, self.valid_features,
+                                                             self.data_bin.partitions, self.sitename,
+                                                             self.use_missing, self.zero_as_missing)
+
+            return best_split_info_guest
+
+        if tree_action == plan.tree_actions['host_only']:
+
+            split_info_table = self.transfer_inst.encrypted_splitinfo_host.get(idx=target_host_idx, suffix=(dep, batch_idx))
+
+            if self.run_cipher_compressing:
+                self.cipher_decompressor.renew_decompressor(node_map)
+            cipher_decompressor = self.cipher_decompressor if self.run_cipher_compressing else None
+            host_split_info = self.splitter.find_host_best_split_info(split_info_table, self.get_host_sitename(target_host_idx),
+                                                                      self.encrypter,
+                                                                      cipher_decompressor=cipher_decompressor)
+
+            LOGGER.debug('best host split info {} at dep {}'.format(host_split_info, dep))
+            split_info_list = [None for i in range(len(host_split_info))]
+            for key in host_split_info:
+                split_info_list[node_map[key]] = host_split_info[key]
+
+            for split_info in split_info_list:
+                split_info.sum_grad, split_info.sum_hess, split_info.gain = self.encrypt(split_info.sum_grad), \
+                                                                            self.encrypt(split_info.sum_hess), \
+                                                                            self.encrypt(split_info.gain)
+
+            self.transfer_inst.federated_best_splitinfo_host.remote(split_info_list,
+                                                                    suffix=(dep, batch_idx),
+                                                                    idx=target_host_idx,
+                                                                    role=consts.HOST)
+            if mode == consts.MIX_TREE:
+                return []
+            elif mode == consts.LAYERED_TREE:
+
+                final_host_split_info = self.sync_final_split_host(dep, batch_idx, idx=target_host_idx)
+                for s1, s2 in zip(host_split_info, final_host_split_info):
+                    s2.gain = s1.gain
+                    s2.sum_grad = s1.sum_grad
+                    s2.sum_hess = s1.sum_hess
+
+                cur_best_split = self.merge_splitinfo(splitinfo_guest=[],
+                                                      splitinfo_host=final_host_split_info,
+                                                      merge_host_split_only=True,
+                                                      need_decrypt=False)
+
+                return cur_best_split
 
     """
     Tree update
@@ -151,7 +213,7 @@ class HeteroFastDecisionTreeGuest(HeteroDecisionTreeGuest):
 
         self.initialize_node_plan()
 
-        self.sync_encrypted_grad_and_hess(idx=-1)
+        self.process_and_sync_grad_and_hess()
 
         root_node = self.initialize_root_node()
         self.cur_layer_nodes = [root_node]
@@ -202,7 +264,7 @@ class HeteroFastDecisionTreeGuest(HeteroDecisionTreeGuest):
         self.initialize_node_plan()
 
         if self.tree_type != plan.tree_type_dict['guest_feat_only']:
-            self.sync_encrypted_grad_and_hess(idx=self.host_id_to_idx(self.target_host_id))
+            self.process_and_sync_grad_and_hess(idx=self.host_id_to_idx(self.target_host_id))
         else:
             root_node = self.initialize_root_node()
             self.cur_layer_nodes = [root_node]
@@ -216,9 +278,6 @@ class HeteroFastDecisionTreeGuest(HeteroDecisionTreeGuest):
             # get cur_layer_node_num
             if self.tree_type == plan.tree_type_dict['host_feat_only']:
                 self.cur_layer_nodes = self.sync_host_cur_layer_nodes(dep, host_idx)
-                LOGGER.debug('printing cur layer nodes')
-                for n in self.cur_layer_nodes:
-                    LOGGER.debug(n)
 
             if len(self.cur_layer_nodes) == 0:
                 break
@@ -229,11 +288,16 @@ class HeteroFastDecisionTreeGuest(HeteroDecisionTreeGuest):
             split_info = []
             for batch_idx, i in enumerate(range(0, len(self.cur_layer_nodes), self.max_split_nodes)):
                 self.cur_to_split_nodes = self.cur_layer_nodes[i: i + self.max_split_nodes]
-                cur_splitinfos = self.compute_best_splits_with_node_plan(tree_action, host_idx, node_map=
-                                                                         self.get_node_map(self.cur_to_split_nodes),
-                                                                         cur_to_split_nodes=self.cur_to_split_nodes,
-                                                                         dep=dep, batch_idx=batch_idx,
-                                                                         mode=consts.MIX_TREE)
+                # cur_splitinfos = self.compute_best_splits_with_node_plan(tree_action, host_idx, node_map=
+                #                                                          self.get_node_map(self.cur_to_split_nodes),
+                #                                                          cur_to_split_nodes=self.cur_to_split_nodes,
+                #                                                          dep=dep, batch_idx=batch_idx,
+                #                                                          mode=consts.MIX_TREE)
+                cur_splitinfos = self.compute_best_splits_with_node_plan2(tree_action, host_idx, node_map=
+                                                                          self.get_node_map(self.cur_to_split_nodes),
+                                                                          cur_to_split_nodes=self.cur_to_split_nodes,
+                                                                          dep=dep, batch_idx=batch_idx,
+                                                                          mode=consts.MIX_TREE)
                 split_info.extend(cur_splitinfos)
 
             if self.tree_type == plan.tree_type_dict['guest_feat_only']:
