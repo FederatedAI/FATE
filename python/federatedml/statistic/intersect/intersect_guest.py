@@ -91,7 +91,7 @@ class RsaIntersectionGuest(RsaIntersect):
         # receive host pub keys for odd ids
         host_public_keys = self.transfer_variable.host_pubkey.get(-1)
         # LOGGER.debug("Get host_public_key:{} from Host".format(host_public_keys))
-        LOGGER.info(f"Get RSA host_public_key from Host")
+        LOGGER.info(f"Get host_public_key from Host")
         self.rcv_e = [int(public_key["e"]) for public_key in host_public_keys]
         self.rcv_n = [int(public_key["n"]) for public_key in host_public_keys]
 
@@ -119,9 +119,6 @@ class RsaIntersectionGuest(RsaIntersect):
                                                            idx=i)
             prvkey_ids_process_pair_list.append(prvkey_ids_process_pair)
             LOGGER.info(f"Remote guest_prvkey_ids to host {host_party_id}")
-        # get prvkey encrypted odd ids from host
-        host_prvkey_ids_list = self.get_host_prvkey_ids()
-        LOGGER.info("Get host_prvkey_ids")
 
         # get & sign host pub key encrypted even ids
         host_pubkey_ids_list = self.get_host_pubkey_ids()
@@ -132,6 +129,10 @@ class RsaIntersectionGuest(RsaIntersect):
                                                               role=consts.HOST,
                                                               idx=i)
             LOGGER.info(f"Remote guest_sign_host_ids to Host {host_party_id}.")
+
+        # get prvkey encrypted odd ids from host
+        host_prvkey_ids_list = self.get_host_prvkey_ids()
+        LOGGER.info("Get host_prvkey_ids")
 
         # Recv host signed odd ids
         # table(guest_pubkey_id, host signed odd ids)
