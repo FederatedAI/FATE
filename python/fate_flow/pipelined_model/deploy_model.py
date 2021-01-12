@@ -16,7 +16,7 @@
 import os
 import shutil
 from fate_arch.common import file_utils
-from fate_flow.utils import model_utils
+from fate_flow.utils import model_utils, schedule_utils
 from fate_flow.settings import stat_logger
 from fate_arch.common.base_utils import json_loads, json_dumps
 from fate_flow.utils.config_adapter import JobRuntimeConfigAdapter
@@ -55,11 +55,33 @@ def deploy(config_data):
         pipeline.model_version = child_model_version
         pipeline.train_runtime_conf = json_dumps(train_runtime_conf, byte=True)
 
-        #  save predict dsl into child model file
         parser = get_dsl_parser_by_version(train_runtime_conf.get('dsl_version', '1'))
-        parser.verify_dsl(config_data.get('predict_dsl'), "predict")
+        train_dsl = json_loads(pipeline.train_dsl)
+        parent_predict_dsl = json_loads(pipeline.inference_dsl)
+
+        if str(train_runtime_conf.get('dsl_version', '1')) == '1':
+            predict_dsl = json_loads(pipeline.inference_dsl)
+        else:
+            if config_data.get('dsl') or config_data.get('predict_dsl'):
+                predict_dsl = config_data.get('dsl') if config_data.get('dsl') else config_data.get('predict_dsl')
+                if not isinstance(predict_dsl, dict):
+                    predict_dsl = json_loads(predict_dsl)
+            else:
+                if config_data.get('cpn_list', None):
+                    cpn_list = config_data.pop('cpn_list')
+                else:
+                    cpn_list = list(train_dsl.get('components', {}).keys())
+                parser_version = train_runtime_conf.get('dsl_version', '1')
+                if str(parser_version) == '1':
+                    predict_dsl = parent_predict_dsl
+                else:
+                    parser = schedule_utils.get_dsl_parser_by_version(parser_version)
+                    predict_dsl = parser.deploy_component(cpn_list, train_dsl)
+
+        #  save predict dsl into child model file
+        parser.verify_dsl(predict_dsl, "predict")
         inference_dsl = parser.get_predict_dsl(role=local_role,
-                                               predict_dsl=config_data.get('predict_dsl'),
+                                               predict_dsl=predict_dsl,
                                                setting_conf_prefix=os.path.join(file_utils.get_python_base_directory(),
                                                                                 *['federatedml', 'conf', 'setting_conf']))
         pipeline.inference_dsl = json_dumps(inference_dsl, byte=True)
