@@ -87,6 +87,8 @@ class Upload(ComponentBase):
                 upload_address = {"name": name, "namespace": namespace, "storage_type": EggRollStorageType.ROLLPAIR_LMDB}
             elif storage_engine in {StorageEngine.MYSQL}:
                 upload_address = {"db": namespace, "name": name}
+            elif storage_engine in {StorageEngine.PATH}:
+                upload_address = {"path": self.parameters["file"]}
             elif storage_engine in {StorageEngine.HDFS}:
                 upload_address = {"path": data_utils.default_input_fs_path(name=name, namespace=namespace, prefix=address_dict.get("path_prefix"))}
             else:
@@ -97,7 +99,9 @@ class Upload(ComponentBase):
             self.parameters["partitions"] = partitions
             self.parameters["name"] = name
             self.table = storage_session.create_table(address=address, **self.parameters)
-            data_table_count = self.save_data_table(job_id, name, namespace, head)
+            data_table_count = None
+            if storage_engine not in [StorageEngine.PATH]:
+                data_table_count = self.save_data_table(job_id, name, namespace, head)
             self.table.get_meta().update_metas(in_serialized=True)
         LOGGER.info("------------load data finish!-----------------")
         # rm tmp file

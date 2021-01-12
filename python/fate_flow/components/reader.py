@@ -129,7 +129,15 @@ class Reader(ComponentBase):
         if input_table_meta.get_engine() not in Relationship.CompToStore.get(computing_engine,
                                                                              []) or not input_table_meta.get_in_serialized():
             address_dict = output_storage_address.copy()
-            if computing_engine == ComputingEngine.STANDALONE:
+            if input_table_meta.get_engine() in [StorageEngine.PATH]:
+                from fate_arch.storage import PathStorageType
+                address_dict["name"] = output_name
+                address_dict["namespace"] = output_namespace
+                address_dict["storage_type"] = PathStorageType.PICTURE
+                output_table_address = StorageTableMeta.create_address(storage_engine=StorageEngine.PATH,
+                                                                       address_dict=address_dict)
+                output_table_engine = StorageEngine.PATH
+            elif computing_engine == ComputingEngine.STANDALONE:
                 from fate_arch.storage import StandaloneStorageType
                 address_dict["name"] = output_name
                 address_dict["namespace"] = output_namespace
