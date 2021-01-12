@@ -27,22 +27,23 @@ class RsaIntersectionGuest(RsaIntersect):
 
     def get_host_prvkey_ids(self):
         host_prvkey_ids_list = self.transfer_variable.host_prvkey_ids.get(idx=-1)
-        LOGGER.info("Not using cache, get host_prvkey_ids from all host")
+        LOGGER.info("Get host_prvkey_ids from all host")
 
         return host_prvkey_ids_list
 
     def get_host_pubkey_ids(self):
         host_pubkey_ids_list = self.transfer_variable.host_pubkey_ids.get(idx=-1)
-        LOGGER.info("Not using cache, get host_pubkey_ids from all host")
+        LOGGER.info("Get host_pubkey_ids from all host")
 
         return host_pubkey_ids_list
 
     def sign_host_ids(self, host_pubkey_ids_list):
-        LOGGER.info("Get host_pubkey_ids from host")
         # Process(signs) hosts' ids
         guest_sign_host_ids_list = [host_pubkey_ids.map(lambda k, v:
                                                         (k, self.sign_id(k, self.d[i], self.n[i])))
                                     for i, host_pubkey_ids in enumerate(host_pubkey_ids_list)]
+        LOGGER.info("Sign host_pubkey_ids with guest prv_keys")
+
         return guest_sign_host_ids_list
 
     def send_intersect_ids(self, encrypt_intersect_ids_list, intersect_ids):
@@ -89,7 +90,8 @@ class RsaIntersectionGuest(RsaIntersect):
 
         # receive host pub keys for odd ids
         host_public_keys = self.transfer_variable.host_pubkey.get(-1)
-        LOGGER.info("Get host_public_key:{} from Host".format(host_public_keys))
+        # LOGGER.debug("Get host_public_key:{} from Host".format(host_public_keys))
+        LOGGER.info(f"Get RSA host_public_key from Host")
         self.rcv_e = [int(public_key["e"]) for public_key in host_public_keys]
         self.rcv_n = [int(public_key["n"]) for public_key in host_public_keys]
 
@@ -171,7 +173,8 @@ class RsaIntersectionGuest(RsaIntersect):
 
         # receives public key e & n
         public_keys = self.transfer_variable.host_pubkey.get(-1)
-        LOGGER.info(f"Get RSA host_public_key:{public_keys} from Host")
+        # LOGGER.debug(f"Get RSA host_public_key:{public_keys} from Host")
+        LOGGER.info(f"Get RSA host_public_key from Host")
         self.rcv_e = [int(public_key["e"]) for public_key in public_keys]
         self.rcv_n = [int(public_key["n"]) for public_key in public_keys]
 
@@ -179,7 +182,9 @@ class RsaIntersectionGuest(RsaIntersect):
                                                           fraction=self.random_base_fraction,
                                                           random_bit=self.random_bit,
                                                           rsa_e=self.rcv_e[i],
-                                                          rsa_n=self.rcv_n[i]) for i in range(len(self.rcv_e))]
+                                                          rsa_n=self.rcv_n[i],
+                                                          hash_operator=self.first_hash_operator,
+                                                          salt=self.salt) for i in range(len(self.rcv_e))]
         LOGGER.info(f"Finish pubkey_ids_process")
 
         for i, guest_id in enumerate(pubkey_ids_process_list):
@@ -188,6 +193,9 @@ class RsaIntersectionGuest(RsaIntersect):
                                                            role=consts.HOST,
                                                            idx=i)
             LOGGER.info("Remote guest_pubkey_ids to Host {}".format(i))
+
+        host_prvkey_ids_list = self.get_host_prvkey_ids()
+        LOGGER.info("Get host_prvkey_ids")
 
         # Recv signed guest ids
         # table(r^e % n *hash(sid), guest_id_process)
@@ -206,9 +214,6 @@ class RsaIntersectionGuest(RsaIntersect):
 
         # table(hash(guest_ids_process/r), sid))
         sid_host_sign_guest_ids_list = [g.map(lambda k, v: (v[1], v[0])) for g in host_sign_guest_ids_list]
-
-        host_prvkey_ids_list = self.get_host_prvkey_ids()
-        LOGGER.info("Get host_prvkey_ids")
 
         # intersect table(hash(guest_ids_process/r), sid)
         encrypt_intersect_ids_list = [v.join(host_prvkey_ids_list[i], lambda sid, h: sid) for i, v in
