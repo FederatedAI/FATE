@@ -146,6 +146,7 @@ class SampleWeight(ModelBase):
                            f"Only weight from 'sample_weight_name' is used.")
 
         new_schema = copy.deepcopy(data_instances.schema)
+        new_schema["sample_weight"] = "weight"
         weight_loc = None
         if self.sample_weight_name:
             self.weight_mode = "sample weight name"
