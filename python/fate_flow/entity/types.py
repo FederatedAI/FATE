@@ -40,6 +40,7 @@ class RunParameters(object):
         self.eggroll_run = {}
         self.spark_run = {}
         self.rabbitmq_run = {}
+        self.pulsar_run = {}
         self.adaptation_parameters = {}
         self.assistant_role = None
         self.map_table_name = None
