@@ -26,6 +26,7 @@ Werkzeug==0.15.3
 coverage==4.5.2
 pika==1.1.0
 pandas==1.1.5
+cryptography==3.2.1
 
 # addtional requirements for eggroll
 grpcio==1.24.3
