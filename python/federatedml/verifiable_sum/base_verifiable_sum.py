@@ -18,16 +18,16 @@
 import numpy as np
 
 from federatedml.model_base import ModelBase
-from federatedml.param.secret_sharing_sum_param import SecretSharingSumParam
+from federatedml.param.verifiable_sum_param import VerifiableSumParam
 from federatedml.secureprotol.secret_sharing.verifiable_secret_sharing import VerifiableSecretSharing
 
 
-class BaseSecretSharingSum(ModelBase):
+class BaseVerifiableSum(ModelBase):
     def __init__(self):
-        super(BaseSecretSharingSum, self).__init__()
+        super(BaseVerifiableSum, self).__init__()
         self.vss = VerifiableSecretSharing()
         self.host_count = None
-        self.model_param = SecretSharingSumParam()
+        self.model_param = VerifiableSumParam()
         self.sum_cols = None
         self.x = None
         self.sub_key = []  # (x,f(x))

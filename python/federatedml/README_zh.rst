@@ -279,7 +279,7 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
      -
      -
 
-   * - `Secret Sharing Sum`_
+   * - `Verifiable Sum`_
      - 秘密分享求和
      - 不暴露隐私数据的前提下进行多方隐私数据求和
      - Table, 值为加数或被加数
@@ -316,7 +316,7 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
 .. _Hetero Federated Transfer Learning: transfer_learning/hetero_ftl/README.rst
 .. _Hetero Fast Secure Boosting: ensemble/README.rst
 .. _Scorecard: statistic/scorecard/README.rst
-.. _Secret Sharing Sum: secret_sharing_sum/README.rst
+.. _Verifiable Sum: verifiable_sum/README.rst
 
 
 安全协议

@@ -1,5 +1,5 @@
 {
-  "federatedml.transfer_variable.transfer_class.secret_sharing_sum_transfer_variable.SecretSharingSumTransferVariables": {
+  "federatedml.transfer_variable.transfer_class.verifiable_sum_transfer_variable.VerifiableSumTransferVariables": {
     "guest_share_primes": {
       "src": [
         "guest"

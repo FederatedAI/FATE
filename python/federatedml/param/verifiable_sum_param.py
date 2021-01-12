@@ -16,7 +16,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from pipeline.param.base_param import BaseParam
+from federatedml.param.base_param import BaseParam
 
 """
 Define how to transfer the cols
@@ -32,7 +32,7 @@ q_n : int, positive integer less than or equal to 16, default: 6
 """
 
 
-class SecretSharingSumParam(BaseParam):
+class VerifiableSumParam(BaseParam):
     def __init__(self, sum_cols=None, q_n=6):
         self.sum_cols = sum_cols
         if sum_cols is None:
@@ -53,3 +53,8 @@ class SecretSharingSumParam(BaseParam):
             raise ValueError(f"param's q_n {self.q_n} not supported, should be non-negative int value")
         elif self.q_n > 16:
             raise ValueError(f"param's q_n {self.q_n} not supported, should be less than or equal to 16")
+
+
+
+
+

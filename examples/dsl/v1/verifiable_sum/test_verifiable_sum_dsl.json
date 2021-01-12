@@ -15,8 +15,8 @@
                 ]
             }
         },
-        "secretsharingsum_0": {
-            "module": "SecretSharingSum",
+        "verifiablesum_0": {
+            "module": "VerifiableSum",
             "input": {
                 "data": {
                     "data": [

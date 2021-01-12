@@ -23,7 +23,7 @@
     },
     "component_parameters":{
         "common": {
-            "secretsharingsum_0": {
+            "verifiablesum_0": {
                 "sum_cols": [1,2,3],
                 "q_n": 6
             }

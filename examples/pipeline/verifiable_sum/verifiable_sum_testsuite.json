@@ -27,7 +27,7 @@
     ],
         "pipeline_tasks": {
         "secret-sharing-sum": {
-            "script": "./pipeline-secret-sharing-sum.py"
+            "script": "./pipeline-verifiable-sum.py"
         }
     }
 }

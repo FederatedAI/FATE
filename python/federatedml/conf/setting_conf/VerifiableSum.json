@@ -1,0 +1,15 @@
+{
+    "module_path":  "federatedml/verifiable_sum",
+    "param_class" : "federatedml/param/verifiable_sum_param/VerifiableSumParam",
+    "role":
+    {
+        "guest":
+        {
+            "program": "verifiable_sum_guest.py/VerifiableSumGuest"
+        },
+        "host":
+        {
+            "program": "verifiable_sum_host.py/VerifiableSumHost"
+        }
+    }
+}

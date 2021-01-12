@@ -27,8 +27,8 @@
     ],
     "tasks": {
         "secret-sharing-sum": {
-            "conf": "test_secret_sharing_sum_conf.json",
-            "dsl": "test_secret_sharing_sum_dsl.json"
+            "conf": "test_verifiable_sum_conf.json",
+            "dsl": "test_verifiable_sum_dsl.json"
         }
     }
 }

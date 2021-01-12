@@ -19,20 +19,20 @@
 import numpy
 
 from federatedml.util import LOGGER
-from federatedml.transfer_variable.transfer_class.secret_sharing_sum_transfer_variable import \
-    SecretSharingSumTransferVariables
-from federatedml.param.secret_sharing_sum_param import SecretSharingSumParam
-from federatedml.secret_sharing_sum.base_secret_sharing_sum import BaseSecretSharingSum
+from federatedml.transfer_variable.transfer_class.verifiable_sum_transfer_variable import \
+    VerifiableSumTransferVariables
+from federatedml.param.verifiable_sum_param import VerifiableSumParam
+from federatedml.verifiable_sum.base_verifiable_sum import BaseVerifiableSum
 
 
-class SecretSharingSumHost(BaseSecretSharingSum):
+class VerifiableSumHost(BaseVerifiableSum):
     def __init__(self):
-        super(SecretSharingSumHost, self).__init__()
-        self.transfer_inst = SecretSharingSumTransferVariables()
+        super(VerifiableSumHost, self).__init__()
+        self.transfer_inst = VerifiableSumTransferVariables()
         self.host_party_idlist = []
         self.local_partyid = -1
 
-    def _init_model(self, model_param: SecretSharingSumParam):
+    def _init_model(self, model_param: VerifiableSumParam):
         self.sum_cols = model_param.sum_cols
         self.vss.Q_n = model_param.q_n
 

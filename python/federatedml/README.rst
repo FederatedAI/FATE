@@ -277,8 +277,8 @@ Algorithm List
      -
      -
 
-   * - `Secret Sharing Sum`_
-     - Secret Sharing Sum
+   * - `Verifiable Sum`_
+     - Verifiable Sum
      - This component will sum multiple privacy values without exposing data
      - Table, values are addend
      - Table, values are sum results
@@ -316,7 +316,7 @@ Algorithm List
 .. _Hetero Federated Transfer Learning: transfer_learning/hetero_ftl/README.rst
 .. _Hetero Fast Secure Boosting: ensemble/README.rst
 .. _Scorecard: statistic/scorecard/README.rst
-.. _Secret Sharing Sum: secret_sharing_sum/README.rst
+.. _Verifiable Sum: verifiable_sum/README.rst
 
 
 Secure Protocol
