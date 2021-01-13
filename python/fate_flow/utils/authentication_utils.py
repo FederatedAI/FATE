@@ -16,7 +16,6 @@
 import functools
 import json
 import os
-import re
 
 from flask import request
 
@@ -29,23 +28,22 @@ class PrivilegeAuth(object):
     local_storage_file = ''
     USE_LOCAL_STORAGE = True
     ALL_PERMISSION = {'privilege_role': ['guest', 'host', 'arbiter'],
-                      'privilege_command': [],
+                      'privilege_command': ['create', 'stop', 'run'],
                       'privilege_component': []}
     command_whitelist = None
 
     @classmethod
-    def authentication_privilege(cls, src_party_id, src_role, request_path, func_name):
-        if not int(PrivilegeAuth.get_dest_party_id(request_path, func_name)) or \
-                src_party_id == PrivilegeAuth.get_dest_party_id(request_path, func_name):
+    def authentication_privilege(cls, src_party_id, src_role, request_path, party_id_index, role_index, command, component_index=None):
+        if not src_party_id:
             return
-        if src_role != 'guest':
-            stat_logger.info('src_role {} is not guest'.format(src_role))
-            raise Exception('src_role {} is not guest'.format(src_role))
-        if src_party_id == PrivilegeAuth.get_dest_party_id(request_path, func_name):
+        src_party_id = str(src_party_id)
+        if src_party_id == PrivilegeAuth.get_dest_party_id(request_path, party_id_index):
             return
         stat_logger.info("party {} role {} start authentication".format(src_party_id, src_role))
-        privilege_dic = PrivilegeAuth.get_authentication_items(request_path, func_name)
+        privilege_dic = PrivilegeAuth.get_authentication_items(request_path, role_index, command, component_index)
         for privilege_type, value in privilege_dic.items():
+            if value and privilege_type == 'privilege_component':
+                value = ''.join(value.split('_')[:-1]).lower()
             if value in PrivilegeAuth.command_whitelist:
                 continue
             if value:
@@ -144,14 +142,14 @@ class PrivilegeAuth(object):
         pass
 
     @classmethod
-    def get_authentication_items(cls, request_path, func_name):
-        dest_role = request_path.split('/')[2] if 'task' not in func_name else request_path.split('/')[4]
-        component = request.json.get('module_name').lower() if 'run_task' in func_name else None
-        return PrivilegeAuth.get_privilege_dic(dest_role, func_name, component)
+    def get_authentication_items(cls, request_path, role_index, command, component_index):
+        dest_role = request_path.split('/')[role_index]
+        component = request_path.split('/')[component_index] if command == 'run' else None
+        return PrivilegeAuth.get_privilege_dic(dest_role, command, component)
 
     @classmethod
-    def get_dest_party_id(cls, request_path, func_name):
-        return request_path.split('/')[3] if 'task' not in func_name else request_path.split('/')[5]
+    def get_dest_party_id(cls, request_path, party_id_index):
+        return request_path.split('/')[party_id_index]
 
     @classmethod
     def get_privilege_dic(cls, privilege_role, privilege_command, privilege_component):
@@ -177,10 +175,7 @@ class PrivilegeAuth(object):
             # init ALL_PERMISSION
             component_path = os.path.join(file_utils.get_python_base_directory(),
                                           'federatedml', 'conf', 'setting_conf')
-            command_file_path = os.path.join(file_utils.get_python_base_directory(),
-                                             'fate_flow', 'apps', 'party_app.py')
-            stat_logger.info('search commands from {}'.format(command_file_path))
-            search_command(command_file_path)
+            search_command()
             stat_logger.info('search components from {}'.format(component_path))
             search_component(component_path)
 
@@ -198,23 +193,26 @@ def modify_permission(permission_info, delete=False):
         PrivilegeAuth.rewrite_local_storage(new_json)
 
 
-def request_authority_certification(func):
-    @functools.wraps(func)
-    def _wrapper(*args, **kwargs):
-        if USE_AUTHENTICATION:
-            PrivilegeAuth.authentication_privilege(src_party_id=str(request.json.get('src_party_id')),
-                                                   src_role=request.json.get('src_role'),
-                                                   request_path=request.path,
-                                                   func_name=func.__name__
-                                                   )
-        return func(*args, **kwargs)
-    return _wrapper
+def request_authority_certification(party_id_index, role_index, command, component_index=None):
+    def request_authority_certification_do(func):
+        @functools.wraps(func)
+        def _wrapper(*args, **kwargs):
+            if USE_AUTHENTICATION:
+                PrivilegeAuth.authentication_privilege(src_party_id=request.json.get('src_party_id'),
+                                                       src_role=request.json.get('src_role'),
+                                                       request_path=request.path,
+                                                       party_id_index=party_id_index,
+                                                       role_index=role_index,
+                                                       command=command,
+                                                       component_index=component_index
+                                                       )
+            return func(*args, **kwargs)
+        return _wrapper
+    return request_authority_certification_do
 
 
-def search_command(path):
-    with open(path, 'r') as fp:
-        command_list = re.findall("def (.*)\(", fp.read())
-    command_list = list(set(command_list) - {'internal_server_error', 'kill_job', 'task_status', 'job_status', 'cancel_job'})
+def search_command():
+    command_list = []
     PrivilegeAuth.ALL_PERMISSION['privilege_command'].extend(command_list)
 
 
@@ -227,22 +225,18 @@ def search_component(path):
 def authentication_check(src_role, src_party_id, dsl, runtime_conf, role, party_id):
     initiator = runtime_conf['initiator']
     roles = runtime_conf['role']
-    if 'local' not in roles or str(party_id) != str(src_party_id):
-        if set(roles['host']) & set(roles['guest']):
-            stat_logger.info('host {} became guest'.format(set(roles['host']) & set(roles['guest'])))
-            raise Exception('host {} can not be used as guest'.format(set(roles['host']) & set(roles['guest'])))
     if initiator['role'] != src_role or initiator['party_id'] != int(src_party_id) or int(party_id) not in roles[role]:
         if not int(party_id):
             return
         else:
             stat_logger.info('src_role {} src_party_id {} authentication check failed'.format(src_role, src_party_id))
             raise Exception('src_role {} src_party_id {} authentication check failed'.format(src_role, src_party_id))
-    components = [dsl['components'][component_name]['module'].lower() for component_name in dsl['components'].keys()]
+    components = get_all_components(dsl)
     if str(party_id) == str(src_party_id):
         return
     need_run_commond = list(set(PrivilegeAuth.ALL_PERMISSION['privilege_command'])-set(PrivilegeAuth.command_whitelist))
-    if need_run_commond != PrivilegeAuth.privilege_cache.get(src_party_id, {}).get(src_role, {}).get('privilege_command', []):
-        if need_run_commond != PrivilegeAuth.get_permission_config(src_party_id, src_role).get('privilege_command', []):
+    if set(need_run_commond) != set(PrivilegeAuth.privilege_cache.get(src_party_id, {}).get(src_role, {}).get('privilege_command', [])):
+        if set(need_run_commond) != set(PrivilegeAuth.get_permission_config(src_party_id, src_role).get('privilege_command', [])):
             stat_logger.info('src_role {} src_party_id {} commond authentication that needs to be run failed:{}'.format(
                     src_role, src_party_id, set(need_run_commond) - set(PrivilegeAuth.privilege_cache.get(src_party_id,
                         {}).get(src_role, {}).get('privilege_command', []))))
@@ -259,3 +253,25 @@ def authentication_check(src_role, src_party_id, dsl, runtime_conf, role, party_
                 src_role, src_party_id, set(components)-set(PrivilegeAuth.privilege_cache.get(src_party_id, {}).get(
                     src_role, {}).get('privilege_component', []))))
     stat_logger.info('src_role {} src_party_id {} authentication check success'.format(src_role, src_party_id))
+
+
+def check_constraint(job_runtime_conf, job_dsl):
+    # Component constraint
+    check_component_constraint(job_runtime_conf, job_dsl)
+
+
+def check_component_constraint(job_runtime_conf, job_dsl):
+    if job_dsl:
+        all_components = get_all_components(job_dsl)
+        glm = ['heterolr', 'heterolinr', 'heteropoisson']
+        for cpn in glm:
+            if cpn in all_components:
+                roles = job_runtime_conf.get('role')
+                if 'guest' in roles.keys() and 'arbiter' in roles.keys() and 'host' in roles.keys():
+                    for party_id in set(roles['guest']) & set(roles['arbiter']):
+                        if party_id in roles['host']:
+                            raise Exception("{} component constraint party id, please check role config:{}".format(cpn, job_runtime_conf.get('role')))
+
+
+def get_all_components(dsl):
+    return [dsl['components'][component_name]['module'].lower() for component_name in dsl['components'].keys()]

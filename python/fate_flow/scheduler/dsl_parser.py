@@ -29,6 +29,7 @@ import copy
 import json
 import os
 
+from fate_flow.settings import stat_logger
 from fate_flow.utils import parameter_util
 from fate_flow.utils.dsl_exception import *
 
@@ -194,8 +195,13 @@ class BaseDSLParser(object):
 
                 for data_set in data_dict:
                     if not isinstance(data_dict.get(data_set), list):
-                        raise ComponentInputDataValueTypeError(component=name, other_info=data_dict.get(data_key))
+                        raise ComponentInputDataValueTypeError(component=name, other_info=data_dict.get(data_set))
 
+                    if version == 2 and data_set not in ["data", "train_data", "validate_data", "test_data",
+                                                         "eval_data"]:
+                        stat_logger.warning(
+                            "DSLParser Warning: make sure that input data's data key should be in {}, but {} found".format(
+                                ["data", "train_data", "validate_data", "test_data", "eval_data"], data_set))
                     for data_key in data_dict.get(data_set):
                         module_name = data_key.split(".", -1)[0]
                         input_data_name = data_key.split(".", -1)[-1]
@@ -554,10 +560,14 @@ class BaseDSLParser(object):
         return self.graph_dependency[role][party_id]
 
     @staticmethod
-    def deploy_component(*args, **kwargs):
-        pass
+    def verify_dsl(dsl, mode="train"):
+        raise NotImplementedError("verify dsl interface should be implemented")
 
-    def _auto_deduction(self, setting_conf_prefix=None, deploy_cpns=None, version=1):
+    @staticmethod
+    def deploy_component(*args, **kwargs):
+        raise NotImplementedError
+
+    def _auto_deduction(self, setting_conf_prefix=None, deploy_cpns=None, version=1, erase_top_data_input=False):
         self.predict_dsl = {"components": {}}
         self.predict_components = []
         mapping_list = {}
@@ -646,6 +656,21 @@ class BaseDSLParser(object):
 
                                 break
 
+                        if version == 2 and erase_top_data_input:
+                            is_top_component = True
+                            for data_key, data_set in self.predict_dsl["components"][name]["input"]["data"].items():
+                                for input_data in data_set:
+                                    cpn_alias = input_data.split(".")[0]
+                                    if cpn_alias == "args":
+                                        is_top_component = False
+                                        break
+
+                                    if cpn_alias in self.predict_dsl["components"]:
+                                        is_top_component = False
+
+                            if is_top_component:
+                                del self.predict_dsl["components"][name]["input"]["data"]
+
             else:
                 name = self.predict_components[i].get_name()
                 input_data = None
@@ -696,9 +721,6 @@ class BaseDSLParser(object):
             if key not in self.args_datakey:
                 raise DataNotExistInSubmitConfError(msg=key)
 
-    def get_predict_dsl(self, role):
-        return self.gen_predict_dsl_by_role(role)
-
     def gen_predict_dsl_by_role(self, role):
         if not self.predict_dsl:
             return self.predict_dsl
@@ -731,6 +753,10 @@ class BaseDSLParser(object):
     @staticmethod
     def _gen_predict_data_mapping():
         return None, None
+
+    @staticmethod
+    def generate_predict_conf_template(train_dsl, train_conf, model_id, model_version):
+        raise NotImplementedError
 
 
 class DSLParser(BaseDSLParser):
@@ -782,22 +808,29 @@ class DSLParser(BaseDSLParser):
         return json_dict
 
     @staticmethod
-    def deploy_component(components, train_dsl):
-        training_cpns = set(train_dsl.get("components").keys())
-        deploy_cpns = set(components)
-        if len(deploy_cpns & training_cpns) != len(deploy_cpns):
-            raise DeployComponentNotExistError(msg=deploy_cpns - training_cpns)
-
+    def verify_dsl(dsl, mode="train"):
         dsl_parser = DSLParser()
-        dsl_parser.dsl = train_dsl
-        dsl_parser._init_components()
-        dsl_parser._find_dependencies()
-        dsl_parser._auto_deduction(deploy_cpns=deploy_cpns)
+        dsl_parser.dsl = dsl
+        dsl_parser._init_components(mode=mode, version=1)
+        dsl_parser._find_dependencies(mode=mode, version=1)
 
-        return dsl_parser.predict_dsl
+    # @staticmethod
+    # def deploy_component(components, train_dsl):
+    #     training_cpns = set(train_dsl.get("components").keys())
+    #     deploy_cpns = set(components)
+    #     if len(deploy_cpns & training_cpns) != len(deploy_cpns):
+    #         raise DeployComponentNotExistError(msg=deploy_cpns - training_cpns)
+
+    #     dsl_parser = DSLParser()
+    #     dsl_parser.dsl = train_dsl
+    #     dsl_parser._init_components()
+    #     dsl_parser._find_dependencies()
+    #     dsl_parser._auto_deduction(deploy_cpns=deploy_cpns)
+
+    #     return dsl_parser.predict_dsl
 
     def run(self, pipeline_dsl=None, pipeline_runtime_conf=None, dsl=None, runtime_conf=None,
-            setting_conf_prefix=None, mode="train",  *args, **kwargs):
+            setting_conf_prefix=None, mode="train", *args, **kwargs):
 
         if mode not in ["train", "predict"]:
             raise ModeError()
@@ -853,6 +886,25 @@ class DSLParser(BaseDSLParser):
 
         return need_deploy
 
+    def get_predict_dsl(self, role, predict_dsl=None, setting_conf_prefix=None):
+        if predict_dsl is not None:
+            return predict_dsl
+        return self.gen_predict_dsl_by_role(role)
+
+    def gen_predict_dsl_by_role(self, role):
+        if not self.predict_dsl:
+            return self.predict_dsl
+
+        role_predict_dsl = copy.deepcopy(self.predict_dsl)
+        component_list = list(self.predict_dsl.get("components").keys())
+        for component in component_list:
+            idx = self.component_name_index.get(component)
+            role_parameters = self.components[idx].get_role_parameters()
+            if role in role_parameters:
+                role_predict_dsl["components"][component]["CodePath"] = role_parameters[role][0].get("CodePath")
+
+        return role_predict_dsl
+
     @staticmethod
     def _gen_predict_data_mapping():
         data_mapping = [("data", "data"), ("train_data", "test_data"),
@@ -860,6 +912,45 @@ class DSLParser(BaseDSLParser):
 
         for data_key, data_value in data_mapping:
             yield data_key, data_value
+
+    @staticmethod
+    def generate_predict_conf_template(predict_dsl, train_conf, model_id, model_version):
+        if not train_conf.get("role") or not train_conf.get("initiator"):
+            raise ValueError("role and initiator should be contain in job's trainconf")
+
+        predict_conf = dict()
+        predict_conf["initiator"] = train_conf.get("initiator")
+        predict_conf["role"] = train_conf.get("role")
+
+        predict_conf["job_parameters"] = train_conf.get("job_parameters", {})
+        predict_conf["job_parameters"]["job_type"] = "predict"
+        predict_conf["job_parameters"]["model_id"] = model_id
+        predict_conf["job_parameters"]["model_version"] = model_version
+
+        predict_conf["role_parameters"] = {}
+
+        for role in predict_conf["role"]:
+            if role not in ["guest", "host"]:
+                continue
+
+            args_input = set()
+            for _, module_info in predict_dsl.get("components", {}).items():
+                data_set = module_info.get("input", {}).get("data", {})
+                for data_key in data_set:
+                    for data in data_set[data_key]:
+                        if data.split(".", -1)[0] == "args":
+                            args_input.add(data.split(".", -1)[1])
+
+            predict_conf["role_parameters"][role] = {"args": {"data": {}}}
+            fill_template = {}
+            for data_key in args_input:
+                fill_template[data_key] = [{"name": "name_to_be_filled_" + str(i),
+                                            "namespace": "namespace_to_be_filled_" + str(i)}
+                                           for i in range(len(predict_conf["role"].get(role)))]
+
+            predict_conf["role_parameters"][role] = {"args": {"data": fill_template}}
+
+        return predict_conf
 
 
 class DSLParserV2(BaseDSLParser):
@@ -873,6 +964,13 @@ class DSLParserV2(BaseDSLParser):
                     raise NamingFormatError(component=name)
 
     @staticmethod
+    def verify_dsl(dsl, mode="train"):
+        dsl_parser = DSLParserV2()
+        dsl_parser.dsl = dsl
+        dsl_parser._init_components(mode=mode, version=2)
+        dsl_parser._find_dependencies(mode=mode, version=2)
+
+    @staticmethod
     def deploy_component(components, train_dsl):
         training_cpns = set(train_dsl.get("components").keys())
         deploy_cpns = set(components)
@@ -883,7 +981,7 @@ class DSLParserV2(BaseDSLParser):
         dsl_parser.dsl = train_dsl
         dsl_parser._init_components()
         dsl_parser._find_dependencies(version=2)
-        dsl_parser._auto_deduction(deploy_cpns=deploy_cpns, version=2)
+        dsl_parser._auto_deduction(deploy_cpns=deploy_cpns, version=2, erase_top_data_input=True)
 
         return dsl_parser.predict_dsl
 
@@ -930,6 +1028,23 @@ class DSLParserV2(BaseDSLParser):
 
         return False
 
+    def get_predict_dsl(self, role, predict_dsl=None, setting_conf_prefix=None):
+        if not predict_dsl:
+            return {}
+
+        role_predict_dsl = copy.deepcopy(predict_dsl)
+        component_list = list(predict_dsl.get("components").keys())
+        for component in component_list:
+            code_path = parameter_util.ParameterUtilV2.get_code_path(role=role,
+                                                                     module=predict_dsl["components"][component][
+                                                                         "module"],
+                                                                     module_alias=component,
+                                                                     setting_conf_prefix=setting_conf_prefix)
+            if code_path:
+                role_predict_dsl["components"][component]["CodePath"] = code_path
+
+        return role_predict_dsl
+
     @staticmethod
     def _gen_predict_data_mapping():
         data_mapping = [("data", "data"), ("train_data", "test_data"),
@@ -937,3 +1052,40 @@ class DSLParserV2(BaseDSLParser):
 
         for data_key, data_value in data_mapping:
             yield data_key, data_value
+
+    @staticmethod
+    def generate_predict_conf_template(predict_dsl, train_conf, model_id, model_version):
+        if not train_conf.get("role") or not train_conf.get("initiator"):
+            raise ValueError("role and initiator should be contain in job's trainconf")
+
+        predict_conf = dict()
+        predict_conf["dsl_version"] = 2
+        predict_conf["role"] = train_conf.get("role")
+        predict_conf["initiator"] = train_conf.get("initiator")
+
+        predict_conf["job_parameters"] = train_conf.get("job_parameters", {})
+        predict_conf["job_parameters"]["common"].update({"model_id": model_id,
+                                                         "model_version": model_version,
+                                                         "job_type": "predict"})
+
+        predict_conf["component_parameters"] = {"role": {}}
+
+        for role in predict_conf["role"]:
+            if role not in ["guest", "host"]:
+                continue
+
+            reader_components = []
+            for module_alias, module_info in predict_dsl.get("components", {}).items():
+                if module_info["module"] == "Reader":
+                    reader_components.append(module_alias)
+
+            predict_conf["component_parameters"]["role"][role] = dict()
+            fill_template = {}
+            for idx, reader_alias in enumerate(reader_components):
+                fill_template[reader_alias] = {"table": {"name": "name_to_be_filled_" + str(idx),
+                                                         "namespace": "namespace_to_be_filled_" + str(idx)}}
+
+            for idx in range(len(predict_conf["role"][role])):
+                predict_conf["component_parameters"]["role"][role][str(idx)] = fill_template
+
+        return predict_conf

@@ -43,39 +43,6 @@
                     "model"
                 ]
             }
-        },
-        "intersection_0": {
-            "module": "Intersection",
-            "input": {
-                "data": {
-                    "data": [
-                        "dataio_0.data"
-                    ]
-                }
-            },
-            "output": {
-                "data": [
-                    "data"
-                ]
-            }
-        },
-        "hetero_lr_0": {
-            "module": "HeteroLR",
-            "input": {
-                "data": {
-                    "train_data": [
-                        "intersection_0.data"
-                    ]
-                }
-            },
-            "output": {
-                "data": [
-                    "data"
-                ],
-                "model": [
-                    "model"
-                ]
-            }
         }
     }
 }

@@ -46,7 +46,7 @@ def get_command_federation_channel():
     return channel, stub
 
 
-def get_routing_metadata(src_party_id, dest_party_id):
+def gen_routing_metadata(src_party_id, dest_party_id):
     routing_head = (
         ("service", "fateflow"),
         ("src-party-id", str(src_party_id)),
@@ -89,9 +89,8 @@ class UnaryService(proxy_pb2_grpc.DataTransferServiceServicer):
         source_routing_header = []
         for key, value in context.invocation_metadata():
             source_routing_header.append((key, value))
-        stat_logger.info(f"grpc request routing header: {source_routing_header}")
 
-        _routing_metadata = get_routing_metadata(src_party_id=src.partyId, dest_party_id=dst.partyId)
+        _routing_metadata = gen_routing_metadata(src_party_id=src.partyId, dest_party_id=dst.partyId)
         context.set_trailing_metadata(trailing_metadata=_routing_metadata)
         try:
             nodes_check(param_dict.get('src_party_id'), param_dict.get('_src_role'), param_dict.get('appKey'),

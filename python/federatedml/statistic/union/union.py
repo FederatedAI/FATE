@@ -98,7 +98,7 @@ class Union(ModelBase):
     @assert_schema_consistent
     def fit(self, data):
         LOGGER.debug(f"fit receives data is {data}")
-        if not isinstance(data, dict):
+        if not isinstance(data, dict) or len(data) <= 1:
             raise ValueError("Union module must receive more than one table as input.")
         empty_count = 0
         combined_table = None
@@ -139,15 +139,19 @@ class Union(ModelBase):
                 # first table to combine
                 combined_table = local_table
                 combined_schema = local_table.schema
+                if self.keep_duplicate:
+                    combined_table = combined_table.map(lambda k, v: (f"{k}_{key}", v))
+                    combined_table.schema = combined_schema
             else:
                 self.check_id(local_table, combined_table)
                 self.check_label_name(local_table, combined_table)
                 self.check_header(local_table, combined_table)
                 if self.keep_duplicate:
-                    repeated_ids = combined_table.join(local_table, lambda v1, v2: 1)
-                    self.repeated_ids = [v[0] for v in repeated_ids.collect()]
-                    self.key = key
-                    local_table = local_table.flatMap(self._renew_id)
+                    # repeated_ids = combined_table.join(local_table, lambda v1, v2: 1)
+                    # self.repeated_ids = [v[0] for v in repeated_ids.collect()]
+                    # self.key = key
+                    # local_table = local_table.flatMap(self._renew_id)
+                    local_table = local_table.map(lambda k, v: (f"{k}_{key}", v))
 
                 combined_table = combined_table.union(local_table, self._keep_first)
 
@@ -160,12 +164,13 @@ class Union(ModelBase):
                 combined_table.mapValues(self.check_feature_length)
 
         if combined_table is None:
-            num_data = 0
             LOGGER.warning("All tables provided are empty or have empty features.")
-        else:
-            num_data = combined_table.count()
+            first_table = list(data.values())[0]
+            combined_table = first_table.join(first_table)
+        num_data = combined_table.count()
         metrics.append(Metric("Total", num_data))
         self.add_summary("Total", num_data)
+        LOGGER.info(f"Result total data entry count: {num_data}")
 
         self.callback_metric(metric_name=self.metric_name,
                              metric_namespace=self.metric_namespace,
@@ -183,4 +188,3 @@ class Union(ModelBase):
 
     def obtain_data(self, data_list):
         return data_list
-

@@ -543,3 +543,4 @@ class PSI(object):
         psi_scores = np.array(psi_scores)
         total_psi = psi_scores.sum()
         return psi_scores, total_psi, expected_interval, actual_interval, expected_percentage, actual_percentage
+

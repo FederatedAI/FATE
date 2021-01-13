@@ -122,13 +122,13 @@ class HeteroFastSecureBoostingTreeHost(HeteroSecureBoostingTreeHost):
         """
 
         for i in range(len(trees)):
+
             tree = trees[i]
-            if tree.target_host_id == tree.self_host_id:
-                leaf_id = tree.host_local_traverse_tree(sample, tree.tree_node, use_missing=tree.use_missing,
-                                                        zero_as_missing=tree.zero_as_missing)
-                node_pos[i] = leaf_id
-            else:
+            if len(tree.tree_node) == 0:  # this tree belongs to other party because it has no tree node
                 continue
+            leaf_id = tree.host_local_traverse_tree(sample, tree.tree_node, use_missing=tree.use_missing,
+                                                    zero_as_missing=tree.zero_as_missing)
+            node_pos[i] = leaf_id
 
         return node_pos
 

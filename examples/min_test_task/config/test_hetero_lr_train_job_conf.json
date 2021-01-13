@@ -4,7 +4,10 @@
         "party_id": 10000
     },
     "job_parameters": {
-        "work_mode": 0
+        "work_mode": 0,
+        "eggroll_run": {
+            "eggroll.session.processors.per.node": 2
+        }
     },
     "role": {
         "guest": [

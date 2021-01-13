@@ -6,5 +6,8 @@
     "work_mode": 1,
     "backend": 0,
     "namespace": "experiment",
-    "table_name": "breast_hetero_guest"
+    "table_name": "breast_hetero_guest",
+    "eggroll_run": {
+        "eggroll.session.processors.per.node": 2
+    }
 }
