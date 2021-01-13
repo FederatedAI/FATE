@@ -1,4 +1,5 @@
 import random
+import math
 from federatedml.secureprotol import gmpy_math
 from gmpy2 import mpz
 
@@ -55,8 +56,6 @@ class VerifiableSecretSharing(object):
             lagrange_polynomial = numerator * gmpy_math.invert(denominator, self.q)
             # multiply the current y & the evaluated polynomial & add it to f(x)
             secret = (self.q + secret + (y_values[i] * lagrange_polynomial)) % self.q
-            if secret > (2 ** 64):
-                secret -= self.q
         return self.decode(secret)
 
     def calculate_commitment(self, coefficient):
@@ -74,14 +73,23 @@ class VerifiableSecretSharing(object):
         return True
 
     def encode(self, x):
-        return int(x*(10**self.Q_n))
+        upscaled = int(x * (10 ** self.Q_n))
+        if isinstance(x, int):
+            assert (abs(upscaled) < (self.q / 2)), (
+                f"{x} cannot be correctly embedded: choose bigger q or a lower precision"
+            )
+        return upscaled
 
     def decode(self, s):
-        return float(s/(10**self.Q_n))
+        gate = s > self.q / 2
+        neg_nums = (s - self.q) * gate
+        pos_nums = s * (1 - gate)
+        result = (neg_nums + pos_nums) / (10 ** self.Q_n)
+        return result
 
     @staticmethod
     def _decode_hex_string(number_str):
-        return mpz("0x{0}".format("".join(number_str.split())))
+        return int(mpz("0x{0}".format("".join(number_str.split()))))
 
     @staticmethod
     def _additional_group_1024_160():
