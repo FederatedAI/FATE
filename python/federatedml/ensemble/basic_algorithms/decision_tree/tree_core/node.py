@@ -32,7 +32,7 @@ class Node(object):
     def __init__(self, id=None, sitename=consts.GUEST, fid=None,
                  bid=None, weight=0, is_leaf=False, sum_grad=None,
                  sum_hess=None, left_nodeid=-1, right_nodeid=-1,
-                 missing_dir=1, sample_num=0, parent_nodeid=None, is_left_node=False):
+                 missing_dir=1, sample_num=0, parent_nodeid=None, is_left_node=False, sibling_nodeid=None):
 
         self.id = id
         self.sitename = sitename
@@ -48,6 +48,7 @@ class Node(object):
         self.parent_nodeid = parent_nodeid
         self.sample_num = sample_num
         self.is_left_node = is_left_node
+        self.sibling_nodeid = sibling_nodeid
 
     def __str__(self):
         return "id{}, fid:{},bid:{},weight:{},sum_grad:{},sum_hess:{},left_node:{},right_node:{}, sitename:{}, " \

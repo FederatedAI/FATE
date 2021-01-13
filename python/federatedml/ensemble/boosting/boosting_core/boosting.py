@@ -117,9 +117,9 @@ class Boosting(ModelBase, ABC):
         self.binning_error = boosting_param.binning_error
 
         if boosting_param.random_seed is not None:
-            self.random_seed = 100
+            self.random_seed = boosting_param.random_seed
 
-            # initialize random seed here
+        # initialize random seed here
         LOGGER.debug('setting random seed done, random seed is {}'.format(self.random_seed))
         np.random.seed(self.random_seed)
 

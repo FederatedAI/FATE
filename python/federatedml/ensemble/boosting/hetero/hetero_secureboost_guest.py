@@ -43,6 +43,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         self.enable_goss = False  # GOSS
         self.top_rate = None
         self.other_rate = None
+        self.new_ver = True
 
     def _init_model(self, param: HeteroSecureBoostParam):
 
@@ -55,6 +56,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         self.top_rate = param.top_rate
         self.other_rate = param.other_rate
         self.round_decimal = param.cipher_compress_error
+        self.new_ver = param.new_ver
 
         if self.use_missing:
             self.tree_param.use_missing = self.use_missing
@@ -128,7 +130,8 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
                   cipher_compressing=self.round_decimal is not None,
                   round_decimal=self.round_decimal,
                   encrypt_key_length=self.encrypt_param.key_length,
-                  max_sample_weight=self.max_sample_weight
+                  max_sample_weight=self.max_sample_weight,
+                  new_ver=self.new_ver
                   )
 
         tree.fit()

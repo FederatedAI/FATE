@@ -45,6 +45,9 @@ class HeteroDecisionTreeGuest(DecisionTree):
         self.round_decimal = 7
         self.max_sample_weight = 1
 
+        # code version control
+        self.new_ver = True
+
     """
     Node Encode/ Decode
     """
@@ -92,6 +95,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
     def report_init_status(self):
 
         LOGGER.info('reporting initialization status')
+        LOGGER.info('using new version code {}'.format(self.new_ver))
         if self.complete_secure_tree:
             LOGGER.info('running complete secure')
         if self.run_goss:
@@ -115,7 +119,8 @@ class HeteroDecisionTreeGuest(DecisionTree):
              cipher_compressing=False,
              encrypt_key_length=None,
              round_decimal=7,
-             max_sample_weight=1):
+             max_sample_weight=1,
+             new_ver=True):
 
         super(HeteroDecisionTreeGuest, self).init_data_and_variable(flowid, runtime_idx, data_bin, bin_split_points,
                                                                     bin_sparse_points, valid_features, grad_and_hess)
@@ -140,6 +145,8 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
         if self.run_cipher_compressing:
             self.init_compressor()
+
+        self.new_ver = new_ver
 
         self.report_init_status()
 
@@ -267,7 +274,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
         for host_idx in range(len(encrypted_splitinfo_host)):
 
-            LOGGER.debug('host index is {}'.format(self.get_host_sitename(host_idx)))
+            LOGGER.debug('host sitename is {}'.format(self.get_host_sitename(host_idx)))
 
             init_gain = self.min_impurity_split - consts.FLOAT_ZERO
             encrypted_init_gain = self.encrypter.encrypt(init_gain)
@@ -341,7 +348,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
             host_split_info = self.splitter.find_host_best_split_info(split_info_table, self.get_host_sitename(host_idx),
                                                                       self.encrypter,
                                                                       cipher_decompressor=cipher_decompressor)
-            LOGGER.debug('best host split info {} at dep {}'.format(host_split_info, dep))
             split_info_list = [None for i in range(len(host_split_info))]
             for key in host_split_info:
                 split_info_list[node_map[key]] = host_split_info[key]
@@ -361,11 +367,8 @@ class HeteroDecisionTreeGuest(DecisionTree):
                 s2.sum_grad = s1.sum_grad
                 s2.sum_hess = s1.sum_hess
 
+        LOGGER.debug('final host best splits {}'.format(final_host_split_info))
         final_best_splits = self.merge_splitinfo(best_split_info_guest, final_host_split_info, need_decrypt=False)
-
-        LOGGER.debug('compute 2 rs {}'.format(final_host_split_info))
-        LOGGER.debug('best splits 2 {}'.format(final_best_splits))
-        LOGGER.debug('computing local splits done')
 
         return final_best_splits
 
@@ -390,8 +393,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
         cur_best_split = self.merge_splitinfo(splitinfo_guest=best_split_info_guest,
                                               splitinfo_host=host_split_info,
                                               merge_host_split_only=False)
-
-        LOGGER.debug('best splits 1 {}'.format(cur_best_split))
 
         return cur_best_split
 
@@ -742,8 +743,12 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
                 self.cur_to_split_nodes = self.cur_layer_nodes[i: i + self.max_split_nodes]
                 node_map = self.get_node_map(self.cur_to_split_nodes)
-                # cur_splitinfos = self.compute_best_splits(self.cur_to_split_nodes, node_map, dep, batch_idx)
-                cur_splitinfos = self.compute_best_splits2(self.cur_to_split_nodes, node_map, dep, batch_idx)
+
+                if self.new_ver:
+                    cur_splitinfos = self.compute_best_splits2(self.cur_to_split_nodes, node_map, dep, batch_idx)
+                else:
+                    cur_splitinfos = self.compute_best_splits(self.cur_to_split_nodes, node_map, dep, batch_idx)
+
                 split_info.extend(cur_splitinfos)
 
             LOGGER.debug('final split info is {}'.format(split_info))

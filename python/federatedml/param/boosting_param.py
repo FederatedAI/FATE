@@ -448,7 +448,7 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
                  complete_secure=False, metrics=None, use_first_metric_only=False, random_seed=100,
                  binning_error=consts.DEFAULT_RELATIVE_ERROR,
                  sparse_optimization=False, run_goss=False, top_rate=0.2, other_rate=0.1,
-                 cipher_compress_error=None):
+                 cipher_compress_error=None, new_ver=True):
 
         super(HeteroSecureBoostParam, self).__init__(task_type, objective_param, learning_rate, num_trees,
                                                      subsample_feature_rate, n_iter_no_change, tol, encrypt_param,
@@ -467,6 +467,7 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         self.top_rate = top_rate
         self.other_rate = other_rate
         self.cipher_compress_error = cipher_compress_error
+        self.new_ver = new_ver
 
     def check(self):
 
@@ -481,6 +482,7 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         self.check_boolean(self.run_goss, 'run goss')
         self.check_decimal_float(self.top_rate, 'top rate')
         self.check_decimal_float(self.other_rate, 'other rate')
+        self.check_boolean(self.new_ver, 'code version switcher')
 
         if self.top_rate + self.other_rate >= 1:
             raise ValueError('sum of top rate and other rate should be smaller than 1')
@@ -502,6 +504,10 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
                                'this function will be disabled automatically')
                 self.cipher_compress_error = None
 
+            if not self.new_ver:
+                LOGGER.warning('old version code does not support cipher compressing')
+                self.cipher_compress_error = None
+
         return True
 
 
@@ -517,7 +523,7 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
                  validation_freqs=None, early_stopping=None, use_missing=False, zero_as_missing=False,
                  complete_secure=False, tree_num_per_party=1, guest_depth=1, host_depth=1, work_mode='mix', metrics=None,
                  sparse_optimization=False, random_seed=100, binning_error=consts.DEFAULT_RELATIVE_ERROR,
-                 cipher_compress_error=None):
+                 cipher_compress_error=None, new_ver=True):
 
         """
         work_mode：
@@ -543,7 +549,8 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
                                                          random_seed=random_seed,
                                                          sparse_optimization=sparse_optimization,
                                                          binning_error=binning_error,
-                                                         cipher_compress_error=cipher_compress_error)
+                                                         cipher_compress_error=cipher_compress_error,
+                                                         new_ver=new_ver)
 
         self.tree_num_per_party = tree_num_per_party
         self.guest_depth = guest_depth

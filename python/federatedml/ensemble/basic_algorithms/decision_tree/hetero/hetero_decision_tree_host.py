@@ -52,12 +52,16 @@ class HeteroDecisionTreeHost(DecisionTree):
         self.key_length = None
         self.round_decimal = 7
 
+        # code version control
+        self.new_ver = True
+
     """
     Setting
     """
-    def report_initialization_status(self):
+    def report_init_status(self):
 
         LOGGER.info('reporting initialization status')
+        LOGGER.info('using new version code {}'.format(self.new_ver))
         if self.run_sparse_opt:
             LOGGER.info('running sparse optimization')
         if self.complete_secure_tree:
@@ -75,7 +79,8 @@ class HeteroDecisionTreeHost(DecisionTree):
              goss_subsample=False,
              run_sprase_opt=False,
              cipher_compressing=False,
-             round_decimal=7):
+             round_decimal=7,
+             new_ver=True):
 
         super(HeteroDecisionTreeHost, self).init_data_and_variable(flowid, runtime_idx, data_bin, bin_split_points,
                                                                    bin_sparse_points, valid_features, None)
@@ -92,7 +97,9 @@ class HeteroDecisionTreeHost(DecisionTree):
         if self.run_cipher_compressing:
             self.init_compressor()
 
-        self.report_initialization_status()
+        self.new_ver = new_ver
+
+        self.report_init_status()
 
     def set_host_party_idlist(self, l):
         self.host_party_idlist = l
@@ -477,14 +484,14 @@ class HeteroDecisionTreeHost(DecisionTree):
 
             acc_histograms = self.get_local_histograms(dep, data, self.grad_and_hess,
                                                        None, cur_to_split_nodes, node_map, ret='tb',
-                                                       hist_sub=False)
+                                                       hist_sub=False, sparse_opt=self.run_sparse_opt)
 
             splitinfo_host, encrypted_splitinfo_host = self.splitter.find_split_host(histograms=acc_histograms,
                                                                                      node_map=node_map,
                                                                                      use_missing=self.use_missing,
                                                                                      zero_as_missing=self.zero_as_missing,
                                                                                      valid_features=self.valid_features,
-                                                                                     sitename=self.sitename)
+                                                                                     sitename=self.sitename,)
 
             self.sync_encrypted_splitinfo_host(encrypted_splitinfo_host, dep, batch)
             federated_best_splitinfo_host = self.sync_federated_best_splitinfo_host(dep, batch)
@@ -518,10 +525,13 @@ class HeteroDecisionTreeHost(DecisionTree):
             batch = 0
             for i in range(0, len(self.cur_layer_nodes), self.max_split_nodes):
                 self.cur_to_split_nodes = self.cur_layer_nodes[i: i + self.max_split_nodes]
-                # self.compute_best_splits(self.cur_to_split_nodes,
-                #                          node_map=self.get_node_map(self.cur_to_split_nodes), dep=dep, batch=batch, )
-                self.compute_best_splits2(self.cur_to_split_nodes, node_map=self.get_node_map(self.cur_to_split_nodes),
-                                          dep=dep, batch=batch)
+                if self.new_ver:
+                    self.compute_best_splits2(self.cur_to_split_nodes,
+                                              node_map=self.get_node_map(self.cur_to_split_nodes),
+                                              dep=dep, batch=batch)
+                else:
+                    self.compute_best_splits(self.cur_to_split_nodes,
+                                             node_map=self.get_node_map(self.cur_to_split_nodes), dep=dep, batch=batch)
                 batch += 1
 
             dispatch_node_host = self.sync_dispatch_node_host(dep)
