@@ -17,6 +17,7 @@ local ngx = ngx
 local new_timer = ngx.timer.at
 local yaml_parser = require "yaml_parser"
 local io = io
+local string = require "string"
 
 local _M = {
     _VERSION = '0.1'
@@ -33,15 +34,18 @@ if not route_cache then
 end
 
 local function reload_route_table()
+    ngx.log(ngx.INFO, "start reload route table config")
     local prefix_path = ngx.config.prefix()
-    local file = io.open(prefix_path.."conf/route_table.yaml", "r")
+    local route_table_config_path = prefix_path.."conf/route_table.yaml"
+    local file = io.open(route_table_config_path, "r")
     local content = file:read("*a")
     file:close()
+    ngx.log(ngx.INFO, string.format("load route table config %s success", route_table_config_path))
     local yaml_table = yaml_parser.parse(content)
-    for k, v in pairs(yaml_table)do
+    for k, v in pairs(yaml_table) do
         route_cache:set(tostring(k), v)
     end
-    ngx.log(ngx.INFO, "reload route table")
+    ngx.log(ngx.INFO, "reload route table done")
 end
 
 local function reload()
