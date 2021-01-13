@@ -131,9 +131,7 @@ class QuantileSummaries(object):
             return self
 
         if self.count == 0:
-            self.count = other.count
-            self.sampled = other.sampled
-            return self
+            return other
 
         # merge two sorted array
         new_sample = []
@@ -160,9 +158,7 @@ class QuantileSummaries(object):
         merge_threshold = 2 * self.error * self.count
 
         res_summary.sampled = res_summary._compress_immut(merge_threshold)
-        t1 = time.time()
-        if t1 - t0 > 1:
-            LOGGER.debug(f"merge took {t1 - t0}s")
+        LOGGER.debug(f"res_summary count: {res_summary.count}, self count: {self.count}, other count: {other.count}")
         return res_summary
 
     def query(self, quantile):
@@ -295,6 +291,7 @@ class SparseQuantileSummaries(QuantileSummaries):
 
     def set_total_count(self, total_count):
         self._total_count = total_count
+        LOGGER.debug(f"In set_total_count, count: {self.count}")
         return self
 
     def insert(self, x):
@@ -311,6 +308,10 @@ class SparseQuantileSummaries(QuantileSummaries):
             return 0.0
 
         non_zero_quantile = self._convert_query_percentile(quantile)
+        LOGGER.debug(f"quantile: {quantile}, zero_lower_bound: {self.zero_lower_bound},"
+                     f"zero_upper_bound: {self.zero_upper_bound}, total_count: {self._total_count},"
+                     f"count: {self.count}"
+                     f"non_zero_quantile: {non_zero_quantile}")
         result = super(SparseQuantileSummaries, self).query(non_zero_quantile)
         return result
 
@@ -327,10 +328,10 @@ class SparseQuantileSummaries(QuantileSummaries):
 
     def merge(self, other):
         assert isinstance(other, SparseQuantileSummaries)
-        self.smaller_num += other.smaller_num
-        self.bigger_num += other.bigger_num
-        super(SparseQuantileSummaries, self).merge(other)
-        return self
+        res_summary = super(SparseQuantileSummaries, self).merge(other)
+        res_summary.smaller_num = self.smaller_num + other.smaller_num
+        res_summary.bigger_num = self.bigger_num + other.bigger_num
+        return res_summary
 
     def _convert_query_percentile(self, quantile):
         zeros_count = self._total_count - self.count

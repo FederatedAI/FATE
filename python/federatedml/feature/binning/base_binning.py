@@ -325,11 +325,14 @@ class BaseBinning(object):
         elif split_points is None:
             split_points = self.split_points
 
-        data_bin_table = self.get_data_bin(data_instances, split_points)
-        if label_table is None:
-            label_table = data_instances.mapValues(lambda x: x.label)
+        # data_bin_table = self.get_data_bin(data_instances, split_points)
+
+        bin_data, _, sparse_bin_num = self.convert_feature_to_bin(data_instances, self.split_points)
+
+        # if label_table is None:
+        #     label_table = data_instances.mapValues(lambda x: x.label)
         # event_count_table = label_table.mapValues(lambda x: (x, 1 - x))
-        data_bin_with_label = data_bin_table.join(label_table, lambda x, y: (x, y))
+        # data_bin_with_label = data_bin_table.join(label_table, lambda x, y: (x, y))
         f = functools.partial(self.add_label_in_partition,
                               split_points=split_points,
                               cols_dict=self.bin_inner_param.bin_cols_map)
