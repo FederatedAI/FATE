@@ -31,9 +31,9 @@ class VerifiableSecretSharing(object):
         for x in range(1, self.share_amount+1):
             y = 0
             for c in reversed(coefficient):
-                y *= x
-                y += c
-            y %= self.q
+                y *= x % self.q
+                y += c % self.q
+                y %= self.q
             f_x.append((x, y))
 
         commitment = list(map(self.calculate_commitment, coefficient))
