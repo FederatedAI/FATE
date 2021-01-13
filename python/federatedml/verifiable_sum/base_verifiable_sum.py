@@ -75,7 +75,7 @@ class BaseVerifiableSum(ModelBase):
 
     def verify_sumkey(self, sum_key, commitment, party_id):
         for recv in self.commitments_recv:
-            commitment = commitment.join(recv, lambda x, y: (x * y) % self.vss.prime)
+            commitment = commitment.join(recv, lambda x, y: (x * y) % self.vss.p)
         sum_key.join(commitment, lambda x, y: self.verify(x, y, party_id, "sum_key"))
 
     def verify_subkey(self, sub_key, commitment, party_id):

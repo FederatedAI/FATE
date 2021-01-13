@@ -36,6 +36,7 @@ class VerifiableSumGuest(BaseVerifiableSum):
 
     def _init_data(self, data_inst):
         self.host_count = len(self.component_properties.host_party_idlist)
+        self.vss.key_pair()
         self.vss.set_share_amount(self.host_count)
         if not self.model_param.sum_cols:
             self.x = data_inst.mapValues(lambda x: x.features)
@@ -56,7 +57,7 @@ class VerifiableSumGuest(BaseVerifiableSum):
         return numpy.array(data)
 
     def sync_primes_to_host(self):
-        self.transfer_inst.guest_share_primes.remote(self.vss.prime,
+        self.transfer_inst.guest_share_primes.remote((self.vss.p, self.vss.g, self.vss.q),
                                                      role="host",
                                                      idx=-1)
 
