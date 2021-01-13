@@ -19,9 +19,9 @@ def data_group():
 
 @data_group.command("upload")
 @click.option('-i', '--include', required=True, type=click.Path(exists=True), multiple=True, metavar="<include>",
-              help="include *benchmark.json under these paths")
+              help="include *benchmark.json or *testsuite.json under these paths")
 @click.option('-e', '--exclude', type=click.Path(exists=True), multiple=True,
-              help="exclude *benchmark.json under these paths")
+              help="exclude *benchmark.json *testsuite.json under these paths")
 @click.option('-g', '--glob', type=str,
               help="glob string to filter sub-directory of path specified by <include>")
 @click.option('-s', '--suite-type', required=True, type=click.Choice(["testsuite", "benchmark"]), help="suite type")
@@ -71,9 +71,9 @@ def upload(ctx, include, exclude, glob, suite_type, role, **kwargs):
 
 @data_group.command("delete")
 @click.option('-i', '--include', required=True, type=click.Path(exists=True), multiple=True, metavar="<include>",
-              help="include *benchmark.json under these paths")
+              help="include *benchmark.json or *testsuite.json under these paths")
 @click.option('-e', '--exclude', type=click.Path(exists=True), multiple=True,
-              help="exclude *benchmark.json under these paths")
+              help="exclude *benchmark.json or *testsuite.json under these paths")
 @click.option('-g', '--glob', type=str,
               help="glob string to filter sub-directory of path specified by <include>")
 @click.option('-s', '--suite-type', required=True, type=click.Choice(["testsuite", "benchmark"]), help="suite type")
