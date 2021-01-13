@@ -223,7 +223,7 @@ class BaseLinearModel(ModelBase):
         check_status = data_instances.applyPartitions(_check_overflow)
         is_overflow = check_status.reduce(lambda a, b: a or b)
         if is_overflow:
-            raise OverflowError("The input data is too large for GLM, please have "
+            raise OverflowError("The value range of input data is too large for GLM, please have "
                                 "a check for input data")
         LOGGER.info("Check for abnormal value passed")
 

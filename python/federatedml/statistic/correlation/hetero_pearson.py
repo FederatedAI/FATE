@@ -116,7 +116,6 @@ class HeteroPearson(ModelBase):
     @staticmethod
     def _vif_from_pearson_matrix(mat: np.ndarray):
         shape = mat.shape
-        LOGGER.error(f"shape: {shape}")
         if shape[0] != shape[1]:
             raise RuntimeError("accept square matrix only")
         dim = shape[0]

@@ -234,7 +234,7 @@ class FeatureBinningParam(BaseParam):
         self.encrypt_param.check()
 
 
-class HomoFeatureBinningParam(BaseParam):
+class HomoFeatureBinningParam(FeatureBinningParam):
     def __init__(self, method=consts.VIRTUAL_SUMMARY,
                  compress_thres=consts.DEFAULT_COMPRESS_THRESHOLD,
                  head_size=consts.DEFAULT_HEAD_SIZE,
@@ -244,14 +244,16 @@ class HomoFeatureBinningParam(BaseParam):
                  transform_param=TransformParam(),
                  local_only=False, category_indexes=None, category_names=None,
                  encrypt_param=EncryptParam(),
-                 need_run=True, skip_static=False):
-        super(HomoFeatureBinningParam, self).__init__()
+                 need_run=True, skip_static=False, max_iter=100):
+        super(HomoFeatureBinningParam, self).__init__(method=method, compress_thres=compress_thres,
+                                                      head_size=head_size, error=error,
+                                                      bin_num=bin_num, bin_indexes=bin_indexes,
+                                                      bin_names=bin_names, adjustment_factor=adjustment_factor,
+                                                      transform_param=transform_param,
+                                                      category_indexes=category_indexes, category_names=category_names,
+                                                      encrypt_param=encrypt_param, need_run=need_run,
+                                                      skip_static=skip_static)
         self.sample_bins = sample_bins
-        self.category_names = category_names
-        self.category_indexes = category_indexes
-        self.skip_static = skip_static
-        self.need_run = need_run
-        self.encrypt_param = encrypt_param
         self.local_only = local_only
         self.adjustment_factor = adjustment_factor
         self.bin_names = bin_names
@@ -262,6 +264,7 @@ class HomoFeatureBinningParam(BaseParam):
         self.head_size = head_size
         self.compress_thres = compress_thres
         self.method = method
+        self.max_iter = max_iter
 
     def check(self):
         descr = "homo binning param's"
@@ -282,3 +285,9 @@ class HomoFeatureBinningParam(BaseParam):
         #     raise ValueError("When skip_static, optimal binning is not supported.")
         self.transform_param.check()
         self.encrypt_param.check()
+        self.check_positive_integer(self.max_iter, descr)
+        if self.max_iter > 100:
+            raise ValueError("Max iter is not allowed exceed 100")
+        
+
+

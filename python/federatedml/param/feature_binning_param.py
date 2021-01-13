@@ -285,6 +285,9 @@ class HomoFeatureBinningParam(FeatureBinningParam):
         #     raise ValueError("When skip_static, optimal binning is not supported.")
         self.transform_param.check()
         self.encrypt_param.check()
+        self.check_positive_integer(self.max_iter, descr)
+        if self.max_iter > 100:
+            raise ValueError("Max iter is not allowed exceed 100")
         
 
 

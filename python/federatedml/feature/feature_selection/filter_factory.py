@@ -21,6 +21,7 @@ import copy
 from federatedml.feature.feature_selection.iso_model_filter import IsoModelFilter, FederatedIsoModelFilter
 from federatedml.feature.feature_selection.manually_filter import ManuallyFilter
 from federatedml.feature.feature_selection.percentage_value_filter import PercentageValueFilter
+from federatedml.feature.feature_selection.correlation_filter import CorrelationFilter
 from federatedml.param import feature_selection_param
 from federatedml.param.feature_selection_param import FeatureSelectionParam
 from federatedml.util import LOGGER
@@ -201,6 +202,27 @@ def get_filter(filter_name, model_param: FeatureSelectionParam, role=consts.GUES
         if iso_model is None:
             raise ValueError("None of psi model has provided when using psi filter")
         return IsoModelFilter(this_param, iso_model)
-
+    elif filter_name == consts.VIF_FILTER:
+        vif_param = model_param.vif_param
+        this_param = _obtain_single_param(vif_param, idx)
+        iso_model = model.isometric_models.get("HeteroPearson")
+        if iso_model is None:
+            raise ValueError("None of Hetero Pearson model has provided when using VIF filter")
+        return IsoModelFilter(this_param, iso_model)
+    elif filter_name == consts.CORRELATION_FILTER:
+        correlation_param = model_param.correlation_param
+        if correlation_param.sort_metric == 'iv':
+            external_model = model.isometric_models.get(consts.BINNING_MODEL)
+            if external_model is None:
+                raise ValueError("None of binning model has provided when using correlation filter")
+        else:
+            raise ValueError(f"sort_metric: {correlation_param.sort_metric} is not supported")
+        iso_model = model.isometric_models.get("HeteroPearson")
+        correlation_model = iso_model.get_metric_info(consts.PEARSON)
+        if iso_model is None:
+            raise ValueError("None of Hetero Pearson model has provided when using Correlation filter")
+        return CorrelationFilter(correlation_param, external_model=external_model,
+                                 correlation_model=correlation_model, role=role,
+                                 cpp=model.component_properties)
     else:
         raise ValueError("filter method: {} does not exist".format(filter_name))
