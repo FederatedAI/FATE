@@ -87,6 +87,14 @@
             "table_name": "motor_hetero_host_2",
             "namespace": "experiment",
             "role": "host_1"
+        },
+        {
+            "file": "examples/data/weighted_breast_hetero_guest.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "weighted_breast_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
         }
     ],
     "tasks": {
@@ -97,6 +105,10 @@
         "train_complete_secure": {
             "conf": "./test_secureboost_train_complete_secure_conf.json",
             "dsl": "./test_secureboost_train_dsl.json"
+        },
+        "train_binary_with_sample_weight": {
+            "conf": "./test_secureboost_train_binary_with_weight_conf.json",
+            "dsl": "./test_secureboost_sample_weight_dsl.json"
         },
         "train_binary_predict": {
             "conf": "./test_predict_conf.json",
