@@ -18,7 +18,7 @@ from colorama import init, deinit, Fore, Style
 import math
 import numpy as np
 
-from prettytable import PrettyTable, MARKDOWN, ORGMODE
+from prettytable import PrettyTable, ORGMODE
 
 SCRIPT_METRICS = "script_metrics"
 
@@ -118,15 +118,15 @@ def match_script_metrics(abs_tol, rel_tol, **results):
         for script_model_name in script_model_names:
             row = [f"{script_model_name}-{script}"] + [f"{TxtStyle.FIELD_VAL}{v}{TxtStyle.END}" for v in filtered_results[script_model_name]]
             table.add_row(row)
-        print(table.get_string(title=f"{TxtStyle.TITLE}{script}Script Metrics Summary{TxtStyle.END}"))
+        print(table.get_string(title=f"{TxtStyle.TITLE}{script} Script Metrics Summary{TxtStyle.END}"))
         eval_summary = evaluate_almost_equal(common_metrics, filtered_results, abs_tol, rel_tol)
         eval_table = PrettyTable()
-        eval_table.set_style(MARKDOWN)
+        eval_table.set_style(ORGMODE)
         eval_table.field_names = ["Metric", "All Match"]
         for metric, v in eval_summary.items():
             row = [metric, v]
             eval_table.add_row(row)
-        print(style_table(eval_table.get_string(title=f"{TxtStyle.TITLE}{script}Script Metrics Match Results{TxtStyle.END}")))
+        print(style_table(eval_table.get_string(title=f"{TxtStyle.TITLE}{script} Script Metrics Match Results{TxtStyle.END}")))
         print("\n"  + "#" * 60)
 
 
@@ -161,7 +161,7 @@ def match_metrics(evaluate, group_name, abs_tol=None, rel_tol=None, **results):
     if evaluate:
         eval_summary = evaluate_almost_equal(common_metrics, filtered_results, abs_tol, rel_tol)
         eval_table = PrettyTable()
-        eval_table.set_style(MARKDOWN)
+        eval_table.set_style(ORGMODE)
         eval_table.field_names = ["Metric", "All Match"]
         for metric, v in eval_summary.items():
             row = [metric, v]
@@ -176,16 +176,17 @@ def match_metrics(evaluate, group_name, abs_tol=None, rel_tol=None, **results):
 
 def extract_data(txt, col_name, convert_float=True, keep_id=False):
     """
-    convert list of string from component output data to 1d array
+    convert list of string from component output data to array
     Parameters
     ----------
     txt: data in list of string
     col_name: column to extract
-    convert_float: whether convert extracted value to float num
+    convert_float: whether to convert extracted value to float value
     keep_id: whether to keep id
 
     Returns
     -------
+    array of extracted data, optionally with id
 
     """
     header = txt[0].split(",")
