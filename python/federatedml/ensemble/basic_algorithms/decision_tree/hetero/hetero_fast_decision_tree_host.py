@@ -520,10 +520,15 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
             batch = 0
             for i in range(0, len(self.cur_layer_nodes), self.max_split_nodes):
                 self.cur_to_split_nodes = self.cur_layer_nodes[i: i + self.max_split_nodes]
-                self.compute_best_splits_with_node_plan(tree_action, layer_target_host_id,
-                                                        cur_to_split_nodes=self.cur_to_split_nodes,
-                                                        node_map=self.get_node_map(self.cur_to_split_nodes),
-                                                        dep=dep, batch_idx=batch, )
+                # self.compute_best_splits_with_node_plan(tree_action, layer_target_host_id,
+                #                                         cur_to_split_nodes=self.cur_to_split_nodes,
+                #                                         node_map=self.get_node_map(self.cur_to_split_nodes),
+                #                                         dep=dep, batch_idx=batch, )
+                self.compute_best_splits_with_node_plan2(tree_action, layer_target_host_id,
+                                                         cur_to_split_nodes=self.cur_to_split_nodes,
+                                                         node_map=self.get_node_map(self.cur_to_split_nodes),
+                                                         dep=dep, batch=batch,
+                                                         mode=consts.LAYERED_TREE)
                 batch += 1
 
             if layer_target_host_id == self.self_host_id:

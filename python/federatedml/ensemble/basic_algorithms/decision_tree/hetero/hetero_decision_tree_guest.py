@@ -21,6 +21,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
     def __init__(self, tree_param):
         super(HeteroDecisionTreeGuest, self).__init__(tree_param)
+
         self.encrypter = None
         self.encrypted_mode_calculator = None
         self.transfer_inst = HeteroDecisionTreeTransferVariable()
@@ -96,12 +97,12 @@ class HeteroDecisionTreeGuest(DecisionTree):
         if self.run_goss:
             LOGGER.info('run goss is {}, top rate is {}, other rate is {}'.format(self.run_goss, self.top_rate,
                                                                                   self.other_rate))
-            LOGGER.info('sampled g_h count is {}, total sample num is {}'.format(self.grad_and_hess,
+            LOGGER.info('sampled g_h count is {}, total sample num is {}'.format(self.grad_and_hess.count(),
                                                                                  self.data_bin.count()))
         if self.run_cipher_compressing:
             LOGGER.info('running cipher compressing')
             LOGGER.info('round decimal is {}'.format(self.round_decimal))
-        LOGGER.info('max sample weight is {}'.format(self.max_sample_weight))
+        LOGGER.info('updated max sample weight is {}'.format(self.max_sample_weight))
 
     def init(self, flowid, runtime_idx, data_bin, bin_split_points, bin_sparse_points, valid_features,
              grad_and_hess,
@@ -175,7 +176,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
         cur_split_node, encrypted_splitinfo_host = value
         sum_grad = cur_split_node.sum_grad
         sum_hess = cur_split_node.sum_hess
-        LOGGER.debug('compute 1 node {} g {} h {}'.format(cur_split_node.id, sum_grad, sum_hess))
+
         best_gain = self.min_impurity_split - consts.FLOAT_ZERO
         best_idx = -1
 
@@ -217,7 +218,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
             best_splitinfo = splitinfo_guest_host[0]
         else:
             best_splitinfo = splitinfo_guest_host[best_gain_host_idx]
-            LOGGER.debug('best split info is {}, {}'.format(best_splitinfo.sum_grad, best_splitinfo.sum_hess))
 
             # when this node can not be further split, host sum_grad and sum_hess is not an encrypted number but 0
             # so need type checking here
@@ -232,7 +232,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
     def merge_splitinfo(self, splitinfo_guest, splitinfo_host, merge_host_split_only=False, need_decrypt=True):
 
-        LOGGER.info("merge splitinfo, merge_host_split_only is {}".format(merge_host_split_only))
+        LOGGER.info("merging splitinfo, merge_host_split_only is {}".format(merge_host_split_only))
 
         if merge_host_split_only:
             splitinfo_guest = [None for i in range(len(splitinfo_host[0]))]
@@ -264,7 +264,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
         # get flatten split points from hosts
         # [split points from host 1, split point from host 2, .... so on] ↓
         encrypted_splitinfo_host = self.sync_encrypted_splitinfo_host(dep, batch, idx=idx)
-        LOGGER.debug('cwj len is {}'.format(len(encrypted_splitinfo_host)))
 
         for host_idx in range(len(encrypted_splitinfo_host)):
 
@@ -512,7 +511,8 @@ class HeteroDecisionTreeGuest(DecisionTree):
         self.cipher_decompressor = GuestSplitInfoDecompressor(self.encrypter, task_type=consts.CLASSIFICATION,
                                                               max_sample_weight=self.max_sample_weight)
 
-        para = {'key_length': self.key_length, 'en_type': self.get_encrypt_type(),
+        max_capacity_int = self.encrypter.public_key.max_int
+        para = {'max_capacity_int': max_capacity_int, 'en_type': self.get_encrypt_type(),
                 'max_sample_weight': self.max_sample_weight}
 
         self.transfer_inst.cipher_compressor_para.remote(para, idx=-1)

@@ -104,30 +104,35 @@ class CipherDecompressor(object):  # this class endcode and unzip cipher package
 
 class CipherCompressor(object):
 
-    def __init__(self, cipher_type, max_float, key_length, package_class, round_decimal):
+    def __init__(self, cipher_type, max_float, max_capacity_int, package_class, round_decimal):
 
         if cipher_type != consts.PAILLIER and cipher_type != consts.ITERATIVEAFFINE:
             raise ValueError('encrypt type {} is not supported by cipher compressing'.format(cipher_type))
 
         self._ciper_type = cipher_type
         self.max_float = max_float
-        self.key_length = key_length
+        self.max_capacity_int = max_capacity_int
         self._package_class = package_class
         self.round_decimal = round_decimal
-        self._padding_length, self.max_capacity = self.advise(max_float, key_length, cipher_type, round_decimal)
+        self._padding_length, self.max_capacity = self.advise(max_float, max_capacity_int, cipher_type, round_decimal)
 
     @staticmethod
-    def advise(max_float, key_length, cipher_type=consts.PAILLIER, round_decimal=7):
+    def advise(max_float, max_capacity_int, cipher_type=consts.PAILLIER, round_decimal=7):
 
         max_int = int(max_float * (10**round_decimal))
+        key_length = max_capacity_int.bit_length()
         padding_length = max_int.bit_length()
+
         if cipher_type == consts.PAILLIER:
             cipher_capacity = (key_length - 1) // padding_length
         else:
-            key_length = (key_length // 5) - 1  # capacity of iterativeAffine
-            cipher_capacity = key_length // padding_length
+            raise ValueError('Non paillier method is not supported')
 
-        print(cipher_type)
+        if cipher_capacity <= 1:
+            raise ValueError('cipher package capacity is too small! capacity is: {}.'
+                             'compressing parameters are: max_float {}, round_decmial {},'
+                             'key_length {}'.format(cipher_capacity, max_float, round_decimal, key_length))
+
         return padding_length, cipher_capacity
 
     def compress(self, cipher_text_list):
@@ -147,7 +152,7 @@ class CipherCompressor(object):
 if __name__ == '__main__':
     import numpy as np
     from federatedml.secureprotol import PaillierEncrypt as Encrypt
-    from federatedml.secureprotol import IterativeAffineEncrypt as Encrypt
+    # from federatedml.secureprotol import IterativeAffineEncrypt as Encrypt
 
     test_group = [1.65539338, 1.62576656, 1.14499671, 1.05994581, 1.37168581, 1.87084777,
                   1.15221312, 1.62920769, 1.90481074, 1.94526007, 1.56370815, 1.44401756,
@@ -162,14 +167,14 @@ if __name__ == '__main__':
     # test_nums = np.array(test_group)
     en = Encrypt()
     en.generate_key(key_length)
-    max_float = test_nums.max()
-
-    encoder = CipherEncoder(round_decimal=decimal_to_keep)
-    compressor = CipherCompressor(consts.ITERATIVEAFFINE, max_float, key_length, NormalCipherPackage, decimal_to_keep)
-    decompressor = CipherDecompressor(encrypter=en)
-
-    en_list = encoder.encode_and_encrypt(test_nums, en)
-    packages = compressor.compress(en_list)
-    rs = decompressor.unpack(packages)
-    print(test_nums)
-    print(np.array(rs))
+    # max_float = test_nums.max()
+    #
+    # encoder = CipherEncoder(round_decimal=decimal_to_keep)
+    # compressor = CipherCompressor(consts.ITERATIVEAFFINE, max_float, key_length, NormalCipherPackage, decimal_to_keep)
+    # decompressor = CipherDecompressor(encrypter=en)
+    #
+    # en_list = encoder.encode_and_encrypt(test_nums, en)
+    # packages = compressor.compress(en_list)
+    # rs = decompressor.unpack(packages)
+    # print(test_nums)
+    # print(np.array(rs))

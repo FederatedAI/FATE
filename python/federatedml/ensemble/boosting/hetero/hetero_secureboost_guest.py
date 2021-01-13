@@ -70,6 +70,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
                                                    lambda v1, v2: (v1[0] * v2.weight, v1[1] * v2.weight))
                 if not self.max_sample_weight_computed:
                     self.max_sample_weight = get_max_sample_weight(data_with_sample_weight)
+                    LOGGER.info('max sample weight is {}'.format(self.max_sample_weight))
                     self.max_sample_weight_computed = True
 
         return grad_and_hess

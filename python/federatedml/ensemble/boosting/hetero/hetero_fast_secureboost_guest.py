@@ -24,7 +24,6 @@ class HeteroFastSecureBoostingTreeGuest(HeteroSecureBoostingTreeGuest):
 
     def _init_model(self, param: HeteroFastSecureBoostParam):
         super(HeteroFastSecureBoostingTreeGuest, self)._init_model(param)
-        LOGGER.debug('loss func is {}'.format(param.objective_param.objective))
         self.tree_num_per_party = param.tree_num_per_party
         self.work_mode = param.work_mode
         self.guest_depth = param.guest_depth

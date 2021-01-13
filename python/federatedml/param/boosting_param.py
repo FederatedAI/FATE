@@ -482,6 +482,9 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         self.check_decimal_float(self.top_rate, 'top rate')
         self.check_decimal_float(self.other_rate, 'other rate')
 
+        if self.top_rate + self.other_rate >= 1:
+            raise ValueError('sum of top rate and other rate should be smaller than 1')
+
         if self.cipher_compress_error is not None:
             self.check_positive_integer(self.cipher_compress_error, 'cipher_compress_error')
             if self.cipher_compress_error > 15:

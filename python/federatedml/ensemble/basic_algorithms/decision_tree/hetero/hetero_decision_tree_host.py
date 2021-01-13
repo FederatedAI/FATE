@@ -375,11 +375,9 @@ class HeteroDecisionTreeHost(DecisionTree):
 
     def init_compressor(self):
         para = self.transfer_inst.cipher_compressor_para.get(idx=0)
-        max_sample_weight, key_len, en_type = para['max_sample_weight'], para['key_length'], para['en_type']
-        LOGGER.info('got para from guest: max weight {}; key len {}; en type {}'.format(max_sample_weight,
-                                                                                        key_len,
-                                                                                        en_type))
-        self.cipher_compressor = HostSplitInfoCompressor(key_len, en_type, consts.CLASSIFICATION,
+        max_sample_weight, max_capcity_int, en_type = para['max_sample_weight'], para['max_capacity_int'], para['en_type']
+        LOGGER.info('got para from guest: max sample weight {}; max capacity int {}; en type {}'.format(max_sample_weight, max_capcity_int, en_type))
+        self.cipher_compressor = HostSplitInfoCompressor(max_capcity_int, en_type, consts.CLASSIFICATION,
                                                          round_decimal=self.round_decimal,
                                                          max_sample_weights=max_sample_weight)
 
@@ -459,7 +457,7 @@ class HeteroDecisionTreeHost(DecisionTree):
                                                                suffix=(dep, batch))
             best_split_info = self.transfer_inst.federated_best_splitinfo_host.get(suffix=(dep, batch), idx=0)
             unmasked_split_info = self.unmask_split_info(best_split_info, self.inverse_fid_bid_random_mapping,
-                                             self.missing_dir_mask_left[dep], self.missing_dir_mask_right[dep])
+                                                         self.missing_dir_mask_left[dep], self.missing_dir_mask_right[dep])
             LOGGER.debug('unmasked split info is {}'.format(unmasked_split_info))
             return_split_info = self.encode_split_info(unmasked_split_info)
             self.transfer_inst.final_splitinfo_host.remote(return_split_info,

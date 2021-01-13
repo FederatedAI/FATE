@@ -2,8 +2,18 @@ import numpy as np
 from fate_arch.session import computing_session
 
 
-def goss_sampling(grad_and_hess, top_rate, other_rate):
+# TODO
+def random_sampling():
+    """
+    Normal random row subsample
+    """
+    pass
 
+
+def goss_sampling(grad_and_hess, top_rate, other_rate):
+    """
+    sampling method introduced in LightGBM
+    """
     sample_num = grad_and_hess.count()
     g_h_generator = grad_and_hess.collect()
     id_list, g_list, h_list = [], [], []

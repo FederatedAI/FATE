@@ -16,8 +16,8 @@ def get_g_h_info(task_type, max_sample_weight):
 
 class SplitInfoPackage(NormalCipherPackage):
 
-    def __init__(self, max_float, key_length, round_decimal):
-        super(SplitInfoPackage, self).__init__(max_float, key_length, round_decimal)
+    def __init__(self, padding_length, max_capacity, round_decimal):
+        super(SplitInfoPackage, self).__init__(padding_length, max_capacity, round_decimal)
         self._split_info_without_gh = []
         self._cur_splitinfo_contains = 0
 
@@ -99,10 +99,10 @@ class GuestSplitInfoDecompressor(object):
 
 class HostSplitInfoCompressor(object):
 
-    def __init__(self, key_length, encrypt_type, task_type=consts.CLASSIFICATION,
+    def __init__(self, max_capacity_int, encrypt_type, task_type=consts.CLASSIFICATION,
                  package_class=SplitInfoPackage, round_decimal=7, max_sample_weights=1):
 
-        self.key_length = key_length
+        self.max_capacity_int = max_capacity_int
         self.encrypt_type = encrypt_type
         self.round_decimal = round_decimal
         self.max_sample_weights = max_sample_weights
@@ -115,11 +115,11 @@ class HostSplitInfoCompressor(object):
         for node_id, idx in node_map.items():
             sample_num = node_sample_count[idx]
             max_float = sample_num*(max(self.g_max, self.h_max))
-            self.compressors[node_id] = CipherCompressor(self.encrypt_type, key_length=self.key_length,
+            self.compressors[node_id] = CipherCompressor(self.encrypt_type, max_capacity_int=self.max_capacity_int,
                                                          package_class=self.package_class,
                                                          round_decimal=self.round_decimal,
                                                          max_float=max_float)
-            _, capacity = CipherCompressor.advise(max_float, self.key_length, self.encrypt_type, self.round_decimal)
+            _, capacity = CipherCompressor.advise(max_float, self.max_capacity_int, self.encrypt_type, self.round_decimal)
             LOGGER.debug('compressor info of node {}: sample num {}, max capacity of a package {}'
                          ', max_float is {}'.format(node_id, sample_num, capacity, max_float))
 
