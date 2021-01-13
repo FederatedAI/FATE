@@ -24,6 +24,7 @@
 # =============================================================================
 # Criterion
 # =============================================================================
+from federatedml.util import LOGGER
 
 
 class Criterion(object):
@@ -36,8 +37,34 @@ class Criterion(object):
 
 
 class XgboostCriterion(Criterion):
-    def __init__(self, reg_lambda=0.1):
-        self.reg_lambda = reg_lambda
+
+    def __init__(self, reg_lambda=0.1, reg_alpha=0):
+
+        self.reg_lambda = reg_lambda  # l2 reg
+        self.reg_alpha = reg_alpha  # l1 reg
+        LOGGER.info('splitter criterion setting done: l1 {}, l2 {}'.format(self.reg_alpha, self.reg_lambda))
+
+    @staticmethod
+    def _g_alpha_cmp(gradient, reg_alpha):
+        if gradient < - reg_alpha:
+            return gradient + reg_alpha
+        elif gradient > reg_alpha:
+            return gradient - reg_alpha
+        else:
+            return 0
+
+    # def _l1_l2_node_gain(self, sum_grad, sum_hess):
+    #     return -(self._g_alpha_cmp(sum_grad, self.reg_alpha)) / (sum_hess + self.reg_lambda)
+    #
+    # def _l2_node_gain(self, sum_grad, sum_hess):
+    #     return sum_grad * sum_grad / (sum_hess + self.reg_lambda)
+    #
+    # def _l1_l2_node_weight(self, sum_grad, sum_hess):
+    #     num = self._g_alpha_cmp(sum_grad, self.reg_alpha)
+    #     return num*num / (sum_hess + self.reg_lambda)
+    #
+    # def _l2_node_weight(self, sum_grad, sum_hess):
+    #     return -sum_grad / (self.reg_lambda + sum_hess)
 
     def split_gain(self, node_sum, left_node_sum, right_node_sum):
         sum_grad, sum_hess = node_sum
@@ -48,7 +75,10 @@ class XgboostCriterion(Criterion):
                self.node_gain(sum_grad, sum_hess)
 
     def node_gain(self, sum_grad, sum_hess):
-        return sum_grad * sum_grad / (sum_hess + self.reg_lambda)
+        # return sum_grad * sum_grad / (sum_hess + self.reg_lambda)
+        num = self._g_alpha_cmp(sum_grad, self.reg_alpha)
+        return num * num / (sum_hess + self.reg_lambda)
 
     def node_weight(self, sum_grad, sum_hess):
-        return -sum_grad / (self.reg_lambda + sum_hess)
+        # return -sum_grad / (self.reg_lambda + sum_hess)
+        return -(self._g_alpha_cmp(sum_grad, self.reg_alpha)) / (sum_hess + self.reg_lambda)

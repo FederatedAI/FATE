@@ -75,8 +75,11 @@ class Splitter(object):
                 self.criterion = XgboostCriterion()
             else:
                 try:
-                    reg_lambda = float(criterion_params[0])
-                    self.criterion = XgboostCriterion(reg_lambda)
+                    reg_lambda, reg_alpha = 0, 0
+                    if type(criterion_params) is list:
+                        reg_lambda = float(criterion_params[0])
+                        reg_alpha = float(criterion_params[1])
+                    self.criterion = XgboostCriterion(reg_lambda=reg_lambda, reg_alpha=reg_alpha)
                 except:
                     warnings.warn("criterion_params' first criterion_params should be numeric")
                     self.criterion = XgboostCriterion()

@@ -56,4 +56,3 @@ class Node(object):
                 self.fid, self.bid, self.weight, self.sum_grad, self.sum_hess, self.left_nodeid, self.right_nodeid,
                 self.sitename, self.is_leaf
         )
-

@@ -105,7 +105,8 @@ class HeteroFastSecureBoostingTreeGuest(HeteroSecureBoostingTreeGuest):
         return pos1 + pos2
 
     # this func will be called by super class's predict()
-    def boosting_fast_predict(self, data_inst, trees: List[HeteroFastDecisionTreeGuest], predict_cache=None):
+    def boosting_fast_predict(self, data_inst, trees: List[HeteroFastDecisionTreeGuest], predict_cache=None,
+                              pred_leaf=False):
 
         LOGGER.info('fast sbt running predict')
 
@@ -126,17 +127,17 @@ class HeteroFastSecureBoostingTreeGuest(HeteroSecureBoostingTreeGuest):
             for host_leaf_pos in host_leaf_pos_list:
                 guest_leaf_pos = guest_leaf_pos.join(host_leaf_pos, self.merge_leaf_pos)
 
-            predict_result = self.get_predict_scores(leaf_pos=guest_leaf_pos, learning_rate=self.learning_rate,
-                                                     init_score=self.init_score, trees=trees,
-                                                     multi_class_num=self.booster_dim, predict_cache=predict_cache)
-
-            return predict_result
-
+            if pred_leaf:  # predict leaf, return leaf position only
+                return guest_leaf_pos
+            else:
+                predict_result = self.get_predict_scores(leaf_pos=guest_leaf_pos, learning_rate=self.learning_rate,
+                                                         init_score=self.init_score, trees=trees,
+                                                         multi_class_num=self.booster_dim, predict_cache=predict_cache)
+                return predict_result
         else:
-
             LOGGER.debug('running layered mode predict')
-
-            return super(HeteroFastSecureBoostingTreeGuest, self).boosting_fast_predict(data_inst, trees, predict_cache)
+            return super(HeteroFastSecureBoostingTreeGuest, self).boosting_fast_predict(data_inst, trees, predict_cache,
+                                                                                        pred_leaf=pred_leaf)
 
     def load_booster(self, model_meta, model_param, epoch_idx, booster_idx):
 
@@ -158,7 +159,7 @@ class HeteroFastSecureBoostingTreeGuest(HeteroSecureBoostingTreeGuest):
     def get_model_meta(self):
 
         _, model_meta = super(HeteroFastSecureBoostingTreeGuest, self).get_model_meta()
-        meta_name = "HeteroFastSecureBoostingTreeGuestMeta"
+        meta_name = consts.HETERO_FAST_SBT_GUEST_MODEL + "Meta"
         model_meta.work_mode = self.work_mode
 
         return meta_name, model_meta
@@ -166,7 +167,7 @@ class HeteroFastSecureBoostingTreeGuest(HeteroSecureBoostingTreeGuest):
     def get_model_param(self):
 
         _, model_param = super(HeteroFastSecureBoostingTreeGuest, self).get_model_param()
-        param_name = "HeteroFastSecureBoostingTreeGuestParam"
+        param_name = consts.HETERO_FAST_SBT_GUEST_MODEL + 'Param'
         model_param.tree_plan.extend(plan.encode_plan(self.tree_plan))
         model_param.model_name = consts.HETERO_FAST_SBT_MIX if self.work_mode == consts.MIX_TREE else \
                                  consts.HETERO_FAST_SBT_LAYERED

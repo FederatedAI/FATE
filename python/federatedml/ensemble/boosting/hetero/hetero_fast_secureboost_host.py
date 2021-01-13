@@ -51,9 +51,9 @@ class HeteroFastSecureBoostingTreeHost(HeteroSecureBoostingTreeHost):
     def update_feature_importance(self, tree_feature_importance):
         for fid in tree_feature_importance:
             if fid not in self.feature_importances_:
-                self.feature_importances_[fid] = 0
-
-            self.feature_importances_[fid] += tree_feature_importance[fid]
+                self.feature_importances_[fid] = tree_feature_importance[fid]
+            else:
+                self.feature_importances_[fid] += tree_feature_importance[fid]
 
     def check_host_number(self, tree_type):
         host_num = len(self.component_properties.host_party_idlist)
@@ -156,7 +156,7 @@ class HeteroFastSecureBoostingTreeHost(HeteroSecureBoostingTreeHost):
     def get_model_meta(self):
 
         _, model_meta = super(HeteroFastSecureBoostingTreeHost, self).get_model_meta()
-        meta_name = "HeteroFastSecureBoostingTreeHostMeta"
+        meta_name = consts.HETERO_FAST_SBT_HOST_MODEL + "Meta"
         model_meta.work_mode = self.work_mode
 
         return meta_name, model_meta
@@ -164,7 +164,7 @@ class HeteroFastSecureBoostingTreeHost(HeteroSecureBoostingTreeHost):
     def get_model_param(self):
 
         _, model_param = super(HeteroFastSecureBoostingTreeHost, self).get_model_param()
-        param_name = "HeteroFastSecureBoostingTreeHostParam"
+        param_name = consts.HETERO_FAST_SBT_HOST_MODEL + "Param"
         model_param.tree_plan.extend(plan.encode_plan(self.tree_plan))
         model_param.model_name = consts.HETERO_FAST_SBT_MIX if self.work_mode == consts.MIX_TREE else \
                                  consts.HETERO_FAST_SBT_LAYERED
@@ -172,10 +172,11 @@ class HeteroFastSecureBoostingTreeHost(HeteroSecureBoostingTreeHost):
         feature_importances = list(self.feature_importances_.items())
         feature_importances = sorted(feature_importances, key=itemgetter(1), reverse=True)
         feature_importance_param = []
-        for fid, _importance in feature_importances:
+        LOGGER.debug('host feat importance is {}'.format(feature_importances))
+        for fid, importance in feature_importances:
             feature_importance_param.append(FeatureImportanceInfo(sitename=self.role,
                                                                   fid=fid,
-                                                                  importance=_importance,
+                                                                  importance=importance.importance,
                                                                   fullname=self.feature_name_fid_mapping[fid]))
         model_param.feature_importances.extend(feature_importance_param)
 

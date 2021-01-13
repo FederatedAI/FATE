@@ -75,8 +75,9 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
 
         for fid in tree_feature_importance:
             if fid not in self.feature_importance:
-                self.feature_importance[fid] = 0
-            self.feature_importance[fid] += tree_feature_importance[fid]
+                self.feature_importance[fid] = tree_feature_importance[fid]
+            else:
+                self.feature_importance[fid] += tree_feature_importance[fid]
 
     def fit_a_booster(self, epoch_idx: int, booster_dim: int):
 
@@ -186,10 +187,10 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
         feature_importance = list(self.feature_importance.items())
         feature_importance = sorted(feature_importance, key=itemgetter(1), reverse=True)
         feature_importance_param = []
-        for fid, _importance in feature_importance:
+        for fid, importance in feature_importance:
             feature_importance_param.append(FeatureImportanceInfo(sitename=self.role,
                                                                   fid=fid,
-                                                                  importance=_importance,
+                                                                  importance=importance.importance,
                                                                   fullname=self.feature_name_fid_mapping[fid]))
         model_param.feature_importances.extend(feature_importance_param)
 

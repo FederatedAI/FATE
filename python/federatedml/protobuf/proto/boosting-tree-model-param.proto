@@ -26,6 +26,8 @@ message FeatureImportanceInfo {
 	int32 fid = 2;
 	double importance = 3;
     string fullname = 4;
+    double importance2 = 5;
+    string main = 6;
 }
 
 message BoostingTreeModelParam {

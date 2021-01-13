@@ -33,6 +33,7 @@ from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.node import N
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.feature_histogram import \
     HistogramBag, FeatureHistogram
 from typing import List
+from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.feature_importance import FeatureImportance
 
 
 class DecisionTree(BasicAlgorithms, ABC):
@@ -66,10 +67,11 @@ class DecisionTree(BasicAlgorithms, ABC):
         self.tree_node_num = 0
         self.runtime_idx = None
         self.valid_features = None
-        self.sample_weights = None
+        self.sample_weights = Node
         self.splitter = Splitter(self.criterion_method, self.criterion_params, self.min_impurity_split,
                                  self.min_sample_split, self.min_leaf_node, self.min_child_weight)  # splitter for finding splits
         self.inst2node_idx = None  # record the node id an instance belongs to
+        self.sample_weights = None
 
         # data
         self.data_bin = None
@@ -197,12 +199,7 @@ class DecisionTree(BasicAlgorithms, ABC):
 
     def update_feature_importance(self, splitinfo, record_site_name=True):
 
-        if self.feature_importance_type == "split":
-            inc = 1
-        elif self.feature_importance_type == "gain":
-            inc = splitinfo.gain
-        else:
-            raise ValueError("feature importance type {} not support yet".format(self.feature_importance_type))
+        inc_split, inc_gain = 1, splitinfo.gain
 
         sitename = splitinfo.sitename
         fid = splitinfo.best_fid
@@ -213,9 +210,11 @@ class DecisionTree(BasicAlgorithms, ABC):
             key = fid
 
         if key not in self.feature_importance:
-            self.feature_importance[key] = 0
+            self.feature_importance[key] = FeatureImportance(0, 0, self.feature_importance_type)
 
-        self.feature_importance[key] += inc
+        self.feature_importance[key].add_split(inc_split)
+        if inc_gain is not None:
+            self.feature_importance[key].add_gain(inc_gain)
 
     """
     To implement
