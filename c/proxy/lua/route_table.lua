@@ -60,6 +60,40 @@ local function reload()
     end
 end
 
+local function get_server_address(server)
+    local port
+    if ngx.req.http_version() == 2 then
+        port = server["grpc_port"]
+    else
+        ngx.log(ngx.INFO, server["http_port"])
+        port = server["http_port"]
+    end
+    return string.format("%s:%s", server["host"], port)
+end
+
+function _M.get_dest_server(dest_env, dest_service)
+    ngx.log(ngx.INFO, string.format("try to get %s %s server", dest_env, dest_service))
+    if dest_env ~= nil then
+        dest_env = tostring(dest_env)
+    else
+        return nil
+    end
+
+    local route = _M.get_route()
+    local env_services = route:get(dest_env)
+    local server
+    if env_services ~= nil then
+        local service = env_services[dest_service]
+        server = get_server_address(service[math.random(1, #service)])
+        ngx.log(ngx.INFO, string.format("get %s %s server: %s", dest_env, dest_service, server))
+    else
+        local default_proxy = route:get("default")["proxy"]
+        server = get_server_address(default_proxy[math.random(1, #default_proxy)])
+        ngx.log(ngx.INFO, string.format("get %s %s default server: %s", dest_env, dest_service, server))
+    end
+    return server
+end
+
 function _M.get_route()
     return route_cache
 end

@@ -48,7 +48,7 @@ fate_on_spark:
     route_table:
   nginx:
     host: 127.0.0.1
-    port: 9390
+    port: 9310
 model_store_address:
   storage: mysql
   name: model

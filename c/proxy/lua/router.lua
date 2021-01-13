@@ -19,35 +19,6 @@ local _M = {
 
 local ngx = ngx
 local route_table = require "route_table"
-local math = require "math"
-local string = require "string"
-
-local function get_server_address(server)
-    return string.format("%s:%s", server["host"], server["port"])
-end
-
-local function get_dest_server(dest_env, dest_service)
-    ngx.log(ngx.INFO, string.format("try to get %s %s server", dest_env, dest_service))
-    if dest_env ~= nil then
-        dest_env = tostring(dest_env)
-    else
-        return nil
-    end
-
-    local route = route_table.get_route()
-    local env_services = route:get(dest_env)
-    local server
-    if env_services ~= nil then
-        local service = env_services[dest_service]
-        server = get_server_address(service[math.random(1, #service)])
-        ngx.log(ngx.INFO, string.format("get %s %s server: %s", dest_env, dest_service, server))
-    else
-        local default_proxy = route:get("default")["proxy"]
-        server = get_server_address(default_proxy[math.random(1, #default_proxy)])
-        ngx.log(ngx.INFO, string.format("get %s %s default server: %s", dest_env, dest_service, server))
-    end
-    return server
-end
 
 local function get_request_dest()
     local headers = ngx.req.get_headers()
@@ -60,7 +31,7 @@ local function routing()
     if dest_env == nil then
         dest_env = request_headers["dest-env"]
     end
-    ngx.ctx.dest_cluster = get_dest_server(dest_env, request_headers["service"])
+    ngx.ctx.dest_cluster = route_table.get_dest_server(dest_env, request_headers["service"])
 end
 
 routing()
