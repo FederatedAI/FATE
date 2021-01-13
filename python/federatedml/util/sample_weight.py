@@ -18,29 +18,17 @@
 
 import copy
 import numpy as np
-from collections import Counter
 
 from fate_flow.entity.metric import Metric, MetricMeta
 from federatedml.model_base import ModelBase
 from federatedml.param.sample_weight_param import SampleWeightParam
+from federatedml.statistic.data_overview import get_label_count
 from federatedml.util import consts, LOGGER
 
 
 def compute_weight_array(data_instances):
     weight_inst = data_instances.mapValues(lambda v: v.weight)
     return np.array([v[1] for v in list(weight_inst.collect())])
-
-
-def compute_class_weight(kv_iterator):
-    class_dict = {}
-    for _, inst in kv_iterator:
-        count = class_dict.get(inst.label, 0)
-        class_dict[inst.label] = count + 1
-
-    if len(class_dict.keys()) > consts.MAX_CLASSNUM:
-        raise ValueError("In Classify Task, max dif classes should no more than %d" % (consts.MAX_CLASSNUM))
-
-    return class_dict
 
 
 class SampleWeight(ModelBase):
@@ -61,8 +49,7 @@ class SampleWeight(ModelBase):
 
     @staticmethod
     def get_class_weight(data_instances):
-        class_weight = data_instances.mapPartitions(compute_class_weight).reduce(
-            lambda x, y: dict(Counter(x) + Counter(y)))
+        class_weight = get_label_count(data_instances)
         n_samples = data_instances.count()
         n_classes = len(class_weight.keys())
         class_weight.update((k, n_samples / (n_classes * v)) for k, v in class_weight.items())
