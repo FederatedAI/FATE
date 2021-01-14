@@ -429,6 +429,7 @@ vi enabled_plugins
 [rabbitmq_federation,rabbitmq_federation_management,rabbitmq_management].
 
 ```
+rabbitmq.config配置从Rabbit MQ官网下载一份对应版本的即可。
 
 **3、允许非localhost登录**
 
