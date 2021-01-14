@@ -450,9 +450,6 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         self.n_iter_no_change = model_meta.n_iter_no_change
         self.tol = model_meta.tol
 
-        # initialize loss function
-        self.loss = self.get_loss_function()
-
     def set_model_param(self, model_param):
         self.boosting_model_list = list(model_param.trees_)
         self.init_score = np.array(list(model_param.init_score))
@@ -461,3 +458,6 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         self.booster_dim = model_param.tree_dim
         self.num_classes = model_param.num_classes
         self.feature_name_fid_mapping.update(model_param.feature_name_fid_mapping)
+        # initialize loss function
+        self.loss = self.get_loss_function()
+
