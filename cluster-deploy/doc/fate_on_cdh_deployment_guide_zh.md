@@ -863,7 +863,7 @@ EOF
 
 1、fateboard端口修改，改成非8080，避免与spark 产生冲突。
 
-2、使用Spark作为计算引擎，fateflow下面要加上proxy:nginx。
+2、Spark作为计算引擎，使用Nginx作为跨站点调度协调代理时，fateflow下面要加上proxy:nginx。
 
 3、hdfs.name_node为hdfs defaultFS的地址。
 
