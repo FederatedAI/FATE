@@ -367,15 +367,18 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         predict_cache = None
 
         tree_num = len(trees)
-        if tree_num == 0 and predict_cache is not None and not pred_leaf:
-            return self.score_to_predict_result(data_inst, predict_cache)
 
         if last_round != 0:
             predict_cache = self.predict_data_cache.predict_data_at(cache_dataset_key, min(rounds, last_round))
             LOGGER.info('load predict cache of round {}'.format(min(rounds, last_round)))
 
+        if tree_num == 0 and predict_cache is not None and not pred_leaf:
+            return self.score_to_predict_result(data_inst, predict_cache)
+
         predict_rs = self.boosting_fast_predict(processed_data, trees=trees, predict_cache=predict_cache, pred_leaf=pred_leaf)
         self.predict_data_cache.add_data(cache_dataset_key, predict_rs, cur_boosting_round=rounds)
+        LOGGER.debug('adding predict rs {}'.format(predict_rs))
+        LOGGER.debug('last round is {}'.format(self.predict_data_cache.predict_data_last_round(cache_dataset_key)))
 
         if pred_leaf:
             return predict_rs  # predict result is leaf position

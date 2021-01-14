@@ -17,14 +17,14 @@
 #  limitations under the License.
 #
 
-import copy
-import collections
 from federatedml.param.base_param import BaseParam
 from federatedml.param.encrypt_param import EncryptParam
 from federatedml.param.encrypted_mode_calculation_param import EncryptedModeCalculatorParam
 from federatedml.param.cross_validation_param import CrossValidationParam
 from federatedml.param.predict_param import PredictParam
 from federatedml.util import consts, LOGGER
+import copy
+import collections
 
 
 class ObjectiveParam(BaseParam):
@@ -130,7 +130,7 @@ class DecisionTreeParam(BaseParam):
 
     """
 
-    def __init__(self, criterion_method="xgboost", criterion_params=[0.1, 1], max_depth=3,
+    def __init__(self, criterion_method="xgboost", criterion_params=[0.1, 0], max_depth=3,
                  min_sample_split=2, min_impurity_split=1e-3, min_leaf_node=1,
                  max_split_nodes=consts.MAX_SPLIT_NODES, feature_importance_type="split",
                  n_iter_no_change=True, tol=0.001, min_child_weight=1,
