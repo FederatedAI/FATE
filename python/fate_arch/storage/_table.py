@@ -215,7 +215,9 @@ class StorageTableMeta(StorageTableMetaABC):
             operate = table_meta.update(update_fields).where(*update_filters)
         else:
             operate = table_meta.update(update_fields)
-        return operate.execute() > 0
+        _return = operate.execute()
+        _meta = StorageTableMeta(name=self.name, namespace=self.namespace)
+        return _return > 0, _meta
 
     @DB.connection_context()
     def destroy_metas(self):

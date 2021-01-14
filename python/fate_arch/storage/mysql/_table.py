@@ -83,20 +83,36 @@ class StorageTable(StorageTableBase):
             count = ret[0][0]
         except:
             count = 0
+        self.get_meta().update_metas(count=count)
         return count
 
     def collect(self, **kwargs) -> list:
         sql = 'select * from {}'.format(self._name)
         data = self.execute(sql)
-        return data
+        for i in data:
+            yield i[0], self.get_meta().get_id_delimiter().join(list(i[1:]))
 
     def put_all(self, kv_list, **kwargs):
-        create_table = 'create table if not exists {}(id varchar(50) NOT NULL, features LONGTEXT, PRIMARY KEY(id))'.format(
-            self._address.name)
-        self.cur.execute(create_table)
-        sql = 'REPLACE INTO {}(id, features)  VALUES'.format(self._address.name)
+        id_name = self.get_meta().get_schema().get('sid', 'id')
+        headers_str = self.get_meta().get_schema().get('header')
+        id_delimiter = self.get_meta().get_id_delimiter()
+        feature_name_list = []
+        feature_num = 0
         for kv in kv_list:
-            sql += '("{}", "{}"),'.format(kv[0], kv[1])
+            feature_num = len(kv[1].split(id_delimiter))
+            break
+        if headers_str:
+            if isinstance(headers_str, str):
+                feature_name_list = headers_str.split(id_delimiter)
+            else:
+                feature_name_list = [headers_str]
+        feature_sql, feature_list = StorageTable.get_meta_header(feature_name_list, feature_num)
+        create_table = 'create table if not exists {}({} varchar(50) NOT NULL, {} PRIMARY KEY(id))'.format(
+            self._address.name, id_name, feature_sql)
+        self.cur.execute(create_table)
+        sql = 'REPLACE INTO {}({}, {})  VALUES'.format(self._address.name, id_name, ','.join(feature_list))
+        for kv in kv_list:
+            sql += '("{}", "{}"),'.format(kv[0], '", "'.join(kv[1].split(id_delimiter)))
         sql = ','.join(sql.split(',')[:-1]) + ';'
         self.cur.execute(sql)
         self.con.commit()
@@ -105,3 +121,17 @@ class StorageTable(StorageTableBase):
         super().destroy()
         sql = 'drop table {}'.format(self._name)
         return self.execute(sql)
+
+    @staticmethod
+    def get_meta_header(feature_name_list, feature_num):
+        create_features = ''
+        feature_list = []
+        if feature_name_list:
+            for feature_name in feature_name_list:
+                create_features += '{} LONGTEXT,'.format(feature_name)
+                feature_list.append(feature_name)
+        else:
+            for i in range(0, feature_num):
+                create_features += '{} LONGTEXT,'.format(f'feature_{i}')
+                feature_list.append(f'feature_{i}')
+        return create_features, feature_list

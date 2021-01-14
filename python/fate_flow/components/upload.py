@@ -120,7 +120,8 @@ class Upload(ComponentBase):
             if head is True:
                 data_head = fin.readline()
                 input_feature_count -= 1
-                self.table.get_meta().update_metas(schema=data_utils.get_header_schema(header_line=data_head, id_delimiter=self.parameters["id_delimiter"]))
+                _, meta = self.table.get_meta().update_metas(schema=data_utils.get_header_schema(header_line=data_head, id_delimiter=self.parameters["id_delimiter"]))
+                self.table.set_meta(meta)
             n = 0
             while True:
                 data = list()
