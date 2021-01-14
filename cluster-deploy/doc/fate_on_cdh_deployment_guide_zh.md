@@ -1081,6 +1081,7 @@ cd /data/projects/fate/common/spark
 sh ./sbin/start-all.sh
 ```
 如果提示输入spark节点的密码，可以使用Ctrl+c 退出
+
 停止
 ```bash
 cd /data/projects/fate/common/spark
