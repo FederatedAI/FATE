@@ -172,6 +172,7 @@ class FeatureBinningParam(BaseParam):
 
     local_only : bool, default: False
         Whether just provide binning method to guest party. If true, host party will do nothing.
+        Warnings: This parameter will be deprecated in future version.
 
     transform_param: TransformParam
         Define how to transfer the binned data.
@@ -230,6 +231,8 @@ class FeatureBinningParam(BaseParam):
         if self.skip_static and self.method == consts.OPTIMAL:
             raise ValueError("When skip_static, optimal binning is not supported.")
         self.transform_param.check()
+        if self.skip_static and self.transform_param.transform_type == 'woe':
+            raise ValueError("To use woe transform, skip_static should set as False")
         self.optimal_binning_param.check()
         self.encrypt_param.check()
 

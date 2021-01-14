@@ -14,6 +14,7 @@
 #  limitations under the License.
 #
 
+import copy
 import functools
 
 # from federatedml.feature.binning.base_binning import IVAttributes
@@ -53,20 +54,32 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
         self.data_output = data_instances
         return data_instances
 
+
+
     def _sync_init_bucket(self, data_instances, split_points, need_shuffle=False):
 
         # self._make_iv_obj(split_points)  # Save split points
+        fit_bin_inner_param = copy.deepcopy(self.bin_inner_param)
+        fit_bin_inner_param.transform_bin_indexes = self.bin_inner_param.bin_indexes
+        fit_bin_inner_param.transform_bin_names = self.bin_inner_param.bin_names
+        bin_data_table, _, sparse_bin_num = \
+            self.binning_obj.convert_feature_to_bin(data_instances, bin_inner_param=fit_bin_inner_param)
 
-        data_bin_table = self.binning_obj.get_data_bin(data_instances, split_points)
-        LOGGER.debug("data_bin_table, count: {}".format(data_bin_table.count()))
+        # data_bin_table = self.binning_obj.get_data_bin(data_instances, split_points)
+        # LOGGER.debug("data_bin_table, count: {}".format(data_bin_table.count()))
 
         # encrypted_label_table_id = self.transfer_variable.generate_transferid(self.transfer_variable.encrypted_label)
         encrypted_label_table = self.transfer_variable.encrypted_label.get(idx=0)
-
         LOGGER.info("Get encrypted_label_table from guest")
 
-        encrypted_bin_sum = self.__static_encrypted_bin_label(data_bin_table, encrypted_label_table,
-                                                              self.bin_inner_param.bin_cols_map, split_points)
+        def set_label(instance, y):
+            instance.label = y
+            return instance
+        bin_data_table = bin_data_table.join(encrypted_label_table, set_label)
+        encrypted_bin_sum = self.binning_obj.static_bin_label(bin_data_table, sparse_bin_num)
+
+        # encrypted_bin_sum = self.__static_encrypted_bin_label(data_bin_table, encrypted_label_table,
+        #                                                       self.bin_inner_param.bin_cols_map, split_points)
         # LOGGER.debug("encrypted_bin_sum: {}".format(encrypted_bin_sum))
         if need_shuffle:
             encrypted_bin_sum = self.binning_obj.shuffle_static_counts(encrypted_bin_sum)
@@ -74,6 +87,7 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
         encrypted_bin_sum = self.bin_inner_param.encode_col_name_dict(encrypted_bin_sum, self)
         self.header_anonymous = self.bin_inner_param.encode_col_name_list(self.header, self)
         LOGGER.debug(f"encrypted_bin_sum: {encrypted_bin_sum.keys()}, cols_map: {self.bin_inner_param.col_name_maps}")
+        LOGGER.debug(f"tmc, encrypted_bin_sum: {encrypted_bin_sum}")
         send_result = {
             "encrypted_bin_sum": encrypted_bin_sum,
             "category_names": self.bin_inner_param.encode_col_name_list(

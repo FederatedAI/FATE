@@ -17,15 +17,19 @@
 #  limitations under the License.
 
 import bisect
+import copy
 import functools
 import math
 import random
-import copy
+import operator
+
+import numpy as np
 
 from federatedml.feature.binning.bin_inner_param import BinInnerParam
 from federatedml.feature.binning.bin_result import BinColResults, BinResults
 from federatedml.feature.sparse_vector import SparseVector
 from federatedml.statistic import data_overview
+from federatedml.util import LOGGER
 
 
 # from federatedml.statistic import statics
@@ -45,6 +49,7 @@ class BaseBinning(object):
         self.bin_num = params.bin_num
         self.event_total = None
         self.non_event_total = None
+        self.bin_data_result = None
 
         if abnormal_list is None:
             self.abnormal_list = []
@@ -121,46 +126,46 @@ class BaseBinning(object):
 
         return data_instances
 
-    def get_data_bin(self, data_instances, split_points=None):
-        """
-        Apply the binning method
-
-        Parameters
-        ----------
-        data_instances : DTable
-            The input data
-
-        split_points : dict.
-            Each value represent for the split points for a feature. The element in each row represent for
-            the corresponding split point.
-            e.g.
-            split_points = {'x1': [0.1, 0.2, 0.3, 0.4 ...],    # The first feature
-                            'x2': [1, 2, 3, 4, ...],           # The second feature
-                            ...]                         # Other features
-
-        Returns
-        -------
-        data_bin_table : DTable.
-
-            Each element represent for the corresponding bin number this feature belongs to.
-            e.g. it could be:
-            [{'x1': 1, 'x2': 5, 'x3': 2}
-            ...
-             ]
-        """
-        # self._init_cols(data_instances)
-        is_sparse = data_overview.is_sparse_data(data_instances)
-
-        if split_points is None:
-            split_points = self.fit_split_points(data_instances)
-
-        f = functools.partial(self.bin_data,
-                              split_points=split_points,
-                              cols_dict=self.bin_inner_param.bin_cols_map,
-                              header=self.header,
-                              is_sparse=is_sparse)
-        data_bin_dict = data_instances.mapValues(f)
-        return data_bin_dict
+    # def get_data_bin(self, data_instances, split_points=None):
+    #     """
+    #     Apply the binning method
+    #
+    #     Parameters
+    #     ----------
+    #     data_instances : DTable
+    #         The input data
+    #
+    #     split_points : dict.
+    #         Each value represent for the split points for a feature. The element in each row represent for
+    #         the corresponding split point.
+    #         e.g.
+    #         split_points = {'x1': [0.1, 0.2, 0.3, 0.4 ...],    # The first feature
+    #                         'x2': [1, 2, 3, 4, ...],           # The second feature
+    #                         ...]                         # Other features
+    #
+    #     Returns
+    #     -------
+    #     data_bin_table : DTable.
+    #
+    #         Each element represent for the corresponding bin number this feature belongs to.
+    #         e.g. it could be:
+    #         [{'x1': 1, 'x2': 5, 'x3': 2}
+    #         ...
+    #          ]
+    #     """
+    #     # self._init_cols(data_instances)
+    #     is_sparse = data_overview.is_sparse_data(data_instances)
+    #
+    #     if split_points is None:
+    #         split_points = self.fit_split_points(data_instances)
+    #
+    #     f = functools.partial(self.bin_data,
+    #                           split_points=split_points,
+    #                           cols_dict=self.bin_inner_param.bin_cols_map,
+    #                           header=self.header,
+    #                           is_sparse=is_sparse)
+    #     data_bin_dict = data_instances.mapValues(f)
+    #     return data_bin_dict
 
     def convert_feature_to_woe(self, data_instances):
         is_sparse = data_overview.is_sparse_data(data_instances)
@@ -184,7 +189,15 @@ class BaseBinning(object):
         new_data.schema = schema
         return new_data
 
-    def convert_feature_to_bin(self, data_instances, split_points=None):
+    def convert_feature_to_bin(self, data_instances, split_points=None, bin_inner_param=None):
+
+        if bin_inner_param is None:
+            bin_inner_param = self.bin_inner_param
+
+        if self.bin_data_result is not None and \
+                bin_inner_param.transform_bin_indexes == self.bin_inner_param.transform_bin_indexes:
+            return self.bin_data_result
+
         is_sparse = data_overview.is_sparse_data(data_instances)
         schema = data_instances.schema
 
@@ -196,7 +209,7 @@ class BaseBinning(object):
 
         if is_sparse:
             f = functools.partial(self._convert_sparse_data,
-                                  bin_inner_param=self.bin_inner_param,
+                                  bin_inner_param=bin_inner_param,
                                   bin_results=self.bin_results,
                                   abnormal_list=self.abnormal_list,
                                   convert_type='bin_num'
@@ -204,16 +217,16 @@ class BaseBinning(object):
             new_data = data_instances.mapValues(f)
         else:
             f = functools.partial(self._convert_dense_data,
-                                  bin_inner_param=self.bin_inner_param,
+                                  bin_inner_param=bin_inner_param,
                                   bin_results=self.bin_results,
                                   abnormal_list=self.abnormal_list,
                                   convert_type='bin_num')
             new_data = data_instances.mapValues(f)
         new_data.schema = schema
-        bin_sparse = self.get_sparse_bin(self.bin_inner_param.transform_bin_indexes, split_points)
-        split_points_result = self.bin_results.get_split_points_array(self.bin_inner_param.transform_bin_names)
-
-        return new_data, split_points_result, bin_sparse
+        bin_sparse = self.get_sparse_bin(bin_inner_param.transform_bin_indexes, split_points)
+        split_points_result = self.bin_results.get_split_points_array(bin_inner_param.transform_bin_names)
+        self.bin_data_result = (new_data, split_points_result, bin_sparse)
+        return self.bin_data_result
 
     @staticmethod
     def _convert_sparse_data(instances, bin_inner_param: BinInnerParam, bin_results: BinResults,
@@ -293,58 +306,117 @@ class BaseBinning(object):
         instances.features = features
         return instances
 
-    def cal_local_iv(self, data_instances, split_points=None, label_table=None):
+    def cal_iv_by_bin_table(self, bin_data_table, sparse_bin_num):
         """
         Calculate iv attributes
 
         Parameters
         ----------
-        data_instances : DTable
-            The input data
+        bin_data_table : DTable
+            The input data whose features are bin nums
 
-        split_points : dict.
-            Each value represent for the split points for a feature. The element in each row represent for
-            the corresponding split point.
-            e.g.
-            split_points = {'x1': [0.1, 0.2, 0.3, 0.4 ...],    # The first feature
-                            'x2': [1, 2, 3, 4, ...],           # The second feature
-                            ...]                         # Other features
-
-        label_table : DTable
-            id with labels
+        sparse_bin_num: dict
+            The bin num of value 0.
 
         Returns
         -------
+        result_counts: dict.
+        It is like:
+            {'x1': [[event_count, non_event_count], [event_count, non_event_count] ... ],
+             'x2': [[event_count, non_event_count], [event_count, non_event_count] ... ],
+             ...
+            }
+
+
         Dict of IVAttributes object
-
         """
-        # self._init_cols(data_instances)
-
-        if split_points is None and self.split_points is None:
-            split_points = self.fit_split_points(data_instances)
-        elif split_points is None:
-            split_points = self.split_points
-
-        data_bin_table = self.get_data_bin(data_instances, split_points)
-
-        # bin_data, _, sparse_bin_num = self.convert_feature_to_bin(data_instances, self.split_points)
-
-        if label_table is None:
-            label_table = data_instances.mapValues(lambda x: x.label)
-        # event_count_table = label_table.mapValues(lambda x: (x, 1 - x))
-        data_bin_with_label = data_bin_table.join(label_table, lambda x, y: (x, y))
-        f = functools.partial(self.add_label_in_partition,
-                              split_points=split_points,
-                              cols_dict=self.bin_inner_param.bin_cols_map)
-
-        result_sum = data_bin_with_label.applyPartitions(f)
-        result_counts = result_sum.reduce(self.aggregate_partition_label)
-        for col_name, bin_results in result_counts.items():
-            for b in bin_results:
-                b[1] = b[1] - b[0]
-
+        result_counts = self.static_bin_label(bin_data_table, sparse_bin_num)
         self.cal_iv_woe(result_counts,
                         self.params.adjustment_factor)
+
+    def static_bin_label(self, bin_data_table, sparse_bin_num):
+        is_sparse = data_overview.is_sparse_data(bin_data_table)
+        event_total = bin_data_table.mapValues(lambda x: x.label).reduce(operator.add)
+        non_event_total = bin_data_table.count() - event_total
+
+        max_bin_num = 0
+        split_points = self.split_points
+        for _, sp in split_points.items():
+            if len(sp) > max_bin_num:
+                max_bin_num = len(sp)
+
+        bin_indexes = self.bin_inner_param.bin_indexes
+        f = functools.partial(self.add_label_in_partition,
+                              sparse_bin_num=sparse_bin_num,
+                              shape=(len(bin_indexes), max_bin_num),
+                              bin_indexes=bin_indexes,
+                              is_sparse=is_sparse)
+        label_array, bin_count_array = bin_data_table.mapPartitions(f).reduce(lambda x, y: (x[0] + y[0],
+                                                                  x[1] + y[1]))
+        non_event_array = bin_count_array - label_array
+        one_total = np.sum(label_array, axis=1)
+        zero_total = np.sum(non_event_array, axis=1)
+        result_counts = {}
+        for i, col_idx in enumerate(bin_indexes):
+            col_name = self.bin_inner_param.bin_names[i]
+            sps_len = len(split_points[col_name])
+            _counts = []
+
+            for j in range(sps_len):
+                _counts.append((label_array[i][j], non_event_array[i][j]))
+            _counts[sparse_bin_num[col_idx]] = (event_total - one_total[i], non_event_total - zero_total[i])
+            result_counts[col_name] = _counts
+        LOGGER.debug(f"tmc2, result_count: {result_counts}")
+        return result_counts
+
+    @staticmethod
+    def add_label_in_partition(bin_data_table, sparse_bin_num, shape, bin_indexes, is_sparse):
+        """
+        Add all label, so that become convenient to calculate woe and iv
+
+        Parameters
+        ----------
+        bin_data_table : DTable
+            The input data whose features are bin_num.
+
+        sparse_bin_num: dict
+            which bins the 0 located at for each column.
+
+        shape: tuple
+            (len(bin_indexes), max_bin_num)
+
+        bin_indexes: list
+            List of which columns should be static
+
+        is_sparse: bool
+            Whether it is a sparse data input
+
+        Returns
+        -------
+        result_sum: the result DTable. It is like:
+            {'x1': [[event_count, total_num], [event_count, total_num] ... ],
+             'x2': [[event_count, total_num], [event_count, total_num] ... ],
+             ...
+            }
+
+        """
+        label_array = np.zeros(shape=shape, dtype=object)
+        bin_count_array = np.zeros(shape=shape, dtype=object)
+        for _, instance in bin_data_table:
+            if is_sparse:
+                data_iter = instance.features.get_all_data()
+            else:
+                data_iter = enumerate(instance.features)
+            for col_idx, bin_num in data_iter:
+                bin_num = int(bin_num)
+                if col_idx not in bin_indexes:
+                    continue
+                if bin_num == sparse_bin_num[col_idx]:
+                    continue
+                i = bin_indexes.index(col_idx)
+                label_array[i][bin_num] = label_array[i][bin_num] + instance.label
+                bin_count_array[i][bin_num] = bin_count_array[i][bin_num] + 1
+        return label_array, bin_count_array
 
     @staticmethod
     def bin_data(instance, split_points, cols_dict, header, is_sparse):
@@ -408,7 +480,7 @@ class BaseBinning(object):
         sp = split_points[:-1]
         col_bin_num = bisect.bisect_left(sp, value)
         # col_bin_num = bisect.bisect_left(split_points, value)
-        return col_bin_num
+        return int(col_bin_num)
 
     @staticmethod
     def woe_1d(data_event_count, adjustment_factor):
@@ -499,52 +571,6 @@ class BaseBinning(object):
             col_result_obj = self.woe_1d(data_event_count, adjustment_factor)
             assert isinstance(col_result_obj, BinColResults)
             self.bin_results.put_col_results(col_name, col_result_obj)
-
-    @staticmethod
-    def add_label_in_partition(data_bin_with_table, split_points, cols_dict):
-        """
-        Add all label, so that become convenient to calculate woe and iv
-
-        Parameters
-        ----------
-        data_bin_with_table : DTable
-            The input data, the DTable is like:
-            (id, {'x1': 1, 'x2': 5, 'x3': 2}, y)
-
-        split_points : dict
-            Split points dict. Use to find out total bin num for each feature
-
-        cols_dict: dict
-            Record key, value pairs where key is cols' name, and value is cols' index.
-
-        Returns
-        -------
-        result_sum: the result DTable. It is like:
-            {'x1': [[event_count, total_num], [event_count, total_num] ... ],
-             'x2': [[event_count, total_num], [event_count, total_num] ... ],
-             ...
-            }
-
-        """
-        result_sum = {}
-        for _, datas in data_bin_with_table:
-            bin_idx_dict = datas[0]
-            y = datas[1]
-
-            # y = y_combo[0]
-            # inverse_y = y_combo[1]
-            for col_name, bin_idx in bin_idx_dict.items():
-                result_sum.setdefault(col_name, [])
-                col_sum = result_sum[col_name]
-                while bin_idx >= len(col_sum):
-                    col_sum.append([0, 0])
-                label_sum = col_sum[bin_idx]
-                label_sum[0] = label_sum[0] + y
-                label_sum[1] = label_sum[1] + 1
-                col_sum[bin_idx] = label_sum
-                result_sum[col_name] = col_sum
-
-        return result_sum
 
     def shuffle_static_counts(self, statistic_counts):
         """
