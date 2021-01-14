@@ -32,11 +32,11 @@
 | party  | partyid | 主机名        | IP地址      | 操作系统                | 安装软件    | 服务                              |
 | ------ | ------- | ------------- | ----------- | ----------------------- | ----------- | --------------------------------- |
 | PartyA | 10000   | VM-0-1-centos | 192.168.0.1 | CentOS 7.2/Ubuntu 16.04 | fate，mysql, nginx | fateflow，fateboard，mysql，nginx |
-| PartyA | 10000   |               |             |                         | Spark Client、HDFS Client |                                   |
-| PartyA | 10000   |               |             |                         | RabbitMQ    |                                   |
+| PartyA | 10000   | VM-0-1-centos | 192.168.0.1 | CentOS 7.2/Ubuntu 16.04 |  Spark 、HDFS |                 Spark Client、HDFS Client                  |
+| PartyA | 10000   | VM-0-1-centos | 192.168.0.1 | CentOS 7.2/Ubuntu 16.04 | RabbitMQ    |                                   |
 | PartyB | 9999    | VM-0-2-centos | 192.168.0.2 | CentOS 7.2/Ubuntu 16.04 | fate，mysql, nginx | fateflow，fateboard，mysql，nginx |
-| PartyB | 9999    |               |             |                         | Spark Client、HDFS Client  |                                   |
-| PartyB | 9999    |               |             |                         | RabbitMQ    |                                   |
+| PartyB | 9999    | VM-0-2-centos | 192.168.0.2 | CentOS 7.2/Ubuntu 16.04 | Spark 、HDFS |                 Spark Client、HDFS Client                  |
+| PartyB | 9999    | VM-0-2-centos | 192.168.0.2 | CentOS 7.2/Ubuntu 16.04 | RabbitMQ    |                                   |
 
 ## 4.CHD集群
 
