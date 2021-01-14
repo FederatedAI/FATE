@@ -10,8 +10,6 @@ from federatedml.ensemble import HeteroSecureBoostingTreeGuest
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import FeatureImportanceInfo
 from federatedml.util import LOGGER
 from federatedml.util import consts
-from federatedml.util.io_check import assert_io_num_rows_equal
-
 
 make_readable_feature_importance = HeteroSecureBoostingTreeGuest.make_readable_feature_importance
 

@@ -24,7 +24,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
     def __init__(self):
         super(HeteroSecureBoostingTreeGuest, self).__init__()
 
-        self.tree_param = None  # decision tree param
+        self.tree_param = DecisionTreeParam()  # decision tree param
         self.use_missing = False
         self.zero_as_missing = False
         self.cur_epoch_idx = -1
@@ -198,7 +198,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
 
             if type(id_) == tuple:
                 if consts.GUEST in id_[0]:
-                    new_fi[fid_mapping[id_[1]]] = feature_importances[id_]
+                    new_fi[fid_mapping[id_[1]]] = feature_importances[id_].importance
                 else:
                     role, party_id = id_[0].split(':')
                     new_fi[generate_anonymous(role=role, fid=id_[1], party_id=party_id)] = feature_importances[id_].importance

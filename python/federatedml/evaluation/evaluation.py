@@ -13,10 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import sys
 from collections import defaultdict
 import math
-import logging
 from federatedml.util import LOGGER
 from fate_flow.entity.metric import Metric, MetricMeta
 from federatedml.param import EvaluateParam
@@ -326,6 +324,8 @@ class Evaluation(ModelBase):
                     for multi_label, marginal_bin_result in unfold_multi_data.items():
                         eval_result = self.evaluate_metrics(mode, marginal_bin_result)
                         new_key = key + '_class_{}'.format(multi_label)
+                        for metric_name, rs_list in eval_result.items():
+                            rs_list[0] = 'multi_unfold_' + rs_list[0]
                         unfold_binary_eval_result[new_key].append(eval_result)
 
                 self.callback_metric_data(unfold_binary_eval_result, return_single_val_metrics=True)

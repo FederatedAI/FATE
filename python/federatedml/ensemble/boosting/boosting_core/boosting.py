@@ -532,7 +532,6 @@ class Boosting(ModelBase, ABC):
 
         self.set_model_meta(model_meta)
         self.set_model_param(model_param)
-        self.loss = self.get_loss_function()
 
     def predict_proba(self, data_inst):
         pass
