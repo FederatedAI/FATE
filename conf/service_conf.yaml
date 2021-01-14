@@ -6,10 +6,12 @@ fateflow:
   host: 127.0.0.1
   http_port: 9380
   grpc_port: 9360
-  # support rollsite or nginx as a coordinate proxy, rollsite recommended in the fate on eggroll, nginx is recommended in the fate on spark
+  # support rollsite or nginx as a coordination proxy, rollsite recommended in the fate on eggroll, nginx is recommended in the fate on spark
   # format(proxy: rollsite) means rollsite use the rollsite configuration of fate_one_eggroll and nginx use the nginx configuration of fate_one_spark
-  # you can customize the config by format(proxy:\n name: rollsite \n host: xx \n port: xx)
+  # you also can customize the config by format(proxy:\n name: nginx \n host: xx \n port: xx)
   proxy: rollsite
+  # can set default/http/grpc, rollsite default is grpc and not support http, nginx default is http also support grpc
+  protocol: default
 fateboard:
   host: 127.0.0.1
   port: 8080
@@ -48,7 +50,8 @@ fate_on_spark:
     route_table:
   nginx:
     host: 127.0.0.1
-    port: 9310
+    http_port: 9300
+    grpc_port: 9310
 model_store_address:
   storage: mysql
   name: model

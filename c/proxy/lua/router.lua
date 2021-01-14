@@ -20,13 +20,8 @@ local _M = {
 local ngx = ngx
 local route_table = require "route_table"
 
-local function get_request_dest()
-    local headers = ngx.req.get_headers()
-    return headers
-end
-
 local function routing()
-    local request_headers = get_request_dest()
+    local request_headers = ngx.req.get_headers()
     local dest_env = request_headers["dest-party-id"]
     if dest_env == nil then
         dest_env = request_headers["dest-env"]

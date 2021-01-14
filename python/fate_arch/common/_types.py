@@ -30,7 +30,7 @@ class EngineType(object):
     FEDERATION = "federation"
 
 
-class CoordinateProxyService(object):
+class CoordinationProxyService(object):
     rollsite = "rollsite"
     nginx = 'nginx'
 

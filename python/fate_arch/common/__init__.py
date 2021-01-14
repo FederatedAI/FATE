@@ -1,1 +1,1 @@
-from fate_arch.common._types import WorkMode, Backend, Party, FederatedMode, FederatedCommunicationType, EngineType, CoordinateProxyService
+from fate_arch.common._types import WorkMode, Backend, Party, FederatedMode, FederatedCommunicationType, EngineType, CoordinationProxyService

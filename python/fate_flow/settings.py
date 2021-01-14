@@ -33,7 +33,8 @@ SERVER_MODULE = "fate_flow_server.py"
 TEMP_DIRECTORY = os.path.join(file_utils.get_project_base_directory(), "temp", "fate_flow")
 HEADERS = {
     "Content-Type": "application/json",
-    "Connection": "close"
+    "Connection": "close",
+    "service": FATEFLOW_SERVICE_NAME
 }
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 GRPC_SERVER_MAX_WORKERS = None
@@ -79,7 +80,7 @@ SUPPORT_BACKENDS_ENTRANCE = {
 }
 
 # Scheduling
-DEFAULT_GRPC_OVERALL_TIMEOUT = 30 * 1000  # ms
+DEFAULT_REMOTE_REQUEST_TIMEOUT = 30 * 1000  # ms
 DEFAULT_FEDERATED_COMMAND_TRYS = 3
 JOB_DEFAULT_TIMEOUT = 3 * 24 * 60 * 60
 JOB_START_TIMEOUT = 60 * 1000  # ms
