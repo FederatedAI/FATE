@@ -324,11 +324,9 @@ class Evaluation(ModelBase):
                     for multi_label, marginal_bin_result in unfold_multi_data.items():
                         eval_result = self.evaluate_metrics(mode, marginal_bin_result)
                         new_key = key + '_class_{}'.format(multi_label)
-                        for metric_name, rs_list in eval_result.items():
-                            rs_list[0] = 'multi_unfold_' + rs_list[0]
                         unfold_binary_eval_result[new_key].append(eval_result)
 
-                self.callback_metric_data(unfold_binary_eval_result, return_single_val_metrics=True)
+                self.callback_ovr_metric_data(unfold_binary_eval_result)
 
                 # recover work mode
                 self.eval_type = consts.MULTY
@@ -644,6 +642,34 @@ class Evaluation(ModelBase):
 
         self.tracker.set_metric_meta(metric_namespace, metric_name,
                                      MetricMeta(name=metric_name, metric_type=metric.upper(), extra_metas=extra_metas))
+
+    def callback_ovr_metric_data(self, eval_results):
+
+        for model_name, eval_rs in eval_results.items():
+
+            train_callback_meta = defaultdict(dict)
+            validate_callback_meta = defaultdict(dict)
+            split_list = model_name.split('_')
+            label = split_list[-1]
+            for rs_dict in eval_rs:
+                for metric_name, metric_rs in rs_dict.items():
+                    if metric_name == consts.KS:
+                        metric_rs = [metric_rs[0], metric_rs[1][0]]  # ks value only, curve data is not needed
+                    metric_namespace = metric_rs[0]
+                    if metric_namespace == 'train':
+                        callback_meta = train_callback_meta
+                    else:
+                        callback_meta = validate_callback_meta
+                    callback_meta[label][metric_name] = metric_rs[1]
+
+            self.tracker.set_metric_meta("train", model_name+'_'+'ovr',
+                                         MetricMeta(name=model_name, metric_type='ovr',
+                                                    extra_metas=train_callback_meta))
+            self.tracker.set_metric_meta("validate", model_name+'_'+'ovr',
+                                         MetricMeta(name=model_name, metric_type='ovr',
+                                                    extra_metas=validate_callback_meta))
+
+            LOGGER.debug('callback data {} {}'.format(train_callback_meta, validate_callback_meta))
 
     def callback_metric_data(self, eval_results, return_single_val_metrics=False):
 
