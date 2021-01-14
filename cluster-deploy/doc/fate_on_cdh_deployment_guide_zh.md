@@ -905,7 +905,7 @@ cd /data/projects/fate/proxy
 此部分需要修改CDH集群部署了Spark和DataNode的节点做以下操作：
 
 #### 8.1 修改hosts
-将每方安装了Spark Client的ip和host name配置到/etc/hosts文件下
+将每方安装了Fate的ip和host name配置到Spark和DataNode的节点的/etc/hosts文件下
 
 ```
 vi /etc/hosts
