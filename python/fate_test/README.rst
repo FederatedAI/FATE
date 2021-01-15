@@ -32,7 +32,7 @@ quick start
    .. code-block:: bash
 
       # edit priority config file with system default editor
-      # filling some field according to comments
+      # filling fields following comments
       fate_test config edit
 
 4. configure FATE-Pipeline and FATE-Flow Commandline server setting
@@ -226,32 +226,62 @@ Benchmark-quality is used for comparing modeling quality between FATE
 and other machine learning systems. Benchmark produces a metrics comparison
 summary for each benchmark job group.
 
+Benchmark can also compare metrics of different models from the same script/PipeLine job.
+Please refer to the `script writing guide <#testing-script>`_ below for instructions.
+
 .. code-block:: bash
 
    fate_test benchmark-quality -i examples/benchmark_quality/hetero_linear_regression
 
 .. code-block:: bash
 
-    +-------+--------------------------------------------------------------+
-    |  Data |                             Name                             |
-    +-------+--------------------------------------------------------------+
+    |----------------------------------------------------------------------|
+    |                             Data Summary                             |
+    |-------+--------------------------------------------------------------|
+    |  Data |                         Information                          |
+    |-------+--------------------------------------------------------------|
     | train | {'guest': 'motor_hetero_guest', 'host': 'motor_hetero_host'} |
     |  test | {'guest': 'motor_hetero_guest', 'host': 'motor_hetero_host'} |
-    +-------+--------------------------------------------------------------+
-    +------------------------------------+--------------------+--------------------+-------------------------+---------------------+
-    |             Model Name             | explained_variance |      r2_score      | root_mean_squared_error |  mean_squared_error |
-    +------------------------------------+--------------------+--------------------+-------------------------+---------------------+
-    | local-linear_regression-regression | 0.9035168452250094 | 0.9035070863155368 |   0.31340413289880553   | 0.09822215051805216 |
-    | FATE-linear_regression-regression  | 0.903146386539082  | 0.9031411831961411 |    0.3139977881119483   | 0.09859461093919596 |
-    +------------------------------------+--------------------+--------------------+-------------------------+---------------------+
-    +-------------------------+-----------+
+    |-------+--------------------------------------------------------------|
+
+
+    |-------------------------------------------------------------------------------------------------------------------------------------|
+    |                                                           Metrics Summary                                                           |
+    |-------------------------------------------+-------------------------+--------------------+---------------------+--------------------|
+    |                 Model Name                | root_mean_squared_error |      r2_score      |  mean_squared_error | explained_variance |
+    |-------------------------------------------+-------------------------+--------------------+---------------------+--------------------|
+    | local-hetero_linear_regression-regression |    0.312552080517407    | 0.9040310440206087 | 0.09768880303575968 | 0.9040312584426697 |
+    |  FATE-hetero_linear_regression-regression |    0.3139977881119483   | 0.9031411831961411 | 0.09859461093919598 | 0.903146386539082  |
+    |-------------------------------------------+-------------------------+--------------------+---------------------+--------------------|
+    |-------------------------------------|
+    |            Match Results            |
+    |-------------------------+-----------|
     |          Metric         | All Match |
-    +-------------------------+-----------+
-    |    explained_variance   |    True   |
-    |         r2_score        |    True   |
+    |-------------------------+-----------|
     | root_mean_squared_error |    True   |
+    |         r2_score        |    True   |
     |    mean_squared_error   |    True   |
-    +-------------------------+-----------+
+    |    explained_variance   |    True   |
+    |-------------------------+-----------|
+
+
+    |-------------------------------------------------------------------------------------|
+    |                             FATE Script Metrics Summary                             |
+    |--------------------+---------------------+--------------------+---------------------|
+    | Script Model Name  |         min         |        max         |         mean        |
+    |--------------------+---------------------+--------------------+---------------------|
+    |  linr_train-FATE   | -1.5305666678748353 | 1.4968292506353484 | 0.03948016870496807 |
+    | linr_validate-FATE | -1.5305666678748353 | 1.4968292506353484 | 0.03948016870496807 |
+    |--------------------+---------------------+--------------------+---------------------|
+    |---------------------------------------|
+    |   FATE Script Metrics Match Results   |
+    |----------------+----------------------|
+    |     Metric     |      All Match       |
+    |----------------+----------------------|
+    |      min       |         True         |
+    |      max       |         True         |
+    |      mean      |         True         |
+    |----------------+----------------------|
 
 command options
 ~~~~~~~~~~~~~~~
@@ -405,6 +435,11 @@ task, consider numbering host as such:
 
 Returned quality metrics of the same key are to be compared.
 Note that only **real-value** metrics can be compared.
+
+To compare metrics of different models from the same script,
+metrics of each model need to be wrapped into dictionary in the same format as the general metric output above.
+
+In the returned dictionary of script, use reserved key ``script_metrics`` to indicate the collection of groups of metrics to be compared.
 
 - FATE script: ``Main`` always has three inputs:
 
