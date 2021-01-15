@@ -25,7 +25,7 @@ from fate_arch.common.conf_utils import get_base_config
 from fate_arch.common.log import audit_logger, schedule_logger
 from fate_arch.common import FederatedMode
 from fate_arch.common import conf_utils
-from fate_arch.common import CoordinationProxyService
+from fate_arch.common import CoordinationProxyService, CoordinationCommunicationProtocol
 from fate_flow.settings import DEFAULT_REMOTE_REQUEST_TIMEOUT, CHECK_NODES_IDENTITY,\
     FATE_MANAGER_GET_NODE_INFO_ENDPOINT, HEADERS, API_VERSION, stat_logger
 from fate_flow.utils.grpc_utils import wrap_grpc_packet, get_command_federation_channel, gen_routing_metadata, \
@@ -65,14 +65,16 @@ def federated_api(job_id, method, endpoint, src_party_id, dest_party_id, src_rol
         return local_api(job_id=job_id, method=method, endpoint=endpoint, json_body=json_body, api_version=api_version)
     elif federated_mode == FederatedMode.MULTIPLE:
         host, port, protocol = get_federated_proxy_address()
-        if protocol == "http":
+        if protocol == CoordinationCommunicationProtocol.HTTP:
             return federated_coordination_on_http(job_id=job_id, method=method, host=host,
                                                   port=port, endpoint=endpoint, src_party_id=src_party_id, src_role=src_role,
                                                   dest_party_id=dest_party_id, json_body=json_body, api_version=api_version, overall_timeout=overall_timeout)
-        else:
+        elif protocol == CoordinationCommunicationProtocol.GRPC:
             return federated_coordination_on_grpc(job_id=job_id, method=method, host=host,
                                                   port=port, endpoint=endpoint, src_party_id=src_party_id, src_role=src_role,
                                                   dest_party_id=dest_party_id, json_body=json_body, api_version=api_version, overall_timeout=overall_timeout)
+        else:
+            raise Exception(f"{protocol} coordination communication protocol is not supported.")
     else:
         raise Exception('{} work mode is not supported'.format(federated_mode))
 
@@ -87,18 +89,18 @@ def get_federated_proxy_address():
     proxy_config = get_base_config("fateflow", {}).get("proxy", None)
     protocol_config = get_base_config("fateflow", {}).get("protocol", "default")
     if isinstance(proxy_config, str):
-        if proxy_config == CoordinationProxyService.rollsite:
+        if proxy_config == CoordinationProxyService.ROLLSITE:
             proxy_address = get_base_config("fate_on_eggroll", {}).get(proxy_config)
-            return proxy_address["host"], proxy_address["port"], "grpc"
-        elif proxy_config == CoordinationProxyService.nginx:
+            return proxy_address["host"], proxy_address["port"], CoordinationCommunicationProtocol.GRPC
+        elif proxy_config == CoordinationProxyService.NGINX:
             proxy_address = get_base_config("fate_on_spark", {}).get(proxy_config)
-            protocol = "http" if protocol_config == "default" else protocol_config
+            protocol = CoordinationCommunicationProtocol.HTTP if protocol_config == "default" else protocol_config
             return proxy_address["host"], proxy_address[f"{protocol}_port"], protocol
         else:
             raise RuntimeError(f"can not support coordinate proxy {proxy_config}")
     elif isinstance(proxy_config, dict):
         proxy_address = proxy_config
-        protocol = "http" if protocol_config == "default" else protocol_config
+        protocol = CoordinationCommunicationProtocol.HTTP if protocol_config == "default" else protocol_config
         return proxy_address["host"], proxy_address[f"{protocol}_port"], protocol
     else:
         raise RuntimeError(f"can not support coordinate proxy config {proxy_config}")

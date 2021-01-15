@@ -31,8 +31,13 @@ class EngineType(object):
 
 
 class CoordinationProxyService(object):
-    rollsite = "rollsite"
-    nginx = 'nginx'
+    ROLLSITE = "rollsite"
+    NGINX = 'nginx'
+
+
+class CoordinationCommunicationProtocol(object):
+    HTTP = "http"
+    GRPC = "grpc"
 
 
 class FederatedMode(object):
