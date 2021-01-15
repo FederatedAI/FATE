@@ -18,6 +18,8 @@
 
 import copy
 import functools
+from collections import Counter
+
 
 from federatedml.util import LOGGER
 from federatedml.util import consts
@@ -134,6 +136,24 @@ def count_labels(data_instance):
     # if len(label_set) != 2:
     #     return False
     # return True
+
+
+def get_class_dict(kv_iterator):
+    class_dict = {}
+    for _, inst in kv_iterator:
+        count = class_dict.get(inst.label, 0)
+        class_dict[inst.label] = count + 1
+
+    if len(class_dict.keys()) > consts.MAX_CLASSNUM:
+        raise ValueError("In Classify Task, max dif classes should be no more than %d" % (consts.MAX_CLASSNUM))
+
+    return class_dict
+
+
+def get_label_count(data_instances):
+    class_weight = data_instances.mapPartitions(get_class_dict).reduce(
+        lambda x, y: dict(Counter(x) + Counter(y)))
+    return class_weight
 
 
 def rubbish_clear(rubbish_list):

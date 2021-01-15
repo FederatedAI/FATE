@@ -8,14 +8,6 @@
                 ]
             }
         },
-        "reader_1": {
-            "module": "Reader",
-            "output": {
-                "data": [
-                    "data"
-                ]
-            }
-        },
         "dataio_0": {
             "module": "DataIO",
             "input": {
@@ -34,17 +26,29 @@
                 ]
             }
         },
-        "dataio_1": {
-            "module": "DataIO",
+        "intersection_0": {
+            "module": "Intersection",
             "input": {
                 "data": {
                     "data": [
-                        "reader_1.data"
+                        "dataio_0.data"
                     ]
-                },
-                "model": [
-                    "dataio_0.model"
+                }
+            },
+            "output": {
+                "data": [
+                    "data"
                 ]
+            }
+        },
+        "sample_weight_0": {
+            "module": "SampleWeight",
+            "input": {
+                "data": {
+                    "data": [
+                        "intersection_0.data"
+                    ]
+                }
             },
             "output": {
                 "data": [
@@ -55,13 +59,30 @@
                 ]
             }
         },
-        "union_0": {
-            "module": "Union",
+        "hetero_lr_0": {
+            "module": "HeteroLR",
+            "input": {
+                "data": {
+                    "train_data": [
+                        "sample_weight_0.data"
+                    ]
+                }
+            },
+            "output": {
+                "data": [
+                    "data"
+                ],
+                "model": [
+                    "model"
+                ]
+            }
+        },
+        "evaluation_0": {
+            "module": "Evaluation",
             "input": {
                 "data": {
                     "data": [
-                        "dataio_0.data",
-                        "dataio_1.data"
+                        "hetero_lr_0.data"
                     ]
                 }
             },
