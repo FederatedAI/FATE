@@ -53,7 +53,7 @@ class DecisionTree(BasicAlgorithms, ABC):
         self.tol = tree_param.tol
         self.use_missing = tree_param.use_missing
         self.zero_as_missing = tree_param.zero_as_missing
-        self.min_child_weight = 0
+        self.min_child_weight = tree_param.min_child_weight
         self.sitename = ''
 
         # transfer var

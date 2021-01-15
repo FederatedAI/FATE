@@ -458,6 +458,6 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         self.booster_dim = model_param.tree_dim
         self.num_classes = model_param.num_classes
         self.feature_name_fid_mapping.update(model_param.feature_name_fid_mapping)
+
         # initialize loss function
         self.loss = self.get_loss_function()
-
