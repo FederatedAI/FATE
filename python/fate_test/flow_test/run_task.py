@@ -7,7 +7,7 @@ import requests
 from fate_arch.common import conf_utils
 from fate_flow.entity.types import StatusSet
 
-config_path = './config/setting.json'
+config_path = 'config/settings.json'
 
 ip = conf_utils.get_base_config("fateflow").get("host")
 http_port = conf_utils.get_base_config("fateflow").get("http_port")
@@ -72,7 +72,7 @@ class Base(object):
         for i in range(timeout//10):
             time.sleep(10)
             status = self.query_job()
-            print("job status is {}".format(status))
+            print("job {} status is {}".format(self.job_id, status))
             if status and status == StatusSet.SUCCESS:
                 return True
             if status and status in [StatusSet.CANCELED, StatusSet.TIMEOUT, StatusSet.FAILED]:
@@ -176,7 +176,7 @@ class UtilizeModel:
             resp_data = response.json()
             print(f'模型部署请求响应: {json.dumps(resp_data, indent=4)}')
             if resp_data.get("retcode", 100) == 0:
-                self.deployed_model_version = resp_data.get("data", {}).get("child_model_version")
+                self.deployed_model_version = resp_data.get("data", {}).get("model_version")
             else:
                 raise Exception(f"Model {self.model_id} {self.model_version} deploy failed, "
                                 f"details: {resp_data.get('retmsg')}")
@@ -251,22 +251,30 @@ def run_fate_flow_test():
     host_party_id = settings.get("host_party_id")
     train_conf_path = settings.get("train_conf_path")
     train_dsl_path = settings.get("train_dsl_path")
+    print('submit train job')
     train = train_job(guest_party_id, host_party_id, train_conf_path, train_dsl_path)
     if not train:
+        print('train job run failed')
         return False
+    print('train job success')
 
     # deploy
+    print('start deploy model')
     utilize = UtilizeModel(train.model_id, train.model_version)
     utilize.deploy_model()
+    print('deploy model success')
 
     # predict
     predict_conf_path = settings.get("predict_conf_path")
     predict_dsl_path = settings.get("predict_dsl_path")
     model_id = train.model_id
     model_version = utilize.deployed_model_version
+    print('start submit predict job')
     predict = predict_job(guest_party_id, host_party_id, predict_conf_path, predict_dsl_path, model_id, model_version)
     if not predict:
+        print('predict job run failed')
         return False
+    print('predict job success')
 
     # load model
     utilize.load_model()
