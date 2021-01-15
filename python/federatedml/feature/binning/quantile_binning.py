@@ -170,6 +170,13 @@ class QuantileBinning(BaseBinning):
 
         return result
 
+    @staticmethod
+    def _query_quantile_points(col_name, summary, quantile_dict):
+        quantile = quantile_dict.get(col_name)
+        if quantile is not None:
+            return summary.query(quantile)
+        return col_name, quantile
+
     def query_quantile_point(self, query_points, col_names=None):
 
         if self.summary_dict is None:
@@ -188,6 +195,10 @@ class QuantileBinning(BaseBinning):
             query_dict = query_points
         else:
             raise ValueError("query_points has wrong type, should be a float, int or dict")
+
+        f = functools.partial(self._query_quantile_points,
+                              percentile_rate=query_points)
+        summary_dict = dict(summary_dict.map(f).collect())
 
         result = {}
         for col_name, query_point in query_dict.items():

@@ -126,47 +126,6 @@ class BaseBinning(object):
 
         return data_instances
 
-    # def get_data_bin(self, data_instances, split_points=None):
-    #     """
-    #     Apply the binning method
-    #
-    #     Parameters
-    #     ----------
-    #     data_instances : DTable
-    #         The input data
-    #
-    #     split_points : dict.
-    #         Each value represent for the split points for a feature. The element in each row represent for
-    #         the corresponding split point.
-    #         e.g.
-    #         split_points = {'x1': [0.1, 0.2, 0.3, 0.4 ...],    # The first feature
-    #                         'x2': [1, 2, 3, 4, ...],           # The second feature
-    #                         ...]                         # Other features
-    #
-    #     Returns
-    #     -------
-    #     data_bin_table : DTable.
-    #
-    #         Each element represent for the corresponding bin number this feature belongs to.
-    #         e.g. it could be:
-    #         [{'x1': 1, 'x2': 5, 'x3': 2}
-    #         ...
-    #          ]
-    #     """
-    #     # self._init_cols(data_instances)
-    #     is_sparse = data_overview.is_sparse_data(data_instances)
-    #
-    #     if split_points is None:
-    #         split_points = self.fit_split_points(data_instances)
-    #
-    #     f = functools.partial(self.bin_data,
-    #                           split_points=split_points,
-    #                           cols_dict=self.bin_inner_param.bin_cols_map,
-    #                           header=self.header,
-    #                           is_sparse=is_sparse)
-    #     data_bin_dict = data_instances.mapValues(f)
-    #     return data_bin_dict
-
     def convert_feature_to_woe(self, data_instances):
         is_sparse = data_overview.is_sparse_data(data_instances)
         schema = data_instances.schema
@@ -351,7 +310,7 @@ class BaseBinning(object):
                               shape=(len(bin_indexes), max_bin_num),
                               bin_indexes=bin_indexes,
                               is_sparse=is_sparse)
-        label_array, bin_count_array = bin_data_table.mapPartitions(f).reduce(lambda x, y: (x[0] + y[0],
+        label_array, bin_count_array = bin_data_table.applyPartitions(f).reduce(lambda x, y: (x[0] + y[0],
                                                                   x[1] + y[1]))
         non_event_array = bin_count_array - label_array
         one_total = np.sum(label_array, axis=1)
@@ -413,6 +372,9 @@ class BaseBinning(object):
                     continue
                 if bin_num == sparse_bin_num[col_idx]:
                     continue
+                else:
+                    LOGGER.debug(f"tmc: bin_num: {bin_num}, sparse_bin_num: {sparse_bin_num[col_idx]},"
+                                 f"col_idx: {col_idx}")
                 i = bin_indexes.index(col_idx)
                 label_array[i][bin_num] = label_array[i][bin_num] + instance.label
                 bin_count_array[i][bin_num] = bin_count_array[i][bin_num] + 1

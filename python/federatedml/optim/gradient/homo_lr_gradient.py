@@ -24,7 +24,10 @@ def load_data(data_instance):
     X = []
     Y = []
     for iter_key, instant in data_instance:
-        weighted_feature = instant.weight * instant.features
+        if not instant.weight:
+            weighted_feature = instant.weight * instant.features
+        else:
+            weighted_feature = instant.features
         X.append(weighted_feature)
         if instant.label == 1:
             Y.append([1])

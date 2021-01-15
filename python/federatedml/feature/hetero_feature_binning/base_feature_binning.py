@@ -200,7 +200,7 @@ class BaseHeteroFeatureBinning(ModelBase):
     def set_schema(self, data_instance):
         self.schema['header'] = self.header
         data_instance.schema = self.schema
-        LOGGER.debug("After Binning, when setting schema, schema is : {}".format(data_instance.schema))
+        # LOGGER.debug("After Binning, when setting schema, schema is : {}".format(data_instance.schema))
 
     def _abnormal_detection(self, data_instances):
         """
