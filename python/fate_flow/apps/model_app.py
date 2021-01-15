@@ -258,7 +258,6 @@ def bind_model_service():
             adapter = JobRuntimeConfigAdapter(runtime_conf)
             job_parameters = adapter.get_common_parameters().to_dict()
             request_config['job_parameters'] = job_parameters if job_parameters else model_info.get('f_train_runtime_conf', {}).get('job_parameters')
-            request_config['job_parameters'] = model_info.get('f_runtime_conf').get('job_parameters')
 
             roles = runtime_conf.get('role')
             request_config['role'] = roles if roles else model_info.get('f_train_runtime_conf', {}).get('role')
