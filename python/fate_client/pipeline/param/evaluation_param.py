@@ -16,10 +16,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
-from pipeline.param import consts
+from pipeline.util import consts
 from pipeline.param.base_param import BaseParam
-
 
 
 class EvaluateParam(BaseParam):
@@ -30,6 +28,8 @@ class EvaluateParam(BaseParam):
     ----------
     eval_type: string, support 'binary' for HomoLR, HeteroLR and Secureboosting. support 'regression' for Secureboosting. 'multi' is not support these version
 
+    unfold_multi_result: bool, unfold multi result and get several one-vs-rest binary classification results
+
     pos_label: specify positive label type, can be int, float and str, this depend on the data's label, this parameter effective only for 'binary'
 
     need_run: bool, default True
@@ -37,12 +37,13 @@ class EvaluateParam(BaseParam):
     """
 
     def __init__(self, eval_type="binary", pos_label=1, need_run=True, metrics=None,
-                 run_clustering_arbiter_metric=False):
+                 run_clustering_arbiter_metric=False, unfold_multi_result=False):
         super().__init__()
         self.eval_type = eval_type
         self.pos_label = pos_label
         self.need_run = need_run
         self.metrics = metrics
+        self.unfold_multi_result = unfold_multi_result
         self.run_clustering_arbiter_metric = run_clustering_arbiter_metric
 
         self.default_metrics = {
@@ -129,6 +130,8 @@ class EvaluateParam(BaseParam):
 
         if self.metrics is None or len(self.metrics) == 0:
             self.metrics = self.default_metrics[self.eval_type]
+
+        self.check_boolean(self.unfold_multi_result, 'multi_result_unfold')
 
         self.metrics = self._check_valid_metric(self.metrics)
 
