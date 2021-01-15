@@ -111,7 +111,7 @@ class DecisionTreeParam(BaseParam):
 
     min_impurity_split: float, least gain of a single split need to reach, default: 1e-3
 
-    min_child_weight: float, sum of hessian needed in child nodes. default is 1
+    min_child_weight: float, sum of hessian needed in child nodes. default is 0
 
     min_leaf_node: int, when samples no more than min_leaf_node, it becomes a leave, default: 1
 
@@ -133,7 +133,7 @@ class DecisionTreeParam(BaseParam):
     def __init__(self, criterion_method="xgboost", criterion_params=[0.1, 0], max_depth=3,
                  min_sample_split=2, min_impurity_split=1e-3, min_leaf_node=1,
                  max_split_nodes=consts.MAX_SPLIT_NODES, feature_importance_type="split",
-                 n_iter_no_change=True, tol=0.001, min_child_weight=1,
+                 n_iter_no_change=True, tol=0.001, min_child_weight=0,
                  use_missing=False, zero_as_missing=False,):
 
         super(DecisionTreeParam, self).__init__()

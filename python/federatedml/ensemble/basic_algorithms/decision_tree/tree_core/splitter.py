@@ -64,8 +64,9 @@ class SplitInfo(object):
 
 class Splitter(object):
 
-    def __init__(self, criterion_method, criterion_params=[0, 1], min_impurity_split=1e-2, min_sample_split=2,
+    def __init__(self, criterion_method, criterion_params=[0, 0], min_impurity_split=1e-2, min_sample_split=2,
                  min_leaf_node=1, min_child_weight=1):
+
         LOGGER.info("splitter init!")
         if not isinstance(criterion_method, str):
             raise TypeError("criterion_method type should be str, but %s find" % (type(criterion_method).__name__))
@@ -88,6 +89,12 @@ class Splitter(object):
         self.min_sample_split = min_sample_split
         self.min_leaf_node = min_leaf_node
         self.min_child_weight = min_child_weight
+
+    def _check_min_child_weight(self, l_h, r_h):
+        return l_h >= self.min_child_weight and r_h >= self.min_child_weight
+
+    def _check_sample_num(self, l_cnt, r_cnt):
+        return l_cnt >= self.min_leaf_node and r_cnt >= self.min_leaf_node
 
     def find_split_single_histogram_guest(self, histogram, valid_features, sitename, use_missing, zero_as_missing):
 
@@ -132,7 +139,7 @@ class Splitter(object):
                 sum_hess_r = sum_hess - sum_hess_l
                 node_cnt_r = node_cnt - node_cnt_l
 
-                if node_cnt_l >= self.min_leaf_node and node_cnt_r >= self.min_leaf_node:
+                if self._check_sample_num(node_cnt_l, node_cnt_r) and self._check_min_child_weight(sum_hess_l, sum_hess_r):
                     gain = self.criterion.split_gain([sum_grad, sum_hess],
                                                      [sum_grad_l, sum_hess_l], [sum_grad_r, sum_hess_r])
 
@@ -157,7 +164,8 @@ class Splitter(object):
                     node_cnt_r -= histogram[fid][-1][2] - histogram[fid][-2][2]
 
                     # if have a better gain value, missing dir is left
-                    if node_cnt_l >= self.min_leaf_node and node_cnt_r >= self.min_leaf_node:
+                    if self._check_sample_num(node_cnt_l, node_cnt_r) and self._check_min_child_weight(sum_hess_l, sum_hess_r):
+
                         gain = self.criterion.split_gain([sum_grad, sum_hess],
                                                          [sum_grad_l, sum_hess_l], [sum_grad_r, sum_hess_r])
 
@@ -269,7 +277,7 @@ class Splitter(object):
 
             node_cnt_r = node_cnt - node_cnt_l
             mask_id = mask_id_mapping[(fid, bid)]
-            if node_cnt_l >= self.min_leaf_node and node_cnt_r >= self.min_leaf_node:
+            if self._check_sample_num(node_cnt_l, node_cnt_r):
 
                 missing_dir = np.random.choice(right_missing_dir)
                 splitinfo = SplitInfo(sitename=sitename, sum_grad=sum_grad_l, sum_hess=sum_hess_l,
@@ -382,7 +390,8 @@ class Splitter(object):
             r_g, r_h = g_sum - l_g, h_sum - l_h
             gain = self.split_gain(g_sum, h_sum, l_g, l_h, r_g, r_h)
 
-            if gain > self.min_impurity_split and gain > best_gain + consts.FLOAT_ZERO:
+            if self._check_min_child_weight(l_h, r_h) and \
+                    gain > self.min_impurity_split and gain > best_gain + consts.FLOAT_ZERO:
                 new_split_info = SplitInfo(sitename=host_sitename, best_fid=split_info.best_fid,
                                            best_bid=split_info.best_bid, gain=gain,
                                            sum_grad=l_g, sum_hess=l_h, missing_dir=split_info.missing_dir,
