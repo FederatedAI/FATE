@@ -37,7 +37,7 @@ class SampleWeightParam(BaseParam):
         feature name of sample weight; if both class_weight and sample_weight_name are None, return original input data
 
     normalize : bool, default False
-        whether to normalize sample weight from sample_weight_name
+        whether to normalize sample weight extracted from `sample_weight_name` column
 
     need_run : bool, default True
         whether to run this module or not
