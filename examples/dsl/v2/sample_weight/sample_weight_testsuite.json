@@ -18,8 +18,12 @@
         }
     ],
     "tasks": {
-        "sample-weight": {
-            "conf": "./sample_weight_job_conf.json",
+        "sample-weight-class": {
+            "conf": "./sample_weight_class_job_conf.json",
+            "dsl": "./sample_weight_job_dsl.json"
+        },
+        "sample-weight-name": {
+            "conf": "./sample_weight_name_job_conf.json",
             "dsl": "./sample_weight_job_dsl.json"
         }
     }
