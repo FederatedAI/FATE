@@ -21,6 +21,8 @@ fateflow:
   proxy: rollsite
   # support default/http/grpc
   protocol: default
+  # It can also be specified in the job configuration using the federated_status_collect_type parameter
+  default_federated_status_collect_type: PULL
 fateboard:
   host: 127.0.0.1
   port: 8080

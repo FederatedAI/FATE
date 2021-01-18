@@ -91,7 +91,6 @@ def get_federated_proxy_address(src_party_id, dest_party_id):
     if isinstance(proxy_config, str):
         if proxy_config == CoordinationProxyService.ROLLSITE:
             proxy_address = get_base_config("fate_on_eggroll", {}).get(proxy_config)
-            print(proxy_address.get("grpc_port", proxy_address["port"]))
             return proxy_address["host"], proxy_address.get("grpc_port", proxy_address["port"]), CoordinationCommunicationProtocol.GRPC
         elif proxy_config == CoordinationProxyService.NGINX:
             proxy_address = get_base_config("fate_on_spark", {}).get(proxy_config)
