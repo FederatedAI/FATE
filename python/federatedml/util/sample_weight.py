@@ -60,7 +60,7 @@ class SampleWeight(ModelBase):
     def replace_weight(data_instance, class_weight, weight_loc=None, weight_base=None):
         weighted_data_instance = copy.copy(data_instance)
         original_features = weighted_data_instance.features
-        if weight_loc:
+        if weight_loc is not None:
             weighted_data_instance.set_weight(original_features[weight_loc] / weight_base)
             weighted_data_instance.features = original_features[np.arange(original_features.shape[0]) != weight_loc]
         else:
@@ -70,7 +70,7 @@ class SampleWeight(ModelBase):
     @staticmethod
     def assign_sample_weight(data_instances, class_weight, weight_loc, normalize):
         weight_base = 1
-        if weight_loc and normalize:
+        if weight_loc is not None and normalize:
             def sum_sample_weight(kv_iterator):
                 sample_weight = 0
                 for _, inst in kv_iterator:
@@ -126,6 +126,7 @@ class SampleWeight(ModelBase):
 
         if self.class_weight and isinstance(self.class_weight, dict):
             self.class_weight = {int(k): v for k, v in self.class_weight.items()}
+        if self.class_weight:
             self.weight_mode = "class weight"
 
         if self.sample_weight_name and self.class_weight:
@@ -138,11 +139,10 @@ class SampleWeight(ModelBase):
         if self.sample_weight_name:
             self.weight_mode = "sample weight name"
             weight_loc = SampleWeight.get_weight_loc(data_instances, self.sample_weight_name)
-            if weight_loc:
+            if weight_loc is not None:
                 new_schema["header"].pop(weight_loc)
             else:
-                raise ValueError(f"Cannot find weight column of given sample_weight_name '{self.sample_weight_name}'."
-                               f"Original data returned.")
+                raise ValueError(f"Cannot find weight column of given sample_weight_name '{self.sample_weight_name}'.")
         result_instances = self.transform_weighted_instance(data_instances, weight_loc)
         result_instances.schema = new_schema
 
