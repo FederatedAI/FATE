@@ -64,7 +64,7 @@ def federated_api(job_id, method, endpoint, src_party_id, dest_party_id, src_rol
     if federated_mode == FederatedMode.SINGLE:
         return local_api(job_id=job_id, method=method, endpoint=endpoint, json_body=json_body, api_version=api_version)
     elif federated_mode == FederatedMode.MULTIPLE:
-        host, port, protocol = get_federated_proxy_address()
+        host, port, protocol = get_federated_proxy_address(src_party_id, dest_party_id)
         if protocol == CoordinationCommunicationProtocol.HTTP:
             return federated_coordination_on_http(job_id=job_id, method=method, host=host,
                                                   port=port, endpoint=endpoint, src_party_id=src_party_id, src_role=src_role,
@@ -85,13 +85,14 @@ def local_api(job_id, method, endpoint, json_body, api_version=API_VERSION, try_
                                           dest_party_id="", json_body=json_body, api_version=api_version, try_times=try_times)
 
 
-def get_federated_proxy_address():
+def get_federated_proxy_address(src_party_id, dest_party_id):
     proxy_config = get_base_config("fateflow", {}).get("proxy", None)
     protocol_config = get_base_config("fateflow", {}).get("protocol", "default")
     if isinstance(proxy_config, str):
         if proxy_config == CoordinationProxyService.ROLLSITE:
             proxy_address = get_base_config("fate_on_eggroll", {}).get(proxy_config)
-            return proxy_address["host"], proxy_address["port"], CoordinationCommunicationProtocol.GRPC
+            print(proxy_address.get("grpc_port", proxy_address["port"]))
+            return proxy_address["host"], proxy_address.get("grpc_port", proxy_address["port"]), CoordinationCommunicationProtocol.GRPC
         elif proxy_config == CoordinationProxyService.NGINX:
             proxy_address = get_base_config("fate_on_spark", {}).get(proxy_config)
             protocol = CoordinationCommunicationProtocol.HTTP if protocol_config == "default" else protocol_config
@@ -101,7 +102,14 @@ def get_federated_proxy_address():
     elif isinstance(proxy_config, dict):
         proxy_address = proxy_config
         protocol = CoordinationCommunicationProtocol.HTTP if protocol_config == "default" else protocol_config
-        return proxy_address["host"], proxy_address[f"{protocol}_port"], protocol
+        proxy_name = proxy_config.get("name", CoordinationProxyService.FATEFLOW)
+        if proxy_name == CoordinationProxyService.FATEFLOW and str(dest_party_id) == str(src_party_id):
+            host = RuntimeConfig.JOB_SERVER_HOST
+            port = RuntimeConfig.HTTP_PORT
+        else:
+            host = proxy_address["host"]
+            port = proxy_address[f"{protocol}_port"]
+        return host, port, protocol
     else:
         raise RuntimeError(f"can not support coordinate proxy config {proxy_config}")
 

@@ -71,7 +71,7 @@ def stop_job():
             return get_json_result(retcode=RetCode.OPERATING_ERROR, retmsg="stop job on this party {};\n"
                                                                            "stop job failed:\n{}".format(kill_status, json_dumps(response, indent=4)))
     else:
-        schedule_logger(job_id).info(f"can not found job {jobs[0]} to stop")
+        schedule_logger(job_id).info(f"can not found job {job_id} to stop")
         return get_json_result(retcode=RetCode.DATA_ERROR, retmsg="can not found job")
 
 

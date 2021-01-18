@@ -32,7 +32,8 @@ class EngineType(object):
 
 class CoordinationProxyService(object):
     ROLLSITE = "rollsite"
-    NGINX = 'nginx'
+    NGINX = "nginx"
+    FATEFLOW = "fateflow"
 
 
 class CoordinationCommunicationProtocol(object):
