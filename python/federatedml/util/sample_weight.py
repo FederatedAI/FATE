@@ -52,9 +52,9 @@ class SampleWeight(ModelBase):
         class_weight = get_label_count(data_instances)
         n_samples = data_instances.count()
         n_classes = len(class_weight.keys())
-        class_weight.update((k, n_samples / (n_classes * v)) for k, v in class_weight.items())
+        res_class_weight = {str(k): n_samples / (n_classes * v) for k, v in class_weight.items()}
 
-        return class_weight
+        return res_class_weight
 
     @staticmethod
     def replace_weight(data_instance, class_weight, weight_loc=None, weight_base=None):
@@ -64,7 +64,7 @@ class SampleWeight(ModelBase):
             weighted_data_instance.set_weight(original_features[weight_loc] / weight_base)
             weighted_data_instance.features = original_features[np.arange(original_features.shape[0]) != weight_loc]
         else:
-            weighted_data_instance.set_weight(class_weight.get(data_instance.label, 1))
+            weighted_data_instance.set_weight(class_weight.get(str(data_instance.label), 1))
         return weighted_data_instance
 
     @staticmethod
@@ -124,8 +124,8 @@ class SampleWeight(ModelBase):
         if self.sample_weight_name is None and self.class_weight is None:
             return data_instances
 
-        if self.class_weight and isinstance(self.class_weight, dict):
-            self.class_weight = {int(k): v for k, v in self.class_weight.items()}
+        # if self.class_weight and isinstance(self.class_weight, dict):
+        #    self.class_weight = {int(k): v for k, v in self.class_weight.items()}
         if self.class_weight:
             self.weight_mode = "class weight"
 
