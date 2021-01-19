@@ -124,7 +124,7 @@ class DecisionTreeParam(BaseParam):
     """
 
     def __init__(self, criterion_method="xgboost", criterion_params=[0.1], max_depth=3,
-                 min_sample_split=2, min_imputiry_split=1e-3, min_leaf_node=1,
+                 min_sample_split=2, min_impurity_split=1e-3, min_leaf_node=1,
                  max_split_nodes=consts.MAX_SPLIT_NODES, feature_importance_type="split",
                  n_iter_no_change=True, tol=0.001,
                  use_missing=False, zero_as_missing=False,):
@@ -133,7 +133,7 @@ class DecisionTreeParam(BaseParam):
         self.criterion_params = criterion_params
         self.max_depth = max_depth
         self.min_sample_split = min_sample_split
-        self.min_impurity_split = min_imputiry_split
+        self.min_impurity_split = min_impurity_split
         self.min_leaf_node = min_leaf_node
         self.max_split_nodes = max_split_nodes
         self.feature_importance_type = feature_importance_type
