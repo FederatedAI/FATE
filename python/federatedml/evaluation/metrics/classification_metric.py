@@ -3,9 +3,11 @@ import sys
 
 import numpy as np
 import pandas as pd
+from scipy import stats
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
+from sklearn.metrics import average_precision_score
 
 ROUND_NUM = 6
 
@@ -114,7 +116,6 @@ class KS(object):
 
     @staticmethod
     def compute(labels, pred_scores, pos_label=1):
-
         sorted_labels, sorted_scores = sort_score_and_label(labels, pred_scores)
 
         score_threshold, cuts = ThresholdCutter.cut_by_index(sorted_scores)
@@ -178,7 +179,6 @@ class BiClassMetric(object):
 
 
 class Lift(BiClassMetric):
-
     """
     Compute lift
     """
@@ -354,7 +354,6 @@ class MultiClassRecall(object):
 
 
 class BiClassAccuracy(BiClassMetric):
-
     """
     Compute binary classification accuracy
     """
@@ -381,13 +380,11 @@ class MultiClassAccuracy(object):
 
 
 class FScore(object):
-
     """
     Compute F score from bi-class confusion mat
     """
     @staticmethod
     def compute(labels, pred_scores, beta=1, pos_label=1):
-
         sorted_labels, sorted_scores = sort_score_and_label(labels, pred_scores)
         score_threshold, cuts = ThresholdCutter.cut_by_step(sorted_scores, steps=0.01)
         score_threshold.append(0)
@@ -432,7 +429,6 @@ class PSI(object):
         validate_count = self.quantile_binning_and_count(validate_scores, quantile_points)
 
         train_pos_perc, validate_pos_perc = None, None
-
         if train_labels is not None and validate_labels is not None:
             assert len(train_labels) == len(train_scores) and len(validate_labels) == len(validate_scores)
             train_labels, validate_labels = np.array(train_labels), np.array(validate_labels)
@@ -462,7 +458,7 @@ class PSI(object):
         actual_interval = actual_interval.astype(np.float)
 
         psi_scores, total_psi, expected_interval, actual_interval, expected_percentage, actual_percentage \
-            = self.psi_score(expected_interval, actual_interval, len(train_scores), len(validate_scores))
+            = self.psi_score(expected_interval, actual_interval)
 
         intervals = train_count['interval'] if not str_intervals else PSI.intervals_to_str(train_count['interval'],
                                                                                            round_num=round_num)
@@ -523,16 +519,17 @@ class PSI(object):
 
         return str_intervals
 
-    @ staticmethod
-    def psi_score(expected_interval: np.ndarray, actual_interval: np.ndarray, expect_total_num, actual_total_num,
-                  debug=False):
+    @staticmethod
+    def psi_score(expected_interval: np.ndarray, actual_interval: np.ndarray, debug=False):
 
+        expected_sum = expected_interval.sum()
         expected_interval[expected_interval == 0] = 1e-6  # in case no overlap samples
 
+        actual_sum = actual_interval.sum()
         actual_interval[actual_interval == 0] = 1e-6  # in case no overlap samples
 
-        expected_percentage = expected_interval / expect_total_num
-        actual_percentage = actual_interval / actual_total_num
+        expected_percentage = expected_interval / expected_sum
+        actual_percentage = actual_interval / actual_sum
 
         if debug:
             print(expected_interval)
@@ -544,3 +541,44 @@ class PSI(object):
         psi_scores = np.array(psi_scores)
         total_psi = psi_scores.sum()
         return psi_scores, total_psi, expected_interval, actual_interval, expected_percentage, actual_percentage
+
+
+class AveragePrecisionScore(object):
+
+    def compute(self, train_scores, validate_scores, train_labels, validate_labels):
+        """
+            train/validate scores: predicted scores on train/validate set
+            train/validate labels: true labels
+        """
+        train_aps = self.average_precision_score(train_scores, train_labels)
+        validate_aps = self.average_precision_score(validate_scores, validate_labels)
+        return train_aps, validate_aps
+
+    @staticmethod
+    def average_precision_score(pred_scores, labels):
+        return average_precision_score(labels, pred_scores)
+
+
+class KSTest(object):
+
+    @staticmethod
+    def compute(train_scores, validate_scores):
+        """
+        train/validate scores: predicted scores on train/validate set
+        """
+        return stats.ks_2samp(train_scores, validate_scores)
+
+
+class Distribution(object):
+
+    @staticmethod
+    def compute(train_scores: list, validate_scores: list):
+        """
+        train/validate scores: predicted scores on train/validate set
+        """
+        train_scores = np.array(train_scores)
+        validate_scores = np.array(validate_scores)
+        quantise_points = ThresholdCutter().cut_by_quantile(train_scores)
+        train_count = PSI().quantile_binning_and_count(train_scores, quantise_points)
+        validate_count = PSI().quantile_binning_and_count(validate_scores, quantise_points)
+        return train_count, validate_count

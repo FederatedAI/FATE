@@ -1,3 +1,4 @@
+from scipy import stats
 from sklearn.metrics import explained_variance_score
 from sklearn.metrics import mean_absolute_error
 from sklearn.metrics import mean_squared_error
@@ -72,3 +73,13 @@ class IC_Approx(object):
     def compute(self, k, n, dfe, loss):
         aic_score = k * dfe + n * np.log(loss * 2)
         return aic_score
+
+
+class Describe(object):
+
+    @staticmethod
+    def compute(train_scores, validate_scores=None):
+        if validate_scores is None:
+            return stats.describe(train_scores)
+        else:
+            return stats.describe(train_scores), stats.describe(validate_scores)
