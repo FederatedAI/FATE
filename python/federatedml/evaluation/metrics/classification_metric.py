@@ -116,6 +116,7 @@ class KS(object):
 
     @staticmethod
     def compute(labels, pred_scores, pos_label=1):
+
         sorted_labels, sorted_scores = sort_score_and_label(labels, pred_scores)
 
         score_threshold, cuts = ThresholdCutter.cut_by_index(sorted_scores)
@@ -179,6 +180,7 @@ class BiClassMetric(object):
 
 
 class Lift(BiClassMetric):
+
     """
     Compute lift
     """
@@ -354,6 +356,7 @@ class MultiClassRecall(object):
 
 
 class BiClassAccuracy(BiClassMetric):
+
     """
     Compute binary classification accuracy
     """
@@ -380,11 +383,13 @@ class MultiClassAccuracy(object):
 
 
 class FScore(object):
+
     """
     Compute F score from bi-class confusion mat
     """
     @staticmethod
     def compute(labels, pred_scores, beta=1, pos_label=1):
+
         sorted_labels, sorted_scores = sort_score_and_label(labels, pred_scores)
         score_threshold, cuts = ThresholdCutter.cut_by_step(sorted_scores, steps=0.01)
         score_threshold.append(0)
@@ -429,6 +434,7 @@ class PSI(object):
         validate_count = self.quantile_binning_and_count(validate_scores, quantile_points)
 
         train_pos_perc, validate_pos_perc = None, None
+
         if train_labels is not None and validate_labels is not None:
             assert len(train_labels) == len(train_scores) and len(validate_labels) == len(validate_scores)
             train_labels, validate_labels = np.array(train_labels), np.array(validate_labels)
@@ -458,7 +464,7 @@ class PSI(object):
         actual_interval = actual_interval.astype(np.float)
 
         psi_scores, total_psi, expected_interval, actual_interval, expected_percentage, actual_percentage \
-            = self.psi_score(expected_interval, actual_interval)
+            = self.psi_score(expected_interval, actual_interval, len(train_scores), len(validate_scores))
 
         intervals = train_count['interval'] if not str_intervals else PSI.intervals_to_str(train_count['interval'],
                                                                                            round_num=round_num)
@@ -519,17 +525,16 @@ class PSI(object):
 
         return str_intervals
 
-    @staticmethod
-    def psi_score(expected_interval: np.ndarray, actual_interval: np.ndarray, debug=False):
+    @ staticmethod
+    def psi_score(expected_interval: np.ndarray, actual_interval: np.ndarray, expect_total_num, actual_total_num,
+                  debug=False):
 
-        expected_sum = expected_interval.sum()
         expected_interval[expected_interval == 0] = 1e-6  # in case no overlap samples
 
-        actual_sum = actual_interval.sum()
         actual_interval[actual_interval == 0] = 1e-6  # in case no overlap samples
 
-        expected_percentage = expected_interval / expected_sum
-        actual_percentage = actual_interval / actual_sum
+        expected_percentage = expected_interval / expect_total_num
+        actual_percentage = actual_interval / actual_total_num
 
         if debug:
             print(expected_interval)
