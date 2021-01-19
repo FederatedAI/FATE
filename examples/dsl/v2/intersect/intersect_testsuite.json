@@ -30,8 +30,16 @@
             "conf": "./test_intersect_job_raw_conf.json",
             "dsl": "./test_intersect_job_dsl.json"
         },
+        "raw_intersect_sm3": {
+            "conf": "./test_intersect_job_raw_sm3_conf.json",
+            "dsl": "./test_intersect_job_dsl.json"
+        },
         "rsa_intersect": {
             "conf": "./test_intersect_job_rsa_conf.json",
+            "dsl": "./test_intersect_job_dsl.json"
+        },
+        "rsa_intersect_fraction": {
+            "conf": "./test_intersect_job_rsa_fraction_conf.json",
             "dsl": "./test_intersect_job_dsl.json"
         },
         "rsa_intersect_split": {
