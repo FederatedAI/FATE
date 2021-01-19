@@ -19,18 +19,18 @@
 import numpy
 
 from federatedml.util import LOGGER
-from federatedml.transfer_variable.transfer_class import verifiable_sum_transfer_variable
-from federatedml.param.verifiable_sum_param import VerifiableSumParam
-from federatedml.verifiable_sum.base_verifiable_sum import BaseVerifiableSum
+from federatedml.transfer_variable.transfer_class import feldman_verifiable_sum_transfer_variable
+from federatedml.param.feldman_verifiable_sum_param import FeldmanVerifiableSumParam
+from federatedml.statistic.feldman_verifiable_sum.base_feldman_verifiable_sum import BaseFeldmanVerifiableSum
 
 
-class VerifiableSumGuest(BaseVerifiableSum):
+class FeldmanVerifiableSumGuest(BaseFeldmanVerifiableSum):
     def __init__(self):
-        super(VerifiableSumGuest, self).__init__()
-        self.transfer_inst = verifiable_sum_transfer_variable.VerifiableSumTransferVariables()
+        super(FeldmanVerifiableSumGuest, self).__init__()
+        self.transfer_inst = feldman_verifiable_sum_transfer_variable.FeldmanVerifiableSumTransferVariables()
         self.output_schema = None
 
-    def _init_model(self, model_param: VerifiableSumParam):
+    def _init_model(self, model_param: FeldmanVerifiableSumParam):
         self.sum_cols = model_param.sum_cols
         self.vss.Q_n = model_param.q_n
 

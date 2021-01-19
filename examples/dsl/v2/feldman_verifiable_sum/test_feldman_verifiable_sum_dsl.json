@@ -1,22 +1,29 @@
 {
     "components": {
-        "dataio_0": {
-            "module": "DataIO",
-            "input": {
-                "data": {
-                    "data": [
-                        "args.data"
-                    ]
-                }
-            },
+        "reader_0": {
+            "module": "Reader",
             "output": {
                 "data": [
                     "data"
                 ]
             }
         },
-        "verifiablesum_0": {
-            "module": "VerifiableSum",
+        "dataio_0": {
+            "module": "DataIO",
+            "input": {
+                "data": {
+                    "data": [
+                        "reader_0.data"
+                    ]
+                }
+            },
+            "output": {
+                "data": ["data"],
+                "model": ["dataio"]
+            }
+        },
+        "feldmanverifiablesum_0": {
+            "module": "FeldmanVerifiableSum",
             "input": {
                 "data": {
                     "data": [

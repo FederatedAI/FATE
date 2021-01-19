@@ -27,7 +27,7 @@ from federatedml.transfer_variable.base_transfer_variable import BaseTransferVar
 
 
 # noinspection PyAttributeOutsideInit
-class VerifiableSumTransferVariables(BaseTransferVariables):
+class FeldmanVerifiableSumTransferVariables(BaseTransferVariables):
     def __init__(self, flowid=0):
         super().__init__(flowid)
         self.guest_share_primes = self._create_variable(name='guest_share_primes', src=['guest'], dst=['host'])

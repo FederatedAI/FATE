@@ -23,7 +23,7 @@
     },
     "component_parameters":{
         "common": {
-            "verifiablesum_0": {
+            "feldmanverifiablesum_0": {
                 "sum_cols": [1,2,3],
                 "q_n": 6
             }

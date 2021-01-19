@@ -14,22 +14,22 @@
 #  limitations under the License.
 #
 
-from pipeline.param.verifiable_sum_param import VerifiableSumParam
+from pipeline.param.feldman_verifiable_sum_param import FeldmanVerifiableSumParam
 from pipeline.component.component_base import Component
 from pipeline.interface import Input
 from pipeline.interface import Output
 from pipeline.utils.logger import LOGGER
 
 
-class VerifiableSum(Component, VerifiableSumParam):
+class FeldmanVerifiableSum(Component, FeldmanVerifiableSumParam):
     def __init__(self, **kwargs):
         Component.__init__(self, **kwargs)
 
         LOGGER.debug(f"{self.name} component created")
         new_kwargs = self.erase_component_base_param(**kwargs)
 
-        VerifiableSumParam.__init__(self, **new_kwargs)
+        FeldmanVerifiableSumParam.__init__(self, **new_kwargs)
 
         self.input = Input(self.name)
         self.output = Output(self.name, has_model=False)
-        self._module_name = "VerifiableSum"
+        self._module_name = "FeldmanVerifiableSum"

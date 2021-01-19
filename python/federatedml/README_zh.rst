@@ -279,8 +279,8 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
      -
      -
 
-   * - `Verifiable Sum`_
-     - 秘密分享求和
+   * - `Feldman Verifiable Sum`_
+     - 费尔德曼秘密分享求和
      - 不暴露隐私数据的前提下进行多方隐私数据求和
      - Table, 值为加数或被加数
      - Table, 值为求和结果
@@ -316,7 +316,7 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
 .. _Hetero Federated Transfer Learning: transfer_learning/hetero_ftl/README.rst
 .. _Hetero Fast Secure Boosting: ensemble/README.rst
 .. _Scorecard: statistic/scorecard/README.rst
-.. _Verifiable Sum: verifiable_sum/README.rst
+.. _Feldman Verifiable Sum: statistic/feldman_verifiable_sum/README.rst
 
 
 安全协议
@@ -339,7 +339,7 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
 
 * `Oblivious Transfer`_
 
-* `Verifiable Secret Sharing`_
+* `Feldman Verifiable Secret Sharing`_
 
 
 .. _Encrypt: secureprotol/README.rst#encrypt
@@ -352,7 +352,7 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
 .. _Diffne Hellman Key Exchange: secureprotol/README.rst#diffne-hellman-key-exchange
 .. _SecretShare MPC Protocol(SPDZ): secureprotol/README.rst#secretshare-mpc-protocol-spdz
 .. _Oblivious Transfer: secureprotol/README.rst#oblivious-transfer
-.. _Verifiable Secret Sharing: secureprotol/README.rst#verifiable-secret-sharing
+.. _Feldman Verifiable Secret Sharing: secureprotol/README.rst#feldman-verifiable-secret-sharing
 
 
 Params

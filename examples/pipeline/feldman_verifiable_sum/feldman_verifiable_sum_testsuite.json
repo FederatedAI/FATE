@@ -26,8 +26,8 @@
         }
     ],
         "pipeline_tasks": {
-        "secret-sharing-sum": {
-            "script": "./pipeline-verifiable-sum.py"
+        "feldman-secret-sharing-sum": {
+            "script": "./pipeline-feldman-verifiable-sum.py"
         }
     }
 }

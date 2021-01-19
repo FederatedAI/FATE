@@ -258,10 +258,10 @@ Oblivious Transfer
 FATE implements Oblivious Transfer(OT) protocol based on work by Eduard Hauck and Julian Loss.
 For more information, please refer `here <https://eprint.iacr.org/2017/1011>`_.
 
-Verifiable secret sharing
-=========================
+Feldman Verifiable secret sharing
+==================================
 
-Verifiable secret sharing `[VSS] <https://www.cs.umd.edu/~gasarch/TOPICS/secretsharing/feldmanVSS.pdf>`_ is an
+Feldman Verifiable secret sharing `[VSS] <https://www.cs.umd.edu/~gasarch/TOPICS/secretsharing/feldmanVSS.pdf>`_ is an
 information-theoretic secure method to share secrets between multi-parties.
 
 Protocol
@@ -269,7 +269,7 @@ Protocol
 
 1. Initialize
 
-    a. generate 512-bits prime number :math:`p` and :math:`g`, where :math:`g` is a primitive root modulo :math:`p`
+    a. generate 1024-bits prime number :math:`p` , :math:`g` and :math:`q`, where :math:`p` is a prime number, :math:`g` is a generator, :math:`q` is a prime-order subgroup.
 
     b. set share_amount, it is the number of pieces the secret will be split into.
 
@@ -291,8 +291,9 @@ How to use
 
 .. code-block:: python
 
-    from federatedml.secureprotol.secret_sharing.verifiable_secret_sharing import VerifiableSecretSharing
-    vss = VerifiableSecretSharing()
+    from federatedml.secureprotol.secret_sharing.verifiable_secret_sharing.feldman_verifiable_secret_sharing import
+    FeldmanVerifiableSecretSharing
+    vss = FeldmanVerifiableSecretSharing()
     vss.set_share_amount(3)
     s = -5.98
     sub_key, commitment = vss.encrypt(s) # generate sub-key and commitment

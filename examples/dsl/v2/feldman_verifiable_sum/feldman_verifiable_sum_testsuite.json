@@ -26,9 +26,9 @@
         }
     ],
     "tasks": {
-        "secret-sharing-sum": {
-            "conf": "test_verifiable_sum_conf.json",
-            "dsl": "test_verifiable_sum_dsl.json"
+        "feldman-secret-sharing-sum": {
+            "conf": "test_feldman_verifiable_sum_conf.json",
+            "dsl": "test_feldman_verifiable_sum_dsl.json"
         }
     }
 }
