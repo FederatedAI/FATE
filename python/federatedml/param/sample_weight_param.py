@@ -60,17 +60,17 @@ class SampleWeightParam(BaseParam):
             if isinstance(self.class_weight, str):
                 self.class_weight = self.input_format = self.check_and_change_lower(self.class_weight,
                                                         [consts.BALANCED],
-                                                        descr + " class_weight")
+                                                        f"{descr} class_weight")
             if isinstance(self.class_weight, dict):
                 for k, v in self.class_weight.items():
                     if v < 0:
-                        LOGGER.warning(f"Negative value {v} for class {k} provided as class_weight.")
+                        LOGGER.warning(f"Negative value {v} provided for class {k} as class_weight.")
 
         if self.sample_weight_name:
-            self.check_string(self.sample_weight_name, descr+" sample_weight_name")
+            self.check_string(self.sample_weight_name, f"{descr} sample_weight_name")
 
-        self.check_boolean(self.need_run, descr+" need_run")
+        self.check_boolean(self.need_run, f"{descr} need_run")
 
-        self.check_boolean(self.normalize, descr+" normalize")
+        self.check_boolean(self.normalize, f"{descr} normalize")
 
         return True

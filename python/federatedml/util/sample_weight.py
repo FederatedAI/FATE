@@ -61,7 +61,11 @@ class SampleWeight(ModelBase):
         weighted_data_instance = copy.copy(data_instance)
         original_features = weighted_data_instance.features
         if weight_loc is not None:
-            weighted_data_instance.set_weight(original_features[weight_loc] / weight_base)
+            if weight_base is not None:
+                inst_weight = original_features[weight_loc] / weight_base
+            else:
+                inst_weight = original_features[weight_loc]
+            weighted_data_instance.set_weight(inst_weight)
             weighted_data_instance.features = original_features[np.arange(original_features.shape[0]) != weight_loc]
         else:
             weighted_data_instance.set_weight(class_weight.get(str(data_instance.label), 1))
@@ -69,7 +73,7 @@ class SampleWeight(ModelBase):
 
     @staticmethod
     def assign_sample_weight(data_instances, class_weight, weight_loc, normalize):
-        weight_base = 1
+        weight_base = None
         if weight_loc is not None and normalize:
             def sum_sample_weight(kv_iterator):
                 sample_weight = 0
@@ -78,7 +82,9 @@ class SampleWeight(ModelBase):
                 return sample_weight
 
             weight_sum = data_instances.mapPartitions(sum_sample_weight).reduce(lambda x, y: x + y)
+            LOGGER.debug(f"weight_sum is {weight_sum}")
             weight_base = weight_sum / data_instances.count()
+            LOGGER.debug(f"weight_base is {weight_base}")
         return data_instances.mapValues(lambda v: SampleWeight.replace_weight(v, class_weight, weight_loc, weight_base))
 
     @staticmethod
@@ -102,7 +108,7 @@ class SampleWeight(ModelBase):
         if self.class_weight:
             class_weight = {str(k): v for k, v in self.class_weight.items()}
             classes = sorted([str(k) for k in self.class_weight.keys()])
-        LOGGER.debug(f"final class weight is: {class_weight}")
+        LOGGER.debug(f"callback class weight is: {class_weight}")
 
         metric_meta = MetricMeta(name='train',
                                  metric_type=self.metric_type,
@@ -130,7 +136,7 @@ class SampleWeight(ModelBase):
             self.weight_mode = "class weight"
 
         if self.sample_weight_name and self.class_weight:
-            LOGGER.warning(f"Both 'sample_weight_name' and 'class_weight' provided."
+            LOGGER.warning(f"Both 'sample_weight_name' and 'class_weight' provided. "
                            f"Only weight from 'sample_weight_name' is used.")
 
         new_schema = copy.deepcopy(data_instances.schema)

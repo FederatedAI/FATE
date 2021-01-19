@@ -56,7 +56,7 @@
                     },
                     "sample_weight_0": {
                         "need_run": true,
-                        "class_weight": {"0": 1, "1": 2}
+                        "class_weight": "balanced"
                     }
                 }
             },

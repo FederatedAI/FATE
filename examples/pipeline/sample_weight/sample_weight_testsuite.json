@@ -18,6 +18,9 @@
         }
     ],
     "pipeline_tasks": {
+        "sample-weight-balanced": {
+            "script": "./pipeline-sample-weight-balanced.py"
+        },
         "sample-weight-class": {
             "script": "./pipeline-sample-weight-class.py"
         },

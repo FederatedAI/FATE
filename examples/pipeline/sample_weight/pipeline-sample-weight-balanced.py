@@ -57,7 +57,7 @@ def main(config="../../config.yaml", namespace=""):
 
     sample_weight_0 = SampleWeight(name="sample_weight_0")
     sample_weight_0.get_party_instance(role='guest', party_id=guest).algorithm_param(need_run=True,
-                                                                                     class_weight={"0": 1, "1": 2})
+                                                                                     class_weight="balanced")
     sample_weight_0.get_party_instance(role='host', party_id=host).algorithm_param(need_run=False)
 
     hetero_lr_0 = HeteroLR(name="hetero_lr_0", optimizer="nesterov_momentum_sgd", tol=0.001,
