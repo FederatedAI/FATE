@@ -17,17 +17,23 @@ local _M = {
     _VERSION = '0.1'
 }
 
-local ngx = ngx
-local route_table = require "route_table"
+local string = require "string"
 
-local function routing()
-    local request_headers = ngx.req.get_headers()
-    local dest_env = request_headers["dest-party-id"]
-    if dest_env == nil then
-        dest_env = request_headers["dest-env"]
-    end
-    ngx.ctx.dest_cluster = route_table.get_dest_server(dest_env, request_headers["service"])
+function _M.string_startswith(str, start)
+    return string.sub(str, 1, string.len(start)) == start
 end
 
-routing()
+function _M.string_split(str, delimiter)
+    if str == nil or str == "" or delimiter==nil then
+        return nil
+    end
+
+    local result = {}
+    for match in (str..delimiter):gmatch("(.-)"..delimiter) do
+        table.insert(result, match)
+    end
+    return result
+end
+
+return _M
 
