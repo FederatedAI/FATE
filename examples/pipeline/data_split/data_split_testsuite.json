@@ -40,6 +40,9 @@
         "homo_data_split": {
             "script": "pipeline-homo-data-split.py"
         },
+        "homo_data_split_validate": {
+            "script": "pipeline-homo-data-split-validate.py"
+        },
         "hetero_data_split_multi_model": {
             "script": "pipeline-homo-data-split.py"
         }
