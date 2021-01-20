@@ -1,6 +1,6 @@
 work_mode: 1
 use_registry: false
-use_deserialize_safe_module: true
+use_deserialize_safe_module: false
 fateflow:
   # you must set real ip address or 127.0.0.1, 0.0.0.0 is not supported
   host: 127.0.0.1
