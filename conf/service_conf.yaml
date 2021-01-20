@@ -36,7 +36,7 @@ database:
   stale_timeout: 30
 fate_on_eggroll:
   clustermanager:
-    cores_per_node: 20
+    cores_per_node: 16
     nodes: 1
   rollsite:
     host: 127.0.0.1
