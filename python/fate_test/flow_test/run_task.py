@@ -170,11 +170,10 @@ class UtilizeModel:
             "model_version": self.model_version
         }
         response = requests.post("/".join([server_url, "model", "deploy"]), json=post_data)
-        print(f'模型部署请求地址: {"/".join([server_url, "model", "deploy"])}')
-        print(f'模型部署请求信息: {json.dumps(post_data, indent=4)}')
+        print(f'Request data of deploy model request: {json.dumps(post_data, indent=4)}')
         if response.status_code == 200:
             resp_data = response.json()
-            print(f'模型部署请求响应: {json.dumps(resp_data, indent=4)}')
+            print(f'Response of model deploy request: {json.dumps(resp_data, indent=4)}')
             if resp_data.get("retcode", 100) == 0:
                 self.deployed_model_version = resp_data.get("data", {}).get("model_version")
             else:
@@ -188,11 +187,10 @@ class UtilizeModel:
             "job_id": self.deployed_model_version
         }
         response = requests.post("/".join([server_url, "model", "load"]), json=post_data)
-        print(f'模型加载请求地址: {"/".join([server_url, "model", "load"])}')
-        print(f'模型加载请求信息: {json.dumps(post_data, indent=4)}')
+        print(f'Request data of load model request: {json.dumps(post_data, indent=4)}')
         if response.status_code == 200:
             resp_data = response.json()
-            print(f'模型加载请求响应: {json.dumps(resp_data, indent=4)}')
+            print(f'Response of load model request: {json.dumps(resp_data, indent=4)}')
             if not resp_data.get('retcode'):
                 return True
             raise Exception(f"Load model {self.model_id} {self.deployed_model_version} failed, "
@@ -205,11 +203,10 @@ class UtilizeModel:
             "service_id": f"auto_test_{datetime.strftime(datetime.now(), '%Y%m%d%H%M%S')}"
         }
         response = requests.post("/".join([server_url, "model", "bind"]), json=post_data)
-        print(f'模型绑定请求地址: {"/".join([server_url, "model", "bind"])}')
-        print(f'模型绑定请求信息: {json.dumps(post_data, indent=4)}')
+        print(f'Request data of bind model request: {json.dumps(post_data, indent=4)}')
         if response.status_code == 200:
             resp_data = response.json()
-            print(f'模型绑定请求响应: {json.dumps(resp_data, indent=4)}')
+            print(f'Response data of bind model request: {json.dumps(resp_data, indent=4)}')
             if not resp_data.get('retcode'):
                 self.service_id = post_data.get('service_id')
                 return True
@@ -236,12 +233,11 @@ class UtilizeModel:
         }
         headers = {"Content-Type": "application/json"}
         response = requests.post(serving_url, json=post_data, headers=headers)
-        print(f"在线请求地址: {server_url}")
-        print(f"在线请求信息: {json.dumps(post_data, indent=4)}")
+        print(f"Request data of online predict request: {json.dumps(post_data, indent=4)}")
         if response.status_code == 200:
-            print(f"请求成功，响应信息: {json.dumps(response.json(), indent=4)}")
+            print(f"Online predict successfully, response: {json.dumps(response.json(), indent=4)}")
         else:
-            print(f"请求失败，相应信息: {response.text}")
+            print(f"Online predict successfully, details: {response.text}")
 
 
 def run_fate_flow_test():
