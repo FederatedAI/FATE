@@ -13,6 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import math
+
 import numpy as np
 
 from fate_arch import session
@@ -21,7 +23,7 @@ from federatedml.model_base import ModelBase
 from federatedml.param.pearson_param import PearsonParam
 from federatedml.secureprotol.spdz import SPDZ
 from federatedml.secureprotol.spdz.tensor.fixedpoint_table import FixedPointTensor, table_dot
-# from federatedml.util.fate_operator import generate_anonymous
+from federatedml.util import LOGGER
 from federatedml.util.anonymous_generator import generate_anonymous
 
 MODEL_META_NAME = "HeteroPearsonModelMeta"
@@ -43,6 +45,8 @@ class HeteroPearson(ModelBase):
         self.local_party = None
         self.other_party = None
         self._set_parties()
+
+        self.local_vif = None  # vif from local features
 
         self._summary = {}
 
@@ -109,12 +113,36 @@ class HeteroPearson(ModelBase):
             raise ValueError(f"zero standard deviation detected, sigma={sigma}")
         return n, data.mapValues(lambda x: (x - mu) / sigma)
 
+    @staticmethod
+    def _vif_from_pearson_matrix(mat: np.ndarray):
+        shape = mat.shape
+        LOGGER.error(f"shape: {shape}")
+        if shape[0] != shape[1]:
+            raise RuntimeError("accept square matrix only")
+        dim = shape[0]
+        det = np.linalg.det(mat)
+
+        vif = []
+        for i in range(dim):
+            ax = [j for j in range(dim) if j != i]
+            vif.append(np.linalg.det(mat[ax, :][:, ax]) / det)
+        return vif
+
+    @staticmethod
+    def _generate_determinant_one_matrix(n: int):
+        k = math.exp((math.sqrt(2 * math.log(n)) / 2 + math.log(math.factorial(n - 1))) / (2 * n))
+        a = np.random.randn(n, n) / k
+        d = np.linalg.det(a)
+        return a / d ** (1 / n)
+
     def fit(self, data_instance):
         # local
         data = self._select_columns(data_instance)
         n, normed = self._standardized(data)
         self.local_corr = table_dot(normed, normed)
         self.local_corr /= n
+        if self.model_param.calc_local_vaf:
+            self.local_vif = self._vif_from_pearson_matrix(self.local_corr)
         self._summary["local_corr"] = self.local_corr.tolist()
         self._summary["num_local_features"] = n
 
@@ -134,6 +162,7 @@ class HeteroPearson(ModelBase):
                 self.corr = spdz.dot(x, y, "corr").get() / n
                 self._summary["corr"] = self.corr.tolist()
                 self._summary["num_remote_features"] = m2 if self.local_party.role == "guest" else m1
+
         else:
             self.shapes.append(self.local_corr.shape[0])
             self.parties = [self.local_party]
@@ -168,6 +197,10 @@ class HeteroPearson(ModelBase):
             anonymous.anonymous = generate_anonymous(fid=idx, party_id=self.local_party.party_id,
                                                      role=self.local_party.role)
 
+        if self.model_param.calc_local_vaf:
+            for vif_value in self.local_vif:
+                param_pb.local_vif.append(vif_value)
+
         # global
         for shape, party in zip(self.shapes, self.parties):
             param_pb.shapes.append(shape)
@@ -184,6 +217,8 @@ class HeteroPearson(ModelBase):
         if self.model_param.cross_parties:
             for v in self.corr.reshape(-1):
                 param_pb.corr.append(max(-1.0, min(float(v), 1.0)))
+
+        param_pb.model_name = "HeteroPearson"
 
         return param_pb
 
