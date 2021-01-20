@@ -30,8 +30,7 @@ from federatedml.transfer_variable.base_transfer_variable import BaseTransferVar
 class FeldmanVerifiableSumTransferVariables(BaseTransferVariables):
     def __init__(self, flowid=0):
         super().__init__(flowid)
-        self.guest_share_primes = self._create_variable(name='guest_share_primes', src=['guest'], dst=['host'])
-        self.guest_share_secret = self._create_variable(name='guest_share_secret', src=['guest'], dst=['host'])
+        self.guest_share_subkey = self._create_variable(name='guest_share_subkey', src=['guest'], dst=['host'])
         self.host_share_to_guest = self._create_variable(name='host_share_to_guest', src=['host'], dst=['guest'])
         self.host_share_to_host = self._create_variable(name='host_share_to_host', src=['host'], dst=['host'])
         self.host_sum = self._create_variable(name='host_sum', src=['host'], dst=['guest'])

@@ -56,14 +56,9 @@ class FeldmanVerifiableSumGuest(BaseFeldmanVerifiableSum):
                 data.append(feature)
         return numpy.array(data)
 
-    def sync_primes_to_host(self):
-        self.transfer_inst.guest_share_primes.remote((self.vss.p, self.vss.g, self.vss.q),
-                                                     role="host",
-                                                     idx=-1)
-
     def sync_share_to_host(self):
         for idx in range(self.host_count):
-            self.transfer_inst.guest_share_secret.remote(self.sub_key[idx],
+            self.transfer_inst.guest_share_subkey.remote(self.sub_key[idx],
                                                          role="host",
                                                          idx=idx)
         self.transfer_inst.guest_commitments.remote(self.commitments,
@@ -89,9 +84,6 @@ class FeldmanVerifiableSumGuest(BaseFeldmanVerifiableSum):
     def fit(self, data_inst):
         LOGGER.info("begin to make guest data")
         self._init_data(data_inst)
-
-        LOGGER.info("sync primes to host")
-        self.sync_primes_to_host()
 
         LOGGER.info("split data into multiple random parts")
         self.secure()

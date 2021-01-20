@@ -40,6 +40,7 @@ class FeldmanVerifiableSumHost(BaseFeldmanVerifiableSum):
         self.local_partyid = self.component_properties.local_partyid
         self.host_party_idlist = self.component_properties.host_party_idlist
         self.host_count = len(self.host_party_idlist)
+        self.vss.key_pair()
         self.vss.set_share_amount(self.host_count)
         if not self.sum_cols:
             self.x = data_inst.mapValues(lambda x: x.features)
@@ -52,10 +53,6 @@ class FeldmanVerifiableSumHost(BaseFeldmanVerifiableSum):
             if idx in self.model_param.sum_cols:
                 data.append(feature)
         return numpy.array(data)
-
-    def recv_primes_from_guest(self):
-        prime = self.transfer_inst.guest_share_primes.get(idx=0)
-        self.vss.set_prime(prime)
 
     def sync_share_to_parties(self):
         for idx, party_id in enumerate(self.host_party_idlist):
@@ -82,7 +79,7 @@ class FeldmanVerifiableSumHost(BaseFeldmanVerifiableSum):
                 self.verify_subkey(sub_key, commitment, self.component_properties.host_party_idlist[idx])
                 self.y_recv.append(sub_key)
             else:
-                sub_key = self.transfer_inst.guest_share_secret.get(idx=0)
+                sub_key = self.transfer_inst.guest_share_subkey.get(idx=0)
                 commitment = self.transfer_inst.guest_commitments.get(idx=0)
                 self.verify_subkey(sub_key, commitment, self.component_properties.guest_partyid)
                 self.y_recv.append(sub_key)
@@ -96,9 +93,6 @@ class FeldmanVerifiableSumHost(BaseFeldmanVerifiableSum):
 
         LOGGER.info("begin to make host data")
         self._init_data(data_inst)
-
-        LOGGER.info("get primes from host")
-        self.recv_primes_from_guest()
 
         LOGGER.info("split data into multiple random parts")
         self.secure()

@@ -1,14 +1,6 @@
 {
   "federatedml.transfer_variable.transfer_class.feldman_verifiable_sum_transfer_variable.FeldmanVerifiableSumTransferVariables": {
-    "guest_share_primes": {
-      "src": [
-        "guest"
-      ],
-      "dst": [
-        "host"
-      ]
-    },
-    "guest_share_secret": {
+    "guest_share_subkey": {
       "src": [
         "guest"
       ],
