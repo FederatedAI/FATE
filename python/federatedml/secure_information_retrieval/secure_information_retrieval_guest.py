@@ -104,11 +104,11 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
         # 5. Find intersection and re-index
         id_list_intersect = self._find_intersection(
             id_list_guest_second, id_list_host_second_only)     # (EEi, -1)
-        LOGGER.info("intersection found, sample num = {}".format(id_list_intersect.count()))
+        LOGGER.info("intersection found")
 
         # 6. Send the re-indexed doubly encrypted ID to host
         self._fake_blocks(id_list_intersect, id_list_host_second_only)  # List[(EEi, -1)]
-        LOGGER.info("faked {} blocks for obfuscation".format(self.block_num))
+        LOGGER.info("faked blocks for obfuscation")
 
         # 7. Wait for host to restore value for the intersection
         LOGGER.info("waiting for host to restore interested values for the intersection")
@@ -264,7 +264,6 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
         """
         intersect_count = id_list_intersect.count()
         self.target_block_index = random.randint(0, self.block_num - 1)
-        LOGGER.info("target block index = {}".format(self.target_block_index))
         for i in range(self.block_num):
             if i == self.target_block_index:
                 id_block = id_list_intersect
