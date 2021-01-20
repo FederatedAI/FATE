@@ -226,6 +226,18 @@ def get_job_parameters(job_id, role, party_id):
         return {}
 
 
+@DB.connection_context()
+def get_job_dsl(job_id, role, party_id):
+    jobs = Job.select(Job.f_dsl).where(Job.f_job_id == job_id,
+                                       Job.f_role == role,
+                                       Job.f_party_id == party_id)
+    if jobs:
+        job = jobs[0]
+        return job.f_dsl
+    else:
+        return {}
+
+
 def job_virtual_component_name():
     return "pipeline"
 

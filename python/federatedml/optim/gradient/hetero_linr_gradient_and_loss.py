@@ -82,7 +82,7 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
             if loss_norm is not None:
                 loss = loss + loss_norm + host_loss_regular[0]
             loss_list.append(loss)
-        LOGGER.debug("In compute_loss, loss list are: {}".format(loss_list))
+        # LOGGER.debug("In compute_loss, loss list are: {}".format(loss_list))
         self.sync_loss_info(loss_list, suffix=current_suffix)
 
     def compute_forward_hess(self, data_instances, delta_s, host_forwards):

@@ -5,4 +5,4 @@
 [submodule "eggroll"]
 	path = eggroll
 	url = https://github.com/WeBankFinTech/eggroll.git
-	branch = release-2.2.1-build-1
+	branch = release-2.2.1-build-5

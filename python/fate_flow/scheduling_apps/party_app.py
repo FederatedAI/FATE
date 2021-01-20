@@ -112,13 +112,7 @@ def save_pipelined_model(job_id, role, party_id):
 
 @manager.route('/<job_id>/<role>/<party_id>/stop/<stop_status>', methods=['POST'])
 def stop_job(job_id, role, party_id, stop_status):
-    jobs = JobSaver.query_job(job_id=job_id, role=role, party_id=party_id)
-    kill_status = True
-    kill_details = {}
-    for job in jobs:
-        kill_job_status, kill_job_details = JobController.stop_job(job=job, stop_status=stop_status)
-        kill_status = kill_status & kill_job_status
-        kill_details[job_id] = kill_job_details
+    kill_status, kill_details = JobController.stop_jobs(job_id=job_id, stop_status=stop_status, role=role, party_id=party_id)
     return get_json_result(retcode=RetCode.SUCCESS if kill_status else RetCode.EXCEPTION_ERROR,
                            retmsg='success' if kill_status else 'failed',
                            data=kill_details)
@@ -140,7 +134,7 @@ def create_task(job_id, component_name, task_id, task_version, role, party_id):
 @manager.route('/<job_id>/<component_name>/<task_id>/<task_version>/<role>/<party_id>/start', methods=['POST'])
 @request_authority_certification(party_id_index=-2, role_index=-3, command='run')
 def start_task(job_id, component_name, task_id, task_version, role, party_id):
-    TaskController.start_task(job_id, component_name, task_id, task_version, role, party_id)
+    TaskController.start_task(job_id, component_name, task_id, task_version, role, party_id, **request.json)
     return get_json_result(retcode=0, retmsg='success')
 
 

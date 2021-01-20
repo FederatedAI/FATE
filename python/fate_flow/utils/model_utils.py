@@ -16,6 +16,8 @@
 import os
 import glob
 import operator
+from collections import OrderedDict
+
 import peewee
 from fate_arch.common.log import sql_logger
 from fate_flow.settings import stat_logger
@@ -102,25 +104,25 @@ def query_model_info_from_file(model_id=None, model_version=None, role=None, par
             pipeline_model = PipelinedModel(model_id=fp.split('/')[-2], model_version=fp.split('/')[-1])
             model_info = gather_model_info_data(pipeline_model, query_filters=query_filters)
             if model_info:
-                if not to_dict and not query_filters:
-                    try:
-                        insert_info = model_info.copy()
-                        insert_info['role'] = fp.split('/')[-2].split('#')[0]
-                        insert_info['party_id'] = fp.split('/')[-2].split('#')[1]
-                        insert_info['job_id'] = model_info.get('f_model_version')
-                        insert_info['size'] = pipeline_model.calculate_model_file_size()
-                        if compare_version(model_info['f_fate_version'], '1.5.1') == 'lt':
-                            insert_info['roles'] = model_info.get('f_train_runtime_conf', {}).get('role', {})
-                            insert_info['initiator_role'] = model_info.get('f_train_runtime_conf', {}).get('initiator', {}).get('role')
-                            insert_info['initiator_party_id'] = model_info.get('f_train_runtime_conf', {}).get('initiator', {}).get('party_id')
-                        save_model_info(insert_info)
-                    except Exception as e:
-                        stat_logger.exception(e)
-                        raise
                 if isinstance(res, dict):
                     res[fp] = model_info
                 else:
                     res.append(model_info)
+
+                if kwargs.get('save'):
+                    try:
+                        insert_info = gather_model_info_data(pipeline_model).copy()
+                        insert_info['role'] = fp.split('/')[-2].split('#')[0]
+                        insert_info['party_id'] = fp.split('/')[-2].split('#')[1]
+                        insert_info['job_id'] = insert_info.get('f_model_version')
+                        insert_info['size'] = pipeline_model.calculate_model_file_size()
+                        if compare_version(insert_info['f_fate_version'], '1.5.1') == 'lt':
+                            insert_info['roles'] = insert_info.get('f_train_runtime_conf', {}).get('role', {})
+                            insert_info['initiator_role'] = insert_info.get('f_train_runtime_conf', {}).get('initiator', {}).get('role')
+                            insert_info['initiator_party_id'] = insert_info.get('f_train_runtime_conf', {}).get('initiator', {}).get('party_id')
+                        save_model_info(insert_info)
+                    except Exception as e:
+                        stat_logger.exception(e)
     if res:
         return 0, 'Query model info from local model success.', res
     return 100, 'Query model info failed, cannot find model from local model files.', res
@@ -129,18 +131,18 @@ def query_model_info_from_file(model_id=None, model_version=None, role=None, par
 def gather_model_info_data(model: PipelinedModel, query_filters=None):
     if model.exists():
         pipeline = model.read_component_model('pipeline', 'pipeline')['Pipeline']
-        model_info = {}
+        model_info = OrderedDict()
         if query_filters and isinstance(query_filters, list):
             for attr, field in pipeline.ListFields():
                 if attr.name in query_filters:
                     if isinstance(field, bytes):
-                        model_info["f_" + attr.name] = json_loads(field)
+                        model_info["f_" + attr.name] = json_loads(field, OrderedDict)
                     else:
                         model_info["f_" + attr.name] = field
         else:
             for attr, field in pipeline.ListFields():
                 if isinstance(field, bytes):
-                    model_info["f_" + attr.name] = json_loads(field)
+                    model_info["f_" + attr.name] = json_loads(field, OrderedDict)
                 else:
                     model_info["f_" + attr.name] = field
         return model_info
@@ -153,6 +155,7 @@ def query_model_info(model_version, role=None, party_id=None, model_id=None, que
     if not retcode:
         return retcode, retmsg, data
     else:
+        arguments['save'] = True
         retcode, retmsg, data = query_model_info_from_file(**arguments)
         if not retcode:
             return retcode, retmsg, data
@@ -200,3 +203,36 @@ def compare_version(version: str, target_version: str):
             else:
                 return 'lt'
     return 'lt'
+
+
+def check_if_parent_model(pipeline):
+    if compare_version(pipeline.fate_version, '1.5.0') == 'gt':
+        if pipeline.parent:
+            return True
+    return False
+
+
+def check_before_deploy(pipeline_model: PipelinedModel):
+    pipeline = pipeline_model.read_component_model('pipeline', 'pipeline')['Pipeline']
+
+    if compare_version(pipeline.fate_version, '1.5.0') == 'gt':
+        if pipeline.parent:
+            return True
+    elif compare_version(pipeline.fate_version, '1.5.0') == 'eq':
+        return True
+    return False
+
+
+def check_if_deployed(role, party_id, model_id, model_version):
+    party_model_id = gen_party_model_id(model_id=model_id, role=role, party_id=party_id)
+    pipeline_model = PipelinedModel(model_id=party_model_id, model_version=model_version)
+    if not pipeline_model.exists():
+        raise Exception(f"Model {party_model_id} {model_version} not exists in model local cache.")
+    else:
+        pipeline = pipeline_model.read_component_model('pipeline', 'pipeline')['Pipeline']
+        if compare_version(pipeline.fate_version, '1.5.0') == 'gt':
+            train_runtime_conf = json_loads(pipeline.train_runtime_conf)
+            if str(train_runtime_conf.get('dsl_version', '1')) != '1':
+                if pipeline.parent:
+                    return False
+        return True

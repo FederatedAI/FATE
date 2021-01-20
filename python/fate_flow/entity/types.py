@@ -28,6 +28,7 @@ class RunParameters(object):
         self.engines_address = {}
         self.federated_mode = None
         self.federation_info = None
+        self.task_cores = None
         self.task_parallelism = None
         self.computing_partitions = None
         self.federated_status_collect_type = None

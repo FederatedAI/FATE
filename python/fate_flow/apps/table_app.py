@@ -75,6 +75,7 @@ def table_delete():
 
 @manager.route('/list', methods=['post'])
 def get_job_table_list():
+    detect_utils.check_config(config=request.json, required_arguments=['job_id', 'role', 'party_id'])
     jobs = JobSaver.query_job(**request.json)
     if jobs:
         job = jobs[0]

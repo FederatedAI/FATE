@@ -49,7 +49,7 @@ def download_upload(access_module):
             shutil.rmtree(os.path.join(job_utils.get_job_directory(job_id), 'fate_upload_tmp'))
             raise e
         job_config = request.args.to_dict()
-        if "config" in job_config:
+        if "namespace" in job_config and "table_name" in job_config:
             pass
         else:
             # higher than version 1.5.1, support eggroll run parameters
@@ -144,7 +144,7 @@ def gen_data_access_job_config(config_data, access_module):
     initiator_party_id = config_data.get('party_id', 0)
     job_runtime_conf["initiator"]["role"] = initiator_role
     job_runtime_conf["initiator"]["party_id"] = initiator_party_id
-    job_parameters_fields = {"work_mode", "backend", "eggroll_run", "spark_run"}
+    job_parameters_fields = {"work_mode", "backend", "task_cores", "eggroll_run", "spark_run"}
     for _ in job_parameters_fields:
         if _ in config_data:
             job_runtime_conf["job_parameters"]["common"][_] = config_data[_]

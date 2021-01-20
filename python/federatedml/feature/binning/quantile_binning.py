@@ -16,10 +16,11 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import copy
 import functools
-# import time
 import uuid
 
+from fate_arch.common.versions import get_eggroll_version
 from federatedml.feature.binning.base_binning import BaseBinning
 from federatedml.feature.binning.quantile_summaries import quantile_summary_factory
 from federatedml.param.feature_binning_param import FeatureBinningParam
@@ -82,7 +83,7 @@ class QuantileBinning(BaseBinning):
         percentile_rate = [i * percent_value for i in range(1, self.bin_num)]
         percentile_rate.append(1.0)
         is_sparse = data_overview.is_sparse_data(data_instances)
-
+    
         self._fit_split_point(data_instances, is_sparse, percentile_rate)
 
         self.fit_category_features(data_instances)
@@ -90,7 +91,8 @@ class QuantileBinning(BaseBinning):
 
     @staticmethod
     def copy_merge(s1, s2):
-        return s1.merge(s2)
+        new_s1 = copy.deepcopy(s1)
+        return new_s1.merge(s2)
 
     def _fit_split_point(self, data_instances, is_sparse, percentile_rate):
         if self.summary_dict is None:
@@ -132,6 +134,38 @@ class QuantileBinning(BaseBinning):
                 split_point.append(s_p)
         return split_point
 
+    # def _fit_split_point(self, data_instances, is_sparse, percentile_rate):
+    #     if self.summary_dict is None:
+    #         f = functools.partial(self.feature_summary,
+    #                               params=self.params,
+    #                               abnormal_list=self.abnormal_list,
+    #                               cols_dict=self.bin_inner_param.bin_cols_map,
+    #                               header=self.header,
+    #                               is_sparse=is_sparse)
+    #         summary_dict = data_instances.mapReducePartitions(f, self.copy_merge)
+    #         summary_dict = dict(summary_dict.collect())
+    #
+    #         LOGGER.debug(f"new summary_dict: {summary_dict}")
+    #         if is_sparse:
+    #             total_count = data_instances.count()
+    #             for _, summary_obj in summary_dict.items():
+    #                 summary_obj.set_total_count(total_count)
+    #
+    #         self.summary_dict = summary_dict
+    #     else:
+    #         summary_dict = self.summary_dict
+    #
+    #     for col_name, summary in summary_dict.items():
+    #         split_point = []
+    #         for percen_rate in percentile_rate:
+    #             s_p = summary.query(percen_rate)
+    #             if not self.allow_duplicate:
+    #                 if s_p not in split_point:
+    #                     split_point.append(s_p)
+    #             else:
+    #                 split_point.append(s_p)
+    #         self.bin_results.put_col_split_points(col_name, split_point)
+
     @staticmethod
     def feature_summary(data_iter, params, cols_dict, abnormal_list, header, is_sparse):
         summary_dict = {}
@@ -162,6 +196,7 @@ class QuantileBinning(BaseBinning):
                         continue
                     summary = summary_dict[col_name]
                     summary.insert(col_value)
+
         result = []
         for features_name, summary_obj in summary_dict.items():
             summary_obj.compress()
@@ -171,10 +206,108 @@ class QuantileBinning(BaseBinning):
         return result
 
     @staticmethod
+    def _query_split_points(summary, percent_rates):
+        split_point = []
+        for percent_rate in percent_rates:
+            s_p = summary.query(percent_rate)
+            if s_p not in split_point:
+                split_point.append(s_p)
+        return split_point
+
+    @staticmethod
+    def approxi_quantile(data_instances, params, cols_dict, abnormal_list, header, is_sparse):
+        """
+        Calculates each quantile information
+
+        Parameters
+        ----------
+        data_instances : DTable
+            The input data
+
+        cols_dict: dict
+            Record key, value pairs where key is cols' name, and value is cols' index.
+
+        params : FeatureBinningParam object,
+                Parameters that user set.
+
+        abnormal_list: list, default: None
+            Specify which columns are abnormal so that will not static when traveling.
+
+        header: list,
+            Storing the header information.
+
+        is_sparse: bool
+            Specify whether data_instance is in sparse type
+
+        Returns
+        -------
+        summary_dict: dict
+            {'col_name1': summary1,
+             'col_name2': summary2,
+             ...
+             }
+
+        """
+
+        summary_dict = {}
+
+        summary_param = {'compress_thres': params.compress_thres,
+                         'head_size': params.head_size,
+                         'error': params.error,
+                         'abnormal_list': abnormal_list}
+
+        for col_name, col_index in cols_dict.items():
+            quantile_summaries = quantile_summary_factory(is_sparse=is_sparse, param_dict=summary_param)
+            summary_dict[col_name] = quantile_summaries
+
+        QuantileBinning.insert_datas(data_instances, summary_dict, cols_dict, header, is_sparse)
+        for _, summary_obj in summary_dict.items():
+            summary_obj.compress()
+        return summary_dict
+
+    @staticmethod
+    def insert_datas(data_instances, summary_dict, cols_dict, header, is_sparse):
+
+        for iter_key, instant in data_instances:
+            if not is_sparse:
+                if type(instant).__name__ == 'Instance':
+                    features = instant.features
+                else:
+                    features = instant
+                for col_name, summary in summary_dict.items():
+                    col_index = cols_dict[col_name]
+                    summary.insert(features[col_index])
+            else:
+                data_generator = instant.features.get_all_data()
+                for col_idx, col_value in data_generator:
+                    col_name = header[col_idx]
+                    summary = summary_dict[col_name]
+                    summary.insert(col_value)
+
+    @staticmethod
+    def merge_summary_dict(s_dict1, s_dict2):
+        if s_dict1 is None and s_dict2 is None:
+            return None
+        if s_dict1 is None:
+            return s_dict2
+        if s_dict2 is None:
+            return s_dict1
+
+        s_dict1 = copy.deepcopy(s_dict1)
+        s_dict2 = copy.deepcopy(s_dict2)
+
+        new_dict = {}
+        for col_name, summary1 in s_dict1.items():
+            summary2 = s_dict2.get(col_name)
+            summary1.merge(summary2)
+            new_dict[col_name] = summary1
+        return new_dict
+
+    @staticmethod
     def _query_quantile_points(col_name, summary, quantile_dict):
         quantile = quantile_dict.get(col_name)
         if quantile is not None:
-            return summary.query(quantile)
+            return col_name, summary.query(quantile)
         return col_name, quantile
 
     def query_quantile_point(self, query_points, col_names=None):
@@ -197,14 +330,18 @@ class QuantileBinning(BaseBinning):
             raise ValueError("query_points has wrong type, should be a float, int or dict")
 
         f = functools.partial(self._query_quantile_points,
-                              percentile_rate=query_points)
-        summary_dict = dict(summary_dict.map(f).collect())
-
-        result = {}
-        for col_name, query_point in query_dict.items():
-            summary = summary_dict[col_name]
-            result[col_name] = summary.query(query_point)
+                              quantile_dict=query_dict)
+        result = dict(summary_dict.map(f).collect())
         return result
 
 
+class QuantileBinningTool(QuantileBinning):
+    """
+    Use for quantile binning data directly.
+    """
 
+    def __init__(self, bin_nums=consts.G_BIN_NUM, param_obj: FeatureBinningParam = None,
+                 abnormal_list=None, allow_duplicate=False):
+        if param_obj is None:
+            param_obj = FeatureBinningParam(bin_num=bin_nums)
+        super().__init__(params=param_obj, abnormal_list=abnormal_list, allow_duplicate=allow_duplicate)

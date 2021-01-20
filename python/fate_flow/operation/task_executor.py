@@ -229,6 +229,8 @@ class TaskExecutor(object):
                           input_dsl, filter_type=None, filter_attr=None, get_input_table=False):
         task_run_args = {}
         input_table = {}
+        if 'idmapping' in role:
+            return {}
         for input_type, input_detail in input_dsl.items():
             if filter_type and input_type not in filter_type:
                 continue

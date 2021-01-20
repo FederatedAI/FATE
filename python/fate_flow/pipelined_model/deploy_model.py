@@ -15,11 +15,14 @@
 #
 import os
 import shutil
-from fate_flow.utils import model_utils
+from fate_arch.common import file_utils
+from fate_flow.utils import model_utils, schedule_utils
 from fate_flow.settings import stat_logger
 from fate_arch.common.base_utils import json_loads, json_dumps
 from fate_flow.utils.config_adapter import JobRuntimeConfigAdapter
 from fate_flow.pipelined_model.pipelined_model import PipelinedModel
+from fate_flow.utils.model_utils import check_before_deploy
+from fate_flow.utils.schedule_utils import get_dsl_parser_by_version
 
 
 def deploy(config_data):
@@ -52,9 +55,36 @@ def deploy(config_data):
         pipeline.model_version = child_model_version
         pipeline.train_runtime_conf = json_dumps(train_runtime_conf, byte=True)
 
-        #  save predict dsl into child model file
-        pipeline.inference_dsl = json_dumps(config_data.get('predict_dsl'), byte=True)
+        parser = get_dsl_parser_by_version(train_runtime_conf.get('dsl_version', '1'))
+        train_dsl = json_loads(pipeline.train_dsl)
+        parent_predict_dsl = json_loads(pipeline.inference_dsl)
 
+        if str(train_runtime_conf.get('dsl_version', '1')) == '1':
+            predict_dsl = json_loads(pipeline.inference_dsl)
+        else:
+            if config_data.get('dsl') or config_data.get('predict_dsl'):
+                predict_dsl = config_data.get('dsl') if config_data.get('dsl') else config_data.get('predict_dsl')
+                if not isinstance(predict_dsl, dict):
+                    predict_dsl = json_loads(predict_dsl)
+            else:
+                if config_data.get('cpn_list', None):
+                    cpn_list = config_data.pop('cpn_list')
+                else:
+                    cpn_list = list(train_dsl.get('components', {}).keys())
+                parser_version = train_runtime_conf.get('dsl_version', '1')
+                if str(parser_version) == '1':
+                    predict_dsl = parent_predict_dsl
+                else:
+                    parser = schedule_utils.get_dsl_parser_by_version(parser_version)
+                    predict_dsl = parser.deploy_component(cpn_list, train_dsl)
+
+        #  save predict dsl into child model file
+        parser.verify_dsl(predict_dsl, "predict")
+        inference_dsl = parser.get_predict_dsl(role=local_role,
+                                               predict_dsl=predict_dsl,
+                                               setting_conf_prefix=os.path.join(file_utils.get_python_base_directory(),
+                                                                                *['federatedml', 'conf', 'setting_conf']))
+        pipeline.inference_dsl = json_dumps(inference_dsl, byte=True)
         if model_utils.compare_version(pipeline.fate_version, '1.5.0') == 'gt':
             pipeline.parent_info = json_dumps({'parent_model_id': model_id, 'parent_model_version': model_version}, byte=True)
             pipeline.parent = False
@@ -85,31 +115,3 @@ def deploy(config_data):
         return 100, f"deploy model of role {local_role} {local_party_id} failed, details: {str(e)}"
     else:
         return 0, f"deploy model of role {local_role} {local_party_id} success"
-
-
-def check_if_parent_model(pipeline):
-    if model_utils.compare_version(pipeline.fate_version, '1.5.0') == 'gt':
-        if pipeline.parent:
-            return True
-    return False
-
-
-def check_before_deploy(pipeline_model: PipelinedModel):
-    pipeline = pipeline_model.read_component_model('pipeline', 'pipeline')['Pipeline']
-
-    if model_utils.compare_version(pipeline.fate_version, '1.5.0') == 'gt':
-        if pipeline.parent:
-            return True
-    elif model_utils.compare_version(pipeline.fate_version, '1.5.0') == 'eq':
-        return True
-    return False
-
-
-def check_if_deployed(role, party_id, model_id, model_version):
-    party_model_id = model_utils.gen_party_model_id(model_id=model_id, role=role, party_id=party_id)
-    pipeline_model = PipelinedModel(model_id=party_model_id, model_version=model_version)
-    if not pipeline_model.exists():
-        raise Exception(f"Model {party_model_id} {model_version} not exists in model local cache.")
-    else:
-        pipeline = pipeline_model.read_component_model('pipeline', 'pipeline')['Pipeline']
-        return not check_if_parent_model(pipeline)
