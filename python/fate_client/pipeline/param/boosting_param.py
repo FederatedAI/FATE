@@ -98,28 +98,30 @@ class DecisionTreeParam(BaseParam):
     ----------
     criterion_method : str, accepted "xgboost" only, the criterion function to use, default: 'xgboost'
 
-    criterion_params: list, should be non empty and first element is float-number, default: 0.1.
+    criterion_params: list or dict, should be non empty and elements are float-numbers,
+                      if a list is offered, the first one is l2 regularization value, and the second one is
+                      l1 regularization value.
+                      if a dict is offered, make sure it contains key 'l1', and 'l2'.
+                      l1, l2 regularization values are non-negative floats.
+                      default: [0.1, 0] or {'l1':0, 'l2':0,1}
 
-    max_depth: int, positive integer, the max depth of a decision tree, default: 5
+    max_depth: int, positive integer, the max depth of a decision tree, default: 3
 
     min_sample_split: int, least quantity of nodes to split, default: 2
 
     min_impurity_split: float, least gain of a single split need to reach, default: 1e-3
+
+    min_child_weight: float, sum of hessian needed in child nodes. default is 1
 
     min_leaf_node: int, when samples no more than min_leaf_node, it becomes a leave, default: 1
 
     max_split_nodes: int, positive integer, we will use no more than max_split_nodes to
                       parallel finding their splits in a batch, for memory consideration. default is 65536
 
-    n_iter_no_change: bool, accepted True,False only, if set to True, tol will use to consider
-                      stop tree growth. default: True
-
     feature_importance_type: str, support 'split', 'gain' only.
                              if is 'split', feature_importances calculate by feature split times,
                              if is 'gain', feature_importances calculate by feature split gain.
                              default: 'split'
-
-    tol: float, only use when n_iter_no_change is set to True, default: 0.001
 
     use_missing: bool, accepted True, False only, use missing value in training process or not. default: False
 
@@ -128,11 +130,13 @@ class DecisionTreeParam(BaseParam):
 
     """
 
-    def __init__(self, criterion_method="xgboost", criterion_params=[0.1], max_depth=5,
+    def __init__(self, criterion_method="xgboost", criterion_params=[0.1, 0], max_depth=3,
                  min_sample_split=2, min_impurity_split=1e-3, min_leaf_node=1,
                  max_split_nodes=consts.MAX_SPLIT_NODES, feature_importance_type="split",
-                 n_iter_no_change=True, tol=0.001,
+                 n_iter_no_change=True, tol=0.001, min_child_weight=1,
                  use_missing=False, zero_as_missing=False,):
+
+        super(DecisionTreeParam, self).__init__()
 
         self.criterion_method = criterion_method
         self.criterion_params = criterion_params
@@ -140,6 +144,7 @@ class DecisionTreeParam(BaseParam):
         self.min_sample_split = min_sample_split
         self.min_impurity_split = min_impurity_split
         self.min_leaf_node = min_leaf_node
+        self.min_child_weight = min_child_weight
         self.max_split_nodes = max_split_nodes
         self.feature_importance_type = feature_importance_type
         self.n_iter_no_change = n_iter_no_change
@@ -154,15 +159,21 @@ class DecisionTreeParam(BaseParam):
                                                              ["xgboost"],
                                                              descr)
 
-        if type(self.criterion_params).__name__ != "list":
-            raise ValueError("decision tree param's criterion_params {} not supported, should be list".format(
-                self.criterion_params))
-
         if len(self.criterion_params) == 0:
             raise ValueError("decisition tree param's criterio_params should be non empty")
 
-        if type(self.criterion_params[0]).__name__ not in ["int", "long", "float"]:
-            raise ValueError("decision tree param's criterion_params element shoubld be numeric")
+        if type(self.criterion_params) == list:
+            assert len(self.criterion_params) == 2, 'length of criterion_param should be 2: l1, l2 regularization ' \
+                                                    'values are needed'
+            self.check_nonnegative_number(self.criterion_params[0], 'l2 reg value')
+            self.check_nonnegative_number(self.criterion_params[1], 'l1 reg value')
+
+        elif type(self.criterion_params) == dict:
+            assert 'l1' in self.criterion_params and 'l2' in self.criterion_params, 'l1 and l2 keys are needed in ' \
+                                                                                    'criterion_params dict'
+            self.criterion_params = [self.criterion_params['l2'], self.criterion_params['l1']]
+        else:
+            raise ValueError('criterion_params should be a dict or a list contains l1, l2 reg value')
 
         if type(self.max_depth).__name__ not in ["int", "long"]:
             raise ValueError("decision tree param's max_depth {} not supported, should be integer".format(
@@ -198,6 +209,8 @@ class DecisionTreeParam(BaseParam):
         self.feature_importance_type = self.check_and_change_lower(self.feature_importance_type,
                                                                     ["split", "gain"],
                                                                     descr)
+
+        self.check_nonnegative_number(self.min_child_weight, 'min_child_weight')
 
         return True
 
