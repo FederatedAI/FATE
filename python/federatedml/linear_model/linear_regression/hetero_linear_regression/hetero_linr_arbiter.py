@@ -19,7 +19,6 @@ from federatedml.linear_model.linear_regression.hetero_linear_regression.hetero_
 from federatedml.optim.gradient import hetero_linr_gradient_and_loss
 from federatedml.param.linear_regression_param import LinearParam
 from federatedml.util import consts
-from federatedml.util import LOGGER
 
 
 class HeteroLinRArbiter(HeteroBaseArbiter, HeteroLinRBase):
