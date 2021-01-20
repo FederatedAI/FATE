@@ -55,7 +55,7 @@ COMPONENT_NAME = click.option("-cpn", "--component-name", type=click.STRING,
 COMPONENT_NAME_REQUIRED = click.option("-cpn", "--component-name", type=click.STRING, required=True,
                                        help="A valid component name.")
 
-status_choices_list = ["complete", "failed", "running", "waiting", "timeout", "canceled", "partial", "deleted"]
+status_choices_list = ["success", "failed", "running", "waiting", "timeout", "canceled", "partial", "deleted"]
 
 STATUS = click.option("-s", "--status", type=click.Choice(status_choices_list), metavar="TEXT",
                       help="Job status. Users can choose one from {} and {}.".format(", ".join(status_choices_list[:-1]),

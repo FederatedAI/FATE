@@ -258,7 +258,6 @@ def bind_model_service():
             adapter = JobRuntimeConfigAdapter(runtime_conf)
             job_parameters = adapter.get_common_parameters().to_dict()
             request_config['job_parameters'] = job_parameters if job_parameters else model_info.get('f_train_runtime_conf', {}).get('job_parameters')
-            request_config['job_parameters'] = model_info.get('f_runtime_conf').get('job_parameters')
 
             roles = runtime_conf.get('role')
             request_config['role'] = roles if roles else model_info.get('f_train_runtime_conf', {}).get('role')
@@ -615,29 +614,9 @@ def deploy():
         else:
             raise Exception("Deploy model failed, can not found model of initiator role or the fate version of model is older than 1.5.0")
 
-        if str(value.get('f_train_runtime_conf', {}).get('dsl_version', '1')) == '1':
-            predict_dsl = value.get('f_inference_dsl')
-        else:
-            if request_data.get('dsl') or request_data.get('predict_dsl'):
-                predict_dsl = request_data.get('dsl') if request_data.get('dsl') else request_data.get('predict_dsl')
-                if not isinstance(predict_dsl, dict):
-                    predict_dsl = json_loads(predict_dsl)
-            else:
-                if request_data.get('cpn_list', None):
-                    cpn_list = request_data.pop('cpn_list')
-                else:
-                    cpn_list = list(value.get('f_train_dsl', {}).get('components', {}).keys())
-                parser_version = value.get('f_train_runtime_conf', {}).get('dsl_version', '1')
-                if str(parser_version) == '1':
-                    predict_dsl = value.get('f_inference_dsl')
-                else:
-                    parser = schedule_utils.get_dsl_parser_by_version(parser_version)
-                    predict_dsl = parser.deploy_component(cpn_list, value.get('f_train_dsl'))
-
         # distribute federated deploy task
         _job_id = job_utils.generate_job_id()
         request_data['child_model_version'] = _job_id
-        request_data['predict_dsl'] = predict_dsl
 
         initiator_party_id = model_init_party_id
         initiator_role = model_init_role
