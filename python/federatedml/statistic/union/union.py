@@ -162,7 +162,7 @@ class Union(ModelBase):
             # only check feature length if not empty
             if self.is_data_instance and not self.is_empty_feature:
                 self.feature_count = len(combined_schema.get("header"))
-                LOGGER.debug(f"feature count: {self.feature_count}")
+                # LOGGER.debug(f"feature count: {self.feature_count}")
                 combined_table.mapValues(self.check_feature_length)
 
         if combined_table is None:
