@@ -20,7 +20,16 @@ This section introduces the Pipeline scripts for different types of tasks.
     
     stratification: stratified by label
 
-3. Heterogeneous Data Split Task with Multiple Models:
+
+3. Homogeneous Data Spilt Task(only validate size specified):
+
+    script: pipeline-homo-data-split-validate.py
+    
+    data type: categorical
+    
+    stratification: stratified by label
+
+4. Heterogeneous Data Split Task with Multiple Models:
 
     script: pipeline-hetero-data-split-multi-model.py
     
