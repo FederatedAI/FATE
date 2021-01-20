@@ -230,4 +230,9 @@ def check_if_deployed(role, party_id, model_id, model_version):
         raise Exception(f"Model {party_model_id} {model_version} not exists in model local cache.")
     else:
         pipeline = pipeline_model.read_component_model('pipeline', 'pipeline')['Pipeline']
-        return not check_if_parent_model(pipeline)
+        if compare_version(pipeline.fate_version, '1.5.0') == 'gt':
+            train_runtime_conf = json_loads(pipeline.train_runtime_conf)
+            if str(train_runtime_conf.get('dsl_version', '1')) != '1':
+                if pipeline.parent:
+                    return False
+        return True

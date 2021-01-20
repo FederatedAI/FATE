@@ -60,7 +60,10 @@ class DAGScheduler(Cron):
                               model_id=common_job_parameters.model_id, model_version=common_job_parameters.model_version)
             pipeline_model = tracker.get_output_model('pipeline')
             train_runtime_conf = json_loads(pipeline_model['Pipeline'].train_runtime_conf)
-            if model_utils.check_if_parent_model(pipeline=pipeline_model['Pipeline']):
+            if not model_utils.check_if_deployed(role=job_initiator['role'],
+                                             party_id=job_initiator['party_id'],
+                                             model_id=common_job_parameters.model_id,
+                                             model_version=common_job_parameters.model_version):
                 raise Exception(f"Model {common_job_parameters.model_id} {common_job_parameters.model_version} has not been deployed yet.")
             job_dsl = json_loads(pipeline_model['Pipeline'].inference_dsl)
 
