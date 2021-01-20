@@ -65,9 +65,9 @@ class _Optimizer(object):
             new_weights = np.append(new_weights, model_weights.intercept_)
             new_weights[-1] -= gradient[-1]
         new_param = LinearModelWeights(new_weights, model_weights.fit_intercept)
-        LOGGER.debug("In _l1_updator, original weight: {}, new_weights: {}".format(
-            model_weights.unboxed, new_weights
-        ))
+        # LOGGER.debug("In _l1_updator, original weight: {}, new_weights: {}".format(
+        #     model_weights.unboxed, new_weights
+        # ))
         return new_param
 
     def _l2_updator(self, lr_weights: LinearModelWeights, gradient):
