@@ -308,5 +308,4 @@ class DataSplitter(ModelBase):
         return train_data, validate_data, test_data
 
     def fit(self, data_inst):
-        LOGGER.debug("fit method in data_split should not be called here.")
-        return
+        raise NotImplementedError("fit method in data_split should not be called here.")

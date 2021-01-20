@@ -59,7 +59,8 @@ class Union(ModelBase):
         local_sid_name = local_schema.get("sid")
         combined_sid_name = combined_schema.get("sid")
         if local_sid_name != combined_sid_name:
-            raise ValueError(f"Id names {local_sid_name} and {combined_sid_name} do not match! Please check id column names.")
+            raise ValueError(f"Id names {local_sid_name} and {combined_sid_name} do not match! "
+                             f"Please check id column names.")
 
     def check_label_name(self, local_table, combined_table):
         if not self.is_data_instance:
@@ -74,7 +75,7 @@ class Union(ModelBase):
                              "Please check labels.")
         if local_label_name != combined_label_name:
             raise ValueError("Label names do not match. "
-                                 "Please check label column names.")
+                             "Please check label column names.")
 
     def check_header(self, local_table, combined_table):
         local_schema, combined_schema = local_table.schema, combined_table.schema
@@ -87,7 +88,8 @@ class Union(ModelBase):
         if not self.is_data_instance or self.allow_missing:
             return
         if len(data_instance.features) != self.feature_count:
-            raise ValueError("Feature length {} mismatch with header length {}.".format(len(data_instance.features), self.feature_count))
+            raise ValueError(f"Feature length {len(data_instance.features)} "
+                             f"mismatch with header length {self.feature_count}")
 
     @staticmethod
     def check_is_data_instance(table):
@@ -97,7 +99,7 @@ class Union(ModelBase):
 
     @assert_schema_consistent
     def fit(self, data):
-        LOGGER.debug(f"fit receives data is {data}")
+        # LOGGER.debug(f"fit receives data is {data}")
         if not isinstance(data, dict) or len(data) <= 1:
             raise ValueError("Union module must receive more than one table as input.")
         empty_count = 0
@@ -160,7 +162,7 @@ class Union(ModelBase):
             # only check feature length if not empty
             if self.is_data_instance and not self.is_empty_feature:
                 self.feature_count = len(combined_schema.get("header"))
-                LOGGER.debug("feature count: {}".format(self.feature_count))
+                LOGGER.debug(f"feature count: {self.feature_count}")
                 combined_table.mapValues(self.check_feature_length)
 
         if combined_table is None:
