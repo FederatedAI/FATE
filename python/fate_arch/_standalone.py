@@ -705,13 +705,13 @@ def _do_map_partitions(p: _UnaryProcess):
 
         cursor = s.enter_context(source_txn.cursor())
         v = p.get_func()(_generator_from_cursor(cursor))
-        if cursor.last():
-            if isinstance(v, Iterable):
-                for k1, v1 in v:
-                    dst_txn.put(serialize(k1), serialize(v1))
-            else:
-                k_bytes = cursor.key()
-                dst_txn.put(k_bytes, serialize(v))
+
+        if isinstance(v, Iterable):
+            for k1, v1 in v:
+                dst_txn.put(serialize(k1), serialize(v1))
+        else:
+            k_bytes = cursor.key()
+            dst_txn.put(k_bytes, serialize(v))
     return rtn
 
 
