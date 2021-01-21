@@ -16,6 +16,86 @@
         "guest"
       ]
     },
+    "guest_pubkey_ids": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "host"
+      ]
+    },
+    "host_pubkey_ids": {
+      "src": [
+        "host"
+      ],
+      "dst": [
+        "guest"
+      ]
+    },
+    "host_prvkey_ids": {
+      "src": [
+        "host"
+      ],
+      "dst": [
+        "guest"
+      ]
+    },
+    "guest_prvkey_ids": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "host"
+      ]
+    },
+    "host_sign_guest_ids": {
+      "src": [
+        "host"
+      ],
+      "dst": [
+        "guest"
+      ]
+    },
+    "guest_sign_host_ids": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "host"
+      ]
+    },
+    "intersect_ids": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "host"
+      ]
+    },
+    "host_intersect_ids": {
+      "src": [
+        "host"
+      ],
+      "dst": [
+        "guest"
+      ]
+    },
+    "host_pubkey": {
+      "src": [
+        "host"
+      ],
+      "dst": [
+        "guest"
+      ]
+    },
+    "guest_pubkey": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "host"
+      ]
+    },
     "intersect_guest_ids": {
       "src": [
         "guest"
@@ -38,14 +118,6 @@
       ],
       "dst": [
         "guest"
-      ]
-    },
-    "intersect_ids": {
-      "src": [
-        "guest"
-      ],
-      "dst": [
-        "host"
       ]
     },
     "rsa_pubkey": {

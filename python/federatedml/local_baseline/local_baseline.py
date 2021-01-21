@@ -228,6 +228,12 @@ class LocalBaseline(ModelBase):
         X = np.array([v[1] for v in list(X_table.collect())])
         y = np.array([v[1] for v in list(y_table.collect())])
 
-        self.model_fit = model.fit(X, y)
+        w = None
+        if data_overview.with_weight(data_instances):
+            LOGGER.info(f"Input Data with Weight. Weight will be used to fit model.")
+            weight_table = data_instances.mapValues(lambda v: v.weight)
+            w = np.array([v[1] for v in list(weight_table.collect())])
+
+        self.model_fit = model.fit(X, y, w)
         self.need_one_vs_rest = len(self.model_fit.classes_) > 2
         self.set_summary(self.get_model_summary())

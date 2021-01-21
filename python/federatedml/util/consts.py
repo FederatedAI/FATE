@@ -300,4 +300,8 @@ CREDIT = 'credit'
 # sample weight
 BALANCED = 'balanced'
 
+# min r base fraction
+MIN_BASE_FRACTION = 0.01
+MAX_BASE_FRACTION = 0.99
+
 MAX_SAMPLE_OUTPUT_LIMIT = 10 ** 6
