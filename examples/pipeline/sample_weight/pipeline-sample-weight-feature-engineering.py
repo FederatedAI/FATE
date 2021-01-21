@@ -24,6 +24,7 @@ from pipeline.component import SampleWeight
 from pipeline.component import Intersection
 from pipeline.component import HeteroFeatureBinning
 from pipeline.component import HeteroFeatureSelection
+from pipeline.component import FeatureScale
 from pipeline.component import Reader
 from pipeline.interface import Data, Model
 
@@ -97,6 +98,8 @@ def main(config="../../config.yaml", namespace=""):
                                                                                      class_weight={"0": 1, "1": 2})
     sample_weight_0.get_party_instance(role='host', party_id=host).algorithm_param(need_run=False)
 
+    feature_scale_0 = FeatureScale(name="feature_scale_0", method="standard_scale", need_run=True)
+
     hetero_lr_0 = HeteroLR(name="hetero_lr_0", optimizer="nesterov_momentum_sgd", tol=0.001,
                                alpha=0.01, max_iter=20, early_stop="weight_diff", batch_size=-1,
                                learning_rate=0.15,
@@ -108,11 +111,12 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.add_component(reader_0)
     pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
     pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
-    pipeline.add_component(hetero_feature_binning_0, data=Data(data=intersection_0.output.data))
+    pipeline.add_component(sample_weight_0, data=Data(data=intersection_0.output.data))
+    pipeline.add_component(hetero_feature_binning_0, data=Data(data=sample_weight_0.output.data))
     pipeline.add_component(hetero_feature_selection_0, data=Data(data=hetero_feature_binning_0.output.data),
                            model=Model(isometric_model=[hetero_feature_binning_0.output.model]))
-    pipeline.add_component(sample_weight_0, data=Data(data=hetero_feature_selection_0.output.data))
-    pipeline.add_component(hetero_lr_0, data=Data(train_data=sample_weight_0.output.data))
+    pipeline.add_component(feature_scale_0, data=Data(hetero_feature_selection_0))
+    pipeline.add_component(hetero_lr_0, data=Data(train_data=feature_scale_0.output.data))
     pipeline.add_component(evaluation_0, data=Data(data=hetero_lr_0.output.data))
 
     pipeline.compile()

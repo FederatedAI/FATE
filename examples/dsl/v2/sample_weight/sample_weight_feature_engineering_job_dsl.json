@@ -41,12 +41,30 @@
                 ]
             }
         },
+        "sample_weight_0": {
+            "module": "SampleWeight",
+            "input": {
+                "data": {
+                    "data": [
+                        "intersection_0.data"
+                    ]
+                }
+            },
+            "output": {
+                "data": [
+                    "data"
+                ],
+                "model": [
+                    "model"
+                ]
+            }
+        },
         "hetero_feature_binning_0": {
             "module": "HeteroFeatureBinning",
             "input": {
                 "data": {
                     "data": [
-                        "intersection_0.data"
+                        "sample_weight_0.data"
                     ]
                 }
             },
@@ -64,7 +82,7 @@
             "input": {
                 "data": {
                     "data": [
-                        "intersection_0.data"
+                        "hetero_feature_binning_0.data"
                     ]
                 },
                 "isometric_model": [
@@ -80,8 +98,8 @@
                 ]
             }
         },
-        "sample_weight_0": {
-            "module": "SampleWeight",
+        "feature_scale_0": {
+            "module": "FeatureScale",
             "input": {
                 "data": {
                     "data": [
@@ -103,7 +121,7 @@
             "input": {
                 "data": {
                     "train_data": [
-                        "sample_weight_0.data"
+                        "feature_scale_0.data"
                     ]
                 }
             },
