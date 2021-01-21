@@ -299,3 +299,5 @@ CREDIT = 'credit'
 
 # sample weight
 BALANCED = 'balanced'
+
+MAX_SAMPLE_OUTPUT_LIMIT = 10 ** 6
