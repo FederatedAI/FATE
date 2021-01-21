@@ -30,7 +30,7 @@ from federatedml.feature.binning.base_binning import BaseBinning
 from federatedml.feature.binning.bucket_binning import BucketBinning
 from federatedml.feature.binning.optimal_binning import bucket_info
 from federatedml.feature.binning.optimal_binning import heap
-from federatedml.feature.binning.quantile_binning import QuantileBinningTool
+from federatedml.feature.binning.quantile_tool import QuantileBinningTool
 from federatedml.param.feature_binning_param import FeatureBinningParam, OptimalBinningParam
 from federatedml.statistic import data_overview
 from federatedml.statistic import statics
@@ -137,16 +137,13 @@ class OptimalBinning(BaseBinning):
                                          is_sparse=is_sparse,
                                          get_bin_num_func=self.get_bin_num)
         bucket_table = data_instances.mapReducePartitions(convert_func, self.merge_bucket_list)
-        bucket_table = dict(bucket_table.collect())
+        # bucket_table = dict(bucket_table.collect())
 
-        for k, v in bucket_table.items():
-            LOGGER.debug(f"[feature] {k}, length of list: {len(v)}")
-
-        LOGGER.debug("bucket_table: {}, length: {}".format(type(bucket_table), len(bucket_table)))
-        bucket_table = [(k, v) for k, v in bucket_table.items()]
-        LOGGER.debug("bucket_table: {}, length: {}".format(type(bucket_table), len(bucket_table)))
-
-        bucket_table = session.parallelize(bucket_table, include_key=True, partition=data_instances.partitions)
+        # LOGGER.debug("bucket_table: {}, length: {}".format(type(bucket_table), len(bucket_table)))
+        # bucket_table = [(k, v) for k, v in bucket_table.items()]
+        # LOGGER.debug("bucket_table: {}, length: {}".format(type(bucket_table), len(bucket_table)))
+        #
+        # bucket_table = session.parallelize(bucket_table, include_key=True, partition=data_instances.partitions)
 
         return bucket_table
 
@@ -181,7 +178,6 @@ class OptimalBinning(BaseBinning):
     @staticmethod
     def convert_data_to_bucket(data_iter, split_points, headers, bucket_dict,
                                is_sparse, get_bin_num_func):
-        data_key = str(uuid.uuid1())
         for data_key, instance in data_iter:
             label = instance.label
             if not is_sparse:
@@ -204,34 +200,6 @@ class OptimalBinning(BaseBinning):
         result = []
         for col_name, bucket_list in bucket_dict.items():
             result.append((col_name, bucket_list))
-        return result
-
-    @staticmethod
-    def convert_data_to_bucket_old(data_iter, split_points, headers, bucket_dict,
-                                   is_sparse, get_bin_num_func):
-        data_key = str(uuid.uuid1())
-        for data_key, instance in data_iter:
-            label = instance.label
-            if not is_sparse:
-                if type(instance).__name__ == 'Instance':
-                    features = instance.features
-                else:
-                    features = instance
-                data_generator = enumerate(features)
-            else:
-                data_generator = instance.features.get_all_data()
-
-            for idx, col_value in data_generator:
-                col_name = headers[idx]
-                if col_name not in split_points:
-                    continue
-                col_split_points = split_points[col_name]
-                bin_num = get_bin_num_func(col_value, col_split_points)
-                bucket = bucket_dict[col_name][bin_num]
-                bucket.add(label, col_value)
-        result = []
-        for col_name, bucket_list in bucket_dict.items():
-            result.append(((data_key, col_name), bucket_list))
         return result
 
     @staticmethod

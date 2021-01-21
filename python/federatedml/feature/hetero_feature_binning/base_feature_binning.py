@@ -22,7 +22,7 @@ from federatedml.feature.binning.bucket_binning import BucketBinning
 from federatedml.feature.binning.optimal_binning.optimal_binning import OptimalBinning
 from federatedml.feature.binning.quantile_binning import QuantileBinning
 from federatedml.model_base import ModelBase
-from federatedml.param.feature_binning_param import FeatureBinningParam
+from federatedml.param.feature_binning_param import HeteroFeatureBinningParam as FeatureBinningParam
 from federatedml.protobuf.generated import feature_binning_meta_pb2, feature_binning_param_pb2
 from federatedml.statistic.data_overview import get_header
 from federatedml.transfer_variable.transfer_class.hetero_feature_binning_transfer_variable import \

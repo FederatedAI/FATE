@@ -17,10 +17,15 @@
 import argparse
 
 from pipeline.backend.pipeline import PipeLine
-from pipeline.component.dataio import DataIO
-from pipeline.component.intersection import Intersection
-from pipeline.component.reader import Reader
-from pipeline.interface.data import Data
+from pipeline.component import DataIO
+from pipeline.component import Evaluation
+from pipeline.component import HeteroPearson
+from pipeline.component import HeteroFeatureSelection
+from pipeline.component import Intersection
+from pipeline.component import Reader
+from pipeline.interface import Data
+from pipeline.interface import Model
+
 from pipeline.utils.tools import load_job_config
 from pipeline.runtime.entity import JobParameters
 
@@ -45,24 +50,32 @@ def main(config="../../config.yaml", namespace=""):
     reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
 
     dataio_0 = DataIO(name="dataio_0")
+    dataio_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True)
+    dataio_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
 
-    dataio_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=False, output_format="dense")
-    dataio_0.get_party_instance(role='host', party_id=host).component_param(with_label=False, output_format="dense")
+    intersection_0 = Intersection(name="intersection_0")
 
-    param = {
-        "intersect_method": "rsa",
-        "sync_intersect_ids": True,
-        "only_output_key": True,
-        "rsa_params": {
-            "hash_method": "sha256",
-            "final_hash_method": "sha256"
+    hetero_pearson_0 = HeteroPearson(name='hetero_pearson_0', column_indexes=-1)
+
+    selection_param = {
+        "name": "hetero_feature_selection_0",
+        "select_col_indexes": -1,
+        "select_names": [],
+        "filter_methods": [
+            "vif_filter"
+        ],
+        "vif_param": {
+            "threshold": 5
         }
     }
-    intersect_0 = Intersection(name="intersect_0", **param)
 
+    hetero_feature_selection_0 = HeteroFeatureSelection(**selection_param)
     pipeline.add_component(reader_0)
     pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
-    pipeline.add_component(intersect_0, data=Data(data=dataio_0.output.data))
+    pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
+    pipeline.add_component(hetero_pearson_0, data=Data(train_data=intersection_0.output.data))
+    pipeline.add_component(hetero_feature_selection_0, data=Data(data=intersection_0.output.data),
+                           model=Model(isometric_model=hetero_pearson_0.output.model))
 
     pipeline.compile()
 
@@ -79,4 +92,3 @@ if __name__ == "__main__":
         main(args.config)
     else:
         main()
-

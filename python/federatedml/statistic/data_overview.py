@@ -18,6 +18,8 @@
 
 import copy
 import functools
+from collections import Counter
+
 
 from federatedml.util import LOGGER
 from federatedml.util import consts
@@ -166,6 +168,24 @@ def get_max_sample_weight(data_inst_with_weight):
     inter_rs = data_inst_with_weight.applyPartitions(max_sample_weight_map_func)
     max_weight = inter_rs.reduce(max_sample_weight_cmp)
     return max_weight
+
+
+def get_class_dict(kv_iterator):
+    class_dict = {}
+    for _, inst in kv_iterator:
+        count = class_dict.get(inst.label, 0)
+        class_dict[inst.label] = count + 1
+
+    if len(class_dict.keys()) > consts.MAX_CLASSNUM:
+        raise ValueError("In Classify Task, max dif classes should be no more than %d" % (consts.MAX_CLASSNUM))
+
+    return class_dict
+
+
+def get_label_count(data_instances):
+    class_weight = data_instances.mapPartitions(get_class_dict).reduce(
+        lambda x, y: dict(Counter(x) + Counter(y)))
+    return class_weight
 
 
 def rubbish_clear(rubbish_list):
