@@ -41,6 +41,10 @@
         "local_baseline-homo": {
             "conf": "./test_local_baseline_homo_job_conf.json",
             "dsl": "./test_local_baseline_homo_job_dsl.json"
+        },
+        "local_baseline-sample-weight": {
+            "conf": "./test_local_baseline_sample_weight_job_conf.json",
+            "dsl": "./test_local_baseline_sample_weight_job_dsl.json"
         }
     }
 }

@@ -21,8 +21,8 @@
         "sample-weight-balanced": {
             "script": "./pipeline-sample-weight-balanced.py"
         },
-        "sample-weight-class": {
-            "script": "./pipeline-sample-weight-class.py"
+        "sample-weight-selection": {
+            "script": "./pipeline-sample-weight-selection.py"
         },
         "sample-weight-name": {
             "script": "./pipeline-sample-weight-name.py"

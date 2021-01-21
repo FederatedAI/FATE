@@ -4,10 +4,18 @@
 
 This section introduces the dsl and conf for different types of tasks.
 
-1. Task:
 
-    script: pipeline-sample-weight.py
+1. Balanced Mode Task:
 
+    script: pipeline-sample-weight-balanced.py
+
+2. Column Name Task:
+
+    script: pipeline-sample-weight-name.py
+
+3. Class Dictionary with Feature Selection Task:
+
+    script: pipeline-sample-weight-selection.py
 
 Users can use following commands to run pipeline job directly.
 

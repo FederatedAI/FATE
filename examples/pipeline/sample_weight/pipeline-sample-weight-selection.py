@@ -22,8 +22,10 @@ from pipeline.component import Evaluation
 from pipeline.component import HeteroLR
 from pipeline.component import SampleWeight
 from pipeline.component import Intersection
+from pipeline.component import HeteroFeatureBinning
+from pipeline.component import HeteroFeatureSelection
 from pipeline.component import Reader
-from pipeline.interface import Data
+from pipeline.interface import Data, Model
 
 from pipeline.utils.tools import load_job_config
 
@@ -55,6 +57,41 @@ def main(config="../../config.yaml", namespace=""):
 
     intersection_0 = Intersection(name="intersection_0")
 
+    binning_param = {
+        "name": 'hetero_feature_binning_0',
+        "method": "quantile",
+        "compress_thres": 10000,
+        "head_size": 10000,
+        "error": 0.001,
+        "bin_num": 10,
+        "bin_indexes": -1,
+        "bin_names": None,
+        "category_indexes": None,
+        "category_names": None,
+        "adjustment_factor": 0.5,
+        "local_only": False,
+        "transform_param": {
+            "transform_cols": -1,
+            "transform_names": None,
+            "transform_type": "bin_num"
+        }
+    }
+
+    selection_param = {
+        "name": "hetero_feature_selection_0",
+        "select_col_indexes": -1,
+        "select_names": [],
+        "filter_methods": [
+            "iv_value_thres"
+        ],
+
+        "iv_value_param": {
+            "value_threshold": 0.1
+        }}
+    hetero_feature_binning_0 = HeteroFeatureBinning(**binning_param)
+
+    hetero_feature_selection_0 = HeteroFeatureSelection(**selection_param)
+
     sample_weight_0 = SampleWeight(name="sample_weight_0")
     sample_weight_0.get_party_instance(role='guest', party_id=guest).algorithm_param(need_run=True,
                                                                                      class_weight={"0": 1, "1": 2})
@@ -71,7 +108,10 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.add_component(reader_0)
     pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
     pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
-    pipeline.add_component(sample_weight_0, data=Data(data=intersection_0.output.data))
+    pipeline.add_component(hetero_feature_binning_0, data=Data(data=intersection_0.output.data))
+    pipeline.add_component(hetero_feature_selection_0, data=Data(data=hetero_feature_binning_0.output.data),
+                           model=Model(isometric_model=[hetero_feature_binning_0.output.model]))
+    pipeline.add_component(sample_weight_0, data=Data(data=hetero_feature_selection_0.output.data))
     pipeline.add_component(hetero_lr_0, data=Data(train_data=sample_weight_0.output.data))
     pipeline.add_component(evaluation_0, data=Data(data=hetero_lr_0.output.data))
 

@@ -26,11 +26,6 @@ from federatedml.statistic.data_overview import get_label_count
 from federatedml.util import consts, LOGGER
 
 
-def compute_weight_array(data_instances):
-    weight_inst = data_instances.mapValues(lambda v: v.weight)
-    return np.array([v[1] for v in list(weight_inst.collect())])
-
-
 class SampleWeight(ModelBase):
     def __init__(self):
         super().__init__()
