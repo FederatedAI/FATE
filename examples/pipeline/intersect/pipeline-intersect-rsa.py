@@ -51,7 +51,7 @@ def main(config="../../config.yaml", namespace=""):
 
     param = {
         "intersect_method": "rsa",
-        "sync_intersect_ids": True,
+        "sync_intersect_ids": False,
         "only_output_key": True,
         "rsa_params": {
             "hash_method": "sha256",
