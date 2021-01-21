@@ -8,14 +8,6 @@
                 ]
             }
         },
-        "reader_1": {
-            "module": "Reader",
-            "output": {
-                "data": [
-                    "data"
-                ]
-            }
-        },
         "dataio_0": {
             "module": "DataIO",
             "input": {
@@ -24,27 +16,6 @@
                         "reader_0.data"
                     ]
                 }
-            },
-            "output": {
-                "data": [
-                    "data"
-                ],
-                "model": [
-                    "model"
-                ]
-            }
-        },
-        "dataio_1": {
-            "module": "DataIO",
-            "input": {
-                "data": {
-                    "data": [
-                        "reader_1.data"
-                    ]
-                },
-                "model": [
-                    "dataio_0.model"
-                ]
             },
             "output": {
                 "data": [
@@ -70,34 +41,60 @@
                 ]
             }
         },
-        "intersection_1": {
-            "module": "Intersection",
+        "hetero_feature_binning_0": {
+            "module": "HeteroFeatureBinning",
             "input": {
                 "data": {
                     "data": [
-                        "dataio_1.data"
+                        "intersection_0.data"
                     ]
                 }
             },
             "output": {
                 "data": [
                     "data"
+                ],
+                "model": [
+                    "model"
                 ]
             }
         },
-        "union_0": {
-            "module": "Union",
+        "hetero_feature_selection_0": {
+            "module": "HeteroFeatureSelection",
             "input": {
                 "data": {
                     "data": [
-                        "intersection_0.data",
-                        "intersection_1.data"
+                        "intersection_0.data"
+                    ]
+                },
+                "isometric_model": [
+                    "hetero_feature_binning_0.model"
+                ]
+            },
+            "output": {
+                "data": [
+                    "data"
+                ],
+                "model": [
+                    "model"
+                ]
+            }
+        },
+        "sample_weight_0": {
+            "module": "SampleWeight",
+            "input": {
+                "data": {
+                    "data": [
+                        "hetero_feature_selection_0.data"
                     ]
                 }
             },
             "output": {
                 "data": [
                     "data"
+                ],
+                "model": [
+                    "model"
                 ]
             }
         },
@@ -106,7 +103,7 @@
             "input": {
                 "data": {
                     "train_data": [
-                        "union_0.data"
+                        "sample_weight_0.data"
                     ]
                 }
             },
