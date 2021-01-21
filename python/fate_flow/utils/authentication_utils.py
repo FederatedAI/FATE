@@ -35,26 +35,42 @@ class PrivilegeAuth(object):
     @classmethod
     def authentication_privilege(cls, src_party_id, src_role, request_path, party_id_index, role_index, command, component_index=None):
         if not src_party_id:
-            return
+            src_party_id = 0
         src_party_id = str(src_party_id)
         if src_party_id == PrivilegeAuth.get_dest_party_id(request_path, party_id_index):
             return
         stat_logger.info("party {} role {} start authentication".format(src_party_id, src_role))
-        privilege_dic = PrivilegeAuth.get_authentication_items(request_path, role_index, command, component_index)
+        privilege_dic = PrivilegeAuth.get_authentication_items(request_path, role_index, command)
         for privilege_type, value in privilege_dic.items():
             if value and privilege_type == 'privilege_component':
-                value = ''.join(value.split('_')[:-1]).lower()
+                continue
             if value in PrivilegeAuth.command_whitelist:
                 continue
             if value:
-                if value not in PrivilegeAuth.privilege_cache.get(src_party_id, {}).get(src_role, {}) \
-                        .get(privilege_type, []):
-                    if value not in PrivilegeAuth.get_permission_config(src_party_id, src_role) \
-                            .get(privilege_type, []):
-                        stat_logger.info('{} {} not authorized'.format(privilege_type.split('_')[1], value))
-                        raise Exception('{} {} not authorized'.format(privilege_type.split('_')[1], value))
-        stat_logger.info('party {} role {} successful authenticated'.format(src_party_id, src_role))
+                PrivilegeAuth.authentication_privilege_do(value, src_party_id, src_role, privilege_type)
+        stat_logger.info('party {} role {} authenticated success'.format(src_party_id, src_role))
         return True
+
+    @classmethod
+    def authentication_component(cls, job_dsl, src_party_id, src_role, party_id, component_name):
+        if USE_AUTHENTICATION:
+            if not src_party_id:
+                src_party_id = 0
+            src_party_id = str(src_party_id)
+            if src_party_id == party_id:
+                return
+            stat_logger.info('party {} role {} start authenticated component'.format(src_party_id, src_role))
+            component_module = get_component_module(component_name, job_dsl)
+            PrivilegeAuth.authentication_privilege_do(component_module, src_party_id, src_role, privilege_type="privilege_component")
+            stat_logger.info('party {} role {} authenticated component success'.format(src_party_id, src_role))
+            return True
+
+    @classmethod
+    def authentication_privilege_do(cls, value, src_party_id, src_role, privilege_type):
+        if value not in PrivilegeAuth.privilege_cache.get(src_party_id, {}).get(src_role, {}).get(privilege_type, []):
+            if value not in PrivilegeAuth.get_permission_config(src_party_id, src_role).get(privilege_type, []):
+                stat_logger.info('{} {} not authorized'.format(privilege_type.split('_')[1], value))
+                raise Exception('{} {} not authorized'.format(privilege_type.split('_')[1], value))
 
     @classmethod
     def get_permission_config(cls, src_party_id, src_role, use_local=True):
@@ -142,9 +158,9 @@ class PrivilegeAuth(object):
         pass
 
     @classmethod
-    def get_authentication_items(cls, request_path, role_index, command, component_index):
+    def get_authentication_items(cls, request_path, role_index, command):
         dest_role = request_path.split('/')[role_index]
-        component = request_path.split('/')[component_index] if command == 'run' else None
+        component = None
         return PrivilegeAuth.get_privilege_dic(dest_role, command, component)
 
     @classmethod
@@ -211,6 +227,10 @@ def request_authority_certification(party_id_index, role_index, command, compone
     return request_authority_certification_do
 
 
+def get_component_module(component_name, job_dsl):
+    return job_dsl["components"][component_name]["module"].lower()
+
+
 def search_command():
     command_list = []
     PrivilegeAuth.ALL_PERMISSION['privilege_command'].extend(command_list)
@@ -269,7 +289,7 @@ def check_component_constraint(job_runtime_conf, job_dsl):
                 roles = job_runtime_conf.get('role')
                 if 'guest' in roles.keys() and 'arbiter' in roles.keys() and 'host' in roles.keys():
                     for party_id in set(roles['guest']) & set(roles['arbiter']):
-                        if party_id in roles['host']:
+                        if party_id not in roles['host'] or len(set(roles['guest']) & set(roles['arbiter'])) != len(roles['host']):
                             raise Exception("{} component constraint party id, please check role config:{}".format(cpn, job_runtime_conf.get('role')))
 
 

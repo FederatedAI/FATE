@@ -298,7 +298,7 @@ class FederatedScheduler(object):
     @classmethod
     def tracker_command(cls, job, request_data, command, json_body=None):
         job_parameters = job.f_runtime_conf_on_party["job_parameters"]
-        response = federated_api(job_id=request_data['job_id'],
+        response = federated_api(job_id=str(request_data['job_id']),
                                  method='POST',
                                  endpoint='/tracker/{}/{}/{}/{}/{}'.format(
                                      request_data['job_id'],

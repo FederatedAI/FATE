@@ -7,7 +7,5 @@
     "backend": 0,
     "namespace": "experiment",
     "table_name": "breast_hetero_guest",
-    "eggroll_run": {
-        "eggroll.session.processors.per.node": 2
-    }
+    "task_cores": 2
 }

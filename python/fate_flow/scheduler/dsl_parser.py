@@ -111,7 +111,7 @@ class BaseDSLParser(object):
 
     def _init_components(self, mode="train", version=1, **kwargs):
         if not self.dsl:
-            raise DSLNotExistError()
+            raise DSLNotExistError("")
 
         components = self.dsl.get("components")
 
@@ -771,7 +771,7 @@ class DSLParser(BaseDSLParser):
             module = component.get_module()
 
             if len(name.split("_", -1)) == 1:
-                raise NamingError()
+                raise NamingError(name)
 
             index = name.split("_", -1)[-1]
             name_prefix = "_".join(name.split("_", -1)[:-1])
@@ -833,7 +833,7 @@ class DSLParser(BaseDSLParser):
             setting_conf_prefix=None, mode="train", *args, **kwargs):
 
         if mode not in ["train", "predict"]:
-            raise ModeError()
+            raise ModeError("")
 
         self.dsl = copy.deepcopy(dsl)
         self._init_components(mode)
@@ -989,7 +989,7 @@ class DSLParserV2(BaseDSLParser):
             setting_conf_prefix=None, mode="train", *args, **kwargs):
 
         if mode not in ["train", "predict"]:
-            raise ModeError()
+            raise ModeError("")
 
         self.dsl = copy.deepcopy(dsl)
         self._init_components(mode, version=2)
