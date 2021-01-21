@@ -70,7 +70,7 @@ class RepeatedIDIntersect(object):
 
         return [(k, v)]
 
-    def map_id(self, data):
+    def run(self, data):
         LOGGER.info("Start repeated id processing.")
         id_map_federation = self.transfer_variable.id_map_from_guest
         party_role = consts.HOST

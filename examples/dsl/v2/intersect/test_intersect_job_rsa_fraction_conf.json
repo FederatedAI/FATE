@@ -9,42 +9,38 @@
             10000
         ],
         "host": [
-            9999,
-            10000
+            9999
         ]
     },
     "job_parameters": {
         "common": {
             "work_mode": 0,
-            "backend": 0
+            "backend": 0,
+            "eggroll_run": {
+                "eggroll.session.processors.per.node": 16
+            }
         }
     },
     "component_parameters": {
         "common": {
             "intersect_0": {
-                "intersect_method": "raw",
-                "sync_intersect_ids": true,
-                "only_output_key": true
+                "intersect_method": "rsa",
+                "sync_intersect_ids": false,
+                "only_output_key": true,
+                "rsa_params": {
+                    "hash_method": "sha256",
+                    "final_hash_method": "sha256",
+                    "split_calculation": false,
+                    "random_base_fraction": 0.5
+                }
             }
         },
         "role": {
-            "host": {
+            "guest": {
                 "0": {
                     "reader_0": {
                         "table": {
-                            "name": "breast_hetero_host",
-                            "namespace": "experiment"
-                        }
-                    },
-                    "dataio_0": {
-                        "with_label": false,
-                        "output_format": "dense"
-                    }
-                },
-                "1": {
-                    "reader_0": {
-                        "table": {
-                            "name": "breast_hetero_host",
+                            "name": "breast_hetero_guest",
                             "namespace": "experiment"
                         }
                     },
@@ -54,11 +50,11 @@
                     }
                 }
             },
-            "guest": {
+            "host": {
                 "0": {
                     "reader_0": {
                         "table": {
-                            "name": "breast_hetero_guest",
+                            "name": "breast_hetero_host",
                             "namespace": "experiment"
                         }
                     },

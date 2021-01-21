@@ -31,31 +31,34 @@ def main(config="../../config.yaml", namespace=""):
         config = load_job_config(config)
     parties = config.parties
     guest = parties.guest[0]
-    hosts = parties.host
+    host = parties.host[0]
     backend = config.backend
     work_mode = config.work_mode
 
     guest_train_data = {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"}
-    host_train_data = [{"name": "breast_hetero_host", "namespace": f"experiment{namespace}"},
-                        {"name": "breast_hetero_host", "namespace": f"experiment{namespace}"}]
+    host_train_data = {"name": "breast_hetero_host", "namespace": f"experiment{namespace}"}
 
-    pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=hosts)
+    pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=host)
 
     reader_0 = Reader(name="reader_0")
     reader_0.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data)
-    reader_0.get_party_instance(role='host', party_id=hosts[0]).component_param(table=host_train_data[0])
-    reader_0.get_party_instance(role='host', party_id=hosts[1]).component_param(table=host_train_data[1])
+    reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
 
     dataio_0 = DataIO(name="dataio_0")
 
     dataio_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=False, output_format="dense")
-    dataio_0.get_party_instance(role='host', party_id=hosts[0]).component_param(with_label=False, output_format="dense")
-    dataio_0.get_party_instance(role='host', party_id=hosts[1]).component_param(with_label=False, output_format="dense")
+    dataio_0.get_party_instance(role='host', party_id=host).component_param(with_label=False, output_format="dense")
 
     param = {
-        "intersect_method": "raw",
+        "intersect_method": "rsa",
         "sync_intersect_ids": True,
-        "only_output_key": True
+        "only_output_key": False,
+        "rsa_params": {
+            "hash_method": "sha256",
+            "final_hash_method": "sha256",
+            "split_calculation": True,
+            "random_base_fraction": 0.5
+        }
     }
     intersect_0 = Intersection(name="intersect_0", **param)
 
@@ -78,3 +81,4 @@ if __name__ == "__main__":
         main(args.config)
     else:
         main()
+

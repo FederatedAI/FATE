@@ -9,8 +9,7 @@
             10000
         ],
         "host": [
-            9999,
-            10000
+            9999
         ]
     },
     "job_parameters": {
@@ -24,24 +23,19 @@
             "intersect_0": {
                 "intersect_method": "raw",
                 "sync_intersect_ids": true,
+                "join_role": "host",
+                "with_encode": true,
+                "encode_params": {
+                    "encode_method": "sm3",
+                    "salt": "12345",
+                    "base64": false
+                },
                 "only_output_key": true
             }
         },
         "role": {
             "host": {
                 "0": {
-                    "reader_0": {
-                        "table": {
-                            "name": "breast_hetero_host",
-                            "namespace": "experiment"
-                        }
-                    },
-                    "dataio_0": {
-                        "with_label": false,
-                        "output_format": "dense"
-                    }
-                },
-                "1": {
                     "reader_0": {
                         "table": {
                             "name": "breast_hetero_host",

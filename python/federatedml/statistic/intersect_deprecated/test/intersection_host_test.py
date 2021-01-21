@@ -1,19 +1,3 @@
-#
-#  Copyright 2019 The FATE Authors. All Rights Reserved.
-#
-#  Licensed under the Apache License, Version 2.0 (the "License");
-#  you may not use this file except in compliance with the License.
-#  You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-#  Unless required by applicable law or agreed to in writing, software
-#  distributed under the License is distributed on an "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#  See the License for the specific language governing permissions and
-#  limitations under the License.
-#
-
 import unittest
 import uuid
 
@@ -27,13 +11,11 @@ class TestRsaIntersectHost(unittest.TestCase):
         self.jobid = str(uuid.uuid1())
         session.init(self.jobid)
 
-        from federatedml.statistic.intersect.intersect_host import RsaIntersectionHost
-        from federatedml.statistic.intersect.intersect_host import RawIntersectionHost
+        from federatedml.statistic.intersect_deprecated.intersect_host import RsaIntersectionHost
+        from federatedml.statistic.intersect_deprecated.intersect_host import RawIntersectionHost
         intersect_param = IntersectParam()
-        self.rsa_operator = RsaIntersectionHost()
-        self.rsa_operator.load_params(intersect_param)
-        self.raw_operator = RawIntersectionHost()
-        self.raw_operator.load_params(intersect_param)
+        self.rsa_operator = RsaIntersectionHost(intersect_param)
+        self.raw_operator = RawIntersectionHost(intersect_param)
 
     def data_to_table(self, data):
         return session.parallelize(data, include_key=True, partition=2)
