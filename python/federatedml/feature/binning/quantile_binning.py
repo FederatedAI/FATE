@@ -125,8 +125,8 @@ class QuantileBinning(BaseBinning):
     @staticmethod
     def _get_split_points(summary, percentile_rate, allow_duplicate):
         split_point = []
-        for percen_rate in percentile_rate:
-            s_p = summary.query(percen_rate)
+        for percent_rate in percentile_rate:
+            s_p = summary.query(percent_rate)
             if not allow_duplicate:
                 if s_p not in split_point:
                     split_point.append(s_p)

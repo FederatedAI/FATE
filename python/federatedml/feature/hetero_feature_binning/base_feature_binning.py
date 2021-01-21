@@ -22,7 +22,7 @@ from federatedml.feature.binning.bucket_binning import BucketBinning
 from federatedml.feature.binning.optimal_binning.optimal_binning import OptimalBinning
 from federatedml.feature.binning.quantile_binning import QuantileBinning
 from federatedml.model_base import ModelBase
-from federatedml.param.feature_binning_param import FeatureBinningParam
+from federatedml.param.feature_binning_param import HeteroFeatureBinningParam as FeatureBinningParam
 from federatedml.protobuf.generated import feature_binning_meta_pb2, feature_binning_param_pb2
 from federatedml.statistic.data_overview import get_header
 from federatedml.transfer_variable.transfer_class.hetero_feature_binning_transfer_variable import \
@@ -77,7 +77,7 @@ class BaseHeteroFeatureBinning(ModelBase):
         LOGGER.debug("in _init_model, role: {}, local_partyid: {}".format(self.role, self.component_properties))
         self.binning_obj.set_role_party(self.role, self.component_properties.local_partyid)
 
-    def _setup_bin_inner_param(self, data_instances, params):
+    def _setup_bin_inner_param(self, data_instances, params: FeatureBinningParam):
         if self.schema is not None:
             return
 
@@ -200,7 +200,7 @@ class BaseHeteroFeatureBinning(ModelBase):
     def set_schema(self, data_instance):
         self.schema['header'] = self.header
         data_instance.schema = self.schema
-        # LOGGER.debug("After Binning, when setting schema, schema is : {}".format(data_instance.schema))
+        LOGGER.debug("After Binning, when setting schema, schema is : {}".format(data_instance.schema))
 
     def _abnormal_detection(self, data_instances):
         """

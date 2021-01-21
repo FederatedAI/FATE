@@ -16,12 +16,14 @@
 
 import copy
 import functools
+import numpy as np
 
 from federatedml.feature.binning.base_binning import BaseBinning
 from federatedml.feature.binning.optimal_binning.optimal_binning import OptimalBinning
 from federatedml.feature.hetero_feature_binning.base_feature_binning import BaseHeteroFeatureBinning
+from federatedml.secureprotol import PaillierEncrypt
+from federatedml.secureprotol.fate_paillier import PaillierEncryptedNumber
 from federatedml.secureprotol import IterativeAffineEncrypt
-from federatedml.secureprotol import PaillierEncrypt, FakeEncrypt
 from federatedml.statistic import data_overview
 from federatedml.statistic import statics
 from federatedml.util import LOGGER
@@ -41,7 +43,6 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
         self._setup_bin_inner_param(data_instances, self.model_param)
 
         self.binning_obj.fit_split_points(data_instances)
-
         if self.model_param.skip_static:
             self.transform(data_instances)
             return self.data_output
@@ -50,18 +51,14 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
         if len(label_counts) > 2:
             raise ValueError("Iv calculation support binary-data only in this version.")
 
-        fit_bin_inner_param = copy.deepcopy(self.bin_inner_param)
-        fit_bin_inner_param.transform_bin_indexes = self.bin_inner_param.bin_indexes
-        fit_bin_inner_param.transform_bin_names = self.bin_inner_param.bin_names
-        bin_data_result = self.binning_obj.convert_feature_to_bin(data_instances,
-                                                                  bin_inner_param=fit_bin_inner_param)
-
         data_instances = data_instances.mapValues(self.load_data)
         self.set_schema(data_instances)
+        label_table = data_instances.mapValues(lambda x: x.label)
 
         if self.model_param.local_only:
             LOGGER.info("This is a local only binning fit")
-            self.binning_obj.cal_iv_by_bin_table(bin_data_result[0], bin_data_result[2])
+            self.binning_obj.cal_local_iv(data_instances, label_table=label_table,
+                                          label_counts=label_counts)
             self.transform(data_instances)
             self.set_summary(self.binning_obj.bin_results.summary())
             LOGGER.debug(f"Summary is: {self.summary()}")
@@ -70,20 +67,11 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
         if self.model_param.encrypt_param.method == consts.PAILLIER:
             cipher = PaillierEncrypt()
             cipher.generate_key(self.model_param.encrypt_param.key_length)
-
-        elif self.model_param.encrypt_param.method == consts.ITERATIVEAFFINE:
-            cipher = IterativeAffineEncrypt()
-            cipher.generate_key(key_size=self.model_param.encrypt_param.key_length,
-                                randomized=False)
-        elif self.model_param.encrypt_param.method == consts.RANDOM_ITERATIVEAFFINE:
-            cipher = IterativeAffineEncrypt()
-            cipher.generate_key(key_size=self.model_param.encrypt_param.key_length,
-                                randomized=True)
         else:
             raise NotImplementedError("encrypt method not supported yet")
-
+        # from federatedml.secureprotol.encrypt import FakeEncrypt
+        # cipher = FakeEncrypt()
         f = functools.partial(self.encrypt, cipher=cipher)
-        label_table = data_instances.mapValues(lambda x: x.label)
         encrypted_label_table = label_table.mapValues(f)
 
         self.transfer_variable.encrypted_label.remote(encrypted_label_table,
@@ -91,7 +79,8 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
                                                       idx=-1)
         LOGGER.info("Sent encrypted_label_table to host")
 
-        self.binning_obj.cal_iv_by_bin_table(bin_data_result[0], bin_data_result[2])
+        self.binning_obj.cal_local_iv(data_instances, label_table=label_table,
+                                      label_counts=label_counts)
 
         encrypted_bin_infos = self.transfer_variable.encrypted_bin_sum.get(idx=-1)
         # LOGGER.debug("encrypted_bin_sums: {}".format(encrypted_bin_sums))
@@ -105,7 +94,8 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
             host_bin_methods = encrypted_bin_info['bin_method']
             category_names = encrypted_bin_info['category_names']
             result_counts = self.__decrypt_bin_sum(encrypted_bin_sum, cipher)
-            LOGGER.debug(f"tmc, result_counts: {result_counts}")
+            LOGGER.debug("Received host {} result, length of buckets: {}".format(host_idx, len(result_counts)))
+            LOGGER.debug("category_name: {}, host_bin_methods: {}".format(category_names, host_bin_methods))
             # if self.model_param.method == consts.OPTIMAL:
             if host_bin_methods == consts.OPTIMAL:
                 optimal_binning_params = encrypted_bin_info['optimal_params']
@@ -136,23 +126,24 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
         self.transform(data_instances)
         LOGGER.info("Finish feature binning fit and transform")
         self.set_summary(total_summary)
+        LOGGER.debug(f"Summary is: {self.summary()}")
         return self.data_output
 
+    # @staticmethod
+    # def encrypt(x, cipher):
+    #     return cipher.encrypt(x), cipher.encrypt(1 - x)
     @staticmethod
     def _merge_summary(summary_1, summary_2):
-        summary_1['iv'].extend(summary_2['iv'])
-        all_ivs = summary_1['iv']
-        all_ivs = sorted(all_ivs, key=lambda p: p[1], reverse=True)
-        # all_ivs = sorted(all_ivs.items(), key=operator.itemgetter(1), reverse=True)
+        res = {}
+        for k, v in summary_1.items():
+            if k == 'iv':
+                v.extend(summary_2[k])
+                v = sorted(v, key=lambda p: p[1], reverse=True)
+            else:
+                v.update(summary_2[k])
+            res[k] = v
 
-        all_woes = summary_1['woe']
-        all_woes.update(summary_2['woe'])
-
-        all_monotonic = summary_1['monotonic']
-        all_monotonic.update(summary_2['monotonic'])
-        return {"iv": all_ivs,
-                "woe": all_woes,
-                "monotonic": all_monotonic}
+        return res
 
     @staticmethod
     def encrypt(x, cipher):
@@ -165,11 +156,11 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
         for col_name, count_list in encrypted_bin_sum.items():
             new_list = []
             for event_count, non_event_count in count_list:
-                if not isinstance(event_count, (float, int)):
+                if isinstance(event_count, PaillierEncryptedNumber):
                     event_count = cipher.decrypt(event_count)
-                if not isinstance(non_event_count, (float, int)):
+                if isinstance(non_event_count, PaillierEncryptedNumber):
                     non_event_count = cipher.decrypt(non_event_count)
-                new_list.append((int(event_count), int(non_event_count)))
+                new_list.append((event_count, non_event_count))
             decrypted_list[col_name] = new_list
         return decrypted_list
 
