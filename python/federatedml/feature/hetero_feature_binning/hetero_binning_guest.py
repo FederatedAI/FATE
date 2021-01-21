@@ -16,12 +16,14 @@
 
 import copy
 import functools
+import numpy as np
 
 from federatedml.feature.binning.base_binning import BaseBinning
 from federatedml.feature.binning.optimal_binning.optimal_binning import OptimalBinning
 from federatedml.feature.hetero_feature_binning.base_feature_binning import BaseHeteroFeatureBinning
 from federatedml.secureprotol import PaillierEncrypt
 from federatedml.secureprotol.fate_paillier import PaillierEncryptedNumber
+from federatedml.secureprotol import IterativeAffineEncrypt
 from federatedml.statistic import data_overview
 from federatedml.statistic import statics
 from federatedml.util import LOGGER
@@ -45,8 +47,8 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
             self.transform(data_instances)
             return self.data_output
 
-        label_counts = data_overview.count_labels(data_instances)
-        if label_counts > 2:
+        label_counts = data_overview.get_label_count(data_instances)
+        if len(label_counts) > 2:
             raise ValueError("Iv calculation support binary-data only in this version.")
 
         data_instances = data_instances.mapValues(self.load_data)
@@ -55,15 +57,20 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
 
         if self.model_param.local_only:
             LOGGER.info("This is a local only binning fit")
-            self.binning_obj.cal_local_iv(data_instances, label_table=label_table)
+            self.binning_obj.cal_local_iv(data_instances, label_table=label_table,
+                                          label_counts=label_counts)
             self.transform(data_instances)
             self.set_summary(self.binning_obj.bin_results.summary())
             LOGGER.debug(f"Summary is: {self.summary()}")
             return self.data_output
 
-        cipher = PaillierEncrypt()
-        cipher.generate_key()
-
+        if self.model_param.encrypt_param.method == consts.PAILLIER:
+            cipher = PaillierEncrypt()
+            cipher.generate_key(self.model_param.encrypt_param.key_length)
+        else:
+            raise NotImplementedError("encrypt method not supported yet")
+        # from federatedml.secureprotol.encrypt import FakeEncrypt
+        # cipher = FakeEncrypt()
         f = functools.partial(self.encrypt, cipher=cipher)
         encrypted_label_table = label_table.mapValues(f)
 
@@ -72,7 +79,8 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
                                                       idx=-1)
         LOGGER.info("Sent encrypted_label_table to host")
 
-        self.binning_obj.cal_local_iv(data_instances, label_table=label_table)
+        self.binning_obj.cal_local_iv(data_instances, label_table=label_table,
+                                      label_counts=label_counts)
 
         encrypted_bin_infos = self.transfer_variable.encrypted_bin_sum.get(idx=-1)
         # LOGGER.debug("encrypted_bin_sums: {}".format(encrypted_bin_sums))
@@ -126,19 +134,16 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
     #     return cipher.encrypt(x), cipher.encrypt(1 - x)
     @staticmethod
     def _merge_summary(summary_1, summary_2):
-        summary_1['iv'].extend(summary_2['iv'])
-        all_ivs = summary_1['iv']
-        all_ivs = sorted(all_ivs, key=lambda p: p[1], reverse=True)
-        # all_ivs = sorted(all_ivs.items(), key=operator.itemgetter(1), reverse=True)
+        res = {}
+        for k, v in summary_1.items():
+            if k == 'iv':
+                v.extend(summary_2[k])
+                v = sorted(v, key=lambda p: p[1], reverse=True)
+            else:
+                v.update(summary_2[k])
+            res[k] = v
 
-        all_woes = summary_1['woe']
-        all_woes.update(summary_2['woe'])
-
-        all_monotonic = summary_1['monotonic']
-        all_monotonic.update(summary_2['monotonic'])
-        return {"iv": all_ivs,
-                "woe": all_woes,
-                "monotonic": all_monotonic}
+        return res
 
     @staticmethod
     def encrypt(x, cipher):

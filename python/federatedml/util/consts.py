@@ -73,6 +73,8 @@ ROC = "roc"
 F1_SCORE = 'f1_score'
 CONFUSION_MAT = 'confusion_mat'
 PSI = 'psi'
+VIF = 'vif'
+PEARSON = 'pearson'
 FEATURE_IMPORTANCE = 'feature_importance'
 QUANTILE_PR = 'quantile_pr'
 JACCARD_SIMILARITY_SCORE = 'jaccard_similarity_score'
@@ -200,7 +202,7 @@ VALIDATE_EVALUATE = 'validate_evaluate'
 G_BIN_NUM = 10
 DEFAULT_COMPRESS_THRESHOLD = 10000
 DEFAULT_HEAD_SIZE = 10000
-DEFAULT_RELATIVE_ERROR = 0.001
+DEFAULT_RELATIVE_ERROR = 1e-4
 ONE_HOT_LIMIT = 1024   # No more than 10 possible values
 PERCENTAGE_VALUE_LIMIT = 0.1
 SECURE_AGG_AMPLIFY_FACTOR = 1000
@@ -208,6 +210,8 @@ SECURE_AGG_AMPLIFY_FACTOR = 1000
 QUANTILE = 'quantile'
 BUCKET = 'bucket'
 OPTIMAL = 'optimal'
+VIRTUAL_SUMMARY = 'virtual_summary'
+RECURSIVE_QUERY = 'recursive_query'
 
 # Feature selection methods
 UNIQUE_VALUE = 'unique_value'
@@ -222,6 +226,8 @@ PERCENTAGE_VALUE = 'percentage_value'
 IV_FILTER = 'iv_filter'
 STATISTIC_FILTER = 'statistic_filter'
 PSI_FILTER = 'psi_filter'
+VIF_FILTER = 'vif_filter'
+CORRELATION_FILTER = 'correlation_filter'
 HETERO_SBT_FILTER = 'hetero_sbt_filter'
 HOMO_SBT_FILTER = 'homo_sbt_filter'
 HETERO_FAST_SBT_FILTER = 'hetero_fast_sbt_filter'
@@ -290,5 +296,8 @@ MANUAL = 'manual'
 
 # scorecard
 CREDIT = 'credit'
+
+# sample weight
+BALANCED = 'balanced'
 
 MAX_SAMPLE_OUTPUT_LIMIT = 10 ** 6

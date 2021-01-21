@@ -194,8 +194,8 @@ class BaseHeteroFeatureSelection(ModelBase):
                                  " in feature selection")
             adapter = adapter_factory(model_name)
             this_iso_model = adapter.convert(model_meta, model_param)
-            # LOGGER.debug(f"model_name: {model_name},"
-            #              f" iso_model: {this_iso_model._metric_info[0].__dict__}")
+            LOGGER.debug(f"model_name: {model_name},"
+                         f" iso_model: {this_iso_model._metric_info[0].__dict__}")
             self.isometric_models[model_name] = this_iso_model
 
         # for model_name, model_dict in iso_model.items():
@@ -275,9 +275,9 @@ class BaseHeteroFeatureSelection(ModelBase):
         this_filter.set_transfer_variable(self.transfer_variable)
         self.curt_select_properties = this_filter.fit(data_instances, suffix).selection_properties
         host_select_properties = getattr(this_filter, 'host_selection_properties', None)
-        if host_select_properties is not None:
-            LOGGER.debug("method: {}, host_select_properties: {}".format(
-                method, host_select_properties[0].all_left_col_names))
+        # if host_select_properties is not None:
+        #     LOGGER.debug("method: {}, host_select_properties: {}".format(
+        #         method, host_select_properties[0].all_left_col_names))
 
         self.completed_selection_result.add_filter_results(filter_name=method,
                                                            select_properties=self.curt_select_properties,
@@ -289,11 +289,11 @@ class BaseHeteroFeatureSelection(ModelBase):
             "left_col_nums": len(left_col_names),
             "left_col_names": left_col_names
         })
-        LOGGER.debug("method: {}, selection_cols: {}, left_cols: {}".format(
-            method, self.curt_select_properties.select_col_names, self.curt_select_properties.left_col_names))
+        # LOGGER.debug("method: {}, selection_cols: {}, left_cols: {}".format(
+        #     method, self.curt_select_properties.select_col_names, self.curt_select_properties.left_col_names))
         self.update_curt_select_param()
-        LOGGER.debug("After updated, method: {}, selection_cols: {}".format(
-            method, self.curt_select_properties.select_col_names))
+        # LOGGER.debug("After updated, method: {}, selection_cols: {}".format(
+        #     method, self.curt_select_properties.select_col_names))
         # self.meta_dicts = this_filter.get_meta_obj(self.meta_dicts)
         self.meta_list.append(this_filter.get_meta_obj())
 
@@ -309,7 +309,8 @@ class BaseHeteroFeatureSelection(ModelBase):
         else:
             for filter_idx, method in enumerate(self.filter_methods):
                 if method in [consts.STATISTIC_FILTER, consts.IV_FILTER, consts.PSI_FILTER,
-                              consts.HETERO_SBT_FILTER, consts.HOMO_SBT_FILTER, consts.HETERO_FAST_SBT_FILTER]:
+                              consts.HETERO_SBT_FILTER, consts.HOMO_SBT_FILTER, consts.HETERO_FAST_SBT_FILTER,
+                              consts.VIF_FILTER]:
                     if method == consts.STATISTIC_FILTER:
                         metrics = self.model_param.statistic_param.metrics
                     elif method == consts.IV_FILTER:
@@ -318,6 +319,8 @@ class BaseHeteroFeatureSelection(ModelBase):
                         metrics = self.model_param.psi_param.metrics
                     elif method in [consts.HETERO_SBT_FILTER, consts.HOMO_SBT_FILTER, consts.HETERO_FAST_SBT_FILTER]:
                         metrics = self.model_param.sbt_param.metrics
+                    elif method == consts.VIF_FILTER:
+                        metrics = self.model_param.vif_param.metrics
                     else:
                         raise ValueError(f"method: {method} is not supported")
                     for idx, _ in enumerate(metrics):
