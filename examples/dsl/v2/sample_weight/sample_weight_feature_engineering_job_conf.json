@@ -67,6 +67,10 @@
                 "iv_value_param": {
                     "value_threshold": 0.1
                 }
+            },
+            "feature_scale_0": {
+                "method": "standard_scale",
+                "need_run": true
             }
         },
         "role": {

@@ -13,9 +13,9 @@ This section introduces the dsl and conf for different types of tasks.
 
     script: pipeline-sample-weight-name.py
 
-3. Class Dictionary with Feature Selection Task:
+3. Class Dictionary with Feature Engineering Task:
 
-    script: pipeline-sample-weight-selection.py
+    script: pipeline-sample-weight-feature-engineering.py
 
 Users can use following commands to run pipeline job directly.
 
