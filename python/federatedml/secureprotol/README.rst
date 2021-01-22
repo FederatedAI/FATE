@@ -267,16 +267,16 @@ information-theoretic secure method to share secrets between multi-parties.
 Protocol
 ------------------
 
-1. Initialize
+1. System parameters
 
-    a. generate 1024-bits prime number :math:`p` , :math:`g` and :math:`q`, where :math:`p` is a prime number, :math:`g` is a generator, :math:`q` is a prime-order subgroup.
+    a. 1024-bits prime number :math:`p` and :math:`g` , 160-bits prime-order subgroup: :math:`q`
 
-    b. set share_amount, it is the number of pieces the secret will be split into.
+    b. Set share_amount, it is the number of pieces the secret will be split into.
 
 2. Encrypt
 
-    a. generate :math:`k-1` random numbers, which is :math:`{a_0, a_1, a_2, ... ,a_{k-1}}`, denotes a polynomial of degree :math:`k-1`,
-       which is shown as :math:`f(x)=a_0+a_1x+a_2x^2+...+a_{k-1}x^{k-1}`. Where :math:`a_0` is the secret number, which requires a number of :math:`k` points to calculate.
+    a. Generate :math:`k-1` random numbers, which is :math:`{a_0, a_1, a_2, ... ,a_{k-1}}`, denotes a polynomial of degree :math:`k-1`,
+       which is shown as :math:`f(x)=a_0+a_1x+a_2x^2+...+a_{k-1}x^{k-1}`. where :math:`a_0` is the secret number, which requires a number of :math:`k` points to calculate.
 
     b. Take :math:`k` points on the polynomial, generate :math:`k` sub-keys, such as :math:`{<1, f(1)>, <2,f(2)>... ,}`.
 
@@ -294,6 +294,7 @@ How to use
     from federatedml.secureprotol.secret_sharing.verifiable_secret_sharing.feldman_verifiable_secret_sharing import
     FeldmanVerifiableSecretSharing
     vss = FeldmanVerifiableSecretSharing()
+    vss.key_pair()
     vss.set_share_amount(3)
     s = -5.98
     sub_key, commitment = vss.encrypt(s) # generate sub-key and commitment
