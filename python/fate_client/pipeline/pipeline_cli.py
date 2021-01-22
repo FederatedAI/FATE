@@ -26,14 +26,14 @@ def cli():
     pass
 
 
-@click.command(name="config")
+@click.command(name="init")
 @click.option("-c", "--pipeline-conf-path", "config_path", type=click.Path(exists=True),
               help="Path to pipeline configuration file.")
 @click.option("-d", "--log-directory", type=click.Path(),
               help="Path to pipeline logs directory.")
 @click.option("--ip", type=click.STRING, help="Fate flow server ip address.")
 @click.option("--port", type=click.INT, help="Fate flow server port.")
-def _config(**kwargs):
+def _init(**kwargs):
     """
         \b
         - DESCRIPTION:
@@ -45,8 +45,8 @@ def _config(**kwargs):
 
         \b
         - USAGE:
-            pipeline config -c config.yaml
-            pipeline config --ip 10.1.2.3 --port 9380 --log-directory ./logs
+            pipeline init -c config.yaml
+            pipeline init --ip 10.1.2.3 --port 9380 --log-directory ./logs
     """
     config_path = kwargs.get("config_path")
     ip = kwargs.get("ip")
@@ -79,7 +79,8 @@ def _config(**kwargs):
     print("Pipeline configuration succeeded.")
 
 
-cli.add_command(_config)
+cli.add_command(_init)
+
 
 if __name__ == '__main__':
     cli()

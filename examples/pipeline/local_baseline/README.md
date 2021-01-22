@@ -16,6 +16,11 @@ This section introduces the Pipeline scripts for different types of tasks.
     
     data type: binary label
 
+1. Hetero Train Task with Sample Weight:
+
+    script: pipeline-local-baseline-sample-weight.py
+    
+    data type: multi-class label
 
 Users can run a pipeline job directly:
 

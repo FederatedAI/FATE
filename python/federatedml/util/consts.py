@@ -254,7 +254,11 @@ COL = 'col'
 PHONE = 'phone'
 IMEI = 'imei'
 MD5 = 'md5'
+SHA1 = 'sha1'
+SHA224 = 'sha224'
 SHA256 = 'sha256'
+SHA384 = 'sha384'
+SM3 = 'sm3'
 INTERSECT_CACHE_TAG = 'Za'
 
 SHARE_INFO_COL_NAME = "share_info"
@@ -286,3 +290,12 @@ MANUAL = 'manual'
 
 # scorecard
 CREDIT = 'credit'
+
+# sample weight
+BALANCED = 'balanced'
+
+# min r base fraction
+MIN_BASE_FRACTION = 0.01
+MAX_BASE_FRACTION = 0.99
+
+MAX_SAMPLE_OUTPUT_LIMIT = 10 ** 6

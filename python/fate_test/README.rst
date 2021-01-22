@@ -40,7 +40,7 @@ quick start
 .. code-block:: bash
 
       # configure FATE-Pipeline server setting
-      pipeline config --port 9380 --ip 127.0.0.1
+      pipeline init --port 9380 --ip 127.0.0.1
       # configure FATE-Flow Commandline server setting
       flow init --port 9380 --ip 127.0.0.1
 
@@ -447,9 +447,12 @@ In the returned dictionary of script, use reserved key ``script_metrics`` to ind
   - param: job parameter setting, dictionary loaded from "conf" file specified in benchmark testsuite
   - namespace: namespace suffix, user-given *namespace* or generated timestamp string when using *namespace-mangling*
 
-- non-FATE script: ``Main`` always has one input:
+- non-FATE script: ``Main`` should have one or two inputs:
 
   - param: job parameter setting, dictionary loaded from "conf" file specified in benchmark testsuite
+  - (optional) config: job configuration, `JobConfig <../fate_client/pipeline/utils/tools.py#L64>`_ object loaded from "fate_test_config.yaml"
+
+Note that ``Main`` in FATE & non-FATE scripts can also be set to take zero input argument.
 
 
 data

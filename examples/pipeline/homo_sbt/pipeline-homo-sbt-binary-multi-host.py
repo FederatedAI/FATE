@@ -44,8 +44,8 @@ def main(config="../../config.yaml", namespace=""):
     work_mode = config.work_mode
 
     guest_train_data = {"name": "default_credit_guest", "namespace": f"experiment{namespace}"}
-    host_train_data_0 = {"name": "default_credit_host_1", "namespace": f"experiment{namespace}"}
-    host_train_data_1 = {"name": "default_credit_host_2", "namespace": f"experiment{namespace}"}
+    host_train_data_0 = {"name": "default_credit_host1", "namespace": f"experiment{namespace}"}
+    host_train_data_1 = {"name": "default_credit_host2", "namespace": f"experiment{namespace}"}
 
     guest_validate_data = {"name": "default_credit_test", "namespace": f"experiment{namespace}"}
     host_validate_data_0 = {"name": "default_credit_test", "namespace": f"experiment{namespace}"}
@@ -73,7 +73,7 @@ def main(config="../../config.yaml", namespace=""):
     dataio_1.get_party_instance(role='host', party_id=host_1).component_param(with_label=True, output_format="dense")
 
     homo_secureboost_0 = HomoSecureBoost(name="homo_secureboost_0",
-                                         num_trees=5,
+                                         num_trees=3,
                                          task_type='classification',
                                          objective_param={"objective": "cross_entropy"},
                                          tree_param={

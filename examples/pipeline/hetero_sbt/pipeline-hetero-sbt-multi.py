@@ -71,7 +71,7 @@ def main(config="../../config.yaml", namespace=""):
 
     # secure boost component
     hetero_secure_boost_0 = HeteroSecureBoost(name="hetero_secure_boost_0",
-                                              num_trees=5,
+                                              num_trees=3,
                                               task_type="classification",
                                               objective_param={"objective": "cross_entropy"},
                                               encrypt_param={"method": "iterativeAffine"},
@@ -93,7 +93,7 @@ def main(config="../../config.yaml", namespace=""):
 
     pipeline.compile()
     job_parameters = JobParameters(backend=backend, work_mode=work_mode)
-    pipeline.fit(backend=backend, work_mode=work_mode)
+    pipeline.fit(job_parameters=job_parameters)
 
     print("fitting hetero secureboost done, result:")
     print(pipeline.get_component("hetero_secure_boost_0").get_summary())

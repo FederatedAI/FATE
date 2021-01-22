@@ -1,7 +1,7 @@
 {
   "data": [
     {
-      "file": "../../data/breast_homo_guest.csv",
+      "file": "examples/data/breast_homo_guest.csv",
       "head": 1,
       "partition": 16,
       "table_name": "breast_homo_guest",
@@ -9,7 +9,7 @@
       "role": "guest_0"
     },
     {
-      "file": "../../data/breast_homo_host.csv",
+      "file": "examples/data/breast_homo_host.csv",
       "head": 1,
       "partition": 16,
       "table_name": "breast_homo_host",
@@ -17,7 +17,7 @@
       "role": "host_0"
     },
     {
-      "file": "../../data/vehicle_scale_homo_guest.csv",
+      "file": "examples/data/vehicle_scale_homo_guest.csv",
       "head": 1,
       "partition": 16,
       "table_name": "vehicle_scale_homo_guest",
@@ -25,7 +25,7 @@
       "role": "guest_0"
     },
     {
-      "file": "../../data/vehicle_scale_homo_host.csv",
+      "file": "examples/data/vehicle_scale_homo_host.csv",
       "head": 1,
       "partition": 16,
       "table_name": "vehicle_scale_homo_host",
@@ -33,7 +33,7 @@
       "role": "host_0"
     },
     {
-      "file": "../../data/vehicle_scale_homo_host.csv",
+      "file": "examples/data/vehicle_scale_homo_host.csv",
       "head": 1,
       "partition": 16,
       "table_name": "vehicle_scale_homo_host",
@@ -64,7 +64,7 @@
       "conf": "./param_conf_multi.yaml"
     },
     "compare_setting": {
-      "relative_tol": 0.05
+      "relative_tol": 0.1
     }
   }
 }

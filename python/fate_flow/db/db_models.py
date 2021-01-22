@@ -25,8 +25,7 @@ from playhouse.apsw_ext import APSWDatabase
 from playhouse.pool import PooledMySQLDatabase
 
 from fate_arch.common import log
-from fate_arch.common.base_utils import current_timestamp
-from fate_arch.storage.metastore.base_model import JSONField, BaseModel, LongTextField
+from fate_arch.storage.metastore.base_model import JSONField, BaseModel, LongTextField, DateTimeField
 from fate_arch.common import WorkMode
 from fate_flow.settings import DATABASE, WORK_MODE, stat_logger
 from fate_flow.entity.runtime_config import RuntimeConfig
@@ -143,10 +142,10 @@ class Job(DataBaseModel):
     f_apply_resource_time = BigIntegerField(null=True)
     f_return_resource_time = BigIntegerField(null=True)
 
-    f_create_time = BigIntegerField()
-    f_update_time = BigIntegerField(null=True)
     f_start_time = BigIntegerField(null=True)
+    f_start_date = DateTimeField(null=True)
     f_end_time = BigIntegerField(null=True)
+    f_end_date = DateTimeField(null=True)
     f_elapsed = BigIntegerField(null=True)
 
     class Meta:
@@ -173,10 +172,11 @@ class Task(DataBaseModel):
     f_run_ip = CharField(max_length=100, null=True)
     f_run_pid = IntegerField(null=True)
     f_party_status = CharField(max_length=50, index=True)
-    f_create_time = BigIntegerField()
-    f_update_time = BigIntegerField(null=True)
+
     f_start_time = BigIntegerField(null=True)
+    f_start_date = DateTimeField(null=True)
     f_end_time = BigIntegerField(null=True)
+    f_end_date = DateTimeField(null=True)
     f_elapsed = BigIntegerField(null=True)
 
     class Meta:
@@ -218,8 +218,6 @@ class TrackingMetric(DataBaseModel):
     f_key = CharField(max_length=200)
     f_value = TextField()
     f_type = IntegerField(index=True)  # 0 is data, 1 is meta
-    f_create_time = BigIntegerField()
-    f_update_time = BigIntegerField(null=True)
 
 
 class TrackingOutputDataInfo(DataBaseModel):
@@ -256,8 +254,6 @@ class TrackingOutputDataInfo(DataBaseModel):
     f_party_id = CharField(max_length=10, index=True)
     f_table_name = CharField(max_length=500, null=True)
     f_table_namespace = CharField(max_length=500, null=True)
-    f_create_time = BigIntegerField()
-    f_update_time = BigIntegerField(null=True)
     f_description = TextField(null=True, default='')
 
 
@@ -300,8 +296,6 @@ class Tag(DataBaseModel):
     f_id = BigAutoField(primary_key=True)
     f_name = CharField(max_length=100, index=True, unique=True)
     f_desc = TextField(null=True)
-    f_create_time = BigIntegerField(default=current_timestamp())
-    f_update_time = BigIntegerField(default=current_timestamp())
 
     class Meta:
         db_table = "t_tags"
@@ -336,8 +330,6 @@ class ComponentSummary(DataBaseModel):
     f_task_id = CharField(max_length=50, null=True, index=True)
     f_task_version = CharField(max_length=50, null=True, index=True)
     f_summary = LongTextField()
-    f_create_time = BigIntegerField(default=0)
-    f_update_time = BigIntegerField(default=0)
 
 
 class ModelOperationLog(DataBaseModel):
@@ -348,8 +340,6 @@ class ModelOperationLog(DataBaseModel):
     f_request_ip = CharField(max_length=20, null=True)
     f_model_id = CharField(max_length=100, index=True)
     f_model_version = CharField(max_length=100, index=True)
-    f_create_time = BigIntegerField(default=current_timestamp())
-    f_update_time = BigIntegerField(default=current_timestamp())
 
     class Meta:
         db_table = "t_model_operation_log"
@@ -365,8 +355,6 @@ class EngineRegistry(DataBaseModel):
     f_remaining_cores = IntegerField(index=True)
     f_remaining_memory = IntegerField(index=True) # MB
     f_nodes = IntegerField(index=True)
-    f_create_time = BigIntegerField()
-    f_update_time = BigIntegerField(null=True)
 
     class Meta:
         db_table = "t_engine_registry"

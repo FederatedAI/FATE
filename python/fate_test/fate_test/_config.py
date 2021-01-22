@@ -21,23 +21,14 @@ from pathlib import Path
 
 from ruamel import yaml
 
-data_switch = False
-use_local_data = 1
-upload_dir = 'performance/hetero_task_upload_testsuite.json'
-intersect_dir = 'performance/hetero_task_intersect_single_testsuite.json'
-intersect_multi_dir = 'performance/hetero_task_intersect_multi_testsuite.json'
-hetero_lr_dir = 'performance/hetero_task_lr_testsuite.json'
-hetero_sbt_dir = 'performance/hetero_task_sbt_testsuite.json'
 temperate = """\
 # 0 for standalone, 1 for cluster
 work_mode: 0
 # 0 for eggroll, 1 for spark
 backend: 0
-# base dir for data upload conf eg, data_base_dir={FATE}
+# base dir for data upload conf eg
 # examples/data/breast_hetero_guest.csv -> $data_base_dir/examples/data/breast_hetero_guest.csv
-data_base_dir: ../../../../
-# fate_test job Dedicated directory, File storage location,cache_directory={FATE}/examples/cache/
-cache_directory: /data/projects/fate/examples/cache/
+data_base_dir: ../../../
 clean_data: true
 parties:
   guest: [10000]
@@ -81,7 +72,7 @@ def create_config(path: Path, override=False):
         raise FileExistsError(f"{path} exists")
     with path.open("w") as f:
         f.write(temperate)
-        
+
 
 def default_config():
     if not _default_config.exists():
@@ -138,10 +129,10 @@ class Config(object):
     tunnel = namedtuple("tunnel", ["ssh_address", "ssh_username", "ssh_password", "ssh_priv_key", "services_address"])
 
     def __init__(self, config):
-        self.cache_directory = config["cache_directory"]
         self.work_mode = config["work_mode"]
         self.backend = config["backend"]
         self.data_base_dir = config["data_base_dir"]
+        self.clean_data = config.get("clean_data", True)
         self.parties = Parties.from_dict(config["parties"])
         self.party_to_service_id = {}
         self.service_id_to_service = {}
@@ -186,7 +177,6 @@ class Config(object):
             with path.open("r") as f:
                 config.update(yaml.safe_load(f))
         config["data_base_dir"] = path.resolve().joinpath(config["data_base_dir"]).resolve()
-        config["cache_directory"] = path.resolve().joinpath(config["cache_directory"]).resolve()
         config.update(kwargs)
         return Config(config)
 

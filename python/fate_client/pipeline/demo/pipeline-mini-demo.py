@@ -121,7 +121,7 @@ def main():
     predict_pipeline.add_component(pipeline,
                                    data=Data(predict_input={pipeline.dataio_0.input.data: reader_2.output.data}))
     # run predict model
-    predict_pipeline.predict(backend=backend, work_mode=work_mode)
+    predict_pipeline.predict(job_parameters)
 
 
 if __name__ == "__main__":

@@ -81,18 +81,14 @@ class JobInvoker(object):
             result = self.client.job.submit(conf_path=submit_path, dsl_path=dsl_path)
             try:
                 if 'retcode' not in result or result["retcode"] != 0:
-                    # LOGGER.opt(exception=True).error(f"retcode err")
-                    raise ValueError
+                    raise ValueError(f"retcode err")
 
                 if "jobId" not in result:
-                    # LOGGER.opt(exception=True).error(f"jobID not in result: {result}")
-                    raise ValueError
+                    raise ValueError(f"jobID not in result: {result}")
 
                 job_id = result["jobId"]
                 data = result["data"]
             except ValueError:
-                # LOGGER.opt(exception=True).error(f"job submit failed, err msg: {result}")
-                # raise
                 raise ValueError("job submit failed, err msg: {}".format(result))
 
         return job_id, data
@@ -185,7 +181,6 @@ class JobInvoker(object):
         try:
             if 'retcode' not in result or result["retcode"] != 0:
                 raise ValueError("can not query_job")
-                # LOGGER.opt(exception=True).error("can not query_job")
 
             ret_code = result["retcode"]
             ret_msg = result["retmsg"]
@@ -193,7 +188,6 @@ class JobInvoker(object):
             return ret_code, ret_msg, data
         except ValueError:
             raise ValueError("query job result is {}, can not parse useful info".format(result))
-            # LOGGER.opt(exception=True).error(f"query job result is {result}, can not parse useful info. err msg: ")
 
     def get_output_data_table(self, job_id, cpn_name, role, party_id):
         """

@@ -73,7 +73,7 @@ def main(config="../../config.yaml", namespace=""):
 
     # secure boost component
     hetero_secure_boost_0 = HeteroSecureBoost(name="hetero_secure_boost_0",
-                                              num_trees=5,
+                                              num_trees=3,
                                               task_type="regression",
                                               objective_param={"objective": "lse"},
                                               encrypt_param={"method": "iterativeAffine"},

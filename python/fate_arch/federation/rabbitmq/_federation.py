@@ -145,9 +145,11 @@ class Federation(FederationABC):
     
     def get(self, name: str, tag: str, parties: typing.List[Party], gc: GarbageCollectionABC) -> typing.List:
         log_str = f"[rabbitmq.get](name={name}, tag={tag}, parties={parties})"
-        LOGGER.debug(f"[{log_str}]start to get")
-         
-        if name not in self._name_dtype_map:
+        LOGGER.debug(f"[{log_str}]start to get")       
+       
+        _name_dtype_keys = [_SPLIT_.join([party.role, party.party_id, name]) for party in parties]
+        
+        if _name_dtype_keys[0] not in self._name_dtype_map:
             mq_names = self._get_mq_names(parties, dtype=NAME_DTYPE_TAG)                       
             channel_infos = self._get_channels(mq_names=mq_names)
             rtn_dtype = []
@@ -156,13 +158,15 @@ class Federation(FederationABC):
                 rtn_dtype.append(obj)
                 LOGGER.debug(f"[rabbitmq.get] name: {name}, dtype: {obj}") 
             
-            self._name_dtype_map[name] = rtn_dtype
-        
-        rtn_dtype = self._name_dtype_map[name]
+            for k in _name_dtype_keys:
+                if k not in self._name_dtype_map:
+                    self._name_dtype_map[k] = rtn_dtype[0]
+            
+        rtn_dtype = self._name_dtype_map[_name_dtype_keys[0]]
         
         rtn = []
-        dtype = rtn_dtype[0].get("dtype", None)  
-        partitions = rtn_dtype[0].get("partitions", None) 
+        dtype = rtn_dtype.get("dtype", None)  
+        partitions = rtn_dtype.get("partitions", None) 
         
         if dtype == FederationDataType.TABLE:
             mq_names = self._get_mq_names(parties, name, partitions=partitions) 
@@ -178,7 +182,11 @@ class Federation(FederationABC):
                 rdd = sc.parallelize(range(partitions), partitions)
                 rdd = rdd.mapPartitionsWithIndex(receive_func)
                 rdd = materialize(rdd)
-                rtn.append(Table(rdd))
+                table = Table(rdd)
+                rtn.append(table)
+                # add gc               
+                gc.add_gc_action(tag, table, '__del__', {})
+                
                 LOGGER.debug(f"[{log_str}]received rdd({i + 1}/{len(parties)}), party: {parties[i]} ")    
         else:
             mq_names = self._get_mq_names(parties, name)
@@ -195,55 +203,60 @@ class Federation(FederationABC):
                gc: GarbageCollectionABC) -> typing.NoReturn:
         log_str = f"[rabbitmq.remote](name={name}, tag={tag}, parties={parties})"
         
-        if name not in self._name_dtype_map:            
-            mq_names = self._get_mq_names(parties, dtype=NAME_DTYPE_TAG)                      
+        _name_dtype_keys = [_SPLIT_.join([party.role, party.party_id, name]) for party in parties]
+        
+        if _name_dtype_keys[0] not in self._name_dtype_map:
+            mq_names = self._get_mq_names(parties, dtype=NAME_DTYPE_TAG) 
             channel_infos = self._get_channels(mq_names=mq_names)
+            if isinstance(v, Table):
+                body = {"dtype": FederationDataType.TABLE, "partitions": v.partitions} 
+            else:
+                body = {"dtype": FederationDataType.OBJECT}
             
+            LOGGER.debug(f"[rabbitmq.remote] _name_dtype_keys: {_name_dtype_keys}, dtype: {body}")
+            self._send_obj(name=name, tag=NAME_DTYPE_TAG, data=p_dumps(body), channel_infos=channel_infos)  
+             
+            for k in _name_dtype_keys:
+                if k not in self._name_dtype_map:
+                    self._name_dtype_map[k] = body
+             
         if isinstance(v, Table): 
             total_size = v.count()           
             partitions = v.partitions
-            if name not in self._name_dtype_map:
-#                 LOGGER.debug(f"[rabbitmq.remote]got channel_infos: {channel_infos}")
-                body = {"dtype": FederationDataType.TABLE, "partitions": partitions}
-                self._name_dtype_map[name] = body
-                LOGGER.debug(f"[rabbitmq.remote] name: {name}, dtype: {body}") 
-                self._send_obj(name=name, tag=NAME_DTYPE_TAG, data=p_dumps(body), channel_infos=channel_infos)
-            
             LOGGER.debug(f"[{log_str}]start to remote RDD, total_size={total_size}, partitions={partitions}")
             
             mq_names = self._get_mq_names(parties, name, partitions=partitions)
-                        
+            # add gc  
+            gc.add_gc_action(tag, v, '__del__', {})    
+                    
             send_func = self._get_partition_send_func(name, tag, partitions, mq_names, mq=self._mq, 
                                                  maximun_message_size=self._max_message_size, 
                                                  connection_conf=self._rabbit_manager.runtime_config.get('connection', {}))
             # noinspection PyProtectedMember
             v._rdd.mapPartitionsWithIndex(send_func).count()
         else:
-            LOGGER.debug(f"[{log_str}]start to remote obj")            
-            if name not in self._name_dtype_map:                
-                body = {"dtype": FederationDataType.OBJECT}
-                self._name_dtype_map[name] = body
-                LOGGER.debug(f"[rabbitmq.remote] name: {name}, dtype: {body}") 
-                self._send_obj(name=name, tag=NAME_DTYPE_TAG, data=p_dumps(body), channel_infos=channel_infos)
-            
+            LOGGER.debug(f"[{log_str}]start to remote obj")   
             mq_names = self._get_mq_names(parties, name)            
             channel_infos = self._get_channels(mq_names=mq_names)
             self._send_obj(name=name, tag=tag, data=p_dumps(v), channel_infos=channel_infos)
             
         LOGGER.debug(f"[{log_str}]finish to remote")
 
-    def cleanup(self):
+    def cleanup(self, parties):
         LOGGER.debug("[rabbitmq.cleanup]start to cleanup...")
-        for queue_key, queue_names in self._queue_map.items():
-            LOGGER.debug(f"[rabbitmq.cleanup]cleanup queue_key={queue_key}, queue_names={queue_names}.")
-            self._rabbit_manager.de_federate_queue(vhost=queue_names.vhost, receive_queue_name=queue_names.receive)
-            self._rabbit_manager.delete_queue(vhost=queue_names.vhost, queue_name=queue_names.send)
-            self._rabbit_manager.delete_queue(vhost=queue_names.vhost, queue_name=queue_names.receive)
-            self._rabbit_manager.delete_vhost(vhost=queue_names.vhost)
-        self._queue_map.clear()
+        for party in parties:
+            vhost = self._get_vhost(party)
+            LOGGER.debug(f"[rabbitmq.cleanup]start to cleanup vhost {vhost}...")
+            self._rabbit_manager.delete_vhost(vhost=vhost)
+            LOGGER.debug(f"[rabbitmq.cleanup]cleanup vhost {vhost} done")
         if self._mq.union_name:
             LOGGER.debug(f"[rabbitmq.cleanup]clean user {self._mq.union_name}.")
             self._rabbit_manager.delete_user(user=self._mq.union_name)
+
+    def _get_vhost(self, party):
+        low, high = (self._party, party) if self._party < party else (party, self._party)
+        vhost = f"{self._session_id}-{low.role}-{low.party_id}-{high.role}-{high.party_id}"
+        return vhost
 
     def _get_mq_names(self, parties: typing.List[Party], name=None, partitions=None, dtype=None) -> typing.List:
         mq_names = [self._get_or_create_queue(party, name, partitions, dtype) for party in parties]
@@ -261,17 +274,18 @@ class Federation(FederationABC):
                 for i in range(partitions):
                     queue_key = _SPLIT_.join([party.role, party.party_id, name, str(i)])
                     queue_key_list.append(queue_key)
-            else:
+            elif name is not None:
                 queue_key = _SPLIT_.join([party.role, party.party_id, name])
-                queue_key_list.append(queue_key)            
+                queue_key_list.append(queue_key)
+            else:
+                queue_key = _SPLIT_.join([party.role, party.party_id])
+                queue_key_list.append(queue_key)
         
         for queue_key in queue_key_list:  
             if queue_key not in self._queue_map:
                 LOGGER.debug(f"[rabbitmq.get_or_create_queue]queue: {queue_key} for party:{party} not found, start to create")
                 # gen names
-                low, high = (self._party, party) if self._party < party else (party, self._party)
-                # union_name = f"{low.role}-{low.party_id}-{high.role}-{high.party_id}"
-                vhost_name = f"{self._session_id}-{low.role}-{low.party_id}-{high.role}-{high.party_id}"
+                vhost_name = self._get_vhost(party)
                 
                 queue_key_splits = queue_key.split(_SPLIT_)
                 queue_suffix = "-".join(queue_key_splits[2:])

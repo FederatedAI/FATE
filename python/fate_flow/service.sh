@@ -98,7 +98,7 @@ start() {
     if [[ ${pid} == "" ]]; then
         mklogsdir
         if [[ $1x == "front"x ]];then
-          python ${PROJECT_BASE}/python/fate_flow/fate_flow_server.py >> "${log_dir}/console.log" 2>>"${log_dir}/error.log"
+          exec python ${PROJECT_BASE}/python/fate_flow/fate_flow_server.py >> "${log_dir}/console.log" 2>>"${log_dir}/error.log"
         else
           nohup python ${PROJECT_BASE}/python/fate_flow/fate_flow_server.py >> "${log_dir}/console.log" 2>>"${log_dir}/error.log" &
         fi

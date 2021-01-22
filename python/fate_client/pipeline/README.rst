@@ -21,7 +21,7 @@ For more pipeline demo, please refer to
 A FATE Job is A Directed Acyclic Graph
 --------------------------------------
 
-A FATE job is a dag consists of algorithm component nodes. FATE pipeline provides
+A FATE job is a dag that consists of algorithm component nodes. FATE pipeline provides
 easy-to-use tools to configure order and setting of the tasks.
 
 FATE is written in a modular style. Modules are designed to have input
@@ -30,10 +30,10 @@ output of one module is set to be the input of another module. By tracing
 how one data set is processed through FATE modules, we can see that a
 FATE job is in fact formed by a sequence of sub-tasks. For example, in
 the `mini demo <./demo/pipeline-mini-demo.py>`__ above, guest’s data is
-firstly read in by ``Reader``, then loaded into ``DataIO``. Overlapping
+first read in by ``Reader``, then loaded into ``DataIO``. Overlapping
 ids between guest and host are then found by running data through
 ``Intersection``. Finally, ``HeteroLR`` model is fit on the data. Each
-of the listed modules runs a small task with the data, and together they
+listed modules run a small task with the data, and together they
 constitute a model training job.
 
 Beyond the given mini demo, a job may include multiple data sets and
@@ -51,7 +51,7 @@ command for more information.
 
 .. code:: bash
 
-   pipeline config --help
+   pipeline init --help
 
 
 Interface of Pipeline
@@ -60,7 +60,7 @@ Interface of Pipeline
 Component
 ~~~~~~~~~
 
-FATE modules are wrapped into ``component``s in Pipeline API. Each
+FATE modules are wrapped into ``component`` in Pipeline API. Each
 component can take in and output ``Data`` and ``Model``. Parameters of
 components can be set conveniently at the time of initialization.
 Unspecified parameters will take default values. All components have a
@@ -68,7 +68,7 @@ Unspecified parameters will take default values. All components have a
 identifier, and so it must be unique within a pipeline. We suggest that
 each component name includes a numbering as suffix for easy tracking.
 
-Components each may have input and/or output `Data` and/or `Model`.
+Components each may have input and/or output ``Data`` and/or ``Model``.
 For details on how to use component, please refer to this
 `guide <./component/README.rst>`__.
 
@@ -163,9 +163,9 @@ To include a component in a pipeline, use ``add_component``. To add the
 Build Fate NN Model In Keras Style
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In pipeline, you can build NN structures in a keras style. Take Homo-NN as an example:
+In pipeline, you can build NN structures in a Keras style. Take Homo-NN as an example:
 
-Firstly, import keras and define your nn structures:
+First, import Keras and define your nn structures:
 
 .. code:: python
 
@@ -175,11 +175,12 @@ Firstly, import keras and define your nn structures:
     layer_0 = Dense(units=6, input_shape=(10,), activation="relu")
     layer_1 = Dense(units=1, activation="sigmoid")
 
-Then, add nn layers into Homo-NN model like using Sequential class in keras:
+Then, add nn layers into Homo-NN model like using Sequential class in Keras:
 
 .. code:: python
+
     from pipeline.component.homo_nn import HomoNN
-    
+
     # set parameter
     homo_nn_0 = HomoNN(name="homo_nn_0", max_iter=10, batch_size=-1, early_stop={"early_stop": "diff", "eps": 0.0001})
     homo_nn_0.add(layer_0)
@@ -199,11 +200,12 @@ Add it to pipeline:
     pipeline.add_component(homo_nn, data=Data(train_data=dataio_0.output.data))
 
 Init Runtime JobParameters
---------------
+--------------------------
 
 To fit or predict, user needs to initialize the runtime environment, like 'backend' and 'work_mode',
 
 .. code:: python
+
     from pipeline.runtime.entity import JobParameters
     job_parameters = JobParameters(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE)
 
@@ -259,10 +261,16 @@ Prediction can then be initiated on the new pipeline.
 
 .. code:: python
 
-   predict_pipeline.predict(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE)
+   predict_pipeline.predict(job_parameters)
 
 In addition, since pipeline is modular, user may add new components to
-the original pipeline when running prediction.
+the original pipeline before running prediction.
+
+.. code:: python
+
+   predict_pipeline.add_component(evaluation_0, data=Data(data=pipeline.hetero_lr_0.output.data))
+   predict_pipeline.predict(job_parameters)
+
 
 Save and Recovery of Pipeline
 -----------------------------
@@ -280,10 +288,10 @@ To restore a pipeline, use **load_model_from_file** interface.
    from pipeline.backend.pipeline import PineLine
    PipeLine.load_model_from_file("pipeline_saved.pkl")
 
-Summary info of pipeline
+Summary Info of Pipeline
 -------------------------
 
-To get the detail of a pipeline, use **describe** interface, it will print the "create time"
+To get the details of a pipeline, use **describe** interface, which prints the "create time"
 fit or predict state and the constructed dsl if exists.
 
 .. code:: python

@@ -24,15 +24,15 @@ from pipeline.param import consts
 
 class EncodeParam(BaseParam):
     """
-    Define the encode method
+    Define the encode method for raw intersect
 
     Parameters
     ----------
     salt: the src data string will be str = str + salt, default by empty string
 
-    encode_method: str, the encode method of src data string, it support md5, sha1, sha224, sha256, sha384, sha512, default by None
+    encode_method: str, the hash method of src data string, it support md5, sha1, sha224, sha256, sha384, sha512, sm3, default by None
 
-    base64: bool, if True, the result of encode will be changed to base64, default by False
+    base64: bool, if True, the result of hash will be changed to base64, default by False
     """
 
     def __init__(self, salt='', encode_method='none', base64=False):
@@ -50,13 +50,68 @@ class EncodeParam(BaseParam):
         descr = "encode param's "
 
         self.encode_method = self.check_and_change_lower(self.encode_method,
-                                                         ["none", "md5", "sha1", "sha224", "sha256", "sha384",
-                                                          "sha512"],
+                                                         ["none", consts.MD5, consts.SHA1, consts.SHA224,
+                                                          consts.SHA256, consts.SHA384, consts.SM3],
                                                          descr)
 
         if type(self.base64).__name__ != "bool":
             raise ValueError(
-                "encode param's base64 {} not supported, should be bool type".format(self.base64))
+                "hash param's base64 {} not supported, should be bool type".format(self.base64))
+
+        return True
+
+
+class RSAParam(BaseParam):
+    """
+    Define the hash method for RSA intersect method
+
+    Parameters
+    ----------
+    salt: the src data string will be str = str + salt, default ''
+
+    hash_method: str, the hash method of src data string, it support sha256, sha384, sha512, sm3, default sha256
+
+    final_hash_method: str, the hash method of result data string, it support md5, sha1, sha224, sha256, sha384, sha512, sm3, default sha256
+
+    split_calculation: bool, if True, Host & Guest split operations for faster performance, recommended on large data set
+
+    random_base_fraction: positive float, if not None, generate specified number of r for encryption and reuse generated r;
+        note that value greater than 0.99 will be taken as 1, and value less than 0.01 will be rounded up to 0.01
+    """
+
+    def __init__(self, salt='', hash_method='sha256',  final_hash_method='sha256',
+                 split_calculation=False, random_base_fraction=None):
+        super().__init__()
+        self.salt = salt
+        self.hash_method = hash_method
+        self.final_hash_method = final_hash_method
+        self.split_calculation = split_calculation
+        self.random_base_fraction = random_base_fraction
+
+    def check(self):
+        if type(self.salt).__name__ != "str":
+            raise ValueError(
+                "rsa param's salt {} not supported, should be str type".format(
+                    self.salt))
+
+        descr = "rsa param's hash_method "
+        self.hash_method = self.check_and_change_lower(self.hash_method,
+                                                       [consts.SHA256, consts.SHA384, consts.SM3],
+                                                       descr)
+
+        descr = "rsa param's final_hash_method "
+        self.final_hash_method = self.check_and_change_lower(self.final_hash_method,
+                                                             [consts.MD5, consts.SHA1, consts.SHA224,
+                                                              consts.SHA256, consts.SHA384, consts.SM3],
+                                                             descr)
+
+        descr = "rsa param's split_calculation"
+        self.check_boolean(self.split_calculation, descr)
+
+        descr = "rsa param's random_base_fraction"
+        if self.random_base_fraction:
+            self.check_positive_number(self.random_base_fraction, descr)
+            self.check_decimal_float(self.random_base_fraction, descr)
 
         return True
 
@@ -71,7 +126,7 @@ class IntersectCache(BaseParam):
     def check(self):
         if type(self.use_cache).__name__ != "bool":
             raise ValueError(
-                "encode param's salt {} not supported, should be bool type".format(
+                "IntersectCache param's use_cache {} not supported, should be bool type".format(
                     self.use_cache))
 
         descr = "intersect cache param's "
@@ -97,12 +152,14 @@ class IntersectParam(BaseParam):
                             while in raw, 'synchronize_intersect_ids' is True means the role of "join_role" will send intersect results and the others will get them.
                             Default by True.
 
-    join_role: str, it supports "guest" and "host" only and effective only for raw. If it is "guest", the host will send its ids to guest and find the intersection of
-                ids in guest; if it is "host", the guest will send its ids. Default by "guest".
+    join_role: str, role who joins ids, supports "guest" and "host" only and effective only for raw. If it is "guest", the host will send its ids to guest and find the intersection of
+               ids in guest; if it is "host", the guest will send its ids to host. Default by "guest".
 
-    with_encode: bool, if True, it will use encode method for intersect ids. It effective only for "raw".
+    with_encode: bool, if True, it will use hash method for intersect ids. Effective only for "raw".
 
     encode_params: EncodeParam, it effective only for with_encode is True
+
+    rsa_params: RSAParam, effective for rsa method only
 
     only_output_key: bool, if false, the results of intersection will include key and value which from input data; if true, it will just include key from input
                     data and the value will be empty or some useless character like "intersect_id"
@@ -115,6 +172,7 @@ class IntersectParam(BaseParam):
     def __init__(self, intersect_method: str = consts.RAW, random_bit=128, sync_intersect_ids=True,
                  join_role=consts.GUEST,
                  with_encode=False, only_output_key=False, encode_params=EncodeParam(),
+                 rsa_params=RSAParam(),
                  intersect_cache_param=IntersectCache(), repeated_id_process=False, repeated_id_owner=consts.GUEST,
                  allow_info_share: bool = False, info_owner=consts.GUEST):
         super().__init__()
@@ -124,6 +182,7 @@ class IntersectParam(BaseParam):
         self.join_role = join_role
         self.with_encode = with_encode
         self.encode_params = copy.deepcopy(encode_params)
+        self.rsa_params = copy.deepcopy(rsa_params)
         self.only_output_key = only_output_key
         self.intersect_cache_param = intersect_cache_param
         self.repeated_id_process = repeated_id_process
@@ -180,4 +239,5 @@ class IntersectParam(BaseParam):
                                                       descr)
 
         self.encode_params.check()
+        self.rsa_params.check()
         return True

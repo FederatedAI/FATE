@@ -18,9 +18,10 @@ import json
 import requests
 from flask import jsonify
 from flask import Response
+from fate_arch.common.base_utils import json_loads, json_dumps
 
 from fate_arch.common.conf_utils import get_base_config
-from fate_arch.common.log import audit_logger
+from fate_arch.common.log import audit_logger, schedule_logger
 from fate_arch.common import FederatedMode
 from fate_arch.common import conf_utils
 from fate_flow.settings import DEFAULT_GRPC_OVERALL_TIMEOUT, CHECK_NODES_IDENTITY,\
@@ -83,7 +84,7 @@ def remote_api(job_id, method, endpoint, src_party_id, dest_party_id, src_role, 
             _return, _call = stub.unaryCall.with_call(_packet, metadata=_routing_metadata, timeout=(overall_timeout/1000))
             audit_logger(job_id).info("grpc api response: {}".format(_return))
             channel.close()
-            response = json.loads(_return.body.value)
+            response = json_loads(_return.body.value)
             return response
         except Exception as e:
             exception = e
@@ -110,7 +111,7 @@ def proxy_api(role, _job_id, request_config):
     channel, stub = get_command_federation_channel()
     _return, _call = stub.unaryCall.with_call(_packet, metadata=_routing_metadata)
     channel.close()
-    json_body = json.loads(_return.body.value)
+    json_body = json_loads(_return.body.value)
     return json_body
 
 
@@ -122,12 +123,13 @@ def local_api(job_id, method, endpoint, json_body, api_version=API_VERSION, try_
             url = "http://{}:{}{}".format(RuntimeConfig.JOB_SERVER_HOST, RuntimeConfig.HTTP_PORT, endpoint)
             audit_logger(job_id).info('local api request: {}'.format(url))
             action = getattr(requests, method.lower(), None)
-            http_response = action(url=url, json=json_body, headers=HEADERS)
+            http_response = action(url=url, data=json_dumps(json_body), headers=HEADERS)
             audit_logger(job_id).info(http_response.text)
             response = http_response.json()
             audit_logger(job_id).info('local api response: {} {}'.format(endpoint, response))
             return response
         except Exception as e:
+            schedule_logger(job_id).exception(e)
             exception = e
     else:
         raise Exception('local request error: {}'.format(exception))

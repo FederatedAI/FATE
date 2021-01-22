@@ -59,20 +59,6 @@ client.job.submit(conf_path, dsl_path)
 
 
 
-#### ```clean(job_id, role=None, party_id=None, component_name=None)```
-
-- *Description*： Cancel all jobs in queue.
-- *Arguments*：
-
-| No.  |    Argument    |  Type   | Required |  Description   |
-| :--: | :------------: | :-----: | :------: | :------------: |
-|  1   |     job_id     | integer |   Yes    | A valid job id |
-|  2   |      role      | string  |    No    |      Role      |
-|  3   |    party_id    | integer |    No    |    Party id    |
-|  4   | component_name | string  |    No    | Component Name |
-
-
-
 #### ```config(job_id, role, party_id, output_path)```
 
 - *Description*：Download the configuration of a specified job.

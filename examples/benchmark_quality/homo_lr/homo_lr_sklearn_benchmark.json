@@ -101,7 +101,7 @@
       "conf": "./epsilon_5k_lr_config.yaml"
     },
     "compare_setting": {
-      "relative_tol": 1e-2
+      "relative_tol": 0.05
     }
   },
   "homo_lr-binary-3": {
@@ -114,7 +114,7 @@
       "conf": "./give_credit_pipeline_lr_config.yaml"
     },
     "compare_setting": {
-      "relative_tol": 1e-2
+      "relative_tol": 0.05
     }
   }
 }

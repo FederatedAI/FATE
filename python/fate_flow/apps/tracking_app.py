@@ -30,6 +30,7 @@ from fate_flow.operation import Tracker
 from fate_flow.settings import stat_logger, TEMP_DIRECTORY
 from fate_flow.utils import job_utils, data_utils, detect_utils, schedule_utils
 from fate_flow.utils.api_utils import get_json_result, error_response
+from fate_flow.utils.config_adapter import JobRuntimeConfigAdapter
 from federatedml.feature.instance import Instance
 
 manager = Flask(__name__)
@@ -164,8 +165,24 @@ def component_output_model():
     job_dsl, job_runtime_conf, runtime_conf_on_party, train_runtime_conf = job_utils.get_job_configuration(job_id=request_data['job_id'],
                                                                                                            role=request_data['role'],
                                                                                                            party_id=request_data['party_id'])
-    model_id = runtime_conf_on_party['job_parameters']['model_id']
-    model_version = runtime_conf_on_party['job_parameters']['model_version']
+    try:
+        model_id = runtime_conf_on_party['job_parameters']['model_id']
+        model_version = runtime_conf_on_party['job_parameters']['model_version']
+    except Exception as e:
+        job_dsl, job_runtime_conf, train_runtime_conf = job_utils.get_model_configuration(job_id=request_data['job_id'],
+                                                                                          role=request_data['role'],
+                                                                                          party_id=request_data['party_id'])
+        if any([job_dsl, job_runtime_conf, train_runtime_conf]):
+            adapter = JobRuntimeConfigAdapter(job_runtime_conf)
+            model_id = adapter.get_common_parameters().to_dict().get('model_id')
+            model_version = adapter.get_common_parameters().to_dict.get('model_version')
+        else:
+            stat_logger.exception(e)
+            stat_logger.error(f"Can not find model info by filters: job id: {request_data.get('job_id')}, "
+                              f"role: {request_data.get('role')}, party id: {request_data.get('party_id')}")
+            raise Exception(f"Can not find model info by filters: job id: {request_data.get('job_id')}, "
+                            f"role: {request_data.get('role')}, party id: {request_data.get('party_id')}")
+
     tracker = Tracker(job_id=request_data['job_id'], component_name=request_data['component_name'],
                       role=request_data['role'], party_id=request_data['party_id'], model_id=model_id,
                       model_version=model_version)

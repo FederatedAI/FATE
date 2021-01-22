@@ -58,31 +58,77 @@ class HeteroNN(Component):
         self._top_nn_model = Sequential()
 
     def add_bottom_model(self, layer):
+        if not hasattr(self, "_bottom_nn_model"):
+            setattr(self, "_bottom_nn_model", Sequential())
+
         self._bottom_nn_model.add(layer)
 
     def set_interactve_layer(self, layer):
+        if not hasattr(self, "_interactive_layer"):
+            setattr(self, "_interactive_layer", Sequential())
+
         self._interactive_layer.add(layer)
 
     def add_top_model(self, layer):
+        if not hasattr(self, "_top_nn_model"):
+            setattr(self, "_top_nn_model", Sequential())
+
         self._top_nn_model.add(layer)
 
     def compile(self, optimizer, loss=None, metrics=None):
         if metrics and not isinstance(metrics, list):
             raise ValueError("metrics should be a list")
 
-        self.optimizer = self._bottom_nn_model.get_optimizer_config(optimizer)
-        self.loss = self._bottom_nn_model.get_loss_config(loss)
+        model = self.get_bottom_model()
+        self.optimizer = model.get_optimizer_config(optimizer)
+        self.loss = model.get_loss_config(loss)
         self.metrics = metrics
-        self.config_type = self._bottom_nn_model.get_layer_type()
-        self.bottom_nn_define = self._bottom_nn_model.get_network_config()
-        self.top_nn_define = self._top_nn_model.get_network_config()
-        self.interactive_layer_define = self._interactive_layer.get_network_config()
+        self.config_type = model.get_layer_type()
+
+        self._compile_common_network_config()
+        self._compile_role_network_config()
+
+    def _compile_common_network_config(self):
+        if hasattr(self, "_bottom_nn_model") and not self._bottom_nn_model.is_empty():
+            self.bottom_nn_define = self._bottom_nn_model.get_network_config()
+            self._component_param["bottom_nn_define"] = self.bottom_nn_define
+        
+        if hasattr(self, "_top_nn_model") and not self._top_nn_model.is_empty():
+            self.top_nn_define = self._top_nn_model.get_network_config()
+            self._component_param["top_nn_define"] = self.top_nn_define
+
+        if hasattr(self, "_interactive_layer") and not self._interactive_layer.is_empty():
+            self.interactive_layer_define = self._interactive_layer.get_network_config()
+            self._component_param["interactive_layer_define"] = self.interactive_layer_define
+
+    def _compile_role_network_config(self):
+        all_party_instance = self._get_all_party_instance()
+        for role in all_party_instance:
+            for party in all_party_instance[role]["party"].keys():
+                all_party_instance[role]["party"][party]._compile_common_network_config()
+
+    def get_bottom_model(self):
+        if hasattr(self, "_bottom_nn_model") and not getattr(self, "_bottom_nn_model").is_empty():
+            return getattr(self, "_bottom_nn_model")
+
+        all_party_instance = self._get_all_party_instance()
+        for role in all_party_instance.keys():
+            for party in all_party_instance[role]["party"].keys():
+                if all_party_instance[role]["party"][party].get_bottom_model():
+                    return all_party_instance[role]["party"][party].get_bottom_model()
+
+        return None
 
     def __getstate__(self):
         state = dict(self.__dict__)
-        del state["_bottom_nn_model"]
-        del state["_interactive_layer"]
-        del state["_top_nn_model"]
+        if "_bottom_nn_model" in state:
+            del state["_bottom_nn_model"]
+
+        if "_interactive_layer" in state:
+            del state["_interactive_layer"]
+
+        if "_top_nn_model" in state:
+            del state["_top_nn_model"]
 
         return state
 

@@ -192,6 +192,9 @@ class Component(object):
 
         return conf
 
+    def _get_all_party_instance(self):
+        return self.__party_instance
+
 
 class PlaceHolder(object):
     pass

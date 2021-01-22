@@ -97,13 +97,6 @@ class DAGScheduler(Cron):
         job.f_runtime_conf_on_party = job.f_runtime_conf.copy()
         job.f_runtime_conf_on_party["job_parameters"] = common_job_parameters.to_dict()
 
-        status_code, response = FederatedScheduler.create_job(job=job)
-        if status_code != FederatedSchedulingStatusCode.SUCCESS:
-            job.f_status = JobStatus.FAILED
-            job.f_tag = "submit_failed"
-            FederatedScheduler.sync_job_status(job=job)
-            raise Exception("create job failed", response)
-
         if common_job_parameters.work_mode == WorkMode.CLUSTER:
             # Save the status information of all participants in the initiator for scheduling
             for role, party_ids in job.f_roles.items():
@@ -111,6 +104,13 @@ class DAGScheduler(Cron):
                     if role == job.f_initiator_role and party_id == job.f_initiator_party_id:
                         continue
                     JobController.initialize_tasks(job_id, role, party_id, False, job.f_initiator_role, job.f_initiator_party_id, common_job_parameters, dsl_parser)
+
+        status_code, response = FederatedScheduler.create_job(job=job)
+        if status_code != FederatedSchedulingStatusCode.SUCCESS:
+            job.f_status = JobStatus.FAILED
+            job.f_tag = "submit_failed"
+            FederatedScheduler.sync_job_status(job=job)
+            raise Exception("create job failed", response)
 
         schedule_logger(job_id).info(
             'submit job successfully, job id is {}, model id is {}'.format(job.f_job_id, common_job_parameters.model_id))
@@ -304,8 +304,6 @@ class DAGScheduler(Cron):
                 cls.update_job_on_initiator(initiator_job=job, update_fields=["status"])
         if EndStatus.contains(job.f_status):
             cls.finish(job=job, end_status=job.f_status)
-        if job.f_cancel_signal:
-            cls.cancel_signal(job_id=job.f_job_id, set_or_reset=False)
         schedule_logger(job_id=job.f_job_id).info("finish scheduling job {}".format(job.f_job_id))
 
     @classmethod
@@ -460,7 +458,13 @@ class DAGScheduler(Cron):
     @classmethod
     @DB.connection_context()
     def rerun_signal(cls, job_id, set_or_reset: bool):
-        update_status = Job.update({Job.f_rerun_signal: set_or_reset}).where(Job.f_job_id == job_id).execute() > 0
+        if set_or_reset is True:
+            update_fields = {Job.f_rerun_signal: True, Job.f_cancel_signal: False}
+        elif set_or_reset is False:
+            update_fields = {Job.f_rerun_signal: False}
+        else:
+            raise RuntimeError(f"can not support rereun signal {set_or_reset}")
+        update_status = Job.update(update_fields).where(Job.f_job_id == job_id).execute() > 0
         return update_status
 
     @classmethod

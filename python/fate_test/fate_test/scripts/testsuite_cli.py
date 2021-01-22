@@ -18,7 +18,6 @@ import uuid
 from datetime import timedelta
 
 import click
-from fate_test import _config
 from fate_test._client import Clients
 from fate_test._config import Config
 from fate_test._flow_client import JobProgress, SubmitJobResponse, QueryJobResponse
@@ -38,22 +37,6 @@ from fate_test.scripts._utils import _load_testsuites, _upload_data, _delete_dat
               help="a json string represents mapping for replacing fields in data/conf/dsl")
 @click.option("-g", '--glob', type=str,
               help="glob string to filter sub-directory of path specified by <include>")
-@click.option('-u', '--use_local_data', type=int, default=1,
-              help="When guest, host and flow are deployed on the same machine, the parameter 0 is more appropriate")
-@click.option('-time', '--timeout', type=int, default=3600,
-              help="Task timeout duration")
-@click.option('-iter', '--max_iter', type=int, default=100,
-              help="When the algorithm model is LR, the number of iterations is set")
-@click.option('-depth', '--max_depth', type=int, default=4,
-              help="When the algorithm model is SecureBoost, set the number of model layers")
-@click.option('-trees', '--num_trees', type=int, default=100,
-              help="When the algorithm model is SecureBoost, set the number of trees")
-@click.option('-node', '--processors_per_node', type=int, default=4,
-              help="processors per node")
-@click.option('--update_job_parameters', default="{}", type=JSON_STRING,
-              help="a json string represents mapping for replacing fields in conf.job_parameters")
-@click.option('--update_component_parameters', default="{}", type=JSON_STRING,
-              help="a json string represents mapping for replacing fields in conf.component_parameters")
 @click.option("--skip-dsl-jobs", is_flag=True, default=False,
               help="skip dsl jobs defined in testsuite")
 @click.option("--skip-pipeline-jobs", is_flag=True, default=False,
@@ -66,9 +49,8 @@ from fate_test.scripts._utils import _load_testsuites, _upload_data, _delete_dat
 @click.option("--enable-clean-data", "clean_data", flag_value=True, default=None)
 @SharedOptions.get_shared_options(hidden=True)
 @click.pass_context
-def run_suite(ctx, replace, include, exclude, glob, timeout, update_job_parameters, update_component_parameters,
-              skip_dsl_jobs, skip_pipeline_jobs, skip_data, data_only, clean_data, use_local_data, max_iter, max_depth,
-              num_trees, processors_per_node, **kwargs):
+def run_suite(ctx, replace, include, exclude, glob,
+              skip_dsl_jobs, skip_pipeline_jobs, skip_data, data_only, clean_data, **kwargs):
     """
     process testsuite
     """
@@ -82,9 +64,7 @@ def run_suite(ctx, replace, include, exclude, glob, timeout, update_job_paramete
     data_namespace_mangling = ctx.obj["namespace_mangling"]
     # prepare output dir and json hooks
     _add_replace_hook(replace)
-    if use_local_data not in [0, 1]:
-        raise Exception("'use_local_data 'can only be 0 or 1")
-    _config.use_local_data = use_local_data
+
     echo.welcome()
     echo.echo(f"testsuite namespace: {namespace}", fg='red')
     echo.echo("loading testsuites:")
@@ -113,9 +93,7 @@ def run_suite(ctx, replace, include, exclude, glob, timeout, update_job_paramete
                 if not skip_dsl_jobs:
                     echo.stdout_newline()
                     try:
-                        _submit_job(client, suite, namespace, config_inst, timeout, update_job_parameters,
-                                    update_component_parameters, max_iter, max_depth, num_trees,
-                                    processors_per_node)
+                        _submit_job(client, suite, namespace, config_inst)
                     except Exception as e:
                         raise RuntimeError(f"exception occur while submit job for {suite.path}") from e
 
@@ -142,8 +120,7 @@ def run_suite(ctx, replace, include, exclude, glob, timeout, update_job_paramete
     echo.echo(f"testsuite namespace: {namespace}", fg='red')
 
 
-def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Config, timeout, update_job_parameters,
-                update_component_parameters, max_iter, max_depth, num_trees, processors_per_node):
+def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Config):
     # submit jobs
     with click.progressbar(length=len(suite.jobs),
                            label="jobs   ",
@@ -162,13 +139,7 @@ def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Conf
 
             # noinspection PyBroadException
             try:
-                job.job_conf.update_component_parameters('max_iter', max_iter)
-                job.job_conf.update_component_parameters('max_depth', max_depth)
-                job.job_conf.update_component_parameters('num_trees', num_trees)
-                job.job_conf.update_job_common_parameters(
-                    eggroll_run={"eggroll.session.processors.per.node": processors_per_node})
-                job.job_conf.update(config.parties, config.work_mode, config.backend, timeout, update_job_parameters,
-                                    update_component_parameters)
+                job.job_conf.update(config.parties, config.work_mode, config.backend)
             except Exception:
                 _raise()
                 continue
@@ -211,22 +182,7 @@ def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Conf
                 job_progress.final(response.status)
                 suite.update_status(job_name=job.job_name, status=response.status.status)
                 if response.status.is_success():
-                    if suite.model_in_dep(job.job_name):
-                        dependent_jobs = suite.get_dependent_jobs(job.job_name)
-                        for predict_job in dependent_jobs:
-                            if predict_job.job_conf.dsl_version == 2:
-                                # noinspection PyBroadException
-                                try:
-                                    model_info = clients["guest_0"].deploy_model(
-                                        model_id=response.model_info["model_id"],
-                                        model_version=response.model_info["model_version"],
-                                        dsl=predict_job.job_dsl.as_dict())
-                                except Exception:
-                                    _raise()
-                            else:
-                                model_info = response.model_info
-                            suite.feed_dep_model_info(predict_job, job.job_name, model_info)
-                        suite.remove_dependency(job.job_name)
+                    suite.feed_success_model_info(job.job_name, response.model_info)
             update_bar(0)
             echo.stdout_newline()
 

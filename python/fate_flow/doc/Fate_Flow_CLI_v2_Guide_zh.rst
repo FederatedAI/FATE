@@ -128,33 +128,8 @@ Job
 
    .. code:: bash
 
-       flow job query -r guest -p 9999 -s complete
+       flow job query -r guest -p 9999 -s success
        flow job query -j $JOB_ID
-
-``clean``
-~~~~~~~~~
-
--  *介绍*\ ： 清理任务处理器，数据表及metric数据。
--  *参数*\ ：
-
-+--------+-------------------+------------+------------------------+------------+------------+
-| 编号   | 参数              | Flag\_1    | Flag\_2                | 必要参数   | 参数介绍   |
-+========+===================+============+========================+============+============+
-| 1      | job\_id           | ``-j``     | ``--job_id``           | 否         | Job ID     |
-+--------+-------------------+------------+------------------------+------------+------------+
-| 2      | role              | ``-r``     | ``--role``             | 否         | 角色       |
-+--------+-------------------+------------+------------------------+------------+------------+
-| 3      | party\_id         | ``-p``     | ``--party_id``         | 否         | Party ID   |
-+--------+-------------------+------------+------------------------+------------+------------+
-| 4      | component\_name   | ``-cpn``   | ``--component_name``   | 否         | 组件名     |
-+--------+-------------------+------------+------------------------+------------+------------+
-
--  *示例*\ ：
-
-.. code:: bash
-
-    flow job clean -r guest -p 9999
-    flow job clean -j $JOB_ID -cpn hetero_feature_binning_0
 
 ``view``
 ~~~~~~~~
@@ -180,7 +155,7 @@ Job
    .. code:: bash
 
        flow job view -r guest -p 9999
-       flow job view -j $JOB_ID -s complete
+       flow job view -j $JOB_ID -s success
 
 ``config``
 ~~~~~~~~~~
@@ -841,7 +816,7 @@ Task
 .. code:: bash
 
     flow task query -j $JOB_ID -p 9999 -r guest
-    flow task query -cpn hetero_feature_binning_0 -s complete
+    flow task query -cpn hetero_feature_binning_0 -s success
 
 ``list``
 ~~~~~~~~
