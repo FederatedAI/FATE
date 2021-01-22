@@ -28,6 +28,7 @@ class RunParameters(object):
         self.engines_address = {}
         self.federated_mode = None
         self.federation_info = None
+        self.task_cores = None
         self.task_parallelism = None
         self.computing_partitions = None
         self.federated_status_collect_type = None
@@ -40,6 +41,9 @@ class RunParameters(object):
         self.spark_run = {}
         self.rabbitmq_run = {}
         self.adaptation_parameters = {}
+        self.assistant_role = None
+        self.map_table_name = None
+        self.map_namespace = None
         for k, v in kwargs.items():
             if hasattr(self, k):
                 setattr(self, k, v)

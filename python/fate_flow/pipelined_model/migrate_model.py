@@ -22,6 +22,7 @@ from fate_flow.db.db_models import DB, MachineLearningModelInfo as MLModel
 from fate_flow.pipelined_model import pipelined_model
 from fate_arch.common.base_utils import json_loads, json_dumps
 from fate_arch.common.file_utils import get_project_base_directory
+from fate_flow.settings import stat_logger
 from fate_flow.utils import model_utils
 from federatedml.protobuf.model_migrate.model_migrate import model_migration
 from fate_flow.utils.config_adapter import JobRuntimeConfigAdapter
@@ -104,7 +105,7 @@ def migration(config_data: dict):
 
         # update pipeline.pb file
         pipeline.train_runtime_conf = json_dumps(train_runtime_conf, byte=True)
-        pipeline.model_id = bytes(adapter.get_common_parameters().to_dict.get("model_id"), "utf-8")
+        pipeline.model_id = bytes(adapter.get_common_parameters().to_dict().get("model_id"), "utf-8")
         pipeline.model_version = bytes(adapter.get_common_parameters().to_dict().get("model_version"), "utf-8")
 
         # save updated pipeline.pb file
@@ -139,7 +140,7 @@ def migration(config_data: dict):
         return (0, f"Migrating model successfully. " \
                   "The configuration of model has been modified automatically. " \
                   "New model id is: {}, model version is: {}. " \
-                  "Model files can be found at '{}'.".format(adapter.get_common_parameters()["model_id"],
+                  "Model files can be found at '{}'.".format(adapter.get_common_parameters().to_dict().get("model_id"),
                                                              migrate_model.model_version,
                                                              os.path.abspath(archive_path)),
                 {"model_id": migrate_model.model_id,
@@ -147,4 +148,5 @@ def migration(config_data: dict):
                  "path": os.path.abspath(archive_path)})
 
     except Exception as e:
+        stat_logger.exception(e)
         return 100, str(e), {}
