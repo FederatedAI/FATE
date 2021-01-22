@@ -86,10 +86,8 @@ class HeteroFastSecureBoostingTreeGuest(HeteroSecureBoostingTreeGuest):
         for t_idx, tree in enumerate(trees):
 
             cur_node_idx = node_pos[t_idx]
-
             if not tree.use_guest_feat_only_predict_mode:
                 continue
-
             rs, reach_leaf = HeteroSecureBoostingTreeGuest.traverse_a_tree(tree, sample, cur_node_idx)
             node_pos[t_idx] = rs
 
@@ -114,7 +112,6 @@ class HeteroFastSecureBoostingTreeGuest(HeteroSecureBoostingTreeGuest):
             # traverse local trees
             traverse_func = functools.partial(self.traverse_guest_local_trees, trees=trees)
             guest_leaf_pos = node_pos.join(data_inst, traverse_func)
-
             # get leaf node from other host parties
             host_leaf_pos_list = self.predict_transfer_inst.host_predict_data.get(idx=-1)
 
@@ -130,7 +127,6 @@ class HeteroFastSecureBoostingTreeGuest(HeteroSecureBoostingTreeGuest):
         else:
 
             LOGGER.debug('running layered mode predict')
-
             return super(HeteroFastSecureBoostingTreeGuest, self).boosting_fast_predict(data_inst, trees, predict_cache)
 
     def load_booster(self, model_meta, model_param, epoch_idx, booster_idx):

@@ -1,14 +1,28 @@
 work_mode: 1
 use_registry: false
+use_deserialize_safe_module: false
 fateflow:
   # you must set real ip address or 127.0.0.1, 0.0.0.0 is not supported
   host: 127.0.0.1
   http_port: 9380
   grpc_port: 9360
-  # support rollsite or nginx as a coordinate proxy, rollsite recommended in the fate on eggroll, nginx is recommended in the fate on spark
+  # support rollsite/nginx/fateflow as a coordination proxy
+  # rollsite support fate on eggroll, use grpc protocol
+  # nginx support fate on eggroll and fate on spark, use http or grpc protocol, default is http
+  # fateflow support fate on eggroll and fate on spark, use http protocol, but not support exchange network mode
+
   # format(proxy: rollsite) means rollsite use the rollsite configuration of fate_one_eggroll and nginx use the nginx configuration of fate_one_spark
-  # you can customize the config by format(proxy:\n name: rollsite \n host: xx \n port: xx)
+  # you also can customize the config like this(set fateflow of the opposite party as proxy):
+  # proxy:
+  #   name: fateflow
+  #   host: xx
+  #   http_port: xx
+  #   grpc_port: xx
   proxy: rollsite
+  # support default/http/grpc
+  protocol: default
+  # It can also be specified in the job configuration using the federated_status_collect_type parameter
+  default_federated_status_collect_type: PULL
 fateboard:
   host: 127.0.0.1
   port: 8080
@@ -22,7 +36,7 @@ database:
   stale_timeout: 30
 fate_on_eggroll:
   clustermanager:
-    cores_per_node: 20
+    cores_per_node: 16
     nodes: 1
   rollsite:
     host: 127.0.0.1
@@ -47,7 +61,8 @@ fate_on_spark:
     route_table:
   nginx:
     host: 127.0.0.1
-    port: 9390
+    http_port: 9300
+    grpc_port: 9310
 model_store_address:
   storage: mysql
   name: model

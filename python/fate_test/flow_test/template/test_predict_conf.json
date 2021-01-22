@@ -2,26 +2,23 @@
     "dsl_version": 2,
     "initiator": {
         "role": "guest",
-        "party_id": 9999
+        "party_id": 10000
     },
     "role": {
-        "arbiter": [
-            10000
-        ],
         "host": [
-            10000
+            9999
         ],
         "guest": [
-            9999
+            10000
         ]
     },
     "job_parameters": {
         "common": {
-            "work_mode": 0,
+            "work_mode": 1,
             "backend": 0,
             "job_type": "predict",
-            "model_id": "arbiter-10000#guest-9999#host-10000#model",
-            "model_version": "2020091517445076770481"
+            "model_id": "guest-10000#host-9999#model",
+            "model_version": "20200928174750711017114"
         }
     },
     "component_parameters": {

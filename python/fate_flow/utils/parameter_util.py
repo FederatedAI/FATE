@@ -60,17 +60,23 @@ class BaseParameterUtil(object):
 
         _support_rols = _module_setting["role"].keys()
         for role in submit_dict["role"]:
-            _role_setting = None
-            for _rolelist in _support_rols:
-                if role not in _rolelist.split("|"):
-                    continue
-                else:
-                    _role_setting = _module_setting["role"].get(_rolelist)
+            # _role_setting = None
+            # for _rolelist in _support_rols:
+            #     if role not in _rolelist.split("|"):
+            #         continue
+            #     else:
+            #         _role_setting = _module_setting["role"].get(_rolelist)
 
-            if not _role_setting:
+            # if not _role_setting:
+            #     continue
+
+            _code_path = ParameterUtil.get_code_path(module_setting=_module_setting,
+                                                     role=role,
+                                                     module=module,
+                                                     module_alias=module_alias)
+            if not _code_path:
                 continue
-
-            _code_path = os.path.join(_module_setting.get('module_path'), _role_setting.get('program'))
+            # _code_path = os.path.join(_module_setting.get('module_path'), _role_setting.get('program'))
             partyid_list = submit_dict["role"][role]
             runtime_role_parameters[role] = []
 
@@ -225,6 +231,28 @@ class BaseParameterUtil(object):
                 fin.close()
 
         return _module_setting
+
+    @staticmethod
+    def get_code_path(role=None, setting_conf_prefix=None, module=None, module_alias=None, module_setting=None):
+        if not module_setting:
+            _module_setting = ParameterUtil.get_setting_conf(setting_conf_prefix, module, module_alias)
+        else:
+            _module_setting = module_setting
+
+        _support_roles = _module_setting["role"].keys()
+        _role_setting = None
+        for _rolelist in _support_roles:
+            if role not in _rolelist.split("|"):
+                continue
+            else:
+                _role_setting = _module_setting["role"].get(_rolelist)
+
+        if not _role_setting:
+            return None
+
+        _code_path = os.path.join(_module_setting.get('module_path'), _role_setting.get('program'))
+
+        return _code_path
 
     @classmethod
     def get_param_object(cls, param_class_path, module, module_alias):

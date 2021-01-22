@@ -4,6 +4,7 @@ sphinx_rtd_theme>=0.4.3
 autodocsumm
 recommonmark
 sphinx-click
+sphinx-markdown-tables
 
 apsw==3.9.2.post1
 beautifultable==1.0.0

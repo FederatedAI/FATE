@@ -42,9 +42,7 @@ This article will introduce the deployment of FATE cluster using ansible deploym
 
 Example deployment in two parties
 
-<div style="text-align:center", align=center>
-<img src="./images/arch_en.png" />
-</div>
+![](./images/arch_en.png)
 
 ## 2.Detailed Design
 
@@ -236,9 +234,7 @@ yum install -y epel-release
 
 ------
 
-<div style="text-align:center;width:500px",align=center>
-<img src="./images/deploy_cluster_en.png" />
-</div>
+![](./images/deploy_cluster_en.png)
 
 ### 4.2 System Check
 
@@ -704,7 +700,7 @@ A result similar to the following indicates success:
 
 ```
 source /data/projects/fate/bin/init_env.sh
-cd /data/projects/fate/examples/toy_example/
+cd /data/projects/fate/examples/scripts/
 python upload_default_data.py -m 1
 ```
 

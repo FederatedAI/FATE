@@ -17,7 +17,6 @@ import os
 import signal
 import sys
 import time
-from concurrent import futures
 import traceback
 
 import grpc
@@ -46,12 +45,12 @@ from fate_flow.scheduler import DAGScheduler
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.entity.types import ProcessRole
 from fate_flow.manager import ResourceManager
-from fate_flow.settings import IP, HTTP_PORT, GRPC_PORT, _ONE_DAY_IN_SECONDS, stat_logger, API_VERSION
-from fate_flow.utils import job_utils
+from fate_flow.settings import IP, HTTP_PORT, GRPC_PORT, _ONE_DAY_IN_SECONDS, stat_logger, API_VERSION, GRPC_SERVER_MAX_WORKERS
 from fate_flow.utils.api_utils import get_json_result
 from fate_flow.utils.authentication_utils import PrivilegeAuth
 from fate_flow.utils.grpc_utils import UnaryService
 from fate_flow.utils.service_utils import ServiceUtils
+from fate_flow.utils.xthread import ThreadPoolExecutor
 
 '''
 Initialize the manager
@@ -102,17 +101,20 @@ if __name__ == '__main__':
     ResourceManager.initialize()
     Detector(interval=5 * 1000).start()
     DAGScheduler(interval=2 * 1000).start()
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10),
+    thread_pool_executor = ThreadPoolExecutor(max_workers=GRPC_SERVER_MAX_WORKERS)
+    stat_logger.info(f"start grpc server thread pool by {thread_pool_executor._max_workers} max workers")
+    server = grpc.server(thread_pool=thread_pool_executor,
                          options=[(cygrpc.ChannelArgKey.max_send_message_length, -1),
                                   (cygrpc.ChannelArgKey.max_receive_message_length, -1)])
 
     proxy_pb2_grpc.add_DataTransferServiceServicer_to_server(UnaryService(), server)
     server.add_insecure_port("{}:{}".format(IP, GRPC_PORT))
     server.start()
+    stat_logger.info("FATE Flow grpc server start successfully")
     # start http server
     try:
+        stat_logger.info("FATE Flow http server start...")
         run_simple(hostname=IP, port=HTTP_PORT, application=app, threaded=True)
-        stat_logger.info("FATE Flow server start Successfully")
     except OSError as e:
         traceback.print_exc()
         os.kill(os.getpid(), signal.SIGKILL)
