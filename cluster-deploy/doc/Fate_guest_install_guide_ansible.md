@@ -414,6 +414,7 @@ guest:
       ips:   ---只支持部署一台主机
       - 192.168.0.1
       port: 4670 ---服务端口
+      cores_per_node: 16 ---nodemanager节点cpu核数，多个nodemanager节点按照CPU核数最小的设置
     nodemanager:
       enable: True ---是否部署nodemanager模块，True为部署，False为否
       ips:  ---支持部署多台主机
@@ -451,6 +452,9 @@ guest:
       use_acl: false
       user: "fate"
       passwd: "fate"
+    servings:
+     ip: 192.168.0.2
+     port: 8000
 ```
 
 4.5 部署

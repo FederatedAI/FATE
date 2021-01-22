@@ -422,6 +422,7 @@ host:
       ips:
       -192.168.0.1 --- Only support the deployment of one host
       port: 4670
+      cores_per_node: 16 ---Nodemanager node CPU core number, multiple nodemanager nodes are set according to the minimum number of CPU cores
     nodemanager:
       enable: True
       ips: ---Support multiple deployment
@@ -459,6 +460,9 @@ host:
       use_acl: false
       user: "fate"
       passwd: "fate"
+    servings:
+     ip: 192.168.0.2
+     port: 8000
 ```
 
 **4) Modify The Guest Parameters**
@@ -499,6 +503,7 @@ guest:
       ips: ---Only support the deployment of one host
       -192.168.0.2
       port: 4670
+      cores_per_node: 16 ---Nodemanager node CPU core number, multiple nodemanager nodes are set according to the minimum number of CPU cores
     nodemanager:
       enable: True
       ips: ---Support the deployment of multiple hosts
@@ -536,6 +541,9 @@ guest:
       use_acl: false
       user: "fate"
       passwd: "fate"
+    servings:
+     ip: 192.168.0.2
+     port: 8000
 ```
 
 **5) Modify Exchange Parameters**
