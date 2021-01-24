@@ -157,7 +157,7 @@ class Federation(FederationABC):
             for i, info in enumerate(channel_infos):
                 obj = self._receive_obj(info, name, tag=_SPLIT_.join([tag, NAME_DTYPE_TAG]))
                 rtn_dtype.append(obj)
-                LOGGER.debug(f"[rabbitmq.get] _name_dtype_keys: {_name_dtype_keys[i]}, dtype: {obj}") 
+                LOGGER.debug(f"[rabbitmq.get] _name_dtype_keys: {_name_dtype_keys}, dtype: {obj}") 
             
             for k in _name_dtype_keys:
                 if k not in self._name_dtype_map:
