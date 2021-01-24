@@ -148,16 +148,16 @@ class Federation(FederationABC):
         log_str = f"[rabbitmq.get](name={name}, tag={tag}, parties={parties})"
         LOGGER.debug(f"[{log_str}]start to get")       
        
-        _name_dtype_keys = [_SPLIT_.join([party.role, party.party_id, name]) for party in parties]
+        _name_dtype_keys = [_SPLIT_.join([party.role, party.party_id, name, tag, "get"]) for party in parties]
         
         if _name_dtype_keys[0] not in self._name_dtype_map:
             mq_names = self._get_mq_names(parties, dtype=NAME_DTYPE_TAG)                       
             channel_infos = self._get_channels(mq_names=mq_names)
             rtn_dtype = []
             for i, info in enumerate(channel_infos):
-                obj = self._receive_obj(info, name, tag=NAME_DTYPE_TAG)
+                obj = self._receive_obj(info, name, tag=_SPLIT_.join([tag, NAME_DTYPE_TAG]))
                 rtn_dtype.append(obj)
-                LOGGER.debug(f"[rabbitmq.get] name: {name}, dtype: {obj}") 
+                LOGGER.debug(f"[rabbitmq.get] _name_dtype_keys: {_name_dtype_keys[i]}, dtype: {obj}") 
             
             for k in _name_dtype_keys:
                 if k not in self._name_dtype_map:
@@ -204,7 +204,7 @@ class Federation(FederationABC):
                gc: GarbageCollectionABC) -> typing.NoReturn:
         log_str = f"[rabbitmq.remote](name={name}, tag={tag}, parties={parties})"
         
-        _name_dtype_keys = [_SPLIT_.join([party.role, party.party_id, name]) for party in parties]
+        _name_dtype_keys = [_SPLIT_.join([party.role, party.party_id, name, tag, "remote"]) for party in parties]
         
         if _name_dtype_keys[0] not in self._name_dtype_map:
             mq_names = self._get_mq_names(parties, dtype=NAME_DTYPE_TAG) 
@@ -215,7 +215,7 @@ class Federation(FederationABC):
                 body = {"dtype": FederationDataType.OBJECT}
             
             LOGGER.debug(f"[rabbitmq.remote] _name_dtype_keys: {_name_dtype_keys}, dtype: {body}")
-            self._send_obj(name=name, tag=NAME_DTYPE_TAG, data=p_dumps(body), channel_infos=channel_infos)  
+            self._send_obj(name=name, tag=_SPLIT_.join([tag, NAME_DTYPE_TAG]), data=p_dumps(body), channel_infos=channel_infos)  
              
             for k in _name_dtype_keys:
                 if k not in self._name_dtype_map:
