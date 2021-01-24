@@ -184,13 +184,18 @@ class ResourceManager(object):
                 "task_nodes": 0,
                 "task_cores_per_node": 0,
                 "task_memory_per_node": 0,
-                "request_task_cores": int(job_parameters.task_cores) if job_parameters.task_cores else DEFAULT_TASK_CORES,  # use default value on initiator settings
+                # request_task_cores base on initiator and distribute to all parties, using job conf parameters or initiator fateflow server default settings
+                "request_task_cores": int(job_parameters.task_cores) if job_parameters.task_cores else DEFAULT_TASK_CORES,
                 "if_initiator_baseline": True
             }
         else:
             # use initiator baseline
             if role == "arbiter":
                 job_parameters.adaptation_parameters["request_task_cores"] = 1
+            elif "request_task_cores" not in job_parameters.adaptation_parameters:
+                # compatibility 1.5.0
+                job_parameters.adaptation_parameters["request_task_cores"] = job_parameters.adaptation_parameters["task_nodes"] * job_parameters.adaptation_parameters["task_cores_per_node"]
+
             job_parameters.adaptation_parameters["if_initiator_baseline"] = False
         adaptation_parameters = job_parameters.adaptation_parameters
 
@@ -201,6 +206,7 @@ class ResourceManager(object):
             else:
                 adaptation_parameters["task_cores_per_node"] = max(1, int(adaptation_parameters["request_task_cores"] / adaptation_parameters["task_nodes"]))
             if not create_initiator_baseline:
+                # set the adaptation parameters to the actual engine operation parameters
                 job_parameters.eggroll_run["eggroll.session.processors.per.node"] = adaptation_parameters["task_cores_per_node"]
         elif job_parameters.computing_engine == ComputingEngine.SPARK:
             adaptation_parameters["task_nodes"] = int(job_parameters.spark_run.get("num-executors", computing_engine_info.f_nodes))
@@ -209,6 +215,7 @@ class ResourceManager(object):
             else:
                 adaptation_parameters["task_cores_per_node"] = max(1, int(adaptation_parameters["request_task_cores"] / adaptation_parameters["task_nodes"]))
             if not create_initiator_baseline:
+                # set the adaptation parameters to the actual engine operation parameters
                 job_parameters.spark_run["num-executors"] = adaptation_parameters["task_nodes"]
                 job_parameters.spark_run["executor-cores"] = adaptation_parameters["task_cores_per_node"]
 
