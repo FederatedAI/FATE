@@ -134,6 +134,7 @@ class Reader(ComponentBase):
                 address_dict["name"] = output_name
                 address_dict["namespace"] = output_namespace
                 address_dict["storage_type"] = PathStorageType.PICTURE
+                address_dict["path"] = input_table_meta.get_address().path
                 output_table_address = StorageTableMeta.create_address(storage_engine=StorageEngine.PATH,
                                                                        address_dict=address_dict)
                 output_table_engine = StorageEngine.PATH
