@@ -1185,6 +1185,8 @@ yum install freeglut*
 确保CDH集群的所有Spark节点和DataNode节点安装了python。
 #### 11.2.10 No mudule name “fate_arch”
 确保CDH集群的所有Spark节点和DataNode有Fate Flow源码。
+保证spark的spark-env.sh文件配置正确。
+
 #### 11.2.11 No mudule name “xxx”
 分析日志，如果有python依赖未安装，则安装即可。
 
@@ -1247,6 +1249,22 @@ hdfs dfs -mkdir -p /tmp/spark/jars
 hdfs dfs -mkdir -p /tmp/spark/event
 hdfs dfs -put *jar /tmp/spark/jars
 /data/projects/common/spark/bin/spark-shell --master yarn --deploy-mode client
+```
+#### 11.2.19No module named ‘pyspark’
+```
+source /data/projects/fate/bin/init_env.sh
+pip install 'pyspark'
+```
+或者下载pyspark-3.0.1.tar.gz离线包进行离线安装
+```
+wget https://files.pythonhosted.org/packages/f0/26/198fc8c0b98580f617cb03cb298c6056587b8f0447e20fa40c5b634ced77/pyspark-3.0.1.tar.gz
+tar -zxvf pyspark-3.0.1.tar.gz
+python setup.py install 
+```
+
+#### 11.2.20io.IOException: Cannot run program "/data/projects/fate/common/python/venv/bin/python": error=13, Permission denied
+```
+ chmod 777 /data/projects/ -R
 ```
 
 ### 11.3 问题排查
