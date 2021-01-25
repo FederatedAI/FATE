@@ -523,7 +523,7 @@ Prediction configuration
 ------------------------
 
 Please note that in dsl v2，predict dsl is not automatically generated after training.
-User should first deploy needed components.
+User should first deploy needed components with `Flow Client <../python/fate_client/flow_client/README.rst>`__.
 Please refer to`FATE-Flow document <../python/fate_client/flow_client/README.rst#deploy>`__'
 for details on using deploy command:
 

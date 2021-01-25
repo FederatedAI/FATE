@@ -3,7 +3,7 @@
 	We will take hetero-secureboost as an example.
 	
 ## Submit a training task
-We can start a training job by submitting conf & dsl through flow client,
+We can start a training job by submitting conf & dsl through [Flow Client](../../../python/fate_client/flow_client/README.rst),
 Here we submit a hetero-secureboost binary classification task, whose conf and dsl are in [hetero secureboost example 
 folder.](../../dsl/v2/hetero_secureboost)
 
