@@ -19,6 +19,7 @@ import typing
 from collections import deque
 from pathlib import Path
 
+from fate_test import _config
 import click
 import prettytable
 
@@ -66,7 +67,7 @@ class Data(object):
     @staticmethod
     def load(config, path: Path):
         kwargs = {}
-        for field_name in ['head', 'partition', 'table_name', 'namespace']:
+        for field_name in ['head', 'partition', 'table_name', 'namespace', 'use_local_data']:
             kwargs[field_name] = config[field_name]
 
         file_path = path.parent.joinpath(config['file']).resolve()
@@ -105,20 +106,51 @@ class JobConf(object):
     def load(path: Path):
         with path.open("r") as f:
             kwargs = json.load(f, object_hook=CONF_JSON_HOOK.hook)
-
         return JobConf(**kwargs)
 
-    def update(self, parties: Parties, work_mode, backend):
+    @property
+    def dsl_version(self):
+        return self.others_kwargs.get("dsl_version", 1)
+
+    def update(self, parties: Parties, work_mode, backend, timeout, job_parameters, component_parameters):
         self.initiator = parties.extract_initiator_role(self.initiator['role'])
         self.role = parties.extract_role({role: len(parties) for role, parties in self.role.items()})
-        self.update_job_common_parameters(work_mode=work_mode, backend=backend)
+        self.update_job_common_parameters(work_mode=work_mode, backend=backend, timeout=timeout)
+
+        for key, value in job_parameters.items():
+            self.update_parameters(parameters=self.job_parameters, key=key, value=value)
+        for key, value in component_parameters.items():
+            if self.dsl_version == 1:
+                self.update_parameters(parameters=self.others_kwargs.get("algorithm_parameters"), key=key, value=value)
+            else:
+                self.update_parameters(parameters=self.others_kwargs.get("component_parameters"), key=key, value=value)
+
+    def update_parameters(self, parameters, key, value):
+        if isinstance(parameters, dict):
+            for keys in parameters:
+                if keys == key:
+                    parameters.get(key).update(value),
+                elif isinstance(parameters[keys], dict):
+                    self.update_parameters(parameters[keys], key, value)
 
     def update_job_common_parameters(self, **kwargs):
-        dsl_version = self.others_kwargs.get("dsl_version", 1)
-        if dsl_version == 1:
+        if self.dsl_version == 1:
             self.job_parameters.update(**kwargs)
         else:
             self.job_parameters.setdefault("common", {}).update(**kwargs)
+
+    def update_component_parameters(self, key, value, parameters=None):
+        if parameters is None:
+            if self.dsl_version == 1:
+                parameters = self.others_kwargs.get("algorithm_parameters")
+            else:
+                parameters = self.others_kwargs.get("component_parameters")
+        if isinstance(parameters, dict):
+            for keys in parameters:
+                if keys == key:
+                    parameters.update({key: value})
+                elif isinstance(parameters[keys], dict) and parameters[keys] is not None:
+                    self.update_component_parameters(key, value, parameters[keys])
 
 
 class JobDSL(object):
@@ -208,6 +240,7 @@ class Testsuite(object):
 
         dataset = []
         for d in testsuite_config.get("data"):
+            d.update({"use_local_data": _config.use_local_data})
             dataset.append(Data.load(d, path))
 
         jobs = []
@@ -233,14 +266,19 @@ class Testsuite(object):
                 [status.name, status.job_id, status.status, status.exception_id, ','.join(status.rest_dependency)])
         return table.get_string()
 
-    def feed_success_model_info(self, name, model_info):
-        if name not in self._dependency:
-            return
-        for job in self._dependency[name]:
-            job.set_pre_work(name, **model_info)
-            if job.is_submit_ready():
-                self._ready_jobs.appendleft(job)
+    def model_in_dep(self, name):
+        return name in self._dependency
+
+    def get_dependent_jobs(self, name):
+        return self._dependency[name]
+
+    def remove_dependency(self, name):
         del self._dependency[name]
+
+    def feed_dep_model_info(self, job, name, model_info):
+        job.set_pre_work(name, **model_info)
+        if job.is_submit_ready():
+            self._ready_jobs.appendleft(job)
 
     def reflash_configs(self, config: Config):
 
@@ -250,7 +288,7 @@ class Testsuite(object):
         failed = []
         for job in self.jobs:
             try:
-                job.job_conf.update(config.parties, config.work_mode, config.backend)
+                job.job_conf.update(config.parties, config.work_mode, config.backend, None, {}, {})
             except ValueError as e:
                 failed.append((job, e))
         return failed

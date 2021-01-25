@@ -16,7 +16,8 @@ install_requires = \
  'requests>=2.24.0,<3.0.0',
  'requests_toolbelt>=0.9.1,<0.10.0',
  'ruamel.yaml>=0.16.10,<0.17.0',
- 'sshtunnel>=0.1.5,<0.2.0']
+ 'sshtunnel>=0.1.5,<0.2.0',
+ 'colorama>=0.4.4']
 
 entry_points = \
 {'console_scripts': ['fate_test = fate_test.scripts.cli:cli']}

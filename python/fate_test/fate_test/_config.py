@@ -15,6 +15,7 @@
 #
 
 import json
+import os
 import typing
 from collections import namedtuple
 from pathlib import Path
@@ -26,9 +27,13 @@ temperate = """\
 work_mode: 0
 # 0 for eggroll, 1 for spark
 backend: 0
-# base dir for data upload conf eg
+# base dir for data upload conf eg, data_base_dir={FATE}
 # examples/data/breast_hetero_guest.csv -> $data_base_dir/examples/data/breast_hetero_guest.csv
-data_base_dir: ../../../
+data_base_dir: path(FATE)
+# fate_test job Dedicated directory, File storage location,cache_directory={FATE}/examples/cache/
+cache_directory: examples/cache/
+# Default performance directory={FATE}/examples/performance/
+performance_template_directory: examples/performance/
 clean_data: true
 parties:
   guest: [10000]
@@ -37,6 +42,8 @@ parties:
 services:
   - flow_services:
       - {address: 127.0.0.1:9380, parties: [9999, 10000]}
+    serving_setting:
+      address: 127.0.0.1:8059
     ssh_tunnel: # optional
       enable: false
       ssh_address: <remote ip>:<remote port>
@@ -65,6 +72,9 @@ services:
 """
 
 _default_config = Path(__file__).parent.joinpath("fate_test_config.yaml").resolve()
+
+data_switch = None
+use_local_data = 1
 
 
 def create_config(path: Path, override=False):
@@ -132,6 +142,8 @@ class Config(object):
         self.work_mode = config["work_mode"]
         self.backend = config["backend"]
         self.data_base_dir = config["data_base_dir"]
+        self.cache_directory = os.path.join(config["data_base_dir"], config["cache_directory"])
+        self.perf_template_dir = os.path.join(config["data_base_dir"], config["performance_template_directory"])
         self.clean_data = config.get("clean_data", True)
         self.parties = Parties.from_dict(config["parties"])
         self.party_to_service_id = {}

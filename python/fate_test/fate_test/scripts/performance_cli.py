@@ -13,11 +13,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import os
 import time
 import uuid
 from datetime import timedelta
-
 import click
+import glob
 from fate_test._client import Clients
 from fate_test._config import Config
 from fate_test._flow_client import JobProgress, SubmitJobResponse, QueryJobResponse
@@ -28,94 +29,94 @@ from fate_test.scripts._utils import _load_testsuites, _upload_data, _delete_dat
     _add_replace_hook
 
 
-@click.command("suite")
-@click.option('-i', '--include', required=True, type=click.Path(exists=True), multiple=True, metavar="<include>",
+@click.command("performance")
+@click.option('-t', '--job_type', type=click.Choice(['intersect', 'intersect_multi', 'hetero_lr', 'hetero_sbt']),
+              help="Select the job type, you can also set through include")
+@click.option('-i', '--include', type=click.Path(exists=True), multiple=True, metavar="<include>",
               help="include *testsuite.json under these paths")
-@click.option('-e', '--exclude', type=click.Path(exists=True), multiple=True,
-              help="exclude *testsuite.json under these paths")
 @click.option('-r', '--replace', default="{}", type=JSON_STRING,
               help="a json string represents mapping for replacing fields in data/conf/dsl")
-@click.option("-g", '--glob', type=str,
-              help="glob string to filter sub-directory of path specified by <include>")
 @click.option('-m', '--timeout', type=int, default=3600,
               help="Task timeout duration")
+@click.option('-e', '--max_iter', type=int, default=100,
+              help="When the algorithm model is LR, the number of iterations is set")
+@click.option('-d', '--max_depth', type=int, default=4,
+              help="When the algorithm model is SecureBoost, set the number of model layers")
+@click.option('-n', '--num_trees', type=int, default=100,
+              help="When the algorithm model is SecureBoost, set the number of trees")
 @click.option('-p', '--processors_per_node', type=int, default=4,
               help="processors per node")
-@click.option('-j', '--update-job-parameters', default="{}", type=JSON_STRING,
+@click.option('-j', '--update_job_parameters', default="{}", type=JSON_STRING,
               help="a json string represents mapping for replacing fields in conf.job_parameters")
-@click.option('-c', '--update-component-parameters', default="{}", type=JSON_STRING,
+@click.option('-c', '--update_component_parameters', default="{}", type=JSON_STRING,
               help="a json string represents mapping for replacing fields in conf.component_parameters")
-@click.option("--skip-dsl-jobs", is_flag=True, default=False,
-              help="skip dsl jobs defined in testsuite")
-@click.option("--skip-pipeline-jobs", is_flag=True, default=False,
-              help="skip pipeline jobs defined in testsuite")
 @click.option("--skip-data", is_flag=True, default=False,
               help="skip uploading data specified in testsuite")
-@click.option("--data-only", is_flag=True, default=False,
-              help="upload data only")
 @click.option("--disable-clean-data", "clean_data", flag_value=False, default=None)
-@click.option("--enable-clean-data", "clean_data", flag_value=True, default=None)
 @SharedOptions.get_shared_options(hidden=True)
 @click.pass_context
-def run_suite(ctx, replace, include, exclude, glob, timeout, update_job_parameters, update_component_parameters,
-              skip_dsl_jobs, skip_pipeline_jobs, skip_data, data_only, clean_data, processors_per_node, **kwargs):
+def run_task(ctx, job_type, include, replace, timeout, update_job_parameters, update_component_parameters,
+             max_iter, max_depth, num_trees, processors_per_node, skip_data, clean_data, **kwargs):
     """
-    process testsuite
+    Test the performance of big data tasks
     """
     ctx.obj.update(**kwargs)
     ctx.obj.post_process()
     config_inst = ctx.obj["config"]
-    if clean_data is None:
-        clean_data = config_inst.clean_data
     namespace = ctx.obj["namespace"]
     yes = ctx.obj["yes"]
     data_namespace_mangling = ctx.obj["namespace_mangling"]
+    if clean_data is None:
+        clean_data = config_inst.clean_data
+
+    def get_perf_template(conf: Config, job_type):
+        perf_dir = os.path.join(os.path.abspath(conf.perf_template_dir) + '/' + job_type + '/' + "*testsuite.json")
+        return glob.glob(perf_dir)
+
+    if not include:
+
+        include = get_perf_template(config_inst, job_type)
     # prepare output dir and json hooks
     _add_replace_hook(replace)
+
     echo.welcome()
     echo.echo(f"testsuite namespace: {namespace}", fg='red')
     echo.echo("loading testsuites:")
-    suites = _load_testsuites(includes=include, excludes=exclude, glob=glob)
-    for suite in suites:
-        echo.echo(f"\tdataset({len(suite.dataset)}) dsl jobs({len(suite.jobs)}) "
-                  f"pipeline jobs ({len(suite.pipeline_jobs)}) {suite.path}")
+    suites = _load_testsuites(includes=include, excludes=tuple(), glob=None)
     if not yes and not click.confirm("running?"):
         return
 
     echo.stdout_newline()
     with Clients(config_inst) as client:
+
         for i, suite in enumerate(suites):
             # noinspection PyBroadException
             try:
                 start = time.time()
                 echo.echo(f"[{i + 1}/{len(suites)}]start at {time.strftime('%Y-%m-%d %X')} {suite.path}", fg='red')
+
                 if not skip_data:
                     try:
                         _upload_data(client, suite, config_inst)
                     except Exception as e:
                         raise RuntimeError(f"exception occur while uploading data for {suite.path}") from e
-                if data_only:
-                    continue
 
-                if not skip_dsl_jobs:
-                    echo.stdout_newline()
-                    try:
-                        _submit_job(client, suite, namespace, config_inst, timeout, update_job_parameters,
-                                    update_component_parameters, processors_per_node)
-                    except Exception as e:
-                        raise RuntimeError(f"exception occur while submit job for {suite.path}") from e
+                echo.stdout_newline()
+                try:
+                    _submit_job(client, suite, namespace, config_inst, timeout, update_job_parameters,
+                                update_component_parameters, max_iter, max_depth, num_trees, processors_per_node)
+                except Exception as e:
+                    raise RuntimeError(f"exception occur while submit job for {suite.path}") from e
 
-                if not skip_pipeline_jobs:
-                    try:
-                        _run_pipeline_jobs(config_inst, suite, namespace, data_namespace_mangling)
-                    except Exception as e:
-                        raise RuntimeError(f"exception occur while running pipeline jobs for {suite.path}") from e
+                try:
+                    _run_pipeline_jobs(config_inst, suite, namespace, data_namespace_mangling)
+                except Exception as e:
+                    raise RuntimeError(f"exception occur while running pipeline jobs for {suite.path}") from e
 
+                echo.echo(f"[{i + 1}/{len(suites)}]elapse {timedelta(seconds=int(time.time() - start))}", fg='red')
                 if not skip_data and clean_data:
                     _delete_data(client, suite)
-                echo.echo(f"[{i + 1}/{len(suites)}]elapse {timedelta(seconds=int(time.time() - start))}", fg='red')
-                if not skip_dsl_jobs or not skip_pipeline_jobs:
-                    echo.echo(suite.pretty_final_summary(), fg='red')
+                echo.echo(suite.pretty_final_summary(), fg='red')
 
             except Exception:
                 exception_id = uuid.uuid1()
@@ -129,10 +130,10 @@ def run_suite(ctx, replace, include, exclude, glob, timeout, update_job_paramete
 
 
 def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Config, timeout, update_job_parameters,
-                update_component_parameters, processors_per_node):
+                update_component_parameters, max_iter, max_depth, num_trees, processors_per_node):
     # submit jobs
     with click.progressbar(length=len(suite.jobs),
-                           label="jobs   ",
+                           label="jobs",
                            show_eta=False,
                            show_pos=True,
                            width=24) as bar:
@@ -148,6 +149,9 @@ def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Conf
 
             # noinspection PyBroadException
             try:
+                job.job_conf.update_component_parameters('max_iter', max_iter)
+                job.job_conf.update_component_parameters('max_depth', max_depth)
+                job.job_conf.update_component_parameters('num_trees', num_trees)
                 job.job_conf.update_job_common_parameters(
                     eggroll_run={"eggroll.session.processors.per.node": processors_per_node})
                 job.job_conf.update(config.parties, config.work_mode, config.backend, timeout, update_job_parameters,

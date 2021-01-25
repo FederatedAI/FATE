@@ -1,0 +1,103 @@
+{
+    "components": {
+        "reader_0": {
+            "module": "Reader",
+            "output": {
+                "data": [
+                    "data"
+                ]
+            },
+            "need_deploy": true
+        },
+        "dataio_0": {
+            "module": "DataIO",
+            "input": {
+                "data": {
+                    "data": [
+                        "reader_0.data"
+                    ]
+                }
+            },
+            "output": {
+                "data": [
+                    "data"
+                ],
+                "model": [
+                    "model"
+                ]
+            },
+            "need_deploy": true
+        },
+        "intersection_0": {
+            "module": "Intersection",
+            "input": {
+                "data": {
+                    "data": [
+                        "dataio_0.data"
+                    ]
+                }
+            },
+            "output": {
+                "data": [
+                    "data"
+                ]
+            },
+            "need_deploy": true
+        },
+        "hetero_data_split_0": {
+            "module": "HeteroDataSplit",
+            "input": {
+                "data": {
+                    "data": [
+                        "intersection_0.data"
+                    ]
+                }
+            },
+            "output": {
+                "data": [
+                    "train_data",
+                    "validate_data"
+                ]
+            },
+            "need_deploy": false
+        },
+        "hetero_secure_boost_0": {
+            "module": "HeteroSecureBoost",
+            "input": {
+                "data": {
+                    "train_data": [
+                        "hetero_data_split_0.train_data"
+                    ],
+                    "validate_data": [
+                        "hetero_data_split_0.validate_data"
+                    ]
+                }
+            },
+            "output": {
+                "data": [
+                    "data"
+                ],
+                "model": [
+                    "model"
+                ]
+            },
+            "need_deploy": true
+        },
+        "evaluation_0": {
+            "module": "Evaluation",
+            "input": {
+                "data": {
+                    "data": [
+                        "hetero_secure_boost_0.data"
+                    ]
+                }
+            },
+            "output": {
+                "data": [
+                    "data"
+                ]
+            },
+            "need_deploy": false
+        }
+    }
+}
