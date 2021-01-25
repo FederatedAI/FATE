@@ -193,8 +193,15 @@ command options
 
    will run testsuites in *path1* and timeout when job does not finish within 3600s; if tasks are expected to last for long, use a larger threshold
 
+6. processors-per-node
 
-6. skip-data:
+   .. code-block:: bash
+
+      fate_test performance -i <path1 contains *testsuite.json> -p 4
+
+   will run testsuites in *path1* with "processors_per_node" set to 4
+
+7. skip-data:
 
    .. code-block:: bash
 
@@ -203,7 +210,7 @@ command options
    will run testsuites in *path1* without uploading data specified in *benchmark.json*.
 
 
-7. yes:
+8. yes:
 
    .. code-block:: bash
 
@@ -211,7 +218,7 @@ command options
 
    will run testsuites in *path1* directly, skipping double check
 
-8. skip-dsl-jobs:
+9. skip-dsl-jobs:
 
    .. code-block:: bash
 
@@ -219,7 +226,7 @@ command options
 
    will run testsuites in *path1* but skip all *tasks* in testsuites. It's would be useful when only pipeline tasks needed.
 
-9. skip-pipeline-jobs:
+10. skip-pipeline-jobs:
 
    .. code-block:: bash
 
@@ -227,7 +234,7 @@ command options
 
    will run testsuites in *path1* but skip all *pipeline tasks* in testsuites. It's would be useful when only dsl tasks needed.
 
-10. disable-clean-data:
+11. disable-clean-data:
 
    .. code-block:: bash
 
@@ -235,7 +242,7 @@ command options
 
    will run testsuites in *path1* without removing data from storage after tasks finish
 
-11. enable-clean-data:
+12. enable-clean-data:
 
    .. code-block:: bash
 
@@ -352,7 +359,15 @@ use the following command to show help message
    If absolute difference between metrics is smaller than *tol*, then metrics are considered
    almost equal. Check benchmark testsuite `writing guide <#benchmark-testsuite>`_ on setting alternative tolerance.
 
-5. skip-data:
+5. processors-per-node
+
+   .. code-block:: bash
+
+      fate_test performance -i <path1 contains *benchmark.json> -p 4
+
+   will run benchmark testsuites in *path1* with "processors_per_node" set to 4
+
+6. skip-data:
 
    .. code-block:: bash
 
@@ -361,7 +376,7 @@ use the following command to show help message
    will run benchmark testsuites in *path1* without uploading data specified in *benchmark.json*.
 
 
-6. yes:
+7. yes:
 
    .. code-block:: bash
 
@@ -531,7 +546,7 @@ command options
 
    .. code-block:: bash
 
-      fate_test performance -i <path1 contains *testsuite.json> -me 5
+      fate_test performance -i <path1 contains *testsuite.json> -e 5
 
    will run testsuites in *path1* with all values to key "max_iter" set to 5
 
