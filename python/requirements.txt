@@ -8,7 +8,6 @@ gmpy2==2.0.8
 kazoo==2.6.1
 lmdb==0.98
 numpy==1.18.4
-pandas>1.0.4
 peewee==3.9.3
 psutil>=5.7.0
 pycryptodomex==3.6.6
@@ -36,4 +35,3 @@ llvmlite==0.33.0
 phe>=1.4.0
 protobuf==3.6.1
 pyarrow==0.17.1
-python-rocksdb==0.7.0

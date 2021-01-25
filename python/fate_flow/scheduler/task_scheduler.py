@@ -130,6 +130,7 @@ class TaskScheduler(object):
     def federated_task_status(cls, job_id, task_id, task_version):
         tasks_on_all_party = JobSaver.query_task(task_id=task_id, task_version=task_version)
         status_flag = 0
+        # idmapping role status can only be ignored if all non-idmapping roles success
         for task in tasks_on_all_party:
             if 'idmapping' not in task.f_role and task.f_party_status != TaskStatus.SUCCESS:
                 status_flag = 1
