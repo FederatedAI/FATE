@@ -102,13 +102,16 @@ class Upload(ComponentBase):
             data_table_count = None
             if storage_engine not in [StorageEngine.PATH]:
                 data_table_count = self.save_data_table(job_id, name, namespace, head)
+            else:
+                data_table_count = self.get_data_table_count(self.parameters["file"], name, namespace)
             self.table.get_meta().update_metas(in_serialized=True)
         LOGGER.info("------------load data finish!-----------------")
         # rm tmp file
         try:
             if '{}/fate_upload_tmp'.format(job_id) in self.parameters['file']:
                 LOGGER.info("remove tmp upload file")
-                shutil.rmtree(os.path.join(self.parameters["file"].split('tmp')[0], 'tmp'))
+                LOGGER.info(os.path.dirname(self.parameters["file"]))
+                shutil.rmtree(os.path.dirname(self.parameters["file"]))
         except:
             LOGGER.info("remove tmp file failed")
         LOGGER.info("file: {}".format(self.parameters["file"]))
@@ -142,16 +145,7 @@ class Upload(ComponentBase):
                 else:
                     table_count = self.table.count()
                     self.table.get_meta().update_metas(count=table_count, partitions=self.parameters["partition"])
-                    self.tracker.log_output_data_info(data_name='upload',
-                                                      table_namespace=dst_table_namespace,
-                                                      table_name=dst_table_name)
-
-                    self.tracker.log_metric_data(metric_namespace="upload",
-                                                 metric_name="data_access",
-                                                 metrics=[Metric("count", table_count)])
-                    self.tracker.set_metric_meta(metric_namespace="upload",
-                                                 metric_name="data_access",
-                                                 metric_meta=MetricMeta(name='upload', metric_type='UPLOAD'))
+                    self.save_meta(dst_table_namespace=dst_table_namespace, dst_table_name=dst_table_name, table_count=table_count)
                     return table_count
                 n += 1
 
@@ -167,3 +161,31 @@ class Upload(ComponentBase):
         file_name = input_file_path.split(".")[0]
         file_name = file_name.split("/")[-1]
         return file_name, str_time
+
+    def save_meta(self, dst_table_namespace, dst_table_name, table_count):
+        self.tracker.log_output_data_info(data_name='upload',
+                                          table_namespace=dst_table_namespace,
+                                          table_name=dst_table_name)
+
+        self.tracker.log_metric_data(metric_namespace="upload",
+                                     metric_name="data_access",
+                                     metrics=[Metric("count", table_count)])
+        self.tracker.set_metric_meta(metric_namespace="upload",
+                                     metric_name="data_access",
+                                     metric_meta=MetricMeta(name='upload', metric_type='UPLOAD'))
+
+    def get_data_table_count(self, path, name, namespace):
+        config_path = os.path.join(path, 'config.yaml')
+        config = file_utils.load_yaml_conf(conf_path=config_path)
+        count = 0
+        if config:
+            if config.get('type') != 'version':
+                raise Exception(f"can not support this type {config.get('type')}")
+            ext = config.get('inputs').get('ext')
+            base_dir = os.path.join(path, 'images')
+            for file_name in os.listdir(base_dir):
+                if file_name.endswith(ext):
+                    count += 1
+        self.save_meta(dst_table_namespace=namespace, dst_table_name=name, table_count=count)
+        self.table.get_meta().update_metas(count=count)
+        return count
