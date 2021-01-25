@@ -106,6 +106,16 @@ class CipherCompressor(object):
 
     def __init__(self, cipher_type, max_float, max_capacity_int, package_class, round_decimal):
 
+        """
+        Parameters
+        ----------
+        cipher_type: paillier only
+        max_float： the max number of ciphertext
+        max_capacity_int: the max number allowed of current encrypt algorithm
+        package_class: cipher package type, can be customized, need implement "add" and "unpack"
+        round_decimal: decimal rounding setting
+        """
+
         if cipher_type != consts.PAILLIER and cipher_type != consts.ITERATIVEAFFINE:
             raise ValueError('encrypt type {} is not supported by cipher compressing'.format(cipher_type))
 
