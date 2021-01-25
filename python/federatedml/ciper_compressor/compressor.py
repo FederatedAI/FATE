@@ -162,29 +162,25 @@ class CipherCompressor(object):
 if __name__ == '__main__':
     import numpy as np
     from federatedml.secureprotol import PaillierEncrypt as Encrypt
-    # from federatedml.secureprotol import IterativeAffineEncrypt as Encrypt
-
-    test_group = [1.65539338, 1.62576656, 1.14499671, 1.05994581, 1.37168581, 1.87084777,
-                  1.15221312, 1.62920769, 1.90481074, 1.94526007, 1.56370815, 1.44401756,
-                  1.2141968,  1.83599407, 1.05869696, 1.01358979, 1.78452837, 1.13341303,
-                  1.12075215, 1.98934339]
 
     int_num = 1000
     decimal_to_keep = 7
     key_length = 1024
-    test_nums = np.random.random(50)
+    test_nums = np.random.random(2)
     test_nums += int_num
-    # test_nums = np.array(test_group)
+
     en = Encrypt()
     en.generate_key(key_length)
-    # max_float = test_nums.max()
-    #
-    # encoder = CipherEncoder(round_decimal=decimal_to_keep)
-    # compressor = CipherCompressor(consts.ITERATIVEAFFINE, max_float, key_length, NormalCipherPackage, decimal_to_keep)
-    # decompressor = CipherDecompressor(encrypter=en)
-    #
-    # en_list = encoder.encode_and_encrypt(test_nums, en)
-    # packages = compressor.compress(en_list)
-    # rs = decompressor.unpack(packages)
-    # print(test_nums)
-    # print(np.array(rs))
+    max_float = test_nums.max()
+    cipher_max_int = en.public_key.max_int
+
+    encoder = CipherEncoder(round_decimal=7)
+    compressor = CipherCompressor(consts.PAILLIER, max_float, cipher_max_int, NormalCipherPackage, decimal_to_keep)
+    decompressor = CipherDecompressor(encrypter=en)
+
+    en_list = encoder.encode_and_encrypt(test_nums, encrypter=en)
+    packages = compressor.compress(en_list)
+    rs = decompressor.unpack(packages)
+
+    print(test_nums)
+    print(np.array(rs))
