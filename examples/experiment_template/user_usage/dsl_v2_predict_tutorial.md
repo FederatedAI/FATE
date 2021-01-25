@@ -51,18 +51,6 @@ We use flow_client to deploy components needed in the prediction task:
 
     flow job deploy --model-id guest-10000#host-10000#model --model-version 2020103015490073208469 --cpn-list "dataio_0, intersection_0, hetero_secure_boost_0"
 
-To get prediction dsl of the same workflow as the trained job:
-
-    flow job get-predict-dsl --model-id guest-10000#host-10000#model --model-version 2020103015490073208469 -o ./predict_dsl
-
-Alternatively, user may specify dsl file of desired workflow:
-
-    flow job dsl --train-dsl-path ./examples/dsl/v2/hetero_secureboost/test_secureboost_train_dsl.json --cpn-list "reader_0, dataio_0, intersection_0, hetero_secure_boost_0" -o ./predict_dsl
-
-Then we got a generated dsl named with a timestamp in the output folder:
-
-    >> ls predict_dsl
-
 We can modify existing predict conf by replacing model_id, model_version and data set name with yours to make a new 
 predict conf.
 Here we replace model_id and model_version in [predict conf](../../dsl/v2/hetero_secureboost/test_predict_conf.json) 

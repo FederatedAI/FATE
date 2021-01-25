@@ -529,10 +529,13 @@ for details on using deploy command:
 
 .. code-block:: bash
 
-    flow job dsl --cpn-list ...
+    flow job deploy --model-id $model_id --model-version $model_version --cpn-list ...
+
+Optionally, use can add additional component(s) to predict dsl, like ``Evaluation``:
 
 **Examples**
-Use a training dsl:
+
+training dsl:
 
 .. code-block:: json
 
@@ -598,15 +601,9 @@ Use a training dsl:
         }
     }
 
-Use the following command to generate predict dsl:
+predict dsl:
 
-.. code-block:: bash
-
-    flow job dsl --train-dsl-path $job_dsl --cpn-list "reader_0, dataio_0, intersection_0, hetero_nn_0" -o ./
-
-Generated dsl:
-
-.. code-block::: json
+.. code-block:: json
 
     "components": {
         "reader_0": {
@@ -620,9 +617,6 @@ Generated dsl:
         "dataio_0": {
             "module": "DataIO",
             "input": {
-                "model": [
-                    "pipeline.dataio_0.model"
-                ],
                 "data": {
                     "data": [
                         "reader_0.data"
@@ -632,32 +626,32 @@ Generated dsl:
             "output": {
                 "data": [
                     "data"
+                ],
+                "model": [
+                    "model"
                 ]
             }
         },
         "intersection_0": {
             "module": "Intersection",
-            "output": {
-                "data": [
-                    "data"
-                ]
-            },
             "input": {
                 "data": {
                     "data": [
                         "dataio_0.data"
                     ]
                 }
+            },
+            "output": {
+                "data":[
+                    "data"
+                ]
             }
         },
         "hetero_nn_0": {
             "module": "HeteroNN",
             "input": {
-                "model": [
-                    "pipeline.hetero_nn_0.model"
-                ],
                 "data": {
-                    "test_data": [
+                    "train_data": [
                         "intersection_0.data"
                     ]
                 }
@@ -665,27 +659,25 @@ Generated dsl:
             "output": {
                 "data": [
                     "data"
+                ],
+                "model": [
+                    "model"
                 ]
             }
+        },
+        "evaluation_0": {
+            "module": "Evaluation",
+            "input": {
+                "data": {
+                    "data": [
+                        "hetero_nn_0.data"
+                    ]
+                }
+             },
+             "output": {
+                 "data": [
+                     "data"
+                 ]
+              }
         }
-    }
-
-Optionally, use can add additional component(s) to predict dsl, like ``Evaluation``:
-
-.. code-block:: json
-
-    "evaluation_0": {
-        "module": "Evaluation",
-        "input": {
-            "data": {
-                "data": [
-                    "hetero_nn_0.data"
-                ]
-            }
-         },
-         "output": {
-             "data": [
-                 "data"
-             ]
-          }
     }
