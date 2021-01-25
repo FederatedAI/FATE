@@ -234,7 +234,7 @@ mkdir -p /data/projects/fate/data/mysql
 #解压缩软件包
 cd /data/projects/install
 tar xzvf mysql-*.tar.gz
-cd mysql
+cd mysql-install/files
 tar xf mysql-8.0.13.tar.gz -C /data/projects/fate/common/mysql
 
 #配置设置
@@ -287,9 +287,6 @@ mysql>flush privileges;
 #校验
 mysql>select User,Host from mysql.user;
 mysql>show databases;
-mysql>use eggroll_meta;
-mysql>show tables;
-mysql>select * from server_node;
 
 ```
 
@@ -1217,6 +1214,40 @@ yarn.scheduler.maximum-allocation-mb=4g
 
 重新下载yarn-clientconfig配置文件替换yarn-site.xml到HADOOP_HOME/etc/hadoop配置目录下。
 
+#### 11.2.14No module named 'beautifultable'
+```
+source /data/projects/fate/bin/init_env.sh
+pip install beautifultable
+```
+#### 11.2.15No module named 'pika'
+```
+source /data/projects/fate/bin/init_env.sh
+pip install pika
+```
+
+#### 11.2.16ImportError: cannot import name 'fs'
+检查pyarrow版本，该版本需要是0.17.1
+```
+source /data/projects/fate/bin/init_env.sh
+pip install pyarrow==0.17.1
+```
+如果提示要更新pip，则更新
+```
+pip install --upgrade pip
+```
+
+#### 11.2.17Federated schedule error
+查看Nginx是否启动，且日志没报错
+
+#### 11.2.18Error: Could not find or load main class org.apache.spark.deploy.yarn.ExecutorLauncher
+上传Spark的Jar包
+```
+cd /data/projects/common/spark/jars
+hdfs dfs -mkdir -p /tmp/spark/jars
+hdfs dfs -mkdir -p /tmp/spark/event
+hdfs dfs -put *jar /tmp/spark/jars
+/data/projects/common/spark/bin/spark-shell --master yarn --deploy-mode client
+```
 
 ### 11.3 问题排查
 #### 11.3.1 Uplod
