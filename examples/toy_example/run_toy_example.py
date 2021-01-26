@@ -144,7 +144,15 @@ def show_log(jobid, log_level):
                             stdout=subprocess.PIPE,
                             stderr=subprocess.STDOUT)
 
-    subp.communicate()
+    stdout = subp.communicate()[0]
+    try:
+        stdout = json.loads(stdout)
+    except:
+        raise ValueError("Can not download logs from fate_flow server, error msg is {}".format(stdout))
+
+    if 'retcode' not in stdout or stdout['retcode'] != 0:
+        raise ValueError("Can not download logs from fate_flow server, error msg is {}".format(stdout))
+
     if log_level == "error":
         error_log = os.path.join(log_path, "ERROR.log")
         

@@ -108,14 +108,17 @@ class JobConf(object):
 
         return JobConf(**kwargs)
 
+    @property
+    def dsl_version(self):
+        return self.others_kwargs.get("dsl_version", 1)
+
     def update(self, parties: Parties, work_mode, backend):
         self.initiator = parties.extract_initiator_role(self.initiator['role'])
         self.role = parties.extract_role({role: len(parties) for role, parties in self.role.items()})
         self.update_job_common_parameters(work_mode=work_mode, backend=backend)
 
     def update_job_common_parameters(self, **kwargs):
-        dsl_version = self.others_kwargs.get("dsl_version", 1)
-        if dsl_version == 1:
+        if self.dsl_version == 1:
             self.job_parameters.update(**kwargs)
         else:
             self.job_parameters.setdefault("common", {}).update(**kwargs)
@@ -233,14 +236,19 @@ class Testsuite(object):
                 [status.name, status.job_id, status.status, status.exception_id, ','.join(status.rest_dependency)])
         return table.get_string()
 
-    def feed_success_model_info(self, name, model_info):
-        if name not in self._dependency:
-            return
-        for job in self._dependency[name]:
-            job.set_pre_work(name, **model_info)
-            if job.is_submit_ready():
-                self._ready_jobs.appendleft(job)
+    def model_in_dep(self, name):
+        return name in self._dependency
+
+    def get_dependent_jobs(self, name):
+        return self._dependency[name]
+
+    def remove_dependency(self, name):
         del self._dependency[name]
+
+    def feed_dep_model_info(self, job, name, model_info):
+        job.set_pre_work(name, **model_info)
+        if job.is_submit_ready():
+            self._ready_jobs.appendleft(job)
 
     def reflash_configs(self, config: Config):
 

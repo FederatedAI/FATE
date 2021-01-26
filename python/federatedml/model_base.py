@@ -230,7 +230,7 @@ class ModelBase(object):
                                                                               float(np.max(y)),
                                                                               dict(zip(classes, list(y)))])
         else:
-            raise ValueError(f"Model's classes type is {type(classes)}, classes must be None or list.")
+            raise ValueError(f"Model's classes type is {type(classes)}, classes must be None or list of length no less than 2.")
 
         return predict_result
 
@@ -300,7 +300,7 @@ class ModelBase(object):
             LOGGER.warning(f"{new_key} already exists in model summary."
                            f"Corresponding value {original_value} will be replaced by {new_value}")
         self._summary[new_key] = new_value
-        LOGGER.debug(f"{new_key}: {new_value} added to summary.")
+        # LOGGER.debug(f"{new_key}: {new_value} added to summary.")
 
     def merge_summary(self, new_content, suffix=None, suffix_sep='_'):
         """

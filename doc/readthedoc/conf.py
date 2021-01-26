@@ -88,6 +88,7 @@ master_doc = 'index'
 def ultimateReplace(app, docname, source):
     result = source[0]
     result = result.replace(".rst", ".html")
+    result = result.replace(".md", ".html")
     source[0] = result
 
 

@@ -4,27 +4,17 @@
         "party_id": 10000
     },
     "job_parameters": {
-        "work_mode": 0,
-        "job_type": "predict",
-        "model_id": "arbiter-10000#guest-10000#host-10000#model",
-        "model_version": ""
+        "work_mode": 0
     },
     "role": {
-        "guest": [
-            10000
-        ],
-        "host": [
-            10000
-        ],
-        "arbiter": [
-            10000
-        ]
+        "guest": [10000],
+        "host": [9998,9999]
     },
     "role_parameters": {
         "guest": {
             "args": {
                 "data": {
-                    "eval_data": [
+                    "data": [
                         {
                             "name": "breast_hetero_guest",
                             "namespace": "experiment"
@@ -36,7 +26,11 @@
         "host": {
             "args": {
                 "data": {
-                    "eval_data": [
+                    "data": [
+                        {
+                            "name": "breast_hetero_host",
+                            "namespace": "experiment"
+                        },
                         {
                             "name": "breast_hetero_host",
                             "namespace": "experiment"
@@ -44,6 +38,12 @@
                     ]
                 }
             }
+        }
+    },
+    "algorithm_parameters": {
+        "feldmanverifiablesum_0": {
+            "sum_cols": [1,2,3],
+            "q_n": 6
         }
     }
 }
