@@ -136,7 +136,7 @@ class HeteroStepwise(object):
             if best_score is None or score < best_score:
                 best_score = score
                 best_model = model
-        LOGGER.info(f"step {self.n_step}, best model {best_model}, best_score {best_score}")
+        LOGGER.info(f"step {self.n_step}, best model {best_model}")
         return best_model
 
     @staticmethod
@@ -227,7 +227,7 @@ class HeteroStepwise(object):
         if self.direction == 'forward' and self.n_step == 0:
             if self.role == consts.GUEST:
                 loss, ic_val = self.get_ic_val_guest(model, train_data)
-                LOGGER.info("step {} n_model {}: ic_val {}".format(self.n_step, n_model, ic_val))
+                LOGGER.info("step {} n_model {}".format(self.n_step, n_model))
                 model_info = ModelInfo(self.n_step, n_model, ic_val, loss, self.step_direction)
                 self.models_trained[model_mask] = model_info
                 model_key = model_info.get_key()

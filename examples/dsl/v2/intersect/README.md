@@ -4,11 +4,11 @@ This section introduces the dsl and conf for usage of different type of task.
 
 #### Intersection Task.
 
-1. Raw Intersection:  
+1. RAW Intersection:  
     - dsl: test_intersect_job_dsl.json  
     - runtime_config : test_intersect_job_raw_conf.json
 
-2. Raw Intersection with SM3 Hashing:  
+2. RAW Intersection with SM3 Hashing:  
     - dsl: test_intersect_job_dsl.json  
     - runtime_config : test_intersect_job_raw_sm3_conf.json
 
@@ -24,13 +24,13 @@ This section introduces the dsl and conf for usage of different type of task.
     - dsl: test_intersect_job_dsl.json  
     - runtime_config : test_intersect_job_rsa_split_conf.json
 
-6. Rsa Multi-hosts Intersection:  
+6. RSA Multi-hosts Intersection:  
     - dsl: test_intersect_job_dsl.json  
     - runtime_config : test_intersect_job_rsa_multi_host_conf.json  
     
     This dsl is an example of guest runs intersection with two hosts using rsa intersection. It can be used as more than two hosts.
     
-4. Raw Multi-hosts Intersection:  
+7. RAW Multi-hosts Intersection:  
     - dsl: test_intersect_job_dsl.json  
     - runtime_config : test_intersect_job_raw_multi_host_conf.json  
     

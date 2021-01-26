@@ -182,7 +182,7 @@ wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/python-env-1.5.0
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/jdk-8u192-linux-x64.tar.gz
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/mysql-1.5.0-release.tar.gz
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/openresty-1.17.8.2.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_1.5.0_preview.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_1.5.0_release.tar.gz
 
 #scp packages to 192.168.0.1和192.168.0.2
 scp *.tar.gz app@192.168.0.1:/data/projects/install

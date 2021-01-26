@@ -29,7 +29,7 @@ from federatedml.util import consts
 
 
 class Node(object):
-    def __init__(self, id=None, sitename=consts.GUEST, fid=None,
+    def __init__(self, id=None, sitename=None, fid=None,
                  bid=None, weight=0, is_leaf=False, sum_grad=None,
                  sum_hess=None, left_nodeid=-1, right_nodeid=-1,
                  missing_dir=1, sample_num=0, sibling_nodeid=None, parent_nodeid=None, is_left_node=False):
