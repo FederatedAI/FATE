@@ -97,7 +97,7 @@ class CipherDecompressor(object):  # this class endcode and unzip cipher package
 
         rs_list = []
         for p in packages:
-            rs_list.append(p.unpack(self.encrypter))
+            rs_list.extend(p.unpack(self.encrypter))
 
         return rs_list
 
