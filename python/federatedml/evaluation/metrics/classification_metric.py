@@ -440,8 +440,8 @@ class PSI(object):
             validate_pos_count = self.quantile_binning_and_count(validate_scores[validate_labels == pos_label],
                                                                  quantile_points)
 
-            train_pos_perc = np.array(list(train_pos_count['count'])) / np.array(train_count['count'])
-            validate_pos_perc = np.array(list(validate_pos_count['count'])) / np.array(validate_count['count'])
+            train_pos_perc = np.array(train_pos_count['count']) / np.array(train_count['count'])
+            validate_pos_perc = np.array(validate_pos_count['count']) / np.array(validate_count['count'])
 
             # handle special cases
             train_pos_perc[train_pos_perc == np.inf] = -1
@@ -453,10 +453,11 @@ class PSI(object):
             print(train_count)
             print(validate_count)
 
-        assert (train_count['interval'] == validate_count['interval']).all()
+        assert (train_count['interval'] == validate_count['interval']), 'train count interval is not equal to ' \
+                                                                              'validate count interval'
 
-        expected_interval = np.array(list(train_count['count']))
-        actual_interval = np.array(list(validate_count['count']))
+        expected_interval = np.array(train_count['count'])
+        actual_interval = np.array(validate_count['count'])
 
         expected_interval = expected_interval.astype(np.float)
         actual_interval = actual_interval.astype(np.float)
@@ -499,9 +500,11 @@ class PSI(object):
 
         count1 = None if bin_result_1 is None else bin_result_1.value_counts().reset_index()
         count2 = bin_result_2.value_counts().reset_index()
+        # if predict scores are the same, count1 will be None, only one interval exists
+        final_interval = list(count1['index']) + list(count2['index']) if count1 is not None else list(count2['index'])
+        final_count = list(count1[0]) + list(count2[0]) if count1 is not None else list(count2[0])
+        rs = {'interval': final_interval, 'count': final_count}
 
-        rs = pd.concat([count1, count2], axis=0)
-        rs.columns = ['interval', 'count']
         return rs
 
     @staticmethod
@@ -512,7 +515,7 @@ class PSI(object):
     @staticmethod
     def intervals_to_str(intervals, round_num=3):
         str_intervals = []
-        for interval in list(intervals):
+        for interval in intervals:
             left_bound, right_bound = '[', ']'
             if interval.closed == 'left':
                 right_bound = ')'
@@ -544,3 +547,4 @@ class PSI(object):
         psi_scores = np.array(psi_scores)
         total_psi = psi_scores.sum()
         return psi_scores, total_psi, expected_interval, actual_interval, expected_percentage, actual_percentage
+

@@ -86,9 +86,9 @@ class HauckObliviousTransferSender(HauckObliviousTransfer):
             iyt = self.tec_arithmetic.mul(scalar=i, a=yt)    # iyT
             diff = self.tec_arithmetic.sub(a=yr, b=iyt)    # yR - iyT
             key = self._mac_tec_element(diff)
-            LOGGER.info("{}-th key generated".format(i))
-            LOGGER.info("key before MAC = " + diff.output())
-            LOGGER.info("key = {}".format(key))
+            # LOGGER.info("{}-th key generated".format(i))
+            # LOGGER.info("key before MAC = " + diff.output())
+            # LOGGER.info("key = {}".format(key))
             key_list.append(ObliviousTransferKey(i, key))
 
         LOGGER.info("all keys successfully generated")
@@ -102,7 +102,5 @@ class HauckObliviousTransferSender(HauckObliviousTransfer):
             t = self._hash_tec_element(s)
             if self.tec_arithmetic.is_in_group(s) and type(t) != int:
                 # Both S and T are legal
-                LOGGER.info("randomly generated y = {}".format(y))
-                LOGGER.info("randomly generated S = " + s.output())
-                LOGGER.info("randomly generated T = " + t.output())
+                LOGGER.info("randomly generated y, S, T")
                 return y, s, t

@@ -20,6 +20,7 @@ from flask import Flask, request
 
 from fate_flow.entity.types import StatusSet
 from fate_arch import storage
+from fate_arch.common.base_utils import json_loads
 from fate_flow.settings import stat_logger, UPLOAD_DATA_FROM_CLIENT
 from fate_flow.utils.api_utils import get_json_result
 from fate_flow.utils import detect_utils, job_utils
@@ -48,6 +49,11 @@ def download_upload(access_module):
             shutil.rmtree(os.path.join(job_utils.get_job_directory(job_id), 'fate_upload_tmp'))
             raise e
         job_config = request.args.to_dict()
+        if "namespace" in job_config and "table_name" in job_config:
+            pass
+        else:
+            # higher than version 1.5.1, support eggroll run parameters
+            job_config = json_loads(list(job_config.keys())[0])
         job_config['file'] = filename
     else:
         job_config = request.json
@@ -138,9 +144,9 @@ def gen_data_access_job_config(config_data, access_module):
     initiator_party_id = config_data.get('party_id', 0)
     job_runtime_conf["initiator"]["role"] = initiator_role
     job_runtime_conf["initiator"]["party_id"] = initiator_party_id
-    for _ in ["work_mode", "backend"]:
+    job_parameters_fields = {"work_mode", "backend", "task_cores", "eggroll_run", "spark_run"}
+    for _ in job_parameters_fields:
         if _ in config_data:
-            # job_runtime_conf["job_parameters"] = config_data[_]
             job_runtime_conf["job_parameters"]["common"][_] = config_data[_]
     job_runtime_conf["role"][initiator_role] = [initiator_party_id]
     job_dsl = {

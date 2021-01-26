@@ -1,0 +1,15 @@
+{
+    "module_path":  "federatedml/statistic/feldman_verifiable_sum",
+    "param_class" : "federatedml/param/feldman_verifiable_sum_param/FeldmanVerifiableSumParam",
+    "role":
+    {
+        "guest":
+        {
+            "program": "feldman_verifiable_sum_guest.py/FeldmanVerifiableSumGuest"
+        },
+        "host":
+        {
+            "program": "feldman_verifiable_sum_host.py/FeldmanVerifiableSumHost"
+        }
+    }
+}
