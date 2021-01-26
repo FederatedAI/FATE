@@ -242,8 +242,8 @@ Job
 
 -  request structure
 
-   - train_dsl: Required, Object: training dsl
-   - cpn_str: Optional, String or Array: list of components which are chose to be used
+   - train_dsl: Required, String: training dsl
+   - cpn_str: Required, String or Array: list of components which are chose to be used
    - filename: Optional, String: generated dsl storing path
 
 -  response structure
