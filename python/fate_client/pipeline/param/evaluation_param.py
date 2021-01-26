@@ -16,7 +16,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from pipeline.util import consts
+from pipeline.param import consts
 from pipeline.param.base_param import BaseParam
 
 
