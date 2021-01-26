@@ -83,7 +83,7 @@ command types
 
   .. code-block:: bash
 
-      fate_test benchmark-quality -i <path contains *benchmark.json>
+      fate_test bq -i <path contains *benchmark.json>
 
 
 
@@ -184,7 +184,6 @@ command options
 
    will find all key-value pair with key "maxIter" in `data conf` or `conf` or `dsl` and replace the value with 5
 
-
 5. timeout:
 
    .. code-block:: bash
@@ -197,26 +196,25 @@ command options
 
    .. code-block:: bash
 
-      fate_test performance -i <path1 contains *testsuite.json> -p 4
+      fate_test suite -i <path1 contains *testsuite.json> -p 4
 
    will run testsuites in *path1* with "processors_per_node" set to 4
 
-7. skip-data:
+7. update-job-parameters
 
    .. code-block:: bash
 
-       fate_test suite -i <path1 contains *testsuite.json> --skip-data
+      fate_test suite -i <path1 contains *testsuite.json> -j {}
 
-   will run testsuites in *path1* without uploading data specified in *benchmark.json*.
+   will run testsuites in *path1* with respective job parameters set to provided values
 
-
-8. yes:
+8. update-component-parameters
 
    .. code-block:: bash
 
-      fate_test suite -i <path1 contains *testsuite.json> --yes
+      fate_test suite -i <path1 contains *testsuite.json> -c {}
 
-   will run testsuites in *path1* directly, skipping double check
+   will run testsuites in *path1* with respective component parameters set to provided values
 
 9. skip-dsl-jobs:
 
@@ -234,21 +232,45 @@ command options
 
    will run testsuites in *path1* but skip all *pipeline tasks* in testsuites. It's would be useful when only dsl tasks needed.
 
-11. disable-clean-data:
+11. skip-data:
 
    .. code-block:: bash
 
-      fate_test suite -i <path1 contains *testsuite.json> --disable-clean-data
+       fate_test suite -i <path1 contains *testsuite.json> --skip-data
+
+   will run testsuites in *path1* without uploading data specified in *testsuite.json*.
+
+12. data only:
+
+   .. code-block:: bash
+
+       fate_test suite -i <path1 contains *testsuite.json> --data-only
+
+   will only upload data specified in *testsuite.json* without running jobs
+
+13. disable-clean-data:
+
+   .. code-block:: bash
+
+       fate_test suite -i <path1 contains *testsuite.json> --disable-clean-data
 
    will run testsuites in *path1* without removing data from storage after tasks finish
 
-12. enable-clean-data:
+14. enable-clean-data:
 
    .. code-block:: bash
 
-      fate_test suite -i <path1 contains *testsuite.json> --enable-clean-data
+       fate_test suite -i <path1 contains *testsuite.json> --enable-clean-data
 
    will remove data from storage after finishing running testsuites
+
+15. yes:
+
+   .. code-block:: bash
+
+       fate_test suite -i <path1 contains *testsuite.json> --yes
+
+   will run testsuites in *path1* directly, skipping double check
 
 
 Benchmark Quality
@@ -507,7 +529,7 @@ command options
 
       fate_test performance --help
 
-1. task:
+1. job-type:
 
    .. code-block:: bash
 
@@ -596,26 +618,23 @@ command options
 
        fate_test performance -i <path1 contains *testsuite.json> --skip-data
 
-   will run testsuites in *path1* without uploading data specified in *benchmark.json*.
+   will run testsuites in *path1* without uploading data specified in *testsuite.json*.
 
-
-12. yes:
-
-   .. code-block:: bash
-
-      fate_test benchmark-quality -i <path1 contains *testsuite.json> --yes
-
-   will run testsuites in *path1* directly, skipping double check
-
-
-13. disable-clean-data:
+12. disable-clean-data:
 
    .. code-block:: bash
 
-      fate_test benchmark-quality -i <path1 contains *testsuite.json> --disable-clean-data
+      fate_test performance -i <path1 contains *testsuite.json> --disable-clean-data
 
    will run testsuites in *path1* without removing data from storage after tasks finish
 
+13. yes:
+
+   .. code-block:: bash
+
+      fate_test performance -i <path1 contains *testsuite.json> --yes
+
+   will run testsuites in *path1* directly, skipping double check
 
 
 data

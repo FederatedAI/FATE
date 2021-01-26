@@ -30,7 +30,7 @@ from fate_test.scripts._utils import _load_testsuites, _upload_data, _delete_dat
 
 
 @click.command("performance")
-@click.option('-t', '--job_type', type=click.Choice(['intersect', 'intersect_multi', 'hetero_lr', 'hetero_sbt']),
+@click.option('-t', '--job-type', type=click.Choice(['intersect', 'intersect_multi', 'hetero_lr', 'hetero_sbt']),
               help="Select the job type, you can also set through include")
 @click.option('-i', '--include', type=click.Path(exists=True), multiple=True, metavar="<include>",
               help="include *testsuite.json under these paths")
@@ -38,17 +38,17 @@ from fate_test.scripts._utils import _load_testsuites, _upload_data, _delete_dat
               help="a json string represents mapping for replacing fields in data/conf/dsl")
 @click.option('-m', '--timeout', type=int, default=3600,
               help="Task timeout duration")
-@click.option('-e', '--max_iter', type=int, default=100,
+@click.option('-e', '--max-iter', type=int, default=100,
               help="When the algorithm model is LR, the number of iterations is set")
-@click.option('-d', '--max_depth', type=int, default=4,
+@click.option('-d', '--max-depth', type=int, default=4,
               help="When the algorithm model is SecureBoost, set the number of model layers")
-@click.option('-n', '--num_trees', type=int, default=100,
+@click.option('-n', '--num-trees', type=int, default=100,
               help="When the algorithm model is SecureBoost, set the number of trees")
-@click.option('-p', '--processors_per_node', type=int, default=4,
+@click.option('-p', '--processors-per-node', type=int, default=4,
               help="processors per node")
-@click.option('-j', '--update_job_parameters', default="{}", type=JSON_STRING,
+@click.option('-j', '--update-job-parameters', default="{}", type=JSON_STRING,
               help="a json string represents mapping for replacing fields in conf.job_parameters")
-@click.option('-c', '--update_component_parameters', default="{}", type=JSON_STRING,
+@click.option('-c', '--update-component-parameters', default="{}", type=JSON_STRING,
               help="a json string represents mapping for replacing fields in conf.component_parameters")
 @click.option("--skip-data", is_flag=True, default=False,
               help="skip uploading data specified in testsuite")
