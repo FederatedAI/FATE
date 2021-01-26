@@ -4,15 +4,15 @@
 
 This section introduces the Pipeline scripts for different types of tasks.
 
-1. Raw Intersection:
+1. RAW Intersection:
 
     script: pipeline-intersect-raw.py
 
-2. Raw Intersection with SM3 Hashing:
+2. RAW Intersection with SM3 Hashing:
 
     script: pipeline-intersect-raw-sm3.py
 
-3. Rsa Intersection:
+3. RSA Intersection:
 
     script: pipeline-intersect-rsa.py
 
