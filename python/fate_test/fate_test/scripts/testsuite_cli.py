@@ -39,7 +39,7 @@ from fate_test.scripts._utils import _load_testsuites, _upload_data, _delete_dat
               help="glob string to filter sub-directory of path specified by <include>")
 @click.option('-m', '--timeout', type=int, default=3600,
               help="Task timeout duration")
-@click.option('-p', '--processors_per_node', type=int, default=4,
+@click.option('-p', '--processors-per-node', type=int, default=4,
               help="processors per node")
 @click.option('-j', '--update-job-parameters', default="{}", type=JSON_STRING,
               help="a json string represents mapping for replacing fields in conf.job_parameters")

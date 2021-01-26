@@ -11,8 +11,19 @@
     ],
     "tasks": {
         "column-expand": {
-            "conf": "test_column_expand_job_conf.json",
-            "dsl": "test_column_expand_job_dsl.json"
+            "conf": "./test_column_expand_job_conf.json",
+            "dsl": "./test_column_expand_job_dsl.json"
+        },
+        "column-expand-train": {
+            "conf": "./test_column_expand_train_job_conf.json",
+            "dsl": "./test_column_expand_train_job_dsl.json",
+            "data-deps": {
+                "column-expand": {
+                    "guest_0": {
+                        "data": "column_expand_0"
+                    }
+                }
+            }
         }
     }
 }
