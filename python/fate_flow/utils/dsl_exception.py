@@ -22,7 +22,7 @@ class BaseDSLException(Exception):
 
 class DSLNotExistError(BaseDSLException):
     def __str__(self):
-        raise Exception("There are no dsl, please check if the role and party id are correct")
+        return "There are no dsl, please check if the role and party id are correct"
 
 
 class SubmitConfNotExistError(Exception):
@@ -205,8 +205,8 @@ class LoopError(Exception):
 
 class NamingError(ModuleException):
     def __str__(self):
-        raise ValueError("Component's name should be format of name_index, index is start from 0 "
-                         "and be consecutive for same module, {} is error".format(self.component))
+        return "Component's name should be format of name_index, index is start from 0 " + \
+               "and be consecutive for same module, {} is error".format(self.component)
 
 
 class NamingIndexError(ModuleException):

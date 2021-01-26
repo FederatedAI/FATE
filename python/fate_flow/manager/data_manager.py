@@ -46,7 +46,6 @@ def delete_tables_by_table_infos(output_data_table_infos):
                 table = storage_session.get_table()
                 try:
                     table.destroy()
-                    table.close()
                     data.append(table_info)
                     status = True
                 except:

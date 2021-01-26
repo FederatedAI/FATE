@@ -15,6 +15,7 @@
 #
 import base64
 import datetime
+import io
 import json
 import os
 import pickle
@@ -22,6 +23,11 @@ import socket
 import time
 import uuid
 from enum import Enum, IntEnum
+
+from fate_arch.common.conf_utils import get_base_config
+
+
+use_deserialize_safe_module = get_base_config('use_deserialize_safe_module', False)
 
 
 class CustomJSONEncoder(json.JSONEncoder):
@@ -60,11 +66,11 @@ def json_dumps(src, byte=False, indent=None):
         return json.dumps(src, indent=indent, cls=CustomJSONEncoder)
 
 
-def json_loads(src):
+def json_loads(src, object_pairs_hook=None):
     if isinstance(src, bytes):
-        return json.loads(bytes_to_string(src))
+        return json.loads(bytes_to_string(src), object_pairs_hook=object_pairs_hook)
     else:
-        return json.loads(src)
+        return json.loads(src, object_pairs_hook=object_pairs_hook)
 
 
 def current_timestamp():
@@ -87,7 +93,33 @@ def serialize_b64(src, to_str=False):
 
 
 def deserialize_b64(src):
-    return pickle.loads(base64.b64decode(string_to_bytes(src) if isinstance(src, str) else src))
+    src = base64.b64decode(string_to_bytes(src) if isinstance(src, str) else src)
+    if use_deserialize_safe_module:
+        return restricted_loads(src)
+    return pickle.loads(src)
+
+
+safe_module = {
+    'federatedml',
+    'numpy',
+    'fate_flow'
+}
+
+
+class RestrictedUnpickler(pickle.Unpickler):
+    def find_class(self, module, name):
+        import importlib
+        if module.split('.')[0] in safe_module:
+            _module = importlib.import_module(module)
+            return getattr(_module, name)
+        # Forbid everything else.
+        raise pickle.UnpicklingError("global '%s.%s' is forbidden" %
+                                     (module, name))
+
+
+def restricted_loads(src):
+    """Helper function analogous to pickle.loads()."""
+    return RestrictedUnpickler(io.BytesIO(src)).load()
 
 
 def get_lan_ip():

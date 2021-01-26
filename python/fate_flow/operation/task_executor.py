@@ -87,8 +87,7 @@ class TaskExecutor(object):
                                                            pipeline_dsl=job_conf["pipeline_dsl_path"]
                                                            )
             party_index = job_runtime_conf["role"][role].index(party_id)
-            job_args = dsl_parser.get_args_input()
-            job_args_on_party = job_args[role][party_index].get('args') if role in job_args else {}
+            job_args_on_party = TaskExecutor.get_job_args_on_party(dsl_parser, job_runtime_conf, role, party_id)
             component = dsl_parser.get_component_info(component_name=component_name)
             component_parameters = component.get_role_parameters()
             component_parameters_on_party = component_parameters[role][
@@ -99,7 +98,8 @@ class TaskExecutor(object):
             component_parameters_on_party['output_data_name'] = task_output_dsl.get('data')
             task_parameters = RunParameters(**file_utils.load_json_conf(args.config))
             job_parameters = task_parameters
-            TaskExecutor.monkey_patch()
+            if job_parameters.assistant_role:
+                TaskExecutor.monkey_patch()
         except Exception as e:
             traceback.print_exc()
             schedule_logger().exception(e)
@@ -218,9 +218,19 @@ class TaskExecutor(object):
         return task_info
 
     @classmethod
+    def get_job_args_on_party(cls, dsl_parser, job_runtime_conf, role, party_id):
+        party_index = job_runtime_conf["role"][role].index(int(party_id))
+        job_args = dsl_parser.get_args_input()
+        job_args_on_party = job_args[role][party_index].get('args') if role in job_args else {}
+        return job_args_on_party
+
+    @classmethod
     def get_task_run_args(cls, job_id, role, party_id, task_id, task_version, job_args, job_parameters: RunParameters, task_parameters: RunParameters,
-                          input_dsl, filter_type=None, filter_attr=None):
+                          input_dsl, filter_type=None, filter_attr=None, get_input_table=False):
         task_run_args = {}
+        input_table = {}
+        if 'idmapping' in role:
+            return {}
         for input_type, input_detail in input_dsl.items():
             if filter_type and input_type not in filter_type:
                 continue
@@ -256,7 +266,11 @@ class TaskExecutor(object):
                                     storage_table_meta = output_tables_meta.get(search_data_name, None)
                         args_from_component = this_type_args[search_component_name] = this_type_args.get(
                             search_component_name, {})
-                        if storage_table_meta:
+                        if get_input_table and storage_table_meta:
+                            input_table[data_key] = {'namespace': storage_table_meta.get_namespace(),
+                                                     'name': storage_table_meta.get_name()}
+                            computing_table = None
+                        elif storage_table_meta:
                             LOGGER.info(f"load computing table use {task_parameters.computing_partitions}")
                             computing_table = session.get_latest_opened().computing.load(
                                 storage_table_meta.get_address(),
@@ -286,6 +300,8 @@ class TaskExecutor(object):
                                      model_version=job_parameters.model_version).get_output_model(
                         model_alias=search_model_alias)
                     this_type_args[search_component_name] = models
+        if get_input_table:
+            return input_table
         return task_run_args
 
     @classmethod
@@ -310,7 +326,8 @@ class TaskExecutor(object):
         if not os.path.exists(package_path):
             return
         for f in os.listdir(package_path):
-            if not os.path.isdir(f) or f == "__pycache__":
+            f_path = os.path.join(file_utils.get_python_base_directory(), "fate_flow", package_name, f)
+            if not os.path.isdir(f_path) or "__pycache__" in f_path:
                 continue
             patch_module = importlib.import_module("fate_flow." + package_name + '.' + f + '.monkey_patch')
             patch_module.patch_all()

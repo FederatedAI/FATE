@@ -133,7 +133,7 @@ class RsaIntersectionGuest(RsaIntersect):
         LOGGER.info("Start rsa intersection")
 
         public_keys = self.transfer_variable.rsa_pubkey.get(-1)
-        # LOGGER.debug("Get RSA public_key:{} from Host".format(public_keys))
+        # LOGGER.info("Get RSA public_key:{} from Host".format(public_keys))
         self.e = [int(public_key["e"]) for public_key in public_keys]
         self.n = [int(public_key["n"]) for public_key in public_keys]
 

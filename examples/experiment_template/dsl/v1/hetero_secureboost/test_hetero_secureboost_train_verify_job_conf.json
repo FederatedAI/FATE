@@ -5,7 +5,9 @@
   },
   "job_parameters": {
     "work_mode": 1,
-    "processors_per_node": 4
+    "eggroll_run": {
+      "eggroll.session.processors.per.node": 4
+    }
   },
   "role": {
     "guest": [9999],

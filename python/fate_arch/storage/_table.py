@@ -215,6 +215,8 @@ class StorageTableMeta(StorageTableMetaABC):
             operate = table_meta.update(update_fields).where(*update_filters)
         else:
             operate = table_meta.update(update_fields)
+        if count:
+            self.count = count
         return operate.execute() > 0
 
     @DB.connection_context()
