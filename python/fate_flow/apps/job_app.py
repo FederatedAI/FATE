@@ -211,7 +211,7 @@ def dsl_generator():
             cpn_str = cpn_str.replace(" ", "").replace("\n", "").strip(",[]")
             cpn_list = cpn_str.split(",")
         train_dsl = json_loads(data.get("train_dsl"))
-        parser = schedule_utils.get_dsl_parser_by_version(data.get("version", "1"))
+        parser = schedule_utils.get_dsl_parser_by_version(data.get("version", "2"))
         predict_dsl = parser.deploy_component(cpn_list, train_dsl)
 
         if data.get("filename"):
