@@ -48,7 +48,7 @@
             "dsl": "./test_hetero_linr_multi_host_train_job_dsl.json"
         },
         "linr-multi-host-predict": {
-            "deps": "linr-multi-host-train",
+            "model_deps": "linr-multi-host-train",
             "conf": "./test_hetero_linr_multi_host_predict_job_conf.json",
             "dsl": "./test_hetero_linr_multi_host_predict_job_dsl.json"
         },
