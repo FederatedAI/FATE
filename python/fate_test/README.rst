@@ -192,13 +192,13 @@ command options
 
    will run testsuites in *path1* and timeout when job does not finish within 3600s; if tasks are expected to last for long, use a larger threshold
 
-6. processors-per-node
+6. task-cores
 
    .. code-block:: bash
 
       fate_test suite -i <path1 contains *testsuite.json> -p 4
 
-   will run testsuites in *path1* with "processors_per_node" set to 4
+   will run testsuites in *path1* with EGGROLL "task_cores" set to 4
 
 7. update-job-parameters
 
@@ -494,15 +494,7 @@ use the following command to show help message
    If absolute difference between metrics is smaller than *tol*, then metrics are considered
    almost equal. Check benchmark testsuite `writing guide <#benchmark-testsuite>`_ on setting alternative tolerance.
 
-5. processors-per-node
-
-   .. code-block:: bash
-
-      fate_test performance -i <path1 contains *benchmark.json> -p 4
-
-   will run benchmark testsuites in *path1* with "processors_per_node" set to 4
-
-6. skip-data:
+5. skip-data:
 
    .. code-block:: bash
 
@@ -511,7 +503,7 @@ use the following command to show help message
    will run benchmark testsuites in *path1* without uploading data specified in *benchmark.json*.
 
 
-7. yes:
+6. yes:
 
    .. code-block:: bash
 
@@ -701,13 +693,13 @@ command options
 
    will run testsuites in *path1* with all values to key "num_trees" set to 5
 
-8. processors-per-node
+8. task-cores
 
    .. code-block:: bash
 
       fate_test performance -i <path1 contains *testsuite.json> -p 4
 
-   will run testsuites in *path1* with "processors_per_node" set to 4
+   will run testsuites in *path1* with EGGROLL "task_cores" set to 4
 
 9. update-job-parameters
 
