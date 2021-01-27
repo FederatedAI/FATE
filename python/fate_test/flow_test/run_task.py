@@ -1,6 +1,8 @@
 import json
 import os
+import tarfile
 import time
+from contextlib import closing
 from datetime import datetime
 
 import requests
@@ -13,6 +15,11 @@ ip = conf_utils.get_base_config("fateflow").get("host")
 http_port = conf_utils.get_base_config("fateflow").get("http_port")
 API_VERSION = "v1"
 server_url = "http://{}:{}/{}".format(ip, http_port, API_VERSION)
+
+component_name = "hetero_secure_boost_0"
+metric_output_path = './output/metric/{}_hetero_secure_boost_0.json'
+model_output_path = './output/model/{}_hetero_secure_boost_0.json'
+data_output_path = './output/data/job_{}_{}_{}_{}_output_data' # job_id, cpn, role, party_id
 
 
 def get_dict_from_file(file_name):
@@ -31,11 +38,13 @@ class Base(object):
         self.model_id = None
         self.model_version = None
 
-    def set_config(self, guest_party_id, host_party_id, path):
+    def set_config(self, guest_party_id, host_party_id, arbiter_party_id, path):
         self.config = get_dict_from_file(path)
-        self.config["initiator"]["party_id"] = guest_party_id
-        self.config["role"]["guest"] = [guest_party_id]
-        self.config["role"]["host"] = [host_party_id]
+        self.config["initiator"]["party_id"] = guest_party_id[0]
+        self.config["role"]["guest"] = guest_party_id
+        self.config["role"]["host"] = host_party_id
+        if arbiter_party_id:
+            self.config["role"]["arbiter"] = arbiter_party_id
         self.guest_party_id = guest_party_id
         self.host_party_id = host_party_id
         return self.config
@@ -46,8 +55,8 @@ class Base(object):
 
     def submit(self, job_type='train'):
         post_data = {'job_runtime_conf': self.config, 'job_dsl': self.dsl}
-        if job_type == 'predict':
-            post_data.pop('job_dsl')
+        # if job_type == 'predict':
+        #     post_data.pop('job_dsl')
         print(f"start submit job, data:{post_data}")
         response = requests.post("/".join([server_url, "job", "submit"]), json=post_data)
         if response.status_code == 200 and not response.json().get('retcode'):
@@ -79,20 +88,45 @@ class Base(object):
                 return False
         return False
 
+    def get_component_output_data(self, output_path=None):
+        post_data = {
+            "job_id": self.job_id,
+            "role": "guest",
+            "party_id": self.guest_party_id[0],
+            "component_name": component_name
+        }
+        if not output_path:
+            output_path = './output/data'
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        tar_file_name = 'job_{}_{}_{}_{}_output_data.tar.gz'.format(post_data['job_id'], post_data['component_name'],
+                                                                    post_data['role'], post_data['party_id'])
+        extract_dir = os.path.join(output_path, tar_file_name.replace('.tar.gz', ''))
+        print("start get component output dat")
+
+        with closing(requests.get("/".join([server_url, "tracking", "component/output/data/download"]), json=post_data,
+                                  stream=True)) as response:
+            if response.status_code == 200:
+                try:
+                    download_from_request(http_response=response, tar_file_name=tar_file_name, extract_dir=extract_dir)
+                    print(f'get component output path {extract_dir}')
+                except:
+                    print(f"get component output data failed")
+                    return False
+
 
 class TrainSBTModel(Base):
     def get_component_metrics(self, file=None):
         post_data = {
             "job_id": self.job_id,
             "role": "guest",
-            "party_id": self.guest_party_id,
-            "component_name": "hetero_secure_boost_0"
+            "party_id": self.guest_party_id[0],
+            "component_name": component_name
         }
         response = requests.post("/".join([server_url, "tracking", "component/metric/all"]), json=post_data)
         if response.status_code == 200:
             if response.json().get("data"):
                 if not file:
-                    file = './output/metric/{}_hetero_secure_boost_0.json'.format(self.job_id)
+                    file = metric_output_path.format(self.job_id)
                 os.makedirs(os.path.dirname(file), exist_ok=True)
                 with open(file, 'w') as fp:
                     json.dump(response.json().get("data"), fp)
@@ -105,15 +139,15 @@ class TrainSBTModel(Base):
         post_data = {
             "job_id": self.job_id,
             "role": "guest",
-            "party_id": self.guest_party_id,
-            "component_name": "hetero_secure_boost_0"
+            "party_id": self.guest_party_id[0],
+            "component_name": component_name
         }
         print(f"request component output model: {post_data}")
         response = requests.post("/".join([server_url, "tracking", "component/output/model"]), json=post_data)
         if response.status_code == 200:
             if response.json().get("data"):
                 if not file:
-                    file = './output/model/{}_hetero_secure_boost_0.json'.format(self.job_id)
+                    file = model_output_path.format(self.job_id)
                 os.makedirs(os.path.dirname(file), exist_ok=True)
                 with open(file, 'w') as fp:
                     json.dump(response.json().get("data"), fp)
@@ -124,15 +158,32 @@ class TrainSBTModel(Base):
 
 
 class PredictSBTMode(Base):
-    def set_predict(self, guest_party_id, host_party_id, model_id, model_version, path):
-        self.set_config(guest_party_id, host_party_id, path=path)
-        self.config["job_parameters"]["common"]["model_id"] = model_id
-        self.config["job_parameters"]["common"]["model_version"] = model_version
+    def set_predict(self, guest_party_id, host_party_id, arbiter_party_id, model_id, model_version, path):
+        self.set_config(guest_party_id, host_party_id, arbiter_party_id, path=path)
+        if self.config["job_parameters"].get("common"):
+            self.config["job_parameters"]["common"]["model_id"] = model_id
+            self.config["job_parameters"]["common"]["model_version"] = model_version
+        else:
+            self.config["job_parameters"]["model_id"] = model_id
+            self.config["job_parameters"]["model_version"] = model_version
 
 
-def train_job(guest_party_id, host_party_id, train_conf_path, train_dsl_path):
+def download_from_request(http_response, tar_file_name, extract_dir):
+    with open(tar_file_name, 'wb') as fw:
+        for chunk in http_response.iter_content(1024):
+            if chunk:
+                fw.write(chunk)
+    tar = tarfile.open(tar_file_name, "r:gz")
+    file_names = tar.getnames()
+    for file_name in file_names:
+        tar.extract(file_name, extract_dir)
+    tar.close()
+    os.remove(tar_file_name)
+
+
+def train_job(guest_party_id, host_party_id, arbiter_party_id, train_conf_path, train_dsl_path):
     train = TrainSBTModel()
-    train.set_config(guest_party_id, host_party_id, train_conf_path)
+    train.set_config(guest_party_id, host_party_id, arbiter_party_id, train_conf_path)
     train.set_dsl(train_dsl_path)
     status = train.submit()
     if status:
@@ -140,18 +191,20 @@ def train_job(guest_party_id, host_party_id, train_conf_path, train_dsl_path):
         if is_success:
             train.get_component_metrics()
             train.get_component_output_model()
+            train.get_component_output_data()
             return train
     return False
 
 
-def predict_job(guest_party_id, host_party_id, predict_conf_path, predict_dsl_path, model_id, model_version):
+def predict_job(guest_party_id, host_party_id, arbiter_party_id, predict_conf_path, predict_dsl_path, model_id, model_version):
     predict = PredictSBTMode()
-    predict.set_predict(guest_party_id, host_party_id, model_id, model_version, predict_conf_path)
+    predict.set_predict(guest_party_id, host_party_id, arbiter_party_id, model_id, model_version, predict_conf_path)
     predict.set_dsl(predict_dsl_path)
     status = predict.submit(job_type='predict')
     if status:
         is_success = predict.wait_success(timeout=600)
         if is_success:
+            predict.get_component_output_data()
             return predict
     return False
 
@@ -245,10 +298,11 @@ def run_fate_flow_test():
     settings = get_dict_from_file(config_path)
     guest_party_id = settings.get("guest_party_id")
     host_party_id = settings.get("host_party_id")
+    arbiter_party_id = settings.get('arbiter_party_id')
     train_conf_path = settings.get("train_conf_path")
     train_dsl_path = settings.get("train_dsl_path")
     print('submit train job')
-    train = train_job(guest_party_id, host_party_id, train_conf_path, train_dsl_path)
+    train = train_job(guest_party_id, host_party_id, arbiter_party_id, train_conf_path, train_dsl_path)
     if not train:
         print('train job run failed')
         return False
@@ -266,7 +320,7 @@ def run_fate_flow_test():
     model_id = train.model_id
     model_version = utilize.deployed_model_version
     print('start submit predict job')
-    predict = predict_job(guest_party_id, host_party_id, predict_conf_path, predict_dsl_path, model_id, model_version)
+    predict = predict_job(guest_party_id, host_party_id, arbiter_party_id, predict_conf_path, predict_dsl_path, model_id, model_version)
     if not predict:
         print('predict job run failed')
         return False

@@ -264,6 +264,10 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         traverse_func = functools.partial(self.traverse_trees, trees=trees)
         comm_round = 0
 
+        if tree_num == 0 and predict_cache is not None:
+            self.predict_transfer_inst.predict_stop_flag.remote(True, idx=-1, suffix=(comm_round,))
+            return predict_cache
+
         while True:
 
             LOGGER.info('cur predict round is {}'.format(comm_round))
@@ -326,9 +330,9 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
             predict_cache = self.predict_data_cache.predict_data_at(cache_dataset_key, min(rounds, last_round))
             LOGGER.info('load predict cache of round {}'.format( min(rounds, last_round)))
 
-        tree_num = len(trees)
-        if tree_num == 0 and predict_cache is not None:
-            return self.score_to_predict_result(data_inst, predict_cache)
+        # tree_num = len(trees)
+        # if tree_num == 0 and predict_cache is not None:
+        #    return self.score_to_predict_result(data_inst, predict_cache)
 
         predict_rs = self.boosting_fast_predict(processed_data, trees=trees, predict_cache=predict_cache)
         self.predict_data_cache.add_data(cache_dataset_key, predict_rs, cur_boosting_round=rounds)

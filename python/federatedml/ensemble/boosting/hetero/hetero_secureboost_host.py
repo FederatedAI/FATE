@@ -197,9 +197,9 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
                                          idx, booster_idx)
                 trees.append(tree)
 
-        if len(trees) == 0:
-            LOGGER.info('no tree for predicting, prediction done')
-            return
+    #    if len(trees) == 0:
+     #       LOGGER.info('no tree for predicting, prediction done')
+      #      return
 
         self.boosting_fast_predict(processed_data, trees=trees)
 

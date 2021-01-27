@@ -135,7 +135,7 @@ Functions
 | 4     | component\_name   | string    | No         | Component Name   |
 +-------+-------------------+-----------+------------+------------------+
 
-``generate_dsl(train_dsl_path, version="1", cpn_file_path=None, cpn_list = None)``
+``generate_dsl(train_dsl_path, cpn_file_path=None, cpn_list = None)``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 -  *Description*\ ：A predict dsl generator.
