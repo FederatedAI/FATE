@@ -289,7 +289,7 @@ class MachineLearningModelInfo(DataBaseModel):
 
 class ModelTag(DataBaseModel):
     f_id = BigAutoField(primary_key=True)
-    f_m_id = BigIntegerField(null=False)
+    f_m_id = CharField(max_length=25, null=False)
     f_t_id = BigIntegerField(null=False)
 
     class Meta:
