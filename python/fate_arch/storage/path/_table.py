@@ -15,7 +15,7 @@
 #
 from typing import Iterable
 
-
+from fate_arch.common import path_utils
 from fate_arch.common.log import getLogger
 from fate_arch.storage import StorageEngine, PathStorageType
 from fate_arch.storage import StorageTableBase
@@ -74,7 +74,9 @@ class StorageTable(StorageTableBase):
         super().destroy()
 
     def count(self):
-        return None
+        count = path_utils.get_data_table_count(self._address.path)
+        self.get_meta().update_metas(count=count)
+        return count
 
     def save_as(self, address, partitions=None, name=None, namespace=None, schema=None, **kwargs):
         return None

@@ -17,7 +17,7 @@ import os
 import shutil
 import time
 
-from fate_arch.common import log, file_utils, EngineType
+from fate_arch.common import log, file_utils, EngineType, path_utils
 from fate_arch.storage import StorageEngine, EggRollStorageType
 from fate_flow.entity.metric import Metric, MetricMeta
 from fate_flow.utils import job_utils, data_utils
@@ -175,17 +175,7 @@ class Upload(ComponentBase):
                                      metric_meta=MetricMeta(name='upload', metric_type='UPLOAD'))
 
     def get_data_table_count(self, path, name, namespace):
-        config_path = os.path.join(path, 'config.yaml')
-        config = file_utils.load_yaml_conf(conf_path=config_path)
-        count = 0
-        if config:
-            if config.get('type') != 'version':
-                raise Exception(f"can not support this type {config.get('type')}")
-            ext = config.get('inputs').get('ext')
-            base_dir = os.path.join(path, 'images')
-            for file_name in os.listdir(base_dir):
-                if file_name.endswith(ext):
-                    count += 1
+        count = path_utils.get_data_table_count(path)
         self.save_meta(dst_table_namespace=namespace, dst_table_name=name, table_count=count)
         self.table.get_meta().update_metas(count=count)
         return count
