@@ -143,7 +143,7 @@ Testsuite
 ---------
 
 Testsuite is used for running a collection of jobs in sequence. Data used for jobs could be uploaded before jobs are
-submitted, and are cleaned when jobs finished. This tool is useful for FATE's release test.
+submitted and, optionally, be cleaned after jobs finish. This tool is useful for FATE's release test.
 
 command options
 ~~~~~~~~~~~~~~~
@@ -271,6 +271,119 @@ command options
        fate_test suite -i <path1 contains *testsuite.json> --yes
 
    will run testsuites in *path1* directly, skipping double check
+
+testsuite
+~~~~~~~~~
+
+Configuration of jobs should be specified in a testsuite whose file name ends
+with "\*testsuite.json". For testsuite examples,
+please refer `dsl examples <../../examples/dsl/v2>`_ and `pipeline examples <../../examples/dsl/pipeline>`_.
+
+A testsuite includes the following elements:
+
+- data: list of local data to be uploaded before running FATE jobs
+
+  - file: path to original data file to be uploaded, should be relative to testsuite or FATE installation path
+  - head: whether file includes header
+  - partition: number of partition for data storage
+  - table_name: table name in storage
+  - namespace: table namespace in storage
+  - role: which role to upload the data, as specified in fate_test.config;
+    naming format is: "{role_type}_{role_index}", index starts at 0
+
+  .. code-block:: json
+
+        "data": [
+            {
+                "file": "examples/data/motor_hetero_host.csv",
+                "head": 1,
+                "partition": 8,
+                "table_name": "motor_hetero_host",
+                "namespace": "experiment",
+                "role": "host_0"
+            }
+        ]
+
+- tasks: includes arbitrary number of jobs with paths to corresponding dsl and conf files
+
+  - job: name of job to be run, must be unique within each group list
+
+    - conf: path to conf filw, should be relative to testsuite
+    - dsl: path to dsl file, should be relative to testsuite
+
+    .. code-block:: json
+
+       "tasks": {
+            "cv": {
+                "conf": "hetero_lr_cv_conf.json",
+                "dsl": "hetero_lr_cv_dsl.json"
+            },
+            "early-stop": {
+                "conf": "hetero_lr_early_stop_conf.json",
+                "dsl": "hetero_lr_early_stop_dsl.json"
+            }
+       }
+
+- pipeline_tasks: includes arbitrary number of pipeline jobs with paths to corresponding python script
+
+  - job: name of job to be run, must be unique within each group list
+
+    - script: path to pipeline script, should be relative to testsuite
+
+    .. code-block:: json
+
+       "pipeline_tasks": {
+            "cv": {
+                "script": "pipeline-hetero-lr-cv.py"
+            },
+            "normal": {
+                "script": "pipeline-hetero-lr-early-stop.py"
+            }
+       }
+
+  - model_deps(deps): model to be used for prediction task
+
+    .. code-block:: json
+
+       "tasks": {
+            "cv": {
+                "conf": "hetero_lr_cv_conf.json",
+                "dsl": "hetero_lr_cv_dsl.json"
+            },
+            "normal": {
+                "conf": "hetero_lr_normal_conf.json",
+                "dsl": "hetero_lr_normal_dsl.json"
+            },
+            "predict": {
+            "conf": "hetero-lr-normal-predict-conf.json",
+            "dsl": "hetero-lr-normal-predict-dsl.json",
+            "deps": "normal"
+            }
+       }
+
+
+  - data_deps: component output data from previous task to be used as designated input for current task(only used for dsl tasks)
+
+    .. code-block:: json
+
+        "tasks": {
+        "column-expand": {
+            "conf": "./test_column_expand_job_conf.json",
+            "dsl": "./test_column_expand_job_dsl.json"
+        },
+        "column-expand-train": {
+            "conf": "./test_column_expand_train_job_conf.json",
+            "dsl": "./test_column_expand_train_job_dsl.json",
+            "data_deps": {
+                "column-expand": {
+                    "guest_0": {
+                        "reader_0": "column_expand_0"
+                    }
+                }
+            }
+        }
+    }
+
 
 
 Benchmark Quality
