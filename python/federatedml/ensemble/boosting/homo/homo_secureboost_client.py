@@ -161,6 +161,9 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
         self.num_classes = model_param.num_classes
         self.feature_name_fid_mapping.update(model_param.feature_name_fid_mapping)
 
+        # initialize loss function
+        self.loss = self.get_loss_function()
+
     def set_model_meta(self, model_meta):
 
         self.booster_meta = model_meta.tree_meta
