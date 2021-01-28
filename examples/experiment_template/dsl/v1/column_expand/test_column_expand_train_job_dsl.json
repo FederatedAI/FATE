@@ -38,14 +38,6 @@
                 "data": ["train"],
                 "model": ["hetero_lr"]
             }
-        },
-        "evaluation_0": {
-            "module": "Evaluation",
-            "input": {
-                "data": {
-                    "data": ["hetero_lr_0.train"]
-                }
-            }
         }
     }
 }
