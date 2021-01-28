@@ -17,7 +17,9 @@ from federatedml.param.boosting_param import HomoSecureBoostParam
 from fate_flow.entity.metric import Metric
 from fate_flow.entity.metric import MetricMeta
 from federatedml.util.io_check import assert_io_num_rows_equal
-from federatedml.param.feature_binning_param import FeatureBinningParam
+
+from federatedml.feature.homo_feature_binning import recursive_query_binning
+from federatedml.param.feature_binning_param import HomoFeatureBinningParam
 
 
 class HomoBoostingClient(Boosting, ABC):
@@ -32,15 +34,18 @@ class HomoBoostingClient(Boosting, ABC):
 
     def federated_binning(self,  data_instance):
 
-        binning_param = FeatureBinningParam(bin_num=self.bin_num, error=self.binning_error)
-        self.binning_obj.bin_param = binning_param
+        binning_param = HomoFeatureBinningParam(method=consts.RECURSIVE_QUERY, bin_num=self.bin_num,
+                                                error=self.binning_error)
 
         if self.use_missing:
-            binning_result = self.binning_obj.average_run(data_instances=data_instance, abnormal_list=[NoneType()])
+            self.binning_obj = recursive_query_binning.Client(params=binning_param, abnormal_list=[NoneType()],
+                                                              role=self.role)
         else:
-            binning_result = self.binning_obj.average_run(data_instances=data_instance,)
+            self.binning_obj = recursive_query_binning.Client(params=binning_param, role=self.role)
 
-        return self.binning_obj.convert_feature_to_bin(data_instance, binning_result)
+        self.binning_obj.fit_split_points(data_instance)
+
+        return self.binning_obj.convert_feature_to_bin(data_instance)
 
     def check_label(self, data_inst, ) -> List[int]:
 
@@ -75,6 +80,11 @@ class HomoBoostingClient(Boosting, ABC):
         # binning
         data_inst = self.data_alignment(data_inst)
         self.data_bin, self.bin_split_points, self.bin_sparse_points = self.federated_binning(data_inst)
+        LOGGER.debug('binning data is {}'.format([(i[0], i[1].features.get_sparse_vector()) for i in list(self.data_bin.collect())]))
+        import pickle
+        import time
+        file_name = str(time.time()) + 'cwj.pkl'
+        pickle.dump(self.bin_split_points, open('/home/cwj/FATE/standalone-fate-master-1.4.5/'+file_name, 'bw'))
 
         # fid mapping
         self.feature_name_fid_mapping = self.gen_feature_fid_mapping(data_inst.schema)
@@ -168,8 +178,17 @@ class HomoBoostingArbiter(Boosting, ABC):
         self.check_convergence_func = None
         self.binning_obj = HomoFeatureBinningServer()
 
-    def federated_binning(self):
-        self.binning_obj.average_run()
+    def federated_binning(self,):
+
+        binning_param = HomoFeatureBinningParam(method=consts.RECURSIVE_QUERY, bin_num=self.bin_num,
+                                                error=self.binning_error)
+
+        if self.use_missing:
+            self.binning_obj = recursive_query_binning.Server(binning_param, abnormal_list=[NoneType()])
+        else:
+            self.binning_obj = recursive_query_binning.Server(binning_param, abnormal_list=[])
+
+        self.binning_obj.fit_split_points(None)
 
     def sync_feature_num(self):
         feature_num_list = self.transfer_inst.feature_number.get(idx=-1, suffix=('feat_num',))
