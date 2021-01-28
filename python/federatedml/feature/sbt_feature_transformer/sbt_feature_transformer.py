@@ -137,7 +137,7 @@ class HeteroSBTFeatureTransformerGuest(HeteroSBTFeatureTransformerBase):
                 indices.append(leaf_mapping_list[tree_idx][leaf_idx] + offset)
                 value.append(1)
                 offset += len(leaf_mapping_list[tree_idx])
-            return Instance(features=SparseVector(indices=indices, data=value), label=label)
+            return Instance(features=SparseVector(indices=indices, data=value, shape=vec_len), label=label)
 
     def _generate_header(self, leaf_mapping):
 
