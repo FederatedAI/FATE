@@ -166,6 +166,8 @@ class HeteroSBTFeatureTransformerGuest(HeteroSBTFeatureTransformerBase):
                                       dense=self.dense_format)
         rs = data_inst.join(pred_result, join_func)
         rs.schema['header'] = self._generate_header(self.leaf_mapping_list)
+        if 'label_name' in data_inst.schema:
+            rs.schema['label_name'] = data_inst.schema['label_name']
         return rs
 
     def _extract_leaf_mapping(self):
