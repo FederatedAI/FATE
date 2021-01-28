@@ -104,10 +104,13 @@ class Reader(ComponentBase):
             "namespace": self.parameters[table_key]['namespace'],
             "table_info": table_info,
             "partitions": output_table_meta.get_partitions(),
-            "storage_engine": output_table_meta.get_engine(),
-            "count": output_table_meta.get_count(),
-            "file_path": input_table_meta.get_address().path if input_table_meta.get_engine() in [StorageEngine.PATH] else None
+            "storage_engine": output_table_meta.get_engine()
         }
+        if input_table_meta.get_engine() in [StorageEngine.PATH]:
+            data_info["file_count"] = output_table_meta.get_count()
+            data_info["file_path"] = input_table_meta.get_address().path
+        else:
+            data_info["count"] = output_table_meta.get_count()
 
         self.tracker.set_metric_meta(metric_namespace="reader_namespace",
                                      metric_name="reader_name",
