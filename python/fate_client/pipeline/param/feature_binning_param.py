@@ -17,9 +17,9 @@
 #
 import copy
 
-from federatedml.param.base_param import BaseParam
-from federatedml.param.encrypt_param import EncryptParam
-from federatedml.util import consts
+from pipeline.param.base_param import BaseParam
+from pipeline.param.encrypt_param import EncryptParam
+from pipeline.param import consts
 
 
 class TransformParam(BaseParam):
