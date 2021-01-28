@@ -669,8 +669,6 @@ class Evaluation(ModelBase):
                                          MetricMeta(name=model_name, metric_type='ovr',
                                                     extra_metas=validate_callback_meta))
 
-            LOGGER.debug('callback data {} {}'.format(train_callback_meta, validate_callback_meta))
-
     def callback_metric_data(self, eval_results, return_single_val_metrics=False):
 
         validate_metric = {}

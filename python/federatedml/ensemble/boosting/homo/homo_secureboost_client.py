@@ -161,6 +161,9 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
         self.num_classes = model_param.num_classes
         self.feature_name_fid_mapping.update(model_param.feature_name_fid_mapping)
 
+        # initialize loss function
+        self.loss = self.get_loss_function()
+
     def set_model_meta(self, model_meta):
 
         self.booster_meta = model_meta.tree_meta
@@ -188,10 +191,12 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
         feature_importance = sorted(feature_importance, key=itemgetter(1), reverse=True)
         feature_importance_param = []
         for fid, importance in feature_importance:
-            feature_importance_param.append(FeatureImportanceInfo(sitename=self.role,
-                                                                  fid=fid,
+            feature_importance_param.append(FeatureImportanceInfo(fid=fid,
                                                                   importance=importance.importance,
-                                                                  fullname=self.feature_name_fid_mapping[fid]))
+                                                                  importance2=importance.importance_2,
+                                                                  main=importance.main_type
+                                                                  ))
+
         model_param.feature_importances.extend(feature_importance_param)
 
         model_param.feature_name_fid_mapping.update(self.feature_name_fid_mapping)
