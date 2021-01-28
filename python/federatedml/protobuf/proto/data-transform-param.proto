@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package com.webank.ai.fate.core.mlmodel.buffer;
+option java_outer_classname = "DataIOParamProto";
+
+message DataTransformImputerParam{
+    map<string, string> missing_replace_value = 1;
+	map<string, double> missing_value_ratio = 2;
+}
+
+message DataTransformOutlierParam{
+    map<string, string> outlier_replace_value = 1;
+	map<string, double> outlier_value_ratio = 2;
+}
+
+message DataTransformParam {
+    repeated string header = 1;
+    string sid_name = 2;
+    string label_name = 3;
+    DataTransformImputerParam imputer_param = 4;
+    DataTransformOutlierParam outlier_param = 5;
+}
