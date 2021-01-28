@@ -77,6 +77,12 @@
         },
         "single-predict": {
             "script": "pipeline-hetero-feature-selection-single-predict.py"
+        },
+        "pearson": {
+            "script": "pipeline-hetero-feature-selection-pearson.py"
+        },
+        "vif": {
+            "script": "pipeline-hetero-feature-selection-vif.py"
         }
     }
 }

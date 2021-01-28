@@ -33,4 +33,4 @@ class DataTransform(Component, DataTransformParam):
 
         self.input = Input(self.name)
         self.output = Output(self.name, data_type='single')
-        self._module_name = "DataIO"
+        self._module_name = "DataTransform"

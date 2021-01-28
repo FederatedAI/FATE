@@ -45,10 +45,7 @@ class HomoLRGuest(HomoLRBase):
 
     def fit(self, data_instances, validate_data=None):
 
-        self._abnormal_detection(data_instances)
-        self.check_abnormal_values(data_instances)
-        self.init_schema(data_instances)
-
+        self._client_check_data(data_instances)
         validation_strategy = self.init_validation_strategy(data_instances, validate_data)
         self.model_weights = self._init_model_variables(data_instances)
 

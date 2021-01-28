@@ -1,0 +1,15 @@
+{
+    "module_path":  "federatedml/feature/homo_feature_binning",
+    "param_class" : "federatedml/param/feature_binning_param.py/HomoFeatureBinningParam",
+    "role":
+    {
+        "guest|host":
+        {
+            "program": "homo_binning_cpn.py/HomoBinningClient"
+        },
+        "arbiter":
+        {
+            "program": "homo_binning_cpn.py/HomoBinningArbiter"
+        }
+    }
+}

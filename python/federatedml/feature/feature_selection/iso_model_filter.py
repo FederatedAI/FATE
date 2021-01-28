@@ -199,8 +199,8 @@ class FederatedIsoModelFilter(IsoModelFilter):
         else:
             results = self._percentile_fit(all_feature_values, threshold, take_high)
 
-        LOGGER.debug(f"filter_type: {filter_type}, results: {results}, "
-                     f"all_feature_values: {all_feature_values}")
+        # LOGGER.debug(f"filter_type: {filter_type}, results: {results}, "
+        #              f"all_feature_values: {all_feature_values}")
 
         for v_idx, v in enumerate(all_feature_values):
             LOGGER.debug(f"all_feature_values: {all_feature_values},"
@@ -212,10 +212,10 @@ class FederatedIsoModelFilter(IsoModelFilter):
                 if v_idx in results:
                     self.selection_properties.add_left_col_name(col_name[1])
             else:
-                LOGGER.debug(f"host_selection_propertied: {self.host_selection_properties}")
-                LOGGER.debug(f" col_name: {col_name}")
+                # LOGGER.debug(f"host_selection_propertied: {self.host_selection_properties}")
+                # LOGGER.debug(f" col_name: {col_name}")
                 host_idx = self.cpp.host_party_idlist.index(int(col_name[0]))
-                LOGGER.debug(f"header: {self.host_selection_properties[host_idx].header}")
+                # LOGGER.debug(f"header: {self.host_selection_properties[host_idx].header}")
                 host_prop = self.host_selection_properties[host_idx]
                 # if len(self.metrics) == 1:
                 host_prop.add_feature_value(col_name[1], v)

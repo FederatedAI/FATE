@@ -15,6 +15,7 @@
 #
 
 import functools
+import operator
 
 # from federatedml.feature.binning.base_binning import IVAttributes
 from federatedml.feature.hetero_feature_binning.base_feature_binning import BaseHeteroFeatureBinning
@@ -51,6 +52,10 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
             data_instances = self.transform(data_instances)
         self.set_schema(data_instances)
         self.data_output = data_instances
+        total_summary = self.binning_obj.bin_results.summary()
+        self.set_summary(total_summary)
+        LOGGER.debug(f"Summary is: {self.summary()}")
+
         return data_instances
 
     def _sync_init_bucket(self, data_instances, split_points, need_shuffle=False):
@@ -95,15 +100,24 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
 
     def __static_encrypted_bin_label(self, data_bin_table, encrypted_label, cols_dict, split_points):
         data_bin_with_label = data_bin_table.join(encrypted_label, lambda x, y: (x, y))
+        event_sum = encrypted_label.reduce(operator.add)
+        label_counts = {0: encrypted_label.count() - event_sum,
+                        1: event_sum}
+        sparse_bin_points = self.binning_obj.get_sparse_bin(self.bin_inner_param.bin_indexes,
+                                                            self.binning_obj.split_points)
+        sparse_bin_points = {self.bin_inner_param.header[k]: v for k, v in sparse_bin_points.items()}
+
         f = functools.partial(self.binning_obj.add_label_in_partition,
-                              split_points=split_points,
-                              cols_dict=cols_dict)
+                              sparse_bin_points=sparse_bin_points)
         result_sum = data_bin_with_label.applyPartitions(f)
         encrypted_bin_sum = result_sum.reduce(self.binning_obj.aggregate_partition_label)
 
         for col_name, bin_results in encrypted_bin_sum.items():
             for b in bin_results:
                 b[1] = b[1] - b[0]
+
+        encrypted_bin_sum = self.binning_obj.fill_sparse_result(encrypted_bin_sum,
+                                                                sparse_bin_points, label_counts)
         return encrypted_bin_sum
 
     def optimal_binning_sync(self):
