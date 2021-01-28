@@ -77,7 +77,7 @@ class HomoOneHotBase(one_hot_encoder.OneHotEncoder):
             values = [x for x in pair_obj.values]
             col_maps[col_name] = values
 
-        LOGGER.debug("new col_maps is: {}".format(col_maps))
+        # LOGGER.debug("new col_maps is: {}".format(col_maps))
 
         if self.need_alignment:
 
@@ -90,7 +90,7 @@ class HomoOneHotBase(one_hot_encoder.OneHotEncoder):
                 # Receive aligned columns from arbiter
             aligned_columns = self.transfer_variable.aligned_columns.get(idx=-1)
             aligned_col_maps = aligned_columns[0]
-            LOGGER.debug("{} aligned columns received are: {}".format(self.role, aligned_col_maps))
+            # LOGGER.debug("{} aligned columns received are: {}".format(self.role, aligned_col_maps))
 
             self.col_maps = {}
             for col_name, value_list in aligned_col_maps.items():
@@ -106,8 +106,8 @@ class HomoOneHotBase(one_hot_encoder.OneHotEncoder):
         self._transform_schema()
 
         data_instances = self.transform(data_instances)
-        LOGGER.debug(
-            "[Result][OHEAlignment{}] After transform in fit, schema is : {}, header: {}".format(self.role, self.schema,
-                                                                                                 self.inner_param.header))
+        # LOGGER.debug(
+        #     "[Result][OHEAlignment{}] After transform in fit, schema is : {}, header: {}".format(self.role, self.schema,
+        #                                                                                          self.inner_param.header))
 
         return data_instances

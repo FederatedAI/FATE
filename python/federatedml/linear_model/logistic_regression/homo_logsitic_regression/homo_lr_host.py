@@ -55,8 +55,10 @@ class HomoLRHost(HomoLRBase):
             self.gradient_operator = LogisticGradient()
 
     def fit(self, data_instances, validate_data=None):
-        # LOGGER.debug("Start data count: {}".format(data_instances.count()))
-        self._client_check_data(data_instances)
+        self._abnormal_detection(data_instances)
+        self.check_abnormal_values(data_instances)
+        self.init_schema(data_instances)
+        # validation_strategy = self.init_validation_strategy(data_instances, validate_data)
 
         pubkey = self.cipher.gen_paillier_pubkey(enable=self.use_encrypt, suffix=('fit',))
         if self.use_encrypt:
@@ -74,12 +76,12 @@ class HomoLRHost(HomoLRBase):
 
         if self.use_encrypt:
             re_encrypt_times = (total_batch_num - 1) // self.re_encrypt_batches + 1
-            LOGGER.debug("re_encrypt_times is :{}, batch_size: {}, total_batch_num: {}, re_encrypt_batches: {}".format(
-                re_encrypt_times, self.batch_size, total_batch_num, self.re_encrypt_batches))
+            # LOGGER.debug("re_encrypt_times is :{}, batch_size: {}, total_batch_num: {}, re_encrypt_batches: {}".format(
+            #     re_encrypt_times, self.batch_size, total_batch_num, self.re_encrypt_batches))
             self.cipher.set_re_cipher_time(re_encrypt_times)
 
-        total_data_num = data_instances.count()
-        LOGGER.debug("Current data count: {}".format(total_data_num))
+        # total_data_num = data_instances.count()
+        # LOGGER.debug("Current data count: {}".format(total_data_num))
 
         model_weights = self.model_weights
         self.prev_round_weights = copy.deepcopy(model_weights)

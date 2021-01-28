@@ -121,7 +121,7 @@ class HeteroStochasticQuansiNewtonGuest(HeteroStochasticQuansiNewton):
         forward_hess, hess_vector = self.gradient_computer.compute_forward_hess(sampled_data, delta_s, host_forwards)
         self.sqn_sync.remote_forward_hess(forward_hess, suffix)
         hess_norm = optimizer.hess_vector_norm(delta_s)
-        LOGGER.debug("In _update_hessian, hess_norm: {}".format(hess_norm.unboxed))
+        # LOGGER.debug("In _update_hessian, hess_norm: {}".format(hess_norm.unboxed))
         hess_vector = hess_vector + hess_norm.unboxed
         self.sqn_sync.sync_hess_vector(hess_vector, suffix)
 
@@ -220,7 +220,7 @@ class HeteroStochasticQuansiNewtonArbiter(HeteroStochasticQuansiNewton):
     def _compute_hess_matrix(self):
         # LOGGER.debug("opt_v: {}, opt_s: {}".format(self.opt_v, self.opt_s))
         rho = sum(self.opt_v[-1] * self.opt_s[-1]) / sum(self.opt_v[-1] * self.opt_v[-1])
-        LOGGER.debug("in _compute_hess_matrix, rho0 = {}".format(rho))
+        # LOGGER.debug("in _compute_hess_matrix, rho0 = {}".format(rho))
         n = self.opt_s[0].shape[0]
         Hess = rho * np.identity(n)
         iter_num = 0
@@ -229,12 +229,12 @@ class HeteroStochasticQuansiNewtonArbiter(HeteroStochasticQuansiNewton):
             Hess = (np.identity(n) - rho * s.dot(y.T)).dot(Hess).dot(np.identity(n) - rho * y.dot(s.T)) + rho * s.dot(
                 s.T)
             iter_num += 1
-            LOGGER.info(
-                "hessian updating algorithm iter_num = {}, rho = {} \n ||s|| is {} \n ||y|| is {}".format(iter_num, rho,
-                                                                                                          np.linalg.norm(
-                                                                                                              s),
-                                                                                                          np.linalg.norm(
-                                                                                                              y)))
+            # LOGGER.info(
+            #     "hessian updating algorithm iter_num = {}, rho = {} \n ||s|| is {} \n ||y|| is {}".format(iter_num, rho,
+            #                                                                                               np.linalg.norm(
+            #                                                                                                   s),
+            #                                                                                               np.linalg.norm(
+            #                                                                                                   y)))
 
         self.opt_Hess = Hess
 

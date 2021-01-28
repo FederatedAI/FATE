@@ -1,0 +1,53 @@
+{
+  "federatedml.transfer_variable.transfer_class.feldman_verifiable_sum_transfer_variable.FeldmanVerifiableSumTransferVariables": {
+    "guest_share_subkey": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "host"
+      ]
+    },
+    "host_share_to_guest": {
+      "src": [
+        "host"
+      ],
+      "dst": [
+        "guest"
+      ]
+    },
+    "host_share_to_host": {
+      "src": [
+        "host"
+      ],
+      "dst": [
+        "host"
+      ]
+    },
+    "host_sum": {
+      "src": [
+        "host"
+      ],
+      "dst": [
+        "guest"
+      ]
+    },
+    "guest_commitments": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "host"
+      ]
+    },
+    "host_commitments": {
+      "src": [
+        "host"
+      ],
+      "dst": [
+        "host",
+        "guest"
+      ]
+    }
+  }
+}

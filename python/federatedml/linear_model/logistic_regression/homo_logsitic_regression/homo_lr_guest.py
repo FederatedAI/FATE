@@ -64,10 +64,6 @@ class HomoLRGuest(HomoLRBase):
             if ((self.n_iter_ + 1) % self.aggregate_iters == 0) or self.n_iter_ == max_iter:
                 weight = self.aggregator.aggregate_then_get(model_weights, degree=degree,
                                                             suffix=self.n_iter_)
-                # LOGGER.debug("Before aggregate: {}, degree: {} after aggregated: {}".format(
-                #     model_weights.unboxed / degree,
-                #     degree,
-                #     weight.unboxed))
 
                 self.model_weights = LogisticRegressionWeights(weight.unboxed, self.fit_intercept)
 

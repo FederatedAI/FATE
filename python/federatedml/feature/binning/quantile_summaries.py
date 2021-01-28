@@ -18,9 +18,7 @@
 #
 
 import math
-import time
 
-from federatedml.util import LOGGER
 from federatedml.util import consts
 
 
@@ -118,7 +116,6 @@ class QuantileSummaries(object):
         other : QuantileSummaries
             The summaries to be merged
         """
-        t0 = time.time()
         if other.head_sampled:
             # other._insert_head_buffer()
             other.compress()
@@ -241,8 +238,6 @@ class QuantileSummaries(object):
         return res
 
     def _compress_immut(self, merge_threshold):
-        t0 = time.time()
-
         if not self.sampled:
             return self.sampled
 
@@ -270,9 +265,6 @@ class QuantileSummaries(object):
 
         # Python do not support prepend, thus, use reverse instead
         res.reverse()
-        t1 = time.time()
-        if t1 - t0 > 1:
-            LOGGER.debug(f"_compress_immut took {time.time() - t0}s")
         return res
 
 
@@ -290,7 +282,6 @@ class SparseQuantileSummaries(QuantileSummaries):
 
     def set_total_count(self, total_count):
         self._total_count = total_count
-        LOGGER.debug(f"In set_total_count, count: {self.count}")
         return self
 
     def insert(self, x):
@@ -307,10 +298,6 @@ class SparseQuantileSummaries(QuantileSummaries):
             return 0.0
 
         non_zero_quantile = self._convert_query_percentile(quantile)
-        # LOGGER.debug(f"quantile: {quantile}, zero_lower_bound: {self.zero_lower_bound},"
-        #              f"zero_upper_bound: {self.zero_upper_bound}, total_count: {self._total_count},"
-        #              f"count: {self.count}"
-        #              f"non_zero_quantile: {non_zero_quantile}")
         result = super(SparseQuantileSummaries, self).query(non_zero_quantile)
         return result
 

@@ -89,3 +89,15 @@ def save_component_summary(job_id: str, component_name: str, task_version: int, 
     summary_data = request_data['summary']
     tracker.insert_summary_into_db(summary_data)
     return get_json_result()
+
+
+@manager.route('/<job_id>/<component_name>/<role>/<party_id>/output/table', methods=['POST'])
+def component_output_data_table(job_id, component_name, role, party_id):
+    output_data_infos = Tracker.query_output_data_infos(job_id=job_id, component_name=component_name, role=role, party_id=party_id)
+    if output_data_infos:
+        return get_json_result(retcode=0, retmsg='success', data=[{'table_name': output_data_info.f_table_name,
+                                                                  'table_namespace': output_data_info.f_table_namespace,
+                                                                   "data_name": output_data_info.f_data_name
+                                                                   } for output_data_info in output_data_infos])
+    else:
+        return get_json_result(retcode=100, retmsg='No found table, please check if the parameters are correct')

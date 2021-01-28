@@ -197,11 +197,12 @@ class RsaIntersect(Intersect):
                                                            rsa_n),
                                           final_hash_operator,
                                           salt)
+            return processed_id, hash_sid
         else:
             processed_id = Intersect.hash(gmpy_math.powmod(hash_sid, rsa_d, rsa_n),
                                           final_hash_operator,
                                           salt)
-        return processed_id, v[0]
+            return processed_id, v[0]
 
     def cal_prvkey_ids_process_pair(self, data_instances, d, n, first_hash_operator=None):
         return data_instances.map(
