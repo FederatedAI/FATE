@@ -80,11 +80,6 @@ class HomoBoostingClient(Boosting, ABC):
         # binning
         data_inst = self.data_alignment(data_inst)
         self.data_bin, self.bin_split_points, self.bin_sparse_points = self.federated_binning(data_inst)
-        LOGGER.debug('binning data is {}'.format([(i[0], i[1].features.get_sparse_vector()) for i in list(self.data_bin.collect())]))
-        import pickle
-        import time
-        file_name = str(time.time()) + 'cwj.pkl'
-        pickle.dump(self.bin_split_points, open('/home/cwj/FATE/standalone-fate-master-1.4.5/'+file_name, 'bw'))
 
         # fid mapping
         self.feature_name_fid_mapping = self.gen_feature_fid_mapping(data_inst.schema)
