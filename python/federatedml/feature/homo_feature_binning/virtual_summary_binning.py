@@ -67,6 +67,9 @@ class Client(homo_binning_base.Client):
     def fit_split_points(self, data_instances):
         if self.aggregator is None:
             self.aggregator = table_aggregator.Client(enable_secure_aggregate=True)
+        if self.bin_inner_param is None:
+            self._setup_bin_inner_param(data_instances, self.params)
+
         self.fit(data_instances)
 
         percent_value = 1.0 / self.bin_num

@@ -27,6 +27,7 @@ from federatedml.feature.binning.bin_result import BinColResults, BinResults
 from federatedml.feature.sparse_vector import SparseVector
 from federatedml.statistic import data_overview
 from federatedml.util import LOGGER
+from federatedml.statistic.data_overview import get_header
 
 # from federatedml.statistic import statics
 
@@ -214,6 +215,32 @@ class BaseBinning(object):
         split_points_result = self.bin_results.get_split_points_array(self.bin_inner_param.transform_bin_names)
 
         return new_data, split_points_result, bin_sparse
+
+    def _setup_bin_inner_param(self, data_instances, params):
+        if self.bin_inner_param is not None:
+            return
+        self.bin_inner_param = BinInnerParam()
+
+        header = get_header(data_instances)
+        LOGGER.debug("_setup_bin_inner_param, get header length: {}".format(len(self.header)))
+
+        self.schema = data_instances.schema
+        self.bin_inner_param.set_header(header)
+        if params.bin_indexes == -1:
+            self.bin_inner_param.set_bin_all()
+        else:
+            self.bin_inner_param.add_bin_indexes(params.bin_indexes)
+            self.bin_inner_param.add_bin_names(params.bin_names)
+
+        self.bin_inner_param.add_category_indexes(params.category_indexes)
+        self.bin_inner_param.add_category_names(params.category_names)
+
+        if params.transform_param.transform_cols == -1:
+            self.bin_inner_param.set_transform_all()
+        else:
+            self.bin_inner_param.add_transform_bin_indexes(params.transform_param.transform_cols)
+            self.bin_inner_param.add_transform_bin_names(params.transform_param.transform_names)
+        self.set_bin_inner_param(self.bin_inner_param)
 
     @staticmethod
     def _convert_sparse_data(instances, bin_inner_param: BinInnerParam, bin_results: BinResults,
@@ -573,10 +600,7 @@ class BaseBinning(object):
                 col_sum = result_sum[col_name]
                 while bin_idx >= len(col_sum):
                     col_sum.append([0, 0])
-                LOGGER.debug(f"In add_label_in_partition, bin_index: {bin_idx},"
-                             f"sparse_bin_points: {sparse_bin_points}")
                 if bin_idx == sparse_bin_points[col_name]:
-                    LOGGER.debug("In add_label_in_partition, matched!")
                     continue
                 label_sum = col_sum[bin_idx]
                 label_sum[0] = label_sum[0] + y

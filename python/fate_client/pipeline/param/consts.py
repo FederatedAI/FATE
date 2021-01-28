@@ -38,6 +38,10 @@ L2_PENALTY = 'L2'
 
 FLOAT_ZERO = 1e-8
 OVERFLOW_THRESHOLD = 1e8
+OT_HAUCK = 'OT_Hauck'
+CE_PH = 'CommutativeEncryptionPohligHellman'
+XOR = 'xor'
+AES = 'aes'
 
 PARAM_MAXDEPTH = 5
 MAX_CLASSNUM = 1000
@@ -69,6 +73,8 @@ ROC = "roc"
 F1_SCORE = 'f1_score'
 CONFUSION_MAT = 'confusion_mat'
 PSI = 'psi'
+VIF = 'vif'
+PEARSON = 'pearson'
 FEATURE_IMPORTANCE = 'feature_importance'
 QUANTILE_PR = 'quantile_pr'
 JACCARD_SIMILARITY_SCORE = 'jaccard_similarity_score'
@@ -183,7 +189,7 @@ CONST = 'const'
 
 # decision tree
 MAX_SPLIT_NODES = 2 ** 16
-MAX_FEDERATED_NODES = 2 ** 10
+MAX_SPLITINFO_TO_COMPUTE = 2 ** 10
 NORMAL_TREE = 'normal'
 COMPLETE_SECURE_TREE = 'complete_secure'
 MIX_TREE = 'mix'
@@ -196,7 +202,7 @@ VALIDATE_EVALUATE = 'validate_evaluate'
 G_BIN_NUM = 10
 DEFAULT_COMPRESS_THRESHOLD = 10000
 DEFAULT_HEAD_SIZE = 10000
-DEFAULT_RELATIVE_ERROR = 0.001
+DEFAULT_RELATIVE_ERROR = 1e-4
 ONE_HOT_LIMIT = 1024   # No more than 10 possible values
 PERCENTAGE_VALUE_LIMIT = 0.1
 SECURE_AGG_AMPLIFY_FACTOR = 1000
@@ -204,6 +210,8 @@ SECURE_AGG_AMPLIFY_FACTOR = 1000
 QUANTILE = 'quantile'
 BUCKET = 'bucket'
 OPTIMAL = 'optimal'
+VIRTUAL_SUMMARY = 'virtual_summary'
+RECURSIVE_QUERY = 'recursive_query'
 
 # Feature selection methods
 UNIQUE_VALUE = 'unique_value'
@@ -218,6 +226,9 @@ PERCENTAGE_VALUE = 'percentage_value'
 IV_FILTER = 'iv_filter'
 STATISTIC_FILTER = 'statistic_filter'
 PSI_FILTER = 'psi_filter'
+VIF_FILTER = 'vif_filter'
+CORRELATION_FILTER = 'correlation_filter'
+SECUREBOOST = 'sbt'
 HETERO_SBT_FILTER = 'hetero_sbt_filter'
 HOMO_SBT_FILTER = 'homo_sbt_filter'
 HETERO_FAST_SBT_FILTER = 'hetero_fast_sbt_filter'
@@ -250,7 +261,11 @@ COL = 'col'
 PHONE = 'phone'
 IMEI = 'imei'
 MD5 = 'md5'
+SHA1 = 'sha1'
+SHA224 = 'sha224'
 SHA256 = 'sha256'
+SHA384 = 'sha384'
+SM3 = 'sm3'
 INTERSECT_CACHE_TAG = 'Za'
 
 SHARE_INFO_COL_NAME = "share_info"
@@ -274,8 +289,15 @@ KURTOSIS = 'kurtosis'
 # adapters model name
 HOMO_SBT = 'homo_sbt'
 HETERO_SBT = 'hetero_sbt'
+HETERO_FAST_SBT = 'hetero_fast_sbt'
 HETERO_FAST_SBT_MIX = 'hetero_fast_sbt_mix'
 HETERO_FAST_SBT_LAYERED = 'hetero_fast_sbt_layered'
+
+# tree protobuf model name
+HETERO_SBT_GUEST_MODEL = 'HeteroSecureBoostingTreeGuest'
+HETERO_SBT_HOST_MODEL = 'HeteroSecureBoostingTreeHost'
+HETERO_FAST_SBT_GUEST_MODEL = "HeteroFastSecureBoostingTreeGuest"
+HETERO_FAST_SBT_HOST_MODEL = "HeteroFastSecureBoostingTreeHost"
 
 # column_expand
 MANUAL = 'manual'
@@ -285,5 +307,9 @@ CREDIT = 'credit'
 
 # sample weight
 BALANCED = 'balanced'
+
+# min r base fraction
+MIN_BASE_FRACTION = 0.01
+MAX_BASE_FRACTION = 0.99
 
 MAX_SAMPLE_OUTPUT_LIMIT = 10 ** 6
