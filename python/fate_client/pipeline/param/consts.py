@@ -293,3 +293,6 @@ CREDIT = 'credit'
 BALANCED = 'balanced'
 
 MAX_SAMPLE_OUTPUT_LIMIT = 10 ** 6
+
+# Hetero NN Selective BP Strategy
+SELECTIVE_SIZE = 1024

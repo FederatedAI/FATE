@@ -28,6 +28,7 @@ from federatedml.protobuf.generated.hetero_nn_model_meta_pb2 import HeteroNNMode
 from federatedml.protobuf.generated.hetero_nn_model_meta_pb2 import OptimizerParam
 from federatedml.protobuf.generated.hetero_nn_model_param_pb2 import HeteroNNModelParam
 from federatedml.util import LOGGER
+from federatedml.nn.hetero_nn.strategy.selector import SelectorFactory
 
 
 class HeteroNNKerasGuestModel(HeteroNNGuestModel):
@@ -50,11 +51,25 @@ class HeteroNNKerasGuestModel(HeteroNNGuestModel):
         self.bottom_model_input_shape = 0
         self.top_model_input_shape = None
 
+        self.batch_size = None
+
+        self.bottom_update_per_batch = 1
+        self.top_update_per_batch = 1
+        self.interactive_update_per_batch = 1
+        self.guest_update_per_batch = 1
+        self.host_update_per_batch = 1
+
         self.is_empty = False
 
         self.set_nn_meta(hetero_nn_param)
         self.model_builder = nn_model.get_nn_builder(config_type=self.config_type)
         self.data_converter = KerasSequenceDataConverter()
+
+        self.selector = SelectorFactory.get_selector(hetero_nn_param.selector_param.method,
+                                                     hetero_nn_param.selector_param.selective_size,
+                                                     beta=hetero_nn_param.selector_param.beta,
+                                                     random_rate=hetero_nn_param.selector_param.random_state,
+                                                     min_prob=hetero_nn_param.selector_param.min_prob)
 
     def set_nn_meta(self, hetero_nn_param):
         self.bottom_nn_define = hetero_nn_param.bottom_nn_define
@@ -63,13 +78,16 @@ class HeteroNNKerasGuestModel(HeteroNNGuestModel):
         self.config_type = hetero_nn_param.config_type
         self.optimizer = hetero_nn_param.optimizer
         self.loss = hetero_nn_param.loss
-        # self.metrics = hetero_nn_param.metrics
         self.hetero_nn_param = hetero_nn_param
+        self.batch_size = hetero_nn_param.batch_size
 
     def set_empty(self):
         self.is_empty = True
 
     def train(self, x, y, epoch, batch_idx):
+        if self.batch_size == -1:
+            self.batch_size = x.shape[0]
+
         if not self.is_empty:
             if self.bottom_model is None:
                 self.bottom_model_input_shape = x.shape[1]
@@ -82,18 +100,20 @@ class HeteroNNKerasGuestModel(HeteroNNGuestModel):
         if self.interactive_model is None:
             self._build_interactive_model()
 
-        interactive_output = self.interactive_model.forward(guest_bottom_output, epoch, batch_idx)
+        interactive_output = self.interactive_model.forward(guest_bottom_output, epoch, batch_idx, train=True)
 
         if self.top_model is None:
             self.top_model_input_shape = int(interactive_output.shape[1])
             self._build_top_model()
 
-        gradients = self.top_model.train_and_get_backward_gradient(interactive_output, y)
+        selective_ids, gradients, loss = self.top_model.train_and_get_backward_gradient(interactive_output, y)
 
-        guest_backward = self.interactive_model.backward(gradients, epoch, batch_idx)
+        interactive_layer_backward = self.interactive_model.backward(gradients, selective_ids, epoch, batch_idx)
 
         if not self.is_empty:
-            self.bottom_model.backward(x, guest_backward)
+            self.bottom_model.backward(x, interactive_layer_backward, selective_ids)
+
+        return loss
 
     def predict(self, x):
         if not self.is_empty:
@@ -101,7 +121,7 @@ class HeteroNNKerasGuestModel(HeteroNNGuestModel):
         else:
             guest_bottom_output = None
 
-        interactive_output = self.interactive_model.forward(guest_bottom_output)
+        interactive_output = self.interactive_model.forward(guest_bottom_output, train=False)
         preds = self.top_model.predict(interactive_output)
 
         return preds
@@ -112,7 +132,7 @@ class HeteroNNKerasGuestModel(HeteroNNGuestModel):
         else:
             guest_bottom_output = None
 
-        interactive_output = self.interactive_model.forward(guest_bottom_output, epoch, batch)
+        interactive_output = self.interactive_model.forward(guest_bottom_output, epoch, batch, train=False)
         metrics = self.top_model.evaluate(interactive_output, y)
 
         return metrics
@@ -216,6 +236,9 @@ class HeteroNNKerasGuestModel(HeteroNNGuestModel):
                                                 model_builder=self.model_builder)
 
         self.bottom_model.set_data_converter(self.data_converter)
+        if self.selector:
+            self.bottom_model.set_backward_select_strategy()
+            self.bottom_model.set_batch(self.batch_size)
 
     def _restore_bottom_model(self, model_bytes):
         self._build_bottom_model()
@@ -231,6 +254,10 @@ class HeteroNNKerasGuestModel(HeteroNNGuestModel):
 
         self.top_model.set_data_converter(self.data_converter)
 
+        if self.selector:
+            self.top_model.set_backward_selector_strategy(selector=self.selector)
+            self.top_model.set_batch(self.batch_size)
+
     def _restore_top_model(self, model_bytes):
         self._build_top_model()
         self.top_model.restore_model(model_bytes)
@@ -242,6 +269,8 @@ class HeteroNNKerasGuestModel(HeteroNNGuestModel):
 
         self.interactive_model.set_transfer_variable(self.transfer_variable)
         self.interactive_model.set_partition(self.partition)
+        if self.selector:
+            self.interactive_model.set_backward_select_strategy()
 
     def _restore_interactive_model(self, interactive_model_param):
         self._build_interactive_model()
@@ -262,6 +291,7 @@ class HeteroNNKerasHostModel(HeteroNNHostModel):
         self.optimizer = None
         self.hetero_nn_param = None
 
+        self.batch_size = None
         self.set_nn_meta(hetero_nn_param)
 
         self.model_builder = nn_model.get_nn_builder(config_type=self.config_type)
@@ -269,11 +299,24 @@ class HeteroNNKerasHostModel(HeteroNNHostModel):
 
         self.transfer_variable = None
 
+        self.bottom_update_per_batch = 1
+        self.top_update_per_batch = 1
+        self.interactive_update_per_batch = 1
+        self.guest_update_per_batch = 1
+        self.host_update_per_batch = 1
+
+        self.selector = SelectorFactory.get_selector(hetero_nn_param.selector_param.method,
+                                                     hetero_nn_param.selector_param.selective_size,
+                                                     beta=hetero_nn_param.selector_param.beta,
+                                                     random_rate=hetero_nn_param.selector_param.random_state,
+                                                     min_prob=hetero_nn_param.selector_param.min_prob)
+
     def set_nn_meta(self, hetero_nn_param):
         self.bottom_nn_define = hetero_nn_param.bottom_nn_define
         self.config_type = hetero_nn_param.config_type
         self.optimizer = hetero_nn_param.optimizer
         self.hetero_nn_param = hetero_nn_param
+        self.batch_size = hetero_nn_param.batch_size
 
     def _build_bottom_model(self):
         self.bottom_model = HeteroNNBottomModel(input_shape=self.bottom_model_input_shape,
@@ -361,18 +404,26 @@ class HeteroNNKerasHostModel(HeteroNNHostModel):
             self.bottom_model_input_shape = x.shape[1]
             self._build_bottom_model()
             self._build_interactive_model()
+            if self.batch_size == -1:
+                self.batch_size = x.shape[0]
+
+            if self.selector:
+                self.bottom_model.set_backward_select_strategy()
+                self.bottom_model.set_batch(self.batch_size)
+                self.interactive_model.set_backward_select_strategy()
 
         host_bottom_output = self.bottom_model.forward(x)
 
-        self.interactive_model.forward(host_bottom_output, epoch, batch_idx)
+        self.interactive_model.forward(host_bottom_output, epoch, batch_idx, train=True)
 
-        host_gradient = self.interactive_model.backward(epoch, batch_idx)
-        self.bottom_model.backward(x, host_gradient)
+        host_gradient, selective_ids = self.interactive_model.backward(epoch, batch_idx)
+
+        self.bottom_model.backward(x, host_gradient, selective_ids)
 
     def predict(self, x):
         guest_bottom_output = self.bottom_model.predict(x)
-        self.interactive_model.forward(guest_bottom_output)
+        self.interactive_model.forward(guest_bottom_output, train=False)
 
     def evaluate(self, x, epoch, batch_idx):
         guest_bottom_output = self.bottom_model.predict(x)
-        self.interactive_model.forward(guest_bottom_output, epoch, batch_idx)
+        self.interactive_model.forward(guest_bottom_output, epoch, batch_idx, train=False)

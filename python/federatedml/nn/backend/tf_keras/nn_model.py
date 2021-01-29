@@ -23,6 +23,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.keras.backend import gradients
 from tensorflow.keras.backend import set_session
+from tensorflow.keras.callbacks import History
 
 from federatedml.framework.weights import OrderDictWeights, Weights
 from federatedml.nn.backend.tf_keras import losses
@@ -123,9 +124,10 @@ class KerasNNModel(NNModel):
     def __init__(self, sess, model):
         self._sess: tf.Session = sess
         self._model: tf.keras.Sequential = model
-        self._trainable_weights = {v.name: v for v in self._model.trainable_weights}
+        self._trainable_weights = {self._trim_device_str(v.name): v for v in self._model.trainable_weights}
 
         self._initialize_variables()
+        self._loss = None
 
     def _initialize_variables(self):
         uninitialized_var_names = [bytes.decode(var) for var in self._sess.run(tf.report_uninitialized_variables())]
@@ -170,6 +172,19 @@ class KerasNNModel(NNModel):
     def get_trainable_weights(self):
         return self._sess.run(self._model.trainable_variables)
 
+    def get_loss(self):
+        return self._loss
+
+    def get_forward_loss_from_input(self, X, y):
+        from federatedml.nn.hetero_nn.backend.tf_keras import losses
+
+        y_true = tf.placeholder(shape=self._model.output.shape,
+                                dtype=self._model.output.dtype)
+
+        loss_fn = getattr(losses, self._model.loss_functions[0].fn.__name__)(y_true, self._model.output)
+        return self._sess.run(loss_fn, feed_dict={self._model.input: X,
+                                                  y_true: y})
+
     def _get_gradients(self, X, y, variable):
         from federatedml.nn.hetero_nn.backend.tf_keras import losses
 
@@ -191,7 +206,9 @@ class KerasNNModel(NNModel):
         if "aggregate_every_n_epoch" in kwargs:
             epochs = kwargs["aggregate_every_n_epoch"]
             del left_kwargs["aggregate_every_n_epoch"]
+        left_kwargs["callbacks"] = [History()]
         self._model.fit(x=data, epochs=epochs, verbose=1, shuffle=True, **left_kwargs)
+        self._loss = left_kwargs["callbacks"][0].history["loss"]
         return epochs * len(data)
 
     def evaluate(self, data: tf.keras.utils.Sequence, **kwargs):
