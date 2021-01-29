@@ -16,14 +16,13 @@
 
 import copy
 import functools
-import numpy as np
 
+from federatedml.ciper_compressor.compressor import CipherDecompressor
 from federatedml.feature.binning.base_binning import BaseBinning
 from federatedml.feature.binning.optimal_binning.optimal_binning import OptimalBinning
 from federatedml.feature.hetero_feature_binning.base_feature_binning import BaseHeteroFeatureBinning
 from federatedml.secureprotol import PaillierEncrypt
 from federatedml.secureprotol.fate_paillier import PaillierEncryptedNumber
-from federatedml.secureprotol import IterativeAffineEncrypt
 from federatedml.statistic import data_overview
 from federatedml.statistic import statics
 from federatedml.util import LOGGER
@@ -61,7 +60,6 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
                                           label_counts=label_counts)
             self.transform(data_instances)
             self.set_summary(self.binning_obj.bin_results.summary())
-            LOGGER.debug(f"Summary is: {self.summary()}")
             return self.data_output
 
         if self.model_param.encrypt_param.method == consts.PAILLIER:
@@ -83,7 +81,6 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
                                       label_counts=label_counts)
 
         encrypted_bin_infos = self.transfer_variable.encrypted_bin_sum.get(idx=-1)
-        # LOGGER.debug("encrypted_bin_sums: {}".format(encrypted_bin_sums))
 
         total_summary = self.binning_obj.bin_results.summary()
 
@@ -91,11 +88,11 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
         for host_idx, encrypted_bin_info in enumerate(encrypted_bin_infos):
             host_party_id = self.component_properties.host_party_idlist[host_idx]
             encrypted_bin_sum = encrypted_bin_info['encrypted_bin_sum']
+            result_counts = self.cipher_decompress(encrypted_bin_sum, cipher)
+            # result_counts = self.__decrypt_bin_sum(encrypted_bin_sum, cipher)
+
             host_bin_methods = encrypted_bin_info['bin_method']
             category_names = encrypted_bin_info['category_names']
-            result_counts = self.__decrypt_bin_sum(encrypted_bin_sum, cipher)
-            LOGGER.debug("Received host {} result, length of buckets: {}".format(host_idx, len(result_counts)))
-            LOGGER.debug("category_name: {}, host_bin_methods: {}".format(category_names, host_bin_methods))
             # if self.model_param.method == consts.OPTIMAL:
             if host_bin_methods == consts.OPTIMAL:
                 optimal_binning_params = encrypted_bin_info['optimal_params']
@@ -125,13 +122,48 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
         self.set_schema(data_instances)
         self.transform(data_instances)
         LOGGER.info("Finish feature binning fit and transform")
+        total_summary['test'] = 'test'
         self.set_summary(total_summary)
-        LOGGER.debug(f"Summary is: {self.summary()}")
         return self.data_output
 
-    # @staticmethod
-    # def encrypt(x, cipher):
-    #     return cipher.encrypt(x), cipher.encrypt(1 - x)
+    def cipher_decompress(self, encrypted_bin_sum, cipher):
+        _decompressor = CipherDecompressor(encrypter=cipher)
+        encrypted_bin_sum["event_counts"] = _decompressor.unpack(encrypted_bin_sum["event_counts"])
+        encrypted_bin_sum["non_event_counts"] = _decompressor.unpack(encrypted_bin_sum["non_event_counts"])
+        return self.convert_decompress_format(encrypted_bin_sum)
+
+    @staticmethod
+    def convert_decompress_format(encrypted_bin_sum):
+        """
+        Parameters
+        ----------
+        encrypted_bin_sum :  dict.
+            {"keys": ['x1', 'x2' ...],
+             "event_counts": [...],
+             "non_event_counts": [...],
+             bin_num": [...]
+            }
+        returns
+        -------
+                {'x1': [[event_count, non_event_count], [event_count, non_event_count] ... ],
+                 'x2': [[event_count, non_event_count], [event_count, non_event_count] ... ],
+                 ...
+                }
+        """
+        result = {}
+        start = 0
+        event_counts = [int(x) for x in encrypted_bin_sum['event_counts']]
+        non_event_counts = [int(x) for x in encrypted_bin_sum['non_event_counts']]
+        for idx, k in enumerate(encrypted_bin_sum["keys"]):
+            bin_num = encrypted_bin_sum["bin_nums"][idx]
+            result[k] = list(zip(event_counts[start: start + bin_num], non_event_counts[start: start + bin_num]))
+            start += bin_num
+        assert start == len(event_counts) == len(non_event_counts), \
+            f"Length of event/non-event does not match " \
+            f"with bin_num sums, all_counts: {start}, length of event count: {len(event_counts)}," \
+            f"length of non_event_counts: {len(non_event_counts)}"
+        return result
+
     @staticmethod
     def _merge_summary(summary_1, summary_2):
         res = {}

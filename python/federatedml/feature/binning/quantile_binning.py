@@ -73,7 +73,7 @@ class QuantileBinning(BaseBinning):
                             }
         """
         header = data_overview.get_header(data_instances)
-        # LOGGER.debug("in _fit_split_point, cols_map: {}".format(self.bin_inner_param.bin_cols_map))
+        LOGGER.debug("Header length: {}".format(len(header)))
 
         self._default_setting(header)
         # self._init_cols(data_instances)
@@ -133,38 +133,6 @@ class QuantileBinning(BaseBinning):
             else:
                 split_point.append(s_p)
         return split_point
-
-    # def _fit_split_point(self, data_instances, is_sparse, percentile_rate):
-    #     if self.summary_dict is None:
-    #         f = functools.partial(self.feature_summary,
-    #                               params=self.params,
-    #                               abnormal_list=self.abnormal_list,
-    #                               cols_dict=self.bin_inner_param.bin_cols_map,
-    #                               header=self.header,
-    #                               is_sparse=is_sparse)
-    #         summary_dict = data_instances.mapReducePartitions(f, self.copy_merge)
-    #         summary_dict = dict(summary_dict.collect())
-    #
-    #         LOGGER.debug(f"new summary_dict: {summary_dict}")
-    #         if is_sparse:
-    #             total_count = data_instances.count()
-    #             for _, summary_obj in summary_dict.items():
-    #                 summary_obj.set_total_count(total_count)
-    #
-    #         self.summary_dict = summary_dict
-    #     else:
-    #         summary_dict = self.summary_dict
-    #
-    #     for col_name, summary in summary_dict.items():
-    #         split_point = []
-    #         for percen_rate in percentile_rate:
-    #             s_p = summary.query(percen_rate)
-    #             if not self.allow_duplicate:
-    #                 if s_p not in split_point:
-    #                     split_point.append(s_p)
-    #             else:
-    #                 split_point.append(s_p)
-    #         self.bin_results.put_col_split_points(col_name, split_point)
 
     @staticmethod
     def feature_summary(data_iter, params, cols_dict, abnormal_list, header, is_sparse):

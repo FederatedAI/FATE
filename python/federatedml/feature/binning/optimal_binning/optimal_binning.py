@@ -31,7 +31,7 @@ from federatedml.feature.binning.bucket_binning import BucketBinning
 from federatedml.feature.binning.optimal_binning import bucket_info
 from federatedml.feature.binning.optimal_binning import heap
 from federatedml.feature.binning.quantile_tool import QuantileBinningTool
-from federatedml.param.feature_binning_param import FeatureBinningParam, OptimalBinningParam
+from federatedml.param.feature_binning_param import HeteroFeatureBinningParam, OptimalBinningParam
 from federatedml.statistic import data_overview
 from federatedml.statistic import statics
 from federatedml.util import LOGGER
@@ -39,7 +39,7 @@ from federatedml.util import consts
 
 
 class OptimalBinning(BaseBinning):
-    def __init__(self, params: FeatureBinningParam, abnormal_list=None):
+    def __init__(self, params: HeteroFeatureBinningParam, abnormal_list=None):
         super().__init__(params, abnormal_list)
         self.optimal_param = params.optimal_binning_param
         self.optimal_param.adjustment_factor = params.adjustment_factor

@@ -17,8 +17,9 @@
 import functools
 import operator
 
-# from federatedml.feature.binning.base_binning import IVAttributes
+from federatedml.ciper_compressor import compressor
 from federatedml.feature.hetero_feature_binning.base_feature_binning import BaseHeteroFeatureBinning
+from federatedml.secureprotol.fate_paillier import PaillierEncryptedNumber
 from federatedml.util import LOGGER
 from federatedml.util import consts
 
@@ -54,8 +55,6 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
         self.data_output = data_instances
         total_summary = self.binning_obj.bin_results.summary()
         self.set_summary(total_summary)
-        LOGGER.debug(f"Summary is: {self.summary()}")
-
         return data_instances
 
     def _sync_init_bucket(self, data_instances, split_points, need_shuffle=False):
@@ -78,7 +77,7 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
 
         encrypted_bin_sum = self.bin_inner_param.encode_col_name_dict(encrypted_bin_sum, self)
         self.header_anonymous = self.bin_inner_param.encode_col_name_list(self.header, self)
-        LOGGER.debug(f"encrypted_bin_sum: {encrypted_bin_sum.keys()}, cols_map: {self.bin_inner_param.col_name_maps}")
+        encrypted_bin_sum = self.cipher_compress(encrypted_bin_sum, data_bin_table.count())
         send_result = {
             "encrypted_bin_sum": encrypted_bin_sum,
             "category_names": self.bin_inner_param.encode_col_name_list(
@@ -92,8 +91,6 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
                 "min_bin_pct": self.model_param.optimal_binning_param.min_bin_pct
             }
         }
-        LOGGER.debug("Send bin_info.category_names: {}, bin_info.bin_method: {}".format(send_result['category_names'],
-                                                                                        send_result['bin_method']))
         self.transfer_variable.encrypted_bin_sum.remote(send_result,
                                                         role=consts.GUEST,
                                                         idx=0)
@@ -119,6 +116,53 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
         encrypted_bin_sum = self.binning_obj.fill_sparse_result(encrypted_bin_sum,
                                                                 sparse_bin_points, label_counts)
         return encrypted_bin_sum
+
+    def cipher_compress(self, encrypted_bin_sum, max_value):
+        converted_bin_sum = self.convert_compress_format(encrypted_bin_sum)
+        event_counts = converted_bin_sum.get("event_counts")
+        cipher_max_int = None
+        for v in event_counts:
+            if isinstance(v, PaillierEncryptedNumber):
+                cipher_max_int = v.public_key.max_int
+        if cipher_max_int is None:
+            raise ValueError("All event counts are 0, please check data input.")
+        _compressor = compressor.CipherCompressor(consts.PAILLIER, max_value,
+                                                  cipher_max_int, compressor.NormalCipherPackage, 0)
+        converted_bin_sum["event_counts"] = _compressor.compress(converted_bin_sum["event_counts"])
+        converted_bin_sum["non_event_counts"] = _compressor.compress(converted_bin_sum["non_event_counts"])
+        return converted_bin_sum
+
+    @staticmethod
+    def convert_compress_format(encrypted_bin_sum):
+        """
+        Parameters
+        ----------
+        encrypted_bin_sum :  dict.
+            It is like:
+                {'x1': [[event_count, non_event_count], [event_count, non_event_count] ... ],
+                 'x2': [[event_count, non_event_count], [event_count, non_event_count] ... ],
+                 ...
+                }
+
+        returns
+        -------
+        {"keys": ['x1', 'x2' ...],
+         "event_counts": [...],
+         "non_event_counts": [...],
+         "bin_num": [...]
+         }
+        """
+        keys = []
+        event_counts = []
+        non_event_counts = []
+        bin_nums = []
+        for k, v in encrypted_bin_sum.items():
+            keys.append(k)
+            bin_nums.append(len(v))
+            event_counts.extend([x[0] for x in v])
+            non_event_counts.extend(x[1] for x in v)
+        return {"keys": keys, "event_counts": event_counts, "non_event_counts": non_event_counts,
+                "bin_nums": bin_nums}
 
     def optimal_binning_sync(self):
         bucket_idx = self.transfer_variable.bucket_idx.get(idx=0)
