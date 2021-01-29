@@ -1,4 +1,4 @@
-from federatedml.ciper_compressor.compressor import CipherCompressor, NormalCipherPackage, CipherDecompressor
+from federatedml.cipher_compressor.compressor import CipherCompressor, NormalCipherPackage, CipherDecompressor
 from federatedml.util import consts
 from federatedml.util import LOGGER
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.splitter import SplitInfo
