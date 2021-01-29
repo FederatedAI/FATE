@@ -107,6 +107,10 @@
     "sync_flag": {
       "src": ["guest"],
       "dst": ["host"]
+    },
+    "cipher_compressor_para": {
+      "src": ["guest"],
+      "dst": ["host"]
     }
   }
 }
