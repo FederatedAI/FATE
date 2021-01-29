@@ -783,7 +783,7 @@ class FeatureHistogram(object):
                     # empty histogram
                     ret_value = (fid, []) if sibling_node_id_map is None else \
                         ((fid, node_id, sibling_node_id_map[node_id]), [])
-                    ret.append((key, (fid, ret_value)))
+                    ret.append((key, ret_value))
 
         return ret
 
