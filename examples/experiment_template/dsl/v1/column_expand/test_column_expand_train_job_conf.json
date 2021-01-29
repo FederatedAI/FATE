@@ -53,7 +53,7 @@
         "host": {
             "args": {
                 "data": {
-                    "train_data": [
+                    "data": [
                         {
                             "name": "breast_hetero_host",
                             "namespace": "experiment"
