@@ -83,10 +83,6 @@ class HeteroNNHost(HeteroNNBase):
             for batch_idx in range(len(self.data_x)):
                 self.model.train(self.data_x[batch_idx], cur_epoch, batch_idx)
 
-                self.reset_flowid()
-                self.model.evaluate(self.data_x[batch_idx], cur_epoch, batch_idx)
-                self.recovery_flowid()
-
             if self.validation_strategy:
                 self.validation_strategy.validate(self, cur_epoch)
                 if self.validation_strategy.need_stop():
