@@ -77,7 +77,7 @@ class Reader(ComponentBase):
                 self.copy_table(src_table=input_table, dest_table=output_table)
                 # update real count to meta info
                 output_table.count()
-                output_table_meta = output_table.get_meta()
+                output_table_meta = StorageTableMeta(name=output_table.get_name(), namespace=output_table.get_namespace())
         self.tracker.log_output_data_info(
             data_name=component_parameters.get('output_data_name')[0] if component_parameters.get(
                 'output_data_name') else table_key,
