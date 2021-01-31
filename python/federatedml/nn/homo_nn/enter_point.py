@@ -111,15 +111,13 @@ class HomoNNClient(HomoNNBase):
                 dataset=dataset,
                 batch_size=self.param.batch_size,
             )
-            if is_table(data):
-                return self.predict_score_to_output(
-                    data,
-                    predict_tbl,
-                    classes=classes,
-                    threshold=self.param.predict_param.threshold,
-                )
-            else:
-                return None
+            data_instances = data if is_table(data) else dataset.as_data_instance()
+            return self.predict_score_to_output(
+                data_instances,
+                predict_tbl,
+                classes=classes,
+                threshold=self.param.predict_param.threshold,
+            )
 
     def export_model(self):
         if self.is_version_0():

@@ -213,7 +213,7 @@ class FedLightModule(pl.LightningModule):
         # loss
         loss_name = loss_config["loss"]
         loss_kwargs = {k: v for k, v in loss_config.items() if k != "loss"}
-        self.loss_fn = get_loss_fn(loss_name, loss_kwargs)
+        self.loss_fn, self.expected_label_type = get_loss_fn(loss_name, loss_kwargs)
 
         # optimizer
         self._optimizer_name = optimizer_config.optimizer
@@ -238,16 +238,21 @@ class FedLightModule(pl.LightningModule):
         x, y = batch
         y_hat = self.forward(x)
         loss = self.loss_fn(y_hat, y)
-        accuracy = (
-            torch.softmax(y_hat, dim=1).argmax(dim=1) == y
-        ).sum().float() / float(y.size(0))
+
+        if y_hat.shape[1] > 1:
+            accuracy = (
+                torch.softmax(y_hat, dim=1).argmax(dim=1) == y
+            ).sum().float() / float(y.size(0))
+        else:
+            y_prob = y_hat[:, 0] > 0.5
+            accuracy = (y == y_prob).sum().float() / y.size(0)
         return {"val_loss": loss, "val_accuracy": accuracy}
 
     def validation_epoch_end(self, outputs):
         loss = torch.mean(torch.stack([x["val_loss"] for x in outputs]))
         accuracy = torch.mean(torch.stack([x["val_accuracy"] for x in outputs]))
         self.context.do_convergence_check(self._num_data_consumed, loss)
-        LOGGER.error(f"validation epoch end, loss: {loss}, accuracy: {accuracy}")
+        LOGGER.info(f"validation epoch end, loss: {loss}, accuracy: {accuracy}")
 
     def training_epoch_end(self, outputs) -> None:
         ...
@@ -425,7 +430,7 @@ def make_dataset(data, **kwargs):
     if is_table(data):
         dataset = TableDataSet(data_instances=data, **kwargs)
     elif isinstance(data, LocalData):
-        dataset = VisionDataSet(data.path)
+        dataset = VisionDataSet(data.path, **kwargs)
     else:
         raise TypeError(f"data type {data} not supported")
 
@@ -433,7 +438,11 @@ def make_dataset(data, **kwargs):
 
 
 def make_predict_dataset(data, trainer: PyTorchFederatedTrainer):
-    return make_dataset(data, label_align_mapping=trainer.get_label_mapping())
+    return make_dataset(
+        data,
+        label_align_mapping=trainer.get_label_mapping(),
+        expected_label_type=trainer.pl_model.expected_label_type,
+    )
 
 
 def build_trainer(
@@ -453,13 +462,14 @@ def build_trainer(
     )
     context.init()
     header = data.schema["header"]
-    dataset = make_dataset(data=data)
     pl_model = FedLightModule(
         context,
         layers_config=param.nn_define,
         optimizer_config=param.optimizer,
         loss_config={"loss": param.loss},
     )
+    dataset = make_dataset(data=data, expected_label_type=pl_model.expected_label_type)
+
     batch_size = param.batch_size
     if batch_size < 0:
         batch_size = len(dataset)

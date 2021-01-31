@@ -23,6 +23,7 @@ from torch.utils.data import Dataset
 
 __all__ = ["TableDataSet", "VisionDataSet"]
 
+from fate_arch.session import computing_session
 from fate_arch.abc import CTableABC
 from federatedml.util import LOGGER
 from federatedml.util.homo_label_encoder import HomoLabelEncoderClient
@@ -52,7 +53,13 @@ class TableDataSet(DatasetMixIn):
     def get_keys(self):
         return self._keys
 
-    def __init__(self, data_instances: CTableABC, label_align_mapping=None, **kwargs):
+    def __init__(
+        self,
+        data_instances: CTableABC,
+        expected_label_type=np.float32,
+        label_align_mapping=None,
+        **kwargs,
+    ):
 
         # partition
         self.partitions = data_instances.partitions
@@ -74,7 +81,7 @@ class TableDataSet(DatasetMixIn):
         # shape
         self.x_shape = data_instances.first()[1].features.shape
         self.x = np.zeros((self.size, *self.x_shape), dtype=np.float32)
-        self.y = np.zeros((self.size,), dtype=np.int64)
+        self.y = np.zeros((self.size,), dtype=expected_label_type)
         self._keys = []
 
         index = 0
@@ -101,7 +108,19 @@ class VisionDataSet(torchvision.datasets.VisionDataset, DatasetMixIn):
     def get_num_features(self):
         return None
 
-    def __init__(self, root):
+    def get_keys(self):
+        return self._keys
+
+    def as_data_instance(self):
+        from federatedml.feature.instance import Instance
+
+        return computing_session.parallelize(
+            data=zip(self._keys, map(lambda x: Instance(x), self.targets)),
+            include_key=True,
+            partition=10,
+        )
+
+    def __init__(self, root, expected_label_type=np.float32):
 
         # fake alignment
         HomoLabelEncoderClient().label_alignment(["fake"])
@@ -135,11 +154,14 @@ class VisionDataSet(torchvision.datasets.VisionDataset, DatasetMixIn):
                     targets_mapping = {}
                     for line in f:
                         filename, target = line.split(",")
-                        targets_mapping[filename.strip()] = int(target.strip())
+                        targets_mapping[filename.strip()] = expected_label_type(
+                            target.strip()
+                        )
                     self.targets = [
                         targets_mapping[filename] for filename in file_names
                     ]
                 self.targets_is_image = False
+            self._keys = file_names
 
         else:
             raise TypeError(f"{config['type']}")

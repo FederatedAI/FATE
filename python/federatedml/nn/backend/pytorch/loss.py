@@ -14,10 +14,12 @@
 #
 import inspect
 
+import numpy as np
 import torch
 
 # noinspection PyProtectedMember
 from torch.nn.modules.loss import _Loss
+
 from federatedml.nn.backend.pytorch.custom import loss as custom_losses
 from federatedml.util import LOGGER
 
@@ -51,7 +53,11 @@ def get_loss_cls(loss_name):
 def get_loss_fn(loss_name, loss_kwargs):
     loss_cls = get_loss_cls(loss_name)
     try:
-        return loss_cls(**loss_kwargs)
+        loss_fn = loss_cls(**loss_kwargs)
+        if isinstance(loss_fn, (torch.nn.CrossEntropyLoss, torch.nn.NLLLoss)):
+            return loss_fn, np.int64
+        else:
+            return loss_fn, np.float32
     except TypeError as e:
         signature = inspect.signature(loss_cls.__init__)
         raise PyTorchLossArgumentsInvalidException(
