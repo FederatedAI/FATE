@@ -90,14 +90,7 @@ class HeteroNNGuest(HeteroNNBase):
             epoch_loss = 0
 
             for batch_idx in range(len(self.data_x)):
-                self.model.train(self.data_x[batch_idx], self.data_y[batch_idx], cur_epoch, batch_idx)
-
-                self.reset_flowid()
-                metrics = self.model.evaluate(self.data_x[batch_idx], self.data_y[batch_idx], cur_epoch, batch_idx)
-                self.recovery_flowid()
-
-                LOGGER.debug("metrics is {}".format(metrics))
-                batch_loss = metrics["loss"]
+                batch_loss = self.model.train(self.data_x[batch_idx], self.data_y[batch_idx], cur_epoch, batch_idx)
 
                 epoch_loss += batch_loss
 
@@ -117,7 +110,11 @@ class HeteroNNGuest(HeteroNNBase):
                     LOGGER.debug('early stopping triggered')
                     break
 
-            is_converge = self.converge_func.is_converge(epoch_loss)
+            if self.hetero_nn_param.selector_param.method:
+                # when use selective bp, loss converge will be disabled
+                is_converge = False
+            else:
+                is_converge = self.converge_func.is_converge(epoch_loss)
             self._summary_buf["is_converged"] = is_converge
             self.transfer_variable.is_converge.remote(is_converge,
                                                       role=consts.HOST,

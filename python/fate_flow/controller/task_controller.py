@@ -31,6 +31,7 @@ from fate_flow.entity.types import RunParameters
 from fate_flow.manager import ResourceManager
 from fate_flow.operation import Tracker
 from fate_arch.computing import ComputingEngine
+from fate_flow.utils.authentication_utils import PrivilegeAuth
 
 
 class TaskController(object):
@@ -51,7 +52,7 @@ class TaskController(object):
         JobSaver.create_task(task_info=task_info)
 
     @classmethod
-    def start_task(cls, job_id, component_name, task_id, task_version, role, party_id):
+    def start_task(cls, job_id, component_name, task_id, task_version, role, party_id, **kwargs):
         """
         Start task, update status and party status
         :param job_id:
@@ -62,6 +63,10 @@ class TaskController(object):
         :param party_id:
         :return:
         """
+        job_dsl = job_utils.get_job_dsl(job_id, role, party_id)
+        PrivilegeAuth.authentication_component(job_dsl, src_party_id=kwargs.get('src_party_id'), src_role=kwargs.get('src_role'),
+                                               party_id=party_id, component_name=component_name)
+
         schedule_logger(job_id).info(
             'try to start job {} task {} {} on {} {} executor subprocess'.format(job_id, task_id, task_version, role, party_id))
         task_executor_process_start_status = False

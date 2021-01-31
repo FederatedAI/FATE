@@ -239,6 +239,7 @@ def _exactly_sample(rdd, num: int, seed: int):
     for split, size in split_size.items():
         sampled_size[split] = hypergeom.rvs(M=total, n=size, N=num)
         total = total - size
+        num = num - sampled_size[split]
 
     return rdd.mapPartitionsWithIndex(
         _ReservoirSample(split_sample_size=sampled_size, seed=seed).func,

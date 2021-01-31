@@ -25,8 +25,9 @@ from pipeline.param.boosting_param import DecisionTreeParam
 from pipeline.param.predict_param import PredictParam
 from pipeline.param.evaluation_param import EvaluateParam
 from pipeline.param.feature_binning_param import FeatureBinningParam
+from pipeline.param.feldman_verifiable_sum_param import FeldmanVerifiableSumParam
 
 
 __all__ = ["DataIOParam", "DecisionTreeParam", "InitParam", "LogisticParam", "ObjectiveParam",
            "EncryptParam", "EvaluateParam", "PredictParam", 'FeatureBinningParam',
-           "LinearParam"]
+           "LinearParam", "FeldmanVerifiableSumParam"]

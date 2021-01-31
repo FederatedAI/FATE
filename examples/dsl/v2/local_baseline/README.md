@@ -20,6 +20,14 @@ This section introduces the dsl and conf for different types of tasks.
     
     data type: binary label
 
+3. Hetero Train Task with Sample Weight:
+
+    dsl: test_local_baseline_job_dsl.json
+
+    runtime_config : test_local_baseline_sample_weight_job_conf.json
+    
+    data type: multi-class label
+
 Users can use following commands to run the task.
 
     flow job submit -c ${runtime_config} -d ${dsl}

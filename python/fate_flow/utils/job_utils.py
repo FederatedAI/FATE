@@ -24,15 +24,15 @@ import typing
 import psutil
 
 from fate_arch.common import file_utils
-from fate_arch.common.base_utils import json_loads, json_dumps, fate_uuid, current_timestamp
+from fate_arch.common.base_utils import json_dumps, fate_uuid, current_timestamp
 from fate_arch.common.log import schedule_logger
-from fate_flow.db.db_models import DB, Job, Task, MachineLearningModelInfo as MLModel
+from fate_flow.db.db_models import DB, Job, Task
 from fate_flow.entity.types import JobStatus
 from fate_flow.entity.types import TaskStatus, RunParameters, KillProcessStatusCode
-from fate_flow.settings import stat_logger, JOB_DEFAULT_TIMEOUT, WORK_MODE
-from fate_flow.utils import detect_utils
+from fate_flow.settings import stat_logger, JOB_DEFAULT_TIMEOUT, WORK_MODE, FATE_BOARD_DASHBOARD_ENDPOINT
+from fate_flow.utils import detect_utils, model_utils
 from fate_flow.utils import session_utils
-
+from fate_flow.utils.service_utils import ServiceUtils
 
 
 class IdCounter(object):
@@ -193,15 +193,25 @@ def get_job_configuration(job_id, role, party_id, tasks=None):
 
 @DB.connection_context()
 def get_model_configuration(job_id, role, party_id):
-    models = MLModel.select(MLModel.f_dsl, MLModel.f_runtime_conf,
-                            MLModel.f_train_runtime_conf).where(MLModel.f_job_id == job_id,
-                                                                MLModel.f_role == role,
-                                                                MLModel.f_party_id == party_id)
-    if models:
-        model = models[0]
-        return model.f_dsl, model.f_runtime_conf, model.f_train_runtime_conf
-    else:
-        return {}, {}, {}
+    res = model_utils.query_model_info(model_version=job_id, role=role, party_id=party_id,
+                                       query_filters=['train_dsl', 'dsl', 'train_runtime_conf', 'runtime_conf'])
+    if res:
+        dsl = res[0].get('train_dsl') if res[0].get('train_dsl') else res[0].get('dsl')
+        runtime_conf = res[0].get('runtime_conf')
+        train_runtime_conf = res[0].get('train_runtime_conf')
+        return dsl, runtime_conf, train_runtime_conf
+    return {}, {}, {}
+
+
+    # models = MLModel.select(MLModel.f_dsl, MLModel.f_runtime_conf,
+    #                         MLModel.f_train_runtime_conf).where(MLModel.f_job_id == job_id,
+    #                                                             MLModel.f_role == role,
+    #                                                             MLModel.f_party_id == party_id)
+    # if models:
+    #     model = models[0]
+    #     return model.f_dsl, model.f_runtime_conf, model.f_train_runtime_conf
+    # else:
+    #     return {}, {}, {}
 
 
 @DB.connection_context()
@@ -212,6 +222,18 @@ def get_job_parameters(job_id, role, party_id):
     if jobs:
         job = jobs[0]
         return job.f_runtime_conf_on_party.get("job_parameters")
+    else:
+        return {}
+
+
+@DB.connection_context()
+def get_job_dsl(job_id, role, party_id):
+    jobs = Job.select(Job.f_dsl).where(Job.f_job_id == job_id,
+                                       Job.f_role == role,
+                                       Job.f_party_id == party_id)
+    if jobs:
+        job = jobs[0]
+        return job.f_dsl
     else:
         return {}
 
@@ -440,26 +462,9 @@ def job_default_timeout(runtime_conf, dsl):
     return timeout
 
 
-def cleaning(signum, frame):
-    sys.exit(0)
-
-
-def federation_cleanup(job, task):
-    from fate_arch.common import Backend
-    from fate_arch.common import Party
-
-    runtime_conf = json_loads(job.f_runtime_conf_on_party)
-    job_parameters = runtime_conf['job_parameters']
-    backend = Backend(job_parameters.get('backend', 0))
-    store_engine = StoreEngine(job_parameters.get('store_engine', 0))
-
-    if backend.is_spark() and store_engine.is_hdfs():
-        runtime_conf['local'] = {'role': job.f_role, 'party_id': job.f_party_id}
-        parties = [Party(k, p) for k,v in runtime_conf['role'].items() for p in v ]
-        from fate_arch.session.spark import Session
-        ssn = Session(session_id=task.f_task_id)
-        ssn.init_federation(federation_session_id=task.f_task_id, runtime_conf=runtime_conf)
-        ssn._get_federation().generate_mq_names(parties=parties)
-        ssn._get_federation().cleanup()
-
-
+def get_board_url(job_id, role, party_id):
+    board_url = "http://{}:{}{}".format(
+        ServiceUtils.get_item("fateboard", "host"),
+        ServiceUtils.get_item("fateboard", "port"),
+        FATE_BOARD_DASHBOARD_ENDPOINT).format(job_id, role, party_id)
+    return board_url

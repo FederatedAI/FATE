@@ -79,6 +79,30 @@
       "dst": [
         "host"
       ]
+    },
+    "selective_info": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "host"
+      ]
+    },
+    "drop_out_table": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "host"
+      ]
+    },
+    "interactive_layer_output_unit": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "host"
+      ]
     }
   }
 }

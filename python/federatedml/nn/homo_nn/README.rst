@@ -267,7 +267,7 @@ Use
 ------
 
 .. Note::
-  For more information on task configuration, please refer to the `[doc] <../../../examples/dsl/v2/README.rst>`_ under example first. In this part we only talk about the parameter configuration.
+  For more information on task configuration, please refer to the `[doc] <../../../../examples/dsl/v2/README.rst>`_ under example first. In this part we only talk about the parameter configuration.
 
 Since all parties training Homogeneous Neural Networks have the same network structure, a common practice is to configure parameters under algorithm_parameters, which is shared across all parties. The basic structure is:
 

@@ -11,17 +11,17 @@ Also, the configuration may vary from party to party.
 For convenience, FATE configure all parameters for all parties and all components in one file.
 This guide will show you how to create such a configure file.
 
-In FATE's version since 1.5.0, V2 of dsl and submit conf will be recommend, but user can still use old configuration method
+Starting at FATE-1.5.0, V2 of dsl and submit conf is recommended, but user can still use old configuration method
 of [`V1`_]
 
 .. _V1: dsl_conf_v1_setting_guide.rst
 
-Please note that dsl V2 will not support online serving in fate-1.5.0，it will be support in later version.
+Please note that dsl V2 does not support online serving for FATE-1.5.0; it will be available in a later version.
 
 DSL Configure File
 ------------------
 
-We use json file which is actually a dict as a dsl config file. The first level of the dict is always "components," which indicates content in the dict are components in your modeling task.
+We use json file which is actually a dictionary as a dsl config file. The first level of the dict is always "components," which indicates content in the dict are components in your modeling task.
 
 .. code-block:: json
   
@@ -522,17 +522,20 @@ Common parameters will be copied for every party.
 Prediction configuration
 ------------------------
 
-Please note that in dsl v2，predict dsl is nnot automatically generated after training.
-User should first deploy needed components.
-Please refer to`FATE-Flow CLI <../python/fate_flow/doc/Fate_Flow_CLI_v2_Guide.rst#dsl>`__'
+Please note that in dsl v2，predict dsl is not automatically generated after training.
+User should first deploy needed components with `Flow Client <../python/fate_client/flow_client/README.rst>`__.
+Please refer to`FATE-Flow document <../python/fate_client/flow_client/README.rst#deploy>`__'
 for details on using deploy command:
 
 .. code-block:: bash
 
-    flow job dsl --cpn-list ...
+    flow job deploy --model-id $model_id --model-version $model_version --cpn-list ...
+
+Optionally, use can add additional component(s) to predict dsl, like ``Evaluation``:
 
 **Examples**
-Use a training dsl:
+
+training dsl:
 
 .. code-block:: json
 
@@ -598,15 +601,9 @@ Use a training dsl:
         }
     }
 
-Use the following command to generate predict dsl:
+predict dsl:
 
-.. code-block:: bash
-
-    flow job dsl --train-dsl-path $job_dsl --cpn-list "reader_0, dataio_0, intersection_0, hetero_nn_0" --version 2 -o ./
-
-Generated dsl:
-
-.. code-block::: json
+.. code-block:: json
 
     "components": {
         "reader_0": {
@@ -620,9 +617,6 @@ Generated dsl:
         "dataio_0": {
             "module": "DataIO",
             "input": {
-                "model": [
-                    "pipeline.dataio_0.model"
-                ],
                 "data": {
                     "data": [
                         "reader_0.data"
@@ -632,32 +626,32 @@ Generated dsl:
             "output": {
                 "data": [
                     "data"
+                ],
+                "model": [
+                    "model"
                 ]
             }
         },
         "intersection_0": {
             "module": "Intersection",
-            "output": {
-                "data": [
-                    "data"
-                ]
-            },
             "input": {
                 "data": {
                     "data": [
                         "dataio_0.data"
                     ]
                 }
+            },
+            "output": {
+                "data":[
+                    "data"
+                ]
             }
         },
         "hetero_nn_0": {
             "module": "HeteroNN",
             "input": {
-                "model": [
-                    "pipeline.hetero_nn_0.model"
-                ],
                 "data": {
-                    "test_data": [
+                    "train_data": [
                         "intersection_0.data"
                     ]
                 }
@@ -665,27 +659,25 @@ Generated dsl:
             "output": {
                 "data": [
                     "data"
+                ],
+                "model": [
+                    "model"
                 ]
             }
+        },
+        "evaluation_0": {
+            "module": "Evaluation",
+            "input": {
+                "data": {
+                    "data": [
+                        "hetero_nn_0.data"
+                    ]
+                }
+             },
+             "output": {
+                 "data": [
+                     "data"
+                 ]
+              }
         }
-    }
-
-Optionally, use can add additional component(s) to predict dsl, like ``Evaluation``:
-
-.. code-block:: json
-
-    "evaluation_0": {
-        "module": "Evaluation",
-        "input": {
-            "data": {
-                "data": [
-                    "hetero_nn_0.data"
-                ]
-            }
-         },
-         "output": {
-             "data": [
-                 "data"
-             ]
-          }
     }

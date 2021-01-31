@@ -88,29 +88,36 @@ def _run_benchmark_pairs(config: Config, suite: BenchmarkSuite, tol: float,
         data_summary = None
         job_n = len(pair.jobs)
         for j, job in enumerate(pair.jobs):
-            echo.echo(f"Running [{j + 1}/{job_n}] job: {job.job_name}")
-            job_name, script_path, conf_path = job.job_name, job.script_path, job.conf_path
-            param = Config.load_from_file(conf_path)
-            mod = _load_module_from_script(script_path)
-            input_params = signature(mod.main).parameters
-            # local script
-            if len(input_params) == 1:
-                data, metric = mod.main(param=param)
-            elif len(input_params) == 2:
-                data, metric = mod.main(config=config, param=param)
-            # pipeline script
-            elif len(input_params) == 3:
-                if data_namespace_mangling:
-                    data, metric = mod.main(config=config, param=param, namespace=f"_{namespace}")
-                else:
+            try:
+                echo.echo(f"Running [{j + 1}/{job_n}] job: {job.job_name}")
+                job_name, script_path, conf_path = job.job_name, job.script_path, job.conf_path
+                param = Config.load_from_file(conf_path)
+                mod = _load_module_from_script(script_path)
+                input_params = signature(mod.main).parameters
+                # local script
+                if len(input_params) == 1:
+                    data, metric = mod.main(param=param)
+                elif len(input_params) == 2:
                     data, metric = mod.main(config=config, param=param)
-            else:
-                data, metric = mod.main()
-            results[job_name] = metric
-            if job_name == "FATE":
-                data_summary = data
-            if data_summary is None:
-                data_summary = data
+                # pipeline script
+                elif len(input_params) == 3:
+                    if data_namespace_mangling:
+                        data, metric = mod.main(config=config, param=param, namespace=f"_{namespace}")
+                    else:
+                        data, metric = mod.main(config=config, param=param)
+                else:
+                    data, metric = mod.main()
+                results[job_name] = metric
+                echo.echo(f"[{j + 1}/{job_n}] job: {job.job_name} Success!")
+                if job_name == "FATE":
+                    data_summary = data
+                if data_summary is None:
+                    data_summary = data
+            except Exception as e:
+                exception_id = uuid.uuid1()
+                echo.echo(f"exception while running [{j + 1}/{job_n}] job, exception_id={exception_id}")
+                LOGGER.exception(f"exception id: {exception_id}, error message: \n{e}")
+                continue
         rel_tol = pair.compare_setting.get("relative_tol")
         show_data(data_summary)
         match_metrics(evaluate=True, group_name=pair.pair_name, abs_tol=tol, rel_tol=rel_tol, **results)

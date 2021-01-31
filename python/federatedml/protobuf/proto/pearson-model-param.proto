@@ -21,21 +21,23 @@ option java_outer_classname = "PearsonModelParamProto";
 
 
 message Names {
-    repeated string names = 1;
+  repeated string names = 1;
 }
 message AnonymousMap {
-    string anonymous = 1;
-    string name = 2;
+  string anonymous = 1;
+  string name = 2;
 }
 
 message PearsonModelParam {
-    string party = 1;
-    repeated string parties = 2;
-    int32 shape = 3;
-    repeated int32 shapes = 4;
-    repeated string names = 5;
-    repeated AnonymousMap anonymous_map = 9;
-    repeated double corr = 6;
-    repeated double local_corr = 7;
-    repeated Names all_names = 8;
+  string party = 1;
+  repeated string parties = 2;
+  int32 shape = 3;
+  repeated int32 shapes = 4;
+  repeated string names = 5;
+  repeated double corr = 6;
+  repeated double local_corr = 7;
+  repeated Names all_names = 8;
+  repeated AnonymousMap anonymous_map = 9;
+  string model_name = 10;
+  repeated double local_vif = 11;
 }

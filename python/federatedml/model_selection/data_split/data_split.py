@@ -129,7 +129,9 @@ class DataSplitter(ModelBase):
                 self.train_size = total_size - self.test_size
                 self.validate_size = total_size - (self.test_size + self.train_size)
             else:
-                self.train_size = total_size - (self.test_size + self.validate_size)
+                if self.test_size is None:
+                    self.test_size = 0
+                self.train_size = total_size - (self.validate_size + self.test_size)
         elif self.test_size is None:
             if self.validate_size is None:
                 self.test_size = total_size - self.train_size
@@ -306,5 +308,4 @@ class DataSplitter(ModelBase):
         return train_data, validate_data, test_data
 
     def fit(self, data_inst):
-        LOGGER.debug("fit method in data_split should not be called here.")
-        return
+        raise NotImplementedError("fit method in data_split should not be called here.")

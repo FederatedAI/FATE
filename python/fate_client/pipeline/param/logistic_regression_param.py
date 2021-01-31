@@ -254,7 +254,7 @@ class HomoLogisticParam(LogisticParam):
                  tol=1e-5, alpha=1.0, optimizer='sgd',
                  batch_size=-1, learning_rate=0.01, init_param=InitParam(),
                  max_iter=100, early_stop='diff',
-                 encrypt_param=EncryptParam(), re_encrypt_batches=2,
+                 encrypt_param=EncryptParam(method=None), re_encrypt_batches=2,
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  decay=1, decay_sqrt=True,
                  aggregate_iters=1, multi_class='ovr', validation_freqs=None,

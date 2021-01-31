@@ -155,9 +155,15 @@ class BinResults(object):
         return {col_name: x.is_woe_monotonic for col_name, x in self.all_cols_results.items()}
 
     def summary(self):
+        split_points = {}
+        for col_name, x in self.all_cols_results.items():
+            sp = x.get_split_points().tolist()
+            split_points[col_name] = sp
+        # split_points = {col_name: x.split_points for col_name, x in self.all_cols_results.items()}
         return {"iv": self.all_ivs,
                 "woe": self.all_woes,
-                "monotonic": self.all_monotonic}
+                "monotonic": self.all_monotonic,
+                "split_points": split_points}
 
     def get_split_points_array(self, bin_names):
         split_points_result = []

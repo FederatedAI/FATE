@@ -14,14 +14,14 @@
 #  limitations under the License.
 #
 
-from pipeline.param.feature_binning_param import FeatureBinningParam
+from pipeline.param.feature_binning_param import HeteroFeatureBinningParam
 from pipeline.component.component_base import Component
 from pipeline.interface import Input
 from pipeline.interface import Output
 from pipeline.utils.logger import LOGGER
 
 
-class HeteroFeatureBinning(Component, FeatureBinningParam):
+class HeteroFeatureBinning(Component, HeteroFeatureBinningParam):
     def __init__(self, **kwargs):
         Component.__init__(self, **kwargs)
 
@@ -30,7 +30,7 @@ class HeteroFeatureBinning(Component, FeatureBinningParam):
 
         new_kwargs = self.erase_component_base_param(**kwargs)
 
-        FeatureBinningParam.__init__(self, **new_kwargs)
+        HeteroFeatureBinningParam.__init__(self, **new_kwargs)
         self.input = Input(self.name)
         self.output = Output(self.name)
         self._module_name = "HeteroFeatureBinning"

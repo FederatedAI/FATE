@@ -128,9 +128,7 @@ class QuantileSummaries(object):
             return self
 
         if self.count == 0:
-            self.count = other.count
-            self.sampled = other.sampled
-            return self
+            return other
 
         # merge two sorted array
         new_sample = []
@@ -145,13 +143,19 @@ class QuantileSummaries(object):
         new_sample += self.sampled[i:]
         new_sample += other.sampled[j:]
 
-        self.sampled = new_sample
-        self.count += other.count
+        res_summary = self.__class__(compress_thres=self.compress_thres,
+                                     head_size=self.head_size,
+                                     error=self.error,
+                                     abnormal_list=self.abnormal_list)
+        res_summary.count = self.count + other.count
+        res_summary.sampled = new_sample
+        # self.sampled = new_sample
+        # self.count += other.count
         # merge_threshold = math.floor(2 * self.error * self.count) - 1
         merge_threshold = 2 * self.error * self.count
 
-        self.sampled = self._compress_immut(merge_threshold)
-        return self
+        res_summary.sampled = res_summary._compress_immut(merge_threshold)
+        return res_summary
 
     def query(self, quantile):
         """
@@ -193,6 +197,45 @@ class QuantileSummaries(object):
                 return cur_sample.value
             i += 1
         return self.sampled[-1].value
+
+    def value_to_rank(self, value):
+        min_rank, max_rank = 0, 0
+        for sample in self.sampled:
+            if sample.value < value:
+                min_rank += sample.g
+                max_rank = min_rank + sample.delta
+            else:
+                return (min_rank + max_rank) // 2
+        return (min_rank + max_rank) // 2
+
+    def query_value_list(self, values):
+        self.compress()
+        res = []
+        min_rank, max_rank = 0, 0
+        idx = 0
+        sample_idx = 0
+        from federatedml.util import LOGGER
+        # LOGGER.debug(f"sampled: {[x.value for x in self.sampled]}")
+        # for sample in self.sampled:
+        while sample_idx < len(self.sampled):
+            v = values[idx]
+            sample = self.sampled[sample_idx]
+            if sample.value < v:
+                min_rank += sample.g
+                max_rank = min_rank + sample.delta
+                sample_idx += 1
+            else:
+                res.append((min_rank + max_rank) // 2)
+                idx += 1
+                if idx >= len(values):
+                    break
+                # LOGGER.debug(f"value: {v}, sample_value: {sample.value}, min_rank: {min_rank}"
+                #              f"max_rank: {max_rank}, res: {(min_rank + max_rank) // 2}")
+
+        while idx < len(values):
+            res.append((min_rank + max_rank) // 2)
+            idx += 1
+        return res
 
     def _compress_immut(self, merge_threshold):
         if not self.sampled:
@@ -239,6 +282,7 @@ class SparseQuantileSummaries(QuantileSummaries):
 
     def set_total_count(self, total_count):
         self._total_count = total_count
+        return self
 
     def insert(self, x):
         if x in self.abnormal_list:
@@ -257,11 +301,23 @@ class SparseQuantileSummaries(QuantileSummaries):
         result = super(SparseQuantileSummaries, self).query(non_zero_quantile)
         return result
 
+    def value_to_rank(self, value):
+        quantile_rank = super().value_to_rank(value)
+        zeros_count = self._total_count - self.count
+
+        if value > 0:
+            return quantile_rank + zeros_count
+        elif value < 0:
+            return quantile_rank
+        else:
+            return quantile_rank + zeros_count // 2
+
     def merge(self, other):
-        self.smaller_num += other.smaller_num
-        self.bigger_num += other.bigger_num
-        super(SparseQuantileSummaries, self).merge(other)
-        return self
+        assert isinstance(other, SparseQuantileSummaries)
+        res_summary = super(SparseQuantileSummaries, self).merge(other)
+        res_summary.smaller_num = self.smaller_num + other.smaller_num
+        res_summary.bigger_num = self.bigger_num + other.bigger_num
+        return res_summary
 
     def _convert_query_percentile(self, quantile):
         zeros_count = self._total_count - self.count

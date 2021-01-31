@@ -39,6 +39,9 @@
         },
         "local_baseline-homo": {
             "script": "./pipeline-local-baseline-homo.py"
+        },
+        "local_baseline-sample-weight": {
+            "script": "./pipeline-local-baseline-sample-weight.py"
         }
     }
 }

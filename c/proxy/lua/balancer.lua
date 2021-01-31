@@ -21,8 +21,8 @@ local ngx = ngx
 local ngx_balancer = require "ngx.balancer"
 
 local function balance()
-    local fate_cluster_server = ngx.ctx.fate_cluster_server
-    local ok, err = ngx_balancer.set_current_peer(fate_cluster_server)
+    local dest_cluster = ngx.ctx.dest_cluster
+    local ok, err = ngx_balancer.set_current_peer(dest_cluster)
     if not ok then
         ngx.log(ngx.INFO, 'failed to set current peer: ' .. err, ngx.HTTP_SERVICE_UNAVAILABLE)
         return ngx.ERROR

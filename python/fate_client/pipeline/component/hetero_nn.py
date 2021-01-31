@@ -26,7 +26,8 @@ class HeteroNN(Component):
     @extract_explicit_parameter
     def __init__(self, task_type="classification", epochs=None, batch_size=-1, early_stop="diff",
                  tol=1e-5, encrypt_param=None, predict_param=None, cv_param=None, interactive_layer_lr=0.1,
-                 validation_freqs=None, early_stopping_rounds=None, use_first_metric_only=None, **kwargs):
+                 validation_freqs=None, early_stopping_rounds=None, use_first_metric_only=None,
+                 floating_point_precision=23, drop_out_keep_rate=1, selector_param=None, **kwargs):
 
         explicit_parameters = kwargs["explict_parameters"]
         explicit_parameters["optimizer"] = None

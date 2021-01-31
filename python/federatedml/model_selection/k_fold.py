@@ -37,6 +37,7 @@ class KFold(BaseCrossValidator):
         self.n_splits = 1
         self.shuffle = True
         self.random_seed = 1
+        self.fold_history = None
 
     def _init_model(self, param):
         self.model_param = param
@@ -45,6 +46,8 @@ class KFold(BaseCrossValidator):
         self.role = param.role
         self.shuffle = param.shuffle
         self.random_seed = param.random_seed
+        self.output_fold_history = param.output_fold_history
+        self.history_with_value = param.history_with_value
         # self.evaluate_param = param.evaluate_param
         # np.random.seed(self.random_seed)
 
@@ -74,7 +77,6 @@ class KFold(BaseCrossValidator):
 
             train_sids_table = [(key_type(x), 1) for x in train_sids]
             test_sids_table = [(key_type(x), 1) for x in test_sids]
-            # print(train_sids_table)
             train_table = session.parallelize(train_sids_table,
                                               include_key=True,
                                               partition=data_inst.partitions)
@@ -88,6 +90,21 @@ class KFold(BaseCrossValidator):
             test_data.schema = schema
             yield train_data, test_data
 
+    @staticmethod
+    def generate_new_id(id, fold_num, data_type):
+        return f"{id}#fold{fold_num}#{data_type}"
+
+    def transform_history_data(self, data, fold_num, data_type):
+        if self.history_with_value:
+            history_data = data.map(lambda k, v: (KFold.generate_new_id(k, fold_num, data_type), v))
+            history_data.schema = copy.deepcopy(data.schema)
+        else:
+            history_data = data.map(lambda k, v: (KFold.generate_new_id(k, fold_num, data_type), fold_num))
+            schema = copy.deepcopy(data.schema)
+            schema["header"] = ["fold_num"]
+            history_data.schema = schema
+        return history_data
+
     def run(self, component_parameters, data_inst, original_model, host_do_evaluate):
         self._init_model(component_parameters)
 
@@ -96,6 +113,9 @@ class KFold(BaseCrossValidator):
             return
         total_data_count = data_inst.count()
         LOGGER.debug("data_inst count: {}".format(data_inst.count()))
+        if self.output_fold_history and self.history_with_value:
+            if total_data_count * self.n_splits > consts.MAX_SAMPLE_OUTPUT_LIMIT:
+                LOGGER.warning(f"max sample output limit {consts.MAX_SAMPLE_OUTPUT_LIMIT} exceeded with n_splits ({self.n_splits}) * instance_count ({total_data_count})")
         if self.mode == consts.HOMO or self.role == consts.GUEST:
             data_generator = self.split(data_inst)
         else:
@@ -149,12 +169,28 @@ class KFold(BaseCrossValidator):
                 self.evaluate(pred_res, fold_name, model)
             LOGGER.debug("Finish fold: {}".format(fold_num))
 
+            if self.output_fold_history:
+                LOGGER.debug(f"generating fold history for fold {fold_num}")
+                fold_train_data = self.transform_history_data(train_data, fold_num, "train")
+                fold_validate_data = self.transform_history_data(test_data, fold_num, "validate")
+                fold_history_data = fold_train_data.union(fold_validate_data)
+                fold_history_data.schema = fold_train_data.schema
+                if self.fold_history is None:
+                    self.fold_history = fold_history_data
+                else:
+                    new_fold_history = self.fold_history.union(fold_history_data)
+                    new_fold_history.schema = fold_history_data.schema
+                    self.fold_history = new_fold_history
+
             summary_res[f"fold_{fold_num}"] = model.summary()
             fold_num += 1
         summary_res['fold_num'] = fold_num
         LOGGER.debug("Finish all fold running")
         original_model.set_summary(summary_res)
-        return
+        if self.output_fold_history:
+            return self.fold_history
+        else:
+            return data_inst
 
     def _arbiter_run(self, original_model):
         for fold_num in range(self.n_splits):
