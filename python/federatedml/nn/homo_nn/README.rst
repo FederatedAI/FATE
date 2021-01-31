@@ -13,7 +13,7 @@ As its name suggested, in Homogeneous Neural Networks, the feature spaces of gue
 An optional encryption mode for model is provided. 
 By doing this, no party can get the private model of other parties. 
 
-.. figure:: images/homo_nn.png
+.. figure:: ../../../doc/images/homo_nn.png
    :width: 500
    :name: hnn figure 1
    :align: center

@@ -43,6 +43,11 @@ class Table(CTableABC):
                                 need_cleanup=False)
             schema.update(self.schema)
             return
+
+        from fate_arch.common.address import PathAddress
+        if isinstance(address, PathAddress):
+            from fate_arch.computing.non_distributed import LocalData
+            return LocalData(address.path)
         raise NotImplementedError(f"address type {type(address)} not supported with standalone backend")
 
     @computing_profile

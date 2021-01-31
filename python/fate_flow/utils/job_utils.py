@@ -284,7 +284,7 @@ def check_process_by_keyword(keywords):
     return ret == 0
 
 
-def run_subprocess(job_id, config_dir, process_cmd, log_dir=None):
+def run_subprocess(job_id, config_dir, process_cmd, log_dir=None, job_dir=None):
     schedule_logger(job_id=job_id).info('start process command: {}'.format(' '.join(process_cmd)))
 
     os.makedirs(config_dir, exist_ok=True)
@@ -302,7 +302,8 @@ def run_subprocess(job_id, config_dir, process_cmd, log_dir=None):
     p = subprocess.Popen(process_cmd,
                          stdout=std_log,
                          stderr=std_log,
-                         startupinfo=startupinfo
+                         startupinfo=startupinfo,
+                         cwd=job_dir,
                          )
     with open(pid_path, 'w') as f:
         f.truncate()

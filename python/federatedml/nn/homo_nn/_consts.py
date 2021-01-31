@@ -13,3 +13,18 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+
+MODEL_META_NAME = "HomoNNModelMeta"
+MODEL_PARAM_NAME = "HomoNNModelParam"
+
+
+def _build_model_dict(meta, param):
+    return {MODEL_META_NAME: meta, MODEL_PARAM_NAME: param}
+
+
+def _extract_param(model_dict: dict):
+    return model_dict.get(MODEL_PARAM_NAME, None)
+
+
+def _extract_meta(model_dict: dict):
+    return model_dict.get(MODEL_META_NAME, None)
