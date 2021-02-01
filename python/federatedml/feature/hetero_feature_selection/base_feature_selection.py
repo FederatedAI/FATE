@@ -179,7 +179,8 @@ class BaseHeteroFeatureSelection(ModelBase):
         self.update_curt_select_param()
 
     def _load_isometric_model(self, iso_model):
-        LOGGER.debug(f"In _load_isometric_model, iso_model: {iso_model}")
+        LOGGER.debug(f"When loading isometric_model, iso_model names are:"
+                     f" {iso_model.keys()}")
         for cpn_name, model_dict in iso_model.items():
             model_param = None
             model_meta = None
@@ -194,18 +195,18 @@ class BaseHeteroFeatureSelection(ModelBase):
                                  " in feature selection")
             adapter = adapter_factory(model_name)
             this_iso_model = adapter.convert(model_meta, model_param)
-            LOGGER.debug(f"model_name: {model_name},"
-                         f" iso_model: {this_iso_model._metric_info[0].__dict__}")
             self.isometric_models[model_name] = this_iso_model
 
         # for model_name, model_dict in iso_model.items():
 
     def load_model(self, model_dict):
-        LOGGER.debug(f"In load_model, model_dict: {model_dict}")
+        LOGGER.debug(f"Start to load model")
         if 'model' in model_dict:
+            LOGGER.debug("Loading selection model")
             self._load_selection_model(model_dict)
 
         if 'isometric_model' in model_dict:
+            LOGGER.debug("Loading isometric_model")
             self._load_isometric_model(model_dict['isometric_model'])
 
     @staticmethod
