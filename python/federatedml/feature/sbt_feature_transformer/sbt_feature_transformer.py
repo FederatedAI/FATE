@@ -69,15 +69,15 @@ class HeteroSBTFeatureTransformerBase(ModelBase):
 
     def _load_tree_model(self, model_dict, key_name='isometric_model'):
         """
-        load isometric model
+        load model
         """
         # judge input model type by key in model_dict
-        LOGGER.info('loading isometric model')
+        LOGGER.info('loading model')
         tree_model_type = self._get_model_type(model_dict[key_name])
         LOGGER.info('model type is {}'.format(tree_model_type))
         if tree_model_type is None:
-            raise ValueError('key related to tree models is not detected in isometric model dict,'
-                             'please check the input isometric model')
+            raise ValueError('key related to tree models is not detected in model dict,'
+                             'please check the input model')
 
         if tree_model_type == consts.HETERO_SBT:
             self.tree_model = HeteroSecureBoostingTreeGuest() if self.role == consts.GUEST else HeteroSecureBoostingTreeHost()
@@ -98,10 +98,6 @@ class HeteroSBTFeatureTransformerBase(ModelBase):
 
         if 'model' in model_dict:
             self._load_tree_model(model_dict, key_name='model')
-
-        elif 'isometric_model' in model_dict:
-            self._load_tree_model(model_dict, key_name='isometric_model')
-
         else:
             raise ValueError('illegal model input')
 
@@ -165,15 +161,16 @@ class HeteroSBTFeatureTransformerGuest(HeteroSBTFeatureTransformerBase):
         join_func = functools.partial(self.join_feature_with_label, vec_len=self.vec_len, leaf_mapping_list=self.leaf_mapping_list,
                                       dense=self.dense_format)
         rs = data_inst.join(pred_result, join_func)
+        # add schema for new data table
         rs.schema['header'] = self._generate_header(self.leaf_mapping_list)
         if 'label_name' in data_inst.schema:
             rs.schema['label_name'] = data_inst.schema['label_name']
+
         return rs
 
     def _extract_leaf_mapping(self):
 
-        # for one hot encoding
-
+        # one hot encoding
         leaf_mapping_list = []
         for tree_param in self.tree_model.boosting_model_list:
             leaf_mapping = {}
@@ -203,13 +200,17 @@ class HeteroSBTFeatureTransformerGuest(HeteroSBTFeatureTransformerBase):
         # predict instances to get leaf indexes
         LOGGER.info('tree model running prediction')
         predict_rs = self.tree_model.predict(data_inst, pred_leaf=True)
-        LOGGER.debug('pred rs is {}'.format(predict_rs.take(5)))
         LOGGER.info('tree model prediction done')
+
+        # transform pred result to new data table
         LOGGER.debug('use dense is {}'.format(self.dense_format))
         rs = self._transform_pred_result(data_inst, predict_rs)
+
+        # display result callback
         LOGGER.debug('header is {}'.format(rs.schema))
         LOGGER.debug('extra meta is {}'.format(self._generate_callback_result(rs.schema['header'])))
         self._callback_leaf_id_mapping(self._generate_callback_result(rs.schema['header']))
+
         return rs
 
     def transform(self, data_inst):
