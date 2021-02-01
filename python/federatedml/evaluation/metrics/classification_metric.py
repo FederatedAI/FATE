@@ -500,6 +500,7 @@ class PSI(object):
 
         count1 = None if bin_result_1 is None else bin_result_1.value_counts().reset_index()
         count2 = bin_result_2.value_counts().reset_index()
+
         # if predict scores are the same, count1 will be None, only one interval exists
         final_interval = list(count1['index']) + list(count2['index']) if count1 is not None else list(count2['index'])
         final_count = list(count1[0]) + list(count2[0]) if count1 is not None else list(count2[0])
@@ -547,4 +548,5 @@ class PSI(object):
         psi_scores = np.array(psi_scores)
         total_psi = psi_scores.sum()
         return psi_scores, total_psi, expected_interval, actual_interval, expected_percentage, actual_percentage
+
 

@@ -228,6 +228,7 @@ STATISTIC_FILTER = 'statistic_filter'
 PSI_FILTER = 'psi_filter'
 VIF_FILTER = 'vif_filter'
 CORRELATION_FILTER = 'correlation_filter'
+SECUREBOOST = 'sbt'
 HETERO_SBT_FILTER = 'hetero_sbt_filter'
 HOMO_SBT_FILTER = 'homo_sbt_filter'
 HETERO_FAST_SBT_FILTER = 'hetero_fast_sbt_filter'
@@ -288,8 +289,15 @@ KURTOSIS = 'kurtosis'
 # adapters model name
 HOMO_SBT = 'homo_sbt'
 HETERO_SBT = 'hetero_sbt'
+HETERO_FAST_SBT = 'hetero_fast_sbt'
 HETERO_FAST_SBT_MIX = 'hetero_fast_sbt_mix'
 HETERO_FAST_SBT_LAYERED = 'hetero_fast_sbt_layered'
+
+# tree protobuf model name
+HETERO_SBT_GUEST_MODEL = 'HeteroSecureBoostingTreeGuest'
+HETERO_SBT_HOST_MODEL = 'HeteroSecureBoostingTreeHost'
+HETERO_FAST_SBT_GUEST_MODEL = "HeteroFastSecureBoostingTreeGuest"
+HETERO_FAST_SBT_HOST_MODEL = "HeteroFastSecureBoostingTreeHost"
 
 # column_expand
 MANUAL = 'manual'
