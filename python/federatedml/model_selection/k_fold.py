@@ -19,7 +19,6 @@ import copy
 import numpy as np
 from sklearn.model_selection import KFold as sk_KFold
 
-# from arch.api import session
 from fate_arch.session import computing_session as session
 from federatedml.evaluation.evaluation import Evaluation
 from federatedml.model_selection.cross_validate import BaseCrossValidator

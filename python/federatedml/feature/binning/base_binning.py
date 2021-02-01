@@ -573,10 +573,8 @@ class BaseBinning(object):
                 col_sum = result_sum[col_name]
                 while bin_idx >= len(col_sum):
                     col_sum.append([0, 0])
-                LOGGER.debug(f"In add_label_in_partition, bin_index: {bin_idx},"
-                             f"sparse_bin_points: {sparse_bin_points}")
                 if bin_idx == sparse_bin_points[col_name]:
-                    LOGGER.debug("In add_label_in_partition, matched!")
+                    # LOGGER.debug("In add_label_in_partition, matched!")
                     continue
                 label_sum = col_sum[bin_idx]
                 label_sum[0] = label_sum[0] + y

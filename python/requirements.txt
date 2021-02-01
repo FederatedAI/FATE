@@ -28,6 +28,7 @@ pika==1.1.0
 pandas==1.1.5
 cryptography==3.2.1
 libsm3==0.0.3
+sortedcontainers==2.2.2
 
 # addtional requirements for eggroll
 grpcio==1.24.3
