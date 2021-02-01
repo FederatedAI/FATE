@@ -117,7 +117,7 @@
             "module": "HeteroLR",
             "input": {
                 "data": {
-                    "train_data": [
+                    "test_data": [
                         "one_hot_encoder_0.data"
                     ]
                 },
