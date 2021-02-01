@@ -75,8 +75,8 @@
    请在环境内使用以下指令安装：
    
    ```
-   python -m pip install fate-client
-   python -m pip install fate-test
+    pip install fate-client
+    pip install fate-test
    ```
 
 

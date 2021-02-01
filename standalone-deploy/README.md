@@ -77,8 +77,8 @@ bash install_standalone_docker.sh
    Install FATE-Client and FATE-Test with the following commands:
 
    ```
-   python -m pip install fate-client
-   python -m pip install fate-test
+    pip install fate-client
+    pip install fate-test
    ```
    
 
