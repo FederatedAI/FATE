@@ -651,6 +651,12 @@ class Evaluation(ModelBase):
             validate_callback_meta = defaultdict(dict)
             split_list = model_name.split('_')
             label = split_list[-1]
+            origin_model_name_list = split_list[:-2]  # remove ' "class" label_index'
+            origin_model_name = ''
+            for s in origin_model_name_list:
+                origin_model_name += (s+'_')
+            origin_model_name = origin_model_name[:-1]
+
             for rs_dict in eval_rs:
                 for metric_name, metric_rs in rs_dict.items():
                     if metric_name == consts.KS:
@@ -663,11 +669,13 @@ class Evaluation(ModelBase):
                     callback_meta[label][metric_name] = metric_rs[1]
 
             self.tracker.set_metric_meta("train", model_name+'_'+'ovr',
-                                         MetricMeta(name=model_name, metric_type='ovr',
+                                         MetricMeta(name=origin_model_name, metric_type='ovr',
                                                     extra_metas=train_callback_meta))
             self.tracker.set_metric_meta("validate", model_name+'_'+'ovr',
-                                         MetricMeta(name=model_name, metric_type='ovr',
+                                         MetricMeta(name=origin_model_name, metric_type='ovr',
                                                     extra_metas=validate_callback_meta))
+
+            LOGGER.debug('callback data {} {}'.format(train_callback_meta, validate_callback_meta))
 
     def callback_metric_data(self, eval_results, return_single_val_metrics=False):
 
