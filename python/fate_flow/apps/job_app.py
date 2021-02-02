@@ -71,7 +71,7 @@ def stop_job():
             return get_json_result(retcode=RetCode.OPERATING_ERROR, retmsg="stop job on this party {};\n"
                                                                            "stop job failed:\n{}".format(kill_status, json_dumps(response, indent=4)))
     else:
-        schedule_logger(job_id).info(f"can not found job {jobs[0]} to stop")
+        schedule_logger(job_id).info(f"can not found job {job_id} to stop")
         return get_json_result(retcode=RetCode.DATA_ERROR, retmsg="can not found job")
 
 
@@ -211,7 +211,7 @@ def dsl_generator():
             cpn_str = cpn_str.replace(" ", "").replace("\n", "").strip(",[]")
             cpn_list = cpn_str.split(",")
         train_dsl = json_loads(data.get("train_dsl"))
-        parser = schedule_utils.get_dsl_parser_by_version(data.get("version", "1"))
+        parser = schedule_utils.get_dsl_parser_by_version(data.get("version", "2"))
         predict_dsl = parser.deploy_component(cpn_list, train_dsl)
 
         if data.get("filename"):

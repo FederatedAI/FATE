@@ -130,5 +130,5 @@ python fate_flow_client.py -f bind -c examples/bind_model_service.json
 
 # 6. 在线推理测试
 
-参考[微众银行FATE在线推理接口文档](https://github.com/FederatedAI/FATE-Serving/wiki/%E5%9C%A8%E7%BA%BF%E6%8E%A8%E7%90%86%E6%8E%A5%E5%8F%A3%E8%AF%B4%E6%98%8E)
+参考[FATE在线推理接口文档](https://github.com/FederatedAI/FATE-Serving/wiki/%E5%9C%A8%E7%BA%BF%E6%8E%A8%E7%90%86%E6%8E%A5%E5%8F%A3%E8%AF%B4%E6%98%8E)
 需要填入上述第5步，发布模型时使用的``service_id``

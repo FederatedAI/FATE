@@ -33,7 +33,8 @@ SERVER_MODULE = "fate_flow_server.py"
 TEMP_DIRECTORY = os.path.join(file_utils.get_project_base_directory(), "temp", "fate_flow")
 HEADERS = {
     "Content-Type": "application/json",
-    "Connection": "close"
+    "Connection": "close",
+    "service": FATEFLOW_SERVICE_NAME
 }
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 GRPC_SERVER_MAX_WORKERS = None
@@ -79,7 +80,7 @@ SUPPORT_BACKENDS_ENTRANCE = {
 }
 
 # Scheduling
-DEFAULT_GRPC_OVERALL_TIMEOUT = 30 * 1000  # ms
+DEFAULT_REMOTE_REQUEST_TIMEOUT = 30 * 1000  # ms
 DEFAULT_FEDERATED_COMMAND_TRYS = 3
 JOB_DEFAULT_TIMEOUT = 3 * 24 * 60 * 60
 JOB_START_TIMEOUT = 60 * 1000  # ms
@@ -107,7 +108,7 @@ UPLOAD_DATA_FROM_CLIENT = True
 USE_AUTHENTICATION = False
 PRIVILEGE_COMMAND_WHITELIST = []
 CHECK_NODES_IDENTITY = False
-DEFAULT_FEDERATED_STATUS_COLLECT_TYPE = "PUSH"
+DEFAULT_FEDERATED_STATUS_COLLECT_TYPE = get_base_config(FATEFLOW_SERVICE_NAME, {}).get("default_federated_status_collect_type", "PUSH")
 
 # Init
 RuntimeConfig.init_config(WORK_MODE=WORK_MODE)

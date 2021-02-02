@@ -135,7 +135,7 @@ Job 操作
 | 4      | component\_name   | string     | 否         | 组件名     |
 +--------+-------------------+------------+------------+------------+
 
-``generate_dsl(train_dsl_path, version="1", cpn_file_path=None, cpn_list = None)``
+``generate_dsl(train_dsl_path, cpn_file_path=None, cpn_list = None)``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 -  介绍：预测DSL文件生成器。
