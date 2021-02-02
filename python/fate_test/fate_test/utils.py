@@ -154,7 +154,7 @@ def match_metrics(evaluate, group_name, abs_tol=None, rel_tol=None, **results):
         table.add_row(row)
     print(table.get_string(title=f"{TxtStyle.TITLE}Metrics Summary{TxtStyle.END}"))
 
-    if evaluate:
+    if evaluate and len(filtered_results.keys()) > 1:
         eval_summary = evaluate_almost_equal(common_metrics, filtered_results, abs_tol, rel_tol)
         eval_table = PrettyTable()
         eval_table.set_style(ORGMODE)
