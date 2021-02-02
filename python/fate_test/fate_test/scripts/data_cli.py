@@ -115,7 +115,7 @@ def delete(ctx, include, exclude, glob, yes, suite_type, **kwargs):
 @data_group.command("generate")
 @click.option('-i', '--include', required=True, type=click.Path(exists=True), multiple=True, metavar="<include>",
               help="include *testsuite.json / *benchmark.json under these paths")
-@click.option('-ht', '--host_data_type', default='tag_value', type=click.Choice(['dense', 'tag', 'tag_value']),
+@click.option('-ht', '--host-data-type', default='tag_value', type=click.Choice(['dense', 'tag', 'tag_value']),
               help="Select the format of the host data")
 @click.option('-p', '--encryption-type', type=click.Choice(['sha256', 'md5']),
               help="Entry ID encryption method for,  sha256 and md5")
