@@ -62,6 +62,8 @@ class Client(homo_binning_base.Client):
     def fit_split_points(self, data_instances):
         if self.aggregator is None:
             self.aggregator = table_aggregator.Client(enable_secure_aggregate=False)
+        if self.bin_inner_param is None:
+            self.bin_inner_param = self.setup_bin_inner_param(data_instances, self.params)
         self.total_count = self.get_total_count(data_instances)
         self.error_rank = np.ceil(self.error * self.total_count)
         quantile_tool = QuantileBinningTool(param_obj=self.params,

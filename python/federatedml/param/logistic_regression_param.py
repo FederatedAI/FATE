@@ -96,9 +96,6 @@ class LogisticParam(BaseParam):
     use_first_metric_only: bool, default: False
         Indicate whether use the first metric only for early stopping judgement.
 
-
-
-
     """
 
     def __init__(self, penalty='L2',

@@ -17,7 +17,7 @@
 import copy
 import functools
 
-from federatedml.ciper_compressor.compressor import CipherDecompressor
+from federatedml.cipher_compressor.compressor import CipherDecompressor
 from federatedml.feature.binning.base_binning import BaseBinning
 from federatedml.feature.binning.optimal_binning.optimal_binning import OptimalBinning
 from federatedml.feature.hetero_feature_binning.base_feature_binning import BaseHeteroFeatureBinning

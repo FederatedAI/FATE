@@ -77,7 +77,7 @@ class BaseHeteroFeatureBinning(ModelBase):
         LOGGER.debug("in _init_model, role: {}, local_partyid: {}".format(self.role, self.component_properties))
         self.binning_obj.set_role_party(self.role, self.component_properties.local_partyid)
 
-    def _setup_bin_inner_param(self, data_instances, params: FeatureBinningParam):
+    def _setup_bin_inner_param(self, data_instances, params):
         if self.schema is not None:
             return
 
