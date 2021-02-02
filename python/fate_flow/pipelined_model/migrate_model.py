@@ -108,6 +108,10 @@ def migration(config_data: dict):
         pipeline.model_id = bytes(adapter.get_common_parameters().to_dict().get("model_id"), "utf-8")
         pipeline.model_version = bytes(adapter.get_common_parameters().to_dict().get("model_version"), "utf-8")
 
+        if model_utils.compare_version(pipeline.fate_version, '1.5.0') == 'gt':
+            pipeline.initiator_role = config_data["migrate_initiator"]['role']
+            pipeline.initiator_party_id = config_data["migrate_initiator"]['party_id']
+
         # save updated pipeline.pb file
         migrate_model.save_pipeline(pipeline)
         shutil.copyfile(os.path.join(migrate_model.model_path, "pipeline.pb"),

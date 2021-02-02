@@ -35,7 +35,7 @@ echo "[INFO] Build info"
 echo "[INFO] version: "${version}
 echo "[INFO] version tag: "${version_tag}
 echo "[INFO] Package output dir is "${package_dir}
-rm -rf ${package_dir} ${package_dir}-${version_tag}".tar.gz"
+rm -rf ${package_dir} ${package_dir}_${version_tag}".tar.gz"
 mkdir -p ${package_dir}
 
 function packaging_bin() {
@@ -177,7 +177,7 @@ compress(){
     echo "[INFO] A total of `ls ${package_dir} | wc -l | awk '{print $1}'` packages:"
     ls -lrt ${package_dir}
     cd ${source_dir}/cluster-deploy/
-    tar czf ${package_dir_name}-${version_tag}".tar.gz" ${package_dir_name}
+    tar czf ${package_dir_name}_${version_tag}".tar.gz" ${package_dir_name}
 }
 
 
