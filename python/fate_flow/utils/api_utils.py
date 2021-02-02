@@ -182,8 +182,8 @@ def proxy_api(role, _job_id, request_config):
     _packet = forward_grpc_packet(json_body, method, endpoint, src_party_id, dest_party_id, job_id=job_id, role=role,
                                   overall_timeout=DEFAULT_REMOTE_REQUEST_TIMEOUT)
     _routing_metadata = gen_routing_metadata(src_party_id=src_party_id, dest_party_id=dest_party_id)
-
-    channel, stub = get_command_federation_channel()
+    host, port, protocol = get_federated_proxy_address(src_party_id, dest_party_id)
+    channel, stub = get_command_federation_channel(host, port)
     _return, _call = stub.unaryCall.with_call(_packet, metadata=_routing_metadata)
     channel.close()
     json_body = json_loads(_return.body.value)
