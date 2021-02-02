@@ -16,7 +16,7 @@
 import os
 import click
 from ruamel import yaml
-from flow_client.flow_cli.utils.cli_utils import prettify, get_lan_ip
+from flow_client.flow_cli.utils.cli_utils import prettify
 from flow_client.flow_cli.commands import (component, data, job, model, queue, task, table, tag)
 
 
