@@ -190,7 +190,7 @@ command options
 
       fate_test suite -i <path1 contains *testsuite.json> -m 3600
 
-   will run testsuites in *path1* and timeout when job does not finish within 3600s; if tasks are expected to last for long, use a larger threshold
+   will run testsuites in *path1* and timeout when job does not finish within 3600s; if tasks need more time, use a larger threshold
 
 6. task-cores
 
@@ -198,7 +198,7 @@ command options
 
       fate_test suite -i <path1 contains *testsuite.json> -p 4
 
-   will run testsuites in *path1* with EGGROLL "task_cores" set to 4
+   will run testsuites in *path1* with EGGROLL "task-cores" set to 4; only effective for DSL conf
 
 7. update-job-parameters
 
@@ -667,7 +667,7 @@ command options
 
       fate_test performance -i <path1 contains *testsuite.json> -m 3600
 
-   will run testsuites in *path1* and timeout when job does not finish within 3600s; if tasks are expected to last for long, use a larger threshold
+   will run testsuites in *path1* and timeout when job does not finish within 3600s; if tasks need more time, use a larger threshold
 
 5. max-iter:
 
@@ -797,7 +797,7 @@ generate command options
 
    .. code-block:: bash
 
-      fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> -ht {dense | tag | tag-value}
+      fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> -ht {tag-value | dense | tag }
 
    will generate dataset in testsuites *path1* where host data are of selected format
 
@@ -813,7 +813,7 @@ generate command options
 
    .. code-block:: bash
 
-      fate_test data generate -i <path1 contains *testsuite.json | *benchmark.json> -p sha256
+      fate_test data generate -i <path1 contains *testsuite.json | *benchmark.json> -p {sha256 | md5}
 
    will generate dataset in testsuites in *path1* with hash id using SHA256 method
 
@@ -821,33 +821,33 @@ generate command options
 
    .. code-block:: bash
 
-      fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> -m 0.2
+      fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> -m 1.0
 
-   will generate dataset in testsuites in *path1* where generated host and guest data have intersection rate of 0.2
+   will generate dataset in testsuites in *path1* where generated host and guest data have intersection rate of 1.0
 
 6. guest-data-size:
 
    .. code-block:: bash
 
-      fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> -ng 2000
+      fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> -ng 10000
 
-   will generate dataset in testsuites *path1* where guest data each have 2000 entries
+   will generate dataset in testsuites *path1* where guest data each have 10000 entries
 
 7. host-data-size:
 
    .. code-block:: bash
 
-      fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> -nh 2000
+      fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> -nh 10000
 
-   will generate dataset in testsuites *path1* where host data have 2000 entries
+   will generate dataset in testsuites *path1* where host data have 10000 entries
 
 8. guest-feature-num:
 
    .. code-block:: bash
 
-      fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> -fg 200
+      fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> -fg 20
 
-   will generate dataset in testsuites *path1* where guest data have 200 features
+   will generate dataset in testsuites *path1* where guest data have 20 features
 
 9. host-feature-num:
 
@@ -872,16 +872,15 @@ generate command options
       fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> -o <path2> --force
 
    will generate dataset in testsuites *path1* and write file to *path2*;
-   will overwrite existing files if designated files from testsuites already exist under *path2*
+   will overwrite existing file(s) if designated file name found under *path2*
 
 12. split-host:
 
    .. code-block:: bash
 
-      fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> -nh 20000 --split-host
+      fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> -nh 10000 --split-host
 
-   will generate dataset in testsuites *path1* where host data sets
-
+   will generate dataset in testsuites *path1*; 10000 entries will be divided equally among all host data sets
 
 13. upload-data
 

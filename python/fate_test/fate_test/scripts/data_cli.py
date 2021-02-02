@@ -117,31 +117,31 @@ def delete(ctx, include, exclude, glob, yes, suite_type, **kwargs):
               help="include *testsuite.json / *benchmark.json under these paths")
 @click.option('-ht', '--host_data_type', default='tag_value', type=click.Choice(['dense', 'tag', 'tag_value']),
               help="Select the format of the host data")
-@click.option('-p', '--encryption_type', type=click.Choice(['sha256', 'md5']),
-              help="Encryption types include sha256 and md5")
-@click.option('-m', '--match_rate', default=1.0, type=float,
-              help="Intersection rate relative to guest, The value is betwehen (0-1)")
+@click.option('-p', '--encryption-type', type=click.Choice(['sha256', 'md5']),
+              help="Entry ID encryption method for,  sha256 and md5")
+@click.option('-m', '--match-rate', default=1.0, type=float,
+              help="Intersection rate relative to guest, between [0, 1]")
 @click.option('-s', '--sparsity', default=0.2, type=float,
               help="The sparsity of tag data, The value is between (0-1)")
-@click.option('-ng', '--guest_data_size', type=int, default=10000,
+@click.option('-ng', '--guest-data-size', type=int, default=10000,
               help="Set guest data set size, not less than 100")
-@click.option('-nh', '--host_data_size', type=int, default=10000,
+@click.option('-nh', '--host-data-size', type=int, default=10000,
               help="Set host data set size, not less than 100")
-@click.option('-fg', '--guest_feature_num', type=int, default=20,
+@click.option('-fg', '--guest-feature-num', type=int, default=20,
               help="Set guest feature dimensions")
-@click.option('-fh', '--host_feature_num', type=int, default=200,
-              help="Set host feature dimensions, The default is equal to the number of guests")
-@click.option('-o', '--output_path', type=click.Path(exists=True),
+@click.option('-fh', '--host-feature-num', type=int, default=200,
+              help="Set host feature dimensions; the default is equal to the number of guest's size")
+@click.option('-o', '--output-path', type=click.Path(exists=True),
               help="Customize the output path of generated data")
 @click.option('--force', is_flag=True, default=False,
-              help="Overlay existing data")
-@click.option('--split_host', is_flag=True, default=False,
-              help="Divide the amount of host data equally to all the host tables in TestSuite")
-@click.option('--upload_data', is_flag=True, default=False,
-              help="The data will be uploaded")
-@click.option('--remove_data', is_flag=True, default=False,
+              help="Overwrite existing file")
+@click.option('--split-host', is_flag=True, default=False,
+              help="Divide the amount of host data equally among all the host tables in TestSuite")
+@click.option('--upload-data', is_flag=True, default=False,
+              help="Generated data will be uploaded")
+@click.option('--remove-data', is_flag=True, default=False,
               help="The generated data will be deleted")
-@click.option('--use_local_data', is_flag=True, default=False,
+@click.option('--use-local-data', is_flag=True, default=False,
               help="The existing data of the server will be uploaded, This parameter is not recommended for "
                    "distributed applications")
 @SharedOptions.get_shared_options(hidden=True)

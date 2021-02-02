@@ -40,9 +40,9 @@ from fate_test.scripts._utils import _load_testsuites, _upload_data, _delete_dat
 @click.option("-g", '--glob', type=str,
               help="glob string to filter sub-directory of path specified by <include>")
 @click.option('-m', '--timeout', type=int, default=3600,
-              help="Task timeout duration")
+              help="Task timeout threshold")
 @click.option('-p', '--task-cores', type=int, default=4,
-              help="processors per node")
+              help="EGGROLL runtime configuration for parameter 'task-cores'")
 @click.option('-j', '--update-job-parameters', default="{}", type=JSON_STRING,
               help="a json string represents mapping for replacing fields in conf.job_parameters")
 @click.option('-c', '--update-component-parameters', default="{}", type=JSON_STRING,

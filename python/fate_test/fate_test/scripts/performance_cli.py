@@ -33,13 +33,13 @@ from fate_test.scripts._utils import _load_testsuites, _upload_data, _delete_dat
 
 @click.command("performance")
 @click.option('-t', '--job-type', type=click.Choice(['intersect', 'intersect_multi', 'hetero_lr', 'hetero_sbt']),
-              help="Select the job type, you can also set through include")
+              help="Select the job type to run corresponding testsuite set in config")
 @click.option('-i', '--include', type=click.Path(exists=True), multiple=True, metavar="<include>",
               help="include *testsuite.json under these paths")
 @click.option('-r', '--replace', default="{}", type=JSON_STRING,
               help="a json string represents mapping for replacing fields in data/conf/dsl")
 @click.option('-m', '--timeout', type=int, default=3600,
-              help="Task timeout duration")
+              help="Task timeout threshold")
 @click.option('-e', '--max-iter', type=int, default=100,
               help="When the algorithm model is LR, the number of iterations is set")
 @click.option('-d', '--max-depth', type=int, default=4,
@@ -47,7 +47,7 @@ from fate_test.scripts._utils import _load_testsuites, _upload_data, _delete_dat
 @click.option('-n', '--num-trees', type=int, default=100,
               help="When the algorithm model is SecureBoost, set the number of trees")
 @click.option('-p', '--task-cores', type=int, default=4,
-              help="processors per node")
+              help="EGGROLL runtime configuration for parameter 'task-cores'")
 @click.option('-j', '--update-job-parameters', default="{}", type=JSON_STRING,
               help="a json string represents mapping for replacing fields in conf.job_parameters")
 @click.option('-c', '--update-component-parameters', default="{}", type=JSON_STRING,
