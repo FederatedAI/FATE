@@ -23,13 +23,11 @@ from fate_test.utils import show_data, match_metrics
 @click.option('-t', '--tol', type=float,
               help="tolerance (absolute error) for metrics to be considered almost equal. "
                    "Comparison is done by evaluating abs(a-b) <= max(relative_tol * max(abs(a), abs(b)), absolute_tol)")
-@click.option('-p', '--processors_per_node', type=int, default=4,
-              help="processors per node")
 @click.option('--skip-data', is_flag=True, default=False,
               help="skip uploading data specified in benchmark conf")
 @SharedOptions.get_shared_options(hidden=True)
 @click.pass_context
-def run_benchmark(ctx, include, exclude, glob, skip_data, tol, processors_per_node, **kwargs):
+def run_benchmark(ctx, include, exclude, glob, skip_data, tol, **kwargs):
     """
     process benchmark suite, alias: bq
     """
