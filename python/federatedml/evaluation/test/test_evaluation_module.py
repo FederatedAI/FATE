@@ -4,6 +4,7 @@ import numpy as np
 from federatedml.util import consts
 from federatedml.evaluation.metrics import classification_metric, clustering_metric, regression_metric
 from federatedml.evaluation.metric_interface import MetricInterface
+from federatedml.evaluation.performance_recorder import PerformanceRecorder
 
 class TestEvaluation(unittest.TestCase):
 
@@ -70,6 +71,17 @@ class TestEvaluation(unittest.TestCase):
         print('testing clustering')
         interface = MetricInterface(eval_type=consts.CLUSTERING, pos_label=1)
         interface.confusion_mat(self.clustering_label, self.clustering_score)
+
+    def test_early_stop(self):
+
+        recorder = PerformanceRecorder()
+        fake_score = [{'auc': 0.6, 'ks': 0.1}, {'auc': 0.7, 'ks': 0.09}, {'auc': 0.59, 'ks': 0.2}, {'auc': 0.61, 'ks': 0.12},
+                      {'auc': 0.6, 'ks': 0.2}, {'auc': 0.8, 'ks': 0.11}, {'auc': 0.81, 'ks': 0.15}, {'auc': 0.81, 'ks': 0.15},
+                      {'auc': 0.81, 'ks': 0.15}, {'auc': 0.81, 'ks': 0.15}, {'auc': 0.81, 'ks': 0.15}]
+        for score in fake_score:
+            recorder.update(score)
+            print(recorder.no_improvement_round)
+            print(recorder.cur_best_performance)
 
 
 if __name__ == '__main__':

@@ -13,10 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import sys
 from collections import defaultdict
 import math
-import logging
 from federatedml.util import LOGGER
 from fate_flow.entity.metric import Metric, MetricMeta
 from federatedml.param import EvaluateParam
@@ -57,14 +55,16 @@ class Evaluation(ModelBase):
         self.metrics = None
         self.round_num = 6
 
-        self.validate_metric = {}
-        self.train_metric = {}
+        self.eval_type = None
 
         # where to call metric computations
         self.metric_interface: MetricInterface = None
 
         self.psi_train_scores, self.psi_validate_scores = None, None
         self.psi_train_labels, self.psi_validate_labels = None, None
+
+        # summaries
+        self.metric_summaries = {}
 
     def _init_model(self, model):
         self.model_param = model
@@ -279,7 +279,7 @@ class Evaluation(ModelBase):
                 eval_result = self.evaluate_metrics(mode, data)
                 self.eval_results[key].append(eval_result)
 
-        return self.callback_metric_data(return_single_val_metrics=return_result)
+        return self.callback_metric_data(self.eval_results, return_single_val_metrics=return_result)
 
     def __save_single_value(self, result, metric_name, metric_namespace, eval_name):
 
@@ -299,7 +299,6 @@ class Evaluation(ModelBase):
                 value = np.round(value, self.round_num)
             points.append((value, np.round(y_axis_list[i], self.round_num)))
         points.sort(key=lambda x: x[0])
-
         metric_points = [Metric(point[0], point[1]) for point in points]
         self.tracker.log_metric_data(metric_namespace, metric_name, metric_points)
 
@@ -590,24 +589,37 @@ class Evaluation(ModelBase):
         self.tracker.set_metric_meta(metric_namespace, metric_name,
                                      MetricMeta(name=metric_name, metric_type=metric.upper(), extra_metas=extra_metas))
 
-    def callback_metric_data(self, return_single_val_metrics=False):
+    def __update_summary(self, data_type, namespace, metric, metric_val):
+        if data_type not in self.metric_summaries:
+            self.metric_summaries[data_type] = {}
+        if namespace not in self.metric_summaries[data_type]:
+            self.metric_summaries[data_type][namespace] = {}
+        self.metric_summaries[data_type][namespace][metric] = metric_val
 
+    def __save_summary(self):
+        LOGGER.info('eval summary is {}'.format(self.metric_summaries))
+        self.set_summary(self.metric_summaries)
+
+    def callback_metric_data(self, eval_results, return_single_val_metrics=False):
+
+        # collect single val metric for validation strategy
+        validate_metric = {}
+        train_metric = {}
         collect_dict = {}
         LOGGER.debug('callback metric called')
 
-        for (data_type, eval_res_list) in self.eval_results.items():
+        for (data_type, eval_res_list) in eval_results.items():
 
             precision_recall = {}
-
             for eval_res in eval_res_list:
                 for (metric, metric_res) in eval_res.items():
 
                     metric_namespace = metric_res[0]
 
                     if metric_namespace == 'validate':
-                        collect_dict = self.validate_metric
+                        collect_dict = validate_metric
                     elif metric_namespace == 'train':
-                        collect_dict = self.train_metric
+                        collect_dict = train_metric
 
                     metric_name = '_'.join([data_type, metric])
 
@@ -618,6 +630,8 @@ class Evaluation(ModelBase):
                                                  metric_namespace=metric_namespace
                                                  , eval_name=metric)
                         collect_dict[metric] = single_val_metric
+                        # update pipeline summary
+                        self.__update_summary(data_type, metric_namespace, metric, single_val_metric)
 
                     if metric == consts.KS:
                         self.__save_ks_curve(metric, metric_res, metric_name, metric_namespace, data_type)
@@ -661,20 +675,17 @@ class Evaluation(ModelBase):
                     elif metric == consts.DISTANCE_MEASURE:
                         self.__save_distance_measure(metric, metric_res[1], metric_name, metric_namespace)
 
-        if len(self.validate_metric) != 0:
-            self.set_summary(self.validate_metric)
-        else:
-            self.set_summary(self.train_metric)
+        self.__save_summary()
 
         if return_single_val_metrics:
-            if len(self.validate_metric) != 0:
+            if len(validate_metric) != 0:
                 LOGGER.debug("return validate metric")
-                LOGGER.debug('validate metric is {}'.format(self.validate_metric))
-                return self.validate_metric
+                LOGGER.debug('validate metric is {}'.format(validate_metric))
+                return validate_metric
             else:
                 LOGGER.debug("validate metric is empty, return train metric")
-                LOGGER.debug('train metric is {}'.format(self.train_metric))
-                return self.train_metric
+                LOGGER.debug('train metric is {}'.format(train_metric))
+                return train_metric
 
         else:
             return None
