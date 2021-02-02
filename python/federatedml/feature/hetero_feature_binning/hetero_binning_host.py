@@ -17,7 +17,7 @@
 import functools
 import operator
 
-from federatedml.ciper_compressor import compressor
+from federatedml.cipher_compressor import compressor
 from federatedml.feature.hetero_feature_binning.base_feature_binning import BaseHeteroFeatureBinning
 from federatedml.secureprotol.fate_paillier import PaillierEncryptedNumber
 from federatedml.util import LOGGER
