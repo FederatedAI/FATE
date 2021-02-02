@@ -89,7 +89,7 @@ class HeteroLinRGuest(HeteroLinRBase):
                 batch_feat_inst = self.transform(batch_data)
 
                 # Start gradient procedure
-                optim_guest_gradient, _, _ = self.gradient_loss_operator.compute_gradient_procedure(
+                optim_guest_gradient = self.gradient_loss_operator.compute_gradient_procedure(
                     batch_feat_inst,
                     self.encrypted_calculator,
                     self.model_weights,

@@ -26,6 +26,9 @@
         },
         "sample-weight-name": {
             "script": "./pipeline-sample-weight-name.py"
+        },
+        "sample-weight-multi-host": {
+            "script": "./pipeline-sample-weight-multi-host.py"
         }
     }
 }

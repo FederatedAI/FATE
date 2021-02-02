@@ -88,7 +88,7 @@ class HeteroPoissonGuest(HeteroPoissonBase):
                 batch_offset = exposure.join(batch_feat_inst, lambda ei, d: HeteroPoissonBase.safe_log(ei))
 
                 # Start gradient procedure
-                optimized_gradient, _, _ = self.gradient_loss_operator.compute_gradient_procedure(
+                optimized_gradient = self.gradient_loss_operator.compute_gradient_procedure(
                     batch_feat_inst,
                     self.encrypted_calculator,
                     self.model_weights,

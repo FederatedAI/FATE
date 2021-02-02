@@ -17,6 +17,10 @@ This section introduces the dsl and conf for different types of tasks.
 
     script: pipeline-sample-weight-feature-engineering.py
 
+4. Balanced Mode Task:
+
+    script: pipeline-sample-weight-multi-host.py
+
 Users can use following commands to run pipeline job directly.
 
     python ${pipeline_script}
