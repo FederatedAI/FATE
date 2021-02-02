@@ -23,7 +23,9 @@ import random
 import copy
 
 from federatedml.feature.binning.bin_inner_param import BinInnerParam
+from federatedml.param.feature_binning_param import FeatureBinningParam
 from federatedml.feature.binning.bin_result import BinColResults, BinResults
+from federatedml.statistic.data_overview import get_header
 from federatedml.feature.sparse_vector import SparseVector
 from federatedml.statistic import data_overview
 from federatedml.util import LOGGER
@@ -70,6 +72,28 @@ class BaseBinning(object):
         bin_inner_param.set_bin_all()
         bin_inner_param.set_transform_all()
         self.set_bin_inner_param(bin_inner_param)
+
+    @staticmethod
+    def setup_bin_inner_param(data_instances, params: FeatureBinningParam):
+        header = get_header(data_instances)
+        LOGGER.debug("setup_bin_inner_param, get header length: {}".format(len(header)))
+        bin_inner_param = BinInnerParam()
+        bin_inner_param.set_header(header)
+        if params.bin_indexes == -1:
+            bin_inner_param.set_bin_all()
+        else:
+            bin_inner_param.add_bin_indexes(params.bin_indexes)
+            bin_inner_param.add_bin_names(params.bin_names)
+
+        bin_inner_param.add_category_indexes(params.category_indexes)
+        bin_inner_param.add_category_names(params.category_names)
+
+        if params.transform_param.transform_cols == -1:
+            bin_inner_param.set_transform_all()
+        else:
+            bin_inner_param.add_transform_bin_indexes(params.transform_param.transform_cols)
+            bin_inner_param.add_transform_bin_names(params.transform_param.transform_names)
+        return bin_inner_param
 
     def fit_split_points(self, data_instances):
         """
