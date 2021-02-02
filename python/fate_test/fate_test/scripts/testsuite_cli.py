@@ -18,6 +18,8 @@ import uuid
 from datetime import timedelta
 
 import click
+
+from fate_test import _config
 from fate_test._client import Clients
 from fate_test._config import Config
 from fate_test._flow_client import JobProgress, SubmitJobResponse, QueryJobResponse
@@ -39,7 +41,7 @@ from fate_test.scripts._utils import _load_testsuites, _upload_data, _delete_dat
               help="glob string to filter sub-directory of path specified by <include>")
 @click.option('-m', '--timeout', type=int, default=3600,
               help="Task timeout duration")
-@click.option('-p', '--processors-per-node', type=int, default=4,
+@click.option('-p', '--task-cores', type=int, default=4,
               help="processors per node")
 @click.option('-j', '--update-job-parameters', default="{}", type=JSON_STRING,
               help="a json string represents mapping for replacing fields in conf.job_parameters")
@@ -58,7 +60,7 @@ from fate_test.scripts._utils import _load_testsuites, _upload_data, _delete_dat
 @SharedOptions.get_shared_options(hidden=True)
 @click.pass_context
 def run_suite(ctx, replace, include, exclude, glob, timeout, update_job_parameters, update_component_parameters,
-              skip_dsl_jobs, skip_pipeline_jobs, skip_data, data_only, clean_data, processors_per_node, **kwargs):
+              skip_dsl_jobs, skip_pipeline_jobs, skip_data, data_only, clean_data, task_cores, **kwargs):
     """
     process testsuite
     """
@@ -101,7 +103,7 @@ def run_suite(ctx, replace, include, exclude, glob, timeout, update_job_paramete
                     echo.stdout_newline()
                     try:
                         _submit_job(client, suite, namespace, config_inst, timeout, update_job_parameters,
-                                    update_component_parameters, processors_per_node)
+                                    update_component_parameters, task_cores)
                     except Exception as e:
                         raise RuntimeError(f"exception occur while submit job for {suite.path}") from e
 
@@ -129,7 +131,7 @@ def run_suite(ctx, replace, include, exclude, glob, timeout, update_job_paramete
 
 
 def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Config, timeout, update_job_parameters,
-                update_component_parameters, processors_per_node):
+                update_component_parameters, task_cores):
     # submit jobs
     with click.progressbar(length=len(suite.jobs),
                            label="jobs   ",
@@ -149,7 +151,8 @@ def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Conf
             # noinspection PyBroadException
             try:
                 job.job_conf.update_job_common_parameters(
-                    eggroll_run={"eggroll.session.processors.per.node": processors_per_node})
+                    eggroll_run={"task_cores": task_cores})
+
                 job.job_conf.update(config.parties, config.work_mode, config.backend, timeout, update_job_parameters,
                                     update_component_parameters)
             except Exception:
@@ -197,18 +200,48 @@ def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Conf
                     if suite.model_in_dep(job.job_name):
                         dependent_jobs = suite.get_dependent_jobs(job.job_name)
                         for predict_job in dependent_jobs:
-                            if predict_job.job_conf.dsl_version == 2:
-                                # noinspection PyBroadException
-                                try:
-                                    model_info = clients["guest_0"].deploy_model(
-                                        model_id=response.model_info["model_id"],
-                                        model_version=response.model_info["model_version"],
-                                        dsl=predict_job.job_dsl.as_dict())
-                                except Exception:
-                                    _raise()
-                            else:
-                                model_info = response.model_info
-                            suite.feed_dep_model_info(predict_job, job.job_name, model_info)
+                            model_info, table_info = None, None
+                            for i in _config.deps_alter[predict_job.job_name]:
+                                if isinstance(i, dict):
+                                    name = i.get('name')
+                                    data_pre = i.get('data')
+
+                            if 'data_deps' in _config.deps_alter[predict_job.job_name]:
+                                roles = list(data_pre.keys())
+                                table_info, hierarchy = [], []
+                                for role_ in roles:
+                                    role, index = role_.split("_")
+                                    input_ = data_pre[role_]
+                                    for data_input, cpn in input_.items():
+                                        try:
+                                            table_name = clients["guest_0"].output_data_table(
+                                                job_id=response.job_id,
+                                                role=role,
+                                                party_id=config.role[role][int(index)],
+                                                component_name=cpn)
+                                        except Exception:
+                                            _raise()
+                                        if predict_job.job_conf.dsl_version == 2:
+                                            hierarchy.append([role, index, data_input])
+                                            table_info.append({'table': table_name})
+                                        else:
+                                            hierarchy.append([role, 'args', 'data'])
+                                            table_info.append({data_input: [table_name]})
+                                table_info = {'hierarchy': hierarchy, 'table_info': table_info}
+                            if 'model_deps' in _config.deps_alter[predict_job.job_name]:
+                                if predict_job.job_conf.dsl_version == 2:
+                                    # noinspection PyBroadException
+                                    try:
+                                        model_info = clients["guest_0"].deploy_model(
+                                            model_id=response.model_info["model_id"],
+                                            model_version=response.model_info["model_version"],
+                                            dsl=predict_job.job_dsl.as_dict())
+                                    except Exception:
+                                        _raise()
+                                else:
+                                    model_info = response.model_info
+
+                            suite.feed_dep_info(predict_job, name, model_info=model_info, table_info=table_info)
                         suite.remove_dependency(job.job_name)
             update_bar(0)
             echo.stdout_newline()

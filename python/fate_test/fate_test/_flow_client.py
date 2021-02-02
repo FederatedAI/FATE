@@ -75,6 +75,10 @@ class FLOWClient(object):
         result = self._deploy_model(model_id=model_id, model_version=model_version, dsl=dsl)
         return result
 
+    def output_data_table(self, job_id, role, party_id, component_name):
+        result = self._output_data_table(job_id=job_id, role=role, party_id=party_id, component_name=component_name)
+        return result
+
     def add_notes(self, job_id, role, party_id, notes):
         self._add_notes(job_id=job_id, role=role, party_id=party_id, notes=notes)
 
@@ -165,6 +169,24 @@ class FLOWClient(object):
 
         return result
 
+    def _output_data_table(self, job_id, role, party_id, component_name):
+        post_data = {'job_id': job_id,
+                     'role': role,
+                     'party_id': party_id,
+                     'component_name': component_name}
+        response = self.flow_client(request='component/output_data_table', param=post_data)
+        result = {}
+        try:
+            retcode = response['retcode']
+            retmsg = response['retmsg']
+            if retcode != 0 or retmsg != 'success':
+                raise RuntimeError(f"deploy model error: {response}")
+            result["name"] = response["data"][0]["table_name"]
+            result["namespace"] = response["data"][0]["table_namespace"]
+        except Exception as e:
+            raise RuntimeError(f"output data table error: {response}") from e
+        return result
+
     def _query_job(self, job_id, role):
         param = {
             'job_id': job_id,
@@ -214,8 +236,12 @@ class FLOWClient(object):
         elif request == 'job/query':
             stdout = client.job.query(job_id=param['job_id'], role=param['role'])
         elif request == 'model/deploy':
-            stdout = client.job.query(model_id=param['model_id'], model_version=param['model_version'],
-                                      predict_dsl=param['predict_dsl'])
+            stdout = client.model.deploy(model_id=param['model_id'], model_version=param['model_version'],
+                                         predict_dsl=param['predict_dsl'])
+        elif request == 'component/output_data_table':
+            stdout = client.component.output_data_table(job_id=param['job_id'], role=param['role'],
+                                                        party_id=param['party_id'],
+                                                        component_name=param['component_name'])
 
         else:
             stdout = {"retcode": None}

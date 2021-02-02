@@ -21,13 +21,15 @@ from fate_test.scripts.config_cli import config_group
 from fate_test.scripts.data_cli import data_group
 from fate_test.scripts.testsuite_cli import run_suite
 from fate_test.scripts.performance_cli import run_task
+from fate_test.scripts.flow_test_cli import flow_group
 
 commands = {
     "config": config_group,
     "suite": run_suite,
     "performance": run_task,
     "benchmark-quality": run_benchmark,
-    "data": data_group
+    "data": data_group,
+    "flow_test": flow_group
 }
 
 commands_alias = {

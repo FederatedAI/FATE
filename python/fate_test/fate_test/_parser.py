@@ -152,6 +152,16 @@ class JobConf(object):
                 elif isinstance(parameters[keys], dict) and parameters[keys] is not None:
                     self.update_component_parameters(key, value, parameters[keys])
 
+    def get_component_parameters(self, keys):
+        if self.dsl_version == 1:
+            parameters = self.others_kwargs.get("role_parameters")
+        else:
+            parameters = self.others_kwargs.get("component_parameters").get('role')
+
+        for key in keys:
+            parameters = parameters[key]
+        return parameters
+
 
 class JobDSL(object):
     def __init__(self, components: dict):
@@ -169,7 +179,7 @@ class JobDSL(object):
 
 class Job(object):
     def __init__(self, job_name: str, job_conf: JobConf, job_dsl: typing.Optional[JobDSL],
-                 pre_works: typing.MutableSet[str]):
+                 pre_works: list):
         self.job_name = job_name
         self.job_conf = job_conf
         self.job_dsl = job_dsl
@@ -182,9 +192,30 @@ class Job(object):
         if job_dsl is not None:
             job_dsl = JobDSL.load(base.joinpath(job_dsl).resolve())
 
-        pre_works = set()
+        pre_works = []
+        pre_works_value = []
+        name_dict = {}
+        if job_configs.get("data_deps", None):
+            pre_works_value.append('data_deps')
+            assembly = list(job_configs["data_deps"].keys())[0]
+            name_dict['data'] = job_configs["data_deps"][assembly]
+        if job_configs.get("model_deps", None):
+            pre_works_value.append('model_deps')
         if job_configs.get("deps", None):
-            pre_works.add(job_configs["deps"])
+            pre_works_value.append('model_deps')
+
+        if job_configs.get("model_deps", None):
+            pre_works.append(job_configs["model_deps"])
+            name_dict['name'] = job_configs["model_deps"]
+        elif job_configs.get("deps", None):
+            pre_works.append(job_configs["deps"])
+            name_dict['name'] = job_configs["deps"]
+        elif job_configs.get("data_deps", None):
+            pre_works.append(list(job_configs["data_deps"].keys())[0])
+            name_dict['name'] = list(job_configs["data_deps"].keys())[0]
+        pre_works_value.append(name_dict)
+        _config.deps_alter[job_name] = pre_works_value
+
         return Job(job_name=job_name, job_conf=job_conf, job_dsl=job_dsl, pre_works=pre_works)
 
     @property
@@ -193,10 +224,14 @@ class Job(object):
                     dsl=self.job_dsl.as_dict() if self.job_dsl else None)
 
     def set_pre_work(self, name, **kwargs):
-        if name not in self.pre_works:
-            raise RuntimeError(f"{self} not dependents on {name} right now")
         self.job_conf.update_job_common_parameters(**kwargs)
-        self.pre_works.remove(name)
+
+    def set_input_data(self, hierarchys, table_info):
+        for table_name, hierarchy in zip(table_info, hierarchys):
+            key = list(table_name.keys())[0]
+            value = table_name[key]
+            self.job_conf.update_component_parameters(key=key, value=value,
+                                                      parameters=self.job_conf.get_component_parameters(hierarchy))
 
     def is_submit_ready(self):
         return len(self.pre_works) == 0
@@ -226,6 +261,7 @@ class Testsuite(object):
         for job in self.jobs:
             for name in job.pre_works:
                 self._dependency.setdefault(name, []).append(job)
+
             self._final_status[job.job_name] = FinalStatus(job.job_name)
             if job.is_submit_ready():
                 self._ready_jobs.appendleft(job)
@@ -275,8 +311,13 @@ class Testsuite(object):
     def remove_dependency(self, name):
         del self._dependency[name]
 
-    def feed_dep_model_info(self, job, name, model_info):
-        job.set_pre_work(name, **model_info)
+    def feed_dep_info(self, job, name, model_info=None, table_info=None):
+        if model_info is not None:
+            job.set_pre_work(name, **model_info)
+        if table_info is not None:
+            job.set_input_data(table_info['hierarchy'], table_info['table_info'])
+        if name in job.pre_works:
+            job.pre_works.remove(name)
         if job.is_submit_ready():
             self._ready_jobs.appendleft(job)
 

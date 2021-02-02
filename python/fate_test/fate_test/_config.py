@@ -21,7 +21,6 @@ from collections import namedtuple
 from pathlib import Path
 
 from ruamel import yaml
-
 temperate = """\
 # 0 for standalone, 1 for cluster
 work_mode: 0
@@ -44,12 +43,19 @@ services:
       - {address: 127.0.0.1:9380, parties: [9999, 10000]}
     serving_setting:
       address: 127.0.0.1:8059
+      
     ssh_tunnel: # optional
       enable: false
       ssh_address: <remote ip>:<remote port>
       ssh_username:
       ssh_password: # optional
       ssh_priv_key: "~/.ssh/id_rsa"
+
+unittest_template:
+  train_conf_path: /examples/unittest_template/test_secureboost_train_binary_conf.json
+  train_dsl_path: /examples/unittest_template/test_secureboost_train_dsl.json
+  predict_conf_path: /examples/unittest_template/test_predict_conf.json
+  predict_dsl_path: /examples/unittest_template/test_predict_dsl.json
 
 # what is ssh_tunnel?
 # to open the ssh tunnel(s) if the remote service
@@ -75,14 +81,15 @@ _default_config = Path(__file__).parent.joinpath("fate_test_config.yaml").resolv
 
 data_switch = None
 use_local_data = 1
-
+data_alter = dict()
+deps_alter = dict()
 
 def create_config(path: Path, override=False):
     if path.exists() and not override:
         raise FileExistsError(f"{path} exists")
     with path.open("w") as f:
         f.write(temperate)
-
+        
 
 def default_config():
     if not _default_config.exists():
@@ -91,22 +98,24 @@ def default_config():
 
 
 class Parties(object):
-    def __init__(self, **kwargs):
-        """
-        mostly, accept guest, host and arbiter
-        """
-        self._role_to_parties = kwargs
+    def __init__(self,
+                 guest: typing.List[int],
+                 host: typing.List[int],
+                 arbiter: typing.List[int] = None):
+        self.guest = guest
+        self.host = host
+        self.arbiter = arbiter or []
 
         self._party_to_role_string = {}
-        for role in kwargs:
-            parties = kwargs[role]
+        for role in ["guest", "host", "arbiter"]:
+            parties = getattr(self, role)
             for i, party in enumerate(parties):
                 if party not in self._party_to_role_string:
                     self._party_to_role_string[party] = set()
                 self._party_to_role_string[party].add(f"{role.lower()}_{i}")
 
     @staticmethod
-    def from_dict(d: typing.MutableMapping[str, typing.List[int]]):
+    def from_dict(d: dict):
         return Parties(**d)
 
     def party_to_role_string(self, party):
@@ -115,19 +124,19 @@ class Parties(object):
     def extract_role(self, counts: typing.MutableMapping[str, int]):
         roles = {}
         for role, num in counts.items():
-            if role not in self._role_to_parties and num > 0:
-                raise ValueError(f"{role} not found in config")
+            if not hasattr(self, role):
+                raise ValueError(f"{role} should be one of [guest, host, arbiter]")
             else:
-                if len(self._role_to_parties[role]) < num:
-                    raise ValueError(f"require {num} {role} parties, only {len(self._role_to_parties[role])} in config")
-            roles[role] = self._role_to_parties[role][:num]
+                if len(getattr(self, role)) < num:
+                    raise ValueError(f"require {num} {role} parties, only {len(getattr(self, role))} in config")
+            roles[role] = getattr(self, role)[:num]
         return roles
 
     def extract_initiator_role(self, role):
         initiator_role = role.strip()
-        if len(self._role_to_parties[initiator_role]) < 1:
+        if len(getattr(self, initiator_role)) < 1:
             raise ValueError(f"role {initiator_role} has empty party list")
-        party_id = self._role_to_parties[initiator_role][0]
+        party_id = getattr(self, initiator_role)[0]
         return dict(role=initiator_role, party_id=party_id)
 
 
@@ -144,6 +153,9 @@ class Config(object):
         self.perf_template_dir = os.path.join(config["data_base_dir"], config["performance_template_directory"])
         self.clean_data = config.get("clean_data", True)
         self.parties = Parties.from_dict(config["parties"])
+        self.role = config["parties"]
+        self.serving_setting = config["services"][0]
+        self.unittest = config["unittest_template"]
         self.party_to_service_id = {}
         self.service_id_to_service = {}
         self.tunnel_id_to_tunnel = {}
