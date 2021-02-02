@@ -136,12 +136,14 @@ class RsaIntersect(Intersect):
     @staticmethod
     def pubkey_id_process(data, fraction, random_bit, rsa_e, rsa_n, hash_operator=None, salt=''):
         if fraction and fraction <= consts.MAX_BASE_FRACTION:
+            LOGGER.debug(f"fraction value: {fraction} provided, use fraction in pubkey id process")
             count = round(data.count() * max(fraction, consts.MIN_BASE_FRACTION))
 
             def group_kv(kv_iterator):
                 res = []
                 for k, v in kv_iterator:
-                    if hash_operator:
+                    if hash_operator is not None:
+                        v = (k, v)
                         k = int(Intersect.hash(k, hash_operator, salt), 16)
                     res.append((k % count, [(k, v)]))
                 return res
@@ -157,6 +159,7 @@ class RsaIntersect(Intersect):
 
             return reduced_pair_group.flatMap(pubkey_id_generate)
         else:
+            LOGGER.debug(f"fraction not provided or invalid, fraction value: {fraction}.")
             return data.map(lambda k, v: RsaIntersect.pubkey_id_process_per(k, v, random_bit, rsa_e, rsa_n,
                                                                             hash_operator, salt))
 
