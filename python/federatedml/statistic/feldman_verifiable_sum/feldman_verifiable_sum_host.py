@@ -65,9 +65,6 @@ class FeldmanVerifiableSumHost(BaseFeldmanVerifiableSum):
                 self.transfer_inst.host_share_to_guest.remote(self.sub_key[-1],
                                                               role="guest",
                                                               idx=0)
-                self.transfer_inst.host_commitments.remote(self.commitments,
-                                                           role="host",
-                                                           idx=-1)
         self.transfer_inst.host_commitments.remote(self.commitments, role="host", idx=-1)
         self.transfer_inst.host_commitments.remote(self.commitments, role="guest", idx=-1)
 
