@@ -502,8 +502,23 @@ use the following command to show help message
 
    will run benchmark testsuites in *path1* without uploading data specified in *benchmark.json*.
 
+6. disable-clean-data:
 
-6. yes:
+   .. code-block:: bash
+
+       fate_test suite -i <path1 contains *benchmark.json> --disable-clean-data
+
+   will run benchmark testsuites in *path1* without removing data from storage after tasks finish
+
+7. enable-clean-data:
+
+   .. code-block:: bash
+
+       fate_test suite -i <path1 contains *benchmark.json> --enable-clean-data
+
+   will remove data from storage after finishing running benchmark testsuites
+
+8. yes:
 
    .. code-block:: bash
 
