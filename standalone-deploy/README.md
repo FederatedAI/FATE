@@ -91,11 +91,12 @@ Http://hostip:8080.
 
 #### 2) Install FATE in Host
 
-1. Check whether the local 8080 port is accessible or not.
+1. Check whether the local 8080,9360,9380 port is occupied.
 
    ```
    netstat -apln|grep 8080
-
+   netstat -apln|grep 9360
+   netstat -apln|grep 9380
    ```
 
 2. Download the compressed package of stand-alone version and decompress it.
