@@ -1,12 +1,12 @@
 {
-    "file": "/Users/sage/FATE/examples/dsl/v1/homo_nn/files/converted/",
+    "file": "./files/converted/",
     "id_delimiter": ",",
     "head": 1,
     "partition": 4,
     "work_mode": 0,
     "backend": 0,
     "storage_engine": "PATH",
-    "namespace": "sagewei",
-    "table_name": "demo",
+    "namespace": "experiment",
+    "table_name": "mnist",
     "use_local_data": 0
 }

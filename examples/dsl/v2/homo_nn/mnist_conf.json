@@ -105,16 +105,16 @@
                 "0|1": {
                     "reader_0": {
                         "table": {
-                            "name": "demo",
-                            "namespace": "sagewei"
+                            "name": "mnist",
+                            "namespace": "experiment"
                         }
                     }
                 },
                 "1": {
                     "reader_0": {
                         "table": {
-                            "name": "demo",
-                            "namespace": "sagewei"
+                            "name": "mnist",
+                            "namespace": "experiment"
                         }
                     }
                 }
@@ -123,8 +123,8 @@
                 "0": {
                     "reader_0": {
                         "table": {
-                            "name": "demo",
-                            "namespace": "sagewei"
+                            "name": "mnist",
+                            "namespace": "experiment"
                         }
                     }
                 }
