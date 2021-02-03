@@ -162,36 +162,3 @@ def get_project_base_directory():
 
 def string_to_bytes(string):
     return string if isinstance(string, bytes) else string.encode(encoding="utf-8")
-
-
-def get_lan_ip():
-    if os.name != "nt":
-        import fcntl
-        import struct
-
-        def get_interface_ip(ifname):
-            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            return socket.inet_ntoa(
-                fcntl.ioctl(s.fileno(), 0x8915, struct.pack('256s', string_to_bytes(ifname[:15])))[20:24])
-
-    ip = socket.gethostbyname(socket.getfqdn())
-    if ip.startswith("127.") and os.name != "nt":
-        interfaces = [
-            "bond1",
-            "eth0",
-            "eth1",
-            "eth2",
-            "wlan0",
-            "wlan1",
-            "wifi0",
-            "ath0",
-            "ath1",
-            "ppp0",
-        ]
-        for ifname in interfaces:
-            try:
-                ip = get_interface_ip(ifname)
-                break
-            except IOError as e:
-                pass
-    return ip or ''

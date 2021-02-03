@@ -16,7 +16,7 @@
 import os
 import click
 from ruamel import yaml
-from flow_client.flow_cli.utils.cli_utils import prettify, get_lan_ip
+from flow_client.flow_cli.utils.cli_utils import prettify
 from flow_client.flow_cli.commands import (component, data, job, model, queue, task, table, tag)
 
 
@@ -42,8 +42,6 @@ def flow_cli(ctx):
             with open(config.get("server_conf_path")) as server_conf_fp:
                 server_conf = yaml.safe_load(server_conf_fp)
             ip = server_conf.get("fateflow", {}).get("host")
-            if ip in ["localhost", "127.0.0.1"]:
-                ip = get_lan_ip()
             ctx.obj["http_port"] = server_conf.get("fateflow", {}).get("http_port")
             ctx.obj["server_url"] = "http://{}:{}/{}".format(ip, ctx.obj["http_port"], config.get("api_version"))
         except Exception:
@@ -51,8 +49,6 @@ def flow_cli(ctx):
     else:
         if config.get("ip") and config.get("port"):
             ip = config.get("ip")
-            if ip in ["localhost", "127.0.0.1"]:
-                ip = get_lan_ip()
             ctx.obj["http_port"] = int(config.get("port"))
             ctx.obj["server_url"] = "http://{}:{}/{}".format(ip, ctx.obj["http_port"], config.get("api_version"))
 
