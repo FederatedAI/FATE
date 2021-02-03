@@ -40,7 +40,7 @@ Eggroll 是一个适用于机器学习和深度学习的大规模分布式架构
 | role  | partyid                | IP地址                | 操作系统                | 主机配置 | 存储 | 外网IP      | 外网带宽 | 部署模块                                              |
 | ----- | ---------------------- | --------------------- | ----------------------- | -------- | ---- | ----------- | -------- | ----------------------------------------------------- |
 | guest | 9999(根据实际规划修改) | 192.168.0.1 （有外网) | CentOS 7.2/Ubuntu 18.04 | 8C16G    | 500G | xx.xx.xx.xx | >=20Mb   | fate_flow，fateboard，clustermanager，rollsite，mysql |
-| guest | 9999(根据实际规划修改) | 192.168.0.2           | CentOS 7.2/Ubuntu 18.04 | 16C32G   | 2T   |             |          | nodemanger                                            |
+| guest | 9999(根据实际规划修改) | 192.168.0.2           | CentOS 7.2/Ubuntu 18.04 | 16C32G   | 500G |             |          | nodemanger                                            |
 
 备注：涉及exchange说明会用192.168.0.88表示其IP，但本次示例不涉及exchange的部署。
 
@@ -50,7 +50,7 @@ Eggroll 是一个适用于机器学习和深度学习的大规模分布式架构
 | -------- | ------------------------------------------------------------ |
 | 主机配置 | 不低于8C16G500G，千兆网卡                                    |
 | 操作系统 | CentOS linux 7.2及以上同时低于8                              |
-| 依赖包   | 需要安装如下依赖包：<br/>#centos<br/>gcc gcc-c++ make openssl-devel gmp-devel mpfr-devel libmpc-devel libaio <br/>numactl autoconf automake libtool libffi-devel ansible jq supervisor<br/>#ubuntu<br/>gcc g++ make openssl ansible libgmp-dev libmpfr-dev libmpc-dev <br/>libaio1 libaio-dev numactl autoconf automake libtool libffi-dev <br/>cd /usr/lib/x86_64-linux-gnu<br/>if [ ! -f "libssl.so.10" ];then<br/>   ln -s libssl.so.1.0.0 libssl.so.10<br/>   ln -s libcrypto.so.1.0.0 libcrypto.so.10<br/>fi |
+| 依赖包   | 需要安装如下依赖包：<br/>#centos<br/>gcc gcc-c++ make openssl-devel gmp-devel mpfr-devel libmpc-devel libaio <br/>numactl autoconf automake libtool libffi-devel ansible supervisor<br/>#ubuntu<br/>gcc g++ make openssl ansible libgmp-dev libmpfr-dev libmpc-dev <br/>libaio1 libaio-dev numactl autoconf automake libtool libffi-dev <br/>cd /usr/lib/x86_64-linux-gnu<br/>if [ ! -f "libssl.so.10" ];then<br/>   ln -s libssl.so.1.0.0 libssl.so.10<br/>   ln -s libcrypto.so.1.0.0 libcrypto.so.10<br/>fi |
 | 用户     | 用户：app，属主：apps（app用户需可以sudo su root而无需密码） |
 | 文件系统 | 1、数据盘挂载在/data目录下。<br/>2、创建/data/projects目录，目录属主为：app:apps。<br/>3、根目录空闲空间不低于20G。 |
 | 虚拟内存 | 不低于128G                                                   |
@@ -67,7 +67,7 @@ Eggroll 是一个适用于机器学习和深度学习的大规模分布式架构
 3.基础环境配置
 ==============
 
-3.1 hostname配置(可选)
+3.1 hostname配置
 ----------------
 
 **1）修改主机名**
@@ -90,7 +90,7 @@ vim /etc/hosts
 
 192.168.0.2 VM_0_2_centos
 
-3.2 关闭selinux(可选)
+3.2 关闭selinux
 ---------------
 
 **在目标服务器（192.168.0.1 192.168.0.2）root用户下执行：**
@@ -201,6 +201,8 @@ ssh app\@192.168.0.1
 
 ssh app\@192.168.0.2
 
+注意：务必要执行此连接测试，需要验证配置是否正确和免yes交互，不然部署的时候会卡住。
+
 ## 3.6 增加虚拟内存
 
 **目标服务器（192.168.0.1 192.168.0.2）root用户执行**
@@ -301,8 +303,8 @@ ls -lrt /data/projects/common/supervisord/supervisord.d/fate-*.conf
 ```
 #注意：URL链接有换行，拷贝的时候注意整理成一行
 cd /data/projects/
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/ansible_nfate_1.5.0_release-1.0.0.tar.gz
-tar xzf ansible_nfate_1.5.0_release-1.0.0.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/ansible_nfate_1.5.1_preview-1.0.0.tar.gz
+tar xzf ansible_nfate_1.5.1_preview-1.0.0.tar.gz
 ```
 
 4.4 配置文件修改和示例
@@ -326,21 +328,24 @@ init project_prod.yml
 
 ### 4.4.2 证书部署前配置(可选)
 
-1）联系webank获取guest端部署证书文件。
-
-2）放置到部署目录
+1）执行脚本制作证书
 
 ```
-cd /data/projects/ansible-nfate-*
-mkdir -p roles/eggroll/files/keys/guest
-cd roles/eggroll/files/keys/guest
-把获取到证书文件解压缩并放置到此目录下，如下：
--rw-r--r-- 1 app apps 1371 Sep  4 18:07 guest-ca.pem
--rw-r--r-- 1 app apps  241 Sep  4 18:07 guest-server.key
--rw-r--r-- 1 app apps 1151 Sep  4 18:07 guest-server.pem
--rw-r--r-- 1 app apps 1371 Sep  4 18:07 host-client-ca.pem
--rw-r--r-- 1 app apps  241 Sep  4 18:07 host-client.key
--rw-r--r-- 1 app apps 1143 Sep  4 18:07 host-client.pem
+cd /data/projects/ansible-nfate-1.*/tools
+sh ./make.sh
+
+在keys/host，guest目录下会产生证书文件。
+```
+
+2）拷贝证书到部署目录
+
+```
+sh cp-keys.sh guest exchange
+
+证书文件会拷贝到roles/eggroll/files/keys目录
+
+特别说明：
+1、目前脚本部署只支持2方设置证书认证。（host&guest、host&exchange、guest&exchange)
 ```
 
 ### 4.4.2 修改配置文件
@@ -386,7 +391,7 @@ guest:
       - 192.168.0.1
       port: 9370 ---rollsite grpc端口
       secure_port: 9371 ---rollsite grpcs端口
-      pool_size: 600 ---线程池大小
+      pool_size: 600 ---线程池大小，推荐设为1200
       max_memory: 12G   ---rollsite进程JVM内存参数，默认是物理内存的1/4，可根据实际情况设置,如12G，如果是rollsite专用的机器，配置成物理内存的75%。
       server_secure: False ---作为服务端，开启安全证书验证，不使用安全证书默认即可
       client_secure: False ---作为客户端，使用证书发起安全请求，不使用安全证书默认即可
@@ -409,6 +414,7 @@ guest:
       ips:   ---只支持部署一台主机
       - 192.168.0.1
       port: 4670 ---服务端口
+      cores_per_node: 16 ---nodemanager节点cpu核数，多个nodemanager节点按照CPU核数最小的设置
     nodemanager:
       enable: True ---是否部署nodemanager模块，True为部署，False为否
       ips:  ---支持部署多台主机
@@ -446,6 +452,9 @@ guest:
       use_acl: false
       user: "fate"
       passwd: "fate"
+    servings:
+     ip: 192.168.0.2
+     port: 8000
 ```
 
 4.5 部署
@@ -519,6 +528,40 @@ sh service.sh start fate-fateflow
 
 /data/logs/fate/fate/fateboard/logs
 
+## 4.7 安全证书替换(可选)
+
+```
+1、配置域名映射,root权限执行,具体ip需和webank确认获取
+vi /etc/hosts
+xx.xx.xx.xx  exchange-fdn.webank.com
+
+2、修改路由，app用户执行
+cd /data/projects/fate/eggroll/conf/
+cp route_table.json route_table.json_20201116
+vi route_table.json
+默认路由配置IP信息修改为exchange-fdn.webank.com，端口和webank确认修改.
+
+3、拷贝证书到部署目录，app用户执行
+ cd /data/projects/data/fate/keys/
+删除这个目录里的文件，并把获取到的证书拷贝过来，安全证书从webank获取。
+
+4、确认安全证书参数文件配置信息和实际信息是否一致
+cd /data/projects/fate/eggroll/conf/
+vi eggroll.properties
+eggroll.core.security.client.ca.crt.path=/data/projects/data/fate/keys/exchange-client-ca.pem
+eggroll.core.security.client.crt.path=/data/projects/data/fate/keys/exchange-client.pem
+eggroll.core.security.client.key.path=/data/projects/data/fate/keys/exchange-client.key
+
+eggroll.core.security.ca.crt.path=/data/projects/data/fate/keys/guest-ca.pem
+eggroll.core.security.crt.path=/data/projects/data/fate/keys/guest-server.pem
+eggroll.core.security.key.path=/data/projects/data/fate/keys/guest-server.key
+
+5、重启rollsite
+cd /data/projects/common/supervisord
+sh service.sh stop fate-rollsite
+sh service.sh start fate-rollsite
+```
+
 5.测试
 ======
 
@@ -585,6 +628,9 @@ python upload_default_data.py -m 1
 ```
 source /data/projects/fate/bin/init_env.sh
 cd /data/projects/fate/examples/min_test_task/
+#单边测试
+python run_task.py -m 1 -gid 9999 -hid 9999 -aid 9999 -f fast
+#联调
 python run_task.py -m 1 -gid 9999 -hid ${host_partyid} -aid ${host_partyid} -f fast
 ```
 
@@ -688,9 +734,27 @@ netstat -tlnp | grep 8080
 | /data/logs                        | 日志路径                       |
 | /data/projects/common/supervisord | 进程管理工具supervisor安装路径 |
 
-# 7. 附录
+# 7. 卸载
 
-## 7.1 Eggroll参数调优
+#### 7.1 概述
+
+支持所有服务服务的卸载以及单个服务的卸载。
+
+#### 7.2 执行卸载
+
+```
+cd /data/projects/ansible-nfate-1.*
+sh ./uninstall.sh prod all
+
+#卸载命令说明
+sh ./uninstall.sh $arg1 $arg2
+- $arg1参数同4.4.1步骤init执行的参数，为test|prod。
+- $arg2参数为选择的服务，可选参数为（all|mysql|eggroll|fate_flow|fateboard），all代表卸载所有服务。
+```
+
+# 8. 附录
+
+## 8.1 Eggroll参数调优
 
 配置文件路径：/data/projects/fate/eggroll/conf/eggroll.properties
 
