@@ -156,7 +156,7 @@ class ValidationStrategy(object):
                     LOGGER.info('default best model: metric {}, iter {}'.format(metric, iteration))
                     self.cur_best_model = self.metric_best_model[metric]
                     self.best_iteration = iteration
-                    first_metric = False
+            first_metric = False
 
     def check_early_stopping(self,):
         """
