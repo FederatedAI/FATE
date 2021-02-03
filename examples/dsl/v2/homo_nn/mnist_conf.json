@@ -1,0 +1,129 @@
+{
+    "dsl_version": 2,
+    "initiator": {
+        "role": "guest",
+        "party_id": 9999
+    },
+    "role": {
+        "arbiter": [
+            10000
+        ],
+        "host": [
+            10000,
+            9999
+        ],
+        "guest": [
+            9999
+        ]
+    },
+    "job_parameters": {
+        "common": {
+            "work_mode": 0,
+            "backend": 0
+        }
+    },
+    "component_parameters": {
+        "common": {
+            "homo_nn_0": {
+                "api_version": 2,
+                "encode_label": true,
+                "max_iter": 15,
+                "batch_size": 32,
+                "early_stop": {
+                    "early_stop": "diff",
+                    "eps": 0.0001
+                },
+                "optimizer": {
+                    "lr": 0.05,
+                    "optimizer": "Adam"
+                },
+                "loss": "NLLLoss",
+                "metrics": [
+                    "accuracy"
+                ],
+                "nn_define": [
+                    {
+                        "layer": "Conv2d",
+                        "in_channels": 1,
+                        "out_channels": 64,
+                        "kernel_size": [
+                            3,
+                            3
+                        ],
+                        "stride": 1,
+                        "padding": 1
+                    },
+                    {
+                        "layer": "ReLU"
+                    },
+                    {
+                        "layer": "Conv2d",
+                        "in_channels": 64,
+                        "out_channels": 128,
+                        "kernel_size": [
+                            3,
+                            3
+                        ],
+                        "stride": 1,
+                        "padding": 1
+                    },
+                    {
+                        "layer": "ReLU"
+                    },
+                    {
+                        "layer": "MaxPool2d",
+                        "kernel_size": 2,
+                        "stride": 2
+                    },
+                    {
+                        "layer": "Flatten"
+                    },
+                    {
+                        "layer": "Linear",
+                        "in_features": 25088,
+                        "out_features": 1024
+                    },
+                    {
+                        "layer": "ReLU"
+                    },
+                    {
+                        "layer": "Linear",
+                        "in_features": 1024,
+                        "out_features": 10
+                    }
+                ],
+                "config_type": "pytorch"
+            }
+        },
+        "role": {
+            "host": {
+                "0|1": {
+                    "reader_0": {
+                        "table": {
+                            "name": "demo",
+                            "namespace": "sagewei"
+                        }
+                    }
+                },
+                "1": {
+                    "reader_0": {
+                        "table": {
+                            "name": "demo",
+                            "namespace": "sagewei"
+                        }
+                    }
+                }
+            },
+            "guest": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "demo",
+                            "namespace": "sagewei"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
