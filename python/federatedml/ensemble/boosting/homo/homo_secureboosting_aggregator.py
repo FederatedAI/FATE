@@ -97,8 +97,7 @@ class DecisionTreeClientAggregator(object):
     def send_histogram(self, hist: List[HistogramBag], suffix):
         if self.verbose:
             for idx, histbag in enumerate(hist):
-                LOGGER.debug('showing client hist {}'.format(idx))
-                LOGGER.debug(histbag)
+                LOGGER.debug('showing client hist {}'.format(histbag))
         weights = FeatureHistogramWeights(list_of_histogram_bags=hist)
         self.aggregator.send_model(weights, suffix=suffix)
 
