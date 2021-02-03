@@ -531,7 +531,7 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
                  bin_num=32,
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
-                 validation_freqs=None, early_stopping=None, use_missing=False, zero_as_missing=False,
+                 validation_freqs=None, early_stopping_rounds=None, use_missing=False, zero_as_missing=False,
                  complete_secure=False, tree_num_per_party=1, guest_depth=1, host_depth=1, work_mode='mix', metrics=None,
                  sparse_optimization=False, random_seed=100, binning_error=consts.DEFAULT_RELATIVE_ERROR,
                  cipher_compress_error=None, new_ver=True):
@@ -555,7 +555,7 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
         super(HeteroFastSecureBoostParam, self).__init__(tree_param, task_type, objective_param, learning_rate,
                                                          num_trees, subsample_feature_rate, n_iter_no_change, tol,
                                                          encrypt_param, bin_num, encrypted_mode_calculator_param,
-                                                         predict_param, cv_param, validation_freqs, early_stopping,
+                                                         predict_param, cv_param, validation_freqs, early_stopping_rounds,
                                                          use_missing, zero_as_missing, complete_secure, metrics=metrics,
                                                          random_seed=random_seed,
                                                          sparse_optimization=sparse_optimization,
