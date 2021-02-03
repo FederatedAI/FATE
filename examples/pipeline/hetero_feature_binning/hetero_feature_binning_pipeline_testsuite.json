@@ -9,26 +9,26 @@
             "role": "guest_0"
         },
         {
-            "file": "examples/data/default_credit_hetero_guest.csv",
+            "file": "examples/data/breast_hetero_host.csv",
             "head": 1,
             "partition": 16,
-            "table_name": "default_credit_hetero_guest",
+            "table_name": "breast_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/breast_homo_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_homo_guest",
             "namespace": "experiment",
             "role": "guest_0"
         },
         {
-            "file": "examples/data/breast_hetero_host.csv",
+            "file": "examples/data/breast_homo_host.csv",
             "head": 1,
             "partition": 16,
-            "table_name": "breast_hetero_host",
-            "namespace": "experiment",
-            "role": "host_0"
-        },
-        {
-            "file": "examples/data/default_credit_hetero_host.csv",
-            "head": 1,
-            "partition": 16,
-            "table_name": "default_credit_hetero_host",
+            "table_name": "breast_homo_host",
             "namespace": "experiment",
             "role": "host_0"
         },
@@ -37,14 +37,6 @@
             "head": 1,
             "partition": 16,
             "table_name": "breast_hetero_host",
-            "namespace": "experiment",
-            "role": "host_1"
-        },
-        {
-            "file": "examples/data/default_credit_hetero_host.csv",
-            "head": 1,
-            "partition": 16,
-            "table_name": "default_credit_hetero_host",
             "namespace": "experiment",
             "role": "host_1"
         }
@@ -86,6 +78,9 @@
         "hetero-binning-sparse-optimal-ks": {
             "script": "pipeline-hetero-binning-sparse-optimal-ks.py"
         },
+        "quantile-binning": {
+            "script": "pipeline-quantile-binning.py"
+        },
         "hetero-binning-sparse-optimal-iv": {
             "script": "pipeline-hetero-binning-sparse-optimal-iv.py"
         },
@@ -97,6 +92,9 @@
         },
         "hetero-binning-sparse-optimal-chi-square": {
             "script": "pipeline-hetero-binning-sparse-optimal-chi-square.py"
+        },
+        "quantile-binning-local-only": {
+            "script": "pipeline-quantile-binning-local-only.py"
         },
         "hetero-binning-skip-statistic": {
             "script": "pipeline-hetero-binning-skip-statistic.py"

@@ -62,12 +62,12 @@
                     0
                 ],
                 "category_names": null,
+                "local_only": false,
                 "transform_param": {
                     "transform_cols": -1,
                     "transform_names": null,
                     "transform_type": "bin_num"
                 },
-                "local_only": false,
                 "optimal_binning_param": {
                     "metric_method": "iv",
                     "min_bin_pct": 0.05,
