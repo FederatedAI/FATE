@@ -135,7 +135,7 @@ class VisionDataSet(torchvision.datasets.VisionDataset, DatasetMixIn):
 
             # read inputs
             if config["inputs"]["type"] != "images":
-                raise TypeError(f"inputs type of vision type should be images")
+                raise TypeError("inputs type of vision type should be images")
             input_ext = config["inputs"]["ext"]
             self.images = [
                 os.path.join(root, "images", f"{x}.{input_ext}") for x in file_names
@@ -170,7 +170,7 @@ class VisionDataSet(torchvision.datasets.VisionDataset, DatasetMixIn):
 
         transform = torchvision.transforms.Compose(
             [
-                torchvision.transforms.Resize((100, 100)),
+                # torchvision.transforms.Resize((100, 100)),
                 torchvision.transforms.ToTensor(),
             ]
         )
@@ -192,7 +192,7 @@ class VisionDataSet(torchvision.datasets.VisionDataset, DatasetMixIn):
         Returns:
             tuple: (image, target) where target is the image segmentation.
         """
-        img = Image.open(self.images[index]).convert("RGB")
+        img = Image.open(self.images[index]).convert("L")
         if self.targets_is_image:
             target = Image.open(self.targets[index])
         else:
