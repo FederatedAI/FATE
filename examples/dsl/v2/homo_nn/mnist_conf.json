@@ -37,7 +37,7 @@
                     "lr": 0.05,
                     "optimizer": "Adam"
                 },
-                "loss": "NLLLoss",
+                "loss": "CrossEntropyLoss",
                 "metrics": [
                     "accuracy"
                 ],
@@ -55,6 +55,11 @@
                     },
                     {
                         "layer": "ReLU"
+                    },
+                    {
+                        "layer": "MaxPool2d",
+                        "kernel_size": 2,
+                        "stride": 2
                     },
                     {
                         "layer": "Conv2d",
@@ -80,7 +85,7 @@
                     },
                     {
                         "layer": "Linear",
-                        "in_features": 25088,
+                        "in_features": 6272,
                         "out_features": 1024
                     },
                     {
