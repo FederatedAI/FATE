@@ -154,7 +154,7 @@ class ValidationStrategy(object):
                 # if early stopping is not triggered, return best model of first metric by default
                 if first_metric:
                     LOGGER.info('default best model: metric {}, iter {}'.format(metric, iteration))
-                    self.best_iteration = self.metric_best_model[metric]
+                    self.cur_best_model = self.metric_best_model[metric]
                     self.best_iteration = iteration
                     first_metric = False
 
