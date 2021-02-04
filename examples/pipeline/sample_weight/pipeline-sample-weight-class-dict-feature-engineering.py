@@ -116,7 +116,7 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.add_component(hetero_feature_binning_0, data=Data(data=sample_weight_0.output.data))
     pipeline.add_component(hetero_feature_selection_0, data=Data(data=hetero_feature_binning_0.output.data),
                            model=Model(isometric_model=[hetero_feature_binning_0.output.model]))
-    pipeline.add_component(feature_scale_0, data=Data(hetero_feature_selection_0))
+    pipeline.add_component(feature_scale_0, data=Data(hetero_feature_selection_0.output.data))
     pipeline.add_component(hetero_lr_0, data=Data(train_data=feature_scale_0.output.data))
     pipeline.add_component(evaluation_0, data=Data(data=hetero_lr_0.output.data))
 
