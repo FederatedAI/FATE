@@ -18,7 +18,7 @@ import os
 import sys
 from flow_sdk.client.api.base import BaseFlowAPI
 from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
-from flow_sdk.utils import preprocess, start_cluster_standalone_job_server, get_project_base_directory
+from flow_sdk.utils import preprocess, start_cluster_standalone_job_server, get_project_base_directory, json_dumps
 
 
 class Data(BaseFlowAPI):
@@ -51,7 +51,7 @@ class Data(BaseFlowAPI):
 
                     data = MultipartEncoderMonitor(data, read_callback)
                     return self._post(url='data/upload', data=data,
-                                      params=config_data, headers={'Content-Type': data.content_type})
+                                      params=json_dumps(config_data), headers={'Content-Type': data.content_type})
             else:
                 raise Exception('The file is obtained from the fate flow client machine, but it does not exist, '
                                 'please check the path: {}'.format(file_name))

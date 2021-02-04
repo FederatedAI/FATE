@@ -19,14 +19,16 @@ import os
 import shutil
 import tarfile
 
-from flask import Flask, request, send_file
+from flask import Flask, request, send_file, jsonify
 from google.protobuf import json_format
 
 from fate_arch.common.base_utils import fate_uuid
 from fate_arch import storage
 from fate_flow.db.db_models import Job, DB
 from fate_flow.manager.data_manager import delete_metric_data
-from fate_flow.operation import Tracker
+from fate_flow.operation.job_tracker import Tracker
+from fate_flow.operation.job_saver import JobSaver
+from fate_flow.scheduler.federated_scheduler import FederatedScheduler
 from fate_flow.settings import stat_logger, TEMP_DIRECTORY
 from fate_flow.utils import job_utils, data_utils, detect_utils, schedule_utils
 from fate_flow.utils.api_utils import get_json_result, error_response
@@ -223,12 +225,13 @@ def component_output_data():
         num = 100
         have_data_label = False
         is_str = False
+        have_weight = False
         if output_table_meta:
             # part_of_data format: [(k, v)]
             for k, v in output_table_meta.get_part_of_data():
                 if num == 0:
                     break
-                data_line, have_data_label, is_str = get_component_output_data_line(src_key=k, src_value=v)
+                data_line, have_data_label, is_str, have_weight = get_component_output_data_line(src_key=k, src_value=v)
                 output_data.append(data_line)
                 num -= 1
             total = output_table_meta.get_count()
@@ -236,7 +239,7 @@ def component_output_data():
             data_names.append(output_name)
             totals.append(total)
         if output_data:
-            header = get_component_output_data_schema(output_table_meta=output_table_meta, have_data_label=have_data_label, is_str=is_str)
+            header = get_component_output_data_schema(output_table_meta=output_table_meta, have_data_label=have_data_label, is_str=is_str, have_weight=have_weight)
             headers.append(header)
         else:
             headers.append(None)
@@ -259,6 +262,7 @@ def component_output_data_download():
     if limit == 0:
         return error_response(response_code=210, retmsg='limit is 0')
     have_data_label = False
+    have_weight = False
 
     output_data_file_list = []
     output_data_meta_file_list = []
@@ -272,7 +276,7 @@ def component_output_data_download():
             with storage.Session.build(name=output_table_meta.get_name(), namespace=output_table_meta.get_namespace()) as storage_session:
                 output_table = storage_session.get_table()
                 for k, v in output_table.collect():
-                    data_line, have_data_label, is_str = get_component_output_data_line(src_key=k, src_value=v)
+                    data_line, have_data_label, is_str, have_weight = get_component_output_data_line(src_key=k, src_value=v)
                     fw.write('{}\n'.format(','.join(map(lambda x: str(x), data_line))))
                     output_data_count += 1
                     if output_data_count == limit:
@@ -281,7 +285,8 @@ def component_output_data_download():
         if output_data_count:
             # get meta
             output_data_file_list.append(output_data_file_path)
-            header = get_component_output_data_schema(output_table_meta=output_table_meta, have_data_label=have_data_label, is_str=is_str)
+            header = get_component_output_data_schema(output_table_meta=output_table_meta, have_data_label=have_data_label,
+                                                      is_str=is_str, have_weight=have_weight)
             output_data_meta_file_path = "{}/{}.meta".format(output_tmp_dir, output_name)
             output_data_meta_file_list.append(output_data_meta_file_path)
             with open(output_data_meta_file_path, 'w') as fw:
@@ -314,14 +319,14 @@ def component_output_data_download():
 
 @manager.route('/component/output/data/table', methods=['post'])
 def component_output_data_table():
-    output_data_infos = Tracker.query_output_data_infos(**request.json)
-    if output_data_infos:
-        return get_json_result(retcode=0, retmsg='success', data=[{'table_name': output_data_info.f_table_name,
-                                                                  'table_namespace': output_data_info.f_table_namespace,
-                                                                   "data_name": output_data_info.f_data_name
-                                                                   } for output_data_info in output_data_infos])
+    request_data = request.json
+    detect_utils.check_config(config=request_data, required_arguments=['job_id', 'role', 'party_id', 'component_name'])
+    jobs = JobSaver.query_job(job_id=request_data.get('job_id'))
+    if jobs:
+        job = jobs[0]
+        return jsonify(FederatedScheduler.tracker_command(job, request_data, 'output/table'))
     else:
-        return get_json_result(retcode=100, retmsg='No found table, please check if the parameters are correct')
+        return get_json_result(retcode=100, retmsg='No found job')
 
 
 @manager.route('/component/summary/download', methods=['POST'])
@@ -376,6 +381,7 @@ def get_component_output_tables_meta(task_data):
 
 def get_component_output_data_line(src_key, src_value):
     have_data_label = False
+    have_weight = False
     data_line = [src_key]
     is_str = False
     if isinstance(src_value, Instance):
@@ -383,15 +389,18 @@ def get_component_output_data_line(src_key, src_value):
             data_line.append(src_value.label)
             have_data_label = True
         data_line.extend(data_utils.dataset_to_list(src_value.features))
+        if src_value.weight is not None:
+            have_weight = True
+            data_line.append(src_value.weight)
     elif isinstance(src_value, str):
         data_line.extend([value for value in src_value.split(',')])
         is_str = True
     else:
         data_line.extend(data_utils.dataset_to_list(src_value))
-    return data_line, have_data_label, is_str
+    return data_line, have_data_label, is_str, have_weight
 
 
-def get_component_output_data_schema(output_table_meta, have_data_label, is_str=False):
+def get_component_output_data_schema(output_table_meta, have_data_label, is_str=False, have_weight=False):
     # get schema
     schema = output_table_meta.get_schema()
     if not schema:
@@ -408,6 +417,8 @@ def get_component_output_data_schema(output_table_meta, have_data_label, is_str=
         header.extend([feature for feature in schema.get('header').split(',')])
     else:
         header.extend(schema.get('header', []))
+    if have_weight:
+        header.append('weight')
     return header
 
 

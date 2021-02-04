@@ -72,6 +72,10 @@ class FLOWClient(object):
             raise RuntimeError(f"submit job failed") from e
         return response
 
+    def deploy_model(self, model_id, model_version, dsl=None):
+        result = self._deploy_model(model_id=model_id, model_version=model_version, dsl=dsl)
+        return result
+
     def add_notes(self, job_id, role, party_id, notes):
         self._add_notes(job_id=job_id, role=role, party_id=party_id, notes=notes)
 
@@ -131,6 +135,24 @@ class FLOWClient(object):
         response = SubmitJobResponse(self._post(url='job/submit', json=post_data))
         return response
 
+    def _deploy_model(self, model_id, model_version, dsl=None):
+        post_data = {'model_id': model_id,
+                     'model_version': model_version,
+                     'dsl': dsl}
+        response = self._post(url='model/deploy', json=post_data)
+        result = {}
+        try:
+            retcode = response['retcode']
+            retmsg = response['retmsg']
+            if retcode != 0 or retmsg != 'success':
+                raise RuntimeError(f"deploy model error: {response}")
+            result["model_id"] = response["data"]["model_id"]
+            result["model_version"] = response["data"]["model_version"]
+        except Exception as e:
+            raise RuntimeError(f"deploy model error: {response}") from e
+
+        return result
+
     def _query_job(self, job_id, role):
         data = {"local": {"role": role}, "job_id": str(job_id)}
         response = QueryJobResponse(self._post(url='job/query', json=data))
@@ -159,7 +181,7 @@ class FLOWClient(object):
         except json.decoder.JSONDecodeError:
             response = {'retcode': 100,
                         'retmsg': "Internal server error. Nothing in response. You may check out the configuration in "
-                                  "'FATE/arch/conf/server_conf.json' and restart fate flow server."}
+                                  "'FATE/conf/service_conf.yaml' and restart fate flow server."}
         return response
 
 

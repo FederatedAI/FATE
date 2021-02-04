@@ -34,9 +34,9 @@ Deploy
 Usage
 -----
 
-##### [Command Line Interface v2](./doc/fate_flow_cli_v2_guide.md)
+##### [Command Line Interface v2](./doc/Fate_Flow_CLI_v2_Guide.rst)
 
-##### [Python SDK](./doc/Fate_Flow_Client_SDK_Guide.md)
+##### [Python SDK](./doc/Fate_Flow_Client_SDK_Guide_zh.rst)
 
 ##### [HTTP API](./doc/fate_flow_http_api.rst)
 

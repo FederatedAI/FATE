@@ -9,13 +9,14 @@ from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import Quantile
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import BoostingTreeModelParam
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import FeatureImportanceInfo
 from federatedml.ensemble.boosting.boosting_core import HeteroBoostingGuest
-from federatedml.param.boosting_param import HeteroSecureBoostParam
+from federatedml.param.boosting_param import HeteroSecureBoostParam, DecisionTreeParam
 from federatedml.ensemble.basic_algorithms import HeteroDecisionTreeGuest
 from federatedml.util import consts
 from federatedml.transfer_variable.transfer_class.hetero_secure_boosting_predict_transfer_variable import \
     HeteroSecureBoostTransferVariable
 from federatedml.util.io_check import assert_io_num_rows_equal
 from federatedml.util.anonymous_generator import generate_anonymous
+from federatedml.statistic.data_overview import with_weight, get_max_sample_weight
 
 
 class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
@@ -23,7 +24,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
     def __init__(self):
         super(HeteroSecureBoostingTreeGuest, self).__init__()
 
-        self.tree_param = None  # decision tree param
+        self.tree_param = DecisionTreeParam()  # decision tree param
         self.use_missing = False
         self.zero_as_missing = False
         self.cur_epoch_idx = -1
@@ -34,6 +35,15 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         self.data_alignment_map = {}
         self.predict_transfer_inst = HeteroSecureBoostTransferVariable()
         self.model_name = 'HeteroSecureBoost'
+        self.max_sample_weight = 1
+        self.max_sample_weight_computed = False
+        self.cipher_compressing = False
+        self.round_decimal = None
+
+        self.enable_goss = False  # GOSS
+        self.top_rate = None
+        self.other_rate = None
+        self.new_ver = True
 
     def _init_model(self, param: HeteroSecureBoostParam):
 
@@ -42,12 +52,33 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         self.use_missing = param.use_missing
         self.zero_as_missing = param.zero_as_missing
         self.complete_secure = param.complete_secure
+        self.enable_goss = param.run_goss
+        self.top_rate = param.top_rate
+        self.other_rate = param.other_rate
+        self.round_decimal = param.cipher_compress_error
+        self.new_ver = param.new_ver
 
         if self.use_missing:
             self.tree_param.use_missing = self.use_missing
             self.tree_param.zero_as_missing = self.zero_as_missing
 
-    def compute_grad_and_hess(self, y_hat, y):
+    def process_sample_weights(self, grad_and_hess, data_with_sample_weight=None):
+
+        # add sample weights to gradient and hessian
+        if data_with_sample_weight is not None:
+            if with_weight(data_with_sample_weight):
+                LOGGER.info('weighted sample detected, multiply g/h by weights')
+                grad_and_hess = grad_and_hess.join(data_with_sample_weight,
+                                                   lambda v1, v2: (v1[0] * v2.weight, v1[1] * v2.weight))
+                if not self.max_sample_weight_computed:
+                    self.max_sample_weight = get_max_sample_weight(data_with_sample_weight)
+                    LOGGER.info('max sample weight is {}'.format(self.max_sample_weight))
+                    self.max_sample_weight_computed = True
+
+        return grad_and_hess
+
+    def compute_grad_and_hess(self, y_hat, y, data_with_sample_weight=None):
+
         LOGGER.info("compute grad and hess")
         loss_method = self.loss
         if self.task_type == consts.CLASSIFICATION:
@@ -58,6 +89,8 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
             grad_and_hess = y.join(y_hat, lambda y, f_val:
             (loss_method.compute_grad(y, f_val),
              loss_method.compute_hess(y, f_val)))
+
+        grad_and_hess = self.process_sample_weights(grad_and_hess, data_with_sample_weight)
 
         return grad_and_hess
 
@@ -71,30 +104,36 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
     def update_feature_importance(self, tree_feature_importance):
         for fid in tree_feature_importance:
             if fid not in self.feature_importances_:
-                self.feature_importances_[fid] = 0
-
-            self.feature_importances_[fid] += tree_feature_importance[fid]
+                self.feature_importances_[fid] = tree_feature_importance[fid]
+            else:
+                self.feature_importances_[fid] += tree_feature_importance[fid]
+        LOGGER.debug('cur feature importance {}'.format(self.feature_importances_))
 
     def fit_a_booster(self, epoch_idx: int, booster_dim: int):
 
         if self.cur_epoch_idx != epoch_idx:
-            self.grad_and_hess = self.compute_grad_and_hess(self.y_hat, self.y)
+            self.grad_and_hess = self.compute_grad_and_hess(self.y_hat, self.y, self.data_inst)
             self.cur_epoch_idx = epoch_idx
 
         g_h = self.get_grad_and_hess(self.grad_and_hess, booster_dim)
 
         tree = HeteroDecisionTreeGuest(tree_param=self.tree_param)
-        tree.set_input_data(self.data_bin, self.bin_split_points, self.bin_sparse_points)
-        tree.set_grad_and_hess(g_h)
-        tree.set_encrypter(self.encrypter)
-        tree.set_encrypted_mode_calculator(self.encrypted_calculator)
-        tree.set_valid_features(self.sample_valid_features())
-        tree.set_flowid(self.generate_flowid(epoch_idx, booster_dim))
-        tree.set_host_party_idlist(self.component_properties.host_party_idlist)
-        tree.set_runtime_idx(self.component_properties.local_partyid)
-
-        if self.cur_epoch_idx == 0 and self.complete_secure:
-            tree.set_as_complete_secure_tree()
+        tree.init(flowid=self.generate_flowid(epoch_idx, booster_dim),
+                  data_bin=self.data_bin, bin_split_points=self.bin_split_points, bin_sparse_points=self.bin_sparse_points,
+                  grad_and_hess=g_h,
+                  encrypter=self.encrypter, encrypted_mode_calculator=self.encrypted_calculator,
+                  valid_features=self.sample_valid_features(),
+                  host_party_list=self.component_properties.host_party_idlist,
+                  runtime_idx=self.component_properties.local_partyid,
+                  goss_subsample=self.enable_goss,
+                  top_rate=self.top_rate, other_rate=self.other_rate,
+                  complete_secure=True if (self.cur_epoch_idx == 0 and self.complete_secure) else False,
+                  cipher_compressing=self.round_decimal is not None,
+                  round_decimal=self.round_decimal,
+                  encrypt_key_length=self.encrypt_param.key_length,
+                  max_sample_weight=self.max_sample_weight,
+                  new_ver=self.new_ver
+                  )
 
         tree.fit()
 
@@ -135,7 +174,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
     def traverse_a_tree(tree: HeteroDecisionTreeGuest, sample, cur_node_idx):
 
         reach_leaf = False
-                                                      # only need nid here, predict state is not needed
+        # only need nid here, predict state is not needed
         rs = tree.traverse_tree(tree_=tree.tree_node, data_inst=sample, predict_state=(cur_node_idx, -1),
                                 decoder=tree.decode, sitename=tree.sitename, use_missing=tree.use_missing,
                                 split_maskdict=tree.split_maskdict, missing_dir_maskdict=tree.missing_dir_maskdict,
@@ -158,13 +197,13 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         for id_ in feature_importances:
 
             if type(id_) == tuple:
-                if 'guest' in id_[0]:
-                    new_fi[fid_mapping[id_[1]]] = feature_importances[id_]
+                if consts.GUEST in id_[0]:
+                    new_fi[fid_mapping[id_[1]]] = feature_importances[id_].importance
                 else:
                     role, party_id = id_[0].split(':')
-                    new_fi[generate_anonymous(role=role, fid=id_[1], party_id=party_id)] = feature_importances[id_]
+                    new_fi[generate_anonymous(role=role, fid=id_[1], party_id=party_id)] = feature_importances[id_].importance
             else:
-                new_fi[fid_mapping[id_]] = feature_importances[id_]
+                new_fi[fid_mapping[id_]] = feature_importances[id_].importance
 
         return new_fi
 
@@ -206,7 +245,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         # finally node pos will hold weights
         weights = []
         for leaf_idx, tree in zip(leaf_pos, trees):
-            weights.append(tree.tree_node[leaf_idx].weight)
+            weights.append(tree.tree_node[int(leaf_idx)].weight)
         weights = np.array(weights)
         if multi_class_num > 2:
             weights = weights.reshape((-1, multi_class_num))
@@ -255,12 +294,13 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
 
         return node_pos_tb, final_leaf_pos
 
-    def boosting_fast_predict(self, data_inst, trees: List[HeteroDecisionTreeGuest], predict_cache=None):
+    def boosting_fast_predict(self, data_inst, trees: List[HeteroDecisionTreeGuest], predict_cache=None,
+                              pred_leaf=False):
 
         tree_num = len(trees)
         generate_func = functools.partial(self.generate_leaf_pos_dict, tree_num=tree_num)
         node_pos_tb = data_inst.mapValues(generate_func)  # record node pos
-        final_leaf_pos = data_inst.mapValues(lambda x: np.zeros(tree_num, dtype=np.int64) - 1)  # record final leaf pos
+        final_leaf_pos = data_inst.mapValues(lambda x: np.zeros(tree_num, dtype=np.int64) + np.nan)  # record final leaf pos
         traverse_func = functools.partial(self.traverse_trees, trees=trees)
         comm_round = 0
 
@@ -291,14 +331,17 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
 
         LOGGER.info('federated prediction process done')
 
-        predict_result = self.get_predict_scores(leaf_pos=final_leaf_pos, learning_rate=self.learning_rate,
-                                                 init_score=self.init_score, trees=trees,
-                                                 multi_class_num=self.booster_dim, predict_cache=predict_cache)
+        if pred_leaf:  # return leaf position only
+            return final_leaf_pos
 
-        return predict_result
+        else:  # get final predict scores from leaf pos
+            predict_result = self.get_predict_scores(leaf_pos=final_leaf_pos, learning_rate=self.learning_rate,
+                                                     init_score=self.init_score, trees=trees,
+                                                     multi_class_num=self.booster_dim, predict_cache=predict_cache)
+            return predict_result
 
     @assert_io_num_rows_equal
-    def predict(self, data_inst):
+    def predict(self, data_inst, pred_leaf=False):
 
         LOGGER.info('running prediction')
         cache_dataset_key = self.predict_data_cache.get_data_key(data_inst)
@@ -307,11 +350,14 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
 
         last_round = self.predict_data_cache.predict_data_last_round(cache_dataset_key)
 
-        self.sync_predict_round(last_round + 1)
+        self.sync_predict_round(last_round)
 
         rounds = len(self.boosting_model_list) // self.booster_dim
         trees = []
-        for idx in range(last_round + 1, rounds):
+        LOGGER.debug('round involved in prediction {}, last round is {}, data key {}'
+                     .format(list(range(last_round, rounds)), last_round, cache_dataset_key))
+
+        for idx in range(last_round, rounds):
             for booster_idx in range(self.booster_dim):
                 tree = self.load_booster(self.booster_meta,
                                          self.boosting_model_list[idx * self.booster_dim + booster_idx],
@@ -319,14 +365,26 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
                 trees.append(tree)
 
         predict_cache = None
-        if last_round != -1:
-            predict_cache = self.predict_data_cache.predict_data_at(cache_dataset_key, last_round)
-            LOGGER.info('load predict cache of round {}'.format(last_round))
 
-        predict_rs = self.boosting_fast_predict(processed_data, trees=trees, predict_cache=predict_cache)
-        self.predict_data_cache.add_data(cache_dataset_key, predict_rs)
+        tree_num = len(trees)
 
-        return self.score_to_predict_result(data_inst, predict_rs)
+        if last_round != 0:
+            predict_cache = self.predict_data_cache.predict_data_at(cache_dataset_key, min(rounds, last_round))
+            LOGGER.info('load predict cache of round {}'.format(min(rounds, last_round)))
+
+        if tree_num == 0 and predict_cache is not None and not pred_leaf:
+            return self.score_to_predict_result(data_inst, predict_cache)
+
+        predict_rs = self.boosting_fast_predict(processed_data, trees=trees, predict_cache=predict_cache, pred_leaf=pred_leaf)
+        self.predict_data_cache.add_data(cache_dataset_key, predict_rs, cur_boosting_round=rounds)
+        LOGGER.debug('adding predict rs {}'.format(predict_rs))
+        LOGGER.debug('last round is {}'.format(self.predict_data_cache.predict_data_last_round(cache_dataset_key)))
+
+        if pred_leaf:
+            return predict_rs  # predict result is leaf position
+
+        else:
+            return self.score_to_predict_result(data_inst, predict_rs)
 
     def get_model_meta(self):
         model_meta = BoostingTreeModelMeta()
@@ -339,7 +397,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         model_meta.task_type = self.task_type
         model_meta.n_iter_no_change = self.n_iter_no_change
         model_meta.tol = self.tol
-        meta_name = "HeteroSecureBoostingTreeGuestMeta"
+        meta_name = consts.HETERO_SBT_GUEST_MODEL + "Meta"
 
         return meta_name, model_meta
 
@@ -359,21 +417,25 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         feature_importances = list(self.feature_importances_.items())
         feature_importances = sorted(feature_importances, key=itemgetter(1), reverse=True)
         feature_importance_param = []
-        for (sitename, fid), _importance in feature_importances:
+        for (sitename, fid), importance in feature_importances:
             if consts.GUEST in sitename:
                 fullname = self.feature_name_fid_mapping[fid]
             else:
                 role_name, party_id = sitename.split(':')
                 fullname = generate_anonymous(fid=fid, party_id=party_id, role=role_name)
+
             feature_importance_param.append(FeatureImportanceInfo(sitename=sitename,
                                                                   fid=fid,
-                                                                  importance=_importance,
-                                                                  fullname=fullname))
+                                                                  importance=importance.importance,
+                                                                  fullname=fullname,
+                                                                  importance2=importance.importance_2,
+                                                                  main=importance.main_type
+                                                                  ))
         model_param.feature_importances.extend(feature_importance_param)
-
+        LOGGER.debug('feat importance param {}'.format(feature_importance_param))
         model_param.feature_name_fid_mapping.update(self.feature_name_fid_mapping)
 
-        param_name = "HeteroSecureBoostingTreeGuestParam"
+        param_name = consts.HETERO_SBT_GUEST_MODEL + "Param"
 
         return param_name, model_param
 
@@ -396,3 +458,6 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         self.booster_dim = model_param.tree_dim
         self.num_classes = model_param.num_classes
         self.feature_name_fid_mapping.update(model_param.feature_name_fid_mapping)
+
+        # initialize loss function
+        self.loss = self.get_loss_function()

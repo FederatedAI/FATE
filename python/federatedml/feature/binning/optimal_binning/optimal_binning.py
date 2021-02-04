@@ -30,8 +30,8 @@ from federatedml.feature.binning.base_binning import BaseBinning
 from federatedml.feature.binning.bucket_binning import BucketBinning
 from federatedml.feature.binning.optimal_binning import bucket_info
 from federatedml.feature.binning.optimal_binning import heap
-from federatedml.feature.binning.quantile_binning import QuantileBinningTool
-from federatedml.param.feature_binning_param import FeatureBinningParam, OptimalBinningParam
+from federatedml.feature.binning.quantile_tool import QuantileBinningTool
+from federatedml.param.feature_binning_param import HeteroFeatureBinningParam, OptimalBinningParam
 from federatedml.statistic import data_overview
 from federatedml.statistic import statics
 from federatedml.util import LOGGER
@@ -39,7 +39,7 @@ from federatedml.util import consts
 
 
 class OptimalBinning(BaseBinning):
-    def __init__(self, params: FeatureBinningParam, abnormal_list=None):
+    def __init__(self, params: HeteroFeatureBinningParam, abnormal_list=None):
         super().__init__(params, abnormal_list)
         self.optimal_param = params.optimal_binning_param
         self.optimal_param.adjustment_factor = params.adjustment_factor
@@ -55,8 +55,8 @@ class OptimalBinning(BaseBinning):
 
         if (self.event_total and self.non_event_total) is None:
             self.event_total, self.non_event_total = self.get_histogram(data_instances)
-        LOGGER.debug("In fit split points, event_total: {}, non_event_total: {}".format(self.event_total,
-                                                                                        self.non_event_total))
+        # LOGGER.debug("In fit split points, event_total: {}, non_event_total: {}".format(self.event_total,
+        #                                                                                 self.non_event_total))
 
         bucket_table = self.init_bucket(data_instances)
         sample_count = data_instances.count()
@@ -78,18 +78,18 @@ class OptimalBinning(BaseBinning):
 
             self.bin_results.put_col_split_points(col_name, split_points)
             self.__cal_single_col_result(col_name, bucket_list)
-            if self.optimal_param.mixture and non_mixture_num > 0:
-                LOGGER.warning("col: {}, non_mixture_num is: {}, cannot meet mixture condition".format(
-                    col_name, non_mixture_num
-                ))
-            if small_size_num > 0:
-                LOGGER.warning("col: {}, small_size_num is: {}, cannot meet small size condition".format(
-                    col_name, small_size_num
-                ))
-            if len(bucket_list) > self.optimal_param.max_bin:
-                LOGGER.warning("col: {}, bin_num is: {}, cannot meet max-bin condition".format(
-                    col_name, small_size_num
-                ))
+            # if self.optimal_param.mixture and non_mixture_num > 0:
+            #     LOGGER.warning("col: {}, non_mixture_num is: {}, cannot meet mixture condition".format(
+            #         col_name, non_mixture_num
+            #     ))
+            # if small_size_num > 0:
+            #     LOGGER.warning("col: {}, small_size_num is: {}, cannot meet small size condition".format(
+            #         col_name, small_size_num
+            #     ))
+            # if len(bucket_list) > self.optimal_param.max_bin:
+            #     LOGGER.warning("col: {}, bin_num is: {}, cannot meet max-bin condition".format(
+            #         col_name, small_size_num
+            #     ))
         return result_bucket
 
     def __cal_single_col_result(self, col_name, bucket_list):
@@ -127,8 +127,8 @@ class OptimalBinning(BaseBinning):
                 bucket_list.append(bucket)
             bucket_list[-1].set_right_neighbor(None)
             bucket_dict[col_name] = bucket_list
-            LOGGER.debug(f"col_name: {col_name}, length of sps: {len(sps)}, "
-                         f"length of list: {len(bucket_list)}")
+            # LOGGER.debug(f"col_name: {col_name}, length of sps: {len(sps)}, "
+            #              f"length of list: {len(bucket_list)}")
 
         convert_func = functools.partial(self.convert_data_to_bucket,
                                          split_points=init_split_points,
@@ -137,16 +137,13 @@ class OptimalBinning(BaseBinning):
                                          is_sparse=is_sparse,
                                          get_bin_num_func=self.get_bin_num)
         bucket_table = data_instances.mapReducePartitions(convert_func, self.merge_bucket_list)
-        bucket_table = dict(bucket_table.collect())
+        # bucket_table = dict(bucket_table.collect())
 
-        for k, v in bucket_table.items():
-            LOGGER.debug(f"[feature] {k}, length of list: {len(v)}")
-
-        LOGGER.debug("bucket_table: {}, length: {}".format(type(bucket_table), len(bucket_table)))
-        bucket_table = [(k, v) for k, v in bucket_table.items()]
-        LOGGER.debug("bucket_table: {}, length: {}".format(type(bucket_table), len(bucket_table)))
-
-        bucket_table = session.parallelize(bucket_table, include_key=True, partition=data_instances.partitions)
+        # LOGGER.debug("bucket_table: {}, length: {}".format(type(bucket_table), len(bucket_table)))
+        # bucket_table = [(k, v) for k, v in bucket_table.items()]
+        # LOGGER.debug("bucket_table: {}, length: {}".format(type(bucket_table), len(bucket_table)))
+        #
+        # bucket_table = session.parallelize(bucket_table, include_key=True, partition=data_instances.partitions)
 
         return bucket_table
 
@@ -156,9 +153,9 @@ class OptimalBinning(BaseBinning):
         label_historgram = static_obj.get_label_histogram()
         event_total = label_historgram.get(1, 0)
         non_event_total = label_historgram.get(0, 0)
-        if event_total == 0 or non_event_total == 0:
-            LOGGER.warning(f"event_total or non_event_total might have errors, event_total: {event_total},"
-                           f" non_event_total: {non_event_total}")
+        # if event_total == 0 or non_event_total == 0:
+        #     LOGGER.warning(f"event_total or non_event_total might have errors, event_total: {event_total},"
+        #                    f" non_event_total: {non_event_total}")
         return event_total, non_event_total
 
     @staticmethod
@@ -181,7 +178,6 @@ class OptimalBinning(BaseBinning):
     @staticmethod
     def convert_data_to_bucket(data_iter, split_points, headers, bucket_dict,
                                is_sparse, get_bin_num_func):
-        data_key = str(uuid.uuid1())
         for data_key, instance in data_iter:
             label = instance.label
             if not is_sparse:
@@ -207,34 +203,6 @@ class OptimalBinning(BaseBinning):
         return result
 
     @staticmethod
-    def convert_data_to_bucket_old(data_iter, split_points, headers, bucket_dict,
-                                   is_sparse, get_bin_num_func):
-        data_key = str(uuid.uuid1())
-        for data_key, instance in data_iter:
-            label = instance.label
-            if not is_sparse:
-                if type(instance).__name__ == 'Instance':
-                    features = instance.features
-                else:
-                    features = instance
-                data_generator = enumerate(features)
-            else:
-                data_generator = instance.features.get_all_data()
-
-            for idx, col_value in data_generator:
-                col_name = headers[idx]
-                if col_name not in split_points:
-                    continue
-                col_split_points = split_points[col_name]
-                bin_num = get_bin_num_func(col_value, col_split_points)
-                bucket = bucket_dict[col_name][bin_num]
-                bucket.add(label, col_value)
-        result = []
-        for col_name, bucket_list in bucket_dict.items():
-            result.append(((data_key, col_name), bucket_list))
-        return result
-
-    @staticmethod
     def merge_optimal_binning(bucket_list, optimal_param: OptimalBinningParam, sample_count):
         t0 = time.time()
         max_item_num = math.floor(optimal_param.max_bin_pct * sample_count)
@@ -242,8 +210,8 @@ class OptimalBinning(BaseBinning):
         bucket_dict = {idx: bucket for idx, bucket in enumerate(bucket_list)}
         final_max_bin = optimal_param.max_bin
 
-        LOGGER.debug("Get in merge optimal binning, sample_count: {}, max_item_num: {}, min_item_num: {},"
-                     "final_max_bin: {}".format(sample_count, max_item_num, min_item_num, final_max_bin))
+        # LOGGER.debug("Get in merge optimal binning, sample_count: {}, max_item_num: {}, min_item_num: {},"
+        #              "final_max_bin: {}".format(sample_count, max_item_num, min_item_num, final_max_bin))
         min_heap = heap.MinHeap()
 
         def _add_heap_nodes(constraint=None):
@@ -478,11 +446,9 @@ class OptimalBinning(BaseBinning):
                 small_size_num += 1
         bucket_res = list(bucket_dict.values())
         bucket_res = sorted(bucket_res, key=lambda bucket: bucket.left_bound)
-        LOGGER.debug("Before return merge_optimal_binning, non_mixture_num: {}, small_size_num: {},"
-                     "min_heap size: {}".format(non_mixture_num, small_size_num, min_heap.size))
 
         LOGGER.debug("Before return, dick length: {}".format(len(bucket_dict)))
-        LOGGER.info(f"Consume time: {time.time() - t0}")
+        # LOGGER.info(f"Consume time: {time.time() - t0}")
         return bucket_res, non_mixture_num, small_size_num
 
     @staticmethod

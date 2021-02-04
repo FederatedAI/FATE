@@ -172,7 +172,7 @@ def call_fun(func, config_data, dsl_path, config_path):
                                     sys.stdout.write('\n')
                     data = MultipartEncoderMonitor(data, read_callback)
                     response = requests.post("/".join([server_url, "data", func.replace('_', '/')]), data=data,
-                                             params=config_data,
+                                             params=json.dumps(config_data),
                                              headers={'Content-Type': data.content_type})
             else:
                 raise Exception('The file is obtained from the fate flow client machine, but it does not exist, '

@@ -70,7 +70,7 @@ class RepeatedIDIntersect(object):
 
         return [(k, v)]
 
-    def run(self, data):
+    def map_id(self, data):
         LOGGER.info("Start repeated id processing.")
         id_map_federation = self.transfer_variable.id_map_from_guest
         party_role = consts.HOST
@@ -83,7 +83,6 @@ class RepeatedIDIntersect(object):
         original_schema = data.schema
         if self.repeated_id_owner == self.role:
             id_map = self.__generate_id_map(data)
-            LOGGER.info("finish generate id_map, id_map:{}".format(id_map))
 
             id_map_federation.remote(id_map,
                                      role=party_role,

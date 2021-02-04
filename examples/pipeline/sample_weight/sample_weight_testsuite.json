@@ -1,0 +1,34 @@
+{
+    "data": [
+        {
+            "file": "examples/data/breast_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/breast_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        }
+    ],
+    "pipeline_tasks": {
+        "sample-weight-balanced": {
+            "script": "./pipeline-sample-weight-balanced.py"
+        },
+        "sample-weight-feature-engineering": {
+            "script": "./pipeline-sample-weight-feature-engineering.py"
+        },
+        "sample-weight-name": {
+            "script": "./pipeline-sample-weight-name.py"
+        },
+        "sample-weight-multi-host": {
+            "script": "./pipeline-sample-weight-multi-host.py"
+        }
+    }
+}

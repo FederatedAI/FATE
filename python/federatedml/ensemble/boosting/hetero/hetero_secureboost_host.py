@@ -9,7 +9,7 @@ from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import Boosting
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import QuantileMeta
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import BoostingTreeModelParam
 from federatedml.ensemble.boosting.boosting_core import HeteroBoostingHost
-from federatedml.param.boosting_param import HeteroSecureBoostParam
+from federatedml.param.boosting_param import HeteroSecureBoostParam, DecisionTreeParam
 from federatedml.ensemble.basic_algorithms import HeteroDecisionTreeHost
 from federatedml.transfer_variable.transfer_class.hetero_secure_boosting_predict_transfer_variable import \
     HeteroSecureBoostTransferVariable
@@ -22,14 +22,20 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
 
     def __init__(self):
         super(HeteroSecureBoostingTreeHost, self).__init__()
-        self.tree_param = None  # decision tree param
         self.use_missing = False
         self.zero_as_missing = False
         self.cur_epoch_idx = -1
         self.grad_and_hess = None
+        self.tree_param = DecisionTreeParam()  # decision tree param
         self.model_param = HeteroSecureBoostParam()
         self.complete_secure = False
         self.model_name = 'HeteroSecureBoost'
+        self.enable_goss = False
+        self.cipher_compressing = False
+        self.max_sample_weight = None
+        self.round_decimal = None
+        self.new_ver = True
+
         # for fast hist
         self.sparse_opt_para = False
         self.run_sparse_opt = False
@@ -42,9 +48,12 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         super(HeteroSecureBoostingTreeHost, self)._init_model(param)
         self.tree_param = param.tree_param
         self.use_missing = param.use_missing
+        self.enable_goss = param.run_goss
         self.zero_as_missing = param.zero_as_missing
         self.complete_secure = param.complete_secure
         self.sparse_opt_para = param.sparse_optimization
+        self.round_decimal = param.cipher_compress_error
+        self.new_ver = param.new_ver
 
         if self.use_missing:
             self.tree_param.use_missing = self.use_missing
@@ -99,21 +108,22 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
 
         self.check_run_sp_opt()
         tree = HeteroDecisionTreeHost(tree_param=self.tree_param)
-        tree.set_input_data(data_bin=self.data_bin, bin_split_points=self.bin_split_points, bin_sparse_points=
-                            self.bin_sparse_points)
-        tree.set_valid_features(self.sample_valid_features())
-        tree.set_flowid(self.generate_flowid(epoch_idx, booster_dim))
-        tree.set_runtime_idx(self.component_properties.local_partyid)
-
-        if self.run_sparse_opt:
-            tree.activate_sparse_hist_opt()
-            tree.set_dense_data_for_sparse_opt(data_bin_dense=self.data_bin_dense, bin_num=self.bin_num)
-
-        if self.complete_secure and epoch_idx == 0:
-            tree.set_as_complete_secure_tree()
+        tree.init(flowid=self.generate_flowid(epoch_idx, booster_dim),
+                  valid_features=self.sample_valid_features(),
+                  data_bin=self.data_bin, bin_split_points=self.bin_split_points,
+                  bin_sparse_points=self.bin_sparse_points,
+                  run_sprase_opt=self.run_sparse_opt,
+                  data_bin_dense=self.data_bin_dense,
+                  runtime_idx=self.component_properties.local_partyid,
+                  goss_subsample=self.enable_goss,
+                  bin_num=self.bin_num,
+                  complete_secure=True if (self.complete_secure and epoch_idx == 0) else False,
+                  cipher_compressing=self.round_decimal is not None,
+                  round_decimal=self.round_decimal,
+                  new_ver=self.new_ver
+                  )
 
         tree.fit()
-
         return tree
 
     def load_booster(self, model_meta, model_param, epoch_idx, booster_idx):
@@ -172,6 +182,9 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
 
             guest_node_pos = self.predict_transfer_inst.guest_predict_data.get(idx=0, suffix=(comm_round, ))
             host_node_pos = guest_node_pos.join(data_inst, traverse_func)
+            if guest_node_pos.count() != host_node_pos.count():
+                raise ValueError('sample count mismatch: guest table {}, host table {}'.format(guest_node_pos.count(),
+                                                                                               host_node_pos.count()))
             self.predict_transfer_inst.host_predict_data.remote(host_node_pos, idx=-1, suffix=(comm_round, ))
 
             comm_round += 1
@@ -193,6 +206,10 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
                                          self.boosting_model_list[idx * self.booster_dim + booster_idx],
                                          idx, booster_idx)
                 trees.append(tree)
+
+        if len(trees) == 0:
+            LOGGER.info('no tree for predicting, prediction done')
+            return
 
         self.boosting_fast_predict(processed_data, trees=trees)
 

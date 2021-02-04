@@ -25,7 +25,6 @@ LOGGER = getLogger()
 
 
 class CSession(CSessionABC):
-
     def __init__(self, session_id: str):
         self._session = Session(session_id)
 
@@ -35,23 +34,39 @@ class CSession(CSessionABC):
     def load(self, address: AddressABC, partitions: int, schema: dict, **kwargs):
         from fate_arch.common.address import StandaloneAddress
         from fate_arch.storage import StandaloneStorageType
+
         if isinstance(address, StandaloneAddress):
             raw_table = self._session.load(address.name, address.namespace)
             if address.storage_type != StandaloneStorageType.ROLLPAIR_IN_MEMORY:
-                raw_table = raw_table.save_as(name=f"{address.name}_{fate_uuid()}",
-                                              namespace=address.namespace, partition=partitions,
-                                              need_cleanup=True)
+                raw_table = raw_table.save_as(
+                    name=f"{address.name}_{fate_uuid()}",
+                    namespace=address.namespace,
+                    partition=partitions,
+                    need_cleanup=True,
+                )
             table = Table(raw_table)
             table.schema = schema
             return table
 
         from fate_arch.common.address import FileAddress
+
         if isinstance(address, FileAddress):
             return address
-        raise NotImplementedError(f"address type {type(address)} not supported with standalone backend")
+
+        from fate_arch.common.address import PathAddress
+
+        if isinstance(address, PathAddress):
+            from fate_arch.computing.non_distributed import LocalData
+
+            return LocalData(address.path)
+        raise NotImplementedError(
+            f"address type {type(address)} not supported with standalone backend"
+        )
 
     def parallelize(self, data: Iterable, partition: int, include_key: bool, **kwargs):
-        table = self._session.parallelize(data=data, partition=partition, include_key=include_key, **kwargs)
+        table = self._session.parallelize(
+            data=data, partition=partition, include_key=include_key, **kwargs
+        )
         return Table(table)
 
     def cleanup(self, name, namespace):

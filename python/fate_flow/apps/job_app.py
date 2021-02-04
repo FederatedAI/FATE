@@ -22,16 +22,18 @@ from flask import Flask, request, send_file
 
 from fate_arch.common import WorkMode
 from fate_arch.common.base_utils import json_loads, json_dumps
-from fate_flow.scheduler import DAGScheduler
-from fate_flow.scheduler import FederatedScheduler
+from fate_flow.scheduler.dag_scheduler import DAGScheduler
+from fate_flow.scheduler.federated_scheduler import FederatedScheduler
 from fate_flow.settings import stat_logger, TEMP_DIRECTORY
 from fate_flow.utils import job_utils, detect_utils, schedule_utils
 from fate_flow.utils.api_utils import get_json_result, error_response, server_error_response
 from fate_flow.entity.types import FederatedSchedulingStatusCode, RetCode, JobStatus
-from fate_flow.operation import Tracker
-from fate_flow.operation import JobSaver
-from fate_flow.operation import JobClean
+from fate_flow.operation.job_tracker import Tracker
+from fate_flow.operation.job_saver import JobSaver
+from fate_flow.operation.job_clean import JobClean
 from fate_flow.utils.config_adapter import JobRuntimeConfigAdapter
+from fate_arch.common.log import schedule_logger
+from fate_flow.controller.job_controller import JobController
 
 manager = Flask(__name__)
 
@@ -57,14 +59,19 @@ def stop_job():
     stop_status = request.json.get("stop_status", "canceled")
     jobs = JobSaver.query_job(job_id=job_id)
     if jobs:
-        stat_logger.info(f"request stop job {jobs[0]} to {stop_status}")
+        schedule_logger(job_id).info(f"stop job on this party")
+        kill_status, kill_details = JobController.stop_jobs(job_id=job_id, stop_status=stop_status)
+        schedule_logger(job_id).info(f"stop job on this party status {kill_status}")
+        schedule_logger(job_id).info(f"request stop job {jobs[0]} to {stop_status}")
         status_code, response = FederatedScheduler.request_stop_job(job=jobs[0], stop_status=stop_status, command_body=jobs[0].to_json())
         if status_code == FederatedSchedulingStatusCode.SUCCESS:
-            return get_json_result(retcode=RetCode.SUCCESS, retmsg="stop job success")
+            return get_json_result(retcode=RetCode.SUCCESS, retmsg=f"stop job on this party {kill_status};\n"
+                                                                   f"stop job on all party success")
         else:
-            return get_json_result(retcode=RetCode.OPERATING_ERROR, retmsg="stop job failed:\n{}".format(json_dumps(response, indent=4)))
+            return get_json_result(retcode=RetCode.OPERATING_ERROR, retmsg="stop job on this party {};\n"
+                                                                           "stop job failed:\n{}".format(kill_status, json_dumps(response, indent=4)))
     else:
-        stat_logger.info(f"can not found job {jobs[0]} to stop")
+        schedule_logger(job_id).info(f"can not found job {job_id} to stop")
         return get_json_result(retcode=RetCode.DATA_ERROR, retmsg="can not found job")
 
 
@@ -204,7 +211,7 @@ def dsl_generator():
             cpn_str = cpn_str.replace(" ", "").replace("\n", "").strip(",[]")
             cpn_list = cpn_str.split(",")
         train_dsl = json_loads(data.get("train_dsl"))
-        parser = schedule_utils.get_dsl_parser_by_version(data.get("version", "1"))
+        parser = schedule_utils.get_dsl_parser_by_version(data.get("version", "2"))
         predict_dsl = parser.deploy_component(cpn_list, train_dsl)
 
         if data.get("filename"):
@@ -220,3 +227,17 @@ def dsl_generator():
                                    "please check logs/fate_flow/fate_flow_stat.log.")
 
 
+@manager.route('/url/get', methods=['POST'])
+def get_url():
+    request_data = request.json
+    detect_utils.check_config(config=request_data, required_arguments=['job_id', 'role', 'party_id'])
+    jobs = JobSaver.query_job(job_id=request_data.get('job_id'), role=request_data.get('role'),
+                              party_id=request_data.get('party_id'))
+    if jobs:
+        board_urls = []
+        for job in jobs:
+            board_url = job_utils.get_board_url(job.f_job_id, job.f_role, job.f_party_id)
+            board_urls.append(board_url)
+        return get_json_result(data={'board_url': board_urls})
+    else:
+        return get_json_result(retcode=101, retmsg='no found job')

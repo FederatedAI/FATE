@@ -20,6 +20,7 @@ from federatedml.feature.feature_selection.model_adapter.statistic_adapter impor
 from federatedml.feature.feature_selection.model_adapter.binning_adapter import BinningAdapter
 from federatedml.feature.feature_selection.model_adapter.psi_adapter import PSIAdapter
 from federatedml.feature.feature_selection.model_adapter import tree_adapter
+from federatedml.feature.feature_selection.model_adapter import pearson_adapter
 from federatedml.util import consts
 
 
@@ -36,5 +37,7 @@ def adapter_factory(model_name):
         return tree_adapter.HomoSBTAdapter()
     elif model_name in [consts.HETERO_FAST_SBT_MIX, consts.HETERO_FAST_SBT_LAYERED]:
         return tree_adapter.HeteroFastSBTAdapter()
+    elif model_name == "HeteroPearson":
+        return pearson_adapter.PearsonAdapter()
     else:
         raise ValueError(f"Cannot recognize model_name: {model_name}")

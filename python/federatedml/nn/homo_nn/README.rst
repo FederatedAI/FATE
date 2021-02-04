@@ -13,7 +13,7 @@ As its name suggested, in Homogeneous Neural Networks, the feature spaces of gue
 An optional encryption mode for model is provided. 
 By doing this, no party can get the private model of other parties. 
 
-.. figure:: images/homo_nn.png
+.. figure:: ../../../doc/images/homo_nn.png
    :width: 500
    :name: hnn figure 1
    :align: center
@@ -267,7 +267,7 @@ Use
 ------
 
 .. Note::
-  For more information on task configuration, please refer to the `[doc] <../../../examples/dsl/v2/README.rst>`_ under example first. In this part we only talk about the parameter configuration.
+  For more information on task configuration, please refer to the `[doc] <../../../../examples/dsl/v2/README.rst>`_ under example first. In this part we only talk about the parameter configuration.
 
 Since all parties training Homogeneous Neural Networks have the same network structure, a common practice is to configure parameters under algorithm_parameters, which is shared across all parties. The basic structure is:
 

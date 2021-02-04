@@ -1,3 +1,6 @@
+import numpy as np
+import functools
+import copy
 from federatedml.ensemble.basic_algorithms import HeteroDecisionTreeHost
 from federatedml.ensemble.boosting.hetero import hetero_fast_secureboost_plan as plan
 from federatedml.util import consts
@@ -5,8 +8,6 @@ from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.splitter impo
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.node import Node
 from federatedml.feature.fate_element_type import NoneType
 from federatedml.util import LOGGER
-import functools
-import copy
 
 
 class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
@@ -86,17 +87,21 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
 
         return final_splitinfos
 
-    def compute_best_splits_with_node_plan(self, tree_action, target_host_id, node_map: dict, dep: int, batch_idx: int,
+    def compute_best_splits_with_node_plan(self, tree_action, target_host_id, cur_to_split_nodes,
+                                           node_map: dict, dep: int, batch_idx: int,
                                            mode=consts.LAYERED_TREE):
 
         LOGGER.debug('node plan at dep {} is {}'.format(dep, (tree_action, target_host_id)))
 
         if tree_action == plan.tree_actions['host_only'] and target_host_id == self.self_host_id:
 
+            data = self.data_with_node_assignments
             if self.run_sparse_opt:
-                acc_histograms = self.fast_get_histograms(node_map)
-            else:
-                acc_histograms = self.get_local_histograms(node_map, ret='tb')
+                data = self.data_bin_dense_with_position
+
+            acc_histograms = self.get_local_histograms(dep, data, self.grad_and_hess,
+                                                       None, cur_to_split_nodes, node_map, ret='tb',
+                                                       hist_sub=False, sparse_opt=self.run_sparse_opt)
 
             splitinfo_host, encrypted_splitinfo_host = self.splitter.find_split_host(histograms=acc_histograms,
                                                                                      node_map=node_map,
@@ -105,6 +110,7 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
                                                                                      valid_features=self.valid_features,
                                                                                      sitename=self.sitename
                                                                                      )
+
             LOGGER.debug('sending en_splitinfo {}'.format(encrypted_splitinfo_host))
             self.sync_encrypted_splitinfo_host(encrypted_splitinfo_host, dep, batch_idx)
             federated_best_splitinfo_host = self.sync_federated_best_splitinfo_host(dep, batch_idx)
@@ -119,6 +125,63 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
                 return host_split_info
         else:
             LOGGER.debug('skip best split computation')
+            return None
+
+    def compute_best_splits_with_node_plan2(self, tree_action, target_host_id, cur_to_split_nodes,
+                                            node_map: dict, dep: int, batch: int,
+                                            mode=consts.LAYERED_TREE):
+
+        if tree_action == plan.tree_actions['host_only'] and target_host_id == self.self_host_id:
+            data = self.data_with_node_assignments
+            if self.run_sparse_opt:
+                data = self.data_bin_dense_with_position
+
+            inst2node_idx = self.get_computing_inst2node_idx()
+            node_sample_count = self.count_node_sample_num(inst2node_idx, node_map)
+            LOGGER.debug('sample count is {}'.format(node_sample_count))
+            acc_histograms = self.get_local_histograms(dep, data, self.grad_and_hess, node_sample_count,
+                                                       cur_to_split_nodes, node_map, ret='tb',
+                                                       sparse_opt=self.run_sparse_opt, hist_sub=True,
+                                                       bin_num=self.bin_num)
+
+            if self.run_cipher_compressing:
+                self.cipher_compressor.renew_compressor(node_sample_count, node_map)
+            cipher_compressor = self.cipher_compressor if self.run_cipher_compressing else None
+
+            split_info_table = self.splitter.host_prepare_split_points(histograms=acc_histograms,
+                                                                       use_missing=self.use_missing,
+                                                                       valid_features=self.valid_features,
+                                                                       sitename=self.sitename,
+                                                                       left_missing_dir=self.missing_dir_mask_left[dep],
+                                                                       right_missing_dir=self.missing_dir_mask_right[dep],
+                                                                       mask_id_mapping=self.fid_bid_random_mapping,
+                                                                       batch_size=self.bin_num,
+                                                                       cipher_compressor=cipher_compressor,
+                                                                       shuffle_random_seed=np.abs(hash((dep, batch)))
+                                                                       )
+
+            # test split info encryption
+            self.transfer_inst.encrypted_splitinfo_host.remote(split_info_table,
+                                                               role=consts.GUEST,
+                                                               idx=-1,
+                                                               suffix=(dep, batch))
+
+            best_split_info = self.transfer_inst.federated_best_splitinfo_host.get(suffix=(dep, batch), idx=0)
+            unmasked_split_info = self.unmask_split_info(best_split_info, self.inverse_fid_bid_random_mapping,
+                                                         self.missing_dir_mask_left[dep],
+                                                         self.missing_dir_mask_right[dep])
+            LOGGER.debug('unmasked split info is {}'.format(unmasked_split_info))
+
+            if mode == consts.LAYERED_TREE:
+                return_split_info = self.encode_split_info(unmasked_split_info)
+                self.transfer_inst.final_splitinfo_host.remote(return_split_info,
+                                                               role=consts.GUEST,
+                                                               idx=-1,
+                                                               suffix=(dep, batch,))
+            elif mode == consts.MIX_TREE:
+                return unmasked_split_info
+        else:
+            LOGGER.debug('skip host computation')
             return None
 
     """
@@ -147,11 +210,15 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
                 left_node = Node(id=self.cur_layer_nodes[i].left_nodeid,
                                  sitename=self.sitename,
                                  sum_grad=split_info[i].sum_grad,
-                                 sum_hess=split_info[i].sum_hess)
+                                 sum_hess=split_info[i].sum_hess,
+                                 parent_nodeid=self.cur_to_split_nodes[i].id
+                                 )
                 right_node = Node(id=self.cur_layer_nodes[i].right_nodeid,
                                   sitename=self.sitename,
                                   sum_grad=sum_grad - split_info[i].sum_grad,
-                                  sum_hess=sum_hess - split_info[i].sum_hess,)
+                                  sum_hess=sum_hess - split_info[i].sum_hess,
+                                  parent_nodeid=self.cur_layer_nodes[i].id
+                                  )
 
                 new_tree_node_queue.append(left_node)
                 new_tree_node_queue.append(right_node)
@@ -162,8 +229,7 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
                 self.cur_layer_nodes[i].bid = split_info[i].best_bid
                 self.cur_layer_nodes[i].missing_dir = split_info[i].missing_dir
 
-                if self.feature_importance_type == 'split':
-                    self.update_feature_importance(split_info[i], record_site_name=False)
+                self.update_feature_importance(split_info[i], record_site_name=False)
 
             self.tree_node.append(self.cur_layer_nodes[i])
 
@@ -293,7 +359,7 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
             if self.tree_node[i].is_leaf is True:
                 continue
             if self.tree_node[i].sitename == self.sitename:
-                fid = self.decode("feature_idx", self.tree_node[i].fid, split_maskdict=self.split_maskdict)
+                fid = self.decode("feature_idx", self.tree_node[i].fid, maskdict=self.split_maskdict)
                 bid = self.decode("feature_val", self.tree_node[i].bid, self.tree_node[i].id, self.split_maskdict)
                 real_splitval = self.encode("feature_val", self.bin_split_points[fid][bid], self.tree_node[i].id)
                 self.tree_node[i].bid = real_splitval
@@ -333,6 +399,8 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
         for dep in range(self.max_depth):
 
             tree_action, layer_target_host_id = self.get_node_plan(dep)
+            # for split point masking
+            self.generate_split_point_masking_variable(dep)
 
             self.sync_cur_layer_nodes(self.cur_layer_nodes, dep)
             if len(self.cur_layer_nodes) == 0:
@@ -343,13 +411,22 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
             split_info = []
             for i in range(0, len(self.cur_layer_nodes), self.max_split_nodes):
                 self.cur_to_split_nodes = self.cur_layer_nodes[i: i + self.max_split_nodes]
-                batch_split_info = self.compute_best_splits_with_node_plan(tree_action, layer_target_host_id,
-                                                                           node_map=self.get_node_map(
-                                                                           self.cur_to_split_nodes),
-                                                                           dep=dep, batch_idx=batch,
-                                                                           mode=consts.MIX_TREE)
+                if self.new_ver:
+                    batch_split_info = self.compute_best_splits_with_node_plan2(tree_action, layer_target_host_id,
+                                                                                cur_to_split_nodes=self.cur_to_split_nodes,
+                                                                                node_map=self.get_node_map(self.cur_to_split_nodes),
+                                                                                dep=dep, batch=batch,
+                                                                                mode=consts.MIX_TREE)
+                else:
+                    batch_split_info = self.compute_best_splits_with_node_plan(tree_action, layer_target_host_id,
+                                                                               cur_to_split_nodes=self.cur_to_split_nodes,
+                                                                               node_map=self.get_node_map(self.cur_to_split_nodes),
+                                                                               dep=dep, batch_idx=batch,
+                                                                               mode=consts.MIX_TREE)
+
                 batch += 1
                 split_info.extend(batch_split_info)
+                LOGGER.debug('batch split info is {}'.format(batch_split_info))
 
             self.update_host_side_tree(split_info, reach_max_depth=False)
             self.inst2node_idx = self.host_local_assign_instances_to_new_node()
@@ -431,22 +508,32 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
         for dep in range(self.max_depth):
 
             tree_action, layer_target_host_id = self.get_node_plan(dep)
+            # for split point masking
+            self.generate_split_point_masking_variable(dep)
 
             self.sync_tree_node_queue(dep)
             if len(self.cur_layer_nodes) == 0:
                 break
 
             if self.self_host_id == layer_target_host_id:
-
                 self.inst2node_idx = self.sync_node_positions(dep)
                 self.update_instances_node_positions()
 
             batch = 0
             for i in range(0, len(self.cur_layer_nodes), self.max_split_nodes):
                 self.cur_to_split_nodes = self.cur_layer_nodes[i: i + self.max_split_nodes]
-                self.compute_best_splits_with_node_plan(tree_action, layer_target_host_id,
-                                                        node_map=self.get_node_map(self.cur_to_split_nodes),
-                                                        dep=dep, batch_idx=batch, )
+                if self.new_ver:
+                    self.compute_best_splits_with_node_plan2(tree_action, layer_target_host_id,
+                                                             cur_to_split_nodes=self.cur_to_split_nodes,
+                                                             node_map=self.get_node_map(self.cur_to_split_nodes),
+                                                             dep=dep, batch=batch,
+                                                             mode=consts.LAYERED_TREE)
+                else:
+                    self.compute_best_splits_with_node_plan(tree_action, layer_target_host_id,
+                                                            cur_to_split_nodes=self.cur_to_split_nodes,
+                                                            node_map=self.get_node_map(self.cur_to_split_nodes),
+                                                            dep=dep, batch_idx=batch, )
+
                 batch += 1
 
             if layer_target_host_id == self.self_host_id:

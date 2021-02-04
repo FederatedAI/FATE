@@ -22,7 +22,7 @@ from federatedml.feature.binning.bucket_binning import BucketBinning
 from federatedml.feature.binning.optimal_binning.optimal_binning import OptimalBinning
 from federatedml.feature.binning.quantile_binning import QuantileBinning
 from federatedml.model_base import ModelBase
-from federatedml.param.feature_binning_param import FeatureBinningParam
+from federatedml.param.feature_binning_param import HeteroFeatureBinningParam as FeatureBinningParam
 from federatedml.protobuf.generated import feature_binning_meta_pb2, feature_binning_param_pb2
 from federatedml.statistic.data_overview import get_header
 from federatedml.transfer_variable.transfer_class.hetero_feature_binning_transfer_variable import \
@@ -77,12 +77,12 @@ class BaseHeteroFeatureBinning(ModelBase):
         LOGGER.debug("in _init_model, role: {}, local_partyid: {}".format(self.role, self.component_properties))
         self.binning_obj.set_role_party(self.role, self.component_properties.local_partyid)
 
-    def _setup_bin_inner_param(self, data_instances, params: FeatureBinningParam):
+    def _setup_bin_inner_param(self, data_instances, params):
         if self.schema is not None:
             return
 
         self.header = get_header(data_instances)
-        LOGGER.debug("_setup_bin_inner_param, get header: {}".format(self.header))
+        LOGGER.debug("_setup_bin_inner_param, get header length: {}".format(len(self.header)))
 
         self.schema = data_instances.schema
         self.bin_inner_param.set_header(self.header)
@@ -100,9 +100,7 @@ class BaseHeteroFeatureBinning(ModelBase):
         else:
             self.bin_inner_param.add_transform_bin_indexes(params.transform_param.transform_cols)
             self.bin_inner_param.add_transform_bin_names(params.transform_param.transform_names)
-        # LOGGER.debug("After _setup_bin_inner_param: {}".format(self.bin_inner_param.__dict__))
         self.binning_obj.set_bin_inner_param(self.bin_inner_param)
-        LOGGER.debug("After _setup_bin_inner_param, header: {}".format(self.header))
 
     @assert_io_num_rows_equal
     @assert_schema_consistent

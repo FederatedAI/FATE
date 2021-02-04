@@ -58,7 +58,8 @@ def main(config="../../config.yaml", namespace=""):
         }
     }
 
-    pipeline = common_tools.make_normal_dsl(config, namespace, lr_param, is_dense=False)
+    pipeline = common_tools.make_normal_dsl(config, namespace, lr_param, is_dense=False,
+                                            need_evaluation=False)
     # fit model
     job_parameters = JobParameters(backend=backend, work_mode=work_mode)
     pipeline.fit(job_parameters)

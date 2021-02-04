@@ -17,14 +17,14 @@
 from flask import Flask, request
 
 from fate_flow.entity.types import RetCode
-from fate_flow.controller import JobController
-from fate_flow.controller import TaskController
+from fate_flow.controller.job_controller import JobController
+from fate_flow.controller.task_controller import TaskController
 from fate_flow.settings import stat_logger
 from fate_flow.utils.api_utils import get_json_result
 from fate_flow.utils.authentication_utils import request_authority_certification
-from fate_flow.operation import JobSaver
+from fate_flow.operation.job_saver import JobSaver
 from fate_arch.common import log
-from fate_flow.manager import ResourceManager
+from fate_flow.manager.resource_manager import ResourceManager
 
 manager = Flask(__name__)
 
@@ -37,7 +37,7 @@ def internal_server_error(e):
 
 # execute command on every party
 @manager.route('/<job_id>/<role>/<party_id>/create', methods=['POST'])
-@request_authority_certification
+@request_authority_certification(party_id_index=-2, role_index=-3, command='create')
 def create_job(job_id, role, party_id):
     try:
         JobController.create_job(job_id=job_id, role=role, party_id=int(party_id), job_info=request.json)
@@ -105,7 +105,6 @@ def job_status(job_id, role, party_id, status):
 
 
 @manager.route('/<job_id>/<role>/<party_id>/model', methods=['POST'])
-@request_authority_certification
 def save_pipelined_model(job_id, role, party_id):
     JobController.save_pipelined_model(job_id=job_id, role=role, party_id=party_id)
     return get_json_result(retcode=0, retmsg='success')
@@ -113,20 +112,13 @@ def save_pipelined_model(job_id, role, party_id):
 
 @manager.route('/<job_id>/<role>/<party_id>/stop/<stop_status>', methods=['POST'])
 def stop_job(job_id, role, party_id, stop_status):
-    jobs = JobSaver.query_job(job_id=job_id, role=role, party_id=party_id)
-    kill_status = True
-    kill_details = {}
-    for job in jobs:
-        kill_job_status, kill_job_details = JobController.stop_job(job=job, stop_status=stop_status)
-        kill_status = kill_status & kill_job_status
-        kill_details[job_id] = kill_job_details
+    kill_status, kill_details = JobController.stop_jobs(job_id=job_id, stop_status=stop_status, role=role, party_id=party_id)
     return get_json_result(retcode=RetCode.SUCCESS if kill_status else RetCode.EXCEPTION_ERROR,
                            retmsg='success' if kill_status else 'failed',
                            data=kill_details)
 
 
 @manager.route('/<job_id>/<role>/<party_id>/clean', methods=['POST'])
-@request_authority_certification
 def clean(job_id, role, party_id):
     JobController.clean_job(job_id=job_id, role=role, party_id=party_id, roles=request.json)
     return get_json_result(retcode=0, retmsg='success')
@@ -134,16 +126,15 @@ def clean(job_id, role, party_id):
 
 # Control API for task
 @manager.route('/<job_id>/<component_name>/<task_id>/<task_version>/<role>/<party_id>/create', methods=['POST'])
-@request_authority_certification
 def create_task(job_id, component_name, task_id, task_version, role, party_id):
     TaskController.create_task(role, party_id, True, request.json)
     return get_json_result(retcode=0, retmsg='success')
 
 
 @manager.route('/<job_id>/<component_name>/<task_id>/<task_version>/<role>/<party_id>/start', methods=['POST'])
-@request_authority_certification
+@request_authority_certification(party_id_index=-2, role_index=-3, command='run')
 def start_task(job_id, component_name, task_id, task_version, role, party_id):
-    TaskController.start_task(job_id, component_name, task_id, task_version, role, party_id)
+    TaskController.start_task(job_id, component_name, task_id, task_version, role, party_id, **request.json)
     return get_json_result(retcode=0, retmsg='success')
 
 
@@ -207,6 +198,7 @@ def task_status(job_id, component_name, task_id, task_version, role, party_id, s
 
 
 @manager.route('/<job_id>/<component_name>/<task_id>/<task_version>/<role>/<party_id>/stop/<stop_status>', methods=['POST'])
+@request_authority_certification(party_id_index=-3, role_index=-4, command='stop')
 def stop_task(job_id, component_name, task_id, task_version, role, party_id, stop_status):
     tasks = JobSaver.query_task(job_id=job_id, task_id=task_id, task_version=task_version, role=role, party_id=int(party_id))
     kill_status = True

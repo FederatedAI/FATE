@@ -44,11 +44,11 @@ class HomoLRGuest(HomoLRBase):
         super()._init_model(params)
 
     def fit(self, data_instances, validate_data=None):
-
         self._abnormal_detection(data_instances)
         self.check_abnormal_values(data_instances)
         self.init_schema(data_instances)
 
+        self._client_check_data(data_instances)
         validation_strategy = self.init_validation_strategy(data_instances, validate_data)
         self.model_weights = self._init_model_variables(data_instances)
 
@@ -67,10 +67,6 @@ class HomoLRGuest(HomoLRBase):
             if ((self.n_iter_ + 1) % self.aggregate_iters == 0) or self.n_iter_ == max_iter:
                 weight = self.aggregator.aggregate_then_get(model_weights, degree=degree,
                                                             suffix=self.n_iter_)
-                # LOGGER.debug("Before aggregate: {}, degree: {} after aggregated: {}".format(
-                #     model_weights.unboxed / degree,
-                #     degree,
-                #     weight.unboxed))
 
                 self.model_weights = LogisticRegressionWeights(weight.unboxed, self.fit_intercept)
 

@@ -23,7 +23,6 @@ from types import SimpleNamespace
 from federatedml.param.base_param import BaseParam
 from federatedml.param.cross_validation_param import CrossValidationParam
 from federatedml.param.predict_param import PredictParam
-from federatedml.protobuf.generated import nn_model_meta_pb2
 import json
 
 
@@ -58,6 +57,7 @@ class HomoNNParam(BaseParam):
     """
 
     def __init__(self,
+                 api_version: int = 0,
                  secure_aggregate: bool = True,
                  aggregate_every_n_epoch: int = 1,
                  config_type: str = "nn",
@@ -72,6 +72,8 @@ class HomoNNParam(BaseParam):
                  predict_param=PredictParam(),
                  cv_param=CrossValidationParam()):
         super(HomoNNParam, self).__init__()
+
+        self.api_version = api_version
 
         self.secure_aggregate = secure_aggregate
         self.aggregate_every_n_epoch = aggregate_every_n_epoch
@@ -91,7 +93,7 @@ class HomoNNParam(BaseParam):
         self.cv_param = copy.deepcopy(cv_param)
 
     def check(self):
-        supported_config_type = ["nn", "keras","pytorch"]
+        supported_config_type = ["nn", "keras", "pytorch"]
         if self.config_type not in supported_config_type:
             raise ValueError(f"config_type should be one of {supported_config_type}")
         self.early_stop = _parse_early_stop(self.early_stop)
@@ -99,6 +101,7 @@ class HomoNNParam(BaseParam):
         self.optimizer = _parse_optimizer(self.optimizer)
 
     def generate_pb(self):
+        from federatedml.protobuf.generated import nn_model_meta_pb2
         pb = nn_model_meta_pb2.HomoNNParam()
         pb.secure_aggregate = self.secure_aggregate
         pb.encode_label = self.encode_label
@@ -139,7 +142,7 @@ class HomoNNParam(BaseParam):
                 self.nn_define.append(json.loads(layer))
         elif self.config_type == "keras":
             self.nn_define = pb.nn_define[0]
-        elif self.config_type== "pytorch":
+        elif self.config_type == "pytorch":
             for layer in pb.nn_define:
                 self.nn_define.append(json.loads(layer))
         else:

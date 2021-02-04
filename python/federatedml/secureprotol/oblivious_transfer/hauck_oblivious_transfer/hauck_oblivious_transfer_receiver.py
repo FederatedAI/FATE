@@ -40,7 +40,7 @@ class HauckObliviousTransferReceiver(HauckObliviousTransfer):
         LOGGER.info("enter receiver key derivation phase for target = {}".format(target))
         # 1. Choose a random scalar from Z^q
         x = self._gen_random_scalar()   # x
-        LOGGER.info("randomly generated x = {}".format(x))
+        LOGGER.info("randomly generated scalar x")
 
         # 2. Get S = yG from the sender and check its legality
         attempt_count = 0
@@ -90,10 +90,10 @@ class HauckObliviousTransferReceiver(HauckObliviousTransfer):
 
         # 5. MAC and output the correct key
         xs = self.tec_arithmetic.mul(scalar=x, a=s)
-        LOGGER.info("target index = " + str(target))
-        LOGGER.info("target key before MAC = " + xs.output())
+        # LOGGER.info("target index = " + str(target))
+        # LOGGER.info("target key before MAC = " + xs.output())
         target_key = self._mac_tec_element(xs)
-        LOGGER.info("target key = {}".format(target_key))
+        # LOGGER.info("target key = {}".format(target_key))
 
         return ObliviousTransferKey(target, target_key)
 

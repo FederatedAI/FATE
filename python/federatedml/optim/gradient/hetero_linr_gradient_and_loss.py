@@ -36,46 +36,29 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
                                  transfer_variables.loss,
                                  transfer_variables.loss_intermediate)
 
-    def compute_and_aggregate_forwards(self, data_instances, model_weights,
-                                       encrypted_calculator, batch_index, current_suffix, offset=None):
+    def compute_half_d(self, data_instances, w, cipher, batch_index, current_suffix):
+        if self.use_sample_weight:
+            self.half_d = data_instances.mapValues(
+                lambda v: (vec_dot(v.features, w.coef_) + w.intercept_) * v.weight - v.label * v.weight)
+        else:
+            self.half_d = data_instances.mapValues(
+                lambda v: (vec_dot(v.features, w.coef_) + w.intercept_) - v.label)
+        return self.half_d
+
+    def compute_and_aggregate_forwards(self, data_instances, half_g, encrypted_half_g, batch_index,
+                                       current_suffix, offset=None):
         """
-        Compute gradients:
-        gradient = (1/N)*\sum(wx -y)*x
-
-        Define wx as guest_forward or host_forward
-        Define (wx-y) as fore_gradient
-        Parameters
-        ----------
-        data_instances: DTable of Instance, input data
-
-        model_weights: LinearRegressionWeights
-            Stores coef_ and intercept_ of model
-
-        encrypted_calculator: Use for different encrypted methods
-
-        offset: Used in Poisson only.
-
-        batch_index: int, use to obtain current encrypted_calculator index:
-
-        current_suffix: tuple or string. Used in transfer_variable
+        gradient = (1/N)*sum(wx - y) * x
+        Define wx -y  as guest_forward and wx as host_forward
         """
-        wx = data_instances.mapValues(
-            lambda v: vec_dot(v.features, model_weights.coef_) + model_weights.intercept_)
-        self.forwards = wx
-        self.aggregated_forwards = encrypted_calculator[batch_index].encrypt(wx)
-
         self.host_forwards = self.get_host_forward(suffix=current_suffix)
-
-        for host_forward in self.host_forwards:
-            self.aggregated_forwards = self.aggregated_forwards.join(host_forward, lambda g, h: g + h)
-        fore_gradient = self.aggregated_forwards.join(data_instances, lambda wx, d: wx - d.label)
-        return fore_gradient
+        return self.host_forwards
 
     def compute_loss(self, data_instances, n_iter_, batch_index, loss_norm=None):
         '''
         Compute hetero linr loss:
             loss = (1/N)*\sum(wx-y)^2 where y is label, w is model weight and x is features
-        (wx - y)^2 = (wx_h)^2 + (wx_g - y)^2 + 2*(wx_h + wx_g - y)
+        log(wx - y)^2 = (wx_h)^2 + (wx_g - y)^2 + 2*(wx_h + wx_g - y)
         '''
         current_suffix = (n_iter_, batch_index)
         n = data_instances.count()
@@ -92,15 +75,14 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
             host_forward = self.host_forwards[0]
             host_wx_square = host_wx_squares[0]
 
-            wxy = self.forwards.join(data_instances, lambda wx, d: wx - d.label)
-            wxy_square = wxy.mapValues(lambda x: np.square(x)).reduce(reduce_add)
+            wxy_square = self.half_d.mapValues(lambda x: np.square(x)).reduce(reduce_add)
 
-            loss_gh = wxy.join(host_forward, lambda g, h: g * h).reduce(reduce_add)
+            loss_gh = self.half_d.join(host_forward, lambda g, h: g * h).reduce(reduce_add)
             loss = (wxy_square + host_wx_square + 2 * loss_gh) / (2 * n)
             if loss_norm is not None:
                 loss = loss + loss_norm + host_loss_regular[0]
             loss_list.append(loss)
-        LOGGER.debug("In compute_loss, loss list are: {}".format(loss_list))
+        # LOGGER.debug("In compute_loss, loss list are: {}".format(loss_list))
         self.sync_loss_info(loss_list, suffix=current_suffix)
 
     def compute_forward_hess(self, data_instances, delta_s, host_forwards):
@@ -132,8 +114,23 @@ class Host(hetero_linear_model_gradient.Host, loss_sync.Host):
                                  transfer_variables.loss_intermediate)
 
     def compute_forwards(self, data_instances, model_weights):
-        wx = data_instances.mapValues(lambda v: vec_dot(v.features, model_weights.coef_) + model_weights.intercept_)
+        if self.use_sample_weight:
+            wx = data_instances.mapValues(
+                lambda v: (vec_dot(v.features, model_weights.coef_) + model_weights.intercept_) * v.weight)
+        else:
+            wx = data_instances.mapValues(
+                lambda v: vec_dot(v.features, model_weights.coef_) + model_weights.intercept_)
         return wx
+
+    def compute_half_g(self, data_instances, w, cipher, batch_index):
+        if self.use_sample_weight:
+            half_g = data_instances.mapValues(
+                lambda v: (vec_dot(v.features, w.coef_) + w.intercept_) * v.weight)
+        else:
+            half_g = data_instances.mapValues(
+                lambda v: vec_dot(v.features, w.coef_) + w.intercept_)
+        encrypt_half_g = cipher[batch_index].encrypt(half_g)
+        return half_g, encrypt_half_g
 
     def compute_loss(self, model_weights, optimizer, n_iter_, batch_index, cipher_operator):
         '''
@@ -170,3 +167,5 @@ class Arbiter(hetero_linear_model_gradient.Arbiter, loss_sync.Arbiter):
         loss_list = self.sync_loss_info(suffix=current_suffix)
         de_loss_list = cipher.decrypt_list(loss_list)
         return de_loss_list
+
+

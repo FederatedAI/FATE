@@ -77,7 +77,6 @@ class HeteroLRGuest(HeteroLRBase):
         else:
             self.need_one_vs_rest = False
             self.fit_binary(data_instances, validate_data)
-        LOGGER.debug(f"Final summary: {self.summary()}")
 
     def fit_binary(self, data_instances, validate_data=None):
         LOGGER.info("Enter hetero_lr_guest fit")
@@ -110,27 +109,26 @@ class HeteroLRGuest(HeteroLRBase):
             batch_index = 0
             for batch_data in batch_data_generator:
                 # transforms features of raw input 'batch_data_inst' into more representative features 'batch_feat_inst'
-                batch_feat_inst = self.transform(batch_data)
-                LOGGER.debug(f"MODEL_STEP In Batch {batch_index}, batch data count: {batch_feat_inst.count()}")
+                batch_feat_inst = batch_data
+                # LOGGER.debug(f"MODEL_STEP In Batch {batch_index}, batch data count: {batch_feat_inst.count()}")
 
                 # Start gradient procedure
                 LOGGER.debug("iter: {}, before compute gradient, data count: {}".format(self.n_iter_,
                                                                                         batch_feat_inst.count()))
-                optim_guest_gradient, fore_gradient, host_forwards = self.gradient_loss_operator. \
-                    compute_gradient_procedure(
-                    batch_feat_inst,
-                    self.encrypted_calculator,
-                    self.model_weights,
-                    self.optimizer,
-                    self.n_iter_,
-                    batch_index
-                )
+                optim_guest_gradient = self.gradient_loss_operator.compute_gradient_procedure(
+                            batch_feat_inst,
+                            self.encrypted_calculator,
+                            self.model_weights,
+                            self.optimizer,
+                            self.n_iter_,
+                            batch_index)
+
                 # LOGGER.debug('optim_guest_gradient: {}'.format(optim_guest_gradient))
-                training_info = {"iteration": self.n_iter_, "batch_index": batch_index}
-                self.update_local_model(fore_gradient, data_instances, self.model_weights.coef_, **training_info)
+                # training_info = {"iteration": self.n_iter_, "batch_index": batch_index}
+                # self.update_local_model(fore_gradient, data_instances, self.model_weights.coef_, **training_info)
 
                 loss_norm = self.optimizer.loss_norm(self.model_weights)
-                self.gradient_loss_operator.compute_loss(data_instances, self.n_iter_, batch_index, loss_norm)
+                self.gradient_loss_operator.compute_loss(data_instances, self.model_weights, self.n_iter_, batch_index, loss_norm)
 
                 self.model_weights = self.optimizer.update_model(self.model_weights, optim_guest_gradient)
                 batch_index += 1
@@ -175,8 +173,8 @@ class HeteroLRGuest(HeteroLRBase):
             predict_result = self.one_vs_rest_obj.predict(data_instances)
             return predict_result
 
-        data_features = self.transform(data_instances)
-        pred_prob = self.compute_wx(data_features, self.model_weights.coef_, self.model_weights.intercept_)
+        # data_features = self.transform(data_instances)
+        pred_prob = self.compute_wx(data_instances, self.model_weights.coef_, self.model_weights.intercept_)
         host_probs = self.transfer_variable.host_prob.get(idx=-1)
 
         LOGGER.info("Get probability from Host")

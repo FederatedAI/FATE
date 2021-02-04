@@ -73,7 +73,7 @@ class QuantileBinning(BaseBinning):
                             }
         """
         header = data_overview.get_header(data_instances)
-        # LOGGER.debug("in _fit_split_point, cols_map: {}".format(self.bin_inner_param.bin_cols_map))
+        LOGGER.debug("Header length: {}".format(len(header)))
 
         self._default_setting(header)
         # self._init_cols(data_instances)
@@ -102,29 +102,37 @@ class QuantileBinning(BaseBinning):
                                   cols_dict=self.bin_inner_param.bin_cols_map,
                                   header=self.header,
                                   is_sparse=is_sparse)
-            summary_dict = data_instances.mapReducePartitions(f, self.copy_merge)
-            summary_dict = dict(summary_dict.collect())
+            # summary_dict_table = data_instances.mapReducePartitions(f, self.copy_merge)
+            summary_dict_table = data_instances.mapReducePartitions(f, lambda s1, s2: s1.merge(s2))
+            # summary_dict = dict(summary_dict.collect())
 
-            LOGGER.debug(f"new summary_dict: {summary_dict}")
             if is_sparse:
                 total_count = data_instances.count()
-                for _, summary_obj in summary_dict.items():
-                    summary_obj.set_total_count(total_count)
+                summary_dict_table = summary_dict_table.mapValues(lambda x: x.set_total_count(total_count))
 
-            self.summary_dict = summary_dict
+            self.summary_dict = summary_dict_table
         else:
-            summary_dict = self.summary_dict
+            summary_dict_table = self.summary_dict
 
-        for col_name, summary in summary_dict.items():
-            split_point = []
-            for percen_rate in percentile_rate:
-                s_p = summary.query(percen_rate)
-                if not self.allow_duplicate:
-                    if s_p not in split_point:
-                        split_point.append(s_p)
-                else:
-                    split_point.append(s_p)
+        f = functools.partial(self._get_split_points,
+                              allow_duplicate=self.allow_duplicate,
+                              percentile_rate=percentile_rate)
+        summary_dict = dict(summary_dict_table.mapValues(f).collect())
+
+        for col_name, split_point in summary_dict.items():
             self.bin_results.put_col_split_points(col_name, split_point)
+
+    @staticmethod
+    def _get_split_points(summary, percentile_rate, allow_duplicate):
+        split_point = []
+        for percent_rate in percentile_rate:
+            s_p = summary.query(percent_rate)
+            if not allow_duplicate:
+                if s_p not in split_point:
+                    split_point.append(s_p)
+            else:
+                split_point.append(s_p)
+        return split_point
 
     @staticmethod
     def feature_summary(data_iter, params, cols_dict, abnormal_list, header, is_sparse):
@@ -263,6 +271,13 @@ class QuantileBinning(BaseBinning):
             new_dict[col_name] = summary1
         return new_dict
 
+    @staticmethod
+    def _query_quantile_points(col_name, summary, quantile_dict):
+        quantile = quantile_dict.get(col_name)
+        if quantile is not None:
+            return col_name, summary.query(quantile)
+        return col_name, quantile
+
     def query_quantile_point(self, query_points, col_names=None):
 
         if self.summary_dict is None:
@@ -282,10 +297,9 @@ class QuantileBinning(BaseBinning):
         else:
             raise ValueError("query_points has wrong type, should be a float, int or dict")
 
-        result = {}
-        for col_name, query_point in query_dict.items():
-            summary = summary_dict[col_name]
-            result[col_name] = summary.query(query_point)
+        f = functools.partial(self._query_quantile_points,
+                              quantile_dict=query_dict)
+        result = dict(summary_dict.map(f).collect())
         return result
 
 

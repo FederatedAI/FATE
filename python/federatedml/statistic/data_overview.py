@@ -18,7 +18,9 @@
 
 import copy
 import functools
+from collections import Counter
 
+from federatedml.feature.instance import Instance
 from federatedml.util import LOGGER
 from federatedml.util import consts
 
@@ -36,6 +38,26 @@ def get_features_shape(data_instances):
             return one_feature[1].features.shape[0]
     else:
         return None
+
+
+def max_sample_weight_map_func(kv_iter):
+
+    max_weight = -1
+    for k, inst in kv_iter:
+        if inst.weight > max_weight:
+            max_weight = inst.weight
+
+    return max_weight
+
+
+def max_sample_weight_cmp(v1, v2):
+    return v1 if v1 > v2 else v2
+
+
+def get_max_sample_weight(data_inst_with_weight):
+    inter_rs = data_inst_with_weight.applyPartitions(max_sample_weight_map_func)
+    max_weight = inter_rs.reduce(max_sample_weight_cmp)
+    return max_weight
 
 
 def header_alignment(data_instances, pre_header):
@@ -134,6 +156,31 @@ def count_labels(data_instance):
     # if len(label_set) != 2:
     #     return False
     # return True
+
+
+def with_weight(data_instances):
+    first_entry = data_instances.first()[1]
+    if isinstance(first_entry, Instance) and first_entry.weight is not None:
+        return True
+    return False
+
+
+def get_class_dict(kv_iterator):
+    class_dict = {}
+    for _, inst in kv_iterator:
+        count = class_dict.get(inst.label, 0)
+        class_dict[inst.label] = count + 1
+
+    if len(class_dict.keys()) > consts.MAX_CLASSNUM:
+        raise ValueError("In Classify Task, max dif classes should be no more than %d" % (consts.MAX_CLASSNUM))
+
+    return class_dict
+
+
+def get_label_count(data_instances):
+    class_weight = data_instances.mapPartitions(get_class_dict).reduce(
+        lambda x, y: dict(Counter(x) + Counter(y)))
+    return class_weight
 
 
 def rubbish_clear(rubbish_list):

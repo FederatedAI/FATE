@@ -277,6 +277,15 @@ Algorithm List
      -
      -
 
+   * - `Feldman Verifiable Sum`_
+     - Feldman Verifiable Sum
+     - This component will sum multiple privacy values without exposing data
+     - Table, values are addend
+     - Table, values are sum results
+     -
+     -
+
+
 
 .. _DataIO: util/README.rst
 .. _Intersect: statistic/intersect/README.rst
@@ -307,6 +316,7 @@ Algorithm List
 .. _Hetero Federated Transfer Learning: transfer_learning/hetero_ftl/README.rst
 .. _Hetero Fast Secure Boosting: ensemble/README.rst
 .. _Scorecard: statistic/scorecard/README.rst
+.. _Feldman Verifiable Sum: statistic/feldman_verifiable_sum/README.rst
 
 
 Secure Protocol
@@ -328,6 +338,8 @@ Secure Protocol
 
 * `Oblivious Transfer`_
 
+* `Feldman Verifiable Secret Sharing`_
+
 
 .. _Encrypt: secureprotol/README.rst#encrypt
 .. _Paillier encryption: secureprotol/README.rst#paillier-encryption
@@ -339,7 +351,7 @@ Secure Protocol
 .. _Diffne Hellman Key Exchange: secureprotol/README.rst#diffne-hellman-key-exchange
 .. _SecretShare MPC Protocol(SPDZ): secureprotol/README.rst#secretshare-mpc-protocol-spdz
 .. _Oblivious Transfer: secureprotol/README.rst#oblivious-transfer
-
+.. _Feldman Verifiable Secret Sharing: secureprotol/README.rst#feldman-verifiable-secret-sharing
 
 
 Params

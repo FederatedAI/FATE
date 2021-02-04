@@ -4,6 +4,8 @@ import socket
 import time
 import typing
 import tarfile
+import datetime
+from enum import Enum, IntEnum
 
 PROJECT_BASE = None
 
@@ -132,3 +134,27 @@ def get_lan_ip():
             except IOError as e:
                 pass
     return ip or ''
+
+
+class CustomJSONEncoder(json.JSONEncoder):
+    def __init__(self, **kwargs):
+        super(CustomJSONEncoder, self).__init__(**kwargs)
+
+    def default(self, obj):
+        if isinstance(obj, datetime.datetime):
+            return obj.strftime('%Y-%m-%d %H:%M:%S')
+        elif isinstance(obj, datetime.date):
+            return obj.strftime('%Y-%m-%d')
+        elif isinstance(obj, datetime.timedelta):
+            return str(obj)
+        elif issubclass(type(obj), Enum) or issubclass(type(obj), IntEnum):
+            return obj.value
+        else:
+            return json.JSONEncoder.default(self, obj)
+
+
+def json_dumps(src, byte=False, indent=None):
+    if byte:
+        return string_to_bytes(json.dumps(src, indent=indent, cls=CustomJSONEncoder))
+    else:
+        return json.dumps(src, indent=indent, cls=CustomJSONEncoder)

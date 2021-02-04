@@ -19,19 +19,18 @@ from fate_arch.common.log import schedule_logger
 from fate_arch.common import EngineType, string_utils
 from fate_flow.entity.types import JobStatus, EndStatus, RunParameters
 from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.operation import Tracker
+from fate_flow.operation.job_tracker import Tracker
 from fate_flow.settings import USE_AUTHENTICATION, DEFAULT_TASK_PARALLELISM, DEFAULT_FEDERATED_STATUS_COLLECT_TYPE
 from fate_flow.utils import job_utils, schedule_utils, data_utils
-from fate_flow.operation import JobSaver
+from fate_flow.operation.job_saver import JobSaver
 from fate_arch.common.base_utils import json_dumps, current_timestamp
-from fate_flow.controller import TaskController
-from fate_flow.manager import ResourceManager
+from fate_flow.controller.task_controller import TaskController
+from fate_flow.manager.resource_manager import ResourceManager
 from fate_arch.common import WorkMode, Backend
 from fate_arch.common import FederatedMode
 from fate_arch.computing import ComputingEngine
 from fate_arch.federation import FederationEngine
 from fate_arch.storage import StorageEngine
-from fate_flow.db.db_models import Job
 
 
 class JobController(object):
@@ -65,7 +64,7 @@ class JobController(object):
         job_info["progress"] = 0
         cls.adapt_job_parameters(role=role, job_parameters=job_parameters)
         engines_info = cls.get_job_engines_address(job_parameters=job_parameters)
-        cls.check_parameters(job_parameters=job_parameters, engines_info=engines_info)
+        cls.check_parameters(job_parameters=job_parameters, role=role, party_id=party_id, engines_info=engines_info)
         job_info["runtime_conf_on_party"]["job_parameters"] = job_parameters.to_dict()
         job_utils.save_job_conf(job_id=job_id,
                                 role=role,
@@ -139,15 +138,15 @@ class JobController(object):
         return engines_info
 
     @classmethod
-    def check_parameters(cls, job_parameters: RunParameters, engines_info):
-        status, cores_submit, max_cores_per_job = ResourceManager.check_resource_apply(job_parameters=job_parameters, engines_info=engines_info)
+    def check_parameters(cls, job_parameters: RunParameters, role, party_id, engines_info):
+        status, cores_submit, max_cores_per_job = ResourceManager.check_resource_apply(job_parameters=job_parameters, role=role, party_id=party_id, engines_info=engines_info)
         if not status:
             msg = ""
-            msg2 = "default value is fate_flow/settings.py#DEFAULT_TASK_CORES_PER_NODE, refer fate_flow/examples/test_hetero_lr_job_conf.json"
+            msg2 = "default value is fate_flow/settings.py#DEFAULT_TASK_CORES_PER_NODE, refer fate_flow/examples/simple_hetero_lr_job_conf.json"
             if job_parameters.computing_engine in {ComputingEngine.EGGROLL, ComputingEngine.STANDALONE}:
-                msg = "please use eggroll_run: eggroll.session.processors.per.node job parameters to set task_cores_per_node"
+                msg = "please use task_cores job parameters to set request task cores or you can customize it with eggroll_run job parameters"
             elif job_parameters.computing_engine in {ComputingEngine.SPARK}:
-                msg = "please use spark_run: executor-cores and num-executors job parameters to set task_cores_per_node"
+                msg = "please use task_cores job parameters to set request task cores or you can customize it with spark_run job parameters"
             raise RuntimeError(f"max cores per job is {max_cores_per_job} base on (fate_flow/settings#MAX_CORES_PERCENT_PER_JOB * conf/service_conf.yaml#nodes * conf/service_conf.yaml#cores_per_node), expect {cores_submit} cores, {msg}, {msg2}")
 
     @classmethod
@@ -267,6 +266,20 @@ class JobController(object):
         return update_status
 
     @classmethod
+    def stop_jobs(cls, job_id, stop_status, role=None, party_id=None):
+        if role and party_id:
+            jobs = JobSaver.query_job(job_id=job_id, role=role, party_id=party_id)
+        else:
+            jobs = JobSaver.query_job(job_id=job_id)
+        kill_status = True
+        kill_details = {}
+        for job in jobs:
+            kill_job_status, kill_job_details = cls.stop_job(job=job, stop_status=stop_status)
+            kill_status = kill_status & kill_job_status
+            kill_details[job_id] = kill_job_details
+        return kill_status, kill_details
+
+    @classmethod
     def stop_job(cls, job, stop_status):
         tasks = JobSaver.query_task(job_id=job.f_job_id, role=job.f_role, party_id=job.f_party_id, reverse=True)
         kill_status = True
@@ -275,6 +288,10 @@ class JobController(object):
             kill_task_status = TaskController.stop_task(task=task, stop_status=stop_status)
             kill_status = kill_status & kill_task_status
             kill_details[task.f_task_id] = 'success' if kill_task_status else 'failed'
+        if kill_status:
+            job_info = job.to_human_model_dict(only_primary_with=["status"])
+            job_info["status"] = stop_status
+            JobController.update_job_status(job_info)
         return kill_status, kill_details
         # Job status depends on the final operation result and initiator calculate
 
@@ -284,9 +301,15 @@ class JobController(object):
         job_dsl, job_runtime_conf, runtime_conf_on_party, train_runtime_conf = job_utils.get_job_configuration(job_id=job_id, role=role,
                                                                                                                party_id=party_id)
         job_parameters = runtime_conf_on_party.get('job_parameters', {})
+        if role in job_parameters.get("assistant_role", []):
+            return
         model_id = job_parameters['model_id']
         model_version = job_parameters['model_version']
         job_type = job_parameters.get('job_type', '')
+        work_mode = job_parameters['work_mode']
+        roles = runtime_conf_on_party['role']
+        initiator_role = runtime_conf_on_party['initiator']['role']
+        initiator_party_id = runtime_conf_on_party['initiator']['party_id']
         if job_type == 'predict':
             return
         dag = schedule_utils.get_job_dsl_parser(dsl=job_dsl,
@@ -300,6 +323,16 @@ class JobController(object):
         pipeline.fate_version = RuntimeConfig.get_env("FATE")
         pipeline.model_id = model_id
         pipeline.model_version = model_version
+
+        pipeline.parent = True
+        pipeline.loaded_times = 0
+        pipeline.roles = json_dumps(roles, byte=True)
+        pipeline.work_mode = work_mode
+        pipeline.initiator_role = initiator_role
+        pipeline.initiator_party_id = initiator_party_id
+        pipeline.runtime_conf_on_party = json_dumps(runtime_conf_on_party, byte=True)
+        pipeline.parent_info = json_dumps({}, byte=True)
+
         tracker = Tracker(job_id=job_id, role=role, party_id=party_id, model_id=model_id, model_version=model_version)
         tracker.save_pipelined_model(pipelined_buffer_object=pipeline)
         if role != 'local':

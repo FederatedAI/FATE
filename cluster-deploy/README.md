@@ -81,7 +81,7 @@ In this example, there is only one host on each end, and multiple hosts on each 
 
 ## 3. Basic Environment Configuration
 
-### 3.1 Hostname Configuration (optional)
+### 3.1 Hostname Configuration
 
 ------
 
@@ -105,7 +105,7 @@ vim /etc/hosts
 
 192.168.0.2 VM_0_2_centos
 
-### 3.2 Close selinux (optional)
+### 3.2 Close selinux
 
 ------
 
@@ -287,8 +287,8 @@ Enter the /data/projects/ directory of the execution node and execute:
 ```
 #Note: URL links have line breaks, please make sure to arrange them in one line when copying
 cd /data/projects/
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/ansible_nfate_1.5.0_release-1.0.0.tar.gz
-tar xzf ansible_nfate_1.5.0_release-1.0.0.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/ansible_nfate_1.5.1_preview-1.0.0.tar.gz
+tar xzf ansible_nfate_1.5.1_preview-1.0.0.tar.gz
 ```
 
 ### 4.4 Configuration File Modification And Example
@@ -401,7 +401,7 @@ host:
       -192.168.0.1
       port: 9370 --- grpc port
       secure_port: 9371 ---grpcs port
-      pool_size: 600 ---thread pool size
+      pool_size: 600 ---thread pool size,Recommended as: min(1000 + len(party_ids) * 200, 5000)
       max_memory: ---rollsite process JVM memory parameter, the default is 1/4 of the physical memory, which can be set according to the actual situation, such as 12G, if it is a machine dedicated to rollsite, configure it to 75% of the physical memory.
       server_secure: False ---As a server, turn on the security certificate verification, do not use the security certificate by default
       client_secure: False ---As a client, use a certificate to initiate a security request, not using a security certificate by default
@@ -422,6 +422,7 @@ host:
       ips:
       -192.168.0.1 --- Only support the deployment of one host
       port: 4670
+      cores_per_node: 16 ---Nodemanager node CPU core number, multiple nodemanager nodes are set according to the minimum number of CPU cores
     nodemanager:
       enable: True
       ips: ---Support multiple deployment
@@ -459,6 +460,9 @@ host:
       use_acl: false
       user: "fate"
       passwd: "fate"
+    servings:
+     ip: 192.168.0.2
+     port: 8000
 ```
 
 **4) Modify The Guest Parameters**
@@ -478,7 +482,7 @@ guest:
       -192.168.0.2
       port: 9370 --- grpc port
       secure_port: 9371 ---grpcs port
-      pool_size: 600 ---thread pool size
+      pool_size: 600 ---thread pool size,Recommended as: min(1000 + len(party_ids) * 200, 5000)
       max_memory: ---rollsite process JVM memory parameter, the default is 1/4 of the physical memory, which can be set according to the actual situation, such as 12G, if it is a machine dedicated to rollsite, configure it to 75% of the physical memory.
       server_secure: False ---As a server, turn on the security certificate verification, do not use the security certificate by default
       client_secure: False ---As a client, use a certificate to initiate a security request, not using a security certificate by default
@@ -499,6 +503,7 @@ guest:
       ips: ---Only support the deployment of one host
       -192.168.0.2
       port: 4670
+      cores_per_node: 16 ---Nodemanager node CPU core number, multiple nodemanager nodes are set according to the minimum number of CPU cores
     nodemanager:
       enable: True
       ips: ---Support the deployment of multiple hosts
@@ -536,6 +541,9 @@ guest:
       use_acl: false
       user: "fate"
       passwd: "fate"
+    servings:
+     ip: 192.168.0.2
+     port: 8000
 ```
 
 **5) Modify Exchange Parameters**
@@ -553,7 +561,7 @@ exchange:
     -192.168.0.88
     port: 9370
     secure_port: 9371 ---grpcs port
-    pool_size: 600
+    pool_size: 600 ---thread pool size,Recommended as: min(1000 + len(party_ids) * 200, 5000)
     max_memory: ---rollsite process JVM memory parameter, the default is 1/4 of the physical memory, which can be set according to the actual situation, such as 12G, if it is a machine dedicated to rollsite, configure it to 75% of the physical memory.
     server_secure: False ---As a server, turn on the security certificate verification, do not use the security certificate by default
     client_secure: False ---As a client, use a certificate to initiate a security request, not using a security certificate by default
@@ -700,7 +708,7 @@ A result similar to the following indicates success:
 
 ```
 source /data/projects/fate/bin/init_env.sh
-cd /data/projects/fate/examples/toy_example/
+cd /data/projects/fate/examples/scripts/
 python upload_default_data.py -m 1
 ```
 
@@ -717,6 +725,9 @@ In the fast mode, the minimization test script will use a relatively small data 
 ```
 source /data/projects/fate/bin/init_env.sh
 cd /data/projects/fate/examples/toy_example/
+#Unilateral test
+python run_task.py -m 1 -gid 9999 -hid 9999 -aid 9999 -f fast
+#Bilateral test
 python run_task.py -m 1 -gid 9999 -hid 10000 -aid 10000 -f fast
 ```
 
@@ -819,9 +830,27 @@ netstat -tlnp | grep 8080
 | /data/logs                        | Log path                                             |
 | /data/projects/common/supervisord | Process management tool supervisor installation path |
 
-## 7. Appendix
+# 7. Uninstall
 
-## 7.1 Eggroll Parameter Tuning
+#### 7.1 Description
+
+Support the uninstallation of all services and the uninstallation of a single service.
+
+#### 7.2 Perform uninstall
+
+```
+cd /data/projects/ansible-nfate-1.*
+sh ./uninstall.sh prod all
+
+#Uninstall command description
+sh ./uninstall.sh $arg1 $arg2
+- The $arg1 parameter is the same as the parameter executed by init in step 4.4.1, and is test|prod.
+- The $arg2 parameter is the selected service, the optional parameter is (all|mysql|eggroll|fate_flow|fateboard), all means uninstall all services.
+```
+
+## 8. Appendix
+
+## 8.1 Eggroll Parameter Tuning
 
 Configuration file path: /data/projects/fate/eggroll/conf/eggroll.properties
 
