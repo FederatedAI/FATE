@@ -45,20 +45,20 @@ def main(config="../../config.yaml", namespace=""):
     pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=hosts, arbiter=arbiter)
 
     reader_0 = Reader(name="reader_0")
-    reader_0.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_train_data)
-    reader_0.get_party_instance(role='host', party_id=hosts).algorithm_param(table=host_train_data)
+    reader_0.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data)
+    reader_0.get_party_instance(role='host', party_id=hosts).component_param(table=host_train_data)
 
     dataio_0 = DataIO(name="dataio_0")
-    dataio_0.get_party_instance(role='guest', party_id=guest).algorithm_param(with_label=True, label_name="y",
+    dataio_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True, label_name="y",
                                                                              label_type="int", output_format="dense")
-    dataio_0.get_party_instance(role='host', party_id=hosts).algorithm_param(with_label=False)
+    dataio_0.get_party_instance(role='host', party_id=hosts).component_param(with_label=False)
 
     intersection_0 = Intersection(name="intersection_0")
 
     sample_weight_0 = SampleWeight(name="sample_weight_0")
-    sample_weight_0.get_party_instance(role='guest', party_id=guest).algorithm_param(need_run=True,
+    sample_weight_0.get_party_instance(role='guest', party_id=guest).component_param(need_run=True,
                                                                                      class_weight="balanced")
-    sample_weight_0.get_party_instance(role='host', party_id=hosts).algorithm_param(need_run=False)
+    sample_weight_0.get_party_instance(role='host', party_id=hosts).component_param(need_run=False)
 
     hetero_lr_0 = HeteroLR(name="hetero_lr_0", optimizer="nesterov_momentum_sgd", tol=0.001,
                                alpha=0.01, max_iter=20, early_stop="weight_diff", batch_size=-1,
@@ -66,7 +66,7 @@ def main(config="../../config.yaml", namespace=""):
                                init_param={"init_method": "zeros"})
 
     evaluation_0 = Evaluation(name="evaluation_0", eval_type="binary", pos_label=1)
-    # evaluation_0.get_party_instance(role='host', party_id=host).algorithm_param(need_run=False)
+    # evaluation_0.get_party_instance(role='host', party_id=host).component_param(need_run=False)
 
     pipeline.add_component(reader_0)
     pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
