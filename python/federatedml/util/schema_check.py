@@ -22,7 +22,7 @@ def check_schema(input_schema, output_schema):
     LOGGER.debug(f"input schema: {input_schema} -> output schema: {output_schema}")
     if output_schema is None:
         raise EnvironmentError(
-            f"{output_schema} is None while input data has schema.")
+            f"output_schema is None while input data has schema.")
 
     input_header = input_schema.get("header", None)
     output_header = output_schema.get("header", None)

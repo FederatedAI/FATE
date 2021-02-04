@@ -67,7 +67,7 @@ class Step(object):
         if original_model.role != consts.ARBITER:
             curr_train_data = train_data.mapValues(lambda v: Step.slice_data_instance(v, feature_mask))
             new_schema = Step.get_new_schema(train_data, feature_mask)
-            LOGGER.debug("new schema is: {}".format(new_schema))
+            # LOGGER.debug("new schema is: {}".format(new_schema))
             set_schema(curr_train_data, new_schema)
             model.header = new_schema.get("header")
         else:

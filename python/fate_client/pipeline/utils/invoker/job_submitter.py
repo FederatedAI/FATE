@@ -409,6 +409,31 @@ class JobInvoker(object):
         except:
             raise ValueError("Cannot get output model, err msg: ")
 
+    def model_deploy(self, model_id, model_version, cpn_list=None, predict_dsl=None):
+        if cpn_list:
+            result = self.client.model.deploy(model_id=model_id, model_version=model_version, cpn_list=cpn_list)
+        elif predict_dsl:
+            result = self.client.model.deploy(model_id=model_id, model_version=model_version, predict_dsl=predict_dsl)
+        else:
+            result = self.client.model.deploy(model_id=model_id, model_version=model_version)
+
+        if result is None or 'retcode' not in result:
+            raise ValueError("Call flow deploy is failed, check if fate_flow server is start!")
+        elif result["retcode"] != 0:
+            raise ValueError("Cannot deploy components, error msg is {}".format(result["retmsg"]))
+        else:
+            return result["data"]
+
+    def get_predict_dsl(self, model_id, model_version):
+        result = self.client.model.get_predict_dsl(model_id=model_id, model_version=model_version)
+        if result is None or 'retcode' not in result:
+            raise ValueError("Call flow get predict dsl is failed, check if fate_flow server is start!")
+        elif result["retcode"] != 0:
+            raise ValueError("Cannot get predict dsl, error msg is {}".format(result["retmsg"]))
+        else:
+            return result["data"]
+
+    """
     def get_predict_dsl(self, train_dsl, cpn_list, version):
         result = None
         with tempfile.TemporaryDirectory() as job_dir:
@@ -424,3 +449,4 @@ class JobInvoker(object):
             raise ValueError("Cannot generate predict dsl, error msg is {}".format(result["retmsg"]))
         else:
             return result["data"]
+    """

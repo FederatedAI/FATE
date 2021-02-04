@@ -117,7 +117,7 @@ class BasePoissonRegression(BaseLinearModel):
 
     def _get_param(self):
         header = self.header
-        LOGGER.debug("In get_param, header: {}".format(header))
+        # LOGGER.debug("In get_param, header: {}".format(header))
         if header is None:
             param_protobuf_obj = poisson_model_param_pb2.PoissonModelParam(best_iteration=-1)
             return param_protobuf_obj

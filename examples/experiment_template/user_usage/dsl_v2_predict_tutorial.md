@@ -1,9 +1,9 @@
 # DSL version 2 predict tutorial
-	This documentation will give a breif tutorial of how to run a predict task after a trainning task.
+	This documentation will give a brief tutorial of how to run a predict task after a trainning task.
 	We will take hetero-secureboost as an example.
 	
 ## Submit a training task
-We can start a training job by submitting conf & dsl through flow client,
+We can start a training job by submitting conf & dsl through [Flow Client](../../../python/fate_client/flow_client/README.rst),
 Here we submit a hetero-secureboost binary classification task, whose conf and dsl are in [hetero secureboost example 
 folder.](../../dsl/v2/hetero_secureboost)
 
@@ -47,13 +47,9 @@ You can query the corresponding model_id and model_version of a job using the "f
 
 ## Make a predict conf and generate predict dsl
 
-We use flow_client to deploy components we needed in the predicting task:
+We use flow_client to deploy components needed in the prediction task:
 
-    flow job dsl --train-dsl-path ./examples/dsl/v2/hetero_secureboost/test_secureboost_train_dsl.json --cpn-list "reader_0, dataio_0, intersection_0, hetero_secure_boost_0" --version 2 -o ./predict_dsl
-
-Then we got a generated dsl named with a timestamp in the output folder:
-
-    >> ls predict_dsl
+    flow job deploy --model-id guest-10000#host-10000#model --model-version 2020103015490073208469 --cpn-list "dataio_0, intersection_0, hetero_secure_boost_0"
 
 We can modify existing predict conf by replacing model_id, model_version and data set name with yours to make a new 
 predict conf.

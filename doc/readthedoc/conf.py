@@ -45,7 +45,8 @@ extensions = [
     'sphinx.ext.napoleon',
     'autodocsumm',
     'recommonmark',
-    'sphinx_click.ext'
+    'sphinx_click.ext',
+    'sphinx_markdown_tables'
 ]
 
 autosummary_generate = True
@@ -87,6 +88,7 @@ master_doc = 'index'
 def ultimateReplace(app, docname, source):
     result = source[0]
     result = result.replace(".rst", ".html")
+    result = result.replace(".md", ".html")
     source[0] = result
 
 

@@ -97,12 +97,10 @@ class Job(BaseFlowAPI):
                 response = response.json()
         return response
 
-    def generate_dsl(self, train_dsl_path, version="1", cpn_file_path=None, cpn_list: list = None):
+    def generate_dsl(self, train_dsl_path, cpn_file_path=None, cpn_list: list = None):
         kwargs = locals()
         if not os.path.exists(kwargs.get("train_dsl_path")):
             raise Exception("Train dsl file not exists.")
-        if str(version) not in get_parser_version_set():
-            raise Exception("{} version of dsl parser is not currently supported.".format(version))
         if kwargs.get("cpn_list"):
             cpn_str = kwargs.get("cpn_list")
         elif kwargs.get("cpn_file_path"):
@@ -117,7 +115,7 @@ class Job(BaseFlowAPI):
         config_data = {
             "cpn_str": cpn_str,
             "train_dsl": train_dsl,
-            "version": str(version)
+            "version": "2"
         }
 
         res = self._post(url="job/dsl/generate", handle_result=True, json=config_data)

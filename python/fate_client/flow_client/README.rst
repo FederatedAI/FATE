@@ -198,6 +198,7 @@ Job
 
 -  *Description*: Download log files of a specified job.
 -  *Arguments*:
+
 +-------+-------------------+------------+------------------------+------------+-------------------+
 | No.   | Argument          | Flag\_1    | Flag\_2                | Required   | Description       |
 +=======+===================+============+========================+============+===================+
@@ -248,14 +249,12 @@ Job
 +-------+--------------------+-----------+------------------------+------------+----------------------------------------------------------------+
 | 4     | output\_path       | ``-o``    | ``--output-path``      | No         | User specifies output directory path.                          |
 +-------+--------------------+-----------+------------------------+------------+----------------------------------------------------------------+
-| 5     | version            | ``-v``    | ``--version``          | No         | User specified version of dsl parser. Default: 1               |
-+-------+--------------------+-----------+------------------------+------------+----------------------------------------------------------------+
 
 -  *Examples*:
 
 .. code:: bash
 
-    flow job dsl --cpn-path fate_flow/examples/component_list.txt --train-dsl-path fate_flow/examples/test_hetero_lr_job_dsl.json --version 2
+    flow job dsl --cpn-path fate_flow/examples/component_list.txt --train-dsl-path fate_flow/examples/test_hetero_lr_job_dsl.json
 
     flow job dsl --cpn-path fate_flow/examples/component_list.txt --train-dsl-path fate_flow/examples/test_hetero_lr_job_dsl.json -o fate_flow/examples/
 
@@ -628,6 +627,105 @@ Model
 
     flow model tag-model -j $JOB_ID -t $TAG_NAME
     flow model tag-model -j $JOB_ID -t $TAG_NAME --remove
+
+``deploy``
+~~~~~~~~~~~
+
+-  *Description*: Deploy model.
+-  *Arguments*:
+
++-------+--------------------+-----------+------------------------+------------+----------------------------------------------------------------+
+| No.   | Argument           | Flag\_1   | Flag\_2                | Required   | Description                                                    |
++=======+====================+===========+========================+============+================================================================+
+| 1     | model\_id          |           | ``--model-id``         | Yes        | Parent model id.                                               |
++-------+--------------------+-----------+------------------------+------------+----------------------------------------------------------------+
+| 2     | model\_version     |           | ``--model-version``    | Yes        | Parent model version.                                          |
++-------+--------------------+-----------+------------------------+------------+----------------------------------------------------------------+
+| 3     | cpn\_list          |           | ``--cpn-list``         | No         | User inputs a string to specify component list.                |
++-------+--------------------+-----------+------------------------+------------+----------------------------------------------------------------+
+| 4     | cpn\_path          |           | ``--cpn-path``         | No         | User specifies a file path which records the component list.   |
++-------+--------------------+-----------+------------------------+------------+----------------------------------------------------------------+
+| 5     | dsl\_path          |           | ``--train-dsl-path``   | No         | User specified predict dsl file.                               |
++-------+--------------------+-----------+------------------------+------------+----------------------------------------------------------------+
+
+-  *Examples*:
+
+.. code:: bash
+
+    flow model deploy --model_id $MODEL_ID --model_version $MODEL_VERSION
+
+``get-predict-dsl``
+~~~~~~~~~~~~~~~~~~~~
+
+-  *Description*: Get predict dsl of model.
+-  *Arguments*:
+
++-------+--------------------+-----------+--------------------+------------+--------------------------+
+| No.   | Argument           | Flag\_1   | Flag\_2            | Required   | Description              |
++=======+====================+===========+====================+============+==========================+
+| 1     | model\_id          |           | ``--model-id``     | Yes        | Model id                 |
++-------+--------------------+-----------+--------------------+------------+--------------------------+
+| 2     | model\_version     |           | ``--model-version``| Yes        | Model version            |
++-------+--------------------+-----------+--------------------+------------+--------------------------+
+| 3     | output\_path       | ``-o``    | ``--output-path``  | Yes        | Output directory path    |
++-------+--------------------+-----------+--------------------+------------+--------------------------+
+
+-  *Examples*:
+
+.. code:: bash
+
+    flow model get-predict-dsl --model_id $MODEL_ID --model_version $MODEL_VERSION -o ./examples/
+
+``get-predict-conf``
+~~~~~~~~~~~~~~~~~~~~
+
+-  *Description*: Get predict conf template of model.
+-  *Arguments*:
+
++-------+--------------------+-----------+--------------------+------------+--------------------------+
+| No.   | Argument           | Flag\_1   | Flag\_2            | Required   | Description              |
++=======+====================+===========+====================+============+==========================+
+| 1     | model\_id          |           | ``--model-id``     | Yes        | Model id                 |
++-------+--------------------+-----------+--------------------+------------+--------------------------+
+| 2     | model\_version     |           | ``--model-version``| Yes        | Model version            |
++-------+--------------------+-----------+--------------------+------------+--------------------------+
+| 3     | output\_path       | ``-o``    | ``--output-path``  | Yes        | Output directory path    |
++-------+--------------------+-----------+--------------------+------------+--------------------------+
+
+-  *Examples*:
+
+.. code:: bash
+
+    flow model get-predict-conf --model_id $MODEL_ID --model_version $MODEL_VERSION -o ./examples/
+
+
+``get-model-info``
+~~~~~~~~~~~~~~~~~~~~
+
+-  *Description*: Get information of model.
+-  *Arguments*:
+
++-------+--------------------+-----------+--------------------+------------+--------------------------+
+| No.   | Argument           | Flag\_1   | Flag\_2            | Required   | Description              |
++=======+====================+===========+====================+============+==========================+
+| 1     | model\_id          |           | ``--model-id``     | No         | Model id                 |
++-------+--------------------+-----------+--------------------+------------+--------------------------+
+| 2     | model\_version     |           | ``--model-version``| Yes        | Model version            |
++-------+--------------------+-----------+--------------------+------------+--------------------------+
+| 3     | role               | ``-r``    | ``--role``         | No         | Role                     |
++-------+--------------------+-----------+--------------------+------------+--------------------------+
+| 2     | party\_id          | ``-p``    | ``--party-id``     | No         | Party ID                 |
++-------+--------------------+-----------+--------------------+------------+--------------------------+
+| 3     | detail             |           | ``--detail``       | No         | Show details             |
++-------+--------------------+-----------+--------------------+------------+--------------------------+
+
+-  *Examples*:
+
+.. code:: bash
+
+    flow model model-info --model_id $MODEL_ID --model_version $MODEL_VERSION
+    flow model model-info --model_id $MODEL_ID --model_version $MODEL_VERSION --detail
+
 
 Tag
 ---
