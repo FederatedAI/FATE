@@ -15,7 +15,7 @@ This section introduces the dsl and conf for different types of tasks.
 
 3. Class Dictionary with Feature Engineering Task:
 
-    script: pipeline-sample-weight-feature-engineering.py
+    script: pipeline-sample-weight-class-dict-feature-engineering.py
 
 4. Balanced Mode Task:
 
