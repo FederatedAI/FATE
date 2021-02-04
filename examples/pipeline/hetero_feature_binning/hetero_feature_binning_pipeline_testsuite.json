@@ -78,9 +78,6 @@
         "hetero-binning-sparse-optimal-ks": {
             "script": "pipeline-hetero-binning-sparse-optimal-ks.py"
         },
-        "quantile-binning": {
-            "script": "pipeline-quantile-binning.py"
-        },
         "hetero-binning-sparse-optimal-iv": {
             "script": "pipeline-hetero-binning-sparse-optimal-iv.py"
         },
@@ -92,9 +89,6 @@
         },
         "hetero-binning-sparse-optimal-chi-square": {
             "script": "pipeline-hetero-binning-sparse-optimal-chi-square.py"
-        },
-        "quantile-binning-local-only": {
-            "script": "pipeline-quantile-binning-local-only.py"
         },
         "hetero-binning-skip-statistic": {
             "script": "pipeline-hetero-binning-skip-statistic.py"
