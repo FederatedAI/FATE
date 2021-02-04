@@ -40,7 +40,7 @@
 4.基础环境配置
 ==============
 
-4.1 hostname配置(可选)
+4.1 hostname配置
 ----------------
 
 **1）修改主机名**
@@ -63,7 +63,7 @@ vim /etc/hosts
 
 192.168.0.2 VM_0_2_centos
 
-4.2 关闭selinux(可选)
+4.2 关闭selinux
 ---------------
 
 **在目标服务器（192.168.0.1 192.168.0.2）root用户下执行：**
@@ -265,8 +265,8 @@ Swap:        131071           0      131071
 
 ```
 cd /data/projects/
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate_cluster_install_1.5.0_release-c7-u18.tar.gz
-tar xzf fate_cluster_install_1.5.0_release-c7-u18.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate_cluster_install_1.5.1_preview-c7-u18.tar.gz
+tar xzf fate_cluster_install_1.5.1_preview-c7-u18.tar.gz
 ```
 
 ## 5.2 部署前检查
@@ -303,7 +303,7 @@ vi fate-cluster-install/allInone/conf/setup.conf
 | 配置项              | 配置项值                                              | 说明                                                         |
 | ------------------- | ----------------------------------------------------- | ------------------------------------------------------------ |
 | roles               | 默认："host" "guest"                                  | 部署的角色，有HOST端、GUEST端                                |
-| version             | 默认：1.5.0                                           | Fate 版本号                                                  |
+| version             | 默认：1.5.1                                           | Fate 版本号                                                  |
 | pbase               | 默认： /data/projects                                 | 项目根目录                                                   |
 | lbase               | 默认：/data/logs                                      | 保持默认不要修改                                             |
 | ssh_user            | 默认：app                                             | ssh连接目标机器的用户，也是部署后文件的属主                  |
@@ -338,7 +338,7 @@ vi fate-cluster-install/allInone/conf/setup.conf
 #to install role
 roles=( "host" "guest" )
 
-version="1.5.0"
+version="1.5.1"
 #project base
 pbase="/data/projects"
 #log directory
@@ -403,7 +403,7 @@ nodemanager_port=4671
 #to install role
 roles=( "host" )
 
-version="1.5.0"
+version="1.5.1"
 #project base
 pbase="/data/projects"
 #log directory
@@ -582,6 +582,9 @@ python upload_default_data.py -m 1
 ```
 source /data/projects/fate/bin/init_env.sh
 cd /data/projects/fate/examples/min_test_task/
+#单边测试
+python run_task.py -m 1 -gid 9999 -hid 9999 -aid 9999 -f fast
+#双边测试
 python run_task.py -m 1 -gid 9999 -hid 10000 -aid 10000 -f fast
 ```
 

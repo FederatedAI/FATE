@@ -238,14 +238,12 @@ Job
 +--------+--------------------+-----------+------------------------+------------+------------------------------------+
 | 4      | output\_path       | ``-o``    | ``--output-path``      | 否         | 输出目录路径                       |
 +--------+--------------------+-----------+------------------------+------------+------------------------------------+
-| 5      | version            | ``-v``    | ``--version``          | 否         | DSL解析器版本（默认：1）           |
-+--------+--------------------+-----------+------------------------+------------+------------------------------------+
 
 -  *示例*\ ：
 
 .. code:: bash
 
-    flow job dsl --cpn-path fate_flow/examples/component_list.txt --train-dsl-path fate_flow/examples/test_hetero_lr_job_dsl.json --version 2
+    flow job dsl --cpn-path fate_flow/examples/component_list.txt --train-dsl-path fate_flow/examples/test_hetero_lr_job_dsl.json
 
     flow job dsl --cpn-path fate_flow/examples/component_list.txt --train-dsl-path fate_flow/examples/test_hetero_lr_job_dsl.json -o fate_flow/examples/
 

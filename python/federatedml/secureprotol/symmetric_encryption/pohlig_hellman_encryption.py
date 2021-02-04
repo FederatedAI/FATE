@@ -121,6 +121,9 @@ class PohligHellmanCiphertext(SymmetricCiphertext):
     def __init__(self, message):
         super(PohligHellmanCiphertext, self).__init__()
         self.message = message
+    
+    def __hash__(self):
+        return self.message.__hash__()
 
     def __eq__(self, other):
         if type(other) is not PohligHellmanCiphertext:
