@@ -137,16 +137,16 @@ class OptimalBinning(BaseBinning):
                                          is_sparse=is_sparse,
                                          get_bin_num_func=self.get_bin_num)
         bucket_table = data_instances.mapReducePartitions(convert_func, self.merge_bucket_list)
-        bucket_table = dict(bucket_table.collect())
+        # bucket_table = dict(bucket_table.collect())
 
         # for k, v in bucket_table.items():
         #     LOGGER.debug(f"[feature] {k}, length of list: {len(v)}")
 
         # LOGGER.debug("bucket_table: {}, length: {}".format(type(bucket_table), len(bucket_table)))
-        bucket_table = [(k, v) for k, v in bucket_table.items()]
+        # bucket_table = [(k, v) for k, v in bucket_table.items()]
         # LOGGER.debug("bucket_table: {}, length: {}".format(type(bucket_table), len(bucket_table)))
 
-        bucket_table = session.parallelize(bucket_table, include_key=True, partition=data_instances.partitions)
+        # bucket_table = session.parallelize(bucket_table, include_key=True, partition=data_instances.partitions)
 
         return bucket_table
 
