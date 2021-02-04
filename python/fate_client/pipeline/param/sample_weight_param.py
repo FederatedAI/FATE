@@ -58,9 +58,9 @@ class SampleWeightParam(BaseParam):
             if not isinstance(self.class_weight, str) and not isinstance(self.class_weight, dict):
                 raise ValueError(f"{descr} class_weight must be str, dict, or None.")
             if isinstance(self.class_weight, str):
-                self.class_weight = self.input_format = self.check_and_change_lower(self.class_weight,
-                                                        [consts.BALANCED],
-                                                        f"{descr} class_weight")
+                self.class_weight = self.check_and_change_lower(self.class_weight,
+                                                                [consts.BALANCED],
+                                                                f"{descr} class_weight")
 
         if self.sample_weight_name:
             self.check_string(self.sample_weight_name, f"{descr} sample_weight_name")
