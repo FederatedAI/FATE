@@ -265,8 +265,8 @@ Swap:        131071           0      131071
 
 ```
 cd /data/projects/
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate_cluster_install_1.5.1_preview-c7-u18.tar.gz
-tar xzf fate_cluster_install_1.5.1_preview-c7-u18.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate_cluster_install_1.5.1_release-c7-u18.tar.gz
+tar xzf fate_cluster_install_1.5.1_release-c7-u18.tar.gz
 ```
 
 ## 5.2 部署前检查
