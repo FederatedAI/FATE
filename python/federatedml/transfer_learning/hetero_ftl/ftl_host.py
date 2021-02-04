@@ -23,9 +23,10 @@ class FTLHost(FTL):
 
     def init_intersect_obj(self):
         LOGGER.debug('creating intersect obj done')
-        intersect_obj = intersect_host.RsaIntersectionHost(self.intersect_param)
+        intersect_obj = intersect_host.RsaIntersectionHost()
         intersect_obj.host_party_id = self.component_properties.local_partyid
         intersect_obj.host_party_id_list = self.component_properties.host_party_idlist
+        intersect_obj.load_params(self.intersect_param)
         return intersect_obj
 
     def batch_compute_components(self, data_loader: FTLDataLoader):

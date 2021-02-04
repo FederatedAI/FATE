@@ -34,9 +34,10 @@ class FTLGuest(FTL):
         self.role = consts.GUEST
 
     def init_intersect_obj(self):
-        intersect_obj = intersect_guest.RsaIntersectionGuest(self.intersect_param)
+        intersect_obj = intersect_guest.RsaIntersectionGuest()
         intersect_obj.guest_party_id = self.component_properties.local_partyid
         intersect_obj.host_party_id_list = self.component_properties.host_party_idlist
+        intersect_obj.load_params(self.intersect_param)
         LOGGER.debug('intersect done')
         return intersect_obj
 

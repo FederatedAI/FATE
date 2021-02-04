@@ -24,8 +24,8 @@ from fate_arch.common.base_utils import json_loads
 from fate_flow.settings import stat_logger, UPLOAD_DATA_FROM_CLIENT
 from fate_flow.utils.api_utils import get_json_result
 from fate_flow.utils import detect_utils, job_utils
-from fate_flow.scheduler import DAGScheduler
-from fate_flow.operation import JobSaver
+from fate_flow.scheduler.dag_scheduler import DAGScheduler
+from fate_flow.operation.job_saver import JobSaver
 
 manager = Flask(__name__)
 

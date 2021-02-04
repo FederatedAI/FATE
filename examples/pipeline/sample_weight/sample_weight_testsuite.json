@@ -21,8 +21,8 @@
         "sample-weight-balanced": {
             "script": "./pipeline-sample-weight-balanced.py"
         },
-        "sample-weight-feature-engineering": {
-            "script": "./pipeline-sample-weight-feature-engineering.py"
+        "sample-weight-class-dict-feature-engineering": {
+            "script": "./pipeline-sample-weight-class-dict-feature-engineering.py"
         },
         "sample-weight-name": {
             "script": "./pipeline-sample-weight-name.py"
