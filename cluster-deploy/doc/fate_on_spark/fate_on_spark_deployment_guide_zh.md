@@ -44,23 +44,23 @@
 请参阅部署指南：[Hadoop_Spark_deployment_guide_zh](hadoop_spark_deployment_guide_zh.md)
 
 ## 5. 部署FATE
-请参阅部署指南：[fate_on_spark_deployment_fate_zh](fate_on_spark_deployment_fate_zh.md)的1、2、3章节
+请参阅部署指南：[fate_deployment_step_by_step_zh](fate_deployment_step_by_step_zh.md)的1、2、3章节
 
 ## 6. FATE配置文件修改
-请参阅部署指南：[fate_on_spark_deployment_fate_zh](fate_on_spark_deployment_fate_zh.md)的第4章节
+请参阅部署指南：[fate_deployment_step_by_step_zh](fate_deployment_step_by_step_zh.md)的第4章节
 其中hdfs的namenode配置为对应的
 
 ## 7. 启动
-请参阅部署指南：[fate_on_spark_deployment_fate_zh](fate_on_spark_deployment_fate_zh.md)的第5章节
+请参阅部署指南：[fate_deployment_step_by_step_zh](fate_deployment_step_by_step_zh.md)的第5章节
 
 ## 8. 问题定位
-请参阅部署指南：[fate_on_spark_deployment_fate_zh](fate_on_spark_deployment_fate_zh.md)的第6章节
+请参阅部署指南：[fate_deployment_step_by_step_zh](fate_deployment_step_by_step_zh.md)的第6章节
 
 ## 9. 测试
-请参阅部署指南：[fate_on_spark_deployment_fate_zh](fate_on_spark_deployment_fate_zh.md)的第7章节
+请参阅部署指南：[fate_deployment_step_by_step_zh](fate_deployment_step_by_step_zh.md)的第7章节
 
 ## 10.系统运维
-请参阅部署指南：[fate_on_spark_deployment_fate_zh](fate_on_spark_deployment_fate_zh.md)的第8章节
+请参阅部署指南：[fate_deployment_step_by_step_zh](fate_deployment_step_by_step_zh.md)的第8章节
 
 ## 11. 附录
-请参阅部署指南：[fate_on_spark_deployment_fate_zh](fate_on_spark_deployment_fate_zh.md)的第9章节
+请参阅部署指南：[fate_deployment_step_by_step_zh](fate_deployment_step_by_step_zh.md)的第9章节

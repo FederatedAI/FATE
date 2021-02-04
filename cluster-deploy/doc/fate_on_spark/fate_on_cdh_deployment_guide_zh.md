@@ -60,7 +60,7 @@ Guest方和Host方可以都以一个CDH作为后台执行引擎，也可以模�
 | RabbitMQ |           | 5672          | 跨站点(party)数据交换代理                             |
 
 ## 6. 部署FATE
-请参阅部署指南：[fate_on_spark_deployment_fate_zh](fate_on_spark_deployment_fate_zh.md)的1、2、3章节, 注意使用hdfs用户代替app用户
+请参阅部署指南：[fate_deployment_step_by_step_zh](fate_deployment_step_by_step_zh.md)的1、2、3章节, 注意使用hdfs用户代替app用户
 
 ## 7. 部署CDH集群Client
 ### 7.1 部署hadoop client
@@ -188,7 +188,7 @@ mkdir -p /data/projects/fate/common
 mkdir -p /data/projects/fate/python
 ```
 #### 8.3 安装python
-请参阅部署指南：[fate_on_spark_deployment_fate_zh](fate_on_spark_deployment_fate_zh.md)的python部署章节
+请参阅部署指南：[fate_deployment_step_by_step_zh](fate_deployment_step_by_step_zh.md)的python部署章节
 
 #### 8.4 安装fate flow 源码
 将部署Fate机器的目录/data/projects/fate/python/下的arch、fate_arch、federatedml三个文件夹拷贝到CDH集群的/data/projects/fate/python目录下
@@ -200,18 +200,18 @@ scp -r  arch fate_arch federatedml hdfs@192.168.0.x:/data/projects/fate/python/
 ```
 
 ## 10. FATE配置文件修改
-请参阅部署指南：[fate_on_spark_deployment_fate_zh](fate_on_spark_deployment_fate_zh.md)的第4章节
+请参阅部署指南：[fate_deployment_step_by_step_zh](fate_deployment_step_by_step_zh.md)的第4章节
 其中hdfs的namenode配置为对应的
 
 ## 11. 启动
-请参阅部署指南：[fate_on_spark_deployment_fate_zh](fate_on_spark_deployment_fate_zh.md)的第5章节
+请参阅部署指南：[fate_deployment_step_by_step_zh](fate_deployment_step_by_step_zh.md)的第5章节
 ## 12. 问题定位
-请参阅部署指南：[fate_on_spark_deployment_fate_zh](fate_on_spark_deployment_fate_zh.md)的第6章节
+请参阅部署指南：[fate_deployment_step_by_step_zh](fate_deployment_step_by_step_zh.md)的第6章节
 ## 13. 测试
-请参阅部署指南：[fate_on_spark_deployment_fate_zh](fate_on_spark_deployment_fate_zh.md)的第7章节
+请参阅部署指南：[fate_deployment_step_by_step_zh](fate_deployment_step_by_step_zh.md)的第7章节
 ## 14.系统运维
 ### 14.1 FATE
-请参阅部署指南：[fate_on_spark_deployment_fate_zh](fate_on_spark_deployment_fate_zh.md)的第8章节
+请参阅部署指南：[fate_deployment_step_by_step_zh](fate_deployment_step_by_step_zh.md)的第8章节
 
 ### 14.2 Spark
 
@@ -230,7 +230,7 @@ sh ./sbin/stop-all.sh
 如果提示输入spark节点的密码，可以使用Ctrl+c 退出
 
 ## 15. 附录
-请参阅部署指南：[fate_on_spark_deployment_fate_zh](fate_on_spark_deployment_fate_zh.md)的第9章节
+请参阅部署指南：[fate_deployment_step_by_step_zh](fate_deployment_step_by_step_zh.md)的第9章节
 
 ## 16. 部署过程中的问题
 

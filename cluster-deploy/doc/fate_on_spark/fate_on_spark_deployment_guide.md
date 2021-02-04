@@ -44,22 +44,22 @@ Architecture:
 Please refer: [Hadoop_Spark_deployment_guide](hadoop_spark_deployment_guide.md)
 
 ## 5. Deploy FATE
-Please refer: [fate_on_spark_deployment_fate](fate_on_spark_deployment_fate.md) first/second/third chapter
+Please refer: [fate_deployment_step_by_step](fate_deployment_step_by_step.md) first/second/third chapter
 
 ## 6. Modify FATE Configuration
-Please refer: [fate_on_spark_deployment_fate](fate_on_spark_deployment_fate.md) fourth chapter
+Please refer: [fate_deployment_step_by_step](fate_deployment_step_by_step.md) fourth chapter
 
 ## 7. Start FATE
-Please refer: [fate_on_spark_deployment_fate](fate_on_spark_deployment_fate.md) fifth chapter
+Please refer: [fate_deployment_step_by_step](fate_deployment_step_by_step.md) fifth chapter
 
 ## 8. Debug
-Please refer: [fate_on_spark_deployment_fate](fate_on_spark_deployment_fate.md) sixth chapter
+Please refer: [fate_deployment_step_by_step](fate_deployment_step_by_step.md) sixth chapter
 
 ## 9. Test
-Please refer: [fate_on_spark_deployment_fate](fate_on_spark_deployment_fate.md) seventh chapter
+Please refer: [fate_deployment_step_by_step](fate_deployment_step_by_step.md) seventh chapter
 
 ## 10. System Management
-Please refer: [fate_on_spark_deployment_fate](fate_on_spark_deployment_fate.md) eighth chapter
+Please refer: [fate_deployment_step_by_step](fate_deployment_step_by_step.md) eighth chapter
 
 ## 11. Appendix
-Please refer: [fate_on_spark_deployment_fate](fate_on_spark_deployment_fate.md) ninth chapter
+Please refer: [fate_deployment_step_by_step](fate_deployment_step_by_step.md) ninth chapter
