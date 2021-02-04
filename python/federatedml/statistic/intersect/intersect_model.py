@@ -127,6 +127,8 @@ class IntersectModelBase(ModelBase):
     def fit(self, data):
         self.__init_intersect_method()
 
+        self.intersect_ids = self.intersection_obj.run(data)
+
         if self.model_param.repeated_id_process:
             if self.model_param.intersect_cache_param.use_cache is True and self.model_param.intersect_method == consts.RSA:
                 raise ValueError("Not support cache module while repeated id process.")
@@ -142,10 +144,7 @@ class IntersectModelBase(ModelBase):
                     or self.model_param.intersect_method == consts.RAW and self.model_param.join_role == self.model_param.info_owner:
                 self.model_param.sync_intersect_ids = False
 
-        self.intersect_ids = self.intersection_obj.run(data)
-
-        if self.model_param.allow_info_share:
-            self.intersect_ids = self.__share_info(data)
+            self.intersect_ids = self.__share_info(self.intersect_ids)
 
         LOGGER.info("Finish intersection")
 
