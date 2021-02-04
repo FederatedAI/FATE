@@ -90,6 +90,7 @@ class Parties(object):
         self._party_to_role_string = {}
         for role in kwargs:
             parties = kwargs[role]
+            setattr(self, role, parties)
             for i, party in enumerate(parties):
                 if party not in self._party_to_role_string:
                     self._party_to_role_string[party] = set()

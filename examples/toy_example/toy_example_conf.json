@@ -6,9 +6,7 @@
   "job_parameters": {
     "work_mode": 0,
     "backend": 0,
-    "eggroll_run": {
-      "eggroll.session.processors.per.node": 2
-    }
+    "task_cores": 2
   },
   "role": {
     "guest": [

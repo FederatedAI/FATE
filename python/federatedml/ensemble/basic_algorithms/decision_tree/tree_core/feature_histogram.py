@@ -92,6 +92,9 @@ class HistogramBag(object):
     def __str__(self):
         return str(self.bag)
 
+    def __repr__(self):
+        return str(self.bag)
+
 
 class FeatureHistogramWeights(Weights):
 
@@ -146,6 +149,9 @@ class FeatureHistogramWeights(Weights):
 
     def __str__(self):
         return str([str(hist) for hist in self.hists])
+
+    def __repr__(self):
+        return str(self.hists)
 
 
 class FeatureHistogram(object):

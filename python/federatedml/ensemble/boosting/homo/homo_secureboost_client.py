@@ -193,6 +193,7 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
         for fid, importance in feature_importance:
             feature_importance_param.append(FeatureImportanceInfo(fid=fid,
                                                                   fullname=self.feature_name_fid_mapping[fid],
+                                                                  sitename=self.role,
                                                                   importance=importance.importance,
                                                                   importance2=importance.importance_2,
                                                                   main=importance.main_type
