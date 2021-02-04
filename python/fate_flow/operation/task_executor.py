@@ -23,7 +23,7 @@ from fate_arch.common.log import schedule_logger, getLogger
 from fate_arch import session
 from fate_flow.entity.types import TaskStatus, ProcessRole, RunParameters
 from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.operation import Tracker
+from fate_flow.operation.job_tracker import Tracker
 from fate_arch import storage
 from fate_flow.utils import job_utils, schedule_utils
 from fate_flow.scheduling_apps.client import ControllerClient
