@@ -43,7 +43,9 @@
                     "n_splits": 5,
                     "shuffle": false,
                     "random_seed": 42,
-                    "need_cv": true
+                    "need_cv": true,
+                    "output_fold_history": true,
+                    "history_value_type": "instance"
                 },
                 "decay": 0.0,
                 "decay_sqrt": false

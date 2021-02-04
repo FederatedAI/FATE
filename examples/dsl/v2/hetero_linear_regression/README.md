@@ -22,7 +22,7 @@ This section introduces the dsl and conf for different types of tasks.
 
     runtime_config : test_hetero_linr_validate_job_conf.json
 
-4. Cross Validation Task:
+4. Cross Validation Task(with fold history data output of instance value):
 
     dsl: test_hetero_linr_cv_job_dsl.json
 
