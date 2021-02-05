@@ -1,8 +1,8 @@
 Feldman Verifiable Sum
-==================
+======================
 
 Introduction
-------------------
+------------
 
 Verifiable secret sharing mechanism is an efficient and practical secret sharing mechanism. Feldman Verifiable sum is
 a multi-party private data summation module based on verifiable secret sharing.This component can sum the same feature
@@ -33,7 +33,7 @@ How to Use
 In general, this component can be used in the data preprocessing stage to count some features. It supports integers and
 floating-point numbers from - 2 ^ 63 to 2 ^ 64. By default, the maximum precision is set to 6 decimal places.
 
-There is an `[examples] <../../../../examples/pipeline/feldman_verifiable_sum/feldman_verifiable_sum_testsuite.json>`_
+There is an `[example] <../../../../examples/pipeline/feldman_verifiable_sum>`_
 
 Param
 -------------------
@@ -49,4 +49,4 @@ Features
 
 1.Supports summation of floating-point numbers and negative numbers
 
-2.Attacks can be resisted when the malicious participant is less than (n-1)/2
+2.Attacks can be detected when the malicious participant is less than (n-1)/2

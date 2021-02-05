@@ -46,7 +46,7 @@ Field Specification
 :component_name: key of a component. This name should end with a "_num" such as "_0", "_1" etc. And the number should start with 0. This is used to distinguish multiple same kind of components that may exist.
 
 :module: Specify which component use. This field should be one of the algorithm modules FATE supported.
-         The supported algorithms can be referred to `here <../../federatedml/README.rst>`__
+         The supported algorithms can be referred to `here <../../python/federatedml/README.rst>`__
 
     - input: There are two type of input, data and model.
 
@@ -117,7 +117,7 @@ Step4: Start Modeling Task
 
     .. code-block::
 
-        python ${your_install_path}/fate_flow/fate_flow_client.py -f upload -c upload_data.json
+        python ${your_install_path}/python/fate_flow/fate_flow_client.py -f upload -c upload_data.json
 
     Here is an example of configuring upload_data.json:
 
@@ -160,7 +160,7 @@ Step4: Start Modeling Task
 
     .. code-block:: bash
         
-        python ${your_install_path}/fate_flow/fate_flow_client.py -f submit_job -d hetero_logistic_regression/test_hetero_lr_train_job_dsl.json -c hetero_logistic_regression/test_hetero_lr_train_job_conf.json
+        python ${your_install_path}/python/fate_flow/fate_flow_client.py -f submit_job -d hetero_logistic_regression/test_hetero_lr_train_job_dsl.json -c hetero_logistic_regression/test_hetero_lr_train_job_conf.json
 
 :Check log files:
     Now you can check out the log in the following path: ${your_install_path}/logs/{your jobid}.
@@ -392,27 +392,3 @@ where
 - ${role}: the role of current user. Please keep in mind that host users are not supposed to get predict results in heterogeneous algorithm.
 - ${component_name}: the component who has predict results
 - ${predict_result_output_dir}: the directory which use download the predict result to.
-
-
-use spark
----------
-
-1. deploy spark(yarn or standalone)
-2. export SPARK_HOME env before fate_flow service start(better adding env to service.sh)
-3. adjust runtime_conf, adjust job_parameters field:
-   
-   .. code-block:: json
-
-      {
-        "job_parameters": {
-            "backend": 1,
-            "spark_submit_config": {
-                "deploy-mode": "client",
-                "queue": "default",
-                "driver-memory": "1g",
-                "num-executors": 2,
-                "executor-memory": "1g",
-                "executor-cores": 1
-            }
-        }
-      }

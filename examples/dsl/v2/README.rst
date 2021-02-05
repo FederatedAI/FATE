@@ -1,5 +1,5 @@
-V2 DSL&Conf Examples
-====================
+V2 DSL & Conf Examples
+======================
 
 This is folder showing examples of each components.
 
