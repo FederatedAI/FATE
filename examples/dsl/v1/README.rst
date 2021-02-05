@@ -27,15 +27,6 @@ Field Specification
 :table_name & namespace: Indicators for stored data table.
 :work_mode: Indicate if using standalone version or cluster version. 0 represent for standalone version and 1 stand for cluster version.
 
-.. Note::
-    We suggest you fully consider the resource of modeling machines before setting partition number.
-
-    Assume that the CPU cores (cpu cores) are: c, The number of Nodemanager is: n, The number of tasks to be run simultaneously is p, then:
-
-    egg_num=eggroll.session.processors.per.node = c * 0.8 / p
-
-    partitions (Number of roll pair partitions) = egg_num * n
-
 
 Step2: Define your modeling task structure
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
