@@ -6,13 +6,13 @@
 
 **1) Modify Hostname**
 
-**Execute on 192.169.0.1 as the root user**:
+**Execute on 192.168.0.1 as the root user**:
 
 ```bash
 hostnamectl set-hostname VM-0-1-centos
 ```
 
-**Execute on 192.169.0.2 as the root user**:
+**Execute on 192.168.0.2 as the root user**:
 
 ```bash
 hostnamectl set-hostname VM-0-2-centos
@@ -20,18 +20,18 @@ hostnamectl set-hostname VM-0-2-centos
 
 **2) Add Host Mapping**
 
-**Execute on 192.169.0.1 192.169.0.2 as the root user**:
+**Execute on 192.168.0.1 192.168.0.2 as the root user**:
 
 ```bash
 vim /etc/hosts
-192.169.0.1 VM-0-1-centos
-192.169.0.2 VM-0-2-centos
+192.168.0.1 VM-0-1-centos
+192.168.0.2 VM-0-2-centos
 ```
 
 ### 1.2 Disable SELinux(Optional)
 
 
-**Execute on 192.169.0.1 192.169.0.2 as the root user**:
+**Execute on 192.168.0.1 192.168.0.2 as the root user**:
 
 Check if SELinux is available:
 
@@ -56,7 +56,7 @@ setenforce 0
 
 ### 1.3 Set Linux resource limit
 
-**Execute on 192.169.0.1 192.169.0.2 as the root user**:
+**Execute on 192.168.0.1 192.168.0.2 as the root user**:
 
 ```bash
 vim /etc/security/limits.conf
@@ -72,7 +72,7 @@ vim /etc/security/limits.d/20-nproc.conf
 ### 1.4 Disable & Stop Firewall(Optional)
 
 
-**Execute on 192.169.0.1 192.169.0.2 as the root user**:
+**Execute on 192.168.0.1 192.168.0.2 as the root user**:
 
 CentOS:
 
@@ -91,7 +91,7 @@ ufw status
 
 ### 1.5 Initialize Software Environment
 
-**Execute on 192.169.0.1 192.169.0.2 as the root user**:
+**Execute on 192.168.0.1 192.168.0.2 as the root user**:
 
 **1) Create User**
 
@@ -133,7 +133,7 @@ User may modify the given comments as needed.
 ### 2.1 Obtain packages
 
 
-**Execute on 192.169.0.1 (with Internet access) as user app**:
+**Execute on 192.168.0.1 (with Internet access) as user app**:
 
 ```bash
 mkdir -p /data/projects/install
@@ -145,14 +145,14 @@ wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/openresty-1.17.9
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/pip-packages-fate-1.5.1.tar.gz
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_1.5.1_release.tar.gz
 
-#scp packages to 192.169.0.1和192.169.0.2
-scp *.tar.gz app@192.169.0.1:/data/projects/install
-scp *.tar.gz app@192.169.0.2:/data/projects/install
+#scp packages to 192.168.0.1和192.168.0.2
+scp *.tar.gz app@192.168.0.1:/data/projects/install
+scp *.tar.gz app@192.168.0.2:/data/projects/install
 ```
 
 ### 2.2 Check Settings of OS
 
-**Execute on 192.169.0.1 192.169.0.2 as user app**:
+**Execute on 192.168.0.1 192.168.0.2 as user app**:
 
 ```bash
 #number of open files limit should be no lower than 65535; refer to section 4.3 to set
@@ -166,7 +166,7 @@ ulimit -u
 
 ### 2.3 Install MySQL
 
-**Execute on 192.169.0.1 192.169.0.2 as user app**:
+**Execute on 192.168.0.1 192.168.0.2 as user app**:
 
 **1）Install MySQL：**
 
@@ -179,30 +179,30 @@ mkdir -p /data/projects/fate/data/mysql
 cd /data/projects/install
 tar xzvf mysql-*.tar.gz
 cd mysql
-tar xf mysql-9.0.13.tar.gz -C /data/projects/fate/common/mysql
+tar xf mysql-8.0.13.tar.gz -C /data/projects/fate/common/mysql
 
 #configure
-mkdir -p /data/projects/fate/common/mysql/mysql-9.0.13/{conf,run,logs}
-cp service.sh /data/projects/fate/common/mysql/mysql-9.0.13/
-cp my.cnf /data/projects/fate/common/mysql/mysql-9.0.13/conf
+mkdir -p /data/projects/fate/common/mysql/mysql-8.0.13/{conf,run,logs}
+cp service.sh /data/projects/fate/common/mysql/mysql-8.0.13/
+cp my.cnf /data/projects/fate/common/mysql/mysql-8.0.13/conf
 
 #initialize
-cd /data/projects/fate/common/mysql/mysql-9.0.13/
-./bin/mysqld --initialize --user=app --basedir=/data/projects/fate/common/mysql/mysql-9.0.13 --datadir=/data/projects/fate/data/mysql > logs/init.log 2>&1
+cd /data/projects/fate/common/mysql/mysql-8.0.13/
+./bin/mysqld --initialize --user=app --basedir=/data/projects/fate/common/mysql/mysql-8.0.13 --datadir=/data/projects/fate/data/mysql > logs/init.log 2>&1
 cat logs/init.log |grep root@localhost
 #User should record passowrd from terminal output 'root@localhost:{$password}', which is password for MySQL root user and is needed later
 
 #Start Service
-cd /data/projects/fate/common/mysql/mysql-9.0.13/
+cd /data/projects/fate/common/mysql/mysql-8.0.13/
 nohup ./bin/mysqld_safe --defaults-file=./conf/my.cnf --user=app >>logs/mysqld.log 2>&1 &
 
 #Change MySQL root user password to 'fate_dev'
-cd /data/projects/fate/common/mysql/mysql-9.0.13/
+cd /data/projects/fate/common/mysql/mysql-8.0.13/
 ./bin/mysqladmin -h 128.0.0.1 -P 3306 -S ./run/mysql.sock -u root -p password "fate_dev"
 Enter Password: {$password}
 
 #Login
-cd /data/projects/fate/common/mysql/mysql-9.0.13/
+cd /data/projects/fate/common/mysql/mysql-8.0.13/
 ./bin/mysql -u root -p -S ./run/mysql.sock
 Enter Password: fate_dev
 ```
@@ -210,7 +210,7 @@ Enter Password: fate_dev
 **2) Create Database & Configure User**
 
 ```bash
-cd /data/projects/fate/common/mysql/mysql-9.0.13/
+cd /data/projects/fate/common/mysql/mysql-8.0.13/
 ./bin/mysql -u root -p -S ./run/mysql.sock
 Enter Password: fate_dev
 
@@ -218,14 +218,14 @@ Enter Password: fate_dev
 mysql>CREATE DATABASE IF NOT EXISTS fate_flow;
 
 #create remote user and grant privileges
-1) execute on 192.169.0.1
-mysql>CREATE USER 'fate'@'192.169.0.1' IDENTIFIED BY 'fate_dev';
-mysql>GRANT ALL ON *.* TO 'fate'@'192.169.0.1';
+1) execute on 192.168.0.1
+mysql>CREATE USER 'fate'@'192.168.0.1' IDENTIFIED BY 'fate_dev';
+mysql>GRANT ALL ON *.* TO 'fate'@'192.168.0.1';
 mysql>flush privileges;
 
-2) execute on 192.169.0.2:
-mysql>CREATE USER 'fate'@'192.169.0.2' IDENTIFIED BY 'fate_dev';
-mysql>GRANT ALL ON *.* TO 'fate'@'192.169.0.2';
+2) execute on 192.168.0.2:
+mysql>CREATE USER 'fate'@'192.168.0.2' IDENTIFIED BY 'fate_dev';
+mysql>GRANT ALL ON *.* TO 'fate'@'192.168.0.2';
 mysql>flush privileges;
 
 #Check
@@ -239,7 +239,7 @@ mysql>select * from server_node;
 
 ### 2.4 Install JDK
 
-**Execute on 192.169.0.1 192.169.0.2 as user app**:
+**Execute on 192.168.0.1 192.168.0.2 as user app**:
 
 ```bash
 #make jdk home base
@@ -248,12 +248,12 @@ mkdir -p /data/projects/fate/common/jdk
 cd /data/projects/install
 tar xzf jdk-8u192-linux-x64.tar.gz -C /data/projects/fate/common/jdk
 cd /data/projects/fate/common/jdk
-mv jdk1.9.0_192 jdk-8u192
+mv jdk1.8.0_192 jdk-8u192
 ```
 
 ### 2.5 Install python
 
-**Execute on 192.169.0.1 192.169.0.2 as user app**:
+**Execute on 192.168.0.1 192.168.0.2 as user app**:
 
 ```bash
 #make python virtual env home base
@@ -281,7 +281,7 @@ pip list | wc -l
 
 ### 2.6 Install Nginx
 
-**Execute on 192.169.0.1 192.169.0.2 as user app**:
+**Execute on 192.168.0.1 192.168.0.2 as user app**:
 
 ```bash
 cd /data/projects/install
@@ -307,7 +307,7 @@ Please refer: [RabbitMQ_deployment_guide](rabbitmq_deployment_guide.md)
 
 ```
 #deploy software
-#Execute on 192.169.0.1 192.169.0.2 as user app:
+#Execute on 192.168.0.1 192.168.0.2 as user app:
 cd /data/projects/install
 tar xf FATE_install_*.tar.gz
 cd FATE_install_*
@@ -319,7 +319,7 @@ tar xvf fateboard.tar.gz -C /data/projects/fate
 tar xvf proxy.tar.gz -C /data/projects/fate
 
 #Set Environemnt Variable
-#Execute on 192.169.0.1 192.169.0.2 as user app:
+#Execute on 192.168.0.1 192.168.0.2 as user app:
 cat >/data/projects/fate/bin/init_env.sh <<EOF
 export PYTHONPATH=/data/projects/fate/python
 export SPARK_HOME=/data/projects/common/spark/spark-2.4.1-bin-hadoop2.7
@@ -353,47 +353,47 @@ Configuration may also be done through commands:
 
 
 ```
-#Execute on 192.169.0.1 as user app
+#Execute on 192.168.0.1 as user app
 cat > /data/projects/fate/proxy/nginx/conf/route_table.yaml << EOF
 default:
   proxy:
-    - host: 192.169.0.2
+    - host: 192.168.0.2
       port: 9390
 10000:
   proxy:
-    - host: 192.169.0.1
+    - host: 192.168.0.1
       port: 9390
   fateflow:
-    - host: 192.169.0.1
+    - host: 192.168.0.1
       port: 9360
 9999:
   proxy:
-    - host: 192.169.0.2
+    - host: 192.168.0.2
       port: 9390
   fateflow:
-    - host: 192.169.0.2
+    - host: 192.168.0.2
       port: 9360
 EOF
 
-#Execute on 192.169.0.2 as user app
+#Execute on 192.168.0.2 as user app
 cat > /data/projects/fate/proxy/nginx/conf/route_table.yaml << EOF
 default:
   proxy:
-    - host: 192.169.0.1
+    - host: 192.168.0.1
       port: 9390
 10000:
   proxy:
-    - host: 192.169.0.1
+    - host: 192.168.0.1
       port: 9390
   fateflow:
-    - host: 192.169.0.1
+    - host: 192.168.0.1
       port: 9360
 9999:
   proxy:
-    - host: 192.169.0.2
+    - host: 192.168.0.2
       port: 9390
   fateflow:
-    - host: 192.169.0.2
+    - host: 192.168.0.2
       port: 9360
 EOF
 ```
@@ -408,11 +408,11 @@ EOF
 
 - Fate-Flow access url
 
-  fateflow.url, host: http://192.169.0.1:9380, guest: http://192.169.0.2:9380
+  fateflow.url, host: http://192.168.0.1:9380, guest: http://192.168.0.2:9380
 
 - Database source name, username, and password
 
-  fateboard.datasource.jdbc-url，host：mysql://192.169.0.1:3306，guest：mysql://192.169.0.2:3306
+  fateboard.datasource.jdbc-url，host：mysql://192.168.0.1:3306，guest：mysql://192.168.0.2:3306
 
   fateboard.datasource.username：fate
 
@@ -427,30 +427,30 @@ All above parameters may be modified manually by referring to the example below:
 Configuration may also be done through commands:  
   
 ```bash
-#Execute on 192.169.0.1 as user app
+#Execute on 192.168.0.1 as user app
 cat > /data/projects/fate/fateboard/conf/application.properties <<EOF
 server.port=8080
-fateflow.url=http://192.169.0.1:9380
+fateflow.url=http://192.168.0.1:9380
 spring.datasource.driver-Class-Name=com.mysql.cj.jdbc.Driver
 spring.http.encoding.charset=UTF-8
 spring.http.encoding.enabled=true
 server.tomcat.uri-encoding=UTF-8
-fateboard.datasource.jdbc-url=jdbc:mysql://192.169.0.1:3306/fate_flow?characterEncoding=utf8&characterSetResults=utf8&autoReconnect=true&failOverReadOnly=false&serverTimezone=GMT%2B8
+fateboard.datasource.jdbc-url=jdbc:mysql://192.168.0.1:3306/fate_flow?characterEncoding=utf8&characterSetResults=utf8&autoReconnect=true&failOverReadOnly=false&serverTimezone=GMT%2B8
 fateboard.datasource.username=fate
 fateboard.datasource.password=fate_dev
 server.tomcat.max-threads=1000
 server.tomcat.max-connections=20000
 EOF
 
-#Execute on 192.169.0.2 as user ap
+#Execute on 192.168.0.2 as user ap
 cat > /data/projects/fate/fateboard/conf/application.properties <<EOF
 server.port=8080
-fateflow.url=http://192.169.0.2:9380
+fateflow.url=http://192.168.0.2:9380
 spring.datasource.driver-Class-Name=com.mysql.cj.jdbc.Driver
 spring.http.encoding.charset=UTF-8
 spring.http.encoding.enabled=true
 server.tomcat.uri-encoding=UTF-8
-fateboard.datasource.jdbc-url=jdbc:mysql://192.169.0.2:3306/fate_flow?characterEncoding=utf8&characterSetResults=utf8&autoReconnect=true&failOverReadOnly=false&serverTimezone=GMT%2B8
+fateboard.datasource.jdbc-url=jdbc:mysql://192.168.0.2:3306/fate_flow?characterEncoding=utf8&characterSetResults=utf8&autoReconnect=true&failOverReadOnly=false&serverTimezone=GMT%2B8
 fateboard.datasource.username=fate
 fateboard.datasource.password=fate_dev
 server.tomcat.max-threads=1000
@@ -461,7 +461,7 @@ EOF
 2) service.sh
 
 ```
-#Execute on 192.169.0.1 192.169.0.2 as user ap
+#Execute on 192.168.0.1 192.168.0.2 as user ap
 cd /data/projects/fate/fateboard
 vi service.sh
 export JAVA_HOME=/data/projects/fate/common/jdk/jdk-8u192
@@ -505,23 +505,23 @@ export JAVA_HOME=/data/projects/fate/common/jdk/jdk-8u192
 
 
 ```
-#Execute on 192.169.0.1 as user ap
+#Execute on 192.168.0.1 as user ap
 cat > /data/projects/fate/conf/service_conf.yaml <<EOF
 work_mode: 1
 independent_scheduling_proxy: true
 use_registry: false
 fateflow:
-  host: 192.169.0.1
+  host: 192.168.0.1
   http_port: 9380
   grpc_port: 9360
 fateboard:
-  host: 192.169.0.1
+  host: 192.168.0.1
   port: 8080
 database:
   name: fate_flow
   user: fate
   passwd: fate_dev
-  host: 192.169.0.1
+  host: 192.168.0.1
   port: 3306
   max_connections: 100
   stale_timeout: 30
@@ -537,37 +537,37 @@ HDFS:
 RABBITMQ:
   address:
     self:
-      10000: 192.169.0.3
+      10000: 192.168.0.3
       mng_port: 12345
       port: 5672
       user: fate
       password: fate
     9999:
-      host: 192.169.0.4
+      host: 192.168.0.4
       port: 5672
 PROXY:
   address:
-    host: 192.169.0.1
+    host: 192.168.0.1
     port: 9390
 EOF
 
-#Execute on 192.169.0.2 as user ap
+#Execute on 192.168.0.2 as user ap
 cat > /data/projects/fate/conf/service_conf.yaml <<EOF
 work_mode: 1
 independent_scheduling_proxy: true
 use_registry: false
 fateflow:
-  host: 192.169.0.2
+  host: 192.168.0.2
   http_port: 9380
   grpc_port: 9360
 fateboard:
-  host: 192.169.0.2
+  host: 192.168.0.2
   port: 8080
 database:
   name: fate_flow
   user: fate
   passwd: fate_dev
-  host: 192.169.0.2
+  host: 192.168.0.2
   port: 3306
   max_connections: 100
   stale_timeout: 30
@@ -583,24 +583,24 @@ HDFS:
 RABBITMQ:
   address:
     self:
-      9999: 192.169.0.4
+      9999: 192.168.0.4
       mng_port: 12345
       port: 5672
       user: fate
       password: fate
     10000:
-      host: 192.169.0.3
+      host: 192.168.0.3
       port: 5672
 PROXY:
   address:
-    host: 192.169.0.2
+    host: 192.168.0.2
     port: 9390
 EOF
 ```
 
 ## 5. Start Service
 
-**#Execute on 192.169.0.1 192.169.0.2 as user ap**
+**#Execute on 192.168.0.1 192.168.0.2 as user ap**
 
 ```
 #start FATE service, FATE-Flow depennds on MytSQL to start
@@ -637,7 +637,7 @@ Set 3 parameters before starting test: `guest_partyid`, `host_partyid`, `work_mo
 
 #### 7.1.1 Local Test
 
-1) Execute on 192.169.0.1, set guest_partyid & host_partyid to 10000：
+1) Execute on 192.168.0.1, set guest_partyid & host_partyid to 10000：
 
 ```bash
 source /data/projects/fate/bin/init_env.sh
@@ -649,7 +649,7 @@ If test succeeds, terminal should print similar results:
 
 "2020-04-28 18:26:20,789 - secure_add_guest.py[line:126] - INFO: success to calculate secure_sum, it is 1999.9999999999998"
 
-2) Execute on 192.169.0.2, set guest_partyid & host_partyid to 9999:
+2) Execute on 192.168.0.2, set guest_partyid & host_partyid to 9999:
 
 ```bash
 source /data/projects/fate/bin/init_env.sh
@@ -663,7 +663,7 @@ If test succeeds, terminal should print similar results:
 
 #### 7.1.2 Federated Test
 
-Set 9999 to be guest, execute on 192.169.0.2:
+Set 9999 to be guest, execute on 192.168.0.2:
 
 ```bash
 source /data/projects/fate/bin/init_env.sh
@@ -679,7 +679,7 @@ If test succeeds, terminal should print similar results:
 
 #### 7.2.1 Upload Pre-set Data
 
-Execute on 192.169.0.1 & 192.169.0.2:
+Execute on 192.168.0.1 & 192.168.0.2:
 
 ```bash
 source /data/projects/fate/bin/init_env.sh
@@ -695,7 +695,7 @@ Please make sure that guest and host already upload pre-set data through scripts
 
 With fast mode, min test runs with a small data set--`breast` with 569 entries.
 
-Set 9999 to be guest, execute on 192.169.0.2:
+Set 9999 to be guest, execute on 192.168.0.2:
 
 ```bash
 source /data/projects/fate/bin/init_env.sh
@@ -717,7 +717,7 @@ Replace “fast” to “normal” in the command above.
 ### 7.3. FATE-Board testing
 
 Fate-Board is a Web service. 
-Once FATE-Board service is started successfully, job information can be found on http://192.169.0.1:8080 and http://192.169.0.2:8080.
+Once FATE-Board service is started successfully, job information can be found on http://192.168.0.1:8080 and http://192.168.0.2:8080.
 Port needs to be opened in presence of firewall. 
 IF Fate-Board and Fate-Flow are deployed to different servers, login information for FATE-Flow server
 needs to be specified on FATE-Board web page: click the gear button on the top right corner --> add --> fill ip, os user, ssh port, and password for FATE-Flow server.
@@ -726,7 +726,7 @@ needs to be specified on FATE-Board web page: click the gear button on the top r
 
 ### 8.1 Service Management
 
-**Execute on 192.169.0.1 & 192.169.0.2 as user app**
+**Execute on 192.168.0.1 & 192.168.0.2 as user app**
 
 ####  8.1.1 FATE Service Management
 
@@ -760,13 +760,13 @@ cd /data/projects/fate/proxy
 start/stop/check/restart MySQL service
 
 ```bash
-cd /data/projects/fate/common/mysql/mysql-9.0.13
+cd /data/projects/fate/common/mysql/mysql-8.0.13
 sh ./service.sh start|stop|status|restart
 ```
 
 ### 8.2 Check Proess and Port
 
-**Execute on 192.169.0.1 & 192.169.0.2 as user app**
+**Execute on 192.168.0.1 & 192.168.0.2 as user app**
 
 #### 8.2.1 Check Process
 
@@ -797,7 +797,7 @@ netstat -tlnp | grep 9390
 | fate_flow&service logs | /data/projects/fate/python/logs                    |
 | fateboard          | /data/projects/fate/fateboard/logs                 |
 | nginx | /data/projects/fate/proxy/nginx/logs                 |
-| mysql              | /data/projects/fate/common/mysql/mysql-9.0.13/logs |
+| mysql              | /data/projects/fate/common/mysql/mysql-8.0.13/logs |
 
 ## 9. Appendix
 
