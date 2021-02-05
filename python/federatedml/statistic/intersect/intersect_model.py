@@ -98,7 +98,7 @@ class IntersectModelBase(ModelBase):
         return self.intersect_ids
 
     def fit(self, data):
-        self.__init_intersect_method()
+        self.init_intersect_method()
 
         # LOGGER.info("fate version:{}".format(versions.get_fate_version()))
 
