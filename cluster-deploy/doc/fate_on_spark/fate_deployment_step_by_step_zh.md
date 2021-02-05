@@ -1,48 +1,8 @@
-# FATE ON Spark 部署指南
+# FATE ON Spark/CDN FATE部署指南
 
-## 1.服务器配置
+## 1.基础环境配置
 
-|  服务器  |                                                              |
-| :------: | ------------------------------------------------------------ |
-|   数量   | >1（根据实际情况配置）                                       |
-|   配置   | 8 core /16GB memory / 500GB硬盘/10M带宽                      |
-| 操作系统 | CentOS linux 7.2及以上/Ubuntu 16.04 以上                     |
-|  依赖包  | （参见4.5 软件环境初始化）                                   |
-|   用户   | 用户：app，属主：apps（app用户需可以sudo su root而无需密码） |
-| 文件系统 | 1.  500G硬盘挂载在/ data目录下； 2.创建/ data / projects目录，目录属主为：app:apps |
-
-## 2.集群规划
-
-| party  | partyid | 主机名        | IP地址      | 操作系统                | 安装软件    | 服务                              |
-| ------ | ------- | ------------- | ----------- | ----------------------- | ----------- | --------------------------------- |
-| PartyA | 10000   | VM-0-1-centos | 192.168.0.1 | CentOS 7.2/Ubuntu 16.04 | fate，mysql, nginx | fateflow，fateboard，mysql，nginx |
-| PartyA | 10000   |               |             |                         | Spark、HDFS |                                   |
-| PartyA | 10000   |               |             |                         | RabbitMQ    |                                   |
-| PartyB | 9999    | VM-0-2-centos | 192.168.0.2 | CentOS 7.2/Ubuntu 16.04 | fate，mysql, nginx | fateflow，fateboard，mysql，nginx |
-| PartyB | 9999    |               |             |                         | Spark、HDFS |                                   |
-| PartyB | 9999    |               |             |                         | RabbitMQ    |                                   |
-
-架构图：
-
-<div style="text-align:center", align=center>
-<img src="../images/fate_on_spark_architecture.png" />
-</div>
-
-## 3.组件说明
-
-| 软件产品 | 组件      | 端口      | 说明                                                  |
-| -------- | --------- | --------- | ----------------------------------------------------- |
-| fate     | fate_flow | 9360;9380 | 联合学习任务流水线管理模块，每个party只能有一个此服务 |
-| fate     | fateboard | 8080      | 联合学习过程可视化模块，每个party只能有一个此服务     |
-| nginx    | nginx     | 9370      | 跨站点(party)调度协调代理                             |
-| mysql    | mysql     | 3306      | 元数据存储                                            |
-| Spark    |           |           | 计算引擎                                              |
-| HDFS     |           |           | 存储引擎                                              |
-| RabbitMQ |           |           | 跨站点(party)数据交换代理                             |
-
-## 4.基础环境配置
-
-### 4.1 hostname配置(可选)
+### 1.1 hostname配置(可选)
 
 **1）修改主机名**
 
@@ -68,7 +28,7 @@ vim /etc/hosts
 192.168.0.2 VM-0-2-centos
 ```
 
-### 4.2 关闭SELinux(可选)
+### 1.2 关闭SELinux(可选)
 
 
 **在目标服务器（192.168.0.1 192.168.0.2）root用户下执行：**
@@ -93,7 +53,7 @@ apt list --installed | grep selinux
 setenforce 0
 ```
 
-### 4.3 修改Linux系统参数
+### 1.3 修改Linux系统参数
 
 **在目标服务器（192.168.0.1 192.168.0.2 192.168.0.3）root用户下执行：**
 
@@ -108,7 +68,7 @@ vim /etc/security/limits.d/20-nproc.conf
 * soft nproc unlimited
 ```
 
-### 4.4 关闭防火墙(可选)
+### 1.4 关闭防火墙(可选)
 
 
 **在目标服务器（192.168.0.1 192.168.0.2 192.168.0.3）root用户下执行**
@@ -128,7 +88,7 @@ ufw disable
 ufw status
 ```
 
-### 4.5 软件环境初始化
+### 1.5 软件环境初始化
 
 **在目标服务器（192.168.0.1 192.168.0.2 192.168.0.3）root用户下执行**
 
@@ -162,11 +122,11 @@ if [ ! -f "libssl.so.10" ];then
 fi
 ```
 
-## 5.项目部署
+## 2.部署依赖组件
 
 注：此指导安装目录默认为/data/projects/install，执行用户为app，安装时根据具体实际情况修改。
 
-### 5.1 获取安装包
+### 2.1 获取安装包
 
 
 在目标服务器（192.168.0.1 具备外网环境）app用户下执行:
@@ -174,18 +134,19 @@ fi
 ```bash
 mkdir -p /data/projects/install
 cd /data/projects/install
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/python-env-1.5.0-release.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/python-env-miniconda3-4.5.4.tar.gz
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/jdk-8u192-linux-x64.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/mysql-1.5.0-release.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/mysql-fate-8.0.13.tar.gz
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/openresty-1.17.8.2.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_1.5.0_release.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/pip-packages-fate-1.5.1.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_1.5.1_release.tar.gz
 
 #传输到192.168.0.1和192.168.0.2
 scp *.tar.gz app@192.168.0.1:/data/projects/install
 scp *.tar.gz app@192.168.0.2:/data/projects/install
 ```
 
-### 5.2 操作系统参数检查
+### 2.2 操作系统参数检查
 
 **在目标服务器（192.168.0.1 192.168.0.2 192.168.0.3）app用户下执行**
 
@@ -199,7 +160,7 @@ ulimit -u
 65535
 ```
 
-### 5.3 部署MySQL
+### 2.3 部署MySQL
 
 **在目标服务器（192.168.0.1 192.168.0.2）app用户下执行**
 
@@ -272,7 +233,7 @@ mysql>select * from server_node;
 
 ```
 
-### 5.4 部署JDK
+### 2.4 部署JDK
 
 **在目标服务器（192.168.0.1 192.168.0.2）app用户下执行**:
 
@@ -286,7 +247,7 @@ cd /data/projects/fate/common/jdk
 mv jdk1.8.0_192 jdk-8u192
 ```
 
-### 5.5 部署python
+### 2.5 部署python
 
 **在目标服务器（192.168.0.1 192.168.0.2）app用户下执行**:
 
@@ -306,14 +267,15 @@ sh Miniconda3-4.5.4-Linux-x86_64.sh -b -p /data/projects/fate/common/miniconda3
 /data/projects/fate/common/miniconda3/bin/virtualenv -p /data/projects/fate/common/miniconda3/bin/python3.6 --no-wheel --no-setuptools --no-download /data/projects/fate/common/python/venv
 
 #安装依赖包
+cd /data/projects/install
 tar xvf pip-packages-fate-*.tar.gz
 source /data/projects/fate/common/python/venv/bin/activate
-pip install setuptools-42.0.2-py2.py3-none-any.whl
-pip install -r pip-packages-fate-1.5.0/requirements.txt -f ./pip-packages-fate-1.5.0 --no-index
+pip install python-env/setuptools-42.0.2-py2.py3-none-any.whl
+pip install -r pip-packages-fate-1.5.1/requirements.txt -f ./pip-packages-fate-1.5.1 --no-index
 pip list | wc -l
 ```
 
-### 5.6 部署NginX
+### 2.6 部署Nginx
 
 **在目标服务器（192.168.0.1 192.168.0.2）app用户下执行**:
 
@@ -331,21 +293,14 @@ cd openresty-*
 make && make install
 ```
 
-### 5.7 部署Spark & HDFS
+### 2.7 部署RabbitMQ
 
-#### 5.7.1
-请参阅部署指南：[Hadoop_Spark_deployment_guide_zh](hadoop_spark_deployment_guide_zh.md)
-
-
-### 5.8 部署RabbitMQ
-
-#### 5.8.1
 请参阅部署指南：[RabbitMQ_deployment_guide_zh](rabbitmq_deployment_guide_zh.md)
 
 
-### 5.9 部署FATE
+## 3 部署FATE
 
-#### 5.9.1 软件部署
+### 3.1 软件部署
 
 ```
 #部署软件
@@ -372,14 +327,16 @@ export PATH=\$PATH:\$JAVA_HOME/bin
 EOF
 ```
 
-#### 5.9.2 NginX配置文件修改
+### 3.2 Nginx配置文件修改
+#### 3.2.1 Nginx基础配置文件修改
 配置文件:  /data/projects/fate/proxy/nginx/conf/nginx.conf
-此配置文件NginX使用，配置服务基础设置以及lua代码，可以参考默认nginx.conf手工修改，修改完成后使用命令检测
+此配置文件Nginx使用，配置服务基础设置以及lua代码，一般不需要修改。
+若要修改，可以参考默认nginx.conf手工修改，修改完成后使用命令检测
 ```
 /data/projects/fate/proxy/nginx/sbin/nginx -t
 ```
 
-#### 5.9.3 NginX路由配置文件修改
+#### 3.2.2 Nginx路由配置文件修改
 
 配置文件:  /data/projects/fate/proxy/nginx/conf/route_table.yaml
 此配置文件NginX使用，配置路由信息，可以参考如下例子手工配置，也可以使用以下指令完成：
@@ -430,7 +387,7 @@ default:
 EOF
 ```
 
-#### 5.9.4 FATE-Board配置文件修改
+### 3.3 FATE-Board配置文件修改
 
 1）conf/application.properties
 
@@ -495,9 +452,9 @@ vi service.sh
 export JAVA_HOME=/data/projects/fate/common/jdk/jdk-8u192
 ```
 
-#### 5.9.5 FATE配置文件修改
+## 4. FATE配置文件修改
  
-  配置文件：/data/projects/fate/python/conf/server_conf.yaml
+  配置文件：/data/projects/fate/conf/service_conf.yaml
   
 ##### 运行配置
 - work_mode(为1表示集群模式，默认)
@@ -530,7 +487,7 @@ export JAVA_HOME=/data/projects/fate/common/jdk/jdk-8u192
 
 ```
 #在目标服务器（192.168.0.1）app用户下修改执行
-cat > /data/projects/fate/python/conf/server_conf.yaml <<EOF
+cat > /data/projects/fate/conf/service_conf.yaml <<EOF
 work_mode: 1
 independent_scheduling_proxy: true
 use_registry: false
@@ -576,7 +533,7 @@ PROXY:
 EOF
 
 #在目标服务器（192.168.0.2）app用户下修改执行
-cat > /data/projects/fate/python/conf/server_conf.yaml <<EOF
+cat > /data/projects/fate/conf/service_conf.yaml <<EOF
 work_mode: 1
 independent_scheduling_proxy: true
 use_registry: false
@@ -622,7 +579,7 @@ PROXY:
 EOF
 ```
 
-### 5.10 启动服务
+## 5. 启动服务
 
 **在目标服务器（192.168.0.1 192.168.0.2）app用户下执行**
 
@@ -637,7 +594,7 @@ cd /data/projects/fate/proxy
 ./nginx/sbin/nginx -c /data/projects/fate/proxy/nginx/conf/nginx.conf
 ```
 
-### 5.11 问题定位
+## 6. 问题定位
 
 1）FATE-Flow日志
 
@@ -651,15 +608,15 @@ cd /data/projects/fate/proxy
 
 /data/projects/fate/proxy/nginx/logs
 
-## 6.测试
+## 7.测试
 
 
-### 6.1 Toy_example部署验证
+### 7.1 Toy_example部署验证
 
 
 此测试您需要设置3个参数：`guest_partyid`, `host_partyid`, `work_mode`, `backend`
 
-#### 6.1.1 单边测试
+#### 7.1.1 单边测试
 
 1）192.168.0.1上执行，guest_partyid和host_partyid都设为10000：
 
@@ -685,7 +642,7 @@ python run_toy_example.py 9999 9999 1 -b 1
 
 "2020-04-28 18:26:20,789 - secure_add_guest.py[line:126] - INFO: success to calculate secure_sum, it is 1999.9999999999998"
 
-#### 6.1.2 双边测试
+#### 7.1.2 双边测试
 
 选定9999为guest方，在192.168.0.2上执行：
 
@@ -699,10 +656,10 @@ python run_toy_example.py 9999 10000 1 -b 1
 
 "2020-04-28 18:26:20,789 - secure_add_guest.py[line:126] - INFO: success to calculate secure_sum, it is 1999.9999999999998"
 
-### 6.2 最小化测试
+### 7.2 最小化测试
 
 
-#### **6.2.1 上传预设数据：**
+#### **7.2.1 上传预设数据：**
 
 分别在192.168.0.1和192.168.0.2上执行：
 
@@ -714,7 +671,7 @@ python upload_default_data.py -m 1
 
 更多细节信息，敬请参考[脚本README](../../examples/scripts/README.rst)
 
-#### 6.2.2 快速模式
+#### 7.2.2 快速模式
 
 请确保guest和host两方均已分别通过给定脚本上传了预设数据。
 
@@ -735,22 +692,23 @@ python run_task.py -m 1 -gid 9999 -hid 10000 -aid 10000 -f fast -b 1
 
 若数分钟后在结果中显示了“success”字样则表明该操作已经运行成功了。若出现“FAILED”或者程序卡住，则意味着测试失败。
 
-#### 6.2.3 正常模式
+#### 7.2.3 正常模式
 
 只需在命令中将“fast”替换为“normal”，其余部分与快速模式相同。
 
-### 6.3. FateBoard testing
+### 7.3. FateBoard testing
 
 Fate-Voard是一项Web服务。如果成功启动了fateboard服务，则可以通过访问 http://192.168.0.1:8080 和 http://192.168.0.2:8080 来查看任务信息，如果有防火墙需开通。如果fateboard和fateflow没有部署再同一台服务器，需在fateboard页面设置fateflow所部署主机的登陆信息：页面右上侧齿轮按钮--》add--》填写fateflow主机ip，os用户，ssh端口，密码。
 
-## 7.系统运维
+
+## 8.系统运维
 ================
 
-### 7.1 服务管理
+### 8.1 服务管理
 
 **在目标服务器（192.168.0.1 192.168.0.2）app用户下执行**
 
-####  7.1.1 FATE服务管理
+####  8.1.1 FATE服务管理
 
 1) 启动/关闭/查看/重启fate_flow服务
 
@@ -777,7 +735,7 @@ cd /data/projects/fate/proxy
 ./nginx/sbin/nginx -s stop
 ```
 
-#### 7.1.2 MySQL服务管理
+#### 8.1.2 MySQL服务管理
 
 启动/关闭/查看/重启MySQL服务
 
@@ -786,11 +744,11 @@ cd /data/projects/fate/common/mysql/mysql-8.0.13
 sh ./service.sh start|stop|status|restart
 ```
 
-### 7.2 查看进程和端口
+### 8.2 查看进程和端口
 
 **在目标服务器（192.168.0.1 192.168.0.2）app用户下执行**
 
-##### 7.2.1 查看进程
+##### 8.2.1 查看进程
 
 ```
 #根据部署规划查看进程是否启动
@@ -799,7 +757,7 @@ ps -ef | grep -i fateboard
 ps -ef | grep -i nginx
 ```
 
-### 7.2.2 查看进程端口
+### 8.2.2 查看进程端口
 
 ```
 #根据部署规划查看进程端口是否存在
@@ -812,7 +770,7 @@ netstat -tlnp | grep 9390
 ```
 
 
-### 7.3 服务日志
+### 8.3 服务日志
 
 | 服务               | 日志路径                                           |
 | ------------------ | -------------------------------------------------- |
@@ -821,8 +779,8 @@ netstat -tlnp | grep 9390
 | nginx | /data/projects/fate/proxy/nginx/logs                 |
 | mysql              | /data/projects/fate/common/mysql/mysql-8.0.13/logs |
 
-## 8. 附录
+## 9. 附录
 
-### 8.1 打包构建
+### 9.1 打包构建
 
 参见[build指导](../build.md) 
