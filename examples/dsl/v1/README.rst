@@ -32,7 +32,7 @@ Field Specification
 
     Assume that the CPU cores (cpu cores) are: c, The number of Nodemanager is: n, The number of tasks to be run simultaneously is p, then:
 
-    egg_num=eggroll.session.processors.per.node = c * 0.8 / p
+    egg_num= task_cores = c * 0.8 / p
 
     partitions (Number of roll pair partitions) = egg_num * n
 

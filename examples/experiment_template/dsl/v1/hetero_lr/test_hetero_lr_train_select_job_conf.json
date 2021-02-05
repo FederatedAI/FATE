@@ -5,7 +5,7 @@
   },
   "job_parameters": {
     "work_mode": 1,
-    "processors_per_node": 4
+    "task_cores": 4
   },
   "role": {
     "guest": [9999],
