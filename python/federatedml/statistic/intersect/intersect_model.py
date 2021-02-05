@@ -14,6 +14,7 @@
 #  limitations under the License.
 #
 from fate_arch.session import computing_session as session
+from fate_arch.common import versions
 from fate_flow.entity.metric import Metric, MetricMeta
 from federatedml.feature.instance import Instance
 from federatedml.model_base import ModelBase
@@ -127,7 +128,7 @@ class IntersectModelBase(ModelBase):
     def fit(self, data):
         self.__init_intersect_method()
 
-        self.intersect_ids = self.intersection_obj.run(data)
+        LOGGER.info("fate version:{}".format(versions.get_fate_version()))
 
         if self.model_param.repeated_id_process:
             if self.model_param.intersect_cache_param.use_cache is True and self.model_param.intersect_method == consts.RSA:
@@ -137,7 +138,17 @@ class IntersectModelBase(ModelBase):
                 raise ValueError("While multi-host, repeated_id_owner should be guest.")
 
             proc_obj = RepeatedIDIntersect(repeated_id_owner=self.model_param.repeated_id_owner, role=self.role)
-            data = proc_obj.run(data=data)
+            proc_obj.set_version(versions.get_fate_version())
+            data = proc_obj.recover(data=data)
+
+        self.intersect_ids = self.intersection_obj.run(data)
+
+        if self.model_param.repeated_id_process:
+            if not self.model_param.sync_intersect_ids:
+                self.intersect_ids = data
+
+            self.intersect_ids = proc_obj.expand(self.intersect_ids)
+            LOGGER.info("repeated_id process:{}".format(self.intersect_ids.count()))
 
         if self.model_param.allow_info_share:
             if self.model_param.intersect_method == consts.RSA and self.model_param.info_owner == consts.GUEST \

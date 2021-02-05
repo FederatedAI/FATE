@@ -63,49 +63,30 @@ class RepeatedIDIntersect(object):
     def __reduce_id_map(x1, x2):
         return x1 + x2
 
+    @staticmethod
+    def __to_sample_id_map(data):
+        id_map = defaultdict(list)
+        for d in data:
+            id_map[d[1].inst_id].append(d[0])
+
+        return [(k, v) for k, v in id_map.items()]
+
     def __generate_id_map(self, data):
         if self.role != self.repeated_id_owner:
             LOGGER.warning("Not a repeated id owner, will not generate id map")
             return
 
-        id_map = data.mapReducePartitions(self.__to_id_map, self.__reduce_id_map)
-        id_map.filter(lambda k, v: len(v) >= 2)
+        if self.version == "1.6.0":
+            all_id_map = data.mapReducePartitions(self.__to_id_map, self.__reduce_id_map)
+            id_map = all_id_map.filter(lambda k, v: len(v) >= 2)
+        else:
+            id_map = data.mapReducePartitions(self.__to_sample_id_map, self.__reduce_id_map)
 
         return id_map
-
-    # def __generate_id_map(self, data):
-    #     if self.role != self.repeated_id_owner :
-    #         LOGGER.warning("Not a repeated id owner, will not generate id map")
-    #         return
-    #
-    #     data_type = self.__get_data_type(data)
-    #     if isinstance(data_type, Instance):
-    #         data = data.mapValues(lambda v: v.features[0])
-    #     else:
-    #         data = data.mapValues(lambda v: v[0])
-    #
-    #     local_data = data.collect()
-    #     all_id_map = defaultdict(list)
-    #     final_id_map = {}
-    #
-    #     for _data in local_data:
-    #         all_id_map[str(_data[1])].append(_data[0])
-    #
-    #     for k, v in all_id_map.items():
-    #         if len(v) >= 2:
-    #             final_id_map[k] = v
-    #
-    #     return final_id_map
 
     @staticmethod
     def __func_restructure_id(k, id_map: list):
         return [(new_id, k) for new_id in id_map]
-
-    # @staticmethod
-    # def __func_restructure_id(k, v):
-    #     data, id_map = v[0], v[1]
-    #     result = [(new_id, data) for new_id in id_map]
-    #     return result
 
     @staticmethod
     def __func_restructure_id_for_partner(k, v):
@@ -113,31 +94,45 @@ class RepeatedIDIntersect(object):
         return [(new_id, data) for new_id in id_map]
 
     @staticmethod
-    def __func_restructure_instance(v):
-        features = [v.features[0]]
-        if len(v.features) > 2:
-            features += v.features[2:]
+    def __func_restructure_sample_id_for_partner(k, v):
+        data, id_map = v[0], v[1]
+        return [(new_id, data) for new_id in id_map]
 
-        v.features = features
+    @staticmethod
+    def __func_restructure_instance(v):
+        v.features = v.features[1:]
         return v
 
     def __restructure_owner_sample_ids(self, data, id_map):
+        rids = id_map.flatMap(functools.partial(self.__func_restructure_id))
         if self.version == "1.6.0":
-            rids = id_map.flatMap(functools.partial(self.__func_restructure_id))
             _data = data.union(rids, lambda dv, rv: dv)
 
-            if isinstance(self.__get_data_type(data), Instance):
+            if self.__get_data_type(self.owner_src_data) == Instance:
                 r_data = self.owner_src_data.join(_data, lambda ov, dv: self.__func_restructure_instance(ov))
             else:
-                r_data = self.owner_src_data.join(_data, lambda ov, dv: ov[0] + ov[2:])
+                r_data = self.owner_src_data.join(_data, lambda ov, dv: ov[1:])
+
+            r_data.schema = self.owner_src_data.schema
+            if r_data.schema.get('header') is not None:
+                r_data.schema['header'] = r_data.schema['header'][1:]
+        else:
+            r_data = self.owner_src_data.join(rids, lambda ov, dv: ov)
+            r_data.schema = self.owner_src_data.schema
 
         return r_data
 
     def __restructure_partner_sample_ids(self, data, id_map):
         _data = data.join(id_map, lambda dv, iv: (dv, iv))
-        repeated_ids = id_map.flatMap(functools.partial(self.__func_restructure_id_for_partner))
-        sub_data = data.subtract_by_key(id_map)
-        return sub_data.union(repeated_ids, lambda sv, rv: sv)
+        repeated_ids = _data.flatMap(functools.partial(self.__func_restructure_id_for_partner))
+        if self.version == "1.6.0":
+            sub_data = data.subtractByKey(id_map)
+            expand_data = sub_data.union(repeated_ids, lambda sv, rv: sv)
+        else:
+            expand_data = repeated_ids
+
+        expand_data.schema = data.schema
+        return expand_data
 
     def __restructure_sample_ids(self, data, id_map):
         if self.role == self.repeated_id_owner:
@@ -145,27 +140,37 @@ class RepeatedIDIntersect(object):
         else:
             return self.__restructure_partner_sample_ids(data, id_map)
 
+    def generate_intersect_data(self, data):
+        if self.__get_data_type(data) == Instance:
+            if self.version == "1.6.0":
+                _data = data.map(
+                    lambda k, v: (v.features[0], 1))
+            else:
+                _data = data.map(lambda k, v: (v.inst_id, v))
+        else:
+            _data = data.mapValues(lambda k, v: (v[0], 1))
+
+        _data.schema = data.schema
+        LOGGER.info("Finish recover real ids")
+
+        return _data
+
+    def set_version(self, version):
+        self.version = version
+
     def recover(self, data):
         LOGGER.info("Start repeated id processing.")
-        if self.role != self.repeated_id_owner:
-            LOGGER.info("Not repeated_id_owner, return!")
 
-        self.id_map = self.__generate_id_map(data)
-
-        # original_schema = data.schema
-        if self.__get_data_type(data) == Instance:
-            data = data.mapValues(
-                lambda v: Instance(features=np.array(v.features[1:], dtype=np.float), label=v.label,
-                                   inst_id=v.inst_id, weight=v.weight))
+        if self.role == self.repeated_id_owner:
+            LOGGER.info("Start to generate id_map")
+            self.id_map = self.__generate_id_map(data)
+            self.owner_src_data = data
         else:
-            data = data.mapValues(lambda v: v[1:])
-        # data.schema = original_schema
+            if self.version == "1.6.0":
+                LOGGER.info("Not repeated_id_owner, return!")
+                return data
 
-        if data.schema.get('header') is not None:
-            data.schema['header'] = data.schema['header'][1:]
-
-        LOGGER.info("Finish recover real ids")
-        return data
+        return self.generate_intersect_data(data)
 
     def expand(self, data):
         if self.repeated_id_owner == consts.HOST:
@@ -184,9 +189,7 @@ class RepeatedIDIntersect(object):
                                      idx=-1)
             LOGGER.info("Remote id_map to partner")
         else:
-            # original_schema = data.schema
-            id_map = id_map_federation.get(idx=0)
+            self.id_map = id_map_federation.get(idx=0)
             LOGGER.info("Get id_map from owner.")
-            # data.schema = original_schema
 
         return self.__restructure_sample_ids(data, self.id_map)
