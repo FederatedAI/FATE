@@ -16,9 +16,7 @@
     "common": {
       "work_mode": 0,
       "backend": 0,
-      "eggroll_run": {
-        "eggroll.session.processors.per.node": 4
-      }
+      "task_cores": 4
     }
   },
   "component_parameters": {
