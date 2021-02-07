@@ -24,7 +24,7 @@ The process of Feldman Verifiable Sum is shown below:
 
    Figure 2: Process of share sub-key
 
-In above process, each party encrypts its own secret value, share sub-key, recieve sub-keys from other parties,
+In the process shown above, each party encrypts its own secret value, share sub-key, recieve sub-keys from other parties,
 and then combine all these sub-keys. Guest, as the task initiator, initialize the parameters and decrypt the sum result.
 
 How to Use

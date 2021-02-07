@@ -8,3 +8,5 @@ Similar to the older version, a pair of dsl & conf files corresponds to a task. 
    .. code-block:: bash
 
       flow job submit -d ${dsl.json} -c ${conf.json}
+
+For more details on using DSL V2, please refer `here <../../doc/dsl_conf_v2_setting_guide.rst>`__.

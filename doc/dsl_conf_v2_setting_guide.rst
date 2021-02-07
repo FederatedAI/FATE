@@ -531,7 +531,7 @@ for details on using deploy command:
 
     flow model deploy --model-id $model_id --model-version $model_version --cpn-list ...
 
-Optionally, use can add additional component(s) to predict dsl, like ``Evaluation``:
+Optionally, user can add additional component(s) to predict dsl, like ``Evaluation``:
 
 **Examples**
 
