@@ -353,9 +353,9 @@ Besides the dsl conf, user also need to prepare a submit runtime conf to set par
      - positive int
      - time elapse (in second) for a job to timeout
 
-   * - eggroll_run
+   * - task_cores
      -
-     - most commonly used is "eggroll.session.processors.per.node", details can be found in `EggRoll configuration  <https://github.com/WeBankFinTech/eggroll/wiki/eggroll.properties:-Eggroll's-Main-Configuration-File>`_.
+     - details can be found in `EggRoll configuration  <https://github.com/WeBankFinTech/eggroll/wiki/eggroll.properties:-Eggroll's-Main-Configuration-File>`_.
      - parameter for EGGROLL computing engine
 
    * - spark_run
@@ -432,9 +432,7 @@ Besides the dsl conf, user also need to prepare a submit runtime conf to set par
         "common": {
            "work_mode": 1,
            "backend": 0,
-           "eggroll_run": {
-              "eggroll.session.processors.per.node": 2
-           }
+           "task_cores": 4
         }
      }
 

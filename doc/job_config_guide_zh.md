@@ -77,9 +77,7 @@ Job Runtime Conf用于设置各个参与方的信息,任务的参数及各个组
     "federated_status_collect_type": "PUSH",
     "timeout": 36000,
     "task_parallelism": 2,
-    "eggroll_run": {
-        "eggroll.session.processors.per.node": 2
-    },
+    "task_cores": 4,
     "spark_run": {
         "num-executors": 1,
         "executor-cores": 2
