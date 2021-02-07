@@ -198,7 +198,7 @@ nohup ./bin/mysqld_safe --defaults-file=./conf/my.cnf --user=app >>logs/mysqld.l
 
 #Change MySQL root user password to 'fate_dev'
 cd /data/projects/fate/common/mysql/mysql-8.0.13/
-./bin/mysqladmin -h 128.0.0.1 -P 3306 -S ./run/mysql.sock -u root -p password "fate_dev"
+./bin/mysqladmin -h 127.0.0.1 -P 3306 -S ./run/mysql.sock -u root -p password "fate_dev"
 Enter Password: {$password}
 
 #Login
