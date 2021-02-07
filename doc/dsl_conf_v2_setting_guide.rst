@@ -1,5 +1,10 @@
 DSL & Task Submit Runtime Conf Setting V2
-======================================
+=========================================
+
+[`中文`_]
+
+.. _中文: dsl_conf_setting_v2_guide_zh.rst
+
 
 To make the modeling task more flexible, currently, FATE uses its own domain-specific language(DSL)
 to describe modeling task. With usage of this DSL, modeling components such as data-io,
@@ -16,26 +21,33 @@ of [`V1`_]
 
 .. _V1: dsl_conf_v1_setting_guide.rst
 
-Please note that dsl V2 does not support online serving for FATE-1.5.0; it will be available in a later version.
-
 DSL Configure File
 ------------------
 
-We use json file which is actually a dictionary as a dsl config file. The first level of the dict is always "components," which indicates content in the dict are components in your modeling task.
+1. Overview
+~~~~~~~~~~~~
+We use json file which is actually a dictionary as a dsl config file.
+
+2. Components
+~~~~~~~~~~~~~~
+
+-  **definition:** components in your modeling task, always the first level of dsl dict.
+-  **example:**
 
 .. code-block:: json
-  
+
   {
     "components" : {
             ...
         }
     }
 
+-  **explanation:**
 
 Then each component should be defined on the second level. Here is an example of setting a component:
 
 .. code-block:: json
-  
+
   "dataio_0": {
         "module": "DataIO",
         "input": {
@@ -66,24 +78,42 @@ this component has "output" field only, like the following:
         }
   }
 
-Field Specification
-^^^^^^^^^^^^^^^^^^^
+3. Module
+~~~~~~~~~~~
 
-:module: Specify which component to use. This field should strictly match the file name in python/federatedml/conf/setting_conf except the ``.json`` suffix.
+-  **definition:** Specify which component to use.
+-  **explanation:** This field should strictly match the file name in python/federatedml/conf/setting_conf except the ``.json`` suffix.
+-  **example:**
 
-:input: There are two types of input, data and model.
+.. code:: json
 
-    - Data: There are four possible data_input type:
+   "hetero_feature_binning_1": {
+       "module": "HeteroFeatureBinning",
+        ...
+   }
+
+4. Input
+~~~~~~~~~~
+
+-  **definition:** There are two types of input, data and model.
+
+4.1 Data Input
+^^^^^^^^^^^^^^^
+
+-  **definition:**  Data input from previous modules; there are four possible data_input type:
 
       1. data: typically used in data_io, feature_engineering modules and evaluation.
       2. train_data: uses in training components like HeteroLR、HeteroSBT and so on. If this field is provided, the task will be parse as a **fit** task
       3. validate_data: If train_data is provided, this field is optional. In this case, this data will be used as validation set.
       4. test_data: specify the data used to predict, if this field is set up, the **model** also needs.
 
-    - Model: There are two possible model-input types:
+4.2 Model Input
+^^^^^^^^^^^^^^^^^
 
-      - model: This is a model input by the same type of component. For example, hetero_binning_0 run as a fit component, and hetero_binning_1 takes model output of hetero_binning_0 as input so that can be used to transform or predict.
-        Here's an example showing this logic:
+-  **definition:**  Model nput from previous modules; there are two possible model-input types:
+
+   1. model: This is a model input by the same type of component. For example, hetero_binning_0 run as a fit component, and hetero_binning_1 takes model output of hetero_binning_0 as input so that can be used to transform or predict.
+      Here's an example showing this logic:
 
       .. code-block:: json
 
@@ -105,8 +135,8 @@ Field Specification
               }
           }
 
-      - isometric_model: This is used to specify the model input from upstream components.
-        For example, feature selection will take feature binning as upstream model, since it will use information value as feature importance. Here's an example of feature selection component:
+   2. isometric_model: This is used to specify the model input from upstream components.
+      For example, feature selection will take feature binning as upstream model, since it will use information value as feature importance. Here's an example of feature selection component:
 
         .. code-block:: json
 
@@ -128,196 +158,114 @@ Field Specification
                 }
             }
 
-:output: Same as input, two types of output may occur which are data and model.
-    
-    1. Data: Specify the output data name
-    2. Model: Specify the output model name
+4.3 Model Output
+^^^^^^^^^^^^^^^^^
 
-    You can take the above case as an example.
+-  **definition:**  Same as input, two types of output may occur: which are data and model.
 
 
-Submit Runtime Conf
--------------------
+5.1 Data Output
+^^^^^^^^^^^^^^^^^
 
-Besides the dsl conf, user also need to prepare a submit runtime conf to set parameters for each component.
+-  **definition:** data output, there are four types:
 
-:dsl_version:
-  To enabled using of dsl V2, this field should be set.
+    1. data: normal data output
+    2. train_data: only for Data Split
+    3. validate_data: only for Data Split
+    4. test_data： only for Data Split
 
-  .. code-block:: json
+5.2 Model Output
+^^^^^^^^^^^^^^^^^^
+-  **definition:** model output, only use ``model``
 
-     "dsl_version": 2
 
-:initiator:
-  To begin with, the initiator should be specified in this runtime conf. Here is an example of setting initiator:
+JOB RUNTIME CONFIG Guide (for version 1.5.x and above)
+-------------------------------------------------------
 
-  .. code-block:: json
+1. Overview
+~~~~~~~~~~~~~~
 
-     "initiator": {
-        "role": "guest",
-        "party_id": 10000
+Job Runtime Conf configures job and module settings for all
+participants. Configurable values include:
+
+2. DSL version
+~~~~~~~~~~~~~~~~~~
+
+-  **definition:** conf version, default 1, 2 is recommended
+-  **example:**
+
+.. code:: json
+
+   "dsl_version": "2"
+
+3. Job Participants
+~~~~~~~~~~~~~~~~~~~~~~
+
+3.1 Initiator
+^^^^^^^^^^^^^^
+
+-  **definition:** role and party_id of job initiator
+-  **example:**
+
+.. code:: json
+
+   "initiator": {
+       "role": "guest",
+       "party_id": 9999
+   }
+
+3.2 Role
+^^^^^^^^^^^
+
+-  **definition:** Information on all participants
+-  **explanation:** each key-value pair in ``role`` represents a role
+   type and corresponding party ids; ``party_id`` should be specified as
+   list since multiple parties may take the same role in a job
+-  **examples**
+
+.. code:: json
+
+   "role": {
+       "guest": [9999],
+       "host": [10000],
+       "arbiter": [10000]
+   }
+
+4. System Runtime Parameters
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-  **definition:** main system configuration when running jobs
+
+4.1 Configuration Applicable Range Policy
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+-  ``common``: applies to all participants
+-  ``role``: applies only to specific participant; specify participant
+   in :math:`role:`\ party_index format; note that ``role``
+   configuration takes priority over ``common``
+
+.. code:: json
+
+   "common": {
+   }
+
+   "role": {
+     "guest": {
+       "0": {
+       }
      }
+   }
 
+In the example above, configuration inside\ ``common`` applies to all
+participants; configuration inside ``role-guest-0`` only applies to
+participant ``guest_0``
 
-:role:
-  All the roles involved in this modeling task should be specified. Each role comes with role name and corresponding party id(s).
-  Ids are always specified in the form of list since there may exist multiple parties of the same role.
+Note: current version does not perform strict checking on role-specific
+runtime parameters; ``common`` is suggested for setting runtime
+configuration
 
-  .. code-block:: json
-
-     "role": {
-         "guest": [
-             10000
-         ],
-         "host": [
-             10000
-         ],
-         "arbiter": [
-             10000
-         ]
-     }
-
-:component_parameters:
-  Running parameters for components included in dsl should be specified here.
-
-  It contains two sub-fields ``common`` and ``role``:
-
-  * parameter specification under ``common`` field applies to all parties
-  * parameter values under ``role`` field are only taken by each corresponding party
-
-  .. code-block:: json
-
-     "component_parameters": {
-         "common": {
-             "component_x": {
-                 ...
-             },
-             ...
-         },
-         "role": {
-             ...
-         }
-     }
-
-  :role:
-    Inside the ``role`` field, party names are used as key, parameter specification as values.
-
-    Take the following json as an example:
-
-    .. code-block:: json
-
-       "role": {
-            "guest": {
-                "0": {
-                    "reader_0": {
-                        "table": {
-                                    "namespace": "guest",
-                                    "name": "table"
-                        }
-                    },
-                    "dataio_0": {
-                        "input_format": "dense",
-                        "with_label": true
-                    }
-                }
-            },
-            "host": {
-                "0": {
-                    "reader_0": {
-                        "table": {
-                                    "namespace": "host",
-                                    "name": "table"}
-                        },
-                    "dataio_0": {
-                        "input_format": "tag",
-                        "with_label": false
-                    }
-                }
-            }
-        }
-
-    "0" indicates that it is the 0_th party of some role(indexing starts at 0).
-
-    User can config parameters for each component.
-
-    Component names should match those defined in the dsl config file.
-
-    Parameters of each component are defined in `Param <../python/federatedml/param>`_ class.
-
-    Parties can be packed together and share configuration, for example:
-
-    .. code-block:: json
-
-       "role": {
-            "host": {
-                "0|2": {
-                    "dataio_0": {
-                        "input_format": "tag",
-                        "with_label": false
-                    }
-                },
-                "1": {
-                    "dataio_0": {
-                        "input_format": "dense",
-                        "with_label": false
-                    }
-                }
-            }
-        }
-
-  :common:
-    If some parameters are the same among all parties, they can be set in ``common``. Here is an example:
-
-    .. code-block:: json
-
-        "common": {
-            "hetero_feature_binning_0": {
-                ...
-            },
-            "hetero_feature_selection_0": {
-                ...
-            },
-            "hetero_lr_0": {
-                "penalty": "L2",
-                "optimizer": "rmsprop",
-                "eps": 1e-5,
-                "alpha": 0.01,
-                 "max_iter": 10,
-                 "converge_func": "diff",
-                 "batch_size": 320,
-                 "learning_rate": 0.15,
-                 "init_param": {
-                    "init_method": "random_uniform"
-                 },
-            "cv_param": {
-                "n_splits": 5,
-                "shuffle": false,
-                "random_seed": 103,
-                "need_cv": false,
-                }
-            }
-        }
-
-    Same ``role``, keys are the names of components defined in dsl config file and values parameter configuration.
-
-:job_parameters:
-  Please note that to enable DSL V2, **dsl_version** must be set to **2**.
-
-  Same as component_parameters, it also has two sub-fields ``common`` and ``role``:
-
-  * parameter specification under ``common`` field applies to all parties
-  * parameter values under ``role`` field are only taken by each corresponding party
-
-  .. code-block:: json
-
-     "job_parameters": {
-          "common": {
-             ...
-          },
-          "role": {
-             ...
-          }
-     }
+4.2 Configurable Job Parameters
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. list-table:: Configurable Job Parameters
    :widths: 20 20 30 30
@@ -343,45 +291,58 @@ Besides the dsl conf, user also need to prepare a submit runtime conf to set par
      - 0, 1
      - 0 for EGGROLL, 1 for SPARK
 
+   * - task_cores
+     - 4
+     - positive integer
+     - total cpu cores requested
+
+   * - task_parallelism
+     - 1
+     - positive int
+     - maximum number of tasks allowed to run in parallel
+
+   * - computing_partitions
+     - same as task_cores
+     - positive integer
+     - partition number for table computing
+
+   * - eggroll_run
+     -
+     - processors_per_node
+     - configuration specific for EGGROLL computing engine; generally set automatically based on ``task_cores``; if specified, ``task_cores`` value ineffective
+
+   * - spark_run
+     -
+     - num-executors, executor-cores
+     - configuration specific for SPARK computing engine; generally set automatically based on ``task_cores``; if specified, ``task_cores`` value ineffective
+
+   * - rabbitmq_run
+     -
+     - queue, exchange etc.
+     - parameters for rabbitmq to set up queue, exchange, etc.; generally takes system default
+
    * - federated_status_collect_type
      - PUSH
      - PUSH, PULL
-     - type of collecting job status
+     - way to collect federated job status; PUSH: participants report to initiator, PULL: initiator regularly queries from all participants
 
    * - timeout
      - 604800
      - positive int
      - time elapse (in second) for a job to timeout
 
-   * - task_cores
-     -
-     - details can be found in `EggRoll configuration  <https://github.com/WeBankFinTech/eggroll/wiki/eggroll.properties:-Eggroll's-Main-Configuration-File>`_.
-     - parameter for EGGROLL computing engine
-
-   * - spark_run
-     -
-     - num-executors, executor-cores
-     - parameter for SPARK computing engine
-
-   * - rabbitmq_run
-     -
-     - queue, exchange etc.
-     - parameters for creation of queue, exchange in rabbitmq
-
-   * - task_parallelism
-     - 2
-     - positive int
-     - maximum number of tasks allowed to run in parallel
-
    * - model_id
      - \-
      - \-
-     - if of model, needed for prediction task
+     - id of model, needed for prediction task
 
    * - model_version
      - \-
      - \-
      - version of model, needed for prediction task
+
+4.3 Non-Configurable Job Parameters
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. list-table:: Non-configurable Job Parameters
    :widths: 20 20 30 30
@@ -419,12 +380,15 @@ Besides the dsl conf, user also need to prepare a submit runtime conf to set par
    ``computing_engine`` only supports HDFS ``storage_engine``.
 
    2. Combination of ``work_mode`` and ``backend`` automatically determines which
-   combination of engines will be used.
+   three engines will be used.
 
    3. Developer may implement other types of engines and set new engine
-   combinations.
+   combinations in runtime conf.
 
-**EGGROLL** conf example:
+4.4 Example Job Parameter Configuration
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+1. **EGGROLL** conf example with default CPU settings:
 
 .. code-block:: json
 
@@ -436,28 +400,200 @@ Besides the dsl conf, user also need to prepare a submit runtime conf to set par
         }
      }
 
-**SPARK** conf example:
+2. **EGGROLL** conf example with manually specified CPU settings:
 
 .. code-block:: json
 
      "job_parameters": {
         "common": {
+            "job_type": "train",
+            "work_mode": 1,
+            "backend": 0,
+            "eggroll_run": {
+              "eggroll.session.processors.per.node": 2
+            },
+            "task_parallelism": 2,
+            "computing_partitions": 8,
+            "timeout": 36000,
+        }
+     }
+
+3. **SPARK** conf example with manually specified CPU settings:
+
+.. code-block:: json
+
+     "job_parameters": {
+        "common": {
+            "job_type": "train",
             "work_mode": 1,
             "backend": 1,
             "spark_run": {
-               "num-executors": 1,
-               "executor-cores": 2
+                "num-executors": 1,
+                "executor-cores": 2
+            },
+            "task_parallelism": 2,
+            "computing_partitions": 8,
+            "timeout": 36000,
+            "rabbitmq_run": {
+                "queue": {
+                    "durable": true
+                },
+                "connection": {
+                    "heartbeat": 10000
+                }
             }
         }
      }
 
-After setting config files and submitting the task, fate-flow will combine the parameter list in role-parameters and algorithm parameters.
-If there are still some undefined fields, default parameter values will be used.
-FATE Flow will send these config files to their corresponding parties and start federated task.
+4.5 Resource Management
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Starting at version 1.5.0, FATE-Flow implements improved, more fine-grained resource management policy on cpu cores,
+lifting restrictions on number of parallel tasks in previous versions.
+
+4.5.1 Total Resource Setting
+''''''''''''''''''''''''''''''''
+
+-  resource comes from underlying engines; since current version does automatically obtain resource information from engines,
+   FATE-Flow server obtains and register engine information to ``t_engine_registry`` from user-specified conf file \ ``$PROJECT_BASE/conf/service_conf.yaml``\
+-  fate_on_eggroll：total_cores=cores_per_node*nodes
+-  fate_on_spark：total_cores=cores_per_node*nodes
+-  standalone：use \ **STANDALONE_BACKEND_VIRTUAL_CORES_PER_NODE**\ from \ ``$PROJECT_BASE/python/fate_flow/settings.py``\
+-  separate computing resources for different engines
+-  above settings effective after restarting FATE-Flow server
+
+4.5.2 Calculate Computing Resource
+''''''''''''''''''''''''''''''''''''
+
+Calculate actual ``task_run_cores`` each task requests at computing engine, may not equal to the amount applied by resource manager
+
+1. only set ``task_cores`` in job conf:
+   - task_run_cores(guest, host)：max(task_cores / total_nodes, 1) \* total_nodes
+   - task_run_cores(arbiter)：max(1 / total_nodes, 1) \* total_nodes
+   - FATE-Flow will automatically convert ``task_cores`` value into engine-specific configuration: eggroll.session.processors.per.node for EGGROLL, and executor-cores & num-executors for SPARK
+
+2. set eggroll_run in job conf：
+
+   -  task_run_cores(guest, host, arbiter)：eggroll.session.processors.per.node \* total_nodes
+
+3. set spark_run in job conf：
+
+   -  task_run_cores(guest, host, arbiter)：executor-cores \* num-executors
+
+4.5.3 Resource Manager
+'''''''''''''''''''''''''''''
+
+1. Apply Resource for Jobs
+
+   -  Computing Engine set to EGGROLL, STANDALONE
+
+      -  apply_cores(guest, host): task_run_cores \* task_parallelism
+      -  apply_cores(arbiter): 0, because actual resource cost is minimal and EGGROLL currently sets the same cores for all nodes, set to **0** to avoid unnecessary job queueing due to resource need from arbiter
+      -  note: on EGGROLL cluster, each node always assigns arbiter task_run_cores/nodes cores
+
+   -  Computing Engine set to SPARK
+
+      -  SPARK supports executor-cores \* num-executors; not strongly correlated with number of cluster nodes due to SPARK own resource manager; if the calculated resource different from the one actually applied, jobs may keep waiting on SPARK engine
+      -  apply_cores(guest, host, arbiter): task_run_cores \* task_parallelism
+
+2. Job Management Policy
+
+   -  Enqueue by job submission time
+   -  Currently only support FIFO policy: manager only applies resources for the first job, deque the first job if success, wait for the next round if failure
+
+3. Resource Application Policy
+
+   -  Manager selects job following the above guidelines and distribute federated resource application request to all participants
+   -  If all participants successfully secure resource, i.e.: (total_cores - apply_cores > 0), then the job succeeds in resource application
+   -  If not all participants succeeds, then send rollback request to succeeded participants, and the job fails in resource application
+
+5. Component Parameter Configuration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+5.1 Configuration Applicable Range Policy
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- ``common``: applies to all participants
+- ``role``: applies only to specific participant; specify participant in $role:$party_index format; note that ``role`` configuration takes priority over ``common``
+
+.. code:: json
+
+   "commom": {
+   }
+
+   "role": {
+     "guest": {
+       "0": {
+       }
+     }
+   }
 
 
-Multi-host configuration
-------------------------
+In the example above, configuration inside``common`` applies to all participants;
+configuration inside ``role-guest-0`` only applies to participant `guest_0`
+
+Note: current version now supports checking on both fields of specification.
+
+
+5.2 Example Component Parameter Configuration
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+-  Configuration of modules ``intersection_0``\ & \ ``hetero_lr_0``\ are put inside ``common``, thus applies to all participants
+-  Configuration of modules \ ``reader_0``\ & \ ``dataio_0``\ are specified for each participant
+-  Names of the above modules are specified in dsl file
+
+.. code:: json
+
+   "component_parameters": {
+     "common": {
+       "intersection_0": {
+         "intersect_method": "raw",
+         "sync_intersect_ids": true,
+         "only_output_key": false
+       },
+       "hetero_lr_0": {
+         "penalty": "L2",
+         "optimizer": "rmsprop",
+         "alpha": 0.01,
+         "max_iter": 3,
+         "batch_size": 320,
+         "learning_rate": 0.15,
+         "init_param": {
+           "init_method": "random_uniform"
+         }
+       }
+     },
+     "role": {
+       "guest": {
+         "0": {
+           "reader_0": {
+             "table": {"name": "breast_hetero_guest", "namespace": "experiment"}
+           },
+           "dataio_0":{
+             "with_label": true,
+             "label_name": "y",
+             "label_type": "int",
+             "output_format": "dense"
+           }
+         }
+       },
+       "host": {
+         "0": {
+           "reader_0": {
+             "table": {"name": "breast_hetero_host", "namespace": "experiment"}
+           },
+           "dataio_0":{
+             "with_label": false,
+             "output_format": "dense"
+           }
+         }
+       }
+     }
+   }
+
+
+5.3 Multi-host configuration
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 For multi-host modeling case, all the host's party ids should be list in the role field.
 
@@ -517,8 +653,11 @@ The parameters set in common parameters need not be copied into host role parame
 Common parameters will be copied for every party.
 
 
-Prediction configuration
-------------------------
+5.4 Prediction configuration
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+5.4.1 Overview
+'''''''''''''''''
 
 Please note that in dsl v2，predict dsl is not automatically generated after training.
 User should first deploy needed components with `Flow Client <../python/fate_client/flow_client/README.rst>`__.
@@ -531,7 +670,8 @@ for details on using deploy command:
 
 Optionally, user can add additional component(s) to predict dsl, like ``Evaluation``:
 
-**Examples**
+5.4.2 Example
+'''''''''''''''''
 
 training dsl:
 
@@ -678,4 +818,15 @@ predict dsl:
                  ]
               }
         }
-    }
+
+
+6. Basic Workflow
+~~~~~~~~~~~~~~~~~~~
+
+1. After job submission, FATE-Flow obtains job dsl and job config and store them inside
+   job folder under corresponding directory ``$PROJECT_BASE/jobs/$jobid/``
+2. Parse job dsl & job config, generate fine-grained configuration according to provided settings
+   (as mentioned above, backend & work_mode together determines configration for three engines) and fill
+   in default parameter values
+3. Distribute and store common configuration to each party, generate and store party-specific \ **job_runtime_on_party_conf**\ under jobs directory
+4. Each party execute job following \ **job_runtime_on_party_conf**\
