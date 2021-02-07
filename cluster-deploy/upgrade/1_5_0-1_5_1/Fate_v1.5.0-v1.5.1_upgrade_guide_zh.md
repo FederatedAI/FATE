@@ -18,3 +18,6 @@ cd 1_5_0-1_5_1-upgrade
 ## 3. 升级eggroll部分
 参考1_5_0-1_5_1-upgrade/eggroll_upgrade_guide_zh.md
 
+## 4. 安装新版本fate client
+参考python/fate_client/README.rst
+
