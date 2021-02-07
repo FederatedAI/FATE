@@ -307,17 +307,17 @@ configuration
      - partition number for table computing
 
    * - eggroll_run
-     -
+     - \
      - processors_per_node
      - configuration specific for EGGROLL computing engine; generally set automatically based on ``task_cores``; if specified, ``task_cores`` value ineffective
 
    * - spark_run
-     -
+     - \
      - num-executors, executor-cores
      - configuration specific for SPARK computing engine; generally set automatically based on ``task_cores``; if specified, ``task_cores`` value ineffective
 
    * - rabbitmq_run
-     -
+     - \
      - queue, exchange etc.
      - parameters for rabbitmq to set up queue, exchange, etc.; generally takes system default
 
