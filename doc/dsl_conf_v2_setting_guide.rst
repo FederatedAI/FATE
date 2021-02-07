@@ -468,9 +468,10 @@ lifting restrictions on number of parallel tasks in previous versions.
 Calculate actual ``task_run_cores`` each task requests at computing engine, may not equal to the amount applied by resource manager
 
 1. only set ``task_cores`` in job conf:
-   - task_run_cores(guest, host)：max(task_cores / total_nodes, 1) \* total_nodes
-   - task_run_cores(arbiter)：max(1 / total_nodes, 1) \* total_nodes
-   - FATE-Flow will automatically convert ``task_cores`` value into engine-specific configuration: eggroll.session.processors.per.node for EGGROLL, and executor-cores & num-executors for SPARK
+
+   -  task_run_cores(guest, host)：max(task_cores / total_nodes, 1) \* total_nodes
+   -  task_run_cores(arbiter)：max(1 / total_nodes, 1) \* total_nodes
+   -  FATE-Flow will automatically convert ``task_cores`` value into engine-specific configuration: eggroll.session.processors.per.node for EGGROLL, and executor-cores & num-executors for SPARK
 
 2. set eggroll_run in job conf：
 

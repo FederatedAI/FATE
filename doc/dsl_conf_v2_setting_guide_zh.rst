@@ -442,9 +442,10 @@ cores管理策略，去除早前版本直接通过限制同时运行作业个数
 计算每个task实际提交到计算引擎的task_run_cores，但并不代表资源调度时的申请量
 
 1. job conf使用task_cores配置：
-   - task_run_cores(guest, host)：max(task_cores / total_nodes, 1) \* total_nodes
-   - task_run_cores(arbiter)：max(1 / total_nodes, 1) \* total_nodes
-   - fateflow会将参数自动转换为对应引擎的实际配置参数，如eggroll的eggroll.session.processors.per.node，spark的executor-cores和num-executors
+
+   -  task_run_cores(guest, host)：max(task_cores / total_nodes, 1) \* total_nodes
+   -  task_run_cores(arbiter)：max(1 / total_nodes, 1) \* total_nodes
+   -  fateflow会将参数自动转换为对应引擎的实际配置参数，如eggroll的eggroll.session.processors.per.node，spark的executor-cores和num-executors
 
 2. job conf使用eggroll_run配置：
 
