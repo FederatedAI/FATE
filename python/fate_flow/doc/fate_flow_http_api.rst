@@ -208,6 +208,52 @@ Job
    -  retmsg: return code description,String
    -  data: tasks data, Array
 
+
+/v1/job/list/job
+~~~~~~~~~~~~~~~~~~
+
+-  request structure
+
+   - limit: Optional, Integer: limitation of number of return records
+
+-  response structure
+
+   -  retcode: return code,Integer
+   -  retmsg: return code description,String
+   -  data: info of jobs, Array
+
+
+/v1/job/list/task
+~~~~~~~~~~~~~~~~~~
+
+-  request structure
+
+   - limit: Optional, Integer: limitation of number of return records
+
+-  response structure
+
+   -  retcode: return code,Integer
+   -  retmsg: return code description,String
+   -  data: info of tasks, Array
+
+
+/v1/job/dsl/generate
+~~~~~~~~~~~~~~~~~~~~~
+
+-  request structure
+
+   - train_dsl: Required, String: training dsl
+   - cpn_str: Required, String or Array: list of components which are chose to be used
+   - filename: Optional, String: generated dsl storing path
+
+-  response structure
+
+   -  retcode: return code,Integer
+   -  retmsg: return code description,String
+   -  data: generated dsl, Array
+
+
+
 Tracking
 ~~~~~~~~
 
@@ -394,6 +440,272 @@ Model
    -  retcode: return code, Integer
    -  retmsg: return code description, String
    -  data: model data, Object
+
+
+/v1/model/import
+~~~~~~~~~~~~~~~~~
+
+-  request structure
+
+   - model_version: Required, Integer: model version
+   - model_id: Required, String: model id
+   - role: Required, String: role
+   - party_id: Required, String: party id
+
+-  response structure
+
+   - retcode: return code, Integer
+   - retmsg: return code description, String
+
+
+/v1/model/export
+~~~~~~~~~~~~~~~~~
+
+-  request structure
+
+   - model_version: Required, Integer: model version
+   - model_id: Required, String: model id
+   - role: Required, String: role
+   - party_id: Required, String: party id
+
+-  response structure
+
+   - retcode: return code, Integer
+   - retmsg: return code description, String
+
+
+/v1/model/store
+~~~~~~~~~~~~~~~~~
+
+-  request structure
+
+   - model_version: Required, Integer: model version
+   - model_id: Required, String: model id
+   - role: Required, String: role
+   - party_id: Required, String: party id
+
+-  response structure
+
+   - retcode: return code, Integer
+   - retmsg: return code description, String
+
+
+/v1/model/restore
+~~~~~~~~~~~~~~~~~
+
+-  request structure
+
+   - model_version: Required, Integer: model version
+   - model_id: Required, String: model id
+   - role: Required, String: role
+   - party_id: Required, String: party id
+
+-  response structure
+
+   - retcode: return code, Integer
+   - retmsg: return code description, String
+
+
+/v1/model/model_tag/retrieve
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-  request structure
+
+   - job_id: Required, Integer: a valid job id or model version
+
+-  response structure
+
+   - retcode: return code, Integer
+   - retmsg: return code description, String
+   - data: information of tags related to the specified model
+
+
+/v1/model/model_tag/create
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-  request structure
+
+   - job_id: Required, Integer: a valid job id or model version
+   - tag_name: Required, String: a valid name of tag
+
+-  response structure
+
+   - retcode: return code, Integer
+   - retmsg: return code description, String
+
+
+/v1/model/model_tag/remove
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-  request structure
+
+   - job_id: Required, Integer: a valid job id or model version
+   - tag_name: Required, String: a valid name of tag
+
+-  response structure
+
+   - retcode: return code, Integer
+   - retmsg: return code description, String
+
+
+/v1/model/tag/retrieve
+~~~~~~~~~~~~~~~~~~~~~~~
+
+-  request structure
+
+   - tag_name: Required, String: a valid tag name
+   - with_model: Optional, Boolean: choose to show tag info or tag info related to models
+
+-  response structure
+
+   -  retcode: return code, Integer
+   -  retmsg: return code description, String
+   -  data: tag info, Object
+
+
+/v1/model/tag/create
+~~~~~~~~~~~~~~~~~~~~~
+
+-  request structure
+
+   - tag_name: Required, String: name of tag
+   - tag_desc: Optional, String: description of tag
+
+-  response structure
+
+   - retcode: return code, Integer
+   - retmsg: return code description, String
+
+
+/v1/model/tag/destroy
+~~~~~~~~~~~~~~~~~~~~~~
+
+-  request structure
+
+   - tag_name: Required, String: a valid tag name
+
+-  response structure
+
+   - retcode: return code, Integer
+   - retmsg: return code description, String
+
+
+/v1/model/tag/update
+~~~~~~~~~~~~~~~~~~~~~~
+
+-  request structure
+
+   - tag_name: Required, String: a valid tag name
+   - new_tag_name: Optional, String: a new name to replace previous name
+   - new_tag_desc: Optional, String: a new decription to replace previous description
+
+-  response structure
+
+   - retcode: return code, Integer
+   - retmsg: return code description, String
+
+
+/v1/model/tag/list
+~~~~~~~~~~~~~~~~~~~~~~
+
+-  request structure
+
+   - limit: Required, Integer: limitation of number of return records
+
+-  response structure
+
+   -  retcode: return code, Integer
+   -  retmsg: return code description, String
+   -  data: tag info, Object
+
+
+/v1/model/migrate
+~~~~~~~~~~~~~~~~~~
+
+-  request structure
+
+   - migrate_initiator: Required, Object: indicates which party is the new initiator after migrating
+   - unify_model_version: Optional, String: a unitive model version for migrate model
+   - role: Required, String: information of roles which participated in model training, including role name and array of party ids
+   - migrate_role: Required, Object: information of roles model would be migrated to, including role name and array of party ids
+   - model_id: Required, String: original model id
+   - model_version: Required, Integer: original model version
+   - execute_party: Required, Object: parties that is going to execute model migration task
+   - job_parameters: Required, Object: job parameters information, including work_mode, model_id and model_version
+
+-  response structure
+
+   -  retcode: return code, Integer
+   -  retmsg: return code description, String
+   -  data: status info, Object
+
+
+/v1/model/query
+~~~~~~~~~~~~~~~~~~
+
+-  request structure
+
+   - model_version: Required, Integer: model version
+   - model_id: Optional, String: model id
+   - role: Optional, String: role
+   - party_id: Optional, String: party id
+   - query_filters: Optional, Array: features filters
+
+-  response structure
+
+   -  retcode: return code, Integer
+   -  retmsg: return code description, String
+   -  data: model info, Object
+
+
+/v1/model/deploy
+~~~~~~~~~~~~~~~~~~
+
+-  request structure
+
+   - model_version: Required, Integer: model version
+   - model_id: Required, String: model id
+
+-  response structure
+
+   -  retcode: return code, Integer
+   -  retmsg: return code description, String
+   -  data: status info, Object
+
+
+/v1/model/get/predict/dsl
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-  request structure
+
+   - model_version: Required, Integer: model version
+   - model_id: Optional, String: model id
+   - role: Optional, String: role
+   - party_id: Optional, String: party id
+
+-  response structure
+
+   -  retcode: return code, Integer
+   -  retmsg: return code description, String
+   -  data: predict dsl of specified model, Object
+
+
+/v1/model/get/predict/conf
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-  request structure
+
+   - model_version: Required, Integer: model version
+   - model_id: Required, String: model id
+   - filename: Optional, String: file storing path
+
+-  response structure
+
+   -  retcode: return code, Integer
+   -  retmsg: return code description, String
+   -  data: predict config of specified model, Object
+
+
 
 Table
 -----

@@ -54,6 +54,7 @@ class PipeLine(object):
         self._fit_status = None
         self._train_board_url = None
         self._model_info = None
+        self._predict_model_info = None
         self._train_components = {}
         self._stage = "fit"
         self._data_to_feed_in_prediction = None
@@ -386,7 +387,14 @@ class PipeLine(object):
                 if not isinstance(val, list):
                     val = [val]
 
+                if "input" not in self._predict_dsl["components"][cpn]:
+                    self._predict_dsl["components"][cpn]["input"] = {}
+
+                if 'data' not in self._predict_dsl["components"][cpn]["input"]:
+                    self._predict_dsl["components"][cpn]["input"]["data"] = {}
+
                 self._predict_dsl["components"][cpn]["input"]["data"][dataset] = val
+
         return self
 
     def _feed_job_parameters(self, conf, job_type=None,
@@ -474,9 +482,14 @@ class PipeLine(object):
 
         self.compile()
 
+        res_dict = self._job_invoker.model_deploy(model_id=self._model_info.model_id,
+                                                  model_version=self._model_info.model_version,
+                                                  predict_dsl=self._predict_dsl)
+        self._predict_model_info = SimpleNamespace(model_id=res_dict["model_id"],
+                                                   model_version=res_dict["model_version"])
         predict_conf = self._feed_job_parameters(self._train_conf,
                                                  job_type="predict",
-                                                 model_info=self._model_info,
+                                                 model_info=self._predict_model_info,
                                                  job_parameters=job_parameters)
         predict_conf = self._filter_out_deploy_component(predict_conf)
         self._predict_conf = copy.deepcopy(predict_conf)
@@ -518,31 +531,33 @@ class PipeLine(object):
             return pickle.loads(fin.read())
 
     @LOGGER.catch(reraise=True)
-    def deploy_component(self, components):
+    def deploy_component(self, components=None):
         if self._train_dsl is None:
             raise ValueError("Before deploy model, training should be finish!!!")
 
-        if not components:
-            deploy_cpns = list(self._components.keys())
-        else:
-            deploy_cpns = []
-            for cpn in components:
-                if isinstance(cpn, str):
-                    deploy_cpns.append(cpn)
-                elif isinstance(cpn, Component):
-                    deploy_cpns.append(cpn.name)
-                else:
-                    raise ValueError(
-                        "deploy component parameters is wrong, expect str or Component object, but {} find".format(cpn))
+        if components is None:
+            components = self._components
+        deploy_cpns = []
+        for cpn in components:
+            if isinstance(cpn, str):
+                deploy_cpns.append(cpn)
+            elif isinstance(cpn, Component):
+                deploy_cpns.append(cpn.name)
+            else:
+                raise ValueError(
+                    "deploy component parameters is wrong, expect str or Component object, but {} find".format(type(cpn)))
 
-                if deploy_cpns[-1] not in self._components:
-                    raise ValueError("Component {} does not exist in pipeline".format(deploy_cpns[-1]))
+            if deploy_cpns[-1] not in self._components:
+                raise ValueError("Component {} does not exist in pipeline".format(deploy_cpns[-1]))
 
-                if isinstance(self._components.get(deploy_cpns[-1]), Reader):
-                    raise ValueError("Reader should not be include in predict pipeline")
+            if isinstance(self._components.get(deploy_cpns[-1]), Reader):
+                raise ValueError("Reader should not be include in predict pipeline")
+        res_dict = self._job_invoker.model_deploy(model_id=self._model_info.model_id,
+                                                  model_version=self._model_info.model_version,
+                                                  cpn_list=deploy_cpns)
 
-        self._predict_dsl = self._job_invoker.get_predict_dsl(train_dsl=self._train_dsl, cpn_list=deploy_cpns,
-                                                              version=VERSION)
+        self._predict_dsl = self._job_invoker.get_predict_dsl(model_id=res_dict["model_id"],
+                                                              model_version=res_dict["model_version"])
 
         if self._predict_dsl:
             self._deploy = True

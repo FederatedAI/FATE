@@ -463,6 +463,15 @@ Below lists input and output elements of each component.
      - None
      - None
 
+   * - `Feldman Verifiable Sum`_
+     - Feldman Verifiable Sum
+     - This component will sum multiple privacy values without exposing data
+     - data
+     - data
+     - None
+     - None
+
+
 
 .. _DataIO: ../../../federatedml/util/README.rst
 .. _Intersect: ../../../federatedml/statistic/intersect/README.rst
@@ -489,6 +498,7 @@ Below lists input and output elements of each component.
 .. _Hetero KMeans: ../../../federatedml/unsupervised_learning/kmeans/README.rst
 .. _Data Statistics: ../../../federatedml/statistic/README.rst
 .. _Scorecard: ../../../federatedml/statistic/scorecard/README.rst
+.. _Feldman Verifiable Sum: ../../../federatedml/statistic/feldman_verifiable_sum/README.rst
 
 
 Params

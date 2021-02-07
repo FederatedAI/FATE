@@ -56,7 +56,7 @@ class HeteroPoissonGuest(HeteroPoissonBase):
         exposure_index = self.exposure_index
         if exposure_index > -1:
             self.header.pop(exposure_index)
-            LOGGER.info("expsoure provided at Guest, colname is {}".format(self.exposure_colname))
+            LOGGER.info("Guest provides exposure value.")
         exposure = data_instances.mapValues(lambda v: HeteroPoissonBase.load_exposure(v, exposure_index))
         data_instances = data_instances.mapValues(lambda v: HeteroPoissonBase.load_instance(v, exposure_index))
 

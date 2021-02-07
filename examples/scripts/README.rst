@@ -1,12 +1,12 @@
 Description
 ===========
 
-Here we placed some scripts with auxiliary functions.
+Here we place some scripts with auxiliary functions.
 
 Upload Data
 -----------
 
-We have already placed some public data sets in example/data. We also provide a script to upload these data into FATE through fate-flow interface.
+We have already placed some public data sets in `examples/data <../data>`_. We also provide a script to upload data into FATE through FATE-Flow interface.
 
 Description
 ```````````
@@ -17,7 +17,7 @@ You can use it as simple as running the following command:
 
      python upload_default_data.py -m {work_mode}
 
-Where work_mode stands for whether you are running standalone mode or cluster mode. If it is standalone mode, work_mode is 0 while work_mode equal to 1 stands for cluster mode.
+Where work_mode stands for whether you are running standalone mode or cluster mode. If it is standalone mode, work_mode is 0 while work_mode equals to 1 for cluster mode.
 
 After that, you are expected to see the following feedback which showing the table information for you:
 

@@ -18,7 +18,7 @@ Pipeline](./images/federated_learning_pipeline.png){.align-center}
 -   Advanced scheduling framework, based on global state and optimistic lock scheduling, single-party DAG scheduling, multi-party coordinated scheduling, and support for multiple schedulers
 -   Flexible scheduling strategy, support start/stop/rerun, etc.
 -   Fine-grained resource scheduling capabilities, supporting core, memory, and working node strategies based on different computing engines
--   Real-time tracker, real-time tracking data, parameters, models and indicators during operation
+-   Realtime tracker, real-time tracking data, parameters, models and indicators during operation
 -   Federated Learning Model Registry, model management, federated consistency, import and export, migration between clusters
 -   Provide CLI, HTTP API, Python SDK
 
@@ -34,9 +34,9 @@ Deploy
 Usage
 -----
 
-##### [Command Line Interface v2](./doc/fate_flow_cli_v2_guide.md)
+##### [Command Line Interface v2](../fate_client/flow_client/README.rst)
 
-##### [Python SDK](./doc/Fate_Flow_Client_SDK_Guide.md)
+##### [Python SDK](../fate_client/flow_sdk/README.rst)
 
 ##### [HTTP API](./doc/fate_flow_http_api.rst)
 

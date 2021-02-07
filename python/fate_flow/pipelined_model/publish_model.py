@@ -15,6 +15,8 @@
 #
 import grpc
 
+from fate_flow.settings import IP, HTTP_PORT, FATE_FLOW_MODEL_TRANSFER_ENDPOINT
+from fate_arch.common.conf_utils import get_base_config
 from fate_arch.protobuf.python import model_service_pb2
 from fate_arch.protobuf.python import model_service_pb2_grpc
 from fate_flow.settings import stat_logger
@@ -56,7 +58,10 @@ def load_model(config_data):
             load_model_request.local.role = config_data.get('local').get('role')
             load_model_request.local.partyId = config_data.get('local').get('party_id')
             load_model_request.loadType = config_data['job_parameters'].get("load_type", "FATEFLOW")
-            load_model_request.filePath = config_data['job_parameters'].get("file_path", "")
+            if not get_base_config('use_registry'):
+                load_model_request.filePath = f"http://{IP}:{HTTP_PORT}{FATE_FLOW_MODEL_TRANSFER_ENDPOINT}"
+            else:
+                load_model_request.filePath = config_data['job_parameters'].get("file_path", "")
             stat_logger.info(load_model_request)
             response = stub.publishLoad(load_model_request)
             stat_logger.info(

@@ -1,3 +1,27 @@
+# Release 1.5.1
+## Major Features and Improvements
+
+> FederatedML
+* Add Feldman Verifiable Secret Sharing protocol (contributed)
+* Add Feldman Verifiable Sum Module (contributed)
+* Updated FATE-Client and FATE-Test for new FATE-Flow
+* Upgraded early stopping strategy: record best model for each metric
+
+> Fate-Flow
+* Optimize the model center, reconstruct publishing model, support deploy, load, bind, migrate operations, and add new interfaces such as model info
+* Improve identity authentication and resource authorization, support party identity verification, and participate in the authorization of roles and components
+* Optimize and fix resource manager, add task_cores job parameters to adapt to different computing engines
+
+> Eggroll
+* In one-way communication mode, add party identity authentication function, which needs to be used with FATE-Cloud
+
+> Deploy
+* Support 1.5.0 retain data upgrade to 1.5.1
+
+## Bug Fixes
+* Fix predict-cache in SecureBoost validation
+* Fix job clean CLI
+
 # Release 1.5.0（LTS）
 ## Major Features and Improvements
 

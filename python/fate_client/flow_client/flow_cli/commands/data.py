@@ -19,6 +19,7 @@ import sys
 from flow_client.flow_cli.utils import cli_args
 from flow_client.flow_cli.utils.cli_utils import preprocess, access_server, check_abs_path, prettify
 from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
+import json
 
 
 @click.group(short_help="Data Operations")
@@ -75,7 +76,7 @@ def upload(ctx, **kwargs):
 
                 data = MultipartEncoderMonitor(data, read_callback)
                 access_server('post', ctx, 'data/upload', json_data=None, data=data,
-                              params=config_data, headers={'Content-Type': data.content_type})
+                              params=json.dumps(config_data), headers={'Content-Type': data.content_type})
         else:
             prettify(
                 {

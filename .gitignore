@@ -33,3 +33,4 @@ _build
 /audit/
 .vscode/*
 /eggroll/
+/fateboard/
