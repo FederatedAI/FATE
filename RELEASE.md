@@ -1,3 +1,15 @@
+# Release 1.5.1
+## Major Features and Improvements
+
+> FederatedML
+* Add Feldman Verifiable Secret Sharing protocol (contributed)
+* Add Feldman Verifiable Sum Module (contributed)
+* Updated FATE-Client and FATE-Test for new FATE-Flow
+* Upgraded early stopping strategy: record best model for each metric
+
+## Bug Fixes
+* Fix predict-cache in SecureBoost validation
+
 # Release 1.5.0（LTS）
 ## Major Features and Improvements
 

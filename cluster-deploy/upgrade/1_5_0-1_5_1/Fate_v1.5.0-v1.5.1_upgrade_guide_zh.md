@@ -10,7 +10,7 @@
 
 ```bash
 cd ~
-tar xvf upgrade_1_5_0-1_5_1.tar.gz
+tar xvf upgrade_fate_1_5_0-1_5_1.tar.gz
 ```
 
 解压后将在用户的home目录下得到upgrade_1_5_0-1_5_1文件夹。
@@ -48,16 +48,22 @@ SUPERVISOR_ROOT=/data/projects/common/supervisord
 
 ## 3. 执行更新脚本
 
-对参数进行修改后，请对更新脚本进行保存。保存后，请使用如下命令执行更新：
+对参数进行修改后，请对更新脚本进行保存，并将upgrade_1_5_0-1_5_1目录拷贝到需要升级的机器：部署并启动了fateflow, fateboard, mysql, nodemanager的home目录。
+
+请使用如下命令执行更新：
+### 3.1 更新脚本使用方法说明
 
 ```bash
-cd ~/upgrade_151/
+cd ~/upgrade_1_5_0-1_5_1/
 
 # 带参数执行如下命令，其中组件名请从：fatepython、fateflow、mysql、all中选择
 sh upgrade.sh <module>
 
 # 例如，如果只需要更新fatepython，请执行如下命令：
 sh upgrade.sh fatepython
+
+# 若所有服务均部署在同一台机器，请使用all，否则不能使用all:
+sh upgrade.sh all
 ```
 
 如果提示ERROR，... aborting字样，则为参数检查不通过，请根据提示对脚本参数进行二次确认及修改；
@@ -66,7 +72,23 @@ sh upgrade.sh fatepython
 
 **【注意】**如果选择单组件分别更新，更新数据库时请手动停止fateflow服务，否则数据库更新进程可能会失败。手动停止fateflow服务的方法详见4.1.1。
 
+### 3.2 更新mysql(mysql所在机器)
 
+```bash
+sh upgrade.sh mysql
+```
+
+### 3.3 更新fatepython(fateflow、nodemanager所在机器)
+
+```bash
+sh upgrade.sh fatepython
+```
+
+### 3.4 更新fateboard(fateboard所在机器)
+
+```bash
+sh upgrade.sh fateboard
+```
 
 ## 4. 更新回滚
 
