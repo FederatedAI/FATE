@@ -20,9 +20,9 @@ install:
   - pip install codecov
 
 script:
-  - wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/standalone-fate-master-1.5.0.tar.gz
-  - tar -xzf  standalone-fate-master-1.5.0.tar.gz
-  - cd standalone-fate-master-1.5.0
+  - wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/standalone-fate-master-1.5.1.tar.gz
+  - tar -xzf  standalone-fate-master-1.5.1.tar.gz
+  - cd standalone-fate-master-1.5.1
   - sed -i.bak "s/sh  service.sh/bash service.sh/g" init.sh
   - sh init.sh init
   - ls -alh
