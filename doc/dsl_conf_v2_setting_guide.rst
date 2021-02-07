@@ -341,6 +341,18 @@ configuration
      - \-
      - version of model, needed for prediction task
 
+.. note::
+
+   1. Some types of ``computing_engine``, ``storage_engine``, and ``federation_engine``
+   are only compatible with each other. For examples, SPARK
+   ``computing_engine`` only supports HDFS ``storage_engine``.
+
+   2. Combination of ``work_mode`` and ``backend`` automatically determines which
+   three engines will be used.
+
+   3. Developer may implement other types of engines and set new engine
+   combinations in runtime conf.
+
 4.3 Non-Configurable Job Parameters
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -372,18 +384,6 @@ configuration
      - set automatically based on ``work_mode`` and ``backend``
      - SINGLE, MULTIPLE
      - federation mode
-
-.. note::
-
-   1. Some types of ``computing_engine``, ``storage_engine``, and ``federation_engine``
-   are only compatible with each other. For examples, SPARK
-   ``computing_engine`` only supports HDFS ``storage_engine``.
-
-   2. Combination of ``work_mode`` and ``backend`` automatically determines which
-   three engines will be used.
-
-   3. Developer may implement other types of engines and set new engine
-   combinations in runtime conf.
 
 4.4 Example Job Parameter Configuration
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
