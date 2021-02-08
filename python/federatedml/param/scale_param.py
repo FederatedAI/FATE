@@ -37,8 +37,8 @@ class ScaleParam(BaseParam):
 
         scale_col_indexes: list,the idx of column in scale_column_idx will be scaled, while the idx of column is not in, it will not be scaled.
         scale_names : list of string, default: [].Specify which columns need to scaled. Each element in the list represent for a column name in header.
-        with_mean: bool, used for "standard_scale". Default False.
-        with_std: bool, used for "standard_scale". Default False.
+        with_mean: bool, used for "standard_scale". Default True.
+        with_std: bool, used for "standard_scale". Default True.
             The standard scale of column x is calculated as : z = (x - u) / s, where u is the mean of the column and s is the standard deviation of the column.
             if with_mean is False, u will be 0, and if with_std is False, s will be 1.
 
