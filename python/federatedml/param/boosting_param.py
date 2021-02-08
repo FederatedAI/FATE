@@ -534,7 +534,7 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
                  validation_freqs=None, early_stopping_rounds=None, use_missing=False, zero_as_missing=False,
                  complete_secure=False, tree_num_per_party=1, guest_depth=1, host_depth=1, work_mode='mix', metrics=None,
                  sparse_optimization=False, random_seed=100, binning_error=consts.DEFAULT_RELATIVE_ERROR,
-                 cipher_compress_error=None, new_ver=True, run_goss=False):
+                 cipher_compress_error=None, new_ver=True, run_goss=False, top_rate=0.2, other_rate=0.1):
 
         """
         work_mode：
@@ -562,7 +562,7 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
                                                          binning_error=binning_error,
                                                          cipher_compress_error=cipher_compress_error,
                                                          new_ver=new_ver,
-                                                         run_goss=False)
+                                                         run_goss=False, top_rate=0.2, other_rate=0.1)
 
         self.tree_num_per_party = tree_num_per_party
         self.guest_depth = guest_depth
