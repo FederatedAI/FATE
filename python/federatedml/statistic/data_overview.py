@@ -60,6 +60,14 @@ def get_max_sample_weight(data_inst_with_weight):
     return max_weight
 
 
+def check_negative_sample_weight(kv_iterator):
+    for k, v in kv_iterator:
+        if isinstance(v, Instance) and v.weight is not None:
+            if v.weight < 0:
+                return True
+    return False
+
+
 def header_alignment(data_instances, pre_header):
     header = data_instances.schema["header"]
     if len((set(header) & set(pre_header))) != len(pre_header):
