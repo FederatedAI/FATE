@@ -22,7 +22,7 @@ import numpy as np
 from fate_flow.entity.metric import Metric, MetricMeta
 from federatedml.model_base import ModelBase
 from federatedml.param.sample_weight_param import SampleWeightParam
-from federatedml.statistic.data_overview import get_label_count
+from federatedml.statistic.data_overview import get_label_count, check_negative_sample_weight
 from federatedml.util import consts, LOGGER
 
 
@@ -148,4 +148,6 @@ class SampleWeight(ModelBase):
         result_instances.schema = new_schema
 
         self.callback_info()
+        if result_instances.mapPartitions(check_negative_sample_weight).reduce(lambda x, y: x or y):
+            LOGGER.warning(f"Negative weight found in weighted instances.")
         return result_instances
