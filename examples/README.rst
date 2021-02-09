@@ -89,7 +89,7 @@ modeling jobs. For more information, please refer this guide on
 Upgraded DSL(DSL v2) by FATE-v1.5 comes with the following major features:
 
 1. Predictions DSL may now be configured through FATE-Flow cli. Please note
-   that new DSL no longer supports automatic formation of prediction DSL;
+   that with new DSL training job will no longer automatically form prediction DSL;
    user needs to first form DSL manually with FATE-Flow cli before running
    prediction task.
 2. New components may now be added to prediction DSL;
@@ -99,6 +99,14 @@ Upgraded DSL(DSL v2) by FATE-v1.5 comes with the following major features:
 For DSL v2 examples, please refer `dsl/v2 <./dsl/v2>`__. For examples of
 the older version, please refer `dsl/v1 <./dsl/v1>`__. This is the "federatedml-1.x-examples" in older version. Please note that
 starting at version 1.6, FATE may no longer support DSL v1.
+
+Cross Validation Task
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Starting at version 1.6, cross validation tasks can output fold history data when ``output_fold_history`` is set to True.
+Output data contains either prediction ``score`` or original ``instance`` value. Please note that the ``score`` output from cross validation
+tasks may not be input to Evaluation module. All testsuites of modeling modules include demos
+on setting `cv parameters <../python/federatedml/param/cross_validation_param.py>`_.
 
 
 Benchmark Quality
