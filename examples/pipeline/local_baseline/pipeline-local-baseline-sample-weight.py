@@ -81,7 +81,7 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.add_component(reader_0)
     pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
     pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
-    pipeline.add_component(sample_weight_0, data=Data(train_data=intersection_0.output.data))
+    pipeline.add_component(sample_weight_0, data=Data(data=intersection_0.output.data))
     pipeline.add_component(hetero_lr_0, data=Data(train_data=sample_weight_0.output.data))
     pipeline.add_component(local_baseline_0, data=Data(train_data=sample_weight_0.output.data))
     pipeline.add_component(evaluation_0, data=Data(data=[hetero_lr_0.output.data, local_baseline_0.output.data]))
