@@ -41,8 +41,8 @@ def main(config="../../config.yaml", namespace=""):
     backend = config.backend
     work_mode = config.work_mode
 
-    guest_train_data = {"name": "vehicle_scale_hetero_guest", "namespace": f"experiment{namespace}"}
-    host_train_data = {"name": "vehicle_scale_hetero_host", "namespace": f"experiment{namespace}"}
+    guest_train_data = {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"}
+    host_train_data = {"name": "breast_hetero_host", "namespace": f"experiment{namespace}"}
 
     pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=host, arbiter=arbiter)
 
@@ -60,9 +60,9 @@ def main(config="../../config.yaml", namespace=""):
                                   only_output_key=False)
 
     sample_weight_0 = SampleWeight(name="sample_weight_0")
-    sample_weight_0.get_party_instance(role='guest', party_id=guest).algorithm_param(need_run=True,
+    sample_weight_0.get_party_instance(role='guest', party_id=guest).component_param(need_run=True,
                                                                                      class_weight={"0": 1, "1": 2})
-    sample_weight_0.get_party_instance(role='host', party_id=host).algorithm_param(need_run=False)
+    sample_weight_0.get_party_instance(role='host', party_id=host).component_param(need_run=False)
 
     hetero_lr_0 = HeteroLR(name="hetero_lr_0", penalty="L2", optimizer="nesterov_momentum_sgd",
                            tol=0.0001, alpha=0.0001, max_iter=30, batch_size=-1,
@@ -74,7 +74,7 @@ def main(config="../../config.yaml", namespace=""):
     local_baseline_0.get_party_instance(role='guest', party_id=guest).component_param(need_run=True)
     local_baseline_0.get_party_instance(role='host', party_id=host).component_param(need_run=False)
 
-    evaluation_0 = Evaluation(name="evaluation_0", eval_type="multi", pos_label=1)
+    evaluation_0 = Evaluation(name="evaluation_0", eval_type="binary", pos_label=1)
     evaluation_0.get_party_instance(role='guest', party_id=guest).component_param(need_run=True)
     evaluation_0.get_party_instance(role='host', party_id=host).component_param(need_run=False)
 
