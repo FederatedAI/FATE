@@ -240,9 +240,7 @@ class FedLightModule(pl.LightningModule):
         loss = self.loss_fn(y_hat, y)
 
         if y_hat.shape[1] > 1:
-            accuracy = (
-                torch.softmax(y_hat, dim=1).argmax(dim=1) == y
-            ).sum().float() / float(y.size(0))
+            accuracy = (y_hat.argmax(dim=1) == y).sum().float() / float(y.size(0))
         else:
             y_prob = y_hat[:, 0] > 0.5
             accuracy = (y == y_prob).sum().float() / y.size(0)
@@ -364,10 +362,11 @@ class PyTorchFederatedTrainer(object):
         param_pb.header.extend(self.header)
 
         # save label mapping
-        for label, mapped in self.label_mapping.items():
-            param_pb.label_mapping.add(
-                label=json.dumps(label), mapped=json.dumps(mapped)
-            )
+        if self.label_mapping is not None:
+            for label, mapped in self.label_mapping.items():
+                param_pb.label_mapping.add(
+                    label=json.dumps(label), mapped=json.dumps(mapped)
+                )
 
         # meta
         meta_pb = nn_model_meta_pb2.NNModelMeta()
@@ -408,6 +407,8 @@ class PyTorchFederatedTrainer(object):
             label = json.loads(item.label)
             mapped = json.loads(item.mapped)
             label_mapping[label] = mapped
+        if not label_mapping:
+            label_mapping = None
 
         # restore trainer
         trainer = PyTorchFederatedTrainer(
@@ -440,6 +441,7 @@ def make_dataset(data, **kwargs):
 def make_predict_dataset(data, trainer: PyTorchFederatedTrainer):
     return make_dataset(
         data,
+        is_train=False,
         label_align_mapping=trainer.get_label_mapping(),
         expected_label_type=trainer.pl_model.expected_label_type,
     )
