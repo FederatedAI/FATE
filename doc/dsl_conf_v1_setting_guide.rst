@@ -2,7 +2,7 @@ DSL & Task Submit Runtime Conf Setting V1
 ======================================
 [`中文`_]
 
-.. _中文: dsl_conf_setting_guide_zh.rst
+.. _中文: dsl_conf_v1_setting_guide_zh.rst
 
 
 To make the modeling task more flexible, currently, FATE use its own domain-specific language(DSL) to describe modeling task. With usage of this DSL, modeling components such as data-io, feature-engineering and classification/regression module etc. can be combined as a Directed Acyclic Graph(DAG). Therefore, user can take and combine the algorithm components flexibly according to their needs.

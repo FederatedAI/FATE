@@ -27,15 +27,6 @@ Field Specification
 :table_name & namespace: Indicators for stored data table.
 :work_mode: Indicate if using standalone version or cluster version. 0 represent for standalone version and 1 stand for cluster version.
 
-.. Note::
-    We suggest you fully consider the resource of modeling machines before setting partition number.
-
-    Assume that the CPU cores (cpu cores) are: c, The number of Nodemanager is: n, The number of tasks to be run simultaneously is p, then:
-
-    egg_num=eggroll.session.processors.per.node = c * 0.8 / p
-
-    partitions (Number of roll pair partitions) = egg_num * n
-
 
 Step2: Define your modeling task structure
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -46,7 +37,7 @@ Currently, FATE provide a kind of domain-specific language(DSL) to define whatev
 
 The DSL config file will define input data and(or) model as well as output data and(or) model for each component. The downstream components take output data and(or) model of upstream components as input. In this way, a DAG can be constructed by the config file.
 
-We have provided several example dsl files located in the corresponding algorithm folder. For example, hetero-lr dsl files are located `here <hetero_logistic_regression/test_hetero_lr_train_job_dsl.json>`_.
+We have provided several example conf/dsl files in corresponding algorithm-named folders. For example, hetero-lr dsl files are located `here <hetero_logistic_regression/>`_.
 
 
 Field Specification
@@ -55,7 +46,7 @@ Field Specification
 :component_name: key of a component. This name should end with a "_num" such as "_0", "_1" etc. And the number should start with 0. This is used to distinguish multiple same kind of components that may exist.
 
 :module: Specify which component use. This field should be one of the algorithm modules FATE supported.
-         The supported algorithms can be referred to `here <../../federatedml/README.rst>`__
+         The supported algorithms can be referred to `here <../../python/federatedml/README.rst>`__
 
     - input: There are two type of input, data and model.
 
@@ -81,14 +72,15 @@ Field Specification
 Step3: Define Submit Runtime Configuration for Each Specific Component.
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This config file is used to config parameters for all components among every party.
+This config file is used to config parameters of all components for each party.
 
 1. initiator: Specify the initiator's role and party id.
-2. role: Indicate all the party ids for all roles.
-3. role_parameters: Those parameters are differ from roles and roles are defined here separately. Please note each parameter are list, each element of which corresponds to a party in this role.
-4. algorithm_parameters: Those parameters are same among all parties are here.
+2. job_parameters: Specify runtime configuration.
+3. role: Indicate all the party ids for all roles.
+4. role_parameters: Those parameters are differ from roles and roles are defined here separately. Please note each parameter are list, each element of which corresponds to a party in this role.
+5. algorithm_parameters: Those parameters are same among all parties are here.
 
-An example of config files can be shown as:
+Below shows an example config file:
 
 .. code-block::
 
@@ -99,7 +91,7 @@ An example of config files can be shown as:
         },
         "job_parameters": {
             "work_mode": 1
-            "processor_per_node": 6
+            "task_cores": 4
         },
         "role": {
             "guest": [
@@ -116,19 +108,19 @@ An example of config files can be shown as:
         "algorithm_parameters": {"Your algorithm parameters"},
     }
 
-You can set processor_per_node in job_parameters.
+You can set task_cores in job_parameters.
 
 Step4: Start Modeling Task
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 :Upload data:
-    Before starting a task, you need to load data among all the data-providers. To do that, a load_file config is needed to be prepared.  Then run the following command:
+    Before starting a task, you need to upload data from all data-providers. To do that, prepare a load_file config, and then run the following command:
 
     .. code-block::
 
-        python ${your_install_path}/fate_flow/fate_flow_client.py -f upload -c upload_data.json
+        python ${your_install_path}/python/fate_flow/fate_flow_client.py -f upload -c upload_data.json
 
-    Here is an example of configuring upload_data.json:
+    Here is an example upload_data.json:
 
     .. code-block:: json
 
@@ -141,9 +133,9 @@ Step4: Start Modeling Task
           "namespace": "experiment"
         }
 
-    We use **breast_hetero_guest** & **experiment** as guest party's table name and namespace. To use default runtime conf, please set host party's name and namespace as **breast_hetero_host** & **hetero_host_breast** and upload the data with path of  **examples/data/breast_hetero_host.csv**
+    We use **breast_hetero_guest** & **experiment** as guest party's table name and namespace. To use default runtime conf, please set host party's name and namespace as **breast_hetero_host** & **hetero_host_breast** and upload the data in path **examples/data/breast_hetero_host.csv**
 
-    To use other data set, please change your file path and table_name & namespace. Please do not upload different data set with same table_name and namespace.
+    To use other data sets, please change your file path, table_name, and namespace. Please do not upload different data sets with the same table_name and namespace.
 
     .. Note::
 
@@ -163,24 +155,24 @@ Step4: Start Modeling Task
             }
  
 
-    As the above example shows, the input train_data should match the upload file conf.
+    As the above example shows, the input table name and namespace of train_data should match the upload file conf.
 
     Then run the following command:
 
     .. code-block:: bash
         
-        python ${your_install_path}/fate_flow/fate_flow_client.py -f submit_job -d hetero_logistic_regression/test_hetero_lr_train_job_dsl.json -c hetero_logistic_regression/test_hetero_lr_train_job_conf.json
+        python ${your_install_path}/python/fate_flow/fate_flow_client.py -f submit_job -d hetero_logistic_regression/test_hetero_lr_train_job_dsl.json -c hetero_logistic_regression/test_hetero_lr_train_job_conf.json
 
 :Check log files:
-    Now you can check out the log in the following path: ${your_install_path}/logs/{your jobid}.
+    You can check log in the following path: ${your_install_path}/logs/{your jobid}.
 
 
 Step5: Check out Results
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-FATE now provide "FATE-BOARD" for showing modeling log-metrics and evaluation results.
+FATE now provide "FATE-BOARD" for visualizing modeling log-metrics and evaluation results.
 
-Use your browser to open a website: `http://{Your fate-board ip}:{your fate-board port}/index.html#/history`.
+Use your browser to open website: `http://{Your fate-board ip}:{your fate-board port}/index.html#/history`.
 
 .. figure:: ../../image/JobList.png
    :height: 250
@@ -188,7 +180,7 @@ Use your browser to open a website: `http://{Your fate-board ip}:{your fate-boar
    
    Figure 1: Job List
 
-There will be all your job history list here. Your latest job will be list in the first page. Use JOBID to find out the modeling task you want to check.
+There will list all your job history. Latest job will be at the top of the page. Search for JOBID to view the modeling task you want to check.
 
 .. figure:: ../../image/JobOverview.png
    :height: 250
@@ -203,7 +195,7 @@ In the task page, all the components will be shown as a DAG. We use different co
 3. Gray: Waiting
 4. Red: Failed.
 
-You can click each component to get their running parameters on the right side. Below those parameters, there exist a **View the outputs** button. You may check out model output, data output and logs for this component.
+You can click each component to get their running parameters on the right side. Below those parameters, there exist a **view the outputs** button. Click and check out model output, data output and logs for this component.
 
 .. figure:: ../../image/Component_Output.png
    :height: 250
@@ -211,7 +203,7 @@ You can click each component to get their running parameters on the right side. 
    
    Figure 3: Component Output
 
-If you want a big picture of the whole task, there is a **dashboard** button on the right upper corner. Get in the Dashboard, there list three windows showing different information.
+If you want an overview of the whole task, there is a **dashboard** button on the right upper corner. Go to Dashboard, there are three windows showing different information.
 
 .. figure:: ../../image/DashBoard.png
    :height: 250
@@ -220,8 +212,8 @@ If you want a big picture of the whole task, there is a **dashboard** button on 
    Figure 4: Dash Board
 
 
-1. Left window: showing data set used for each party in this task.
-2. Middle window: Running status or progress of the whole task.
+1. Left window: data set used for each party in this task.
+2. Middle window: running status or progress of the whole task.
 3. Right window: DAG of components.
 
 
@@ -230,7 +222,7 @@ Step6: Check out Logs
 
 After you submit a job, you can find your job log in `${Your install path}/logs/${your jobid}`
 
-The logs for each party is collected separately and list in different folders. Inside each folder, the logs for different components are also arranged in different folders. In this way, you can check out the log more specifically and get useful detailed  information.
+The logs for each party are listed in different folders. Inside each party folder, logs from different components are also arranged in corresponding sub-folders.
 
 
 FATE-FLOW Usage
@@ -401,27 +393,3 @@ where
 - ${role}: the role of current user. Please keep in mind that host users are not supposed to get predict results in heterogeneous algorithm.
 - ${component_name}: the component who has predict results
 - ${predict_result_output_dir}: the directory which use download the predict result to.
-
-
-use spark
----------
-
-1. deploy spark(yarn or standalone)
-2. export SPARK_HOME env before fate_flow service start(better adding env to service.sh)
-3. adjust runtime_conf, adjust job_parameters field:
-   
-   .. code-block:: json
-
-      {
-        "job_parameters": {
-            "backend": 1,
-            "spark_submit_config": {
-                "deploy-mode": "client",
-                "queue": "default",
-                "driver-memory": "1g",
-                "num-executors": 2,
-                "executor-memory": "1g",
-                "executor-cores": 1
-            }
-        }
-      }

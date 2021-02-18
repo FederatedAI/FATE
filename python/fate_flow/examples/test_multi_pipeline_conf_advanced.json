@@ -20,9 +20,7 @@
             "work_mode": 1,
             "task_parallelism": 2,
             "computing_partitions": 8,
-            "eggroll_run": {
-                "eggroll.session.processors.per.node": 2
-            },
+            "task_cores": 4,
             "spark_run": {
                 "num-executors": 1,
                 "executor-cores": 2

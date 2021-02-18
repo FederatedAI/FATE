@@ -13,8 +13,8 @@ The indicators for each column that can be statistic are list as follow.
 6. min/max: Min and Max value of this column
 7. coefficient of variance: The formula is abs(stddev / mean)
 8. missing_count/missing_ratio: Number and ratio of missing value in this column
-9. skewness: The defination can be referred to `[here] <https://en.wikipedia.org/wiki/Skewness>`_
-10. kurtosis: The defination can be referred to `[here] <https://en.wikipedia.org/wiki/Kurtosis>`_
+9. skewness: The definition can be referred to `[here] <https://en.wikipedia.org/wiki/Skewness>`_
+10. kurtosis: The definition can be referred to `[here] <https://en.wikipedia.org/wiki/Kurtosis>`_
 11. percentile: The value of percentile. Accept 0% to 100% while the number before the "%" should be integer.
 
 These static values can be used in feature selection as a criterion.

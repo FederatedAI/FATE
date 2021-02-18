@@ -21,42 +21,44 @@ set -x
 basepath=$(cd `dirname $0`;pwd)
 fatepath=$(cd $basepath/..;pwd)
 
-cd ${fatepath}
-fateboard_git_url=`grep -A 3 '"fateboard"' .gitmodules | grep 'url' | awk -F '= ' '{print $2}'`
-fateboard_git_branch=`grep -A 3 '"fateboard"' .gitmodules | grep 'branch' | awk -F '= ' '{print $2}'`
-echo "[INFO] Git clone fateboard submodule source code from ${fateboard_git_url} branch ${fateboard_git_branch}"
-if [[ -e "fateboard" ]];then
-    while [[ true ]];do
-        read -p "The fateboard directory already exists, delete and re-download? [y/n] " input
-        case ${input} in
-        [yY]*)
-                echo "[INFO] Delete the original fateboard"
-                rm -rf fateboard
-                git clone ${fateboard_git_url} -b ${fateboard_git_branch} fateboard
-                break
-                ;;
-        [nN]*)
-                echo "[INFO] Use the original fateboard"
-                break
-                ;;
-        *)
-                echo "Just enter y or n, please."
-                ;;
-        esac
-    done
-else
-    git clone ${fateboard_git_url} -b ${fateboard_git_branch} fateboard
-fi
+download(){
+  cd ${fatepath}
+  fateboard_git_url=`grep -A 3 '"fateboard"' .gitmodules | grep 'url' | awk -F '= ' '{print $2}'`
+  fateboard_git_branch=`grep -A 3 '"fateboard"' .gitmodules | grep 'branch' | awk -F '= ' '{print $2}'`
+  echo "[INFO] Git clone fateboard submodule source code from ${fateboard_git_url} branch ${fateboard_git_branch}"
 
+  if [[ -e "fateboard" ]];then
+      while [[ true ]];do
+          read -p "The fateboard directory already exists, delete and re-download? [y/n] " input
+          case ${input} in
+          [yY]*)
+                  echo "[INFO] Delete the original fateboard"
+                  rm -rf fateboard
+                  git clone ${fateboard_git_url} -b ${fateboard_git_branch} fateboard
+                  break
+                  ;;
+          [nN]*)
+                  echo "[INFO] Use the original fateboard"
+                  break
+                  ;;
+          *)
+                  echo "Just enter y or n, please."
+                  ;;
+          esac
+      done
+  else
+      git clone ${fateboard_git_url} -b ${fateboard_git_branch} fateboard
+  fi
+
+}
 
 init() {
+    download
     cd ${fatepath}
     cp -r  bin conf examples fate.env python RELEASE.md   ${basepath}
     cd ${basepath}
     sed -i "s#work_mode: 1#work_mode: 0#g" ${basepath}/conf/service_conf.yaml
     #sed -i.bak "s#^MarkupSafe==.*#MarkupSafe==1.1.1#g" ${basepath}/python/requirements.txt
-    tar -cf ./docker/python/fate.tar bin conf examples fate.env python RELEASE.md
-    rm -rf bin conf examples fate.env python RELEASE.md
 
     cd ${fatepath}/fateboard
     mvn clean package
@@ -79,44 +81,33 @@ init() {
     cp ${fatepath}/fateboard/src/main/resources/application.properties ${basepath}/fateboard/conf
     touch ${basepath}/fateboard/ssh/ssh.properties
 
-    sed -i "s#^fateflow.url=.*#fateflow.url=http://python:9380#g" ${basepath}/fateboard/conf/application.properties
+    sed -i "s#^fateflow.url=.*#fateflow.url=http://localhost:9380#g" ${basepath}/fateboard/conf/application.properties
     sed -i "s#^fateboard.datasource.jdbc-url=.*#fateboard.datasource.jdbc-url=jdbc:sqlite:/fate/python/fate_flow/fate_flow_sqlite.db#g" ${basepath}/fateboard/conf/application.properties
     sed -i "s#^spring.datasource.driver-Class-Name=.*#spring.datasource.driver-Class-Name=org.sqlite.JDBC#g" ${basepath}/fateboard/conf/application.properties
+
     cd ${basepath}
-    tar -cf ./docker/fateboard/fateboard.tar fateboard
-    rm -rf ${basepath}/fateboard
+    wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/jdk-8u192.tar.gz
+    tar -cf ./docker/fate/fate.tar bin conf examples fate.env python RELEASE.md fateboard  jdk-8u192.tar.gz
+    rm -rf bin conf examples fate.env python RELEASE.md fateboard jdk-8u192.tar.gz
 
-    logPath="./fate/log"
-    if [ ! -d "$logPath" ]; then
-     mkdir -p "$logPath"
-    fi
+    cd ${basepath}/docker/fate
+    docker build -t fate:latest .
+    docker run -d --name fate -p 8080:8080 fate:latest /bin/bash
 
-    dataPath="./fate/data" 
-    if [ ! -d "$dataPath" ]; then
-     mkdir -p "$dataPath"
-    fi
-    cp -r ${fatepath}/python/fate_flow/* ./fate/data
+    rm fate.tar
 
-    docker-compose -f ./docker/docker-compose-build.yml up -d
-
-    docker restart fate_python
-    sleep 5
-    docker restart fate_fateboard
-    rm docker/python/fate.tar
-    rm docker/fateboard/fateboard.tar
     docker ps -a
 
-
 }
+
 start() {
-    docker start `docker ps -a | grep -i "docker_python" | awk '{print $1}'`
-    docker start `docker ps -a | grep -i "docker_fateboard" | awk '{print $1}'`
+    docker start `docker ps -a | grep -i "fate" | awk '{print $1}'`
 }
-stop(){
-    docker stop `docker ps -a | grep -i "docker_python" | awk '{print $1}'`
-    docker stop `docker ps -a | grep -i "docker_fateboard" | awk '{print $1}'`
 
+stop(){
+    docker stop `docker ps -a | grep -i "fate" | awk '{print $1}'`
 }
+
 case "$1" in
     init)
         init
