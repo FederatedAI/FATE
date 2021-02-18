@@ -120,10 +120,11 @@ class VisionDataSet(torchvision.datasets.VisionDataset, DatasetMixIn):
             partition=10,
         )
 
-    def __init__(self, root, expected_label_type=np.float32):
+    def __init__(self, root, is_train=True, expected_label_type=np.float32, **kwargs):
 
         # fake alignment
-        HomoLabelEncoderClient().label_alignment(["fake"])
+        if is_train:
+            HomoLabelEncoderClient().label_alignment(["fake"])
 
         # load data
         with open(os.path.join(root, "config.yaml")) as f:
