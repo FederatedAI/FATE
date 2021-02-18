@@ -52,6 +52,8 @@ class Client(homo_binning_base.Client):
         if self.bin_inner_param is None:
             self.bin_inner_param = self.setup_bin_inner_param(data_inst, self.params)
         self.total_count = self.get_total_count(data_inst)
+        LOGGER.debug(f"abnormal_list: {self.abnormal_list}")
+
         quantile_tool = QuantileBinningTool(param_obj=self.params,
                                             abnormal_list=self.abnormal_list,
                                             allow_duplicate=self.allow_duplicate)

@@ -17,11 +17,11 @@ from federatedml.model_base import ModelBase
 from federatedml.param.feature_binning_param import HomoFeatureBinningParam
 from federatedml.feature.homo_feature_binning import virtual_summary_binning, recursive_query_binning
 from federatedml.util import consts
-from federatedml.feature.hetero_feature_binning.base_feature_binning import BaseHeteroFeatureBinning
+from federatedml.feature.hetero_feature_binning.base_feature_binning import BaseFeatureBinning
 from federatedml.transfer_variable.transfer_class.homo_binning_transfer_variable import HomoBinningTransferVariable
 
 
-class HomoBinningArbiter(BaseHeteroFeatureBinning):
+class HomoBinningArbiter(BaseFeatureBinning):
     def __init__(self):
         super().__init__()
         self.binning_obj = None
@@ -42,7 +42,7 @@ class HomoBinningArbiter(BaseHeteroFeatureBinning):
         self.binning_obj.fit_split_points()
 
 
-class HomoBinningClient(BaseHeteroFeatureBinning):
+class HomoBinningClient(BaseFeatureBinning):
     def __init__(self):
         super().__init__()
         self.binning_obj = None
@@ -55,13 +55,16 @@ class HomoBinningClient(BaseHeteroFeatureBinning):
             self.binning_obj = virtual_summary_binning.Client(self.model_param)
         elif self.model_param.method == consts.RECURSIVE_QUERY:
             self.binning_obj = recursive_query_binning.Client(role=self.component_properties.role,
-                                                              params=self.model_param)
+                                                              params=self.model_param
+                                                              )
         else:
             raise ValueError(f"Method: {self.model_param.method} cannot be recognized")
 
     def fit(self, data_instances):
         self._abnormal_detection(data_instances)
         self._setup_bin_inner_param(data_instances, self.model_param)
+        data_instances = data_instances.mapValues(self.data_format_transform)
+        data_instances.schema = self.schema
         self.binning_obj.set_bin_inner_param(self.bin_inner_param)
         self.binning_obj.set_transfer_variable(self.transfer_variable)
         split_points = self.binning_obj.fit_split_points(data_instances)

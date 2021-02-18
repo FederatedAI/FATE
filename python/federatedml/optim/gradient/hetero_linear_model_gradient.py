@@ -26,13 +26,14 @@ from federatedml.statistic import data_overview
 from federatedml.util import LOGGER
 from federatedml.util import consts
 from federatedml.util import fate_operator
+from federatedml.util.fixpoint_solver import FixedPointEncoder
 
 
 class HeteroGradientBase(object):
     def __init__(self):
         self.use_async = False
         self.use_sample_weight = False
-        self.fixed_float_precision = False
+        self.fixed_point_encoder = None
 
     def compute_gradient_procedure(self, *args):
         raise NotImplementedError("Should not call here")
@@ -49,8 +50,9 @@ class HeteroGradientBase(object):
     def set_use_sample_weight(self):
         self.use_sample_weight = True
 
-    def set_fixed_float_precision(self):
-        self.fixed_float_precision = True
+    def set_fixed_float_precision(self, floating_point_precision):
+        if floating_point_precision is not None:
+            self.fixed_point_encoder = FixedPointEncoder(2**floating_point_precision)
 
     @staticmethod
     def __compute_partition_gradient(data, fit_intercept=True, is_sparse=False):
@@ -117,7 +119,7 @@ class HeteroGradientBase(object):
             return np.array(gradient)
 
     @staticmethod
-    def __apply_cal_gradient(data, fixed_float_precision, is_sparse):
+    def __apply_cal_gradient(data, fixed_point_encoder, is_sparse):
         all_g = None
         for key, (feature, d) in data:
             if is_sparse:
@@ -125,8 +127,9 @@ class HeteroGradientBase(object):
                 for idx, v in feature.get_all_data():
                     x[idx] = v
                 feature = x
-            if fixed_float_precision:
-                g = (feature * 1e6).astype("int") * d
+            if fixed_point_encoder:
+                # g = (feature * 2 ** floating_point_precision).astype("int") * d
+                g = fixed_point_encoder.encode(feature) * d
             else:
                 g = feature * d
             if all_g is None:
@@ -135,8 +138,8 @@ class HeteroGradientBase(object):
                 all_g += g
         if all_g is None:
             return all_g
-        elif fixed_float_precision:
-            all_g /= 1e6
+        elif fixed_point_encoder:
+            all_g = fixed_point_encoder.decode(all_g)
         return all_g
 
     def compute_gradient(self, data_instances, fore_gradient, fit_intercept):
@@ -163,7 +166,7 @@ class HeteroGradientBase(object):
             feat_join_grad = data_instances.join(fore_gradient,
                                                  lambda d, g: (d.features, g))
             f = functools.partial(self.__apply_cal_gradient,
-                                  fixed_float_precision=self.fixed_float_precision,
+                                  fixed_point_encoder=self.fixed_point_encoder,
                                   is_sparse=is_sparse)
             gradient_sum = feat_join_grad.applyPartitions(f)
             gradient_sum = gradient_sum.reduce(lambda x, y: x + y)

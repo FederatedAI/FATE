@@ -66,16 +66,27 @@ class Client(homo_binning_base.Client):
             self.bin_inner_param = self.setup_bin_inner_param(data_instances, self.params)
         self.total_count = self.get_total_count(data_instances)
         self.error_rank = np.ceil(self.error * self.total_count)
+        LOGGER.debug(f"abnormal_list: {self.abnormal_list}")
         quantile_tool = QuantileBinningTool(param_obj=self.params,
                                             abnormal_list=self.abnormal_list,
                                             allow_duplicate=self.allow_duplicate)
         quantile_tool.set_bin_inner_param(self.bin_inner_param)
         summary_table = quantile_tool.fit_summary(data_instances)
+
+
+        # summary_collect = summary_table.collect()
+        # for k, summary in summary_collect
+
+
         self.get_min_max(data_instances)
         split_points_table = self._recursive_querying(summary_table)
         split_points = dict(split_points_table.collect())
         for col_name, sps in split_points.items():
             sp = [x.value for x in sps]
+            if col_name == 'x2':
+                LOGGER.debug(f"sp: {sp}")
+                for x in sps:
+                    LOGGER.debug(f"x: {x.__dict__}")
             if not self.allow_duplicate:
                 sp = sorted(set(sp))
             self.bin_results.put_col_split_points(col_name, sp)
