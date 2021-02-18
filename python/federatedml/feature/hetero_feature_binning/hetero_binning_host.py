@@ -18,13 +18,13 @@ import functools
 import operator
 
 from federatedml.cipher_compressor import compressor
-from federatedml.feature.hetero_feature_binning.base_feature_binning import BaseHeteroFeatureBinning
+from federatedml.feature.hetero_feature_binning.base_feature_binning import BaseFeatureBinning
 from federatedml.secureprotol.fate_paillier import PaillierEncryptedNumber
 from federatedml.util import LOGGER
 from federatedml.util import consts
 
 
-class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
+class HeteroFeatureBinningHost(BaseFeatureBinning):
     def fit(self, data_instances):
         """
         Apply binning method for both data instances in local party as well as the other one. Afterwards, calculate

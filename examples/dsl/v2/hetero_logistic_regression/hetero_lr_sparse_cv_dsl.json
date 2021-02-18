@@ -58,21 +58,6 @@
                     "model"
                 ]
             }
-        },
-        "evaluation_0": {
-            "module": "Evaluation",
-            "input": {
-                "data": {
-                    "data": [
-                        "hetero_lr_0.data"
-                    ]
-                }
-            },
-            "output": {
-                "data": [
-                    "data"
-                ]
-            }
         }
     }
 }

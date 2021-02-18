@@ -2,7 +2,7 @@ DSL 配置和运行配置 V1
 ====================
 [`ENG`_]
 
-.. _ENG: dsl_conf_setting_guide.rst
+.. _ENG: dsl_conf_v1_setting_guide.rst
 
 为了让任务模型的构建更加灵活，目前 FATE 使用了一套自定的领域特定语言 (DSL) 来描述任务。在 DSL 中，各种模块（例如数据读写 data_io，特征工程 feature-engineering， 回归 regression，分类 classification）可以通向一个有向无环图 （DAG） 组织起来。通过各种方式，用户可以根据自身的需要，灵活地组合各种算法模块。
 

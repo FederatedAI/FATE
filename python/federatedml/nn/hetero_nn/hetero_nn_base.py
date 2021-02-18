@@ -106,7 +106,7 @@ class HeteroNNBase(ModelBase):
 
     def init_validation_strategy(self, train_data=None, validate_data=None):
         validation_strategy = ValidationStrategy(self.role, self.mode, self.validation_freqs,
-                                                 self.early_stopping_rounds, self.use_first_metric_only)
+                                                 self.early_stopping_rounds, self.use_first_metric_only, arbiter_comm=False)
         validation_strategy.set_train_data(train_data)
         validation_strategy.set_validate_data(validate_data)
         return validation_strategy
