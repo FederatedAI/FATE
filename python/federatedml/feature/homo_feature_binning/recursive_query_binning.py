@@ -73,20 +73,11 @@ class Client(homo_binning_base.Client):
         quantile_tool.set_bin_inner_param(self.bin_inner_param)
         summary_table = quantile_tool.fit_summary(data_instances)
 
-
-        # summary_collect = summary_table.collect()
-        # for k, summary in summary_collect
-
-
         self.get_min_max(data_instances)
         split_points_table = self._recursive_querying(summary_table)
         split_points = dict(split_points_table.collect())
         for col_name, sps in split_points.items():
             sp = [x.value for x in sps]
-            if col_name == 'x2':
-                LOGGER.debug(f"sp: {sp}")
-                for x in sps:
-                    LOGGER.debug(f"x: {x.__dict__}")
             if not self.allow_duplicate:
                 sp = sorted(set(sp))
             self.bin_results.put_col_split_points(col_name, sp)
@@ -118,24 +109,15 @@ class Client(homo_binning_base.Client):
     def renew_query_points_table(query_points, ranks):
         assert len(query_points) == len(ranks)
         new_array = []
-        LOGGER.debug(f"node_values: {[x.value for x in query_points]}")
-        LOGGER.debug(f"aim_rank: {[x.aim_rank for x in query_points]}")
-        LOGGER.debug(f"ranks: {[ranks]}")
-        LOGGER.debug(f"allow_error_rank: {[x.allow_error_rank for x in query_points]}")
 
         for idx, node in enumerate(query_points):
             rank = ranks[idx]
-            LOGGER.debug(f"idx: {idx}, rank: {rank}, last_rank: {node.last_rank}")
             if node.fixed:
                 new_node = copy.deepcopy(node)
-            # elif abs(rank - node.last_rank) < consts.FLOAT_ZERO:
-            #     new_node = copy.deepcopy(node)
             elif rank - node.aim_rank > node.allow_error_rank:
                 new_node = node.create_left_new()
-                LOGGER.debug("Go left")
             elif node.aim_rank - rank > node.allow_error_rank:
                 new_node = node.create_right_new()
-                LOGGER.debug("Go right")
             else:
                 new_node = copy.deepcopy(node)
                 new_node.fixed = True
