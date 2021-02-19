@@ -255,7 +255,7 @@ Job
 
 
 Tracking
-~~~~~~~~
+--------
 
 /v1/tracking/job/data_view
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -374,7 +374,7 @@ Tracking
    -  meta: schema header information, Object
 
 Pipeline
-~~~~~~~~
+--------
 
 /v1/pipeline/dag/dependency
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -392,7 +392,7 @@ Pipeline
    -  data: pipeline dag dependency data,Object
 
 Model
-~~~~~
+-----
 
 /v1/model/load
 ~~~~~~~~~~~~~~
