@@ -67,7 +67,7 @@ class Data(object):
     @staticmethod
     def load(config, path: Path):
         kwargs = {}
-        for field_name in ['head', 'partition', 'table_name', 'namespace', 'use_local_data']:
+        for field_name in ['head', 'partition', 'table_name', 'namespace']:
             kwargs[field_name] = config[field_name]
 
         file_path = path.parent.joinpath(config['file']).resolve()

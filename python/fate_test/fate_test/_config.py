@@ -29,10 +29,10 @@ backend: 0
 # base dir for data upload conf eg, data_base_dir={FATE}
 # examples/data/breast_hetero_guest.csv -> $data_base_dir/examples/data/breast_hetero_guest.csv
 data_base_dir: path(FATE)
-# fate_test job Dedicated directory, File storage location,cache_directory={FATE}/examples/cache/
-cache_directory: examples/cache/
-# Default performance directory={FATE}/examples/performance/
-performance_template_directory: examples/performance/
+# fate_test job Dedicated directory, File storage location,cache_directory={FATE}/examples/fate_test/cache/
+cache_directory: examples/fate_test/cache/
+performance_template_directory: examples/fate_test/performance/
+flow_test_config_directory: examples/fate_test/flow_test_template/flow_test_config.yaml
 clean_data: true
 parties:
   guest: [10000]
@@ -51,11 +51,6 @@ services:
       ssh_password: # optional
       ssh_priv_key: "~/.ssh/id_rsa"
 
-unittest_template:
-  train_conf_path: /examples/unittest_template/test_secureboost_train_binary_conf.json
-  train_dsl_path: /examples/unittest_template/test_secureboost_train_dsl.json
-  predict_conf_path: /examples/unittest_template/test_predict_conf.json
-  predict_dsl_path: /examples/unittest_template/test_predict_dsl.json
 
 # what is ssh_tunnel?
 # to open the ssh tunnel(s) if the remote service
@@ -77,7 +72,7 @@ unittest_template:
 
 """
 
-_default_config = Path(__file__).parent.joinpath("fate_test_config.yaml").resolve()
+_default_config = Path(__file__).parent.joinpath("flow_test_config.yaml").resolve()
 
 data_switch = None
 use_local_data = 1
@@ -151,17 +146,18 @@ class Config(object):
         self.data_base_dir = config["data_base_dir"]
         self.cache_directory = os.path.join(config["data_base_dir"], config["cache_directory"])
         self.perf_template_dir = os.path.join(config["data_base_dir"], config["performance_template_directory"])
+        self.flow_test_config_dir = os.path.join(config["data_base_dir"], config["flow_test_config_directory"])
         self.clean_data = config.get("clean_data", True)
         self.parties = Parties.from_dict(config["parties"])
         self.role = config["parties"]
         self.serving_setting = config["services"][0]
-        self.unittest = config["unittest_template"]
         self.party_to_service_id = {}
         self.service_id_to_service = {}
         self.tunnel_id_to_tunnel = {}
 
         tunnel_id = 0
         service_id = 0
+        os.makedirs(os.path.dirname(self.cache_directory), exist_ok=True)
         for service_config in config["services"]:
             flow_services = service_config["flow_services"]
             if service_config.get("ssh_tunnel", {}).get("enable", False):

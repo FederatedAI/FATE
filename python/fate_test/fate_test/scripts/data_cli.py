@@ -10,26 +10,6 @@ from fate_test.scripts._options import SharedOptions
 from fate_test.scripts._utils import _upload_data, _load_testsuites, _delete_data, _big_data_task
 
 
-def client_upload(suites, config_inst, namespace, output_path=None):
-    with Clients(config_inst) as client:
-        for i, suite in enumerate(suites):
-            # noinspection PyBroadException
-            try:
-                echo.echo(f"[{i + 1}/{len(suites)}]start at {time.strftime('%Y-%m-%d %X')} {suite.path}", fg='red')
-                try:
-                    _upload_data(client, suite, config_inst, output_path)
-                except Exception as e:
-                    raise RuntimeError(f"exception occur while uploading data for {suite.path}") from e
-            except Exception:
-                exception_id = uuid.uuid1()
-                echo.echo(f"exception in {suite.path}, exception_id={exception_id}")
-                LOGGER.exception(f"exception id: {exception_id}")
-            finally:
-                echo.stdout_newline()
-    echo.farewell()
-    echo.echo(f"testsuite namespace: {namespace}", fg='red')
-
-
 @click.group(name="data")
 def data_group():
     """
@@ -125,7 +105,7 @@ def delete(ctx, include, exclude, glob, yes, suite_type, **kwargs):
               help="The sparsity of tag data, The value is between (0-1)")
 @click.option('-ng', '--guest-data-size', type=int, default=10000,
               help="Set guest data set size, not less than 100")
-@click.option('-nh', '--host-data-size', type=int, default=10000,
+@click.option('-nh', '--host-data-size', type=int,
               help="Set host data set size, not less than 100")
 @click.option('-fg', '--guest-feature-num', type=int, default=20,
               help="Set guest feature dimensions")
@@ -159,6 +139,8 @@ def generate(ctx, include, host_data_type, encryption_type, match_rate, sparsity
     yes = ctx.obj["yes"]
     echo.echo(f"testsuite namespace: {namespace}", fg='red')
     echo.echo("loading testsuites:")
+    if host_data_size is None:
+        host_data_size = guest_data_size
     suites = _load_testsuites(includes=include, excludes=tuple(), glob=None)
     for suite in suites:
         if upload_data:
@@ -175,3 +157,23 @@ def generate(ctx, include, host_data_type, encryption_type, match_rate, sparsity
             _config.use_local_data = 0
         _config.data_switch = remove_data
         client_upload(suites=suites, config_inst=config_inst, namespace=namespace, output_path=output_path)
+
+
+def client_upload(suites, config_inst, namespace, output_path=None):
+    with Clients(config_inst) as client:
+        for i, suite in enumerate(suites):
+            # noinspection PyBroadException
+            try:
+                echo.echo(f"[{i + 1}/{len(suites)}]start at {time.strftime('%Y-%m-%d %X')} {suite.path}", fg='red')
+                try:
+                    _upload_data(client, suite, config_inst, output_path)
+                except Exception as e:
+                    raise RuntimeError(f"exception occur while uploading data for {suite.path}") from e
+            except Exception:
+                exception_id = uuid.uuid1()
+                echo.echo(f"exception in {suite.path}, exception_id={exception_id}")
+                LOGGER.exception(f"exception id: {exception_id}")
+            finally:
+                echo.stdout_newline()
+    echo.farewell()
+    echo.echo(f"testsuite namespace: {namespace}", fg='red')

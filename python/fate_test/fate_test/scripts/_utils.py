@@ -1,6 +1,8 @@
 import importlib
+import os
 import time
 import uuid
+import glob as glob_
 from pathlib import Path
 
 import click
@@ -25,17 +27,20 @@ def _big_data_task(includes, guest_data_size, host_data_size, guest_feature_num,
             else:
                 LOGGER.warning(f"{path} is file, but not end with `{suffix}`, skip")
                 paths = []
+            return [p.resolve() for p in paths]
         else:
-            paths = path.glob(f"**/*{suffix}")
-        return [p.resolve() for p in paths]
+            os.path.abspath(path)
+            paths = glob_.glob(f"{path}/*{suffix[0]}") + glob_.glob(f"{path}/*{suffix[1]}")
+            return [Path(p) for p in paths]
 
-    include = includes[0]
-    if isinstance(include, str):
-        include_path = Path(include)
-        include_path = _find_testsuite_files(include_path)[0]
-        generate_mock_data.get_big_data(guest_data_size, host_data_size, guest_feature_num, host_feature_num,
-                                        include_path, host_data_type, config_inst, encryption_type,
-                                        match_rate, sparsity, force, split_host, output_path)
+    for include in includes:
+        if isinstance(include, str):
+            include_paths = Path(include)
+            include_paths = _find_testsuite_files(include_paths)
+            for include_path in include_paths:
+                generate_mock_data.get_big_data(guest_data_size, host_data_size, guest_feature_num, host_feature_num,
+                                                include_path, host_data_type, config_inst, encryption_type,
+                                                match_rate, sparsity, force, split_host, output_path)
 
 
 def _load_testsuites(includes, excludes, glob, suffix="testsuite.json", suite_type="testsuite"):

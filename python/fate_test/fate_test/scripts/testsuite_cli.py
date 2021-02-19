@@ -39,10 +39,8 @@ from fate_test.scripts._utils import _load_testsuites, _upload_data, _delete_dat
               help="a json string represents mapping for replacing fields in data/conf/dsl")
 @click.option("-g", '--glob', type=str,
               help="glob string to filter sub-directory of path specified by <include>")
-@click.option('-m', '--timeout', type=int, default=3600,
-              help="Task timeout threshold")
-@click.option('-p', '--task-cores', type=int, default=4,
-              help="EGGROLL runtime configuration for parameter 'task-cores'")
+@click.option('-m', '--timeout', type=int, default=3600, help="Task timeout duration")
+@click.option('-p', '--task-cores', type=int, help="processors per node")
 @click.option('-j', '--update-job-parameters', default="{}", type=JSON_STRING,
               help="a json string represents mapping for replacing fields in conf.job_parameters")
 @click.option('-c', '--update-component-parameters', default="{}", type=JSON_STRING,
@@ -150,9 +148,8 @@ def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Conf
 
             # noinspection PyBroadException
             try:
-                job.job_conf.update_job_common_parameters(
-                    eggroll_run={"task_cores": task_cores})
-
+                if task_cores is not None:
+                    job.job_conf.update_job_common_parameters(task_cores=task_cores)
                 job.job_conf.update(config.parties, config.work_mode, config.backend, timeout, update_job_parameters,
                                     update_component_parameters)
             except Exception:

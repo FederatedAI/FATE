@@ -33,21 +33,18 @@ from fate_test.scripts._utils import _load_testsuites, _upload_data, _delete_dat
 
 @click.command("performance")
 @click.option('-t', '--job-type', type=click.Choice(['intersect', 'intersect_multi', 'hetero_lr', 'hetero_sbt']),
-              help="Select the job type to run corresponding testsuite set in config")
+              help="Select the job type, you can also set through include")
 @click.option('-i', '--include', type=click.Path(exists=True), multiple=True, metavar="<include>",
               help="include *testsuite.json under these paths")
 @click.option('-r', '--replace', default="{}", type=JSON_STRING,
               help="a json string represents mapping for replacing fields in data/conf/dsl")
 @click.option('-m', '--timeout', type=int, default=3600,
-              help="Task timeout threshold")
-@click.option('-e', '--max-iter', type=int, default=100,
-              help="When the algorithm model is LR, the number of iterations is set")
-@click.option('-d', '--max-depth', type=int, default=4,
+              help="Task timeout duration")
+@click.option('-e', '--max-iter', type=int, help="When the algorithm model is LR, the number of iterations is set")
+@click.option('-d', '--max-depth', type=int,
               help="When the algorithm model is SecureBoost, set the number of model layers")
-@click.option('-n', '--num-trees', type=int, default=100,
-              help="When the algorithm model is SecureBoost, set the number of trees")
-@click.option('-p', '--task-cores', type=int, default=4,
-              help="EGGROLL runtime configuration for parameter 'task-cores'")
+@click.option('-n', '--num-trees', type=int, help="When the algorithm model is SecureBoost, set the number of trees")
+@click.option('-p', '--task-cores', type=int, help="processors per node")
 @click.option('-j', '--update-job-parameters', default="{}", type=JSON_STRING,
               help="a json string represents mapping for replacing fields in conf.job_parameters")
 @click.option('-c', '--update-component-parameters', default="{}", type=JSON_STRING,
@@ -150,11 +147,14 @@ def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Conf
 
             # noinspection PyBroadException
             try:
-                job.job_conf.update_component_parameters('max_iter', max_iter)
-                job.job_conf.update_component_parameters('max_depth', max_depth)
-                job.job_conf.update_component_parameters('num_trees', num_trees)
-                job.job_conf.update_job_common_parameters(
-                    eggroll_run={"task_cores": task_cores})
+                if max_iter is not None:
+                    job.job_conf.update_component_parameters('max_iter', max_iter)
+                if max_depth is not None:
+                    job.job_conf.update_component_parameters('max_depth', max_depth)
+                if num_trees is not None:
+                    job.job_conf.update_component_parameters('num_trees', num_trees)
+                if task_cores is not None:
+                    job.job_conf.update_job_common_parameters(task_cores=task_cores)
                 job.job_conf.update(config.parties, config.work_mode, config.backend, timeout, update_job_parameters,
                                     update_component_parameters)
             except Exception:

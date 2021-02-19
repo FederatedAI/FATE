@@ -29,7 +29,7 @@ commands = {
     "performance": run_task,
     "benchmark-quality": run_benchmark,
     "data": data_group,
-    "flow_test": flow_group
+    "flow-test": flow_group
 }
 
 commands_alias = {

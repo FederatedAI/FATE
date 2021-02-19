@@ -1,0 +1,33 @@
+{
+    "data": [
+        {
+            "file": "examples/data/breast_hetero_guest.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "breast_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/breast_hetero_host_tag_value.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "breast_hetero_host_tag_value",
+            "namespace": "experiment",
+            "role": "host_0"
+        }
+    ],
+    "tasks": {
+        "lr_train": {
+            "conf": "test_hetero_lr_train_job_conf.json",
+            "dsl": "test_hetero_lr_train_job_dsl.json",
+            "data_deps": {
+                                "a1": {
+                                                        "b2":{
+                                                                                    "data": "c3"
+                                                                                                            }
+                                                                        }
+                                            }
+        }
+    }
+}
