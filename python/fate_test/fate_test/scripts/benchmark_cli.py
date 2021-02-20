@@ -73,7 +73,7 @@ def run_benchmark(ctx, include, exclude, glob, skip_data, tol, clean_data, **kwa
 
             except Exception:
                 exception_id = uuid.uuid1()
-                echo.echo(f"exception in {suite.path}, exception_id={exception_id}")
+                echo.echo(f"exception in {suite.path}, exception_id={exception_id}", err=True, fg='red')
                 LOGGER.exception(f"exception id: {exception_id}")
             finally:
                 echo.stdout_newline()
@@ -119,7 +119,7 @@ def _run_benchmark_pairs(config: Config, suite: BenchmarkSuite, tol: float,
                     data_summary = data
             except Exception as e:
                 exception_id = uuid.uuid1()
-                echo.echo(f"exception while running [{j + 1}/{job_n}] job, exception_id={exception_id}")
+                echo.echo(f"exception while running [{j + 1}/{job_n}] job, exception_id={exception_id}", err=True, fg='red')
                 LOGGER.exception(f"exception id: {exception_id}, error message: \n{e}")
                 continue
         rel_tol = pair.compare_setting.get("relative_tol")

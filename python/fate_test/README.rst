@@ -226,51 +226,51 @@ command options
 
 10. skip-pipeline-jobs:
 
-   .. code-block:: bash
+    .. code-block:: bash
 
-      fate_test suite -i <path1 contains *testsuite.json> --skip-pipeline-jobs
+       fate_test suite -i <path1 contains *testsuite.json> --skip-pipeline-jobs
 
-   will run testsuites in *path1* but skip all *pipeline tasks* in testsuites. It's would be useful when only dsl tasks needed.
+    will run testsuites in *path1* but skip all *pipeline tasks* in testsuites. It's would be useful when only dsl tasks needed.
 
 11. skip-data:
 
-   .. code-block:: bash
+    .. code-block:: bash
 
-       fate_test suite -i <path1 contains *testsuite.json> --skip-data
+        fate_test suite -i <path1 contains *testsuite.json> --skip-data
 
-   will run testsuites in *path1* without uploading data specified in *testsuite.json*.
+    will run testsuites in *path1* without uploading data specified in *testsuite.json*.
 
 12. data only:
 
-   .. code-block:: bash
+    .. code-block:: bash
 
-       fate_test suite -i <path1 contains *testsuite.json> --data-only
+        fate_test suite -i <path1 contains *testsuite.json> --data-only
 
-   will only upload data specified in *testsuite.json* without running jobs
+    will only upload data specified in *testsuite.json* without running jobs
 
 13. disable-clean-data:
 
-   .. code-block:: bash
+    .. code-block:: bash
 
-       fate_test suite -i <path1 contains *testsuite.json> --disable-clean-data
+        fate_test suite -i <path1 contains *testsuite.json> --disable-clean-data
 
-   will run testsuites in *path1* without removing data from storage after tasks finish
+    will run testsuites in *path1* without removing data from storage after tasks finish
 
 14. enable-clean-data:
 
-   .. code-block:: bash
+    .. code-block:: bash
 
-       fate_test suite -i <path1 contains *testsuite.json> --enable-clean-data
+        fate_test suite -i <path1 contains *testsuite.json> --enable-clean-data
 
-   will remove data from storage after finishing running testsuites
+    will remove data from storage after finishing running testsuites
 
 15. yes:
 
-   .. code-block:: bash
+    .. code-block:: bash
 
-       fate_test suite -i <path1 contains *testsuite.json> --yes
+        fate_test suite -i <path1 contains *testsuite.json> --yes
 
-   will run testsuites in *path1* directly, skipping double check
+    will run testsuites in *path1* directly, skipping double check
 
 testsuite
 ~~~~~~~~~
@@ -726,35 +726,35 @@ command options
 
 10. update-component-parameters
 
-   .. code-block:: bash
+    .. code-block:: bash
 
-      fate_test performance -i <path1 contains *testsuite.json> -c {}
+       fate_test performance -i <path1 contains *testsuite.json> -c {}
 
-   will run testsuites in *path1* with respective component parameters set to provided values
+    will run testsuites in *path1* with respective component parameters set to provided values
 
 11. skip-data:
 
-   .. code-block:: bash
+    .. code-block:: bash
 
-       fate_test performance -i <path1 contains *testsuite.json> --skip-data
+        fate_test performance -i <path1 contains *testsuite.json> --skip-data
 
-   will run testsuites in *path1* without uploading data specified in *testsuite.json*.
+    will run testsuites in *path1* without uploading data specified in *testsuite.json*.
 
 12. disable-clean-data:
 
-   .. code-block:: bash
+    .. code-block:: bash
 
-      fate_test performance -i <path1 contains *testsuite.json> --disable-clean-data
+       fate_test performance -i <path1 contains *testsuite.json> --disable-clean-data
 
-   will run testsuites in *path1* without removing data from storage after tasks finish
+    will run testsuites in *path1* without removing data from storage after tasks finish
 
 13. yes:
 
-   .. code-block:: bash
+    .. code-block:: bash
 
-      fate_test performance -i <path1 contains *testsuite.json> --yes
+       fate_test performance -i <path1 contains *testsuite.json> --yes
 
-   will run testsuites in *path1* directly, skipping double check
+    will run testsuites in *path1* directly, skipping double check
 
 
 data
@@ -874,53 +874,53 @@ generate command options
 
 10. output-path:
 
-   .. code-block:: bash
+    .. code-block:: bash
 
-      fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> -o <path2>
+       fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> -o <path2>
 
-   will generate dataset in testsuites *path1* and write file to *path2*
+    will generate dataset in testsuites *path1* and write file to *path2*
 
 11. force:
 
-   .. code-block:: bash
+    .. code-block:: bash
 
-      fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> -o <path2> --force
+       fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> -o <path2> --force
 
-   will generate dataset in testsuites *path1* and write file to *path2*;
-   will overwrite existing file(s) if designated file name found under *path2*
+    will generate dataset in testsuites *path1* and write file to *path2*;
+    will overwrite existing file(s) if designated file name found under *path2*
 
 12. split-host:
 
-   .. code-block:: bash
+    .. code-block:: bash
 
-      fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> -nh 10000 --split-host
+       fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> -nh 10000 --split-host
 
-   will generate dataset in testsuites *path1*; 10000 entries will be divided equally among all host data sets
+    will generate dataset in testsuites *path1*; 10000 entries will be divided equally among all host data sets
 
 13. upload-data
 
-   .. code-block:: bash
+    .. code-block:: bash
 
-      fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> --upload-data
+       fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> --upload-data
 
-   will generate dataset in testsuites *path1* and upload generated data for all parties to FATE
+    will generate dataset in testsuites *path1* and upload generated data for all parties to FATE
 
 14. remove-data
 
-   .. code-block:: bash
+    .. code-block:: bash
 
-      fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> --remove-data
+       fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> --remove-data
 
-   (effective with ``upload-data`` set to True) will delete generated data after generate and upload dataset in testsuites *path1*
+    (effective with ``upload-data`` set to True) will delete generated data after generate and upload dataset in testsuites *path1*
 
 15. use-local-data
 
-   .. code-block:: bash
+    .. code-block:: bash
 
-      fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> --use-local-data
+       fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> --use-local-data
 
-   (effective with ``upload-data`` set to True) will generate dataset in testsuites *path1* and upload data from local server;
-   use this option if flow and data storage are deployed to the same server
+    (effective with ``upload-data`` set to True) will generate dataset in testsuites *path1* and upload data from local server;
+    use this option if flow and data storage are deployed to the same server
 
 
 full command options
