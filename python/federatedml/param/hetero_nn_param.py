@@ -29,6 +29,16 @@ from federatedml.util import consts
 
 
 class SelectorParam(object):
+    """
+    Parameters used for Homo Neural Network.
+
+    Args:
+        method: None or str, back propagation select method, accept "relative" only, default: None
+        selective_size: int, deque size to use, store the most recent selective_size historical loss, default: 1024
+        beta: int, sample whose selective probability >= power(np.random, beta) will be selected
+        min_prob: Numeric, selective probability is max(min_prob, rank_rate)
+
+    """
     def __init__(self, method=None, beta=1, selective_size=consts.SELECTIVE_SIZE, min_prob=0, random_state=None):
         self.method = method
         self.selective_size = selective_size
@@ -39,6 +49,15 @@ class SelectorParam(object):
     def check(self):
         if self.method is not None and self.method not in ["relative"]:
             raise ValueError('selective method should be None be "relative"')
+
+        if not isinstance(self.selective_size, int) or self.selective_size <= 0:
+            raise ValueError("selective size should be a positive integer")
+
+        if not isinstance(self.beta, int):
+            raise ValueError("beta should be integer")
+
+        if not isinstance(self.min_prob, (float, int)):
+            raise ValueError("min_prob should be numeric")
 
 
 class HeteroNNParam(BaseParam):
@@ -234,6 +253,7 @@ class HeteroNNParam(BaseParam):
         self.encrypt_param.check()
         self.encrypted_model_calculator_param.check()
         self.predict_param.check()
+        self.selector_param.check()
 
     @staticmethod
     def _parse_optimizer(opt):
