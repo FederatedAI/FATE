@@ -1,0 +1,9 @@
+{
+  "data": [],
+  "tasks": {
+    "mnist_images": {
+      "conf": "./mnist_conf.json",
+      "dsl": "./mnist_dsl.json"
+    }
+  }
+}

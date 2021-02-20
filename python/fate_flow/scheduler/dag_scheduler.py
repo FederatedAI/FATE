@@ -18,13 +18,13 @@ from fate_arch.common.base_utils import json_loads, json_dumps, current_timestam
 from fate_arch.common.log import schedule_logger
 from fate_arch.common import WorkMode
 from fate_flow.db.db_models import DB, Job
-from fate_flow.scheduler import FederatedScheduler
-from fate_flow.scheduler import TaskScheduler
-from fate_flow.operation import JobSaver
+from fate_flow.scheduler.federated_scheduler import FederatedScheduler
+from fate_flow.scheduler.task_scheduler import TaskScheduler
+from fate_flow.operation.job_saver import JobSaver
 from fate_flow.entity.types import JobStatus, TaskStatus, EndStatus, StatusSet, SchedulingStatusCode, ResourceOperation, \
     FederatedSchedulingStatusCode, RunParameters, RetCode
-from fate_flow.operation import Tracker
-from fate_flow.controller import JobController
+from fate_flow.operation.job_tracker import Tracker
+from fate_flow.controller.job_controller import JobController
 from fate_flow.utils import detect_utils, job_utils, schedule_utils, authentication_utils
 from fate_flow.utils.config_adapter import JobRuntimeConfigAdapter
 from fate_flow.utils import model_utils
@@ -481,7 +481,7 @@ class DAGScheduler(Cron):
     @DB.connection_context()
     def rerun_signal(cls, job_id, set_or_reset: bool):
         if set_or_reset is True:
-            update_fields = {Job.f_rerun_signal: True, Job.f_cancel_signal: False}
+            update_fields = {Job.f_rerun_signal: True, Job.f_cancel_signal: False, Job.f_end_scheduling_updates: 0}
         elif set_or_reset is False:
             update_fields = {Job.f_rerun_signal: False}
         else:

@@ -16,13 +16,19 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import copy
+
+import numpy as np
+
 from federatedml.feature.binning.base_binning import BaseBinning
 from federatedml.feature.binning.bin_inner_param import BinInnerParam
 from federatedml.feature.binning.bucket_binning import BucketBinning
 from federatedml.feature.binning.optimal_binning.optimal_binning import OptimalBinning
 from federatedml.feature.binning.quantile_binning import QuantileBinning
+from federatedml.feature.fate_element_type import NoneType
+from federatedml.feature.sparse_vector import SparseVector
 from federatedml.model_base import ModelBase
-from federatedml.param.feature_binning_param import FeatureBinningParam
+from federatedml.param.feature_binning_param import HeteroFeatureBinningParam as FeatureBinningParam
 from federatedml.protobuf.generated import feature_binning_meta_pb2, feature_binning_param_pb2
 from federatedml.statistic.data_overview import get_header
 from federatedml.transfer_variable.transfer_class.hetero_feature_binning_transfer_variable import \
@@ -37,14 +43,14 @@ MODEL_PARAM_NAME = 'FeatureBinningParam'
 MODEL_META_NAME = 'FeatureBinningMeta'
 
 
-class BaseHeteroFeatureBinning(ModelBase):
+class BaseFeatureBinning(ModelBase):
     """
     Do binning method through guest and host
 
     """
 
     def __init__(self):
-        super(BaseHeteroFeatureBinning, self).__init__()
+        super(BaseFeatureBinning, self).__init__()
         self.transfer_variable = HeteroFeatureBinningTransferVariable()
         self.binning_obj: BaseBinning = None
         self.header = None
@@ -77,12 +83,53 @@ class BaseHeteroFeatureBinning(ModelBase):
         LOGGER.debug("in _init_model, role: {}, local_partyid: {}".format(self.role, self.component_properties))
         self.binning_obj.set_role_party(self.role, self.component_properties.local_partyid)
 
-    def _setup_bin_inner_param(self, data_instances, params: FeatureBinningParam):
+    @staticmethod
+    def data_format_transform(row):
+
+        """
+        transform data into sparse format
+        """
+
+        if type(row.features).__name__ != consts.SPARSE_VECTOR:
+            feature_shape = row.features.shape[0]
+            indices = []
+            data = []
+
+            for i in range(feature_shape):
+                if np.isnan(row.features[i]):
+                    indices.append(i)
+                    data.append(NoneType())
+                elif np.abs(row.features[i]) < consts.FLOAT_ZERO:
+                    continue
+                else:
+                    indices.append(i)
+                    data.append(row.features[i])
+
+            new_row = copy.deepcopy(row)
+            new_row.features = SparseVector(indices, data, feature_shape)
+            return new_row
+        else:
+            sparse_vec = row.features.get_sparse_vector()
+            replace_key = []
+            for key in sparse_vec:
+                if sparse_vec.get(key) == NoneType() or np.isnan(sparse_vec.get(key)):
+                    replace_key.append(key)
+
+            if len(replace_key) == 0:
+                return row
+            else:
+                new_row = copy.deepcopy(row)
+                new_sparse_vec = new_row.features.get_sparse_vector()
+                for key in replace_key:
+                    new_sparse_vec[key] = NoneType()
+                return new_row
+
+    def _setup_bin_inner_param(self, data_instances, params):
         if self.schema is not None:
             return
 
         self.header = get_header(data_instances)
-        LOGGER.debug("_setup_bin_inner_param, get header: {}".format(self.header))
+        LOGGER.debug("_setup_bin_inner_param, get header length: {}".format(len(self.header)))
 
         self.schema = data_instances.schema
         self.bin_inner_param.set_header(self.header)
@@ -100,9 +147,7 @@ class BaseHeteroFeatureBinning(ModelBase):
         else:
             self.bin_inner_param.add_transform_bin_indexes(params.transform_param.transform_cols)
             self.bin_inner_param.add_transform_bin_names(params.transform_param.transform_names)
-        # LOGGER.debug("After _setup_bin_inner_param: {}".format(self.bin_inner_param.__dict__))
         self.binning_obj.set_bin_inner_param(self.bin_inner_param)
-        LOGGER.debug("After _setup_bin_inner_param, header: {}".format(self.header))
 
     @assert_io_num_rows_equal
     @assert_schema_consistent

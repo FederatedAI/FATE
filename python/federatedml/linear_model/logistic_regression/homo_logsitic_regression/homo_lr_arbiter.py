@@ -23,6 +23,7 @@ from federatedml.framework.homo.procedure import paillier_cipher
 from federatedml.linear_model.linear_model_weight import LinearModelWeights as LogisticRegressionWeights
 from federatedml.linear_model.logistic_regression.homo_logsitic_regression.homo_lr_base import HomoLRBase
 from federatedml.optim import activation
+ 
 from federatedml.util import LOGGER
 from federatedml.util import consts
 
@@ -45,6 +46,8 @@ class HomoLRArbiter(HomoLRBase):
         self.cipher.register_paillier_cipher(self.transfer_variable)
 
     def fit(self, data_instances=None, validate_data=None):
+        self._server_check_data()
+
         host_ciphers = self.cipher.paillier_keygen(key_length=self.model_param.encrypt_param.key_length,
                                                    suffix=('fit',))
         host_has_no_cipher_ids = [idx for idx, cipher in host_ciphers.items() if cipher is None]

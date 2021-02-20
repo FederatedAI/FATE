@@ -28,7 +28,7 @@ class StepwiseParam(BaseParam):
     Parameters
     ----------
     score_name: str, default: 'AIC'
-        Specify which model selection criterion to be used
+        Specify which model selection criterion to be used, choose 'aic' or 'bic'
 
     mode: str, default: 'Hetero'
         Indicate what mode is current task

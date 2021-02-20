@@ -42,6 +42,12 @@ class Table(CTableABC):
             self._rp.save_as(name=address.name, namespace=address.namespace, partition=partitions, options=options)
             schema.update(self.schema)
             return
+
+        from fate_arch.common.address import PathAddress
+        if isinstance(address, PathAddress):
+            from fate_arch.computing.non_distributed import LocalData
+            return LocalData(address.path)
+
         raise NotImplementedError(f"address type {type(address)} not supported with eggroll backend")
 
     @computing_profile

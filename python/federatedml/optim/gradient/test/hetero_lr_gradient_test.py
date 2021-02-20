@@ -18,7 +18,7 @@ import unittest
 
 import numpy as np
 
-from arch.api import session
+from fate_arch.session import computing_session as session
 from federatedml.feature.instance import Instance
 from federatedml.feature.sparse_vector import SparseVector
 from federatedml.optim.gradient import hetero_linear_model_gradient

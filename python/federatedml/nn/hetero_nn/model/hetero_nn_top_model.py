@@ -17,6 +17,7 @@
 #  limitations under the License.
 #
 
+import numpy as np
 from federatedml.util import LOGGER
 
 
@@ -30,18 +31,53 @@ class HeteroNNTopModel(object):
                                     metrics=metrics)
 
         self.data_converter = None
+        self.batch_size = None
+        self.selector = None
+        self.batch_data_cached_X = []
+        self.batch_data_cached_y = []
 
     def set_data_converter(self, data_converter):
         self.data_converter = data_converter
 
+    def set_backward_selector_strategy(self, selector):
+        self.selector = selector
+
+    def set_batch(self, batch_size):
+        self.batch_size = batch_size
+
     def train_and_get_backward_gradient(self, x, y):
         LOGGER.debug("top model start to forward propagation")
-        input_gradients = self._model.get_input_gradients(x, y)
 
-        data = self.data_converter.convert_data(x, y)
-        self._model.train(data)
+        selective_id = []
+        input_gradient = []
+        if self.selector:
+            losses = self._model.get_forward_loss_from_input(x, y)
+            loss = sum(losses) / len(losses)
+            selective_strategy = self.selector.select_batch_sample(losses)
+            for idx, select in enumerate(selective_strategy):
+                if select:
+                    selective_id.append(idx)
+                    self.batch_data_cached_X.append(x[idx])
+                    self.batch_data_cached_y.append(y[idx])
 
-        return input_gradients[0]
+            if len(self.batch_data_cached_X) >= self.batch_size:
+                data = self.data_converter.convert_data(np.array(self.batch_data_cached_X[: self.batch_size]),
+                                                        np.array(self.batch_data_cached_y[: self.batch_size]))
+                input_gradient = self._model.get_input_gradients(np.array(self.batch_data_cached_X[: self.batch_size]),
+                                                                 np.array(self.batch_data_cached_y[: self.batch_size]))[0]
+
+                self._model.train(data)
+
+                self.batch_data_cached_X = self.batch_data_cached_X[self.batch_size:]
+                self.batch_data_cached_y = self.batch_data_cached_y[self.batch_size:]
+
+        else:
+            input_gradient = self._model.get_input_gradients(x, y)[0]
+            data = self.data_converter.convert_data(x, y)
+            self._model.train(data)
+            loss = self._model.get_loss()[0]
+
+        return selective_id, input_gradient, loss
 
     def predict(self, input_data):
         LOGGER.debug("top model start to backward propagation")

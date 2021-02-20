@@ -55,6 +55,16 @@ class HeteroNNBase(ModelBase):
         self.model_param = HeteroNNParam()
         self.mode = consts.HETERO
 
+        self.bottom_update_per_batch = 1
+        self.top_update_per_batch = 1
+        self.interactive_update_per_batch = 1
+        self.guest_update_per_batch = 1
+        self.host_update_per_batch = 1
+
+        self.selector_param = None
+
+        self.floating_point_precision = None
+
     def _init_model(self, hetero_nn_param):
         self.interactive_layer_lr = hetero_nn_param.interactive_layer_lr
         self.epochs = hetero_nn_param.epochs
@@ -71,6 +81,16 @@ class HeteroNNBase(ModelBase):
         self.predict_param = hetero_nn_param.predict_param
         self.hetero_nn_param = hetero_nn_param
 
+        self.bottom_update_per_batch = hetero_nn_param.bottom_update_per_batch
+        self.top_update_per_batch = hetero_nn_param.top_update_per_batch
+        self.interactive_update_per_batch = hetero_nn_param.interactive_update_per_batch
+        self.guest_update_per_batch = hetero_nn_param.guest_update_per_batch
+        self.host_update_per_batch = hetero_nn_param.host_update_per_batch
+
+        self.selector_param = hetero_nn_param.selector_param
+
+        self.floating_point_precision = hetero_nn_param.floating_point_precision
+
         if self.role == consts.GUEST:
             self.batch_generator.register_batch_generator(self.transfer_variable, has_arbiter=False)
         else:
@@ -86,7 +106,7 @@ class HeteroNNBase(ModelBase):
 
     def init_validation_strategy(self, train_data=None, validate_data=None):
         validation_strategy = ValidationStrategy(self.role, self.mode, self.validation_freqs,
-                                                 self.early_stopping_rounds, self.use_first_metric_only)
+                                                 self.early_stopping_rounds, self.use_first_metric_only, arbiter_comm=False)
         validation_strategy.set_train_data(train_data)
         validation_strategy.set_validate_data(validate_data)
         return validation_strategy

@@ -77,7 +77,7 @@ class Reader(ComponentBase):
                 self.copy_table(src_table=input_table, dest_table=output_table)
                 # update real count to meta info
                 output_table.count()
-                output_table_meta = output_table.get_meta()
+                output_table_meta = StorageTableMeta(name=output_table.get_name(), namespace=output_table.get_namespace())
         self.tracker.log_output_data_info(
             data_name=component_parameters.get('output_data_name')[0] if component_parameters.get(
                 'output_data_name') else table_key,
@@ -104,9 +104,13 @@ class Reader(ComponentBase):
             "namespace": self.parameters[table_key]['namespace'],
             "table_info": table_info,
             "partitions": output_table_meta.get_partitions(),
-            "storage_engine": output_table_meta.get_engine(),
-            "count": output_table_meta.get_count()
+            "storage_engine": output_table_meta.get_engine()
         }
+        if input_table_meta.get_engine() in [StorageEngine.PATH]:
+            data_info["file_count"] = output_table_meta.get_count()
+            data_info["file_path"] = input_table_meta.get_address().path
+        else:
+            data_info["count"] = output_table_meta.get_count()
 
         self.tracker.set_metric_meta(metric_namespace="reader_namespace",
                                      metric_name="reader_name",
@@ -120,7 +124,16 @@ class Reader(ComponentBase):
         if not input_table_meta:
             raise RuntimeError(f"can not found table name: {input_name} namespace: {input_namespace}")
         address_dict = output_storage_address.copy()
-        if computing_engine == ComputingEngine.STANDALONE:
+        if input_table_meta.get_engine() in [StorageEngine.PATH]:
+            from fate_arch.storage import PathStorageType
+            address_dict["name"] = output_name
+            address_dict["namespace"] = output_namespace
+            address_dict["storage_type"] = PathStorageType.PICTURE
+            address_dict["path"] = input_table_meta.get_address().path
+            output_table_address = StorageTableMeta.create_address(storage_engine=StorageEngine.PATH,
+                                                                   address_dict=address_dict)
+            output_table_engine = StorageEngine.PATH
+        elif computing_engine == ComputingEngine.STANDALONE:
             from fate_arch.storage import StandaloneStorageType
             address_dict["name"] = output_name
             address_dict["namespace"] = output_namespace

@@ -54,7 +54,7 @@ class ValidationStrategy(object):
                 validate data will be used for evaluating
     """
     def __init__(self, role=None, mode=None, validation_freqs=None, early_stopping_rounds=None,
-                 use_first_metric_only=False):
+                 use_first_metric_only=False, arbiter_comm=True):
 
         self.validation_freqs = validation_freqs
         self.role = role
@@ -62,11 +62,13 @@ class ValidationStrategy(object):
         self.flowid = ''
         self.train_data = None
         self.validate_data = None
+
+        # early stopping related vars
+        self.arbiter_comm = arbiter_comm
         self.sync_status = False
         self.early_stopping_rounds = early_stopping_rounds
         self.use_first_metric_only = use_first_metric_only
         self.first_metric = None
-        self.best_iteration = -1
         self._evaluation_summary = {}
 
         if early_stopping_rounds is not None:
@@ -79,10 +81,12 @@ class ValidationStrategy(object):
             LOGGER.debug("early stopping round is {}".format(self.early_stopping_rounds))
 
         self.cur_best_model = None
-        self.performance_recorder = PerformanceRecorder()
-        self.transfer_inst = ValidationStrategyVariable()
+        self.best_iteration = -1
+        self.metric_best_model = {}  # best model of a certain metric
+        self.metric_best_iter = {}  # best iter of a certain metric
+        self.performance_recorder = PerformanceRecorder()  # recorder to record performances
 
-        LOGGER.debug("end to init validation_strategy, freqs is {}".format(self.validation_freqs))
+        self.transfer_inst = ValidationStrategyVariable()
 
     def set_train_data(self, train_data):
         self.train_data = train_data
@@ -118,6 +122,11 @@ class ValidationStrategy(object):
         cv_fold = "_".join(["fold", model_flowid.split(".", -1)[-1]])
         return ".".join([cv_fold, data_iteration_name])
 
+    @staticmethod
+    def extract_best_model(model):
+        best_model = model.export_model()
+        return {'model': {'best_model': best_model}} if best_model is not None else None
+
     def is_best_performance_updated(self, use_first_metric_only=False):
         if len(self.performance_recorder.no_improvement_round.items()) == 0:
             return False
@@ -127,6 +136,28 @@ class ValidationStrategy(object):
             if use_first_metric_only:
                 break
         return True
+
+    def update_early_stopping_status(self, iteration, model):
+
+        first_metric = True
+        if self.role == consts.GUEST:
+            LOGGER.info('showing early stopping status, {} shows cur best performances: {}'.format(self.role,
+                                                                                                   self.performance_recorder.cur_best_performance))
+
+        LOGGER.info('showing early stopping status, {} shows early stopping no improve rounds: {}'.format(self.role,
+                                                                                                          self.performance_recorder.no_improvement_round))
+
+        for metric, no_improve_round in self.performance_recorder.no_improvement_round.items():
+            if no_improve_round == 0:
+                self.metric_best_iter[metric] = iteration
+                self.metric_best_model[metric] = self.extract_best_model(model)
+                LOGGER.info('best model of metric {} is now updated to {}'.format(metric, iteration))
+                # if early stopping is not triggered, return best model of first metric by default
+                if first_metric:
+                    LOGGER.info('default best model: metric {}, iter {}'.format(metric, iteration))
+                    self.cur_best_model = self.metric_best_model[metric]
+                    self.best_iteration = iteration
+            first_metric = False
 
     def check_early_stopping(self,):
         """
@@ -138,7 +169,12 @@ class ValidationStrategy(object):
         no_improvement_dict = self.performance_recorder.no_improvement_round
         for metric in no_improvement_dict:
             if no_improvement_dict[metric] >= self.early_stopping_rounds:
+                self.best_iteration = self.metric_best_iter[metric]
+                self.cur_best_model = self.metric_best_model[metric]
+                LOGGER.info('early stopping triggered, model of iter {} is chosen because metric {} satisfied'
+                            'stop condition'.format(self.best_iteration, metric))
                 return True
+
         return False
 
     def sync_performance_recorder(self, epoch):
@@ -148,7 +184,11 @@ class ValidationStrategy(object):
         if self.mode == consts.HETERO and self.role == consts.GUEST:
             recorder_to_send = copy.deepcopy(self.performance_recorder)
             recorder_to_send.cur_best_performance = None
-            self.transfer_inst.validation_status.remote(recorder_to_send, idx=-1, suffix=(epoch,))
+            if self.arbiter_comm:
+                self.transfer_inst.validation_status.remote(recorder_to_send, idx=-1, suffix=(epoch,))
+            else:
+                self.transfer_inst.validation_status.remote(recorder_to_send, idx=-1, suffix=(epoch,),
+                                                            role=consts.HOST)
 
         elif self.mode == consts.HETERO:
             self.performance_recorder = self.transfer_inst.validation_status.get(idx=-1, suffix=(epoch,))[0]
@@ -321,13 +361,6 @@ class ValidationStrategy(object):
 
         if self.sync_status:
             self.sync_performance_recorder(epoch)
-            LOGGER.debug('showing early stopping status, {} shows cur best performances'.format(self.role))
-            LOGGER.debug(self.performance_recorder.cur_best_performance)
-            LOGGER.debug('showing early stopping status, {} shows early stopping no improve rounds'.format(self.role))
-            LOGGER.debug(self.performance_recorder.no_improvement_round)
 
-        if self.early_stopping_rounds and self.is_best_performance_updated() and self.mode == consts.HETERO:
-            best_model = model.export_model()
-            self.cur_best_model = {'model': {'best_model': best_model}} if best_model is not None else None
-            self.best_iteration = epoch
-            LOGGER.debug('cur best model saved, best iter is {}'.format(self.best_iteration))
+        if self.early_stopping_rounds and self.mode == consts.HETERO:
+            self.update_early_stopping_status(epoch, model)

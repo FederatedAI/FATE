@@ -40,6 +40,34 @@ def get_features_shape(data_instances):
         return None
 
 
+def max_sample_weight_map_func(kv_iter):
+
+    max_weight = -1
+    for k, inst in kv_iter:
+        if inst.weight > max_weight:
+            max_weight = inst.weight
+
+    return max_weight
+
+
+def max_sample_weight_cmp(v1, v2):
+    return v1 if v1 > v2 else v2
+
+
+def get_max_sample_weight(data_inst_with_weight):
+    inter_rs = data_inst_with_weight.applyPartitions(max_sample_weight_map_func)
+    max_weight = inter_rs.reduce(max_sample_weight_cmp)
+    return max_weight
+
+
+def check_negative_sample_weight(kv_iterator):
+    for k, v in kv_iterator:
+        if isinstance(v, Instance) and v.weight is not None:
+            if v.weight < 0:
+                return True
+    return False
+
+
 def header_alignment(data_instances, pre_header):
     header = data_instances.schema["header"]
     if len((set(header) & set(pre_header))) != len(pre_header):

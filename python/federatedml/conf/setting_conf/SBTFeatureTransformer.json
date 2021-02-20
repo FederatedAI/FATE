@@ -1,0 +1,15 @@
+{
+    "module_path":  "federatedml/feature/sbt_feature_transformer",
+    "param_class" : "federatedml/param/sbt_feature_transformer_param.py/SBTTransformerParam",
+    "role":
+    {
+        "guest":
+        {
+            "program": "sbt_feature_transformer.py/HeteroSBTFeatureTransformerGuest"
+        },
+        "host":
+        {
+            "program": "sbt_feature_transformer.py/HeteroSBTFeatureTransformerHost"
+        }
+    }
+}

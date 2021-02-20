@@ -19,13 +19,13 @@ from fate_arch.common.log import schedule_logger
 from fate_arch.common import EngineType, string_utils
 from fate_flow.entity.types import JobStatus, EndStatus, RunParameters
 from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.operation import Tracker
+from fate_flow.operation.job_tracker import Tracker
 from fate_flow.settings import USE_AUTHENTICATION, DEFAULT_TASK_PARALLELISM, DEFAULT_FEDERATED_STATUS_COLLECT_TYPE
 from fate_flow.utils import job_utils, schedule_utils, data_utils
-from fate_flow.operation import JobSaver
+from fate_flow.operation.job_saver import JobSaver
 from fate_arch.common.base_utils import json_dumps, current_timestamp
-from fate_flow.controller import TaskController
-from fate_flow.manager import ResourceManager
+from fate_flow.controller.task_controller import TaskController
+from fate_flow.manager.resource_manager import ResourceManager
 from fate_arch.common import WorkMode, Backend
 from fate_arch.common import FederatedMode
 from fate_arch.computing import ComputingEngine

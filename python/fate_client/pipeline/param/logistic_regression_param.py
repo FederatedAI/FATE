@@ -18,15 +18,15 @@
 #
 import copy
 
-from pipeline.param import consts
 from pipeline.param.base_param import BaseParam
 from pipeline.param.cross_validation_param import CrossValidationParam
 from pipeline.param.encrypt_param import EncryptParam
 from pipeline.param.encrypted_mode_calculation_param import EncryptedModeCalculatorParam
 from pipeline.param.init_model_param import InitParam
 from pipeline.param.predict_param import PredictParam
-from pipeline.param.sqn_param import StochasticQuasiNewtonParam
 from pipeline.param.stepwise_param import StepwiseParam
+from pipeline.param.sqn_param import StochasticQuasiNewtonParam
+from pipeline.param import consts
 
 
 class LogisticParam(BaseParam):
@@ -39,13 +39,13 @@ class LogisticParam(BaseParam):
         Penalty method used in LR. Please note that, when using encrypted version in HomoLR,
         'L1' is not supported.
 
-    tol : float, default: 1e-5
+    tol : float, default: 1e-4
         The tolerance of convergence
 
     alpha : float, default: 1.0
         Regularization strength coefficient.
 
-    optimizer : str, 'sgd', 'rmsprop', 'adam', 'nesterov_momentum_sgd', 'sqn' or 'adagrad', default: 'sgd'
+    optimizer : str, 'sgd', 'rmsprop', 'adam', 'nesterov_momentum_sgd', 'sqn' or 'adagrad', default: 'rmsprop'
         Optimize method, if 'sqn' has been set, sqn_param will take effect. Currently, 'sqn' support hetero mode only.
 
     batch_size : int, default: -1
@@ -96,19 +96,16 @@ class LogisticParam(BaseParam):
     use_first_metric_only: bool, default: False
         Indicate whether use the first metric only for early stopping judgement.
 
-
-
-
     """
 
     def __init__(self, penalty='L2',
-                 tol=1e-5, alpha=1.0, optimizer='sgd',
+                 tol=1e-4, alpha=1.0, optimizer='rmsprop',
                  batch_size=-1, learning_rate=0.01, init_param=InitParam(),
                  max_iter=100, early_stop='diff', encrypt_param=EncryptParam(),
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  decay=1, decay_sqrt=True,
                  multi_class='ovr', validation_freqs=None, early_stopping_rounds=None,
-                 stepwise_param=StepwiseParam(),
+                 stepwise_param=StepwiseParam(), floating_point_precision=23,
                  metrics=None,
                  use_first_metric_only=False
                  ):
@@ -133,6 +130,7 @@ class LogisticParam(BaseParam):
         self.early_stopping_rounds = early_stopping_rounds
         self.metrics = metrics or []
         self.use_first_metric_only = use_first_metric_only
+        self.floating_point_precision = floating_point_precision
 
     def check(self):
         descr = "logistic_param's"
@@ -228,6 +226,10 @@ class LogisticParam(BaseParam):
         if not isinstance(self.use_first_metric_only, bool):
             raise ValueError("use_first_metric_only should be a boolean")
 
+        if self.floating_point_precision is not None and \
+                (not isinstance(self.floating_point_precision, int) or\
+                 self.floating_point_precision < 0 or self.floating_point_precision > 64):
+            raise ValueError("floating point precision should be null or a integer between 0 and 64")
         return True
 
 
@@ -244,14 +246,15 @@ class HomoLogisticParam(LogisticParam):
         Indicate how many iterations are aggregated once.
 
     use_proximal: bool, default: False
-        Whether to turn on additional proximial term.
+        Whether to turn on additional proximial term. For more details of FedProx, Please refer to
+        https://arxiv.org/abs/1812.06127
 
     mu: float, default 0.1
         To scale the proximal term
 
     """
     def __init__(self, penalty='L2',
-                 tol=1e-5, alpha=1.0, optimizer='sgd',
+                 tol=1e-4, alpha=1.0, optimizer='rmsprop',
                  batch_size=-1, learning_rate=0.01, init_param=InitParam(),
                  max_iter=100, early_stop='diff',
                  encrypt_param=EncryptParam(method=None), re_encrypt_batches=2,
@@ -259,7 +262,7 @@ class HomoLogisticParam(LogisticParam):
                  decay=1, decay_sqrt=True,
                  aggregate_iters=1, multi_class='ovr', validation_freqs=None,
                  early_stopping_rounds=None,
-                 metrics=['auc', 'ks'],
+                 metrics=['auc', 'ks'], floating_point_precision=23,
                  use_first_metric_only=False,
                  use_proximal=False,
                  mu=0.1
@@ -271,6 +274,7 @@ class HomoLogisticParam(LogisticParam):
                                                 encrypt_param=encrypt_param, predict_param=predict_param,
                                                 cv_param=cv_param, multi_class=multi_class,
                                                 validation_freqs=validation_freqs,
+                                                floating_point_precision=floating_point_precision,
                                                 decay=decay, decay_sqrt=decay_sqrt,
                                                 early_stopping_rounds=early_stopping_rounds,
                                                 metrics=metrics, use_first_metric_only=use_first_metric_only)
@@ -309,14 +313,14 @@ class HomoLogisticParam(LogisticParam):
 
 class HeteroLogisticParam(LogisticParam):
     def __init__(self, penalty='L2',
-                 tol=1e-5, alpha=1.0, optimizer='sgd',
+                 tol=1e-4, alpha=1.0, optimizer='rmsprop',
                  batch_size=-1, learning_rate=0.01, init_param=InitParam(),
                  max_iter=100, early_stop='diff',
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  decay=1, decay_sqrt=True, sqn_param=StochasticQuasiNewtonParam(),
                  multi_class='ovr', validation_freqs=None, early_stopping_rounds=None,
-                 metrics=['auc', 'ks'],
+                 metrics=['auc', 'ks'], floating_point_precision=23,
                  use_first_metric_only=False, stepwise_param=StepwiseParam()
                  ):
         super(HeteroLogisticParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
@@ -328,7 +332,7 @@ class HeteroLogisticParam(LogisticParam):
                                                   decay_sqrt=decay_sqrt, multi_class=multi_class,
                                                   validation_freqs=validation_freqs,
                                                   early_stopping_rounds=early_stopping_rounds,
-                                                  metrics=metrics,
+                                                  metrics=metrics, floating_point_precision=floating_point_precision,
                                                   use_first_metric_only=use_first_metric_only,
                                                   stepwise_param=stepwise_param)
         self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)

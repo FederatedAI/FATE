@@ -40,17 +40,18 @@ from fate_flow.scheduling_apps.party_app import manager as party_app_manager
 from fate_flow.scheduling_apps.tracker_app import manager as tracker_app_manager
 from fate_flow.db.db_models import init_database_tables as init_flow_db
 from fate_arch.storage.metastore.db_models import init_database_tables as init_arch_db
-from fate_flow.scheduler import Detector
-from fate_flow.scheduler import DAGScheduler
+from fate_flow.scheduler.detector import Detector
+from fate_flow.scheduler.dag_scheduler import DAGScheduler
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.entity.types import ProcessRole
-from fate_flow.manager import ResourceManager
+from fate_flow.manager.resource_manager import ResourceManager
 from fate_flow.settings import IP, HTTP_PORT, GRPC_PORT, _ONE_DAY_IN_SECONDS, stat_logger, API_VERSION, GRPC_SERVER_MAX_WORKERS
 from fate_flow.utils.api_utils import get_json_result
 from fate_flow.utils.authentication_utils import PrivilegeAuth
 from fate_flow.utils.grpc_utils import UnaryService
 from fate_flow.utils.service_utils import ServiceUtils
 from fate_flow.utils.xthread import ThreadPoolExecutor
+from fate_flow.utils import job_utils
 
 '''
 Initialize the manager
@@ -86,6 +87,7 @@ if __name__ == '__main__':
     )
     # init
     # signal.signal(signal.SIGTERM, job_utils.cleaning)
+    signal.signal(signal.SIGCHLD, job_utils.wait_child_process)
     # init db
     init_flow_db()
     init_arch_db()

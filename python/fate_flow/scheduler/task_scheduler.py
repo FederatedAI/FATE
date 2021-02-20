@@ -16,10 +16,10 @@
 from fate_arch.common import FederatedCommunicationType
 from fate_flow.entity.types import TaskStatus, EndStatus, StatusSet, SchedulingStatusCode, FederatedSchedulingStatusCode, RetCode
 from fate_flow.utils import job_utils
-from fate_flow.scheduler import FederatedScheduler
-from fate_flow.operation import JobSaver
+from fate_flow.scheduler.federated_scheduler import FederatedScheduler
+from fate_flow.operation.job_saver import JobSaver
 from fate_arch.common.log import schedule_logger
-from fate_flow.manager import ResourceManager
+from fate_flow.manager.resource_manager import ResourceManager
 
 
 class TaskScheduler(object):

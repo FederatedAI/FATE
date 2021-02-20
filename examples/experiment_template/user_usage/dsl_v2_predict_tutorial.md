@@ -49,7 +49,7 @@ You can query the corresponding model_id and model_version of a job using the "f
 
 We use flow_client to deploy components needed in the prediction task:
 
-    flow job deploy --model-id guest-10000#host-10000#model --model-version 2020103015490073208469 --cpn-list "dataio_0, intersection_0, hetero_secure_boost_0"
+    flow model deploy --model-id guest-10000#host-10000#model --model-version 2020103015490073208469 --cpn-list "dataio_0, intersection_0, hetero_secure_boost_0"
 
 We can modify existing predict conf by replacing model_id, model_version and data set name with yours to make a new 
 predict conf.
@@ -108,4 +108,4 @@ with model_id and model_version returned by training job.
 ## Submit a predict job
 Then we can submit a new predict job:
     
-    >> flow job submit -c ./examples/dsl/v2/hetero_secureboost/test_predict_conf.json -d ./predict_dsl/predict_dsl_20201030164751.json
+    >> flow job submit -c ./examples/dsl/v2/hetero_secureboost/test_predict_conf.json

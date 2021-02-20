@@ -21,6 +21,7 @@ from collections import namedtuple
 from pathlib import Path
 
 from ruamel import yaml
+
 temperate = """\
 # 0 for standalone, 1 for cluster
 work_mode: 0
@@ -72,7 +73,7 @@ services:
 
 """
 
-_default_config = Path(__file__).parent.joinpath("flow_test_config.yaml").resolve()
+_default_config = Path(__file__).parent.joinpath("fate_test_config.yaml").resolve()
 
 data_switch = None
 use_local_data = 1
@@ -84,7 +85,7 @@ def create_config(path: Path, override=False):
         raise FileExistsError(f"{path} exists")
     with path.open("w") as f:
         f.write(temperate)
-        
+
 
 def default_config():
     if not _default_config.exists():
@@ -93,24 +94,23 @@ def default_config():
 
 
 class Parties(object):
-    def __init__(self,
-                 guest: typing.List[int],
-                 host: typing.List[int],
-                 arbiter: typing.List[int] = None):
-        self.guest = guest
-        self.host = host
-        self.arbiter = arbiter or []
+    def __init__(self, **kwargs):
+        """
+        mostly, accept guest, host and arbiter
+        """
+        self._role_to_parties = kwargs
 
         self._party_to_role_string = {}
-        for role in ["guest", "host", "arbiter"]:
-            parties = getattr(self, role)
+        for role in kwargs:
+            parties = kwargs[role]
+            setattr(self, role, parties)
             for i, party in enumerate(parties):
                 if party not in self._party_to_role_string:
                     self._party_to_role_string[party] = set()
                 self._party_to_role_string[party].add(f"{role.lower()}_{i}")
 
     @staticmethod
-    def from_dict(d: dict):
+    def from_dict(d: typing.MutableMapping[str, typing.List[int]]):
         return Parties(**d)
 
     def party_to_role_string(self, party):
@@ -119,19 +119,19 @@ class Parties(object):
     def extract_role(self, counts: typing.MutableMapping[str, int]):
         roles = {}
         for role, num in counts.items():
-            if not hasattr(self, role):
-                raise ValueError(f"{role} should be one of [guest, host, arbiter]")
+            if role not in self._role_to_parties and num > 0:
+                raise ValueError(f"{role} not found in config")
             else:
-                if len(getattr(self, role)) < num:
-                    raise ValueError(f"require {num} {role} parties, only {len(getattr(self, role))} in config")
-            roles[role] = getattr(self, role)[:num]
+                if len(self._role_to_parties[role]) < num:
+                    raise ValueError(f"require {num} {role} parties, only {len(self._role_to_parties[role])} in config")
+            roles[role] = self._role_to_parties[role][:num]
         return roles
 
     def extract_initiator_role(self, role):
         initiator_role = role.strip()
-        if len(getattr(self, initiator_role)) < 1:
+        if len(self._role_to_parties[initiator_role]) < 1:
             raise ValueError(f"role {initiator_role} has empty party list")
-        party_id = getattr(self, initiator_role)[0]
+        party_id = self._role_to_parties[initiator_role][0]
         return dict(role=initiator_role, party_id=party_id)
 
 

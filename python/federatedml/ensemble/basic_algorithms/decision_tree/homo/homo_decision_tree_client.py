@@ -126,10 +126,10 @@ class HomoDecisionTreeClient(DecisionTree):
         LOGGER.info("start to get node histograms")
         node_map = self.get_node_map(nodes=cur_to_split)
         histograms = FeatureHistogram.calculate_histogram(
-            table_with_assign, g_h,
-            split_points, sparse_point,
-            valid_feature, node_map,
-            self.use_missing, self.zero_as_missing)
+                    table_with_assign, g_h,
+                    split_points, sparse_point,
+                    valid_feature, node_map,
+                    self.use_missing, self.zero_as_missing)
 
         hist_bags = []
         for hist_list in histograms:
@@ -226,7 +226,7 @@ class HomoDecisionTreeClient(DecisionTree):
         return next_layer_node
 
     @staticmethod
-    def assign_a_instance(row, tree: List[Node], bin_sparse_point, use_missing, use_zero_as_missing):
+    def assign_an_instance(row, tree: List[Node], bin_sparse_point, use_missing, use_zero_as_missing):
 
         leaf_status, nodeid = row[1]
         node = tree[nodeid]
@@ -260,7 +260,7 @@ class HomoDecisionTreeClient(DecisionTree):
     def assign_instances_to_new_node(self, table_with_assignment, tree_node: List[Node]):
 
         LOGGER.debug('re-assign instance to new nodes')
-        assign_method = functools.partial(self.assign_a_instance, tree=tree_node, bin_sparse_point=
+        assign_method = functools.partial(self.assign_an_instance, tree=tree_node, bin_sparse_point=
                                           self.bin_sparse_points, use_missing=self.use_missing, use_zero_as_missing
                                           =self.zero_as_missing)
 

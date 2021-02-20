@@ -19,9 +19,15 @@ This section introduces the dsl and conf for different types of tasks.
 
 3. Class Dictionary with Feature Engineering Task:
 
-    dsl: sample_weight_feature_engineering_job_dsl.json
+    dsl: sample_weight_class_dict_feature_engineering_job_dsl.json
 
-    runtime_config : sample_weight_feature_engineering_job_conf.json
+    runtime_config : sample_weight_class_dict_feature_engineering_job_conf.json
+
+4. Multi-host Balanced Mode Task:
+
+    dsl: sample_weight_job_dsl.json
+
+    runtime_config : sample_weight_multi_host_job_conf.json
 
 
 Users can use following commands to run the task.
