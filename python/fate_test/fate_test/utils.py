@@ -22,13 +22,14 @@ from prettytable import PrettyTable, ORGMODE
 
 SCRIPT_METRICS = "script_metrics"
 
+
 class TxtStyle:
-   TRUE_VAL = Fore.GREEN
-   FALSE_VAL = Fore.RED + Style.BRIGHT
-   TITLE = Fore.BLUE
-   FIELD_VAL = Fore.YELLOW
-   DATA_FIELD_VAL = Fore.CYAN
-   END = Style.RESET_ALL
+    TRUE_VAL = Fore.GREEN
+    FALSE_VAL = Fore.RED + Style.BRIGHT
+    TITLE = Fore.BLUE
+    FIELD_VAL = Fore.YELLOW
+    DATA_FIELD_VAL = Fore.CYAN
+    END = Style.RESET_ALL
 
 
 def show_data(data):
