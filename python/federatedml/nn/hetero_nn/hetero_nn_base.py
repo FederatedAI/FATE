@@ -55,12 +55,6 @@ class HeteroNNBase(ModelBase):
         self.model_param = HeteroNNParam()
         self.mode = consts.HETERO
 
-        self.bottom_update_per_batch = 1
-        self.top_update_per_batch = 1
-        self.interactive_update_per_batch = 1
-        self.guest_update_per_batch = 1
-        self.host_update_per_batch = 1
-
         self.selector_param = None
 
         self.floating_point_precision = None
@@ -80,12 +74,6 @@ class HeteroNNBase(ModelBase):
 
         self.predict_param = hetero_nn_param.predict_param
         self.hetero_nn_param = hetero_nn_param
-
-        self.bottom_update_per_batch = hetero_nn_param.bottom_update_per_batch
-        self.top_update_per_batch = hetero_nn_param.top_update_per_batch
-        self.interactive_update_per_batch = hetero_nn_param.interactive_update_per_batch
-        self.guest_update_per_batch = hetero_nn_param.guest_update_per_batch
-        self.host_update_per_batch = hetero_nn_param.host_update_per_batch
 
         self.selector_param = hetero_nn_param.selector_param
 

@@ -130,11 +130,6 @@ class HeteroNNParam(BaseParam):
                  early_stopping_rounds=None,
                  metrics=None,
                  use_first_metric_only=True,
-                 bottom_update_per_batch=1,
-                 top_update_per_batch=1,
-                 interactive_update_per_batch=1,
-                 guest_update_per_batch=1,
-                 host_update_per_batch=1,
                  selector_param=SelectorParam(),
                  floating_point_precision=23,
                  drop_out_keep_rate=1.0):
@@ -161,12 +156,6 @@ class HeteroNNParam(BaseParam):
         self.encrypted_model_calculator_param = encrypted_mode_calculator_param
         self.predict_param = copy.deepcopy(predict_param)
         self.cv_param = copy.deepcopy(cv_param)
-
-        self.bottom_update_per_batch = bottom_update_per_batch
-        self.top_update_per_batch = top_update_per_batch
-        self.interactive_update_per_batch = interactive_update_per_batch
-        self.guest_update_per_batch = guest_update_per_batch
-        self.host_update_per_batch = host_update_per_batch
 
         self.selector_param = selector_param
         self.floating_point_precision = floating_point_precision
@@ -229,21 +218,6 @@ class HeteroNNParam(BaseParam):
 
         if not isinstance(self.use_first_metric_only, bool):
             raise ValueError("use_first_metric_only should be a boolean")
-
-        if not isinstance(self.bottom_update_per_batch, int) or self.bottom_update_per_batch < 0:
-            raise ValueError("bottom_update_per_batch should be positive integer")
-
-        if not isinstance(self.interactive_update_per_batch, int) or self.interactive_update_per_batch < 0:
-            raise ValueError("interactive_update_per_batch should be positive integer")
-
-        if not isinstance(self.top_update_per_batch, int) or self.top_update_per_batch < 0:
-            raise ValueError("top_update_per_batch should be positive integer")
-
-        if not isinstance(self.guest_update_per_batch, int) or self.guest_update_per_batch < 0:
-            raise ValueError("guest_update_per_batch should be positive integer")
-
-        if not isinstance(self.host_update_per_batch, int) or self.host_update_per_batch < 0:
-            raise ValueError("host_update_per_batch should be positive integer")
 
         if self.floating_point_precision is not None and \
                 (not isinstance(self.floating_point_precision, int) or\
