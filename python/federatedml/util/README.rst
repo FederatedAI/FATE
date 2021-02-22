@@ -75,7 +75,9 @@ Weight may be specified by input param ``class_weight`` or ``sample_weight_name`
 Output data instances will each have a weight value,
 which will be used for training.
 
-Please note that when weight is not None, only ``weight_diff`` convergence check method may be used for GLM.
+If result weighted instances include negative weight, a warning message will be given.
+
+Please note that when weight is not None, only ``weight_diff`` convergence check method may be used for training GLM.
 
 How to Use
 ----------

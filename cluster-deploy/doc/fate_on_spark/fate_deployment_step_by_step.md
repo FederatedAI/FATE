@@ -1,48 +1,8 @@
-# FATE ON Spark Deploy Guide
+# FATE ON Spark/CDH Deploy FATE
 
-## 1.Server Information
+## 1.Base Environment Configuration
 
-|  Server  |                                                              |
-| :------: | ------------------------------------------------------------ |
-|   Number | >1 (Depending on user needs)                                       |
-|   Specs  | 8 core /16GB memory / 500GB hard disk/10M bandwidth       |
-|   OS     | CentOS linux 7.2 & above/Ubuntu 16.04 & above        |
-|  Dependency| Please refer section 4.5                                   |
-|   User   | user: app, user group: apps (app user should be able to execute sudo su root without password) |
-| File System | 1. mount 500G hard disk to /data 2. make /data/projects directory, ownership to app:apps |
-
-## 2.Cluster Information
-
-| party  | partyid | Host name     | IP Address  | OS                      | Software    | Service                              |
-| ------ | ------- | ------------- | ----------- | ----------------------- | ----------- | --------------------------------- |
-| PartyA | 10000   | VM-0-1-centos | 192.168.0.1 | CentOS 7.2/Ubuntu 16.04 | fate，mysql, nginx | fateflow，fateboard，mysql，nginx |
-| PartyA | 10000   |               |             |                         | Spark、HDFS |                                   |
-| PartyA | 10000   |               |             |                         | RabbitMQ    |                                   |
-| PartyB | 9999    | VM-0-2-centos | 192.168.0.2 | CentOS 7.2/Ubuntu 16.04 | fate，mysql, nginx | fateflow，fateboard，mysql，nginx |
-| PartyB | 9999    |               |             |                         | Spark、HDFS |                                   |
-| PartyB | 9999    |               |             |                         | RabbitMQ    |                                   |
-
-Architecture:
-
-<div style="text-align:center", align=center>
-<img src="../images/fate_on_spark_architecture.png" />
-</div>
-
-## 3.Module Information
-
-| Product  | Module    | Port     | Information                                               |
-| -------- | --------- | --------- | ----------------------------------------------------- |
-| fate     | fate_flow | 9360;9380 | Manages workflow of federated learning jobs, one service instance per party |
-| fate     | fateboard | 8080      | Visualizes federated learning process, one service instance per party     |
-| nginx    | nginx     | 9370      | proxy for cross-party scheduling                 |
-| mysql    | mysql     | 3306      | meta table storage                                            |
-| Spark    |           |           | compute engine                                              |
-| HDFS     |           |           | storage engine                                            |
-| RabbitMQ |           |           | proxy for cross-party data exchange                             |
-
-## 4.Base Environment Configuration
-
-### 4.1 configure hostname(optional)
+### 1.1 configure hostname(optional)
 
 **1) Modify Hostname**
 
@@ -68,7 +28,7 @@ vim /etc/hosts
 192.168.0.2 VM-0-2-centos
 ```
 
-### 4.2 Disable SELinux(Optional)
+### 1.2 Disable SELinux(Optional)
 
 
 **Execute on 192.168.0.1 192.168.0.2 as the root user**:
@@ -94,7 +54,7 @@ setenforce 0
 ```
 
 
-### 4.3 Set Linux resource limit
+### 1.3 Set Linux resource limit
 
 **Execute on 192.168.0.1 192.168.0.2 as the root user**:
 
@@ -109,7 +69,7 @@ vim /etc/security/limits.d/20-nproc.conf
 * soft nproc unlimited
 ```
 
-### 4.4 Disable & Stop Firewall(Optional)
+### 1.4 Disable & Stop Firewall(Optional)
 
 
 **Execute on 192.168.0.1 192.168.0.2 as the root user**:
@@ -129,7 +89,7 @@ ufw disable
 ufw status
 ```
 
-### 4.5 Initialize Software Environment
+### 1.5 Initialize Software Environment
 
 **Execute on 192.168.0.1 192.168.0.2 as the root user**:
 
@@ -163,14 +123,14 @@ if [ ! -f "libssl.so.10" ];then
 fi
 ```
 
-## 5.Install FATE
+## 2.Install dependency module
 
 **NOTE**
 
 This guide assumes that installation path is /data/projects/install, all commands executed by user app. 
 User may modify the given comments as needed.
 
-### 5.1 Obtain packages
+### 2.1 Obtain packages
 
 
 **Execute on 192.168.0.1 (with Internet access) as user app**:
@@ -178,18 +138,19 @@ User may modify the given comments as needed.
 ```bash
 mkdir -p /data/projects/install
 cd /data/projects/install
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/python-env-1.5.0-release.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/python-env-miniconda3-4.5.4.tar.gz
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/jdk-8u192-linux-x64.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/mysql-1.5.0-release.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/openresty-1.17.8.2.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_1.5.0_release.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/mysql-fate-8.0.13.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/openresty-1.17.9.2.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/pip-packages-fate-1.5.1.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_1.5.1_release.tar.gz
 
 #scp packages to 192.168.0.1和192.168.0.2
 scp *.tar.gz app@192.168.0.1:/data/projects/install
 scp *.tar.gz app@192.168.0.2:/data/projects/install
 ```
 
-### 5.2 Check Settings of OS
+### 2.2 Check Settings of OS
 
 **Execute on 192.168.0.1 192.168.0.2 as user app**:
 
@@ -203,7 +164,7 @@ ulimit -u
 65535
 ```
 
-### 5.3 Deploy MySQL
+### 2.3 Install MySQL
 
 **Execute on 192.168.0.1 192.168.0.2 as user app**:
 
@@ -276,7 +237,7 @@ mysql>select * from server_node;
 
 ```
 
-### 5.4 Deploy JDK
+### 2.4 Install JDK
 
 **Execute on 192.168.0.1 192.168.0.2 as user app**:
 
@@ -290,7 +251,7 @@ cd /data/projects/fate/common/jdk
 mv jdk1.8.0_192 jdk-8u192
 ```
 
-### 5.5 Deploy python
+### 2.5 Install python
 
 **Execute on 192.168.0.1 192.168.0.2 as user app**:
 
@@ -310,14 +271,15 @@ sh Miniconda3-4.5.4-Linux-x86_64.sh -b -p /data/projects/fate/common/miniconda3
 /data/projects/fate/common/miniconda3/bin/virtualenv -p /data/projects/fate/common/miniconda3/bin/python3.6 --no-wheel --no-setuptools --no-download /data/projects/fate/common/python/venv
 
 #install dependencies
+cd /data/projects/install
 tar xvf pip-packages-fate-*.tar.gz
 source /data/projects/fate/common/python/venv/bin/activate
-pip install setuptools-42.0.2-py2.py3-none-any.whl
-pip install -r pip-packages-fate-1.5.0/requirements.txt -f ./pip-packages-fate-1.5.0 --no-index
+pip install python-env/setuptools-42.0.2-py2.py3-none-any.whl
+pip install -r pip-packages-fate-1.5.1/requirements.txt -f ./pip-packages-fate-1.5.1 --no-index
 pip list | wc -l
 ```
 
-### 5.6 Install NginX
+### 2.6 Install Nginx
 
 **Execute on 192.168.0.1 192.168.0.2 as user app**:
 
@@ -335,20 +297,13 @@ cd openresty-*
 make && make install
 ```
 
-### 5.7 Deploy Spark & HDFS
+### 2.7 Deploy RabbitMQ
 
-#### 5.7.1
-Please refer: [Hadoop_Spark_deployment_guide](hadoop_spark_deployment_guide.md)
-
-
-### 5.8 Deploy RabbitMQ
-
-#### 5.8.1
 Please refer: [RabbitMQ_deployment_guide](rabbitmq_deployment_guide.md)
 
-### 5.9 Deploy FATE
+## 3 Install FATE
 
-#### 5.9.1 Deploy Software
+### 3.1 Deploy Software
 
 ```
 #deploy software
@@ -375,22 +330,24 @@ export PATH=\$PATH:\$JAVA_HOME/bin
 EOF
 ```
 
-#### 5.9.2 Modify NginX Configuration
+### 3.2 Modify Nginx Configuration
 
+#### 3.2.1 Modify Nginx Base Configuration
 conf file:  /data/projects/fate/proxy/nginx/conf/nginx.conf
 
-This conf file is used by NginX for service base setting and lua code.
-Please refer to Nginx.conf to manually edit conf; use the following command to check modified conf: 
+This conf file is used by Nginx for service base setting and lua code.
+No modification is usually required.
+If you want to modify it, please refer to Nginx.conf to manually edit conf; use the following command to check modified conf: 
 
 ```bash
 /data/projects/fate/proxy/nginx/sbin/nginx -t
 ```
 
-#### 5.9.3 Modify NginX Proxy Setting
+#### 3.2.2 Modify Nginx Proxy Route Table
 
 conf file:  /data/projects/fate/proxy/nginx/conf/route_table.yaml
 
-This conf file is used NginX for proxy information.
+This conf file is used Nginx for proxy information.
 User may refer to the example below to manually modify the file.
 Configuration may also be done through commands:
 
@@ -441,7 +398,7 @@ default:
 EOF
 ```
 
-#### 5.9.4 Modify FATE-Board Configuration
+### 3.3 Modify FATE-Board Configuration
 
 1）conf/application.properties
 
@@ -510,14 +467,14 @@ vi service.sh
 export JAVA_HOME=/data/projects/fate/common/jdk/jdk-8u192
 ```
 
-#### 5.9.5 Modify FATE Configuration
+### 4. Modify FATE Configuration
  
-  conf file: /data/projects/fate/python/conf/server_conf.yaml
+  conf file: /data/projects/fate/conf/service_conf.yaml
   
 ##### Runtime Configuration
 - work_mode(1 fot cluster, default 1)
 
-- independent_scheduling_proxy(use NginX for FATE-Flow scheduling proxy service; needs to be True for FATE on Spark)
+- independent_scheduling_proxy(use Nginx for FATE-Flow scheduling proxy service; needs to be True for FATE on Spark)
 
 - FATE-Flow ip address and port
 
@@ -549,7 +506,7 @@ export JAVA_HOME=/data/projects/fate/common/jdk/jdk-8u192
 
 ```
 #Execute on 192.168.0.1 as user ap
-cat > /data/projects/fate/python/conf/server_conf.yaml <<EOF
+cat > /data/projects/fate/conf/service_conf.yaml <<EOF
 work_mode: 1
 independent_scheduling_proxy: true
 use_registry: false
@@ -595,7 +552,7 @@ PROXY:
 EOF
 
 #Execute on 192.168.0.2 as user ap
-cat > /data/projects/fate/python/conf/server_conf.yaml <<EOF
+cat > /data/projects/fate/conf/service_conf.yaml <<EOF
 work_mode: 1
 independent_scheduling_proxy: true
 use_registry: false
@@ -641,7 +598,7 @@ PROXY:
 EOF
 ```
 
-### 5.10 Start Service
+## 5. Start Service
 
 **#Execute on 192.168.0.1 192.168.0.2 as user ap**
 
@@ -656,7 +613,7 @@ cd /data/projects/fate/proxy
 ./nginx/sbin/nginx -c /data/projects/fate/proxy/nginx/conf/nginx.conf
 ```
 
-### 5.11 Debug
+## 6. Debug
 
 1）FATE-Flow Logs
 
@@ -670,15 +627,15 @@ cd /data/projects/fate/proxy
 
 /data/projects/fate/proxy/nginx/logs
 
-## 6.Test
+## 7.Test
 
 
-### 6.1 test deployment with toy-example
+### 7.1 test deployment with toy-example
 
 
 Set 3 parameters before starting test: `guest_partyid`, `host_partyid`, `work_mode`, `backend`
 
-#### 6.1.1 Local Test
+#### 7.1.1 Local Test
 
 1) Execute on 192.168.0.1, set guest_partyid & host_partyid to 10000：
 
@@ -704,7 +661,7 @@ If test succeeds, terminal should print similar results:
 
 "2020-04-28 18:26:20,789 - secure_add_guest.py[line:126] - INFO: success to calculate secure_sum, it is 1999.9999999999998"
 
-#### 6.1.2 Federated Test
+#### 7.1.2 Federated Test
 
 Set 9999 to be guest, execute on 192.168.0.2:
 
@@ -718,9 +675,9 @@ If test succeeds, terminal should print similar results:
 
 "2020-04-28 18:26:20,789 - secure_add_guest.py[line:126] - INFO: success to calculate secure_sum, it is 1999.9999999999998"
 
-### 6.2 Min-Test
+### 7.2 Min-Test
 
-#### 6.2.1 Upload Pre-set Data
+#### 7.2.1 Upload Pre-set Data
 
 Execute on 192.168.0.1 & 192.168.0.2:
 
@@ -732,7 +689,7 @@ python upload_default_data.py -m 1
 
 For more details on uploadind data, please refer to, [script README](../../examples/scripts/README.rst)
 
-#### 6.2.2 Fast Mode
+#### 7.2.2 Fast Mode
 
 Please make sure that guest and host already upload pre-set data through scripts.
 
@@ -753,11 +710,11 @@ Other parameters for min-test include:
 
 If the word "success" is displayed in the result after a few minutes, it indicates that the operation has run successfully. If "FAILED" appears or the program is stuck, it means the test has failed.
 
-#### 6.2.3 Normal Mode
+#### 7.2.3 Normal Mode
 
 Replace “fast” to “normal” in the command above.
 
-### 6.3. FATE-Board testing
+### 7.3. FATE-Board testing
 
 Fate-Board is a Web service. 
 Once FATE-Board service is started successfully, job information can be found on http://192.168.0.1:8080 and http://192.168.0.2:8080.
@@ -765,13 +722,13 @@ Port needs to be opened in presence of firewall.
 IF Fate-Board and Fate-Flow are deployed to different servers, login information for FATE-Flow server
 needs to be specified on FATE-Board web page: click the gear button on the top right corner --> add --> fill ip, os user, ssh port, and password for FATE-Flow server.
 
-## 7.System Management
+## 8.System Management
 
-### 7.1 Service Management
+### 8.1 Service Management
 
 **Execute on 192.168.0.1 & 192.168.0.2 as user app**
 
-####  7.1.1 FATE Service Management
+####  8.1.1 FATE Service Management
 
 1) start/stop/check/restart fate_flow service
 
@@ -798,7 +755,7 @@ cd /data/projects/fate/proxy
 ./nginx/sbin/nginx -s stop
 ```
 
-#### 7.1.2 MySQL Service Management
+#### 8.1.2 MySQL Service Management
 
 start/stop/check/restart MySQL service
 
@@ -807,11 +764,11 @@ cd /data/projects/fate/common/mysql/mysql-8.0.13
 sh ./service.sh start|stop|status|restart
 ```
 
-### 7.2 Check Proess and Port
+### 8.2 Check Proess and Port
 
 **Execute on 192.168.0.1 & 192.168.0.2 as user app**
 
-#### 7.2.1 Check Process
+#### 8.2.1 Check Process
 
 ```
 #check if processes are started
@@ -820,7 +777,7 @@ ps -ef | grep -i fateboard
 ps -ef | grep -i nginx
 ```
 
-#### 7.2.2 Check Process Port
+#### 8.2.2 Check Process Port
 
 ```
 #check if processes are active
@@ -833,7 +790,7 @@ netstat -tlnp | grep 9390
 ```
 
 
-### 7.3 Service Logs
+### 8.3 Service Logs
 
 | Service            | logs path                                           |
 | ------------------ | -------------------------------------------------- |
@@ -842,8 +799,8 @@ netstat -tlnp | grep 9390
 | nginx | /data/projects/fate/proxy/nginx/logs                 |
 | mysql              | /data/projects/fate/common/mysql/mysql-8.0.13/logs |
 
-## 8. Appendix
+## 9. Appendix
 
-### 8.1 Build Structure
+### 9.1 Build Structure
 
 Please refer to [build guide](../build.md) 

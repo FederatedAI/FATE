@@ -54,7 +54,7 @@ class ValidationStrategy(object):
                 validate data will be used for evaluating
     """
     def __init__(self, role=None, mode=None, validation_freqs=None, early_stopping_rounds=None,
-                 use_first_metric_only=False):
+                 use_first_metric_only=False, arbiter_comm=True):
 
         self.validation_freqs = validation_freqs
         self.role = role
@@ -64,6 +64,7 @@ class ValidationStrategy(object):
         self.validate_data = None
 
         # early stopping related vars
+        self.arbiter_comm = arbiter_comm
         self.sync_status = False
         self.early_stopping_rounds = early_stopping_rounds
         self.use_first_metric_only = use_first_metric_only
@@ -183,7 +184,11 @@ class ValidationStrategy(object):
         if self.mode == consts.HETERO and self.role == consts.GUEST:
             recorder_to_send = copy.deepcopy(self.performance_recorder)
             recorder_to_send.cur_best_performance = None
-            self.transfer_inst.validation_status.remote(recorder_to_send, idx=-1, suffix=(epoch,))
+            if self.arbiter_comm:
+                self.transfer_inst.validation_status.remote(recorder_to_send, idx=-1, suffix=(epoch,))
+            else:
+                self.transfer_inst.validation_status.remote(recorder_to_send, idx=-1, suffix=(epoch,),
+                                                            role=consts.HOST)
 
         elif self.mode == consts.HETERO:
             self.performance_recorder = self.transfer_inst.validation_status.get(idx=-1, suffix=(epoch,))[0]

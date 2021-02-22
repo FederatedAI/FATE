@@ -50,20 +50,20 @@
         }
     ],
     "pipeline_tasks": {
-        "train": {
-            "script": "pipeline-homo-lr-train.py"
-        },
-        "train-eval": {
-            "script": "pipeline-homo-lr-train-eval.py"
-        },
-        "cv": {
-            "script": "pipeline-homo-lr-cv.py"
-        },
-        "eval": {
+        "homo-lr-eval": {
             "script": "pipeline-homo-lr-eval.py"
         },
-        "multi-host": {
+        "homo-lr-multi-host": {
             "script": "pipeline-homo-lr-multi-host.py"
+        },
+        "homo-lr-train": {
+            "script": "pipeline-homo-lr-train.py"
+        },
+        "homo-lr-cv": {
+            "script": "pipeline-homo-lr-cv.py"
+        },
+        "homo-lr-train-eval": {
+            "script": "pipeline-homo-lr-train-eval.py"
         }
     }
 }

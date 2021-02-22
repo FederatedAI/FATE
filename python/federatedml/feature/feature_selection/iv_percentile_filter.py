@@ -21,7 +21,7 @@ import math
 
 from federatedml.feature.feature_selection.filter_base import BaseFilterMethod
 from federatedml.feature.feature_selection.iv_value_select_filter import fit_iv_values
-from federatedml.feature.hetero_feature_binning.base_feature_binning import BaseHeteroFeatureBinning
+from federatedml.feature.hetero_feature_binning.base_feature_binning import BaseFeatureBinning
 from federatedml.framework.hetero.sync import selection_info_sync
 from federatedml.param.feature_selection_param import IVPercentileSelectionParam
 from federatedml.protobuf.generated import feature_selection_meta_pb2
@@ -37,7 +37,7 @@ class IVPercentileFilter(BaseFilterMethod, metaclass=abc.ABCMeta):
     def __init__(self, filter_param):
         super().__init__(filter_param)
         self.transfer_variable = None
-        self.binning_obj: BaseHeteroFeatureBinning = None
+        self.binning_obj: BaseFeatureBinning = None
         self.local_only = False
         self.sync_obj = None
 

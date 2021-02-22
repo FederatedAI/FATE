@@ -481,7 +481,7 @@ class DAGScheduler(Cron):
     @DB.connection_context()
     def rerun_signal(cls, job_id, set_or_reset: bool):
         if set_or_reset is True:
-            update_fields = {Job.f_rerun_signal: True, Job.f_cancel_signal: False}
+            update_fields = {Job.f_rerun_signal: True, Job.f_cancel_signal: False, Job.f_end_scheduling_updates: 0}
         elif set_or_reset is False:
             update_fields = {Job.f_rerun_signal: False}
         else:

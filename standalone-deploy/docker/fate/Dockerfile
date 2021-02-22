@@ -26,11 +26,11 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-FROM docker.io/kdvolder/jdk8
+FROM python:3.6
 
 WORKDIR /fate
 
-ADD fateboard.tar /fate
+ADD fate.tar /fate
 ADD docker-entrypoint.sh /fate
 
 RUN rm /bin/sh && ln -sf /bin/bash /bin/sh
@@ -39,6 +39,14 @@ COPY docker-entrypoint.sh /usr/local/bin/
 
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
+RUN apt-get update && apt-get install libgmp3-dev -y && apt-get install -y libmpfr-dev libmpfr-doc libmpfr6 && apt-get install libmpc-dev -y
+
+#RUN pip install -r requirements.txt -f ./pip-dependedocker ncies --no-index
+RUN pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r /fate/python/requirements.txt
+
 ENV PYTHONPATH /fate/python
+
+RUN tar -xzf /fate/jdk-8u192.tar.gz
+ENV JAVA_PATH /fate/jdk-8u192/bin
 
 ENTRYPOINT ["docker-entrypoint.sh"]

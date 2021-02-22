@@ -167,7 +167,8 @@ class FTL(ModelBase):
 
     def init_validation_strategy(self, train_data=None, validate_data=None):
         validation_strategy = ValidationStrategy(self.role, consts.HETERO, self.validation_freqs,
-                                                 self.early_stopping_rounds, self.use_first_metric_only)
+                                                 self.early_stopping_rounds, self.use_first_metric_only,
+                                                 arbiter_comm=False)
         validation_strategy.set_train_data(train_data)
         validation_strategy.set_validate_data(validate_data)
         return validation_strategy
@@ -199,7 +200,7 @@ class FTL(ModelBase):
         if guest_side:
             data_inst = self.check_label(data_inst)
 
-        overlap_samples = intersect_obj.run(data_inst)  # find intersect ids
+        overlap_samples = intersect_obj.run_intersect(data_inst)  # find intersect ids
         non_overlap_samples = data_inst.subtractByKey(overlap_samples)
 
         LOGGER.debug('num of overlap/non-overlap sampels: {}/{}'.format(overlap_samples.count(),

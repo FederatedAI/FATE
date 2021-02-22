@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 
+import os
 from pathlib import Path
 from ruamel import yaml
 import torchvision
 
 
-def download_mnist(base=Path("./files")):
+def download_mnist(base, name, is_train=True):
     dataset = torchvision.datasets.MNIST(
-        root=base.joinpath(".cache"), train=True, download=True
+        root=base.joinpath(".cache"), train=is_train, download=True
     )
-    converted_path = base.joinpath("converted")
+    converted_path = base.joinpath(name)
     converted_path.mkdir(exist_ok=True)
 
     inputs_path = converted_path.joinpath("images")
@@ -35,11 +36,19 @@ def download_mnist(base=Path("./files")):
     config = {
         "type": "vision",
         "inputs": {"type": "images", "ext": "jpg"},
-        "target": {"type": "integer"},
+        "targets": {"type": "integer"},
     }
     with config_path.open("w") as f:
         yaml.safe_dump(config, f, indent=2)
 
 
+def main():
+    data_dir = os.path.realpath(
+        os.path.join(os.path.realpath(__file__), os.path.pardir, os.path.pardir, "data")
+    )
+    download_mnist(Path(data_dir), "mnist_train")
+    download_mnist(Path(data_dir), "mnist_eval", is_train=False)
+
+
 if __name__ == "__main__":
-    download_mnist()
+    main()

@@ -23,12 +23,12 @@ import random
 import copy
 
 from federatedml.feature.binning.bin_inner_param import BinInnerParam
-from federatedml.param.feature_binning_param import FeatureBinningParam
 from federatedml.feature.binning.bin_result import BinColResults, BinResults
 from federatedml.statistic.data_overview import get_header
 from federatedml.feature.sparse_vector import SparseVector
 from federatedml.statistic import data_overview
 from federatedml.util import LOGGER
+from federatedml.feature.fate_element_type import NoneType
 
 # from federatedml.statistic import statics
 
@@ -49,7 +49,7 @@ class BaseBinning(object):
         self.non_event_total = None
 
         if abnormal_list is None:
-            self.abnormal_list = []
+            self.abnormal_list = [NoneType()]
         else:
             self.abnormal_list = abnormal_list
 
@@ -72,28 +72,6 @@ class BaseBinning(object):
         bin_inner_param.set_bin_all()
         bin_inner_param.set_transform_all()
         self.set_bin_inner_param(bin_inner_param)
-
-    @staticmethod
-    def setup_bin_inner_param(data_instances, params: FeatureBinningParam):
-        header = get_header(data_instances)
-        LOGGER.debug("setup_bin_inner_param, get header length: {}".format(len(header)))
-        bin_inner_param = BinInnerParam()
-        bin_inner_param.set_header(header)
-        if params.bin_indexes == -1:
-            bin_inner_param.set_bin_all()
-        else:
-            bin_inner_param.add_bin_indexes(params.bin_indexes)
-            bin_inner_param.add_bin_names(params.bin_names)
-
-        bin_inner_param.add_category_indexes(params.category_indexes)
-        bin_inner_param.add_category_names(params.category_names)
-
-        if params.transform_param.transform_cols == -1:
-            bin_inner_param.set_transform_all()
-        else:
-            bin_inner_param.add_transform_bin_indexes(params.transform_param.transform_cols)
-            bin_inner_param.add_transform_bin_names(params.transform_param.transform_names)
-        return bin_inner_param
 
     def fit_split_points(self, data_instances):
         """
@@ -238,6 +216,32 @@ class BaseBinning(object):
         split_points_result = self.bin_results.get_split_points_array(self.bin_inner_param.transform_bin_names)
 
         return new_data, split_points_result, bin_sparse
+
+    def _setup_bin_inner_param(self, data_instances, params):
+        if self.bin_inner_param is not None:
+            return
+        self.bin_inner_param = BinInnerParam()
+
+        header = get_header(data_instances)
+        LOGGER.debug("_setup_bin_inner_param, get header length: {}".format(len(self.header)))
+
+        self.schema = data_instances.schema
+        self.bin_inner_param.set_header(header)
+        if params.bin_indexes == -1:
+            self.bin_inner_param.set_bin_all()
+        else:
+            self.bin_inner_param.add_bin_indexes(params.bin_indexes)
+            self.bin_inner_param.add_bin_names(params.bin_names)
+
+        self.bin_inner_param.add_category_indexes(params.category_indexes)
+        self.bin_inner_param.add_category_names(params.category_names)
+
+        if params.transform_param.transform_cols == -1:
+            self.bin_inner_param.set_transform_all()
+        else:
+            self.bin_inner_param.add_transform_bin_indexes(params.transform_param.transform_cols)
+            self.bin_inner_param.add_transform_bin_names(params.transform_param.transform_names)
+        self.set_bin_inner_param(self.bin_inner_param)
 
     @staticmethod
     def _convert_sparse_data(instances, bin_inner_param: BinInnerParam, bin_results: BinResults,
@@ -598,7 +602,6 @@ class BaseBinning(object):
                 while bin_idx >= len(col_sum):
                     col_sum.append([0, 0])
                 if bin_idx == sparse_bin_points[col_name]:
-                    # LOGGER.debug("In add_label_in_partition, matched!")
                     continue
                 label_sum = col_sum[bin_idx]
                 label_sum[0] = label_sum[0] + y

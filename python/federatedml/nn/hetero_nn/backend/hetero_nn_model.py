@@ -53,12 +53,6 @@ class HeteroNNKerasGuestModel(HeteroNNGuestModel):
 
         self.batch_size = None
 
-        self.bottom_update_per_batch = 1
-        self.top_update_per_batch = 1
-        self.interactive_update_per_batch = 1
-        self.guest_update_per_batch = 1
-        self.host_update_per_batch = 1
-
         self.is_empty = False
 
         self.set_nn_meta(hetero_nn_param)
@@ -298,12 +292,6 @@ class HeteroNNKerasHostModel(HeteroNNHostModel):
         self.data_converter = KerasSequenceDataConverter()
 
         self.transfer_variable = None
-
-        self.bottom_update_per_batch = 1
-        self.top_update_per_batch = 1
-        self.interactive_update_per_batch = 1
-        self.guest_update_per_batch = 1
-        self.host_update_per_batch = 1
 
         self.selector = SelectorFactory.get_selector(hetero_nn_param.selector_param.method,
                                                      hetero_nn_param.selector_param.selective_size,

@@ -1,0 +1,12 @@
+{
+  "file": "examples/data/mnist_train",
+  "id_delimiter": ",",
+  "head": 1,
+  "partition": 4,
+  "work_mode": 0,
+  "backend": 0,
+  "storage_engine": "PATH",
+  "namespace": "experiment",
+  "table_name": "mnist_images",
+  "use_local_data": 0
+}

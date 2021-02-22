@@ -50,14 +50,14 @@ class CrossValidationParam(BaseParam):
         Indicate whether to output table of ids used by each fold, else return original input data
         returned ids are formatted as: {original_id}#fold{fold_num}#{train/validate}
 
-    history_with_value: bool, default False
-        Indicate whether to include original feature values in the output fold history,
+    history_value_type: str, default score, choose between {'instance', 'score'}
+        Indicate whether to include original instance or predict score in the output fold history,
         only effective when output_fold_history set to True
 
     """
 
     def __init__(self, n_splits=5, mode=consts.HETERO, role=consts.GUEST, shuffle=True, random_seed=1,
-                 need_cv=False, output_fold_history=True, history_with_value=False):
+                 need_cv=False, output_fold_history=True, history_value_type="score"):
         super(CrossValidationParam, self).__init__()
         self.n_splits = n_splits
         self.mode = mode
@@ -67,7 +67,7 @@ class CrossValidationParam(BaseParam):
         # self.evaluate_param = copy.deepcopy(evaluate_param)
         self.need_cv = need_cv
         self.output_fold_history = output_fold_history
-        self.history_with_value = history_with_value
+        self.history_value_type = history_value_type
 
     def check(self):
         model_param_descr = "cross validation param's "
@@ -76,6 +76,6 @@ class CrossValidationParam(BaseParam):
         self.check_valid_value(self.role, model_param_descr, valid_values=[consts.HOST, consts.GUEST, consts.ARBITER])
         self.check_boolean(self.shuffle, model_param_descr)
         self.check_boolean(self.output_fold_history, model_param_descr)
-        self.check_boolean(self.history_with_value, model_param_descr)
+        self.history_value_type = self.check_and_change_lower(self.history_value_type, ["instance", "score"], model_param_descr)
         if self.random_seed is not None:
             self.check_positive_integer(self.random_seed, model_param_descr)

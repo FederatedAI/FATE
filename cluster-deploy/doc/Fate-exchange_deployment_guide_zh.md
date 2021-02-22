@@ -146,7 +146,7 @@ fi
 ```
 cd /data/projects/install
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/jdk-8u192-linux-x64.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_1.5.1_preview.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_1.5.1_release.tar.gz
 ```
 
 ## 5.2 操作系统参数检查

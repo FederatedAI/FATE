@@ -111,7 +111,7 @@ class DecisionTreeParam(BaseParam):
 
     min_impurity_split: float, least gain of a single split need to reach, default: 1e-3
 
-    min_child_weight: float, sum of hessian needed in child nodes. default is 1
+    min_child_weight: float, sum of hessian needed in child nodes. default is 0
 
     min_leaf_node: int, when samples no more than min_leaf_node, it becomes a leave, default: 1
 
@@ -133,7 +133,7 @@ class DecisionTreeParam(BaseParam):
     def __init__(self, criterion_method="xgboost", criterion_params=[0.1, 0], max_depth=3,
                  min_sample_split=2, min_impurity_split=1e-3, min_leaf_node=1,
                  max_split_nodes=consts.MAX_SPLIT_NODES, feature_importance_type="split",
-                 n_iter_no_change=True, tol=0.001, min_child_weight=1,
+                 n_iter_no_change=True, tol=0.001, min_child_weight=0,
                  use_missing=False, zero_as_missing=False,):
 
         super(DecisionTreeParam, self).__init__()
@@ -534,7 +534,7 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
                  validation_freqs=None, early_stopping_rounds=None, use_missing=False, zero_as_missing=False,
                  complete_secure=False, tree_num_per_party=1, guest_depth=1, host_depth=1, work_mode='mix', metrics=None,
                  sparse_optimization=False, random_seed=100, binning_error=consts.DEFAULT_RELATIVE_ERROR,
-                 cipher_compress_error=None, new_ver=True):
+                 cipher_compress_error=None, new_ver=True, run_goss=False, top_rate=0.2, other_rate=0.1):
 
         """
         work_mode：
@@ -561,7 +561,8 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
                                                          sparse_optimization=sparse_optimization,
                                                          binning_error=binning_error,
                                                          cipher_compress_error=cipher_compress_error,
-                                                         new_ver=new_ver)
+                                                         new_ver=new_ver,
+                                                         run_goss=run_goss, top_rate=top_rate, other_rate=other_rate)
 
         self.tree_num_per_party = tree_num_per_party
         self.guest_depth = guest_depth

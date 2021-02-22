@@ -22,19 +22,19 @@
 
 1. 主机需要能够访问外部网络，从公共网络中拉取安装包和docker镜像。
 
-2. 依赖[docker](https://download.docker.com/linux/)和[docker-compose](https://github.com/docker/compose/releases/tag/1.24.0)，docker建议版本为18.09，docker-compose建议版本为1.24.0，您可以使用以下命令验证docker环境：docker --version和docker-compose --version，docker的起停和其他操作请参考docker --help。
+2. 依赖[docker](https://download.docker.com/linux/)，docker建议版本为18.09，您可以使用以下命令验证docker环境：docker --version,docker的起停和其他操作请参考docker --help。
 
-3. 执行之前，请检查8080、9360和9380端口是否已被占用。 如果要再次执行，请使用docker命令删除以前的容器和镜像。
+3. 执行之前，请检查8080是否已被占用。 如果要再次执行，请使用docker命令删除以前的容器和镜像。
 
    请按照以下步骤操作:
 
    ```
    #获取安装包
-   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/docker_standalone-fate-1.5.0.tar.gz
-   tar -xzvf docker_standalone-fate-1.5.0.tar.gz
+   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/docker_standalone_fate_1.5.1.tar.gz
+   tar -xzvf docker_standalone_fate_1.5.1.tar.gz
    
    #执行部署
-   cd docker_standalone-fate-1.5.0
+   cd docker_standalone_fate_1.5.1
    bash install_standalone_docker.sh
    ```
 
@@ -43,7 +43,7 @@
    - 单元测试
 
    ```
-   CONTAINER_ID=`docker ps -aqf "name=fate_python"`
+   CONTAINER_ID=`docker ps -aqf "name=fate"`
    docker exec -t -i ${CONTAINER_ID} bash
    bash ./python/federatedml/test/run_test.sh
    ```
@@ -57,7 +57,7 @@
    - Toy测试
 
    ```
-   CONTAINER_ID=`docker ps -aqf "name=fate_python"`
+   CONTAINER_ID=`docker ps -aqf "name=fate"`
    docker exec -t -i ${CONTAINER_ID} bash
    python ./examples/toy_example/run_toy_example.py 10000 10000 0
    ```
@@ -75,8 +75,8 @@
    请在环境内使用以下指令安装：
    
    ```
-   python -m pip install fate-client
-   python -m pip install fate-test
+    pip install fate-client
+    pip install fate-test
    ```
 
 
@@ -99,14 +99,14 @@
 2. 下载独立版本的压缩包并解压缩。
 
    ```
-   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/standalone-fate-master-1.5.0.tar.gz
-   tar -xzvf  standalone-fate-master-1.5.0.tar.gz
+   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/standalone_fate_master_1.5.1.tar.gz
+   tar -xzvf  standalone_fate_master_1.5.1.tar.gz
    ```
 
 3. 进入FATE目录并执行init.sh。
 
    ```
-   cd standalone-fate-master-1.5.0
+   cd standalone_fate_master_1.5.1
    sh init.sh init
    ```
 
@@ -115,7 +115,7 @@
    - 单元测试
 
    ```
-   cd standalone-fate-master-1.5.0
+   cd standalone_fate_master_1.5.1
    source bin/init_env.sh
    bash ./python/federatedml/test/run_test.sh
    ```
@@ -129,7 +129,7 @@
    - Toy测试
 
    ```
-   cd standalone-fate-master-1.5.0
+   cd standalone_fate_master_1.5.1
    source bin/init_env.sh
    python ./examples/toy_example/run_toy_example.py 10000 10000 0
    ```

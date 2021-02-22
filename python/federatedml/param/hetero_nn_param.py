@@ -29,6 +29,16 @@ from federatedml.util import consts
 
 
 class SelectorParam(object):
+    """
+    Parameters used for Homo Neural Network.
+
+    Args:
+        method: None or str, back propagation select method, accept "relative" only, default: None
+        selective_size: int, deque size to use, store the most recent selective_size historical loss, default: 1024
+        beta: int, sample whose selective probability >= power(np.random, beta) will be selected
+        min_prob: Numeric, selective probability is max(min_prob, rank_rate)
+
+    """
     def __init__(self, method=None, beta=1, selective_size=consts.SELECTIVE_SIZE, min_prob=0, random_state=None):
         self.method = method
         self.selective_size = selective_size
@@ -39,6 +49,15 @@ class SelectorParam(object):
     def check(self):
         if self.method is not None and self.method not in ["relative"]:
             raise ValueError('selective method should be None be "relative"')
+
+        if not isinstance(self.selective_size, int) or self.selective_size <= 0:
+            raise ValueError("selective size should be a positive integer")
+
+        if not isinstance(self.beta, int):
+            raise ValueError("beta should be integer")
+
+        if not isinstance(self.min_prob, (float, int)):
+            raise ValueError("min_prob should be numeric")
 
 
 class HeteroNNParam(BaseParam):
@@ -111,11 +130,6 @@ class HeteroNNParam(BaseParam):
                  early_stopping_rounds=None,
                  metrics=None,
                  use_first_metric_only=True,
-                 bottom_update_per_batch=1,
-                 top_update_per_batch=1,
-                 interactive_update_per_batch=1,
-                 guest_update_per_batch=1,
-                 host_update_per_batch=1,
                  selector_param=SelectorParam(),
                  floating_point_precision=23,
                  drop_out_keep_rate=1.0):
@@ -142,12 +156,6 @@ class HeteroNNParam(BaseParam):
         self.encrypted_model_calculator_param = encrypted_mode_calculator_param
         self.predict_param = copy.deepcopy(predict_param)
         self.cv_param = copy.deepcopy(cv_param)
-
-        self.bottom_update_per_batch = bottom_update_per_batch
-        self.top_update_per_batch = top_update_per_batch
-        self.interactive_update_per_batch = interactive_update_per_batch
-        self.guest_update_per_batch = guest_update_per_batch
-        self.host_update_per_batch = host_update_per_batch
 
         self.selector_param = selector_param
         self.floating_point_precision = floating_point_precision
@@ -211,21 +219,6 @@ class HeteroNNParam(BaseParam):
         if not isinstance(self.use_first_metric_only, bool):
             raise ValueError("use_first_metric_only should be a boolean")
 
-        if not isinstance(self.bottom_update_per_batch, int) or self.bottom_update_per_batch < 0:
-            raise ValueError("bottom_update_per_batch should be positive integer")
-
-        if not isinstance(self.interactive_update_per_batch, int) or self.interactive_update_per_batch < 0:
-            raise ValueError("interactive_update_per_batch should be positive integer")
-
-        if not isinstance(self.top_update_per_batch, int) or self.top_update_per_batch < 0:
-            raise ValueError("top_update_per_batch should be positive integer")
-
-        if not isinstance(self.guest_update_per_batch, int) or self.guest_update_per_batch < 0:
-            raise ValueError("guest_update_per_batch should be positive integer")
-
-        if not isinstance(self.host_update_per_batch, int) or self.host_update_per_batch < 0:
-            raise ValueError("host_update_per_batch should be positive integer")
-
         if self.floating_point_precision is not None and \
                 (not isinstance(self.floating_point_precision, int) or\
                  self.floating_point_precision < 0 or self.floating_point_precision > 64):
@@ -234,6 +227,7 @@ class HeteroNNParam(BaseParam):
         self.encrypt_param.check()
         self.encrypted_model_calculator_param.check()
         self.predict_param.check()
+        self.selector_param.check()
 
     @staticmethod
     def _parse_optimizer(opt):
