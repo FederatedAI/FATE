@@ -24,8 +24,8 @@ from federatedml.nn.hetero_nn.strategy.comparision import Comparision
 class RelativeSelector(object):
     def __init__(self, max_size=None, beta=1, random_state=None, min_prob=0):
         self._comparision = Comparision(size=max_size)
-        self.beta = beta
-        self.min_prob = min_prob
+        self._beta = beta
+        self._min_prob = min_prob
         np.random.seed(random_state)
 
     def select_batch_sample(self, samples):
@@ -34,7 +34,7 @@ class RelativeSelector(object):
             self._comparision.add(sample)
 
         for idx, sample in enumerate(samples):
-            select_ret[idx] = np.random.uniform(0, 1) <= max(self.min_prob, np.power(self._comparision.get_rate(sample), self.beta))
+            select_ret[idx] = max(self._min_prob, np.power(np.random.uniform(0, 1), self._beta)) <= self._comparision.get_rate(sample)
 
         return select_ret
 
