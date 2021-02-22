@@ -40,7 +40,8 @@
                     "mode": "fast"
                 },
                 "decay": 0.0,
-                "decay_sqrt": false
+                "decay_sqrt": false,
+                "floating_point_precision": 23
             },
             "evaluation_0": {
                 "eval_type": "regression",

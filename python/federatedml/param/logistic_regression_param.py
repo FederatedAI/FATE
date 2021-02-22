@@ -96,6 +96,10 @@ class LogisticParam(BaseParam):
     use_first_metric_only: bool, default: False
         Indicate whether use the first metric only for early stopping judgement.
 
+    floating_point_precision: None or integer, if not None, use floating_point_precision-bit to speed up calculation,
+                               e.g.: convert an x to round(x * 2**floating_point_precision) during Paillier operation, divide
+                                      the result by 2**floating_point_precision in the end.
+
     """
 
     def __init__(self, penalty='L2',

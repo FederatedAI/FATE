@@ -103,6 +103,10 @@ class PoissonParam(BaseParam):
     use_first_metric_only: bool, default: False
         Indicate whether to use the first metric in `metrics` as the only criterion for early stopping judgement.
 
+    floating_point_precision: None or integer, if not None, use floating_point_precision-bit to speed up calculation,
+                               e.g.: convert an x to round(x * 2**floating_point_precision) during Paillier operation, divide
+                                      the result by 2**floating_point_precision in the end.
+
     """
 
     def __init__(self, penalty='L2',
@@ -114,7 +118,8 @@ class PoissonParam(BaseParam):
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
                  cv_param=CrossValidationParam(), stepwise_param=StepwiseParam(),
                  decay=1, decay_sqrt=True,
-                 validation_freqs=None, early_stopping_rounds=None, metrics=None, use_first_metric_only=False):
+                 validation_freqs=None, early_stopping_rounds=None, metrics=None, use_first_metric_only=False,
+                 floating_point_precision=23):
         super(PoissonParam, self).__init__()
         self.penalty = penalty
         self.tol = tol
@@ -138,6 +143,7 @@ class PoissonParam(BaseParam):
         self.early_stopping_rounds = early_stopping_rounds
         self.metrics = metrics or []
         self.use_first_metric_only = use_first_metric_only
+        self.floating_point_precision = floating_point_precision
 
     def check(self):
         descr = "poisson_regression_param's "
@@ -250,5 +256,10 @@ class PoissonParam(BaseParam):
 
         if not isinstance(self.use_first_metric_only, bool):
             raise ValueError("use_first_metric_only should be a boolean")
+
+        if self.floating_point_precision is not None and \
+                (not isinstance(self.floating_point_precision, int) or
+                 self.floating_point_precision < 0 or self.floating_point_precision > 64):
+            raise ValueError("floating point precision should be null or a integer between 0 and 64")
 
         return True
