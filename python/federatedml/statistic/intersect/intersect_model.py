@@ -113,7 +113,7 @@ class IntersectModelBase(ModelBase):
             proc_obj.set_version(versions.get_fate_version())
             data = proc_obj.recover(data=data)
 
-        self.intersect_ids = self.intersection_obj.run(data)
+        self.intersect_ids = self.intersection_obj.run_intersect(data)
 
         if self.model_param.repeated_id_process:
             if not self.model_param.sync_intersect_ids:
