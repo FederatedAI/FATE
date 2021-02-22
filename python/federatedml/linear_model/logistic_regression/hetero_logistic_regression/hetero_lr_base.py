@@ -51,9 +51,7 @@ class HeteroLRBase(BaseLogisticRegression):
         self.gradient_loss_operator.register_gradient_procedure(self.transfer_variable)
         if len(self.component_properties.host_party_idlist) == 1:
             self.gradient_loss_operator.set_use_async()
-
-        if self.model_param.floating_point_precision is not None:
-            self.gradient_loss_operator.set_fixed_float_precision(self.model_param.floating_point_precision)
+        self.gradient_loss_operator.set_fixed_float_precision(self.model_param.floating_point_precision)
 
         if params.optimizer == 'sqn':
             gradient_loss_operator = sqn_factory(self.role, params.sqn_param)
