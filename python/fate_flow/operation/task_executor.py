@@ -100,12 +100,6 @@ class TaskExecutor(object):
             job_parameters = task_parameters
             if job_parameters.assistant_role:
                 TaskExecutor.monkey_patch()
-        except Exception as e:
-            traceback.print_exc()
-            schedule_logger().exception(e)
-            task_info["party_status"] = TaskStatus.FAILED
-            return
-        try:
             job_log_dir = os.path.join(job_utils.get_job_log_directory(job_id=job_id), role, str(party_id))
             task_log_dir = os.path.join(job_log_dir, component_name)
             log.LoggerFactory.set_directory(directory=task_log_dir, parent_log_dir=job_log_dir,
@@ -192,6 +186,7 @@ class TaskExecutor(object):
                                       task_output_dsl['model'][0] if task_output_dsl.get('model') else 'default')
             task_info["party_status"] = TaskStatus.SUCCESS
         except Exception as e:
+            traceback.print_exc()
             task_info["party_status"] = TaskStatus.FAILED
             schedule_logger().exception(e)
         finally:
