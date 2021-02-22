@@ -563,7 +563,7 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
                                                          binning_error=binning_error,
                                                          cipher_compress_error=cipher_compress_error,
                                                          new_ver=new_ver,
-                                                         run_goss=False, top_rate=0.2, other_rate=0.1,)
+                                                         run_goss=run_goss, top_rate=top_rate, other_rate=other_rate)
 
         self.tree_num_per_party = tree_num_per_party
         self.guest_depth = guest_depth
