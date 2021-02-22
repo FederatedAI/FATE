@@ -59,6 +59,7 @@ class BaseParameterUtil(object):
         runtime_role_parameters = {}
 
         _support_rols = _module_setting["role"].keys()
+        role_on_module = copy.deepcopy(submit_dict["role"])
         for role in submit_dict["role"]:
             # _role_setting = None
             # for _rolelist in _support_rols:
@@ -75,6 +76,7 @@ class BaseParameterUtil(object):
                                                      module=module,
                                                      module_alias=module_alias)
             if not _code_path:
+                del role_on_module[role]
                 continue
             # _code_path = os.path.join(_module_setting.get('module_path'), _role_setting.get('program'))
             partyid_list = submit_dict["role"][role]
@@ -154,6 +156,10 @@ class BaseParameterUtil(object):
                 runtime_dict['module'] = module
 
                 runtime_role_parameters[role].append(runtime_dict)
+
+        for role, role_params in runtime_role_parameters.items():
+            for param_dict in role_params:
+                param_dict["role"] = role_on_module
 
         return runtime_role_parameters
 
