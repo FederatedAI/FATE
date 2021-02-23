@@ -218,6 +218,8 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
         model_meta.task_type = self.task_type
         model_meta.n_iter_no_change = self.n_iter_no_change
         model_meta.tol = self.tol
+        model_meta.use_missing = self.use_missing
+        model_meta.zero_as_missing = self.zero_as_missing
 
         meta_name = "HomoSecureBoostingTreeGuestMeta"
 
