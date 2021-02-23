@@ -1,14 +1,46 @@
 import importlib
+import os
 import time
 import uuid
+import glob as glob_
 from pathlib import Path
 
 import click
+from fate_test import _config
 from fate_test._client import Clients
 from fate_test._config import Config
 from fate_test._flow_client import DataProgress, UploadDataResponse, QueryJobResponse
 from fate_test._io import echo, LOGGER, set_logger
 from fate_test._parser import Testsuite, BenchmarkSuite, DATA_JSON_HOOK, CONF_JSON_HOOK, DSL_JSON_HOOK
+from fate_test.scripts import generate_mock_data
+
+
+def _big_data_task(includes, guest_data_size, host_data_size, guest_feature_num, host_feature_num, host_data_type,
+                   config_inst, encryption_type, match_rate, sparsity, force, split_host, output_path):
+    def _find_testsuite_files(path):
+        suffix = ["testsuite.json", "benchmark.json"]
+        if isinstance(path, str):
+            path = Path(path)
+        if path.is_file():
+            if path.name.endswith(suffix[0]) or path.name.endswith(suffix[1]):
+                paths = [path]
+            else:
+                LOGGER.warning(f"{path} is file, but not end with `{suffix}`, skip")
+                paths = []
+            return [p.resolve() for p in paths]
+        else:
+            os.path.abspath(path)
+            paths = glob_.glob(f"{path}/*{suffix[0]}") + glob_.glob(f"{path}/*{suffix[1]}")
+            return [Path(p) for p in paths]
+
+    for include in includes:
+        if isinstance(include, str):
+            include_paths = Path(include)
+            include_paths = _find_testsuite_files(include_paths)
+            for include_path in include_paths:
+                generate_mock_data.get_big_data(guest_data_size, host_data_size, guest_feature_num, host_feature_num,
+                                                include_path, host_data_type, config_inst, encryption_type,
+                                                match_rate, sparsity, force, split_host, output_path)
 
 
 def _load_testsuites(includes, excludes, glob, suffix="testsuite.json", suite_type="testsuite"):
@@ -60,7 +92,7 @@ def _load_testsuites(includes, excludes, glob, suffix="testsuite.json", suite_ty
 
 
 @LOGGER.catch
-def _upload_data(clients: Clients, suite, config: Config):
+def _upload_data(clients: Clients, suite, config: Config, output_path=None):
     with click.progressbar(length=len(suite.dataset),
                            label="dataset",
                            show_eta=False,
@@ -85,12 +117,14 @@ def _upload_data(clients: Clients, suite, config: Config):
 
             try:
                 echo.stdout_newline()
-                response = clients[data.role_str].upload_data(data, _call_back)
+                response, data_path = clients[data.role_str].upload_data(data, _call_back, output_path)
                 data_progress.update()
                 if not response.status.is_success():
                     raise RuntimeError(f"uploading {i + 1}th data for {suite.path} {response.status}")
                 bar.update(1)
-            except Exception as e:
+                if _config.data_switch:
+                    generate_mock_data.remove_file(data_path)
+            except Exception:
                 exception_id = str(uuid.uuid1())
                 echo.file(f"exception({exception_id})")
                 LOGGER.exception(f"exception id: {exception_id}")

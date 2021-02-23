@@ -22,10 +22,12 @@ from pipeline.component import Evaluation
 from pipeline.component import HeteroLinR
 from pipeline.component import Intersection
 from pipeline.component import Reader
-from pipeline.interface import Data
+from pipeline.interface import Data, Model
 
 from pipeline.utils.tools import load_job_config, JobConfig
 from pipeline.runtime.entity import JobParameters
+
+from fate_test.utils import extract_data
 
 
 def main(config="../../config.yaml", param="./linr_config.yaml", namespace=""):
@@ -41,14 +43,6 @@ def main(config="../../config.yaml", param="./linr_config.yaml", namespace=""):
 
     if isinstance(param, str):
         param = JobConfig.load_from_file(param)
-    """
-    guest = 9999
-    host = 10000
-    arbiter = 9999
-    backend = 0
-    work_mode = 1
-    param = {"penalty": "L2", "max_iter": 5}
-    """
 
     guest_train_data = {"name": "motor_hetero_guest", "namespace": f"experiment{namespace}"}
     host_train_data = {"name": "motor_hetero_host", "namespace": f"experiment{namespace}"}
@@ -94,8 +88,14 @@ def main(config="../../config.yaml", param="./linr_config.yaml", namespace=""):
     }
 
     hetero_linr_0 = HeteroLinR(name='hetero_linr_0', **param)
+    hetero_linr_1 = HeteroLinR(name='hetero_linr_1')
 
     evaluation_0 = Evaluation(name='evaluation_0', eval_type="regression",
+                              metrics=["r2_score",
+                                       "mean_squared_error",
+                                       "root_mean_squared_error",
+                                       "explained_variance"])
+    evaluation_1 = Evaluation(name='evaluation_1', eval_type="regression",
                               metrics=["r2_score",
                                        "mean_squared_error",
                                        "root_mean_squared_error",
@@ -106,7 +106,12 @@ def main(config="../../config.yaml", param="./linr_config.yaml", namespace=""):
     pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
     pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
     pipeline.add_component(hetero_linr_0, data=Data(train_data=intersection_0.output.data))
+    pipeline.add_component(hetero_linr_1,
+                           data=Data(test_data=intersection_0.output.data),
+                           model=Model(hetero_linr_0.output.model))
     pipeline.add_component(evaluation_0, data=Data(data=hetero_linr_0.output.data))
+    pipeline.add_component(evaluation_1, data=Data(data=hetero_linr_1.output.data))
+
 
     # compile pipeline once finished adding modules, this step will form conf and dsl files for running job
     pipeline.compile()
@@ -115,7 +120,27 @@ def main(config="../../config.yaml", param="./linr_config.yaml", namespace=""):
     job_parameters = JobParameters(backend=backend, work_mode=work_mode)
     pipeline.fit(job_parameters)
 
-    metric_summary = pipeline.get_component("evaluation_0").get_summary()
+    metric_summary_linr_0 = pipeline.get_component("evaluation_0").get_summary()
+    metric_summary_linr_1 = pipeline.get_component("evaluation_1").get_summary()
+    import copy
+    metric_linr_0 = copy.copy(metric_summary_linr_0)
+    metric_linr_1 = copy.copy(metric_summary_linr_1)
+
+    data_linr_0 = extract_data(pipeline.get_component("hetero_linr_0").get_output_data().get("data"), "predict_result")
+    data_linr_1 = extract_data(pipeline.get_component("hetero_linr_1").get_output_data().get("data"), "predict_result")
+    import numpy as np
+    metric_linr_0["max"] = np.max(data_linr_0)
+    metric_linr_0["mean"] = np.mean(data_linr_0)
+    metric_linr_0["min"] = np.min(data_linr_0)
+
+    metric_linr_1["max"] = np.max(data_linr_1)
+    metric_linr_1["mean"] = np.mean(data_linr_1)
+    metric_linr_1["min"] = np.min(data_linr_1)
+
+    metric_summary = copy.copy(metric_summary_linr_0)
+    metric_summary["script_metrics"] = {"linr_train": metric_linr_0,
+                                        "linr_validate": metric_linr_1}
+
     data_summary = {"train": {"guest": guest_train_data["name"], "host": host_train_data["name"]},
                     "test": {"guest": guest_train_data["name"], "host": host_train_data["name"]}
                     }

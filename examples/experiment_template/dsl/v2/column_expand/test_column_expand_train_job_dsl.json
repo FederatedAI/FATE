@@ -8,14 +8,6 @@
                 ]
             }
         },
-        "reader_1": {
-            "module": "Reader",
-            "output": {
-                "data": [
-                    "data"
-                ]
-            }
-        },
         "dataio_0": {
             "module": "DataIO",
             "input": {
@@ -24,27 +16,6 @@
                         "reader_0.data"
                     ]
                 }
-            },
-            "output": {
-                "data": [
-                    "data"
-                ],
-                "model": [
-                    "model"
-                ]
-            }
-        },
-        "dataio_1": {
-            "module": "DataIO",
-            "input": {
-                "data": {
-                    "data": [
-                        "reader_1.data"
-                    ]
-                },
-                "model": [
-                    "dataio_0.model"
-                ]
             },
             "output": {
                 "data": [
@@ -70,30 +41,12 @@
                 ]
             }
         },
-        "intersection_1": {
-            "module": "Intersection",
+        "feature_scale_0": {
+            "module": "FeatureScale",
             "input": {
                 "data": {
                     "data": [
-                        "dataio_1.data"
-                    ]
-                }
-            },
-            "output": {
-                "data": [
-                    "data"
-                ]
-            }
-        },
-        "hetero_secure_boost_0": {
-            "module": "HeteroSecureBoost",
-            "input": {
-                "data": {
-                    "train_data": [
                         "intersection_0.data"
-                    ],
-                    "validate_data": [
-                        "intersection_1.data"
                     ]
                 }
             },
@@ -106,18 +59,78 @@
                 ]
             }
         },
-        "evaluation_0": {
-            "module": "Evaluation",
+        "hetero_feature_binning_0": {
+            "module": "HeteroFeatureBinning",
             "input": {
                 "data": {
                     "data": [
-                        "hetero_secure_boost_0.data"
+                        "feature_scale_0.data"
                     ]
                 }
             },
             "output": {
                 "data": [
                     "data"
+                ],
+                "model": [
+                    "model"
+                ]
+            }
+        },
+        "hetero_feature_selection_0": {
+            "module": "HeteroFeatureSelection",
+            "input": {
+                "data": {
+                    "data": [
+                        "hetero_feature_binning_0.data"
+                    ]
+                },
+                "isometric_model": [
+                    "hetero_feature_binning_0.model"
+                ]
+            },
+            "output": {
+                "data": [
+                    "data"
+                ],
+                "model": [
+                    "model"
+                ]
+            }
+        },
+        "one_hot_encoder_0": {
+            "module": "OneHotEncoder",
+            "input": {
+                "data": {
+                    "data": [
+                        "hetero_feature_selection_0.data"
+                    ]
+                }
+            },
+            "output": {
+                "data": [
+                    "data"
+                ],
+                "model": [
+                    "model"
+                ]
+            }
+        },
+        "hetero_lr_0": {
+            "module": "HeteroLR",
+            "input": {
+                "data": {
+                    "train_data": [
+                        "one_hot_encoder_0.data"
+                    ]
+                }
+            },
+            "output": {
+                "data": [
+                    "data"
+                ],
+                "model": [
+                    "model"
                 ]
             }
         }

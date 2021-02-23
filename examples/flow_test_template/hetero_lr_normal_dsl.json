@@ -8,7 +8,26 @@
                 ]
             }
         },
+        "dataio_0": {
+            "module": "DataIO",
+            "input": {
+                "data": {
+                    "data": [
+                        "reader_0.data"
+                    ]
+                }
+            },
+            "output": {
+                "data": [
+                    "data"
+                ],
+                "model": [
+                    "model"
+                ]
+            }
+        },
         "intersection_0": {
+            "module": "Intersection",
             "input": {
                 "data": {
                     "data": [
@@ -16,43 +35,39 @@
                     ]
                 }
             },
-            "module": "Intersection",
             "output": {
                 "data": [
                     "data"
                 ]
             }
         },
-        "dataio_0": {
+        "hetero_lr_0": {
+            "module": "HeteroLR",
+            "input": {
+                "data": {
+                    "train_data": [
+                        "intersection_0.data"
+                    ]
+                }
+            },
+            "output": {
+                "data": [
+                    "data"
+                ],
+                "model": [
+                    "model"
+                ]
+            }
+        },
+        "evaluation_0": {
+            "module": "Evaluation",
             "input": {
                 "data": {
                     "data": [
-                        "reader_0.data"
+                        "hetero_lr_0.data"
                     ]
-                },
-                "model": [
-                    "pipeline.dataio_0.model"
-                ]
+                }
             },
-            "module": "DataIO",
-            "output": {
-                "data": [
-                    "data"
-                ]
-            }
-        },
-        "hetero_secure_boost_0": {
-            "input": {
-                "data": {
-                    "test_data": [
-                        "intersection_0.data"
-                    ]
-                },
-                "model": [
-                    "pipeline.hetero_secure_boost_0.model"
-                ]
-            },
-            "module": "HeteroSecureBoost",
             "output": {
                 "data": [
                     "data"

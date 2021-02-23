@@ -25,9 +25,11 @@ from fate_test.utils import show_data, match_metrics
                    "Comparison is done by evaluating abs(a-b) <= max(relative_tol * max(abs(a), abs(b)), absolute_tol)")
 @click.option('--skip-data', is_flag=True, default=False,
               help="skip uploading data specified in benchmark conf")
+@click.option("--disable-clean-data", "clean_data", flag_value=False, default=None)
+@click.option("--enable-clean-data", "clean_data", flag_value=True, default=None)
 @SharedOptions.get_shared_options(hidden=True)
 @click.pass_context
-def run_benchmark(ctx, include, exclude, glob, skip_data, tol, **kwargs):
+def run_benchmark(ctx, include, exclude, glob, skip_data, tol, clean_data, **kwargs):
     """
     process benchmark suite, alias: bq
     """
@@ -35,6 +37,8 @@ def run_benchmark(ctx, include, exclude, glob, skip_data, tol, **kwargs):
     ctx.obj.post_process()
     namespace = ctx.obj["namespace"]
     config_inst = ctx.obj["config"]
+    if clean_data is None:
+        clean_data = config_inst.clean_data
     data_namespace_mangling = ctx.obj["namespace_mangling"]
     yes = ctx.obj["yes"]
 
@@ -63,13 +67,13 @@ def run_benchmark(ctx, include, exclude, glob, skip_data, tol, **kwargs):
                 except Exception as e:
                     raise RuntimeError(f"exception occur while running benchmark jobs for {suite.path}") from e
 
-                if not skip_data:
+                if not skip_data and clean_data:
                     _delete_data(client, suite)
                 echo.echo(f"[{i + 1}/{len(suites)}]elapse {timedelta(seconds=int(time.time() - start))}", fg='red')
 
             except Exception:
                 exception_id = uuid.uuid1()
-                echo.echo(f"exception in {suite.path}, exception_id={exception_id}")
+                echo.echo(f"exception in {suite.path}, exception_id={exception_id}", err=True, fg='red')
                 LOGGER.exception(f"exception id: {exception_id}")
             finally:
                 echo.stdout_newline()
@@ -115,7 +119,7 @@ def _run_benchmark_pairs(config: Config, suite: BenchmarkSuite, tol: float,
                     data_summary = data
             except Exception as e:
                 exception_id = uuid.uuid1()
-                echo.echo(f"exception while running [{j + 1}/{job_n}] job, exception_id={exception_id}")
+                echo.echo(f"exception while running [{j + 1}/{job_n}] job, exception_id={exception_id}", err=True, fg='red')
                 LOGGER.exception(f"exception id: {exception_id}, error message: \n{e}")
                 continue
         rel_tol = pair.compare_setting.get("relative_tol")
