@@ -394,6 +394,8 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         model_meta.quantile_meta.CopyFrom(QuantileMeta(bin_num=self.bin_num))
         model_meta.objective_meta.CopyFrom(ObjectiveMeta(objective=self.objective_param.objective,
                                                          param=self.objective_param.params))
+        model_meta.use_missing = self.use_missing
+        model_meta.zero_as_missing = self.zero_as_missing
         model_meta.task_type = self.task_type
         model_meta.n_iter_no_change = self.n_iter_no_change
         model_meta.tol = self.tol
