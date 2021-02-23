@@ -32,7 +32,7 @@ backend: 0
 data_base_dir: path(FATE)
 # fate_test job Dedicated directory, File storage location,cache_directory={FATE}/examples/fate_test/cache/
 cache_directory: examples/fate_test/cache/
-performance_template_directory: examples/fate_test/performance/
+performance_template_directory: examples/benchmark_performance/
 flow_test_config_directory: examples/fate_test/flow_test_template/flow_test_config.yaml
 clean_data: true
 parties:
