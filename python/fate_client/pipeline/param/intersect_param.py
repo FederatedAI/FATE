@@ -51,7 +51,7 @@ class EncodeParam(BaseParam):
 
         self.encode_method = self.check_and_change_lower(self.encode_method,
                                                          ["none", consts.MD5, consts.SHA1, consts.SHA224,
-                                                          consts.SHA256, consts.SHA384, consts.SM3],
+                                                          consts.SHA256, consts.SHA384, consts.SHA512, consts.SM3],
                                                          descr)
 
         if type(self.base64).__name__ != "bool":
@@ -96,13 +96,13 @@ class RSAParam(BaseParam):
 
         descr = "rsa param's hash_method "
         self.hash_method = self.check_and_change_lower(self.hash_method,
-                                                       [consts.SHA256, consts.SHA384, consts.SM3],
+                                                       [consts.SHA256, consts.SHA384, consts.SHA512, consts.SM3],
                                                        descr)
 
         descr = "rsa param's final_hash_method "
         self.final_hash_method = self.check_and_change_lower(self.final_hash_method,
                                                              [consts.MD5, consts.SHA1, consts.SHA224,
-                                                              consts.SHA256, consts.SHA384, consts.SM3],
+                                                              consts.SHA256, consts.SHA384, consts.SHA512, consts.SM3],
                                                              descr)
 
         descr = "rsa param's split_calculation"
