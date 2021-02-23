@@ -124,7 +124,8 @@ following common models:
 * homogeneous scenario: LogisticRegression(`benchmark_quality/homo_lr <./benchmark_quality/homo_lr>`__),
   SecureBoost(`benchmark_quality/homo_sbt <./benchmark_quality/homo_sbt>`__), NN(`benchmark_quality/homo_nn <./benchmark_quality/homo_nn>`__.
 
-To run the comparison, please refer to the guide on `benchmark_quality <../python/fate_test/README.rst>`__.
+Starting at v1.6, benchmark quality supports matching metrics from the same script. For more details, please refer
+to the `guide <../python/fate_test/README.rst>`__.
 
 Upload Default Data
 -------------------
@@ -134,6 +135,7 @@ along with a utility script for uploading all data sets. User may use the provid
 script to upload all pre-given data, or modify the corresponding configuration file for uploading
 arbitrary data. Please refer `scripts <./scripts/README.rst>`__ for details.
 
+Alternatively, user may use `FATE-Test <../python/fate_test/README.rst#data>`__ for uploading data.
 
 Toy Example
 -----------
