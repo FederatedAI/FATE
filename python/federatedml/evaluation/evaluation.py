@@ -293,11 +293,11 @@ class Evaluation(ModelBase):
             self._check_clustering_input(data)
         else:
             for key, eval_data in data.items():
-                header = eval_data.schema['header']
-                if len(header) != 5:  # label predict_type predict_score predict_detail type
-                    raise ValueError('length of table header mismatch, expected length is 5, got :{},'
-                                     'please check the input of the Evaluation Module, result of'
-                                     'cross validation is not supported.'.format(header))
+                sample = eval_data.take(0)[0]
+                if type(sample[1]) != list or len(sample[1]) != 5:  # label, predict_type, predict_score, predict_detail, type
+                    raise ValueError('length of table header mismatch, expected length is 5, got:{},'
+                                     'please check the input of the Evaluation Module, result of '
+                                     'cross validation is not supported.'.format(sample))
 
     def fit(self, data, return_result=False):
 
