@@ -293,7 +293,7 @@ class Evaluation(ModelBase):
             self._check_clustering_input(data)
         else:
             for key, eval_data in data.items():
-                header = eval_data.schmea['header']
+                header = eval_data.schema['header']
                 if len(header) != 5:  # label predict_type predict_score predict_detail type
                     raise ValueError('length of table header mismatch, expected length is 5, got :{},'
                                      'please check the input of the Evaluation Module, result of'
