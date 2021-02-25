@@ -27,8 +27,16 @@ This section introduces the dsl and conf for different types of tasks.
     runtime_config : test_local_baseline_homo_job_conf.json
     
     data type: binary label
+    
+4.  Homo Predict Task:
 
-4. Hetero Train Task with Sample Weight:
+    dsl: test_local_baseline_homo_predict_job_dsl.json
+
+    runtime_config : test_local_baseline_homo_predict_job_conf.json
+    
+    data type: binary label
+
+5. Hetero Train Task with Sample Weight:
 
     dsl: test_local_baseline_job_dsl.json
 
