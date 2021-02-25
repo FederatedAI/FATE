@@ -295,7 +295,7 @@ class Evaluation(ModelBase):
             for key, eval_data in data.items():
                 if eval_data is None:
                     continue
-                sample = eval_data.take(0)[0]
+                sample = eval_data.take(1)[0]
                 if type(sample[1]) != list or len(sample[1]) != 5:  # label, predict_type, predict_score, predict_detail, type
                     raise ValueError('length of table header mismatch, expected length is 5, got:{},'
                                      'please check the input of the Evaluation Module, result of '
