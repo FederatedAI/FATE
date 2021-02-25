@@ -29,12 +29,14 @@
    请按照以下步骤操作:
 
    ```
+   #注意! 请用实际的版本号替换下文中的${version}
+   
    #获取安装包
-   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/docker_standalone_fate_1.5.1.tar.gz
-   tar -xzvf docker_standalone_fate_1.5.1.tar.gz
+   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/docker_standalone_fate_${version}.tar.gz
+   tar -xzvf docker_standalone_fate_${version}.tar.gz
    
    #执行部署
-   cd docker_standalone_fate_1.5.1
+   cd docker_standalone_fate_${version}
    bash install_standalone_docker.sh
    ```
 
@@ -99,14 +101,18 @@
 2. 下载独立版本的压缩包并解压缩。
 
    ```
-   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/standalone_fate_master_1.5.1.tar.gz
-   tar -xzvf  standalone_fate_master_1.5.1.tar.gz
+   #注意! 请用实际的版本号替换下文中的${version}
+   
+   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/standalone_fate_master_${version}.tar.gz
+   tar -xzvf  standalone_fate_master_${version}.tar.gz
    ```
 
 3. 进入FATE目录并执行init.sh。
 
    ```
-   cd standalone_fate_master_1.5.1
+   #注意! 请用实际的版本号替换下文中的${version}
+   
+   cd standalone_fate_master_${version}
    sh init.sh init
    ```
 
@@ -115,7 +121,9 @@
    - 单元测试
 
    ```
-   cd standalone_fate_master_1.5.1
+   #注意! 请用实际的版本号替换下文中的${version}
+   
+   cd standalone_fate_master_${version}
    source bin/init_env.sh
    bash ./python/federatedml/test/run_test.sh
    ```
@@ -129,7 +137,9 @@
    - Toy测试
 
    ```
-   cd standalone_fate_master_1.5.1
+   #注意! 请用实际的版本号替换下文中的${version}
+   
+   cd standalone_fate_master_${version}
    source bin/init_env.sh
    python ./examples/toy_example/run_toy_example.py 10000 10000 0
    ```
