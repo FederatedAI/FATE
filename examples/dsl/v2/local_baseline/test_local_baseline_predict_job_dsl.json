@@ -1,0 +1,97 @@
+{
+    "components": {
+        "reader_0": {
+            "module": "Reader",
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
+        },
+        "dataio_0": {
+            "module": "DataIO",
+            "input": {
+                "data": {
+                    "data": [
+                        "reader_0.data"
+                    ]
+                },
+                "model": [
+                    "pipeline.dataio_0.model"
+                ]
+            },
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
+        },
+        "intersection_0": {
+            "module": "Intersection",
+            "input": {
+                "data": {
+                    "data": [
+                        "dataio_0.data"
+                    ]
+                }
+            },
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
+        },
+        "hetero_lr_0": {
+            "module": "HeteroLR",
+            "input": {
+                "data": {
+                    "test_data": [
+                        "intersection_0.data"
+                    ]
+                },
+                "model": [
+                    "pipeline.hetero_lr_0.model"
+                ]
+            },
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
+        },
+        "local_baseline_0": {
+            "module": "LocalBaseline",
+            "input": {
+                "data": {
+                    "test_data": [
+                        "intersection_0.data"
+                    ]
+                },
+                "model": [
+                    "pipeline.local_baseline_0.model"
+                ]
+            },
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
+        },
+        "evaluation_0": {
+            "module": "Evaluation",
+            "input": {
+                "data": {
+                    "data": [
+                        "hetero_lr_0.data",
+                        "local_baseline_0.data"
+                    ]
+                }
+            },
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
+        }
+    }
+}

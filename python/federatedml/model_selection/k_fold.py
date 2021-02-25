@@ -200,6 +200,7 @@ class KFold(BaseCrossValidator):
         if self.output_fold_history:
             LOGGER.debug(f"output data schema: {self.fold_history.schema}")
             #LOGGER.debug(f"output data: {list(self.fold_history.collect())}")
+            LOGGER.debug(f"output data is: {self.fold_history}")
             return self.fold_history
         else:
             return data_inst
