@@ -14,6 +14,7 @@
 #
 #
 import json
+import math
 import os
 import tempfile
 import types
@@ -23,10 +24,6 @@ import numpy
 import pytorch_lightning as pl
 import torch
 import torch.optim
-from pytorch_lightning.callbacks import Callback
-from torch import nn
-from torch.utils.data import DataLoader
-
 from fate_arch.computing import is_table
 from fate_arch.computing.non_distributed import LocalData
 from fate_arch.session import computing_session
@@ -38,10 +35,11 @@ from federatedml.nn.backend.pytorch.loss import get_loss_fn
 from federatedml.nn.backend.pytorch.optimizer import get_optimizer
 from federatedml.nn.homo_nn import _consts
 from federatedml.param import HomoNNParam
-from federatedml.protobuf.generated import nn_model_meta_pb2
-from federatedml.protobuf.generated import nn_model_param_pb2
+from federatedml.protobuf.generated import nn_model_meta_pb2, nn_model_param_pb2
 from federatedml.util import LOGGER
 from federatedml.util.homo_label_encoder import HomoLabelEncoderArbiter
+from pytorch_lightning.callbacks import Callback
+from torch import nn
 
 
 class _PyTorchSAContext(object):
@@ -51,9 +49,10 @@ class _PyTorchSAContext(object):
         self._aggregation_iteration = 0
         self._early_stopped = False
 
-    def _suffix(self):
+    def _suffix(self, group: str = "model"):
         return (
             self._name,
+            group,
             f"{self._aggregation_iteration}",
         )
 
@@ -87,7 +86,7 @@ class PyTorchSAClientContext(_PyTorchSAContext):
             self.transfer_variable.random_padding_cipher_trans_var
         )
         self.aggregate_every_n_epoch = aggregate_every_n_epoch
-        self._params = None
+        self._params: list = None
 
         self._should_stop = False
         self.loss_summary = []
@@ -100,17 +99,23 @@ class PyTorchSAClientContext(_PyTorchSAContext):
             torch.clone(tensor).detach().mul_(weight)
         ).numpy()
 
-    def send(self, tensors, weight):
+    def send_model(self, tensors, weight):
         self.aggregator.send_model(
             ([self.encrypt(p.data, weight) for p in tensors], weight),
             suffix=self._suffix(),
         )
 
-    def recv(self):
+    def recv_model(self):
         return [
             torch.from_numpy(arr)
             for arr in self.aggregator.get_aggregated_model(suffix=self._suffix())
         ]
+
+    def send_loss(self, loss, weight):
+        self.aggregator.send_model((loss, weight), suffix=self._suffix(group="loss"))
+
+    def recv_loss(self):
+        self.aggregator.get_aggregated_model(suffix=self._suffix(group="convergence"))
 
     def do_aggregation(self, weight):
         """
@@ -122,17 +127,23 @@ class PyTorchSAClientContext(_PyTorchSAContext):
         Returns:
 
         """
-        self.send(self._params, weight)
-        agg_tensors: typing.List[torch.Tensor] = self.recv()
+        self.send_model(self._params, weight)
+        agg_tensors: typing.List[torch.Tensor] = self.recv_model()
         for param, agg_tensor in zip(self._params, agg_tensors):
             if param.grad is None:
                 continue
             param.data.copy_(agg_tensor)
-        self.increase_aggregation_iteration()
 
     def do_convergence_check(self, weight, loss):
-        # todo: add convergence check, fixme
-        self.loss_summary.append(loss.detach().tolist())
+        loss_value = loss.detach().numpy().tolist()
+        self.loss_summary.append(loss_value)
+
+        # send loss to server
+        self.send_loss(loss_value, weight)
+
+        # recv convergence status
+        status = self.recv_loss()
+        return status
 
     def configure_aggregation_params(
         self,
@@ -155,7 +166,7 @@ class PyTorchSAClientContext(_PyTorchSAContext):
 
 
 class PyTorchSAServerContext(_PyTorchSAContext):
-    def __init__(self, max_num_aggregation, name="default"):
+    def __init__(self, max_num_aggregation, eps=0.0, name="default"):
         super(PyTorchSAServerContext, self).__init__(
             max_num_aggregation=max_num_aggregation, name=name
         )
@@ -165,20 +176,47 @@ class PyTorchSAServerContext(_PyTorchSAContext):
             self.transfer_variable.random_padding_cipher_trans_var
         )
 
+        self._eps = eps
+        self._loss = math.inf
+
     def init(self):
         self.random_padding_cipher.exchange_secret_keys()
 
-    def send(self, aggregated_tensors):
+    def send_model(self, aggregated_tensors):
         return self.aggregator.send_aggregated_model(
             aggregated_tensors, suffix=self._suffix()
         )
 
-    def recv(self):
+    def recv_model(self):
         return self.aggregator.get_models(suffix=self._suffix())
 
+    def send_convergence_status(self, status):
+        self.aggregator.send_aggregated_model(
+            status, suffix=self._suffix(group="convergence")
+        )
+
+    def recv_losses(self):
+        return self.aggregator.get_models(suffix=self._suffix(group="loss"))
+
     def do_convergence_check(self):
-        # todo: add convergence check
-        ...
+        # recieve losses and weights of parties
+        loss_weight_pairs = self.recv_losses()
+        total_loss = 0.0
+        total_weight = 0.0
+
+        for loss, weight in loss_weight_pairs:
+            total_loss += loss * weight
+            total_weight += weight
+        mean_loss = total_loss / total_weight
+
+        is_converged = abs(mean_loss - self._loss) < self._eps
+        # send convergen status
+        self.send_convergence_status(is_converged)
+
+        self._loss = mean_loss
+
+        LOGGER.info(f"convergence check: loss={mean_loss}, is_converged={is_converged}")
+        return is_converged, mean_loss
 
 
 class EarlyStopCallback(Callback):
@@ -252,6 +290,10 @@ class FedLightModule(pl.LightningModule):
         self.context.do_convergence_check(self._num_data_consumed, loss)
         LOGGER.info(f"validation epoch end, loss: {loss}, accuracy: {accuracy}")
 
+        # aggregation end
+        self._num_data_consumed = 0
+        self.context.increase_aggregation_iteration()
+
     def training_epoch_end(self, outputs) -> None:
         ...
 
@@ -273,7 +315,7 @@ class FedLightModule(pl.LightningModule):
         if self.context.should_aggregate_on_epoch(self.current_epoch):
             self.context.do_aggregation(float(self._num_data_consumed))
             self._all_consumed_data_aggregated = True
-            self._num_data_consumed = 0
+            # self._num_data_consumed = 0
 
     def configure_optimizers(self):
         optimizer = get_optimizer(
@@ -489,14 +531,14 @@ def build_trainer(
 
 
 class PytorchFederatedAggregator(object):
-    def __init__(self, context):
+    def __init__(self, context: PyTorchSAServerContext):
         self.context = context
 
-    def fit(self):
+    def fit(self, loss_callback):
         while not self.context.finished():
             recv_elements: typing.List[
                 typing.Tuple[typing.List[numpy.ndarray], float]
-            ] = self.context.recv()
+            ] = self.context.recv_model()
             degrees = [party_tuple[1] for party_tuple in recv_elements]
             tensors = [party_tuple[0] for party_tuple in recv_elements]
             total_degree = sum(degrees)
@@ -506,9 +548,14 @@ class PytorchFederatedAggregator(object):
                     if i != 0:
                         tensors[0][j] += tensor
 
-            self.context.send(tensors[0])
+            self.context.send_model(tensors[0])
+            is_converged, loss = self.context.do_convergence_check()
+            loss_callback(self.context.aggregation_iteration, float(loss))
+
+            # increse aggregation iteration number at iteration end
             self.context.increase_aggregation_iteration()
-            self.context.do_convergence_check()
+            if is_converged:
+                break
 
     @staticmethod
     def dataset_align():
@@ -518,7 +565,9 @@ class PytorchFederatedAggregator(object):
 
 
 def build_aggregator(param: HomoNNParam):
-    context = PyTorchSAServerContext(max_num_aggregation=param.max_iter)
+    context = PyTorchSAServerContext(
+        max_num_aggregation=param.max_iter, eps=param.early_stop.eps
+    )
     context.init()
     fed_aggregator = PytorchFederatedAggregator(context)
     return fed_aggregator

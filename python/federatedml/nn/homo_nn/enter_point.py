@@ -14,12 +14,13 @@
 #  limitations under the License.
 #
 from fate_arch.computing import is_table
+from fate_flow.entity.metric import Metric, MetricMeta
 from federatedml.framework.homo.blocks.base import HomoTransferBase
 from federatedml.framework.homo.blocks.has_converged import HasConvergedTransVar
 from federatedml.framework.homo.blocks.loss_scatter import LossScatterTransVar
 from federatedml.framework.homo.blocks.secure_aggregator import SecureAggregatorTransVar
 from federatedml.model_base import ModelBase
-from federatedml.nn.homo_nn._consts import _extract_param, _extract_meta
+from federatedml.nn.homo_nn._consts import _extract_meta, _extract_param
 from federatedml.param.homo_nn_param import HomoNNParam
 from federatedml.util import consts
 
@@ -53,6 +54,25 @@ class HomoNNServer(HomoNNBase):
 
             _version_0.server_init_model(self, param)
 
+    def callback_loss(self, iter_num, loss):
+        # noinspection PyTypeChecker
+        metric_meta = MetricMeta(
+            name="train",
+            metric_type="LOSS",
+            extra_metas={
+                "unit_name": "iters",
+            },
+        )
+
+        self.callback_meta(
+            metric_name="loss", metric_namespace="train", metric_meta=metric_meta
+        )
+        self.callback_metric(
+            metric_name="loss",
+            metric_namespace="train",
+            metric_data=[Metric(iter_num, loss)],
+        )
+
     def fit(self, data_inst):
         if self.is_version_0():
             from federatedml.nn.homo_nn import _version_0
@@ -64,7 +84,7 @@ class HomoNNServer(HomoNNBase):
 
             aggregator = build_aggregator(self.param)
             aggregator.dataset_align()
-            aggregator.fit()
+            aggregator.fit(self.callback_loss)
 
 
 class HomoNNClient(HomoNNBase):
