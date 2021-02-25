@@ -57,7 +57,7 @@
                         "intersection_0.train"
                     ]
                 },
-                "model": [
+                "isometric_model": [
                     "secureboost_0.train"
                 ]
             },

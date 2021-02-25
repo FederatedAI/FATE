@@ -57,7 +57,7 @@
                         "intersection_0.train"
                     ]
                 },
-                "model": [
+                "isometric_model": [
                     "fast_secureboost_0.train"
                 ]
             },
@@ -74,7 +74,7 @@
                         "intersection_0.train"
                     ]
                 },
-                "model": [
+                "isometric_model": [
                     "sbt_feature_transformer_0.model"
                 ]
             },
