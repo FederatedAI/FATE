@@ -1,0 +1,113 @@
+{
+    "dsl_version": 2,
+    "initiator": {
+        "role": "guest",
+        "party_id": 9999
+    },
+    "role": {
+        "host": [
+            9998
+        ],
+        "guest": [
+            9999
+        ]
+    },
+    "job_parameters": {
+        "common": {
+            "job_type": "train",
+            "backend": 0,
+            "work_mode": 0
+        }
+    },
+    "component_parameters": {
+        "common": {
+            "fast_secureboost_0": {
+                "task_type": "classification",
+                "objective_param": {
+                    "objective": "cross_entropy"
+                },
+                "num_trees": 3,
+                "validation_freqs": 1,
+                "encrypt_param": {
+                    "method": "iterativeAffine"
+                },
+                "tree_param": {
+                    "max_depth": 3
+                },
+                "work_mode": "mix"
+            },
+            "evaluation_0": {
+                "eval_type": "binary"
+            },
+            "sbt_feature_transformer_0": {
+                "dense_format": true
+            },
+            "sbt_feature_transformer_1": {
+                "dense_format": false
+            }
+        },
+        "role": {
+            "guest": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_guest",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "dataio_0": {
+                        "with_label": true,
+                        "output_format": "dense"
+                    },
+                    "local_baseline_0": {
+                        "model_name": "LogisticRegression",
+                        "model_opts":
+                            {
+                                "penalty": "l2",
+                                "tol": 0.0001,
+                                "C": 1.0,
+                                "fit_intercept": true,
+                                "solver": "lbfgs",
+                                "max_iter": 50
+                            }
+                        ,
+                        "need_run": true
+                    },
+                    "local_baseline_1": {
+                        "model_name": "LogisticRegression",
+                        "model_opts":
+                            {
+                                "penalty": "l2",
+                                "tol": 0.0001,
+                                "C": 1.0,
+                                "fit_intercept": true,
+                                "solver": "lbfgs",
+                                "max_iter": 50
+                            }
+                        ,
+                        "need_run": true
+                    }
+                }
+            },
+            "host": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "dataio_0": {
+                        "with_label": false
+                    },
+                    "local_baseline_0": {
+                        "need_run": false
+                    },
+                    "local_baseline_1": {
+                        "need_run": false
+                    }
+                }
+            }
+        }
+    }
+}
