@@ -147,6 +147,7 @@ class VisionDataSet(torchvision.datasets.VisionDataset, DatasetMixIn):
             self.images = [
                 os.path.join(root, "images", f"{x}.{input_ext}") for x in file_names
             ]
+            self._PIL_mode = config["inputs"].get("PIL_mode", "L")
 
             # read targets
             if config["targets"]["type"] == "images":
@@ -199,7 +200,7 @@ class VisionDataSet(torchvision.datasets.VisionDataset, DatasetMixIn):
         Returns:
             tuple: (image, target) where target is the image segmentation.
         """
-        img = Image.open(self.images[index]).convert("L")
+        img = Image.open(self.images[index]).convert(self._PIL_mode)
         if self.targets_is_image:
             target = Image.open(self.targets[index])
         else:
