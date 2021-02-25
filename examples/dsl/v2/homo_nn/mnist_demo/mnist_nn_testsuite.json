@@ -9,7 +9,7 @@
       "backend": 0,
       "storage_engine": "PATH",
       "namespace": "experiment",
-      "table_name": "mnist_images",
+      "table_name": "mnist_images_guest",
       "use_local_data": 0,
       "role": "guest_0"
     },
@@ -22,7 +22,7 @@
       "backend": 0,
       "storage_engine": "PATH",
       "namespace": "experiment",
-      "table_name": "mnist_images",
+      "table_name": "mnist_images_host_0",
       "use_local_data": 0,
       "role": "host_0"
     },
@@ -35,7 +35,7 @@
       "backend": 0,
       "storage_engine": "PATH",
       "namespace": "experiment",
-      "table_name": "mnist_images",
+      "table_name": "mnist_images_host_1",
       "use_local_data": 0,
       "role": "host_1"
     }
