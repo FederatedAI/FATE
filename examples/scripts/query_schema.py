@@ -22,6 +22,7 @@ import subprocess
 import sys
 import time
 import traceback
+import os
 
 feature_idx = -1
 
@@ -31,6 +32,9 @@ MAX_INTERSECT_TIME = 600
 MAX_TRAIN_TIME = 3600
 OTHER_TASK_TIME = 300
 STATUS_CHECKER_TIME = 10
+home_dir = os.path.split(os.path.realpath(__file__))[0]
+fate_flow_path = home_dir + "/../../python/fate_flow/fate_flow_client.py"
+fate_flow_home = home_dir + "/../../python/fate_flow"
 
 
 class BaseTask(object):
@@ -94,7 +98,8 @@ class BaseTask(object):
         return stdout
 
     def get_table_info(self, name, namespace):
-        cmd = ['flow', "table", "info", "-t", str(name), "-n", str(namespace)]
+        # cmd = ['flow', "table", "info", "-t", str(name), "-n", str(namespace)]
+        cmd = ['python', fate_flow_path, "-f", "table_info", "-t", str(name), "-n", str(namespace)]
         table_info = self.start_task(cmd)
         return table_info
 
@@ -117,10 +122,10 @@ class QuerySchema(BaseTask):
     def query_component_output_data(self, job_id, cpn, this_feature_idx=None):
         if this_feature_idx is None:
             this_feature_idx = feature_idx
-        # cmd = ['python', run_config.FATE_FLOW_PATH, "-f", "component_output_data", "-j", job_id,
-        #        '-cpn', cpn, '-r', ROLE, '-p', str(PARTY_ID), '-o', run_config.TEMP_DATA_PATH, '-l', '10']
-        cmd = ['flow', 'component', 'output-data-table', '-j', job_id, '-cpn', cpn, "-r", self.role,
-               '-p', self.party_id]
+        cmd = ['python', fate_flow_path, "-f", "component_output_data_table", "-j", job_id,
+               '-cpn', cpn, '-r', self.role, '-p', str(self.party_id)]
+        # cmd = ['flow', 'component', 'output-data-table', '-j', job_id, '-cpn', cpn, "-r", self.role,
+        #        '-p', self.party_id]
 
         stdout = self.start_task(cmd)
         if stdout['retcode'] != 0:
