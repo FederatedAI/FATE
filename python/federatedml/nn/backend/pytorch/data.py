@@ -114,8 +114,14 @@ class VisionDataSet(torchvision.datasets.VisionDataset, DatasetMixIn):
     def as_data_instance(self):
         from federatedml.feature.instance import Instance
 
+        def _as_instance(x):
+            if isinstance(x, np.number):
+                return Instance(label=x.tolist())
+            else:
+                return Instance(label=x)
+
         return computing_session.parallelize(
-            data=zip(self._keys, map(lambda x: Instance(x), self.targets)),
+            data=zip(self._keys, map(_as_instance, self.targets)),
             include_key=True,
             partition=10,
         )

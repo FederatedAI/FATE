@@ -23,6 +23,7 @@ from federatedml.model_base import ModelBase
 from federatedml.nn.homo_nn._consts import _extract_meta, _extract_param
 from federatedml.param.homo_nn_param import HomoNNParam
 from federatedml.util import consts
+from federatedml.util import LOGGER
 
 
 class HomoNNBase(ModelBase):
@@ -121,7 +122,8 @@ class HomoNNClient(HomoNNBase):
         if self.is_version_0():
             from federatedml.nn.homo_nn import _version_0
 
-            return _version_0.client_predict(self=self, data_inst=data)
+            results = _version_0.client_predict(self=self, data_inst=data)
+            return results
 
         else:
             from federatedml.nn.homo_nn._torch import make_predict_dataset
@@ -132,12 +134,13 @@ class HomoNNClient(HomoNNBase):
                 batch_size=self.param.batch_size,
             )
             data_instances = data if is_table(data) else dataset.as_data_instance()
-            return self.predict_score_to_output(
+            results = self.predict_score_to_output(
                 data_instances,
                 predict_tbl,
                 classes=classes,
                 threshold=self.param.predict_param.threshold,
             )
+            return results
 
     def export_model(self):
         if self.is_version_0():

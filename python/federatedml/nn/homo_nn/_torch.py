@@ -115,7 +115,9 @@ class PyTorchSAClientContext(_PyTorchSAContext):
         self.aggregator.send_model((loss, weight), suffix=self._suffix(group="loss"))
 
     def recv_loss(self):
-        self.aggregator.get_aggregated_model(suffix=self._suffix(group="convergence"))
+        return self.aggregator.get_aggregated_model(
+            suffix=self._suffix(group="convergence")
+        )
 
     def do_aggregation(self, weight):
         """
@@ -163,6 +165,9 @@ class PyTorchSAClientContext(_PyTorchSAContext):
 
     def should_stop(self):
         return self._should_stop
+
+    def set_converged(self):
+        self._should_stop = True
 
 
 class PyTorchSAServerContext(_PyTorchSAContext):
@@ -287,12 +292,18 @@ class FedLightModule(pl.LightningModule):
     def validation_epoch_end(self, outputs):
         loss = torch.mean(torch.stack([x["val_loss"] for x in outputs]))
         accuracy = torch.mean(torch.stack([x["val_accuracy"] for x in outputs]))
-        self.context.do_convergence_check(self._num_data_consumed, loss)
-        LOGGER.info(f"validation epoch end, loss: {loss}, accuracy: {accuracy}")
+        convergence_status = self.context.do_convergence_check(
+            self._num_data_consumed, loss
+        )
+        LOGGER.info(
+            f"validation epoch end, local loss: {loss}, local accuracy: {accuracy}, convergence statu: {convergence_status}"
+        )
 
         # aggregation end
         self._num_data_consumed = 0
         self.context.increase_aggregation_iteration()
+        if convergence_status:
+            self.context.set_converged()
 
     def training_epoch_end(self, outputs) -> None:
         ...
