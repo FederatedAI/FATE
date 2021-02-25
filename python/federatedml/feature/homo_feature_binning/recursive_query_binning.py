@@ -63,7 +63,7 @@ class Client(homo_binning_base.Client):
         if self.aggregator is None:
             self.aggregator = table_aggregator.Client(enable_secure_aggregate=False)
         if self.bin_inner_param is None:
-            self.bin_inner_param = self.setup_bin_inner_param(data_instances, self.params)
+            self.bin_inner_param = self._setup_bin_inner_param(data_instances, self.params)
         self.total_count = self.get_total_count(data_instances)
         self.error_rank = np.ceil(self.error * self.total_count)
         LOGGER.debug(f"abnormal_list: {self.abnormal_list}")
