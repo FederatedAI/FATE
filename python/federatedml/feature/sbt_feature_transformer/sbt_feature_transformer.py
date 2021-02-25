@@ -96,8 +96,8 @@ class HeteroSBTFeatureTransformerBase(ModelBase):
 
         LOGGER.debug(f"In load_model, model_dict: {model_dict}")
 
-        if 'model' in model_dict:
-            self._load_tree_model(model_dict, key_name='model')
+        if 'isometric_model' in model_dict:
+            self._load_tree_model(model_dict, key_name='isometric_model')
         else:
             raise ValueError('illegal model input')
 
