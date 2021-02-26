@@ -35,7 +35,14 @@ This section introduces the dsl and conf for usage of different type of task.
     - runtime_config : test_intersect_job_raw_multi_host_conf.json  
     
     This dsl is an example of guest runs intersection with two hosts using rsa intersection. It can be used as more than two hosts.
+
+8. Repeated-id Intersection:  
+    - dsl: test_intersect_job_dsl.json  
+    - runtime_config : test_intersect_job_repeated_id_conf.json  
     
+    This dsl is an example of intersection witch guest data has repeated ids, while host data has not.
+     
+   
 Users can use following commands to running the task.
 
     flow job submit -c ${runtime_config} -d ${dsl}

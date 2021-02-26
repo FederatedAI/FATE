@@ -32,6 +32,10 @@ This section introduces the Pipeline scripts for different types of tasks.
 
     script: pipeline-intersect-multi-raw.py
 
+8. Repeated-id Intersection:
+
+    script: pipeline-intersect-repeated-id.py
+
 Users can run a pipeline job directly:
 
     python ${pipeline_script}
