@@ -35,11 +35,11 @@ def download_mnist(base, name, is_train=True):
 
     config = {
         "type": "vision",
-        "inputs": {"type": "images", "ext": "jpg"},
+        "inputs": {"type": "images", "ext": "jpg", "PIL_mode": "L"},
         "targets": {"type": "integer"},
     }
     with config_path.open("w") as f:
-        yaml.safe_dump(config, f, indent=2)
+        yaml.safe_dump(config, f, indent=2, default_flow_style=False)
 
 
 def main():
