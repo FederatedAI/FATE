@@ -16,7 +16,7 @@
                 "data": {
                     "data": [
                         {
-                            "name": "breast_hetero_guest",
+                            "name": "breast_homo_test",
                             "namespace": "experiment"
                         }
                     ]
@@ -28,11 +28,11 @@
                 "data": {
                     "data": [
                         {
-                            "name": "breast_hetero_host",
+                            "name": "breast_homo_test",
                             "namespace": "experiment"
                         },
                         {
-                            "name": "breast_hetero_host",
+                            "name": "breast_homo_test",
                             "namespace": "experiment"
                         }
                     ]
