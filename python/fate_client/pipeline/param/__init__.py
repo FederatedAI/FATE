@@ -39,7 +39,6 @@ from pipeline.param.sample_param import SampleParam
 from pipeline.param.sample_weight_param import SampleWeightParam
 from pipeline.param.scale_param import ScaleParam
 from pipeline.param.scorecard_param import ScorecardParam
-from pipeline.param.sir_param import SecureInformationRetrievalParam
 from pipeline.param.statistics_param import StatisticsParam
 from pipeline.param.union_param import UnionParam
 from pipeline.param.boosting_param import ObjectiveParam
@@ -53,5 +52,5 @@ __all__ = ["HeteroSecureBoostParam", "HomoSecureBoostParam", "HeteroFastSecureBo
            "KmeansParam", "HeteroNNParam", "HomoNNParam", "HomoOneHotParam", "InitParam",
            "IntersectParam", "LinearParam", "LocalBaselineParam", "HeteroLogisticParam",
            "HomoLogisticParam", "PearsonParam", "PoissonParam", "PSIParam", "SampleParam",
-           "SampleWeightParam", "ScaleParam", "ScorecardParam", "SecureInformationRetrievalParam",
+           "SampleWeightParam", "ScaleParam", "ScorecardParam",
            "UnionParam", "ObjectiveParam", "DecisionTreeParam", "PredictParam"]
