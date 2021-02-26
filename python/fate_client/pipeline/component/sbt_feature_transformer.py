@@ -21,7 +21,7 @@ from pipeline.interface import Output
 from pipeline.utils.logger import LOGGER
 
 
-class HeteroSecureBoost(Component, SBTTransformerParam):
+class SBTTransformer(Component, SBTTransformerParam):
     def __init__(self, **kwargs):
         Component.__init__(self, **kwargs)
 
