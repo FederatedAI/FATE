@@ -101,7 +101,8 @@ def main(config="../../config.yaml", param="./vechile_config.yaml", namespace=""
         "batch_size": param["batch_size"],
         "early_stop": "diff",
         "init_param": {
-            "init_method": param.get("init_method", 'random_uniform')
+            "init_method": param.get("init_method", 'random_uniform'),
+            "random_seed": param.get("random_seed", 103)
         }
     }
     lr_param.update(config_param)
@@ -134,10 +135,11 @@ def main(config="../../config.yaml", param="./vechile_config.yaml", namespace=""
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("BENCHMARK-QUALITY PIPELINE JOB")
-    parser.add_argument("-config", type=str,
-                        help="config file")
-    parser.add_argument("-param", type=str,
-                        help="config file for params")
+    parser.add_argument("-c", "--config", type=str,
+                        help="config file", default="../../config.yaml")
+    parser.add_argument("-p", "--param", type=str,
+                        help="config file for params", default="./breast_config.yaml")
+
     args = parser.parse_args()
     if args.config is not None:
         main(args.config, args.param)

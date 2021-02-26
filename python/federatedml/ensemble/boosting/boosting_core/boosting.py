@@ -5,7 +5,7 @@ import numpy as np
 from federatedml.param.boosting_param import BoostingParam, ObjectiveParam
 from federatedml.param.predict_param import PredictParam
 from federatedml.param.feature_binning_param import FeatureBinningParam
-from federatedml.model_selection.k_fold import KFold
+from federatedml.model_selection import start_cross_validation
 from federatedml.util import abnormal_detection
 from federatedml.util import consts
 from federatedml.util.validation_strategy import ValidationStrategy
@@ -284,12 +284,7 @@ class Boosting(ModelBase, ABC):
         return validation_strategy
 
     def cross_validation(self, data_instances):
-        if not self.need_run:
-            return data_instances
-        kflod_obj = KFold()
-        cv_param = self._get_cv_param()
-        kflod_obj.run(cv_param, data_instances, self, host_do_evaluate=False)
-        return data_instances
+        return start_cross_validation.run(self, data_instances)
 
     def get_loss_function(self):
         loss_type = self.objective_param.objective

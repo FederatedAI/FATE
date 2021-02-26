@@ -266,7 +266,7 @@ class HomoLogisticParam(LogisticParam):
                  decay=1, decay_sqrt=True,
                  aggregate_iters=1, multi_class='ovr', validation_freqs=None,
                  early_stopping_rounds=None,
-                 metrics=['auc', 'ks'], floating_point_precision=23,
+                 metrics=['auc', 'ks'],
                  use_first_metric_only=False,
                  use_proximal=False,
                  mu=0.1
@@ -278,7 +278,6 @@ class HomoLogisticParam(LogisticParam):
                                                 encrypt_param=encrypt_param, predict_param=predict_param,
                                                 cv_param=cv_param, multi_class=multi_class,
                                                 validation_freqs=validation_freqs,
-                                                floating_point_precision=floating_point_precision,
                                                 decay=decay, decay_sqrt=decay_sqrt,
                                                 early_stopping_rounds=early_stopping_rounds,
                                                 metrics=metrics, use_first_metric_only=use_first_metric_only)

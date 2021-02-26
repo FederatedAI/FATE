@@ -104,8 +104,10 @@ def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
         "batch_size": param["batch_size"],
         "early_stop": "diff",
         "tol": 1e-5,
+        "floating_point_precision": param.get("floating_point_precision"),
         "init_param": {
-            "init_method": param.get("init_method", 'random_uniform')
+            "init_method": param.get("init_method", 'random_uniform'),
+            "random_seed": param.get("random_seed", 103)
         }
     }
     lr_param.update(config_param)

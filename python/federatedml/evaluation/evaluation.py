@@ -284,13 +284,26 @@ class Evaluation(ModelBase):
     def obtain_data(self, data_list):
         return data_list
 
-    def fit(self, data, return_result=False):
+    def check_data(self, data):
 
         if len(data) <= 0:
             return
 
         if self.eval_type == consts.CLUSTERING:
             self._check_clustering_input(data)
+        else:
+            for key, eval_data in data.items():
+                if eval_data is None:
+                    continue
+                sample = eval_data.take(1)[0]
+                if type(sample[1]) != list or len(sample[1]) != 5:  # label, predict_type, predict_score, predict_detail, type
+                    raise ValueError('length of table header mismatch, expected length is 5, got:{},'
+                                     'please check the input of the Evaluation Module, result of '
+                                     'cross validation is not supported.'.format(sample))
+
+    def fit(self, data, return_result=False):
+
+        self.check_data(data)
 
         LOGGER.debug(f'running eval, data: {data}')
         self.eval_results.clear()

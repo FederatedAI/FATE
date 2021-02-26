@@ -209,12 +209,9 @@ class Client(BaseBinning):
     @staticmethod
     def _query_table(summary, query_points):
         queries = [x.value for x in query_points]
-        LOGGER.debug(f"in query_table, queries: {queries}")
-
         original_idx = np.argsort(np.argsort(queries))
         queries = np.sort(queries)
         ranks = summary.query_value_list(queries)
         ranks = np.array(ranks)[original_idx]
-        LOGGER.debug(f"in query_table, ranks: {ranks}")
         return np.array(ranks, dtype=int)
 

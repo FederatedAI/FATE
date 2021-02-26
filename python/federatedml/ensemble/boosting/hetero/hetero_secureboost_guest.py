@@ -419,6 +419,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         feature_importances = list(self.feature_importances_.items())
         feature_importances = sorted(feature_importances, key=itemgetter(1), reverse=True)
         feature_importance_param = []
+        
         for (sitename, fid), importance in feature_importances:
             if consts.GUEST in sitename:
                 fullname = self.feature_name_fid_mapping[fid]
