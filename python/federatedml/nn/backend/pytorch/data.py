@@ -114,8 +114,14 @@ class VisionDataSet(torchvision.datasets.VisionDataset, DatasetMixIn):
     def as_data_instance(self):
         from federatedml.feature.instance import Instance
 
+        def _as_instance(x):
+            if isinstance(x, np.number):
+                return Instance(label=x.tolist())
+            else:
+                return Instance(label=x)
+
         return computing_session.parallelize(
-            data=zip(self._keys, map(lambda x: Instance(x), self.targets)),
+            data=zip(self._keys, map(_as_instance, self.targets)),
             include_key=True,
             partition=10,
         )
@@ -141,6 +147,7 @@ class VisionDataSet(torchvision.datasets.VisionDataset, DatasetMixIn):
             self.images = [
                 os.path.join(root, "images", f"{x}.{input_ext}") for x in file_names
             ]
+            self._PIL_mode = config["inputs"].get("PIL_mode", "L")
 
             # read targets
             if config["targets"]["type"] == "images":
@@ -193,7 +200,7 @@ class VisionDataSet(torchvision.datasets.VisionDataset, DatasetMixIn):
         Returns:
             tuple: (image, target) where target is the image segmentation.
         """
-        img = Image.open(self.images[index]).convert("L")
+        img = Image.open(self.images[index]).convert(self._PIL_mode)
         if self.targets_is_image:
             target = Image.open(self.targets[index])
         else:
