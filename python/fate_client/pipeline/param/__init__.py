@@ -30,4 +30,4 @@ from pipeline.param.feldman_verifiable_sum_param import FeldmanVerifiableSumPara
 
 __all__ = ["DataIOParam", "DecisionTreeParam", "InitParam", "LogisticParam", "ObjectiveParam",
            "EncryptParam", "EvaluateParam", "PredictParam", 'FeatureBinningParam',
-           "LinearParam", "FeldmanVerifiableSumParam"]
+           "LinearParam", "FeldmanVerifiableSumParam", "SBTTransformerParam"]
