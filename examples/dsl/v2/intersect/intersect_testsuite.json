@@ -23,6 +23,14 @@
             "table_name": "breast_hetero_host",
             "namespace": "experiment",
             "role": "host_1"
+        },
+        {
+            "file": "examples/data/breast_hetero_guest_repeated_id.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_guest_repeated_id",
+            "namespace": "experiment",
+            "role": "guest_0"
         }
     ],
     "tasks": {
@@ -52,6 +60,10 @@
         },
         "raw_intersect_multi_host": {
             "conf": "./test_intersect_job_raw_multi_host_conf.json",
+            "dsl": "./test_intersect_job_dsl.json"
+        },
+        "repeated_id_intersect": {
+            "conf": "./test_intersect_job_repeated_id_conf.json",
             "dsl": "./test_intersect_job_dsl.json"
         }
     }
