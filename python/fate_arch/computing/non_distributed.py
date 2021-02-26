@@ -18,4 +18,4 @@
 class LocalData(object):
     def __init__(self, path):
         self.path = path
-        self.schema = {"header": []}
+        self.schema = {"header": [], "sid_name": "id"}
