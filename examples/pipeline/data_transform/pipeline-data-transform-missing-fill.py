@@ -46,13 +46,15 @@ def main(config="../../config.yaml", namespace=""):
 
     data_transform_0 = DataTransform(name="data_transform_0")
     data_transform_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True,
-                                                                                      label_name="label",
+                                                                                      label_name="LABEL",
                                                                                       missing_fill=True,
-                                                                                      missing_fill_method="mean")
+                                                                                      missing_fill_method="mean",
+                                                                                      outlier_replace=True)
     data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False,
                                                                                     missing_fill=True,
                                                                                     missing_fill_method="designated",
-                                                                                    default_value=0)
+                                                                                    default_value=0,
+                                                                                    outlier_replace=False)
 
     pipeline.add_component(reader_0)
     pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
