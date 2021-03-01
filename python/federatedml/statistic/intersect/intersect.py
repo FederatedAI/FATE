@@ -137,7 +137,7 @@ class RsaIntersect(Intersect):
     def pubkey_id_process(data, fraction, random_bit, rsa_e, rsa_n, hash_operator=None, salt=''):
         if fraction and fraction <= consts.MAX_BASE_FRACTION:
             LOGGER.debug(f"fraction value: {fraction} provided, use fraction in pubkey id process")
-            count = round(data.count() * max(fraction, consts.MIN_BASE_FRACTION))
+            count = max(round(data.count() * max(fraction, consts.MIN_BASE_FRACTION)), 1)
 
             def group_kv(kv_iterator):
                 res = []
