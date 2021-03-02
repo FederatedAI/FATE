@@ -231,7 +231,7 @@ class HomoDecisionTreeClient(DecisionTree):
         leaf_status, nodeid = row[1]
         node = tree[nodeid]
         if node.is_leaf:
-            return node.weight
+            return node.id
 
         fid = node.fid
         bid = node.bid
@@ -279,11 +279,11 @@ class HomoDecisionTreeClient(DecisionTree):
     """
 
     @staticmethod
-    def get_node_sample_weights(inst2node, tree_node: List[Node]):
+    def get_sample_node_id(inst2node, tree_node: List[Node]):
         """
         get samples' weights which correspond to its node assignment
         """
-        func = functools.partial(lambda inst, nodes: nodes[inst[1]].weight, nodes=tree_node)
+        func = functools.partial(lambda inst, nodes: nodes[inst[1]].id, nodes=tree_node)
         return inst2node.mapValues(func)
 
     def get_feature_importance(self):
@@ -299,6 +299,7 @@ class HomoDecisionTreeClient(DecisionTree):
 
     def assign_instance_to_root_node(self, data_bin, root_node_id):
         return data_bin.mapValues(lambda inst: (1, root_node_id))
+
 
     """
     Fit & Predict
@@ -336,11 +337,11 @@ class HomoDecisionTreeClient(DecisionTree):
                     node.is_leaf = True
                     self.tree_node.append(node)
 
-                rest_sample_weights = self.get_node_sample_weights(self.inst2node_idx, self.tree_node)
-                if self.sample_weights is None:
-                    self.sample_weights = rest_sample_weights
+                rest_sample_pos = self.get_sample_node_id(self.inst2node_idx, self.tree_node)
+                if self.sample_leaf_pos is None:
+                    self.sample_leaf_pos = rest_sample_pos
                 else:
-                    self.sample_weights = self.sample_weights.union(rest_sample_weights)
+                    self.sample_leaf_pos = self.sample_leaf_pos.union(rest_sample_pos)
 
                 # stop fitting
                 break
@@ -383,14 +384,15 @@ class HomoDecisionTreeClient(DecisionTree):
             self.inst2node_idx, leaf_val = self.assign_instances_to_new_node(table_with_assignment, self.tree_node)
 
             # record leaf val
-            if self.sample_weights is None:
-                self.sample_weights = leaf_val
+            if self.sample_leaf_pos is None:
+                self.sample_leaf_pos = leaf_val
             else:
-                self.sample_weights = self.sample_weights.union(leaf_val)
+                self.sample_leaf_pos = self.sample_leaf_pos.union(leaf_val)
 
             LOGGER.debug('assigning instance to new nodes done')
 
         self.convert_bin_to_real()
+        self.sample_weights_post_process()
         LOGGER.debug('fitting tree done')
 
     def traverse_tree(self, data_inst: Instance, tree: List[Node], use_missing, zero_as_missing):

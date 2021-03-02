@@ -389,18 +389,6 @@ class HeteroFastDecisionTreeGuest(HeteroDecisionTreeGuest):
     Mix Functions
     """
 
-    @staticmethod
-    def get_node_weights(node_id, tree_nodes):
-        return tree_nodes[node_id].weight
-
-    def extract_sample_weights_from_node(self, sample_leaf_pos):
-        """
-        Given a dtable contains leaf positions of samples, return leaf weights
-        """
-        func = functools.partial(self.get_node_weights, tree_nodes=self.tree_node)
-        sample_weights = sample_leaf_pos.mapValues(func)
-        return sample_weights
-
     def handle_leaf_nodes(self, nodes):
         """
         decrypte hess and grad and return tree node list that only contains leaves

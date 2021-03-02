@@ -406,7 +406,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
             LOGGER.info('sending encoded g/h to host')
             en_grad_hess = self.cipher_encoder.encode_g_h_and_encrypt(self.grad_and_hess)
         else:
-            LOGGER.info('sedding g/h to host')
+            LOGGER.info('sending g/h to host')
             en_grad_hess = self.encrypted_mode_calculator.encrypt(self.grad_and_hess)
 
         self.transfer_inst.encrypted_grad_and_hess.remote(en_grad_hess,
@@ -621,7 +621,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
         unleaf_state, nodeid = value[1]
 
         if tree_[nodeid].is_leaf is True:
-            return tree_[nodeid].weight
+            return tree_[nodeid].id
         else:
             if tree_[nodeid].sitename == sitename:
                 fid = decoder("feature_idx", tree_[nodeid].fid, split_maskdict=split_maskdict)

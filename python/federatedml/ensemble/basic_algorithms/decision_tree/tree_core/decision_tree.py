@@ -70,7 +70,9 @@ class DecisionTree(BasicAlgorithms, ABC):
         self.splitter = Splitter(self.criterion_method, self.criterion_params, self.min_impurity_split,
                                  self.min_sample_split, self.min_leaf_node, self.min_child_weight)  # splitter for finding splits
         self.inst2node_idx = None  # record the node id an instance belongs to
+        self.sample_leaf_pos = None
         self.sample_weights = None
+        self.leaf_count = None  # num of samples a leaf covers
 
         # data
         self.data_bin = None
@@ -89,6 +91,10 @@ class DecisionTree(BasicAlgorithms, ABC):
         # histogram
         self.hist_computer = FeatureHistogram()
 
+    """
+    Common functions
+    """
+
     def get_feature_importance(self):
         return self.feature_importance
 
@@ -102,10 +108,8 @@ class DecisionTree(BasicAlgorithms, ABC):
     def init_data_and_variable(self, flowid, runtime_idx, data_bin, bin_split_points, bin_sparse_points, valid_features,
                                grad_and_hess):
 
-        LOGGER.info("set flowid, flowid is {}".format(flowid))
-        self.transfer_inst.set_flowid(flowid)
-        self.runtime_idx = runtime_idx
-        self.sitename = ":".join([self.sitename, str(self.runtime_idx)])
+        self.set_flowid(flowid)
+        self.set_runtime_idx(runtime_idx)
 
         LOGGER.info("set valid features")
         self.valid_features = valid_features
@@ -123,18 +127,9 @@ class DecisionTree(BasicAlgorithms, ABC):
         self.runtime_idx = runtime_idx
         self.sitename = ":".join([self.sitename, str(self.runtime_idx)])
 
-    def set_valid_features(self, valid_features=None):
-        LOGGER.info("set valid features")
-        self.valid_features = valid_features
-
-    def set_grad_and_hess(self, grad_and_hess):
-        self.grad_and_hess = grad_and_hess
-
-    def set_input_data(self, data_bin, bin_split_points, bin_sparse_points):
-
-        self.data_bin = data_bin
-        self.bin_split_points = bin_split_points
-        self.bin_sparse_points = bin_sparse_points
+    """
+    Histogram interface
+    """
 
     def get_local_histograms(self, dep, data_with_pos, g_h, node_sample_count, cur_to_split_nodes, node_map, ret='tensor', sparse_opt=False
                              , hist_sub=True, bin_num=None):
@@ -156,6 +151,10 @@ class DecisionTree(BasicAlgorithms, ABC):
                                                               bin_num=bin_num)
         return acc_histograms
 
+    """
+    Node map functions
+    """
+
     @staticmethod
     def get_node_map(nodes: List[Node], left_node_only=False):
         node_map = {}
@@ -166,6 +165,18 @@ class DecisionTree(BasicAlgorithms, ABC):
             node_map[node.id] = idx
             idx += 1
         return node_map
+
+    @staticmethod
+    def get_leaf_node_map(nodes: List[Node]):
+        leaf_nodes = []
+        for n in nodes:
+            if n.is_leaf:
+                leaf_nodes.append(n)
+        return DecisionTree.get_node_map(leaf_nodes)
+
+    """
+    Sample count functions
+    """
 
     @staticmethod
     def sample_count_map_func(kv, node_map):
@@ -183,13 +194,18 @@ class DecisionTree(BasicAlgorithms, ABC):
 
     def count_node_sample_num(self, inst2node_idx, node_map):
         """
-        count sample number in every leaf node
+        count sample number in internal nodes during training
         """
         count_func = functools.partial(self.sample_count_map_func, node_map=node_map)
         rs = inst2node_idx.applyPartitions(count_func).reduce(self.sample_count_reduce_func)
         return rs
 
+    """
+    Sample weight functions
+    """
+
     def get_sample_weights(self):
+        # return sample weights to boosting class
         return self.sample_weights
 
     @ staticmethod
@@ -214,6 +230,24 @@ class DecisionTree(BasicAlgorithms, ABC):
         self.feature_importance[key].add_split(inc_split)
         if inc_gain is not None:
             self.feature_importance[key].add_gain(inc_gain)
+
+    @staticmethod
+    def get_node_weights(node_id, tree_nodes):
+        return tree_nodes[node_id].weight
+
+    def extract_sample_weights_from_node(self, sample_leaf_pos):
+        """
+        Given a dtable contains leaf positions of samples, return leaf weights
+        """
+        func = functools.partial(self.get_node_weights, tree_nodes=self.tree_node)
+        sample_weights = sample_leaf_pos.mapValues(func)
+        return sample_weights
+
+    def sample_weights_post_process(self):
+
+        self.sample_weights = self.extract_sample_weights_from_node(self.sample_leaf_pos)
+        leaf_node_map = self.get_leaf_node_map(self.tree_node)
+        self.leaf_count = self.count_node_sample_num(self.sample_leaf_pos, leaf_node_map)
 
     """
     To implement
@@ -274,6 +308,10 @@ class DecisionTree(BasicAlgorithms, ABC):
     @abc.abstractmethod
     def traverse_tree(self, *args):
         pass
+
+    """
+    Model I/O
+    """
 
     def get_model(self):
 
