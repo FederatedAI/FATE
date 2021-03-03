@@ -18,21 +18,45 @@ import io
 import os
 import tempfile
 import zipfile
+import uuid
 
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras.backend import gradients
-from tensorflow.keras.backend import set_session
 from tensorflow.keras.callbacks import History
+from tensorflow.python.keras import backend
+
+try:
+    from tensorflow import (
+        get_default_graph,
+        global_variables,
+        initialize_variables,
+        report_uninitialized_variables,
+        assign,
+        placeholder,
+    )
+    from tensorflow.keras.backend import set_session
+except ImportError:
+    from tensorflow.compat.v1 import (
+        get_default_graph,
+        report_uninitialized_variables,
+        global_variables,
+        initialize_variables,
+        assign,
+        placeholder,
+    )
+    from tensorflow.compat.v1.keras.backend import set_session
+
+    tf.compat.v1.disable_eager_execution()
 
 from federatedml.framework.weights import OrderDictWeights, Weights
 from federatedml.nn.backend.tf_keras import losses
-from federatedml.nn.homo_nn.nn_model import NNModel, DataConverter
+from federatedml.nn.homo_nn.nn_model import DataConverter, NNModel
 
 
 def _zip_dir_as_bytes(path):
     with io.BytesIO() as io_bytes:
-        with zipfile.ZipFile(io_bytes, 'w', zipfile.ZIP_DEFLATED) as zipper:
+        with zipfile.ZipFile(io_bytes, "w", zipfile.ZIP_DEFLATED) as zipper:
             for root, dirs, files in os.walk(path, topdown=False):
                 for name in files:
                     full_path = os.path.join(root, name)
@@ -47,19 +71,18 @@ def _zip_dir_as_bytes(path):
 
 
 def _compile_model(model, loss, optimizer, metrics):
-    optimizer_instance = getattr(tf.keras.optimizers, optimizer.optimizer)(**optimizer.kwargs)
+    optimizer_instance = getattr(tf.keras.optimizers, optimizer.optimizer)(
+        **optimizer.kwargs
+    )
     # losses = getattr(tf.keras.losses, loss)
     loss_fn = getattr(losses, loss)
-    model.compile(loss=loss_fn,
-                  optimizer=optimizer_instance,
-                  metrics=metrics)
+    model.compile(loss=loss_fn, optimizer=optimizer_instance, metrics=metrics)
     return model
 
 
 def _init_session():
-    from tensorflow.python.keras import backend
     sess = backend.get_session()
-    tf.get_default_graph()
+    get_default_graph()
     set_session(sess)
     return sess
 
@@ -69,8 +92,8 @@ def _load_model(nn_struct_json):
 
 
 def _modify_model_input_shape(nn_struct, input_shape):
-    import json
     import copy
+    import json
 
     if not input_shape:
         return json.dumps(nn_struct)
@@ -81,38 +104,38 @@ def _modify_model_input_shape(nn_struct, input_shape):
         input_shape = list(input_shape)
 
     struct = copy.deepcopy(nn_struct)
-    if not struct.get("config") or \
-            not struct["config"].get("layers") or \
-            not struct["config"]["layers"][0].get("config"):
+    if (
+        not struct.get("config")
+        or not struct["config"].get("layers")
+        or not struct["config"]["layers"][0].get("config")
+    ):
         return json.dumps(struct)
 
     if struct["config"]["layers"][0].get("config"):
-        struct["config"]["layers"][0]["config"]["batch_input_shape"] = [None] + input_shape
+        struct["config"]["layers"][0]["config"]["batch_input_shape"] = [
+            None
+        ] + input_shape
         return json.dumps(struct)
     else:
         return json.dump(struct)
 
 
 def build_keras(nn_define, loss, optimizer, metrics, **kwargs):
-    nn_define_json = _modify_model_input_shape(nn_define, kwargs.get("input_shape", None))
+    nn_define_json = _modify_model_input_shape(
+        nn_define, kwargs.get("input_shape", None)
+    )
 
     sess = _init_session()
 
     model = _load_model(nn_struct_json=nn_define_json)
-    model = _compile_model(model=model,
-                           loss=loss,
-                           optimizer=optimizer,
-                           metrics=metrics)
+    model = _compile_model(model=model, loss=loss, optimizer=optimizer, metrics=metrics)
     return KerasNNModel(sess, model)
 
 
 def from_keras_sequential_model(model, loss, optimizer, metrics):
     sess = _init_session()
 
-    model = _compile_model(model=model,
-                           loss=loss,
-                           optimizer=optimizer,
-                           metrics=metrics)
+    model = _compile_model(model=model, loss=loss, optimizer=optimizer, metrics=metrics)
     return KerasNNModel(sess, model)
 
 
@@ -124,15 +147,24 @@ class KerasNNModel(NNModel):
     def __init__(self, sess, model):
         self._sess: tf.Session = sess
         self._model: tf.keras.Sequential = model
-        self._trainable_weights = {self._trim_device_str(v.name): v for v in self._model.trainable_weights}
+        self._trainable_weights = {
+            self._trim_device_str(v.name): v for v in self._model.trainable_weights
+        }
 
         self._initialize_variables()
         self._loss = None
 
     def _initialize_variables(self):
-        uninitialized_var_names = [bytes.decode(var) for var in self._sess.run(tf.report_uninitialized_variables())]
-        uninitialized_vars = [var for var in tf.global_variables() if var.name.split(':')[0] in uninitialized_var_names]
-        self._sess.run(tf.initialize_variables(uninitialized_vars))
+        uninitialized_var_names = [
+            bytes.decode(var)
+            for var in self._sess.run(report_uninitialized_variables())
+        ]
+        uninitialized_vars = [
+            var
+            for var in global_variables()
+            if var.name.split(":")[0] in uninitialized_var_names
+        ]
+        self._sess.run(initialize_variables(uninitialized_vars))
 
     @staticmethod
     def _trim_device_str(name):
@@ -143,7 +175,9 @@ class KerasNNModel(NNModel):
 
     def set_model_weights(self, weights: Weights):
         unboxed = weights.unboxed
-        self._sess.run([tf.assign(v, unboxed[name]) for name, v in self._trainable_weights.items()])
+        self._sess.run(
+            [assign(v, unboxed[name]) for name, v in self._trainable_weights.items()]
+        )
 
     def get_layer_by_index(self, layer_idx):
         return self._model.layers[layer_idx]
@@ -162,7 +196,9 @@ class KerasNNModel(NNModel):
         return self._sess.run(gradient, feed_dict={self._model.input: X})
 
     def apply_gradients(self, grads):
-        update_ops = self._model.optimizer.apply_gradients(zip(grads, self._model.trainable_variables))
+        update_ops = self._model.optimizer.apply_gradients(
+            zip(grads, self._model.trainable_variables)
+        )
         self._initialize_variables()
         self._sess.run(update_ops)
 
@@ -178,26 +214,30 @@ class KerasNNModel(NNModel):
     def get_forward_loss_from_input(self, X, y):
         from federatedml.nn.hetero_nn.backend.tf_keras import losses
 
-        y_true = tf.placeholder(shape=self._model.output.shape,
-                                dtype=self._model.output.dtype)
+        y_true = placeholder(
+            shape=self._model.output.shape, dtype=self._model.output.dtype
+        )
 
-        loss_fn = getattr(losses, self._model.loss_functions[0].fn.__name__)(y_true, self._model.output)
-        return self._sess.run(loss_fn, feed_dict={self._model.input: X,
-                                                  y_true: y})
+        loss_fn = getattr(losses, self._model.loss_functions[0].fn.__name__)(
+            y_true, self._model.output
+        )
+        return self._sess.run(loss_fn, feed_dict={self._model.input: X, y_true: y})
 
     def _get_gradients(self, X, y, variable):
         from federatedml.nn.hetero_nn.backend.tf_keras import losses
 
-        y_true = tf.placeholder(shape=self._model.output.shape,
-                                dtype=self._model.output.dtype)
+        y_true = placeholder(
+            shape=self._model.output.shape, dtype=self._model.output.dtype
+        )
 
-        loss_fn = getattr(losses, self._model.loss_functions[0].fn.__name__)(y_true, self._model.output)
+        loss_fn = getattr(losses, self._model.loss_functions[0].fn.__name__)(
+            y_true, self._model.output
+        )
         gradient = gradients(loss_fn, variable)
-        return self._sess.run(gradient, feed_dict={self._model.input: X,
-                                                   y_true: y})
+        return self._sess.run(gradient, feed_dict={self._model.input: X, y_true: y})
 
     def set_learning_rate(self, learning_rate):
-        assign_op = tf.assign(self._model.optimizer.learning_rate, learning_rate)
+        assign_op = assign(self._model.optimizer.learning_rate, learning_rate)
         self._sess.run(assign_op)
 
     def train(self, data: tf.keras.utils.Sequence, **kwargs):
@@ -222,35 +262,60 @@ class KerasNNModel(NNModel):
         return self._model.predict(data)
 
     def export_model(self):
-        with tempfile.TemporaryDirectory() as tmp_path:
-            # try:
-            #     tf.keras.models.save_model(self._model, filepath=tmp_path, save_format="tf")
-            # except NotImplementedError:
-            #     import warnings
-            #     warnings.warn('Saving the model as SavedModel is still in experimental stages. '
-            #                   'trying tf.keras.experimental.export_saved_model...')
-            tf.keras.experimental.export_saved_model(self._model, saved_model_path=tmp_path)
+        model_base = "./saved_model"
+        if not os.path.exists(model_base):
+            os.mkdir(model_base)
+        model_path = f"{model_base}/{uuid.uuid1()}"
+        os.mkdir(model_path)
+        try:
+            from tensorflow.keras.experimental import (
+                export_saved_model as save_model,
+            )
 
-            model_bytes = _zip_dir_as_bytes(tmp_path)
+            save_model(self._model, model_path)
+
+        except ImportError:
+            from tensorflow.compat.v1 import saved_model
+
+            saved_model.save(self._model, model_path)
+            # from tensorflow.keras.models import save_model
+
+        model_bytes = _zip_dir_as_bytes(model_path)
 
         return model_bytes
 
     @staticmethod
-    def restore_model(model_bytes):  # todo: restore optimizer to support incremental learning
+    def restore_model(
+        model_bytes,
+    ):  # todo: restore optimizer to support incremental learning
         sess = _init_session()
+        model_base = "./restore_model"
+        if not os.path.exists(model_base):
+            os.mkdir(model_base)
+        model_path = f"{model_base}/{uuid.uuid1()}"
+        os.mkdir(model_path)
+        with io.BytesIO(model_bytes) as bytes_io:
+            with zipfile.ZipFile(bytes_io, "r", zipfile.ZIP_DEFLATED) as f:
+                f.extractall(model_path)
 
-        with tempfile.TemporaryDirectory() as tmp_path:
-            with io.BytesIO(model_bytes) as bytes_io:
-                with zipfile.ZipFile(bytes_io, 'r', zipfile.ZIP_DEFLATED) as f:
-                    f.extractall(tmp_path)
+        try:
+            from tensorflow.keras.models import load_model
 
-            # try:
-            #     model = tf.keras.models.load_model(filepath=tmp_path)
-            # except IOError:
-            #     import warnings
-            #     warnings.warn('loading the model as SavedModel is still in experimental stages. '
-            #                   'trying tf.keras.experimental.load_from_saved_model...')
-            model = tf.keras.experimental.load_from_saved_model(saved_model_path=tmp_path)
+            # add custom objects
+            from federatedml.nn.hetero_nn.backend.tf_keras.losses import (
+                keep_predict_loss,
+            )
+
+            tf.keras.utils.get_custom_objects().update(
+                {"keep_predict_loss": keep_predict_loss}
+            )
+
+        except ImportError:
+            from tensorflow.keras.experimental import (
+                load_from_saved_model as load_model,
+            )
+
+        model = load_model(f"{model_path}")
 
         return KerasNNModel(sess, model)
 
@@ -259,7 +324,6 @@ class KerasNNModel(NNModel):
 
 
 class KerasSequenceData(tf.keras.utils.Sequence):
-
     def get_shape(self):
         return self.x_shape, self.y_shape
 
@@ -315,7 +379,7 @@ class KerasSequenceData(tf.keras.utils.Sequence):
         """
         start = self.batch_size * index
         end = self.batch_size * (index + 1)
-        return self.x[start: end], self.y[start: end]
+        return self.x[start:end], self.y[start:end]
 
     def __len__(self):
         """Number of batch in the Sequence.

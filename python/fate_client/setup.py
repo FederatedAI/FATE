@@ -38,7 +38,7 @@ install_requires = \
  'requests_toolbelt>=0.9.1,<0.10.0',
  'ruamel.yaml>=0.16.10,<0.17.0',
  'setuptools>=50.0,<51.0',
- 'tensorflow==1.15.4',
+ 'tensorflow>=1.15.4',
  'torch']
 
 entry_points = \
