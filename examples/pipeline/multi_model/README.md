@@ -1,6 +1,6 @@
 ## Multi Pipeline Configuration Usage Guide.
 
-This section introduces the dsl and conf for usage of a multi-pipeline task.
+This section introduces the pipeline script of a multi-pipeline task.
 
 #### Multi Pipeline Task.
 
