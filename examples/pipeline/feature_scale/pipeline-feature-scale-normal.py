@@ -25,7 +25,6 @@ from pipeline.component import FederatedSample
 from pipeline.component import HeteroFeatureBinning
 from pipeline.component import HeteroFeatureSelection
 from pipeline.component import HeteroLR
-from pipeline.component import HeteroSecureBoost
 from pipeline.component import Intersection
 from pipeline.component import OneHotEncoder
 from pipeline.component import Reader
@@ -61,7 +60,7 @@ def main(config="../../config.yaml", namespace=""):
     intersection_0 = Intersection(name="intersection_0")
     federated_sample_0 = FederatedSample(name="federated_sample_0", mode="stratified", method="upsample",
                                          fractions=[[0, 1.5], [1, 2.0]])
-    feature_scale_0 = FeatureScale(name="feature_scale_0", mode="normal")
+    feature_scale_0 = FeatureScale(name="feature_scale_0", method="min_max_scale", mode="normal")
     feature_scale_0.get_party_instance(role='guest', party_id=guest).component_param(feat_upper=[1, 2, 1, 1, 0.5, 1, 2, 2, 1, 1])
     hetero_feature_binning_0 = HeteroFeatureBinning(name="hetero_feature_binning_0")
     hetero_feature_selection_0 = HeteroFeatureSelection(name="hetero_feature_selection_0")
@@ -69,19 +68,7 @@ def main(config="../../config.yaml", namespace=""):
     hetero_lr_0 = HeteroLR(name="hetero_lr_0", penalty="L2", optimizer="rmsprop", tol=1e-5,
                            init_param={"init_method": "random_uniform"},
                            alpha=0.01, max_iter=10, early_stop="diff", batch_size=320, learning_rate=0.15)
-    hetero_lr_1 = HeteroLR(name="hetero_lr_1", penalty="L2", optimizer="rmsprop", tol=1e-5,
-                           init_param={"init_method": "random_uniform"},
-                           alpha=0.01, max_iter=10, early_stop="diff", batch_size=320, learning_rate=0.15,
-                           cv_param={"n_splits": 5,
-                                     "shuffle": True,
-                                     "random_seed": 103,
-                                     "need_cv": True})
-
-    hetero_secureboost_0 = HeteroSecureBoost(name="hetero_secureboost_0", num_trees=5,
-                                             cv_param={"shuffle": False, "need_cv": True})
-    hetero_secureboost_1 = HeteroSecureBoost(name="hetero_secureboost_1", num_trees=5)
     evaluation_0 = Evaluation(name="evaluation_0")
-    evaluation_1 = Evaluation(name="evaluation_1")
 
     pipeline.add_component(reader_0)
     pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
@@ -92,11 +79,7 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.add_component(hetero_feature_selection_0, data=Data(data=hetero_feature_binning_0.output.data))
     pipeline.add_component(one_hot_0, data=Data(data=hetero_feature_selection_0.output.data))
     pipeline.add_component(hetero_lr_0, data=Data(train_data=one_hot_0.output.data))
-    pipeline.add_component(hetero_lr_1, data=Data(train_data=one_hot_0.output.data))
-    pipeline.add_component(hetero_secureboost_0, data=Data(train_data=one_hot_0.output.data))
-    pipeline.add_component(hetero_secureboost_1, data=Data(train_data=one_hot_0.output.data))
     pipeline.add_component(evaluation_0, data=Data(data=hetero_lr_0.output.data))
-    pipeline.add_component(evaluation_1, data=Data(data=hetero_secureboost_1.output.data))
     pipeline.compile()
 
     job_parameters = JobParameters(backend=backend, work_mode=work_mode)

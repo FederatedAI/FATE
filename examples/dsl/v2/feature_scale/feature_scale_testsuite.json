@@ -1,0 +1,30 @@
+{
+    "data": [
+        {
+            "file": "examples/data/breast_hetero_host.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "breast_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/breast_hetero_guest.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "breast_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        }
+    ],
+    "tasks": {
+        "normal": {
+            "conf": "./test_feature_scale_normal_conf.json",
+            "dsl": "./test_feature_scale_normal_dsl.json"
+        },
+        "cap": {
+            "conf": "./test_feature_scale_cap_conf.json",
+            "dsl": "./test_feature_scale_cap_dsl.json"
+        }
+    }
+}
