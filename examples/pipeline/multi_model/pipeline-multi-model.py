@@ -61,8 +61,7 @@ def main(config="../../config.yaml", namespace=""):
     intersection_0 = Intersection(name="intersection_0")
     federated_sample_0 = FederatedSample(name="federated_sample_0", mode="stratified", method="upsample",
                                          fractions=[[0, 1.5], [1, 2.0]])
-    feature_scale_0 = FeatureScale(name="feature_scale_0", mode="normal")
-    feature_scale_0.get_party_instance(role='guest', party_id=guest).component_param(feat_upper=[1, 2, 1, 1, 0.5, 1, 2, 2, 1, 1])
+    feature_scale_0 = FeatureScale(name="feature_scale_0")
     hetero_feature_binning_0 = HeteroFeatureBinning(name="hetero_feature_binning_0")
     hetero_feature_selection_0 = HeteroFeatureSelection(name="hetero_feature_selection_0")
     one_hot_0 = OneHotEncoder(name="one_hot_0")
