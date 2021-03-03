@@ -397,7 +397,7 @@ class HomoDecisionTreeClient(DecisionTree):
 
     def traverse_tree(self, data_inst: Instance, tree: List[Node], use_missing, zero_as_missing):
 
-        nid = 0 # root node id
+        nid = 0  # root node id
         while True:
 
             if tree[nid].is_leaf:

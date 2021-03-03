@@ -184,7 +184,10 @@ class DecisionTree(BasicAlgorithms, ABC):
         # record node sample number in count_arr
         count_arr = np.zeros(len(node_map))
         for k, v in kv:
-            node_idx = node_map[v[1]]  # node position
+            if type(v) == int:  # leaf node format: (leaf_node_id)
+                node_idx = node_map[v]
+            else:  # internal node format: (1, node_id)
+                node_idx = node_map[v[1]]
             count_arr[node_idx] += 1
         return count_arr
 
