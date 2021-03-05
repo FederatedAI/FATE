@@ -3,7 +3,7 @@ DSL & Task Submit Runtime Conf Setting V2
 
 [`中文`_]
 
-.. _中文: dsl_conf_setting_v2_guide_zh.rst
+.. _中文: dsl_conf_v2_setting_guide_zh.rst
 
 
 To make the modeling task more flexible, currently, FATE uses its own domain-specific language(DSL)
@@ -101,21 +101,20 @@ this component has "output" field only, like the following:
 ^^^^^^^^^^^^^^^
 
 -  **definition:**  Data input from previous modules; there are four possible data_input type:
-
-      1. data: typically used in data_io, feature_engineering modules and evaluation.
-      2. train_data: uses in training components like HeteroLR、HeteroSBT and so on. If this field is provided, the task will be parse as a **fit** task
-      3. validate_data: If train_data is provided, this field is optional. In this case, this data will be used as validation set.
-      4. test_data: specify the data used to predict, if this field is set up, the **model** also needs.
+   1. data: typically used in data_io, feature_engineering modules and evaluation.
+   2. train_data: uses in training components like HeteroLR、HeteroSBT and so on. If this field is provided, the task will be parse as a **fit** task
+   3. validate_data: If train_data is provided, this field is optional. In this case, this data will be used as validation set.
+   4. test_data: specify the data used to predict, if this field is set up, the **model** also needs.
 
 4.2 Model Input
 ^^^^^^^^^^^^^^^^^
 
--  **definition:**  Model nput from previous modules; there are two possible model-input types:
+-  **definition:**  Model input from previous modules; there are two possible model-input types:
 
 1. model: This is a model input by the same type of component. For example, hetero_binning_0 run as a fit component, and hetero_binning_1 takes model output of hetero_binning_0 as input so that can be used to transform or predict.
-  Here's an example showing this logic:
+   Here's an example showing this logic:
 
-  .. code-block:: json
+   .. code-block:: json
 
       "hetero_feature_binning_1": {
           "module": "HeteroFeatureBinning",
@@ -136,9 +135,9 @@ this component has "output" field only, like the following:
       }
 
 2. isometric_model: This is used to specify the model input from upstream components.
-  For example, feature selection will take feature binning as upstream model, since it will use information value as feature importance. Here's an example of feature selection component:
+   For example, feature selection will take feature binning as upstream model, since it will use information value as feature importance. Here's an example of feature selection component:
 
-    .. code-block:: json
+   .. code-block:: json
 
         "hetero_feature_selection_0": {
             "module": "HeteroFeatureSelection",
@@ -662,7 +661,7 @@ Common parameters will be copied for every party.
 
 Please note that in dsl v2，predict dsl is not automatically generated after training.
 User should first deploy needed components with `Flow Client <../python/fate_client/flow_client/README.rst>`__.
-Please refer to`FATE-Flow document <../python/fate_client/flow_client/README.rst#deploy>`__
+Please refer to `FATE-Flow document <../python/fate_client/flow_client/README.rst#deploy>`__
 for details on using deploy command:
 
 .. code-block:: bash
