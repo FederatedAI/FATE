@@ -27,9 +27,9 @@ fateboard:
   host: 127.0.0.1
   port: 8080
 database:
-  name: 'fate'
-  user: 'fate-dev'
-  passwd: 'fate-dev'
+  name: fate_flow
+  user: fate
+  passwd: fate
   host: 127.0.0.1
   port: 3306
   max_connections: 100
@@ -48,34 +48,34 @@ fate_on_spark:
     cores_per_node: 20
     nodes: 2
   hdfs:
-    name_node: hdfs://127.0.0.1:9000
+    name_node: hdfs://fate-cluster
     # default /
     path_prefix:
   rabbitmq:
-    host: 127.0.0.1
-    mng_port: 15672
+    host: 192.168.0.4
+    mng_port: 12345
     port: 5672
     user: fate
     password: fate
     # default conf/rabbitmq_route_table.yaml
     route_table:
-  nginx:
-    host: 127.0.0.1
-    http_port: 9300
-    grpc_port: 9310
   pulsar:
-    host: 127.0.0.1
+    host: 192.168.0.5
     port: 6650
     mng_port: 8080
     # default conf/pulsar_route_table.yaml
     route_table:
+  nginx:
+    host: 127.0.0.1
+    http_port: 9300
+    grpc_port: 9310
 model_store_address:
   storage: mysql
-  name: "fate"
+  name: model
   host: 127.0.0.1
   port: 3306
-  user: "fate-dev"
-  passwd: "fate-dev"
+  user: fate
+  passwd: fate
   max_connections: 10
   stale_timeout: 10
 servings:
