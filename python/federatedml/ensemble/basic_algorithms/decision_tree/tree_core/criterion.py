@@ -53,19 +53,6 @@ class XgboostCriterion(Criterion):
         else:
             return 0
 
-    # def _l1_l2_node_gain(self, sum_grad, sum_hess):
-    #     return -(self._g_alpha_cmp(sum_grad, self.reg_alpha)) / (sum_hess + self.reg_lambda)
-    #
-    # def _l2_node_gain(self, sum_grad, sum_hess):
-    #     return sum_grad * sum_grad / (sum_hess + self.reg_lambda)
-    #
-    # def _l1_l2_node_weight(self, sum_grad, sum_hess):
-    #     num = self._g_alpha_cmp(sum_grad, self.reg_alpha)
-    #     return num*num / (sum_hess + self.reg_lambda)
-    #
-    # def _l2_node_weight(self, sum_grad, sum_hess):
-    #     return -sum_grad / (self.reg_lambda + sum_hess)
-
     def split_gain(self, node_sum, left_node_sum, right_node_sum):
         sum_grad, sum_hess = node_sum
         left_node_sum_grad, left_node_sum_hess = left_node_sum
