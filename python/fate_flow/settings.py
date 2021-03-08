@@ -72,15 +72,11 @@ SUPPORT_BACKENDS_ENTRANCE = {
         EngineType.STORAGE: (StorageEngine.EGGROLL, "clustermanager"),
         EngineType.FEDERATION: (FederationEngine.EGGROLL, "rollsite"),
     },
-    "fate_on_spark_rabbitmq": {
+    "fate_on_spark": {
         EngineType.COMPUTING: (ComputingEngine.SPARK, "spark"),
         EngineType.STORAGE: (StorageEngine.HDFS, "hdfs"),
         EngineType.FEDERATION: (FederationEngine.RABBITMQ, "rabbitmq"),
-    },
-    "fate_on_spark_pulsar": {
-        EngineType.COMPUTING: (ComputingEngine.SPARK, "spark"),
-        EngineType.STORAGE: (StorageEngine.HDFS, "hdfs"),
-        EngineType.FEDERATION: (FederationEngine.PULSAR, "pulsar")
+        EngineType.FEDERATION: (FederationEngine.PULSAR, "pulsar"),
     }
 }
 
