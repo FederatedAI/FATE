@@ -27,6 +27,7 @@ MULTY = 'multi'
 CLASSIFICATION = "classification"
 REGRESSION = 'regression'
 CLUSTERING = 'clustering'
+ONE_VS_REST = 'one_vs_rest'
 PAILLIER = 'Paillier'
 RANDOM_PADS = "RandomPads"
 NONE = "None"

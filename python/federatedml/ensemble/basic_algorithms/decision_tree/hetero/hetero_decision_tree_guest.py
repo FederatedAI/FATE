@@ -370,7 +370,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
                 s2.sum_hess = s1.sum_hess
 
         LOGGER.debug('final host best splits {}'.format(final_host_split_info))
-        LOGGER.debug('final guest best splits {}'.format(best_split_info_guest))
         final_best_splits = self.merge_splitinfo(best_split_info_guest, final_host_split_info, need_decrypt=False)
 
         return final_best_splits
