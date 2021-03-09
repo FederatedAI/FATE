@@ -830,7 +830,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
                 predict_result = predict_result.union(predict_leaf)
 
             predict_data = predict_data.subtractByKey(predict_leaf)
-
             unleaf_node_count = predict_data.count()
 
             if unleaf_node_count == 0:

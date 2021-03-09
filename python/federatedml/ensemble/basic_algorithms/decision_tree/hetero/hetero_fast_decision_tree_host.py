@@ -376,6 +376,12 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
     Mix Mode
     """
 
+    def sync_en_g_sum_h_sum(self):
+
+        gh_list = self.transfer_inst.encrypted_grad_and_hess.get(idx=0, suffix='ghsum')
+        g_sum, h_sum = gh_list
+        return g_sum, h_sum
+
     def mix_mode_fit(self):
 
         LOGGER.info('running mix mode')
@@ -390,7 +396,7 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
         LOGGER.debug('use local host feature to build tree')
 
         self.sync_encrypted_grad_and_hess()
-        root_sum_grad, root_sum_hess = self.get_grad_hess_sum(self.grad_and_hess)
+        root_sum_grad, root_sum_hess = self.sync_en_g_sum_h_sum()
         self.inst2node_idx = self.assign_instance_to_root_node(self.data_bin,
                                                                root_node_id=0)  # root node id is 0
 

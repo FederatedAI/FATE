@@ -16,13 +16,13 @@
 
 import argparse
 
-from pipeline.runtime.entity import JobParameters
-
 from pipeline.backend.pipeline import PipeLine
-from pipeline.component import DataTransform
-from pipeline.component import Reader
-from pipeline.interface import Data
+from pipeline.component.dataio import DataIO
+from pipeline.component.intersection import Intersection
+from pipeline.component.reader import Reader
+from pipeline.interface.data import Data
 from pipeline.utils.tools import load_job_config
+from pipeline.runtime.entity import JobParameters
 
 
 def main(config="../../config.yaml", namespace=""):
@@ -35,8 +35,8 @@ def main(config="../../config.yaml", namespace=""):
     backend = config.backend
     work_mode = config.work_mode
 
-    guest_train_data = {"name": "ionosphere_scale_hetero_guest", "namespace": f"experiment{namespace}"}
-    host_train_data = {"name": "ionosphere_scale_hetero_host", "namespace": f"experiment{namespace}"}
+    guest_train_data = {"name": "breast_hetero_guest_repeated_id", "namespace": f"experiment{namespace}"}
+    host_train_data = {"name": "breast_hetero_host", "namespace": f"experiment{namespace}"}
 
     pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=host)
 
@@ -44,20 +44,23 @@ def main(config="../../config.yaml", namespace=""):
     reader_0.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data)
     reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
 
-    data_transform_0 = DataTransform(name="data_transform_0")
-    data_transform_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True,
-                                                                                      label_name="LABEL",
-                                                                                      missing_fill=True,
-                                                                                      missing_fill_method="mean",
-                                                                                      outlier_replace=True)
-    data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False,
-                                                                                    missing_fill=True,
-                                                                                    missing_fill_method="designated",
-                                                                                    default_value=0,
-                                                                                    outlier_replace=False)
+    dataio_0 = DataIO(name="dataio_0")
+
+    dataio_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=False, output_format="dense", exclusive_data_type={"id":"str"})
+    dataio_0.get_party_instance(role='host', party_id=host).component_param(with_label=False, output_format="dense")
+
+    param = {
+        "intersect_method": "rsa",
+        "sync_intersect_ids": True,
+        "only_output_key": True,
+        "repeated_id_process": True,
+        "repeated_id_owner": "guest"
+    }
+    intersect_0 = Intersection(name="intersect_0", **param)
 
     pipeline.add_component(reader_0)
-    pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
+    pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
+    pipeline.add_component(intersect_0, data=Data(data=dataio_0.output.data))
 
     pipeline.compile()
 
@@ -74,3 +77,4 @@ if __name__ == "__main__":
         main(args.config)
     else:
         main()
+

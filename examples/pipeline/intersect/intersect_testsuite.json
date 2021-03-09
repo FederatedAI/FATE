@@ -23,6 +23,14 @@
             "table_name": "breast_hetero_host",
             "namespace": "experiment",
             "role": "host_1"
+        },
+        {
+            "file": "examples/data/breast_hetero_guest_repeated_id.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_guest_repeated_id",
+            "namespace": "experiment",
+            "role": "guest_0"
         }
     ],
     "pipeline_tasks": {
@@ -49,6 +57,9 @@
         },
         "raw_intersect_200c_with_union": {
             "script": "./pipeline-intersect-with-union.py"
+        },
+        "repeated_id": {
+            "script": "./pipeline-intersect-repeated-id.py"
         }
     }
 }
