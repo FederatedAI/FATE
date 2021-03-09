@@ -37,6 +37,7 @@ class Server(homo_binning_base.Server):
             self.aggregator = table_aggregator.Server(enable_secure_aggregate=True)
         self.get_total_count()
         self.get_min_max()
+        self.get_missing_count()
         self.query_values()
 
 
@@ -47,6 +48,7 @@ class Client(homo_binning_base.Client):
         self.query_points = None
         self.global_ranks = None
         self.total_count = 0
+        self.missing_count = 0
 
     def fit(self, data_inst):
         if self.bin_inner_param is None:
@@ -62,6 +64,7 @@ class Client(homo_binning_base.Client):
         summary_table = quantile_tool.fit_summary(data_inst)
 
         self.get_min_max(data_inst)
+        self.missing_count = self.get_missing_count(summary_table)
         self.query_points = self.init_query_points(summary_table.partitions,
                                                    split_num=self.params.sample_bins)
         self.global_ranks = self.query_values(summary_table, self.query_points)
@@ -72,24 +75,32 @@ class Client(homo_binning_base.Client):
             self.aggregator = table_aggregator.Client(enable_secure_aggregate=True)
         self.fit(data_instances)
 
-        percent_value = 1.0 / self.bin_num
-
-        # calculate the split points
-        percentile_rate = [i * percent_value for i in range(1, self.bin_num)]
-        percentile_rate.append(1.0)
-
-        query_ranks = [int(x * self.total_count) for x in percentile_rate]
-        query_func = functools.partial(self._query, query_ranks=query_ranks)
-        split_point_table = self.query_points.join(self.global_ranks, query_func)
+        query_func = functools.partial(self._query, bin_num=self.bin_num,
+                                       missing_count=self.missing_count,
+                                       total_count=self.total_count)
+        split_point_table = self.query_points.join(self.global_ranks, lambda x, y: (x, y))
+        # split_point_table = self.query_points.join(self.global_ranks, query_func)
+        split_point_table = split_point_table.map(query_func)
         split_points = dict(split_point_table.collect())
         for col_name, sps in split_points.items():
             self.bin_results.put_col_split_points(col_name, sps)
         # self._query(query_ranks)
         return self.bin_results.all_split_points
 
-    def _query(self, query_points, global_ranks, query_ranks):
+    def _query(self, feature_name, values, bin_num, missing_count, total_count):
+        percent_value = 1.0 / bin_num
+
+        # calculate the split points
+        percentile_rate = [i * percent_value for i in range(1, bin_num)]
+        percentile_rate.append(1.0)
+        this_count = total_count - missing_count[feature_name]
+        query_ranks = [int(x * this_count) for x in percentile_rate]
+
+        query_points, global_ranks = values[0], values[1]
         query_values = [x.value for x in query_points]
         query_res = []
+        # query_ranks = [max(0, x - missing_count[feature_name]) for x in query_ranks]
+
         for rank in query_ranks:
             idx = bisect.bisect_left(global_ranks, rank)
             if idx >= len(global_ranks) - 1:
@@ -97,7 +108,7 @@ class Client(homo_binning_base.Client):
                 query_res.append(approx_value)
             else:
                 if np.fabs(query_values[idx + 1] - query_values[idx]) < consts.FLOAT_ZERO:
-                    query_res.append([query_values[idx]])
+                    query_res.append(query_values[idx])
                 elif np.fabs(global_ranks[idx + 1] - global_ranks[idx]) < consts.FLOAT_ZERO:
                     query_res.append(query_values[idx])
                 else:
@@ -107,29 +118,4 @@ class Client(homo_binning_base.Client):
                     query_res.append(approx_value)
         if not self.allow_duplicate:
             query_res = sorted(set(query_res))
-        return query_res
-
-
-        # for col_name in self.bin_inner_param.bin_names:
-        #     query_res = []
-        #     query_values = self.query_points[col_name]
-        #     global_ranks = self.global_ranks[col_name]
-        #     LOGGER.debug(f"query_values: {query_values}, global_ranks: {global_ranks}")
-        #     for rank in ranks:
-        #         idx = bisect.bisect_left(global_ranks, rank)
-        #         if idx >= len(global_ranks) - 1:
-        #             approx_value = query_values[-1]
-        #             query_res.append(approx_value)
-        #         else:
-        #             if np.fabs(query_values[idx + 1] - query_values[idx]) < consts.FLOAT_ZERO:
-        #                 query_res.append([query_values[idx]])
-        #             elif global_ranks[idx + 1] <= global_ranks[idx]:
-        #                 query_res.append(query_values[idx])
-        #             else:
-        #                 approx_value = query_values[idx] + (query_values[idx + 1] - query_values[idx]) * \
-        #                                ((rank - global_ranks[idx]) /
-        #                                 (global_ranks[idx + 1] - global_ranks[idx]))
-        #                 query_res.append(approx_value)
-        #     if not self.allow_duplicate:
-        #         query_res = sorted(set(query_res))
-        #     self.bin_results.put_col_split_points(col_name, query_res)
+        return feature_name, query_res

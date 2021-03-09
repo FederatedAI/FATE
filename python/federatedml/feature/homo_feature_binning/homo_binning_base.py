@@ -21,15 +21,14 @@ from federatedml.util import LOGGER
 from federatedml.feature.binning.base_binning import BaseBinning
 from federatedml.framework import weights
 from fate_arch.session import computing_session as session
-from federatedml.framework.homo.blocks import secure_sum_aggregator
 from federatedml.param.feature_binning_param import HomoFeatureBinningParam
 from federatedml.statistic.data_statistics import MultivariateStatisticalSummary
 from federatedml.transfer_variable.transfer_class.homo_binning_transfer_variable import HomoBinningTransferVariable
-from federatedml.framework.weights import Weights
+from federatedml.util import consts
 
 
 class SplitPointNode(object):
-    def __init__(self, value, min_value, max_value, aim_rank, allow_error_rank, last_rank=-1):
+    def __init__(self, value, min_value, max_value, aim_rank=None, allow_error_rank=0, last_rank=-1):
         self.value = value
         self.min_value = min_value
         self.max_value = max_value
@@ -38,13 +37,22 @@ class SplitPointNode(object):
         self.last_rank = last_rank
         self.fixed = False
 
+    def set_aim_rank(self, rank):
+        self.aim_rank = rank
+
     def create_right_new(self):
         value = (self.value + self.max_value) / 2
+        if np.fabs(value - self.value) <= consts.FLOAT_ZERO * 0.1:
+            self.fixed = True
+            return self
         min_value = self.value
         return SplitPointNode(value, min_value, self.max_value, self.aim_rank, self.allow_error_rank)
 
     def create_left_new(self):
         value = (self.value + self.min_value) / 2
+        if np.fabs(value - self.value) <= consts.FLOAT_ZERO * 0.1:
+            self.fixed = True
+            return self
         max_value = self.max_value
         return SplitPointNode(value, self.min_value, max_value, self.aim_rank, self.allow_error_rank)
 
@@ -107,6 +115,11 @@ class Server(BaseBinning):
         self.aggregator.send_aggregated_model(total_count, suffix=(self.suffix, 'total_count'))
         return total_count
 
+    def get_missing_count(self):
+        missing_count = self.aggregator.sum_model(suffix=(self.suffix, 'missing_count'))
+        self.aggregator.send_aggregated_model(missing_count, suffix=(self.suffix, 'missing_count'))
+        return missing_count
+
     def get_min_max(self):
         local_values = self.transfer_variable.local_static_values.get(suffix=(self.suffix, "min-max"))
         max_array, min_array = [], []
@@ -150,6 +163,14 @@ class Client(BaseBinning):
         total_count = self.aggregator.get_aggregated_model(suffix=(self.suffix, 'total_count')).unboxed
         return total_count
 
+    def get_missing_count(self, summary_table):
+        missing_table = summary_table.mapValues(lambda x: x.missing_count)
+        missing_value_counts = dict(missing_table.collect())
+        missing_weight = weights.DictWeights(missing_value_counts)
+        self.aggregator.send_model(missing_weight, suffix=(self.suffix, 'missing_count'))
+        missing_counts = self.aggregator.get_aggregated_model(suffix=(self.suffix, 'missing_count')).unboxed
+        return missing_counts
+
     def get_min_max(self, data_inst):
         """
         Get max and min value of each selected columns
@@ -174,7 +195,6 @@ class Client(BaseBinning):
                                                           suffix=(self.suffix, "min-max"))
         self.max_values, self.min_values = self.transfer_variable.global_static_values.get(
                                         idx=0, suffix=(self.suffix, "min-max"))
-        LOGGER.debug(f"global_max_values: {self.max_values}, min_value: {self.min_values}")
         return self.max_values, self.min_values
 
     def init_query_points(self, partitions, split_num, error_rank=1, need_first=True):
@@ -183,12 +203,11 @@ class Client(BaseBinning):
             max_value = self.max_values[idx]
             min_value = self.min_values[idx]
             sps = np.linspace(min_value, max_value, split_num)
-            aim_ranks = [np.floor(x * self.total_count)
-                         for x in np.linspace(0, 1, split_num)]
+
             if not need_first:
                 sps = sps[1:]
-                aim_ranks = aim_ranks[1:]
-            split_point_array = [SplitPointNode(sps[i], min_value, max_value, aim_ranks[i], error_rank)
+
+            split_point_array = [SplitPointNode(sps[i], min_value, max_value, allow_error_rank=error_rank)
                                  for i in range(len(sps))]
             query_points.append((col_name, split_point_array))
         query_points_table = session.parallelize(query_points,
@@ -197,8 +216,6 @@ class Client(BaseBinning):
         return query_points_table
 
     def query_values(self, summary_table, query_points):
-        LOGGER.debug(f"In query_values, query_points: {query_points}")
-
         local_ranks = summary_table.join(query_points, self._query_table)
 
         self.aggregator.send_table(local_ranks, suffix=(self.suffix, 'rank'))
