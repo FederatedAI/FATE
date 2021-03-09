@@ -115,6 +115,13 @@ class DecisionTree(BasicAlgorithms, ABC):
         self.bin_split_points = bin_split_points
         self.bin_sparse_points = bin_sparse_points
 
+    def check_max_split_nodes(self):
+        # check max_split_nodes
+        if self.max_split_nodes != 0 and self.max_split_nodes % 2 == 1:
+            self.max_split_nodes += 1
+            LOGGER.warning('an even max_split_nodes value is suggested '
+                           'when using histogram-subtraction, max_split_nodes reset to {}'.format(self.max_split_nodes))
+
     def set_flowid(self, flowid=0):
         LOGGER.info("set flowid, flowid is {}".format(flowid))
         self.transfer_inst.set_flowid(flowid)
@@ -173,6 +180,8 @@ class DecisionTree(BasicAlgorithms, ABC):
         # record node sample number in count_arr
         count_arr = np.zeros(len(node_map))
         for k, v in kv:
+            if v[1] not in node_map:
+                continue
             node_idx = node_map[v[1]]  # node position
             count_arr[node_idx] += 1
         return count_arr

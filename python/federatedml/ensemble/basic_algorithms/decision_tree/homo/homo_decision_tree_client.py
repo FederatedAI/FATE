@@ -50,13 +50,6 @@ class HomoDecisionTreeClient(DecisionTree):
         self.bin_sparse_points = bin_sparse_point
         self.epoch_idx = epoch_idx
         self.tree_idx = tree_idx
-
-        # check max_split_nodes
-        if self.max_split_nodes != 0 and self.max_split_nodes % 2 == 1:
-            self.max_split_nodes += 1
-            LOGGER.warning('an even max_split_nodes value is suggested '
-                           'when using histogram-subtraction, max_split_nodes reset to {}'.format(self.max_split_nodes))
-
         self.transfer_inst = HomoDecisionTreeTransferVariable()
 
         """
@@ -78,6 +71,8 @@ class HomoDecisionTreeClient(DecisionTree):
 
         elif mode == 'predict':
             self.role, self.aggregator = None, None
+
+        self.check_max_split_nodes()
 
     def set_flowid(self, flowid=0):
         LOGGER.info("set flowid, flowid is {}".format(flowid))

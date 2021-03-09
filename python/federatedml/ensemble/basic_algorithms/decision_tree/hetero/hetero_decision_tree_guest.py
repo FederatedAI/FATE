@@ -125,6 +125,8 @@ class HeteroDecisionTreeGuest(DecisionTree):
         super(HeteroDecisionTreeGuest, self).init_data_and_variable(flowid, runtime_idx, data_bin, bin_split_points,
                                                                     bin_sparse_points, valid_features, grad_and_hess)
 
+        self.check_max_split_nodes()
+
         self.encrypter = encrypter
         self.encrypted_mode_calculator = encrypted_mode_calculator
         self.complete_secure_tree = complete_secure
@@ -368,6 +370,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
                 s2.sum_hess = s1.sum_hess
 
         LOGGER.debug('final host best splits {}'.format(final_host_split_info))
+        LOGGER.debug('final guest best splits {}'.format(best_split_info_guest))
         final_best_splits = self.merge_splitinfo(best_split_info_guest, final_host_split_info, need_decrypt=False)
 
         return final_best_splits
