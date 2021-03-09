@@ -33,6 +33,9 @@ def goss_sampling(grad_and_hess, top_rate, other_rate):
     a_part_num = int(sample_num * top_rate)
     b_part_num = int(sample_num * other_rate)
 
+    if a_part_num == 0 or b_part_num == 0:
+        raise ValueError('subsampled result is 0: top sample {}, other sample {}'.format(a_part_num, b_part_num))
+
     # index of a part
     a_sample_idx = sorted_idx[:a_part_num]
 

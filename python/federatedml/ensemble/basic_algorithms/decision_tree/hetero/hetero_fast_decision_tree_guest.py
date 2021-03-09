@@ -223,9 +223,7 @@ class HeteroFastDecisionTreeGuest(HeteroDecisionTreeGuest):
         LOGGER.info('running layered mode')
 
         self.initialize_node_plan()
-
         self.process_and_sync_grad_and_hess()
-
         root_node = self.initialize_root_node()
         self.cur_layer_nodes = [root_node]
         self.inst2node_idx = self.assign_instance_to_root_node(self.data_bin, root_node_id=root_node.id)
@@ -275,6 +273,12 @@ class HeteroFastDecisionTreeGuest(HeteroDecisionTreeGuest):
     Mix Mode
     """
 
+    def sync_en_g_sum_h_sum(self):
+        root_sum_grad, root_sum_hess = self.get_grad_hess_sum(self.grad_and_hess)
+        en_g, en_h = self.encrypt(root_sum_grad), self.encrypt(root_sum_hess)
+        self.transfer_inst.encrypted_grad_and_hess.remote(idx=self.host_id_to_idx(self.target_host_id),
+                                                          obj=[en_g, en_h], suffix='ghsum', role=consts.HOST)
+
     def mix_mode_fit(self):
 
         LOGGER.info('running mix mode')
@@ -283,6 +287,7 @@ class HeteroFastDecisionTreeGuest(HeteroDecisionTreeGuest):
 
         if self.tree_type != plan.tree_type_dict['guest_feat_only']:
             self.process_and_sync_grad_and_hess(idx=self.host_id_to_idx(self.target_host_id))
+            self.sync_en_g_sum_h_sum()
         else:
             root_node = self.initialize_root_node()
             self.cur_layer_nodes = [root_node]
@@ -358,7 +363,6 @@ class HeteroFastDecisionTreeGuest(HeteroDecisionTreeGuest):
                                               missing_dir_maskdict=self.missing_dir_maskdict)
             predict_result = predict_data.join(data_inst, traverse_tree)
             LOGGER.debug('guest_predict_inst_count is {}'.format(predict_result.count()))
-
         else:
             LOGGER.debug('predicting using host local tree')
             leaf_node_info = self.sync_sample_leaf_pos(idx=self.host_id_to_idx(self.target_host_id))

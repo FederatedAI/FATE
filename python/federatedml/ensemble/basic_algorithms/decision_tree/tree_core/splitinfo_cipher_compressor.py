@@ -86,15 +86,12 @@ class GuestSplitInfoDecompressor(object):
     def unpack_split_info(self, node_id, packages):
 
         unpack_lists = self.decompressor[node_id].unpack(packages)
-        rs = []
-        for l_ in unpack_lists:
-            rs += l_
 
-        for split_info in rs:
+        for split_info in unpack_lists:
             split_info.sum_grad = split_info.sum_grad - split_info.sample_count * self.g_offset
             split_info.sum_hess = split_info.sum_hess - split_info.sample_count * self.h_offset
 
-        return rs
+        return unpack_lists
 
 
 class HostSplitInfoCompressor(object):
