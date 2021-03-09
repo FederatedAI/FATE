@@ -196,6 +196,7 @@ class MetricInterface(object):
             except:
                 rs = [0, [0], [0], [0], [0]]   # in case all labels are 0 or 1
                 logging.warning("all true labels are 0/1 when running ovr KS")
+            return rs
         else:
             return classification_metric.KS().compute(labels, pred_scores)
 
