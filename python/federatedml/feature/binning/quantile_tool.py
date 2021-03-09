@@ -18,7 +18,7 @@ import functools
 from federatedml.feature.binning.quantile_binning import QuantileBinning
 from federatedml.param.feature_binning_param import FeatureBinningParam
 from federatedml.statistic import data_overview
-from federatedml.util import consts
+from federatedml.util import consts, LOGGER
 
 
 class QuantileBinningTool(QuantileBinning):
@@ -41,6 +41,7 @@ class QuantileBinningTool(QuantileBinning):
     def fit_summary(self, data_instances, is_sparse=None):
         if is_sparse is None:
             is_sparse = data_overview.is_sparse_data(data_instances)
+            LOGGER.debug(f"is_sparse: {is_sparse}")
 
         f = functools.partial(self.feature_summary,
                               params=self.params,

@@ -19,7 +19,7 @@
 
 import math
 
-from federatedml.util import consts
+from federatedml.util import consts, LOGGER
 
 
 class Stats(object):
@@ -40,6 +40,7 @@ class QuantileSummaries(object):
         self.head_sampled = []
         self.sampled = []  # list of Stats
         self.count = 0  # Total observations appeared
+        self.missing_count = 0
         if abnormal_list is None:
             self.abnormal_list = []
         else:
@@ -57,6 +58,7 @@ class QuantileSummaries(object):
 
         """
         if x in self.abnormal_list:
+            self.missing_count += 1
             return
 
         try:
@@ -148,6 +150,7 @@ class QuantileSummaries(object):
                                      error=self.error,
                                      abnormal_list=self.abnormal_list)
         res_summary.count = self.count + other.count
+        res_summary.missing_count = self.missing_count + other.missing_count
         res_summary.sampled = new_sample
         # self.sampled = new_sample
         # self.count += other.count
@@ -209,14 +212,15 @@ class QuantileSummaries(object):
         return (min_rank + max_rank) // 2
 
     def query_value_list(self, values):
+        """
+        Given a sorted value list, return the rank of each element in this list
+        """
         self.compress()
         res = []
         min_rank, max_rank = 0, 0
         idx = 0
         sample_idx = 0
-        from federatedml.util import LOGGER
-        # LOGGER.debug(f"sampled: {[x.value for x in self.sampled]}")
-        # for sample in self.sampled:
+
         while sample_idx < len(self.sampled):
             v = values[idx]
             sample = self.sampled[sample_idx]
@@ -229,8 +233,6 @@ class QuantileSummaries(object):
                 idx += 1
                 if idx >= len(values):
                     break
-                # LOGGER.debug(f"value: {v}, sample_value: {sample.value}, min_rank: {min_rank}"
-                #              f"max_rank: {max_rank}, res: {(min_rank + max_rank) // 2}")
 
         while idx < len(values):
             res.append((min_rank + max_rank) // 2)
@@ -284,8 +286,13 @@ class SparseQuantileSummaries(QuantileSummaries):
         self._total_count = total_count
         return self
 
+    @property
+    def summary_count(self):
+        return self._total_count - self.missing_count
+
     def insert(self, x):
         if x in self.abnormal_list:
+            self.missing_count += 1
             return
         if x < consts.FLOAT_ZERO:
             self.smaller_num += 1
@@ -303,7 +310,7 @@ class SparseQuantileSummaries(QuantileSummaries):
 
     def value_to_rank(self, value):
         quantile_rank = super().value_to_rank(value)
-        zeros_count = self._total_count - self.count
+        zeros_count = self.zero_counts
 
         if value > 0:
             return quantile_rank + zeros_count
@@ -320,12 +327,12 @@ class SparseQuantileSummaries(QuantileSummaries):
         return res_summary
 
     def _convert_query_percentile(self, quantile):
-        zeros_count = self._total_count - self.count
+        zeros_count = self.zero_counts
         if zeros_count == 0:
             return quantile
 
         if quantile <= self.zero_lower_bound:
-            return (self._total_count / self.count) * quantile
+            return ((self._total_count - self.missing_count) / self.count) * quantile
 
         return (quantile - self.zero_upper_bound + self.zero_lower_bound) / (
                 1 - self.zero_upper_bound + self.zero_lower_bound)
@@ -334,14 +341,29 @@ class SparseQuantileSummaries(QuantileSummaries):
     def zero_lower_bound(self):
         if self.smaller_num == 0:
             return 0.0
-        return self.smaller_num / self._total_count
+        return self.smaller_num / (self._total_count - self.missing_count)
 
     @property
     def zero_upper_bound(self):
         if self.bigger_num == 0:
-            return self._total_count
-        zeros_num = self._total_count - self.smaller_num - self.bigger_num
-        return (self.smaller_num + zeros_num) / self._total_count
+            return self._total_count - self.missing_count
+        return (self.smaller_num + self.zero_counts) / (self._total_count - self.missing_count)
+
+    @property
+    def zero_counts(self):
+        return self._total_count - self.smaller_num - self.bigger_num - self.missing_count
+
+    def query_value_list(self, values):
+        summary_ranks = super().query_value_list(values)
+        res = []
+        for v, r in zip(values, summary_ranks):
+            if v == 0:
+                res.append(self.smaller_num)
+            elif v < 0:
+                res.append(r)
+            else:
+                res.append(r + self.zero_counts)
+        return res
 
 
 def quantile_summary_factory(is_sparse, param_dict):
