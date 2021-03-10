@@ -295,7 +295,7 @@ class Federation(FederationABC):
                 topic_pair = _TopicPair(
                     namespace=self._session_id, send=send_topic_name, receive=receive_topic_name)
 
-                if self._mq.route_table.get(int(party.party_id)).get('local', False) == True:
+                if party.party_id == self._party.party_id:
                     LOGGER.debug(
                         'connecting to local broker, skipping cluster creation')
                 else:
@@ -349,9 +349,9 @@ class Federation(FederationABC):
                     DEFAULT_TENANT).json()
                 # create namespace
                 if f"{DEFAULT_TENANT}/{self._session_id}" not in namespaces:
-                    # append target cluster to the pulsaar namespace
+                    # append target cluster to the pulsar namespace
                     clusters = [DEFAULT_CLUSTER]
-                    if self._mq.route_table.get(int(party.party_id)).get('local', False) != True:
+                    if party.party_id != self._party.party_id and party.party_id not in clusters:
                         clusters.append(party.party_id)
 
                     policy = {
@@ -371,7 +371,7 @@ class Federation(FederationABC):
                             "unable to create pulsar namespace with status code: {}".format(code))
                 # update party to namespace
                 else:
-                    if self._mq.route_table.get(int(party.party_id)).get('local', False) != True:
+                    if party.party_id != self._party.party_id:
                         clusters = self._pulsar_manager.get_cluster_from_namespace(
                             DEFAULT_TENANT, self._session_id).json()
                         if party.party_id not in clusters:
