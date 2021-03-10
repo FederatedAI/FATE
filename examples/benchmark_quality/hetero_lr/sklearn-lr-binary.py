@@ -58,7 +58,7 @@ def main(config="../../config.yaml", param="./vechile_config.yaml"):
     df = df_guest.join(df_host, rsuffix="host")
     y = df[label_name]
     X = df.drop(label_name, axis=1)
-
+    print(list(X["x0"]))
     # x_train, x_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=0)
     x_train, x_test, y_train, y_test = X, X, y, y
 
