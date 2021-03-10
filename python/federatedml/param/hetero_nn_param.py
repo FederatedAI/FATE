@@ -221,8 +221,8 @@ class HeteroNNParam(BaseParam):
 
         if self.floating_point_precision is not None and \
                 (not isinstance(self.floating_point_precision, int) or\
-                 self.floating_point_precision < 0 or self.floating_point_precision > 64):
-            raise ValueError("floating point precision should be null or a integer between 0 and 64")
+                 self.floating_point_precision < 0 or self.floating_point_precision > 63):
+            raise ValueError("floating point precision should be null or a integer between 0 and 63")
 
         self.encrypt_param.check()
         self.encrypted_model_calculator_param.check()
