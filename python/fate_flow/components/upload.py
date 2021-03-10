@@ -83,7 +83,7 @@ class Upload(ComponentBase):
         address_dict = storage_address.copy()
         with storage.Session.build(session_id=job_utils.generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id, suffix="storage", random_end=True),
                                    storage_engine=storage_engine, options=self.parameters.get("options")) as storage_session:
-            if storage_engine in {StorageEngine.EGGROLL, StorageEngine.STANDALONE}:
+            if storage_engine in {StorageEngine.EGGROLL, StorageEngine.STANDALONE, StorageEngine.LOCAL}:
                 upload_address = {"name": name, "namespace": namespace, "storage_type": EggRollStorageType.ROLLPAIR_LMDB}
             elif storage_engine in {StorageEngine.MYSQL}:
                 upload_address = {"db": namespace, "name": name}

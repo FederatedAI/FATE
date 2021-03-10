@@ -11,6 +11,7 @@ class StorageEngine(object):
     SIMPLE = 'SIMPLE'
     FILE = 'FILE'
     PATH = 'PATH'
+    LOCAL = 'LOCAL'
 
 
 class StandaloneStorageType(object):
@@ -30,6 +31,10 @@ class EggRollStorageType(object):
     ROLLPAIR_CACHE = 'ROLL_PAIR_CACHE'
     ROLLPAIR_QUEUE = 'ROLL_PAIR_QUEUE'
     DEFAULT = ROLLPAIR_LMDB
+
+
+class LocalStorageType(object):
+    FILE = 'FILE'
 
 
 class HDFSStorageType(object):
@@ -69,7 +74,7 @@ class Relationship(object):
     CompToStore = {
         ComputingEngine.STANDALONE: [StorageEngine.STANDALONE],
         ComputingEngine.EGGROLL: [StorageEngine.EGGROLL],
-        ComputingEngine.SPARK: [StorageEngine.HDFS]
+        ComputingEngine.SPARK: [StorageEngine.HDFS, StorageEngine.LOCAL]
     }
     EngineToAddress = {
         StorageEngine.STANDALONE: StandaloneAddress,
@@ -78,6 +83,7 @@ class Relationship(object):
         StorageEngine.MYSQL: MysqlAddress,
         StorageEngine.FILE: FileAddress,
         StorageEngine.PATH: PathAddress
+        StorageEngine.LOCAL: StandaloneAddress
     }
 
 
