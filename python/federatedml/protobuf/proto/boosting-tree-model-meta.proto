@@ -42,3 +42,7 @@ message BoostingTreeModelMeta {
     string work_mode = 11;
 }
 
+message TransformerMeta{
+    BoostingTreeModelMeta tree_meta=1;
+    string model_name=2;
+}
