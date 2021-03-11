@@ -3,7 +3,7 @@ import sys
 
 import numpy as np
 import pandas as pd
-from scipy import stats
+from scipy.stats import stats
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
@@ -116,7 +116,6 @@ class KS(object):
 
     @staticmethod
     def compute(labels, pred_scores, pos_label=1):
-
         sorted_labels, sorted_scores = sort_score_and_label(labels, pred_scores)
 
         score_threshold, cuts = ThresholdCutter.cut_by_index(sorted_scores)
@@ -171,7 +170,7 @@ class BiClassMetric(object):
         return confusion_mat, score_threshold, cuts
 
     def compute(self, labels, scores, ):
-        confusion_mat, score_threshold, cuts = self.prepare_confusion_mat(labels, scores,)
+        confusion_mat, score_threshold, cuts = self.prepare_confusion_mat(labels, scores, )
         metric_scores = self.compute_metric_from_confusion_mat(confusion_mat)
         return list(metric_scores), score_threshold, cuts
 
@@ -180,7 +179,6 @@ class BiClassMetric(object):
 
 
 class Lift(BiClassMetric):
-
     """
     Compute lift
     """
@@ -224,11 +222,11 @@ class Lift(BiClassMetric):
 
         confusion_mat, score_threshold, cuts = self.prepare_confusion_mat(labels, pred_scores, add_to_end=False, )
 
-        lifts_y, lifts_x = self.compute_metric_from_confusion_mat(confusion_mat, len(labels),)
+        lifts_y, lifts_x = self.compute_metric_from_confusion_mat(confusion_mat, len(labels), )
 
         return lifts_y, lifts_x, list(score_threshold)
 
-    def compute_metric_from_confusion_mat(self, confusion_mat, labels_len,):
+    def compute_metric_from_confusion_mat(self, confusion_mat, labels_len, ):
 
         labels_nums = np.zeros(len(confusion_mat['tp'])) + labels_len
 
@@ -356,7 +354,6 @@ class MultiClassRecall(object):
 
 
 class BiClassAccuracy(BiClassMetric):
-
     """
     Compute binary classification accuracy
     """
@@ -368,8 +365,8 @@ class BiClassAccuracy(BiClassMetric):
 
     def compute_metric_from_confusion_mat(self, confusion_mat, normalize=True):
         rs = (confusion_mat['tp'] + confusion_mat['tn']) / \
-               (confusion_mat['tp'] + confusion_mat['tn'] + confusion_mat['fn'] + confusion_mat['fp']) if normalize \
-                else (confusion_mat['tp'] + confusion_mat['tn'])
+             (confusion_mat['tp'] + confusion_mat['tn'] + confusion_mat['fn'] + confusion_mat['fp']) if normalize \
+            else (confusion_mat['tp'] + confusion_mat['tn'])
         return rs[:-1]
 
 
@@ -383,13 +380,12 @@ class MultiClassAccuracy(object):
 
 
 class FScore(object):
-
     """
     Compute F score from bi-class confusion mat
     """
+
     @staticmethod
     def compute(labels, pred_scores, beta=1, pos_label=1):
-
         sorted_labels, sorted_scores = sort_score_and_label(labels, pred_scores)
         score_threshold, cuts = ThresholdCutter.cut_by_step(sorted_scores, steps=0.01)
         score_threshold.append(0)
@@ -456,7 +452,7 @@ class PSI(object):
             print(validate_count)
 
         assert (train_count['interval'] == validate_count['interval']), 'train count interval is not equal to ' \
-                                                                              'validate count interval'
+                                                                        'validate count interval'
 
         expected_interval = np.array(train_count['count'])
         actual_interval = np.array(validate_count['count'])
@@ -529,7 +525,7 @@ class PSI(object):
 
         return str_intervals
 
-    @ staticmethod
+    @staticmethod
     def psi_score(expected_interval: np.ndarray, actual_interval: np.ndarray, expect_total_num, actual_total_num,
                   debug=False):
 
@@ -552,22 +548,6 @@ class PSI(object):
         return psi_scores, total_psi, expected_interval, actual_interval, expected_percentage, actual_percentage
 
 
-class AveragePrecisionScore(object):
-
-    def compute(self, train_scores, validate_scores, train_labels, validate_labels):
-        """
-            train/validate scores: predicted scores on train/validate set
-            train/validate labels: true labels
-        """
-        train_aps = self.average_precision_score(train_scores, train_labels)
-        validate_aps = self.average_precision_score(validate_scores, validate_labels)
-        return train_aps, validate_aps
-
-    @staticmethod
-    def average_precision_score(pred_scores, labels):
-        return average_precision_score(labels, pred_scores)
-
-
 class KSTest(object):
 
     @staticmethod
@@ -575,7 +555,20 @@ class KSTest(object):
         """
         train/validate scores: predicted scores on train/validate set
         """
-        return stats.ks_2samp(train_scores, validate_scores)
+        return stats.ks_2samp(train_scores, validate_scores).pvalue
+
+
+class AveragePrecisionScore(object):
+
+    @staticmethod
+    def compute(train_scores, validate_scores, train_labels, validate_labels):
+        """
+            train/validate scores: predicted scores on train/validate set
+            train/validate labels: true labels
+        """
+        train_mAP = average_precision_score(train_scores, train_labels)
+        validate_mAP = average_precision_score(validate_scores, validate_labels)
+        return abs(train_mAP - validate_mAP)
 
 
 class Distribution(object):
@@ -587,7 +580,9 @@ class Distribution(object):
         """
         train_scores = np.array(train_scores)
         validate_scores = np.array(validate_scores)
-        quantise_points = ThresholdCutter().cut_by_quantile(train_scores)
-        train_count = PSI().quantile_binning_and_count(train_scores, quantise_points)
-        validate_count = PSI().quantile_binning_and_count(validate_scores, quantise_points)
-        return train_count, validate_count
+        validate_scores = dict(validate_scores)
+        count = 0
+        for key, value in train_scores:
+            if key in validate_scores.keys() and value != validate_scores.get(key):
+                count += 1
+        return count / len(train_scores)
