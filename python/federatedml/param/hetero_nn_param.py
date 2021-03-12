@@ -224,6 +224,10 @@ class HeteroNNParam(BaseParam):
                  self.floating_point_precision < 0 or self.floating_point_precision > 64):
             raise ValueError("floating point precision should be null or a integer between 0 and 64")
 
+        if not isinstance(self.drop_out_keep_rate, (float, int)) or self.drop_out_keep_rate < 0.0 or \
+                self.drop_out_keep_rate > 1.0:
+            raise ValueError("drop_out_keep_rate should be in range [0.0, 1.0]")
+
         self.encrypt_param.check()
         self.encrypted_model_calculator_param.check()
         self.predict_param.check()
