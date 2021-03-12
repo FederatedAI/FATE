@@ -59,6 +59,12 @@ fate_on_spark:
     password: fate
     # default conf/rabbitmq_route_table.yaml
     route_table:
+  pulsar:
+    host: 192.168.0.5
+    port: 6650
+    mng_port: 8080
+    # default conf/pulsar_route_table.yaml
+    route_table:
   nginx:
     host: 127.0.0.1
     http_port: 9300

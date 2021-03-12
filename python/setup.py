@@ -15,6 +15,7 @@ packages = \
  'fate_arch.federation',
  'fate_arch.federation.eggroll',
  'fate_arch.federation.rabbitmq',
+ 'fate_arch.federation.pulsar',
  'fate_arch.federation.standalone',
  'fate_arch.federation.transfer_variable',
  'fate_arch.federation.transfer_variable.scripts',
