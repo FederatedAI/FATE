@@ -566,8 +566,8 @@ class AveragePrecisionScore(object):
             train/validate scores: predicted scores on train/validate set
             train/validate labels: true labels
         """
-        train_mAP = average_precision_score(train_scores, train_labels)
-        validate_mAP = average_precision_score(validate_scores, validate_labels)
+        train_mAP = average_precision_score(train_labels, train_scores)
+        validate_mAP = average_precision_score(validate_labels, validate_scores)
         return abs(train_mAP - validate_mAP)
 
 

@@ -5,6 +5,7 @@ from federatedml.util import consts
 from federatedml.evaluation.metrics import classification_metric, clustering_metric, regression_metric
 from federatedml.evaluation.metric_interface import MetricInterface
 
+
 class TestEvaluation(unittest.TestCase):
 
     def setUp(self):
@@ -15,7 +16,6 @@ class TestEvaluation(unittest.TestCase):
         self.reg_label = np.random.random(100) * 10
 
         self.multi_score = np.random.randint([4 for i in range(50)])
-        self.multi_score_1 = np.random.randint([4 for i in range(40)])
         self.multi_label = np.random.randint([4 for i in range(50)])
 
         self.clustering_score = np.random.randint([4 for i in range(50)])
@@ -68,8 +68,10 @@ class TestEvaluation(unittest.TestCase):
 
     def test_newly_added(self):
         print('testing newly added')
-        classification_metric.Distribution().compute(self.psi_train_score, self.psi_val_score)
-        classification_metric.Distribution().compute(self.multi_score, self.multi_score_1)
+        binary_data = list(zip([i for i in range(len(self.psi_train_score))], self.psi_train_score))
+        classification_metric.Distribution().compute(binary_data, binary_data)
+        multi_data = list(zip([i for i in range(len(self.multi_score))], self.multi_score))
+        classification_metric.Distribution().compute(multi_data, multi_data)
 
         classification_metric.KSTest().compute(self.multi_score, self.multi_score)
         classification_metric.KSTest().compute(self.psi_train_score, self.psi_val_score)
