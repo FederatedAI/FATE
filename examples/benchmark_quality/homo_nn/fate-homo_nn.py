@@ -25,6 +25,7 @@ import tensorflow.keras.layers
 from tensorflow.keras import optimizers
 from pipeline.runtime.entity import JobParameters
 
+from examples.benchmark_quality.parse_result import parse_summary_result
 from federatedml.evaluation.metrics import classification_metric
 from fate_test.utils import extract_data
 
@@ -110,7 +111,7 @@ def main(config="../../config.yaml", param="param_conf.yaml", namespace=""):
     pipeline.compile()
     job_parameters = JobParameters(backend=config.backend, work_mode=config.work_mode)
     pipeline.fit(job_parameters)
-    metric_summary = pipeline.get_component("evaluation_0").get_summary()
+    metric_summary = parse_summary_result(pipeline.get_component("evaluation_0").get_summary())
     nn_0_data = pipeline.get_component("homo_nn_0").get_output_data().get("data")
     nn_1_data = pipeline.get_component("homo_nn_1").get_output_data().get("data")
     nn_0_score = extract_data(nn_0_data, "predict_result")

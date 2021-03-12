@@ -27,6 +27,7 @@ from pipeline.utils.tools import JobConfig
 from pipeline.utils.tools import load_job_config
 from pipeline.runtime.entity import JobParameters
 
+from examples.benchmark_quality.parse_result import parse_summary_result
 from federatedml.evaluation.metrics import regression_metric, classification_metric
 from fate_test.utils import extract_data
 
@@ -104,7 +105,7 @@ def main(config="../../config.yaml", param='./xgb_config_binary.yaml', namespace
     sbt_1_label = extract_data(sbt_1_data, "label")
     sbt_0_score_label = extract_data(sbt_0_data, "predict_result", keep_id=True)
     sbt_1_score_label = extract_data(sbt_1_data, "predict_result", keep_id=True)
-    metric_summary = pipeline.get_component("evaluation_0").get_summary()
+    metric_summary = parse_summary_result(pipeline.get_component("evaluation_0").get_summary())
     if param['eval_type'] == "regression":
         desc_sbt_0 = regression_metric.Describe().compute(sbt_0_score)
         desc_sbt_1 = regression_metric.Describe().compute(sbt_1_score)
