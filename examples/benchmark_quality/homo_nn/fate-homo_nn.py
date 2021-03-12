@@ -19,11 +19,14 @@ import argparse
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component import DataIO, HomoNN, Evaluation
 from pipeline.component import Reader
-from pipeline.interface import Data
+from pipeline.interface import Data, Model
 from pipeline.utils.tools import load_job_config, JobConfig
 import tensorflow.keras.layers
 from tensorflow.keras import optimizers
 from pipeline.runtime.entity import JobParameters
+
+from federatedml.evaluation.metrics import classification_metric
+from fate_test.utils import extract_data
 
 
 class dataset(object):
@@ -91,17 +94,43 @@ def main(config="../../config.yaml", param="param_conf.yaml", namespace=""):
         homo_nn_0.add(layer(**layer_params))
         homo_nn_0.compile(optimizer=getattr(optimizers, optimizer_name)(learning_rate=lr), metrics=metrics,
                           loss=loss)
-
-    evaluation_0 = Evaluation(name='evaluation_0', eval_type="multi", metrics=["accuracy", "precision", "recall"])
+    homo_nn_1 = HomoNN(name="homo_nn_1")
+    if param["loss"] == "categorical_crossentropy":
+        eval_type = "multi"
+    else:
+        eval_type = "binary"
+    evaluation_0 = Evaluation(name='evaluation_0', eval_type=eval_type, metrics=["accuracy", "precision", "recall"])
 
     pipeline.add_component(reader_0)
     pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
     pipeline.add_component(homo_nn_0, data=Data(train_data=dataio_0.output.data))
+    pipeline.add_component(homo_nn_1, data=Data(test_data=dataio_0.output.data),
+                           model=Model(homo_nn_0.output.model))
     pipeline.add_component(evaluation_0, data=Data(data=homo_nn_0.output.data))
     pipeline.compile()
     job_parameters = JobParameters(backend=config.backend, work_mode=config.work_mode)
     pipeline.fit(job_parameters)
     metric_summary = pipeline.get_component("evaluation_0").get_summary()
+    nn_0_data = pipeline.get_component("homo_nn_0").get_output_data().get("data")
+    nn_1_data = pipeline.get_component("homo_nn_1").get_output_data().get("data")
+    nn_0_score = extract_data(nn_0_data, "predict_result")
+    nn_0_label = extract_data(nn_0_data, "label")
+    nn_1_score = extract_data(nn_1_data, "predict_result")
+    nn_1_label = extract_data(nn_1_data, "label")
+    nn_0_score_label = extract_data(nn_0_data, "predict_result", keep_id=True)
+    nn_1_score_label = extract_data(nn_1_data, "predict_result", keep_id=True)
+    if eval_type == "binary":
+        metric_nn = {
+            "score_diversity_ratio": classification_metric.Distribution.compute(nn_0_score_label, nn_1_score_label),
+            "ks_2samp": classification_metric.KSTest.compute(nn_0_score, nn_1_score),
+            "mAP_D_value": classification_metric.AveragePrecisionScore().compute(nn_0_score, nn_1_score, nn_0_label,
+                                                                                 nn_1_label)}
+        metric_summary["distribution_metrics"] = {"homo_nn": metric_nn}
+    elif eval_type == "multi":
+        metric_nn = {
+            "score_diversity_ratio": classification_metric.Distribution.compute(nn_0_score_label, nn_1_score_label)}
+        metric_summary["distribution_metrics"] = {"homo_nn": metric_nn}
+
     data_summary = dict(
         train={"guest": guest_train_data["name"], **{f"host_{i}": host_train_data[i]["name"] for i in range(num_host)}},
         test={"guest": guest_train_data["name"], **{f"host_{i}": host_train_data[i]["name"] for i in range(num_host)}}
