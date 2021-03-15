@@ -29,6 +29,7 @@ from pipeline.runtime.entity import JobParameters
 
 from fate_test.utils import extract_data
 from federatedml.evaluation.metrics import classification_metric
+from examples.benchmark_quality.parse_result import parse_summary_result
 
 
 def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
@@ -143,7 +144,7 @@ def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
     lr_1_label = extract_data(lr_1_data, "label")
     lr_0_score_label = extract_data(lr_0_data, "predict_result", keep_id=True)
     lr_1_score_label = extract_data(lr_1_data, "predict_result", keep_id=True)
-    result_summary = pipeline.get_component("evaluation_0").get_summary()
+    result_summary = parse_summary_result(pipeline.get_component("evaluation_0").get_summary())
     metric_lr = {
         "score_diversity_ratio": classification_metric.Distribution.compute(lr_0_score_label, lr_1_score_label),
         "ks_2samp": classification_metric.KSTest.compute(lr_0_score, lr_1_score),
