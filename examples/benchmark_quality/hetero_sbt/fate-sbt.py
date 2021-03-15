@@ -29,6 +29,15 @@ from pipeline.utils.tools import JobConfig
 from pipeline.runtime.entity import JobParameters
 
 
+def parse_summary_result(rs_dict):
+    for model_key in rs_dict:
+        rs_content = rs_dict[model_key]
+        if 'validate' in rs_content:
+            return rs_content['validate']
+        else:
+            return rs_content['train']
+
+
 def main(config="../../config.yaml", param="./xgb_config_binary.yaml", namespace=""):
     # obtain config
     if isinstance(config, str):
@@ -104,7 +113,8 @@ def main(config="../../config.yaml", param="./xgb_config_binary.yaml", namespace
                     "test": {"guest": guest_train_data["name"], "host": host_train_data["name"]}
                     }
 
-    return data_summary, pipeline.get_component("evaluation_0").get_summary()
+    rs = pipeline.get_component("evaluation_0").get_summary()
+    return data_summary, parse_summary_result(rs)
 
 
 if __name__ == "__main__":
