@@ -28,7 +28,6 @@ from pipeline.utils.tools import load_job_config, JobConfig
 from pipeline.runtime.entity import JobParameters
 
 from federatedml.evaluation.metrics import regression_metric
-from examples.benchmark_quality.parse_result import parse_summary_result
 from fate_test.utils import extract_data
 
 
@@ -114,7 +113,7 @@ def main(config="../../config.yaml", param="./linr_config.yaml", namespace=""):
     job_parameters = JobParameters(backend=backend, work_mode=work_mode)
     pipeline.fit(job_parameters)
 
-    metric_summary = parse_summary_result(pipeline.get_component("evaluation_0").get_summary())
+    metric_summary = pipeline.get_component("evaluation_0").get_summary()
 
     data_linr_0 = extract_data(pipeline.get_component("hetero_linr_0").get_output_data().get("data"), "predict_result")
     data_linr_1 = extract_data(pipeline.get_component("hetero_linr_1").get_output_data().get("data"), "predict_result")

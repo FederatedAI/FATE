@@ -31,7 +31,6 @@ from pipeline.utils.tools import load_job_config, JobConfig
 from pipeline.runtime.entity import JobParameters
 
 from federatedml.evaluation.metrics import classification_metric
-from examples.benchmark_quality.parse_result import parse_summary_result
 from fate_test.utils import extract_data
 
 
@@ -109,7 +108,7 @@ def main(config="../../config.yaml", param="./hetero_nn_breast_config.yaml", nam
     nn_1_label = extract_data(nn_1_data, "label")
     nn_0_score_label = extract_data(nn_0_data, "predict_result", keep_id=True)
     nn_1_score_label = extract_data(nn_1_data, "predict_result", keep_id=True)
-    metric_summary = parse_summary_result(pipeline.get_component("evaluation_0").get_summary())
+    metric_summary = pipeline.get_component("evaluation_0").get_summary()
     if eval_type == "binary":
         metric_nn = {
             "score_diversity_ratio": classification_metric.Distribution.compute(nn_0_score_label, nn_1_score_label),
