@@ -54,7 +54,7 @@ class HeteroFastSecureBoostingTreeGuest(HeteroSecureBoostingTreeGuest):
 
         if self.cur_epoch_idx != epoch_idx:
             # update g/h every epoch
-            self.grad_and_hess = self.compute_grad_and_hess(self.y_hat, self.y)
+            self.grad_and_hess = self.compute_grad_and_hess(self.y_hat, self.y, self.data_inst)
             self.cur_epoch_idx = epoch_idx
 
         g_h = self.get_grad_and_hess(self.grad_and_hess, booster_dim)

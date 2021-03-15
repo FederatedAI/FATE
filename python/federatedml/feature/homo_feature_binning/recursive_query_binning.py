@@ -36,6 +36,7 @@ class Server(homo_binning_base.Server):
             self.aggregator = table_aggregator.Server(enable_secure_aggregate=False)
         self.get_total_count()
         self.get_min_max()
+        self.get_missing_count()
         self.set_suffix(-1)
         self.query_values()
         n_iter = 0
@@ -55,6 +56,7 @@ class Client(homo_binning_base.Client):
         self.allow_duplicate = allow_duplicate
         self.global_ranks = {}
         self.total_count = 0
+        self.missing_counts = 0
         self.error = params.error
         self.error_rank = None
         self.role = role
@@ -74,14 +76,34 @@ class Client(homo_binning_base.Client):
         summary_table = quantile_tool.fit_summary(data_instances)
 
         self.get_min_max(data_instances)
+        self.missing_counts = self.get_missing_count(summary_table)
         split_points_table = self._recursive_querying(summary_table)
         split_points = dict(split_points_table.collect())
         for col_name, sps in split_points.items():
             sp = [x.value for x in sps]
             if not self.allow_duplicate:
                 sp = sorted(set(sp))
+                res = [sp[0] if np.fabs(sp[0]) > consts.FLOAT_ZERO else 0.0]
+                last = sp[0]
+                for v in sp[1:]:
+                    if np.fabs(v) < consts.FLOAT_ZERO:
+                        v = 0.0
+                    if np.abs(v - last) > consts.FLOAT_ZERO:
+                        res.append(v)
+                    last = v
+                sp = res
             self.bin_results.put_col_split_points(col_name, sp)
         return self.bin_results.all_split_points
+
+    @staticmethod
+    def _set_aim_rank(feature_name, split_point_array, missing_dict, total_counts, split_num):
+        total_count = total_counts - missing_dict[feature_name]
+        aim_ranks = [np.floor(x * total_count)
+                     for x in np.linspace(0, 1, split_num)]
+        aim_ranks = aim_ranks[1:]
+        for idx, sp in enumerate(split_point_array):
+            sp.set_aim_rank(aim_ranks[idx])
+        return feature_name, split_point_array
 
     def _recursive_querying(self, summary_table):
         self.set_suffix(-1)
@@ -89,6 +111,12 @@ class Client(homo_binning_base.Client):
                                                     split_num=self.params.bin_num + 1,
                                                     error_rank=self.error_rank,
                                                     need_first=False)
+
+        f = functools.partial(self._set_aim_rank,
+                              missing_dict=self.missing_counts,
+                              total_counts=self.total_count,
+                              split_num=self.params.bin_num + 1)
+        query_points_table = query_points_table.map(f)
         global_ranks = self.query_values(summary_table, query_points_table)
 
         n_iter = 0

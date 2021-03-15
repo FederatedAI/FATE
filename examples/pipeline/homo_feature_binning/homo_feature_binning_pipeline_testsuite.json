@@ -61,6 +61,12 @@
         },
         "homo-recursive-binning": {
             "script": "pipeline-homo-recursive-binning.py"
+        },
+        "homo-virtual-summary-binning-predict": {
+            "script": "pipeline-homo-virtual-summary-binning-predict.py"
+        },
+        "homo-recursive-binning-predict": {
+            "script": "pipeline-homo-recursive-binning-predict.py"
         }
     }
 }

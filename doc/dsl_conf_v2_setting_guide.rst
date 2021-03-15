@@ -288,8 +288,8 @@ configuration
 
    * - backend
      - 0
-     - 0, 1
-     - 0 for EGGROLL, 1 for SPARK
+     - 0, 1, 2
+     - 0 for EGGROLL, 1 for SPARK with RabbitMQ, 2 for SPARK with Pulsar
 
    * - task_cores
      - 4
@@ -377,7 +377,7 @@ configuration
 
    * - federation_engine
      - set automatically based on ``work_mode`` and ``backend``
-     - EGGROLL, RABBITMQ, STANDALONE
+     - EGGROLL, RABBITMQ, STANDALONE, PULSAR
      - engine for communication among parties
 
    * - federated_mode
@@ -418,7 +418,7 @@ configuration
         }
      }
 
-3. **SPARK** conf example with manually specified CPU settings:
+3. **SPARK With RabbitMQ** conf example with manually specified CPU settings:
 
 .. code-block:: json
 
@@ -445,6 +445,21 @@ configuration
         }
      }
 
+4. **SPARK With Pulsar** conf example with default setting :
+
+.. code-block:: json
+
+     "job_parameters": {
+        "common": {
+            "job_type": "train",
+            "work_mode": 1,
+            "backend": 2,
+            "spark_run": {
+                "num-executors": 1,
+                "executor-cores": 2
+            }
+        }
+     }
 4.5 Resource Management
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 

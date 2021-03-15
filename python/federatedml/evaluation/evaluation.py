@@ -331,7 +331,7 @@ class Evaluation(ModelBase):
 
                 # set work mode to binary evaluation
                 self.eval_type = consts.BINARY
-                self.metric_interface.eval_type = consts.BINARY
+                self.metric_interface.eval_type = consts.ONE_VS_REST
                 back_up_metric = self.metrics
                 self.metrics = [consts.AUC, consts.KS]
 

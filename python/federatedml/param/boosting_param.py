@@ -493,6 +493,8 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         self.check_boolean(self.run_goss, 'run goss')
         self.check_decimal_float(self.top_rate, 'top rate')
         self.check_decimal_float(self.other_rate, 'other rate')
+        self.check_positive_number(self.other_rate, 'other_rate')
+        self.check_positive_number(self.top_rate, 'top_rate')
         self.check_boolean(self.new_ver, 'code version switcher')
 
         if self.top_rate + self.other_rate >= 1:

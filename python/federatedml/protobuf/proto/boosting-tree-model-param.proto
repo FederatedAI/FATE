@@ -46,3 +46,8 @@ message BoostingTreeModelParam {
     map<string, string> anonymous_name_mapping = 13;
 }
 
+message TransformerParam {
+    BoostingTreeModelParam tree_param=1;
+    string model_name=2;
+}
+
