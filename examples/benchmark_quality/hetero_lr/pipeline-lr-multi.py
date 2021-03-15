@@ -26,6 +26,7 @@ from pipeline.interface import Data, Model
 from pipeline.utils.tools import load_job_config, JobConfig
 from pipeline.runtime.entity import JobParameters
 
+from examples.benchmark_quality.parse_result import parse_summary_result
 from federatedml.evaluation.metrics import classification_metric
 from fate_test.utils import extract_data
 
@@ -132,7 +133,7 @@ def main(config="../../config.yaml", param="./vechile_config.yaml", namespace=""
     pipeline.fit(job_parameters)
     # query component summary
 
-    result_summary = pipeline.get_component("evaluation_0").get_summary()
+    result_summary = parse_summary_result(pipeline.get_component("evaluation_0").get_summary())
     lr_0_data = pipeline.get_component("hetero_lr_0").get_output_data().get("data")
     lr_1_data = pipeline.get_component("hetero_lr_1").get_output_data().get("data")
     lr_0_score_label = extract_data(lr_0_data, "predict_result", keep_id=True)
