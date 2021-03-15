@@ -41,6 +41,9 @@ class HomoBinningArbiter(BaseFeatureBinning):
         self.binning_obj.set_transfer_variable(self.transfer_variable)
         self.binning_obj.fit_split_points()
 
+    def transform(self, data_instances):
+        pass
+
 
 class HomoBinningClient(BaseFeatureBinning):
     def __init__(self):
