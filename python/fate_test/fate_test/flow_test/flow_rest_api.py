@@ -83,7 +83,7 @@ class TestModel(Base):
             try:
                 response = requests.post("/".join([self.server_url, "job", command]), json=post_data)
                 if response.json().get('retcode'):
-                    self.error_log('clean queue: {}'.format(response.json().get('retmsg')) + '\n')
+                    self.error_log('data view query: {}'.format(response.json().get('retmsg')) + '\n')
                 if len(response.json().get("data")) == len(self.dsl['components'].keys()) - 1:
                     return response.json().get('retcode')
             except Exception:
@@ -214,7 +214,7 @@ class TestModel(Base):
                                               extract_dir=extract_dir)
                         return 0
                     except Exception as e:
-                        self.error_log('list task: {}'.format(e) + '\n')
+                        self.error_log('component output data: {}'.format(e) + '\n')
                         return
 
         elif command == 'output/data/table':
@@ -497,7 +497,7 @@ class TestModel(Base):
                 if response.status_code == 200:
                     if response.json().get('retcode'):
                         self.error_log('model bind: {}'.format(response.json().get('retmsg')) + '\n')
-                    return True
+                    return response.json().get('retcode')
             except Exception:
                 return
 

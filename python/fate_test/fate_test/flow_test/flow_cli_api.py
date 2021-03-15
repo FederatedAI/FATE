@@ -73,7 +73,7 @@ class TestModel(object):
                 stdout, stderr = subp.communicate()
                 stdout = json.loads(stdout.decode("utf-8"))
                 if stdout.get('retcode'):
-                    self.error_log('clean queue: {}'.format(stdout.get('retmsg')) + '\n')
+                    self.error_log('job log: {}'.format(stdout.get('retmsg')) + '\n')
                 return stdout.get('retcode')
             except Exception:
                 return
@@ -85,7 +85,7 @@ class TestModel(object):
                 stdout, stderr = subp.communicate()
                 stdout = json.loads(stdout.decode("utf-8"))
                 if stdout.get('retcode'):
-                    self.error_log('clean queue: {}'.format(stdout.get('retmsg')) + '\n')
+                    self.error_log('data view queue: {}'.format(stdout.get('retmsg')) + '\n')
                 if len(stdout.get("data")) == len(list(get_dict_from_file(self.dsl_path)['components'].keys())) - 1:
                     return stdout.get('retcode')
             except Exception:
@@ -98,7 +98,7 @@ class TestModel(object):
                 stdout, stderr = subp.communicate()
                 stdout = json.loads(stdout.decode("utf-8"))
                 if stdout.get('retcode'):
-                    self.error_log('clean queue: {}'.format(stdout.get('retmsg')) + '\n')
+                    self.error_log('clean job: {}'.format(stdout.get('retmsg')) + '\n')
                 subp = subprocess.Popen(["python", self.fate_flow_path, "-f", "component_metrics", "-j", self.job_id,
                                          "-r", "guest", "-p", str(self.guest_party_id[0]), "-cpn", 'evaluation_0'],
                                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -190,7 +190,7 @@ class TestModel(object):
                 stdout, stderr = subp.communicate()
                 stdout = json.loads(stdout.decode("utf-8"))
                 if stdout.get('retcode'):
-                    self.error_log('clean queue: {}'.format(stdout.get('retmsg')) + '\n')
+                    self.error_log('component output data: {}'.format(stdout.get('retmsg')) + '\n')
                 return stdout.get('retcode')
             except Exception:
                 return
@@ -449,7 +449,7 @@ class TestModel(object):
             stdout, stderr = subp.communicate()
             stdout = json.loads(stdout.decode("utf-8"))
             if stdout.get('retcode'):
-                self.error_log('component output model: {}'.format(stdout.get('retmsg')) + '\n')
+                self.error_log('model export: {}'.format(stdout.get('retmsg')) + '\n')
             else:
                 export_model_path = stdout.get('file')
                 return stdout.get('retcode'), export_model_path
@@ -470,7 +470,7 @@ class TestModel(object):
             stdout, stderr = subp.communicate()
             stdout = json.loads(stdout.decode("utf-8"))
             if stdout.get('retcode'):
-                self.error_log('component output model: {}'.format(stdout.get('retmsg')) + '\n')
+                self.error_log('model {}: {}'.format(command, stdout.get('retmsg')) + '\n')
             return stdout.get('retcode')
 
     def query_status(self, job_id=None):

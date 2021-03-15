@@ -99,7 +99,7 @@ def main(config="../../config.yaml", param="param_conf.yaml", namespace=""):
         eval_type = "multi"
     else:
         eval_type = "binary"
-    evaluation_0 = Evaluation(name='evaluation_0', eval_type=eval_type, metrics=["accuracy", "precision", "recall"])
+    evaluation_0 = Evaluation(name='evaluation_0', eval_type="multi", metrics=["accuracy", "precision", "recall"])
 
     pipeline.add_component(reader_0)
     pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))

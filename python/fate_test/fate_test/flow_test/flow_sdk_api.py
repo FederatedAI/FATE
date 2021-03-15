@@ -90,7 +90,7 @@ class TestModel(object):
             try:
                 stdout = self.client.job.view(job_id=self.job_id)
                 if stdout.get('retcode'):
-                    self.error_log('clean queue: {}'.format(stdout.get('retmsg')) + '\n')
+                    self.error_log('job view: {}'.format(stdout.get('retmsg')) + '\n')
                 if len(stdout.get("data")) == len(list(get_dict_from_file(self.dsl_path)['components'].keys())) - 1:
                     return stdout.get('retcode')
             except Exception:
@@ -101,7 +101,7 @@ class TestModel(object):
             try:
                 stdout = self.client.job.log(job_id=self.job_id, output_path=log_file_dir)
                 if stdout.get('retcode'):
-                    self.error_log('clean queue: {}'.format(stdout.get('retmsg')) + '\n')
+                    self.error_log('job log: {}'.format(stdout.get('retmsg')) + '\n')
                 return stdout.get('retcode')
             except Exception:
                 return
@@ -179,7 +179,7 @@ class TestModel(object):
                                                            component_name=self.component_name,
                                                            output_path=component_output_path)
                 if stdout.get('retcode'):
-                    self.error_log('clean queue: {}'.format(stdout.get('retmsg')) + '\n')
+                    self.error_log('component output data: {}'.format(stdout.get('retmsg')) + '\n')
                 return stdout.get('retcode')
             except Exception:
                 return
@@ -428,7 +428,7 @@ class TestModel(object):
                 if stdout.get('retcode'):
                     self.error_log('model bind: {}'.format(stdout.get('retmsg')) + '\n')
                 else:
-                    return True
+                    return stdout.get('retcode')
             except Exception:
                 return
 
@@ -468,7 +468,7 @@ class TestModel(object):
                 json.dump(config_data, fp)
             stdout = self.client.model.export_model(conf_path=config_file_path)
             if stdout.get('retcode'):
-                self.error_log('component output model: {}'.format(stdout.get('retmsg')) + '\n')
+                self.error_log('model export: {}'.format(stdout.get('retmsg')) + '\n')
             else:
                 export_model_path = stdout.get('file')
                 return stdout.get('retcode'), export_model_path
