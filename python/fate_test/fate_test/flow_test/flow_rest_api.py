@@ -8,7 +8,6 @@ from pathlib import Path
 import requests
 from contextlib import closing
 from prettytable import PrettyTable, ORGMODE
-from fate_flow.entity.types import StatusSet
 from fate_test.flow_test.flow_process import Base, get_dict_from_file, download_from_request
 
 
@@ -74,7 +73,7 @@ class TestModel(Base):
                 if response.status_code == 200:
                     if response.json().get('retcode'):
                         self.error_log('job stop: {}'.format(response.json().get('retmsg')) + '\n')
-                    if self.query_job() == StatusSet.CANCELED:
+                    if self.query_job() == "canceled":
                         return response.json().get('retcode')
             except Exception:
                 return
@@ -179,7 +178,7 @@ class TestModel(Base):
                 if response.json().get('retcode'):
                     self.error_log('task query: {}'.format(response.json().get('retmsg')) + '\n')
                 status = response.json().get("data")[0].get("f_status")
-                if status == StatusSet.SUCCESS:
+                if status == "success":
                     return response.json().get('retcode')
         except Exception:
             return
@@ -704,8 +703,8 @@ class TestModel(Base):
         while True:
             time.sleep(5)
             status = self.query_job(job_id=job_id)
-            if status and status in [StatusSet.WAITING, StatusSet.RUNNING, StatusSet.SUCCESS]:
-                if status and status == StatusSet.SUCCESS:
+            if status and status in ["waiting", "running", "success"]:
+                if status and status == "success":
                     return 0
             else:
                 return
@@ -760,7 +759,7 @@ def run_test_api(config_json):
     job.add_row(['job stop', judging_state(test_api.job_api('stop'))])
     job.add_row(['job rerun', judging_state(test_api.job_api('rerun'))])
     job.add_row(['job submit', judging_state(test_api.submit_job(stop=False))])
-    job.add_row(['job query', judging_state(False if test_api.query_job() == StatusSet.SUCCESS else True)])
+    job.add_row(['job query', judging_state(False if test_api.query_job() == "success" else True)])
     job.add_row(['job data view', judging_state(test_api.job_api('data/view/query'))])
     job.add_row(['job list', judging_state(test_api.job_api('list/job'))])
     job.add_row(['job config', judging_state(test_api.job_config(max_iter=max_iter, output_path=output_path))])

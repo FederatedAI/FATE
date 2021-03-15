@@ -27,9 +27,8 @@ from pipeline.interface import Data, Model
 from pipeline.utils.tools import load_job_config, JobConfig
 from pipeline.runtime.entity import JobParameters
 
-from fate_test.utils import extract_data
+from fate_test.utils import extract_data, parse_summary_result
 from federatedml.evaluation.metrics import classification_metric
-from examples.benchmark_quality.parse_result import parse_summary_result
 
 
 def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):

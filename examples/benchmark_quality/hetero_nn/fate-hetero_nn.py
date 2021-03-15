@@ -31,8 +31,7 @@ from pipeline.utils.tools import load_job_config, JobConfig
 from pipeline.runtime.entity import JobParameters
 
 from federatedml.evaluation.metrics import classification_metric
-from examples.benchmark_quality.parse_result import parse_summary_result
-from fate_test.utils import extract_data
+from fate_test.utils import extract_data, parse_summary_result
 
 
 def main(config="../../config.yaml", param="./hetero_nn_breast_config.yaml", namespace=""):

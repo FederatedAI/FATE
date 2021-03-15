@@ -26,8 +26,7 @@ from tensorflow.keras import optimizers
 from pipeline.runtime.entity import JobParameters
 
 from federatedml.evaluation.metrics import classification_metric
-from examples.benchmark_quality.parse_result import parse_summary_result
-from fate_test.utils import extract_data
+from fate_test.utils import extract_data, parse_summary_result
 
 
 class dataset(object):

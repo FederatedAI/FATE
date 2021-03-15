@@ -197,6 +197,15 @@ def match_metrics(evaluate, group_name, abs_tol=None, rel_tol=None, **results):
     deinit()
 
 
+def parse_summary_result(rs_dict):
+    for model_key in rs_dict:
+        rs_content = rs_dict[model_key]
+        if 'validate' in rs_content:
+            return rs_content['validate']
+        else:
+            return rs_content['train']
+
+
 def extract_data(txt, col_name, convert_float=True, keep_id=False):
     """
     convert list of string from component output data to array

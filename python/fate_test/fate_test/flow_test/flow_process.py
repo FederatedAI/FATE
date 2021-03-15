@@ -6,7 +6,6 @@ from contextlib import closing
 from datetime import datetime
 
 import requests
-from fate_flow.entity.types import StatusSet
 
 
 def get_dict_from_file(file_name):
@@ -73,9 +72,9 @@ class Base(object):
             time.sleep(10)
             status = self.query_job()
             print("job {} status is {}".format(self.job_id, status))
-            if status and status == StatusSet.SUCCESS:
+            if status and status == "success":
                 return True
-            if status and status in [StatusSet.CANCELED, StatusSet.TIMEOUT, StatusSet.FAILED]:
+            if status and status in ["canceled", "timeout", "failed"]:
                 return False
         return False
 
