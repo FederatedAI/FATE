@@ -4,7 +4,7 @@
     "head": 1,
     "partition": 4,
     "work_mode": 1,
-    "backend": 0,
+    "backend": 1,
     "namespace": "experiment",
     "table_name": "breast_hetero_guest",
     "task_cores": 2

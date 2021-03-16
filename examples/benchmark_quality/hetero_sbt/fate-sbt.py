@@ -31,6 +31,15 @@ from pipeline.runtime.entity import JobParameters
 from federatedml.evaluation.metrics import regression_metric, classification_metric
 from fate_test.utils import extract_data, parse_summary_result
 
+def parse_summary_result(rs_dict):
+    for model_key in rs_dict:
+        rs_content = rs_dict[model_key]
+        if 'validate' in rs_content:
+            return rs_content['validate']
+        else:
+            return rs_content['train']
+
+
 def main(config="../../config.yaml", param="./xgb_config_binary.yaml", namespace=""):
     # obtain config
     if isinstance(config, str):
@@ -135,6 +144,7 @@ def main(config="../../config.yaml", param="./xgb_config_binary.yaml", namespace
                     }
 
     return data_summary, metric_summary
+
 
 
 if __name__ == "__main__":
