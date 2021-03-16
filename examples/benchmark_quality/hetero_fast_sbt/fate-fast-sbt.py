@@ -28,6 +28,9 @@ from pipeline.utils.tools import load_job_config
 from pipeline.utils.tools import JobConfig
 from pipeline.runtime.entity import JobParameters
 
+from federatedml.evaluation.metrics import regression_metric, classification_metric
+from fate_test.utils import extract_data, parse_summary_result
+
 
 def main(config="../../config.yaml", param="./xgb_config_binary.yaml", namespace=""):
     # obtain config
@@ -87,7 +90,7 @@ def main(config="../../config.yaml", param="./xgb_config_binary.yaml", namespace
                                               tree_num_per_party=param['tree_num_per_party'],
                                               work_mode=param['work_mode']
                                               )
-
+    hetero_fast_sbt_1 = HeteroFastSecureBoost(name="hetero_fast_sbt_1")
     # evaluation component
     evaluation_0 = Evaluation(name="evaluation_0", eval_type=param['eval_type'])
 
@@ -99,17 +102,45 @@ def main(config="../../config.yaml", param="./xgb_config_binary.yaml", namespace
     pipeline.add_component(intersect_1, data=Data(data=dataio_1.output.data))
     pipeline.add_component(hetero_fast_sbt_0, data=Data(train_data=intersect_0.output.data,
                                                         validate_data=intersect_1.output.data))
+    pipeline.add_component(hetero_fast_sbt_1, data=Data(test_data=intersect_1.output.data),
+                           model=Model(hetero_fast_sbt_0.output.model))
     pipeline.add_component(evaluation_0, data=Data(data=hetero_fast_sbt_0.output.data))
 
     pipeline.compile()
     job_parameters = JobParameters(backend=backend, work_mode=work_mode)
     pipeline.fit(job_parameters)
 
+    sbt_0_data = pipeline.get_component("hetero_fast_sbt_0").get_output_data().get("data")
+    sbt_1_data = pipeline.get_component("hetero_fast_sbt_1").get_output_data().get("data")
+    sbt_0_score = extract_data(sbt_0_data, "predict_result")
+    sbt_0_label = extract_data(sbt_0_data, "label")
+    sbt_1_score = extract_data(sbt_1_data, "predict_result")
+    sbt_1_label = extract_data(sbt_1_data, "label")
+    sbt_0_score_label = extract_data(sbt_0_data, "predict_result", keep_id=True)
+    sbt_1_score_label = extract_data(sbt_1_data, "predict_result", keep_id=True)
+    metric_summary = parse_summary_result(pipeline.get_component("evaluation_0").get_summary())
+    if param['eval_type'] == "regression":
+        desc_sbt_0 = regression_metric.Describe().compute(sbt_0_score)
+        desc_sbt_1 = regression_metric.Describe().compute(sbt_1_score)
+        metric_summary["script_metrics"] = {"hetero_fast_sbt_train": desc_sbt_0,
+                                            "hetero_fast_sbt_validate": desc_sbt_1}
+    elif param['eval_type'] == "binary":
+        metric_sbt = {
+            "score_diversity_ratio": classification_metric.Distribution.compute(sbt_0_score_label, sbt_1_score_label),
+            "ks_2samp": classification_metric.KSTest.compute(sbt_0_score, sbt_1_score),
+            "mAP_D_value": classification_metric.AveragePrecisionScore().compute(sbt_0_score, sbt_1_score, sbt_0_label,
+                                                                                 sbt_1_label)}
+        metric_summary["distribution_metrics"] = {"hetero_fast_sbt": metric_sbt}
+    elif param['eval_type'] == "multi":
+        metric_sbt = {
+            "score_diversity_ratio": classification_metric.Distribution.compute(sbt_0_score_label, sbt_1_score_label)}
+        metric_summary["distribution_metrics"] = {"hetero_fast_sbt": metric_sbt}
+
     data_summary = {"train": {"guest": guest_train_data["name"], "host": host_train_data["name"]},
                     "test": {"guest": guest_train_data["name"], "host": host_train_data["name"]}
                     }
 
-    return data_summary, pipeline.get_component("evaluation_0").get_summary()
+    return data_summary, metric_summary
 
 
 if __name__ == "__main__":

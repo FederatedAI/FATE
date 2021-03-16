@@ -1,12 +1,12 @@
-train_auc: 0.9752
+train_auc: 0.975186
 api_version: v1
 component_name: hetero_lr_0
 metric_output_path: ./output/metric/{}_hetero_lr_0.json
 model_output_path: ./output/model/{}_hetero_lr_0.json
 
 flow_test_template:
-  train_conf_path: /examples/fate_test/flow_test_template/hetero_lr_normal_conf.json
-  train_dsl_path: /examples/fate_test/flow_test_template/hetero_lr_normal_dsl.json
-  predict_conf_path: /examples/fate_test/flow_test_template/hetero-lr-normal-predict-conf.json
-  predict_dsl_path: /examples/fate_test/flow_test_template/hetero-lr-normal-predict-dsl.json
-  upload_conf_path: /examples/fate_test/flow_test_template/upload_conf.json
+  train_conf_path: /examples/flow_test_template/hetero_lr_normal_conf.json
+  train_dsl_path: /examples/flow_test_template/hetero_lr_normal_dsl.json
+  predict_conf_path: /examples/flow_test_template/hetero-lr-normal-predict-conf.json
+  predict_dsl_path: /examples/flow_test_template/hetero-lr-normal-predict-dsl.json
+  upload_conf_path: /examples/flow_test_template/upload_conf.json
