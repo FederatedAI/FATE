@@ -34,6 +34,7 @@ from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.feature_histo
     HistogramBag, FeatureHistogram
 from typing import List
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.feature_importance import FeatureImportance
+from federatedml.util import consts
 
 
 class DecisionTree(BasicAlgorithms, ABC):
@@ -205,9 +206,16 @@ class DecisionTree(BasicAlgorithms, ABC):
     def assign_instance_to_root_node(data_bin, root_node_id):
         return data_bin.mapValues(lambda inst: (1, root_node_id))
 
+    @staticmethod
+    def float_round(num):
+        """
+        prevent float error
+        """
+        return round(num, consts.TREE_DECIMAL_ROUND)
+
     def update_feature_importance(self, splitinfo, record_site_name=True):
 
-        inc_split, inc_gain = 1, splitinfo.gain
+        inc_split, inc_gain = 1, self.float_round(splitinfo.gain)
 
         sitename = splitinfo.sitename
         fid = splitinfo.best_fid
@@ -223,6 +231,12 @@ class DecisionTree(BasicAlgorithms, ABC):
         self.feature_importance[key].add_split(inc_split)
         if inc_gain is not None:
             self.feature_importance[key].add_gain(inc_gain)
+
+    def round_leaf_val(self):
+        # process predict weight to prevent float error
+        for node in self.tree_node:
+            if node.is_leaf:
+                node.weight = self.float_round(node.weight)
 
     """
     To implement

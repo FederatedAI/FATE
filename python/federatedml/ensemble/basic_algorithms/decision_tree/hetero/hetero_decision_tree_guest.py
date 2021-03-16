@@ -761,6 +761,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
             self.assign_instance_to_leaves_and_update_weights()
 
         self.convert_bin_to_real()
+        self.round_leaf_val()
         self.sync_tree()
 
         LOGGER.info("fitting guest decision tree done")
