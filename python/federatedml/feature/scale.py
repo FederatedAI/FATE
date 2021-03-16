@@ -132,6 +132,7 @@ class Scale(ModelBase):
         meta_obj = list(model_dict.get('model').values())[0].get(self.model_meta_name)
         self.header = list(model_obj.header)
         self.need_run = meta_obj.need_run
+        self.model_param.method = meta_obj.method
 
         shape = len(self.header)
         self.column_max_value = [0 for _ in range(shape)]
