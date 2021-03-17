@@ -132,7 +132,7 @@ class JobInvoker(object):
 
             elif status == JobStatus.FAILED:
                 # sys.stdout.write(f"\n\r")
-                LOGGER.info(f"\n\r")
+                # LOGGER.info(f"\n\r")
                 raise ValueError(f"Job is failed, please check out job {job_id} by fate board or fate_flow cli")
 
             elif status == JobStatus.WAITING:
