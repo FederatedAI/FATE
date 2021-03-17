@@ -77,16 +77,20 @@ class RSAParam(BaseParam):
 
     random_base_fraction: positive float, if not None, generate (fraction * public key id count) of r for encryption and reuse generated r;
         note that value greater than 0.99 will be taken as 1, and value less than 0.01 will be rounded up to 0.01
+
+    key_bit: positive int, bit count of rsa key, default 1024
+
     """
 
     def __init__(self, salt='', hash_method='sha256',  final_hash_method='sha256',
-                 split_calculation=False, random_base_fraction=None):
+                 split_calculation=False, random_base_fraction=None, key_bit=1024):
         super().__init__()
         self.salt = salt
         self.hash_method = hash_method
         self.final_hash_method = final_hash_method
         self.split_calculation = split_calculation
         self.random_base_fraction = random_base_fraction
+        self.key_bit = key_bit
 
     def check(self):
         if type(self.salt).__name__ != "str":
@@ -112,6 +116,9 @@ class RSAParam(BaseParam):
         if self.random_base_fraction:
             self.check_positive_number(self.random_base_fraction, descr)
             self.check_decimal_float(self.random_base_fraction, descr)
+
+        descr = "rsa param's key_bit"
+        self.check_positive_integer(self.key_bit, descr)
 
         return True
 
