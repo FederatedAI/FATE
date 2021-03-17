@@ -27,7 +27,8 @@
                 "rsa_params": {
                     "hash_method": "sha256",
                     "final_hash_method": "sha256",
-                    "split_calculation": false
+                    "split_calculation": false,
+                    "key_length": 2048
                 }
             }
         },
