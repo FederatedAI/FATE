@@ -126,7 +126,7 @@ class JobInvoker(object):
                 # print("job is success!!!")
                 elapse_seconds = timedelta(seconds=int(time.time() - start_time))
                 # sys.stdout.write(f"\n\r")
-                LOGGER.info(f"\n\rJob is success!!! Job id is {job_id}")
+                LOGGER.info(f"Job is success!!! Job id is {job_id}")
                 LOGGER.info(f"Total time: {elapse_seconds}")
                 return StatusCode.SUCCESS
 
