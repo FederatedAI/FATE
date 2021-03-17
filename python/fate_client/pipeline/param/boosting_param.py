@@ -211,7 +211,7 @@ class BoostingParam(BaseParam):
 
         num_trees : int, accepted int, float only, the max number of boosting round. default: 5
 
-        subsample_feature_rate : float, a float-number in [0, 1], default: 0.8
+        subsample_feature_rate : float, a float-number in [0, 1], default: 1.0
 
         n_iter_no_change : bool,
             when True and residual error less than tol, tree building process will stop. default: True
@@ -366,7 +366,7 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
 
         num_trees : int, accepted int, float only, the max number of trees to build. default: 5
 
-        subsample_feature_rate : float, a float-number in [0, 1], default: 0.8
+        subsample_feature_rate : float, a float-number in [0, 1], default: 1.0
 
         subsample_random_seed: seed that controls feature subsample
 
