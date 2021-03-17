@@ -131,6 +131,8 @@ class Tracker(object):
                 address_dict.update({"name": output_table_name, "namespace": output_table_namespace, "storage_type": storage.StandaloneStorageType.ROLLPAIR_LMDB})
             elif output_storage_engine == StorageEngine.HDFS:
                 address_dict.update({"path": data_utils.default_output_fs_path(name=output_table_name, namespace=output_table_namespace, prefix=address_dict.get("path_prefix"))})
+            elif output_storage_engine == StorageEngine.LOCAL:
+                address_dict.update({"path": data_utils.default_output_fs_path(name=output_table_name, namespace=output_table_namespace, prefix=address_dict.get("path_prefix"))})
             else:
                 raise RuntimeError(f"{output_storage_engine} storage is not supported")
             address = storage.StorageTableMeta.create_address(storage_engine=output_storage_engine, address_dict=address_dict)
