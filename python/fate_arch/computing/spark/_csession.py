@@ -18,7 +18,7 @@ from typing import Iterable
 
 from fate_arch.abc import AddressABC
 from fate_arch.abc import CSessionABC
-from fate_arch.computing.spark._table import from_hdfs, from_rdd
+from fate_arch.computing.spark._table import from_hdfs, from_rdd, from_local_file
 from fate_arch.common import log
 
 LOGGER = log.getLogger()
@@ -35,18 +35,23 @@ class CSession(CSessionABC):
     def load(self, address: AddressABC, partitions, schema, **kwargs):
         from fate_arch.common.address import HDFSAddress
         if isinstance(address, HDFSAddress):
-            table = from_hdfs(paths=f"{address.name_node}/{address.path}", partitions=partitions)
+            table = from_hdfs(
+                paths=f"{address.name_node}/{address.path}", partitions=partitions)
             table.schema = schema
             return table
+
         from fate_arch.common.address import FileAddress
         if isinstance(address, FileAddress):
             return address
 
         from fate_arch.common.address import PathAddress
         if isinstance(address, PathAddress):
-            from fate_arch.computing.non_distributed import LocalData
-            return LocalData(address.path)
-        raise NotImplementedError(f"address type {type(address)} not supported with spark backend")
+            table = from_local_file(path=address.path, partitions=partitions)
+            table.schema = schema
+            return table
+
+        raise NotImplementedError(
+            f"address type {type(address)} not supported with spark backend")
 
     def parallelize(self, data: Iterable, partition: int, include_key: bool, **kwargs):
         # noinspection PyPackageRequirements

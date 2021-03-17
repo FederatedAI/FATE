@@ -40,23 +40,28 @@ class Table(CTableABC):
     def __del__(self):
         try:
             unmaterialize(self._rdd)
-            del self._rdd            
+            del self._rdd
         except:
-            return 
+            return
 
     @computing_profile
     def save(self, address, partitions, schema, **kwargs):
-        from fate_arch.common.address import HDFSAddress
+        from fate_arch.common.address import HDFSAddress, PathAddress
 
         if isinstance(address, HDFSAddress):
             self._rdd.map(lambda x: hdfs_utils.serialize(x[0], x[1])).repartition(
                 partitions
             ).saveAsTextFile(f"{address.name_node}/{address.path}")
-            schema.update(self.schema)
-            return
-        raise NotImplementedError(
-            f"address type {type(address)} not supported with spark backend"
-        )
+        elif isinstance(address, PathAddress):
+            self._rdd.map(lambda x: hdfs_utils.serialize(x[0], x[1])).repartition(
+                partitions
+            ).saveAsTextFile(f"{address.path}")
+        else:
+            raise NotImplementedError(
+                f"address type {type(address)} not supported with spark backend"
+            )
+
+        schema.update(self.schema)
 
     @property
     def partitions(self):
@@ -82,7 +87,8 @@ class Table(CTableABC):
             )
             return self.applyPartitions(func)
         return from_rdd(
-            self._rdd.mapPartitions(func, preservesPartitioning=preserves_partitioning)
+            self._rdd.mapPartitions(
+                func, preservesPartitioning=preserves_partitioning)
         )
 
     @computing_profile
@@ -107,7 +113,8 @@ class Table(CTableABC):
     ):
         if fraction is not None:
             return from_rdd(
-                self._rdd.sample(fraction=fraction, withReplacement=False, seed=seed)
+                self._rdd.sample(fraction=fraction,
+                                 withReplacement=False, seed=seed)
             )
 
         if num is not None:
@@ -166,6 +173,17 @@ def from_hdfs(paths: str, partitions):
     sc = SparkContext.getOrCreate()
     rdd = materialize(
         sc.textFile(paths, partitions)
+        .map(hdfs_utils.deserialize)
+        .repartition(partitions)
+    )
+    return Table(rdd=rdd)
+
+
+def from_local_file(path: str, partitions):
+    from pyspark import SparkContext
+    sc = SparkContext.getOrCreate()
+    rdd = materialize(
+        sc.textFile(path, partitions)
         .map(hdfs_utils.deserialize)
         .repartition(partitions)
     )
@@ -233,7 +251,8 @@ def _exactly_sample(rdd, num: int, seed: int):
     total = sum(split_size.values())
 
     if num > total:
-        raise ValueError(f"not enough data to sample, own {total} but required {num}")
+        raise ValueError(
+            f"not enough data to sample, own {total} but required {num}")
     # random the size of each split
     sampled_size = {}
     for split, size in split_size.items():
