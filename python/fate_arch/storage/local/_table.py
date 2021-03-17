@@ -13,14 +13,13 @@ from fate_arch.common import hdfs_utils
 from fate_arch.common.log import getLogger
 from fate_arch.storage import StorageEngine, LocalStorageType
 from fate_arch.storage import StorageTableBase
-from fate_arch._standalone import _get_data_dir, _get_storage_dir
 
 LOGGER = getLogger()
 
 
 class StorageTable(StorageTableBase):
+
     def __init__(self,
-                 session: Session,
                  address=None,
                  name: str = None,
                  namespace: str = None,
@@ -36,9 +35,13 @@ class StorageTable(StorageTableBase):
         self._options = options if options else {}
         self._engine = StorageEngine.LOCAL
 
-        self._path = _get_storage_dir(self._name, self._namespace)
-
         self._local_fs_client = fs.LocalFileSystem()
+
+    def _get_data_dir():
+        return _data_dir
+
+    def _get_storage_dir(*args):
+        return _data_dir.joinpath(*args)
 
     def get_name(self):
         return self._name
@@ -61,8 +64,16 @@ class StorageTable(StorageTableBase):
     def get_options(self):
         return self._options
 
+    @property
+    def _path(self):
+        return self._address.path
+
     def put_all(self, kv_list: Iterable, append=True, assume_file_exist=False, **kwargs):
-            LOGGER.info(f"put in file: {self._path}")
+        LOGGER.info(f"put in file: {self._path}")
+
+        # always create the directory first, otherwise the following creation of file will fail.
+        self._local_fs_client. create_dir('/'.join(self._path.split('/')[:-1]))
+
         if append and (assume_file_exist or self._exist()):
             stream = self._local_fs_client.open_append_stream(path=self._path, compression=None)
         else:
@@ -86,7 +97,12 @@ class StorageTable(StorageTableBase):
 
     def destroy(self):
         super().destroy()
-        self._local_fs_client.delete_file(self._path)
+
+        # use try/catch to avoid stop while deleting an non-exist file
+        try:
+            self._local_fs_client.delete_file(self._path)
+        except Exception as e:
+            LOGGER.debug(e)
 
     def count(self):
         count = 0
@@ -126,7 +142,7 @@ class StorageTable(StorageTableBase):
                     continue
                 assert file_info.is_file, f"{self._path} is directory contains a subdirectory: {file_info.path}"
                 with io.TextIOWrapper(
-                        buffer=self._local_fs_client.open_input_stream(f"{self._address.name_node}/{file_info.path}"),
+                        buffer=self._local_fs_client.open_input_stream(f"{self._address.file_path:}/{file_info.path}"),
                         encoding="utf-8") as reader:
                     for line in reader:
                         yield line

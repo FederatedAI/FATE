@@ -82,8 +82,8 @@ class Relationship(object):
         StorageEngine.HDFS: HDFSAddress,
         StorageEngine.MYSQL: MysqlAddress,
         StorageEngine.FILE: FileAddress,
-        StorageEngine.PATH: PathAddress
-        StorageEngine.LOCAL: StandaloneAddress
+        StorageEngine.PATH: PathAddress,
+        StorageEngine.LOCAL: PathAddress
     }
 
 

@@ -76,7 +76,7 @@ SUPPORT_BACKENDS_ENTRANCE = {
     },
     "fate_on_spark": {
         EngineType.COMPUTING: [(ComputingEngine.SPARK, "spark")],
-        EngineType.STORAGE: [(StorageEngine.HDFS, "hdfs")],
+        EngineType.STORAGE: [(StorageEngine.HDFS, "hdfs"), (StorageEngine.LOCAL, "local")],
         EngineType.FEDERATION: [
             (FederationEngine.RABBITMQ, "rabbitmq"), (FederationEngine.PULSAR, "pulsar")]
     }

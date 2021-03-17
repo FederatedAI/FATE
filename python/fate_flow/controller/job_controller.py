@@ -93,28 +93,41 @@ class JobController(object):
                 raise RuntimeError("unable to find compatible backend engines")
             work_mode = WorkMode(job_parameters.work_mode)
             backend = Backend(job_parameters.backend)
-            if backend == Backend.EGGROLL:
-                if work_mode == WorkMode.CLUSTER:
-                    job_parameters.computing_engine = ComputingEngine.EGGROLL
-                    job_parameters.federation_engine = FederationEngine.EGGROLL
-                    job_parameters.storage_engine = StorageEngine.EGGROLL
-                else:
+
+            if work_mode == WorkMode.STANDALONE:
+                if backend == backend.STANDALONE_SINGLE:
                     job_parameters.computing_engine = ComputingEngine.STANDALONE
                     job_parameters.federation_engine = FederationEngine.STANDALONE
                     job_parameters.storage_engine = StorageEngine.STANDALONE
-            elif backend == Backend.SPARK_PULSAR:
-                job_parameters.computing_engine = ComputingEngine.SPARK
-                job_parameters.federation_engine = FederationEngine.PULSAR
-                job_parameters.storage_engine = StorageEngine.HDFS
-            elif backend == Backend.SPARK_RABBITMQ:
-                job_parameters.computing_engine = ComputingEngine.SPARK
-                job_parameters.federation_engine = FederationEngine.RABBITMQ
-                job_parameters.storage_engine = StorageEngine.HDFS
-                # add mq info
-                federation_info = {}
-                federation_info['union_name'] = string_utils.random_string(4)
-                federation_info['policy_id'] = string_utils.random_string(10)
-                job_parameters.federation_info = federation_info
+                elif backend == backend.STANDALONE_MULTIPLE:
+                    job_parameters.computing_engine = ComputingEngine.SPARK
+                    job_parameters.federation_engine = FederationEngine.RABBITMQ
+                    job_parameters.storage_engine = StorageEngine.LOCAL
+
+                     # add mq info
+                    federation_info = {}
+                    federation_info['union_name'] = string_utils.random_string(4)
+                    federation_info['policy_id'] = string_utils.random_string(10)
+                    job_parameters.federation_info = federation_info
+
+            if work_mode == WorkMode.CLUSTER:
+                if backend == backend.EGGROLL:
+                    job_parameters.computing_engine = ComputingEngine.EGGROLL
+                    job_parameters.federation_engine = FederationEngine.EGGROLL
+                    job_parameters.storage_engine = StorageEngine.EGGROLL
+                elif backend == Backend.SPARK_PULSAR:
+                    job_parameters.computing_engine = ComputingEngine.SPARK
+                    job_parameters.federation_engine = FederationEngine.PULSAR
+                    job_parameters.storage_engine = StorageEngine.HDFS
+                elif backend == Backend.SPARK_RABBITMQ:
+                    job_parameters.computing_engine = ComputingEngine.SPARK
+                    job_parameters.federation_engine = FederationEngine.RABBITMQ
+                    job_parameters.storage_engine = StorageEngine.HDFS
+                    # add mq info
+                    federation_info = {}
+                    federation_info['union_name'] = string_utils.random_string(4)
+                    federation_info['policy_id'] = string_utils.random_string(10)
+                    job_parameters.federation_info = federation_info
 
         if job_parameters.federated_mode is None:
             if job_parameters.computing_engine in [ComputingEngine.EGGROLL, ComputingEngine.SPARK]:

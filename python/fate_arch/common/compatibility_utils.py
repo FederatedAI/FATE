@@ -31,14 +31,18 @@ def backend_compatibility(work_mode: typing.Union[WorkMode, int] = WorkMode.STAN
             work_mode = WorkMode(work_mode)
         if isinstance(backend, int):
             backend = Backend(backend)
-        if backend == Backend.EGGROLL:
-            if work_mode == WorkMode.CLUSTER:
-                return ComputingEngine.EGGROLL, FederationEngine.EGGROLL, FederatedMode.MULTIPLE
-            else:
+        if work_mode == WorkMode.STANDALONE:
+            if backend == Backend.STANDALONE_SINGLE:
                 return ComputingEngine.STANDALONE, FederationEngine.STANDALONE, FederatedMode.SINGLE
-        if backend == Backend.SPARK_RABBITMQ:
-            return ComputingEngine.SPARK, FederationEngine.RABBITMQ, FederatedMode.MULTIPLE
-        if backend == Backend.SPARK_PULSAR:
-            return ComputingEngine.SPARK, FederationEngine.PULSAR, FederatedMode.MULTIPLE
+            if backend == Backend.STANDALONE_MULTIPLE:
+                return ComputingEngine.SPARK, FederationEngine.RABBITMQ, FederatedMode.MULTIPLE
+
+        if work_mode == WorkMode.CLUSTER:
+            if backend == Backend.EGGROLL:
+                return ComputingEngine.EGGROLL, FederationEngine.EGGROLL, FederatedMode.MULTIPLE
+            if backend == Backend.SPARK_RABBITMQ:
+                return ComputingEngine.SPARK, FederationEngine.RABBITMQ, FederatedMode.MULTIPLE
+            if backend == Backend.SPARK_PULSAR:
+                return ComputingEngine.SPARK, FederationEngine.PULSAR, FederatedMode.MULTIPLE
     else:
         return kwargs["computing_engine"], kwargs["federation_engine"], kwargs["federated_mode"]

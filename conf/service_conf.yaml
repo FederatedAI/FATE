@@ -71,6 +71,9 @@ fate_on_spark:
     host: 127.0.0.1
     http_port: 9300
     grpc_port: 9310
+  local:
+    # default /fate
+    path_prefix:
 model_store_address:
   storage: mysql
   name: model
@@ -93,4 +96,3 @@ fatemanager:
   host: 127.0.0.1
   port: 8001
   federatedId: 0
-

@@ -16,7 +16,8 @@ class Backend(IntEnum):
     EGGROLL = 0
     SPARK_RABBITMQ = 1
     SPARK_PULSAR = 2
-    STANDALONE = 1
+    STANDALONE_SINGLE = 0
+    STANDALONE_MULTIPLE = 1
 
     def is_spark_rabbitmq(self):
         return self.value == self.SPARK_RABBITMQ
@@ -26,6 +27,12 @@ class Backend(IntEnum):
 
     def is_eggroll(self):
         return self.value == self.EGGROLL
+
+    def is_standalone_single(self):
+        return self.value == self.STANDALONE_SINGLE
+
+    def is_standalone_multiple(self):
+        return self.value == self.STANDALONE_MULTIPLE
 
 
 class EngineType(object):

@@ -83,13 +83,13 @@ class Upload(ComponentBase):
         address_dict = storage_address.copy()
         with storage.Session.build(session_id=job_utils.generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id, suffix="storage", random_end=True),
                                    storage_engine=storage_engine, options=self.parameters.get("options")) as storage_session:
-            if storage_engine in {StorageEngine.EGGROLL, StorageEngine.STANDALONE, StorageEngine.LOCAL}:
+            if storage_engine in {StorageEngine.EGGROLL, StorageEngine.STANDALONE}:
                 upload_address = {"name": name, "namespace": namespace, "storage_type": EggRollStorageType.ROLLPAIR_LMDB}
             elif storage_engine in {StorageEngine.MYSQL}:
                 upload_address = {"db": namespace, "name": name}
             elif storage_engine in {StorageEngine.PATH}:
                 upload_address = {"path": self.parameters["file"]}
-            elif storage_engine in {StorageEngine.HDFS}:
+            elif storage_engine in {StorageEngine.HDFS, StorageEngine.LOCAL}:
                 upload_address = {"path": data_utils.default_input_fs_path(name=name, namespace=namespace, prefix=address_dict.get("path_prefix"))}
             else:
                 raise RuntimeError(f"can not support this storage engine: {storage_engine}")
