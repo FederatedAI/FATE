@@ -27,6 +27,11 @@ SERVER_VERSION = "v1"
 TIME_QUERY_FREQS = 0.5
 
 
+CONSOLE_DISPLAY_LOG = get_default_config().get("console_display_log", True)
+if CONSOLE_DISPLAY_LOG is None:
+    CONSOLE_DISPLAY_LOG = True
+
+
 class Role(object):
     LOCAL = "local"
     GUEST = "guest"
