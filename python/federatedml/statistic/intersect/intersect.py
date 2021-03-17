@@ -172,11 +172,11 @@ class RsaIntersect(Intersect):
 
     def generate_protocol_key(self):
         if self.role == consts.HOST:
-            e, d, n = self.generate_rsa_key(self.rsa_params.key_bit)
+            e, d, n = self.generate_rsa_key(self.rsa_params.key_length)
         else:
             e, d, n = [], [], []
             for i in range(len(self.host_party_id_list)):
-                e_i, d_i, n_i = self.generate_rsa_key(self.rsa_params.key_bit)
+                e_i, d_i, n_i = self.generate_rsa_key(self.rsa_params.key_length)
                 e.append(e_i)
                 d.append(d_i)
                 n.append(n_i)
