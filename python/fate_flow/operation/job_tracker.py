@@ -318,7 +318,8 @@ class Tracker(object):
                 DB.create_tables([model])
             except Exception as e:
                 schedule_logger(self.job_id).exception(e)
-            batch_size = 50 if RuntimeConfig.USE_LOCAL_DATABASE else 1000
+            # batch_size = 50 if RuntimeConfig.USE_LOCAL_DATABASE else 1000
+            batch_size = 1000
             for i in range(0, len(data_source), batch_size):
                 with DB.atomic():
                     model.insert_many(data_source[i:i+batch_size]).execute()
