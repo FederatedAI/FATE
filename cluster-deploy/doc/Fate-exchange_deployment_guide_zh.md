@@ -146,7 +146,7 @@ fi
 ```
 cd /data/projects/install
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/jdk-8u192-linux-x64.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_1.5.1_release.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_1.6.0_release.tar.gz
 ```
 
 ## 5.2 操作系统参数检查
@@ -221,7 +221,14 @@ eggroll.rollsite.host=192.168.0.1
 eggroll.rollsite.port=9370
 eggroll.rollsite.party.id=exchange
 eggroll.rollsite.route.table.path=conf/route_table.json
-eggroll.rollsite.adapter.sendbuf.size=1048576
+eggroll.rollsite.route.table.key=fate
+eggroll.rollsite.route.table.whitelist=127.0.0.1
+eggroll.rollsite.jvm.options=-XX:+UseG1GC -XX:+PrintGCDetails -XX:+PrintGCDateStamps -Xloggc:logs/eggroll/rollsite.gc.log
+eggroll.rollsite.push.max.retry=3
+eggroll.rollsite.push.long.retry=2
+eggroll.rollsite.push.batches.per.stream=10
+eggroll.rollsite.adapter.sendbuf.size=100000
+eggroll.core.grpc.channel.keepalive.timeout.sec=20
 EOF
 ```
 
