@@ -215,7 +215,7 @@ class DecisionTree(BasicAlgorithms, ABC):
 
     def update_feature_importance(self, splitinfo, record_site_name=True):
 
-        inc_split, inc_gain = 1, self.float_round(splitinfo.gain)
+        inc_split, inc_gain = 1, splitinfo.gain
 
         sitename = splitinfo.sitename
         fid = splitinfo.best_fid
