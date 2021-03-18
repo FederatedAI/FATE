@@ -11,7 +11,7 @@ from pyarrow import fs
 
 from fate_arch.common import hdfs_utils
 from fate_arch.common.log import getLogger
-from fate_arch.storage import StorageEngine, LocalStorageType
+from fate_arch.storage import StorageEngine, PathStorageType
 from fate_arch.storage import StorageTableBase
 
 LOGGER = getLogger()
@@ -24,14 +24,14 @@ class StorageTable(StorageTableBase):
                  name: str = None,
                  namespace: str = None,
                  partitions: int = None,
-                 storage_type: LocalStorageType = None,
+                 storage_type: PathStorageType = None,
                  options=None):
         super(StorageTable, self).__init__(name=name, namespace=namespace)
         self._address = address
         self._name = name
         self._namespace = namespace
         self._partitions = partitions if partitions else 1
-        self._type = storage_type if storage_type else LocalStorageType.FILE
+        self._type = storage_type if storage_type else PathStorageType.PICTURE
         self._options = options if options else {}
         self._engine = StorageEngine.LOCAL
 
@@ -75,9 +75,11 @@ class StorageTable(StorageTableBase):
         self._local_fs_client. create_dir('/'.join(self._path.split('/')[:-1]))
 
         if append and (assume_file_exist or self._exist()):
-            stream = self._local_fs_client.open_append_stream(path=self._path, compression=None)
+            stream = self._local_fs_client.open_append_stream(
+                path=self._path, compression=None)
         else:
-            stream = self._local_fs_client.open_output_stream(path=self._path, compression=None)
+            stream = self._local_fs_client.open_output_stream(
+                path=self._path, compression=None)
 
         counter = 0
         with io.TextIOWrapper(stream) as writer:
@@ -142,7 +144,8 @@ class StorageTable(StorageTableBase):
                     continue
                 assert file_info.is_file, f"{self._path} is directory contains a subdirectory: {file_info.path}"
                 with io.TextIOWrapper(
-                        buffer=self._local_fs_client.open_input_stream(f"{self._address.file_path:}/{file_info.path}"),
+                        buffer=self._local_fs_client.open_input_stream(
+                            f"{self._address.file_path:}/{file_info.path}"),
                         encoding="utf-8") as reader:
                     for line in reader:
                         yield line

@@ -33,10 +33,6 @@ class EggRollStorageType(object):
     DEFAULT = ROLLPAIR_LMDB
 
 
-class LocalStorageType(object):
-    FILE = 'FILE'
-
-
 class HDFSStorageType(object):
     RAM_DISK = 'RAM_DISK'
     SSD = 'SSD'
