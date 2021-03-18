@@ -713,8 +713,8 @@ Model
 
 .. code:: bash
 
-    flow model model-info --model_id $MODEL_ID --model_version $MODEL_VERSION
-    flow model model-info --model_id $MODEL_ID --model_version $MODEL_VERSION --detail
+    flow model get-model-info --model-id $MODEL_ID --model-version $MODEL_VERSION
+    flow model get-model-info --model-id $MODEL_ID --model-version $MODEL_VERSION --detail
 
 
 Tag

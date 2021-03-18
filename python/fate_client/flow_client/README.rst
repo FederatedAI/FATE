@@ -651,7 +651,7 @@ Model
 
 .. code:: bash
 
-    flow model deploy --model_id $MODEL_ID --model_version $MODEL_VERSION
+    flow model deploy --model-id $MODEL_ID --model-version $MODEL_VERSION
 
 ``get-predict-dsl``
 ~~~~~~~~~~~~~~~~~~~~
@@ -673,7 +673,7 @@ Model
 
 .. code:: bash
 
-    flow model get-predict-dsl --model_id $MODEL_ID --model_version $MODEL_VERSION -o ./examples/
+    flow model get-predict-dsl --model-id $MODEL_ID --model-version $MODEL_VERSION -o ./examples/
 
 ``get-predict-conf``
 ~~~~~~~~~~~~~~~~~~~~
@@ -695,7 +695,7 @@ Model
 
 .. code:: bash
 
-    flow model get-predict-conf --model_id $MODEL_ID --model_version $MODEL_VERSION -o ./examples/
+    flow model get-predict-conf --model-id $MODEL_ID --model-version $MODEL_VERSION -o ./examples/
 
 
 ``get-model-info``
@@ -722,8 +722,8 @@ Model
 
 .. code:: bash
 
-    flow model model-info --model_id $MODEL_ID --model_version $MODEL_VERSION
-    flow model model-info --model_id $MODEL_ID --model_version $MODEL_VERSION --detail
+    flow model get-model-info --model-id $MODEL_ID --model-version $MODEL_VERSION
+    flow model get-model-info --model-id $MODEL_ID --model-version $MODEL_VERSION --detail
 
 
 Tag
