@@ -62,7 +62,7 @@ class SelectorParam(object):
 
 class HeteroNNParam(BaseParam):
     """
-    Parameters used for Homo Neural Network.
+    Parameters used for Hetero Neural Network.
 
     Args:
         task_type: str, task type of hetero nn model, one of 'classification', 'regression'.
