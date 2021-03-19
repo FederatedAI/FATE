@@ -718,7 +718,8 @@ def deploy():
                                              src_role=initiator_role,
                                              json_body=request_data,
                                              # only 0 || 0 will use FederatedMode.SINGLE
-                                             federated_mode=FederatedMode.MULTIPLE if work_mode or backend else FederatedMode.SINGLE)
+                                             #federated_mode=FederatedMode.MULTIPLE if work_mode or backend else FederatedMode.SINGLE)
+                                             federated_mode=FederatedMode.MULTIPLE)
                     deploy_status_info[role_name][_party_id] = response['retcode']
                     detail = {_party_id: {}}
                     detail[_party_id]['retcode'] = response['retcode']
