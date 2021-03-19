@@ -90,7 +90,7 @@
         "0": {
           "reader_0": {
             "table": {
-              "name": "mnist_images_guest",
+              "name": "mnist_images_host_0",
               "namespace": "experiment"
             }
           }
@@ -108,7 +108,7 @@
         "0": {
           "reader_0": {
             "table": {
-              "name": "mnist_images_host_0",
+              "name": "mnist_images_guest",
               "namespace": "experiment"
             }
           }
