@@ -103,13 +103,13 @@ class DAGScheduler(Cron):
         job.f_runtime_conf_on_party = job.f_runtime_conf.copy()
         job.f_runtime_conf_on_party["job_parameters"] = common_job_parameters.to_dict()
 
-        if common_job_parameters.work_mode == WorkMode.CLUSTER:
-            # Save the status information of all participants in the initiator for scheduling
-            for role, party_ids in job.f_roles.items():
-                for party_id in party_ids:
-                    if role == job.f_initiator_role and party_id == job.f_initiator_party_id:
-                        continue
-                    JobController.initialize_tasks(job_id, role, party_id, False, job.f_initiator_role, job.f_initiator_party_id, common_job_parameters, dsl_parser)
+        #if common_job_parameters.work_mode == WorkMode.CLUSTER or common_job_parameters.backend :
+        # Save the status information of all participants in the initiator for scheduling
+        for role, party_ids in job.f_roles.items():
+            for party_id in party_ids:
+                if role == job.f_initiator_role and party_id == job.f_initiator_party_id:
+                    continue
+                JobController.initialize_tasks(job_id, role, party_id, False, job.f_initiator_role, job.f_initiator_party_id, common_job_parameters, dsl_parser)
 
         status_code, response = FederatedScheduler.create_job(job=job)
         if status_code != FederatedSchedulingStatusCode.SUCCESS:
