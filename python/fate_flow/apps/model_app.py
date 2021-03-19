@@ -704,6 +704,7 @@ def deploy():
             adapter = JobRuntimeConfigAdapter(
                 value.get("f_train_runtime_conf", {}))
             work_mode = adapter.get_job_work_mode()
+            backend = adapter.get_job_backend()
 
             for _party_id in role_partys:
                 request_data['local'] = {
@@ -716,7 +717,8 @@ def deploy():
                                              dest_party_id=_party_id,
                                              src_role=initiator_role,
                                              json_body=request_data,
-                                             federated_mode=FederatedMode.MULTIPLE if work_mode else FederatedMode.SINGLE)
+                                             # only 0 || 0 will use FederatedMode.SINGLE
+                                             federated_mode=FederatedMode.MULTIPLE if work_mode | | backend else FederatedMode.SINGLE)
                     deploy_status_info[role_name][_party_id] = response['retcode']
                     detail = {_party_id: {}}
                     detail[_party_id]['retcode'] = response['retcode']
