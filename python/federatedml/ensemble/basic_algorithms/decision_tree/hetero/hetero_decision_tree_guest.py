@@ -108,6 +108,9 @@ class HeteroDecisionTreeGuest(DecisionTree):
             LOGGER.info('round decimal is {}'.format(self.round_decimal))
         LOGGER.info('updated max sample weight is {}'.format(self.max_sample_weight))
 
+        if self.deterministic:
+            LOGGER.info('running on deterministic mode')
+
     def init(self, flowid, runtime_idx, data_bin, bin_split_points, bin_sparse_points, valid_features,
              grad_and_hess,
              encrypter, encrypted_mode_calculator,

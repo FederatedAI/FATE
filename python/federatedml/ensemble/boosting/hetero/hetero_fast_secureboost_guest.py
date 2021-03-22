@@ -73,7 +73,8 @@ class HeteroFastSecureBoostingTreeGuest(HeteroSecureBoostingTreeGuest):
                   cipher_compressing=self.round_decimal is not None,
                   round_decimal=self.round_decimal,
                   encrypt_key_length=self.encrypt_param.key_length,
-                  max_sample_weight=self.max_sample_weight
+                  max_sample_weight=self.max_sample_weight,
+                  new_ver=self.new_ver
                   )
         tree.set_tree_work_mode(tree_type, target_host_id)
         tree.set_layered_depth(self.guest_depth, self.host_depth)
