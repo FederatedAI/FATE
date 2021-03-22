@@ -108,6 +108,9 @@ class HeteroDecisionTreeGuest(DecisionTree):
             LOGGER.info('round decimal is {}'.format(self.round_decimal))
         LOGGER.info('updated max sample weight is {}'.format(self.max_sample_weight))
 
+        if self.deterministic:
+            LOGGER.info('running on deterministic mode')
+
     def init(self, flowid, runtime_idx, data_bin, bin_split_points, bin_sparse_points, valid_features,
              grad_and_hess,
              encrypter, encrypted_mode_calculator,
@@ -124,6 +127,8 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
         super(HeteroDecisionTreeGuest, self).init_data_and_variable(flowid, runtime_idx, data_bin, bin_split_points,
                                                                     bin_sparse_points, valid_features, grad_and_hess)
+
+        self.check_max_split_nodes()
 
         self.encrypter = encrypter
         self.encrypted_mode_calculator = encrypted_mode_calculator
@@ -759,6 +764,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
             self.assign_instance_to_leaves_and_update_weights()
 
         self.convert_bin_to_real()
+        self.round_leaf_val()
         self.sync_tree()
         self.sample_weights_post_process()
         LOGGER.info("fitting guest decision tree done")
@@ -849,7 +855,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
                 predict_result = predict_result.union(predict_leaf)
 
             predict_data = predict_data.subtractByKey(predict_leaf)
-
             unleaf_node_count = predict_data.count()
 
             if unleaf_node_count == 0:

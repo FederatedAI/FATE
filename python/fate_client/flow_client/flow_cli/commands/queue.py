@@ -40,4 +40,4 @@ def clean(ctx):
     - USAGE:
         flow queue clean
     """
-    access_server('post', ctx, "job/clean/queue", json={})
+    access_server('post', ctx, "job/clean/queue")

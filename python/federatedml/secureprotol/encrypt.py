@@ -18,7 +18,6 @@ import functools
 from collections import Iterable
 
 import numpy as np
-import torch
 from Cryptodome import Random
 from Cryptodome.PublicKey import RSA
 import hashlib
@@ -235,22 +234,29 @@ class PadsCipher(Encrypt):
                 else:
                     ret = rand.add_rand_pads(ret, -1.0 * self._amplify_factor)
             return ret
-        elif isinstance(value, torch.Tensor):
-            ret = value.numpy()
-            for uid, rand in self._rands.items():
-                if uid > self._uuid:
-                    ret = rand.add_rand_pads(ret, 1.0 * self._amplify_factor)
-                else:
-                    ret = rand.add_rand_pads(ret, -1.0 * self._amplify_factor)
-            return torch.Tensor(ret)
-        else:
-            ret = value
-            for uid, rand in self._rands.items():
-                if uid > self._uuid:
-                    ret += rand.rand(1)[0] * self._amplify_factor
-                else:
-                    ret -= rand.rand(1)[0] * self._amplify_factor
-            return ret
+
+        # try to import torch, if torch is required, the upper level will fail first. 
+        try:
+            import torch
+            if isinstance(value, torch.Tensor):
+                ret = value.numpy()
+                for uid, rand in self._rands.items():
+                    if uid > self._uuid:
+                        ret = rand.add_rand_pads(ret, 1.0 * self._amplify_factor)
+                    else:
+                        ret = rand.add_rand_pads(ret, -1.0 * self._amplify_factor)
+                return torch.Tensor(ret)
+
+        except ImportError:
+            pass
+
+        ret = value
+        for uid, rand in self._rands.items():
+            if uid > self._uuid:
+                ret += rand.rand(1)[0] * self._amplify_factor
+            else:
+                ret -= rand.rand(1)[0] * self._amplify_factor
+        return ret
 
     def encrypt_table(self, table):
         def _pad(key, value, seeds, amplify_factor):

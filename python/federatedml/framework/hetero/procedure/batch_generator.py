@@ -65,7 +65,8 @@ class Host(batch_info_sync.Host):
         for batch_index in range(self.batch_nums):
             batch_suffix = suffix + (batch_index,)
             batch_data_index = self.sync_batch_index(suffix=batch_suffix)
-            batch_data_inst = batch_data_index.join(data_instances, lambda g, d: d)
+            # batch_data_inst = batch_data_index.join(data_instances, lambda g, d: d)
+            batch_data_inst = data_instances.join(batch_data_index, lambda d, g: d)
             self.batch_data_insts.append(batch_data_inst)
 
     def generate_batch_data(self):

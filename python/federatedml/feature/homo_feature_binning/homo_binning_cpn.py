@@ -41,6 +41,9 @@ class HomoBinningArbiter(BaseFeatureBinning):
         self.binning_obj.set_transfer_variable(self.transfer_variable)
         self.binning_obj.fit_split_points()
 
+    def transform(self, data_instances):
+        pass
+
 
 class HomoBinningClient(BaseFeatureBinning):
     def __init__(self):
@@ -63,11 +66,11 @@ class HomoBinningClient(BaseFeatureBinning):
     def fit(self, data_instances):
         self._abnormal_detection(data_instances)
         self._setup_bin_inner_param(data_instances, self.model_param)
-        data_instances = data_instances.mapValues(self.data_format_transform)
-        data_instances.schema = self.schema
+        transformed_instances = data_instances.mapValues(self.data_format_transform)
+        transformed_instances.schema = self.schema
         self.binning_obj.set_bin_inner_param(self.bin_inner_param)
         self.binning_obj.set_transfer_variable(self.transfer_variable)
-        split_points = self.binning_obj.fit_split_points(data_instances)
+        split_points = self.binning_obj.fit_split_points(transformed_instances)
         data_out = self.transform(data_instances)
         summary = {}
         for k, v in split_points.items():

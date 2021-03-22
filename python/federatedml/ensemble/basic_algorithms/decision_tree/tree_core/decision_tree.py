@@ -121,6 +121,13 @@ class DecisionTree(BasicAlgorithms, ABC):
         self.bin_split_points = bin_split_points
         self.bin_sparse_points = bin_sparse_points
 
+    def check_max_split_nodes(self):
+        # check max_split_nodes
+        if self.max_split_nodes != 0 and self.max_split_nodes % 2 == 1:
+            self.max_split_nodes += 1
+            LOGGER.warning('an even max_split_nodes value is suggested '
+                           'when using histogram-subtraction, max_split_nodes reset to {}'.format(self.max_split_nodes))
+
     def set_flowid(self, flowid=0):
         LOGGER.info("set flowid, flowid is {}".format(flowid))
         self.transfer_inst.set_flowid(flowid)
@@ -190,7 +197,6 @@ class DecisionTree(BasicAlgorithms, ABC):
                 node_idx = node_map[v]
             else:  # internal node format: (1, node_id)
                 node_idx = node_map[v[1]]
-
             count_arr[node_idx] += 1
         return count_arr
 
@@ -217,6 +223,13 @@ class DecisionTree(BasicAlgorithms, ABC):
     @ staticmethod
     def assign_instance_to_root_node(data_bin, root_node_id):
         return data_bin.mapValues(lambda inst: (1, root_node_id))
+
+    @staticmethod
+    def float_round(num):
+        """
+        prevent float error
+        """
+        return round(num, consts.TREE_DECIMAL_ROUND)
 
     def update_feature_importance(self, splitinfo, record_site_name=True):
 
@@ -298,6 +311,12 @@ class DecisionTree(BasicAlgorithms, ABC):
             return node.left_nodeid
         else:
             return node.right_nodeid
+
+    def round_leaf_val(self):
+        # process predict weight to prevent float error
+        for node in self.tree_node:
+            if node.is_leaf:
+                node.weight = self.float_round(node.weight)
 
     """
     To implement

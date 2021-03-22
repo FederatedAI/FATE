@@ -30,10 +30,21 @@ from federatedml.nn.hetero_nn.backend.paillier_tensor import PaillierTensor
 from federatedml.util import LOGGER
 
 
+try:
+    from tensorflow import get_default_graph, initialize_all_variables, placeholder
+except ImportError:
+    from tensorflow.compat.v1 import (
+        get_default_graph,
+        initialize_all_variables,
+        placeholder,
+    )
+
+
 def _init_session():
     from tensorflow.python.keras import backend
+
     sess = backend.get_session()
-    tf.get_default_graph()
+    get_default_graph()
     set_session(sess)
     return sess
 
@@ -77,7 +88,13 @@ class DenseModel(object):
     def set_sess(self, sess):
         self.sess = sess
 
-    def build(self, input_shape=None, layer_config=None, model_builder=None, restore_stage=False):
+    def build(
+        self,
+        input_shape=None,
+        layer_config=None,
+        model_builder=None,
+        restore_stage=False,
+    ):
         if not input_shape:
             if self.role == "host":
                 raise ValueError("host input is empty!")
@@ -89,11 +106,13 @@ class DenseModel(object):
 
         self.layer_config = layer_config
 
-        self.model = model_builder(input_shape=input_shape,
-                                   nn_define=layer_config,
-                                   optimizer=SimpleNamespace(optimizer="SGD", kwargs={}),
-                                   loss="keep_predict_loss",
-                                   metrics=None)
+        self.model = model_builder(
+            input_shape=input_shape,
+            nn_define=layer_config,
+            optimizer=SimpleNamespace(optimizer="SGD", kwargs={}),
+            loss="keep_predict_loss",
+            metrics=None,
+        )
 
         dense_layer = self.model.get_layer_by_index(0)
         if not restore_stage:
@@ -105,7 +124,7 @@ class DenseModel(object):
 
     def export_model(self):
         if self.is_empty_model:
-            return ''.encode()
+            return "".encode()
 
         layer_weights = [self.model_weight]
         if self.bias is not None:
@@ -124,7 +143,7 @@ class DenseModel(object):
 
     def _init_model_weight(self, dense_layer, restore_stage=False):
         if not restore_stage:
-            self.sess.run(tf.initialize_all_variables())
+            self.sess.run(initialize_all_variables())
 
         trainable_weights = self.sess.run(dense_layer.trainable_weights)
         self.model_weight = trainable_weights[0]
@@ -137,11 +156,13 @@ class DenseModel(object):
         shape = dense_layer.output_shape
         dtype = dense_layer.get_weights()[0].dtype
 
-        input_data = tf.placeholder(shape=shape,
-                                    dtype=dtype,
-                                    name=self.activation_placeholder_name)
+        input_data = placeholder(
+            shape=shape, dtype=dtype, name=self.activation_placeholder_name
+        )
 
-        self.activation_gradient_func = gradients(dense_layer.activation(input_data), input_data)
+        self.activation_gradient_func = gradients(
+            dense_layer.activation(input_data), input_data
+        )
 
     def forward_activation(self, input_data):
         self.activation_input = input_data
@@ -152,13 +173,17 @@ class DenseModel(object):
         return output
 
     def backward_activation(self):
-        placeholder = tf.get_default_graph().get_tensor_by_name(":".join([self.activation_placeholder_name, "0"]))
+        placeholder = get_default_graph().get_tensor_by_name(
+            ":".join([self.activation_placeholder_name, "0"])
+        )
         if self.do_backward_selective_strategy:
-            self.activation_input = self.activation_cached[:self.batch_size]
-            self.activation_cached = self.activation_cached[self.batch_size:]
+            self.activation_input = self.activation_cached[: self.batch_size]
+            self.activation_cached = self.activation_cached[self.batch_size :]
 
-        return self.sess.run(self.activation_gradient_func,
-                             feed_dict={placeholder: self.activation_input})
+        return self.sess.run(
+            self.activation_gradient_func,
+            feed_dict={placeholder: self.activation_input},
+        )
 
     def get_weight(self):
         return self.model_weight
@@ -197,7 +222,9 @@ class GuestDenseModel(DenseModel):
         if self.input_cached.shape[0] == 0:
             self.input_cached = self.input[selective_ids]
         else:
-            self.input_cached = np.vstack((self.input_cached, self.input[selective_ids]))
+            self.input_cached = np.vstack(
+                (self.input_cached, self.input[selective_ids])
+            )
 
     def get_input_gradient(self, delta):
         if self.empty:
@@ -213,7 +240,7 @@ class GuestDenseModel(DenseModel):
 
         if self.do_backward_selective_strategy:
             self.input = self.input_cached[: self.batch_size]
-            self.input_cached = self.input_cached[self.batch_size:]
+            self.input_cached = self.input_cached[self.batch_size :]
 
         delta_w = np.matmul(delta.T, self.input) / self.input.shape[0]
 
@@ -236,7 +263,11 @@ class HostDenseModel(DenseModel):
         offsets = [i + cached_shape for i in range(len(selective_ids))]
         id_map = dict(zip(selective_ids, offsets))
         if cached_shape == 0:
-            self.input_cached = self.input.get_obj().filter(lambda k, v: k in id_map).map(lambda k, v: (id_map[k], v))
+            self.input_cached = (
+                self.input.get_obj()
+                .filter(lambda k, v: k in id_map)
+                .map(lambda k, v: (id_map[k], v))
+            )
             self.input_cached = PaillierTensor(tb_obj=self.input_cached)
             # selective_ids_tb = session.parallelize(zip(selective_ids, range(len(selective_ids))), include_key=True,
             #                                        partition=self.input.partitions)
@@ -249,9 +280,17 @@ class HostDenseModel(DenseModel):
             # selective_input = self.input.get_obj().join(selective_ids_tb, lambda v1, v2: (v1, v2))
             # pre_count = self.input_cached.shape[0]
             # selective_input = selective_input.map(lambda k, v: (v[1] + pre_count, v[0]))
-            selective_input = self.input.get_obj().filter(lambda k, v: k in id_map).map(lambda k, v: (id_map[k], v))
-            self.input_cached = PaillierTensor(tb_obj=self.input_cached.get_obj().union(selective_input))
-            self.activation_cached = np.vstack((self.activation_cached, self.activation_input[selective_ids]))
+            selective_input = (
+                self.input.get_obj()
+                .filter(lambda k, v: k in id_map)
+                .map(lambda k, v: (id_map[k], v))
+            )
+            self.input_cached = PaillierTensor(
+                tb_obj=self.input_cached.get_obj().union(selective_input)
+            )
+            self.activation_cached = np.vstack(
+                (self.activation_cached, self.activation_input[selective_ids])
+            )
 
     def forward_dense(self, x, encoder=None):
         self.input = x
@@ -281,7 +320,9 @@ class HostDenseModel(DenseModel):
         # delta_w = self.input.fast_matmul_2d(delta) / self.input.shape[0]
         if self.do_backward_selective_strategy:
             self.input = self.input_cached.filter(lambda k, v: k < self.batch_size)
-            self.input_cached = self.input_cached.filter(lambda k, v: k >= self.batch_size).map(lambda  kv: (kv[0] - self.batch_size, kv[1]))
+            self.input_cached = self.input_cached.filter(
+                lambda k, v: k >= self.batch_size
+            ).map(lambda kv: (kv[0] - self.batch_size, kv[1]))
             # self.input_cached = self.input_cached.subtractByKey(self.input).map(lambda kv: (kv[0] - self.batch_size, kv[1]))
 
         if encoder:

@@ -85,6 +85,7 @@ class HeteroDecisionTreeHost(DecisionTree):
         super(HeteroDecisionTreeHost, self).init_data_and_variable(flowid, runtime_idx, data_bin, bin_split_points,
                                                                    bin_sparse_points, valid_features, None)
 
+        self.check_max_split_nodes()
         self.complete_secure_tree = complete_secure
         self.run_goss = goss_subsample
         self.run_sparse_opt = run_sprase_opt
@@ -484,7 +485,8 @@ class HeteroDecisionTreeHost(DecisionTree):
 
             acc_histograms = self.get_local_histograms(dep, data, self.grad_and_hess,
                                                        None, cur_to_split_nodes, node_map, ret='tb',
-                                                       hist_sub=False, sparse_opt=self.run_sparse_opt)
+                                                       hist_sub=False, sparse_opt=self.run_sparse_opt,
+                                                       bin_num=self.bin_num)
 
             splitinfo_host, encrypted_splitinfo_host = self.splitter.find_split_host(histograms=acc_histograms,
                                                                                      node_map=node_map,

@@ -24,21 +24,21 @@
     },
     "component_parameters": {
         "role": {
-            "host": {
-                "0": {
-                    "reader_0": {
-                        "table": {
-                            "name": "breast_homo_host",
-                            "namespace": "experiment"
-                        }
-                    }
-                }
-            },
             "guest": {
                 "0": {
                     "reader_0": {
                         "table": {
                             "name": "breast_homo_guest",
+                            "namespace": "experiment"
+                        }
+                    }
+                }
+            },
+            "host": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_homo_host",
                             "namespace": "experiment"
                         }
                     }

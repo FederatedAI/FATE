@@ -21,10 +21,12 @@ from pipeline.component import DataIO
 from pipeline.component import Evaluation
 from pipeline.component import HomoLR
 from pipeline.component import Reader
-from pipeline.interface import Data
+from pipeline.interface import Data, Model
 from pipeline.utils.tools import load_job_config, JobConfig
 from pipeline.runtime.entity import JobParameters
 
+from fate_test.utils import extract_data, parse_summary_result
+from federatedml.evaluation.metrics import classification_metric
 
 def main(config="../../config.yaml", param="./breast_lr_config.yaml", namespace=""):
     # obtain config
@@ -115,6 +117,7 @@ def main(config="../../config.yaml", param="./breast_lr_config.yaml", namespace=
     lr_param.update(config_param)
     print(f"lr_param: {lr_param}, data_set: {data_set}")
     homo_lr_0 = HomoLR(name='homo_lr_0', **lr_param)
+    homo_lr_1 = HomoLR(name='homo_lr_1')
 
     evaluation_0 = Evaluation(name='evaluation_0', eval_type="binary")
     evaluation_0.get_party_instance(role='host', party_id=host).component_param(need_run=False)
@@ -123,6 +126,8 @@ def main(config="../../config.yaml", param="./breast_lr_config.yaml", namespace=
     pipeline.add_component(reader_0)
     pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
     pipeline.add_component(homo_lr_0, data=Data(train_data=dataio_0.output.data))
+    pipeline.add_component(homo_lr_1, data=Data(test_data=dataio_0.output.data),
+                           model=Model(homo_lr_0.output.model))
     pipeline.add_component(evaluation_0, data=Data(data=homo_lr_0.output.data))
 
     # compile pipeline once finished adding modules, this step will form conf and dsl files for running job
@@ -135,7 +140,22 @@ def main(config="../../config.yaml", param="./breast_lr_config.yaml", namespace=
     data_summary = {"train": {"guest": guest_train_data["name"], "host": host_train_data["name"]},
                     "test": {"guest": guest_train_data["name"], "host": host_train_data["name"]}
                     }
-    result_summary = pipeline.get_component("evaluation_0").get_summary()
+    result_summary = parse_summary_result(pipeline.get_component("evaluation_0").get_summary())
+    lr_0_data = pipeline.get_component("homo_lr_0").get_output_data().get("data")
+    lr_1_data = pipeline.get_component("homo_lr_1").get_output_data().get("data")
+    lr_0_score = extract_data(lr_0_data, "predict_result")
+    lr_0_label = extract_data(lr_0_data, "label")
+    lr_1_score = extract_data(lr_1_data, "predict_result")
+    lr_1_label = extract_data(lr_1_data, "label")
+    lr_0_score_label = extract_data(lr_0_data, "predict_result", keep_id=True)
+    lr_1_score_label = extract_data(lr_1_data, "predict_result", keep_id=True)
+    metric_lr = {
+        "score_diversity_ratio": classification_metric.Distribution.compute(lr_0_score_label, lr_1_score_label),
+        "ks_2samp": classification_metric.KSTest.compute(lr_0_score, lr_1_score),
+        "mAP_D_value": classification_metric.AveragePrecisionScore().compute(lr_0_score, lr_1_score, lr_0_label,
+                                                                             lr_1_label)}
+    result_summary["distribution_metrics"] = {"homo_lr": metric_lr}
+
     return data_summary, result_summary
 
 
