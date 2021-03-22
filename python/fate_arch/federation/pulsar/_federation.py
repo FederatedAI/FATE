@@ -305,18 +305,36 @@ class Federation(FederationABC):
                     if cluster.get('brokerServiceUrl', '') == '' and cluster.get('brokerServiceUrlTls', '') == '':
                         LOGGER.debug(
                             "pulsar cluster with name %s does not exist or broker url is empty, creating...", party.party_id)
-                        host = self._mq.route_table.get(
-                            int(party.party_id)).get('host')
-                        port = self._mq.route_table.get(
-                            int(party.party_id)).get('port', '6650')
 
-                        sslPort = self._mq.route_table.get(
-                            int(party.party_id)).get('sslPort', '6651')
-                        proxy = self._mq.route_table.get(
-                            int(party.party_id)).get('proxy', '')
+                        remote_party = self._mq.route_table.get(
+                            int(party.party_id), None)
+
+                        # handle party does not exist in route table first
+                        if remote_party is None:
+                            domain = self._mq.route_table.get(
+                                'default').get('domain')
+                            host = f"{party.party_id}.{domain}"
+                            port = self._mq.route_table.get(
+                                'default').get('port', '6650')
+                            sslPort = self._mq.route_table.get(
+                                'default').get('sslPort', '6651')
+                            proxy = self._mq.route_table.get(
+                                'default').get('proxy', '')
+                        # fetch party info from the route table
+                        else:
+                            host = self._mq.route_table.get(
+                                int(party.party_id)).get('host')
+                            port = self._mq.route_table.get(
+                                int(party.party_id)).get('port', '6650')
+
+                            sslPort = self._mq.route_table.get(
+                                int(party.party_id)).get('sslPort', '6651')
+                            proxy = self._mq.route_table.get(
+                                int(party.party_id)).get('proxy', '')
 
                         broker_url = f"pulsar://{host}:{port}"
                         broker_url_tls = f"pulsar+ssl://{host}:{sslPort}"
+                        proxy = f"pulsar+ssl//{proxy}"
 
                         if self._pulsar_manager.create_cluster(cluster_name=party.party_id, broker_url=broker_url, broker_url_tls=broker_url_tls, proxy_url=proxy).ok:
                             LOGGER.debug(
