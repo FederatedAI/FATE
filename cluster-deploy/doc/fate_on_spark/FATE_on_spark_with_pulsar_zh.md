@@ -56,7 +56,7 @@ FATE在1.5中支持了使用Spark作为计算服务，与其配套使用的还�
 default:
   # compose host and proxy for party that does not exist in route table
   # in this example, the host for party 8888 will be 8888.fate.org
-  proxy: "proxy.fate.org"
+  proxy: "proxy.fate.org:443"
   domain: "fate.org"
   port: 6650
   sslPort: 6651
@@ -216,10 +216,10 @@ CONFIG proxy.config.url_remap.remap_required INT 0
 CONFIG proxy.config.url_remap.pristine_host_hdr INT 0
 CONFIG proxy.config.http.response_server_enabled INT 0
 
-// 配置4443端口为安全端口
-CONFIG proxy.config.http.server_ports STRING 8080 8080:ipv6 4443:ssl
+// 配置443端口为安全端口
+CONFIG proxy.config.http.server_ports STRING 8080 8080:ipv6 443:ssl
 
-CONFIG proxy.config.http.connect_ports STRING 4443 6650-6660
+CONFIG proxy.config.http.connect_ports STRING 443 6650-6660
 
 // CA根证书
 CONFIG proxy.config.ssl.CA.cert.filename STRING ca.cert.pem
@@ -295,7 +295,7 @@ default:
   port: 6650
 
 default:
-  proxy: "proxy.fate.org"
+  proxy: "proxy.fate.org:443"
   domain: "fate.org"
 ```
 
@@ -306,7 +306,7 @@ default:
   "serviceUrlTls" : "",
   "brokerServiceUrl" : "pulsar://9999.fate.org:6650",
   "brokerServiceUrlTls" : "pulsar+ssl://9999.fate.org:6651",
-  "proxyServiceUrl" : "pulsar+ssl//proxy.fate.org:4443",
+  "proxyServiceUrl" : "pulsar+ssl://proxy.fate.org:443",
   "proxyProtocol" : "SNI",
   "peerClusterNames" : [ ]
 }

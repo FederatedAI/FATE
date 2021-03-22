@@ -16,7 +16,7 @@
 default:
   # compose host and proxy for party that does not exist in route table
   # in this example, the host for party 8888 will be 8888.fate.org
-  proxy: "proxy.fate.org"
+  proxy: "proxy.fate.org:443"
   domain: "fate.org"
-  port: 6650
-  sslPort: 6651
+  brokerPort: 6650
+  brokerSslPort: 6651
