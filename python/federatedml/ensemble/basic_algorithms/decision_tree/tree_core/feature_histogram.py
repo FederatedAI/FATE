@@ -317,7 +317,9 @@ class FeatureHistogram(object):
                 valid_features=valid_features, node_map=node_map,
                 use_missing=use_missing, zero_as_missing=zero_as_missing,
                 parent_nid_map=parent_node_id_map,
-                sibling_node_id_map=sibling_node_id_map)
+                sibling_node_id_map=sibling_node_id_map,
+                stable_reduce=self.stable_reduce
+            )
 
             agg_func = self._stable_hist_aggregate if self.stable_reduce else self._hist_aggregate
             histograms_table = batch_histogram_intermediate_rs.mapReducePartitions(batch_histogram_cal, agg_func)
@@ -399,17 +401,16 @@ class FeatureHistogram(object):
     @staticmethod
     def _stable_hist_reduce(value):
 
-        fid, hist_list = value
         # [partition1, partition2, ...], [(fid, hist), (fid, hist) .... ]
-        partition_id_list, hist_val_list = hist_list
+        partition_id_list, hist_list = value
         order = np.argsort(partition_id_list)
         aggregated_hist = None
         for idx in order:  # make sure reduce in order to avoid float error
-            hist = hist_val_list[idx]
+            hist = hist_list[idx]
             if aggregated_hist is None:
                 aggregated_hist = hist
                 continue
-            aggregated_hist = FeatureHistogram._aggregate_histogram(aggregated_hist, hist)
+            aggregated_hist = FeatureHistogram._hist_aggregate(aggregated_hist, hist)
         return aggregated_hist
 
     @staticmethod
