@@ -331,6 +331,10 @@ class Federation(FederationABC):
                                 int(party.party_id)).get('sslPort', '6651')
                             proxy = self._mq.route_table.get(
                                 int(party.party_id)).get('proxy', '')
+                            # fallback to use default proxy
+                            if proxy == '':
+                                proxy = self._mq.route_table.get(
+                                    'default').get('proxy', '')
 
                         broker_url = f"pulsar://{host}:{port}"
                         broker_url_tls = f"pulsar+ssl://{host}:{sslPort}"

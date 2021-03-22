@@ -1,17 +1,16 @@
 9999:
-  # host can be a domain like broker.pulsar.9999
+  # host can be a domain like 9999.fate.org
   host: 192.168.0.4
   port: 6650
   sslPort: 6651
-  # set proxy for star deployment
+  # will use default.proxy if the value of proxy is empty
   proxy: ""
+
 10000:
-  # host can be a domain like broker.pulsar.10000
+  # host can be a domain like 10000.fate.org
   host: 192.168.0.3
   port: 6650
   sslPort: 6651
-   # set proxy for star deployment
-  proxy: ""
 
 default:
   # compose host and proxy for party that does not exist in route table
