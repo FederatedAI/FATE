@@ -304,8 +304,8 @@ default:
 {
   "serviceUrl" : "",
   "serviceUrlTls" : "",
-  "brokerServiceUrl" : "pulsar://9999.broker.pulsar:6650",
-  "brokerServiceUrlTls" : "pulsar+ssl://9999.broker.pulsar:6651",
+  "brokerServiceUrl" : "pulsar://9999.fate.org:6650",
+  "brokerServiceUrlTls" : "pulsar+ssl://9999.fate.org:6651",
   "proxyServiceUrl" : "pulsar+ssl//proxy.fate.org:4443",
   "proxyProtocol" : "SNI",
   "peerClusterNames" : [ ]
