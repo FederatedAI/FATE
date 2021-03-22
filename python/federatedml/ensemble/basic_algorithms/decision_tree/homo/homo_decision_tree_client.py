@@ -160,7 +160,6 @@ class HomoDecisionTreeClient(DecisionTree):
 
         # set histogram id and parent histogram id
         for node, hist_bag in zip(left_nodes, hist_bags):
-            # LOGGER.debug('node id {}, node parent id {}, cur tree {}'.format(node.id, node.parent_nodeid, len(tree)))
             hist_bag.hid = node.id
             hist_bag.p_hid = node.parent_nodeid
 
@@ -225,6 +224,10 @@ class HomoDecisionTreeClient(DecisionTree):
 
         return next_layer_node
 
+    """
+    Update instance to node index
+    """
+
     @staticmethod
     def assign_an_instance(row, tree: List[Node], bin_sparse_point, use_missing, use_zero_as_missing):
 
@@ -234,28 +237,11 @@ class HomoDecisionTreeClient(DecisionTree):
             return node.id
 
         fid = node.fid
-        bid = node.bid
-
-        missing_dir = node.missing_dir
-
-        missing_val = False
-        if use_zero_as_missing:
-            if row[0].features.get_data(fid, None) is None or \
-                    row[0].features.get_data(fid) == NoneType():
-                missing_val = True
-        elif use_missing and row[0].features.get_data(fid) == NoneType():
-            missing_val = True
-
-        if missing_val:
-            if missing_dir == 1:
-                return 1, tree[nodeid].right_nodeid
-            else:
-                return 1, tree[nodeid].left_nodeid
-        else:
-            if row[0].features.get_data(fid, bin_sparse_point[fid]) <= bid:
-                return 1, tree[nodeid].left_nodeid
-            else:
-                return 1, tree[nodeid].right_nodeid
+        zero_val = bin_sparse_point[fid]
+        data_inst = row[0]
+        new_layer_nodeid = DecisionTree.get_next_layer_nodeid(node, data_inst, use_missing, use_zero_as_missing,
+                                                              zero_val)
+        return 1, new_layer_nodeid
 
     def assign_instances_to_new_node(self, table_with_assignment, tree_node: List[Node]):
 
@@ -403,29 +389,8 @@ class HomoDecisionTreeClient(DecisionTree):
             if tree[nid].is_leaf:
                 return tree[nid].weight
 
-            cur_node = tree[nid]
-            fid, bid = cur_node.fid,cur_node.bid
-            missing_dir = cur_node.missing_dir
-
-            if use_missing and zero_as_missing:
-
-                if data_inst.features.get_data(fid) == NoneType() or data_inst.features.get_data(fid, None) is None:
-
-                    nid = tree[nid].right_nodeid if missing_dir == 1 else tree[nid].left_nodeid
-
-                elif data_inst.features.get_data(fid) <= bid + consts.FLOAT_ZERO:
-                    nid = tree[nid].left_nodeid
-                else:
-                    nid = tree[nid].right_nodeid
-
-            elif data_inst.features.get_data(fid) == NoneType():
-
-                nid = tree[nid].right_nodeid if missing_dir == 1 else tree[nid].left_nodeid
-
-            elif data_inst.features.get_data(fid, 0) <= bid + consts.FLOAT_ZERO:
-                nid = tree[nid].left_nodeid
-            else:
-                nid = tree[nid].right_nodeid
+            nid = DecisionTree.get_next_layer_nodeid(tree[nid], data_inst, use_missing, zero_as_missing,
+                                                     zero_val=0)
 
     def predict(self, data_inst):
 
@@ -481,7 +446,10 @@ class HomoDecisionTreeClient(DecisionTree):
                                   right_nodeid=node.right_nodeid,
                                   missing_dir=node.missing_dir)
 
-        LOGGER.debug('output tree: epoch_idx:{} tree_idx:{}'.format(self.epoch_idx, self.tree_idx))
+        model_param.leaf_count.update(self.leaf_count)
+        from federatedml.protobuf.model_migrate.sbt_model_to_lgb import compute_internal_count
+        internal_count = compute_internal_count(model_param)
+        LOGGER.debug('internal count is {}'.format(internal_count))
         return model_param
 
     def set_model_param(self, model_param):

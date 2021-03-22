@@ -203,7 +203,7 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
 
         model_param.feature_name_fid_mapping.update(self.feature_name_fid_mapping)
 
-        param_name = "HomoSecureBoostingTreeGuestParam"
+        param_name = consts.HOMO_SBT_HOST_MODEL + "Param"
 
         return param_name, model_param
 
@@ -221,7 +221,7 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
         model_meta.use_missing = self.use_missing
         model_meta.zero_as_missing = self.zero_as_missing
 
-        meta_name = "HomoSecureBoostingTreeGuestMeta"
+        meta_name = consts.HOMO_SBT_GUEST_MODEL + "Meta"
 
         return meta_name, model_meta
 

@@ -680,10 +680,10 @@ class HeteroDecisionTreeGuest(DecisionTree):
         dispatch_guest_result = dispatch_guest_result.subtractByKey(dispatch_to_host_result)
         leaf = dispatch_guest_result.filter(lambda key, value: isinstance(value, tuple) is False)
 
-        if self.sample_weights is None:
-            self.sample_weights = leaf
+        if self.sample_leaf_pos is None:
+            self.sample_leaf_pos = leaf
         else:
-            self.sample_weights = self.sample_weights.union(leaf)
+            self.sample_leaf_pos = self.sample_leaf_pos.union(leaf)
 
         if reach_max_depth:  # if reach max_depth only update weight samples
             return
@@ -760,8 +760,26 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
         self.convert_bin_to_real()
         self.sync_tree()
-
+        self.sample_weights_post_process()
         LOGGER.info("fitting guest decision tree done")
+
+
+    # @staticmethod
+    # def traverse_tree(predict_state, data_inst, tree_=None,
+    #                   decoder=None, sitename=consts.GUEST, split_maskdict=None,
+    #                   use_missing=None, zero_as_missing=None, missing_dir_maskdict=None, return_leaf_id=False):
+    #
+    #     nid, tag = predict_state
+    #
+    #     while tree_[nid].sitename == sitename:
+    #
+    #         if tree_[nid].is_leaf is True:
+    #             return tree_[nid].weight if not return_leaf_id else nid
+    #
+    #         nid = DecisionTree.get_next_layer_nodeid(tree_[nid], data_inst, use_missing, zero_as_missing,
+    #                                                  0, split_maskdict, missing_dir_maskdict, decoder)
+    #
+    #     return nid, 1
 
     @staticmethod
     def traverse_tree(predict_state, data_inst, tree_=None,
@@ -771,6 +789,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
         nid, tag = predict_state
 
         while tree_[nid].sitename == sitename:
+
             if tree_[nid].is_leaf is True:
                 return tree_[nid].weight if not return_leaf_id else nid
 
@@ -897,7 +916,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
         model_param.split_maskdict.update(self.split_maskdict)
         model_param.missing_dir_maskdict.update(self.missing_dir_maskdict)
-
+        model_param.leaf_count.update(self.leaf_count)
         return model_param
 
     def set_model_param(self, model_param):

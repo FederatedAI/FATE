@@ -27,6 +27,8 @@ import numpy as np
 import functools
 from federatedml.ensemble.basic_algorithms.algorithm_prototype import BasicAlgorithms
 from federatedml.util import LOGGER
+from federatedml.util import consts
+from federatedml.feature.fate_element_type import NoneType
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.splitter import \
     SplitInfo, Splitter
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.node import Node
@@ -69,13 +71,13 @@ class DecisionTree(BasicAlgorithms, ABC):
         self.valid_features = None
         self.splitter = Splitter(self.criterion_method, self.criterion_params, self.min_impurity_split,
                                  self.min_sample_split, self.min_leaf_node, self.min_child_weight)  # splitter for finding splits
-        self.inst2node_idx = None  # record the node id an instance belongs to
-        self.sample_leaf_pos = None
-        self.sample_weights = None
+        self.inst2node_idx = None  # record the internal node id an instance belongs to
+        self.sample_leaf_pos = None  # record the final leaf id of samples
+        self.sample_weights = None  # leaf weights of samples
         self.leaf_count = None  # num of samples a leaf covers
 
         # data
-        self.data_bin = None
+        self.data_bin = None  # data after binning
         self.bin_split_points = None
         self.bin_sparse_points = None
         self.data_with_node_assignments = None
@@ -188,6 +190,7 @@ class DecisionTree(BasicAlgorithms, ABC):
                 node_idx = node_map[v]
             else:  # internal node format: (1, node_id)
                 node_idx = node_map[v[1]]
+
             count_arr[node_idx] += 1
         return count_arr
 
@@ -250,7 +253,51 @@ class DecisionTree(BasicAlgorithms, ABC):
 
         self.sample_weights = self.extract_sample_weights_from_node(self.sample_leaf_pos)
         leaf_node_map = self.get_leaf_node_map(self.tree_node)
-        self.leaf_count = self.count_node_sample_num(self.sample_leaf_pos, leaf_node_map)
+        leaf_count = self.count_node_sample_num(self.sample_leaf_pos, leaf_node_map)
+        rs = {}
+        for k, v in leaf_node_map.items():
+            rs[k] = int(leaf_count[v])
+        self.leaf_count = rs
+        LOGGER.debug('final leaf count is {}'.format(self.leaf_count))
+
+    @staticmethod
+    def make_decision(data_inst, fid, bid, missing_dir, use_missing, zero_as_missing, zero_val=0):
+
+        left, right = True, False
+        missing_dir = left if missing_dir == -1 else right
+        if use_missing and zero_as_missing:
+            # missing or zero
+            if data_inst.features.get_data(fid) == NoneType() or data_inst.features.get_data(fid, None) is None:
+                return missing_dir
+
+        # is missing feat
+        if data_inst.features.get_data(fid) == NoneType():
+            return missing_dir
+
+        # no missing val
+        feat_val = data_inst.features.get_data(fid, zero_val)
+        dir = left if feat_val <= bid + consts.FLOAT_ZERO else right
+        return dir
+
+    @staticmethod
+    def get_next_layer_nodeid(node, data_inst, use_missing, zero_as_missing, zero_val=0,
+                              split_maskdict=None,
+                              missing_dir_maskdict=None,
+                              decoder=None):
+
+        if missing_dir_maskdict is not None and split_maskdict is not None:
+            fid = decoder("feature_idx", node.fid, split_maskdict=split_maskdict)
+            bid = decoder("feature_val", node.bid, node.id, split_maskdict=split_maskdict)
+            missing_dir = decoder("missing_dir", node.missing_dir, node.id, missing_dir_maskdict=missing_dir_maskdict)
+        else:
+            fid, bid = node.fid, node.bid
+            missing_dir = node.missing_dir
+
+        go_left = DecisionTree.make_decision(data_inst, fid, bid, missing_dir, use_missing, zero_as_missing, zero_val)
+        if go_left:
+            return node.left_nodeid
+        else:
+            return node.right_nodeid
 
     """
     To implement
