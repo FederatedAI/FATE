@@ -315,9 +315,9 @@ class Federation(FederationABC):
                                 'default').get('domain')
                             host = f"{party.party_id}.{domain}"
                             port = self._mq.route_table.get(
-                                'default').get('port', '6650')
+                                'default').get('brokerPort', '6650')
                             sslPort = self._mq.route_table.get(
-                                'default').get('sslPort', '6651')
+                                'default').get('brokerSslPort', '6651')
                             proxy = self._mq.route_table.get(
                                 'default').get('proxy', '')
                         # fetch party info from the route table
@@ -333,7 +333,8 @@ class Federation(FederationABC):
 
                         broker_url = f"pulsar://{host}:{port}"
                         broker_url_tls = f"pulsar+ssl://{host}:{sslPort}"
-                        proxy = f"pulsar+ssl//{proxy}"
+                        if proxy != '':
+                            proxy = f"pulsar+ssl://{proxy}"
 
                         if self._pulsar_manager.create_cluster(cluster_name=party.party_id, broker_url=broker_url, broker_url_tls=broker_url_tls, proxy_url=proxy).ok:
                             LOGGER.debug(
