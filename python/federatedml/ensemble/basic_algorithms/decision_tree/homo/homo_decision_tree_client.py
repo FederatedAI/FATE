@@ -138,7 +138,7 @@ class HomoDecisionTreeClient(DecisionTree):
         node_map = self.get_node_map(cur_nodes, left_node_only=True)
 
         LOGGER.info("start to get node histograms")
-        histograms = FeatureHistogram.calculate_histogram(
+        histograms = self.hist_computer.calculate_histogram(
             table_with_assign, g_h,
             split_points, sparse_point,
             valid_feature, node_map,
