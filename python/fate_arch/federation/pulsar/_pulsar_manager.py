@@ -73,7 +73,7 @@ class PulsarManager():
         # initialize data
         data = {
             'serviceUrl': service_url,
-            'serviceUrlTls': service_url,
+            'serviceUrlTls': service_url_tls,
             'brokerServiceUrl': broker_url,
             'brokerServiceUrlTls': broker_url_tls,
             'peerClusterNames': peer_cluster_names,
@@ -94,7 +94,7 @@ class PulsarManager():
         # initialize data
         data = {
             'serviceUrl': service_url,
-            'serviceUrlTls': service_url,
+            'serviceUrlTls': service_url_tls,
             'brokerServiceUrl': broker_url,
             'brokerServiceUrlTls': broker_url_tls,
             'peerClusterNames': peer_cluster_names,
