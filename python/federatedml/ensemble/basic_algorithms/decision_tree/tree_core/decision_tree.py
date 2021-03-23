@@ -91,7 +91,10 @@ class DecisionTree(BasicAlgorithms, ABC):
         self.missing_dir_maskdict = {}
 
         # histogram
+        self.deterministic = tree_param.deterministic
         self.hist_computer = FeatureHistogram()
+        if self.deterministic:
+            self.hist_computer.stable_reduce = True
 
     """
     Common functions
