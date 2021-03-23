@@ -163,6 +163,38 @@ def parse_header(param: BoostingTreeModelParam, meta: BoostingTreeModelMeta):
     return result_str
 
 
+def internal_count_computer(cur_id, tree_node, leaf_count, internal_count):
+
+    if cur_id in leaf_count:
+        return leaf_count[cur_id]
+
+    left_count = internal_count_computer(tree_node[cur_id].left_nodeid, tree_node, leaf_count, internal_count)
+    right_count = internal_count_computer(tree_node[cur_id].right_nodeid, tree_node, leaf_count, internal_count)
+    internal_count[cur_id] = left_count + right_count
+    return internal_count[cur_id]
+
+
+def compute_internal_count(tree_param: DecisionTreeModelParam):
+
+    root = tree_param.tree_[0]
+    internal_count = {}
+    leaf_count = tree_param.leaf_count
+    root_count = internal_count_computer(root.id, tree_param.tree_, leaf_count, internal_count)
+    if root.id not in internal_count:
+        internal_count[root_count] = root_count
+    return internal_count
+
+
+def update_leaf_count(param):
+    # in homo sbt, sometimes a leaf covers no sample, so need to add 1 to leaf count
+    tmp = {}
+    for i in param.leaf_count:
+        tmp[i] = param.leaf_count[i]
+    for i in tmp:
+        if tmp[i] == 0:
+            param.leaf_count[i] += 1
+
+
 def parse_a_tree(param: DecisionTreeModelParam, tree_idx: int, zero_as_missing=False, learning_rate=0.1, init_score=None):
 
     split_feature = []
@@ -171,11 +203,18 @@ def parse_a_tree(param: DecisionTreeModelParam, tree_idx: int, zero_as_missing=F
     internal_weight = []
     leaf_weight = []
     left, right = [], []
-
     leaf_idx = -1
     lgb_node_idx = 0
     sbt_lgb_node_map = {}
     is_leaf = []
+    leaf_count = []
+    internal_count, internal_count_dict = [], {}
+    has_count_info = len(param.leaf_count) != 0
+
+    # compute internal count
+    if has_count_info:
+        update_leaf_count(param)
+        internal_count_dict = compute_internal_count(param)  # get internal count from leaf count
 
     # mark leaf nodes and get sbt-lgb node mapping
     for node in param.tree_:
@@ -198,14 +237,23 @@ def parse_a_tree(param: DecisionTreeModelParam, tree_idx: int, zero_as_missing=F
             # extract split point and weight
             split_threshold.append(node.bid)
             internal_weight.append(node.weight)
-            if is_leaf[node.left_nodeid]:
+
+            # add internal count
+            if has_count_info:
+                internal_count.append(internal_count_dict[node.id])
+
+            if is_leaf[node.left_nodeid]:  # generate lgb leaf idx
                 left.append(leaf_idx)
+                if has_count_info:
+                    leaf_count.append(param.leaf_count[node.left_nodeid])
                 leaf_idx -= 1
             else:
                 left.append(sbt_lgb_node_map[node.left_nodeid])
 
-            if is_leaf[node.right_nodeid]:
+            if is_leaf[node.right_nodeid]:  # generate lgb leaf idx
                 right.append(leaf_idx)
+                if has_count_info:
+                    leaf_count.append(param.leaf_count[node.right_nodeid])
                 leaf_idx -= 1
             else:
                 right.append(sbt_lgb_node_map[node.right_nodeid])
@@ -219,6 +267,7 @@ def parse_a_tree(param: DecisionTreeModelParam, tree_idx: int, zero_as_missing=F
             else:
                 # leaf value is node.weight * learning_rate in lgb
                 score = node.weight * learning_rate
+
             leaf_weight.append(score)
 
     leaves_num = len(leaf_weight)
@@ -228,6 +277,11 @@ def parse_a_tree(param: DecisionTreeModelParam, tree_idx: int, zero_as_missing=F
                                       list_to_str(split_threshold), list_to_str(decision_type),
                                       list_to_str(left), list_to_str(right), list_to_str(leaf_weight),
                                       list_to_str(internal_weight), learning_rate)
+
+    if len(internal_count) != 0:
+        result_str += 'internal_count={}\n'.format(list_to_str(internal_count))
+    if len(leaf_count) != 0:
+        result_str += 'leaf_count={}\n'.format(list_to_str(leaf_count))
 
     return result_str
 
@@ -265,22 +319,3 @@ def parse_parameter(param, meta):
                               )
     return rs
 
-
-if __name__ == '__main__':
-
-    # from google.protobuf.json_format import Parse
-    # import lightgbm as lgb
-    #
-    # with open('./homo_missing_proto.pkl', 'r') as f:
-    #     json_ = f.read()
-    #
-    # with open('./homo_missing_proto_meta.pkl', 'r') as f:
-    #     json_meta = f.read()
-    #
-    # param = Parse(json_, BoostingTreeModelParam())
-    # meta = Parse(json_meta, BoostingTreeModelMeta())
-    # rs = sbt_to_lgb(param, meta, )
-    # f = open('./model_str_missing.txt', 'w')
-    # f.write(rs)
-    # f.close()
-    pass

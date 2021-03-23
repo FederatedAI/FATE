@@ -287,7 +287,6 @@ MISSING_RATIO = "missing_ratio"
 SKEWNESS = 'skewness'
 KURTOSIS = 'kurtosis'
 
-
 # adapters model name
 HOMO_SBT = 'homo_sbt'
 HETERO_SBT = 'hetero_sbt'
@@ -300,6 +299,8 @@ HETERO_SBT_GUEST_MODEL = 'HeteroSecureBoostingTreeGuest'
 HETERO_SBT_HOST_MODEL = 'HeteroSecureBoostingTreeHost'
 HETERO_FAST_SBT_GUEST_MODEL = "HeteroFastSecureBoostingTreeGuest"
 HETERO_FAST_SBT_HOST_MODEL = "HeteroFastSecureBoostingTreeHost"
+HOMO_SBT_GUEST_MODEL = "HomoSecureBoostingTreeGuest"
+HOMO_SBT_HOST_MODEL = "HomoSecureBoostingTreeHost"
 
 # tree decimal round to prevent float error
 TREE_DECIMAL_ROUND = 10

@@ -289,6 +289,8 @@ class FeatureHistogram(object):
         ret: return type, if 'tb', return histograms stored in DTable
         """
 
+        LOGGER.debug('cwj bin split {}'.format(bin_split_points))
+        LOGGER.debug('cwj bin shape {}'.format(bin_sparse_points))
         LOGGER.debug("bin_shape is {}, node num is {}".format(bin_split_points.shape, len(node_map)))
 
         # reformat, now format is: key, ((data_instance, node position), (g, h))

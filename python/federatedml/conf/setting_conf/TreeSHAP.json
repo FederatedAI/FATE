@@ -1,0 +1,12 @@
+{
+    "module_path":  "federatedml/model_interpret/",
+    "param_class" : "federatedml/param/shap_param.py/TreeSHAPParam",
+    "need_deploy": false,
+    "role":
+    {
+        "guest|host":
+        {
+            "program": "federated_tree_shap.py/TreeSHAP"
+        }
+    }
+}
