@@ -39,6 +39,7 @@ class RepeatedIDIntersect(object):
         self.version = None
         self.owner_src_data = None
         self.data_type = None
+        self.with_match_id = False
 
     def __get_data_type(self, data):
         if self.data_type is None:
@@ -76,7 +77,7 @@ class RepeatedIDIntersect(object):
             LOGGER.warning("Not a repeated id owner, will not generate id map")
             return
 
-        if self.version == "1.6.0":
+        if not self.with_match_id:
             all_id_map = data.mapReducePartitions(self.__to_id_map, self.__reduce_id_map)
             id_map = all_id_map.filter(lambda k, v: len(v) >= 2)
         else:
@@ -105,7 +106,7 @@ class RepeatedIDIntersect(object):
 
     def __restructure_owner_sample_ids(self, data, id_map):
         rids = id_map.flatMap(functools.partial(self.__func_restructure_id))
-        if self.version == "1.6.0":
+        if not self.with_match_id:
             _data = data.union(rids, lambda dv, rv: dv)
 
             if self.__get_data_type(self.owner_src_data) == Instance:
@@ -125,7 +126,7 @@ class RepeatedIDIntersect(object):
     def __restructure_partner_sample_ids(self, data, id_map):
         _data = data.join(id_map, lambda dv, iv: (dv, iv))
         repeated_ids = _data.flatMap(functools.partial(self.__func_restructure_id_for_partner))
-        if self.version == "1.6.0":
+        if not self.with_match_id:
             sub_data = data.subtractByKey(id_map)
             expand_data = sub_data.union(repeated_ids, lambda sv, rv: sv)
         else:
@@ -142,7 +143,7 @@ class RepeatedIDIntersect(object):
 
     def generate_intersect_data(self, data):
         if self.__get_data_type(data) == Instance:
-            if self.version == "1.6.0":
+            if not self.with_match_id:
                 _data = data.map(
                     lambda k, v: (v.features[0], 1))
             else:
@@ -155,8 +156,8 @@ class RepeatedIDIntersect(object):
 
         return _data
 
-    def set_version(self, version):
-        self.version = version
+    def use_match_id(self):
+        self.with_match_id = True
 
     def recover(self, data):
         LOGGER.info("Start repeated id processing.")
@@ -166,7 +167,7 @@ class RepeatedIDIntersect(object):
             self.id_map = self.__generate_id_map(data)
             self.owner_src_data = data
         else:
-            if self.version == "1.6.0":
+            if not self.with_match_id:
                 LOGGER.info("Not repeated_id_owner, return!")
                 return data
 

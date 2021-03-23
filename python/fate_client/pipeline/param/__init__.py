@@ -18,7 +18,7 @@ from pipeline.param.boosting_param import HeteroSecureBoostParam, HomoSecureBoos
 from pipeline.param.column_expand_param import ColumnExpandParam
 from pipeline.param.data_split_param import DataSplitParam
 from pipeline.param.dataio_param import DataIOParam
-from federatedml.param.encrypt_param import EncryptParam
+from pipeline.param.encrypt_param import EncryptParam
 from pipeline.param.evaluation_param import EvaluateParam
 from pipeline.param.feature_binning_param import FeatureBinningParam
 from pipeline.param.feldman_verifiable_sum_param import FeldmanVerifiableSumParam
