@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+
 from fate_arch.session import computing_session as session
-from fate_arch.common import versions
 from fate_flow.entity.metric import Metric, MetricMeta
 from federatedml.feature.instance import Instance
 from federatedml.model_base import ModelBase
@@ -99,8 +99,6 @@ class IntersectModelBase(ModelBase):
 
     def fit(self, data):
         self.init_intersect_method()
-
-        # LOGGER.info("fate version:{}".format(versions.get_fate_version()))
 
         if self.model_param.repeated_id_process:
             if self.model_param.intersect_cache_param.use_cache is True and self.model_param.intersect_method == consts.RSA:
