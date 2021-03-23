@@ -456,29 +456,9 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
             if tree_node[nid].is_leaf:
                 return nid
 
-            cur_node = tree_node[nid]
-            fid, bid = cur_node.fid, cur_node.bid
-            missing_dir = cur_node.missing_dir
-
-            if use_missing and zero_as_missing:
-
-                if data_inst.features.get_data(fid) == NoneType() or data_inst.features.get_data(fid, None) is None:
-
-                    nid = tree_node[nid].right_nodeid if missing_dir == 1 else tree_node[nid].left_nodeid
-
-                elif data_inst.features.get_data(fid) <= bid:
-                    nid = tree_node[nid].left_nodeid
-                else:
-                    nid = tree_node[nid].right_nodeid
-
-            elif data_inst.features.get_data(fid) == NoneType():
-
-                nid = tree_node[nid].right_nodeid if missing_dir == 1 else tree_node[nid].left_nodeid
-
-            elif data_inst.features.get_data(fid, 0) <= bid:
-                nid = tree_node[nid].left_nodeid
-            else:
-                nid = tree_node[nid].right_nodeid
+            new_layer_nodeid = HeteroFastDecisionTreeHost.get_next_layer_nodeid(tree_node, data_inst, use_missing,
+                                                                                use_missing, 0)
+            nid = new_layer_nodeid
 
     def mix_mode_predict(self, data_inst):
 
