@@ -260,7 +260,7 @@ class Status(object):
         self.status = status
 
     def is_done(self):
-        return self.status.lower() in ['complete', 'success', 'canceled', 'failed']
+        return self.status.lower() in ['complete', 'success', 'canceled', 'failed', "timeout"]
 
     def is_success(self):
         return self.status.lower() in ['complete', 'success']
