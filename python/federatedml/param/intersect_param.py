@@ -181,7 +181,7 @@ class IntersectParam(BaseParam):
 
     repeated_id_owner: str, which role has the repeated ids
 
-    with_match_id: bool, data with match id or not, default False
+    with_match_id: bool, data with match id or not, default False; set this param to True may lead to unexpected behavior
     """
 
     def __init__(self, intersect_method: str = consts.RAW, random_bit=128, sync_intersect_ids=True,
@@ -255,6 +255,8 @@ class IntersectParam(BaseParam):
                                                       [consts.GUEST, consts.HOST],
                                                       descr+"info_owner")
         self.check_boolean(self.with_match_id, descr+"with_match_id")
+        if self.with_match_id:
+            LOGGER.warning(f"Setting with_match_id may lead to unexpected behavior.")
 
         self.encode_params.check()
         self.rsa_params.check()

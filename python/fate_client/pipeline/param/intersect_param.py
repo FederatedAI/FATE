@@ -175,7 +175,7 @@ class IntersectParam(BaseParam):
 
     repeated_id_owner: str, which role has the repeated ids
 
-    with_match_id: bool, data with match id or not, default False
+    with_match_id: bool, data with match id or not, default False; set this param to True may lead to unexpected behavior
 
     """
 
