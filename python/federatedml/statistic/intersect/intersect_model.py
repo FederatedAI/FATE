@@ -124,7 +124,7 @@ class IntersectModelBase(ModelBase):
                 self.intersect_ids = self.intersect_ids.mapValues(lambda v: None)
                 self.intersect_ids.schema['sid_name'] = sid_name
 
-            LOGGER.info("repeated_id process:{}".format(self.intersect_ids.count()))
+            # LOGGER.info("repeated_id process:{}".format(self.intersect_ids.count()))
 
         if self.model_param.allow_info_share:
             if self.model_param.intersect_method == consts.RSA and self.model_param.info_owner == consts.GUEST \
