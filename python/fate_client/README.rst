@@ -37,7 +37,7 @@ Initial Configuration
       # provide real ip address and port info to initialize pipeline
       pipeline init --ip 127.0.0.1 --port 9380
       # optionally, set log directory of Pipeline
-      cd /data/projects/fate/fate_client/pipeline
+      cd /data/projects/fate/python/fate_client/pipeline
       pipeline init --ip 127.0.0.1 --port 9380 --log-directory ./logs
 
 
