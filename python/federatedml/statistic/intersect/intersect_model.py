@@ -108,8 +108,8 @@ class IntersectModelBase(ModelBase):
                 raise ValueError("While multi-host, repeated_id_owner should be guest.")
 
             proc_obj = RepeatedIDIntersect(repeated_id_owner=self.model_param.repeated_id_owner, role=self.role)
-            if self.model_param.with_match_id:
-                proc_obj.use_match_id()
+            if self.model_param.with_sample_id:
+                proc_obj.use_sample_id()
             data = proc_obj.recover(data=data)
 
         self.intersect_ids = self.intersection_obj.run_intersect(data)
