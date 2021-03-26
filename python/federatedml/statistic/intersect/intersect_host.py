@@ -72,6 +72,11 @@ class RsaIntersectionHost(RsaIntersect):
         LOGGER.info(f"Get guest_pubkey_ids from guest")
         host_sign_guest_ids = guest_pubkey_ids.map(lambda k, v: (k, self.sign_id(k, self.d, self.n)))
         LOGGER.debug(f"host sign guest_pubkey_ids")
+        # send signed guest odd ids
+        self.transfer_variable.host_sign_guest_ids.remote(host_sign_guest_ids,
+                                                          role=consts.GUEST,
+                                                          idx=0)
+        LOGGER.info("Remote host_sign_guest_ids_process to Guest.")
 
         # encrypt & send privkey-encrypted host odd ids to guest
         prvkey_ids_process_pair = self.cal_prvkey_ids_process_pair(sid_hash_odd, self.d, self.n)
@@ -80,16 +85,6 @@ class RsaIntersectionHost(RsaIntersect):
                                                       role=consts.GUEST,
                                                       idx=0)
         LOGGER.info("Remote host_prvkey_ids to Guest.")
-
-        # send signed guest odd ids
-        self.transfer_variable.host_sign_guest_ids.remote(host_sign_guest_ids,
-                                                          role=consts.GUEST,
-                                                          idx=0)
-        LOGGER.info("Remote host_sign_guest_ids_process to Guest.")
-
-        # recv guest privkey-encrypted even ids
-        guest_prvkey_ids = self.transfer_variable.guest_prvkey_ids.get(idx=0)
-        LOGGER.info("Get guest_prvkey_ids")
 
         # receive guest-signed host even ids
         recv_guest_sign_host_ids = self.transfer_variable.guest_sign_host_ids.get(idx=0)
@@ -102,6 +97,10 @@ class RsaIntersectionHost(RsaIntersect):
                                                                                              self.final_hash_operator,
                                                                                              self.rsa_params.salt)))
         sid_guest_sign_host_ids = guest_sign_host_ids.map(lambda k, v: (v[1], v[0]))
+
+        # recv guest privkey-encrypted even ids
+        guest_prvkey_ids = self.transfer_variable.guest_prvkey_ids.get(idx=0)
+        LOGGER.info("Get guest_prvkey_ids")
 
         encrypt_intersect_even_ids = sid_guest_sign_host_ids.join(guest_prvkey_ids, lambda sid, h: sid)
 
