@@ -67,6 +67,14 @@ class RsaIntersectionHost(RsaIntersect):
                                                       idx=0)
         LOGGER.info("Remote host_mask_ids to Guest")
 
+        # encrypt & send privkey-encrypted host odd ids to guest
+        prvkey_ids_process_pair = self.cal_prvkey_ids_process_pair(sid_hash_odd, self.d, self.n)
+        prvkey_ids_process = prvkey_ids_process_pair.mapValues(lambda v: 1)
+        self.transfer_variable.host_prvkey_ids.remote(prvkey_ids_process,
+                                                      role=consts.GUEST,
+                                                      idx=0)
+        LOGGER.info("Remote host_prvkey_ids to Guest.")
+
         # get & sign guest pubkey-encrypted odd ids
         guest_pubkey_ids = self.transfer_variable.guest_pubkey_ids.get(idx=0)
         LOGGER.info(f"Get guest_pubkey_ids from guest")
@@ -77,14 +85,6 @@ class RsaIntersectionHost(RsaIntersect):
                                                           role=consts.GUEST,
                                                           idx=0)
         LOGGER.info("Remote host_sign_guest_ids_process to Guest.")
-
-        # encrypt & send privkey-encrypted host odd ids to guest
-        prvkey_ids_process_pair = self.cal_prvkey_ids_process_pair(sid_hash_odd, self.d, self.n)
-        prvkey_ids_process = prvkey_ids_process_pair.mapValues(lambda v: 1)
-        self.transfer_variable.host_prvkey_ids.remote(prvkey_ids_process,
-                                                      role=consts.GUEST,
-                                                      idx=0)
-        LOGGER.info("Remote host_prvkey_ids to Guest.")
 
         # receive guest-signed host even ids
         recv_guest_sign_host_ids = self.transfer_variable.guest_sign_host_ids.get(idx=0)

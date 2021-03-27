@@ -109,16 +109,6 @@ class RsaIntersectionGuest(RsaIntersect):
                                                            idx=i)
             LOGGER.info(f"Remote guest_pubkey_ids to Host {i}")
 
-        # get & sign host pub key encrypted even ids
-        host_pubkey_ids_list = self.get_host_pubkey_ids()
-        guest_sign_host_ids_list = self.sign_host_ids(host_pubkey_ids_list)
-        # send signed host even ids
-        for i, host_party_id in enumerate(self.host_party_id_list):
-            self.transfer_variable.guest_sign_host_ids.remote(guest_sign_host_ids_list[i],
-                                                              role=consts.HOST,
-                                                              idx=i)
-            LOGGER.info(f"Remote guest_sign_host_ids to Host {host_party_id}.")
-
         # encrypt & send prvkey encrypted guest even ids to host
         prvkey_ids_process_pair_list = []
         for i, host_party_id in enumerate(self.host_party_id_list):
@@ -129,6 +119,16 @@ class RsaIntersectionGuest(RsaIntersect):
                                                            idx=i)
             prvkey_ids_process_pair_list.append(prvkey_ids_process_pair)
             LOGGER.info(f"Remote guest_prvkey_ids to host {host_party_id}")
+
+        # get & sign host pub key encrypted even ids
+        host_pubkey_ids_list = self.get_host_pubkey_ids()
+        guest_sign_host_ids_list = self.sign_host_ids(host_pubkey_ids_list)
+        # send signed host even ids
+        for i, host_party_id in enumerate(self.host_party_id_list):
+            self.transfer_variable.guest_sign_host_ids.remote(guest_sign_host_ids_list[i],
+                                                              role=consts.HOST,
+                                                              idx=i)
+            LOGGER.info(f"Remote guest_sign_host_ids to Host {host_party_id}.")
 
         # Recv host signed odd ids
         # table(guest_pubkey_id, host signed odd ids)
