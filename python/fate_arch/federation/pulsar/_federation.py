@@ -584,7 +584,7 @@ class Federation(FederationABC):
                 # leave this code to handle unexpected situation
                 channel_info.basic_ack(message)
                 print(
-                    f"[pulsar._partition_receive]: require {name}.{tag}, got {properties.message_id}.{properties.correlation_id}")
+                    f"[pulsar._partition_receive]: require {name}.{tag}, got {properties['message_id']}.{properties['correlation_id']}")
                 continue
 
             if properties['content_type'] == 'application/json':
