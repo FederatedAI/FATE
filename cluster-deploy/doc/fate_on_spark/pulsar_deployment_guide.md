@@ -35,8 +35,18 @@ $ cd /data/projects/common/apache-pulsar-2.7.0
 1. Edit the "conf/standalone.conf" file and modify it as follows:
 
 ``` bash
-# Modify the function of automatically deleting topics
+
+# Setting time to confirm message automatically
+ttlDurationDefaultInSeconds=180
+
+# Enable to delete inactive topic
 brokerDeleteInactiveTopicsEnabled=true
+
+# Setting time interval for scanning of inactive topic
+brokerDeleteInactiveTopicsFrequencySeconds=180
+
+# Setting number of connection for replication
+replicationConnectionsPerBroker=4
 
 # Modify the frame size of bookkie to 128MB, the default size is 5MB
 nettyMaxFrameSizeBytes=134217728
@@ -44,6 +54,7 @@ nettyMaxFrameSizeBytes=134217728
 # Modify the size of the pulsar message capacity to 128MB, the default is 5MB
 maxMessageSize=134217728
 ```
+For more details about the configuration, please refer to the file mentioned above.
 
 2. Start the pulsar service
 

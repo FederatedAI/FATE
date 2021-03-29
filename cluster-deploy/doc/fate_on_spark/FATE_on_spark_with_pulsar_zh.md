@@ -142,7 +142,7 @@ $ chmod 444 certs/ca.cert.pem
 - certs/ca.cert.pem 保存的是CA的证书文件
 - private/ca.key.pem 保存是CA的密钥文件
 
-##### 为broker.pulsar1生成证书
+##### 为10000.fate.org生成证书
 1. 生成目录存储证书文件
 ```
 $ mkdir 10000.fate.org
@@ -284,7 +284,7 @@ $ pulsar standalone -nss
   port: 6650
 
 default:
-  proxy: "proxy.fate.org"
+  proxy: "proxy.fate.org:443"
   domain: "fate.org"
 ```
 
