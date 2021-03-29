@@ -88,6 +88,10 @@ class RsaIntersectionHost(RsaIntersect):
                                                           idx=0)
         LOGGER.info("Remote host_sign_guest_ids_process to Guest.")
 
+        # recv guest privkey-encrypted even ids
+        guest_prvkey_ids = self.transfer_variable.guest_prvkey_ids.get(idx=0)
+        LOGGER.info("Get guest_prvkey_ids")
+
         # receive guest-signed host even ids
         recv_guest_sign_host_ids = self.transfer_variable.guest_sign_host_ids.get(idx=0)
         LOGGER.info(f"Get guest_sign_host_ids from Guest.")
@@ -99,10 +103,6 @@ class RsaIntersectionHost(RsaIntersect):
                                                                                              self.final_hash_operator,
                                                                                              self.rsa_params.salt)))
         sid_guest_sign_host_ids = guest_sign_host_ids.map(lambda k, v: (v[1], v[0]))
-
-        # recv guest privkey-encrypted even ids
-        guest_prvkey_ids = self.transfer_variable.guest_prvkey_ids.get(idx=0)
-        LOGGER.info("Get guest_prvkey_ids")
 
         encrypt_intersect_even_ids = sid_guest_sign_host_ids.join(guest_prvkey_ids, lambda sid, h: sid)
 

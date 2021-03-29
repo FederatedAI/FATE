@@ -130,6 +130,9 @@ class RsaIntersectionGuest(RsaIntersect):
                                                               idx=i)
             LOGGER.info(f"Remote guest_sign_host_ids to Host {host_party_id}.")
 
+        # get prvkey encrypted odd ids from host
+        host_prvkey_ids_list = self.get_host_prvkey_ids()
+
         # Recv host signed odd ids
         # table(guest_pubkey_id, host signed odd ids)
         recv_host_sign_guest_ids_list = self.transfer_variable.host_sign_guest_ids.get(idx=-1)
@@ -146,9 +149,6 @@ class RsaIntersectionGuest(RsaIntersect):
                                     for i, v in enumerate(pubkey_ids_process_list)]
         # table(hash(guest_ids_process/r), sid))
         sid_host_sign_guest_ids_list = [g.map(lambda k, v: (v[1], v[0])) for g in host_sign_guest_ids_list]
-
-        # get prvkey encrypted odd ids from host
-        host_prvkey_ids_list = self.get_host_prvkey_ids()
 
         # get intersect odd ids
         # intersect table(hash(guest_ids_process/r), sid)
