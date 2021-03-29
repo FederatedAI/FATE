@@ -179,8 +179,6 @@ class IntersectParam(BaseParam):
 
     left_join: bool, whether to supplement imputed host ids, default False. Only valid when with_sample_id is set to True
 
-    left_join_hash_method: str, method to encode non-intersect ids for left_join, default sha256
-
     """
 
     def __init__(self, intersect_method: str = consts.RAW, random_bit=128, sync_intersect_ids=True,
@@ -188,7 +186,7 @@ class IntersectParam(BaseParam):
                  with_encode=False, only_output_key=False, encode_params=EncodeParam(),
                  rsa_params=RSAParam(),
                  intersect_cache_param=IntersectCache(), repeated_id_process=False, repeated_id_owner=consts.GUEST,
-                 with_sample_id=False, left_join=False, left_join_hash_method="sha256",
+                 with_sample_id=False, left_join=False,
                  allow_info_share: bool = False, info_owner=consts.GUEST):
         super().__init__()
         self.intersect_method = intersect_method
@@ -206,7 +204,6 @@ class IntersectParam(BaseParam):
         self.info_owner = info_owner
         self.with_sample_id = with_sample_id
         self.left_join = left_join
-        self.left_join_hash_method = left_join_hash_method
 
     def check(self):
         descr = "intersect param's "
@@ -258,14 +255,14 @@ class IntersectParam(BaseParam):
 
         self.check_boolean(self.with_sample_id, descr+"with_sample_id")
         self.check_boolean(self.left_join, descr+"left_join")
-        if not self.with_sample_id and self.left_join:
-            raise ValueError(f"Cannot perform left join without sample ids.")
 
-        self.left_join_hash_method = self.check_and_change_lower(self.final_hash_method,
-                                                                 [consts.MD5, consts.SHA1, consts.SHA224,
-                                                                 consts.SHA256, consts.SHA384, consts.SHA512,
-                                                                 consts.SM3, "none"],
-                                                                 descr+"left_join_hash_method")
+        if self.left_join:
+            if not self.with_sample_id:
+                raise ValueError(f"Cannot perform left join without sample ids.")
+            if not self.sync_intersect_ids:
+                raise ValueError(f"Cannot perform left join without sync intersect ids")
+            if self.intersect_method == consts.RSA and self.info_owner == consts.GUEST and not self.allow_info_share:
+                raise ValueError(f"Cannot perform left join without sharing info")
 
         self.encode_params.check()
         self.rsa_params.check()
