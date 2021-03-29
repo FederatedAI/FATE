@@ -301,13 +301,15 @@ class BaseBinning(object):
     @staticmethod
     def _convert_dense_data(instances, bin_inner_param: BinInnerParam, bin_results: BinResults,
                             abnormal_list: list, convert_type: str = 'bin_num'):
-        instances = copy.deepcopy(instances)
+        # instances = copy.deepcopy(instances)
         features = instances.features
         transform_cols_idx = bin_inner_param.transform_bin_indexes
         split_points_dict = bin_results.all_split_points
 
+        transform_cols_idx_set = set(transform_cols_idx)
+
         for col_idx, col_value in enumerate(features):
-            if col_idx in transform_cols_idx:
+            if col_idx in transform_cols_idx_set:
                 if col_value in abnormal_list:
                     features[col_idx] = col_value
                     continue
@@ -368,27 +370,38 @@ class BaseBinning(object):
         f = functools.partial(self.add_label_in_partition,
                               sparse_bin_points=sparse_bin_points)
 
-        result_sum = data_bin_with_label.applyPartitions(f)
-        result_counts = result_sum.reduce(self.aggregate_partition_label)
-        for col_name, bin_results in result_counts.items():
+        # result_sum = data_bin_with_label.applyPartitions(f)
+        # result_counts = result_sum.reduce(self.aggregate_partition_label)
+        result_counts = data_bin_with_label.mapReducePartitions(f, self.aggregate_partition_label)
+
+        def cal_zeros(bin_results):
             for b in bin_results:
                 b[1] = b[1] - b[0]
+            return bin_results
 
-        result_counts = self.fill_sparse_result(result_counts, sparse_bin_points, label_counts)
+        result_counts = result_counts.mapValues(cal_zeros)
 
+        # for col_name, bin_results in result_counts.items():
+        #     for b in bin_results:
+        #         b[1] = b[1] - b[0]
+
+        f = functools.partial(self.fill_sparse_result,
+                              sparse_bin_points=sparse_bin_points,
+                              label_counts=label_counts)
+        # result_counts = self.fill_sparse_result(result_counts, sparse_bin_points, label_counts)
+        result_counts = result_counts.map(f)
         self.cal_iv_woe(result_counts,
                         self.params.adjustment_factor)
 
-    def fill_sparse_result(self, result_counts, sparse_bin_points, label_counts):
+    @staticmethod
+    def fill_sparse_result(col_name, static_nums, sparse_bin_points, label_counts):
         """
         Parameters
         ----------
-        result_counts :  dict.
+        static_nums :  list.
             It is like:
-                {'x1': [[event_count, non_event_count], [event_count, non_event_count] ... ],
-                 'x2': [[event_count, non_event_count], [event_count, non_event_count] ... ],
-                 ...
-                }
+                [[event_count, total_num], [event_count, total_num] ... ]
+
 
         sparse_bin_points : dict
             Dict of sparse bin num
@@ -402,13 +415,12 @@ class BaseBinning(object):
         The format is same as result_counts.
         """
 
-        for col_name, static_nums in result_counts.items():
-            curt_all = functools.reduce(lambda x, y: (x[0] + y[0], x[1] + y[1]), static_nums)
-            LOGGER.debug(f"In fill_sparse_result, curt_all: {curt_all}, label_count: {label_counts}")
-            sparse_bin = sparse_bin_points.get(col_name)
-            result_counts[col_name][sparse_bin] = [label_counts[1] - curt_all[0],
-                                                   label_counts[0] - curt_all[1]]
-        return result_counts
+        curt_all = functools.reduce(lambda x, y: (x[0] + y[0], x[1] + y[1]), static_nums)
+        LOGGER.debug(f"In fill_sparse_result, curt_all: {curt_all}, label_count: {label_counts}")
+        sparse_bin = sparse_bin_points.get(col_name)
+        static_nums[sparse_bin] = [label_counts[1] - curt_all[0],
+                                   label_counts[0] - curt_all[1]]
+        return col_name, static_nums
 
 
     @staticmethod
@@ -542,7 +554,7 @@ class BaseBinning(object):
 
         Parameters
         ----------
-        result_counts: dict.
+        result_counts: dict or table.
             It is like:
                 {'x1': [[event_count, non_event_count], [event_count, non_event_count] ... ],
                  'x2': [[event_count, non_event_count], [event_count, non_event_count] ... ],
@@ -560,10 +572,18 @@ class BaseBinning(object):
              ...
              }
         """
-        for col_name, data_event_count in result_counts.items():
-            col_result_obj = self.woe_1d(data_event_count, adjustment_factor)
-            assert isinstance(col_result_obj, BinColResults)
-            self.bin_results.put_col_results(col_name, col_result_obj)
+        if isinstance(result_counts, dict):
+            for col_name, data_event_count in result_counts.items():
+                col_result_obj = self.woe_1d(data_event_count, adjustment_factor)
+                assert isinstance(col_result_obj, BinColResults)
+                self.bin_results.put_col_results(col_name, col_result_obj)
+        else:
+            woe_1d = functools.partial(self.woe_1d, adjustment_factor=adjustment_factor)
+            col_result_obj_dict = dict(result_counts.mapValues(woe_1d).collect())
+            # col_result_obj = self.woe_1d(data_event_count, adjustment_factor)
+            for col_name, col_result_obj in col_result_obj_dict.items():
+                assert isinstance(col_result_obj, BinColResults)
+                self.bin_results.put_col_results(col_name, col_result_obj)
 
     @staticmethod
     def add_label_in_partition(data_bin_with_table, sparse_bin_points):
@@ -609,7 +629,7 @@ class BaseBinning(object):
                 col_sum[bin_idx] = label_sum
                 result_sum[col_name] = col_sum
 
-        return result_sum
+        return list(result_sum.items())
 
     def shuffle_static_counts(self, statistic_counts):
         """
@@ -645,14 +665,10 @@ class BaseBinning(object):
 
         Parameters
         ----------
-        sum1 :  dict.
+        sum1 :  list.
             It is like:
-                {'x1': [[event_count, total_num], [event_count, total_num] ... ],
-                 'x2': [[event_count, total_num], [event_count, total_num] ... ],
-                 ...
-                }
-
-        sum2 : dict
+                [[event_count, total_num], [event_count, total_num] ... ]
+        sum2 : list
             Same as sum1
         Returns
         -------
@@ -668,17 +684,12 @@ class BaseBinning(object):
         if sum2 is None:
             return sum1
 
-        for col_name, count_sum2 in sum2.items():
-            if col_name not in sum1:
-                sum1[col_name] = count_sum2
-                continue
-            count_sum1 = sum1[col_name]
-            for idx, label_sum2 in enumerate(count_sum2):
-                if idx >= len(count_sum1):
-                    count_sum1.append(label_sum2)
-                else:
-                    label_sum1 = count_sum1[idx]
-                    tmp = [label_sum1[0] + label_sum2[0], label_sum1[1] + label_sum2[1]]
-                    count_sum1[idx] = tmp
+        for idx, label_sum2 in enumerate(sum2):
+            if idx >= len(sum1):
+                sum1.append(label_sum2)
+            else:
+                label_sum1 = sum1[idx]
+                tmp = [label_sum1[0] + label_sum2[0], label_sum1[1] + label_sum2[1]]
+                sum1[idx] = tmp
 
         return sum1

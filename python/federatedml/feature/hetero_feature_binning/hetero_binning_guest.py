@@ -80,14 +80,15 @@ class HeteroFeatureBinningGuest(BaseFeatureBinning):
         self.binning_obj.cal_local_iv(data_instances, label_table=label_table,
                                       label_counts=label_counts)
 
-        encrypted_bin_infos = self.transfer_variable.encrypted_bin_sum.get(idx=-1)
-
+        encrypted_bin_sum_infos = self.transfer_variable.encrypted_bin_sum.get(idx=-1)
+        encrypted_bin_infos = self.transfer_variable.optimal_info.get(idx=-1)
         total_summary = self.binning_obj.bin_results.summary()
 
         LOGGER.info("Get encrypted_bin_sum from host")
         for host_idx, encrypted_bin_info in enumerate(encrypted_bin_infos):
             host_party_id = self.component_properties.host_party_idlist[host_idx]
-            encrypted_bin_sum = encrypted_bin_info['encrypted_bin_sum']
+            # encrypted_bin_sum = encrypted_bin_info['encrypted_bin_sum']
+            encrypted_bin_sum = encrypted_bin_sum_infos[host_idx]
             result_counts = self.cipher_decompress(encrypted_bin_sum, cipher)
             # result_counts = self.__decrypt_bin_sum(encrypted_bin_sum, cipher)
 
@@ -105,6 +106,7 @@ class HeteroFeatureBinningGuest(BaseFeatureBinning):
                 host_model_params.optimal_binning_param.min_bin_pct = optimal_binning_params.get('min_bin_pct')
 
                 self.binning_obj.event_total, self.binning_obj.non_event_total = self.get_histogram(data_instances)
+                result_counts = dict(result_counts.collect())
                 optimal_binning_cols = {x: y for x, y in result_counts.items() if x not in category_names}
                 host_binning_obj = self.optimal_binning_sync(optimal_binning_cols, data_instances.count(),
                                                              data_instances.partitions,
@@ -127,10 +129,19 @@ class HeteroFeatureBinningGuest(BaseFeatureBinning):
         return self.data_output
 
     def cipher_decompress(self, encrypted_bin_sum, cipher):
-        _decompressor = CipherDecompressor(encrypter=cipher)
-        encrypted_bin_sum["event_counts"] = _decompressor.unpack(encrypted_bin_sum["event_counts"])
-        encrypted_bin_sum["non_event_counts"] = _decompressor.unpack(encrypted_bin_sum["non_event_counts"])
-        return self.convert_decompress_format(encrypted_bin_sum)
+
+        def _decompress(col_dict):
+            _decompressor = CipherDecompressor(encrypter=cipher)
+            event_counts = _decompressor.unpack(col_dict["event_counts"])
+            event_counts = [int(x) for x in event_counts]
+            non_event_counts = _decompressor.unpack(col_dict["non_event_counts"])
+            non_event_counts = [int(x) for x in non_event_counts]
+            res = list(zip(event_counts, non_event_counts))
+            return res
+
+        encrypted_bin_sum = encrypted_bin_sum.mapValues(_decompress)
+        # return self.convert_decompress_format(encrypted_bin_sum)
+        return encrypted_bin_sum
 
     @staticmethod
     def convert_decompress_format(encrypted_bin_sum):
