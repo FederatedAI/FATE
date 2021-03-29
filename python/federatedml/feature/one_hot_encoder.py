@@ -285,7 +285,8 @@ class OneHotEncoder(ModelBase):
 
         new_feature = [_transformed_value[x] if x in _transformed_value else 0 for x in result_header]
 
-        feature_array = np.array(new_feature, dtype='float64')
+        # feature_array = np.array(new_feature, dtype='float64')
+        feature_array = np.array(new_feature)
         instance.features = feature_array
         return instance
 
@@ -346,6 +347,10 @@ class OneHotEncoder(ModelBase):
                 self.col_maps[col_name] = TransferPair(col_name)
             pair_obj = self.col_maps[col_name]
             for feature_value in list(cols_map_obj.values):
-                pair_obj.add_value(eval(feature_value))
+                try:
+                    feature_value = eval(feature_value)
+                except NameError:
+                    pass
+                pair_obj.add_value(feature_value)
 
         self.inner_param.set_result_header(list(model_param.result_header))

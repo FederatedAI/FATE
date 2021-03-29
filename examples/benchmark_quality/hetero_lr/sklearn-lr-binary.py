@@ -38,6 +38,7 @@ def main(config="../../config.yaml", param="./vechile_config.yaml"):
 
     if isinstance(config, str):
         config = JobConfig.load_from_file(config)
+        print(f"config: {config}")
         data_base_dir = config["data_base_dir"]
     else:
         data_base_dir = config.data_base_dir
@@ -47,7 +48,8 @@ def main(config="../../config.yaml", param="./vechile_config.yaml"):
         "max_iter": 100,
         "alpha": param["alpha"],
         "learning_rate": "optimal",
-        "eta0": param["learning_rate"]
+        "eta0": param["learning_rate"],
+        "random_state": 105
     }
 
     # prepare data
@@ -88,5 +90,5 @@ if __name__ == "__main__":
     parser.add_argument("-p", "--param", type=str, default="./breast_config.yaml",
                         help="config file for params")
     args = parser.parse_args()
-    main(args.param)
+    main(param=args.param)
 

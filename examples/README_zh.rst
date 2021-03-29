@@ -93,6 +93,15 @@ DSL是FATE提供的第一代配置和构建联邦建模任务的方式，具体�
 `dsl/v1 <./dsl/v1>`__\ ，此文件夹是在过去版本中对应的"federatedml-1.x-examples"文件夹。
 需要注意的是，在FATE-v1.6或者以后的版本里面，旧版本的DSL将会被逐步移除。
 
+
+交叉验证任务
+~~~~~~~~~~~
+
+1.6及以后的版本的交叉验证任务可选输出支持训练/验证过程数据。如需要输出过程数据，请配置CV参数``output_fold_history``；
+输出数据内容可从以下两种选择：1. 训练/预测结果 2. 数据特证。需注意输出的训练/预测结果不可输入下游评估组件Evaluation.
+目前所有建模模型组件的样例集均包括使用`CV参数 <../python/federatedml/param/cross_validation_param.py>`_ 的样例。
+
+
 Benchmark Quality
 -----------------
 

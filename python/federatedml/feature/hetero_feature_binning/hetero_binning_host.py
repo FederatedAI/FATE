@@ -15,14 +15,16 @@
 #
 
 import functools
+import operator
 
-# from federatedml.feature.binning.base_binning import IVAttributes
-from federatedml.feature.hetero_feature_binning.base_feature_binning import BaseHeteroFeatureBinning
+from federatedml.cipher_compressor import compressor
+from federatedml.feature.hetero_feature_binning.base_feature_binning import BaseFeatureBinning
+from federatedml.secureprotol.fate_paillier import PaillierEncryptedNumber
 from federatedml.util import LOGGER
 from federatedml.util import consts
 
 
-class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
+class HeteroFeatureBinningHost(BaseFeatureBinning):
     def fit(self, data_instances):
         """
         Apply binning method for both data instances in local party as well as the other one. Afterwards, calculate
@@ -51,6 +53,8 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
             data_instances = self.transform(data_instances)
         self.set_schema(data_instances)
         self.data_output = data_instances
+        total_summary = self.binning_obj.bin_results.summary()
+        self.set_summary(total_summary)
         return data_instances
 
     def _sync_init_bucket(self, data_instances, split_points, need_shuffle=False):
@@ -73,7 +77,7 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
 
         encrypted_bin_sum = self.bin_inner_param.encode_col_name_dict(encrypted_bin_sum, self)
         self.header_anonymous = self.bin_inner_param.encode_col_name_list(self.header, self)
-        LOGGER.debug(f"encrypted_bin_sum: {encrypted_bin_sum.keys()}, cols_map: {self.bin_inner_param.col_name_maps}")
+        encrypted_bin_sum = self.cipher_compress(encrypted_bin_sum, data_bin_table.count())
         send_result = {
             "encrypted_bin_sum": encrypted_bin_sum,
             "category_names": self.bin_inner_param.encode_col_name_list(
@@ -87,24 +91,78 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
                 "min_bin_pct": self.model_param.optimal_binning_param.min_bin_pct
             }
         }
-        LOGGER.debug("Send bin_info.category_names: {}, bin_info.bin_method: {}".format(send_result['category_names'],
-                                                                                        send_result['bin_method']))
         self.transfer_variable.encrypted_bin_sum.remote(send_result,
                                                         role=consts.GUEST,
                                                         idx=0)
 
     def __static_encrypted_bin_label(self, data_bin_table, encrypted_label, cols_dict, split_points):
         data_bin_with_label = data_bin_table.join(encrypted_label, lambda x, y: (x, y))
+        event_sum = encrypted_label.reduce(operator.add)
+        label_counts = {0: encrypted_label.count() - event_sum,
+                        1: event_sum}
+        sparse_bin_points = self.binning_obj.get_sparse_bin(self.bin_inner_param.bin_indexes,
+                                                            self.binning_obj.split_points)
+        sparse_bin_points = {self.bin_inner_param.header[k]: v for k, v in sparse_bin_points.items()}
+
         f = functools.partial(self.binning_obj.add_label_in_partition,
-                              split_points=split_points,
-                              cols_dict=cols_dict)
+                              sparse_bin_points=sparse_bin_points)
         result_sum = data_bin_with_label.applyPartitions(f)
         encrypted_bin_sum = result_sum.reduce(self.binning_obj.aggregate_partition_label)
 
         for col_name, bin_results in encrypted_bin_sum.items():
             for b in bin_results:
                 b[1] = b[1] - b[0]
+
+        encrypted_bin_sum = self.binning_obj.fill_sparse_result(encrypted_bin_sum,
+                                                                sparse_bin_points, label_counts)
         return encrypted_bin_sum
+
+    def cipher_compress(self, encrypted_bin_sum, max_value):
+        converted_bin_sum = self.convert_compress_format(encrypted_bin_sum)
+        event_counts = converted_bin_sum.get("event_counts")
+        cipher_max_int = None
+        for v in event_counts:
+            if isinstance(v, PaillierEncryptedNumber):
+                cipher_max_int = v.public_key.max_int
+        if cipher_max_int is None:
+            raise ValueError("All event counts are 0, please check data input.")
+        _compressor = compressor.CipherCompressor(consts.PAILLIER, max_value,
+                                                  cipher_max_int, compressor.NormalCipherPackage, 0)
+        converted_bin_sum["event_counts"] = _compressor.compress(converted_bin_sum["event_counts"])
+        converted_bin_sum["non_event_counts"] = _compressor.compress(converted_bin_sum["non_event_counts"])
+        return converted_bin_sum
+
+    @staticmethod
+    def convert_compress_format(encrypted_bin_sum):
+        """
+        Parameters
+        ----------
+        encrypted_bin_sum :  dict.
+            It is like:
+                {'x1': [[event_count, non_event_count], [event_count, non_event_count] ... ],
+                 'x2': [[event_count, non_event_count], [event_count, non_event_count] ... ],
+                 ...
+                }
+
+        returns
+        -------
+        {"keys": ['x1', 'x2' ...],
+         "event_counts": [...],
+         "non_event_counts": [...],
+         "bin_num": [...]
+         }
+        """
+        keys = []
+        event_counts = []
+        non_event_counts = []
+        bin_nums = []
+        for k, v in encrypted_bin_sum.items():
+            keys.append(k)
+            bin_nums.append(len(v))
+            event_counts.extend([x[0] for x in v])
+            non_event_counts.extend(x[1] for x in v)
+        return {"keys": keys, "event_counts": event_counts, "non_event_counts": non_event_counts,
+                "bin_nums": bin_nums}
 
     def optimal_binning_sync(self):
         bucket_idx = self.transfer_variable.bucket_idx.get(idx=0)

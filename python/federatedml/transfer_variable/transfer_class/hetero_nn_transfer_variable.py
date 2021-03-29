@@ -40,3 +40,7 @@ class HeteroNNTransferVariable(BaseTransferVariables):
         self.encrypted_host_forward = self._create_variable(name='encrypted_host_forward', src=['host'], dst=['guest'])
         self.host_backward = self._create_variable(name='host_backward', src=['guest'], dst=['host'])
         self.is_converge = self._create_variable(name='is_converge', src=['guest'], dst=['host'])
+        self.selective_info = self._create_variable(name="selective_info", src=["guest"], dst=["host"])
+        self.drop_out_table = self._create_variable(name="drop_out_table", src=["guest"], dst=["host"])
+        self.interactive_layer_output_unit = self._create_variable(name="interactive_layer_output_unit", src=["guest"], dst=["host"])
+

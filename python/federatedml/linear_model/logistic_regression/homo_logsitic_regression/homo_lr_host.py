@@ -59,6 +59,7 @@ class HomoLRHost(HomoLRBase):
         self.check_abnormal_values(data_instances)
         self.init_schema(data_instances)
         # validation_strategy = self.init_validation_strategy(data_instances, validate_data)
+        self._client_check_data(data_instances)
 
         pubkey = self.cipher.gen_paillier_pubkey(enable=self.use_encrypt, suffix=('fit',))
         if self.use_encrypt:

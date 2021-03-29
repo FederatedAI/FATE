@@ -13,10 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import sys
 from collections import defaultdict
 import math
-import logging
 from federatedml.util import LOGGER
 from fate_flow.entity.metric import Metric, MetricMeta
 from federatedml.param import EvaluateParam
@@ -57,8 +55,7 @@ class Evaluation(ModelBase):
         self.metrics = None
         self.round_num = 6
 
-        self.validate_metric = {}
-        self.train_metric = {}
+        self.eval_type = None
 
         # where to call metric computations
         self.metric_interface: MetricInterface = None
@@ -66,10 +63,17 @@ class Evaluation(ModelBase):
         self.psi_train_scores, self.psi_validate_scores = None, None
         self.psi_train_labels, self.psi_validate_labels = None, None
 
+        # multi unfold setting
+        self.need_unfold_multi_result = False
+
+        # summaries
+        self.metric_summaries = {}
+
     def _init_model(self, model):
         self.model_param = model
         self.eval_type = self.model_param.eval_type
         self.pos_label = self.model_param.pos_label
+        self.need_unfold_multi_result = self.model_param.unfold_multi_result
         self.metrics = model.metrics
         self.metric_interface = MetricInterface(pos_label=self.pos_label, eval_type=self.eval_type, )
 
@@ -176,8 +180,10 @@ class Evaluation(ModelBase):
                             LOGGER.info("res is inf, set to {}".format(res))
                     except:
                         pass
+
                     eval_result[eval_metric].append(mode)
                     eval_result[eval_metric].append(res)
+
             elif eval_metric == consts.PSI:
                 if mode == 'train':
                     self.psi_train_scores = pred_results
@@ -193,6 +199,7 @@ class Evaluation(ModelBase):
                     eval_result[eval_metric].append(res)
                     # delete saved scores after computing a psi pair
                     self.psi_train_scores, self.psi_validate_scores = None, None
+
         return eval_result
 
     def _evaluate_clustering_metrics(self, mode, data):
@@ -241,6 +248,31 @@ class Evaluation(ModelBase):
                              'one evaluation component is only available '
                              'for one clustering(kmean) component in current version')
 
+    @staticmethod
+    def _unfold_multi_result(score_list):
+        """
+        one-vs-rest transformation: multi classification result to several binary classification results
+        """
+
+        binary_result = {}
+        for key, multi_result in score_list:
+            true_label = multi_result[0]
+            predicted_label = multi_result[1]
+            multi_score = multi_result[3]
+            data_type = multi_result[-1]
+            # to binary predict result format
+            for multi_label in multi_score:
+                bin_label = 1 if str(multi_label) == str(true_label) else 0
+                bin_predicted_label = 1 if str(multi_label) == str(predicted_label) else 0
+                bin_score = multi_score[multi_label]
+                neg_bin_score = 1 - bin_score
+                result_list = [bin_label, bin_predicted_label, bin_score, {1: bin_score,  0: neg_bin_score}, data_type]
+                if multi_label not in binary_result:
+                    binary_result[multi_label] = []
+                binary_result[multi_label].append((key, result_list))
+
+        return binary_result
+
     def evaluate_metrics(self, mode: str, data: list) -> dict:
 
         eval_result = None
@@ -255,13 +287,26 @@ class Evaluation(ModelBase):
     def obtain_data(self, data_list):
         return data_list
 
-    def fit(self, data, return_result=False):
+    def check_data(self, data):
 
         if len(data) <= 0:
             return
 
         if self.eval_type == consts.CLUSTERING:
             self._check_clustering_input(data)
+        else:
+            for key, eval_data in data.items():
+                if eval_data is None:
+                    continue
+                sample = eval_data.take(1)[0]
+                if type(sample[1]) != list or len(sample[1]) != 5:  # label, predict_type, predict_score, predict_detail, type
+                    raise ValueError('length of table header mismatch, expected length is 5, got:{},'
+                                     'please check the input of the Evaluation Module, result of '
+                                     'cross validation is not supported.'.format(sample))
+
+    def fit(self, data, return_result=False):
+
+        self.check_data(data)
 
         LOGGER.debug(f'running eval, data: {data}')
         self.eval_results.clear()
@@ -274,12 +319,37 @@ class Evaluation(ModelBase):
             eval_data_local = list(eval_data.collect())
             if len(eval_data_local) == 0:
                 continue
+
             split_data_with_label = self.split_data_with_type(eval_data_local)
+
             for mode, data in split_data_with_label.items():
                 eval_result = self.evaluate_metrics(mode, data)
                 self.eval_results[key].append(eval_result)
 
-        return self.callback_metric_data(return_single_val_metrics=return_result)
+            if self.need_unfold_multi_result and self.eval_type == consts.MULTY:
+                unfold_binary_eval_result = defaultdict(list)
+
+                # set work mode to binary evaluation
+                self.eval_type = consts.BINARY
+                self.metric_interface.eval_type = consts.ONE_VS_REST
+                back_up_metric = self.metrics
+                self.metrics = [consts.AUC, consts.KS]
+
+                for mode, data in split_data_with_label.items():
+                    unfold_multi_data = self._unfold_multi_result(eval_data_local)
+                    for multi_label, marginal_bin_result in unfold_multi_data.items():
+                        eval_result = self.evaluate_metrics(mode, marginal_bin_result)
+                        new_key = key + '_class_{}'.format(multi_label)
+                        unfold_binary_eval_result[new_key].append(eval_result)
+
+                self.callback_ovr_metric_data(unfold_binary_eval_result)
+
+                # recover work mode
+                self.eval_type = consts.MULTY
+                self.metric_interface.eval_type = consts.MULTY
+                self.metrics = back_up_metric
+
+        return self.callback_metric_data(self.eval_results, return_single_val_metrics=return_result)
 
     def __save_single_value(self, result, metric_name, metric_namespace, eval_name):
 
@@ -299,7 +369,6 @@ class Evaluation(ModelBase):
                 value = np.round(value, self.round_num)
             points.append((value, np.round(y_axis_list[i], self.round_num)))
         points.sort(key=lambda x: x[0])
-
         metric_points = [Metric(point[0], point[1]) for point in points]
         self.tracker.log_metric_data(metric_namespace, metric_name, metric_points)
 
@@ -590,24 +659,71 @@ class Evaluation(ModelBase):
         self.tracker.set_metric_meta(metric_namespace, metric_name,
                                      MetricMeta(name=metric_name, metric_type=metric.upper(), extra_metas=extra_metas))
 
-    def callback_metric_data(self, return_single_val_metrics=False):
+    def __update_summary(self, data_type, namespace, metric, metric_val):
+        if data_type not in self.metric_summaries:
+            self.metric_summaries[data_type] = {}
+        if namespace not in self.metric_summaries[data_type]:
+            self.metric_summaries[data_type][namespace] = {}
+        self.metric_summaries[data_type][namespace][metric] = metric_val
 
+    def __save_summary(self):
+        LOGGER.info('eval summary is {}'.format(self.metric_summaries))
+        self.set_summary(self.metric_summaries)
+
+    def callback_ovr_metric_data(self, eval_results):
+
+        for model_name, eval_rs in eval_results.items():
+
+            train_callback_meta = defaultdict(dict)
+            validate_callback_meta = defaultdict(dict)
+            split_list = model_name.split('_')
+            label = split_list[-1]
+            origin_model_name_list = split_list[:-2]  # remove ' "class" label_index'
+            origin_model_name = ''
+            for s in origin_model_name_list:
+                origin_model_name += (s+'_')
+            origin_model_name = origin_model_name[:-1]
+
+            for rs_dict in eval_rs:
+                for metric_name, metric_rs in rs_dict.items():
+                    if metric_name == consts.KS:
+                        metric_rs = [metric_rs[0], metric_rs[1][0]]  # ks value only, curve data is not needed
+                    metric_namespace = metric_rs[0]
+                    if metric_namespace == 'train':
+                        callback_meta = train_callback_meta
+                    else:
+                        callback_meta = validate_callback_meta
+                    callback_meta[label][metric_name] = metric_rs[1]
+
+            self.tracker.set_metric_meta("train", model_name+'_'+'ovr',
+                                         MetricMeta(name=origin_model_name, metric_type='ovr',
+                                                    extra_metas=train_callback_meta))
+            self.tracker.set_metric_meta("validate", model_name+'_'+'ovr',
+                                         MetricMeta(name=origin_model_name, metric_type='ovr',
+                                                    extra_metas=validate_callback_meta))
+
+            LOGGER.debug('callback data {} {}'.format(train_callback_meta, validate_callback_meta))
+
+    def callback_metric_data(self, eval_results, return_single_val_metrics=False):
+
+        # collect single val metric for validation strategy
+        validate_metric = {}
+        train_metric = {}
         collect_dict = {}
         LOGGER.debug('callback metric called')
 
-        for (data_type, eval_res_list) in self.eval_results.items():
+        for (data_type, eval_res_list) in eval_results.items():
 
             precision_recall = {}
-
             for eval_res in eval_res_list:
                 for (metric, metric_res) in eval_res.items():
 
                     metric_namespace = metric_res[0]
 
                     if metric_namespace == 'validate':
-                        collect_dict = self.validate_metric
+                        collect_dict = validate_metric
                     elif metric_namespace == 'train':
-                        collect_dict = self.train_metric
+                        collect_dict = train_metric
 
                     metric_name = '_'.join([data_type, metric])
 
@@ -618,6 +734,8 @@ class Evaluation(ModelBase):
                                                  metric_namespace=metric_namespace
                                                  , eval_name=metric)
                         collect_dict[metric] = single_val_metric
+                        # update pipeline summary
+                        self.__update_summary(data_type, metric_namespace, metric, single_val_metric)
 
                     if metric == consts.KS:
                         self.__save_ks_curve(metric, metric_res, metric_name, metric_namespace, data_type)
@@ -661,20 +779,17 @@ class Evaluation(ModelBase):
                     elif metric == consts.DISTANCE_MEASURE:
                         self.__save_distance_measure(metric, metric_res[1], metric_name, metric_namespace)
 
-        if len(self.validate_metric) != 0:
-            self.set_summary(self.validate_metric)
-        else:
-            self.set_summary(self.train_metric)
+        self.__save_summary()
 
         if return_single_val_metrics:
-            if len(self.validate_metric) != 0:
+            if len(validate_metric) != 0:
                 LOGGER.debug("return validate metric")
-                LOGGER.debug('validate metric is {}'.format(self.validate_metric))
-                return self.validate_metric
+                LOGGER.debug('validate metric is {}'.format(validate_metric))
+                return validate_metric
             else:
                 LOGGER.debug("validate metric is empty, return train metric")
-                LOGGER.debug('train metric is {}'.format(self.train_metric))
-                return self.train_metric
+                LOGGER.debug('train metric is {}'.format(train_metric))
+                return train_metric
 
         else:
             return None

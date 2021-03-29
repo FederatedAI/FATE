@@ -18,7 +18,7 @@ class HomoDecisionTreeArbiter(DecisionTree):
 
         super(HomoDecisionTreeArbiter, self).__init__(tree_param)
         self.splitter = Splitter(self.criterion_method, self.criterion_params, self.min_impurity_split,
-                                 self.min_sample_split, self.min_leaf_node,)
+                                 self.min_sample_split, self.min_leaf_node, self.min_child_weight)
 
         self.transfer_inst = HomoDecisionTreeTransferVariable()
         """
@@ -164,7 +164,7 @@ class HomoDecisionTreeArbiter(DecisionTree):
     def compute_best_splits(self, *args):
         pass
 
-    def assign_a_instance(self, *args):
+    def assign_an_instance(self, *args):
         pass
 
     def assign_instances_to_new_node(self, *args):

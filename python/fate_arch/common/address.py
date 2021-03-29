@@ -25,6 +25,11 @@ class HDFSAddress(AddressABC):
         self.path = path
 
 
+class PathAddress(AddressABC):
+    def __init__(self, path=None):
+        self.path = path
+
+
 class MysqlAddress(AddressABC):
     def __init__(self, user, passwd, host, port, db, name):
         self.user = user

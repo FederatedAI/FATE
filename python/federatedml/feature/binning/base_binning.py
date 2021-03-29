@@ -24,9 +24,11 @@ import copy
 
 from federatedml.feature.binning.bin_inner_param import BinInnerParam
 from federatedml.feature.binning.bin_result import BinColResults, BinResults
+from federatedml.statistic.data_overview import get_header
 from federatedml.feature.sparse_vector import SparseVector
 from federatedml.statistic import data_overview
-
+from federatedml.util import LOGGER
+from federatedml.feature.fate_element_type import NoneType
 
 # from federatedml.statistic import statics
 
@@ -47,7 +49,7 @@ class BaseBinning(object):
         self.non_event_total = None
 
         if abnormal_list is None:
-            self.abnormal_list = []
+            self.abnormal_list = [NoneType()]
         else:
             self.abnormal_list = abnormal_list
 
@@ -215,6 +217,32 @@ class BaseBinning(object):
 
         return new_data, split_points_result, bin_sparse
 
+    def _setup_bin_inner_param(self, data_instances, params):
+        if self.bin_inner_param is not None:
+            return
+        self.bin_inner_param = BinInnerParam()
+
+        header = get_header(data_instances)
+        LOGGER.debug("_setup_bin_inner_param, get header length: {}".format(len(self.header)))
+
+        self.schema = data_instances.schema
+        self.bin_inner_param.set_header(header)
+        if params.bin_indexes == -1:
+            self.bin_inner_param.set_bin_all()
+        else:
+            self.bin_inner_param.add_bin_indexes(params.bin_indexes)
+            self.bin_inner_param.add_bin_names(params.bin_names)
+
+        self.bin_inner_param.add_category_indexes(params.category_indexes)
+        self.bin_inner_param.add_category_names(params.category_names)
+
+        if params.transform_param.transform_cols == -1:
+            self.bin_inner_param.set_transform_all()
+        else:
+            self.bin_inner_param.add_transform_bin_indexes(params.transform_param.transform_cols)
+            self.bin_inner_param.add_transform_bin_names(params.transform_param.transform_names)
+        self.set_bin_inner_param(self.bin_inner_param)
+
     @staticmethod
     def _convert_sparse_data(instances, bin_inner_param: BinInnerParam, bin_results: BinResults,
                              abnormal_list: list, convert_type: str = 'bin_num'):
@@ -256,6 +284,11 @@ class BaseBinning(object):
     def get_sparse_bin(self, transform_cols_idx, split_points_dict):
         """
         Get which bins the 0 located at for each column.
+
+        Returns
+        -------
+        Dict of sparse bin num
+            {0: 2, 1: 3, 2:5 ... }
         """
         result = {}
         for col_idx in transform_cols_idx:
@@ -293,7 +326,7 @@ class BaseBinning(object):
         instances.features = features
         return instances
 
-    def cal_local_iv(self, data_instances, split_points=None, label_table=None):
+    def cal_local_iv(self, data_instances, label_counts, split_points=None, label_table=None):
         """
         Calculate iv attributes
 
@@ -326,13 +359,14 @@ class BaseBinning(object):
             split_points = self.split_points
 
         data_bin_table = self.get_data_bin(data_instances, split_points)
+        sparse_bin_points = self.get_sparse_bin(self.bin_inner_param.bin_indexes, self.split_points)
+        sparse_bin_points = {self.bin_inner_param.header[k]: v for k, v in sparse_bin_points.items()}
         if label_table is None:
             label_table = data_instances.mapValues(lambda x: x.label)
         # event_count_table = label_table.mapValues(lambda x: (x, 1 - x))
         data_bin_with_label = data_bin_table.join(label_table, lambda x, y: (x, y))
         f = functools.partial(self.add_label_in_partition,
-                              split_points=split_points,
-                              cols_dict=self.bin_inner_param.bin_cols_map)
+                              sparse_bin_points=sparse_bin_points)
 
         result_sum = data_bin_with_label.applyPartitions(f)
         result_counts = result_sum.reduce(self.aggregate_partition_label)
@@ -340,8 +374,42 @@ class BaseBinning(object):
             for b in bin_results:
                 b[1] = b[1] - b[0]
 
+        result_counts = self.fill_sparse_result(result_counts, sparse_bin_points, label_counts)
+
         self.cal_iv_woe(result_counts,
                         self.params.adjustment_factor)
+
+    def fill_sparse_result(self, result_counts, sparse_bin_points, label_counts):
+        """
+        Parameters
+        ----------
+        result_counts :  dict.
+            It is like:
+                {'x1': [[event_count, non_event_count], [event_count, non_event_count] ... ],
+                 'x2': [[event_count, non_event_count], [event_count, non_event_count] ... ],
+                 ...
+                }
+
+        sparse_bin_points : dict
+            Dict of sparse bin num
+                {"x1": 2, "x2": 3, "x3": 5 ... }
+
+        label_counts: dict
+            eg. {0: 100, 1: 200}
+
+        Returns
+        -------
+        The format is same as result_counts.
+        """
+
+        for col_name, static_nums in result_counts.items():
+            curt_all = functools.reduce(lambda x, y: (x[0] + y[0], x[1] + y[1]), static_nums)
+            LOGGER.debug(f"In fill_sparse_result, curt_all: {curt_all}, label_count: {label_counts}")
+            sparse_bin = sparse_bin_points.get(col_name)
+            result_counts[col_name][sparse_bin] = [label_counts[1] - curt_all[0],
+                                                   label_counts[0] - curt_all[1]]
+        return result_counts
+
 
     @staticmethod
     def bin_data(instance, split_points, cols_dict, header, is_sparse):
@@ -498,7 +566,7 @@ class BaseBinning(object):
             self.bin_results.put_col_results(col_name, col_result_obj)
 
     @staticmethod
-    def add_label_in_partition(data_bin_with_table, split_points, cols_dict):
+    def add_label_in_partition(data_bin_with_table, sparse_bin_points):
         """
         Add all label, so that become convenient to calculate woe and iv
 
@@ -508,11 +576,9 @@ class BaseBinning(object):
             The input data, the DTable is like:
             (id, {'x1': 1, 'x2': 5, 'x3': 2}, y)
 
-        split_points : dict
-            Split points dict. Use to find out total bin num for each feature
-
-        cols_dict: dict
-            Record key, value pairs where key is cols' name, and value is cols' index.
+        sparse_bin_points: dict
+            Dict of sparse bin num
+                {0: 2, 1: 3, 2:5 ... }
 
         Returns
         -------
@@ -535,6 +601,8 @@ class BaseBinning(object):
                 col_sum = result_sum[col_name]
                 while bin_idx >= len(col_sum):
                     col_sum.append([0, 0])
+                if bin_idx == sparse_bin_points[col_name]:
+                    continue
                 label_sum = col_sum[bin_idx]
                 label_sum[0] = label_sum[0] + y
                 label_sum[1] = label_sum[1] + 1

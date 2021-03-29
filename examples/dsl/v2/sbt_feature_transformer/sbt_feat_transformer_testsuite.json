@@ -1,0 +1,50 @@
+{
+    "data": [
+        {
+            "file": "examples/data/breast_hetero_guest.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "breast_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/breast_hetero_host.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "breast_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/vehicle_scale_hetero_guest.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "vehicle_scale_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/vehicle_scale_hetero_host.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "vehicle_scale_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        }
+    ],
+    "tasks": {
+        "sbt_transform_and_baseline_compare": {
+            "conf": "./test_sbt_feat_transformer_conf_0.json",
+            "dsl": "./test_sbt_feat_transformer_dsl_0.json"
+        },
+        "fast_sbt_transform_and_baseline_compare": {
+            "conf": "./test_sbt_feat_transformer_conf_1.json",
+            "dsl": "./test_sbt_feat_transformer_dsl_1.json"
+        },
+        "multi_classification_sbt_transform": {
+            "conf": "./test_sbt_feat_transformer_conf_2.json",
+            "dsl": "./test_sbt_feat_transformer_dsl_2.json"
+        }
+    }
+}

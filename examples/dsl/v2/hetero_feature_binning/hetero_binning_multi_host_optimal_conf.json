@@ -15,12 +15,50 @@
     },
     "job_parameters": {
         "common": {
-            "job_type": "train",
-            "backend": 0,
-            "work_mode": 0
+            "job_type": "train"
         }
     },
     "component_parameters": {
+        "role": {
+            "host": {
+                "1": {
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    }
+                },
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    }
+                },
+                "0|1": {
+                    "dataio_0": {
+                        "with_label": false,
+                        "output_format": "dense"
+                    }
+                }
+            },
+            "guest": {
+                "0": {
+                    "dataio_0": {
+                        "with_label": true,
+                        "output_format": "dense"
+                    },
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_guest",
+                            "namespace": "experiment"
+                        }
+                    }
+                }
+            }
+        },
         "common": {
             "hetero_feature_binning_0": {
                 "method": "optimal",
@@ -46,46 +84,6 @@
                     "init_bucket_method": "quantile",
                     "init_bin_nums": 100,
                     "mixture": false
-                }
-            }
-        },
-        "role": {
-            "guest": {
-                "0": {
-                    "dataio_0": {
-                        "with_label": true,
-                        "output_format": "dense"
-                    },
-                    "reader_0": {
-                        "table": {
-                            "name": "breast_hetero_guest",
-                            "namespace": "experiment"
-                        }
-                    }
-                }
-            },
-            "host": {
-                "0|1": {
-                    "dataio_0": {
-                        "with_label": false,
-                        "output_format": "dense"
-                    }
-                },
-                "1": {
-                    "reader_0": {
-                        "table": {
-                            "name": "breast_hetero_host",
-                            "namespace": "experiment"
-                        }
-                    }
-                },
-                "0": {
-                    "reader_0": {
-                        "table": {
-                            "name": "breast_hetero_host",
-                            "namespace": "experiment"
-                        }
-                    }
                 }
             }
         }

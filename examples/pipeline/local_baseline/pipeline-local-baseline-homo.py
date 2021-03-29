@@ -75,6 +75,16 @@ def main(config="../../config.yaml", namespace=""):
     job_parameters = JobParameters(backend=backend, work_mode=work_mode)
     pipeline.fit(job_parameters)
 
+    # predict
+    pipeline.deploy_component([dataio_0, homo_lr_0, local_baseline_0])
+
+    predict_pipeline = PipeLine()
+    predict_pipeline.add_component(reader_0)
+    predict_pipeline.add_component(pipeline,
+                                   data=Data(predict_input={pipeline.dataio_0.input.data: reader_0.output.data}))
+    predict_pipeline.add_component(evaluation_0, data=Data(data=[homo_lr_0.output.data, local_baseline_0.output.data]))
+    predict_pipeline.predict(job_parameters)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("PIPELINE DEMO")

@@ -471,6 +471,14 @@ Below lists input and output elements of each component.
      - None
      - None
 
+   * - `Sample Weight`_
+     - Sample Weight
+     - Sample Weight assigns weight to instances according to user-specified parameters
+     - data
+     - data
+     - None
+     - None
+
 
 
 .. _DataIO: ../../../federatedml/util/README.rst
@@ -499,6 +507,7 @@ Below lists input and output elements of each component.
 .. _Data Statistics: ../../../federatedml/statistic/README.rst
 .. _Scorecard: ../../../federatedml/statistic/scorecard/README.rst
 .. _Feldman Verifiable Sum: ../../../federatedml/statistic/feldman_verifiable_sum/README.rst
+.. _Sample Weight: ../../../federatedml/util/README.rst
 
 
 Params
