@@ -272,7 +272,7 @@ Below lists input and output elements of each component.
      - model
 
    * - `DataTransform`_
-     - DataIO
+     - DataTransform
      - This component usually follows ``Reader``. It transforms user-uploaded date into Instance object.
      - data
      - data
