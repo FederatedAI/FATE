@@ -49,11 +49,19 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
 
    * - `DataIO`_
      - DataIO
-     - 该组件将原始数据转换为Instance对象。
+     - 该组件将原始数据转换为Instance对象(FATE-v1.7后会逐步弃用，使用DataTransform)。
      - Table，值为原始数据
      - 转换后的数据表，值为在 : `federatedml/feature/instance.py` 中定义的Data Instance的实例
      -
      - DataIO模型
+
+   * - `DataTransform`_
+     - DataTransform
+     - 该组件将原始数据转换为Instance对象。
+     - Table，值为原始数据
+     - 转换后的数据表，值为在 : `federatedml/feature/instance.py` 中定义的Data Instance的实例
+     -
+     - DataTransform模型
 
    * - `Intersect`_
      - Intersection
@@ -288,6 +296,7 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
      -
 
 .. _DataIO: util/README.rst
+.. _DataTransform:: util/README.rst
 .. _Intersect: statistic/intersect/README.rst
 .. _Federated Sampling: feature/README.rst
 .. _Feature Scale: feature/README.rst
