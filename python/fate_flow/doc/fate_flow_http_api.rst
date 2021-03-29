@@ -665,6 +665,9 @@ Model
 
    - model_version: Required, Integer: model version
    - model_id: Required, String: model id
+   - cpn_list: Optional, String: array-like string that contains components
+   - cpn_path: Optional, String: file path of plain text which stores component list
+   - dsl_path: Optional, String: file path of plain text which stores dsl content
 
 -  response structure
 
