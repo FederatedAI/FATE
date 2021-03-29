@@ -177,7 +177,9 @@ class IntersectParam(BaseParam):
 
     with_sample_id: bool, data with sample id or not, default False; set this param to True may lead to unexpected behavior
 
-    left_join: bool, whether to supplement imputed host ids, default False. Only valid when with_match_id is set to True
+    left_join: bool, whether to supplement imputed host ids, default False. Only valid when with_sample_id is set to True
+
+    left_join_hash_method: str, method to encode non-intersect ids for left_join, default sha256
 
     """
 
@@ -186,7 +188,7 @@ class IntersectParam(BaseParam):
                  with_encode=False, only_output_key=False, encode_params=EncodeParam(),
                  rsa_params=RSAParam(),
                  intersect_cache_param=IntersectCache(), repeated_id_process=False, repeated_id_owner=consts.GUEST,
-                 with_sample_id=False, left_join=False,
+                 with_sample_id=False, left_join=False, left_join_hash_method="sha256",
                  allow_info_share: bool = False, info_owner=consts.GUEST):
         super().__init__()
         self.intersect_method = intersect_method
@@ -203,6 +205,8 @@ class IntersectParam(BaseParam):
         self.allow_info_share = allow_info_share
         self.info_owner = info_owner
         self.with_sample_id = with_sample_id
+        self.left_join = left_join
+        self.left_join_hash_method = left_join_hash_method
 
     def check(self):
         descr = "intersect param's "
@@ -251,10 +255,17 @@ class IntersectParam(BaseParam):
         self.info_owner = self.check_and_change_lower(self.info_owner,
                                                       [consts.GUEST, consts.HOST],
                                                       descr+"info_owner")
-        self.check_boolean(self.left_join, descr+"left_join")
-        if not self.with_match_id and self.left_join:
-            raise ValueError(f"Cannot perform left join without match ids.")
+
         self.check_boolean(self.with_sample_id, descr+"with_sample_id")
+        self.check_boolean(self.left_join, descr+"left_join")
+        if not self.with_sample_id and self.left_join:
+            raise ValueError(f"Cannot perform left join without sample ids.")
+
+        self.left_join_hash_method = self.check_and_change_lower(self.final_hash_method,
+                                                                 [consts.MD5, consts.SHA1, consts.SHA224,
+                                                                 consts.SHA256, consts.SHA384, consts.SHA512,
+                                                                 consts.SM3, "none"],
+                                                                 descr+"left_join_hash_method")
 
         self.encode_params.check()
         self.rsa_params.check()
