@@ -265,6 +265,14 @@ Below lists input and output elements of each component.
 
    * - `DataIO`_
      - DataIO
+     - This component usually follows ``Reader``. It transforms user-uploaded date into Instance object(deprecate in FATe-v1.7, use DataTransform instead).
+     - data
+     - data
+     - model
+     - model
+
+   * - `DataTransform`_
+     - DataIO
      - This component usually follows ``Reader``. It transforms user-uploaded date into Instance object.
      - data
      - data
@@ -482,6 +490,7 @@ Below lists input and output elements of each component.
 
 
 .. _DataIO: ../../../federatedml/util/README.rst
+.. _DataTransform: ../../../federatedml/util/README.rst
 .. _Intersect: ../../../federatedml/statistic/intersect/README.rst
 .. _Federated Sampling: ../../../federatedml/feature/README.rst
 .. _Feature Scale: ../../../federatedml/feature/README.rst
