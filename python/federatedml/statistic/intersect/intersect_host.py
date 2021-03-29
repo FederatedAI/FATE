@@ -61,15 +61,17 @@ class RsaIntersectionHost(RsaIntersect):
                                                     random_bit=self.random_bit,
                                                     rsa_e=self.rcv_e,
                                                     rsa_n=self.rcv_n)
+        LOGGER.info(f"Finish pubkey_ids_process")
         mask_host_id = pubkey_ids_process.mapValues(lambda v: 1)
         self.transfer_variable.host_pubkey_ids.remote(mask_host_id,
                                                       role=consts.GUEST,
                                                       idx=0)
-        LOGGER.info("Remote host_mask_ids to Guest")
+        LOGGER.info("Remote host_pubkey_ids to Guest")
 
-        # encrypt & send privkey-encrypted host odd ids to guest
+        # encrypt & send prvkey-encrypted host odd ids to guest
         prvkey_ids_process_pair = self.cal_prvkey_ids_process_pair(sid_hash_odd, self.d, self.n)
         prvkey_ids_process = prvkey_ids_process_pair.mapValues(lambda v: 1)
+
         self.transfer_variable.host_prvkey_ids.remote(prvkey_ids_process,
                                                       role=consts.GUEST,
                                                       idx=0)
