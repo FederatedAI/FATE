@@ -311,6 +311,14 @@ Below lists input and output elements of each component.
      - model
      - model
 
+   * - `Homo Feature Binning`_
+     - Homo Feature Binning
+     - Calculate quantile binning through multiple parties
+     - data
+     - data
+     - None
+     - model
+
    * - `OneHot Encoder`_
      - OneHotEncoder
      - Transfer a column into one-hot format.
@@ -387,6 +395,22 @@ Below lists input and output elements of each component.
      - HeteroSecureBoost
      - Build hetero secure boosting module through multiple parties
      - train_data; validate_data; predict_input
+     - data
+     - model
+     - model
+
+   * - `Hetero Fast Secure Boosting`_
+     - HeteroFastSecureBoost
+     - Build hetero secure boosting model through multiple parties in layered/mix manners.
+     - train_data; validate_data; predict_input
+     - data
+     - model
+     - model
+
+   * - `Hetero Secure Boost Feature Transformer`_
+     - SBT Feature Transformer
+     - This component can encode sample using Hetero SBT leaf indices.
+     - data
      - data
      - model
      - model
@@ -495,6 +519,7 @@ Below lists input and output elements of each component.
 .. _Federated Sampling: ../../../federatedml/feature/README.rst
 .. _Feature Scale: ../../../federatedml/feature/README.rst
 .. _Hetero Feature Binning: ../../../federatedml/feature/README.rst
+.. _Homo Feature Binning: ../../../federatedml/feature/README.rst
 .. _OneHot Encoder: ../../../federatedml/feature/README.rst
 .. _Hetero Feature Selection: ../../../federatedml/feature/README.rst
 .. _Union: ../../../federatedml/statistic/union/README.rst
@@ -505,6 +530,8 @@ Below lists input and output elements of each component.
 .. _Homo-LR: ../../../federatedml/linear_model/logistic_regression/README.rst
 .. _Homo-NN: ../../../federatedml/nn/homo_nn/README.rst
 .. _Hetero Secure Boosting: ../../../federatedml/ensemble/README.rst
+.. _Hetero Fast Secure Boosting: ../../../federatedml/ensemble/README.rst
+.. _Hetero Secure Boost Feature Transformer: ../../../federatedml/feature/sbt_feature_transformer
 .. _Evaluation: ../../../federatedml/evaluation/README.rst
 .. _Hetero Pearson: ../../../federatedml/statistic/correlation/README.rst
 .. _Hetero-NN: ../../../federatedml/nn/hetero_nn/README.rst
