@@ -175,7 +175,7 @@ class IntersectParam(BaseParam):
 
     repeated_id_owner: str, which role has the repeated ids
 
-    with_match_id: bool, data with match id or not, default False; set this param to True may lead to unexpected behavior
+    with_sample_id: bool, data with sample id or not, default False; set this param to True may lead to unexpected behavior
 
     left_join: bool, whether to supplement imputed host ids, default False. Only valid when with_match_id is set to True
 
@@ -186,7 +186,7 @@ class IntersectParam(BaseParam):
                  with_encode=False, only_output_key=False, encode_params=EncodeParam(),
                  rsa_params=RSAParam(),
                  intersect_cache_param=IntersectCache(), repeated_id_process=False, repeated_id_owner=consts.GUEST,
-                 with_match_id=False, left_join=False,
+                 with_sample_id=False, left_join=False,
                  allow_info_share: bool = False, info_owner=consts.GUEST):
         super().__init__()
         self.intersect_method = intersect_method
@@ -202,8 +202,7 @@ class IntersectParam(BaseParam):
         self.repeated_id_owner = repeated_id_owner
         self.allow_info_share = allow_info_share
         self.info_owner = info_owner
-        self.with_match_id = with_match_id
-        self.left_join = left_join
+        self.with_sample_id = with_sample_id
 
     def check(self):
         descr = "intersect param's "
@@ -252,11 +251,10 @@ class IntersectParam(BaseParam):
         self.info_owner = self.check_and_change_lower(self.info_owner,
                                                       [consts.GUEST, consts.HOST],
                                                       descr+"info_owner")
-
-        self.check_boolean(self.with_match_id, descr+"with_match_id")
         self.check_boolean(self.left_join, descr+"left_join")
         if not self.with_match_id and self.left_join:
             raise ValueError(f"Cannot perform left join without match ids.")
+        self.check_boolean(self.with_sample_id, descr+"with_sample_id")
 
         self.encode_params.check()
         self.rsa_params.check()

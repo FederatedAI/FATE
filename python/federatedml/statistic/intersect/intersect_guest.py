@@ -132,7 +132,6 @@ class RsaIntersectionGuest(RsaIntersect):
 
         # get prvkey encrypted odd ids from host
         host_prvkey_ids_list = self.get_host_prvkey_ids()
-        LOGGER.info("Get host_prvkey_ids")
 
         # Recv host signed odd ids
         # table(guest_pubkey_id, host signed odd ids)

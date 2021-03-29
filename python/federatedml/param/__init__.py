@@ -21,6 +21,7 @@ from federatedml.param.column_expand_param import ColumnExpandParam
 from federatedml.param.cross_validation_param import CrossValidationParam
 from federatedml.param.data_split_param import DataSplitParam
 from federatedml.param.dataio_param import DataIOParam
+from federatedml.param.data_transform_param import DataTransformParam
 from federatedml.param.encrypt_param import EncryptParam
 from federatedml.param.encrypted_mode_calculation_param import EncryptedModeCalculatorParam
 from federatedml.param.evaluation_param import EvaluateParam
@@ -64,6 +65,7 @@ __all__ = [
     "CrossValidationParam",
     "DataSplitParam",
     "DataIOParam",
+    "DataTransformParam",
     "EncryptParam",
     "EncryptedModeCalculatorParam",
     "FeatureBinningParam",
