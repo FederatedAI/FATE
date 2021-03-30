@@ -5,7 +5,7 @@ FROM ${PREFIX}/base-image:${BASE_TAG}
 RUN set -eux; \
     rpm --rebuilddb; \
     rpm --import /etc/pki/rpm-gpg/RPM*; \
-    yum install -y which java-1.8.0-openjdk java-1.8.0-openjdk-devel ; \
+    yum install -y which strace java-1.8.0-openjdk java-1.8.0-openjdk-devel ; \
     yum clean all;
 
 WORKDIR /data/projects/fate/eggroll/
