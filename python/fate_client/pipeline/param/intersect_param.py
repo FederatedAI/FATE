@@ -257,11 +257,9 @@ class IntersectParam(BaseParam):
         self.check_boolean(self.left_join, descr+"left_join")
 
         if self.left_join:
-            if not self.with_sample_id:
-                raise ValueError(f"Cannot perform left join without sample ids.")
-            if not self.sync_intersect_ids:
+            if self.intersect_method == consts.RAW and not self.sync_intersect_ids:
                 raise ValueError(f"Cannot perform left join without sync intersect ids")
-            if self.intersect_method == consts.RSA and self.info_owner == consts.GUEST and not self.allow_info_share:
+            if self.intersect_method == consts.RSA and not self.allow_info_share:
                 raise ValueError(f"Cannot perform left join without sharing info")
 
         self.encode_params.check()
