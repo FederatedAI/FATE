@@ -18,12 +18,12 @@ from fate_arch.common.base_utils import current_timestamp
 from fate_flow.db.db_models import DB, Job
 from fate_arch.storage import StorageSessionBase
 from fate_arch.common.log import detect_logger
-from fate_flow.scheduler import FederatedScheduler
+from fate_flow.scheduler.federated_scheduler import FederatedScheduler
 from fate_flow.entity.types import JobStatus, TaskStatus, EndStatus
 from fate_flow.utils import cron, job_utils
 from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.operation import JobSaver
-from fate_flow.manager import ResourceManager
+from fate_flow.operation.job_saver import JobSaver
+from fate_flow.manager.resource_manager import ResourceManager
 
 
 class Detector(cron.Cron):

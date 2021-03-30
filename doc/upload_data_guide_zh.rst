@@ -73,7 +73,7 @@ DataIO模块接受以下输入数据格式，并将其转换为所需的输出DT
 3. head: 指定数据文件是否包含表头
 3. partition: 指定用于存储数据的分区数
 4. work_mode: 指定工作模式，0代表单机版，1代表集群版
-5. backend: 指定后端，0代表EGGROLL， 1代表SPARK
+5. backend: 指定后端，0代表EGGROLL， 1代表SPARK加RabbitMQ， 2代表SPARK加Pulsar
 
 上传命令
 --------

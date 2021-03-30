@@ -1,3 +1,4 @@
+from scipy.stats import stats
 from sklearn.metrics import explained_variance_score
 from sklearn.metrics import mean_absolute_error
 from sklearn.metrics import mean_squared_error
@@ -72,3 +73,13 @@ class IC_Approx(object):
     def compute(self, k, n, dfe, loss):
         aic_score = k * dfe + n * np.log(loss * 2)
         return aic_score
+
+
+class Describe(object):
+
+    @staticmethod
+    def compute(pred_scores):
+        describe = stats.describe(pred_scores)
+        metrics = {"min": describe.minmax[0], "max": describe.minmax[1], "mean": describe.mean,
+                   "variance": describe.variance, "skewness": describe.skewness, "kurtosis": describe.kurtosis}
+        return metrics

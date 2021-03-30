@@ -1,7 +1,7 @@
 [submodule "fateboard"]
 	path = fateboard
 	url = https://github.com/FederatedAI/FATE-Board.git
-	branch = v1.5.1
+	branch = master
 [submodule "eggroll"]
 	path = eggroll
 	url = https://github.com/WeBankFinTech/eggroll.git

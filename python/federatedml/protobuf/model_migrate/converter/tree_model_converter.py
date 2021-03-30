@@ -34,6 +34,8 @@ class HeteroSBTConverter(ProtoConverterBase):
                 ):
 
         feat_importance_list = list(param.feature_importances)
+        fid_feature_mapping = dict(param.feature_name_fid_mapping)
+        feature_fid_mapping = {v: k for k, v in fid_feature_mapping.items()}
         tree_list = list(param.trees_)
         tree_plan = list(param.tree_plan)
         replacer = AutoReplace(guest_id_mapping, host_id_mapping, arbiter_id_mapping)
@@ -41,7 +43,8 @@ class HeteroSBTConverter(ProtoConverterBase):
         # fp == feature importance
         for fp in feat_importance_list:
             fp.sitename = replacer.replace(fp.sitename)
-            fp.fullname = replacer.replace(fp.fullname)
+            if fp.fullname not in feature_fid_mapping:
+                fp.fullname = replacer.replace(fp.fullname)
 
         for tree in tree_list:
             tree_nodes = list(tree.tree_)

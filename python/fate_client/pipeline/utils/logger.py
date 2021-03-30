@@ -20,29 +20,51 @@ from pathlib import Path
 
 import loguru
 
-from pipeline.backend.config import LogPath, LogFormat
+from pipeline.backend.config import LogPath, LogFormat, CONSOLE_DISPLAY_LOG
 
 RUNTIME_LOG = "runtime"
+
+info_log_path = os.path.join(LogPath.log_directory(), LogPath.INFO)
+debug_log_path = os.path.join(LogPath.log_directory(), LogPath.DEBUG)
+error_log_path = os.path.join(LogPath.log_directory(), LogPath.ERROR)
+
 
 def runtime_log_only(record):
     log_type = record["extra"].get("log_type", "")
     return log_type == RUNTIME_LOG
 
 
-info_log_path = os.path.join(LogPath.log_directory(), LogPath.INFO)
-debug_log_path = os.path.join(LogPath.log_directory(), LogPath.DEBUG)
-error_log_path = os.path.join(LogPath.log_directory(), LogPath.ERROR)
-
 LOGGER = loguru.logger
-# LOGGER.remove()
-# LOGGER.add(sys.stderr, level="INFO", colorize=True, format=LogFormat.SIMPLE)
-#LOGGER.add(lambda msg: sys.stdout.write(msg), level="INFO", colorize=True,
-#           format=LogFormat.SIMPLE, filter=runtime_log_only)
-LOGGER.configure(handlers=[{"sink": sys.stderr, "level": "INFO"}])
+
+LOGGER.remove()
+LOGGER.configure(extra={"format": LogFormat.NORMAL})
+if CONSOLE_DISPLAY_LOG:
+    console_handler = LOGGER.add(sys.stderr, level="INFO", colorize=True,
+                                 filter=runtime_log_only)
 LOGGER.add(Path(info_log_path).resolve(), level="INFO", rotation="500MB",
-           colorize=True, format=LogFormat.NORMAL, filter=runtime_log_only)
+           colorize=True, filter=runtime_log_only)
 LOGGER.add(Path(debug_log_path).resolve(), level="DEBUG", rotation="500MB", colorize=True,
-           format=LogFormat.NORMAL, filter=runtime_log_only)
+           filter=runtime_log_only)
 LOGGER.add(Path(error_log_path).resolve(), level="ERROR", rotation="500MB", colorize=True,
-           format=LogFormat.NORMAL, backtrace=True, filter=runtime_log_only)
+           backtrace=True, filter=runtime_log_only)
 LOGGER = LOGGER.bind(log_type=RUNTIME_LOG)
+
+
+def disable_console_log():
+    """
+    disable logging to stderr, for silent mode
+    Returns
+    -------
+
+    """
+    try:
+        LOGGER.remove(console_handler)
+    except:
+        pass
+
+
+def enable_console_log():
+    disable_console_log()
+    global console_handler
+    console_handler = LOGGER.add(sys.stderr, level="INFO", colorize=True,
+                                 filter=runtime_log_only)

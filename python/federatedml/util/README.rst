@@ -1,4 +1,4 @@
-DataIO
+DataTransform(DataIO)
 ======
 
 Data IO is the most basic component of Fate Algorithm module. 
@@ -67,3 +67,31 @@ Please check out federatedmd/feature/imputer.py for more details.
    :linenos:
    :pyobject: Imputer.__init__
 
+Sample Weight
+=============
+
+Sample Weight assigns weight to input sample.
+Weight may be specified by input param ``class_weight`` or ``sample_weight_name``.
+Output data instances will each have a weight value,
+which will be used for training.
+
+If result weighted instances include negative weight, a warning message will be given.
+
+Please note that when weight is not None, only ``weight_diff`` convergence check method may be used for training GLM.
+
+How to Use
+----------
+
+:params:
+
+    :class_weight: str or dict, class weight dictionary or class weight computation mode. String value only accepts 'balanced'. If dict provided, key should be class(label), and weight will not be normalized.
+
+    :sample_weight_name: str, name of column which specifies sample weight. Extracted weight values will be normalized.
+
+    :normalize: bool, default False. Whether to normalize sample weight extracted from `sample_weight_name` column
+
+    :need_run: bool, whether to run this module or not
+
+    .. Note::
+
+        If both ``class_weight`` and ``sample_weight_name`` are provided, values from column of ``sample_weight_name`` will be used.

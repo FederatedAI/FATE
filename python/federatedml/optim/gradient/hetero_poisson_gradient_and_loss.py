@@ -34,6 +34,23 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
                                  transfer_variables.loss,
                                  transfer_variables.loss_intermediate)
 
+    def compute_gradient_procedure(self, data_instances, encrypted_calculator, model_weights, optimizer,
+                                   n_iter_, batch_index, offset=None):
+        current_suffix = (n_iter_, batch_index)
+        fore_gradient = self.compute_and_aggregate_forwards(data_instances, model_weights, encrypted_calculator,
+                                                            batch_index, current_suffix, offset)
+
+        self.remote_fore_gradient(fore_gradient, suffix=current_suffix)
+
+        unilateral_gradient = self.compute_gradient(data_instances,
+                                                    fore_gradient,
+                                                    model_weights.fit_intercept)
+        if optimizer is not None:
+            unilateral_gradient = optimizer.add_regular_to_grad(unilateral_gradient, model_weights)
+
+        optimized_gradient = self.update_gradient(unilateral_gradient, suffix=current_suffix)
+        return optimized_gradient
+
     def compute_and_aggregate_forwards(self, data_instances, model_weights, encrypted_calculator,
                                        batch_index, current_suffix, offset=None):
         '''
@@ -81,8 +98,8 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
         n = data_instances.count()
         guest_wx_y = data_instances.join(offset,
                                          lambda v, m: (
-                                         vec_dot(v.features, model_weights.coef_) + model_weights.intercept_ + m,
-                                         v.label))
+                                             vec_dot(v.features, model_weights.coef_) + model_weights.intercept_ + m,
+                                             v.label))
         loss_list = []
         host_wxs = self.get_host_loss_intermediate(current_suffix)
         if loss_norm is not None:
@@ -113,6 +130,31 @@ class Host(hetero_linear_model_gradient.Host, loss_sync.Host):
         self._register_loss_sync(transfer_variables.host_loss_regular,
                                  transfer_variables.loss,
                                  transfer_variables.loss_intermediate)
+
+    def compute_gradient_procedure(self, data_instances, encrypted_calculator, model_weights,
+                                   optimizer,
+                                   n_iter_, batch_index):
+        """
+        Linear model gradient procedure
+        Step 1: get host forwards which differ from different algorithm
+                For Logistic Regression: forwards = wx
+        """
+        current_suffix = (n_iter_, batch_index)
+
+        self.forwards = self.compute_forwards(data_instances, model_weights)
+        encrypted_forward = encrypted_calculator[batch_index].encrypt(self.forwards)
+
+        self.remote_host_forward(encrypted_forward, suffix=current_suffix)
+        fore_gradient = self.get_fore_gradient(suffix=current_suffix)
+
+        unilateral_gradient = self.compute_gradient(data_instances,
+                                                    fore_gradient,
+                                                    model_weights.fit_intercept)
+        if optimizer is not None:
+            unilateral_gradient = optimizer.add_regular_to_grad(unilateral_gradient, model_weights)
+
+        optimized_gradient = self.update_gradient(unilateral_gradient, suffix=current_suffix)
+        return optimized_gradient
 
     def compute_forwards(self, data_instances, model_weights):
         mu = data_instances.mapValues(

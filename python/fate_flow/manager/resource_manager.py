@@ -33,10 +33,11 @@ class ResourceManager(object):
     @classmethod
     def initialize(cls):
         for backend_name, backend_engines in SUPPORT_BACKENDS_ENTRANCE.items():
-            for engine_type, engine_keys in backend_engines.items():
-                engine_config = get_base_config(backend_name, {}).get(engine_keys[1], {})
-                if engine_config:
-                    cls.register_engine(engine_type=engine_type, engine_name=engine_keys[0], engine_entrance=engine_keys[1], engine_config=engine_config)
+            for engine_type, engine_keys_list in backend_engines.items():
+                for engine_keys in engine_keys_list:
+                    engine_config = get_base_config(backend_name, {}).get(engine_keys[1], {})
+                    if engine_config:
+                        cls.register_engine(engine_type=engine_type, engine_name=engine_keys[0], engine_entrance=engine_keys[1], engine_config=engine_config)
 
         # initialize standalone engine
         for backend_engines in SUPPORT_BACKENDS_ENTRANCE.values():

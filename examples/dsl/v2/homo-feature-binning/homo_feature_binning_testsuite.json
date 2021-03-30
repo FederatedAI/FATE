@@ -1,0 +1,78 @@
+{
+    "data": [
+        {
+            "file": "examples/data/breast_homo_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_homo_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/breast_homo_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_homo_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/breast_homo_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_homo_host",
+            "namespace": "experiment",
+            "role": "host_1"
+        },
+        {
+            "file": "examples/data/breast_homo_test.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "homo_breast_test",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/breast_homo_test.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "homo_breast_test",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/breast_homo_test.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "homo_breast_test",
+            "namespace": "experiment",
+            "role": "host_1"
+        }
+    ],
+    "tasks": {
+        "homo_recursive_binning_select_cols": {
+            "conf": "homo_recursive_binning_select_cols_conf.json",
+            "dsl": "homo_recursive_binning_select_cols_dsl.json"
+        },
+        "homo_virtual_summary_binning": {
+            "conf": "homo_virtual_summary_binning_conf.json",
+            "dsl": "homo_virtual_summary_binning_dsl.json"
+        },
+        "homo_virtual_summary_binning_select_cols": {
+            "conf": "homo_virtual_summary_binning_select_cols_conf.json",
+            "dsl": "homo_virtual_summary_binning_select_cols_dsl.json"
+        },
+        "homo_recursive_binning": {
+            "conf": "homo_recursive_binning_conf.json",
+            "dsl": "homo_recursive_binning_dsl.json"
+        },
+        "homo_virtual_summary_binning_predict": {
+            "conf": "homo_virtual_summary_binning_predict_conf.json",
+            "dsl": "homo_virtual_summary_binning_predict_dsl.json"
+        },
+        "homo_recursive_binning_predict": {
+            "conf": "homo_recursive_binning_predict_conf.json",
+            "dsl": "homo_recursive_binning_predict_dsl.json"
+        }
+    }
+}

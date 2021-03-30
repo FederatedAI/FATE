@@ -22,9 +22,12 @@ from pipeline.component import Evaluation
 from pipeline.component import HeteroLR
 from pipeline.component import Intersection
 from pipeline.component import Reader
-from pipeline.interface import Data
+from pipeline.interface import Data, Model
 from pipeline.utils.tools import load_job_config, JobConfig
 from pipeline.runtime.entity import JobParameters
+
+from federatedml.evaluation.metrics import classification_metric
+from fate_test.utils import extract_data, parse_summary_result
 
 
 def main(config="../../config.yaml", param="./vechile_config.yaml", namespace=""):
@@ -101,12 +104,14 @@ def main(config="../../config.yaml", param="./vechile_config.yaml", namespace=""
         "batch_size": param["batch_size"],
         "early_stop": "diff",
         "init_param": {
-            "init_method": param.get("init_method", 'random_uniform')
+            "init_method": param.get("init_method", 'random_uniform'),
+            "random_seed": param.get("random_seed", 103)
         }
     }
     lr_param.update(config_param)
     print(f"lr_param: {lr_param}, data_set: {data_set}")
     hetero_lr_0 = HeteroLR(name='hetero_lr_0', **lr_param)
+    hetero_lr_1 = HeteroLR(name='hetero_lr_1')
 
     evaluation_0 = Evaluation(name='evaluation_0', eval_type="multi")
 
@@ -115,6 +120,8 @@ def main(config="../../config.yaml", param="./vechile_config.yaml", namespace=""
     pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
     pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
     pipeline.add_component(hetero_lr_0, data=Data(train_data=intersection_0.output.data))
+    pipeline.add_component(hetero_lr_1, data=Data(test_data=intersection_0.output.data),
+                           model=Model(hetero_lr_0.output.model))
     pipeline.add_component(evaluation_0, data=Data(data=hetero_lr_0.output.data))
 
     # compile pipeline once finished adding modules, this step will form conf and dsl files for running job
@@ -124,8 +131,16 @@ def main(config="../../config.yaml", param="./vechile_config.yaml", namespace=""
     job_parameters = JobParameters(backend=backend, work_mode=work_mode)
     pipeline.fit(job_parameters)
     # query component summary
-    print(pipeline.get_component("evaluation_0").get_summary())
-    result_summary = pipeline.get_component("evaluation_0").get_summary()
+
+    result_summary = parse_summary_result(pipeline.get_component("evaluation_0").get_summary())
+    lr_0_data = pipeline.get_component("hetero_lr_0").get_output_data().get("data")
+    lr_1_data = pipeline.get_component("hetero_lr_1").get_output_data().get("data")
+    lr_0_score_label = extract_data(lr_0_data, "predict_result", keep_id=True)
+    lr_1_score_label = extract_data(lr_1_data, "predict_result", keep_id=True)
+    metric_lr = {
+        "score_diversity_ratio": classification_metric.Distribution.compute(lr_0_score_label, lr_1_score_label)}
+    result_summary["distribution_metrics"] = {"hetero_lr": metric_lr}
+
     data_summary = {"train": {"guest": guest_train_data["name"], "host": host_train_data["name"]},
                     "test": {"guest": guest_train_data["name"], "host": host_train_data["name"]}
                     }
@@ -134,10 +149,11 @@ def main(config="../../config.yaml", param="./vechile_config.yaml", namespace=""
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("BENCHMARK-QUALITY PIPELINE JOB")
-    parser.add_argument("-config", type=str,
-                        help="config file")
-    parser.add_argument("-param", type=str,
-                        help="config file for params")
+    parser.add_argument("-c", "--config", type=str,
+                        help="config file", default="../../config.yaml")
+    parser.add_argument("-p", "--param", type=str,
+                        help="config file for params", default="./breast_config.yaml")
+
     args = parser.parse_args()
     if args.config is not None:
         main(args.config, args.param)

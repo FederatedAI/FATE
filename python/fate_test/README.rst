@@ -83,7 +83,7 @@ command types
 
   .. code-block:: bash
 
-      fate_test benchmark-quality -i <path contains *benchmark.json>
+      fate_test bq -i <path contains *benchmark.json>
 
 
 
@@ -143,7 +143,7 @@ Testsuite
 ---------
 
 Testsuite is used for running a collection of jobs in sequence. Data used for jobs could be uploaded before jobs are
-submitted, and are cleaned when jobs finished. This tool is useful for FATE's release test.
+submitted and, optionally, be cleaned after jobs finish. This tool is useful for FATE's release test.
 
 command options
 ~~~~~~~~~~~~~~~
@@ -184,25 +184,39 @@ command options
 
    will find all key-value pair with key "maxIter" in `data conf` or `conf` or `dsl` and replace the value with 5
 
-
-5. skip-data:
-
-   .. code-block:: bash
-
-       fate_test suite -i <path1 contains *testsuite.json> --skip-data
-
-   will run testsuites in *path1* without uploading data specified in *benchmark.json*.
-
-
-6. yes:
+5. timeout:
 
    .. code-block:: bash
 
-      fate_test suite -i <path1 contains *testsuite.json> --yes
+      fate_test suite -i <path1 contains *testsuite.json> -m 3600
 
-   will run testsuites in *path1* directly, skipping double check
+   will run testsuites in *path1* and timeout when job does not finish within 3600s; if tasks need more time, use a larger threshold
 
-7. skip-dsl-jobs:
+6. task-cores
+
+   .. code-block:: bash
+
+      fate_test suite -i <path1 contains *testsuite.json> -p 4
+
+   will run testsuites in *path1* with EGGROLL "task-cores" set to 4; only effective for DSL conf
+
+7. update-job-parameters
+
+   .. code-block:: bash
+
+      fate_test suite -i <path1 contains *testsuite.json> -j {}
+
+   will run testsuites in *path1* with respective job parameters set to provided values
+
+8. update-component-parameters
+
+   .. code-block:: bash
+
+      fate_test suite -i <path1 contains *testsuite.json> -c {}
+
+   will run testsuites in *path1* with respective component parameters set to provided values
+
+9. skip-dsl-jobs:
 
    .. code-block:: bash
 
@@ -210,13 +224,166 @@ command options
 
    will run testsuites in *path1* but skip all *tasks* in testsuites. It's would be useful when only pipeline tasks needed.
 
-8. skip-pipeline-jobs:
+10. skip-pipeline-jobs:
 
-   .. code-block:: bash
+    .. code-block:: bash
 
-      fate_test suite -i <path1 contains *testsuite.json> --skip-pipeline-jobs
+       fate_test suite -i <path1 contains *testsuite.json> --skip-pipeline-jobs
 
-   will run testsuites in *path1* but skip all *pipeline tasks* in testsuites. It's would be useful when only dsl tasks needed.
+    will run testsuites in *path1* but skip all *pipeline tasks* in testsuites. It's would be useful when only dsl tasks needed.
+
+11. skip-data:
+
+    .. code-block:: bash
+
+        fate_test suite -i <path1 contains *testsuite.json> --skip-data
+
+    will run testsuites in *path1* without uploading data specified in *testsuite.json*.
+
+12. data only:
+
+    .. code-block:: bash
+
+        fate_test suite -i <path1 contains *testsuite.json> --data-only
+
+    will only upload data specified in *testsuite.json* without running jobs
+
+13. disable-clean-data:
+
+    .. code-block:: bash
+
+        fate_test suite -i <path1 contains *testsuite.json> --disable-clean-data
+
+    will run testsuites in *path1* without removing data from storage after tasks finish
+
+14. enable-clean-data:
+
+    .. code-block:: bash
+
+        fate_test suite -i <path1 contains *testsuite.json> --enable-clean-data
+
+    will remove data from storage after finishing running testsuites
+
+15. yes:
+
+    .. code-block:: bash
+
+        fate_test suite -i <path1 contains *testsuite.json> --yes
+
+    will run testsuites in *path1* directly, skipping double check
+
+testsuite
+~~~~~~~~~
+
+Configuration of jobs should be specified in a testsuite whose file name ends
+with "\*testsuite.json". For testsuite examples,
+please refer `dsl examples <../../examples/dsl/v2>`_ and `pipeline examples <../../examples/dsl/pipeline>`_.
+
+A testsuite includes the following elements:
+
+- data: list of local data to be uploaded before running FATE jobs
+
+  - file: path to original data file to be uploaded, should be relative to testsuite or FATE installation path
+  - head: whether file includes header
+  - partition: number of partition for data storage
+  - table_name: table name in storage
+  - namespace: table namespace in storage
+  - role: which role to upload the data, as specified in fate_test.config;
+    naming format is: "{role_type}_{role_index}", index starts at 0
+
+  .. code-block:: json
+
+        "data": [
+            {
+                "file": "examples/data/motor_hetero_host.csv",
+                "head": 1,
+                "partition": 8,
+                "table_name": "motor_hetero_host",
+                "namespace": "experiment",
+                "role": "host_0"
+            }
+        ]
+
+- tasks: includes arbitrary number of jobs with paths to corresponding dsl and conf files
+
+  - job: name of job to be run, must be unique within each group list
+
+    - conf: path to conf filw, should be relative to testsuite
+    - dsl: path to dsl file, should be relative to testsuite
+
+    .. code-block:: json
+
+       "tasks": {
+            "cv": {
+                "conf": "hetero_lr_cv_conf.json",
+                "dsl": "hetero_lr_cv_dsl.json"
+            },
+            "early-stop": {
+                "conf": "hetero_lr_early_stop_conf.json",
+                "dsl": "hetero_lr_early_stop_dsl.json"
+            }
+       }
+
+- pipeline_tasks: includes arbitrary number of pipeline jobs with paths to corresponding python script
+
+  - job: name of job to be run, must be unique within each group list
+
+    - script: path to pipeline script, should be relative to testsuite
+
+    .. code-block:: json
+
+       "pipeline_tasks": {
+            "cv": {
+                "script": "pipeline-hetero-lr-cv.py"
+            },
+            "normal": {
+                "script": "pipeline-hetero-lr-early-stop.py"
+            }
+       }
+
+  - model_deps(deps): model to be used for prediction task
+
+    .. code-block:: json
+
+       "tasks": {
+            "cv": {
+                "conf": "hetero_lr_cv_conf.json",
+                "dsl": "hetero_lr_cv_dsl.json"
+            },
+            "normal": {
+                "conf": "hetero_lr_normal_conf.json",
+                "dsl": "hetero_lr_normal_dsl.json"
+            },
+            "predict": {
+            "conf": "hetero-lr-normal-predict-conf.json",
+            "dsl": "hetero-lr-normal-predict-dsl.json",
+            "deps": "normal"
+            }
+       }
+
+
+  - data_deps: component output data from previous task to be used as designated input for current task(only used for dsl tasks)
+
+    .. code-block:: json
+
+        "tasks": {
+        "column-expand": {
+            "conf": "./test_column_expand_job_conf.json",
+            "dsl": "./test_column_expand_job_dsl.json"
+        },
+        "column-expand-train": {
+            "conf": "./test_column_expand_train_job_conf.json",
+            "dsl": "./test_column_expand_train_job_dsl.json",
+            "data_deps": {
+                "column-expand": {
+                    "guest_0": {
+                        "reader_0": "column_expand_0"
+                    }
+                }
+            }
+        }
+    }
+
 
 
 Benchmark Quality
@@ -226,32 +393,63 @@ Benchmark-quality is used for comparing modeling quality between FATE
 and other machine learning systems. Benchmark produces a metrics comparison
 summary for each benchmark job group.
 
+Benchmark can also compare metrics of different models from the same script/PipeLine job.
+Please refer to the `script writing guide <#testing-script>`_ below for instructions.
+
 .. code-block:: bash
 
    fate_test benchmark-quality -i examples/benchmark_quality/hetero_linear_regression
 
 .. code-block:: bash
 
-    +-------+--------------------------------------------------------------+
-    |  Data |                             Name                             |
-    +-------+--------------------------------------------------------------+
-    | train | {'guest': 'motor_hetero_guest', 'host': 'motor_hetero_host'} |
-    |  test | {'guest': 'motor_hetero_guest', 'host': 'motor_hetero_host'} |
-    +-------+--------------------------------------------------------------+
-    +------------------------------------+--------------------+--------------------+-------------------------+---------------------+
-    |             Model Name             | explained_variance |      r2_score      | root_mean_squared_error |  mean_squared_error |
-    +------------------------------------+--------------------+--------------------+-------------------------+---------------------+
-    | local-linear_regression-regression | 0.9035168452250094 | 0.9035070863155368 |   0.31340413289880553   | 0.09822215051805216 |
-    | FATE-linear_regression-regression  | 0.903146386539082  | 0.9031411831961411 |    0.3139977881119483   | 0.09859461093919596 |
-    +------------------------------------+--------------------+--------------------+-------------------------+---------------------+
-    +-------------------------+-----------+
-    |          Metric         | All Match |
-    +-------------------------+-----------+
-    |    explained_variance   |    True   |
-    |         r2_score        |    True   |
-    | root_mean_squared_error |    True   |
-    |    mean_squared_error   |    True   |
-    +-------------------------+-----------+
+     |----------------------------------------------------------------------|
+     |                             Data Summary                             |
+     |-------+--------------------------------------------------------------|
+     |  Data |                         Information                          |
+     |-------+--------------------------------------------------------------|
+     | train | {'guest': 'motor_hetero_guest', 'host': 'motor_hetero_host'} |
+     |  test | {'guest': 'motor_hetero_guest', 'host': 'motor_hetero_host'} |
+     |-------+--------------------------------------------------------------|
+
+
+     |-------------------------------------------------------------------------------------------------------------------------------------|
+     |                                                           Metrics Summary                                                           |
+     |-------------------------------------------+-------------------------+--------------------+---------------------+--------------------|
+     |                 Model Name                | root_mean_squared_error |      r2_score      |  mean_squared_error | explained_variance |
+     |-------------------------------------------+-------------------------+--------------------+---------------------+--------------------|
+     | local-hetero_linear_regression-regression |    0.312552080517407    | 0.9040310440206087 | 0.09768880303575968 | 0.9040312584426697 |
+     |  FATE-hetero_linear_regression-regression |    0.3139977881119483   | 0.9031411831961411 | 0.09859461093919598 | 0.903146386539082  |
+     |-------------------------------------------+-------------------------+--------------------+---------------------+--------------------|
+     |-------------------------------------|
+     |            Match Results            |
+     |-------------------------+-----------|
+     |          Metric         | All Match |
+     | root_mean_squared_error |    True   |
+     |         r2_score        |    True   |
+     |    mean_squared_error   |    True   |
+     |    explained_variance   |    True   |
+     |-------------------------+-----------|
+
+
+     |-------------------------------------------------------------------------------------|
+     |                             FATE Script Metrics Summary                             |
+     |--------------------+---------------------+--------------------+---------------------|
+     | Script Model Name  |         min         |        max         |         mean        |
+     |--------------------+---------------------+--------------------+---------------------|
+     |  linr_train-FATE   | -1.5305666678748353 | 1.4968292506353484 | 0.03948016870496807 |
+     | linr_validate-FATE | -1.5305666678748353 | 1.4968292506353484 | 0.03948016870496807 |
+     |--------------------+---------------------+--------------------+---------------------|
+     |---------------------------------------|
+     |   FATE Script Metrics Match Results   |
+     |----------------+----------------------|
+     |     Metric     |      All Match       |
+     |----------------+----------------------|
+     |      min       |         True         |
+     |      max       |         True         |
+     |      mean      |         True         |
+     |----------------+----------------------|
+
+
 
 command options
 ~~~~~~~~~~~~~~~
@@ -304,8 +502,23 @@ use the following command to show help message
 
    will run benchmark testsuites in *path1* without uploading data specified in *benchmark.json*.
 
+6. disable-clean-data:
 
-6. yes:
+   .. code-block:: bash
+
+       fate_test suite -i <path1 contains *benchmark.json> --disable-clean-data
+
+   will run benchmark testsuites in *path1* without removing data from storage after tasks finish
+
+7. enable-clean-data:
+
+   .. code-block:: bash
+
+       fate_test suite -i <path1 contains *benchmark.json> --enable-clean-data
+
+   will remove data from storage after finishing running benchmark testsuites
+
+8. yes:
 
    .. code-block:: bash
 
@@ -406,6 +619,11 @@ task, consider numbering host as such:
 Returned quality metrics of the same key are to be compared.
 Note that only **real-value** metrics can be compared.
 
+To compare metrics of different models from the same script,
+metrics of each model need to be wrapped into dictionary in the same format as the general metric output above.
+
+In the returned dictionary of script, use reserved key ``script_metrics`` to indicate the collection of metrics to be compared.
+
 - FATE script: ``Main`` should have three inputs:
 
   - config: job configuration, `JobConfig <../fate_client/pipeline/utils/tools.py#L64>`_ object loaded from "fate_test_config.yaml"
@@ -419,11 +637,130 @@ Note that only **real-value** metrics can be compared.
 
 Note that ``Main`` in FATE & non-FATE scripts can also be set to take zero input argument.
 
+performance
+-----------
+
+`Performance` sub-command is used to test efficiency of designated FATE jobs.
+
+command options
+~~~~~~~~~~~~~~~
+
+.. code-block:: bash
+
+      fate_test performance --help
+
+1. job-type:
+
+   .. code-block:: bash
+
+      fate_test performance -t intersect
+
+   will run testsuites from intersect sub-directory (set in config) in the default performance directory;
+   note that only one of ``task`` and ``include`` is needed
+
+2. include:
+
+   .. code-block:: bash
+
+      fate_test performance -i <path1 contains *testsuite.json>; note that only one of ``task`` and ``include`` needs to be specified.
+
+   will run testsuites in *path1*.
+   Note that only one of ``task`` and ``include`` needs to be specified;
+   when both are given, path from ``include`` takes priority.
+
+3. replace:
+
+   .. code-block:: bash
+
+      fate_test performance -i <path1 contains *testsuite.json> -r '{"maxIter": 5}'
+
+   will find all key-value pair with key "maxIter" in `data conf` or `conf` or `dsl` and replace the value with 5
+
+4. timeout:
+
+   .. code-block:: bash
+
+      fate_test performance -i <path1 contains *testsuite.json> -m 3600
+
+   will run testsuites in *path1* and timeout when job does not finish within 3600s; if tasks need more time, use a larger threshold
+
+5. max-iter:
+
+   .. code-block:: bash
+
+      fate_test performance -i <path1 contains *testsuite.json> -e 5
+
+   will run testsuites in *path1* with all values to key "max_iter" set to 5
+
+6. max-depth
+
+   .. code-block:: bash
+
+      fate_test performance -i <path1 contains *testsuite.json> -d 4
+
+   will run testsuites in *path1* with all values to key "max_depth" set to 4
+
+7. num-trees
+
+   .. code-block:: bash
+
+      fate_test performance -i <path1 contains *testsuite.json> -n 5
+
+   will run testsuites in *path1* with all values to key "num_trees" set to 5
+
+8. task-cores
+
+   .. code-block:: bash
+
+      fate_test performance -i <path1 contains *testsuite.json> -p 4
+
+   will run testsuites in *path1* with EGGROLL "task_cores" set to 4
+
+9. update-job-parameters
+
+   .. code-block:: bash
+
+      fate_test performance -i <path1 contains *testsuite.json> -j {}
+
+   will run testsuites in *path1* with respective job parameters set to provided values
+
+10. update-component-parameters
+
+    .. code-block:: bash
+
+       fate_test performance -i <path1 contains *testsuite.json> -c {}
+
+    will run testsuites in *path1* with respective component parameters set to provided values
+
+11. skip-data:
+
+    .. code-block:: bash
+
+        fate_test performance -i <path1 contains *testsuite.json> --skip-data
+
+    will run testsuites in *path1* without uploading data specified in *testsuite.json*.
+
+12. disable-clean-data:
+
+    .. code-block:: bash
+
+       fate_test performance -i <path1 contains *testsuite.json> --disable-clean-data
+
+    will run testsuites in *path1* without removing data from storage after tasks finish
+
+13. yes:
+
+    .. code-block:: bash
+
+       fate_test performance -i <path1 contains *testsuite.json> --yes
+
+    will run testsuites in *path1* directly, skipping double check
+
 
 data
 ----
 
-`Data` sub-command is used for upload or delete dataset in suite's.
+`Data` sub-command is used for upload, delete, and generate dataset.
 
 command options
 ~~~~~~~~~~~~~~~
@@ -436,7 +773,7 @@ command options
 
    .. code-block:: bash
 
-      fate_test data [upload|delete] -i <path1 contains *testsuite.json>
+      fate_test data [upload|delete] -i <path1 contains *testsuite.json | *benchmark.json>
 
    will upload/delete dataset in testsuites in *path1*
 
@@ -444,7 +781,7 @@ command options
 
    .. code-block:: bash
 
-      fate_test data [upload|delete] -i <path1 contains *testsuite.json> -e <path2 to exclude> -e <path3 to exclude> ...
+      fate_test data [upload|delete] -i <path1 contains *testsuite.json | *benchmark.json> -e <path2 to exclude> -e <path3 to exclude> ...
 
    will upload/delete dataset in testsuites in *path1* but not in *path2* and *path3*
 
@@ -452,9 +789,138 @@ command options
 
    .. code-block:: bash
 
-      fate_test data [upload|delete] -i <path1 contains *testsuite.json> -g "hetero*"
+      fate_test data [upload|delete] -i <path1 contains \*testsuite.json | \*benchmark.json> -g "hetero*"
 
    will upload/delete dataset in testsuites in sub directory start with *hetero* of *path1*
+
+generate command options
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: bash
+
+      fate_test data --help
+
+1. include:
+
+   .. code-block:: bash
+
+      fate_test data generate -i <path1 contains *testsuite.json | *benchmark.json>
+
+   will generate dataset in testsuites in *path1*; note that only one of ``type`` and ``include`` is needed
+
+2. host-data-type:
+
+   .. code-block:: bash
+
+      fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> -ht {tag-value | dense | tag }
+
+   will generate dataset in testsuites *path1* where host data are of selected format
+
+3. sparsity:
+
+   .. code-block:: bash
+
+      fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> -s 0.2
+
+   will generate dataset in testsuites in *path1* with sparsity at 0.1; useful for tag-formatted data
+
+4. encryption-type:
+
+   .. code-block:: bash
+
+      fate_test data generate -i <path1 contains *testsuite.json | *benchmark.json> -p {sha256 | md5}
+
+   will generate dataset in testsuites in *path1* with hash id using SHA256 method
+
+5. match-rate:
+
+   .. code-block:: bash
+
+      fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> -m 1.0
+
+   will generate dataset in testsuites in *path1* where generated host and guest data have intersection rate of 1.0
+
+6. guest-data-size:
+
+   .. code-block:: bash
+
+      fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> -ng 10000
+
+   will generate dataset in testsuites *path1* where guest data each have 10000 entries
+
+7. host-data-size:
+
+   .. code-block:: bash
+
+      fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> -nh 10000
+
+   will generate dataset in testsuites *path1* where host data have 10000 entries
+
+8. guest-feature-num:
+
+   .. code-block:: bash
+
+      fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> -fg 20
+
+   will generate dataset in testsuites *path1* where guest data have 20 features
+
+9. host-feature-num:
+
+   .. code-block:: bash
+
+      fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> -fh 200
+
+   will generate dataset in testsuites *path1* where host data have 200 features
+
+10. output-path:
+
+    .. code-block:: bash
+
+       fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> -o <path2>
+
+    will generate dataset in testsuites *path1* and write file to *path2*
+
+11. force:
+
+    .. code-block:: bash
+
+       fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> -o <path2> --force
+
+    will generate dataset in testsuites *path1* and write file to *path2*;
+    will overwrite existing file(s) if designated file name found under *path2*
+
+12. split-host:
+
+    .. code-block:: bash
+
+       fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> -nh 10000 --split-host
+
+    will generate dataset in testsuites *path1*; 10000 entries will be divided equally among all host data sets
+
+13. upload-data
+
+    .. code-block:: bash
+
+       fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> --upload-data
+
+    will generate dataset in testsuites *path1* and upload generated data for all parties to FATE
+
+14. remove-data
+
+    .. code-block:: bash
+
+       fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> --remove-data
+
+    (effective with ``upload-data`` set to True) will delete generated data after generate and upload dataset in testsuites *path1*
+
+15. use-local-data
+
+    .. code-block:: bash
+
+       fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> --use-local-data
+
+    (effective with ``upload-data`` set to True) will generate dataset in testsuites *path1* and upload data from local server;
+    use this option if flow and data storage are deployed to the same server
 
 
 full command options

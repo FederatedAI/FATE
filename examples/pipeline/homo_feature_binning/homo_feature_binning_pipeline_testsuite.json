@@ -1,0 +1,72 @@
+{
+    "data": [
+        {
+            "file": "examples/data/breast_homo_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_homo_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/breast_homo_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_homo_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/breast_homo_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_homo_host",
+            "namespace": "experiment",
+            "role": "host_1"
+        },
+        {
+            "file": "examples/data/breast_homo_test.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "homo_breast_test",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/breast_homo_test.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "homo_breast_test",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/breast_homo_test.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "homo_breast_test",
+            "namespace": "experiment",
+            "role": "host_1"
+        }
+    ],
+    "pipeline_tasks": {
+        "homo-recursive-binning-select-cols": {
+            "script": "pipeline-homo-recursive-binning-select-cols.py"
+        },
+        "homo-virtual-summary-binning": {
+            "script": "pipeline-homo-virtual-summary-binning.py"
+        },
+        "homo-virtual-summary-binning-select-cols": {
+            "script": "pipeline-homo-virtual-summary-binning-select-cols.py"
+        },
+        "homo-recursive-binning": {
+            "script": "pipeline-homo-recursive-binning.py"
+        },
+        "homo-virtual-summary-binning-predict": {
+            "script": "pipeline-homo-virtual-summary-binning-predict.py"
+        },
+        "homo-recursive-binning-predict": {
+            "script": "pipeline-homo-recursive-binning-predict.py"
+        }
+    }
+}

@@ -43,7 +43,9 @@
                     "n_splits": 3,
                     "shuffle": false,
                     "random_seed": 103,
-                    "need_cv": true
+                    "need_cv": true,
+                    "output_fold_history": true,
+                    "history_value_type": "score"
                 }
             }
         },

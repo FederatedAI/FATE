@@ -58,7 +58,8 @@ def main(config="../../config.yaml", namespace=""):
                                alpha=0.01, max_iter=20, early_stop="weight_diff", batch_size=-1,
                                learning_rate=0.15, decay=0.0, decay_sqrt=False,
                                init_param={"init_method": "zeros"},
-                               encrypted_mode_calculator_param={"mode": "fast"})
+                               encrypted_mode_calculator_param={"mode": "fast"},
+                               floating_point_precision=23)
 
     evaluation_0 = Evaluation(name="evaluation_0", eval_type="regression", pos_label=1)
     # evaluation_0.get_party_instance(role='host', party_id=host).component_param(need_run=False)
