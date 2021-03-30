@@ -101,9 +101,8 @@ class TestFeatureHistogram(unittest.TestCase):
 
         data2 = [[random.randint(0, 10) for i in range(2)] for j in range(3)]
 
-        fid, agg_histograms = self.feature_histogram._hist_aggregate((fake_fid, data1),
-                                                                          (fake_fid, data2),
-                                                                          node_map=None)
+        fid, agg_histograms = self.feature_histogram._hist_aggregate((fake_fid, data1), (fake_fid, data2))
+
         for i in range(len(data1)):
             for j in range(len(data1[i])):
                 data1[i][j] += data2[i][j]
