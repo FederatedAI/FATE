@@ -36,8 +36,17 @@ $ cd /data/projects/common/apache-pulsar-2.7.0
 1. 编辑"conf/standalone.conf"文件, 修改如下：
 
 ``` bash
-# 修改自动删除topic功能
+# 设置消息自动确认时间
+ttlDurationDefaultInSeconds=180
+
+# 打开自动删除非活跃topic功能
 brokerDeleteInactiveTopicsEnabled=true
+
+# 设置非活跃topic扫描间隔
+brokerDeleteInactiveTopicsFrequencySeconds=180
+
+# 设置用于镜像复制的链接数
+replicationConnectionsPerBroker=4
 
 # 修改bookkie的frame容量大小位128MB，默认为5MB
 nettyMaxFrameSizeBytes=134217728
@@ -45,6 +54,7 @@ nettyMaxFrameSizeBytes=134217728
 # 增加pulsar message容量的大小为128MB，默认为5MB
 maxMessageSize=134217728
 ```
+更多关于配置字段的描述可以参考配置文件的注释。
 
 2. 启动pulsar集群
 
