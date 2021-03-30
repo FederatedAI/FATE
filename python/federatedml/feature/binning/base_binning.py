@@ -49,7 +49,7 @@ class BaseBinning(object):
         self.non_event_total = None
 
         if abnormal_list is None:
-            self.abnormal_list = [NoneType()]
+            self.abnormal_list = []
         else:
             self.abnormal_list = abnormal_list
 
