@@ -409,7 +409,7 @@ class BaseBinning(object):
         """
 
         curt_all = functools.reduce(lambda x, y: (x[0] + y[0], x[1] + y[1]), static_nums)
-        LOGGER.debug(f"In fill_sparse_result, curt_all: {curt_all}, label_count: {label_counts}")
+        # LOGGER.debug(f"In fill_sparse_result, curt_all: {curt_all}, label_count: {label_counts}")
         sparse_bin = sparse_bin_points.get(col_name)
         static_nums[sparse_bin] = [label_counts[1] - curt_all[0],
                                    label_counts[0] - curt_all[1]]
