@@ -7,7 +7,7 @@ version: 2
 
 # Build documentation in the docs/ directory with Sphinx
 sphinx:
-  configuration: conf.py
+  configuration: doc/readthedoc/conf.py
   fail_on_warning: false
 
 
@@ -19,3 +19,7 @@ python:
   version: 3.6
   install:
     - requirements: doc/readthedoc/requirements.txt
+    - method: pip
+      path: python/fate_client
+    - method: pip
+      path: python/fate_test

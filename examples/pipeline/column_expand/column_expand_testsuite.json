@@ -1,0 +1,17 @@
+{
+    "data": [
+        {
+            "file": "examples/data/breast_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        }
+    ],
+    "pipeline_tasks": {
+        "column-expand": {
+            "script": "./pipeline-column-expand.py"
+        }
+    }
+}

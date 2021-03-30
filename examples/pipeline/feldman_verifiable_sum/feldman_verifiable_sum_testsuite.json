@@ -1,0 +1,33 @@
+{
+    "data": [
+        {
+            "file": "examples/data/breast_homo_test.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_homo_test",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/breast_homo_test.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_homo_test",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/breast_homo_test.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_homo_test",
+            "namespace": "experiment",
+            "role": "host_1"
+        }
+    ],
+        "pipeline_tasks": {
+        "feldman-secret-sharing-sum": {
+            "script": "./pipeline-feldman-verifiable-sum.py"
+        }
+    }
+}

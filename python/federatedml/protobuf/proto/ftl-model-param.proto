@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package com.webank.ai.fate.core.mlmodel.buffer;
+option java_outer_classname = "FTLModelParamProto";
+
+message FTLModelParam {
+    bytes model_bytes = 1;
+    repeated double phi_a = 2;
+    repeated string header = 3;
+}

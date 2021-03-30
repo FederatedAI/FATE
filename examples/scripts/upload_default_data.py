@@ -19,13 +19,20 @@
 import argparse
 import json
 import os
+import sys
 import time
 
-from examples.test import submit
+cur_path = os.path.realpath(__file__)
+for i in range(3):
+    cur_path = os.path.dirname(cur_path)
+print(f'fate_path: {cur_path}')
+sys.path.append(cur_path)
+
+from examples.scripts import submit
 
 
 def check_data_count(submitter, fate_home, table_name, namespace, expect_count):
-    fate_flow_path = os.path.join(fate_home, "../fate_flow/fate_flow_client.py")
+    fate_flow_path = os.path.join(fate_home, "../python/fate_flow/fate_flow_client.py")
     cmd = ["python", fate_flow_path, "-f", "table_info", "-t", table_name, "-n", namespace]
     stdout = submitter.run_cmd(cmd)
     try:
@@ -40,7 +47,7 @@ def check_data_count(submitter, fate_home, table_name, namespace, expect_count):
     print(f"[{time.strftime('%Y-%m-%d %X')}] check_data_out {stdout} \n")
 
 
-def data_upload(submitter, upload_config, check_interval, fate_home):
+def data_upload(submitter, upload_config, check_interval, fate_home, backend):
     # with open(file_name) as f:
     #     upload_config = json.loads(f.read())
 
@@ -52,15 +59,23 @@ def data_upload(submitter, upload_config, check_interval, fate_home):
                                   namespace=data["namespace"],
                                   name=data["table_name"],
                                   partition=data["partition"],
+                                  backend=backend,
                                   head=data["head"])
         print(f"[{time.strftime('%Y-%m-%d %X')}]upload done {format_msg}, job_id={job_id}\n")
+        if job_id is None:
+            print("table already exist. To upload again, Please add '-f 1' in start cmd")
+            continue
 
         submitter.await_finish(job_id, check_interval=check_interval)
         check_data_count(submitter, fate_home, data["table_name"], data["namespace"], data["count"])
 
 
-def read_data(fate_home):
-    config_file = os.path.join(fate_home, "scripts/config.json")
+def read_data(fate_home, config_type):
+    if config_type == 'min-test':
+        config_file = os.path.join(fate_home, "scripts/min_test_config.json")
+    else:
+        config_file = os.path.join(fate_home, "scripts/config.json")
+
     with open(config_file, 'r', encoding='utf-8') as f:
         json_info = json.loads(f.read())
     return json_info
@@ -87,13 +102,15 @@ def main():
                             default=1)
 
     arg_parser.add_argument("-b", "--backend", type=int, help="backend", choices=[0, 1], default=0)
+    arg_parser.add_argument("-c", "--config_file", type=str, help="config file", default="min-test")
+
     args = arg_parser.parse_args()
 
     work_mode = args.mode
     existing_strategy = args.force
     backend = args.backend
     interval = args.interval
-
+    config_file = args.config_file
     spark_submit_config = {}
     submitter = submit.Submitter(fate_home=fate_home,
                                  work_mode=work_mode,
@@ -101,9 +118,13 @@ def main():
                                  existing_strategy=existing_strategy,
                                  spark_submit_config=spark_submit_config)
 
-    upload_data = read_data(fate_home)
+    if config_file in ["all", "min-test"]:
+        upload_data = read_data(fate_home, config_file)
+    else:
+        with open(config_file, 'r', encoding='utf-8') as f:
+            upload_data = json.loads(f.read())
 
-    data_upload(submitter, upload_data, interval, fate_home)
+    data_upload(submitter, upload_data, interval, fate_home, backend=backend)
 
 
 if __name__ == "__main__":

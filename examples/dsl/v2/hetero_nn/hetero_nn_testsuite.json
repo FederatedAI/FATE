@@ -1,0 +1,78 @@
+{
+    "data": [
+        {
+            "file": "examples/data/breast_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/breast_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/default_credit_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "default_credit_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/default_credit_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "default_credit_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/vehicle_scale_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "vehicle_scale_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/vehicle_scale_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "vehicle_scale_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        }
+    ],
+    "tasks": {
+        "train_binary": {
+            "conf": "./test_hetero_nn_binary_conf.json",
+            "dsl": "./test_hetero_nn_dsl.json"
+        },
+        "train_multi": {
+            "conf": "./test_hetero_nn_multi_conf.json",
+            "dsl": "./test_hetero_nn_dsl.json"
+        },
+        "train_with_early_stop": {
+            "conf": "./test_hetero_nn_binary_with_early_stop_conf.json",
+            "dsl": "./test_hetero_nn_binary_with_early_stop_dsl.json"
+        },
+        "train_with_selective_bp": {
+            "conf": "./test_hetero_nn_binary_selective_bp_conf.json",
+            "dsl": "./test_hetero_nn_dsl.json"
+        },
+        "train_with_floating_point_precision": {
+            "conf": "./test_hetero_nn_binary_floating_point_precision_conf.json",
+            "dsl": "./test_hetero_nn_dsl.json"
+        },
+        "train_with_drop_out": {
+            "conf": "./test_hetero_nn_binary_drop_out_conf.json",
+            "dsl": "./test_hetero_nn_dsl.json"
+        }
+    }
+}

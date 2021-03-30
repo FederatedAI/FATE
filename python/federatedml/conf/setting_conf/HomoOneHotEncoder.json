@@ -1,0 +1,15 @@
+{
+    "module_path":  "federatedml/feature/homo_onehot",
+    "param_class" : "federatedml/param/homo_onehot_encoder_param.py/HomoOneHotParam",
+    "role":
+    {
+        "guest|host":
+        {
+            "program": "homo_ohe_base.py/HomoOneHotBase"
+        },
+        "arbiter":
+        {
+            "program": "homo_ohe_arbiter.py/HomoOneHotArbiter"
+        }
+    }
+}

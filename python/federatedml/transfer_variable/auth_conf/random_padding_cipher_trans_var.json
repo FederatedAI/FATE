@@ -1,0 +1,40 @@
+{
+  "federatedml.framework.homo.blocks.random_padding_cipher.RandomPaddingCipherTransVar": {
+    "UUIDTransVar.uuid": {
+      "src": [
+        "arbiter"
+      ],
+      "dst": [
+        "guest",
+        "host"
+      ]
+    },
+    "DHTransVar.p_power_r": {
+      "src": [
+        "guest",
+        "host"
+      ],
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "DHTransVar.p_power_r_bc": {
+      "src": [
+        "arbiter"
+      ],
+      "dst": [
+        "guest",
+        "host"
+      ]
+    },
+    "DHTransVar.pubkey": {
+      "src": [
+        "arbiter"
+      ],
+      "dst": [
+        "guest",
+        "host"
+      ]
+    }
+  }
+}

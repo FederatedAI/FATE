@@ -1,0 +1,58 @@
+{
+    "dsl_version": 2,
+    "initiator": {
+        "role": "guest",
+        "party_id": 9999
+    },
+    "role": {
+        "guest": [
+            9999
+        ]
+    },
+    "job_parameters": {
+        "common": {
+            "work_mode": 0,
+            "backend": 0
+        }
+    },
+    "component_parameters": {
+        "common": {
+            "union_0": {
+                "need_run": true,
+                "allow_missing": false,
+                "keep_duplicate": true
+            },
+            "dataio_0": {
+                "input_format": "tag",
+                "delimitor": ",",
+                "tag_with_value": true,
+                "with_label": false,
+                "output_format": "dense"
+            }
+        },
+        "role": {
+            "guest": {
+                "0": {
+                    "reader_1": {
+                        "table": {
+                            "name": "tag_value_2",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "reader_2": {
+                        "table": {
+                            "name": "tag_value_3",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "reader_0": {
+                        "table": {
+                            "name": "tag_value_1",
+                            "namespace": "experiment"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

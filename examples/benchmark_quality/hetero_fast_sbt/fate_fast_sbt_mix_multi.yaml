@@ -1,0 +1,14 @@
+data_guest_train: "vehicle_scale_hetero_guest"
+data_guest_val: "vehicle_scale_hetero_guest"
+data_host_train: "vehicle_scale_hetero_host"
+data_host_val: "vehicle_scale_hetero_host"
+eval_type: "multi"
+task_type: "classification"
+loss_func: "cross_entropy"
+tree_depth: 3
+tree_num: 50
+learning_rate: 0.3
+work_mode: "mix"
+tree_num_per_party: 1
+guest_depth: 1
+host_depth: 2

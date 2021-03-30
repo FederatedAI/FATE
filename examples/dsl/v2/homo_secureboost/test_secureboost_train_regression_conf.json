@@ -1,0 +1,97 @@
+{
+    "dsl_version": 2,
+    "initiator": {
+        "role": "guest",
+        "party_id": 9999
+    },
+    "role": {
+        "arbiter": [
+            9999
+        ],
+        "host": [
+            9998
+        ],
+        "guest": [
+            9999
+        ]
+    },
+    "job_parameters": {
+        "common": {
+            "job_type": "train",
+            "backend": 0,
+            "work_mode": 0
+        }
+    },
+    "component_parameters": {
+        "common": {
+            "homo_secureboost_0": {
+                "task_type": "regression",
+                "objective_param": {
+                    "objective": "lse"
+                },
+                "num_trees": 3,
+                "validation_freqs": 1,
+                "tree_param": {
+                    "max_depth": 3
+                }
+            },
+            "evaluation_0": {
+                "eval_type": "regression"
+            }
+        },
+        "role": {
+            "host": {
+                "0": {
+                    "reader_1": {
+                        "table": {
+                            "name": "student_homo_test",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "dataio_0": {
+                        "with_label": true,
+                        "label_type": "float",
+                        "output_format": "dense"
+                    },
+                    "dataio_1": {
+                        "with_label": true,
+                        "label_type": "float",
+                        "output_format": "dense"
+                    },
+                    "reader_0": {
+                        "table": {
+                            "name": "student_homo_host",
+                            "namespace": "experiment"
+                        }
+                    }
+                }
+            },
+            "guest": {
+                "0": {
+                    "reader_1": {
+                        "table": {
+                            "name": "student_homo_test",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "dataio_0": {
+                        "with_label": true,
+                        "label_type": "float",
+                        "output_format": "dense"
+                    },
+                    "dataio_1": {
+                        "with_label": true,
+                        "label_type": "float",
+                        "output_format": "dense"
+                    },
+                    "reader_0": {
+                        "table": {
+                            "name": "student_homo_guest",
+                            "namespace": "experiment"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

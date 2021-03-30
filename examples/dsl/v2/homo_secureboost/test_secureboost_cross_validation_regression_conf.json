@@ -1,0 +1,76 @@
+{
+    "dsl_version": 2,
+    "initiator": {
+        "role": "guest",
+        "party_id": 9999
+    },
+    "role": {
+        "arbiter": [
+            9999
+        ],
+        "host": [
+            9998
+        ],
+        "guest": [
+            9999
+        ]
+    },
+    "job_parameters": {
+        "common": {
+            "job_type": "train",
+            "backend": 0,
+            "work_mode": 0
+        }
+    },
+    "component_parameters": {
+        "common": {
+            "homo_secureboost_0": {
+                "task_type": "regression",
+                "objective_param": {
+                    "objective": "lse"
+                },
+                "num_trees": 3,
+                "cv_param": {
+                    "need_cv": true,
+                    "shuffle": false,
+                    "n_splits": 5
+                },
+                "tree_param": {
+                    "max_depth": 3
+                }
+            }
+        },
+        "role": {
+            "host": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_homo_host",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "dataio_0": {
+                        "with_label": true,
+                        "label_type": "float",
+                        "output_format": "dense"
+                    }
+                }
+            },
+            "guest": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_homo_guest",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "dataio_0": {
+                        "with_label": true,
+                        "label_type": "float",
+                        "output_format": "dense"
+                    }
+                }
+            }
+        }
+    }
+}

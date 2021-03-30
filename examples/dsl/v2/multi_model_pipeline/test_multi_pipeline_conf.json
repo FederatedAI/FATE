@@ -1,0 +1,117 @@
+{
+    "dsl_version": 2,
+    "initiator": {
+        "role": "guest",
+        "party_id": 9999
+    },
+    "role": {
+        "arbiter": [
+            9999
+        ],
+        "host": [
+            9998
+        ],
+        "guest": [
+            9999
+        ]
+    },
+    "job_parameters": {
+        "common": {
+            "job_type": "train",
+            "backend": 0,
+            "work_mode": 0
+        }
+    },
+    "component_parameters": {
+        "common": {
+            "federated_sample_0": {
+                "mode": "stratified",
+                "method": "upsample",
+                "fractions": [
+                    [
+                        0,
+                        1.5
+                    ],
+                    [
+                        1,
+                        2.0
+                    ]
+                ]
+            },
+            "hetero_lr_0": {
+                "penalty": "L2",
+                "tol": 1e-05,
+                "alpha": 0.01,
+                "optimizer": "rmsprop",
+                "batch_size": 320,
+                "learning_rate": 0.15,
+                "init_param": {
+                    "init_method": "random_uniform"
+                },
+                "max_iter": 10,
+                "early_stop": "diff"
+            },
+            "hetero_lr_1": {
+                "penalty": "L2",
+                "tol": 1e-05,
+                "alpha": 0.01,
+                "optimizer": "rmsprop",
+                "batch_size": 320,
+                "learning_rate": 0.15,
+                "init_param": {
+                    "init_method": "random_uniform"
+                },
+                "max_iter": 10,
+                "early_stop": "diff",
+                "cv_param": {
+                    "n_splits": 5,
+                    "shuffle": true,
+                    "random_seed": 103,
+                    "need_cv": true
+                }
+            },
+            "hetero_secureboost_0": {
+                "num_trees": 5,
+                "cv_param": {
+                    "shuffle": false,
+                    "need_cv": true
+                }
+            },
+            "hetero_secureboost_1": {
+                "num_trees": 5
+            }
+        },
+        "role": {
+            "guest": {
+                "0": {
+                    "dataio_0": {
+                        "missing_fill": true,
+                        "outlier_replace": true,
+                        "with_label": true
+                    },
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_guest",
+                            "namespace": "experiment"
+                        }
+                    }
+                }
+            },
+            "host": {
+                "0": {
+                    "dataio_0": {
+                        "missing_fill": true,
+                        "outlier_replace": true,
+                        "with_label": false
+                    },
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,11 @@
+{
+    "module_path":  "federatedml/util",
+    "param_class" : "federatedml/param/data_transform_param.py/DataTransformParam",
+    "role":
+    {
+        "guest|host":
+        {
+            "program": "data_transform.py/DataTransform"
+        }
+    }
+}

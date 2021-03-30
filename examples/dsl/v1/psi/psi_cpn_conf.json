@@ -1,0 +1,49 @@
+{
+    "initiator": {
+        "role": "guest",
+        "party_id": 10000
+    },
+    "job_parameters": {
+        "work_mode": 0
+    },
+    "role": {
+        "guest": [10000],
+        "host": [10000]
+    },
+    "role_parameters": {
+        "guest": {
+            "args": {
+                "data": {
+                    "train_data": [{"name": "expect", "namespace": "experiment"}],
+                    "eval_data": [{"name": "actual", "namespace": "experiment"}]
+                }
+            },
+            "dataio_0":{
+                "with_label": [true],
+                "label_name": ["y"],
+                "label_type": ["int"],
+                "output_format": ["dense"]
+            }
+        },
+        "host": {
+            "args": {
+                "data": {
+                    "train_data": [{"name": "expect", "namespace": "experiment"}],
+                    "eval_data": [{"name": "actual", "namespace": "experiment"}]
+                }
+            },
+             "dataio_0":{
+                "with_label": [true],
+                "label_name": ["y"],
+                "label_type": ["int"],
+                "output_format": ["dense"]
+            }
+        }
+    },
+    "algorithm_parameters": {
+        "psi_0": {
+            "need_run": true,
+            "max_bin_num": 20
+        }
+    }
+}

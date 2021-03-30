@@ -1,0 +1,12 @@
+epoch: 100
+lr: 0.05
+batch_size: 32
+optimizer: Adam
+encode_label: false
+layers:
+  - name: Dense
+    params: { units: 1, input_shape: [ 30, ], activation: sigmoid }
+dataset: breast
+loss: binary_crossentropy
+is_multy: false
+metrics: [ "accuracy" ]

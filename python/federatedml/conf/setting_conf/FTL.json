@@ -1,0 +1,15 @@
+{
+    "module_path":  "federatedml/transfer_learning/hetero_ftl",
+    "param_class" : "federatedml/param/ftl_param.py/FTLParam",
+    "role":
+    {
+        "guest":
+        {
+            "program": "ftl_guest.py/FTLGuest"
+        },
+        "host":
+        {
+            "program": "ftl_host.py/FTLHost"
+        }
+    }
+}

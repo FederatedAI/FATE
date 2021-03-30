@@ -1,0 +1,19 @@
+{
+    "module_path":  "federatedml/ensemble/boosting/homo",
+    "param_class" : "federatedml/param/boosting_param.py/HomoSecureBoostParam",
+    "role":
+    {
+        "guest":
+        {
+            "program": "homo_secureboost_client.py/HomoSecureBoostingTreeClient"
+        },
+        "host":
+        {
+            "program": "homo_secureboost_client.py/HomoSecureBoostingTreeClient"
+        },
+        "arbiter":
+        {
+            "program": "homo_secureboost_arbiter.py/HomoSecureBoostingTreeArbiter"
+        }
+    }
+}

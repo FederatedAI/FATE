@@ -1,0 +1,102 @@
+{
+    "dsl_version": 2,
+    "initiator": {
+        "role": "guest",
+        "party_id": 9999
+    },
+    "role": {
+        "arbiter": [
+            9999
+        ],
+        "host": [
+            9998
+        ],
+        "guest": [
+            9999
+        ]
+    },
+    "job_parameters": {
+        "common": {
+            "job_type": "train",
+            "backend": 0,
+            "work_mode": 0
+        }
+    },
+    "component_parameters": {
+        "common": {
+            "hetero_feature_binning_0": {
+                "method": "optimal",
+                "bin_indexes": -1,
+                "optimal_binning_param": {
+                    "metric_method": "iv"
+                }
+            },
+            "hetero_feature_selection_0": {
+                "select_col_indexes": -1,
+                "filter_methods": [
+                    "manually",
+                    "iv_filter"
+                ],
+                "manually_param": {
+                    "filter_out_indexes": [
+                        1
+                    ]
+                },
+                "iv_param": {
+                    "metrics": [
+                        "iv",
+                        "iv"
+                    ],
+                    "filter_type": [
+                        "top_k",
+                        "threshold"
+                    ],
+                    "take_high": [
+                        true,
+                        true
+                    ],
+                    "threshold": [
+                        10,
+                        0.001
+                    ]
+                }
+            },
+            "hetero_kmeans_0": {
+                "k": 3,
+                "max_iter": 10
+            },
+            "evaluation_0": {
+                "eval_type": "clustering"
+            }
+        },
+        "role": {
+            "host": {
+                "0": {
+                    "dataio_0": {
+                        "with_label": false
+                    },
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    }
+                }
+            },
+            "guest": {
+                "0": {
+                    "dataio_0": {
+                        "with_label": true,
+                        "output_format": "dense"
+                    },
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_guest",
+                            "namespace": "experiment"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
