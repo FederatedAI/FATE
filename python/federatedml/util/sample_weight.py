@@ -77,9 +77,9 @@ class SampleWeight(ModelBase):
                 return sample_weight
 
             weight_sum = data_instances.mapPartitions(sum_sample_weight).reduce(lambda x, y: x + y)
-            LOGGER.debug(f"weight_sum is {weight_sum}")
+            # LOGGER.debug(f"weight_sum is {weight_sum}")
             weight_base = weight_sum / data_instances.count()
-            LOGGER.debug(f"weight_base is {weight_base}")
+            # LOGGER.debug(f"weight_base is {weight_base}")
         return data_instances.mapValues(lambda v: SampleWeight.replace_weight(v, class_weight, weight_loc, weight_base))
 
     @staticmethod
@@ -103,7 +103,7 @@ class SampleWeight(ModelBase):
         if self.class_weight:
             class_weight = {str(k): v for k, v in self.class_weight.items()}
             classes = sorted([str(k) for k in self.class_weight.keys()])
-        LOGGER.debug(f"callback class weight is: {class_weight}")
+        # LOGGER.debug(f"callback class weight is: {class_weight}")
 
         metric_meta = MetricMeta(name='train',
                                  metric_type=self.metric_type,
