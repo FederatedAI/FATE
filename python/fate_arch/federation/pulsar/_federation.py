@@ -67,9 +67,10 @@ class Federation(FederationABC):
                   runtime_conf: dict,
                   pulsar_config: dict):
         LOGGER.debug(f"pulsar_config: {pulsar_config}")
-        host = pulsar_config.get("host", '')
-        port = pulsar_config.get("port", '')
-        mng_port = pulsar_config.get("mng_port", '')
+        host = pulsar_config.get("host", 'localhost')
+        port = pulsar_config.get("port", '6650')
+        mng_port = pulsar_config.get("mng_port", '8080')
+        topic_ttl = int(pulsar_config.get("topic_ttl", 0))
 
         # pulsaar runtime config
         pulsar_run = runtime_conf.get(
@@ -79,6 +80,11 @@ class Federation(FederationABC):
         max_message_size = pulsar_run.get(
             'max_message_size', DEFAULT_MESSAGE_MAX_SIZE)
         LOGGER.debug(f'set max message size to {max_message_size} Bytes')
+
+        # topic ttl could be overwritten by run time config
+        topic_ttl = int(pulsar_run.get(
+            'topic_ttl', topic_ttl
+        ))
 
         # pulsar not use user and password so far
         # TODO add credential to connections
@@ -99,9 +105,9 @@ class Federation(FederationABC):
             route_table_path = "conf/pulsar_route_table.yaml"
         route_table = file_utils.load_yaml_conf(conf_path=route_table_path)
         mq = MQ(host, port, route_table)
-        return Federation(federation_session_id, party, mq, pulsar_manager, max_message_size)
+        return Federation(federation_session_id, party, mq, pulsar_manager, max_message_size, topic_ttl)
 
-    def __init__(self, session_id, party: Party, mq: MQ,  pulsar_manager: PulsarManager, max_message_size):
+    def __init__(self, session_id, party: Party, mq: MQ,  pulsar_manager: PulsarManager, max_message_size, topic_ttl):
         self._session_id = session_id
         self._party = party
         self._mq = mq
@@ -113,6 +119,7 @@ class Federation(FederationABC):
         self._name_dtype_map = {}
         self._message_cache = {}
         self._max_message_size = max_message_size
+        self._topic_ttl = topic_ttl
 
     def __getstate__(self):
         pass
@@ -404,6 +411,14 @@ class Federation(FederationABC):
                                     'unable to update clusters: {} to pulsar namespaces: {}'.format(
                                         clusters, self._session_id)
                                 )
+
+                # set message ttl for the namespace
+                if self._pulsar_manager.set_message_ttl(DEFAULT_TENANT, self._session_id, self._topic_ttl).ok and \
+                        self._pulsar_manager.set_subscription_expiration_time(DEFAULT_TENANT, self._session_id, self._topic_ttl).ok:
+                    LOGGER.debug(
+                        'successfully set message ttl to namespaces: {} about {} mintues'.format(
+                            self._session_id, self._topic_ttl)
+                    )
 
                 self._topic_map[topic_key] = topic_pair
                 # TODO: check federated queue status

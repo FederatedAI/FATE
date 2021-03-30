@@ -63,6 +63,8 @@ fate_on_spark:
     host: 192.168.0.5
     port: 6650
     mng_port: 8080
+    # message ttl in minutes
+    topic_ttl: 5
     # default conf/pulsar_route_table.yaml
     route_table:
   nginx:
