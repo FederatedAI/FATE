@@ -301,7 +301,7 @@ class BaseBinning(object):
     @staticmethod
     def _convert_dense_data(instances, bin_inner_param: BinInnerParam, bin_results: BinResults,
                             abnormal_list: list, convert_type: str = 'bin_num'):
-        # instances = copy.deepcopy(instances)
+        instances = copy.deepcopy(instances)
         features = instances.features
         transform_cols_idx = bin_inner_param.transform_bin_indexes
         split_points_dict = bin_results.all_split_points
@@ -370,8 +370,6 @@ class BaseBinning(object):
         f = functools.partial(self.add_label_in_partition,
                               sparse_bin_points=sparse_bin_points)
 
-        # result_sum = data_bin_with_label.applyPartitions(f)
-        # result_counts = result_sum.reduce(self.aggregate_partition_label)
         result_counts = data_bin_with_label.mapReducePartitions(f, self.aggregate_partition_label)
 
         def cal_zeros(bin_results):
@@ -381,14 +379,9 @@ class BaseBinning(object):
 
         result_counts = result_counts.mapValues(cal_zeros)
 
-        # for col_name, bin_results in result_counts.items():
-        #     for b in bin_results:
-        #         b[1] = b[1] - b[0]
-
         f = functools.partial(self.fill_sparse_result,
                               sparse_bin_points=sparse_bin_points,
                               label_counts=label_counts)
-        # result_counts = self.fill_sparse_result(result_counts, sparse_bin_points, label_counts)
         result_counts = result_counts.map(f)
         self.cal_iv_woe(result_counts,
                         self.params.adjustment_factor)

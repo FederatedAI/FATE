@@ -87,14 +87,11 @@ class HeteroFeatureBinningGuest(BaseFeatureBinning):
         LOGGER.info("Get encrypted_bin_sum from host")
         for host_idx, encrypted_bin_info in enumerate(encrypted_bin_infos):
             host_party_id = self.component_properties.host_party_idlist[host_idx]
-            # encrypted_bin_sum = encrypted_bin_info['encrypted_bin_sum']
             encrypted_bin_sum = encrypted_bin_sum_infos[host_idx]
             result_counts = self.cipher_decompress(encrypted_bin_sum, cipher)
-            # result_counts = self.__decrypt_bin_sum(encrypted_bin_sum, cipher)
 
             host_bin_methods = encrypted_bin_info['bin_method']
             category_names = encrypted_bin_info['category_names']
-            # if self.model_param.method == consts.OPTIMAL:
             if host_bin_methods == consts.OPTIMAL:
                 optimal_binning_params = encrypted_bin_info['optimal_params']
 
