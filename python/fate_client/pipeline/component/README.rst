@@ -265,6 +265,14 @@ Below lists input and output elements of each component.
 
    * - `DataIO`_
      - DataIO
+     - This component usually follows ``Reader``. It transforms user-uploaded date into Instance object(deprecate in FATe-v1.7, use DataTransform instead).
+     - data
+     - data
+     - model
+     - model
+
+   * - `DataTransform`_
+     - DataTransform
      - This component usually follows ``Reader``. It transforms user-uploaded date into Instance object.
      - data
      - data
@@ -301,6 +309,14 @@ Below lists input and output elements of each component.
      - data
      - data
      - model
+     - model
+
+   * - `Homo Feature Binning`_
+     - Homo Feature Binning
+     - Calculate quantile binning through multiple parties
+     - data
+     - data
+     - None
      - model
 
    * - `OneHot Encoder`_
@@ -379,6 +395,22 @@ Below lists input and output elements of each component.
      - HeteroSecureBoost
      - Build hetero secure boosting module through multiple parties
      - train_data; validate_data; predict_input
+     - data
+     - model
+     - model
+
+   * - `Hetero Fast Secure Boosting`_
+     - HeteroFastSecureBoost
+     - Build hetero secure boosting model through multiple parties in layered/mix manners.
+     - train_data; validate_data; predict_input
+     - data
+     - model
+     - model
+
+   * - `Hetero Secure Boost Feature Transformer`_
+     - SBT Feature Transformer
+     - This component can encode sample using Hetero SBT leaf indices.
+     - data
      - data
      - model
      - model
@@ -471,13 +503,23 @@ Below lists input and output elements of each component.
      - None
      - None
 
+   * - `Sample Weight`_
+     - Sample Weight
+     - Sample Weight assigns weight to instances according to user-specified parameters
+     - data
+     - data
+     - None
+     - None
+
 
 
 .. _DataIO: ../../../federatedml/util/README.rst
+.. _DataTransform: ../../../federatedml/util/README.rst
 .. _Intersect: ../../../federatedml/statistic/intersect/README.rst
 .. _Federated Sampling: ../../../federatedml/feature/README.rst
 .. _Feature Scale: ../../../federatedml/feature/README.rst
 .. _Hetero Feature Binning: ../../../federatedml/feature/README.rst
+.. _Homo Feature Binning: ../../../federatedml/feature/README.rst
 .. _OneHot Encoder: ../../../federatedml/feature/README.rst
 .. _Hetero Feature Selection: ../../../federatedml/feature/README.rst
 .. _Union: ../../../federatedml/statistic/union/README.rst
@@ -488,6 +530,8 @@ Below lists input and output elements of each component.
 .. _Homo-LR: ../../../federatedml/linear_model/logistic_regression/README.rst
 .. _Homo-NN: ../../../federatedml/nn/homo_nn/README.rst
 .. _Hetero Secure Boosting: ../../../federatedml/ensemble/README.rst
+.. _Hetero Fast Secure Boosting: ../../../federatedml/ensemble/README.rst
+.. _Hetero Secure Boost Feature Transformer: ../../../federatedml/feature/sbt_feature_transformer
 .. _Evaluation: ../../../federatedml/evaluation/README.rst
 .. _Hetero Pearson: ../../../federatedml/statistic/correlation/README.rst
 .. _Hetero-NN: ../../../federatedml/nn/hetero_nn/README.rst
@@ -499,6 +543,7 @@ Below lists input and output elements of each component.
 .. _Data Statistics: ../../../federatedml/statistic/README.rst
 .. _Scorecard: ../../../federatedml/statistic/scorecard/README.rst
 .. _Feldman Verifiable Sum: ../../../federatedml/statistic/feldman_verifiable_sum/README.rst
+.. _Sample Weight: ../../../federatedml/util/README.rst
 
 
 Params

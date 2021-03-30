@@ -1,0 +1,73 @@
+{
+    "dsl_version": 2,
+    "initiator": {
+        "role": "guest",
+        "party_id": 9999
+    },
+    "role": {
+        "host": [
+            9998
+        ],
+        "guest": [
+            9999
+        ]
+    },
+    "job_parameters": {
+        "common": {
+            "job_type": "train",
+            "backend": 0,
+            "work_mode": 0
+        }
+    },
+    "component_parameters": {
+        "common": {
+            "secureboost_0": {
+                "task_type": "classification",
+                "objective_param": {
+                    "objective": "cross_entropy"
+                },
+                "num_trees": 2,
+                "validation_freqs": 1,
+                "random_seed": 1000,
+                "encrypt_param": {
+                    "method": "iterativeAffine"
+                },
+                "tree_param": {
+                    "max_depth": 3
+                }
+            },
+            "sbt_feature_transformer_0": {
+                "dense_format": true
+            }
+        },
+        "role": {
+            "guest": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "vehicle_scale_hetero_guest",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "dataio_0": {
+                        "with_label": true,
+                        "output_format": "dense"
+                    }
+                }
+            },
+            "host": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "vehicle_scale_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "dataio_0": {
+                        "with_label": false
+                    }
+                }
+            }
+        }
+    }
+}

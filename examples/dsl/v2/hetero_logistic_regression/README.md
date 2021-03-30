@@ -12,7 +12,7 @@ This section introduces the dsl and conf for usage of different type of task.
     dsl: hetero_lr_validate_dsl.json
     runtime_config: hetero_lr_validate_conf.json
 
-3. Cross Validation Task:
+3. Cross Validation Task(with fold history data output of predict score):
     dsl: hetero_lr_cv_dsl.json
     runtime_config: hetero_lr_cv_conf.json
 

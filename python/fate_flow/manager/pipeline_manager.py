@@ -15,7 +15,7 @@
 #
 from fate_flow.settings import stat_logger
 from fate_flow.utils import job_utils, detect_utils, schedule_utils
-from fate_flow.operation import JobSaver
+from fate_flow.operation.job_saver import JobSaver
 
 
 def pipeline_dag_dependency(job_info):

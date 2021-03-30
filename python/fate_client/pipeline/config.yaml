@@ -1,3 +1,4 @@
 ip:
 port:
 log_directory:
+console_display_log:

@@ -14,20 +14,23 @@
 #  limitations under the License.
 #
 import copy
-import io
-import os
 import tempfile
-import zipfile
-import collections
+
 import numpy as np
 import torch
-from torch.autograd import Variable
-import torchvision.transforms as transforms
 import torch.utils.data as data
+from sklearn.metrics import (
+    accuracy_score,
+    precision_score,
+    roc_auc_score,
+    recall_score,
+    f1_score,
+    fbeta_score,
+)
 from torch.utils.data import DataLoader
+
 from federatedml.framework.weights import OrderDictWeights, Weights
 from federatedml.nn.homo_nn.nn_model import NNModel, DataConverter
-from sklearn.metrics import accuracy_score, precision_score, roc_auc_score, recall_score, f1_score, fbeta_score
 
 
 def layers(layer, config, type):
@@ -118,7 +121,6 @@ def restore_pytorch_nn_model(model_bytes):
 
 
 class PytorchNNModel(NNModel):
-
     def __init__(self, model, optimizer=None, loss=None, metrics=None):
         self._model: torch.nn.Sequential = model
         self._optimizer = optimizer
@@ -144,7 +146,9 @@ class PytorchNNModel(NNModel):
         for epoch in range(epochs):
             for batch_id, (feature, label) in enumerate(train_data):
                 feature = torch.tensor(feature, dtype=torch.float32)
-                if isinstance(loss_fn, torch.nn.CrossEntropyLoss) | isinstance(loss_fn, torch.nn.NLLLoss):
+                if isinstance(loss_fn, torch.nn.CrossEntropyLoss) | isinstance(
+                    loss_fn, torch.nn.NLLLoss
+                ):
                     label = torch.tensor(label, dtype=torch.long)
                     temp = label.t()
                     label = temp[0]
@@ -185,7 +189,9 @@ class PytorchNNModel(NNModel):
             else:
                 result = np.vstack((result, y.detach().numpy()))
                 eval_label = np.vstack((eval_label, label.detach().numpy()))
-            if isinstance(loss_fn, torch.nn.CrossEntropyLoss) | isinstance(loss_fn, torch.nn.NLLLoss):
+            if isinstance(loss_fn, torch.nn.CrossEntropyLoss) | isinstance(
+                loss_fn, torch.nn.NLLLoss
+            ):
                 label = torch.tensor(label, dtype=torch.long)
                 temp = label.t()
                 label = temp[0]
@@ -209,7 +215,7 @@ class PytorchNNModel(NNModel):
         if len(other_metrics) > 0:
             if num_output_units == 1:
                 for i in range(len(data)):
-                    if (result[i] > 0.5):
+                    if result[i] > 0.5:
                         result[i] = 1
                     else:
                         result[i] = 0
@@ -232,12 +238,12 @@ class PytorchNNModel(NNModel):
                 acc = 0
                 if data.use_one_hot:
                     for i in range(len(data)):
-                        if (result[i].argmax() == eval_label[i].argmax()):
-                            acc += 1;
+                        if result[i].argmax() == eval_label[i].argmax():
+                            acc += 1
                 else:
                     for i in range(len(data)):
-                        if (result[i].argmax() == eval_label[i]):
-                            acc += 1;
+                        if result[i].argmax() == eval_label[i]:
+                            acc += 1
                 metircs["auccuray"] = acc / len(data)
         return metircs
 
@@ -311,7 +317,7 @@ class PytorchData(data.Dataset):
             elif num_label > 2:
                 self.output_shape = (num_label,)
             else:
-                 raise ValueError(f"num_label is {num_label}")
+                raise ValueError(f"num_label is {num_label}")
             self.x = np.zeros((self.size, *self.x_shape))
             self.y = np.zeros((self.size, *self.y_shape))
             index = 0
@@ -339,3 +345,6 @@ class PytorchData(data.Dataset):
 class PytorchDataConverter(DataConverter):
     def convert(self, data, *args, **kwargs):
         return PytorchData(data, *args, **kwargs)
+
+
+

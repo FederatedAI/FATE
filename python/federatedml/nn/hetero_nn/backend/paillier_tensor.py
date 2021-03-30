@@ -165,11 +165,18 @@ class PaillierTensor(object):
     def decrypt(self, decrypt_tool):
         return PaillierTensor(tb_obj=self._obj.mapValues(lambda val: decrypt_tool.recursive_decrypt(val)))
 
+    def encode(self, encoder):
+        return PaillierTensor(tb_obj=self._obj.mapValues(lambda val: encoder.encode(val)))
+
+    def decode(self, decoder):
+        return PaillierTensor(tb_obj=self._obj.mapValues(lambda val: decoder.decode(val)))
+
     @staticmethod
     def _vector_mul(kv_iters):
         ret_mat = None
         for k, v in kv_iters:
-            tmp_mat = np.tensordot(v[0], v[1], [[], []])
+            tmp_mat = np.outer(v[0], v[1])
+            # tmp_mat = np.tensordot(v[0], v[1], [[], []])
 
             if ret_mat is not None:
                 ret_mat += tmp_mat
@@ -223,3 +230,7 @@ class PaillierTensor(object):
             return PaillierTensor(ori_data=list(self._obj.collect())[0][1], partitions=self.partitions)
         else:
             return PaillierTensor(tb_obj=self._obj.mapValues(lambda val: np.squeeze(val, axis=axis - 1)))
+
+    def select_columns(self, select_table):
+        return PaillierTensor(tb_obj=self._obj.join(select_table, lambda v1, v2: v1[v2]))
+

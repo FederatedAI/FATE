@@ -95,7 +95,7 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.add_component(hetero_secureboost_0, data=Data(train_data=one_hot_0.output.data))
     pipeline.add_component(hetero_secureboost_1, data=Data(train_data=one_hot_0.output.data))
     pipeline.add_component(evaluation_0, data=Data(data=hetero_lr_0.output.data))
-    pipeline.add_component(evaluation_1, data=Data(data=hetero_lr_1.output.data))
+    pipeline.add_component(evaluation_1, data=Data(data=hetero_secureboost_1.output.data))
     pipeline.compile()
 
     job_parameters = JobParameters(backend=backend, work_mode=work_mode)

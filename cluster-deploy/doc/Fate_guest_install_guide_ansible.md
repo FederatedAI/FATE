@@ -276,8 +276,8 @@ ls -lrt /data/projects/common/supervisord/supervisord.d/fate-*.conf
 ```
 #注意：URL链接有换行，拷贝的时候注意整理成一行
 cd /data/projects/
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/ansible_nfate_1.5.1_release-1.0.0.tar.gz
-tar xzf ansible_nfate_1.5.1_release-1.0.0.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/ansible_nfate_1.6.0_release-1.0.0.tar.gz
+tar xzf ansible_nfate_1.6.0_release-1.0.0.tar.gz
 ```
 
 4.4 配置文件修改和示例
@@ -313,7 +313,7 @@ sh ./make.sh
 2）拷贝证书到部署目录
 
 ```
-sh cp-keys.sh guest exchange
+sh cp-keys.sh host guest
 
 证书文件会拷贝到roles/eggroll/files/keys目录
 
@@ -520,9 +520,9 @@ vi route_table.json
 4、确认安全证书参数文件配置信息和实际信息是否一致
 cd /data/projects/fate/eggroll/conf/
 vi eggroll.properties
-eggroll.core.security.client.ca.crt.path=/data/projects/data/fate/keys/exchange-client-ca.pem
-eggroll.core.security.client.crt.path=/data/projects/data/fate/keys/exchange-client.pem
-eggroll.core.security.client.key.path=/data/projects/data/fate/keys/exchange-client.key
+eggroll.core.security.client.ca.crt.path=/data/projects/data/fate/keys/host-client-ca.pem
+eggroll.core.security.client.crt.path=/data/projects/data/fate/keys/host-client.pem
+eggroll.core.security.client.key.path=/data/projects/data/fate/keys/host-client.key
 
 eggroll.core.security.ca.crt.path=/data/projects/data/fate/keys/guest-ca.pem
 eggroll.core.security.crt.path=/data/projects/data/fate/keys/guest-server.pem

@@ -41,6 +41,11 @@ class CSession(CSessionABC):
         from fate_arch.common.address import FileAddress
         if isinstance(address, FileAddress):
             return address
+
+        from fate_arch.common.address import PathAddress
+        if isinstance(address, PathAddress):
+            from fate_arch.computing.non_distributed import LocalData
+            return LocalData(address.path)
         raise NotImplementedError(f"address type {type(address)} not supported with spark backend")
 
     def parallelize(self, data: Iterable, partition: int, include_key: bool, **kwargs):

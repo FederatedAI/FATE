@@ -55,10 +55,7 @@ def main(config="../../config.yaml", namespace=""):
     param = {
         "intersect_method": "raw",
         "sync_intersect_ids": True,
-        "only_output_key": True,
-        "intersect_cache_param": {
-            "use_cache": False
-        }
+        "only_output_key": True
     }
     intersect_0 = Intersection(name="intersect_0", **param)
 

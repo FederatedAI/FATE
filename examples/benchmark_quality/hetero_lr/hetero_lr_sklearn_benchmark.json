@@ -140,7 +140,7 @@
     },
     "FATE": {
       "script": "./pipeline-lr-multi.py",
-      "conf": "./vechile_config.yaml"
+      "conf": "./vechile_pipeline_config.yaml"
     },
     "compare_setting": {
       "relative_tol": 1e-2

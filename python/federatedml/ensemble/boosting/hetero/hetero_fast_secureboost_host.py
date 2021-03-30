@@ -10,8 +10,6 @@ from federatedml.ensemble import HeteroSecureBoostingTreeGuest
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import FeatureImportanceInfo
 from federatedml.util import LOGGER
 from federatedml.util import consts
-from federatedml.util.io_check import assert_io_num_rows_equal
-
 
 make_readable_feature_importance = HeteroSecureBoostingTreeGuest.make_readable_feature_importance
 
@@ -51,9 +49,9 @@ class HeteroFastSecureBoostingTreeHost(HeteroSecureBoostingTreeHost):
     def update_feature_importance(self, tree_feature_importance):
         for fid in tree_feature_importance:
             if fid not in self.feature_importances_:
-                self.feature_importances_[fid] = 0
-
-            self.feature_importances_[fid] += tree_feature_importance[fid]
+                self.feature_importances_[fid] = tree_feature_importance[fid]
+            else:
+                self.feature_importances_[fid] += tree_feature_importance[fid]
 
     def check_host_number(self, tree_type):
         host_num = len(self.component_properties.host_party_idlist)
@@ -67,24 +65,28 @@ class HeteroFastSecureBoostingTreeHost(HeteroSecureBoostingTreeHost):
         self.check_host_number(tree_type)
         self.check_run_sp_opt()
         tree = HeteroFastDecisionTreeHost(tree_param=self.tree_param)
-        tree.set_input_data(data_bin=self.data_bin, bin_split_points=self.bin_split_points, bin_sparse_points=
-                            self.bin_sparse_points)
-        tree.set_valid_features(self.sample_valid_features())
-        tree.set_flowid(self.generate_flowid(epoch_idx, booster_dim))
-        tree.set_runtime_idx(self.component_properties.local_partyid)
-        tree.set_host_party_idlist(self.component_properties.host_party_idlist)
+        tree.init(flowid=self.generate_flowid(epoch_idx, booster_dim),
+                  valid_features=self.sample_valid_features(),
+                  data_bin=self.data_bin, bin_split_points=self.bin_split_points,
+                  bin_sparse_points=self.bin_sparse_points,
+                  run_sprase_opt=self.run_sparse_opt,
+                  data_bin_dense=self.data_bin_dense,
+                  runtime_idx=self.component_properties.local_partyid,
+                  goss_subsample=self.enable_goss,
+                  bin_num=self.bin_num,
+                  complete_secure=True if (self.complete_secure and epoch_idx == 0) else False,
+                  cipher_compressing=self.round_decimal is not None,
+                  round_decimal=self.round_decimal,
+                  new_ver=self.new_ver
+                  )
+
         tree.set_tree_work_mode(tree_type, target_host_id)
         tree.set_layered_depth(self.guest_depth, self.host_depth)
         tree.set_self_host_id(self.component_properties.local_partyid)
-
-        if self.run_sparse_opt:
-            tree.activate_sparse_hist_opt()
-            tree.set_dense_data_for_sparse_opt(data_bin_dense=self.data_bin_dense, bin_num=self.bin_num)
-
+        tree.set_host_party_idlist(self.component_properties.host_party_idlist)
         LOGGER.debug('tree work mode is {}'.format(tree_type))
         tree.fit()
         self.update_feature_importance(tree.get_feature_importance())
-        # tree.print_leafs()
         return tree
 
     def load_booster(self, model_meta, model_param, epoch_idx, booster_idx):
@@ -153,7 +155,7 @@ class HeteroFastSecureBoostingTreeHost(HeteroSecureBoostingTreeHost):
     def get_model_meta(self):
 
         _, model_meta = super(HeteroFastSecureBoostingTreeHost, self).get_model_meta()
-        meta_name = "HeteroFastSecureBoostingTreeHostMeta"
+        meta_name = consts.HETERO_FAST_SBT_HOST_MODEL + "Meta"
         model_meta.work_mode = self.work_mode
 
         return meta_name, model_meta
@@ -161,7 +163,7 @@ class HeteroFastSecureBoostingTreeHost(HeteroSecureBoostingTreeHost):
     def get_model_param(self):
 
         _, model_param = super(HeteroFastSecureBoostingTreeHost, self).get_model_param()
-        param_name = "HeteroFastSecureBoostingTreeHostParam"
+        param_name = consts.HETERO_FAST_SBT_HOST_MODEL + "Param"
         model_param.tree_plan.extend(plan.encode_plan(self.tree_plan))
         model_param.model_name = consts.HETERO_FAST_SBT_MIX if self.work_mode == consts.MIX_TREE else \
                                  consts.HETERO_FAST_SBT_LAYERED
@@ -169,10 +171,11 @@ class HeteroFastSecureBoostingTreeHost(HeteroSecureBoostingTreeHost):
         feature_importances = list(self.feature_importances_.items())
         feature_importances = sorted(feature_importances, key=itemgetter(1), reverse=True)
         feature_importance_param = []
-        for fid, _importance in feature_importances:
+        LOGGER.debug('host feat importance is {}'.format(feature_importances))
+        for fid, importance in feature_importances:
             feature_importance_param.append(FeatureImportanceInfo(sitename=self.role,
                                                                   fid=fid,
-                                                                  importance=_importance,
+                                                                  importance=importance.importance,
                                                                   fullname=self.feature_name_fid_mapping[fid]))
         model_param.feature_importances.extend(feature_importance_param)
 

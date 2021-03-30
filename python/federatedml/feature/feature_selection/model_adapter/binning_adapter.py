@@ -34,7 +34,7 @@ class BinningAdapter(BaseAdapter):
             values.append(v.iv)
             col_names.append(n)
         host_results = list(model_param.host_results)
-        LOGGER.debug(f"In binning adapter convert, host_results: {host_results}")
+        # LOGGER.debug(f"In binning adapter convert, host_results: {host_results}")
         host_party_ids = [int(x.party_id) for x in host_results]
         host_values = []
         host_col_names = []

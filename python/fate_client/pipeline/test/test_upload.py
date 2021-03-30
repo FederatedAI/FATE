@@ -19,7 +19,7 @@
 import unittest
 import uuid
 
-from arch.api import session
+from fate_arch.session import computing_session as session
 from pipeline.backend.config import Backend
 from pipeline.backend.config import WorkMode
 from pipeline.backend.pipeline import PipeLine

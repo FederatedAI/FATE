@@ -1,0 +1,70 @@
+{
+    "components": {
+        "reader_0": {
+            "module": "Reader",
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
+        },
+        "dataio_0": {
+            "module": "DataIO",
+            "input": {
+                "data": {
+                    "data": [
+                        "reader_0.data"
+                    ]
+                }
+            },
+            "output": {
+                "data": ["train"],
+                "model": ["dataio"]
+            }
+         },
+        "intersection_0": {
+            "module": "Intersection",
+            "input": {
+                "data": {
+                    "data": [
+                        "dataio_0.train"
+                    ]
+                }
+            },
+            "output": {
+                "data": ["train"]
+            }
+        },
+        "secureboost_0": {
+            "module": "HeteroSecureBoost",
+            "input": {
+                "data": {
+                    "train_data": [
+                        "intersection_0.train"
+                    ]
+                }
+            },
+            "output": {
+                "data": ["train"],
+                "model": ["train"]
+            }
+        },
+        "sbt_feature_transformer_0": {
+            "module": "SBTFeatureTransformer",
+            "input": {
+                "data": {
+                    "data": [
+                        "intersection_0.train"
+                    ]
+                },
+                "isometric_model": [
+                    "secureboost_0.train"
+                ]
+            },
+            "output": {
+                "data": ["train"],
+                "model": ["model"]
+            }
+        }
+    }
+}

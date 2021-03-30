@@ -16,7 +16,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-import copy
 
 from federatedml.param.base_param import BaseParam
 # from federatedml.param.evaluation_param import EvaluateParam
@@ -44,13 +43,21 @@ class CrossValidationParam(BaseParam):
     random_seed: int, default: 1
         Specify the random seed for numpy shuffle
 
-    need_cv: bool, default True
+    need_cv: bool, default False
         Indicate if this module needed to be run
+
+    output_fold_history: bool, default True
+        Indicate whether to output table of ids used by each fold, else return original input data
+        returned ids are formatted as: {original_id}#fold{fold_num}#{train/validate}
+
+    history_value_type: str, default score, choose between {'instance', 'score'}
+        Indicate whether to include original instance or predict score in the output fold history,
+        only effective when output_fold_history set to True
 
     """
 
     def __init__(self, n_splits=5, mode=consts.HETERO, role=consts.GUEST, shuffle=True, random_seed=1,
-                 need_cv=False):
+                 need_cv=False, output_fold_history=True, history_value_type="score"):
         super(CrossValidationParam, self).__init__()
         self.n_splits = n_splits
         self.mode = mode
@@ -59,6 +66,8 @@ class CrossValidationParam(BaseParam):
         self.random_seed = random_seed
         # self.evaluate_param = copy.deepcopy(evaluate_param)
         self.need_cv = need_cv
+        self.output_fold_history = output_fold_history
+        self.history_value_type = history_value_type
 
     def check(self):
         model_param_descr = "cross validation param's "
@@ -66,5 +75,7 @@ class CrossValidationParam(BaseParam):
         self.check_valid_value(self.mode, model_param_descr, valid_values=[consts.HOMO, consts.HETERO])
         self.check_valid_value(self.role, model_param_descr, valid_values=[consts.HOST, consts.GUEST, consts.ARBITER])
         self.check_boolean(self.shuffle, model_param_descr)
+        self.check_boolean(self.output_fold_history, model_param_descr)
+        self.history_value_type = self.check_and_change_lower(self.history_value_type, ["instance", "score"], model_param_descr)
         if self.random_seed is not None:
             self.check_positive_integer(self.random_seed, model_param_descr)

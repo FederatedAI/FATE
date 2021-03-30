@@ -51,8 +51,13 @@ def main(config="../../config.yaml", namespace=""):
 
     param = {
         "intersect_method": "rsa",
-        "sync_intersect_ids": True,
-        "only_output_key": True
+        "sync_intersect_ids": False,
+        "only_output_key": True,
+        "rsa_params": {
+            "hash_method": "sha256",
+            "final_hash_method": "sha256",
+            "key_length": 2048
+        }
     }
     intersect_0 = Intersection(name="intersect_0", **param)
 

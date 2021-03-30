@@ -1,0 +1,69 @@
+{
+    "data": [
+        {
+            "file": "examples/data/breast_homo_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_homo_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/breast_homo_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_homo_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/breast_homo_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_homo_host",
+            "namespace": "experiment",
+            "role": "host_1"
+        },
+        {
+            "file": "examples/data/breast_homo_test.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "homo_breast_test",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/breast_homo_test.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "homo_breast_test",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/breast_homo_test.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "homo_breast_test",
+            "namespace": "experiment",
+            "role": "host_1"
+        }
+    ],
+    "pipeline_tasks": {
+        "homo-lr-eval": {
+            "script": "pipeline-homo-lr-eval.py"
+        },
+        "homo-lr-multi-host": {
+            "script": "pipeline-homo-lr-multi-host.py"
+        },
+        "homo-lr-train": {
+            "script": "pipeline-homo-lr-train.py"
+        },
+        "homo-lr-cv": {
+            "script": "pipeline-homo-lr-cv.py"
+        },
+        "homo-lr-train-eval": {
+            "script": "pipeline-homo-lr-train-eval.py"
+        }
+    }
+}
