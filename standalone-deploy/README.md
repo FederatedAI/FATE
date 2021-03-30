@@ -29,10 +29,9 @@ It is strongly recommended to use docker, which greatly reduces the possibility 
 
    please follow the below step:
 
+    Please replace ${version} below with the real version you want to use， refer to version of FATE in [fate.env](../fate.env).
 
 ```
-#Please replace ${version} below with the real version you want to use!
-
 #Get code
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/docker_standalone_fate_${version}.tar.gz
 tar -xzvf docker_standalone_fate_${version}.tar.gz
@@ -103,29 +102,28 @@ Http://hostip:8080.
 
 2. Download the compressed package of stand-alone version and decompress it.
 
-   ```
-   #Please replace ${version} below with the real version you want to use!
-   
+    Please replace ${version} below with the real version you want to use， refer to version of FATE in [fate.env](../fate.env).
+   ```   
    wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/standalone_fate_master_${version}.tar.gz
    tar -xzvf  standalone_fate_master_${version}.tar.gz
    ```
 
 3. Enter FATE directory and execute the init.sh.
 
-   ```
-   #Please replace ${version} below with the real version you want to use!
-   
+    Please replace ${version} below with the real version you want to use， refer to version of FATE in [fate.env](../fate.env).
+
+   ```   
    cd standalone_fate_master_${version}
    sh init.sh init
    ```
 
 4. Test
 
+    Please replace ${version} below with the real version you want to use， refer to version of FATE in [fate.env](../fate.env).
+
    - Unit Test
 
-   ```
-   #Please replace ${version} below with the real version you want to use!
-   
+   ```   
    cd standalone_fate_master_${version}
    source bin/init_env.sh
    bash ./python/federatedml/test/run_test.sh
@@ -139,9 +137,7 @@ Http://hostip:8080.
 
    - Toy_example Test
 
-   ```
-   #Please replace ${version} below with the real version you want to use!
-   
+   ```   
    cd standalone_fate_master_${version}
    source bin/init_env.sh
    python ./examples/toy_example/run_toy_example.py 10000 10000 0
