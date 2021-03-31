@@ -124,7 +124,8 @@ class SampleWeight(ModelBase):
     def transform(self, data_instances):
         LOGGER.info(f"Enter Sample Weight Transform")
         if self.class_weight is not None:
-            raise ValueError(f"Transform does not support class weight mode.")
+            LOGGER.warning(f"Transform does not support class weight mode. Original input data returned")
+            return data_instances
         return self.fit(data_instances)
 
     def fit(self, data_instances):
