@@ -48,7 +48,7 @@ def wrap_grpc_packet(json_body, http_method, url, src_party_id, dst_party_id, jo
     _src = proxy_pb2.Topic(name=job_id, partyId="{}".format(src_party_id), role=FATEFLOW_SERVICE_NAME, callback=_src_end_point)
     _dst = proxy_pb2.Topic(name=job_id, partyId="{}".format(dst_party_id), role=FATEFLOW_SERVICE_NAME, callback=None)
     _task = proxy_pb2.Task(taskId=job_id)
-    _command = proxy_pb2.Command(name=FATEFLOW_SERVICE_NAME)
+    _command = proxy_pb2.Command(name=url)
     _conf = proxy_pb2.Conf(overallTimeout=overall_timeout)
     _meta = proxy_pb2.Metadata(src=_src, dst=_dst, task=_task, command=_command, operator=http_method, conf=_conf)
     _data = proxy_pb2.Data(key=url, value=bytes(json_dumps(json_body), 'utf-8'))
