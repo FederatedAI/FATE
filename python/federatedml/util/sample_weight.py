@@ -121,12 +121,14 @@ class SampleWeight(ModelBase):
                                      metric_name=self.metric_name,
                                      metric_meta=metric_meta)
 
+    def transform(self, data_instances):
+        LOGGER.info(f"Enter Sample Weight Transform")
+        return self.fit(data_instances)
+
     def fit(self, data_instances):
         if self.sample_weight_name is None and self.class_weight is None:
             return data_instances
 
-        # if self.class_weight and isinstance(self.class_weight, dict):
-        #    self.class_weight = {int(k): v for k, v in self.class_weight.items()}
         if self.class_weight:
             self.weight_mode = "class weight"
 
