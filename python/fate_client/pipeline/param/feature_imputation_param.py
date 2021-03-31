@@ -25,15 +25,9 @@ class FeatureImputationParam(BaseParam):
 
     Parameters
     ----------
-    input_format : str, accepted 'dense','sparse' 'tag' only in this version. default: 'dense'.
-                   please have a look at this tutorial at "DataIO" section of federatedml/util/README.md.
-                   Formally,
-                       dense input format data should be set to "dense",
-                       svm-light input format data should be set to "sparse",
-                       tag or tag:value input format data should be set to "tag".
 
     default_value : None or single object type or list, the value to replace missing value.
-                    if None, it will use default value define in federatedml/feature/imputer.py,
+                    if None, it will use default value defined in federatedml/feature/imputer.py,
                     if single object, will fill missing value with this object,
                     if list, it's length should be the sample of input data' feature dimension,
                         means that if some column happens to have missing values, it will replace it
@@ -42,17 +36,22 @@ class FeatureImputationParam(BaseParam):
 
     missing_fill_method: None or str, the method to replace missing value, should be one of [None, 'min', 'max', 'mean', 'designated'], default: None
 
+    col_missing_fill_method: None or dict of (column name, missing_fill_method) pairs,
+                             specifies method to replace missing value for each column;
+                             any column not specified will take missing_fill_method;
+                             method should be one of [None, 'min', 'max', 'mean', 'designated'], default: None
+
     missing_impute: None or list, element of list can be any type, or auto generated if value is None, define which values to be consider as missing, default: None
 
     need_run: boolean, default True,
 
     """
 
-    def __init__(self, input_format="dense", default_value=0, missing_fill_method=None,
+    def __init__(self, default_value=0, missing_fill_method=None, col_missing_fill_method=None,
                  missing_impute=None, need_run=True):
-        self.input_format = input_format
         self.default_value = default_value
         self.missing_fill_method = missing_fill_method
+        self.col_missing_fill_method = col_missing_fill_method
         self.missing_impute = missing_impute
         self.need_run = need_run
 
@@ -60,15 +59,20 @@ class FeatureImputationParam(BaseParam):
 
         descr = "feature imputation param's "
 
-        self.input_format = self.check_and_change_lower(self.input_format,
-                                                        ["dense", "sparse", "tag"],
-                                                        descr)
         self.check_boolean(self.need_run, descr+"need_run")
 
         if self.missing_fill_method is not None:
             self.missing_fill_method = self.check_and_change_lower(self.missing_fill_method,
                                                                    ['min', 'max', 'mean', 'designated'],
-                                                                   descr)
-
+                                                                   f"{descr} missing_fill_method ")
+        if self.col_missing_fill_method:
+            if not isinstance(self.col_missing_fill_method, dict):
+                raise ValueError(f"{descr} col_missing_fill_method should be a dict")
+            for k, v in self.col_missing_fill_method.items():
+                if not isinstance(k, str):
+                    raise ValueError(f"{descr} col_missing_fill_method should contain str key(s) only")
+                self.check_valid_value(v,
+                                       ['min', 'max', 'mean', 'designated'],
+                                       f"per column method specified in {descr} col_missing_fill_method dict")
 
         return True

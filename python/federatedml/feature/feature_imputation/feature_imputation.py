@@ -50,6 +50,7 @@ class FeatureImputation(object):
         return result
 
     def fit(self, data):
+
         pass
 
     def transform(self, data):

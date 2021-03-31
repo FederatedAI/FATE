@@ -2,6 +2,7 @@ import copy
 import functools
 import numpy as np
 
+from federatedml.feature.instance import Instance
 from federatedml.statistic.data_overview import get_header
 from federatedml.statistic.statics import MultivariateStatisticalSummary
 from federatedml.util import consts
@@ -76,10 +77,16 @@ class Imputer(object):
     def __replace_missing_value_with_cols_transform_value(data, transform_list, missing_value_list):
         _data = copy.deepcopy(data)
         replace_cols_index_list = []
-        for i, v in enumerate(_data):
-            if str(v) in missing_value_list:
-                _data[i] = str(transform_list[i])
-                replace_cols_index_list.append(i)
+        if isinstance(_data, Instance):
+            for i, v in enumerate(_data.feaures):
+                if str(v) in missing_value_list:
+                    _data.features[i] = transform_list[i]
+                    replace_cols_index_list.append(i)
+        else:
+            for i, v in enumerate(_data):
+                if str(v) in missing_value_list:
+                    _data[i] = str(transform_list[i])
+                    replace_cols_index_list.append(i)
 
         return _data, replace_cols_index_list
 
@@ -108,25 +115,42 @@ class Imputer(object):
         return _data, replace_cols_index_list
 
     def __get_cols_transform_value(self, data, replace_method, quantile=None):
+        """
+
+        Parameters
+        ----------
+        data: input data
+        replace_method: dictionary of (column name, replace_metho_name) pairs
+        quantile
+
+        Returns
+        -------
+        list of transform value for each column, length equal to fature count of input data
+
+        """
+        # @TODO: get value for per column
         summary_obj = MultivariateStatisticalSummary(data, -1, abnormal_list=self.missing_value_list)
         header = get_header(data)
-
-        if replace_method == consts.MIN:
-            cols_transform_value = summary_obj.get_min()
-        elif replace_method == consts.MAX:
-            cols_transform_value = summary_obj.get_max()
-        elif replace_method == consts.MEAN:
-            cols_transform_value = summary_obj.get_mean()
-        elif replace_method == consts.MEDIAN:
-            cols_transform_value = summary_obj.get_median()
-        elif replace_method == consts.QUANTILE:
-            if quantile > 1 or quantile < 0:
-                raise ValueError("quantile should between 0 and 1, but get:{}".format(quantile))
-            cols_transform_value = summary_obj.get_quantile_point(quantile)
-        else:
-            raise ValueError("Unknown replace method:{}".format(replace_method))
+        cols_transform_value = []
+        for i, feature in enumerate(header):
+            if replace_method[feature]== consts.MIN:
+                transform_value = summary_obj.get_min()[feature]
+            elif replace_method[feature] == consts.MAX:
+                transform_value = summary_obj.get_max()[feature]
+            elif replace_method[feature] == consts.MEAN:
+                transform_value = summary_obj.get_mean()[feature]
+            elif replace_method[feature] == consts.MEDIAN:
+                transform_value = summary_obj.get_median()[feature]
+            elif replace_method[feature] == consts.QUANTILE:
+                if quantile > 1 or quantile < 0:
+                    raise ValueError("quantile should between 0 and 1, but get:{}".format(quantile))
+                transform_value = summary_obj.get_quantile_point(quantile)[feature]
+            else:
+                raise ValueError("Unknown replace method:{}".format(replace_method))
+            cols_transform_value.append(transform_value)
 
         cols_transform_value = [round(cols_transform_value[key], 6) for key in header]
+        # cols_transform_value = {i: round(cols_transform_value[key], 6) for i, key in enumerate(header)}
         return cols_transform_value
 
     def __fit_replace(self, data, replace_method, replace_value=None, output_format=None, quantile=None):
