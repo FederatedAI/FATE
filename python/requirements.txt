@@ -30,8 +30,9 @@ cryptography==3.2.1
 libsm3py==0.0.1
 sortedcontainers==2.2.2
 pytorch-lightning>=1.2.1
-pulsar-client==2.7.0
 filelock==3.0.12
+pulsar-client==2.8.0
+fastavro==1.4.1
 
 # addtional requirements for eggroll
 grpcio>=1.24.3

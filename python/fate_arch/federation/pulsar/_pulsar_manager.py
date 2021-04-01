@@ -10,6 +10,7 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 from fate_arch.common.log import getLogger
+from fate_arch.federation.pulsar._mq_channel import DEFAULT_SUBSCRIPTION_NAME
 
 logger = getLogger()
 
@@ -199,4 +200,45 @@ class PulsarManager():
             self.service_url + 'namespaces/{}/{}/messageTTL'.format(tenant, namespace), json=mintues*60
         )
 
+        return response
+
+    def unsubscribe_namespace_all_topics(self, tenant: str, namespace: str, subscription_name: str):
+        session = self._create_session()
+        response = session.post(
+            self.service_url +
+            'namespaces/{}/{}/unsubscribe/{}'.format(
+                tenant, namespace, subscription_name)
+        )
+        return response
+
+    def set_retention(self, tenant: str, namespace: str,
+                      retention_time_in_minutes: int = 0, retention_size_in_MB: int = 0):
+        session = self._create_session()
+
+        data = {'retentionTimeInMinutes': retention_time_in_minutes,
+                'retentionSizeInMB': retention_size_in_MB}
+
+        response = session.post(
+            self.service_url +
+            'namespaces/{}/{}/retention'.format(tenant, namespace), data=json.dumps(data)
+        )
+        return response
+
+    def remove_retention(self, tenant: str, namespace: str):
+        session = self._create_session()
+        response = session.delete(
+            self.service_url +
+            'namespaces/{}/{}/retention'.format(tenant, namespace),
+        )
+
+        return response
+
+    # topic
+    def unsubscribe_topic(self, tenant: str, namespace: str, topic: str, subscription_name: str):
+        session = self._create_session()
+        response = session.delete(
+            self.service_url +
+            'persistent/{}/{}/{}/subscription/{}'.format(
+                tenant, namespace, topic, subscription_name)
+        )
         return response

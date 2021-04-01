@@ -20,14 +20,14 @@ from fate_arch.common import Party
 from fate_arch.common.log import getLogger
 from fate_arch.computing.spark import get_storage_level, Table
 from fate_arch.computing.spark._materialize import materialize
-from fate_arch.federation.pulsar._mq_channel import MQChannel, DEFAULT_TENANT, DEFAULT_CLUSTER
+from fate_arch.federation.pulsar._mq_channel import MQChannel, DEFAULT_TENANT, DEFAULT_CLUSTER, DEFAULT_SUBSCRIPTION_NAME
 from fate_arch.federation.pulsar._pulsar_manager import PulsarManager
 from fate_arch.federation.rabbitmq._federation import Datastream
 
 
 LOGGER = getLogger()
-# default message max size in bytes = 1MB
-DEFAULT_MESSAGE_MAX_SIZE = 104857
+# default message max size in bytes = 50MB
+DEFAULT_MESSAGE_MAX_SIZE = 104857 * 50
 NAME_DTYPE_TAG = '<dtype>'
 _SPLIT_ = '^'
 
@@ -36,11 +36,14 @@ class FederationDataType(object):
     OBJECT = 'obj'
     TABLE = 'Table'
 
+# to create pulsar client
+
 
 class MQ(object):
-    def __init__(self, host, port, route_table):
+    def __init__(self, host, port, mng_port, route_table):
         self.host = host
         self.port = port
+        self.mng_port = mng_port
         self.route_table = route_table
 
     def __str__(self):
@@ -51,9 +54,12 @@ class MQ(object):
     def __repr__(self):
         return self.__str__()
 
+# to locate pulsar topic
+
 
 class _TopicPair(object):
-    def __init__(self, namespace, send, receive):
+    def __init__(self, tenant, namespace, send, receive):
+        self.tenant = tenant
         self.namespace = namespace
         self.send = send
         self.receive = receive
@@ -66,11 +72,14 @@ class Federation(FederationABC):
                   party: Party,
                   runtime_conf: dict,
                   pulsar_config: dict):
-        LOGGER.debug(f"pulsar_config: {pulsar_config}")
-        host = pulsar_config.get("host", 'localhost')
-        port = pulsar_config.get("port", '6650')
-        mng_port = pulsar_config.get("mng_port", '8080')
-        topic_ttl = int(pulsar_config.get("topic_ttl", 0))
+        LOGGER.debug(f'pulsar_config: {pulsar_config}')
+        host = pulsar_config.get('host', 'localhost')
+        port = pulsar_config.get('port', '6650')
+        mng_port = pulsar_config.get('mng_port', '8080')
+        topic_ttl = int(pulsar_config.get('topic_ttl', 0))
+        cluster = pulsar_config.get('cluster', DEFAULT_CLUSTER)
+        # tenant name should be unified between parties
+        tenant = pulsar_config.get('tenant', DEFAULT_TENANT)
 
         # pulsaar runtime config
         pulsar_run = runtime_conf.get(
@@ -95,19 +104,19 @@ class Federation(FederationABC):
             host=host, port=mng_port, runtime_config=pulsar_run)
 
         # init tenant
-        tenant = pulsar_manager.get_tenant(tenant=DEFAULT_TENANT).json()
-        if tenant.get('allowedClusters') is None:
+        tenant_info = pulsar_manager.get_tenant(tenant=tenant).json()
+        if tenant_info.get('allowedClusters') is None:
             pulsar_manager.create_tenant(
-                tenant=DEFAULT_TENANT, admins=[], clusters=['standalone'])
+                tenant=tenant, admins=[], clusters=[cluster])
 
         route_table_path = pulsar_config.get("route_table")
         if route_table_path is None:
             route_table_path = "conf/pulsar_route_table.yaml"
         route_table = file_utils.load_yaml_conf(conf_path=route_table_path)
-        mq = MQ(host, port, route_table)
-        return Federation(federation_session_id, party, mq, pulsar_manager, max_message_size, topic_ttl)
+        mq = MQ(host, port, mng_port, route_table)
+        return Federation(federation_session_id, party, mq, pulsar_manager, max_message_size, topic_ttl, cluster, tenant)
 
-    def __init__(self, session_id, party: Party, mq: MQ,  pulsar_manager: PulsarManager, max_message_size, topic_ttl):
+    def __init__(self, session_id, party: Party, mq: MQ,  pulsar_manager: PulsarManager, max_message_size, topic_ttl, cluster, tenant):
         self._session_id = session_id
         self._party = party
         self._mq = mq
@@ -120,6 +129,8 @@ class Federation(FederationABC):
         self._message_cache = {}
         self._max_message_size = max_message_size
         self._topic_ttl = topic_ttl
+        self._cluster = cluster
+        self._tenant = tenant
 
     def __getstate__(self):
         pass
@@ -155,13 +166,13 @@ class Federation(FederationABC):
         partitions = rtn_dtype.get("partitions", None)
 
         if dtype == FederationDataType.TABLE:
-            party_topic_info = self._get_party_topic_infos(
+            party_topic_infos = self._get_party_topic_infos(
                 parties, name, partitions=partitions)
-            for i in range(len(party_topic_info)):
+            for i in range(len(party_topic_infos)):
                 party = parties[i]
                 role = party.role
                 party_id = party.party_id
-                topic_infos = party_topic_info[i]
+                topic_infos = party_topic_infos[i]
                 receive_func = self._get_partition_receive_func(name, tag, party_id, role, topic_infos, mq=self._mq,
                                                                 conf=self._pulsar_manager.runtime_config)
 
@@ -171,9 +182,10 @@ class Federation(FederationABC):
                 rdd = materialize(rdd)
                 table = Table(rdd)
                 rtn.append(table)
-                # add gc
-                gc.add_gc_action(tag, table, '__del__', {})
 
+                # add gc
+                # 1. spark
+                gc.add_gc_action(tag, table, '__del__', {})
                 LOGGER.debug(
                     f"[{log_str}]received rdd({i + 1}/{len(parties)}), party: {parties[i]} ")
         else:
@@ -245,19 +257,39 @@ class Federation(FederationABC):
         LOGGER.debug(f"[{log_str}]finish to remote")
 
     def cleanup(self, parties):
-        # The idead cleanup strategy is to consume all message leave in topics,
+        # The idea cleanup strategy is to consume all message in topics,
         # and let pulsar cluster to collect the used topics.
 
-        # Now we just force to remove the namespace
         LOGGER.debug("[pulsar.cleanup]start to cleanup...")
-        self._pulsar_manager.delete_namespace(
-            tenant=DEFAULT_TENANT, namespace=self._session_id, force=True)
 
-    def _get_vhost(self, party):
-        low, high = (self._party, party) if self._party < party else (
-            party, self._party)
-        vhost = f"{self._session_id}-{low.role}-{low.party_id}-{high.role}-{high.party_id}"
-        return vhost
+        # 1. remove subscription
+        response = self._pulsar_manager.unsubscribe_namespace_all_topics(
+            tenant=self._tenant, namespace=self._session_id,
+            subscription_name=DEFAULT_SUBSCRIPTION_NAME
+        )
+        if response.ok:
+            LOGGER.debug("successfully unsubscribe all topics")
+        else:
+            LOGGER.error(response.text)
+
+        # 2. reset retention policy
+        response = self._pulsar_manager.set_retention(
+            self._tenant, self._session_id, retention_time_in_minutes=0, retention_size_in_MB=0)
+        if response.ok:
+            LOGGER.debug("successfully reset all retention policy")
+        else:
+            LOGGER.error(response.text)
+
+        # 3. remove cluster from namespace
+        response = self._pulsar_manager.set_clusters_to_namespace(
+            self._tenant, self._session_id, [self._cluster])
+        if response.ok:
+	        LOGGER.debug("successfully reset all replicated cluster")
+        else:
+            LOGGER.error(response.text)
+
+        # 4. clear all backlog ?
+
 
     def _get_party_topic_infos(self, parties: typing.List[Party], name=None, partitions=None, dtype=None) -> typing.List:
         topic_infos = [self._get_or_create_topic(
@@ -300,7 +332,7 @@ class Federation(FederationABC):
 
                 # topic_pair is a pair of topic for sending and receiving message respectively
                 topic_pair = _TopicPair(
-                    namespace=self._session_id, send=send_topic_name, receive=receive_topic_name)
+                    tenant=self._tenant, namespace=self._session_id, send=send_topic_name, receive=receive_topic_name)
 
                 if party.party_id == self._party.party_id:
                     LOGGER.debug(
@@ -353,16 +385,16 @@ class Federation(FederationABC):
                             error_message = "unable to create pulsar cluster: %s".format(
                                 party.party_id)
                             LOGGER.error(error_message)
-                            # I amd little bit torn here, so I just decide to leave this alone.
+                            # just leave this alone.
                             raise Exception(error_message)
 
                     # update tenant
                     tenant_info = self._pulsar_manager.get_tenant(
-                        DEFAULT_TENANT).json()
+                        self._tenant).json()
                     if party.party_id not in tenant_info['allowedClusters']:
                         tenant_info['allowedClusters'].append(
                             party.party_id)
-                        if self._pulsar_manager.update_tenant(DEFAULT_TENANT, tenant_info.get('admins', []), tenant_info.get('allowedClusters',)).ok:
+                        if self._pulsar_manager.update_tenant(self._tenant, tenant_info.get('admins', []), tenant_info.get('allowedClusters',)).ok:
                             LOGGER.debug(
                                 'successfully update tenant with cluster: %s', party.party_id)
                         else:
@@ -371,11 +403,11 @@ class Federation(FederationABC):
                 # TODO: remove this for the loop
                 # init pulsar namespace
                 namespaces = self._pulsar_manager.get_namespace(
-                    DEFAULT_TENANT).json()
+                    self._tenant).json()
                 # create namespace
-                if f"{DEFAULT_TENANT}/{self._session_id}" not in namespaces:
+                if f"{self._tenant}/{self._session_id}" not in namespaces:
                     # append target cluster to the pulsar namespace
-                    clusters = [DEFAULT_CLUSTER]
+                    clusters = [self._cluster]
                     if party.party_id != self._party.party_id and party.party_id not in clusters:
                         clusters.append(party.party_id)
 
@@ -384,7 +416,7 @@ class Federation(FederationABC):
                     }
 
                     code = self._pulsar_manager.create_namespace(
-                        DEFAULT_TENANT, self._session_id, policies=policy).status_code
+                        self._tenant, self._session_id, policies=policy).status_code
                     # according to https://pulsar.apache.org/admin-rest-api/?version=2.7.0&apiversion=v2#operation/getPolicies
                     # return 409 if existed
                     # return 204 if ok
@@ -394,14 +426,27 @@ class Federation(FederationABC):
                     else:
                         raise Exception(
                             "unable to create pulsar namespace with status code: {}".format(code))
+
+                    # set message ttl for the namespace
+                    response = self._pulsar_manager.set_retention(self._tenant, self._session_id,
+                                                                  retention_time_in_minutes=int(self._topic_ttl), retention_size_in_MB=-1)
+
+                    LOGGER.debug(response.text)
+                    if response.ok:
+                        LOGGER.debug(
+                            'successfully set message ttl to namespace: {} about {} mintues'.format(
+                                self._session_id, self._topic_ttl)
+                        )
+                    else:
+                        LOGGER.debug('failed to set message ttl to namespace')
                 # update party to namespace
                 else:
                     if party.party_id != self._party.party_id:
                         clusters = self._pulsar_manager.get_cluster_from_namespace(
-                            DEFAULT_TENANT, self._session_id).json()
+                            self._tenant, self._session_id).json()
                         if party.party_id not in clusters:
                             clusters.append(party.party_id)
-                            if self._pulsar_manager.set_clusters_to_namespace(DEFAULT_TENANT, self._session_id, clusters).ok:
+                            if self._pulsar_manager.set_clusters_to_namespace(self._tenant, self._session_id, clusters).ok:
                                 LOGGER.debug(
                                     'successfully set clusters: {}  to pulsar namespace: {}'.format(
                                         clusters, self._session_id)
@@ -411,14 +456,6 @@ class Federation(FederationABC):
                                     'unable to update clusters: {} to pulsar namespaces: {}'.format(
                                         clusters, self._session_id)
                                 )
-
-                # set message ttl for the namespace
-                if self._pulsar_manager.set_message_ttl(DEFAULT_TENANT, self._session_id, self._topic_ttl).ok and \
-                        self._pulsar_manager.set_subscription_expiration_time(DEFAULT_TENANT, self._session_id, self._topic_ttl).ok:
-                    LOGGER.debug(
-                        'successfully set message ttl to namespaces: {} about {} mintues'.format(
-                            self._session_id, self._topic_ttl)
-                    )
 
                 self._topic_map[topic_key] = topic_pair
                 # TODO: check federated queue status
@@ -431,7 +468,7 @@ class Federation(FederationABC):
         return topic_infos
 
     def _get_channel(self, mq, topic_pair: _TopicPair, party_id, role, conf: dict):
-        return MQChannel(host=mq.host, port=mq.port, pulsar_namespace=topic_pair.namespace,
+        return MQChannel(host=mq.host, port=mq.port, mng_port=mq.mng_port, pulsar_tenant=topic_pair.tenant, pulsar_namespace=topic_pair.namespace,
                          pulsar_send_topic=topic_pair.send, pulsar_receive_topic=topic_pair.receive,
                          party_id=party_id, role=role, credential=None, extra_args=conf)
 
@@ -631,3 +668,28 @@ class Federation(FederationABC):
             else:
                 ValueError(
                     f"[pulsar._partition_receive]properties.content_type is {properties.content_type}, but must be application/json")
+
+    def _unsubscribe_topic(self, topic_name):
+        self._pulsar_manager.unsubscribe_topic(
+            self._tenant, self._session_id, topic_name, DEFAULT_SUBSCRIPTION_NAME)
+        LOGGER.debug(
+            f"[unsubscribe topic {self._session_id}/{topic_name}/{DEFAULT_SUBSCRIPTION_NAME}"
+        )
+
+    def _unsubscribe_topics(self, party_topic_infos):
+        for party_topic_info in party_topic_infos:
+            for topic_info in party_topic_info:
+                topic_pair = topic_info[1]
+                self._unsubscribe_topic(topic_pair.receive)
+
+    # this is used insied spark, which is required to create pulsar manager first
+    # the mq_channel is a MQChannel instance
+    def _unsubscribe_topic_without_manager(self, mq_channel):
+        pulsar_manager = PulsarManager(
+            host=mq_channel._host, port=mq_channel._mng_port)
+        pulsar_manager.unsubscribe_topic(
+            mq_channel._tenant, mq_channel._namespace, mq_channel._receive_topic, DEFAULT_SUBSCRIPTION_NAME)
+
+        print(
+            f"[unsubscribe topic {mq_channel._namespace}/{mq_channel._receive_topic}/{DEFAULT_SUBSCRIPTION_NAME}"
+        )
