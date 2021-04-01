@@ -16,6 +16,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+
 from pipeline.param.base_param import BaseParam
 
 
@@ -64,15 +65,19 @@ class FeatureImputationParam(BaseParam):
         if self.missing_fill_method is not None:
             self.missing_fill_method = self.check_and_change_lower(self.missing_fill_method,
                                                                    ['min', 'max', 'mean', 'designated'],
-                                                                   f"{descr} missing_fill_method ")
+                                                                   f"{descr}missing_fill_method ")
         if self.col_missing_fill_method:
             if not isinstance(self.col_missing_fill_method, dict):
-                raise ValueError(f"{descr} col_missing_fill_method should be a dict")
+                raise ValueError(f"{descr}col_missing_fill_method should be a dict")
             for k, v in self.col_missing_fill_method.items():
                 if not isinstance(k, str):
-                    raise ValueError(f"{descr} col_missing_fill_method should contain str key(s) only")
-                self.check_valid_value(v,
-                                       ['min', 'max', 'mean', 'designated'],
-                                       f"per column method specified in {descr} col_missing_fill_method dict")
+                    raise ValueError(f"{descr}col_missing_fill_method should contain str key(s) only")
+                v = self.check_and_change_lower(v,
+                                                ['min', 'max', 'mean', 'designated'],
+                                                f"per column method specified in {descr} col_missing_fill_method dict")
+                self.col_missing_fill_method[k] = v
+        if self.missing_impute:
+            if not isinstance(self.missing_impute, list):
+                raise ValueError(f"{descr}missing_impute must be None or list.")
 
         return True
