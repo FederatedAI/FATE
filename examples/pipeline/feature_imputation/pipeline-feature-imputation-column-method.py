@@ -48,9 +48,12 @@ def main(config="../../config.yaml", namespace=""):
     data_transform_0 = DataTransform(name="data_transform_0", with_label=False)
 
     intersection_0 = Intersection(name="intersection_0")
-    feature_imputation_0 = FeatureImputation(name="feature_imputation_0", missing_fill_method="max",
-                                             col_missing_fill_method={"doctorco": "min"},
+    feature_imputation_0 = FeatureImputation(name="feature_imputation_0",
+                                             default_value=42,
                                              missing_impute=[0])
+    feature_imputation_0.get_party_instance(role='guest', party_id=guest).component_param(
+                                             col_missing_fill_method={"doctorco": "min",
+                                                                      "hscore": "designated"})
 
     pipeline.add_component(reader_0)
     pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
@@ -60,6 +63,21 @@ def main(config="../../config.yaml", namespace=""):
 
     job_parameters = JobParameters(backend=backend, work_mode=work_mode)
     pipeline.fit(job_parameters)
+
+    # predict
+    # deploy required components
+    pipeline.deploy_component([data_transform_0, intersection_0,
+                               feature_imputation_0])
+
+    predict_pipeline = PipeLine()
+    # add data reader onto predict pipeline
+    predict_pipeline.add_component(reader_0)
+    # add selected components from train pipeline onto predict pipeline
+    # specify data source
+    predict_pipeline.add_component(pipeline,
+                                   data=Data(predict_input={pipeline.data_transform_0.input.data: reader_0.output.data}))
+    # run predict model
+    predict_pipeline.predict(job_parameters)
 
 
 if __name__ == "__main__":

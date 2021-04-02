@@ -39,7 +39,8 @@ class FeatureImputationParam(BaseParam):
 
     col_missing_fill_method: None or dict of (column name, missing_fill_method) pairs,
                              specifies method to replace missing value for each column;
-                             any column not specified will take missing_fill_method;
+                             any column not specified will take missing_fill_method,
+                             if missing_fill_method is None, unspecified column will not be imputed;
                              method should be one of [None, 'min', 'max', 'mean', 'designated'], default: None
 
     missing_impute: None or list, element of list can be any type, or auto generated if value is None, define which values to be consider as missing, default: None

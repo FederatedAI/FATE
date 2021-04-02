@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='com.webank.ai.fate.core.mlmodel.buffer',
   syntax='proto3',
   serialized_options=_b('B\033FeatureImputationParamProto'),
-  serialized_pb=_b('\n\x1e\x66\x65\x61ture-imputation-param.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"\xaf\x04\n\x13\x46\x65\x61tureImputerParam\x12s\n\x15missing_replace_value\x18\x01 \x03(\x0b\x32T.com.webank.ai.fate.core.mlmodel.buffer.FeatureImputerParam.MissingReplaceValueEntry\x12o\n\x13missing_value_ratio\x18\x02 \x03(\x0b\x32R.com.webank.ai.fate.core.mlmodel.buffer.FeatureImputerParam.MissingValueRatioEntry\x12|\n\x1amissing_replace_value_type\x18\x03 \x03(\x0b\x32X.com.webank.ai.fate.core.mlmodel.buffer.FeatureImputerParam.MissingReplaceValueTypeEntry\x1a:\n\x18MissingReplaceValueEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x01:\x02\x38\x01\x1a\x38\n\x16MissingValueRatioEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x01:\x02\x38\x01\x1a>\n\x1cMissingReplaceValueTypeEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"|\n\x16\x46\x65\x61tureImputationParam\x12\x0e\n\x06header\x18\x01 \x03(\t\x12R\n\rimputer_param\x18\x02 \x01(\x0b\x32;.com.webank.ai.fate.core.mlmodel.buffer.FeatureImputerParamB\x1d\x42\x1b\x46\x65\x61tureImputationParamProtob\x06proto3')
+  serialized_pb=_b('\n\x1e\x66\x65\x61ture-imputation-param.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"\xc2\x04\n\x13\x46\x65\x61tureImputerParam\x12s\n\x15missing_replace_value\x18\x01 \x03(\x0b\x32T.com.webank.ai.fate.core.mlmodel.buffer.FeatureImputerParam.MissingReplaceValueEntry\x12o\n\x13missing_value_ratio\x18\x02 \x03(\x0b\x32R.com.webank.ai.fate.core.mlmodel.buffer.FeatureImputerParam.MissingValueRatioEntry\x12|\n\x1amissing_replace_value_type\x18\x03 \x03(\x0b\x32X.com.webank.ai.fate.core.mlmodel.buffer.FeatureImputerParam.MissingReplaceValueTypeEntry\x12\x11\n\tskip_cols\x18\x04 \x03(\t\x1a:\n\x18MissingReplaceValueEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x01:\x02\x38\x01\x1a\x38\n\x16MissingValueRatioEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x01:\x02\x38\x01\x1a>\n\x1cMissingReplaceValueTypeEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"|\n\x16\x46\x65\x61tureImputationParam\x12\x0e\n\x06header\x18\x01 \x03(\t\x12R\n\rimputer_param\x18\x02 \x01(\x0b\x32;.com.webank.ai.fate.core.mlmodel.buffer.FeatureImputerParamB\x1d\x42\x1b\x46\x65\x61tureImputationParamProtob\x06proto3')
 )
 
 
@@ -59,8 +59,8 @@ _FEATUREIMPUTERPARAM_MISSINGREPLACEVALUEENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=454,
-  serialized_end=512,
+  serialized_start=473,
+  serialized_end=531,
 )
 
 _FEATUREIMPUTERPARAM_MISSINGVALUERATIOENTRY = _descriptor.Descriptor(
@@ -96,8 +96,8 @@ _FEATUREIMPUTERPARAM_MISSINGVALUERATIOENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=514,
-  serialized_end=570,
+  serialized_start=533,
+  serialized_end=589,
 )
 
 _FEATUREIMPUTERPARAM_MISSINGREPLACEVALUETYPEENTRY = _descriptor.Descriptor(
@@ -133,8 +133,8 @@ _FEATUREIMPUTERPARAM_MISSINGREPLACEVALUETYPEENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=572,
-  serialized_end=634,
+  serialized_start=591,
+  serialized_end=653,
 )
 
 _FEATUREIMPUTERPARAM = _descriptor.Descriptor(
@@ -165,6 +165,13 @@ _FEATUREIMPUTERPARAM = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='skip_cols', full_name='com.webank.ai.fate.core.mlmodel.buffer.FeatureImputerParam.skip_cols', index=3,
+      number=4, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -178,7 +185,7 @@ _FEATUREIMPUTERPARAM = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=75,
-  serialized_end=634,
+  serialized_end=653,
 )
 
 
@@ -215,8 +222,8 @@ _FEATUREIMPUTATIONPARAM = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=636,
-  serialized_end=760,
+  serialized_start=655,
+  serialized_end=779,
 )
 
 _FEATUREIMPUTERPARAM_MISSINGREPLACEVALUEENTRY.containing_type = _FEATUREIMPUTERPARAM
