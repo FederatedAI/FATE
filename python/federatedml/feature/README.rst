@@ -187,7 +187,7 @@ Samples will be transformed into sparse 0-1 vectors after encoding.
 See `[original paper] <https://research.fb.com/wp-content/uploads/2016/11/practical-lessons-from-predicting-clicks-on-ads-at-facebook.pdf>`_ for its details.
 
 .. figure:: images/gbdt_lr.png
-   :width: 850
+   :width: 500
    :align: center
 
    Figure 5: Encoding using leaf indices</div>
