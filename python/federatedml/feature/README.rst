@@ -184,7 +184,7 @@ SBT Feature Transformer
 =============
 A feature engineering module that encodes sample using leaf indices predicted by Hetero SBT/Fast-SBT.
 Samples will be transformed into sparse 0-1 vectors after encoding.
-See `[OneHot wiki] <https://research.fb.com/wp-content/uploads/2016/11/practical-lessons-from-predicting-clicks-on-ads-at-facebook.pdf>`_ for its details.
+See `[original paper] <https://research.fb.com/wp-content/uploads/2016/11/practical-lessons-from-predicting-clicks-on-ads-at-facebook.pdf>`_ for its details.
 
 .. figure:: images/gbdt_lr.png
    :width: 850
