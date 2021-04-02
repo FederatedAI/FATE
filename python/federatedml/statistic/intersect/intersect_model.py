@@ -99,8 +99,6 @@ class IntersectModelBase(ModelBase):
 
     def fit(self, data):
         self.init_intersect_method()
-        if not data.first().with_inst_id and self.model_param.left_join:
-            raise ValueError(f"data must have inst_id to perform left_join")
 
         if self.model_param.repeated_id_process:
             if self.model_param.intersect_cache_param.use_cache is True and self.model_param.intersect_method == consts.RSA:
