@@ -139,7 +139,7 @@ def save_feature_imputer_model(missing_fill=False,
 
         if missing_fill_value is not None:
             fill_header = [col for col in header if col not in skip_cols]
-            feature_value_dict = dict(zip(fill_header, missing_fill_value))
+            feature_value_dict = dict(zip(fill_header, map(str, missing_fill_value)))
 
             model_param.missing_replace_value.update(feature_value_dict)
             missing_fill_value_type = [type(v).__name__ for v in missing_fill_value]
