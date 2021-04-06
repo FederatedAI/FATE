@@ -137,7 +137,7 @@ class DenseModel(object):
         if self.is_empty_model:
             return
 
-        LOGGER.debug("model_bytes is {}".format(model_bytes))
+        # LOGGER.debug("model_bytes is {}".format(model_bytes))
         self.model = self.model.restore_model(model_bytes)
         self._init_model_weight(self.model.get_layer_by_index(0), restore_stage=True)
 

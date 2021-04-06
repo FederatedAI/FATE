@@ -271,7 +271,7 @@ class Guest(HeteroGradientBase):
             unilateral_gradient = optimizer.add_regular_to_grad(unilateral_gradient, model_weights)
 
         optimized_gradient = self.update_gradient(unilateral_gradient, suffix=current_suffix)
-        LOGGER.debug(f"Before return, optimized_gradient: {optimized_gradient}")
+        # LOGGER.debug(f"Before return, optimized_gradient: {optimized_gradient}")
         return optimized_gradient
 
     def get_host_forward(self, suffix=tuple()):

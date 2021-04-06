@@ -16,6 +16,14 @@
         "guest"
       ]
     },
+    "optimal_info": {
+      "src": [
+        "host"
+      ],
+      "dst": [
+        "guest"
+      ]
+    },
     "encrypted_label": {
       "src": [
         "guest"

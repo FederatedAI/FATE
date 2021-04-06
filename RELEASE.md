@@ -4,18 +4,16 @@
 > FederatedML
 
 * Hetero SecureBoost: more efficient computation with GOSS, histogram subtraction, cipher compression, 2-4x faster
-* Hetero SecureBoost: L1 penalty & adjustable min_child_weight to prevent overfitting 
-* Hetero SecureBoost: optional deterministic mode solves floating point error, ensures consistency and replicability 
-* NEW SecureBoost Transformer: feature engineering module that encodes instances with leaf nodes from SecureBoost model
-* Intersect: add split calculation option and adjustable random base fraction, 30% faster 
-* Intersect supports SM3 hashing method 
-* Hetero GLM: improved communication efficiency, adjustable floating point precision, up to 2x faster 
+* Hetero GLM: improved communication efficiency, adjustable floating point precision, 2x faster 
 * Hetero NN: adjustable floating point precision, support SelectiveBackPropagation and dropOut on interaction layer, 2x faster
-* Hetero Feature Binning: improved algorithm with restricted data copying and reduced memory usage, support cipher compression, 2x faster
-* Hetero Pearson: support VIF computation 
+* Hetero Feature Binning: improved algorithm with cipher compression, 2x faster
+* Intersect: add split calculation option and adjustable random base fraction, 30% faster 
+* Homo NN: restructure torch backend and enhanced grammar; train and predict with raw image data
+* Intersect supports SM3 hashing method 
+* Hetero SecureBoost: L1 penalty & adjustable min_child_weight to prevent overfitting 
+* NEW SecureBoost Transformer: feature engineering module that encodes instances with leaf nodes from SecureBoost model
+* Hetero Pearson: support local VIF computation 
 * Hetero Feature Selection: support selection based on VIF and Pearson 
-* Homo NN: train and predict with raw image data
-* Homo NN: restructure torch backend and enhanced grammar 
 * NEW Homo Feature Binning: support virtual/recursive binning strategy
 * NEW Sample Weight: set sample weights based on label or from feature column, Hetero GLM & Hetero SecureBoost support weighted training
 * NEW Data Transformer: case-insensitive on data schema
@@ -30,10 +28,8 @@
 
 > FATE-Test
 
-* Add Benchmark performance for efficiency comparison; add mock data generation tool 
-* FATE-Flow api unittest for REST/CLI/SDK
-* FATE-Flow process test on training-prediction-online-inference workflow 
-* Benchmark Quality supports metrics comparison between training and validation sets
+* Add Benchmark performance for efficiency comparison; add mock data generation tool; support metrics comparison between training and validation sets
+* FATE-Flow unittest for REST/CLI/SDK API and training-prediction workflow 
 
 
 # Release 1.5.1

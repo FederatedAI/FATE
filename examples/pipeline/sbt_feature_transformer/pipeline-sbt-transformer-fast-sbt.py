@@ -117,7 +117,7 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.add_component(transformer_0, data=Data(data=intersect_0.output.data),
                            model=Model(isometric_model=hetero_fast_sbt_0.output.model))
     pipeline.add_component(transformer_1, data=Data(data=intersect_0.output.data),
-                           model=Model(isometric_model=transformer_0.output.model))
+                           model=Model(model=transformer_0.output.model))
 
     pipeline.add_component(local_baseline_0, data=Data(data=transformer_0.output.data))
     pipeline.add_component(local_baseline_1, data=Data(data=intersect_0.output.data))

@@ -56,8 +56,7 @@ def main(config="../../config.yaml", namespace=""):
                              epochs=10, alpha=1, batch_size=-1, mode='plain')
 
     hetero_ftl_0.add_nn_layer(Dense(units=32, activation='sigmoid',
-                                    kernel_initializer=initializers.RandomNormal(stddev=1.0,
-                                                                                 dtype="float32"),
+                                    kernel_initializer=initializers.RandomNormal(stddev=1.0),
                                     bias_initializer=initializers.Zeros()))
 
     hetero_ftl_0.compile(optimizer=optimizers.Adam(lr=0.01))

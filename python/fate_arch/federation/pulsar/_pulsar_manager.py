@@ -158,6 +158,15 @@ class PulsarManager():
         )
         return response
 
+    def delete_namespace(self, tenant: str, namespace: str, force: bool = False):
+        session = self._create_session()
+        response = session.delete(
+            self.service_url +
+            'namespace/{}/{}?force={}'.format(tenant,
+                                              namespace, str(force).lower())
+        )
+        return response
+
     def set_clusters_to_namespace(self, tenant: str, namespace: str, clusters: list):
         session = self._create_session()
         response = session.post(
@@ -175,11 +184,19 @@ class PulsarManager():
 
         return response
 
-    def delete_namespace(self, tenant: str, namespace: str, force: bool = False):
+    def set_subscription_expiration_time(self, tenant: str, namespace: str, mintues: int = 0):
         session = self._create_session()
-        response = session.delete(
-            self.service_url +
-            'namespace/{}/{}?force={}'.format(tenant,
-                                              namespace, str(force).lower())
+        response = session.post(
+            self.service_url + 'namespaces/{}/{}/subscriptionExpirationTime'.format(tenant, namespace), json=mintues
         )
+
+        return response
+
+    def set_message_ttl(self, tenant: str, namespace: str, mintues: int = 0):
+        session = self._create_session()
+        response = session.post(
+            # the API accepts data as seconds
+            self.service_url + 'namespaces/{}/{}/messageTTL'.format(tenant, namespace), json=mintues*60
+        )
+
         return response
