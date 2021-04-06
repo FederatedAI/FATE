@@ -1,0 +1,12 @@
+{
+  "federatedml.transfer_variable.transfer_class.shap_transfer_variable.SHAPTransferVariable": {
+    "host_node_route": {
+      "src": [
+        "host"
+      ],
+      "dst": [
+        "guest"
+      ]
+    }
+  }
+}

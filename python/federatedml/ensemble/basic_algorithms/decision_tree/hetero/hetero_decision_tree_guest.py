@@ -48,42 +48,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
         # code version control
         self.new_ver = True
 
-    """
-    Node Encode/ Decode
-    """
-
-    def encode(self, etype="feature_idx", val=None, nid=None):
-        if etype == "feature_idx":
-            return val
-
-        if etype == "feature_val":
-            self.split_maskdict[nid] = val
-            return None
-
-        if etype == "missing_dir":
-            self.missing_dir_maskdict[nid] = val
-            return None
-
-        raise TypeError("encode type %s is not support!" % (str(etype)))
-
-    @staticmethod
-    def decode(dtype="feature_idx", val=None, nid=None, split_maskdict=None, missing_dir_maskdict=None):
-        if dtype == "feature_idx":
-            return val
-
-        if dtype == "feature_val":
-            if nid in split_maskdict:
-                return split_maskdict[nid]
-            else:
-                raise ValueError("decode val %s cause error, can't recognize it!" % (str(val)))
-
-        if dtype == "missing_dir":
-            if nid in missing_dir_maskdict:
-                return missing_dir_maskdict[nid]
-            else:
-                raise ValueError("decode val %s cause error, can't recognize it!" % (str(val)))
-
-        return TypeError("decode type %s is not support!" % (str(dtype)))
 
     """
     Setting
@@ -596,6 +560,10 @@ class HeteroDecisionTreeGuest(DecisionTree):
                                   is_left_node=False,
                                   parent_nodeid=pid)
 
+                LOGGER.debug('cwj node {}'.format(left_node))
+                LOGGER.debug('cwj node {}'.format(right_node))
+                LOGGER.debug('cwj gain {}'.format(split_info[i].gain))
+
                 new_tree_node_queue.append(left_node)
                 new_tree_node_queue.append(right_node)
 
@@ -629,36 +597,12 @@ class HeteroDecisionTreeGuest(DecisionTree):
             return tree_[nodeid].id
         else:
             if tree_[nodeid].sitename == sitename:
-                fid = decoder("feature_idx", tree_[nodeid].fid, split_maskdict=split_maskdict)
-                bid = decoder("feature_val", tree_[nodeid].bid, nodeid, split_maskdict=split_maskdict)
-                if not use_missing:
-                    if value[0].features.get_data(fid, bin_sparse_points[fid]) <= bid:
-                        return 1, tree_[nodeid].left_nodeid
-                    else:
-                        return 1, tree_[nodeid].right_nodeid
-                else:
-                    missing_dir = decoder("missing_dir", tree_[nodeid].missing_dir, nodeid,
-                                          missing_dir_maskdict=missing_dir_maskdict)
 
-                    missing_val = False
-                    if zero_as_missing:
-                        if value[0].features.get_data(fid, None) is None or \
-                                value[0].features.get_data(fid) == NoneType():
-                            missing_val = True
-                    elif use_missing and value[0].features.get_data(fid) == NoneType():
-                        missing_val = True
+                next_layer_nid = HeteroDecisionTreeGuest.go_next_layer(tree_[nodeid], value[0], use_missing,
+                                                                       zero_as_missing, None, split_maskdict,
+                                                                       missing_dir_maskdict, decoder)
+                return 1, next_layer_nid
 
-                    if missing_val:
-                        if missing_dir == 1:
-                            return 1, tree_[nodeid].right_nodeid
-                        else:
-                            return 1, tree_[nodeid].left_nodeid
-                    else:
-                        LOGGER.debug("fid is {}, bid is {}, sitename is {}".format(fid, bid, sitename))
-                        if value[0].features.get_data(fid, bin_sparse_points[fid]) <= bid:
-                            return 1, tree_[nodeid].left_nodeid
-                        else:
-                            return 1, tree_[nodeid].right_nodeid
             else:
                 return (1, tree_[nodeid].fid, tree_[nodeid].bid, tree_[nodeid].sitename,
                         nodeid, tree_[nodeid].left_nodeid, tree_[nodeid].right_nodeid)
@@ -770,23 +714,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
         LOGGER.info("fitting guest decision tree done")
 
 
-    # @staticmethod
-    # def traverse_tree(predict_state, data_inst, tree_=None,
-    #                   decoder=None, sitename=consts.GUEST, split_maskdict=None,
-    #                   use_missing=None, zero_as_missing=None, missing_dir_maskdict=None, return_leaf_id=False):
-    #
-    #     nid, tag = predict_state
-    #
-    #     while tree_[nid].sitename == sitename:
-    #
-    #         if tree_[nid].is_leaf is True:
-    #             return tree_[nid].weight if not return_leaf_id else nid
-    #
-    #         nid = DecisionTree.get_next_layer_nodeid(tree_[nid], data_inst, use_missing, zero_as_missing,
-    #                                                  0, split_maskdict, missing_dir_maskdict, decoder)
-    #
-    #     return nid, 1
-
     @staticmethod
     def traverse_tree(predict_state, data_inst, tree_=None,
                       decoder=None, sitename=consts.GUEST, split_maskdict=None,
@@ -799,33 +726,8 @@ class HeteroDecisionTreeGuest(DecisionTree):
             if tree_[nid].is_leaf is True:
                 return tree_[nid].weight if not return_leaf_id else nid
 
-            fid = decoder("feature_idx", tree_[nid].fid, split_maskdict=split_maskdict)
-            bid = decoder("feature_val", tree_[nid].bid, nid, split_maskdict=split_maskdict)
-            if use_missing:
-                missing_dir = decoder("missing_dir", 1, nid, missing_dir_maskdict=missing_dir_maskdict)
-            else:
-                missing_dir = 1
-
-            if use_missing and zero_as_missing:
-                missing_dir = decoder("missing_dir", 1, nid, missing_dir_maskdict=missing_dir_maskdict)
-                if data_inst.features.get_data(fid) == NoneType() or data_inst.features.get_data(fid, None) is None:
-                    if missing_dir == 1:
-                        nid = tree_[nid].right_nodeid
-                    else:
-                        nid = tree_[nid].left_nodeid
-                elif data_inst.features.get_data(fid) <= bid + consts.FLOAT_ZERO:
-                    nid = tree_[nid].left_nodeid
-                else:
-                    nid = tree_[nid].right_nodeid
-            elif data_inst.features.get_data(fid) == NoneType():
-                if missing_dir == 1:
-                    nid = tree_[nid].right_nodeid
-                else:
-                    nid = tree_[nid].left_nodeid
-            elif data_inst.features.get_data(fid, 0) <= bid + consts.FLOAT_ZERO:
-                nid = tree_[nid].left_nodeid
-            else:
-                nid = tree_[nid].right_nodeid
+            nid = DecisionTree.go_next_layer(tree_[nid], data_inst, use_missing, zero_as_missing,
+                                             None, split_maskdict, missing_dir_maskdict, decoder)
 
         return nid, 1
 

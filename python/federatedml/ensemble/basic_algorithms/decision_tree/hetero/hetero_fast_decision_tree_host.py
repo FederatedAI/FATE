@@ -245,32 +245,10 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
 
         fid = tree_[nodeid].fid
         bid = tree_[nodeid].bid
-
         if not dense_format:
-            if not use_missing:
-                if value[0].features.get_data(fid, bin_sparse_points[fid]) <= bid:
-                    return 1, tree_[nodeid].left_nodeid
-                else:
-                    return 1, tree_[nodeid].right_nodeid
-            else:
-                missing_dir = tree_[nodeid].missing_dir
-                missing_val = False
-                if zero_as_missing:
-                    if value[0].features.get_data(fid, None) is None or \
-                            value[0].features.get_data(fid) == NoneType():
-                        missing_val = True
-                elif use_missing and value[0].features.get_data(fid) == NoneType():
-                    missing_val = True
-                if missing_val:
-                    if missing_dir == 1:
-                        return 1, tree_[nodeid].right_nodeid
-                    else:
-                        return 1, tree_[nodeid].left_nodeid
-                else:
-                    if value[0].features.get_data(fid, bin_sparse_points[fid]) <= bid:
-                        return 1, tree_[nodeid].left_nodeid
-                    else:
-                        return 1, tree_[nodeid].right_nodeid
+            next_nid = HeteroFastDecisionTreeHost.go_next_layer(tree_[nodeid], value[0], use_missing,
+                                                                zero_as_missing, bin_sparse_points)
+            return 1, next_nid
         else:
             # this branch is for fast histogram
             # will get scipy sparse matrix if using fast histogram
@@ -456,8 +434,8 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
             if tree_node[nid].is_leaf:
                 return nid
 
-            new_layer_nodeid = HeteroFastDecisionTreeHost.get_next_layer_nodeid(tree_node, data_inst, use_missing,
-                                                                                use_missing, 0)
+            new_layer_nodeid = HeteroFastDecisionTreeHost.go_next_layer(tree_node[nid], data_inst, use_missing,
+                                                                        zero_as_missing)
             nid = new_layer_nodeid
 
     def mix_mode_predict(self, data_inst):

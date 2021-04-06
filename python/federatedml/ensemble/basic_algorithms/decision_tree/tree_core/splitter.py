@@ -96,7 +96,11 @@ class Splitter(object):
     def _check_sample_num(self, l_cnt, r_cnt):
         return l_cnt >= self.min_leaf_node and r_cnt >= self.min_leaf_node
 
-    def find_split_single_histogram_guest(self, histogram, valid_features, sitename, use_missing, zero_as_missing):
+    def find_split_single_histogram_guest(self, histogram, valid_features, sitename, use_missing, zero_as_missing,
+                                          reshape_tuple=None):
+
+        if reshape_tuple:
+            histogram = histogram.reshape(reshape_tuple)
 
         # default values
         best_fid = None

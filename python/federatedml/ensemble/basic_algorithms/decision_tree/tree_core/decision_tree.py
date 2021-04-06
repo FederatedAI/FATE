@@ -140,6 +140,44 @@ class DecisionTree(BasicAlgorithms, ABC):
         self.sitename = ":".join([self.sitename, str(self.runtime_idx)])
 
     """
+    Node encode/ decode
+    """
+    # add node split-val/missing-dir to mask dict, hetero tree only
+    def encode(self, etype="feature_idx", val=None, nid=None):
+        if etype == "feature_idx":
+            return val
+
+        if etype == "feature_val":
+            self.split_maskdict[nid] = val
+            return None
+
+        if etype == "missing_dir":
+            self.missing_dir_maskdict[nid] = val
+            return None
+
+        raise TypeError("encode type %s is not support!" % (str(etype)))
+
+    # recover node split-val/missing-dir from mask dict, hetero tree only
+    @staticmethod
+    def decode(dtype="feature_idx", val=None, nid=None, split_maskdict=None, missing_dir_maskdict=None):
+        if dtype == "feature_idx":
+            return val
+
+        if dtype == "feature_val":
+            if nid in split_maskdict:
+                return split_maskdict[nid]
+            else:
+                raise ValueError("decode val %s cause error, can't recognize it!" % (str(val)))
+
+        if dtype == "missing_dir":
+            if nid in missing_dir_maskdict:
+                return missing_dir_maskdict[nid]
+            else:
+                raise ValueError("decode val %s cause error, can't recognize it!" % (str(val)))
+
+        return TypeError("decode type %s is not support!" % (str(dtype)))
+
+    """
     Histogram interface
     """
 
@@ -296,10 +334,11 @@ class DecisionTree(BasicAlgorithms, ABC):
         return dir
 
     @staticmethod
-    def get_next_layer_nodeid(node, data_inst, use_missing, zero_as_missing, zero_val=0,
-                              split_maskdict=None,
-                              missing_dir_maskdict=None,
-                              decoder=None):
+    def go_next_layer(node, data_inst, use_missing, zero_as_missing, bin_sparse_point=None,
+                      split_maskdict=None,
+                      missing_dir_maskdict=None,
+                      decoder=None,
+                      return_node_id=True):
 
         if missing_dir_maskdict is not None and split_maskdict is not None:
             fid = decoder("feature_idx", node.fid, split_maskdict=split_maskdict)
@@ -308,8 +347,12 @@ class DecisionTree(BasicAlgorithms, ABC):
         else:
             fid, bid = node.fid, node.bid
             missing_dir = node.missing_dir
-
+        zero_val = 0 if bin_sparse_point is None else bin_sparse_point[fid]
         go_left = DecisionTree.make_decision(data_inst, fid, bid, missing_dir, use_missing, zero_as_missing, zero_val)
+
+        if not return_node_id:
+            return go_left
+
         if go_left:
             return node.left_nodeid
         else:

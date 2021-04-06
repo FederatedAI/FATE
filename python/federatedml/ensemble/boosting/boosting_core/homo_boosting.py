@@ -31,6 +31,7 @@ class HomoBoostingClient(Boosting, ABC):
         self.model_param = HomoSecureBoostParam()
         self.binning_obj = HomoFeatureBinningClient()
         self.mode = consts.HOMO
+        self.bin_arr, self.sample_id_arr = None, None
 
     def federated_binning(self,  data_instance):
 
@@ -78,8 +79,19 @@ class HomoBoostingClient(Boosting, ABC):
     def fit(self, data_inst, validate_data=None):
 
         # binning
+
+        bin_arr_table, self.bin_split_points, self.bin_sparse_points = self.federated_binning(data_inst)
+        bin_arr = []
+        id_list = []
+        import numpy as np
+        for id_, inst in bin_arr_table.collect():
+            bin_arr.append(inst.features)
+            id_list.append(id_)
+        self.bin_arr = np.asfortranarray(np.stack(bin_arr, axis=0).astype(np.uint8))
+        self.sample_id_arr = np.array(id_list)
+        LOGGER.debug('bin arr is {}'.format(bin_arr))
         data_inst = self.data_alignment(data_inst)
-        self.data_bin, self.bin_split_points, self.bin_sparse_points = self.federated_binning(data_inst)
+        self.data_bin, _, _ = self.binning_obj.convert_feature_to_bin(data_inst)
 
         # fid mapping
         self.feature_name_fid_mapping = self.gen_feature_fid_mapping(data_inst.schema)
@@ -139,7 +151,8 @@ class HomoBoostingClient(Boosting, ABC):
             self.aggregator.send_local_loss(local_loss, self.data_bin.count(), suffix=(epoch_idx,))
 
             if self.validation_strategy:
-                self.validation_strategy.validate(self, epoch_idx)
+                self.validation_strategy.validate(self, epoch_idx, use_precomputed_train=True,
+                                                  train_scores=self.score_to_predict_result(data_inst, self.y_hat))
 
             # check stop flag if n_iter_no_change is True
             if self.n_iter_no_change:

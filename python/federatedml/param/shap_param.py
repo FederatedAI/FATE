@@ -9,4 +9,4 @@ class TreeSHAPParam(BaseParam):
         self.interpret_limit = interpret_limit
 
     def check(self):
-        pass
+        self.check_positive_integer(self.interpret_limit, 'interpret limits')

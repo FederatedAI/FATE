@@ -154,6 +154,8 @@ def parse_header(param: BoostingTreeModelParam, meta: BoostingTreeModelMeta):
     max_feature_idx = len(param.feature_name_fid_mapping) - 1
     feature_names = ''
     for name in [param.feature_name_fid_mapping[i] for i in range(max_feature_idx+1)]:
+        if ' ' in name:  # space is not allowed
+            name = name.replace(' ', '-')
         feature_names += name+' '
     feature_names = feature_names[:-1]
     feature_info = FAKE_FEATURE_INFO_STR * (max_feature_idx+1)  # need to make fake feature info

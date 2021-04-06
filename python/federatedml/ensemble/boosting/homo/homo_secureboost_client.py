@@ -83,7 +83,8 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
 
         valid_features = self.get_valid_features(epoch_idx, booster_dim)
         LOGGER.debug('valid features are {}'.format(valid_features))
-
+        import time
+        s = time.time()
         if self.cur_epoch_idx != epoch_idx:
             # update g/h every epoch
             self.grad_and_hess = self.compute_local_grad_and_hess(self.y_hat)
@@ -95,9 +96,13 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
                                           self.bin_sparse_points, subtree_g_h, valid_feature=valid_features
                                           , epoch_idx=epoch_idx, role=self.role, flow_id=flow_id, tree_idx= \
                                           booster_dim, mode='train')
-        new_tree.fit()
+        new_tree.arr_bin_data = self.bin_arr
+        new_tree.bin_num = self.bin_num
+        new_tree.sample_id_arr = self.sample_id_arr
+        new_tree.memory_fit()
         self.update_feature_importance(new_tree.get_feature_importance())
-
+        e = time.time()
+        LOGGER.debug('time take {}'.format(e-s))
         return new_tree
 
     @staticmethod

@@ -46,17 +46,19 @@ class HistogramBag(object):
     holds histograms
     """
 
-    def __init__(self, tensor: list, hid: int = -1, p_hid: int = -1):
+    def __init__(self, tensor: list, hid: int = -1, p_hid: int = -1, tensor_type='list'):
 
         """
         :param tensor: list returned by calculate_histogram
         :param hid: histogram id
         :param p_hid: parent node histogram id
+        :param tensor_type: 'list' or 'array'
         """
 
         self.hid = hid
         self.p_hid = p_hid
         self.bag = tensor
+        self.tensor_type = tensor_type
 
     def binary_op(self, other, func, inplace=False):
 
@@ -78,10 +80,22 @@ class HistogramBag(object):
         return self if inplace else newbag
 
     def __add__(self, other):
-        return self.binary_op(other, add, inplace=False)
+        if self.tensor_type == 'list':
+            return self.binary_op(other, add, inplace=False)
+        elif self.tensor_type == 'array':
+            self.bag += other.bag
+            return self
+        else:
+            raise ValueError('unknown tensor type')
 
     def __sub__(self, other):
-        return self.binary_op(other, sub, inplace=False)
+        if self.tensor_type == 'list':
+            return self.binary_op(other, add, inplace=False)
+        elif self.tensor_type == 'array':
+            self.bag -= other.bag
+            return self
+        else:
+            raise ValueError('unknown tensor type')
 
     def __len__(self):
         return len(self.bag)

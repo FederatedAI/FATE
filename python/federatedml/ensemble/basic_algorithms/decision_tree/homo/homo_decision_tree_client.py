@@ -17,14 +17,16 @@ from federatedml.feature.fate_element_type import NoneType
 from federatedml.feature.instance import Instance
 from federatedml.param import DecisionTreeParam
 import numpy as np
+from sklearn.ensemble._hist_gradient_boosting.grower import HistogramBuilder
 from typing import List
+from fate_arch.session import computing_session as session
 
 
 class HomoDecisionTreeClient(DecisionTree):
 
     def __init__(self, tree_param: DecisionTreeParam, data_bin=None, bin_split_points: np.array = None,
                  bin_sparse_point=None, g_h=None, valid_feature: dict = None, epoch_idx: int = None,
-                 role: str = None, tree_idx: int = None, flow_id: int = None, mode='train'):
+                 role: str = None, tree_idx: int = None, flow_id: int = None, mode='train', backend='eggroll'):
 
         """
         Parameters
@@ -51,6 +53,13 @@ class HomoDecisionTreeClient(DecisionTree):
         self.epoch_idx = epoch_idx
         self.tree_idx = tree_idx
         self.transfer_inst = HomoDecisionTreeTransferVariable()
+        self.arr_bin_data = None
+        self.bin_num = 0
+
+        # memory backend
+        self.backend = backend  # memory or eggroll
+        self.sklearn_hist_builder = None
+        self.sample_id_arr = None
 
         """
         initializing here
@@ -229,11 +238,9 @@ class HomoDecisionTreeClient(DecisionTree):
         if node.is_leaf:
             return node.id
 
-        fid = node.fid
-        zero_val = bin_sparse_point[fid]
         data_inst = row[0]
-        new_layer_nodeid = DecisionTree.get_next_layer_nodeid(node, data_inst, use_missing, use_zero_as_missing,
-                                                              zero_val)
+        new_layer_nodeid = DecisionTree.go_next_layer(node, data_inst, use_missing, use_zero_as_missing,
+                                                      bin_sparse_point=bin_sparse_point)
         return 1, new_layer_nodeid
 
     def assign_instances_to_new_node(self, table_with_assignment, tree_node: List[Node]):
@@ -279,11 +286,148 @@ class HomoDecisionTreeClient(DecisionTree):
     def assign_instance_to_root_node(self, data_bin, root_node_id):
         return data_bin.mapValues(lambda inst: (1, root_node_id))
 
+    """
+    Memory backend functions
+    """
 
+    def get_g_h_arr(self):
+        g_, h_ = [], []
+        for id_, gh in self.g_h.collect():
+            g_.append(gh[0])
+            h_.append(gh[1])
+        g_, h_ = np.array(g_).astype(np.float32), np.array(h_).astype(np.float32)
+        return g_, h_
+
+    def init_node2index(self, sample_num):
+        root_sample_idx = np.array([i for i in range(sample_num)]).astype(np.uint32)
+        return root_sample_idx
+
+    def init_sklearn_hist_builder(self, g, h, bin_data, bin_num):
+        self.sklearn_hist_builder = HistogramBuilder(bin_data, bin_num, g, h, False)
+
+    def sklearn_compute_agg_hist(self, data_indices):
+        hist_memory_view = self.sklearn_hist_builder.compute_histograms_brute(data_indices)
+        hist_arr = np.array(hist_memory_view)
+        g = hist_arr['sum_gradients'].cumsum(axis=1)
+        h = hist_arr['sum_hessians'].cumsum(axis=1)
+        count = hist_arr['count'].cumsum(axis=1)
+
+        final_hist = []
+        for feat_idx in range(len(g)):
+            arr = np.array([g[feat_idx], h[feat_idx], count[feat_idx]]).transpose()
+            final_hist.append(arr)
+
+        return np.array(final_hist)
+
+    def assign_arr_inst(self, node, data_arr, data_indices):
+
+        inst = data_arr[data_indices]
+        fid = node.fid
+        bid = node.bid
+        decision = inst[::, fid] <= bid
+        left_samples = data_indices[decision]
+        right_samples = data_indices[~decision]
+        return left_samples, right_samples
+
+    """
+    Memory Fit test codes
+    """
+    def memory_fit(self):
+
+        import time
+        LOGGER.info('begin to fit homo decision tree, epoch {}, tree idx {}'.format(self.epoch_idx, self.tree_idx))
+
+        # compute local g_sum and h_sum
+        g_sum, h_sum = self.get_grad_hess_sum(self.g_h)
+
+        # get aggregated root info
+        self.aggregator.send_local_root_node_info(g_sum, h_sum, suffix=('root_node_sync1', self.epoch_idx))
+        g_h_dict = self.aggregator.get_aggregated_root_info(suffix=('root_node_sync2', self.epoch_idx))
+        global_g_sum, global_h_sum = g_h_dict['g_sum'], g_h_dict['h_sum']
+
+        # test codes
+        s = time.time()
+        g, h = self.get_g_h_arr()
+        self.init_sklearn_hist_builder(g, h, self.arr_bin_data, self.bin_num)
+        root_indices = self.init_node2index(len(self.arr_bin_data))
+        e = time.time()
+        LOGGER.debug('gh time take {}'.format(e - s))
+
+        # initialize node
+        root_node = Node(id=0, sitename=consts.GUEST, sum_grad=global_g_sum, sum_hess=global_h_sum, weight=
+                         self.splitter.node_weight(global_g_sum, global_h_sum), inst_indices=root_indices)
+
+        self.cur_layer_node = [root_node]
+
+        tree_height = self.max_depth + 1  # non-leaf node height + 1 layer leaf
+
+        empty_hist = self.sklearn_compute_agg_hist(np.array([]).astype(np.uint32))
+        LOGGER.debug('empty hist is {}'.format(empty_hist))
+
+        for dep in range(tree_height):
+            if dep + 1 == tree_height:
+                for node in self.cur_layer_node:
+                    node.is_leaf = True
+                    self.tree_node.append(node)
+                break
+
+            self.sync_cur_layer_node_num(len(self.cur_layer_node), suffix=(dep, self.epoch_idx, self.tree_idx))
+
+            node_hists = []
+            node_map = self.get_node_map(self.cur_layer_node)
+            for node in self.cur_layer_node:
+                if node.id in node_map:
+                    s = time.time()
+                    hist = self.sklearn_compute_agg_hist(node.inst_indices)
+                    sklearn_hist_bag = HistogramBag(hist, tensor_type='array')
+                    sklearn_hist_bag.hid = node.id
+                    sklearn_hist_bag.p_hid = node.parent_nodeid
+                    node_hists.append(sklearn_hist_bag)
+                    e = time.time()
+                    LOGGER.debug('hist time take {}'.format(e-s))
+
+            s = time.time()
+            self.sync_local_node_histogram(node_hists, suffix=(0, dep, self.epoch_idx, self.tree_idx))
+            split_info = self.sync_best_splits(suffix=(dep, self.epoch_idx))
+            e = time.time()
+            LOGGER.debug('split take {}'.format(e-s))
+
+            new_layer_node = self.update_tree(self.cur_layer_node, split_info)
+            node2inst_idx = []
+
+            s = time.time()
+            for node in self.cur_layer_node:
+                if node.is_leaf:
+                    continue
+                l, r = self.assign_arr_inst(node, self.arr_bin_data, node.inst_indices)
+                node2inst_idx.append(l)
+                node2inst_idx.append(r)
+            assert len(node2inst_idx) == len(new_layer_node)
+
+            for node, indices in zip(new_layer_node, node2inst_idx):
+                node.inst_indices = indices
+            e = time.time()
+            LOGGER.debug('update time take {}'.format(e-s))
+            self.cur_layer_node = new_layer_node
+
+        sample_indices, weights = [], []
+
+        for node in self.tree_node:
+            if node.is_leaf:
+                sample_indices += list(node.inst_indices)
+                weights += [node.weight] * len(node.inst_indices)
+            else:
+                node.bid = self.bin_split_points[node.fid][int(node.bid)]
+
+        s = time.time()
+        sample_id = self.sample_id_arr[sample_indices]
+        self.sample_weights = session.parallelize([(str(id_), weight) for id_, weight in zip(sample_id, weights)],
+                                                  include_key=True, partition=4)
+        e = time.time()
+        LOGGER.debug('weight compute time take {}'.format(e-s))
     """
     Fit & Predict
     """
-
     def fit(self):
         """
         start to fit
@@ -297,12 +441,10 @@ class HomoDecisionTreeClient(DecisionTree):
         self.aggregator.send_local_root_node_info(g_sum, h_sum, suffix=('root_node_sync1', self.epoch_idx))
         g_h_dict = self.aggregator.get_aggregated_root_info(suffix=('root_node_sync2', self.epoch_idx))
         global_g_sum, global_h_sum = g_h_dict['g_sum'], g_h_dict['h_sum']
-
-        # initialize node
         root_node = Node(id=0, sitename=consts.GUEST, sum_grad=global_g_sum, sum_hess=global_h_sum, weight=
                          self.splitter.node_weight(global_g_sum, global_h_sum))
-
         self.cur_layer_node = [root_node]
+
         LOGGER.debug('assign samples to root node')
         self.inst2node_idx = self.assign_instance_to_root_node(self.data_bin, 0)
 
@@ -359,7 +501,6 @@ class HomoDecisionTreeClient(DecisionTree):
 
             new_layer_node = self.update_tree(self.cur_layer_node, split_info)
             self.cur_layer_node = new_layer_node
-
             self.inst2node_idx, leaf_val = self.assign_instances_to_new_node(table_with_assignment, self.tree_node)
 
             # record leaf val
@@ -382,8 +523,7 @@ class HomoDecisionTreeClient(DecisionTree):
             if tree[nid].is_leaf:
                 return tree[nid].weight
 
-            nid = DecisionTree.get_next_layer_nodeid(tree[nid], data_inst, use_missing, zero_as_missing,
-                                                     zero_val=0)
+            nid = DecisionTree.go_next_layer(tree[nid], data_inst, use_missing, zero_as_missing)
 
     def predict(self, data_inst):
 
@@ -439,10 +579,6 @@ class HomoDecisionTreeClient(DecisionTree):
                                   right_nodeid=node.right_nodeid,
                                   missing_dir=node.missing_dir)
 
-        model_param.leaf_count.update(self.leaf_count)
-        from federatedml.protobuf.model_migrate.sbt_model_to_lgb import compute_internal_count
-        internal_count = compute_internal_count(model_param)
-        LOGGER.debug('internal count is {}'.format(internal_count))
         return model_param
 
     def set_model_param(self, model_param):

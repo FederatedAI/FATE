@@ -106,7 +106,7 @@ class HeteroDecisionTreeHost(DecisionTree):
         self.host_party_idlist = l
 
     """
-    Node encode/decode
+    Node feature, bid mask
     """
 
     def generate_missing_dir(self, dep, left_num=3, right_num=3):
@@ -133,41 +133,6 @@ class HeteroDecisionTreeHost(DecisionTree):
                 idx += 1
 
         return mapping
-
-    def encode(self, etype="feature_idx", val=None, nid=None):
-
-        if etype == "feature_idx":
-            return val
-
-        if etype == "feature_val":
-            self.split_maskdict[nid] = val
-            return None
-
-        if etype == "missing_dir":
-            self.missing_dir_maskdict[nid] = val
-            return None
-
-        raise TypeError("encode type %s is not support!" % (str(etype)))
-
-    @staticmethod
-    def decode(dtype="feature_idx", val=None, nid=None, maskdict=None, missing_dir_maskdict=None):
-
-        if dtype == "feature_idx":
-            return val
-
-        if dtype == "feature_val":
-            if nid in maskdict:
-                return maskdict[nid]
-            else:
-                raise ValueError("decode val %s cause error, can't recognize it!" % (str(val)))
-
-        if dtype == "missing_dir":
-            if nid in missing_dir_maskdict:
-                return missing_dir_maskdict[nid]
-            else:
-                raise ValueError("decode val %s cause error, can't recognize it!" % (str(val)))
-
-        return TypeError("decode type %s is not support!" % (str(dtype)))
 
     def generate_split_point_masking_variable(self, dep):
         # for split point masking
@@ -315,7 +280,7 @@ class HeteroDecisionTreeHost(DecisionTree):
 
     @staticmethod
     def assign_an_instance(value1, value2, sitename=None, decoder=None,
-                           maskdict=None, bin_sparse_points=None,
+                           split_maskdict=None, bin_sparse_points=None,
                            use_missing=False, zero_as_missing=False,
                            missing_dir_maskdict=None):
 
@@ -323,36 +288,13 @@ class HeteroDecisionTreeHost(DecisionTree):
         if node_sitename != sitename:
             return value1
 
-        fid = decoder("feature_idx", fid, nodeid, maskdict=maskdict)
-        bid = decoder("feature_val", bid, nodeid, maskdict=maskdict)
+        fid = decoder("feature_idx", fid, nodeid, split_maskdict=split_maskdict)
+        bid = decoder("feature_val", bid, nodeid, split_maskdict=split_maskdict)
+        missing_dir = decoder("missing_dir", 1, nodeid, missing_dir_maskdict=missing_dir_maskdict)
+        direction = HeteroDecisionTreeHost.make_decision(value2, fid, bid, missing_dir, use_missing, zero_as_missing,
+                                                         bin_sparse_points[fid])
 
-        if not use_missing:
-            if value2.features.get_data(fid, bin_sparse_points[fid]) <= bid:
-                return unleaf_state, left_nodeid
-            else:
-                return unleaf_state, right_nodeid
-        else:
-            missing_dir = decoder("missing_dir", 1, nodeid,
-                                  missing_dir_maskdict=missing_dir_maskdict)
-            missing_val = False
-
-            if zero_as_missing:
-                if value2.features.get_data(fid, None) is None or \
-                        value2.features.get_data(fid) == NoneType():
-                    missing_val = True
-            elif use_missing and value2.features.get_data(fid) == NoneType():
-                missing_val = True
-
-            if missing_val:
-                if missing_dir == 1:
-                    return unleaf_state, right_nodeid
-                else:
-                    return unleaf_state, left_nodeid
-            else:
-                if value2.features.get_data(fid, bin_sparse_points[fid]) <= bid:
-                    return unleaf_state, left_nodeid
-                else:
-                    return unleaf_state, right_nodeid
+        return (unleaf_state, left_nodeid) if direction else (unleaf_state, right_nodeid)
 
     def assign_instances_to_new_node(self, dispatch_node_host, dep=-1):
 
@@ -361,7 +303,7 @@ class HeteroDecisionTreeHost(DecisionTree):
         dispatch_node_method = functools.partial(self.assign_an_instance,
                                                  sitename=self.sitename,
                                                  decoder=self.decode,
-                                                 maskdict=self.split_maskdict,
+                                                 split_maskdict=self.split_maskdict,
                                                  bin_sparse_points=self.bin_sparse_points,
                                                  use_missing=self.use_missing,
                                                  zero_as_missing=self.zero_as_missing,
@@ -395,7 +337,7 @@ class HeteroDecisionTreeHost(DecisionTree):
         for nid in duplicated_nodes:
             del self.split_maskdict[nid]
 
-    def convert_bin_to_real(self, decode_func, maskdict):
+    def convert_bin_to_real(self, decode_func, split_maskdict):
         LOGGER.info("convert tree node bins to real value")
         split_nid_used = []
 
@@ -404,8 +346,8 @@ class HeteroDecisionTreeHost(DecisionTree):
                 continue
 
             if self.tree_node[i].sitename == self.sitename:
-                fid = decode_func("feature_idx", self.tree_node[i].fid, self.tree_node[i].id, maskdict)
-                bid = decode_func("feature_val", self.tree_node[i].bid, self.tree_node[i].id, maskdict)
+                fid = decode_func("feature_idx", self.tree_node[i].fid, self.tree_node[i].id, split_maskdict)
+                bid = decode_func("feature_val", self.tree_node[i].bid, self.tree_node[i].id, split_maskdict)
                 LOGGER.debug("shape of bin_split_points is {}".format(len(self.bin_split_points[fid])))
                 real_splitval = self.encode("feature_val", self.bin_split_points[fid][bid], self.tree_node[i].id)
                 self.tree_node[i].bid = real_splitval
@@ -539,7 +481,7 @@ class HeteroDecisionTreeHost(DecisionTree):
             dispatch_node_host = self.sync_dispatch_node_host(dep)
             self.assign_instances_to_new_node(dispatch_node_host, dep=dep)
         self.sync_tree()
-        self.convert_bin_to_real(decode_func=self.decode, maskdict=self.split_maskdict)
+        self.convert_bin_to_real(decode_func=self.decode, split_maskdict=self.split_maskdict)
         LOGGER.info("fitting host decision tree done")
 
     @staticmethod
@@ -553,34 +495,9 @@ class HeteroDecisionTreeHost(DecisionTree):
             return predict_state
 
         while tree_[nid].sitename == sitename:
-            fid = decoder("feature_idx", tree_[nid].fid, nid, split_maskdict)
-            bid = decoder("feature_val", tree_[nid].bid, nid, split_maskdict)
 
-            if use_missing:
-                missing_dir = decoder("missing_dir", 1, nid, missing_dir_maskdict=missing_dir_maskdict)
-            else:
-                missing_dir = 1
-
-            if use_missing and zero_as_missing:
-                missing_dir = decoder("missing_dir", 1, nid, missing_dir_maskdict=missing_dir_maskdict)
-                if data_inst.features.get_data(fid) == NoneType() or data_inst.features.get_data(fid, None) is None:
-                    if missing_dir == 1:
-                        nid = tree_[nid].right_nodeid
-                    else:
-                        nid = tree_[nid].left_nodeid
-                elif data_inst.features.get_data(fid) <= bid:
-                    nid = tree_[nid].left_nodeid
-                else:
-                    nid = tree_[nid].right_nodeid
-            elif data_inst.features.get_data(fid) == NoneType():
-                if missing_dir == 1:
-                    nid = tree_[nid].right_nodeid
-                else:
-                    nid = tree_[nid].left_nodeid
-            elif data_inst.features.get_data(fid, 0) <= bid:
-                nid = tree_[nid].left_nodeid
-            else:
-                nid = tree_[nid].right_nodeid
+            nid = HeteroDecisionTreeHost.go_next_layer(tree_[nid], data_inst, use_missing, zero_as_missing,
+                                                       None, split_maskdict, missing_dir_maskdict, decoder)
 
         return nid, 0
 
