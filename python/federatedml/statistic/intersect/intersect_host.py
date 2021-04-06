@@ -30,6 +30,8 @@ class RsaIntersectionHost(RsaIntersect):
         # split data
         sid_hash_odd = data_instances.filter(lambda k, v: k & 1)
         sid_hash_even = data_instances.filter(lambda k, v: not k & 1)
+        # LOGGER.debug(f"sid_hash_odd count: {sid_hash_odd.count()},"
+        #              f"odd fraction: {sid_hash_odd.count()/data_instances.count()}")
 
         # generate rsa keys
         self.e, self.d, self.n = self.generate_protocol_key()

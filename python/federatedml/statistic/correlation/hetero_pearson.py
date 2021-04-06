@@ -147,7 +147,7 @@ class HeteroPearson(ModelBase):
         n, normed = self._standardized(data)
         self.local_corr = table_dot(normed, normed)
         self.local_corr /= n
-        if self.model_param.calc_local_vaf:
+        if self.model_param.calc_local_vif:
             self.local_vif = self._vif_from_pearson_matrix(self.local_corr)
         self._summary["local_corr"] = self.local_corr.tolist()
         self._summary["num_local_features"] = n
@@ -218,7 +218,7 @@ class HeteroPearson(ModelBase):
                 fid=idx, party_id=self.local_party.party_id, role=self.local_party.role
             )
 
-        if self.model_param.calc_local_vaf:
+        if self.model_param.calc_local_vif:
             for vif_value in self.local_vif:
                 param_pb.local_vif.append(vif_value)
 

@@ -105,7 +105,7 @@ Besides, we support multi-host federated feature selection for iv filters. Hosts
    :width: 850
    :align: center
 
-   Figure 3： Multi-Host Selection Principle</div>
+   Figure 4: Multi-Host Selection Principle</div>
 
 More feature selection methods will be provided. Please make suggestions by submitting an issue.
 
@@ -178,4 +178,22 @@ Param
 ------
 
 .. automodule:: federatedml.param.column_expand_param
+   :members:
+
+SBT Feature Transformer
+=============
+A feature engineering module that encodes sample using leaf indices predicted by Hetero SBT/Fast-SBT.
+Samples will be transformed into sparse 0-1 vectors after encoding.
+See `[original paper] <https://research.fb.com/wp-content/uploads/2016/11/practical-lessons-from-predicting-clicks-on-ads-at-facebook.pdf>`_ for its details.
+
+.. figure:: images/gbdt_lr.png
+   :width: 500
+   :align: center
+
+   Figure 5: Encoding using leaf indices</div>
+
+Param
+------
+
+.. automodule:: federatedml.param.sbt_feature_transformer_param
    :members:

@@ -29,14 +29,15 @@ It is strongly recommended to use docker, which greatly reduces the possibility 
 
    please follow the below step:
 
+    Please replace ${version} below with the real version you want to use， refer to version of FATE in [fate.env](../fate.env).
 
 ```
 #Get code
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/docker_standalone_fate_1.5.1.tar.gz
-tar -xzvf docker_standalone_fate_1.5.1.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/docker_standalone_fate_${version}.tar.gz
+tar -xzvf docker_standalone_fate_${version}.tar.gz
 
 #Execute the command
-cd docker_standalone_fate_1.5.1
+cd docker_standalone_fate_${version}
 bash install_standalone_docker.sh
 ```
 
@@ -101,24 +102,29 @@ Http://hostip:8080.
 
 2. Download the compressed package of stand-alone version and decompress it.
 
-   ```
-   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/standalone_fate_master_1.5.1.tar.gz
-   tar -xzvf  standalone_fate_master_1.5.1.tar.gz
+    Please replace ${version} below with the real version you want to use， refer to version of FATE in [fate.env](../fate.env).
+   ```   
+   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/standalone_fate_master_${version}.tar.gz
+   tar -xzvf  standalone_fate_master_${version}.tar.gz
    ```
 
 3. Enter FATE directory and execute the init.sh.
 
-   ```
-   cd standalone_fate_master_1.5.1
+    Please replace ${version} below with the real version you want to use， refer to version of FATE in [fate.env](../fate.env).
+
+   ```   
+   cd standalone_fate_master_${version}
    sh init.sh init
    ```
 
 4. Test
 
+    Please replace ${version} below with the real version you want to use， refer to version of FATE in [fate.env](../fate.env).
+
    - Unit Test
 
-   ```
-   cd standalone_fate_master_1.5.1
+   ```   
+   cd standalone_fate_master_${version}
    source bin/init_env.sh
    bash ./python/federatedml/test/run_test.sh
    ```
@@ -131,8 +137,8 @@ Http://hostip:8080.
 
    - Toy_example Test
 
-   ```
-   cd standalone_fate_master_1.5.1
+   ```   
+   cd standalone_fate_master_${version}
    source bin/init_env.sh
    python ./examples/toy_example/run_toy_example.py 10000 10000 0
    ```

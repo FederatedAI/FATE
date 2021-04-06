@@ -265,8 +265,8 @@ Swap:        131071           0      131071
 
 ```
 cd /data/projects/
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate_cluster_install_1.5.1_release-c7-u18.tar.gz
-tar xzf fate_cluster_install_1.5.1_release-c7-u18.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate_cluster_install_1.6.0_release-c7-u18.tar.gz
+tar xzf fate_cluster_install_1.6.0_release-c7-u18.tar.gz
 ```
 
 ## 5.2 部署前检查
@@ -338,7 +338,7 @@ vi fate-cluster-install/allInone/conf/setup.conf
 #to install role
 roles=( "host" "guest" )
 
-version="1.5.1"
+version="1.6.0"
 #project base
 pbase="/data/projects"
 #log directory
@@ -403,7 +403,7 @@ nodemanager_port=4671
 #to install role
 roles=( "host" )
 
-version="1.5.1"
+version="1.6.0"
 #project base
 pbase="/data/projects"
 #log directory

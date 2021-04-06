@@ -93,6 +93,14 @@ Algorithm List
      -
      - iv/woe, split points, event count, non-event count etc. of each column.
 
+   * - `Homo Feature Binning`_
+     - Homo Feature Binning
+     - Calculate quantile binning through multiple parties
+     - Table
+     - Transformed Table
+     -
+     - Split points of each column
+
    * - `OneHot Encoder`_
      - OneHotEncoder
      - Transfer a column into one-hot format.
@@ -180,6 +188,14 @@ Algorithm List
      - Table, values are instances.
      -
      - FastSecureBoost Model, consists of model-meta and model-param.
+
+   * - `Hetero Secure Boost Feature Transformer`_
+     - SBT Feature Transformer
+     - This component can encode sample using Hetero SBT leaf indices.
+     - Table, values are instances.
+     - Table, values are instances.
+     -
+     - SBT Transformer Model
 
    * - `Evaluation`_
      - Evaluation
@@ -285,6 +301,14 @@ Algorithm List
      -
      -
 
+   * - `Sample Weight`_
+     - Sample Weight
+     - Assign weight to instances according to user-specified parameters
+     - Table, values are instance
+     - Table, values are weighted instance
+     -
+     -
+
    * - `Feldman Verifiable Sum`_
      - Feldman Verifiable Sum
      - This component will sum multiple privacy values without exposing data
@@ -301,6 +325,7 @@ Algorithm List
 .. _Federated Sampling: feature/README.rst
 .. _Feature Scale: feature/README.rst
 .. _Hetero Feature Binning: feature/README.rst
+.. _Homo Feature Binning: feature/README.rst
 .. _OneHot Encoder: feature/README.rst
 .. _Hetero Feature Selection: feature/README.rst
 .. _Union: statistic/union/README.rst
@@ -311,6 +336,7 @@ Algorithm List
 .. _Homo-LR: linear_model/logistic_regression/README.rst
 .. _Homo-NN: nn/homo_nn/README.rst
 .. _Hetero Secure Boosting: ensemble/README.rst
+.. _Hetero Secure Boost Feature Transformer: feature/sbt_feature_transformer
 .. _Evaluation: evaluation/README.rst
 .. _Hetero Pearson: statistic/correlation/README.rst
 .. _Hetero-NN: nn/hetero_nn/README.rst
@@ -325,6 +351,7 @@ Algorithm List
 .. _Hetero Federated Transfer Learning: transfer_learning/hetero_ftl/README.rst
 .. _Hetero Fast Secure Boosting: ensemble/README.rst
 .. _Scorecard: statistic/scorecard/README.rst
+.. _Sample Weight: util/README.rst
 .. _Feldman Verifiable Sum: statistic/feldman_verifiable_sum/README.rst
 
 

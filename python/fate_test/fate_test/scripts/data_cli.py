@@ -142,6 +142,7 @@ def generate(ctx, include, host_data_type, encryption_type, match_rate, sparsity
     if host_data_size is None:
         host_data_size = guest_data_size
     suites = _load_testsuites(includes=include, excludes=tuple(), glob=None)
+    suites += _load_testsuites(includes=include, excludes=tuple(), glob=None, suffix="benchmark.json", suite_type="benchmark")
     for suite in suites:
         if upload_data:
             echo.echo(f"\tdataget({len(suite.dataset)}) dataset({len(suite.dataset)}) {suite.path}")
