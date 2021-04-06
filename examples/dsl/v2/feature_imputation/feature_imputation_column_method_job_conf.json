@@ -42,6 +42,12 @@
                             "namespace": "experiment"
                         }
                     }
+                },
+                "feature_imputation_0": {
+                    "col_missing_fill_method": {
+                        "doctorco": "min",
+                        "hscore": "designated"
+                    }
                 }
             }
         },
@@ -50,13 +56,10 @@
                 "with_label": false
             },
             "feature_imputation_0": {
-                "missing_fill_method": "max",
-                "col_missing_fill_method": {
-                    "doctorco": "min"
-                },
                 "missing_impute": [
                     0
-                ]
+                ],
+                "default_value": 42
             }
         }
     }
