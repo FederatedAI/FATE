@@ -1,3 +1,12 @@
+---
+name: New Algorithm
+about: implement a new algorithm
+title: '[WIP]implement algorithm xxx'
+labels: 'federatedml'
+assignees: ''
+
+---
+
 # New Algorithm
 
 - Name:
