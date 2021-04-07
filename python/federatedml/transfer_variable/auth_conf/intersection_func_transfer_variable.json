@@ -31,6 +31,22 @@
       "dst": [
         "host"
       ]
+    },
+    "join_id_from_guest": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "host"
+      ]
+    },
+    "join_id_from_host": {
+      "src": [
+        "host"
+      ],
+      "dst": [
+        "guest"
+      ]
     }
   }
 }

@@ -177,11 +177,11 @@ class IntersectParam(BaseParam):
 
     repeated_id_owner: str, which role has the repeated ids
 
-    with_sample_id: bool, data with sample id or not, default False; set this param to True may lead to unexpected behavior
+    with_sample_id: bool, data with sample id or not, default False; in ver 1.7 and above, this param is ignored
 
-    join_method: str, choose 'inner_join' or 'left_join', if 'left_join', participants will all take repeated_id_owner's sid, default 'inner'
+    join_method: str, choose 'inner_join' or 'left_join', if 'left_join', participants will all include repeated id owner's (imputed) ids in output, default 'inner_join'
 
-    new_join_id: bool, whether to generate new id for repeated_id_owners' ids, only effective when join_method is 'left', default False
+    new_join_id: bool, whether to generate new id for repeated_id_owners' ids, only effective when join_method is 'left_join', default False
 
     """
 
@@ -190,7 +190,7 @@ class IntersectParam(BaseParam):
                  with_encode=False, only_output_key=False, encode_params=EncodeParam(),
                  rsa_params=RSAParam(),
                  intersect_cache_param=IntersectCache(), repeated_id_process=False, repeated_id_owner=consts.GUEST,
-                 with_sample_id=False, join_method="inner_join", new_join_id=False,
+                 with_sample_id=False, join_method=consts.INNER_JOIN, new_join_id=False,
                  allow_info_share: bool = False, info_owner=consts.GUEST):
         super().__init__()
         self.intersect_method = intersect_method
@@ -259,15 +259,13 @@ class IntersectParam(BaseParam):
                                                       f"{descr}info_owner")
 
         self.check_boolean(self.with_sample_id, descr+"with_sample_id")
-        self.join_method = self.check_and_change_lower(self.join_method, ["inner_join", "left_join"],
+        self.join_method = self.check_and_change_lower(self.join_method, [consts.INNER_JOIN, "left_join"],
                                                        f"{descr}join_method")
         self.check_boolean(self.new_join_id, descr+"new_join_id")
 
-        if self.join_method=="left_join" and self.new_join_id:
-            if self.intersect_method == consts.RAW and not self.sync_intersect_ids:
+        if self.join_method == "left_join":
+            if not self.sync_intersect_ids:
                 raise ValueError(f"Cannot perform left join without sync intersect ids")
-            if self.intersect_method == consts.RSA and not self.allow_info_share:
-                raise ValueError(f"Cannot perform left join without sharing info")
 
         self.encode_params.check()
         self.rsa_params.check()

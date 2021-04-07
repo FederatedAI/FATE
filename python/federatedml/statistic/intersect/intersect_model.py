@@ -14,6 +14,8 @@
 #  limitations under the License.
 #
 
+import uuid
+
 from fate_arch.session import computing_session as session
 from fate_flow.entity.metric import Metric, MetricMeta
 from federatedml.feature.instance import Instance
@@ -22,6 +24,7 @@ from federatedml.param.intersect_param import IntersectParam
 from federatedml.statistic.intersect import RawIntersectionHost, RawIntersectionGuest, RsaIntersectionHost, \
     RsaIntersectionGuest
 from federatedml.statistic.intersect.repeat_id_process import RepeatedIDIntersect
+from federatedml.statistic import data_overview
 from federatedml.transfer_variable.transfer_class.intersection_func_transfer_variable import \
     IntersectionFuncTransferVariable
 from federatedml.util import consts, LOGGER
@@ -38,6 +41,7 @@ class IntersectModelBase(ModelBase):
         self.metric_namespace = "train"
         self.metric_type = "INTERSECTION"
         self.model_param = IntersectParam()
+        self.use_match_id_process = False
         self.role = None
 
         self.guest_party_id = None
@@ -87,7 +91,7 @@ class IntersectModelBase(ModelBase):
                                       idx=-1)
             else:
                 raise ValueError(
-                    "'allow_info_share' is true, and 'info_owner' is {}, but can not header in data, not to do information sharing".format(
+                    "'allow_info_share' is true, and 'info_owner' is {}, but can not get header in data, information sharing not done".format(
                         self.model_param.info_owner))
         else:
             self.intersect_ids = info_share.get(idx=0)
@@ -97,10 +101,54 @@ class IntersectModelBase(ModelBase):
 
         return self.intersect_ids
 
+    def __sync_join_id(self, data, intersect_data):
+        LOGGER.debug(f"data count: {data.count()}")
+        LOGGER.debug(f"intersect_data count: {intersect_data.count()}")
+
+        if self.model_param.repeated_id_owner == consts.GUEST:
+            sync_join_id = self.transfer_variable.join_id_from_guest
+        else:
+            sync_join_id = self.transfer_variable.join_id_from_host
+        if self.role == self.model_param.repeated_id_owner:
+            join_data = data.subtractByKey(intersect_data)
+            # LOGGER.debug(f"join_data count: {join_data.count()}")
+            if self.model_param.new_join_id:
+                if self.model_param.only_output_key:
+                    join_data = join_data.map(lambda k, v: (str(uuid.uuid1()), None))
+                    join_id = join_data
+                else:
+                    join_data = join_data.map(lambda k, v: (str(uuid.uuid1()), v))
+                    join_id = join_data.mapValues(lambda v: None)
+                sync_join_id.remote(join_id)
+
+                result_data = intersect_data.union(join_data)
+            else:
+                join_id = join_data.map(lambda k, v: (k, None))
+                if self.model_param.only_output_key:
+                    result_data = data.mapValues(lambda v: None)
+                else:
+                    result_data = data
+                sync_join_id.remote(join_id)
+        else:
+            join_id = sync_join_id.get(idx=0)
+            # LOGGER.debug(f"received join_id count: {join_id.count()}")
+            result_data = intersect_data.union(join_id)
+        LOGGER.debug(f"result data count: {result_data.count()}")
+        return result_data
+
     def fit(self, data):
         self.init_intersect_method()
+        import copy
+        schema = copy.deepcopy(data.schema)
+        data = data.mapValues(lambda v: Instance(inst_id=v.features[0], features=v.features[1:], label=v.label))
+        schema["header"].pop(0)
+        data.schema = schema
 
-        if self.model_param.repeated_id_process:
+        if data_overview.check_with_inst_id(data) or self.model_param.repeated_id_process:
+            self.use_match_id_process = True
+            LOGGER.info(f"use match_id_process")
+
+        if self.use_match_id_process:
             if self.model_param.intersect_cache_param.use_cache is True and self.model_param.intersect_method == consts.RSA:
                 raise ValueError("Not support cache module while repeated id process.")
 
@@ -108,15 +156,17 @@ class IntersectModelBase(ModelBase):
                 raise ValueError("While multi-host, repeated_id_owner should be guest.")
 
             proc_obj = RepeatedIDIntersect(repeated_id_owner=self.model_param.repeated_id_owner, role=self.role)
-            if self.model_param.with_sample_id:
+            proc_obj.new_join_id = self.model_param.new_join_id
+            if data_overview.check_with_inst_id(data) or self.model_param.with_sample_id:
                 proc_obj.use_sample_id()
-            data = proc_obj.recover(data=data)
+            match_data = proc_obj.recover(data=data)
+            self.intersect_ids = self.intersection_obj.run_intersect(match_data)
+        else:
+            self.intersect_ids = self.intersection_obj.run_intersect(data)
 
-        self.intersect_ids = self.intersection_obj.run_intersect(data)
-
-        if self.model_param.repeated_id_process:
+        if self.use_match_id_process:
             if not self.model_param.sync_intersect_ids:
-                self.intersect_ids = data
+                self.intersect_ids = match_data
 
             self.intersect_ids = proc_obj.expand(self.intersect_ids)
             if self.model_param.repeated_id_owner == self.role and self.model_param.only_output_key:
@@ -149,11 +199,19 @@ class IntersectModelBase(ModelBase):
                                      metric_name=self.metric_name,
                                      metric_meta=MetricMeta(name=self.metric_name, metric_type=self.metric_type))
 
+        result_data = self.intersect_ids
+        if self.model_param.join_method == consts.LEFT_JOIN:
+            result_data = self.__sync_join_id(data, self.intersect_ids)
+            result_data.schema = self.intersect_ids.schema
+        return result_data
+
+    """
     def save_data(self):
         if self.intersect_ids is not None:
             LOGGER.info("intersect_ids count:{}".format(self.intersect_ids.count()))
             LOGGER.info("intersect_ids header schema:{}".format(self.intersect_ids.schema))
         return self.intersect_ids
+    """
 
     def check_consistency(self):
         pass
