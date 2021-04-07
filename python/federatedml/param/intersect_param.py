@@ -94,7 +94,7 @@ class RSAParam(BaseParam):
         self.final_hash_method = final_hash_method
         self.split_calculation = split_calculation
         self.random_base_fraction = random_base_fraction
-        self.key_length=key_length
+        self.key_length = key_length
 
     def check(self):
         if type(self.salt).__name__ != "str":
