@@ -62,7 +62,7 @@ class SelectorParam(object):
 
 class HeteroNNParam(BaseParam):
     """
-    Parameters used for Homo Neural Network.
+    Parameters used for Hetero Neural Network.
 
     Args:
         task_type: str, task type of hetero nn model, one of 'classification', 'regression'.
@@ -223,6 +223,10 @@ class HeteroNNParam(BaseParam):
                 (not isinstance(self.floating_point_precision, int) or\
                  self.floating_point_precision < 0 or self.floating_point_precision > 63):
             raise ValueError("floating point precision should be null or a integer between 0 and 63")
+
+        if not isinstance(self.drop_out_keep_rate, (float, int)) or self.drop_out_keep_rate < 0.0 or \
+                self.drop_out_keep_rate > 1.0:
+            raise ValueError("drop_out_keep_rate should be in range [0.0, 1.0]")
 
         self.encrypt_param.check()
         self.encrypted_model_calculator_param.check()

@@ -248,9 +248,9 @@ class FLOWClient(object):
 
         status = stdout["retcode"]
         if status != 0:
-            raise ValueError({'retcode': 100,
-                              'retmsg': "Internal server error. Nothing in response. You may check out the configuration in "
-                                        "'FATE/conf/server_conf.yaml' and restart fate flow server."})
+            if request == 'table/delete' and stdout["retmsg"] == "no find table":
+                return stdout
+            raise ValueError({'retcode': 100, 'retmsg': stdout["retmsg"]})
 
         return stdout
 
@@ -260,7 +260,7 @@ class Status(object):
         self.status = status
 
     def is_done(self):
-        return self.status.lower() in ['complete', 'success', 'canceled', 'failed']
+        return self.status.lower() in ['complete', 'success', 'canceled', 'failed', "timeout"]
 
     def is_success(self):
         return self.status.lower() in ['complete', 'success']

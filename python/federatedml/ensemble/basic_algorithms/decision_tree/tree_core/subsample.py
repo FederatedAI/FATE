@@ -28,7 +28,7 @@ def goss_sampling(grad_and_hess, top_rate, other_rate):
     g_arr = np.array(g_list).astype(np.float64)
     h_arr = np.array(h_list).astype(np.float64)
     abs_g_list_arr = np.abs(g_arr)
-    sorted_idx = np.argsort(-abs_g_list_arr)
+    sorted_idx = np.argsort(-abs_g_list_arr, kind='stable')
 
     a_part_num = int(sample_num * top_rate)
     b_part_num = int(sample_num * other_rate)

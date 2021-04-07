@@ -108,6 +108,9 @@ class HeteroDecisionTreeGuest(DecisionTree):
             LOGGER.info('round decimal is {}'.format(self.round_decimal))
         LOGGER.info('updated max sample weight is {}'.format(self.max_sample_weight))
 
+        if self.deterministic:
+            LOGGER.info('running on deterministic mode')
+
     def init(self, flowid, runtime_idx, data_bin, bin_split_points, bin_sparse_points, valid_features,
              grad_and_hess,
              encrypter, encrypted_mode_calculator,
@@ -124,6 +127,8 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
         super(HeteroDecisionTreeGuest, self).init_data_and_variable(flowid, runtime_idx, data_bin, bin_split_points,
                                                                     bin_sparse_points, valid_features, grad_and_hess)
+
+        self.check_max_split_nodes()
 
         self.encrypter = encrypter
         self.encrypted_mode_calculator = encrypted_mode_calculator
@@ -297,7 +302,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
                 # update best splitinfo and gain for every cur to split nodes
                 for node_idx, splitinfo in splitinfos:
-                    LOGGER.debug('_, splitinfo are {}, {}'.format(node_idx, splitinfo))
+
                     if best_splitinfo_host[node_idx][0] == -1:
                         best_splitinfo_host[node_idx] = list(splitinfo[:2])
                         best_gains[node_idx] = splitinfo[2]
@@ -367,7 +372,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
                 s2.sum_grad = s1.sum_grad
                 s2.sum_hess = s1.sum_hess
 
-        LOGGER.debug('final host best splits {}'.format(final_host_split_info))
         final_best_splits = self.merge_splitinfo(best_split_info_guest, final_host_split_info, need_decrypt=False)
 
         return final_best_splits
@@ -751,7 +755,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
                 split_info.extend(cur_splitinfos)
 
-            LOGGER.debug('final split info is {}'.format(split_info))
             self.update_tree(split_info, False)
             self.assign_instances_to_new_node(dep)
 
@@ -759,6 +762,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
             self.assign_instance_to_leaves_and_update_weights()
 
         self.convert_bin_to_real()
+        self.round_leaf_val()
         self.sync_tree()
 
         LOGGER.info("fitting guest decision tree done")

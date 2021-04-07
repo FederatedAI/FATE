@@ -81,16 +81,20 @@ class RSAParam(BaseParam):
 
     random_base_fraction: positive float, if not None, generate (fraction * public key id count) of r for encryption and reuse generated r;
         note that value greater than 0.99 will be taken as 1, and value less than 0.01 will be rounded up to 0.01
+
+    key_length: positive int, bit count of rsa key, default 1024
+
     """
 
     def __init__(self, salt='', hash_method='sha256',  final_hash_method='sha256',
-                 split_calculation=False, random_base_fraction=None):
+                 split_calculation=False, random_base_fraction=None, key_length=1024):
         super().__init__()
         self.salt = salt
         self.hash_method = hash_method
         self.final_hash_method = final_hash_method
         self.split_calculation = split_calculation
         self.random_base_fraction = random_base_fraction
+        self.key_length=key_length
 
     def check(self):
         if type(self.salt).__name__ != "str":
@@ -117,6 +121,9 @@ class RSAParam(BaseParam):
         if self.random_base_fraction:
             self.check_positive_number(self.random_base_fraction, descr)
             self.check_decimal_float(self.random_base_fraction, descr)
+
+        descr = "rsa param's key_length"
+        self.check_positive_integer(self.key_length, descr)
 
         LOGGER.debug("Finish RSAParam parameter check!")
         return True
@@ -173,6 +180,8 @@ class IntersectParam(BaseParam):
     repeated_id_process: bool, if true, intersection will process the ids which can be repeatable
 
     repeated_id_owner: str, which role has the repeated ids
+
+    with_sample_id: bool, data with sample id or not, default False; set this param to True may lead to unexpected behavior
     """
 
     def __init__(self, intersect_method: str = consts.RAW, random_bit=128, sync_intersect_ids=True,
@@ -180,6 +189,7 @@ class IntersectParam(BaseParam):
                  with_encode=False, only_output_key=False, encode_params=EncodeParam(),
                  rsa_params=RSAParam(),
                  intersect_cache_param=IntersectCache(), repeated_id_process=False, repeated_id_owner=consts.GUEST,
+                 with_sample_id=False,
                  allow_info_share: bool = False, info_owner=consts.GUEST):
         super().__init__()
         self.intersect_method = intersect_method
@@ -195,9 +205,10 @@ class IntersectParam(BaseParam):
         self.repeated_id_owner = repeated_id_owner
         self.allow_info_share = allow_info_share
         self.info_owner = info_owner
+        self.with_sample_id = with_sample_id
 
     def check(self):
-        descr = "intersect param's"
+        descr = "intersect param's "
 
         self.intersect_method = self.check_and_change_lower(self.intersect_method,
                                                             [consts.RSA, consts.RAW],
@@ -214,7 +225,7 @@ class IntersectParam(BaseParam):
 
         self.join_role = self.check_and_change_lower(self.join_role,
                                                      [consts.GUEST, consts.HOST],
-                                                     descr)
+                                                     descr+"join_role")
 
         if type(self.with_encode).__name__ != "bool":
             raise ValueError(
@@ -233,7 +244,7 @@ class IntersectParam(BaseParam):
 
         self.repeated_id_owner = self.check_and_change_lower(self.repeated_id_owner,
                                                              [consts.GUEST],
-                                                             descr)
+                                                             descr+"repeated_id_owner")
 
         if type(self.allow_info_share).__name__ != "bool":
             raise ValueError(
@@ -242,7 +253,10 @@ class IntersectParam(BaseParam):
 
         self.info_owner = self.check_and_change_lower(self.info_owner,
                                                       [consts.GUEST, consts.HOST],
-                                                      descr)
+                                                      descr+"info_owner")
+        self.check_boolean(self.with_sample_id, descr+"with_sample_id")
+        if self.with_sample_id:
+            LOGGER.warning(f"Using with_sample_id may lead to unexpected behavior.")
 
         self.encode_params.check()
         self.rsa_params.check()

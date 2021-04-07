@@ -85,6 +85,7 @@ class HeteroDecisionTreeHost(DecisionTree):
         super(HeteroDecisionTreeHost, self).init_data_and_variable(flowid, runtime_idx, data_bin, bin_split_points,
                                                                    bin_sparse_points, valid_features, None)
 
+        self.check_max_split_nodes()
         self.complete_secure_tree = complete_secure
         self.run_goss = goss_subsample
         self.run_sparse_opt = run_sprase_opt
@@ -262,7 +263,6 @@ class HeteroDecisionTreeHost(DecisionTree):
 
             final_splitinfos.append(splitinfo)
 
-        LOGGER.debug('final split info is {}'.format([str(i) for i in final_splitinfos]))
         self.transfer_inst.final_splitinfo_host.remote(final_splitinfos,
                                                        role=consts.GUEST,
                                                        idx=-1,
@@ -465,7 +465,6 @@ class HeteroDecisionTreeHost(DecisionTree):
             best_split_info = self.transfer_inst.federated_best_splitinfo_host.get(suffix=(dep, batch), idx=0)
             unmasked_split_info = self.unmask_split_info(best_split_info, self.inverse_fid_bid_random_mapping,
                                                          self.missing_dir_mask_left[dep], self.missing_dir_mask_right[dep])
-            LOGGER.debug('unmasked split info is {}'.format(unmasked_split_info))
             return_split_info = self.encode_split_info(unmasked_split_info)
             self.transfer_inst.final_splitinfo_host.remote(return_split_info,
                                                            role=consts.GUEST,
@@ -484,7 +483,8 @@ class HeteroDecisionTreeHost(DecisionTree):
 
             acc_histograms = self.get_local_histograms(dep, data, self.grad_and_hess,
                                                        None, cur_to_split_nodes, node_map, ret='tb',
-                                                       hist_sub=False, sparse_opt=self.run_sparse_opt)
+                                                       hist_sub=False, sparse_opt=self.run_sparse_opt,
+                                                       bin_num=self.bin_num)
 
             splitinfo_host, encrypted_splitinfo_host = self.splitter.find_split_host(histograms=acc_histograms,
                                                                                      node_map=node_map,

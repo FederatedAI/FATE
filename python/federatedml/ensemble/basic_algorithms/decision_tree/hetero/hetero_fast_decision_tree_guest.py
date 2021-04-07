@@ -88,7 +88,6 @@ class HeteroFastDecisionTreeGuest(HeteroDecisionTreeGuest):
                                                       splitinfo_host=host_split_info,
                                                       merge_host_split_only=True)
 
-        LOGGER.debug('split is {}'.format(cur_best_split))
         return cur_best_split
 
     def compute_best_splits_with_node_plan2(self, tree_action, target_host_idx, cur_to_split_nodes, node_map: dict,
@@ -124,7 +123,6 @@ class HeteroFastDecisionTreeGuest(HeteroDecisionTreeGuest):
                                                                       self.encrypter,
                                                                       cipher_decompressor=cipher_decompressor)
 
-            LOGGER.debug('best host split info {} at dep {}'.format(host_split_info, dep))
             split_info_list = [None for i in range(len(host_split_info))]
             for key in host_split_info:
                 split_info_list[node_map[key]] = host_split_info[key]
@@ -267,6 +265,7 @@ class HeteroFastDecisionTreeGuest(HeteroDecisionTreeGuest):
             self.assign_instance_to_leaves_and_update_weights()
 
         self.convert_bin_to_real()
+        self.round_leaf_val()
         self.sync_tree(idx=-1)
 
     """
@@ -345,6 +344,8 @@ class HeteroFastDecisionTreeGuest(HeteroDecisionTreeGuest):
             if self.cur_layer_nodes:
                 self.assign_instance_to_leaves_and_update_weights() # guest local updates
             self.convert_bin_to_real()  # convert bin id to real value features
+
+        self.round_leaf_val()
 
     def mix_mode_predict(self, data_inst):
 

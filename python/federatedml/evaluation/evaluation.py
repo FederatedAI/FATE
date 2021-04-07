@@ -66,6 +66,9 @@ class Evaluation(ModelBase):
         # multi unfold setting
         self.need_unfold_multi_result = False
 
+        # summaries
+        self.metric_summaries = {}
+
     def _init_model(self, model):
         self.model_param = model
         self.eval_type = self.model_param.eval_type
@@ -328,7 +331,7 @@ class Evaluation(ModelBase):
 
                 # set work mode to binary evaluation
                 self.eval_type = consts.BINARY
-                self.metric_interface.eval_type = consts.BINARY
+                self.metric_interface.eval_type = consts.ONE_VS_REST
                 back_up_metric = self.metrics
                 self.metrics = [consts.AUC, consts.KS]
 
@@ -656,6 +659,17 @@ class Evaluation(ModelBase):
         self.tracker.set_metric_meta(metric_namespace, metric_name,
                                      MetricMeta(name=metric_name, metric_type=metric.upper(), extra_metas=extra_metas))
 
+    def __update_summary(self, data_type, namespace, metric, metric_val):
+        if data_type not in self.metric_summaries:
+            self.metric_summaries[data_type] = {}
+        if namespace not in self.metric_summaries[data_type]:
+            self.metric_summaries[data_type][namespace] = {}
+        self.metric_summaries[data_type][namespace][metric] = metric_val
+
+    def __save_summary(self):
+        LOGGER.info('eval summary is {}'.format(self.metric_summaries))
+        self.set_summary(self.metric_summaries)
+
     def callback_ovr_metric_data(self, eval_results):
 
         for model_name, eval_rs in eval_results.items():
@@ -692,6 +706,7 @@ class Evaluation(ModelBase):
 
     def callback_metric_data(self, eval_results, return_single_val_metrics=False):
 
+        # collect single val metric for validation strategy
         validate_metric = {}
         train_metric = {}
         collect_dict = {}
@@ -719,6 +734,8 @@ class Evaluation(ModelBase):
                                                  metric_namespace=metric_namespace
                                                  , eval_name=metric)
                         collect_dict[metric] = single_val_metric
+                        # update pipeline summary
+                        self.__update_summary(data_type, metric_namespace, metric, single_val_metric)
 
                     if metric == consts.KS:
                         self.__save_ks_curve(metric, metric_res, metric_name, metric_namespace, data_type)
@@ -762,12 +779,7 @@ class Evaluation(ModelBase):
                     elif metric == consts.DISTANCE_MEASURE:
                         self.__save_distance_measure(metric, metric_res[1], metric_name, metric_namespace)
 
-        if len(validate_metric) != 0:
-            self.set_summary(validate_metric)
-        else:
-            self.set_summary(train_metric)
-
-        LOGGER.debug('collect dict contains {}'.format(collect_dict))
+        self.__save_summary()
 
         if return_single_val_metrics:
             if len(validate_metric) != 0:

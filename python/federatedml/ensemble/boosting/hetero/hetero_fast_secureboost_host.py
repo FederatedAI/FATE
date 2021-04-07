@@ -76,7 +76,8 @@ class HeteroFastSecureBoostingTreeHost(HeteroSecureBoostingTreeHost):
                   bin_num=self.bin_num,
                   complete_secure=True if (self.complete_secure and epoch_idx == 0) else False,
                   cipher_compressing=self.round_decimal is not None,
-                  round_decimal=self.round_decimal
+                  round_decimal=self.round_decimal,
+                  new_ver=self.new_ver
                   )
 
         tree.set_tree_work_mode(tree_type, target_host_id)

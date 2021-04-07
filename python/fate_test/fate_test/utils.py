@@ -21,7 +21,7 @@ import numpy as np
 from prettytable import PrettyTable, ORGMODE
 
 SCRIPT_METRICS = "script_metrics"
-
+DISTRIBUTION_METRICS = "distribution_metrics"
 
 class TxtStyle:
     TRUE_VAL = Fore.GREEN
@@ -105,6 +105,22 @@ def evaluate_almost_equal(metrics, results, abs_tol=None, rel_tol=None):
     return eval_summary, all_match
 
 
+def distribution_metrics(**results):
+    filtered_metric_group = _filter_results([DISTRIBUTION_METRICS], **results)
+    for script, model_results_pair in filtered_metric_group.items():
+        metric_results = model_results_pair[0]
+        common_metrics = _get_common_metrics(**metric_results)
+        filtered_results = _filter_results(common_metrics, **metric_results)
+        table = PrettyTable()
+        table.set_style(ORGMODE)
+        script_model_names = list(filtered_results.keys())
+        table.field_names = ["Script Model Name"] + common_metrics
+        for script_model_name in script_model_names:
+            row = [f"{script}-{script_model_name}"] + [f"{TxtStyle.FIELD_VAL}{v}{TxtStyle.END}" for v in filtered_results[script_model_name]]
+            table.add_row(row)
+        print(table.get_string(title=f"{TxtStyle.TITLE}{script} distribution metrics{TxtStyle.END}"))
+
+
 def match_script_metrics(abs_tol, rel_tol, **results):
     filtered_metric_group = _filter_results([SCRIPT_METRICS], **results)
     for script, model_results_pair in filtered_metric_group.items():
@@ -176,8 +192,18 @@ def match_metrics(evaluate, group_name, abs_tol=None, rel_tol=None, **results):
         else:
             print(f"All Metrics Match: {TxtStyle.FALSE_VAL}{all_match}{TxtStyle.END}")
 
+    distribution_metrics(**results)
     match_script_metrics(abs_tol, rel_tol, **results)
     deinit()
+
+
+def parse_summary_result(rs_dict):
+    for model_key in rs_dict:
+        rs_content = rs_dict[model_key]
+        if 'validate' in rs_content:
+            return rs_content['validate']
+        else:
+            return rs_content['train']
 
 
 def extract_data(txt, col_name, convert_float=True, keep_id=False):

@@ -852,7 +852,8 @@ class DataIO(ModelBase):
         self.model_param = DataIOParam()
 
     def _init_model(self, model_param):
-        print("model_param is {}".format(model_param))
+        LOGGER.warning('DataIO is deprecated, and will be removed in 1.7, use DataTransform module instead')
+
         if model_param.input_format == "dense":
             self.reader = DenseFeatureReader(self.model_param)
         elif model_param.input_format == "sparse":

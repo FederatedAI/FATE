@@ -27,7 +27,8 @@ from pipeline.interface import Data, Model
 from pipeline.utils.tools import load_job_config, JobConfig
 from pipeline.runtime.entity import JobParameters
 
-from fate_test.utils import extract_data
+from federatedml.evaluation.metrics import regression_metric
+from fate_test.utils import extract_data, parse_summary_result
 
 
 def main(config="../../config.yaml", param="./linr_config.yaml", namespace=""):
@@ -95,23 +96,15 @@ def main(config="../../config.yaml", param="./linr_config.yaml", namespace=""):
                                        "mean_squared_error",
                                        "root_mean_squared_error",
                                        "explained_variance"])
-    evaluation_1 = Evaluation(name='evaluation_1', eval_type="regression",
-                              metrics=["r2_score",
-                                       "mean_squared_error",
-                                       "root_mean_squared_error",
-                                       "explained_variance"])
 
     # add components to pipeline, in order of task execution
     pipeline.add_component(reader_0)
     pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
     pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
     pipeline.add_component(hetero_linr_0, data=Data(train_data=intersection_0.output.data))
-    pipeline.add_component(hetero_linr_1,
-                           data=Data(test_data=intersection_0.output.data),
+    pipeline.add_component(hetero_linr_1,data=Data(test_data=intersection_0.output.data),
                            model=Model(hetero_linr_0.output.model))
     pipeline.add_component(evaluation_0, data=Data(data=hetero_linr_0.output.data))
-    pipeline.add_component(evaluation_1, data=Data(data=hetero_linr_1.output.data))
-
 
     # compile pipeline once finished adding modules, this step will form conf and dsl files for running job
     pipeline.compile()
@@ -120,26 +113,15 @@ def main(config="../../config.yaml", param="./linr_config.yaml", namespace=""):
     job_parameters = JobParameters(backend=backend, work_mode=work_mode)
     pipeline.fit(job_parameters)
 
-    metric_summary_linr_0 = pipeline.get_component("evaluation_0").get_summary()
-    metric_summary_linr_1 = pipeline.get_component("evaluation_1").get_summary()
-    import copy
-    metric_linr_0 = copy.copy(metric_summary_linr_0)
-    metric_linr_1 = copy.copy(metric_summary_linr_1)
+    metric_summary = parse_summary_result(pipeline.get_component("evaluation_0").get_summary())
 
     data_linr_0 = extract_data(pipeline.get_component("hetero_linr_0").get_output_data().get("data"), "predict_result")
     data_linr_1 = extract_data(pipeline.get_component("hetero_linr_1").get_output_data().get("data"), "predict_result")
-    import numpy as np
-    metric_linr_0["max"] = np.max(data_linr_0)
-    metric_linr_0["mean"] = np.mean(data_linr_0)
-    metric_linr_0["min"] = np.min(data_linr_0)
+    desc_linr_0 = regression_metric.Describe().compute(data_linr_0)
+    desc_linr_1 = regression_metric.Describe().compute(data_linr_1)
 
-    metric_linr_1["max"] = np.max(data_linr_1)
-    metric_linr_1["mean"] = np.mean(data_linr_1)
-    metric_linr_1["min"] = np.min(data_linr_1)
-
-    metric_summary = copy.copy(metric_summary_linr_0)
-    metric_summary["script_metrics"] = {"linr_train": metric_linr_0,
-                                        "linr_validate": metric_linr_1}
+    metric_summary["script_metrics"] = {"linr_train": desc_linr_0,
+                                        "linr_validate": desc_linr_1}
 
     data_summary = {"train": {"guest": guest_train_data["name"], "host": host_train_data["name"]},
                     "test": {"guest": guest_train_data["name"], "host": host_train_data["name"]}

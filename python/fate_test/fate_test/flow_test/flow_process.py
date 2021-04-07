@@ -6,7 +6,6 @@ from contextlib import closing
 from datetime import datetime
 
 import requests
-from fate_flow.entity.types import StatusSet
 
 
 def get_dict_from_file(file_name):
@@ -73,9 +72,9 @@ class Base(object):
             time.sleep(10)
             status = self.query_job()
             print("job {} status is {}".format(self.job_id, status))
-            if status and status == StatusSet.SUCCESS:
+            if status and status == "success":
                 return True
-            if status and status in [StatusSet.CANCELED, StatusSet.TIMEOUT, StatusSet.FAILED]:
+            if status and status in ["canceled", "timeout", "failed"]:
                 return False
         return False
 
@@ -156,12 +155,12 @@ class Base(object):
 
 
 class TrainLRModel(Base):
-    def get_component_metrics(self, metric_output_path, arbiter_party_id, file=None):
+    def get_component_metrics(self, metric_output_path, file=None):
         post_data = {
             "job_id": self.job_id,
-            "role": "arbiter",
-            "party_id": arbiter_party_id,
-            "component_name": self.component_name
+            "role": "guest",
+            "party_id": self.guest_party_id[0],
+            "component_name": "evaluation_0"
         }
         response = requests.post("/".join([self.server_url, "tracking", "component/metric/all"]), json=post_data)
         if response.status_code == 200:
@@ -231,7 +230,7 @@ def train_job(guest_party_id, host_party_id, arbiter_party_id, train_conf_path, 
     if status:
         is_success = train.wait_success(timeout=600)
         if is_success:
-            train.get_component_metrics(metric_output_path, arbiter_party_id)
+            train.get_component_metrics(metric_output_path)
             train.get_component_output_model(model_output_path)
             train.get_component_output_data()
             train_auc = train.get_auc()

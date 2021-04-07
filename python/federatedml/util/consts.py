@@ -27,6 +27,7 @@ MULTY = 'multi'
 CLASSIFICATION = "classification"
 REGRESSION = 'regression'
 CLUSTERING = 'clustering'
+ONE_VS_REST = 'one_vs_rest'
 PAILLIER = 'Paillier'
 RANDOM_PADS = "RandomPads"
 NONE = "None"
@@ -299,6 +300,9 @@ HETERO_SBT_GUEST_MODEL = 'HeteroSecureBoostingTreeGuest'
 HETERO_SBT_HOST_MODEL = 'HeteroSecureBoostingTreeHost'
 HETERO_FAST_SBT_GUEST_MODEL = "HeteroFastSecureBoostingTreeGuest"
 HETERO_FAST_SBT_HOST_MODEL = "HeteroFastSecureBoostingTreeHost"
+
+# tree decimal round to prevent float error
+TREE_DECIMAL_ROUND = 10
 
 # column_expand
 MANUAL = 'manual'

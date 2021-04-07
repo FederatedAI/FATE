@@ -34,6 +34,7 @@ from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.feature_histo
     HistogramBag, FeatureHistogram
 from typing import List
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.feature_importance import FeatureImportance
+from federatedml.util import consts
 
 
 class DecisionTree(BasicAlgorithms, ABC):
@@ -87,7 +88,10 @@ class DecisionTree(BasicAlgorithms, ABC):
         self.missing_dir_maskdict = {}
 
         # histogram
+        self.deterministic = tree_param.deterministic
         self.hist_computer = FeatureHistogram()
+        if self.deterministic:
+            self.hist_computer.stable_reduce = True
 
     def get_feature_importance(self):
         return self.feature_importance
@@ -114,6 +118,13 @@ class DecisionTree(BasicAlgorithms, ABC):
         self.data_bin = data_bin
         self.bin_split_points = bin_split_points
         self.bin_sparse_points = bin_sparse_points
+
+    def check_max_split_nodes(self):
+        # check max_split_nodes
+        if self.max_split_nodes != 0 and self.max_split_nodes % 2 == 1:
+            self.max_split_nodes += 1
+            LOGGER.warning('an even max_split_nodes value is suggested '
+                           'when using histogram-subtraction, max_split_nodes reset to {}'.format(self.max_split_nodes))
 
     def set_flowid(self, flowid=0):
         LOGGER.info("set flowid, flowid is {}".format(flowid))
@@ -173,6 +184,8 @@ class DecisionTree(BasicAlgorithms, ABC):
         # record node sample number in count_arr
         count_arr = np.zeros(len(node_map))
         for k, v in kv:
+            if v[1] not in node_map:
+                continue
             node_idx = node_map[v[1]]  # node position
             count_arr[node_idx] += 1
         return count_arr
@@ -196,6 +209,13 @@ class DecisionTree(BasicAlgorithms, ABC):
     def assign_instance_to_root_node(data_bin, root_node_id):
         return data_bin.mapValues(lambda inst: (1, root_node_id))
 
+    @staticmethod
+    def float_round(num):
+        """
+        prevent float error
+        """
+        return round(num, consts.TREE_DECIMAL_ROUND)
+
     def update_feature_importance(self, splitinfo, record_site_name=True):
 
         inc_split, inc_gain = 1, splitinfo.gain
@@ -214,6 +234,12 @@ class DecisionTree(BasicAlgorithms, ABC):
         self.feature_importance[key].add_split(inc_split)
         if inc_gain is not None:
             self.feature_importance[key].add_gain(inc_gain)
+
+    def round_leaf_val(self):
+        # process predict weight to prevent float error
+        for node in self.tree_node:
+            if node.is_leaf:
+                node.weight = self.float_round(node.weight)
 
     """
     To implement

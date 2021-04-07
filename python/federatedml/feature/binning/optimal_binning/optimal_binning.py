@@ -78,18 +78,6 @@ class OptimalBinning(BaseBinning):
 
             self.bin_results.put_col_split_points(col_name, split_points)
             self.__cal_single_col_result(col_name, bucket_list)
-            # if self.optimal_param.mixture and non_mixture_num > 0:
-            #     LOGGER.warning("col: {}, non_mixture_num is: {}, cannot meet mixture condition".format(
-            #         col_name, non_mixture_num
-            #     ))
-            # if small_size_num > 0:
-            #     LOGGER.warning("col: {}, small_size_num is: {}, cannot meet small size condition".format(
-            #         col_name, small_size_num
-            #     ))
-            # if len(bucket_list) > self.optimal_param.max_bin:
-            #     LOGGER.warning("col: {}, bin_num is: {}, cannot meet max-bin condition".format(
-            #         col_name, small_size_num
-            #     ))
         return result_bucket
 
     def __cal_single_col_result(self, col_name, bucket_list):
@@ -137,14 +125,6 @@ class OptimalBinning(BaseBinning):
                                          is_sparse=is_sparse,
                                          get_bin_num_func=self.get_bin_num)
         bucket_table = data_instances.mapReducePartitions(convert_func, self.merge_bucket_list)
-        # bucket_table = dict(bucket_table.collect())
-
-        # LOGGER.debug("bucket_table: {}, length: {}".format(type(bucket_table), len(bucket_table)))
-        # bucket_table = [(k, v) for k, v in bucket_table.items()]
-        # LOGGER.debug("bucket_table: {}, length: {}".format(type(bucket_table), len(bucket_table)))
-        #
-        # bucket_table = session.parallelize(bucket_table, include_key=True, partition=data_instances.partitions)
-
         return bucket_table
 
     @staticmethod

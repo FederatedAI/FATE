@@ -9,13 +9,13 @@ from ruamel import yaml
 from fate_test._config import Config
 from fate_test._io import LOGGER, echo
 from fate_test.scripts._options import SharedOptions
-from fate_test.flow_test import flow_process
+from fate_test.flow_test import flow_rest_api, flow_sdk_api, flow_cli_api, flow_process
 
 
-@click.group(name="flow_test")
+@click.group(name="flow-test")
 def flow_group():
     """
-    flow_test
+    flow test
     """
     ...
 
@@ -48,6 +48,90 @@ def process(ctx, **kwargs):
         LOGGER.exception(f"exception id: {exception_id}")
 
 
+@flow_group.command("rest")
+@SharedOptions.get_shared_options(hidden=True)
+@click.pass_context
+def api(ctx, **kwargs):
+    """
+    flow rest api test
+    """
+    ctx.obj.update(**kwargs)
+    ctx.obj.post_process()
+    namespace = ctx.obj["namespace"]
+    config_inst = ctx.obj["config"]
+    yes = ctx.obj["yes"]
+
+    echo.welcome("benchmark")
+    echo.echo(f"testsuite namespace: {namespace}", fg='red')
+    echo.echo("loading testsuites:")
+    if not yes and not click.confirm("running?"):
+        return
+    try:
+        start = time.time()
+        flow_rest_api.run_test_api(get_role(conf=config_inst))
+        echo.echo(f"elapse {timedelta(seconds=int(time.time() - start))}", fg='red')
+    except Exception:
+        exception_id = uuid.uuid1()
+        echo.echo(f"exception_id={exception_id}")
+        LOGGER.exception(f"exception id: {exception_id}")
+
+
+@flow_group.command("sdk")
+@SharedOptions.get_shared_options(hidden=True)
+@click.pass_context
+def api(ctx, **kwargs):
+    """
+    flow sdk api test
+    """
+    ctx.obj.update(**kwargs)
+    ctx.obj.post_process()
+    namespace = ctx.obj["namespace"]
+    config_inst = ctx.obj["config"]
+    yes = ctx.obj["yes"]
+
+    echo.welcome("benchmark")
+    echo.echo(f"testsuite namespace: {namespace}", fg='red')
+    echo.echo("loading testsuites:")
+    if not yes and not click.confirm("running?"):
+        return
+    try:
+        start = time.time()
+        flow_sdk_api.run_test_api(get_role(conf=config_inst))
+        echo.echo(f"elapse {timedelta(seconds=int(time.time() - start))}", fg='red')
+    except Exception:
+        exception_id = uuid.uuid1()
+        echo.echo(f"exception_id={exception_id}")
+        LOGGER.exception(f"exception id: {exception_id}")
+
+
+@flow_group.command("cli")
+@SharedOptions.get_shared_options(hidden=True)
+@click.pass_context
+def api(ctx, **kwargs):
+    """
+    flow cli api test
+    """
+    ctx.obj.update(**kwargs)
+    ctx.obj.post_process()
+    namespace = ctx.obj["namespace"]
+    config_inst = ctx.obj["config"]
+    yes = ctx.obj["yes"]
+
+    echo.welcome("benchmark")
+    echo.echo(f"testsuite namespace: {namespace}", fg='red')
+    echo.echo("loading testsuites:")
+    if not yes and not click.confirm("running?"):
+        return
+    try:
+        start = time.time()
+        flow_cli_api.run_test_api(get_role(conf=config_inst))
+        echo.echo(f"elapse {timedelta(seconds=int(time.time() - start))}", fg='red')
+    except Exception:
+        exception_id = uuid.uuid1()
+        echo.echo(f"exception_id={exception_id}")
+        LOGGER.exception(f"exception id: {exception_id}")
+
+
 def get_role(conf: Config):
     flow_services = conf.serving_setting['flow_services'][0]['address']
     path = conf.flow_test_config_dir
@@ -72,6 +156,8 @@ def get_role(conf: Config):
                    'train_auc': config['train_auc'],
                    'component_name': config['component_name'],
                    'metric_output_path': config['metric_output_path'],
-                   'model_output_path': config['model_output_path']
+                   'model_output_path': config['model_output_path'],
+                   'cache_directory': conf.cache_directory,
+                   'data_base_dir': conf.data_base_dir
                    }
     return config_json

@@ -24,7 +24,9 @@
 # =============================================================================
 # Criterion
 # =============================================================================
+import math
 from federatedml.util import LOGGER
+from federatedml.util import consts
 
 
 class Criterion(object):
@@ -53,19 +55,23 @@ class XgboostCriterion(Criterion):
         else:
             return 0
 
+    @staticmethod
+    def truncate(f, n=consts.TREE_DECIMAL_ROUND):
+        return math.floor(f * 10 ** n) / 10 ** n
+
     def split_gain(self, node_sum, left_node_sum, right_node_sum):
         sum_grad, sum_hess = node_sum
         left_node_sum_grad, left_node_sum_hess = left_node_sum
         right_node_sum_grad, right_node_sum_hess = right_node_sum
-        return self.node_gain(left_node_sum_grad, left_node_sum_hess) + \
-               self.node_gain(right_node_sum_grad, right_node_sum_hess) - \
-               self.node_gain(sum_grad, sum_hess)
+        rs = self.node_gain(left_node_sum_grad, left_node_sum_hess) + \
+             self.node_gain(right_node_sum_grad, right_node_sum_hess) - \
+             self.node_gain(sum_grad, sum_hess)
+        return self.truncate(rs)
 
     def node_gain(self, sum_grad, sum_hess):
-        # return sum_grad * sum_grad / (sum_hess + self.reg_lambda)
+        sum_grad, sum_hess = self.truncate(sum_grad), self.truncate(sum_hess)
         num = self._g_alpha_cmp(sum_grad, self.reg_alpha)
-        return num * num / (sum_hess + self.reg_lambda)
+        return self.truncate(num * num / (sum_hess + self.reg_lambda))
 
     def node_weight(self, sum_grad, sum_hess):
-        # return -sum_grad / (self.reg_lambda + sum_hess)
-        return -(self._g_alpha_cmp(sum_grad, self.reg_alpha)) / (sum_hess + self.reg_lambda)
+        return self.truncate(-(self._g_alpha_cmp(sum_grad, self.reg_alpha)) / (sum_hess + self.reg_lambda))

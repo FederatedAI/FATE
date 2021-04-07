@@ -129,13 +129,16 @@ class DecisionTreeParam(BaseParam):
     zero_as_missing: bool, accepted True, False only, regard 0 as missing value or not,
                      will be use only if use_missing=True, default: False
 
+    deterministic: bool, ensure stability when computing histogram. Set this to true to ensure stable result when using
+                         same data and same parameter. But it may slow down computation.
+
     """
 
     def __init__(self, criterion_method="xgboost", criterion_params=[0.1, 0], max_depth=3,
                  min_sample_split=2, min_impurity_split=1e-3, min_leaf_node=1,
                  max_split_nodes=consts.MAX_SPLIT_NODES, feature_importance_type="split",
                  n_iter_no_change=True, tol=0.001, min_child_weight=0,
-                 use_missing=False, zero_as_missing=False,):
+                 use_missing=False, zero_as_missing=False, deterministic=False):
 
         super(DecisionTreeParam, self).__init__()
 
@@ -152,6 +155,7 @@ class DecisionTreeParam(BaseParam):
         self.tol = tol
         self.use_missing = use_missing
         self.zero_as_missing = zero_as_missing
+        self.deterministic = deterministic
 
     def check(self):
         descr = "decision tree param"
@@ -212,6 +216,7 @@ class DecisionTreeParam(BaseParam):
                                                                     descr)
 
         self.check_nonnegative_number(self.min_child_weight, 'min_child_weight')
+        self.check_boolean(self.deterministic, 'deterministic')
 
         return True
 
@@ -230,7 +235,7 @@ class BoostingParam(BaseParam):
 
         num_trees : int, accepted int, float only, the max number of boosting round. default: 5
 
-        subsample_feature_rate : float, a float-number in [0, 1], default: 0.8
+        subsample_feature_rate : float, a float-number in [0, 1], default: 1.0
 
         n_iter_no_change : bool,
             when True and residual error less than tol, tree building process will stop. default: True
@@ -385,7 +390,7 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
 
         num_trees : int, accepted int, float only, the max number of trees to build. default: 5
 
-        subsample_feature_rate : float, a float-number in [0, 1], default: 0.8
+        subsample_feature_rate : float, a float-number in [0, 1], default: 1.0
 
         random_seed: seed that controls all random functions
 

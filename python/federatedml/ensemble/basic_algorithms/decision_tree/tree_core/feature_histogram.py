@@ -164,6 +164,7 @@ class FeatureHistogram(object):
         self._cur_dep = -1
         self._prev_layer_dtable = None
         self._cur_layer_dtables = [None]
+        self.stable_reduce = False
 
     """
     Public Interface for Histogram Computation
@@ -214,7 +215,7 @@ class FeatureHistogram(object):
 
             # running hist sub
             self._update_cached_histograms(dep, ret=ret)
-            if self._is_root_node(node_map):  # root node need not hist sub
+            if self._is_root_node(node_map):  # root node need no hist sub
                 self._cur_layer_cached_histograms[0] = histograms[0]
                 result = histograms
             else:
@@ -263,8 +264,7 @@ class FeatureHistogram(object):
                 self._cached_histograms(result, ret=ret)
             return result
 
-    @staticmethod
-    def calculate_histogram(data_bin, grad_and_hess,
+    def calculate_histogram(self, data_bin, grad_and_hess,
                             bin_split_points, bin_sparse_points,
                             valid_features=None,
                             node_map=None,
@@ -291,21 +291,11 @@ class FeatureHistogram(object):
 
         LOGGER.debug("bin_shape is {}, node num is {}".format(bin_split_points.shape, len(node_map)))
 
-        batch_histogram_cal = functools.partial(
-            FeatureHistogram._batch_calculate_histogram,
-            bin_split_points=bin_split_points, bin_sparse_points=bin_sparse_points,
-            valid_features=valid_features, node_map=node_map,
-            use_missing=use_missing, zero_as_missing=zero_as_missing,
-            parent_nid_map=parent_node_id_map,
-            sibling_node_id_map=sibling_node_id_map)
-
-        agg_histogram = functools.partial(FeatureHistogram._aggregate_histogram, node_map=node_map)
         # reformat, now format is: key, ((data_instance, node position), (g, h))
         batch_histogram_intermediate_rs = data_bin.join(grad_and_hess, lambda data_inst, g_h: (data_inst, g_h))
 
-        if batch_histogram_intermediate_rs.count() == 0:
+        if batch_histogram_intermediate_rs.count() == 0: # if input sample number is 0, return empty histograms
 
-            # if input sample number is 0, return empty histograms
             node_histograms = FeatureHistogram._generate_histogram_template(node_map, bin_split_points, valid_features,
                                                                             1 if use_missing else 0)
             hist_list = FeatureHistogram._generate_histogram_key_value_list(node_histograms, node_map, bin_split_points,
@@ -319,9 +309,23 @@ class FeatureHistogram(object):
                 histograms_table = session.parallelize(hist_list, partition=data_bin.partitions, include_key=True)
                 return FeatureHistogram._construct_table(histograms_table)
 
-        else:
-            histograms_table = batch_histogram_intermediate_rs.mapReducePartitions(batch_histogram_cal,
-                                                                                   agg_histogram)
+        else:  # compute histograms
+
+            batch_histogram_cal = functools.partial(
+                FeatureHistogram._batch_calculate_histogram,
+                bin_split_points=bin_split_points, bin_sparse_points=bin_sparse_points,
+                valid_features=valid_features, node_map=node_map,
+                use_missing=use_missing, zero_as_missing=zero_as_missing,
+                parent_nid_map=parent_node_id_map,
+                sibling_node_id_map=sibling_node_id_map,
+                stable_reduce=self.stable_reduce
+            )
+
+            agg_func = self._stable_hist_aggregate if self.stable_reduce else self._hist_aggregate
+            histograms_table = batch_histogram_intermediate_rs.mapReducePartitions(batch_histogram_cal, agg_func)
+            if self.stable_reduce:
+                histograms_table = histograms_table.mapValues(self._stable_hist_reduce)
+
             if ret == "tensor":
                 feature_num = bin_split_points.shape[0]
                 histogram_list = list(histograms_table.collect())
@@ -375,7 +379,7 @@ class FeatureHistogram(object):
         return new_value
 
     @staticmethod
-    def _aggregate_histogram(fid_histogram1, fid_histogram2, node_map):
+    def _hist_aggregate(fid_histogram1, fid_histogram2):
         # add histograms with same key((node id, feature id)) together
         fid_1, histogram1 = fid_histogram1
         fid_2, histogram2 = fid_histogram2
@@ -385,6 +389,29 @@ class FeatureHistogram(object):
                 aggregated_res[i].append(histogram1[i][j] + histogram2[i][j])
 
         return fid_1, aggregated_res
+
+    @staticmethod
+    def _stable_hist_aggregate(fid_histogram1, fid_histogram2):
+
+        partition_id_list_1, hist_val_list_1 = fid_histogram1
+        partition_id_list_2, hist_val_list_2 = fid_histogram2
+        value = [partition_id_list_1+partition_id_list_2, hist_val_list_1+hist_val_list_2]
+        return value
+
+    @staticmethod
+    def _stable_hist_reduce(value):
+
+        # [partition1, partition2, ...], [(fid, hist), (fid, hist) .... ]
+        partition_id_list, hist_list = value
+        order = np.argsort(partition_id_list)
+        aggregated_hist = None
+        for idx in order:  # make sure reduce in order to avoid float error
+            hist = hist_list[idx]
+            if aggregated_hist is None:
+                aggregated_hist = hist
+                continue
+            aggregated_hist = FeatureHistogram._hist_aggregate(aggregated_hist, hist)
+        return aggregated_hist
 
     @staticmethod
     def _generate_histogram_template(node_map: dict, bin_split_points: np.ndarray, valid_features: dict,
@@ -414,7 +441,7 @@ class FeatureHistogram(object):
 
     @staticmethod
     def _generate_histogram_key_value_list(node_histograms, node_map, bin_split_points, parent_node_id_map,
-                                           sibling_node_id_map):
+                                           sibling_node_id_map, partition_key=None):
 
         # generate key_value hist list for DTable parallelization
         ret = []
@@ -428,6 +455,8 @@ class FeatureHistogram(object):
                 # if sibling_node_id_map is offered, recorded its sibling ids for histogram subtraction
                 value = (fid, node_histograms[node_idx][fid]) if sibling_node_id_map is None else \
                     ((fid, node_id, sibling_node_id_map[node_id]), node_histograms[node_idx][fid])
+                if partition_key is not None:
+                    value = [[partition_key], [value]]
                 ret.append((key, value))
 
         return ret
@@ -436,7 +465,7 @@ class FeatureHistogram(object):
     def _batch_calculate_histogram(kv_iterator, bin_split_points=None,
                                    bin_sparse_points=None, valid_features=None,
                                    node_map=None, use_missing=False, zero_as_missing=False,
-                                   parent_nid_map=None, sibling_node_id_map=None):
+                                   parent_nid_map=None, sibling_node_id_map=None, stable_reduce=False):
         data_bins = []
         node_ids = []
         grad = []
@@ -444,8 +473,14 @@ class FeatureHistogram(object):
 
         data_record = 0  # total instance number of this partition
 
+        partition_key = None  # this var is for stable reduce
+
         # go through iterator to collect g/h feature instances/ node positions
-        for _, value in kv_iterator:
+        for data_id, value in kv_iterator:
+
+            if partition_key is None and stable_reduce:  # first key of data is used as partition key
+                partition_key = data_id
+
             data_bin, nodeid_state = value[0]
             unleaf_state, nodeid = nodeid_state
             if unleaf_state == 0 or nodeid not in node_map:
@@ -526,7 +561,8 @@ class FeatureHistogram(object):
                                                                  zero_optim[node_idx][fid][2]
 
         ret = FeatureHistogram._generate_histogram_key_value_list(node_histograms, node_map, bin_split_points,
-                                                                  parent_nid_map, sibling_node_id_map)
+                                                                  parent_nid_map, sibling_node_id_map,
+                                                                  partition_key=partition_key)
         return ret
 
     @staticmethod
