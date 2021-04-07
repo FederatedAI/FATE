@@ -99,7 +99,10 @@ bash ./python/federatedml/test/run_test.sh
 
 9. Some common problem
     * If you have occurs "Too many open files" error, you may need to change the limit of open files set by your system. For mac system, you can try [this](https://superuser.com/questions/433746/is-there-a-fix-for-the-too-many-open-files-in-system-error-on-os-x-10-7-1). For Linux system, try [this](http://woshub.com/too-many-open-files-error-linux/)
-    * If gypm2 can not be installed, we recommend you install it with conda. Alternatively, you can try install the following basic dependencies by [this way](https://github.com/FederatedAI/FATE/tree/master/cluster-deploy#37-install-dependent-packages)
+    * If gypm2 can not be installed, we recommend you install it with conda. Alternatively, for mac,you can try install the following basic dependencies by:
+    ```
+   brew install gmp mpfr libmpc
+   ```
 
 10. Install FATE-Client and FATE-Test
 
