@@ -138,11 +138,11 @@ class IntersectModelBase(ModelBase):
 
     def fit(self, data):
         self.init_intersect_method()
-        import copy
-        schema = copy.deepcopy(data.schema)
-        data = data.mapValues(lambda v: Instance(inst_id=v.features[0], features=v.features[1:], label=v.label))
-        schema["header"].pop(0)
-        data.schema = schema
+        # import copy
+        # schema = copy.deepcopy(data.schema)
+        # data = data.mapValues(lambda v: Instance(inst_id=v.features[0], features=v.features[1:], label=v.label))
+        # schema["header"].pop(0)
+        # data.schema = schema
 
         if data_overview.check_with_inst_id(data) or self.model_param.repeated_id_process:
             self.use_match_id_process = True
