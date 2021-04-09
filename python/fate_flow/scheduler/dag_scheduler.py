@@ -77,9 +77,7 @@ class DAGScheduler(Cron):
         job.f_dsl = job_dsl
         job.f_train_runtime_conf = train_runtime_conf
         job.f_roles = job_runtime_conf['role']
-        # use local work_mode if remote client is difference
-        work_mode = common_job_parameters.work_mode
-        job.f_work_mode = WORK_MODE
+        job.f_work_mode = common_job_parameters.work_mode
         job.f_initiator_role = job_initiator['role']
         job.f_initiator_party_id = job_initiator['party_id']
         job.f_role = job_initiator['role']
