@@ -31,6 +31,7 @@ from fate_flow.scheduling_apps.client import TrackerClient
 from fate_flow.db.db_models import TrackingOutputDataInfo, fill_db_model_object
 from fate_arch.computing import ComputingEngine
 from fate_flow.settings import WORK_MODE
+from fate_flow.controller.job_controller import JobController
 
 LOGGER = getLogger()
 
@@ -110,8 +111,11 @@ class TaskExecutor(object):
             task_parameters = RunParameters(
                 **file_utils.load_json_conf(args.config))
 
-            # use local work mode if it is different from the remote party
-            task_parameters.work_mode = WORK_MODE
+            # adjust parameters if work_mode is different from remote party
+            if task_parameters.work_mode != WORK_MODE:
+                task_parameters.work_mode = WORK_MODE
+                JobController.backend_compatibility(
+                    job_parameter=task_parameters)
 
             job_parameters = task_parameters
             if job_parameters.assistant_role:
