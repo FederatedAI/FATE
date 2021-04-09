@@ -150,7 +150,7 @@ class JobController(object):
                             4)
                         federation_info['policy_id'] = string_utils.random_string(
                             10)
-                        job_parameters.federation_info = federation_inf
+                        job_parameters.federation_info = federation_info
 
         if job_parameters.federated_mode is None:
             if job_parameters.computing_engine in [ComputingEngine.EGGROLL, ComputingEngine.SPARK]:
