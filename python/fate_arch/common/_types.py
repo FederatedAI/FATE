@@ -12,12 +12,25 @@ class WorkMode(IntEnum):
         return self.value == self.CLUSTER
 
 
+class StandaloneBackend(IntEnum):
+    STANDALONE_PURE = 0
+    STANDALONE_RABBITMQ = 1
+    STANDALONE_PULSAR = 2
+
+    def is_standalone_pure(self):
+        return self.value == self.STANDALONE_PURE
+
+    def is_standalone_rabbitmq(self):
+        return self.value == self.STANDALONE_RABBITMQ
+
+    def is_standalone_pulsar(self):
+        return self.value == self.STANDALONE_PULSAR
+
+
 class Backend(IntEnum):
     EGGROLL = 0
     SPARK_RABBITMQ = 1
     SPARK_PULSAR = 2
-    STANDALONE_SINGLE = 0
-    STANDALONE_MULTIPLE = 1
 
     def is_spark_rabbitmq(self):
         return self.value == self.SPARK_RABBITMQ
@@ -27,12 +40,6 @@ class Backend(IntEnum):
 
     def is_eggroll(self):
         return self.value == self.EGGROLL
-
-    def is_standalone_single(self):
-        return self.value == self.STANDALONE_SINGLE
-
-    def is_standalone_multiple(self):
-        return self.value == self.STANDALONE_MULTIPLE
 
 
 class EngineType(object):

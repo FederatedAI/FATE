@@ -26,7 +26,7 @@ from fate_flow.operation.job_saver import JobSaver
 from fate_arch.common.base_utils import json_dumps, current_timestamp
 from fate_flow.controller.task_controller import TaskController
 from fate_flow.manager.resource_manager import ResourceManager
-from fate_arch.common import WorkMode, Backend
+from fate_arch.common import WorkMode, Backend, StandaloneBackend
 from fate_arch.common import FederatedMode
 from fate_arch.computing import ComputingEngine
 from fate_arch.federation import FederationEngine
@@ -92,14 +92,14 @@ class JobController(object):
             if job_parameters.work_mode is None or job_parameters.backend is None:
                 raise RuntimeError("unable to find compatible backend engines")
             work_mode = WorkMode(job_parameters.work_mode)
-            backend = Backend(job_parameters.backend)
 
             if work_mode == WorkMode.STANDALONE:
-                if backend == backend.STANDALONE_SINGLE:
+                backend = StandaloneBackend(job_parameters.backend)
+                if backend == StandaloneBackend.STANDALONE_PURE:
                     job_parameters.computing_engine = ComputingEngine.STANDALONE
                     job_parameters.federation_engine = FederationEngine.STANDALONE
                     job_parameters.storage_engine = StorageEngine.STANDALONE
-                elif backend == backend.STANDALONE_MULTIPLE:
+                elif backend == StandaloneBackend.STANDALONE_RABBITMQ:
                     job_parameters.computing_engine = ComputingEngine.SPARK
                     job_parameters.federation_engine = FederationEngine.RABBITMQ
                     job_parameters.storage_engine = StorageEngine.LOCAL
@@ -109,9 +109,14 @@ class JobController(object):
                     federation_info['union_name'] = string_utils.random_string(4)
                     federation_info['policy_id'] = string_utils.random_string(10)
                     job_parameters.federation_info = federation_info
+                elif backend == StandaloneBackend.STANDALONE_PULSAR:
+                    job_parameters.computing_engine = ComputingEngine.SPARK
+                    job_parameters.federation_engine = FederationEngine.PULSAR
+                    job_parameters.storage_engine = StorageEngine.LOCAL
 
             if work_mode == WorkMode.CLUSTER:
-                if backend == backend.EGGROLL:
+                backend = Backend(job_parameters.backend)
+                if backend == Backend.EGGROLL:
                     job_parameters.computing_engine = ComputingEngine.EGGROLL
                     job_parameters.federation_engine = FederationEngine.EGGROLL
                     job_parameters.storage_engine = StorageEngine.EGGROLL

@@ -40,7 +40,7 @@ from fate_flow.utils.service_utils import ServiceUtils
 from fate_flow.utils.detect_utils import check_config
 from fate_flow.utils.model_utils import gen_party_model_id, check_if_deployed
 from fate_flow.entity.types import ModelOperation, TagOperation
-from fate_arch.common import file_utils, WorkMode, FederatedMode, Backend
+from fate_arch.common import file_utils, WorkMode, FederatedMode, Backend, StandaloneBackend
 from fate_flow.utils.config_adapter import JobRuntimeConfigAdapter
 
 manager = Flask(__name__)
@@ -91,7 +91,7 @@ def load_model():
     load_status_msg = 'success'
     load_status_info['detail'] = {}
     if "federated_mode" not in request_config['job_parameters']:
-        if request_config["job_parameters"]["work_mode"] == WorkMode.STANDALONE and request_config["job_parameters"]["backend"] == Backend.STANDALONE_SINGLE:
+        if request_config["job_parameters"]["work_mode"] == WorkMode.STANDALONE and request_config["job_parameters"]["backend"] == StandaloneBackend.STANDALONE_PURE:
             request_config['job_parameters']["federated_mode"] = FederatedMode.SINGLE
         elif request_config["job_parameters"]["work_mode"] == WorkMode.CLUSTER:
             request_config['job_parameters']["federated_mode"] = FederatedMode.MULTIPLE
