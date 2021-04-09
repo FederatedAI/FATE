@@ -15,7 +15,7 @@
 #
 import typing
 
-from fate_arch.common import WorkMode, Backend, FederatedMode
+from fate_arch.common import WorkMode, Backend, StandaloneBackend, FederatedMode
 from fate_arch.computing import ComputingEngine
 from fate_arch.federation import FederationEngine
 
@@ -29,15 +29,19 @@ def backend_compatibility(work_mode: typing.Union[WorkMode, int] = WorkMode.STAN
             raise RuntimeError("unable to find compatible engines")
         if isinstance(work_mode, int):
             work_mode = WorkMode(work_mode)
-        if isinstance(backend, int):
-            backend = Backend(backend)
         if work_mode == WorkMode.STANDALONE:
-            if backend == Backend.STANDALONE_SINGLE:
+            if isinstance(backend, int):
+                backend = StandaloneBackend(backend)
+            if backend == StandaloneBackend.STANDALONE_PURE:
                 return ComputingEngine.STANDALONE, FederationEngine.STANDALONE, FederatedMode.SINGLE
-            if backend == Backend.STANDALONE_MULTIPLE:
+            if backend == StandaloneBackend.STANDALONE_RABBITMQ:
                 return ComputingEngine.SPARK, FederationEngine.RABBITMQ, FederatedMode.MULTIPLE
+            if backend == StandaloneBackend.STANDALONE_PULSAR:
+                return ComputingEngine.SPARK, FederationEngine.PULSAR, FederatedMode.MULTIPLE
 
         if work_mode == WorkMode.CLUSTER:
+            if isinstance(backend, int):
+                backend = Backend(backend)
             if backend == Backend.EGGROLL:
                 return ComputingEngine.EGGROLL, FederationEngine.EGGROLL, FederatedMode.MULTIPLE
             if backend == Backend.SPARK_RABBITMQ:
