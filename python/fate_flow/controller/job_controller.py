@@ -117,12 +117,13 @@ class JobController(object):
                     job_parameters.storage_engine = StorageEngine.LOCAL
 
                     # add mq info
-                    federation_info = {}
-                    federation_info['union_name'] = string_utils.random_string(
-                        4)
-                    federation_info['policy_id'] = string_utils.random_string(
-                        10)
-                    job_parameters.federation_info = federation_info
+                    if job_parameters.federation_info == None:
+                        federation_info = {}
+                        federation_info['union_name'] = string_utils.random_string(
+                            4)
+                        federation_info['policy_id'] = string_utils.random_string(
+                            10)
+                        job_parameters.federation_info = federation_info
                 elif backend == StandaloneBackend.STANDALONE_PULSAR:
                     job_parameters.computing_engine = ComputingEngine.SPARK
                     job_parameters.federation_engine = FederationEngine.PULSAR
@@ -143,12 +144,13 @@ class JobController(object):
                     job_parameters.federation_engine = FederationEngine.RABBITMQ
                     job_parameters.storage_engine = StorageEngine.HDFS
                     # add mq info
-                    federation_info = {}
-                    federation_info['union_name'] = string_utils.random_string(
-                        4)
-                    federation_info['policy_id'] = string_utils.random_string(
-                        10)
-                    job_parameters.federation_info = federation_info
+                    if job_parameters.federation_info == None:
+                        federation_info = {}
+                        federation_info['union_name'] = string_utils.random_string(
+                            4)
+                        federation_info['policy_id'] = string_utils.random_string(
+                            10)
+                        job_parameters.federation_info = federation_inf
 
         if job_parameters.federated_mode is None:
             if job_parameters.computing_engine in [ComputingEngine.EGGROLL, ComputingEngine.SPARK]:
