@@ -166,7 +166,7 @@ class Imputer(object):
 
         Returns
         -------
-        list of transform value for each column, length equal to fature count of input data
+        list of transform value for each column, length equal to feature count of input data
 
         """
         summary_obj = MultivariateStatisticalSummary(data, -1, abnormal_list=self.missing_value_list)
@@ -199,7 +199,7 @@ class Imputer(object):
 
     def __fit_replace(self, data, replace_method, replace_value=None, output_format=None, quantile=None,
                       col_replace_method=None):
-        if replace_method is not None or col_replace_method is not None and replace_method != consts.DESIGNATED:
+        if (replace_method is not None and replace_method != consts.DESIGNATED) or col_replace_method is not None:
             replace_method_per_col, skip_cols = self.__get_cols_transform_method(data, replace_method, col_replace_method)
             cols_transform_value = self.__get_cols_transform_value(data, replace_method_per_col,
                                                                    quantile=quantile,
