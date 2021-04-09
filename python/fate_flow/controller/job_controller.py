@@ -31,6 +31,7 @@ from fate_arch.common import FederatedMode
 from fate_arch.computing import ComputingEngine
 from fate_arch.federation import FederationEngine
 from fate_arch.storage import StorageEngine
+from fate_flow.settings import WORK_MODE
 
 
 class JobController(object):
@@ -51,6 +52,17 @@ class JobController(object):
         schedule_logger(job_id).info(
             'job parameters:{}'.format(job_parameters))
         job_parameters = RunParameters(**job_parameters)
+
+        # adjust parameters if work_mode is different from remote party
+        if job_parameters.work_mode != WORK_MODE:
+            schedule_logger(job_id).info(
+                'received job config with different work mode defined in settings, update the backend compatibility forcibly')
+            job_parameters.work_mode = WORK_MODE
+            JobController.backend_compatibility(
+                job_parameters=job_parameters, force_update=True)
+
+            schedule_logger(job_id).info(
+                'job parameters after forced updated, job parameters:{}'.format(job_parameters.to_dict()))
 
         # save new job into db
         if role == job_info["initiator_role"] and party_id == job_info["initiator_party_id"]:
@@ -86,9 +98,9 @@ class JobController(object):
         JobSaver.create_job(job_info=job_info)
 
     @classmethod
-    def backend_compatibility(cls, job_parameters: RunParameters):
+    def backend_compatibility(cls, job_parameters: RunParameters, force_update: bool = False):
         # compatible with previous 1.5 versions
-        if job_parameters.computing_engine is None or job_parameters.federation_engine is None:
+        if job_parameters.computing_engine is None or job_parameters.federation_engine is None or force_update:
             if job_parameters.work_mode is None or job_parameters.backend is None:
                 raise RuntimeError("unable to find compatible backend engines")
             work_mode = WorkMode(job_parameters.work_mode)
@@ -104,10 +116,12 @@ class JobController(object):
                     job_parameters.federation_engine = FederationEngine.RABBITMQ
                     job_parameters.storage_engine = StorageEngine.LOCAL
 
-                     # add mq info
+                    # add mq info
                     federation_info = {}
-                    federation_info['union_name'] = string_utils.random_string(4)
-                    federation_info['policy_id'] = string_utils.random_string(10)
+                    federation_info['union_name'] = string_utils.random_string(
+                        4)
+                    federation_info['policy_id'] = string_utils.random_string(
+                        10)
                     job_parameters.federation_info = federation_info
                 elif backend == StandaloneBackend.STANDALONE_PULSAR:
                     job_parameters.computing_engine = ComputingEngine.SPARK
@@ -130,8 +144,10 @@ class JobController(object):
                     job_parameters.storage_engine = StorageEngine.HDFS
                     # add mq info
                     federation_info = {}
-                    federation_info['union_name'] = string_utils.random_string(4)
-                    federation_info['policy_id'] = string_utils.random_string(10)
+                    federation_info['union_name'] = string_utils.random_string(
+                        4)
+                    federation_info['policy_id'] = string_utils.random_string(
+                        10)
                     job_parameters.federation_info = federation_info
 
         if job_parameters.federated_mode is None:
@@ -192,6 +208,7 @@ class JobController(object):
         common_task_info["party_id"] = party_id
         common_task_info["federated_mode"] = job_parameters.federated_mode
         common_task_info["federated_status_collect_type"] = job_parameters.federated_status_collect_type
+
         if task_version:
             common_task_info["task_version"] = task_version
         if not component_name:
