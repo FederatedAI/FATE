@@ -116,7 +116,7 @@ bash ./python/federatedml/test/run_test.sh
    ```
 
 
-There are a few algorithms under [examples](../examples/dsl/v2) folder, try them out!
+Please refer [here](../examples/pipeline/README.rst) for a quick start tutorial.
 
 You can also experience the fateboard access via a browser:
 Http://hostip:8080.

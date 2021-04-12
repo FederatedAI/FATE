@@ -39,7 +39,7 @@ FATE is `/data/projects/fate`.
 
    .. code-block:: bash
 
-      # provide real ip address and port info to initialize pipeline
+      # provide real ip address and port info of fate-flow server to initialize pipeline. Typically, the default ip and port are 127.0.0.1:8080.
       pipeline init --ip 127.0.0.1 --port 9380
       # optionally, set log directory of Pipeline
       cd /data/projects/fate/python/fate_client/pipeline
@@ -47,8 +47,22 @@ FATE is `/data/projects/fate`.
 
 4. upload data with FATE-Pipeline
 
-   Script to upload data can be found `here <./demo/pipeline-upload.py>`_.
+    Before start a modeling task, the data to be used should be uploaded. Typically, a party is usually a cluster which include multiple nodes. Thus, when we upload these data, the data will be allocated to those nodes.
+
+   We have provided an example script to upload data:  `here <./demo/pipeline-upload.py>`_.
    User may modify file path and table name to upload arbitrary data following instructions in the script.
+
+   .. code-block:: python
+            pipeline_upload.add_upload_data(file=os.path.join(data_base, "examples/data/breast_hetero_guest.csv"),
+                                    table_name=dense_data["name"],             # table name
+                                    namespace=dense_data["namespace"],         # namespace
+                                    head=1, partition=partition)               # data info
+            pipeline_upload.add_upload_data(file=os.path.join(data_base, "examples/data/breast_hetero_host.csv"),
+                                    table_name=tag_data["name"],
+                                    namespace=tag_data["namespace"],
+                                    head=1, partition=partition)
+
+
    For a list of available example data and general guide on table naming, please refer
    to this `guide <../data/README.rst>`_.
 
@@ -75,6 +89,8 @@ FATE is `/data/projects/fate`.
          2021-03-25 17:13:27Running component upload_0, time elapse: 0:00:03
          2021-03-25 17:13:29.480 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:129 - Job is success!!! Job id is 202103251713251765644
          2021-03-25 17:13:29.480 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:130 - Total time: 0:00:04
+
+    If you would like to change this demo and use your own data, please
 
 4. run a FATE-Pipeline fit job
 
