@@ -47,11 +47,11 @@ FATE is `/data/projects/fate`.
 
 4. upload data with FATE-Pipeline
 
-Before start a modeling task, the data to be used should be uploaded. Typically, a party is usually a cluster which include multiple nodes. Thus, when we upload these data, the data will be allocated to those nodes.
+   Before start a modeling task, the data to be used should be uploaded. Typically, a party is usually a cluster which include multiple nodes. Thus, when we upload these data, the data will be allocated to those nodes.
 
-We have provided an example script to upload data:  `here <./demo/pipeline-upload.py>`_.
+   We have provided an example script to upload data:  `here <./demo/pipeline-upload.py>`_.
 
-Set your fate path in the beginning of this script:
+   Set your fate path in the beginning of this script:
 
    .. code-block:: python
         #  path to data
@@ -72,8 +72,7 @@ User may modify file path and table name to upload arbitrary data following inst
                                     head=1, partition=partition)
 
 
-For a list of available example data and general guide on table naming, please refer
-   to this `guide <../data/README.md>`_.
+   For a list of available example data and general guide on table naming, please refer to this `guide <../data/README.md>`_.
 
    .. code-block:: bash
 
@@ -108,13 +107,13 @@ For a list of available example data and general guide on table naming, please r
       cd /data/projects/fate
       python examples/pipeline/demo/pipeline-quick-demo.py
 
-The details of each step of this demo can be shown `here <./demo/pipeline-quick-demo.py>`_.
+   The details of each step of this demo can be shown `here <./demo/pipeline-quick-demo.py>`_.
 
    This quick demo shows how to build to a heterogeneous SecureBoost job using uploaded data from previous step.
    Note that data are uploaded to the same machine in the previous step. To run the below job with cluster deployment,
    make sure to first upload data to corresponding parties and set role information and job parameters accordingly.
 
-Progress of job execution will be printed as modules run.
+   Progress of job execution will be printed as modules run.
    A message indicating final status ("success") will be printed when job finishes.
    The script queries final model information when model training completes.
 
