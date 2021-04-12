@@ -51,16 +51,13 @@ FATE is `/data/projects/fate`.
 
    We have provided an example script to upload data:  `here <./demo/pipeline-upload.py>`_.
 
-   Set your fate path in the beginning of this script:
-
-   .. code-block:: python
-        #  path to data
-        #  default fate installation path
-        DATA_BASE = "/data/projects/fate"
-
 User may modify file path and table name to upload arbitrary data following instructions in the script.
 
    .. code-block:: python
+
+            #  path to data
+            #  default fate installation path
+            DATA_BASE = "/data/projects/fate"
 
             pipeline_upload.add_upload_data(file=os.path.join(data_base, "examples/data/breast_hetero_guest.csv"),
                                     table_name=dense_data["name"],             # table name
