@@ -73,7 +73,7 @@ User may modify file path and table name to upload arbitrary data following inst
 
 
 For a list of available example data and general guide on table naming, please refer
-   to this `guide <../data/README.rst>`_.
+   to this `guide <../data/README.md>`_.
 
    .. code-block:: bash
 
@@ -101,7 +101,7 @@ For a list of available example data and general guide on table naming, please r
 
     If you would like to change this demo and use your own data, please
 
-4. run a FATE-Pipeline fit job
+5. run a FATE-Pipeline fit job
 
    .. code-block:: bash
 
@@ -111,7 +111,7 @@ For a list of available example data and general guide on table naming, please r
    This quick demo shows how to build to a heterogeneous SecureBoost job using uploaded data from previous step.
    Note that data are uploaded to the same machine in the previous step. To run the below job with cluster deployment,
    make sure to first upload data to corresponding parties and set role information and job parameters accordingly
-   `here <./demo/pipeline-quick-demo.py>`_.
+   `here <./demo/pipeline-quick-demo.py>`_.  
    Progress of job execution will be printed as modules run.
    A message indicating final status ("success") will be printed when job finishes.
    The script queries final model information when model training completes.
@@ -128,7 +128,7 @@ For a list of available example data and general guide on table naming, please r
         2021-03-25 17:14:32.446 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:129 - Job is success!!! Job id is 202103251713510969875
         2021-03-25 17:14:32.447 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:130 - Total time: 0:00:41
 
-5. (another example) run FATE-Pipeline fit and predict jobs
+6. (another example) run FATE-Pipeline fit and predict jobs
 
    .. code-block:: bash
 
