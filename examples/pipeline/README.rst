@@ -108,11 +108,13 @@ For a list of available example data and general guide on table naming, please r
       cd /data/projects/fate
       python examples/pipeline/demo/pipeline-quick-demo.py
 
+The details of each step of this demo can be shown `here <./demo/pipeline-quick-demo.py>`_.
+
    This quick demo shows how to build to a heterogeneous SecureBoost job using uploaded data from previous step.
    Note that data are uploaded to the same machine in the previous step. To run the below job with cluster deployment,
-   make sure to first upload data to corresponding parties and set role information and job parameters accordingly
-   `here <./demo/pipeline-quick-demo.py>`_.  
-   Progress of job execution will be printed as modules run.
+   make sure to first upload data to corresponding parties and set role information and job parameters accordingly.
+
+Progress of job execution will be printed as modules run.
    A message indicating final status ("success") will be printed when job finishes.
    The script queries final model information when model training completes.
 
