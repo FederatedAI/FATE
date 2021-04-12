@@ -50,6 +50,13 @@ FATE is `/data/projects/fate`.
     Before start a modeling task, the data to be used should be uploaded. Typically, a party is usually a cluster which include multiple nodes. Thus, when we upload these data, the data will be allocated to those nodes.
 
    We have provided an example script to upload data:  `here <./demo/pipeline-upload.py>`_.
+
+   Set your fate path in the beginning of this script:
+   .. code-block:: python
+        # path to data
+        # default fate installation path
+        DATA_BASE = "/data/projects/fate"
+
    User may modify file path and table name to upload arbitrary data following instructions in the script.
 
    .. code-block:: python
