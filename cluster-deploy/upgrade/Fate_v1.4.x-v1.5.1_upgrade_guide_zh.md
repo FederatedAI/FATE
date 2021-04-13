@@ -8,29 +8,29 @@
 ### 1.1 1.4.0 -> 1.5.1
 ```bash
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate_1_4_0-1_5_1.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/eggroll_2.0.x-2.2.1.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/eggroll_2_0_x-2_2_1.tar.gz
 ```
 
 ### 1.2 1.4.3 -> 1.5.1
 ```bash
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate_1_4_3-1_5_1.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/eggroll_2.0.x-2.2.1.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/eggroll_2_0_x-2_2_1.tar.gz
 ```
 
 ### 1.3 1.4.4 -> 1.5.1
 ```bash
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate_1_4_4-1_5_1.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/eggroll_2.0.x-2.2.1.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/eggroll_2_0_x-2_2_1.tar.gz
 ```
 
 ## 2. 升级eggroll部分
 
-参考eggroll升级包解压目录后eggroll_upgrade_guide_zh.md
+参考eggroll升级包解压目录后upgrade_helper_guide_zh.md
 
 
 ## 3. 升级fate部分
 
-参考fate升级包解压目录后fate_upgrade_guide_zh.md
+参考fate升级包解压目录后fate_upgrade_zh.md
 
 
 ## 4. 安装新版本fate client
