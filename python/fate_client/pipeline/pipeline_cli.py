@@ -79,7 +79,47 @@ def _init(**kwargs):
     print("Pipeline configuration succeeded.")
 
 
+@click.group("config", help="pipeline config tool")
+def config_group():
+    """
+    pipeline config
+    """
+    pass
+
+
+@config_group.command(name="show")
+def _show():
+    """
+        \b
+        - DESCRIPTION:
+            Pipeline Config Show Command. Will show config details.
+
+        \b
+        - USAGE:
+            pipeline config show
+    """
+    with Path(default_config).open("r") as fin:
+        config = yaml.safe_load(fin)
+        click.echo(f"Pipeline Config: {yaml.dump(config)}")
+
+
+@config_group.command(name="check")
+def _check():
+    """
+        \b
+        - DESCRIPTION:
+            Pipeline Config Check Command. Will check for Flow Connection Status.
+
+        \b
+        - USAGE:
+            pipeline config check
+    """
+    #@TODO: check whether flow connection with current flow ip & port normal
+    pass
+
+
 cli.add_command(_init)
+cli.add_command(config_group)
 
 
 if __name__ == '__main__':
