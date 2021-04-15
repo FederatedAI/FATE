@@ -109,6 +109,7 @@ class ModelBase(object):
         LOGGER.debug("saved_result is : {}, data_output: {}".format(saved_result, self.data_output))
         # self.check_consistency()
         self.save_summary()
+        # LOGGER.debug(f"data_output count: {self.data_output.count()}")
 
     def get_metrics_param(self):
         return EvaluateParam(eval_type="binary",
@@ -126,6 +127,10 @@ class ModelBase(object):
         pass
 
     def fit(self, *args):
+        pass
+
+    def explain(self, background_data, explain_data):
+        raise NotImplementedError("In base model")
         pass
 
     def transform(self, data_inst):

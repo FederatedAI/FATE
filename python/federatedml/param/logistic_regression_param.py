@@ -25,6 +25,7 @@ from federatedml.param.encrypted_mode_calculation_param import EncryptedModeCalc
 from federatedml.param.init_model_param import InitParam
 from federatedml.param.predict_param import PredictParam
 from federatedml.param.stepwise_param import StepwiseParam
+from federatedml.param.shap_param import ExplainableParam
 from federatedml.param.sqn_param import StochasticQuasiNewtonParam
 from federatedml.util import consts
 
@@ -107,7 +108,7 @@ class LogisticParam(BaseParam):
                  batch_size=-1, learning_rate=0.01, init_param=InitParam(),
                  max_iter=100, early_stop='diff', encrypt_param=EncryptParam(),
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
-                 decay=1, decay_sqrt=True,
+                 decay=1, decay_sqrt=True, explainable_param=ExplainableParam(),
                  multi_class='ovr', validation_freqs=None, early_stopping_rounds=None,
                  stepwise_param=StepwiseParam(), floating_point_precision=23,
                  metrics=None,
@@ -126,6 +127,7 @@ class LogisticParam(BaseParam):
         self.encrypt_param = encrypt_param
         self.predict_param = copy.deepcopy(predict_param)
         self.cv_param = copy.deepcopy(cv_param)
+        self.explainable_param = copy.deepcopy(explainable_param)
         self.decay = decay
         self.decay_sqrt = decay_sqrt
         self.multi_class = multi_class
@@ -234,6 +236,7 @@ class LogisticParam(BaseParam):
                 (not isinstance(self.floating_point_precision, int) or\
                  self.floating_point_precision < 0 or self.floating_point_precision > 63):
             raise ValueError("floating point precision should be null or a integer between 0 and 63")
+        self.explainable_param.check()
         return True
 
 
@@ -269,7 +272,7 @@ class HomoLogisticParam(LogisticParam):
                  metrics=['auc', 'ks'],
                  use_first_metric_only=False,
                  use_proximal=False,
-                 mu=0.1
+                 mu=0.1, explainable_param=ExplainableParam()
                  ):
         super(HomoLogisticParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
                                                 batch_size=batch_size,
@@ -280,7 +283,8 @@ class HomoLogisticParam(LogisticParam):
                                                 validation_freqs=validation_freqs,
                                                 decay=decay, decay_sqrt=decay_sqrt,
                                                 early_stopping_rounds=early_stopping_rounds,
-                                                metrics=metrics, use_first_metric_only=use_first_metric_only)
+                                                metrics=metrics, use_first_metric_only=use_first_metric_only,
+                                                explainable_param=explainable_param)
         self.re_encrypt_batches = re_encrypt_batches
         self.aggregate_iters = aggregate_iters
         self.use_proximal = use_proximal
@@ -324,7 +328,8 @@ class HeteroLogisticParam(LogisticParam):
                  decay=1, decay_sqrt=True, sqn_param=StochasticQuasiNewtonParam(),
                  multi_class='ovr', validation_freqs=None, early_stopping_rounds=None,
                  metrics=['auc', 'ks'], floating_point_precision=23,
-                 use_first_metric_only=False, stepwise_param=StepwiseParam()
+                 use_first_metric_only=False, stepwise_param=StepwiseParam(),
+                 explainable_param=ExplainableParam()
                  ):
         super(HeteroLogisticParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
                                                   batch_size=batch_size,
@@ -337,7 +342,8 @@ class HeteroLogisticParam(LogisticParam):
                                                   early_stopping_rounds=early_stopping_rounds,
                                                   metrics=metrics, floating_point_precision=floating_point_precision,
                                                   use_first_metric_only=use_first_metric_only,
-                                                  stepwise_param=stepwise_param)
+                                                  stepwise_param=stepwise_param,
+                                                  explainable_param=explainable_param)
         self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
         self.sqn_param = copy.deepcopy(sqn_param)
 

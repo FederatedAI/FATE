@@ -194,3 +194,9 @@ class HeteroLRGuest(HeteroLRBase):
         predict_result = self.predict_score_to_output(data_instances, pred_prob, classes=[0, 1], threshold=threshold)
 
         return predict_result
+
+    def explain(self, background_data, explain_data):
+        # TODO: Implement explain functions
+        LOGGER.debug(f"Background_data: {background_data},"
+                     f"explain_data: {explain_data}")
+        return explain_data
