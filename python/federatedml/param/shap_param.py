@@ -24,11 +24,12 @@ class KernelSHAPParam(BaseParam):
 
 class SHAPParam(BaseParam):
 
-    def __init__(self, interpret_limit=10, subset_sample_num='auto', random_seed=100):
+    def __init__(self, interpret_limit=10, subset_sample_num='auto', random_seed=100, need_shap=False):
         super(SHAPParam, self).__init__()
         self.interpret_limit = interpret_limit
         self.subset_sample_num = subset_sample_num
         self.random_seed = random_seed
+        self.need_shap = need_shap
 
     def check(self):
         self.check_positive_integer(self.interpret_limit, 'interpret_limit')
