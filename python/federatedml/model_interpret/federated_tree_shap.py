@@ -148,7 +148,7 @@ class TreeSHAP(ModelBase):
         rs = [i for i in range(feat_len, feat_len+host_num)]
         return rs
 
-    def explain(self, data_arr, tree_param, routes, host_fed_feat_idx):
+    def explain_an_instance(self, data_arr, tree_param, routes, host_fed_feat_idx):
 
         tree_param = copy.deepcopy(tree_param)
         for route, host_idx in zip(routes, host_fed_feat_idx):
@@ -190,7 +190,7 @@ class TreeSHAP(ModelBase):
             contribs = []
             for sample_id, feat in zip(ids, data_arr):
                 routes = [host_route[sample_id] for host_route in hosts_sample_route_map]
-                contrib = self.explain(feat, self.tree_param, routes, host_fed_feat_idx)
+                contrib = self.explain_an_instance(feat, self.tree_param, routes, host_fed_feat_idx)
                 if self.class_num > 2:
                     contrib = contrib.reshape(self.class_num, -1)
                 contribs.append(contrib)
