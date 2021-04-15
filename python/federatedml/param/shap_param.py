@@ -10,3 +10,14 @@ class TreeSHAPParam(BaseParam):
 
     def check(self):
         self.check_positive_integer(self.interpret_limit, 'interpret limits')
+
+
+class KernelSHAPParam(BaseParam):
+
+    def __init__(self, interpret_limit=10):
+        super(KernelSHAPParam, self).__init__()
+        self.interpret_limit = interpret_limit
+
+    def check(self):
+        self.check_positive_integer(self.interpret_limit, 'interpret limits')
+

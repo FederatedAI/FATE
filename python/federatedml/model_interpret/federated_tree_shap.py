@@ -24,6 +24,7 @@ class TreeSHAP(ModelBase):
         self.run_mode = consts.HOMO
         self.model_param = TreeSHAPParam()
         self.transfer_variable = SHAPTransferVariable()
+        self.class_num = 1
 
         self.left_dir_split_val, self.right_dir_split_val = 2, 0
         self.mock_fed_feature = 1  # 1<2 go left, 0<1 go right
@@ -157,7 +158,6 @@ class TreeSHAP(ModelBase):
         to_predict_sample = self.extend_host_fed_feat(data_arr, len(host_fed_feat_idx))
         predict_rs = lgb_model.predict([to_predict_sample])
         contrib = lgb_model.predict([to_predict_sample], pred_contrib=True)
-        LOGGER.debug('predict rs {}, contrib {}'.format(predict_rs, contrib))
         return contrib
 
     def hetero_fit(self, data_inst):
@@ -181,6 +181,8 @@ class TreeSHAP(ModelBase):
             LOGGER.debug('get route map from {} host'.format(len(hosts_sample_route_map)))
             LOGGER.debug('get route map {} '.format(hosts_sample_route_map))
 
+            feat_name = data_inst.schema['header']
+            feat_num = len(feat_name) + len(hosts_sample_route_map)
             host_fed_feat_idx = self.get_fed_host_feat_idx(len(hosts_sample_route_map))
             self.add_host_feat_mapping(host_fed_feat_idx)
 
@@ -189,13 +191,11 @@ class TreeSHAP(ModelBase):
             for sample_id, feat in zip(ids, data_arr):
                 routes = [host_route[sample_id] for host_route in hosts_sample_route_map]
                 contrib = self.explain(feat, self.tree_param, routes, host_fed_feat_idx)
+                if self.class_num > 2:
+                    contrib = contrib.reshape(self.class_num, -1)
                 contribs.append(contrib)
 
-            feat_name = data_inst.schema['header']
-            import pickle
-            pickle.dump([feat_name, contribs],
-                        open('/home/cwj/FATE/standalone-fate-master-1.4.5/shap_result/shap_{}.pkl'.format(self.task_version_id), 'bw'))
-
+            LOGGER.debug('contrib {}'.format(contribs))
             LOGGER.info('explain model done')
 
     def load_model(self, model_dict):
@@ -216,6 +216,7 @@ class TreeSHAP(ModelBase):
                     self.tree_meta = model_content[content_name]
                 elif 'Param' in content_name:
                     self.tree_param = model_content[content_name]
+                    self.class_num = len(self.tree_param.classes_)
 
     def fit(self, data_inst):
 

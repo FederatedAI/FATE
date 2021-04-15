@@ -30,3 +30,5 @@ class SHAPTransferVariable(BaseTransferVariables):
     def __init__(self, flowid=0):
         super().__init__(flowid)
         self.host_node_route = self._create_variable(name='host_node_route', src=['host'], dst=['guest'])
+        self.selected_sample_index = self._create_variable(name='selected_sample_index', src=['guest'], dst=['host'])
+        self.random_sample_id = self._create_variable(name='random_sample_id', src=['guest'], dst=['host'])
