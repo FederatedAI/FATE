@@ -9,7 +9,7 @@ from federatedml.util import LOGGER
 from sklearn.linear_model import LinearRegression
 from scipy.special import binom
 from federatedml.transfer_variable.transfer_class.shap_transfer_variable import SHAPTransferVariable
-from federatedml.param.shap_param import KernelSHAPParam
+from federatedml.param.model_interpret_param import ModelInterpretParam
 from federatedml.feature.instance import Instance
 from fate_arch.session import computing_session as session
 from federatedml.util import consts
@@ -26,12 +26,23 @@ class HeteroSHAP(ModelBase):
         self.model = None
         self.run_local = False
         self.sample_id = None
-        self.reference_vec_type = 'all_zeros'
-        self.model_param = KernelSHAPParam()
         self.transfer_variable = SHAPTransferVariable()
         self.is_multi_eval = True
         self.schema = None
         self.table_partitions = 4
+
+        self.reference_vec_type = 'all_zeros'
+        self.interpret_limit = 10
+        self.random_seed = 100
+        self.shap_subset_sample_num = None
+        self.model_param = ModelInterpretParam()
+
+    def load_param(self, param: ModelInterpretParam):
+        self.interpret_limit = param.interpret_limit
+        self.reference_vec_type = param.reference_type
+        self.random_seed = param.random_seed
+        self.shap_subset_sample_num = param.shap_subset_sample_num
+
 
     def _get_reference_vec_from_background_data(self, data_inst, reference_type='median', ret_format='tensor'):
 
@@ -127,7 +138,7 @@ class HeteroSHAP(ModelBase):
 
         return phi
 
-    def load_test_model(self, model):
+    def load_model_inst(self, model):
         self.model = model
 
 
@@ -140,17 +151,17 @@ class HeteroKernelSHAPGuest(HeteroSHAP):
         self.selected_idx_sent = False
         self.class_order = None
 
-    def fit(self, data_inst):
+    def fit(self, data_inst, background_data):
 
         # initialize
         x = data_inst.take(1)[0][1].features
         self.schema = copy.deepcopy(data_inst.schema)
         self.table_partitions = data_inst.partitions
         if self.run_local:
-            phi = self.local_shap(x, data_inst)
+            phi = self.local_shap(x, background_data)
             return phi
         else:
-            phi = self.federated_shap(x, data_inst)
+            phi = self.federated_shap(x, background_data)
             return phi
 
     def _generate_random_sample_ids(self, sample_num):
@@ -284,7 +295,17 @@ class HeteroKernelSHAPGuest(HeteroSHAP):
         return budget*weight
 
     def _get_sample_budget(self, feat_num):
-        suggested_val = 2**11 + 2*feat_num
+
+        if self.shap_subset_sample_num == 'auto':
+            suggested_val = 2**11 + 2*feat_num
+        else:
+            suggested_val = 2**11 + 2*feat_num
+            max_val = 2**15 - 2
+            if self.shap_subset_sample_num > suggested_val:
+                suggested_val = self.shap_subset_sample_num
+            if suggested_val > max_val:
+                suggested_val = max_val
+
         sample_budget = 2**feat_num - 2
         if sample_budget > suggested_val:
             sample_budget = suggested_val
@@ -412,13 +433,13 @@ class HeteroKernelSHAPHost(HeteroSHAP):
         self.sample_id = None
         self.selected_idx = None
 
-    def fit(self, data_inst):
+    def fit(self, data_inst, background_data):
 
         # initialize
         self.table_partitions = data_inst.partitions
         self.schema = copy.deepcopy(data_inst.schema)
         x = data_inst.take(1)[0][1].features
-        self.federated_shap(x)
+        self.federated_shap(x, background_data)
 
     def _make_host_sample_table(self, x, reference_data,):
 
@@ -434,7 +455,7 @@ class HeteroKernelSHAPHost(HeteroSHAP):
         host_table.schema = copy.deepcopy(self.schema)
         return host_table
 
-    def federated_shap(self, x):
+    def federated_shap(self, x, background_data):
 
         LOGGER.debug('receiving data')
         if self.sample_id is None:
@@ -442,7 +463,7 @@ class HeteroKernelSHAPHost(HeteroSHAP):
         if self.selected_idx is None:
             self.selected_idx = self.transfer_variable.selected_sample_index.get(idx=0)
         LOGGER.debug('receiving data done')
-        local_ref_vec = self._get_reference_vec(None, feat_num=len(x))
+        local_ref_vec = self._get_reference_vec(background_data, feat_num=len(x))
         host_table = self._make_host_sample_table(x, local_ref_vec)
         LOGGER.debug('start predict')
         self.model.predict(host_table)

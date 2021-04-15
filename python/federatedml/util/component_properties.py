@@ -80,7 +80,7 @@ class ComponentProperties(object):
         self.need_run = need_run
 
         try:
-            self.need_explain = param.explainable_param.need_explain
+            self.need_explain = param.model_interpret_param.need_explain
         except AttributeError:
             self.need_explain = False
 

@@ -21,6 +21,7 @@ from federatedml.param.base_param import BaseParam
 from federatedml.param.encrypt_param import EncryptParam
 from federatedml.param.encrypted_mode_calculation_param import EncryptedModeCalculatorParam
 from federatedml.param.cross_validation_param import CrossValidationParam
+from federatedml.param.model_interpret_param import ModelInterpretParam
 from federatedml.param.predict_param import PredictParam
 from federatedml.util import consts, LOGGER
 import copy
@@ -255,7 +256,7 @@ class BoostingParam(BaseParam):
                  tol=0.0001, bin_num=32,
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  validation_freqs=None, metrics=None, random_seed=100,
-                 binning_error=consts.DEFAULT_RELATIVE_ERROR):
+                 binning_error=consts.DEFAULT_RELATIVE_ERROR, model_interpret_param=ModelInterpretParam()):
 
         super(BoostingParam, self).__init__()
 
@@ -269,6 +270,7 @@ class BoostingParam(BaseParam):
         self.bin_num = bin_num
         self.predict_param = copy.deepcopy(predict_param)
         self.cv_param = copy.deepcopy(cv_param)
+        self.model_interpret_param = copy.deepcopy(model_interpret_param)
         self.validation_freqs = validation_freqs
         self.metrics = metrics
         self.random_seed = random_seed

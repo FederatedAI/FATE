@@ -25,7 +25,7 @@ from federatedml.param.encrypted_mode_calculation_param import EncryptedModeCalc
 from federatedml.param.init_model_param import InitParam
 from federatedml.param.predict_param import PredictParam
 from federatedml.param.stepwise_param import StepwiseParam
-from federatedml.param.shap_param import ExplainableParam
+from federatedml.param.model_interpret_param import ModelInterpretParam
 from federatedml.param.sqn_param import StochasticQuasiNewtonParam
 from federatedml.util import consts
 
@@ -108,7 +108,7 @@ class LogisticParam(BaseParam):
                  batch_size=-1, learning_rate=0.01, init_param=InitParam(),
                  max_iter=100, early_stop='diff', encrypt_param=EncryptParam(),
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
-                 decay=1, decay_sqrt=True, explainable_param=ExplainableParam(),
+                 decay=1, decay_sqrt=True, explainable_param=ModelInterpretParam(),
                  multi_class='ovr', validation_freqs=None, early_stopping_rounds=None,
                  stepwise_param=StepwiseParam(), floating_point_precision=23,
                  metrics=None,
@@ -272,7 +272,7 @@ class HomoLogisticParam(LogisticParam):
                  metrics=['auc', 'ks'],
                  use_first_metric_only=False,
                  use_proximal=False,
-                 mu=0.1, explainable_param=ExplainableParam()
+                 mu=0.1, explainable_param=ModelInterpretParam()
                  ):
         super(HomoLogisticParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
                                                 batch_size=batch_size,
@@ -329,7 +329,7 @@ class HeteroLogisticParam(LogisticParam):
                  multi_class='ovr', validation_freqs=None, early_stopping_rounds=None,
                  metrics=['auc', 'ks'], floating_point_precision=23,
                  use_first_metric_only=False, stepwise_param=StepwiseParam(),
-                 explainable_param=ExplainableParam()
+                 explainable_param=ModelInterpretParam()
                  ):
         super(HeteroLogisticParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
                                                   batch_size=batch_size,

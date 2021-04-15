@@ -31,6 +31,7 @@ from federatedml.util.classify_label_checker import RegressionLabelChecker
 from federatedml.util import LOGGER
 from fate_flow.entity.metric import Metric
 from fate_flow.entity.metric import MetricMeta
+from federatedml.model_interpret.run_interpret import run_explain
 from federatedml.transfer_variable.transfer_class.hetero_boosting_transfer_variable import \
     HeteroBoostingTransferVariable
 from federatedml.util.io_check import assert_io_num_rows_equal
@@ -339,6 +340,10 @@ class HeteroBoostingHost(HeteroBoosting, ABC):
 
         LOGGER.info('using default lazy prediction')
         self.lazy_predict(data_inst)
+
+    def explain(self, background_data, explain_data):
+        rs = run_explain(self, background_data, explain_data, self.model_param.model_interpret_param, self.role,
+                         self.flowid)
 
     @abc.abstractmethod
     def load_booster(self, model_meta, model_param, epoch_idx, booster_idx):
