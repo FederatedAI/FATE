@@ -88,7 +88,7 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
             output_data['feature'] = feature
             output_data.to_csv(data_path, mode='a+', index=False, header=False)
 
-    def _generate_label_data(data_path, data_num, id_value, feature_nums, label_flag):
+    def _generate_dens_data(data_path, data_num, id_value, feature_nums, label_flag):
         if label_flag:
             head_1 = ['id', 'y']
         else:
@@ -169,13 +169,14 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
             big_data_dir = os.path.abspath(conf.cache_directory)
     except Exception:
         raise Exception('{}path does not exist'.format(big_data_dir))
-    date_set = [os.path.basename(upload_dict['file']) for upload_dict in testsuite_config['data']]
-    role_set = [upload_dict['role'] for upload_dict in testsuite_config['data']]
+    date_set = {}
+    for upload_dict in testsuite_config['data']:
+        date_set[os.path.basename(upload_dict['file'])] = upload_dict['role']
     data_count = 0
-    for idx, data_name in enumerate(date_set):
-        label_flag = True if 'guest' in role_set[idx] else False
-        data_type = 'dense' if 'guest' in role_set[idx] else host_data_type
-        if split_host and ('host' in role_set[idx]):
+    for idx, data_name in enumerate(date_set.keys()):
+        label_flag = True if 'guest' in date_set[data_name] else False
+        data_type = 'dense' if 'guest' in date_set[data_name] else host_data_type
+        if split_host and ('host' in date_set[data_name]):
             right = int(np.ceil(host_data_size / len(date_set))) * (data_count + 1) if np.ceil(
                 host_data_size / len(date_set)) * (data_count + 1) <= host_data_size else host_data_size
             host_id_list = host_ids[int(np.ceil(host_data_size / len(date_set))) * data_count: right]
@@ -200,7 +201,10 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
             elif data_type == 'tag_value':
                 _generate_tag_value_data(out_path, host_data_size, host_id_list, host_feature_num)
             elif data_type == 'dense':
-                _generate_label_data(out_path, guest_data_size, guest_ids, guest_feature_num, label_flag)
+                if 'guest' in date_set[data_name]:
+                    _generate_dens_data(out_path, guest_data_size, guest_ids, guest_feature_num, label_flag)
+                else:
+                    _generate_dens_data(out_path, host_data_size, host_id_list, host_feature_num, label_flag)
             progress.set_switch(False)
             time.sleep(1)
             print()

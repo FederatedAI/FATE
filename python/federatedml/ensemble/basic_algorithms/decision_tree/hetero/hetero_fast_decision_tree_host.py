@@ -111,7 +111,6 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
                                                                                      sitename=self.sitename
                                                                                      )
 
-            LOGGER.debug('sending en_splitinfo {}'.format(encrypted_splitinfo_host))
             self.sync_encrypted_splitinfo_host(encrypted_splitinfo_host, dep, batch_idx)
             federated_best_splitinfo_host = self.sync_federated_best_splitinfo_host(dep, batch_idx)
 
@@ -170,7 +169,6 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
             unmasked_split_info = self.unmask_split_info(best_split_info, self.inverse_fid_bid_random_mapping,
                                                          self.missing_dir_mask_left[dep],
                                                          self.missing_dir_mask_right[dep])
-            LOGGER.debug('unmasked split info is {}'.format(unmasked_split_info))
 
             if mode == consts.LAYERED_TREE:
                 return_split_info = self.encode_split_info(unmasked_split_info)
@@ -410,7 +408,6 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
 
                 batch += 1
                 split_info.extend(batch_split_info)
-                LOGGER.debug('batch split info is {}'.format(batch_split_info))
 
             self.update_host_side_tree(split_info, reach_max_depth=False)
             self.inst2node_idx = self.host_local_assign_instances_to_new_node()

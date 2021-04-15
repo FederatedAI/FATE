@@ -23,14 +23,13 @@ import numpy as np
 from fate_arch.session import computing_session as session
 
 from federatedml.feature.instance import Instance
-from federatedml.util import consts
 from federatedml.util.sample_weight import SampleWeight
 
 
 class TestSampleWeight(unittest.TestCase):
     def setUp(self):
         session.init("test_sample_weight_" + str(uuid.uuid1()))
-        self.class_weight = {0: 2, 1: 3}
+        self.class_weight = {"0": 2, "1": 3}
         data = []
         for i in range(1, 11):
             label = 1 if i % 5 == 0 else 0
@@ -44,17 +43,17 @@ class TestSampleWeight(unittest.TestCase):
 
     def test_get_class_weight(self):
         class_weight = self.sample_weight_obj.get_class_weight(self.table)
-        c_class_weight = {1: 10/4, 0: 10/16}
+        c_class_weight = {"1": 10/4, "0": 10/16}
         self.assertDictEqual(class_weight, c_class_weight)
 
     def test_replace_weight(self):
         instance = self.table.first()
         weighted_instance = self.sample_weight_obj.replace_weight(instance[1], self.class_weight)
-        self.assertEqual(weighted_instance.weight, self.class_weight[weighted_instance.label])
+        self.assertEqual(weighted_instance.weight, self.class_weight[str(weighted_instance.label)])
 
     def test_assign_sample_weight(self):
         weighted_table = self.sample_weight_obj.assign_sample_weight(self.table, self.class_weight, None, False)
-        weighted_table.mapValues(lambda v: self.assertEqual(v.weight, self.class_weight[v.label]))
+        weighted_table.mapValues(lambda v: self.assertEqual(v.weight, self.class_weight[str(v.label)]))
 
     def test_get_weight_loc(self):
         c_loc = 2

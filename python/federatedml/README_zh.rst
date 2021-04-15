@@ -49,11 +49,19 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
 
    * - `DataIO`_
      - DataIO
-     - 该组件将原始数据转换为Instance对象。
+     - 该组件将原始数据转换为Instance对象(FATE-v1.7后会逐步弃用，使用DataTransform)。
      - Table，值为原始数据
      - 转换后的数据表，值为在 : `federatedml/feature/instance.py` 中定义的Data Instance的实例
      -
      - DataIO模型
+
+   * - `DataTransform`_
+     - DataTransform
+     - 该组件将原始数据转换为Instance对象。
+     - Table，值为原始数据
+     - 转换后的数据表，值为在 : `federatedml/feature/instance.py` 中定义的Data Instance的实例
+     -
+     - DataTransform模型
 
    * - `Intersect`_
      - Intersection
@@ -86,7 +94,15 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
      - 转换后的Table
      -
      - 每列的iv/woe，分裂点，事件计数，非事件计数等
-   
+
+   * - `Homo Feature Binning`_
+     - Homo Feature Binning
+     - 计算横向场景的等频分箱
+     - Table
+     - 转换后的Table
+     -
+     - 每列的分裂点
+
    * - `OneHot Encoder`_
      - OneHotEncoder
      - 将一列转换为One-Hot格式。
@@ -174,6 +190,15 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
      - Table，值为Instance
      -
      - FastSecureBoost模型
+
+   * - `Hetero Secure Boost Feature Transformer`_
+     - SBT Feature Transformer
+     - 利用SBT叶子为特征编码
+     - Table，值为Instance
+     - Table，值为Instance
+     -
+     - SBT Transformer模型
+
     
    * - `Evaluation`_
      - Evaluation
@@ -279,6 +304,14 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
      -
      -
 
+   * - `Sample Weight`_
+     - 样本加权
+     - 根据用户设置对输入数据加权
+     - Table, 值为Instance
+     - Table, 值为加权后Instance
+     -
+     -
+
    * - `Feldman Verifiable Sum`_
      - 费尔德曼秘密分享求和
      - 不暴露隐私数据的前提下进行多方隐私数据求和
@@ -288,10 +321,12 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
      -
 
 .. _DataIO: util/README.rst
+.. _DataTransform:: util/README.rst
 .. _Intersect: statistic/intersect/README.rst
 .. _Federated Sampling: feature/README.rst
 .. _Feature Scale: feature/README.rst
 .. _Hetero Feature Binning: feature/README.rst
+.. _Homo Feature Binning: feature/README.rst
 .. _OneHot Encoder: feature/README.rst
 .. _Hetero Feature Selection: feature/README.rst
 .. _Union: statistic/union/README.rst
@@ -302,6 +337,8 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
 .. _Homo-LR: linear_model/logistic_regression/README.rst
 .. _Homo-NN: nn/homo_nn/README.rst
 .. _Hetero Secure Boosting: ensemble/README.rst
+.. _Hetero Fast Secure Boosting: ensemble/README.rst
+.. _Hetero Secure Boost Feature Transformer: feature/sbt_feature_transformer
 .. _Evaluation: evaluation/README.rst
 .. _Hetero Pearson: statistic/correlation/README.rst
 .. _Hetero-NN: nn/hetero_nn/README.rst
@@ -314,8 +351,8 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
 .. _Data Statistics: statistic/README.rst
 .. _PSI: statistic/psi/README.rst
 .. _Hetero Federated Transfer Learning: transfer_learning/hetero_ftl/README.rst
-.. _Hetero Fast Secure Boosting: ensemble/README.rst
 .. _Scorecard: statistic/scorecard/README.rst
+.. _Sample Weight: util/README.rst
 .. _Feldman Verifiable Sum: statistic/feldman_verifiable_sum/README.rst
 
 

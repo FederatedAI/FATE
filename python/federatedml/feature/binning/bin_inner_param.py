@@ -144,12 +144,10 @@ class BinInnerParam(object):
         assert len(self.bin_indexes) == len(self.bin_names)
         return dict(zip(self.bin_names, self.bin_indexes))
 
-    def encode_col_name_dict(self, col_name_dict: dict, model):
-        result = {}
-        for x, y in col_name_dict.items():
-            col_index = self.col_name_maps.get(x)
-            result[anonymous_generator.generate_anonymous(col_index, model=model)] = y
-        return result
+    @staticmethod
+    def encode_col_name_dict(col_name, v, model, col_name_maps: dict):
+        col_index = col_name_maps.get(col_name)
+        return anonymous_generator.generate_anonymous(col_index, model=model), v
 
     def encode_col_name_list(self, col_name_list: list, model):
         result = []

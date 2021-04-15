@@ -30,6 +30,8 @@ class RsaIntersectionHost(RsaIntersect):
         # split data
         sid_hash_odd = data_instances.filter(lambda k, v: k & 1)
         sid_hash_even = data_instances.filter(lambda k, v: not k & 1)
+        # LOGGER.debug(f"sid_hash_odd count: {sid_hash_odd.count()},"
+        #              f"odd fraction: {sid_hash_odd.count()/data_instances.count()}")
 
         # generate rsa keys
         self.e, self.d, self.n = self.generate_protocol_key()
@@ -61,26 +63,27 @@ class RsaIntersectionHost(RsaIntersect):
                                                     random_bit=self.random_bit,
                                                     rsa_e=self.rcv_e,
                                                     rsa_n=self.rcv_n)
+        LOGGER.info(f"Finish pubkey_ids_process")
         mask_host_id = pubkey_ids_process.mapValues(lambda v: 1)
         self.transfer_variable.host_pubkey_ids.remote(mask_host_id,
                                                       role=consts.GUEST,
                                                       idx=0)
-        LOGGER.info("Remote host_mask_ids to Guest")
+        LOGGER.info("Remote host_pubkey_ids to Guest")
+
+        # encrypt & send prvkey-encrypted host odd ids to guest
+        prvkey_ids_process_pair = self.cal_prvkey_ids_process_pair(sid_hash_odd, self.d, self.n)
+        prvkey_ids_process = prvkey_ids_process_pair.mapValues(lambda v: 1)
+
+        self.transfer_variable.host_prvkey_ids.remote(prvkey_ids_process,
+                                                      role=consts.GUEST,
+                                                      idx=0)
+        LOGGER.info("Remote host_prvkey_ids to Guest.")
 
         # get & sign guest pubkey-encrypted odd ids
         guest_pubkey_ids = self.transfer_variable.guest_pubkey_ids.get(idx=0)
         LOGGER.info(f"Get guest_pubkey_ids from guest")
         host_sign_guest_ids = guest_pubkey_ids.map(lambda k, v: (k, self.sign_id(k, self.d, self.n)))
         LOGGER.debug(f"host sign guest_pubkey_ids")
-
-        # encrypt & send privkey-encrypted host odd ids to guest
-        prvkey_ids_process_pair = self.cal_prvkey_ids_process_pair(sid_hash_odd, self.d, self.n)
-        prvkey_ids_process = prvkey_ids_process_pair.mapValues(lambda v: 1)
-        self.transfer_variable.host_prvkey_ids.remote(prvkey_ids_process,
-                                                      role=consts.GUEST,
-                                                      idx=0)
-        LOGGER.info("Remote host_prvkey_ids to Guest.")
-
         # send signed guest odd ids
         self.transfer_variable.host_sign_guest_ids.remote(host_sign_guest_ids,
                                                           role=consts.GUEST,

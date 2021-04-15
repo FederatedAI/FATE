@@ -228,7 +228,6 @@ class HeteroDecisionTreeHost(DecisionTree):
 
             final_splitinfos.append(splitinfo)
 
-        LOGGER.debug('final split info is {}'.format([str(i) for i in final_splitinfos]))
         self.transfer_inst.final_splitinfo_host.remote(final_splitinfos,
                                                        role=consts.GUEST,
                                                        idx=-1,
@@ -408,7 +407,6 @@ class HeteroDecisionTreeHost(DecisionTree):
             best_split_info = self.transfer_inst.federated_best_splitinfo_host.get(suffix=(dep, batch), idx=0)
             unmasked_split_info = self.unmask_split_info(best_split_info, self.inverse_fid_bid_random_mapping,
                                                          self.missing_dir_mask_left[dep], self.missing_dir_mask_right[dep])
-            LOGGER.debug('unmasked split info is {}'.format(unmasked_split_info))
             return_split_info = self.encode_split_info(unmasked_split_info)
             self.transfer_inst.final_splitinfo_host.remote(return_split_info,
                                                            role=consts.GUEST,

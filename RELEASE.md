@@ -1,3 +1,37 @@
+# Release 1.6.0
+## Major Features and Improvements
+
+> FederatedML
+
+* Hetero SecureBoost: more efficient computation with GOSS, histogram subtraction, cipher compression, 2-4x faster
+* Hetero GLM: improved communication efficiency, adjustable floating point precision, 2x faster 
+* Hetero NN: adjustable floating point precision, support SelectiveBackPropagation and dropOut on interaction layer, 2x faster
+* Hetero Feature Binning: improved algorithm with cipher compression, 2x faster
+* Intersect: add split calculation option and adjustable random base fraction, 30% faster 
+* Homo NN: restructure torch backend and enhanced grammar; train and predict with raw image data
+* Intersect supports SM3 hashing method 
+* Hetero SecureBoost: L1 penalty & adjustable min_child_weight to prevent overfitting 
+* NEW SecureBoost Transformer: feature engineering module that encodes instances with leaf nodes from SecureBoost model
+* Hetero Pearson: support local VIF computation 
+* Hetero Feature Selection: support selection based on VIF and Pearson 
+* NEW Homo Feature Binning: support virtual/recursive binning strategy
+* NEW Sample Weight: set sample weights based on label or from feature column, Hetero GLM & Hetero SecureBoost support weighted training
+* NEW Data Transformer: case-insensitive on data schema
+* Local Baseline supports prediction task
+* Cross Validation: output fold split history 
+* Evaluation: add multi-result-unfold option which unfolds multi-classification evaluation result to several binary evaluation results in a one-vs-rest manner 
+
+>System Architecture
+
+* Added local file system directory path virtual storage engine to support image input data
+* Added the message queue Pulsar cross-site transmission engine, which can be used with the Spark computing engine, and can be added to the Exchange role to support the star networking mode
+
+> FATE-Test
+
+* Add Benchmark performance for efficiency comparison; add mock data generation tool; support metrics comparison between training and validation sets
+* FATE-Flow unittest for REST/CLI/SDK API and training-prediction workflow 
+
+
 # Release 1.5.1
 ## Major Features and Improvements
 
