@@ -22,16 +22,20 @@ class KernelSHAPParam(BaseParam):
         self.check_positive_integer(self.interpret_limit, 'interpret limits')
 
 
-class SHAPParam(BaseParam):
+class ExplainableParam(BaseParam):
 
-    def __init__(self, interpret_limit=10, subset_sample_num='auto', random_seed=100, need_shap=False):
-        super(SHAPParam, self).__init__()
+    def __init__(self, need_explain=False, method='shap', interpret_limit=10, shap_subset_sample_num='auto',
+                 random_seed=100, ):
+        super(ExplainableParam, self).__init__()
+        self.need_explain = need_explain
+        self.method = method
         self.interpret_limit = interpret_limit
-        self.subset_sample_num = subset_sample_num
+        self.shap_subset_sample_num = shap_subset_sample_num
         self.random_seed = random_seed
-        self.need_shap = need_shap
 
     def check(self):
+        self.check_boolean(self.need_explain, 'need_explain')
         self.check_positive_integer(self.interpret_limit, 'interpret_limit')
         self.check_positive_integer(self.random_seed, 'random_seed')
+
 
