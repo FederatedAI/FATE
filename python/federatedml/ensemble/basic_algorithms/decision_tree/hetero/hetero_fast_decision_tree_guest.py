@@ -87,6 +87,7 @@ class HeteroFastDecisionTreeGuest(HeteroDecisionTreeGuest):
                 cur_best_split = self.merge_splitinfo(splitinfo_guest=[],
                                                       splitinfo_host=host_split_info,
                                                       merge_host_split_only=True)
+
         return cur_best_split
 
     def compute_best_splits_with_node_plan2(self, tree_action, target_host_idx, cur_to_split_nodes, node_map: dict,

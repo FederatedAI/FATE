@@ -28,7 +28,7 @@ class PearsonParam(BaseParam):
         cross_parties=True,
         need_run=True,
         use_mix_rand=False,
-        calc_local_vaf=True,
+        calc_local_vif=True,
     ):
         super().__init__()
         self.column_names = column_names
@@ -40,7 +40,7 @@ class PearsonParam(BaseParam):
             self.column_names = []
         if column_indexes is None:
             self.column_indexes = []
-        self.calc_local_vaf = calc_local_vaf
+        self.calc_local_vif = calc_local_vif
 
     def check(self):
         if not isinstance(self.use_mix_rand, bool):

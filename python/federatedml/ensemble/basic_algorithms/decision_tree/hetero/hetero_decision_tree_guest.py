@@ -302,6 +302,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
                 # update best splitinfo and gain for every cur to split nodes
                 for node_idx, splitinfo in splitinfos:
+
                     if best_splitinfo_host[node_idx][0] == -1:
                         best_splitinfo_host[node_idx] = list(splitinfo[:2])
                         best_gains[node_idx] = splitinfo[2]

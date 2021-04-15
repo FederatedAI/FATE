@@ -26,6 +26,7 @@ FATE在1.5中支持了使用Spark作为计算服务，与其配套使用的还�
     host: 192.168.0.1
     port: 6650
     mng_port: 8080
+    topic_ttl: 5
     # default conf/pulsar_route_table.yaml
     route_table:
   nginx:
@@ -35,6 +36,7 @@ FATE在1.5中支持了使用Spark作为计算服务，与其配套使用的还�
 ...
 ```
 其中`pulsar.host`填写Pulsar broker所在的主机IP或域名，`pulsar.port`和`pulsar.mng_port`分别填写broker的"brokerServicePort"和"webServicePort"。
+`topic_ttl`设置topic在若干分钟无活动之后会被标记成不活跃，配合`Pulsar的brokerDeleteInactiveTopicsEnabled`功能来回收资源。
 
 - "conf/pulsar_route_table.yaml"
 ```yml

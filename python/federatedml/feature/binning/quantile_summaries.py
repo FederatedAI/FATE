@@ -155,7 +155,7 @@ class QuantileSummaries(object):
         # self.sampled = new_sample
         # self.count += other.count
         # merge_threshold = math.floor(2 * self.error * self.count) - 1
-        merge_threshold = 2 * self.error * self.count
+        merge_threshold = 2 * self.error * res_summary.count
 
         res_summary.sampled = res_summary._compress_immut(merge_threshold)
         return res_summary

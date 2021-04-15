@@ -34,16 +34,19 @@ class TestHeteroLogisticGradient(unittest.TestCase):
         self.hetero_lr_gradient = hetero_lr_gradient_and_loss.Guest()
 
         size = 10
-        self.en_wx = session.parallelize([self.paillier_encrypt.encrypt(i) for i in range(size)], partition=48)
+        self.en_wx = session.parallelize([self.paillier_encrypt.encrypt(i) for i in range(size)],
+                                         partition=48,
+                                         include_key=False)
         # self.en_wx = session.parallelize([self.paillier_encrypt.encrypt(i) for i in range(size)])
 
         self.en_sum_wx_square = session.parallelize([self.paillier_encrypt.encrypt(np.square(i)) for i in range(size)],
-                                                    partition=48)
+                                                    partition=48,
+                                                    include_key=False)
         self.wx = np.array([i for i in range(size)])
         self.w = self.wx / np.array([1 for _ in range(size)])
         self.data_inst = session.parallelize(
             [Instance(features=np.array([1 for _ in range(size)]), label=pow(-1, i % 2)) for i in range(size)],
-            partition=48)
+            partition=48, include_key=False)
 
         # test fore_gradient
         self.fore_gradient_local = [-0.5, 0.75, 0, 1.25, 0.5, 1.75, 1, 2.25, 1.5, 2.75]
@@ -56,14 +59,15 @@ class TestHeteroLogisticGradient(unittest.TestCase):
     def test_compute_partition_gradient(self):
         fore_gradient = self.en_wx.join(self.data_inst, lambda wx, d: 0.25 * wx - 0.5 * d.label)
         sparse_data = self._make_sparse_data()
+        gradient_computer = hetero_linear_model_gradient.HeteroGradientBase()
         for fit_intercept in [True, False]:
-            dense_result = hetero_linear_model_gradient.compute_gradient(self.data_inst, fore_gradient, fit_intercept)
+            dense_result = gradient_computer.compute_gradient(self.data_inst, fore_gradient, fit_intercept)
             dense_result = [self.paillier_encrypt.decrypt(iterator) for iterator in dense_result]
             if fit_intercept:
                 self.assertListEqual(dense_result, self.gradient_fit_intercept)
             else:
                 self.assertListEqual(dense_result, self.gradient)
-            sparse_result = hetero_linear_model_gradient.compute_gradient(sparse_data, fore_gradient, fit_intercept)
+            sparse_result = gradient_computer.compute_gradient(sparse_data, fore_gradient, fit_intercept)
             sparse_result = [self.paillier_encrypt.decrypt(iterator) for iterator in sparse_result]
             self.assertListEqual(dense_result, sparse_result)
 

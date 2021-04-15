@@ -82,7 +82,7 @@ init() {
     touch ${basepath}/fateboard/ssh/ssh.properties
 
     sed -i "s#^fateflow.url=.*#fateflow.url=http://localhost:9380#g" ${basepath}/fateboard/conf/application.properties
-    sed -i "s#^fateboard.datasource.jdbc-url=.*#fateboard.datasource.jdbc-url=jdbc:sqlite:/fate/python/fate_flow/fate_flow_sqlite.db#g" ${basepath}/fateboard/conf/application.properties
+    sed -i "s#^fateboard.datasource.jdbc-url=.*#fateboard.datasource.jdbc-url=jdbc:sqlite:/fate/fate_flow_sqlite.db#g" ${basepath}/fateboard/conf/application.properties
     sed -i "s#^spring.datasource.driver-Class-Name=.*#spring.datasource.driver-Class-Name=org.sqlite.JDBC#g" ${basepath}/fateboard/conf/application.properties
 
     cd ${basepath}
