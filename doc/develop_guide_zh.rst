@@ -267,7 +267,7 @@ fate_flow_client 模块的运行规则是：
 
 每个模型一般需要两个proto文件，其中后缀为meta的文件中保存某一次任务的配置，后缀为param的文件中保存某次任务的模型结果。
 
-在完成proto文件的定义后，可执行protobuf目录下的 `proto_generate.sh 文件 <python/federatedml/protobuf/proto_generate.sh>`_ 生成对应的python文件。之后，您可在自己的项目中引用自己设计的proto类型，并进行保存：
+在完成proto文件的定义后，可执行protobuf目录下的 `generate_py.sh文件 <python/fate_arch/protobuf/generate_py.sh>`_ 生成对应的python文件。之后，您可在自己的项目中引用自己设计的proto类型，并进行保存：
 
    .. code-block:: bash
 

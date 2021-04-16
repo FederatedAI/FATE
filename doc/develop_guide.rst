@@ -263,11 +263,11 @@ The two proto files are
 1. File with "meta" as suffix: Save the parameters of a task.
 2. File with "param" as suffix: Save the model result of a task.
 
-After defining your proto files, you can use the following script named `proto_generate.sh <python/federatedml/protobuf/proto_generate.sh>`_ to create the corresponding python file:
+After defining your proto files, you can use the following script named `generate_py.sh <python/fate_arch/protobuf/generate_py.sh>`_ to create the corresponding python file:
 
    .. code-block:: bash
 
-      bash proto_generate.sh
+      bash generate_py.sh
 
 :Define export_model interface:
    Similar with part b, define your export_model interface so that fate-flow can obtain output model when needed. The format should be a dict contains both "Meta" and "Param" proto buffer generated. Here is an example showing how to export model.
