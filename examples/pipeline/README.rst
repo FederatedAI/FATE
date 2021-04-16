@@ -42,8 +42,7 @@ FATE is `/data/projects/fate`.
       # provide real ip address and port info of fate-flow server to initialize pipeline. Typically, the default ip and port are 127.0.0.1:8080.
       pipeline init --ip 127.0.0.1 --port 9380
       # optionally, set log directory of Pipeline
-      cd /data/projects/fate/python/fate_client/pipeline
-      pipeline init --ip 127.0.0.1 --port 9380 --log-directory ./logs
+      pipeline init --ip 127.0.0.1 --port 9380 --log-directory {desired log path}
 
 4. upload data with FATE-Pipeline
 
@@ -58,7 +57,8 @@ User may modify file path and table name to upload arbitrary data following inst
             #  path to data
             #  default fate installation path
             DATA_BASE = "/data/projects/fate"
-
+            # This is an example for standalone version. For cluster version, you will need to upload your data
+            # on each party respectively.
             pipeline_upload.add_upload_data(file=os.path.join(data_base, "examples/data/breast_hetero_guest.csv"),
                                     table_name=dense_data["name"],             # table name
                                     namespace=dense_data["namespace"],         # namespace

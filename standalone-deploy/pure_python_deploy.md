@@ -15,9 +15,8 @@ If you have met any problems during the installation process, please check Secti
 3. Please install python with version 3.6 or 3.7. Then create a virtual environment:
 ```
 cd(or create) {a dir you wish to locate your venv}
-python -m venv {your venv_name}
-cd {venv_name}    // This is your venv root 
-source {venv root}/bin/activate
+python -m venv {venv_name}
+source {venv_name}/bin/activate
 ```
 
 Alternatively, you can use conda to create a new environment.
@@ -120,6 +119,8 @@ Please refer [here](../examples/pipeline/README.rst) for a quick start tutorial.
 
 You can also experience the fateboard access via a browser:
 Http://hostip:8080.
+
+For more details about fateboard description and deployment guide, please refer to [here](https://github.com/FederatedAI/FATE-Board)
 
 
 Congratulations, You are all set. 
