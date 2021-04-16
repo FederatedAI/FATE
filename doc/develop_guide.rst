@@ -244,16 +244,17 @@ In this section, we describe how to do 3-5. Many common interfaces are provided 
 
    This function is used for feature-engineering components in predict task.
 
-Step 5. Define the protobuf file required for model saving
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
 :Define your save_data interface:
    so that fate-flow can obtain output data through it when needed.
 
    .. code-block:: python
-      
+
       def save_data(self):
           return self.data_output
+
+
+Step 5. Define the protobuf file required for model saving
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 To use the trained model through different platform, FATE use protobuf files to save the parameters and model result of a task. When developing your own module, you are supposed to create two proto files which defined your model content in `this folder <python/federatedml/protobuf/proto>`_.
 

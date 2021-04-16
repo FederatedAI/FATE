@@ -248,9 +248,6 @@ fate_flow_client 模块的运行规则是：
 
    Data_inst 是一个 Table. 用于特征工程组件对数据进行转化功能。在用户启动预测任务时，将被model_base自动调起。
 
-第五步： 定义模型保存所需的protobuf
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
 :定义您的 save_data 接口:
    以便 fate-flow 可以在需要时通过它获取输出数据。
 
@@ -259,6 +256,9 @@ fate_flow_client 模块的运行规则是：
       def save_data(self):
           return self.data_output
 
+
+第五步： 定义模型保存所需的protobuf
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 定义模型保存所需的protobuf文件:
    为了方便模型跨平台保存和读取模型，FATE使用protobuf文件定义每个模型所需的参数和模型内容。当您开发自己的模块时，需要定义本模块中需要保存的内容并创建相应的protobuf文件。protobuf文件所在的位置为 `这个目录 <python/federatedml/protobuf/proto> `_ 。
