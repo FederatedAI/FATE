@@ -261,13 +261,13 @@ fate_flow_client 模块的运行规则是：
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 定义模型保存所需的protobuf文件:
-   为了方便模型跨平台保存和读取模型，FATE使用protobuf文件定义每个模型所需的参数和模型内容。当您开发自己的模块时，需要定义本模块中需要保存的内容并创建相应的protobuf文件。protobuf文件所在的位置为 `这个目录 <python/federatedml/protobuf/proto> `_ 。
+   为了方便模型跨平台保存和读取模型，FATE使用protobuf文件定义每个模型所需的参数和模型内容。当您开发自己的模块时，需要定义本模块中需要保存的内容并创建相应的protobuf文件。protobuf文件所在的位置为 `这个目录 <..python/federatedml/protobuf/proto>`_ 。
 
 更多使用protobuf的细节，请参考 `这个教程 <https://developers.google.com/protocol-buffers/docs/pythontutorial>`_
 
 每个模型一般需要两个proto文件，其中后缀为meta的文件中保存某一次任务的配置，后缀为param的文件中保存某次任务的模型结果。
 
-在完成proto文件的定义后，可执行protobuf目录下的 `generate_py.sh文件 <python/fate_arch/protobuf/generate_py.sh>`_ 生成对应的python文件。之后，您可在自己的项目中引用自己设计的proto类型，并进行保存：
+在完成proto文件的定义后，可执行protobuf目录下的 `generate_py.sh文件 <..python/fate_arch/protobuf/generate_py.sh>`_ 生成对应的python文件。之后，您可在自己的项目中引用自己设计的proto类型，并进行保存：
 
    .. code-block:: bash
 
