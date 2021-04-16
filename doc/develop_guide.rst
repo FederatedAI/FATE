@@ -256,7 +256,7 @@ In this section, we describe how to do 3-5. Many common interfaces are provided 
 Step 5. Define the protobuf file required for model saving
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To use the trained model through different platform, FATE use protobuf files to save the parameters and model result of a task. When developing your own module, you are supposed to create two proto files which defined your model content in `this folder <..python/federatedml/protobuf/proto>`_.
+To use the trained model through different platform, FATE use protobuf files to save the parameters and model result of a task. When developing your own module, you are supposed to create two proto files which defined your model content in `this folder <../python/federatedml/protobuf/proto>`_.
 
 For more details of protobuf, please refer to `this tutorial <https://developers.google.com/protocol-buffers/docs/pythontutorial>`_
 
@@ -264,7 +264,7 @@ The two proto files are
 1. File with "meta" as suffix: Save the parameters of a task.
 2. File with "param" as suffix: Save the model result of a task.
 
-After defining your proto files, you can use the following script named `generate_py.sh <..python/fate_arch/protobuf/generate_py.sh>`_ to create the corresponding python file:
+After defining your proto files, you can use the following script named `generate_py.sh <../python/fate_arch/protobuf/generate_py.sh>`_ to create the corresponding python file:
 
    .. code-block:: bash
 
