@@ -362,7 +362,8 @@ class Splitter(object):
 
         return result_list
 
-    def _find_host_best_splits_map_func(self, value, decrypter, cipher_decompressor=None, host_sitename=consts.HOST):
+    def _find_host_best_splits_map_func(self, value, decrypter, cipher_decompressor=None, gh_packer=None,
+                                        host_sitename=consts.HOST):
 
         # find best split points in a node for every host feature, mapValues function
         best_gain = self.min_impurity_split - consts.FLOAT_ZERO
@@ -376,8 +377,19 @@ class Splitter(object):
         if cipher_decompressor is None:
             split_info_list, g_h_info = value
             for split_info in split_info_list:
-                split_info.sum_grad, split_info.sum_hess = decrypter.decrypt(split_info.sum_grad), decrypter.decrypt(split_info.sum_hess)
-            g_sum, h_sum = decrypter.decrypt(g_h_info.sum_grad), decrypter.decrypt(g_h_info.sum_hess)
+                if gh_packer is not None:
+                    paillier_num = split_info.sum_grad
+                    g, h = gh_packer.unpack(paillier_num, decrypter)
+                    split_info.sum_grad = g
+                    split_info.sum_hess = h
+                else:
+                    split_info.sum_grad, split_info.sum_hess = decrypter.decrypt(split_info.sum_grad), decrypter.decrypt(split_info.sum_hess)
+
+            if gh_packer is not None:
+                g_sum, h_sum = gh_packer.unpack(g_h_info.sum_grad, decrypter)
+            else:
+                g_sum, h_sum = decrypter.decrypt(g_h_info.sum_grad), decrypter.decrypt(g_h_info.sum_hess)
+
         else:
             nid, package = value
             split_info_list = cipher_decompressor.unpack_split_info(nid, package)  # unpack and decrypt
@@ -422,12 +434,14 @@ class Splitter(object):
             else:
                 return -1
 
-    def find_host_best_split_info(self, host_split_info_table, host_sitename, decrypter, cipher_decompressor=None):
+    def find_host_best_split_info(self, host_split_info_table, host_sitename, decrypter, cipher_decompressor=None,
+                                  gh_packer=None):
 
         map_func = functools.partial(self._find_host_best_splits_map_func,
                                      decrypter=decrypter,
                                      host_sitename=host_sitename,
-                                     cipher_decompressor=cipher_decompressor
+                                     cipher_decompressor=cipher_decompressor,
+                                     gh_packer=gh_packer
                                      )
 
         host_feature_best_split_table = host_split_info_table.mapValues(map_func)

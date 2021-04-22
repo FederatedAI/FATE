@@ -45,6 +45,9 @@ class HeteroDecisionTreeGuest(DecisionTree):
         self.round_decimal = 7
         self.max_sample_weight = 1
 
+        self.pack_g_h = True
+        self.packer = None
+
         # code version control
         self.new_ver = True
 
@@ -316,7 +319,8 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
             host_split_info = self.splitter.find_host_best_split_info(split_info_table, self.get_host_sitename(host_idx),
                                                                       self.encrypter,
-                                                                      cipher_decompressor=cipher_decompressor)
+                                                                      cipher_decompressor=cipher_decompressor,
+                                                                      gh_packer=self.packer)
             split_info_list = [None for i in range(len(host_split_info))]
             for key in host_split_info:
                 split_info_list[node_map[key]] = host_split_info[key]
@@ -370,7 +374,17 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
     def process_and_sync_grad_and_hess(self, idx=-1):
 
-        if self.run_cipher_compressing:
+        if self.pack_g_h:
+
+            from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.g_h import GHPacker
+
+            self.packer = GHPacker(self.encrypter.public_key.max_int, self.data_bin.count())
+
+            pack_func = functools.partial(self.packer.pack, encrypter=self.encrypter)
+            pack_gh = self.grad_and_hess.mapValues(pack_func)
+            en_grad_hess = pack_gh
+
+        elif self.run_cipher_compressing:
             LOGGER.info('sending encoded g/h to host')
             en_grad_hess = self.cipher_encoder.encode_g_h_and_encrypt(self.grad_and_hess)
         else:
