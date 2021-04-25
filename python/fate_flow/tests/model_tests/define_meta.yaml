@@ -1,0 +1,56 @@
+describe: This is the model definition meta
+component_define:
+  dataio_0:
+    module_name: DataIO
+  statistic_0:
+    module_name: DataStatistics
+  hetero_feature_binning_0:
+    module_name: HeteroFeatureBinning
+  hetero_feature_selection_0:
+    module_name: HeteroFeatureSelection
+  feature_scale_0:
+    module_name: FeatureScale
+  hetero_lr_0:
+    module_name: HeteroLR
+  pipeline:
+    module_name: Pipeline
+model_proto:
+  dataio_0:
+    dataio:
+      DataIOMeta: DataIOMeta
+      DataIOParam: DataIOParam
+    default:
+      DataIOMeta: DataIOMeta
+      DataIOParam: DataIOParam
+  statistic_0:
+    model:
+      StatisticMeta: StatisticMeta
+      StatisticParam: ModelParam
+  hetero_feature_binning_0:
+    binning_model:
+      FeatureBinningMeta: FeatureBinningMeta
+      FeatureBinningParam: FeatureBinningParam
+  hetero_feature_selection_0:
+    selected:
+      FeatureSelectionMeta: FeatureSelectionMeta
+      FeatureSelectionParam: FeatureSelectionParam
+    default:
+      FeatureSelectionMeta: FeatureSelectionMeta
+      FeatureSelectionParam: FeatureSelectionParam
+  feature_scale_0:
+    feature_scale:
+      ScaleMeta: ScaleMeta
+      ScaleParam: ScaleParam
+    default:
+      ScaleMeta: ScaleMeta
+      ScaleParam: ScaleParam
+  hetero_lr_0:
+    hetero_lr:
+      HeteroLogisticRegressionMeta: LRModelMeta
+      HeteroLogisticRegressionParam: LRModelParam
+    default:
+      HeteroLogisticRegressionMeta: LRModelMeta
+      HeteroLogisticRegressionParam: LRModelParam
+  pipeline:
+    pipeline:
+      Pipeline: Pipeline
