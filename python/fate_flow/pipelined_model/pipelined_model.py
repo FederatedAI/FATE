@@ -19,6 +19,7 @@ import os
 import shutil
 import base64
 from ruamel import yaml
+from copy import deepcopy
 
 from os.path import join, getsize
 from fate_arch.common import file_utils
@@ -53,7 +54,7 @@ class PipelinedModel(object):
         for path in [self.variables_index_path, self.variables_data_path]:
             os.makedirs(path, exist_ok=False)
         shutil.copytree(os.path.join(file_utils.get_python_base_directory(), "federatedml", "protobuf", "proto"), self.define_proto_path)
-        with open(self.define_meta_path, "w", encoding="utf-8") as fw:
+        with open(self.define_meta_path, "x", encoding="utf-8") as fw:
             yaml.dump({"describe": "This is the model definition meta"}, fw, Dumper=yaml.RoundTripDumper)
 
     def save_component_model(self, component_name, component_module_name, model_alias, model_buffers):
@@ -142,16 +143,18 @@ class PipelinedModel(object):
     def update_component_meta(self, component_name, component_module_name, model_alias, model_proto_index):
         """
         update meta info yaml
-        TODO: with lock
         :param component_name:
         :param component_module_name:
         :param model_alias:
         :param model_proto_index:
         :return:
         """
-        with open(self.define_meta_path, "r", encoding="utf-8") as fr:
-            define_index = yaml.safe_load(fr)
-        with open(self.define_meta_path, "w", encoding="utf-8") as fw:
+        with open(self.define_meta_path, "r+", encoding="utf-8") as f:
+            _define_index = yaml.safe_load(f)
+            if not isinstance(_define_index, dict):
+                raise ValueError('Invalid meta file')
+            define_index = deepcopy(_define_index)
+
             define_index["component_define"] = define_index.get("component_define", {})
             define_index["component_define"][component_name] = define_index["component_define"].get(component_name, {})
             define_index["component_define"][component_name].update({"module_name": component_module_name})
@@ -159,7 +162,11 @@ class PipelinedModel(object):
             define_index["model_proto"][component_name] = define_index["model_proto"].get(component_name, {})
             define_index["model_proto"][component_name][model_alias] = define_index["model_proto"][component_name].get(model_alias, {})
             define_index["model_proto"][component_name][model_alias].update(model_proto_index)
-            yaml.dump(define_index, fw, Dumper=yaml.RoundTripDumper)
+
+            if define_index != _define_index:
+                f.seek(0)
+                yaml.dump(define_index, f, Dumper=yaml.RoundTripDumper)
+                f.truncate()
 
     def get_model_proto_index(self, component_name, model_alias):
         with open(self.define_meta_path, "r", encoding="utf-8") as fr:
