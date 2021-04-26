@@ -82,6 +82,7 @@ class TransferPair(object):
         self.name = name
         self._values = set()
         self._transformed_headers = {}
+        self._ordered_header = None
 
     def add_value(self, value):
         if value in self._values:
@@ -96,7 +97,15 @@ class TransferPair(object):
 
     @property
     def values(self):
-        return list(self._values)
+        if self._ordered_header is None:
+            return list(self._values)
+        if len(self._ordered_header) != len(list(self._values)):
+            raise ValueError("Indicated order header length is not equal to value set,"
+                             f" ordered_header: {self._ordered_header}, values: {self._values}")
+        return self._ordered_header
+
+    def set_ordered_header(self, ordered_header):
+        self._ordered_header = ordered_header
 
     @property
     def transformed_headers(self):
