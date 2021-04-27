@@ -506,7 +506,7 @@ use the following command to show help message
 
     .. code-block:: bash
 
-       fate_test performance -i <path1 contains *benchmark.json> -v test
+       fate_test performance -i <path1 contains *benchmark.json> -v test1 -v test2
 
     will run benchmark testsuites in *path1* with performance compared to history jobs under provided tag(s)
 
@@ -760,7 +760,7 @@ command options
 
     .. code-block:: bash
 
-       fate_test performance -i <path1 contains *testsuite.json> -v test
+       fate_test performance -i <path1 contains *testsuite.json> -v test1 -v test2
 
     will run testsuites in *path1* with performance time compared to history jobs under provided tag(s)
 
