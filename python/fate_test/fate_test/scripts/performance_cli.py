@@ -24,6 +24,7 @@ import glob
 from fate_test import _config
 from fate_test._client import Clients
 from fate_test._config import Config
+from fate_test.utils import TxtStyle
 from fate_test._flow_client import JobProgress, SubmitJobResponse, QueryJobResponse
 from fate_test._io import LOGGER, echo
 from prettytable import PrettyTable, ORGMODE
@@ -87,6 +88,9 @@ def run_task(ctx, job_type, include, replace, timeout, update_job_parameters, up
     echo.echo(f"testsuite namespace: {namespace}", fg='red')
     echo.echo("loading testsuites:")
     suites = _load_testsuites(includes=include, excludes=tuple(), glob=None)
+    for i, suite in enumerate(suites):
+        echo.echo(f"\tdataset({len(suite.dataset)}) dsl jobs({len(suite.jobs)}) {suite.path}")
+
     if not yes and not click.confirm("running?"):
         return
 
@@ -315,9 +319,10 @@ def comparison_quality(group_name, history_tags, history_info_dir, time_consumin
     table.set_style(ORGMODE)
     table.field_names = ["Script Model Name", "time consuming"]
     for script_model_name in benchmark_performance:
-        table.add_row([script_model_name, benchmark_performance[script_model_name]])
-    print(table.get_string(title=f"Performance comparison results"))
-    print("\n" + "#" * 60)
+        table.add_row([f"{script_model_name}"] +
+                      [f"{TxtStyle.FIELD_VAL}{benchmark_performance[script_model_name]}{TxtStyle.END}"])
+    print("\n")
+    print(table.get_string(title=f"{TxtStyle.TITLE}Performance comparison results{TxtStyle.END}"))
 
 
 def save_quality(storage_tag, save_dir, time_consuming):
@@ -331,6 +336,6 @@ def save_quality(storage_tag, save_dir, time_consuming):
     try:
         with open(save_dir, 'w') as fp:
             json.dump(benchmark_quality, fp, indent=2)
-        print("Storage successful, please check: ", save_dir)
+        print("\n" + "Storage successful, please check: ", save_dir)
     except Exception:
-        print("Check whether you have write permission.")
+        print("\n" + "Storage failed, please check: ", save_dir)

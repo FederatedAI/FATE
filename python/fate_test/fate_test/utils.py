@@ -201,10 +201,11 @@ def _all_match(common_metrics, filtered_results, abs_tol, rel_tol, script=None):
         eval_table.add_row(row)
 
     print(style_table(eval_table.get_string(title=f"{TxtStyle.TITLE}Match Results{TxtStyle.END}")))
+    script = "" if script is None else f"{script} "
     if all_match:
-        print(f"All {script} Metrics Match: {TxtStyle.TRUE_VAL}{all_match}{TxtStyle.END}")
+        print(f"All {script}Metrics Match: {TxtStyle.TRUE_VAL}{all_match}{TxtStyle.END}")
     else:
-        print(f"All {script} Metrics Match: {TxtStyle.FALSE_VAL}{all_match}{TxtStyle.END}")
+        print(f"All {script}Metrics Match: {TxtStyle.FALSE_VAL}{all_match}{TxtStyle.END}")
 
 
 def comparison_quality(group_name, history_tags, cache_directory, abs_tol, rel_tol, **results):
@@ -266,7 +267,7 @@ def metric_compare(abs_tol, rel_tol, **metric_results):
     for script_model_name in script_model_names:
         table.add_row([f"{script_model_name}"] +
                       [f"{TxtStyle.FIELD_VAL}{v}{TxtStyle.END}" for v in filtered_results[script_model_name]])
-    print(table.get_string(title=f"{TxtStyle.TITLE}Comparison results of all metrics{TxtStyle.END}"))
+    print(table.get_string(title=f"{TxtStyle.TITLE}Comparison results of all metrics of Script Model FATE{TxtStyle.END}"))
     _all_match(common_metrics, filtered_results, abs_tol, rel_tol)
 
 
@@ -282,9 +283,9 @@ def _save_quality(storage_tag, cache_directory, **results):
     try:
         with open(save_dir, 'w') as fp:
             json.dump(benchmark_quality, fp, indent=2)
-        print("Storage successful, please check: ", save_dir)
+        print("Storage success, please check: ", save_dir)
     except Exception:
-        print("Check whether you have write permission.")
+        print("Storage failed, please check: ", save_dir)
 
 
 def parse_summary_result(rs_dict):
