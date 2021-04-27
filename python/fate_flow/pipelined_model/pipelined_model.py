@@ -20,6 +20,7 @@ import shutil
 import base64
 from ruamel import yaml
 from copy import deepcopy
+from filelock import FileLock
 
 from os.path import join, getsize
 from fate_arch.common import file_utils
@@ -31,7 +32,6 @@ class PipelinedModel(object):
     def __init__(self, model_id, model_version):
         """
         Support operations on FATE PipelinedModels
-        TODO: add lock
         :param model_id: the model id stored at the local party.
         :param model_version: the model version.
         """
@@ -43,19 +43,21 @@ class PipelinedModel(object):
         self.variables_index_path = os.path.join(self.model_path, "variables", "index")
         self.variables_data_path = os.path.join(self.model_path, "variables", "data")
         self.default_archive_format = "zip"
+        self.lock = FileLock(os.path.join(self.model_path, ".lock"))
 
     def create_pipelined_model(self):
         if os.path.exists(self.model_path):
             raise Exception("Model creation failed because it has already been created, model cache path is {}".format(
                 self.model_path
             ))
-        else:
-            os.makedirs(self.model_path, exist_ok=False)
-        for path in [self.variables_index_path, self.variables_data_path]:
-            os.makedirs(path, exist_ok=False)
-        shutil.copytree(os.path.join(file_utils.get_python_base_directory(), "federatedml", "protobuf", "proto"), self.define_proto_path)
-        with open(self.define_meta_path, "x", encoding="utf-8") as fw:
-            yaml.dump({"describe": "This is the model definition meta"}, fw, Dumper=yaml.RoundTripDumper)
+        os.makedirs(self.model_path, exist_ok=False)
+
+        with self.lock:
+            for path in [self.variables_index_path, self.variables_data_path]:
+                os.makedirs(path, exist_ok=False)
+            shutil.copytree(os.path.join(file_utils.get_python_base_directory(), "federatedml", "protobuf", "proto"), self.define_proto_path)
+            with open(self.define_meta_path, "x", encoding="utf-8") as fw:
+                yaml.dump({"describe": "This is the model definition meta"}, fw, Dumper=yaml.RoundTripDumper)
 
     def save_component_model(self, component_name, component_module_name, model_alias, model_buffers):
         model_proto_index = {}
@@ -68,7 +70,7 @@ class PipelinedModel(object):
                 fill_message = default_empty_fill_pb2.DefaultEmptyFillMessage()
                 fill_message.flag = 'set'
                 buffer_object_serialized_string = fill_message.SerializeToString()
-            with open(storage_path, "wb") as fw:
+            with self.lock, open(storage_path, "wb") as fw:
                 fw.write(buffer_object_serialized_string)
             model_proto_index[model_name] = type(buffer_object).__name__   # index of model name and proto buffer class name
             stat_logger.info("Save {} {} {} buffer".format(component_name, model_alias, model_name))
@@ -122,7 +124,7 @@ class PipelinedModel(object):
             fill_message = default_empty_fill_pb2.DefaultEmptyFillMessage()
             fill_message.flag = 'set'
             buffer_object_serialized_string = fill_message.SerializeToString()
-        with open(os.path.join(self.model_path, "pipeline.pb"), "wb") as fw:
+        with self.lock, open(os.path.join(self.model_path, "pipeline.pb"), "wb") as fw:
             fw.write(buffer_object_serialized_string)
 
     def packaging_model(self):
@@ -149,7 +151,7 @@ class PipelinedModel(object):
         :param model_proto_index:
         :return:
         """
-        with open(self.define_meta_path, "r+", encoding="utf-8") as f:
+        with self.lock, open(self.define_meta_path, "r+", encoding="utf-8") as f:
             _define_index = yaml.safe_load(f)
             if not isinstance(_define_index, dict):
                 raise ValueError('Invalid meta file')
