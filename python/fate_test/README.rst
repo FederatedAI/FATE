@@ -500,7 +500,9 @@ use the following command to show help message
 
        fate_test performance -i <path1 contains *benchmark.json> -s test
 
-    will run benchmark testsuites in *path1* with performance stored under provided tag for future comparison
+    will run benchmark testsuites in *path1* with performance stored under provided tag for future comparison;
+    note that FATE-Test always records the most recent run for each tag; if the same tag
+    is used more than once, only metrics from the latest job is kept
 
 6. history-tag
 
@@ -754,7 +756,9 @@ command options
 
        fate_test performance -i <path1 contains *testsuite.json> -s test
 
-    will run testsuites in *path1* with performance time stored under provided tag for future comparison
+    will run testsuites in *path1* with performance time stored under provided tag for future comparison;
+    note that FATE-Test always records the most recent run for each tag; if the same tag
+    is used more than once, only performance from the latest job is kept
 
 12. history-tag
 
