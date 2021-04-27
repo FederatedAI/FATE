@@ -108,7 +108,7 @@ def evaluate_almost_equal(metrics, results, abs_tol=None, rel_tol=None):
     return eval_summary, all_match
 
 
-def distribution_metrics(**results):
+def _distribution_metrics(**results):
     filtered_metric_group = _filter_results([DISTRIBUTION_METRICS], **results)
     for script, model_results_pair in filtered_metric_group.items():
         metric_results = model_results_pair[0]
@@ -119,9 +119,11 @@ def distribution_metrics(**results):
         script_model_names = list(filtered_results.keys())
         table.field_names = ["Script Model Name"] + common_metrics
         for script_model_name in script_model_names:
-            row = [f"{script}-{script_model_name}"] + [f"{TxtStyle.FIELD_VAL}{v}{TxtStyle.END}" for v in filtered_results[script_model_name]]
+            row = [f"{script}-{script_model_name}"] + [f"{TxtStyle.FIELD_VAL}{v}{TxtStyle.END}" for v in
+                                                       filtered_results[script_model_name]]
             table.add_row(row)
         print(table.get_string(title=f"{TxtStyle.TITLE}{script} distribution metrics{TxtStyle.END}"))
+        print("\n" + "#" * 60)
 
 
 def match_script_metrics(abs_tol, rel_tol, **results):
@@ -135,21 +137,11 @@ def match_script_metrics(abs_tol, rel_tol, **results):
         script_model_names = list(filtered_results.keys())
         table.field_names = ["Script Model Name"] + common_metrics
         for script_model_name in script_model_names:
-            row = [f"{script_model_name}-{script}"] + [f"{TxtStyle.FIELD_VAL}{v}{TxtStyle.END}" for v in filtered_results[script_model_name]]
+            row = [f"{script_model_name}-{script}"] + [f"{TxtStyle.FIELD_VAL}{v}{TxtStyle.END}" for v in
+                                                       filtered_results[script_model_name]]
             table.add_row(row)
         print(table.get_string(title=f"{TxtStyle.TITLE}{script} Script Metrics Summary{TxtStyle.END}"))
-        eval_summary, all_match = evaluate_almost_equal(common_metrics, filtered_results, abs_tol, rel_tol)
-        eval_table = PrettyTable()
-        eval_table.set_style(ORGMODE)
-        eval_table.field_names = ["Metric", "All Match"]
-        for metric, v in eval_summary.items():
-            row = [metric, v]
-            eval_table.add_row(row)
-        print(style_table(eval_table.get_string(title=f"{TxtStyle.TITLE}{script} Script Metrics Match Results{TxtStyle.END}")))
-        if all_match:
-            print(f"All {script} Script Metrics Match: {TxtStyle.TRUE_VAL}{all_match}{TxtStyle.END}")
-        else:
-            print(f"All {script} Script Metrics Match: {TxtStyle.FALSE_VAL}{all_match}{TxtStyle.END}")
+        _all_match(common_metrics, filtered_results, abs_tol, rel_tol, script)
         print("\n" + "#" * 60)
 
 
@@ -180,38 +172,42 @@ def match_metrics(evaluate, group_name, abs_tol=None, rel_tol=None, storage_tag=
     model_names = list(filtered_results.keys())
     table.field_names = ["Model Name"] + common_metrics
     for model_name in model_names:
-        row = [f"{model_name}-{group_name}"] + [f"{TxtStyle.FIELD_VAL}{v}{TxtStyle.END}" for v in filtered_results[model_name]]
+        row = [f"{model_name}-{group_name}"] + [f"{TxtStyle.FIELD_VAL}{v}{TxtStyle.END}" for v in
+                                                filtered_results[model_name]]
         table.add_row(row)
     print(table.get_string(title=f"{TxtStyle.TITLE}Metrics Summary{TxtStyle.END}"))
 
     if evaluate and len(filtered_results.keys()) > 1:
-        eval_summary, all_match = evaluate_almost_equal(common_metrics, filtered_results, abs_tol, rel_tol)
-        eval_table = PrettyTable()
-        eval_table.set_style(ORGMODE)
-        eval_table.field_names = ["Metric", "All Match"]
-        for metric, v in eval_summary.items():
-            row = [metric, v]
-            eval_table.add_row(row)
+        _all_match(common_metrics, filtered_results, abs_tol, rel_tol)
 
-        print(style_table(eval_table.get_string(title=f"{TxtStyle.TITLE}Match Results{TxtStyle.END}")))
-        print("\n")
-        if all_match:
-            print(f"All Metrics Match: {TxtStyle.TRUE_VAL}{all_match}{TxtStyle.END}")
-        else:
-            print(f"All Metrics Match: {TxtStyle.FALSE_VAL}{all_match}{TxtStyle.END}")
-
-    distribution_metrics(**results)
+    _distribution_metrics(**results)
     match_script_metrics(abs_tol, rel_tol, **results)
     if history_tag:
         history_tag = ["_".join([i, group_name]) for i in history_tag]
-        comparison_quality(group_name, history_tag, cache_directory, **results)
+        comparison_quality(group_name, history_tag, cache_directory, abs_tol, rel_tol, **results)
     if storage_tag:
         storage_tag = "_".join(['FATE', fate_version, storage_tag, group_name])
-        save_quality(storage_tag, cache_directory, **results)
+        _save_quality(storage_tag, cache_directory, **results)
     deinit()
 
 
-def comparison_quality(group_name, history_tags, cache_directory, **results):
+def _all_match(common_metrics, filtered_results, abs_tol, rel_tol, script=None):
+    eval_summary, all_match = evaluate_almost_equal(common_metrics, filtered_results, abs_tol, rel_tol)
+    eval_table = PrettyTable()
+    eval_table.set_style(ORGMODE)
+    eval_table.field_names = ["Metric", "All Match"]
+    for metric, v in eval_summary.items():
+        row = [metric, v]
+        eval_table.add_row(row)
+
+    print(style_table(eval_table.get_string(title=f"{TxtStyle.TITLE}Match Results{TxtStyle.END}")))
+    if all_match:
+        print(f"All {script} Metrics Match: {TxtStyle.TRUE_VAL}{all_match}{TxtStyle.END}")
+    else:
+        print(f"All {script} Metrics Match: {TxtStyle.FALSE_VAL}{all_match}{TxtStyle.END}")
+
+
+def comparison_quality(group_name, history_tags, cache_directory, abs_tol, rel_tol, **results):
     def regression_group(results_dict):
         metric = {}
         for k, v in results_dict.items():
@@ -248,18 +244,19 @@ def comparison_quality(group_name, history_tags, cache_directory, **results):
     if SCRIPT_METRICS in results["FATE"] and regression_metric:
         print()
         regression_metric[group_name] = regression_group(results['FATE'])
-        metric_compare(**regression_metric)
+        metric_compare(abs_tol, rel_tol, **regression_metric)
         for key, value in _filter_results([SCRIPT_METRICS], **results)['FATE'][0].items():
             regression_quality["_".join([group_name, key])] = value
-        metric_compare(**regression_quality)
+        metric_compare(abs_tol, rel_tol, **regression_quality)
+        print("\n" + "#" * 60)
     elif DISTRIBUTION_METRICS in results["FATE"] and class_quality:
 
         class_quality[group_name] = class_group(results['FATE'])
-        metric_compare(**class_quality)
-    print("\n" + "#" * 60)
+        metric_compare(abs_tol, rel_tol, **class_quality)
+        print("\n" + "#" * 60)
 
 
-def metric_compare(**metric_results):
+def metric_compare(abs_tol, rel_tol, **metric_results):
     common_metrics = _get_common_metrics(**metric_results)
     filtered_results = _filter_results(common_metrics, **metric_results)
     table = PrettyTable()
@@ -267,11 +264,13 @@ def metric_compare(**metric_results):
     script_model_names = list(filtered_results.keys())
     table.field_names = ["Script Model Name"] + common_metrics
     for script_model_name in script_model_names:
-        table.add_row([f"{script_model_name}"] + [f"{v}" for v in filtered_results[script_model_name]])
-    print(table.get_string(title=f"Comparison results of all metrics"))
+        table.add_row([f"{script_model_name}"] +
+                      [f"{TxtStyle.FIELD_VAL}{v}{TxtStyle.END}" for v in filtered_results[script_model_name]])
+    print(table.get_string(title=f"{TxtStyle.TITLE}Comparison results of all metrics{TxtStyle.END}"))
+    _all_match(common_metrics, filtered_results, abs_tol, rel_tol)
 
 
-def save_quality(storage_tag, cache_directory, **results):
+def _save_quality(storage_tag, cache_directory, **results):
     save_dir = "/".join([os.path.join(os.path.abspath(cache_directory), 'benchmark_history', "benchmark_quality.json")])
     os.makedirs(os.path.dirname(save_dir), exist_ok=True)
     if os.path.exists(save_dir):
