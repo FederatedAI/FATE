@@ -32,17 +32,15 @@ class LRComponentConverter(ComponentConverterBase):
 
         sk_lr_model = LogisticRegression(penalty=meta_obj.penalty.lower(),
                                          tol=meta_obj.tol,
-                                         C=1.0/meta_obj.alpha,
-                                         warm_start=True)
+                                         fit_intercept=meta_obj.fit_intercept,
+                                         max_iter=meta_obj.max_iter)
 
         coefficient = np.empty((1, len(param_obj.header)))
         for index in range(len(param_obj.header)):
             coefficient[0][index] = param_obj.weight[param_obj.header[index]]
         sk_lr_model.coef_ = coefficient
-
-        intercept = np.array([param_obj.intercept])
-        sk_lr_model.intercept_ = intercept
-
+        sk_lr_model.intercept_ = np.array([param_obj.intercept])
         # hard-coded 0-1 classification as HomoLR only supports this for now
         sk_lr_model.classes_ = np.array([0., 1.])
+        sk_lr_model.n_iter_ = [param_obj.iters]
         return sk_lr_model
