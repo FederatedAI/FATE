@@ -70,7 +70,7 @@ Eggroll 是一个适用于机器学习和深度学习的大规模分布式架构
 3.基础环境配置
 ==============
 
-3.1 hostname配置(可选)
+3.1 hostname配置
 ----------------
 
 **1）修改主机名**
@@ -93,7 +93,7 @@ vim /etc/hosts
 
 192.168.0.2 VM_0_2_centos
 
-3.2 关闭selinux(可选)
+3.2 关闭selinux
 ---------------
 
 **在目标服务器（192.168.0.1 192.168.0.2）root用户下执行：**
@@ -206,6 +206,8 @@ ssh app\@192.168.0.1
 
 ssh app\@192.168.0.2
 
+注意：务必要执行此连接测试，需要验证配置是否正确和免yes交互，不然部署的时候会卡住。
+
 ## 3.6 增加虚拟内存
 
 **目标服务器（192.168.0.1 192.168.0.2）root用户执行**
@@ -302,8 +304,8 @@ ls -lrt /data/projects/common/supervisord/supervisord.d/fate-*.conf
 ```
 #注意：URL链接有换行，拷贝的时候注意整理成一行
 cd /data/projects/
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/ansible_nfate_1.5.0_release-1.0.0.tar.gz
-tar xzf ansible_nfate_1.5.0_release-1.0.0.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/ansible_nfate_1.5.1_release-1.0.0.tar.gz
+tar xzf ansible_nfate_1.5.1_release-1.0.0.tar.gz
 ```
 
 ### 4.4 配置文件修改和示例
@@ -406,7 +408,7 @@ host:
       - 192.168.0.1  
       port: 9370 ---grpc端口
       secure_port: 9371 ---grpcs端口
-      pool_size: 600 ---线程池大小
+      pool_size: 600 ---线程池大小，推荐设为：min(1000 + len(party_ids) * 200, 5000)
       max_memory:    ---rollsite进程JVM内存参数，默认是物理内存的1/4，可根据实际情况设置,如12G，如果是rollsite专用的机器，配置成物理内存的75%。
       server_secure: False ---作为服务端，开启安全证书验证，不使用安全证书默认即可
       client_secure: False ---作为客户端，使用证书发起安全请求，不使用安全证书默认即可
@@ -429,6 +431,7 @@ host:
       ips:
       - 192.168.0.1 ---只支持部署一台主机
       port: 4670
+      cores_per_node: 16 ---nodemanager节点cpu核数，多个nodemanager节点按照CPU核数最小的设置
     nodemanager:
       enable: True
       ips: ---支持部署多台
@@ -467,6 +470,9 @@ host:
       use_acl: false
       user: "fate"
       passwd: "fate"
+    servings:
+     ip: 192.168.0.1
+     port: 8000
 ```
 
 **4）修改guest参数**
@@ -486,7 +492,7 @@ guest:
       - 192.168.0.2
       port: 9370 ---grpc端口
       secure_port: 9371 ---grpcs端口
-      pool_size: 600 ---线程池大小
+      pool_size: 600 ---线程池大小，推荐设为：min(1000 + len(party_ids) * 200, 5000)
       max_memory:    ---rollsite进程JVM内存参数，默认是物理内存的1/4，可根据实际情况设置,如12G，如果是rollsite专用的机器，配置成物理内存的75%。
       server_secure: False ---作为服务端，开启安全证书验证，不使用安全证书默认即可
       client_secure: False ---作为客户端，使用证书发起安全请求，不使用安全证书默认即可
@@ -509,6 +515,7 @@ guest:
       ips:   ---只支持部署一台主机
       - 192.168.0.2
       port: 4670
+      cores_per_node: 16 ---nodemanager节点cpu核数，多个nodemanager节点按照CPU核数最小的设置
     nodemanager:
       enable: True
       ips:  ---支持部署多台主机
@@ -547,6 +554,9 @@ guest:
       use_acl: false
       user: "fate"
       passwd: "fate"
+   servings:
+     ip: 192.168.0.2
+     port: 8000
 ```
 
 **5）修改exchange参数**
@@ -564,7 +574,7 @@ exchange:
     - 192.168.0.88
     port: 9370
     secure_port: 9371 ---grpcs端口
-    pool_size: 600
+    pool_size: 600，推荐设为：min(1000 + len(party_ids) * 200, 5000)
     max_memory:    ---rollsite进程JVM内存参数，默认是物理内存的1/4，可根据实际情况设置,如12G，如果是rollsite专用的机器，配置成物理内存的75%。
     server_secure: False ---作为服务端，开启安全证书验证，不使用安全证书默认即可
     client_secure: False ---作为客户端，使用证书发起安全请求，不使用安全证书默认即可
@@ -681,7 +691,7 @@ python run_toy_example.py 10000 10000 1
 
 "2020-04-28 18:26:20,789 - secure_add_guest.py[line:126] - INFO: success to calculate secure_sum, it is 1999.9999999999998"
 
-提示：如出现max cores per job is 1, please modify job parameters报错提示，需要修改当前目录下文件toy_example_conf.json中参数eggroll.session.processors.per.node为1.
+提示：如出现max cores per job is 1, please modify job parameters报错提示，需要修改当前目录下文件toy_example_conf.json中参数task_cores为1.
 
 2）192.168.0.2上执行，guest_partyid和host_partyid都设为9999：
 
@@ -737,6 +747,9 @@ python upload_default_data.py -m 1
 ```
 source /data/projects/fate/bin/init_env.sh
 cd /data/projects/fate/examples/min_test_task/
+#单边测试
+python run_task.py -m 1 -gid 9999 -hid 9999 -aid 9999 -f fast
+#两边测试
 python run_task.py -m 1 -gid 9999 -hid 10000 -aid 10000 -f fast
 ```
 
@@ -842,16 +855,36 @@ netstat -tlnp | grep 8080
 | /data/logs                        | 日志路径                       |
 | /data/projects/common/supervisord | 进程管理工具supervisor安装路径 |
 
-# 7. 附录
+# 7. 卸载
 
-## 7.1 Eggroll参数调优
+#### 7.1 概述
 
-配置文件路径：/data/projects/fate/eggroll/conf/eggroll.properties
+支持所有服务服务的卸载以及单个服务的卸载。
 
-配置参数：eggroll.session.processors.per.node
+#### 7.2 执行卸载
+
+```
+cd /data/projects/ansible-nfate-1.*
+sh ./uninstall.sh prod all
+
+#卸载命令说明
+sh ./uninstall.sh $arg1 $arg2
+- $arg1参数同4.4.1步骤init执行的参数，为test|prod。
+- $arg2参数为选择的服务，可选参数为（all|mysql|eggroll|fate_flow|fateboard），all代表卸载所有服务。
+```
+
+# 8. 附录
+
+## 8.1 Eggroll参数调优
 
 假定 CPU核数（cpu cores）为 c, Nodemanager的数量为 n，需要同时运行的任务数为 p，则：
 
 egg_num=eggroll.session.processors.per.node = c * 0.8 / p
 
 partitions （roll pair分区数）= egg_num * n
+
+可通过job conf中的job parameters指定作业使用的参数：
+1. egg_num：配置task_cores或者配置eggroll_run中processors_per_node参数
+2. partitions：配置computing_partitions
+
+更多关于作业提交配置请参考[dsl_conf_v2_setting_guide_zh](../../doc/dsl_conf_v2_setting_guide_zh.rst)

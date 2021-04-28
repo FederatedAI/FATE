@@ -51,6 +51,7 @@ from fate_flow.utils.authentication_utils import PrivilegeAuth
 from fate_flow.utils.grpc_utils import UnaryService
 from fate_flow.utils.service_utils import ServiceUtils
 from fate_flow.utils.xthread import ThreadPoolExecutor
+from fate_flow.utils import job_utils
 
 '''
 Initialize the manager
@@ -86,6 +87,7 @@ if __name__ == '__main__':
     )
     # init
     # signal.signal(signal.SIGTERM, job_utils.cleaning)
+    signal.signal(signal.SIGCHLD, job_utils.wait_child_process)
     # init db
     init_flow_db()
     init_arch_db()

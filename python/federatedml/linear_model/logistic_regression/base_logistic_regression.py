@@ -71,7 +71,7 @@ class BaseLogisticRegression(BaseLinearModel):
 
     def _get_param(self):
         header = self.header
-        LOGGER.debug("In get_param, header: {}".format(header))
+        # LOGGER.debug("In get_param, header: {}".format(header))
         if header is None:
             param_protobuf_obj = lr_model_param_pb2.LRModelParam()
             return param_protobuf_obj
@@ -133,7 +133,6 @@ class BaseLogisticRegression(BaseLinearModel):
     def one_vs_rest_fit(self, train_data=None, validate_data=None):
         LOGGER.debug("Class num larger than 2, need to do one_vs_rest")
         self.one_vs_rest_obj.fit(data_instances=train_data, validate_data=validate_data)
-        LOGGER.debug(f"Final summary: {self.summary()}")
 
     def get_metrics_param(self):
         if self.need_one_vs_rest:

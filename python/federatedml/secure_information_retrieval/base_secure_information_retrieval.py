@@ -253,34 +253,15 @@ class BaseSecureInformationRetrieval(ModelBase):
 
     @staticmethod
     def log_table(tab, mode=0):
-        """
-        Print a small table
-        mode = 0: k, v
-        mode = 1: k, v.label
-        :param mode:
-        :param tab: Table
-        :return:
-        """
-        tab_col = tab.collect()
+        # tab_col = tab.collect()
         if mode == 0:
-            for k, v in tab_col:
-                LOGGER.debug("k = {}".format(k))
-                LOGGER.debug("v = {}".format(v))
+            LOGGER.debug("mode 0: k, v")
         elif mode == 1:
-            for k, v in tab_col:
-                LOGGER.debug("k = {}".format(k))
-                LOGGER.debug("v.label = {}".format(v.label))
+            LOGGER.debug("mode 1: k, v.label")
         elif mode == 2:
-            for k, v in tab_col:
-                LOGGER.debug("k = {}".format(k))
-                LOGGER.debug("v.id = {}".format(v.inst_id))
-                LOGGER.debug("v.label = {}".format(v.label))
+            LOGGER.debug("mode 2: k, v.id, v.label")
         elif mode == 3:
-            for k, v in tab_col:
-                LOGGER.debug("k = {}".format(k))
-                LOGGER.debug("v.id = {}".format(v.inst_id))
-                LOGGER.debug("v.features = {}".format(v.features))
-                LOGGER.debug("v.label = {}".format(v.label))
+           LOGGER.debug("mode 3: k, v.id, v.features, v.label")
 
     @staticmethod
     def log_schema(tab):

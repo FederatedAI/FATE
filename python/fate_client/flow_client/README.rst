@@ -249,14 +249,12 @@ Job
 +-------+--------------------+-----------+------------------------+------------+----------------------------------------------------------------+
 | 4     | output\_path       | ``-o``    | ``--output-path``      | No         | User specifies output directory path.                          |
 +-------+--------------------+-----------+------------------------+------------+----------------------------------------------------------------+
-| 5     | version            | ``-v``    | ``--version``          | No         | User specified version of dsl parser. Default: 1               |
-+-------+--------------------+-----------+------------------------+------------+----------------------------------------------------------------+
 
 -  *Examples*:
 
 .. code:: bash
 
-    flow job dsl --cpn-path fate_flow/examples/component_list.txt --train-dsl-path fate_flow/examples/test_hetero_lr_job_dsl.json --version 2
+    flow job dsl --cpn-path fate_flow/examples/component_list.txt --train-dsl-path fate_flow/examples/test_hetero_lr_job_dsl.json
 
     flow job dsl --cpn-path fate_flow/examples/component_list.txt --train-dsl-path fate_flow/examples/test_hetero_lr_job_dsl.json -o fate_flow/examples/
 

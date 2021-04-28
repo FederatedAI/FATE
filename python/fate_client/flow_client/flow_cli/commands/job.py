@@ -245,8 +245,6 @@ def view(ctx, **kwargs):
               help="User specifies a file path which records the component list.")
 @click.option("--train-dsl-path", type=click.Path(exists=True), required=True,
               help="User specifies the train dsl file path.")
-@click.option("-v", "--version", type=click.Choice(["1", "2"]), default="1", metavar='TEXT',
-              help="User specifies the version of dsl parser. Choosing from 1 and 2. (Default: 1)")
 @cli_args.OUTPUT_PATH
 @click.pass_context
 def dsl_generator(ctx, **kwargs):
@@ -264,7 +262,7 @@ def dsl_generator(ctx, **kwargs):
 
     \b
     - USAGE:
-        flow job dsl --cpn-path fate_flow/examples/component_list.txt --train-dsl-path fate_flow/examples/test_hetero_lr_job_dsl.json -o fate_flow/examples/ --version 2
+        flow job dsl --cpn-path fate_flow/examples/component_list.txt --train-dsl-path fate_flow/examples/test_hetero_lr_job_dsl.json -o fate_flow/examples/
         flow job dsl --cpn-list "dataio_0, hetero_feature_binning_0, hetero_feature_selection_0, evaluation_0" --train-dsl-path fate_flow/examples/test_hetero_lr_job_dsl.json -o fate_flow/examples/
         flow job dsl --cpn-list [dataio_0,hetero_feature_binning_0,hetero_feature_selection_0,evaluation_0] --train-dsl-path fate_flow/examples/test_hetero_lr_job_dsl.json -o fate_flow/examples/
     """
@@ -282,7 +280,7 @@ def dsl_generator(ctx, **kwargs):
     config_data = {
         "cpn_str": cpn_str,
         "train_dsl": train_dsl,
-        "version": kwargs.get("version"),
+        "version": "2",
     }
 
     if kwargs.get("output_path"):

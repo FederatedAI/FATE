@@ -34,7 +34,7 @@
 4.基础环境配置
 ==============
 
-4.1 hostname配置(可选)
+4.1 hostname配置
 ----------------
 
 **1）修改主机名**
@@ -51,7 +51,7 @@ vim /etc/hosts
 
 192.168.0.1 VM_0_1_centos
 
-4.2 关闭selinux(可选)
+4.2 关闭selinux
 ---------------
 
 **在目标服务器（192.168.0.1）root用户下执行：**
@@ -79,7 +79,7 @@ ubuntu系统执行：apt list --installed | grep selinux
 
 \* soft nproc unlimited
 
-4.4 关闭防火墙(可选)
+4.4 关闭防火墙
 --------------
 
 **在目标服务器（192.168.0.1）root用户下执行**
@@ -146,7 +146,7 @@ fi
 ```
 cd /data/projects/install
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/jdk-8u192-linux-x64.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_1.5.0_release.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_1.5.1_release.tar.gz
 ```
 
 ## 5.2 操作系统参数检查

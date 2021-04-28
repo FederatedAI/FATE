@@ -101,7 +101,8 @@ def deserialize_b64(src):
 
 safe_module = {
     'federatedml',
-    'numpy'
+    'numpy',
+    'fate_flow'
 }
 
 

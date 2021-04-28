@@ -258,7 +258,6 @@ def bind_model_service():
             adapter = JobRuntimeConfigAdapter(runtime_conf)
             job_parameters = adapter.get_common_parameters().to_dict()
             request_config['job_parameters'] = job_parameters if job_parameters else model_info.get('f_train_runtime_conf', {}).get('job_parameters')
-            request_config['job_parameters'] = model_info.get('f_runtime_conf').get('job_parameters')
 
             roles = runtime_conf.get('role')
             request_config['role'] = roles if roles else model_info.get('f_train_runtime_conf', {}).get('role')
@@ -390,13 +389,13 @@ def tag_model(operation):
         return get_json_result(100, "'{}' is not currently supported.".format(operation))
 
     request_data = request.json
-    model = MLModel.get_or_none(MLModel.f_job_id == request_data.get("job_id"))
+    model = MLModel.get_or_none(MLModel.f_model_version == request_data.get("job_id"))
     if not model:
         raise Exception("Can not found model by job id: '{}'.".format(request_data.get("job_id")))
 
     if operation == 'retrieve':
         res = {'tags': []}
-        tags = (Tag.select().join(ModelTag, on=ModelTag.f_t_id == Tag.f_id).where(ModelTag.f_m_id == model.f_id))
+        tags = (Tag.select().join(ModelTag, on=ModelTag.f_t_id == Tag.f_id).where(ModelTag.f_m_id == model.f_model_version))
         for tag in tags:
             res['tags'].append({'name': tag.f_name, 'description': tag.f_desc})
         res['count'] = tags.count()
@@ -405,12 +404,12 @@ def tag_model(operation):
         tag = Tag.get_or_none(Tag.f_name == request_data.get('tag_name'))
         if not tag:
             raise Exception("Can not found '{}' tag.".format(request_data.get('tag_name')))
-        tags = (Tag.select().join(ModelTag, on=ModelTag.f_t_id == Tag.f_id).where(ModelTag.f_m_id == model.f_id))
+        tags = (Tag.select().join(ModelTag, on=ModelTag.f_t_id == Tag.f_id).where(ModelTag.f_m_id == model.f_model_version))
         if tag.f_name not in [t.f_name for t in tags]:
             raise Exception("Model {} {} does not have tag '{}'.".format(model.f_model_id,
                                                                          model.f_model_version,
                                                                          tag.f_name))
-        delete_query = ModelTag.delete().where(ModelTag.f_m_id == model.f_id, ModelTag.f_t_id == tag.f_id)
+        delete_query = ModelTag.delete().where(ModelTag.f_m_id == model.f_model_version, ModelTag.f_t_id == tag.f_id)
         delete_query.execute()
         return get_json_result(retmsg="'{}' tag has been removed from tag list of model {} {}.".format(request_data.get('tag_name'),
                                                                                                        model.f_model_id,
@@ -424,12 +423,12 @@ def tag_model(operation):
             tag.f_name = request_data.get('tag_name')
             tag.save(force_insert=True)
         else:
-            tags = (Tag.select().join(ModelTag, on=ModelTag.f_t_id == Tag.f_id).where(ModelTag.f_m_id == model.f_id))
+            tags = (Tag.select().join(ModelTag, on=ModelTag.f_t_id == Tag.f_id).where(ModelTag.f_m_id == model.f_model_version))
             if tag.f_name in [t.f_name for t in tags]:
                 raise Exception("Model {} {} already been tagged as tag '{}'.".format(model.f_model_id,
                                                                                       model.f_model_version,
                                                                                       tag.f_name))
-        ModelTag.create(f_t_id=tag.f_id, f_m_id=model.f_id)
+        ModelTag.create(f_t_id=tag.f_id, f_m_id=model.f_model_version)
         return get_json_result(retmsg="Adding {} tag for model with job id: {} successfully.".format(request_data.get('tag_name'),
                                                                                                      request_data.get('job_id')))
 
@@ -479,12 +478,14 @@ def operate_tag(tag_operation):
         if tag_operation == TagOperation.RETRIEVE:
             if request_data.get('with_model', False):
                 res = {'models': []}
-                models = (MLModel.select().join(ModelTag, on=ModelTag.f_m_id == MLModel.f_id).where(ModelTag.f_t_id == tag.f_id))
+                models = (MLModel.select().join(ModelTag, on=ModelTag.f_m_id == MLModel.f_model_version).where(ModelTag.f_t_id == tag.f_id))
                 for model in models:
                         res["models"].append({
                         "model_id": model.f_model_id,
                         "model_version": model.f_model_version,
-                        "model_size": model.f_size
+                        "model_size": model.f_size,
+                        "role": model.f_role,
+                        "party_id": model.f_party_id
                     })
                 res["count"] = models.count()
                 return get_json_result(data=res)

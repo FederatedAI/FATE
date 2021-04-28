@@ -17,6 +17,7 @@ local ngx = ngx
 local new_timer = ngx.timer.at
 local yaml_parser = require "yaml_parser"
 local io = io
+local string = require "string"
 
 local _M = {
     _VERSION = '0.1'
@@ -33,15 +34,18 @@ if not route_cache then
 end
 
 local function reload_route_table()
+    ngx.log(ngx.INFO, "start reload route table config")
     local prefix_path = ngx.config.prefix()
-    local file = io.open(prefix_path.."conf/route_table.yaml", "r")
+    local route_table_config_path = prefix_path.."conf/route_table.yaml"
+    local file = io.open(route_table_config_path, "r")
     local content = file:read("*a")
     file:close()
+    ngx.log(ngx.INFO, string.format("load route table config %s success", route_table_config_path))
     local yaml_table = yaml_parser.parse(content)
-    for k, v in pairs(yaml_table)do
+    for k, v in pairs(yaml_table) do
         route_cache:set(tostring(k), v)
     end
-    ngx.log(ngx.INFO, "reload route table")
+    ngx.log(ngx.INFO, "reload route table done")
 end
 
 local function reload()
@@ -54,6 +58,40 @@ local function reload()
         reload_route_table()
         return
     end
+end
+
+local function get_server_address(server)
+    local port
+    if ngx.req.http_version() == 2 then
+        port = server["grpc_port"]
+    else
+        ngx.log(ngx.INFO, server["http_port"])
+        port = server["http_port"]
+    end
+    return string.format("%s:%s", server["host"], port)
+end
+
+function _M.get_dest_server(dest_env, dest_service)
+    ngx.log(ngx.INFO, string.format("try to get %s %s server", dest_env, dest_service))
+    if dest_env ~= nil then
+        dest_env = tostring(dest_env)
+    else
+        return nil
+    end
+
+    local route = _M.get_route()
+    local env_services = route:get(dest_env)
+    local server
+    if env_services ~= nil then
+        local service = env_services[dest_service]
+        server = get_server_address(service[math.random(1, #service)])
+        ngx.log(ngx.INFO, string.format("get %s %s server: %s", dest_env, dest_service, server))
+    else
+        local default_proxy = route:get("default")["proxy"]
+        server = get_server_address(default_proxy[math.random(1, #default_proxy)])
+        ngx.log(ngx.INFO, string.format("get %s %s default server: %s", dest_env, dest_service, server))
+    end
+    return server
 end
 
 function _M.get_route()
