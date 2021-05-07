@@ -113,11 +113,13 @@ def download_model(request_data):
 
 
 def convert_homo_model(request_data):
-    model_id = request_data.get("model_id")
+    party_model_id = model_utils.gen_party_model_id(model_id=request_data["model_id"],
+                                                    role=request_data["role"],
+                                                    party_id=request_data["party_id"])
     model_version = request_data.get("model_version")
-    model = pipelined_model.PipelinedModel(model_id=model_id, model_version=model_version)
+    model = pipelined_model.PipelinedModel(model_id=party_model_id, model_version=model_version)
     if not model.exists():
-        return 100, 'Model {} {} does not exist'.format(model_id, model_version), None
+        return 100, 'Model {} {} does not exist'.format(party_model_id, model_version), None
 
     with open(model.define_meta_path, "r", encoding="utf-8") as fr:
         define_index = yaml.safe_load(fr)
@@ -147,7 +149,7 @@ def convert_homo_model(request_data):
     if len(detail) > 0:
         return (0,
                 f"Conversion of homogeneous federated learning component(s) in model "
-                f"{model_id}:{model_version} completed. Use export to download the converted model.",
+                f"{party_model_id}:{model_version} completed. Use export to download the converted model.",
                 detail)
     else:
-        return 100, f"No component in model {model_id}:{model_version} can be converted.", None
+        return 100, f"No component in model {party_model_id}:{model_version} can be converted.", None

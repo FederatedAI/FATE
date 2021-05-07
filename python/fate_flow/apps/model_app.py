@@ -731,10 +731,6 @@ def homo_convert():
     request_config = request.json or request.form.to_dict()
     required_arguments = ["model_id", "model_version", "role", "party_id"]
     check_config(request_config, required_arguments=required_arguments)
-    request_config["model_id"] = gen_party_model_id(model_id=request_config["model_id"],
-                                                    role=request_config["role"],
-                                                    party_id=request_config["party_id"])
-
     retcode, retmsg, res_data = publish_model.convert_homo_model(request_data=request_config)
     operation_record(request.json, "homo_convert", "success" if not retcode else "failed")
     return get_json_result(retcode=retcode, retmsg=retmsg, data=res_data)
