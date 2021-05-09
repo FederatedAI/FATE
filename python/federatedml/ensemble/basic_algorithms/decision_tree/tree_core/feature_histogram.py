@@ -525,8 +525,7 @@ class FeatureHistogram(object):
                 node_histograms[node_idx][fid][value][1] += hess[rid]
                 node_histograms[node_idx][fid][value][2] += 1
 
-
-        for nid in range(node_num):##cal feature level g_h incremental
+        for nid in range(node_num):  ##cal feature level g_h incremental
             node_gh_sum_cal_flag = False
             for fid in range(bin_split_points.shape[0]):
                 if valid_features is not None and valid_features[fid] is False:
@@ -536,12 +535,11 @@ class FeatureHistogram(object):
                     zero_optim[nid][fid][1] += node_histograms[nid][fid][bin_index][1]
                     zero_optim[nid][fid][2] += node_histograms[nid][fid][bin_index][2]
 
-                if not node_gh_sum_cal_flag: ## node total sum value,cal only one feature enough
-                    zero_opt_node_sum[nid][0] += zero_optim[nid][fid][0]
-                    zero_opt_node_sum[nid][1] += zero_optim[nid][fid][1]
+                zero_opt_node_sum[nid][0] += zero_optim[nid][fid][0]
+                zero_opt_node_sum[nid][1] += zero_optim[nid][fid][1]
+                if not node_gh_sum_cal_flag:
                     zero_opt_node_sum[nid][2] += zero_optim[nid][fid][2]
-                    node_gh_sum_cal_flag = True
-
+                    node_gh_sum_cal_flag=True
 
         for node_idx in range(node_num):
             for fid in range(bin_split_points.shape[0]):
