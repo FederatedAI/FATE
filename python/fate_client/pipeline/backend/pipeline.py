@@ -448,7 +448,7 @@ class PipeLine(object):
         return predict_conf
 
     @LOGGER.catch(reraise=True)
-    def fit(self, job_parameters=None):
+    def fit(self, job_parameters=None, callback_func=None):
 
         if self._stage == "predict":
             raise ValueError("This pipeline is constructed for predicting, cannot use fit interface")
@@ -461,7 +461,7 @@ class PipeLine(object):
         training_conf = self._feed_job_parameters(self._train_conf, job_type="train", job_parameters=job_parameters)
         self._train_conf = training_conf
         LOGGER.debug(f"train_conf is: \n {json.dumps(training_conf, indent=4, ensure_ascii=False)}")
-        self._train_job_id, detail_info = self._job_invoker.submit_job(self._train_dsl, training_conf)
+        self._train_job_id, detail_info = self._job_invoker.submit_job(self._train_dsl, training_conf, callback_func)
         self._train_board_url = detail_info["board_url"]
         self._model_info = SimpleNamespace(model_id=detail_info["model_info"]["model_id"],
                                            model_version=detail_info["model_info"]["model_version"])
