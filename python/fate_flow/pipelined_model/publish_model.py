@@ -129,14 +129,14 @@ def convert_homo_model(request_data):
     for key, value in define_index.get("model_proto", {}).items():
         if key == 'pipeline':
             continue
-        for v in value.keys():
-            buffer_obj = model.read_component_model(key, v)
+        for model_alias in value.keys():
+            buffer_obj = model.read_component_model(key, model_alias)
             module_name = define_index.get("component_define", {}).get(key, {}).get('module_name')
             converted_framework, converted_model = model_convert(model_contents=buffer_obj,
                                                                  module_name=module_name,
                                                                  framework_name=framework_name)
             if converted_model:
-                converted_model_dir = os.path.join(model.variables_data_path, key, "converted_model")
+                converted_model_dir = os.path.join(model.variables_data_path, key, model_alias, "converted_model")
                 os.makedirs(converted_model_dir, exist_ok=True)
 
                 saved_path = save_converted_model(converted_model,
@@ -144,6 +144,7 @@ def convert_homo_model(request_data):
                                                   converted_model_dir)
                 detail.append({
                     "component_name": key,
+                    "model_alias": model_alias,
                     "converted_model_path": saved_path
                 })
     if len(detail) > 0:
