@@ -508,8 +508,8 @@ Below lists input and output elements of each component.
      - Sample Weight assigns weight to instances according to user-specified parameters
      - data
      - data
-     - None
-     - None
+     - model
+     - model
 
 
 

@@ -310,7 +310,7 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
      - Table, 值为Instance
      - Table, 值为加权后Instance
      -
-     -
+     - SampleWeight Model
 
    * - `Feldman Verifiable Sum`_
      - 费尔德曼秘密分享求和

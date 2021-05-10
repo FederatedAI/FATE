@@ -307,7 +307,7 @@ Algorithm List
      - Table, values are instance
      - Table, values are weighted instance
      -
-     -
+     - SampleWeight Model
 
    * - `Feldman Verifiable Sum`_
      - Feldman Verifiable Sum
