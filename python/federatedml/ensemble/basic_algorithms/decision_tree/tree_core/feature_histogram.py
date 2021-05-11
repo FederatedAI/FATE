@@ -535,9 +535,9 @@ class FeatureHistogram(object):
                     zero_optim[nid][fid][1] += node_histograms[nid][fid][bin_index][1]
                     zero_optim[nid][fid][2] += node_histograms[nid][fid][bin_index][2]
 
-                zero_opt_node_sum[nid][0] += zero_optim[nid][fid][0]
-                zero_opt_node_sum[nid][1] += zero_optim[nid][fid][1]
                 if not node_gh_sum_cal_flag:
+                    zero_opt_node_sum[nid][0] += zero_optim[nid][fid][0]
+                    zero_opt_node_sum[nid][1] += zero_optim[nid][fid][1]
                     zero_opt_node_sum[nid][2] += zero_optim[nid][fid][2]
                     node_gh_sum_cal_flag=True
 
