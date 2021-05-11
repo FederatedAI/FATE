@@ -128,9 +128,6 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
                   goss_subsample=self.enable_goss,
                   top_rate=self.top_rate, other_rate=self.other_rate,
                   complete_secure=True if (self.cur_epoch_idx == 0 and self.complete_secure) else False,
-                  cipher_compressing=self.round_decimal is not None,
-                  round_decimal=self.round_decimal,
-                  encrypt_key_length=self.encrypt_param.key_length,
                   max_sample_weight=self.max_sample_weight,
                   new_ver=self.new_ver
                   )

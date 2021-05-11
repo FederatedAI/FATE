@@ -79,7 +79,6 @@ class HeteroDecisionTreeHost(DecisionTree):
              goss_subsample=False,
              run_sprase_opt=False,
              cipher_compressing=False,
-             round_decimal=7,
              new_ver=True):
 
         super(HeteroDecisionTreeHost, self).init_data_and_variable(flowid, runtime_idx, data_bin, bin_split_points,
@@ -92,7 +91,6 @@ class HeteroDecisionTreeHost(DecisionTree):
         self.data_bin_dense = data_bin_dense
         self.bin_num = bin_num
         self.run_cipher_compressing = cipher_compressing
-        self.round_decimal = round_decimal
         self.feature_num = self.bin_split_points.shape[0]
 
         if self.run_cipher_compressing:

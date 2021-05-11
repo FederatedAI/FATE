@@ -38,14 +38,8 @@ class HeteroDecisionTreeGuest(DecisionTree):
         self.top_rate, self.other_rate = 0.2, 0.1  # goss sampling rate
 
         # cipher compressing
-        self.cipher_encoder = None
-        self.cipher_decompressor = None
-        self.run_cipher_compressing = False
-        self.key_length = None
-        self.round_decimal = 7
-        self.max_sample_weight = 1
-
         self.pack_g_h = True
+        self.max_sample_weight = 1
         self.packer = None
 
         # code version control
@@ -70,9 +64,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
                                                                                   self.other_rate))
             LOGGER.info('sampled g_h count is {}, total sample num is {}'.format(self.grad_and_hess.count(),
                                                                                  self.data_bin.count()))
-        if self.run_cipher_compressing:
-            LOGGER.info('running cipher compressing')
-            LOGGER.info('round decimal is {}'.format(self.round_decimal))
+
         LOGGER.info('updated max sample weight is {}'.format(self.max_sample_weight))
 
         if self.deterministic:
@@ -86,9 +78,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
              goss_subsample=False,
              top_rate=0.1,
              other_rate=0.2,
-             cipher_compressing=False,
-             encrypt_key_length=None,
-             round_decimal=7,
              max_sample_weight=1,
              new_ver=True):
 
@@ -106,17 +95,11 @@ class HeteroDecisionTreeGuest(DecisionTree):
         self.top_rate = top_rate
         self.other_rate = other_rate
 
-        self.run_cipher_compressing = cipher_compressing
-        self.key_length = encrypt_key_length
-        self.round_decimal = round_decimal
         self.max_sample_weight = max_sample_weight
 
         if self.run_goss:
             self.goss_sampling()
             self.max_sample_weight = self.max_sample_weight * ((1 - top_rate) / other_rate)
-
-        if self.run_cipher_compressing:
-            self.init_compressor()
 
         self.new_ver = new_ver
 

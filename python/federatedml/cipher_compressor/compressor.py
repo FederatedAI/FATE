@@ -49,10 +49,13 @@ class NormalCipherPackage(CipherPackage):
     def unpack(self, decrypter):
 
         unpack_result = []
-        compressed_plain_text = int(decrypter.decrypt(self._cipher_text))
+        compressed_plain_text = decrypter.privacy_key.raw_decrypt(self._cipher_text.ciphertext())
         bit_len = (self._padding_num - 1).bit_length()
         for i in range(self.cur_cipher_contained()):
-            num = (compressed_plain_text & (self._padding_num - 1)) / (10 ** self._round_decimal)
+            if self._round_decimal == 0:
+                num = (compressed_plain_text & (self._padding_num - 1))
+            else:
+                num = (compressed_plain_text & (self._padding_num - 1)) / (10 ** self._round_decimal)
             compressed_plain_text = compressed_plain_text >> bit_len
             unpack_result.insert(0, num)
 
