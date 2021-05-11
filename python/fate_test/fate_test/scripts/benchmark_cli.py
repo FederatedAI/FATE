@@ -27,13 +27,15 @@ from fate_test.utils import show_data, match_metrics
               help="tag for storing metrics, for future metrics info comparison")
 @click.option('-v', '--history-tag', type=str, multiple=True,
               help="Extract metrics info from history tags for comparison")
+@click.option('-d', '--match-details', type=click.Choice(['all', 'relative', 'absolute', 'none']),
+              default="all", help="Error value display in algorithm comparison")
 @click.option('--skip-data', is_flag=True, default=False,
               help="skip uploading data specified in benchmark conf")
 @click.option("--disable-clean-data", "clean_data", flag_value=False, default=None)
 @click.option("--enable-clean-data", "clean_data", flag_value=True, default=None)
 @SharedOptions.get_shared_options(hidden=True)
 @click.pass_context
-def run_benchmark(ctx, include, exclude, glob, skip_data, tol, clean_data, storage_tag, history_tag,
+def run_benchmark(ctx, include, exclude, glob, skip_data, tol, clean_data, storage_tag, history_tag, match_details,
                   **kwargs):
     """
     process benchmark suite, alias: bq
@@ -70,7 +72,7 @@ def run_benchmark(ctx, include, exclude, glob, skip_data, tol, clean_data, stora
                         raise RuntimeError(f"exception occur while uploading data for {suite.path}") from e
                 try:
                     _run_benchmark_pairs(config_inst, suite, tol, namespace, data_namespace_mangling, storage_tag,
-                                         history_tag, fate_version)
+                                         history_tag, fate_version, match_details)
                 except Exception as e:
                     raise RuntimeError(f"exception occur while running benchmark jobs for {suite.path}") from e
 
@@ -90,7 +92,7 @@ def run_benchmark(ctx, include, exclude, glob, skip_data, tol, clean_data, stora
 
 @LOGGER.catch
 def _run_benchmark_pairs(config: Config, suite: BenchmarkSuite, tol: float, namespace: str,
-                         data_namespace_mangling: bool, storage_tag, history_tag, fate_version):
+                         data_namespace_mangling: bool, storage_tag, history_tag, fate_version, match_details):
     # pipeline demo goes here
     pair_n = len(suite.pairs)
     for i, pair in enumerate(suite.pairs):
@@ -134,4 +136,4 @@ def _run_benchmark_pairs(config: Config, suite: BenchmarkSuite, tol: float, name
         show_data(data_summary)
         match_metrics(evaluate=True, group_name=pair.pair_name, abs_tol=tol, rel_tol=rel_tol,
                       storage_tag=storage_tag, history_tag=history_tag, fate_version=fate_version,
-                      cache_directory=config.cache_directory, **results)
+                      cache_directory=config.cache_directory, match_details=match_details, **results)
