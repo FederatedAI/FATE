@@ -67,6 +67,9 @@ class PipeLine(object):
 
         return self
 
+    def get_component_list(self):
+        return copy.copy(list(self._components.keys()))
+
     def restore_roles(self, initiator, roles):
         self._initiator = initiator
         self._roles = roles
