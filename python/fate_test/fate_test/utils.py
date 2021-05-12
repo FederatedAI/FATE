@@ -201,8 +201,9 @@ def _match_error(metrics, results):
         return False
     for i, v in enumerate(metrics):
         v_eval = [res[i] for res in results.values()]
-        absolute_error_list.append(abs(max(v_eval) - min(v_eval)))
-        relative_error_list.append(abs((max(v_eval) - min(v_eval)) / max(v_eval)))
+        absolute_error_list.append(f"{TxtStyle.FIELD_VAL}{abs(max(v_eval) - min(v_eval))}{TxtStyle.END}")
+        relative_error_list.append(
+            f"{TxtStyle.FIELD_VAL}{abs((max(v_eval) - min(v_eval)) / max(v_eval))}{TxtStyle.END}")
     return relative_error_list, absolute_error_list
 
 
