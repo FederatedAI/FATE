@@ -64,7 +64,7 @@ class Hash:
 
     def __compute_sm3(self, value):
         if self.base64 == 1:
-            return str(base64.b64encode(libsm3py.hash(bytes(value, encoding='utf-8')).encode('utf-8')), "utf-8")
+            return str(base64.b64encode(libsm3py.hash(bytes(value, encoding='utf-8'))), "utf-8")
         else:
             return libsm3py.hash(bytes(value, encoding='utf-8')).hex()
 
