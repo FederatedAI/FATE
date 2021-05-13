@@ -212,12 +212,19 @@ class ValidationStrategy(object):
         return self._evaluation_summary
 
     def update_metric_summary(self, metric_dict):
-        if len(self._evaluation_summary) == 0:
-            self._evaluation_summary = {metric_name: [] for metric_name in metric_dict}
 
-        for metric_name in metric_dict:
-            epoch_metric = metric_dict[metric_name]
-            self._evaluation_summary[metric_name].append(epoch_metric)
+        iter_name = list(metric_dict.keys())[0]
+        metric_dict = metric_dict[iter_name]
+
+        if len(self._evaluation_summary) == 0:
+            self._evaluation_summary = {namespace: {} for namespace in metric_dict}
+
+        for namespace in metric_dict:
+            for metric_name in metric_dict[namespace]:
+                epoch_metric = metric_dict[namespace][metric_name]
+                if metric_name not in self._evaluation_summary[namespace]:
+                    self._evaluation_summary[namespace][metric_name] = []
+                self._evaluation_summary[namespace][metric_name].append(epoch_metric)
 
     def evaluate(self, predicts, model, epoch):
 

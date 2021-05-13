@@ -55,6 +55,10 @@ class HeteroNNBase(ModelBase):
         self.model_param = HeteroNNParam()
         self.mode = consts.HETERO
 
+        self.selector_param = None
+
+        self.floating_point_precision = None
+
     def _init_model(self, hetero_nn_param):
         self.interactive_layer_lr = hetero_nn_param.interactive_layer_lr
         self.epochs = hetero_nn_param.epochs
@@ -70,6 +74,10 @@ class HeteroNNBase(ModelBase):
 
         self.predict_param = hetero_nn_param.predict_param
         self.hetero_nn_param = hetero_nn_param
+
+        self.selector_param = hetero_nn_param.selector_param
+
+        self.floating_point_precision = hetero_nn_param.floating_point_precision
 
         if self.role == consts.GUEST:
             self.batch_generator.register_batch_generator(self.transfer_variable, has_arbiter=False)

@@ -31,7 +31,7 @@ from flask import Flask, request, send_file, Response
 
 from fate_flow.pipelined_model.migrate_model import compare_roles
 from fate_flow.pipelined_model.pipelined_model import PipelinedModel
-from fate_flow.scheduler import DAGScheduler, dsl_parser
+from fate_flow.scheduler.dag_scheduler import DAGScheduler
 from fate_flow.settings import stat_logger, MODEL_STORE_ADDRESS, TEMP_DIRECTORY
 from fate_flow.pipelined_model import migrate_model, pipelined_model, publish_model, deploy_model
 from fate_flow.utils.api_utils import get_json_result, federated_api, error_response

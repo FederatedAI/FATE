@@ -16,7 +16,11 @@
 #  limitations under the License.
 #
 
-PROJECT_BASE=$(cd "$(dirname "$0")";cd ../;cd ../;pwd)
+if [[ -z "${FATE_DEPLOY_BASE}" ]]; then
+    PROJECT_BASE=$(cd "$(dirname "$0")";cd ../;cd ../;pwd)
+else
+    PROJECT_BASE="${FATE_DEPLOY_BASE}"
+fi
 echo "PROJECT_BASE: "${PROJECT_BASE}
 
 # source init_env.sh
@@ -98,9 +102,13 @@ start() {
     if [[ ${pid} == "" ]]; then
         mklogsdir
         if [[ $1x == "front"x ]];then
+          export FATE_DEPLOY_BASE=${PROJECT_BASE}
           exec python ${PROJECT_BASE}/python/fate_flow/fate_flow_server.py >> "${log_dir}/console.log" 2>>"${log_dir}/error.log"
+          unset FATE_DEPLOY_BASE
         else
+          export FATE_DEPLOY_BASE=${PROJECT_BASE}
           nohup python ${PROJECT_BASE}/python/fate_flow/fate_flow_server.py >> "${log_dir}/console.log" 2>>"${log_dir}/error.log" &
+          unset FATE_DEPLOY_BASE
         fi
         for((i=1;i<=100;i++));
         do

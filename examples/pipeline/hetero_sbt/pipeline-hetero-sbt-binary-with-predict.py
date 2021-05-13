@@ -102,7 +102,7 @@ def main(config="../../config.yaml", namespace=""):
 
     # predict
     # deploy required components
-    pipeline.deploy_component([dataio_0, intersect_0, hetero_secure_boost_0])
+    pipeline.deploy_component([dataio_0, intersect_0, hetero_secure_boost_0, evaluation_0])
 
     predict_pipeline = PipeLine()
     # add data reader onto predict pipeline
@@ -111,6 +111,7 @@ def main(config="../../config.yaml", namespace=""):
     # specify data source
     predict_pipeline.add_component(pipeline,
                                    data=Data(predict_input={pipeline.dataio_0.input.data: reader_0.output.data}))
+
     # run predict model
     predict_pipeline.predict(job_parameters)
 

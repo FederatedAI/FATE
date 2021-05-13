@@ -14,7 +14,8 @@
 #  limitations under the License.
 #
 from fate_flow.manager.data_manager import delete_tables_by_table_infos, delete_metric_data
-from fate_flow.operation import Tracker, JobSaver
+from fate_flow.operation.job_tracker import Tracker
+from fate_flow.operation.job_saver import JobSaver
 from fate_flow.settings import stat_logger
 from fate_flow.utils.job_utils import start_session_stop
 

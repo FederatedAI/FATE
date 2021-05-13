@@ -75,8 +75,9 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
 
         for fid in tree_feature_importance:
             if fid not in self.feature_importance:
-                self.feature_importance[fid] = 0
-            self.feature_importance[fid] += tree_feature_importance[fid]
+                self.feature_importance[fid] = tree_feature_importance[fid]
+            else:
+                self.feature_importance[fid] += tree_feature_importance[fid]
 
     def fit_a_booster(self, epoch_idx: int, booster_dim: int):
 
@@ -155,10 +156,13 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
     def set_model_param(self, model_param):
         self.boosting_model_list = list(model_param.trees_)
         self.init_score = np.array(list(model_param.init_score))
-        self.classes_ = list(model_param.classes_)
+        self.classes_ = list(mpa(int, model_param.classes_))
         self.booster_dim = model_param.tree_dim
         self.num_classes = model_param.num_classes
         self.feature_name_fid_mapping.update(model_param.feature_name_fid_mapping)
+
+        # initialize loss function
+        self.loss = self.get_loss_function()
 
     def set_model_meta(self, model_meta):
 
@@ -186,11 +190,15 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
         feature_importance = list(self.feature_importance.items())
         feature_importance = sorted(feature_importance, key=itemgetter(1), reverse=True)
         feature_importance_param = []
-        for fid, _importance in feature_importance:
-            feature_importance_param.append(FeatureImportanceInfo(sitename=self.role,
-                                                                  fid=fid,
-                                                                  importance=_importance,
-                                                                  fullname=self.feature_name_fid_mapping[fid]))
+        for fid, importance in feature_importance:
+            feature_importance_param.append(FeatureImportanceInfo(fid=fid,
+                                                                  fullname=self.feature_name_fid_mapping[fid],
+                                                                  sitename=self.role,
+                                                                  importance=importance.importance,
+                                                                  importance2=importance.importance_2,
+                                                                  main=importance.main_type
+                                                                  ))
+
         model_param.feature_importances.extend(feature_importance_param)
 
         model_param.feature_name_fid_mapping.update(self.feature_name_fid_mapping)
@@ -210,6 +218,8 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
         model_meta.task_type = self.task_type
         model_meta.n_iter_no_change = self.n_iter_no_change
         model_meta.tol = self.tol
+        model_meta.use_missing = self.use_missing
+        model_meta.zero_as_missing = self.zero_as_missing
 
         meta_name = "HomoSecureBoostingTreeGuestMeta"
 

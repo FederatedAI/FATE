@@ -24,6 +24,7 @@ session.init("123")
 from federatedml.feature.binning.bucket_binning import BucketBinning
 from federatedml.feature.instance import Instance
 from federatedml.param.feature_binning_param import FeatureBinningParam
+from federatedml.statistic import data_overview
 
 
 class TestBucketBinning(unittest.TestCase):
@@ -62,7 +63,9 @@ class TestBucketBinning(unittest.TestCase):
         for kth, s_p in enumerate(split_point):
             expect_s_p = (self.data_num - 1) / self.bin_num * (kth + 1)
             self.assertEqual(s_p, expect_s_p)
-        bucket_bin.cal_local_iv(self.table)
+        label_counts = data_overview.get_label_count(self.table)
+
+        bucket_bin.cal_local_iv(self.table, label_counts=label_counts)
         for col_name, iv_attr in bucket_bin.bin_results.all_cols_results.items():
             # print('col_name: {}, iv: {}, woe_array: {}'.format(col_name, iv_attr.iv, iv_attr.woe_array))
             assert abs(iv_attr.iv - 0.00364386529386804) < 1e-6

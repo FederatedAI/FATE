@@ -17,7 +17,7 @@ import os
 import shutil
 import time
 
-from fate_arch.common import log, file_utils, EngineType
+from fate_arch.common import log, file_utils, EngineType, path_utils
 from fate_arch.storage import StorageEngine, EggRollStorageType
 from fate_flow.entity.metric import Metric, MetricMeta
 from fate_flow.utils import job_utils, data_utils
@@ -87,6 +87,8 @@ class Upload(ComponentBase):
                 upload_address = {"name": name, "namespace": namespace, "storage_type": EggRollStorageType.ROLLPAIR_LMDB}
             elif storage_engine in {StorageEngine.MYSQL}:
                 upload_address = {"db": namespace, "name": name}
+            elif storage_engine in {StorageEngine.PATH}:
+                upload_address = {"path": self.parameters["file"]}
             elif storage_engine in {StorageEngine.HDFS}:
                 upload_address = {"path": data_utils.default_input_fs_path(name=name, namespace=namespace, prefix=address_dict.get("path_prefix"))}
             else:
@@ -97,7 +99,11 @@ class Upload(ComponentBase):
             self.parameters["partitions"] = partitions
             self.parameters["name"] = name
             self.table = storage_session.create_table(address=address, **self.parameters)
-            data_table_count = self.save_data_table(job_id, name, namespace, head)
+            data_table_count = None
+            if storage_engine not in [StorageEngine.PATH]:
+                data_table_count = self.save_data_table(job_id, name, namespace, head)
+            else:
+                data_table_count = self.get_data_table_count(self.parameters["file"], name, namespace)
             self.table.get_meta().update_metas(in_serialized=True)
         LOGGER.info("------------load data finish!-----------------")
         # rm tmp file
@@ -140,16 +146,7 @@ class Upload(ComponentBase):
                 else:
                     table_count = self.table.count()
                     self.table.get_meta().update_metas(count=table_count, partitions=self.parameters["partition"])
-                    self.tracker.log_output_data_info(data_name='upload',
-                                                      table_namespace=dst_table_namespace,
-                                                      table_name=dst_table_name)
-
-                    self.tracker.log_metric_data(metric_namespace="upload",
-                                                 metric_name="data_access",
-                                                 metrics=[Metric("count", table_count)])
-                    self.tracker.set_metric_meta(metric_namespace="upload",
-                                                 metric_name="data_access",
-                                                 metric_meta=MetricMeta(name='upload', metric_type='UPLOAD'))
+                    self.save_meta(dst_table_namespace=dst_table_namespace, dst_table_name=dst_table_name, table_count=table_count)
                     return table_count
                 n += 1
 
@@ -165,3 +162,21 @@ class Upload(ComponentBase):
         file_name = input_file_path.split(".")[0]
         file_name = file_name.split("/")[-1]
         return file_name, str_time
+
+    def save_meta(self, dst_table_namespace, dst_table_name, table_count):
+        self.tracker.log_output_data_info(data_name='upload',
+                                          table_namespace=dst_table_namespace,
+                                          table_name=dst_table_name)
+
+        self.tracker.log_metric_data(metric_namespace="upload",
+                                     metric_name="data_access",
+                                     metrics=[Metric("count", table_count)])
+        self.tracker.set_metric_meta(metric_namespace="upload",
+                                     metric_name="data_access",
+                                     metric_meta=MetricMeta(name='upload', metric_type='UPLOAD'))
+
+    def get_data_table_count(self, path, name, namespace):
+        count = path_utils.get_data_table_count(path)
+        self.save_meta(dst_table_namespace=namespace, dst_table_name=name, table_count=count)
+        self.table.get_meta().update_metas(count=count)
+        return count

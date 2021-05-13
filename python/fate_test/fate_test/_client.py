@@ -30,9 +30,10 @@ class Clients(object):
 
         for service_id, service in config.service_id_to_service.items():
             if isinstance(service, Config.service):
-                self._flow_clients[service_id] = FLOWClient(service.address, config.data_base_dir)
+                self._flow_clients[service_id] = FLOWClient(service.address, config.data_base_dir, config.cache_directory)
+
             elif isinstance(service, Config.tunnel_service):
-                self._flow_clients[service_id] = FLOWClient(None, config.data_base_dir)
+                self._flow_clients[service_id] = FLOWClient(None, config.data_base_dir, config.cache_directory)
                 self._tunnel_id_to_flow_clients.setdefault(service.tunnel_id, []).append(
                     (service.index, self._flow_clients[service_id]))
 

@@ -42,6 +42,15 @@
         },
         "train_with_early_stop": {
             "script": "./pipeline-hetero-nn-train-with-early-stop.py"
+        },
+        "train_with_drop_out": {
+            "script": "./pipeline-hetero-nn-train-binary-drop-out.py"
+        },
+        "train_with_selective-bp": {
+            "script": "./pipeline-hetero-nn-train-binary-selective-bp.py"
+        },
+        "train_with_fixed_point_opt": {
+            "script": "./pipeline-hetero-nn-train-binary-floating_point_precision.py"
         }
     }
 }

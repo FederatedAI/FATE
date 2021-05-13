@@ -32,5 +32,6 @@ message NNModelParam {
   bool is_converged = 4;
   repeated string header = 5;
   repeated LabelMapping label_mapping = 6;
+  uint32 api_version = 7;
 }
 

@@ -17,6 +17,7 @@
 #  limitations under the License.
 #
 from federatedml.util import LOGGER
+import numpy as np
 
 
 class HeteroNNBottomModel(object):
@@ -29,19 +30,44 @@ class HeteroNNBottomModel(object):
                                     metrics=None)
 
         self.data_converter = None
+        self.do_backward_select_strategy = False
+        self.x = []
+        self.x_cached = []
+        self.batch_size = None
 
     def set_data_converter(self, data_converter):
         self.data_converter = data_converter
 
+    def set_backward_select_strategy(self):
+        self.do_backward_select_strategy = True
+
+    def set_batch(self, batch_size):
+        self.batch_size = batch_size
+
     def forward(self, x):
         LOGGER.debug("bottom model start to forward propagation")
+        self.x = x
         data = self.data_converter.convert_data(x)
         output_data = self._model.predict(data)
 
         return output_data
 
-    def backward(self, x, y):
+    def backward(self, x, y, selective_ids):
         LOGGER.debug("bottom model start to backward propagation")
+        if self.do_backward_select_strategy:
+            if selective_ids:
+                if len(self.x_cached) == 0:
+                    self.x_cached = self.x[selective_ids]
+                else:
+                    self.x_cached = np.vstack((self.x_cached, self.x[selective_ids]))
+
+        if len(y) == 0:
+            return
+
+        if self.do_backward_select_strategy:
+            x = self.x_cached[: self.batch_size]
+            self.x_cached = self.x_cached[self.batch_size:]
+
         data = self.data_converter.convert_data(x, y / x.shape[0])
         self._model.train(data)
 

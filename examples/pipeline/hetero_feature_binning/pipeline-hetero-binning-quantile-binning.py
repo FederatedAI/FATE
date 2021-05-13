@@ -54,7 +54,7 @@ def main(config="../../config.yaml", namespace=""):
             "transform_type": "bin_num"
         }
     }
-    pipeline = common_tools.make_add_one_hot_dsl(config, namespace, param)
+    pipeline = common_tools.make_normal_dsl(config, namespace, param)
     job_parameters = JobParameters(backend=backend, work_mode=work_mode)
     pipeline.fit(job_parameters)
     # common_tools.prettify(pipeline.get_component("hetero_feature_binning_0").get_summary())

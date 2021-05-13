@@ -25,6 +25,8 @@ from federatedml.optim.optimizer import optimizer_factory
 from federatedml.param.logistic_regression_param import HomoLogisticParam
 from federatedml.protobuf.generated import lr_model_meta_pb2
 from federatedml.secureprotol import PaillierEncrypt, FakeEncrypt
+from federatedml.util.classify_label_checker import ClassifyLabelChecker
+from federatedml.util.homo_label_encoder import HomoLabelEncoderClient, HomoLabelEncoderArbiter
 from federatedml.statistic import data_overview
 from federatedml.transfer_variable.transfer_class.homo_lr_transfer_variable import HomoLRTransferVariable
 from federatedml.util import LOGGER
@@ -63,6 +65,21 @@ class HomoLRBase(BaseLogisticRegression):
         if self.model_param.early_stop == 'weight_diff':
             return False
         return True
+
+    def _client_check_data(self, data_instances):
+        self._abnormal_detection(data_instances)
+        self.check_abnormal_values(data_instances)
+        self.init_schema(data_instances)
+
+        num_classes, classes_ = ClassifyLabelChecker.validate_label(data_instances)
+        aligned_label, new_label_mapping = HomoLabelEncoderClient().label_alignment(classes_)
+        if len(aligned_label) > 2:
+            raise ValueError("Homo LR support binary classification only now")
+        elif len(aligned_label) <= 1:
+            raise ValueError("Number of classes should be equal to 2")
+
+    def _server_check_data(self):
+        HomoLabelEncoderArbiter().label_alignment()
 
     def classify(self, predict_wx, threshold):
         """

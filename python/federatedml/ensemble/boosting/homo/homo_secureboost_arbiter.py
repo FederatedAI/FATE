@@ -31,11 +31,6 @@ class HomoSecureBoostingTreeArbiter(HomoBoostingArbiter):
     def sample_valid_features(self):
 
         LOGGER.info("sample valid features")
-
-        if not self._set_random_seed and self.subsample_random_seed is not None:
-            np.random.seed(self.subsample_random_seed)
-            self._set_random_seed = True
-
         chosen_feature = random.choice(range(0, self.feature_num),
                                        max(1, int(self.subsample_feature_rate * self.feature_num)), replace=False)
         valid_features = [False for i in range(self.feature_num)]

@@ -5,3 +5,4 @@ class FederationEngine(object):
     EGGROLL = 'EGGROLL'
     RABBITMQ = 'RABBITMQ'
     STANDALONE = 'STANDALONE'
+    PULSAR = 'PULSAR'

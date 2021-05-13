@@ -30,7 +30,8 @@ API_VERSION = "v1"
 FATEFLOW_SERVICE_NAME = "fateflow"
 MAIN_MODULE = os.path.relpath(__main__.__file__)
 SERVER_MODULE = "fate_flow_server.py"
-TEMP_DIRECTORY = os.path.join(file_utils.get_project_base_directory(), "temp", "fate_flow")
+TEMP_DIRECTORY = os.path.join(
+    file_utils.get_project_base_directory(), "temp", "fate_flow")
 HEADERS = {
     "Content-Type": "application/json",
     "Connection": "close",
@@ -63,20 +64,22 @@ DEFAULT_TASK_MEMORY = 0  # mb
 MAX_CORES_PERCENT_PER_JOB = 1  # 1 means total
 STANDALONE_BACKEND_VIRTUAL_CORES_PER_NODE = 20
 IGNORE_RESOURCE_ROLES = {"arbiter"}
-SUPPORT_IGNORE_RESOURCE_ENGINES = {ComputingEngine.EGGROLL, ComputingEngine.STANDALONE}
+SUPPORT_IGNORE_RESOURCE_ENGINES = {
+    ComputingEngine.EGGROLL, ComputingEngine.STANDALONE}
 
 # Storage engine is used for component output data
 SUPPORT_BACKENDS_ENTRANCE = {
     "fate_on_eggroll": {
-        EngineType.COMPUTING: (ComputingEngine.EGGROLL, "clustermanager"),
-        EngineType.STORAGE: (StorageEngine.EGGROLL, "clustermanager"),
-        EngineType.FEDERATION: (FederationEngine.EGGROLL, "rollsite"),
+        EngineType.COMPUTING: [(ComputingEngine.EGGROLL, "clustermanager")],
+        EngineType.STORAGE: [(StorageEngine.EGGROLL, "clustermanager")],
+        EngineType.FEDERATION: [(FederationEngine.EGGROLL, "rollsite")],
     },
     "fate_on_spark": {
-        EngineType.COMPUTING: (ComputingEngine.SPARK, "spark"),
-        EngineType.STORAGE: (StorageEngine.HDFS, "hdfs"),
-        EngineType.FEDERATION: (FederationEngine.RABBITMQ, "rabbitmq"),
-    },
+        EngineType.COMPUTING: [(ComputingEngine.SPARK, "spark")],
+        EngineType.STORAGE: [(StorageEngine.HDFS, "hdfs")],
+        EngineType.FEDERATION: [
+            (FederationEngine.RABBITMQ, "rabbitmq"), (FederationEngine.PULSAR, "pulsar")]
+    }
 }
 
 # Scheduling
@@ -84,7 +87,7 @@ DEFAULT_REMOTE_REQUEST_TIMEOUT = 30 * 1000  # ms
 DEFAULT_FEDERATED_COMMAND_TRYS = 3
 JOB_DEFAULT_TIMEOUT = 3 * 24 * 60 * 60
 JOB_START_TIMEOUT = 60 * 1000  # ms
-END_STATUS_JOB_SCHEDULING_TIME_LIMIT = 5 * 60 * 1000 # ms
+END_STATUS_JOB_SCHEDULING_TIME_LIMIT = 5 * 60 * 1000  # ms
 END_STATUS_JOB_SCHEDULING_UPDATES = 1
 
 # Endpoint
@@ -96,7 +99,8 @@ FATE_BOARD_DASHBOARD_ENDPOINT = "/index.html#/dashboard?job_id={}&role={}&party_
 # Logger
 log.LoggerFactory.LEVEL = 10
 # {CRITICAL: 50, FATAL:50, ERROR:40, WARNING:30, WARN:30, INFO:20, DEBUG:10, NOTSET:0}
-log.LoggerFactory.set_directory(os.path.join(file_utils.get_project_base_directory(), "logs", "fate_flow"))
+log.LoggerFactory.set_directory(os.path.join(
+    file_utils.get_project_base_directory(), "logs", "fate_flow"))
 stat_logger = log.getLogger("fate_flow_stat")
 detect_logger = log.getLogger("fate_flow_detect")
 access_logger = log.getLogger("fate_flow_access")
@@ -108,7 +112,8 @@ UPLOAD_DATA_FROM_CLIENT = True
 USE_AUTHENTICATION = False
 PRIVILEGE_COMMAND_WHITELIST = []
 CHECK_NODES_IDENTITY = False
-DEFAULT_FEDERATED_STATUS_COLLECT_TYPE = get_base_config(FATEFLOW_SERVICE_NAME, {}).get("default_federated_status_collect_type", "PUSH")
+DEFAULT_FEDERATED_STATUS_COLLECT_TYPE = get_base_config(
+    FATEFLOW_SERVICE_NAME, {}).get("default_federated_status_collect_type", "PUSH")
 
 # Init
 RuntimeConfig.init_config(WORK_MODE=WORK_MODE)

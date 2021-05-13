@@ -24,21 +24,33 @@ from pipeline.runtime.entity import JobParameters
 
 
 # noinspection PyPep8Naming
-class dataset(object):
-    breast = {
-        "guest": {"name": "breast_homo_guest", "namespace": "experiment"},
-        "host": [
-            {"name": "breast_homo_host", "namespace": "experiment"},
-            {"name": "breast_homo_host", "namespace": "experiment"}
-        ]
-    }
-    vehicle = {
-        "guest": {"name": "vehicle_scale_homo_guest", "namespace": "experiment"},
-        "host": [
-            {"name": "vehicle_scale_homo_host", "namespace": "experiment"},
-            {"name": "vehicle_scale_homo_host", "namespace": "experiment"}
-        ]
-    }
+class dataset_meta(type):
+    @property
+    def breast(cls):
+        return {
+            "guest": {"name": "breast_homo_guest", "namespace": "experiment"},
+            "host": [
+                {"name": "breast_homo_host", "namespace": "experiment"},
+                {"name": "breast_homo_host", "namespace": "experiment"},
+            ],
+        }
+
+    @property
+    def vehicle(cls):
+        return {
+            "guest": {
+                "name": "vehicle_scale_homo_guest",
+                "namespace": "experiment",
+            },
+            "host": [
+                {"name": "vehicle_scale_homo_host", "namespace": "experiment"},
+                {"name": "vehicle_scale_homo_host", "namespace": "experiment"},
+            ],
+        }
+
+
+class dataset(metaclass=dataset_meta):
+    ...
 
 
 def run_homo_nn_pipeline(config, namespace, data: dict, nn_component, num_host):
@@ -51,20 +63,30 @@ def run_homo_nn_pipeline(config, namespace, data: dict, nn_component, num_host):
         d["namespace"] = f"{d['namespace']}{namespace}"
 
     hosts = config.parties.host[:num_host]
-    pipeline = PipeLine() \
-        .set_initiator(role='guest', party_id=config.parties.guest[0]) \
-        .set_roles(guest=config.parties.guest[0], host=hosts, arbiter=config.parties.arbiter)
+    pipeline = (
+        PipeLine()
+        .set_initiator(role="guest", party_id=config.parties.guest[0])
+        .set_roles(
+            guest=config.parties.guest[0], host=hosts, arbiter=config.parties.arbiter
+        )
+    )
 
     reader_0 = Reader(name="reader_0")
-    reader_0.get_party_instance(role='guest', party_id=config.parties.guest[0]).component_param(table=guest_train_data)
+    reader_0.get_party_instance(
+        role="guest", party_id=config.parties.guest[0]
+    ).component_param(table=guest_train_data)
     for i in range(num_host):
-        reader_0.get_party_instance(role='host', party_id=hosts[i]) \
-            .component_param(table=host_train_data[i])
+        reader_0.get_party_instance(role="host", party_id=hosts[i]).component_param(
+            table=host_train_data[i]
+        )
 
     dataio_0 = DataIO(name="dataio_0", with_label=True)
-    dataio_0.get_party_instance(role='guest', party_id=config.parties.guest[0]) \
-        .component_param(with_label=True, output_format="dense")
-    dataio_0.get_party_instance(role='host', party_id=hosts).component_param(with_label=True)
+    dataio_0.get_party_instance(
+        role="guest", party_id=config.parties.guest[0]
+    ).component_param(with_label=True, output_format="dense")
+    dataio_0.get_party_instance(role="host", party_id=hosts).component_param(
+        with_label=True
+    )
 
     pipeline.add_component(reader_0)
     pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
@@ -78,16 +100,17 @@ def run_homo_nn_pipeline(config, namespace, data: dict, nn_component, num_host):
     # predict
     predict_pipeline = PipeLine()
     predict_pipeline.add_component(reader_0)
-    predict_pipeline.add_component(pipeline,
-                                   data=Data(predict_input={pipeline.dataio_0.input.data: reader_0.output.data}))
+    predict_pipeline.add_component(
+        pipeline,
+        data=Data(predict_input={pipeline.dataio_0.input.data: reader_0.output.data}),
+    )
     # run predict model
     predict_pipeline.predict(job_parameters)
 
 
 def runner(main_func):
     parser = argparse.ArgumentParser("PIPELINE DEMO")
-    parser.add_argument("-config", type=str,
-                        help="config file")
+    parser.add_argument("-config", type=str, help="config file")
     args = parser.parse_args()
     if args.config is not None:
         main_func(args.config)
