@@ -36,12 +36,12 @@ from fate_flow.settings import stat_logger, MODEL_STORE_ADDRESS, TEMP_DIRECTORY
 from fate_flow.pipelined_model import migrate_model, pipelined_model, publish_model, deploy_model
 from fate_flow.utils.api_utils import get_json_result, federated_api, error_response
 from fate_flow.utils import job_utils, model_utils, schedule_utils
-from fate_flow.utils.service_utils import ServiceUtils
 from fate_flow.utils.detect_utils import check_config
 from fate_flow.utils.model_utils import gen_party_model_id, check_if_deployed
 from fate_flow.entity.types import ModelOperation, TagOperation
 from fate_arch.common import file_utils, WorkMode, FederatedMode
 from fate_flow.utils.config_adapter import JobRuntimeConfigAdapter
+from fate_flow.db.db_services import service_db
 
 manager = Flask(__name__)
 
@@ -204,7 +204,7 @@ def do_migrate_model():
 @manager.route('/load/do', methods=['POST'])
 def do_load_model():
     request_data = request.json
-    adapter_servings_config(request_data)
+    request_data['servings'] = service_db().get_servings('servings')
     if not check_if_deployed(role=request_data['local']['role'],
                              party_id=request_data['local']['party_id'],
                              model_id=request_data['job_parameters']['model_id'],
@@ -272,7 +272,7 @@ def bind_model_service():
                                           "Please check if the model version is valid.".format(request_config.get('job_id')))
     if not request_config.get('servings'):
         # get my party all servings
-        adapter_servings_config(request_config)
+        request_config['servings'] = service_db().get_urls('servings')
     service_id = request_config.get('service_id')
     if not service_id:
         return get_json_result(retcode=101, retmsg='no service id')
@@ -284,7 +284,22 @@ def bind_model_service():
 
 @manager.route('/transfer', methods=['post'])
 def transfer_model():
-    model_data = publish_model.download_model(request.json)
+    model_id = request.json.get('namespace')
+    model_version = request.json.get('name')
+    if not model_id or not model_version:
+        return error_response(400, 'namespace and name are required')
+    model_data = publish_model.download_model(model_id, model_version)
+    if model_data is None:
+        return error_response(404, 'model not found')
+    return get_json_result(retcode=0, retmsg="success", data=model_data)
+
+
+@manager.route('/transfer/<model_id>/<model_version>', methods=['post'])
+def download_model(model_id, model_version):
+    model_id = model_id.relaced('_', '#')
+    model_data = publish_model.download_model(model_id, model_version)
+    if model_data is None:
+        return error_response(404, 'model not found')
     return get_json_result(retcode=0, retmsg="success", data=model_data)
 
 
@@ -724,16 +739,6 @@ def get_predict_conf():
         else:
             return get_json_result(data=predict_conf)
     return error_response(210, "No model found, please check if arguments are specified correctly.")
-
-
-def adapter_servings_config(request_data):
-    servings_conf = ServiceUtils.get("servings", {})
-    if isinstance(servings_conf, dict):
-        request_data["servings"] = servings_conf.get('hosts', [])
-    elif isinstance(servings_conf, list):
-        request_data["servings"] = servings_conf
-    else:
-        raise Exception('Please check the servings config')
 
 
 class DatetimeEncoder(json.JSONEncoder):

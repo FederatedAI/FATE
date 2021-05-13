@@ -26,6 +26,7 @@ from fate_arch.common.file_utils import get_project_base_directory
 from fate_flow.pipelined_model.pipelined_model import PipelinedModel
 
 from fate_flow.db.db_models import DB, MachineLearningModelInfo as MLModel
+from fate_flow.db.db_services import service_db
 
 gen_key_string_separator = '#'
 
@@ -185,6 +186,8 @@ def save_model_info(model_info):
             raise Exception("Create {} failed:\n{}".format(MLModel, e))
     except Exception as e:
         raise Exception("Create {} failed:\n{}".format(MLModel, e))
+
+    service_db().register_model(model.f_model_id, model.f_model_version)
 
 
 def compare_version(version: str, target_version: str):
