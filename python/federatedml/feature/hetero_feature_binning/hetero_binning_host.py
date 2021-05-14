@@ -106,7 +106,7 @@ class HeteroFeatureBinningHost(BaseFeatureBinning):
         event_sum = encrypted_label.reduce(operator.add)
         label_counts = {0: encrypted_label.count() - event_sum,
                         1: event_sum}
-        sparse_bin_points = self.binning_obj.get_sparse_bin(self.bin_inner_param.bin_indexes,
+        sparse_bin_points = self.binning_obj.get_sparse_bin(self.bin_inner_param.bin_indexes+self.bin_inner_param.category_indexes,
                                                             self.binning_obj.split_points)
         sparse_bin_points = {self.bin_inner_param.header[k]: v for k, v in sparse_bin_points.items()}
 

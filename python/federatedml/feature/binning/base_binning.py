@@ -158,7 +158,7 @@ class BaseBinning(object):
 
         f = functools.partial(self.bin_data,
                               split_points=split_points,
-                              cols_dict=self.bin_inner_param.bin_cols_map,
+                              cols_dict=self.bin_inner_param.get_need_cal_iv_cols_map(),
                               header=self.header,
                               is_sparse=is_sparse)
         data_bin_dict = data_instances.mapValues(f)
@@ -361,7 +361,7 @@ class BaseBinning(object):
             split_points = self.split_points
 
         data_bin_table = self.get_data_bin(data_instances, split_points)
-        sparse_bin_points = self.get_sparse_bin(self.bin_inner_param.bin_indexes, self.split_points)
+        sparse_bin_points = self.get_sparse_bin(self.bin_inner_param.bin_indexes+self.bin_inner_param.category_indexes, self.split_points)
         sparse_bin_points = {self.bin_inner_param.header[k]: v for k, v in sparse_bin_points.items()}
         if label_table is None:
             label_table = data_instances.mapValues(lambda x: x.label)
