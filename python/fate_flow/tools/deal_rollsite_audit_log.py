@@ -3,18 +3,22 @@ import json
 import sys
 import requests
 import traceback
+import datetime
 
 
 LOG_INDEX = "fate_rollsite_exchange_audit"
 SERVER_IP = None
 EXCHANGE_TYPE = "general"
 
+ELASTIC_SEARCH_AUTH = False
+ELASTIC_SEARCH_URL = ""
+ELASTIC_SEARCH_USER = ""
+ELASTIC_SEARCH_PASSWORD = ""
 
-def run(log_path, ip, exchange_type):
-    global SERVER_IP
-    SERVER_IP = ip
-    global EXCHANGE_TYPE
-    EXCHANGE_TYPE = exchange_type
+HOST_ROLE_PARTY_ID = ["10000"]
+
+
+def run(log_path):
     progress = read_progress()
     end_pos = progress.get("end_pos", -1)
     last_st_ino = progress.get("st_ino", -1)
@@ -158,8 +162,12 @@ def deal_line(src):
                 meta_item_value = meta_item_value_str
             meta_data[meta_item_key] = meta_item_value
         meta_data["jobId"] = meta_data["task"]["taskId"]
+        #meta_data["jobId"] = meta_data["task"]["taskId"].replace("20210519", "20210518")
+        meta_data["jobDate"] = (datetime.datetime.strptime(meta_data["jobId"][:14], "%Y%m%d%H%M%S") - datetime.timedelta(hours=8)).strftime("%Y-%m-%d %H:%M:%S")
         meta_data["server"] = SERVER_IP
         meta_data["exchangeType"] = EXCHANGE_TYPE
+        meta_data["src"]["role"] = "host" if meta_data["src"]["partyId"] in HOST_ROLE_PARTY_ID else "guest"
+        meta_data["dst"]["role"] = "host" if meta_data["dst"]["partyId"] in HOST_ROLE_PARTY_ID else "guest"
     except Exception as e:
         traceback.print_exc()
     return meta_data
@@ -231,4 +239,13 @@ def bulk_save(audit_logs):
 
 
 if __name__ == "__main__":
-    run(sys.argv[1], sys.argv[2], sys.argv[3] if len(sys.argv) > 3 else EXCHANGE_TYPE)
+    log_path = sys.argv[1]
+    SERVER_IP = sys.argv[2]
+    EXCHANGE_TYPE = sys.argv[3]
+    ELASTIC_SEARCH_URL = sys.argv[4]
+    if len(sys.argv) > 5:
+        ELASTIC_SEARCH_AUTH = True
+        ELASTIC_SEARCH_USER = sys.argv[5]
+        ELASTIC_SEARCH_PASSWORD = sys.argv[6]
+
+    run(sys.argv[1])
