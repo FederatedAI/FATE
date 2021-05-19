@@ -139,6 +139,12 @@ class BinInnerParam(object):
                 self.bin_indexes.remove(idx)
                 self.bin_names.remove(self.header[idx])
 
+    def get_need_cal_iv_cols_map(self):
+        names = self.bin_names + self.category_names
+        indexs = self.bin_indexes + self.category_indexes
+        assert len(names) == len(indexs)
+        return dict(zip(names, indexs))
+
     @property
     def bin_cols_map(self):
         assert len(self.bin_indexes) == len(self.bin_names)

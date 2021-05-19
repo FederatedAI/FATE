@@ -275,9 +275,9 @@ class BaseHeteroFeatureSelection(ModelBase):
         this_filter.set_transfer_variable(self.transfer_variable)
         self.curt_select_properties = this_filter.fit(data_instances, suffix).selection_properties
         host_select_properties = getattr(this_filter, 'host_selection_properties', None)
-        if host_select_properties is not None:
-            LOGGER.debug("method: {}, host_select_properties: {}".format(
-                method, host_select_properties[0].all_left_col_names))
+        # if host_select_properties is not None:
+        #     LOGGER.debug("method: {}, host_select_properties: {}".format(
+        #         method, host_select_properties[0].all_left_col_names))
 
         self.completed_selection_result.add_filter_results(filter_name=method,
                                                            select_properties=self.curt_select_properties,
