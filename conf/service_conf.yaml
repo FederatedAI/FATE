@@ -1,0 +1,96 @@
+work_mode: 1
+use_registry: false
+use_deserialize_safe_module: false
+fateflow:
+  # you must set real ip address, 127.0.0.1 and 0.0.0.0 is not supported
+  host: 127.0.0.1
+  http_port: 9380
+  grpc_port: 9360
+  # support rollsite/nginx/fateflow as a coordination proxy
+  # rollsite support fate on eggroll, use grpc protocol
+  # nginx support fate on eggroll and fate on spark, use http or grpc protocol, default is http
+  # fateflow support fate on eggroll and fate on spark, use http protocol, but not support exchange network mode
+
+  # format(proxy: rollsite) means rollsite use the rollsite configuration of fate_one_eggroll and nginx use the nginx configuration of fate_one_spark
+  # you also can customize the config like this(set fateflow of the opposite party as proxy):
+  # proxy:
+  #   name: fateflow
+  #   host: xx
+  #   http_port: xx
+  #   grpc_port: xx
+  proxy: rollsite
+  # support default/http/grpc
+  protocol: default
+  # It can also be specified in the job configuration using the federated_status_collect_type parameter
+  default_federated_status_collect_type: PULL
+fateboard:
+  host: 127.0.0.1
+  port: 8080
+database:
+  name: fate_flow
+  user: fate
+  passwd: fate
+  host: 127.0.0.1
+  port: 3306
+  max_connections: 100
+  stale_timeout: 30
+fate_on_eggroll:
+  clustermanager:
+    cores_per_node: 16
+    nodes: 1
+  rollsite:
+    host: 127.0.0.1
+    port: 9370
+fate_on_spark:
+  spark:
+    # default use SPARK_HOME environment variable
+    home:
+    cores_per_node: 20
+    nodes: 2
+  hdfs:
+    name_node: hdfs://fate-cluster
+    # default /
+    path_prefix:
+  rabbitmq:
+    host: 192.168.0.4
+    mng_port: 12345
+    port: 5672
+    user: fate
+    password: fate
+    # default conf/rabbitmq_route_table.yaml
+    route_table:
+  pulsar:
+    host: 192.168.0.5
+    port: 6650
+    mng_port: 8080
+    # message ttl in minutes
+    topic_ttl: 5
+    # default conf/pulsar_route_table.yaml
+    route_table:
+  nginx:
+    host: 127.0.0.1
+    http_port: 9300
+    grpc_port: 9310
+model_store_address:
+  storage: mysql
+  name: model
+  host: 127.0.0.1
+  port: 3306
+  user: fate
+  passwd: fate
+  max_connections: 10
+  stale_timeout: 10
+servings:
+  hosts:
+    - 127.0.0.1:8000
+zookeeper:
+  hosts:
+    - 127.0.0.1:2281
+  use_acl: true
+  user: fate
+  password: fate
+fatemanager:
+  host: 127.0.0.1
+  port: 8001
+  federatedId: 0
+

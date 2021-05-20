@@ -1,0 +1,128 @@
+{
+  "federatedml.transfer_variable.transfer_class.ftl_transfer_variable.FTLTransferVariable": {
+    "guest_components": {
+      "src": ["guest"],
+      "dst": [
+        "host"
+      ]
+    },
+    "y_overlap_2_phi_2": {
+      "src": ["guest"],
+      "dst": [
+        "host"
+      ]
+    },
+    "y_overlap_phi": {
+      "src": ["guest"],
+      "dst": [
+        "host"
+      ]
+    },
+    "mapping_comp_a": {
+      "src": ["guest"],
+      "dst": [
+        "host"
+      ]
+    },
+    "stop_flag": {
+      "src": ["guest"],
+      "dst": [
+        "host"
+      ]
+    },
+    "host_components": {
+      "src": ["host"],
+      "dst": [
+        "guest"
+      ]
+    },
+    "overlap_ub": {
+      "src": ["host"],
+      "dst": [
+        "guest"
+      ]
+    },
+    "overlap_ub_2": {
+      "src": ["host"],
+      "dst": [
+        "guest"
+      ]
+    },
+    "mapping_comp_b": {
+      "src": ["host"],
+      "dst": [
+        "guest"
+      ]
+    },
+    "host_side_gradients": {
+      "src": ["host"],
+      "dst": [
+        "guest"
+      ]
+    },
+    "guest_side_gradients": {
+      "src": ["guest"],
+      "dst": [
+        "host"
+      ]
+    },
+    "guest_side_const": {
+      "src": ["guest"],
+      "dst": [
+        "host"
+      ]
+    },
+    "encrypted_loss": {
+      "src": ["guest"],
+      "dst": ["host"]
+    },
+    "decrypted_loss": {
+      "src": ["host"],
+      "dst": [
+        "guest"
+      ]
+    },
+    "decrypted_guest_gradients": {
+      "src": ["host"],
+      "dst": [
+        "guest"
+      ]
+    },
+    "decrypted_guest_const": {
+      "src": ["host"],
+      "dst": [
+        "guest"
+      ]
+    },
+    "decrypted_host_gradients": {
+      "src": ["guest"],
+      "dst": [
+        "host"
+      ]
+    },
+    "predict_stop_flag": {
+      "src": ["host"],
+      "dst": ["guest"]
+    },
+    "predict_host_u": {
+      "src": ["host"],
+      "dst": ["guest"]
+    },
+    "encrypted_predict_score": {
+      "src": ["guest"],
+      "dst": ["host"]
+    },
+    "masked_predict_score": {
+      "src": ["host"],
+      "dst": ["guest"]
+    },
+    "final_predict_score": {
+      "src": ["guest"],
+      "dst": ["host"]
+    },
+    "predict_batch_num": {
+      "src": ["host"],
+      "dst": ["guest"]
+    }
+  }
+}

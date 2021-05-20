@@ -1,1 +1,0 @@
-This folder modified from [eggroll](https://github.com/WeBankFinTech/eggroll/tree/v1.1.4/api) to simplify standalone deployment with eggroll 1.x

@@ -1,0 +1,56 @@
+{
+  "initiator": {
+    "role": "guest",
+    "party_id": 10000
+  },
+  "job_parameters": {
+    "work_mode": 0
+  },
+  "role": {
+    "guest": [
+      10000
+    ],
+    "host": [
+      10000
+    ]
+  },
+  "role_parameters": {
+    "guest": {
+      "args": {
+        "data": {
+          "train_data": [
+            {
+              "name": "breast_homo_guest",
+              "namespace": "experiment"
+            }
+          ]
+        }
+      }
+    },
+    "host": {
+      "args": {
+        "data": {
+          "train_data": [
+            {
+              "name": "breast_homo_host",
+              "namespace": "experiment"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "algorithm_parameters": {
+    "dataio_0":{
+            "with_label": true,
+            "label_name": "y",
+            "label_type": "int",
+            "output_format": "dense"
+        },
+    "homo_data_split_0": {
+      "test_size": 0.3,
+      "validate_size": 0.2,
+      "stratified": true
+    }
+  }
+}

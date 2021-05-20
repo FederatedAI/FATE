@@ -1,0 +1,193 @@
+{
+    "data": [
+        {
+            "file": "examples/data/breast_homo_guest.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "breast_homo_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/breast_homo_host.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "breast_homo_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/breast_homo_test.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "breast_homo_test",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/breast_homo_test.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "breast_homo_test",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/vehicle_scale_homo_guest.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "vehicle_scale_homo_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/vehicle_scale_homo_host.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "vehicle_scale_homo_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/vehicle_scale_homo_test.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "vehicle_scale_homo_test",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/vehicle_scale_homo_test.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "vehicle_scale_homo_test",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/student_homo_guest.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "student_homo_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/student_homo_host.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "student_homo_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/student_homo_test.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "student_homo_test",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/student_homo_test.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "student_homo_test",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/ionosphere_scale_hetero_guest.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "ionosphere_scale_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/ionosphere_scale_hetero_guest.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "ionosphere_scale_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/default_credit_homo_guest.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "default_credit_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/default_credit_homo_host_1.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "default_credit_host1",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/default_credit_homo_host_2.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "default_credit_host2",
+            "namespace": "experiment",
+            "role": "host_1"
+        },
+        {
+            "file": "examples/data/default_credit_homo_test.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "default_credit_test",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/default_credit_homo_test.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "default_credit_test",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/default_credit_homo_test.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "default_credit_test",
+            "namespace": "experiment",
+            "role": "host_1"
+        }
+    ],
+    "pipeline_tasks": {
+        "train_binary": {
+            "script": "./pipeline-homo-sbt-binary.py"
+        },
+        "train_binary_predict": {
+            "script": "./pipeline-homo-sbt-binary-with-predict.py"
+        },
+        "train_multi": {
+            "script": "./pipeline-homo-sbt-multi.py"
+        },
+        "train_regression": {
+            "script": "./pipeline-homo-sbt-regression.py"
+        },
+        "train_binary_with_missing_value": {
+            "script": "./pipeline-homo-sbt-binary-with-missing-value.py"
+        },
+        "train_multi_host": {
+            "script": "./pipeline-homo-sbt-binary-multi-host.py"
+        },
+        "cv_binary": {
+            "script": "./pipeline-homo-sbt-binary-cv.py"
+        },
+        "cv_multi": {
+            "script": "./pipeline-homo-sbt-multi-cv.py"
+        },
+        "cv_regression": {
+            "script": "./pipeline-homo-sbt-regression-cv.py"
+        }
+    }
+}

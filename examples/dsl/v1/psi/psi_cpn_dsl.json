@@ -1,0 +1,53 @@
+{
+    "components" : {
+        "dataio_0": {
+            "module": "DataIO",
+            "input": {
+                "data": {
+                    "data": [
+                        "args.train_data"
+                    ]
+                }
+            },
+            "output": {
+                "data": ["train"],
+                "model": ["dataio"]
+            }
+         },
+        "dataio_1": {
+            "module": "DataIO",
+            "input": {
+                "data": {
+                    "data": [
+                        "args.eval_data"
+                    ]
+                },
+                "model": [
+                    "dataio_0.dataio"
+                ]
+            },
+            "output": {
+                "data": ["eval"],
+                "model": ["dataio"]
+            },
+            "need_deploy": false
+         },
+        "psi_0": {
+            "module": "PSI",
+            "input": {
+                "data": {
+                    "train_data": [
+                        "dataio_0.train"
+                    ],
+                    "eval_data": [
+                        "dataio_1.eval"
+                    ]
+                }
+            },
+            "output": {
+                "data": ["train_data"],
+                "model": ["model"]
+            }
+        }
+    }
+}

@@ -1,0 +1,11 @@
+{
+    "module_path":  "federatedml/statistic",
+    "param_class" : "federatedml/param/statistics_param.py/StatisticsParam",
+    "role":
+    {
+        "guest|host":
+        {
+            "program": "data_statistics.py/DataStatistics"
+        }
+    }
+}

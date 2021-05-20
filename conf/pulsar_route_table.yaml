@@ -1,0 +1,22 @@
+9999:
+  # host can be a domain like 9999.fate.org
+  host: 192.168.0.4
+  port: 6650
+  sslPort: 6651
+  # set proxy address for this pulsar cluster
+  proxy: ""
+
+10000:
+  # host can be a domain like 10000.fate.org
+  host: 192.168.0.3
+  port: 6650
+  sslPort: 6651
+  proxy: ""
+
+default:
+  # compose host and proxy for party that does not exist in route table
+  # in this example, the host for party 8888 will be 8888.fate.org
+  proxy: "proxy.fate.org:443"
+  domain: "fate.org"
+  brokerPort: 6650
+  brokerSslPort: 6651

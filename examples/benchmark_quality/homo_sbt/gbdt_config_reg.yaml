@@ -1,0 +1,5 @@
+data_guest: "examples/data/student_homo_guest.csv"
+data_host: "examples/data/student_homo_host.csv"
+data_test: "examples/data/student_homo_test.csv"
+idx: "id"
+label_name: "y"

@@ -1,0 +1,54 @@
+{
+    "data": [
+        {
+            "file": "examples/data/motor_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "motor_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/motor_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "motor_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/breast_homo_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_homo_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/breast_homo_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_homo_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        }
+    ],
+    "tasks": {
+        "hetero_data_split": {
+            "conf": "test_hetero_data_split_job_conf.json",
+            "dsl": "test_hetero_data_split_job_dsl.json"
+        },
+        "homo_data_split": {
+            "conf": "test_homo_data_split_job_conf.json",
+            "dsl": "test_homo_data_split_job_dsl.json"
+        },
+        "homo_data_split_validate": {
+            "conf": "test_homo_data_split_validate_job_conf.json",
+            "dsl": "test_homo_data_split_job_dsl.json"
+        },
+        "hetero_data_split_multi_model": {
+            "conf": "test_hetero_data_split_multi_model_job_conf.json",
+            "dsl": "test_hetero_data_split_multi_model_job_dsl.json"
+        }
+    }
+}

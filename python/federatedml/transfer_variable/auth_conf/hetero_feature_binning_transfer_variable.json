@@ -1,0 +1,44 @@
+{
+  "federatedml.transfer_variable.transfer_class.hetero_feature_binning_transfer_variable.HeteroFeatureBinningTransferVariable": {
+    "bucket_idx": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "host"
+      ]
+    },
+    "encrypted_bin_sum": {
+      "src": [
+        "host"
+      ],
+      "dst": [
+        "guest"
+      ]
+    },
+    "optimal_info": {
+      "src": [
+        "host"
+      ],
+      "dst": [
+        "guest"
+      ]
+    },
+    "encrypted_label": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "host"
+      ]
+    },
+    "paillier_pubkey": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "host"
+      ]
+    }
+  }
+}

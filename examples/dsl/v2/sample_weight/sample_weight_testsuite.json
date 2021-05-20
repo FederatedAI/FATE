@@ -1,0 +1,46 @@
+{
+    "data": [
+        {
+            "file": "examples/data/breast_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/breast_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_host",
+            "namespace": "experiment",
+            "role": "host_1"
+        },
+        {
+            "file": "examples/data/breast_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        }
+    ],
+    "tasks": {
+        "sample-weight-balanced": {
+            "conf": "./sample_weight_balanced_job_conf.json",
+            "dsl": "./sample_weight_job_dsl.json"
+        },
+        "sample-weight-class-dict-feature-engineering": {
+            "conf": "./sample_weight_class_dict_feature_engineering_job_conf.json",
+            "dsl": "./sample_weight_class_dict_feature_engineering_job_dsl.json"
+        },
+        "sample-weight-name": {
+            "conf": "./sample_weight_name_job_conf.json",
+            "dsl": "./sample_weight_job_dsl.json"
+        },
+        "sample-weight-multi-host": {
+            "conf": "./sample_weight_multi_host_job_conf.json",
+            "dsl": "./sample_weight_job_dsl.json"
+        }
+    }
+}

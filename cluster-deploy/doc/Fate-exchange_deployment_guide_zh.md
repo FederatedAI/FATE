@@ -7,7 +7,7 @@
 | :------: | ------------------------------------------------------------ |
 |   数量   | 1（根据实际情况配置）                                        |
 |   配置   | 8 core /16GB memory / 500GB硬盘/10M带宽                      |
-| 操作系统 | CentOS linux 7.2及以上/Ubuntu 16.04 以上                     |
+| 操作系统 | CentOS linux 7.2及以上/Ubuntu 18.04                          |
 |  依赖包  | （参见4.5 软件环境初始化）                                   |
 |   用户   | 用户：app，属主：apps（app用户需可以sudo su root而无需密码） |
 | 文件系统 | 1.  500G硬盘挂载在/ data目录下； 2.创建/ data / projects目录，目录属主为：app:apps |
@@ -17,7 +17,7 @@
 
 | party    | partyid  | 主机名        | IP地址      | 操作系统                | 安装软件 | 服务     |
 | -------- | -------- | ------------- | ----------- | ----------------------- | -------- | -------- |
-| exchange | exchange | VM_0_1_centos | 192.168.0.1 | CentOS 7.2/Ubuntu 16.04 | eggroll  | rollsite |
+| exchange | exchange | VM_0_1_centos | 192.168.0.1 | CentOS 7.2/Ubuntu 18.04 | eggroll  | rollsite |
 
 架构图：
 
@@ -34,7 +34,7 @@
 4.基础环境配置
 ==============
 
-4.1 hostname配置(可选)
+4.1 hostname配置
 ----------------
 
 **1）修改主机名**
@@ -51,7 +51,7 @@ vim /etc/hosts
 
 192.168.0.1 VM_0_1_centos
 
-4.2 关闭selinux(可选)
+4.2 关闭selinux
 ---------------
 
 **在目标服务器（192.168.0.1）root用户下执行：**
@@ -79,7 +79,7 @@ ubuntu系统执行：apt list --installed | grep selinux
 
 \* soft nproc unlimited
 
-4.4 关闭防火墙(可选)
+4.4 关闭防火墙
 --------------
 
 **在目标服务器（192.168.0.1）root用户下执行**
@@ -146,7 +146,7 @@ fi
 ```
 cd /data/projects/install
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/jdk-8u192-linux-x64.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_1.4.4-release.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_1.6.0_release.tar.gz
 ```
 
 ## 5.2 操作系统参数检查
@@ -221,7 +221,14 @@ eggroll.rollsite.host=192.168.0.1
 eggroll.rollsite.port=9370
 eggroll.rollsite.party.id=exchange
 eggroll.rollsite.route.table.path=conf/route_table.json
-eggroll.rollsite.adapter.sendbuf.size=1048576
+eggroll.rollsite.route.table.key=fate
+eggroll.rollsite.route.table.whitelist=127.0.0.1
+eggroll.rollsite.jvm.options=-XX:+UseG1GC -XX:+PrintGCDetails -XX:+PrintGCDateStamps -Xloggc:logs/eggroll/rollsite.gc.log
+eggroll.rollsite.push.max.retry=3
+eggroll.rollsite.push.long.retry=2
+eggroll.rollsite.push.batches.per.stream=10
+eggroll.rollsite.adapter.sendbuf.size=100000
+eggroll.core.grpc.channel.keepalive.timeout.sec=20
 EOF
 ```
 

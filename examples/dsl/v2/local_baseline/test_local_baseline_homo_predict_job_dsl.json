@@ -1,0 +1,82 @@
+ {
+    "components": {
+        "reader_0": {
+            "module": "Reader",
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
+        },
+        "dataio_0": {
+            "module": "DataIO",
+            "input": {
+                "data": {
+                    "data": [
+                        "reader_0.data"
+                    ]
+                },
+                "model": [
+                    "pipeline.dataio_0.model"
+                ]
+            },
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
+        },
+        "homo_lr_0": {
+            "module": "HomoLR",
+            "input": {
+                "data": {
+                    "test_data": [
+                        "dataio_0.data"
+                    ]
+                },
+                "model": [
+                    "pipeline.homo_lr_0.model"
+                ]
+            },
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
+        },
+        "local_baseline_0": {
+            "module": "LocalBaseline",
+            "input": {
+                "data": {
+                    "test_data": [
+                        "dataio_0.data"
+                    ]
+                },
+                "model": [
+                    "pipeline.local_baseline_0.model"
+                ]
+            },
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
+        },
+        "evaluation_0": {
+            "module": "Evaluation",
+            "input": {
+                "data": {
+                    "data": [
+                        "homo_lr_0.data",
+                        "local_baseline_0.data"
+                    ]
+                }
+            },
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
+        }
+    }
+}

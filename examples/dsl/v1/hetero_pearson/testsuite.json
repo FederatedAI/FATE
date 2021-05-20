@@ -1,0 +1,157 @@
+{
+    "data": [
+        {
+            "file": "examples/data/breast_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "work_mode": 0,
+            "table_name": "breast_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/breast_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "work_mode": 0,
+            "table_name": "breast_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/vehicle_scale_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "work_mode": 0,
+            "table_name": "vehicle_scale_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/vehicle_scale_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "work_mode": 0,
+            "table_name": "vehicle_scale_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        }
+    ],
+    "tasks": {
+    "pearson": {
+      "conf": "./test_conf.json",
+      "dsl": "./test_dsl.json",
+      "substitutes": {
+        "vehicle": {
+          "role_parameters": {
+            "guest": {
+              "args": {
+                "data": {
+                  "data": [
+                    {
+                      "name": "vehicle_scale_hetero_guest",
+                      "namespace": "experiment"
+                    }
+                  ]
+                }
+              }
+            },
+            "host": {
+              "args": {
+                "data": {
+                  "data": [
+                    {
+                      "name": "vehicle_scale_hetero_host",
+                      "namespace": "experiment"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "sole_host": {
+          "role_parameters": {
+            "guest": {
+              "pearson_0": {
+                "column_indexes": [
+                  -1
+                ],
+                "cross_parties": [
+                  false
+                ],
+                "need_run": [
+                  false
+                ]
+              }
+            },
+            "host": {
+              "pearson_0": {
+                "column_indexes": [
+                  -1
+                ],
+                "cross_parties": [
+                  false
+                ],
+                "need_run": [
+                  true
+                ]
+              }
+            }
+          }
+        },
+        "sole_both": {
+          "role_parameters": {
+            "guest": {
+              "pearson_0": {
+                "column_indexes": [
+                  -1
+                ],
+                "cross_parties": [
+                  false
+                ],
+                "need_run": [
+                  true
+                ]
+              }
+            },
+            "host": {
+              "pearson_0": {
+                "column_indexes": [
+                  -1
+                ],
+                "cross_parties": [
+                  false
+                ],
+                "need_run": [
+                  true
+                ]
+              }
+            }
+          }
+        },
+        "mix": {
+          "role_parameters": {
+            "guest": {
+              "pearson_0": {
+                "column_indexes": [
+                  -1
+                ],
+                "use_mix_rand": [
+                  true
+                ]
+              }
+            },
+            "host": {
+              "pearson_0": {
+                "column_indexes": [
+                  -1
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

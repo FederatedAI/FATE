@@ -1,4 +1,4 @@
-#                     Fate cluster部署指南
+# Fate cluster部署指南
 
 # 1.总体介绍
 
@@ -6,7 +6,9 @@
 
 1）FATE
 
-FATE (Federated AI Technology Enabler) 是微众银行AI部门发起的开源项目，提供了一种基于数据隐私保护的安全计算框架，为机器学习、深度学习、迁移学习算法提供强有力的安全计算支持。 安全底层支持同态加密、秘密共享、哈希散列等多种多方安全计算机制，算法层支持多方安全计算模式下的逻辑回归、Boosting、联邦迁移学习等。
+FATE (Federated AI Technology Enabler) 是微众银行AI部门发起的开源项目，
+提供了一种基于数据隐私保护的安全计算框架，为机器学习、深度学习、迁移学习算法提供强有力的安全计算支持。
+安全底层支持同态加密、秘密共享、哈希散列等多种多方安全计算机制，算法层支持多方安全计算模式下的逻辑回归、Boosting、联邦迁移学习等。
 
 2）EggRoll
 
@@ -30,9 +32,7 @@ Eggroll 是一个适用于机器学习和深度学习的大规模分布式架构
 
 ### 1.3.系统架构
 
-<div style="text-align:center", align=center>
-<img src="../images/arch_zh.png" />
-</div>
+![](../images/arch_zh.png)
 
 # 2.详细设计
 
@@ -42,16 +42,18 @@ Eggroll 是一个适用于机器学习和深度学习的大规模分布式架构
 
 | role  | partyid | IP地址                | 操作系统                | 主机配置 | 存储 | 部署模块                                                     |
 | ----- | ------- | --------------------- | ----------------------- | -------- | ---- | ------------------------------------------------------------ |
-| host  | 10000   | 192.168.0.1 （有外网) | CentOS 7.2/Ubuntu 16.04 | 8C16G    | 500G | fate_flow，fateboard，clustermanager，nodemanger，rollsite，mysql |
-| guest | 9999    | 192.168.0.2           | CentOS 7.2/Ubuntu 16.04 | 8C16G    | 500G | fate_flow，fateboard，clustermanager，nodemanger，rollsite，mysql |
+| host  | 10000   | 192.168.0.1 （有外网) | CentOS 7.2/Ubuntu 18.04 | 8C16G    | 500G | fate_flow，fateboard，clustermanager，nodemanger，rollsite，mysql |
+| guest | 9999    | 192.168.0.2           | CentOS 7.2/Ubuntu 18.04 | 8C16G    | 500G | fate_flow，fateboard，clustermanager，nodemanger，rollsite，mysql |
+
+备注：涉及exchange说明会用192.168.0.88表示其IP，但本次示例不涉及exchange的部署。
 
 ## 2.2.主机资源和操作系统要求
 
 | **类别** | **说明**                                                     |
 | -------- | ------------------------------------------------------------ |
 | 主机配置 | 不低于8C16G500G，千兆网卡                                    |
-| 操作系统 | CentOS linux 7.2及以上同时低于8/Ubuntu 16.04 或 Ubuntu 18.04 |
-| 依赖包   | 需要安装如下依赖包：<br/>#centos<br/>gcc gcc-c++ make openssl-devel gmp-devel mpfr-devel libmpc-devel libaio <br/>numactl autoconf automake libtool libffi-devel ansible jq supervisor<br/>#ubuntu<br/>gcc g++ make openssl supervisor ansible jq libgmp-dev libmpfr-dev libmpc-dev <br/>libaio libaio-dev numactl autoconf automake libtool libffi-dev ansible jq supervisor <br/>cd /usr/lib/x86_64-linux-gnu<br/>if [ ! -f "libssl.so.10" ];then<br/>   ln -s libssl.so.1.0.0 libssl.so.10<br/>   ln -s libcrypto.so.1.0.0 libcrypto.so.10<br/>fi |
+| 操作系统 | CentOS linux 7.2及以上同时低于8/Ubuntu 18.04                 |
+| 依赖包   | 需要安装如下依赖包：<br/>#centos<br/>gcc gcc-c++ make openssl-devel gmp-devel mpfr-devel libmpc-devel libaio <br/>numactl autoconf automake libtool libffi-devel ansible<br/>#ubuntu<br/>gcc g++ make openssl ansible libgmp-dev libmpfr-dev libmpc-dev <br/>libaio1 libaio-dev numactl autoconf automake libtool libffi-dev <br/>cd /usr/lib/x86_64-linux-gnu<br/>if [ ! -f "libssl.so.10" ];then<br/>   ln -s libssl.so.1.0.0 libssl.so.10<br/>   ln -s libcrypto.so.1.0.0 libcrypto.so.10<br/>fi |
 | 用户     | 用户：app，属主：apps（app用户需可以sudo su root而无需密码） |
 | 文件系统 | 1、数据盘挂载在/data目录下。<br>2、创建/data/projects目录，目录属主为：app:apps。<br/>3、根目录空闲空间不低于20G。 |
 | 虚拟内存 | 不低于128G                                                   |
@@ -68,7 +70,7 @@ Eggroll 是一个适用于机器学习和深度学习的大规模分布式架构
 3.基础环境配置
 ==============
 
-3.1 hostname配置(可选)
+3.1 hostname配置
 ----------------
 
 **1）修改主机名**
@@ -91,7 +93,7 @@ vim /etc/hosts
 
 192.168.0.2 VM_0_2_centos
 
-3.2 关闭selinux(可选)
+3.2 关闭selinux
 ---------------
 
 **在目标服务器（192.168.0.1 192.168.0.2）root用户下执行：**
@@ -100,8 +102,6 @@ vim /etc/hosts
 
 centos系统执行：rpm -qa | grep selinux
 
-ubuntu系统执行：apt list --installed | grep selinux
-
 如果已安装了selinux就执行：setenforce 0
 
 3.3 修改Linux系统参数
@@ -109,34 +109,38 @@ ubuntu系统执行：apt list --installed | grep selinux
 
 **在目标服务器（192.168.0.1 192.168.0.2）root用户下执行：**
 
-1）vim /etc/security/limits.conf
+1）清理20-nproc.conf文件
+
+cd /etc/security/limits.d
+
+ls -lrt 20-nproc.conf
+
+存在则：mv 20-nproc.conf 20-nproc.conf_bak
+
+2）vim /etc/security/limits.conf
 
 \* soft nofile 65535
 
 \* hard nofile 65535
 
-2）vim /etc/security/limits.d/20-nproc.conf
+\* soft nproc 65535
 
-\* soft nproc unlimited
+\* hard nproc 65535
+
+重新登陆，ulimit -a查看是否生效
 
 3.4 关闭防火墙
 --------------
 
 **在目标服务器（192.168.0.1 192.168.0.2 ）root用户下执行**
 
-如果是Centos系统：
+Centos系统：
 
 systemctl disable firewalld.service
 
 systemctl stop firewalld.service
 
 systemctl status firewalld.service
-
-如果是Ubuntu系统：
-
-ufw disable
-
-ufw status
 
 3.5 软件环境初始化
 ------------------
@@ -164,6 +168,8 @@ app ALL=(ALL) NOPASSWD: ALL
 Defaults !env_reset
 
 **3）配置ssh无密登录**
+
+**注意：192.168.0.1不但需要可以免密登陆192.168.0.2，也需要可以免密登陆自身，配置完后务必手工ssh连接下自身和192.168.0.2，确认下认证信息。**
 
 **a. 在目标服务器（192.168.0.1 192.168.0.2）app用户下执行**
 
@@ -200,11 +206,15 @@ ssh app\@192.168.0.1
 
 ssh app\@192.168.0.2
 
+注意：务必要执行此连接测试，需要验证配置是否正确和免yes交互，不然部署的时候会卡住。
+
 ## 3.6 增加虚拟内存
 
 **目标服务器（192.168.0.1 192.168.0.2）root用户执行**
 
 生产环境使用时，因内存计算需要增加128G虚拟内存，执行前需检查存储空间是否足够。
+
+注意：dd执行时间较长，请耐心等待
 
 ```
 cd /data
@@ -215,43 +225,52 @@ cat /proc/swaps
 echo '/data/swapfile128G swap swap defaults 0 0' >> /etc/fstab
 ```
 
-## 3.7 安装ansible
+## 3.7 安装依赖包
 
-**目标服务器（192.168.0.1) root用户执行**
+**目标服务器（192.168.0.1 192.168.0.2）root用户执行**
 
 ```
-#判断是否已安装ansible
-ansible --version
-#没有则执行
+#安装基础依赖包
+#centos
+yum install -y gcc gcc-c++ make openssl-devel gmp-devel mpfr-devel libmpc-devel libaio numactl autoconf automake
+#ubuntu
+apt-get install -y gcc g++ make openssl libgmp-dev libmpfr-dev libmpc-dev libaio1 libaio-dev numactl autoconf automake libtool libffi-dev
+#如果有报错，需要解决依赖安装源问题。
+
+#安装ansible和进程管理依赖包
+#centos
 yum install -y ansible
+#ubuntu
+apt-get install -y ansible
+
+#如果安装有报错同时服务器有外网，没有外网的需要解决yum源不全的问题，执行：
+#centos
+yum install -y epel-release
+#增加一个更全面的第三方的源，然后再重新安装ansible
 ```
-
-
 
 4.项目部署
 ==========
 
 ### 4.1 部署示意图
 
-<div style="text-align:center;width:500px",align=center>
-<img src="../images/deploy_cluster.png" />
-</div>
+![](../images/deploy_cluster.png)
 
 ### 4.2 系统检查
 
 **在目标服务器（192.168.0.1 192.168.0.2）app用户下执行**
 
 ```
-#虚拟内存，size不低于128G，如不满足需参考4.6章节重新设置
+#虚拟内存，size不低于128G，如不满足需参考3.6章节重新设置
 cat /proc/swaps
 Filename                                Type            Size    Used    Priority
 /data/swapfile128G                      file            134217724       384     -1
 
-#文件句柄数，不低于65535，如不满足需参考4.3章节重新设置
+#文件句柄数，不低于65535，如不满足需参考3.3章节重新设置
 ulimit -n
 65535
 
-#用户进程数，不低于64000，如不满足需参考4.3章节重新设置
+#用户进程数，不低于64000，如不满足需参考3.3章节重新设置
 ulimit -u
 65535
 
@@ -261,6 +280,7 @@ ps -ef| grep -i fate
 netstat -tlnp | grep 4670
 netstat -tlnp | grep 4671
 netstat -tlnp | grep 9370
+netstat -tlnp | grep 9371
 netstat -tlnp | grep 9360
 netstat -tlnp | grep 8080
 netstat -tlnp | grep 3306
@@ -284,8 +304,8 @@ ls -lrt /data/projects/common/supervisord/supervisord.d/fate-*.conf
 ```
 #注意：URL链接有换行，拷贝的时候注意整理成一行
 cd /data/projects/
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/ansible_nfate_1.4.4_release-1.0.0.tar.gz
-tar xzf ansible_nfate_1.4.4_release-1.0.0.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/ansible_nfate_1.6.0_release-1.0.0.tar.gz
+tar xzf ansible_nfate_1.6.0_release-1.0.0.tar.gz
 ```
 
 ### 4.4 配置文件修改和示例
@@ -295,9 +315,6 @@ tar xzf ansible_nfate_1.4.4_release-1.0.0.tar.gz
 ```
 cd ansible-nfate-*
 #init.sh文件不需要修改，主要是辅助生成一些配置文件
-
-#测试环境加test参数执行
- sh ./tools/init.sh test
  
 #生产环境加prod参数执行
  sh ./tools/init.sh prod
@@ -309,6 +326,44 @@ init var_files/prod
 init project_prod.yml
 ```
 
+### 4.4.2 证书制作配置(可选)
+
+1）证书制作
+
+```
+vi /data/projects/ansible-nfate-1.*/tools/make.sh
+
+#1、自定义安全证书需同时部署两端，只部署一端需要手工处理证书，手工处理部分暂不介绍。
+#2、安全证书支持如下部署方式：
+    1）部署host+guest，host和guest使用安全证书通讯。
+    2）部署host+exchange+guest，其中host和exchange使用安全证书通讯，guest和exchange普通通讯。
+    3）部署host+exchange+guest，其中guest和exchange使用安全证书通讯，host和exchange普通通讯。
+
+guest_host="192.168.0.1" ---根据实际IP修改
+host_host="192.168.0.2" ---根据实际IP修改
+exchange_host="192.168.0.88" ---根据实际IP修改，本示例不部署无需修改
+```
+
+2）执行脚本制作证书
+
+```
+cd tools
+sh ./make.sh
+
+在keys/host，guest目录下会产生证书文件。
+```
+
+3）拷贝证书到部署目录
+
+```
+sh cp-keys.sh host guest
+
+证书文件会拷贝到roles/eggroll/files/keys目录
+
+特别说明：
+1、目前脚本部署只支持2方设置证书认证。（host&guest、host&exchange、guest&exchange)
+```
+
 #### 4.4.2 修改配置文件
 
 **1）修改初始化主机IP**
@@ -317,9 +372,12 @@ init project_prod.yml
 vi /data/projects/ansible-nfate-1.*/environments/prod/hosts
 
 #ansible格式配置文件
-[init]   ---把需要部署的主机IP填入init组
+[fate]   ---把需要部署的主机IP填入fate组
 192.168.0.1  
 192.168.0.2
+
+[deploy_check] ---把执行ansible的本机IP填入deploy_check组
+192.168.0.1 
 
 [all:vars]
 ansible_connection=ssh
@@ -333,16 +391,9 @@ ansible_become_pass=   ---各个主机未做免密sudo需填写root密码
 
 ```
 
-**2）修改部署模式**
+**2）修改host方参数**
 
-```
-vi /data/projects/ansible-nfate-1.*/var_files/prod/fate_init
-
-#只修改如下参数，其他参数默认不变
-deploy_mode: "install" ---默认为空，修改为install，表示新部署
-```
-
-**3）修改host方参数**
+**注意：默认是不启用安全证书的配置，如果启用安全证书通讯需把server_secure，client_secure，is_secure设置为true，以及is_secure对应的port设置为9371**。
 
 ```
 #不部署host方则不用修改
@@ -355,13 +406,19 @@ host:
       enable: True
       ips: ---IP列表，目前rollsite只支持部署到一台服务器
       - 192.168.0.1  
-      port: 9370
-      pool_size: 600 ---线程池大小
-      max_memory:    ---rollsite进程JVM内存参数，默认是物理内存的1/4，可根据实际情况设置,如8G
-      default_rules: ---本party指向exchange或者其他party的IP，端口路由配置
+      port: 9370 ---grpc端口
+      secure_port: 9371 ---grpcs端口
+      pool_size: 600 ---线程池大小，推荐设为：min(1000 + len(party_ids) * 200, 5000)
+      max_memory:    ---rollsite进程JVM内存参数，默认是物理内存的1/4，可根据实际情况设置,如12G，如果是rollsite专用的机器，配置成物理内存的75%。
+      server_secure: False ---作为服务端，开启安全证书验证，不使用安全证书默认即可
+      client_secure: False ---作为客户端，使用证书发起安全请求，不使用安全证书默认即可
+      polling: ---是否使用单向模式，本示例不支持，默认false即可
+        enable: False
+      default_rules: ---本party指向exchange或者其他party的IP、端口路由配置
       - name: default
-        ip: 192.168.0.3 ---exchange或者对端party rollsite IP
-        port: 9370 ---exchange或者对端party rollsite 端口，一般默认9370
+        ip: 192.168.0.2 ---exchange或者对端party rollsite IP
+        port: 9370 ---exchange或者对端party rollsite 端口，一般默认9370，即无安全证书部署；如需开启安全证书通信，应设置为9371；
+        is_secure: False ---是否使用安全认证通讯；需要结合server_secure或者client_secure使用，当三者都为true时，表示和下一跳rollsite使用安全认证通讯，同时上一个参数port需设置为9371；不使用安全证书默认即可。
       rules: ---本party自身路由配置
       - name: default
         ip: 192.168.0.1
@@ -374,6 +431,7 @@ host:
       ips:
       - 192.168.0.1 ---只支持部署一台主机
       port: 4670
+      cores_per_node: 16 ---nodemanager节点cpu核数，多个nodemanager节点按照CPU核数最小的设置
     nodemanager:
       enable: True
       ips: ---支持部署多台
@@ -390,6 +448,7 @@ host:
       grpcPort: 9360
       httpPort: 9380
       dbname: "fate_flow"
+      proxy: rollsite ---fate_flow通讯服务的前置代理是rollsite还是nginx，默认即可
     fateboard:
       enable: True
       ips:
@@ -411,9 +470,14 @@ host:
       use_acl: false
       user: "fate"
       passwd: "fate"
+    servings:
+     ip: 192.168.0.1
+     port: 8000
 ```
 
 **4）修改guest参数**
+
+**注意：默认是不启用安全证书的配置，如果启用安全证书通讯需把server_secure，client_secure，is_secure设置为true，以及is_secure对应的port设置为9371**。
 
 ```
 #不部署guest方则不用修改
@@ -426,13 +490,19 @@ guest:
       enable: True
       ips: ---IP列表，目前rollsite只支持部署到一台服务器
       - 192.168.0.2
-      port: 9370
-      pool_size: 600 ---线程池大小
-      max_memory:    ---rollsite进程JVM内存参数，默认是物理内存的1/4，可根据实际情况设置,如8G
-      default_rules:  ---本party指向exchange或者其他party的IP，端口路由配置
+      port: 9370 ---grpc端口
+      secure_port: 9371 ---grpcs端口
+      pool_size: 600 ---线程池大小，推荐设为：min(1000 + len(party_ids) * 200, 5000)
+      max_memory:    ---rollsite进程JVM内存参数，默认是物理内存的1/4，可根据实际情况设置,如12G，如果是rollsite专用的机器，配置成物理内存的75%。
+      server_secure: False ---作为服务端，开启安全证书验证，不使用安全证书默认即可
+      client_secure: False ---作为客户端，使用证书发起安全请求，不使用安全证书默认即可
+      polling: ---是否使用单向模式，本示例不支持，默认false即可
+        enable: False
+      default_rules:  ---本party指向exchange或者其他party的IP、端口路由配置
       - name: default
-        ip: 192.168.0.3 ---exchange或者对端party rollsite IP
-        port: 9370 ---exchange或者对端party rollsite 端口，一般默认9370
+        ip: 192.168.0.1 ---exchange或者对端party rollsite IP
+        port: 9370 ---exchange或者对端party rollsite 端口，一般默认9370，即无安全证书部署；如需开启安全证书通信，应设置为9371；
+        is_secure: False ---server_secure或者client_secure为true，指向的下一跳rollsite也开启了安全认证，此参数需要设置为true，上一个参数port需设置为9371，不使用安全证书默认即可
       rules:  ---本party自身路由配置
       - name: default
         ip: 192.168.0.2
@@ -445,6 +515,7 @@ guest:
       ips:   ---只支持部署一台主机
       - 192.168.0.2
       port: 4670
+      cores_per_node: 16 ---nodemanager节点cpu核数，多个nodemanager节点按照CPU核数最小的设置
     nodemanager:
       enable: True
       ips:  ---支持部署多台主机
@@ -461,6 +532,7 @@ guest:
       grpcPort: 9360
       httpPort: 9380
       dbname: "fate_flow"
+      proxy: rollsite  ---fate_flow通讯服务的前置代理是rollsite还是nginx，默认即可
     fateboard:
       enable: True
       ips:  ---只支持部署一台主机
@@ -482,36 +554,47 @@ guest:
       use_acl: false
       user: "fate"
       passwd: "fate"
+   servings:
+     ip: 192.168.0.2
+     port: 8000
 ```
 
 **5）修改exchange参数**
+
+**注意：默认是不启用安全证书的配置，如果启用安全证书通讯需把server_secure，client_secure，is_secure设置为true，以及is_secure对应的port设置为9371**。
 
 ```
 #不部署exchange则不需要修改
 vi /data/projects/ansible-nfate-1.*/var_files/prod/fate_exchange
 
 exchange:
-  enable: True
+  enable: False --部署exchange需修改为True
   rollsite: 
     ips:
-    - 192.168.0.3
+    - 192.168.0.88
     port: 9370
-    pool_size: 600
-    max_memory:    ---rollsite进程JVM内存参数，默认是物理内存的1/4，可根据实际情况设置,如8G
+    secure_port: 9371 ---grpcs端口
+    pool_size: 600，推荐设为：min(1000 + len(party_ids) * 200, 5000)
+    max_memory:    ---rollsite进程JVM内存参数，默认是物理内存的1/4，可根据实际情况设置,如12G，如果是rollsite专用的机器，配置成物理内存的75%。
+    server_secure: False ---作为服务端，开启安全证书验证，不使用安全证书默认即可
+    client_secure: False ---作为客户端，使用证书发起安全请求，不使用安全证书默认即可
+    polling:  ---是否使用单向模式，本示例不支持，默认false即可
+      enable: False
+      id: 10000
   partys:  ---指向各party的路由配置
   - id: 10000
     rules:
     - name: default
       ip: 192.168.0.1
-      port: 9367
+      port: 9370  ---对应party rollsite 端口，一般默认9370，即无安全证书通讯；如需开启安全证书通信，应设置为9371；
+      is_secure: False ---server_secure或者client_secure为true，指向的下一跳rollsite也开启了安全认证，此参数需要设置为true，上一个参数port需设置为9371，不使用安全证书默认即可
   - id: 9999
     rules:
     - name: default
       ip: 192.168.0.2
-      port: 9370
+      port: 9370 ---对应party rollsite 端口，一般默认9370，即无安全证书通讯；如需开启安全证书通信，应设置为9371；
+      is_secure: False ---server_secure或者client_secure为true，指向的下一跳rollsite也开启了安全认证，此参数需要设置为true，上一个参数port需设置为9371，不使用安全证书默认即可
 ```
-
-
 
 ### 4.5 部署
 
@@ -520,11 +603,10 @@ exchange:
 ```
 #相对ansible-nfate-*目录
 cd /data/projects/ansible-nfate-1.*
-#测试环境加test参数执行
- nohup  sh ./boot.sh test -D > logs/boot.log 2>&1 &
  
 #生产环境加prod参数执行
 nohup  sh ./boot.sh prod -D > logs/boot.log 2>&1 &
+
 ```
 
 部署日志输出在logs目录下,实时查看是否有报错：
@@ -549,6 +631,16 @@ tail -f ansible.log （实时查看部署情况，如果没有这个日志文件
     ---/data/projects/data存在，需要mv。
 7、"Warning: supervisor_fate_conf exists, please remove ls /data/projects/common/supervisord/supervisord.d/fate-*.conf"
   ---/data/projects/common目录存在，需要mv。
+```
+
+fateflow部署完重启：
+
+```
+#因为fate_flow依赖的组件比较多，可能启动会有异常，处理如下：
+netstat -tlnp | grep 9360
+如果没有端口则重起fateflow：
+sh service.sh stop fate-fateflow
+sh service.sh start fate-fateflow
 ```
 
 ### 4.6 问题定位
@@ -588,22 +680,28 @@ tail -f ansible.log （实时查看部署情况，如果没有这个日志文件
 1）192.168.0.1上执行，guest_partyid和host_partyid都设为10000：
 
 ```
-source /data/projects/fate/init_env.sh
-cd /data/projects/fate/python/examples/toy_example/
+source /data/projects/fate/bin/init_env.sh
+cd /data/projects/fate/examples/toy_example/
 python run_toy_example.py 10000 10000 1
 ```
+
+注意：如果超过1分钟没输出，表示部署有问题，需要看日志进行问题定位。
 
 类似如下结果表示成功：
 
 "2020-04-28 18:26:20,789 - secure_add_guest.py[line:126] - INFO: success to calculate secure_sum, it is 1999.9999999999998"
 
+提示：如出现max cores per job is 1, please modify job parameters报错提示，需要修改当前目录下文件toy_example_conf.json中参数task_cores为1.
+
 2）192.168.0.2上执行，guest_partyid和host_partyid都设为9999：
 
 ```
-source /data/projects/fate/init_env.sh
-cd /data/projects/fate/python/examples/toy_example/
+source /data/projects/fate/bin/init_env.sh
+cd /data/projects/fate/examples/toy_example/
 python run_toy_example.py 9999 9999 1
 ```
+
+注意：如果超过1分钟没输出，表示部署有问题，需要看日志进行问题定位。
 
 类似如下结果表示成功：
 
@@ -614,8 +712,8 @@ python run_toy_example.py 9999 9999 1
 选定9999为guest方，在192.168.0.2上执行：
 
 ```
-source /data/projects/fate/init_env.sh
-cd /data/projects/fate/python/examples/toy_example/
+source /data/projects/fate/bin/init_env.sh
+cd /data/projects/fate/examples/toy_example/
 python run_toy_example.py 9999 10000 1
 ```
 
@@ -631,8 +729,8 @@ python run_toy_example.py 9999 10000 1
 分别在192.168.0.1和192.168.0.2上执行：
 
 ```
-source /data/projects/fate/init_env.sh
-cd /data/projects/fate/python/examples/scripts/
+source /data/projects/fate/bin/init_env.sh
+cd /data/projects/fate/examples/scripts/
 python upload_default_data.py -m 1
 ```
 
@@ -647,8 +745,11 @@ python upload_default_data.py -m 1
 选定9999为guest方，在192.168.0.2上执行：
 
 ```
-source /data/projects/fate/init_env.sh
-cd /data/projects/fate/python/examples/min_test_task/
+source /data/projects/fate/bin/init_env.sh
+cd /data/projects/fate/examples/min_test_task/
+#单边测试
+python run_task.py -m 1 -gid 9999 -hid 9999 -aid 9999 -f fast
+#两边测试
 python run_task.py -m 1 -gid 9999 -hid 10000 -aid 10000 -f fast
 ```
 
@@ -682,17 +783,26 @@ Fateboard是一项Web服务。如果成功启动了fateboard服务，则可以�
 cd /data/projects/common/supervisord
 ```
 
-启动/关闭/查看所有：
+启动/关闭/重启/查看所有：
 
 ```
-sh service.sh start/stop/status all 
+#注意：因mysql是基础组件，启动较慢，建议重启操作是先停止所有组件，然后先启动mysql，再启动其他组件
+sh service.sh start/stop/restart/status all 
+
+#说明：因为fateflow依赖的组件比较多，重启所有的操作可能会导致fateflow启动异常，处理如下：
+netstat -tlnp | grep 9360
+如果没有端口则重起fateflow：
+sh service.sh stop fate-fateflow
+sh service.sh start fate-fateflow
 ```
 
-启动/关闭/查看单个模块(可选：clustermanager，nodemanager，rollsite，fateflow，fateboard，mysql)：
+启动/关闭/重启/查看单个模块(可选：clustermanager，nodemanager，rollsite，fateflow，fateboard，mysql)：
 
 ```
-sh service.sh start/stop/status fate-clustermanager
+sh service.sh start/stop/restart/status fate-clustermanager
 ```
+
+
 
 ## 6.2 查看进程和端口
 
@@ -745,16 +855,36 @@ netstat -tlnp | grep 8080
 | /data/logs                        | 日志路径                       |
 | /data/projects/common/supervisord | 进程管理工具supervisor安装路径 |
 
-# 7. 附录
+# 7. 卸载
 
-## 7.1 Eggroll参数调优
+#### 7.1 概述
 
-配置文件路径：/data/projects/fate/eggroll/conf/eggroll.properties
+支持所有服务服务的卸载以及单个服务的卸载。
 
-配置参数：eggroll.session.processors.per.node
+#### 7.2 执行卸载
+
+```
+cd /data/projects/ansible-nfate-1.*
+sh ./uninstall.sh prod all
+
+#卸载命令说明
+sh ./uninstall.sh $arg1 $arg2
+- $arg1参数同4.4.1步骤init执行的参数，为test|prod。
+- $arg2参数为选择的服务，可选参数为（all|mysql|eggroll|fate_flow|fateboard），all代表卸载所有服务。
+```
+
+# 8. 附录
+
+## 8.1 Eggroll参数调优
 
 假定 CPU核数（cpu cores）为 c, Nodemanager的数量为 n，需要同时运行的任务数为 p，则：
 
 egg_num=eggroll.session.processors.per.node = c * 0.8 / p
 
 partitions （roll pair分区数）= egg_num * n
+
+可通过job conf中的job parameters指定作业使用的参数：
+1. egg_num：配置task_cores或者配置eggroll_run中processors_per_node参数
+2. partitions：配置computing_partitions
+
+更多关于作业提交配置请参考[dsl_conf_v2_setting_guide_zh](../../doc/dsl_conf_v2_setting_guide_zh.rst)

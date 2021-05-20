@@ -1,0 +1,12 @@
+data_guest: "examples/data/epsilon_5k_homo_guest.csv"
+data_host: "examples/data/epsilon_5k_homo_host.csv"
+data_test: "examples/data/epsilon_5k_homo_guest.csv"
+idx: "id"
+label_name: "y"
+penalty: "L2"
+max_iter: 50
+alpha: 0.0002
+batch_size: 16
+learning_rate: 0.15
+optimizer: "adam"
+init_method: "zeros"

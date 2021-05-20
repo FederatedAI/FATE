@@ -1,0 +1,145 @@
+{
+    "initiator": {
+        "role": "guest",
+        "party_id": 9999
+    },
+    "job_parameters": {
+        "work_mode": 0
+    },
+    "role": {
+        "guest": [
+            9999
+        ],
+        "host": [
+            10000
+        ]
+    },
+    "role_parameters": {
+        "guest": {
+            "args": {
+                "data": {
+                    "data0": [
+                        {
+                            "name": "breast_hetero_guest",
+                            "namespace": "experiment"
+                        }
+                    ],
+                    "data1": [
+                        {
+                            "name": "breast_hetero_guest",
+                            "namespace": "experiment"
+                        }
+                    ],
+                    "data2": [
+                        {
+                            "name": "breast_hetero_guest",
+                            "namespace": "experiment"
+                        }
+                    ]
+                }
+            },
+            "dataio_0": {
+                "with_label": [
+                    true
+                ],
+                "label_name": [
+                    "y"
+                ],
+                "output_format": [
+                    "dense"
+                ],
+                "missing_fill": [
+                    false
+                ],
+                "outlier_replace": [
+                    false
+                ]
+            },
+            "dataio_1": {
+                "with_label": [
+                    true
+                ],
+                "label_name": [
+                    "y"
+                ],
+                "output_format": [
+                    "dense"
+                ],
+                "missing_fill": [
+                    false
+                ],
+                "outlier_replace": [
+                    false
+                ]
+            }
+        },
+        "host": {
+            "args": {
+                "data": {
+                    "data0": [
+                        {
+                            "name": "breast_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    ],
+                    "data1": [
+                        {
+                            "name": "breast_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    ],
+                    "data2": [
+                        {
+                            "name": "breast_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    ]
+                }
+            },
+            "dataio_0": {
+                "with_label": [
+                    false
+                ],
+                "output_format": [
+                    "dense"
+                ],
+                "missing_fill": [
+                    false
+                ],
+                "outlier_replace": [
+                    false
+                ]
+            },
+            "dataio_1": {
+                "with_label": [
+                    false
+                ],
+                "label_name": [
+                    "y"
+                ],
+                "output_format": [
+                    "dense"
+                ],
+                "missing_fill": [
+                    false
+                ],
+                "outlier_replace": [
+                    false
+                ]
+            }
+        }
+    },
+    "algorithm_parameters": {
+        "union_0": {
+            "need_run": true,
+            "keep_duplicate": true,
+            "allow_missing": false
+        },
+        "union_1": {
+            "need_run": true,
+            "keep_duplicate": true,
+            "allow_missing": false
+        }
+
+    }
+}

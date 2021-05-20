@@ -1,0 +1,70 @@
+{
+  "data": [
+    {
+      "file": "examples/data/breast_homo_guest.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "breast_homo_guest",
+      "namespace": "experiment",
+      "role": "guest_0"
+    },
+    {
+      "file": "examples/data/breast_homo_host.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "breast_homo_host",
+      "namespace": "experiment",
+      "role": "host_0"
+    },
+    {
+      "file": "examples/data/vehicle_scale_homo_guest.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "vehicle_scale_homo_guest",
+      "namespace": "experiment",
+      "role": "guest_0"
+    },
+    {
+      "file": "examples/data/vehicle_scale_homo_host.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "vehicle_scale_homo_host",
+      "namespace": "experiment",
+      "role": "host_0"
+    },
+    {
+      "file": "examples/data/vehicle_scale_homo_host.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "vehicle_scale_homo_host",
+      "namespace": "experiment",
+      "role": "host_1"
+    }
+  ],
+  "homo_nn-binary": {
+    "local": {
+      "script": "./local-homo_nn.py",
+      "conf": "./param_conf_binary.yaml"
+    },
+    "FATE": {
+      "script": "./fate-homo_nn.py",
+      "conf": "./param_conf_binary.yaml"
+    },
+    "compare_setting": {
+      "relative_tol": 0.05
+    }
+  },
+   "homo_nn-multi": {
+    "local": {
+      "script": "./local-homo_nn.py",
+      "conf": "./param_conf_multi.yaml"
+    },
+    "FATE": {
+      "script": "./fate-homo_nn.py",
+      "conf": "./param_conf_multi.yaml"
+    },
+    "compare_setting": {
+      "relative_tol": 0.1
+    }
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "federatedml.transfer_variable.transfer_class.homo_binning_transfer_variable.HomoBinningTransferVariable": {
+    "local_static_values": {
+      "src": [
+        "guest",
+        "host"
+      ],
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "global_static_values": {
+      "src": [
+        "arbiter"
+      ],
+      "dst": [
+        "guest",
+        "host"
+      ]
+    },
+    "query_array": {
+      "src": [
+        "arbiter"
+      ],
+      "dst": [
+        "guest",
+        "host"
+      ]
+    },
+    "is_converge": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "arbiter"
+      ]
+    }
+  }
+}
