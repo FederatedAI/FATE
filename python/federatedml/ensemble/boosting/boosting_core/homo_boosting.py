@@ -1,8 +1,9 @@
 from abc import ABC
 import abc
+import time
 from federatedml.ensemble.boosting.boosting_core import Boosting
 from federatedml.feature.homo_feature_binning.homo_split_points import HomoFeatureBinningClient, \
-                                                                      HomoFeatureBinningServer
+    HomoFeatureBinningServer
 from federatedml.util.classify_label_checker import ClassifyLabelChecker, RegressionLabelChecker
 from federatedml.util import consts
 from federatedml.util.homo_label_encoder import HomoLabelEncoderClient, HomoLabelEncoderArbiter
@@ -41,7 +42,8 @@ class HomoBoostingClient(Boosting, ABC):
             self.binning_obj = recursive_query_binning.Client(params=binning_param, abnormal_list=[NoneType()],
                                                               role=self.role)
         else:
-            self.binning_obj = recursive_query_binning.Client(params=binning_param, role=self.role)
+            self.binning_obj = recursive_query_binning.Client(
+                params=binning_param, role=self.role)
 
         self.binning_obj.fit_split_points(data_instance)
 
@@ -53,7 +55,8 @@ class HomoBoostingClient(Boosting, ABC):
 
         classes_ = None
         if self.task_type == consts.CLASSIFICATION:
-            num_classes, classes_ = ClassifyLabelChecker.validate_label(data_inst)
+            num_classes, classes_ = ClassifyLabelChecker.validate_label(
+                data_inst)
         else:
             RegressionLabelChecker.validate_label(data_inst)
 
@@ -73,16 +76,19 @@ class HomoBoostingClient(Boosting, ABC):
                                  'but got {} and {}'.format(prev, aft))
 
     def sync_feature_num(self):
-        self.transfer_inst.feature_number.remote(self.feature_num, role=consts.ARBITER, idx=-1, suffix=('feat_num', ))
+        self.transfer_inst.feature_number.remote(
+            self.feature_num, role=consts.ARBITER, idx=-1, suffix=('feat_num', ))
 
     def fit(self, data_inst, validate_data=None):
 
         # binning
         data_inst = self.data_alignment(data_inst)
-        self.data_bin, self.bin_split_points, self.bin_sparse_points = self.federated_binning(data_inst)
+        self.data_bin, self.bin_split_points, self.bin_sparse_points = self.federated_binning(
+            data_inst)
 
         # fid mapping
-        self.feature_name_fid_mapping = self.gen_feature_fid_mapping(data_inst.schema)
+        self.feature_name_fid_mapping = self.gen_feature_fid_mapping(
+            data_inst.schema)
 
         # set feature_num
         self.feature_num = self.bin_split_points.shape[0]
@@ -91,7 +97,8 @@ class HomoBoostingClient(Boosting, ABC):
         self.sync_feature_num()
 
         # initialize validation strategy
-        self.validation_strategy = self.init_validation_strategy(train_data=data_inst, validate_data=validate_data, )
+        self.validation_strategy = self.init_validation_strategy(
+            train_data=data_inst, validate_data=validate_data, )
 
         # check labels
         local_classes = self.check_label(self.data_bin)
@@ -104,8 +111,10 @@ class HomoBoostingClient(Boosting, ABC):
             self.check_label_starts_from_zero(self.classes_)
             # set labels
             self.num_classes = len(new_label_mapping)
-            LOGGER.info('aligned labels are {}, num_classes is {}'.format(aligned_label, self.num_classes))
-            self.y = self.data_bin.mapValues(lambda instance: new_label_mapping[instance.label])
+            LOGGER.info('aligned labels are {}, num_classes is {}'.format(
+                aligned_label, self.num_classes))
+            self.y = self.data_bin.mapValues(
+                lambda instance: new_label_mapping[instance.label])
             # set tree dimension
             self.booster_dim = self.num_classes if self.num_classes > 2 else 1
         else:
@@ -115,9 +124,12 @@ class HomoBoostingClient(Boosting, ABC):
         self.loss = self.get_loss_function()
 
         # set y_hat_val
-        self.y_hat, self.init_score = self.get_init_score(self.y, self.num_classes)
+        self.y_hat, self.init_score = self.get_init_score(
+            self.y, self.num_classes)
 
         LOGGER.info('begin to fit a boosting tree')
+        start_time = time.time()
+        wasted_time = 0.0
         for epoch_idx in range(self.boosting_round):
 
             LOGGER.info('cur epoch idx is {}'.format(epoch_idx))
@@ -133,20 +145,35 @@ class HomoBoostingClient(Boosting, ABC):
 
                 # update predict score
                 cur_sample_weights = model.get_sample_weights()
-                self.y_hat = self.get_new_predict_score(self.y_hat, cur_sample_weights, dim=class_idx)
+                self.y_hat = self.get_new_predict_score(
+                    self.y_hat, cur_sample_weights, dim=class_idx)
 
             local_loss = self.compute_loss(self.y_hat, self.y)
-            self.aggregator.send_local_loss(local_loss, self.data_bin.count(), suffix=(epoch_idx,))
+
+            # send loss caused some overhead
+            LOGGER.debug("start to send loss")
+            aggregation_start = time.time()
+            self.aggregator.send_local_loss(
+                local_loss, self.data_bin.count(), suffix=(epoch_idx,))
 
             if self.validation_strategy:
                 self.validation_strategy.validate(self, epoch_idx)
 
             # check stop flag if n_iter_no_change is True
             if self.n_iter_no_change:
-                should_stop = self.aggregator.get_converge_status(suffix=(str(epoch_idx),))
+                should_stop = self.aggregator.get_converge_status(
+                    suffix=(str(epoch_idx),))
+                aggregation_end = time.time()
+                LOGGER.debug("end of send loss after %.3f seconds", aggregation_end - aggregation_start)
+                wasted_time += aggregation_end - aggregation_start
                 if should_stop:
                     LOGGER.info('n_iter_no_change stop triggered')
                     break
+
+        end_time = time.time()
+        total_time = end_time - start_time
+        LOGGER.debug("spent %.3f seconds for all iterations", total_time)
+        LOGGER.debug("spent %.3f seconds in aggregation, wasted time portion of total time is %.3f %%", wasted_time, wasted_time/total_time *100)
 
         self.set_summary(self.generate_summary())
 
@@ -179,14 +206,17 @@ class HomoBoostingArbiter(Boosting, ABC):
                                                 error=self.binning_error)
 
         if self.use_missing:
-            self.binning_obj = recursive_query_binning.Server(binning_param, abnormal_list=[NoneType()])
+            self.binning_obj = recursive_query_binning.Server(
+                binning_param, abnormal_list=[NoneType()])
         else:
-            self.binning_obj = recursive_query_binning.Server(binning_param, abnormal_list=[])
+            self.binning_obj = recursive_query_binning.Server(
+                binning_param, abnormal_list=[])
 
         self.binning_obj.fit_split_points(None)
 
     def sync_feature_num(self):
-        feature_num_list = self.transfer_inst.feature_number.get(idx=-1, suffix=('feat_num',))
+        feature_num_list = self.transfer_inst.feature_number.get(
+            idx=-1, suffix=('feat_num',))
         for num in feature_num_list[1:]:
             assert feature_num_list[0] == num
         return feature_num_list[0]
@@ -203,10 +233,12 @@ class HomoBoostingArbiter(Boosting, ABC):
         if self.task_type == consts.CLASSIFICATION:
             label_mapping = HomoLabelEncoderArbiter().label_alignment()
             LOGGER.info('label mapping is {}'.format(label_mapping))
-            self.booster_dim = len(label_mapping) if len(label_mapping) > 2 else 1
+            self.booster_dim = len(label_mapping) if len(
+                label_mapping) > 2 else 1
 
         if self.n_iter_no_change:
-            self.check_convergence_func = converge_func_factory("diff", self.tol)
+            self.check_convergence_func = converge_func_factory(
+                "diff", self.tol)
 
         LOGGER.info('begin to fit a boosting tree')
         for epoch_idx in range(self.boosting_round):
@@ -249,6 +281,3 @@ class HomoBoostingArbiter(Boosting, ABC):
     @abc.abstractmethod
     def load_booster(self, model_meta, model_param, epoch_idx, booster_idx):
         raise NotImplementedError()
-
-
-

@@ -154,6 +154,7 @@ def client_fit(self, data_inst):
 
     epoch_degree = float(len(data)) * self.aggregate_every_n_epoch
 
+    
     while self.aggregate_iteration_num < self.max_aggregate_iteration_num:
         LOGGER.info(f"start {self.aggregate_iteration_num}_th aggregation")
 

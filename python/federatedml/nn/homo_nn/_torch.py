@@ -19,6 +19,7 @@ import os
 import tempfile
 import types
 import typing
+import time
 
 import numpy
 import pytorch_lightning as pl
@@ -81,7 +82,8 @@ class PyTorchSAClientContext(_PyTorchSAContext):
             max_num_aggregation=max_num_aggregation, name=name
         )
         self.transfer_variable = SecureAggregatorTransVar()
-        self.aggregator = aggregator.Client(self.transfer_variable.aggregator_trans_var)
+        self.aggregator = aggregator.Client(
+            self.transfer_variable.aggregator_trans_var)
         self.random_padding_cipher = random_padding_cipher.Client(
             self.transfer_variable.random_padding_cipher_trans_var
         )
@@ -90,6 +92,7 @@ class PyTorchSAClientContext(_PyTorchSAContext):
 
         self._should_stop = False
         self.loss_summary = []
+        self.wasted_time = 0.0
 
     def init(self):
         self.random_padding_cipher.create_cipher()
@@ -112,7 +115,8 @@ class PyTorchSAClientContext(_PyTorchSAContext):
         ]
 
     def send_loss(self, loss, weight):
-        self.aggregator.send_model((loss, weight), suffix=self._suffix(group="loss"))
+        self.aggregator.send_model(
+            (loss, weight), suffix=self._suffix(group="loss"))
 
     def recv_loss(self):
         return self.aggregator.get_aggregated_model(
@@ -176,7 +180,8 @@ class PyTorchSAServerContext(_PyTorchSAContext):
             max_num_aggregation=max_num_aggregation, name=name
         )
         self.transfer_variable = SecureAggregatorTransVar()
-        self.aggregator = aggregator.Server(self.transfer_variable.aggregator_trans_var)
+        self.aggregator = aggregator.Server(
+            self.transfer_variable.aggregator_trans_var)
         self.random_padding_cipher = random_padding_cipher.Server(
             self.transfer_variable.random_padding_cipher_trans_var
         )
@@ -220,7 +225,8 @@ class PyTorchSAServerContext(_PyTorchSAContext):
 
         self._loss = mean_loss
 
-        LOGGER.info(f"convergence check: loss={mean_loss}, is_converged={is_converged}")
+        LOGGER.info(
+            f"convergence check: loss={mean_loss}, is_converged={is_converged}")
         return is_converged, mean_loss
 
 
@@ -249,14 +255,16 @@ class FedLightModule(pl.LightningModule):
         layers = []
         for layer_config in layers_config:
             layer_name = layer_config["layer"]
-            layer_kwargs = {k: v for k, v in layer_config.items() if k != "layer"}
+            layer_kwargs = {k: v for k,
+                            v in layer_config.items() if k != "layer"}
             layers.append(get_layer_fn(layer_name, layer_kwargs))
         self.model = nn.Sequential(*layers)
 
         # loss
         loss_name = loss_config["loss"]
         loss_kwargs = {k: v for k, v in loss_config.items() if k != "loss"}
-        self.loss_fn, self.expected_label_type = get_loss_fn(loss_name, loss_kwargs)
+        self.loss_fn, self.expected_label_type = get_loss_fn(
+            loss_name, loss_kwargs)
 
         # optimizer
         self._optimizer_name = optimizer_config.optimizer
@@ -283,7 +291,8 @@ class FedLightModule(pl.LightningModule):
         loss = self.loss_fn(y_hat, y)
 
         if y_hat.shape[1] > 1:
-            accuracy = (y_hat.argmax(dim=1) == y).sum().float() / float(y.size(0))
+            accuracy = (y_hat.argmax(dim=1) == y).sum().float() / \
+                float(y.size(0))
         else:
             y_prob = y_hat[:, 0] > 0.5
             accuracy = (y == y_prob).sum().float() / y.size(0)
@@ -291,7 +300,8 @@ class FedLightModule(pl.LightningModule):
 
     def validation_epoch_end(self, outputs):
         loss = torch.mean(torch.stack([x["val_loss"] for x in outputs]))
-        accuracy = torch.mean(torch.stack([x["val_accuracy"] for x in outputs]))
+        accuracy = torch.mean(torch.stack(
+            [x["val_accuracy"] for x in outputs]))
         convergence_status = self.context.do_convergence_check(
             self._num_data_consumed, loss
         )
@@ -324,8 +334,14 @@ class FedLightModule(pl.LightningModule):
 
     def on_train_epoch_end(self, outputs) -> None:
         if self.context.should_aggregate_on_epoch(self.current_epoch):
+            start_time = time.time()
+            LOGGER.debug("start aggregation")
             self.context.do_aggregation(float(self._num_data_consumed))
             self._all_consumed_data_aggregated = True
+            end_time = time.time()
+            duration = end_time - start_time
+            self.context.wasted_time += duration
+            LOGGER.debug("end of aggregation after %.3f seconds", duration)
             # self._num_data_consumed = 0
 
     def configure_optimizers(self):
@@ -357,11 +373,19 @@ class PyTorchFederatedTrainer(object):
         return self.label_mapping
 
     def fit(self, dataloader):
+        start_time = time.time()
+        LOGGER.debug("start fit")
         self.pl_trainer.fit(
             self.pl_model,
             train_dataloader=dataloader,
             val_dataloaders=dataloader,
         )
+
+        end_time = time.time()
+        duration = end_time - start_time
+
+        LOGGER.debug("end of fit with %.3f seconds", duration)
+        LOGGER.debug("wasted time is %.3f of total portion is %.3f %%", self.context.wasted_time, self.context.wasted_time/duration * 100.0)
 
     def summary(self):
         return {
@@ -392,7 +416,8 @@ class PyTorchFederatedTrainer(object):
             kv, include_key=True, partition=partitions
         )
         classes = (
-            [0, 1] if num_output_units == 1 else [i for i in range(num_output_units)]
+            [0, 1] if num_output_units == 1 else [
+                i for i in range(num_output_units)]
         )
 
         return pred_tbl, classes
@@ -523,7 +548,8 @@ def build_trainer(
         optimizer_config=param.optimizer,
         loss_config={"loss": param.loss},
     )
-    dataset = make_dataset(data=data, expected_label_type=pl_model.expected_label_type)
+    dataset = make_dataset(
+        data=data, expected_label_type=pl_model.expected_label_type)
 
     batch_size = param.batch_size
     if batch_size < 0:
