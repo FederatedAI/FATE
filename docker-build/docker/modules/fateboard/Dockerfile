@@ -1,5 +1,5 @@
 FROM mcr.microsoft.com/java/jre:8u192-zulu-alpine
-
+RUN apk add tzdata
 WORKDIR /data/projects/fate/fateboard/
 
 ARG fateboard_version
