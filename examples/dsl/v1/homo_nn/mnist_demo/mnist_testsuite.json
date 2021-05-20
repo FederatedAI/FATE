@@ -1,0 +1,42 @@
+{
+  "data": [
+    {
+      "file": "examples/data/mnist_test.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "mnist_test",
+      "namespace": "experiment",
+      "role": "guest_0"
+    },
+    {
+      "file": "examples/data/mnist_test.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "mnist_test",
+      "namespace": "experiment",
+      "role": "host_0"
+    },
+    {
+      "file": "examples/data/mnist_train.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "mnist_train",
+      "namespace": "experiment",
+      "role": "guest_0"
+    },
+    {
+      "file": "examples/data/mnist_train.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "mnist_train",
+      "namespace": "experiment",
+      "role": "host_0"
+    }
+  ],
+  "tasks": {
+    "mnist_conv": {
+      "conf": "./mnist_conf.json",
+      "dsl": "./mnist_dsl.json"
+    }
+  }
+}

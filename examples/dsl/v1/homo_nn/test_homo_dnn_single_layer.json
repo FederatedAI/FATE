@@ -4,14 +4,13 @@
         "party_id": 10000
     },
     "job_parameters": {
-        "work_mode": 0
+        "work_mode": 1
     },
     "role": {
         "guest": [
             10000
         ],
         "host": [
-            10000
         ],
         "arbiter": [
             10000
@@ -24,32 +23,6 @@
                     "train_data": [
                         {
                             "name": "breast_homo_guest",
-                            "namespace": "experiment"
-                        }
-                    ]
-                }
-            },
-            "dataio_0": {
-                "with_label": [
-                    true
-                ],
-                "label_name": [
-                    "y"
-                ],
-                "label_type": [
-                    "int"
-                ],
-                "output_format": [
-                    "dense"
-                ]
-            }
-        },
-        "host": {
-            "args": {
-                "data": {
-                    "train_data": [
-                        {
-                            "name": "breast_homo_host",
                             "namespace": "experiment"
                         }
                     ]

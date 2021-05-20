@@ -3,7 +3,7 @@
   "id_delimiter": ",",
   "head": 1,
   "partition": 4,
-  "work_mode": 0,
+  "work_mode": 1,
   "backend": 0,
   "storage_engine": "PATH",
   "namespace": "experiment",

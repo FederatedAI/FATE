@@ -6,7 +6,7 @@
   },
   "role": {
     "arbiter": [10000],
-    "host": [],
+    "host": [10000],
     "guest": [10000]
   },
   "job_parameters": {
@@ -18,9 +18,10 @@
   "component_parameters": {
     "common": {
       "homo_nn_0": {
+	"aggregate_every_n_epoch": 500,
         "api_version": 2,
         "encode_label": true,
-        "max_iter": 10,
+        "max_iter": 1,
         "batch_size": 32,
         "early_stop": {
           "early_stop": "diff",
@@ -86,6 +87,16 @@
       }
     },
     "role": {
+      "host": {
+        "0": {
+          "reader_0": {
+            "table": {
+              "name": "mnist_images",
+              "namespace": "experiment"
+            }
+          }
+        }
+      },
       "guest": {
         "0": {
           "reader_0": {

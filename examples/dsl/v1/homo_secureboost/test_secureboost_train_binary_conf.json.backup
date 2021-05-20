@@ -4,13 +4,14 @@
         "party_id": 10000
     },
     "job_parameters": {
-        "work_mode": 1
+        "work_mode": 0
     },
     "role": {
         "guest": [
             10000
         ],
         "host": [
+            10000
         ],
         "arbiter": [
             10000
@@ -28,7 +29,39 @@
                     ],
                     "eval_data": [
                         {
-                            "name": "homo_breast_test",
+                            "name": "breast_homo_test",
+                            "namespace": "experiment"
+                        }
+                    ]
+                }
+            },
+            "dataio_0": {
+                "with_label": [
+                    true
+                ],
+                "label_name": [
+                    "y"
+                ],
+                "label_type": [
+                    "int"
+                ],
+                "output_format": [
+                    "dense"
+                ]
+            }
+        },
+        "host": {
+            "args": {
+                "data": {
+                    "train_data": [
+                        {
+                            "name": "breast_homo_host",
+                            "namespace": "experiment"
+                        }
+                    ],
+                    "eval_data": [
+                        {
+                            "name": "breast_homo_test",
                             "namespace": "experiment"
                         }
                     ]
@@ -54,9 +87,9 @@
         "secureboost_0": {
             "task_type": "classification",
             "learning_rate": 0.1,
-            "num_trees": 30,
+            "num_trees": 3,
             "subsample_feature_rate": 1,
-            "n_iter_no_change": true,
+            "n_iter_no_change": false,
             "tol": 0.0001,
             "bin_num": 50,
             "validation_freqs": 1,
