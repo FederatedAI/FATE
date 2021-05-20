@@ -38,7 +38,6 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         self.max_sample_weight = 1
         self.max_sample_weight_computed = False
         self.cipher_compressing = False
-        self.round_decimal = None
 
         self.enable_goss = False  # GOSS
         self.top_rate = None
@@ -55,7 +54,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         self.enable_goss = param.run_goss
         self.top_rate = param.top_rate
         self.other_rate = param.other_rate
-        self.round_decimal = param.cipher_compress_error
+        self.cipher_compressing = param.cipher_compress
         self.new_ver = param.new_ver
 
         if self.use_missing:
@@ -122,12 +121,14 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
                   data_bin=self.data_bin, bin_split_points=self.bin_split_points, bin_sparse_points=self.bin_sparse_points,
                   grad_and_hess=g_h,
                   encrypter=self.encrypter, encrypted_mode_calculator=self.encrypted_calculator,
+                  task_type=self.task_type,
                   valid_features=self.sample_valid_features(),
                   host_party_list=self.component_properties.host_party_idlist,
                   runtime_idx=self.component_properties.local_partyid,
                   goss_subsample=self.enable_goss,
                   top_rate=self.top_rate, other_rate=self.other_rate,
                   complete_secure=True if (self.cur_epoch_idx == 0 and self.complete_secure) else False,
+                  cipher_compressing=self.cipher_compressing,
                   max_sample_weight=self.max_sample_weight,
                   new_ver=self.new_ver
                   )
@@ -454,7 +455,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         self.boosting_model_list = list(model_param.trees_)
         self.init_score = np.array(list(model_param.init_score))
         self.history_loss = list(model_param.losses)
-        self.classes_ = list(model_param.classes_)
+        self.classes_ = list(map(int, model_param.classes_))
         self.booster_dim = model_param.tree_dim
         self.num_classes = model_param.num_classes
         self.feature_name_fid_mapping.update(model_param.feature_name_fid_mapping)

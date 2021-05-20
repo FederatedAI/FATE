@@ -3,6 +3,7 @@ from abc import ABC
 from abc import abstractmethod
 from federatedml.util import consts
 from typing import List
+from federatedml.secureprotol import PaillierEncrypt, IterativeAffineEncrypt
 
 
 class CipherPackage(ABC):
@@ -46,10 +47,25 @@ class NormalCipherPackage(CipherPackage):
         if self._capacity_left == 0:
             self._has_space = False
 
-    def unpack(self, decrypter):
+    def unpack(self, decrypter, raw_decrypt=False):
+
+        if type(decrypter) == PaillierEncrypt:
+            if not raw_decrypt:
+                compressed_plain_text = int(decrypter.decrypt(self._cipher_text))
+            else:
+                compressed_plain_text = decrypter.privacy_key.raw_decrypt(self._cipher_text.ciphertext())
+        elif type(decrypter) == IterativeAffineEncrypt:
+            if not raw_decrypt:
+                compressed_plain_text = int(decrypter.decrypt(self._cipher_text))
+            else:
+                compressed_plain_text = decrypter.key.raw_decrypt(self._cipher_text)
+        else:
+            raise ValueError('unknown decrypter: {}'.format(type(decrypter)))
+
+        if self.cur_cipher_contained() == 1:
+            return [compressed_plain_text]
 
         unpack_result = []
-        compressed_plain_text = decrypter.privacy_key.raw_decrypt(self._cipher_text.ciphertext())
         bit_len = (self._padding_num - 1).bit_length()
         for i in range(self.cur_cipher_contained()):
             if self._round_decimal == 0:

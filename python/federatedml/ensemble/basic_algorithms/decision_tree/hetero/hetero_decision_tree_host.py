@@ -7,7 +7,7 @@ from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.decision_tree
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.splitter import SplitInfo
 from federatedml.transfer_variable.transfer_class.hetero_decision_tree_transfer_variable import \
     HeteroDecisionTreeTransferVariable
-from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.splitinfo_cipher_compressor import HostSplitInfoCompressor
+from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.g_h_optim import PackedGHCompressor
 from federatedml.util import consts
 from federatedml.feature.fate_element_type import NoneType
 import functools
@@ -48,9 +48,7 @@ class HeteroDecisionTreeHost(DecisionTree):
 
         # cipher compressing
         self.cipher_compressor = None
-        self.run_cipher_compressing = False
-        self.key_length = None
-        self.round_decimal = 7
+        self.run_cipher_compressing = True
 
         # code version control
         self.new_ver = True
@@ -70,7 +68,6 @@ class HeteroDecisionTreeHost(DecisionTree):
             LOGGER.info('running goss')
         if self.run_cipher_compressing:
             LOGGER.info('running cipher compressing')
-            LOGGER.info('round decimal is {}'.format(self.round_decimal))
         LOGGER.debug('bin num and feature num: {}/{}'.format(self.bin_num, self.feature_num))
 
     def init(self, flowid, runtime_idx, data_bin, bin_split_points, bin_sparse_points, data_bin_dense, bin_num,
@@ -93,9 +90,6 @@ class HeteroDecisionTreeHost(DecisionTree):
         self.run_cipher_compressing = cipher_compressing
         self.feature_num = self.bin_split_points.shape[0]
 
-        if self.run_cipher_compressing:
-            self.init_compressor()
-
         self.new_ver = new_ver
 
         self.report_init_status()
@@ -104,7 +98,7 @@ class HeteroDecisionTreeHost(DecisionTree):
         self.host_party_idlist = l
 
     """
-    Node feature, bid mask
+    Node encode/decode
     """
 
     def generate_missing_dir(self, dep, left_num=3, right_num=3):
@@ -131,6 +125,41 @@ class HeteroDecisionTreeHost(DecisionTree):
                 idx += 1
 
         return mapping
+
+    def encode(self, etype="feature_idx", val=None, nid=None):
+
+        if etype == "feature_idx":
+            return val
+
+        if etype == "feature_val":
+            self.split_maskdict[nid] = val
+            return None
+
+        if etype == "missing_dir":
+            self.missing_dir_maskdict[nid] = val
+            return None
+
+        raise TypeError("encode type %s is not support!" % (str(etype)))
+
+    @staticmethod
+    def decode(dtype="feature_idx", val=None, nid=None, maskdict=None, missing_dir_maskdict=None):
+
+        if dtype == "feature_idx":
+            return val
+
+        if dtype == "feature_val":
+            if nid in maskdict:
+                return maskdict[nid]
+            else:
+                raise ValueError("decode val %s cause error, can't recognize it!" % (str(val)))
+
+        if dtype == "missing_dir":
+            if nid in missing_dir_maskdict:
+                return missing_dir_maskdict[nid]
+            else:
+                raise ValueError("decode val %s cause error, can't recognize it!" % (str(val)))
+
+        return TypeError("decode type %s is not support!" % (str(dtype)))
 
     def generate_split_point_masking_variable(self, dep):
         # for split point masking
@@ -177,8 +206,12 @@ class HeteroDecisionTreeHost(DecisionTree):
     Federation Functions
     """
 
-    def sync_encrypted_grad_and_hess(self):
+    def init_compressor_and_sync_gh(self):
         LOGGER.info("get encrypted grad and hess")
+        if self.run_cipher_compressing:
+            para = self.transfer_inst.cipher_compressor_para.get(idx=0)
+            padding_bit_len, max_capacity = para['padding_bit_len'], para['max_capacity']
+            self.cipher_compressor = PackedGHCompressor(padding_bit_len=padding_bit_len, max_capacity=max_capacity)
         self.grad_and_hess = self.transfer_inst.encrypted_grad_and_hess.get(idx=0)
 
     def sync_node_positions(self, dep=-1):
@@ -253,14 +286,12 @@ class HeteroDecisionTreeHost(DecisionTree):
         LOGGER.info("get the {}-th predict finish tag from guest".format(recv_times))
         finish_tag = self.transfer_inst.predict_finish_tag.get(idx=0,
                                                                suffix=(recv_times,))
-
         return finish_tag
 
     def sync_predict_data(self, recv_times):
         LOGGER.info("srecv predict data to host, recv times is {}".format(recv_times))
         predict_data = self.transfer_inst.predict_data.get(idx=0,
                                                            suffix=(recv_times,))
-
         return predict_data
 
     def sync_data_predicted_by_host(self, predict_data, send_times):
@@ -277,7 +308,7 @@ class HeteroDecisionTreeHost(DecisionTree):
 
     @staticmethod
     def assign_an_instance(value1, value2, sitename=None, decoder=None,
-                           split_maskdict=None, bin_sparse_points=None,
+                           maskdict=None, bin_sparse_points=None,
                            use_missing=False, zero_as_missing=False,
                            missing_dir_maskdict=None):
 
@@ -295,12 +326,11 @@ class HeteroDecisionTreeHost(DecisionTree):
 
     def assign_instances_to_new_node(self, dispatch_node_host, dep=-1):
 
-        # assist inst2node_idx computation
         LOGGER.info("start to find host dispath of depth {}".format(dep))
         dispatch_node_method = functools.partial(self.assign_an_instance,
                                                  sitename=self.sitename,
                                                  decoder=self.decode,
-                                                 split_maskdict=self.split_maskdict,
+                                                 maskdict=self.split_maskdict,
                                                  bin_sparse_points=self.bin_sparse_points,
                                                  use_missing=self.use_missing,
                                                  zero_as_missing=self.zero_as_missing,
@@ -320,31 +350,22 @@ class HeteroDecisionTreeHost(DecisionTree):
     Pre-Process / Post-Process
     """
 
-    def init_compressor(self):
-        para = self.transfer_inst.cipher_compressor_para.get(idx=0)
-        max_sample_weight, max_capcity_int, en_type = para['max_sample_weight'], para['max_capacity_int'], para['en_type']
-        LOGGER.info('got para from guest: max sample weight {}; max capacity int {}; en type {}'.format(max_sample_weight, max_capcity_int, en_type))
-        self.cipher_compressor = HostSplitInfoCompressor(max_capcity_int, en_type, consts.CLASSIFICATION,
-                                                         round_decimal=self.round_decimal,
-                                                         max_sample_weights=max_sample_weight)
-
     def remove_duplicated_split_nodes(self, split_nid_used):
         LOGGER.info("remove duplicated nodes from split mask dict")
         duplicated_nodes = set(self.split_maskdict.keys()) - set(split_nid_used)
         for nid in duplicated_nodes:
             del self.split_maskdict[nid]
 
-    def convert_bin_to_real(self, decode_func, split_maskdict):
+    def convert_bin_to_real(self, decode_func, maskdict):
         LOGGER.info("convert tree node bins to real value")
         split_nid_used = []
 
         for i in range(len(self.tree_node)):
             if self.tree_node[i].is_leaf is True:
                 continue
-
             if self.tree_node[i].sitename == self.sitename:
-                fid = decode_func("feature_idx", self.tree_node[i].fid, self.tree_node[i].id, split_maskdict)
-                bid = decode_func("feature_val", self.tree_node[i].bid, self.tree_node[i].id, split_maskdict)
+                fid = decode_func("feature_idx", self.tree_node[i].fid, self.tree_node[i].id, maskdict)
+                bid = decode_func("feature_val", self.tree_node[i].bid, self.tree_node[i].id, maskdict)
                 LOGGER.debug("shape of bin_split_points is {}".format(len(self.bin_split_points[fid])))
                 real_splitval = self.encode("feature_val", self.bin_split_points[fid][bid], self.tree_node[i].id)
                 self.tree_node[i].bid = real_splitval
@@ -368,11 +389,9 @@ class HeteroDecisionTreeHost(DecisionTree):
 
         LOGGER.info('solving node batch {}, node num is {}'.format(batch, len(cur_to_split_nodes)))
         if not self.complete_secure_tree:
-
             data = self.data_with_node_assignments
             if self.run_sparse_opt:
                 data = self.data_bin_dense_with_position
-
             inst2node_idx = self.get_computing_inst2node_idx()
             node_sample_count = self.count_node_sample_num(inst2node_idx, node_map)
             LOGGER.debug('sample count is {}'.format(node_sample_count))
@@ -380,10 +399,6 @@ class HeteroDecisionTreeHost(DecisionTree):
                                                        cur_to_split_nodes, node_map, ret='tb',
                                                        sparse_opt=self.run_sparse_opt, hist_sub=True,
                                                        bin_num=self.bin_num)
-
-            if self.run_cipher_compressing:
-                self.cipher_compressor.renew_compressor(node_sample_count, node_map)
-            cipher_compressor = self.cipher_compressor if self.run_cipher_compressing else None
 
             split_info_table = self.splitter.host_prepare_split_points(histograms=acc_histograms,
                                                                        use_missing=self.use_missing,
@@ -393,7 +408,7 @@ class HeteroDecisionTreeHost(DecisionTree):
                                                                        right_missing_dir=self.missing_dir_mask_right[dep],
                                                                        mask_id_mapping=self.fid_bid_random_mapping,
                                                                        batch_size=self.bin_num,
-                                                                       cipher_compressor=cipher_compressor,
+                                                                       cipher_compressor=self.cipher_compressor,
                                                                        shuffle_random_seed=np.abs(hash((dep, batch)))
                                                                        )
 
@@ -448,7 +463,8 @@ class HeteroDecisionTreeHost(DecisionTree):
         
         LOGGER.info("begin to fit host decision tree")
 
-        self.sync_encrypted_grad_and_hess()
+        self.init_compressor_and_sync_gh()
+        LOGGER.debug('grad and hess count {}'.format(self.grad_and_hess.count()))
 
         for dep in range(self.max_depth):
 
@@ -477,7 +493,7 @@ class HeteroDecisionTreeHost(DecisionTree):
             dispatch_node_host = self.sync_dispatch_node_host(dep)
             self.assign_instances_to_new_node(dispatch_node_host, dep=dep)
         self.sync_tree()
-        self.convert_bin_to_real(decode_func=self.decode, split_maskdict=self.split_maskdict)
+        self.convert_bin_to_real(decode_func=self.decode, maskdict=self.split_maskdict)
         LOGGER.info("fitting host decision tree done")
 
     @staticmethod

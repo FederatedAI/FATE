@@ -1,5 +1,6 @@
 from abc import ABC
 import abc
+import numpy as np
 from federatedml.ensemble.boosting.boosting_core import Boosting
 from federatedml.feature.homo_feature_binning.homo_split_points import HomoFeatureBinningClient, \
                                                                       HomoFeatureBinningServer
@@ -17,7 +18,6 @@ from federatedml.param.boosting_param import HomoSecureBoostParam
 from fate_flow.entity.metric import Metric
 from fate_flow.entity.metric import MetricMeta
 from federatedml.util.io_check import assert_io_num_rows_equal
-
 from federatedml.feature.homo_feature_binning import recursive_query_binning
 from federatedml.param.feature_binning_param import HomoFeatureBinningParam
 
@@ -31,7 +31,6 @@ class HomoBoostingClient(Boosting, ABC):
         self.model_param = HomoSecureBoostParam()
         self.binning_obj = HomoFeatureBinningClient()
         self.mode = consts.HOMO
-        self.bin_arr, self.sample_id_arr = None, None
 
     def federated_binning(self,  data_instance):
 
@@ -41,6 +40,7 @@ class HomoBoostingClient(Boosting, ABC):
         if self.use_missing:
             self.binning_obj = recursive_query_binning.Client(params=binning_param, abnormal_list=[NoneType()],
                                                               role=self.role)
+            LOGGER.debug('use missing')
         else:
             self.binning_obj = recursive_query_binning.Client(params=binning_param, role=self.role)
 
@@ -76,22 +76,14 @@ class HomoBoostingClient(Boosting, ABC):
     def sync_feature_num(self):
         self.transfer_inst.feature_number.remote(self.feature_num, role=consts.ARBITER, idx=-1, suffix=('feat_num', ))
 
+    def data_preporcess(self, data_inst):
+        # transform to sparse and binning
+        data_inst = self.data_alignment(data_inst)
+        self.data_bin, self.bin_split_points, self.bin_sparse_points = self.federated_binning(data_inst)
+
     def fit(self, data_inst, validate_data=None):
 
-        # binning
-
-        bin_arr_table, self.bin_split_points, self.bin_sparse_points = self.federated_binning(data_inst)
-        bin_arr = []
-        id_list = []
-        import numpy as np
-        for id_, inst in bin_arr_table.collect():
-            bin_arr.append(inst.features)
-            id_list.append(id_)
-        self.bin_arr = np.asfortranarray(np.stack(bin_arr, axis=0).astype(np.uint8))
-        self.sample_id_arr = np.array(id_list)
-        LOGGER.debug('bin arr is {}'.format(bin_arr))
-        data_inst = self.data_alignment(data_inst)
-        self.data_bin, _, _ = self.binning_obj.convert_feature_to_bin(data_inst)
+        self.data_preporcess(data_inst)
 
         # fid mapping
         self.feature_name_fid_mapping = self.gen_feature_fid_mapping(data_inst.schema)

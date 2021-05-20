@@ -88,7 +88,6 @@ class HeteroFastDecisionTreeGuest(HeteroDecisionTreeGuest):
                                                       splitinfo_host=host_split_info,
                                                       merge_host_split_only=True)
 
-        LOGGER.debug('split is {}'.format(cur_best_split))
         return cur_best_split
 
     def compute_best_splits_with_node_plan2(self, tree_action, target_host_idx, cur_to_split_nodes, node_map: dict,
@@ -117,14 +116,9 @@ class HeteroFastDecisionTreeGuest(HeteroDecisionTreeGuest):
 
             split_info_table = self.transfer_inst.encrypted_splitinfo_host.get(idx=target_host_idx, suffix=(dep, batch_idx))
 
-            if self.run_cipher_compressing:
-                self.cipher_decompressor.renew_decompressor(node_map)
-            cipher_decompressor = self.cipher_decompressor if self.run_cipher_compressing else None
             host_split_info = self.splitter.find_host_best_split_info(split_info_table, self.get_host_sitename(target_host_idx),
-                                                                      self.encrypter,
-                                                                      cipher_decompressor=cipher_decompressor)
+                                                                      self.encrypter, gh_packer=self.packer)
 
-            LOGGER.debug('best host split info {} at dep {}'.format(host_split_info, dep))
             split_info_list = [None for i in range(len(host_split_info))]
             for key in host_split_info:
                 split_info_list[node_map[key]] = host_split_info[key]
@@ -187,10 +181,10 @@ class HeteroFastDecisionTreeGuest(HeteroDecisionTreeGuest):
 
         dispatch_guest_result = dispatch_guest_result.subtractByKey(dispatch_to_host_result)
         leaf = dispatch_guest_result.filter(lambda key, value: isinstance(value, tuple) is False)
-        if self.sample_leaf_pos is None:
-            self.sample_leaf_pos = leaf
+        if self.sample_weights is None:
+            self.sample_weights = leaf
         else:
-            self.sample_leaf_pos = self.sample_leaf_pos.union(leaf)
+            self.sample_weights = self.sample_weights.union(leaf)
 
         dispatch_guest_result = dispatch_guest_result.subtractByKey(leaf)
 
@@ -223,7 +217,7 @@ class HeteroFastDecisionTreeGuest(HeteroDecisionTreeGuest):
         LOGGER.info('running layered mode')
 
         self.initialize_node_plan()
-        self.process_and_sync_grad_and_hess()
+        self.init_packer_and_sync_gh()
         root_node = self.initialize_root_node()
         self.cur_layer_nodes = [root_node]
         self.inst2node_idx = self.assign_instance_to_root_node(self.data_bin, root_node_id=root_node.id)
@@ -269,7 +263,6 @@ class HeteroFastDecisionTreeGuest(HeteroDecisionTreeGuest):
         self.convert_bin_to_real()
         self.round_leaf_val()
         self.sync_tree(idx=-1)
-        self.sample_weights_post_process()
 
     """
     Mix Mode
@@ -288,7 +281,7 @@ class HeteroFastDecisionTreeGuest(HeteroDecisionTreeGuest):
         self.initialize_node_plan()
 
         if self.tree_type != plan.tree_type_dict['guest_feat_only']:
-            self.process_and_sync_grad_and_hess(idx=self.host_id_to_idx(self.target_host_id))
+            self.init_packer_and_sync_gh(idx=self.host_id_to_idx(self.target_host_id))
             self.sync_en_g_sum_h_sum()
         else:
             root_node = self.initialize_root_node()
@@ -335,18 +328,19 @@ class HeteroFastDecisionTreeGuest(HeteroDecisionTreeGuest):
             target_idx = self.host_id_to_idx(self.get_node_plan(0)[1])  # get host id
             leaves = self.sync_host_leaf_nodes(target_idx)  # get leaves node from host
             self.tree_node = self.handle_leaf_nodes(leaves)  # decrypt node info
-            self.sample_leaf_pos = self.sync_sample_leaf_pos(idx=target_idx)  # get final sample leaf id from host
+            sample_pos = self.sync_sample_leaf_pos(idx=target_idx)  # get final sample leaf id from host
 
             # checking sample number
-            assert self.sample_leaf_pos.count() == self.data_bin.count(), 'numbers of sample positions failed to match, ' \
-                                                                          'sample leaf pos number:{}, instance number {}'.\
-                format(self.sample_leaf_pos.count(), self.data_bin.count())
+            assert sample_pos.count() == self.data_bin.count(), 'numbers of sample positions failed to match, ' \
+                                                                'sample leaf pos number:{}, instance number {}'.\
+                format(sample_pos.count(), self.data_bin.count())
+
+            self.sample_weights = self.extract_sample_weights_from_node(sample_pos)  # extract leaf weights
         else:
             if self.cur_layer_nodes:
                 self.assign_instance_to_leaves_and_update_weights() # guest local updates
             self.convert_bin_to_real()  # convert bin id to real value features
 
-        self.sample_weights_post_process()
         self.round_leaf_val()
 
     def mix_mode_predict(self, data_inst):
@@ -366,7 +360,6 @@ class HeteroFastDecisionTreeGuest(HeteroDecisionTreeGuest):
                                               missing_dir_maskdict=self.missing_dir_maskdict)
             predict_result = predict_data.join(data_inst, traverse_tree)
             LOGGER.debug('guest_predict_inst_count is {}'.format(predict_result.count()))
-
         else:
             LOGGER.debug('predicting using host local tree')
             leaf_node_info = self.sync_sample_leaf_pos(idx=self.host_id_to_idx(self.target_host_id))
@@ -397,9 +390,21 @@ class HeteroFastDecisionTreeGuest(HeteroDecisionTreeGuest):
     Mix Functions
     """
 
+    @staticmethod
+    def get_node_weights(node_id, tree_nodes):
+        return tree_nodes[node_id].weight
+
+    def extract_sample_weights_from_node(self, sample_leaf_pos):
+        """
+        Given a dtable contains leaf positions of samples, return leaf weights
+        """
+        func = functools.partial(self.get_node_weights, tree_nodes=self.tree_node)
+        sample_weights = sample_leaf_pos.mapValues(func)
+        return sample_weights
+
     def handle_leaf_nodes(self, nodes):
         """
-        decrypt hess and grad and return tree node list that only contains leaves
+        decrypte hess and grad and return tree node list that only contains leaves
         """
         max_node_id = -1
         for n in nodes:

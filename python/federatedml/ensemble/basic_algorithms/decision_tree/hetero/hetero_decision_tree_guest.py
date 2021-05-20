@@ -10,10 +10,9 @@ from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import Decision
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import DecisionTreeModelParam
 from federatedml.transfer_variable.transfer_class.hetero_decision_tree_transfer_variable import \
     HeteroDecisionTreeTransferVariable
-from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.splitinfo_cipher_compressor import \
-    GuestSplitInfoDecompressor, GuestGradHessEncoder
-from federatedml.secureprotol import PaillierEncrypt, IterativeAffineEncrypt
+from federatedml.secureprotol import PaillierEncrypt, IterativeAffineEncrypt, FakeEncrypt
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.subsample import goss_sampling
+from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.g_h_optim import GHPacker, get_homo_encryption_max_int
 from federatedml.util import consts
 
 
@@ -38,13 +37,50 @@ class HeteroDecisionTreeGuest(DecisionTree):
         self.top_rate, self.other_rate = 0.2, 0.1  # goss sampling rate
 
         # cipher compressing
-        self.pack_g_h = True
-        self.max_sample_weight = 1
+        self.task_type = None
+        self.run_cipher_compressing = True
         self.packer = None
+        self.max_sample_weight = 1
 
         # code version control
         self.new_ver = True
 
+    """
+    Node Encode/ Decode
+    """
+
+    def encode(self, etype="feature_idx", val=None, nid=None):
+        if etype == "feature_idx":
+            return val
+
+        if etype == "feature_val":
+            self.split_maskdict[nid] = val
+            return None
+
+        if etype == "missing_dir":
+            self.missing_dir_maskdict[nid] = val
+            return None
+
+        raise TypeError("encode type %s is not support!" % (str(etype)))
+
+    @staticmethod
+    def decode(dtype="feature_idx", val=None, nid=None, split_maskdict=None, missing_dir_maskdict=None):
+        if dtype == "feature_idx":
+            return val
+
+        if dtype == "feature_val":
+            if nid in split_maskdict:
+                return split_maskdict[nid]
+            else:
+                raise ValueError("decode val %s cause error, can't recognize it!" % (str(val)))
+
+        if dtype == "missing_dir":
+            if nid in missing_dir_maskdict:
+                return missing_dir_maskdict[nid]
+            else:
+                raise ValueError("decode val %s cause error, can't recognize it!" % (str(val)))
+
+        return TypeError("decode type %s is not support!" % (str(dtype)))
 
     """
     Setting
@@ -64,7 +100,8 @@ class HeteroDecisionTreeGuest(DecisionTree):
                                                                                   self.other_rate))
             LOGGER.info('sampled g_h count is {}, total sample num is {}'.format(self.grad_and_hess.count(),
                                                                                  self.data_bin.count()))
-
+        if self.run_cipher_compressing:
+            LOGGER.info('running cipher compressing')
         LOGGER.info('updated max sample weight is {}'.format(self.max_sample_weight))
 
         if self.deterministic:
@@ -74,10 +111,12 @@ class HeteroDecisionTreeGuest(DecisionTree):
              grad_and_hess,
              encrypter, encrypted_mode_calculator,
              host_party_list,
+             task_type,
              complete_secure=False,
              goss_subsample=False,
              top_rate=0.1,
              other_rate=0.2,
+             cipher_compressing=False,
              max_sample_weight=1,
              new_ver=True):
 
@@ -95,14 +134,21 @@ class HeteroDecisionTreeGuest(DecisionTree):
         self.top_rate = top_rate
         self.other_rate = other_rate
 
+        self.run_cipher_compressing = cipher_compressing
         self.max_sample_weight = max_sample_weight
 
+        self.task_type = task_type
+
         if self.run_goss:
+            self.encrypted_mode_calculator.align_to_input_data = False
+            if self.encrypted_mode_calculator.mode != 'strict':
+                self.encrypted_mode_calculator.init_enc_zero(self.grad_and_hess,
+                                                             raw_en=self.run_cipher_compressing, exponent=0)
+                LOGGER.info('fast/balance encrypt mode, initialize enc zeros for goss sampling')
             self.goss_sampling()
             self.max_sample_weight = self.max_sample_weight * ((1 - top_rate) / other_rate)
 
         self.new_ver = new_ver
-
         self.report_init_status()
 
     """
@@ -294,15 +340,10 @@ class HeteroDecisionTreeGuest(DecisionTree):
         host_split_info_tables = self.transfer_inst.encrypted_splitinfo_host.get(idx=-1, suffix=(dep, batch_idx))
         best_splits_of_all_hosts = []
 
-        if self.run_cipher_compressing:
-            self.cipher_decompressor.renew_decompressor(node_map)
-        cipher_decompressor = self.cipher_decompressor if self.run_cipher_compressing else None
-
         for host_idx, split_info_table in enumerate(host_split_info_tables):
 
             host_split_info = self.splitter.find_host_best_split_info(split_info_table, self.get_host_sitename(host_idx),
                                                                       self.encrypter,
-                                                                      cipher_decompressor=cipher_decompressor,
                                                                       gh_packer=self.packer)
             split_info_list = [None for i in range(len(host_split_info))]
             for key in host_split_info:
@@ -355,25 +396,30 @@ class HeteroDecisionTreeGuest(DecisionTree):
     Federation Functions
     """
 
-    def process_and_sync_grad_and_hess(self, idx=-1):
+    def init_packer_and_sync_gh(self, idx=-1):
 
-        if self.pack_g_h:
+        if self.run_cipher_compressing:
 
-            from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.g_h import GHPacker
+            pos_max, neg_min = get_homo_encryption_max_int(self.encrypter)
+            LOGGER.debug('g,h count is {}'.format(self.grad_and_hess.count()))
+            self.packer = GHPacker(pos_max=pos_max, sample_num=self.grad_and_hess.count(), task_type=self.task_type,
+                                   max_sample_weight=self.max_sample_weight)
+            padding_bit_len, capacity = self.packer.total_bit_len, self.packer.cipher_compress_capacity
 
-            self.packer = GHPacker(self.encrypter.public_key.max_int, self.data_bin.count())
+            if type(self.encrypter) == IterativeAffineEncrypt:
+                capacity = 1  # iterative affine only support gh packing
 
-            pack_func = functools.partial(self.packer.pack, encrypter=self.encrypter)
-            pack_gh = self.grad_and_hess.mapValues(pack_func)
-            en_grad_hess = pack_gh
+            para = {'padding_bit_len': padding_bit_len, 'max_capacity': capacity}
+            self.transfer_inst.cipher_compressor_para.remote(para, idx=-1)
+            LOGGER.info('sending compressing para {}'.format(para))
+            en_grad_hess = self.packer.pack_and_encrypt_2(self.grad_and_hess, self.encrypted_mode_calculator)
 
-        elif self.run_cipher_compressing:
-            LOGGER.info('sending encoded g/h to host')
-            en_grad_hess = self.cipher_encoder.encode_g_h_and_encrypt(self.grad_and_hess)
         else:
-            LOGGER.info('sending g/h to host')
             en_grad_hess = self.encrypted_mode_calculator.encrypt(self.grad_and_hess)
+            LOGGER.debug('self grad and hess count {} {}'.format(en_grad_hess.count()
+                                                                 , self.grad_and_hess.count()))
 
+        LOGGER.info('sending g/h to host')
         self.transfer_inst.encrypted_grad_and_hess.remote(en_grad_hess,
                                                           role=consts.HOST,
                                                           idx=idx)
@@ -468,20 +514,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
     """
     Pre-porcess / Post-Process
     """
-
-    def init_compressor(self):
-
-        self.cipher_encoder = GuestGradHessEncoder(self.encrypter, self.encrypted_mode_calculator, task_type=consts.CLASSIFICATION,
-                                                   round_decimal=self.round_decimal, max_sample_weights=self.max_sample_weight)
-
-        self.cipher_decompressor = GuestSplitInfoDecompressor(self.encrypter, task_type=consts.CLASSIFICATION,
-                                                              max_sample_weight=self.max_sample_weight)
-
-        max_capacity_int = self.encrypter.public_key.max_int
-        para = {'max_capacity_int': max_capacity_int, 'en_type': self.get_encrypt_type(),
-                'max_sample_weight': self.max_sample_weight}
-
-        self.transfer_inst.cipher_compressor_para.remote(para, idx=-1)
 
     def goss_sampling(self,):
         new_g_h = goss_sampling(self.grad_and_hess, self.top_rate, self.other_rate)
@@ -666,7 +698,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
         LOGGER.info('fitting a guest decision tree')
 
-        self.process_and_sync_grad_and_hess()
+        self.init_packer_and_sync_gh()
         root_node = self.initialize_root_node()
         self.cur_layer_nodes = [root_node]
         self.inst2node_idx = self.assign_instance_to_root_node(self.data_bin, root_node_id=root_node.id)
@@ -697,6 +729,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
                 split_info.extend(cur_splitinfos)
 
             self.update_tree(split_info, False)
+            LOGGER.debug('split info is {}'.format(split_info))
             self.assign_instances_to_new_node(dep)
 
         if self.cur_layer_nodes:

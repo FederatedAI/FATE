@@ -134,23 +134,16 @@ class HomoDecisionTreeArbiter(DecisionTree):
                 left_node_histogram = self.sync_local_histogram(suffix=(batch_id, dep, self.epoch_idx, self.tree_idx))
 
                 all_histograms = self.histogram_subtraction(left_node_histogram, self.stored_histograms)
-            
+                LOGGER.debug('all histogram is {}'.format(all_histograms))
                 # store histogram
                 for hist in all_histograms:
                     layer_stored_hist[hist.hid] = hist
 
                 # FIXME stable parallel_partitions
-                # import functools
-                # import numpy as np
-                # hist = np.array(all_histograms)
-                # func = functools.partial(self.splitter.find_split_single_histogram_guest, valid_features=self.valid_features,
-                #                          use_missing=self.use_missing, zero_as_missing=self.zero_as_missing,
-                #                          reshape_tuple=hist.shape[1:],
-                #                          sitename=self.sitename)
                 best_splits = self.federated_find_best_split(all_histograms, parallel_partitions=10)
-                # compute_hist = hist.reshape((hist.shape[0], -1))
-                # best_splits = list(np.apply_along_axis(func, 1, compute_hist))
                 split_info += best_splits
+
+            LOGGER.debug('split info {}'.format(split_info))
 
             self.stored_histograms = layer_stored_hist
 

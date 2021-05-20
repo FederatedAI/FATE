@@ -90,7 +90,7 @@ class HistogramBag(object):
 
     def __sub__(self, other):
         if self.tensor_type == 'list':
-            return self.binary_op(other, add, inplace=False)
+            return self.binary_op(other, sub, inplace=False)
         elif self.tensor_type == 'array':
             self.bag -= other.bag
             return self

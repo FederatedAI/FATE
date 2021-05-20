@@ -15,10 +15,10 @@
 #
 
 import random
-from collections import Iterable
-
+import functools
 import numpy as np
-
+from collections import Iterable
+from federatedml.secureprotol import PaillierEncrypt, IterativeAffineEncrypt
 from federatedml.util import consts
 
 
@@ -47,6 +47,7 @@ class EncryptModeCalculator(object):
         self.prev_encrypted_data = None
         self.enc_zeros = None
 
+        self.align_to_input_data = True
         self.soft_link_mode()
 
     def soft_link_mode(self):
@@ -62,13 +63,13 @@ class EncryptModeCalculator(object):
     @staticmethod
     def add_enc_zero(obj, enc_zero):
         if isinstance(obj, np.ndarray):
-            return obj + enc_zero
+            return enc_zero + obj
         elif isinstance(obj, Iterable):
             return type(obj)(
                 EncryptModeCalculator.add_enc_zero(o, enc_zero) if isinstance(o, Iterable) else o + enc_zero for o in
                 obj)
         else:
-            return obj + enc_zero
+            return enc_zero + obj
 
     @staticmethod
     def gen_random_number():
@@ -76,6 +77,47 @@ class EncryptModeCalculator(object):
 
     def should_re_encrypted(self):
         return self.gen_random_number() <= self.re_encrypted_rate + consts.FLOAT_ZERO
+
+    def set_enc_zeros(self, input_data, enc_func):
+        self.enc_zeros = input_data.mapValues(lambda val: enc_func(0))
+
+    def re_encrypt(self, input_data, enc_func):
+        if input_data is None:  # no need to re-encrypt
+            return
+        self.set_enc_zeros(input_data, enc_func)
+
+    def encrypt_data(self, input_data, enc_func):
+
+        if self.mode == "strict":
+            new_data = input_data.mapValues(enc_func)
+            return new_data
+        else:
+            target_data = input_data
+            if self.enc_zeros is None:
+                self.set_enc_zeros(target_data, enc_func)
+            elif self.mode == "balance" and self.should_re_encrypted():
+                if not self.align_to_input_data:
+                    target_data = self.enc_zeros
+                self.re_encrypt(target_data, enc_func)
+            elif self.enc_zeros.count() != input_data.count():
+                if not self.align_to_input_data:
+                    target_data = None
+                self.re_encrypt(target_data, enc_func)
+            new_data = input_data.join(self.enc_zeros, self.add_enc_zero)
+            return new_data
+
+    def get_enc_func(self, encrypter, raw_enc=False, exponent=0):
+
+        if not raw_enc:
+            return encrypter.recursive_encrypt
+        else:
+            if type(self.encrypter) == PaillierEncrypt:
+                raw_en_func = functools.partial(self.encrypter.paillier_recursive_raw_encrypt, exponent=exponent)
+            elif type(self.encrypter) == IterativeAffineEncrypt:
+                raw_en_func = self.encrypter.recursive_raw_encrypt
+            else:
+                raise ValueError('unknown en type')
+            return raw_en_func
 
     def encrypt(self, input_data):
         """
@@ -90,16 +132,16 @@ class EncryptModeCalculator(object):
         new_data: DTable, encrypted result of input_data
 
         """
-        if self.mode == "strict":
-            new_data = input_data.mapValues(self.encrypter.recursive_encrypt)
-            return new_data
-        else:
-            if self.enc_zeros is None or (
-                self.mode == "balance" and self.should_re_encrypted()) \
-                    or self.enc_zeros.count() != input_data.count():
-                self.enc_zeros = input_data.mapValues(lambda val: self.encrypter.encrypt(0))
+        encrypt_func = self.get_enc_func(self.encrypter, raw_enc=False)
+        new_data = self.encrypt_data(input_data, encrypt_func)
+        return new_data
 
-            new_data = input_data.join(self.enc_zeros, self.add_enc_zero)
-            return new_data
+    def raw_encrypt(self, input_data, exponent=0):
 
+        raw_en_func = self.get_enc_func(self.encrypter, raw_enc=True, exponent=exponent)
+        new_data = self.encrypt_data(input_data, raw_en_func)
+        return new_data
 
+    def init_enc_zero(self, input_data, raw_en=False, exponent=0):
+        en_func = self.get_enc_func(self.encrypter, raw_en, exponent)
+        self.set_enc_zeros(input_data, en_func)
