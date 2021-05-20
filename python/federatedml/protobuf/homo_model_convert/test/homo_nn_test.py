@@ -29,7 +29,7 @@ from federatedml.protobuf.generated.nn_model_meta_pb2 import NNModelMeta
 from federatedml.param.homo_nn_param import HomoNNParam
 from federatedml.nn.backend.tf_keras.nn_model import _zip_dir_as_bytes
 from federatedml.nn.backend.pytorch.nn_model import build_pytorch
-from federatedml.nn.homo_nn._torch import FedLightModule, PyTorchSAClientContext
+from federatedml.nn.homo_nn._torch import FedLightModule
 
 
 class TestHomoNNConverter(unittest.TestCase):

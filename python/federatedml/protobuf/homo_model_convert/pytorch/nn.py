@@ -34,7 +34,7 @@ class NNComponentConverter(ComponentConverterBase):
 
         with io.BytesIO(param_obj.saved_model_bytes) as model_bytes:
             if hasattr(param_obj, "api_version") and param_obj.api_version > 0:
-                from ....nn.homo_nn._torch import FedLightModule
+                from federatedml.nn.homo_nn._torch import FedLightModule
                 pytorch_nn_model = FedLightModule.load_from_checkpoint(model_bytes).model
             else:
                 pytorch_nn_model = torch.load(model_bytes)
