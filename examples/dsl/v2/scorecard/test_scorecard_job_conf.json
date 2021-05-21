@@ -1,0 +1,93 @@
+{
+    "dsl_version": 2,
+    "initiator": {
+        "role": "guest",
+        "party_id": 10000
+    },
+    "role": {
+        "arbiter": [
+            9999
+        ],
+        "host": [
+            9999
+        ],
+        "guest": [
+            10000
+        ]
+    },
+    "job_parameters": {
+        "common": {
+            "work_mode": 0,
+            "backend": 0
+        }
+    },
+    "component_parameters": {
+        "common": {
+            "intersection_0": {
+                "intersect_method": "rsa",
+                "sync_intersect_ids": true,
+                "only_output_key": false
+            },
+            "hetero_lr_0": {
+                "penalty": "L2",
+                "tol": 0.0001,
+                "alpha": 0.01,
+                "optimizer": "nesterov_momentum_sgd",
+                "batch_size": -1,
+                "learning_rate": 0.15,
+                "init_param": {
+                    "init_method": "random_uniform"
+                },
+                "max_iter": 5,
+                "early_stop": "weight_diff",
+                "sqn_param": {
+                    "update_interval_L": 3,
+                    "memory_M": 5,
+                    "sample_size": 5000,
+                    "random_seed": null
+                }
+            }
+        },
+        "role": {
+            "guest": {
+                "0": {
+                    "scorecard_0": {
+                        "method": "credit",
+                        "offset": 500,
+                        "factor": 20,
+                        "factor_base": 2,
+                        "upper_limit_ratio": 3,
+                        "lower_limit_value": 0,
+                        "need_run": true
+                    },
+                    "reader_0": {
+                        "table": {
+                            "name": "default_credit_hetero_guest",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "dataio_0": {
+                        "with_label": true,
+                        "output_format": "dense"
+                    }
+                }
+            },
+            "host": {
+                "0": {
+                    "scorecard_0": {
+                        "need_run": false
+                    },
+                    "reader_0": {
+                        "table": {
+                            "name": "default_credit_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "dataio_0": {
+                        "with_label": false
+                    }
+                }
+            }
+        }
+    }
+}

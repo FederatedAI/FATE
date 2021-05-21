@@ -1,0 +1,149 @@
+{
+    "data": [
+        {
+            "file": "../../data/breast_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "../../data/breast_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "../../data/default_credit_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "default_credit_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "../../data/default_credit_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "default_credit_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "../../data/give_credit_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "give_credit_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "../../data/give_credit_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "give_credit_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "../../data/epsilon_5k_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "epsilon_5k_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "../../data/epsilon_5k_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "epsilon_5k_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "../../data/vehicle_scale_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "vehicle_scale_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "../../data/vehicle_scale_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "vehicle_scale_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        }
+    ],
+    "hetero_nn-binary-0": {
+        "local": {
+            "script": "./local-hetero_nn.py",
+            "conf": "./hetero_nn_breast_config.yaml"
+        },
+        "FATE": {
+            "script": "./fate-hetero_nn.py",
+            "conf": "./hetero_nn_breast_config.yaml"
+        },
+        "compare_setting": {
+            "relative_tol": 0.01
+        }
+    },
+    "hetero_nn-binary-1": {
+        "local": {
+            "script": "./local-hetero_nn.py",
+            "conf": "./hetero_nn_default_credit_config.yaml"
+        },
+        "FATE": {
+            "script": "./fate-hetero_nn.py",
+            "conf": "./hetero_nn_default_credit_config.yaml"
+        },
+        "compare_setting": {
+            "relative_tol": 0.05
+        }
+    },
+    "hetero_nn-binary-2": {
+        "local": {
+            "script": "./local-hetero_nn.py",
+            "conf": "./hetero_nn_give_credit_config.yaml"
+        },
+        "FATE": {
+            "script": "./fate-hetero_nn.py",
+            "conf": "./hetero_nn_give_credit_config.yaml"
+        },
+        "compare_setting": {
+            "relative_tol": 0.05
+        }
+    },
+    "hetero_nn-binary-3": {
+        "local": {
+            "script": "./local-hetero_nn.py",
+            "conf": "./hetero_nn_epsilon_5k_config.yaml"
+        },
+        "FATE": {
+            "script": "./fate-hetero_nn.py",
+            "conf": "./hetero_nn_epsilon_5k_config.yaml"
+        },
+        "compare_setting": {
+            "relative_tol": 0.01
+        }
+    },
+    "hetero_nn-multi-0": {
+        "local": {
+            "script": "./local-hetero_nn.py",
+            "conf": "./hetero_nn_vehicle_scale_config.yaml"
+        },
+        "FATE": {
+            "script": "./fate-hetero_nn.py",
+            "conf": "./hetero_nn_vehicle_scale_config.yaml"
+        },
+        "compare_setting": {
+            "relative_tol": 0.05
+        }
+    }
+}

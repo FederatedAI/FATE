@@ -1,0 +1,16 @@
+{
+  "federatedml.transfer_variable.transfer_class.homo_label_encoder_transfer_variable.HomoLabelEncoderTransferVariable": {
+    "local_labels": {
+      "src": ["guest", "host"],
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "label_mapping": {
+      "src": "arbiter",
+      "dst": [
+        "host", "guest"
+      ]
+    }
+  }
+}

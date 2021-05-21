@@ -1,0 +1,17 @@
+data_guest: "examples/data/vehicle_scale_hetero_guest.csv"
+data_host: "examples/data/vehicle_scale_hetero_host.csv"
+idx: "id"
+label_name: "y"
+learning_rate: 0.015
+tol: 0.01
+loss: "categorical_crossentropy"
+batch_size: 512
+metrics: ["accuracy"]
+epochs: 100
+bottom_layer_units: 8
+interactive_layer_units: 6
+top_layer_units: 4
+guest_table_name: "vehicle_scale_hetero_guest"
+host_table_name: "vehicle_scale_hetero_host"
+top_act: "softmax"
+opt: "RMSprop"

@@ -1,0 +1,84 @@
+{
+    "dsl_version": 2,
+    "initiator": {
+        "role": "guest",
+        "party_id": 9999
+    },
+    "role": {
+        "arbiter": [
+            10000
+        ],
+        "host": [
+            10000
+        ],
+        "guest": [
+            9999
+        ]
+    },
+    "job_parameters": {
+        "common": {
+            "work_mode": 1,
+            "backend": 1
+        }
+    },
+    "component_parameters": {
+        "common": {
+            "hetero_linr_0": {
+                "penalty": "None",
+                "optimizer": "sgd",
+                "tol": 0.001,
+                "alpha": 0.01,
+                "batch_size": -1,
+                "learning_rate": 0.15,
+                "decay": 0.0,
+                "decay_sqrt": false,
+                "init_param": {
+                    "init_method": "zeros"
+                },
+                "max_iter": 3,
+                "early_stop": "diff",
+                "encrypted_mode_calculator_param": {
+                    "mode": "fast"
+                },
+                "stepwise_param": {
+                    "score_name": "AIC",
+                    "direction": "backward",
+                    "need_stepwise": true,
+                    "max_step": 3,
+                    "nvmin": 2
+                }
+            }
+        },
+        "role": {
+            "host": {
+                "0": {
+                    "dataio_0": {
+                        "with_label": false
+                    },
+                    "reader_0": {
+                        "table": {
+                            "name": "motor_hetero_mini_host",
+                            "namespace": "experiment"
+                        }
+                    }
+                }
+            },
+            "guest": {
+                "0": {
+                    "dataio_0": {
+                        "with_label": true,
+                        "label_name": "motor_speed",
+                        "label_type": "float",
+                        "output_format": "dense"
+                    },
+                    "reader_0": {
+                        "table": {
+                            "name": "motor_hetero_mini_guest",
+                            "namespace": "experiment"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,55 @@
+{
+    "data": [
+        {
+            "file": "examples/data/breast_homo_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_homo_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/breast_homo_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_homo_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/vehicle_scale_homo_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "vehicle_scale_homo_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/vehicle_scale_homo_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "vehicle_scale_homo_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/vehicle_scale_homo_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "vehicle_scale_homo_host",
+            "namespace": "experiment",
+            "role": "host_1"
+        }
+    ],
+    "pipeline_tasks": {
+        "single_layer": {
+            "script": "./pipeline_homo_nn_single_layer.py"
+        },
+        "multi_layer": {
+            "script": "./pipeline_homo_nn_multi_layer.py"
+        },
+        "multi_label": {
+            "script": "./pipeline_homo_nn_multi_label.py"
+        }
+    }
+}

@@ -1,8 +1,0 @@
-{
-  "file": "examples/data/breast_homo_host.csv",
-  "head": 1,
-  "partition": 10,
-  "work_mode": 0,
-  "namespace": "fate_flow_test_breast_homo",
-  "table_name": "breast_homo_host"
-}

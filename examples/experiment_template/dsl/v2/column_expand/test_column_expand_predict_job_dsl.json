@@ -1,0 +1,150 @@
+{
+    "components": {
+        "reader_0": {
+            "module": "Reader",
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
+        },
+        "dataio_0": {
+            "module": "DataIO",
+            "input": {
+                "data": {
+                    "data": [
+                        "reader_0.data"
+                    ]
+                },
+                "model": [
+                    "pipeline.dataio_0.model"
+                ]
+            },
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
+        },
+        "intersection_0": {
+            "module": "Intersection",
+            "input": {
+                "data": {
+                    "data": [
+                        "dataio_0.data"
+                    ]
+                }
+            },
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
+        },
+        "feature_scale_0": {
+            "module": "FeatureScale",
+            "input": {
+                "data": {
+                    "data": [
+                        "intersection_0.data"
+                    ]
+                },
+                "model": [
+                    "pipeline.feature_scale_0.model"
+                ]
+            },
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
+        },
+        "hetero_feature_binning_0": {
+            "module": "HeteroFeatureBinning",
+            "input": {
+                "data": {
+                    "data": [
+                        "feature_scale_0.data"
+                    ]
+                },
+                "model": [
+                    "pipeline.hetero_feature_binning_0.model"
+                ]
+            },
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
+        },
+        "hetero_feature_selection_0": {
+            "module": "HeteroFeatureSelection",
+            "input": {
+                "data": {
+                    "data": [
+                        "hetero_feature_binning_0.data"
+                    ]
+                },
+                "model": [
+                    "pipeline.hetero_feature_selection_0.model"
+                ]
+            },
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
+        },
+        "one_hot_encoder_0": {
+            "module": "OneHotEncoder",
+            "input": {
+                "data": {
+                    "data": [
+                        "hetero_feature_selection_0.data"
+                    ]
+                },
+                "model": [
+                    "pipeline.one_hot_encoder_0.model"
+                ]
+            },
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
+        },
+        "hetero_lr_0": {
+            "module": "HeteroLR",
+            "input": {
+                "data": {
+                    "test_data": [
+                        "one_hot_encoder_0.data"
+                    ]
+                },
+                "model": [
+                    "pipeline.hetero_lr_0.model"
+                ]
+            },
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
+        },
+        "evaluation_0": {
+            "module": "Evaluation",
+            "input": {
+                "data": {
+                    "data": [
+                        "hetero_lr_0.data"
+                    ]
+                }
+            },
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
+        }
+    }
+}

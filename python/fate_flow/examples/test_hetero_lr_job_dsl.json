@@ -1,0 +1,92 @@
+{
+    "components" : {
+        "reader_0": {
+            "module": "Reader",
+            "output": {
+                "data": ["table"]
+            }
+         },
+        "dataio_0": {
+            "module": "DataIO",
+            "input": {
+                "data": {
+                    "data": [
+                         "reader_0.table"
+                    ]
+                }
+            },
+            "output": {
+                "data": ["train"],
+                "model": ["dataio"]
+            },
+			"need_deploy": true
+         },
+        "intersection_0": {
+            "module": "Intersection",
+            "input": {
+                "data": {
+                    "data": [
+                        "dataio_0.train"
+                    ]
+                }
+            },
+            "output": {
+                "data": ["train"]
+            }
+        },
+        "hetero_feature_binning_0": {
+            "module": "HeteroFeatureBinning",
+            "input": {
+                "data": {
+                    "data": [
+                        "intersection_0.train"
+                    ]
+                }
+            },
+            "output": {
+                "data": ["train"],
+                "model": ["hetero_feature_binning"]
+            }
+        },
+        "hetero_feature_selection_0": {
+            "module": "HeteroFeatureSelection",
+            "input": {
+                "data": {
+                    "data": [
+                        "hetero_feature_binning_0.train"
+                    ]
+                },
+                "isometric_model": [
+                    "hetero_feature_binning_0.hetero_feature_binning"
+                ]
+            },
+            "output": {
+                "data": ["train"],
+                "model": ["selected"]
+            }
+        },
+        "hetero_lr_0": {
+            "module": "HeteroLR",
+            "input": {
+                "data": {
+                    "train_data": ["hetero_feature_selection_0.train"]
+                }
+            },
+            "output": {
+                "data": ["train"],
+                "model": ["hetero_lr"]
+            }
+        },
+        "evaluation_0": {
+            "module": "Evaluation",
+            "input": {
+                "data": {
+                    "data": ["hetero_lr_0.train"]
+                }
+            },
+            "output": {
+                "data": ["evaluate"]
+            }
+        }
+    }
+}

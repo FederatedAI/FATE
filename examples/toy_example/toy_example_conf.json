@@ -4,7 +4,9 @@
     "party_id": 10000
   },
   "job_parameters": {
-    "work_mode": 0
+    "work_mode": 0,
+    "backend": 0,
+    "task_cores": 2
   },
   "role": {
     "guest": [
@@ -32,8 +34,8 @@
   },
   "algorithm_parameters": {
     "secure_add_example_0": {
-        "partition": 48,
-        "data_num": 1000
+      "partition": 48,
+      "data_num": 1000
     }
   }
 }

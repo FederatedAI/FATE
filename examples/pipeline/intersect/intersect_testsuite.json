@@ -1,0 +1,65 @@
+{
+    "data": [
+        {
+            "file": "examples/data/breast_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/breast_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/breast_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_host",
+            "namespace": "experiment",
+            "role": "host_1"
+        },
+        {
+            "file": "examples/data/breast_hetero_guest_repeated_id.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_guest_repeated_id",
+            "namespace": "experiment",
+            "role": "guest_0"
+        }
+    ],
+    "pipeline_tasks": {
+        "raw_intersect": {
+            "script": "./pipeline-intersect-raw.py"
+        },
+        "raw_intersect_sm3": {
+            "script": "./pipeline-intersect-raw-sm3.py"
+        },
+        "rsa_intersect": {
+            "script": "./pipeline-intersect-rsa.py"
+        },
+        "rsa_intersect_fraction": {
+            "script": "./pipeline-intersect-rsa-fraction.py"
+        },
+        "rsa_intersect_split": {
+            "script": "./pipeline-intersect-rsa-split.py"
+        },
+        "rsa_intersect_multi_host": {
+            "script": "./pipeline-intersect-multi-rsa.py"
+        },
+        "raw_intersect_multi_host": {
+            "script": "./pipeline-intersect-multi-raw.py"
+        },
+        "raw_intersect_200c_with_union": {
+            "script": "./pipeline-intersect-with-union.py"
+        },
+        "repeated_id": {
+            "script": "./pipeline-intersect-repeated-id.py"
+        }
+    }
+}

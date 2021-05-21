@@ -1,8 +1,0 @@
-{
-    "file": "examples/data/vehicle_scale_hetero_guest.csv",
-    "head": 1,
-    "partition": 16,
-    "work_mode": 0,
-    "table_name": "vehicle_scale_hetero_guest",
-    "namespace": "experiment"
-}

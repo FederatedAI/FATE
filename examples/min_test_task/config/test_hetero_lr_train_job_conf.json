@@ -4,7 +4,8 @@
         "party_id": 10000
     },
     "job_parameters": {
-        "work_mode": 0
+        "work_mode": 0,
+        "task_cores": 2
     },
     "role": {
         "guest": [
@@ -122,10 +123,7 @@
                 "n_splits": 5,
                 "shuffle": false,
                 "random_seed": 103,
-                "need_cv": false,
-                "evaluate_param": {
-                    "eval_type": "binary"
-                }
+                "need_cv": false
             }
         },
         "intersect_0": {

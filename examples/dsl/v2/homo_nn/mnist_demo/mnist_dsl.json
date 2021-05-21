@@ -1,0 +1,30 @@
+{
+  "components": {
+    "reader_0": {
+      "module": "Reader",
+      "output": {
+        "data": [
+          "data"
+        ]
+      }
+    },
+    "homo_nn_0": {
+      "module": "HomoNN",
+      "input": {
+        "data": {
+          "train_data": [
+            "reader_0.data"
+          ]
+        }
+      },
+      "output": {
+        "data": [
+          "data"
+        ],
+        "model": [
+          "model"
+        ]
+      }
+    }
+  }
+}

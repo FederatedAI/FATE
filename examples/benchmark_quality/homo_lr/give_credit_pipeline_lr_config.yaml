@@ -1,0 +1,12 @@
+data_guest: "examples/data/give_credit_homo_guest.csv"
+data_host: "examples/data/give_credit_homo_host.csv"
+data_test: "examples/data/give_credit_homo_test.csv"
+idx: "id"
+label_name: "y"
+penalty: "L2"
+max_iter: 30
+alpha: 0.0001
+batch_size: 16
+learning_rate: 0.15
+optimizer: "rmsprop"
+init_method: "zeros"

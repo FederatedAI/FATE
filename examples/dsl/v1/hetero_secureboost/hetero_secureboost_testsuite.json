@@ -1,0 +1,138 @@
+{
+    "data": [
+        {
+            "file": "examples/data/breast_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/breast_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/vehicle_scale_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "vehicle_scale_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/vehicle_scale_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "vehicle_scale_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/student_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "student_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/student_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "student_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/ionosphere_scale_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "ionosphere_scale_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/ionosphere_scale_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "ionosphere_scale_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/motor_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "motor_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/motor_hetero_host_1.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "motor_hetero_host_1",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/motor_hetero_host_2.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "motor_hetero_host_2",
+            "namespace": "experiment",
+            "role": "host_1"
+        }
+    ],
+    "tasks": {
+        "train_binary": {
+            "conf": "./test_secureboost_train_binary_conf.json",
+            "dsl": "./test_secureboost_train_dsl.json"
+        },
+        "train_complete_secure": {
+            "conf": "./test_secureboost_train_complete_secure_conf.json",
+            "dsl": "./test_secureboost_train_dsl.json"
+        },
+        "train_binary_predict": {
+            "conf": "./test_predict_conf.json",
+            "deps": "train_binary"
+        },
+        "train_multi": {
+            "conf": "./test_secureboost_train_multi_conf.json",
+            "dsl": "./test_secureboost_train_dsl.json"
+        },
+        "train_regression": {
+            "conf": "./test_secureboost_train_regression_conf.json",
+            "dsl": "./test_secureboost_train_dsl.json"
+        },
+        "cv_binary": {
+            "conf": "./test_secureboost_cross_validation_binary_conf.json",
+            "dsl": "./test_secureboost_cross_validation_dsl.json"
+        },
+        "cv_multi": {
+            "conf": "./test_secureboost_cross_validation_multi_conf.json",
+            "dsl": "./test_secureboost_cross_validation_dsl.json"
+        },
+        "cv_regression": {
+            "conf": "./test_secureboost_cross_validation_regression_conf.json",
+            "dsl": "./test_secureboost_cross_validation_dsl.json"
+        },
+        "train_binary_with_missing_value": {
+            "conf": "./test_secureboost_train_binary_with_missing_value_conf.json",
+            "dsl": "./test_secureboost_train_dsl.json"
+        },
+        "train_multi_host": {
+            "conf": "./test_secureboost_train_regression_multi_host_conf.json",
+            "dsl": "./test_secureboost_train_dsl.json"
+        },
+        "train_with_early_stopping": {
+            "conf": "./test_secureboost_train_with_early_stopping_conf.json",
+            "dsl": "./test_secureboost_train_dsl.json"
+        }
+    }
+}

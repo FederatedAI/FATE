@@ -1,0 +1,67 @@
+{
+    "dsl_version": "2",
+    "initiator": {
+        "role": "guest",
+        "party_id": 9999
+    },
+    "role": {
+        "guest": [9999],
+        "host": [10000],
+        "arbiter": [10000]
+    },
+    "job_parameters": {
+        "common": {
+            "work_mode": 1,
+            "backend": 0,
+            "task_parallelism": 2,
+            "computing_partitions": 8,
+            "task_cores": 4
+        }
+    },
+    "component_parameters": {
+        "common": {
+            "intersection_0": {
+                "intersect_method": "raw",
+                "sync_intersect_ids": true,
+                "only_output_key": false
+            },
+            "hetero_lr_0": {
+                "penalty": "L2",
+                "optimizer": "rmsprop",
+                "alpha": 0.01,
+                "max_iter": 3,
+                "batch_size": 320,
+                "learning_rate": 0.15,
+                "init_param": {
+                    "init_method": "random_uniform"
+                }
+            }
+        },
+        "role": {
+            "guest": {
+                "0": {
+                    "reader_0": {
+                        "table": {"name": "breast_hetero_guest", "namespace": "experiment"}
+                    },
+                    "dataio_0":{
+                        "with_label": true,
+                        "label_name": "y",
+                        "label_type": "int",
+                        "output_format": "dense"
+                    }
+                }
+            },
+            "host": {
+                "0": {
+                    "reader_0": {
+                        "table": {"name": "breast_hetero_host", "namespace": "experiment"}
+                    },
+                    "dataio_0":{
+                        "with_label": false,
+                        "output_format": "dense"
+                    }
+                }
+            }
+        }
+    }
+}

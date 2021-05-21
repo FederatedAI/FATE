@@ -1,3 +1,124 @@
+# Release 1.6.0
+## Major Features and Improvements
+
+> FederatedML
+
+* Hetero SecureBoost: more efficient computation with GOSS, histogram subtraction, cipher compression, 2-4x faster
+* Hetero GLM: improved communication efficiency, adjustable floating point precision, 2x faster 
+* Hetero NN: adjustable floating point precision, support SelectiveBackPropagation and dropOut on interaction layer, 2x faster
+* Hetero Feature Binning: improved algorithm with cipher compression, 2x faster
+* Intersect: add split calculation option and adjustable random base fraction, 30% faster 
+* Homo NN: restructure torch backend and enhanced grammar; train and predict with raw image data
+* Intersect supports SM3 hashing method 
+* Hetero SecureBoost: L1 penalty & adjustable min_child_weight to prevent overfitting 
+* NEW SecureBoost Transformer: feature engineering module that encodes instances with leaf nodes from SecureBoost model
+* Hetero Pearson: support local VIF computation 
+* Hetero Feature Selection: support selection based on VIF and Pearson 
+* NEW Homo Feature Binning: support virtual/recursive binning strategy
+* NEW Sample Weight: set sample weights based on label or from feature column, Hetero GLM & Hetero SecureBoost support weighted training
+* NEW Data Transformer: case-insensitive on data schema
+* Local Baseline supports prediction task
+* Cross Validation: output fold split history 
+* Evaluation: add multi-result-unfold option which unfolds multi-classification evaluation result to several binary evaluation results in a one-vs-rest manner 
+
+>System Architecture
+
+* Added local file system directory path virtual storage engine to support image input data
+* Added the message queue Pulsar cross-site transmission engine, which can be used with the Spark computing engine, and can be added to the Exchange role to support the star networking mode
+
+> FATE-Test
+
+* Add Benchmark performance for efficiency comparison; add mock data generation tool; support metrics comparison between training and validation sets
+* FATE-Flow unittest for REST/CLI/SDK API and training-prediction workflow 
+
+
+# Release 1.5.1
+## Major Features and Improvements
+
+> FederatedML
+* Add Feldman Verifiable Secret Sharing protocol (contributed)
+* Add Feldman Verifiable Sum Module (contributed)
+* Updated FATE-Client and FATE-Test for new FATE-Flow
+* Upgraded early stopping strategy: record best model for each metric
+
+> Fate-Flow
+* Optimize the model center, reconstruct publishing model, support deploy, load, bind, migrate operations, and add new interfaces such as model info
+* Improve identity authentication and resource authorization, support party identity verification, and participate in the authorization of roles and components
+* Optimize and fix resource manager, add task_cores job parameters to adapt to different computing engines
+
+> Eggroll
+* In one-way communication mode, add party identity authentication function, which needs to be used with FATE-Cloud
+
+> Deploy
+* Support 1.5.0 retain data upgrade to 1.5.1
+
+## Bug Fixes
+* Fix predict-cache in SecureBoost validation
+* Fix job clean CLI
+
+# Release 1.5.0（LTS）
+## Major Features and Improvements
+
+> FederatedML
+
+* Refactored Hetero FTL with optional communication-efficiency mechanism, with 4x time efficiency improvement
+* Hetero SecureBoost supports complete secure mode
+* Hetero SecureBoost now can reduce time consumption over highly sparse data by using sparse matrix 
+    computation on histogram aggregations.
+* Hetero SecureBoost optimization: the communication round in prediction is reduced to no larger than tree depth, 
+                                                         prediction speed is improved by 32 times in a 100-tree model.
+* Addition of Hetero FastSecureBoost module, whose mixed/layered modeling method makes it twice as efficient as SecureBoost  
+* Improved Hetero Federated Binning with 30%~50% time efficiency improvement
+* Better GLM: >10% improvement in time efficiency
+* FATE first unsupervised learning algorithm: Hetero KMeans
+* Upgraded Hetero Feature Selection: add PSI filter and SecureBoost feature importance filter
+* Add Data Split module: splitting data into train, validate, and test sets inside FATE modeling workflow
+* Add DataStatistic module: compute min/max, mean, median, skewness, kurtosis, coefficient of variance, percentile, etc.
+* Add PSI module for computing population stability index
+* Add Homo OneHot module for one-hot encoding in homogeneous scenario
+* Evaluation module adds metrics for clustering
+* Optional FedProx mechanism for Homo LR, useful for training with non-iid data
+* Add Oblivious Transfer Protocol and OT-based module Secure Information Retrieval
+* Random Iterative Affine protocol, providing additional security
+
+> Fate-Flow
+
+* Brand new scheduling framework based on global state and optimistic concurrency control and support multiple scheduler
+* Upgraded task scheduling: multi-model output for component, executing component in parallel, component rerun
+* Add new DSL v2 which significantly improves user experiences in comparison to DSL v1. Several syntax error detection functions are supported in v2. Now DSL v1 and v2 are 
+   compatible in the current FATE version
+* Enhanced resource scheduling: remove limit on job number, base on cores, memory and working node according to different computing engine supports
+* Add model registry, supports model query, import/export, model transfer between clusters
+* Add Reader component: automatically dump input data to FATE-compatible format and cluster storage engine; now data from HDFS
+* Refactor submit job configuration's parameters setting, support different parties use different job parameters when using dsl V2.
+
+> System Architecture
+
+* New architectural framework that supports a combination of different computing, storage, and transfer engines
+* Support new engine combination: Spark、HDFS、RabbitMQ
+* New data table management, standardized API for all different storage engines
+* Rearrange FATE code structure, conf setting at one place, streamlined user experiment
+* Support one-way network communication between parties, only one party needs to open the entrance network strategy
+
+> FATE-Client
+
+* Pipeline, a tool with a keras-like user interface and integrates TensorFlow, PyTorch, Keras in the backend, is used for fast federated model building with FATE
+* Brand new CLI v2 with easy independent installation, user-friendly programming syntax & command-line prompt
+* Support FLOW python language SDK
+* Support PyPI
+
+> FATE-Test
+
+* Testsuite: For Fate function regressions
+* Benchmark tool and examples for comparing modeling quality; provided examples include common models such as heterogeneous LR, SecureBoost, and NN
+* Performance Statistics: Log now includes statistics on timing, API usage, and variable transfer
+
+
+# Release 1.4.5
+## Major Features and Improvements
+> EggRoll
+* RollSite supports the communication certificates
+
 # Release 1.4.4
 ## Major Features and Improvements
 > FATE-Flow

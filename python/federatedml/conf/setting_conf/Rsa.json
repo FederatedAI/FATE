@@ -1,0 +1,11 @@
+{
+    "module_path":  "federatedml/util",
+    "param_class" : "federatedml/param/rsa_param.py/RsaParam",
+    "role":
+    {
+        "guest|host":
+        {
+            "program": "rsa.py/RsaModel"
+        }
+    }
+}

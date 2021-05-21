@@ -1,0 +1,166 @@
+{
+    "dsl_version": 2,
+    "initiator": {
+        "role": "guest",
+        "party_id": 9999
+    },
+    "role": {
+        "arbiter": [
+            10000
+        ],
+        "host": [
+            10000,
+            9999
+        ],
+        "guest": [
+            9999
+        ]
+    },
+    "job_parameters": {
+        "common": {
+            "work_mode": 1,
+            "backend": 0
+        }
+    },
+    "component_parameters": {
+        "common": {
+            "dataio_0": {
+                "with_label": true
+            },
+            "homo_nn_0": {
+                "encode_label": true,
+                "max_iter": 15,
+                "batch_size": -1,
+                "early_stop": {
+                    "early_stop": "diff",
+                    "eps": 0.0001
+                },
+                "optimizer": {
+                    "learning_rate": 0.05,
+                    "decay": 0.0,
+                    "beta_1": 0.9,
+                    "beta_2": 0.999,
+                    "epsilon": 1e-07,
+                    "amsgrad": false,
+                    "optimizer": "Adam"
+                },
+                "loss": "categorical_crossentropy",
+                "metrics": [
+                    "accuracy"
+                ],
+                "nn_define": {
+                    "class_name": "Sequential",
+                    "config": {
+                        "name": "sequential",
+                        "layers": [
+                            {
+                                "class_name": "Dense",
+                                "config": {
+                                    "name": "dense",
+                                    "trainable": true,
+                                    "batch_input_shape": [
+                                        null,
+                                        18
+                                    ],
+                                    "dtype": "float32",
+                                    "units": 5,
+                                    "activation": "relu",
+                                    "use_bias": true,
+                                    "kernel_initializer": {
+                                        "class_name": "GlorotUniform",
+                                        "config": {
+                                            "seed": null,
+                                            "dtype": "float32"
+                                        }
+                                    },
+                                    "bias_initializer": {
+                                        "class_name": "Zeros",
+                                        "config": {
+                                            "dtype": "float32"
+                                        }
+                                    },
+                                    "kernel_regularizer": null,
+                                    "bias_regularizer": null,
+                                    "activity_regularizer": null,
+                                    "kernel_constraint": null,
+                                    "bias_constraint": null
+                                }
+                            },
+                            {
+                                "class_name": "Dense",
+                                "config": {
+                                    "name": "dense_1",
+                                    "trainable": true,
+                                    "dtype": "float32",
+                                    "units": 4,
+                                    "activation": "sigmoid",
+                                    "use_bias": true,
+                                    "kernel_initializer": {
+                                        "class_name": "GlorotUniform",
+                                        "config": {
+                                            "seed": null,
+                                            "dtype": "float32"
+                                        }
+                                    },
+                                    "bias_initializer": {
+                                        "class_name": "Zeros",
+                                        "config": {
+                                            "dtype": "float32"
+                                        }
+                                    },
+                                    "kernel_regularizer": null,
+                                    "bias_regularizer": null,
+                                    "activity_regularizer": null,
+                                    "kernel_constraint": null,
+                                    "bias_constraint": null
+                                }
+                            }
+                        ]
+                    },
+                    "keras_version": "2.2.4-tf",
+                    "backend": "tensorflow"
+                },
+                "config_type": "keras"
+            }
+        },
+        "role": {
+            "host": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "vehicle_scale_homo_host",
+                            "namespace": "experiment"
+                        }
+                    }
+                },
+                "1": {
+                    "reader_0": {
+                        "table": {
+                            "name": "vehicle_scale_homo_host",
+                            "namespace": "experiment"
+                        }
+                    }
+                },
+                "0|1": {
+                    "dataio_0": {
+                        "with_label": true
+                    }
+                }
+            },
+            "guest": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "vehicle_scale_homo_guest",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "dataio_0": {
+                        "with_label": true,
+                        "output_format": "dense"
+                    }
+                }
+            }
+        }
+    }
+}

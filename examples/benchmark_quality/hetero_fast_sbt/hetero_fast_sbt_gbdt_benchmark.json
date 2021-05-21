@@ -1,0 +1,172 @@
+{
+    "data": [
+        {
+            "file": "examples/data/vehicle_scale_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "vehicle_scale_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/vehicle_scale_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "vehicle_scale_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/breast_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/breast_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+                {
+            "file": "examples/data/student_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "student_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/student_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "student_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/epsilon_5k_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "epsilon_5k_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/epsilon_5k_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "epsilon_5k_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        }
+    ],
+    "fast_sbt_mix-regression-0": {
+        "local": {
+            "script": "./gbdt-regression.py",
+            "conf": "./gbdt_config_reg.yaml"
+        },
+        "FATE": {
+            "script": "./fate-fast-sbt.py",
+            "conf": "./fate_fast_sbt_mix_regression.yaml"
+        },
+        "compare_setting": {
+            "relative_tol": 0.01
+        }
+    },
+    "fast_sbt_mix-multi-0": {
+        "local": {
+            "script": "./gbdt-multi.py",
+            "conf": "./gbdt_config_multi.yaml"
+        },
+        "FATE": {
+            "script": "./fate-fast-sbt.py",
+            "conf": "./fate_fast_sbt_mix_multi.yaml"
+        },
+        "compare_setting": {
+            "relative_tol": 0.01
+        }
+    },
+    "fast_sbt_layered-multi-0": {
+        "local": {
+            "script": "./gbdt-multi.py",
+            "conf": "./gbdt_config_multi.yaml"
+        },
+        "FATE": {
+            "script": "./fate-fast-sbt.py",
+            "conf": "./fate_fast_sbt_layered_multi.yaml"
+        },
+        "compare_setting": {
+            "relative_tol": 0.01
+        }
+    },
+    "fast_sbt_layered-regression-0": {
+        "local": {
+            "script": "./gbdt-regression.py",
+            "conf": "./gbdt_config_reg.yaml"
+        },
+        "FATE": {
+            "script": "./fate-fast-sbt.py",
+            "conf": "./fate_fast_sbt_layered_regression.yaml"
+        },
+        "compare_setting": {
+            "relative_tol": 0.01
+        }
+    },
+    "fast_sbt_mix-binary-0": {
+        "local": {
+            "script": "./gbdt-binary.py",
+            "conf": "./gbdt_config_binary.yaml"
+        },
+        "FATE": {
+            "script": "./fate-fast-sbt.py",
+            "conf": "./fate_fast_sbt_mix_binary.yaml"
+        },
+        "compare_setting": {
+            "relative_tol": 0.01
+        }
+    },
+    "fast_sbt_mix-binary-1": {
+        "local": {
+            "script": "./gbdt-binary.py",
+            "conf": "./gbdt_config_binary-epsilon-5k.yaml"
+        },
+        "FATE": {
+            "script": "./fate-fast-sbt.py",
+            "conf": "./fate_fast_sbt_mix_epsilon_5k.yaml"
+        },
+        "compare_setting": {
+            "relative_tol": 0.01
+        }
+    },
+    "fast_sbt_layered-binary-0": {
+        "local": {
+            "script": "./gbdt-binary.py",
+            "conf": "./gbdt_config_binary.yaml"
+        },
+        "FATE": {
+            "script": "./fate-fast-sbt.py",
+            "conf": "./fate_fast_sbt_layered_binary.yaml"
+        },
+        "compare_setting": {
+            "relative_tol": 0.01
+        }
+    },
+    "fast_sbt_layered-binary-1": {
+        "local": {
+            "script": "./gbdt-binary.py",
+            "conf": "./gbdt_config_binary-epsilon-5k.yaml"
+        },
+        "FATE": {
+            "script": "./fate-fast-sbt.py",
+            "conf": "./fate_fast_sbt_layered_epsilon_5k.yaml"
+        },
+        "compare_setting": {
+            "relative_tol": 0.01
+        }
+    }
+}

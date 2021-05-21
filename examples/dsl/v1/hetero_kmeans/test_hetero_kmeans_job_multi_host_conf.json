@@ -1,0 +1,110 @@
+{
+    "initiator": {
+        "role": "guest",
+        "party_id": 10000
+    },
+    "job_parameters": {
+        "work_mode": 0,
+        "task_parallelism": 1,
+        "task_nodes": 1,
+        "task_cores_per_node": 5,
+        "task_memory_per_node": 1024,
+        "align_task_input_data_partition": true,
+        "federated_comm": "PUSH"
+    },
+    "role": {
+        "guest": [10000],
+        "host": [10000, 10001],
+        "arbiter": [10000]
+    },
+    "role_parameters": {
+        "guest": {
+            "args": {
+                "data": {
+                    "train_data": [
+                        {
+                            "name": "breast_hetero_guest",
+                            "namespace": "experiment"
+                        }
+                    ],
+                    "eval_data": [
+                        {
+                            "name": "breast_hetero_guest",
+                            "namespace": "experiment"
+                        }
+                    ]
+                }
+            },
+            "dataio_0": {
+                "with_label": [
+                    true
+                ],
+                "label_name": [
+                    "y"
+                ],
+                "label_type": [
+                    "int"
+                ],
+                "output_format": [
+                    "dense"
+                ],
+                "missing_fill": [
+                    true
+                ],
+                "outlier_replace": [
+                    true
+                ]
+            }
+        },
+        "host": {
+            "args": {
+                "data": {
+                    "train_data": [
+                        {
+                            "name": "breast_hetero_host",
+                            "namespace": "experiment"
+                        },
+                        {
+                            "name": "breast_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    ],
+                    "eval_data": [
+                        {
+                            "name": "breast_hetero_host",
+                            "namespace": "experiment"
+                        },
+                        {
+                            "name": "breast_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    ]
+                }
+            },
+            "dataio_0": {
+                "with_label": [
+                    false,
+                    false
+                ],
+                "output_format": [
+                    "dense",
+                    "dense"
+                ],
+                "outlier_replace": [
+                    true,
+                    true
+                ]
+            }
+        }
+    },
+    "algorithm_parameters": {
+        "hetero_kmeans_0": {
+            "k":4,
+            "tol": 0.01,
+            "max_iter": 4
+        },
+        "evaluation_0":{
+            "eval_type":"clustering"
+        }
+    }
+}
