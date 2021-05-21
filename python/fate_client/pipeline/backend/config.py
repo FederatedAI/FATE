@@ -68,11 +68,11 @@ class FlowConfig(object):
     IP = conf.get("ip", None)
     if IP is None:
         raise ValueError(f"IP not configured. "
-                         f"Please use command line tool pipeline config or modify setting file pipeline/config.yaml")
+                         f"Please use command line tool pipeline init to set Flow server IP.")
     PORT = conf.get("port", None)
     if PORT is None:
         raise ValueError(f"PORT not configured. "
-                         f"Please use command line tool pipeline config or modify setting file pipeline/config.yaml")
+                         f"Please use command line tool pipeline init to set Flow server port")
 
 
 class LogPath(object):
