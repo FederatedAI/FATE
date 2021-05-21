@@ -40,6 +40,20 @@ class MysqlAddress(AddressABC):
         self.name = name
 
 
+class HiveAddress(AddressABC):
+    def __init__(self, host, name, port=10000, username=None, database='default', auth='NONE', configuration=None,
+                 kerberos_service_name=None, password=None):
+        self.host = host
+        self.username = username
+        self.port = port
+        self.database = database
+        self.auth = auth
+        self.configuration = configuration
+        self.kerberos_service_name = kerberos_service_name
+        self.password=password
+        self.name = name
+
+
 class FileAddress(AddressABC):
     def __init__(self, path, path_type):
         self.path = path

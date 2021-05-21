@@ -61,6 +61,9 @@ class Session(object):
         elif storage_engine == StorageEngine.PATH:
             from fate_arch.storage.path import StorageSession
             storage_session = StorageSession(session_id=session_id, options=kwargs.get("options", {}))
+        elif storage_engine == StorageEngine.HIVE:
+            from fate_arch.storage.hive import StorageSession
+            storage_session = StorageSession(session_id=session_id, options=kwargs.get("options", {}))
         else:
             raise NotImplementedError(f"can not be initialized with storage engine: {storage_engine}")
         if kwargs.get("name") and kwargs.get("namespace"):

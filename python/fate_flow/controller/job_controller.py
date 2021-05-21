@@ -13,14 +13,15 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from fate_flow.utils.authentication_utils import authentication_check
+from fate_flow.utils.authentication_utils import authentication_check, data_authentication_check
 from federatedml.protobuf.generated import pipeline_pb2
 from fate_arch.common.log import schedule_logger
 from fate_arch.common import EngineType, string_utils
 from fate_flow.entity.types import JobStatus, EndStatus, RunParameters
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.operation.job_tracker import Tracker
-from fate_flow.settings import USE_AUTHENTICATION, DEFAULT_TASK_PARALLELISM, DEFAULT_FEDERATED_STATUS_COLLECT_TYPE
+from fate_flow.settings import USE_AUTHENTICATION, DEFAULT_TASK_PARALLELISM, DEFAULT_FEDERATED_STATUS_COLLECT_TYPE, \
+    USE_DATA_AUTHENTICATION
 from fate_flow.utils import job_utils, schedule_utils, data_utils
 from fate_flow.operation.job_saver import JobSaver
 from fate_arch.common.base_utils import json_dumps, current_timestamp
@@ -48,8 +49,19 @@ class JobController(object):
                                                        runtime_conf=runtime_conf,
                                                        train_runtime_conf=train_runtime_conf)
         job_parameters = dsl_parser.get_job_parameters().get(role, {}).get(party_id, {})
-        schedule_logger(job_id).info(
-            'job parameters:{}'.format(job_parameters))
+        schedule_logger(job_id).info('job parameters:{}'.format(job_parameters))
+        if USE_DATA_AUTHENTICATION:
+            user = dsl_parser.get_job_parameters().get(job_info.get('src_role'), {}).get(int(job_info.get('src_party_id')),
+                                                                                         {}).get("user")
+            job_args = dsl_parser.get_args_input()
+            schedule_logger(job_id).info('job args:{}'.format(job_args))
+            dataset_dict = cls.get_dataset(False, role, party_id, runtime_conf.get("role"), job_args)
+            dataset_list = []
+            if dataset_dict.get(role, {}).get(party_id):
+                for k, v in dataset_dict[role][party_id].items():
+                    dataset_list.append({"namespace": v.split('.')[0], "table_name": v.split('.')[1]})
+            data_authentication_check(src_role=job_info.get('src_role'), src_party_id=job_info.get('src_party_id'),
+                                      user=user, dataset_list=dataset_list)
         job_parameters = RunParameters(**job_parameters)
 
         # save new job into db

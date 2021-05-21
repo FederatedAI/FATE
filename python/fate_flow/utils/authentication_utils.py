@@ -87,11 +87,12 @@ class PrivilegeAuth(object):
         return local_storage_conf.get(src_party_id, {}).get(src_role, {})
 
     @classmethod
-    def get_new_permission_config(cls, src_party_id, src_role, privilege_role, privilege_command, privilege_component, delete):
+    def get_new_permission_config(cls, src_party_id, src_role, privilege_role, privilege_command, privilege_component,
+                                  privilege_dataset, delete):
         with open(PrivilegeAuth.local_storage_file) as f:
             stat_logger.info(
-                "add permissions: src_party_id {} src_role {} privilege_role {} privilege_command {} privilege_component {}".format(
-                    src_party_id, src_role, privilege_role, privilege_command, privilege_component))
+                "add permissions: src_party_id {} src_role {} privilege_role {} privilege_command {} privilege_component {} privilege_dataset {}".format(
+                    src_party_id, src_role, privilege_role, privilege_command, privilege_component, privilege_dataset))
             json_data = json.load(f)
             local_storage = json_data
             privilege_dic = PrivilegeAuth.get_privilege_dic(privilege_role, privilege_command, privilege_component)
@@ -131,13 +132,43 @@ class PrivilegeAuth(object):
                                 if isinstance(value, str):
                                     local_storage[src_party_id][src_role][privilege_type].remove(value)
                                 else:
-                                    local_storage[src_party_id][src_role][ privilege_type] = []
+                                    local_storage[src_party_id][src_role][privilege_type] = []
                             except:
                                 stat_logger.info('{} {} is not authorized ,it cannot be deleted'.format(privilege_type.split('_')[1], value)
                                     if isinstance(value, str) else "No permission to delete")
                                 raise Exception(
                                     '{} {} is not authorized ,it cannot be deleted'.format(privilege_type.split('_')[1], value)
                                     if isinstance(value, str) else "No permission to delete")
+            # privilege dataset
+            if privilege_dataset:
+                if not delete:
+                    if local_storage.get(src_party_id, {}):
+                        if local_storage.get(src_party_id).get(src_role, {}):
+                            if local_storage.get(src_party_id).get(src_role).get("privilege_dataset"):
+                                for k, v in privilege_dataset.items():
+                                    if local_storage.get(src_party_id).get(src_role).get("privilege_dataset").get(k):
+                                        for table in v:
+                                            if table not in local_storage[src_party_id][src_role]["privilege_dataset"][k]:
+                                                local_storage[src_party_id][src_role]["privilege_dataset"][k].append(table)
+                                    else:
+                                        local_storage[src_party_id][src_role]["privilege_dataset"][k] = v
+                            else:
+                                local_storage[src_party_id][src_role]["privilege_dataset"] = privilege_dataset
+                        else:
+                            local_storage[src_party_id][src_role] = {"privilege_dataset": privilege_dataset}
+                    else:
+                        local_storage[src_party_id] = {src_role: {"privilege_dataset": privilege_dataset}}
+                else:
+                    for k, v in privilege_dataset.items():
+                        try:
+                            if isinstance(v, list):
+                                local_storage[src_party_id][src_role]["privilege_dataset"][k].remove(v)
+                            if v == "all":
+                                local_storage[src_party_id][src_role]["privilege_dataset"][k] = []
+                        except:
+                            stat_logger.exception(
+                                '{} {} is not authorized ,it cannot be deleted'.format(privilege_dataset, v)
+                                if isinstance(value, str) else "No permission to delete")
             stat_logger.info('add permission successfully')
             f.close()
             return local_storage
@@ -205,6 +236,8 @@ def modify_permission(permission_info, delete=False):
                                                                                                  None),
                                                            privilege_component=permission_info.get(
                                                                'privilege_component', None),
+                                                           privilege_dataset=permission_info.get(
+                                                               'privilege_dataset', None),
                                                            delete=delete)
         PrivilegeAuth.rewrite_local_storage(new_json)
 
@@ -273,6 +306,19 @@ def authentication_check(src_role, src_party_id, dsl, runtime_conf, role, party_
                 src_role, src_party_id, set(components)-set(PrivilegeAuth.privilege_cache.get(src_party_id, {}).get(
                     src_role, {}).get('privilege_component', []))))
     stat_logger.info('src_role {} src_party_id {} authentication check success'.format(src_role, src_party_id))
+
+
+def data_authentication_check(src_role, src_party_id, user, dataset_list):
+    if not user:
+        raise Exception("no found src_role {} src_party_id user".format(src_role, src_party_id))
+    for dataset in dataset_list:
+        if dataset not in PrivilegeAuth.privilege_cache.get(src_party_id, {}).get(src_role, {}).get('privilege_dataset',
+                                                                                                    {}).get(user, []):
+            if dataset not in PrivilegeAuth.get_permission_config(src_party_id, src_role).get('privilege_dataset',
+                                                                                              {}).get(user, []):
+                raise Exception('src_role {} src_party_id {} user {} dataset authentication that needs to be run '
+                                'failed:{}'.format(src_role, src_party_id, user, dataset))
+
 
 
 def check_constraint(job_runtime_conf, job_dsl):

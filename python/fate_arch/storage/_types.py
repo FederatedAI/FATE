@@ -1,6 +1,6 @@
 from fate_arch.computing import ComputingEngine
 from fate_arch.common.address import StandaloneAddress, EggRollAddress, HDFSAddress, MysqlAddress, FileAddress, \
-    PathAddress
+    PathAddress, HiveAddress
 
 
 class StorageEngine(object):
@@ -11,6 +11,7 @@ class StorageEngine(object):
     SIMPLE = 'SIMPLE'
     FILE = 'FILE'
     PATH = 'PATH'
+    HIVE = 'HIVE'
 
 
 class StandaloneStorageType(object):
@@ -56,6 +57,10 @@ class MySQLStorageType(object):
     DEFAULT = None
 
 
+class HiveStorageType(object):
+    DEFAULT = "HDFS"
+
+
 class StorageTableMetaType(object):
     ENGINE = "engine"
     TYPE = "type"
@@ -77,7 +82,8 @@ class Relationship(object):
         StorageEngine.HDFS: HDFSAddress,
         StorageEngine.MYSQL: MysqlAddress,
         StorageEngine.FILE: FileAddress,
-        StorageEngine.PATH: PathAddress
+        StorageEngine.PATH: PathAddress,
+        StorageEngine.HIVE: HiveAddress
     }
 
 

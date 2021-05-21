@@ -43,8 +43,11 @@ def delete_permission():
 @manager.route('/query/privilege', methods=['post'])
 def query_privilege():
     privilege_dict = PrivilegeAuth.get_permission_config(request.json.get('src_party_id'), request.json.get('src_role'))
-    return get_json_result(retcode=0, retmsg='success', data={'src_party_id': request.json.get('src_party_id'),
-                                                              'role': request.json.get('src_role'),
-                                                              'privilege_role': privilege_dict.get('privilege_role',[]),
-                                                              'privilege_command': privilege_dict.get('privilege_command', []),
-                                                              'privilege_component': privilege_dict.get('privilege_component', [])})
+    data = {'src_party_id': request.json.get('src_party_id'),
+            'role': request.json.get('src_role'),
+            'privilege_role': privilege_dict.get('privilege_role', []),
+            'privilege_command': privilege_dict.get('privilege_command', []),
+            'privilege_component': privilege_dict.get('privilege_component', [])}
+    if privilege_dict.get("user"):
+        data["privilege_dataset"] = privilege_dict.get('privilege_dataset', {}).get(privilege_dict.get("user"), [])
+    return get_json_result(retcode=0, retmsg='success', data=data)
