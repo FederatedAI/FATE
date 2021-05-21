@@ -162,7 +162,6 @@ def deal_line(src):
                 meta_item_value = meta_item_value_str
             meta_data[meta_item_key] = meta_item_value
         meta_data["jobId"] = meta_data["task"]["taskId"]
-        #meta_data["jobId"] = meta_data["task"]["taskId"].replace("20210519", "20210518")
         meta_data["jobDate"] = (datetime.datetime.strptime(meta_data["jobId"][:14], "%Y%m%d%H%M%S") - datetime.timedelta(hours=8)).strftime("%Y-%m-%d %H:%M:%S")
         meta_data["server"] = SERVER_IP
         meta_data["exchangeType"] = EXCHANGE_TYPE
