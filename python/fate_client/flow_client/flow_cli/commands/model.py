@@ -366,7 +366,7 @@ def deploy(ctx, **kwargs):
     access_server('post', ctx, 'model/deploy', config_data)
 
 
-@model.command("get-model-info", short_help="Deploy model")
+@model.command("get-model-info", short_help="Get model info")
 @cli_args.MODEL_ID
 @cli_args.MODEL_VERSION_REQUIRED
 @cli_args.ROLE
