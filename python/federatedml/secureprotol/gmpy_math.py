@@ -20,6 +20,7 @@ import gmpy2
 
 POWMOD_GMP_SIZE = pow(2, 64)
 
+
 def powmod(a, b, c):
     """
     return int: (a ** b) % c
@@ -110,3 +111,7 @@ def gcd(a, b):
 
 def next_prime(n):
     return int(gmpy2.next_prime(n))
+
+
+def mpz(n):
+    return gmpy2.mpz(n)

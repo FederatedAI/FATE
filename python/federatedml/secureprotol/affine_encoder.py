@@ -23,5 +23,8 @@ class AffineEncoder(object):
     def encode(self, plaintext):
         return int(self.mult * (plaintext + self.trans))
 
-    def decode(self, ciphertext, multiplier=1):
-        return ciphertext / self.mult - multiplier * self.trans
+    def decode(self, ciphertext, multiplier=1, mult_times=0):
+        for i in range(mult_times + 1):
+            ciphertext /= self.mult
+        return ciphertext - multiplier * self.trans
+        # return ciphertext / self.mult - multiplier * self.trans
