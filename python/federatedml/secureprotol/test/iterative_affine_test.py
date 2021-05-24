@@ -28,7 +28,7 @@ class TestAffine(unittest.TestCase):
     def tearDown(self):
         unittest.TestCase.tearDown(self)
          
-    def test_int_add_randomized(self):
+    def test_add_randomized(self):
         x_li = np.ones(100) * np.random.randint(100)
         y_li = np.ones(100) * np.random.randint(1000)        
         z_li = np.ones(100) * np.random.rand()
@@ -51,7 +51,7 @@ class TestAffine(unittest.TestCase):
             de_en_res = self.randomized_key.decrypt(en_res)
             self.assertAlmostEqual(de_en_res, res)
 
-    def test_float_add_randomized(self):
+    def test_float_add_deterministic(self):
         x_li = np.ones(100) * np.random.uniform(-1e6, 1e6)
         y_li = np.ones(100) * np.random.randint(-1e6, 1e6)
         z_li = np.ones(100) * np.random.uniform(-1e6, )
@@ -62,19 +62,19 @@ class TestAffine(unittest.TestCase):
             y = y_li[i]
             z = z_li[i]
             t = t_li[i]
-            en_x = self.randomized_key.encrypt(x)
-            en_y = self.randomized_key.encrypt(y)
-            en_z = self.randomized_key.encrypt(z)
-            en_t = self.randomized_key.encrypt(t)
+            en_x = self.deterministic_key.encrypt(x)
+            en_y = self.deterministic_key.encrypt(y)
+            en_z = self.deterministic_key.encrypt(z)
+            en_t = self.deterministic_key.encrypt(t)
 
             en_res = en_x + en_y + en_z + en_t
 
             res = x + y + z + t
 
-            de_en_res = self.randomized_key.decrypt(en_res)
+            de_en_res = self.deterministic_key.decrypt(en_res)
             self.assertAlmostEqual(de_en_res, res)
 
-    def test_add_randomized(self):
+    def test_int_add_deterministic(self):
         x_li = np.ones(100) * np.random.randint(100)
         y_li = np.ones(100) * np.random.randint(1000)
         z_li = np.ones(100) * np.random.rand()
