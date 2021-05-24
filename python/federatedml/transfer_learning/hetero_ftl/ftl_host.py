@@ -1,6 +1,6 @@
 import numpy as np
 from federatedml.transfer_learning.hetero_ftl.ftl_base import FTL
-from federatedml.statistic.intersect import intersect_host
+from federatedml.statistic.intersect import intersect_rsa
 from federatedml.util import LOGGER
 from federatedml.transfer_learning.hetero_ftl.ftl_dataloder import FTLDataLoader
 from federatedml.util import consts
@@ -23,7 +23,7 @@ class FTLHost(FTL):
 
     def init_intersect_obj(self):
         LOGGER.debug('creating intersect obj done')
-        intersect_obj = intersect_host.RsaIntersectionHost()
+        intersect_obj = intersect_rsa.RsaIntersectionHost()
         intersect_obj.host_party_id = self.component_properties.local_partyid
         intersect_obj.host_party_id_list = self.component_properties.host_party_idlist
         intersect_obj.load_params(self.intersect_param)

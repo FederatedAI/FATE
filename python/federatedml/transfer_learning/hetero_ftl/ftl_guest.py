@@ -2,7 +2,7 @@ import numpy as np
 from fate_arch.session import computing_session as session
 from federatedml.util import consts
 from federatedml.transfer_learning.hetero_ftl.ftl_base import FTL
-from federatedml.statistic.intersect import intersect_guest
+from federatedml.statistic.intersect import intersect_rsa
 from federatedml.util import LOGGER
 from federatedml.transfer_learning.hetero_ftl.ftl_dataloder import FTLDataLoader
 from fate_flow.entity.metric import Metric
@@ -34,7 +34,7 @@ class FTLGuest(FTL):
         self.role = consts.GUEST
 
     def init_intersect_obj(self):
-        intersect_obj = intersect_guest.RsaIntersectionGuest()
+        intersect_obj = intersect_rsa.RsaIntersectionGuest()
         intersect_obj.guest_party_id = self.component_properties.local_partyid
         intersect_obj.host_party_id_list = self.component_properties.host_party_idlist
         intersect_obj.load_params(self.intersect_param)
