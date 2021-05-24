@@ -64,7 +64,7 @@ class _Optimizer(object):
         if model_weights.fit_intercept:
             new_weights = np.append(new_weights, model_weights.intercept_)
             new_weights[-1] -= gradient[-1]
-        new_param = LinearModelWeights(new_weights, model_weights.fit_intercept)
+        new_param = LinearModelWeights(new_weights, model_weights.fit_intercept, model_weights.raise_overflow_error)
         # LOGGER.debug("In _l1_updator, original weight: {}, new_weights: {}".format(
         #     model_weights.unboxed, new_weights
         # ))
@@ -76,7 +76,7 @@ class _Optimizer(object):
         """
 
         new_weights = lr_weights.unboxed - gradient
-        new_param = LinearModelWeights(new_weights, lr_weights.fit_intercept)
+        new_param = LinearModelWeights(new_weights, lr_weights.fit_intercept, lr_weights.raise_overflow_error)
 
         return new_param
 
@@ -104,7 +104,9 @@ class _Optimizer(object):
             model_weights = self._l2_updator(model_weights, grad)
         else:
             new_vars = model_weights.unboxed - grad
-            model_weights = LinearModelWeights(new_vars, model_weights.fit_intercept)
+            model_weights = LinearModelWeights(new_vars,
+                                               model_weights.fit_intercept,
+                                               model_weights.raise_overflow_error)
 
         if prev_round_weights is not None:  # additional proximal term
             coef_ = model_weights.unboxed
@@ -121,7 +123,9 @@ class _Optimizer(object):
             else:
                 new_coef_ = coef_without_intercept
 
-            model_weights = LinearModelWeights(new_coef_, model_weights.fit_intercept)
+            model_weights = LinearModelWeights(new_coef_,
+                                               model_weights.fit_intercept,
+                                               model_weights.raise_overflow_error)
         return model_weights
 
     def __l1_loss_norm(self, model_weights: LinearModelWeights):
@@ -163,11 +167,17 @@ class _Optimizer(object):
 
     def hess_vector_norm(self, delta_s: LinearModelWeights):
         if self.penalty == consts.L1_PENALTY:
-            return LinearModelWeights(np.zeros_like(delta_s.unboxed), fit_intercept=delta_s.fit_intercept)
+            return LinearModelWeights(np.zeros_like(delta_s.unboxed),
+                                      fit_intercept=delta_s.fit_intercept,
+                                      raise_overflow_error=delta_s.raise_overflow_error)
         elif self.penalty == consts.L2_PENALTY:
-            return LinearModelWeights(self.alpha * np.array(delta_s.unboxed), fit_intercept=delta_s.fit_intercept)
+            return LinearModelWeights(self.alpha * np.array(delta_s.unboxed),
+                                      fit_intercept=delta_s.fit_intercept,
+                                      raise_overflow_error=delta_s.raise_overflow_error)
         else:
-            return LinearModelWeights(np.zeros_like(delta_s.unboxed), fit_intercept=delta_s.fit_intercept)
+            return LinearModelWeights(np.zeros_like(delta_s.unboxed),
+                                      fit_intercept=delta_s.fit_intercept,
+                                      raise_overflow_error=delta_s.raise_overflow_error)
 
     def update_model(self, model_weights: LinearModelWeights, grad, prev_round_weights: LinearModelWeights = None,
                      has_applied=True):

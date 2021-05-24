@@ -21,17 +21,21 @@ import numpy as np
 
 from federatedml.framework.weights import ListWeights, TransferableWeights
 from federatedml.secureprotol.fate_paillier import PaillierEncryptedNumber
-
+from federatedml.util import LOGGER
 
 class LinearModelWeights(ListWeights):
-    def __init__(self, l, fit_intercept):
+    def __init__(self, l, fit_intercept, raise_overflow_error=True):
         l = np.array(l)
         if not isinstance(l[0], PaillierEncryptedNumber):
             if np.max(np.abs(l)) > 1e8:
-                raise RuntimeError("The model weights are overflow, please check if the "
-                                   "input data has been normalized")
+                if raise_overflow_error:
+                    raise RuntimeError("The model weights are overflow, please check if the "
+                                       "input data has been normalized")
+                else:
+                    LOGGER.warning(f"LinearModelWeights contains entry greater than 1e8.")
         super().__init__(l)
         self.fit_intercept = fit_intercept
+        self.raise_overflow_error = raise_overflow_error
 
     def for_remote(self):
         return TransferableWeights(self._weights, self.__class__, self.fit_intercept)
