@@ -13,17 +13,14 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from pyspark import RDD
 
-from fate_arch.abc import AddressABC, CTableABC
+import pickle
+from pyspark.sql import Row
 
-# noinspection PyAbstractClass
-class Table(CTableABC):
-    def __init__(self, rdd: RDD):
-        self._rdd: RDD = ...
-        ...
-    def save(self, address: AddressABC, partitions: int, schema: dict, **kwargs): ...
 
-def from_hdfs(paths: str, partitions) -> Table: ...
-def from_hive(tb_name: str, db_name: str, partitions: int) -> Table: ...
-def from_rdd(rdd) -> Table: ...
+def from_row(r):
+    return r.key, r.value
+
+
+def to_row(k, v):
+    return Row(key=k, value=pickle.dumps(v).hex())
