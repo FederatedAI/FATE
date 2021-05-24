@@ -16,7 +16,7 @@
 
 import uuid
 
-from fate_arch.session import computing_session as session
+# from fate_arch.session import computing_session as session
 from fate_flow.entity.metric import Metric, MetricMeta
 from federatedml.feature.instance import Instance
 from federatedml.model_base import ModelBase
@@ -252,7 +252,6 @@ class IntersectGuest(IntersectModelBase):
 
         if self.model_param.intersect_method == "rsa":
             self.intersection_obj = RsaIntersectionGuest()
-            self.intersection_obj.guest_party_id = self.guest_party_id
 
         elif self.model_param.intersect_method == "raw":
             self.intersection_obj = RawIntersectionGuest()

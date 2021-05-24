@@ -426,3 +426,59 @@ class RawIntersect(Intersect):
                 LOGGER.info("save guest_{}'s id in name:{}, namespace:{}".format(k, table_name, namespace))
 
         return intersect_ids
+
+
+class PhIntersect(Intersect):
+    def __init__(self):
+        super().__init__()
+        self.role = None
+        self.transfer_variable = PhIntersectTransferVariable()
+        self.commutative_cipher = None
+
+    def load_params(self, param):
+        self.only_output_key = param.only_output_key
+        self.sync_intersect_ids = param.sync_intersect_ids
+        self.ph_params = param.ph_params
+        # self.join_role = param.join_role
+        self.hash_operator = Hash(param.ph_params.hash_method, param.ph_params.base64)
+        self.salt = self.ph_params.salt
+        self.key_size = self.ph_params.key_size
+
+    @staticmethod
+    def _encrypt_id(data_instance, cipher, reserve_original_key=False):
+        """
+        Encrypt the key (ID) of input Table
+        :param cipher: cipher object
+        :param data_instance: Table
+        :param reserve_original_key: (ori_key, enc_key) if reserve_original_key == True, otherwise (enc_key, -1)
+        :return:
+        """
+        if reserve_original_key:
+            return cipher.map_encrypt(data_instance, mode=0)
+        else:
+            return cipher.map_encrypt(data_instance, mode=1)
+
+    @staticmethod
+    def _decrypt_id(data_instance, cipher, reserve_value=False):
+        """
+        Decrypt the key (ID) of input Table
+        :param data_instance: Table
+        :param reserve_value: (e, De) if reserve_value, otherwise (De, -1)
+        :return:
+        """
+        if reserve_value:
+            return cipher.map_decrypt(data_instance, mode=0)
+        else:
+            return cipher.map_decrypt(data_instance, mode=1)
+
+    def _init_commutative_cipher(self):
+        self.commutative_cipher = [CryptoExecutor(PohligHellmanCipherKey.generate_key(self.key_size)) for _ in self.host_party_id_list]
+
+    def _sync_commutative_cipher_public_knowledge(self):
+        pass
+
+    def _exchange_id_list(self, id_list):
+        pass
+
+    def _sync_doubly_encrypted_id_list(self, id_list):
+        pass
