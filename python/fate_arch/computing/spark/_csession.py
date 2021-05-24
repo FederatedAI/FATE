@@ -46,13 +46,13 @@ class CSession(CSessionABC):
         if isinstance(address, FileAddress):
             return address
 
-<<<<<<< Updated upstream
         from fate_arch.common.address import PathAddress
+
         if isinstance(address, PathAddress):
             from fate_arch.computing.non_distributed import LocalData
+
             return LocalData(address.path)
-        raise NotImplementedError(f"address type {type(address)} not supported with spark backend")
-=======
+
         from fate_arch.common.address import HiveAddress
 
         if isinstance(address, HiveAddress):
@@ -67,7 +67,6 @@ class CSession(CSessionABC):
         raise NotImplementedError(
             f"address type {type(address)} not supported with spark backend"
         )
->>>>>>> Stashed changes
 
     def parallelize(self, data: Iterable, partition: int, include_key: bool, **kwargs):
         # noinspection PyPackageRequirements
