@@ -15,6 +15,7 @@
 #
 
 import random
+import uuid
 
 from federatedml.param.intersect_param import IntersectParam
 from federatedml.secureprotol import gmpy_math
@@ -103,6 +104,10 @@ class Intersect(object):
     def hash(value, hash_operator, salt=''):
         h_value = hash_operator.compute(value, postfit_salt=salt)
         return h_value
+
+    @staticmethod
+    def generate_new_uuid():
+        return str(uuid.uuid1())
 
 
 class RsaIntersect(Intersect):

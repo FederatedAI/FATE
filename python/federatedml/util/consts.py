@@ -321,3 +321,7 @@ MAX_SAMPLE_OUTPUT_LIMIT = 10 ** 6
 
 # Hetero NN Selective BP Strategy
 SELECTIVE_SIZE = 1024
+
+# intersect join methods
+INNER_JOIN = "inner_join"
+LEFT_JOIN = "left_join"

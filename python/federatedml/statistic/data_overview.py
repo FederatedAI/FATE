@@ -41,6 +41,16 @@ def get_features_shape(data_instances):
         return None
 
 
+def get_instance_shape(instance):
+    if instance is None:
+        return None
+
+    if type(instance.features).__name__ == consts.SPARSE_VECTOR:
+        return instance.features.get_shape()
+    else:
+        return instance.features.shape[0]
+
+
 def max_abs_sample_weight_map_func(kv_iter):
 
     max_weight = -1
@@ -206,6 +216,13 @@ def rubbish_clear(rubbish_list):
             r.destroy()
         except Exception as e:
             LOGGER.warning("destroy Dtable error,:{}, but this can be ignored sometimes".format(e))
+
+
+def check_with_inst_id(data_instances):
+    instance = data_instances.first()[1]
+    if isinstance(instance, Instance) and instance.with_inst_id:
+        return True
+    return False
 
 
 class DataStatistics(object):

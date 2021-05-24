@@ -94,7 +94,7 @@ class RSAParam(BaseParam):
         self.final_hash_method = final_hash_method
         self.split_calculation = split_calculation
         self.random_base_fraction = random_base_fraction
-        self.key_length=key_length
+        self.key_length = key_length
 
     def check(self):
         if type(self.salt).__name__ != "str":
@@ -181,7 +181,12 @@ class IntersectParam(BaseParam):
 
     repeated_id_owner: str, which role has the repeated ids
 
-    with_sample_id: bool, data with sample id or not, default False; set this param to True may lead to unexpected behavior
+    with_sample_id: bool, data with sample id or not, default False; in ver 1.7 and above, this param is ignored
+
+    join_method: str, choose 'inner_join' or 'left_join', if 'left_join', participants will all include repeated id owner's (imputed) ids in output, default 'inner_join'
+
+    new_join_id: bool, whether to generate new id for repeated_id_owners' ids, only effective when join_method is 'left_join', default False
+
     """
 
     def __init__(self, intersect_method: str = consts.RAW, random_bit=128, sync_intersect_ids=True,
@@ -189,7 +194,7 @@ class IntersectParam(BaseParam):
                  with_encode=False, only_output_key=False, encode_params=EncodeParam(),
                  rsa_params=RSAParam(),
                  intersect_cache_param=IntersectCache(), repeated_id_process=False, repeated_id_owner=consts.GUEST,
-                 with_sample_id=False,
+                 with_sample_id=False, join_method=consts.INNER_JOIN, new_join_id=False,
                  allow_info_share: bool = False, info_owner=consts.GUEST):
         super().__init__()
         self.intersect_method = intersect_method
@@ -206,13 +211,15 @@ class IntersectParam(BaseParam):
         self.allow_info_share = allow_info_share
         self.info_owner = info_owner
         self.with_sample_id = with_sample_id
+        self.join_method = join_method
+        self.new_join_id = new_join_id
 
     def check(self):
         descr = "intersect param's "
 
         self.intersect_method = self.check_and_change_lower(self.intersect_method,
                                                             [consts.RSA, consts.RAW],
-                                                            descr)
+                                                            f"{descr}intersect_method")
 
         if type(self.random_bit).__name__ not in ["int"]:
             raise ValueError("intersect param's random_bit {} not supported, should be positive integer".format(
@@ -225,7 +232,7 @@ class IntersectParam(BaseParam):
 
         self.join_role = self.check_and_change_lower(self.join_role,
                                                      [consts.GUEST, consts.HOST],
-                                                     descr+"join_role")
+                                                     f"{descr}join_role")
 
         if type(self.with_encode).__name__ != "bool":
             raise ValueError(
@@ -244,7 +251,7 @@ class IntersectParam(BaseParam):
 
         self.repeated_id_owner = self.check_and_change_lower(self.repeated_id_owner,
                                                              [consts.GUEST],
-                                                             descr+"repeated_id_owner")
+                                                             f"{descr}repeated_id_owner")
 
         if type(self.allow_info_share).__name__ != "bool":
             raise ValueError(
@@ -253,10 +260,21 @@ class IntersectParam(BaseParam):
 
         self.info_owner = self.check_and_change_lower(self.info_owner,
                                                       [consts.GUEST, consts.HOST],
-                                                      descr+"info_owner")
+                                                      f"{descr}info_owner")
+
         self.check_boolean(self.with_sample_id, descr+"with_sample_id")
+        self.join_method = self.check_and_change_lower(self.join_method, [consts.INNER_JOIN, consts.LEFT_JOIN],
+                                                       f"{descr}join_method")
+        self.check_boolean(self.new_join_id, descr+"new_join_id")
+
         if self.with_sample_id:
-            LOGGER.warning(f"Using with_sample_id may lead to unexpected behavior.")
+            LOGGER.warning(f"with_sample_id is ignored.")
+
+        if self.join_method==consts.LEFT_JOIN:
+            if not self.sync_intersect_ids:
+                raise ValueError(f"Cannot perform left join without sync intersect ids or info share")
+            if not self.allow_info_share:
+                LOGGER.warning(f"when performing left_join, allow_info_share is always True.")
 
         self.encode_params.check()
         self.rsa_params.check()
