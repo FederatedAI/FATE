@@ -28,7 +28,7 @@ class Imputer(object):
         else:
             self.missing_value_list = missing_value_list
 
-        self.support_replace_method = ['min', 'max', 'mean', 'median', 'quantile', 'designated']
+        self.support_replace_method = ['min', 'max', 'mean', 'median', 'designated']
         self.support_output_format = {
             'str': str,
             'float': float,
@@ -41,7 +41,6 @@ class Imputer(object):
             'max': 'col',
             'mean': 'col',
             'median': 'col',
-            'quantile': 'col',
             'designated': 'col'
         }
 
@@ -155,14 +154,13 @@ class Imputer(object):
 
         return replace_method_per_col, skip_cols
 
-    def __get_cols_transform_value(self, data, replace_method, quantile=None, replace_value=None):
+    def __get_cols_transform_value(self, data, replace_method, replace_value=None):
         """
 
         Parameters
         ----------
         data: input data
         replace_method: dictionary of (column name, replace_method_name) pairs
-        quantile
 
         Returns
         -------
@@ -183,10 +181,6 @@ class Imputer(object):
                 transform_value = summary_obj.get_mean()[feature]
             elif replace_method[feature] == consts.MEDIAN:
                 transform_value = summary_obj.get_median()[feature]
-            elif replace_method[feature] == consts.QUANTILE:
-                if quantile > 1 or quantile < 0:
-                    raise ValueError("quantile should between 0 and 1, but get:{}".format(quantile))
-                transform_value = summary_obj.get_quantile_point(quantile)[feature]
             elif replace_method[feature] == consts.DESIGNATED:
                 transform_value = replace_value
             else:
@@ -197,12 +191,11 @@ class Imputer(object):
         # cols_transform_value = {i: round(cols_transform_value[key], 6) for i, key in enumerate(header)}
         return cols_transform_value
 
-    def __fit_replace(self, data, replace_method, replace_value=None, output_format=None, quantile=None,
+    def __fit_replace(self, data, replace_method, replace_value=None, output_format=None,
                       col_replace_method=None):
         if (replace_method is not None and replace_method != consts.DESIGNATED) or col_replace_method is not None:
             replace_method_per_col, skip_cols = self.__get_cols_transform_method(data, replace_method, col_replace_method)
             cols_transform_value = self.__get_cols_transform_value(data, replace_method_per_col,
-                                                                   quantile=quantile,
                                                                    replace_value=replace_value)
             self.skip_cols = skip_cols
             skip_cols = [get_header(data).index(v) for v in skip_cols]
@@ -295,7 +288,7 @@ class Imputer(object):
 
         return cols_impute_rate
 
-    def fit(self, data, replace_method=None, replace_value=None, output_format=consts.ORIGIN, quantile=None,
+    def fit(self, data, replace_method=None, replace_value=None, output_format=consts.ORIGIN,
             col_replace_method=None):
         """
         Apply imputer for input data
@@ -338,7 +331,6 @@ class Imputer(object):
                 col_replace_method[col_name] = method
 
         process_data, cols_transform_value = self.__fit_replace(data, replace_method, replace_value, output_format,
-                                                                quantile=quantile,
                                                                 col_replace_method=col_replace_method)
 
         self.cols_fit_impute_rate = self.__get_impute_rate_from_replace_data(process_data)
