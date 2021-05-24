@@ -1,5 +1,5 @@
 from fate_arch.storage._types import StorageTableMetaType, StorageEngine
-from fate_arch.storage._types import StandaloneStorageType, EggRollStorageType, HDFSStorageType, MySQLStorageType, FileStorageType, PathStorageType, HiveStorageType
+from fate_arch.storage._types import StandaloneStorageType, EggRollStorageType, HDFSStorageType, MySQLStorageType, FileStorageType, PathStorageType, HiveStorageType, LinkisHiveStorageType
 from fate_arch.storage._types import Relationship
 from fate_arch.storage._types import DEFAULT_ID_DELIMITER
 from fate_arch.storage._session import Session, StorageSessionBase

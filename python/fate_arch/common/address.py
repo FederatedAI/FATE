@@ -54,6 +54,20 @@ class HiveAddress(AddressABC):
         self.name = name
 
 
+class LinkisHiveAddress(AddressABC):
+    def __init__(self, host="127.0.0.1", port=9001, username='', database='', name='', run_type='hql',
+                 execute_application_name='hive', source={}, params={}):
+        self.host = host
+        self.port = port
+        self.username = username
+        self.database = database if database else f"{username}__ind"
+        self.name = name
+        self.run_type = run_type
+        self.execute_application_name = execute_application_name
+        self.source=source
+        self.params = params
+
+
 class FileAddress(AddressABC):
     def __init__(self, path, path_type):
         self.path = path

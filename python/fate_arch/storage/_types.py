@@ -12,6 +12,7 @@ class StorageEngine(object):
     FILE = 'FILE'
     PATH = 'PATH'
     HIVE = 'HIVE'
+    LINKIS_HIVE = 'LINKIS_HIVE'
 
 
 class StandaloneStorageType(object):
@@ -58,6 +59,10 @@ class MySQLStorageType(object):
 
 
 class HiveStorageType(object):
+    DEFAULT = "HDFS"
+
+
+class LinkisHiveStorageType(object):
     DEFAULT = "HDFS"
 
 
