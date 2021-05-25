@@ -192,7 +192,7 @@ class DAGScheduler(Cron):
                 if not update_status:
                     schedule_logger(job.f_job_id).info(f"the number of updates has been exceeded")
                     continue
-                self.schedule_running_job(job=job)
+                self.schedule_running_job(job=job, force_sync_status=True)
             except Exception as e:
                 schedule_logger(job.f_job_id).exception(e)
                 schedule_logger(job.f_job_id).error(f"schedule job {job.f_job_id} failed")
@@ -294,7 +294,7 @@ class DAGScheduler(Cron):
             schedule_logger(job_id=job_id).error("can not found job {} on initiator {} {}".format(job_id, initiator_role, initiator_party_id))
 
     @classmethod
-    def schedule_running_job(cls, job):
+    def schedule_running_job(cls, job, force_sync_status=False):
         schedule_logger(job_id=job.f_job_id).info("scheduling job {}".format(job.f_job_id))
 
         dsl_parser = schedule_utils.get_job_dsl_parser(dsl=job.f_dsl,
@@ -322,6 +322,8 @@ class DAGScheduler(Cron):
                 cls.update_job_on_initiator(initiator_job=job, update_fields=["status"])
         if EndStatus.contains(job.f_status):
             cls.finish(job=job, end_status=job.f_status)
+        if force_sync_status:
+            FederatedScheduler.sync_job_status(job=job)
         schedule_logger(job_id=job.f_job_id).info("finish scheduling job {}".format(job.f_job_id))
 
     @classmethod
