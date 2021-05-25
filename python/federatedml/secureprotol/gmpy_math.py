@@ -20,44 +20,62 @@ import gmpy2
 
 POWMOD_GMP_SIZE = pow(2, 64)
 
+
 def powmod(a, b, c):
     """
     return int: (a ** b) % c
     """
-    
+
     if a == 1:
         return 1
-    
+
     if max(a, b, c) < POWMOD_GMP_SIZE:
         return pow(a, b, c)
-    
+
     else:
         return int(gmpy2.powmod(a, b, c))
 
 
+def crt_coefficient(p, q):
+    """
+    return crt coefficient
+    """
+    tq = gmpy2.invert(p, q)
+    tp = gmpy2.invert(q, p)
+    return tp * q, tq * p
+
+
+def powmod_crt(x, d, n, p, q, cp, cq):
+    """
+    return int: (a ** b) % n
+    """
+
+    rp = gmpy2.powmod(x, d % (p - 1), p)
+    rq = gmpy2.powmod(x, d % (q - 1), q)
+    return int((rp * cp + rq * cq) % n)
+
+
 def invert(a, b):
-    """return int: x, where a * x == 1 mod b
-    """    
+    """return int: x, where a * x == 1 mod b"""
     x = int(gmpy2.invert(a, b))
-   
+
     if x == 0:
-        raise ZeroDivisionError('invert(a, b) no inverse exists')
-    
+        raise ZeroDivisionError("invert(a, b) no inverse exists")
+
     return x
-   
-   
+
+
 def getprimeover(n):
-    """return a random n-bit prime number
-    """     
+    """return a random n-bit prime number"""
     r = gmpy2.mpz(random.SystemRandom().getrandbits(n))
     r = gmpy2.bit_set(r, n - 1)
-    
+
     return int(gmpy2.next_prime(r))
 
 
 def isqrt(n):
     """ return the integer square root of N """
-    
+
     return int(gmpy2.isqrt(n))
 
 
