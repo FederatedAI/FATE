@@ -47,6 +47,10 @@ fate_on_spark:
     home:
     cores_per_node: 20
     nodes: 2
+  links_spark:
+    host: 127.0.0.1
+    port: 9001
+    token_code: fate
   hdfs:
     name_node: hdfs://fate-cluster
     # default /

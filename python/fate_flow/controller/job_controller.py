@@ -50,9 +50,10 @@ class JobController(object):
                                                        train_runtime_conf=train_runtime_conf)
         job_parameters = dsl_parser.get_job_parameters().get(role, {}).get(party_id, {})
         schedule_logger(job_id).info('job parameters:{}'.format(job_parameters))
+        user = dsl_parser.get_job_parameters().get(role, {}).get(party_id, {}).get("user", '')
         if USE_DATA_AUTHENTICATION:
-            user = dsl_parser.get_job_parameters().get(job_info.get('src_role'), {}).get(int(job_info.get('src_party_id')),
-                                                                                         {}).get("user")
+            src_user = dsl_parser.get_job_parameters().get(job_info.get('src_role'), {}).get(
+                int(job_info.get('src_party_id')), {}).get("user", '')
             job_args = dsl_parser.get_args_input()
             schedule_logger(job_id).info('job args:{}'.format(job_args))
             dataset_dict = cls.get_dataset(False, role, party_id, runtime_conf.get("role"), job_args)
@@ -61,7 +62,7 @@ class JobController(object):
                 for k, v in dataset_dict[role][party_id].items():
                     dataset_list.append({"namespace": v.split('.')[0], "table_name": v.split('.')[1]})
             data_authentication_check(src_role=job_info.get('src_role'), src_party_id=job_info.get('src_party_id'),
-                                      user=user, dataset_list=dataset_list)
+                                      user=src_user, dataset_list=dataset_list)
         job_parameters = RunParameters(**job_parameters)
 
         # save new job into db
@@ -70,6 +71,7 @@ class JobController(object):
         else:
             is_initiator = False
         job_info["status"] = JobStatus.WAITING
+        job_info["f_user_id"] = user
         # this party configuration
         job_info["role"] = role
         job_info["party_id"] = party_id
