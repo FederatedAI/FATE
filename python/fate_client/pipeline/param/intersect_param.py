@@ -159,7 +159,6 @@ class PHParam(BaseParam):
         descr = "ph param's key_length"
         self.check_positive_integer(self.key_length, descr)
 
-        LOGGER.debug("Finish PHParam parameter check!")
         return True
 
 
