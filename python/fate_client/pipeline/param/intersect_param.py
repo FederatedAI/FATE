@@ -135,7 +135,7 @@ class PHParam(BaseParam):
 
     hash_method: str, the hash method of src data string, it support sha256, sha384, sha512, sm3, default sha256
 
-    key_length: positive int, >= 768, the key length of the commutative cipher, default 1024
+    key_length: positive int, value >= 768 is suggested, the key length of the commutative cipher, default 1024
 
     """
 
@@ -153,7 +153,9 @@ class PHParam(BaseParam):
 
         descr = "ph param's hash_method "
         self.hash_method = self.check_and_change_lower(self.hash_method,
-                                                       [consts.SHA256, consts.SHA384, consts.SHA512, consts.SM3],
+                                                       ["none", consts.MD5, consts.SHA1, consts.SHA224,
+                                                        consts.SHA256, consts.SHA384, consts.SHA512,
+                                                        consts.SM3],
                                                        descr)
 
         descr = "ph param's key_length"

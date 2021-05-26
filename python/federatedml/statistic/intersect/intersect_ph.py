@@ -94,7 +94,9 @@ class PhIntersectionGuest(PhIntersect):
         # 1st ID encrypt: # (Eg, -1)
         self.id_list_local_first = [self._encrypt_id(data_instances,
                                                      cipher,
-                                                     reserve_original_key=True) for cipher in self.commutative_cipher]
+                                                     reserve_original_key=True,
+                                                     hash_operator=self.hash_operator,
+                                                     salt=self.salt) for cipher in self.commutative_cipher]
         LOGGER.info("encrypted guest id for the 1st time")
         id_list_remote_first = self._exchange_id_list(self.id_list_local_first)
 
@@ -190,8 +192,11 @@ class PhIntersectionHost(PhIntersect):
         self.commutative_cipher.init()
 
         # 1st ID encrypt: (h, (Eh, Instance))
-        self.id_list_local_first = self._encrypt_id(data_instances, self.commutative_cipher,
-                                                    reserve_original_key=True)
+        self.id_list_local_first = self._encrypt_id(data_instances,
+                                                    self.commutative_cipher,
+                                                    reserve_original_key=True,
+                                                    hash_operator=self.hash_operator,
+                                                    salt=self.salt)
         LOGGER.info("encrypted local id for the 1st time")
         # send (Eh, -1), get (Eg, -1)
         id_list_remote_first = self._exchange_id_list(self.id_list_local_first)

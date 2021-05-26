@@ -56,7 +56,9 @@ def main(config="../../config.yaml", namespace=""):
         "with_encode": True,
         "only_output_key": True,
         "ph_params": {
-            "key_length": 1024,
+            "hash_method": "sha256",
+            "salt": "12345",
+            "key_length": 1024
         }
     }
     intersect_0 = Intersection(name="intersect_0", **param)

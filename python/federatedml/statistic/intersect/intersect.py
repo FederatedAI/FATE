@@ -480,17 +480,23 @@ class PhIntersect(Intersect):
     """
 
     @staticmethod
-    def _encrypt_id(data_instance, cipher, reserve_original_key=False):
+    def _encrypt_id(data_instance, cipher, reserve_original_key=False, hash_operator=None, salt=''):
         """
         Encrypt the key (ID) of input Table
         :param cipher: cipher object
         :param data_instance: Table
         :param reserve_original_key: (enc_key, ori_key) if reserve_original_key == True, otherwise (enc_key, -1)
+        :param hash_operator: if provided, use map_hash_encrypt
+        :param salt: if provided, use for map_hash_encrypt
         :return:
         """
         if reserve_original_key:
+            if hash_operator:
+                return cipher.map_hash_encrypt(data_instance, mode=4, hash_operator=hash_operator, salt=salt)
             return cipher.map_encrypt(data_instance, mode=4)
         else:
+            if hash_operator:
+                return cipher.map_hash_encrypt(data_instance, mode=1, hash_operator=hash_operator, salt=salt)
             return cipher.map_encrypt(data_instance, mode=1)
 
     @staticmethod

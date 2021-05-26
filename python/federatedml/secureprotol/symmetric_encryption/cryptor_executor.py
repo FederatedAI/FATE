@@ -30,6 +30,31 @@ class CryptoExecutor(object):
     def renew(self, cipher_core):
         self.cipher_core = cipher_core
 
+    def map_hash_encrypt(self, plaintable, mode, hash_operator, salt):
+        """
+        Process the input Table as (k, v)
+        (k, enc_k) for mode == 0
+        (enc_k, -1) for mode == 1
+        (enc_k, v) for mode == 2
+        (k, (enc_k, v)) for mode == 3
+        (enc_k, k) for mode == 4
+        :param plaintable: Table
+        :param mode: int
+        :return: Table
+        """
+        if mode == 0:
+            return plaintable.map(lambda k, v: (k, self.cipher_core.encrypt(hash_operator.compute(k, postfit_salt=salt))))
+        elif mode == 1:
+            return plaintable.map(lambda k, v: (self.cipher_core.encrypt(hash_operator.compute(k, postfit_salt=salt)), -1))
+        elif mode == 2:
+            return plaintable.map(lambda k, v: (self.cipher_core.encrypt(hash_operator.compute(k, postfit_salt=salt)), v))
+        elif mode == 3:
+            return plaintable.map(lambda k, v: (k, (self.cipher_core.encrypt(hash_operator.compute(k, postfit_salt=salt)), v)))
+        elif mode == 4:
+            return plaintable.map(lambda k, v: (self.cipher_core.encrypt(hash_operator.compute(k, postfit_salt=salt)), k))
+        else:
+            raise ValueError("Unsupported mode for crypto_executor map encryption")
+
     def map_encrypt(self, plaintable, mode):
         """
         Process the input Table as (k, v)

@@ -24,6 +24,8 @@
                 "intersect_method": "ph",
                 "sync_intersect_ids": true,
                 "ph_params": {
+                    "hash_method": "sha256",
+                    "salt": "12345",
                     "key_length": 1024
                 },
                 "only_output_key": true
