@@ -736,6 +736,23 @@ def homo_convert():
     return get_json_result(retcode=retcode, retmsg=retmsg, data=res_data)
 
 
+@manager.route('/homo/deploy', methods=['POST'])
+def homo_deploy():
+    request_config = request.json or request.form.to_dict()
+    required_arguments = ["service_id",
+                          "model_id",
+                          "model_version",
+                          "role",
+                          "party_id",
+                          "component_name",
+                          "deployment_type",
+                          "deployment_parameters"]
+    check_config(request_config, required_arguments=required_arguments)
+    retcode, retmsg, res_data = publish_model.deploy_homo_model(request_data=request_config)
+    operation_record(request.json, "homo_deploy", "success" if not retcode else "failed")
+    return get_json_result(retcode=retcode, retmsg=retmsg, data=res_data)
+
+
 def adapter_servings_config(request_data):
     servings_conf = ServiceUtils.get("servings", {})
     if isinstance(servings_conf, dict):
