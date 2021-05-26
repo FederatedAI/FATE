@@ -390,3 +390,24 @@ def model_info(ctx, **kwargs):
         config_data['query_filters'] = ['create_date', 'role', 'party_id', 'roles', 'model_id',
                                         'model_version', 'loaded_times', 'size', 'description', 'parent', 'parent_info']
     access_server('post', ctx, 'model/query', config_data)
+
+
+@model.command("homo-convert", short_help="Convert trained homogenous model")
+@cli_args.CONF_PATH
+@click.pass_context
+def homo_convert_model(ctx, **kwargs):
+    """
+    \b
+    - DESCRIPTION:
+        Convert trained homogenous model to the format of another ML framework. Converted model files
+        will be saved alongside the original model and can be downloaded via model export command.
+        The supported conversions are:
+          HomoLR to `sklearn.linear_model.LogisticRegression`
+          HomoNN to `tf.keras.Sequential` or `torch.nn.Sequential`, depending on the originally-used backend type.
+
+    \b
+    - USAGE:
+        flow model homo-convert -c fate_flow/examples/homo_convert_model.json
+    """
+    config_data, dsl_data = preprocess(**kwargs)
+    access_server('post', ctx, 'model/homo/convert', config_data)
