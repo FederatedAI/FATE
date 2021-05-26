@@ -36,6 +36,10 @@ This section introduces the Pipeline scripts for different types of tasks.
 
     script: pipeline-intersect-repeated-id.py
 
+9. PH Intersection:
+
+    script: pipeline-intersect-ph.py
+
 Users can run a pipeline job directly:
 
     python ${pipeline_script}

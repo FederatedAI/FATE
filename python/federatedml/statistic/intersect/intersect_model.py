@@ -22,7 +22,7 @@ from federatedml.feature.instance import Instance
 from federatedml.model_base import ModelBase
 from federatedml.param.intersect_param import IntersectParam
 from federatedml.statistic.intersect import RawIntersectionHost, RawIntersectionGuest, RsaIntersectionHost, \
-    RsaIntersectionGuest
+    RsaIntersectionGuest, PhIntersectionGuest, PhIntersectionHost
 from federatedml.statistic.intersect.repeat_id_process import RepeatedIDIntersect
 from federatedml.statistic import data_overview
 from federatedml.transfer_variable.transfer_class.intersection_func_transfer_variable import \
@@ -203,6 +203,9 @@ class IntersectModelBase(ModelBase):
         if self.model_param.join_method == consts.LEFT_JOIN:
             result_data = self.__sync_join_id(data, self.intersect_ids)
             result_data.schema = self.intersect_ids.schema
+
+        if not self.intersection_obj.only_output_key:
+            result_data = self.intersection_obj.get_value_from_data(self.intersect_ids, data)
         return result_data
 
     """
@@ -226,13 +229,17 @@ class IntersectHost(IntersectModelBase):
         super().init_intersect_method()
         self.host_party_id = self.component_properties.local_partyid
 
-        if self.model_param.intersect_method == "rsa":
+        if self.model_param.intersect_method == consts.RSA:
             self.intersection_obj = RsaIntersectionHost()
 
-        elif self.model_param.intersect_method == "raw":
+        elif self.model_param.intersect_method == consts.RAW:
             self.intersection_obj = RawIntersectionHost()
             self.intersection_obj.tracker = self.tracker
             self.intersection_obj.task_version_id = self.task_version_id
+
+        elif self.model_param.intersect_method == consts.PH:
+            self.intersection_obj = PhIntersectionHost()
+
         else:
             raise ValueError("intersect_method {} is not support yet".format(self.model_param.intersect_method))
 
@@ -250,13 +257,17 @@ class IntersectGuest(IntersectModelBase):
     def init_intersect_method(self):
         super().init_intersect_method()
 
-        if self.model_param.intersect_method == "rsa":
+        if self.model_param.intersect_method == consts.RSA:
             self.intersection_obj = RsaIntersectionGuest()
 
-        elif self.model_param.intersect_method == "raw":
+        elif self.model_param.intersect_method == consts.RAW:
             self.intersection_obj = RawIntersectionGuest()
             self.intersection_obj.tracker = self.tracker
             self.intersection_obj.task_version_id = self.task_version_id
+
+        elif self.model_param.intersect_method == consts.PH:
+            self.intersection_obj = PhIntersectionGuest()
+
         else:
             raise ValueError("intersect_method {} is not support yet".format(self.model_param.intersect_method))
 

@@ -21,11 +21,12 @@ from federatedml.param.intersect_param import IntersectParam
 from federatedml.secureprotol import gmpy_math
 from federatedml.secureprotol.encrypt import RsaEncrypt
 from federatedml.secureprotol.hash.hash_factory import Hash
-from federatedml.util import consts
-from federatedml.util import LOGGER
+from federatedml.secureprotol.symmetric_encryption.cryptor_executor import CryptoExecutor
+from federatedml.secureprotol.symmetric_encryption.pohlig_hellman_encryption import PohligHellmanCipherKey
+from federatedml.util import consts, LOGGER
 from federatedml.transfer_variable.transfer_class.raw_intersect_transfer_variable import RawIntersectTransferVariable
 from federatedml.transfer_variable.transfer_class.rsa_intersect_transfer_variable import RsaIntersectTransferVariable
-
+from federatedml.transfer_variable.transfer_class.ph_intersect_transfer_variable import PhIntersectTransferVariable
 
 class Intersect(object):
     def __init__(self):
@@ -78,7 +79,8 @@ class Intersect(object):
         if self.transfer_variable is not None:
             self.transfer_variable.set_flowid(flowid)
 
-    def _get_value_from_data(self, intersect_ids, data_instances):
+    @staticmethod
+    def get_value_from_data(intersect_ids, data_instances):
         if intersect_ids is not None:
             intersect_ids = intersect_ids.join(data_instances, lambda i, d: d)
             intersect_ids.schema = data_instances.schema
@@ -99,6 +101,50 @@ class Intersect(object):
             intersect_ids = intersect_ids.join(value, lambda id, v: "id")
 
         return intersect_ids
+
+    @staticmethod
+    def extract_intersect_ids(intersect_ids, all_ids):
+        intersect_ids = intersect_ids.join(all_ids, lambda e, h: h)
+        return intersect_ids
+
+    @staticmethod
+    def filter_intersect_ids(encrypt_intersect_ids, keep_encrypt_ids=False):
+        if keep_encrypt_ids:
+            f = lambda k, v: (v, k)
+        else:
+            f = lambda k, v: (v, 1)
+        if len(encrypt_intersect_ids) > 1:
+            raw_intersect_ids = [e.map(f) for e in encrypt_intersect_ids]
+            intersect_ids = Intersect.get_common_intersection(raw_intersect_ids)
+        else:
+            intersect_ids = encrypt_intersect_ids[0]
+            intersect_ids = intersect_ids.map(f)
+        return intersect_ids
+
+    @staticmethod
+    def map_raw_id_to_encrypt_id(raw_id_data, encrypt_id_data):
+        encrypt_id_data_exchange_kv = encrypt_id_data.map(lambda k, v: (v, k))
+        encrypt_raw_id = raw_id_data.join(encrypt_id_data_exchange_kv, lambda r, e: e)
+        encrypt_common_id = encrypt_raw_id.map(lambda k, v: (v, "id"))
+
+        return encrypt_common_id
+
+    @staticmethod
+    def map_encrypt_id_to_raw_id(encrypt_id_data, raw_id_data):
+        """
+
+        Parameters
+        ----------
+        encrypt_id_data: E(id)
+        raw_id_data: (E(id), id)
+
+        Returns
+        -------
+
+        """
+        encrypt_id_raw_id = raw_id_data.join(encrypt_id_data, lambda r, e: r)
+        raw_id = encrypt_id_raw_id.map(lambda k, v: (v, k))
+        return raw_id
 
     @staticmethod
     def hash(value, hash_operator, salt=''):
@@ -224,28 +270,6 @@ class RsaIntersect(Intersect):
     def sign_id(hash_sid, rsa_d, rsa_n):
         return gmpy_math.powmod(hash_sid, rsa_d, rsa_n)
 
-    @staticmethod
-    def map_raw_id_to_encrypt_id(raw_id_data, encrypt_id_data):
-        encrypt_id_data_exchange_kv = encrypt_id_data.map(lambda k, v: (v, k))
-        encrypt_raw_id = raw_id_data.join(encrypt_id_data_exchange_kv, lambda r, e: e)
-        encrypt_common_id = encrypt_raw_id.map(lambda k, v: (v, "id"))
-
-        return encrypt_common_id
-
-    def filter_intersect_ids(self, encrypt_intersect_ids):
-        if len(encrypt_intersect_ids) > 1:
-            raw_intersect_ids = [e.map(lambda k, v: (v, 1)) for e in encrypt_intersect_ids]
-            intersect_ids = self.get_common_intersection(raw_intersect_ids)
-        else:
-            intersect_ids = encrypt_intersect_ids[0]
-            intersect_ids = intersect_ids.map(lambda k, v: (v, 1))
-        return intersect_ids
-
-    @staticmethod
-    def extract_intersect_ids(intersect_ids, all_ids):
-        intersect_ids = intersect_ids.join(all_ids, lambda e, h: h)
-        return intersect_ids
-
     def split_calculation_process(self, data_instances):
         raise NotImplementedError("This method should not be called here")
 
@@ -261,8 +285,8 @@ class RsaIntersect(Intersect):
             intersect_ids = self.split_calculation_process(hash_data_instances)
         else:
             intersect_ids = self.unified_calculation_process(data_instances)
-        if not self.only_output_key:
-            intersect_ids = self._get_value_from_data(intersect_ids, data_instances)
+        # if not self.only_output_key:
+        #    intersect_ids = self._get_value_from_data(intersect_ids, data_instances)
         return intersect_ids
 
 
@@ -330,9 +354,8 @@ class RawIntersect(Intersect):
             recv_intersect_ids = self.get_common_intersection(recv_intersect_ids_list)
 
             if self.role == consts.GUEST and len(self.host_party_id_list) > 1:
-                LOGGER.info(
-                    "raw intersect send role is guest, and has {} hosts, remote the final intersect_ids to hosts".format(
-                        len(self.host_party_id_list)))
+                LOGGER.info(f"raw intersect send role is guest, "
+                            f"and has {self.host_party_id_list} hosts, remote the final intersect_ids to hosts")
                 self.transfer_variable.sync_intersect_ids_multi_hosts.remote(recv_intersect_ids,
                                                                              role=consts.HOST,
                                                                              idx=-1)
@@ -345,8 +368,8 @@ class RawIntersect(Intersect):
         else:
             LOGGER.info("Not Get intersect ids from role-join!")
 
-        if not self.only_output_key:
-            intersect_ids = self._get_value_from_data(intersect_ids, data_instances)
+        # if not self.only_output_key:
+        #   intersect_ids = self._get_value_from_data(intersect_ids, data_instances)
 
         return intersect_ids
 
@@ -404,9 +427,8 @@ class RawIntersect(Intersect):
             LOGGER.info("Remote intersect ids to role-send")
 
             if self.role == consts.HOST and len(self.host_party_id_list) > 1:
-                LOGGER.info(
-                    "raw intersect join role is host, and has {} hosts, get the final intersect_ids from guest".format(
-                        len(self.host_party_id_list)))
+                LOGGER.info(f"raw intersect join role is host,"
+                            f"and has {self.host_party_id_list} hosts, get the final intersect_ids from guest")
                 hash_intersect_ids = self.transfer_variable.sync_intersect_ids_multi_hosts.get(idx=0)
 
         if sid_hash_pair:
@@ -415,8 +437,8 @@ class RawIntersect(Intersect):
         else:
             intersect_ids = hash_intersect_ids
 
-        if not self.only_output_key:
-            intersect_ids = self._get_value_from_data(intersect_ids, data_instances)
+        # if not self.only_output_key:
+        #    intersect_ids = self._get_value_from_data(intersect_ids, data_instances)
 
         if self.task_version_id is not None:
             namespace = "#".join([str(self.guest_party_id), str(self.host_party_id), "mountain"])
@@ -429,6 +451,9 @@ class RawIntersect(Intersect):
 
 
 class PhIntersect(Intersect):
+    """
+    adapted from Secure Information Retrieval Module
+    """
     def __init__(self):
         super().__init__()
         self.role = None
@@ -439,10 +464,20 @@ class PhIntersect(Intersect):
         self.only_output_key = param.only_output_key
         self.sync_intersect_ids = param.sync_intersect_ids
         self.ph_params = param.ph_params
-        # self.join_role = param.join_role
-        self.hash_operator = Hash(param.ph_params.hash_method, param.ph_params.base64)
+        # @TODO: use arbitrary hash
+        self.hash_operator = Hash(param.ph_params.hash_method)
         self.salt = self.ph_params.salt
-        self.key_size = self.ph_params.key_size
+        self.key_length = self.ph_params.key_length
+
+    """    
+    @staticmethod
+    def record_original_id(k, v):
+        if isinstance(k, str):
+            restored_id = conversion.int_to_str(conversion.str_to_int(k))
+        else:
+            restored_id = k
+        return (restored_id, k)
+    """
 
     @staticmethod
     def _encrypt_id(data_instance, cipher, reserve_original_key=False):
@@ -450,11 +485,11 @@ class PhIntersect(Intersect):
         Encrypt the key (ID) of input Table
         :param cipher: cipher object
         :param data_instance: Table
-        :param reserve_original_key: (ori_key, enc_key) if reserve_original_key == True, otherwise (enc_key, -1)
+        :param reserve_original_key: (enc_key, ori_key) if reserve_original_key == True, otherwise (enc_key, -1)
         :return:
         """
         if reserve_original_key:
-            return cipher.map_encrypt(data_instance, mode=0)
+            return cipher.map_encrypt(data_instance, mode=4)
         else:
             return cipher.map_encrypt(data_instance, mode=1)
 
@@ -471,14 +506,69 @@ class PhIntersect(Intersect):
         else:
             return cipher.map_decrypt(data_instance, mode=1)
 
-    def _init_commutative_cipher(self):
-        self.commutative_cipher = [CryptoExecutor(PohligHellmanCipherKey.generate_key(self.key_size)) for _ in self.host_party_id_list]
+    """    
+    @staticmethod
+    def _find_intersection(id_local, id_remote):
+        '''
+        Find the intersection set of ENC_id
+        :param id_local: Table in the form (EEg, -1)
+        :param id_remote: Table in the form (EEh, -1)
+        :return: Table in the form (EEi, -1)
+        '''
+        return id_local.join(id_remote, lambda v, u: -1)
+    """
+
+    def _generate_commutative_cipher(self):
+        self.commutative_cipher = [
+            CryptoExecutor(PohligHellmanCipherKey.generate_key(self.key_length)) for _ in self.host_party_id_list
+        ]
 
     def _sync_commutative_cipher_public_knowledge(self):
+        """
+        guest -> host public knowledge
+        :return:
+        """
         pass
 
     def _exchange_id_list(self, id_list):
+        """
+        :param id_list: Table in the form (id, 0)
+        :return:
+        """
         pass
 
     def _sync_doubly_encrypted_id_list(self, id_list):
+        """
+        host -> guest
+        :param id_list:
+        :return:
+        """
         pass
+
+    def _sync_intersect_cipher_cipher(self, id_list):
+        """
+        guest -> host
+        :param id_list:
+        :return:
+        """
+        pass
+
+    def _sync_intersect_cipher(self, id_list):
+        """
+        host -> guest
+        :param id_list:
+        :return:
+        """
+        pass
+
+    def get_intersect_doubly_encrypted_id(self, data_instances):
+        raise NotImplementedError("This method should not be called here")
+
+    def decrypt_intersect_doubly_encrypted_id(self, id_list_intersect_cipher_cipher):
+        raise NotImplementedError("This method should not be called here")
+
+    def run_intersect(self, data_instances):
+        LOGGER.info("Start PH Intersection")
+        id_list_intersect_cipher_cipher = self.get_intersect_doubly_encrypted_id(data_instances)
+        intersect_ids = self.decrypt_intersect_doubly_encrypted_id(id_list_intersect_cipher_cipher)
+        return intersect_ids

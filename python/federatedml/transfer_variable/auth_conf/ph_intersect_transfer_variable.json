@@ -1,0 +1,46 @@
+{
+  "federatedml.transfer_variable.transfer_class.ph_intersect_transfer_variable.PhIntersectTransferVariable": {
+    "commutative_cipher_public_knowledge": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    },
+    "id_ciphertext_list_exchange_g2h": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    },
+    "id_ciphertext_list_exchange_h2g": {
+      "src": "host",
+      "dst": [
+        "guest"
+      ]
+    },
+    "doubly_encrypted_id_list": {
+      "src": "host",
+      "dst": [
+        "guest"
+      ]
+    },
+    "intersect_cipher_cipher": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    },
+    "intersect_cipher": {
+      "src": "host",
+      "dst": [
+        "guest"
+      ]
+    },
+    "intersect_ids": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    }
+  }
+}

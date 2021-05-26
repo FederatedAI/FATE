@@ -22,7 +22,7 @@ import numpy as np
 
 from federatedml.feature.instance import Instance
 from federatedml.secure_information_retrieval.base_secure_information_retrieval import \
-    BaseSecureInformationRetrieval, CryptoExecutor
+    BaseSecureInformationRetrieval
 from federatedml.param.sir_param import SecureInformationRetrievalParam
 from federatedml.secureprotol.oblivious_transfer.hauck_oblivious_transfer.hauck_oblivious_transfer_receiver import \
     HauckObliviousTransferReceiver

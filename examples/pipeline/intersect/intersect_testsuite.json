@@ -60,6 +60,9 @@
         },
         "repeated_id": {
             "script": "./pipeline-intersect-repeated-id.py"
+        },
+        "ph_interect": {
+            "script": "./pipeline-intersect-ph.py"
         }
     }
 }

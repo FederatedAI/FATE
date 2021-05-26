@@ -129,6 +129,44 @@ class RSAParam(BaseParam):
         return True
 
 
+class PHParam(BaseParam):
+    """
+    Define the hash method for PH intersect method
+
+    Parameters
+    ----------
+    salt: the src data string will be str = str + salt, default ''
+
+    hash_method: str, the hash method of src data string, it support sha256, sha384, sha512, sm3, default sha256
+
+    key_length: positive int, >= 768, the key length of the commutative cipher, default 1024
+
+    """
+
+    def __init__(self, salt='', hash_method='sha256', key_length=1024):
+        super().__init__()
+        self.salt = salt
+        self.hash_method = hash_method
+        self.key_length = key_length
+
+    def check(self):
+        if type(self.salt).__name__ != "str":
+            raise ValueError(
+                "ph param's salt {} not supported, should be str type".format(
+                    self.salt))
+
+        descr = "ph param's hash_method "
+        self.hash_method = self.check_and_change_lower(self.hash_method,
+                                                       [consts.SHA256, consts.SHA384, consts.SHA512, consts.SM3],
+                                                       descr)
+
+        descr = "ph param's key_length"
+        self.check_positive_integer(self.key_length, descr)
+
+        LOGGER.debug("Finish PHParam parameter check!")
+        return True
+
+
 class IntersectCache(BaseParam):
     def __init__(self, use_cache=False, id_type=consts.PHONE, encrypt_type=consts.SHA256):
         super().__init__()
@@ -157,7 +195,7 @@ class IntersectParam(BaseParam):
 
     Parameters
     ----------
-    intersect_method: str, it supports 'rsa' and 'raw', default by 'raw'
+    intersect_method: str, it supports 'rsa', 'raw', and 'ph', default by 'raw'
 
     random_bit: positive int, it will define the encrypt length of rsa algorithm. It effective only for intersect_method is rsa
 
@@ -187,6 +225,8 @@ class IntersectParam(BaseParam):
 
     new_join_id: bool, whether to generate new id for repeated_id_owners' ids, only effective when join_method is 'left_join', default False
 
+    ph_params: PHParam, effective for ph method only
+
     """
 
     def __init__(self, intersect_method: str = consts.RAW, random_bit=128, sync_intersect_ids=True,
@@ -195,7 +235,7 @@ class IntersectParam(BaseParam):
                  rsa_params=RSAParam(),
                  intersect_cache_param=IntersectCache(), repeated_id_process=False, repeated_id_owner=consts.GUEST,
                  with_sample_id=False, join_method=consts.INNER_JOIN, new_join_id=False,
-                 allow_info_share: bool = False, info_owner=consts.GUEST):
+                 allow_info_share: bool = False, info_owner=consts.GUEST, ph_params=PHParam()):
         super().__init__()
         self.intersect_method = intersect_method
         self.random_bit = random_bit
@@ -213,12 +253,13 @@ class IntersectParam(BaseParam):
         self.with_sample_id = with_sample_id
         self.join_method = join_method
         self.new_join_id = new_join_id
+        self.ph_params = ph_params
 
     def check(self):
         descr = "intersect param's "
 
         self.intersect_method = self.check_and_change_lower(self.intersect_method,
-                                                            [consts.RSA, consts.RAW],
+                                                            [consts.RSA, consts.RAW, consts.PH],
                                                             f"{descr}intersect_method")
 
         if type(self.random_bit).__name__ not in ["int"]:
@@ -278,5 +319,6 @@ class IntersectParam(BaseParam):
 
         self.encode_params.check()
         self.rsa_params.check()
+        self.ph_params.check()
         LOGGER.debug("Finish intersect parameter check!")
         return True
