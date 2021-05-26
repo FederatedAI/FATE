@@ -204,7 +204,7 @@ class IntersectModelBase(ModelBase):
             result_data = self.__sync_join_id(data, self.intersect_ids)
             result_data.schema = self.intersect_ids.schema
 
-        if not self.intersection_obj.only_output_key and self.intersect_ids:
+        if not self.intersection_obj.only_output_key and result_data:
             result_data = self.intersection_obj.get_value_from_data(self.intersect_ids, data)
         return result_data
 
