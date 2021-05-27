@@ -13,6 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import time
+
 import requests
 
 from fate_arch.storage import StorageEngine, LinkisHiveStorageType
@@ -64,10 +66,10 @@ class StorageTable(StorageTableBase):
             execute_status = execute_response.json()["data"]["status"]
             if execute_status == "Success":
                 return True
-            elif execute_status == "Scheduled" or execute_status == "Running":
-                return False
-            else:
+            elif execute_status == "Failed":
                 raise Exception(f"request linkis hive status entrance failed, status: {execute_status}")
+            else:
+                return False
         else:
             raise SystemError(f"request linkis hive status entrance failed, status: {execute_response.json().get('status')},"
                               f" message: {execute_response.json().get('message')}")
@@ -81,6 +83,7 @@ class StorageTable(StorageTableBase):
             status = self.status_entrance(exec_id)
             if status:
                 break
+            time.sleep(1)
         return self.result_entrance()
 
     def get_partitions(self):

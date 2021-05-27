@@ -1,6 +1,6 @@
 from fate_arch.computing import ComputingEngine
 from fate_arch.common.address import StandaloneAddress, EggRollAddress, HDFSAddress, MysqlAddress, FileAddress, \
-    PathAddress, HiveAddress
+    PathAddress, HiveAddress, LinkisHiveAddress
 
 
 class StorageEngine(object):
@@ -79,7 +79,8 @@ class Relationship(object):
     CompToStore = {
         ComputingEngine.STANDALONE: [StorageEngine.STANDALONE],
         ComputingEngine.EGGROLL: [StorageEngine.EGGROLL],
-        ComputingEngine.SPARK: [StorageEngine.HDFS]
+        ComputingEngine.SPARK: [StorageEngine.HDFS, StorageEngine.HIVE],
+        ComputingEngine.LINKIS_SPARK: [StorageEngine.LINKIS_HIVE]
     }
     EngineToAddress = {
         StorageEngine.STANDALONE: StandaloneAddress,
@@ -88,7 +89,8 @@ class Relationship(object):
         StorageEngine.MYSQL: MysqlAddress,
         StorageEngine.FILE: FileAddress,
         StorageEngine.PATH: PathAddress,
-        StorageEngine.HIVE: HiveAddress
+        StorageEngine.HIVE: HiveAddress,
+        StorageEngine.LINKIS_HIVE: LinkisHiveAddress
     }
 
 

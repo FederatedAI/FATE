@@ -50,7 +50,7 @@ class HiveAddress(AddressABC):
         self.auth = auth
         self.configuration = configuration
         self.kerberos_service_name = kerberos_service_name
-        self.password=password
+        self.password = password
         self.name = name
 
 
@@ -60,7 +60,7 @@ class LinkisHiveAddress(AddressABC):
         self.host = host
         self.port = port
         self.username = username
-        self.database = database if database else f"{username}__ind"
+        self.database = database if database else f"{username}_ind"
         self.name = name
         self.run_type = run_type
         self.execute_application_name = execute_application_name

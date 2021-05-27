@@ -209,7 +209,7 @@ class ResourceManager(object):
             if not create_initiator_baseline:
                 # set the adaptation parameters to the actual engine operation parameters
                 job_parameters.eggroll_run["eggroll.session.processors.per.node"] = adaptation_parameters["task_cores_per_node"]
-        elif job_parameters.computing_engine == ComputingEngine.SPARK:
+        elif job_parameters.computing_engine == ComputingEngine.SPARK or job_parameters.computing_engine == ComputingEngine.LINKIS_SPARK:
             adaptation_parameters["task_nodes"] = int(job_parameters.spark_run.get("num-executors", computing_engine_info.f_nodes))
             if int(job_parameters.spark_run.get("executor-cores", 0)) > 0:
                 adaptation_parameters["task_cores_per_node"] = int(job_parameters.spark_run["executor-cores"])

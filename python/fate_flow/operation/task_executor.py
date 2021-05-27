@@ -68,6 +68,7 @@ class TaskExecutor(object):
                                                            )
             party_index = job_runtime_conf["role"][role].index(party_id)
             job_args_on_party = TaskExecutor.get_job_args_on_party(dsl_parser, job_runtime_conf, role, party_id)
+            user_name = dsl_parser.get_job_parameters().get(role, {}).get(party_id, {}).get("user", '')
             component = dsl_parser.get_component_info(component_name=component_name)
             component_parameters = component.get_role_parameters()
             component_parameters_on_party = component_parameters[role][
@@ -155,7 +156,8 @@ class TaskExecutor(object):
                 persistent_table_namespace, persistent_table_name = tracker.save_output_data(
                     computing_table=output_data[index],
                     output_storage_engine=job_parameters.storage_engine,
-                    output_storage_address=job_parameters.engines_address.get(EngineType.STORAGE, {}))
+                    output_storage_address=job_parameters.engines_address.get(EngineType.STORAGE, {}),
+                    tracker_client=tracker_client)
                 if persistent_table_namespace and persistent_table_name:
                     tracker.log_output_data_info(data_name=data_name,
                                                  table_namespace=persistent_table_namespace,
@@ -163,7 +165,8 @@ class TaskExecutor(object):
             output_model = run_object.export_model()
             # There is only one model output at the current dsl version.
             tracker.save_output_model(output_model,
-                                      task_output_dsl['model'][0] if task_output_dsl.get('model') else 'default')
+                                      task_output_dsl['model'][0] if task_output_dsl.get('model') else 'default',
+                                      tracker_client=tracker_client)
             task_info["party_status"] = TaskStatus.SUCCESS
         except Exception as e:
             traceback.print_exc()
@@ -260,13 +263,14 @@ class TaskExecutor(object):
                         data_key_item = data_key.split('.')
                         search_component_name, search_data_name = data_key_item[0], data_key_item[1]
                         storage_table_meta = None
+                        tracker_client = TrackerClient(job_id=job_id, role=role, party_id=party_id,
+                                                       component_name=search_component_name)
                         if search_component_name == 'args':
                             if job_args.get('data', {}).get(search_data_name).get('namespace', '') and job_args.get(
                                     'data', {}).get(search_data_name).get('name', ''):
-                                storage_table_meta = storage.StorageTableMeta(name=job_args['data'][search_data_name]['name'], namespace=job_args['data'][search_data_name]['namespace'])
+                                storage_table_meta = tracker_client.get_table_meta(table_name=job_args['data'][search_data_name]['name'],
+                                                                                   table_namespace=job_args['data'][search_data_name]['namespace'])
                         else:
-                            tracker_client = TrackerClient(job_id=job_id, role=role, party_id=party_id,
-                                                           component_name=search_component_name)
                             upstream_output_table_infos_json = tracker_client.get_output_data_info(
                                 data_name=search_data_name)
                             if upstream_output_table_infos_json:
@@ -276,7 +280,7 @@ class TaskExecutor(object):
                                 for _ in upstream_output_table_infos_json:
                                     upstream_output_table_infos.append(fill_db_model_object(
                                         Tracker.get_dynamic_db_model(TrackingOutputDataInfo, job_id)(), _))
-                                output_tables_meta = tracker.get_output_data_table(output_data_infos=upstream_output_table_infos)
+                                output_tables_meta = tracker.get_output_data_table(output_data_infos=upstream_output_table_infos, tracker_client=tracker_client)
                                 if output_tables_meta:
                                     storage_table_meta = output_tables_meta.get(search_data_name, None)
                         args_from_component = this_type_args[search_component_name] = this_type_args.get(
@@ -310,10 +314,12 @@ class TaskExecutor(object):
                         search_component_name, search_model_alias = dsl_model_key_items[1], dsl_model_key_items[2]
                     else:
                         raise Exception('get input {} failed'.format(input_type))
-                    models = Tracker(job_id=job_id, role=role, party_id=party_id, component_name=search_component_name,
+                    tracker_client = TrackerClient(job_id=job_id, role=role, party_id=party_id, component_name=search_component_name
+                                                   , model_id=job_parameters.model_id, model_version=job_parameters.model_version)
+                    tracker = Tracker(job_id=job_id, role=role, party_id=party_id, component_name=search_component_name,
                                      model_id=job_parameters.model_id,
-                                     model_version=job_parameters.model_version).get_output_model(
-                        model_alias=search_model_alias)
+                                     model_version=job_parameters.model_version)
+                    models = tracker_client.read_component_output_model(search_model_alias, tracker)
                     this_type_args[search_component_name] = models
         if get_input_table:
             return input_table

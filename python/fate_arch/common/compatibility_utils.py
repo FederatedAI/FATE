@@ -40,5 +40,7 @@ def backend_compatibility(work_mode: typing.Union[WorkMode, int] = WorkMode.STAN
             return ComputingEngine.SPARK, FederationEngine.RABBITMQ, FederatedMode.MULTIPLE
         if backend == Backend.SPARK_PULSAR:
             return ComputingEngine.SPARK, FederationEngine.PULSAR, FederatedMode.MULTIPLE
+        if backend == Backend.LINKIS_SPARK_RABBITMQ:
+            return ComputingEngine.LINKIS_SPARK, FederationEngine.RABBITMQ, FederatedMode.MULTIPLE
     else:
         return kwargs["computing_engine"], kwargs["federation_engine"], kwargs["federated_mode"]

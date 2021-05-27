@@ -115,7 +115,7 @@ class Tracker(object):
         return view_data
 
     def save_output_data(self, computing_table, output_storage_engine, output_storage_address: dict,
-                         output_table_namespace=None, output_table_name=None):
+                         output_table_namespace=None, output_table_name=None, tracker_client=None, user_name=''):
         if computing_table:
             if not output_table_namespace or not output_table_name:
                 output_table_namespace, output_table_name = data_utils.default_output_table_info(task_id=self.task_id, task_version=self.task_version)
@@ -131,6 +131,10 @@ class Tracker(object):
                 address_dict.update({"name": output_table_name, "namespace": output_table_namespace, "storage_type": storage.StandaloneStorageType.ROLLPAIR_LMDB})
             elif output_storage_engine == StorageEngine.HDFS:
                 address_dict.update({"path": data_utils.default_output_fs_path(name=output_table_name, namespace=output_table_namespace, prefix=address_dict.get("path_prefix"))})
+            elif output_storage_engine == StorageEngine.HIVE:
+                address_dict.update({"database": output_table_namespace, "name": output_table_name})
+            elif output_storage_engine == StorageEngine.LINKIS_HIVE:
+                address_dict.update({"database": None, "name": f"{output_table_namespace}_{output_table_name}", "user_name": user_name})
             else:
                 raise RuntimeError(f"{output_storage_engine} storage is not supported")
             address = storage.StorageTableMeta.create_address(storage_engine=output_storage_engine, address_dict=address_dict)
@@ -153,13 +157,32 @@ class Tracker(object):
             table_meta.schema = schema
             table_meta.part_of_data = part_of_data
             table_meta.count = table_count
-            table_meta.create()
+            if not tracker_client:
+                table_meta.create()
+            else:
+                tracker_client.create_table_meta(table_meta)
             return output_table_namespace, output_table_name
         else:
             schedule_logger(self.job_id).info('task id {} output data table is none'.format(self.task_id))
             return None, None
 
-    def get_output_data_table(self, output_data_infos):
+    def save_table_meta(self, meta):
+        schedule_logger(self.job_id).info(f'start save table meta:{meta}')
+        address = storage.StorageTableMeta.create_address(storage_engine=meta.get("engine"),
+                                                          address_dict=meta.get("address"))
+        table_meta = storage.StorageTableMeta(name=meta.get("name"), namespace=meta.get("namespace"), new=True)
+        table_meta.set_metas(**meta)
+        meta["address"] = address
+        table_meta.create()
+        schedule_logger(self.job_id).info(f'save table meta success')
+
+    def get_table_meta(self, table_info):
+        schedule_logger(self.job_id).info(f'start get table meta:{table_info}')
+        table_meta_dict = storage.StorageTableMeta(namespace=table_info.get("namespace"), name=table_info.get("table_name"), create_address=False).to_dict()
+        schedule_logger(self.job_id).info(f'get table meta success: {table_meta_dict}')
+        return table_meta_dict
+
+    def get_output_data_table(self, output_data_infos, tracker_client=None):
         """
         Get component output data table, will run in the task executor process
         :param output_data_infos:
@@ -169,23 +192,32 @@ class Tracker(object):
         if output_data_infos:
             for output_data_info in output_data_infos:
                 schedule_logger(self.job_id).info("Get task {} {} output table {} {}".format(output_data_info.f_task_id, output_data_info.f_task_version, output_data_info.f_table_namespace, output_data_info.f_table_name))
-                data_table_meta = storage.StorageTableMeta(name=output_data_info.f_table_name, namespace=output_data_info.f_table_namespace)
+                if not tracker_client:
+                    data_table_meta = storage.StorageTableMeta(name=output_data_info.f_table_name, namespace=output_data_info.f_table_namespace)
+                else:
+                    data_table_meta = tracker_client.get_table_meta(output_data_info.f_table_name, output_data_info.f_table_namespace)
+
                 output_tables_meta[output_data_info.f_data_name] = data_table_meta
         return output_tables_meta
 
     def init_pipelined_model(self):
         self.pipelined_model.create_pipelined_model()
 
-    def save_output_model(self, model_buffers: dict, model_alias: str):
+    def save_output_model(self, model_buffers: dict, model_alias: str, tracker_client=None):
         if model_buffers:
             self.pipelined_model.save_component_model(component_name=self.component_name,
                                                       component_module_name=self.module_name,
                                                       model_alias=model_alias,
-                                                      model_buffers=model_buffers)
+                                                      model_buffers=model_buffers,
+                                                      tracker_client=tracker_client)
 
-    def get_output_model(self, model_alias):
+    def write_output_model(self, component_model):
+        self.pipelined_model.write_component_model(component_model)
+
+    def get_output_model(self, model_alias, parse=True):
         model_buffers = self.pipelined_model.read_component_model(component_name=self.component_name,
-                                                                  model_alias=model_alias)
+                                                                  model_alias=model_alias,
+                                                                  parse=parse)
         return model_buffers
 
     def collect_model(self):

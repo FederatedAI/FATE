@@ -28,6 +28,9 @@ class Session(object):
         if backend == Backend.SPARK_RABBITMQ:
             return Session(ComputingEngine.SPARK, FederationEngine.RABBITMQ)
 
+        if backend == Backend.LINKIS_SPARK_RABBITMQ:
+            return Session(ComputingEngine.LINKIS_SPARK, FederationEngine.RABBITMQ)
+
         if backend == Backend.SPARK_PULSAR:
             return Session(ComputingEngine.SPARK, FederationEngine.PULSAR)
 
@@ -84,6 +87,12 @@ class Session(object):
             from fate_arch.computing.spark import CSession
             self._computing_session = CSession(session_id=computing_session_id)
             self._computing_type = ComputingEngine.SPARK
+            return self
+
+        if self._computing_type == ComputingEngine.LINKIS_SPARK:
+            from fate_arch.computing.spark import CSession
+            self._computing_session = CSession(session_id=computing_session_id)
+            self._computing_type = ComputingEngine.LINKIS_SPARK
             return self
 
         if self._computing_type == ComputingEngine.STANDALONE:
