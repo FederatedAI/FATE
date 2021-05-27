@@ -58,9 +58,7 @@ def load_model(config_data):
             load_model_request.local.role = config_data.get('local').get('role')
             load_model_request.local.partyId = config_data.get('local').get('party_id')
             load_model_request.loadType = config_data['job_parameters'].get("load_type", "FATEFLOW")
-            # make use of 'model.transfer.url' in serving server
-            use_serving_url = config_data['job_parameters'].get('use_transfer_url_on_serving', False)
-            if not get_base_config('use_registry') and not use_serving_url:
+            if not get_base_config('use_registry'):
                 load_model_request.filePath = f"http://{IP}:{HTTP_PORT}{FATE_FLOW_MODEL_TRANSFER_ENDPOINT}"
             else:
                 load_model_request.filePath = config_data['job_parameters'].get("file_path", "")
