@@ -30,7 +30,7 @@ class EncodeParam(BaseParam):
     ----------
     salt: the src data string will be str = str + salt, default by empty string
 
-    encode_method: str, the hash method of src data string, it support md5, sha1, sha224, sha256, sha384, sha512, sm3, default by None
+    encode_method: str, the hash method of src data string, support md5, sha1, sha224, sha256, sha384, sha512, sm3, default by None
 
     base64: bool, if True, the result of hash will be changed to base64, default by False
     """
@@ -70,9 +70,9 @@ class RSAParam(BaseParam):
     ----------
     salt: the src data string will be str = str + salt, default ''
 
-    hash_method: str, the hash method of src data string, it support sha256, sha384, sha512, sm3, default sha256
+    hash_method: str, the hash method of src data string, support sha256, sha384, sha512, sm3, default sha256
 
-    final_hash_method: str, the hash method of result data string, it support md5, sha1, sha224, sha256, sha384, sha512, sm3, default sha256
+    final_hash_method: str, the hash method of result data string, support md5, sha1, sha224, sha256, sha384, sha512, sm3, default sha256
 
     split_calculation: bool, if True, Host & Guest split operations for faster performance, recommended on large data set
 
@@ -133,7 +133,8 @@ class PHParam(BaseParam):
     ----------
     salt: the src data string will be str = str + salt, default ''
 
-    hash_method: str, the hash method of src data string, it support sha256, sha384, sha512, sm3, default sha256
+    hash_method: str, the hash method of src data string, support none, md5, sha1, sha 224, sha256, sha384, sha512, sm3,
+        default sha256
 
     key_length: positive int, value >= 768 is suggested, the key length of the commutative cipher, default 1024
 
