@@ -39,10 +39,14 @@ message IVParam {
     repeated string bin_anonymous = 11;
 }
 
-message FeatureBinningResult {
+message SingleLabelFeatureBinningResult {
     map<string, IVParam> binning_result = 1;
     string role = 2;
     string party_id = 3;
+}
+
+message FeatureBinningResult {
+    map<int64, SingleLabelFeatureBinningResult> binning_result = 1;
 }
 
 message BinningSingleFeatureValue {

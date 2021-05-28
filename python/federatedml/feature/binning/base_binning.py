@@ -21,6 +21,7 @@ import functools
 import math
 import random
 import copy
+import numpy as np
 
 from federatedml.feature.binning.bin_inner_param import BinInnerParam
 from federatedml.feature.binning.bin_result import BinColResults, BinResults
@@ -328,6 +329,40 @@ class BaseBinning(object):
         instances.features = features
         return instances
 
+    @staticmethod
+    def convert_bin_counts_table(result_counts, idx):
+        """
+        Given event count information calculate iv information
+
+        Parameters
+        ----------
+        result_counts: table.
+            It is like:
+                ('x1': [[label_0_count, label_1_count, ...], [label_0_count, label_1_count, ...] ... ],
+                 'x2': [[label_0_count, label_1_count, ...], [label_0_count, label_1_count, ...] ... ],
+                 ...
+                )
+
+        idx: int
+
+        Returns
+        -------
+        ('x1': [[event_count, non_event_count], [event_count, non_event_count] ... ],
+         'x2': [[event_count, non_event_count], [event_count, non_event_count] ... ],
+         ...
+        )
+        """
+
+        def _convert(list_counts):
+            res = []
+            for c_array in list_counts:
+                event_count = c_array[idx]
+                non_event_count = np.sum(c_array) - event_count
+                res.append([event_count, non_event_count])
+            return res
+
+        return result_counts.mapValues(_convert)
+
     def cal_local_iv(self, data_instances, label_counts, split_points=None, label_table=None):
         """
         Calculate iv attributes
@@ -400,19 +435,20 @@ class BaseBinning(object):
             Dict of sparse bin num
                 {"x1": 2, "x2": 3, "x3": 5 ... }
 
-        label_counts: dict
-            eg. {0: 100, 1: 200}
+        label_counts: np.array
+            eg. [100, 200, ...]
 
         Returns
         -------
         The format is same as result_counts.
         """
 
-        curt_all = functools.reduce(lambda x, y: (x[0] + y[0], x[1] + y[1]), static_nums)
+        curt_all = functools.reduce(lambda x, y: x + y, static_nums)
         # LOGGER.debug(f"In fill_sparse_result, curt_all: {curt_all}, label_count: {label_counts}")
         sparse_bin = sparse_bin_points.get(col_name)
-        static_nums[sparse_bin] = [label_counts[1] - curt_all[0],
-                                   label_counts[0] - curt_all[1]]
+        # static_nums[sparse_bin] = [label_counts[1] - curt_all[0],
+        #                            label_counts[0] - curt_all[1]]
+        static_nums[sparse_bin] = label_counts - curt_all
         return col_name, static_nums
 
 
@@ -577,9 +613,50 @@ class BaseBinning(object):
             for col_name, col_result_obj in col_result_obj_dict.items():
                 assert isinstance(col_result_obj, BinColResults)
                 self.bin_results.put_col_results(col_name, col_result_obj)
+        return self.bin_results
 
     @staticmethod
     def add_label_in_partition(data_bin_with_table, sparse_bin_points):
+        """
+        Add all label, so that become convenient to calculate woe and iv
+
+        Parameters
+        ----------
+        data_bin_with_table : DTable
+            The input data, the DTable is like:
+            (id, {'x1': 1, 'x2': 5, 'x3': 2}, y)
+
+        sparse_bin_points: dict
+            Dict of sparse bin num
+                {0: 2, 1: 3, 2:5 ... }
+
+        Returns
+        -------
+        result_sum: the result DTable. It is like:
+            {'x1': [[label_0_sum, label_1_sum, ...], [label_0_sum, label_1_sum, ...] ... ],
+             'x2': [[label_0_sum, label_1_sum, ...], [label_0_sum, label_1_sum, ...] ... ],
+             ...
+            }
+
+        """
+        result_sum = {}
+        for _, datas in data_bin_with_table:
+            bin_idx_dict = datas[0]
+            y = datas[1]
+            for col_name, bin_idx in bin_idx_dict.items():
+                result_sum.setdefault(col_name, [])
+                col_sum = result_sum[col_name]
+                while bin_idx >= len(col_sum):
+                    col_sum.append(np.zeros(len(y)))
+                if bin_idx == sparse_bin_points[col_name]:
+                    continue
+                col_sum[bin_idx] += y
+        return list(result_sum.items())
+
+
+
+    @staticmethod
+    def add_label_in_partition_bak(data_bin_with_table, sparse_bin_points):
         """
         Add all label, so that become convenient to calculate woe and iv
 
@@ -681,8 +758,9 @@ class BaseBinning(object):
             if idx >= len(sum1):
                 sum1.append(label_sum2)
             else:
-                label_sum1 = sum1[idx]
-                tmp = [label_sum1[0] + label_sum2[0], label_sum1[1] + label_sum2[1]]
-                sum1[idx] = tmp
+                sum1[idx] += label_sum2
+                # label_sum1 = sum1[idx]
+                # tmp = [label_sum1[0] + label_sum2[0], label_sum1[1] + label_sum2[1]]
+                # sum1[idx] = tmp
 
         return sum1

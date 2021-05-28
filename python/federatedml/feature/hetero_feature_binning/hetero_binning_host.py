@@ -66,8 +66,7 @@ class HeteroFeatureBinningHost(BaseFeatureBinning):
 
         LOGGER.info("Get encrypted_label_table from guest")
 
-        encrypted_bin_sum = self.__static_encrypted_bin_label(data_bin_table, encrypted_label_table,
-                                                              self.bin_inner_param.bin_cols_map, split_points)
+        encrypted_bin_sum = self.__static_encrypted_bin_label(data_bin_table, encrypted_label_table)
 
         encode_name_f = functools.partial(self.bin_inner_param.encode_col_name_dict,
                                           model=self,
@@ -96,7 +95,24 @@ class HeteroFeatureBinningHost(BaseFeatureBinning):
                                                         role=consts.GUEST,
                                                         idx=0)
 
-    def __static_encrypted_bin_label(self, data_bin_table, encrypted_label, cols_dict, split_points):
+    def __static_encrypted_bin_label(self, data_bin_table, encrypted_label):
+        data_bin_with_label = data_bin_table.join(encrypted_label, lambda x, y: (x, y))
+        label_counts = encrypted_label.reduce(operator.add)
+        sparse_bin_points = self.binning_obj.get_sparse_bin(self.bin_inner_param.bin_indexes,
+                                                            self.binning_obj.split_points)
+        sparse_bin_points = {self.bin_inner_param.header[k]: v for k, v in sparse_bin_points.items()}
+
+        f = functools.partial(self.binning_obj.add_label_in_partition,
+                              sparse_bin_points=sparse_bin_points)
+        encrypted_bin_sum = data_bin_with_label.mapReducePartitions(f, self.binning_obj.aggregate_partition_label)
+        f = functools.partial(self.binning_obj.fill_sparse_result,
+                              sparse_bin_points=sparse_bin_points,
+                              label_counts=label_counts)
+        encrypted_bin_sum = encrypted_bin_sum.map(f)
+
+        return encrypted_bin_sum
+
+    def __static_encrypted_bin_label_deprecated(self, data_bin_table, encrypted_label, cols_dict, split_points):
         """
         Returns:
             table with value like:
