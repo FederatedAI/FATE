@@ -20,9 +20,11 @@
 from federatedml.secure_information_retrieval.base_secure_information_retrieval import \
     BaseSecureInformationRetrieval, CryptoExecutor
 from federatedml.param.sir_param import SecureInformationRetrievalParam
+from federatedml.param.intersect_param import IntersectParam
 from federatedml.secureprotol.oblivious_transfer.hauck_oblivious_transfer.hauck_oblivious_transfer_sender import \
     HauckObliviousTransferSender
 from federatedml.secureprotol.symmetric_encryption.py_aes_encryption import AESEncryptKey
+from federatedml.statistic.intersect import PhIntersectionHost
 from federatedml.util import consts, abnormal_detection, LOGGER
 
 
@@ -37,6 +39,10 @@ class SecureInformationRetrievalHost(BaseSecureInformationRetrieval):
 
     def _init_model(self, param: SecureInformationRetrievalParam):
         self._init_base_model(param)
+        self.intersect_obj = PhIntersectionHost()
+        self.intersect_obj.role = consts.HOST
+        intersect_param = IntersectParam(ph_params=self.ph_params)
+        self.intersect_obj.load_params(intersect_param)
 
         if self.model_param.oblivious_transfer_protocol == consts.OT_HAUCK:
             self.oblivious_transfer = HauckObliviousTransferSender()
@@ -65,6 +71,7 @@ class SecureInformationRetrievalHost(BaseSecureInformationRetrieval):
         if not self._check_oblivious_transfer_condition():
             self._failure_response()
 
+        """
         # 2. Sync commutative cipher public knowledge, block num and init
         self._sync_commutative_cipher_public_knowledge()
         self.commutative_cipher.init()
@@ -88,6 +95,9 @@ class SecureInformationRetrievalHost(BaseSecureInformationRetrieval):
 
         # 5. Wait for guest to find intersection and re-index the messages
         LOGGER.info("waiting for guest to find intersection and perform natural indexation")
+        """
+        self.intersect_obj.get_intersect_doubly_encrypted_id(data_inst)
+        id_list_host_first = self.intersect_obj.id_list_local_first
 
         # 6. Get the re-indexed doubly encrypted ID from guest
         id_blocks = self._iteratively_get_id_blocks()

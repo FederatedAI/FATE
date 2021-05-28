@@ -24,10 +24,12 @@ from federatedml.feature.instance import Instance
 from federatedml.secure_information_retrieval.base_secure_information_retrieval import \
     BaseSecureInformationRetrieval
 from federatedml.param.sir_param import SecureInformationRetrievalParam
+from federatedml.param.intersect_param import IntersectParam
 from federatedml.secureprotol.oblivious_transfer.hauck_oblivious_transfer.hauck_oblivious_transfer_receiver import \
     HauckObliviousTransferReceiver
 from federatedml.secureprotol.symmetric_encryption.py_aes_encryption import AESDecryptKey
 from federatedml.secureprotol.symmetric_encryption.pohlig_hellman_encryption import PohligHellmanCipherKey
+from federatedml.statistic.intersect import PhIntersectionGuest
 from federatedml.util import consts, abnormal_detection, LOGGER
 
 
@@ -46,18 +48,16 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
 
     def _init_model(self, param: SecureInformationRetrievalParam):
         self._init_base_model(param)
+        self.intersect_obj = PhIntersectionGuest()
+        self.intersect_obj.role = consts.GUEST
+        intersect_param = IntersectParam(ph_params=self.ph_params)
+        self.intersect_obj.load_params(intersect_param)
 
         if self.model_param.oblivious_transfer_protocol == consts.OT_HAUCK:
             self.oblivious_transfer = HauckObliviousTransferReceiver()
         else:
             LOGGER.error("SIR only supports Hauck's OT")
             raise ValueError("SIR only supports Hauck's OT")
-
-        if self.model_param.commutative_encryption == consts.CE_PH:
-            self.commutative_cipher = CryptoExecutor(PohligHellmanCipherKey.generate_key(self.model_param.key_size))
-        else:
-            LOGGER.error("SIR only supports Pohlig-Hellman encryption")
-            raise ValueError("SIR only supports Pohlig-Hellman encryption")
 
     def fit(self, data_inst):
         """
@@ -80,6 +80,7 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
         if not self._check_oblivious_transfer_condition():
             self._failure_response()
 
+        """
         # 2. Sync commutative cipher public knowledge, block num and init
         self._sync_commutative_cipher_public_knowledge()
         self.commutative_cipher.init()
@@ -107,6 +108,9 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
         id_list_intersect = self._find_intersection(
             id_list_guest_second, id_list_host_second_only)     # (EEi, -1)
         LOGGER.info("intersection found")
+        """
+        id_list_intersect = self.intersect_obj.get_intersect_doubly_encrypted_id(data_inst)
+        id_list_host_second_only = self.intersect_obj.id_list_remote_second
 
         # 6. Send the re-indexed doubly encrypted ID to host
         self._fake_blocks(id_list_intersect, id_list_host_second_only)  # List[(EEi, -1)]

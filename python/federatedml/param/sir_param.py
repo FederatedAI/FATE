@@ -17,46 +17,38 @@
 #  limitations under the License.
 #
 from federatedml.param.base_param import BaseParam
+from federatedml.param.intersect_param import PHParam
 from federatedml.util import consts
 
 
 class SecureInformationRetrievalParam(BaseParam):
     """
     security_level: float [0, 1]; if security_level == 0, then do raw data retrieval
-    oblivious_transfer_protocol: OT type, only supports consts.OT_HAUCK
-    commutative_encryption: the commutative encryption scheme used, only supports consts.CE_PH
-    non_committing_encryption: the non-committing encryption scheme used, only supports consts.AES
-    key_size: int >= 768, the key length of the commutative cipher
+    oblivious_transfer_protocol: OT type, only supports OT_Hauck
+    commutative_encryption: the commutative encryption scheme used, only supports CommutativeEncryptionPohligHellman
+    non_committing_encryption: the non-committing encryption scheme used, only supports aes
+    ph_params: params for Pohlig-Hellman Encryption
     raw_retrieval: bool, perform raw retrieval if raw_retrieval
     """
     def __init__(self, security_level=0.5,
                  oblivious_transfer_protocol=consts.OT_HAUCK,
                  commutative_encryption=consts.CE_PH,
                  non_committing_encryption=consts.AES,
-                 key_size=1024,
+                 ph_params=PHParam(),
                  raw_retrieval=False):
-        """
-
-        :param security_level: float
-            oblivious_transfer_protocol: str
-            commutative_encryption: str
-            non_committing_encryption: str
-            key_size: int
-            raw_retrieval: bool
-        """
         super(SecureInformationRetrievalParam, self).__init__()
         self.security_level = security_level
         self.oblivious_transfer_protocol = oblivious_transfer_protocol
         self.commutative_encryption = commutative_encryption
         self.non_committing_encryption = non_committing_encryption
-        self.key_size = key_size
+        self.ph_params = ph_params
         self.raw_retrieval = raw_retrieval
 
     def check(self):
         descr = "secure information retrieval param's"
         self.check_decimal_float(self.security_level, descr)
-        self.check_string(self.oblivious_transfer_protocol, descr)
-        self.check_string(self.commutative_encryption, descr)
-        self.check_string(self.non_committing_encryption, descr)
-        self.check_positive_integer(self.key_size, descr)
+        self.check_and_change_lower(self.oblivious_transfer_protocol, [consts.OT_HAUCK.lower()], descr)
+        self.check_and_change_lower(self.commutative_encryption, [consts.CE_PH.lower()], descr)
+        self.check_and_change_lower(self.non_committing_encryption, [consts.AES.lower()], descr)
+        self.ph_params.check()
         self.check_boolean(self.raw_retrieval, descr)

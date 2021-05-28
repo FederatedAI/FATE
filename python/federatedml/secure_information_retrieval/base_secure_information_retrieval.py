@@ -44,6 +44,9 @@ class BaseSecureInformationRetrieval(ModelBase):
         self.block_num = None       # N in 1-N OT
         self.coverage = None        # the percentage of transactions whose values are successfully retrieved
 
+        self.ph_params = None
+        self.intersect_obj = None
+
         # For callback
         self.metric_name = "sir"
         self.metric_namespace = "train"
@@ -55,6 +58,7 @@ class BaseSecureInformationRetrieval(ModelBase):
 
         self.model_param = param
         self.security_level = self.model_param.security_level
+        self.ph_params = self.model_param.ph_params
 
     def _init_transfer_variable(self):
         self.transfer_variable.natural_indexation.disable_auto_clean()
