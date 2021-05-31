@@ -74,20 +74,24 @@ def get_table_meta(job_id, component_name, task_version, task_id, role, party_id
     return get_json_result(data=table_meta_dict)
 
 
-@manager.route('/<job_id>/<component_name>/<task_id>/<task_version>/<role>/<party_id>/<model_id>/<model_version>/component_model/save',
+@manager.route('/<job_id>/<component_name>/<task_id>/<task_version>/<role>/<party_id>/component_model/save',
                methods=['POST'])
-def save_component_model(job_id, component_name, task_version, task_id, role, party_id, model_id, model_version):
-    component_model = request.json
+def save_component_model(job_id, component_name, task_version, task_id, role, party_id):
+    request_data = request.json
+    model_id = request_data.get("model_id")
+    model_version = request_data.get("model_version")
     tracker = Tracker(job_id=job_id, component_name=component_name, task_id=task_id, task_version=task_version,
                       role=role, party_id=party_id, model_id=model_id, model_version=model_version)
-    tracker.write_output_model(component_model)
+    tracker.write_output_model(request_data.get("component_model"))
     return get_json_result()
 
 
-@manager.route('/<job_id>/<component_name>/<task_id>/<task_version>/<role>/<party_id>/<model_id>/<model_version>/component_model/get',
+@manager.route('/<job_id>/<component_name>/<task_id>/<task_version>/<role>/<party_id>/component_model/get',
                methods=['POST'])
-def get_component_model(job_id, component_name, task_version, task_id, role, party_id, model_id, model_version):
+def get_component_model(job_id, component_name, task_version, task_id, role, party_id):
     request_data = request.json
+    model_id = request_data.get("model_id")
+    model_version = request_data.get("model_version")
     tracker = Tracker(job_id=job_id, component_name=component_name, task_id=task_id, task_version=task_version,
                       role=role, party_id=party_id, model_id=model_id, model_version=model_version)
     data = tracker.get_output_model(model_alias=request_data.get("search_model_alias"), parse=False)

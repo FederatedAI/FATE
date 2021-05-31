@@ -173,6 +173,8 @@ class Tracker(object):
         table_meta = storage.StorageTableMeta(name=meta.get("name"), namespace=meta.get("namespace"), new=True)
         table_meta.set_metas(**meta)
         meta["address"] = address
+        meta["part_of_data"] = deserialize_b64(meta["part_of_data"])
+        meta["schema"] = deserialize_b64(meta["schema"])
         table_meta.create()
         schedule_logger(self.job_id).info(f'save table meta success')
 
@@ -180,6 +182,8 @@ class Tracker(object):
         schedule_logger(self.job_id).info(f'start get table meta:{table_info}')
         table_meta_dict = storage.StorageTableMeta(namespace=table_info.get("namespace"), name=table_info.get("table_name"), create_address=False).to_dict()
         schedule_logger(self.job_id).info(f'get table meta success: {table_meta_dict}')
+        table_meta_dict["part_of_data"] = serialize_b64(table_meta_dict["part_of_data"], to_str=True)
+        table_meta_dict["schema"] = serialize_b64(table_meta_dict["schema"], to_str=True)
         return table_meta_dict
 
     def get_output_data_table(self, output_data_infos, tracker_client=None):

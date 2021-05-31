@@ -156,8 +156,7 @@ class TaskExecutor(object):
                 persistent_table_namespace, persistent_table_name = tracker.save_output_data(
                     computing_table=output_data[index],
                     output_storage_engine=job_parameters.storage_engine,
-                    output_storage_address=job_parameters.engines_address.get(EngineType.STORAGE, {}),
-                    tracker_client=tracker_client)
+                    output_storage_address=job_parameters.engines_address.get(EngineType.STORAGE, {}))
                 if persistent_table_namespace and persistent_table_name:
                     tracker.log_output_data_info(data_name=data_name,
                                                  table_namespace=persistent_table_namespace,
@@ -268,8 +267,11 @@ class TaskExecutor(object):
                         if search_component_name == 'args':
                             if job_args.get('data', {}).get(search_data_name).get('namespace', '') and job_args.get(
                                     'data', {}).get(search_data_name).get('name', ''):
-                                storage_table_meta = tracker_client.get_table_meta(table_name=job_args['data'][search_data_name]['name'],
-                                                                                   table_namespace=job_args['data'][search_data_name]['namespace'])
+                                # storage_table_meta = tracker_client.get_table_meta(table_name=job_args['data'][search_data_name]['name'],
+                                #                                                    table_namespace=job_args['data'][search_data_name]['namespace'])
+                                storage_table_meta = storage.StorageTableMeta(
+                                    name=job_args['data'][search_data_name]['name'],
+                                    namespace=job_args['data'][search_data_name]['namespace'])
                         else:
                             upstream_output_table_infos_json = tracker_client.get_output_data_info(
                                 data_name=search_data_name)
@@ -280,7 +282,7 @@ class TaskExecutor(object):
                                 for _ in upstream_output_table_infos_json:
                                     upstream_output_table_infos.append(fill_db_model_object(
                                         Tracker.get_dynamic_db_model(TrackingOutputDataInfo, job_id)(), _))
-                                output_tables_meta = tracker.get_output_data_table(output_data_infos=upstream_output_table_infos, tracker_client=tracker_client)
+                                output_tables_meta = tracker.get_output_data_table(output_data_infos=upstream_output_table_infos)
                                 if output_tables_meta:
                                     storage_table_meta = output_tables_meta.get(search_data_name, None)
                         args_from_component = this_type_args[search_component_name] = this_type_args.get(

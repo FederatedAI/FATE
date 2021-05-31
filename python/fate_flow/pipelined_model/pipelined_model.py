@@ -72,26 +72,26 @@ class PipelinedModel(object):
                 with open(storage_path, "wb") as fw:
                     fw.write(buffer_object_serialized_string)
             else:
-                component_model["buffer"][storage_path] = buffer_object_serialized_string
+                component_model["buffer"][storage_path] = base64.b64encode(buffer_object_serialized_string).decode()
             model_proto_index[model_name] = type(buffer_object).__name__   # index of model name and proto buffer class name
             stat_logger.info("Save {} {} {} buffer".format(component_name, model_alias, model_name))
         if not tracker_client:
             self.update_component_meta(component_name=component_name,
                                        component_module_name=component_module_name,
-                                       model_alias=component_module_name,
+                                       model_alias=model_alias,
                                        model_proto_index=model_proto_index)
             stat_logger.info("Save {} {} successfully".format(component_name, model_alias))
         else:
             component_model["component_name"] = component_name
             component_model["component_module_name"] = component_module_name
-            component_model["model_alias"] = component_module_name
+            component_model["model_alias"] = model_alias
             component_model["model_proto_index"] = model_proto_index
             tracker_client.save_component_output_model(component_model)
 
     def write_component_model(self, component_model):
-        for storage_path, buffer_object_serialized_string in component_model.get("buffer"):
+        for storage_path, buffer_object_serialized_string in component_model.get("buffer").items():
             with open(storage_path, "wb") as fw:
-                fw.write(buffer_object_serialized_string)
+                fw.write(base64.b64decode(buffer_object_serialized_string.encode()))
         self.update_component_meta(component_name=component_model["component_name"],
                                    component_module_name=component_model["component_module_name"],
                                    model_alias=component_model["model_alias"],
@@ -111,7 +111,7 @@ class PipelinedModel(object):
                     model_buffers[model_name] = self.parse_proto_object(buffer_name=buffer_name,
                                                                         buffer_object_serialized_string=buffer_object_serialized_string)
                 else:
-                    model_buffers[model_name] = [buffer_name, buffer_object_serialized_string]
+                    model_buffers[model_name] = [buffer_name, base64.b64encode(buffer_object_serialized_string).decode()]
         return model_buffers
 
     def collect_models(self, in_bytes=False, b64encode=True):

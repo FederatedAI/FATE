@@ -13,12 +13,13 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import base64
 from typing import List
 
 from fate_arch import storage
 from fate_arch.abc import AddressABC
 from fate_arch.common import log
-from fate_arch.common.base_utils import serialize_b64
+from fate_arch.common.base_utils import serialize_b64, deserialize_b64
 from fate_flow.entity.types import RetCode, RunParameters
 from fate_flow.entity.metric import Metric, MetricMeta
 from fate_flow.operation.job_tracker import Tracker
@@ -123,10 +124,14 @@ class TrackerClient(object):
     def create_table_meta(self, table_meta):
         request_body = dict()
         for k, v in table_meta.to_dict().items():
-            if not issubclass(type(v), AddressABC):
-                request_body[k] = v
-            else:
+            if k == "part_of_data":
+                request_body[k] = serialize_b64(v, to_str=True)
+            elif k == "schema":
+                request_body[k] = serialize_b64(v, to_str=True)
+            elif issubclass(type(v), AddressABC):
                 request_body[k] = v.__dict__
+            else:
+                request_body[k] = v
         response = api_utils.local_api(job_id=self.job_id,
                                        method='POST',
                                        endpoint='/tracker/{}/{}/{}/{}/{}/{}/table_meta/create'.format(
@@ -160,43 +165,43 @@ class TrackerClient(object):
             data_table_meta.set_metas(**response["data"])
             data_table_meta.address = storage.StorageTableMeta.create_address(storage_engine=response["data"].get("engine"),
                                                                               address_dict=response["data"].get("address"))
+            data_table_meta.part_of_data = deserialize_b64(data_table_meta.part_of_data)
+            data_table_meta.schema = deserialize_b64(data_table_meta.schema)
             return data_table_meta
 
     def save_component_output_model(self, component_model):
+        json_body = {"model_id": self.model_id, "model_version": self.model_version, "component_model": component_model}
         response = api_utils.local_api(job_id=self.job_id,
                                        method='POST',
-                                       endpoint='/tracker/{}/{}/{}/{}/{}/{}/{}/{}/component_model/save'.format(
+                                       endpoint='/tracker/{}/{}/{}/{}/{}/{}/component_model/save'.format(
                                            self.job_id,
                                            self.component_name,
                                            self.task_id,
                                            self.task_version,
                                            self.role,
-                                           self.party_id,
-                                           self.model_id,
-                                           self.model_version),
-                                       json_body=component_model)
+                                           self.party_id),
+                                       json_body=json_body)
         if response['retcode'] != RetCode.SUCCESS:
             raise Exception(f"create table meta failed:{response['retmsg']}")
 
     def read_component_output_model(self, search_model_alias, tracker):
+        json_body = {"search_model_alias": search_model_alias, "model_id": self.model_id, "model_version": self.model_version}
         response = api_utils.local_api(job_id=self.job_id,
                                        method='POST',
-                                       endpoint='/tracker/{}/{}/{}/{}/{}/{}/{}/{}/component_model/read'.format(
+                                       endpoint='/tracker/{}/{}/{}/{}/{}/{}/component_model/get'.format(
                                            self.job_id,
                                            self.component_name,
                                            self.task_id,
                                            self.task_version,
                                            self.role,
-                                           self.party_id,
-                                           self.model_id,
-                                           self.model_version),
-                                       json_body={"search_model_alias": search_model_alias})
+                                           self.party_id),
+                                       json_body=json_body)
         if response['retcode'] != RetCode.SUCCESS:
             raise Exception(f"create table meta failed:{response['retmsg']}")
         else:
             model_buffers = {}
             for model_name, v in response['data'].items():
-                model_buffers[model_name] = tracker.parse_proto_object(buffer_name=v[0], buffer_object_serialized_string=v[1])
+                model_buffers[model_name] = tracker.pipelined_model.parse_proto_object(buffer_name=v[0], buffer_object_serialized_string=base64.b64decode(v[1].encode()))
             return model_buffers
 
     def log_output_data_info(self, data_name: str, table_namespace: str, table_name: str):
