@@ -59,6 +59,8 @@ class BaseSecureInformationRetrieval(ModelBase):
         self.model_param = param
         self.security_level = self.model_param.security_level
         self.ph_params = self.model_param.ph_params
+        self.target_cols = self.model_param.target_cols
+        self.target_indexes = self.model_param.target_indexes
 
     def _init_transfer_variable(self):
         self.transfer_variable.natural_indexation.disable_auto_clean()
@@ -86,21 +88,6 @@ class BaseSecureInformationRetrieval(ModelBase):
     def _decrypt_id(self, data_instance, mode):
         pass
 
-    def _sync_commutative_cipher_public_knowledge(self):
-        """
-        guest -> host public knowledge
-        :return:
-        """
-        pass
-
-    def _exchange_id_list(self, id_list):
-        """
-
-        :param id_list: Table in the form (id, 0)
-        :return:
-        """
-        pass
-
     def _raw_information_retrieval(self, data_instance):
         """
         If security_level == 0, then perform raw information retrieval
@@ -113,14 +100,6 @@ class BaseSecureInformationRetrieval(ModelBase):
         """
         Cooperatively parse the security level index
         :param data_instance:
-        :return:
-        """
-        pass
-
-    def _sync_doubly_encrypted_id_list(self, id_list):
-        """
-        host -> guest
-        :param id_list:
         :return:
         """
         pass
@@ -152,20 +131,6 @@ class BaseSecureInformationRetrieval(ModelBase):
         host -> guest
         :param id_block:
         :param time: int
-        :return:
-        """
-
-    def _sync_intersect_cipher_cipher(self, id_list):
-        """
-        guest -> host
-        :param id_list:
-        :return:
-        """
-
-    def _sync_intersect_cipher(self, id_list):
-        """
-        host -> guest
-        :param id_list:
         :return:
         """
 

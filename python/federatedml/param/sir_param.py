@@ -29,13 +29,21 @@ class SecureInformationRetrievalParam(BaseParam):
     non_committing_encryption: the non-committing encryption scheme used, only supports aes
     ph_params: params for Pohlig-Hellman Encryption
     raw_retrieval: bool, perform raw retrieval if raw_retrieval
+    target_cols: str or list of str, target cols to retrieve; to retrieve label, please specify "label",
+        any values not retrieved will be marked as "unretrieved",
+        default None
+    target_indexes: int or list of int, target indexes to retrieve, note that label can only be specified by target_cols;
+        values will be merged with target_cols,
+        default None
     """
     def __init__(self, security_level=0.5,
                  oblivious_transfer_protocol=consts.OT_HAUCK,
                  commutative_encryption=consts.CE_PH,
                  non_committing_encryption=consts.AES,
                  ph_params=PHParam(),
-                 raw_retrieval=False):
+                 raw_retrieval=False,
+                 target_cols=None,
+                 target_indexes=None):
         super(SecureInformationRetrievalParam, self).__init__()
         self.security_level = security_level
         self.oblivious_transfer_protocol = oblivious_transfer_protocol
@@ -43,12 +51,30 @@ class SecureInformationRetrievalParam(BaseParam):
         self.non_committing_encryption = non_committing_encryption
         self.ph_params = ph_params
         self.raw_retrieval = raw_retrieval
+        self.target_cols = target_cols
+        self.target_indexes = target_indexes
 
     def check(self):
-        descr = "secure information retrieval param's"
-        self.check_decimal_float(self.security_level, descr)
-        self.check_and_change_lower(self.oblivious_transfer_protocol, [consts.OT_HAUCK.lower()], descr)
-        self.check_and_change_lower(self.commutative_encryption, [consts.CE_PH.lower()], descr)
-        self.check_and_change_lower(self.non_committing_encryption, [consts.AES.lower()], descr)
+        descr = "secure information retrieval param's "
+        self.check_decimal_float(self.security_level, descr+"security_level")
+        self.check_and_change_lower(self.oblivious_transfer_protocol,
+                                    [consts.OT_HAUCK.lower()],
+                                    descr+"oblivious_transfer_protocol")
+        self.check_and_change_lower(self.commutative_encryption,
+                                    [consts.CE_PH.lower()],
+                                    descr+"commutative_encryption")
+        self.check_and_change_lower(self.non_committing_encryption,
+                                    [consts.AES.lower()],
+                                    descr+"non_committing_encryption")
         self.ph_params.check()
         self.check_boolean(self.raw_retrieval, descr)
+        if self.target_cols:
+            if not isinstance(self.target_cols, list):
+                self.target_cols = [self.target_cols]
+            for col in self.target_cols:
+                self.check_string(col, descr+"target_cols")
+        if self.target_indexes:
+            if not isinstance(self.target_indexes, list):
+                self.target_indexes = [self.target_indexes]
+            for i in self.target_indexes:
+                self.check_nonnegative_number(i, descr+"target_indexes")

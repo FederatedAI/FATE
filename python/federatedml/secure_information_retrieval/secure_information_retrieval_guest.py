@@ -80,6 +80,8 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
         if not self._check_oblivious_transfer_condition():
             self._failure_response()
 
+        recorded_k_data = data_inst.map(lambda k, v: BaseSecureInformationRetrieval.record_original_id(k, v))
+
         """
         # 2. Sync commutative cipher public knowledge, block num and init
         self._sync_commutative_cipher_public_knowledge()
@@ -93,7 +95,6 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
         # h, Eh, EEh: host
         # i, Ei, EEi: intersection
         # record converted string id in case of non-ascii
-        recorded_k_data = data_inst.map(lambda k, v: BaseSecureInformationRetrieval.record_original_id(k, v))
         id_list_guest_first = self._encrypt_id(data_inst)      # (Eg, -1)
         LOGGER.info("encrypted guest id for the 1st time")
         id_list_host_first = self._exchange_id_list(id_list_guest_first)              # send (Eg, -1), get (Eh, -1)
@@ -293,25 +294,6 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
             id_list_array[i].mapValues(lambda v: i)
         return id_list_array
 
-    @staticmethod
-    def _find_intersection(id_list_guest, id_list_host):
-        """
-        Find the intersection set of ENC_id
-        :param id_list_guest: Table in the form (EEg, -1)
-        :param id_list_host: Table in the form (EEh, -1)
-        :return: Table in the form (EEi, -1)
-        """
-        return id_list_guest.join(id_list_host, lambda v, u: -1)
-
-    def _sync_doubly_encrypted_id_list(self, id_list=None):
-        id_list_guest = self.transfer_variable.doubly_encrypted_id_list.get(idx=0)
-        # id_list_guest = federation.get(name=self.transfer_variable.doubly_encrypted_id_list.name,
-        #                                tag=self.transfer_variable.generate_transferid(
-        #                                    self.transfer_variable.doubly_encrypted_id_list),
-        #                                idx=0)
-        LOGGER.info("got doubly encrypted id list from host")
-        return id_list_guest
-
     def _parse_security_level(self, data_instance):
         data_count_guest = data_instance.count()
 
@@ -320,25 +302,6 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
         LOGGER.info("parsed block num = {}".format(self.block_num))
 
         self._sync_block_num()
-
-    def _exchange_id_list(self, id_list_guest):
-        self.transfer_variable.id_ciphertext_list_exchange_g2h.remote(id_list_guest,
-                                                                      role=consts.HOST,
-                                                                      idx=0)
-        # federation.remote(obj=id_list_guest,
-        #                   name=self.transfer_variable.id_ciphertext_list_exchange_g2h.name,
-        #                   tag=self.transfer_variable.generate_transferid(
-        #                       self.transfer_variable.id_ciphertext_list_exchange_g2h),
-        #                   role=consts.HOST,
-        #                   idx=0)
-        LOGGER.info("sent id 1st ciphertext list to host")
-        id_list_host = self.transfer_variable.id_ciphertext_list_exchange_h2g.get(idx=0)
-        # id_list_host = federation.get(name=self.transfer_variable.id_ciphertext_list_exchange_h2g.name,
-        #                               tag=self.transfer_variable.generate_transferid(
-        #                                   self.transfer_variable.id_ciphertext_list_exchange_h2g),
-        #                               idx=0)
-        LOGGER.info("got id 1st ciphertext list from host")
-        return id_list_host
 
     def _encrypt_id(self, data_instance, reserve_original_key=False):
         """

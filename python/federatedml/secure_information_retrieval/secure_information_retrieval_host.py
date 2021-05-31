@@ -235,39 +235,8 @@ class SecureInformationRetrievalHost(BaseSecureInformationRetrieval):
         LOGGER.info("got naturally indexed block {} from guest".format(time))
         return id_list_natural_indexation
 
-    def _sync_doubly_encrypted_id_list(self, id_list):
-        self.transfer_variable.doubly_encrypted_id_list.remote(id_list,
-                                                               role=consts.GUEST,
-                                                               idx=0)
-        # federation.remote(obj=id_list,
-        #                   name=self.transfer_variable.doubly_encrypted_id_list.name,
-        #                   tag=self.transfer_variable.generate_transferid(
-        #                       self.transfer_variable.doubly_encrypted_id_list),
-        #                   role=consts.GUEST,
-        #                   idx=0)
-        LOGGER.info("sent doubly encrypted id list to guest")
-
     def _parse_security_level(self, data_instance):
         self._sync_block_num()
-
-    def _exchange_id_list(self, id_list_host):
-        self.transfer_variable.id_ciphertext_list_exchange_h2g.remote(id_list_host,
-                                                                      role=consts.GUEST,
-                                                                      idx=0)
-        # federation.remote(obj=id_list_host,
-        #                   name=self.transfer_variable.id_ciphertext_list_exchange_h2g.name,
-        #                   tag=self.transfer_variable.generate_transferid(
-        #                       self.transfer_variable.id_ciphertext_list_exchange_h2g),
-        #                   role=consts.GUEST,
-        #                   idx=0)
-        LOGGER.info("sent id 1st ciphertext list to guest")
-        id_list_guest = self.transfer_variable.id_ciphertext_list_exchange_g2h.get(idx=0)
-        # id_list_guest = federation.get(name=self.transfer_variable.id_ciphertext_list_exchange_g2h.name,
-        #                                tag=self.transfer_variable.generate_transferid(
-        #                                    self.transfer_variable.id_ciphertext_list_exchange_g2h),
-        #                                idx=0)
-        LOGGER.info("got id 1st ciphertext list from guest")
-        return id_list_guest
 
     def _encrypt_id(self, data_instance, reserve_value=False):
         """
@@ -281,14 +250,6 @@ class SecureInformationRetrievalHost(BaseSecureInformationRetrieval):
             return self.commutative_cipher.map_encrypt(data_instance, mode=3)
         else:
             return self.commutative_cipher.map_encrypt(data_instance, mode=1)
-
-    def _sync_commutative_cipher_public_knowledge(self):
-        self.commutative_cipher = self.transfer_variable.commutative_cipher_public_knowledge.get(idx=0)
-        # self.commutative_cipher = federation.get(name=self.transfer_variable.commutative_cipher_public_knowledge.name,
-        #                                          tag=self.transfer_variable.generate_transferid(
-        #                                              self.transfer_variable.commutative_cipher_public_knowledge),
-        #                                          idx=0)
-        LOGGER.info("got commutative cipher public knowledge from host {}".format(self.commutative_cipher))
 
     def _sync_block_num(self):
         self.block_num = self.transfer_variable.block_num.get(idx=0)
