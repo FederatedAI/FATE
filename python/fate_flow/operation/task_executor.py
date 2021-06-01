@@ -156,7 +156,8 @@ class TaskExecutor(object):
                 persistent_table_namespace, persistent_table_name = tracker.save_output_data(
                     computing_table=output_data[index],
                     output_storage_engine=job_parameters.storage_engine,
-                    output_storage_address=job_parameters.engines_address.get(EngineType.STORAGE, {}))
+                    output_storage_address=job_parameters.engines_address.get(EngineType.STORAGE, {}),
+                    user_name=user_name)
                 if persistent_table_namespace and persistent_table_name:
                     tracker.log_output_data_info(data_name=data_name,
                                                  table_namespace=persistent_table_namespace,

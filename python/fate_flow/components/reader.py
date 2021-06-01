@@ -59,25 +59,23 @@ class Reader(ComponentBase):
             # update real count to meta info
             input_table.count()
             # Table replication is required
-            if input_table_meta.get_engine() != output_table_engine:
-                LOGGER.info(
-                    f"the {input_table_meta.get_engine()} engine input table needs to be converted to {output_table_engine} engine to support computing engine {computing_engine}")
+            if computing_engine == ComputingEngine.LINKIS_SPARK:
+                output_table_meta = input_table_meta
             else:
-                LOGGER.info(f"the {input_table_meta.get_engine()} input table needs to be transform format")
-            with storage.Session.build(
-                    session_id=job_utils.generate_session_id(self.tracker.task_id, self.tracker.task_version,
-                                                             self.tracker.role, self.tracker.party_id,
-                                                             suffix="storage",
-                                                             random_end=True),
-                    storage_engine=output_table_engine) as output_table_session:
-                output_table = output_table_session.create_table(address=output_table_address,
-                                                                 name=output_table_name,
-                                                                 namespace=output_table_namespace,
-                                                                 partitions=input_table_meta.partitions)
-                self.copy_table(src_table=input_table, dest_table=output_table)
-                # update real count to meta info
-                output_table.count()
-                output_table_meta = StorageTableMeta(name=output_table.get_name(), namespace=output_table.get_namespace())
+                with storage.Session.build(
+                        session_id=job_utils.generate_session_id(self.tracker.task_id, self.tracker.task_version,
+                                                                 self.tracker.role, self.tracker.party_id,
+                                                                 suffix="storage",
+                                                                 random_end=True),
+                        storage_engine=output_table_engine) as output_table_session:
+                    output_table = output_table_session.create_table(address=output_table_address,
+                                                                     name=output_table_name,
+                                                                     namespace=output_table_namespace,
+                                                                     partitions=input_table_meta.partitions)
+                    self.copy_table(src_table=input_table, dest_table=output_table)
+                    # update real count to meta info
+                    output_table.count()
+                    output_table_meta = StorageTableMeta(name=output_table.get_name(), namespace=output_table.get_namespace())
         self.tracker.log_output_data_info(
             data_name=component_parameters.get('output_data_name')[0] if component_parameters.get(
                 'output_data_name') else table_key,
@@ -151,13 +149,16 @@ class Reader(ComponentBase):
             output_table_engine = StorageEngine.EGGROLL
         elif computing_engine == ComputingEngine.SPARK:
             if input_table_meta.get_engine() == StorageEngine.HIVE:
+                # todo
                 pass
             else:
                 address_dict["path"] = data_utils.default_output_fs_path(name=output_name, namespace=output_namespace, prefix=address_dict.get("path_prefix"))
                 output_table_address = StorageTableMeta.create_address(storage_engine=StorageEngine.HDFS,
                                                                        address_dict=address_dict)
                 output_table_engine = StorageEngine.HDFS
-
+        elif computing_engine == ComputingEngine.LINKIS_SPARK:
+            output_table_address = input_table_meta.get_address()
+            output_table_engine = input_table_meta.get_engine()
         else:
             raise RuntimeError(f"can not support computing engine {computing_engine}")
         return input_table_meta, output_table_address, output_table_engine

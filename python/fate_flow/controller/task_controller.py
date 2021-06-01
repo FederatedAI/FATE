@@ -18,14 +18,13 @@ import sys
 import requests
 
 from fate_arch.common import FederatedCommunicationType
-from fate_arch.common.conf_utils import get_base_config
 from fate_arch.common.log import schedule_logger
 from fate_flow.db.db_models import Task
 from fate_flow.operation.task_executor import TaskExecutor
 from fate_flow.scheduler.federated_scheduler import FederatedScheduler
 from fate_flow.entity.types import TaskStatus, EndStatus, KillProcessStatusCode
 from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.settings import LINKIS_EXECUTE_ENTRANCE
+from fate_flow.settings import LINKIS_EXECUTE_ENTRANCE, LINKIS_SPARK_CONFIG, LINKIS_KILL_ENTRANCE
 from fate_flow.utils import job_utils
 import os
 from fate_flow.operation.job_saver import JobSaver
@@ -93,6 +92,7 @@ class TaskController(object):
 
             schedule_logger(job_id=job_id).info(f"use computing engine {run_parameters.computing_engine}")
             subprocess = True
+            task_info["engine_conf"] = {"computing_engine": run_parameters.computing_engine}
             if run_parameters.computing_engine in {ComputingEngine.EGGROLL, ComputingEngine.STANDALONE}:
                 process_cmd = [
                     sys.executable,
@@ -142,11 +142,10 @@ class TaskController(object):
                 ])
             elif run_parameters.computing_engine == ComputingEngine.LINKIS_SPARK:
                 subprocess = False
-                linkis_spark_config = get_base_config("fate_on_spark", {}).get("linkis_spark")
-                linkis_execute_url = "http://{}:{}{}".format(linkis_spark_config.get("host"),
-                                                             linkis_spark_config.get("port"),
+                linkis_execute_url = "http://{}:{}{}".format(LINKIS_SPARK_CONFIG.get("host"),
+                                                             LINKIS_SPARK_CONFIG.get("port"),
                                                              LINKIS_EXECUTE_ENTRANCE)
-                headers = {"Token-Code": linkis_spark_config.get("token_code"),
+                headers = {"Token-Code": LINKIS_SPARK_CONFIG.get("token_code"),
                            "Token-User": kwargs.get("user_id"),
                            "Content-Type": "application/json"}
                 schedule_logger(job_id).info(f"headers:{headers}")
@@ -167,9 +166,12 @@ class TaskController(object):
                     "source": {}
                 }
                 schedule_logger(job_id).info(f'submit linkis spark, data:{data}')
+                task_info["engine_conf"]["data"] = data
+                task_info["engine_conf"]["headers"] = headers
                 res = requests.post(url=linkis_execute_url, headers=headers, json=data)
                 schedule_logger(job_id).info(f"start linkis spark task: {res.text}")
                 if res.status_code == 200:
+                    task_info["engine_conf"]["execID"] = res.json().get("data").get("execID")
                     schedule_logger(job_id).info('submit linkis spark success')
                 else:
                     raise Exception(f"submit linkis spark failed: {res.text}")
@@ -273,8 +275,19 @@ class TaskController(object):
     def kill_task(cls, task: Task):
         kill_status = False
         try:
-            # kill task executor
-            kill_status_code = job_utils.kill_task_executor_process(task)
+            if task.f_engine_conf.get("computing_engine") and task.f_engine_conf.get("computing_engine") == ComputingEngine.LINKIS_SPARK:
+                linkis_execute_url = "http://{}:{}{}".format(LINKIS_SPARK_CONFIG.get("host"),
+                                                             LINKIS_SPARK_CONFIG.get("port"),
+                                                             LINKIS_KILL_ENTRANCE.replace("execID", task.f_engine_conf.get("execID")))
+                headers = task.f_engine_conf.get("headers")
+                schedule_logger(task.f_job_id).info(f"start stop task:{linkis_execute_url}")
+                kill_result = requests.post(linkis_execute_url, headers=headers)
+                if kill_result.status_code == 200:
+                    pass
+                kill_status_code = KillProcessStatusCode.KILLED
+            else:
+                # kill task executor
+                kill_status_code = job_utils.kill_task_executor_process(task)
             # session stop
             if kill_status_code == KillProcessStatusCode.KILLED or task.f_status not in {TaskStatus.WAITING}:
                 job_utils.start_session_stop(task)

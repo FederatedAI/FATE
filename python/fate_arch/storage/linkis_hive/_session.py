@@ -20,7 +20,7 @@ from fate_arch.abc import AddressABC
 
 class StorageSession(StorageSessionBase):
     def __init__(self, session_id, options=None):
-        super(StorageSession, self).__init__(session_id=session_id, engine_name=StorageEngine.MYSQL)
+        super(StorageSession, self).__init__(session_id=session_id, engine_name=StorageEngine.LINKIS_HIVE)
         self.con = None
         self.cur = None
         self.address = None
