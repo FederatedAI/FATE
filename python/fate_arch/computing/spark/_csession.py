@@ -53,12 +53,12 @@ class CSession(CSessionABC):
 
             return LocalData(address.path)
 
-        from fate_arch.common.address import HiveAddress
+        from fate_arch.common.address import HiveAddress, LinkisHiveAddress
 
-        if isinstance(address, HiveAddress):
+        if isinstance(address, (HiveAddress, LinkisHiveAddress)):
             table = from_hive(
-                tb_name=address.table_name,
-                db_name=address.db_name,
+                tb_name=address.database,
+                db_name=address.name,
                 partitions=partitions,
             )
             table.schema = schema

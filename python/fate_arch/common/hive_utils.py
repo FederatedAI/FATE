@@ -19,7 +19,7 @@ from pyspark.sql import Row
 
 
 def from_row(r):
-    return r.key, r.value
+    return r.key, pickle.loads(bytes.fromhex(r.value))
 
 
 def to_row(k, v):

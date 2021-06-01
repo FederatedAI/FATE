@@ -18,6 +18,7 @@ import uuid
 from itertools import chain
 
 import typing
+import pyspark
 
 from pyspark.rddsampler import RDDSamplerBase
 
@@ -32,7 +33,7 @@ LOGGER = log.getLogger()
 
 class Table(CTableABC):
     def __init__(self, rdd):
-        self._rdd = rdd
+        self._rdd: pyspark.RDD = rdd
 
     def __getstate__(self):
         pass
@@ -55,12 +56,15 @@ class Table(CTableABC):
             schema.update(self.schema)
             return
 
-        from fate_arch.common.address import HiveAddress
+        from fate_arch.common.address import HiveAddress, LinkisHiveAddress
 
-        if isinstance(address, HiveAddress):
-            self._rdd.map(lambda x: hive_utils.to_row(x[0], x[1])).repartition(
-                partitions
-            ).toDF()
+        if isinstance(address, (HiveAddress, LinkisHiveAddress)):
+            df = (
+                self._rdd.map(lambda x: hive_utils.to_row(x[0], x[1]))
+                .repartition(partitions)
+                .toDF()
+            )
+            df.write.saveAsTable(f"{address.database}.{address.name}")
             schema.update(self.schema)
             return
         raise NotImplementedError(
