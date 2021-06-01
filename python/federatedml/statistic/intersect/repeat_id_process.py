@@ -173,7 +173,7 @@ class RepeatedIDIntersect(object):
 
         return self.generate_intersect_data(data)
 
-    def expand(self, data):
+    def expand(self, data, owner_only=False):
         if self.repeated_id_owner == consts.HOST:
             id_map_federation = self.transfer_variable.id_map_from_host
             partner_role = consts.GUEST
@@ -184,12 +184,14 @@ class RepeatedIDIntersect(object):
         if self.repeated_id_owner == self.role:
             self.id_map = self.id_map.join(data, lambda i, d: i)
             LOGGER.info("Find repeated id_map from intersection ids")
-
-            id_map_federation.remote(self.id_map,
-                                     role=partner_role,
-                                     idx=-1)
-            LOGGER.info("Remote id_map to partner")
+            if not owner_only:
+                id_map_federation.remote(self.id_map,
+                                         role=partner_role,
+                                         idx=-1)
+                LOGGER.info("Remote id_map to partner")
         else:
+            if owner_only:
+                return data
             self.id_map = id_map_federation.get(idx=0)
             LOGGER.info("Get id_map from owner.")
 

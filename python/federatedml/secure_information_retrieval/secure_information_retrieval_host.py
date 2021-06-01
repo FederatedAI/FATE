@@ -17,13 +17,18 @@
 #  limitations under the License.
 #
 
+import copy
+import numpy as np
+
 from federatedml.secure_information_retrieval.base_secure_information_retrieval import \
     BaseSecureInformationRetrieval, CryptoExecutor
+from federatedml.feature.instance import Instance
 from federatedml.param.sir_param import SecureInformationRetrievalParam
 from federatedml.param.intersect_param import IntersectParam
 from federatedml.secureprotol.oblivious_transfer.hauck_oblivious_transfer.hauck_oblivious_transfer_sender import \
     HauckObliviousTransferSender
 from federatedml.secureprotol.symmetric_encryption.py_aes_encryption import AESEncryptKey
+from federatedml.statistic import data_overview
 from federatedml.statistic.intersect import PhIntersectionHost
 from federatedml.util import consts, abnormal_detection, LOGGER
 
@@ -36,13 +41,15 @@ class SecureInformationRetrievalHost(BaseSecureInformationRetrieval):
     def __init__(self):
         super(SecureInformationRetrievalHost, self).__init__()
         self.oblivious_transfer = None
+        self.retrieve_indexes = None
+        self.need_label = False
 
     def _init_model(self, param: SecureInformationRetrievalParam):
         self._init_base_model(param)
-        self.intersect_obj = PhIntersectionHost()
-        self.intersect_obj.role = consts.HOST
+        self.intersection_obj = PhIntersectionHost()
+        self.intersection_obj.role = consts.HOST
         intersect_param = IntersectParam(ph_params=self.ph_params)
-        self.intersect_obj.load_params(intersect_param)
+        self.intersection_obj.load_params(intersect_param)
 
         if self.model_param.oblivious_transfer_protocol == consts.OT_HAUCK:
             self.oblivious_transfer = HauckObliviousTransferSender()
@@ -56,6 +63,8 @@ class SecureInformationRetrievalHost(BaseSecureInformationRetrieval):
         :return:
         """
         LOGGER.info("data count = {}".format(data_inst.count()))
+        self._update_retrieve_indexes(data_inst)
+
         # 0. Raw retrieval
         if self.model_param.raw_retrieval or self.security_level == 0:
             LOGGER.info("enter raw information retrieval host")
@@ -70,6 +79,10 @@ class SecureInformationRetrievalHost(BaseSecureInformationRetrieval):
         self._parse_security_level(data_inst)
         if not self._check_oblivious_transfer_condition():
             self._failure_response()
+        match_data = data_inst
+        if data_overview.check_with_inst_id(data_inst):
+            match_data = self._recover_match_id(data_inst)
+        # match_data = self.extract_value(match_data, self.retrieve_indexes)
 
         """
         # 2. Sync commutative cipher public knowledge, block num and init
@@ -96,14 +109,18 @@ class SecureInformationRetrievalHost(BaseSecureInformationRetrieval):
         # 5. Wait for guest to find intersection and re-index the messages
         LOGGER.info("waiting for guest to find intersection and perform natural indexation")
         """
-        self.intersect_obj.get_intersect_doubly_encrypted_id(data_inst)
-        id_list_host_first = self.intersect_obj.id_list_local_first
+        # 2. Guest find intersection
+        self.intersection_obj.get_intersect_doubly_encrypted_id(match_data)
+        id_list_host_first = self.intersection_obj.id_list_local_first
 
-        # 6. Get the re-indexed doubly encrypted ID from guest
+        # 3. Get the re-indexed doubly encrypted ID from guest
         id_blocks = self._iteratively_get_id_blocks()
 
-        # 7. Restore value for the intersection
-        id_blocks = self._restore_value(id_list_host_first, id_blocks)      # List[(Ei, val)]
+        # 4. Restore value for the intersection
+        id_blocks = _restore_value(id_list_host_first,
+                                   id_blocks,
+                                   self.retrieve_indexes,
+                                   self.need_label)      # List[(Ei, val)]
         LOGGER.info("interested values restored")
 
         # 8. Execute OT as sender
@@ -116,13 +133,15 @@ class SecureInformationRetrievalHost(BaseSecureInformationRetrieval):
         LOGGER.info("non-committing encryption and transmission completed")
 
         # 10. Get doubly encrypted ID list from guest
-        id_list_intersect_cipher_cipher = self._sync_intersect_cipher_cipher()      # get (EEright, -1)
+        id_list_intersect_cipher_cipher = self.intersection_obj.sync_intersect_cipher_cipher()      # get (EEright, -1)
 
         # 11. Decrypt and send to guest
-        id_list_intersect_cipher = self._decrypt_id(
-            id_list_intersect_cipher_cipher, reserve_value=True)    # (EEright, Eright)
+        id_list_intersect_cipher = self.intersection_obj._decrypt_id(
+            id_list_intersect_cipher_cipher,
+            self.intersection_obj.commutative_cipher,
+            reserve_value=True)    # (EEright, Eright)
         LOGGER.info("decryption completed")
-        self._sync_intersect_cipher(id_list_intersect_cipher)
+        self.intersection_obj.sync_intersect_cipher(id_list_intersect_cipher)
 
         # 12. Slack
         self._sync_coverage(data_inst)
@@ -143,39 +162,6 @@ class SecureInformationRetrievalHost(BaseSecureInformationRetrieval):
         #                   role=consts.GUEST,
         #                   idx=0)
         LOGGER.info("sent {}-th nonce to guest".format(time))
-
-    def _sync_intersect_cipher(self, id_list):
-        self.transfer_variable.intersect_cipher.remote(id_list,
-                                                       role=consts.GUEST,
-                                                       idx=0)
-        # federation.remote(obj=id_list,
-        #                   name=self.transfer_variable.intersect_cipher.name,
-        #                   tag=self.transfer_variable.generate_transferid(self.transfer_variable.intersect_cipher),
-        #                   role=consts.GUEST,
-        #                   idx=0)
-        LOGGER.info("send intersect cipher to guest")
-
-    def _decrypt_id(self, data_instance, reserve_value=False):
-        """
-        (e, De) if reserve_value, otherwise (De, -1)
-        :param data_instance:
-        :param reserve_value:
-        :return:
-        """
-        if reserve_value:
-            return self.commutative_cipher.map_decrypt(data_instance, mode=0)
-        else:
-            return self.commutative_cipher.map_decrypt(data_instance, mode=1)
-
-    def _sync_intersect_cipher_cipher(self, id_list=None):
-        id_list_intersect_cipher_cipher = self.transfer_variable.intersect_cipher_cipher.get(idx=0)
-        # id_list_intersect_cipher_cipher = federation.get(
-        #     name=self.transfer_variable.intersect_cipher_cipher.name,
-        #     tag=self.transfer_variable.generate_transferid(self.transfer_variable.intersect_cipher_cipher),
-        #     idx=0
-        # )
-        LOGGER.info("got intersect cipher cipher from guest")
-        return id_list_intersect_cipher_cipher
 
     def _transmit_value_ciphertext(self, id_block, time):
         self.transfer_variable.id_blocks_ciphertext.remote(id_block,
@@ -210,20 +196,41 @@ class SecureInformationRetrievalHost(BaseSecureInformationRetrieval):
             if block_confirm:
                 continue
 
-    @staticmethod
-    def _restore_value(id_list_host, id_blocks):
-        """
+    def _update_retrieve_indexes(self, schema):
+        if len(self.target_cols) == 0 and len(self.target_indexes) == 0:
+            self.need_label = True
+            return
+        target_cols = copy.deepcopy(self.target_cols)
+        target_indexes = set(copy.deepcopy(self.target_indexes))
+        header = schema.header
+        # if schema.label_name in self.target_cols:
+        #    self.need_label = True
+        #    target_cols.pop(schema.label_name)
+        if len(target_cols) > 0:
+            for col_name in target_cols:
+                try:
+                    i = header.index(col_name)
+                    target_indexes.add(i)
+                except ValueError:
+                    raise ValueError(f"{col_name} does not exist in table header. Please check.")
+        self.retrieve_indexes = target_indexes
 
-        :param id_list_host: (h, (Eh, Instance))
-        :param id_blocks: List[(Ei, -1)]
-        :return:
-        """
-        id_list_host_parse = id_list_host.map(lambda k, v: (v[0], v[1].label))     # (Eh, val)
-        id_value_blocks = []
-        for i in range(len(id_blocks)):
-            restored_table = id_list_host_parse.join(id_blocks[i], lambda v, u: v)
-            id_value_blocks.append(restored_table)
-        return id_value_blocks
+    """
+    @staticmethod
+    def extract_value(instance, retrieve_indexes, need_label):
+        value = []
+        if need_label:
+            value.append(instance.label)
+        value.extend((instance.features[i] for i in retrieve_indexes))
+        return value
+    """
+
+    @staticmethod
+    def extract_value(instance, retrieve_indexes, need_label):
+        if need_label:
+            return instance.label
+        features = [instance.features[i] for i in retrieve_indexes]
+        return features
 
     def _sync_natural_indexation(self, id_list=None, time=None):
         id_list_natural_indexation = self.transfer_variable.natural_indexation.get(idx=0,
@@ -237,19 +244,6 @@ class SecureInformationRetrievalHost(BaseSecureInformationRetrieval):
 
     def _parse_security_level(self, data_instance):
         self._sync_block_num()
-
-    def _encrypt_id(self, data_instance, reserve_value=False):
-        """
-        Encrypt the key (ID) column of the input Table
-        :param data_instance: Table
-                reserve_value: (k, (enc_k, v)) if reserve_value = True,
-                    otherwise set all values to be minus one (enc_k, -1)
-        :return:
-        """
-        if reserve_value:
-            return self.commutative_cipher.map_encrypt(data_instance, mode=3)
-        else:
-            return self.commutative_cipher.map_encrypt(data_instance, mode=1)
 
     def _sync_block_num(self):
         self.block_num = self.transfer_variable.block_num.get(idx=0)
@@ -301,3 +295,21 @@ class SecureInformationRetrievalHost(BaseSecureInformationRetrieval):
             id_blocks[i] = id_block
 
         return id_blocks
+
+def _restore_value(id_list_host, id_blocks, retrieve_indexes, need_label):
+    """
+
+    :param id_list_host: (h, (Eh, Instance))
+    :param id_blocks: List[(Ei, -1)]
+    :return:
+    """
+    # id_list_host_parse = id_list_host.map(lambda k, v: (v[0], v[1].label))     # (Eh, val)
+    id_value_blocks = []
+    for i in range(len(id_blocks)):
+        restored_table = id_list_host.join(id_blocks[i],
+                                           lambda v, u:
+                                           SecureInformationRetrievalHost.extract_value(v[1],
+                                                                                        retrieve_indexes,
+                                                                                        need_label))
+        id_value_blocks.append(restored_table)
+    return id_value_blocks

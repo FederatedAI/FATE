@@ -38,6 +38,7 @@ class CryptoExecutor(object):
         (enc_k, v) for mode == 2
         (k, (enc_k, v)) for mode == 3
         (enc_k, k) for mode == 4
+        (enc_k, (k, v)) for mode == 5
         :param plaintable: Table
         :param mode: int
         :return: Table
@@ -52,6 +53,10 @@ class CryptoExecutor(object):
             return plaintable.map(lambda k, v: (k, (self.cipher_core.encrypt(hash_operator.compute(k, postfit_salt=salt)), v)))
         elif mode == 4:
             return plaintable.map(lambda k, v: (self.cipher_core.encrypt(hash_operator.compute(k, postfit_salt=salt)), k))
+        elif mode == 5:
+            return plaintable.map(
+                lambda k, v: (self.cipher_core.encrypt(hash_operator.compute(k, postfit_salt=salt)), (k, v)))
+
         else:
             raise ValueError("Unsupported mode for crypto_executor map encryption")
 
@@ -63,6 +68,7 @@ class CryptoExecutor(object):
         (enc_k, v) for mode == 2
         (k, (enc_k, v)) for mode == 3
         (enc_k, k) for mode == 4
+        (enc_k, (k, v)) for mode == 5
         :param plaintable: Table
         :param mode: int
         :return: Table
@@ -77,6 +83,9 @@ class CryptoExecutor(object):
             return plaintable.map(lambda k, v: (k, (self.cipher_core.encrypt(k), v)))
         elif mode == 4:
             return plaintable.map(lambda k, v: (self.cipher_core.encrypt(k), k))
+        elif mode == 5:
+            return plaintable.map(lambda k, v: (self.cipher_core.encrypt(k), (k, v)))
+
         else:
             raise ValueError("Unsupported mode for crypto_executor map encryption")
 

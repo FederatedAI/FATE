@@ -136,14 +136,14 @@ class Intersect(object):
         Parameters
         ----------
         encrypt_id_data: E(id)
-        raw_id_data: (E(id), id)
+        raw_id_data: (E(id), (id, v))
 
         Returns
         -------
 
         """
         encrypt_id_raw_id = raw_id_data.join(encrypt_id_data, lambda r, e: r)
-        raw_id = encrypt_id_raw_id.map(lambda k, v: (v, k))
+        raw_id = encrypt_id_raw_id.map(lambda k, v: (v[0], k))
         return raw_id
 
     @staticmethod
@@ -464,7 +464,6 @@ class PhIntersect(Intersect):
         self.only_output_key = param.only_output_key
         self.sync_intersect_ids = param.sync_intersect_ids
         self.ph_params = param.ph_params
-        # @TODO: use arbitrary hash
         self.hash_operator = Hash(param.ph_params.hash_method)
         self.salt = self.ph_params.salt
         self.key_length = self.ph_params.key_length
@@ -480,7 +479,8 @@ class PhIntersect(Intersect):
     """
 
     @staticmethod
-    def _encrypt_id(data_instance, cipher, reserve_original_key=False, hash_operator=None, salt=''):
+    def _encrypt_id(data_instance, cipher, reserve_original_key=False, hash_operator=None, salt='',
+                    reserve_original_value=False):
         """
         Encrypt the key (ID) of input Table
         :param cipher: cipher object
@@ -488,16 +488,26 @@ class PhIntersect(Intersect):
         :param reserve_original_key: (enc_key, ori_key) if reserve_original_key == True, otherwise (enc_key, -1)
         :param hash_operator: if provided, use map_hash_encrypt
         :param salt: if provided, use for map_hash_encrypt
+        : param reserve_original_value:
+            (enc_key, (ori_key, val)) for reserve_original_key == True and reserve_original_value==True;
+            (ori_key, (enc_key, val)) for only reserve_original_value == True.
         :return:
         """
+        if reserve_original_key and reserve_original_value:
+            if hash_operator:
+                return cipher.map_hash_encrypt(data_instance, mode=5, hash_operator=hash_operator, salt=salt)
+            return cipher.map_encrypt(data_instance, mode=5)
         if reserve_original_key:
             if hash_operator:
                 return cipher.map_hash_encrypt(data_instance, mode=4, hash_operator=hash_operator, salt=salt)
             return cipher.map_encrypt(data_instance, mode=4)
-        else:
+        if reserve_original_value:
             if hash_operator:
-                return cipher.map_hash_encrypt(data_instance, mode=1, hash_operator=hash_operator, salt=salt)
-            return cipher.map_encrypt(data_instance, mode=1)
+                return cipher.map_hash_encrypt(data_instance, mode=3, hash_operator=hash_operator, salt=salt)
+            return cipher.map_encrypt(data_instance, mode=3)
+        if hash_operator:
+            return cipher.map_hash_encrypt(data_instance, mode=1, hash_operator=hash_operator, salt=salt)
+        return cipher.map_encrypt(data_instance, mode=1)
 
     @staticmethod
     def _decrypt_id(data_instance, cipher, reserve_value=False):
@@ -551,7 +561,7 @@ class PhIntersect(Intersect):
         """
         pass
 
-    def _sync_intersect_cipher_cipher(self, id_list):
+    def sync_intersect_cipher_cipher(self, id_list):
         """
         guest -> host
         :param id_list:
@@ -559,7 +569,7 @@ class PhIntersect(Intersect):
         """
         pass
 
-    def _sync_intersect_cipher(self, id_list):
+    def sync_intersect_cipher(self, id_list):
         """
         host -> guest
         :param id_list:

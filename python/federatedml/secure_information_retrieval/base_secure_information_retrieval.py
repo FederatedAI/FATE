@@ -22,7 +22,8 @@ from federatedml.protobuf.generated import sir_meta_pb2, sir_param_pb2
 from fate_flow.entity.metric import Metric, MetricMeta
 from federatedml.model_base import ModelBase
 from federatedml.param.sir_param import SecureInformationRetrievalParam
-from federatedml.util import abnormal_detection, LOGGER, conversion
+from federatedml.statistic.intersect.repeat_id_process import RepeatedIDIntersect
+from federatedml.util import consts, abnormal_detection, LOGGER, conversion
 from federatedml.transfer_variable.transfer_class.secure_information_retrieval_transfer_variable import \
     SecureInformationRetrievalTransferVariable
 
@@ -45,7 +46,9 @@ class BaseSecureInformationRetrieval(ModelBase):
         self.coverage = None        # the percentage of transactions whose values are successfully retrieved
 
         self.ph_params = None
-        self.intersect_obj = None
+        self.intersection_obj = None
+        self.proc_obj = None
+        self.with_inst_id = None
 
         # For callback
         self.metric_name = "sir"
@@ -59,6 +62,8 @@ class BaseSecureInformationRetrieval(ModelBase):
         self.model_param = param
         self.security_level = self.model_param.security_level
         self.ph_params = self.model_param.ph_params
+        if self.model_param.key_size:
+            self.ph_params.key_length = self.model_param.key_size
         self.target_cols = self.model_param.target_cols
         self.target_indexes = self.model_param.target_indexes
 
@@ -82,11 +87,17 @@ class BaseSecureInformationRetrieval(ModelBase):
             restored_id = k
         return (restored_id, k)
 
-    def _encrypt_id(self, data_instance, mode):
-        pass
+    def _recover_match_id(self, data_instance):
+        self.proc_obj = RepeatedIDIntersect(repeated_id_owner=consts.GUEST, role=self.intersection_obj.role)
+        self.proc_obj.new_join_id = False
+        self.proc_obj.use_sample_id()
+        match_data = self.proc_obj.recover(data=data_instance)
+        return match_data
 
-    def _decrypt_id(self, data_instance, mode):
-        pass
+    def _restore_sample_id(self, data_instances):
+        restore_data = self.proc_obj.expand(data_instances, owner_only=True)
+
+        return restore_data
 
     def _raw_information_retrieval(self, data_instance):
         """

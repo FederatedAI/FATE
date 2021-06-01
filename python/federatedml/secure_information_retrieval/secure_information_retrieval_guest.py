@@ -28,7 +28,8 @@ from federatedml.param.intersect_param import IntersectParam
 from federatedml.secureprotol.oblivious_transfer.hauck_oblivious_transfer.hauck_oblivious_transfer_receiver import \
     HauckObliviousTransferReceiver
 from federatedml.secureprotol.symmetric_encryption.py_aes_encryption import AESDecryptKey
-from federatedml.secureprotol.symmetric_encryption.pohlig_hellman_encryption import PohligHellmanCipherKey
+from federatedml.statistic import data_overview
+# from federatedml.secureprotol.symmetric_encryption.pohlig_hellman_encryption import PohligHellmanCipherKey
 from federatedml.statistic.intersect import PhIntersectionGuest
 from federatedml.util import consts, abnormal_detection, LOGGER
 
@@ -48,10 +49,10 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
 
     def _init_model(self, param: SecureInformationRetrievalParam):
         self._init_base_model(param)
-        self.intersect_obj = PhIntersectionGuest()
-        self.intersect_obj.role = consts.GUEST
+        self.intersection_obj = PhIntersectionGuest()
+        self.intersection_obj.role = consts.GUEST
         intersect_param = IntersectParam(ph_params=self.ph_params)
-        self.intersect_obj.load_params(intersect_param)
+        self.intersection_obj.load_params(intersect_param)
 
         if self.model_param.oblivious_transfer_protocol == consts.OT_HAUCK:
             self.oblivious_transfer = HauckObliviousTransferReceiver()
@@ -80,7 +81,11 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
         if not self._check_oblivious_transfer_condition():
             self._failure_response()
 
-        recorded_k_data = data_inst.map(lambda k, v: BaseSecureInformationRetrieval.record_original_id(k, v))
+        match_data = data_inst
+        self.with_inst_id = data_overview.check_with_inst_id(data_inst)
+        if self.with_inst_id:
+            match_data = self._recover_match_id(data_inst)
+        recorded_k_data = match_data.map(lambda k, v: BaseSecureInformationRetrieval.record_original_id(k, v))
 
         """
         # 2. Sync commutative cipher public knowledge, block num and init
@@ -110,8 +115,8 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
             id_list_guest_second, id_list_host_second_only)     # (EEi, -1)
         LOGGER.info("intersection found")
         """
-        id_list_intersect = self.intersect_obj.get_intersect_doubly_encrypted_id(data_inst)
-        id_list_host_second_only = self.intersect_obj.id_list_remote_second
+        id_list_intersect = self.intersection_obj.get_intersect_doubly_encrypted_id(match_data)[0]
+        id_list_host_second_only = self.intersection_obj.id_list_remote_second[0]
 
         # 6. Send the re-indexed doubly encrypted ID to host
         self._fake_blocks(id_list_intersect, id_list_host_second_only)  # List[(EEi, -1)]
@@ -134,17 +139,19 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
 
         # 10. Encrypt again and send to host
         target_block_cipher_cipher_id = self._composite_encrypt(target_block_cipher_id)      # (EEright, val)
-        self._sync_intersect_cipher_cipher(
+        self.intersection_obj.sync_intersect_cipher_cipher(
             target_block_cipher_cipher_id.mapValues(lambda v: -1))       # send (EEright, -1)
 
         # 11. Get decrypted result from host, and decrypt again
-        id_list_intersect_cipher_id = self._sync_intersect_cipher()        # get (EEright, Eright_host)
+        id_list_intersect_cipher_id = self.intersection_obj.sync_intersect_cipher()        # get (EEright, Eright_host)
         id_list_intersect_cipher_id = self._composite_decrypt(id_list_intersect_cipher_id)        # (EEright, right)
 
         # 12. Merge result
         data_output = self._merge(target_block_cipher_cipher_id, id_list_intersect_cipher_id)
         data_output = recorded_k_data.join(data_output, lambda v1, v2: (v1, v2))
         data_output = data_output.map(lambda k, v: (v[0], v[1]))
+        if self.with_inst_id:
+            data_output = self._restore_sample_id(data_output)
         data_output = self._compensate_set_difference(data_inst, data_output)
         self._display_result()
         LOGGER.info("secure information retrieval finished")
@@ -162,7 +169,7 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
         return nonce_list_result
 
     @staticmethod
-    def _merge(id_map1, id_map2):
+    def _merge(id_map1, id_map2, need_label):
         """
 
         :param id_map1: (a, b)
@@ -170,7 +177,10 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
         :return: (c, b)
         """
         merge_table = id_map1.join(id_map2, lambda v, u: (u, v))
-        return merge_table.map(lambda k, v: (v[0], Instance(label=v[1], features=[])))
+        if need_label:
+            return merge_table.map(lambda k, v: (v[0], Instance(label=v[1], features=[])))
+        else:
+            return merge_table.map(lambda k, v: (v[0], Instance(features=v[1])))
 
     def _composite_decrypt(self, id_list):
         """
@@ -194,28 +204,6 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
         :param id_list:
         :return:
         """
-
-    def _sync_intersect_cipher(self, id_list=None):
-        id_list_intersect_cipher = self.transfer_variable.intersect_cipher.get(idx=0)
-        # id_list_intersect_cipher = federation.get(
-        #     name=self.transfer_variable.intersect_cipher.name,
-        #     tag=self.transfer_variable.generate_transferid(self.transfer_variable.intersect_cipher),
-        #     idx=0
-        # )
-        LOGGER.info("got intersect cipher from host")
-        return id_list_intersect_cipher
-
-    def _sync_intersect_cipher_cipher(self, id_list):
-        self.transfer_variable.intersect_cipher_cipher.remote(id_list,
-                                                              role=consts.HOST,
-                                                              idx=0)
-        # federation.remote(obj=id_list,
-        #                   name=self.transfer_variable.intersect_cipher_cipher.name,
-        #                   tag=self.transfer_variable.generate_transferid(
-        #                       self.transfer_variable.intersect_cipher_cipher),
-        #                   role=consts.HOST,
-        #                   idx=0)
-        LOGGER.info("sent intersect cipher cipher to host")
 
     def _non_committing_decrypt(self, id_block_ciphertext, nonce, target_key):
         """

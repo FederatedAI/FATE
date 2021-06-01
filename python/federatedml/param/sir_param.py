@@ -28,18 +28,23 @@ class SecureInformationRetrievalParam(BaseParam):
     commutative_encryption: the commutative encryption scheme used, only supports CommutativeEncryptionPohligHellman
     non_committing_encryption: the non-committing encryption scheme used, only supports aes
     ph_params: params for Pohlig-Hellman Encryption
+    key_size: int >= 768, the key length of the commutative cipher, note that this param will be deprecated in future,
+        for thie version, key_size takes priority over `key_length` in ph_params
     raw_retrieval: bool, perform raw retrieval if raw_retrieval
-    target_cols: str or list of str, target cols to retrieve; to retrieve label, please specify "label",
+    target_cols: str or list of str, target cols to retrieve;
         any values not retrieved will be marked as "unretrieved",
         default None
-    target_indexes: int or list of int, target indexes to retrieve, note that label can only be specified by target_cols;
-        values will be merged with target_cols,
+    target_indexes: int or list of int, target indexes to retrieve;
+        values will be merged with target_cols;
+        any values not retrieved will be marked as "unretrieved";
+        if both target_cols and target_indexes are None, label will be retrieved, same behavior as in previous version
         default None
     """
     def __init__(self, security_level=0.5,
                  oblivious_transfer_protocol=consts.OT_HAUCK,
                  commutative_encryption=consts.CE_PH,
                  non_committing_encryption=consts.AES,
+                 key_size=1024,
                  ph_params=PHParam(),
                  raw_retrieval=False,
                  target_cols=None,
@@ -50,9 +55,10 @@ class SecureInformationRetrievalParam(BaseParam):
         self.commutative_encryption = commutative_encryption
         self.non_committing_encryption = non_committing_encryption
         self.ph_params = ph_params
+        self.key_size = key_size
         self.raw_retrieval = raw_retrieval
-        self.target_cols = target_cols
-        self.target_indexes = target_indexes
+        self.target_cols = [] if target_cols is None else target_cols
+        self.target_indexes = [] if target_indexes is None else target_indexes
 
     def check(self):
         descr = "secure information retrieval param's "
@@ -67,14 +73,15 @@ class SecureInformationRetrievalParam(BaseParam):
                                     [consts.AES.lower()],
                                     descr+"non_committing_encryption")
         self.ph_params.check()
+        self.check_positive_integer(self.key_size, descr+"key_size")
         self.check_boolean(self.raw_retrieval, descr)
-        if self.target_cols:
-            if not isinstance(self.target_cols, list):
-                self.target_cols = [self.target_cols]
-            for col in self.target_cols:
-                self.check_string(col, descr+"target_cols")
-        if self.target_indexes:
-            if not isinstance(self.target_indexes, list):
-                self.target_indexes = [self.target_indexes]
-            for i in self.target_indexes:
-                self.check_nonnegative_number(i, descr+"target_indexes")
+        if not isinstance(self.target_cols, list):
+            self.target_cols = [self.target_cols]
+        for col in self.target_cols:
+            self.check_string(col, descr+"target_cols")
+        if not isinstance(self.target_indexes, list):
+            self.target_indexes = [self.target_indexes]
+        for i in self.target_indexes:
+            self.check_nonnegative_number(i, descr+"target_indexes")
+        if len(self.target_cols) == 0 and len(self.target_indexes) == 0:
+            raise ValueError(f"Both 'target_cols' and 'target_indexes' are empty.")

@@ -83,6 +83,11 @@ class PohligHellmanCipherKey(SymmetricKey):
                 break
 
     def encrypt(self, plaintext):
+        if isinstance(plaintext, list):
+            return self.encrypt_list(plaintext)
+        return self.encrypt_single_val(plaintext)
+
+    def encrypt_single_val(self, plaintext):
         """
 
         :param plaintext: int >= 0 / str / PohligHellmanCiphertext
@@ -96,7 +101,16 @@ class PohligHellmanCipherKey(SymmetricKey):
         ciphertext = powmod(plaintext, self.exponent, self.mod_base)
         return PohligHellmanCiphertext(ciphertext)
 
+    def encrypt_list(self, list_plaintext):
+        ciphertext = [self.encrypt_single_val(p) for p in list_plaintext]
+        return ciphertext
+
     def decrypt(self, ciphertext, decode_output=False):
+        if isinstance(ciphertext, list):
+            return self.decrypt_list(ciphertext, decode_output)
+        return self.decrypt_single_val(ciphertext, decode_output)
+
+    def decrypt_single_val(self, ciphertext, decode_output=False):
         """
         If decode, then call int_to_str() method to decode the output plaintext
         :param ciphertext: PohligHellmanCiphertext
@@ -112,6 +126,10 @@ class PohligHellmanCipherKey(SymmetricKey):
             return conversion.int_to_str(powmod(ciphertext, self.exponent_inverse, self.mod_base))
         else:
             return PohligHellmanCiphertext(powmod(ciphertext, self.exponent_inverse, self.mod_base))
+
+    def decrypt_list(self, ciphertext, decode_output):
+        decrypt_result = [self.decrypt_single_val(c, decode_output) for c in ciphertext]
+        return decrypt_result
 
 
 class PohligHellmanCiphertext(SymmetricCiphertext):
