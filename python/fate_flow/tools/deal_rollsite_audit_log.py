@@ -4,32 +4,25 @@ import sys
 import requests
 import traceback
 import datetime
+from deal_rollsite_audit_log_settings import LOG_INDEX, ELASTIC_SEARCH_URL, ELASTIC_SEARCH_AUTH, ELASTIC_SEARCH_USER, ELASTIC_SEARCH_PASSWORD, HOST_ROLE_PARTY_ID
 
-
-LOG_INDEX = "fate_rollsite_exchange_audit"
+LOG_PATH = ""
 SERVER_IP = None
 EXCHANGE_TYPE = "general"
 
-ELASTIC_SEARCH_AUTH = False
-ELASTIC_SEARCH_URL = ""
-ELASTIC_SEARCH_USER = ""
-ELASTIC_SEARCH_PASSWORD = ""
 
-HOST_ROLE_PARTY_ID = ["10000"]
-
-
-def run(log_path):
+def run():
     progress = read_progress()
     end_pos = progress.get("end_pos", -1)
     last_st_ino = progress.get("st_ino", -1)
     last_st_mtime = progress.get("st_mtime", -1)
-    now_st_ino = os.stat(log_path).st_ino
+    now_st_ino = os.stat(LOG_PATH).st_ino
     print(f"last inode num: {last_st_ino}, mtime: {last_st_mtime}")
-    print(f"{log_path} inode num is {now_st_ino}")
+    print(f"{LOG_PATH} inode num is {now_st_ino}")
     if last_st_ino != -1 and last_st_ino != now_st_ino:
         # create time not match, log path have change
         print(f"last inode num is {last_st_ino}, but now is {now_st_ino}, log path have change, search all pending log")
-        last_deal_log_path, pending_paths = search_pending_logs(os.path.dirname(log_path), last_st_ino, last_st_mtime)
+        last_deal_log_path, pending_paths = search_pending_logs(os.path.dirname(LOG_PATH), last_st_ino, last_st_mtime)
         print(f"find last deal log path: {last_deal_log_path}")
         print(f"find pending paths: {pending_paths}")
         deal_log(last_deal_log_path, end_pos)
@@ -37,20 +30,20 @@ def run(log_path):
             deal_log(pending_path, -1)
         # reset end pos
         end_pos = -1
-    end_pos = deal_log(log_path, end_pos)
+    end_pos = deal_log(LOG_PATH, end_pos)
     progress["end_pos"] = end_pos
-    progress["st_mtime"] = os.stat(log_path).st_mtime
-    progress["st_ino"] = os.stat(log_path).st_ino
+    progress["st_mtime"] = os.stat(LOG_PATH).st_mtime
+    progress["st_ino"] = os.stat(LOG_PATH).st_ino
     save_progress(progress)
 
 
-def deal_log(log_path, end_pos):
-    if not log_path:
+def deal_log(LOG_PATH, end_pos):
+    if not LOG_PATH:
         return end_pos
     audit_logs = []
-    with open(log_path) as fr:
+    with open(LOG_PATH) as fr:
         line_count = get_file_line_count(fr)
-        print(f"{log_path} end pos: {end_pos}, line count: {line_count}")
+        print(f"{LOG_PATH} end pos: {end_pos}, line count: {line_count}")
         if line_count > end_pos + 1:
             fr.seek(end_pos + 1)
             while True:
@@ -61,7 +54,7 @@ def deal_log(log_path, end_pos):
                 merge_audit_log(audit_log, audit_logs)
             end_pos = fr.tell()
         else:
-            print(f"{log_path} no change")
+            print(f"{LOG_PATH} no change")
     if audit_logs:
         bulk_save(audit_logs)
     return end_pos
@@ -234,17 +227,12 @@ def bulk_save(audit_logs):
                             data=data,
                             headers={'content-type':'application/json', 'charset':'UTF-8'},
                             timeout=(30, 300))
+    print(res.text)
     print(res.json())
 
 
 if __name__ == "__main__":
-    log_path = sys.argv[1]
+    LOG_PATH = sys.argv[1]
     SERVER_IP = sys.argv[2]
     EXCHANGE_TYPE = sys.argv[3]
-    ELASTIC_SEARCH_URL = sys.argv[4]
-    if len(sys.argv) > 5:
-        ELASTIC_SEARCH_AUTH = True
-        ELASTIC_SEARCH_USER = sys.argv[5]
-        ELASTIC_SEARCH_PASSWORD = sys.argv[6]
-
-    run(sys.argv[1])
+    run()
