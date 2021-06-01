@@ -95,6 +95,7 @@ FATE_FLOW_MODEL_TRANSFER_ENDPOINT = "/v1/model/transfer"
 FATE_MANAGER_GET_NODE_INFO_ENDPOINT = "/fate-manager/api/site/secretinfo"
 FATE_MANAGER_NODE_CHECK_ENDPOINT = "/fate-manager/api/site/checksite"
 FATE_BOARD_DASHBOARD_ENDPOINT = "/index.html#/dashboard?job_id={}&role={}&party_id={}"
+LINKIS_EXECUTE_ENTRANCE = "/api/rest_j/v1/entrance/execute"
 
 # Logger
 log.LoggerFactory.LEVEL = 10

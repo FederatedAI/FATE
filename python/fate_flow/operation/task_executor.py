@@ -38,34 +38,14 @@ class TaskExecutor(object):
     REPORT_TO_DRIVER_FIELDS = ["run_ip", "run_pid", "party_status", "update_time", "end_time", "elapsed"]
 
     @classmethod
-    def run_task(cls):
+    def run_task(cls, **kwargs):
         task_info = {}
         try:
-            parser = argparse.ArgumentParser()
-            parser.add_argument('-j', '--job_id', required=True, type=str, help="job id")
-            parser.add_argument('-n', '--component_name', required=True, type=str,
-                                help="component name")
-            parser.add_argument('-t', '--task_id', required=True, type=str, help="task id")
-            parser.add_argument('-v', '--task_version', required=True, type=int, help="task version")
-            parser.add_argument('-r', '--role', required=True, type=str, help="role")
-            parser.add_argument('-p', '--party_id', required=True, type=int, help="party id")
-            parser.add_argument('-c', '--config', required=True, type=str, help="task parameters")
-            parser.add_argument('--run_ip', help="run ip", type=str)
-            parser.add_argument('--job_server', help="job server", type=str)
-            args = parser.parse_args()
-            schedule_logger(args.job_id).info('enter task process')
-            schedule_logger(args.job_id).info(args)
-            # init function args
-            if args.job_server:
-                RuntimeConfig.init_config(JOB_SERVER_HOST=args.job_server.split(':')[0],
-                                          HTTP_PORT=args.job_server.split(':')[1])
+            job_id, component_name, task_id, task_version, role, party_id, run_ip, config, job_server = cls.get_run_task_args(kwargs)
+            if job_server:
+                RuntimeConfig.init_config(JOB_SERVER_HOST=job_server.split(':')[0],
+                                          HTTP_PORT=job_server.split(':')[1])
                 RuntimeConfig.set_process_role(ProcessRole.EXECUTOR)
-            job_id = args.job_id
-            component_name = args.component_name
-            task_id = args.task_id
-            task_version = args.task_version
-            role = args.role
-            party_id = args.party_id
             executor_pid = os.getpid()
             task_info.update({
                 "job_id": job_id,
@@ -74,7 +54,7 @@ class TaskExecutor(object):
                 "task_version": task_version,
                 "role": role,
                 "party_id": party_id,
-                "run_ip": args.run_ip,
+                "run_ip": run_ip,
                 "run_pid": executor_pid
             })
             start_time = current_timestamp()
@@ -96,7 +76,7 @@ class TaskExecutor(object):
             task_input_dsl = component.get_input()
             task_output_dsl = component.get_output()
             component_parameters_on_party['output_data_name'] = task_output_dsl.get('data')
-            task_parameters = RunParameters(**file_utils.load_json_conf(args.config))
+            task_parameters = RunParameters(**file_utils.load_json_conf(config))
             job_parameters = task_parameters
             if job_parameters.assistant_role:
                 TaskExecutor.monkey_patch()
@@ -211,6 +191,46 @@ class TaskExecutor(object):
         print('Finish {} {} {} {} {} {} task {}'.format(job_id, component_name, task_id, task_version, role, party_id,
                                                         task_info["party_status"]))
         return task_info
+
+    @classmethod
+    def get_run_task_args(cls, args):
+        if args:
+            job_id = args.get("job_id")
+            component_name = args.get("component_name")
+            task_id = args.get("task_id")
+            task_version = args.get("task_version")
+            role = args.get("role")
+            party_id = args.get("party_id")
+            config = args.get("config")
+            run_ip = args.get("run_ip")
+            job_server = args.get("job_server")
+        else:
+            parser = argparse.ArgumentParser()
+            parser.add_argument('-j', '--job_id', required=True, type=str, help="job id")
+            parser.add_argument('-n', '--component_name', required=True, type=str,
+                                help="component name")
+            parser.add_argument('-t', '--task_id', required=True, type=str, help="task id")
+            parser.add_argument('-v', '--task_version', required=True, type=int, help="task version")
+            parser.add_argument('-r', '--role', required=True, type=str, help="role")
+            parser.add_argument('-p', '--party_id', required=True, type=int, help="party id")
+            parser.add_argument('-c', '--config', required=True, type=str, help="task parameters")
+            parser.add_argument('--run_ip', help="run ip", type=str)
+            parser.add_argument('--job_server', help="job server", type=str)
+            args = parser.parse_args()
+            schedule_logger(args.job_id).info('enter task process')
+            schedule_logger(args.job_id).info(args)
+            # init function args
+            job_id = args.job_id
+            component_name = args.component_name
+            task_id = args.task_id
+            task_version = args.task_version
+            role = args.role
+            party_id = args.party_id
+            run_ip = args.run_ip
+            config = args.config
+            job_server = args.job_server
+        schedule_logger(job_id).info('enter task process')
+        return job_id, component_name, task_id, task_version, role, party_id, run_ip, config, job_server
 
     @classmethod
     def get_job_args_on_party(cls, dsl_parser, job_runtime_conf, role, party_id):

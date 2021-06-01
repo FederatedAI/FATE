@@ -92,7 +92,7 @@ class TaskScheduler(object):
             return SchedulingStatusCode.PASS
         schedule_logger(job_id=task.f_job_id).info("start job {} task {} {} on {} {}".format(task.f_job_id, task.f_task_id, task.f_task_version, task.f_role, task.f_party_id))
         FederatedScheduler.sync_task_status(job=job, task=task)
-        task_parameters = {}
+        task_parameters = {"user_id": job.f_user_id}
         status_code, response = FederatedScheduler.start_task(job=job, task=task, task_parameters=task_parameters)
         if status_code == FederatedSchedulingStatusCode.SUCCESS:
             return SchedulingStatusCode.SUCCESS

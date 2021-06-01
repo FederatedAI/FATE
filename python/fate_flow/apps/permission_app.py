@@ -48,6 +48,6 @@ def query_privilege():
             'privilege_role': privilege_dict.get('privilege_role', []),
             'privilege_command': privilege_dict.get('privilege_command', []),
             'privilege_component': privilege_dict.get('privilege_component', [])}
-    if privilege_dict.get("user"):
-        data["privilege_dataset"] = privilege_dict.get('privilege_dataset', {}).get(privilege_dict.get("user"), [])
+    if request.json.get("user"):
+        data["privilege_dataset"] = privilege_dict.get('privilege_dataset', {}).get(request.json.get("user"), [])
     return get_json_result(retcode=0, retmsg='success', data=data)

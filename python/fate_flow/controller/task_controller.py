@@ -15,13 +15,17 @@
 #
 import sys
 
+import requests
+
 from fate_arch.common import FederatedCommunicationType
+from fate_arch.common.conf_utils import get_base_config
 from fate_arch.common.log import schedule_logger
 from fate_flow.db.db_models import Task
 from fate_flow.operation.task_executor import TaskExecutor
 from fate_flow.scheduler.federated_scheduler import FederatedScheduler
 from fate_flow.entity.types import TaskStatus, EndStatus, KillProcessStatusCode
 from fate_flow.entity.runtime_config import RuntimeConfig
+from fate_flow.settings import LINKIS_EXECUTE_ENTRANCE
 from fate_flow.utils import job_utils
 import os
 from fate_flow.operation.job_saver import JobSaver
@@ -88,7 +92,7 @@ class TaskController(object):
             run_parameters = RunParameters(**run_parameters_dict)
 
             schedule_logger(job_id=job_id).info(f"use computing engine {run_parameters.computing_engine}")
-
+            subprocess = True
             if run_parameters.computing_engine in {ComputingEngine.EGGROLL, ComputingEngine.STANDALONE}:
                 process_cmd = [
                     sys.executable,
@@ -136,15 +140,48 @@ class TaskController(object):
                     '--run_ip', RuntimeConfig.JOB_SERVER_HOST,
                     '--job_server', '{}:{}'.format(RuntimeConfig.JOB_SERVER_HOST, RuntimeConfig.HTTP_PORT),
                 ])
+            elif run_parameters.computing_engine == ComputingEngine.LINKIS_SPARK:
+                subprocess = False
+                linkis_spark_config = get_base_config("fate_on_spark", {}).get("linkis_spark")
+                linkis_execute_url = "http://{}:{}{}".format(linkis_spark_config.get("host"),
+                                                             linkis_spark_config.get("port"),
+                                                             LINKIS_EXECUTE_ENTRANCE)
+                headers = {"Token-Code": linkis_spark_config.get("token_code"),
+                           "Token-User": kwargs.get("user_id"),
+                           "Content-Type": "application/json"}
+                schedule_logger(job_id).info(f"headers:{headers}")
+                execution_code = 'from fate_flow.operation.task_executor import TaskExecutor\n' \
+                                 'task_info = TaskExecutor.run_task(job_id="{}",component_name="{}",' \
+                                 'task_id="{}",task_version={},role="{}",party_id={},' \
+                                 'run_ip="{}",config="{}",job_server="{}"\n' \
+                                 'TaskExecutor.report_task_update_to_driver(task_info=task_info)'.format(
+                    job_id, component_name, task_id, task_version, role, party_id, RuntimeConfig.JOB_SERVER_HOST,
+                    task_parameters_path, '{}:{}'.format(RuntimeConfig.JOB_SERVER_HOST, RuntimeConfig.HTTP_PORT))
+                schedule_logger(job_id).info(f"execution code:{execution_code}")
+                data = {
+                    "method": LINKIS_EXECUTE_ENTRANCE,
+                    "params": {},
+                    "executeApplicationName": "spark",
+                    "executionCode": execution_code,
+                    "runType": "python",
+                    "source": {}
+                }
+                schedule_logger(job_id).info(f'submit linkis spark, data:{data}')
+                res = requests.post(url=linkis_execute_url, headers=headers, json=data)
+                schedule_logger(job_id).info(f"start linkis spark task: {res.text}")
+                if res.status_code == 200:
+                    schedule_logger(job_id).info('submit linkis spark success')
+                else:
+                    raise Exception(f"submit linkis spark failed: {res.text}")
             else:
                 raise ValueError(f"${run_parameters.computing_engine} is not supported")
-
-            task_log_dir = os.path.join(job_utils.get_job_log_directory(job_id=job_id), role, party_id, component_name)
-            task_job_dir = os.path.join(job_utils.get_job_directory(job_id=job_id), role, party_id, component_name)
-            schedule_logger(job_id).info(
-                'job {} task {} {} on {} {} executor subprocess is ready'.format(job_id, task_id, task_version, role, party_id))
-            p = job_utils.run_subprocess(job_id=job_id, config_dir=task_dir, process_cmd=process_cmd, log_dir=task_log_dir, job_dir=task_job_dir)
-            if p:
+            if subprocess:
+                task_log_dir = os.path.join(job_utils.get_job_log_directory(job_id=job_id), role, party_id, component_name)
+                task_job_dir = os.path.join(job_utils.get_job_directory(job_id=job_id), role, party_id, component_name)
+                schedule_logger(job_id).info(
+                    'job {} task {} {} on {} {} executor subprocess is ready'.format(job_id, task_id, task_version, role, party_id))
+                p = job_utils.run_subprocess(job_id=job_id, config_dir=task_dir, process_cmd=process_cmd, log_dir=task_log_dir, job_dir=task_job_dir)
+            if not subprocess or p:
                 task_info["party_status"] = TaskStatus.RUNNING
                 #task_info["run_pid"] = p.pid
                 task_info["start_time"] = current_timestamp()
