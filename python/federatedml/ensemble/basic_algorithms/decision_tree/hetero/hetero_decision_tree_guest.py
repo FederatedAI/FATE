@@ -139,6 +139,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
         self.task_type = task_type
 
+        # initializing goss settings
         if self.run_goss:
             self.encrypted_mode_calculator.align_to_input_data = False
             if self.encrypted_mode_calculator.mode != 'strict':

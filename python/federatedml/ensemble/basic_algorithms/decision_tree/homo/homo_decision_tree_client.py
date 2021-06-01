@@ -205,6 +205,7 @@ class HomoDecisionTreeClient(DecisionTree):
             l_g, l_h = split_info[idx].sum_grad, split_info[idx].sum_hess
 
             # create new left node and new right node
+            LOGGER.debug('split info is {}'.format(split_info[idx]))
             left_node = Node(id=l_id,
                              sitename=self.sitename,
                              sum_grad=l_g,
@@ -416,7 +417,13 @@ class HomoDecisionTreeClient(DecisionTree):
             else:
                 node.bid = self.bin_split_points[node.fid][int(node.bid)]
 
+        # post-processing of memory backend fit
         sample_id = self.sample_id_arr[sample_indices]
+        self.leaf_count = {}
+        for node in self.tree_node:
+            if node.is_leaf:
+                self.leaf_count[node.id] = len(node.inst_indices)
+        LOGGER.debug('leaf count is {}'.format(self.leaf_count))
         sample_id_type = type(self.g_h.take(1)[0][0])
         self.sample_weights = session.parallelize([(sample_id_type(id_), weight) for id_, weight in zip(sample_id, weights)],
                                                   include_key=True, partition=self.data_bin.partitions)
@@ -429,6 +436,7 @@ class HomoDecisionTreeClient(DecisionTree):
                     'running on distributed backend'.format(self.epoch_idx, self.tree_idx))
 
         self.init_root_node_and_gh_sum()
+        LOGGER.debug('self grad and hess is {}'.format(list(self.g_h.collect())))
         LOGGER.debug('assign samples to root node')
         self.inst2node_idx = self.assign_instance_to_root_node(self.data_bin, 0)
 
@@ -437,15 +445,16 @@ class HomoDecisionTreeClient(DecisionTree):
         for dep in range(tree_height):
 
             if dep + 1 == tree_height:
+
                 for node in self.cur_layer_node:
                     node.is_leaf = True
                     self.tree_node.append(node)
 
-                rest_sample_weights = self.get_node_sample_weights(self.inst2node_idx, self.tree_node)
-                if self.sample_weights is None:
-                    self.sample_weights = rest_sample_weights
+                rest_sample_leaf_pos = self.inst2node_idx.mapValues(lambda x: x[1])
+                if self.sample_leaf_pos is None:
+                    self.sample_leaf_pos = rest_sample_leaf_pos
                 else:
-                    self.sample_weights = self.sample_weights.union(rest_sample_weights)
+                    self.sample_leaf_pos = self.sample_leaf_pos.union(rest_sample_leaf_pos)
                 # stop fitting
                 break
 
@@ -485,7 +494,6 @@ class HomoDecisionTreeClient(DecisionTree):
             self.cur_layer_node = new_layer_node
 
             self.inst2node_idx, leaf_val = self.assign_instances_to_new_node(table_with_assignment, self.tree_node)
-
             # record leaf val
             if self.sample_leaf_pos is None:
                 self.sample_leaf_pos = leaf_val
@@ -561,7 +569,7 @@ class HomoDecisionTreeClient(DecisionTree):
                                   left_nodeid=node.left_nodeid,
                                   right_nodeid=node.right_nodeid,
                                   missing_dir=node.missing_dir)
-
+        model_param.leaf_count.update(self.leaf_count)
         return model_param
 
     def set_model_param(self, model_param):

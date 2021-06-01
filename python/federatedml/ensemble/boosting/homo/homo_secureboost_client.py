@@ -179,8 +179,6 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
                                           , epoch_idx=epoch_idx, role=self.role, flow_id=flow_id, tree_idx=\
                                           booster_dim, mode='train')
 
-        import time
-        s = time.time()
         if self.backend == consts.DISTRIBUTED_BACKEND:
             new_tree.fit()
             LOGGER.debug('running memory fit')
@@ -191,8 +189,7 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
             new_tree.bin_num = self.bin_num
             new_tree.sample_id_arr = self.sample_id_arr
             new_tree.memory_fit()
-        e = time.time()
-        LOGGER.debug('fit take {}'.format(e-s))
+
         self.update_feature_importance(new_tree.get_feature_importance())
 
         return new_tree
@@ -235,7 +232,8 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
 
     @assert_io_num_rows_equal
     def predict(self, data_inst):
-        return self.fast_homo_tree_predict(data_inst)
+        rs = self.fast_homo_tree_predict(data_inst)
+        return rs
 
     def generate_summary(self) -> dict:
 

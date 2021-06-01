@@ -142,14 +142,14 @@ class HeteroDecisionTreeHost(DecisionTree):
         raise TypeError("encode type %s is not support!" % (str(etype)))
 
     @staticmethod
-    def decode(dtype="feature_idx", val=None, nid=None, maskdict=None, missing_dir_maskdict=None):
+    def decode(dtype="feature_idx", val=None, nid=None, split_maskdict=None, missing_dir_maskdict=None):
 
         if dtype == "feature_idx":
             return val
 
         if dtype == "feature_val":
-            if nid in maskdict:
-                return maskdict[nid]
+            if nid in split_maskdict:
+                return split_maskdict[nid]
             else:
                 raise ValueError("decode val %s cause error, can't recognize it!" % (str(val)))
 
@@ -308,8 +308,9 @@ class HeteroDecisionTreeHost(DecisionTree):
 
     @staticmethod
     def assign_an_instance(value1, value2, sitename=None, decoder=None,
-                           maskdict=None, bin_sparse_points=None,
+                           bin_sparse_points=None,
                            use_missing=False, zero_as_missing=False,
+                           split_maskdict=None,
                            missing_dir_maskdict=None):
 
         unleaf_state, fid, bid, node_sitename, nodeid, left_nodeid, right_nodeid = value1
@@ -330,7 +331,7 @@ class HeteroDecisionTreeHost(DecisionTree):
         dispatch_node_method = functools.partial(self.assign_an_instance,
                                                  sitename=self.sitename,
                                                  decoder=self.decode,
-                                                 maskdict=self.split_maskdict,
+                                                 split_maskdict=self.split_maskdict,
                                                  bin_sparse_points=self.bin_sparse_points,
                                                  use_missing=self.use_missing,
                                                  zero_as_missing=self.zero_as_missing,
@@ -356,7 +357,7 @@ class HeteroDecisionTreeHost(DecisionTree):
         for nid in duplicated_nodes:
             del self.split_maskdict[nid]
 
-    def convert_bin_to_real(self, decode_func, maskdict):
+    def convert_bin_to_real(self, decode_func, split_maskdict):
         LOGGER.info("convert tree node bins to real value")
         split_nid_used = []
 
@@ -364,8 +365,8 @@ class HeteroDecisionTreeHost(DecisionTree):
             if self.tree_node[i].is_leaf is True:
                 continue
             if self.tree_node[i].sitename == self.sitename:
-                fid = decode_func("feature_idx", self.tree_node[i].fid, self.tree_node[i].id, maskdict)
-                bid = decode_func("feature_val", self.tree_node[i].bid, self.tree_node[i].id, maskdict)
+                fid = decode_func("feature_idx", self.tree_node[i].fid, self.tree_node[i].id, split_maskdict)
+                bid = decode_func("feature_val", self.tree_node[i].bid, self.tree_node[i].id, split_maskdict)
                 LOGGER.debug("shape of bin_split_points is {}".format(len(self.bin_split_points[fid])))
                 real_splitval = self.encode("feature_val", self.bin_split_points[fid][bid], self.tree_node[i].id)
                 self.tree_node[i].bid = real_splitval
@@ -493,7 +494,7 @@ class HeteroDecisionTreeHost(DecisionTree):
             dispatch_node_host = self.sync_dispatch_node_host(dep)
             self.assign_instances_to_new_node(dispatch_node_host, dep=dep)
         self.sync_tree()
-        self.convert_bin_to_real(decode_func=self.decode, maskdict=self.split_maskdict)
+        self.convert_bin_to_real(decode_func=self.decode, split_maskdict=self.split_maskdict)
         LOGGER.info("fitting host decision tree done")
 
     @staticmethod
