@@ -319,6 +319,8 @@ class DecisionTree(BasicAlgorithms, ABC):
 
         left, right = True, False
         missing_dir = left if missing_dir == -1 else right
+
+        # use missing and zero as missing
         if use_missing and zero_as_missing:
             # missing or zero
             if data_inst.features.get_data(fid) == NoneType() or data_inst.features.get_data(fid, None) is None:
@@ -330,8 +332,8 @@ class DecisionTree(BasicAlgorithms, ABC):
 
         # no missing val
         feat_val = data_inst.features.get_data(fid, zero_val)
-        dir = left if feat_val <= bid + consts.FLOAT_ZERO else right
-        return dir
+        direction = left if feat_val <= bid + consts.FLOAT_ZERO else right
+        return direction
 
     @staticmethod
     def go_next_layer(node, data_inst, use_missing, zero_as_missing, bin_sparse_point=None,
