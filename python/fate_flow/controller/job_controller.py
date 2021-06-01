@@ -71,7 +71,7 @@ class JobController(object):
         else:
             is_initiator = False
         job_info["status"] = JobStatus.WAITING
-        job_info["f_user_id"] = user
+        job_info["user_id"] = user
         # this party configuration
         job_info["role"] = role
         job_info["party_id"] = party_id

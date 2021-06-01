@@ -152,7 +152,7 @@ class TaskController(object):
                 execution_code = 'from fate_flow.operation.task_executor import TaskExecutor\n' \
                                  'task_info = TaskExecutor.run_task(job_id="{}",component_name="{}",' \
                                  'task_id="{}",task_version={},role="{}",party_id={},' \
-                                 'run_ip="{}",config="{}",job_server="{}"\n' \
+                                 'run_ip="{}",config="{}",job_server="{}")\n' \
                                  'TaskExecutor.report_task_update_to_driver(task_info=task_info)'.format(
                     job_id, component_name, task_id, task_version, role, party_id, RuntimeConfig.JOB_SERVER_HOST,
                     task_parameters_path, '{}:{}'.format(RuntimeConfig.JOB_SERVER_HOST, RuntimeConfig.HTTP_PORT))

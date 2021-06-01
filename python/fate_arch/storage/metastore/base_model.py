@@ -42,7 +42,7 @@ class JSONField(LongTextField):
 
     def python_value(self, value):
         if value is None:
-            value = {}
+            return "{}"
         return json.loads(value)
 
 
