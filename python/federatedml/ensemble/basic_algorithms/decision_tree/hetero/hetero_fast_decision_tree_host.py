@@ -354,7 +354,7 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
             if self.tree_node[i].is_leaf is True:
                 continue
             if self.tree_node[i].sitename == self.sitename:
-                fid = self.decode("feature_idx", self.tree_node[i].fid, maskdict=self.split_maskdict)
+                fid = self.decode("feature_idx", self.tree_node[i].fid, split_maskdict=self.split_maskdict)
                 bid = self.decode("feature_val", self.tree_node[i].bid, self.tree_node[i].id, self.split_maskdict)
                 real_splitval = self.encode("feature_val", self.bin_split_points[fid][bid], self.tree_node[i].id)
                 self.tree_node[i].bid = real_splitval
@@ -502,7 +502,6 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
         LOGGER.info('running layered mode')
 
         self.initialize_node_plan()
-
         self.init_compressor_and_sync_gh()
 
         for dep in range(self.max_depth):
