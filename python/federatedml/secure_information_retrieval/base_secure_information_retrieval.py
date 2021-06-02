@@ -49,6 +49,8 @@ class BaseSecureInformationRetrieval(ModelBase):
         self.intersection_obj = None
         self.proc_obj = None
         self.with_inst_id = None
+        self.need_label = False
+        self.target_cols = None
 
         # For callback
         self.metric_name = "sir"
@@ -65,7 +67,6 @@ class BaseSecureInformationRetrieval(ModelBase):
         if self.model_param.key_size:
             self.ph_params.key_length = self.model_param.key_size
         self.target_cols = self.model_param.target_cols
-        self.target_indexes = self.model_param.target_indexes
 
     def _init_transfer_variable(self):
         self.transfer_variable.natural_indexation.disable_auto_clean()
@@ -86,6 +87,9 @@ class BaseSecureInformationRetrieval(ModelBase):
         else:
             restored_id = k
         return (restored_id, k)
+
+    def _check_need_label(self):
+        return len(self.target_cols) == 0
 
     def _recover_match_id(self, data_instance):
         self.proc_obj = RepeatedIDIntersect(repeated_id_owner=consts.GUEST, role=self.intersection_obj.role)

@@ -18,16 +18,15 @@
 #
 
 import copy
-import numpy as np
 
 from federatedml.secure_information_retrieval.base_secure_information_retrieval import \
-    BaseSecureInformationRetrieval, CryptoExecutor
-from federatedml.feature.instance import Instance
+    BaseSecureInformationRetrieval
 from federatedml.param.sir_param import SecureInformationRetrievalParam
 from federatedml.param.intersect_param import IntersectParam
 from federatedml.secureprotol.oblivious_transfer.hauck_oblivious_transfer.hauck_oblivious_transfer_sender import \
     HauckObliviousTransferSender
 from federatedml.secureprotol.symmetric_encryption.py_aes_encryption import AESEncryptKey
+from federatedml.secureprotol.symmetric_encryption.cryptor_executor import CryptoExecutor
 from federatedml.statistic import data_overview
 from federatedml.statistic.intersect import PhIntersectionHost
 from federatedml.util import consts, abnormal_detection, LOGGER
@@ -41,8 +40,7 @@ class SecureInformationRetrievalHost(BaseSecureInformationRetrieval):
     def __init__(self):
         super(SecureInformationRetrievalHost, self).__init__()
         self.oblivious_transfer = None
-        self.retrieve_indexes = None
-        self.need_label = False
+        self.target_indexes = None
 
     def _init_model(self, param: SecureInformationRetrievalParam):
         self._init_base_model(param)
@@ -50,6 +48,8 @@ class SecureInformationRetrievalHost(BaseSecureInformationRetrieval):
         self.intersection_obj.role = consts.HOST
         intersect_param = IntersectParam(ph_params=self.ph_params)
         self.intersection_obj.load_params(intersect_param)
+        self.intersection_obj.host_party_id_list = self.component_properties.host_party_idlist
+        self.intersection_obj.guest_party_id = self.component_properties.guest_partyid
 
         if self.model_param.oblivious_transfer_protocol == consts.OT_HAUCK:
             self.oblivious_transfer = HauckObliviousTransferSender()
@@ -63,7 +63,7 @@ class SecureInformationRetrievalHost(BaseSecureInformationRetrieval):
         :return:
         """
         LOGGER.info("data count = {}".format(data_inst.count()))
-        self._update_retrieve_indexes(data_inst)
+        self._update_target_indexes(data_inst.schema)
 
         # 0. Raw retrieval
         if self.model_param.raw_retrieval or self.security_level == 0:
@@ -119,7 +119,7 @@ class SecureInformationRetrievalHost(BaseSecureInformationRetrieval):
         # 4. Restore value for the intersection
         id_blocks = _restore_value(id_list_host_first,
                                    id_blocks,
-                                   self.retrieve_indexes,
+                                   self.target_indexes,
                                    self.need_label)      # List[(Ei, val)]
         LOGGER.info("interested values restored")
 
@@ -132,7 +132,9 @@ class SecureInformationRetrievalHost(BaseSecureInformationRetrieval):
         self._non_committing_encrypt(id_blocks, key_list)       # List[(Ei, Eval)]
         LOGGER.info("non-committing encryption and transmission completed")
 
+        """
         # 10. Get doubly encrypted ID list from guest
+
         id_list_intersect_cipher_cipher = self.intersection_obj.sync_intersect_cipher_cipher()      # get (EEright, -1)
 
         # 11. Decrypt and send to guest
@@ -140,8 +142,11 @@ class SecureInformationRetrievalHost(BaseSecureInformationRetrieval):
             id_list_intersect_cipher_cipher,
             self.intersection_obj.commutative_cipher,
             reserve_value=True)    # (EEright, Eright)
+        
         LOGGER.info("decryption completed")
+        
         self.intersection_obj.sync_intersect_cipher(id_list_intersect_cipher)
+        """
 
         # 12. Slack
         self._sync_coverage(data_inst)
@@ -196,40 +201,28 @@ class SecureInformationRetrievalHost(BaseSecureInformationRetrieval):
             if block_confirm:
                 continue
 
-    def _update_retrieve_indexes(self, schema):
-        if len(self.target_cols) == 0 and len(self.target_indexes) == 0:
-            self.need_label = True
+    def _update_target_indexes(self, schema):
+        self.need_label = self._check_need_label()
+        if self.need_label:
             return
-        target_cols = copy.deepcopy(self.target_cols)
-        target_indexes = set(copy.deepcopy(self.target_indexes))
-        header = schema.header
+        header = schema["header"]
         # if schema.label_name in self.target_cols:
         #    self.need_label = True
         #    target_cols.pop(schema.label_name)
-        if len(target_cols) > 0:
-            for col_name in target_cols:
-                try:
-                    i = header.index(col_name)
-                    target_indexes.add(i)
-                except ValueError:
-                    raise ValueError(f"{col_name} does not exist in table header. Please check.")
-        self.retrieve_indexes = target_indexes
-
-    """
-    @staticmethod
-    def extract_value(instance, retrieve_indexes, need_label):
-        value = []
-        if need_label:
-            value.append(instance.label)
-        value.extend((instance.features[i] for i in retrieve_indexes))
-        return value
-    """
+        target_indexes = []
+        for col_name in self.target_cols:
+            try:
+                i = header.index(col_name)
+                target_indexes.append(i)
+            except ValueError:
+                raise ValueError(f"{col_name} does not exist in table header. Please check.")
+        self.target_indexes = target_indexes
 
     @staticmethod
-    def extract_value(instance, retrieve_indexes, need_label):
+    def extract_value(instance, target_indexes, need_label):
         if need_label:
             return instance.label
-        features = [instance.features[i] for i in retrieve_indexes]
+        features = [instance.features[i] for i in target_indexes]
         return features
 
     def _sync_natural_indexation(self, id_list=None, time=None):
@@ -296,7 +289,7 @@ class SecureInformationRetrievalHost(BaseSecureInformationRetrieval):
 
         return id_blocks
 
-def _restore_value(id_list_host, id_blocks, retrieve_indexes, need_label):
+def _restore_value(id_list_host, id_blocks, target_indexes, need_label):
     """
 
     :param id_list_host: (h, (Eh, Instance))
@@ -309,7 +302,7 @@ def _restore_value(id_list_host, id_blocks, retrieve_indexes, need_label):
         restored_table = id_list_host.join(id_blocks[i],
                                            lambda v, u:
                                            SecureInformationRetrievalHost.extract_value(v[1],
-                                                                                        retrieve_indexes,
+                                                                                        target_indexes,
                                                                                         need_label))
         id_value_blocks.append(restored_table)
     return id_value_blocks

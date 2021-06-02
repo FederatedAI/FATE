@@ -122,10 +122,13 @@ class Intersect(object):
         return intersect_ids
 
     @staticmethod
-    def map_raw_id_to_encrypt_id(raw_id_data, encrypt_id_data):
+    def map_raw_id_to_encrypt_id(raw_id_data, encrypt_id_data, keep_value=False):
         encrypt_id_data_exchange_kv = encrypt_id_data.map(lambda k, v: (v, k))
-        encrypt_raw_id = raw_id_data.join(encrypt_id_data_exchange_kv, lambda r, e: e)
-        encrypt_common_id = encrypt_raw_id.map(lambda k, v: (v, "id"))
+        encrypt_raw_id = raw_id_data.join(encrypt_id_data_exchange_kv, lambda r, e: (e, r))
+        if keep_value:
+            encrypt_common_id = encrypt_raw_id.map(lambda k, v: (v[0], v[1]))
+        else:
+            encrypt_common_id = encrypt_raw_id.map(lambda k, v: (v[0], "id"))
 
         return encrypt_common_id
 

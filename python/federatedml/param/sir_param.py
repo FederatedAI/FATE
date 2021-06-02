@@ -16,9 +16,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+
 from federatedml.param.base_param import BaseParam
 from federatedml.param.intersect_param import PHParam
-from federatedml.util import consts
+from federatedml.util import consts, LOGGER
 
 
 class SecureInformationRetrievalParam(BaseParam):
@@ -33,11 +34,7 @@ class SecureInformationRetrievalParam(BaseParam):
     raw_retrieval: bool, perform raw retrieval if raw_retrieval
     target_cols: str or list of str, target cols to retrieve;
         any values not retrieved will be marked as "unretrieved",
-        default None
-    target_indexes: int or list of int, target indexes to retrieve;
-        values will be merged with target_cols;
-        any values not retrieved will be marked as "unretrieved";
-        if both target_cols and target_indexes are None, label will be retrieved, same behavior as in previous version
+        if target_cols is None, label will be retrieved, same behavior as in previous version
         default None
     """
     def __init__(self, security_level=0.5,
@@ -47,8 +44,7 @@ class SecureInformationRetrievalParam(BaseParam):
                  key_size=1024,
                  ph_params=PHParam(),
                  raw_retrieval=False,
-                 target_cols=None,
-                 target_indexes=None):
+                 target_cols=None):
         super(SecureInformationRetrievalParam, self).__init__()
         self.security_level = security_level
         self.oblivious_transfer_protocol = oblivious_transfer_protocol
@@ -58,7 +54,6 @@ class SecureInformationRetrievalParam(BaseParam):
         self.key_size = key_size
         self.raw_retrieval = raw_retrieval
         self.target_cols = [] if target_cols is None else target_cols
-        self.target_indexes = [] if target_indexes is None else target_indexes
 
     def check(self):
         descr = "secure information retrieval param's "
@@ -79,9 +74,5 @@ class SecureInformationRetrievalParam(BaseParam):
             self.target_cols = [self.target_cols]
         for col in self.target_cols:
             self.check_string(col, descr+"target_cols")
-        if not isinstance(self.target_indexes, list):
-            self.target_indexes = [self.target_indexes]
-        for i in self.target_indexes:
-            self.check_nonnegative_number(i, descr+"target_indexes")
-        if len(self.target_cols) == 0 and len(self.target_indexes) == 0:
-            raise ValueError(f"Both 'target_cols' and 'target_indexes' are empty.")
+        if len(self.target_cols) == 0:
+            LOGGER.warning(f"Both 'target_cols' and 'target_indexes' are empty. Label will be retrieved.")

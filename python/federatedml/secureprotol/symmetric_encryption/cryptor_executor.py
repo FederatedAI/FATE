@@ -121,6 +121,10 @@ class CryptoExecutor(object):
             return ciphertable.map(lambda k, v: (self.cipher_core.decrypt(k), v))
         elif mode == 3:
             return ciphertable.map(lambda k, v: (k, (self.cipher_core.decrypt(k), v)))
+        elif mode == 4:
+            return ciphertable.map(lambda k, v: (self.cipher_core.decrypt(k), v))
+        elif mode == 5:
+            return ciphertable.map(lambda k, v: (self.cipher_core.decrypt(k), v))
         else:
             raise ValueError("Unsupported mode for crypto_executor map decryption")
 

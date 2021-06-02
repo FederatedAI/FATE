@@ -27,6 +27,7 @@ class AESKey(SymmetricKey):
     """
     Note that a key cannot used for both encryption and decryption scenarios
     """
+
     def __init__(self, key, nonce=None):
         """
 
@@ -56,10 +57,17 @@ class AESEncryptKey(AESKey):
     AES encryption scheme
     Note that the ciphertext size is affected only by that of the plaintext, instead of the key length
     """
+
     def __init__(self, key):
         super(AESEncryptKey, self).__init__(key=key)
 
     def encrypt(self, plaintext):
+        if isinstance(plaintext, list):
+            return [self.encrypt_single_val(p) for p in plaintext]
+        else:
+            return self.encrypt_single_val(plaintext)
+
+    def encrypt_single_val(self, plaintext):
         if type(plaintext) is not bytes:
             plaintext = self._all_to_bytes(plaintext)
         elif type(plaintext) is bytes:
@@ -92,10 +100,17 @@ class AESDecryptKey(AESKey):
     """
     AES decryption scheme
     """
+
     def __init__(self, key, nonce):
         super(AESDecryptKey, self).__init__(key=key, nonce=nonce)
 
     def decrypt(self, ciphertext):
+        if isinstance(ciphertext, list):
+            return [self.decrypt_single_val(p) for p in ciphertext]
+        else:
+            return self.decrypt_single_val(ciphertext)
+
+    def decrypt_single_val(self, ciphertext):
         """
 
         :param ciphertext: bytes

@@ -191,7 +191,7 @@ class PhIntersectionHost(PhIntersect):
         self._sync_commutative_cipher_public_knowledge()
         self.commutative_cipher.init()
 
-        # 1st ID encrypt: (h, (Eh, Instance))
+        # 1st ID encrypt: (Eh, (h, Instance))
         self.id_list_local_first = self._encrypt_id(data_instances,
                                                     self.commutative_cipher,
                                                     reserve_original_key=True,

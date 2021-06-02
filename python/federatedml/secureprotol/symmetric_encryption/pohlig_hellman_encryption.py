@@ -97,6 +97,8 @@ class PohligHellmanCipherKey(SymmetricKey):
             plaintext = conversion.str_to_int(plaintext)
         elif type(plaintext) == PohligHellmanCiphertext:
             plaintext = plaintext.message
+        elif type(plaintext) != int:
+            plaintext = conversion.str_to_int(str(plaintext))
 
         ciphertext = powmod(plaintext, self.exponent, self.mod_base)
         return PohligHellmanCiphertext(ciphertext)
