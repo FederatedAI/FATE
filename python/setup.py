@@ -219,8 +219,11 @@ install_requires = \
  'gmpy2==2.0.8',
  'joblib==1.0.1',
  'kazoo==2.6.1',
+ 'kfserving>=0.5.1'
+ 'kubernetes>=12.0.1'
  'lmdb==0.94',
  'numpy==1.18.4',
+ 'minio>=6.0.2',
  'pandas==0.23.4',
  'peewee==3.9.3',
  'psutil==5.6.6',
@@ -234,6 +237,7 @@ install_requires = \
  'scipy==1.1.0',
  'tensorflow==1.15.4',
  'torch==1.4.0',
+ 'torch-model-archiver==0.3.1'
  'torchvision==0.5.0',
  'werkzeug==0.15.3']
 

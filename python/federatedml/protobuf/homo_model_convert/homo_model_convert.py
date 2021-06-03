@@ -21,6 +21,10 @@ import os
 from federatedml.util import LOGGER
 from .component_converter import ComponentConverterBase
 
+SKLEARN_FILENAME = "sklearn.joblib"
+PYTORCH_FILENAME = "pytorch.pth"
+TF_DIRNAME = "tensorflow_saved_model"
+
 
 def _get_component_converter(module_name: str,
                              framework_name: str):
@@ -47,6 +51,29 @@ def _get_component_converter(module_name: str,
     return None, None
 
 
+def get_default_target_framework(model_contents: dict,
+                                 module_name: str):
+    """
+    Returns the name of a supported ML framework based on the
+    original FATE model module name and model contents.
+
+    :param model_contents: the model content of the FATE model
+    :param module_name:  The module name, typically as HomoXXXX.
+    :return: the corresponding framework name that this model can be converted to.
+    """
+    framework_name = None
+    if module_name == "HomoLR":
+        framework_name = "sklearn"
+    elif module_name == 'HomoNN':
+        if model_contents['HomoNNModelMeta'].params.config_type == "pytorch":
+            framework_name = "pytorch"
+        else:
+            framework_name = "tf_keras"
+    else:
+        LOGGER.debug(f"Module {module_name} is not a supported homogeneous model")
+    return framework_name
+
+
 def model_convert(model_contents: dict,
                   module_name: str,
                   framework_name=None):
@@ -61,15 +88,8 @@ def model_convert(model_contents: dict,
              the specified framework.
     """
     if not framework_name:
-        if module_name == "HomoLR":
-            framework_name = "sklearn"
-        elif module_name == 'HomoNN':
-            if model_contents['HomoNNModelMeta'].params.config_type == "pytorch":
-                framework_name = "pytorch"
-            else:
-                framework_name = "tf_keras"
-        else:
-            LOGGER.debug(f"Module {module_name} is not a supported homogeneous model")
+        framework_name = get_default_target_framework(model_contents, module_name)
+        if not framework_name:
             return None, None
     target_framework, component_converter = _get_component_converter(module_name, framework_name)
     if not component_converter:
@@ -77,6 +97,21 @@ def model_convert(model_contents: dict,
         return None, None
     LOGGER.info(f"Converting {module_name} module to a model of framework {target_framework}")
     return target_framework, component_converter.convert(model_contents)
+
+
+def _get_model_saver_loader(framework_name: str):
+    if framework_name in ["sklearn", "scikit-learn"]:
+        import joblib
+        return joblib.dump, joblib.load, SKLEARN_FILENAME
+    elif framework_name in ["pytorch", "torch"]:
+        import torch
+        return torch.save, torch.load, PYTORCH_FILENAME
+    elif framework_name in ["tensorflow", "tf", "tf_keras"]:
+        import tensorflow
+        return tensorflow.saved_model.save, tensorflow.saved_model.load, TF_DIRNAME
+    else:
+        raise NotImplementedError("save method for framework: {} is not implemented"
+                                  .format(framework_name))
 
 
 def save_converted_model(model_object,
@@ -90,20 +125,24 @@ def save_converted_model(model_object,
 
     :return: local file/folder path
     """
-    if framework_name in ["sklearn", "scikit-learn"]:
-        import joblib
-        dest = os.path.join(base_dir, "sklearn.joblib")
-        joblib.dump(model_object, dest)
-    elif framework_name in ["pytorch", "torch"]:
-        import torch
-        dest = os.path.join(base_dir, "pytorch.pth")
-        torch.save(model_object, dest)
-    elif framework_name in ["tensorflow", "tf", "tf_keras"]:
-        import tensorflow
-        dest = os.path.join(base_dir, "tensorflow_saved_model")
-        tensorflow.saved_model.save(model_object, dest)
-    else:
-        raise NotImplementedError("save method for framework: {} is not implemented"
-                                  .format(framework_name))
+    save, _, dest_filename = _get_model_saver_loader(framework_name)
+    dest = os.path.join(base_dir, dest_filename)
+    save(model_object, dest)
     LOGGER.info(f"Saved {framework_name} model to {dest}")
     return dest
+
+
+def load_converted_model(framework_name: str,
+                         base_dir: str):
+    """Load a model from the specified directory previously used to save the converted model
+
+    :param framework_name: name of the framework of the model
+    :param base_dir: the base directory to save the model file
+
+    :return: model object of the specified framework
+    """
+    _, load, src_filename = _get_model_saver_loader(framework_name)
+    src = os.path.join(base_dir, src_filename)
+    if not os.path.exists(src):
+        raise FileNotFoundError("expected file or folder {} doesn't exist".format(src))
+    return load(src)
