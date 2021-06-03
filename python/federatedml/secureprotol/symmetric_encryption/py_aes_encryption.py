@@ -17,6 +17,7 @@
 #  limitations under the License.
 #
 import os
+import numpy as np
 
 from federatedml.secureprotol.symmetric_encryption.py_aes_core import AESModeOfOperationOFB
 from federatedml.secureprotol.symmetric_encryption.symmetric_encryption import SymmetricKey
@@ -85,9 +86,9 @@ class AESEncryptKey(AESKey):
         :param message: int/float/str
         :return: -1 if type error, otherwise str
         """
-        if type(message) == int or type(message) == float:
+        if isinstance(message, int) or isinstance(message, float):
             return conversion.str_to_bytes(str(message))
-        elif type(message) == str:
+        elif isinstance(message, str):
             return conversion.str_to_bytes(message)
         else:
             return -1
@@ -106,7 +107,7 @@ class AESDecryptKey(AESKey):
 
     def decrypt(self, ciphertext):
         if isinstance(ciphertext, list):
-            return [self.decrypt_single_val(p) for p in ciphertext]
+            return np.array([self.decrypt_single_val(p) for p in ciphertext])
         else:
             return self.decrypt_single_val(ciphertext)
 

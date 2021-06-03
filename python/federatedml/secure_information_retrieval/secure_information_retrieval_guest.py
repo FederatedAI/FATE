@@ -120,22 +120,23 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
             id_list_guest_second, id_list_host_second_only)     # (EEi, -1)
         LOGGER.info("intersection found")
         """
+        # 2. Find intersection
         id_list_intersect = self.intersection_obj.get_intersect_doubly_encrypted_id(match_data)[0]
         id_list_host_second_only = self.intersection_obj.id_list_remote_second[0]
 
-        # 6. Send the re-indexed doubly encrypted ID to host
+        # 3. Send the re-indexed doubly encrypted ID to host
         self._fake_blocks(id_list_intersect, id_list_host_second_only)  # List[(EEi, -1)]
         LOGGER.info("faked blocks for obfuscation")
 
-        # 7. Wait for host to restore value for the intersection
+        # 4. Wait for host to restore value for the intersection
         LOGGER.info("waiting for host to restore interested values for the intersection")
 
-        # 8. Execute OT as receiver
+        # 5. Execute OT as receiver
         LOGGER.info("enter oblivious transfer protocol as a receiver")
         target_key = self.oblivious_transfer.key_derivation(self.target_block_index)
         LOGGER.info("oblivious transfer key derived")
 
-        # 9. Wait for host to encrypt and transmit, and then receive the encrypted interested values
+        # 6. Wait for host to encrypt and transmit, and then receive the encrypted interested values
         id_block_ciphertext, nonce = self._iteratively_get_encrypted_values()
         LOGGER.info("got encrypted interested values and nonce")
         target_block_cipher_id = self._non_committing_decrypt(
@@ -147,25 +148,19 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
         # self.intersection_obj.sync_intersect_cipher_cipher(
         #    [target_block_cipher_cipher_id.mapValues(lambda v: -1)])       # send (EEright, -1)
 
-        # get (EEright, instance)
+        # 7. Get (EEright, instance)
         target_block_cipher_cipher_id = self.intersection_obj.map_raw_id_to_encrypt_id(target_block_cipher_id,
                                                                                        id_list_host_second_only,
                                                                                        keep_value=True)
+        # 8. Get (EEright, Eright_guest)
+        id_list_local_first = self.intersection_obj.id_list_local_first[0] # (Eright_guest, id)
+        id_list_local_second = self.intersection_obj.id_list_local_second[0] #(EEright, Eright_guest)
 
-        # self.intersection_obj.sync_intersect_cipher_cipher([target_block_cipher_cipher_id])  # send (EEright, id)
-
-        # 11. Get decrypted result from host, and decrypt again
-        # id_list_intersect_cipher_id = self.intersection_obj.sync_intersect_cipher()[0]    # get (EEright, Eright_guest)
-        id_list_local_first = self.intersection_obj.id_list_local_first[0]
-        id_list_local_second = self.intersection_obj.id_list_local_second[0]
-
-        # id_list_intersect_cipher_id = self._composite_decrypt(id_list_intersect_cipher_id[0])        # (EEright, right)
-
-        # 12. Merge result
+        # 9. Merge result
+        # (Eright_guest, instance)
         id_list_cipher = self._merge_instance(target_block_cipher_cipher_id, id_list_local_second, self.need_label)
         data_output = self._merge(id_list_cipher, id_list_local_first)
-        # data_output = recorded_k_data.join(data_output, lambda v1, v2: (v1, v2))
-        # data_output = data_output.map(lambda k, v: (v[0], v[1]))
+
         if self.with_inst_id:
             data_output = self._restore_sample_id(data_output)
         data_output = self._compensate_set_difference(data_inst, data_output)
@@ -177,10 +172,6 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
     def _sync_nonce_list(self, nonce=None, time=0):
         nonce_list_result = self.transfer_variable.nonce_list.get(idx=0,
                                                                   suffix=(time,))
-        # nonce_list_result = federation.get(name=self.transfer_variable.nonce_list.name,
-        #                                    tag=self.transfer_variable.generate_transferid(
-        #                                        self.transfer_variable.nonce_list, time),
-        #                                    idx=0)
         LOGGER.info("Got {}-th nonce list from host".format(time))
         return nonce_list_result
 
@@ -314,7 +305,7 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
         return id_list_array
 
     def _parse_security_level(self, data_instance):
-        data_count_guest = data_instance.count()
+        # data_count_guest = data_instance.count()
 
         # block_num = 2 * exp(scale * level)
         self.block_num = int(np.ceil(2 * np.exp(self.security_scale * self.security_level)))
@@ -326,18 +317,9 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
         self.transfer_variable.raw_id_list.remote(data_instance.map(lambda k, v: (k, -1)),
                                                   role=consts.HOST,
                                                   idx=0)
-        # federation.remote(obj=data_instance.map(lambda k, v: (k, -1)),
-        #                   name=self.transfer_variable.raw_id_list.name,
-        #                   tag=self.transfer_variable.generate_transferid(self.transfer_variable.raw_id_list),
-        #                   role=consts.HOST,
-        #                   idx=0)
         LOGGER.info("sent raw id list to host")
 
         data_output = self.transfer_variable.raw_value_list.get(idx=0)
-        # data_output = federation.get(name=self.transfer_variable.raw_value_list.name,
-        #                              tag=self.transfer_variable.generate_transferid(
-        #                                  self.transfer_variable.raw_value_list),
-        #                              idx=0)
         LOGGER.info("got raw value list from host")
 
         data_output = self._compensate_set_difference(data_instance, data_output)
@@ -352,24 +334,6 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
         :param exact_num: int
         :return: Table
         """
-        """
-        data_inst_count = data_inst.count()
-        rate = exact_num / data_inst_count
-        while True:
-            sample_inst = data_inst.sample(fraction=rate)
-            if sample_inst.count() >= exact_num:
-                break
-        if sample_inst.count() != exact_num:
-            # diff = sample_inst.count() - exact_num
-            # diff_list = sample_inst.take(diff)
-            # for k, _ in diff_list:
-                #sample_inst.delete(k=k)
-            sample_inst_list = sample_inst.take(exact_num)
-            from fate_arch.session import computing_session as session
-            sample_inst = session.parallelize(sample_inst_list,
-                                              partition=sample_inst.partitions,
-                                              include_key=True)
-        """
         sample_inst = data_inst.sample(num=exact_num)
         return sample_inst
 
@@ -377,11 +341,6 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
         self.transfer_variable.block_num.remote(self.block_num,
                                                 role=consts.HOST,
                                                 idx=0)
-        # federation.remote(obj=self.block_num,
-        #                   name=self.transfer_variable.block_num.name,
-        #                   tag=self.transfer_variable.generate_transferid(self.transfer_variable.block_num),
-        #                   role=consts.HOST,
-        #                   idx=0)
         LOGGER.info("sent block num {} to host".format(self.block_num))
 
     def _compensate_set_difference(self, original_data, data_output):
@@ -392,7 +351,9 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
             original_data = original_data.mapValues(lambda v: Instance(label="unretrieved", features=[],
                                                                        inst_id=v.inst_id))
         else:
-            original_data = original_data.mapValues(lambda v: Instance(features=["unretrieved" for _ in self.target_cols],
+            feature_count = len(self.target_cols)
+            features = np.array(["unretrieved"] * feature_count)
+            original_data = original_data.mapValues(lambda v: Instance(features=features,
                                                                        inst_id=v.inst_id))
         # LOGGER.debug(f"original data features is {list(original_data.collect())[0][1].features}")
         # LOGGER.debug(f"original data label is {list(original_data.collect())[0][1].label}")
@@ -415,11 +376,6 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
         self.transfer_variable.coverage.remote(self.coverage * data_instance.count(),
                                                role=consts.HOST,
                                                idx=0)
-        # federation.remote(obj=self.coverage * data_instance.count(),
-        #                   name=self.transfer_variable.coverage.name,
-        #                   tag=self.transfer_variable.generate_transferid(self.transfer_variable.coverage),
-        #                   role=consts.HOST,
-        #                   idx=0)
         LOGGER.info("sent coverage {} to host".format(self.coverage * data_instance.count()))
 
     def _iteratively_get_encrypted_values(self):

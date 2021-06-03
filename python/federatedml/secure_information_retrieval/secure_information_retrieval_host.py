@@ -17,8 +17,6 @@
 #  limitations under the License.
 #
 
-import copy
-
 from federatedml.secure_information_retrieval.base_secure_information_retrieval import \
     BaseSecureInformationRetrieval
 from federatedml.param.sir_param import SecureInformationRetrievalParam
@@ -82,7 +80,6 @@ class SecureInformationRetrievalHost(BaseSecureInformationRetrieval):
         match_data = data_inst
         if data_overview.check_with_inst_id(data_inst):
             match_data = self._recover_match_id(data_inst)
-        # match_data = self.extract_value(match_data, self.retrieve_indexes)
 
         """
         # 2. Sync commutative cipher public knowledge, block num and init
@@ -148,7 +145,7 @@ class SecureInformationRetrievalHost(BaseSecureInformationRetrieval):
         self.intersection_obj.sync_intersect_cipher(id_list_intersect_cipher)
         """
 
-        # 12. Slack
+        # 10. Slack
         self._sync_coverage(data_inst)
         self._display_result()
         LOGGER.info("secure information retrieval finished")
@@ -160,12 +157,6 @@ class SecureInformationRetrievalHost(BaseSecureInformationRetrieval):
                                                  suffix=(time,),
                                                  role=consts.GUEST,
                                                  idx=0)
-        # federation.remote(obj=nonce,
-        #                   name=self.transfer_variable.nonce_list.name,
-        #                   tag=self.transfer_variable.generate_transferid(
-        #                       self.transfer_variable.nonce_list, time),
-        #                   role=consts.GUEST,
-        #                   idx=0)
         LOGGER.info("sent {}-th nonce to guest".format(time))
 
     def _transmit_value_ciphertext(self, id_block, time):
@@ -173,12 +164,6 @@ class SecureInformationRetrievalHost(BaseSecureInformationRetrieval):
                                                            suffix=(time,),
                                                            role=consts.GUEST,
                                                            idx=0)
-        # federation.remote(obj=id_block,
-        #                   name=self.transfer_variable.id_blocks_ciphertext.name,
-        #                   tag=self.transfer_variable.generate_transferid(self.transfer_variable.id_blocks_ciphertext,
-        #                                                                  time),
-        #                   role=consts.GUEST,
-        #                   idx=0)
         LOGGER.info("sent {}-th id block ciphertext to guest".format(time))
 
     def _non_committing_encrypt(self, id_blocks, key_list):
@@ -240,18 +225,10 @@ class SecureInformationRetrievalHost(BaseSecureInformationRetrieval):
 
     def _sync_block_num(self):
         self.block_num = self.transfer_variable.block_num.get(idx=0)
-        # self.block_num = federation.get(name=self.transfer_variable.block_num.name,
-        #                                 tag=self.transfer_variable.generate_transferid(
-        #                                     self.transfer_variable.block_num),
-        #                                 idx=0)
         LOGGER.info("got block num {} from guest".format(self.block_num))
 
     def _raw_information_retrieval(self, data_instance):
         id_list_guest = self.transfer_variable.raw_id_list.get(idx=0)
-        # id_list_guest = federation.get(name=self.transfer_variable.raw_id_list.name,
-        #                                tag=self.transfer_variable.generate_transferid(
-        #                                    self.transfer_variable.raw_id_list),
-        #                                idx=0)
         LOGGER.info("got raw id list from guest")
 
         id_intersect = data_instance.join(id_list_guest, lambda v, u: v)
@@ -259,22 +236,12 @@ class SecureInformationRetrievalHost(BaseSecureInformationRetrieval):
         self.transfer_variable.raw_value_list.remote(id_intersect,
                                                      role=consts.GUEST,
                                                      idx=0)
-        # federation.remote(obj=id_intersect,
-        #                   name=self.transfer_variable.raw_value_list.name,
-        #                   tag=self.transfer_variable.generate_transferid(
-        #                       self.transfer_variable.raw_value_list),
-        #                   role=consts.GUEST,
-        #                   idx=0)
         LOGGER.info("sent raw value list to guest")
 
         self._sync_coverage(data_instance)
 
     def _sync_coverage(self, data_instance):
         self.coverage = self.transfer_variable.coverage.get(idx=0) / data_instance.count()
-        # self.coverage = federation.get(name=self.transfer_variable.coverage.name,
-        #                                tag=self.transfer_variable.generate_transferid(
-        #                                    self.transfer_variable.coverage),
-        #                                idx=0) / data_instance.count()
         LOGGER.info("got coverage {} from guest".format(self.coverage))
 
     def _iteratively_get_id_blocks(self):
@@ -296,7 +263,6 @@ def _restore_value(id_list_host, id_blocks, target_indexes, need_label):
     :param id_blocks: List[(Ei, -1)]
     :return:
     """
-    # id_list_host_parse = id_list_host.map(lambda k, v: (v[0], v[1].label))     # (Eh, val)
     id_value_blocks = []
     for i in range(len(id_blocks)):
         restored_table = id_list_host.join(id_blocks[i],
