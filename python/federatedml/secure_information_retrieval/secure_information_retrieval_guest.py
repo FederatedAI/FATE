@@ -143,7 +143,7 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
             id_block_ciphertext, nonce, target_key)  # (Eright, val)
         LOGGER.info("used the right key to decrypt the wanted values")
 
-        # 10. Encrypt again and send to host
+        # Encrypt again and send to host
         # target_block_cipher_cipher_id = self._composite_encrypt(target_block_cipher_id)      # (EEright, val)
         # self.intersection_obj.sync_intersect_cipher_cipher(
         #    [target_block_cipher_cipher_id.mapValues(lambda v: -1)])       # send (EEright, -1)
