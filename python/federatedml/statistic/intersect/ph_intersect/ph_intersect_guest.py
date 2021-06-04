@@ -1,5 +1,5 @@
 #
-#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#  Copyright 2021 The FATE Authors. All Rights Reserved.
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 
-from federatedml.statistic.intersect import PhIntersect
+from federatedml.statistic.intersect.ph_intersect.ph_intersect_base import PhIntersect
 from federatedml.util import consts, LOGGER
 
 
@@ -137,88 +137,5 @@ class PhIntersectionGuest(PhIntersect):
             self.send_intersect_ids(intersect_ids)
         else:
             LOGGER.info("Skip sync intersect ids with Host(s).")
-
-        return intersect_ids
-
-
-class PhIntersectionHost(PhIntersect):
-    def __init__(self):
-        super().__init__()
-        self.role = consts.HOST
-        self.id_list_local_first = None
-
-    def _sync_commutative_cipher_public_knowledge(self):
-        self.commutative_cipher = self.transfer_variable.commutative_cipher_public_knowledge.get(idx=0)
-
-        LOGGER.info(f"got commutative cipher public knowledge from guest")
-
-    def _exchange_id_list(self, id_list):
-        id_only = id_list.map(lambda k, v: (k, -1))
-        self.transfer_variable.id_ciphertext_list_exchange_h2g.remote(id_only,
-                                                                      role=consts.GUEST,
-                                                                      idx=0)
-        LOGGER.info("sent id 1st ciphertext list to guest")
-
-        id_list_guest = self.transfer_variable.id_ciphertext_list_exchange_g2h.get(idx=0)
-        LOGGER.info("got id 1st ciphertext list from guest")
-
-        return id_list_guest
-
-    def _sync_doubly_encrypted_id_list(self, id_list):
-        self.transfer_variable.doubly_encrypted_id_list.remote(id_list,
-                                                               role=consts.GUEST,
-                                                               idx=0)
-        LOGGER.info("sent doubly encrypted id list to guest")
-
-    def sync_intersect_cipher_cipher(self, id_list=None):
-        id_list_intersect_cipher_cipher = self.transfer_variable.intersect_cipher_cipher.get(idx=0)
-        LOGGER.info("got intersect cipher cipher from guest")
-        return id_list_intersect_cipher_cipher
-
-    def sync_intersect_cipher(self, id_list):
-        self.transfer_variable.intersect_cipher.remote(id_list,
-                                                       role=consts.GUEST,
-                                                       idx=0)
-        LOGGER.info("send intersect cipher to guest")
-
-    def get_intersect_ids(self):
-        first_cipher_intersect_ids = self.transfer_variable.intersect_ids.get(idx=0)
-        intersect_ids = self.map_encrypt_id_to_raw_id(first_cipher_intersect_ids, self.id_list_local_first)
-        return intersect_ids
-
-    def get_intersect_doubly_encrypted_id(self, data_instances):
-        LOGGER.info("Start PH intersection")
-        self._sync_commutative_cipher_public_knowledge()
-        self.commutative_cipher.init()
-
-        # 1st ID encrypt: (Eh, (h, Instance))
-        self.id_list_local_first = self._encrypt_id(data_instances,
-                                                    self.commutative_cipher,
-                                                    reserve_original_key=True,
-                                                    hash_operator=self.hash_operator,
-                                                    salt=self.salt,
-                                                    reserve_original_value=True)
-        LOGGER.info("encrypted local id for the 1st time")
-        # send (Eh, -1), get (Eg, -1)
-        id_list_remote_first = self._exchange_id_list(self.id_list_local_first)
-
-        # 2nd ID encrypt & send doubly encrypted guest ID list to guest
-        id_list_remote_second = self._encrypt_id(id_list_remote_first,
-                                                 self.commutative_cipher,
-                                                 reserve_original_key=True)  # (EEg, Eg)
-        LOGGER.info("encrypted guest id for the 2nd time")
-        self._sync_doubly_encrypted_id_list(id_list_remote_second)
-
-    def decrypt_intersect_doubly_encrypted_id(self, id_list_intersect_cipher_cipher=None):
-        # receive EEi from guest
-        id_list_intersect_cipher_cipher = self.sync_intersect_cipher_cipher()  # get (EE i -1)
-
-        # decrypt and send back to guest: (Ei, -1)
-        id_list_intersect_cipher = self._decrypt_id(id_list_intersect_cipher_cipher, self.commutative_cipher)
-        LOGGER.info("decryption completed")
-        self.sync_intersect_cipher(id_list_intersect_cipher)
-        intersect_ids = None
-        if self.sync_intersect_ids:
-            intersect_ids = self.get_intersect_ids()
 
         return intersect_ids

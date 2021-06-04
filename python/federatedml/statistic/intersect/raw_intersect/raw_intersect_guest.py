@@ -1,5 +1,5 @@
 #
-#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#  Copyright 2021 The FATE Authors. All Rights Reserved.
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 
-from federatedml.statistic.intersect import RawIntersect
+from federatedml.statistic.intersect.raw_intersect.raw_intersect_base import RawIntersect
 from federatedml.util import consts, LOGGER
 
 
@@ -32,23 +32,5 @@ class RawIntersectionGuest(RawIntersect):
             intersect_ids = self.intersect_join_id(data_instances)
         else:
             raise ValueError("Unknown intersect join role, please check the configure of guest")
-
-        return intersect_ids
-
-
-class RawIntersectionHost(RawIntersect):
-    def __init__(self):
-        super().__init__()
-        self.role = consts.HOST
-
-    def run_intersect(self, data_instances):
-        LOGGER.info("Start raw intersection")
-
-        if self.join_role == consts.GUEST:
-            intersect_ids = self.intersect_send_id(data_instances)
-        elif self.join_role == consts.HOST:
-            intersect_ids = self.intersect_join_id(data_instances)
-        else:
-            raise ValueError("Unknown intersect join role, please check job configuration")
 
         return intersect_ids

@@ -28,7 +28,7 @@ class TestRsaIntersectGuest(unittest.TestCase):
         session.init(self.jobid)
 
         from federatedml.statistic.intersect.intersect_rsa import RsaIntersectionGuest
-        from federatedml.statistic.intersect.intersect import RsaIntersect
+        from federatedml.statistic.intersect.base_intersect import RsaIntersect
         intersect_param = IntersectParam()
         self.rsa_operator = RsaIntersectionGuest()
         self.rsa_operator.load_params(intersect_param)
