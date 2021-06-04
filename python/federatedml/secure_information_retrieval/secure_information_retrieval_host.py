@@ -42,6 +42,7 @@ class SecureInformationRetrievalHost(BaseSecureInformationRetrieval):
 
     def _init_model(self, param: SecureInformationRetrievalParam):
         self._init_base_model(param)
+
         self.intersection_obj = PhIntersectionHost()
         self.intersection_obj.role = consts.HOST
         intersect_param = IntersectParam(ph_params=self.ph_params)
@@ -57,7 +58,7 @@ class SecureInformationRetrievalHost(BaseSecureInformationRetrieval):
     def fit(self, data_inst):
         """
 
-        :param data_inst: Table, only the key and the value (Instance.label) are used
+        :param data_inst: Table
         :return:
         """
         LOGGER.info("data count = {}".format(data_inst.count()))
@@ -191,9 +192,6 @@ class SecureInformationRetrievalHost(BaseSecureInformationRetrieval):
         if self.need_label:
             return
         header = schema["header"]
-        # if schema.label_name in self.target_cols:
-        #    self.need_label = True
-        #    target_cols.pop(schema.label_name)
         target_indexes = []
         for col_name in self.target_cols:
             try:
@@ -213,11 +211,7 @@ class SecureInformationRetrievalHost(BaseSecureInformationRetrieval):
     def _sync_natural_indexation(self, id_list=None, time=None):
         id_list_natural_indexation = self.transfer_variable.natural_indexation.get(idx=0,
                                                                                    suffix=(time,))
-        # id_list_natural_indexation = federation.get(name=self.transfer_variable.natural_indexation.name,
-        #                                             tag=self.transfer_variable.generate_transferid(
-        #                                                 self.transfer_variable.natural_indexation, time),
-        #                                             idx=0)
-        LOGGER.info("got naturally indexed block {} from guest".format(time))
+        LOGGER.info(f"got naturally indexed block {time} from guest")
         return id_list_natural_indexation
 
     def _parse_security_level(self, data_instance):
@@ -230,8 +224,12 @@ class SecureInformationRetrievalHost(BaseSecureInformationRetrieval):
     def _raw_information_retrieval(self, data_instance):
         id_list_guest = self.transfer_variable.raw_id_list.get(idx=0)
         LOGGER.info("got raw id list from guest")
+        target_indexes, need_label = self.target_indexes, self.need_label
 
-        id_intersect = data_instance.join(id_list_guest, lambda v, u: v)
+        id_intersect = data_instance.join(id_list_guest,
+                                          lambda v, u: SecureInformationRetrievalHost.extract_value(v,
+                                                                                                    target_indexes,
+                                                                                                    need_label))
 
         self.transfer_variable.raw_value_list.remote(id_intersect,
                                                      role=consts.GUEST,
@@ -242,7 +240,7 @@ class SecureInformationRetrievalHost(BaseSecureInformationRetrieval):
 
     def _sync_coverage(self, data_instance):
         self.coverage = self.transfer_variable.coverage.get(idx=0) / data_instance.count()
-        LOGGER.info("got coverage {} from guest".format(self.coverage))
+        LOGGER.info(f"got coverage {self.coverage} from guest")
 
     def _iteratively_get_id_blocks(self):
         """

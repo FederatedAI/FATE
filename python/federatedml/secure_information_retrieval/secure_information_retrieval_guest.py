@@ -71,7 +71,6 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
         """
         # 0. Raw retrieval
         if self.model_param.raw_retrieval or self.security_level == 0:
-            #@ TODO: raw retrieval for multiple features
             LOGGER.info("enter raw information retrieval guest")
             abnormal_detection.empty_table_detection(data_inst)
             data_output = self._raw_information_retrieval(data_inst)
@@ -90,7 +89,6 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
         self.with_inst_id = data_overview.check_with_inst_id(data_inst)
         if self.with_inst_id:
             match_data = self._recover_match_id(data_inst)
-        # recorded_k_data = match_data.map(lambda k, v: BaseSecureInformationRetrieval.record_original_id(k, v))
 
         """
         # 2. Sync commutative cipher public knowledge, block num and init

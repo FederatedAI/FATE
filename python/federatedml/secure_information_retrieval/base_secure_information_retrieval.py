@@ -80,6 +80,7 @@ class BaseSecureInformationRetrieval(ModelBase):
         abnormal_detection.empty_table_detection(data_instances)
         abnormal_detection.empty_feature_detection(data_instances)
 
+    """    
     @staticmethod
     def record_original_id(k, v):
         if isinstance(k, str):
@@ -87,6 +88,7 @@ class BaseSecureInformationRetrieval(ModelBase):
         else:
             restored_id = k
         return (restored_id, k)
+    """
 
     def _check_need_label(self):
         return len(self.target_cols) == 0
@@ -226,15 +228,10 @@ class BaseSecureInformationRetrieval(ModelBase):
                                          metric_name=self.metric_name,
                                          metric_meta=MetricMeta(self.metric_name, metric_type="INTERSECTION"))
 
+    """
     @staticmethod
     def _set_schema(data_instance, id_name=None, label_name=None, feature_name=None):
-        """
-
-        :param data_instance: Table
-        :param id_name: str
-        :param label_name: str
-        :return:
-        """
+    
         if id_name is not None:
             data_instance.schema['sid_name'] = id_name
         if label_name is not None:
@@ -257,9 +254,6 @@ class BaseSecureInformationRetrieval(ModelBase):
 
     @staticmethod
     def log_schema(tab):
-        """
-
-        :param tab: Table
-        :return:
-        """
+        
         LOGGER.debug("tab schema = {}".format(tab.schema))
+    """
