@@ -64,7 +64,8 @@ def main(config="../../config.yaml", namespace=""):
         "commutative_encryption": "CommutativeEncryptionPohligHellman",
         "non_committing_encryption": "aes",
         "key_size": 1024,
-        "raw_retrieval": False
+        "raw_retrieval": False,
+        "target_cols": ["x0", "x3"]
     }
     secure_information_retrieval_0 = SecureInformationRetrieval(name="secure_information_retrieval_0", **param)
 

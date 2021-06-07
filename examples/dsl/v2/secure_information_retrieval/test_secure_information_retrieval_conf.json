@@ -55,7 +55,8 @@
                 "commutative_encryption": "CommutativeEncryptionPohligHellman",
                 "non_committing_encryption": "aes",
                 "key_size": 1024,
-                "raw_retrieval": false
+                "raw_retrieval": false,
+                "target_cols": ["x0", "x3"]
             }
         }
     }
