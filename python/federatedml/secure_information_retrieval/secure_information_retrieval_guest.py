@@ -57,10 +57,9 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
         self.intersection_obj.host_party_id_list = self.component_properties.host_party_idlist
         self.intersection_obj.guest_party_id = self.component_properties.guest_partyid
 
-        if self.model_param.oblivious_transfer_protocol == consts.OT_HAUCK:
+        if self.model_param.oblivious_transfer_protocol == consts.OT_HAUCK.lower():
             self.oblivious_transfer = HauckObliviousTransferReceiver()
         else:
-            LOGGER.error("SIR only supports Hauck's OT")
             raise ValueError("SIR only supports Hauck's OT")
 
     def fit(self, data_inst):
@@ -231,7 +230,7 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
         :param target_key: ObliviousTransferKey
         :return:
         """
-        if self.model_param.non_committing_encryption == consts.AES:
+        if self.model_param.non_committing_encryption == consts.AES.lower():
             aes_key = CryptoExecutor(AESDecryptKey(key=target_key.key, nonce=nonce))
         else:
             raise ValueError("only supports AES cipher for non-committing decryption")

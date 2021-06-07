@@ -1,0 +1,25 @@
+{
+    "data": [
+        {
+            "file": "examples/data/breast_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_guest",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/breast_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_host",
+            "namespace": "experiment",
+            "role": "guest_0"
+        }
+    ],
+    "pipeline_tasks": {
+        "secure-information-retrieval": {
+            "script": "./secure-information-retrieval.py"
+        }
+    }
+}

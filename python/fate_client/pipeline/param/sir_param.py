@@ -17,9 +17,9 @@
 #  limitations under the License.
 #
 
-from federatedml.param.base_param import BaseParam
-from federatedml.param.intersect_param import PHParam
-from federatedml.util import consts, LOGGER
+from pipeline.param.base_param import BaseParam
+from pipeline.param.intersect_param import PHParam
+from pipeline.param import consts
 
 
 class SecureInformationRetrievalParam(BaseParam):
@@ -60,13 +60,13 @@ class SecureInformationRetrievalParam(BaseParam):
         self.check_decimal_float(self.security_level, descr+"security_level")
         self.oblivious_transfer_protocol = self.check_and_change_lower(self.oblivious_transfer_protocol,
                                                                        [consts.OT_HAUCK.lower()],
-                                                                       descr + "oblivious_transfer_protocol")
+                                                                       descr+"oblivious_transfer_protocol")
         self.commutative_encryption = self.check_and_change_lower(self.commutative_encryption,
                                                                   [consts.CE_PH.lower()],
-                                                                  descr + "commutative_encryption")
+                                                                  descr+"commutative_encryption")
         self.non_committing_encryption = self.check_and_change_lower(self.non_committing_encryption,
                                                                      [consts.AES.lower()],
-                                                                     descr + "non_committing_encryption")
+                                                                     descr+"non_committing_encryption")
         self.ph_params.check()
         self.check_positive_integer(self.key_size, descr+"key_size")
         self.check_boolean(self.raw_retrieval, descr)
@@ -74,5 +74,3 @@ class SecureInformationRetrievalParam(BaseParam):
             self.target_cols = [self.target_cols]
         for col in self.target_cols:
             self.check_string(col, descr+"target_cols")
-        if len(self.target_cols) == 0:
-            LOGGER.warning(f"Both 'target_cols' and 'target_indexes' are empty. Label will be retrieved.")
