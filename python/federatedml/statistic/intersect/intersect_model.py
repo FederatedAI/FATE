@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 #
 #  Copyright 2021 The FATE Authors. All Rights Reserved.
 #
