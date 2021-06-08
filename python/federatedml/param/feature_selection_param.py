@@ -95,7 +95,8 @@ class IVPercentileSelectionParam(BaseParam):
 
     def check(self):
         descr = "IV selection param's"
-        self.check_decimal_float(self.percentile_threshold, descr)
+        if self.percentile_threshold not in [0, 1]:
+            self.check_decimal_float(self.percentile_threshold, descr)
         self.check_boolean(self.local_only, descr)
         return True
 
@@ -163,7 +164,8 @@ class OutlierColsSelectionParam(BaseParam):
 
     def check(self):
         descr = "Outlier Filter param's"
-        self.check_decimal_float(self.percentile, descr)
+        if self.percentile not in [0, 1]:
+            self.check_decimal_float(self.percentile, descr)
         self.check_defined_type(self.upper_threshold, descr, ['float', 'int'])
         return True
 
