@@ -26,6 +26,7 @@ from federatedml.secureprotol import gmpy_math
 from federatedml.secureprotol.affine import AffineCipher
 from federatedml.secureprotol.fate_paillier import PaillierKeypair
 from federatedml.secureprotol.iterative_affine import IterativeAffineCipher
+from federatedml.secureprotol.fate_paillier import PaillierEncryptedNumber
 from federatedml.secureprotol.random import RandomPads
 
 _TORCH_VALID = False
@@ -61,6 +62,12 @@ class Encrypt(object):
         pass
 
     def decrypt(self, value):
+        pass
+
+    def raw_encrypt(self, value):
+        pass
+
+    def raw_decrypt(self, value):
         pass
 
     def encrypt_list(self, values):
@@ -100,6 +107,12 @@ class Encrypt(object):
 
     def recursive_decrypt(self, X):
         return self._recursive_func(X, self.decrypt)
+
+    def recursive_raw_encrypt(self, X):
+        return self._recursive_func(X, self.raw_encrypt)
+
+    def recursive_raw_decrypt(self, X):
+        return self._recursive_func(X, self.raw_decrypt)
 
 
 class RsaEncrypt(Encrypt):
@@ -182,8 +195,25 @@ class PaillierEncrypt(Encrypt):
         else:
             return None
 
+    def raw_encrypt(self, plaintext, exponent=0):
+        cipher_int = self.public_key.raw_encrypt(plaintext)
+        paillier_num = PaillierEncryptedNumber(public_key=self.public_key, ciphertext=cipher_int, exponent=exponent)
+        return paillier_num
+
+    def raw_decrypt(self, ciphertext):
+        return self.privacy_key.raw_decrypt(ciphertext.ciphertext())
+
+    def paillier_recursive_raw_encrypt(self, X, exponent=0):
+        raw_en_func = functools.partial(self.raw_encrypt, exponent=exponent)
+        return self._recursive_func(X, raw_en_func)
+
 
 class FakeEncrypt(Encrypt):
+
+    def __init__(self):
+        from federatedml.util import LOGGER
+        LOGGER.debug('using fake encrypt')
+
     def encrypt(self, value):
         return value
 
@@ -332,3 +362,9 @@ class IterativeAffineEncrypt(SymmetricEncrypt):
             return self.key.decrypt(ciphertext)
         else:
             return None
+
+    def raw_encrypt(self, plaintext):
+        return self.key.raw_encrypt(plaintext)
+
+    def raw_decrypt(self, ciphertext):
+        return self.key.raw_decrypt(ciphertext)
