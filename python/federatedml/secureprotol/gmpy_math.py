@@ -128,3 +128,7 @@ def gcd(a, b):
 
 def next_prime(n):
     return int(gmpy2.next_prime(n))
+
+
+def mpz(n):
+    return gmpy2.mpz(n)
