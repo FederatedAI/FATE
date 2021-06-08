@@ -24,10 +24,10 @@ for i in range(4):
 print(f'fate_path: {cur_path}')
 sys.path.append(cur_path)
 
-from examples.pipeline.hetero_feature_binning import common_tools
+from examples.pipeline.hetero_logistic_regression import common_tools
+
 from pipeline.utils.tools import load_job_config
 from pipeline.runtime.entity import JobParameters
-import copy
 
 
 def main(config="../../config.yaml", namespace=""):
@@ -37,42 +37,36 @@ def main(config="../../config.yaml", namespace=""):
     backend = config.backend
     work_mode = config.work_mode
 
-    param = {
-        "method": "quantile",
-        "optimal_binning_param": {
-            "metric_method": "gini",
-            "min_bin_pct": 0.05,
-            "max_bin_pct": 0.8,
-            "init_bucket_method": "quantile",
-            "init_bin_nums": 100,
-            "mixture": True
+    lr_param = {
+        "name": "hetero_lr_0",
+        "penalty": "L2",
+        "optimizer": "nesterov_momentum_sgd",
+        "tol": 0.0001,
+        "alpha": 0.01,
+        "max_iter": 10,
+        "early_stop": "diff",
+        "batch_size": -1,
+        "learning_rate": 0.15,
+        "validation_freqs": 1,
+        "early_stopping_rounds": 3,
+        "init_param": {
+            "init_method": "zeros"
         },
-        "compress_thres": 10000,
-        "head_size": 10000,
-        "error": 0.001,
-        "bin_num": 10,
-        "bin_indexes": -1,
-        "bin_names": None,
-        "category_indexes": [0, 1, 2],
-        "category_names": None,
-        "adjustment_factor": 0.5,
-        "local_only": False,
-        "transform_param": {
-            "transform_cols": -1,
-            "transform_names": None,
-            "transform_type": "bin_num"
+        "cv_param": {
+            "n_splits": 3,
+            "shuffle": False,
+            "random_seed": 103,
+            "need_cv": False
         }
     }
 
-    guest_param = copy.deepcopy(param)
-    guest_param["method"] = 'quantile'
-    host_param = copy.deepcopy(param)
-    host_param["method"] = 'optimal'
-    pipeline = common_tools.make_asymmetric_dsl(config, namespace, guest_param=guest_param,
-                                                host_param=host_param)
+    pipeline = common_tools.make_normal_dsl(config, namespace, lr_param, is_ovr=True,
+                                            is_cv=False, has_validate=True)
+    # fit model
     job_parameters = JobParameters(backend=backend, work_mode=work_mode)
     pipeline.fit(job_parameters)
-    # common_tools.prettify(pipeline.get_component("hetero_feature_binning_0").get_summary())
+    # query component summary
+    common_tools.prettify(pipeline.get_component("hetero_lr_0").get_summary())
 
 
 if __name__ == "__main__":

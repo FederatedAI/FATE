@@ -39,14 +39,18 @@ message IVParam {
     repeated string bin_anonymous = 11;
 }
 
-message SingleLabelFeatureBinningResult {
+message FeatureBinningResult {
     map<string, IVParam> binning_result = 1;
     string role = 2;
     string party_id = 3;
 }
 
-message FeatureBinningResult {
-    map<int64, SingleLabelFeatureBinningResult> binning_result = 1;
+message MultiClassResult {
+    repeated FeatureBinningResult results = 1;
+    repeated string labels = 2;
+    repeated FeatureBinningResult host_results = 3;
+    repeated string host_party_ids = 4;
+    bool has_host_result = 5;
 }
 
 message BinningSingleFeatureValue {
@@ -55,14 +59,11 @@ message BinningSingleFeatureValue {
     string value_name = 3;
 }
 
-//message BinningOnePartyResult {
-//    repeated BinningSingleFeatureValue results = 1;
-//}
-
 message FeatureBinningParam {
     FeatureBinningResult binning_result = 1;
     repeated FeatureBinningResult host_results = 2;
     repeated string header = 3;
     repeated string header_anonymous = 4;
     string model_name = 5;
+    MultiClassResult multi_class_result=6;
 }

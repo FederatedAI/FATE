@@ -16,10 +16,11 @@
 
 import copy
 import functools
+
 import numpy as np
 
 from federatedml.cipher_compressor.compressor import CipherDecompressor
-from federatedml.feature.binning.base_binning import BaseBinning
+from federatedml.feature.binning.iv_calculator import IvCalculator
 from federatedml.feature.binning.optimal_binning.optimal_binning import OptimalBinning
 from federatedml.feature.hetero_feature_binning.base_feature_binning import BaseFeatureBinning
 from federatedml.secureprotol import PaillierEncrypt
@@ -40,31 +41,42 @@ class HeteroFeatureBinningGuest(BaseFeatureBinning):
         self._abnormal_detection(data_instances)
 
         # self._parse_cols(data_instances)
-        self._setup_bin_inner_param(data_instances, self.model_param)
 
-        self.binning_obj.fit_split_points(data_instances)
+        self._setup_bin_inner_param(data_instances, self.model_param)
+        split_points = self.binning_obj.fit_split_points(data_instances)
+
         if self.model_param.skip_static:
             self.transform(data_instances)
             return self.data_output
 
-        label_counts = data_overview.get_label_count(data_instances)
-        # if len(label_counts) > 2:
-        #     self.multi_class_iv(data_instances, label_counts)
+        label_counts_dict = data_overview.get_label_count(data_instances)
+
+        if len(label_counts_dict) > 2:
+            if self.model_param.method == consts.OPTIMAL:
+                raise ValueError("Have not supported optimal binning in multi-class data yet")
+            # self.multi_class_iv(data_instances, label_counts)
         #     return
 
         # data_instances = data_instances.mapValues(self.load_data)
         # self.set_schema(data_instances)
         # label_table = data_instances.mapValues(lambda x: x.label)
 
-        label_elements = list(label_counts.keys())
-        label_table = self.convert_label(data_instances, label_elements)
+        self.labels = list(label_counts_dict.keys())
+        label_counts = [label_counts_dict[k] for k in self.labels]
+        label_table = IvCalculator.convert_label(data_instances, self.labels)
+        self.bin_result = self.iv_calculator.cal_local_iv(data_instances=data_instances,
+                                                          split_points=split_points,
+                                                          labels=self.labels,
+                                                          label_counts=label_counts,
+                                                          bin_cols_map=self.bin_inner_param.bin_cols_map,
+                                                          label_table=label_table)
 
         if self.model_param.local_only:
-            LOGGER.info("This is a local only binning fit")
-            self.binning_obj.cal_local_iv(data_instances, label_table=label_table,
-                                          label_counts=label_counts)
+            # LOGGER.info("This is a local only binning fit")
+            # self.binning_obj.cal_local_iv(data_instances, label_table=label_table,
+            #                               label_counts=label_counts)
             self.transform(data_instances)
-            self.set_summary(self.binning_obj.bin_results.summary())
+            self.set_summary(self.bin_result.summary())
             return self.data_output
 
         if self.model_param.encrypt_param.method == consts.PAILLIER:
@@ -72,47 +84,16 @@ class HeteroFeatureBinningGuest(BaseFeatureBinning):
             cipher.generate_key(self.model_param.encrypt_param.key_length)
         else:
             raise NotImplementedError("encrypt method not supported yet")
+
         # from federatedml.secureprotol.encrypt import FakeEncrypt
         # cipher = FakeEncrypt()
-        f = functools.partial(self.encrypt, cipher=cipher)
-        encrypted_label_table = label_table.mapValues(f)
 
-        self.transfer_variable.encrypted_label.remote(encrypted_label_table,
-                                                      role=consts.HOST,
-                                                      idx=-1)
-        LOGGER.info("Sent encrypted_label_table to host")
+        self.federated_iv(data_instances=data_instances, label_table=label_table,
+                          cipher=cipher, result_counts=label_counts_dict, label_elements=self.labels)
 
-        self.binning_obj.cal_local_iv(data_instances, label_table=label_table,
-                                      label_counts=label_counts)
-
-        encrypted_bin_sum_infos = self.transfer_variable.encrypted_bin_sum.get(idx=-1)
-        encrypted_bin_infos = self.transfer_variable.optimal_info.get(idx=-1)
-        total_summary = self.binning_obj.bin_results.summary()
-
-        LOGGER.info("Get encrypted_bin_sum from host")
-        for host_idx, encrypted_bin_info in enumerate(encrypted_bin_infos):
-            host_party_id = self.component_properties.host_party_idlist[host_idx]
-            encrypted_bin_sum = encrypted_bin_sum_infos[host_idx]
-
-            # TODO: New decompress
-            result_counts = self.cipher_decompress(encrypted_bin_sum, cipher)
-
-            host_bin_methods = encrypted_bin_info['bin_method']
-            category_names = encrypted_bin_info['category_names']
-
-            if host_bin_methods == consts.OPTIMAL:
-                host_binning_obj = self.host_optimal_binning(data_instances, host_idx,
-                                                             encrypted_bin_info, result_counts,
-                                                             category_names)
-                category_bins = {x: y for x, y in result_counts.items() if x in category_names}
-                host_binning_obj.cal_iv_woe(category_bins, self.model_param.adjustment_factor)
-            else:
-                host_binning_obj = BaseBinning()
-                host_binning_obj.cal_iv_woe(result_counts, self.model_param.adjustment_factor)
-            host_binning_obj.set_role_party(role=consts.HOST, party_id=host_party_id)
-            total_summary = self._merge_summary(total_summary,
-                                                host_binning_obj.bin_results.summary())
-            self.host_results.append(host_binning_obj)
+        total_summary = self.bin_result.summary()
+        for host_res in self.host_results:
+            total_summary = self._merge_summary(total_summary, host_res.summary())
 
         self.set_schema(data_instances)
         self.transform(data_instances)
@@ -121,21 +102,11 @@ class HeteroFeatureBinningGuest(BaseFeatureBinning):
         self.set_summary(total_summary)
         return self.data_output
 
-    @staticmethod
-    def convert_label(data_instances, label_elements):
-        def _convert(instance):
-            res_labels = np.zeros(len(label_elements))
-            res_labels[label_elements.index(instance.label)] = 1
-            return res_labels
-        label_table = data_instances.mapValues(_convert)
-        return label_table
-
-    def multi_class_iv(self, data_instances, label_counts, cipher):
-        label_elements = list(label_counts.keys())
-        label_table = self.convert_label(data_instances, label_elements)
+    def federated_iv(self, data_instances, label_table, cipher, result_counts, label_elements):
 
         # TODO: Compress & encrypt
-        encrypted_label_table = label_table
+        f = functools.partial(self.encrypt, cipher=cipher)
+        encrypted_label_table = label_table.mapValues(f)
 
         self.transfer_variable.encrypted_label.remote(encrypted_label_table,
                                                       role=consts.HOST,
@@ -148,13 +119,17 @@ class HeteroFeatureBinningGuest(BaseFeatureBinning):
             encrypted_bin_sum = encrypted_bin_sum_infos[host_idx]
 
             # TODO: New decompress
-            result_counts = self.cipher_decompress(encrypted_bin_sum, cipher)
+            # result_counts_table = self.cipher_decompress(encrypted_bin_sum, cipher)
+            # encrypted_bin_sum = dict(encrypted_bin_sum.collect())
+            result_counts_table = self.__decrypt_bin_sum(encrypted_bin_sum, cipher)
 
-            host_binning_obj = self.obtain_host_binning_obj(data_instances, host_idx, encrypted_bin_info, result_counts)
-            host_binning_obj.set_role_party(role=consts.HOST, party_id=host_party_id)
-            # total_summary = self._merge_summary(total_summary,
-            #                                     host_binning_obj.bin_results.summary())
-            self.host_results.append(host_binning_obj)
+            bin_result = self.cal_bin_results(data_instances=data_instances,
+                                              host_idx=host_idx,
+                                              encrypted_bin_info=encrypted_bin_info,
+                                              result_counts_table=result_counts_table,
+                                              result_counts=result_counts,
+                                              label_elements=label_elements)
+            self.host_results.append(bin_result)
 
     def host_optimal_binning(self, data_instances, host_idx, encrypted_bin_info, result_counts, category_names):
         optimal_binning_params = encrypted_bin_info['optimal_params']
@@ -166,28 +141,43 @@ class HeteroFeatureBinningGuest(BaseFeatureBinning):
         host_model_params.optimal_binning_param.max_bin_pct = optimal_binning_params.get('max_bin_pct')
         host_model_params.optimal_binning_param.min_bin_pct = optimal_binning_params.get('min_bin_pct')
 
-        self.binning_obj.event_total, self.binning_obj.non_event_total = self.get_histogram(data_instances)
+        event_total, non_event_total = self.get_histogram(data_instances)
         result_counts = dict(result_counts.collect())
         optimal_binning_cols = {x: y for x, y in result_counts.items() if x not in category_names}
-        host_binning_obj = self.optimal_binning_sync(optimal_binning_cols, data_instances.count(),
+        host_binning_obj = OptimalBinning(params=host_model_params, abnormal_list=self.binning_obj.abnormal_list)
+        host_binning_obj.event_total = event_total
+        host_binning_obj.non_event_total = non_event_total
+        host_binning_obj = self.optimal_binning_sync(host_binning_obj, optimal_binning_cols, data_instances.count(),
                                                      data_instances.partitions,
-                                                     host_idx, host_model_params)
+                                                     host_idx)
         return host_binning_obj
 
-    def obtain_host_binning_obj(self, data_instances, host_idx, encrypted_bin_info, result_counts):
+    def cal_bin_results(self, data_instances, host_idx, encrypted_bin_info, result_counts_table,
+                        result_counts, label_elements):
         host_bin_methods = encrypted_bin_info['bin_method']
         category_names = encrypted_bin_info['category_names']
-
+        result_counts_dict = dict(result_counts_table.collect())
         if host_bin_methods == consts.OPTIMAL:
+            if len(result_counts) > 2:
+                raise ValueError("Have not supported optimal binning in multi-class data yet")
             host_binning_obj = self.host_optimal_binning(data_instances, host_idx,
-                                                         encrypted_bin_info, result_counts,
+                                                         encrypted_bin_info, result_counts_table,
                                                          category_names)
-            category_bins = {x: y for x, y in result_counts.items() if x in category_names}
-            host_binning_obj.cal_iv_woe(category_bins, self.model_param.adjustment_factor)
+            optimal_counts = {}
+            for col_name, bucket_list in host_binning_obj.bucket_lists.items():
+                optimal_counts[col_name] = [np.array([b.event_count, b.non_event_count]) for b in bucket_list]
+
+            for col_name, counts in result_counts_dict.items():
+                if col_name in category_names:
+                    optimal_counts[col_name] = counts
+            LOGGER.debug(f"optimal_counts: {optimal_counts}")
+            bin_res = self.iv_calculator.cal_iv_from_counts(optimal_counts, labels=label_elements)
+            # category_bins = {x: y for x, y in result_counts.items() if x in category_names}
+            # host_binning_obj.cal_iv_woe(category_bins, self.model_param.adjustment_factor)
         else:
-            host_binning_obj = BaseBinning()
-            host_binning_obj.cal_iv_woe(result_counts, self.model_param.adjustment_factor)
-        return host_binning_obj
+            bin_res = self.iv_calculator.cal_iv_from_counts(result_counts_table,
+                                                            label_elements)
+        return bin_res
 
     def cipher_decompress(self, encrypted_bin_sum, cipher):
 
@@ -238,35 +228,44 @@ class HeteroFeatureBinningGuest(BaseFeatureBinning):
 
     @staticmethod
     def _merge_summary(summary_1, summary_2):
-        res = {}
-        for k, v in summary_1.items():
-            if k == 'iv':
-                v.extend(summary_2[k])
-                v = sorted(v, key=lambda p: p[1], reverse=True)
-            else:
-                v.update(summary_2[k])
-            res[k] = v
+        def merge_single_label(s1, s2):
+            res = {}
+            for k, v in s1.items():
+                if k == 'iv':
+                    v.extend(s2[k])
+                    v = sorted(v, key=lambda p: p[1], reverse=True)
+                else:
+                    v.update(s2[k])
+                res[k] = v
+            return res
 
+        res = {}
+        for label, s1 in summary_1.items():
+            s2 = summary_2.get(label)
+            res[label] = merge_single_label(s1, s2)
         return res
 
     @staticmethod
     def encrypt(x, cipher):
-        return cipher.encrypt(x)
+        if not isinstance(x, np.ndarray):
+            return cipher.encrypt(x)
+        res = []
+        for idx, value in enumerate(x):
+            res.append(cipher.encrypt(value))
+        return np.array(res)
 
     @staticmethod
     def __decrypt_bin_sum(encrypted_bin_sum, cipher):
-        # for feature_sum in encrypted_bin_sum:
-        decrypted_list = {}
-        for col_name, count_list in encrypted_bin_sum.items():
-            new_list = []
-            for event_count, non_event_count in count_list:
-                if isinstance(event_count, PaillierEncryptedNumber):
-                    event_count = cipher.decrypt(event_count)
-                if isinstance(non_event_count, PaillierEncryptedNumber):
-                    non_event_count = cipher.decrypt(non_event_count)
-                new_list.append((event_count, non_event_count))
-            decrypted_list[col_name] = new_list
-        return decrypted_list
+
+        def decrypt(values):
+            res = []
+            for counts in values:
+                for idx, c in enumerate(counts):
+                    if isinstance(c, PaillierEncryptedNumber):
+                        counts[idx] = cipher.decrypt(c)
+                res.append(counts)
+            return res
+        return encrypted_bin_sum.mapValues(decrypt)
 
     @staticmethod
     def load_data(data_instance):
@@ -276,10 +275,7 @@ class HeteroFeatureBinningGuest(BaseFeatureBinning):
             data_instance.label = 0
         return data_instance
 
-    def optimal_binning_sync(self, result_counts, sample_count, partitions, host_idx, host_model_params):
-        host_binning_obj = OptimalBinning(params=host_model_params, abnormal_list=self.binning_obj.abnormal_list)
-        host_binning_obj.event_total = self.binning_obj.event_total
-        host_binning_obj.non_event_total = self.binning_obj.non_event_total
+    def optimal_binning_sync(self, host_binning_obj, result_counts, sample_count, partitions, host_idx):
         LOGGER.debug("Start host party optimal binning train")
         bucket_table = host_binning_obj.bin_sum_to_bucket_list(result_counts, partitions)
         host_binning_obj.fit_buckets(bucket_table, sample_count)

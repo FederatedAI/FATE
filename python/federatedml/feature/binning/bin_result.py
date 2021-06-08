@@ -92,19 +92,52 @@ class BinColResults(object):
         self.split_points = list(iv_obj.split_points)
         self.iv = iv_obj.iv
 
-    def generate_pb(self):
-        result = feature_binning_param_pb2.IVParam(woe_array=self.woe_array,
-                                                   iv_array=self.iv_array,
-                                                   event_count_array=self.event_count_array,
-                                                   non_event_count_array=self.non_event_count_array,
-                                                   event_rate_array=self.event_rate_array,
-                                                   non_event_rate_array=self.non_event_rate_array,
-                                                   split_points=self.split_points,
-                                                   iv=self.iv,
-                                                   is_woe_monotonic=self.is_woe_monotonic,
-                                                   bin_nums=self.bin_nums,
-                                                   bin_anonymous=self.bin_anonymous)
+    def generate_pb_dict(self):
+        # result = feature_binning_param_pb2.IVParam(woe_array=self.woe_array,
+        #                                            iv_array=self.iv_array,
+        #                                            event_count_array=self.event_count_array,
+        #                                            non_event_count_array=self.non_event_count_array,
+        #                                            event_rate_array=self.event_rate_array,
+        #                                            non_event_rate_array=self.non_event_rate_array,
+        #                                            split_points=self.split_points,
+        #                                            iv=self.iv,
+        #                                            is_woe_monotonic=self.is_woe_monotonic,
+        #                                            bin_nums=self.bin_nums,
+        #                                            bin_anonymous=self.bin_anonymous)
+        result = {
+            "woe_array": self.woe_array,
+            "iv_array": self.iv_array,
+            "event_count_array": self.event_count_array,
+            "non_event_count_array": self.non_event_count_array,
+            "event_rate_array": self.event_rate_array,
+            "non_event_rate_array": self.non_event_rate_array,
+            "split_points": self.split_points,
+            "iv": self.iv,
+            "is_woe_monotonic": self.is_woe_monotonic,
+            "bin_nums": self.bin_nums,
+            "bin_anonymous": self.bin_anonymous
+        }
         return result
+
+
+class SplitPointsResult(object):
+    def __init__(self):
+        self.split_results = {}
+
+    def put_col_split_points(self, col_name, split_points):
+        self.split_results[col_name] = split_points
+
+    @property
+    def all_split_points(self):
+        return self.split_results
+
+    def get_split_points_array(self, col_names):
+        split_points_result = []
+        for col_name in col_names:
+            if col_name not in self.split_results:
+                continue
+            split_points_result.append(self.split_results[col_name])
+        return np.array(split_points_result)
 
 
 class BinResults(object):
@@ -154,30 +187,27 @@ class BinResults(object):
     def all_monotonic(self):
         return {col_name: x.is_woe_monotonic for col_name, x in self.all_cols_results.items()}
 
-    def summary(self):
-        split_points = {}
-        for col_name, x in self.all_cols_results.items():
-            sp = x.get_split_points().tolist()
-            split_points[col_name] = sp
+    def summary(self, split_points=None):
+        if split_points is None:
+            split_points = {}
+            for col_name, x in self.all_cols_results.items():
+                sp = x.get_split_points().tolist()
+                split_points[col_name] = sp
         # split_points = {col_name: x.split_points for col_name, x in self.all_cols_results.items()}
         return {"iv": self.all_ivs,
                 "woe": self.all_woes,
                 "monotonic": self.all_monotonic,
                 "split_points": split_points}
 
-    def get_split_points_array(self, bin_names):
-        split_points_result = []
-        for bin_name in bin_names:
-            if bin_name not in self.all_cols_results:
-                continue
-            split_points_result.append(self.all_cols_results[bin_name].get_split_points())
-        return np.array(split_points_result)
-
-    def generated_pb(self):
+    def generated_pb(self, split_points=None):
         col_result_dict = {}
+        if split_points is not None:
+            for col_name, sp in split_points.items():
+                self.put_col_split_points(col_name, sp)
         for col_name, col_bin_result in self.all_cols_results.items():
-            col_result_dict[col_name] = col_bin_result.generate_pb()
-        LOGGER.debug("In generated_pb, role: {}, party_id: {}".format(self.role, self.party_id))
+            bin_res_dict = col_bin_result.generate_pb_dict()
+            col_result_dict[col_name] = feature_binning_param_pb2.IVParam(**bin_res_dict)
+        # LOGGER.debug("In generated_pb, role: {}, party_id: {}".format(self.role, self.party_id))
         result_pb = feature_binning_param_pb2.FeatureBinningResult(binning_result=col_result_dict,
                                                                    role=self.role,
                                                                    party_id=str(self.party_id))
@@ -192,3 +222,63 @@ class BinResults(object):
             col_bin_obj.reconstruct(col_bin_result)
             self.all_cols_results[col_name] = col_bin_obj
         return self
+
+
+class MultiClassBinResult(BinResults):
+    def __init__(self, labels):
+        super().__init__()
+        self.labels = labels
+        if len(self.labels) == 2:
+            self.is_multi_class = False
+            self.bin_results = [BinResults()]
+        else:
+            self.is_multi_class = True
+            self.bin_results = [BinResults() for _ in range(len(self.labels))]
+
+    def set_role_party(self, role, party_id):
+        self.role = role
+        self.party_id = party_id
+        for br in self.bin_results:
+            br.set_role_party(role, party_id)
+
+    def put_col_results(self, col_name, col_results: BinColResults, label_idx=0):
+        self.bin_results[label_idx].put_col_results(col_name, col_results)
+
+    def summary(self, split_points=None):
+        if not self.is_multi_class:
+            return {"result": self.bin_results[0].summary(split_points)}
+        return {label: self.bin_results[label_idx].summary(split_points) for
+                label_idx, label in enumerate(self.labels)}
+
+    def put_col_split_points(self, col_name, split_points, label_idx=None):
+        if label_idx is None:
+            for br in self.bin_results:
+                br.put_col_split_points(col_name, split_points)
+        else:
+            self.bin_results[label_idx].put_col_split_points(col_name, split_points)
+
+    def generated_pb_list(self, split_points=None):
+        res = []
+        for br in self.bin_results:
+            res.append(br.generated_pb(split_points))
+        return res
+
+    @staticmethod
+    def reconstruct(result_pb, labels=None):
+        if not isinstance(result_pb, list):
+            result_pb = [result_pb]
+
+        if labels is None:
+            if len(result_pb) <= 1:
+                labels = [0, 1]
+            else:
+                labels = list(range(len(result_pb)))
+        result = MultiClassBinResult(labels)
+        for idx, pb in enumerate(result_pb):
+            result.bin_results[idx].reconstruct(pb)
+
+        return result
+
+    @property
+    def all_split_points(self):
+        return self.bin_results[0].all_split_points

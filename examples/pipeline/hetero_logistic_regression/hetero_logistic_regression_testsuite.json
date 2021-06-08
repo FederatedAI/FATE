@@ -63,6 +63,9 @@
         "ovr-cv": {
             "script": "pipeline-hetero-lr-ovr-cv.py"
         },
+        "ovr-validate": {
+            "script": "pipeline-hetero-lr-ovr-validate.py"
+        },
         "ovr-sqn": {
             "script": "pipeline-hetero-lr-ovr-sqn.py"
         },

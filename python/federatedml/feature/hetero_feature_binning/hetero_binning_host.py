@@ -40,6 +40,8 @@ class HeteroFeatureBinningHost(BaseFeatureBinning):
         if self.model_param.skip_static:
             if self.transform_type != 'woe':
                 data_instances = self.transform(data_instances)
+            else:
+                raise ValueError("Woe transform is not supported in host parties.")
             self.set_schema(data_instances)
             self.data_output = data_instances
             return data_instances
@@ -53,13 +55,13 @@ class HeteroFeatureBinningHost(BaseFeatureBinning):
             data_instances = self.transform(data_instances)
         self.set_schema(data_instances)
         self.data_output = data_instances
-        total_summary = self.binning_obj.bin_results.summary()
+        total_summary = self.binning_obj.bin_results.split_results
         self.set_summary(total_summary)
         return data_instances
 
     def _sync_init_bucket(self, data_instances, split_points, need_shuffle=False):
 
-        data_bin_table = self.binning_obj.get_data_bin(data_instances, split_points)
+        data_bin_table = self.binning_obj.get_data_bin(data_instances, split_points, self.bin_inner_param.bin_cols_map)
         LOGGER.debug("data_bin_table, count: {}".format(data_bin_table.count()))
 
         encrypted_label_table = self.transfer_variable.encrypted_label.get(idx=0)
@@ -75,7 +77,7 @@ class HeteroFeatureBinningHost(BaseFeatureBinning):
         encrypted_bin_sum = encrypted_bin_sum.map(encode_name_f)
 
         self.header_anonymous = self.bin_inner_param.encode_col_name_list(self.header, self)
-        encrypted_bin_sum = self.cipher_compress(encrypted_bin_sum, data_bin_table.count())
+        # encrypted_bin_sum = self.cipher_compress(encrypted_bin_sum, data_bin_table.count())
         self.transfer_variable.encrypted_bin_sum.remote(encrypted_bin_sum,
                                                         role=consts.GUEST,
                                                         idx=0)
@@ -96,52 +98,27 @@ class HeteroFeatureBinningHost(BaseFeatureBinning):
                                                         idx=0)
 
     def __static_encrypted_bin_label(self, data_bin_table, encrypted_label):
-        data_bin_with_label = data_bin_table.join(encrypted_label, lambda x, y: (x, y))
+        # data_bin_with_label = data_bin_table.join(encrypted_label, lambda x, y: (x, y))
         label_counts = encrypted_label.reduce(operator.add)
         sparse_bin_points = self.binning_obj.get_sparse_bin(self.bin_inner_param.bin_indexes,
-                                                            self.binning_obj.split_points)
+                                                            self.binning_obj.bin_results.all_split_points,
+                                                            self.bin_inner_param.header)
         sparse_bin_points = {self.bin_inner_param.header[k]: v for k, v in sparse_bin_points.items()}
 
-        f = functools.partial(self.binning_obj.add_label_in_partition,
-                              sparse_bin_points=sparse_bin_points)
-        encrypted_bin_sum = data_bin_with_label.mapReducePartitions(f, self.binning_obj.aggregate_partition_label)
-        f = functools.partial(self.binning_obj.fill_sparse_result,
-                              sparse_bin_points=sparse_bin_points,
-                              label_counts=label_counts)
-        encrypted_bin_sum = encrypted_bin_sum.map(f)
+        encrypted_bin_sum = self.iv_calculator.cal_bin_label(
+            data_bin_table=data_bin_table,
+            sparse_bin_points=sparse_bin_points,
+            label_table=encrypted_label,
+            label_counts=label_counts
+        )
 
-        return encrypted_bin_sum
-
-    def __static_encrypted_bin_label_deprecated(self, data_bin_table, encrypted_label, cols_dict, split_points):
-        """
-        Returns:
-            table with value like:
-                [[event_count, total_num], [event_count, total_num] ... ]
-        """
-        data_bin_with_label = data_bin_table.join(encrypted_label, lambda x, y: (x, y))
-        event_sum = encrypted_label.reduce(operator.add)
-        label_counts = {0: encrypted_label.count() - event_sum,
-                        1: event_sum}
-        sparse_bin_points = self.binning_obj.get_sparse_bin(self.bin_inner_param.bin_indexes,
-                                                            self.binning_obj.split_points)
-        sparse_bin_points = {self.bin_inner_param.header[k]: v for k, v in sparse_bin_points.items()}
-
-        f = functools.partial(self.binning_obj.add_label_in_partition,
-                              sparse_bin_points=sparse_bin_points)
-
-        encrypted_bin_sum = data_bin_with_label.mapReducePartitions(f, self.binning_obj.aggregate_partition_label)
-
-        def cal_zeros(bin_results):
-            for b in bin_results:
-                b[1] = b[1] - b[0]
-            return bin_results
-
-        encrypted_bin_sum = encrypted_bin_sum.mapValues(cal_zeros)
-
-        f = functools.partial(self.binning_obj.fill_sparse_result,
-                              sparse_bin_points=sparse_bin_points,
-                              label_counts=label_counts)
-        encrypted_bin_sum = encrypted_bin_sum.map(f)
+        # f = functools.partial(self.binning_obj.add_label_in_partition,
+        #                       sparse_bin_points=sparse_bin_points)
+        # encrypted_bin_sum = data_bin_with_label.mapReducePartitions(f, self.binning_obj.aggregate_partition_label)
+        # f = functools.partial(self.binning_obj.fill_sparse_result,
+        #                       sparse_bin_points=sparse_bin_points,
+        #                       label_counts=label_counts)
+        # encrypted_bin_sum = encrypted_bin_sum.map(f)
 
         return encrypted_bin_sum
 
