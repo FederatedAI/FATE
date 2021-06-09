@@ -40,7 +40,13 @@ class RsaIntersectionGuest(RsaIntersect):
     def sign_host_ids(self, host_pubkey_ids_list):
         # Process(signs) hosts' ids
         guest_sign_host_ids_list = [host_pubkey_ids.map(lambda k, v:
-                                                        (k, self.sign_id(k, self.d[i], self.n[i])))
+                                                        (k, self.sign_id(k,
+                                                                         self.d[i],
+                                                                         self.n[i],
+                                                                         self.p[i],
+                                                                         self.q[i],
+                                                                         self.cp[i],
+                                                                         self.cq[i])))
                                     for i, host_pubkey_ids in enumerate(host_pubkey_ids_list)]
         LOGGER.info("Sign host_pubkey_ids with guest prv_keys")
 
@@ -79,7 +85,8 @@ class RsaIntersectionGuest(RsaIntersect):
         #              f"odd fraction: {sid_hash_odd.count()/data_instances.count()}")
 
         # generate pub keys for even ids
-        self.e, self.d, self.n = self.generate_protocol_key()
+        # self.e, self.d, self.n = self.generate_protocol_key()
+        self.generate_protocol_key()
         LOGGER.info("Generate guest protocol key!")
 
         # send public key e & n to all host
@@ -114,7 +121,13 @@ class RsaIntersectionGuest(RsaIntersect):
         # encrypt & send prvkey encrypted guest even ids to host
         prvkey_ids_process_pair_list = []
         for i, host_party_id in enumerate(self.host_party_id_list):
-            prvkey_ids_process_pair = self.cal_prvkey_ids_process_pair(sid_hash_even, self.d[i], self.n[i])
+            prvkey_ids_process_pair = self.cal_prvkey_ids_process_pair(sid_hash_even,
+                                                                       self.d[i],
+                                                                       self.n[i],
+                                                                       self.p[i],
+                                                                       self.q[i],
+                                                                       self.cp[i],
+                                                                       self.cq[i])
             prvkey_ids_process = prvkey_ids_process_pair.mapValues(lambda v: 1)
             self.transfer_variable.guest_prvkey_ids.remote(prvkey_ids_process,
                                                            role=consts.HOST,

@@ -32,6 +32,10 @@ class RsaIntersect(Intersect):
         self.e = None
         self.d = None
         self.n = None
+        self.p = None
+        self.q = None
+        self.cp = None
+        self.cq = None
         # self.r = None
         self.transfer_variable = RsaIntersectTransferVariable()
         self.role = None
@@ -90,15 +94,27 @@ class RsaIntersect(Intersect):
 
     def generate_protocol_key(self):
         if self.role == consts.HOST:
-            e, d, n = self.generate_rsa_key(self.rsa_params.key_length)
+            self.e, self.d, self.n, self.p, self.q = self.generate_rsa_key(self.rsa_params.key_length)
+            self.cp, self.cq = gmpy_math.crt_coefficient(self.p, self.q)
         else:
-            e, d, n = [], [], []
+            e, d, n, p, q, cp, cq = [], [], [], [], [], [], []
             for i in range(len(self.host_party_id_list)):
-                e_i, d_i, n_i = self.generate_rsa_key(self.rsa_params.key_length)
+                e_i, d_i, n_i, p_i, q_i = self.generate_rsa_key(self.rsa_params.key_length)
+                cp_i, cq_i = gmpy_math.crt_coefficient(p_i, q_i)
                 e.append(e_i)
                 d.append(d_i)
                 n.append(n_i)
-        return e, d, n
+                p.append(p_i)
+                q.append(q_i)
+                cp.append(cp_i)
+                cq.append(cq_i)
+            self.e = e
+            self.d = d
+            self.n = n
+            self.p = p
+            self.q = q
+            self.cp = cp
+            self.cq = cq
 
     @staticmethod
     def pubkey_id_process_per(hash_sid, v, random_bit, rsa_e, rsa_n, hash_operator=None, salt=''):
@@ -111,31 +127,35 @@ class RsaIntersect(Intersect):
             return processed_id, (v[0], r)
 
     @staticmethod
-    def prvkey_id_process(hash_sid, v, rsa_d, rsa_n, final_hash_operator, salt, first_hash_operator=None):
+    def prvkey_id_process(hash_sid, v, rsa_d, rsa_n, rsa_p, rsa_q, cp, cq, final_hash_operator, salt, first_hash_operator=None):
         if first_hash_operator:
-            processed_id = Intersect.hash(gmpy_math.powmod(int(Intersect.hash(hash_sid, first_hash_operator, salt), 16),
-                                                           rsa_d,
-                                                           rsa_n),
+            processed_id = Intersect.hash(gmpy_math.powmod_crt(int(Intersect.hash(hash_sid, first_hash_operator, salt), 16),
+                                                               rsa_d,
+                                                               rsa_n,
+                                                               rsa_p,
+                                                               rsa_q,
+                                                               cp,
+                                                               cq),
                                           final_hash_operator,
                                           salt)
             return processed_id, hash_sid
         else:
-            processed_id = Intersect.hash(gmpy_math.powmod(hash_sid, rsa_d, rsa_n),
+            processed_id = Intersect.hash(gmpy_math.powmod_crt(hash_sid, rsa_d, rsa_n, rsa_p, rsa_q, cp, cq),
                                           final_hash_operator,
                                           salt)
             return processed_id, v[0]
 
-    def cal_prvkey_ids_process_pair(self, data_instances, d, n, first_hash_operator=None):
+    def cal_prvkey_ids_process_pair(self, data_instances, d, n, p, q, cp, cq, first_hash_operator=None):
         return data_instances.map(
-            lambda k, v: self.prvkey_id_process(k, v, d, n,
+            lambda k, v: self.prvkey_id_process(k, v, d, n, p, q, cp, cq,
                                                 self.final_hash_operator,
                                                 self.rsa_params.salt,
                                                 first_hash_operator)
         )
 
     @staticmethod
-    def sign_id(hash_sid, rsa_d, rsa_n):
-        return gmpy_math.powmod(hash_sid, rsa_d, rsa_n)
+    def sign_id(hash_sid, rsa_d, rsa_n, rsa_p, rsa_q, cp, cq):
+        return gmpy_math.powmod_crt(hash_sid, rsa_d, rsa_n, rsa_p, rsa_q, cp, cq)
 
     def split_calculation_process(self, data_instances):
         raise NotImplementedError("This method should not be called here")

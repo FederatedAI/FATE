@@ -30,7 +30,7 @@ class SecureInformationRetrievalParam(BaseParam):
     non_committing_encryption: the non-committing encryption scheme used, only supports aes
     ph_params: params for Pohlig-Hellman Encryption
     key_size: int >= 768, the key length of the commutative cipher, note that this param will be deprecated in future,
-        for thie version, key_size takes priority over `key_length` in ph_params
+        for this version, key_size takes priority over `key_length` in ph_params, default 1024
     raw_retrieval: bool, perform raw retrieval if raw_retrieval
     target_cols: str or list of str, target cols to retrieve;
         any values not retrieved will be marked as "unretrieved",
@@ -68,7 +68,8 @@ class SecureInformationRetrievalParam(BaseParam):
                                                                      [consts.AES.lower()],
                                                                      descr+"non_committing_encryption")
         self.ph_params.check()
-        self.check_positive_integer(self.key_size, descr+"key_size")
+        if self.key_size:
+            self.check_positive_integer(self.key_size, descr+"key_size")
         self.check_boolean(self.raw_retrieval, descr)
         if not isinstance(self.target_cols, list):
             self.target_cols = [self.target_cols]

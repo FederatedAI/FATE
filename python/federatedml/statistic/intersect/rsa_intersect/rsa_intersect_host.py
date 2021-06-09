@@ -34,7 +34,8 @@ class RsaIntersectionHost(RsaIntersect):
         #              f"odd fraction: {sid_hash_odd.count()/data_instances.count()}")
 
         # generate rsa keys
-        self.e, self.d, self.n = self.generate_protocol_key()
+        # self.e, self.d, self.n = self.generate_protocol_key()
+        self.generate_protocol_key()
         LOGGER.info("Generate host protocol key!")
         public_key = {"e": self.e, "n": self.n}
 
@@ -71,7 +72,13 @@ class RsaIntersectionHost(RsaIntersect):
         LOGGER.info("Remote host_pubkey_ids to Guest")
 
         # encrypt & send prvkey-encrypted host odd ids to guest
-        prvkey_ids_process_pair = self.cal_prvkey_ids_process_pair(sid_hash_odd, self.d, self.n)
+        prvkey_ids_process_pair = self.cal_prvkey_ids_process_pair(sid_hash_odd,
+                                                                   self.d,
+                                                                   self.n,
+                                                                   self.p,
+                                                                   self.q,
+                                                                   self.cp,
+                                                                   self.cq)
         prvkey_ids_process = prvkey_ids_process_pair.mapValues(lambda v: 1)
 
         self.transfer_variable.host_prvkey_ids.remote(prvkey_ids_process,
@@ -82,7 +89,13 @@ class RsaIntersectionHost(RsaIntersect):
         # get & sign guest pubkey-encrypted odd ids
         guest_pubkey_ids = self.transfer_variable.guest_pubkey_ids.get(idx=0)
         LOGGER.info(f"Get guest_pubkey_ids from guest")
-        host_sign_guest_ids = guest_pubkey_ids.map(lambda k, v: (k, self.sign_id(k, self.d, self.n)))
+        host_sign_guest_ids = guest_pubkey_ids.map(lambda k, v: (k, self.sign_id(k,
+                                                                                 self.d,
+                                                                                 self.n,
+                                                                                 self.p,
+                                                                                 self.q,
+                                                                                 self.cp,
+                                                                                 self.cq)))
         LOGGER.debug(f"host sign guest_pubkey_ids")
         # send signed guest odd ids
         self.transfer_variable.host_sign_guest_ids.remote(host_sign_guest_ids,
@@ -128,7 +141,8 @@ class RsaIntersectionHost(RsaIntersect):
     def unified_calculation_process(self, data_instances):
         LOGGER.info("RSA intersect using unified calculation.")
         # generate rsa keys
-        self.e, self.d, self.n = self.generate_protocol_key()
+        # self.e, self.d, self.n = self.generate_protocol_key()
+        self.generate_protocol_key()
         LOGGER.info("Generate protocol key!")
         public_key = {"e": self.e, "n": self.n}
 
@@ -141,6 +155,10 @@ class RsaIntersectionHost(RsaIntersect):
         prvkey_ids_process_pair = self.cal_prvkey_ids_process_pair(data_instances,
                                                                    self.d,
                                                                    self.n,
+                                                                   self.p,
+                                                                   self.q,
+                                                                   self.cp,
+                                                                   self.cq,
                                                                    self.first_hash_operator)
 
         prvkey_ids_process = prvkey_ids_process_pair.mapValues(lambda v: 1)
@@ -154,7 +172,13 @@ class RsaIntersectionHost(RsaIntersect):
         LOGGER.info("Get guest_pubkey_ids from guest")
 
         # Process(signs) guest ids and return to guest
-        host_sign_guest_ids = guest_pubkey_ids.map(lambda k, v: (k, self.sign_id(k, self.d, self.n)))
+        host_sign_guest_ids = guest_pubkey_ids.map(lambda k, v: (k, self.sign_id(k,
+                                                                                 self.d,
+                                                                                 self.n,
+                                                                                 self.p,
+                                                                                 self.q,
+                                                                                 self.cp,
+                                                                                 self.cq)))
         self.transfer_variable.host_sign_guest_ids.remote(host_sign_guest_ids,
                                                           role=consts.GUEST,
                                                           idx=0)
