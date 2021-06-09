@@ -87,6 +87,11 @@
         "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis",
         "ignore_malformed": false
       },
+      "logTime": {
+        "type": "date",
+        "format": "yyyy-MM-dd HH:mm:ss,SSS||yyyy-MM-dd||epoch_millis",
+        "ignore_malformed": false
+      },
       "operator": {
         "type": "text",
         "fields": {

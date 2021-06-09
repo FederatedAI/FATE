@@ -149,6 +149,7 @@ def deal_line(src):
         split_items = src.split(" - ")
         meta_line = split_items[1].strip()
         meta_data["logTime"] = re.findall("\[.*?\]", split_items[0])[2].strip("[").strip("]")
+        meta_data["logTime"] = (datetime.datetime.strptime(meta_data["logTime"], "%Y-%m-%d %H:%M:%S,%f") - datetime.timedelta(hours=8)).strftime("%Y-%m-%d %H:%M:%S,%f")[:-3]
         for meta_item_str in meta_line.split("|"):
             meta_item_key = meta_item_str[:meta_item_str.index("=")]
             meta_item_value_str = meta_item_str[meta_item_str.index("=") + 1:]
