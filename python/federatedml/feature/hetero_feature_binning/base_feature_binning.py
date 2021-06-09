@@ -157,7 +157,13 @@ class BaseFeatureBinning(ModelBase):
     @assert_schema_consistent
     def transform(self, data_instances):
         self._setup_bin_inner_param(data_instances, self.model_param)
-        data_instances = self.binning_obj.transform(data_instances, self.transform_type)
+        if self.transform_type != "woe":
+            data_instances = self.binning_obj.transform(data_instances, self.transform_type)
+        elif self.role == consts.HOST:
+            raise ValueError("Woe transform is not available for host parties.")
+        else:
+            data_instances = self.iv_calculator.woe_transformer(data_instances, self.bin_inner_param,
+                                                                self.bin_result)
         self.set_schema(data_instances)
         self.data_output = data_instances
         return data_instances

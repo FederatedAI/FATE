@@ -21,6 +21,7 @@ import numpy as np
 from federatedml.feature.binning.base_binning import BaseBinning
 from federatedml.feature.binning.bin_result import BinColResults, MultiClassBinResult
 from federatedml.statistic import data_overview
+from federatedml.feature.sparse_vector import SparseVector
 from federatedml.util import LOGGER
 
 
@@ -40,7 +41,7 @@ class IvCalculator(object):
             ...
              ]
         Returns:
-
+            MultiClassBinResult object
         """
         header = data_instances.schema.get("header")
         if bin_cols_map is None:
@@ -64,7 +65,10 @@ class IvCalculator(object):
             label_table = self.convert_label(data_instances, labels)
 
         result_counts = self.cal_bin_label(data_bin_table, sparse_bin_points, label_table, label_counts)
-        return self.cal_iv_from_counts(result_counts, labels)
+        multi_bin_res = self.cal_iv_from_counts(result_counts, labels)
+        for col_name, sp in split_points.items():
+            multi_bin_res.put_col_split_points(col_name, sp)
+        return multi_bin_res
 
     def cal_iv_from_counts(self, result_counts, labels):
         result = MultiClassBinResult(labels)
@@ -356,3 +360,59 @@ class IvCalculator(object):
 
         label_table = data_instances.mapValues(_convert)
         return label_table
+
+    @staticmethod
+    def woe_transformer(data_instances, bin_inner_param, multi_class_bin_res: MultiClassBinResult,
+                        abnormal_list=None):
+        if abnormal_list is None:
+            abnormal_list = []
+        bin_res = multi_class_bin_res.bin_results[0]
+        transform_cols_idx = bin_inner_param.transform_bin_indexes
+        split_points_dict = bin_res.all_split_points
+        is_sparse = data_overview.is_sparse_data(data_instances)
+
+        def convert(instances):
+            if is_sparse:
+                all_data = instances.features.get_all_data()
+                indice = []
+                sparse_value = []
+                data_shape = instances.features.get_shape()
+                for col_idx, col_value in all_data:
+                    if col_idx in transform_cols_idx:
+                        if col_value in abnormal_list:
+                            indice.append(col_idx)
+                            sparse_value.append(col_value)
+                            continue
+                        # Maybe it is because missing value add in sparse value, but
+                        col_name = bin_inner_param.header[col_idx]
+                        split_points = split_points_dict[col_name]
+                        bin_num = BaseBinning.get_bin_num(col_value, split_points)
+                        indice.append(col_idx)
+                        col_results = bin_res.all_cols_results.get(col_name)
+                        woe_value = col_results.woe_array[bin_num]
+                        sparse_value.append(woe_value)
+                    else:
+                        indice.append(col_idx)
+                        sparse_value.append(col_value)
+                sparse_vector = SparseVector(indice, sparse_value, data_shape)
+                instances.features = sparse_vector
+            else:
+                features = instances.features
+                assert isinstance(features, np.ndarray)
+                transform_cols_idx_set = set(transform_cols_idx)
+
+                for col_idx, col_value in enumerate(features):
+                    if col_idx in transform_cols_idx_set:
+                        if col_value in abnormal_list:
+                            features[col_idx] = col_value
+                            continue
+                        col_name = bin_inner_param.header[col_idx]
+                        split_points = split_points_dict[col_name]
+                        bin_num = BaseBinning.get_bin_num(col_value, split_points)
+                        col_results = bin_res.all_cols_results.get(col_name)
+                        woe_value = col_results.woe_array[bin_num]
+                        features[col_idx] = woe_value
+                instances.features = features
+            return instances
+
+        return data_instances.mapValues(convert)

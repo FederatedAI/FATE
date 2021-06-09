@@ -264,12 +264,6 @@ class BaseBinning(object):
                 indice.append(col_idx)
                 if convert_type == 'bin_num':
                     sparse_value.append(bin_num)
-
-                # TODO: woe transformer replaced in iv calculator
-                # elif convert_type == 'woe':
-                    # col_results = bin_results.all_cols_results.get(col_name)
-                    # woe_value = col_results.woe_array[bin_num]
-                    # sparse_value.append(woe_value)
                 else:
                     sparse_value.append(col_value)
             else:
@@ -318,10 +312,6 @@ class BaseBinning(object):
                 bin_num = BaseBinning.get_bin_num(col_value, split_points)
                 if convert_type == 'bin_num':
                     features[col_idx] = bin_num
-                # elif convert_type == 'woe':
-                #     col_results = bin_results.all_cols_results.get(col_name)
-                #     woe_value = col_results.woe_array[bin_num]
-                #     features[col_idx] = woe_value
                 else:
                     features[col_idx] = col_value
 
