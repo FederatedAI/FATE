@@ -48,7 +48,7 @@
             "namespace": "experiment",
             "role": "host_1"
         },
-                {
+        {
             "file": "examples/data/vehicle_scale_hetero_guest.csv",
             "head": 1,
             "partition": 16,
@@ -130,6 +130,15 @@
         },
         "hetero-binning-multi-host-sparse-optimal": {
             "script": "pipeline-hetero-binning-multi-host-sparse-optimal.py"
+        },
+        "hetero-binning-multiclass": {
+            "script": "pipeline-hetero-binning-multiclass.py"
+        },
+        "hetero-binning-multiclass-multihost": {
+            "script": "pipeline-hetero-binning-multiclass-multihost.py"
+        },
+        "hetero-binning-multiclass-multihost-woe": {
+            "script": "pipeline-hetero-binning-multiclass-multihost-woe.py"
         }
     }
 }

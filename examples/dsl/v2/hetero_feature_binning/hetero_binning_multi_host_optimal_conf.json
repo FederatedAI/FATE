@@ -5,31 +5,39 @@
         "party_id": 10000
     },
     "role": {
-        "guest": [
-            10000
-        ],
         "host": [
             9999,
+            10000
+        ],
+        "guest": [
             10000
         ]
     },
     "job_parameters": {
         "common": {
+            "backend": 0,
+            "work_mode": 0,
             "job_type": "train"
         }
     },
     "component_parameters": {
         "role": {
-            "host": {
-                "1": {
+            "guest": {
+                "0": {
+                    "dataio_0": {
+                        "with_label": true,
+                        "output_format": "dense"
+                    },
                     "reader_0": {
                         "table": {
-                            "name": "breast_hetero_host",
+                            "name": "breast_hetero_guest",
                             "namespace": "experiment"
                         }
                     }
-                },
-                "0": {
+                }
+            },
+            "host": {
+                "1": {
                     "reader_0": {
                         "table": {
                             "name": "breast_hetero_host",
@@ -42,17 +50,11 @@
                         "with_label": false,
                         "output_format": "dense"
                     }
-                }
-            },
-            "guest": {
+                },
                 "0": {
-                    "dataio_0": {
-                        "with_label": true,
-                        "output_format": "dense"
-                    },
                     "reader_0": {
                         "table": {
-                            "name": "breast_hetero_guest",
+                            "name": "breast_hetero_host",
                             "namespace": "experiment"
                         }
                     }
@@ -71,12 +73,12 @@
                 "bin_names": null,
                 "category_indexes": null,
                 "category_names": null,
-                "local_only": false,
                 "transform_param": {
                     "transform_cols": -1,
                     "transform_names": null,
                     "transform_type": "bin_num"
                 },
+                "local_only": false,
                 "optimal_binning_param": {
                     "metric_method": "iv",
                     "min_bin_pct": 0.05,
