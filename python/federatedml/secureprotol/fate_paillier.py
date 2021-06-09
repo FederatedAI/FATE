@@ -331,7 +331,7 @@ class PaillierEncryptedNumber(object):
     def __raw_add(self, e_x, e_y, exponent):
         """return the integer E(x + y) given ints E(x) and E(y).
         """
-        ciphertext =  e_x * e_y % self.public_key.nsquare
+        ciphertext = gmpy_math.mpz(e_x) * gmpy_math.mpz(e_y) % self.public_key.nsquare
 
-        return PaillierEncryptedNumber(self.public_key, ciphertext, exponent)
+        return PaillierEncryptedNumber(self.public_key, int(ciphertext), exponent)
 

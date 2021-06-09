@@ -67,7 +67,7 @@ class HeteroLinRHost(HeteroLinRBase):
             self.init_param_obj.fit_intercept = False
 
         w = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
-        self.model_weights = LinearModelWeights(w, fit_intercept=self.fit_intercept)
+        self.model_weights = LinearModelWeights(w, fit_intercept=self.fit_intercept, raise_overflow_error=False)
 
         while self.n_iter_ < self.max_iter:
             LOGGER.info("iter:" + str(self.n_iter_))
