@@ -69,6 +69,10 @@
         "ph_intersect": {
             "conf": "./test_intersect_job_ph_conf.json",
             "dsl": "./test_intersect_job_dsl.json"
+        },
+        "ph_intersect_multi": {
+            "conf": "./test_intersect_job_ph_multi_conf.json",
+            "dsl": "./test_intersect_job_dsl.json"
         }
     }
 }

@@ -34,6 +34,4 @@ class PhIntersectTransferVariable(BaseTransferVariables):
         self.id_ciphertext_list_exchange_g2h = self._create_variable(name='id_ciphertext_list_exchange_g2h', src=['guest'], dst=['host'])
         self.id_ciphertext_list_exchange_h2g = self._create_variable(name='id_ciphertext_list_exchange_h2g', src=['host'], dst=['guest'])
         self.doubly_encrypted_id_list = self._create_variable(name='doubly_encrypted_id_list', src=['host'], dst=['guest'])
-        self.intersect_cipher_cipher = self._create_variable(name='intersect_cipher_cipher', src=['guest'], dst=['host'])
-        self.intersect_cipher = self._create_variable(name='intersect_cipher', src=['host'], dst=['guest'])
         self.intersect_ids = self._create_variable(name='intersect_ids', src=['guest'], dst=['host'])

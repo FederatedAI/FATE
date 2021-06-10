@@ -140,11 +140,6 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
             id_block_ciphertext, nonce, target_key)  # (Eright, val)
         LOGGER.info("used the right key to decrypt the wanted values")
 
-        # Encrypt again and send to host
-        # target_block_cipher_cipher_id = self._composite_encrypt(target_block_cipher_id)      # (EEright, val)
-        # self.intersection_obj.sync_intersect_cipher_cipher(
-        #    [target_block_cipher_cipher_id.mapValues(lambda v: -1)])       # send (EEright, -1)
-
         # 7. Get (EEright, instance)
         target_block_cipher_cipher_id = self.intersection_obj.map_raw_id_to_encrypt_id(target_block_cipher_id,
                                                                                        id_list_host_second_only,
@@ -240,10 +235,6 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
     def _transmit_value_ciphertext(self, id_block=None, time=0):
         id_blocks = self.transfer_variable.id_blocks_ciphertext.get(idx=0,
                                                                     suffix=(time,))
-        # id_blocks = federation.get(name=self.transfer_variable.id_blocks_ciphertext.name,
-        #                            tag=self.transfer_variable.generate_transferid(
-        #                                self.transfer_variable.id_blocks_ciphertext, time),
-        #                            idx=0)
         LOGGER.info("got {}-th id block ciphertext from host".format(time))
         return id_blocks
 
@@ -261,12 +252,6 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
                                                          suffix=(time,),
                                                          role=consts.HOST,
                                                          idx=0)
-        # federation.remote(obj=id_list,
-        #                   name=self.transfer_variable.natural_indexation.name,
-        #                   tag=self.transfer_variable.generate_transferid(
-        #                       self.transfer_variable.natural_indexation, time),
-        #                   role=consts.HOST,
-        #                   idx=0)
         LOGGER.info("sent naturally indexed block {} to host".format(time))
 
     def _fake_blocks(self, id_list_intersect, id_list_host, replacement=True):

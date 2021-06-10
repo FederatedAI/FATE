@@ -25,6 +25,7 @@ class PhIntersectionGuest(PhIntersect):
         self.id_list_local_first = None
         self.id_list_remote_second = None
         self.id_list_local_second = None
+        self.host_count = None
         # self.recorded_k_data = None
 
     def _sync_commutative_cipher_public_knowledge(self):
@@ -63,29 +64,42 @@ class PhIntersectionGuest(PhIntersect):
         LOGGER.info("got intersect cipher from all host")
         return id_list_intersect_cipher
 
+    @staticmethod
+    def map_cipher_cipher_to_cipher_id(id_cipher_cipher, id_cipher):
+        common_cipher_id = id_cipher.join(id_cipher_cipher, lambda r, e: r)
+        cipher_id = common_cipher_id.map(lambda k, v: (v, k))
+        return cipher_id
+
+    def get_intersect_cipher(self, id_list_intersect_cipher_cipher):
+        id_list_intersect_cipher = [
+            self.map_cipher_cipher_to_cipher_id(id_list_intersect_cipher_cipher[i],
+                                                self.id_list_local_second[i]) for i in range(self.host_count)]
+        return id_list_intersect_cipher
+
     def _get_remote_cipher_intersect_ids(self, intersect_ids):
         host_count = len(self.id_list_local_first)
-        first_local_cipher_ids_list = [self.map_raw_id_to_encrypt_id(intersect_ids,
-                                                                     self.id_list_local_first[i]) for i in range(host_count)]
-        doubly_encrypted_ids_list = [self.map_raw_id_to_encrypt_id(first_local_cipher_ids_list[i],
-                                                                   self.id_list_local_second[i]) for i in range(host_count)]
-        first_remote_local_ids_list = [self.map_raw_id_to_encrypt_id(doubly_encrypted_ids_list[i],
-                                                                     self.id_list_remote_second[i]) for i in range(host_count)]
-        return first_remote_local_ids_list
+        first_cipher_local_ids_list = [intersect_ids.map(lambda k, v: (v[i], 1)) for i in range(host_count)] # Ei
+        doubly_encrypted_ids_list = [self.map_raw_id_to_encrypt_id(first_cipher_local_ids_list[i],           # EEi
+                                                                   self.id_list_local_second[i]) for i in
+                                     range(host_count)]
+        # EEi to Eh
+        first_remote_cipher_ids_list = [self.map_cipher_cipher_to_cipher_id(doubly_encrypted_ids_list[i],
+                                                                            self.id_list_remote_second[i]) for i in
+                                       range(host_count)]
+        return first_remote_cipher_ids_list
 
     def send_intersect_ids(self, intersect_ids):
-        remote_cipher_intersect_ids = self._get_remote_cipher_intersect_ids(intersect_ids)
-        for i in range(len(remote_cipher_intersect_ids)):
-            self.transfer_variable.intersect_ids.remote(remote_cipher_intersect_ids[i],
+        remote_intersect_id_list = self._get_remote_cipher_intersect_ids(intersect_ids)
+        for i, host_party_id in enumerate(self.host_party_id_list):
+            self.transfer_variable.intersect_ids.remote(remote_intersect_id_list[i],
                                                         role=consts.HOST,
                                                         idx=i)
-            LOGGER.info(f"sent intersect ids to {i}th host")
+            LOGGER.info(f"Remote intersect ids to Host {host_party_id}!")
 
     def get_intersect_doubly_encrypted_id(self, data_instances):
         self._generate_commutative_cipher()
         self._sync_commutative_cipher_public_knowledge()
-        host_count = len(self.commutative_cipher)
-        # self.recorded_k_data = data_instances.map(lambda k, v: self.record_original_id(k, v))
+        self.host_count = len(self.commutative_cipher)
 
         for cipher in self.commutative_cipher:
             cipher.init()
@@ -102,8 +116,8 @@ class PhIntersectionGuest(PhIntersect):
 
         # 2nd ID encrypt & receive doubly encrypted ID list: # (EEh, Eh)
         self.id_list_remote_second = [self._encrypt_id(id_list_remote_first[i],
-                                                  self.commutative_cipher[i],
-                                                  reserve_original_key=True) for i in range(host_count)]
+                                                       self.commutative_cipher[i],
+                                                       reserve_original_key=True) for i in range(self.host_count)]
         LOGGER.info("encrypted remote id for the 2nd time")
 
         # receive doubly encrypted ID list from all host:
@@ -112,15 +126,14 @@ class PhIntersectionGuest(PhIntersect):
         # find intersection per host
         id_list_intersect_cipher_cipher = [self.extract_intersect_ids(self.id_list_remote_second[i],
                                                                       self.id_list_local_second[i])
-                                           for i in range(host_count)]  # (EEi, -1)
+                                           for i in range(self.host_count)]  # (EEi, -1)
         LOGGER.info("encrypted intersection ids found")
 
         return id_list_intersect_cipher_cipher
 
     def decrypt_intersect_doubly_encrypted_id(self, id_list_intersect_cipher_cipher):
-        # send EEi & receive decrypted intersection ids from host (Ei, -1)
-        self.sync_intersect_cipher_cipher(id_list_intersect_cipher_cipher)
-        id_list_intersect_cipher = self.sync_intersect_cipher()
+        # EEi -> Ei from Eg
+        id_list_intersect_cipher = self.get_intersect_cipher(id_list_intersect_cipher_cipher)
 
         # find intersect ids: (Ei, original key)
         encrypt_intersect_ids = [
@@ -128,9 +141,7 @@ class PhIntersectionGuest(PhIntersect):
                                        self.id_list_local_first[i]) for i in range(len(self.id_list_local_first))
         ]
         # map encrypted intersect ids to original ids
-        intersect_ids = self.filter_intersect_ids(encrypt_intersect_ids)
-        # intersect_ids = self.recorded_k_data.join(intersect_ids, lambda v1, v2: (v1, v2))
-        # intersect_ids = intersect_ids.map(lambda k, v: (v[0], v[1]))
+        intersect_ids = self.filter_intersect_ids(encrypt_intersect_ids, keep_encrypt_ids=True)
         LOGGER.info(f"intersection found")
 
         if self.sync_intersect_ids:

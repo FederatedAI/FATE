@@ -63,6 +63,9 @@
         },
         "ph_interect": {
             "script": "./pipeline-intersect-ph.py"
+        },
+        "ph_interect_mutli": {
+            "script": "./pipeline-intersect-ph-multi.py"
         }
     }
 }

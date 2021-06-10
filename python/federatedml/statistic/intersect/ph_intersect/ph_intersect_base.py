@@ -133,22 +133,6 @@ class PhIntersect(Intersect):
         """
         pass
 
-    def sync_intersect_cipher_cipher(self, id_list):
-        """
-        guest -> host
-        :param id_list:
-        :return:
-        """
-        pass
-
-    def sync_intersect_cipher(self, id_list):
-        """
-        host -> guest
-        :param id_list:
-        :return:
-        """
-        pass
-
     def get_intersect_doubly_encrypted_id(self, data_instances):
         raise NotImplementedError("This method should not be called here")
 

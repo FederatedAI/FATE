@@ -130,22 +130,6 @@ class SecureInformationRetrievalHost(BaseSecureInformationRetrieval):
         self._non_committing_encrypt(id_blocks, key_list)       # List[(Ei, Eval)]
         LOGGER.info("non-committing encryption and transmission completed")
 
-        """
-        # 10. Get doubly encrypted ID list from guest
-
-        id_list_intersect_cipher_cipher = self.intersection_obj.sync_intersect_cipher_cipher()      # get (EEright, -1)
-
-        # 11. Decrypt and send to guest
-        id_list_intersect_cipher = self.intersection_obj._decrypt_id(
-            id_list_intersect_cipher_cipher,
-            self.intersection_obj.commutative_cipher,
-            reserve_value=True)    # (EEright, Eright)
-        
-        LOGGER.info("decryption completed")
-        
-        self.intersection_obj.sync_intersect_cipher(id_list_intersect_cipher)
-        """
-
         # 10. Slack
         self._sync_coverage(data_inst)
         self._display_result()

@@ -47,19 +47,9 @@ class PhIntersectionHost(PhIntersect):
                                                                idx=0)
         LOGGER.info("sent doubly encrypted id list to guest")
 
-    def sync_intersect_cipher_cipher(self, id_list=None):
-        id_list_intersect_cipher_cipher = self.transfer_variable.intersect_cipher_cipher.get(idx=0)
-        LOGGER.info("got intersect cipher cipher from guest")
-        return id_list_intersect_cipher_cipher
-
-    def sync_intersect_cipher(self, id_list):
-        self.transfer_variable.intersect_cipher.remote(id_list,
-                                                       role=consts.GUEST,
-                                                       idx=0)
-        LOGGER.info("send intersect cipher to guest")
-
     def get_intersect_ids(self):
         first_cipher_intersect_ids = self.transfer_variable.intersect_ids.get(idx=0)
+        LOGGER.info(f"obtained cipher intersect ids from guest")
         intersect_ids = self.map_encrypt_id_to_raw_id(first_cipher_intersect_ids, self.id_list_local_first)
         return intersect_ids
 
@@ -87,13 +77,6 @@ class PhIntersectionHost(PhIntersect):
         self._sync_doubly_encrypted_id_list(id_list_remote_second)
 
     def decrypt_intersect_doubly_encrypted_id(self, id_list_intersect_cipher_cipher=None):
-        # receive EEi from guest
-        id_list_intersect_cipher_cipher = self.sync_intersect_cipher_cipher()  # get (EE i -1)
-
-        # decrypt and send back to guest: (Ei, -1)
-        id_list_intersect_cipher = self._decrypt_id(id_list_intersect_cipher_cipher, self.commutative_cipher)
-        LOGGER.info("decryption completed")
-        self.sync_intersect_cipher(id_list_intersect_cipher)
         intersect_ids = None
         if self.sync_intersect_ids:
             intersect_ids = self.get_intersect_ids()

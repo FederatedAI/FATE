@@ -52,10 +52,27 @@ class RsaIntersectionGuest(RsaIntersect):
 
         return guest_sign_host_ids_list
 
+    """
     def send_intersect_ids(self, encrypt_intersect_ids_list, intersect_ids):
         if len(self.host_party_id_list) > 1:
             for i, host_party_id in enumerate(self.host_party_id_list):
                 remote_intersect_id = self.map_raw_id_to_encrypt_id(intersect_ids, encrypt_intersect_ids_list[i])
+                self.transfer_variable.intersect_ids.remote(remote_intersect_id,
+                                                            role=consts.HOST,
+                                                            idx=i)
+                LOGGER.info(f"Remote intersect ids to Host {host_party_id}!")
+        else:
+            remote_intersect_id = encrypt_intersect_ids_list[0].mapValues(lambda v: 1)
+            self.transfer_variable.intersect_ids.remote(remote_intersect_id,
+                                                        role=consts.HOST,
+                                                        idx=0)
+            LOGGER.info(f"Remote intersect ids to Host!")
+    """
+
+    def send_intersect_ids(self, encrypt_intersect_ids_list, intersect_ids):
+        if len(self.host_party_id_list) > 1:
+            for i, host_party_id in enumerate(self.host_party_id_list):
+                remote_intersect_id = intersect_ids.map(lambda k, v: (v[i], 1))
                 self.transfer_variable.intersect_ids.remote(remote_intersect_id,
                                                             role=consts.HOST,
                                                             idx=i)
@@ -73,7 +90,7 @@ class RsaIntersectionGuest(RsaIntersect):
         intersect_ids_pair_list = [self.extract_intersect_ids(ids,
                                                               guest_prvkey_ids_list[i]) for i, ids in
                                    enumerate(encrypt_intersect_ids_list)]
-        intersect_ids = self.filter_intersect_ids(intersect_ids_pair_list)
+        intersect_ids = self.filter_intersect_ids(intersect_ids_pair_list, keep_encrypt_ids=True)
         return intersect_ids
 
     def split_calculation_process(self, data_instances):
@@ -169,7 +186,7 @@ class RsaIntersectionGuest(RsaIntersect):
         # intersect table(hash(guest_ids_process/r), sid)
         encrypt_intersect_odd_ids_list = [v.join(host_prvkey_ids_list[i], lambda sid, h: sid) for i, v in
                                           enumerate(sid_host_sign_guest_ids_list)]
-        intersect_odd_ids = self.filter_intersect_ids(encrypt_intersect_odd_ids_list)
+        intersect_odd_ids = self.filter_intersect_ids(encrypt_intersect_odd_ids_list, keep_encrypt_ids=True)
         intersect_even_ids = self.get_host_intersect_ids(prvkey_ids_process_pair_list)
         intersect_ids = intersect_odd_ids.union(intersect_even_ids)
         if self.sync_intersect_ids:
@@ -234,7 +251,7 @@ class RsaIntersectionGuest(RsaIntersect):
         encrypt_intersect_ids_list = [v.join(host_prvkey_ids_list[i], lambda sid, h: sid) for i, v in
                                       enumerate(sid_host_sign_guest_ids_list)]
 
-        intersect_ids = self.filter_intersect_ids(encrypt_intersect_ids_list)
+        intersect_ids = self.filter_intersect_ids(encrypt_intersect_ids_list, keep_encrypt_ids=True)
         if self.sync_intersect_ids:
             self.send_intersect_ids(encrypt_intersect_ids_list, intersect_ids)
         else:

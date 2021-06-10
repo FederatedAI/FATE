@@ -24,18 +24,6 @@
         "guest"
       ]
     },
-    "intersect_cipher_cipher": {
-      "src": "guest",
-      "dst": [
-        "host"
-      ]
-    },
-    "intersect_cipher": {
-      "src": "host",
-      "dst": [
-        "guest"
-      ]
-    },
     "intersect_ids": {
       "src": "guest",
       "dst": [

@@ -40,6 +40,12 @@ This section introduces the Pipeline scripts for different types of tasks.
 
     script: pipeline-intersect-ph.py
 
+10. PH Multi-host Intersection:  
+    script: pipeline-intersect-ph-multi.py
+
+11. RAW Intersect of 200 Union Components as Input:
+    script: pipeline-intersect-with-union.py
+
 Users can run a pipeline job directly:
 
     python ${pipeline_script}

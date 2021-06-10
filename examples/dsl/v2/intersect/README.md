@@ -46,6 +46,9 @@ This section introduces the dsl and conf for usage of different type of task.
     - dsl: test_intersect_job_dsl.json  
     - runtime_config : test_intersect_job_ph_conf.json
   
+10. PH Multi-host Intersection:  
+    - dsl: test_intersect_job_dsl.json  
+    - runtime_config : test_intersect_job_ph_multi_conf.json
    
 Users can use following commands to running the task.
 

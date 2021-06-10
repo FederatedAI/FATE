@@ -80,16 +80,21 @@ class Intersect(object):
         return intersect_ids
 
     @staticmethod
-    def get_common_intersection(intersect_ids_list: list):
+    def get_common_intersection(intersect_ids_list: list, keep_encrypt_ids=False):
         if len(intersect_ids_list) == 1:
             return intersect_ids_list[0]
+
+        if keep_encrypt_ids:
+            f = lambda id, v: id + v
+        else:
+            f = lambda id, v: "id"
 
         intersect_ids = None
         for i, value in enumerate(intersect_ids_list):
             if intersect_ids is None:
                 intersect_ids = value
                 continue
-            intersect_ids = intersect_ids.join(value, lambda id, v: "id")
+            intersect_ids = intersect_ids.join(value, f)
 
         return intersect_ids
 
@@ -101,12 +106,12 @@ class Intersect(object):
     @staticmethod
     def filter_intersect_ids(encrypt_intersect_ids, keep_encrypt_ids=False):
         if keep_encrypt_ids:
-            f = lambda k, v: (v, k)
+            f = lambda k, v: (v, [k])
         else:
             f = lambda k, v: (v, 1)
         if len(encrypt_intersect_ids) > 1:
             raw_intersect_ids = [e.map(f) for e in encrypt_intersect_ids]
-            intersect_ids = Intersect.get_common_intersection(raw_intersect_ids)
+            intersect_ids = Intersect.get_common_intersection(raw_intersect_ids, keep_encrypt_ids)
         else:
             intersect_ids = encrypt_intersect_ids[0]
             intersect_ids = intersect_ids.map(f)
@@ -134,6 +139,7 @@ class Intersect(object):
 
         Returns
         -------
+        (id, E(id))
 
         """
         encrypt_id_raw_id = raw_id_data.join(encrypt_id_data, lambda r, e: r)
