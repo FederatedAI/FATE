@@ -50,9 +50,7 @@ fate_on_spark:
   linkis_spark:
     host: 127.0.0.1
     port: 9001
-    token_code: fate
-    cores_per_node: 20
-    nodes: 2
+    python_path: /data/projects/fate/python
   hive:
     host: 127.0.0.1
     port: 10000

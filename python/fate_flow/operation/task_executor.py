@@ -25,6 +25,7 @@ from fate_flow.entity.types import TaskStatus, ProcessRole, RunParameters
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.operation.job_tracker import Tracker
 from fate_arch import storage
+from fate_flow.scheduling_apps.client.operation_client import OperationClient
 from fate_flow.utils import job_utils, schedule_utils
 from fate_flow.scheduling_apps.client import ControllerClient
 from fate_flow.scheduling_apps.client import TrackerClient
@@ -58,7 +59,8 @@ class TaskExecutor(object):
                 "run_pid": executor_pid
             })
             start_time = current_timestamp()
-            job_conf = job_utils.get_job_conf(job_id, role)
+            operation_client = OperationClient()
+            job_conf = operation_client.get_job_conf(job_id, role)
             job_dsl = job_conf["job_dsl_path"]
             job_runtime_conf = job_conf["job_runtime_conf_path"]
             dsl_parser = schedule_utils.get_job_dsl_parser(dsl=job_dsl,
@@ -68,7 +70,6 @@ class TaskExecutor(object):
                                                            )
             party_index = job_runtime_conf["role"][role].index(party_id)
             job_args_on_party = TaskExecutor.get_job_args_on_party(dsl_parser, job_runtime_conf, role, party_id)
-            user_name = dsl_parser.get_job_parameters().get(role, {}).get(party_id, {}).get("user", '')
             component = dsl_parser.get_component_info(component_name=component_name)
             component_parameters = component.get_role_parameters()
             component_parameters_on_party = component_parameters[role][
@@ -77,7 +78,11 @@ class TaskExecutor(object):
             task_input_dsl = component.get_input()
             task_output_dsl = component.get_output()
             component_parameters_on_party['output_data_name'] = task_output_dsl.get('data')
-            task_parameters = RunParameters(**file_utils.load_json_conf(config))
+            json_conf = operation_client.load_json_conf(job_id, config)
+            user_name = dsl_parser.get_job_parameters().get(role, {}).get(party_id, {}).get("user", '')
+            schedule_logger(job_id).info(f"user name:{user_name}")
+            src_user = json_conf.get("src_user")
+            task_parameters = RunParameters(**json_conf)
             job_parameters = task_parameters
             if job_parameters.assistant_role:
                 TaskExecutor.monkey_patch()

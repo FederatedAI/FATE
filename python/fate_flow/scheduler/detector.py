@@ -43,6 +43,8 @@ class Detector(cron.Cron):
             for task in running_tasks:
                 count += 1
                 try:
+                    if task.f_engine_conf:
+                        return
                     process_exist = job_utils.check_job_process(int(task.f_run_pid))
                     if not process_exist:
                         detect_logger(job_id=task.f_job_id).info(

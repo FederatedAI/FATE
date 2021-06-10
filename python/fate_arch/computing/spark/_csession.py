@@ -57,8 +57,8 @@ class CSession(CSessionABC):
 
         if isinstance(address, (HiveAddress, LinkisHiveAddress)):
             table = from_hive(
-                tb_name=address.database,
-                db_name=address.name,
+                tb_name=address.name,
+                db_name=address.database,
                 partitions=partitions,
             )
             table.schema = schema

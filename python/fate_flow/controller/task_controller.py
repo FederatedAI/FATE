@@ -85,6 +85,7 @@ class TaskController(object):
             os.makedirs(task_dir, exist_ok=True)
             task_parameters_path = os.path.join(task_dir, 'task_parameters.json')
             run_parameters_dict = job_utils.get_job_parameters(job_id, role, party_id)
+            run_parameters_dict["src_user"] = kwargs.get("src_user")
             with open(task_parameters_path, 'w') as fw:
                 fw.write(json_dumps(run_parameters_dict))
 
@@ -149,11 +150,13 @@ class TaskController(object):
                            "Token-User": kwargs.get("user_id"),
                            "Content-Type": "application/json"}
                 schedule_logger(job_id).info(f"headers:{headers}")
-                execution_code = 'from fate_flow.operation.task_executor import TaskExecutor\n' \
+                python_path = LINKIS_SPARK_CONFIG.get("python_path")
+                execution_code = 'import sys\nsys.path.append("{}")\n' \
+                                 'from fate_flow.operation.task_executor import TaskExecutor\n' \
                                  'task_info = TaskExecutor.run_task(job_id="{}",component_name="{}",' \
                                  'task_id="{}",task_version={},role="{}",party_id={},' \
                                  'run_ip="{}",config="{}",job_server="{}")\n' \
-                                 'TaskExecutor.report_task_update_to_driver(task_info=task_info)'.format(
+                                 'TaskExecutor.report_task_update_to_driver(task_info=task_info)'.format(python_path,
                     job_id, component_name, task_id, task_version, role, party_id, RuntimeConfig.JOB_SERVER_HOST,
                     task_parameters_path, '{}:{}'.format(RuntimeConfig.JOB_SERVER_HOST, RuntimeConfig.HTTP_PORT))
                 schedule_logger(job_id).info(f"execution code:{execution_code}")
@@ -276,14 +279,15 @@ class TaskController(object):
         kill_status = False
         try:
             if task.f_engine_conf.get("computing_engine") and task.f_engine_conf.get("computing_engine") == ComputingEngine.LINKIS_SPARK:
-                linkis_execute_url = "http://{}:{}{}".format(LINKIS_SPARK_CONFIG.get("host"),
-                                                             LINKIS_SPARK_CONFIG.get("port"),
-                                                             LINKIS_KILL_ENTRANCE.replace("execID", task.f_engine_conf.get("execID")))
-                headers = task.f_engine_conf.get("headers")
-                schedule_logger(task.f_job_id).info(f"start stop task:{linkis_execute_url}")
-                kill_result = requests.post(linkis_execute_url, headers=headers)
-                if kill_result.status_code == 200:
-                    pass
+                if task.f_engine_conf.get("execID"):
+                    linkis_execute_url = "http://{}:{}{}".format(LINKIS_SPARK_CONFIG.get("host"),
+                                                                 LINKIS_SPARK_CONFIG.get("port"),
+                                                                 LINKIS_KILL_ENTRANCE.replace("execID", task.f_engine_conf.get("execID")))
+                    headers = task.f_engine_conf.get("headers")
+                    schedule_logger(task.f_job_id).info(f"start stop task:{linkis_execute_url}")
+                    kill_result = requests.post(linkis_execute_url, headers=headers)
+                    if kill_result.status_code == 200:
+                        pass
                 kill_status_code = KillProcessStatusCode.KILLED
             else:
                 # kill task executor

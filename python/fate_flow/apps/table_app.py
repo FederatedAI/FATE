@@ -136,7 +136,7 @@ def get_job_all_table(job):
 
 def get_component_input_table(dsl_parser, job, component_name):
     component = dsl_parser.get_component_info(component_name=component_name)
-    if 'reader' in component_name:
+    if 'reader' in component_name.lower():
         component_parameters = component.get_role_parameters()
         return component_parameters[job.f_role][0]['ReaderParam']
     task_input_dsl = component.get_input()

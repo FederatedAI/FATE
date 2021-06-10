@@ -97,7 +97,7 @@ FATE_FLOW_MODEL_TRANSFER_ENDPOINT = "/v1/model/transfer"
 FATE_MANAGER_GET_NODE_INFO_ENDPOINT = "/fate-manager/api/site/secretinfo"
 FATE_MANAGER_NODE_CHECK_ENDPOINT = "/fate-manager/api/site/checksite"
 FATE_BOARD_DASHBOARD_ENDPOINT = "/index.html#/dashboard?job_id={}&role={}&party_id={}"
-# linkis spark
+# linkis spark config
 LINKIS_EXECUTE_ENTRANCE = "/api/rest_j/v1/entrance/execute"
 LINKIS_KILL_ENTRANCE = "/api/rest_j/v1/entrance/execID/kill"
 
@@ -113,10 +113,15 @@ data_manager_logger = log.getLogger("fate_flow_data_manager")
 peewee_logger = log.getLogger("peewee")
 
 # Switch
+# upload
 UPLOAD_DATA_FROM_CLIENT = True
+
+# authentication
 USE_AUTHENTICATION = False
 USE_DATA_AUTHENTICATION = False
+AUTOMATIC_AUTHORIZATION_OUTPUT_DATA = True
 PRIVILEGE_COMMAND_WHITELIST = []
+
 CHECK_NODES_IDENTITY = False
 DEFAULT_FEDERATED_STATUS_COLLECT_TYPE = get_base_config(
     FATEFLOW_SERVICE_NAME, {}).get("default_federated_status_collect_type", "PUSH")

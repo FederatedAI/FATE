@@ -36,7 +36,7 @@ class StorageTable(StorageTableBase):
         self._namespace = namespace
         self._partitions = partitions
         self._options = options if options else {}
-        self._storage_engine = StorageEngine.HIVE
+        self._storage_engine = StorageEngine.LINKIS_HIVE
         self._type = storage_type if storage_type else LinkisHiveStorageType.DEFAULT
 
     def execute_entrance(self, sql):
@@ -116,16 +116,29 @@ class StorageTable(StorageTableBase):
         self.get_meta().update_metas(count=count)
         return count
 
-    def collect(self, **kwargs) -> list:
-        sql = 'select * from {}.{}'.format(self._address.databases, self._address.name)
-        data = self.execute(sql)
-        for i in data:
-            yield i[0], self.get_meta().get_id_delimiter().join(list(i[1:]))
+    def collect(self, **kwargs):
+        from fate_arch.common.log import schedule_logger
+        if kwargs.get("is_spark"):
+            from pyspark.sql import SparkSession
+            session = SparkSession.builder.enableHiveSupport().getOrCreate()
+            data = session.sql(f"select * from {self._address.database}.{self._address.name}")
+            schedule_logger('wzh_test').info(data)
+            return data
+        else:
+            schedule_logger('wzh_test').info(f"no spark")
+            sql = 'select * from {}.{}'.format(self._address.database, self._address.name)
+            data = self.execute(sql)
+            for i in data:
+                yield i[0], self.get_meta().get_id_delimiter().join(list(i[1:]))
 
-    def put_all(self, kv_list, **kwargs):
-        pass
+    def put_all(self, kv_pd, **kwargs):
+        from pyspark.sql import SparkSession
+        session = SparkSession.builder.enableHiveSupport().getOrCreate()
+        session.sql("use {}".format(self._address.database))
+        spark_df = session.createDataFrame(kv_pd)
+        spark_df.write.saveAsTable(self._address.name, format="orc")
 
     def destroy(self):
         super().destroy()
-        sql = 'drop table {}.{}'.format(self._address.databases, self._address.name)
+        sql = 'drop table {}.{}'.format(self._address.database, self._address.name)
         return self.execute(sql)
