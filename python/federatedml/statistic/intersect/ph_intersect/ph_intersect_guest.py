@@ -52,18 +52,6 @@ class PhIntersectionGuest(PhIntersect):
         LOGGER.info("got doubly encrypted id list from all host")
         return id_list_guest
 
-    def sync_intersect_cipher_cipher(self, id_list):
-        for i in range(len(id_list)):
-            self.transfer_variable.intersect_cipher_cipher.remote(id_list[i],
-                                                                  role=consts.HOST,
-                                                                  idx=i)
-            LOGGER.info(f"sent intersect cipher cipher to {i}th host")
-
-    def sync_intersect_cipher(self, id_list=None):
-        id_list_intersect_cipher = self.transfer_variable.intersect_cipher.get(idx=-1)
-        LOGGER.info("got intersect cipher from all host")
-        return id_list_intersect_cipher
-
     @staticmethod
     def map_cipher_cipher_to_cipher_id(id_cipher_cipher, id_cipher):
         common_cipher_id = id_cipher.join(id_cipher_cipher, lambda r, e: r)
