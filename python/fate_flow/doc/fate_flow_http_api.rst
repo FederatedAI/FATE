@@ -709,6 +709,24 @@ Model
    -  data: predict config of specified model, Object
 
 
+/v1/model/homo/convert
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-  request structure
+
+   - model_version: Required, Integer: model version
+   - model_id: Required, String: model id
+   - role: Required, String: role
+   - party_id: Required, String: party id
+   - framework_name: Optional, String: the target machine learning framework this model should be converted to, will be inferred automatically if it is empty
+
+-  response structure
+
+   -  retcode: return code, Integer
+   -  retmsg: return code description, String
+   -  data: converted component name and the saved file path, List
+
+
 /v1/model/homo/deploy
 ~~~~~~~~~~~~~~~~~~
 

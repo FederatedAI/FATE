@@ -384,11 +384,12 @@ def run_fate_flow_test(config_json):
         return False
     print('predict job success')
 
-    # load model
-    utilize.load_model()
+    if not config_json.get('component_is_homo'):
+        # load model
+        utilize.load_model()
 
-    # bind model
-    utilize.bind_model()
+        # bind model
+        utilize.bind_model()
 
-    # online predict
-    utilize.online_predict(online_serving=online_serving)
+        # online predict
+        utilize.online_predict(online_serving=online_serving)
