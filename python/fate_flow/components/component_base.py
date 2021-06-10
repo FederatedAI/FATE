@@ -22,6 +22,7 @@ class ComponentBase(object):
     def __init__(self):
         self.task_version_id = ''
         self.tracker = None
+        self.checkpoint_manager = None
         self.model_output = None
         self.data_output = None
 
@@ -30,6 +31,9 @@ class ComponentBase(object):
 
     def set_tracker(self, tracker):
         self.tracker = tracker
+
+    def set_checkpoint_manager(self, checkpoint_manager):
+        self.checkpoint_manager = checkpoint_manager
 
     def save_data(self):
         return self.data_output

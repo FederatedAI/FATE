@@ -42,6 +42,7 @@ class ModelBase(object):
         self.task_version_id = ''
         self.need_one_vs_rest = False
         self.tracker = None
+        self.checkpoint_manager = None
         self.cv_fold = 0
         self.validation_freqs = None
         self.component_properties = ComponentProperties()
@@ -174,6 +175,10 @@ class ModelBase(object):
 
     def set_tracker(self, tracker):
         self.tracker = tracker
+
+    def set_checkpoint_manager(self, checkpoint_manager):
+        checkpoint_manager.load_checkpoints_from_disk()
+        self.checkpoint_manager = checkpoint_manager
 
     @staticmethod
     def set_predict_data_schema(predict_datas, schemas):
@@ -377,3 +382,15 @@ class ModelBase(object):
         if isinstance(data_list, list):
             return data_list[0]
         return data_list
+
+    def save_new_checkpoint(self, data, step_index, step_name):
+        checkpoint = self.checkpoint_manager.new_checkpoint(step_index, step_name)
+        return checkpoint.save(data)
+
+    @property
+    def checkpoint_available(self):
+        return self.checkpoint_manager.latest_checkpoint is not None
+
+    def read_latest_checkpoint(self):
+        if self.checkpoint_available:
+            return self.checkpoint_manager.latest_checkpoint.read()

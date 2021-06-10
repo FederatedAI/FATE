@@ -13,23 +13,24 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import os
 import argparse
 import importlib
-import os
 import traceback
-from fate_arch.common import file_utils, log, EngineType, profile
+
+from fate_arch.common import file_utils, EngineType, profile
 from fate_arch.common.base_utils import current_timestamp, timestamp_to_date
-from fate_arch.common.log import schedule_logger, getLogger
-from fate_arch import session
+from fate_arch.common.log import schedule_logger, getLogger, LoggerFactory
+from fate_arch import session, storage
+from fate_arch.computing import ComputingEngine
+
 from fate_flow.entity.types import TaskStatus, ProcessRole, RunParameters
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.operation.job_tracker import Tracker
-from fate_arch import storage
+from fate_flow.components.checkpoint import CheckpointManager
 from fate_flow.utils import job_utils, schedule_utils
-from fate_flow.scheduling_apps.client import ControllerClient
-from fate_flow.scheduling_apps.client import TrackerClient
+from fate_flow.scheduling_apps.client import ControllerClient, TrackerClient
 from fate_flow.db.db_models import TrackingOutputDataInfo, fill_db_model_object
-from fate_arch.computing import ComputingEngine
 
 LOGGER = getLogger()
 
@@ -88,7 +89,7 @@ class TaskExecutor(object):
                                                            )
             party_index = job_runtime_conf["role"][role].index(party_id)
             job_args_on_party = TaskExecutor.get_job_args_on_party(dsl_parser, job_runtime_conf, role, party_id)
-            component = dsl_parser.get_component_info(component_name=component_name)
+            component = dsl_parser.get_component_info(component_name)
             component_parameters = component.get_role_parameters()
             component_parameters_on_party = component_parameters[role][
                 party_index] if role in component_parameters else {}
@@ -102,29 +103,30 @@ class TaskExecutor(object):
                 TaskExecutor.monkey_patch()
             job_log_dir = os.path.join(job_utils.get_job_log_directory(job_id=job_id), role, str(party_id))
             task_log_dir = os.path.join(job_log_dir, component_name)
-            log.LoggerFactory.set_directory(directory=task_log_dir, parent_log_dir=job_log_dir,
-                                            append_to_parent_log=True, force=True)
+            LoggerFactory.set_directory(directory=task_log_dir, parent_log_dir=job_log_dir,
+                                        append_to_parent_log=True, force=True)
 
-            tracker = Tracker(job_id=job_id, role=role, party_id=party_id, component_name=component_name,
-                              task_id=task_id,
-                              task_version=task_version,
-                              model_id=job_parameters.model_id,
-                              model_version=job_parameters.model_version,
-                              component_module_name=module_name,
-                              job_parameters=job_parameters)
-            tracker_client = TrackerClient(job_id=job_id, role=role, party_id=party_id,
-                                           component_name=component_name,
-                                           task_id=task_id,
-                                           task_version=task_version,
-                                           model_id=job_parameters.model_id,
-                                           model_version=job_parameters.model_version,
-                                           component_module_name=module_name,
-                                           job_parameters=job_parameters)
+            kwargs = {
+                'job_id': job_id,
+                'role': role,
+                'party_id': party_id,
+                'component_name': component_name,
+                'task_id': task_id,
+                'task_version': task_version,
+                'model_id': job_parameters.model_id,
+                'model_version': job_parameters.model_version,
+                'component_module_name': module_name,
+                'job_parameters': job_parameters,
+            }
+            tracker = Tracker(**kwargs)
+            tracker_client = TrackerClient(**kwargs)
+            checkpoint_manager = CheckpointManager(**kwargs, max_to_keep=3)
+
             run_class_paths = component_parameters_on_party.get('CodePath').split('/')
             run_class_package = '.'.join(run_class_paths[:-2]) + '.' + run_class_paths[-2].replace('.py', '')
             run_class_name = run_class_paths[-1]
             task_info["party_status"] = TaskStatus.RUNNING
-            cls.report_task_update_to_driver(task_info=task_info)
+            cls.report_task_update_to_driver(task_info)
 
             # init environment, process is shared globally
             RuntimeConfig.init_config(WORK_MODE=job_parameters.work_mode,
@@ -137,7 +139,8 @@ class TaskExecutor(object):
             else:
                 session_options = {}
 
-            sess = session.Session(computing_type=job_parameters.computing_engine, federation_type=job_parameters.federation_engine)
+            sess = session.Session(computing_type=job_parameters.computing_engine,
+                                   federation_type=job_parameters.federation_engine)
             computing_session_id = job_utils.generate_session_id(task_id, task_version, role, party_id)
             sess.init_computing(computing_session_id=computing_session_id, options=session_options)
             federation_session_id = job_utils.generate_task_version_id(task_id, task_version)
@@ -158,11 +161,15 @@ class TaskExecutor(object):
                                                   task_parameters=task_parameters,
                                                   input_dsl=task_input_dsl,
                                                   )
-            if module_name in {"Upload", "Download", "Reader", "Writer"}:
+            if module_name.lower() in {"upload", "download", "reader", "writer"}:
                 task_run_args["job_parameters"] = job_parameters
-            run_object = getattr(importlib.import_module(run_class_package), run_class_name)()
-            run_object.set_tracker(tracker=tracker_client)
-            run_object.set_task_version_id(task_version_id=job_utils.generate_task_version_id(task_id, task_version))
+
+            run_object = getattr(importlib.import_module(run_class_package), run_class_name)
+            run_object = run_object()
+            run_object.set_tracker(tracker_client)
+            run_object.set_checkpoint_manager(checkpoint_manager)
+            run_object.set_task_version_id(job_utils.generate_task_version_id(task_id, task_version))
+
             # add profile logs
             profile.profile_start()
             run_object.run(component_parameters_on_party, task_run_args)
@@ -170,10 +177,10 @@ class TaskExecutor(object):
             output_data = run_object.save_data()
             if not isinstance(output_data, list):
                 output_data = [output_data]
-            for index in range(0, len(output_data)):
-                data_name = task_output_dsl.get('data')[index] if task_output_dsl.get('data') else '{}'.format(index)
+            for index, data in enumerate(output_data):
+                data_name = task_output_dsl['data'][index] if task_output_dsl.get('data') else str(index)
                 persistent_table_namespace, persistent_table_name = tracker.save_output_data(
-                    computing_table=output_data[index],
+                    computing_table=data,
                     output_storage_engine=job_parameters.storage_engine,
                     output_storage_address=job_parameters.engines_address.get(EngineType.STORAGE, {}))
                 if persistent_table_namespace and persistent_table_name:
@@ -220,7 +227,8 @@ class TaskExecutor(object):
         return job_args_on_party
 
     @classmethod
-    def get_task_run_args(cls, job_id, role, party_id, task_id, task_version, job_args, job_parameters: RunParameters, task_parameters: RunParameters,
+    def get_task_run_args(cls, job_id, role, party_id, task_id, task_version,
+                          job_args, job_parameters: RunParameters, task_parameters: RunParameters,
                           input_dsl, filter_type=None, filter_attr=None, get_input_table=False):
         task_run_args = {}
         input_table = {}
@@ -243,12 +251,13 @@ class TaskExecutor(object):
                         if search_component_name == 'args':
                             if job_args.get('data', {}).get(search_data_name).get('namespace', '') and job_args.get(
                                     'data', {}).get(search_data_name).get('name', ''):
-                                storage_table_meta = storage.StorageTableMeta(name=job_args['data'][search_data_name]['name'], namespace=job_args['data'][search_data_name]['namespace'])
+                                storage_table_meta = storage.StorageTableMeta(
+                                    name=job_args['data'][search_data_name]['name'],
+                                    namespace=job_args['data'][search_data_name]['namespace'])
                         else:
                             tracker_client = TrackerClient(job_id=job_id, role=role, party_id=party_id,
                                                            component_name=search_component_name)
-                            upstream_output_table_infos_json = tracker_client.get_output_data_info(
-                                data_name=search_data_name)
+                            upstream_output_table_infos_json = tracker_client.get_output_data_info(search_data_name)
                             if upstream_output_table_infos_json:
                                 tracker = Tracker(job_id=job_id, role=role, party_id=party_id,
                                                   component_name=search_component_name)
@@ -256,7 +265,7 @@ class TaskExecutor(object):
                                 for _ in upstream_output_table_infos_json:
                                     upstream_output_table_infos.append(fill_db_model_object(
                                         Tracker.get_dynamic_db_model(TrackingOutputDataInfo, job_id)(), _))
-                                output_tables_meta = tracker.get_output_data_table(output_data_infos=upstream_output_table_infos)
+                                output_tables_meta = tracker.get_output_data_table(upstream_output_table_infos)
                                 if output_tables_meta:
                                     storage_table_meta = output_tables_meta.get(search_data_name, None)
                         args_from_component = this_type_args[search_component_name] = this_type_args.get(
@@ -312,7 +321,7 @@ class TaskExecutor(object):
             task_info["role"],
             task_info["party_id"],
         ))
-        ControllerClient.report_task(task_info=task_info)
+        ControllerClient.report_task(task_info)
 
     @classmethod
     def monkey_patch(cls):
@@ -329,5 +338,5 @@ class TaskExecutor(object):
 
 
 if __name__ == '__main__':
-    task_info = TaskExecutor.run_task()
-    TaskExecutor.report_task_update_to_driver(task_info=task_info)
+    _task_info = TaskExecutor.run_task()
+    TaskExecutor.report_task_update_to_driver(_task_info)
