@@ -38,13 +38,19 @@ With RSA intersection, participants can get their intersection ids securely and 
 RAW Intersection
 ----------------
 
-This intersection mode implements the simple intersection method in which a participant sends all its ids to another participant, and the other
+This mode implements the simple intersection method in which a participant sends all its ids to another participant, and the other
 participant finds their common ids. Finally, the joining role will send the intersection ids to the sender.
+
+PH Intersection
+---------------
+
+This mode implements secure intersection based on symmetric encryption with Pohlig–Hellman commutative cipher.
+PH Intersection is also used in `Secure Information Retrieval(SIR) module <../../secure_information_retrieval>`_.
 
 Multi-Host Intersection
 -----------------------
 
-Both RSA and RAW intersection support multi-host scenario. It means a guest can perform intersection with more than one host simultaneously and get the common ids among all participants.
+RSA, RAW, and PH intersection support multi-host scenario. It means a guest can perform intersection with more than one host simultaneously and get the common ids among all participants.
 
 .. figure:: ./images/multi_hosts.png
    :align: center
@@ -109,7 +115,7 @@ Param
 Feature
 -------
 
-Both RSA and RAW intersection support:
+RSA, RAW, and PH intersection methods support:
 
 1. Multi-host modeling task. The detailed configuration for multi-host modeling task is located `here. <../../../../doc/dsl_conf_v2_setting_guide.rst#multi-host-configuration>`_
 
