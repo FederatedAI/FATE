@@ -118,10 +118,7 @@ class Tracker(object):
                          output_table_namespace=None, output_table_name=None, tracker_client=None, user_name=''):
         if computing_table:
             if not output_table_namespace or not output_table_name:
-                if output_storage_engine == StorageEngine.LINKIS_HIVE:
-                    output_table_namespace, output_table_name = self.task_id, self.task_version
-                else:
-                    output_table_namespace, output_table_name = data_utils.default_output_table_info(task_id=self.task_id, task_version=self.task_version)
+                output_table_namespace, output_table_name = data_utils.default_output_table_info(task_id=self.task_id, task_version=self.task_version)
             schedule_logger(self.job_id).info(
                 'persisting the component output temporary table to {} {}'.format(output_table_namespace,
                                                                                   output_table_name))
@@ -365,6 +362,8 @@ class Tracker(object):
             return 0
 
     def save_as_table(self, computing_table, name, namespace):
+        if self.job_parameters.storage_engine == StorageEngine.LINKIS_HIVE:
+            return
         self.save_output_data(computing_table=computing_table,
                               output_storage_engine=self.job_parameters.storage_engine,
                               output_storage_address=self.job_parameters.engines_address.get(EngineType.STORAGE, {}),

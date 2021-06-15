@@ -59,11 +59,14 @@ class Table(CTableABC):
         from fate_arch.common.address import HiveAddress, LinkisHiveAddress
 
         if isinstance(address, (HiveAddress, LinkisHiveAddress)):
-            df = (
-                self._rdd.map(lambda x: hive_utils.to_row(x[0], x[1]))
-                .repartition(partitions)
-                .toDF()
-            )
+            # df = (
+            #     self._rdd.map(lambda x: hive_utils.to_row(x[0], x[1]))
+            #     .repartition(partitions)
+            #     .toDF()
+            # )
+            tmp = self._rdd.map(lambda x: hive_utils.to_row(x[0], x[1])).cache()
+            tmp.count()
+            df = tmp.toDF()
             df.write.saveAsTable(f"{address.database}.{address.name}")
             schema.update(self.schema)
             return

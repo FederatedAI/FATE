@@ -72,7 +72,8 @@ class PipelinedModel(object):
                 with open(storage_path, "wb") as fw:
                     fw.write(buffer_object_serialized_string)
             else:
-                component_model["buffer"][storage_path] = base64.b64encode(buffer_object_serialized_string).decode()
+                component_model["buffer"][storage_path.replace(file_utils.get_project_base_directory(), "")] = \
+                    base64.b64encode(buffer_object_serialized_string).decode()
             model_proto_index[model_name] = type(buffer_object).__name__   # index of model name and proto buffer class name
             stat_logger.info("Save {} {} {} buffer".format(component_name, model_alias, model_name))
         if not tracker_client:
@@ -90,6 +91,8 @@ class PipelinedModel(object):
 
     def write_component_model(self, component_model):
         for storage_path, buffer_object_serialized_string in component_model.get("buffer").items():
+            storage_path = file_utils.get_project_base_directory()+storage_path
+            os.makedirs(os.path.dirname(storage_path), exist_ok=True)
             with open(storage_path, "wb") as fw:
                 fw.write(base64.b64decode(buffer_object_serialized_string.encode()))
         self.update_component_meta(component_name=component_model["component_name"],
