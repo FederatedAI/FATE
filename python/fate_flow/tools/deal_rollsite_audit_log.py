@@ -1,6 +1,7 @@
 import os
 import json
 import sys
+import re
 import requests
 import traceback
 import datetime
@@ -145,7 +146,10 @@ def deal_line(src):
     #a = "[INFO ][36165610][2021-03-19 20:08:05,935][grpc-server-9370-30,pid:32590,tid:89][audit:87] - task={taskId=202103192007180194594}|src={name=202103192007180194594,partyId=9999,role=fateflow,callback={ip=127.0.0.1,port=9360}}|dst={name=202103192007180194594,partyId=10000,role=fateflow}|command={name=/v1/party/202103192007180194594/arbiter/10000/clean}|operator=POST|conf={overallTimeout=30000}"
     meta_data = {}
     try:
-        meta_line = src.split(" - ")[1].strip()
+        split_items = src.split(" - ")
+        meta_line = split_items[1].strip()
+        meta_data["logTime"] = re.findall("\[.*?\]", split_items[0])[2].strip("[").strip("]")
+        meta_data["logTime"] = (datetime.datetime.strptime(meta_data["logTime"], "%Y-%m-%d %H:%M:%S,%f") - datetime.timedelta(hours=8)).strftime("%Y-%m-%d %H:%M:%S,%f")[:-3]
         for meta_item_str in meta_line.split("|"):
             meta_item_key = meta_item_str[:meta_item_str.index("=")]
             meta_item_value_str = meta_item_str[meta_item_str.index("=") + 1:]
