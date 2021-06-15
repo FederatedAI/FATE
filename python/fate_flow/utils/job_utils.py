@@ -35,26 +35,39 @@ from fate_flow.utils import session_utils
 from fate_flow.utils.service_utils import ServiceUtils
 
 
-class IdCounter(object):
+class JobIdGenerator(object):
     _lock = threading.RLock()
 
     def __init__(self, initial_value=0):
         self._value = initial_value
+        self._pre_timestamp = None
+        self._max = 99999
 
-    def incr(self, delta=1):
+    def next_id(self):
         '''
-        Increment the counter with locking
+        generate next job id with locking
         '''
-        with IdCounter._lock:
-            self._value += delta
-            return self._value
+        #todo: there is duplication in the case of multiple instances deployment
+        now = datetime.datetime.now()
+        with JobIdGenerator._lock:
+            if self._pre_timestamp == now:
+                if self._value < self._max:
+                    self._value += 1
+                else:
+                    now += datetime.timedelta(microseconds=1)
+                    self._pre_timestamp = now
+                    self._value = 0
+            else:
+                self._pre_timestamp = now
+                self._value = 0
+            return "{}{}".format(now.strftime("%Y%m%d%H%M%S%f"), self._value)
 
 
-id_counter = IdCounter()
+job_id_generator = JobIdGenerator()
 
 
 def generate_job_id():
-    return '{}{}'.format(datetime.datetime.now().strftime("%Y%m%d%H%M%S%f"), str(id_counter.incr()))
+    return job_id_generator.next_id()
 
 
 def generate_task_id(job_id, component_name):
@@ -467,3 +480,15 @@ def get_board_url(job_id, role, party_id):
         ServiceUtils.get_item("fateboard", "port"),
         FATE_BOARD_DASHBOARD_ENDPOINT).format(job_id, role, party_id)
     return board_url
+
+if __name__ == "__main__":
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+    with ThreadPoolExecutor(max_workers=50) as t:
+        obj_list = []
+        for page in range(1, 50):
+            obj = t.submit(new_generate_job_id)
+            obj_list.append(obj)
+
+        for future in as_completed(obj_list):
+            data = future.result()
+            print(f"main: {data}")

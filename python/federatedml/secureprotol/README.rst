@@ -151,21 +151,28 @@ How To Use
 
     .. code-block:: python
 
-        from arch.api import session
-        from arch.api import federation
-        s = session.init("session_name", 0)
-        federation.init("session_name", {
-            "local": {
-                "role": "guest",
-                "party_id": 1000
-            },
-            "role": {
-                "host": [999],
-                "guest": [1000]
-            }
-         })
-        partys = federation.all_parties()
+        from fate_arch.session import Session
+        s = Session.create(backend=0, work_mode=0)
 
+        # on guest side
+        s.init_computing("a guest session name")
+        s.init_federation("federation session name",runtime_conf={
+        "local": {"role": "guest", "party_id": 1000},
+        "role": {"guest": [1000], "host": [999]},
+        },)
+        s.as_default()
+        partys = s.parties.all_parties
+        # [Party(role=guest, party_id=1000), Party(role=host, party_id=999)]
+
+        # on host side
+        s.init_computing("a host session name")
+        s.init_federation("federation session name",
+        runtime_conf={
+        "local": {"role": "host", "party_id": 999},
+        "role": {"guest": [1000], "host": [999]},
+        },)
+        s.as_default()
+        partys = s.parties.all_parties
         # [Party(role=guest, party_id=1000), Party(role=host, party_id=999)]
 
 
@@ -198,7 +205,7 @@ How To Use
             data = np.array([[3,2,1], [6,5,4]])
             with SPDZ() as spdz:
                 y = FixedPointTensor.from_source("y", data)
-                x = FixedPointTensor.from_source("x", partys[1])
+                x = FixedPointTensor.from_source("x", partys[0])
 
 
     2. one based on a table for distributed use:
@@ -208,16 +215,16 @@ How To Use
        from federatedml.secureprotol.spdz.tensor.fixedpoint_table import FixedPointTensor
        
        # on guest side(assuming PartyId is partys[0]): 
-       data = session.parallelize(np.array([1,2,3]), np.array([4,5,6]))
+       data = s.computing.parallelize([np.array([1,2,3]), np.array([4,5,6])], include_key=False, partition=2)
        with SPDZ() as spdz:
-       x = FixedPointTensor.from_source("x", data)
-       y = FixedPointTensor.from_source("y", party_1)
+           x = FixedPointTensor.from_source("x", data)
+           y = FixedPointTensor.from_source("y", party[1])
        
        # on host side(assuming PartyId is partys[1]):
-       data = session.parallelize(np.array([3,2,1]), np.array([6,5,4]))
-           with SPDZ() as spdz:
-               y = FixedPointTensor.from_source("y", data)
-               x = FixedPointTensor.from_source("x", party_0)
+       data = session.parallelize([np.array([3,2,1]), np.array([6,5,4])], include_key=False, partition=2)
+       with SPDZ() as spdz:
+           y = FixedPointTensor.from_source("y", data)
+           x = FixedPointTensor.from_source("x", party[0])
 
 
 When tensor is created from a provided data, data is split into n shares and every party gets a different one.
