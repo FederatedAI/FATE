@@ -1,8 +1,34 @@
 import math
 from abc import ABC
 from abc import abstractmethod
-from federatedml.util import consts
-from typing import List
+from federatedml.util import LOGGER
+from federatedml.secureprotol import PaillierEncrypt, IterativeAffineEncrypt
+from federatedml.transfer_variable.transfer_class.cipher_compressor_transfer_variable \
+    import CipherCompressorTransferVariable
+
+
+def get_homo_encryption_max_int(encrypter):
+
+    if type(encrypter) == PaillierEncrypt:
+        max_pos_int = encrypter.public_key.max_int
+        min_neg_int = -max_pos_int
+    elif type(encrypter) == IterativeAffineEncrypt:
+        n_array = encrypter.key.n_array
+        allowed_max_int = n_array[0]
+        max_pos_int = int(allowed_max_int * 0.9) - 1  # the other 0.1 part is for negative num
+        min_neg_int = (max_pos_int - allowed_max_int) + 1
+    else:
+        raise ValueError('unknown encryption type')
+
+    return max_pos_int, min_neg_int
+
+
+def cipher_compress_advisor(encrypter, plaintext_bit_len):
+
+    max_pos_int, min_neg_int = get_homo_encryption_max_int(encrypter)
+    max_bit_len = max_pos_int.bit_length()
+    capacity = max_bit_len // plaintext_bit_len
+    return capacity
 
 
 class CipherPackage(ABC):
@@ -20,11 +46,75 @@ class CipherPackage(ABC):
         pass
 
 
+class PackingCipherTensor(object):
+
+    """
+    A naive realization of cipher tensor
+    """
+
+    def __init__(self, ciphers):
+
+        if type(ciphers) == list:
+            if len(ciphers) == 1:
+                self.ciphers = ciphers[0]
+            else:
+                self.ciphers = ciphers
+            self.dim = len(ciphers)
+        else:
+            self.ciphers = ciphers
+            self.dim = 1
+
+    def __add__(self, other):
+
+        new_cipher_list = []
+        if type(other) == PackingCipherTensor:
+            assert self.dim == other.dim
+
+            if self.dim == 1:
+                return PackingCipherTensor(self.ciphers + other.ciphers)
+            for c1, c2 in zip(self.ciphers, other.ciphers):
+                new_cipher_list.append(c1+c2)
+            return PackingCipherTensor(ciphers=new_cipher_list)
+        else:
+            # scalar / single en num
+            if self.dim == 1:
+                return PackingCipherTensor(self.ciphers + other)
+            for c in self.ciphers:
+                new_cipher_list.append(c + other)
+            return PackingCipherTensor(ciphers=new_cipher_list)
+
+    def __radd__(self, other):
+        return self.__add__(other)
+
+    def __sub__(self, other):
+        return self + other * -1
+
+    def __rsub__(self, other):
+        return other + (self * -1)
+
+    def __mul__(self, other):
+
+        if self.dim == 1:
+            return PackingCipherTensor(self.ciphers * other)
+        new_cipher_list = []
+        for c in self.ciphers:
+            new_cipher_list.append(c*other)
+        return PackingCipherTensor(new_cipher_list)
+
+    def __rmul__(self, other):
+        return self.__mul__(other)
+
+    def __truediv__(self, other):
+        return self.__mul__(1/other)
+
+    def __repr__(self):
+        return "[" + self.ciphers.__repr__() + ", dim {}".format(self.dim) + "]"
+
+
 class NormalCipherPackage(CipherPackage):
 
-    def __init__(self, padding_length, max_capacity, round_decimal=7):
+    def __init__(self, padding_length, max_capacity):
 
-        self._round_decimal = round_decimal
         self._padding_num = 2 ** padding_length
         self.max_capacity = max_capacity
         self._cipher_text = None
@@ -46,13 +136,28 @@ class NormalCipherPackage(CipherPackage):
         if self._capacity_left == 0:
             self._has_space = False
 
-    def unpack(self, decrypter):
+    def unpack(self, decrypter, raw_decrypt=False):
+
+        if type(decrypter) == PaillierEncrypt:
+            if not raw_decrypt:
+                compressed_plain_text = int(decrypter.decrypt(self._cipher_text))
+            else:
+                compressed_plain_text = decrypter.privacy_key.raw_decrypt(self._cipher_text.ciphertext())
+        elif type(decrypter) == IterativeAffineEncrypt:
+            if not raw_decrypt:
+                compressed_plain_text = int(decrypter.decrypt(self._cipher_text))
+            else:
+                compressed_plain_text = decrypter.key.raw_decrypt(self._cipher_text)
+        else:
+            raise ValueError('unknown decrypter: {}'.format(type(decrypter)))
+
+        if self.cur_cipher_contained() == 1:
+            return [compressed_plain_text]
 
         unpack_result = []
-        compressed_plain_text = int(decrypter.decrypt(self._cipher_text))
         bit_len = (self._padding_num - 1).bit_length()
         for i in range(self.cur_cipher_contained()):
-            num = (compressed_plain_text & (self._padding_num - 1)) / (10 ** self._round_decimal)
+            num = (compressed_plain_text & (self._padding_num - 1))
             compressed_plain_text = compressed_plain_text >> bit_len
             unpack_result.insert(0, num)
 
@@ -68,119 +173,92 @@ class NormalCipherPackage(CipherPackage):
         return self._cipher_text
 
 
-class CipherEncoder(object):  # this class encode to large integer
+class PackingCipherTensorPackage(CipherPackage):
 
-    def __init__(self, round_decimal):
-        self.round_decimal = round_decimal
+    """
+    A naive realization of compressible tensor(only compress last dimension because previous ciphers have
+    no space for compressing)
+    """
 
-    def encode(self, num):
-        return int(num * 10**self.round_decimal)
+    def __init__(self, padding_length, max_capcity):
+        self.cached_list = []
+        self.compressed_cipher = []
+        self.compressed_dim = -1
+        self.not_compress_len = None
+        self.normal_package = NormalCipherPackage(padding_length, max_capcity)
 
-    def encode_list(self, plaintext_list):
+    def add(self, obj: PackingCipherTensor):
 
-        int_list = []
-        for i in plaintext_list:
-            int_list.append(self.encode(i))
-        return int_list
+        if self.normal_package.has_space():
+            if obj.dim == 1:
+                self.normal_package.add(obj.ciphers)
+            else:
+                self.cached_list.extend(obj.ciphers[:-1])
+                self.not_compress_len = len(obj.ciphers[:-1])
+                self.normal_package.add(obj.ciphers[-1])
+        else:
+            raise ValueError('have no space for compressing')
 
-    def encode_and_encrypt(self, plaintext_list, encrypter):
-        int_list = self.encode_list(plaintext_list)
-        return [encrypter.encrypt(i) for i in int_list]
+    def unpack(self, decrypter, raw_encrypt=False):
+
+        compressed_part = self.normal_package.unpack(decrypter, raw_encrypt)
+        de_rs = []
+        if len(self.cached_list) != 0:
+            if raw_encrypt:
+                de_rs = decrypter.recursive_raw_decrypt(self.cached_list)
+            else:
+                de_rs = decrypter.recursive_decrypt(self.cached_list)
+        if len(de_rs) == 0:
+            return [[i] for i in compressed_part]
+        else:
+            rs = []
+            idx_0, idx_1 = 0, 0
+            while idx_0 < len(self.cached_list):
+                rs.append(de_rs[idx_0: idx_0+self.not_compress_len] + [compressed_part[idx_1]])
+                idx_0 += self.not_compress_len
+                idx_1 += 1
+            return rs
+
+    def has_space(self):
+        return self.normal_package.has_space()
 
 
-class CipherDecompressor(object):  # this class endcode and unzip cipher package
+class CipherCompressorHost(object):
 
-    def __init__(self, encrypter):
-        self.encrypter = encrypter
-
-    def unpack(self, packages: List[CipherPackage]):
-
-        rs_list = []
-        for p in packages:
-            rs_list.extend(p.unpack(self.encrypter))
-
-        return rs_list
-
-
-class CipherCompressor(object):
-
-    def __init__(self, cipher_type, max_float, max_capacity_int, package_class, round_decimal):
+    def __init__(self, package_class=PackingCipherTensorPackage):
 
         """
         Parameters
         ----------
-        cipher_type: paillier only
-        max_float： the max number of ciphertext
-        max_capacity_int: the max number allowed of current encrypt algorithm
-        package_class: cipher package type, can be customized, need implement "add" and "unpack"
-        round_decimal: decimal rounding setting
+        package_class type of compressed packages
         """
 
-        if cipher_type != consts.PAILLIER and cipher_type != consts.ITERATIVEAFFINE:
-            raise ValueError('encrypt type {} is not supported by cipher compressing'.format(cipher_type))
-
-        self._ciper_type = cipher_type
-        self.max_float = max_float
-        self.max_capacity_int = max_capacity_int
         self._package_class = package_class
-        self.round_decimal = round_decimal
-        self._padding_length, self.max_capacity = self.advise(max_float, max_capacity_int, cipher_type, round_decimal)
+        self.transfer_var = CipherCompressorTransferVariable()
+        # received from host
+        self._padding_length, self._capacity = self.transfer_var.compress_para.get(idx=0)
+        LOGGER.debug("received parameter from guest is {} {}".format(self._padding_length, self._capacity))
 
-    @staticmethod
-    def advise(max_float, max_capacity_int, cipher_type=consts.PAILLIER, round_decimal=7):
-
-        max_int = int(max_float * (10**round_decimal))
-        key_length = max_capacity_int.bit_length()
-        padding_length = max_int.bit_length()
-
-        if cipher_type == consts.PAILLIER:
-            cipher_capacity = (key_length - 1) // padding_length
-        else:
-            raise ValueError('Non paillier method is not supported')
-
-        if cipher_capacity <= 1:
-            raise ValueError('cipher package capacity is too small! capacity is: {}.'
-                             'compressing parameters are: max_float {}, round_decmial {},'
-                             'key_length {}'.format(cipher_capacity, max_float, round_decimal, key_length))
-
-        return padding_length, cipher_capacity
-
-    def compress(self, cipher_text_list):
+    def compress(self, encrypted_obj_list):
 
         rs = []
-        cur_package = self._package_class(self._padding_length, self.max_capacity, self.round_decimal)
-        for c in cipher_text_list:
+        cur_package = self._package_class(self._padding_length, self._capacity)
+        for c in encrypted_obj_list:
             if not cur_package.has_space():
                 rs.append(cur_package)
-                cur_package = self._package_class(self._padding_length, self.max_capacity, self.round_decimal)
+                cur_package = self._package_class(self._padding_length, self._capacity)
             cur_package.add(c)
 
         rs.append(cur_package)
         return rs
 
+    def compress_dtable(self, table):
+        rs = table.mapValues(self.compress)
+        return rs
+
 
 if __name__ == '__main__':
-    import numpy as np
-    from federatedml.secureprotol import PaillierEncrypt as Encrypt
-
-    int_num = 1000
-    decimal_to_keep = 7
-    key_length = 1024
-    test_nums = np.random.random(2)
-    test_nums += int_num
-
-    en = Encrypt()
-    en.generate_key(key_length)
-    max_float = test_nums.max()
-    cipher_max_int = en.public_key.max_int
-
-    encoder = CipherEncoder(round_decimal=7)
-    compressor = CipherCompressor(consts.PAILLIER, max_float, cipher_max_int, NormalCipherPackage, decimal_to_keep)
-    decompressor = CipherDecompressor(encrypter=en)
-
-    en_list = encoder.encode_and_encrypt(test_nums, encrypter=en)
-    packages = compressor.compress(en_list)
-    rs = decompressor.unpack(packages)
-
-    print(test_nums)
-    print(np.array(rs))
+    a = PackingCipherTensor([1, 2, 3, 4])
+    b = PackingCipherTensor([2, 3, 4, 5])
+    c = PackingCipherTensor(124)
+    d = PackingCipherTensor([114514])
