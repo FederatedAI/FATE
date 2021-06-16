@@ -1,4 +1,6 @@
 import functools
+import numpy as np
+from typing import List
 from federatedml.util import LOGGER
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import CriterionMeta
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import DecisionTreeModelMeta
@@ -16,8 +18,8 @@ from federatedml.ensemble import DecisionTreeClientAggregator
 from federatedml.feature.fate_element_type import NoneType
 from federatedml.feature.instance import Instance
 from federatedml.param import DecisionTreeParam
-import numpy as np
-from typing import List
+from sklearn.ensemble._hist_gradient_boosting.grower import HistogramBuilder
+from fate_arch.session import computing_session as session
 
 
 class HomoDecisionTreeClient(DecisionTree):
@@ -63,6 +65,12 @@ class HomoDecisionTreeClient(DecisionTree):
         self.sitename = consts.GUEST
         self.feature_importance = {}
 
+        # memory backend
+        self.arr_bin_data = None
+        self.memory_hist_builder = None
+        self.sample_id_arr = None
+        self.bin_num = 0
+
         # secure aggregator, class SecureBoostClientAggregator
         if mode == 'train':
             self.role = role
@@ -74,7 +82,9 @@ class HomoDecisionTreeClient(DecisionTree):
 
         self.check_max_split_nodes()
 
-    def set_flowid(self, flowid=0):
+        LOGGER.debug('use missing status {} {}'.format(self.use_missing, self.zero_as_missing))
+
+    def set_flowid(self, flowid):
         LOGGER.info("set flowid, flowid is {}".format(flowid))
         self.transfer_inst.set_flowid(flowid)
 
@@ -195,6 +205,7 @@ class HomoDecisionTreeClient(DecisionTree):
             l_g, l_h = split_info[idx].sum_grad, split_info[idx].sum_hess
 
             # create new left node and new right node
+            LOGGER.debug('split info is {}'.format(split_info[idx]))
             left_node = Node(id=l_id,
                              sitename=self.sitename,
                              sum_grad=l_g,
@@ -226,31 +237,12 @@ class HomoDecisionTreeClient(DecisionTree):
         leaf_status, nodeid = row[1]
         node = tree[nodeid]
         if node.is_leaf:
-            return node.weight
+            return node.id
 
-        fid = node.fid
-        bid = node.bid
-
-        missing_dir = node.missing_dir
-
-        missing_val = False
-        if use_zero_as_missing:
-            if row[0].features.get_data(fid, None) is None or \
-                    row[0].features.get_data(fid) == NoneType():
-                missing_val = True
-        elif use_missing and row[0].features.get_data(fid) == NoneType():
-            missing_val = True
-
-        if missing_val:
-            if missing_dir == 1:
-                return 1, tree[nodeid].right_nodeid
-            else:
-                return 1, tree[nodeid].left_nodeid
-        else:
-            if row[0].features.get_data(fid, bin_sparse_point[fid]) <= bid:
-                return 1, tree[nodeid].left_nodeid
-            else:
-                return 1, tree[nodeid].right_nodeid
+        data_inst = row[0]
+        new_layer_nodeid = DecisionTree.go_next_layer(node, data_inst, use_missing, use_zero_as_missing,
+                                                      bin_sparse_point=bin_sparse_point)
+        return 1, new_layer_nodeid
 
     def assign_instances_to_new_node(self, table_with_assignment, tree_node: List[Node]):
 
@@ -295,29 +287,156 @@ class HomoDecisionTreeClient(DecisionTree):
     def assign_instance_to_root_node(self, data_bin, root_node_id):
         return data_bin.mapValues(lambda inst: (1, root_node_id))
 
+    def init_root_node_and_gh_sum(self):
+        # compute local g_sum and h_sum
+        g_sum, h_sum = self.get_grad_hess_sum(self.g_h)
+        # get aggregated root info
+        self.aggregator.send_local_root_node_info(g_sum, h_sum, suffix=('root_node_sync1', self.epoch_idx))
+        g_h_dict = self.aggregator.get_aggregated_root_info(suffix=('root_node_sync2', self.epoch_idx))
+        global_g_sum, global_h_sum = g_h_dict['g_sum'], g_h_dict['h_sum']
+        # initialize node
+        root_node = Node(id=0, sitename=consts.GUEST, sum_grad=global_g_sum, sum_hess=global_h_sum, weight=
+                         self.splitter.node_weight(global_g_sum, global_h_sum))
+        self.cur_layer_node = [root_node]
+
+    """
+    Memory backend functions
+    """
+
+    def get_g_h_arr(self):
+
+        g_, h_ = [], []
+        for id_, gh in self.g_h.collect():
+            g_.append(gh[0])
+            h_.append(gh[1])
+        g_, h_ = np.array(g_).astype(np.float32), np.array(h_).astype(np.float32)
+        return g_, h_
+
+    def init_node2index(self, sample_num):
+        root_sample_idx = np.array([i for i in range(sample_num)]).astype(np.uint32)
+        return root_sample_idx
+
+    def init_memory_hist_builder(self, g, h, bin_data, bin_num):
+        self.memory_hist_builder = HistogramBuilder(bin_data, bin_num, g, h, False)
+
+    def sklearn_compute_agg_hist(self, data_indices):
+        hist_memory_view = self.memory_hist_builder.compute_histograms_brute(data_indices)
+        hist_arr = np.array(hist_memory_view)
+        g = hist_arr['sum_gradients'].cumsum(axis=1)
+        h = hist_arr['sum_hessians'].cumsum(axis=1)
+        count = hist_arr['count'].cumsum(axis=1)
+
+        final_hist = []
+        for feat_idx in range(len(g)):
+            arr = np.array([g[feat_idx], h[feat_idx], count[feat_idx]]).transpose()
+            final_hist.append(arr)
+
+        return np.array(final_hist)
+
+    def assign_arr_inst(self, node, data_arr, data_indices, missing_bin_index=None):
+
+        # a fast inst assign using memory computing
+        inst = data_arr[data_indices]
+        fid = node.fid
+        bid = node.bid
+        decision = inst[::, fid] <= bid
+        if self.use_missing and missing_bin_index is not None:
+            missing_dir = True if node.missing_dir == -1 else False
+            missing_samples = (inst[::, fid] == missing_bin_index)
+            decision[missing_samples] = missing_dir
+        left_samples = data_indices[decision]
+        right_samples = data_indices[~decision]
+        return left_samples, right_samples
+
     """
     Fit & Predict
     """
+
+    def memory_fit(self):
+
+        """
+        fitting using memory backend
+        """
+
+        LOGGER.info('begin to fit homo decision tree, epoch {}, tree idx {},'
+                    'running on memory backend'.format(self.epoch_idx, self.tree_idx))
+
+        self.init_root_node_and_gh_sum()
+        g, h = self.get_g_h_arr()
+        self.init_memory_hist_builder(g, h, self.arr_bin_data, self.bin_num + self.use_missing) # last missing bin
+        root_indices = self.init_node2index(len(self.arr_bin_data))
+        self.cur_layer_node[0].inst_indices = root_indices  # root node
+
+        tree_height = self.max_depth + 1  # non-leaf node height + 1 layer leaf
+
+        for dep in range(tree_height):
+
+            if dep + 1 == tree_height:
+                for node in self.cur_layer_node:
+                    node.is_leaf = True
+                    self.tree_node.append(node)
+                break
+
+            self.sync_cur_layer_node_num(len(self.cur_layer_node), suffix=(dep, self.epoch_idx, self.tree_idx))
+
+            node_hists = []
+            node_map = self.get_node_map(self.cur_layer_node)
+
+            for node in self.cur_layer_node:
+                if node.id in node_map:
+                    hist = self.sklearn_compute_agg_hist(node.inst_indices)
+                    hist_bag = HistogramBag(hist, tensor_type='array')
+                    hist_bag.hid = node.id
+                    hist_bag.p_hid = node.parent_nodeid
+                    node_hists.append(hist_bag)
+
+            self.sync_local_node_histogram(node_hists, suffix=(0, dep, self.epoch_idx, self.tree_idx))
+            split_info = self.sync_best_splits(suffix=(dep, self.epoch_idx))
+
+            new_layer_node = self.update_tree(self.cur_layer_node, split_info)
+            node2inst_idx = []
+
+            for node in self.cur_layer_node:
+                if node.is_leaf:
+                    continue
+                l, r = self.assign_arr_inst(node, self.arr_bin_data, node.inst_indices, missing_bin_index=self.bin_num)
+                node2inst_idx.append(l)
+                node2inst_idx.append(r)
+            assert len(node2inst_idx) == len(new_layer_node)
+
+            for node, indices in zip(new_layer_node, node2inst_idx):
+                node.inst_indices = indices
+            self.cur_layer_node = new_layer_node
+
+        sample_indices, weights = [], []
+
+        for node in self.tree_node:
+            if node.is_leaf:
+                sample_indices += list(node.inst_indices)
+                weights += [node.weight] * len(node.inst_indices)
+            else:
+                node.bid = self.bin_split_points[node.fid][int(node.bid)]
+
+        # post-processing of memory backend fit
+        sample_id = self.sample_id_arr[sample_indices]
+        self.leaf_count = {}
+        for node in self.tree_node:
+            if node.is_leaf:
+                self.leaf_count[node.id] = len(node.inst_indices)
+        LOGGER.debug('leaf count is {}'.format(self.leaf_count))
+        sample_id_type = type(self.g_h.take(1)[0][0])
+        self.sample_weights = session.parallelize([(sample_id_type(id_), weight) for id_, weight in zip(sample_id, weights)],
+                                                  include_key=True, partition=self.data_bin.partitions)
 
     def fit(self):
         """
         start to fit
         """
-        LOGGER.info('begin to fit homo decision tree, epoch {}, tree idx {}'.format(self.epoch_idx, self.tree_idx))
+        LOGGER.info('begin to fit homo decision tree, epoch {}, tree idx {},'
+                    'running on distributed backend'.format(self.epoch_idx, self.tree_idx))
 
-        # compute local g_sum and h_sum
-        g_sum, h_sum = self.get_grad_hess_sum(self.g_h)
-
-        # get aggregated root info
-        self.aggregator.send_local_root_node_info(g_sum, h_sum, suffix=('root_node_sync1', self.epoch_idx))
-        g_h_dict = self.aggregator.get_aggregated_root_info(suffix=('root_node_sync2', self.epoch_idx))
-        global_g_sum, global_h_sum = g_h_dict['g_sum'], g_h_dict['h_sum']
-
-        # initialize node
-        root_node = Node(id=0, sitename=consts.GUEST, sum_grad=global_g_sum, sum_hess=global_h_sum, weight=
-                         self.splitter.node_weight(global_g_sum, global_h_sum))
-
-        self.cur_layer_node = [root_node]
+        self.init_root_node_and_gh_sum()
+        LOGGER.debug('self grad and hess is {}'.format(list(self.g_h.collect())))
         LOGGER.debug('assign samples to root node')
         self.inst2node_idx = self.assign_instance_to_root_node(self.data_bin, 0)
 
@@ -331,12 +450,11 @@ class HomoDecisionTreeClient(DecisionTree):
                     node.is_leaf = True
                     self.tree_node.append(node)
 
-                rest_sample_weights = self.get_node_sample_weights(self.inst2node_idx, self.tree_node)
-                if self.sample_weights is None:
-                    self.sample_weights = rest_sample_weights
+                rest_sample_leaf_pos = self.inst2node_idx.mapValues(lambda x: x[1])
+                if self.sample_leaf_pos is None:
+                    self.sample_leaf_pos = rest_sample_leaf_pos
                 else:
-                    self.sample_weights = self.sample_weights.union(rest_sample_weights)
-
+                    self.sample_leaf_pos = self.sample_leaf_pos.union(rest_sample_leaf_pos)
                 # stop fitting
                 break
 
@@ -376,49 +494,27 @@ class HomoDecisionTreeClient(DecisionTree):
             self.cur_layer_node = new_layer_node
 
             self.inst2node_idx, leaf_val = self.assign_instances_to_new_node(table_with_assignment, self.tree_node)
-
             # record leaf val
-            if self.sample_weights is None:
-                self.sample_weights = leaf_val
+            if self.sample_leaf_pos is None:
+                self.sample_leaf_pos = leaf_val
             else:
-                self.sample_weights = self.sample_weights.union(leaf_val)
+                self.sample_leaf_pos = self.sample_leaf_pos.union(leaf_val)
 
             LOGGER.debug('assigning instance to new nodes done')
 
         self.convert_bin_to_real()
+        self.sample_weights_post_process()
         LOGGER.debug('fitting tree done')
 
     def traverse_tree(self, data_inst: Instance, tree: List[Node], use_missing, zero_as_missing):
 
-        nid = 0 # root node id
+        nid = 0  # root node id
         while True:
 
             if tree[nid].is_leaf:
                 return tree[nid].weight
 
-            cur_node = tree[nid]
-            fid, bid = cur_node.fid,cur_node.bid
-            missing_dir = cur_node.missing_dir
-
-            if use_missing and zero_as_missing:
-
-                if data_inst.features.get_data(fid) == NoneType() or data_inst.features.get_data(fid, None) is None:
-
-                    nid = tree[nid].right_nodeid if missing_dir == 1 else tree[nid].left_nodeid
-
-                elif data_inst.features.get_data(fid) <= bid + consts.FLOAT_ZERO:
-                    nid = tree[nid].left_nodeid
-                else:
-                    nid = tree[nid].right_nodeid
-
-            elif data_inst.features.get_data(fid) == NoneType():
-
-                nid = tree[nid].right_nodeid if missing_dir == 1 else tree[nid].left_nodeid
-
-            elif data_inst.features.get_data(fid, 0) <= bid + consts.FLOAT_ZERO:
-                nid = tree[nid].left_nodeid
-            else:
-                nid = tree[nid].right_nodeid
+            nid = DecisionTree.go_next_layer(tree[nid], data_inst, use_missing, zero_as_missing)
 
     def predict(self, data_inst):
 
@@ -473,8 +569,7 @@ class HomoDecisionTreeClient(DecisionTree):
                                   left_nodeid=node.left_nodeid,
                                   right_nodeid=node.right_nodeid,
                                   missing_dir=node.missing_dir)
-
-        LOGGER.debug('output tree: epoch_idx:{} tree_idx:{}'.format(self.epoch_idx, self.tree_idx))
+        model_param.leaf_count.update(self.leaf_count)
         return model_param
 
     def set_model_param(self, model_param):

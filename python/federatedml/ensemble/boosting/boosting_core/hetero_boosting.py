@@ -22,7 +22,7 @@ import abc
 from federatedml.ensemble.boosting.boosting_core import Boosting
 from federatedml.param.boosting_param import HeteroBoostingParam
 from federatedml.secureprotol import IterativeAffineEncrypt
-from federatedml.secureprotol import PaillierEncrypt
+from federatedml.secureprotol import PaillierEncrypt, FakeEncrypt
 from federatedml.secureprotol.encrypt_mode import EncryptModeCalculator
 from federatedml.util import consts
 from federatedml.feature.binning.quantile_binning import QuantileBinning
@@ -59,6 +59,7 @@ class HeteroBoosting(Boosting, ABC):
         self.use_first_metric_only = param.use_first_metric_only
 
     def generate_encrypter(self):
+
         LOGGER.info("generate encrypter")
         if self.encrypt_param.method.lower() == consts.PAILLIER.lower():
             self.encrypter = PaillierEncrypt()
@@ -72,8 +73,7 @@ class HeteroBoosting(Boosting, ABC):
             self.encrypter.generate_key(key_size=self.encrypt_param.key_length,
                                         randomized=True)
         else:
-            raise NotImplementedError("encrypt method not supported yes!!!")
-
+            raise NotImplementedError("unknown encrypt type {}".format(type(self.encrypt_param.method.lower())))
         self.encrypted_calculator = EncryptModeCalculator(self.encrypter, self.calculated_mode, self.re_encrypted_rate)
 
     def check_label(self):
@@ -185,6 +185,7 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
                 self.y_hat = self.get_new_predict_score(self.y_hat, cur_sample_weights, dim=class_idx)
 
             # compute loss
+            LOGGER.debug('y hat is {}'.format(list(self.y_hat.collect())))
             loss = self.compute_loss(self.y_hat, self.y)
             self.history_loss.append(loss)
             LOGGER.info("round {} loss is {}".format(epoch_idx, loss))

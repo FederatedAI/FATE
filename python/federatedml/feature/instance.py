@@ -51,3 +51,6 @@ class Instance(object):
 
     def set_feature(self, features):
         self.features = features
+
+    def __repr__(self):
+        return self.features.__repr__()

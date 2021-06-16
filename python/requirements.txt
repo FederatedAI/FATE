@@ -17,7 +17,7 @@ redis==3.0.1
 requests==2.23.0
 requests_toolbelt==0.9.1
 ruamel-yaml==0.16.10
-scikit-learn==0.19.2
+scikit-learn==0.24.2
 scipy==1.1.0
 tensorflow>=2.4.1
 torch==1.4.0

@@ -304,6 +304,10 @@ HETERO_FAST_SBT_HOST_MODEL = "HeteroFastSecureBoostingTreeHost"
 # tree decimal round to prevent float error
 TREE_DECIMAL_ROUND = 10
 
+# homm sbt backend
+MEMORY_BACKEND = 'memory'
+DISTRIBUTED_BACKEND = 'distributed'
+
 # column_expand
 MANUAL = 'manual'
 

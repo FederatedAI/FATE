@@ -1,5 +1,6 @@
 import numpy as np
 import functools
+import copy
 from typing import List
 from operator import itemgetter
 from federatedml.ensemble.boosting.boosting_core.homo_boosting import HomoBoostingClient
@@ -13,6 +14,7 @@ from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import Boostin
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import FeatureImportanceInfo
 from federatedml.ensemble import HeteroSecureBoostingTreeGuest
 from federatedml.util.io_check import assert_io_num_rows_equal
+from federatedml.feature.fate_element_type import NoneType
 from federatedml.util import LOGGER
 
 
@@ -32,12 +34,17 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
         self.feature_importance = {}
         self.model_param = HomoSecureBoostParam()
 
+        # memory back end
+        self.backend = consts.DISTRIBUTED_BACKEND
+        self.bin_arr, self.sample_id_arr = None, None
+
     def _init_model(self, boosting_param: HomoSecureBoostParam):
 
         super(HomoSecureBoostingTreeClient, self)._init_model(boosting_param)
         self.use_missing = boosting_param.use_missing
         self.zero_as_missing = boosting_param.zero_as_missing
         self.tree_param = boosting_param.tree_param
+        self.backend = boosting_param.backend
 
         if self.use_missing:
             self.tree_param.use_missing = self.use_missing
@@ -79,6 +86,82 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
             else:
                 self.feature_importance[fid] += tree_feature_importance[fid]
 
+    """
+    Functions for memory backends
+    """
+
+    @staticmethod
+    def _handle_zero_as_missing(inst, feat_num, missing_bin_idx):
+
+        """
+        This for use_missing + zero_as_missing case
+        """
+
+        sparse_vec = inst.features.sparse_vec
+        arr = np.zeros(feat_num, dtype=np.uint8) + missing_bin_idx
+        for k, v in sparse_vec.items():
+            if v != NoneType():
+                arr[k] = v
+        inst.features = arr
+        return inst
+
+    @staticmethod
+    def _map_missing_bin(inst, bin_index):
+
+        arr_bin = copy.deepcopy(inst.features)
+        arr_bin[arr_bin == NoneType()] = bin_index
+        inst.features = arr_bin
+        return inst
+
+    @staticmethod
+    def _fill_nan(inst):
+        arr = copy.deepcopy(inst.features)
+        nan_index = np.isnan(arr)
+        arr = arr.astype(np.object)
+        arr[nan_index] = NoneType()
+        inst.features = arr
+        return inst
+
+    def data_preporcess(self, data_inst):
+        """
+        override parent function
+        """
+        need_transform_to_sparse = self.backend == consts.DISTRIBUTED_BACKEND or\
+                                   (self.backend == consts.MEMORY_BACKEND and self.use_missing and self.zero_as_missing)
+
+        if need_transform_to_sparse:
+            data_inst = self.data_alignment(data_inst)
+        elif self.use_missing:
+            # fill nan
+            schema = copy.deepcopy(data_inst.schema)
+            data_inst = data_inst.mapValues(self._fill_nan)
+            data_inst.schema = schema
+
+        self.data_bin, self.bin_split_points, self.bin_sparse_points = self.federated_binning(data_inst)
+
+        if self.backend == consts.MEMORY_BACKEND:
+
+            if self.use_missing and self.zero_as_missing:
+                feat_num = len(self.bin_split_points)
+                func = functools.partial(self._handle_zero_as_missing, feat_num=feat_num, missing_bin_idx=self.bin_num)
+                self.data_bin = self.data_bin.mapValues(func)
+            elif self.use_missing:  # use missing only
+                missing_bin_index = self.bin_num
+                func = functools.partial(self._map_missing_bin, bin_index=missing_bin_index)
+                self.data_bin = self.data_bin.mapValues(func)
+
+            self._collect_data_arr(self.data_bin)
+
+    def _collect_data_arr(self, bin_arr_table):
+
+        bin_arr = []
+        id_list = []
+        for id_, inst in bin_arr_table.collect():
+            bin_arr.append(inst.features)
+            id_list.append(id_)
+        self.bin_arr = np.asfortranarray(np.stack(bin_arr, axis=0).astype(np.uint8))
+        self.sample_id_arr = np.array(id_list)
+
     def fit_a_booster(self, epoch_idx: int, booster_dim: int):
 
         valid_features = self.get_valid_features(epoch_idx, booster_dim)
@@ -93,9 +176,20 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
         flow_id = self.generate_flowid(epoch_idx, booster_dim)
         new_tree = HomoDecisionTreeClient(self.tree_param, self.data_bin, self.bin_split_points,
                                           self.bin_sparse_points, subtree_g_h, valid_feature=valid_features
-                                          , epoch_idx=epoch_idx, role=self.role, flow_id=flow_id, tree_idx= \
+                                          , epoch_idx=epoch_idx, role=self.role, flow_id=flow_id, tree_idx=\
                                           booster_dim, mode='train')
-        new_tree.fit()
+
+        if self.backend == consts.DISTRIBUTED_BACKEND:
+            new_tree.fit()
+            LOGGER.debug('running memory fit')
+        elif self.backend == consts.MEMORY_BACKEND:
+            # memory backend needed variable
+            LOGGER.debug('running memory fit')
+            new_tree.arr_bin_data = self.bin_arr
+            new_tree.bin_num = self.bin_num
+            new_tree.sample_id_arr = self.sample_id_arr
+            new_tree.memory_fit()
+
         self.update_feature_importance(new_tree.get_feature_importance())
 
         return new_tree
@@ -138,7 +232,8 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
 
     @assert_io_num_rows_equal
     def predict(self, data_inst):
-        return self.fast_homo_tree_predict(data_inst)
+        rs = self.fast_homo_tree_predict(data_inst)
+        return rs
 
     def generate_summary(self) -> dict:
 

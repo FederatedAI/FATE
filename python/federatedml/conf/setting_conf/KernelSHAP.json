@@ -1,0 +1,16 @@
+{
+    "module_path":  "federatedml/model_interpret/",
+    "param_class" : "federatedml/param/shap_param.py/KernelSHAPParam",
+    "need_deploy": false,
+    "role":
+    {
+        "guest":
+        {
+            "program": "federated_kernel_shap.py/HeteroKernelSHAPGuest"
+        },
+        "host":
+        {
+            "program": "federated_kernel_shap.py/HeteroKernelSHAPHost"
+        }
+    }
+}
