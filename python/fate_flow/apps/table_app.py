@@ -119,8 +119,11 @@ def get_job_all_table(job):
                                                    )
     _, hierarchical_structure = dsl_parser.get_dsl_hierarchical_structure()
     component_table = {}
-    component_output_tables = Tracker.query_output_data_infos(job_id=job.f_job_id, role=job.f_role,
-                                                              party_id=job.f_party_id)
+    try:
+        component_output_tables = Tracker.query_output_data_infos(job_id=job.f_job_id, role=job.f_role,
+                                                                  party_id=job.f_party_id)
+    except:
+        component_output_tables = []
     for component_name_list in hierarchical_structure:
         for component_name in component_name_list:
             component_table[component_name] = {}
@@ -136,7 +139,8 @@ def get_job_all_table(job):
 
 def get_component_input_table(dsl_parser, job, component_name):
     component = dsl_parser.get_component_info(component_name=component_name)
-    if 'reader' in component_name:
+    module_name = get_component_module(component_name, job.f_dsl)
+    if 'reader' in module_name.lower():
         component_parameters = component.get_role_parameters()
         return component_parameters[job.f_role][0]['ReaderParam']
     task_input_dsl = component.get_input()
@@ -157,3 +161,7 @@ def get_component_input_table(dsl_parser, job, component_name):
                                                            get_input_table=True
                                                            )
     return component_input_table
+
+
+def get_component_module(component_name, job_dsl):
+    return job_dsl["components"][component_name]["module"].lower()
