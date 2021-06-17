@@ -31,6 +31,36 @@ This section introduces the dsl and conf for different types of tasks.
 
     This feature support since FATE-1.4, please have a look at the param "early_stopping_rounds", "metric", "validation_freqs"
 
+4. Train Task With Selective BackPropagation Strategy:
+
+    example-data: (1) guest: default_credit_hetero_guest.csv  (2) host: default_credit_hetero_host.csv  
+    
+    dsl: test_hetero_nn_dsl.json
+
+    runtime_config : test_hetero_nn_binary_selective_bp_conf.json
+
+    This feature support since FATE-1.6, please have a look at the param "selector_param"
+
+5. Train Task With Interactive Layer DropOut Strategy:
+
+    example-data: (1) guest: default_credit_hetero_guest.csv  (2) host: default_credit_hetero_host.csv  
+    
+    dsl: test_hetero_nn_dsl.json
+
+    runtime_config : test_hetero_nn_binary_drop_out_conf.json
+
+    This feature support since FATE-1.6, please have a look at the param "drop_out_keep_rate"
+
+5. Train Task With Floating Point Precision Optimization:
+
+    example-data: (1) guest: default_credit_hetero_guest.csv  (2) host: default_credit_hetero_host.csv  
+    
+    dsl: test_hetero_nn_dsl.json
+
+    runtime_config : test_hetero_nn_binary_floating_point_precision_conf.json
+
+    This feature support since FATE-1.6, please have a look at the param "floating_point_precision"
+
 Users can use following commands to run a task.
 
     flow job submit -c ${runtime_config} -d ${dsl}

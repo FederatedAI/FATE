@@ -45,7 +45,8 @@ def main(config="../../config.yaml", param="./vechile_config.yaml"):
         "max_iter": param["max_iter"],
         "alpha": param["alpha"],
         "learning_rate": "optimal",
-        "eta0": param["learning_rate"]
+        "eta0": param["learning_rate"],
+        "random_state": 105
     }
 
     # prepare data

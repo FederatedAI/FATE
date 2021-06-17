@@ -9,4 +9,4 @@ learning_rate: 0.15
 optimizer: "rmsprop"
 batch_size: 800
 early_stop: "diff"
-init_method: "zeros"
+init_method: "random_normal"

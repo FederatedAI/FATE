@@ -31,7 +31,7 @@ from flask import Flask, request, send_file, Response
 
 from fate_flow.pipelined_model.migrate_model import compare_roles
 from fate_flow.pipelined_model.pipelined_model import PipelinedModel
-from fate_flow.scheduler import DAGScheduler, dsl_parser
+from fate_flow.scheduler.dag_scheduler import DAGScheduler
 from fate_flow.settings import stat_logger, MODEL_STORE_ADDRESS, TEMP_DIRECTORY
 from fate_flow.pipelined_model import migrate_model, pipelined_model, publish_model, deploy_model
 from fate_flow.utils.api_utils import get_json_result, federated_api, error_response
@@ -739,6 +739,43 @@ def get_predict_conf():
         else:
             return get_json_result(data=predict_conf)
     return error_response(210, "No model found, please check if arguments are specified correctly.")
+
+
+@manager.route('/homo/convert', methods=['POST'])
+def homo_convert():
+    request_config = request.json or request.form.to_dict()
+    required_arguments = ["model_id", "model_version", "role", "party_id"]
+    check_config(request_config, required_arguments=required_arguments)
+    retcode, retmsg, res_data = publish_model.convert_homo_model(request_data=request_config)
+    operation_record(request.json, "homo_convert", "success" if not retcode else "failed")
+    return get_json_result(retcode=retcode, retmsg=retmsg, data=res_data)
+
+
+@manager.route('/homo/deploy', methods=['POST'])
+def homo_deploy():
+    request_config = request.json or request.form.to_dict()
+    required_arguments = ["service_id",
+                          "model_id",
+                          "model_version",
+                          "role",
+                          "party_id",
+                          "component_name",
+                          "deployment_type",
+                          "deployment_parameters"]
+    check_config(request_config, required_arguments=required_arguments)
+    retcode, retmsg, res_data = publish_model.deploy_homo_model(request_data=request_config)
+    operation_record(request.json, "homo_deploy", "success" if not retcode else "failed")
+    return get_json_result(retcode=retcode, retmsg=retmsg, data=res_data)
+
+
+def adapter_servings_config(request_data):
+    servings_conf = ServiceUtils.get("servings", {})
+    if isinstance(servings_conf, dict):
+        request_data["servings"] = servings_conf.get('hosts', [])
+    elif isinstance(servings_conf, list):
+        request_data["servings"] = servings_conf
+    else:
+        raise Exception('Please check the servings config')
 
 
 class DatetimeEncoder(json.JSONEncoder):

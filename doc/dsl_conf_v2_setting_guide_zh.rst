@@ -262,8 +262,8 @@ Job Runtime Conf用于设置各个参与方的信息, 作业的参数及各个�
 
    * - backend
      - 0
-     - 0, 1
-     - 0代表EGGROLL，1代表SPARK
+     - 0, 1, 2
+     - 0代表EGGROLL，1代表SPARK加RabbitMQ，2代表SPARK加Pulsar
 
    * - task_cores
      - 4
@@ -294,6 +294,11 @@ Job Runtime Conf用于设置各个参与方的信息, 作业的参数及各个�
      - 无
      - queue, exchange等
      - rabbitmq创建queue、exchange的相关配置参数，一般无须配置，采取系统默认值
+
+   * - pulsar_run
+     - 无
+     - producer, consumer等
+     - pulsar创建producer和consumer时候的相关配置，一般无需配置。
 
    * - federated_status_collect_type
      - PUSH
@@ -346,7 +351,7 @@ Job Runtime Conf用于设置各个参与方的信息, 作业的参数及各个�
 
    * - federation_engine
      - 依据work_mode和backend, 自动得到
-     - EGGROLL, RABBITMQ, STANDALONE
+     - EGGROLL, RABBITMQ, STANDALONE, PULSAR
      - 通信引擎类型
 
    * - federated_mode
@@ -392,7 +397,7 @@ Job Runtime Conf用于设置各个参与方的信息, 作业的参数及各个�
      }
    }
 
-3. 使用spark作为backend，采取直接指定cpu等参数时的配置
+3. 使用spark加rabbitMQ作为backend，采取直接指定cpu等参数时的配置
 
 .. code:: json
 
@@ -416,6 +421,20 @@ Job Runtime Conf用于设置各个参与方的信息, 作业的参数及各个�
            "heartbeat": 10000
          }
        }
+     }
+   }
+4. 使用spark加pulsar作为backend
+
+.. code::json
+
+   "job_parameters": {
+     "common": {
+       "work_mode": 1,
+       "backend": 2,
+       "spark_run": {
+         "num-executors": 1,
+         "executor-cores": 2
+       },
      }
    }
 

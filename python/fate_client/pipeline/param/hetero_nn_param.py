@@ -28,6 +28,19 @@ from pipeline.param.predict_param import PredictParam
 from pipeline.param import consts
 
 
+class SelectorParam(object):
+    def __init__(self, method=None, beta=1, selective_size=consts.SELECTIVE_SIZE, min_prob=0, random_state=None):
+        self.method = method
+        self.selective_size = selective_size
+        self.beta = beta
+        self.min_prob = min_prob
+        self.random_state = random_state
+
+    def check(self):
+        if self.method is not None and self.method not in ["relative"]:
+            raise ValueError('selective method should be None be "relative"')
+
+
 class HeteroNNParam(BaseParam):
     """
     Parameters used for Homo Neural Network.
@@ -71,6 +84,10 @@ class HeteroNNParam(BaseParam):
                   speed up training by skipping validation rounds. When it is larger than 1, a number which is
                   divisible by "epochs" is recommended, otherwise, you will miss the validation scores
                   of last training epoch.
+        floating_point_precision: None or integer, if not None, means use floating_point_precision-bit to speed up calculation,
+                                   e.g.: convert an x to round(x * 2**floating_point_precision) during Paillier operation, divide
+                                          the result by 2**floating_point_precision in the end.
+        drop_out_keep_rate: float, should betweend 0 and 1, if not equals to 1.0, will enabled drop out
     """
 
     def __init__(self,
@@ -87,13 +104,16 @@ class HeteroNNParam(BaseParam):
                  early_stop="diff",
                  tol=1e-5,
                  encrypt_param=EncryptParam(),
-                 encrypted_mode_calculator_param = EncryptedModeCalculatorParam(mode="confusion_opt"),
+                 encrypted_mode_calculator_param=EncryptedModeCalculatorParam(mode="confusion_opt"),
                  predict_param=PredictParam(),
                  cv_param=CrossValidationParam(),
                  validation_freqs=None,
                  early_stopping_rounds=None,
                  metrics=None,
-                 use_first_metric_only=True):
+                 use_first_metric_only=True,
+                 selector_param=SelectorParam(),
+                 floating_point_precision=23,
+                 drop_out_keep_rate=1.0):
         super(HeteroNNParam, self).__init__()
 
         self.task_type = task_type
@@ -118,12 +138,17 @@ class HeteroNNParam(BaseParam):
         self.predict_param = copy.deepcopy(predict_param)
         self.cv_param = copy.deepcopy(cv_param)
 
+        self.selector_param = selector_param
+        self.floating_point_precision = floating_point_precision
+
+        self.drop_out_keep_rate = drop_out_keep_rate
+
     def check(self):
         self.optimizer = self._parse_optimizer(self.optimizer)
         supported_config_type = ["keras"]
 
         if self.task_type not in ["classification", "regression"]:
-            raise  ValueError("config_type should be classification or regression")
+            raise ValueError("config_type should be classification or regression")
 
         if self.config_type not in supported_config_type:
             raise ValueError(f"config_type should be one of {supported_config_type}")
@@ -151,7 +176,7 @@ class HeteroNNParam(BaseParam):
                     " {} not supported, should be larger than 10 or -1 represent for all data".format(self.batch_size))
 
         if self.early_stop != "diff":
-            raise  ValueError("early stop should be diff in this version")
+            raise ValueError("early stop should be diff in this version")
 
         if self.validation_freqs is None:
             pass
@@ -174,6 +199,11 @@ class HeteroNNParam(BaseParam):
 
         if not isinstance(self.use_first_metric_only, bool):
             raise ValueError("use_first_metric_only should be a boolean")
+
+        if self.floating_point_precision is not None and \
+                (not isinstance(self.floating_point_precision, int) or \
+                 self.floating_point_precision < 0 or self.floating_point_precision > 64):
+            raise ValueError("floating point precision should be null or a integer between 0 and 64")
 
         self.encrypt_param.check()
         self.encrypted_model_calculator_param.check()

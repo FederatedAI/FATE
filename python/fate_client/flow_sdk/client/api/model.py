@@ -65,7 +65,7 @@ class Model(BaseFlowAPI):
             else:
                 raise Exception('The file is obtained from the fate flow client machine, but it does not exist, '
                                 'please check the path: {}'.format(file_path))
-            return self._post(url='model/import', json=config_data, files=files)
+            return self._post(url='model/import', data=config_data, files=files)
         return self._post(url='model/restore', json=config_data)
 
     def export_model(self, conf_path, to_database=False):
@@ -131,3 +131,9 @@ class Model(BaseFlowAPI):
         config_data, dsl_data = preprocess(**kwargs)
         return self._post(url='model/query', json=config_data)
 
+    def homo_convert(self, conf_path):
+        if not os.path.exists(conf_path):
+            raise FileNotFoundError('Invalid conf path, file not exists.')
+        kwargs = locals()
+        config_data, dsl_data = preprocess(**kwargs)
+        return self._post(url='model/homo/convert', json=config_data)

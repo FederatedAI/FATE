@@ -198,6 +198,8 @@ class CommonFilterParam(BaseParam):
         Set threshold for different host. If None, use same threshold as guest. If provided, the order should map with
         the host id setting.
 
+    select_federated: bool, default: True
+        Whether select federated with other parties or based on local variables
     """
 
     def __init__(self, metrics, filter_type='threshold', take_high=True, threshold=1,
@@ -256,8 +258,44 @@ class CommonFilterParam(BaseParam):
             if not isinstance(self.host_thresholds, list):
                 raise ValueError("IV selection param's host_threshold should be list or None")
 
+        assert isinstance(self.select_federated, list)
         for v in self.select_federated:
             self.check_boolean(v, descr)
+
+
+class CorrelationFilterParam(BaseParam):
+    """
+    This filter follow this specific rules:
+        1. Sort all the columns from high to low based on specific metric, eg. iv.
+        2. Traverse each sorted column. If there exists other columns with whom the
+            absolute values of correlation are larger than threshold, they will be filtered.
+
+    Parameters
+    ----------
+    sort_metric: str, default: iv
+        Specify which metric to be used to sort features.
+
+    threshold: float or int, default: 0.1
+        Correlation threshold
+
+    select_federated: bool, default: True
+        Whether select federated with other parties or based on local variables
+    """
+    def __init__(self, sort_metric='iv', threshold=0.1, select_federated=True):
+        super().__init__()
+        self.sort_metric = sort_metric
+        self.threshold = threshold
+        self.select_federated = select_federated
+
+    def check(self):
+        descr = "Correlation Filter param's"
+
+        self.sort_metric = self.sort_metric.lower()
+        support_metrics = ['iv']
+        if self.sort_metric not in support_metrics:
+            raise ValueError(f"sort_metric in Correlation Filter should be one of {support_metrics}")
+
+        self.check_positive_number(self.threshold, descr)
 
 
 class PercentageValueParam(BaseParam):
@@ -347,7 +385,8 @@ class FeatureSelectionParam(BaseParam):
 
     filter_methods: list, ["manually", "iv_filter", "statistic_filter",
                             "psi_filter", “hetero_sbt_filter", "homo_sbt_filter",
-                             "hetero_fast_sbt_filter", "percentage_value"],
+                             "hetero_fast_sbt_filter", "percentage_value",
+                             "vif_filter", "correlation_filter"],
                  default: ["manually"]
 
         The following methods will be deprecated in future version:
@@ -409,10 +448,16 @@ class FeatureSelectionParam(BaseParam):
                  statistic_param=CommonFilterParam(metrics=consts.MEAN),
                  psi_param=CommonFilterParam(metrics=consts.PSI,
                                              take_high=False),
+                 vif_param=CommonFilterParam(metrics=consts.VIF,
+                                             threshold=5.0,
+                                             take_high=False),
                  sbt_param=CommonFilterParam(metrics=consts.FEATURE_IMPORTANCE),
+                 correlation_param=CorrelationFilterParam(),
                  need_run=True
                  ):
         super(FeatureSelectionParam, self).__init__()
+        self.correlation_param = correlation_param
+        self.vif_param = vif_param
         self.select_col_indexes = select_col_indexes
         if select_names is None:
             self.select_names = []
@@ -451,7 +496,8 @@ class FeatureSelectionParam(BaseParam):
                                                    consts.MANUALLY_FILTER, consts.PERCENTAGE_VALUE,
                                                    consts.IV_FILTER, consts.STATISTIC_FILTER, consts.IV_TOP_K,
                                                    consts.PSI_FILTER, consts.HETERO_SBT_FILTER,
-                                                   consts.HOMO_SBT_FILTER, consts.HETERO_FAST_SBT_FILTER])
+                                                   consts.HOMO_SBT_FILTER, consts.HETERO_FAST_SBT_FILTER,
+                                                   consts.VIF_FILTER, consts.CORRELATION_FILTER])
 
             self.filter_methods[idx] = method
 
@@ -490,3 +536,10 @@ class FeatureSelectionParam(BaseParam):
         for m in self.sbt_param.metrics:
             if m != consts.FEATURE_IMPORTANCE:
                 raise ValueError("For SBT filter, metrics should be 'feature_importance'")
+
+        self.vif_param.check()
+        for m in self.vif_param.metrics:
+            if m != consts.VIF:
+                raise ValueError("For VIF filter, metrics should be 'vif'")
+
+        self.correlation_param.check()

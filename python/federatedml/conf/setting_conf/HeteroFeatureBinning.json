@@ -1,6 +1,6 @@
 {
     "module_path":  "federatedml/feature/hetero_feature_binning",
-    "param_class" : "federatedml/param/feature_binning_param.py/FeatureBinningParam",
+    "param_class" : "federatedml/param/feature_binning_param.py/HeteroFeatureBinningParam",
     "role":
     {
         "guest":

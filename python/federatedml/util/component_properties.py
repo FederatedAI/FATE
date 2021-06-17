@@ -249,7 +249,7 @@ class ComponentProperties(object):
             return running_funcs
 
         if self.need_cv:
-            running_funcs.add_func(model.cross_validation, [train_data])
+            running_funcs.add_func(model.cross_validation, [train_data], save_result=True)
             return running_funcs
 
         if self.need_stepwise:

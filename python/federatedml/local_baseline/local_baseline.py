@@ -196,6 +196,68 @@ class LocalBaseline(ModelBase):
         return summary
 
     @assert_io_num_rows_equal
+    def _load_single_coef(self, result_obj):
+        feature_shape = len(self.header)
+        tmp_vars = np.zeros(feature_shape)
+        weight_dict = dict(result_obj.weight)
+        for idx, header_name in enumerate(self.header):
+            tmp_vars[idx] = weight_dict.get(header_name)
+        return tmp_vars
+
+    def _load_single_model(self, result_obj):
+        coef = self._load_single_coef(result_obj)
+        self.model_fit.__setattr__('coef_', np.array([coef]))
+        self.model_fit.__setattr__('intercept_', np.array([result_obj.intercept]))
+        self.model_fit.__setattr__('classes_', np.array([0, 1]))
+        self.model_fit.__setattr__('n_iter_', [result_obj.iters])
+        return
+
+    def _load_ovr_model(self, result_obj):
+        one_vs_rest_result = result_obj.one_vs_rest_result
+        classes = np.array([int(i) for i in one_vs_rest_result.one_vs_rest_classes])
+        models = one_vs_rest_result.completed_models
+
+        class_count, feature_shape = len(classes), len(self.header)
+        coef_all = np.zeros((class_count, feature_shape))
+        intercept_all = np.zeros(class_count)
+        iters = -1
+
+        for i, label in enumerate(classes):
+            model = models[i]
+            coef = self._load_single_coef(model)
+            coef_all[i,] = coef
+            intercept_all[i] = model.intercept
+            iters = model.iters
+
+        self.model_fit.__setattr__('coef_', coef_all)
+        self.model_fit.__setattr__('intercept_', intercept_all)
+        self.model_fit.__setattr__('classes_', classes)
+        self.model_fit.__setattr__('n_iter_', [iters])
+        return
+
+    def _load_model_meta(self, meta_obj):
+        self.model_fit.__setattr__('penalty', meta_obj.penalty)
+        self.model_fit.__setattr__('tol', meta_obj.tol)
+        self.model_fit.__setattr__('fit_intercept', meta_obj.fit_intercept)
+        self.model_fit.__setattr__('solver', meta_obj.optimizer)
+        self.model_fit.__setattr__('max_iter', meta_obj.max_iter)
+
+    def load_model(self, model_dict):
+        result_obj = list(model_dict.get('model').values())[0].get(self.model_param_name)
+        meta_obj = list(model_dict.get('model').values())[0].get(self.model_meta_name)
+        self.model_fit = LogisticRegression()
+        self._load_model_meta(meta_obj)
+        self.header = list(result_obj.header)
+
+        self.need_one_vs_rest = meta_obj.need_one_vs_rest
+        LOGGER.debug("in _load_model need_one_vs_rest: {}".format(self.need_one_vs_rest))
+        if self.need_one_vs_rest:
+            self._load_ovr_model(result_obj)
+        else:
+            self._load_single_model(result_obj)
+        return
+
+    @assert_io_num_rows_equal
     def predict(self, data_instances):
         if not self.need_run:
             return
@@ -228,6 +290,12 @@ class LocalBaseline(ModelBase):
         X = np.array([v[1] for v in list(X_table.collect())])
         y = np.array([v[1] for v in list(y_table.collect())])
 
-        self.model_fit = model.fit(X, y)
+        w = None
+        if data_overview.with_weight(data_instances):
+            LOGGER.info(f"Input Data with Weight. Weight will be used to fit model.")
+            weight_table = data_instances.mapValues(lambda v: v.weight)
+            w = np.array([v[1] for v in list(weight_table.collect())])
+
+        self.model_fit = model.fit(X, y, w)
         self.need_one_vs_rest = len(self.model_fit.classes_) > 2
         self.set_summary(self.get_model_summary())

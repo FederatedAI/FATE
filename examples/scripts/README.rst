@@ -93,7 +93,7 @@ Parameters
 ``````````
 -  -m --mode: Work mode, Required. 1 represent for cluster version while 0 means standalone version.
 -  -f --force: Whether force upload or not. When setting as 1, the table will be deleted before upload if it is already existed. Default: 0
--  -b --backend: Backend of the task. 0 represent for eggroll while 1 represent for spark. Default: 0
+-  -b --backend: Backend of the task. 0 represent for eggroll while 1 represent for spark with rabbitmq and 2 stands for spark with pulsar. Default: 0
 -  -c --config_file: The config file provided. If a file path is provided, it will upload the data list in the config file. We also provided some pre-set config file. Default: min-test
     *  "all" means upload all data-set provided in example/data folder. If use this config file, the time consume for this upload task could be relatively long.
     *  "min-test" means upload the data needed for min-test.

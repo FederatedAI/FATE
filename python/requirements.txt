@@ -5,9 +5,13 @@ cloudpickle==0.6.1
 cos-python-sdk-v5==1.8.0
 Flask==1.0.2
 gmpy2==2.0.8
+joblib==1.0.1
 kazoo==2.6.1
+kfserving>=0.5.1
+kubernetes>=12.0.1
 lmdb==0.98
-numpy==1.18.4
+minio>=6.0.2
+numpy>=1.18.4
 peewee==3.9.3
 psutil>=5.7.0
 pycryptodomex==3.6.6
@@ -19,21 +23,26 @@ requests_toolbelt==0.9.1
 ruamel-yaml==0.16.10
 scikit-learn==0.19.2
 scipy==1.1.0
-tensorflow==1.15.4
+tensorflow>=2.4.1
 torch==1.4.0
+torch-model-archiver==0.3.1
 torchvision==0.5.0
 Werkzeug==0.15.3
 coverage==4.5.2
 pika==1.1.0
 pandas==1.1.5
 cryptography==3.2.1
+libsm3py==0.0.1
+sortedcontainers==2.2.2
+pytorch-lightning>=1.2.1
+pulsar-client==2.7.0
 filelock==3.0.12
 
 # addtional requirements for eggroll
-grpcio==1.24.3
+grpcio>=1.24.3
 grpcio-tools==1.24.3
 numba==0.50.0
 llvmlite==0.33.0
 phe>=1.4.0
-protobuf==3.6.1
+protobuf>=3.6.1
 pyarrow==0.17.1

@@ -23,13 +23,17 @@ class WorkMode(IntEnum):
 
 class Backend(IntEnum):
     EGGROLL = 0
-    SPARK = 1
+    SPARK_RABBITMQ = 1
+    SPARK_PULSAR = 2
 
     def is_eggroll(self):
         return self.value == self.EGGROLL
 
-    def is_spark(self):
-        return self.value == self.SPARK
+    def is_spark_rabbitmq(self):
+        return self.value == self.SPARK_RABBITMQ
+
+    def is_spark_pulsar(self):
+        return self.value == self.SPARK_PULSAR
 
 
 class StoreEngine(IntEnum):

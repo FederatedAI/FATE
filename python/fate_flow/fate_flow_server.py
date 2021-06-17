@@ -35,16 +35,17 @@ from fate_flow.apps.tracking_app import manager as tracking_app_manager
 from fate_flow.apps.permission_app import manager as permission_app_manager
 from fate_flow.apps.version_app import manager as version_app_manager
 from fate_flow.apps.proxy_app import manager as proxy_app_manager
+from fate_flow.apps.info_app import manager as info_app_manager
 from fate_flow.scheduling_apps.initiator_app import manager as initiator_app_manager
 from fate_flow.scheduling_apps.party_app import manager as party_app_manager
 from fate_flow.scheduling_apps.tracker_app import manager as tracker_app_manager
 from fate_flow.db.db_models import init_database_tables as init_flow_db
 from fate_arch.storage.metastore.db_models import init_database_tables as init_arch_db
-from fate_flow.scheduler import Detector
-from fate_flow.scheduler import DAGScheduler
+from fate_flow.scheduler.detector import Detector
+from fate_flow.scheduler.dag_scheduler import DAGScheduler
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.entity.types import ProcessRole
-from fate_flow.manager import ResourceManager
+from fate_flow.manager.resource_manager import ResourceManager
 from fate_flow.settings import IP, HTTP_PORT, GRPC_PORT, _ONE_DAY_IN_SECONDS, stat_logger, API_VERSION, GRPC_SERVER_MAX_WORKERS
 from fate_flow.utils.api_utils import get_json_result
 from fate_flow.utils.authentication_utils import PrivilegeAuth
@@ -83,7 +84,8 @@ if __name__ == '__main__':
             '/{}/party'.format(API_VERSION): party_app_manager,
             '/{}/initiator'.format(API_VERSION): initiator_app_manager,
             '/{}/tracker'.format(API_VERSION): tracker_app_manager,
-            '/{}/forward'.format(API_VERSION): proxy_app_manager
+            '/{}/forward'.format(API_VERSION): proxy_app_manager,
+            '/{}/info'.format(API_VERSION): info_app_manager,
         }
     )
     # init

@@ -43,6 +43,7 @@ class HeteroLinRBase(BaseLinearRegression):
         self.converge_procedure.register_convergence(self.transfer_variable)
         self.batch_generator.register_batch_generator(self.transfer_variable)
         self.gradient_loss_operator.register_gradient_procedure(self.transfer_variable)
+        self.gradient_loss_operator.set_fixed_float_precision(self.model_param.floating_point_precision)
 
         if params.optimizer == 'sqn':
             gradient_loss_operator = sqn_factory(self.role, params.sqn_param)

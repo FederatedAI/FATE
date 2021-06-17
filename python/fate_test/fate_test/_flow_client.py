@@ -13,7 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
+import os
 import json
 import time
 import typing
@@ -21,38 +21,37 @@ from datetime import timedelta
 from pathlib import Path
 
 import requests
-from requests_toolbelt import MultipartEncoderMonitor, MultipartEncoder
-
 from fate_test._parser import Data, Job
+from flow_sdk.client import FlowClient
+from fate_test import _config
 
 
 class FLOWClient(object):
 
     def __init__(self,
                  address: typing.Optional[str],
-                 data_base_dir: typing.Optional[Path]):
+                 data_base_dir: typing.Optional[Path],
+                 cache_directory: typing.Optional[Path]):
         self.address = address
         self.version = "v1"
         self._http = requests.Session()
         self._data_base_dir = data_base_dir
+        self._cache_directory = cache_directory
+        self.data_size = 0
 
     def set_address(self, address):
         self.address = address
 
-    @property
-    def _base(self):
-        return f"http://{self.address}/{self.version}/"
-
-    def upload_data(self, data: Data, callback=None) -> 'UploadDataResponse':
+    def upload_data(self, data: Data, callback=None, output_path=None):
         try:
-            response = self._upload_data(conf=data.config, verbose=0, drop=1)
+            response, data_path = self._upload_data(conf=data.config, output_path=output_path, verbose=0, drop=1)
             if callback is not None:
                 callback(response)
             status = self._awaiting(response.job_id, "local")
             response.status = status
         except Exception as e:
             raise RuntimeError(f"upload data failed") from e
-        return response
+        return response, data_path
 
     def delete_data(self, data: Data):
         try:
@@ -74,6 +73,10 @@ class FLOWClient(object):
 
     def deploy_model(self, model_id, model_version, dsl=None):
         result = self._deploy_model(model_id=model_id, model_version=model_version, dsl=dsl)
+        return result
+
+    def output_data_table(self, job_id, role, party_id, component_name):
+        result = self._output_data_table(job_id=job_id, role=role, party_id=party_id, component_name=component_name)
         return result
 
     def add_notes(self, job_id, role, party_id, notes):
@@ -102,9 +105,24 @@ class FLOWClient(object):
                 callback(response)
             time.sleep(1)
 
-    def _upload_data(self, conf, verbose, drop):
-        conf['drop'] = drop
-        conf['verbose'] = verbose
+    def _save_json(self, file, file_name):
+        file = json.dumps(file, indent=4)
+        file_path = os.path.join(str(self._cache_directory), file_name)
+        try:
+            with open(file_path, "w", encoding='utf-8') as f:
+                f.write(file)
+        except Exception as e:
+            raise Exception(f"write error==>{e}")
+        return file_path
+
+    def _upload_data(self, conf, output_path=None, verbose=0, drop=1):
+        if output_path is not None:
+            conf['file'] = os.path.join(os.path.abspath(output_path), os.path.basename(conf.get('file')))
+        else:
+            if _config.data_switch is not None:
+                conf['file'] = os.path.join(str(self._cache_directory), os.path.basename(conf.get('file')))
+            else:
+                conf['file'] = os.path.join(str(self._data_base_dir), conf.get('file'))
         path = Path(conf.get('file'))
         if not path.is_file():
             path = self._data_base_dir.joinpath(conf.get('file')).resolve()
@@ -112,34 +130,32 @@ class FLOWClient(object):
         if not path.exists():
             raise Exception('The file is obtained from the fate flow client machine, but it does not exist, '
                             f'please check the path: {path}')
-
-        with path.open("rb") as fp:
-            data = MultipartEncoder(
-                fields={'file': (path.name, fp, 'application/octet-stream')}
-            )
-            data = MultipartEncoderMonitor(data)
-            upload_response = self._post(url='data/upload', data=data, params=conf,
-                                         headers={'Content-Type': data.content_type})
-            response = UploadDataResponse(upload_response)
-        return response
+        upload_response = self.flow_client(request='data/upload', param=self._save_json(conf, 'upload_conf.json'),
+                                           verbose=verbose, drop=drop)
+        response = UploadDataResponse(upload_response)
+        return response, conf['file']
 
     def _delete_data(self, table_name, namespace):
-        response = self._post(url='table/delete', json={'table_name': table_name, 'namespace': namespace})
+        param = {
+            'table_name': table_name,
+            'namespace': namespace
+        }
+        response = self.flow_client(request='table/delete', param=param)
         return response
 
     def _submit_job(self, conf, dsl):
-        post_data = {
-            'job_dsl': dsl,
-            'job_runtime_conf': conf
+        param = {
+            'job_dsl': self._save_json(dsl, 'submit_dsl.json'),
+            'job_runtime_conf': self._save_json(conf, 'submit_conf.json')
         }
-        response = SubmitJobResponse(self._post(url='job/submit', json=post_data))
+        response = SubmitJobResponse(self.flow_client(request='job/submit', param=param))
         return response
 
     def _deploy_model(self, model_id, model_version, dsl=None):
         post_data = {'model_id': model_id,
                      'model_version': model_version,
-                     'dsl': dsl}
-        response = self._post(url='model/deploy', json=post_data)
+                     'predict_dsl': dsl}
+        response = self.flow_client(request='model/deploy', param=post_data)
         result = {}
         try:
             retcode = response['retcode']
@@ -153,15 +169,40 @@ class FLOWClient(object):
 
         return result
 
+    def _output_data_table(self, job_id, role, party_id, component_name):
+        post_data = {'job_id': job_id,
+                     'role': role,
+                     'party_id': party_id,
+                     'component_name': component_name}
+        response = self.flow_client(request='component/output_data_table', param=post_data)
+        result = {}
+        try:
+            retcode = response['retcode']
+            retmsg = response['retmsg']
+            if retcode != 0 or retmsg != 'success':
+                raise RuntimeError(f"deploy model error: {response}")
+            result["name"] = response["data"][0]["table_name"]
+            result["namespace"] = response["data"][0]["table_namespace"]
+        except Exception as e:
+            raise RuntimeError(f"output data table error: {response}") from e
+        return result
+
     def _query_job(self, job_id, role):
-        data = {"local": {"role": role}, "job_id": str(job_id)}
-        response = QueryJobResponse(self._post(url='job/query', json=data))
+        param = {
+            'job_id': job_id,
+            'role': role
+        }
+        response = QueryJobResponse(self.flow_client(request='job/query', param=param))
         return response
 
     def _add_notes(self, job_id, role, party_id, notes):
         data = dict(job_id=job_id, role=role, party_id=party_id, notes=notes)
         response = AddNotesResponse(self._post(url='job/update', json=data))
         return response
+
+    @property
+    def _base(self):
+        return f"http://{self.address}/{self.version}/"
 
     def _post(self, url, **kwargs) -> dict:
         request_url = self._base + url
@@ -181,8 +222,37 @@ class FLOWClient(object):
         except json.decoder.JSONDecodeError:
             response = {'retcode': 100,
                         'retmsg': "Internal server error. Nothing in response. You may check out the configuration in "
-                                  "'FATE/arch/conf/server_conf.json' and restart fate flow server."}
+                                  "'FATE/conf/service_conf.yaml' and restart fate flow server."}
         return response
+
+    def flow_client(self, request, param, verbose=0, drop=0):
+        client = FlowClient(self.address.split(':')[0], self.address.split(':')[1], self.version)
+        if request == 'data/upload':
+            stdout = client.data.upload(conf_path=param, verbose=verbose, drop=drop)
+        elif request == 'table/delete':
+            stdout = client.table.delete(table_name=param['table_name'], namespace=param['namespace'])
+        elif request == 'job/submit':
+            stdout = client.job.submit(conf_path=param['job_runtime_conf'], dsl_path=param['job_dsl'])
+        elif request == 'job/query':
+            stdout = client.job.query(job_id=param['job_id'], role=param['role'])
+        elif request == 'model/deploy':
+            stdout = client.model.deploy(model_id=param['model_id'], model_version=param['model_version'],
+                                         predict_dsl=param['predict_dsl'])
+        elif request == 'component/output_data_table':
+            stdout = client.component.output_data_table(job_id=param['job_id'], role=param['role'],
+                                                        party_id=param['party_id'],
+                                                        component_name=param['component_name'])
+
+        else:
+            stdout = {"retcode": None}
+
+        status = stdout["retcode"]
+        if status != 0:
+            if request == 'table/delete' and stdout["retmsg"] == "no find table":
+                return stdout
+            raise ValueError({'retcode': 100, 'retmsg': stdout["retmsg"]})
+
+        return stdout
 
 
 class Status(object):
@@ -190,7 +260,7 @@ class Status(object):
         self.status = status
 
     def is_done(self):
-        return self.status.lower() in ['complete', 'success', 'canceled', 'failed']
+        return self.status.lower() in ['complete', 'success', 'canceled', 'failed', "timeout"]
 
     def is_success(self):
         return self.status.lower() in ['complete', 'success']

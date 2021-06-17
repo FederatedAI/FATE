@@ -33,9 +33,9 @@ class CSession(CSessionABC):
         if options is None:
             options = {}
         if work_mode == WorkMode.STANDALONE:
-            options['eggroll.session.deploy.mode'] = "standalone"
+            options["eggroll.session.deploy.mode"] = "standalone"
         elif work_mode == WorkMode.CLUSTER:
-            options['eggroll.session.deploy.mode'] = "cluster"
+            options["eggroll.session.deploy.mode"] = "cluster"
         self._rp_session = session_init(session_id=session_id, options=options)
         self._rpc = runtime_init(session=self._rp_session)
         self._session_id = self._rp_session.get_session_id()
@@ -52,28 +52,47 @@ class CSession(CSessionABC):
 
         from fate_arch.common.address import EggRollAddress
         from fate_arch.storage import EggRollStorageType
+
         if isinstance(address, EggRollAddress):
             options = kwargs.get("option", {})
             options["total_partitions"] = partitions
             options["store_type"] = address.storage_type
             options["create_if_missing"] = False
-            rp = self._rpc.load(namespace=address.namespace, name=address.name, options=options)
+            rp = self._rpc.load(
+                namespace=address.namespace, name=address.name, options=options
+            )
             if rp is None or rp.get_partitions() == 0:
-                raise RuntimeError(f"no exists: {address.name}, {address.namespace}, {address.storage_type}")
+                raise RuntimeError(
+                    f"no exists: {address.name}, {address.namespace}, {address.storage_type}"
+                )
 
             if address.storage_type != EggRollStorageType.ROLLPAIR_IN_MEMORY:
-                rp = rp.save_as(name=f"{address.name}_{fate_uuid()}", namespace=self.session_id, partition=partitions,
-                                options={'store_type': EggRollStorageType.ROLLPAIR_IN_MEMORY})
+                rp = rp.save_as(
+                    name=f"{address.name}_{fate_uuid()}",
+                    namespace=self.session_id,
+                    partition=partitions,
+                    options={"store_type": EggRollStorageType.ROLLPAIR_IN_MEMORY},
+                )
 
             table = Table(rp=rp)
             table.schema = schema
             return table
 
         from fate_arch.common.address import FileAddress
+
         if isinstance(address, FileAddress):
             return address
 
-        raise NotImplementedError(f"address type {type(address)} not supported with eggroll backend")
+        from fate_arch.common.address import PathAddress
+
+        if isinstance(address, PathAddress):
+            from fate_arch.computing.non_distributed import LocalData
+
+            return LocalData(address.path)
+
+        raise NotImplementedError(
+            f"address type {type(address)} not supported with eggroll backend"
+        )
 
     @computing_profile
     def parallelize(self, data, partition: int, include_key: bool, **kwargs) -> Table:

@@ -665,6 +665,9 @@ Model
 
    - model_version: Required, Integer: model version
    - model_id: Required, String: model id
+   - cpn_list: Optional, String: array-like string that contains components
+   - cpn_path: Optional, String: file path of plain text which stores component list
+   - dsl_path: Optional, String: file path of plain text which stores dsl content
 
 -  response structure
 
@@ -704,6 +707,46 @@ Model
    -  retcode: return code, Integer
    -  retmsg: return code description, String
    -  data: predict config of specified model, Object
+
+
+/v1/model/homo/convert
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-  request structure
+
+   - model_version: Required, Integer: model version
+   - model_id: Required, String: model id
+   - role: Required, String: role
+   - party_id: Required, String: party id
+   - framework_name: Optional, String: the target machine learning framework this model should be converted to, will be inferred automatically if it is empty
+
+-  response structure
+
+   -  retcode: return code, Integer
+   -  retmsg: return code description, String
+   -  data: converted component name and the saved file path, List
+
+
+/v1/model/homo/deploy
+~~~~~~~~~~~~~~~~~~
+
+-  request structure
+
+   - service_id: Required, String: service id
+   - model_version: Required, Integer: model version
+   - model_id: Required, String: model id
+   - role: Required, String: role
+   - party_id: Required, String: party id
+   - component_name: Required, String: component name
+   - framework_name: Optional, String: the target machine learning framework this serving service is for, will be inferred automatically if it is empty
+   - deployment_type: Required, String: type of the serving service, only "kfserving" is allowed currently
+   - deployment_parameters: Required, Object: parameters that will be configured for the serving service
+
+-  response structure
+
+   -  retcode: return code, Integer
+   -  retmsg: return code description, String
+   -  data: detailed info of the deployed serving service, Object
 
 
 

@@ -33,7 +33,8 @@ loguru = "^0.5.1"
 prettytable = "^1.0.0"
 sshtunnel = "^0.1.5"
 fate_client = "^0.1"
-pandas = "1.1.5"
+pandas = ">=1.1.5"
+colorama = "^0.4.4"
 
 [tool.poetry.dev-dependencies]
 

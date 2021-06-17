@@ -2,10 +2,10 @@ from abc import ABC
 import abc
 from numpy import random
 import numpy as np
-import copy
-from federatedml.param.boosting_param import BoostingParam
+from federatedml.param.boosting_param import BoostingParam, ObjectiveParam
+from federatedml.param.predict_param import PredictParam
 from federatedml.param.feature_binning_param import FeatureBinningParam
-from federatedml.model_selection.k_fold import KFold
+from federatedml.model_selection import start_cross_validation
 from federatedml.util import abnormal_detection
 from federatedml.util import consts
 from federatedml.util.validation_strategy import ValidationStrategy
@@ -39,20 +39,20 @@ class Boosting(ModelBase, ABC):
 
         # input hyper parameter
         self.task_type = None
-        self.objective_param = None
         self.learning_rate = None
         self.boosting_round = None
         self.n_iter_no_change = None
         self.tol = 0.0
         self.bin_num = None
         self.calculated_mode = None
-        self.predict_param = None
         self.cv_param = None
         self.validation_freqs = None
         self.feature_name_fid_mapping = {}
         self.mode = None
+        self.predict_param = PredictParam()
+        self.objective_param = ObjectiveParam()
         self.model_param = BoostingParam()
-        self.subsample_feature_rate = 0.8
+        self.subsample_feature_rate = 1.0
         self.subsample_random_seed = None
         self.model_name = 'default'  # model name
         self.early_stopping_rounds = None
@@ -61,8 +61,11 @@ class Boosting(ModelBase, ABC):
 
         # running variable
 
+        # random seed
+        self.random_seed = 100
+
         # data
-        self._set_random_seed = False
+        self.data_inst = None  # original input data
         self.binning_class = None  # class used for data binning
         self.binning_obj = None  # instance of self.binning_class
         self.data_bin = None  # data with transformed features
@@ -112,8 +115,14 @@ class Boosting(ModelBase, ABC):
         self.validation_freqs = boosting_param.validation_freqs
         self.metrics = boosting_param.metrics
         self.subsample_feature_rate = boosting_param.subsample_feature_rate
-        self.subsample_random_seed = boosting_param.subsample_random_seed
         self.binning_error = boosting_param.binning_error
+
+        if boosting_param.random_seed is not None:
+            self.random_seed = boosting_param.random_seed
+
+        # initialize random seed here
+        LOGGER.debug('setting random seed done, random seed is {}'.format(self.random_seed))
+        np.random.seed(self.random_seed)
 
     """
     Data Processing
@@ -173,16 +182,13 @@ class Boosting(ModelBase, ABC):
             self.binning_obj = self.binning_class(param_obj)
 
         self.binning_obj.fit_split_points(data_instance)
+        rs = self.binning_obj.convert_feature_to_bin(data_instance)
         LOGGER.info("convert feature to bins over")
-        return self.binning_obj.convert_feature_to_bin(data_instance)
+        return rs
 
     def sample_valid_features(self):
 
         LOGGER.info("sample valid features")
-
-        if not self._set_random_seed and self.subsample_random_seed is not None:
-            np.random.seed(self.subsample_random_seed)
-            self._set_random_seed = True
 
         self.feature_num = self.bin_split_points.shape[0]
         choose_feature = random.choice(range(0, self.feature_num), \
@@ -278,12 +284,7 @@ class Boosting(ModelBase, ABC):
         return validation_strategy
 
     def cross_validation(self, data_instances):
-        if not self.need_run:
-            return data_instances
-        kflod_obj = KFold()
-        cv_param = self._get_cv_param()
-        kflod_obj.run(cv_param, data_instances, self, host_do_evaluate=False)
-        return data_instances
+        return start_cross_validation.run(self, data_instances)
 
     def get_loss_function(self):
         loss_type = self.objective_param.objective
@@ -514,10 +515,10 @@ class Boosting(ModelBase, ABC):
             return None
         return self.get_cur_model()
 
-    def load_model(self, model_dict):
+    def load_model(self, model_dict, model_key="model"):
         model_param = None
         model_meta = None
-        for _, value in model_dict["model"].items():
+        for _, value in model_dict[model_key].items():
             for model in value:
                 if model.endswith("Meta"):
                     model_meta = value[model]
@@ -527,7 +528,6 @@ class Boosting(ModelBase, ABC):
 
         self.set_model_meta(model_meta)
         self.set_model_param(model_param)
-        self.loss = self.get_loss_function()
 
     def predict_proba(self, data_inst):
         pass

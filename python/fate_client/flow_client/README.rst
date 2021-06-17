@@ -153,7 +153,7 @@ Job
 +-------+-------------------+------------+------------------------+------------+-------------------+
 | No.   | Argument          | Flag\_1    | Flag\_2                | Required   | Description       |
 +=======+===================+============+========================+============+===================+
-| 1     | job\_id           | ``-j``     | ``--job_id``           | No         | A valid job id.   |
+| 1     | job\_id           | ``-j``     | ``--job_id``           | Yes         | A valid job id.   |
 +-------+-------------------+------------+------------------------+------------+-------------------+
 | 2     | role              | ``-r``     | ``--role``             | No         | Role              |
 +-------+-------------------+------------+------------------------+------------+-------------------+
@@ -166,7 +166,6 @@ Job
 
    .. code:: bash
 
-       flow job view -r guest -p 9999
        flow job view -j $JOB_ID -s complete
 
 ``config``
@@ -652,7 +651,7 @@ Model
 
 .. code:: bash
 
-    flow model deploy --model_id $MODEL_ID --model_version $MODEL_VERSION
+    flow model deploy --model-id $MODEL_ID --model-version $MODEL_VERSION
 
 ``get-predict-dsl``
 ~~~~~~~~~~~~~~~~~~~~
@@ -674,7 +673,7 @@ Model
 
 .. code:: bash
 
-    flow model get-predict-dsl --model_id $MODEL_ID --model_version $MODEL_VERSION -o ./examples/
+    flow model get-predict-dsl --model-id $MODEL_ID --model-version $MODEL_VERSION -o ./examples/
 
 ``get-predict-conf``
 ~~~~~~~~~~~~~~~~~~~~
@@ -696,7 +695,7 @@ Model
 
 .. code:: bash
 
-    flow model get-predict-conf --model_id $MODEL_ID --model_version $MODEL_VERSION -o ./examples/
+    flow model get-predict-conf --model-id $MODEL_ID --model-version $MODEL_VERSION -o ./examples/
 
 
 ``get-model-info``
@@ -723,8 +722,26 @@ Model
 
 .. code:: bash
 
-    flow model model-info --model_id $MODEL_ID --model_version $MODEL_VERSION
-    flow model model-info --model_id $MODEL_ID --model_version $MODEL_VERSION --detail
+    flow model get-model-info --model-id $MODEL_ID --model-version $MODEL_VERSION
+    flow model get-model-info --model-id $MODEL_ID --model-version $MODEL_VERSION --detail
+
+``homo-convert``
+~~~~~~~~~~
+
+-  *Description*: Convert trained homogeneous model to a model of common framework.
+-  *Arguments*:
+
++-------+--------------+-----------+-------------------+------------+-----------------------------------+
+| No.   | Argument     | Flag\_1   | Flag\_2           | Required   | Description                       |
++=======+==============+===========+===================+============+===================================+
+| 1     | conf\_path   | ``-c``    | ``--conf-path``   | Yes        | Runtime configuration file path   |
++-------+--------------+-----------+-------------------+------------+-----------------------------------+
+
+-  *Examples*:
+
+.. code:: bash
+
+    flow model homo-convert -c fate_flow/examples/homo_convert_model.json
 
 
 Tag
@@ -982,21 +999,14 @@ Table
 +-------+-------------------+------------+------------------------+------------+------------------+
 | 2     | table\_name       | ``-t``     | ``--table_name``       | No         | Table name       |
 +-------+-------------------+------------+------------------------+------------+------------------+
-| 3     | job\_id           | ``-j``     | ``--job_id``           | No         | A valid job id   |
-+-------+-------------------+------------+------------------------+------------+------------------+
-| 4     | role              | ``-r``     | ``--role``             | No         | Role             |
-+-------+-------------------+------------+------------------------+------------+------------------+
-| 5     | party\_id         | ``-p``     | ``--party_id``         | No         | Party ID         |
-+-------+-------------------+------------+------------------------+------------+------------------+
-| 6     | component\_name   | ``-cpn``   | ``--component_name``   | No         | Component Name   |
-+-------+-------------------+------------+------------------------+------------+------------------+
+
 
 -  *Examples*:
 
 .. code:: bash
 
     flow table delete -n $NAMESPACE -t $TABLE_NAME
-    flow table delete -j $JOB_ID -r guest -p 9999
+
 
 Queue
 -----

@@ -45,3 +45,4 @@ class HeteroDecisionTreeTransferVariable(BaseTransferVariables):
         self.host_cur_to_split_node_num = self._create_variable(name='host_cur_to_split_node_num', src=['host'], dst=['guest'])
         self.host_leafs = self._create_variable(name='host_leafs', src=['host'], dst=['guest'])
         self.sync_flag = self._create_variable(name='sync_flag', src=['guest'], dst=['host'])
+        self.cipher_compressor_para = self._create_variable(name='cipher_compressor_para', src=['guest'], dst=['host'])

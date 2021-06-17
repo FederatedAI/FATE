@@ -16,11 +16,10 @@
 #  limitations under the License.
 #
 import copy
-import math
 
 from pipeline.param.base_param import BaseParam
+from pipeline.param.encrypt_param import EncryptParam
 from pipeline.param import consts
-
 
 
 class TransformParam(BaseParam):
@@ -88,6 +87,7 @@ class OptimalBinningParam(BaseParam):
         Init bucket methods. Accept quantile and bucket.
 
     """
+
     def __init__(self, metric_method='iv', min_bin_pct=0.05, max_bin_pct=1.0,
                  init_bin_nums=1000, mixture=True, init_bucket_method='quantile'):
         super().__init__()
@@ -172,6 +172,7 @@ class FeatureBinningParam(BaseParam):
 
     local_only : bool, default: False
         Whether just provide binning method to guest party. If true, host party will do nothing.
+        Warnings: This parameter will be deprecated in future version.
 
     transform_param: TransformParam
         Define how to transfer the binned data.
@@ -190,8 +191,9 @@ class FeatureBinningParam(BaseParam):
                  head_size=consts.DEFAULT_HEAD_SIZE,
                  error=consts.DEFAULT_RELATIVE_ERROR,
                  bin_num=consts.G_BIN_NUM, bin_indexes=-1, bin_names=None, adjustment_factor=0.5,
-                 transform_param=TransformParam(), optimal_binning_param=OptimalBinningParam(),
-                 local_only=False, category_indexes=None, category_names=None,
+                 transform_param=TransformParam(),
+                 local_only=False,
+                 category_indexes=None, category_names=None,
                  need_run=True, skip_static=False):
         super(FeatureBinningParam, self).__init__()
         self.method = method
@@ -204,17 +206,15 @@ class FeatureBinningParam(BaseParam):
         self.bin_names = bin_names
         self.category_indexes = category_indexes
         self.category_names = category_names
-        self.local_only = local_only
         self.transform_param = copy.deepcopy(transform_param)
-        self.optimal_binning_param = copy.deepcopy(optimal_binning_param)
         self.need_run = need_run
         self.skip_static = skip_static
+        self.local_only = local_only
 
     def check(self):
-        descr = "hetero binning param's"
+        descr = "Binning param's"
         self.check_string(self.method, descr)
         self.method = self.method.lower()
-        self.check_valid_value(self.method, descr, [consts.QUANTILE, consts.BUCKET, consts.OPTIMAL])
         self.check_positive_integer(self.compress_thres, descr)
         self.check_positive_integer(self.head_size, descr)
         self.check_decimal_float(self.error, descr)
@@ -225,7 +225,73 @@ class FeatureBinningParam(BaseParam):
         self.check_defined_type(self.category_indexes, descr, ['list', "NoneType"])
         self.check_defined_type(self.category_names, descr, ['list', "NoneType"])
         self.check_open_unit_interval(self.adjustment_factor, descr)
+        self.check_boolean(self.local_only, descr)
+
+
+class HeteroFeatureBinningParam(FeatureBinningParam):
+    def __init__(self, method=consts.QUANTILE,
+                 compress_thres=consts.DEFAULT_COMPRESS_THRESHOLD,
+                 head_size=consts.DEFAULT_HEAD_SIZE,
+                 error=consts.DEFAULT_RELATIVE_ERROR,
+                 bin_num=consts.G_BIN_NUM, bin_indexes=-1, bin_names=None, adjustment_factor=0.5,
+                 transform_param=TransformParam(), optimal_binning_param=OptimalBinningParam(),
+                 local_only=False, category_indexes=None, category_names=None,
+                 encrypt_param=EncryptParam(),
+                 need_run=True, skip_static=False):
+        super(HeteroFeatureBinningParam, self).__init__(method=method, compress_thres=compress_thres,
+                                                        head_size=head_size, error=error,
+                                                        bin_num=bin_num, bin_indexes=bin_indexes,
+                                                        bin_names=bin_names, adjustment_factor=adjustment_factor,
+                                                        transform_param=transform_param,
+                                                        category_indexes=category_indexes,
+                                                        category_names=category_names,
+                                                        need_run=need_run, local_only=local_only,
+                                                        skip_static=skip_static)
+        self.optimal_binning_param = copy.deepcopy(optimal_binning_param)
+        self.encrypt_param = encrypt_param
+
+    def check(self):
+        descr = "Hetero Binning param's"
+        super(HeteroFeatureBinningParam, self).check()
+        self.check_valid_value(self.method, descr, [consts.QUANTILE, consts.BUCKET, consts.OPTIMAL])
+        self.optimal_binning_param.check()
+        self.encrypt_param.check()
+        if self.encrypt_param.method != consts.PAILLIER:
+            raise ValueError("Feature Binning support Paillier encrypt method only.")
         if self.skip_static and self.method == consts.OPTIMAL:
             raise ValueError("When skip_static, optimal binning is not supported.")
         self.transform_param.check()
-        self.optimal_binning_param.check()
+        if self.skip_static and self.transform_param.transform_type == 'woe':
+            raise ValueError("To use woe transform, skip_static should set as False")
+
+
+class HomoFeatureBinningParam(FeatureBinningParam):
+    def __init__(self, method=consts.VIRTUAL_SUMMARY,
+                 compress_thres=consts.DEFAULT_COMPRESS_THRESHOLD,
+                 head_size=consts.DEFAULT_HEAD_SIZE,
+                 error=consts.DEFAULT_RELATIVE_ERROR,
+                 sample_bins=100,
+                 bin_num=consts.G_BIN_NUM, bin_indexes=-1, bin_names=None, adjustment_factor=0.5,
+                 transform_param=TransformParam(),
+                 category_indexes=None, category_names=None,
+                 need_run=True, skip_static=False, max_iter=100):
+        super(HomoFeatureBinningParam, self).__init__(method=method, compress_thres=compress_thres,
+                                                      head_size=head_size, error=error,
+                                                      bin_num=bin_num, bin_indexes=bin_indexes,
+                                                      bin_names=bin_names, adjustment_factor=adjustment_factor,
+                                                      transform_param=transform_param,
+                                                      category_indexes=category_indexes, category_names=category_names,
+                                                      need_run=need_run,
+                                                      skip_static=skip_static)
+        self.sample_bins = sample_bins
+        self.max_iter = max_iter
+
+    def check(self):
+        descr = "homo binning param's"
+        super(HomoFeatureBinningParam, self).check()
+        self.check_string(self.method, descr)
+        self.method = self.method.lower()
+        self.check_valid_value(self.method, descr, [consts.VIRTUAL_SUMMARY, consts.RECURSIVE_QUERY])
+        self.check_positive_integer(self.max_iter, descr)
+        if self.max_iter > 100:
+            raise ValueError("Max iter is not allowed exceed 100")

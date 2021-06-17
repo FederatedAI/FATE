@@ -19,17 +19,17 @@ from fate_arch.common import FederatedCommunicationType
 from fate_arch.common.log import schedule_logger
 from fate_flow.db.db_models import Task
 from fate_flow.operation.task_executor import TaskExecutor
-from fate_flow.scheduler import FederatedScheduler
+from fate_flow.scheduler.federated_scheduler import FederatedScheduler
 from fate_flow.entity.types import TaskStatus, EndStatus, KillProcessStatusCode
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.utils import job_utils
 import os
-from fate_flow.operation import JobSaver
+from fate_flow.operation.job_saver import JobSaver
 from fate_arch.common.base_utils import json_dumps, current_timestamp
 from fate_arch.common import base_utils
 from fate_flow.entity.types import RunParameters
-from fate_flow.manager import ResourceManager
-from fate_flow.operation import Tracker
+from fate_flow.manager.resource_manager import ResourceManager
+from fate_flow.operation.job_tracker import Tracker
 from fate_arch.computing import ComputingEngine
 from fate_flow.utils.authentication_utils import PrivilegeAuth
 
@@ -140,9 +140,10 @@ class TaskController(object):
                 raise ValueError(f"${run_parameters.computing_engine} is not supported")
 
             task_log_dir = os.path.join(job_utils.get_job_log_directory(job_id=job_id), role, party_id, component_name)
+            task_job_dir = os.path.join(job_utils.get_job_directory(job_id=job_id), role, party_id, component_name)
             schedule_logger(job_id).info(
                 'job {} task {} {} on {} {} executor subprocess is ready'.format(job_id, task_id, task_version, role, party_id))
-            p = job_utils.run_subprocess(job_id=job_id, config_dir=task_dir, process_cmd=process_cmd, log_dir=task_log_dir)
+            p = job_utils.run_subprocess(job_id=job_id, config_dir=task_dir, process_cmd=process_cmd, log_dir=task_log_dir, job_dir=task_job_dir)
             if p:
                 task_info["party_status"] = TaskStatus.RUNNING
                 #task_info["run_pid"] = p.pid

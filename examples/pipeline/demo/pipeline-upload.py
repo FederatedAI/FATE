@@ -42,13 +42,15 @@ def main(data_base=DATA_BASE):
     # partition for data storage
     partition = 4
 
+    # table name and namespace, used in FATE job configuration
     dense_data = {"name": "breast_hetero_guest", "namespace": f"experiment"}
-
     tag_data = {"name": "breast_hetero_host", "namespace": f"experiment"}
 
     pipeline_upload = PipeLine().set_initiator(role="guest", party_id=guest).set_roles(guest=guest)
     # add upload data info
-    # original csv file path
+    # path to csv file(s) to be uploaded, modify to upload designated data
+    # This is an example for standalone version. For cluster version, you will need to upload your data
+    # on each party respectively.
     pipeline_upload.add_upload_data(file=os.path.join(data_base, "examples/data/breast_hetero_guest.csv"),
                                     table_name=dense_data["name"],             # table name
                                     namespace=dense_data["namespace"],         # namespace
@@ -59,7 +61,7 @@ def main(data_base=DATA_BASE):
                                     namespace=tag_data["namespace"],
                                     head=1, partition=partition)
 
-    # upload all data
+    # upload data
     pipeline_upload.upload(work_mode=work_mode, backend=backend, drop=1)
 
 
