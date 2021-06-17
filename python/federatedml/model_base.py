@@ -382,15 +382,3 @@ class ModelBase(object):
         if isinstance(data_list, list):
             return data_list[0]
         return data_list
-
-    def save_new_checkpoint(self, data, step_index, step_name):
-        checkpoint = self.checkpoint_manager.new_checkpoint(step_index, step_name)
-        return checkpoint.save(data)
-
-    @property
-    def checkpoint_available(self):
-        return self.checkpoint_manager.latest_checkpoint is not None
-
-    def read_latest_checkpoint(self):
-        if self.checkpoint_available:
-            return self.checkpoint_manager.latest_checkpoint.read()

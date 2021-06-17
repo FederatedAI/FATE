@@ -13,14 +13,16 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import os
 import pickle
+import hashlib
 from pathlib import Path
-from datetime import datetime
+from shutil import rmtree
+from datetime import datetime, timezone
 from collections import deque, OrderedDict
 
 from filelock import FileLock
 
+from fate_flow.settings import stat_logger
 from fate_flow.entity.types import RunParameters
 from fate_arch.common.file_utils import get_project_base_directory
 
@@ -30,26 +32,68 @@ class Checkpoint:
     def __init__(self, directory: Path, step_index: int, step_name: str):
         self.step_index = step_index
         self.step_name = step_name
-        self.create_time = datetime.utcnow()
+        self.create_time = None
         self.filepath = directory / f'{step_index}#{step_name}.pickle'
-        self.locker = FileLock(f'{self.filepath}.lock')
+        self.hashpath = self.filepath.with_suffix('.sha1')
+        self.lock = self._lock
+
+    @property
+    def _lock(self):
+        return FileLock(self.filepath.with_suffix('.lock'))
+
+    def __deepcopy__(self, memo):
+        return self
+
+    # https://docs.python.org/3/library/pickle.html#handling-stateful-objects
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state.pop('lock')
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self.lock = self._lock
 
     @property
     def available(self):
-        return self.filepath.exists()
+        return self.filepath.exists() and self.hashpath.exists()
 
     def save(self, data):
-        with self.locker, open(self.filepath, 'wb') as f:
-            pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
+        pickled = pickle.dumps(data, pickle.HIGHEST_PROTOCOL)
+        sha1 = hashlib.sha1(pickled).hexdigest()
+
+        with self.lock:
+            self.filepath.write_bytes(pickled)
+            self.hashpath.write_text(sha1, 'utf8')
+            self.create_time = datetime.utcnow()
+
+        stat_logger.info(f'Checkpoint saved. filepath: {self.filepath} sha1: {sha1}')
         return self.filepath
 
     def read(self):
-        with self.locker, open(self.filepath, 'rb') as f:
-            return pickle.load(f)
+        if not self.hashpath.exists():
+            raise FileNotFoundError(f'Hash file is not found, checkpoint may be incorrect. '
+                                    f'filepath: {self.hashpath}')
+
+        with self.lock:
+            sha1_orig = self.hashpath.read_text('utf8')
+            pickled = self.filepath.read_bytes()
+            self.create_time = datetime.fromtimestamp(self.filepath.stat().st_mtime, tz=timezone.utc)
+
+        sha1 = hashlib.sha1(pickled).hexdigest()
+        if sha1 != sha1_orig:
+            raise ValueError(f'Hash dose not match, checkpoint may be incorrect. '
+                             f'expected: {sha1_orig} actual: {sha1}')
+
+        return pickle.loads(pickled)
 
     def remove(self):
-        with self.locker:
-            os.remove(self.filepath)
+        with self.lock:
+            for i in (self.hashpath, self.filepath):
+                try:
+                    i.unlink()
+                except FileNotFoundError:
+                    pass
 
 
 class CheckpointManager:
@@ -74,7 +118,7 @@ class CheckpointManager:
 
         self.directory = (Path(get_project_base_directory()) / 'model_local_cache' /
                           model_id / model_version / 'checkpoint' / self.component_name)
-        os.makedirs(self.directory, exist_ok=True)
+        self.directory.mkdir(0o755, True, True)
 
         if isinstance(max_to_keep, int):
             if max_to_keep <= 0:
@@ -85,11 +129,14 @@ class CheckpointManager:
 
     def load_checkpoints_from_disk(self):
         checkpoints = []
-        for filepath in self.directory.rglob('*.pickle'):
+        for filepath in self.directory.glob('*.pickle'):
+            if not filepath.with_suffix('.sha1').exists():
+                continue
+
             step_index, step_name = filepath.name.rsplit('.', 1)[0].split('#', 1)
             checkpoints.append(Checkpoint(self.directory, int(step_index), step_name))
 
-        self.checkpoints = deque(sorted((i.step_index, i) for i in checkpoints), self.max_checkpoints_number)
+        self.checkpoints = deque(sorted(checkpoints, key=lambda i: i.step_index), self.max_checkpoints_number)
 
     @property
     def checkpoints_number(self):
@@ -140,3 +187,8 @@ class CheckpointManager:
             popped_checkpoint.remove()
 
         return checkpoint
+
+    def clean(self):
+        self.checkpoints = deque(maxlen=self.max_checkpoints_number)
+        rmtree(self.directory, True)
+        self.directory.mkdir(0o755)
