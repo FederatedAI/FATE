@@ -174,20 +174,20 @@ def save_model_info(model_info):
             setattr(model, attr_name, v)
         elif hasattr(MLModel, k):
             setattr(model, k, v)
+
     try:
         rows = model.save(force_insert=True)
         if rows != 1:
-            raise Exception("Create {} failed".format(MLModel))
-        return model
+            raise Exception("Save to database failed")
     except peewee.IntegrityError as e:
-        if e.args[0] == 1062:
-            sql_logger(job_id=model_info.get("job_id", "fate_flow")).warning(e)
-        else:
+        if e.args[0] != 1062:
             raise Exception("Create {} failed:\n{}".format(MLModel, e))
+        sql_logger(job_id=model_info.get("job_id", "fate_flow")).warning(e)
     except Exception as e:
         raise Exception("Create {} failed:\n{}".format(MLModel, e))
-
-    service_db().register_model(model.f_model_id, model.f_model_version)
+    else:
+        service_db().register_model(model.f_model_id, model.f_model_version)
+        return model
 
 
 def compare_version(version: str, target_version: str):
