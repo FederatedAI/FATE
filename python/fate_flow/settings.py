@@ -22,13 +22,11 @@ from fate_arch.storage import StorageEngine
 from fate_arch.common import file_utils, log, EngineType
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_arch.common.conf_utils import get_base_config
-import __main__
 
 
 # Server
 API_VERSION = "v1"
 FATEFLOW_SERVICE_NAME = "fateflow"
-MAIN_MODULE = os.path.relpath(__main__.__file__)
 SERVER_MODULE = "fate_flow_server.py"
 TEMP_DIRECTORY = os.path.join(
     file_utils.get_project_base_directory(), "temp", "fate_flow")

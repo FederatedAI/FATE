@@ -1,0 +1,13 @@
+train_auc: 0.998095
+api_version: v1
+component_name: homo_lr_0
+component_is_homo: true
+metric_output_path: ./output/metric/{}_homo_lr_0.json
+model_output_path: ./output/model/{}_homo_lr_0.json
+
+flow_test_template:
+  train_conf_path: /examples/flow_test_template/homo_lr/homo_lr_train_conf.json
+  train_dsl_path: /examples/flow_test_template/homo_lr/homo_lr_train_dsl.json
+  predict_conf_path: /examples/flow_test_template/homo_lr/homo-lr-normal-predict-conf.json
+  predict_dsl_path: /examples/flow_test_template/homo_lr/homo-lr-normal-predict-dsl.json
+  upload_conf_path: /examples/flow_test_template/homo_lr/upload_conf.json
