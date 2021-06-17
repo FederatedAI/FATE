@@ -111,8 +111,9 @@ def run_task(ctx, job_type, include, replace, timeout, update_job_parameters, up
 
                 echo.stdout_newline()
                 try:
-                    _submit_job(client, suite, namespace, config_inst, timeout, update_job_parameters, storage_tag, history_tag,
-                                update_component_parameters, max_iter, max_depth, num_trees, task_cores)
+                    time_consuming = _submit_job(client, suite, namespace, config_inst, timeout, update_job_parameters,
+                                                 storage_tag, history_tag, update_component_parameters, max_iter,
+                                                 max_depth, num_trees, task_cores)
                 except Exception as e:
                     raise RuntimeError(f"exception occur while submit job for {suite.path}") from e
 
@@ -124,7 +125,7 @@ def run_task(ctx, job_type, include, replace, timeout, update_job_parameters, up
                 echo.echo(f"[{i + 1}/{len(suites)}]elapse {timedelta(seconds=int(time.time() - start))}", fg='red')
                 if not skip_data and clean_data:
                     _delete_data(client, suite)
-                echo.echo(suite.pretty_final_summary(), fg='red')
+                echo.echo(suite.pretty_final_summary(int(time_consuming)), fg='red')
 
             except Exception:
                 exception_id = uuid.uuid1()
@@ -267,6 +268,7 @@ def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Conf
                 storage_tag = "_".join(['FATE', fate_version, storage_tag, job.job_name])
                 save_quality(storage_tag, performance_dir, time_consuming)
             echo.stdout_newline()
+            return time_consuming
 
 
 def _run_pipeline_jobs(config: Config, suite: Testsuite, namespace: str, data_namespace_mangling: bool):
@@ -323,6 +325,7 @@ def comparison_quality(group_name, history_tags, history_info_dir, time_consumin
                       [f"{TxtStyle.FIELD_VAL}{benchmark_performance[script_model_name]}{TxtStyle.END}"])
     print("\n")
     print(table.get_string(title=f"{TxtStyle.TITLE}Performance comparison results{TxtStyle.END}"))
+    print("#" * 60)
 
 
 def save_quality(storage_tag, save_dir, time_consuming):

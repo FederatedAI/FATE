@@ -100,8 +100,8 @@ def run_suite(ctx, replace, include, exclude, glob, timeout, update_job_paramete
                 if not skip_dsl_jobs:
                     echo.stdout_newline()
                     try:
-                        _submit_job(client, suite, namespace, config_inst, timeout, update_job_parameters,
-                                    update_component_parameters, task_cores)
+                        time_consuming = _submit_job(client, suite, namespace, config_inst, timeout,
+                                                     update_job_parameters, update_component_parameters, task_cores)
                     except Exception as e:
                         raise RuntimeError(f"exception occur while submit job for {suite.path}") from e
 
@@ -115,7 +115,7 @@ def run_suite(ctx, replace, include, exclude, glob, timeout, update_job_paramete
                     _delete_data(client, suite)
                 echo.echo(f"[{i + 1}/{len(suites)}]elapse {timedelta(seconds=int(time.time() - start))}", fg='red')
                 if not skip_dsl_jobs or not skip_pipeline_jobs:
-                    echo.echo(suite.pretty_final_summary(), fg='red')
+                    echo.echo(suite.pretty_final_summary(int(time_consuming)), fg='red')
 
             except Exception:
                 exception_id = uuid.uuid1()
@@ -138,7 +138,7 @@ def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Conf
                            width=24) as bar:
         for job in suite.jobs_iter():
             job_progress = JobProgress(job.job_name)
-
+            start = time.time()
             def _raise():
                 exception_id = str(uuid.uuid1())
                 job_progress.exception(exception_id)
@@ -242,6 +242,7 @@ def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Conf
                         suite.remove_dependency(job.job_name)
             update_bar(0)
             echo.stdout_newline()
+            return time.time() - start
 
 
 def _run_pipeline_jobs(config: Config, suite: Testsuite, namespace: str, data_namespace_mangling: bool):
