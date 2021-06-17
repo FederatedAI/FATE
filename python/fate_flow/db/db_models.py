@@ -18,7 +18,6 @@ import inspect
 import os
 import sys
 
-import __main__
 from peewee import (CharField, IntegerField, BigIntegerField,
                     TextField, CompositeKey, BigAutoField, BooleanField)
 from playhouse.apsw_ext import APSWDatabase
@@ -63,14 +62,18 @@ class BaseDataBase(object):
             raise Exception('can not init database')
 
 
-MAIN_FILE_PATH = os.path.realpath(__main__.__file__)
-if MAIN_FILE_PATH.endswith('fate_flow_server.py') or \
-        MAIN_FILE_PATH.endswith('task_executor.py') or \
-        MAIN_FILE_PATH.find("/unittest/__main__.py"):
-    DB = BaseDataBase().database_connection
-else:
-    # Initialize the database only when the server is started.
-    DB = None
+# Initialize the database only when the server is started.
+DB = None
+for frame in inspect.stack():
+    filename = frame.filename
+    if filename.startswith('<'):
+        continue
+    filename = os.path.abspath(os.path.realpath(frame.filename))
+    if filename.endswith('fate_flow_server.py') or \
+        filename.endswith('task_executor.py') or \
+            filename.find('/unittest/') >= 0:
+        DB = BaseDataBase().database_connection
+        break
 
 
 def close_connection():
