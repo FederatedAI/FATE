@@ -48,8 +48,11 @@ fate_on_spark:
     cores_per_node: 20
     nodes: 2
   linkis_spark:
+    cores_per_node: 20
+    nodes: 2
     host: 127.0.0.1
     port: 9001
+    token_code: MLSS
     python_path: /data/projects/fate/python
   hive:
     host: 127.0.0.1

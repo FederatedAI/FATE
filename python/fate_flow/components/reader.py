@@ -198,7 +198,7 @@ class Reader(ComponentBase):
         src_data.applymap(lambda x: str(x))
         f = functools.partial(self.convert_join, delimitor=id_delimiter)
         src_data["result"] = src_data.agg(f, axis=1)
-        dest_data = src_data.iloc[:,[1,-1]]
+        dest_data = src_data.iloc[:,[0,-1]]
         dest_data.columns = ["key", "value"]
         LOGGER.info(f"dest_data: {dest_data}")
         LOGGER.info(f"database:{dest_table.get_address().database}, name:{dest_table.get_address().name}")

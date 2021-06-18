@@ -24,7 +24,8 @@ from fate_flow.operation.task_executor import TaskExecutor
 from fate_flow.scheduler.federated_scheduler import FederatedScheduler
 from fate_flow.entity.types import TaskStatus, EndStatus, KillProcessStatusCode
 from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.settings import LINKIS_EXECUTE_ENTRANCE, LINKIS_SPARK_CONFIG, LINKIS_KILL_ENTRANCE
+from fate_flow.settings import LINKIS_EXECUTE_ENTRANCE, LINKIS_SPARK_CONFIG, LINKIS_KILL_ENTRANCE, LINKIS_SUBMIT_PARAMS, \
+    LINKIS_RUNTYPE
 from fate_flow.utils import job_utils
 import os
 from fate_flow.operation.job_saver import JobSaver
@@ -162,11 +163,12 @@ class TaskController(object):
                 schedule_logger(job_id).info(f"execution code:{execution_code}")
                 data = {
                     "method": LINKIS_EXECUTE_ENTRANCE,
-                    "params": {},
+                    "params": LINKIS_SUBMIT_PARAMS,
                     "executeApplicationName": "spark",
                     "executionCode": execution_code,
-                    "runType": "python",
-                    "source": {}
+                    "runType": LINKIS_RUNTYPE,
+                    "source": {},
+                    "labels": {"tenant": "fate"}
                 }
                 schedule_logger(job_id).info(f'submit linkis spark, data:{data}')
                 task_info["engine_conf"]["data"] = data
@@ -285,7 +287,9 @@ class TaskController(object):
                                                                  LINKIS_KILL_ENTRANCE.replace("execID", task.f_engine_conf.get("execID")))
                     headers = task.f_engine_conf.get("headers")
                     schedule_logger(task.f_job_id).info(f"start stop task:{linkis_execute_url}")
+                    schedule_logger(task.f_job_id).info(f"headers: {headers}")
                     kill_result = requests.post(linkis_execute_url, headers=headers)
+                    schedule_logger(task.f_job_id).info(f"kill result:{kill_result}")
                     if kill_result.status_code == 200:
                         pass
                 kill_status_code = KillProcessStatusCode.KILLED

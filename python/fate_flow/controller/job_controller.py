@@ -50,7 +50,7 @@ class JobController(object):
                                                        train_runtime_conf=train_runtime_conf)
         job_parameters = dsl_parser.get_job_parameters().get(role, {}).get(party_id, {})
         schedule_logger(job_id).info('job parameters:{}'.format(job_parameters))
-        user = dsl_parser.get_job_parameters().get(role, {}).get(party_id, {}).get("user", '')
+        dest_user = dsl_parser.get_job_parameters().get(role, {}).get(party_id, {}).get("user", '')
         src_user = dsl_parser.get_job_parameters().get(job_info.get('src_role'), {}).get(
             int(job_info.get('src_party_id')), {}).get("user", '')
         if USE_DATA_AUTHENTICATION:
@@ -62,7 +62,7 @@ class JobController(object):
                 for k, v in dataset_dict[role][party_id].items():
                     dataset_list.append({"namespace": v.split('.')[0], "table_name": v.split('.')[1]})
             data_authentication_check(src_role=job_info.get('src_role'), src_party_id=job_info.get('src_party_id'),
-                                      user=src_user, dataset_list=dataset_list)
+                                      src_user=src_user, dest_user=dest_user, dataset_list=dataset_list)
         job_parameters = RunParameters(**job_parameters)
 
         # save new job into db
@@ -71,7 +71,7 @@ class JobController(object):
         else:
             is_initiator = False
         job_info["status"] = JobStatus.WAITING
-        job_info["user_id"] = user
+        job_info["user_id"] = dest_user
         job_info["src_user"] = src_user
         # this party configuration
         job_info["role"] = role
@@ -254,8 +254,9 @@ class JobController(object):
         if job_args.get('dsl_version'):
             if job_args.get('dsl_version') == 2:
                 dsl_version = 2
-            job_args.pop('dsl_version')
         for _role, _role_party_args in job_args.items():
+            if _role == "dsl_version":
+                continue
             if is_initiator or _role == role:
                 for _party_index in range(len(_role_party_args)):
                     _party_id = roles[_role][_party_index]

@@ -88,7 +88,7 @@ class PrivilegeAuth(object):
 
     @classmethod
     def get_new_permission_config(cls, src_party_id, src_role, privilege_role, privilege_command, privilege_component,
-                                  privilege_dataset, delete):
+                                  privilege_dataset, delete, src_user, dest_user):
         with open(PrivilegeAuth.local_storage_file) as f:
             stat_logger.info(
                 "add permissions: src_party_id {} src_role {} privilege_role {} privilege_command {} privilege_component {} privilege_dataset {}".format(
@@ -141,34 +141,37 @@ class PrivilegeAuth(object):
                                     if isinstance(value, str) else "No permission to delete")
             # privilege dataset
             if privilege_dataset:
+                if not src_user or not dest_user:
+                    raise Exception("Required parameters: src_user and dest_user")
                 if not delete:
                     if local_storage.get(src_party_id, {}):
                         if local_storage.get(src_party_id).get(src_role, {}):
                             if local_storage.get(src_party_id).get(src_role).get("privilege_dataset"):
-                                for k, v in privilege_dataset.items():
-                                    if local_storage.get(src_party_id).get(src_role).get("privilege_dataset").get(k):
-                                        for table in v:
-                                            if table not in local_storage[src_party_id][src_role]["privilege_dataset"][k]:
-                                                local_storage[src_party_id][src_role]["privilege_dataset"][k].append(table)
+                                if local_storage.get(src_party_id).get(src_role).get("privilege_dataset").get(src_user, {}):
+                                    if local_storage.get(src_party_id).get(src_role).get("privilege_dataset").get(
+                                        src_user, {}).get(dest_user, []):
+                                        for table in privilege_dataset:
+                                            if table not in local_storage[src_party_id][src_role]["privilege_dataset"][src_user][dest_user]:
+                                                local_storage[src_party_id][src_role]["privilege_dataset"][src_user][dest_user].append(table)
                                     else:
-                                        local_storage[src_party_id][src_role]["privilege_dataset"][k] = v
+                                        local_storage[src_party_id][src_role]["privilege_dataset"][src_user] = {dest_user: privilege_dataset}
+                                else:
+                                    local_storage[src_party_id][src_role]["privilege_dataset"][src_user] = {dest_user: privilege_dataset}
                             else:
-                                local_storage[src_party_id][src_role]["privilege_dataset"] = privilege_dataset
+                                local_storage[src_party_id][src_role]["privilege_dataset"] = {src_user:{dest_user: privilege_dataset}}
                         else:
-                            local_storage[src_party_id][src_role] = {"privilege_dataset": privilege_dataset}
+                            local_storage[src_party_id][src_role] = {"privilege_dataset": {src_user:{dest_user: privilege_dataset}}}
                     else:
-                        local_storage[src_party_id] = {src_role: {"privilege_dataset": privilege_dataset}}
+                        local_storage[src_party_id] = {src_role: {"privilege_dataset": {src_user:{dest_user: privilege_dataset}}}}
                 else:
-                    for k, v in privilege_dataset.items():
-                        try:
-                            if isinstance(v, list):
-                                local_storage[src_party_id][src_role]["privilege_dataset"][k].remove(v)
-                            if v == "all":
-                                local_storage[src_party_id][src_role]["privilege_dataset"][k] = []
-                        except:
-                            stat_logger.exception(
-                                '{} {} is not authorized ,it cannot be deleted'.format(privilege_dataset, v)
-                                if isinstance(value, str) else "No permission to delete")
+                    if isinstance(privilege_dataset, list):
+                        for table in privilege_dataset:
+                            try:
+                                local_storage[src_party_id][src_role]["privilege_dataset"][src_user][dest_user].remove(table)
+                            except:
+                                stat_logger.exception('{} is not authorized ,it cannot be deleted'.format(table))
+                    elif privilege_dataset in ["all", "ALL", "*"]:
+                        local_storage[src_party_id][src_role]["privilege_dataset"][src_user][dest_user] = []
             stat_logger.info('add permission successfully')
             f.close()
             return local_storage
@@ -229,8 +232,8 @@ class PrivilegeAuth(object):
 
 def modify_permission(permission_info, delete=False):
     if PrivilegeAuth.USE_LOCAL_STORAGE:
-        new_json = PrivilegeAuth.get_new_permission_config(src_party_id=permission_info.get('src_party_id'),
-                                                           src_role=permission_info.get('src_role'),
+        new_json = PrivilegeAuth.get_new_permission_config(src_party_id=permission_info.get('src_party_id', '*'),
+                                                           src_role=permission_info.get('src_role', '*'),
                                                            privilege_role=permission_info.get('privilege_role', None),
                                                            privilege_command=permission_info.get('privilege_command',
                                                                                                  None),
@@ -238,7 +241,9 @@ def modify_permission(permission_info, delete=False):
                                                                'privilege_component', None),
                                                            privilege_dataset=permission_info.get(
                                                                'privilege_dataset', None),
-                                                           delete=delete)
+                                                           delete=delete,
+                                                           src_user=permission_info.get("src_user"),
+                                                           dest_user=permission_info.get("dest_user"))
         PrivilegeAuth.rewrite_local_storage(new_json)
 
 
@@ -308,16 +313,15 @@ def authentication_check(src_role, src_party_id, dsl, runtime_conf, role, party_
     stat_logger.info('src_role {} src_party_id {} authentication check success'.format(src_role, src_party_id))
 
 
-def data_authentication_check(src_role, src_party_id, user, dataset_list):
-    if not user:
-        raise Exception("no found src_role {} src_party_id user".format(src_role, src_party_id))
+def data_authentication_check(src_role, src_party_id, src_user, dest_user, dataset_list):
+    if not src_user:
+        raise Exception(f"no found src user {src_user} or dest user {dest_user}")
+    if src_user == dest_user:
+        return
     for dataset in dataset_list:
-        if dataset not in PrivilegeAuth.privilege_cache.get(src_party_id, {}).get(src_role, {}).get('privilege_dataset',
-                                                                                                    {}).get(user, []):
-            if dataset not in PrivilegeAuth.get_permission_config(src_party_id, src_role).get('privilege_dataset',
-                                                                                              {}).get(user, []):
-                raise Exception('src_role {} src_party_id {} user {} dataset authentication that needs to be run '
-                                'failed:{}'.format(src_role, src_party_id, user, dataset))
+        if dataset not in PrivilegeAuth.privilege_cache.get("*", {}).get("*", {}).get('privilege_dataset', {}).get(src_user, {}).get(dest_user, []):
+            if dataset not in PrivilegeAuth.get_permission_config("*", "*").get('privilege_dataset', {}).get(src_user, {}).get(dest_user, []):
+                raise Exception(f'src user {src_user} dest user {dest_user} dataset {dataset} authentication check failed')
 
 
 
