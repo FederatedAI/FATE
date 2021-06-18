@@ -26,6 +26,7 @@ from fate_arch.common.file_utils import get_project_base_directory
 from fate_flow.pipelined_model.pipelined_model import PipelinedModel
 
 from fate_flow.db.db_models import DB, MachineLearningModelInfo as MLModel
+from fate_flow.utils.service_utils import ServiceUtils
 
 gen_key_string_separator = '#'
 
@@ -177,6 +178,7 @@ def save_model_info(model_info):
         rows = model.save(force_insert=True)
         if rows != 1:
             raise Exception("Create {} failed".format(MLModel))
+        ServiceUtils.register(model.f_model_id, model.f_model_version)
         return model
     except peewee.IntegrityError as e:
         if e.args[0] == 1062:

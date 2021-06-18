@@ -102,6 +102,7 @@ if __name__ == '__main__':
     RuntimeConfig.set_process_role(ProcessRole.DRIVER)
     PrivilegeAuth.init()
     ServiceUtils.register()
+    ServiceUtils.register_models()
     ResourceManager.initialize()
     Detector(interval=5 * 1000).start()
     DAGScheduler(interval=2 * 1000).start()

@@ -102,9 +102,8 @@ def bind_model_service(config_data):
     return 0, None
 
 
-def download_model(request_data):
-    model = pipelined_model.PipelinedModel(model_id=request_data.get("namespace"),
-                                           model_version=request_data.get("name"))
-    model_data = model.collect_models(in_bytes=True)
-    return model_data
-
+def download_model(model_id, model_version):
+    model = pipelined_model.PipelinedModel(model_id, model_version)
+    if not model.exists():
+        return
+    return model.collect_models(in_bytes=True)
