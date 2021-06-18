@@ -46,13 +46,14 @@ from fate_flow.scheduler.dag_scheduler import DAGScheduler
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.entity.types import ProcessRole
 from fate_flow.manager.resource_manager import ResourceManager
-from fate_flow.settings import IP, HTTP_PORT, GRPC_PORT, _ONE_DAY_IN_SECONDS, stat_logger, API_VERSION, GRPC_SERVER_MAX_WORKERS
+from fate_flow.settings import IP, HTTP_PORT, GRPC_PORT, _ONE_DAY_IN_SECONDS, stat_logger, detect_logger, API_VERSION, GRPC_SERVER_MAX_WORKERS
 from fate_flow.utils.api_utils import get_json_result
 from fate_flow.utils.authentication_utils import PrivilegeAuth
 from fate_flow.utils.grpc_utils import UnaryService
 from fate_flow.utils.service_utils import ServiceUtils
 from fate_flow.utils.xthread import ThreadPoolExecutor
 from fate_flow.utils import job_utils
+from fate_arch.common.log import schedule_logger
 
 '''
 Initialize the manager
@@ -103,8 +104,8 @@ if __name__ == '__main__':
     PrivilegeAuth.init()
     ServiceUtils.register()
     ResourceManager.initialize()
-    Detector(interval=5 * 1000).start()
-    DAGScheduler(interval=2 * 1000).start()
+    Detector(interval=5 * 1000, logger=detect_logger).start()
+    DAGScheduler(interval=2 * 1000, logger=schedule_logger()).start()
     thread_pool_executor = ThreadPoolExecutor(max_workers=GRPC_SERVER_MAX_WORKERS)
     stat_logger.info(f"start grpc server thread pool by {thread_pool_executor._max_workers} max workers")
     server = grpc.server(thread_pool=thread_pool_executor,
