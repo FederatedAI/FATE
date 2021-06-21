@@ -1,0 +1,12 @@
+{
+  "federatedml.transfer_variable.transfer_class.cipher_compressor_transfer_variable.CipherCompressorTransferVariable": {
+    "compress_para": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "host"
+      ]
+    }
+  }
+}
