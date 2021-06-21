@@ -132,6 +132,15 @@ class PhIntersectionGuest(PhIntersect):
         intersect_ids = self.filter_intersect_ids(encrypt_intersect_ids, keep_encrypt_ids=True)
         LOGGER.info(f"intersection found")
 
+        if self.cardinality_only:
+            cardinality = intersect_ids.count()
+            if self.sync_cardinality:
+                self.transfer_variable.cardinality.remote(cardinality, role=consts.HOST, idx=-1)
+                LOGGER.info("Sent intersect cardinality to host.")
+            else:
+                LOGGER.info("Skip sync intersect cardinality with host(s)")
+            return cardinality
+
         if self.sync_intersect_ids:
             self.send_intersect_ids(intersect_ids)
         else:

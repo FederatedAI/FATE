@@ -128,6 +128,13 @@ class RsaIntersectionHost(RsaIntersect):
         self.transfer_variable.host_intersect_ids.remote(remote_intersect_even_ids, role=consts.GUEST, idx=0)
         LOGGER.info(f"Remote host intersect ids to Guest")
 
+        if self.cardinality_only:
+            cardinality = None
+            if self.sync_cardinality:
+                cardinality = self.transfer_variable.cardinality.get(cardinality, role=consts.GUEST, idx=0)
+                LOGGER.info(f"Got intersect cardinality from guest.")
+            return cardinality
+
         # recv intersect ids
         intersect_ids = None
         if self.sync_intersect_ids:
@@ -183,6 +190,13 @@ class RsaIntersectionHost(RsaIntersect):
                                                           role=consts.GUEST,
                                                           idx=0)
         LOGGER.info("Remote host_sign_guest_ids_process to Guest.")
+
+        if self.cardinality_only:
+            cardinality = None
+            if self.sync_cardinality:
+                cardinality = self.transfer_variable.cardinality.get(cardinality, role=consts.GUEST, idx=0)
+                LOGGER.info(f"Got intersect cardinality from guest.")
+            return cardinality
 
         # recv intersect ids
         intersect_ids = None

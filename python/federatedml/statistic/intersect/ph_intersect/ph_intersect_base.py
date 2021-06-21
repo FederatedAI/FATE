@@ -33,8 +33,9 @@ class PhIntersect(Intersect):
         self.commutative_cipher = None
 
     def load_params(self, param):
-        self.only_output_key = param.only_output_key
-        self.sync_intersect_ids = param.sync_intersect_ids
+        # self.only_output_key = param.only_output_key
+        # self.sync_intersect_ids = param.sync_intersect_ids
+        super().load_params(param=param)
         self.ph_params = param.ph_params
         self.hash_operator = Hash(param.ph_params.hash_method)
         self.salt = self.ph_params.salt

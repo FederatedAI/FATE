@@ -39,6 +39,22 @@
       "dst": [
         "host"
       ]
+    },
+    "cardinality_guest": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "host"
+      ]
+    },
+    "cardinality_host": {
+      "src": [
+        "host"
+      ],
+      "dst": [
+        "guest"
+      ]
     }
   }
 }

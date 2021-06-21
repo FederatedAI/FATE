@@ -127,6 +127,14 @@
       "dst": [
         "guest"
       ]
+    },
+    "cardinality": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "host"
+      ]
     }
   }
 }

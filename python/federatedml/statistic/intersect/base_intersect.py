@@ -30,7 +30,11 @@ class Intersect(object):
         self._host_id_list = None
 
     def load_params(self, param):
-        raise NotImplementedError("this method should not be called here")
+        self.model_param = param
+        self.only_output_key = param.only_output_key
+        self.sync_intersect_ids = param.sync_intersect_ids
+        self.cardinality_only = param.cardinality_only
+        self.sync_cardinality = param.sync_cardinality
 
     @property
     def guest_party_id(self):

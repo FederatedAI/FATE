@@ -77,6 +77,13 @@ class PhIntersectionHost(PhIntersect):
         self._sync_doubly_encrypted_id_list(id_list_remote_second)
 
     def decrypt_intersect_doubly_encrypted_id(self, id_list_intersect_cipher_cipher=None):
+        if self.cardinality_only:
+            cardinality = None
+            if self.sync_cardinality:
+                cardinality = self.transfer_variable.cardinality.get(cardinality, role=consts.GUEST, idx=0)
+                LOGGER.info(f"Got intersect cardinality from guest.")
+            return cardinality
+
         intersect_ids = None
         if self.sync_intersect_ids:
             intersect_ids = self.get_intersect_ids()

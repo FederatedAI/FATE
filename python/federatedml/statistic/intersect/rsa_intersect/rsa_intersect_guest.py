@@ -189,6 +189,16 @@ class RsaIntersectionGuest(RsaIntersect):
         intersect_odd_ids = self.filter_intersect_ids(encrypt_intersect_odd_ids_list, keep_encrypt_ids=True)
         intersect_even_ids = self.get_host_intersect_ids(prvkey_ids_process_pair_list)
         intersect_ids = intersect_odd_ids.union(intersect_even_ids)
+
+        if self.cardinality_only:
+            cardinality = intersect_ids.count()
+            if self.sync_cardinality:
+                self.transfer_variable.cardinality.remote(cardinality, role=consts.HOST, idx=-1)
+                LOGGER.info("Sent intersect cardinality to host.")
+            else:
+                LOGGER.info("Skip sync intersect cardinality with host(s)")
+            return cardinality
+
         if self.sync_intersect_ids:
             self.send_intersect_ids(encrypt_intersect_odd_ids_list, intersect_odd_ids)
         else:
@@ -252,6 +262,15 @@ class RsaIntersectionGuest(RsaIntersect):
                                       enumerate(sid_host_sign_guest_ids_list)]
 
         intersect_ids = self.filter_intersect_ids(encrypt_intersect_ids_list, keep_encrypt_ids=True)
+        if self.cardinality_only:
+            cardinality = intersect_ids.count()
+            if self.sync_cardinality:
+                self.transfer_variable.cardinality.remote(cardinality, role=consts.HOST, idx=-1)
+                LOGGER.info("Sent intersect cardinality to host.")
+            else:
+                LOGGER.info("Skip sync intersect cardinality with host(s)")
+            return cardinality
+
         if self.sync_intersect_ids:
             self.send_intersect_ids(encrypt_intersect_ids_list, intersect_ids)
         else:

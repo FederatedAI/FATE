@@ -29,8 +29,9 @@ class RawIntersect(Intersect):
         self.tracker = None
 
     def load_params(self, param):
-        self.only_output_key = param.only_output_key
-        self.sync_intersect_ids = param.sync_intersect_ids
+        # self.only_output_key = param.only_output_key
+        # self.sync_intersect_ids = param.sync_intersect_ids
+        super().load_params(param=param)
         self.with_encode = param.with_encode
         self.encode_params = param.encode_params
         self.join_role = param.join_role
@@ -66,6 +67,21 @@ class RawIntersect(Intersect):
                                    idx=-1)
 
         LOGGER.info("Remote data_sid to role-join")
+        if self.cardinality_only:
+            cardinality = None
+            if self.sync_cardinality:
+                if self.role == consts.GUEST:
+                    cardinality_federation = self.transfer_variable.cardinality_host
+                elif self.role == consts.HOST:
+                    cardinality_federation = self.transfer_variable.cardinality_guest
+                else:
+                    raise ValueError("Unknown intersect role, please check the code")
+                cardinality = cardinality_federation.get(idx=-1)
+                LOGGER.info("Get intersect cardinality from role-join!")
+            else:
+                LOGGER.info("Skip sync intersect cardinality with role-join.")
+            return cardinality
+
         intersect_ids = None
         if self.sync_intersect_ids:
             if self.role == consts.HOST:
@@ -140,6 +156,24 @@ class RawIntersect(Intersect):
         else:
             hash_intersect_ids = None
         LOGGER.info("Finish intersect_ids computing")
+
+        if self.cardinality_only:
+            cardinality = hash_intersect_ids.count()
+            if self.sync_cardinality:
+                if self.role == consts.GUEST:
+                    cardinality_federation = self.transfer_variable.cardinality_guest
+                elif self.role == consts.HOST:
+                    cardinality_federation = self.transfer_variable.cardinality_host
+                else:
+                    raise ValueError("Unknown intersect role, please check the code")
+                send_role = self.role
+                cardinality_federation.remote(cardinality,
+                                              role=send_role,
+                                              idx=-1)
+                LOGGER.info("Remote intersect cardinality to role-send!")
+            else:
+                LOGGER.info("Skip sync intersect cardinality with role-send")
+            return cardinality
 
         if self.sync_intersect_ids:
             if self.role == consts.GUEST:

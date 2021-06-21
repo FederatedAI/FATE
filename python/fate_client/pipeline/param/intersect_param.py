@@ -226,6 +226,12 @@ class IntersectParam(BaseParam):
 
     ph_params: PHParam, effective for ph method only
 
+    cardinality_only: boolean, whether to output intersection count(cardinality) only; if sync_cardinality is True,
+        then sync cardinality count with host(s)
+
+    sync_cardinality: boolean, whether to sync cardinality with all participants, default False,
+        only effective when cardinality_only set to True
+
     """
 
     def __init__(self, intersect_method: str = consts.RAW, random_bit=128, sync_intersect_ids=True,
@@ -234,7 +240,8 @@ class IntersectParam(BaseParam):
                  rsa_params=RSAParam(),
                  intersect_cache_param=IntersectCache(), repeated_id_process=False, repeated_id_owner=consts.GUEST,
                  with_sample_id=False, join_method=consts.INNER_JOIN, new_join_id=False,
-                 allow_info_share: bool = False, info_owner=consts.GUEST, ph_params=PHParam()):
+                 allow_info_share: bool = False, info_owner=consts.GUEST, ph_params=PHParam(),
+                 cardinality_only: bool = True, sync_cardinality: bool = False):
         super().__init__()
         self.intersect_method = intersect_method
         self.random_bit = random_bit
@@ -253,6 +260,8 @@ class IntersectParam(BaseParam):
         self.join_method = join_method
         self.new_join_id = new_join_id
         self.ph_params = ph_params
+        self.cardinality_only = cardinality_only
+        self.sync_cardinality = sync_cardinality
 
     def check(self):
         descr = "intersect param's "
@@ -314,4 +323,6 @@ class IntersectParam(BaseParam):
         self.encode_params.check()
         self.rsa_params.check()
         self.ph_params.check()
+        self.check_boolean(self.cardinality_only, descr+"cardinality_only")
+        self.check_boolean(self.sync_cardinality, descr+"sync_cardinality")
         return True

@@ -41,8 +41,9 @@ class RsaIntersect(Intersect):
         self.role = None
 
     def load_params(self, param):
-        self.only_output_key = param.only_output_key
-        self.sync_intersect_ids = param.sync_intersect_ids
+        # self.only_output_key = param.only_output_key
+        # self.sync_intersect_ids = param.sync_intersect_ids
+        super().load_params(param=param)
         self.random_bit = param.random_bit
         self.rsa_params = param.rsa_params
         self.split_calculation = self.rsa_params.split_calculation

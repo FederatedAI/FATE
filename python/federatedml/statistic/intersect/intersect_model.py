@@ -160,9 +160,19 @@ class IntersectModelBase(ModelBase):
             if data_overview.check_with_inst_id(data) or self.model_param.with_sample_id:
                 proc_obj.use_sample_id()
             match_data = proc_obj.recover(data=data)
-            self.intersect_ids = self.intersection_obj.run_intersect(match_data)
+            intersect_result = self.intersection_obj.run_intersect(match_data)
         else:
-            self.intersect_ids = self.intersection_obj.run_intersect(data)
+            intersect_result = self.intersection_obj.run_intersect(data)
+
+        if self.intersection_obj.cardinality_only:
+            # intersect result = cardinality
+            self.intersect_num = intersect_result
+            self.intersect_rate = intersect_result / data.count()
+            self.set_summary(self.get_model_summary())
+            return
+        else:
+            # intersect result = intersect ids
+            self.intersect_ids = intersect_result
 
         if self.use_match_id_process:
             if not self.model_param.sync_intersect_ids:
@@ -247,6 +257,7 @@ class IntersectHost(IntersectModelBase):
         self.intersection_obj.guest_party_id = self.guest_party_id
         self.intersection_obj.host_party_id_list = self.host_party_id_list
         self.intersection_obj.load_params(self.model_param)
+        self.model_param = self.intersection_obj.model_param
 
 
 class IntersectGuest(IntersectModelBase):
