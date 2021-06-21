@@ -25,6 +25,7 @@ from pipeline.backend.config import Backend, WorkMode
 from pipeline.backend.config import Role
 from pipeline.backend.config import StatusCode
 from pipeline.backend.config import VERSION
+from pipeline.backend.config import SystemSetting
 from pipeline.backend.task_info import TaskInfo
 from pipeline.component.component_base import Component
 from pipeline.component.reader import Reader
@@ -61,6 +62,7 @@ class PipeLine(object):
         self._data_to_feed_in_prediction = None
         self._predict_pipeline = []
         self._deploy = False
+        self._system_role = SystemSetting.system_setting().get("role")
 
     @LOGGER.catch(reraise=True)
     def set_initiator(self, role, party_id):
@@ -398,6 +400,16 @@ class PipeLine(object):
 
         return self
 
+    @LOGGER.catch(reraise=True)
+    def _check_duplicate_setting(self, submit_conf):
+        system_role = self._system_role
+        if "role" in submit_conf["job_parameters"]:
+            role_conf = submit_conf["job_parameters"]["role"]
+            system_role_conf = role_conf.get(system_role, {})
+            for party, conf in system_role_conf.items():
+                if conf.get("user"):
+                    raise ValueError(f"system role {system_role}'s user info already set. Please check.")
+
     def _feed_job_parameters(self, conf, job_type=None,
                              model_info=None, job_parameters=None):
         submit_conf = copy.deepcopy(conf)
@@ -415,7 +427,8 @@ class PipeLine(object):
             submit_conf["job_parameters"]["common"]["model_id"] = model_info.model_id
             submit_conf["job_parameters"]["common"]["model_version"] = model_info.model_version
 
-        if job_parameters.fill_system_user:
+        if self._system_role:
+            self._check_duplicate_setting(submit_conf)
             init_role = self._initiator.role
             idx = str(self._roles[init_role].index(self._initiator.party_id))
             if "role" not in submit_conf["job_parameters"]:

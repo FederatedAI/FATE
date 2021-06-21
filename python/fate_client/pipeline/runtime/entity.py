@@ -29,14 +29,6 @@ class JobParameters(object):
 
         self.__party_instance = {}
         self._job_param = {}
-        self._fill_system_user = False
-
-    @property
-    def fill_system_user(self):
-        return self._fill_system_user
-
-    def set_fill_system_user(self, set_val=True):
-        self._fill_system_user = set_val
 
     def get_party_instance(self, role="guest", party_id=None):
         if role not in ["guest", "host", "arbiter"]:
