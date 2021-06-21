@@ -14,6 +14,7 @@
 #  limitations under the License.
 #
 import copy
+import getpass
 import json
 import pickle
 import sys
@@ -414,6 +415,19 @@ class PipeLine(object):
             submit_conf["job_parameters"]["common"]["model_id"] = model_info.model_id
             submit_conf["job_parameters"]["common"]["model_version"] = model_info.model_version
 
+        if job_parameters.fill_system_user:
+            init_role = self._initiator.role
+            idx = str(self._roles[init_role].index(self._initiator.party_id))
+            if "role" not in submit_conf["job_parameters"]:
+                submit_conf["job_parameters"]["role"] = {}
+
+            if init_role not in submit_conf["job_parameters"]["role"]:
+                submit_conf["job_parameters"]["role"][init_role] = {}
+
+            if idx not in submit_conf["job_parameters"]["role"][init_role]:
+                submit_conf["job_parameters"]["role"][init_role][idx] = {}
+
+            submit_conf["job_parameters"]["role"][init_role][idx].update({"user": getpass.getuser()})
         return submit_conf
 
     def _filter_out_deploy_component(self, predict_conf):
