@@ -136,6 +136,15 @@ class IntersectModelBase(ModelBase):
         LOGGER.debug(f"result data count: {result_data.count()}")
         return result_data
 
+    def callback(self):
+        self.callback_metric(metric_name=self.metric_name,
+                             metric_namespace=self.metric_namespace,
+                             metric_data=[Metric("intersect_count", self.intersect_num),
+                                          Metric("intersect_rate", self.intersect_rate)])
+        self.tracker.set_metric_meta(metric_namespace=self.metric_namespace,
+                                     metric_name=self.metric_name,
+                                     metric_meta=MetricMeta(name=self.metric_name, metric_type=self.metric_type))
+
     def fit(self, data):
         self.init_intersect_method()
         # import copy
@@ -166,9 +175,11 @@ class IntersectModelBase(ModelBase):
 
         if self.intersection_obj.cardinality_only:
             # intersect result = cardinality
-            self.intersect_num = intersect_result
-            self.intersect_rate = intersect_result / data.count()
+            if intersect_result:
+                self.intersect_num = intersect_result
+                self.intersect_rate = intersect_result / data.count()
             self.set_summary(self.get_model_summary())
+            self.callback()
             return
         else:
             # intersect result = intersect ids
@@ -200,14 +211,7 @@ class IntersectModelBase(ModelBase):
             self.intersect_rate = self.intersect_num * 1.0 / data.count()
 
         self.set_summary(self.get_model_summary())
-
-        self.callback_metric(metric_name=self.metric_name,
-                             metric_namespace=self.metric_namespace,
-                             metric_data=[Metric("intersect_count", self.intersect_num),
-                                          Metric("intersect_rate", self.intersect_rate)])
-        self.tracker.set_metric_meta(metric_namespace=self.metric_namespace,
-                                     metric_name=self.metric_name,
-                                     metric_meta=MetricMeta(name=self.metric_name, metric_type=self.metric_type))
+        self.callback()
 
         result_data = self.intersect_ids
         if self.model_param.join_method == consts.LEFT_JOIN:

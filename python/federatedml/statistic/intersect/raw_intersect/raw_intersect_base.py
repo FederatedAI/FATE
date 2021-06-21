@@ -162,11 +162,12 @@ class RawIntersect(Intersect):
             if self.sync_cardinality:
                 if self.role == consts.GUEST:
                     cardinality_federation = self.transfer_variable.cardinality_guest
+                    send_role = consts.HOST
                 elif self.role == consts.HOST:
                     cardinality_federation = self.transfer_variable.cardinality_host
+                    send_role = consts.GUEST
                 else:
                     raise ValueError("Unknown intersect role, please check the code")
-                send_role = self.role
                 cardinality_federation.remote(cardinality,
                                               role=send_role,
                                               idx=-1)

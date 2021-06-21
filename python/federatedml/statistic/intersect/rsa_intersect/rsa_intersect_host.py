@@ -194,7 +194,7 @@ class RsaIntersectionHost(RsaIntersect):
         if self.cardinality_only:
             cardinality = None
             if self.sync_cardinality:
-                cardinality = self.transfer_variable.cardinality.get(cardinality, role=consts.GUEST, idx=0)
+                cardinality = self.transfer_variable.cardinality.get(idx=0)
                 LOGGER.info(f"Got intersect cardinality from guest.")
             return cardinality
 

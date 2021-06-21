@@ -241,7 +241,7 @@ class IntersectParam(BaseParam):
                  intersect_cache_param=IntersectCache(), repeated_id_process=False, repeated_id_owner=consts.GUEST,
                  with_sample_id=False, join_method=consts.INNER_JOIN, new_join_id=False,
                  allow_info_share: bool = False, info_owner=consts.GUEST, ph_params=PHParam(),
-                 cardinality_only: bool = True, sync_cardinality: bool = False):
+                 cardinality_only: bool = False, sync_cardinality: bool = False):
         super().__init__()
         self.intersect_method = intersect_method
         self.random_bit = random_bit
