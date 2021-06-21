@@ -108,7 +108,7 @@ class PackingCipherTensor(object):
         return self.__mul__(1/other)
 
     def __repr__(self):
-        return "[" + self.ciphers.__repr__() + ", dim {}".format(self.dim) + "]"
+        return "[" + self.ciphers.__repr__() + "], dim {}".format(self.dim)
 
 
 class NormalCipherPackage(CipherPackage):
@@ -136,18 +136,12 @@ class NormalCipherPackage(CipherPackage):
         if self._capacity_left == 0:
             self._has_space = False
 
-    def unpack(self, decrypter, raw_decrypt=False):
+    def unpack(self, decrypter):
 
         if type(decrypter) == PaillierEncrypt:
-            if not raw_decrypt:
-                compressed_plain_text = int(decrypter.decrypt(self._cipher_text))
-            else:
-                compressed_plain_text = decrypter.privacy_key.raw_decrypt(self._cipher_text.ciphertext())
+            compressed_plain_text = decrypter.privacy_key.raw_decrypt(self._cipher_text.ciphertext())
         elif type(decrypter) == IterativeAffineEncrypt:
-            if not raw_decrypt:
-                compressed_plain_text = int(decrypter.decrypt(self._cipher_text))
-            else:
-                compressed_plain_text = decrypter.key.raw_decrypt(self._cipher_text)
+            compressed_plain_text = decrypter.key.raw_decrypt(self._cipher_text)
         else:
             raise ValueError('unknown decrypter: {}'.format(type(decrypter)))
 
@@ -199,15 +193,13 @@ class PackingCipherTensorPackage(CipherPackage):
         else:
             raise ValueError('have no space for compressing')
 
-    def unpack(self, decrypter, raw_encrypt=False):
+    def unpack(self, decrypter):
 
-        compressed_part = self.normal_package.unpack(decrypter, raw_encrypt)
+        compressed_part = self.normal_package.unpack(decrypter)
         de_rs = []
         if len(self.cached_list) != 0:
-            if raw_encrypt:
-                de_rs = decrypter.recursive_raw_decrypt(self.cached_list)
-            else:
-                de_rs = decrypter.recursive_decrypt(self.cached_list)
+            de_rs = decrypter.recursive_raw_decrypt(self.cached_list)
+
         if len(de_rs) == 0:
             return [[i] for i in compressed_part]
         else:

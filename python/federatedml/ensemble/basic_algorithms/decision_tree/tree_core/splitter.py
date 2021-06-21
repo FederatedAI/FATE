@@ -379,17 +379,8 @@ class Splitter(object):
                 split_info.sum_grad, split_info.sum_hess = decrypter.decrypt(split_info.sum_grad), decrypter.decrypt(split_info.sum_hess)
             g_sum, h_sum = decrypter.decrypt(g_h_info.sum_grad), decrypter.decrypt(g_h_info.sum_hess)
         else:
-            # if type(value[1]) != list:
-            #     split_info_list, g_h_info = value
-            #     for split_info in split_info_list:
-            #         en_num = split_info.sum_grad
-            #         g, h = gh_packer.unpack(en_num, decrypter, split_info.sample_count)
-            #         split_info.sum_grad = g
-            #         split_info.sum_hess = h
-            #     g_sum, h_sum = gh_packer.unpack(g_h_info.sum_grad, decrypter, g_h_info.sample_count)
-            # else:
             nid, package = value
-            split_info_list = gh_packer.decompress_and_unpack(package, decrypter)
+            split_info_list = gh_packer.decompress_and_unpack(package)
             g_sum, h_sum = split_info_list[-1].sum_grad, split_info_list[-1].sum_hess  # g/h is at last index
             split_info_list = split_info_list[:-1]
 

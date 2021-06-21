@@ -12,7 +12,7 @@ from federatedml.transfer_variable.transfer_class.hetero_decision_tree_transfer_
     HeteroDecisionTreeTransferVariable
 from federatedml.secureprotol import PaillierEncrypt, IterativeAffineEncrypt, FakeEncrypt
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.subsample import goss_sampling
-from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.g_h_optim import GHPacker, get_homo_encryption_max_int
+from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.g_h_optim import GHPacker
 from federatedml.util import consts
 
 
@@ -401,19 +401,12 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
         if self.run_cipher_compressing:
 
-            pos_max, neg_min = get_homo_encryption_max_int(self.encrypter)
-            LOGGER.debug('g,h count is {}'.format(self.grad_and_hess.count()))
-            self.packer = GHPacker(pos_max=pos_max, sample_num=self.grad_and_hess.count(), task_type=self.task_type,
-                                   max_sample_weight=self.max_sample_weight)
-            padding_bit_len, capacity = self.packer.total_bit_len, self.packer.cipher_compress_capacity
+            self.packer = GHPacker(sample_num=self.grad_and_hess.count(),
+                                   task_type=self.task_type,
+                                   max_sample_weight=self.max_sample_weight,
+                                   en_calculator=self.encrypted_mode_calculator)
 
-            if type(self.encrypter) == IterativeAffineEncrypt:
-                capacity = 1  # iterative affine only support gh packing
-
-            para = {'padding_bit_len': padding_bit_len, 'max_capacity': capacity}
-            self.transfer_inst.cipher_compressor_para.remote(para, idx=-1)
-            LOGGER.info('sending compressing para {}'.format(para))
-            en_grad_hess = self.packer.pack_and_encrypt_2(self.grad_and_hess, self.encrypted_mode_calculator)
+            en_grad_hess = self.packer.pack_and_encrypt(self.grad_and_hess)
 
         else:
             en_grad_hess = self.encrypted_mode_calculator.encrypt(self.grad_and_hess)
@@ -699,6 +692,9 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
         LOGGER.info('fitting a guest decision tree')
 
+        import time
+        s = time.time()
+
         self.init_packer_and_sync_gh()
         root_node = self.initialize_root_node()
         self.cur_layer_nodes = [root_node]
@@ -741,6 +737,9 @@ class HeteroDecisionTreeGuest(DecisionTree):
         self.sync_tree()
         self.sample_weights_post_process()
         LOGGER.info("fitting guest decision tree done")
+
+        e = time.time()
+        LOGGER.debug('time take {}'.format(s - e))
 
 
     @staticmethod

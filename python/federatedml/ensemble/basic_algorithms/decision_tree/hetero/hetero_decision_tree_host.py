@@ -7,8 +7,8 @@ from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.decision_tree
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.splitter import SplitInfo
 from federatedml.transfer_variable.transfer_class.hetero_decision_tree_transfer_variable import \
     HeteroDecisionTreeTransferVariable
-from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.g_h_optim import PackedGHCompressor
 from federatedml.util import consts
+from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.g_h_optim import PackedGHCompressor
 from federatedml.feature.fate_element_type import NoneType
 import functools
 
@@ -208,10 +208,10 @@ class HeteroDecisionTreeHost(DecisionTree):
 
     def init_compressor_and_sync_gh(self):
         LOGGER.info("get encrypted grad and hess")
+
         if self.run_cipher_compressing:
-            para = self.transfer_inst.cipher_compressor_para.get(idx=0)
-            padding_bit_len, max_capacity = para['padding_bit_len'], para['max_capacity']
-            self.cipher_compressor = PackedGHCompressor(padding_bit_len=padding_bit_len, max_capacity=max_capacity)
+            self.cipher_compressor = PackedGHCompressor()
+
         self.grad_and_hess = self.transfer_inst.encrypted_grad_and_hess.get(idx=0)
 
     def sync_node_positions(self, dep=-1):
@@ -493,6 +493,7 @@ class HeteroDecisionTreeHost(DecisionTree):
 
             dispatch_node_host = self.sync_dispatch_node_host(dep)
             self.assign_instances_to_new_node(dispatch_node_host, dep=dep)
+
         self.sync_tree()
         self.convert_bin_to_real(decode_func=self.decode, split_maskdict=self.split_maskdict)
         LOGGER.info("fitting host decision tree done")

@@ -203,7 +203,7 @@ class PaillierEncrypt(Encrypt):
     def raw_decrypt(self, ciphertext):
         return self.privacy_key.raw_decrypt(ciphertext.ciphertext())
 
-    def paillier_recursive_raw_encrypt(self, X, exponent=0):
+    def recursive_raw_encrypt(self, X, exponent=0):
         raw_en_func = functools.partial(self.raw_encrypt, exponent=exponent)
         return self._recursive_func(X, raw_en_func)
 
@@ -211,8 +211,7 @@ class PaillierEncrypt(Encrypt):
 class FakeEncrypt(Encrypt):
 
     def __init__(self):
-        from federatedml.util import LOGGER
-        LOGGER.debug('using fake encrypt')
+        pass
 
     def encrypt(self, value):
         return value
@@ -222,6 +221,7 @@ class FakeEncrypt(Encrypt):
 
 
 class SymmetricEncrypt(Encrypt):
+
     def __init__(self):
         self.key = None
 

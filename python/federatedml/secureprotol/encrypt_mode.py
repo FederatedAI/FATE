@@ -112,11 +112,11 @@ class EncryptModeCalculator(object):
             return encrypter.recursive_encrypt
         else:
             if type(self.encrypter) == PaillierEncrypt:
-                raw_en_func = functools.partial(self.encrypter.paillier_recursive_raw_encrypt, exponent=exponent)
+                raw_en_func = functools.partial(self.encrypter.recursive_raw_encrypt, exponent=exponent)
             elif type(self.encrypter) == IterativeAffineEncrypt:
                 raw_en_func = self.encrypter.recursive_raw_encrypt
             else:
-                raise ValueError('unknown en type')
+                raise ValueError('unknown encrypt type')
             return raw_en_func
 
     def encrypt(self, input_data):

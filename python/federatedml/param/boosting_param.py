@@ -520,7 +520,7 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
                  validation_freqs=None, early_stopping_rounds=None, use_missing=False, zero_as_missing=False,
                  complete_secure=False, tree_num_per_party=1, guest_depth=1, host_depth=1, work_mode='mix', metrics=None,
                  sparse_optimization=False, random_seed=100, binning_error=consts.DEFAULT_RELATIVE_ERROR,
-                 cipher_compress_error=None, new_ver=True, run_goss=False, cipher_compress=True,
+                 cipher_compress_error=None, new_ver=True, run_goss=False, cipher_compress=False,
                  top_rate=0.2, other_rate=0.1):
 
         """

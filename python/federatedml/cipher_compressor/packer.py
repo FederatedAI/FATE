@@ -1,28 +1,18 @@
 import functools
 from federatedml.util import LOGGER
+from federatedml.cipher_compressor.compressor import get_homo_encryption_max_int
 from federatedml.secureprotol.encrypt_mode import EncryptModeCalculator
 from federatedml.cipher_compressor.compressor import PackingCipherTensor
 from federatedml.cipher_compressor.compressor import CipherPackage
-from federatedml.secureprotol.encrypt import IterativeAffineEncrypt, PaillierEncrypt
+from federatedml.secureprotol.encrypt import IterativeAffineEncrypt
 from federatedml.transfer_variable.transfer_class.cipher_compressor_transfer_variable \
     import CipherCompressorTransferVariable
 from federatedml.util import consts
 
 
-def get_homo_encryption_max_int(encrypter):
-
-    if type(encrypter) == PaillierEncrypt:
-        max_pos_int = encrypter.public_key.max_int
-        min_neg_int = -max_pos_int
-    elif type(encrypter) == IterativeAffineEncrypt:
-        n_array = encrypter.key.n_array
-        allowed_max_int = n_array[0]
-        max_pos_int = int(allowed_max_int * 0.9) - 1  # the other 0.1 part is for negative num
-        min_neg_int = (max_pos_int - allowed_max_int) + 1
-    else:
-        raise ValueError('unknown encryption type')
-
-    return max_pos_int, min_neg_int
+def cipher_list_to_cipher_tensor(cipher_list: list):
+    cipher_tensor = PackingCipherTensor(ciphers=cipher_list)
+    return cipher_tensor
 
 
 class GuestIntegerPacker(object):
@@ -49,7 +39,6 @@ class GuestIntegerPacker(object):
         # sometimes max_int is not able to hold all num need to be packed, so we
         # use more than one large integer to pack them all
         self._bit_assignment = []
-        self.total_bit_take = sum(self._pack_num_bit)
         tmp_list = []
         bit_count = 0
         for bit_len in self._pack_num_bit:
@@ -73,10 +62,12 @@ class GuestIntegerPacker(object):
         else:
             compress_parameter = (None, 1)
         self.trans_var.compress_para.remote(compress_parameter, role=consts.HOST, idx=-1)
+        LOGGER.debug('int packer init done, bit assign is {}, compress para is {}'.format(self._bit_assignment,
+                                                                                          compress_parameter))
 
     def cipher_compress_suggest(self):
         if type(self.calculator.encrypter) == IterativeAffineEncrypt:  # iterativeAffine not support cipher compress
-            return None, 1
+            return 1, 1
         compressible = self._bit_assignment[-1]
         total_bit_count = sum(compressible)
         compress_num = self._max_bit // total_bit_count
@@ -105,7 +96,6 @@ class GuestIntegerPacker(object):
 
         return result
 
-
     def _unpack_an_int(self, integer: int, bit_assign_list: list):
 
         rs_list = []
@@ -118,48 +108,50 @@ class GuestIntegerPacker(object):
 
         return list(reversed(rs_list))
 
-    def _cipher_list_to_cipher_tensor(self, cipher_list: list):
-
-        cipher_tensor = PackingCipherTensor(ciphers=cipher_list)
-        return cipher_tensor
-
     def pack(self, data_table):
         packing_data_table = data_table.mapValues(self.pack_int_list)
         return packing_data_table
 
-    def pack_and_encrypt(self, data_table, ret_cipher_tensor=True):
+    def pack_and_encrypt(self, data_table, post_process_func=cipher_list_to_cipher_tensor):
 
         packing_data_table = self.pack(data_table)
         en_packing_data_table = self.calculator.raw_encrypt(packing_data_table)
-        if ret_cipher_tensor:
-            en_packing_data_table = en_packing_data_table.mapValues(self._cipher_list_to_cipher_tensor)
+
+        if post_process_func:
+            en_packing_data_table = en_packing_data_table.mapValues(post_process_func)
 
         return en_packing_data_table
 
-    def unpack_result(self, decrypted_result_list: list):
+    def unpack_result(self, decrypted_result_list: list, post_func=None):
 
         final_rs = []
         for l_ in decrypted_result_list:
 
-            assert len(l_) == len(self._bit_assignment), 'length of integer list is not equal to bit_assignment'
-
-            rs_list = []
-            for idx, integer in enumerate(l_):
-                unpack_list = self._unpack_an_int(integer, self._bit_assignment[idx])
-                rs_list.extend(unpack_list)
-
+            rs_list = self.unpack_an_int_list(l_, post_func)
             final_rs.append(rs_list)
 
         return final_rs
 
-    def _decrypt_cipher_packages(self, content):
+    def unpack_an_int_list(self, int_list, post_func=None):
+
+        assert len(int_list) == len(self._bit_assignment), 'length of integer list is not equal to bit_assignment'
+        rs_list = []
+        for idx, integer in enumerate(int_list):
+            unpack_list = self._unpack_an_int(integer, self._bit_assignment[idx])
+            if post_func:
+                unpack_list = post_func(unpack_list)
+            rs_list.extend(unpack_list)
+
+        return rs_list
+
+    def decrypt_cipher_packages(self, content):
 
         if type(content) == list:
 
             assert issubclass(type(content[0]), CipherPackage), 'content is not CipherPackages'
             decrypt_rs = []
             for i in content:
-                unpack_ = i.unpack(self.calculator.encrypter, True)
+                unpack_ = i.unpack(self.calculator.encrypter)
                 decrypt_rs += unpack_
             return decrypt_rs
 
@@ -168,7 +160,7 @@ class GuestIntegerPacker(object):
 
     def decrypt_cipher_package_and_unpack(self, data_table):
 
-        de_func = functools.partial(self._decrypt_cipher_packages)
+        de_func = functools.partial(self.decrypt_cipher_packages)
         de_table = data_table.mapValues(de_func)
         unpack_table = de_table.mapValues(self.unpack_result)
 
