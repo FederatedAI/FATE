@@ -485,7 +485,6 @@ class Tracker(object):
                                                                                                      self.party_id))
                 sess.computing.stop()
             if self.job_parameters.federation_engine == FederationEngine.RABBITMQ and self.role != "local":
-                return
                 schedule_logger(self.job_id).info('rabbitmq start clean up')
                 parties = [Party(k, p) for k, v in runtime_conf['role'].items() for p in v]
                 federation_session_id = job_utils.generate_task_version_id(self.task_id, self.task_version)

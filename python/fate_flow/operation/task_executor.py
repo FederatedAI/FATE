@@ -152,7 +152,7 @@ class TaskExecutor(object):
             # add profile logs
             profile.profile_start()
             run_object.run(component_parameters_on_party, task_run_args)
-            profile.profile_ends()
+            # profile.profile_ends()
             output_data = run_object.save_data()
             if not isinstance(output_data, list):
                 output_data = [output_data]

@@ -138,9 +138,9 @@ class Session(object):
             from fate_arch.computing.spark import CSession
             from fate_arch.federation.rabbitmq import Federation
 
-            if not self.is_computing_valid or not isinstance(self._computing_session, CSession):
-                raise RuntimeError(
-                    f"require computing with type {ComputingEngine.SPARK} valid")
+            # if not self.is_computing_valid or not isinstance(self._computing_session, CSession):
+            #     raise RuntimeError(
+            #         f"require computing with type {ComputingEngine.SPARK} valid")
 
             self._federation_session = Federation.from_conf(federation_session_id=federation_session_id,
                                                             party=parties_info.local_party,

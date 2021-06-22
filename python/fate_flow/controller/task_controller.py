@@ -176,6 +176,8 @@ class TaskController(object):
                 res = requests.post(url=linkis_execute_url, headers=headers, json=data)
                 schedule_logger(job_id).info(f"start linkis spark task: {res.text}")
                 if res.status_code == 200:
+                    if res.json().get("status"):
+                        raise Exception(f"submit linkis spark failed: {res.json()}")
                     task_info["engine_conf"]["execID"] = res.json().get("data").get("execID")
                     schedule_logger(job_id).info('submit linkis spark success')
                 else:
@@ -288,7 +290,7 @@ class TaskController(object):
                     headers = task.f_engine_conf.get("headers")
                     schedule_logger(task.f_job_id).info(f"start stop task:{linkis_execute_url}")
                     schedule_logger(task.f_job_id).info(f"headers: {headers}")
-                    kill_result = requests.post(linkis_execute_url, headers=headers)
+                    kill_result = requests.get(linkis_execute_url, headers=headers)
                     schedule_logger(task.f_job_id).info(f"kill result:{kill_result}")
                     if kill_result.status_code == 200:
                         pass
