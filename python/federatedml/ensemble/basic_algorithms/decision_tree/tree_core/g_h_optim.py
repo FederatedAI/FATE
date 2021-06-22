@@ -12,7 +12,7 @@ REGRESSION_MAX_GRADIENT = 10**9
 
 
 def post_func(x):
-    # add a 0 to occupy h position
+    # transform x to cipher tensor and add a 0 to occupy h position
     tensor = cipher_list_to_cipher_tensor(x)
     return tensor, 0
 

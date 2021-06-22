@@ -621,7 +621,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
             if tree_[nodeid].sitename == sitename:
 
                 next_layer_nid = HeteroDecisionTreeGuest.go_next_layer(tree_[nodeid], value[0], use_missing,
-                                                                       zero_as_missing, None, split_maskdict,
+                                                                       zero_as_missing, bin_sparse_points, split_maskdict,
                                                                        missing_dir_maskdict, decoder)
                 return 1, next_layer_nid
 

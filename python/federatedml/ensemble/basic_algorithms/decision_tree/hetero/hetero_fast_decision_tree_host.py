@@ -242,30 +242,12 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
         bid = tree_[nodeid].bid
 
         if not dense_format:
-            if not use_missing:
-                if value[0].features.get_data(fid, bin_sparse_points[fid]) <= bid:
-                    return 1, tree_[nodeid].left_nodeid
-                else:
-                    return 1, tree_[nodeid].right_nodeid
-            else:
-                missing_dir = tree_[nodeid].missing_dir
-                missing_val = False
-                if zero_as_missing:
-                    if value[0].features.get_data(fid, None) is None or \
-                            value[0].features.get_data(fid) == NoneType():
-                        missing_val = True
-                elif use_missing and value[0].features.get_data(fid) == NoneType():
-                    missing_val = True
-                if missing_val:
-                    if missing_dir == 1:
-                        return 1, tree_[nodeid].right_nodeid
-                    else:
-                        return 1, tree_[nodeid].left_nodeid
-                else:
-                    if value[0].features.get_data(fid, bin_sparse_points[fid]) <= bid:
-                        return 1, tree_[nodeid].left_nodeid
-                    else:
-                        return 1, tree_[nodeid].right_nodeid
+
+            next_layer_nid = HeteroFastDecisionTreeHost.go_next_layer(tree_[nodeid], value[0], use_missing,
+                                                                      zero_as_missing, bin_sparse_points)
+
+            return 1, next_layer_nid
+
         else:
             # this branch is for fast histogram
             # will get scipy sparse matrix if using fast histogram
