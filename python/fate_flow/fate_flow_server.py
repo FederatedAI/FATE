@@ -18,7 +18,6 @@ import signal
 import sys
 import time
 import traceback
-import atexit
 
 import grpc
 from flask import Flask
@@ -104,7 +103,6 @@ if __name__ == '__main__':
     RuntimeConfig.set_process_role(ProcessRole.DRIVER)
     PrivilegeAuth.init()
     service_db().register_models()
-    atexit.register(service_db().unregister_models)
     ResourceManager.initialize()
     Detector(interval=5 * 1000).start()
     DAGScheduler(interval=2 * 1000).start()

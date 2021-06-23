@@ -1,4 +1,5 @@
 import abc
+import atexit
 from urllib import parse
 
 from kazoo.client import KazooClient
@@ -194,31 +195,30 @@ class ZooKeeperDB(ServicesDB):
             client_kwargs['auth_data'] = [('digest', ':'.join([username, password]))]
 
         try:
+            # `KazooClient` is thread-safe, it contains `_thread.RLock` and can not be pickle.
+            # So be careful when using `self.client` outside the class.
             self.client = KazooClient(**client_kwargs)
+            self.client.start()
         except ZookeeperError as e:
             raise ZooKeeperBackendError(None, repr(e))
 
+        atexit.register(self.client.stop)
+
     def _insert(self, service_name, service_url):
         try:
-            self.client.start()
-            self.client.create(self._get_znode_path(service_name, service_url), makepath=True)
+            self.client.create(self._get_znode_path(service_name, service_url), ephemeral=True, makepath=True)
         except NodeExistsError:
             pass
         except ZookeeperError as e:
             raise ZooKeeperBackendError(None, repr(e))
-        finally:
-            self.client.stop()
 
     def _delete(self, service_name, service_url):
         try:
-            self.client.start()
             self.client.delete(self._get_znode_path(service_name, service_url))
         except NoNodeError:
             pass
         except ZookeeperError as e:
             raise ZooKeeperBackendError(None, repr(e))
-        finally:
-            self.client.stop()
 
     def _get_znode_path(self, service_name, service_url):
         """Get the znode path by service_name.
@@ -237,12 +237,9 @@ class ZooKeeperDB(ServicesDB):
 
     def _get_urls(self, service_name):
         try:
-            self.client.start()
             urls = self.client.get_children(self.znodes[service_name])
         except ZookeeperError as e:
             raise ZooKeeperBackendError(None, repr(e))
-        finally:
-            self.client.stop()
 
         # remove prefix and unescape the url
         return [parse.unquote(url.rsplit('/', 1)[-1]) for url in urls]

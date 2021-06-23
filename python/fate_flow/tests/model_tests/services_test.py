@@ -91,10 +91,8 @@ class TestZooKeeperDB(unittest.TestCase):
         self.service_db._delete('servings', 'http://foo/bar')
         self.service_db._insert('servings', 'http://foo/bar')
 
-        self.service_db.client.start()
         with self.assertRaises(NodeExistsError):
             self.service_db.client.create(self.service_db._get_znode_path('servings', 'http://foo/bar'), makepath=True)
-        self.service_db.client.stop()
 
         self.service_db._insert('servings', 'http://foo/bar')
         self.service_db._delete('servings', 'http://foo/bar')
@@ -102,12 +100,18 @@ class TestZooKeeperDB(unittest.TestCase):
     def test_delete_not_exists_node(self):
         self.service_db._delete('servings', 'http://foo/bar')
 
-        self.service_db.client.start()
         with self.assertRaises(NoNodeError):
             self.service_db.client.delete(self.service_db._get_znode_path('servings', 'http://foo/bar'))
-        self.service_db.client.stop()
 
         self.service_db._delete('servings', 'http://foo/bar')
+
+    def test_connection_closed(self):
+        self.service_db._insert('fateflow', model_download_url)
+        self.assertIn(model_download_url, self.service_db.get_urls('fateflow'))
+
+        self.service_db.client.stop()
+        self.service_db.client.start()
+        self.assertNotIn(model_download_url, self.service_db.get_urls('fateflow'))
 
     def test_register_models(self):
         try:
