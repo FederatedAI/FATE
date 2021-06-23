@@ -169,8 +169,8 @@ class FederatedScheduler(object):
         return cls.task_command(job=job, task=task, command="create", command_body=task.to_human_model_dict())
 
     @classmethod
-    def start_task(cls, job, task, task_parameters):
-        return cls.task_command(job=job, task=task, command="start", command_body=task_parameters)
+    def start_task(cls, job, task):
+        return cls.task_command(job=job, task=task, command="start", command_body={}, need_user=True)
 
     @classmethod
     def collect_task(cls, job, task):
@@ -219,7 +219,7 @@ class FederatedScheduler(object):
         return status_code, response
 
     @classmethod
-    def task_command(cls, job, task, command, command_body=None):
+    def task_command(cls, job, task, command, command_body=None, need_user=False):
         federated_response = {}
         job_parameters = job.f_runtime_conf_on_party["job_parameters"]
         dsl_parser = schedule_utils.get_job_dsl_parser(dsl=job.f_dsl, runtime_conf=job.f_runtime_conf_on_party, train_runtime_conf=job.f_train_runtime_conf)
@@ -230,6 +230,10 @@ class FederatedScheduler(object):
             for parameters_on_party in parameters_on_partys:
                 dest_party_id = parameters_on_party.get('local', {}).get('party_id')
                 try:
+                    if need_user:
+                        command_body["user_id"] = job.f_user.get(dest_role, {}).get(str(dest_party_id), "")
+                        schedule_logger(job_id=job.f_job_id).info(f'user:{job.f_user}, dest_role:{dest_role}, dest_party_id:{dest_party_id}')
+                        schedule_logger(job_id=job.f_job_id).info(f'command_body: {command_body}')
                     response = federated_api(job_id=task.f_job_id,
                                              method='POST',
                                              endpoint='/party/{}/{}/{}/{}/{}/{}/{}'.format(

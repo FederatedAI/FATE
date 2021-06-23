@@ -51,8 +51,14 @@ class JobController(object):
         job_parameters = dsl_parser.get_job_parameters().get(role, {}).get(party_id, {})
         schedule_logger(job_id).info('job parameters:{}'.format(job_parameters))
         dest_user = dsl_parser.get_job_parameters().get(role, {}).get(party_id, {}).get("user", '')
+        user = {}
         src_user = dsl_parser.get_job_parameters().get(job_info.get('src_role'), {}).get(
-            int(job_info.get('src_party_id')), {}).get("user", '')
+            int(job_info.get('src_party_id', 0)), {}).get("user", '')
+        for _role, party_id_item in dsl_parser.get_job_parameters().items():
+            user[_role] = {}
+            for _party_id, _parameters in party_id_item.items():
+                user[_role][_party_id] = _parameters.get("user", "")
+        schedule_logger(job_id).info('job user:{}'.format(user))
         if USE_DATA_AUTHENTICATION:
             job_args = dsl_parser.get_args_input()
             schedule_logger(job_id).info('job args:{}'.format(job_args))
@@ -73,6 +79,7 @@ class JobController(object):
         job_info["status"] = JobStatus.WAITING
         job_info["user_id"] = dest_user
         job_info["src_user"] = src_user
+        job_info["user"] = user
         # this party configuration
         job_info["role"] = role
         job_info["party_id"] = party_id

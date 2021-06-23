@@ -116,6 +116,8 @@ def get_federated_proxy_address(src_party_id, dest_party_id):
 def federated_coordination_on_http(job_id, method, host, port, endpoint, src_party_id, src_role, dest_party_id, json_body, api_version=API_VERSION, overall_timeout=DEFAULT_REMOTE_REQUEST_TIMEOUT, try_times=3):
     endpoint = f"/{api_version}{endpoint}"
     exception = None
+    json_body['src_role'] = src_role
+    json_body['src_party_id'] = src_party_id
     for t in range(try_times):
         try:
             url = "http://{}:{}{}".format(host, port, endpoint)

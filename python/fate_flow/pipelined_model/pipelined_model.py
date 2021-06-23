@@ -60,7 +60,8 @@ class PipelinedModel(object):
         model_proto_index = {}
         component_model = {"buffer": {}}
         component_model_storage_path = os.path.join(self.variables_data_path, component_name, model_alias)
-        os.makedirs(component_model_storage_path, exist_ok=True)
+        if not tracker_client:
+            os.makedirs(component_model_storage_path, exist_ok=True)
         for model_name, buffer_object in model_buffers.items():
             storage_path = os.path.join(component_model_storage_path, model_name)
             buffer_object_serialized_string = buffer_object.SerializeToString()

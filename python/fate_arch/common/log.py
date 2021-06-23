@@ -34,6 +34,7 @@ class LoggerFactory(object):
 
     LOG_DIR = None
     PARENT_LOG_DIR = None
+    log_share = True
 
     append_to_parent_log = None
 
@@ -60,7 +61,12 @@ class LoggerFactory(object):
                 directory = os.path.join(file_utils.get_project_base_directory(), 'logs')
             if not LoggerFactory.LOG_DIR or force:
                 LoggerFactory.LOG_DIR = directory
-            os.makedirs(LoggerFactory.LOG_DIR, exist_ok=True)
+            if LoggerFactory.log_share:
+                oldmask = os.umask(000)
+                os.makedirs(LoggerFactory.LOG_DIR, exist_ok=True)
+                os.umask(oldmask)
+            else:
+                os.makedirs(LoggerFactory.LOG_DIR, exist_ok=True)
             for loggerName, ghandler in LoggerFactory.global_handler_dict.items():
                 for className, (logger, handler) in LoggerFactory.logger_dict.items():
                     logger.removeHandler(ghandler)
@@ -121,11 +127,18 @@ class LoggerFactory(object):
             formatter = logging.Formatter(LoggerFactory.JOB_LOG_FORMAT.replace("jobid", job_id))
         else:
             formatter = logging.Formatter(LoggerFactory.LOG_FORMAT)
-        handler = TimedRotatingFileHandler(log_file,
-                                           when='D',
-                                           interval=1,
-                                           backupCount=14,
-                                           delay=True)
+        if LoggerFactory.log_share:
+            handler = ROpenHandler(log_file,
+                                   when='D',
+                                   interval=1,
+                                   backupCount=14,
+                                   delay=True)
+        else:
+            handler = TimedRotatingFileHandler(log_file,
+                                               when='D',
+                                               interval=1,
+                                               backupCount=14,
+                                               delay=True)
 
         if level:
             handler.level = level
@@ -176,8 +189,14 @@ class LoggerFactory(object):
                 log_dirs = [job_log_dir, fate_flow_log_dir]
             else:
                 log_dirs = [job_log_dir]
-        os.makedirs(job_log_dir, exist_ok=True)
-        os.makedirs(fate_flow_log_dir, exist_ok=True)
+        if LoggerFactory.log_share:
+            oldmask = os.umask(000)
+            os.makedirs(job_log_dir, exist_ok=True)
+            os.makedirs(fate_flow_log_dir, exist_ok=True)
+            os.umask(oldmask)
+        else:
+            os.makedirs(job_log_dir, exist_ok=True)
+            os.makedirs(fate_flow_log_dir, exist_ok=True)
         logger = logging.getLogger('{}_{}'.format(job_id, log_type))
         logger.setLevel(LoggerFactory.LEVEL)
         for job_log_dir in log_dirs:
@@ -250,3 +269,11 @@ def detect_logger(job_id='', log_type='detect'):
 
 def exception_to_trace_string(ex):
     return "".join(traceback.TracebackException.from_exception(ex).format())
+
+
+class ROpenHandler(TimedRotatingFileHandler):
+    def _open(self):
+        prevumask = os.umask(000)
+        rtv = TimedRotatingFileHandler._open(self)
+        os.umask(prevumask)
+        return rtv
