@@ -47,7 +47,7 @@ Algorithm List
 
    * - `DataIO`_
      - DataIO
-     - This component transforms user-uploaded date into Instance object(deprecate in FATe-v1.7, use DataTransform instead).
+     - This component transforms user-uploaded data into Instance object(deprecate in FATe-v1.7, use DataTransform instead).
      - Table, values are raw data.
      - Transformed Table, values are data instance defined `here <./feature/instance.py>`_
      -
@@ -55,7 +55,7 @@ Algorithm List
 
    * - `DataTransform`_
      - DataTransform
-     - This component transforms user-uploaded date into Instance object.
+     - This component transforms user-uploaded data into Instance object.
      - Table, values are raw data.
      - Transformed Table, values are data instance defined `here <./feature/instance.py>`_
      -
