@@ -72,12 +72,17 @@ class RawIntersect(Intersect):
             if self.sync_cardinality:
                 if self.role == consts.GUEST:
                     cardinality_federation = self.transfer_variable.cardinality_host
+                    if len(self.host_party_id_list) > 1:
+                        raise ValueError(f"For multi-host raw intersection cardinality task,"
+                                         f"when sync_cardinality is True, join_role must be Guest")
                 elif self.role == consts.HOST:
                     cardinality_federation = self.transfer_variable.cardinality_guest
                 else:
                     raise ValueError("Unknown intersect role, please check the code")
                 cardinality = cardinality_federation.get(idx=-1)
                 LOGGER.info("Get intersect cardinality from role-join!")
+                if isinstance(cardinality, list):
+                   cardinality = cardinality[0]
             else:
                 LOGGER.info("Skip sync intersect cardinality with role-join.")
             return cardinality
@@ -166,6 +171,9 @@ class RawIntersect(Intersect):
                 elif self.role == consts.HOST:
                     cardinality_federation = self.transfer_variable.cardinality_host
                     send_role = consts.GUEST
+                    if len(self.host_party_id_list) > 1:
+                        raise ValueError(f"For multi-host cardinality case, "
+                                         f"when sync_cardinality is True, join_role must be Guest")
                 else:
                     raise ValueError("Unknown intersect role, please check the code")
                 cardinality_federation.remote(cardinality,
