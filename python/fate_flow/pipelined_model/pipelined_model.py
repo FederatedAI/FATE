@@ -52,10 +52,24 @@ class PipelinedModel(object):
         self.variables_index_path = os.path.join(self.model_path, "variables", "index")
         self.variables_data_path = os.path.join(self.model_path, "variables", "data")
         self.default_archive_format = "zip"
-        self.lock = FileLock(os.path.join(self.model_path, ".lock"))
+        self.lock = self._lock
+
+    @property
+    def _lock(self):
+        return FileLock(os.path.join(self.model_path, ".lock"))
 
     def __deepcopy__(self, memo):
         return self
+
+    # https://docs.python.org/3/library/pickle.html#handling-stateful-objects
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state.pop('lock')
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self.lock = self._lock
 
     def create_pipelined_model(self):
         if self.exists():
