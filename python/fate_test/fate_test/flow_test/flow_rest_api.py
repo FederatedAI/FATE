@@ -474,8 +474,8 @@ class TestModel(Base):
             except Exception:
                 return
 
-    def model_api(self, command, output_path=None, remove_path=None, model_path=None, arbiter_party_id=None,
-                  tag_name=None):
+    def model_api(self, command, output_path=None, remove_path=None, model_path=None, homo_deploy_path=None,
+                  homo_deploy_kube_config_path=None, arbiter_party_id=None, tag_name=None):
         if command == 'model/load':
             post_data = {
                 "job_id": self.job_id
@@ -595,6 +595,29 @@ class TestModel(Base):
                 if response.status_code == 200:
                     if response.json().get('retcode'):
                         self.error_log('model homo convert: {}'.format(response.json().get('retmsg')) + '\n')
+                    return response.json().get("retcode")
+            except Exception:
+                return
+
+        elif command == 'model/homo/deploy':
+            job_data = {
+                "model_id": self.model_id,
+                "model_version": self.model_version,
+                "role": "guest",
+                "party_id": self.guest_party_id[0],
+                "component_name": self.component_name
+            }
+            config_data = get_dict_from_file(homo_deploy_path)
+            config_data.update(job_data)
+            if homo_deploy_kube_config_path:
+                with open(homo_deploy_kube_config_path, 'r') as fp:
+                    config_data['deployment_parameters']['config_file_content'] = fp.read()
+                config_data['deployment_parameters'].pop('config_file', None)
+            try:
+                response = requests.post("/".join([self.server_url, "model", "homo/deploy"]), json=config_data)
+                if response.status_code == 200:
+                    if response.json().get('retcode'):
+                        self.error_log('model homo deploy: {}'.format(response.json().get('retmsg')) + '\n')
                     return response.json().get("retcode")
             except Exception:
                 return
@@ -823,7 +846,13 @@ def run_test_api(config_json):
     model.set_style(ORGMODE)
     model.field_names = ['model api name', 'status']
     if config_json.get('component_is_homo'):
+        homo_deploy_path = config_json.get('homo_deploy_path')
+        homo_deploy_kube_config_path = config_json.get('homo_deploy_kube_config_path')
         model.add_row(['model homo convert', judging_state(test_api.model_api('model/homo/convert'))])
+        model.add_row(['model homo deploy',
+                       judging_state(test_api.model_api('model/homo/deploy',
+                                                        homo_deploy_path=homo_deploy_path,
+                                                        homo_deploy_kube_config_path=homo_deploy_kube_config_path))])
     else:
         model.add_row(['model load', judging_state(test_api.model_api('model/load'))])
         model.add_row(['model bind', judging_state(test_api.model_api('model/bind'))])
