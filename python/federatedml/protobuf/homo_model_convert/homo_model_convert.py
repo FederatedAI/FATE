@@ -34,6 +34,9 @@ def _get_component_converter(module_name: str,
         framework_name = "pytorch"
     elif framework_name in ["sklearn", "scikit-learn"]:
         framework_name = "sklearn"
+    elif framework_name in ['lightgbm', 'lgb']:
+        framework_name = 'lightgbm'
+
     package_name = "." + framework_name
     parent_package = importlib.import_module(package_name, __package__)
     parent_package_path = os.path.dirname(os.path.realpath(parent_package.__file__))
@@ -69,6 +72,8 @@ def get_default_target_framework(model_contents: dict,
             framework_name = "pytorch"
         else:
             framework_name = "tf_keras"
+    elif module_name == 'HomoSBT':
+        framework_name = 'lightgbm'
     else:
         LOGGER.debug(f"Module {module_name} is not a supported homogeneous model")
     return framework_name
