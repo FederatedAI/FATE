@@ -582,10 +582,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
                                   is_left_node=False,
                                   parent_nodeid=pid)
 
-                LOGGER.debug('cwj node {}'.format(left_node))
-                LOGGER.debug('cwj node {}'.format(right_node))
-                LOGGER.debug('cwj gain {}'.format(split_info[i].gain))
-
                 new_tree_node_queue.append(left_node)
                 new_tree_node_queue.append(right_node)
 
