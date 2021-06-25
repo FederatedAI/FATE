@@ -6,7 +6,6 @@ from federatedml.ensemble.boosting.hetero import hetero_fast_secureboost_plan as
 from federatedml.util import consts
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.splitter import SplitInfo
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.node import Node
-from sklearn.ensemble._hist_gradient_boosting.grower import HistogramBuilder
 from federatedml.feature.fate_element_type import NoneType
 from federatedml.util import LOGGER
 
