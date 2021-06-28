@@ -25,23 +25,31 @@ from pipeline.param import consts
 class SecureInformationRetrievalParam(BaseParam):
     """
     security_level: float [0, 1]; if security_level == 0, then do raw data retrieval
+
     oblivious_transfer_protocol: OT type, only supports OT_Hauck
+
     commutative_encryption: the commutative encryption scheme used, only supports CommutativeEncryptionPohligHellman
+
     non_committing_encryption: the non-committing encryption scheme used, only supports aes
+
     ph_params: params for Pohlig-Hellman Encryption
-    key_size: int >= 768, the key length of the commutative cipher, note that this param will be deprecated in future,
-        for this version, key_size takes priority over `key_length` in ph_params, default 1024
+
+    key_size: int >= 768, the key length of the commutative cipher;
+        note that this param will be deprecated in future, please specify key_length in PHParam instead.
+
     raw_retrieval: bool, perform raw retrieval if raw_retrieval
+
     target_cols: str or list of str, target cols to retrieve;
         any values not retrieved will be marked as "unretrieved",
         if target_cols is None, label will be retrieved, same behavior as in previous version
         default None
+
     """
     def __init__(self, security_level=0.5,
                  oblivious_transfer_protocol=consts.OT_HAUCK,
                  commutative_encryption=consts.CE_PH,
                  non_committing_encryption=consts.AES,
-                 key_size=1024,
+                 key_size=consts.DEFAULT_KEY_LENGTH,
                  ph_params=PHParam(),
                  raw_retrieval=False,
                  target_cols=None):

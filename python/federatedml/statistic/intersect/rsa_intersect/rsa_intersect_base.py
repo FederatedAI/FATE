@@ -16,6 +16,7 @@
 
 import random
 
+from federatedml.param.intersect_param import DEFAULT_RANDOM_BIT
 from federatedml.secureprotol import gmpy_math
 from federatedml.secureprotol.encrypt import RsaEncrypt
 from federatedml.secureprotol.hash.hash_factory import Hash
@@ -44,8 +45,10 @@ class RsaIntersect(Intersect):
         # self.only_output_key = param.only_output_key
         # self.sync_intersect_ids = param.sync_intersect_ids
         super().load_params(param=param)
-        self.random_bit = param.random_bit
         self.rsa_params = param.rsa_params
+        self.random_bit = self.rsa_params.random_bit
+        if param.random_bit is not None and self.random_bit == DEFAULT_RANDOM_BIT:
+            self.random_bit = param.random_bit
         self.split_calculation = self.rsa_params.split_calculation
         self.random_base_fraction = self.rsa_params.random_base_fraction
         self.first_hash_operator = Hash(self.rsa_params.hash_method, False)

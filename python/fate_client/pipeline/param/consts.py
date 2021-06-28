@@ -305,3 +305,5 @@ SELECTIVE_SIZE = 1024
 # intersect join methods
 INNER_JOIN = "inner_join"
 LEFT_JOIN = "left_join"
+
+DEFAULT_KEY_LENGTH = 1024

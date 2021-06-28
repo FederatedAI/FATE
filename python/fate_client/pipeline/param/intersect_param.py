@@ -21,6 +21,8 @@ import copy
 from pipeline.param.base_param import BaseParam
 from pipeline.param import consts
 
+DEFAULT_RANDOM_BIT = 128
+
 
 class EncodeParam(BaseParam):
     """
@@ -81,10 +83,13 @@ class RSAParam(BaseParam):
 
     key_length: positive int, bit count of rsa key, default 1024
 
+    random_bit: positive int, it will define the size of blinding factor in rsa algorithm, default 128
+
     """
 
     def __init__(self, salt='', hash_method='sha256',  final_hash_method='sha256',
-                 split_calculation=False, random_base_fraction=None, key_length=1024):
+                 split_calculation=False, random_base_fraction=None, key_length=consts.DEFAULT_KEY_LENGTH,
+                 random_bit=DEFAULT_RANDOM_BIT):
         super().__init__()
         self.salt = salt
         self.hash_method = hash_method
@@ -92,6 +97,7 @@ class RSAParam(BaseParam):
         self.split_calculation = split_calculation
         self.random_base_fraction = random_base_fraction
         self.key_length = key_length
+        self.random_bit = random_bit
 
     def check(self):
         if type(self.salt).__name__ != "str":
@@ -122,6 +128,9 @@ class RSAParam(BaseParam):
         descr = "rsa param's key_length"
         self.check_positive_integer(self.key_length, descr)
 
+        descr = "rsa params' random_bit"
+        self.check_positive_integer(self.random_bit, descr)
+
         return True
 
 
@@ -140,7 +149,7 @@ class PHParam(BaseParam):
 
     """
 
-    def __init__(self, salt='', hash_method='sha256', key_length=1024):
+    def __init__(self, salt='', hash_method='sha256', key_length=consts.DEFAULT_KEY_LENGTH):
         super().__init__()
         self.salt = salt
         self.hash_method = hash_method
@@ -196,7 +205,8 @@ class IntersectParam(BaseParam):
     ----------
     intersect_method: str, it supports 'rsa' and 'raw', default by 'raw'
 
-    random_bit: positive int, it will define the encrypt length of rsa algorithm. It effective only for intersect_method is rsa
+    random_bit: positive int, it will define the size of blinding factor in rsa algorithm, default 128
+        note that this param will be deprecated in future, please use random_bit in RSAParam instead.
 
     sync_intersect_ids: bool. In rsa, 'synchronize_intersect_ids' is True means guest or host will send intersect results to the others, and False will not.
                             while in raw, 'synchronize_intersect_ids' is True means the role of "join_role" will send intersect results and the others will get them.
