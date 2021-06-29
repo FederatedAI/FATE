@@ -18,15 +18,15 @@ This document describes the deployment of FATE clusters by using the ansible dep
 
 ### 1.2 Component Description
 
-| Software| Component| Port| Description
-|----------|----------|----------|----------
-| fate| fate\_flow| 9360; 9380| The management module of federated learning task flow
-| fate| fateboard| 8080| The visualization module of federated learning process
-| fate| FederatedML| | The algorithm code package
-| eggroll| clustermanager| 4670| The cluster manager manages clusters
-| eggroll| nodemanger| 4671| The node manager manages the resources of each machine
-| eggroll| rollsite| 9370| The cross-site/party communication component
-| mysql| mysql| 3306| The data storage, relied on by clustermanager and fateflow
+| Software| Component| Port| Description |
+|----------|----------|----------|---------- |
+| fate| fate\_flow| 9360; 9380| The management module of federated learning task flow |
+| fate| fateboard| 8080| The visualization module of federated learning process|
+| fate| FederatedML| | The algorithm code package |
+| eggroll| clustermanager| 4670| The cluster manager manages clusters|
+| eggroll| nodemanger| 4671| The node manager manages the resources of each machine|
+| eggroll| rollsite| 9370| The cross-site/party communication component|
+| mysql| mysql| 3306| The data storage, relied on by clustermanager and fateflow|
 
 ### 1.3 System Architecture
 
@@ -38,10 +38,10 @@ This document describes the deployment of FATE clusters by using the ansible dep
 
 In this example, there is only one host on each end (in real scenario, there can be more than one). Multi-node deployment is currently supported only for nodemanager. For all other components, single-node deployment is supported.
 
-| role| partyid| IP Address| Operating System| Host Configuration| Storage| Deployment Module
-|----------|----------|----------|----------|----------|----------|----------
-| host| 10000| 192.168.0.1 (with extranet)| CentOS 7.2/Ubuntu 18.04| 8C, 16G| 500G| fate\_flow, fateboard, clustermanager, nodemanger, rollsite, mysql
-| guest| 9999| 192.168.0.2| CentOS 7.2/Ubuntu 18.04| 8C, 16G| 500G| fate\_flow, fateboard, clustermanager, nodemanger, rollsite, mysql
+| role| partyid| IP Address| Operating System| Host Configuration| Storage| Deployment Module|
+|----------|----------|----------|----------|----------|----------|----------|
+| host| 10000| 192.168.0.1 (with extranet)| CentOS 7.2/Ubuntu 18.04| 8C, 16G| 500G| fate\_flow, fateboard, clustermanager, nodemanger, rollsite, mysql|
+| guest| 9999| 192.168.0.2| CentOS 7.2/Ubuntu 18.04| 8C, 16G| 500G| fate\_flow, fateboard, clustermanager, nodemanger, rollsite, mysql|
 
 Note: When describing exchange, we use 192.168.0.88 as its IP. But, the deployment of exchange is not covered in this example.
 

@@ -2,21 +2,21 @@
 
 # 1\. Server Configuration
 
-| Server| 
-|:----------:|----------
-| Quantities| 1 or 2
-| Configuration| 8 cores /16GB memory / 500GB hard disk / 10M bandwidth
-| Operating System| CentOS Linux 7.2+/Ubuntu 18.04
-| Dependency Package| Installed automatically during deployment
-| User| User: app, Owner: apps (the app user should be able to execute sudo su root without entering a password)
-| File System| 1\. Mount the 500G hard disk in the /data directory; 2. Create the /data/projects directory with the directory owner of app:apps
+| Server|                |
+|:----------:|---------- |
+| Quantities| 1 or 2 .   |
+| Configuration| 8 cores /16GB memory / 500GB hard disk / 10M bandwidth |
+| Operating System| CentOS Linux 7.2+/Ubuntu 18.04 |
+| Dependency Package| Installed automatically during deployment |
+| User| User: app, Owner: apps (the app user should be able to execute sudo su root without entering a password) |
+| File System| 1\. Mount the 500G hard disk in the /data directory; 2. Create the /data/projects directory with the directory owner of app:apps |
 
 # 2\. Cluster Planning
 
-| Party| Hostname| IP Address| Operating System| Installed Software| Service
-|----------|----------|----------|----------|----------|----------
-| PartyA| VM\_0\_1\_centos| 192.168.0.1| CentOS 7.2/Ubuntu 18.04| fate, eggroll, mysql| fate\_flow, fateboard, clustermanager, nodemanager, rollsite, mysql
-| PartyB| VM\_0\_2\_centos| 192.168.0.2| CentOS 7.2/Ubuntu 18.04| fate, eggroll, mysql| fate\_flow, fateboard, clustermanager, nodemanager, rollsite, mysql
+| Party| Hostname| IP Address| Operating System| Installed Software| Service |
+|----------|----------|----------|----------|----------|---------- |
+| PartyA| VM\_0\_1\_centos| 192.168.0.1| CentOS 7.2/Ubuntu 18.04| fate, eggroll, mysql| fate\_flow, fateboard, clustermanager, nodemanager, rollsite, mysql |
+| PartyB| VM\_0\_2\_centos| 192.168.0.2| CentOS 7.2/Ubuntu 18.04| fate, eggroll, mysql| fate\_flow, fateboard, clustermanager, nodemanager, rollsite, mysql |
 
 The architecture diagram:
 
