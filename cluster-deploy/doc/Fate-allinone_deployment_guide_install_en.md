@@ -21,8 +21,9 @@
 The architecture diagram:
 
 <div style="text-align:center", align=center>
-<img src="../images/arch_zh.png" />
+<img src="../images/arch_en.png" />
 </div>
+
 # 3\. Component Description
 
 | Software| Component| Port| Description
@@ -694,4 +695,4 @@ The parameters used by the job can be specified with the job parameters in job c
 1. egg\_num: configure task\_cores or configure processors\_per\_node parameter in eggroll\_run
 2. partitions: configure computing\_partitions
 
-For more information about configuring job submission, refer to [dsl\_conf\_v2\_setting\_guide\_zh](../../doc/dsl_conf_v2_setting_guide_zh.rst)
+For more information about configuring job submission, refer to [dsl\_conf\_v2\_setting\_guide](../../doc/dsl_conf_v2_setting_guide.rst)

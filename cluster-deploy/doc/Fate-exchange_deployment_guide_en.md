@@ -22,6 +22,7 @@ The architecture diagram:
 <div style="text-align:center", align=center>
 <img src="../images/proxy_en.png" />
 </div>
+
 # 3\. Component Description
 
 | Software| Component| Port| Description
@@ -190,7 +191,9 @@ EOF
 
 - Modify the rollsite IP and port of the corresponding party, and the party id of this party. For the rollsite port, the default value can be used.
   
-  eggroll.rollsite.host: 192.168.0.1 eggroll.rollsite.port: 9370 eggroll.rollsite.party.id: exchange
+  eggroll.rollsite.host: 192.168.0.1
+  eggroll.rollsite.port: 9370
+  eggroll.rollsite.party.id: exchange
 
 These parameters can be manually configured by referring to the following example or by using the following commands:
 
