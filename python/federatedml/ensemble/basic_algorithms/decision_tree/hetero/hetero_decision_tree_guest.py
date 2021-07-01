@@ -142,10 +142,13 @@ class HeteroDecisionTreeGuest(DecisionTree):
         # initializing goss settings
         if self.run_goss:
             self.encrypted_mode_calculator.align_to_input_data = False
+
             if self.encrypted_mode_calculator.mode != 'strict':
-                self.encrypted_mode_calculator.init_enc_zero(self.grad_and_hess,
-                                                             raw_en=self.run_cipher_compressing, exponent=0)
-                LOGGER.info('fast/balance encrypt mode, initialize enc zeros for goss sampling')
+                if self.encrypted_mode_calculator.enc_zeros is None:
+                    self.encrypted_mode_calculator.init_enc_zero(self.grad_and_hess,
+                                                                 raw_en=self.run_cipher_compressing, exponent=0)
+                    LOGGER.info('fast/balance encrypt mode, initialize enc zeros for goss sampling')
+
             self.goss_sampling()
             self.max_sample_weight = self.max_sample_weight * ((1 - top_rate) / other_rate)
 

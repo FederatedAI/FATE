@@ -51,6 +51,7 @@ class EncryptModeCalculator(object):
         self.soft_link_mode()
 
     def soft_link_mode(self):
+
         if self.mode == "strict":
             return
 
