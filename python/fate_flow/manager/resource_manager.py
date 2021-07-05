@@ -17,7 +17,7 @@
 import math
 import typing
 
-from fate_arch.common import EngineType
+from fate_arch.common import EngineType, Backend
 from fate_arch.common import base_utils
 from fate_arch.common.conf_utils import get_base_config
 from fate_arch.common.log import schedule_logger
@@ -227,7 +227,10 @@ class ResourceManager(object):
                                                           role=role,
                                                           party_id=party_id)
             job_parameters = RunParameters(**job_parameters)
-        if role in IGNORE_RESOURCE_ROLES and job_parameters.computing_engine in SUPPORT_IGNORE_RESOURCE_ENGINES:
+        if job_parameters.backend == Backend.LINKIS_SPARK_RABBITMQ:
+            cores = 0
+            memory = 0
+        elif role in IGNORE_RESOURCE_ROLES and job_parameters.computing_engine in SUPPORT_IGNORE_RESOURCE_ENGINES:
             cores = 0
             memory = 0
         else:
@@ -244,7 +247,10 @@ class ResourceManager(object):
                                                           role=task_info["role"],
                                                           party_id=task_info["party_id"])
             task_parameters = RunParameters(**job_parameters)
-        if task_info["role"] in IGNORE_RESOURCE_ROLES and task_parameters.computing_engine in SUPPORT_IGNORE_RESOURCE_ENGINES:
+        if task_parameters.backend == Backend.LINKIS_SPARK_RABBITMQ:
+            cores_per_task = 0
+            memory_per_task = 0
+        elif task_info["role"] in IGNORE_RESOURCE_ROLES and task_parameters.computing_engine in SUPPORT_IGNORE_RESOURCE_ENGINES:
             cores_per_task = 0
             memory_per_task = 0
         else:
@@ -265,7 +271,7 @@ class ResourceManager(object):
     @classmethod
     def resource_for_task(cls, task_info, operation_type):
         cores_per_task, memory_per_task = cls.calculate_task_resource(task_info=task_info)
-
+        schedule_logger(job_id=task_info["job_id"]).info(f"cores_per_task:{cores_per_task}, memory_per_task:{memory_per_task}")
         if cores_per_task or memory_per_task:
             filters, updates = cls.update_resource_sql(resource_model=Job,
                                                        cores=cores_per_task,

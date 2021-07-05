@@ -25,7 +25,8 @@ from fate_flow.settings import USE_AUTHENTICATION, PRIVILEGE_COMMAND_WHITELIST, 
 
 class PrivilegeAuth(object):
     privilege_cache = {}
-    local_storage_file = ''
+    file_dir = os.path.join(file_utils.get_python_base_directory(), 'fate_flow')
+    local_storage_file = os.path.join(file_dir, 'authorization_config.json')
     USE_LOCAL_STORAGE = True
     ALL_PERMISSION = {'privilege_role': ['guest', 'host', 'arbiter'],
                       'privilege_command': ['create', 'stop', 'run'],

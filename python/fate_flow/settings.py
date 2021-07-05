@@ -100,19 +100,20 @@ FATE_BOARD_DASHBOARD_ENDPOINT = "/index.html#/dashboard?job_id={}&role={}&party_
 # linkis spark config
 LINKIS_EXECUTE_ENTRANCE = "/api/rest_j/v1/entrance/execute"
 LINKIS_KILL_ENTRANCE = "/api/rest_j/v1/entrance/execID/kill"
-# LINKIS_SUBMIT_PARAMS = {
-#     "configuration": {
-#         "startup": {
-#             "spark.python.version": "/data/anaconda3/bin/python",
-#             "archives": "hdfs:///apps-data/johnnwang/fate/python.zip#python,hdfs:///apps-data/fate/fate_host.zip#fate_host",
-#             "spark.executorEnv.PYTHONPATH": "./fate_host/python:$PYTHONPATH",
-#             "wds.linkis.rm.yarnqueue": "dws",
-#             "spark.pyspark.python": "python/bin/python"
-#         }
-#     }
-# }
-LINKIS_SUBMIT_PARAMS = {}
+LINKIS_QUERT_STATUS = "/api/rest_j/v1/entrance/execID/status"
+LINKIS_SUBMIT_PARAMS = {
+     "configuration": {
+        "startup": {
+            "spark.python.version": "/data/anaconda3/bin/python",
+            "archives": "hdfs:///apps-data/fate/python.zip#python,hdfs:///apps-data/fate/fate_guest.zip#fate_guest",
+            "spark.executorEnv.PYTHONPATH": "./fate_guest/python:$PYTHONPATH",
+            "wds.linkis.rm.yarnqueue": "dws",
+            "spark.pyspark.python": "python/bin/python"
+        }
+    }
+}
 LINKIS_RUNTYPE = "py"
+LINKIS_LABELS = {"tenant": "fate"}
 # Logger
 log.LoggerFactory.LEVEL = 10
 # {CRITICAL: 50, FATAL:50, ERROR:40, WARNING:30, WARN:30, INFO:20, DEBUG:10, NOTSET:0}

@@ -180,6 +180,11 @@ class EndStatus(BaseStatus):
     SUCCESS = StatusSet.SUCCESS
 
 
+class LinkisJobStatus(BaseStatus):
+    FAILED = "Failed"
+    SUCCESS = "Success"
+
+
 class ModelStorage(object):
     REDIS = "redis"
     MYSQL = "mysql"

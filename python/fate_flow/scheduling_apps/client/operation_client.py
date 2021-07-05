@@ -22,7 +22,6 @@ LOGGER = log.getLogger()
 class OperationClient(object):
     @classmethod
     def get_job_conf(cls, job_id, role):
-        LOGGER.info(f"request get job conf: job_id {job_id}, role {role}")
         response = api_utils.local_api(
             job_id=job_id,
             method='POST',
@@ -33,7 +32,6 @@ class OperationClient(object):
 
     @classmethod
     def load_json_conf(cls, job_id, config_path):
-        LOGGER.info(f"request load json conf: {config_path}")
         response = api_utils.local_api(
             job_id=job_id,
             method='POST',

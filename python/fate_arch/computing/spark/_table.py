@@ -64,10 +64,9 @@ class Table(CTableABC):
             #     .repartition(partitions)
             #     .toDF()
             # )
-            tmp = self._rdd.map(lambda x: hive_utils.to_row(x[0], x[1])).cache()
-            tmp.count()
-            df = tmp.toDF()
-            df.write.saveAsTable(f"{address.database}.{address.name}")
+            LOGGER.debug(f"partitions: {partitions}")
+            _repartition = self._rdd.map(lambda x: hive_utils.to_row(x[0], x[1])).repartition(partitions)
+            _repartition.toDF().write.saveAsTable(f"{address.database}.{address.name}")
             schema.update(self.schema)
             return
         raise NotImplementedError(

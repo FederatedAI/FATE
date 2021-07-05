@@ -13,13 +13,16 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import requests
+
 from fate_arch import storage
 from fate_arch.common.base_utils import current_timestamp
 from fate_flow.db.db_models import DB, Job
 from fate_arch.storage import StorageSessionBase
 from fate_arch.common.log import detect_logger
 from fate_flow.scheduler.federated_scheduler import FederatedScheduler
-from fate_flow.entity.types import JobStatus, TaskStatus, EndStatus
+from fate_flow.entity.types import JobStatus, TaskStatus, EndStatus, LinkisJobStatus
+from fate_flow.settings import LINKIS_SPARK_CONFIG, LINKIS_QUERT_STATUS
 from fate_flow.utils import cron, job_utils
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.operation.job_saver import JobSaver
@@ -43,9 +46,22 @@ class Detector(cron.Cron):
             for task in running_tasks:
                 count += 1
                 try:
-                    if task.f_engine_conf:
-                        return
-                    process_exist = job_utils.check_job_process(int(task.f_run_pid))
+                    process_exist = True
+                    try:
+                        if task.f_engine_conf:
+                            linkis_query_url = "http://{}:{}{}".format(LINKIS_SPARK_CONFIG.get("host"),
+                                                                         LINKIS_SPARK_CONFIG.get("port"),
+                                                                         LINKIS_QUERT_STATUS.replace("execID", task.f_engine_conf.get("execID")))
+                            headers = task.f_engine_conf["engine_conf"]["headers"]
+                            response = requests.get(linkis_query_url, headers=headers).json()
+                            if response.get("data").get("status") == LinkisJobStatus.FAILED:
+                                process_exist = False
+                    except Exception as e:
+                        detect_logger(job_id=task.f_job_id).exception(e)
+                        process_exist = False
+
+                    else:
+                        process_exist = job_utils.check_job_process(int(task.f_run_pid))
                     if not process_exist:
                         detect_logger(job_id=task.f_job_id).info(
                                 'job {} task {} {} on {} {} process {} does not exist'.format(

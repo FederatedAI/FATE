@@ -14,6 +14,7 @@
 #  limitations under the License.
 #
 import sys
+from copy import deepcopy
 
 import requests
 
@@ -22,10 +23,10 @@ from fate_arch.common.log import schedule_logger
 from fate_flow.db.db_models import Task
 from fate_flow.operation.task_executor import TaskExecutor
 from fate_flow.scheduler.federated_scheduler import FederatedScheduler
-from fate_flow.entity.types import TaskStatus, EndStatus, KillProcessStatusCode
+from fate_flow.entity.types import TaskStatus, EndStatus, KillProcessStatusCode, LinkisJobStatus
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.settings import LINKIS_EXECUTE_ENTRANCE, LINKIS_SPARK_CONFIG, LINKIS_KILL_ENTRANCE, LINKIS_SUBMIT_PARAMS, \
-    LINKIS_RUNTYPE
+    LINKIS_RUNTYPE, LINKIS_LABELS, LINKIS_QUERT_STATUS
 from fate_flow.utils import job_utils
 import os
 from fate_flow.operation.job_saver import JobSaver
@@ -80,7 +81,9 @@ class TaskController(object):
             "task_version": task_version,
             "role": role,
             "party_id": party_id,
+            "party_status": TaskStatus.RUNNING
         }
+        is_failed = False
         try:
             task_dir = os.path.join(job_utils.get_job_directory(job_id=job_id), role, party_id, component_name, task_id, task_version)
             os.makedirs(task_dir, exist_ok=True)
@@ -161,14 +164,19 @@ class TaskController(object):
                     job_id, component_name, task_id, task_version, role, party_id, RuntimeConfig.JOB_SERVER_HOST,
                     task_parameters_path, '{}:{}'.format(RuntimeConfig.JOB_SERVER_HOST, RuntimeConfig.HTTP_PORT))
                 schedule_logger(job_id).info(f"execution code:{execution_code}")
+                params = deepcopy(LINKIS_SUBMIT_PARAMS)
+                schedule_logger(job_id).info(f"spark run parameters:{run_parameters.spark_run}")
+                for spark_key, v in run_parameters.spark_run.items():
+                    if spark_key in ["spark.executor.memory", "spark.driver.memory", "spark.executor.instances"]:
+                        params["configuration"]["startup"][spark_key] = v
                 data = {
                     "method": LINKIS_EXECUTE_ENTRANCE,
-                    "params": LINKIS_SUBMIT_PARAMS,
+                    "params": params,
                     "executeApplicationName": "spark",
                     "executionCode": execution_code,
                     "runType": LINKIS_RUNTYPE,
                     "source": {},
-                    "labels": {"tenant": "fate"}
+                    "labels": LINKIS_LABELS
                 }
                 schedule_logger(job_id).info(f'submit linkis spark, data:{data}')
                 task_info["engine_conf"]["data"] = data
@@ -179,6 +187,7 @@ class TaskController(object):
                     if res.json().get("status"):
                         raise Exception(f"submit linkis spark failed: {res.json()}")
                     task_info["engine_conf"]["execID"] = res.json().get("data").get("execID")
+                    task_info["engine_conf"]["taskID"] = res.json().get("data").get("taskID")
                     schedule_logger(job_id).info('submit linkis spark success')
                 else:
                     raise Exception(f"submit linkis spark failed: {res.text}")
@@ -191,19 +200,21 @@ class TaskController(object):
                     'job {} task {} {} on {} {} executor subprocess is ready'.format(job_id, task_id, task_version, role, party_id))
                 p = job_utils.run_subprocess(job_id=job_id, config_dir=task_dir, process_cmd=process_cmd, log_dir=task_log_dir, job_dir=task_job_dir)
             if not subprocess or p:
-                task_info["party_status"] = TaskStatus.RUNNING
                 #task_info["run_pid"] = p.pid
                 task_info["start_time"] = current_timestamp()
                 task_executor_process_start_status = True
             else:
-                task_info["party_status"] = TaskStatus.FAILED
+                is_failed = True
         except Exception as e:
             schedule_logger(job_id).exception(e)
-            task_info["party_status"] = TaskStatus.FAILED
+            is_failed = True
         finally:
             try:
                 cls.update_task(task_info=task_info)
                 cls.update_task_status(task_info=task_info)
+                if is_failed:
+                    task_info["party_status"] = TaskStatus.FAILED
+                    cls.update_task_status(task_info=task_info)
             except Exception as e:
                 schedule_logger(job_id).exception(e)
             schedule_logger(job_id).info(
@@ -283,17 +294,25 @@ class TaskController(object):
         kill_status = False
         try:
             if task.f_engine_conf.get("computing_engine") and task.f_engine_conf.get("computing_engine") == ComputingEngine.LINKIS_SPARK:
-                if task.f_engine_conf.get("execID"):
-                    linkis_execute_url = "http://{}:{}{}".format(LINKIS_SPARK_CONFIG.get("host"),
-                                                                 LINKIS_SPARK_CONFIG.get("port"),
-                                                                 LINKIS_KILL_ENTRANCE.replace("execID", task.f_engine_conf.get("execID")))
-                    headers = task.f_engine_conf.get("headers")
-                    schedule_logger(task.f_job_id).info(f"start stop task:{linkis_execute_url}")
-                    schedule_logger(task.f_job_id).info(f"headers: {headers}")
-                    kill_result = requests.get(linkis_execute_url, headers=headers)
-                    schedule_logger(task.f_job_id).info(f"kill result:{kill_result}")
-                    if kill_result.status_code == 200:
-                        pass
+                if task.f_engine_conf:
+                    linkis_query_url = "http://{}:{}{}".format(LINKIS_SPARK_CONFIG.get("host"),
+                                                               LINKIS_SPARK_CONFIG.get("port"),
+                                                               LINKIS_QUERT_STATUS.replace("execID",
+                                                                                           task.f_engine_conf.get(
+                                                                                               "execID")))
+                    headers = task.f_engine_conf["engine_conf"]["headers"]
+                    response = requests.get(linkis_query_url, headers=headers).json()
+                    if response.get("data").get("status") != LinkisJobStatus.SUCCESS:
+                        linkis_execute_url = "http://{}:{}{}".format(LINKIS_SPARK_CONFIG.get("host"),
+                                                                     LINKIS_SPARK_CONFIG.get("port"),
+                                                                     LINKIS_KILL_ENTRANCE.replace("execID", task.f_engine_conf.get("execID")))
+                        headers = task.f_engine_conf.get("headers")
+                        schedule_logger(task.f_job_id).info(f"start stop task:{linkis_execute_url}")
+                        schedule_logger(task.f_job_id).info(f"headers: {headers}")
+                        kill_result = requests.get(linkis_execute_url, headers=headers)
+                        schedule_logger(task.f_job_id).info(f"kill result:{kill_result}")
+                        if kill_result.status_code == 200:
+                            pass
                 kill_status_code = KillProcessStatusCode.KILLED
             else:
                 # kill task executor
