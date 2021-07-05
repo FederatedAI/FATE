@@ -724,7 +724,7 @@ In the fast mode, the minimization test script will use a relatively small data 
 
 ```
 source /data/projects/fate/bin/init_env.sh
-cd /data/projects/fate/examples/toy_example/
+cd /data/projects/fate/examples/min_test_task/
 #Unilateral test
 python run_task.py -m 1 -gid 9999 -hid 9999 -aid 9999 -f fast
 #Bilateral test
