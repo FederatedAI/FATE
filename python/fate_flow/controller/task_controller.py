@@ -167,7 +167,7 @@ class TaskController(object):
                 params = deepcopy(LINKIS_SUBMIT_PARAMS)
                 schedule_logger(job_id).info(f"spark run parameters:{run_parameters.spark_run}")
                 for spark_key, v in run_parameters.spark_run.items():
-                    if spark_key in ["spark.executor.memory", "spark.driver.memory", "spark.executor.instances"]:
+                    if spark_key in ["spark.executor.memory", "spark.driver.memory", "spark.executor.instances", "wds.linkis.rm.yarnqueue"]:
                         params["configuration"]["startup"][spark_key] = v
                 data = {
                     "method": LINKIS_EXECUTE_ENTRANCE,
