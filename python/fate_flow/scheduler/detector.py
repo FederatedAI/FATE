@@ -47,19 +47,19 @@ class Detector(cron.Cron):
                 count += 1
                 try:
                     process_exist = True
-                    try:
-                        if task.f_engine_conf:
+                    if task.f_engine_conf:
+                        try:
                             linkis_query_url = "http://{}:{}{}".format(LINKIS_SPARK_CONFIG.get("host"),
                                                                          LINKIS_SPARK_CONFIG.get("port"),
                                                                          LINKIS_QUERT_STATUS.replace("execID", task.f_engine_conf.get("execID")))
-                            headers = task.f_engine_conf["engine_conf"]["headers"]
+                            headers = task.f_engine_conf["headers"]
                             response = requests.get(linkis_query_url, headers=headers).json()
+                            detect_logger(job_id=task.f_job_id).info(response)
                             if response.get("data").get("status") == LinkisJobStatus.FAILED:
                                 process_exist = False
-                    except Exception as e:
-                        detect_logger(job_id=task.f_job_id).exception(e)
-                        process_exist = False
-
+                        except Exception as e:
+                            detect_logger(job_id=task.f_job_id).exception(e)
+                            process_exist = False
                     else:
                         process_exist = job_utils.check_job_process(int(task.f_run_pid))
                     if not process_exist:

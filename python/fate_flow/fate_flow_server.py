@@ -39,6 +39,7 @@ from fate_flow.apps.info_app import manager as info_app_manager
 from fate_flow.scheduling_apps.initiator_app import manager as initiator_app_manager
 from fate_flow.scheduling_apps.party_app import manager as party_app_manager
 from fate_flow.scheduling_apps.tracker_app import manager as tracker_app_manager
+from fate_flow.scheduling_apps.operation_app import manager as operation_app_manager
 from fate_flow.db.db_models import init_database_tables as init_flow_db
 from fate_arch.storage.metastore.db_models import init_database_tables as init_arch_db
 from fate_flow.scheduler.detector import Detector

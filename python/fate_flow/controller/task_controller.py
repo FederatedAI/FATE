@@ -297,16 +297,14 @@ class TaskController(object):
                 if task.f_engine_conf:
                     linkis_query_url = "http://{}:{}{}".format(LINKIS_SPARK_CONFIG.get("host"),
                                                                LINKIS_SPARK_CONFIG.get("port"),
-                                                               LINKIS_QUERT_STATUS.replace("execID",
-                                                                                           task.f_engine_conf.get(
-                                                                                               "execID")))
-                    headers = task.f_engine_conf["engine_conf"]["headers"]
+                                                               LINKIS_QUERT_STATUS.replace("execID",task.f_engine_conf.get("execID")))
+                    headers = task.f_engine_conf.get("headers")
                     response = requests.get(linkis_query_url, headers=headers).json()
+                    schedule_logger(task.f_job_id).info(f"querty task response:{response}")
                     if response.get("data").get("status") != LinkisJobStatus.SUCCESS:
                         linkis_execute_url = "http://{}:{}{}".format(LINKIS_SPARK_CONFIG.get("host"),
                                                                      LINKIS_SPARK_CONFIG.get("port"),
                                                                      LINKIS_KILL_ENTRANCE.replace("execID", task.f_engine_conf.get("execID")))
-                        headers = task.f_engine_conf.get("headers")
                         schedule_logger(task.f_job_id).info(f"start stop task:{linkis_execute_url}")
                         schedule_logger(task.f_job_id).info(f"headers: {headers}")
                         kill_result = requests.get(linkis_execute_url, headers=headers)
