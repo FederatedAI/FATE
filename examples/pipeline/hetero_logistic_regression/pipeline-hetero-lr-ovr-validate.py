@@ -40,36 +40,33 @@ def main(config="../../config.yaml", namespace=""):
     lr_param = {
         "name": "hetero_lr_0",
         "penalty": "L2",
-        "optimizer": "rmsprop",
+        "optimizer": "nesterov_momentum_sgd",
         "tol": 0.0001,
         "alpha": 0.01,
-        "max_iter": 30,
+        "max_iter": 10,
         "early_stop": "diff",
         "batch_size": -1,
         "learning_rate": 0.15,
-        "validation_freqs": 3,
+        "validation_freqs": 1,
         "early_stopping_rounds": 3,
         "init_param": {
-            "init_method": "zeros",
-            "fit_intercept": True
-        },
-        "encrypt_param": {
-            "key_length": 2048
+            "init_method": "zeros"
         },
         "cv_param": {
-            "n_splits": 5,
+            "n_splits": 3,
             "shuffle": False,
             "random_seed": 103,
             "need_cv": False
         }
     }
 
-    pipeline = common_tools.make_normal_dsl(config, namespace, lr_param, has_validate=True)
+    pipeline = common_tools.make_normal_dsl(config, namespace, lr_param, is_ovr=True,
+                                            is_cv=False, has_validate=True)
     # fit model
     job_parameters = JobParameters(backend=backend, work_mode=work_mode)
     pipeline.fit(job_parameters)
     # query component summary
-    common_tools.prettify(pipeline.get_component("evaluation_0").get_summary())
+    common_tools.prettify(pipeline.get_component("hetero_lr_0").get_summary())
 
 
 if __name__ == "__main__":

@@ -126,6 +126,9 @@ class BaseLogisticRegression(BaseLinearModel):
 
         if self.fit_intercept:
             tmp_vars = np.append(tmp_vars, single_model_obj.intercept)
+
+        if len(tmp_vars) == 0:
+            tmp_vars = [0.0]
         self.model_weights = LogisticRegressionWeights(tmp_vars, fit_intercept=self.fit_intercept)
         self.n_iter_ = single_model_obj.iters
         return self
