@@ -91,7 +91,3 @@ class PhIntersectionHost(PhIntersect):
             intersect_ids = self.get_intersect_ids()
 
         return intersect_ids
-
-    def run_cardinality(self, data_instances):
-        self.get_intersect_doubly_encrypted_id(data_instances)
-

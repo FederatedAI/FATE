@@ -223,6 +223,15 @@ class RsaIntersectionHost(RsaIntersect):
                          cq={self.guest_party_id: str(self.cq)})
         return rsa_key
 
+    def load_intersect_key(self, intersect_key):
+        self.e = int(intersect_key.e[self.guest_party_id])
+        self.d = int(intersect_key.d[self.guest_party_id])
+        self.n = int(intersect_key.n[self.guest_party_id])
+        self.p = int(intersect_key.p[self.guest_party_id])
+        self.q = int(intersect_key.q[self.guest_party_id])
+        self.cp = int(intersect_key.cp[self.guest_party_id])
+        self.cq = int(intersect_key.cq[self.guest_party_id])
+
     def run_cardinality(self, data_instances):
         # generate rsa keys
         self.generate_protocol_key()

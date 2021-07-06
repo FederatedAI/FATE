@@ -295,6 +295,12 @@ class RsaIntersectionGuest(RsaIntersect):
                          rcv_n=dict(zip(self.host_party_id_list, map(str, self.rcv_n))))
         return rsa_key
 
+    def load_intersect_key(self, intersect_key):
+        self.rcv_e, self.rcv_n = [], []
+        for host_party in self.host_party_id_list:
+            self.rcv_e.append(int(intersect_key.rcv_e[host_party]))
+            self.rcv_n.append(int(intersect_key.rcv_n[host_party]))
+
     def run_cardinality(self, data_instances):
         # receives public key e & n
         public_keys = self.transfer_variable.host_pubkey.get(-1)

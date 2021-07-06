@@ -85,6 +85,9 @@ class Intersect(object):
     def get_intersect_key(self):
         pass
 
+    def load_intersect_key(self, intersect_key):
+        pass
+
     def _get_meta(self):
         preprocess_params = IntersectPreProcessMeta(
             false_positive_rate=self.intersect_preprocess_params.false_positive_rate,
@@ -141,7 +144,7 @@ class Intersect(object):
         # self.intersect_preprocess_params.false_positive_rate = meta_obj.false_positive_rate
         # self.intersect_preprocess_params.hash_method = meta_obj.hash_method
         # self.intersect_preprocess_params.random_state = meta_obj.random_state
-        if param_obj.filter:
+        if param_obj.filter and param_obj.filter.bit_count > 0:
             filter_obj = param_obj.filter
             filter_array = np.array(filter_obj.filter_array)
             self.filter = BitArray(bit_count=filter_obj.bit_count,
@@ -151,6 +154,8 @@ class Intersect(object):
                                   salt=list(filter_obj.salt))
             self.filter.id = filter_obj.id
             self.filter.set_array(filter_array)
+        if meta_obj.intersect_method == consts.RSA:
+            self.load_intersect_key(param_obj.rsa_encrypt_key)
 
     def run_intersect(self, data_instances):
         raise NotImplementedError("method should not be called here")
