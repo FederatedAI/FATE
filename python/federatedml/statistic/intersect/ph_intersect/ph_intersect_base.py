@@ -14,6 +14,7 @@
 #  limitations under the License.
 #
 
+from federatedml.protobuf.generated.intersect_meta_pb2 import PHMeta
 from federatedml.secureprotol.hash.hash_factory import Hash
 from federatedml.secureprotol.symmetric_encryption.cryptor_executor import CryptoExecutor
 from federatedml.secureprotol.symmetric_encryption.pohlig_hellman_encryption import PohligHellmanCipherKey
@@ -50,6 +51,9 @@ class PhIntersect(Intersect):
             restored_id = k
         return (restored_id, k)
     """
+    def get_intersect_meta(self):
+        return PHMeta(hash_method=self.ph_params.hash_method,
+                      salt=self.salt)
 
     @staticmethod
     def _encrypt_id(data_instance, cipher, reserve_original_key=False, hash_operator=None, salt='',

@@ -17,6 +17,7 @@
 import random
 
 from federatedml.param.intersect_param import DEFAULT_RANDOM_BIT
+from federatedml.protobuf.generated.intersect_meta_pb2 import RSAMeta
 from federatedml.secureprotol import gmpy_math
 from federatedml.secureprotol.encrypt import RsaEncrypt
 from federatedml.secureprotol.hash.hash_factory import Hash
@@ -55,6 +56,11 @@ class RsaIntersect(Intersect):
         self.final_hash_operator = Hash(self.rsa_params.final_hash_method, False)
         self.salt = self.rsa_params.salt
 
+    def get_intersect_method_meta(self):
+        return RSAMeta(hash_method=self.rsa_params.hash_method,
+                       final_hash_method=self.rsa_params.final_hash_method,
+                       salt=self.salt)
+
     @staticmethod
     def extend_pair(v1, v2):
         return v1 + v2
@@ -91,7 +97,7 @@ class RsaIntersect(Intersect):
 
     @staticmethod
     def generate_rsa_key(rsa_bit=1024):
-        LOGGER.info(f"Generated {rsa_bit}-bit RSA key.")
+        LOGGER.info(f"Generate {rsa_bit}-bit RSA key.")
         encrypt_operator = RsaEncrypt()
         encrypt_operator.generate_key(rsa_bit)
         return encrypt_operator.get_key_pair()

@@ -14,16 +14,26 @@
 #  limitations under the License.
 #
 
+import functools
+import math
+import numpy as np
 import uuid
 
-from federatedml.param.intersect_param import IntersectParam
-from federatedml.util import LOGGER
+from federatedml.param.intersect_param import IntersectParam, IntersectPreProcessParam
+from federatedml.protobuf.generated.intersect_meta_pb2 import IntersectModelMeta, IntersectPreProcessMeta
+from federatedml.protobuf.generated.intersect_param_pb2 import Filter, IntersectModelParam, RSAKey, PHKey
+from federatedml.statistic.intersect.intersect_preprocess import BitArray
+from federatedml.util import LOGGER, consts
 
 class Intersect(object):
     def __init__(self):
         super().__init__()
         self.model_param = IntersectParam()
         self.transfer_variable = None
+        self.filter = None
+        self.intersect_num = None
+        self.model_param_name = "IntersectModelParam"
+        self.model_meta_name = "IntersectModelMeta"
 
         self._guest_id = None
         self._host_id = None
@@ -31,10 +41,12 @@ class Intersect(object):
 
     def load_params(self, param):
         self.model_param = param
+        self.intersect_method = param.intersect_method
         self.only_output_key = param.only_output_key
         self.sync_intersect_ids = param.sync_intersect_ids
         self.cardinality_only = param.cardinality_only
         self.sync_cardinality = param.sync_cardinality
+        self.intersect_preprocess_params = param.intersect_preprocess_params
 
     @property
     def guest_party_id(self):
@@ -67,8 +79,84 @@ class Intersect(object):
                 "type host_party_id should be list, but get {} with {}".format(type(host_id_list), host_id_list))
         self._host_id_list = host_id_list
 
+    def get_intersect_method_meta(self):
+        return IntersectModelMeta()
+
+    def get_intersect_key(self):
+        pass
+
+    def _get_meta(self):
+        preprocess_params = IntersectPreProcessMeta(
+            false_positive_rate=self.intersect_preprocess_params.false_positive_rate,
+            encrypt_method=self.intersect_preprocess_params.encrypt_method,
+            hash_method=self.intersect_preprocess_params.hash_method,
+            random_state=self.intersect_preprocess_params.random_state)
+        if self.intersect_method == consts.RSA:
+            meta_obj = IntersectModelMeta(intersect_method=self.intersect_method,
+                                          intersect_preprocess_params=preprocess_params,
+                                          rsa_params=self.get_intersect_method_meta())
+        elif self.intersect_method == consts.PH:
+            meta_obj = IntersectModelMeta(intersect_method=self.intersect_method,
+                                          intersect_preprocess_params=preprocess_params,
+                                          ph_params=self.get_intersect_method_meta())
+        else:
+            meta_obj = IntersectModelMeta(intersect_method=self.intersect_method,
+                                          intersect_preprocess_params=preprocess_params)
+        return meta_obj
+
+    def _get_param(self):
+        param_obj = IntersectModelParam()
+        if self.cardinality_only:
+            intersect_filter = Filter()
+            rsa_encrypt_key = RSAKey()
+            ph_encrypt_key = PHKey()
+            if self.filter:
+                intersect_filter = Filter(bit_count=self.filter.bit_count,
+                                          filter_array=self.filter.get_array(),
+                                          filter_id=self.filter.id,
+                                          salt=self.filter.salt,
+                                          hash_func_count=self.filter.hash_func_count)
+            if self.intersect_method == consts.RSA:
+                rsa_encrypt_key = self.get_intersect_key()
+            param_obj = IntersectModelParam(intersect_filter=intersect_filter,
+                                            rsa_encrypt_key=rsa_encrypt_key,
+                                            ph_encrypt_key=ph_encrypt_key)
+
+        return param_obj
+
+    def get_model(self):
+        meta_obj = self._get_meta()
+        param_obj = self._get_param()
+
+        result = {
+            self.model_meta_name: meta_obj,
+            self.model_param_name: param_obj
+        }
+        return result
+
+    def load_model(self, model_dict):
+        meta_obj, param_obj = model_dict[self.model_meta_name], model_dict[self.model_param_name]
+        proprocess_params = meta_obj.intersect_preprocess_params
+        self.intersect_preprocess_params = IntersectPreProcessParam(**proprocess_params)
+        # self.intersect_preprocess_params.false_positive_rate = meta_obj.false_positive_rate
+        # self.intersect_preprocess_params.hash_method = meta_obj.hash_method
+        # self.intersect_preprocess_params.random_state = meta_obj.random_state
+        if param_obj.filter:
+            filter_obj = param_obj.filter
+            filter_array = np.array(filter_obj.filter_array)
+            self.filter = BitArray(bit_count=filter_obj.bit_count,
+                                  hash_func_count=filter_obj.hash_func_count,
+                                  hash_method=proprocess_params.hash_method,
+                                  random_state=proprocess_params.random_state,
+                                  salt=list(filter_obj.salt))
+            self.filter.id = filter_obj.id
+            self.filter.set_array(filter_array)
+
     def run_intersect(self, data_instances):
-        raise NotImplementedError("method init must be define")
+        raise NotImplementedError("method should not be called here")
+
+    def run_cardinality(self, data_instances):
+        raise NotImplementedError("method should not be called here")
 
     def set_flowid(self, flowid=0):
         if self.transfer_variable is not None:
@@ -158,3 +246,59 @@ class Intersect(object):
     @staticmethod
     def generate_new_uuid():
         return str(uuid.uuid1())
+
+    @staticmethod
+    def get_filter_param(n, p):
+        """
+
+        Parameters
+        ----------
+        n: items to store in filter
+        p: target false positive rate
+
+        Returns
+        -------
+
+        """
+        # bit count
+        m = math.ceil(-n * math.log(p) / (math.pow(math.log(2), 2)))
+        # hash func count
+        k = round(m / n * math.log(2))
+        if k < consts.MIN_HASH_FUNC_COUNT:
+            LOGGER.info(f"computed k value {k} is smaller than min hash func count limit, "
+                        f"set to {consts.MIN_HASH_FUNC_COUNT}")
+            k = consts.MIN_HASH_FUNC_COUNT
+        if k > consts.MAX_HASH_FUNC_COUNT:
+            LOGGER.info(f"computed k value {k} is greater than max hash func count limit, "
+                        f"set to {consts.MAX_HASH_FUNC_COUNT}")
+            k = consts.MAX_HASH_FUNC_COUNT
+        return m, k
+
+    @staticmethod
+    def insert_key(kv_iterator, filter):
+        res_filter = None
+        for k, _ in kv_iterator:
+            res_filter = filter.insert(k)
+        return res_filter
+
+    @staticmethod
+    def count_key_in_filter(kv_iterator, filter):
+        count = 0
+        for k, _ in kv_iterator:
+            count += filter.check(k)
+        return count
+
+    @staticmethod
+    def construct_filter(data, false_positive_rate, hash_method, random_state):
+        n = data.count()
+        m, k = Intersect.get_filter_param(n, false_positive_rate)
+        filter = BitArray(m, k, hash_method, random_state)
+        LOGGER.debug(f"filter bit count is: {filter.bit_count}")
+        f = functools.partial(Intersect.insert_key, filter=filter)
+        # ind_list = data.map(lambda k, v: (filter.get_ind_set(k), k))
+        # ind_list.mapPartitions(f, use_previous_behavior=False)
+        new_array = data.mapPartitions(f).reduce(lambda x, y: x | y)
+        LOGGER.debug(f"array obtained")
+        filter.set_array(new_array)
+        # LOGGER.debug(f"after insert, filter sparsity is: {filter.sparsity}")
+        return filter

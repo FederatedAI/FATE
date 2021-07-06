@@ -32,7 +32,7 @@ class Intersection(Component, IntersectParam):
 
         IntersectParam.__init__(self, **new_kwargs)
         self.input = Input(self.name)
-        self.output = Output(self.name, has_model=False)
+        self.output = Output(self.name, has_model=True)
         self._module_name = "Intersection"
 
 

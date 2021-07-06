@@ -14,6 +14,7 @@
 #  limitations under the License.
 #
 
+from federatedml.statistic.intersect.intersect_preprocess import BitArray
 from federatedml.statistic.intersect.ph_intersect.ph_intersect_base import PhIntersect
 from federatedml.util import consts, LOGGER
 
@@ -132,6 +133,7 @@ class PhIntersectionGuest(PhIntersect):
         intersect_ids = self.filter_intersect_ids(encrypt_intersect_ids, keep_encrypt_ids=True)
         LOGGER.info(f"intersection found")
 
+        """
         if self.cardinality_only:
             cardinality = intersect_ids.count()
             if self.sync_cardinality:
@@ -140,6 +142,7 @@ class PhIntersectionGuest(PhIntersect):
             else:
                 LOGGER.info("Skip sync intersect cardinality with host(s)")
             return cardinality
+        """
 
         if self.sync_intersect_ids:
             self.send_intersect_ids(intersect_ids)
@@ -147,3 +150,8 @@ class PhIntersectionGuest(PhIntersect):
             LOGGER.info("Skip sync intersect ids with Host(s).")
 
         return intersect_ids
+
+    def run_cardinality(self, data_instances):
+        self.get_intersect_doubly_encrypted_id(data_instances)
+
+

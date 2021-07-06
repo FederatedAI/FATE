@@ -261,7 +261,12 @@ COL = 'col'
 PHONE = 'phone'
 IMEI = 'imei'
 MD5 = 'md5'
+SHA1 = 'sha1'
+SHA224 = 'sha224'
 SHA256 = 'sha256'
+SHA384 = 'sha384'
+SHA512 = 'sha512'
+SM3 = 'sm3'
 INTERSECT_CACHE_TAG = 'Za'
 
 SHARE_INFO_COL_NAME = "share_info"

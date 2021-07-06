@@ -135,6 +135,14 @@
       "dst": [
         "host"
       ]
+    },
+    "host_filter": {
+      "src": [
+        "host"
+      ],
+      "dst": [
+        "guest"
+      ]
     }
   }
 }

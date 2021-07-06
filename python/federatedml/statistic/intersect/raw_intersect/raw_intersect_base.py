@@ -67,6 +67,7 @@ class RawIntersect(Intersect):
                                    idx=-1)
 
         LOGGER.info("Remote data_sid to role-join")
+        """
         if self.cardinality_only:
             cardinality = None
             if self.sync_cardinality:
@@ -86,6 +87,7 @@ class RawIntersect(Intersect):
             else:
                 LOGGER.info("Skip sync intersect cardinality with role-join.")
             return cardinality
+        """
 
         intersect_ids = None
         if self.sync_intersect_ids:
@@ -162,6 +164,7 @@ class RawIntersect(Intersect):
             hash_intersect_ids = None
         LOGGER.info("Finish intersect_ids computing")
 
+        """
         if self.cardinality_only:
             cardinality = hash_intersect_ids.count()
             if self.sync_cardinality:
@@ -183,6 +186,7 @@ class RawIntersect(Intersect):
             else:
                 LOGGER.info("Skip sync intersect cardinality with role-send")
             return cardinality
+        """
 
         if self.sync_intersect_ids:
             if self.role == consts.GUEST:

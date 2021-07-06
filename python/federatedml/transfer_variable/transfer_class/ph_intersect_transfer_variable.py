@@ -36,3 +36,4 @@ class PhIntersectTransferVariable(BaseTransferVariables):
         self.doubly_encrypted_id_list = self._create_variable(name='doubly_encrypted_id_list', src=['host'], dst=['guest'])
         self.intersect_ids = self._create_variable(name='intersect_ids', src=['guest'], dst=['host'])
         self.cardinality = self._create_variable(name='cardinality', src=['guest'], dst=['host'])
+        self.host_filter = self._create_variable(name='host_filter', src=['host'], dst=['guest'])

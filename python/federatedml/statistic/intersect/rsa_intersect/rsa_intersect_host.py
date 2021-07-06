@@ -16,6 +16,7 @@
 
 import gmpy2
 
+from federatedml.protobuf.generated.intersect_param_pb2 import RSAKey
 from federatedml.statistic.intersect.rsa_intersect.rsa_intersect_base import RsaIntersect
 from federatedml.util import consts, LOGGER
 
@@ -128,12 +129,14 @@ class RsaIntersectionHost(RsaIntersect):
         self.transfer_variable.host_intersect_ids.remote(remote_intersect_even_ids, role=consts.GUEST, idx=0)
         LOGGER.info(f"Remote host intersect ids to Guest")
 
+        """
         if self.cardinality_only:
             cardinality = None
             if self.sync_cardinality:
                 cardinality = self.transfer_variable.cardinality.get(cardinality, role=consts.GUEST, idx=0)
                 LOGGER.info(f"Got intersect cardinality from guest.")
             return cardinality
+        """
 
         # recv intersect ids
         intersect_ids = None
@@ -191,12 +194,14 @@ class RsaIntersectionHost(RsaIntersect):
                                                           idx=0)
         LOGGER.info("Remote host_sign_guest_ids_process to Guest.")
 
+        """
         if self.cardinality_only:
             cardinality = None
             if self.sync_cardinality:
                 cardinality = self.transfer_variable.cardinality.get(idx=0)
                 LOGGER.info(f"Got intersect cardinality from guest.")
             return cardinality
+        """
 
         # recv intersect ids
         intersect_ids = None
@@ -207,3 +212,67 @@ class RsaIntersectionHost(RsaIntersect):
             LOGGER.info("Get intersect ids from Guest")
 
         return intersect_ids
+
+    def get_intersect_key(self):
+        rsa_key = RSAKey(e={self.guest_party_id: str(self.e)},
+                         d={self.guest_party_id: str(self.d)},
+                         n={self.guest_party_id: str(self.n)},
+                         p={self.guest_party_id: str(self.p)},
+                         q={self.guest_party_id: str(self.q)},
+                         cp={self.guest_party_id: str(self.cp)},
+                         cq={self.guest_party_id: str(self.cq)})
+        return rsa_key
+
+    def run_cardinality(self, data_instances):
+        # generate rsa keys
+        self.generate_protocol_key()
+        LOGGER.info("Generate protocol key!")
+        public_key = {"e": self.e, "n": self.n}
+
+        # sends public key e & n to guest
+        self.transfer_variable.host_pubkey.remote(public_key,
+                                                  role=consts.GUEST,
+                                                  idx=0)
+        LOGGER.info("Remote public key to Guest.")
+        # hash host ids
+        prvkey_ids_process_pair = self.cal_prvkey_ids_process_pair(data_instances,
+                                                                   self.d,
+                                                                   self.n,
+                                                                   self.p,
+                                                                   self.q,
+                                                                   self.cp,
+                                                                   self.cq,
+                                                                   self.first_hash_operator)
+
+        filter = self.construct_filter(prvkey_ids_process_pair,
+                                       false_positive_rate=self.intersect_preprocess_params.false_positive_rate,
+                                       hash_method=self.intersect_preprocess_params.hash_method,
+                                       random_state=self.intersect_preprocess_params.random_state)
+        self.filter = filter
+        self.transfer_variable.host_filter.remote(filter,
+                                                  role=consts.GUEST,
+                                                  idx=0)
+        LOGGER.info("Remote host_filter to Guest.")
+
+        # Recv guest ids
+        guest_pubkey_ids = self.transfer_variable.guest_pubkey_ids.get(idx=0)
+        LOGGER.info("Get guest_pubkey_ids from guest")
+
+        # Process(signs) guest ids and return to guest
+        host_sign_guest_ids = guest_pubkey_ids.map(lambda k, v: (k, self.sign_id(k,
+                                                                                 self.d,
+                                                                                 self.n,
+                                                                                 self.p,
+                                                                                 self.q,
+                                                                                 self.cp,
+                                                                                 self.cq)))
+        self.transfer_variable.host_sign_guest_ids.remote(host_sign_guest_ids,
+                                                          role=consts.GUEST,
+                                                          idx=0)
+        LOGGER.info("Remote host_sign_guest_ids_process to Guest.")
+
+        if self.sync_cardinality:
+            self.intersect_num = self.transfer_variable.cardinality.get(idx=0)
+            LOGGER.info("Got intersect cardinality from guest.")
+
+        return data_instances

@@ -57,3 +57,5 @@ class RsaIntersectTransferVariable(BaseTransferVariables):
         self.rsa_pubkey = self._create_variable(name='rsa_pubkey', src=['host'], dst=['guest'])
 
         self.cardinality = self._create_variable(name='cardinality', src=['guest'], dst=['host'])
+
+        self.host_filter = self._create_variable(name="host_filter", src=['host'], dst=['guest'])

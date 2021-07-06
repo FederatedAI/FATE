@@ -59,7 +59,8 @@ class IntersectModelBase(ModelBase):
             raise ValueError("role {} is not support".format(self.role))
 
     def get_model_summary(self):
-        return {"intersect_num": self.intersect_num, "intersect_rate": self.intersect_rate}
+        return {"intersect_num": self.intersect_num, "intersect_rate": self.intersect_rate,
+                "cardinality_only": self.intersection_obj.cardinality_only}
 
     def __share_info(self, data):
         LOGGER.info("Start to share information with another role")
@@ -157,6 +158,7 @@ class IntersectModelBase(ModelBase):
             self.use_match_id_process = True
             LOGGER.info(f"use match_id_process")
 
+        filter = None
         if self.use_match_id_process:
             if self.model_param.intersect_cache_param.use_cache is True and self.model_param.intersect_method == consts.RSA:
                 raise ValueError("Not support cache module while repeated id process.")
@@ -169,10 +171,26 @@ class IntersectModelBase(ModelBase):
             if data_overview.check_with_inst_id(data) or self.model_param.with_sample_id:
                 proc_obj.use_sample_id()
             match_data = proc_obj.recover(data=data)
-            intersect_result = self.intersection_obj.run_intersect(match_data)
+            if self.intersection_obj.cardinality_only:
+                filter = self.intersection_obj.run_cardinality(match_data)
+            else:
+                self.intersect_ids = self.intersection_obj.run_intersect(match_data)
         else:
-            intersect_result = self.intersection_obj.run_intersect(data)
+            if self.intersection_obj.cardinality_only:
+                filter = self.intersection_obj.run_cardinality(data)
+            else:
+                self.intersect_ids = self.intersection_obj.run_intersect(data)
 
+        if self.intersection_obj.cardinality_only:
+            if self.intersection_obj.intersect_num:
+                self.intersect_num = self.intersection_obj.intersect_num
+                self.intersect_rate = self.intersect_num / data.count()
+            # self.model = self.intersection_obj.get_model()
+            self.set_summary(self.get_model_summary())
+            self.callback()
+            return filter
+
+        """
         if self.intersection_obj.cardinality_only:
             # intersect result = cardinality
             if intersect_result:
@@ -184,6 +202,7 @@ class IntersectModelBase(ModelBase):
         else:
             # intersect result = intersect ids
             self.intersect_ids = intersect_result
+        """
 
         if self.use_match_id_process:
             if not self.model_param.sync_intersect_ids:
@@ -232,6 +251,12 @@ class IntersectModelBase(ModelBase):
 
     def check_consistency(self):
         pass
+
+    def export_model(self):
+        return self.intersection_obj.get_model()
+
+    def load_model(self, model_dict):
+        self.intersection_obj.load_model(model_dict)
 
 
 class IntersectHost(IntersectModelBase):
