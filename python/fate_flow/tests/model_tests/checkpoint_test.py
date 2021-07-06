@@ -26,9 +26,9 @@ class TestCheckpoint(unittest.TestCase):
     def tearDown(self):
         self.tmpdir.cleanup()
 
-    def test_filepath(self):
-        self.assertEqual(self.checkpoint.filepath, Path(self.tmpdir.name) / '123#foobar.pickle')
-        self.assertEqual(self.checkpoint.hashpath, Path(self.tmpdir.name) / '123#foobar.sha1')
+    def test_path(self):
+        self.assertEqual(self.checkpoint.directory, Path(self.tmpdir.name) / '123#foobar')
+        self.assertEqual(self.checkpoint.database, Path(self.tmpdir.name) / '123#foobar' / 'database.yaml')
 
     def test_save_checkpoint(self):
         self.assertFalse(self.checkpoint.available)

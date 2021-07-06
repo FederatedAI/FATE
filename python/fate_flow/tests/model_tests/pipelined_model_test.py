@@ -16,7 +16,7 @@ from fate_flow.pipelined_model.pipelined_model import PipelinedModel
 from fate_flow.settings import TEMP_DIRECTORY
 
 
-with open(Path(__file__).parent / 'define_meta.yaml', encoding='utf8') as _f:
+with open(Path(__file__).parent.parent / 'misc' / 'define_meta.yaml', encoding='utf8') as _f:
     data_define_meta = yaml.safe_load(_f)
 args_update_component_meta = [
     'dataio_0',

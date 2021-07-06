@@ -228,9 +228,10 @@ class PipelinedModel(object):
             return define_index.get("component_define", {}).get(component_name, {})
         return define_index.get("component_define", {})
 
-    def parse_proto_object(self, buffer_name, buffer_object_serialized_string):
+    @classmethod
+    def parse_proto_object(cls, buffer_name, buffer_object_serialized_string):
         try:
-            buffer_object = self.get_proto_buffer_class(buffer_name)()
+            buffer_object = cls.get_proto_buffer_class(buffer_name)()
         except Exception as e:
             stat_logger.exception("Can not restore proto buffer object", e)
             raise e
@@ -263,8 +264,6 @@ class PipelinedModel(object):
                         return obj
             except Exception as e:
                 stat_logger.warning(e)
-        else:
-            return None
 
     @property
     def archive_model_base_path(self):
