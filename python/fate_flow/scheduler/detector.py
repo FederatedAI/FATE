@@ -41,17 +41,21 @@ class Detector(cron.Cron):
         detect_logger().info('start to detect running task..')
         count = 0
         try:
-            running_tasks = JobSaver.query_task(party_status=TaskStatus.RUNNING, run_on_this_party=True, run_ip=RuntimeConfig.JOB_SERVER_HOST, only_latest=False)
+            running_tasks = JobSaver.query_task(party_status=TaskStatus.RUNNING, run_on_this_party=True, only_latest=False)
             stop_job_ids = set()
             for task in running_tasks:
+                if not task.f_engine_conf and task.f_run_ip != RuntimeConfig.JOB_SERVER_HOST:
+                    continue
                 count += 1
                 try:
                     process_exist = True
                     if task.f_engine_conf:
                         try:
                             linkis_query_url = "http://{}:{}{}".format(LINKIS_SPARK_CONFIG.get("host"),
-                                                                         LINKIS_SPARK_CONFIG.get("port"),
-                                                                         LINKIS_QUERT_STATUS.replace("execID", task.f_engine_conf.get("execID")))
+                                                                       LINKIS_SPARK_CONFIG.get("port"),
+                                                                       LINKIS_QUERT_STATUS.replace("execID",
+                                                                                                   task.f_engine_conf.get(
+                                                                                                       "execID")))
                             headers = task.f_engine_conf["headers"]
                             response = requests.get(linkis_query_url, headers=headers).json()
                             detect_logger(job_id=task.f_job_id).info(response)
