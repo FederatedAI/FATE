@@ -32,8 +32,9 @@ class Variable(object):
     """
     variable to distinguish federation by name
     """
+
     __disable_auth_check = False
-    __instances: typing.MutableMapping[str, 'Variable'] = {}
+    __instances: typing.MutableMapping[str, "Variable"] = {}
 
     @classmethod
     def _disable_auth_check(cls):
@@ -43,27 +44,34 @@ class Variable(object):
         cls.__disable_auth_check = True
 
     @classmethod
-    def get_or_create(cls, name, create_func: typing.Callable[[], 'Variable']) -> 'Variable':
+    def get_or_create(
+        cls, name, create_func: typing.Callable[[], "Variable"]
+    ) -> "Variable":
         if name not in cls.__instances:
             value = create_func()
             cls.__instances[name] = value
         return cls.__instances[name]
 
-    def __init__(self, name: str,
-                 src: typing.Tuple[str, ...],
-                 dst: typing.Tuple[str, ...]):
+    def __init__(
+        self, name: str, src: typing.Tuple[str, ...], dst: typing.Tuple[str, ...]
+    ):
 
         if name in self.__instances:
             raise RuntimeError(
-                f"{self.__instances[name]} with {name} already initialized, which expected to be an singleton object.")
+                f"{self.__instances[name]} with {name} already initialized, which expected to be an singleton object."
+            )
 
         if not self.__disable_auth_check:
             auth_src, auth_dst = _check_variable_auth_conf(name)
             if set(src) != set(auth_src) or set(dst) != set(auth_dst):
-                raise RuntimeError(f"Variable {name} auth error, "
-                                   f"acquired: src={src}, dst={dst}, allowed: src={auth_src}, dst={auth_dst}")
+                raise RuntimeError(
+                    f"Variable {name} auth error, "
+                    f"acquired: src={src}, dst={dst}, allowed: src={auth_src}, dst={auth_dst}"
+                )
 
-        assert len(name.split(".")) >= 3, "incorrect name format, should be `module_name.class_name.variable_name`"
+        assert (
+            len(name.split(".")) >= 3
+        ), "incorrect name format, should be `module_name.class_name.variable_name`"
         self._name = name
         self._src = src
         self._dst = dst
@@ -74,8 +82,8 @@ class Variable(object):
 
     @staticmethod
     def _get_short_name(name):
-        fix_sized = hashlib.blake2b(name.encode('utf-8'), digest_size=10).hexdigest()
-        _, right = name.rsplit('.', 1)
+        fix_sized = hashlib.blake2b(name.encode("utf-8"), digest_size=10).hexdigest()
+        _, right = name.rsplit(".", 1)
         return f"hash.{fix_sized}.{right}"
 
     # copy never create a new instance
@@ -100,10 +108,12 @@ class Variable(object):
         self._get_gc.clean()
         self._remote_gc.clean()
 
-    def remote_parties(self,
-                       obj,
-                       parties: Union[typing.List[Party], Party],
-                       suffix: Union[typing.Any, typing.Tuple] = tuple()):
+    def remote_parties(
+        self,
+        obj,
+        parties: Union[typing.List[Party], Party],
+        suffix: Union[typing.Any, typing.Tuple] = tuple(),
+    ):
         """
         remote object to specified parties
 
@@ -129,22 +139,30 @@ class Variable(object):
 
         for party in parties:
             if party.role not in self._dst:
-                raise RuntimeError(f"not allowed to remote object to {party} using {self._name}")
+                raise RuntimeError(
+                    f"not allowed to remote object to {party} using {self._name}"
+                )
         local = session.parties.local_party.role
         if local not in self._src:
-            raise RuntimeError(f"not allowed to remote object from {local} using {self._name}")
+            raise RuntimeError(
+                f"not allowed to remote object from {local} using {self._name}"
+            )
 
         name = self._short_name if self._use_short_name else self._name
 
         timer = profile.federation_remote_timer(name, self._name, tag, local, parties)
-        session.federation.remote(v=obj, name=name, tag=tag, parties=parties, gc=self._remote_gc)
+        session.federation.remote(
+            v=obj, name=name, tag=tag, parties=parties, gc=self._remote_gc
+        )
         timer.done(session.federation)
 
         self._remote_gc.gc()
 
-    def get_parties(self,
-                    parties: Union[typing.List[Party], Party],
-                    suffix: Union[typing.Any, typing.Tuple] = tuple()):
+    def get_parties(
+        self,
+        parties: Union[typing.List[Party], Party],
+        suffix: Union[typing.Any, typing.Tuple] = tuple(),
+    ):
         """
         get objects/tables from specified parties
 
@@ -170,14 +188,20 @@ class Variable(object):
 
         for party in parties:
             if party.role not in self._src:
-                raise RuntimeError(f"not allowed to get object from {party} using {self._name}")
+                raise RuntimeError(
+                    f"not allowed to get object from {party} using {self._name}"
+                )
         local = session.parties.local_party.role
         if local not in self._dst:
-            raise RuntimeError(f"not allowed to get object to {local} using {self._name}")
+            raise RuntimeError(
+                f"not allowed to get object to {local} using {self._name}"
+            )
 
         name = self._short_name if self._use_short_name else self._name
         timer = profile.federation_get_timer(name, self._name, tag, local, parties)
-        rtn = session.federation.get(name=name, tag=tag, parties=parties, gc=self._get_gc)
+        rtn = session.federation.get(
+            name=name, tag=tag, parties=parties, gc=self._get_gc
+        )
         timer.done(session.federation)
 
         self._get_gc.gc()
@@ -212,7 +236,7 @@ class Variable(object):
             parties = parties[idx]
         return self.remote_parties(obj=obj, parties=parties, suffix=suffix)
 
-    def get(self, idx=-1, suffix=tuple()):
+    def get(self, idx=-1, role=None, suffix=tuple()):
         """
         get obj from other parties.
 
@@ -224,14 +248,28 @@ class Variable(object):
         Returns:
             object or list of object
         """
-        src_parties = get_latest_opened().parties.roles_to_parties(roles=self._src, strict=False)
+        if role is None:
+            src_parties = get_latest_opened().parties.roles_to_parties(
+                roles=self._src, strict=False
+            )
+        else:
+            if isinstance(role, str):
+                role = [role]
+            src_parties = get_latest_opened().parties.roles_to_parties(
+                roles=role, strict=False
+            )
         if isinstance(idx, list):
             rtn = self.get_parties(parties=[src_parties[i] for i in idx], suffix=suffix)
         elif isinstance(idx, int):
-            rtn = self.get_parties(parties=src_parties, suffix=suffix) if idx < 0 else \
-                self.get_parties(parties=src_parties[idx], suffix=suffix)[0]
+            rtn = (
+                self.get_parties(parties=src_parties, suffix=suffix)
+                if idx < 0
+                else self.get_parties(parties=src_parties[idx], suffix=suffix)[0]
+            )
         else:
-            raise ValueError(f"illegal idx type: {type(idx)}, supported types: int or list of int")
+            raise ValueError(
+                f"illegal idx type: {type(idx)}, supported types: int or list of int"
+            )
         return rtn
 
 
@@ -262,9 +300,13 @@ class BaseTransferVariables(object):
         """
         FederationTagNamespace.set_namespace(str(flowid))
 
-    def _create_variable(self, name: str, src: typing.Iterable[str], dst: typing.Iterable[str]) -> Variable:
+    def _create_variable(
+        self, name: str, src: typing.Iterable[str], dst: typing.Iterable[str]
+    ) -> Variable:
         full_name = f"{self.__module__}.{self.__class__.__name__}.{name}"
-        return Variable.get_or_create(full_name, lambda: Variable(name=full_name, src=tuple(src), dst=tuple(dst)))
+        return Variable.get_or_create(
+            full_name, lambda: Variable(name=full_name, src=tuple(src), dst=tuple(dst))
+        )
 
     @staticmethod
     def all_parties():
