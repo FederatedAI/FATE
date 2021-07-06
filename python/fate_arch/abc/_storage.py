@@ -163,6 +163,10 @@ class StorageTableABC(metaclass=abc.ABCMeta):
     def destroy(self):
         ...
 
+    @abc.abstractmethod
+    def check_address(self):
+        ...
+
 
 class StorageSessionABC(metaclass=abc.ABCMeta):
     @abc.abstractmethod

@@ -85,6 +85,9 @@ class StorageTableBase(StorageTableABC):
         src_table_meta = self.get_meta()
         pass
 
+    def check_address(self):
+        return True
+
 
 class StorageTableMeta(StorageTableMetaABC):
 
