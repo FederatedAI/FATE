@@ -27,6 +27,7 @@ from federatedml.statistic.intersect.repeat_id_process import RepeatedIDIntersec
 from federatedml.statistic import data_overview
 from federatedml.transfer_variable.transfer_class.intersection_func_transfer_variable import \
     IntersectionFuncTransferVariable
+from federatedml.secureprotol.hash.hash_factory import Hash
 from federatedml.util import consts, LOGGER
 
 
@@ -49,6 +50,10 @@ class IntersectModelBase(ModelBase):
         self.host_party_id_list = None
 
         self.transfer_variable = IntersectionFuncTransferVariable()
+
+    def _init_model(self, params):
+        self.model_param = params
+        self.intersect_preprocess_params = params.intersect_preprocess_params
 
     def init_intersect_method(self):
         LOGGER.info("Using {} intersection, role is {}".format(self.model_param.intersect_method, self.role))
@@ -158,7 +163,6 @@ class IntersectModelBase(ModelBase):
             self.use_match_id_process = True
             LOGGER.info(f"use match_id_process")
 
-        filter = None
         if self.use_match_id_process:
             if self.model_param.intersect_cache_param.use_cache is True and self.model_param.intersect_method == consts.RSA:
                 raise ValueError("Not support cache module while repeated id process.")
@@ -172,14 +176,20 @@ class IntersectModelBase(ModelBase):
                 proc_obj.use_sample_id()
             match_data = proc_obj.recover(data=data)
             if self.intersection_obj.cardinality_only:
-                filter = self.intersection_obj.run_cardinality(match_data)
+                self.intersection_obj.run_cardinality(match_data)
             else:
-                self.intersect_ids = self.intersection_obj.run_intersect(match_data)
+                intersect_data = match_data
+                if self.model_param.run_preprocess:
+                    intersect_data = self.run_preprocess(match_data)
+                self.intersect_ids = self.intersection_obj.run_intersect(intersect_data)
         else:
             if self.intersection_obj.cardinality_only:
-                filter = self.intersection_obj.run_cardinality(data)
+                self.intersection_obj.run_cardinality(data)
             else:
-                self.intersect_ids = self.intersection_obj.run_intersect(data)
+                intersect_data = data
+                if self.model_param.run_preprocess:
+                    intersect_data = self.run_preprocess(data)
+                self.intersect_ids = self.intersection_obj.run_intersect(intersect_data)
 
         if self.intersection_obj.cardinality_only:
             if self.intersection_obj.intersect_num:
@@ -188,7 +198,7 @@ class IntersectModelBase(ModelBase):
             # self.model = self.intersection_obj.get_model()
             self.set_summary(self.get_model_summary())
             self.callback()
-            return filter
+            return data
 
         """
         if self.intersection_obj.cardinality_only:
@@ -258,6 +268,20 @@ class IntersectModelBase(ModelBase):
     def load_model(self, model_dict):
         self.intersection_obj.load_model(model_dict)
 
+    def make_filter_process(self, data_instances, hash_operator):
+        pass
+
+    def get_filter_process(self, data_instances, hash_operator):
+        pass
+
+    def run_preprocess(self, data_instances):
+        preprocess_hash_operator = Hash(self.model_param.intersect_preprocess_params.preprocess_method, False)
+        if self.role == self.model_param.intersect_preprocess_params.filter_owner:
+            data = self.make_filter_process(data_instances, preprocess_hash_operator)
+        else:
+            data = self.get_filter_process(data_instances, preprocess_hash_operator)
+        return data
+
 
 class IntersectHost(IntersectModelBase):
     def __init__(self):
@@ -288,6 +312,24 @@ class IntersectHost(IntersectModelBase):
         self.intersection_obj.load_params(self.model_param)
         self.model_param = self.intersection_obj.model_param
 
+    def make_filter_process(self, data_instances, hash_operator):
+        filter = self.intersection_obj.construct_filter(data_instances,
+                                                        self.intersect_preprocess_params.false_positive_rate,
+                                                        self.intersect_preprocess_params.hash_method,
+                                                        self.intersect_preprocess_params.random_state,
+                                                        hash_operator,
+                                                        self.intersect_preprocess_params.preprocess_salt)
+        self.transfer_variable.intersect_filter_from_host.remote(filter, role=consts.GUEST, idx=0)
+        LOGGER.debug(f"filter sent to guest")
+        return data_instances
+
+    def get_filter_process(self, data_instances, hash_operator):
+        filter = self.transfer_variable.intersect_filter_from_guest.get(idx=0)
+        LOGGER.debug(f"got filter from guest")
+        filtered_data = data_instances.filter(lambda k, v: filter.check(
+            hash_operator.compute(k, False, postfit_salt=self.intersect_preprocess_params.preprocess_salt)))
+        return filtered_data
+
 
 class IntersectGuest(IntersectModelBase):
     def __init__(self):
@@ -314,3 +356,27 @@ class IntersectGuest(IntersectModelBase):
         self.intersection_obj.guest_party_id = self.guest_party_id
         self.intersection_obj.host_party_id_list = self.host_party_id_list
         self.intersection_obj.load_params(self.model_param)
+
+    def make_filter_process(self, data_instances, hash_operator):
+        filter = self.intersection_obj.construct_filter(data_instances,
+                                                        self.intersect_preprocess_params.false_positive_rate,
+                                                        self.intersect_preprocess_params.hash_method,
+                                                        self.intersect_preprocess_params.random_state,
+                                                        hash_operator,
+                                                        self.intersect_preprocess_params.preprocess_salt)
+        self.transfer_variable.intersect_filter_from_guest.remote(filter, role=consts.HOST, idx=-1)
+        LOGGER.debug(f"filter sent to guest")
+
+        return data_instances
+
+    def get_filter_process(self, data_instances, hash_operator):
+        filter_list = self.transfer_variable.intersect_filter_from_guest.get(idx=-1)
+        LOGGER.debug(f"got filter from all host")
+
+        filtered_data_list = [data_instances.filter(lambda k, v: filter.check(
+            hash_operator.compute(k,
+                                  False,
+                                  postfit_salt=self.intersect_preprocess_params.preprocess_salt))) for filter in filter_list]
+        filtered_data = self.intersection_obj.get_common_intersection(filtered_data_list, False)
+
+        return filtered_data

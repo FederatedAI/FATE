@@ -46,6 +46,7 @@ class Intersect(object):
         self.sync_intersect_ids = param.sync_intersect_ids
         self.cardinality_only = param.cardinality_only
         self.sync_cardinality = param.sync_cardinality
+        self.run_preprocess = param.run_preprocess
         self.intersect_preprocess_params = param.intersect_preprocess_params
 
     @property
@@ -148,10 +149,10 @@ class Intersect(object):
             filter_obj = param_obj.filter
             filter_array = np.array(filter_obj.filter_array)
             self.filter = BitArray(bit_count=filter_obj.bit_count,
-                                  hash_func_count=filter_obj.hash_func_count,
-                                  hash_method=proprocess_params.hash_method,
-                                  random_state=proprocess_params.random_state,
-                                  salt=list(filter_obj.salt))
+                                   hash_func_count=filter_obj.hash_func_count,
+                                   hash_method=proprocess_params.hash_method,
+                                   random_state=proprocess_params.random_state,
+                                   salt=list(filter_obj.salt))
             self.filter.id = filter_obj.id
             self.filter.set_array(filter_array)
         if meta_obj.intersect_method == consts.RSA:
@@ -280,10 +281,13 @@ class Intersect(object):
         return m, k
 
     @staticmethod
-    def insert_key(kv_iterator, filter):
+    def insert_key(kv_iterator, filter, hash_operator=None, salt=None):
         res_filter = None
         for k, _ in kv_iterator:
-            res_filter = filter.insert(k)
+            if hash_operator:
+                res_filter = filter.insert(hash_operator.compute(k, False, salt))
+            else:
+                res_filter = filter.insert(k)
         return res_filter
 
     @staticmethod
@@ -294,12 +298,12 @@ class Intersect(object):
         return count
 
     @staticmethod
-    def construct_filter(data, false_positive_rate, hash_method, random_state):
+    def construct_filter(data, false_positive_rate, hash_method, random_state, hash_operator=None, salt=None):
         n = data.count()
         m, k = Intersect.get_filter_param(n, false_positive_rate)
         filter = BitArray(m, k, hash_method, random_state)
         LOGGER.debug(f"filter bit count is: {filter.bit_count}")
-        f = functools.partial(Intersect.insert_key, filter=filter)
+        f = functools.partial(Intersect.insert_key, filter=filter, hash_operator=hash_operator, salt=salt)
         # ind_list = data.map(lambda k, v: (filter.get_ind_set(k), k))
         # ind_list.mapPartitions(f, use_previous_behavior=False)
         new_array = data.mapPartitions(f).reduce(lambda x, y: x | y)

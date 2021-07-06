@@ -36,3 +36,8 @@ class IntersectionFuncTransferVariable(BaseTransferVariables):
         self.info_share_from_guest = self._create_variable(name='info_share_from_guest', src=['guest'], dst=['host'])
         self.join_id_from_guest = self._create_variable(name='join_id_from_guest', src=['guest'], dst=['host'])
         self.join_id_from_host = self._create_variable(name='join_id_from_host', src=['host'], dst=['guest'])
+        self.intersect_filter_from_host =  self._create_variable(name='intersect_filter_from_host', src=['host'],
+                                                                 dst=['guest'])
+        self.intersect_filter_from_guest = self._create_variable(name='intersect_filter_from_guest', src=['guest'],
+                                                                 dst=['host'])
+

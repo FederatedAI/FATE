@@ -47,6 +47,22 @@
       "dst": [
         "guest"
       ]
+    },
+    "intersect_filter_from_host": {
+      "src": [
+        "host"
+      ],
+      "dst": [
+        "guest"
+      ]
+    },
+    "intersect_filter_from_guest": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "host"
+      ]
     }
   }
 }

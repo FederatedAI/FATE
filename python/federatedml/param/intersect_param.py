@@ -208,33 +208,42 @@ class IntersectPreProcessParam(BaseParam):
     Parameters
     ----------
     false_positive_rate: float, initial target false positive rate when creating Bloom Filter,
-        must be <= 0.1, default 1e-3 for target sparsity of 0.5
+        must be <= 0.5, default 1e-3 for target sparsity of 0.5
 
     encrypt_method: str, encrypt method for encrypting id, supports rsa and ph, default rsa;
         specify parameter setting with respective params when using either method.
 
+    hash_method: str, the hash method for inserting ids, support md5, sha1, sha 224, sha256, sha384, sha512, sm3,
+        default sha256
+
+    preprocess_method: str, the hash method for encoding ids before insertion, default sha256
+
+    preprocess_salt: str, salt for preprocess hashing method, default ''
+
     random_state: seed for random salt generator when constructing hash functions,
         salt is appended to hash result str, default 42
 
-    hash_method: str, the hash method of encrypted ids, support md5, sha1, sha 224, sha256, sha384, sha512, sm3,
-        default sha256
+    filter_owner: str, role that constructs filter, either guest or host, default guest
 
     """
 
     def __init__(self, false_positive_rate=1e-3, encrypt_method=consts.RSA, hash_method='sha256',
-                 random_state=42):
+                 preprocess_method='sha256', preprocess_salt='', random_state=42, filter_owner=consts.GUEST):
         super().__init__()
         self.false_positive_rate = false_positive_rate
         self.encrypt_method = encrypt_method
-        self.random_state = random_state
         self.hash_method = hash_method
+        self.preprocess_method = preprocess_method
+        self.preprocess_salt = preprocess_salt
+        self.random_state = random_state
+        self.filter_owner = filter_owner
 
     def check(self):
         descr = "intersect preporcess param's false_positive_rate "
         self.check_decimal_float(self.false_positive_rate, descr)
         self.check_positive_number(self.false_positive_rate, descr)
-        if self.false_positive_rate > 0.1:
-            raise ValueError(f"{descr} must be positive float no greater than 0.1")
+        if self.false_positive_rate > 0.5:
+            raise ValueError(f"{descr} must be positive float no greater than 0.5")
 
         descr = "intersect preprocess param's encrypt_method "
         self.encrypt_method = self.check_and_change_lower(self.encrypt_method, [consts.RSA, consts.PH], descr)
@@ -248,6 +257,20 @@ class IntersectPreProcessParam(BaseParam):
                                                         consts.SHA256, consts.SHA384, consts.SHA512,
                                                         consts.SM3],
                                                        descr)
+        descr = "intersect preporcess param's preprocess_salt "
+        self.check_string(self.preprocess_salt, descr)
+
+        descr = "intersect preporcess param's preprocess_method "
+        self.preprocess_method = self.check_and_change_lower(self.preprocess_method,
+                                                             [consts.MD5, consts.SHA1, consts.SHA224,
+                                                             consts.SHA256, consts.SHA384, consts.SHA512,
+                                                             consts.SM3],
+                                                             descr)
+
+        descr = "intersect preporcess param's filter_owner "
+        self.filter_owner = self.check_and_change_lower(self.filter_owner,
+                                                        [consts.GUEST, consts.HOST],
+                                                        descr)
 
         LOGGER.debug("Finish IntersectPreProcessParam parameter check!")
         return True
@@ -298,6 +321,8 @@ class IntersectParam(BaseParam):
     sync_cardinality: boolean, whether to sync cardinality with all participants, default False,
         only effective when cardinality_only set to True
 
+    run_preprocess: boolean, whether to run preprocess process, default False
+
     intersect_preprocess_params: IntersectPreProcessParam, used for preprocessing and cardinality_only mode
 
     """
@@ -310,6 +335,7 @@ class IntersectParam(BaseParam):
                  with_sample_id=False, join_method=consts.INNER_JOIN, new_join_id=False,
                  allow_info_share: bool = False, info_owner=consts.GUEST, ph_params=PHParam(),
                  cardinality_only: bool = False, sync_cardinality: bool = False,
+                 run_preprocess:bool = False,
                  intersect_preprocess_params=IntersectPreProcessParam()):
         super().__init__()
         self.intersect_method = intersect_method
@@ -331,6 +357,7 @@ class IntersectParam(BaseParam):
         self.ph_params = ph_params
         self.cardinality_only = cardinality_only
         self.sync_cardinality = sync_cardinality
+        self.run_preprocess = run_preprocess
         self.intersect_preprocess_params = intersect_preprocess_params
 
     def check(self):
@@ -400,11 +427,15 @@ class IntersectParam(BaseParam):
         self.ph_params.check()
         self.check_boolean(self.cardinality_only, descr+"cardinality_only")
         self.check_boolean(self.sync_cardinality, descr+"sync_cardinality")
+        self.check_boolean(self.run_preprocess, descr+"run_preprocess")
         self.intersect_preprocess_params.check()
         if self.cardinality_only:
             if self.intersect_method not in [consts.RSA, consts.PH]:
                 raise ValueError(f"cardinality-only mode only support rsa or PH method.")
             if self.intersect_method == consts.RSA and self.rsa_params.split_calculation:
                 raise ValueError(f"cardinality-only mode only supports unified calculation.")
+        if self.run_preprocess:
+            if self.intersect_preprocess_params.false_positive_rate < 0.01:
+                raise ValueError(f"for preprocessing ids, false_positive_rate must be no less than 0.01")
         LOGGER.debug("Finish intersect parameter check!")
         return True
