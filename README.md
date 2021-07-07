@@ -25,7 +25,7 @@ FATE can be installed on Linux or Mac. Now, FATE can support：
 
 * KubeFATE installation:
 
-	- Multipal parties deployment by docker-compose, which for devolopment and test purpose;
+	- Multipal parties deployment by docker-compose, which for development and test purpose;
 
 	- Cluster (multi-node) deployment by Kubernetes
 
