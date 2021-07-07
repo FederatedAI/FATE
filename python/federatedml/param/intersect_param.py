@@ -437,5 +437,7 @@ class IntersectParam(BaseParam):
         if self.run_preprocess:
             if self.intersect_preprocess_params.false_positive_rate < 0.01:
                 raise ValueError(f"for preprocessing ids, false_positive_rate must be no less than 0.01")
+            if self.cardinality_only:
+                raise ValueError(f"cardinality_only mode cannot run preprocessing.")
         LOGGER.debug("Finish intersect parameter check!")
         return True

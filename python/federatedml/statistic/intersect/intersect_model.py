@@ -327,7 +327,7 @@ class IntersectHost(IntersectModelBase):
         filter = self.transfer_variable.intersect_filter_from_guest.get(idx=0)
         LOGGER.debug(f"got filter from guest")
         filtered_data = data_instances.filter(lambda k, v: filter.check(
-            hash_operator.compute(k, False, postfit_salt=self.intersect_preprocess_params.preprocess_salt)))
+            hash_operator.compute(k, postfit_salt=self.intersect_preprocess_params.preprocess_salt)))
         return filtered_data
 
 
@@ -375,7 +375,6 @@ class IntersectGuest(IntersectModelBase):
 
         filtered_data_list = [data_instances.filter(lambda k, v: filter.check(
             hash_operator.compute(k,
-                                  False,
                                   postfit_salt=self.intersect_preprocess_params.preprocess_salt))) for filter in filter_list]
         filtered_data = self.intersection_obj.get_common_intersection(filtered_data_list, False)
 

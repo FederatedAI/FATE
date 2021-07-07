@@ -15,10 +15,12 @@
 #
 
 import gmpy2
+import math
 import uuid
 import numpy as np
 
 from federatedml.secureprotol.hash.hash_factory import Hash
+from federatedml.util import consts, LOGGER
 
 SALT_LENGTH = 8
 
@@ -45,7 +47,7 @@ class BitArray(object):
     @property
     def sparsity(self):
         set_bit_count = sum(map(gmpy2.popcount, map(int, self._array)))
-        return set_bit_count / self.bit_count
+        return 1 - set_bit_count / self.bit_count
 
     def set_array(self, new_array):
         self._array = new_array
@@ -158,3 +160,35 @@ class BitArray(object):
         pos = ind >> 6
         bit_pos = ind & 63
         return (self._array[pos] & np.uint64(1 << bit_pos)) != 0
+
+    @staticmethod
+    def get_filter_param(n, p):
+        """
+
+        Parameters
+        ----------
+        n: items to store in filter
+        p: target false positive rate
+
+        Returns
+        -------
+
+        """
+        # bit count
+        m = math.ceil(-n * math.log(p) / (math.pow(math.log(2), 2)))
+        # hash func count
+        k = round(m / n * math.log(2))
+        if k < consts.MIN_HASH_FUNC_COUNT:
+            LOGGER.info(f"computed k value {k} is smaller than min hash func count limit, "
+                        f"set to {consts.MIN_HASH_FUNC_COUNT}")
+            k = consts.MIN_HASH_FUNC_COUNT
+            # update bit count so that target fpr = p
+            m = round(-n * k / math.log(1 - math.pow(p, 1 / k)))
+
+        if k > consts.MAX_HASH_FUNC_COUNT:
+            LOGGER.info(f"computed k value {k} is greater than max hash func count limit, "
+                        f"set to {consts.MAX_HASH_FUNC_COUNT}")
+            k = consts.MAX_HASH_FUNC_COUNT
+            # update bit count so that target fpr = p
+            m = round(-n * k / math.log(1 - math.pow(p, 1 / k)))
+        return m, k

@@ -254,38 +254,11 @@ class Intersect(object):
         return str(uuid.uuid1())
 
     @staticmethod
-    def get_filter_param(n, p):
-        """
-
-        Parameters
-        ----------
-        n: items to store in filter
-        p: target false positive rate
-
-        Returns
-        -------
-
-        """
-        # bit count
-        m = math.ceil(-n * math.log(p) / (math.pow(math.log(2), 2)))
-        # hash func count
-        k = round(m / n * math.log(2))
-        if k < consts.MIN_HASH_FUNC_COUNT:
-            LOGGER.info(f"computed k value {k} is smaller than min hash func count limit, "
-                        f"set to {consts.MIN_HASH_FUNC_COUNT}")
-            k = consts.MIN_HASH_FUNC_COUNT
-        if k > consts.MAX_HASH_FUNC_COUNT:
-            LOGGER.info(f"computed k value {k} is greater than max hash func count limit, "
-                        f"set to {consts.MAX_HASH_FUNC_COUNT}")
-            k = consts.MAX_HASH_FUNC_COUNT
-        return m, k
-
-    @staticmethod
     def insert_key(kv_iterator, filter, hash_operator=None, salt=None):
         res_filter = None
         for k, _ in kv_iterator:
             if hash_operator:
-                res_filter = filter.insert(hash_operator.compute(k, False, salt))
+                res_filter = filter.insert(hash_operator.compute(k, postfit_salt=salt))
             else:
                 res_filter = filter.insert(k)
         return res_filter
@@ -300,14 +273,14 @@ class Intersect(object):
     @staticmethod
     def construct_filter(data, false_positive_rate, hash_method, random_state, hash_operator=None, salt=None):
         n = data.count()
-        m, k = Intersect.get_filter_param(n, false_positive_rate)
+        m, k = BitArray.get_filter_param(n, false_positive_rate)
         filter = BitArray(m, k, hash_method, random_state)
         LOGGER.debug(f"filter bit count is: {filter.bit_count}")
         f = functools.partial(Intersect.insert_key, filter=filter, hash_operator=hash_operator, salt=salt)
         # ind_list = data.map(lambda k, v: (filter.get_ind_set(k), k))
         # ind_list.mapPartitions(f, use_previous_behavior=False)
         new_array = data.mapPartitions(f).reduce(lambda x, y: x | y)
-        LOGGER.debug(f"array obtained")
+        LOGGER.debug(f"filter array obtained")
         filter.set_array(new_array)
         # LOGGER.debug(f"after insert, filter sparsity is: {filter.sparsity}")
         return filter
