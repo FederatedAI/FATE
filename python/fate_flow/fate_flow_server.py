@@ -50,7 +50,8 @@ from fate_flow.settings import IP, HTTP_PORT, GRPC_PORT, _ONE_DAY_IN_SECONDS, st
 from fate_flow.utils.api_utils import get_json_result
 from fate_flow.utils.authentication_utils import PrivilegeAuth
 from fate_flow.utils.grpc_utils import UnaryService
-from fate_flow.utils.service_utils import ServiceUtils
+from fate_flow.db.db_services import service_db
+
 from fate_flow.utils.xthread import ThreadPoolExecutor
 from fate_flow.utils import job_utils
 
@@ -101,7 +102,7 @@ if __name__ == '__main__':
     RuntimeConfig.init_env()
     RuntimeConfig.set_process_role(ProcessRole.DRIVER)
     PrivilegeAuth.init()
-    ServiceUtils.register()
+    service_db().register_models()
     ResourceManager.initialize()
     Detector(interval=5 * 1000).start()
     DAGScheduler(interval=2 * 1000).start()
