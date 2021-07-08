@@ -1,0 +1,9 @@
+{
+    "file": "/data/projects/fate/examples/data/breast_homo_guest.csv",
+    "table_name": "breast_homo_guest_test",
+    "namespace": "experiment",
+    "head": 1,
+    "partition": 4,
+    "work_mode": 0,
+    "backend": 0
+}

@@ -155,6 +155,7 @@ def get_role(conf: Config):
                    'server_url': "http://{}/{}".format(flow_services, config['api_version']),
                    'train_auc': config['train_auc'],
                    'component_name': config['component_name'],
+                   'component_is_homo': config.get('component_is_homo', False),
                    'metric_output_path': config['metric_output_path'],
                    'model_output_path': config['model_output_path'],
                    'cache_directory': conf.cache_directory,
