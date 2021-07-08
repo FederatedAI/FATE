@@ -22,7 +22,6 @@ from kazoo.exceptions import NodeExistsError
 
 from fate_arch.common import conf_utils
 from fate_arch.common.conf_utils import get_base_config
-from fate_flow.db.db_models import MachineLearningModelInfo as MLModel
 from fate_flow.settings import FATE_FLOW_MODEL_TRANSFER_ENDPOINT, IP, HTTP_PORT, FATEFLOW_SERVICE_NAME
 from fate_flow.settings import stat_logger, SERVICES_SUPPORT_REGISTRY, FATE_SERVICES_REGISTERED_PATH
 
@@ -68,7 +67,7 @@ class ServiceUtils(object):
             raise Exception('loading servings node  failed from zookeeper: {}'.format(e))
 
     @classmethod
-    def register(cls, model_id=None, model_version=None):
+    def register(cls, party_model_id=None, model_version=None):
         if not get_base_config('use_registry', False):
             return
 
@@ -77,8 +76,8 @@ class ServiceUtils(object):
         atexit.register(zk.stop)
 
         model_transfer_url = 'http://{}:{}{}'.format(IP, HTTP_PORT, FATE_FLOW_MODEL_TRANSFER_ENDPOINT)
-        if model_id is not None and model_version is not None:
-            model_transfer_url += '/{}/{}'.format(model_id, model_version.replace('#', '_'))
+        if party_model_id is not None and model_version is not None:
+            model_transfer_url += '/{}/{}'.format(party_model_id.replace('#', '_'), model_version)
         fate_flow_model_transfer_service = '{}/{}'.format(FATE_SERVICES_REGISTERED_PATH.get(FATEFLOW_SERVICE_NAME, ""), parse.quote(model_transfer_url, safe=' '))
 
         try:
@@ -90,17 +89,12 @@ class ServiceUtils(object):
             stat_logger.exception(e)
 
     @classmethod
-    def models(cls):
-        return (MLModel.select(MLModel.f_model_id, MLModel.f_model_version).
-                group_by(MLModel.f_model_id, MLModel.f_model_version))
-
-    @classmethod
-    def register_models(cls):
+    def register_models(cls, models):
         if not get_base_config('use_registry', False):
             return
 
-        for model in cls.models():
-            cls.register(model.f_model_id, model.f_model_version)
+        for model in models:
+            cls.register(model.f_party_model_id, model.f_model_version)
 
 
 def nodes_unquote(nodes):

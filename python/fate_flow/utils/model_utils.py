@@ -178,7 +178,10 @@ def save_model_info(model_info):
         rows = model.save(force_insert=True)
         if rows != 1:
             raise Exception("Create {} failed".format(MLModel))
-        ServiceUtils.register(model.f_model_id, model.f_model_version)
+        ServiceUtils.register(gen_party_model_id(role=model.f_role,
+                                                 party_id=model.f_party_id,
+                                                 model_id=model.f_model_id),
+                              model.f_model_version)
         return model
     except peewee.IntegrityError as e:
         if e.args[0] == 1062:
@@ -238,3 +241,19 @@ def check_if_deployed(role, party_id, model_id, model_version):
                 if pipeline.parent:
                     return False
         return True
+
+
+@DB.connection_context()
+def models_group_by_party_model_id_and_model_version():
+    args = [
+        MLModel.f_role,
+        MLModel.f_party_id,
+        MLModel.f_model_id,
+        MLModel.f_model_version,
+    ]
+    models = MLModel.select(*args).group_by(*args)
+    for model in models:
+        model.f_party_model_id = gen_party_model_id(role=model.f_role,
+                                                    party_id=model.f_party_id,
+                                                    model_id=model.f_model_id)
+    return models
