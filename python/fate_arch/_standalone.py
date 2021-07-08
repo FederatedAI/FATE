@@ -700,9 +700,12 @@ class _TaskInfo:
         self.task_id = task_id
         self.function_id = function_id
         self.function_bytes = function_bytes
+        self._function_deserialized = None
 
     def get_func(self):
-        return f_pickle.loads(self.function_bytes)
+        if self._function_deserialized is None:
+            self._function_deserialized = f_pickle.loads(self.function_bytes)
+        return self._function_deserialized
 
 
 class _MapReduceTaskInfo:
