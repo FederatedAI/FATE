@@ -269,17 +269,19 @@ class IntersectModelBase(ModelBase):
         self.intersection_obj.load_model(model_dict)
 
     def make_filter_process(self, data_instances, hash_operator):
-        pass
+        raise NotImplementedError("This method should not be called here")
 
     def get_filter_process(self, data_instances, hash_operator):
-        pass
+        raise NotImplementedError("This method should not be called here")
 
     def run_preprocess(self, data_instances):
         preprocess_hash_operator = Hash(self.model_param.intersect_preprocess_params.preprocess_method, False)
         if self.role == self.model_param.intersect_preprocess_params.filter_owner:
             data = self.make_filter_process(data_instances, preprocess_hash_operator)
         else:
+            LOGGER.debug(f"before preprocess, data count: {data_instances.count()}")
             data = self.get_filter_process(data_instances, preprocess_hash_operator)
+            LOGGER.debug(f"after preprocess, data count: {data.count()}")
         return data
 
 

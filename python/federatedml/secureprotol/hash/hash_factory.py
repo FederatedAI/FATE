@@ -2,87 +2,101 @@ import base64
 import hashlib
 import libsm3py
 
-from federatedml.util import LOGGER
+from federatedml.util import consts
+
+SUPPORT_METHOD = [consts.MD5, consts.SHA1, consts.SHA224, consts.SHA256,
+                         consts.SHA384, consts.SHA512, consts.SM3, "none"]
 
 
 class Hash:
     def __init__(self, method, base64=0):
         self.method = method
+        if self.method not in SUPPORT_METHOD:
+            raise ValueError("Hash module do not support method:{}".format(self.method))
+
         self.base64 = base64
 
         self.dist_encode_function = {
-            "md5": self.__compute_md5,
-            "sha1": self.__compute_sha1,
-            "sha224": self.__compute_sha224,
-            "sha256": self.__compute_sha256,
-            "sha384": self.__compute_sha384,
-            "sha512": self.__compute_sha512,
-            "sm3": self.__compute_sm3,
-            "none": self.__compute_no_hash
+            consts.MD5: compute_md5,
+            consts.SHA1: compute_sha1,
+            consts.SHA224: compute_sha224,
+            consts.SHA256: compute_sha256,
+            consts.SHA384: compute_sha384,
+            consts.SHA512: compute_sha512,
+            consts.SM3: compute_sm3,
+            "none": compute_no_hash
         }
 
-    @staticmethod
-    def is_support(method):
-        support_encode_method = ["md5", "sha1", "sha224", "sha256", "sha384", "sha512", "sm3", "none"]
-        return method in support_encode_method
+        self.dist_encode_base_64_function = {
+            consts.MD5: compute_md5_base64,
+            consts.SHA1: compute_sha1_base64,
+            consts.SHA224: compute_sha224_base64,
+            consts.SHA256: compute_sha256_base64,
+            consts.SHA384: compute_sha384_base64,
+            consts.SHA512: compute_sha512_base64,
+            consts.SM3: compute_sm3_base64,
+            "none": compute_no_hash_base64
+        }
 
-    def __compute_md5(self, value):
-        if self.base64 == 1:
-            return str(base64.b64encode(hashlib.md5(bytes(value, encoding='utf-8')).digest()), "utf-8")
+        if self.base64:
+            self.hash_operator = self.dist_encode_base_64_function[self.method]
         else:
-            return hashlib.md5(bytes(value, encoding='utf-8')).hexdigest()
-
-    def __compute_sha256(self, value):
-        if self.base64 == 1:
-            return str(base64.b64encode(hashlib.sha256(bytes(value, encoding='utf-8')).digest()), "utf-8")
-        else:
-            return hashlib.sha256(bytes(value, encoding='utf-8')).hexdigest()
-
-    def __compute_sha1(self, value):
-        if self.base64 == 1:
-            return str(base64.b64encode(hashlib.sha1(bytes(value, encoding='utf-8')).digest()), "utf-8")
-        else:
-            return hashlib.sha1(bytes(value, encoding='utf-8')).hexdigest()
-
-    def __compute_sha224(self, value):
-        if self.base64 == 1:
-            return str(base64.b64encode(hashlib.sha224(bytes(value, encoding='utf-8')).digest()), "utf-8")
-        else:
-            return hashlib.sha224(bytes(value, encoding='utf-8')).hexdigest()
-
-    def __compute_sha512(self, value):
-        if self.base64 == 1:
-            return str(base64.b64encode(hashlib.sha512(bytes(value, encoding='utf-8')).digest()), "utf-8")
-        else:
-            return hashlib.sha512(bytes(value, encoding='utf-8')).hexdigest()
-
-    def __compute_sha384(self, value):
-        if self.base64 == 1:
-            return str(base64.b64encode(hashlib.sha384(bytes(value, encoding='utf-8')).digest()), "utf-8")
-        else:
-            return hashlib.sha384(bytes(value, encoding='utf-8')).hexdigest()
-
-    def __compute_sm3(self, value):
-        if self.base64 == 1:
-            return str(base64.b64encode(libsm3py.hash(bytes(value, encoding='utf-8')).encode('utf-8')), "utf-8")
-        else:
-            return libsm3py.hash(bytes(value, encoding='utf-8')).hex()
-
-    def __compute_no_hash(self, value):
-        if self.base64 == 1:
-            return str(base64.b64encode(bytes(value, encoding='utf-8')), 'utf-8')
-        else:
-            return str(value)
+            self.hash_operator = self.dist_encode_function[self.method]
 
     def compute(self, value, pre_salt=None, postfit_salt=None):
-        if not Hash.is_support(self.method):
-            LOGGER.warning("Hash module do not support method:{}".format(self.method))
-            return value
-
         value = str(value)
         if pre_salt is not None and len(pre_salt) > 0:
             value = pre_salt + value
 
         if postfit_salt is not None and len(postfit_salt) > 0:
             value = value + postfit_salt
-        return self.dist_encode_function[self.method](value)
+        return self.hash_operator(value)
+
+
+def compute_md5(value):
+    return hashlib.md5(bytes(value, encoding='utf-8')).hexdigest()
+
+def compute_md5_base64(value):
+    return str(base64.b64encode(hashlib.md5(bytes(value, encoding='utf-8')).digest()), "utf-8")
+
+def compute_sha256(value):
+    return hashlib.sha256(bytes(value, encoding='utf-8')).hexdigest()
+
+def compute_sha256_base64(value):
+    return str(base64.b64encode(hashlib.sha256(bytes(value, encoding='utf-8')).digest()), "utf-8")
+
+def compute_sha1(value):
+    return hashlib.sha1(bytes(value, encoding='utf-8')).hexdigest()
+
+def compute_sha1_base64(value):
+    return str(base64.b64encode(hashlib.sha1(bytes(value, encoding='utf-8')).digest()), "utf-8")
+
+def compute_sha224(value):
+    return hashlib.sha224(bytes(value, encoding='utf-8')).hexdigest()
+
+def compute_sha224_base64(value):
+    return str(base64.b64encode(hashlib.sha224(bytes(value, encoding='utf-8')).digest()), "utf-8")
+
+def compute_sha512(value):
+    return hashlib.sha512(bytes(value, encoding='utf-8')).hexdigest()
+
+def compute_sha512_base64(value):
+    return str(base64.b64encode(hashlib.sha512(bytes(value, encoding='utf-8')).digest()), "utf-8")
+
+def compute_sha384(value):
+    return hashlib.sha384(bytes(value, encoding='utf-8')).hexdigest()
+
+def compute_sha384_base64(value):
+    return str(base64.b64encode(hashlib.sha384(bytes(value, encoding='utf-8')).digest()), "utf-8")
+
+def compute_sm3(value):
+    return libsm3py.hash(bytes(value, encoding='utf-8')).hex()
+
+def compute_sm3_base64(value):
+    return str(base64.b64encode(libsm3py.hash(bytes(value, encoding='utf-8')).encode('utf-8')), "utf-8")
+
+def compute_no_hash(value):
+    return str(value)
+
+def compute_no_hash_base64(value):
+    return str(base64.b64encode(bytes(value, encoding='utf-8')), 'utf-8')
