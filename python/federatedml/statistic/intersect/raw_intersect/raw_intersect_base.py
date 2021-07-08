@@ -134,7 +134,7 @@ class RawIntersect(Intersect):
             if Hash.is_support(self.encode_params.encode_method):
                 hash_operator = Hash(self.encode_params.encode_method, self.encode_params.base64)
                 sid_hash_pair = data_instances.map(
-                    lambda k, v: (hash_operator.compute(k, postfit_salt=self.encode_params.salt), k))
+                    lambda k, v: (hash_operator.compute(k, suffix_salt=self.encode_params.salt), k))
                 data_sid = sid_hash_pair.mapValues(lambda v: 1)
             else:
                 raise ValueError("Unknown encode_method, please check the configure of hash_param")

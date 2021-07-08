@@ -15,7 +15,6 @@
 #
 
 import functools
-import math
 import numpy as np
 import uuid
 
@@ -246,7 +245,7 @@ class Intersect(object):
 
     @staticmethod
     def hash(value, hash_operator, salt=''):
-        h_value = hash_operator.compute(value, postfit_salt=salt)
+        h_value = hash_operator.compute(value, suffix_salt=salt)
         return h_value
 
     @staticmethod
@@ -258,7 +257,7 @@ class Intersect(object):
         res_filter = None
         for k, _ in kv_iterator:
             if hash_operator:
-                res_filter = filter.insert(hash_operator.compute(k, postfit_salt=salt))
+                res_filter = filter.insert(hash_operator.compute(k, suffix_salt=salt))
             else:
                 res_filter = filter.insert(k)
         return res_filter

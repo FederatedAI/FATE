@@ -43,13 +43,13 @@ class Hash:
         else:
             self.hash_operator = self.dist_encode_function[self.method]
 
-    def compute(self, value, pre_salt=None, postfit_salt=None):
+    def compute(self, value, prefix_salt=None, suffix_salt=None):
         value = str(value)
-        if pre_salt is not None and len(pre_salt) > 0:
-            value = pre_salt + value
+        if prefix_salt is not None and len(prefix_salt) > 0:
+            value = prefix_salt + value
 
-        if postfit_salt is not None and len(postfit_salt) > 0:
-            value = value + postfit_salt
+        if suffix_salt is not None and len(suffix_salt) > 0:
+            value = value + suffix_salt
         return self.hash_operator(value)
 
 

@@ -63,7 +63,7 @@ class BitArray(object):
     def get_ind_set(self, x):
         hash_encoder = Hash(self.hash_method, False)
         return set(int(hash_encoder.compute(x,
-                                            postfit_salt=self.salt[i]),
+                                            suffix_salt=self.salt[i]),
                        16) % self.bit_count for i in range(self.hash_func_count))
 
     def insert(self, x):
@@ -109,7 +109,7 @@ class BitArray(object):
         """
         hash_encoder = Hash(self.hash_method, False)
         for i in range(self.hash_func_count):
-            ind = int(hash_encoder.compute(x, postfit_salt=self.salt[i]), 16) % self.bit_count
+            ind = int(hash_encoder.compute(x, suffix_salt=self.salt[i]), 16) % self.bit_count
             if not self.query_bit(ind):
                 return False
         return True
@@ -148,7 +148,7 @@ class BitArray(object):
 
     def query_bit(self, ind):
         """
-        query bit == 0
+        query bit != 0
         Parameters
         ----------
         ind
