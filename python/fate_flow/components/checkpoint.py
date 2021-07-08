@@ -36,6 +36,7 @@ class Checkpoint:
         self.step_name = step_name
         self.create_time = None
         self.directory = directory / f'{step_index}#{step_name}'
+        self.directory.mkdir(0o755, True, True)
         self.database = self.directory / 'database.yaml'
         self.lock = self._lock
 
@@ -83,23 +84,28 @@ class Checkpoint:
             model_strings[model_name] = buffer_object_serialized_string
 
             data['models'][model_name] = {
-                'filepath': str(self.directory / f'{model_name}.pb'),
+                'filename': f'{model_name}.pb',
                 'sha1': hashlib.sha1(buffer_object_serialized_string).hexdigest(),
                 'buffer_name': type(buffer_object).__name__,
             }
 
         with self.lock:
             for model_name, model in data['models'].items():
-                Path(model['filepath']).write_bytes(model_strings[model_name])
+                (self.directory / model['filename']).write_bytes(model_strings[model_name])
             self.database.write_text(yaml.dump(data, Dumper=yaml.RoundTripDumper), 'utf8')
         stat_logger.info(f'Checkpoint saved. path: {self.directory}')
 
     def read(self):
         with self.lock:
-            data = yaml.load(self.database.read_text('utf8'))
+            data = yaml.safe_load(self.database.read_text('utf8'))
+            if data['step_index'] != self.step_index or data['step_name'] != self.step_name:
+                raise ValueError('Checkpoint may be incorrect: step_index or step_name dose not match. '
+                                 f'filepath: {self.database} '
+                                 f'expected step_index: {self.step_index} actual step_index: {data["step_index"]} '
+                                 f'expected step_name: {self.step_name} actual step_index: {data["step_name"]}')
 
             for model_name, model in data['models'].items():
-                model['filepath'] = Path(model['filepath'])
+                model['filepath'] = self.directory / model['filename']
                 if not model['filepath'].exists():
                     raise FileNotFoundError('Checkpoint is incorrect: protobuf file not found. '
                                             f'filepath: {model["filepath"]}')
@@ -110,18 +116,17 @@ class Checkpoint:
         for model_name, model in data['models'].items():
             sha1 = hashlib.sha1(model_strings[model_name]).hexdigest()
             if sha1 != model['sha1']:
-                raise ValueError('Hash dose not match, checkpoint may be incorrect. '
+                raise ValueError('Checkpoint may be incorrect: hash dose not match. '
                                  f'filepath: {model["filepath"]} expected: {model["sha1"]} actual: {sha1}')
 
-        self.step_index = data['step_index']
-        self.step_name = data['step_name']
         self.create_time = datetime.fromisoformat(data['create_time'])
-
         return {model_name: PipelinedModel.parse_proto_object(model['buffer_name'], model_strings[model_name])
                 for model_name, model in data['models'].items()}
 
     def remove(self):
-        rmtree(self.directory, True)
+        self.create_time = None
+        rmtree(self.directory)
+        self.directory.mkdir(0o755)
 
 
 class CheckpointManager:
@@ -155,20 +160,17 @@ class CheckpointManager:
             raise TypeError('max_to_keep must be an integer')
         self.checkpoints = deque(maxlen=max_to_keep)
 
-    def load_checkpoints_from_disk(self, remove_incorrect=True):
+    def load_checkpoints_from_disk(self):
         checkpoints = []
         for directory in self.directory.glob('*'):
-            if not (directory.is_dir() and '#' in directory.name):
+            if not directory.is_dir() or '#' not in directory.name:
                 continue
 
             step_index, step_name = directory.name.split('#', 1)
             checkpoint = Checkpoint(self.directory, int(step_index), step_name)
 
             if not checkpoint.available:
-                if remove_incorrect:
-                    checkpoint.remove()
                 continue
-
             checkpoints.append(checkpoint)
 
         self.checkpoints = deque(sorted(checkpoints, key=lambda i: i.step_index), self.max_checkpoints_number)
@@ -225,5 +227,5 @@ class CheckpointManager:
 
     def clean(self):
         self.checkpoints = deque(maxlen=self.max_checkpoints_number)
-        rmtree(self.directory, True)
+        rmtree(self.directory)
         self.directory.mkdir(0o755)
