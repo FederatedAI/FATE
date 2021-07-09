@@ -44,18 +44,18 @@ class CryptoExecutor(object):
         :return: Table
         """
         if mode == 0:
-            return plaintable.map(lambda k, v: (k, self.cipher_core.encrypt(hash_operator.compute(k, postfit_salt=salt))))
+            return plaintable.map(lambda k, v: (k, self.cipher_core.encrypt(hash_operator.compute(k, suffix_salt=salt))))
         elif mode == 1:
-            return plaintable.map(lambda k, v: (self.cipher_core.encrypt(hash_operator.compute(k, postfit_salt=salt)), -1))
+            return plaintable.map(lambda k, v: (self.cipher_core.encrypt(hash_operator.compute(k, suffix_salt=salt)), -1))
         elif mode == 2:
-            return plaintable.map(lambda k, v: (self.cipher_core.encrypt(hash_operator.compute(k, postfit_salt=salt)), v))
+            return plaintable.map(lambda k, v: (self.cipher_core.encrypt(hash_operator.compute(k, suffix_salt=salt)), v))
         elif mode == 3:
-            return plaintable.map(lambda k, v: (k, (self.cipher_core.encrypt(hash_operator.compute(k, postfit_salt=salt)), v)))
+            return plaintable.map(lambda k, v: (k, (self.cipher_core.encrypt(hash_operator.compute(k, suffix_salt=salt)), v)))
         elif mode == 4:
-            return plaintable.map(lambda k, v: (self.cipher_core.encrypt(hash_operator.compute(k, postfit_salt=salt)), k))
+            return plaintable.map(lambda k, v: (self.cipher_core.encrypt(hash_operator.compute(k, suffix_salt=salt)), k))
         elif mode == 5:
             return plaintable.map(
-                lambda k, v: (self.cipher_core.encrypt(hash_operator.compute(k, postfit_salt=salt)), (k, v)))
+                lambda k, v: (self.cipher_core.encrypt(hash_operator.compute(k, suffix_salt=salt)), (k, v)))
 
         else:
             raise ValueError("Unsupported mode for crypto_executor map encryption")

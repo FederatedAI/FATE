@@ -51,7 +51,7 @@ class PhIntersect(Intersect):
             restored_id = k
         return (restored_id, k)
     """
-    def get_intersect_meta(self):
+    def get_intersect_method_meta(self):
         return PHMeta(hash_method=self.ph_params.hash_method,
                       salt=self.salt)
 
