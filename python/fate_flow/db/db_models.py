@@ -279,6 +279,23 @@ class MachineLearningModelInfo(DataBaseModel):
         primary_key = CompositeKey('f_role', 'f_party_id', 'f_model_id', 'f_model_version')
 
 
+class DataTableTrackingModel(DataBaseModel):
+    f_table_id = BigAutoField(primary_key=True)
+    f_table_name = CharField(max_length=300, null=True)
+    f_table_namespace = CharField(max_length=300, null=True)
+    f_job_id = CharField(max_length=25, index=True, null=True)
+    f_have_parent = BooleanField(default=False)
+    f_parent_number = IntegerField(default=0)
+
+    f_parent_table_name = CharField(max_length=500, null=True)
+    f_parent_table_namespace = CharField(max_length=500, null=True)
+    f_source_table_name = CharField(max_length=500, null=True)
+    f_source_table_namespace = CharField(max_length=500, null=True)
+
+    class Meta:
+        db_table = "t_data_table_tracking"
+
+
 class ModelTag(DataBaseModel):
     f_id = BigAutoField(primary_key=True)
     f_m_id = CharField(max_length=25, null=False)

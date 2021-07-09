@@ -20,6 +20,7 @@ import time
 from fate_arch.common import log, file_utils, EngineType, path_utils
 from fate_arch.storage import StorageEngine, EggRollStorageType
 from fate_flow.entity.metric import Metric, MetricMeta
+from fate_flow.manager.data_manager import DataTableTracker
 from fate_flow.utils import job_utils, data_utils
 from fate_flow.scheduling_apps.client import ControllerClient
 from fate_arch import storage
@@ -104,6 +105,7 @@ class Upload(ComponentBase):
                 data_table_count = self.save_data_table(job_id, name, namespace, head)
             else:
                 data_table_count = self.get_data_table_count(self.parameters["file"], name, namespace)
+            DataTableTracker.create_table_tracker(table_name=name, table_namespace=namespace, entity_info={"job_id": job_id, "have_parent": False})
             self.table.get_meta().update_metas(in_serialized=True)
         LOGGER.info("------------load data finish!-----------------")
         # rm tmp file

@@ -273,16 +273,3 @@ class TaskController(object):
         else:
             return False
 
-    @classmethod
-    def query_task_input_args(cls, job_id, task_id, role, party_id, job_args, job_parameters, input_dsl, filter_type=None, filter_attr=None):
-        task_run_args = TaskExecutor.get_task_run_args(job_id=job_id, role=role, party_id=party_id,
-                                                       task_id=task_id,
-                                                       job_args=job_args,
-                                                       job_parameters=job_parameters,
-                                                       task_parameters={},
-                                                       input_dsl=input_dsl,
-                                                       filter_type=filter_type,
-                                                       filter_attr=filter_attr
-                                                       )
-        return task_run_args
-

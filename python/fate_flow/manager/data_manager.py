@@ -17,21 +17,57 @@ import operator
 
 from fate_arch import storage
 from fate_flow.settings import stat_logger
-from fate_flow.db.db_models import DB, TrackingMetric
+from fate_flow.db.db_models import DB, TrackingMetric, DataTableTrackingModel
 
 
-@DB.connection_context()
-def query_data_view(**kwargs):
-    filters = []
-    for f_n, f_v in kwargs.items():
-        attr_name = 'f_%s' % f_n
-        if hasattr(DataView, attr_name):
-            filters.append(operator.attrgetter('f_%s' % f_n)(DataView) == f_v)
-    if filters:
-        data_views = DataView.select().where(*filters)
-    else:
-        data_views = []
-    return [data_view for data_view in data_views]
+class DataTableTracker(object):
+    @classmethod
+    @DB.connection_context()
+    def create_table_tracker(cls, table_name, table_namespace, entity_info):
+        tracker = DataTableTrackingModel()
+        tracker.f_table_name = table_name
+        tracker.f_table_namespace = table_namespace
+        for k, v in entity_info.items():
+            attr_name = 'f_%s' % k
+            if hasattr(DataTableTrackingModel, attr_name):
+                setattr(tracker, attr_name, v)
+        if entity_info.get("have_parent"):
+            parent_trackers = DataTableTrackingModel.select().where(
+                DataTableTrackingModel.f_table_name == entity_info.get("parent_table_name"),
+                DataTableTrackingModel.f_table_namespace == entity_info.get("parent_table_namespace")).order_by(DataTableTrackingModel.f_create_time.desc())
+            if not parent_trackers:
+                raise Exception(f"table {table_name} {table_namespace} no found parent")
+            parent_tracker = parent_trackers[0]
+            if parent_tracker.f_have_parent:
+                tracker.f_source_table_name = parent_tracker.f_source_table_name
+                tracker.f_source_table_namespace = parent_tracker.f_source_table_namespace
+            else:
+                tracker.f_source_table_name = parent_tracker.f_table_name
+                tracker.f_source_table_namespace = parent_tracker.f_table_namespace
+        rows = tracker.save(force_insert=True)
+        if rows != 1:
+            raise Exception("Create {} failed".format(tracker))
+        return tracker
+
+    @classmethod
+    @DB.connection_context()
+    def get_parent_table(cls, table_name, table_namespace):
+        filters = [operator.attrgetter('f_table_name')(DataTableTrackingModel) == table_name,
+                   operator.attrgetter('f_table_namespace')(DataTableTrackingModel) == table_namespace]
+        trackers = DataTableTrackingModel.select().where(*filters)
+        if trackers:
+            tracker = trackers[0]
+            if tracker.f_have_parent:
+                parent_table_info = {"parent_table_name": tracker.f_parent_table_name,
+                                     "parent_table_namespace": tracker.f_parent_table_namespace,
+                                     "source_table_name": trackers.f_source_table_name,
+                                     "source_table_namespace": tracker.f_table_namespace,
+                                     "have_parent": True}
+            else:
+                parent_table_info = {"have_parent": False}
+        else:
+            raise Exception(f"no found table: table name {table_name}, table namespace {table_namespace}")
+        return parent_table_info
 
 
 def delete_tables_by_table_infos(output_data_table_infos):

@@ -23,6 +23,7 @@ from fate_arch.common import log, EngineType
 from fate_arch.computing import ComputingEngine
 from fate_arch.storage import StorageTableMeta, StorageEngine, Relationship
 from fate_flow.entity.metric import MetricMeta
+from fate_flow.manager.data_manager import DataTableTracker
 from fate_flow.utils import job_utils, data_utils
 from fate_flow.components.component_base import ComponentBase
 
@@ -83,6 +84,12 @@ class Reader(ComponentBase):
                 'output_data_name') else table_key,
             table_namespace=output_table_meta.get_namespace(),
             table_name=output_table_meta.get_name())
+        DataTableTracker.create_table_tracker(output_table_meta.get_name(), output_table_meta.get_namespace(),
+                                              entity_info={
+                                                  "have_parent": True,
+                                                  "parent_table_namespace": self.parameters[table_key]['namespace'],
+                                                  "parent_table_name": self.parameters[table_key]['name']
+                                              })
         headers_str = output_table_meta.get_schema().get('header')
         table_info = {}
         if output_table_meta.get_schema() and headers_str:

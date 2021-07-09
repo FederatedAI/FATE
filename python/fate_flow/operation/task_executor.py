@@ -23,6 +23,7 @@ from fate_arch.common.log import schedule_logger, getLogger
 from fate_arch import session
 from fate_flow.entity.types import TaskStatus, ProcessRole, RunParameters
 from fate_flow.entity.runtime_config import RuntimeConfig
+from fate_flow.manager.data_manager import DataTableTracker
 from fate_flow.operation.job_tracker import Tracker
 from fate_arch import storage
 from fate_flow.utils import job_utils, schedule_utils
@@ -150,14 +151,14 @@ class TaskExecutor(object):
             schedule_logger().info('Run {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id))
             schedule_logger().info("Component parameters on party {}".format(component_parameters_on_party))
             schedule_logger().info("Task input dsl {}".format(task_input_dsl))
-            task_run_args = cls.get_task_run_args(job_id=job_id, role=role, party_id=party_id,
-                                                  task_id=task_id,
-                                                  task_version=task_version,
-                                                  job_args=job_args_on_party,
-                                                  job_parameters=job_parameters,
-                                                  task_parameters=task_parameters,
-                                                  input_dsl=task_input_dsl,
-                                                  )
+            task_run_args, input_table_list = cls.get_task_run_args(job_id=job_id, role=role, party_id=party_id,
+                                                                    task_id=task_id,
+                                                                    task_version=task_version,
+                                                                    job_args=job_args_on_party,
+                                                                    job_parameters=job_parameters,
+                                                                    task_parameters=task_parameters,
+                                                                    input_dsl=task_input_dsl,
+                                                                    )
             if module_name in {"Upload", "Download", "Reader", "Writer"}:
                 task_run_args["job_parameters"] = job_parameters
             run_object = getattr(importlib.import_module(run_class_package), run_class_name)()
@@ -170,6 +171,7 @@ class TaskExecutor(object):
             output_data = run_object.save_data()
             if not isinstance(output_data, list):
                 output_data = [output_data]
+            output_table_list = []
             for index in range(0, len(output_data)):
                 data_name = task_output_dsl.get('data')[index] if task_output_dsl.get('data') else '{}'.format(index)
                 persistent_table_namespace, persistent_table_name = tracker.save_output_data(
@@ -180,6 +182,8 @@ class TaskExecutor(object):
                     tracker.log_output_data_info(data_name=data_name,
                                                  table_namespace=persistent_table_namespace,
                                                  table_name=persistent_table_name)
+                    output_table_list.append({"namespace": persistent_table_namespace, "name": persistent_table_name})
+            TaskExecutor.log_output_data_table_tracker(input_table_list, output_table_list)
             output_model = run_object.export_model()
             # There is only one model output at the current dsl version.
             tracker.save_output_model(output_model,
@@ -213,6 +217,25 @@ class TaskExecutor(object):
         return task_info
 
     @classmethod
+    def log_output_data_table_tracker(cls, input_table_list, output_table_list):
+        try:
+            parent_number = 0
+            if len(input_table_list) > 1 and len(output_table_list)>1:
+                return
+            for input_table in input_table_list:
+                for output_table in output_table_list:
+                    DataTableTracker.create_table_tracker(output_table.get("name"), output_table.get("namespace"),
+                                                          entity_info={
+                                                              "have_parent": True,
+                                                              "parent_table_namespace": input_table.get("namespace"),
+                                                              "parent_table_name": input_table.get("name"),
+                                                              "parent_number": parent_number
+                                                          })
+                parent_number +=0
+        except Exception as e:
+            schedule_logger().exception(e)
+
+    @classmethod
     def get_job_args_on_party(cls, dsl_parser, job_runtime_conf, role, party_id):
         party_index = job_runtime_conf["role"][role].index(int(party_id))
         job_args = dsl_parser.get_args_input()
@@ -224,6 +247,7 @@ class TaskExecutor(object):
                           input_dsl, filter_type=None, filter_attr=None, get_input_table=False):
         task_run_args = {}
         input_table = {}
+        input_table_info_list = []
         if 'idmapping' in role:
             return {}
         for input_type, input_detail in input_dsl.items():
@@ -271,6 +295,8 @@ class TaskExecutor(object):
                                 storage_table_meta.get_address(),
                                 schema=storage_table_meta.get_schema(),
                                 partitions=task_parameters.computing_partitions)
+                            input_table_info_list.append({'namespace': storage_table_meta.get_namespace(),
+                                                          'name': storage_table_meta.get_name()})
                         else:
                             computing_table = None
 
@@ -297,7 +323,7 @@ class TaskExecutor(object):
                     this_type_args[search_component_name] = models
         if get_input_table:
             return input_table
-        return task_run_args
+        return task_run_args, input_table_info_list
 
     @classmethod
     def report_task_update_to_driver(cls, task_info):
