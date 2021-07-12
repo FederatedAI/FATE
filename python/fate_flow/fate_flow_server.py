@@ -51,6 +51,7 @@ from fate_flow.utils.api_utils import get_json_result
 from fate_flow.utils.authentication_utils import PrivilegeAuth
 from fate_flow.utils.grpc_utils import UnaryService
 from fate_flow.utils.service_utils import ServiceUtils
+from fate_flow.utils.model_utils import models_group_by_party_model_id_and_model_version
 from fate_flow.utils.xthread import ThreadPoolExecutor
 from fate_flow.utils import job_utils
 
@@ -102,6 +103,7 @@ if __name__ == '__main__':
     RuntimeConfig.set_process_role(ProcessRole.DRIVER)
     PrivilegeAuth.init()
     ServiceUtils.register()
+    ServiceUtils.register_models(models_group_by_party_model_id_and_model_version())
     ResourceManager.initialize()
     Detector(interval=5 * 1000).start()
     DAGScheduler(interval=2 * 1000).start()
