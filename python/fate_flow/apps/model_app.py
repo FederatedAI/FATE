@@ -284,8 +284,23 @@ def bind_model_service():
 
 @manager.route('/transfer', methods=['post'])
 def transfer_model():
-    model_data = publish_model.download_model(request.json)
-    return get_json_result(retcode=0, retmsg="success", data=model_data)
+    party_model_id = request.json.get('namespace')
+    model_version = request.json.get('name')
+    if not party_model_id or not model_version:
+        return error_response(400, 'namespace and name are required')
+    model_data = publish_model.download_model(party_model_id, model_version)
+    if model_data is None:
+        return error_response(404, 'model not found')
+    return get_json_result(data=model_data)
+
+
+@manager.route('/transfer/<party_model_id>/<model_version>', methods=['post'])
+def download_model(party_model_id, model_version):
+    party_model_id = party_model_id.replace('_', '#')
+    model_data = publish_model.download_model(party_model_id, model_version)
+    if model_data is None:
+        return error_response(404, 'model not found')
+    return get_json_result(data=model_data)
 
 
 @manager.route('/<model_operation>', methods=['post', 'get'])

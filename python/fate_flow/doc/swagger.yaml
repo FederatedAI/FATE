@@ -1,0 +1,157 @@
+openapi: 3.0.0
+info:
+  version: '1.5.2'
+  title: Fate Flow
+paths:
+  '/v1/info/fateboard':
+    post:
+      summary: get fateboard host and port
+      responses:
+        '200':
+          description: return fateboard host and port
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  retcode:
+                    type: integer
+                    example: 0
+                  retmsg:
+                    type: string
+                    example: success
+                  data:
+                    type: object
+                    properties:
+                      host:
+                        type: string
+                        example: 127.0.0.1
+                      port:
+                        type: integer
+                        example: 8080
+        '404':
+          description: fateboard is not configured
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  retcode:
+                    type: integer
+                    example: 404
+                  retmsg:
+                    type: string
+                    example: fateboard is not configured
+      tags:
+        - service information
+  '/v1/model/transfer':
+    post:
+      summary: download a model by party_model_id and model_version (parameters in body)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                namespace:
+                  type: string
+                  description: party model id
+                  example: 'host#10000#arbiter-10000#guest-9999#host-10000#model'
+                name:
+                  type: string
+                  description: model version
+                  example: '202107120947156899170'
+
+      responses:
+        '200':
+          description: return model data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelData'
+        '400':
+          description: namespace and name are required
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  retcode:
+                    type: integer
+                    example: 400
+                  retmsg:
+                    type: string
+                    example: namespace and name are required
+        '404':
+          description: model not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  retcode:
+                    type: integer
+                    example: 404
+                  retmsg:
+                    type: string
+                    example: model not found
+      tags:
+        - model download
+  '/v1/model/transfer/{party_model_id}/{model_version}':
+    post:
+      summary: download a model by party_model_id and model_version (parameters in path)
+      parameters:
+        - name: model_id
+          in: path
+          required: true
+          description: 'model id (replace # with _)'
+          schema:
+            type : string
+            example: 'host_10000_arbiter-10000_guest-9999_host-10000_model'
+        - name: model_version
+          in: path
+          required: true
+          description: model version
+          schema:
+            type : string
+            example: '202107120947156899170'
+      responses:
+        '200':
+          description: return model data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelData'
+        '404':
+          description: model not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  retcode:
+                    type: integer
+                    example: 404
+                  retmsg:
+                    type: string
+                    example: model not found
+      tags:
+        - model download
+components:
+  schemas:
+    ModelData:
+      type: object
+      properties:
+        retcode:
+          type: integer
+          example: 0
+        retmsg:
+          type: string
+          example: success
+        data:
+          type: object
+          description: base64 encoded model data
+tags:
+  - name: service information
+  - name: model download
