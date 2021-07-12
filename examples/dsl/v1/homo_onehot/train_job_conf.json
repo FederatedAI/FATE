@@ -27,7 +27,12 @@
     	        "with_label": [true],
         	    "label_name": ["target"],
             	"label_type": ["int"],
-                "data_type": ["str"],
+                "data_type": ["float"],
+                "exclusive_data_type": [{
+                  "x1": "str",
+                  "x2": "str",
+                  "x5": "str"
+                }],
             	"output_format": ["dense"]
         	}
         },
@@ -46,7 +51,12 @@
     	        "with_label": [true],
         	    "label_name": ["target"],
             	"label_type": ["int"],
-                "data_type": ["str"],
+                "data_type": ["float"],
+                "exclusive_data_type": [{
+                  "x1": "str",
+                  "x2": "str",
+                  "x5": "str"
+                }],
             	"output_format": ["dense"]
         	},
             "evaluation_0": {
@@ -56,12 +66,12 @@
     },
     "algorithm_parameters": {		
       	"homo_onehot_0":{
-      		"transform_col_indexes": [1,2,5,6,8,10,11,12],
+      		"transform_col_indexes": [1,2,5],
       		"transform_col_names": [],
       		"need_alignment": true
       	},      		
       	"homo_onehot_1":{
-      		"transform_col_indexes": [1,2,5,6,8,10,11,12],
+      		"transform_col_indexes": [1,2,5],
       		"transform_col_names": [],
       		"need_alignment": true
       	},
