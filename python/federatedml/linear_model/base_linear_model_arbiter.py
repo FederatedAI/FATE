@@ -125,6 +125,8 @@ class HeteroBaseArbiter(BaseLinearModel):
 
             self.converge_procedure.sync_converge_info(self.is_converged, suffix=(self.n_iter_,))
 
+            self.add_checkpoint(step_index=self.n_iter_)
+
             if self.validation_strategy:
                 LOGGER.debug('Linear Arbiter running validation')
                 self.validation_strategy.validate(self, self.n_iter_)

@@ -70,15 +70,13 @@ class BaseLogisticRegression(BaseLinearModel):
         return result
 
     def _get_param(self):
-        header = self.header
-        # LOGGER.debug("In get_param, header: {}".format(header))
-        if header is None:
-            param_protobuf_obj = lr_model_param_pb2.LRModelParam()
-            return param_protobuf_obj
+        self.header = self.header if self.header else []
+        LOGGER.debug("In get_param, self.need_one_vs_rest: {}".format(self.need_one_vs_rest))
+
         if self.need_one_vs_rest:
             # one_vs_rest_class = list(map(str, self.one_vs_rest_obj.classes))
             one_vs_rest_result = self.one_vs_rest_obj.save(lr_model_param_pb2.SingleModel)
-            single_result = {'header': header, 'need_one_vs_rest': True, "best_iteration": -1}
+            single_result = {'header': self.header, 'need_one_vs_rest': True, "best_iteration": -1}
         else:
             one_vs_rest_result = None
             single_result = self.get_single_model_param()
@@ -126,6 +124,8 @@ class BaseLogisticRegression(BaseLinearModel):
 
         if self.fit_intercept:
             tmp_vars = np.append(tmp_vars, single_model_obj.intercept)
+        if len(tmp_vars) == 0:
+            tmp_vars = [0.]
         self.model_weights = LogisticRegressionWeights(tmp_vars, fit_intercept=self.fit_intercept)
         self.n_iter_ = single_model_obj.iters
         return self

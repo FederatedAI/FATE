@@ -62,10 +62,9 @@ class KFold(BaseCrossValidator):
                 key_type = type(sid)
             data_sids.append(sid)
         data_sids = np.array(data_sids)
-        # if self.shuffle:
-        #     np.random.shuffle(data_sids)
 
-        kf = sk_KFold(n_splits=self.n_splits, shuffle=self.shuffle, random_state=self.random_seed)
+        random_state = self.random_seed if self.shuffle else None
+        kf = sk_KFold(n_splits=self.n_splits, shuffle=self.shuffle, random_state=random_state)
 
         n = 0
         for train, test in kf.split(data_sids):
@@ -75,16 +74,17 @@ class KFold(BaseCrossValidator):
             n += 1
 
             train_sids_table = [(key_type(x), 1) for x in train_sids]
-            test_sids_table = [(key_type(x), 1) for x in test_sids]
+            # test_sids_table = [(key_type(x), 1) for x in test_sids]
             train_table = session.parallelize(train_sids_table,
                                               include_key=True,
                                               partition=data_inst.partitions)
             train_data = data_inst.join(train_table, lambda x, y: x)
 
-            test_table = session.parallelize(test_sids_table,
-                                             include_key=True,
-                                             partition=data_inst.partitions)
-            test_data = data_inst.join(test_table, lambda x, y: x)
+            # test_table = session.parallelize(test_sids_table,
+            #                                  include_key=True,
+            #                                  partition=data_inst.partitions)
+            # test_data = data_inst.join(test_table, lambda x, y: x)
+            test_data = data_inst.subtractByKey(train_data)
             train_data.schema = schema
             test_data.schema = schema
             yield train_data, test_data
@@ -139,8 +139,12 @@ class KFold(BaseCrossValidator):
             if self.mode == consts.HETERO:
                 train_data = self._align_data_index(train_data, model.flowid, consts.TRAIN_DATA)
                 LOGGER.info("Train data Synchronized")
-                test_data = self._align_data_index(test_data, model.flowid, consts.TEST_DATA)
-                LOGGER.info("Test data Synchronized")
+                if self.role == consts.HOST:
+                    test_data = data_inst.subtractByKey(train_data)
+                    test_data.schema = data_inst.schema
+
+                # test_data = self._align_data_index(test_data, model.flowid, consts.TEST_DATA)
+                # LOGGER.info("Test data Synchronized")
             LOGGER.debug("train_data count: {}".format(train_data.count()))
             if train_data.count() + test_data.count() != total_data_count:
                 raise EnvironmentError("In cv fold: {}, train count: {}, test count: {}, original data count: {}."

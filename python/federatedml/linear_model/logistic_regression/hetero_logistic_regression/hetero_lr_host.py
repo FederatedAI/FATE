@@ -111,9 +111,10 @@ class HeteroLRHost(HeteroLRBase):
         model_shape = self.get_features_shape(data_instances)
         if self.init_param_obj.fit_intercept:
             self.init_param_obj.fit_intercept = False
-        w = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
-        # LOGGER.debug("model_shape: {}, w shape: {}, w: {}".format(model_shape, w.shape, w))
-        self.model_weights = LinearModelWeights(w, fit_intercept=self.init_param_obj.fit_intercept)
+
+        if not self.component_properties.is_warm_start:
+            w = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
+            self.model_weights = LinearModelWeights(w, fit_intercept=self.init_param_obj.fit_intercept)
 
         while self.n_iter_ < self.max_iter:
             LOGGER.info("iter:" + str(self.n_iter_))
@@ -140,6 +141,8 @@ class HeteroLRHost(HeteroLRBase):
 
             LOGGER.info("Get is_converged flag from arbiter:{}".format(self.is_converged))
             LOGGER.info("iter: {}, is_converged: {}".format(self.n_iter_, self.is_converged))
+
+            self.add_checkpoint(step_index=self.n_iter_)
 
             if self.validation_strategy:
                 LOGGER.debug('LR host running validation')

@@ -99,8 +99,9 @@ class HeteroLRGuest(HeteroLRBase):
         LOGGER.info("Start initialize model.")
         LOGGER.info("fit_intercept:{}".format(self.init_param_obj.fit_intercept))
         model_shape = self.get_features_shape(data_instances)
-        w = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
-        self.model_weights = LinearModelWeights(w, fit_intercept=self.fit_intercept)
+        if not self.component_properties.is_warm_start:
+            w = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
+            self.model_weights = LinearModelWeights(w, fit_intercept=self.fit_intercept)
 
         while self.n_iter_ < self.max_iter:
             LOGGER.info("iter:{}".format(self.n_iter_))
@@ -123,19 +124,16 @@ class HeteroLRGuest(HeteroLRBase):
                             self.n_iter_,
                             batch_index)
 
-                # LOGGER.debug('optim_guest_gradient: {}'.format(optim_guest_gradient))
-                # training_info = {"iteration": self.n_iter_, "batch_index": batch_index}
-                # self.update_local_model(fore_gradient, data_instances, self.model_weights.coef_, **training_info)
-
                 loss_norm = self.optimizer.loss_norm(self.model_weights)
                 self.gradient_loss_operator.compute_loss(data_instances, self.model_weights, self.n_iter_, batch_index, loss_norm)
 
                 self.model_weights = self.optimizer.update_model(self.model_weights, optim_guest_gradient)
                 batch_index += 1
-                # LOGGER.debug("lr_weight, iters: {}, update_model: {}".format(self.n_iter_, self.model_weights.unboxed))
 
             self.is_converged = self.converge_procedure.sync_converge_info(suffix=(self.n_iter_,))
             LOGGER.info("iter: {},  is_converged: {}".format(self.n_iter_, self.is_converged))
+
+            self.add_checkpoint(step_index=self.n_iter_)
 
             if self.validation_strategy:
                 LOGGER.debug('LR guest running validation')
@@ -194,3 +192,9 @@ class HeteroLRGuest(HeteroLRBase):
         predict_result = self.predict_score_to_output(data_instances, pred_prob, classes=[0, 1], threshold=threshold)
 
         return predict_result
+
+    def explain(self, background_data, explain_data):
+        # TODO: Implement explain functions
+        LOGGER.debug(f"Background_data: {background_data},"
+                     f"explain_data: {explain_data}")
+        return explain_data
