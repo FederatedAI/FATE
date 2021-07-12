@@ -183,6 +183,7 @@ class EndStatus(BaseStatus):
 class LinkisJobStatus(BaseStatus):
     FAILED = "Failed"
     SUCCESS = "Success"
+    RUNNING = "Running"
 
 
 class ModelStorage(object):

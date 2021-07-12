@@ -70,7 +70,7 @@ class PipelinedModel(object):
                 fill_message.flag = 'set'
                 buffer_object_serialized_string = fill_message.SerializeToString()
             if not tracker_client:
-                with open(storage_path, "wb") as fw:
+                with self.lock, open(storage_path, "wb") as fw:
                     fw.write(buffer_object_serialized_string)
             else:
                 component_model["buffer"][storage_path.replace(file_utils.get_project_base_directory(), "")] = \
