@@ -86,7 +86,8 @@ class Upload(ComponentBase):
             if storage_engine in {StorageEngine.EGGROLL, StorageEngine.STANDALONE}:
                 upload_address = {"name": name, "namespace": namespace, "storage_type": EggRollStorageType.ROLLPAIR_LMDB}
             elif storage_engine in {StorageEngine.MYSQL}:
-                upload_address = {"db": namespace, "name": name}
+                if not address_dict.get("db") or not address_dict.get("name"):
+                    upload_address = {"db": namespace, "name": name}
             elif storage_engine in {StorageEngine.HDFS}:
                 upload_address = {"path": data_utils.default_input_fs_path(name=name, namespace=namespace, prefix=address_dict.get("path_prefix"))}
             else:

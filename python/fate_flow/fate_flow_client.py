@@ -36,7 +36,7 @@ TASK_OPERATE_FUNC = ["query_task"]
 TRACKING_FUNC = ["component_parameters", "component_metric_all", "component_metric_delete", "component_metrics",
                  "component_output_model", "component_output_data", "component_output_data_table"]
 DATA_FUNC = ["download", "upload", "upload_history"]
-TABLE_FUNC = ["table_info", "table_delete", "table_add"]
+TABLE_FUNC = ["table_info", "table_delete", "table_add", "table_bind"]
 MODEL_FUNC = ["load", "bind", "store", "restore", "export", "import"]
 PERMISSION_FUNC = ["grant_privilege", "delete_privilege", "query_privilege"]
 
