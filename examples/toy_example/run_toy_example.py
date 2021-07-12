@@ -9,13 +9,15 @@ import time
 home_dir = os.path.split(os.path.realpath(__file__))[0]
 fate_flow_path = os.path.join(home_dir, "..", "..", "python", "fate_flow", "fate_flow_client.py")
 dsl_path = os.path.join(home_dir, "toy_example_dsl.json")
-conf_path = os.path.join(home_dir, "toy_example_conf.json")
+conf_v1_path = os.path.join(home_dir, "toy_example_conf_v1.json")
+conf_v2_path = os.path.join(home_dir, "toy_example_conf_v2.json")
 
 guest_party_id = -1
 host_party_id = -1
 
 work_mode = 0
 backend = 0
+dsl_version = 1
 
 component_name = 'secure_add_example_0'
 
@@ -40,6 +42,7 @@ def gen_unique_path():
 
 def create_new_runtime_config():
     conf_dict = {}
+    conf_path = conf_v1_path if dsl_version == 1 else conf_v2_path
     with open(conf_path, "r") as fin:
         conf_dict = json.loads(fin.read())
 
@@ -47,13 +50,17 @@ def create_new_runtime_config():
         if not os.path.isfile(conf_dict):
             raise ValueError("config file {} dose not exist, please check!".format(conf_path))
 
-        raise ValueError("{} ")
+        raise ValueError("json format error of toy runtime conf")
 
     conf_dict["initiator"]["party_id"] = guest_party_id
-    conf_dict["job_parameters"]["work_mode"] = work_mode
-    conf_dict["job_parameters"]["backend"] = backend
     conf_dict["role"]["guest"] = [guest_party_id]
     conf_dict["role"]["host"] = [host_party_id]
+    if dsl_version == 1:
+        conf_dict["job_parameters"]["work_mode"] = work_mode
+        conf_dict["job_parameters"]["backend"] = backend
+    else:
+        conf_dict["job_parameters"]["common"]["work_mode"] = work_mode
+        conf_dict["job_parameters"]["common"]["backend"] = backend
 
     new_config_path = gen_unique_path()
 
@@ -184,7 +191,7 @@ def exec_toy_example(runtime_config):
             show_log(jobid, "info")
             return
         else:
-            print ("job status is {}".format((status)))
+            print ("job status is {}".format(status))
 
     raise ValueError("job running time exceed, please check federation or eggroll log")
 
@@ -197,6 +204,8 @@ if __name__ == "__main__":
                             help="please input work_mode, 0 stands for standalone, 1  stands for cluster")
     arg_parser.add_argument("-b", "--backend", type=int, default=0,
                             help="please input backend, 0 stands for eggroll, 1 stands for spark")
+    arg_parser.add_argument("-v", "--dsl_version", type=int, default=1,
+                            help="please input dsl version to use")
 
     args = arg_parser.parse_args()
 
@@ -204,6 +213,7 @@ if __name__ == "__main__":
     host_party_id = args.host_party_id
     work_mode = args.work_mode
     backend = args.backend
+    dsl_version = args.dsl_version
 
     runtime_config = create_new_runtime_config()
 
