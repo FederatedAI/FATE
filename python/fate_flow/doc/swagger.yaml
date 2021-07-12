@@ -102,7 +102,7 @@ paths:
     post:
       summary: download a model by party_model_id and model_version (parameters in path)
       parameters:
-        - name: model_id
+        - name: party_model_id
           in: path
           required: true
           description: 'model id (replace # with _)'
@@ -138,6 +138,107 @@ paths:
                     example: model not found
       tags:
         - model download
+  '/v1/component/validate':
+    post:
+      summary: validate component parameters
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                dsl_version:
+                  type: integer
+                  example: 2
+                component_name:
+                  type: string
+                  example: dataio_0
+                component_module_name:
+                  type: string
+                  example: DataIO
+                role:
+                  type: object
+                  example:
+                    guest:
+                      - 10000
+                    host:
+                      - 9999
+                    arbiter:
+                      - 9999
+                component_parameters:
+                  type: object
+                  description: required if `dsl_version` == 2
+                  example:
+                    common:
+                      dataio_0:
+                        output_format: dense
+                      role:
+                        guest:
+                          '0':
+                            dataio_0:
+                              with_label: true
+                        host:
+                          '0':
+                            dataio_0:
+                              with_label: false
+                              output_format: dense
+                role_parameters:
+                  type: object
+                  description: required if `dsl_version` == 1
+                  example:
+                    guest:
+                      dataio_0:
+                        with_label:
+                          - true
+                        label_name:
+                          - y
+                        label_type:
+                          - int
+                        output_format:
+                          - dense
+                        missing_fill:
+                          - true
+                        outlier_replace:
+                          - true
+                    host:
+                      dataio_0:
+                        with_label:
+                          - false
+                        output_format:
+                          - dense
+                        outlier_replace:
+                          - true
+      responses:
+        '200':
+          description: validation passed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  retcode:
+                    type: integer
+                    example: 0
+                  retmsg:
+                    type: string
+                    example: success
+        '400':
+          description: validation failed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  retcode:
+                    type: integer
+                    example: 400
+                  retmsg:
+                    type: string
+                    description: error message
+                    example: "Component dataio_0, module DataIO, does not pass component check, error msg is dataio param's dendse not supported, should be one of ['dense', 'sparse']"
+      tags:
+        - component validation
 components:
   schemas:
     ModelData:
@@ -155,3 +256,4 @@ components:
 tags:
   - name: service information
   - name: model download
+  - name: component validation

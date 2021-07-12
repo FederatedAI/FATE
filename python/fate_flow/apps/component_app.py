@@ -33,10 +33,21 @@ def internal_server_error(e):
 
 @manager.route('/validate', methods=['POST'])
 def validate_component_param():
+    if not request.json or not isinstance(request.json, dict):
+        return error_response(400, 'bad request')
+
+    dsl_version = int(request.json.get('dsl_version', 1))
+    if dsl_version == 2:
+        parameters_key_name = 'component_parameters'
+        parser_class = DSLParserV2
+    else:
+        parameters_key_name = 'role_parameters'
+        parser_class = DSLParser
+
     try:
         check_config(request.json, [
             'role',
-            'component_parameters',
+            parameters_key_name,
             'component_name',
             'component_module_name',
         ])
@@ -47,16 +58,13 @@ def validate_component_param():
         get_federatedml_setting_conf_directory(),
         {
             'role': request.json['role'],
-            'component_parameters': request.json['component_parameters'],
+            parameters_key_name: request.json[parameters_key_name],
         },
         request.json['component_name'],
         request.json['component_module_name'],
     ]
     try:
-        if int(request.json.get('dsl_version', 1)) == 2:
-            DSLParserV2.validate_component_param(*args)
-        else:
-            DSLParser.validate_component_param(*args)
+        parser_class.validate_component_param(*args)
     except Exception as e:
         return error_response(400, str(e))
 
