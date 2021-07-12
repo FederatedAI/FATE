@@ -464,17 +464,6 @@ class BaseDSLParser(object):
 
             if not dependence_dict[name]:
                 del dependence_dict[name]
-            # upstream = self.component_upstream[self.component_name_index.get(name)]
-            # if upstream:
-            #     dependence_dict[name] = []
-            #     for up_component in upstream:
-            #         if (name, up_component) in self.component_upstream_data_relation_set:
-            #             dependence_dict[name].append({"component_name": up_component,
-            #                                           "type": "data"})
-
-            #         if (name, up_component) in self.component_upstream_model_relation_set:
-            #             dependence_dict[name].append({"component_name": up_component,
-            #                                           "type": "model"})
 
         component_list = [None for i in range(len(self.components))]
         topo_rank_reverse_mapping = {}
@@ -583,14 +572,6 @@ class BaseDSLParser(object):
             if module == "Reader":
                 if version != 2:
                     raise ValueError("Reader component can only be set in dsl_version 2")
-
-                # if self.get_need_deploy_parameter(name=name,
-                #                                   setting_conf_prefix=setting_conf_prefix,
-                #                                   deploy_cpns=deploy_cpns):
-                #     raise ValueError(
-                #         "Reader component should not be include in predict process, it should be just as an input placeholder")
-
-                # continue
 
             if self.get_need_deploy_parameter(name=name,
                                               setting_conf_prefix=setting_conf_prefix,
@@ -758,6 +739,19 @@ class BaseDSLParser(object):
     def generate_predict_conf_template(train_dsl, train_conf, model_id, model_version):
         raise NotImplementedError
 
+    @staticmethod
+    def validate_component_param(setting_conf_prefix, runtime_conf, component_name, module, version=1):
+        util = parameter_util.ParameterUtil if version == 1 else parameter_util.ParameterUtilV2
+        try:
+            util.override_parameter(setting_conf_prefix,
+                                    runtime_conf,
+                                    module,
+                                    component_name,
+                                    redundant_param_check=True)
+            return 0
+        except Exception as e:
+            raise ValueError(f"{e}")
+
 
 class DSLParser(BaseDSLParser):
     def _check_component_valid_names(self):
@@ -813,21 +807,6 @@ class DSLParser(BaseDSLParser):
         dsl_parser.dsl = dsl
         dsl_parser._init_components(mode=mode, version=1)
         dsl_parser._find_dependencies(mode=mode, version=1)
-
-    # @staticmethod
-    # def deploy_component(components, train_dsl):
-    #     training_cpns = set(train_dsl.get("components").keys())
-    #     deploy_cpns = set(components)
-    #     if len(deploy_cpns & training_cpns) != len(deploy_cpns):
-    #         raise DeployComponentNotExistError(msg=deploy_cpns - training_cpns)
-
-    #     dsl_parser = DSLParser()
-    #     dsl_parser.dsl = train_dsl
-    #     dsl_parser._init_components()
-    #     dsl_parser._find_dependencies()
-    #     dsl_parser._auto_deduction(deploy_cpns=deploy_cpns)
-
-    #     return dsl_parser.predict_dsl
 
     def run(self, pipeline_dsl=None, pipeline_runtime_conf=None, dsl=None, runtime_conf=None,
             setting_conf_prefix=None, mode="train", *args, **kwargs):
@@ -951,6 +930,14 @@ class DSLParser(BaseDSLParser):
             predict_conf["role_parameters"][role] = {"args": {"data": fill_template}}
 
         return predict_conf
+
+    @staticmethod
+    def validate_component_param(setting_conf_prefix, runtime_conf, component_name, module, *args):
+        return BaseDSLParser.validate_component_param(setting_conf_prefix,
+                                                      runtime_conf,
+                                                      component_name,
+                                                      module,
+                                                      version=1)
 
 
 class DSLParserV2(BaseDSLParser):
@@ -1089,3 +1076,12 @@ class DSLParserV2(BaseDSLParser):
                 predict_conf["component_parameters"]["role"][role][str(idx)] = fill_template
 
         return predict_conf
+
+    @staticmethod
+    def validate_component_param(setting_conf_prefix, runtime_conf, component_name, module, *args):
+        return BaseDSLParser.validate_component_param(setting_conf_prefix,
+                                                      runtime_conf,
+                                                      component_name,
+                                                      module,
+                                                      version=2)
+
