@@ -385,9 +385,9 @@ class Boosting(ModelBase, ABC):
 
     @staticmethod
     def accumulate_y_hat(val, new_val, lr=0.1, idx=0):
-        copied_val = copy.deepcopy(val)
-        copied_val[idx] += lr * new_val
-        return copied_val
+        z_vec = np.zeros(len(val))
+        z_vec[idx] = lr * new_val
+        return z_vec + val
 
     def generate_flowid(self, round_num, dim):
         LOGGER.info("generate flowid, flowid {}".format(self.flowid))
