@@ -56,12 +56,12 @@
     },
     "algorithm_parameters": {		
       	"homo_onehot_0":{
-      		"transform_col_indexes": [1,2,5,6,8,10,11,12],
+      		"transform_col_indexes": -1,
       		"transform_col_names": [],
       		"need_alignment": true
       	},      		
       	"homo_onehot_1":{
-      		"transform_col_indexes": [1,2,5,6,8,10,11,12],
+      		"transform_col_indexes": -1,
       		"transform_col_names": [],
       		"need_alignment": true
       	},
