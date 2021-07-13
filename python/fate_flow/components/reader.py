@@ -88,7 +88,8 @@ class Reader(ComponentBase):
                                               entity_info={
                                                   "have_parent": True,
                                                   "parent_table_namespace": self.parameters[table_key]['namespace'],
-                                                  "parent_table_name": self.parameters[table_key]['name']
+                                                  "parent_table_name": self.parameters[table_key]['name'],
+                                                  "job_id": self.tracker.job_id
                                               })
         headers_str = output_table_meta.get_schema().get('header')
         table_info = {}

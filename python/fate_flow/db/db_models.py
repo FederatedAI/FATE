@@ -279,7 +279,7 @@ class MachineLearningModelInfo(DataBaseModel):
         primary_key = CompositeKey('f_role', 'f_party_id', 'f_model_id', 'f_model_version')
 
 
-class DataTableTrackingModel(DataBaseModel):
+class DataTableTracking(DataBaseModel):
     f_table_id = BigAutoField(primary_key=True)
     f_table_name = CharField(max_length=300, null=True)
     f_table_namespace = CharField(max_length=300, null=True)

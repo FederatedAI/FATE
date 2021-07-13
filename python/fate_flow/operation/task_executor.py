@@ -183,7 +183,7 @@ class TaskExecutor(object):
                                                  table_namespace=persistent_table_namespace,
                                                  table_name=persistent_table_name)
                     output_table_list.append({"namespace": persistent_table_namespace, "name": persistent_table_name})
-            TaskExecutor.log_output_data_table_tracker(input_table_list, output_table_list)
+            TaskExecutor.log_output_data_table_tracker(job_id, input_table_list, output_table_list)
             output_model = run_object.export_model()
             # There is only one model output at the current dsl version.
             tracker.save_output_model(output_model,
@@ -217,10 +217,11 @@ class TaskExecutor(object):
         return task_info
 
     @classmethod
-    def log_output_data_table_tracker(cls, input_table_list, output_table_list):
+    def log_output_data_table_tracker(cls, job_id, input_table_list, output_table_list):
         try:
             parent_number = 0
             if len(input_table_list) > 1 and len(output_table_list)>1:
+                # TODO
                 return
             for input_table in input_table_list:
                 for output_table in output_table_list:
@@ -229,9 +230,10 @@ class TaskExecutor(object):
                                                               "have_parent": True,
                                                               "parent_table_namespace": input_table.get("namespace"),
                                                               "parent_table_name": input_table.get("name"),
-                                                              "parent_number": parent_number
+                                                              "parent_number": parent_number,
+                                                              "job_id": job_id
                                                           })
-                parent_number +=0
+                parent_number +=1
         except Exception as e:
             schedule_logger().exception(e)
 
