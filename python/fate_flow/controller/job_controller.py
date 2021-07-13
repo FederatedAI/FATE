@@ -52,8 +52,8 @@ class JobController(object):
         schedule_logger(job_id).info('job parameters:{}'.format(job_parameters))
         dest_user = dsl_parser.get_job_parameters().get(role, {}).get(party_id, {}).get("user", '')
         user = {}
-        src_user = dsl_parser.get_job_parameters().get(job_info.get('src_role'), {}).get(
-            int(job_info.get('src_party_id', 0)), {}).get("user", '')
+        src_party_id = int(job_info.get('src_party_id')) if job_info.get('src_party_id') else 0
+        src_user = dsl_parser.get_job_parameters().get(job_info.get('src_role'), {}).get(src_party_id, {}).get("user", '')
         for _role, party_id_item in dsl_parser.get_job_parameters().items():
             user[_role] = {}
             for _party_id, _parameters in party_id_item.items():

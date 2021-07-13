@@ -41,10 +41,10 @@ class Detector(cron.Cron):
         detect_logger().info('start to detect running task..')
         count = 0
         try:
-            running_tasks = JobSaver.query_task(party_status=TaskStatus.RUNNING, run_on_this_party=True, only_latest=False)
+            running_tasks = JobSaver.query_task(party_status=TaskStatus.RUNNING, only_latest=False)
             stop_job_ids = set()
             for task in running_tasks:
-                if not task.f_engine_conf and task.f_run_ip != RuntimeConfig.JOB_SERVER_HOST:
+                if not task.f_engine_conf and task.f_run_ip != RuntimeConfig.JOB_SERVER_HOST and not task.f_run_on_this_party:
                     continue
                 count += 1
                 try:

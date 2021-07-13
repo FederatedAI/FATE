@@ -19,6 +19,8 @@ work_mode = 0
 backend = 0
 dsl_version = 1
 
+user_name = ""
+
 component_name = 'secure_add_example_0'
 
 GUEST = 'guest'
@@ -61,6 +63,10 @@ def create_new_runtime_config():
     else:
         conf_dict["job_parameters"]["common"]["work_mode"] = work_mode
         conf_dict["job_parameters"]["common"]["backend"] = backend
+        conf_dict["job_parameters"]["role"] = {
+            "guest": {"0": {"user": user_name}},
+            "host": {"0": {"user": user_name}},
+        }
 
     new_config_path = gen_unique_path()
 
@@ -206,6 +212,7 @@ if __name__ == "__main__":
                             help="please input backend, 0 stands for eggroll, 1 stands for spark")
     arg_parser.add_argument("-v", "--dsl_version", type=int, default=1,
                             help="please input dsl version to use")
+    arg_parser.add_argument("-u", "--user_name", type=str, help="please input user name")
 
     args = arg_parser.parse_args()
 
@@ -214,6 +221,7 @@ if __name__ == "__main__":
     work_mode = args.work_mode
     backend = args.backend
     dsl_version = args.dsl_version
+    user_name = args.user_name
 
     runtime_config = create_new_runtime_config()
 
