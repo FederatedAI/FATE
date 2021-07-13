@@ -61,11 +61,11 @@
         "repeated_id": {
             "script": "./pipeline-intersect-repeated-id.py"
         },
-        "ph_interect": {
-            "script": "./pipeline-intersect-ph.py"
+        "dh_interect": {
+            "script": "./pipeline-intersect-dh.py"
         },
-        "ph_interect_mutli": {
-            "script": "./pipeline-intersect-ph-multi.py"
+        "dh_interect_mutli": {
+            "script": "./pipeline-intersect-dh-multi.py"
         }
     }
 }

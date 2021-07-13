@@ -9,7 +9,8 @@
             10000
         ],
         "host": [
-            9999
+            9999,
+            10000
         ]
     },
     "job_parameters": {
@@ -21,9 +22,9 @@
     "component_parameters": {
         "common": {
             "intersect_0": {
-                "intersect_method": "ph",
+                "intersect_method": "dh",
                 "sync_intersect_ids": true,
-                "ph_params": {
+                "dh_params": {
                     "hash_method": "sha256",
                     "salt": "12345",
                     "key_length": 1024
@@ -34,6 +35,18 @@
         "role": {
             "host": {
                 "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "dataio_0": {
+                        "with_label": false,
+                        "output_format": "dense"
+                    }
+                },
+                "1": {
                     "reader_0": {
                         "table": {
                             "name": "breast_hetero_host",

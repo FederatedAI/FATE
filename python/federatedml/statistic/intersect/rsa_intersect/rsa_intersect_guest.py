@@ -302,6 +302,7 @@ class RsaIntersectionGuest(RsaIntersect):
             self.rcv_n.append(int(intersect_key.rcv_n[host_party]))
 
     def run_cardinality(self, data_instances):
+        LOGGER.info(f"run cardinality_only with RSA")
         # receives public key e & n
         public_keys = self.transfer_variable.host_pubkey.get(-1)
         LOGGER.info(f"Get RSA host_public_key from Host")

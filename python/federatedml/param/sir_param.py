@@ -18,7 +18,7 @@
 #
 
 from federatedml.param.base_param import BaseParam
-from federatedml.param.intersect_param import PHParam
+from federatedml.param.intersect_param import DHParam
 from federatedml.util import consts, LOGGER
 
 
@@ -32,7 +32,7 @@ class SecureInformationRetrievalParam(BaseParam):
 
     non_committing_encryption: the non-committing encryption scheme used, only supports aes
 
-    ph_params: params for Pohlig-Hellman Encryption
+    dh_params: params for Pohlig-Hellman Encryption
 
     key_size: int >= 768, the key length of the commutative cipher;
         note that this param will be deprecated in future, please specify key_length in PHParam instead.
@@ -50,7 +50,7 @@ class SecureInformationRetrievalParam(BaseParam):
                  commutative_encryption=consts.CE_PH,
                  non_committing_encryption=consts.AES,
                  key_size=consts.DEFAULT_KEY_LENGTH,
-                 ph_params=PHParam(),
+                 dh_params=DHParam(),
                  raw_retrieval=False,
                  target_cols=None):
         super(SecureInformationRetrievalParam, self).__init__()
@@ -58,7 +58,7 @@ class SecureInformationRetrievalParam(BaseParam):
         self.oblivious_transfer_protocol = oblivious_transfer_protocol
         self.commutative_encryption = commutative_encryption
         self.non_committing_encryption = non_committing_encryption
-        self.ph_params = ph_params
+        self.dh_params = dh_params
         self.key_size = key_size
         self.raw_retrieval = raw_retrieval
         self.target_cols = [] if target_cols is None else target_cols
@@ -75,7 +75,7 @@ class SecureInformationRetrievalParam(BaseParam):
         self.non_committing_encryption = self.check_and_change_lower(self.non_committing_encryption,
                                                                      [consts.AES.lower()],
                                                                      descr + "non_committing_encryption")
-        self.ph_params.check()
+        self.dh_params.check()
         if self.key_size:
             self.check_positive_integer(self.key_size, descr+"key_size")
         self.check_boolean(self.raw_retrieval, descr)

@@ -14,12 +14,12 @@
 #  limitations under the License.
 #
 
-from federatedml.statistic.intersect.intersect_preprocess import BitArray
-from federatedml.statistic.intersect.ph_intersect.ph_intersect_base import PhIntersect
+# from federatedml.statistic.intersect.intersect_preprocess import BitArray
+from federatedml.statistic.intersect.dh_intersect.dh_intersect_base import DhIntersect
 from federatedml.util import consts, LOGGER
 
 
-class PhIntersectionGuest(PhIntersect):
+class DhIntersectionGuest(DhIntersect):
     def __init__(self):
         super().__init__()
         self.role = consts.GUEST
@@ -150,5 +150,3 @@ class PhIntersectionGuest(PhIntersect):
             LOGGER.info("Skip sync intersect ids with Host(s).")
 
         return intersect_ids
-
-

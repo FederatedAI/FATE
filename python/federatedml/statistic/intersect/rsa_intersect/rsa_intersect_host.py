@@ -233,6 +233,7 @@ class RsaIntersectionHost(RsaIntersect):
         self.cq = int(intersect_key.cq[self.guest_party_id])
 
     def run_cardinality(self, data_instances):
+        LOGGER.info(f"run cardinality_only with RSA")
         # generate rsa keys
         self.generate_protocol_key()
         LOGGER.info("Generate protocol key!")

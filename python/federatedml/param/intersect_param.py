@@ -138,9 +138,9 @@ class RSAParam(BaseParam):
         return True
 
 
-class PHParam(BaseParam):
+class DHParam(BaseParam):
     """
-    Define the hash method for PH intersect method
+    Define the hash method for DH intersect method
 
     Parameters
     ----------
@@ -149,7 +149,7 @@ class PHParam(BaseParam):
     hash_method: str, the hash method of src data string, support none, md5, sha1, sha 224, sha256, sha384, sha512, sm3,
         default sha256
 
-    key_length: positive int, value >= 768 is suggested, the key length of the commutative cipher, default 1024
+    key_length: positive int, value >= 768 is suggested, the key length of the commutative cipher p, default 1024
 
     """
 
@@ -162,25 +162,33 @@ class PHParam(BaseParam):
     def check(self):
         if type(self.salt).__name__ != "str":
             raise ValueError(
-                "ph param's salt {} not supported, should be str type".format(
+                "dh param's salt {} not supported, should be str type".format(
                     self.salt))
 
-        descr = "ph param's hash_method "
+        descr = "dh param's hash_method "
         self.hash_method = self.check_and_change_lower(self.hash_method,
                                                        ["none", consts.MD5, consts.SHA1, consts.SHA224,
                                                         consts.SHA256, consts.SHA384, consts.SHA512,
                                                         consts.SM3],
                                                        descr)
 
-        descr = "ph param's key_length"
+        descr = "dh param's key_length"
         self.check_positive_integer(self.key_length, descr)
 
-        LOGGER.debug("Finish PHParam parameter check!")
+        LOGGER.debug("Finish DHParam parameter check!")
         return True
 
 
 class IntersectCache(BaseParam):
     def __init__(self, use_cache=False, id_type=consts.PHONE, encrypt_type=consts.SHA256):
+        """
+
+        Parameters
+        ----------
+        use_cache: whether to store Host's encrypted ids or use cached ids, only valid when intersect method is 'rsa' or 'ph'
+        id_type
+        encrypt_type
+        """
         super().__init__()
         self.use_cache = use_cache
         self.id_type = id_type
@@ -210,7 +218,7 @@ class IntersectPreProcessParam(BaseParam):
     false_positive_rate: float, initial target false positive rate when creating Bloom Filter,
         must be <= 0.5, default 1e-3 for target sparsity of 0.5
 
-    encrypt_method: str, encrypt method for encrypting id, supports rsa and ph, default rsa;
+    encrypt_method: str, encrypt method for encrypting id, supports rsa only, default rsa;
         specify parameter setting with respective params when using either method.
 
     hash_method: str, the hash method for inserting ids, support md5, sha1, sha 224, sha256, sha384, sha512, sm3,
@@ -246,7 +254,7 @@ class IntersectPreProcessParam(BaseParam):
             raise ValueError(f"{descr} must be positive float no greater than 0.5")
 
         descr = "intersect preprocess param's encrypt_method "
-        self.encrypt_method = self.check_and_change_lower(self.encrypt_method, [consts.RSA, consts.PH], descr)
+        self.encrypt_method = self.check_and_change_lower(self.encrypt_method, [consts.RSA], descr)
 
         descr = "intersect preporcess param's random_state "
         self.check_nonnegative_number(self.random_state, descr)
@@ -282,7 +290,7 @@ class IntersectParam(BaseParam):
 
     Parameters
     ----------
-    intersect_method: str, it supports 'rsa', 'raw', and 'ph', default by 'raw'
+    intersect_method: str, it supports 'rsa', 'raw', and 'dh', default by 'raw'
 
     random_bit: positive int, it will define the size of blinding factor in rsa algorithm, default 128
         note that this param will be deprecated in future, please use random_bit in RSAParam instead.
@@ -313,7 +321,7 @@ class IntersectParam(BaseParam):
 
     new_join_id: bool, whether to generate new id for repeated_id_owners' ids, only effective when join_method is 'left_join', default False
 
-    ph_params: PHParam, effective for ph method only
+    dh_params: DHParam, effective for dh method only
 
     cardinality_only: boolean, whether to output estimated intersection count(cardinality) only using pre-process;
         if sync_cardinality is True, then sync cardinality count with host(s)
@@ -333,7 +341,7 @@ class IntersectParam(BaseParam):
                  rsa_params=RSAParam(),
                  intersect_cache_param=IntersectCache(), repeated_id_process=False, repeated_id_owner=consts.GUEST,
                  with_sample_id=False, join_method=consts.INNER_JOIN, new_join_id=False,
-                 allow_info_share: bool = False, info_owner=consts.GUEST, ph_params=PHParam(),
+                 allow_info_share: bool = False, info_owner=consts.GUEST, dh_params=DHParam(),
                  cardinality_only: bool = False, sync_cardinality: bool = False,
                  run_preprocess:bool = False,
                  intersect_preprocess_params=IntersectPreProcessParam()):
@@ -354,7 +362,7 @@ class IntersectParam(BaseParam):
         self.with_sample_id = with_sample_id
         self.join_method = join_method
         self.new_join_id = new_join_id
-        self.ph_params = ph_params
+        self.dh_params = dh_params
         self.cardinality_only = cardinality_only
         self.sync_cardinality = sync_cardinality
         self.run_preprocess = run_preprocess
@@ -364,7 +372,7 @@ class IntersectParam(BaseParam):
         descr = "intersect param's "
 
         self.intersect_method = self.check_and_change_lower(self.intersect_method,
-                                                            [consts.RSA, consts.RAW, consts.PH],
+                                                            [consts.RSA, consts.RAW, consts.DH],
                                                             f"{descr}intersect_method")
 
         if type(self.random_bit).__name__ not in ["int"]:
@@ -424,14 +432,14 @@ class IntersectParam(BaseParam):
 
         self.encode_params.check()
         self.rsa_params.check()
-        self.ph_params.check()
+        self.dh_params.check()
         self.check_boolean(self.cardinality_only, descr+"cardinality_only")
         self.check_boolean(self.sync_cardinality, descr+"sync_cardinality")
         self.check_boolean(self.run_preprocess, descr+"run_preprocess")
         self.intersect_preprocess_params.check()
         if self.cardinality_only:
-            if self.intersect_method not in [consts.RSA, consts.PH]:
-                raise ValueError(f"cardinality-only mode only support rsa or PH method.")
+            if self.intersect_method not in [consts.RSA]:
+                raise ValueError(f"cardinality-only mode only support rsa.")
             if self.intersect_method == consts.RSA and self.rsa_params.split_calculation:
                 raise ValueError(f"cardinality-only mode only supports unified calculation.")
         if self.run_preprocess:

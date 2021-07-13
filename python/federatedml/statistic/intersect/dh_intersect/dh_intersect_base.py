@@ -23,7 +23,7 @@ from federatedml.transfer_variable.transfer_class.ph_intersect_transfer_variable
 from federatedml.util import LOGGER
 
 
-class PhIntersect(Intersect):
+class DhIntersect(Intersect):
     """
     adapted from Secure Information Retrieval Module
     """
@@ -37,10 +37,10 @@ class PhIntersect(Intersect):
         # self.only_output_key = param.only_output_key
         # self.sync_intersect_ids = param.sync_intersect_ids
         super().load_params(param=param)
-        self.ph_params = param.ph_params
-        self.hash_operator = Hash(param.ph_params.hash_method)
-        self.salt = self.ph_params.salt
-        self.key_length = self.ph_params.key_length
+        self.dh_params = param.dh_params
+        self.hash_operator = Hash(param.dh_params.hash_method)
+        self.salt = self.dh_params.salt
+        self.key_length = self.dh_params.key_length
 
     """    
     @staticmethod
@@ -52,12 +52,12 @@ class PhIntersect(Intersect):
         return (restored_id, k)
     """
     def get_intersect_method_meta(self):
-        return PHMeta(hash_method=self.ph_params.hash_method,
+        return PHMeta(hash_method=self.dh_params.hash_method,
                       salt=self.salt)
 
     @staticmethod
-    def _encrypt_id(data_instance, cipher, reserve_original_key=False, hash_operator=None, salt='',
-                    reserve_original_value=False):
+    def _encrypt_id(data_instances, cipher, reserve_original_key=False, hash_operator=None, salt='',
+                          reserve_original_value=False):
         """
         Encrypt the key (ID) of input Table
         :param cipher: cipher object
@@ -70,21 +70,20 @@ class PhIntersect(Intersect):
             (ori_key, (enc_key, val)) for only reserve_original_value == True.
         :return:
         """
+        mode = DhIntersect._get_mode(reserve_original_key, reserve_original_value)
+        if hash_operator is not None:
+            return cipher.map_hash_encrypt(data_instances, mode=mode, hash_operator=hash_operator, salt=salt)
+        return cipher.map_encrypt(data_instances, mode=mode)
+
+    @staticmethod
+    def _get_mode(reserve_original_key=False, reserve_original_value=False):
         if reserve_original_key and reserve_original_value:
-            if hash_operator:
-                return cipher.map_hash_encrypt(data_instance, mode=5, hash_operator=hash_operator, salt=salt)
-            return cipher.map_encrypt(data_instance, mode=5)
+            return 5
         if reserve_original_key:
-            if hash_operator:
-                return cipher.map_hash_encrypt(data_instance, mode=4, hash_operator=hash_operator, salt=salt)
-            return cipher.map_encrypt(data_instance, mode=4)
+            return 4
         if reserve_original_value:
-            if hash_operator:
-                return cipher.map_hash_encrypt(data_instance, mode=3, hash_operator=hash_operator, salt=salt)
-            return cipher.map_encrypt(data_instance, mode=3)
-        if hash_operator:
-            return cipher.map_hash_encrypt(data_instance, mode=1, hash_operator=hash_operator, salt=salt)
-        return cipher.map_encrypt(data_instance, mode=1)
+            return 3
+        return 1
 
     @staticmethod
     def _decrypt_id(data_instance, cipher, reserve_value=False):
@@ -98,18 +97,6 @@ class PhIntersect(Intersect):
             return cipher.map_decrypt(data_instance, mode=0)
         else:
             return cipher.map_decrypt(data_instance, mode=1)
-
-    """    
-    @staticmethod
-    def _find_intersection(id_local, id_remote):
-        '''
-        Find the intersection set of ENC_id
-        :param id_local: Table in the form (EEg, -1)
-        :param id_remote: Table in the form (EEh, -1)
-        :return: Table in the form (EEi, -1)
-        '''
-        return id_local.join(id_remote, lambda v, u: -1)
-    """
 
     def _generate_commutative_cipher(self):
         self.commutative_cipher = [
@@ -145,7 +132,7 @@ class PhIntersect(Intersect):
         raise NotImplementedError("This method should not be called here")
 
     def run_intersect(self, data_instances):
-        LOGGER.info("Start PH Intersection")
+        LOGGER.info("Start DH Intersection")
         id_list_intersect_cipher_cipher = self.get_intersect_doubly_encrypted_id(data_instances)
         intersect_ids = self.decrypt_intersect_doubly_encrypted_id(id_list_intersect_cipher_cipher)
         return intersect_ids

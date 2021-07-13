@@ -23,7 +23,7 @@ from fate_flow.entity.metric import Metric, MetricMeta
 from federatedml.model_base import ModelBase
 from federatedml.param.sir_param import SecureInformationRetrievalParam
 from federatedml.statistic.intersect.repeat_id_process import RepeatedIDIntersect
-from federatedml.util import consts, abnormal_detection, LOGGER, conversion
+from federatedml.util import consts, abnormal_detection
 from federatedml.transfer_variable.transfer_class.secure_information_retrieval_transfer_variable import \
     SecureInformationRetrievalTransferVariable
 
@@ -45,7 +45,7 @@ class BaseSecureInformationRetrieval(ModelBase):
         self.block_num = None       # N in 1-N OT
         self.coverage = None        # the percentage of transactions whose values are successfully retrieved
 
-        self.ph_params = None
+        self.dh_params = None
         self.intersection_obj = None
         self.proc_obj = None
         self.with_inst_id = None
@@ -63,9 +63,9 @@ class BaseSecureInformationRetrieval(ModelBase):
 
         self.model_param = param
         self.security_level = self.model_param.security_level
-        self.ph_params = self.model_param.ph_params
-        if self.model_param.key_size is not None and self.ph_params.key_length == consts.DEFAULT_KEY_LENGTH:
-            self.ph_params.key_length = self.model_param.key_size
+        self.dh_params = self.model_param.dh_params
+        if self.model_param.key_size is not None and self.dh_params.key_length == consts.DEFAULT_KEY_LENGTH:
+            self.dh_params.key_length = self.model_param.key_size
         self.target_cols = self.model_param.target_cols
 
     def _init_transfer_variable(self):

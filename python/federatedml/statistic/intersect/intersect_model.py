@@ -22,7 +22,7 @@ from federatedml.feature.instance import Instance
 from federatedml.model_base import ModelBase
 from federatedml.param.intersect_param import IntersectParam
 from federatedml.statistic.intersect import RawIntersectionHost, RawIntersectionGuest, RsaIntersectionHost, \
-    RsaIntersectionGuest, PhIntersectionGuest, PhIntersectionHost
+    RsaIntersectionGuest, DhIntersectionGuest, DhIntersectionHost
 from federatedml.statistic.intersect.repeat_id_process import RepeatedIDIntersect
 from federatedml.statistic import data_overview
 from federatedml.transfer_variable.transfer_class.intersection_func_transfer_variable import \
@@ -302,8 +302,8 @@ class IntersectHost(IntersectModelBase):
             self.intersection_obj.tracker = self.tracker
             self.intersection_obj.task_version_id = self.task_version_id
 
-        elif self.model_param.intersect_method == consts.PH:
-            self.intersection_obj = PhIntersectionHost()
+        elif self.model_param.intersect_method == consts.DH:
+            self.intersection_obj = DhIntersectionHost()
 
         else:
             raise ValueError("intersect_method {} is not support yet".format(self.model_param.intersect_method))
@@ -349,8 +349,8 @@ class IntersectGuest(IntersectModelBase):
             self.intersection_obj.tracker = self.tracker
             self.intersection_obj.task_version_id = self.task_version_id
 
-        elif self.model_param.intersect_method == consts.PH:
-            self.intersection_obj = PhIntersectionGuest()
+        elif self.model_param.intersect_method == consts.DH:
+            self.intersection_obj = DhIntersectionGuest()
 
         else:
             raise ValueError("intersect_method {} is not support yet".format(self.model_param.intersect_method))

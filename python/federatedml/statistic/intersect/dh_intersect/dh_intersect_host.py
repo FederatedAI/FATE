@@ -14,11 +14,11 @@
 #  limitations under the License.
 #
 
-from federatedml.statistic.intersect.ph_intersect.ph_intersect_base import PhIntersect
+from federatedml.statistic.intersect.dh_intersect.dh_intersect_base import DhIntersect
 from federatedml.util import consts, LOGGER
 
 
-class PhIntersectionHost(PhIntersect):
+class DhIntersectionHost(DhIntersect):
     def __init__(self):
         super().__init__()
         self.role = consts.HOST
@@ -54,7 +54,6 @@ class PhIntersectionHost(PhIntersect):
         return intersect_ids
 
     def get_intersect_doubly_encrypted_id(self, data_instances):
-        LOGGER.info("Start PH intersection")
         self._sync_commutative_cipher_public_knowledge()
         self.commutative_cipher.init()
 

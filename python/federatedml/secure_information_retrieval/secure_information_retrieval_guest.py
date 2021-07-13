@@ -31,7 +31,7 @@ from federatedml.secureprotol.symmetric_encryption.py_aes_encryption import AESD
 from federatedml.secureprotol.symmetric_encryption.cryptor_executor import CryptoExecutor
 from federatedml.statistic import data_overview
 # from federatedml.secureprotol.symmetric_encryption.pohlig_hellman_encryption import PohligHellmanCipherKey
-from federatedml.statistic.intersect import PhIntersectionGuest
+from federatedml.statistic.intersect import DhIntersectionGuest
 from federatedml.util import consts, abnormal_detection, LOGGER
 
 
@@ -50,9 +50,9 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
 
     def _init_model(self, param: SecureInformationRetrievalParam):
         self._init_base_model(param)
-        self.intersection_obj = PhIntersectionGuest()
+        self.intersection_obj = DhIntersectionGuest()
         self.intersection_obj.role = consts.GUEST
-        intersect_param = IntersectParam(ph_params=self.ph_params)
+        intersect_param = IntersectParam(dh_params=self.dh_params)
         self.intersection_obj.load_params(intersect_param)
         self.intersection_obj.host_party_id_list = self.component_properties.host_party_idlist
         self.intersection_obj.guest_party_id = self.component_properties.guest_partyid
@@ -89,34 +89,6 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
         if self.with_inst_id:
             match_data = self._recover_match_id(data_inst)
 
-        """
-        # 2. Sync commutative cipher public knowledge, block num and init
-        self._sync_commutative_cipher_public_knowledge()
-        self.commutative_cipher.init()
-        LOGGER.info("commutative cipher key generated")
-
-        # 3. 1st ID encryption and exchange
-        # g: guest's plaintext
-        # Eg: guest's ciphertext
-        # EEg: guest's doubly encrypted ciphertext
-        # h, Eh, EEh: host
-        # i, Ei, EEi: intersection
-        # record converted string id in case of non-ascii
-        id_list_guest_first = self._encrypt_id(data_inst)      # (Eg, -1)
-        LOGGER.info("encrypted guest id for the 1st time")
-        id_list_host_first = self._exchange_id_list(id_list_guest_first)              # send (Eg, -1), get (Eh, -1)
-
-        # 4. 2nd ID encryption, receive doubly encrypted ID list from host
-        id_list_host_second = self._encrypt_id(id_list_host_first, reserve_original_key=True)    # (Eh, EEh)
-        LOGGER.info("encrypted guest id for the 2nd time")
-        id_list_host_second_only = id_list_host_second.map(lambda k, v: (v, -1))     # (EEh, -1)
-        id_list_guest_second = self._sync_doubly_encrypted_id_list()       # get (EEg, -1)
-
-        # 5. Find intersection and re-index
-        id_list_intersect = self._find_intersection(
-            id_list_guest_second, id_list_host_second_only)     # (EEi, -1)
-        LOGGER.info("intersection found")
-        """
         # 2. Find intersection
         id_list_intersect = self.intersection_obj.get_intersect_doubly_encrypted_id(match_data)[0]
         id_list_host_second_only = self.intersection_obj.id_list_remote_second[0]

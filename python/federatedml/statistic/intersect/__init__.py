@@ -23,18 +23,18 @@ from federatedml.statistic.intersect.rsa_intersect.rsa_intersect_base import Rsa
 from federatedml.statistic.intersect.rsa_intersect.rsa_intersect_guest import RsaIntersectionGuest
 from federatedml.statistic.intersect.rsa_intersect.rsa_intersect_host import RsaIntersectionHost
 
-from federatedml.statistic.intersect.ph_intersect.ph_intersect_base import PhIntersect
-from federatedml.statistic.intersect.ph_intersect.ph_intersect_guest import PhIntersectionGuest
-from federatedml.statistic.intersect.ph_intersect.ph_intersect_host import PhIntersectionHost
+from federatedml.statistic.intersect.dh_intersect.dh_intersect_base import DhIntersect
+from federatedml.statistic.intersect.dh_intersect.dh_intersect_guest import DhIntersectionGuest
+from federatedml.statistic.intersect.dh_intersect.dh_intersect_host import DhIntersectionHost
 
 
 __all__ = ['Intersect',
            'RawIntersect',
            'RsaIntersect',
-           'PhIntersect',
+           'DhIntersect',
            'RsaIntersectionHost',
            'RsaIntersectionGuest',
            'RawIntersectionHost',
            'RawIntersectionGuest',
-           'PhIntersectionGuest',
-           'PhIntersectionHost']
+           'DhIntersectionGuest',
+           'DhIntersectionHost']

@@ -98,7 +98,7 @@ class Intersect(object):
             meta_obj = IntersectModelMeta(intersect_method=self.intersect_method,
                                           intersect_preprocess_params=preprocess_params,
                                           rsa_params=self.get_intersect_method_meta())
-        elif self.intersect_method == consts.PH:
+        elif self.intersect_method == consts.DH:
             meta_obj = IntersectModelMeta(intersect_method=self.intersect_method,
                                           intersect_preprocess_params=preprocess_params,
                                           ph_params=self.get_intersect_method_meta())

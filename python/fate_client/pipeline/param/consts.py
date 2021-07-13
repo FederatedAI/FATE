@@ -53,7 +53,7 @@ HOMO = "homo"
 
 RAW = "raw"
 RSA = "rsa"
-PH = "ph"
+DH = "dh"
 
 # evaluation
 AUC = "auc"
