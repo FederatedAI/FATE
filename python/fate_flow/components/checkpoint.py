@@ -20,42 +20,24 @@ from datetime import datetime
 from collections import deque, OrderedDict
 
 from ruamel import yaml
-from filelock import FileLock
 
 from fate_flow.settings import stat_logger
 from fate_flow.entity.types import RunParameters
-from fate_flow.pipelined_model.pipelined_model import PipelinedModel
-from fate_arch.protobuf.python import default_empty_fill_pb2
+from fate_flow.model import serialize_buffer_object, parse_proto_object, Locker
 from fate_arch.common.file_utils import get_project_base_directory
 
 
-class Checkpoint:
+class Checkpoint(Locker):
 
     def __init__(self, directory: Path, step_index: int, step_name: str):
         self.step_index = step_index
         self.step_name = step_name
         self.create_time = None
-        self.directory = directory / f'{step_index}#{step_name}'
-        self.directory.mkdir(0o755, True, True)
-        self.database = self.directory / 'database.yaml'
-        self.lock = self._lock
+        directory = directory / f'{step_index}#{step_name}'
+        directory.mkdir(0o755, True, True)
+        self.database = directory / 'database.yaml'
 
-    @property
-    def _lock(self):
-        return FileLock(self.directory / '.lock')
-
-    def __deepcopy__(self, memo):
-        return self
-
-    # https://docs.python.org/3/library/pickle.html#handling-stateful-objects
-    def __getstate__(self):
-        state = self.__dict__.copy()
-        state.pop('lock')
-        return state
-
-    def __setstate__(self, state):
-        self.__dict__.update(state)
-        self.lock = self._lock
+        super().__init__(directory)
 
     @property
     def available(self):
@@ -75,17 +57,10 @@ class Checkpoint:
 
         model_strings = {}
         for model_name, buffer_object in model_buffers.items():
-            # the type is bytes, not str
-            buffer_object_serialized_string = buffer_object.SerializeToString()
-            if not buffer_object_serialized_string:
-                fill_message = default_empty_fill_pb2.DefaultEmptyFillMessage()
-                fill_message.flag = 'set'
-                buffer_object_serialized_string = fill_message.SerializeToString()
-            model_strings[model_name] = buffer_object_serialized_string
-
+            model_strings[model_name] = serialize_buffer_object(buffer_object)
             data['models'][model_name] = {
                 'filename': f'{model_name}.pb',
-                'sha1': hashlib.sha1(buffer_object_serialized_string).hexdigest(),
+                'sha1': hashlib.sha1(model_strings[model_name]).hexdigest(),
                 'buffer_name': type(buffer_object).__name__,
             }
 
@@ -120,7 +95,7 @@ class Checkpoint:
                                  f'filepath: {model["filepath"]} expected: {model["sha1"]} actual: {sha1}')
 
         self.create_time = datetime.fromisoformat(data['create_time'])
-        return {model_name: PipelinedModel.parse_proto_object(model['buffer_name'], model_strings[model_name])
+        return {model_name: parse_proto_object(model['buffer_name'], model_strings[model_name])
                 for model_name, model in data['models'].items()}
 
     def remove(self):

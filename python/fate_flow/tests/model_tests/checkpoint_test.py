@@ -16,7 +16,7 @@ model_string = (Path(__file__).parent.parent / 'misc' / 'DataIOMeta.pb').read_by
 sha1 = hashlib.sha1(model_string).hexdigest()
 buffer_name = 'DataIOMeta'
 model_buffers = {
-    'my_model': checkpoint.PipelinedModel.parse_proto_object(buffer_name, model_string),
+    'my_model': checkpoint.parse_proto_object(buffer_name, model_string),
 }
 data = yaml.dump({
     'step_index': 123,
