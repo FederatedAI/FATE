@@ -15,6 +15,7 @@
 #
 
 import gmpy2
+import uuid
 
 from federatedml.protobuf.generated.intersect_param_pb2 import RSAKey
 from federatedml.statistic.intersect.rsa_intersect.rsa_intersect_base import RsaIntersect
@@ -194,15 +195,6 @@ class RsaIntersectionHost(RsaIntersect):
                                                           idx=0)
         LOGGER.info("Remote host_sign_guest_ids_process to Guest.")
 
-        """
-        if self.cardinality_only:
-            cardinality = None
-            if self.sync_cardinality:
-                cardinality = self.transfer_variable.cardinality.get(idx=0)
-                LOGGER.info(f"Got intersect cardinality from guest.")
-            return cardinality
-        """
-
         # recv intersect ids
         intersect_ids = None
         if self.sync_intersect_ids:
@@ -286,3 +278,41 @@ class RsaIntersectionHost(RsaIntersect):
             LOGGER.info("Got intersect cardinality from guest.")
 
         return data_instances
+
+    def run_cache(self, data_instances):
+        LOGGER.info("Run RSA intersect cache.")
+        # generate rsa keys
+        # self.e, self.d, self.n = self.generate_protocol_key()
+        self.generate_protocol_key()
+        LOGGER.info("Generate protocol key!")
+        public_key = {"e": self.e, "n": self.n}
+
+        # sends public key e & n to guest
+        self.transfer_variable.host_pubkey.remote(public_key,
+                                                  role=consts.GUEST,
+                                                  idx=0)
+        LOGGER.info("Remote public key to Guest.")
+        # hash host ids
+        prvkey_ids_process_pair = self.cal_prvkey_ids_process_pair(data_instances,
+                                                                   self.d,
+                                                                   self.n,
+                                                                   self.p,
+                                                                   self.q,
+                                                                   self.cp,
+                                                                   self.cq,
+                                                                   self.first_hash_operator)
+
+        prvkey_ids_process = prvkey_ids_process_pair.mapValues(lambda v: 1)
+
+        self.cache_id = {self.guest_party_id: str(uuid.uuid4())}
+        cache_schema = {"uid": self.cache_id}
+        # self.cache = prvkey_ids_process_pair
+        prvkey_ids_process.schema = cache_schema
+
+        self.transfer_variable.host_prvkey_ids.remote(prvkey_ids_process,
+                                                      role=consts.GUEST,
+                                                      idx=0)
+        LOGGER.info("Remote host_ids_process to Guest.")
+
+        prvkey_ids_process_pair.schema = cache_schema
+        return prvkey_ids_process_pair

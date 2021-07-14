@@ -27,6 +27,8 @@ class RsaIntersectionGuest(RsaIntersect):
         self.role = consts.GUEST
 
     def get_host_prvkey_ids(self):
+        if self.cache:
+            return self.cache
         host_prvkey_ids_list = self.transfer_variable.host_prvkey_ids.get(idx=-1)
         LOGGER.info("Get host_prvkey_ids from all host")
 
@@ -58,23 +60,6 @@ class RsaIntersectionGuest(RsaIntersect):
         LOGGER.info("Sign host_pubkey_ids with guest prv_keys")
 
         return guest_sign_host_ids_list
-
-    """
-    def send_intersect_ids(self, encrypt_intersect_ids_list, intersect_ids):
-        if len(self.host_party_id_list) > 1:
-            for i, host_party_id in enumerate(self.host_party_id_list):
-                remote_intersect_id = self.map_raw_id_to_encrypt_id(intersect_ids, encrypt_intersect_ids_list[i])
-                self.transfer_variable.intersect_ids.remote(remote_intersect_id,
-                                                            role=consts.HOST,
-                                                            idx=i)
-                LOGGER.info(f"Remote intersect ids to Host {host_party_id}!")
-        else:
-            remote_intersect_id = encrypt_intersect_ids_list[0].mapValues(lambda v: 1)
-            self.transfer_variable.intersect_ids.remote(remote_intersect_id,
-                                                        role=consts.HOST,
-                                                        idx=0)
-            LOGGER.info(f"Remote intersect ids to Host!")
-    """
 
     def send_intersect_ids(self, encrypt_intersect_ids_list, intersect_ids):
         if len(self.host_party_id_list) > 1:
@@ -109,7 +94,6 @@ class RsaIntersectionGuest(RsaIntersect):
         #              f"odd fraction: {sid_hash_odd.count()/data_instances.count()}")
 
         # generate pub keys for even ids
-        # self.e, self.d, self.n = self.generate_protocol_key()
         self.generate_protocol_key()
         LOGGER.info("Generate guest protocol key!")
 
@@ -197,17 +181,6 @@ class RsaIntersectionGuest(RsaIntersect):
         intersect_even_ids = self.get_host_intersect_ids(prvkey_ids_process_pair_list)
         intersect_ids = intersect_odd_ids.union(intersect_even_ids)
 
-        """
-        if self.cardinality_only:
-            cardinality = intersect_ids.count()
-            if self.sync_cardinality:
-                self.transfer_variable.cardinality.remote(cardinality, role=consts.HOST, idx=-1)
-                LOGGER.info("Sent intersect cardinality to host.")
-            else:
-                LOGGER.info("Skip sync intersect cardinality with host(s)")
-            return cardinality
-        """
-
         if self.sync_intersect_ids:
             self.send_intersect_ids(encrypt_intersect_odd_ids_list, intersect_odd_ids)
         else:
@@ -217,10 +190,6 @@ class RsaIntersectionGuest(RsaIntersect):
 
     def unified_calculation_process(self, data_instances):
         LOGGER.info("RSA intersect using unified calculation.")
-        # generate r
-        # count = data_instances.count()
-        # self.r = self.generate_r_base(self.random_bit, count, self.random_base_fraction)
-        # LOGGER.info(f"Generate {len(self.r)} r values.")
 
         # receives public key e & n
         public_keys = self.transfer_variable.host_pubkey.get(-1)
@@ -271,17 +240,6 @@ class RsaIntersectionGuest(RsaIntersect):
                                       enumerate(sid_host_sign_guest_ids_list)]
 
         intersect_ids = self.filter_intersect_ids(encrypt_intersect_ids_list, keep_encrypt_ids=True)
-
-        """
-        if self.cardinality_only:
-            cardinality = intersect_ids.count()
-            if self.sync_cardinality:
-                self.transfer_variable.cardinality.remote(cardinality, role=consts.HOST, idx=-1)
-                LOGGER.info("Sent intersect cardinality to host.")
-            else:
-                LOGGER.info("Skip sync intersect cardinality with host(s)")
-            return cardinality
-        """
 
         if self.sync_intersect_ids:
             self.send_intersect_ids(encrypt_intersect_ids_list, intersect_ids)
@@ -360,3 +318,78 @@ class RsaIntersectionGuest(RsaIntersect):
             LOGGER.info("Skip sync intersect cardinality with host(s)")
 
         return data_instances
+
+    def run_cache(self, data_instances):
+        LOGGER.info("Run RSA intersect cache")
+        # generate r
+        # count = data_instances.count()
+        # self.r = self.generate_r_base(self.random_bit, count, self.random_base_fraction)
+        # LOGGER.info(f"Generate {len(self.r)} r values.")
+
+        # receives public key e & n
+        public_keys = self.transfer_variable.host_pubkey.get(-1)
+        # LOGGER.debug(f"Get RSA host_public_key:{public_keys} from Host")
+        LOGGER.info(f"Get RSA host_public_key from Host")
+        self.rcv_e = [int(public_key["e"]) for public_key in public_keys]
+        self.rcv_n = [int(public_key["n"]) for public_key in public_keys]
+
+        host_prvkey_ids_list = self.get_host_prvkey_ids()
+        # self.cache = host_prvkey_ids_list
+        self.cache_id = dict(zip(self.host_party_id_list, [ids.schema.get("cache_id") for ids in host_prvkey_ids_list]))
+        LOGGER.info("Get host_prvkey_ids")
+        return host_prvkey_ids_list
+
+    def cache_unified_calculation_process(self, data_instances, cache):
+        LOGGER.info("RSA intersect using cache.")
+
+        # verify cache id
+        #@TODO: to verify cache id implement
+
+        pubkey_ids_process_list = [self.pubkey_id_process(data_instances,
+                                                          fraction=self.random_base_fraction,
+                                                          random_bit=self.random_bit,
+                                                          rsa_e=self.rcv_e[i],
+                                                          rsa_n=self.rcv_n[i],
+                                                          hash_operator=self.first_hash_operator,
+                                                          salt=self.salt) for i in range(len(self.rcv_e))]
+        LOGGER.info(f"Finish pubkey_ids_process")
+
+        for i, guest_id in enumerate(pubkey_ids_process_list):
+            mask_guest_id = guest_id.mapValues(lambda v: 1)
+            self.transfer_variable.guest_pubkey_ids.remote(mask_guest_id,
+                                                           role=consts.HOST,
+                                                           idx=i)
+            LOGGER.info("Remote guest_pubkey_ids to Host {}".format(i))
+
+        host_prvkey_ids_list = cache
+
+        # Recv signed guest ids
+        # table(r^e % n *hash(sid), guest_id_process)
+        recv_host_sign_guest_ids_list = self.transfer_variable.host_sign_guest_ids.get(idx=-1)
+        LOGGER.info("Get host_sign_guest_ids from Host")
+
+        # table(r^e % n *hash(sid), sid, hash(guest_ids_process/r))
+        # g[0]=(r^e % n *hash(sid), sid), g[1]=random bits r
+        host_sign_guest_ids_list = [v.join(recv_host_sign_guest_ids_list[i],
+                                           lambda g, r: (g[0], RsaIntersectionGuest.hash(gmpy2.divm(int(r),
+                                                                                                    int(g[1]),
+                                                                                                    self.rcv_n[i]),
+                                                                                         self.final_hash_operator,
+                                                                                         self.rsa_params.salt)))
+                                    for i, v in enumerate(pubkey_ids_process_list)]
+
+        # table(hash(guest_ids_process/r), sid))
+        sid_host_sign_guest_ids_list = [g.map(lambda k, v: (v[1], v[0])) for g in host_sign_guest_ids_list]
+
+        # intersect table(hash(guest_ids_process/r), sid)
+        encrypt_intersect_ids_list = [v.join(host_prvkey_ids_list[i], lambda sid, h: sid) for i, v in
+                                      enumerate(sid_host_sign_guest_ids_list)]
+
+        intersect_ids = self.filter_intersect_ids(encrypt_intersect_ids_list, keep_encrypt_ids=True)
+
+        if self.sync_intersect_ids:
+            self.send_intersect_ids(encrypt_intersect_ids_list, intersect_ids)
+        else:
+            LOGGER.info("Skip sync intersect ids with Host(s).")
+
+        return intersect_ids

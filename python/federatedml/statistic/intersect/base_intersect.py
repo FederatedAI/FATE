@@ -24,13 +24,16 @@ from federatedml.protobuf.generated.intersect_param_pb2 import Filter, Intersect
 from federatedml.statistic.intersect.intersect_preprocess import BitArray
 from federatedml.util import LOGGER, consts
 
+
 class Intersect(object):
     def __init__(self):
         super().__init__()
+        self.cache_id = None
         self.model_param = IntersectParam()
         self.transfer_variable = None
         self.filter = None
         self.intersect_num = None
+        self.cache = None
         self.model_param_name = "IntersectModelParam"
         self.model_meta_name = "IntersectModelMeta"
 
@@ -47,6 +50,7 @@ class Intersect(object):
         self.sync_cardinality = param.sync_cardinality
         self.run_preprocess = param.run_preprocess
         self.intersect_preprocess_params = param.intersect_preprocess_params
+        self.run_cache = param.intersect_cache.run_cache
 
     @property
     def guest_party_id(self):
@@ -124,7 +128,15 @@ class Intersect(object):
             param_obj = IntersectModelParam(intersect_filter=intersect_filter,
                                             rsa_encrypt_key=rsa_encrypt_key,
                                             ph_encrypt_key=ph_encrypt_key)
-
+        elif self.run_cache:
+            if self.intersect_method == consts.RSA:
+                rsa_encrypt_key = self.get_intersect_key()
+                param_obj = IntersectModelParam(rsa_encrypt_key=rsa_encrypt_key,
+                                                uid=self.cache_id)
+            elif self.intersect_method == consts.DH:
+                ph_encrypt_key = self.get_intersect_key()
+                param_obj = IntersectModelParam(ph_encrypt_key=ph_encrypt_key,
+                                                uid=self.cache_id)
         return param_obj
 
     def get_model(self):
@@ -161,6 +173,9 @@ class Intersect(object):
         raise NotImplementedError("method should not be called here")
 
     def run_cardinality(self, data_instances):
+        raise NotImplementedError("method should not be called here")
+
+    def run_cache(self, data_instances):
         raise NotImplementedError("method should not be called here")
 
     def set_flowid(self, flowid=0):

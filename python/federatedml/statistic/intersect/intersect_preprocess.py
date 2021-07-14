@@ -33,7 +33,7 @@ class BitArray(object):
         # self.hash_encoder = Hash(hash_method, False)
         self.hash_method = hash_method
         self.hash_func_count = hash_func_count
-        self.id = str(uuid.uuid1())
+        self.id = str(uuid.uuid4())
         self.salt = salt
         if salt is None:
             self.salt = self._generate_salt()

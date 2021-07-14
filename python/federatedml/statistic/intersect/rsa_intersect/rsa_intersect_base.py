@@ -173,6 +173,9 @@ class RsaIntersect(Intersect):
     def unified_calculation_process(self, data_instances):
         raise NotImplementedError("This method should not be called here")
 
+    def cache_unified_calculation_process(self, data_instances, cache):
+        raise NotImplementedError("This method should not be called here")
+
     def run_intersect(self, data_instances):
         LOGGER.info("Start RSA Intersection")
         if self.split_calculation:

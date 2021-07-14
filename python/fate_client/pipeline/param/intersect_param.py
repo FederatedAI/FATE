@@ -175,13 +175,24 @@ class DHParam(BaseParam):
 
 
 class IntersectCache(BaseParam):
-    def __init__(self, use_cache=False, id_type=consts.PHONE, encrypt_type=consts.SHA256):
+    def __init__(self, run_cache=False, use_cache=False, id_type=consts.PHONE, encrypt_type=consts.SHA256):
+        """
+
+        Parameters
+        ----------
+        run_cache: whether to store Host's encrypted ids, only valid when intersect method is 'rsa' or 'dh'
+        use_cache: whether to use cached ids
+        id_type
+        encrypt_type
+        """
         super().__init__()
+        self.run_cache = run_cache
         self.use_cache = use_cache
         self.id_type = id_type
         self.encrypt_type = encrypt_type
 
     def check(self):
+        self.check_boolean(self.run_cache, "intersect cache param's run_cache")
         if type(self.use_cache).__name__ != "bool":
             raise ValueError(
                 "IntersectCache param's use_cache {} not supported, should be bool type".format(
@@ -413,6 +424,7 @@ class IntersectParam(BaseParam):
         self.encode_params.check()
         self.rsa_params.check()
         self.dh_params.check()
+        self.intersect_cache_param.check()
         self.check_boolean(self.cardinality_only, descr+"cardinality_only")
         self.check_boolean(self.sync_cardinality, descr+"sync_cardinality")
         self.check_boolean(self.run_preprocess, descr+"run_preprocess")
@@ -427,4 +439,9 @@ class IntersectParam(BaseParam):
                 raise ValueError(f"for preprocessing ids, false_positive_rate must be no less than 0.01")
             if self.cardinality_only:
                 raise ValueError(f"cardinality_only mode cannot run preprocessing.")
+        if self.intersect_cache_param.run_cache:
+            if self.intersect_method not in [consts.RSA, consts.DH]:
+                raise ValueError(f"Only rsa or dh method supports cache.")
+            if self.intersect_method == consts.RSA and self.rsa_params.split_calculation:
+                raise ValueError(f"RSA split_calculation does not support cache.")
         return True

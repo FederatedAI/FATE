@@ -120,10 +120,10 @@ class IntersectModelBase(ModelBase):
             # LOGGER.debug(f"join_data count: {join_data.count()}")
             if self.model_param.new_join_id:
                 if self.model_param.only_output_key:
-                    join_data = join_data.map(lambda k, v: (str(uuid.uuid1()), None))
+                    join_data = join_data.map(lambda k, v: (uuid.uuid4().hex, None))
                     join_id = join_data
                 else:
-                    join_data = join_data.map(lambda k, v: (str(uuid.uuid1()), v))
+                    join_data = join_data.map(lambda k, v: (uuid.uuid4().hex, v))
                     join_id = join_data.mapValues(lambda v: None)
                 sync_join_id.remote(join_id)
 
@@ -175,6 +175,8 @@ class IntersectModelBase(ModelBase):
             if data_overview.check_with_inst_id(data) or self.model_param.with_sample_id:
                 proc_obj.use_sample_id()
             match_data = proc_obj.recover(data=data)
+            if self.intersection_obj.run_cache:
+                return self.intersection_obj.run_cache(match_data)
             if self.intersection_obj.cardinality_only:
                 self.intersection_obj.run_cardinality(match_data)
             else:
@@ -183,6 +185,8 @@ class IntersectModelBase(ModelBase):
                     intersect_data = self.run_preprocess(match_data)
                 self.intersect_ids = self.intersection_obj.run_intersect(intersect_data)
         else:
+            if self.intersection_obj.run_cache:
+                return self.intersection_obj.run_cache(data)
             if self.intersection_obj.cardinality_only:
                 self.intersection_obj.run_cardinality(data)
             else:
@@ -199,20 +203,6 @@ class IntersectModelBase(ModelBase):
             self.set_summary(self.get_model_summary())
             self.callback()
             return data
-
-        """
-        if self.intersection_obj.cardinality_only:
-            # intersect result = cardinality
-            if intersect_result:
-                self.intersect_num = intersect_result
-                self.intersect_rate = intersect_result / data.count()
-            self.set_summary(self.get_model_summary())
-            self.callback()
-            return
-        else:
-            # intersect result = intersect ids
-            self.intersect_ids = intersect_result
-        """
 
         if self.use_match_id_process:
             if not self.model_param.sync_intersect_ids:
