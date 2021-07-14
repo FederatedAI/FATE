@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 
-from fate_arch.storage import StorageEngine, MySQLStorageType
+from fate_arch.storage import StorageEngine, HiveStorageType
 from fate_arch.storage import StorageTableBase
 
 
@@ -26,7 +26,7 @@ class StorageTable(StorageTableBase):
                  name: str = None,
                  namespace: str = None,
                  partitions: int = 1,
-                 storage_type: MySQLStorageType = None,
+                 storage_type: HiveStorageType = None,
                  options=None):
         super(StorageTable, self).__init__(name=name, namespace=namespace)
         self.cur = cur
@@ -35,10 +35,9 @@ class StorageTable(StorageTableBase):
         self._name = name
         self._namespace = namespace
         self._partitions = partitions
-        self._storage_type = storage_type
         self._options = options if options else {}
-        self._storage_engine = StorageEngine.MYSQL
-        self._type = storage_type if storage_type else MySQLStorageType.InnoDB
+        self._storage_engine = StorageEngine.HIVE
+        self._type = storage_type if storage_type else HiveStorageType.DEFAULT
 
     def execute(self, sql, select=True):
         self.cur.execute(sql)
@@ -75,7 +74,7 @@ class StorageTable(StorageTableBase):
         return self._options
 
     def count(self, **kwargs):
-        sql = 'select count(*) from {}'.format(self._name)
+        sql = 'select count(*) from {}'.format(self._address.name)
         try:
             self.cur.execute(sql)
             self.con.commit()
@@ -87,35 +86,13 @@ class StorageTable(StorageTableBase):
         return count
 
     def collect(self, **kwargs) -> list:
-        sql = 'select * from {}'.format(self._name)
+        sql = 'select * from {}'.format(self._address.name)
         data = self.execute(sql)
         for i in data:
             yield i[0], self.get_meta().get_id_delimiter().join(list(i[1:]))
 
     def put_all(self, kv_list, **kwargs):
-        id_name = self.get_meta().get_schema().get('sid', 'id')
-        headers_str = self.get_meta().get_schema().get('header')
-        id_delimiter = self.get_meta().get_id_delimiter()
-        feature_name_list = []
-        feature_num = 0
-        for kv in kv_list:
-            feature_num = len(kv[1].split(id_delimiter))
-            break
-        if headers_str:
-            if isinstance(headers_str, str):
-                feature_name_list = headers_str.split(id_delimiter)
-            else:
-                feature_name_list = [headers_str]
-        feature_sql, feature_list = StorageTable.get_meta_header(feature_name_list, feature_num)
-        create_table = 'create table if not exists {}({} varchar(50) NOT NULL, {} PRIMARY KEY(id))'.format(
-            self._address.name, id_name, feature_sql)
-        self.cur.execute(create_table)
-        sql = 'REPLACE INTO {}({}, {})  VALUES'.format(self._address.name, id_name, ','.join(feature_list))
-        for kv in kv_list:
-            sql += '("{}", "{}"),'.format(kv[0], '", "'.join(kv[1].split(id_delimiter)))
-        sql = ','.join(sql.split(',')[:-1]) + ';'
-        self.cur.execute(sql)
-        self.con.commit()
+        pass
 
     def destroy(self):
         super().destroy()

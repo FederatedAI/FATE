@@ -88,7 +88,7 @@ class StorageTableBase(StorageTableABC):
 
 class StorageTableMeta(StorageTableMetaABC):
 
-    def __init__(self, name, namespace, new=False):
+    def __init__(self, name, namespace, new=False, create_address=True):
         self.name = name
         self.namespace = namespace
         self.address = None
@@ -112,12 +112,13 @@ class StorageTableMeta(StorageTableMetaABC):
         if self.part_of_data is None:
             self.part_of_data = []
         if not new:
-            self.build()
+            self.build(create_address)
 
-    def build(self):
+    def build(self, create_address):
         for k, v in self.table_meta.__dict__["__data__"].items():
             setattr(self, k.lstrip("f_"), v)
-        self.address = self.create_address(storage_engine=self.engine, address_dict=self.address)
+        if create_address:
+            self.address = self.create_address(storage_engine=self.engine, address_dict=self.address)
 
     def __new__(cls, *args, **kwargs):
         if not kwargs.get("new", False):
@@ -217,7 +218,9 @@ class StorageTableMeta(StorageTableMetaABC):
             operate = table_meta.update(update_fields)
         if count:
             self.count = count
-        return operate.execute() > 0
+        _return = operate.execute()
+        _meta = StorageTableMeta(name=self.name, namespace=self.namespace)
+        return _return > 0, _meta
 
     @DB.connection_context()
     def destroy_metas(self):

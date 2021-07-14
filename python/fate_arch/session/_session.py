@@ -28,6 +28,9 @@ class Session(object):
         if backend == Backend.SPARK_RABBITMQ:
             return Session(ComputingEngine.SPARK, FederationEngine.RABBITMQ)
 
+        if backend == Backend.LINKIS_SPARK_RABBITMQ:
+            return Session(ComputingEngine.LINKIS_SPARK, FederationEngine.RABBITMQ)
+
         if backend == Backend.SPARK_PULSAR:
             return Session(ComputingEngine.SPARK, FederationEngine.PULSAR)
 
@@ -86,6 +89,12 @@ class Session(object):
             self._computing_type = ComputingEngine.SPARK
             return self
 
+        if self._computing_type == ComputingEngine.LINKIS_SPARK:
+            from fate_arch.computing.spark import CSession
+            self._computing_session = CSession(session_id=computing_session_id)
+            self._computing_type = ComputingEngine.LINKIS_SPARK
+            return self
+
         if self._computing_type == ComputingEngine.STANDALONE:
             from fate_arch.computing.standalone import CSession
             self._computing_session = CSession(session_id=computing_session_id)
@@ -126,12 +135,12 @@ class Session(object):
             return self
 
         if self._federation_type == FederationEngine.RABBITMQ:
-            from fate_arch.computing.spark import CSession
+            # from fate_arch.computing.spark import CSession
             from fate_arch.federation.rabbitmq import Federation
 
-            if not self.is_computing_valid or not isinstance(self._computing_session, CSession):
-                raise RuntimeError(
-                    f"require computing with type {ComputingEngine.SPARK} valid")
+            # if not self.is_computing_valid or not isinstance(self._computing_session, CSession):
+            #     raise RuntimeError(
+            #         f"require computing with type {ComputingEngine.SPARK} valid")
 
             self._federation_session = Federation.from_conf(federation_session_id=federation_session_id,
                                                             party=parties_info.local_party,

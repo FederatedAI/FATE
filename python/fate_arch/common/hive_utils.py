@@ -1,5 +1,5 @@
 #
-#  Copyright 2019 The Eggroll Authors. All Rights Reserved.
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -14,9 +14,13 @@
 #  limitations under the License.
 #
 
+import pickle
+from pyspark.sql import Row
 
-class ComputingEngine(object):
-    EGGROLL = 'EGGROLL'
-    SPARK = 'SPARK'
-    LINKIS_SPARK = 'LINKIS_SPARK'
-    STANDALONE = 'STANDALONE'
+
+def from_row(r):
+    return r.key, pickle.loads(bytes.fromhex(r.value))
+
+
+def to_row(k, v):
+    return Row(key=k, value=pickle.dumps(v).hex())

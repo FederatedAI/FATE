@@ -18,11 +18,12 @@ import uuid
 from itertools import chain
 
 import typing
+import pyspark
 
 from pyspark.rddsampler import RDDSamplerBase
 
 from fate_arch.abc import CTableABC
-from fate_arch.common import log, hdfs_utils
+from fate_arch.common import log, hdfs_utils, hive_utils
 from fate_arch.common.profile import computing_profile
 from fate_arch.computing.spark._materialize import materialize, unmaterialize
 from scipy.stats import hypergeom
@@ -32,7 +33,7 @@ LOGGER = log.getLogger()
 
 class Table(CTableABC):
     def __init__(self, rdd):
-        self._rdd = rdd
+        self._rdd: pyspark.RDD = rdd
 
     def __getstate__(self):
         pass
@@ -40,9 +41,9 @@ class Table(CTableABC):
     def __del__(self):
         try:
             unmaterialize(self._rdd)
-            del self._rdd            
+            del self._rdd
         except:
-            return 
+            return
 
     @computing_profile
     def save(self, address, partitions, schema, **kwargs):
@@ -52,6 +53,20 @@ class Table(CTableABC):
             self._rdd.map(lambda x: hdfs_utils.serialize(x[0], x[1])).repartition(
                 partitions
             ).saveAsTextFile(f"{address.name_node}/{address.path}")
+            schema.update(self.schema)
+            return
+
+        from fate_arch.common.address import HiveAddress, LinkisHiveAddress
+
+        if isinstance(address, (HiveAddress, LinkisHiveAddress)):
+            # df = (
+            #     self._rdd.map(lambda x: hive_utils.to_row(x[0], x[1]))
+            #     .repartition(partitions)
+            #     .toDF()
+            # )
+            LOGGER.debug(f"partitions: {partitions}")
+            _repartition = self._rdd.map(lambda x: hive_utils.to_row(x[0], x[1])).repartition(partitions)
+            _repartition.toDF().write.saveAsTable(f"{address.database}.{address.name}")
             schema.update(self.schema)
             return
         raise NotImplementedError(
@@ -167,6 +182,18 @@ def from_hdfs(paths: str, partitions):
     rdd = materialize(
         sc.textFile(paths, partitions)
         .map(hdfs_utils.deserialize)
+        .repartition(partitions)
+    )
+    return Table(rdd=rdd)
+
+
+def from_hive(tb_name, db_name, partitions):
+    from pyspark.sql import SparkSession
+
+    session = SparkSession.builder.enableHiveSupport().getOrCreate()
+    rdd = materialize(
+        session.sql(f"select * from {db_name}.{tb_name}")
+        .rdd.map(hive_utils.from_row)
         .repartition(partitions)
     )
     return Table(rdd=rdd)
