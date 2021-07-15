@@ -4,7 +4,7 @@ from federatedml.secureprotol.encrypt_mode import EncryptModeCalculator
 from federatedml.cipher_compressor.packer import GuestIntegerPacker, cipher_list_to_cipher_tensor
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.splitter import SplitInfo
 from federatedml.util import consts
-from federatedml.cipher_compressor.compressor import CipherCompressorHost, PackingCipherTensorPackage
+from federatedml.cipher_compressor.compressor import CipherCompressorHost, NormalCipherPackage
 from federatedml.util import LOGGER
 
 precision = 2**53
@@ -12,9 +12,8 @@ REGRESSION_MAX_GRADIENT = 10**9
 
 
 def post_func(x):
-    # transform x to cipher tensor and add a 0 to occupy h position
-    tensor = cipher_list_to_cipher_tensor(x)
-    return tensor, 0
+    # add a 0 to occupy h position
+    return x[0], 0
 
 
 def g_h_recover_post_func(unpack_rs_list: list, precision):
@@ -26,7 +25,7 @@ def g_h_recover_post_func(unpack_rs_list: list, precision):
         return None, None
 
 
-class SplitInfoPackage(PackingCipherTensorPackage):
+class SplitInfoPackage(NormalCipherPackage):
 
     def __init__(self, padding_length, max_capacity):
         super(SplitInfoPackage, self).__init__(padding_length, max_capacity)
@@ -112,9 +111,9 @@ class GHPacker(object):
     def decompress_and_unpack(self, split_info_package_list):
 
         rs = self.packer.decrypt_cipher_packages(split_info_package_list)
-        gh_post_func = functools.partial(g_h_recover_post_func, precision=precision)
         for split_info in rs:
-            g, h = self.packer.unpack_an_int_list(split_info.sum_grad, gh_post_func)
+            g, h = g_h_recover_post_func(self.packer._unpack_an_int(split_info.sum_grad, self.packer._bit_assignment[0]),
+                                         precision=precision)
             split_info.sum_grad = g - self.g_offset * split_info.sample_count
             split_info.sum_hess = h
 

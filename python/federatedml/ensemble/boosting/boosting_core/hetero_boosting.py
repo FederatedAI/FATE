@@ -185,7 +185,7 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
                 self.y_hat = self.get_new_predict_score(self.y_hat, cur_sample_weights, dim=class_idx)
 
             # compute loss
-            LOGGER.debug('y hat is {}'.format(list(self.y_hat.collect())))
+            # LOGGER.debug('y hat is {}'.format(list(self.y_hat.collect())))
             loss = self.compute_loss(self.y_hat, self.y)
             self.history_loss.append(loss)
             LOGGER.info("round {} loss is {}".format(epoch_idx, loss))
