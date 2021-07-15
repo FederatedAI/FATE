@@ -27,7 +27,7 @@ from fate_arch.common.base_utils import json_loads, json_dumps
 from fate_arch.common.file_utils import get_project_base_directory
 from fate_flow.db.db_models import MachineLearningModelInfo as MLModel
 from fate_flow.db.db_models import Tag, DB, ModelTag, ModelOperationLog as OperLog
-from flask import Flask, request, send_file, Response
+from flask import request, send_file, Response
 
 from fate_flow.pipelined_model.migrate_model import compare_roles
 from fate_flow.pipelined_model.pipelined_model import PipelinedModel
@@ -42,14 +42,6 @@ from fate_flow.entity.types import ModelOperation, TagOperation
 from fate_arch.common import file_utils, WorkMode, FederatedMode
 from fate_flow.utils.config_adapter import JobRuntimeConfigAdapter
 from fate_flow.db.db_services import service_db
-
-manager = Flask(__name__)
-
-
-@manager.errorhandler(500)
-def internal_server_error(e):
-    stat_logger.exception(e)
-    return get_json_result(retcode=100, retmsg=str(e))
 
 
 @manager.route('/load', methods=['POST'])
