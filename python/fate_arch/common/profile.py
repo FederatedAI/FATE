@@ -69,9 +69,6 @@ class _ComputingTimerItem(object):
         self.item = _TimerItem()
 
 
-def _stack_hash(function_stack):
-    return f"h{hashlib.blake2b(function_stack.encode('utf-8'), digest_size=5).hexdigest()}"
-
 class _ComputingTimer(object):
     _STATS: typing.MutableMapping[str, _ComputingTimerItem] = {}
 
@@ -79,7 +76,7 @@ class _ComputingTimer(object):
         self._start = time.time()
 
         function_stack = "\n".join(function_stack_list)
-        self._hash = _stack_hash(function_stack)
+        self._hash = hashlib.blake2b(function_stack.encode('utf-8'), digest_size=5).hexdigest()
 
         if self._hash not in self._STATS:
             self._STATS[self._hash] = _ComputingTimerItem(function_name, function_stack)
@@ -97,7 +94,7 @@ class _ComputingTimer(object):
 
     @classmethod
     def computing_statistics_table(cls):
-        stack_table = beautifultable.BeautifulTable(110, precision=4)
+        stack_table = beautifultable.BeautifulTable(110, precision=4, detect_numerics=False)
         stack_table.set_style(beautifultable.STYLE_BOX_ROUNDED)
         stack_table.columns.header = ["function", "n", "sum(s)", "mean(s)", "max(s)", "stack_hash", "stack"]
         stack_table.columns.alignment["stack"] = beautifultable.ALIGN_LEFT
