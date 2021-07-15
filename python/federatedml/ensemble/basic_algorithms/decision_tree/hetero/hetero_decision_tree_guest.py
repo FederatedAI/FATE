@@ -4,13 +4,12 @@ from fate_arch.session import computing_session as session
 from federatedml.util import LOGGER
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.decision_tree import DecisionTree
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.node import Node
-from federatedml.feature.fate_element_type import NoneType
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import CriterionMeta
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import DecisionTreeModelMeta
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import DecisionTreeModelParam
 from federatedml.transfer_variable.transfer_class.hetero_decision_tree_transfer_variable import \
     HeteroDecisionTreeTransferVariable
-from federatedml.secureprotol import PaillierEncrypt, IterativeAffineEncrypt, FakeEncrypt
+from federatedml.secureprotol import PaillierEncrypt, IterativeAffineEncrypt
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.subsample import goss_sampling
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.g_h_optim import GHPacker
 from federatedml.util import consts

@@ -15,7 +15,6 @@ from federatedml.ensemble import Node
 from federatedml.ensemble import HistogramBag
 from federatedml.ensemble import SplitInfo
 from federatedml.ensemble import DecisionTreeClientAggregator
-from federatedml.feature.fate_element_type import NoneType
 from federatedml.feature.instance import Instance
 from federatedml.param import DecisionTreeParam
 from sklearn.ensemble._hist_gradient_boosting.grower import HistogramBuilder
