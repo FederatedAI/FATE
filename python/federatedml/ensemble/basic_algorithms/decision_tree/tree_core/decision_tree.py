@@ -235,9 +235,12 @@ class DecisionTree(BasicAlgorithms, ABC):
         count_arr = np.zeros(len(node_map))
         for k, v in kv:
             if type(v) == int:  # leaf node format: (leaf_node_id)
-                node_idx = node_map[v]
+                key = v
             else:  # internal node format: (1, node_id)
-                node_idx = node_map[v[1]]
+                key = v[1]
+            if key not in node_map:
+                continue
+            node_idx = node_map[key]
             count_arr[node_idx] += 1
         return count_arr
 
