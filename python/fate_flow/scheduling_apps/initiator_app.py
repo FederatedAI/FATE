@@ -13,24 +13,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+from flask import request
 
-from flask import Flask, request
-
-from fate_arch.common import log
 from fate_flow.db.db_models import Task
-from fate_flow.entity.types import RetCode
 from fate_flow.operation.job_saver import JobSaver
 from fate_flow.scheduler.dag_scheduler import DAGScheduler
-from fate_flow.settings import stat_logger
 from fate_flow.utils.api_utils import get_json_result
-
-manager = Flask(__name__)
-
-
-@manager.errorhandler(500)
-def internal_server_error(e):
-    stat_logger.exception(e)
-    return get_json_result(retcode=RetCode.EXCEPTION_ERROR, retmsg=log.exception_to_trace_string(e))
 
 
 # apply initiator for control operation
