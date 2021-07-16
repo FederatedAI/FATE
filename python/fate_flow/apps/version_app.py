@@ -13,20 +13,11 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from flask import Flask, request
+from flask import request
 
 from fate_arch.common import conf_utils
 from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.settings import stat_logger
 from fate_flow.utils.api_utils import get_json_result
-
-manager = Flask(__name__)
-
-
-@manager.errorhandler(500)
-def internal_server_error(e):
-    stat_logger.exception(e)
-    return get_json_result(retcode=100, retmsg=str(e))
 
 
 @manager.route('/get', methods=['POST'])

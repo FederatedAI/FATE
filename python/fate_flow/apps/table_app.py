@@ -20,16 +20,7 @@ from fate_flow.operation.job_tracker import Tracker
 from fate_flow.operation.task_executor import TaskExecutor
 from fate_flow.utils.api_utils import get_json_result
 from fate_flow.utils import detect_utils, job_utils, schedule_utils
-from fate_flow.settings import stat_logger
-from flask import Flask, request
-
-manager = Flask(__name__)
-
-
-@manager.errorhandler(500)
-def internal_server_error(e):
-    stat_logger.exception(e)
-    return get_json_result(retcode=100, retmsg=str(e))
+from flask import request
 
 
 @manager.route('/add', methods=['post'])
