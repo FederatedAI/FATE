@@ -81,6 +81,7 @@ class Upload(ComponentBase):
                 else:
                     LOGGER.info(f"can not found table name: {name} namespace: {namespace}, pass destroy")
         address_dict = storage_address.copy()
+        upload_address = {}
         with storage.Session.build(session_id=job_utils.generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id, suffix="storage", random_end=True),
                                    storage_engine=storage_engine, options=self.parameters.get("options")) as storage_session:
             if storage_engine in {StorageEngine.EGGROLL, StorageEngine.STANDALONE}:
