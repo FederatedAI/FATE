@@ -13,10 +13,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import atexit
 from urllib import parse
 
 from kazoo.client import KazooClient
 from kazoo.security import make_digest_acl
+from kazoo.exceptions import NodeExistsError
 
 from fate_arch.common import conf_utils
 from fate_arch.common.conf_utils import get_base_config
@@ -65,17 +67,34 @@ class ServiceUtils(object):
             raise Exception('loading servings node  failed from zookeeper: {}'.format(e))
 
     @classmethod
-    def register(cls):
-        if get_base_config("use_registry", False):
-            zk = ServiceUtils.get_zk()
-            zk.start()
-            model_transfer_url = 'http://{}:{}{}'.format(IP, HTTP_PORT, FATE_FLOW_MODEL_TRANSFER_ENDPOINT)
-            fate_flow_model_transfer_service = '{}/{}'.format(FATE_SERVICES_REGISTERED_PATH.get(FATEFLOW_SERVICE_NAME, ""), parse.quote(model_transfer_url, safe=' '))
-            try:
-                zk.create(fate_flow_model_transfer_service, makepath=True, ephemeral=True)
-                stat_logger.info("register path {} to {}".format(fate_flow_model_transfer_service, ";".join(get_base_config("zookeeper", {}).get("hosts"))))
-            except Exception as e:
-                stat_logger.exception(e)
+    def register(cls, party_model_id=None, model_version=None):
+        if not get_base_config('use_registry', False):
+            return
+
+        zk = ServiceUtils.get_zk()
+        zk.start()
+        atexit.register(zk.stop)
+
+        model_transfer_url = 'http://{}:{}{}'.format(IP, HTTP_PORT, FATE_FLOW_MODEL_TRANSFER_ENDPOINT)
+        if party_model_id is not None and model_version is not None:
+            model_transfer_url += '/{}/{}'.format(party_model_id.replace('#', '_'), model_version)
+        fate_flow_model_transfer_service = '{}/{}'.format(FATE_SERVICES_REGISTERED_PATH.get(FATEFLOW_SERVICE_NAME, ""), parse.quote(model_transfer_url, safe=' '))
+
+        try:
+            zk.create(fate_flow_model_transfer_service, makepath=True, ephemeral=True)
+            stat_logger.info("register path {} to {}".format(fate_flow_model_transfer_service, ";".join(get_base_config("zookeeper", {}).get("hosts"))))
+        except NodeExistsError:
+            pass
+        except Exception as e:
+            stat_logger.exception(e)
+
+    @classmethod
+    def register_models(cls, models):
+        if not get_base_config('use_registry', False):
+            return
+
+        for model in models:
+            cls.register(model.f_party_model_id, model.f_model_version)
 
 
 def nodes_unquote(nodes):
