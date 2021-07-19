@@ -15,6 +15,7 @@
 #
 
 import math
+import operator
 import typing
 
 from fate_arch.common import EngineType
@@ -24,6 +25,7 @@ from fate_arch.common.log import schedule_logger
 from fate_arch.computing import ComputingEngine
 from fate_flow.db.db_models import DB, EngineRegistry, Job
 from fate_flow.entity.types import ResourceOperation, RunParameters
+from fate_flow.operation.job_saver import JobSaver
 from fate_flow.settings import stat_logger, STANDALONE_BACKEND_VIRTUAL_CORES_PER_NODE, SUPPORT_BACKENDS_ENTRANCE, \
     MAX_CORES_PERCENT_PER_JOB, DEFAULT_TASK_CORES, IGNORE_RESOURCE_ROLES, SUPPORT_IGNORE_RESOURCE_ENGINES, TOTAL_CORES_OVERWEIGHT_PERCENT, TOTAL_MEMORY_OVERWEIGHT_PERCENT
 from fate_flow.utils import job_utils
@@ -111,6 +113,29 @@ class ResourceManager(object):
     def return_job_resource(cls, job_id, role, party_id):
         return cls.resource_for_job(job_id=job_id, role=role, party_id=party_id,
                                     operation_type=ResourceOperation.RETURN)
+
+    @classmethod
+    def query_resource(cls, resource_in_use=True, engine_name=ComputingEngine.EGGROLL):
+        use_resource_jobs = JobSaver.query_job(resource_in_use=resource_in_use)
+        used = []
+        for job in use_resource_jobs:
+            used.append({"job_id": job.f_job_id, "role": job.f_role, "party_id": job.f_party_id,
+                         "core": job.f_cores, "memory": job.f_memory})
+        computing_engine_resource = cls.get_engine_registration_info(engine_type=EngineType.COMPUTING, engine_name=engine_name)
+        return used, computing_engine_resource.to_json() if computing_engine_resource else {}
+
+    @classmethod
+    def return_resource(cls, job_id):
+        jobs = JobSaver.query_job(job_id=job_id)
+        return_resource_job_list = []
+        for job in jobs:
+            job_info = {"job_id": job.f_job_id, "role": job.f_role, "party_id": job.f_party_id, "resource_in_use": job.f_resource_in_use}
+            if job.f_resource_in_use:
+                return_status = cls.return_job_resource(job.f_job_id, job.f_role, job.f_party_id)
+                job_info["resource_return_status"] = return_status
+            return_resource_job_list.append(job_info)
+        return return_resource_job_list
+
 
     @classmethod
     @DB.connection_context()

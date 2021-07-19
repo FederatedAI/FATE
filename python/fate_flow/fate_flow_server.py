@@ -31,6 +31,7 @@ from fate_flow.apps.job_app import manager as job_app_manager
 from fate_flow.apps.model_app import manager as model_app_manager
 from fate_flow.apps.pipeline_app import manager as pipeline_app_manager
 from fate_flow.apps.table_app import manager as table_app_manager
+from fate_flow.apps.resource_app import manager as resource_app
 from fate_flow.apps.tracking_app import manager as tracking_app_manager
 from fate_flow.apps.permission_app import manager as permission_app_manager
 from fate_flow.apps.version_app import manager as version_app_manager
@@ -82,6 +83,7 @@ if __name__ == '__main__':
             '/{}/version'.format(API_VERSION): version_app_manager,
             '/{}/party'.format(API_VERSION): party_app_manager,
             '/{}/initiator'.format(API_VERSION): initiator_app_manager,
+            '/{}/resource'.format(API_VERSION): resource_app,
             '/{}/tracker'.format(API_VERSION): tracker_app_manager,
             '/{}/forward'.format(API_VERSION): proxy_app_manager,
             '/{}/info'.format(API_VERSION): info_app_manager,
