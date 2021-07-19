@@ -760,16 +760,6 @@ def homo_deploy():
     return get_json_result(retcode=retcode, retmsg=retmsg, data=res_data)
 
 
-def adapter_servings_config(request_data):
-    servings_conf = ServiceUtils.get("servings", {})
-    if isinstance(servings_conf, dict):
-        request_data["servings"] = servings_conf.get('hosts', [])
-    elif isinstance(servings_conf, list):
-        request_data["servings"] = servings_conf
-    else:
-        raise Exception('Please check the servings config')
-
-
 class DatetimeEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, datetime):

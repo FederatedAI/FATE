@@ -120,7 +120,7 @@ class TestCheckpointManager(unittest.TestCase):
     def test_directory(self):
         self.assertEqual(self.checkpoint_manager.directory,
                          Path(self.tmpdir.name) / 'model_local_cache' /
-                         'model_id' / 'model_version' / 'checkpoint' / 'pipeline')
+                         'role#1000#model_id' / 'model_version' / 'checkpoint' / 'pipeline')
 
     def test_load_checkpoints_from_disk(self):
         for x in range(1, 51):
