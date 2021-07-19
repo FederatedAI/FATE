@@ -98,7 +98,7 @@ class DhIntersectionHost(DhIntersect):
 
     def get_intersect_key(self):
         cipher_core = self.commutative_cipher.cipher_core
-        mod_base = str(cipher_core.mode_base)
+        mod_base = str(cipher_core.mod_base)
         exponent = str(cipher_core.exponent)
         ph_key = PHKey(mod_base={self.guest_party_id: mod_base},
                        exponent={self.guest_party_id: exponent})
@@ -136,6 +136,7 @@ class DhIntersectionHost(DhIntersect):
                                                                       role=consts.GUEST,
                                                                       idx=0)
         LOGGER.info("sent id 1st ciphertext list to guest")
+        return self.id_list_local_first
 
     def get_intersect_doubly_encrypted_id_from_cache(self, data_instances, cache):
         id_list_remote_first = self.transfer_variable.id_ciphertext_list_exchange_g2h.get(idx=0)
@@ -146,4 +147,5 @@ class DhIntersectionHost(DhIntersect):
                                                  self.commutative_cipher,
                                                  reserve_original_key=True)  # (EEg, Eg)
         LOGGER.info("encrypted guest id for the 2nd time")
+        self.id_list_local_first = cache[0]
         self._sync_doubly_encrypted_id_list(id_list_remote_second)

@@ -146,7 +146,7 @@ class DhIntersectionGuest(DhIntersect):
         mod_base, exponent = {}, {}
         for i, party_id in enumerate(self.host_party_id_list):
             cipher_core = self.commutative_cipher[i].cipher_core
-            mod_base[party_id] = str(cipher_core.mode_base)
+            mod_base[party_id] = str(cipher_core.mod_base)
             exponent[party_id] = str(cipher_core.exponent)
 
         ph_key = PHKey(mod_base=mod_base, exponent=exponent)
@@ -193,12 +193,20 @@ class DhIntersectionGuest(DhIntersect):
         return self.id_list_remote_second
 
     def get_intersect_doubly_encrypted_id_from_cache(self, data_instances, cache):
+        self.host_count = len(self.commutative_cipher)
         self.id_list_local_first = [self._encrypt_id(data_instances,
                                                      cipher,
                                                      reserve_original_key=True,
                                                      hash_operator=self.hash_operator,
                                                      salt=self.salt) for cipher in self.commutative_cipher]
         LOGGER.info("encrypted guest id for the 1st time")
+
+        for i, id in enumerate(self.id_list_local_first):
+            id_only = id.map(lambda k, v: (k, -1))
+            self.transfer_variable.id_ciphertext_list_exchange_g2h.remote(id_only,
+                                                                          role=consts.HOST,
+                                                                          idx=i)
+            LOGGER.info(f"sent id 1st ciphertext list to {i} th host")
 
         # receive doubly encrypted ID list from all host:
         self.id_list_local_second = self._sync_doubly_encrypted_id_list()  # get (EEg, Eg)
@@ -208,5 +216,6 @@ class DhIntersectionGuest(DhIntersect):
                                                                       self.id_list_local_second[i])
                                            for i in range(self.host_count)]  # (EEi, -1)
         LOGGER.info("encrypted intersection ids found")
+        self.id_list_remote_second = cache
 
         return id_list_intersect_cipher_cipher

@@ -23,7 +23,11 @@ message IntersectModelMeta {
     string intersect_method = 1;
     IntersectPreProcessMeta intersect_preprocess_params = 2;
     RSAMeta rsa_params = 3;
-    PHMeta ph_params = 4;
+    DHMeta dh_params = 4;
+    bool sync_intersect_ids = 5;
+    bool only_output_key = 6;
+    bool allow_info_share = 7;
+    string join_method = 8;
 }
 
 message IntersectPreProcessMeta {
@@ -40,7 +44,7 @@ message RSAMeta {
     int64 random_bit = 4;
 }
 
-message PHMeta {
+message DHMeta {
     string hash_method = 1;
     string salt = 2;
 }

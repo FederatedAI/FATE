@@ -243,14 +243,6 @@ class IntersectModelBase(ModelBase):
             result_data = self.intersection_obj.get_value_from_data(self.intersect_ids, data)
         return result_data
 
-    """
-    def save_data(self):
-        if self.intersect_ids is not None:
-            LOGGER.info("intersect_ids count:{}".format(self.intersect_ids.count()))
-            LOGGER.info("intersect_ids header schema:{}".format(self.intersect_ids.schema))
-        return self.intersect_ids
-    """
-
     def check_consistency(self):
         pass
 
@@ -258,12 +250,17 @@ class IntersectModelBase(ModelBase):
         return self.intersection_obj.get_model()
 
     def load_intersect_meta(self, meta_obj):
+        self.model_param.intersect_method = meta_obj.intersect_method
+        self.model_param.join_method = meta_obj.join_method
+        self.model_param.sync_intersect_ids = meta_obj.sync_intersect_ids
+        self.model_param.only_output_key = meta_obj.only_output_key
+        self.model_param.allow_info_share = meta_obj.allow_info_share
         if self.model_param.intersect_method == consts.RSA:
             rsa_params = meta_obj.rsa_params
             self.model_param.rsa_params.hash_method = rsa_params.hash_method
             self.model_param.rsa_params.final_hash_method = rsa_params.final_hash_method
             self.model_param.rsa_params.salt = rsa_params.salt
-            self.model_param.rsa_params.random_bit = rsa_params.random_bit
+            self.model_param.rsa_params.random_bit = int(rsa_params.random_bit)
         elif self.model_param.intersect_method == consts.DH:
             dh_params = meta_obj.dh_params
             self.model_param.dh_params.hash_method = dh_params.hash_method
@@ -271,8 +268,6 @@ class IntersectModelBase(ModelBase):
 
     def load_model(self, model_dict):
         model_dict = list(model_dict.get('model').values())[0]
-        intersect_method = model_dict[self.model_meta_name].intersect_method
-        self.model_param.intersect_method = intersect_method
         self.load_intersect_meta(model_dict[self.model_meta_name])
         self.init_intersect_method()
         self.intersection_obj.load_model(model_dict)
@@ -294,7 +289,7 @@ class IntersectModelBase(ModelBase):
         return data
 
     def transform(self, data_inst):
-        data, cache = list(data_inst.values())[0], list(data_inst.values())[1]
+        data, cache = list(data_inst.values())[0], [list(data_inst.values())[1]]
         # verify cache id
         if data_overview.check_with_inst_id(data) or self.model_param.repeated_id_process:
             self.use_match_id_process = True
@@ -322,7 +317,7 @@ class IntersectModelBase(ModelBase):
 
         if self.role == consts.HOST:
             cache_id = self.intersection_obj.cache_id[self.guest_party_id]
-            if cache_id != cache.schema.get("cache_id"):
+            if cache_id != cache[0].schema.get("cache_id"):
                 raise ValueError(f"cache_id of model and input cache table do not match. Please check!")
             self.transfer_variable.cache_id.remote(cache_id, role=consts.GUEST, idx=0)
             guest_cache_id = self.transfer_variable.cache_id.get(role=consts.GUEST, idx=0)
@@ -331,8 +326,8 @@ class IntersectModelBase(ModelBase):
         elif self.role == consts.GUEST:
             for i, party_id in enumerate(self.host_party_id_list):
                 cache_id = self.intersection_obj.cache_id[party_id]
-                 #@todo: need to deal with multi host case
-                if cache.schema.get("cache_id") != cache_id:
+                 #@todo: need to deal with multi-host case where partyid sequence diff from data input order in dsl
+                if cache[i].schema.get("cache_id") != cache_id:
                     raise ValueError(f"cache_id of model and input cache table do not match. Please check!")
                 self.transfer_variable.cache_id.remote(cache_id,
                                                        role=consts.HOST,

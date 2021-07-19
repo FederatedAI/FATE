@@ -385,7 +385,7 @@ class RsaIntersectionGuest(RsaIntersect):
         sid_host_sign_guest_ids_list = [g.map(lambda k, v: (v[1], v[0])) for g in host_sign_guest_ids_list]
 
         # intersect table(hash(guest_ids_process/r), sid)
-        host_prvkey_ids_list = [cache]
+        host_prvkey_ids_list = cache
         encrypt_intersect_ids_list = [v.join(host_prvkey_ids_list[i], lambda sid, h: sid) for i, v in
                                       enumerate(sid_host_sign_guest_ids_list)]
 

@@ -130,15 +130,6 @@ class RsaIntersectionHost(RsaIntersect):
         self.transfer_variable.host_intersect_ids.remote(remote_intersect_even_ids, role=consts.GUEST, idx=0)
         LOGGER.info(f"Remote host intersect ids to Guest")
 
-        """
-        if self.cardinality_only:
-            cardinality = None
-            if self.sync_cardinality:
-                cardinality = self.transfer_variable.cardinality.get(cardinality, role=consts.GUEST, idx=0)
-                LOGGER.info(f"Got intersect cardinality from guest.")
-            return cardinality
-        """
-
         # recv intersect ids
         intersect_ids = None
         if self.sync_intersect_ids:
@@ -322,6 +313,7 @@ class RsaIntersectionHost(RsaIntersect):
 
     def cache_unified_calculation_process(self, data_instances, cache):
         LOGGER.info("RSA intersect using cache.")
+        cache = cache[0]
 
         # Recv guest ids
         guest_pubkey_ids = self.transfer_variable.guest_pubkey_ids.get(idx=0)

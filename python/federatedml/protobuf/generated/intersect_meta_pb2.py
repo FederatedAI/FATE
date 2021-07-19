@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='com.webank.ai.fate.common.mlmodel.buffer',
   syntax='proto3',
   serialized_options=_b('B\022IntersectMetaProto'),
-  serialized_pb=_b('\n\x14intersect-meta.proto\x12(com.webank.ai.fate.common.mlmodel.buffer\"\xa2\x02\n\x12IntersectModelMeta\x12\x18\n\x10intersect_method\x18\x01 \x01(\t\x12\x66\n\x1bintersect_preprocess_params\x18\x02 \x01(\x0b\x32\x41.com.webank.ai.fate.common.mlmodel.buffer.IntersectPreProcessMeta\x12\x45\n\nrsa_params\x18\x03 \x01(\x0b\x32\x31.com.webank.ai.fate.common.mlmodel.buffer.RSAMeta\x12\x43\n\tph_params\x18\x04 \x01(\x0b\x32\x30.com.webank.ai.fate.common.mlmodel.buffer.PHMeta\"y\n\x17IntersectPreProcessMeta\x12\x1b\n\x13\x66\x61lse_positive_rate\x18\x01 \x01(\x01\x12\x16\n\x0e\x65ncrypt_method\x18\x02 \x01(\t\x12\x13\n\x0bhash_method\x18\x03 \x01(\t\x12\x14\n\x0crandom_state\x18\x04 \x01(\x03\"[\n\x07RSAMeta\x12\x13\n\x0bhash_method\x18\x01 \x01(\t\x12\x19\n\x11\x66inal_hash_method\x18\x02 \x01(\t\x12\x0c\n\x04salt\x18\x03 \x01(\t\x12\x12\n\nrandom_bit\x18\x04 \x01(\x03\"+\n\x06PHMeta\x12\x13\n\x0bhash_method\x18\x01 \x01(\t\x12\x0c\n\x04salt\x18\x02 \x01(\tB\x14\x42\x12IntersectMetaProtob\x06proto3')
+  serialized_pb=_b('\n\x14intersect-meta.proto\x12(com.webank.ai.fate.common.mlmodel.buffer\"\x86\x03\n\x12IntersectModelMeta\x12\x18\n\x10intersect_method\x18\x01 \x01(\t\x12\x66\n\x1bintersect_preprocess_params\x18\x02 \x01(\x0b\x32\x41.com.webank.ai.fate.common.mlmodel.buffer.IntersectPreProcessMeta\x12\x45\n\nrsa_params\x18\x03 \x01(\x0b\x32\x31.com.webank.ai.fate.common.mlmodel.buffer.RSAMeta\x12\x43\n\tdh_params\x18\x04 \x01(\x0b\x32\x30.com.webank.ai.fate.common.mlmodel.buffer.DHMeta\x12\x1a\n\x12sync_intersect_ids\x18\x05 \x01(\x08\x12\x17\n\x0fonly_output_key\x18\x06 \x01(\x08\x12\x18\n\x10\x61llow_info_share\x18\x07 \x01(\x08\x12\x13\n\x0bjoin_method\x18\x08 \x01(\t\"y\n\x17IntersectPreProcessMeta\x12\x1b\n\x13\x66\x61lse_positive_rate\x18\x01 \x01(\x01\x12\x16\n\x0e\x65ncrypt_method\x18\x02 \x01(\t\x12\x13\n\x0bhash_method\x18\x03 \x01(\t\x12\x14\n\x0crandom_state\x18\x04 \x01(\x03\"[\n\x07RSAMeta\x12\x13\n\x0bhash_method\x18\x01 \x01(\t\x12\x19\n\x11\x66inal_hash_method\x18\x02 \x01(\t\x12\x0c\n\x04salt\x18\x03 \x01(\t\x12\x12\n\nrandom_bit\x18\x04 \x01(\x03\"+\n\x06\x44HMeta\x12\x13\n\x0bhash_method\x18\x01 \x01(\t\x12\x0c\n\x04salt\x18\x02 \x01(\tB\x14\x42\x12IntersectMetaProtob\x06proto3')
 )
 
 
@@ -55,9 +55,37 @@ _INTERSECTMODELMETA = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='ph_params', full_name='com.webank.ai.fate.common.mlmodel.buffer.IntersectModelMeta.ph_params', index=3,
+      name='dh_params', full_name='com.webank.ai.fate.common.mlmodel.buffer.IntersectModelMeta.dh_params', index=3,
       number=4, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='sync_intersect_ids', full_name='com.webank.ai.fate.common.mlmodel.buffer.IntersectModelMeta.sync_intersect_ids', index=4,
+      number=5, type=8, cpp_type=7, label=1,
+      has_default_value=False, default_value=False,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='only_output_key', full_name='com.webank.ai.fate.common.mlmodel.buffer.IntersectModelMeta.only_output_key', index=5,
+      number=6, type=8, cpp_type=7, label=1,
+      has_default_value=False, default_value=False,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='allow_info_share', full_name='com.webank.ai.fate.common.mlmodel.buffer.IntersectModelMeta.allow_info_share', index=6,
+      number=7, type=8, cpp_type=7, label=1,
+      has_default_value=False, default_value=False,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='join_method', full_name='com.webank.ai.fate.common.mlmodel.buffer.IntersectModelMeta.join_method', index=7,
+      number=8, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
@@ -74,7 +102,7 @@ _INTERSECTMODELMETA = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=67,
-  serialized_end=357,
+  serialized_end=457,
 )
 
 
@@ -125,8 +153,8 @@ _INTERSECTPREPROCESSMETA = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=359,
-  serialized_end=480,
+  serialized_start=459,
+  serialized_end=580,
 )
 
 
@@ -177,27 +205,27 @@ _RSAMETA = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=482,
-  serialized_end=573,
+  serialized_start=582,
+  serialized_end=673,
 )
 
 
-_PHMETA = _descriptor.Descriptor(
-  name='PHMeta',
-  full_name='com.webank.ai.fate.common.mlmodel.buffer.PHMeta',
+_DHMETA = _descriptor.Descriptor(
+  name='DHMeta',
+  full_name='com.webank.ai.fate.common.mlmodel.buffer.DHMeta',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='hash_method', full_name='com.webank.ai.fate.common.mlmodel.buffer.PHMeta.hash_method', index=0,
+      name='hash_method', full_name='com.webank.ai.fate.common.mlmodel.buffer.DHMeta.hash_method', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='salt', full_name='com.webank.ai.fate.common.mlmodel.buffer.PHMeta.salt', index=1,
+      name='salt', full_name='com.webank.ai.fate.common.mlmodel.buffer.DHMeta.salt', index=1,
       number=2, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -215,17 +243,17 @@ _PHMETA = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=575,
-  serialized_end=618,
+  serialized_start=675,
+  serialized_end=718,
 )
 
 _INTERSECTMODELMETA.fields_by_name['intersect_preprocess_params'].message_type = _INTERSECTPREPROCESSMETA
 _INTERSECTMODELMETA.fields_by_name['rsa_params'].message_type = _RSAMETA
-_INTERSECTMODELMETA.fields_by_name['ph_params'].message_type = _PHMETA
+_INTERSECTMODELMETA.fields_by_name['dh_params'].message_type = _DHMETA
 DESCRIPTOR.message_types_by_name['IntersectModelMeta'] = _INTERSECTMODELMETA
 DESCRIPTOR.message_types_by_name['IntersectPreProcessMeta'] = _INTERSECTPREPROCESSMETA
 DESCRIPTOR.message_types_by_name['RSAMeta'] = _RSAMETA
-DESCRIPTOR.message_types_by_name['PHMeta'] = _PHMETA
+DESCRIPTOR.message_types_by_name['DHMeta'] = _DHMETA
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 IntersectModelMeta = _reflection.GeneratedProtocolMessageType('IntersectModelMeta', (_message.Message,), {
@@ -249,12 +277,12 @@ RSAMeta = _reflection.GeneratedProtocolMessageType('RSAMeta', (_message.Message,
   })
 _sym_db.RegisterMessage(RSAMeta)
 
-PHMeta = _reflection.GeneratedProtocolMessageType('PHMeta', (_message.Message,), {
-  'DESCRIPTOR' : _PHMETA,
+DHMeta = _reflection.GeneratedProtocolMessageType('DHMeta', (_message.Message,), {
+  'DESCRIPTOR' : _DHMETA,
   '__module__' : 'intersect_meta_pb2'
-  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.common.mlmodel.buffer.PHMeta)
+  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.common.mlmodel.buffer.DHMeta)
   })
-_sym_db.RegisterMessage(PHMeta)
+_sym_db.RegisterMessage(DHMeta)
 
 
 DESCRIPTOR._options = None

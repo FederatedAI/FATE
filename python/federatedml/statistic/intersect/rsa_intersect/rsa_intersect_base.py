@@ -59,7 +59,8 @@ class RsaIntersect(Intersect):
     def get_intersect_method_meta(self):
         return RSAMeta(hash_method=self.rsa_params.hash_method,
                        final_hash_method=self.rsa_params.final_hash_method,
-                       salt=self.salt)
+                       salt=self.salt,
+                       random_bit=self.random_bit)
 
     @staticmethod
     def extend_pair(v1, v2):

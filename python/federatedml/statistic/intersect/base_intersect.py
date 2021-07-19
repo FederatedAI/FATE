@@ -103,14 +103,26 @@ class Intersect(object):
         if self.intersect_method == consts.RSA:
             meta_obj = IntersectModelMeta(intersect_method=self.intersect_method,
                                           intersect_preprocess_params=preprocess_params,
+                                          sync_intersect_ids=self.sync_intersect_ids,
+                                          only_output_key=self.only_output_key,
+                                          allow_info_share=self.model_param.allow_info_share,
+                                          join_method=self.model_param.join_method,
                                           rsa_params=self.get_intersect_method_meta())
         elif self.intersect_method == consts.DH:
             meta_obj = IntersectModelMeta(intersect_method=self.intersect_method,
                                           intersect_preprocess_params=preprocess_params,
-                                          ph_params=self.get_intersect_method_meta())
+                                          sync_intersect_ids=self.sync_intersect_ids,
+                                          only_output_key=self.only_output_key,
+                                          allow_info_share=self.model_param.allow_info_share,
+                                          join_method=self.model_param.join_method,
+                                          dh_params=self.get_intersect_method_meta())
         else:
             meta_obj = IntersectModelMeta(intersect_method=self.intersect_method,
-                                          intersect_preprocess_params=preprocess_params)
+                                          intersect_preprocess_params=preprocess_params,
+                                          sync_intersect_ids=self.sync_intersect_ids,
+                                          only_output_key=self.only_output_key,
+                                          allow_info_share=self.model_param.allow_info_share,
+                                          join_method=self.model_param.join_method)
         return meta_obj
 
     def _get_param(self):
@@ -169,13 +181,11 @@ class Intersect(object):
                                    salt=list(filter_obj.salt))
             self.filter.id = filter_obj.id
             self.filter.set_array(filter_array)
-        #@TODO: load intersect meta params: hash method etc
         if meta_obj.intersect_method == consts.RSA:
             self.load_intersect_key(param_obj.rsa_encrypt_key)
-            self.load_intersect_method_meta(meta_obj)
         elif meta_obj.intersect_method == consts.DH:
             self.load_intersect_key(param_obj.ph_encrypt_key)
-        self.cache_id = param_obj.cache_id
+        self.cache_id = dict(param_obj.cache_id)
 
     def run_intersect(self, data_instances):
         raise NotImplementedError("method should not be called here")
