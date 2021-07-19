@@ -17,7 +17,7 @@
 #
 import numpy as np
 
-from fate_arch import storage
+from fate_arch import storage, session
 from fate_arch.abc import StorageTableABC, StorageTableMetaABC, AddressABC
 from fate_arch.common import log, EngineType
 from fate_arch.computing import ComputingEngine
@@ -35,9 +35,11 @@ class Reader(ComponentBase):
     def __init__(self):
         super(Reader, self).__init__()
         self.parameters = None
+        self.job_parameters = None
 
     def run(self, component_parameters=None, args=None):
         self.parameters = component_parameters["ReaderParam"]
+        self.job_parameters = args["job_parameters"]
         output_storage_address = args["job_parameters"].engines_address[EngineType.STORAGE]
         table_key = [key for key in self.parameters.keys()][0]
         computing_engine = args["job_parameters"].computing_engine
@@ -165,6 +167,20 @@ class Reader(ComponentBase):
         else:
             raise RuntimeError(f"can not support computing engine {computing_engine}")
         return input_table_meta, output_table_address, output_table_engine
+
+    def save_table(self, src_table_meta, dest_table):
+        sess = session.Session(computing_type=self.job_parameters.computing_engine,
+                               federation_type=self.job_parameters.federation_engine)
+        computing_session_id = job_utils.generate_session_id(self.tracker.task_id, self.tracker.task_version,
+                                                             self.tracker.role, self.tracker.party_id)
+        sess.init_computing(computing_session_id=computing_session_id)
+        sess.as_default()
+        src_computing_table = session.get_latest_opened().computing.load(src_table_meta.get_address(),
+                                                                         schema=src_table_meta.get_schema(),
+                                                                         partitions=src_table_meta.get_partitions())
+        src_computing_table.save(dest_table.get_address(), src_table_meta.get_partitions(),
+                                 schema=src_table_meta.get_schema())
+        count = src_computing_table.count()
 
     def copy_table(self, src_table: StorageTableABC, dest_table: StorageTableABC):
         count = 0
