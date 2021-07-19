@@ -1,5 +1,5 @@
 #
-#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#  Copyright 2021 The FATE Authors. All Rights Reserved.
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 import gmpy2
 
-from federatedml.statistic.intersect import RawIntersect, RsaIntersect
+from federatedml.statistic.intersect.rsa_intersect.rsa_intersect_base import RsaIntersect
 from federatedml.util import consts, LOGGER
 
 
@@ -34,7 +34,8 @@ class RsaIntersectionHost(RsaIntersect):
         #              f"odd fraction: {sid_hash_odd.count()/data_instances.count()}")
 
         # generate rsa keys
-        self.e, self.d, self.n = self.generate_protocol_key()
+        # self.e, self.d, self.n = self.generate_protocol_key()
+        self.generate_protocol_key()
         LOGGER.info("Generate host protocol key!")
         public_key = {"e": self.e, "n": self.n}
 
@@ -71,7 +72,13 @@ class RsaIntersectionHost(RsaIntersect):
         LOGGER.info("Remote host_pubkey_ids to Guest")
 
         # encrypt & send prvkey-encrypted host odd ids to guest
-        prvkey_ids_process_pair = self.cal_prvkey_ids_process_pair(sid_hash_odd, self.d, self.n)
+        prvkey_ids_process_pair = self.cal_prvkey_ids_process_pair(sid_hash_odd,
+                                                                   self.d,
+                                                                   self.n,
+                                                                   self.p,
+                                                                   self.q,
+                                                                   self.cp,
+                                                                   self.cq)
         prvkey_ids_process = prvkey_ids_process_pair.mapValues(lambda v: 1)
 
         self.transfer_variable.host_prvkey_ids.remote(prvkey_ids_process,
@@ -82,7 +89,13 @@ class RsaIntersectionHost(RsaIntersect):
         # get & sign guest pubkey-encrypted odd ids
         guest_pubkey_ids = self.transfer_variable.guest_pubkey_ids.get(idx=0)
         LOGGER.info(f"Get guest_pubkey_ids from guest")
-        host_sign_guest_ids = guest_pubkey_ids.map(lambda k, v: (k, self.sign_id(k, self.d, self.n)))
+        host_sign_guest_ids = guest_pubkey_ids.map(lambda k, v: (k, self.sign_id(k,
+                                                                                 self.d,
+                                                                                 self.n,
+                                                                                 self.p,
+                                                                                 self.q,
+                                                                                 self.cp,
+                                                                                 self.cq)))
         LOGGER.debug(f"host sign guest_pubkey_ids")
         # send signed guest odd ids
         self.transfer_variable.host_sign_guest_ids.remote(host_sign_guest_ids,
@@ -115,6 +128,15 @@ class RsaIntersectionHost(RsaIntersect):
         self.transfer_variable.host_intersect_ids.remote(remote_intersect_even_ids, role=consts.GUEST, idx=0)
         LOGGER.info(f"Remote host intersect ids to Guest")
 
+        """
+        if self.cardinality_only:
+            cardinality = None
+            if self.sync_cardinality:
+                cardinality = self.transfer_variable.cardinality.get(cardinality, role=consts.GUEST, idx=0)
+                LOGGER.info(f"Got intersect cardinality from guest.")
+            return cardinality
+        """
+
         # recv intersect ids
         intersect_ids = None
         if self.sync_intersect_ids:
@@ -128,7 +150,8 @@ class RsaIntersectionHost(RsaIntersect):
     def unified_calculation_process(self, data_instances):
         LOGGER.info("RSA intersect using unified calculation.")
         # generate rsa keys
-        self.e, self.d, self.n = self.generate_protocol_key()
+        # self.e, self.d, self.n = self.generate_protocol_key()
+        self.generate_protocol_key()
         LOGGER.info("Generate protocol key!")
         public_key = {"e": self.e, "n": self.n}
 
@@ -141,6 +164,10 @@ class RsaIntersectionHost(RsaIntersect):
         prvkey_ids_process_pair = self.cal_prvkey_ids_process_pair(data_instances,
                                                                    self.d,
                                                                    self.n,
+                                                                   self.p,
+                                                                   self.q,
+                                                                   self.cp,
+                                                                   self.cq,
                                                                    self.first_hash_operator)
 
         prvkey_ids_process = prvkey_ids_process_pair.mapValues(lambda v: 1)
@@ -154,11 +181,26 @@ class RsaIntersectionHost(RsaIntersect):
         LOGGER.info("Get guest_pubkey_ids from guest")
 
         # Process(signs) guest ids and return to guest
-        host_sign_guest_ids = guest_pubkey_ids.map(lambda k, v: (k, self.sign_id(k, self.d, self.n)))
+        host_sign_guest_ids = guest_pubkey_ids.map(lambda k, v: (k, self.sign_id(k,
+                                                                                 self.d,
+                                                                                 self.n,
+                                                                                 self.p,
+                                                                                 self.q,
+                                                                                 self.cp,
+                                                                                 self.cq)))
         self.transfer_variable.host_sign_guest_ids.remote(host_sign_guest_ids,
                                                           role=consts.GUEST,
                                                           idx=0)
         LOGGER.info("Remote host_sign_guest_ids_process to Guest.")
+
+        """
+        if self.cardinality_only:
+            cardinality = None
+            if self.sync_cardinality:
+                cardinality = self.transfer_variable.cardinality.get(idx=0)
+                LOGGER.info(f"Got intersect cardinality from guest.")
+            return cardinality
+        """
 
         # recv intersect ids
         intersect_ids = None
@@ -170,20 +212,56 @@ class RsaIntersectionHost(RsaIntersect):
 
         return intersect_ids
 
+    def run_cardinality(self, data_instances):
+        # generate rsa keys
+        self.generate_protocol_key()
+        LOGGER.info("Generate protocol key!")
+        public_key = {"e": self.e, "n": self.n}
 
-class RawIntersectionHost(RawIntersect):
-    def __init__(self):
-        super().__init__()
-        self.role = consts.HOST
+        # sends public key e & n to guest
+        self.transfer_variable.host_pubkey.remote(public_key,
+                                                  role=consts.GUEST,
+                                                  idx=0)
+        LOGGER.info("Remote public key to Guest.")
+        # hash host ids
+        prvkey_ids_process_pair = self.cal_prvkey_ids_process_pair(data_instances,
+                                                                   self.d,
+                                                                   self.n,
+                                                                   self.p,
+                                                                   self.q,
+                                                                   self.cp,
+                                                                   self.cq,
+                                                                   self.first_hash_operator)
 
-    def run_intersect(self, data_instances):
-        LOGGER.info("Start raw intersection")
+        filter = self.construct_filter(prvkey_ids_process_pair,
+                                       false_positive_rate=self.intersect_preprocess_params.false_positive_rate,
+                                       hash_method=self.intersect_preprocess_params.hash_method,
+                                       random_state=self.intersect_preprocess_params.random_state)
+        self.filter = filter
+        self.transfer_variable.host_filter.remote(filter,
+                                                  role=consts.GUEST,
+                                                  idx=0)
+        LOGGER.info("Remote host_filter to Guest.")
 
-        if self.join_role == consts.GUEST:
-            intersect_ids = self.intersect_send_id(data_instances)
-        elif self.join_role == consts.HOST:
-            intersect_ids = self.intersect_join_id(data_instances)
-        else:
-            raise ValueError("Unknown intersect join role, please check job configuration")
+        # Recv guest ids
+        guest_pubkey_ids = self.transfer_variable.guest_pubkey_ids.get(idx=0)
+        LOGGER.info("Get guest_pubkey_ids from guest")
 
-        return intersect_ids
+        # Process(signs) guest ids and return to guest
+        host_sign_guest_ids = guest_pubkey_ids.map(lambda k, v: (k, self.sign_id(k,
+                                                                                 self.d,
+                                                                                 self.n,
+                                                                                 self.p,
+                                                                                 self.q,
+                                                                                 self.cp,
+                                                                                 self.cq)))
+        self.transfer_variable.host_sign_guest_ids.remote(host_sign_guest_ids,
+                                                          role=consts.GUEST,
+                                                          idx=0)
+        LOGGER.info("Remote host_sign_guest_ids_process to Guest.")
+
+        if self.sync_cardinality:
+            self.intersect_num = self.transfer_variable.cardinality.get(idx=0)
+            LOGGER.info("Got intersect cardinality from guest.")
+
+        return data_instances

@@ -60,6 +60,9 @@
         },
         "repeated_id": {
             "script": "./pipeline-intersect-repeated-id.py"
+        },
+        "rsa_intersect_ca": {
+            "script": "./pipeline-intersect-rsa-ca.py"
         }
     }
 }

@@ -1,5 +1,5 @@
 #
-#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#  Copyright 2021 The FATE Authors. All Rights Reserved.
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -14,13 +14,15 @@
 #  limitations under the License.
 #
 
-from federatedml.statistic.intersect.intersect import Intersect
-from federatedml.statistic.intersect.intersect import RawIntersect
-from federatedml.statistic.intersect.intersect import RsaIntersect
-from federatedml.statistic.intersect.intersect_guest import RsaIntersectionGuest
-from federatedml.statistic.intersect.intersect_host import RsaIntersectionHost
-from federatedml.statistic.intersect.intersect_guest import RawIntersectionGuest
-from federatedml.statistic.intersect.intersect_host import RawIntersectionHost
+from federatedml.statistic.intersect.base_intersect import Intersect
+from federatedml.statistic.intersect.raw_intersect.raw_intersect_base import RawIntersect
+from federatedml.statistic.intersect.raw_intersect.raw_intersect_guest import RawIntersectionGuest
+from federatedml.statistic.intersect.raw_intersect.raw_intersect_host import RawIntersectionHost
+
+from federatedml.statistic.intersect.rsa_intersect.rsa_intersect_base import RsaIntersect
+from federatedml.statistic.intersect.rsa_intersect.rsa_intersect_guest import RsaIntersectionGuest
+from federatedml.statistic.intersect.rsa_intersect.rsa_intersect_host import RsaIntersectionHost
+
 
 __all__ = ['Intersect',
            'RawIntersect',

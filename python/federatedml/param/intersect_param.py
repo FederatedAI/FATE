@@ -21,6 +21,8 @@ import copy
 from federatedml.param.base_param import BaseParam
 from federatedml.util import consts, LOGGER
 
+DEFAULT_RANDOM_BIT = 128
+
 
 class EncodeParam(BaseParam):
     """
@@ -30,7 +32,7 @@ class EncodeParam(BaseParam):
     ----------
     salt: the src data string will be str = str + salt, default by empty string
 
-    encode_method: str, the hash method of src data string, it support md5, sha1, sha224, sha256, sha384, sha512, sm3, default by None
+    encode_method: str, the hash method of src data string, support md5, sha1, sha224, sha256, sha384, sha512, sm3, default by None
 
     base64: bool, if True, the result of hash will be changed to base64, default by False
     """
@@ -73,9 +75,9 @@ class RSAParam(BaseParam):
     ----------
     salt: the src data string will be str = str + salt, default ''
 
-    hash_method: str, the hash method of src data string, it support sha256, sha384, sha512, sm3, default sha256
+    hash_method: str, the hash method of src data string, support sha256, sha384, sha512, sm3, default sha256
 
-    final_hash_method: str, the hash method of result data string, it support md5, sha1, sha224, sha256, sha384, sha512, sm3, default sha256
+    final_hash_method: str, the hash method of result data string, support md5, sha1, sha224, sha256, sha384, sha512, sm3, default sha256
 
     split_calculation: bool, if True, Host & Guest split operations for faster performance, recommended on large data set
 
@@ -84,17 +86,21 @@ class RSAParam(BaseParam):
 
     key_length: positive int, bit count of rsa key, default 1024
 
+    random_bit: positive int, it will define the size of blinding factor in rsa algorithm, default 128
+
     """
 
     def __init__(self, salt='', hash_method='sha256',  final_hash_method='sha256',
-                 split_calculation=False, random_base_fraction=None, key_length=1024):
+                 split_calculation=False, random_base_fraction=None, key_length=consts.DEFAULT_KEY_LENGTH,
+                 random_bit=DEFAULT_RANDOM_BIT):
         super().__init__()
         self.salt = salt
         self.hash_method = hash_method
         self.final_hash_method = final_hash_method
         self.split_calculation = split_calculation
         self.random_base_fraction = random_base_fraction
-        self.key_length=key_length
+        self.key_length = key_length
+        self.random_bit = random_bit
 
     def check(self):
         if type(self.salt).__name__ != "str":
@@ -125,6 +131,9 @@ class RSAParam(BaseParam):
         descr = "rsa param's key_length"
         self.check_positive_integer(self.key_length, descr)
 
+        descr = "rsa params' random_bit"
+        self.check_positive_integer(self.random_bit, descr)
+
         LOGGER.debug("Finish RSAParam parameter check!")
         return True
 
@@ -151,15 +160,68 @@ class IntersectCache(BaseParam):
                                     descr)
 
 
+class IntersectPreProcessParam(BaseParam):
+    """
+    Define the hash method for intersect pre-process method
+
+    Parameters
+    ----------
+    false_positive_rate: float, initial target false positive rate when creating Bloom Filter,
+        must be <= 0.1, default 1e-3 for target sparsity of 0.5
+
+    encrypt_method: str, encrypt method for encrypting id, supports rsa only, default rsa;
+        specify parameter setting with respective params when using either method.
+
+    random_state: seed for random salt generator when constructing hash functions,
+        salt is appended to hash result str, default 42
+
+    hash_method: str, the hash method of encrypted ids, support md5, sha1, sha 224, sha256, sha384, sha512, sm3,
+        default sha256
+
+    """
+
+    def __init__(self, false_positive_rate=1e-3, encrypt_method=consts.RSA, hash_method='sha256',
+                 random_state=42):
+        super().__init__()
+        self.false_positive_rate = false_positive_rate
+        self.encrypt_method = encrypt_method
+        self.random_state = random_state
+        self.hash_method = hash_method
+
+    def check(self):
+        descr = "intersect preporcess param's false_positive_rate "
+        self.check_decimal_float(self.false_positive_rate, descr)
+        self.check_positive_number(self.false_positive_rate, descr)
+        if self.false_positive_rate > 0.1:
+            raise ValueError(f"{descr} must be positive float no greater than 0.1")
+
+        descr = "intersect preprocess param's encrypt_method "
+        self.encrypt_method = self.check_and_change_lower(self.encrypt_method, [consts.RSA], descr)
+
+        descr = "intersect preporcess param's random_state "
+        self.check_nonnegative_number(self.random_state, descr)
+
+        descr = "intersect preporcess param's hash_method "
+        self.hash_method = self.check_and_change_lower(self.hash_method,
+                                                       [consts.MD5, consts.SHA1, consts.SHA224,
+                                                        consts.SHA256, consts.SHA384, consts.SHA512,
+                                                        consts.SM3],
+                                                       descr)
+
+        LOGGER.debug("Finish IntersectPreProcessParam parameter check!")
+        return True
+
+
 class IntersectParam(BaseParam):
     """
     Define the intersect method
 
     Parameters
     ----------
-    intersect_method: str, it supports 'rsa' and 'raw', default by 'raw'
+    intersect_method: str, it supports 'rsa', 'raw', default by 'raw'
 
-    random_bit: positive int, it will define the encrypt length of rsa algorithm. It effective only for intersect_method is rsa
+    random_bit: positive int, it will define the size of blinding factor in rsa algorithm, default 128
+        note that this param will be deprecated in future, please use random_bit in RSAParam instead.
 
     sync_intersect_ids: bool. In rsa, 'synchronize_intersect_ids' is True means guest or host will send intersect results to the others, and False will not.
                             while in raw, 'synchronize_intersect_ids' is True means the role of "join_role" will send intersect results and the others will get them.
@@ -181,16 +243,31 @@ class IntersectParam(BaseParam):
 
     repeated_id_owner: str, which role has the repeated ids
 
-    with_sample_id: bool, data with sample id or not, default False; set this param to True may lead to unexpected behavior
+    with_sample_id: bool, data with sample id or not, default False; in ver 1.7 and above, this param is ignored
+
+    join_method: str, choose 'inner_join' or 'left_join', if 'left_join', participants will all include repeated id owner's (imputed) ids in output, default 'inner_join'
+
+    new_join_id: bool, whether to generate new id for repeated_id_owners' ids, only effective when join_method is 'left_join', default False
+
+    cardinality_only: boolean, whether to output estimated intersection count(cardinality) only using pre-process;
+        if sync_cardinality is True, then sync cardinality count with host(s)
+
+    sync_cardinality: boolean, whether to sync cardinality with all participants, default False,
+        only effective when cardinality_only set to True
+
+    intersect_preprocess_params: IntersectPreProcessParam, used for preprocessing and cardinality_only mode
+
     """
 
-    def __init__(self, intersect_method: str = consts.RAW, random_bit=128, sync_intersect_ids=True,
+    def __init__(self, intersect_method: str = consts.RAW, random_bit=DEFAULT_RANDOM_BIT, sync_intersect_ids=True,
                  join_role=consts.GUEST,
                  with_encode=False, only_output_key=False, encode_params=EncodeParam(),
                  rsa_params=RSAParam(),
                  intersect_cache_param=IntersectCache(), repeated_id_process=False, repeated_id_owner=consts.GUEST,
-                 with_sample_id=False,
-                 allow_info_share: bool = False, info_owner=consts.GUEST):
+                 with_sample_id=False, join_method=consts.INNER_JOIN, new_join_id=False,
+                 allow_info_share: bool = False, info_owner=consts.GUEST,
+                 cardinality_only: bool = False, sync_cardinality: bool = False,
+                 intersect_preprocess_params=IntersectPreProcessParam()):
         super().__init__()
         self.intersect_method = intersect_method
         self.random_bit = random_bit
@@ -206,13 +283,18 @@ class IntersectParam(BaseParam):
         self.allow_info_share = allow_info_share
         self.info_owner = info_owner
         self.with_sample_id = with_sample_id
+        self.join_method = join_method
+        self.new_join_id = new_join_id
+        self.cardinality_only = cardinality_only
+        self.sync_cardinality = sync_cardinality
+        self.intersect_preprocess_params = intersect_preprocess_params
 
     def check(self):
         descr = "intersect param's "
 
         self.intersect_method = self.check_and_change_lower(self.intersect_method,
                                                             [consts.RSA, consts.RAW],
-                                                            descr)
+                                                            f"{descr}intersect_method")
 
         if type(self.random_bit).__name__ not in ["int"]:
             raise ValueError("intersect param's random_bit {} not supported, should be positive integer".format(
@@ -225,7 +307,7 @@ class IntersectParam(BaseParam):
 
         self.join_role = self.check_and_change_lower(self.join_role,
                                                      [consts.GUEST, consts.HOST],
-                                                     descr+"join_role")
+                                                     f"{descr}join_role")
 
         if type(self.with_encode).__name__ != "bool":
             raise ValueError(
@@ -244,7 +326,7 @@ class IntersectParam(BaseParam):
 
         self.repeated_id_owner = self.check_and_change_lower(self.repeated_id_owner,
                                                              [consts.GUEST],
-                                                             descr+"repeated_id_owner")
+                                                             f"{descr}repeated_id_owner")
 
         if type(self.allow_info_share).__name__ != "bool":
             raise ValueError(
@@ -253,12 +335,31 @@ class IntersectParam(BaseParam):
 
         self.info_owner = self.check_and_change_lower(self.info_owner,
                                                       [consts.GUEST, consts.HOST],
-                                                      descr+"info_owner")
+                                                      f"{descr}info_owner")
+
         self.check_boolean(self.with_sample_id, descr+"with_sample_id")
+        self.join_method = self.check_and_change_lower(self.join_method, [consts.INNER_JOIN, consts.LEFT_JOIN],
+                                                       f"{descr}join_method")
+        self.check_boolean(self.new_join_id, descr+"new_join_id")
+
         if self.with_sample_id:
-            LOGGER.warning(f"Using with_sample_id may lead to unexpected behavior.")
+            LOGGER.warning(f"with_sample_id is ignored.")
+
+        if self.join_method==consts.LEFT_JOIN:
+            if not self.sync_intersect_ids:
+                raise ValueError(f"Cannot perform left join without sync intersect ids or info share")
+            if not self.allow_info_share:
+                LOGGER.warning(f"when performing left_join, allow_info_share is always True.")
 
         self.encode_params.check()
         self.rsa_params.check()
+        self.check_boolean(self.cardinality_only, descr+"cardinality_only")
+        self.check_boolean(self.sync_cardinality, descr+"sync_cardinality")
+        self.intersect_preprocess_params.check()
+        if self.cardinality_only:
+            if self.intersect_method not in [consts.RSA]:
+                raise ValueError(f"cardinality-only mode only support rsa method.")
+            if self.intersect_method == consts.RSA and self.rsa_params.split_calculation:
+                raise ValueError(f"cardinality-only mode only supports unified calculation.")
         LOGGER.debug("Finish intersect parameter check!")
         return True

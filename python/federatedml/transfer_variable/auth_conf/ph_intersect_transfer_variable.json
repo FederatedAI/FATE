@@ -1,6 +1,6 @@
 {
-  "federatedml.transfer_variable.transfer_class.intersection_func_transfer_variable.IntersectionFuncTransferVariable": {
-    "id_map_from_guest": {
+  "federatedml.transfer_variable.transfer_class.ph_intersect_transfer_variable.PhIntersectTransferVariable": {
+    "commutative_cipher_public_knowledge": {
       "src": [
         "guest"
       ],
@@ -8,23 +8,7 @@
         "host"
       ]
     },
-    "id_map_from_host": {
-      "src": [
-        "host"
-      ],
-      "dst": [
-        "guest"
-      ]
-    },
-    "info_share_from_host": {
-      "src": [
-        "host"
-      ],
-      "dst": [
-        "guest"
-      ]
-    },
-    "info_share_from_guest": {
+    "id_ciphertext_list_exchange_g2h": {
       "src": [
         "guest"
       ],
@@ -32,7 +16,23 @@
         "host"
       ]
     },
-    "join_id_from_guest": {
+    "id_ciphertext_list_exchange_h2g": {
+      "src": [
+        "host"
+      ],
+      "dst": [
+        "guest"
+      ]
+    },
+    "doubly_encrypted_id_list": {
+      "src": [
+        "host"
+      ],
+      "dst": [
+        "guest"
+      ]
+    },
+    "intersect_ids": {
       "src": [
         "guest"
       ],
@@ -40,7 +40,15 @@
         "host"
       ]
     },
-    "join_id_from_host": {
+    "cardinality": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "host"
+      ]
+    },
+    "host_filter": {
       "src": [
         "host"
       ],
