@@ -188,3 +188,10 @@ class RsaIntersect(Intersect):
         # if not self.only_output_key:
         #    intersect_ids = self._get_value_from_data(intersect_ids, data_instances)
         return intersect_ids
+
+    def run_cache_intersect(self, data_instances, cache):
+        LOGGER.info("Start RSA Intersection with cache")
+        if self.split_calculation:
+            LOGGER.warning(f"split_calculation not applicable to cache-enabled RSA intersection.")
+        intersect_ids = self.cache_unified_calculation_process(data_instances, cache)
+        return intersect_ids

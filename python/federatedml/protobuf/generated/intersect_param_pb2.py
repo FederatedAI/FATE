@@ -20,11 +20,48 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='com.webank.ai.fate.common.mlmodel.buffer',
   syntax='proto3',
   serialized_options=_b('B\023IntersectParamProto'),
-  serialized_pb=_b('\n\x15intersect-param.proto\x12(com.webank.ai.fate.common.mlmodel.buffer\"\xf5\x01\n\x13IntersectModelParam\x12J\n\x10intersect_filter\x18\x01 \x01(\x0b\x32\x30.com.webank.ai.fate.common.mlmodel.buffer.Filter\x12I\n\x0frsa_encrypt_key\x18\x02 \x01(\x0b\x32\x30.com.webank.ai.fate.common.mlmodel.buffer.RSAKey\x12G\n\x0eph_encrypt_key\x18\x03 \x01(\x0b\x32/.com.webank.ai.fate.common.mlmodel.buffer.PHKey\"k\n\x06\x46ilter\x12\x11\n\tbit_count\x18\x01 \x01(\x03\x12\x14\n\x0c\x66ilter_array\x18\x02 \x03(\x04\x12\x11\n\tfilter_id\x18\x03 \x01(\t\x12\x0c\n\x04salt\x18\x04 \x03(\t\x12\x17\n\x0fhash_func_count\x18\x05 \x01(\x03\"\x80\x08\n\x06RSAKey\x12\x42\n\x01\x65\x18\x01 \x03(\x0b\x32\x37.com.webank.ai.fate.common.mlmodel.buffer.RSAKey.EEntry\x12\x42\n\x01\x64\x18\x02 \x03(\x0b\x32\x37.com.webank.ai.fate.common.mlmodel.buffer.RSAKey.DEntry\x12\x42\n\x01n\x18\x03 \x03(\x0b\x32\x37.com.webank.ai.fate.common.mlmodel.buffer.RSAKey.NEntry\x12\x42\n\x01p\x18\x04 \x03(\x0b\x32\x37.com.webank.ai.fate.common.mlmodel.buffer.RSAKey.PEntry\x12\x42\n\x01q\x18\x05 \x03(\x0b\x32\x37.com.webank.ai.fate.common.mlmodel.buffer.RSAKey.QEntry\x12\x44\n\x02\x63p\x18\x06 \x03(\x0b\x32\x38.com.webank.ai.fate.common.mlmodel.buffer.RSAKey.CpEntry\x12\x44\n\x02\x63q\x18\x07 \x03(\x0b\x32\x38.com.webank.ai.fate.common.mlmodel.buffer.RSAKey.CqEntry\x12I\n\x05rcv_e\x18\x08 \x03(\x0b\x32:.com.webank.ai.fate.common.mlmodel.buffer.RSAKey.RcvEEntry\x12I\n\x05rcv_n\x18\t \x03(\x0b\x32:.com.webank.ai.fate.common.mlmodel.buffer.RSAKey.RcvNEntry\x1a(\n\x06\x45\x45ntry\x12\x0b\n\x03key\x18\x01 \x01(\x03\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\x1a(\n\x06\x44\x45ntry\x12\x0b\n\x03key\x18\x01 \x01(\x03\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\x1a(\n\x06NEntry\x12\x0b\n\x03key\x18\x01 \x01(\x03\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\x1a(\n\x06PEntry\x12\x0b\n\x03key\x18\x01 \x01(\x03\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\x1a(\n\x06QEntry\x12\x0b\n\x03key\x18\x01 \x01(\x03\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\x1a)\n\x07\x43pEntry\x12\x0b\n\x03key\x18\x01 \x01(\x03\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\x1a)\n\x07\x43qEntry\x12\x0b\n\x03key\x18\x01 \x01(\x03\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\x1a+\n\tRcvEEntry\x12\x0b\n\x03key\x18\x01 \x01(\x03\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\x1a+\n\tRcvNEntry\x12\x0b\n\x03key\x18\x01 \x01(\x03\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"\x89\x02\n\x05PHKey\x12N\n\x08mod_base\x18\x01 \x03(\x0b\x32<.com.webank.ai.fate.common.mlmodel.buffer.PHKey.ModBaseEntry\x12O\n\x08\x65xponent\x18\x02 \x03(\x0b\x32=.com.webank.ai.fate.common.mlmodel.buffer.PHKey.ExponentEntry\x1a.\n\x0cModBaseEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x03:\x02\x38\x01\x1a/\n\rExponentEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x03:\x02\x38\x01\x42\x15\x42\x13IntersectParamProtob\x06proto3')
+  serialized_pb=_b('\n\x15intersect-param.proto\x12(com.webank.ai.fate.common.mlmodel.buffer\"\x83\x03\n\x13IntersectModelParam\x12J\n\x10intersect_filter\x18\x01 \x01(\x0b\x32\x30.com.webank.ai.fate.common.mlmodel.buffer.Filter\x12I\n\x0frsa_encrypt_key\x18\x02 \x01(\x0b\x32\x30.com.webank.ai.fate.common.mlmodel.buffer.RSAKey\x12G\n\x0eph_encrypt_key\x18\x03 \x01(\x0b\x32/.com.webank.ai.fate.common.mlmodel.buffer.PHKey\x12\\\n\x08\x63\x61\x63he_id\x18\x04 \x03(\x0b\x32J.com.webank.ai.fate.common.mlmodel.buffer.IntersectModelParam.CacheIdEntry\x1a.\n\x0c\x43\x61\x63heIdEntry\x12\x0b\n\x03key\x18\x01 \x01(\x03\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"k\n\x06\x46ilter\x12\x11\n\tbit_count\x18\x01 \x01(\x03\x12\x14\n\x0c\x66ilter_array\x18\x02 \x03(\x04\x12\x11\n\tfilter_id\x18\x03 \x01(\t\x12\x0c\n\x04salt\x18\x04 \x03(\t\x12\x17\n\x0fhash_func_count\x18\x05 \x01(\x03\"\x80\x08\n\x06RSAKey\x12\x42\n\x01\x65\x18\x01 \x03(\x0b\x32\x37.com.webank.ai.fate.common.mlmodel.buffer.RSAKey.EEntry\x12\x42\n\x01\x64\x18\x02 \x03(\x0b\x32\x37.com.webank.ai.fate.common.mlmodel.buffer.RSAKey.DEntry\x12\x42\n\x01n\x18\x03 \x03(\x0b\x32\x37.com.webank.ai.fate.common.mlmodel.buffer.RSAKey.NEntry\x12\x42\n\x01p\x18\x04 \x03(\x0b\x32\x37.com.webank.ai.fate.common.mlmodel.buffer.RSAKey.PEntry\x12\x42\n\x01q\x18\x05 \x03(\x0b\x32\x37.com.webank.ai.fate.common.mlmodel.buffer.RSAKey.QEntry\x12\x44\n\x02\x63p\x18\x06 \x03(\x0b\x32\x38.com.webank.ai.fate.common.mlmodel.buffer.RSAKey.CpEntry\x12\x44\n\x02\x63q\x18\x07 \x03(\x0b\x32\x38.com.webank.ai.fate.common.mlmodel.buffer.RSAKey.CqEntry\x12I\n\x05rcv_e\x18\x08 \x03(\x0b\x32:.com.webank.ai.fate.common.mlmodel.buffer.RSAKey.RcvEEntry\x12I\n\x05rcv_n\x18\t \x03(\x0b\x32:.com.webank.ai.fate.common.mlmodel.buffer.RSAKey.RcvNEntry\x1a(\n\x06\x45\x45ntry\x12\x0b\n\x03key\x18\x01 \x01(\x03\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\x1a(\n\x06\x44\x45ntry\x12\x0b\n\x03key\x18\x01 \x01(\x03\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\x1a(\n\x06NEntry\x12\x0b\n\x03key\x18\x01 \x01(\x03\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\x1a(\n\x06PEntry\x12\x0b\n\x03key\x18\x01 \x01(\x03\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\x1a(\n\x06QEntry\x12\x0b\n\x03key\x18\x01 \x01(\x03\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\x1a)\n\x07\x43pEntry\x12\x0b\n\x03key\x18\x01 \x01(\x03\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\x1a)\n\x07\x43qEntry\x12\x0b\n\x03key\x18\x01 \x01(\x03\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\x1a+\n\tRcvEEntry\x12\x0b\n\x03key\x18\x01 \x01(\x03\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\x1a+\n\tRcvNEntry\x12\x0b\n\x03key\x18\x01 \x01(\x03\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"\x89\x02\n\x05PHKey\x12N\n\x08mod_base\x18\x01 \x03(\x0b\x32<.com.webank.ai.fate.common.mlmodel.buffer.PHKey.ModBaseEntry\x12O\n\x08\x65xponent\x18\x02 \x03(\x0b\x32=.com.webank.ai.fate.common.mlmodel.buffer.PHKey.ExponentEntry\x1a.\n\x0cModBaseEntry\x12\x0b\n\x03key\x18\x01 \x01(\x03\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\x1a/\n\rExponentEntry\x12\x0b\n\x03key\x18\x01 \x01(\x03\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\x42\x15\x42\x13IntersectParamProtob\x06proto3')
 )
 
 
 
+
+_INTERSECTMODELPARAM_CACHEIDENTRY = _descriptor.Descriptor(
+  name='CacheIdEntry',
+  full_name='com.webank.ai.fate.common.mlmodel.buffer.IntersectModelParam.CacheIdEntry',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='key', full_name='com.webank.ai.fate.common.mlmodel.buffer.IntersectModelParam.CacheIdEntry.key', index=0,
+      number=1, type=3, cpp_type=2, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='value', full_name='com.webank.ai.fate.common.mlmodel.buffer.IntersectModelParam.CacheIdEntry.value', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=_b('8\001'),
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=409,
+  serialized_end=455,
+)
 
 _INTERSECTMODELPARAM = _descriptor.Descriptor(
   name='IntersectModelParam',
@@ -54,10 +91,17 @@ _INTERSECTMODELPARAM = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='cache_id', full_name='com.webank.ai.fate.common.mlmodel.buffer.IntersectModelParam.cache_id', index=3,
+      number=4, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
-  nested_types=[],
+  nested_types=[_INTERSECTMODELPARAM_CACHEIDENTRY, ],
   enum_types=[
   ],
   serialized_options=None,
@@ -67,7 +111,7 @@ _INTERSECTMODELPARAM = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=68,
-  serialized_end=313,
+  serialized_end=455,
 )
 
 
@@ -125,8 +169,8 @@ _FILTER = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=315,
-  serialized_end=422,
+  serialized_start=457,
+  serialized_end=564,
 )
 
 
@@ -163,8 +207,8 @@ _RSAKEY_EENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1065,
-  serialized_end=1105,
+  serialized_start=1207,
+  serialized_end=1247,
 )
 
 _RSAKEY_DENTRY = _descriptor.Descriptor(
@@ -200,8 +244,8 @@ _RSAKEY_DENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1107,
-  serialized_end=1147,
+  serialized_start=1249,
+  serialized_end=1289,
 )
 
 _RSAKEY_NENTRY = _descriptor.Descriptor(
@@ -237,8 +281,8 @@ _RSAKEY_NENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1149,
-  serialized_end=1189,
+  serialized_start=1291,
+  serialized_end=1331,
 )
 
 _RSAKEY_PENTRY = _descriptor.Descriptor(
@@ -274,8 +318,8 @@ _RSAKEY_PENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1191,
-  serialized_end=1231,
+  serialized_start=1333,
+  serialized_end=1373,
 )
 
 _RSAKEY_QENTRY = _descriptor.Descriptor(
@@ -311,8 +355,8 @@ _RSAKEY_QENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1233,
-  serialized_end=1273,
+  serialized_start=1375,
+  serialized_end=1415,
 )
 
 _RSAKEY_CPENTRY = _descriptor.Descriptor(
@@ -348,8 +392,8 @@ _RSAKEY_CPENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1275,
-  serialized_end=1316,
+  serialized_start=1417,
+  serialized_end=1458,
 )
 
 _RSAKEY_CQENTRY = _descriptor.Descriptor(
@@ -385,8 +429,8 @@ _RSAKEY_CQENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1318,
-  serialized_end=1359,
+  serialized_start=1460,
+  serialized_end=1501,
 )
 
 _RSAKEY_RCVEENTRY = _descriptor.Descriptor(
@@ -422,8 +466,8 @@ _RSAKEY_RCVEENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1361,
-  serialized_end=1404,
+  serialized_start=1503,
+  serialized_end=1546,
 )
 
 _RSAKEY_RCVNENTRY = _descriptor.Descriptor(
@@ -459,8 +503,8 @@ _RSAKEY_RCVNENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1406,
-  serialized_end=1449,
+  serialized_start=1548,
+  serialized_end=1591,
 )
 
 _RSAKEY = _descriptor.Descriptor(
@@ -545,8 +589,8 @@ _RSAKEY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=425,
-  serialized_end=1449,
+  serialized_start=567,
+  serialized_end=1591,
 )
 
 
@@ -559,15 +603,15 @@ _PHKEY_MODBASEENTRY = _descriptor.Descriptor(
   fields=[
     _descriptor.FieldDescriptor(
       name='key', full_name='com.webank.ai.fate.common.mlmodel.buffer.PHKey.ModBaseEntry.key', index=0,
-      number=1, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
+      number=1, type=3, cpp_type=2, label=1,
+      has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='value', full_name='com.webank.ai.fate.common.mlmodel.buffer.PHKey.ModBaseEntry.value', index=1,
-      number=2, type=3, cpp_type=2, label=1,
-      has_default_value=False, default_value=0,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
@@ -583,8 +627,8 @@ _PHKEY_MODBASEENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1622,
-  serialized_end=1668,
+  serialized_start=1764,
+  serialized_end=1810,
 )
 
 _PHKEY_EXPONENTENTRY = _descriptor.Descriptor(
@@ -596,15 +640,15 @@ _PHKEY_EXPONENTENTRY = _descriptor.Descriptor(
   fields=[
     _descriptor.FieldDescriptor(
       name='key', full_name='com.webank.ai.fate.common.mlmodel.buffer.PHKey.ExponentEntry.key', index=0,
-      number=1, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
+      number=1, type=3, cpp_type=2, label=1,
+      has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='value', full_name='com.webank.ai.fate.common.mlmodel.buffer.PHKey.ExponentEntry.value', index=1,
-      number=2, type=3, cpp_type=2, label=1,
-      has_default_value=False, default_value=0,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
@@ -620,8 +664,8 @@ _PHKEY_EXPONENTENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1670,
-  serialized_end=1717,
+  serialized_start=1812,
+  serialized_end=1859,
 )
 
 _PHKEY = _descriptor.Descriptor(
@@ -657,13 +701,15 @@ _PHKEY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1452,
-  serialized_end=1717,
+  serialized_start=1594,
+  serialized_end=1859,
 )
 
+_INTERSECTMODELPARAM_CACHEIDENTRY.containing_type = _INTERSECTMODELPARAM
 _INTERSECTMODELPARAM.fields_by_name['intersect_filter'].message_type = _FILTER
 _INTERSECTMODELPARAM.fields_by_name['rsa_encrypt_key'].message_type = _RSAKEY
 _INTERSECTMODELPARAM.fields_by_name['ph_encrypt_key'].message_type = _PHKEY
+_INTERSECTMODELPARAM.fields_by_name['cache_id'].message_type = _INTERSECTMODELPARAM_CACHEIDENTRY
 _RSAKEY_EENTRY.containing_type = _RSAKEY
 _RSAKEY_DENTRY.containing_type = _RSAKEY
 _RSAKEY_NENTRY.containing_type = _RSAKEY
@@ -693,11 +739,19 @@ DESCRIPTOR.message_types_by_name['PHKey'] = _PHKEY
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 IntersectModelParam = _reflection.GeneratedProtocolMessageType('IntersectModelParam', (_message.Message,), {
+
+  'CacheIdEntry' : _reflection.GeneratedProtocolMessageType('CacheIdEntry', (_message.Message,), {
+    'DESCRIPTOR' : _INTERSECTMODELPARAM_CACHEIDENTRY,
+    '__module__' : 'intersect_param_pb2'
+    # @@protoc_insertion_point(class_scope:com.webank.ai.fate.common.mlmodel.buffer.IntersectModelParam.CacheIdEntry)
+    })
+  ,
   'DESCRIPTOR' : _INTERSECTMODELPARAM,
   '__module__' : 'intersect_param_pb2'
   # @@protoc_insertion_point(class_scope:com.webank.ai.fate.common.mlmodel.buffer.IntersectModelParam)
   })
 _sym_db.RegisterMessage(IntersectModelParam)
+_sym_db.RegisterMessage(IntersectModelParam.CacheIdEntry)
 
 Filter = _reflection.GeneratedProtocolMessageType('Filter', (_message.Message,), {
   'DESCRIPTOR' : _FILTER,
@@ -810,6 +864,7 @@ _sym_db.RegisterMessage(PHKey.ExponentEntry)
 
 
 DESCRIPTOR._options = None
+_INTERSECTMODELPARAM_CACHEIDENTRY._options = None
 _RSAKEY_EENTRY._options = None
 _RSAKEY_DENTRY._options = None
 _RSAKEY_NENTRY._options = None

@@ -24,7 +24,7 @@ message IntersectModelParam {
     Filter intersect_filter = 1;
     RSAKey rsa_encrypt_key = 2;
     PHKey ph_encrypt_key = 3;
-    string uid = 4;
+    map <int64, string> cache_id = 4;
 }
 
 message Filter {

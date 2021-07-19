@@ -37,6 +37,7 @@ message RSAMeta {
     string hash_method = 1;
     string final_hash_method = 2;
     string salt = 3;
+    int64 random_bit = 4;
 }
 
 message PHMeta {

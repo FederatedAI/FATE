@@ -14,7 +14,9 @@
 #  limitations under the License.
 #
 
-# from federatedml.statistic.intersect.intersect_preprocess import BitArray
+from federatedml.protobuf.generated.intersect_param_pb2 import PHKey
+from federatedml.secureprotol.symmetric_encryption.cryptor_executor import CryptoExecutor
+from federatedml.secureprotol.symmetric_encryption.pohlig_hellman_encryption import PohligHellmanCipherKey
 from federatedml.statistic.intersect.dh_intersect.dh_intersect_base import DhIntersect
 from federatedml.util import consts, LOGGER
 
@@ -133,20 +135,78 @@ class DhIntersectionGuest(DhIntersect):
         intersect_ids = self.filter_intersect_ids(encrypt_intersect_ids, keep_encrypt_ids=True)
         LOGGER.info(f"intersection found")
 
-        """
-        if self.cardinality_only:
-            cardinality = intersect_ids.count()
-            if self.sync_cardinality:
-                self.transfer_variable.cardinality.remote(cardinality, role=consts.HOST, idx=-1)
-                LOGGER.info("Sent intersect cardinality to host.")
-            else:
-                LOGGER.info("Skip sync intersect cardinality with host(s)")
-            return cardinality
-        """
-
         if self.sync_intersect_ids:
             self.send_intersect_ids(intersect_ids)
         else:
             LOGGER.info("Skip sync intersect ids with Host(s).")
 
         return intersect_ids
+
+    def get_intersect_key(self):
+        mod_base, exponent = {}, {}
+        for i, party_id in enumerate(self.host_party_id_list):
+            cipher_core = self.commutative_cipher[i].cipher_core
+            mod_base[party_id] = str(cipher_core.mode_base)
+            exponent[party_id] = str(cipher_core.exponent)
+
+        ph_key = PHKey(mod_base=mod_base, exponent=exponent)
+        return ph_key
+
+    def load_intersect_key(self, intersect_key):
+        commutative_cipher = []
+        for host_party in self.host_party_id_list:
+            mod_base = int(intersect_key.mod_base[host_party])
+            exponent = int(intersect_key.exponent[host_party])
+            ph_key = PohligHellmanCipherKey(mod_base, exponent)
+            commutative_cipher.append(CryptoExecutor(ph_key))
+        self.commutative_cipher = commutative_cipher
+
+    def generate_cache(self, data_instances):
+        self._generate_commutative_cipher()
+        self._sync_commutative_cipher_public_knowledge()
+        self.host_count = len(self.commutative_cipher)
+
+        for cipher in self.commutative_cipher:
+            cipher.init()
+        LOGGER.info("commutative cipher key generated")
+
+        cache_id_list = self.cache_transfer_variable.get(idx=-1)
+        LOGGER.info(f"got cache_id from all host")
+
+        id_list_remote_first = self.transfer_variable.id_ciphertext_list_exchange_h2g.get(idx=-1)
+        LOGGER.info("Get id ciphertext list from all host")
+
+        # 2nd ID encrypt & receive doubly encrypted ID list: # (EEh, Eh)
+        id_list_remote_second = [self._encrypt_id(id_list_remote_first[i],
+                                                  self.commutative_cipher[i],
+                                                  reserve_original_key=True) for i in range(self.host_count)]
+        LOGGER.info("encrypted remote id for the 2nd time")
+
+        cache_id_dict = {}
+        for i, party_id in enumerate(self.host_party_id_list):
+            id_list_remote_second[i].schema = {"cache_id": cache_id_list[i]}
+            cache_id_dict[party_id] = cache_id_list[i]
+
+        self.id_list_remote_second = id_list_remote_second
+        self.cache_id = cache_id_dict
+
+        return self.id_list_remote_second
+
+    def get_intersect_doubly_encrypted_id_from_cache(self, data_instances, cache):
+        self.id_list_local_first = [self._encrypt_id(data_instances,
+                                                     cipher,
+                                                     reserve_original_key=True,
+                                                     hash_operator=self.hash_operator,
+                                                     salt=self.salt) for cipher in self.commutative_cipher]
+        LOGGER.info("encrypted guest id for the 1st time")
+
+        # receive doubly encrypted ID list from all host:
+        self.id_list_local_second = self._sync_doubly_encrypted_id_list()  # get (EEg, Eg)
+
+        # find intersection per host
+        id_list_intersect_cipher_cipher = [self.extract_intersect_ids(cache[i],
+                                                                      self.id_list_local_second[i])
+                                           for i in range(self.host_count)]  # (EEi, -1)
+        LOGGER.info("encrypted intersection ids found")
+
+        return id_list_intersect_cipher_cipher

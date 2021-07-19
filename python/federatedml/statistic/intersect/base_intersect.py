@@ -22,6 +22,7 @@ from federatedml.param.intersect_param import IntersectParam, IntersectPreProces
 from federatedml.protobuf.generated.intersect_meta_pb2 import IntersectModelMeta, IntersectPreProcessMeta
 from federatedml.protobuf.generated.intersect_param_pb2 import Filter, IntersectModelParam, RSAKey, PHKey
 from federatedml.statistic.intersect.intersect_preprocess import BitArray
+from federatedml.transfer_variable.transfer_class.intersection_func_transfer_variable import IntersectionFuncTransferVariable
 from federatedml.util import LOGGER, consts
 
 
@@ -31,6 +32,7 @@ class Intersect(object):
         self.cache_id = None
         self.model_param = IntersectParam()
         self.transfer_variable = None
+        self.cache_transfer_variable = IntersectionFuncTransferVariable().cache_id_from_host
         self.filter = None
         self.intersect_num = None
         self.cache = None
@@ -50,7 +52,7 @@ class Intersect(object):
         self.sync_cardinality = param.sync_cardinality
         self.run_preprocess = param.run_preprocess
         self.intersect_preprocess_params = param.intersect_preprocess_params
-        self.run_cache = param.intersect_cache.run_cache
+        self.run_cache = param.intersect_cache_param.run_cache
 
     @property
     def guest_party_id(self):
@@ -132,11 +134,11 @@ class Intersect(object):
             if self.intersect_method == consts.RSA:
                 rsa_encrypt_key = self.get_intersect_key()
                 param_obj = IntersectModelParam(rsa_encrypt_key=rsa_encrypt_key,
-                                                uid=self.cache_id)
+                                                cache_id=self.cache_id)
             elif self.intersect_method == consts.DH:
                 ph_encrypt_key = self.get_intersect_key()
                 param_obj = IntersectModelParam(ph_encrypt_key=ph_encrypt_key,
-                                                uid=self.cache_id)
+                                                cache_id=self.cache_id)
         return param_obj
 
     def get_model(self):
@@ -152,11 +154,12 @@ class Intersect(object):
     def load_model(self, model_dict):
         meta_obj, param_obj = model_dict[self.model_meta_name], model_dict[self.model_param_name]
         proprocess_params = meta_obj.intersect_preprocess_params
-        self.intersect_preprocess_params = IntersectPreProcessParam(**proprocess_params)
-        # self.intersect_preprocess_params.false_positive_rate = meta_obj.false_positive_rate
-        # self.intersect_preprocess_params.hash_method = meta_obj.hash_method
-        # self.intersect_preprocess_params.random_state = meta_obj.random_state
-        if param_obj.filter and param_obj.filter.bit_count > 0:
+        # self.intersect_preprocess_params = IntersectPreProcessParam(**proprocess_params)
+        self.intersect_preprocess_params.false_positive_rate = proprocess_params.false_positive_rate
+        self.intersect_preprocess_params.hash_method = proprocess_params.hash_method
+        self.intersect_preprocess_params.random_state = proprocess_params.random_state
+        self.intersect_preprocess_params.encrypt_method = proprocess_params.encrypt_method
+        if param_obj.intersect_filter and param_obj.intersect_filter.bit_count > 0:
             filter_obj = param_obj.filter
             filter_array = np.array(filter_obj.filter_array)
             self.filter = BitArray(bit_count=filter_obj.bit_count,
@@ -166,8 +169,13 @@ class Intersect(object):
                                    salt=list(filter_obj.salt))
             self.filter.id = filter_obj.id
             self.filter.set_array(filter_array)
+        #@TODO: load intersect meta params: hash method etc
         if meta_obj.intersect_method == consts.RSA:
             self.load_intersect_key(param_obj.rsa_encrypt_key)
+            self.load_intersect_method_meta(meta_obj)
+        elif meta_obj.intersect_method == consts.DH:
+            self.load_intersect_key(param_obj.ph_encrypt_key)
+        self.cache_id = param_obj.cache_id
 
     def run_intersect(self, data_instances):
         raise NotImplementedError("method should not be called here")
@@ -175,7 +183,10 @@ class Intersect(object):
     def run_cardinality(self, data_instances):
         raise NotImplementedError("method should not be called here")
 
-    def run_cache(self, data_instances):
+    def generate_cache(self, data_instances):
+        raise NotImplementedError("method should not be called here")
+
+    def run_cache_intersect(self, data_instances, cache):
         raise NotImplementedError("method should not be called here")
 
     def set_flowid(self, flowid=0):
@@ -265,7 +276,7 @@ class Intersect(object):
 
     @staticmethod
     def generate_new_uuid():
-        return str(uuid.uuid1())
+        return str(uuid.uuid4())
 
     @staticmethod
     def insert_key(kv_iterator, filter, hash_operator=None, salt=None):

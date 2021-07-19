@@ -279,7 +279,7 @@ class RsaIntersectionHost(RsaIntersect):
 
         return data_instances
 
-    def run_cache(self, data_instances):
+    def generate_cache(self, data_instances):
         LOGGER.info("Run RSA intersect cache.")
         # generate rsa keys
         # self.e, self.d, self.n = self.generate_protocol_key()
@@ -304,10 +304,13 @@ class RsaIntersectionHost(RsaIntersect):
 
         prvkey_ids_process = prvkey_ids_process_pair.mapValues(lambda v: 1)
 
-        self.cache_id = {self.guest_party_id: str(uuid.uuid4())}
-        cache_schema = {"uid": self.cache_id}
+        cache_id = str(uuid.uuid4())
+        self.cache_id = {self.guest_party_id: cache_id}
+        cache_schema = {"cache_id": cache_id}
         # self.cache = prvkey_ids_process_pair
-        prvkey_ids_process.schema = cache_schema
+        # prvkey_ids_process.schema = cache_schema
+        self.cache_transfer_variable.remote(cache_id, role=consts.GUEST, idx=0)
+        LOGGER.info(f"remote cache_id to guest")
 
         self.transfer_variable.host_prvkey_ids.remote(prvkey_ids_process,
                                                       role=consts.GUEST,
@@ -316,3 +319,33 @@ class RsaIntersectionHost(RsaIntersect):
 
         prvkey_ids_process_pair.schema = cache_schema
         return prvkey_ids_process_pair
+
+    def cache_unified_calculation_process(self, data_instances, cache):
+        LOGGER.info("RSA intersect using cache.")
+
+        # Recv guest ids
+        guest_pubkey_ids = self.transfer_variable.guest_pubkey_ids.get(idx=0)
+        LOGGER.info("Get guest_pubkey_ids from guest")
+
+        # Process(signs) guest ids and return to guest
+        host_sign_guest_ids = guest_pubkey_ids.map(lambda k, v: (k, self.sign_id(k,
+                                                                                 self.d,
+                                                                                 self.n,
+                                                                                 self.p,
+                                                                                 self.q,
+                                                                                 self.cp,
+                                                                                 self.cq)))
+        self.transfer_variable.host_sign_guest_ids.remote(host_sign_guest_ids,
+                                                          role=consts.GUEST,
+                                                          idx=0)
+        LOGGER.info("Remote host_sign_guest_ids_process to Guest.")
+
+        # recv intersect ids
+        intersect_ids = None
+        if self.sync_intersect_ids:
+            encrypt_intersect_ids = self.transfer_variable.intersect_ids.get(idx=0)
+            intersect_ids_pair = encrypt_intersect_ids.join(cache, lambda e, h: h)
+            intersect_ids = intersect_ids_pair.map(lambda k, v: (v, "id"))
+            LOGGER.info("Get intersect ids from Guest")
+
+        return intersect_ids

@@ -27,8 +27,6 @@ class RsaIntersectionGuest(RsaIntersect):
         self.role = consts.GUEST
 
     def get_host_prvkey_ids(self):
-        if self.cache:
-            return self.cache
         host_prvkey_ids_list = self.transfer_variable.host_prvkey_ids.get(idx=-1)
         LOGGER.info("Get host_prvkey_ids from all host")
 
@@ -319,7 +317,7 @@ class RsaIntersectionGuest(RsaIntersect):
 
         return data_instances
 
-    def run_cache(self, data_instances):
+    def generate_cache(self, data_instances):
         LOGGER.info("Run RSA intersect cache")
         # generate r
         # count = data_instances.count()
@@ -333,17 +331,23 @@ class RsaIntersectionGuest(RsaIntersect):
         self.rcv_e = [int(public_key["e"]) for public_key in public_keys]
         self.rcv_n = [int(public_key["n"]) for public_key in public_keys]
 
+        cache_id_list = self.cache_transfer_variable.get(idx=-1)
+        LOGGER.info(f"Get cache_id from all host")
+
         host_prvkey_ids_list = self.get_host_prvkey_ids()
-        # self.cache = host_prvkey_ids_list
-        self.cache_id = dict(zip(self.host_party_id_list, [ids.schema.get("cache_id") for ids in host_prvkey_ids_list]))
         LOGGER.info("Get host_prvkey_ids")
-        return host_prvkey_ids_list
+
+        cache_id_dict = {}
+        for i, party_id in enumerate(self.host_party_id_list):
+            host_prvkey_ids_list[i].schema = {"cache_id": cache_id_list[i]}
+            cache_id_dict[party_id] = cache_id_list[i]
+
+        self.cache_id = cache_id_dict
+
+        return host_prvkey_ids_list[0]
 
     def cache_unified_calculation_process(self, data_instances, cache):
         LOGGER.info("RSA intersect using cache.")
-
-        # verify cache id
-        #@TODO: to verify cache id implement
 
         pubkey_ids_process_list = [self.pubkey_id_process(data_instances,
                                                           fraction=self.random_base_fraction,
@@ -361,7 +365,6 @@ class RsaIntersectionGuest(RsaIntersect):
                                                            idx=i)
             LOGGER.info("Remote guest_pubkey_ids to Host {}".format(i))
 
-        host_prvkey_ids_list = cache
 
         # Recv signed guest ids
         # table(r^e % n *hash(sid), guest_id_process)
@@ -382,6 +385,7 @@ class RsaIntersectionGuest(RsaIntersect):
         sid_host_sign_guest_ids_list = [g.map(lambda k, v: (v[1], v[0])) for g in host_sign_guest_ids_list]
 
         # intersect table(hash(guest_ids_process/r), sid)
+        host_prvkey_ids_list = [cache]
         encrypt_intersect_ids_list = [v.join(host_prvkey_ids_list[i], lambda sid, h: sid) for i, v in
                                       enumerate(sid_host_sign_guest_ids_list)]
 

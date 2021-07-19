@@ -63,6 +63,24 @@
       "dst": [
         "host"
       ]
+    },
+    "cache_id": {
+      "src": [
+        "guest",
+        "host"
+      ],
+      "dst": [
+        "host",
+        "guest"
+      ]
+    },
+    "cache_id_from_host": {
+      "src": [
+        "host"
+      ],
+      "dst": [
+        "guest"
+      ]
     }
   }
 }

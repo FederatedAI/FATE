@@ -131,8 +131,17 @@ class DhIntersect(Intersect):
     def decrypt_intersect_doubly_encrypted_id(self, id_list_intersect_cipher_cipher):
         raise NotImplementedError("This method should not be called here")
 
+    def get_intersect_doubly_encrypted_id_from_cache(self, data_instances, cache):
+        raise NotImplementedError("This method should not be called here")
+
     def run_intersect(self, data_instances):
         LOGGER.info("Start DH Intersection")
         id_list_intersect_cipher_cipher = self.get_intersect_doubly_encrypted_id(data_instances)
+        intersect_ids = self.decrypt_intersect_doubly_encrypted_id(id_list_intersect_cipher_cipher)
+        return intersect_ids
+
+    def run_cache_intersect(self, data_instances, cache):
+        LOGGER.info("Start DH Intersection with cache")
+        id_list_intersect_cipher_cipher = self.get_intersect_doubly_encrypted_id_from_cache(data_instances, cache)
         intersect_ids = self.decrypt_intersect_doubly_encrypted_id(id_list_intersect_cipher_cipher)
         return intersect_ids
