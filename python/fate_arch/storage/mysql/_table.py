@@ -87,25 +87,20 @@ class StorageTable(StorageTableBase):
         return count
 
     def collect(self, **kwargs) -> list:
-        sql = 'select * from {}'.format(self._name)
+        id_name, feature_name_list, _ = self.get_id_feature_name()
+        id_feature_name = [id_name]
+        id_feature_name.extend(feature_name_list)
+        sql = 'select {} from {}'.format(','.join(id_feature_name), self._address.name)
         data = self.execute(sql)
         for i in data:
             yield i[0], self.get_meta().get_id_delimiter().join(list(i[1:]))
 
     def put_all(self, kv_list, **kwargs):
-        id_name = self.get_meta().get_schema().get('sid', 'id')
-        headers_str = self.get_meta().get_schema().get('header')
-        id_delimiter = self.get_meta().get_id_delimiter()
-        if headers_str:
-            if isinstance(headers_str, str):
-                feature_name_list = headers_str.split(id_delimiter)
-            else:
-                feature_name_list = [headers_str]
-        else:
-            raise Exception("mysql table need data header")
+        id_name, feature_name_list, id_delimiter = self.get_id_feature_name()
         feature_sql, feature_list = StorageTable.get_meta_header(feature_name_list)
-        create_table = 'create table if not exists {}({} varchar(50) NOT NULL, {} PRIMARY KEY({}))'.format(
-            self._address.name, id_name, feature_sql, id_name)
+        id_size = "varchar(100)"
+        create_table = 'create table if not exists {}({} {} NOT NULL, {} PRIMARY KEY({}))'.format(
+            self._address.name, id_name, id_size, feature_sql, id_name)
         self.cur.execute(create_table)
         sql = 'REPLACE INTO {}({}, {})  VALUES'.format(self._address.name, id_name, ','.join(feature_list))
         for kv in kv_list:
@@ -114,16 +109,33 @@ class StorageTable(StorageTableBase):
         self.cur.execute(sql)
         self.con.commit()
 
+    def get_id_feature_name(self):
+        id = self.get_meta().get_schema().get('sid', 'id')
+        header = self.get_meta().get_schema().get('header')
+        id_delimiter = self.get_meta().get_id_delimiter()
+        if header:
+            if isinstance(header, str):
+                feature_list = header.split(id_delimiter)
+            elif isinstance(header, list):
+                feature_list = header
+            else:
+                feature_list = [header]
+        else:
+            raise Exception("mysql table need data header")
+        return id, feature_list, id_delimiter
+
+
     def destroy(self):
         super().destroy()
-        sql = 'drop table {}'.format(self._name)
+        sql = 'drop table {}'.format(self._address.name)
         return self.execute(sql)
 
     @staticmethod
     def get_meta_header(feature_name_list):
         create_features = ''
         feature_list = []
+        feature_size = "varchar(255)"
         for feature_name in feature_name_list:
-            create_features += '{} varchar(255),'.format(feature_name)
+            create_features += '{} {},'.format(feature_name, feature_size)
             feature_list.append(feature_name)
         return create_features, feature_list
