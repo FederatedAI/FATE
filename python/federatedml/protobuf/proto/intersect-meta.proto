@@ -27,7 +27,8 @@ message IntersectModelMeta {
     bool sync_intersect_ids = 5;
     bool only_output_key = 6;
     bool allow_info_share = 7;
-    string join_method = 8;
+    string info_owner = 8;
+    string join_method = 9;
 }
 
 message IntersectPreProcessMeta {

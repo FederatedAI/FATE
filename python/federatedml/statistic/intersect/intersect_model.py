@@ -255,6 +255,7 @@ class IntersectModelBase(ModelBase):
         self.model_param.sync_intersect_ids = meta_obj.sync_intersect_ids
         self.model_param.only_output_key = meta_obj.only_output_key
         self.model_param.allow_info_share = meta_obj.allow_info_share
+        self.model_param.info_owner = meta_obj.info_owner
         if self.model_param.intersect_method == consts.RSA:
             rsa_params = meta_obj.rsa_params
             self.model_param.rsa_params.hash_method = rsa_params.hash_method
@@ -294,7 +295,7 @@ class IntersectModelBase(ModelBase):
         if data_overview.check_with_inst_id(data) or self.model_param.repeated_id_process:
             self.use_match_id_process = True
             LOGGER.info(f"use match_id_process")
-
+        intersect_data = data
         if self.use_match_id_process:
             if self.model_param.intersect_cache_param.use_cache is True and self.model_param.intersect_method == consts.RSA:
                 raise ValueError("Not support cache module while repeated id process.")
@@ -308,12 +309,6 @@ class IntersectModelBase(ModelBase):
                 proc_obj.use_sample_id()
             match_data = proc_obj.recover(data=data)
             intersect_data = match_data
-            if self.model_param.run_preprocess:
-                intersect_data = self.run_preprocess(match_data)
-        else:
-            intersect_data = data
-            if self.model_param.run_preprocess:
-                intersect_data = self.run_preprocess(data)
 
         if self.role == consts.HOST:
             cache_id = self.intersection_obj.cache_id[self.guest_party_id]

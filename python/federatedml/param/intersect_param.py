@@ -219,20 +219,22 @@ class IntersectPreProcessParam(BaseParam):
     Parameters
     ----------
     false_positive_rate: float, initial target false positive rate when creating Bloom Filter,
-        must be <= 0.5, default 1e-3 for target sparsity of 0.5
+        must be <= 0.5, default 1e-3
 
-    encrypt_method: str, encrypt method for encrypting id, supports rsa only, default rsa;
-        specify parameter setting with respective params when using either method.
+    encrypt_method: str, encrypt method for encrypting id when performing cardinality_only task,
+        supports rsa only, default rsa;
+        specify rsa parameter setting with RSAParam
 
     hash_method: str, the hash method for inserting ids, support md5, sha1, sha 224, sha256, sha384, sha512, sm3,
         default sha256
 
-    preprocess_method: str, the hash method for encoding ids before insertion, default sha256
+    preprocess_method: str, the hash method for encoding ids before insertion into filter, default sha256
 
-    preprocess_salt: str, salt for preprocess hashing method, default ''
+    preprocess_salt: str, salt to be appended to hash result by preprocess_method before insertion into filter,
+                    default ''
 
     random_state: seed for random salt generator when constructing hash functions,
-        salt is appended to hash result str, default 42
+        salt is appended to hash result by hash_method when performing insertion, default 42
 
     filter_owner: str, role that constructs filter, either guest or host, default guest
 
@@ -298,35 +300,39 @@ class IntersectParam(BaseParam):
     random_bit: positive int, it will define the size of blinding factor in rsa algorithm, default 128
         note that this param will be deprecated in future, please use random_bit in RSAParam instead.
 
-    sync_intersect_ids: bool. In rsa, 'synchronize_intersect_ids' is True means guest or host will send intersect results to the others, and False will not.
-                            while in raw, 'synchronize_intersect_ids' is True means the role of "join_role" will send intersect results and the others will get them.
+    sync_intersect_ids: bool. In rsa, 'sync_intersect_ids' is True means guest or host will send intersect results to the others, and False will not.
+                            while in raw, 'sync_intersect_ids' is True means the role of "join_role" will send intersect results and the others will get them.
                             Default by True.
 
     join_role: str, role who joins ids, supports "guest" and "host" only and effective only for raw. If it is "guest", the host will send its ids to guest and find the intersection of
                ids in guest; if it is "host", the guest will send its ids to host. Default by "guest".
 
-    with_encode: bool, if True, it will use hash method for intersect ids. Effective only for "raw".
+    with_encode: bool, if True, it will use hash method for intersect ids, effective for raw method only.
 
-    encode_params: EncodeParam, it effective only for with_encode is True
+    encode_params: EncodeParam, effective only when with_encode is True
 
     rsa_params: RSAParam, effective for rsa method only
 
     only_output_key: bool, if false, the results of intersection will include key and value which from input data; if true, it will just include key from input
                      data and the value will be empty or some useless character like "intersect_id"
 
-    repeated_id_process: bool, if true, intersection will process the ids which can be repeatable
+    repeated_id_process: bool, if true, intersection will process the ids which can be repeatable; repeated id process
+                         will be automatically applied to data with instance id
 
     repeated_id_owner: str, which role has the repeated ids
 
     with_sample_id: bool, data with sample id or not, default False; in ver 1.7 and above, this param is ignored
 
-    join_method: str, choose 'inner_join' or 'left_join', if 'left_join', participants will all include repeated id owner's (imputed) ids in output, default 'inner_join'
+    join_method: str, choose 'inner_join' or 'left_join',
+                if 'left_join', participants will all include repeated id owner's (imputed) ids in output,
+                default 'inner_join'
 
-    new_join_id: bool, whether to generate new id for repeated_id_owners' ids, only effective when join_method is 'left_join', default False
+    new_join_id: bool, whether to generate new id for repeated_id_owners' ids,
+                only effective when join_method is 'left_join', default False
 
     dh_params: DHParam, effective for dh method only
 
-    cardinality_only: boolean, whether to output estimated intersection count(cardinality) only using pre-process;
+    cardinality_only: boolean, whether to output estimated intersection count(cardinality);
         if sync_cardinality is True, then sync cardinality count with host(s)
 
     sync_cardinality: boolean, whether to sync cardinality with all participants, default False,
@@ -456,5 +462,9 @@ class IntersectParam(BaseParam):
                 raise ValueError(f"Only rsa or dh method supports cache.")
             if self.intersect_method == consts.RSA and self.rsa_params.split_calculation:
                 raise ValueError(f"RSA split_calculation does not support cache.")
+            if self.cardinality_only:
+                raise ValueError(f"cache is not available for cardinality_only mode.")
+            if self.run_preprocess:
+                raise ValueError(f"Cannot run preprocess with cache mode")
         LOGGER.debug("Finish intersect parameter check!")
         return True

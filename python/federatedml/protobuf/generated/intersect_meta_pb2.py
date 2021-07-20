@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='com.webank.ai.fate.common.mlmodel.buffer',
   syntax='proto3',
   serialized_options=_b('B\022IntersectMetaProto'),
-  serialized_pb=_b('\n\x14intersect-meta.proto\x12(com.webank.ai.fate.common.mlmodel.buffer\"\x86\x03\n\x12IntersectModelMeta\x12\x18\n\x10intersect_method\x18\x01 \x01(\t\x12\x66\n\x1bintersect_preprocess_params\x18\x02 \x01(\x0b\x32\x41.com.webank.ai.fate.common.mlmodel.buffer.IntersectPreProcessMeta\x12\x45\n\nrsa_params\x18\x03 \x01(\x0b\x32\x31.com.webank.ai.fate.common.mlmodel.buffer.RSAMeta\x12\x43\n\tdh_params\x18\x04 \x01(\x0b\x32\x30.com.webank.ai.fate.common.mlmodel.buffer.DHMeta\x12\x1a\n\x12sync_intersect_ids\x18\x05 \x01(\x08\x12\x17\n\x0fonly_output_key\x18\x06 \x01(\x08\x12\x18\n\x10\x61llow_info_share\x18\x07 \x01(\x08\x12\x13\n\x0bjoin_method\x18\x08 \x01(\t\"y\n\x17IntersectPreProcessMeta\x12\x1b\n\x13\x66\x61lse_positive_rate\x18\x01 \x01(\x01\x12\x16\n\x0e\x65ncrypt_method\x18\x02 \x01(\t\x12\x13\n\x0bhash_method\x18\x03 \x01(\t\x12\x14\n\x0crandom_state\x18\x04 \x01(\x03\"[\n\x07RSAMeta\x12\x13\n\x0bhash_method\x18\x01 \x01(\t\x12\x19\n\x11\x66inal_hash_method\x18\x02 \x01(\t\x12\x0c\n\x04salt\x18\x03 \x01(\t\x12\x12\n\nrandom_bit\x18\x04 \x01(\x03\"+\n\x06\x44HMeta\x12\x13\n\x0bhash_method\x18\x01 \x01(\t\x12\x0c\n\x04salt\x18\x02 \x01(\tB\x14\x42\x12IntersectMetaProtob\x06proto3')
+  serialized_pb=_b('\n\x14intersect-meta.proto\x12(com.webank.ai.fate.common.mlmodel.buffer\"\x9a\x03\n\x12IntersectModelMeta\x12\x18\n\x10intersect_method\x18\x01 \x01(\t\x12\x66\n\x1bintersect_preprocess_params\x18\x02 \x01(\x0b\x32\x41.com.webank.ai.fate.common.mlmodel.buffer.IntersectPreProcessMeta\x12\x45\n\nrsa_params\x18\x03 \x01(\x0b\x32\x31.com.webank.ai.fate.common.mlmodel.buffer.RSAMeta\x12\x43\n\tdh_params\x18\x04 \x01(\x0b\x32\x30.com.webank.ai.fate.common.mlmodel.buffer.DHMeta\x12\x1a\n\x12sync_intersect_ids\x18\x05 \x01(\x08\x12\x17\n\x0fonly_output_key\x18\x06 \x01(\x08\x12\x18\n\x10\x61llow_info_share\x18\x07 \x01(\x08\x12\x12\n\ninfo_owner\x18\x08 \x01(\t\x12\x13\n\x0bjoin_method\x18\t \x01(\t\"y\n\x17IntersectPreProcessMeta\x12\x1b\n\x13\x66\x61lse_positive_rate\x18\x01 \x01(\x01\x12\x16\n\x0e\x65ncrypt_method\x18\x02 \x01(\t\x12\x13\n\x0bhash_method\x18\x03 \x01(\t\x12\x14\n\x0crandom_state\x18\x04 \x01(\x03\"[\n\x07RSAMeta\x12\x13\n\x0bhash_method\x18\x01 \x01(\t\x12\x19\n\x11\x66inal_hash_method\x18\x02 \x01(\t\x12\x0c\n\x04salt\x18\x03 \x01(\t\x12\x12\n\nrandom_bit\x18\x04 \x01(\x03\"+\n\x06\x44HMeta\x12\x13\n\x0bhash_method\x18\x01 \x01(\t\x12\x0c\n\x04salt\x18\x02 \x01(\tB\x14\x42\x12IntersectMetaProtob\x06proto3')
 )
 
 
@@ -83,8 +83,15 @@ _INTERSECTMODELMETA = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='join_method', full_name='com.webank.ai.fate.common.mlmodel.buffer.IntersectModelMeta.join_method', index=7,
+      name='info_owner', full_name='com.webank.ai.fate.common.mlmodel.buffer.IntersectModelMeta.info_owner', index=7,
       number=8, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='join_method', full_name='com.webank.ai.fate.common.mlmodel.buffer.IntersectModelMeta.join_method', index=8,
+      number=9, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -102,7 +109,7 @@ _INTERSECTMODELMETA = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=67,
-  serialized_end=457,
+  serialized_end=477,
 )
 
 
@@ -153,8 +160,8 @@ _INTERSECTPREPROCESSMETA = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=459,
-  serialized_end=580,
+  serialized_start=479,
+  serialized_end=600,
 )
 
 
@@ -205,8 +212,8 @@ _RSAMETA = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=582,
-  serialized_end=673,
+  serialized_start=602,
+  serialized_end=693,
 )
 
 
@@ -243,8 +250,8 @@ _DHMETA = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=675,
-  serialized_end=718,
+  serialized_start=695,
+  serialized_end=738,
 )
 
 _INTERSECTMODELMETA.fields_by_name['intersect_preprocess_params'].message_type = _INTERSECTPREPROCESSMETA
