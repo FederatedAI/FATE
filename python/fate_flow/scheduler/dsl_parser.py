@@ -631,26 +631,29 @@ class BaseDSLParser(object):
                                             self.predict_dsl["components"][name]["input"]["data"][data_value].append(
                                                 input_data)
                                         else:
-                                            self.predict_dsl["components"][name]["input"]["data"][data_value] = \
-                                                output_data_maps[
-                                                    pre_name][data_suffix]
+                                            self.predict_dsl["components"][name]["input"]["data"][data_value].extend(
+                                                output_data_maps[pre_name][data_suffix])
 
                                 break
 
                         if version == 2 and erase_top_data_input:
-                            is_top_component = True
+                            input_dep = {}
                             for data_key, data_set in self.predict_dsl["components"][name]["input"]["data"].items():
+                                final_data_set = []
                                 for input_data in data_set:
                                     cpn_alias = input_data.split(".")[0]
                                     if cpn_alias == "args":
-                                        is_top_component = False
-                                        break
+                                        final_data_set.append(input_data)
+                                    elif cpn_alias in self.predict_dsl["components"]:
+                                        final_data_set.append(input_data)
 
-                                    if cpn_alias in self.predict_dsl["components"]:
-                                        is_top_component = False
+                                if final_data_set:
+                                    input_dep[data_key] = final_data_set
 
-                            if is_top_component:
+                            if not input_dep:
                                 del self.predict_dsl["components"][name]["input"]["data"]
+                            else:
+                                self.predict_dsl["components"][name]["input"]["data"] = input_dep
 
             else:
                 name = self.predict_components[i].get_name()
