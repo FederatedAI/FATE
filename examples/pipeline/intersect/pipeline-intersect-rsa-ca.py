@@ -52,9 +52,9 @@ def main(config="../../config.yaml", namespace=""):
     param = {
         "intersect_method": "rsa",
         "cardinality_only": True,
+        "sync_cardinality": False,
         "intersect_preprocess_params": {
-            "false_positive_rate": 0.01,
-            "hash_method": "sha256"
+            "false_positive_rate": 0.01
         },
         "rsa_params": {
             "hash_method": "sha256",

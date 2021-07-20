@@ -65,6 +65,10 @@
         "repeated_id_intersect": {
             "conf": "./test_intersect_job_repeated_id_conf.json",
             "dsl": "./test_intersect_job_dsl.json"
+        },
+        "rsa_intersect_ca": {
+            "conf": "./test_intersect_job_rsa_ca_conf.json",
+            "dsl": "./test_intersect_job_dsl.json"
         }
     }
 }
