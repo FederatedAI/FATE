@@ -113,11 +113,11 @@ class IntersectModelBase(ModelBase):
         LOGGER.debug(f"data count: {data.count()}")
         LOGGER.debug(f"intersect_data count: {intersect_data.count()}")
 
-        if self.model_param.repeated_id_owner == consts.GUEST:
+        if self.model_param.join_id_owner == consts.GUEST:
             sync_join_id = self.transfer_variable.join_id_from_guest
         else:
             sync_join_id = self.transfer_variable.join_id_from_host
-        if self.role == self.model_param.repeated_id_owner:
+        if self.role == self.model_param.join_id_owner:
             join_data = data.subtractByKey(intersect_data)
             # LOGGER.debug(f"join_data count: {join_data.count()}")
             if self.model_param.new_join_id:
@@ -161,18 +161,16 @@ class IntersectModelBase(ModelBase):
         # schema["header"].pop(0)
         # data.schema = schema
 
-        if data_overview.check_with_inst_id(data) or self.model_param.repeated_id_process:
+        # if data_overview.check_with_inst_id(data) or self.model_param.repeated_id_process:
+        if data_overview.check_with_inst_id(data):
             self.use_match_id_process = True
             LOGGER.info(f"use match_id_process")
 
         if self.use_match_id_process:
-            if self.model_param.intersect_cache_param.use_cache is True and self.model_param.intersect_method == consts.RSA:
-                raise ValueError("Not support cache module while repeated id process.")
+            if len(self.host_party_id_list) > 1 and self.model_param.join_id_owner != consts.GUEST:
+                raise ValueError("While multi-host, join_id_owner should be guest.")
 
-            if len(self.host_party_id_list) > 1 and self.model_param.repeated_id_owner != consts.GUEST:
-                raise ValueError("While multi-host, repeated_id_owner should be guest.")
-
-            proc_obj = RepeatedIDIntersect(repeated_id_owner=self.model_param.repeated_id_owner, role=self.role)
+            proc_obj = RepeatedIDIntersect(repeated_id_owner=self.model_param.join_id_owner, role=self.role)
             proc_obj.new_join_id = self.model_param.new_join_id
             if data_overview.check_with_inst_id(data) or self.model_param.with_sample_id:
                 proc_obj.use_sample_id()
@@ -211,19 +209,19 @@ class IntersectModelBase(ModelBase):
                 self.intersect_ids = match_data
 
             self.intersect_ids = proc_obj.expand(self.intersect_ids)
-            if self.model_param.repeated_id_owner == self.role and self.model_param.only_output_key:
+            if self.model_param.join_id_owner == self.role and self.model_param.only_output_key:
                 sid_name = self.intersect_ids.schema.get('sid_name')
                 self.intersect_ids = self.intersect_ids.mapValues(lambda v: None)
                 self.intersect_ids.schema['sid_name'] = sid_name
 
-            # LOGGER.info("repeated_id process:{}".format(self.intersect_ids.count()))
-
+        """
         if self.model_param.allow_info_share:
             if self.model_param.intersect_method == consts.RSA and self.model_param.info_owner == consts.GUEST \
                     or self.model_param.intersect_method == consts.RAW and self.model_param.join_role == self.model_param.info_owner:
                 self.model_param.sync_intersect_ids = False
 
             self.intersect_ids = self.__share_info(self.intersect_ids)
+        """
 
         LOGGER.info("Finish intersection")
 
@@ -254,14 +252,12 @@ class IntersectModelBase(ModelBase):
         self.model_param.join_method = meta_obj.join_method
         self.model_param.sync_intersect_ids = meta_obj.sync_intersect_ids
         self.model_param.only_output_key = meta_obj.only_output_key
-        self.model_param.allow_info_share = meta_obj.allow_info_share
-        self.model_param.info_owner = meta_obj.info_owner
         if self.model_param.intersect_method == consts.RSA:
             rsa_params = meta_obj.rsa_params
             self.model_param.rsa_params.hash_method = rsa_params.hash_method
             self.model_param.rsa_params.final_hash_method = rsa_params.final_hash_method
             self.model_param.rsa_params.salt = rsa_params.salt
-            self.model_param.rsa_params.random_bit = int(rsa_params.random_bit)
+            self.model_param.rsa_params.random_bit = rsa_params.random_bit
         elif self.model_param.intersect_method == consts.DH:
             dh_params = meta_obj.dh_params
             self.model_param.dh_params.hash_method = dh_params.hash_method
@@ -292,7 +288,8 @@ class IntersectModelBase(ModelBase):
     def transform(self, data_inst):
         data, cache = list(data_inst.values())[0], [list(data_inst.values())[1]]
         # verify cache id
-        if data_overview.check_with_inst_id(data) or self.model_param.repeated_id_process:
+        # if data_overview.check_with_inst_id(data) or self.model_param.repeated_id_process:
+        if data_overview.check_with_inst_id(data):
             self.use_match_id_process = True
             LOGGER.info(f"use match_id_process")
         intersect_data = data
@@ -300,10 +297,10 @@ class IntersectModelBase(ModelBase):
             if self.model_param.intersect_cache_param.use_cache is True and self.model_param.intersect_method == consts.RSA:
                 raise ValueError("Not support cache module while repeated id process.")
 
-            if len(self.host_party_id_list) > 1 and self.model_param.repeated_id_owner != consts.GUEST:
-                raise ValueError("While multi-host, repeated_id_owner should be guest.")
+            if len(self.host_party_id_list) > 1 and self.model_param.join_id_owner != consts.GUEST:
+                raise ValueError("While multi-host, join_id_owner should be guest.")
 
-            proc_obj = RepeatedIDIntersect(repeated_id_owner=self.model_param.repeated_id_owner, role=self.role)
+            proc_obj = RepeatedIDIntersect(repeated_id_owner=self.model_param.join_id_owner, role=self.role)
             proc_obj.new_join_id = self.model_param.new_join_id
             if data_overview.check_with_inst_id(data) or self.model_param.with_sample_id:
                 proc_obj.use_sample_id()
@@ -339,16 +336,18 @@ class IntersectModelBase(ModelBase):
                 self.intersect_ids = match_data
 
             self.intersect_ids = proc_obj.expand(self.intersect_ids)
-            if self.model_param.repeated_id_owner == self.role and self.model_param.only_output_key:
+            if self.model_param.join_id_owner == self.role and self.model_param.only_output_key:
                 sid_name = self.intersect_ids.schema.get('sid_name')
                 self.intersect_ids = self.intersect_ids.mapValues(lambda v: None)
                 self.intersect_ids.schema['sid_name'] = sid_name
 
+        """
         if self.model_param.allow_info_share:
             if self.model_param.intersect_method == consts.RSA and self.model_param.info_owner == consts.GUEST:
                 self.model_param.sync_intersect_ids = False
 
             self.intersect_ids = self.__share_info(self.intersect_ids)
+        """
         LOGGER.info("Finish intersection")
 
         if self.intersect_ids:

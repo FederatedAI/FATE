@@ -52,7 +52,7 @@ class Intersect(object):
         self.sync_cardinality = param.sync_cardinality
         self.run_preprocess = param.run_preprocess
         self.intersect_preprocess_params = param.intersect_preprocess_params
-        self.run_cache = param.intersect_cache_param.run_cache
+        self.run_cache = param.run_cache
 
     @property
     def guest_party_id(self):
@@ -105,8 +105,6 @@ class Intersect(object):
                                           intersect_preprocess_params=preprocess_params,
                                           sync_intersect_ids=self.sync_intersect_ids,
                                           only_output_key=self.only_output_key,
-                                          allow_info_share=self.model_param.allow_info_share,
-                                          info_owner=self.model_param.info_owner,
                                           join_method=self.model_param.join_method,
                                           rsa_params=self.get_intersect_method_meta())
         elif self.intersect_method == consts.DH:
@@ -114,8 +112,6 @@ class Intersect(object):
                                           intersect_preprocess_params=preprocess_params,
                                           sync_intersect_ids=self.sync_intersect_ids,
                                           only_output_key=self.only_output_key,
-                                          allow_info_share=self.model_param.allow_info_share,
-                                          info_owner=self.model_param.info_owner,
                                           join_method=self.model_param.join_method,
                                           dh_params=self.get_intersect_method_meta())
         else:
@@ -123,8 +119,6 @@ class Intersect(object):
                                           intersect_preprocess_params=preprocess_params,
                                           sync_intersect_ids=self.sync_intersect_ids,
                                           only_output_key=self.only_output_key,
-                                          allow_info_share=self.model_param.allow_info_share,
-                                          info_owner=self.model_param.info_owner,
                                           join_method=self.model_param.join_method)
         return meta_obj
 

@@ -67,9 +67,55 @@ class EncodeParam(BaseParam):
         return True
 
 
+class RAWParam(BaseParam):
+    """
+    Specify parameters for raw intersect method
+
+    Parameters
+    ----------
+    use_hash: bool, whether to hash ids for raw intersect
+
+    salt: str, the src data string will be str = str + salt, default by empty string
+
+    hash_method: str, the hash method of src data string, support md5, sha1, sha224, sha256, sha384, sha512, sm3, default by None
+
+    base64: bool, if True, the result of hash will be changed to base64, default by False
+
+    join_role: str, role who joins ids, supports "guest" and "host" only and effective only for raw.
+               If it is "guest", the host will send its ids to guest and find the intersection of
+               ids in guest; if it is "host", the guest will send its ids to host. Default by "guest";
+    """
+
+    def __init__(self, use_hash=False, salt='', hash_method='none', base64=False, join_role=consts.GUEST):
+        super().__init__()
+        self.use_hash = use_hash
+        self.salt = salt
+        self.hash_method = hash_method
+        self.base64 = base64
+        self.join_role = join_role
+
+    def check(self):
+        descr = "raw param's "
+
+        self.check_boolean(self.use_hash, f"{descr}use_hash")
+        self.check_string(self.salt, f"{descr}salt")
+
+        self.hash_method = self.check_and_change_lower(self.hash_method,
+                                                         ["none", consts.MD5, consts.SHA1, consts.SHA224,
+                                                          consts.SHA256, consts.SHA384, consts.SHA512,
+                                                          consts.SM3],
+                                                         f"{descr}hash_method")
+
+        self.check_boolean(self.base64, f"{descr}base_64")
+        self.join_role = self.check_and_change_lower(self.join_role, [consts.GUEST, consts.HOST], f"{descr}join_role")
+
+        LOGGER.debug("Finish RAWParam check!")
+        return True
+
+
 class RSAParam(BaseParam):
     """
-    Define the hash method for RSA intersect method
+    Specify parameters for RSA intersect method
 
     Parameters
     ----------
@@ -103,36 +149,27 @@ class RSAParam(BaseParam):
         self.random_bit = random_bit
 
     def check(self):
-        if type(self.salt).__name__ != "str":
-            raise ValueError(
-                "rsa param's salt {} not supported, should be str type".format(
-                    self.salt))
+        descr = "rsa param's "
+        self.check_string(self.salt, f"{descr}salt")
 
-        descr = "rsa param's hash_method "
         self.hash_method = self.check_and_change_lower(self.hash_method,
                                                        [consts.SHA256, consts.SHA384, consts.SHA512, consts.SM3],
-                                                       descr)
+                                                       f"{descr}hash_method")
 
-        descr = "rsa param's final_hash_method "
         self.final_hash_method = self.check_and_change_lower(self.final_hash_method,
                                                              [consts.MD5, consts.SHA1, consts.SHA224,
                                                               consts.SHA256, consts.SHA384, consts.SHA512,
                                                               consts.SM3],
-                                                             descr)
+                                                             f"{descr}final_hash_method")
 
-        descr = "rsa param's split_calculation"
-        self.check_boolean(self.split_calculation, descr)
+        self.check_boolean(self.split_calculation, f"{descr}split_calculation")
 
-        descr = "rsa param's random_base_fraction"
         if self.random_base_fraction:
             self.check_positive_number(self.random_base_fraction, descr)
-            self.check_decimal_float(self.random_base_fraction, descr)
+            self.check_decimal_float(self.random_base_fraction, f"{descr}random_base_fraction")
 
-        descr = "rsa param's key_length"
-        self.check_positive_integer(self.key_length, descr)
-
-        descr = "rsa params' random_bit"
-        self.check_positive_integer(self.random_bit, descr)
+        self.check_positive_integer(self.key_length, f"{descr}key_length")
+        self.check_positive_integer(self.random_bit, f"{descr}random_bit")
 
         LOGGER.debug("Finish RSAParam parameter check!")
         return True
@@ -160,61 +197,51 @@ class DHParam(BaseParam):
         self.key_length = key_length
 
     def check(self):
-        if type(self.salt).__name__ != "str":
-            raise ValueError(
-                "dh param's salt {} not supported, should be str type".format(
-                    self.salt))
+        descr = "dh param's "
+        self.check_string(self.salt, f"{descr}salt")
 
-        descr = "dh param's hash_method "
         self.hash_method = self.check_and_change_lower(self.hash_method,
                                                        ["none", consts.MD5, consts.SHA1, consts.SHA224,
                                                         consts.SHA256, consts.SHA384, consts.SHA512,
                                                         consts.SM3],
-                                                       descr)
+                                                       f"{descr}hash_method")
 
-        descr = "dh param's key_length"
-        self.check_positive_integer(self.key_length, descr)
+        self.check_positive_integer(self.key_length, f"{descr}key_length")
 
         LOGGER.debug("Finish DHParam parameter check!")
         return True
 
 
 class IntersectCache(BaseParam):
-    def __init__(self, run_cache=False, use_cache=False, id_type=consts.PHONE, encrypt_type=consts.SHA256):
+    def __init__(self, use_cache=False, id_type=consts.PHONE, encrypt_type=consts.SHA256):
         """
 
         Parameters
         ----------
-        run_cache: whether to store Host's encrypted ids, only valid when intersect method is 'rsa' or 'dh'
-        use_cache: whether to use cached ids
-        id_type
-        encrypt_type
+        use_cache: whether to use cached ids; with ver1.7 and above, this param is ignored
+        id_type: with ver1.7 and above, this param is ignored
+        encrypt_type: with ver1.7 and anove, this param is ignored
         """
         super().__init__()
-        self.run_cache = run_cache
         self.use_cache = use_cache
         self.id_type = id_type
         self.encrypt_type = encrypt_type
 
     def check(self):
-        self.check_boolean(self.run_cache, "intersect cache param's run_cache")
-        if type(self.use_cache).__name__ != "bool":
-            raise ValueError(
-                "IntersectCache param's use_cache {} not supported, should be bool type".format(
-                    self.use_cache))
+        descr = "intersect_cache param's "
+        # self.check_boolean(self.use_cache, f"{descr}use_cache")
 
-        descr = "intersect cache param's "
         self.check_and_change_lower(self.id_type,
                                     [consts.PHONE, consts.IMEI],
-                                    descr)
+                                    f"{descr}id_type")
         self.check_and_change_lower(self.encrypt_type,
                                     [consts.MD5, consts.SHA256],
-                                    descr)
+                                    f"{descr}encrypt_type")
 
 
 class IntersectPreProcessParam(BaseParam):
     """
-    Define the hash method for intersect pre-process method
+    Specify parameters for intersect pre-process method
 
     Parameters
     ----------
@@ -298,39 +325,47 @@ class IntersectParam(BaseParam):
     intersect_method: str, it supports 'rsa', 'raw', and 'dh', default by 'raw'
 
     random_bit: positive int, it will define the size of blinding factor in rsa algorithm, default 128
-        note that this param will be deprecated in future, please use random_bit in RSAParam instead.
+        note that this param will be deprecated in future, please use random_bit in RSAParam instead
 
     sync_intersect_ids: bool. In rsa, 'sync_intersect_ids' is True means guest or host will send intersect results to the others, and False will not.
                             while in raw, 'sync_intersect_ids' is True means the role of "join_role" will send intersect results and the others will get them.
                             Default by True.
 
-    join_role: str, role who joins ids, supports "guest" and "host" only and effective only for raw. If it is "guest", the host will send its ids to guest and find the intersection of
-               ids in guest; if it is "host", the guest will send its ids to host. Default by "guest".
+    join_role: str, role who joins ids, supports "guest" and "host" only and effective only for raw.
+               If it is "guest", the host will send its ids to guest and find the intersection of
+               ids in guest; if it is "host", the guest will send its ids to host. Default by "guest";
+               note this param will be deprecated in future version, please use 'join_role' in raw_params instead
 
-    with_encode: bool, if True, it will use hash method for intersect ids, effective for raw method only.
+    only_output_key: bool, if false, the results of intersection will include key and value which from input data; if true, it will just include key from input
+                     data and the value will be empty or filled by uniform string like "intersect_id"
 
-    encode_params: EncodeParam, effective only when with_encode is True
+    with_encode: bool, if True, it will use hash method for intersect ids, effective for raw method only;
+                 note that this param will be deprecated in future version, please use 'use_hash' in raw_params;
+                 currently if this param is set to True,
+                 specification by 'encode_params' will be taken instead of 'raw_params'.
+
+    encode_params: EncodeParam, effective only when with_encode is True;
+                  this param will be deprecated in future version, use 'raw_params' in future implementation
+
+    raw_params: RAWParam, effective for raw method only
 
     rsa_params: RSAParam, effective for rsa method only
 
-    only_output_key: bool, if false, the results of intersection will include key and value which from input data; if true, it will just include key from input
-                     data and the value will be empty or some useless character like "intersect_id"
-
-    repeated_id_process: bool, if true, intersection will process the ids which can be repeatable; repeated id process
-                         will be automatically applied to data with instance id
-
-    repeated_id_owner: str, which role has the repeated ids
-
-    with_sample_id: bool, data with sample id or not, default False; in ver 1.7 and above, this param is ignored
+    dh_params: DHParam, effective for dh method only
 
     join_method: str, choose 'inner_join' or 'left_join',
-                if 'left_join', participants will all include repeated id owner's (imputed) ids in output,
-                default 'inner_join'
+            if 'left_join', participants will all include join id owner's (imputed) ids in output,
+            default 'inner_join'
 
-    new_join_id: bool, whether to generate new id for repeated_id_owners' ids,
+    new_join_id: bool, whether to generate new id for join_id_owners' ids,
                 only effective when join_method is 'left_join', default False
 
-    dh_params: DHParam, effective for dh method only
+    join_id_owner: str, which role owns the join ids, effecive only when join_method is 'left_join', default 'guest'
+
+    intersect_cache_param: IntersectCacheParam, specification for cache generation,
+                           with ver1.7 and above, this param is ignored.
+
+    run_cache: whether to store Host's encrypted ids, only valid when intersect method is 'rsa' or 'dh', default False
 
     cardinality_only: boolean, whether to output estimated intersection count(cardinality);
         if sync_cardinality is True, then sync cardinality count with host(s)
@@ -342,18 +377,31 @@ class IntersectParam(BaseParam):
 
     intersect_preprocess_params: IntersectPreProcessParam, used for preprocessing and cardinality_only mode
 
+    repeated_id_process: bool, if true, intersection will process the ids which can be repeatable;
+                         in ver 1.7 and above,repeated id process
+                         will be automatically applied to data with instance id, this param will be ignored
+
+    repeated_id_owner: str, which role has the repeated id; in ver 1.7 and above, this param is ignored
+
+    allow_info_share: bool, in ver 1.7 and above, this param is ignored
+
+    info_owner: str, in ver 1.7 and above, this param is ignored
+
+    with_sample_id: bool, data with sample id or not, default False; in ver 1.7 and above, this param is ignored
+
     """
 
     def __init__(self, intersect_method: str = consts.RAW, random_bit=DEFAULT_RANDOM_BIT, sync_intersect_ids=True,
-                 join_role=consts.GUEST,
-                 with_encode=False, only_output_key=False, encode_params=EncodeParam(),
-                 rsa_params=RSAParam(),
-                 intersect_cache_param=IntersectCache(), repeated_id_process=False, repeated_id_owner=consts.GUEST,
-                 with_sample_id=False, join_method=consts.INNER_JOIN, new_join_id=False,
-                 allow_info_share: bool = False, info_owner=consts.GUEST, dh_params=DHParam(),
+                 join_role=consts.GUEST, only_output_key: bool=False,
+                 with_encode=False, encode_params=EncodeParam(),
+                 raw_params=RAWParam(), rsa_params=RSAParam(), dh_params=DHParam(),
+                 join_method=consts.INNER_JOIN, new_join_id: bool = False, join_id_owner=consts.GUEST,
+                 intersect_cache_param=IntersectCache(), run_cache: bool = False,
                  cardinality_only: bool = False, sync_cardinality: bool = False,
                  run_preprocess:bool = False,
-                 intersect_preprocess_params=IntersectPreProcessParam()):
+                 intersect_preprocess_params=IntersectPreProcessParam(),
+                 repeated_id_process=False, repeated_id_owner=consts.GUEST,
+                 with_sample_id=False,  allow_info_share: bool = False, info_owner=consts.GUEST):
         super().__init__()
         self.intersect_method = intersect_method
         self.random_bit = random_bit
@@ -361,9 +409,12 @@ class IntersectParam(BaseParam):
         self.join_role = join_role
         self.with_encode = with_encode
         self.encode_params = copy.deepcopy(encode_params)
+        self.raw_params = copy.deepcopy(raw_params)
         self.rsa_params = copy.deepcopy(rsa_params)
         self.only_output_key = only_output_key
-        self.intersect_cache_param = intersect_cache_param
+        self.join_id_owner = join_id_owner
+        self.intersect_cache_param = copy.deepcopy(intersect_cache_param)
+        self.run_cache = run_cache
         self.repeated_id_process = repeated_id_process
         self.repeated_id_owner = repeated_id_owner
         self.allow_info_share = allow_info_share
@@ -371,11 +422,11 @@ class IntersectParam(BaseParam):
         self.with_sample_id = with_sample_id
         self.join_method = join_method
         self.new_join_id = new_join_id
-        self.dh_params = dh_params
+        self.dh_params = copy.deepcopy(dh_params)
         self.cardinality_only = cardinality_only
         self.sync_cardinality = sync_cardinality
         self.run_preprocess = run_preprocess
-        self.intersect_preprocess_params = intersect_preprocess_params
+        self.intersect_preprocess_params = copy.deepcopy(intersect_preprocess_params)
 
     def check(self):
         descr = "intersect param's "
@@ -384,68 +435,61 @@ class IntersectParam(BaseParam):
                                                             [consts.RSA, consts.RAW, consts.DH],
                                                             f"{descr}intersect_method")
 
-        if type(self.random_bit).__name__ not in ["int"]:
-            raise ValueError("intersect param's random_bit {} not supported, should be positive integer".format(
-                self.random_bit))
-
-        if type(self.sync_intersect_ids).__name__ != "bool":
-            raise ValueError(
-                "intersect param's sync_intersect_ids {} not supported, should be bool type".format(
-                    self.sync_intersect_ids))
-
+        self.check_positive_integer(self.random_bit, f"{descr}random_bit")
+        self.check_boolean(self.sync_intersect_ids, f"{descr}intersect_ids")
         self.join_role = self.check_and_change_lower(self.join_role,
                                                      [consts.GUEST, consts.HOST],
                                                      f"{descr}join_role")
-
-        if type(self.with_encode).__name__ != "bool":
-            raise ValueError(
-                "intersect param's with_encode {} not supported, should be bool type".format(
-                    self.with_encode))
-
-        if type(self.only_output_key).__name__ != "bool":
-            raise ValueError(
-                "intersect param's only_output_key {} not supported, should be bool type".format(
-                    self.only_output_key))
-
+        self.check_boolean(self.with_encode, f"{descr}with_encode")
+        self.check_boolean(self.only_output_key, f"{descr}only_output_key")
+        """
         if type(self.repeated_id_process).__name__ != "bool":
-            raise ValueError(
-                "intersect param's repeated_id_process {} not supported, should be bool type".format(
-                    self.repeated_id_process))
-
+        raise ValueError(
+            "intersect param's repeated_id_process {} not supported, should be bool type".format(
+                self.repeated_id_process))
         self.repeated_id_owner = self.check_and_change_lower(self.repeated_id_owner,
                                                              [consts.GUEST],
                                                              f"{descr}repeated_id_owner")
-
         if type(self.allow_info_share).__name__ != "bool":
             raise ValueError(
                 "intersect param's allow_info_sync {} not supported, should be bool type".format(
                     self.allow_info_share))
-
         self.info_owner = self.check_and_change_lower(self.info_owner,
                                                       [consts.GUEST, consts.HOST],
                                                       f"{descr}info_owner")
+        self.check_boolean(self.with_sample_id, f"{descr}with_sample_id")
+        """
+        if self.repeated_id_process:
+            LOGGER.warning(f"parameter repeated_id_process is ignored")
+        if self.repeated_id_owner:
+            LOGGER.warning(f"parameter repeated_id_owner is ignored")
+        if self.allow_info_share:
+            LOGGER.warning(f"parameter allow_info_share is ignored")
+        if self.info_owner:
+            LOGGER.warning(f"parameter info_owner is ignored")
+        if self.with_sample_id:
+            LOGGER.warning(f"parameter with_sample_id is ignored.")
 
-        self.check_boolean(self.with_sample_id, descr+"with_sample_id")
         self.join_method = self.check_and_change_lower(self.join_method, [consts.INNER_JOIN, consts.LEFT_JOIN],
                                                        f"{descr}join_method")
-        self.check_boolean(self.new_join_id, descr+"new_join_id")
-
-        if self.with_sample_id:
-            LOGGER.warning(f"with_sample_id is ignored.")
+        self.check_boolean(self.new_join_id, f"{descr}new_join_id")
+        self.join_id_owner = self.check_and_change_lower(self.join_id_owner,
+                                                        [consts.GUEST, consts.HOST],
+                                                        f"{descr}join_id_owner")
 
         if self.join_method==consts.LEFT_JOIN:
             if not self.sync_intersect_ids:
-                raise ValueError(f"Cannot perform left join without sync intersect ids or info share")
-            if not self.allow_info_share:
-                LOGGER.warning(f"when performing left_join, allow_info_share is always True.")
+                raise ValueError(f"Cannot perform left join without sync intersect ids")
 
+        self.check_boolean(self.run_cache, f"{descr} run_cache")
         self.encode_params.check()
+        self.raw_params.check()
         self.rsa_params.check()
         self.dh_params.check()
         self.intersect_cache_param.check()
-        self.check_boolean(self.cardinality_only, descr+"cardinality_only")
-        self.check_boolean(self.sync_cardinality, descr+"sync_cardinality")
-        self.check_boolean(self.run_preprocess, descr+"run_preprocess")
+        self.check_boolean(self.cardinality_only, f"{descr}cardinality_only")
+        self.check_boolean(self.sync_cardinality, f"{descr}sync_cardinality")
+        self.check_boolean(self.run_preprocess, f"{descr}run_preprocess")
         self.intersect_preprocess_params.check()
         if self.cardinality_only:
             if self.intersect_method not in [consts.RSA]:
@@ -457,7 +501,7 @@ class IntersectParam(BaseParam):
                 raise ValueError(f"for preprocessing ids, false_positive_rate must be no less than 0.01")
             if self.cardinality_only:
                 raise ValueError(f"cardinality_only mode cannot run preprocessing.")
-        if self.intersect_cache_param.run_cache:
+        if self.run_cache:
             if self.intersect_method not in [consts.RSA, consts.DH]:
                 raise ValueError(f"Only rsa or dh method supports cache.")
             if self.intersect_method == consts.RSA and self.rsa_params.split_calculation:
