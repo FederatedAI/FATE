@@ -36,35 +36,32 @@ def validate_component_param():
     if not request.json or not isinstance(request.json, dict):
         return error_response(400, 'bad request')
 
-    dsl_version = int(request.json.get('dsl_version', 1))
-    if dsl_version == 2:
-        parameters_key_name = 'component_parameters'
+    required_keys = [
+        'component_name',
+        'component_module_name',
+    ]
+    config_keys = ['role']
+
+    dsl_version = int(request.json.get('dsl_version', 0))
+    if dsl_version == 1:
+        config_keys += ['role_parameters', 'algorithm_parameters']
+        parser_class = DSLParser
+    elif dsl_version == 2:
+        config_keys += ['component_parameters']
         parser_class = DSLParserV2
     else:
-        parameters_key_name = 'role_parameters'
-        parser_class = DSLParser
+        return error_response(400, 'unsupported dsl_version')
 
     try:
-        check_config(request.json, [
-            'role',
-            parameters_key_name,
-            'component_name',
-            'component_module_name',
-        ])
+        check_config(request.json, required_keys + config_keys)
     except Exception as e:
         return error_response(400, str(e))
 
-    args = [
-        get_federatedml_setting_conf_directory(),
-        {
-            'role': request.json['role'],
-            parameters_key_name: request.json[parameters_key_name],
-        },
-        request.json['component_name'],
-        request.json['component_module_name'],
-    ]
     try:
-        parser_class.validate_component_param(*args)
+        parser_class.validate_component_param(
+            get_federatedml_setting_conf_directory(),
+            {i: request.json[i] for i in config_keys},
+            *[request.json[i] for i in required_keys])
     except Exception as e:
         return error_response(400, str(e))
 
