@@ -204,7 +204,6 @@ class HomoDecisionTreeClient(DecisionTree):
             l_g, l_h = split_info[idx].sum_grad, split_info[idx].sum_hess
 
             # create new left node and new right node
-            LOGGER.debug('split info is {}'.format(split_info[idx]))
             left_node = Node(id=l_id,
                              sitename=self.sitename,
                              sum_grad=l_g,
@@ -378,20 +377,24 @@ class HomoDecisionTreeClient(DecisionTree):
 
             self.sync_cur_layer_node_num(len(self.cur_layer_node), suffix=(dep, self.epoch_idx, self.tree_idx))
 
-            node_hists = []
             node_map = self.get_node_map(self.cur_layer_node)
+            node_hists = []
+            for batch_id, i in enumerate(range(0, len(self.cur_layer_node), self.max_split_nodes)):
 
-            for node in self.cur_layer_node:
-                if node.id in node_map:
-                    hist = self.sklearn_compute_agg_hist(node.inst_indices)
-                    hist_bag = HistogramBag(hist, tensor_type='array')
-                    hist_bag.hid = node.id
-                    hist_bag.p_hid = node.parent_nodeid
-                    node_hists.append(hist_bag)
+                cur_to_split = self.cur_layer_node[i:i + self.max_split_nodes]
 
-            self.sync_local_node_histogram(node_hists, suffix=(0, dep, self.epoch_idx, self.tree_idx))
+                for node in cur_to_split:
+                    if node.id in node_map:
+                        hist = self.sklearn_compute_agg_hist(node.inst_indices)
+                        hist_bag = HistogramBag(hist, tensor_type='array')
+                        hist_bag.hid = node.id
+                        hist_bag.p_hid = node.parent_nodeid
+                        node_hists.append(hist_bag)
+
+                self.sync_local_node_histogram(node_hists, suffix=(batch_id, dep, self.epoch_idx, self.tree_idx))
+                node_hists = []
+
             split_info = self.sync_best_splits(suffix=(dep, self.epoch_idx))
-
             new_layer_node = self.update_tree(self.cur_layer_node, split_info)
             node2inst_idx = []
 
