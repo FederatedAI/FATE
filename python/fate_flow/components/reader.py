@@ -77,10 +77,11 @@ class Reader(ComponentBase):
                                                                  name=output_table_name,
                                                                  namespace=output_table_namespace,
                                                                  partitions=input_table_meta.partitions)
-                self.copy_table(src_table=input_table, dest_table=output_table)
+                self.save_table(src_table=input_table, dest_table=output_table)
                 # update real count to meta info
                 output_table.count()
-                output_table_meta = StorageTableMeta(name=output_table.get_name(), namespace=output_table.get_namespace())
+                output_table_meta = StorageTableMeta(name=output_table.get_name(),
+                                                     namespace=output_table.get_namespace())
         self.tracker.log_output_data_info(
             data_name=component_parameters.get('output_data_name')[0] if component_parameters.get(
                 'output_data_name') else table_key,
@@ -168,7 +169,19 @@ class Reader(ComponentBase):
             raise RuntimeError(f"can not support computing engine {computing_engine}")
         return input_table_meta, output_table_address, output_table_engine
 
-    def save_table(self, src_table_meta, dest_table):
+    def save_table(self, src_table: StorageTableABC, dest_table: StorageTableABC):
+        LOGGER.info(f"start copying table")
+        LOGGER.info(
+            f"source table name: {src_table.get_name()} namespace: {src_table.get_namespace()} engine: {src_table.get_engine()}")
+        LOGGER.info(
+            f"destination table name: {dest_table.get_name()} namespace: {dest_table.get_namespace()} engine: {dest_table.get_engine()}")
+        if dest_table.get_engine() == dest_table.get_engine() and src_table.get_meta().get_in_serialized():
+            self.save(src_table, dest_table)
+        else:
+            self.copy_table(src_table, dest_table)
+
+    def save(self, src_table, dest_table):
+        src_table_meta = src_table.get_meta()
         sess = session.Session(computing_type=self.job_parameters.computing_engine,
                                federation_type=self.job_parameters.federation_engine)
         computing_session_id = job_utils.generate_session_id(self.tracker.task_id, self.tracker.task_version,
@@ -178,20 +191,19 @@ class Reader(ComponentBase):
         src_computing_table = session.get_latest_opened().computing.load(src_table_meta.get_address(),
                                                                          schema=src_table_meta.get_schema(),
                                                                          partitions=src_table_meta.get_partitions())
-        src_computing_table.save(dest_table.get_address(), src_table_meta.get_partitions(),
-                                 schema=src_table_meta.get_schema())
-        count = src_computing_table.count()
+        LOGGER.info(f"schema: {src_table_meta.get_schema()}")
+        self.tracker.job_tracker.save_output_data(src_computing_table, output_storage_engine=dest_table.get_engine(),
+                                                  output_storage_address=dest_table.get_address(),
+                                                  output_table_namespace=dest_table.get_namespace(),
+                                                  output_table_name=dest_table.get_name(),
+                                                  meta_schema=src_table_meta.get_schema())
+        LOGGER.info(f"save {dest_table.get_namespace()} {dest_table.get_name()} success")
 
-    def copy_table(self, src_table: StorageTableABC, dest_table: StorageTableABC):
+    def copy_table(self, src_table, dest_table):
         count = 0
         data_temp = []
         part_of_data = []
         src_table_meta = src_table.get_meta()
-        LOGGER.info(f"start copying table")
-        LOGGER.info(
-            f"source table name: {src_table.get_name()} namespace: {src_table.get_namespace()} engine: {src_table.get_engine()}")
-        LOGGER.info(
-            f"destination table name: {dest_table.get_name()} namespace: {dest_table.get_namespace()} engine: {dest_table.get_engine()}")
         schema = {}
         if not src_table_meta.get_in_serialized():
             if src_table_meta.get_have_head():

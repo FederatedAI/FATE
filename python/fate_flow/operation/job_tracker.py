@@ -115,7 +115,7 @@ class Tracker(object):
         return view_data
 
     def save_output_data(self, computing_table, output_storage_engine, output_storage_address: dict,
-                         output_table_namespace=None, output_table_name=None):
+                         output_table_namespace=None, output_table_name=None, meta_schema=None):
         if computing_table:
             if not output_table_namespace or not output_table_name:
                 output_table_namespace, output_table_name = data_utils.default_output_table_info(task_id=self.task_id, task_version=self.task_version)
@@ -124,19 +124,23 @@ class Tracker(object):
                                                                                   output_table_name))
             partitions = computing_table.partitions
             schedule_logger(self.job_id).info('output data table partitions is {}'.format(partitions))
-            address_dict = output_storage_address.copy()
-            if output_storage_engine == StorageEngine.EGGROLL:
-                address_dict.update({"name": output_table_name, "namespace": output_table_namespace, "storage_type": storage.EggRollStorageType.ROLLPAIR_LMDB})
-            elif output_storage_engine == StorageEngine.STANDALONE:
-                address_dict.update({"name": output_table_name, "namespace": output_table_namespace, "storage_type": storage.StandaloneStorageType.ROLLPAIR_LMDB})
-            elif output_storage_engine == StorageEngine.HDFS:
-                address_dict.update({"path": data_utils.default_output_fs_path(name=output_table_name, namespace=output_table_namespace, prefix=address_dict.get("path_prefix"))})
+            if isinstance(output_storage_address, dict):
+                address_dict = output_storage_address.copy()
+                if output_storage_engine == StorageEngine.EGGROLL:
+                    address_dict.update({"name": output_table_name, "namespace": output_table_namespace, "storage_type": storage.EggRollStorageType.ROLLPAIR_LMDB})
+                elif output_storage_engine == StorageEngine.STANDALONE:
+                    address_dict.update({"name": output_table_name, "namespace": output_table_namespace, "storage_type": storage.StandaloneStorageType.ROLLPAIR_LMDB})
+                elif output_storage_engine == StorageEngine.HDFS:
+                    address_dict.update({"path": data_utils.default_output_fs_path(name=output_table_name, namespace=output_table_namespace, prefix=address_dict.get("path_prefix"))})
+                else:
+                    raise RuntimeError(f"{output_storage_engine} storage is not supported")
+                address = storage.StorageTableMeta.create_address(storage_engine=output_storage_engine, address_dict=address_dict)
             else:
-                raise RuntimeError(f"{output_storage_engine} storage is not supported")
-            address = storage.StorageTableMeta.create_address(storage_engine=output_storage_engine, address_dict=address_dict)
+                address = output_storage_address
             schema = {}
             # persistent table
             computing_table.save(address, schema=schema, partitions=partitions)
+            schema = schema if not meta_schema else meta_schema
             part_of_data = []
             part_of_limit = 100
             for k, v in computing_table.collect():
@@ -145,7 +149,7 @@ class Tracker(object):
                 if part_of_limit == 0:
                     break
             table_count = computing_table.count()
-            table_meta = storage.StorageTableMeta(name=output_table_name, namespace=output_table_namespace, new=True)
+            table_meta = storage.StorageTableMeta(name=output_table_name, namespace=output_table_namespace, new=True if not meta_schema else False)
             table_meta.address = address
             table_meta.partitions = computing_table.partitions
             table_meta.engine = output_storage_engine
@@ -153,7 +157,10 @@ class Tracker(object):
             table_meta.schema = schema
             table_meta.part_of_data = part_of_data
             table_meta.count = table_count
-            table_meta.create()
+            if not meta_schema:
+                table_meta.create()
+            else:
+                table_meta.update_metas(schema=schema, part_of_data=part_of_data, count=table_count)
             return output_table_namespace, output_table_name
         else:
             schedule_logger(self.job_id).info('task id {} output data table is none'.format(self.task_id))
