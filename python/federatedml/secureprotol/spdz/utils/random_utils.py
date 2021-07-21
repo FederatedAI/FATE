@@ -71,7 +71,26 @@ def _mix_rand_func(it, q_field):
     return result
 
 
+# def urand_tensor(q_field, tensor, use_mix=False):
+#     if is_table(tensor):
+#         if use_mix:
+#             return tensor.mapPartitions(functools.partial(_mix_rand_func, q_field=q_field),
+#                                         use_previous_behavior=False,
+#                                         preserves_partitioning=True)
+#         return tensor.mapValues(
+#             lambda x: np.random.random(len(x)))
+#     if isinstance(tensor, np.ndarray):
+#         arr = np.random.random(tensor.shape)
+#         # arr = np.zeros(shape=tensor.shape, dtype=object)
+#         # view = arr.view().reshape(-1)
+#         # for i in range(arr.size):
+#         #     view[i] = random.SystemRandom().randint(1, q_field)
+#         return arr
+#     raise NotImplementedError(f"type={type(tensor)}")
+
+
 def urand_tensor(q_field, tensor, use_mix=False):
+    # q_field = 1
     if is_table(tensor):
         if use_mix:
             return tensor.mapPartitions(functools.partial(_mix_rand_func, q_field=q_field),

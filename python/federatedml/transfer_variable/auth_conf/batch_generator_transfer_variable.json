@@ -1,0 +1,21 @@
+{
+  "federatedml.transfer_variable.transfer_class.batch_generator_transfer_variable.BatchGeneratorTransferVariable": {
+    "batch_data_index": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "host"
+      ]
+    },
+    "batch_info": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "host",
+        "arbiter"
+      ]
+    }
+  }
+}

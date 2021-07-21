@@ -14,6 +14,10 @@
 #  limitations under the License.
 #
 
+# This is used in sshe lr. Set it as True, means you allow all your model weights be reconstructed in
+# Guest party only. Please make sure that is what you authorize to.
+ALLOW_REVIEW_GUEST_ONLY = True
+
 ARBITER = 'arbiter'
 HOST = 'host'
 GUEST = 'guest'

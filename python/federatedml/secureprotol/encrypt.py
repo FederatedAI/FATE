@@ -72,11 +72,11 @@ class Encrypt(object):
         return result
 
     def distribute_decrypt(self, X):
-        decrypt_table = X.mapValues(lambda x: self.decrypt(x))
+        decrypt_table = X.mapValues(lambda x: self.recursive_decrypt(x))
         return decrypt_table
 
     def distribute_encrypt(self, X):
-        encrypt_table = X.mapValues(lambda x: self.encrypt(x))
+        encrypt_table = X.mapValues(lambda x: self.recursive_encrypt(x))
         return encrypt_table
 
     def _recursive_func(self, obj, func):
@@ -316,9 +316,12 @@ class IterativeAffineEncrypt(SymmetricEncrypt):
     def __init__(self):
         super(IterativeAffineEncrypt, self).__init__()
 
-    def generate_key(self, key_size=1024, key_round=5, randomized=False):
+    def generate_key(self, key_size=1024, key_round=5, encode_precision=2**100, randomized=False):
         self.key = IterativeAffineCipher.generate_keypair(
-            key_size=key_size, key_round=key_round, randomized=randomized
+            key_size=key_size,
+            key_round=key_round,
+            encode_precision=encode_precision,
+            randomized=randomized
         )
 
     def encrypt(self, plaintext):
