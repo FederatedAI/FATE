@@ -690,9 +690,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
         LOGGER.info('fitting a guest decision tree')
 
-        import time
-        s = time.time()
-
         self.init_packer_and_sync_gh()
         root_node = self.initialize_root_node()
         self.cur_layer_nodes = [root_node]
@@ -724,7 +721,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
                 split_info.extend(cur_splitinfos)
 
             self.update_tree(split_info, False)
-            LOGGER.debug('split info is {}'.format(split_info))
             self.assign_instances_to_new_node(dep)
 
         if self.cur_layer_nodes:
@@ -735,9 +731,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
         self.sync_tree()
         self.sample_weights_post_process()
         LOGGER.info("fitting guest decision tree done")
-
-        e = time.time()
-        LOGGER.debug('time take {}'.format(s - e))
 
 
     @staticmethod
