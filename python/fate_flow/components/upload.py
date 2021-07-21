@@ -126,15 +126,27 @@ class Upload(ComponentBase):
             if head is True:
                 data_head = fin.readline()
                 input_feature_count -= 1
-                self.table.get_meta().update_metas(schema=data_utils.get_header_schema(header_line=data_head, id_delimiter=self.parameters["id_delimiter"]))
+                self.table.get_meta().update_metas(
+                    schema=data_utils.get_header_schema(header_line=data_head,
+                                                        id_delimiter=self.parameters["id_delimiter"],
+                                                        extend_sid=self.parameters["extend_sid"]),
+                    auto_increasing_sid=self.parameters["auto_increasing_sid"],
+                    extend_sid=self.parameters["extend_sid"]
+                )
             n = 0
             while True:
                 data = list()
                 lines = fin.readlines(self.MAX_BYTES)
+                line_index = 0
                 if lines:
+                    # self.append_data_line(lines, data, n)
                     for line in lines:
                         values = line.rstrip().split(self.parameters["id_delimiter"])
-                        data.append((values[0], data_utils.list_to_str(values[1:], id_delimiter=self.parameters["id_delimiter"])))
+                        k, v = data_utils.get_data_line(values, line_index, extend_sid=self.parameters["extend_sid"],
+                                                        auto_increasing_sid=self.parameters["auto_increasing_sid"],
+                                                        id_delimiter=self.parameters["id_delimiter"])
+                        data.append((k, v))
+                        line_index += 1
                     lines_count += len(data)
                     save_progress = lines_count/input_feature_count*100//1
                     job_info = {'progress': save_progress, "job_id": job_id, "role": self.parameters["local"]['role'], "party_id": self.parameters["local"]['party_id']}
@@ -144,7 +156,8 @@ class Upload(ComponentBase):
                         self.table.get_meta().update_metas(part_of_data=data)
                 else:
                     table_count = self.table.count()
-                    self.table.get_meta().update_metas(count=table_count, partitions=self.parameters["partition"])
+                    self.table.get_meta().update_metas(count=table_count, partitions=self.parameters["partition"],
+                                                       extend_sid=self.parameters["extend_sid"])
                     self.save_meta(dst_table_namespace=dst_table_namespace, dst_table_name=dst_table_name, table_count=table_count)
                     return table_count
                 n += 1

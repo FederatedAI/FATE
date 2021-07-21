@@ -174,14 +174,18 @@ class Reader(ComponentBase):
                 get_head = False
             else:
                 get_head = True
+            line_index = 0
             for line in src_table.read():
                 if not get_head:
-                    schema = data_utils.get_header_schema(header_line=line, id_delimiter=src_table_meta.get_id_delimiter())
+                    schema = data_utils.get_header_schema(header_line=line, id_delimiter=src_table_meta.get_id_delimiter(),
+                                                          extend_sid=src_table_meta.get_extend_sid())
                     get_head = True
                     continue
                 values = line.rstrip().split(src_table.get_meta().get_id_delimiter())
-                k, v = values[0], data_utils.list_to_str(values[1:],
-                                                         id_delimiter=src_table.get_meta().get_id_delimiter())
+                k, v = data_utils.get_data_line(values, line_index, extend_sid=src_table.get_meta().get_extend_sid(),
+                                                auto_increasing_sid=src_table.get_meta().get_auto_increasing_sid(),
+                                                id_delimiter=src_table.get_meta().get_id_delimiter())
+                line_index += 1
                 count = self.put_in_table(table=dest_table, k=k, v=v, temp=data_temp, count=count,
                                           part_of_data=part_of_data)
         else:
