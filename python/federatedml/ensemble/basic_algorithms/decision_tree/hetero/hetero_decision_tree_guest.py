@@ -407,13 +407,9 @@ class HeteroDecisionTreeGuest(DecisionTree):
                                    task_type=self.task_type,
                                    max_sample_weight=self.max_sample_weight,
                                    en_calculator=self.encrypted_mode_calculator)
-
             en_grad_hess = self.packer.pack_and_encrypt(self.grad_and_hess)
-
         else:
             en_grad_hess = self.encrypted_mode_calculator.encrypt(self.grad_and_hess)
-            LOGGER.debug('self grad and hess count {} {}'.format(en_grad_hess.count()
-                                                                 , self.grad_and_hess.count()))
 
         LOGGER.info('sending g/h to host')
         self.transfer_inst.encrypted_grad_and_hess.remote(en_grad_hess,
