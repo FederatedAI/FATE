@@ -188,9 +188,9 @@ class PaillierPrivateKey(object):
 
         encoded = self.raw_decrypt(encrypted_number.ciphertext(be_secure=False))
         encoded = FixedPointNumber(encoded,
-                                   encrypted_number.exponent,
-                                   self.public_key.n,
-                                   self.public_key.max_int)
+                             encrypted_number.exponent,
+                             self.public_key.n,
+                             self.public_key.max_int)
         decrypt_value = encoded.decode()
 
         return decrypt_value
@@ -228,8 +228,6 @@ class PaillierEncryptedNumber(object):
     def __add__(self, other):
         if isinstance(other, PaillierEncryptedNumber):
             return self.__add_encryptednumber(other)
-        elif isinstance(other, FixedPointNumber):
-            return self.__add_fixpointnumber(other)
         else:
             return self.__add_scalar(other)
 
@@ -335,5 +333,4 @@ class PaillierEncryptedNumber(object):
         """
         ciphertext = gmpy_math.mpz(e_x) * gmpy_math.mpz(e_y) % self.public_key.nsquare
 
-        return PaillierEncryptedNumber(self.public_key, ciphertext, exponent)
-
+        return PaillierEncryptedNumber(self.public_key, int(ciphertext), exponent)
