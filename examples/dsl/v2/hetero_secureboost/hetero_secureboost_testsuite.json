@@ -98,6 +98,10 @@
             "conf": "./test_secureboost_train_complete_secure_conf.json",
             "dsl": "./test_secureboost_train_dsl.json"
         },
+        "train_binary_without_cipher_compress": {
+            "conf": "./test_secureboost_train_binary_without_cipher_compress_conf.json",
+            "dsl": "./test_secureboost_train_dsl.json"
+        },
         "train_binary_predict": {
             "conf": "./test_predict_conf.json",
             "dsl": "./test_predict_dsl.json",
