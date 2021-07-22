@@ -46,15 +46,16 @@ def get_header_schema(header_line, id_delimiter, extend_sid=True):
     return {'header': header, 'sid': sid}
 
 
-def get_data_line(values, line_index, id_delimiter, extend_sid=True, auto_increasing_sid=False):
-    if extend_sid:
-        if not auto_increasing_sid:
-            sid = fate_uuid()
-        else:
-            sid = line_index
-        return sid, list_to_str(values, id_delimiter=id_delimiter)
-    else:
-        return values[0], list_to_str(values[1:], id_delimiter=id_delimiter)
+def get_sid_data_line(values, id_delimiter, fate_uuid, line_index, **kwargs):
+    return fate_uuid+str(line_index), list_to_str(values, id_delimiter=id_delimiter)
+
+
+def get_auto_increasing_sid_data_line(values, id_delimiter, line_index, **kwargs):
+    return line_index, list_to_str(values, id_delimiter=id_delimiter)
+
+
+def get_data_line(values, id_delimiter, **kwargs):
+    return values[0], list_to_str(values[1:], id_delimiter=id_delimiter)
 
 
 def list_to_str(input_list, id_delimiter):

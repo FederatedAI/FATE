@@ -16,6 +16,7 @@
 import os
 import shutil
 import time
+import uuid
 
 from fate_arch.common import log, file_utils, EngineType, path_utils
 from fate_arch.storage import StorageEngine, EggRollStorageType
@@ -134,6 +135,13 @@ class Upload(ComponentBase):
                     extend_sid=self.parameters["extend_sid"]
                 )
             n = 0
+            fate_uuid = uuid.uuid1().hex
+            if not self.parameters["extend_sid"]:
+                get_line = data_utils.get_data_line
+            elif not self.parameters["auto_increasing_sid"]:
+                get_line = data_utils.get_sid_data_line
+            else:
+                get_line = data_utils.get_auto_increasing_sid_data_line
             while True:
                 data = list()
                 lines = fin.readlines(self.MAX_BYTES)
@@ -142,9 +150,10 @@ class Upload(ComponentBase):
                     # self.append_data_line(lines, data, n)
                     for line in lines:
                         values = line.rstrip().split(self.parameters["id_delimiter"])
-                        k, v = data_utils.get_data_line(values, line_index, extend_sid=self.parameters["extend_sid"],
-                                                        auto_increasing_sid=self.parameters["auto_increasing_sid"],
-                                                        id_delimiter=self.parameters["id_delimiter"])
+                        k, v = get_line(values=values, line_index=line_index, extend_sid=self.parameters["extend_sid"],
+                                        auto_increasing_sid=self.parameters["auto_increasing_sid"],
+                                        id_delimiter=self.parameters["id_delimiter"],
+                                        fate_uuid=fate_uuid)
                         data.append((k, v))
                         line_index += 1
                     lines_count += len(data)
