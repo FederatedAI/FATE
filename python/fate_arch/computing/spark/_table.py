@@ -159,14 +159,16 @@ class Table(CTableABC):
         return from_rdd(_union(self._rdd, other._rdd, func))
 
 
-def from_hdfs(paths: str, partitions):
+def from_hdfs(paths: str, partitions, in_serialized=True, id_delimiter=None):
     # noinspection PyPackageRequirements
     from pyspark import SparkContext
 
     sc = SparkContext.getOrCreate()
+    fun = hdfs_utils.deserialize if in_serialized else lambda x: (x.partition(id_delimiter)[0],
+                                                                  x.partition(id_delimiter)[2])
     rdd = materialize(
         sc.textFile(paths, partitions)
-        .map(hdfs_utils.deserialize)
+        .map(fun)
         .repartition(partitions)
     )
     return Table(rdd=rdd)

@@ -35,7 +35,8 @@ class CSession(CSessionABC):
     def load(self, address: AddressABC, partitions, schema, **kwargs):
         from fate_arch.common.address import HDFSAddress
         if isinstance(address, HDFSAddress):
-            table = from_hdfs(paths=f"{address.name_node}/{address.path}", partitions=partitions)
+            table = from_hdfs(paths=f"{address.name_node}/{address.path}", partitions=partitions,
+                              in_serialized=kwargs.get("in_serialized", True), id_delimiter=None)
             table.schema = schema
             return table
         from fate_arch.common.address import FileAddress

@@ -175,12 +175,12 @@ class Reader(ComponentBase):
             f"source table name: {src_table.get_name()} namespace: {src_table.get_namespace()} engine: {src_table.get_engine()}")
         LOGGER.info(
             f"destination table name: {dest_table.get_name()} namespace: {dest_table.get_namespace()} engine: {dest_table.get_engine()}")
-        if dest_table.get_engine() == dest_table.get_engine() and src_table.get_meta().get_in_serialized():
-            self.save(src_table, dest_table)
+        if dest_table.get_engine() == dest_table.get_engine():
+            self.to_save(src_table, dest_table)
         else:
             self.copy_table(src_table, dest_table)
 
-    def save(self, src_table, dest_table):
+    def to_save(self, src_table, dest_table):
         src_table_meta = src_table.get_meta()
         sess = session.Session(computing_type=self.job_parameters.computing_engine,
                                federation_type=self.job_parameters.federation_engine)
@@ -190,13 +190,19 @@ class Reader(ComponentBase):
         sess.as_default()
         src_computing_table = session.get_latest_opened().computing.load(src_table_meta.get_address(),
                                                                          schema=src_table_meta.get_schema(),
-                                                                         partitions=src_table_meta.get_partitions())
+                                                                         partitions=src_table_meta.get_partitions(),
+                                                                         id_delimiter=src_table_meta.get_id_delimiter(),
+                                                                         in_serialized=src_table_meta.get_in_serialized())
         LOGGER.info(f"schema: {src_table_meta.get_schema()}")
+        meta_schema = src_table_meta.get_schema()
+        if not src_table_meta.get_in_serialized():
+            header_line = src_computing_table.take()
+            meta_schema = data_utils.get_header_schema(header_line=header_line, id_delimiter=src_table_meta.get_id_delimiter())
         self.tracker.job_tracker.save_output_data(src_computing_table, output_storage_engine=dest_table.get_engine(),
                                                   output_storage_address=dest_table.get_address(),
                                                   output_table_namespace=dest_table.get_namespace(),
                                                   output_table_name=dest_table.get_name(),
-                                                  meta_schema=src_table_meta.get_schema())
+                                                  meta_schema=meta_schema)
         LOGGER.info(f"save {dest_table.get_namespace()} {dest_table.get_name()} success")
 
     def copy_table(self, src_table, dest_table):
