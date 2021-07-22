@@ -105,10 +105,10 @@ paths:
         - name: party_model_id
           in: path
           required: true
-          description: 'model id (replace # with _)'
+          description: 'model id (replace # with ~)'
           schema:
             type : string
-            example: 'host_10000_arbiter-10000_guest-9999_host-10000_model'
+            example: 'host~10000~arbiter-10000~guest-9999~host-10000~model'
         - name: model_version
           in: path
           required: true

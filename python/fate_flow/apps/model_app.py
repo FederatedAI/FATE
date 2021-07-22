@@ -296,7 +296,7 @@ def transfer_model():
 
 @manager.route('/transfer/<party_model_id>/<model_version>', methods=['post'])
 def download_model(party_model_id, model_version):
-    party_model_id = party_model_id.replace('_', '#')
+    party_model_id = party_model_id.replace('~', '#')
     model_data = publish_model.download_model(party_model_id, model_version)
     if model_data is None:
         return error_response(404, 'model not found')
