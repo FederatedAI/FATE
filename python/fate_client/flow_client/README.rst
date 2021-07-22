@@ -488,7 +488,7 @@ Model
 ``load``
 ~~~~~~~~
 
--  *Description*: Load model.
+-  *Description*: Load model. Need to deploy model first if `dsl_version` == `2`.
 -  *Arguments*:
 
 +-------+--------------+-----------+-------------------+------------+-----------------------------------+
@@ -509,7 +509,7 @@ Model
 ``bind``
 ~~~~~~~~
 
--  *Description*: Bind model.
+-  *Description*: Bind model. Need to deploy model first if `dsl_version` == `2`.
 -  *Arguments*:
 
 +-------+--------------+-----------+-------------------+------------+-----------------------------------+

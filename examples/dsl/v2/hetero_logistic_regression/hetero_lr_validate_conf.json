@@ -35,7 +35,8 @@
                 "batch_size": -1,
                 "learning_rate": 0.15,
                 "init_param": {
-                    "init_method": "zeros"
+                    "init_method": "zeros",
+                    "fit_intercept": false
                 },
                 "max_iter": 30,
                 "early_stop": "diff",

@@ -93,6 +93,10 @@
         "homo_sbt": {
             "conf": "pipeline-hetero-feature-selection-homo-sbt_conf.json",
             "dsl": "pipeline-hetero-feature-selection-homo-sbt_dsl.json"
+        },
+        "hetero_feature_selection_local_only": {
+            "conf": "hetero_feature_selection_local_only_conf.json",
+            "dsl": "hetero_feature_selection_local_only_dsl.json"
         }
     }
 }

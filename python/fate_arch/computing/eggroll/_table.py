@@ -115,7 +115,7 @@ class Table(CTableABC):
                 sampled_table = self._rp.sample(fraction=frac, seed=seed)
                 sampled_count = sampled_table.count()
                 if sampled_count < num:
-                    frac += 0.1
+                    frac *= 1.1
                 else:
                     break
 

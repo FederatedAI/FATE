@@ -15,19 +15,26 @@
 #
 
 import functools
+import hashlib
 from collections import Iterable
 
 import numpy as np
 from Cryptodome import Random
 from Cryptodome.PublicKey import RSA
-import hashlib
-
 from federatedml.feature.instance import Instance
 from federatedml.secureprotol import gmpy_math
 from federatedml.secureprotol.affine import AffineCipher
 from federatedml.secureprotol.fate_paillier import PaillierKeypair
 from federatedml.secureprotol.iterative_affine import IterativeAffineCipher
 from federatedml.secureprotol.random import RandomPads
+
+_TORCH_VALID = False
+try:
+    import torch
+
+    _TORCH_VALID = True
+except ImportError:
+    pass
 
 
 class Encrypt(object):
@@ -77,10 +84,14 @@ class Encrypt(object):
             if len(obj.shape) == 1:
                 return np.reshape([func(val) for val in obj], obj.shape)
             else:
-                return np.reshape([self._recursive_func(o, func) for o in obj], obj.shape)
+                return np.reshape(
+                    [self._recursive_func(o, func) for o in obj], obj.shape
+                )
         elif isinstance(obj, Iterable):
             return type(obj)(
-                self._recursive_func(o, func) if isinstance(o, Iterable) else func(o) for o in obj)
+                self._recursive_func(o, func) if isinstance(o, Iterable) else func(o)
+                for o in obj
+            )
         else:
             return func(obj)
 
@@ -140,8 +151,9 @@ class PaillierEncrypt(Encrypt):
         super(PaillierEncrypt, self).__init__()
 
     def generate_key(self, n_length=1024):
-        self.public_key, self.privacy_key = \
-            PaillierKeypair.generate_keypair(n_length=n_length)
+        self.public_key, self.privacy_key = PaillierKeypair.generate_keypair(
+            n_length=n_length
+        )
 
     def get_key_pair(self):
         return self.public_key, self.privacy_key
@@ -208,7 +220,6 @@ class AffineEncrypt(SymmetricEncrypt):
 
 
 class PadsCipher(Encrypt):
-
     def __init__(self):
         super().__init__()
         self._uuid = None
@@ -222,8 +233,14 @@ class PadsCipher(Encrypt):
         self._amplify_factor = factor
 
     def set_exchanged_keys(self, keys):
-        self._seeds = {uid: v & 0xffffffff for uid, v in keys.items() if uid != self._uuid}
-        self._rands = {uid: RandomPads(v & 0xffffffff) for uid, v in keys.items() if uid != self._uuid}
+        self._seeds = {
+            uid: v & 0xFFFFFFFF for uid, v in keys.items() if uid != self._uuid
+        }
+        self._rands = {
+            uid: RandomPads(v & 0xFFFFFFFF)
+            for uid, v in keys.items()
+            if uid != self._uuid
+        }
 
     def encrypt(self, value):
         if isinstance(value, np.ndarray):
@@ -235,20 +252,14 @@ class PadsCipher(Encrypt):
                     ret = rand.add_rand_pads(ret, -1.0 * self._amplify_factor)
             return ret
 
-        # try to import torch, if torch is required, the upper level will fail first. 
-        try:
-            import torch
-            if isinstance(value, torch.Tensor):
-                ret = value.numpy()
-                for uid, rand in self._rands.items():
-                    if uid > self._uuid:
-                        ret = rand.add_rand_pads(ret, 1.0 * self._amplify_factor)
-                    else:
-                        ret = rand.add_rand_pads(ret, -1.0 * self._amplify_factor)
-                return torch.Tensor(ret)
-
-        except ImportError:
-            pass
+        if _TORCH_VALID and isinstance(value, torch.Tensor):
+            ret = value.numpy()
+            for uid, rand in self._rands.items():
+                if uid > self._uuid:
+                    ret = rand.add_rand_pads(ret, 1.0 * self._amplify_factor)
+                else:
+                    ret = rand.add_rand_pads(ret, -1.0 * self._amplify_factor)
+            return torch.Tensor(ret)
 
         ret = value
         for uid, rand in self._rands.items():
@@ -264,7 +275,7 @@ class PadsCipher(Encrypt):
             # LOGGER.debug(f"hash_key: {has_key}")
             cur_seeds = {uid: has_key + seed for uid, seed in seeds.items()}
             # LOGGER.debug(f"cur_seeds: {cur_seeds}")
-            rands = {uid: RandomPads(v & 0xffffffff) for uid, v in cur_seeds.items()}
+            rands = {uid: RandomPads(v & 0xFFFFFFFF) for uid, v in cur_seeds.items()}
 
             if isinstance(value, np.ndarray):
                 ret = value
@@ -292,9 +303,10 @@ class PadsCipher(Encrypt):
                         ret -= rand.rand(1)[0] * self._amplify_factor
                 return key, ret
 
-        f = functools.partial(_pad, seeds=self._seeds, amplify_factor=self._amplify_factor)
+        f = functools.partial(
+            _pad, seeds=self._seeds, amplify_factor=self._amplify_factor
+        )
         return table.map(f)
-
 
     def decrypt(self, value):
         return value
@@ -305,9 +317,9 @@ class IterativeAffineEncrypt(SymmetricEncrypt):
         super(IterativeAffineEncrypt, self).__init__()
 
     def generate_key(self, key_size=1024, key_round=5, randomized=False):
-        self.key = IterativeAffineCipher.generate_keypair(key_size=key_size,
-                                                          key_round=key_round,
-                                                          randomized=randomized)
+        self.key = IterativeAffineCipher.generate_keypair(
+            key_size=key_size, key_round=key_round, randomized=randomized
+        )
 
     def encrypt(self, plaintext):
         if self.key is not None:

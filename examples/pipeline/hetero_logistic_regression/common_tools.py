@@ -37,7 +37,7 @@ def prettify(response, verbose=True):
 
 
 def make_normal_dsl(config, namespace, lr_param, is_multi_host=False, has_validate=False,
-                    is_cv=False, is_ovr=False, is_dense=True):
+                    is_cv=False, is_ovr=False, is_dense=True, need_evaluation=True):
     parties = config.parties
     guest = parties.guest[0]
     if is_multi_host:
@@ -133,23 +133,11 @@ def make_normal_dsl(config, namespace, lr_param, is_multi_host=False, has_valida
                                model=Model(hetero_lr_0.output.model))
         evaluation_data.append(hetero_lr_1.output.data)
 
-    evaluation_0 = Evaluation(name="evaluation_0", eval_type="binary")
-    pipeline.add_component(evaluation_0, data=Data(data=evaluation_data))
+    if need_evaluation:
+        evaluation_0 = Evaluation(name="evaluation_0", eval_type="binary")
+        pipeline.add_component(evaluation_0, data=Data(data=evaluation_data))
 
     pipeline.compile()
-    # pipeline.fit(backend=0, work_mode=0)
-    # deploy_components = [dataio_0, intersection_0, hetero_lr_0]
-    # pipeline.deploy_component(components=deploy_components)
-    #
-    # predict_pipeline = PipeLine()
-    # # add data reader onto predict pipeline
-    # predict_pipeline.add_component(reader_0)
-    # # add selected components from train pipeline onto predict pipeline
-    # # specify data source
-    # predict_pipeline.add_component(pipeline,
-    #                                data=Data(predict_input={pipeline.dataio_0.input.data: reader_0.output.data}))
-    # predict_pipeline.compile()
-    # predict_pipeline.predict(backend=0, work_mode=0)
     return pipeline
 
 

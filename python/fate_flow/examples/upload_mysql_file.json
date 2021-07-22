@@ -7,5 +7,13 @@
     "backend": 0,
     "namespace": "experiment",
     "table_name": "breast_hetero_guest",
-    "task_cores": 2
+    "storage_engine": "MYSQL",
+    "storage_address":{
+        "host": "127.0.0.1",
+        "port":3306,
+        "user": "fate",
+        "passwd":"fate",
+        "db": "experiment",
+        "name": "breast_hetero_guest"
+    }
 }
