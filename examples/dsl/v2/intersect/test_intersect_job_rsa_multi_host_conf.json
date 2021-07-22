@@ -35,9 +35,11 @@
         "role": {
             "guest": {
                 "0": {
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": false,
-                        "output_format": "dense"
+                        "output_format": "dense",
+                        "with_match_id": true,
+                        "match_id_name": "id"
                     },
                     "reader_0": {
                         "table": {
@@ -49,9 +51,11 @@
             },
             "host": {
                 "0": {
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": false,
-                        "output_format": "dense"
+                        "output_format": "dense",
+                        "with_match_id": true,
+                        "match_id_name": "id"
                     },
                     "reader_0": {
                         "table": {
@@ -61,9 +65,11 @@
                     }
                 },
                 "1": {
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": false,
-                        "output_format": "dense"
+                        "output_format": "dense",
+                        "with_match_id": true,
+                        "match_id_name": "id"
                     },
                     "reader_0": {
                         "table": {

@@ -172,12 +172,12 @@ class IntersectModelBase(ModelBase):
                 proc_obj.use_sample_id()
             match_data = proc_obj.recover(data=data)
             if self.intersection_obj.cardinality_only:
-                filter = self.intersection_obj.run_cardinality(match_data)
+                self.intersection_obj.run_cardinality(match_data)
             else:
                 self.intersect_ids = self.intersection_obj.run_intersect(match_data)
         else:
             if self.intersection_obj.cardinality_only:
-                filter = self.intersection_obj.run_cardinality(data)
+                self.intersection_obj.run_cardinality(data)
             else:
                 self.intersect_ids = self.intersection_obj.run_intersect(data)
 
@@ -188,7 +188,7 @@ class IntersectModelBase(ModelBase):
             # self.model = self.intersection_obj.get_model()
             self.set_summary(self.get_model_summary())
             self.callback()
-            return filter
+            return data
 
         """
         if self.intersection_obj.cardinality_only:
@@ -210,9 +210,9 @@ class IntersectModelBase(ModelBase):
 
             self.intersect_ids = proc_obj.expand(self.intersect_ids)
             if self.model_param.repeated_id_owner == self.role and self.model_param.only_output_key:
-                sid_name = self.intersect_ids.schema.get('sid_name')
-                self.intersect_ids = self.intersect_ids.mapValues(lambda v: None)
-                self.intersect_ids.schema['sid_name'] = sid_name
+                # sid_name = self.intersect_ids.schema.get('sid_name')
+                self.intersect_ids = self.intersect_ids.mapValues(lambda v: Instance(inst_id=v.inst_id))
+                # self.intersect_ids.schema['sid_name'] = sid_name
 
             # LOGGER.info("repeated_id process:{}".format(self.intersect_ids.count()))
 

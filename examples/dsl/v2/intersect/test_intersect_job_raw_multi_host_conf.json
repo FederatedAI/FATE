@@ -36,9 +36,11 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": false,
-                        "output_format": "dense"
+                        "output_format": "dense",
+                        "with_match_id": true,
+                        "match_id_name": "id"
                     }
                 },
                 "1": {
@@ -48,9 +50,11 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": false,
-                        "output_format": "dense"
+                        "output_format": "dense",
+                        "with_match_id": true,
+                        "match_id_name": "id"
                     }
                 }
             },
@@ -62,9 +66,11 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": false,
-                        "output_format": "dense"
+                        "output_format": "dense",
+                        "with_match_id": true,
+                        "match_id_name": "id"
                     }
                 }
             }

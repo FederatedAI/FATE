@@ -346,4 +346,4 @@ class RsaIntersectionGuest(RsaIntersect):
         else:
             LOGGER.info("Skip sync intersect cardinality with host(s)")
 
-        return data_instances
+        return

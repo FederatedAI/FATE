@@ -264,4 +264,4 @@ class RsaIntersectionHost(RsaIntersect):
             self.intersect_num = self.transfer_variable.cardinality.get(idx=0)
             LOGGER.info("Got intersect cardinality from guest.")
 
-        return data_instances
+        return
