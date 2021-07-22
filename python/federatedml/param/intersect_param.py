@@ -62,7 +62,7 @@ class EncodeParam(BaseParam):
                 "hash param's base64 {} not supported, should be bool type".format(self.base64))
 
         LOGGER.debug("Finish EncodeParam check!")
-        LOGGER.warning(f"'EncodeParam' will be renamed to 'RawParam' in future release."
+        LOGGER.warning(f"'EncodeParam' will be replaced by 'RAWParam' in future release."
                        f"Please do not rely on current param naming in application.")
         return True
 

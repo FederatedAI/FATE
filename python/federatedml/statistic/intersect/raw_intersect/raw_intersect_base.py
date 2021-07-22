@@ -32,15 +32,38 @@ class RawIntersect(Intersect):
         # self.only_output_key = param.only_output_key
         # self.sync_intersect_ids = param.sync_intersect_ids
         super().load_params(param=param)
-        self.with_encode = param.with_encode
-        self.encode_params = param.encode_params
-        self.join_role = param.join_role
-        self.hash_operator = Hash(param.encode_params.encode_method, param.encode_params.base64)
-        self.salt = self.encode_params.salt
+        self.raw_params = param.raw_params
+        if param.with_encode:
+            self.use_hash = param.with_encode
+            LOGGER.warning(f"with_encode of IntersectParam will be deprecated in future."
+                           f"Please use 'use_hash' within RAWParam instead.")
+            self.hash_method = param.encode_params.encode_method
+            LOGGER.warning(f"EncodeParam will be deprecated in future."
+                           f"Please use 'hash_method' within RAWParam instead.")
+            self.base64 = param.encode_params.base64
+            LOGGER.warning(f"EncodeParam will be deprecated in future."
+                           f"Please use 'base64' within RAWParam instead.")
+            self.salt = param.encode_params.salt
+            LOGGER.warning(f"EncodeParam will be deprecated in future."
+                           f"Please use 'salt' within RAWParam instead.")
+        else:
+            self.use_hash = self.raw_params.use_hash
+            self.hash_method = self.raw_params.hash_method
+            self.base64 = self.raw_params.base64
+            self.salt = self.raw_params.salt
+
+        self.join_role = self.raw_params.join_role
+        if param.join_role != consts.GUEST:
+            self.join_role = param.join_role
+            LOGGER.warning(f"join_encode of IntersectParam will be deprecated in future."
+                           f"Please use 'join_role' within RAWParam instead.")
+
+        self.hash_operator = Hash(self.hash_method, self.base64)
 
     def intersect_send_id(self, data_instances):
         sid_hash_pair = None
-        if self.with_encode and self.encode_params.encode_method != "none":
+        if self.use_hash and self.hash_method != "none":
+            """
             if Hash.is_support(self.encode_params.encode_method):
                 # hash_operator = Hash(self.encode_params.encode_method, self.encode_params.base64)
                 sid_hash_pair = data_instances.map(
@@ -48,6 +71,10 @@ class RawIntersect(Intersect):
                 data_sid = sid_hash_pair.mapValues(lambda v: 1)
             else:
                 raise ValueError("Unknown encode_method, please check the configuration of encode_param")
+            """
+            sid_hash_pair = data_instances.map(
+                lambda k, v: (Intersect.hash(k, self.hash_operator, self.salt), k))
+            data_sid = sid_hash_pair.mapValues(lambda v: 1)
         else:
             data_sid = data_instances.mapValues(lambda v: 1)
 
@@ -67,27 +94,6 @@ class RawIntersect(Intersect):
                                    idx=-1)
 
         LOGGER.info("Remote data_sid to role-join")
-        """
-        if self.cardinality_only:
-            cardinality = None
-            if self.sync_cardinality:
-                if self.role == consts.GUEST:
-                    cardinality_federation = self.transfer_variable.cardinality_host
-                    if len(self.host_party_id_list) > 1:
-                        raise ValueError(f"For multi-host raw intersection cardinality task,"
-                                         f"when sync_cardinality is True, join_role must be Guest")
-                elif self.role == consts.HOST:
-                    cardinality_federation = self.transfer_variable.cardinality_guest
-                else:
-                    raise ValueError("Unknown intersect role, please check the code")
-                cardinality = cardinality_federation.get(idx=-1)
-                LOGGER.info("Get intersect cardinality from role-join!")
-                if isinstance(cardinality, list):
-                   cardinality = cardinality[0]
-            else:
-                LOGGER.info("Skip sync intersect cardinality with role-join.")
-            return cardinality
-        """
 
         intersect_ids = None
         if self.sync_intersect_ids:
@@ -130,7 +136,8 @@ class RawIntersect(Intersect):
         LOGGER.info("Join id role is {}".format(self.role))
 
         sid_hash_pair = None
-        if self.with_encode and self.encode_params.encode_method != "none":
+        if self.use_hash and self.hash_method != "none":
+            """
             if Hash.is_support(self.encode_params.encode_method):
                 hash_operator = Hash(self.encode_params.encode_method, self.encode_params.base64)
                 sid_hash_pair = data_instances.map(
@@ -138,6 +145,10 @@ class RawIntersect(Intersect):
                 data_sid = sid_hash_pair.mapValues(lambda v: 1)
             else:
                 raise ValueError("Unknown encode_method, please check the configure of hash_param")
+            """
+            sid_hash_pair = data_instances.map(
+                lambda k, v: (Intersect.hash(k, self.hash_operator, self.salt), k))
+            data_sid = sid_hash_pair.mapValues(lambda v: 1)
         else:
             data_sid = data_instances.mapValues(lambda v: 1)
 
@@ -163,30 +174,6 @@ class RawIntersect(Intersect):
         else:
             hash_intersect_ids = None
         LOGGER.info("Finish intersect_ids computing")
-
-        """
-        if self.cardinality_only:
-            cardinality = hash_intersect_ids.count()
-            if self.sync_cardinality:
-                if self.role == consts.GUEST:
-                    cardinality_federation = self.transfer_variable.cardinality_guest
-                    send_role = consts.HOST
-                elif self.role == consts.HOST:
-                    cardinality_federation = self.transfer_variable.cardinality_host
-                    send_role = consts.GUEST
-                    if len(self.host_party_id_list) > 1:
-                        raise ValueError(f"For multi-host cardinality case, "
-                                         f"when sync_cardinality is True, join_role must be Guest")
-                else:
-                    raise ValueError("Unknown intersect role, please check the code")
-                cardinality_federation.remote(cardinality,
-                                              role=send_role,
-                                              idx=-1)
-                LOGGER.info("Remote intersect cardinality to role-send!")
-            else:
-                LOGGER.info("Skip sync intersect cardinality with role-send")
-            return cardinality
-        """
 
         if self.sync_intersect_ids:
             if self.role == consts.GUEST:
@@ -214,14 +201,13 @@ class RawIntersect(Intersect):
         else:
             intersect_ids = hash_intersect_ids
 
-        # if not self.only_output_key:
-        #    intersect_ids = self._get_value_from_data(intersect_ids, data_instances)
-
+        """
         if self.task_version_id is not None:
             namespace = "#".join([str(self.guest_party_id), str(self.host_party_id), "mountain"])
             for k, v in enumerate(recv_ids_list):
                 table_name = '_'.join([self.task_version_id, str(k)])
                 self.tracker.job_tracker.save_as_table(v, table_name, namespace)
                 LOGGER.info("save guest_{}'s id in name:{}, namespace:{}".format(k, table_name, namespace))
+        """
 
         return intersect_ids
