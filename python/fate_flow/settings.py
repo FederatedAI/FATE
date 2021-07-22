@@ -42,6 +42,10 @@ IP = get_base_config(FATEFLOW_SERVICE_NAME, {}).get("host", "127.0.0.1")
 HTTP_PORT = get_base_config(FATEFLOW_SERVICE_NAME, {}).get("http_port")
 GRPC_PORT = get_base_config(FATEFLOW_SERVICE_NAME, {}).get("grpc_port")
 
+HTTP_APP_KEY = get_base_config(FATEFLOW_SERVICE_NAME, {}).get("http_app_key")
+HTTP_SECRET_KEY = get_base_config(FATEFLOW_SERVICE_NAME, {}).get("http_secret_key")
+MAX_TIMESTAMP_INTERVAL = 60
+
 WORK_MODE = get_base_config("work_mode", 0)
 DATABASE = get_base_config("database", {})
 MODEL_STORE_ADDRESS = get_base_config("model_store_address", {})

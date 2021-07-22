@@ -17,14 +17,13 @@ import json
 
 import requests
 import time
-from flask import jsonify
-from flask import Response
-from fate_arch.common.base_utils import json_loads, json_dumps
+from flask import jsonify, Response
+from werkzeug.http import HTTP_STATUS_CODES
 
+from fate_arch.common.base_utils import json_loads, json_dumps
 from fate_arch.common.conf_utils import get_base_config
 from fate_arch.common.log import audit_logger, schedule_logger
-from fate_arch.common import FederatedMode
-from fate_arch.common import CoordinationProxyService, CoordinationCommunicationProtocol
+from fate_arch.common import FederatedMode, CoordinationProxyService, CoordinationCommunicationProtocol
 from fate_flow.settings import DEFAULT_REMOTE_REQUEST_TIMEOUT, CHECK_NODES_IDENTITY,\
     FATE_MANAGER_GET_NODE_INFO_ENDPOINT, HEADERS, API_VERSION, stat_logger
 from fate_flow.utils.grpc_utils import wrap_grpc_packet, get_command_federation_channel, gen_routing_metadata, \
@@ -52,7 +51,9 @@ def server_error_response(e):
         return get_json_result(retcode=RetCode.EXCEPTION_ERROR, retmsg=str(e))
 
 
-def error_response(response_code, retmsg):
+def error_response(response_code, retmsg=None):
+    if retmsg is None:
+        retmsg = HTTP_STATUS_CODES.get(response_code, 'Unknown Error')
     return Response(json.dumps({'retmsg': retmsg, 'retcode': response_code}), status=response_code, mimetype='application/json')
 
 

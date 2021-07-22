@@ -28,3 +28,13 @@ def get_fateboard_info():
         'host': host,
         'port': port,
     })
+
+
+@manager.route('/mysql', methods=['POST'])
+def get_mysql_info():
+    pass
+
+
+@manager.route('/eggroll', methods=['POST'])
+def get_eggroll_info():
+    pass

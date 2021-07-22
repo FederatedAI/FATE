@@ -18,12 +18,17 @@ from flask import request
 from fate_arch.common import conf_utils
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.utils.api_utils import get_json_result
+from fate_flow.settings import API_VERSION
 
 
 @manager.route('/get', methods=['POST'])
 def get_fate_version_info():
-    version = RuntimeConfig.get_env(request.json.get('module', 'FATE'))
-    return get_json_result(data={request.json.get('module'): version})
+    module = request.json.get('module', 'FATE')
+    version = RuntimeConfig.get_env(module)
+    return get_json_result(data={
+        module: version,
+        'API': API_VERSION,
+    })
 
 
 @manager.route('/set', methods=['POST'])
