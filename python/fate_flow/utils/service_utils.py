@@ -77,7 +77,7 @@ class ServiceUtils(object):
 
         model_transfer_url = 'http://{}:{}{}'.format(IP, HTTP_PORT, FATE_FLOW_MODEL_TRANSFER_ENDPOINT)
         if party_model_id is not None and model_version is not None:
-            model_transfer_url += '/{}/{}'.format(party_model_id.replace('#', '_'), model_version)
+            model_transfer_url += '/{}/{}'.format(party_model_id.replace('#', '~'), model_version)
         fate_flow_model_transfer_service = '{}/{}'.format(FATE_SERVICES_REGISTERED_PATH.get(FATEFLOW_SERVICE_NAME, ""), parse.quote(model_transfer_url, safe=' '))
 
         try:
