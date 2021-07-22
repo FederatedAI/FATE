@@ -104,7 +104,7 @@ class BaseParam(object):
 
     @staticmethod
     def check_decimal_float(param, descr):
-        if type(param).__name__ not in ["float"] or param < 0 or param > 1:
+        if type(param).__name__ not in ["float", "int"] or param < 0 or param > 1:
             raise ValueError(descr + " {} not supported, should be a float number in range [0, 1]".format(param))
 
     @staticmethod

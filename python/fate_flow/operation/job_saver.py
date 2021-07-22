@@ -59,6 +59,10 @@ class JobSaver(object):
     @classmethod
     def update_job(cls, job_info):
         schedule_logger(job_id=job_info["job_id"]).info("try to update job {}".format(job_info["job_id"]))
+        if "status" in job_info:
+            # Avoid unintentional usage that updates the status
+            del job_info["status"]
+            schedule_logger(job_id=job_info["job_id"]).warning("try to update job {}, pop job status".format(job_info["job_id"]))
         update_status = cls.update_entity_table(Job, job_info)
         if update_status:
             schedule_logger(job_id=job_info.get("job_id")).info(f"job {job_info['job_id']} update successfully: {job_info}")

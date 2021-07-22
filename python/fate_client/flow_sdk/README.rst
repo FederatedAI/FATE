@@ -604,6 +604,18 @@ Functions
 | 5     | query\_filters| list     | No         | query filters             |
 +-------+---------------+----------+------------+---------------------------+
 
+``homo_convert(conf_path)``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+-  *Description*\ ： Convert trained homogeneous model to a model of common framework.
+-  *Arguments*\ ：
+
++-------+--------------+----------+------------+---------------------------+
+| No.   | Argument     | Type     | Required   | Description               |
++=======+==============+==========+============+===========================+
+| 1     | conf\_path   | string   | Yes        | Configuration file path   |
++-------+--------------+----------+------------+---------------------------+
+
 
 
 Tag Operations

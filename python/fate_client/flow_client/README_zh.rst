@@ -716,6 +716,24 @@ Model
     flow model get-model-info --model-id $MODEL_ID --model-version $MODEL_VERSION
     flow model get-model-info --model-id $MODEL_ID --model-version $MODEL_VERSION --detail
 
+``homo-convert``
+~~~~~~~~~~~
+
+-  *介绍*\ ： 基于横向训练的模型，生成其他ML框架的模型文件。
+-  *参数*\ ：
+
++--------+--------------+-----------+-------------------+------------+--------------------+
+| 编号   | 参数          | Flag\_1   | Flag\_2           | 必要参数   | 参数介绍           |
++========+==============+===========+===================+============+====================+
+| 1      | conf\_path   | ``-c``    | ``--conf-path``   | 是         | 任务配置文件路径   |
++--------+--------------+-----------+-------------------+------------+--------------------+
+
+-  *示例*\ ：
+
+.. code:: bash
+
+    flow model homo-convert -c fate_flow/examples/homo_convert_model.json
+
 
 Tag
 ---

@@ -51,7 +51,30 @@ class TestAffine(unittest.TestCase):
             de_en_res = self.randomized_key.decrypt(en_res)
             self.assertAlmostEqual(de_en_res, res)
 
-    def test_add_randomized(self):
+    def test_float_add_deterministic(self):
+        x_li = np.ones(100) * np.random.uniform(-1e6, 1e6)
+        y_li = np.ones(100) * np.random.randint(-1e6, 1e6)
+        z_li = np.ones(100) * np.random.uniform(-1e6, )
+        t_li = range(100)
+
+        for i in range(x_li.shape[0]):
+            x = x_li[i]
+            y = y_li[i]
+            z = z_li[i]
+            t = t_li[i]
+            en_x = self.deterministic_key.encrypt(x)
+            en_y = self.deterministic_key.encrypt(y)
+            en_z = self.deterministic_key.encrypt(z)
+            en_t = self.deterministic_key.encrypt(t)
+
+            en_res = en_x + en_y + en_z + en_t
+
+            res = x + y + z + t
+
+            de_en_res = self.deterministic_key.decrypt(en_res)
+            self.assertAlmostEqual(de_en_res, res)
+
+    def test_int_add_deterministic(self):
         x_li = np.ones(100) * np.random.randint(100)
         y_li = np.ones(100) * np.random.randint(1000)
         z_li = np.ones(100) * np.random.rand()
@@ -95,7 +118,7 @@ class TestAffine(unittest.TestCase):
             de_en_res = self.randomized_key.decrypt(en_res)
             self.assertAlmostEqual(de_en_res, res)
 
-    def test_mul_deterministic(self):
+    def test_int_mul_deterministic(self):
         x_li = (np.ones(100) * np.random.randint(100)).tolist()
         y_li = (np.ones(100) * np.random.randint(1000) * -1).tolist()
         z_li = (np.ones(100) * np.random.rand()).tolist()
@@ -115,7 +138,36 @@ class TestAffine(unittest.TestCase):
 
             de_en_res = self.deterministic_key.decrypt(en_res)
             self.assertAlmostEqual(de_en_res, res)
-            
-   
+
+    def test_float_mul_deterministic(self):
+        N = 100
+        x_li = np.random.uniform(-1e5, 1e5, (N, )).tolist()
+        y_li = np.random.uniform(-1e5, 1e5, (N, )).tolist()
+        en_x = [self.deterministic_key.encrypt(x) for x in x_li]
+
+        for i in range(N):
+            xy = x_li[i] * y_li[i]
+            en_xy = en_x[i] * y_li[i]
+
+            de_en_res = self.deterministic_key.decrypt(en_xy)
+            self.assertAlmostEqual(de_en_res, xy)
+
+    def test_float_add_mul_deterministic(self):
+        N = 100
+        x_li = np.random.uniform(-1e3, 1e3, (N, )).tolist()
+        y_li = np.random.uniform(-1e3, 1e3, (N, )).tolist()
+        en_x = [self.deterministic_key.encrypt(x) for x in x_li]
+
+        res = 0
+        en_res = en_x[0]
+        for i in range(N):
+            res += x_li[i] * y_li[i]
+            en_res += en_x[i] * y_li[i]
+
+        en_res -= en_x[0]
+        de_en_res = self.deterministic_key.decrypt(en_res)
+        self.assertAlmostEqual(de_en_res, res)
+
+
 if __name__ == '__main__': 
     unittest.main()
