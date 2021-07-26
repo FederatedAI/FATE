@@ -31,16 +31,20 @@ from fate_arch.session import get_latest_opened
 
 
 class _VariableProtocol(object):
-
-    def remote_parties(self,
-                       obj,
-                       parties: Union[typing.List[Party], Party],
-                       suffix: Union[typing.Any, typing.Tuple] = tuple()):
+    def remote_parties(
+        self,
+        obj,
+        parties: Union[typing.List[Party], Party],
+        suffix: Union[typing.Any, typing.Tuple] = tuple(),
+        blocking=False,
+    ):
         raise NotImplementedError()
 
-    def get_parties(self,
-                    parties: Union[typing.List[Party], Party],
-                    suffix: Union[typing.Any, typing.Tuple] = tuple()) -> typing.List:
+    def get_parties(
+        self,
+        parties: Union[typing.List[Party], Party],
+        suffix: Union[typing.Any, typing.Tuple] = tuple(),
+    ) -> typing.List:
         raise NotImplementedError()
 
     @staticmethod
@@ -54,7 +58,7 @@ class _ToArbiter(_VariableProtocol):
     def to_arbiter(self, obj, suffix):
         parties = self.roles_to_parties(["arbiter"])
         self.remote_parties(obj, parties, suffix)
-    
+
     def to_kth_arbiter(self, obj, k, suffix):
         parties = self.roles_to_parties(["arbiter"])
         assert k < len(parties), f"index {k} out of range [0, {len(parties) - 1}]"
@@ -79,7 +83,7 @@ class _ToGuest(_VariableProtocol):
     def to_guest(self, obj, suffix):
         parties = self.roles_to_parties(["guest"])
         self.remote_parties(obj, parties, suffix)
-    
+
     def to_kth_guest(self, obj, k, suffix):
         parties = self.roles_to_parties(["guest"])
         assert k < len(parties), f"index {k} out of range [0, {len(parties) - 1}]"
@@ -104,7 +108,7 @@ class _ToHost(_VariableProtocol):
     def to_host(self, obj, suffix):
         parties = self.roles_to_parties(["host"])
         self.remote_parties(obj, parties, suffix)
-    
+
     def to_kth_host(self, obj, k, suffix):
         parties = self.roles_to_parties(["host"])
         assert k < len(parties), f"index {k} out of range [0, {len(parties) - 1}]"
@@ -168,59 +172,59 @@ class _ToGuestHost(_ToGuest, _ToHost):
 
 class A2GVariable(Variable, _FromArbiter, _ToGuest):
     def __init__(self, name):
-        super().__init__(name, src=('arbiter',), dst=('guest',))
+        super().__init__(name, src=("arbiter",), dst=("guest",))
 
 
 class A2HVariable(Variable, _FromArbiter, _ToHost):
     def __init__(self, name):
-        super().__init__(name, src=('arbiter',), dst=('host',))
+        super().__init__(name, src=("arbiter",), dst=("host",))
 
 
 class G2AVariable(Variable, _FromGuest, _ToArbiter):
     def __init__(self, name):
-        super().__init__(name, src=('guest',), dst=('arbiter',))
+        super().__init__(name, src=("guest",), dst=("arbiter",))
 
 
 class G2HVariable(Variable, _FromGuest, _ToHost):
     def __init__(self, name):
-        super().__init__(name, src=('guest',), dst=('host',))
+        super().__init__(name, src=("guest",), dst=("host",))
 
 
 class H2AVariable(Variable, _FromHost, _ToArbiter):
     def __init__(self, name):
-        super().__init__(name, src=('host',), dst=('arbiter',))
+        super().__init__(name, src=("host",), dst=("arbiter",))
 
 
 class H2GVariable(Variable, _FromHost, _ToGuest):
     def __init__(self, name):
-        super().__init__(name, src=('host',), dst=('guest',))
+        super().__init__(name, src=("host",), dst=("guest",))
 
 
 class A2GHVariable(Variable, _FromArbiter, _ToGuestHost):
     def __init__(self, name):
-        super().__init__(name, src=('arbiter',), dst=('guest', 'host'))
+        super().__init__(name, src=("arbiter",), dst=("guest", "host"))
 
 
 class GH2AVariable(Variable, _FromGuestHost, _ToArbiter):
     def __init__(self, name):
-        super().__init__(name, src=('guest', 'host'), dst=('arbiter',))
+        super().__init__(name, src=("guest", "host"), dst=("arbiter",))
 
 
 class G2AHVariable(Variable, _FromGuest, _ToArbiterHost):
     def __init__(self, name):
-        super().__init__(name, src=('guest',), dst=('arbiter', 'host'))
+        super().__init__(name, src=("guest",), dst=("arbiter", "host"))
 
 
 class AH2GVariable(Variable, _FromArbiterHost, _ToGuest):
     def __init__(self, name):
-        super().__init__(name, src=('arbiter', 'host'), dst=('guest',))
+        super().__init__(name, src=("arbiter", "host"), dst=("guest",))
 
 
 class H2AGVariable(Variable, _FromHost, _ToArbiterGuest):
     def __init__(self, name):
-        super().__init__(name, src=('host',), dst=('arbiter', 'guest'))
+        super().__init__(name, src=("host",), dst=("arbiter", "guest"))
 
 
 class AG2HVariable(Variable, _FromArbiterGuest, _ToHost):
     def __init__(self, name):
-        super().__init__(name, src=('arbiter', 'guest'), dst=('host',))
+        super().__init__(name, src=("arbiter", "guest"), dst=("host",))
