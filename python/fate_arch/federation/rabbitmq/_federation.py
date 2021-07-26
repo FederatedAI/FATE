@@ -273,6 +273,7 @@ class Federation(FederationABC):
         tag: str,
         parties: typing.List[Party],
         gc: GarbageCollectionABC,
+        blocking=False,
     ) -> typing.NoReturn:
         log_str = f"[rabbitmq.remote](name={name}, tag={tag}, parties={parties})"
 

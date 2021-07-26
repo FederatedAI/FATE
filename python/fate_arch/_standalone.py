@@ -527,7 +527,14 @@ class Federation(object):
         return self._federation_status_table.get(_tagged_key)
 
     # noinspection PyUnusedLocal
-    def remote(self, v, name: str, tag: str, parties: typing.List[Party]):
+    def remote(
+        self,
+        v,
+        name: str,
+        tag: str,
+        parties: typing.List[Party],
+        blocking: bool,
+    ):
         log_str = f"federation.standalone.remote.{name}.{tag}"
 
         if v is None:

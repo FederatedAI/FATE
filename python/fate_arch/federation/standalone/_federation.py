@@ -29,6 +29,7 @@ class Federation(FederationABC):
         tag: str,
         parties: typing.List[Party],
         gc: GarbageCollectionABC,
+        blocking: bool = False,
     ):
         if not _remote_tag_not_duplicate(name, tag, parties):
             raise ValueError(f"remote to {parties} with duplicate tag: {name}.{tag}")
@@ -36,7 +37,9 @@ class Federation(FederationABC):
         if isinstance(v, Table):
             # noinspection PyProtectedMember
             v = v._table
-        return self._federation.remote(v=v, name=name, tag=tag, parties=parties)
+        return self._federation.remote(
+            v=v, name=name, tag=tag, parties=parties, blocking=blocking
+        )
 
     # noinspection PyProtectedMember
     def get(

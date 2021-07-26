@@ -14,10 +14,9 @@ class FederationABC(metaclass=ABCMeta):
     """
 
     @abc.abstractmethod
-    def get(self, name: str,
-            tag: str,
-            parties: typing.List[Party],
-            gc: GarbageCollectionABC) -> typing.List:
+    def get(
+        self, name: str, tag: str, parties: typing.List[Party], gc: GarbageCollectionABC
+    ) -> typing.List:
         """
         get objects/tables from ``parties``
 
@@ -41,11 +40,15 @@ class FederationABC(metaclass=ABCMeta):
         ...
 
     @abc.abstractmethod
-    def remote(self, v,
-               name: str,
-               tag: str,
-               parties: typing.List[Party],
-               gc: GarbageCollectionABC) -> typing.NoReturn:
+    def remote(
+        self,
+        v,
+        name: str,
+        tag: str,
+        parties: typing.List[Party],
+        gc: GarbageCollectionABC,
+        blocking: bool = False,
+    ) -> typing.NoReturn:
         """
         remote object/table to ``parties``
 
