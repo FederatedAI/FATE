@@ -16,7 +16,6 @@
 
 import uuid
 
-# from fate_arch.session import computing_session as session
 from fate_flow.entity.metric import Metric, MetricMeta
 from federatedml.feature.instance import Instance
 from federatedml.model_base import ModelBase
@@ -155,13 +154,6 @@ class IntersectModelBase(ModelBase):
 
     def fit(self, data):
         self.init_intersect_method()
-        # import copy
-        # schema = copy.deepcopy(data.schema)
-        # data = data.mapValues(lambda v: Instance(inst_id=v.features[0], features=v.features[1:], label=v.label))
-        # schema["header"].pop(0)
-        # data.schema = schema
-
-        # if data_overview.check_with_inst_id(data) or self.model_param.repeated_id_process:
         if data_overview.check_with_inst_id(data):
             self.use_match_id_process = True
             LOGGER.info(f"use match_id_process")
@@ -208,20 +200,11 @@ class IntersectModelBase(ModelBase):
             if not self.model_param.sync_intersect_ids:
                 self.intersect_ids = match_data
 
-            self.intersect_ids = proc_obj.expand(self.intersect_ids)
-            if self.model_param.join_id_owner == self.role and self.model_param.only_output_key:
-                sid_name = self.intersect_ids.schema.get('sid_name')
-                self.intersect_ids = self.intersect_ids.mapValues(lambda v: None)
-                self.intersect_ids.schema['sid_name'] = sid_name
-
-        """
-        if self.model_param.allow_info_share:
-            if self.model_param.intersect_method == consts.RSA and self.model_param.info_owner == consts.GUEST \
-                    or self.model_param.intersect_method == consts.RAW and self.model_param.join_role == self.model_param.info_owner:
-                self.model_param.sync_intersect_ids = False
-
-            self.intersect_ids = self.__share_info(self.intersect_ids)
-        """
+            self.intersect_ids = proc_obj.expand(self.intersect_ids, match_data=match_data)
+            if self.model_param.only_output_key:
+                self.intersect_ids = self.intersect_ids.mapValues(lambda v: Instance(inst_id=v.inst_id))
+                self.intersect_ids.schema = {"match_id_name": data.schema["match_id_name"],
+                                             "sid_name": data.schema["sid_name"]}
 
         LOGGER.info("Finish intersection")
 
@@ -236,9 +219,10 @@ class IntersectModelBase(ModelBase):
         if self.model_param.join_method == consts.LEFT_JOIN:
             result_data = self.__sync_join_id(data, self.intersect_ids)
             result_data.schema = self.intersect_ids.schema
-
+        """
         if not self.intersection_obj.only_output_key and result_data:
             result_data = self.intersection_obj.get_value_from_data(self.intersect_ids, data)
+        """
         return result_data
 
     def check_consistency(self):
@@ -335,19 +319,12 @@ class IntersectModelBase(ModelBase):
             if not self.model_param.sync_intersect_ids:
                 self.intersect_ids = match_data
 
-            self.intersect_ids = proc_obj.expand(self.intersect_ids)
-            if self.model_param.join_id_owner == self.role and self.model_param.only_output_key:
-                # sid_name = self.intersect_ids.schema.get('sid_name')
+            self.intersect_ids = proc_obj.expand(self.intersect_ids, match_data=match_data)
+            if self.model_param.only_output_key:
                 self.intersect_ids = self.intersect_ids.mapValues(lambda v: Instance(inst_id=v.inst_id))
-                # self.intersect_ids.schema['sid_name'] = sid_name
+                self.intersect_ids.schema = {"match_id_name": data.schema["match_id_name"],
+                                             "sid_name": data.schema["sid_name"]}
 
-        """
-        if self.model_param.allow_info_share:
-            if self.model_param.intersect_method == consts.RSA and self.model_param.info_owner == consts.GUEST:
-                self.model_param.sync_intersect_ids = False
-
-            self.intersect_ids = self.__share_info(self.intersect_ids)
-        """
         LOGGER.info("Finish intersection")
 
         if self.intersect_ids:
@@ -362,8 +339,6 @@ class IntersectModelBase(ModelBase):
             result_data = self.__sync_join_id(data, self.intersect_ids)
             result_data.schema = self.intersect_ids.schema
 
-        if not self.intersection_obj.only_output_key and result_data:
-            result_data = self.intersection_obj.get_value_from_data(self.intersect_ids, data)
         return result_data
 
     def obtain_data(self, data_list):

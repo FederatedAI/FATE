@@ -123,9 +123,12 @@ class RepeatedIDIntersect(object):
 
         return r_data
 
-    def __restructure_partner_sample_ids(self, data, id_map):
+    def __restructure_partner_sample_ids(self, data, id_map, match_data=None):
+        data = data.join(match_data, lambda k, v: v)
         _data = data.join(id_map, lambda dv, iv: (dv, iv))
+        # LOGGER.debug(f"_data is: {_data.first()}")
         repeated_ids = _data.flatMap(functools.partial(self.__func_restructure_id_for_partner))
+        # LOGGER.debug(f"restructure id for partner called, result is: {repeated_ids.first()}")
         if not self.with_sample_id:
             sub_data = data.subtractByKey(id_map)
             expand_data = sub_data.union(repeated_ids, lambda sv, rv: sv)
@@ -133,13 +136,17 @@ class RepeatedIDIntersect(object):
             expand_data = repeated_ids
 
         expand_data.schema = data.schema
+        if match_data:
+            expand_data.schema = match_data.schema
+
         return expand_data
 
-    def __restructure_sample_ids(self, data, id_map):
+    def __restructure_sample_ids(self, data, id_map, match_data=None):
+        # LOGGER.debug(f"id map is: {self.id_map.first()}")
         if self.role == self.repeated_id_owner:
             return self.__restructure_owner_sample_ids(data, id_map)
         else:
-            return self.__restructure_partner_sample_ids(data, id_map)
+            return self.__restructure_partner_sample_ids(data, id_map, match_data)
 
     def generate_intersect_data(self, data):
         if self.__get_data_type(data) == Instance:
@@ -173,7 +180,7 @@ class RepeatedIDIntersect(object):
 
         return self.generate_intersect_data(data)
 
-    def expand(self, data, owner_only=False):
+    def expand(self, data, owner_only=False, match_data=None):
         if self.repeated_id_owner == consts.HOST:
             id_map_federation = self.transfer_variable.id_map_from_host
             partner_role = consts.GUEST
@@ -195,4 +202,4 @@ class RepeatedIDIntersect(object):
             self.id_map = id_map_federation.get(idx=0)
             LOGGER.info("Get id_map from owner.")
 
-        return self.__restructure_sample_ids(data, self.id_map)
+        return self.__restructure_sample_ids(data, self.id_map, match_data)

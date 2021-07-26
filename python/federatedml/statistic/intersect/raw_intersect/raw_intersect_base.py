@@ -63,15 +63,6 @@ class RawIntersect(Intersect):
     def intersect_send_id(self, data_instances):
         sid_hash_pair = None
         if self.use_hash and self.hash_method != "none":
-            """
-            if Hash.is_support(self.encode_params.encode_method):
-                # hash_operator = Hash(self.encode_params.encode_method, self.encode_params.base64)
-                sid_hash_pair = data_instances.map(
-                    lambda k, v: (Intersect.hash(k, self.hash_operator, self.salt), k))
-                data_sid = sid_hash_pair.mapValues(lambda v: 1)
-            else:
-                raise ValueError("Unknown encode_method, please check the configuration of encode_param")
-            """
             sid_hash_pair = data_instances.map(
                 lambda k, v: (Intersect.hash(k, self.hash_operator, self.salt), k))
             data_sid = sid_hash_pair.mapValues(lambda v: 1)
@@ -127,9 +118,6 @@ class RawIntersect(Intersect):
         else:
             LOGGER.info("Not Get intersect ids from role-join!")
 
-        # if not self.only_output_key:
-        #   intersect_ids = self._get_value_from_data(intersect_ids, data_instances)
-
         return intersect_ids
 
     def intersect_join_id(self, data_instances):
@@ -137,15 +125,6 @@ class RawIntersect(Intersect):
 
         sid_hash_pair = None
         if self.use_hash and self.hash_method != "none":
-            """
-            if Hash.is_support(self.encode_params.encode_method):
-                hash_operator = Hash(self.encode_params.encode_method, self.encode_params.base64)
-                sid_hash_pair = data_instances.map(
-                    lambda k, v: (hash_operator.compute(k, suffix_salt=self.encode_params.salt), k))
-                data_sid = sid_hash_pair.mapValues(lambda v: 1)
-            else:
-                raise ValueError("Unknown encode_method, please check the configure of hash_param")
-            """
             sid_hash_pair = data_instances.map(
                 lambda k, v: (Intersect.hash(k, self.hash_operator, self.salt), k))
             data_sid = sid_hash_pair.mapValues(lambda v: 1)
