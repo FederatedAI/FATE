@@ -179,73 +179,73 @@ class TestFeatureHistogram(unittest.TestCase):
 
             print('passed')
 
-    # def test_pack_gh_accumulate(self):
-    #
-    #     # test the correctness of gh packing(in comparision to plaintext)
-    #
-    #     # Iterative Affine
-    #     self.run_gh_accumulate_test(self.test_num, self.iter_collected_gh, self.iter_en_g_l, self.iter_en_h_l, self.iter_packer,
-    #                                 self.iter_en, self.g, self.h)
-    #
-    #     print('*'*30)
-    #     print('test iter done')
-    #     print('*'*30)
-    #
-    #     # Paillier
-    #     self.run_gh_accumulate_test(self.test_num, self.p_collected_gh, self.p_en_g_l, self.p_en_h_l, self.p_packer,
-    #                                 self.p_en, self.g, self.h)
-    #
-    #     print('*'*30)
-    #     print('test paillier done')
-    #     print('*'*30)
-    #
-    # def test_split_info_cipher_compress(self):
-    #
-    #     # test the correctness of cipher compressing
-    #     print('testing binary')
-    #     collected_gh = self.p_collected_gh
-    #     en_g_l = self.p_en_g_l
-    #     en_h_l = self.p_en_h_l
-    #     packer = self.p_packer
-    #     en = self.p_en
-    #
-    #     sp_list = []
-    #     g_sum_list, h_sum_list = [], []
-    #     pack_en_list = []
-    #
-    #     for i in range(self.split_info_test_num):
-    #         g_sum, h_sum, en_sum, en_g_sum, en_h_sum, sample_num = make_random_sum(collected_gh, self.g, self.h,
-    #                                                                                en_g_l,
-    #                                                                                en_h_l,
-    #                                                                                self.max_sample_num)
-    #         sp = SplitInfo(sum_grad=en_sum, sum_hess=0, sample_count=sample_num)
-    #         sp_list.append(sp)
-    #         g_sum_list.append(g_sum)
-    #         h_sum_list.append(h_sum)
-    #         pack_en_list.append(en_sum)
-    #
-    #     print('generating split-info done')
-    #     packages = self.compressor.compress_split_info(sp_list[:-1], sp_list[-1])
-    #     print('package length is {}'.format(len(packages)))
-    #     unpack_rs = packer.decompress_and_unpack(packages)
-    #     case_id = 0
-    #     for s, g, h, en_gh in zip(unpack_rs, g_sum_list, h_sum_list, pack_en_list):
-    #         print('*'*10)
-    #         print(case_id)
-    #         case_id += 1
-    #         de_num = en.raw_decrypt(en_gh)
-    #         unpack_num = packer.packer._unpack_an_int(de_num, packer.packer._bit_assignment[0])
-    #         g_sum_ = unpack_num[0] / fix_point_precision - s.sample_count * packer.g_offset
-    #         h_sum_ = unpack_num[1] / fix_point_precision
-    #
-    #         print(s.sample_count)
-    #         print(s.sum_grad, g_sum_, g)
-    #         print(s.sum_hess, h_sum_, h)
-    #
-    #         # make sure cipher compress is correct
-    #         self.assertTrue(truncate(s.sum_grad) == truncate(g_sum_))
-    #         self.assertTrue(truncate(s.sum_hess) == truncate(h_sum_))
-    #     print('check passed')
+    def test_pack_gh_accumulate(self):
+
+        # test the correctness of gh packing(in comparision to plaintext)
+
+        # Iterative Affine
+        self.run_gh_accumulate_test(self.test_num, self.iter_collected_gh, self.iter_en_g_l, self.iter_en_h_l, self.iter_packer,
+                                    self.iter_en, self.g, self.h)
+
+        print('*'*30)
+        print('test iter done')
+        print('*'*30)
+
+        # Paillier
+        self.run_gh_accumulate_test(self.test_num, self.p_collected_gh, self.p_en_g_l, self.p_en_h_l, self.p_packer,
+                                    self.p_en, self.g, self.h)
+
+        print('*'*30)
+        print('test paillier done')
+        print('*'*30)
+
+    def test_split_info_cipher_compress(self):
+
+        # test the correctness of cipher compressing
+        print('testing binary')
+        collected_gh = self.p_collected_gh
+        en_g_l = self.p_en_g_l
+        en_h_l = self.p_en_h_l
+        packer = self.p_packer
+        en = self.p_en
+
+        sp_list = []
+        g_sum_list, h_sum_list = [], []
+        pack_en_list = []
+
+        for i in range(self.split_info_test_num):
+            g_sum, h_sum, en_sum, en_g_sum, en_h_sum, sample_num = make_random_sum(collected_gh, self.g, self.h,
+                                                                                   en_g_l,
+                                                                                   en_h_l,
+                                                                                   self.max_sample_num)
+            sp = SplitInfo(sum_grad=en_sum, sum_hess=0, sample_count=sample_num)
+            sp_list.append(sp)
+            g_sum_list.append(g_sum)
+            h_sum_list.append(h_sum)
+            pack_en_list.append(en_sum)
+
+        print('generating split-info done')
+        packages = self.compressor.compress_split_info(sp_list[:-1], sp_list[-1])
+        print('package length is {}'.format(len(packages)))
+        unpack_rs = packer.decompress_and_unpack(packages)
+        case_id = 0
+        for s, g, h, en_gh in zip(unpack_rs, g_sum_list, h_sum_list, pack_en_list):
+            print('*'*10)
+            print(case_id)
+            case_id += 1
+            de_num = en.raw_decrypt(en_gh)
+            unpack_num = packer.packer._unpack_an_int(de_num, packer.packer._bit_assignment[0])
+            g_sum_ = unpack_num[0] / fix_point_precision - s.sample_count * packer.g_offset
+            h_sum_ = unpack_num[1] / fix_point_precision
+
+            print(s.sample_count)
+            print(s.sum_grad, g_sum_, g)
+            print(s.sum_hess, h_sum_, h)
+
+            # make sure cipher compress is correct
+            self.assertTrue(truncate(s.sum_grad) == truncate(g_sum_))
+            self.assertTrue(truncate(s.sum_hess) == truncate(h_sum_))
+        print('check passed')
 
     def test_regression_cipher_compress(self):
 
