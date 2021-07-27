@@ -89,10 +89,11 @@ def make_random_sum(collected_gh, g, h, en_g_l, en_h_l, max_sample_num):
 class TestFeatureHistogram(unittest.TestCase):
 
     @staticmethod
-    def prepare_testing_data(g, h, en, max_sample_num, sample_id, task_type):
+    def prepare_testing_data(g, h, en, max_sample_num, sample_id, task_type, g_min=None, g_max=None):
 
         calculator = EncryptModeCalculator(encrypter=en)
-        packer = GHPacker(max_sample_num, en_calculator=calculator, sync_para=False, task_type=task_type)
+        packer = GHPacker(max_sample_num, en_calculator=calculator, sync_para=False, task_type=task_type,
+                          g_min=g_min, g_max=g_max)
         en_g_l, en_h_l = en_gh_list(g, h, en)
         data_list = [(id_, (g_, h_)) for id_, g_, h_ in zip(sample_id, g, h)]
         data_table = session.parallelize(data_list, 4, include_key=True)
@@ -134,7 +135,8 @@ class TestFeatureHistogram(unittest.TestCase):
         # regression data
         cls.g_reg, cls.h_reg = generate_reg_gh(cls.max_sample_num, -1000, 1000)
         cls.reg_p_packer, cls.reg_p_en_g_l, cls.reg_p_en_h_l, cls.reg_p_en_table, cls.reg_p_collected_gh = \
-            cls.prepare_testing_data(cls.g_reg, cls.h_reg, cls.p_en, cls.max_sample_num, sample_id, consts.REGRESSION)
+            cls.prepare_testing_data(cls.g_reg, cls.h_reg, cls.p_en, cls.max_sample_num, sample_id, consts.REGRESSION,
+                                     g_min=-1000, g_max=1000)
         cls.reg_compressor = PackedGHCompressor(sync_para=False)
         cls.reg_compressor.compressor._padding_length, cls.reg_compressor.compressor._capacity = \
             cls.reg_p_packer.packer.cipher_compress_suggest()
