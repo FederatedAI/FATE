@@ -27,7 +27,7 @@ from federatedml.transfer_variable.base_transfer_variable import BaseTransferVar
 
 
 # noinspection PyAttributeOutsideInit
-class PhIntersectTransferVariable(BaseTransferVariables):
+class DhIntersectTransferVariable(BaseTransferVariables):
     def __init__(self, flowid=0):
         super().__init__(flowid)
         self.commutative_cipher_public_knowledge = self._create_variable(name='commutative_cipher_public_knowledge', src=['guest'], dst=['host'])

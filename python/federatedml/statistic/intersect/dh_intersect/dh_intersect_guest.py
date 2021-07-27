@@ -40,7 +40,7 @@ class DhIntersectionGuest(DhIntersect):
 
     def _exchange_id_list(self, id_list):
         for i, id in enumerate(id_list):
-            id_only = id.map(lambda k, v: (k, -1))
+            id_only = id.mapValues(lambda v: None)
             self.transfer_variable.id_ciphertext_list_exchange_g2h.remote(id_only,
                                                                           role=consts.HOST,
                                                                           idx=i)
@@ -187,10 +187,10 @@ class DhIntersectionGuest(DhIntersect):
             id_list_remote_second[i].schema = {"cache_id": cache_id_list[i]}
             cache_id_dict[party_id] = cache_id_list[i]
 
-        self.id_list_remote_second = id_list_remote_second
+        # self.id_list_remote_second = id_list_remote_second
         self.cache_id = cache_id_dict
 
-        return self.id_list_remote_second
+        return id_list_remote_second
 
     def get_intersect_doubly_encrypted_id_from_cache(self, data_instances, cache):
         self.host_count = len(self.commutative_cipher)
@@ -202,7 +202,7 @@ class DhIntersectionGuest(DhIntersect):
         LOGGER.info("encrypted guest id for the 1st time")
 
         for i, id in enumerate(self.id_list_local_first):
-            id_only = id.map(lambda k, v: (k, -1))
+            id_only = id.mapValues(lambda v: None)
             self.transfer_variable.id_ciphertext_list_exchange_g2h.remote(id_only,
                                                                           role=consts.HOST,
                                                                           idx=i)

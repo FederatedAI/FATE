@@ -19,7 +19,7 @@ from federatedml.secureprotol.hash.hash_factory import Hash
 from federatedml.secureprotol.symmetric_encryption.cryptor_executor import CryptoExecutor
 from federatedml.secureprotol.symmetric_encryption.pohlig_hellman_encryption import PohligHellmanCipherKey
 from federatedml.statistic.intersect.base_intersect import Intersect
-from federatedml.transfer_variable.transfer_class.ph_intersect_transfer_variable import PhIntersectTransferVariable
+from federatedml.transfer_variable.transfer_class.dh_intersect_transfer_variable import DhIntersectTransferVariable
 from federatedml.util import LOGGER
 
 
@@ -30,7 +30,7 @@ class DhIntersect(Intersect):
     def __init__(self):
         super().__init__()
         self.role = None
-        self.transfer_variable = PhIntersectTransferVariable()
+        self.transfer_variable = DhIntersectTransferVariable()
         self.commutative_cipher = None
 
     def load_params(self, param):

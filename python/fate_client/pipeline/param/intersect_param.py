@@ -235,29 +235,31 @@ class IntersectCache(BaseParam):
 
 class IntersectPreProcessParam(BaseParam):
     """
-    Specify parameters for intersect pre-process method
+    Specify parameters for pre-processing and cardinality-only mode
 
     Parameters
     ----------
     false_positive_rate: float, initial target false positive rate when creating Bloom Filter,
-        must be <= 0.5, default 1e-3
+                         must be <= 0.5, default 1e-3
 
     encrypt_method: str, encrypt method for encrypting id when performing cardinality_only task,
-        supports rsa only, default rsa;
-        specify rsa parameter setting with RSAParam
+                    supports rsa only, default rsa;
+                    specify rsa parameter setting with RSAParam
 
     hash_method: str, the hash method for inserting ids, support md5, sha1, sha 224, sha256, sha384, sha512, sm3,
-        default sha256
+                 default sha256
 
-    preprocess_method: str, the hash method for encoding ids before insertion into filter, default sha256
+    preprocess_method: str, the hash method for encoding ids before insertion into filter, default sha256,
+                       only effective for preprocessing
 
     preprocess_salt: str, salt to be appended to hash result by preprocess_method before insertion into filter,
-                    default ''
+                     default '', only effective for preprocessing
 
     random_state: seed for random salt generator when constructing hash functions,
-        salt is appended to hash result by hash_method when performing insertion, default 42
+                  salt is appended to hash result by hash_method when performing insertion, default 42
 
-    filter_owner: str, role that constructs filter, either guest or host, default guest
+    filter_owner: str, role that constructs filter, either guest or host, default guest,
+                  only effective for preprocessing
 
     """
 
@@ -490,7 +492,7 @@ class IntersectParam(BaseParam):
             if self.intersect_method == consts.RSA and self.rsa_params.split_calculation:
                 raise ValueError(f"RSA split_calculation does not support cache.")
             if self.cardinality_only:
-                raise ValueError(f"cache is not available for cardinality_only mode.")
+                raise ValueError(f"Cache is not available for cardinality_only mode.")
             if self.run_preprocess:
-                raise ValueError(f"Cannot run preprocess with cache mode")
+                raise ValueError(f"Preprocessing does not support cache.")
         return True

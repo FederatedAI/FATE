@@ -35,7 +35,7 @@ class DhIntersectionHost(DhIntersect):
         LOGGER.info(f"got commutative cipher public knowledge from guest")
 
     def _exchange_id_list(self, id_list):
-        id_only = id_list.map(lambda k, v: (k, -1))
+        id_only = id_list.mapValues(lambda v: None)
         self.transfer_variable.id_ciphertext_list_exchange_h2g.remote(id_only,
                                                                       role=consts.GUEST,
                                                                       idx=0)
@@ -114,29 +114,31 @@ class DhIntersectionHost(DhIntersect):
         self._sync_commutative_cipher_public_knowledge()
         self.commutative_cipher.init()
 
-        # 1st ID encrypt: (Eh, (h, Instance))
-        self.id_list_local_first = self._encrypt_id(data_instances,
-                                                    self.commutative_cipher,
-                                                    reserve_original_key=True,
-                                                    hash_operator=self.hash_operator,
-                                                    salt=self.salt,
-                                                    reserve_original_value=True)
-        LOGGER.info("encrypted local id for the 1st time")
         cache_id = str(uuid.uuid4())
         self.cache_id = {self.guest_party_id: cache_id}
-        cache_schema = {"cache_id": cache_id}
-        self.id_list_local_first.schema = cache_schema
-
-        id_only = self.id_list_local_first.map(lambda k, v: (k, -1))
         # id_only.schema = cache_schema
         self.cache_transfer_variable.remote(cache_id, role=consts.GUEST, idx=0)
         LOGGER.info(f"remote cache_id to guest")
 
+        # 1st ID encrypt: (Eh, (h, Instance))
+        id_list_local_first = self._encrypt_id(data_instances,
+                                               self.commutative_cipher,
+                                               reserve_original_key=True,
+                                               hash_operator=self.hash_operator,
+                                               salt=self.salt,
+                                               reserve_original_value=True)
+        LOGGER.info("encrypted local id for the 1st time")
+
+        cache_schema = {"cache_id": cache_id}
+        id_list_local_first.schema = cache_schema
+
+        id_only = id_list_local_first.mapValues(lambda v: None)
         self.transfer_variable.id_ciphertext_list_exchange_h2g.remote(id_only,
                                                                       role=consts.GUEST,
                                                                       idx=0)
         LOGGER.info("sent id 1st ciphertext list to guest")
-        return self.id_list_local_first
+
+        return id_list_local_first
 
     def get_intersect_doubly_encrypted_id_from_cache(self, data_instances, cache):
         id_list_remote_first = self.transfer_variable.id_ciphertext_list_exchange_g2h.get(idx=0)

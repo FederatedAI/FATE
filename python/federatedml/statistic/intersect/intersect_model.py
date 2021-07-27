@@ -34,6 +34,7 @@ class IntersectModelBase(ModelBase):
     def __init__(self):
         super().__init__()
         self.intersection_obj = None
+        self.proc_obj = None
         self.intersect_num = -1
         self.intersect_rate = -1
         self.intersect_ids = None
@@ -162,11 +163,11 @@ class IntersectModelBase(ModelBase):
             if len(self.host_party_id_list) > 1 and self.model_param.join_id_owner != consts.GUEST:
                 raise ValueError("While multi-host, join_id_owner should be guest.")
 
-            proc_obj = RepeatedIDIntersect(repeated_id_owner=self.model_param.join_id_owner, role=self.role)
-            proc_obj.new_join_id = self.model_param.new_join_id
+            self.proc_obj = RepeatedIDIntersect(sample_id_generator=self.model_param.join_id_owner, role=self.role)
+            self.proc_obj.new_join_id = self.model_param.new_join_id
             if data_overview.check_with_inst_id(data) or self.model_param.with_sample_id:
-                proc_obj.use_sample_id()
-            match_data = proc_obj.recover(data=data)
+                self.proc_obj.use_sample_id()
+            match_data = self.proc_obj.recover(data=data)
             if self.intersection_obj.run_cache:
                 return self.intersection_obj.generate_cache(match_data)
             if self.intersection_obj.cardinality_only:
@@ -198,10 +199,13 @@ class IntersectModelBase(ModelBase):
 
         if self.use_match_id_process:
             if not self.model_param.sync_intersect_ids:
-                self.intersect_ids = match_data
-
-            self.intersect_ids = proc_obj.expand(self.intersect_ids, match_data=match_data)
-            if self.model_param.only_output_key:
+                # self.intersect_ids = match_data
+                self.intersect_ids = self.proc_obj.expand(self.intersect_ids,
+                                                          match_data=match_data,
+                                                          owner_only=True)
+            else:
+                self.intersect_ids = self.proc_obj.expand(self.intersect_ids, match_data=match_data)
+            if self.model_param.only_output_key and self.intersect_ids:
                 self.intersect_ids = self.intersect_ids.mapValues(lambda v: Instance(inst_id=v.inst_id))
                 self.intersect_ids.schema = {"match_id_name": data.schema["match_id_name"],
                                              "sid_name": data.schema["sid_name"]}

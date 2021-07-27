@@ -1,5 +1,5 @@
 {
-  "federatedml.transfer_variable.transfer_class.ph_intersect_transfer_variable.PhIntersectTransferVariable": {
+  "federatedml.transfer_variable.transfer_class.dh_intersect_transfer_variable.DhIntersectTransferVariable": {
     "commutative_cipher_public_knowledge": {
       "src": [
         "guest"
