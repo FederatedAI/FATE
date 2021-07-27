@@ -2,12 +2,14 @@ import threading
 import typing
 import uuid
 
-from fate_arch.abc import CSessionABC, FederationABC, CTableABC
-from fate_arch.common import Backend, WorkMode
+from fate_arch.abc import CSessionABC, CTableABC, FederationABC
+from fate_arch.common import Backend, WorkMode, remote_status
+from fate_arch.common.log import getLogger
 from fate_arch.computing import ComputingEngine
 from fate_arch.federation import FederationEngine
 from fate_arch.session._parties import PartiesInfo
-from fate_arch.common import remote_status
+
+LOGGER = getLogger()
 
 
 class Session(object):
@@ -215,7 +217,9 @@ class Session(object):
         return self._federation_session is not None
 
     def wait_remote_all_done(self, timeout=None):
+        LOGGER.info(f"remote futures: {remote_status._remote_futures}, waiting...")
         remote_status.wait_all_remote_done(timeout)
+        LOGGER.info(f"remote futures: {remote_status._remote_futures}, all done")
 
 
 class _RuntimeSessionEnvironment(object):
