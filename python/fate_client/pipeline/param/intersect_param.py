@@ -89,7 +89,7 @@ class IntersectParam(BaseParam):
 
     Parameters
     ----------
-    intersect_method: str, it supports 'rsa' and 'raw', default by 'raw'
+    intersect_method: str, it supports 'rsa' and 'raw', default by 'rsa'
 
     random_bit: positive int, it will define the encrypt length of rsa algorithm. It effective only for intersect_method is rsa
 
@@ -112,7 +112,7 @@ class IntersectParam(BaseParam):
     repeated_id_owner: str, which role has the repeated ids
     """
 
-    def __init__(self, intersect_method: str = consts.RAW, random_bit=128, sync_intersect_ids=True,
+    def __init__(self, intersect_method: str = consts.RSA, random_bit=128, sync_intersect_ids=True,
                  join_role=consts.GUEST,
                  with_encode=False, only_output_key=False, encode_params=EncodeParam(),
                  intersect_cache_param=IntersectCache(), repeated_id_process=False, repeated_id_owner=consts.GUEST,
