@@ -16,24 +16,22 @@
 
 from collections import defaultdict
 import functools
-import numpy as np
 
-from fate_arch.session import computing_session as session
 from federatedml.feature.instance import Instance
-from federatedml.transfer_variable.transfer_class.repeated_id_intersect_transfer_variable import \
-    RepeatedIDIntersectTransferVariable
+from federatedml.transfer_variable.transfer_class.match_id_intersect_transfer_variable import \
+    MatchIDIntersectTransferVariable
 from federatedml.util import consts
 from federatedml.util import LOGGER
 
 
-class RepeatedIDIntersect(object):
+class MatchIDIntersect(object):
     """
     This will support repeated ID intersection using ID expanding.
     """
 
-    def __init__(self, repeated_id_owner: str, role: str):
-        self.repeated_id_owner = repeated_id_owner
-        self.transfer_variable = RepeatedIDIntersectTransferVariable()
+    def __init__(self, sample_id_generator: str, role: str):
+        self.sample_id_generator = sample_id_generator
+        self.transfer_variable = MatchIDIntersectTransferVariable()
         self.role = role
         self.id_map = None
         self.version = None
@@ -73,7 +71,7 @@ class RepeatedIDIntersect(object):
         return [(k, v) for k, v in id_map.items()]
 
     def __generate_id_map(self, data):
-        if self.role != self.repeated_id_owner:
+        if self.role != self.sample_id_generator:
             LOGGER.warning("Not a repeated id owner, will not generate id map")
             return
 
@@ -143,7 +141,7 @@ class RepeatedIDIntersect(object):
 
     def __restructure_sample_ids(self, data, id_map, match_data=None):
         # LOGGER.debug(f"id map is: {self.id_map.first()}")
-        if self.role == self.repeated_id_owner:
+        if self.role == self.sample_id_generator:
             return self.__restructure_owner_sample_ids(data, id_map)
         else:
             return self.__restructure_partner_sample_ids(data, id_map, match_data)
@@ -169,26 +167,26 @@ class RepeatedIDIntersect(object):
     def recover(self, data):
         LOGGER.info("Start repeated id processing.")
 
-        if self.role == self.repeated_id_owner:
+        if self.role == self.sample_id_generator:
             LOGGER.info("Start to generate id_map")
             self.id_map = self.__generate_id_map(data)
             self.owner_src_data = data
         else:
             if not self.with_sample_id:
-                LOGGER.info("Not repeated_id_owner, return!")
+                LOGGER.info("Not sample_id_generator, return!")
                 return data
 
         return self.generate_intersect_data(data)
 
     def expand(self, data, owner_only=False, match_data=None):
-        if self.repeated_id_owner == consts.HOST:
+        if self.sample_id_generator == consts.HOST:
             id_map_federation = self.transfer_variable.id_map_from_host
             partner_role = consts.GUEST
         else:
             id_map_federation = self.transfer_variable.id_map_from_guest
             partner_role = consts.HOST
 
-        if self.repeated_id_owner == self.role:
+        if self.sample_id_generator == self.role:
             self.id_map = self.id_map.join(data, lambda i, d: i)
             LOGGER.info("Find repeated id_map from intersection ids")
             if not owner_only:

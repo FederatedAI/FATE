@@ -22,7 +22,7 @@ from federatedml.protobuf.generated import sir_meta_pb2, sir_param_pb2
 from fate_flow.entity.metric import Metric, MetricMeta
 from federatedml.model_base import ModelBase
 from federatedml.param.sir_param import SecureInformationRetrievalParam
-from federatedml.statistic.intersect.repeat_id_process import RepeatedIDIntersect
+from federatedml.statistic.intersect.match_id_process import MatchIDIntersect
 from federatedml.util import consts, abnormal_detection
 from federatedml.transfer_variable.transfer_class.secure_information_retrieval_transfer_variable import \
     SecureInformationRetrievalTransferVariable
@@ -94,7 +94,7 @@ class BaseSecureInformationRetrieval(ModelBase):
         return len(self.target_cols) == 0
 
     def _recover_match_id(self, data_instance):
-        self.proc_obj = RepeatedIDIntersect(repeated_id_owner=consts.GUEST, role=self.intersection_obj.role)
+        self.proc_obj = MatchIDIntersect(sample_id_generator=consts.GUEST, role=self.intersection_obj.role)
         self.proc_obj.new_join_id = False
         self.proc_obj.use_sample_id()
         match_data = self.proc_obj.recover(data=data_instance)

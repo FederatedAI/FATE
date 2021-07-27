@@ -317,7 +317,7 @@ class IntersectParam(BaseParam):
 
     Parameters
     ----------
-    intersect_method: str, it supports 'rsa', 'raw', and 'dh', default by 'raw'
+    intersect_method: str, it supports 'rsa', 'raw', and 'dh', default by 'rsa'
 
     random_bit: positive int, it will define the size of blinding factor in rsa algorithm, default 128
         note that this param will be deprecated in future, please use random_bit in RSAParam instead
@@ -352,10 +352,10 @@ class IntersectParam(BaseParam):
             if 'left_join', participants will all include join id owner's (imputed) ids in output,
             default 'inner_join'
 
-    new_join_id: bool, whether to generate new id for join_id_owners' ids,
+    new_sample_id: bool, whether to generate new id for sample_id_generators' ids,
                 only effective when join_method is 'left_join', default False
 
-    join_id_owner: str, which role owns the join ids, effecive only when join_method is 'left_join', default 'guest'
+    sample_id_generator: str, which role owns the join ids, effecive only when join_method is 'left_join', default 'guest'
 
     intersect_cache_param: IntersectCacheParam, specification for cache generation,
                            with ver1.7 and above, this param is ignored.
@@ -386,11 +386,11 @@ class IntersectParam(BaseParam):
 
     """
 
-    def __init__(self, intersect_method: str = consts.RAW, random_bit=DEFAULT_RANDOM_BIT, sync_intersect_ids=True,
+    def __init__(self, intersect_method: str = consts.RSA, random_bit=DEFAULT_RANDOM_BIT, sync_intersect_ids=True,
                  join_role=consts.GUEST, only_output_key: bool=False,
                  with_encode=False, encode_params=EncodeParam(),
                  raw_params=RAWParam(), rsa_params=RSAParam(), dh_params=DHParam(),
-                 join_method=consts.INNER_JOIN, new_join_id: bool = False, join_id_owner=consts.GUEST,
+                 join_method=consts.INNER_JOIN, new_sample_id: bool = False, sample_id_generator=consts.GUEST,
                  intersect_cache_param=IntersectCache(), run_cache: bool = False,
                  cardinality_only: bool = False, sync_cardinality: bool = False,
                  run_preprocess:bool = False,
@@ -407,7 +407,7 @@ class IntersectParam(BaseParam):
         self.raw_params = copy.deepcopy(raw_params)
         self.rsa_params = copy.deepcopy(rsa_params)
         self.only_output_key = only_output_key
-        self.join_id_owner = join_id_owner
+        self.sample_id_generator = sample_id_generator
         self.intersect_cache_param = copy.deepcopy(intersect_cache_param)
         self.run_cache = run_cache
         self.repeated_id_process = repeated_id_process
@@ -416,7 +416,7 @@ class IntersectParam(BaseParam):
         self.info_owner = info_owner
         self.with_sample_id = with_sample_id
         self.join_method = join_method
-        self.new_join_id = new_join_id
+        self.new_sample_id = new_sample_id
         self.dh_params = copy.deepcopy(dh_params)
         self.cardinality_only = cardinality_only
         self.sync_cardinality = sync_cardinality
@@ -457,10 +457,10 @@ class IntersectParam(BaseParam):
 
         self.join_method = self.check_and_change_lower(self.join_method, [consts.INNER_JOIN, consts.LEFT_JOIN],
                                                        f"{descr}join_method")
-        self.check_boolean(self.new_join_id, f"{descr}new_join_id")
-        self.join_id_owner = self.check_and_change_lower(self.join_id_owner,
-                                                        [consts.GUEST, consts.HOST],
-                                                        f"{descr}join_id_owner")
+        self.check_boolean(self.new_sample_id, f"{descr}new_sample_id")
+        self.sample_id_generator = self.check_and_change_lower(self.sample_id_generator,
+                                                               [consts.GUEST, consts.HOST],
+                                                               f"{descr}sample_id_generator")
 
         if self.join_method==consts.LEFT_JOIN:
             if not self.sync_intersect_ids:

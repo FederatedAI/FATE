@@ -27,7 +27,7 @@ from federatedml.transfer_variable.base_transfer_variable import BaseTransferVar
 
 
 # noinspection PyAttributeOutsideInit
-class RepeatedIDIntersectTransferVariable(BaseTransferVariables):
+class MatchIDIntersectTransferVariable(BaseTransferVariables):
     def __init__(self, flowid=0):
         super().__init__(flowid)
         self.id_map_from_guest = self._create_variable(name='id_map_from_guest', src=['guest'], dst=['host'])
