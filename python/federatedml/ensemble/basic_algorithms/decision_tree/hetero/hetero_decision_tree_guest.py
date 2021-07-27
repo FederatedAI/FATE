@@ -12,6 +12,7 @@ from federatedml.transfer_variable.transfer_class.hetero_decision_tree_transfer_
 from federatedml.secureprotol import PaillierEncrypt, IterativeAffineEncrypt
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.subsample import goss_sampling
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.g_h_optim import GHPacker
+from federatedml.statistic.statics import MultivariateStatisticalSummary
 from federatedml.util import consts
 
 
@@ -403,11 +404,21 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
         if self.run_cipher_compressing:
 
+            g_min, g_max = None, None
+            if self.task_type == consts.REGRESSION:
+                self.grad_and_hess.schema = {'header': ['g', 'h']}
+                statistics = MultivariateStatisticalSummary(self.grad_and_hess, -1)
+                g_min = statistics.get_min()['g']
+                g_max = statistics.get_max()['g']
+
             self.packer = GHPacker(sample_num=self.grad_and_hess.count(),
                                    task_type=self.task_type,
                                    max_sample_weight=self.max_sample_weight,
-                                   en_calculator=self.encrypted_mode_calculator)
+                                   en_calculator=self.encrypted_mode_calculator,
+                                   g_min=g_min,
+                                   g_max=g_max)
             en_grad_hess = self.packer.pack_and_encrypt(self.grad_and_hess)
+
         else:
             en_grad_hess = self.encrypted_mode_calculator.encrypt(self.grad_and_hess)
 
@@ -417,6 +428,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
                                                           idx=idx)
 
     def sync_cur_to_split_nodes(self, cur_to_split_node, dep=-1, idx=-1):
+
         LOGGER.info("send tree node queue of depth {}".format(dep))
         mask_tree_node_queue = copy.deepcopy(cur_to_split_node)
         for i in range(len(mask_tree_node_queue)):
@@ -430,6 +442,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
                                                   suffix=(dep,))
 
     def sync_node_positions(self, dep, idx=-1):
+
         LOGGER.info("send node positions of depth {}".format(dep))
         self.transfer_inst.node_positions.remote(self.inst2node_idx,
                                                  role=consts.HOST,

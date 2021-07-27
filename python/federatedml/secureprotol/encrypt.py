@@ -219,6 +219,12 @@ class FakeEncrypt(Encrypt):
     def decrypt(self, value):
         return value
 
+    def raw_decrypt(self, value):
+        return value
+
+    def raw_encrypt(self, value):
+        return value
+
 
 class SymmetricEncrypt(Encrypt):
 

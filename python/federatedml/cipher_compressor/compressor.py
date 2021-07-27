@@ -217,7 +217,7 @@ class PackingCipherTensorPackage(CipherPackage):
 
 class CipherCompressorHost(object):
 
-    def __init__(self, package_class=PackingCipherTensorPackage):
+    def __init__(self, package_class=PackingCipherTensorPackage, sync_para=True):
 
         """
         Parameters
@@ -226,10 +226,12 @@ class CipherCompressorHost(object):
         """
 
         self._package_class = package_class
-        self.transfer_var = CipherCompressorTransferVariable()
-        # received from host
-        self._padding_length, self._capacity = self.transfer_var.compress_para.get(idx=0)
-        LOGGER.debug("received parameter from guest is {} {}".format(self._padding_length, self._capacity))
+        self._padding_length, self._capacity = None, None
+        if sync_para:
+            self.transfer_var = CipherCompressorTransferVariable()
+            # received from host
+            self._padding_length, self._capacity = self.transfer_var.compress_para.get(idx=0)
+            LOGGER.debug("received parameter from guest is {} {}".format(self._padding_length, self._capacity))
 
     def compress(self, encrypted_obj_list):
 

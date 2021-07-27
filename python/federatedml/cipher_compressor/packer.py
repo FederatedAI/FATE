@@ -18,7 +18,7 @@ def cipher_list_to_cipher_tensor(cipher_list: list):
 class GuestIntegerPacker(object):
 
     def __init__(self, pack_num: int, pack_num_range: list, encrypt_mode_calculator: EncryptModeCalculator,
-                 need_cipher_compress=True):
+                 sync_para=True):
         """
         max_int: max int allowed for packing result
         pack_num: number of int to pack, they must be POSITIVE integer
@@ -56,12 +56,12 @@ class GuestIntegerPacker(object):
         self._pack_int_needed = len(self._bit_assignment)
 
         # transfer variable
-        self.trans_var = CipherCompressorTransferVariable()
-        if need_cipher_compress:
-            compress_parameter = self.cipher_compress_suggest()
-        else:
-            compress_parameter = (None, 1)
-        self.trans_var.compress_para.remote(compress_parameter, role=consts.HOST, idx=-1)
+        compress_parameter = self.cipher_compress_suggest()
+
+        if sync_para:
+            self.trans_var = CipherCompressorTransferVariable()
+            self.trans_var.compress_para.remote(compress_parameter, role=consts.HOST, idx=-1)
+
         LOGGER.debug('int packer init done, bit assign is {}, compress para is {}'.format(self._bit_assignment,
                                                                                           compress_parameter))
 
