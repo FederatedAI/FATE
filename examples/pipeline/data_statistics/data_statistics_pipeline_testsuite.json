@@ -31,6 +31,9 @@
         },
         "data-statistics-partial-column": {
             "script": "pipeline-data-statistics-partial-column.py"
+        },
+        "data-statistics-partial-column-name": {
+            "script": "pipeline-data-statistics-partial-column-name.py"
         }
     }
 }

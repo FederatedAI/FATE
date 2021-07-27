@@ -33,6 +33,10 @@
         "data_statistics_partial_column": {
             "conf": "data_statistics_partial_column_conf.json",
             "dsl": "data_statistics_partial_column_dsl.json"
+        },
+        "data_statistics_partial_column_name": {
+            "conf": "data_statistics_partial_column_name_conf.json",
+            "dsl": "data_statistics_partial_column_name_dsl.json"
         }
     }
 }
