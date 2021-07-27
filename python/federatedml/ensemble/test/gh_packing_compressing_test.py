@@ -303,9 +303,6 @@ class TestFeatureHistogram(unittest.TestCase):
         self.run_gh_accumulate_test(self.test_num, self.reg_p_collected_gh, self.reg_p_en_g_l, self.reg_p_en_h_l, self.reg_p_packer,
                                     self.p_en, self.g_reg, self.h_reg, check=False)  # float error in regression is not controllable
 
-    def test_regression_clip(self):
-        pass
-
     @classmethod
     def tearDownClass(self):
         session.stop()

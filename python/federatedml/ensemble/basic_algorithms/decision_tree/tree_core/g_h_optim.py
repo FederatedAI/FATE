@@ -100,8 +100,6 @@ class GHPacker(object):
     def to_fixedpoint(gh, mul, g_offset):
 
         g, h = gh[0], gh[1]
-        if abs(g) >= REGRESSION_MAX_GRADIENT:
-            g = REGRESSION_MAX_GRADIENT
         g += g_offset  # to positive
         g_encoding = GHPacker.fixedpoint_encode(g, mul)
         h_encoding = GHPacker.fixedpoint_encode(h, mul)
