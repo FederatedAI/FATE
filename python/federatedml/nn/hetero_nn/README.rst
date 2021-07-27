@@ -115,4 +115,5 @@ Other features
 - Support use early stopping strategy since FATE-v1.4.0
 
 [1] Qiao Zhang, Cong Wang, Hongyi Wu, Chunsheng Xin and Tran V. Phuong. GELU-Net: A Globally Encrypted, Locally Unencrypted Deep Neural Network for Privacy-Preserved Learning
+
 [2] Yifei Zhang, Hao Zhu. Deep Neural Network for Collaborative Machine Learning with Additively Homomorphic Encryption.IJCAI FL Workshop 2019
