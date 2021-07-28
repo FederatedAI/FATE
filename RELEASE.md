@@ -16,8 +16,8 @@
 * More efficient ‘sample’ api 
 
 > Bug Fixes
-* Fix missing input modules when deploying model with multi-input module but no all are deployed
-* Fix job id length no more than 25 limitation.
+* Fix error for deploying module with lack of partial upstream modules in multi-input cases
+* Fix job id length no more than 25 limitation
 * Fix error when loss function of Hetero SecureBoost set to log-cosh
 * Fix setting predict label to string-type error when Hetero SecureBoost predicts
 * Fix error for HeteroLR without intercept
