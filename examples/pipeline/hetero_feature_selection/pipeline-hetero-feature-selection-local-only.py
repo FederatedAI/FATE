@@ -24,8 +24,7 @@ for i in range(4):
 print(f'fate_path: {cur_path}')
 sys.path.append(cur_path)
 
-from examples.pipeline.hetero_logistic_regression import common_tools
-
+from examples.pipeline.hetero_feature_selection import common_tools
 from pipeline.utils.tools import load_job_config
 from pipeline.runtime.entity import JobParameters
 
@@ -37,47 +36,49 @@ def main(config="../../config.yaml", namespace=""):
     backend = config.backend
     work_mode = config.work_mode
 
-    lr_param = {
-        "name": "hetero_lr_0",
-        "penalty": "L2",
-        "optimizer": "rmsprop",
-        "tol": 0.0001,
-        "alpha": 0.01,
-        "max_iter": 30,
-        "early_stop": "diff",
-        "batch_size": 320,
-        "learning_rate": 0.15,
-        "init_param": {
-            "init_method": "zeros"
-        },
-        "sqn_param": {
-            "update_interval_L": 3,
-            "memory_M": 5,
-            "sample_size": 5000,
-            "random_seed": None
-        },
-        "cv_param": {
-            "n_splits": 5,
-            "shuffle": False,
-            "random_seed": 103,
-            "need_cv": False
+    binning_param = {
+        "name": 'hetero_feature_binning_0',
+        "method": "quantile",
+        "compress_thres": 10000,
+        "head_size": 10000,
+        "error": 0.001,
+        "bin_num": 10,
+        "bin_indexes": -1,
+        "bin_names": None,
+        "category_indexes": None,
+        "category_names": None,
+        "adjustment_factor": 0.5,
+        "local_only": False,
+        "transform_param": {
+            "transform_cols": -1,
+            "transform_names": None,
+            "transform_type": "bin_num"
         }
     }
 
-    pipeline = common_tools.make_normal_dsl(config, namespace, lr_param)
-    # dsl_json = predict_pipeline.get_predict_dsl()
-    # conf_json = predict_pipeline.get_predict_conf()
-    # import json
-    # json.dump(dsl_json, open('./hetero-lr-normal-predict-dsl.json', 'w'), indent=4)
-    # json.dump(conf_json, open('./hetero-lr-normal-predict-conf.json', 'w'), indent=4)
+    selection_param = {
+        "name": "hetero_feature_selection_0",
+        "select_col_indexes": -1,
+        "select_names": [],
+        "filter_methods": [
+            "iv_value_thres",
+            "iv_filter"
+        ],
 
-
-    # fit model
+        "iv_value_param": {
+            "value_threshold": 1,
+            "local_only": True
+        },
+        "iv_top_k_param": {
+            "k": 7,
+            "local_only": False
+        }
+    }
+    pipeline = common_tools.make_normal_dsl(config, namespace, selection_param,
+                                            binning_param=binning_param)
     job_parameters = JobParameters(backend=backend, work_mode=work_mode)
     pipeline.fit(job_parameters)
-    # query component summary
-    common_tools.prettify(pipeline.get_component("hetero_lr_0").get_summary())
-    common_tools.prettify(pipeline.get_component("evaluation_0").get_summary())
+    common_tools.prettify(pipeline.get_component("hetero_feature_selection_0").get_summary())
 
 
 if __name__ == "__main__":
