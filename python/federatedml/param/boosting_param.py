@@ -255,7 +255,7 @@ class BoostingParam(BaseParam):
                  tol=0.0001, bin_num=32,
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  validation_freqs=None, metrics=None, random_seed=100,
-                 binning_error=consts.DEFAULT_RELATIVE_ERROR):
+                 binning_error=consts.DEFAULT_RELATIVE_ERROR, is_warm_start=True):
 
         super(BoostingParam, self).__init__()
 
@@ -273,6 +273,7 @@ class BoostingParam(BaseParam):
         self.metrics = metrics
         self.random_seed = random_seed
         self.binning_error = binning_error
+        self.is_warm_start = is_warm_start
 
     def check(self):
 
