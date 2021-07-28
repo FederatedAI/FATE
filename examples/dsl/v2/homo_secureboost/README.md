@@ -73,7 +73,7 @@
     example-data: (1) guest: vehicle_scale_homo_guest.csv
                   (2) host: vehicle_scale_homo_host.csv  
                   
-    dsl: test_secureboost_cross_validation_binary_conf.json  
+    dsl: test_secureboost_cross_validation_dsl.json
     
     runtime_config: test_secureboost_cross_validation_multi_conf.json  
     

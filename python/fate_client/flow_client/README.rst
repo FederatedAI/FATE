@@ -725,6 +725,24 @@ Model
     flow model get-model-info --model-id $MODEL_ID --model-version $MODEL_VERSION
     flow model get-model-info --model-id $MODEL_ID --model-version $MODEL_VERSION --detail
 
+``homo-convert``
+~~~~~~~~~~
+
+-  *Description*: Convert trained homogeneous model to a model of common framework.
+-  *Arguments*:
+
++-------+--------------+-----------+-------------------+------------+-----------------------------------+
+| No.   | Argument     | Flag\_1   | Flag\_2           | Required   | Description                       |
++=======+==============+===========+===================+============+===================================+
+| 1     | conf\_path   | ``-c``    | ``--conf-path``   | Yes        | Runtime configuration file path   |
++-------+--------------+-----------+-------------------+------------+-----------------------------------+
+
+-  *Examples*:
+
+.. code:: bash
+
+    flow model homo-convert -c fate_flow/examples/homo_convert_model.json
+
 
 Tag
 ---

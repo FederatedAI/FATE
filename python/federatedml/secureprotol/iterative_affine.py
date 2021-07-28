@@ -18,7 +18,7 @@ import random
 import numpy as np
 
 from federatedml.secureprotol.affine_encoder import AffineEncoder
-from federatedml.secureprotol.gmpy_math import invert
+from federatedml.secureprotol.gmpy_math import invert, mpz
 
 
 class IterativeAffineCipher(object):
@@ -184,10 +184,12 @@ class DeterministicIterativeAffineCipherKey(IterativeAffineCipherKey):
     def decrypt(self, ciphertext):
         if isinstance(ciphertext, int) is True and ciphertext is 0:
             return 0
-        return self.affine_encoder.decode(self.raw_decrypt(ciphertext))
+        return self.affine_encoder.decode(self.raw_decrypt(ciphertext), mult_times=ciphertext.mult_times)
 
     def raw_encrypt(self, plaintext):
-        ciphertext = DeterministicIterativeAffineCiphertext(plaintext, self.n_array[-1])
+        ciphertext = DeterministicIterativeAffineCiphertext(plaintext,
+                                                            self.n_array[-1],
+                                                            self.affine_encoder.mult)
         for i in range(self.key_round):
             ciphertext = self.raw_encrypt_round(ciphertext, i)
         return ciphertext
@@ -200,12 +202,14 @@ class DeterministicIterativeAffineCipherKey(IterativeAffineCipherKey):
 
     def raw_encrypt_round(self, plaintext, round_index):
         return DeterministicIterativeAffineCiphertext(
-            (self.a_array[round_index] * plaintext.cipher) % self.n_array[round_index], plaintext.n_final)
+            (self.a_array[round_index] * plaintext.cipher) % self.n_array[round_index],
+            plaintext.n_final,
+            self.affine_encoder.mult
+        )
 
     def raw_decrypt_round(self, ciphertext, round_index):
-        plaintext = (self.a_inv_array[self.key_round - 1 - round_index]
-                     * (ciphertext % self.n_array[self.key_round - 1 - round_index]))\
-                    % self.n_array[self.key_round - 1 - round_index]
+        plaintext = int((mpz(self.a_inv_array[self.key_round - 1 - round_index]) * mpz(ciphertext)) \
+                    % self.n_array[self.key_round - 1 - round_index])
         if plaintext / self.n_array[self.key_round - 1 - round_index] > 0.9:
             return plaintext - self.n_array[self.key_round - 1 - round_index]
         else:
@@ -306,15 +310,15 @@ class DeterministicIterativeAffineCiphertext(IterativeAffineCiphertext):
             if self.mult_times > other.mult_times:
                 mult_times_diff = self.mult_times - other.mult_times
                 return DeterministicIterativeAffineCiphertext(
-                    cipher=(self.cipher + other.cipher) * other.multiple * mult_times_diff % self.n_final,
+                    cipher=(self.cipher + other.cipher * other.multiple * mult_times_diff) % self.n_final,
                     n_final=self.n_final,
                     multiple=self.multiple,
                     mult_times=self.mult_times
                 )
             elif self.mult_times < other.mult_times:
-                mult_times_diff = self.mult_times - other.mult_times
+                mult_times_diff = other.mult_times - self.mult_times
                 return DeterministicIterativeAffineCiphertext(
-                    cipher=(self.cipher + other.cipher) * self.multiple * mult_times_diff % self.n_final,
+                    cipher=(self.cipher * self.multiple * mult_times_diff + other.cipher) % self.n_final,
                     n_final=self.n_final,
                     multiple=self.multiple,
                     mult_times=other.mult_times

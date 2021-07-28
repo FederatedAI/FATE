@@ -24,17 +24,16 @@ from fate_arch.common.base_utils import json_loads, json_dumps
 from fate_arch.common.conf_utils import get_base_config
 from fate_arch.common.log import audit_logger, schedule_logger
 from fate_arch.common import FederatedMode
-from fate_arch.common import conf_utils
 from fate_arch.common import CoordinationProxyService, CoordinationCommunicationProtocol
 from fate_flow.settings import DEFAULT_REMOTE_REQUEST_TIMEOUT, CHECK_NODES_IDENTITY,\
     FATE_MANAGER_GET_NODE_INFO_ENDPOINT, HEADERS, API_VERSION, stat_logger
 from fate_flow.utils.grpc_utils import wrap_grpc_packet, get_command_federation_channel, gen_routing_metadata, \
     forward_grpc_packet
-from fate_flow.utils.service_utils import ServiceUtils
 from fate_flow.entity.runtime_config import RuntimeConfig
+from fate_flow.entity.types import RetCode
 
 
-def get_json_result(retcode=0, retmsg='success', data=None, job_id=None, meta=None):
+def get_json_result(retcode=RetCode.SUCCESS, retmsg='success', data=None, job_id=None, meta=None):
     result_dict = {"retcode": retcode, "retmsg": retmsg, "data": data, "jobId": job_id, "meta": meta}
     response = {}
     for key, value in result_dict.items():
@@ -48,9 +47,9 @@ def get_json_result(retcode=0, retmsg='success', data=None, job_id=None, meta=No
 def server_error_response(e):
     stat_logger.exception(e)
     if len(e.args) > 1:
-        return get_json_result(retcode=100, retmsg=str(e.args[0]), data=e.args[1])
+        return get_json_result(retcode=RetCode.EXCEPTION_ERROR, retmsg=str(e.args[0]), data=e.args[1])
     else:
-        return get_json_result(retcode=100, retmsg=str(e))
+        return get_json_result(retcode=RetCode.EXCEPTION_ERROR, retmsg=str(e))
 
 
 def error_response(response_code, retmsg):
@@ -207,12 +206,12 @@ def forward_api(role, request_config):
 def get_node_identity(json_body, src_party_id):
     params = {
         'partyId': int(src_party_id),
-        'federatedId': conf_utils.get_base_config("fatemanager", {}).get("federatedId")
+        'federatedId': get_base_config("fatemanager", {}).get("federatedId")
     }
     try:
         response = requests.post(url="http://{}:{}{}".format(
-            ServiceUtils.get_item("fatemanager", "host"),
-            ServiceUtils.get_item("fatemanager", "port"),
+            get_base_config("fatemanager", {}).get("host"),
+            get_base_config("fatemanager", {}).get("port"),
             FATE_MANAGER_GET_NODE_INFO_ENDPOINT), json=params)
         json_body['appKey'] = response.json().get('data').get('appKey')
         json_body['appSecret'] = response.json().get('data').get('appSecret')

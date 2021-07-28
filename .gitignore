@@ -9,6 +9,7 @@ __pycache__
 .project
 *.prefs
 _build
+venv
 
 # excluded paths
 /arch/core/target/

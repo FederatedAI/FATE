@@ -39,18 +39,37 @@ FATE is `/data/projects/fate`.
 
    .. code-block:: bash
 
-      # provide real ip address and port info to initialize pipeline
+      # provide real ip address and port info of fate-flow server to initialize pipeline. Typically, the default ip and port are 127.0.0.1:8080.
       pipeline init --ip 127.0.0.1 --port 9380
       # optionally, set log directory of Pipeline
-      cd /data/projects/fate/python/fate_client/pipeline
-      pipeline init --ip 127.0.0.1 --port 9380 --log-directory ./logs
+      pipeline init --ip 127.0.0.1 --port 9380 --log-directory {desired log path}
 
 4. upload data with FATE-Pipeline
 
-   Script to upload data can be found `here <./demo/pipeline-upload.py>`_.
-   User may modify file path and table name to upload arbitrary data following instructions in the script.
-   For a list of available example data and general guide on table naming, please refer
-   to this `guide <../data/README.rst>`_.
+   Before start a modeling task, the data to be used should be uploaded. Typically, a party is usually a cluster which include multiple nodes. Thus, when we upload these data, the data will be allocated to those nodes.
+
+   We have provided an example script to upload data:  `here <./demo/pipeline-upload.py>`_.
+
+User may modify file path and table name to upload arbitrary data following instructions in the script.
+
+   .. code-block:: python
+
+            #  path to data
+            #  default fate installation path
+            DATA_BASE = "/data/projects/fate"
+            # This is an example for standalone version. For cluster version, you will need to upload your data
+            # on each party respectively.
+            pipeline_upload.add_upload_data(file=os.path.join(data_base, "examples/data/breast_hetero_guest.csv"),
+                                    table_name=dense_data["name"],             # table name
+                                    namespace=dense_data["namespace"],         # namespace
+                                    head=1, partition=partition)               # data info
+            pipeline_upload.add_upload_data(file=os.path.join(data_base, "examples/data/breast_hetero_host.csv"),
+                                    table_name=tag_data["name"],
+                                    namespace=tag_data["namespace"],
+                                    head=1, partition=partition)
+
+
+   For a list of available example data and general guide on table naming, please refer to this `guide <../data/README.md>`_.
 
    .. code-block:: bash
 
@@ -76,17 +95,21 @@ FATE is `/data/projects/fate`.
          2021-03-25 17:13:29.480 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:129 - Job is success!!! Job id is 202103251713251765644
          2021-03-25 17:13:29.480 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:130 - Total time: 0:00:04
 
-4. run a FATE-Pipeline fit job
+    If you would like to change this demo and use your own data, please
+
+5. run a FATE-Pipeline fit job
 
    .. code-block:: bash
 
       cd /data/projects/fate
       python examples/pipeline/demo/pipeline-quick-demo.py
 
+   The details of each step of this demo can be shown `here <./demo/pipeline-quick-demo.py>`_.
+
    This quick demo shows how to build to a heterogeneous SecureBoost job using uploaded data from previous step.
    Note that data are uploaded to the same machine in the previous step. To run the below job with cluster deployment,
-   make sure to first upload data to corresponding parties and set role information and job parameters accordingly
-   `here <./demo/pipeline-quick-demo.py>`_.
+   make sure to first upload data to corresponding parties and set role information and job parameters accordingly.
+
    Progress of job execution will be printed as modules run.
    A message indicating final status ("success") will be printed when job finishes.
    The script queries final model information when model training completes.
@@ -103,7 +126,7 @@ FATE is `/data/projects/fate`.
         2021-03-25 17:14:32.446 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:129 - Job is success!!! Job id is 202103251713510969875
         2021-03-25 17:14:32.447 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:130 - Total time: 0:00:41
 
-5. (another example) run FATE-Pipeline fit and predict jobs
+6. (another example) run FATE-Pipeline fit and predict jobs
 
    .. code-block:: bash
 

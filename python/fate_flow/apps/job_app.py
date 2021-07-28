@@ -18,7 +18,7 @@ import os
 import json
 import tarfile
 
-from flask import Flask, request, send_file
+from flask import request, send_file
 
 from fate_arch.common import WorkMode
 from fate_arch.common.base_utils import json_loads, json_dumps
@@ -26,7 +26,7 @@ from fate_flow.scheduler.dag_scheduler import DAGScheduler
 from fate_flow.scheduler.federated_scheduler import FederatedScheduler
 from fate_flow.settings import stat_logger, TEMP_DIRECTORY
 from fate_flow.utils import job_utils, detect_utils, schedule_utils
-from fate_flow.utils.api_utils import get_json_result, error_response, server_error_response
+from fate_flow.utils.api_utils import get_json_result, error_response
 from fate_flow.entity.types import FederatedSchedulingStatusCode, RetCode, JobStatus
 from fate_flow.operation.job_tracker import Tracker
 from fate_flow.operation.job_saver import JobSaver
@@ -34,13 +34,6 @@ from fate_flow.operation.job_clean import JobClean
 from fate_flow.utils.config_adapter import JobRuntimeConfigAdapter
 from fate_arch.common.log import schedule_logger
 from fate_flow.controller.job_controller import JobController
-
-manager = Flask(__name__)
-
-
-@manager.errorhandler(500)
-def internal_server_error(e):
-    return server_error_response(e)
 
 
 @manager.route('/submit', methods=['POST'])

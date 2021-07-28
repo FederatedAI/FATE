@@ -19,6 +19,9 @@ import os
 import shutil
 import base64
 from ruamel import yaml
+from copy import deepcopy
+from filelock import FileLock
+import hashlib
 
 from os.path import join, getsize
 from fate_arch.common import file_utils
@@ -26,11 +29,18 @@ from fate_arch.protobuf.python import default_empty_fill_pb2
 from fate_flow.settings import stat_logger, TEMP_DIRECTORY
 
 
+def local_cache_required(method):
+    def magic(self, *args, **kwargs):
+        if not self.exists():
+            raise FileNotFoundError(f'Can not found {self.model_id} {self.model_version} model local cache')
+        return method(self, *args, **kwargs)
+    return magic
+
+
 class PipelinedModel(object):
     def __init__(self, model_id, model_version):
         """
         Support operations on FATE PipelinedModels
-        TODO: add lock
         :param model_id: the model id stored at the local party.
         :param model_version: the model version.
         """
@@ -42,19 +52,37 @@ class PipelinedModel(object):
         self.variables_index_path = os.path.join(self.model_path, "variables", "index")
         self.variables_data_path = os.path.join(self.model_path, "variables", "data")
         self.default_archive_format = "zip"
+        self.lock = self._lock
+
+    @property
+    def _lock(self):
+        return FileLock(os.path.join(self.model_path, ".lock"))
+
+    def __deepcopy__(self, memo):
+        return self
+
+    # https://docs.python.org/3/library/pickle.html#handling-stateful-objects
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state.pop('lock')
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self.lock = self._lock
 
     def create_pipelined_model(self):
-        if os.path.exists(self.model_path):
-            raise Exception("Model creation failed because it has already been created, model cache path is {}".format(
-                self.model_path
-            ))
-        else:
-            os.makedirs(self.model_path, exist_ok=False)
-        for path in [self.variables_index_path, self.variables_data_path]:
-            os.makedirs(path, exist_ok=False)
-        shutil.copytree(os.path.join(file_utils.get_python_base_directory(), "federatedml", "protobuf", "proto"), self.define_proto_path)
-        with open(self.define_meta_path, "w", encoding="utf-8") as fw:
-            yaml.dump({"describe": "This is the model definition meta"}, fw, Dumper=yaml.RoundTripDumper)
+        if self.exists():
+            raise FileExistsError("Model creation failed because it has already been created, model cache path is {}".
+                                  format(self.model_path))
+        os.makedirs(self.model_path)
+
+        with self.lock:
+            for path in [self.variables_index_path, self.variables_data_path]:
+                os.makedirs(path)
+            shutil.copytree(os.path.join(file_utils.get_python_base_directory(), "federatedml", "protobuf", "proto"), self.define_proto_path)
+            with open(self.define_meta_path, "x", encoding="utf-8") as fw:
+                yaml.dump({"describe": "This is the model definition meta"}, fw, Dumper=yaml.RoundTripDumper)
 
     def save_component_model(self, component_name, component_module_name, model_alias, model_buffers):
         model_proto_index = {}
@@ -67,7 +95,7 @@ class PipelinedModel(object):
                 fill_message = default_empty_fill_pb2.DefaultEmptyFillMessage()
                 fill_message.flag = 'set'
                 buffer_object_serialized_string = fill_message.SerializeToString()
-            with open(storage_path, "wb") as fw:
+            with self.lock, open(storage_path, "wb") as fw:
                 fw.write(buffer_object_serialized_string)
             model_proto_index[model_name] = type(buffer_object).__name__   # index of model name and proto buffer class name
             stat_logger.info("Save {} {} {} buffer".format(component_name, model_alias, model_name))
@@ -89,23 +117,24 @@ class PipelinedModel(object):
                                                                     buffer_object_serialized_string=buffer_object_serialized_string)
         return model_buffers
 
+    @local_cache_required
     def collect_models(self, in_bytes=False, b64encode=True):
         model_buffers = {}
         with open(self.define_meta_path, "r", encoding="utf-8") as fr:
             define_index = yaml.safe_load(fr)
-            for component_name in define_index.get("model_proto", {}).keys():
-                for model_alias, model_proto_index in define_index["model_proto"][component_name].items():
-                    component_model_storage_path = os.path.join(self.variables_data_path, component_name, model_alias)
-                    for model_name, buffer_name in model_proto_index.items():
-                        with open(os.path.join(component_model_storage_path, model_name), "rb") as fr:
-                            buffer_object_serialized_string = fr.read()
-                            if not in_bytes:
-                                model_buffers[model_name] = self.parse_proto_object(buffer_name=buffer_name,
-                                                                                    buffer_object_serialized_string=buffer_object_serialized_string)
-                            else:
-                                if b64encode:
-                                    buffer_object_serialized_string = base64.b64encode(buffer_object_serialized_string).decode()
-                                model_buffers["{}.{}:{}".format(component_name, model_alias, model_name)] = buffer_object_serialized_string
+        for component_name in define_index.get("model_proto", {}).keys():
+            for model_alias, model_proto_index in define_index["model_proto"][component_name].items():
+                component_model_storage_path = os.path.join(self.variables_data_path, component_name, model_alias)
+                for model_name, buffer_name in model_proto_index.items():
+                    with open(os.path.join(component_model_storage_path, model_name), "rb") as fr:
+                        buffer_object_serialized_string = fr.read()
+                        if not in_bytes:
+                            model_buffers[model_name] = self.parse_proto_object(buffer_name=buffer_name,
+                                                                                buffer_object_serialized_string=buffer_object_serialized_string)
+                        else:
+                            if b64encode:
+                                buffer_object_serialized_string = base64.b64encode(buffer_object_serialized_string).decode()
+                            model_buffers["{}.{}:{}".format(component_name, model_alias, model_name)] = buffer_object_serialized_string
         return model_buffers
 
     def set_model_path(self):
@@ -121,37 +150,56 @@ class PipelinedModel(object):
             fill_message = default_empty_fill_pb2.DefaultEmptyFillMessage()
             fill_message.flag = 'set'
             buffer_object_serialized_string = fill_message.SerializeToString()
-        with open(os.path.join(self.model_path, "pipeline.pb"), "wb") as fw:
+        with self.lock, open(os.path.join(self.model_path, "pipeline.pb"), "wb") as fw:
             fw.write(buffer_object_serialized_string)
 
+    @local_cache_required
     def packaging_model(self):
-        if not self.exists():
-            raise Exception("Can not found {} {} model local cache".format(self.model_id, self.model_version))
-        archive_file_path = shutil.make_archive(base_name=self.archive_model_base_path(), format=self.default_archive_format, root_dir=self.model_path)
-        stat_logger.info("Make model {} {} archive on {} successfully".format(self.model_id,
-                                                                              self.model_version,
-                                                                              archive_file_path))
+        archive_file_path = shutil.make_archive(base_name=self.archive_model_base_path, format=self.default_archive_format, root_dir=self.model_path)
+
+        with open(archive_file_path, 'rb') as f:
+            sha1 = hashlib.sha1(f.read()).hexdigest()
+        with open(archive_file_path + '.sha1', 'w', encoding='utf8') as f:
+            f.write(sha1)
+
+        stat_logger.info("Make model {} {} archive on {} successfully. sha1: {}".format(
+            self.model_id, self.model_version, archive_file_path, sha1))
         return archive_file_path
 
     def unpack_model(self, archive_file_path: str):
-        if os.path.exists(self.model_path):
-            raise Exception("Model {} {} local cache already existed".format(self.model_id, self.model_version))
-        shutil.unpack_archive(archive_file_path, self.model_path)
+        if self.exists():
+            raise FileExistsError("Model {} {} local cache already existed".format(self.model_id, self.model_version))
+
+        if os.path.isfile(archive_file_path + '.sha1'):
+            with open(archive_file_path + '.sha1', encoding='utf8') as f:
+                sha1_orig = f.read().strip()
+            with open(archive_file_path, 'rb') as f:
+                sha1 = hashlib.sha1(f.read()).hexdigest()
+            if sha1 != sha1_orig:
+                raise ValueError('Hash not match. path: {} expected: {} actual: {}'.format(
+                    archive_file_path, sha1_orig, sha1))
+
+        os.makedirs(self.model_path)
+        with self.lock:
+            shutil.unpack_archive(archive_file_path, self.model_path)
         stat_logger.info("Unpack model archive to {}".format(self.model_path))
 
+    @local_cache_required
     def update_component_meta(self, component_name, component_module_name, model_alias, model_proto_index):
         """
         update meta info yaml
-        TODO: with lock
         :param component_name:
         :param component_module_name:
         :param model_alias:
         :param model_proto_index:
         :return:
         """
-        with open(self.define_meta_path, "r", encoding="utf-8") as fr:
-            define_index = yaml.safe_load(fr)
-        with open(self.define_meta_path, "w", encoding="utf-8") as fw:
+        with self.lock, open(self.define_meta_path, "r+", encoding="utf-8") as f:
+            _define_index = yaml.safe_load(f)
+            if not isinstance(_define_index, dict):
+                raise ValueError('Invalid meta file')
+            define_index = deepcopy(_define_index)
+
             define_index["component_define"] = define_index.get("component_define", {})
             define_index["component_define"][component_name] = define_index["component_define"].get(component_name, {})
             define_index["component_define"][component_name].update({"module_name": component_module_name})
@@ -159,20 +207,26 @@ class PipelinedModel(object):
             define_index["model_proto"][component_name] = define_index["model_proto"].get(component_name, {})
             define_index["model_proto"][component_name][model_alias] = define_index["model_proto"][component_name].get(model_alias, {})
             define_index["model_proto"][component_name][model_alias].update(model_proto_index)
-            yaml.dump(define_index, fw, Dumper=yaml.RoundTripDumper)
 
+            if define_index != _define_index:
+                f.seek(0)
+                yaml.dump(define_index, f, Dumper=yaml.RoundTripDumper)
+                f.truncate()
+
+    @local_cache_required
     def get_model_proto_index(self, component_name, model_alias):
         with open(self.define_meta_path, "r", encoding="utf-8") as fr:
             define_index = yaml.safe_load(fr)
-            return define_index.get("model_proto", {}).get(component_name, {}).get(model_alias, {})
+        return define_index.get("model_proto", {}).get(component_name, {}).get(model_alias, {})
 
+    @local_cache_required
     def get_component_define(self, component_name=None):
         with open(self.define_meta_path, "r", encoding="utf-8") as fr:
             define_index = yaml.safe_load(fr)
-            if component_name:
-                return define_index.get("component_define", {}).get(component_name, {})
-            else:
-                return define_index.get("component_define", {})
+
+        if component_name is not None:
+            return define_index.get("component_define", {}).get(component_name, {})
+        return define_index.get("component_define", {})
 
     def parse_proto_object(self, buffer_name, buffer_object_serialized_string):
         try:
@@ -212,11 +266,13 @@ class PipelinedModel(object):
         else:
             return None
 
+    @property
     def archive_model_base_path(self):
         return os.path.join(TEMP_DIRECTORY, "{}_{}".format(self.model_id, self.model_version))
 
+    @property
     def archive_model_file_path(self):
-        return "{}.{}".format(self.archive_model_base_path(), self.default_archive_format)
+        return "{}.{}".format(self.archive_model_base_path, self.default_archive_format)
 
     def calculate_model_file_size(self):
         size = 0
