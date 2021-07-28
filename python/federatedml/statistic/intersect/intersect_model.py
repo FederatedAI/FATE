@@ -132,10 +132,10 @@ class IntersectModelBase(ModelBase):
                 result_data = intersect_data.union(join_data)
             else:
                 join_id = join_data.map(lambda k, v: (k, None))
+                result_data = data
                 if self.model_param.only_output_key:
-                    result_data = data.mapValues(lambda v: None)
-                else:
-                    result_data = data
+                    if not self.use_match_id_process:
+                        result_data = data.mapValues(lambda v: None)
                 sync_join_id.remote(join_id)
         else:
             join_id = sync_join_id.get(idx=0)
@@ -163,9 +163,9 @@ class IntersectModelBase(ModelBase):
             if len(self.host_party_id_list) > 1 and self.model_param.sample_id_generator != consts.GUEST:
                 raise ValueError("While multi-host, sample_id_generator should be guest.")
             if self.model_param.intersect_method == consts.RAW:
-                if self.model_param.sample_id_generator != self.model_param.raw_params.join_role:
+                if self.model_param.sample_id_generator != self.intersection_obj.join_role:
                     raise ValueError(f"When using raw intersect with match id process,"
-                                     f"join_role and sample_id_generator should be the same role")
+                                     f"'join_role' should be same role as 'sample_id_generator'")
             else:
                 if not self.model_param.sync_intersect_ids:
                     if self.model_param.sample_id_generator != consts.GUEST:
@@ -292,11 +292,18 @@ class IntersectModelBase(ModelBase):
             LOGGER.info(f"use match_id_process")
         intersect_data = data
         if self.use_match_id_process:
-            if self.model_param.intersect_cache_param.use_cache is True and self.model_param.intersect_method == consts.RSA:
-                raise ValueError("Not support cache module while repeated id process.")
-
             if len(self.host_party_id_list) > 1 and self.model_param.sample_id_generator != consts.GUEST:
                 raise ValueError("While multi-host, sample_id_generator should be guest.")
+            if self.model_param.intersect_method == consts.RAW:
+                if self.model_param.sample_id_generator != self.intersection_obj.join_role:
+                    raise ValueError(f"When using raw intersect with match id process,"
+                                     f"'join_role' should be same role as 'sample_id_generator'")
+            else:
+                if not self.model_param.sync_intersect_ids:
+                    if self.model_param.sample_id_generator != consts.GUEST:
+                        self.model_param.sample_id_generator = consts.GUEST
+                        LOGGER.warning(f"when not sync_intersect_ids with match id process,"
+                                       f"sample_id_generator is set to Guest")
 
             proc_obj = MatchIDIntersect(sample_id_generator=self.model_param.sample_id_generator, role=self.role)
             proc_obj.new_sample_id = self.model_param.new_sample_id
