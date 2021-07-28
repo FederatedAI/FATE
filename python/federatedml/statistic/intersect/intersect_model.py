@@ -37,6 +37,8 @@ class IntersectModelBase(ModelBase):
         self.proc_obj = None
         self.intersect_num = -1
         self.intersect_rate = -1
+        self.unmatched_num = -1
+        self.unmatched_rate = -1
         self.intersect_ids = None
         self.metric_name = "intersection"
         self.metric_namespace = "train"
@@ -145,13 +147,18 @@ class IntersectModelBase(ModelBase):
         return result_data
 
     def callback(self):
+        meta_info = {"intersect_method": self.model_param.intersect_method,
+                     "join_method": self.model_param.join_method}
         self.callback_metric(metric_name=self.metric_name,
                              metric_namespace=self.metric_namespace,
                              metric_data=[Metric("intersect_count", self.intersect_num),
-                                          Metric("intersect_rate", self.intersect_rate)])
+                                          Metric("intersect_rate", self.intersect_rate),
+                                          Metric("unmatched_count", self.unmatched_num),
+                                          Metric("unmatched_rate", self.unmatched_rate)])
         self.tracker.set_metric_meta(metric_namespace=self.metric_namespace,
                                      metric_name=self.metric_name,
-                                     metric_meta=MetricMeta(name=self.metric_name, metric_type=self.metric_type))
+                                     metric_meta=MetricMeta(name=self.metric_name, metric_type=self.metric_type),
+                                     )
 
     def fit(self, data):
         self.init_intersect_method()
@@ -200,8 +207,11 @@ class IntersectModelBase(ModelBase):
 
         if self.intersection_obj.cardinality_only:
             if self.intersection_obj.intersect_num:
+                data_count = data.count()
                 self.intersect_num = self.intersection_obj.intersect_num
-                self.intersect_rate = self.intersect_num / data.count()
+                self.intersect_rate = self.intersect_num / data_count
+                self.unmatched_num = data_count - self.intersect_num
+                self.unmatched_rate = 1 - self.intersect_rate
             # self.model = self.intersection_obj.get_model()
             self.set_summary(self.get_model_summary())
             self.callback()
@@ -223,8 +233,11 @@ class IntersectModelBase(ModelBase):
         LOGGER.info("Finish intersection")
 
         if self.intersect_ids:
+            data_count = data.count()
             self.intersect_num = self.intersect_ids.count()
-            self.intersect_rate = self.intersect_num * 1.0 / data.count()
+            self.intersect_rate = self.intersect_num / data_count
+            self.unmatched_num = data_count - self.intersect_num
+            self.unmatched_rate = 1 - self.intersect_rate
 
         self.set_summary(self.get_model_summary())
         self.callback()
@@ -352,7 +365,7 @@ class IntersectModelBase(ModelBase):
 
         if self.intersect_ids:
             self.intersect_num = self.intersect_ids.count()
-            self.intersect_rate = self.intersect_num * 1.0 / data.count()
+            self.intersect_rate = self.intersect_num / data.count()
 
         self.set_summary(self.get_model_summary())
         self.callback()
