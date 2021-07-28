@@ -145,6 +145,8 @@ class FixedPointNumber(object):
     def __add__(self, other):
         if isinstance(other, FixedPointNumber):
             return self.__add_fixpointnumber(other)
+        elif type(other).__name__ == "PaillierEncryptedNumber":
+            return other + self
         else:
             return self.__add_scalar(other)
 

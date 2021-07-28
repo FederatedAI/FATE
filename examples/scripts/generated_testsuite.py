@@ -36,9 +36,12 @@ def extract(my_pipeline, file_name, output_path='generated_conf_and_dsl'):
         for l in lines:
             if ".predict(" in l:
                 code_lines.append(f"# {l}")
+            elif "return pipeline" in l:
+                code_lines.append(f"# {l}")
             elif 'if __name__ == "__main__":' in l:
-                code_lines.append("    extract(pipeline, __file__)\n")
                 code_lines.append(l)
+
+                code_lines.append("    extract(pipeline, __file__)\n")
             elif "get_summary()" in l:
                 continue
             else:
@@ -127,7 +130,7 @@ def do_generated(file_path, fold_name, template_path, yaml_file):
     for f in files:
         if not f.startswith("pipeline"):
             continue
-        # print(f)
+        print(f)
         task_name = f.replace(".py", "")
         task_name = "-".join(task_name.split('-')[1:])
         pipeline_suite["pipeline_tasks"][task_name] = {
@@ -167,7 +170,7 @@ def do_generated(file_path, fold_name, template_path, yaml_file):
     with open(suite_path, 'w', encoding='utf-8') as json_file:
         json.dump(pipeline_suite, json_file, ensure_ascii=False, indent=4)
 
-    shutil.rmtree(replaced_path)
+    # shutil.rmtree(replaced_path)
     print("Generate testsuite and dsl&conf finished!")
     # os.system('rm -rf {}'.format(replaced_path))
 

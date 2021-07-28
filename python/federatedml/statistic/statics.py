@@ -383,7 +383,7 @@ class MultivariateStatisticalSummary(object):
                                         error=self.error)
         self.binning_obj = QuantileBinning(bin_param, abnormal_list=self.abnormal_list)
         self.binning_obj.fit_split_points(self.data_instances)
-
+        LOGGER.debug(f"bin_param: {bin_param.__dict__}, bin_name: {self.binning_obj.bin_inner_param.bin_names}")
         return self.binning_obj
 
     @staticmethod

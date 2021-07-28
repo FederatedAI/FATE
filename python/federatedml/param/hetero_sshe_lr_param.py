@@ -31,9 +31,8 @@ class LogisticRegressionParam(BaseParam):
 
     Parameters
     ----------
-    penalty : str, 'L1', 'L2' or None. default: 'L2'
-        Penalty method used in LR. Please note that, when using encrypted version in HomoLR,
-        'L1' is not supported.
+    penalty : str, 'L1', 'L2' or None. default: None
+        Penalty method used in LR. If it is not None, weights are required to be reconstruct every iter.
 
     tol : float, default: 1e-4
         The tolerance of convergence
@@ -105,19 +104,27 @@ class LogisticRegressionParam(BaseParam):
             only when guest provide no features. If there is any feature has been provided
             in Guest, this param is illegal.
 
+    compute_loss: bool, default True
+        Indicate whether to compute loss or not.
+
+    review_every_iter: bool, default: True
+        Whether reconstruct model weights every iteration. If so, Regularization is available.
+        The performance will be better as well since the algorithm process is simplified.
+
+
     """
 
-    def __init__(self, penalty='L2',
-                 tol=1e-4, alpha=1.0, optimizer='rmsprop',
+    def __init__(self, penalty=None,
+                 tol=1e-4, alpha=1.0, optimizer='sgd',
                  batch_size=-1, learning_rate=0.01, init_param=InitParam(),
                  max_iter=100, early_stop='diff', encrypt_param=EncryptParam(),
                  predict_param=PredictParam(),
                  decay=1, decay_sqrt=True,
                  multi_class='ovr', validation_freqs=None, early_stopping_rounds=None,
-                 stepwise_param=StepwiseParam(), floating_point_precision=23,
                  metrics=None,
                  use_first_metric_only=False, use_mix_rand=False,
-                 random_field=1 << 20, review_strategy="respectively"
+                 random_field=1 << 20, review_strategy="respectively", compute_loss=True,
+                 review_every_iter=True
                  ):
         super(LogisticRegressionParam, self).__init__()
         self.penalty = penalty
@@ -136,13 +143,13 @@ class LogisticRegressionParam(BaseParam):
         self.decay_sqrt = decay_sqrt
         self.multi_class = multi_class
         self.validation_freqs = validation_freqs
-        self.stepwise_param = copy.deepcopy(stepwise_param)
         self.early_stopping_rounds = early_stopping_rounds
         self.metrics = metrics or []
         self.use_first_metric_only = use_first_metric_only
-        self.floating_point_precision = floating_point_precision
         self.use_mix_rand = use_mix_rand
         self.review_strategy = review_strategy
+        self.compute_loss = compute_loss
+        self.review_every_iter = review_every_iter
 
     def check(self):
         descr = "logistic_param's"
@@ -171,10 +178,8 @@ class LogisticRegressionParam(BaseParam):
                 "logistic_param's optimizer {} not supported, should be str type".format(self.optimizer))
         else:
             self.optimizer = self.optimizer.lower()
-            if self.optimizer not in ['sgd', 'rmsprop', 'adam', 'adagrad', 'nesterov_momentum_sgd', 'sqn']:
-                raise ValueError(
-                    "logistic_param's optimizer not supported, optimizer should be"
-                    " 'sgd', 'rmsprop', 'adam', 'nesterov_momentum_sgd', 'sqn' or 'adagrad'")
+            if self.optimizer not in ['sgd']:
+                raise ValueError("sshe logistic_param's optimizer support sgd only.")
 
         if self.batch_size != -1:
             if type(self.batch_size).__name__ not in ["int"] \
@@ -206,6 +211,9 @@ class LogisticRegressionParam(BaseParam):
                 raise ValueError(
                     "logistic_param's early_stop not supported, converge_func should be"
                     " 'diff', 'weight_diff' or 'abs'")
+            if self.early_stop in ["diff", 'abs'] and not self.compute_loss:
+                raise ValueError(f"sshe lr param early_stop: {self.early_stop} should calculate loss."
+                                 f"Please set 'compute_loss' to be True")
 
         self.encrypt_param.check()
         self.predict_param.check()
@@ -222,7 +230,6 @@ class LogisticRegressionParam(BaseParam):
             raise ValueError(
                 "logistic_param's decay_sqrt {} not supported, should be 'bool'".format(
                     self.decay_sqrt))
-        self.stepwise_param.check()
 
         if self.validation_freqs is not None:
             if type(self.validation_freqs).__name__ not in ["int", "list", "tuple", "set"]:
@@ -245,11 +252,6 @@ class LogisticRegressionParam(BaseParam):
 
         if not isinstance(self.use_first_metric_only, bool):
             raise ValueError("use_first_metric_only should be a boolean")
-
-        if self.floating_point_precision is not None and \
-                (not isinstance(self.floating_point_precision, int) or\
-                 self.floating_point_precision < 0 or self.floating_point_precision > 63):
-            raise ValueError("floating point precision should be null or a integer between 0 and 63")
 
         self.review_strategy = self.review_strategy.lower()
         self.check_valid_value(self.review_strategy, descr, ["respectively", "all_review_in_guest"])

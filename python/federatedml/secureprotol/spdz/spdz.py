@@ -46,8 +46,8 @@ class SPDZ(object):
 
         self.party_idx = self.communicator.party_idx
         self.other_parties = self.communicator.other_parties
-        if len(self.other_parties) > 1:
-            raise EnvironmentError("support 2-party secret share only")
+        # if len(self.other_parties) > 1:
+        #     raise EnvironmentError("support 2-party secret share only")
         self.public_key, self.private_key = PaillierKeypair.generate_keypair(1024)
         self.q_field = q_field
         self.use_mix_rand = use_mix_rand

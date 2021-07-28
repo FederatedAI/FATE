@@ -288,3 +288,15 @@ class PaillierFixedPointTensor(FixedPointTensor):
 
     def _boxed(self, value, tensor_name=None):
         return PaillierFixedPointTensor(value=value, q_field=self.q_field, endec=self.endec, tensor_name=tensor_name)
+
+    def __add__(self, other):
+        if isinstance(other, FixedPointTensor):
+            return self._raw_add(other.value)
+        else:
+            return self._raw_add(other)
+
+    def __radd__(self, other):
+        if isinstance(other, FixedPointTensor):
+            return self._raw_add(other.value)
+        else:
+            return self._raw_add(other)

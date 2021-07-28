@@ -53,6 +53,22 @@
       "dst": [
         "host"
       ]
+    },
+    "loss": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "host"
+      ]
+    },
+    "is_converged": {
+      "src": [
+        "host"
+      ],
+      "dst": [
+        "guest"
+      ]
     }
   }
 }

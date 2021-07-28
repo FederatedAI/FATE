@@ -43,7 +43,7 @@ def main(config="../../config.yaml", namespace=""):
     work_mode = config.work_mode
     parties = config.parties
     guest = parties.guest[0]
-    hosts = parties.host[0]
+    hosts = parties.host
 
     guest_train_data = {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"}
     host_train_data = {"name": "breast_hetero_host", "namespace": f"experiment{namespace}"}
@@ -89,7 +89,7 @@ def main(config="../../config.yaml", namespace=""):
         "tol": 0.0001,
         "alpha": 0.01,
         "max_iter": 3,
-        "early_stop": "weight_diff",
+        "early_stop": "diff",
         "batch_size": -1,
         "learning_rate": 0.15,
         "init_param": {

@@ -22,9 +22,9 @@ from abc import ABC
 
 import numpy as np
 
+from federatedml.linear_model.linear_model_weight import LinearModelWeights
 from federatedml.linear_model.sshe_model.sshe_model_base import SSHEModelBase
 from federatedml.one_vs_rest.one_vs_rest import one_vs_rest_factory
-from federatedml.linear_model.linear_model_weight import LinearModelWeights
 from federatedml.param.hetero_sshe_lr_param import LogisticRegressionParam
 from federatedml.param.logistic_regression_param import InitParam
 from federatedml.protobuf.generated import lr_model_meta_pb2
@@ -49,6 +49,7 @@ class HeteroLRBase(SSHEModelBase, ABC):
         self.model_param = LogisticRegressionParam()
         # self.features = None
         self.labels = None
+        self.label_tensor = None
         self.hosted_model_weights: list = []
         self.encoded_batch_num = []
         self.one_vs_rest_obj = None
@@ -59,6 +60,8 @@ class HeteroLRBase(SSHEModelBase, ABC):
         self.cipher.generate_key(self.model_param.encrypt_param.key_length)
         self.transfer_variable = SSHEModelTransferVariable()
         self.one_vs_rest_obj = one_vs_rest_factory(self, role=self.role, mode=self.mode, has_arbiter=False)
+        self.cal_loss = self.model_param.compute_loss
+        self.converge_func_name = params.early_stop
 
     def get_model_summary(self):
         header = self.header
@@ -115,6 +118,9 @@ class HeteroLRBase(SSHEModelBase, ABC):
     def transfer_pubkey(self):
         raise NotImplementedError("Should not call here")
 
+    def compute_loss(self, suffix):
+        raise NotImplementedError("Should not call here")
+
     def fit(self, data_instances, validate_data=None):
         self.header = data_instances.schema.get("header", [])
         self._abnormal_detection(data_instances)
@@ -135,6 +141,16 @@ class HeteroLRBase(SSHEModelBase, ABC):
     def _init_weights(self, model_shape):
         return self.initializer.init_model(model_shape, init_params=self.init_param_obj)
 
+    def check_converge_by_loss(self, loss_list, suffix):
+        if self.role == consts.HOST:
+            loss = np.sum(loss_list) / self.batch_generator.batch_nums
+            self.loss_history.append(loss)
+            self.is_converged = self.converge_func.is_converge(loss)
+            self.transfer_variable.is_converged.remote(self.is_converged, suffix=suffix)
+        else:
+            self.is_converged = self.transfer_variable.is_converged.get(idx=0, suffix=suffix)
+        return self.is_converged
+
     def fit_binary(self, data_instances, validate_data=None):
         LOGGER.info("Start to hetero_sshe_logistic_regression")
 
@@ -142,10 +158,10 @@ class HeteroLRBase(SSHEModelBase, ABC):
         # self.batch_generator.initialize_batch_generator(data_instances, self.batch_size)
         model_shape = self.get_features_shape(data_instances)
         w = self._init_weights(model_shape)
+        self.model_weights = LinearModelWeights(l=w,
+                                                fit_intercept=self.model_param.init_param.fit_intercept)
         self.batch_generator.initialize_batch_generator(data_instances, batch_size=self.batch_size)
         last_models = [w, self.hosted_model_weights]
-        if self.role == consts.GUEST:
-            self.labels = data_instances.mapValues(lambda x: np.array([x.label], dtype=int))
 
         remote_pubkey = self.transfer_pubkey()
         with SPDZ(
@@ -155,6 +171,12 @@ class HeteroLRBase(SSHEModelBase, ABC):
                 use_mix_rand=self.model_param.use_mix_rand,
         ) as spdz:
             self.fixpoint_encoder = self.create_fixpoint_encoder(remote_pubkey.n)
+            if self.role == consts.GUEST:
+                self.labels = data_instances.mapValues(lambda x: np.array([x.label], dtype=int))
+                self.label_tensor = fixedpoint_table.FixedPointTensor.from_value(self.labels,
+                                                                                 q_field=self.fixpoint_encoder.n,
+                                                                                 encoder=self.fixpoint_encoder)
+
             w_self, w_remote = self.share_init_model(w, self.fixpoint_encoder)
 
             batch_data_generator = self.batch_generator.generate_batch_data()
@@ -168,7 +190,7 @@ class HeteroLRBase(SSHEModelBase, ABC):
                                                       endec=self.fixpoint_encoder))
 
             while self.n_iter_ < self.max_iter:
-
+                loss_list = []
                 for batch_idx, batch_data in enumerate(encoded_batch_data):
 
                     LOGGER.debug(f"n_iter: {self.n_iter_}")
@@ -186,15 +208,24 @@ class HeteroLRBase(SSHEModelBase, ABC):
                     else:
                         w_self, w_remote = self.compute_gradient(wa=w_self, wb=w_remote, error=y,
                                                                  features=batch_data, suffix=current_suffix)
-                    new_w = self.review_models(w_self, w_remote)
-                    # LOGGER.debug(f"new_w: {new_w}")
-                    self.model_weights = LinearModelWeights(l=new_w,
-                                                            fit_intercept=self.model_param.init_param.fit_intercept)
+                    if self.cal_loss:
+                        loss_list.append(self.compute_loss(suffix=current_suffix))
+                    else:
+                        new_w = self.review_models(w_self, w_remote)
+                        # LOGGER.debug(f"new_w: {new_w}")
+                        self.model_weights = LinearModelWeights(l=new_w,
+                                                                fit_intercept=self.model_param.init_param.fit_intercept)
 
-                self.is_converged = self.check_converge(last_w=last_models, new_w=new_w, suffix=(self.n_iter_,))
+                if self.converge_func_name == "diff":
+                    self.is_converged = self.check_converge_by_loss(loss_list, suffix=(self.n_iter_,))
+                elif self.converge_func_name == "weight_diff":
+                    self.is_converged = self.check_converge_by_weights(last_w=last_models, new_w=new_w,
+                                                                       suffix=(self.n_iter_,))
+                    last_models = [new_w, copy.deepcopy(self.hosted_model_weights)]
+                else:
+                    raise ValueError(f"Cannot recognize early_stop function: {self.converge_func_name}")
+
                 LOGGER.info("iter: {},  is_converged: {}".format(self.n_iter_, self.is_converged))
-                last_models = [new_w, copy.deepcopy(self.hosted_model_weights)]
-
                 if self.validation_strategy:
                     LOGGER.debug('LR guest running validation')
                     self.validation_strategy.validate(self, self.n_iter_)
@@ -206,6 +237,14 @@ class HeteroLRBase(SSHEModelBase, ABC):
                     break
                 self.n_iter_ += 1
 
+            # Finally reconstruct
+            if self.cal_loss:
+                new_w = self.review_models(w_self, w_remote)
+                # LOGGER.debug(f"new_w: {new_w}")
+                self.model_weights = LinearModelWeights(l=new_w,
+                                                        fit_intercept=self.model_param.init_param.fit_intercept)
+
+        LOGGER.debug(f"loss_history: {self.loss_history}")
         if self.validation_strategy and self.validation_strategy.has_saved_best_model():
             self.load_model(self.validation_strategy.cur_best_model)
         self.set_summary(self.get_model_summary())
@@ -241,16 +280,16 @@ class HeteroLRBase(SSHEModelBase, ABC):
 
     def share_z(self, suffix, **kwargs):
         if self.role == consts.HOST:
-            # for var_name in ["z", "z_square", "z_cube"]:
-            for var_name in ["z"]:
+            for var_name in ["z", "z_square"]:
+            # for var_name in ["z"]:
                 z = kwargs[var_name]
                 encrypt_z = self.cipher.distribute_encrypt(z.value)
                 self.transfer_variable.encrypted_share_matrix.remote(encrypt_z, role=consts.GUEST,
                                                                      suffix=(var_name,) + suffix)
         else:
             res = []
-            # for var_name in ["z", "z_square", "z_cube"]:
-            for var_name in ["z"]:
+            for var_name in ["z", "z_square"]:
+            # for var_name in ["z"]:
                 dest_role = consts.GUEST if self.role == consts.HOST else consts.HOST
                 z_table = self.transfer_variable.encrypted_share_matrix.get(role=dest_role, idx=0,
                                                                             suffix=(var_name,) + suffix)
@@ -260,7 +299,7 @@ class HeteroLRBase(SSHEModelBase, ABC):
                 res.append(fixedpoint_table.PaillierFixedPointTensor(
                     z_table, q_field=self.fixpoint_encoder.n, endec=self.fixpoint_encoder))
             # return res[0], res[1], res[2]
-            return res[0], res[0], res[0]
+            return res[0], res[1]
 
     def _get_meta(self):
         meta_protobuf_obj = lr_model_meta_pb2.LRModelMeta(penalty=self.model_param.penalty,

@@ -46,19 +46,18 @@ class SSHEModelBase(BaseLinearModel, ABC):
         LOGGER.debug(f"batch_generator: {self.batch_generator}, self.role: {self.role}")
         self.batch_generator.register_batch_generator(BatchGeneratorTransferVariable(), has_arbiter=False)
 
-    def check_converge(self, last_w, new_w, suffix):
+    def check_converge_by_weights(self, last_w, new_w, suffix):
         raise NotImplementedError("Should not call here")
 
     def _set_parties(self):
-        # since multi-host not supported yet, we assume parties are one from guest and one from host
         parties = []
         guest_parties = session.get_latest_opened().parties.roles_to_parties(["guest"])
         host_parties = session.get_latest_opened().parties.roles_to_parties(["host"])
-        if len(guest_parties) != 1 or len(host_parties) != 1:
-            raise ValueError(
-                f"one guest and one host required, "
-                f"while {len(guest_parties)} guest and {len(host_parties)} host provided"
-            )
+        # if len(guest_parties) != 1 or len(host_parties) != 1:
+        #     raise ValueError(
+        #         f"one guest and one host required, "
+        #         f"while {len(guest_parties)} guest and {len(host_parties)} host provided"
+        #     )
         parties.extend(guest_parties)
         parties.extend(host_parties)
 

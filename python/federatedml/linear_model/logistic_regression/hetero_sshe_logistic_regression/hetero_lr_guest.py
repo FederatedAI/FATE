@@ -35,6 +35,7 @@ class HeteroLRGuest(HeteroLRBase):
         super().__init__()
         self.encrypted_error = None
         self.encrypted_wx = None
+        self.z_square = None
 
     def _init_model(self, params):
         super()._init_model(params)
@@ -48,7 +49,7 @@ class HeteroLRGuest(HeteroLRBase):
                                                           suffix=("host_pubkey",))
         return remote_pubkey
 
-    def cal_prediction(self, w_self, w_remote, features, spdz, suffix):
+    def _cal_z_in_share(self, w_self, w_remote, features, suffix):
         z1 = features.dot_array(w_self.value, fit_intercept=self.fit_intercept)
 
         za_suffix = ("za",) + suffix
@@ -58,20 +59,34 @@ class HeteroLRGuest(HeteroLRBase):
         zb_share = self.secure_matrix_mul_passive(features,
                                                   suffix=("zb",) + suffix)
         z = z1 + za_share + zb_share
+        return z
+
+    def _compute_sigmoid(self, z, remote_z, remote_z_square):
+        z_square = z * z
+
+        complete_z = remote_z + z
+        self.z_square = z_square + remote_z_square
+        self.z_square = self.z_square + 2 * remote_z * z
+        sigmoid_z = complete_z * 0.2 + 0.5
+
+        # complete_z_cube = remote_z_cube + remote_z_square * z * 3 + remote_z * z_square * 3 + z_cube
+        # sigmoid_z = complete_z * 0.197 - complete_z_cube * 0.004 + 0.5
+        return sigmoid_z
+
+    def cal_prediction(self, w_self, w_remote, features, spdz, suffix):
+        if self.cal_loss:
+            z = self._cal_z_in_share(w_self, w_remote, features, suffix)
+        else:
+            LOGGER.debug(f"Calculate z directly.")
+            z = features.dot_array(self.model_weights.unboxed, fit_intercept=self.fit_intercept)
 
         # z = z.convert_to_array_tensor()
         # new_w = z.reconstruct_unilateral(tensor_name=f"z_{self.n_iter_}")
         # raise ValueError(f"reconstructed z: {new_w}")
+        remote_z, remote_z_square = self.share_z(suffix=suffix)
+        sigmoid_z = self._compute_sigmoid(z, remote_z, remote_z_square)
 
-        # z_square = z * z
-        # z_cube = z_square * z
-
-        remote_z, remote_z_square, remote_z_cube = self.share_z(suffix=suffix)
-
-        complete_z = remote_z + z
-        # complete_z_cube = remote_z_cube + remote_z_square * z * 3 + remote_z * z_square * 3 + z_cube
-        # sigmoid_z = complete_z * 0.197 - complete_z_cube * 0.004 + 0.5
-        sigmoid_z = complete_z * 0.2 + 0.5
+        # sigmoid_z = complete_z * 0.2 + 0.5
         self.encrypted_wx = sigmoid_z
         encrypted_error = sigmoid_z.value.join(self.labels, operator.sub)
         self.encrypted_error = fixedpoint_table.PaillierFixedPointTensor.from_value(
@@ -106,7 +121,21 @@ class HeteroLRGuest(HeteroLRBase):
 
         return wa, wb
 
-    def check_converge(self, last_w, new_w, suffix):
+    def compute_loss(self, suffix):
+        """
+        Use Taylor series expand log loss:
+        Loss = - y * log(h(x)) - (1-y) * log(1 - h(x)) where h(x) = 1/(1+exp(-wx))
+        Then loss' = - (1/N)*∑(log(1/2) - 1/2*wx + wxy + 1/8(wx)^2)
+        """
+        encoded_1_n = self.encoded_batch_num[suffix[1]]
+        wxy = self.encrypted_wx.dot_local(self.label_tensor)
+        loss_table = - np.log(0.5) + 0.5 * self.encrypted_wx - 0.125 * self.z_square
+
+        loss = (loss_table.value.reduce(operator.add) + wxy) * encoded_1_n
+        self.transfer_variable.loss.remote(loss, suffix=suffix)
+        return loss
+
+    def check_converge_by_weights(self, last_w, new_w, suffix):
         if self.is_respectively_reviewed:
             return self._respectively_check(last_w[0], new_w, suffix)
         else:
@@ -150,7 +179,8 @@ class HeteroLRGuest(HeteroLRBase):
         if self.need_one_vs_rest:
             predict_result = self.one_vs_rest_obj.predict(data_instances)
             return predict_result
-        LOGGER.debug(f"Before_predict_review_strategy: {self.model_param.review_strategy}, {self.is_respectively_reviewed}")
+        LOGGER.debug(
+            f"Before_predict_review_strategy: {self.model_param.review_strategy}, {self.is_respectively_reviewed}")
 
         if self.is_respectively_reviewed:
             return self._respectively_predict(data_instances)

@@ -241,8 +241,17 @@ class FixedPointTensor(TensorBase):
     def __add__(self, other):
         return self._basic_op(other, operator.add)
 
+    def __radd__(self, other):
+        return self._basic_op(other, operator.add)
+
     def __sub__(self, other):
         return self._basic_op(other, operator.sub)
+
+    def __rsub__(self, other):
+        return self._basic_op(other, operator.sub)
+
+    def __rmul__(self, other):
+        return self._basic_op(other, operator.mul)
 
     def __mul__(self, other):
         return self._basic_op(other, operator.mul)

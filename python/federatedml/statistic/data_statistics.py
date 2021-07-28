@@ -148,6 +148,8 @@ class DataStatistics(ModelBase):
                 results = res
             else:
                 for k, v in res.items():
+                    LOGGER.debug(f"results: {results}, k: {k}, query_point: {query_point},"
+                                 f"res: {res}")
                     results[k][query_point] = v
         for k, v in results.items():
             # new_dict = {}

@@ -43,9 +43,7 @@ class HeteroLRHost(HeteroLRBase):
         self.init_param_obj.fit_intercept = False
         return self.initializer.init_model(model_shape, init_params=self.init_param_obj)
 
-    def cal_prediction(self, w_self, w_remote, features, spdz, suffix):
-        # za_share = self.secure_matrix_mul(self.features, cipher=self.cipher, suffix=("za",) + suffix)
-        # zb_share = self.secure_matrix_mul(w_remote, suffix=("zb",) + suffix)
+    def _cal_z_in_share(self, w_self, w_remote, features, suffix):
         z1 = features.dot_array(w_self.value)
         za_share = self.secure_matrix_mul_passive(features, suffix=("za",) + suffix)
 
@@ -54,8 +52,18 @@ class HeteroLRHost(HeteroLRBase):
         zb_share = self.received_share_matrix(self.cipher, q_field=self.fixpoint_encoder.n,
                                               encoder=self.fixpoint_encoder, suffix=zb_suffix)
         z = z1 + za_share + zb_share
+        return z
 
-        self.share_z(suffix=suffix, z=z, z_square=z, z_cube=z)
+    def cal_prediction(self, w_self, w_remote, features, spdz, suffix):
+        if self.cal_loss:
+            z = self._cal_z_in_share(w_self, w_remote, features, suffix)
+        else:
+            z = features.dot_array(self.model_weights.unboxed, fit_intercept=self.fit_intercept)
+
+        z_square = z * z
+        # z_cube = z_square * z
+
+        self.share_z(suffix=suffix, z=z, z_square=z_square)
 
         shared_sigmoid_z = self.received_share_matrix(self.cipher,
                                                       q_field=z.q_field,
@@ -80,7 +88,13 @@ class HeteroLRHost(HeteroLRBase):
 
         return wa, wb
 
-    def check_converge(self, last_w, new_w, suffix):
+    def compute_loss(self, suffix):
+        loss = self.transfer_variable.loss.get(idx=0, suffix=suffix)
+        loss = self.cipher.decrypt(loss.value[0][0])
+        LOGGER.debug(f"recevided loss: {loss}")
+        return loss
+
+    def check_converge_by_weights(self, last_w, new_w, suffix):
         if self.is_respectively_reviewed:
             return self._respectively_check(last_w[0], new_w, suffix)
         else:
