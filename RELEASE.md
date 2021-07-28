@@ -1,3 +1,32 @@
+# Release 1.5.2
+## Major Features and Improvements
+
+> FederatedML
+* SIR support non-ascii id
+* Selection support local iv filter
+* Adjustable Paillier key length for Hetero LR
+* Binning support iv calculation on categorical features
+* Hetero LR one vs rest support evaluation during training
+
+> Fate-Flow
+* Read data from mysql with ‘table bind’ command to map source table to FATE table
+* FATE cluster push model for one-to-multiple FATE Serving clusters in one party
+
+> System Architecture
+* More efficient ‘sample’ api 
+
+> Bug Fixes
+* Fix missing input modules when deploying model with multi-input module but no all are deployed
+* Fix job id length no more than 25 limitation.
+* Fix error when loss function of Hetero SecureBoost set to log-cosh
+* Fix setting predict label to string-type error when Hetero SecureBoost predicts
+* Fix error for HeteroLR without intercept
+* Fix torch import error
+* Fix quantile error of Data Statistics with specified columns
+* Fix string parsing error of OneHot with specified columns
+* Some parameters can now take 0 or 1 integer values when valid range is [0, 1]
+
+
 # Release 1.5.1
 ## Major Features and Improvements
 
