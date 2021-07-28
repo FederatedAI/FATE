@@ -360,9 +360,12 @@ class IntersectParam(BaseParam):
             default 'inner_join'
 
     new_sample_id: bool, whether to generate new id for sample_id_generator's ids,
-                   only effective when join_method is 'left_join', default False
+                   only effective when join_method is 'left_join' or when input data are instance with match id,
+                   default False
 
-    sample_id_generator: str, which role owns the join ids, effecive only when join_method is 'left_join', default 'guest'
+    sample_id_generator: str, role whose ids are to be kept,
+                         effective only when join_method is 'left_join' or when input data are instance with match id,
+                         default 'guest'
 
     intersect_cache_param: IntersectCacheParam, specification for cache generation,
                            with ver1.7 and above, this param is ignored.
