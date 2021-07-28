@@ -68,26 +68,31 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
         :param data_inst: Table, only the key column of the Table is used
         :return:
         """
+        abnormal_detection.empty_table_detection(data_inst)
+
         # 0. Raw retrieval
+        match_data = data_inst
+        self.with_inst_id = data_overview.check_with_inst_id(data_inst)
+        if self.with_inst_id:
+            match_data = self._recover_match_id(data_inst)
+
         if self.model_param.raw_retrieval or self.security_level == 0:
             LOGGER.info("enter raw information retrieval guest")
-            abnormal_detection.empty_table_detection(data_inst)
-            data_output = self._raw_information_retrieval(data_inst)
+            # abnormal_detection.empty_table_detection(data_inst)
+            data_output = self._raw_information_retrieval(match_data)
             self._display_result(block_num='N/A')
+            if self.with_inst_id:
+                data_output = self._restore_sample_id(data_output)
+            data_output = self._compensate_set_difference(data_inst, data_output)
             return data_output
 
         # 1. Data pre-processing
         LOGGER.info("enter secure information retrieval guest")
         self.need_label = self._check_need_label()
-        abnormal_detection.empty_table_detection(data_inst)
-        self._parse_security_level(data_inst)
+        # abnormal_detection.empty_table_detection(data_inst)
+        self._parse_security_level(match_data)
         if not self._check_oblivious_transfer_condition():
             self._failure_response()
-
-        match_data = data_inst
-        self.with_inst_id = data_overview.check_with_inst_id(data_inst)
-        if self.with_inst_id:
-            match_data = self._recover_match_id(data_inst)
 
         # 2. Find intersection
         id_list_intersect = self.intersection_obj.get_intersect_doubly_encrypted_id(match_data)[0]
@@ -276,7 +281,7 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
         data_output = self.transfer_variable.raw_value_list.get(idx=0)
         LOGGER.info("got raw value list from host")
 
-        data_output = self._compensate_set_difference(data_instance, data_output)
+        # data_output = self._compensate_set_difference(data_instance, data_output)
 
         return data_output
 
@@ -327,10 +332,11 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
         return data_output
 
     def _sync_coverage(self, data_instance):
-        self.transfer_variable.coverage.remote(self.coverage * data_instance.count(),
+        coverage = self.coverage * data_instance.count()
+        self.transfer_variable.coverage.remote(coverage,
                                                role=consts.HOST,
                                                idx=0)
-        LOGGER.info("sent coverage {} to host".format(self.coverage * data_instance.count()))
+        LOGGER.info(f"sent coverage {coverage} to host")
 
     def _iteratively_get_encrypted_values(self):
         """

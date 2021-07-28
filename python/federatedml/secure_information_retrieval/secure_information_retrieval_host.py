@@ -61,26 +61,28 @@ class SecureInformationRetrievalHost(BaseSecureInformationRetrieval):
         :param data_inst: Table
         :return:
         """
-        LOGGER.info("data count = {}".format(data_inst.count()))
+        # LOGGER.info("data count = {}".format(data_inst.count()))
+        abnormal_detection.empty_table_detection(data_inst)
         self._update_target_indexes(data_inst.schema)
+        match_data = data_inst
+        if data_overview.check_with_inst_id(data_inst):
+            match_data = self._recover_match_id(data_inst)
 
         # 0. Raw retrieval
         if self.model_param.raw_retrieval or self.security_level == 0:
             LOGGER.info("enter raw information retrieval host")
-            abnormal_detection.empty_table_detection(data_inst)
-            self._raw_information_retrieval(data_inst)
+            # abnormal_detection.empty_table_detection(data_inst)
+            self._raw_information_retrieval(match_data)
             self._display_result(block_num='N/A')
+            self._sync_coverage(data_inst)
             return data_inst
 
         # 1. Data pre-processing
         LOGGER.info("enter secure information retrieval host")
-        abnormal_detection.empty_table_detection(data_inst)
-        self._parse_security_level(data_inst)
+        # abnormal_detection.empty_table_detection(data_inst)
+        self._parse_security_level(match_data)
         if not self._check_oblivious_transfer_condition():
             self._failure_response()
-        match_data = data_inst
-        if data_overview.check_with_inst_id(data_inst):
-            match_data = self._recover_match_id(data_inst)
 
         # 2. Guest find intersection
         self.intersection_obj.get_intersect_doubly_encrypted_id(match_data)
@@ -195,7 +197,7 @@ class SecureInformationRetrievalHost(BaseSecureInformationRetrieval):
                                                      idx=0)
         LOGGER.info("sent raw value list to guest")
 
-        self._sync_coverage(data_instance)
+        # self._sync_coverage(data_instance)
 
     def _sync_coverage(self, data_instance):
         self.coverage = self.transfer_variable.coverage.get(idx=0) / data_instance.count()
