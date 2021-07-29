@@ -26,14 +26,17 @@
         "role": {
             "host": {
                 "0": {
+                    "dataio_0": {
+                        "with_label": false
+                    },
                     "reader_0": {
                         "table": {
-                            "name": "vehicle_scale_hetero_host",
+                            "name": "breast_hetero_host",
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_0": {
-                        "with_label": false
+                    "sample_weight_0": {
+                        "need_run": false
                     }
                 }
             },
@@ -41,38 +44,44 @@
                 "0": {
                     "reader_0": {
                         "table": {
-                            "name": "vehicle_scale_hetero_guest",
+                            "name": "breast_hetero_guest",
                             "namespace": "experiment"
                         }
-                    },
-                    "dataio_0": {
-                        "with_label": true
                     }
                 }
             }
         },
         "common": {
             "dataio_0": {
+                "with_label": true,
                 "output_format": "dense"
+            },
+            "sample_weight_0": {
+                "class_weight": {
+                    "0": 1,
+                    "1": 2
+                }
             },
             "hetero_lr_0": {
                 "penalty": "L2",
-                "tol": 0.0001,
+                "tol": 1e-05,
                 "alpha": 0.01,
-                "optimizer": "nesterov_momentum_sgd",
-                "batch_size": -1,
+                "optimizer": "rmsprop",
+                "batch_size": 320,
                 "learning_rate": 0.15,
                 "init_param": {
                     "init_method": "zeros"
                 },
-                "max_iter": 10,
+                "max_iter": 3,
                 "early_stop": "diff",
                 "cv_param": {
-                    "n_splits": 3,
-                    "shuffle": false,
-                    "random_seed": 103,
-                    "need_cv": true
-                }
+                    "n_splits": 5,
+                    "shuffle": true,
+                    "random_seed": 33,
+                    "need_cv": false
+                },
+                "decay": 1.0,
+                "decay_sqrt": true
             }
         }
     }

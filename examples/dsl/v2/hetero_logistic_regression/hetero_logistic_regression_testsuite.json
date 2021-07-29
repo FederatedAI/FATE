@@ -42,62 +42,65 @@
         }
     ],
     "tasks": {
-        "cv": {
-            "conf": "hetero_lr_cv_conf.json",
-            "dsl": "hetero_lr_cv_dsl.json"
+        "hetero_lr_sample_weights": {
+            "conf": "hetero_lr_sample_weights_conf.json",
+            "dsl": "hetero_lr_sample_weights_dsl.json"
         },
-        "one-vs-all": {
-            "conf": "hetero_lr_one_vs_all_conf.json",
-            "dsl": "hetero_lr_one_vs_all_dsl.json"
-        },
-        "normal": {
-            "conf": "hetero_lr_normal_conf.json",
-            "dsl": "hetero_lr_normal_dsl.json"
-        },
-        "validate": {
-            "conf": "hetero_lr_validate_conf.json",
-            "dsl": "hetero_lr_validate_dsl.json"
-        },
-        "feature-engineering": {
-            "conf": "hetero_lr_feature_engineering_conf.json",
-            "dsl": "hetero_lr_feature_engineering_dsl.json"
-        },
-        "multi-host": {
-            "conf": "hetero_lr_multi_host_conf.json",
-            "dsl": "hetero_lr_multi_host_dsl.json"
-        },
-        "sparse": {
-            "conf": "hetero_lr_sparse_conf.json",
-            "dsl": "hetero_lr_sparse_dsl.json"
-        },
-        "sparse-sqn": {
-            "conf": "hetero_lr_sparse_sqn_conf.json",
-            "dsl": "hetero_lr_sparse_sqn_dsl.json"
-        },
-        "ovr-cv": {
-            "conf": "hetero_lr_ovr_cv_conf.json",
-            "dsl": "hetero_lr_ovr_cv_dsl.json"
-        },
-        "sparse-cv": {
-            "conf": "hetero_lr_sparse_cv_conf.json",
-            "dsl": "hetero_lr_sparse_cv_dsl.json"
-        },
-        "ovr-sqn": {
-            "conf": "hetero_lr_ovr_sqn_conf.json",
-            "dsl": "hetero_lr_ovr_sqn_dsl.json"
-        },
-        "sqn": {
+        "hetero_lr_sqn": {
             "conf": "hetero_lr_sqn_conf.json",
             "dsl": "hetero_lr_sqn_dsl.json"
         },
-        "early-stop": {
+        "hetero_lr_sparse": {
+            "conf": "hetero_lr_sparse_conf.json",
+            "dsl": "hetero_lr_sparse_dsl.json"
+        },
+        "hetero_lr_ovr_sqn": {
+            "conf": "hetero_lr_ovr_sqn_conf.json",
+            "dsl": "hetero_lr_ovr_sqn_dsl.json"
+        },
+        "hetero_lr_feature_engineering": {
+            "conf": "hetero_lr_feature_engineering_conf.json",
+            "dsl": "hetero_lr_feature_engineering_dsl.json"
+        },
+        "hetero_lr_ovr_cv": {
+            "conf": "hetero_lr_ovr_cv_conf.json",
+            "dsl": "hetero_lr_ovr_cv_dsl.json"
+        },
+        "hetero_lr_cv": {
+            "conf": "hetero_lr_cv_conf.json",
+            "dsl": "hetero_lr_cv_dsl.json"
+        },
+        "hetero_lr_one_vs_all": {
+            "conf": "hetero_lr_one_vs_all_conf.json",
+            "dsl": "hetero_lr_one_vs_all_dsl.json"
+        },
+        "hetero_lr_multi_host": {
+            "conf": "hetero_lr_multi_host_conf.json",
+            "dsl": "hetero_lr_multi_host_dsl.json"
+        },
+        "hetero_lr_ovr_validate": {
+            "conf": "hetero_lr_ovr_validate_conf.json",
+            "dsl": "hetero_lr_ovr_validate_dsl.json"
+        },
+        "hetero_lr_normal": {
+            "conf": "hetero_lr_normal_conf.json",
+            "dsl": "hetero_lr_normal_dsl.json"
+        },
+        "hetero_lr_validate": {
+            "conf": "hetero_lr_validate_conf.json",
+            "dsl": "hetero_lr_validate_dsl.json"
+        },
+        "hetero_lr_sparse_cv": {
+            "conf": "hetero_lr_sparse_cv_conf.json",
+            "dsl": "hetero_lr_sparse_cv_dsl.json"
+        },
+        "hetero_lr_early_stop": {
             "conf": "hetero_lr_early_stop_conf.json",
             "dsl": "hetero_lr_early_stop_dsl.json"
         },
-        "predict": {
-            "conf": "hetero-lr-normal-predict-conf.json",
-            "dsl": "hetero-lr-normal-predict-dsl.json",
-            "deps": "normal"
+        "hetero_lr_sparse_sqn": {
+            "conf": "hetero_lr_sparse_sqn_conf.json",
+            "dsl": "hetero_lr_sparse_sqn_dsl.json"
         }
     }
 }

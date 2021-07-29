@@ -24,19 +24,6 @@
     },
     "component_parameters": {
         "role": {
-            "host": {
-                "0": {
-                    "reader_0": {
-                        "table": {
-                            "name": "vehicle_scale_hetero_host",
-                            "namespace": "experiment"
-                        }
-                    },
-                    "dataio_0": {
-                        "with_label": false
-                    }
-                }
-            },
             "guest": {
                 "0": {
                     "reader_0": {
@@ -45,8 +32,33 @@
                             "namespace": "experiment"
                         }
                     },
+                    "reader_1": {
+                        "table": {
+                            "name": "vehicle_scale_hetero_guest",
+                            "namespace": "experiment"
+                        }
+                    },
                     "dataio_0": {
                         "with_label": true
+                    }
+                }
+            },
+            "host": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "vehicle_scale_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "reader_1": {
+                        "table": {
+                            "name": "vehicle_scale_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "dataio_0": {
+                        "with_label": false
                     }
                 }
             }
@@ -71,8 +83,13 @@
                     "n_splits": 3,
                     "shuffle": false,
                     "random_seed": 103,
-                    "need_cv": true
-                }
+                    "need_cv": false
+                },
+                "validation_freqs": 1,
+                "early_stopping_rounds": 3
+            },
+            "evaluation_0": {
+                "eval_type": "binary"
             }
         }
     }
