@@ -161,9 +161,13 @@ class LogisticRegressionParam(BaseParam):
                 "logistic_param's penalty {} not supported, should be str type".format(self.penalty))
         else:
             self.penalty = self.penalty.upper()
-            if self.penalty not in [consts.L1_PENALTY, consts.L2_PENALTY, 'NONE']:
+            if self.penalty not in [consts.L1_PENALTY, consts.L2_PENALTY]:
                 raise ValueError(
                     "logistic_param's penalty not supported, penalty should be 'L1', 'L2' or 'none'")
+            if not self.review_every_iter:
+                raise ValueError(
+                    f"When penalty is {self.penalty}, review_every_iter should be true."
+                )
 
         if not isinstance(self.tol, (int, float)):
             raise ValueError(

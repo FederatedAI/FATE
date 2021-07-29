@@ -42,8 +42,9 @@ class _Optimizer(object):
 
     @property
     def shrinkage_val(self):
-        this_step_size = self.learning_rate / np.sqrt(self.iters)
-        return self.alpha * this_step_size
+        # this_step_size = self.learning_rate / np.sqrt(self.iters)
+        # return self.alpha * this_step_size
+        return self.alpha * self.decay_learning_rate()
 
     def set_iters(self, iters):
         self.iters = iters

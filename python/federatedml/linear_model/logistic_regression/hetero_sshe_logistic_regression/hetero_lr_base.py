@@ -62,6 +62,7 @@ class HeteroLRBase(SSHEModelBase, ABC):
         self.one_vs_rest_obj = one_vs_rest_factory(self, role=self.role, mode=self.mode, has_arbiter=False)
         self.cal_loss = self.model_param.compute_loss
         self.converge_func_name = params.early_stop
+        self.review_every_iter = params.review_every_iter
 
     def get_model_summary(self):
         header = self.header
@@ -208,13 +209,15 @@ class HeteroLRBase(SSHEModelBase, ABC):
                     else:
                         w_self, w_remote = self.compute_gradient(wa=w_self, wb=w_remote, error=y,
                                                                  features=batch_data, suffix=current_suffix)
-                    if self.cal_loss:
-                        loss_list.append(self.compute_loss(suffix=current_suffix))
-                    else:
+
+                    if self.review_every_iter:
                         new_w = self.review_models(w_self, w_remote)
-                        # LOGGER.debug(f"new_w: {new_w}")
                         self.model_weights = LinearModelWeights(l=new_w,
                                                                 fit_intercept=self.model_param.init_param.fit_intercept)
+
+                    if self.cal_loss:
+                        loss_list.append(self.compute_loss(suffix=current_suffix))
+
 
                 if self.converge_func_name == "diff":
                     self.is_converged = self.check_converge_by_loss(loss_list, suffix=(self.n_iter_,))
