@@ -15,6 +15,7 @@
 #
 
 
+import copy
 import numpy as np
 
 from federatedml.model_base import ModelBase
@@ -82,9 +83,12 @@ class Scorecard(ModelBase):
                                                                                             factor_base,
                                                                                             upper_limit_value,
                                                                                             lower_limit_value))
-        schema = prediction_result.schema
+        result_schema = copy.deepcopy(prediction_result.schema)
+        result_schema["header"] = ["label", "predict_result", "predict_score", "credit_score"]
+        """
         result_schema = {"header": ["label", "predict_result", "predict_score", "credit_score"],
                          "sid_name": schema.get('sid_name')}
+        """
         score_result.schema = result_schema
 
         self._set_summary()
