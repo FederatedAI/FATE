@@ -1,5 +1,5 @@
 #
-#  Copyright 2019 The Eggroll Authors. All Rights Reserved.
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -700,9 +700,12 @@ class _TaskInfo:
         self.task_id = task_id
         self.function_id = function_id
         self.function_bytes = function_bytes
+        self._function_deserialized = None
 
     def get_func(self):
-        return f_pickle.loads(self.function_bytes)
+        if self._function_deserialized is None:
+            self._function_deserialized = f_pickle.loads(self.function_bytes)
+        return self._function_deserialized
 
 
 class _MapReduceTaskInfo:
@@ -711,12 +714,20 @@ class _MapReduceTaskInfo:
         self.function_id = function_id
         self.map_function_bytes = map_function_bytes
         self.reduce_function_bytes = reduce_function_bytes
+        self._reduce_function_deserialized = None
+        self._mapper_function_deserialized = None
 
     def get_mapper(self):
-        return f_pickle.loads(self.map_function_bytes)
+        if self._mapper_function_deserialized is None:
+            self._mapper_function_deserialized = f_pickle.loads(self.map_function_bytes)
+        return self._mapper_function_deserialized
 
     def get_reducer(self):
-        return f_pickle.loads(self.reduce_function_bytes)
+        if self._reduce_function_deserialized is None:
+            self._reduce_function_deserialized = f_pickle.loads(
+                self.reduce_function_bytes
+            )
+        return self._reduce_function_deserialized
 
 
 class _Operand:

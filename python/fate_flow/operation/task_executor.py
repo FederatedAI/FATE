@@ -176,6 +176,7 @@ class TaskExecutor(object):
                 run_object.run(component_parameters_on_party, task_run_args)
             else:
                 run_object.warm_start(component_parameters_on_party, task_run_args)
+            sess.wait_remote_all_done()
             profile.profile_ends()
 
             output_data = run_object.save_data()
