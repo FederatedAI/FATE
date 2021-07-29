@@ -29,7 +29,7 @@ from fate_arch.common.log import schedule_logger
 from fate_flow.db.db_models import DB, Job, Task
 from fate_flow.entity.types import JobStatus
 from fate_flow.entity.types import TaskStatus, RunParameters, KillProcessStatusCode
-from fate_flow.settings import stat_logger, JOB_DEFAULT_TIMEOUT, WORK_MODE, FATE_BOARD_DASHBOARD_ENDPOINT
+from fate_flow.settings import stat_logger, JOB_DEFAULT_TIMEOUT, Settings, FATE_BOARD_DASHBOARD_ENDPOINT
 from fate_flow.utils import detect_utils, model_utils
 from fate_flow.utils import session_utils
 from fate_arch.common.conf_utils import get_base_config
@@ -123,7 +123,7 @@ def check_job_runtime_conf(runtime_conf: typing.Dict):
 def runtime_conf_basic(if_local=False):
     job_runtime_conf = {
         "initiator": {},
-        "job_parameters": {"work_mode": WORK_MODE},
+        "job_parameters": {"work_mode": Settings.WORK_MODE},
         "role": {},
         "role_parameters": {}
     }

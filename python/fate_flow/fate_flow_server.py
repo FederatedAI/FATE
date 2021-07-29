@@ -33,7 +33,7 @@ from fate_flow.scheduler.dag_scheduler import DAGScheduler
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.entity.types import ProcessRole
 from fate_flow.manager.resource_manager import ResourceManager
-from fate_flow.settings import IP, HTTP_PORT, GRPC_PORT, _ONE_DAY_IN_SECONDS, stat_logger, GRPC_SERVER_MAX_WORKERS
+from fate_flow.settings import Settings, _ONE_DAY_IN_SECONDS, stat_logger, GRPC_SERVER_MAX_WORKERS
 from fate_flow.utils.authentication_utils import PrivilegeAuth
 from fate_flow.utils.grpc_utils import UnaryService
 from fate_flow.db.db_services import service_db
@@ -68,13 +68,13 @@ if __name__ == '__main__':
                                   (cygrpc.ChannelArgKey.max_receive_message_length, -1)])
 
     proxy_pb2_grpc.add_DataTransferServiceServicer_to_server(UnaryService(), server)
-    server.add_insecure_port("{}:{}".format(IP, GRPC_PORT))
+    server.add_insecure_port("{}:{}".format(Settings.IP, Settings.GRPC_PORT))
     server.start()
     stat_logger.info("FATE Flow grpc server start successfully")
     # start http server
     try:
         stat_logger.info("FATE Flow http server start...")
-        run_simple(hostname=IP, port=HTTP_PORT, application=app, threaded=True)
+        run_simple(hostname=Settings.IP, port=Settings.HTTP_PORT, application=app, threaded=True)
     except OSError as e:
         traceback.print_exc()
         os.kill(os.getpid(), signal.SIGKILL)

@@ -7,7 +7,7 @@ from kazoo.security import make_digest_acl
 from kazoo.exceptions import ZookeeperError, NodeExistsError, NoNodeError
 
 from fate_arch.common.conf_utils import get_base_config
-from fate_flow.settings import IP, HTTP_PORT, FATE_FLOW_MODEL_TRANSFER_ENDPOINT, \
+from fate_flow.settings import Settings, FATE_FLOW_MODEL_TRANSFER_ENDPOINT, \
     FATE_SERVICES_REGISTRY, stat_logger
 from fate_flow.db.db_models import MachineLearningModelInfo as MLModel
 from fate_flow.errors.error_services import *
@@ -37,7 +37,7 @@ def get_model_download_endpoint():
     :rtype: str
     """
 
-    return f'http://{IP}:{HTTP_PORT}{FATE_FLOW_MODEL_TRANSFER_ENDPOINT}'
+    return f'http://{Settings.IP}:{Settings.HTTP_PORT}{FATE_FLOW_MODEL_TRANSFER_ENDPOINT}'
 
 
 def get_model_download_url(model_id, model_version):

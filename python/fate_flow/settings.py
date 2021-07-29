@@ -13,15 +13,15 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-# -*- coding: utf-8 -*-
 import os
+from pathlib import Path
 
 from fate_arch.computing import ComputingEngine
 from fate_arch.federation import FederationEngine
 from fate_arch.storage import StorageEngine
 from fate_arch.common import file_utils, log, EngineType
 from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_arch.common.conf_utils import get_base_config
+from fate_arch.common.conf_utils import SERVICE_CONF
 
 
 # Server
@@ -37,18 +37,7 @@ HEADERS = {
 }
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 GRPC_SERVER_MAX_WORKERS = None
-
-IP = get_base_config(FATEFLOW_SERVICE_NAME, {}).get("host", "127.0.0.1")
-HTTP_PORT = get_base_config(FATEFLOW_SERVICE_NAME, {}).get("http_port")
-GRPC_PORT = get_base_config(FATEFLOW_SERVICE_NAME, {}).get("grpc_port")
-
-HTTP_APP_KEY = get_base_config(FATEFLOW_SERVICE_NAME, {}).get("http_app_key")
-HTTP_SECRET_KEY = get_base_config(FATEFLOW_SERVICE_NAME, {}).get("http_secret_key")
 MAX_TIMESTAMP_INTERVAL = 60
-
-WORK_MODE = get_base_config("work_mode", 0)
-DATABASE = get_base_config("database", {})
-MODEL_STORE_ADDRESS = get_base_config("model_store_address", {})
 
 # Registry
 FATE_SERVICES_REGISTRY = {
@@ -115,9 +104,28 @@ UPLOAD_DATA_FROM_CLIENT = True
 USE_AUTHENTICATION = False
 PRIVILEGE_COMMAND_WHITELIST = []
 CHECK_NODES_IDENTITY = False
-DEFAULT_FEDERATED_STATUS_COLLECT_TYPE = get_base_config(
-    FATEFLOW_SERVICE_NAME, {}).get("default_federated_status_collect_type", "PUSH")
 
-# Init
-RuntimeConfig.init_config(WORK_MODE=WORK_MODE)
-RuntimeConfig.init_config(JOB_SERVER_HOST=IP, HTTP_PORT=HTTP_PORT)
+
+class Settings:
+
+    @classmethod
+    def load(cls):
+        conf = file_utils.load_yaml_conf(Path(file_utils.get_project_base_directory()) / SERVICE_CONF)
+        if not isinstance(conf, dict):
+            raise ValueError('config is not a dict')
+
+        cls.IP = conf.get('FATEFLOW_SERVICE_NAME', {}).get('host', '127.0.0.1')
+        for k, v in conf.items():
+            if k == FATEFLOW_SERVICE_NAME:
+                if not isinstance(v, dict):
+                    raise ValueError(f'{FATEFLOW_SERVICE_NAME} is not a dict')
+
+                for key, val in v.items():
+                    setattr(cls, key.upper(), val)
+            else:
+                setattr(cls, k.upper(), v)
+
+        RuntimeConfig.init_config(WORK_MODE=cls.WORK_MODE, JOB_SERVER_HOST=cls.IP, HTTP_PORT=cls.HTTP_PORT)
+
+
+Settings.load()

@@ -6,7 +6,7 @@ import unittest
 import requests
 from fate_arch.common import file_utils, conf_utils
 
-from fate_flow.settings import HTTP_PORT, API_VERSION, WORK_MODE, FATEFLOW_SERVICE_NAME
+from fate_flow.settings import Settings, API_VERSION, FATEFLOW_SERVICE_NAME
 from fate_flow.entity.types import EndStatus, JobStatus
 
 
@@ -18,17 +18,17 @@ class TestTracking(unittest.TestCase):
         self.config_path = 'fate_flow/examples/test_hetero_lr_job_conf.json'
         self.test_component_name = 'hetero_feature_selection_0'
         ip = conf_utils.get_base_config(FATEFLOW_SERVICE_NAME).get("host")
-        self.server_url = "http://{}:{}/{}".format(ip, HTTP_PORT, API_VERSION)
-        self.party_info = file_utils.load_json_conf(os.path.abspath(os.path.join('./jobs', 'party_info.json'))) if WORK_MODE else None
-        self.guest_party_id = self.party_info['guest'] if WORK_MODE else 9999
-        self.host_party_id = self.party_info['host'] if WORK_MODE else 10000
+        self.server_url = "http://{}:{}/{}".format(ip, Settings.HTTP_PORT, API_VERSION)
+        self.party_info = file_utils.load_json_conf(os.path.abspath(os.path.join('./jobs', 'party_info.json'))) if Settings.WORK_MODE else None
+        self.guest_party_id = self.party_info['guest'] if Settings.WORK_MODE else 9999
+        self.host_party_id = self.party_info['host'] if Settings.WORK_MODE else 10000
 
     def test_tracking(self):
         with open(os.path.join(file_utils.get_python_base_directory(), self.dsl_path), 'r') as f:
             dsl_data = json.load(f)
         with open(os.path.join(file_utils.get_python_base_directory(), self.config_path), 'r') as f:
             config_data = json.load(f)
-            config_data['job_parameters']['work_mode'] = WORK_MODE
+            config_data['job_parameters']['work_mode'] = Settings.WORK_MODE
             config_data[ "initiator"]["party_id"] = self.guest_party_id
             config_data["role"] = {
                 "guest": [self.guest_party_id],

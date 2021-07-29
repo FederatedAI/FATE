@@ -20,7 +20,7 @@ from fate_arch.common import EngineType, string_utils
 from fate_flow.entity.types import JobStatus, EndStatus, RunParameters
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.operation.job_tracker import Tracker
-from fate_flow.settings import USE_AUTHENTICATION, DEFAULT_TASK_PARALLELISM, DEFAULT_FEDERATED_STATUS_COLLECT_TYPE
+from fate_flow.settings import USE_AUTHENTICATION, DEFAULT_TASK_PARALLELISM, Settings
 from fate_flow.utils import job_utils, schedule_utils, data_utils
 from fate_flow.operation.job_saver import JobSaver
 from fate_arch.common.base_utils import json_dumps, current_timestamp
@@ -130,7 +130,7 @@ class JobController(object):
             if job_parameters.task_parallelism is None:
                 job_parameters.task_parallelism = DEFAULT_TASK_PARALLELISM
             if job_parameters.federated_status_collect_type is None:
-                job_parameters.federated_status_collect_type = DEFAULT_FEDERATED_STATUS_COLLECT_TYPE
+                job_parameters.federated_status_collect_type = Settings.DEFAULT_FEDERATED_STATUS_COLLECT_TYPE
         if create_initiator_baseline and not job_parameters.computing_partitions:
             job_parameters.computing_partitions = job_parameters.adaptation_parameters[
                 "task_cores_per_node"] * job_parameters.adaptation_parameters["task_nodes"]

@@ -13,8 +13,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+from fate_arch.common import WorkMode
 from fate_arch.common.conf_utils import get_base_config
 from fate_flow.utils.api_utils import error_response, get_json_result
+from fate_flow.settings import Settings
 
 
 @manager.route('/fateboard', methods=['POST'])
@@ -32,9 +34,11 @@ def get_fateboard_info():
 
 @manager.route('/mysql', methods=['POST'])
 def get_mysql_info():
-    pass
+    if Settings.WORK_MODE != WorkMode.CLUSTER:
+        return error_response(503, 'mysql only available on cluster mode')
 
 
 @manager.route('/eggroll', methods=['POST'])
 def get_eggroll_info():
-    pass
+    if Settings.WORK_MODE != WorkMode.CLUSTER:
+        return error_response(503, 'eggroll only available on cluster mode')
