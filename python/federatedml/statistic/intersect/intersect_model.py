@@ -243,13 +243,14 @@ class IntersectModelBase(ModelBase):
         self.callback()
 
         result_data = self.intersect_ids
+        if not self.use_match_id_process and not self.intersection_obj.only_output_key and result_data:
+            result_data = self.intersection_obj.get_value_from_data(result_data, data)
+            LOGGER.debug(f"not only_output_key, restore value called")
+
         if self.model_param.join_method == consts.LEFT_JOIN:
             result_data = self.__sync_join_id(data, self.intersect_ids)
             result_data.schema = self.intersect_ids.schema
-        """
-        if not self.intersection_obj.only_output_key and result_data:
-            result_data = self.intersection_obj.get_value_from_data(self.intersect_ids, data)
-        """
+
         return result_data
 
     def check_consistency(self):
@@ -371,6 +372,10 @@ class IntersectModelBase(ModelBase):
         self.callback()
 
         result_data = self.intersect_ids
+        if not self.use_match_id_process and not self.intersection_obj.only_output_key and result_data:
+            result_data = self.intersection_obj.get_value_from_data(result_data, data)
+            LOGGER.debug(f"not only_output_key, restore value called")
+
         if self.model_param.join_method == consts.LEFT_JOIN:
             result_data = self.__sync_join_id(data, self.intersect_ids)
             result_data.schema = self.intersect_ids.schema

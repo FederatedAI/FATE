@@ -31,6 +31,7 @@ class FeatureImputation(ModelBase):
         self.summary_obj = None
         self.missing_impute_rate = None
         self.header = None
+        self.cols_replace_method = None
         from federatedml.param.feature_imputation_param import FeatureImputationParam
         self.model_param = FeatureImputationParam()
 
@@ -66,6 +67,7 @@ class FeatureImputation(ModelBase):
                                                          missing_impute=self.missing_impute,
                                                          missing_fill_value=self.default_value,
                                                          missing_replace_rate=self.missing_impute_rate,
+                                                         cols_replace_method=self.cols_replace_method,
                                                          header=self.header)
 
 
@@ -96,6 +98,7 @@ class FeatureImputation(ModelBase):
             self.missing_impute = imputer_processor.get_missing_value_list()
         self.missing_impute_rate = imputer_processor.get_impute_rate("fit")
         self.header = get_header(imputed_data)
+        self.cols_replace_method = imputer_processor.cols_replace_method
         self.set_summary(self.get_summary())
 
         return imputed_data
@@ -117,6 +120,7 @@ def save_feature_imputer_model(missing_fill=False,
                                missing_impute=None,
                                missing_fill_value=None,
                                missing_replace_rate=None,
+                               cols_replace_method=None,
                                header=None):
     model_meta = FeatureImputerMeta()
     model_param = FeatureImputerParam()
@@ -140,6 +144,12 @@ def save_feature_imputer_model(missing_fill=False,
         if missing_replace_rate is not None:
             missing_replace_rate_dict = dict(zip(header, missing_replace_rate))
             model_param.missing_value_ratio.update(missing_replace_rate_dict)
+
+        if cols_replace_method is not None:
+            cols_replace_method_dict = cols_replace_method
+            if not isinstance(cols_replace_method, dict):
+                cols_replace_method_dict = dict(zip(header, cols_replace_method))
+            model_meta.cols_strategy.update(cols_replace_method_dict)
 
     return model_meta, model_param
 
