@@ -14,10 +14,9 @@
 #  limitations under the License.
 #
 import requests
-from fate_arch.common import conf_utils
 
+from fate_arch.common.conf_utils import get_base_config
 from fate_flow.settings import CHECK_NODES_IDENTITY, FATE_MANAGER_NODE_CHECK_ENDPOINT
-from fate_flow.utils.service_utils import ServiceUtils
 
 
 def nodes_check(src_party_id, src_role, appKey, appSecret, dst_party_id):
@@ -28,12 +27,12 @@ def nodes_check(src_party_id, src_role, appKey, appSecret, dst_party_id):
             'appKey': appKey,
             'appSecret': appSecret,
             'dstPartyId': int(dst_party_id),
-            'federatedId': conf_utils.get_base_config("fatemanager", {}).get("federatedId")
+            'federatedId': get_base_config("fatemanager", {}).get("federatedId")
         }
         try:
             response = requests.post(url="http://{}:{}{}".format(
-                ServiceUtils.get_item("fatemanager", "host"),
-                ServiceUtils.get_item("fatemanager", "port"),
+                get_base_config("fatemanager", {}).get("host"),
+                get_base_config("fatemanager", {}).get("port"),
                 FATE_MANAGER_NODE_CHECK_ENDPOINT), json=body).json()
             if response['code'] != 0:
                 raise Exception(str(response['msg']))

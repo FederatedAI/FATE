@@ -38,6 +38,9 @@ pytorch-lightning>=1.2.1
 pulsar-client==2.7.0
 filelock==3.0.12
 
+# python 3.6
+backports-datetime-fromisoformat
+
 # addtional requirements for eggroll
 grpcio>=1.24.3
 grpcio-tools==1.24.3

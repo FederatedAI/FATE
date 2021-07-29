@@ -13,19 +13,16 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import importlib
-import inspect
 import os
 import shutil
 import base64
 from ruamel import yaml
 from copy import deepcopy
-from filelock import FileLock
 import hashlib
 
 from os.path import join, getsize
 from fate_arch.common import file_utils
-from fate_arch.protobuf.python import default_empty_fill_pb2
+from fate_flow.model import serialize_buffer_object, parse_proto_object, Locker
 from fate_flow.settings import stat_logger, TEMP_DIRECTORY
 
 
@@ -37,7 +34,7 @@ def local_cache_required(method):
     return magic
 
 
-class PipelinedModel(object):
+class PipelinedModel(Locker):
     def __init__(self, model_id, model_version):
         """
         Support operations on FATE PipelinedModels
@@ -46,30 +43,14 @@ class PipelinedModel(object):
         """
         self.model_id = model_id
         self.model_version = model_version
-        self.model_path = os.path.join(file_utils.get_project_base_directory(), "model_local_cache", model_id, model_version)
+        self.model_path = file_utils.get_project_base_directory("model_local_cache", model_id, model_version)
         self.define_proto_path = os.path.join(self.model_path, "define", "proto")
         self.define_meta_path = os.path.join(self.model_path, "define", "define_meta.yaml")
         self.variables_index_path = os.path.join(self.model_path, "variables", "index")
         self.variables_data_path = os.path.join(self.model_path, "variables", "data")
         self.default_archive_format = "zip"
-        self.lock = self._lock
 
-    @property
-    def _lock(self):
-        return FileLock(os.path.join(self.model_path, ".lock"))
-
-    def __deepcopy__(self, memo):
-        return self
-
-    # https://docs.python.org/3/library/pickle.html#handling-stateful-objects
-    def __getstate__(self):
-        state = self.__dict__.copy()
-        state.pop('lock')
-        return state
-
-    def __setstate__(self, state):
-        self.__dict__.update(state)
-        self.lock = self._lock
+        super().__init__(self.model_path)
 
     def create_pipelined_model(self):
         if self.exists():
@@ -80,7 +61,8 @@ class PipelinedModel(object):
         with self.lock:
             for path in [self.variables_index_path, self.variables_data_path]:
                 os.makedirs(path)
-            shutil.copytree(os.path.join(file_utils.get_python_base_directory(), "federatedml", "protobuf", "proto"), self.define_proto_path)
+            shutil.copytree(file_utils.get_python_base_directory("federatedml", "protobuf", "proto"),
+                            self.define_proto_path)
             with open(self.define_meta_path, "x", encoding="utf-8") as fw:
                 yaml.dump({"describe": "This is the model definition meta"}, fw, Dumper=yaml.RoundTripDumper)
 
@@ -88,17 +70,12 @@ class PipelinedModel(object):
         model_proto_index = {}
         component_model_storage_path = os.path.join(self.variables_data_path, component_name, model_alias)
         os.makedirs(component_model_storage_path, exist_ok=True)
-        for model_name, buffer_object in model_buffers.items():
-            storage_path = os.path.join(component_model_storage_path, model_name)
-            buffer_object_serialized_string = buffer_object.SerializeToString()
-            if not buffer_object_serialized_string:
-                fill_message = default_empty_fill_pb2.DefaultEmptyFillMessage()
-                fill_message.flag = 'set'
-                buffer_object_serialized_string = fill_message.SerializeToString()
-            with self.lock, open(storage_path, "wb") as fw:
-                fw.write(buffer_object_serialized_string)
-            model_proto_index[model_name] = type(buffer_object).__name__   # index of model name and proto buffer class name
-            stat_logger.info("Save {} {} {} buffer".format(component_name, model_alias, model_name))
+        with self.lock:
+            for model_name, buffer_object in model_buffers.items():
+                self.save_protobuf(buffer_object, os.path.join(component_model_storage_path, model_name))
+                # index of model name and proto buffer class name
+                model_proto_index[model_name] = type(buffer_object).__name__
+                stat_logger.info("Save {} {} {} buffer".format(component_name, model_alias, model_name))
         self.update_component_meta(component_name=component_name,
                                    component_module_name=component_module_name,
                                    model_alias=model_alias,
@@ -112,9 +89,8 @@ class PipelinedModel(object):
         model_buffers = {}
         for model_name, buffer_name in model_proto_index.items():
             with open(os.path.join(component_model_storage_path, model_name), "rb") as fr:
-                buffer_object_serialized_string = fr.read()
-                model_buffers[model_name] = self.parse_proto_object(buffer_name=buffer_name,
-                                                                    buffer_object_serialized_string=buffer_object_serialized_string)
+                serialized_string = fr.read()
+            model_buffers[model_name] = parse_proto_object(buffer_name, serialized_string)
         return model_buffers
 
     @local_cache_required
@@ -127,31 +103,26 @@ class PipelinedModel(object):
                 component_model_storage_path = os.path.join(self.variables_data_path, component_name, model_alias)
                 for model_name, buffer_name in model_proto_index.items():
                     with open(os.path.join(component_model_storage_path, model_name), "rb") as fr:
-                        buffer_object_serialized_string = fr.read()
-                        if not in_bytes:
-                            model_buffers[model_name] = self.parse_proto_object(buffer_name=buffer_name,
-                                                                                buffer_object_serialized_string=buffer_object_serialized_string)
-                        else:
-                            if b64encode:
-                                buffer_object_serialized_string = base64.b64encode(buffer_object_serialized_string).decode()
-                            model_buffers["{}.{}:{}".format(component_name, model_alias, model_name)] = buffer_object_serialized_string
+                        serialized_string = fr.read()
+                    if not in_bytes:
+                        model_buffers[model_name] = parse_proto_object(buffer_name, serialized_string)
+                    else:
+                        if b64encode:
+                            serialized_string = base64.b64encode(serialized_string).decode()
+                        model_buffers["{}.{}:{}".format(component_name, model_alias, model_name)] = serialized_string
         return model_buffers
-
-    def set_model_path(self):
-        self.model_path = os.path.join(file_utils.get_project_base_directory(), "model_local_cache",
-                                       self.model_id, self.model_version)
 
     def exists(self):
         return os.path.exists(self.model_path)
 
-    def save_pipeline(self, pipelined_buffer_object):
-        buffer_object_serialized_string = pipelined_buffer_object.SerializeToString()
-        if not buffer_object_serialized_string:
-            fill_message = default_empty_fill_pb2.DefaultEmptyFillMessage()
-            fill_message.flag = 'set'
-            buffer_object_serialized_string = fill_message.SerializeToString()
-        with self.lock, open(os.path.join(self.model_path, "pipeline.pb"), "wb") as fw:
-            fw.write(buffer_object_serialized_string)
+    def save_protobuf(self, buffer_object, filepath):
+        serialized_string = serialize_buffer_object(buffer_object)
+        with self.lock, open(filepath, "wb") as fw:
+            fw.write(serialized_string)
+        return filepath
+
+    def save_pipeline(self, buffer_object):
+        return self.save_protobuf(buffer_object, os.path.join(self.model_path, "pipeline.pb"))
 
     @local_cache_required
     def packaging_model(self):
@@ -227,44 +198,6 @@ class PipelinedModel(object):
         if component_name is not None:
             return define_index.get("component_define", {}).get(component_name, {})
         return define_index.get("component_define", {})
-
-    def parse_proto_object(self, buffer_name, buffer_object_serialized_string):
-        try:
-            buffer_object = self.get_proto_buffer_class(buffer_name)()
-        except Exception as e:
-            stat_logger.exception("Can not restore proto buffer object", e)
-            raise e
-        try:
-            buffer_object.ParseFromString(buffer_object_serialized_string)
-            stat_logger.info('parse {} proto object normal'.format(type(buffer_object).__name__))
-            return buffer_object
-        except Exception as e1:
-            try:
-                fill_message = default_empty_fill_pb2.DefaultEmptyFillMessage()
-                fill_message.ParseFromString(buffer_object_serialized_string)
-                buffer_object.ParseFromString(bytes())
-                stat_logger.info('parse {} proto object with default values'.format(type(buffer_object).__name__))
-                return buffer_object
-            except Exception as e2:
-                stat_logger.exception(e2)
-                raise e1
-
-    @classmethod
-    def get_proto_buffer_class(cls, buffer_name):
-        package_path = os.path.join(file_utils.get_python_base_directory(), 'federatedml', 'protobuf', 'generated')
-        package_python_path = 'federatedml.protobuf.generated'
-        for f in os.listdir(package_path):
-            if f.startswith('.'):
-                continue
-            try:
-                proto_module = importlib.import_module(package_python_path + '.' + f.rstrip('.py'))
-                for name, obj in inspect.getmembers(proto_module):
-                    if inspect.isclass(obj) and name == buffer_name:
-                        return obj
-            except Exception as e:
-                stat_logger.warning(e)
-        else:
-            return None
 
     @property
     def archive_model_base_path(self):
