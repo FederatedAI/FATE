@@ -1,0 +1,57 @@
+# modify from https://github.com/samuelcolvin/rtoml/blob/master/.github/workflows/ci.yml
+name: build-wheel
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - '**'
+  pull_request: { }
+
+jobs:
+  build:
+    name: build py3.${{ matrix.python-version }} on ${{ matrix.platform || matrix.os }}
+    strategy:
+      fail-fast: true
+      matrix:
+        os:
+          - ubuntu
+        python-version:
+          - '6'
+        poetry-version: [1.1.6]
+
+    runs-on: ${{ format('{0}-latest', matrix.os) }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Run image
+        uses: abatilo/actions-poetry@v2.0.0
+        with:
+          poetry-version: ${{ matrix.poetry-version }}
+      - name: View poetry --help
+        run: poetry --help
+      - name: build fate_client
+        run: cd python/fate_client && peotry build
+
+      - name: list dist files
+        run: ${{ matrix.ls || 'ls -lh' }} dist/
+
+      - name: twine check
+        run: |
+          pip install -U twine
+          twine check dist/*
+
+      # - name: upload to pypi
+      #   if: startsWith(github.ref, 'refs/tags/')
+      #   run: twine upload dist/*
+      #   env:
+      #     TWINE_USERNAME: __token__
+      #     TWINE_PASSWORD: ${{ secrets.pypi_token }}
+
+      - uses: actions/upload-artifact@v2
+        with:
+          path: ./dist/*.whl
+
