@@ -42,47 +42,50 @@
         }
     ],
     "pipeline_tasks": {
-        "cv": {
-            "script": "pipeline-hetero-lr-cv.py"
+        "hetero-lr-sample-weights": {
+            "script": "pipeline-hetero-lr-sample-weights.py"
         },
-        "early-stop": {
-            "script": "pipeline-hetero-lr-early-stop.py"
-        },
-        "feature-engineering": {
-            "script": "pipeline-hetero-lr-feature-engineering.py"
-        },
-        "train": {
-            "script": "pipeline-hetero-lr-normal.py"
-        },
-        "multi-host": {
-            "script": "pipeline-hetero-lr-multi-host.py"
-        },
-        "one-vs-all": {
-            "script": "pipeline-hetero-lr-one-vs-all.py"
-        },
-        "ovr-cv": {
-            "script": "pipeline-hetero-lr-ovr-cv.py"
-        },
-        "ovr-validate": {
-            "script": "pipeline-hetero-lr-ovr-validate.py"
-        },
-        "ovr-sqn": {
-            "script": "pipeline-hetero-lr-ovr-sqn.py"
-        },
-        "sparse": {
-            "script": "pipeline-hetero-lr-sparse.py"
-        },
-        "sparse-cv": {
-            "script": "pipeline-hetero-lr-sparse-cv.py"
-        },
-        "sparse-sqn": {
-            "script": "pipeline-hetero-lr-sparse-sqn.py"
-        },
-        "sqn": {
+        "hetero-lr-sqn": {
             "script": "pipeline-hetero-lr-sqn.py"
         },
-        "validate": {
+        "hetero-lr-sparse": {
+            "script": "pipeline-hetero-lr-sparse.py"
+        },
+        "hetero-lr-ovr-sqn": {
+            "script": "pipeline-hetero-lr-ovr-sqn.py"
+        },
+        "hetero-lr-feature-engineering": {
+            "script": "pipeline-hetero-lr-feature-engineering.py"
+        },
+        "hetero-lr-ovr-cv": {
+            "script": "pipeline-hetero-lr-ovr-cv.py"
+        },
+        "hetero-lr-cv": {
+            "script": "pipeline-hetero-lr-cv.py"
+        },
+        "hetero-lr-one-vs-all": {
+            "script": "pipeline-hetero-lr-one-vs-all.py"
+        },
+        "hetero-lr-multi-host": {
+            "script": "pipeline-hetero-lr-multi-host.py"
+        },
+        "hetero-lr-ovr-validate": {
+            "script": "pipeline-hetero-lr-ovr-validate.py"
+        },
+        "hetero-lr-normal": {
+            "script": "pipeline-hetero-lr-normal.py"
+        },
+        "hetero-lr-validate": {
             "script": "pipeline-hetero-lr-validate.py"
+        },
+        "hetero-lr-sparse-cv": {
+            "script": "pipeline-hetero-lr-sparse-cv.py"
+        },
+        "hetero-lr-early-stop": {
+            "script": "pipeline-hetero-lr-early-stop.py"
+        },
+        "hetero-lr-sparse-sqn": {
+            "script": "pipeline-hetero-lr-sparse-sqn.py"
         }
     }
 }
