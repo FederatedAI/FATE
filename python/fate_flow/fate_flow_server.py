@@ -36,6 +36,7 @@ from fate_flow.apps.permission_app import manager as permission_app_manager
 from fate_flow.apps.version_app import manager as version_app_manager
 from fate_flow.apps.proxy_app import manager as proxy_app_manager
 from fate_flow.apps.info_app import manager as info_app_manager
+from fate_flow.apps.component_app import manager as component_app_manager
 from fate_flow.scheduling_apps.initiator_app import manager as initiator_app_manager
 from fate_flow.scheduling_apps.party_app import manager as party_app_manager
 from fate_flow.scheduling_apps.tracker_app import manager as tracker_app_manager
@@ -52,6 +53,7 @@ from fate_flow.utils.api_utils import get_json_result
 from fate_flow.utils.authentication_utils import PrivilegeAuth
 from fate_flow.utils.grpc_utils import UnaryService
 from fate_flow.utils.service_utils import ServiceUtils
+from fate_flow.utils.model_utils import models_group_by_party_model_id_and_model_version
 from fate_flow.utils.xthread import ThreadPoolExecutor
 from fate_flow.utils import job_utils
 from fate_arch.common.log import schedule_logger
@@ -88,7 +90,8 @@ if __name__ == '__main__':
             '/{}/forward'.format(API_VERSION): proxy_app_manager,
             '/{}/info'.format(API_VERSION): info_app_manager,
             '/{}/operation'.format(API_VERSION): operation_app_manager,
-            '/{}/forward'.format(API_VERSION): proxy_app_manager
+            '/{}/forward'.format(API_VERSION): proxy_app_manager,
+            '/{}/component'.format(API_VERSION): component_app_manager,
         }
     )
     # init
@@ -106,6 +109,7 @@ if __name__ == '__main__':
     RuntimeConfig.set_process_role(ProcessRole.DRIVER)
     PrivilegeAuth.init()
     ServiceUtils.register()
+    ServiceUtils.register_models(models_group_by_party_model_id_and_model_version())
     ResourceManager.initialize()
     Detector(interval=5 * 1000, logger=detect_logger).start()
     DAGScheduler(interval=2 * 1000, logger=schedule_logger()).start()
