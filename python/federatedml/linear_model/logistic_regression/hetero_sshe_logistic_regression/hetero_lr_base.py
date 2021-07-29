@@ -87,7 +87,7 @@ class HeteroLRBase(SSHEModelBase, ABC):
     def is_respectively_reviewed(self):
         return self.model_param.review_strategy == "respectively"
 
-    def share_init_model(self, w, fix_point_encoder, n_iter=-1):
+    def share_model(self, w, fix_point_encoder, n_iter=-1):
         source = [w, self.other_party]
         if self.local_party.role == consts.GUEST:
             wb, wa = (
@@ -178,7 +178,7 @@ class HeteroLRBase(SSHEModelBase, ABC):
                                                                                  q_field=self.fixpoint_encoder.n,
                                                                                  encoder=self.fixpoint_encoder)
 
-            w_self, w_remote = self.share_init_model(w, self.fixpoint_encoder)
+            w_self, w_remote = self.share_model(w, self.fixpoint_encoder)
 
             batch_data_generator = self.batch_generator.generate_batch_data()
             encoded_batch_data = []
@@ -192,6 +192,7 @@ class HeteroLRBase(SSHEModelBase, ABC):
 
             while self.n_iter_ < self.max_iter:
                 loss_list = []
+                self.optimizer.set_iters(self.n_iter_)
                 for batch_idx, batch_data in enumerate(encoded_batch_data):
 
                     LOGGER.debug(f"n_iter: {self.n_iter_}")
@@ -203,23 +204,27 @@ class HeteroLRBase(SSHEModelBase, ABC):
                         error = fixedpoint_table.FixedPointTensor.from_value(error,
                                                                              q_field=self.fixpoint_encoder.n,
                                                                              encoder=self.fixpoint_encoder)
-                        w_remote, w_self = self.compute_gradient(wa=w_remote, wb=w_self, error=error,
+                        remote_g, self_g = self.compute_gradient(wa=w_remote, wb=w_self, error=error,
                                                                  features=batch_data,
                                                                  suffix=current_suffix)
                     else:
-                        w_self, w_remote = self.compute_gradient(wa=w_self, wb=w_remote, error=y,
+                        self_g, remote_g = self.compute_gradient(wa=w_self, wb=w_remote, error=y,
                                                                  features=batch_data, suffix=current_suffix)
 
                     if self.review_every_iter:
-                        new_w = self.review_models(w_self, w_remote)
-                        self.model_weights = LinearModelWeights(l=new_w,
-                                                                fit_intercept=self.model_param.init_param.fit_intercept)
+                        new_g = self.review_gradients(self_g, remote_g)
+
+                        self.model_weights = self.optimizer.update_model(self.model_weights, new_g,
+                                                                         has_applied=False)
+                        w_self, w_remote = self.share_model(self.model_weights.unboxed, self.fixpoint_encoder)
+                    else:
+                        w_self -= self_g * self.optimizer.decay_learning_rate()
+                        w_remote -= remote_g * self.optimizer.decay_learning_rate()
 
                     if self.cal_loss:
                         loss_list.append(self.compute_loss(suffix=current_suffix))
 
-
-                if self.converge_func_name == "diff":
+                if self.converge_func_name in ["diff", "abs"]:
                     self.is_converged = self.check_converge_by_loss(loss_list, suffix=(self.n_iter_,))
                 elif self.converge_func_name == "weight_diff":
                     self.is_converged = self.check_converge_by_weights(last_w=last_models, new_w=new_w,
@@ -251,6 +256,18 @@ class HeteroLRBase(SSHEModelBase, ABC):
         if self.validation_strategy and self.validation_strategy.has_saved_best_model():
             self.load_model(self.validation_strategy.cur_best_model)
         self.set_summary(self.get_model_summary())
+
+    def review_gradients(self, self_g, remote_g):
+        if self.model_param.review_strategy == "respectively":
+            if self.role == consts.GUEST:
+                new_g = self_g.reconstruct_unilateral(tensor_name=f"gb_{self.n_iter_}")
+                remote_g.broadcast_reconstruct_share(tensor_name=f"ga_{self.n_iter_}")
+            else:
+                remote_g.broadcast_reconstruct_share(tensor_name=f"gb_{self.n_iter_}")
+                new_g = self_g.reconstruct_unilateral(tensor_name=f"ga_{self.n_iter_}")
+        else:
+            raise NotImplementedError(f"review strategy: {self.model_param.review_strategy} has not been implemented.")
+        return new_g
 
     def review_models(self, w_self, w_remote):
         if self.model_param.review_strategy == "respectively":

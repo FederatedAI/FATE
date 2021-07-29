@@ -261,4 +261,7 @@ class LogisticRegressionParam(BaseParam):
         self.check_valid_value(self.review_strategy, descr, ["respectively", "all_review_in_guest"])
         if not consts.ALLOW_REVIEW_GUEST_ONLY and self.review_strategy == "all_review_in_guest":
             raise PermissionError("review strategy: all_review_in_guest has not been authorized.")
+        if self.review_strategy == "all_review_in_guest" and self.review_every_iter:
+            raise PermissionError("review strategy: all_review_in_guest mode is not allow to review every iter.")
+        self.check_boolean(self.review_every_iter, descr)
         return True

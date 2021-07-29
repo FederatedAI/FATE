@@ -115,11 +115,13 @@ class HeteroLRGuest(HeteroLRBase):
         ga2_2 = self.received_share_matrix(self.cipher, q_field=self.fixpoint_encoder.n,
                                            encoder=self.fixpoint_encoder, suffix=ga2_suffix)
 
-        wb = wb - gb2 * self.model_param.learning_rate
-        wa = wa - ga2_2.transpose() * self.model_param.learning_rate
-        wa = wa.reshape(wa.shape[-1])
+        # wb = wb - gb2 * self.model_param.learning_rate
+        # ga2_2 = ga2_2.reshape(ga2_2.shape[0])
+        # LOGGER.debug(f"wa shape: {wa.shape}, ga_shape: {ga2_2.shape}")
+        # wa = wa - ga2_2 * self.model_param.learning_rate
+        # wa = wa.reshape(wa.shape[-1])
 
-        return wa, wb
+        return ga2_2, gb2
 
     def compute_loss(self, suffix):
         """
@@ -132,6 +134,9 @@ class HeteroLRGuest(HeteroLRBase):
         loss_table = - np.log(0.5) + 0.5 * self.encrypted_wx - 0.125 * self.z_square
 
         loss = (loss_table.value.reduce(operator.add) + wxy) * encoded_1_n
+        loss_norm = self.optimizer.loss_norm(self.model_weights)
+        if loss_norm:
+            loss += loss_norm
         self.transfer_variable.loss.remote(loss, suffix=suffix)
         return loss
 

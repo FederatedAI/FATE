@@ -82,15 +82,19 @@ class HeteroLRHost(HeteroLRBase):
         learning_rate = self.fixpoint_encoder.encode(self.model_param.learning_rate)
         ga_new = ga + ga2_1.reshape(ga2_1.shape[0])
 
-        wa = wa - ga_new.transpose() * learning_rate
-        wb = wb - gb1 * learning_rate
-        wa = wa.reshape(wa.shape[-1])
+        LOGGER.debug(f"wa shape: {wa.shape}, ga_shape: {ga_new.shape}")
+        # wa = wa - ga_new * learning_rate
+        # wb = wb - gb1 * learning_rate
+        # wa = wa.reshape(wa.shape[-1])
 
-        return wa, wb
+        return ga_new, gb1
 
     def compute_loss(self, suffix):
         loss = self.transfer_variable.loss.get(idx=0, suffix=suffix)
         loss = self.cipher.decrypt(loss.value[0][0])
+        loss_norm = self.optimizer.loss_norm(self.model_weights)
+        if loss_norm:
+            loss += loss_norm
         LOGGER.debug(f"recevided loss: {loss}")
         return loss
 
