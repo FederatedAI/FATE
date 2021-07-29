@@ -107,10 +107,10 @@ class LinkisSparkEngine(BaseEngine):
                                                        LINKIS_QUERT_STATUS.replace("execID", task.f_engine_conf.get("execID")))
             headers = task.f_engine_conf["headers"]
             response = requests.get(linkis_query_url, headers=headers).json()
-            detect_logger(job_id=task.f_job_id).info(response)
+            detect_logger.info(response)
             if response.get("data").get("status") == LinkisJobStatus.FAILED:
                 process_exist = False
         except Exception as e:
-            detect_logger(job_id=task.f_job_id).exception(e)
+            detect_logger.exception(e)
             process_exist = False
         return process_exist
