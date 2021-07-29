@@ -87,8 +87,8 @@ jobs:
       - name: Upload to PyPI
         if: ${{ steps.extract.outputs.name == 'release' }}
         run: |
-          twine upload --repository testpypi python/fate_client/dist/*
-          twine upload --repository testpypi python/fate_test/dist/*
+          twine upload python/fate_client/dist/*
+          twine upload python/fate_test/dist/*
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.pypi_token }}
