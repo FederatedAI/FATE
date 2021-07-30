@@ -19,7 +19,7 @@ import os
 import shutil
 import tarfile
 
-from flask import Flask, request, send_file, jsonify
+from flask import request, send_file, jsonify
 from google.protobuf import json_format
 
 from fate_arch.common.base_utils import fate_uuid
@@ -34,14 +34,6 @@ from fate_flow.utils import job_utils, data_utils, detect_utils, schedule_utils
 from fate_flow.utils.api_utils import get_json_result, error_response
 from fate_flow.utils.config_adapter import JobRuntimeConfigAdapter
 from federatedml.feature.instance import Instance
-
-manager = Flask(__name__)
-
-
-@manager.errorhandler(500)
-def internal_server_error(e):
-    stat_logger.exception(e)
-    return get_json_result(retcode=100, retmsg=str(e))
 
 
 @manager.route('/job/data_view', methods=['post'])

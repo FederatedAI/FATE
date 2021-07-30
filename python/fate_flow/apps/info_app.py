@@ -13,20 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from flask import Flask
-
 from fate_arch.common.conf_utils import get_base_config
-from fate_flow.settings import stat_logger
 from fate_flow.utils.api_utils import error_response, get_json_result
-
-
-manager = Flask(__name__)
-
-
-@manager.errorhandler(500)
-def internal_server_error(e):
-    stat_logger.exception(e)
-    return error_response(500, str(e))
 
 
 @manager.route('/fateboard', methods=['POST'])

@@ -49,10 +49,11 @@ MODEL_STORE_ADDRESS = get_base_config("model_store_address", {})
 LINKIS_SPARK_CONFIG = get_base_config("fate_on_spark", {}).get("linkis_spark")
 
 # Registry
-SERVICES_SUPPORT_REGISTRY = ["servings", "fateflow"]
-FATE_SERVICES_REGISTERED_PATH = {
-    "fateflow": "/FATE-SERVICES/flow/online/transfer/providers",
-    "servings": "/FATE-SERVICES/serving/online/publishLoad/providers",
+FATE_SERVICES_REGISTRY = {
+    'zookeeper': {
+        'fateflow': "/FATE-SERVICES/flow/online/transfer/providers",
+        'servings': "/FATE-SERVICES/serving/online/publishLoad/providers",
+    },
 }
 
 # Resource

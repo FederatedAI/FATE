@@ -122,9 +122,10 @@ class JobConf(object):
         self.role = parties.extract_role(
             {role: len(parties) for role, parties in self.role.items()}
         )
-        self.update_job_common_parameters(
-            work_mode=work_mode, backend=backend, timeout=timeout
-        )
+        if timeout > 0:
+            self.update_job_common_parameters(work_mode=work_mode, backend=backend, timeout=timeout)
+        else:
+            self.update_job_common_parameters(work_mode=work_mode, backend=backend)
 
         for key, value in job_parameters.items():
             self.update_parameters(parameters=self.job_parameters, key=key, value=value)
