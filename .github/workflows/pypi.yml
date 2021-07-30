@@ -75,6 +75,12 @@ jobs:
             python/fate_client/dist/*
             python/fate_test/dist/*
 
+      - name: Test Install
+        run: |
+          pip install -U pip
+          pip install python/fate_client/dist/fate_client-${{steps.extract.outputs.version}}.tar.gz
+          pip install python/fate_test/dist/fate_test-${{steps.extract.outputs.version}}.tar.gz
+
       - name: Upload to PyPI Test
         if: ${{ steps.extract.outputs.name == 'develop' }}
         run: |
