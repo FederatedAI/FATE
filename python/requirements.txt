@@ -36,7 +36,7 @@ pulsar-client==2.8.0
 fastavro==1.4.1
 
 # addtional requirements for eggroll
-grpcio>=1.24.3
+grpcio==1.24.3
 grpcio-tools==1.24.3
 numba==0.50.0
 llvmlite==0.33.0
