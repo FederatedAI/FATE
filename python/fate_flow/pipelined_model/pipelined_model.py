@@ -84,10 +84,12 @@ class PipelinedModel(object):
             with open(self.define_meta_path, "x", encoding="utf-8") as fw:
                 yaml.dump({"describe": "This is the model definition meta"}, fw, Dumper=yaml.RoundTripDumper)
 
-    def save_component_model(self, component_name, component_module_name, model_alias, model_buffers):
+    def save_component_model(self, component_name, component_module_name, model_alias, model_buffers, tracker_client=None):
         model_proto_index = {}
+        component_model = {"buffer": {}}
         component_model_storage_path = os.path.join(self.variables_data_path, component_name, model_alias)
-        os.makedirs(component_model_storage_path, exist_ok=True)
+        if not tracker_client:
+            os.makedirs(component_model_storage_path, exist_ok=True)
         for model_name, buffer_object in model_buffers.items():
             storage_path = os.path.join(component_model_storage_path, model_name)
             buffer_object_serialized_string = buffer_object.SerializeToString()
@@ -95,17 +97,41 @@ class PipelinedModel(object):
                 fill_message = default_empty_fill_pb2.DefaultEmptyFillMessage()
                 fill_message.flag = 'set'
                 buffer_object_serialized_string = fill_message.SerializeToString()
-            with self.lock, open(storage_path, "wb") as fw:
-                fw.write(buffer_object_serialized_string)
+            if not tracker_client:
+                with self.lock, open(storage_path, "wb") as fw:
+                    fw.write(buffer_object_serialized_string)
+            else:
+                component_model["buffer"][storage_path.replace(file_utils.get_project_base_directory(), "")] = \
+                    base64.b64encode(buffer_object_serialized_string).decode()
             model_proto_index[model_name] = type(buffer_object).__name__   # index of model name and proto buffer class name
             stat_logger.info("Save {} {} {} buffer".format(component_name, model_alias, model_name))
-        self.update_component_meta(component_name=component_name,
-                                   component_module_name=component_module_name,
-                                   model_alias=model_alias,
-                                   model_proto_index=model_proto_index)
-        stat_logger.info("Save {} {} successfully".format(component_name, model_alias))
+        if not tracker_client:
+            self.update_component_meta(component_name=component_name,
+                                       component_module_name=component_module_name,
+                                       model_alias=model_alias,
+                                       model_proto_index=model_proto_index)
+            stat_logger.info("Save {} {} successfully".format(component_name, model_alias))
+        else:
+            component_model["component_name"] = component_name
+            component_model["component_module_name"] = component_module_name
+            component_model["model_alias"] = model_alias
+            component_model["model_proto_index"] = model_proto_index
+            tracker_client.save_component_output_model(component_model)
 
-    def read_component_model(self, component_name, model_alias):
+    def write_component_model(self, component_model):
+        for storage_path, buffer_object_serialized_string in component_model.get("buffer").items():
+            storage_path = file_utils.get_project_base_directory()+storage_path
+            os.makedirs(os.path.dirname(storage_path), exist_ok=True)
+            with open(storage_path, "wb") as fw:
+                fw.write(base64.b64decode(buffer_object_serialized_string.encode()))
+        self.update_component_meta(component_name=component_model["component_name"],
+                                   component_module_name=component_model["component_module_name"],
+                                   model_alias=component_model["model_alias"],
+                                   model_proto_index=component_model["model_proto_index"])
+        stat_logger.info("Save {} {} successfully".format(component_model["component_name"],
+                                                          component_model["model_alias"]))
+
+    def read_component_model(self, component_name, model_alias, parse=True):
         component_model_storage_path = os.path.join(self.variables_data_path, component_name, model_alias)
         model_proto_index = self.get_model_proto_index(component_name=component_name,
                                                        model_alias=model_alias)
@@ -113,8 +139,11 @@ class PipelinedModel(object):
         for model_name, buffer_name in model_proto_index.items():
             with open(os.path.join(component_model_storage_path, model_name), "rb") as fr:
                 buffer_object_serialized_string = fr.read()
-                model_buffers[model_name] = self.parse_proto_object(buffer_name=buffer_name,
-                                                                    buffer_object_serialized_string=buffer_object_serialized_string)
+                if parse:
+                    model_buffers[model_name] = self.parse_proto_object(buffer_name=buffer_name,
+                                                                        buffer_object_serialized_string=buffer_object_serialized_string)
+                else:
+                    model_buffers[model_name] = [buffer_name, base64.b64encode(buffer_object_serialized_string).decode()]
         return model_buffers
 
     @local_cache_required

@@ -18,7 +18,7 @@ from typing import Iterable
 
 from fate_arch.abc import AddressABC
 from fate_arch.abc import CSessionABC
-from fate_arch.computing.spark._table import from_hdfs, from_rdd
+from fate_arch.computing.spark._table import from_hdfs, from_rdd, from_hive
 from fate_arch.common import log
 
 LOGGER = log.getLogger()
@@ -47,7 +47,21 @@ class CSession(CSessionABC):
         if isinstance(address, PathAddress):
             from fate_arch.computing.non_distributed import LocalData
             return LocalData(address.path)
-        raise NotImplementedError(f"address type {type(address)} not supported with spark backend")
+
+        from fate_arch.common.address import HiveAddress, LinkisHiveAddress
+
+        if isinstance(address, (HiveAddress, LinkisHiveAddress)):
+            table = from_hive(
+                tb_name=address.name,
+                db_name=address.database,
+                partitions=partitions,
+            )
+            table.schema = schema
+            return table
+
+        raise NotImplementedError(
+            f"address type {type(address)} not supported with spark backend"
+        )
 
     def parallelize(self, data: Iterable, partition: int, include_key: bool, **kwargs):
         # noinspection PyPackageRequirements
