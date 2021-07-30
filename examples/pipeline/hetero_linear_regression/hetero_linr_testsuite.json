@@ -29,6 +29,9 @@
         "linr-train": {
             "script": "./pipeline-hetero-linr.py"
         },
+        "linr-warm-start": {
+            "script": "./pipeline-hetero-linr-warm-start.py"
+        },
         "linr-validate": {
             "script": "./pipeline-hetero-linr-validate.py"
         },

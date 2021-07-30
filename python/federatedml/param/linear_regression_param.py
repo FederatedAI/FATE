@@ -113,7 +113,8 @@ class LinearParam(BaseParam):
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
                  cv_param=CrossValidationParam(), decay=1, decay_sqrt=True, validation_freqs=None,
                  early_stopping_rounds=None, stepwise_param=StepwiseParam(), metrics=None, use_first_metric_only=False,
-                 floating_point_precision=23):
+                 floating_point_precision=23,
+                 is_warm_start=False):
         super(LinearParam, self).__init__()
         self.penalty = penalty
         self.tol = tol
@@ -137,6 +138,7 @@ class LinearParam(BaseParam):
         self.metrics = metrics or []
         self.use_first_metric_only = use_first_metric_only
         self.floating_point_precision = floating_point_precision
+        self.is_warm_start = is_warm_start
 
     def check(self):
         descr = "linear_regression_param's "
@@ -246,5 +248,5 @@ class LinearParam(BaseParam):
                 (not isinstance(self.floating_point_precision, int) or
                  self.floating_point_precision < 0 or self.floating_point_precision > 64):
             raise ValueError("floating point precision should be null or a integer between 0 and 64")
-
+        self.check_boolean(self.is_warm_start, "is_warm_start")
         return True

@@ -66,8 +66,9 @@ class HeteroLinRHost(HeteroLinRBase):
         if self.init_param_obj.fit_intercept:
             self.init_param_obj.fit_intercept = False
 
-        w = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
-        self.model_weights = LinearModelWeights(w, fit_intercept=self.fit_intercept, raise_overflow_error=False)
+        if not self.component_properties.is_warm_start:
+            w = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
+            self.model_weights = LinearModelWeights(w, fit_intercept=self.fit_intercept, raise_overflow_error=False)
 
         while self.n_iter_ < self.max_iter:
             LOGGER.info("iter:" + str(self.n_iter_))
@@ -75,9 +76,8 @@ class HeteroLinRHost(HeteroLinRBase):
             batch_data_generator = self.batch_generator.generate_batch_data()
             batch_index = 0
             for batch_data in batch_data_generator:
-                batch_feat_inst = self.transform(batch_data)
                 optim_host_gradient = self.gradient_loss_operator.compute_gradient_procedure(
-                    batch_feat_inst,
+                    batch_data,
                     self.encrypted_calculator,
                     self.model_weights,
                     self.optimizer,
@@ -125,8 +125,7 @@ class HeteroLinRHost(HeteroLinRBase):
 
         self._abnormal_detection(data_instances)
         data_instances = self.align_data_header(data_instances, self.header)
-        data_features = self.transform(data_instances)
 
-        pred_host = self.compute_wx(data_features, self.model_weights.coef_, self.model_weights.intercept_)
+        pred_host = self.compute_wx(data_instances, self.model_weights.coef_, self.model_weights.intercept_)
         self.transfer_variable.host_partial_prediction.remote(pred_host, role=consts.GUEST, idx=0)
         LOGGER.info("Remote partial prediction to Guest")
