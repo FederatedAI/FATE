@@ -59,45 +59,23 @@ class Reader(ComponentBase):
                 storage_engine=input_table_meta.get_engine()) as input_table_session:
             input_table = input_table_session.get_table(name=input_table_meta.get_name(),
                                                         namespace=input_table_meta.get_namespace())
-            if computing_engine == ComputingEngine.LINKIS_SPARK:
-                with storage.Session.build(
-                        session_id=job_utils.generate_session_id(self.tracker.task_id, self.tracker.task_version,
-                                                                 self.tracker.role, self.tracker.party_id,
-                                                                 suffix="storage",
-                                                                 random_end=True),
-                        storage_engine=output_table_engine) as output_table_session:
-                    output_table = output_table_session.create_table(address=output_table_address,
-                                                                     name=output_table_name,
-                                                                     namespace=output_table_namespace,
-                                                                     partitions=input_table_meta.partitions)
+            with storage.Session.build(
+                    session_id=job_utils.generate_session_id(self.tracker.task_id, self.tracker.task_version,
+                                                             self.tracker.role, self.tracker.party_id,
+                                                             suffix="storage",
+                                                             random_end=True),
+                    storage_engine=output_table_engine) as output_table_session:
+                output_table = output_table_session.create_table(address=output_table_address,
+                                                                 name=output_table_name,
+                                                                 namespace=output_table_namespace,
+                                                                 partitions=input_table_meta.partitions)
+                if computing_engine == ComputingEngine.LINKIS_SPARK:
                     self.deal_linkis_hive(src_table=input_table, dest_table=output_table)
-                    output_table_meta = StorageTableMeta(name=output_table.get_name(),
-                                                         namespace=output_table.get_namespace())
-            else:
-            # update real count to meta info
-
-                input_table.count()
-                # Table replication is required
-                if input_table_meta.get_engine() != output_table_engine:
-                    LOGGER.info(
-                        f"the {input_table_meta.get_engine()} engine input table needs to be converted to {output_table_engine} engine to support computing engine {computing_engine}")
                 else:
-                    LOGGER.info(f"the {input_table_meta.get_engine()} input table needs to be transform format")
-                with storage.Session.build(
-                        session_id=job_utils.generate_session_id(self.tracker.task_id, self.tracker.task_version,
-                                                                 self.tracker.role, self.tracker.party_id,
-                                                                 suffix="storage",
-                                                                 random_end=True),
-                        storage_engine=output_table_engine) as output_table_session:
-                    output_table = output_table_session.create_table(address=output_table_address,
-                                                                     name=output_table_name,
-                                                                     namespace=output_table_namespace,
-                                                                     partitions=input_table_meta.partitions)
+                    input_table.count()
                     self.save_table(src_table=input_table, dest_table=output_table)
-                    # update real count to meta info
-                    output_table.count()
-                    output_table_meta = StorageTableMeta(name=output_table.get_name(),
-                                                         namespace=output_table.get_namespace())
+                output_table_meta = StorageTableMeta(name=output_table.get_name(),
+                                                     namespace=output_table.get_namespace())
         self.tracker.log_output_data_info(
             data_name=component_parameters.get('output_data_name')[0] if component_parameters.get(
                 'output_data_name') else table_key,
