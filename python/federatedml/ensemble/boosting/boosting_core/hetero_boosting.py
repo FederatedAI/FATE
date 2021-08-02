@@ -135,6 +135,10 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
         LOGGER.info("sync predict start round {}".format(predict_round))
         self.transfer_variable.predict_start_round.remote(predict_round, role=consts.HOST, idx=-1,)
 
+    def prepare_warm_start(self, data_inst):
+        warm_start_y_hat = self.predict(data_inst, ret_format='raw')
+        self.y_hat = warm_start_y_hat
+
     def fit(self, data_inst, validate_data=None):
 
         LOGGER.info('begin to fit a hetero boosting model, model is {}'.format(self.model_name))
@@ -154,6 +158,9 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
         self.sync_booster_dim()
 
         self.y_hat, self.init_score = self.get_init_score(self.y, self.num_classes)
+
+        if self.is_warm_start:
+            self.prepare_warm_start(data_inst)
 
         self.generate_encrypter()
 
@@ -275,6 +282,9 @@ class HeteroBoostingHost(HeteroBoosting, ABC):
     def sync_predict_start_round(self,):
         return self.transfer_variable.predict_start_round.get(idx=0,)
 
+    def prepare_warm_start(self, data_inst):
+        self.predict(data_inst)
+
     def fit(self, data_inst, validate_data=None):
 
         LOGGER.info('begin to fit a hetero boosting model, model is {}'.format(self.model_name))
@@ -282,6 +292,9 @@ class HeteroBoostingHost(HeteroBoosting, ABC):
         self.data_bin, self.bin_split_points, self.bin_sparse_points = self.prepare_data(data_inst)
         self.sync_booster_dim()
         self.generate_encrypter()
+
+        if self.is_warm_start:
+            self.prepare_warm_start(data_inst)
 
         self.validation_strategy = self.init_validation_strategy(data_inst, validate_data)
 

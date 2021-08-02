@@ -255,7 +255,7 @@ class BoostingParam(BaseParam):
                  tol=0.0001, bin_num=32,
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  validation_freqs=None, metrics=None, random_seed=100,
-                 binning_error=consts.DEFAULT_RELATIVE_ERROR, is_warm_start=True):
+                 binning_error=consts.DEFAULT_RELATIVE_ERROR, is_warm_start=False):
 
         super(BoostingParam, self).__init__()
 
@@ -341,13 +341,13 @@ class HeteroBoostingParam(BoostingParam):
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  validation_freqs=None, early_stopping_rounds=None, metrics=None, use_first_metric_only=False,
-                 random_seed=100, binning_error=consts.DEFAULT_RELATIVE_ERROR):
+                 random_seed=100, binning_error=consts.DEFAULT_RELATIVE_ERROR, is_warm_start=False):
 
         super(HeteroBoostingParam, self).__init__(task_type, objective_param, learning_rate, num_trees,
                                                   subsample_feature_rate, n_iter_no_change, tol, bin_num,
                                                   predict_param, cv_param, validation_freqs, metrics=metrics,
                                                   random_seed=random_seed,
-                                                  binning_error=binning_error)
+                                                  binning_error=binning_error, is_warm_start=is_warm_start)
 
         self.encrypt_param = copy.deepcopy(encrypt_param)
         self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
@@ -465,7 +465,7 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
                  complete_secure=False, metrics=None, use_first_metric_only=False, random_seed=100,
                  binning_error=consts.DEFAULT_RELATIVE_ERROR,
                  sparse_optimization=False, run_goss=False, top_rate=0.2, other_rate=0.1,
-                 cipher_compress_error=None, new_ver=True):
+                 cipher_compress_error=None, new_ver=True, is_warm_start=False):
 
         super(HeteroSecureBoostParam, self).__init__(task_type, objective_param, learning_rate, num_trees,
                                                      subsample_feature_rate, n_iter_no_change, tol, encrypt_param,
@@ -473,7 +473,7 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
                                                      validation_freqs, early_stopping_rounds, metrics=metrics,
                                                      use_first_metric_only=use_first_metric_only,
                                                      random_seed=random_seed,
-                                                     binning_error=binning_error)
+                                                     binning_error=binning_error, is_warm_start=is_warm_start)
 
         self.tree_param = tree_param
         self.zero_as_missing = zero_as_missing
@@ -542,7 +542,8 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
                  validation_freqs=None, early_stopping_rounds=None, use_missing=False, zero_as_missing=False,
                  complete_secure=False, tree_num_per_party=1, guest_depth=1, host_depth=1, work_mode='mix', metrics=None,
                  sparse_optimization=False, random_seed=100, binning_error=consts.DEFAULT_RELATIVE_ERROR,
-                 cipher_compress_error=None, new_ver=True, run_goss=False, top_rate=0.2, other_rate=0.1):
+                 cipher_compress_error=None, new_ver=True, run_goss=False, top_rate=0.2, other_rate=0.1,
+                 is_warm_start=False):
 
         """
         work_mode：
@@ -570,7 +571,8 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
                                                          binning_error=binning_error,
                                                          cipher_compress_error=cipher_compress_error,
                                                          new_ver=new_ver,
-                                                         run_goss=run_goss, top_rate=top_rate, other_rate=other_rate)
+                                                         run_goss=run_goss, top_rate=top_rate, other_rate=other_rate,
+                                                         is_warm_start=is_warm_start)
 
         self.tree_num_per_party = tree_num_per_party
         self.guest_depth = guest_depth
@@ -602,7 +604,7 @@ class HomoSecureBoostParam(BoostingParam):
                  learning_rate=0.3, num_trees=5, subsample_feature_rate=1, n_iter_no_change=True,
                  tol=0.0001, bin_num=32, predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  validation_freqs=None, use_missing=False, zero_as_missing=False, random_seed=100,
-                 binning_error=consts.DEFAULT_RELATIVE_ERROR
+                 binning_error=consts.DEFAULT_RELATIVE_ERROR, is_warm_start=False
                  ):
         super(HomoSecureBoostParam, self).__init__(task_type=task_type,
                                                    objective_param=objective_param,
@@ -616,7 +618,8 @@ class HomoSecureBoostParam(BoostingParam):
                                                    cv_param=cv_param,
                                                    validation_freqs=validation_freqs,
                                                    random_seed=random_seed,
-                                                   binning_error=binning_error
+                                                   binning_error=binning_error,
+                                                   is_warm_start=is_warm_start
                                                    )
         self.use_missing = use_missing
         self.zero_as_missing = zero_as_missing
