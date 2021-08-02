@@ -13,23 +13,11 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+from flask import request
 
-from flask import Flask, request
-
-from fate_flow.entity.types import RetCode
-from fate_flow.settings import stat_logger
 from fate_flow.utils import job_utils
 from fate_flow.utils.api_utils import get_json_result
-from fate_arch.common import log, file_utils
-
-
-manager = Flask(__name__)
-
-
-@manager.errorhandler(500)
-def internal_server_error(e):
-    stat_logger.exception(e)
-    return get_json_result(retcode=RetCode.EXCEPTION_ERROR, retmsg=log.exception_to_trace_string(e))
+from fate_arch.common import file_utils
 
 
 @manager.route('/job_config/get', methods=['POST'])
@@ -37,6 +25,7 @@ def get_config():
     request_data = request.json
     job_conf = job_utils.get_job_conf(request_data.get("job_id"), request_data.get("role"))
     return get_json_result(retcode=0, retmsg='success', data=job_conf)
+
 
 @manager.route('/json_conf/load', methods=['POST'])
 def load_json_conf():
