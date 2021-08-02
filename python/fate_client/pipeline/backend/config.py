@@ -102,3 +102,12 @@ class LogFormat(object):
     SIMPLE = '<green>[{time:HH:mm:ss}]</green><level>{message}</level>'
     NORMAL = '<green>{time:YYYY-MM-DD HH:mm:ss}</green> | ' \
              '<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>'
+
+
+class SystemSetting(object):
+    @classmethod
+    def system_setting(cls):
+        conf = get_default_config()
+        system_setting = conf.get("system_setting", {})
+        # system_role = system_setting.get("role", None)
+        return system_setting

@@ -17,21 +17,79 @@ import operator
 
 from fate_arch import storage
 from fate_flow.settings import stat_logger
-from fate_flow.db.db_models import DB, TrackingMetric
+from fate_flow.db.db_models import DB, TrackingMetric, DataTableTracking
 
 
-@DB.connection_context()
-def query_data_view(**kwargs):
-    filters = []
-    for f_n, f_v in kwargs.items():
-        attr_name = 'f_%s' % f_n
-        if hasattr(DataView, attr_name):
-            filters.append(operator.attrgetter('f_%s' % f_n)(DataView) == f_v)
-    if filters:
-        data_views = DataView.select().where(*filters)
-    else:
-        data_views = []
-    return [data_view for data_view in data_views]
+class DataTableTracker(object):
+    @classmethod
+    @DB.connection_context()
+    def create_table_tracker(cls, table_name, table_namespace, entity_info):
+        tracker = DataTableTracking()
+        tracker.f_table_name = table_name
+        tracker.f_table_namespace = table_namespace
+        for k, v in entity_info.items():
+            attr_name = 'f_%s' % k
+            if hasattr(DataTableTracking, attr_name):
+                setattr(tracker, attr_name, v)
+        if entity_info.get("have_parent"):
+            parent_trackers = DataTableTracking.select().where(
+                DataTableTracking.f_table_name == entity_info.get("parent_table_name"),
+                DataTableTracking.f_table_namespace == entity_info.get("parent_table_namespace")).order_by(DataTableTracking.f_create_time.desc())
+            if not parent_trackers:
+                raise Exception(f"table {table_name} {table_namespace} no found parent")
+            parent_tracker = parent_trackers[0]
+            if parent_tracker.f_have_parent:
+                tracker.f_source_table_name = parent_tracker.f_source_table_name
+                tracker.f_source_table_namespace = parent_tracker.f_source_table_namespace
+            else:
+                tracker.f_source_table_name = parent_tracker.f_table_name
+                tracker.f_source_table_namespace = parent_tracker.f_table_namespace
+        rows = tracker.save(force_insert=True)
+        if rows != 1:
+            raise Exception("Create {} failed".format(tracker))
+        return tracker
+
+    @classmethod
+    @DB.connection_context()
+    def query_tracker(cls, table_name, table_namespace, is_parent=False):
+        if not is_parent:
+            filters = [operator.attrgetter('f_table_name')(DataTableTracking) == table_name,
+                       operator.attrgetter('f_table_namespace')(DataTableTracking) == table_namespace]
+        else:
+            filters = [operator.attrgetter('f_parent_table_name')(DataTableTracking) == table_name,
+                       operator.attrgetter('f_parent_table_namespace')(DataTableTracking) == table_namespace]
+        trackers = DataTableTracking.select().where(*filters)
+        return [tracker for tracker in trackers]
+
+
+    @classmethod
+    @DB.connection_context()
+    def get_parent_table(cls, table_name, table_namespace):
+        trackers = DataTableTracker.query_tracker(table_name, table_namespace)
+        if not trackers:
+            raise Exception(f"no found table: table name {table_name}, table namespace {table_namespace}")
+        else:
+            parent_table_info = []
+            for tracker in trackers:
+                if not tracker.f_have_parent:
+                    return []
+                else:
+                    parent_table_info.append({"parent_table_name": tracker.f_parent_table_name,
+                                              "parent_table_namespace": tracker.f_parent_table_namespace,
+                                              "source_table_name": trackers.f_source_table_name,
+                                              "source_table_namespace": tracker.f_table_namespace,
+                                              })
+        return parent_table_info
+
+    @classmethod
+    @DB.connection_context()
+    def track_job(cls, table_name, table_namespace, display=False):
+        trackers = DataTableTracker.query_tracker(table_name, table_namespace, is_parent=True)
+        job_id_list = []
+        for tracker in trackers:
+            job_id_list.append(tracker.f_job_id)
+        job_id_list = list(set(job_id_list))
+        return {"count": len(job_id_list)} if not display else {"count": len(job_id_list), "job": job_id_list}
 
 
 def delete_tables_by_table_infos(output_data_table_infos):

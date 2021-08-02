@@ -13,15 +13,13 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import sys
-
 from fate_arch.common import FederatedCommunicationType
 from fate_arch.common.log import schedule_logger
+from fate_flow.controller.engine_adapt import build_engine
 from fate_flow.db.db_models import Task
 from fate_flow.operation.task_executor import TaskExecutor
 from fate_flow.scheduler.federated_scheduler import FederatedScheduler
-from fate_flow.entity.types import TaskStatus, EndStatus, KillProcessStatusCode
-from fate_flow.entity.runtime_config import RuntimeConfig
+from fate_flow.entity.types import TaskStatus, EndStatus
 from fate_flow.utils import job_utils
 import os
 from fate_flow.operation.job_saver import JobSaver
@@ -30,7 +28,6 @@ from fate_arch.common import base_utils
 from fate_flow.entity.types import RunParameters
 from fate_flow.manager.resource_manager import ResourceManager
 from fate_flow.operation.job_tracker import Tracker
-from fate_arch.computing import ComputingEngine
 from fate_flow.utils.authentication_utils import PrivilegeAuth
 
 
@@ -76,88 +73,43 @@ class TaskController(object):
             "task_version": task_version,
             "role": role,
             "party_id": party_id,
+            "party_status": TaskStatus.RUNNING
         }
+        is_failed = False
         try:
             task_dir = os.path.join(job_utils.get_job_directory(job_id=job_id), role, party_id, component_name, task_id, task_version)
             os.makedirs(task_dir, exist_ok=True)
             task_parameters_path = os.path.join(task_dir, 'task_parameters.json')
             run_parameters_dict = job_utils.get_job_parameters(job_id, role, party_id)
+            run_parameters_dict["src_user"] = kwargs.get("src_user")
             with open(task_parameters_path, 'w') as fw:
                 fw.write(json_dumps(run_parameters_dict))
 
             run_parameters = RunParameters(**run_parameters_dict)
 
             schedule_logger(job_id=job_id).info(f"use computing engine {run_parameters.computing_engine}")
-
-            if run_parameters.computing_engine in {ComputingEngine.EGGROLL, ComputingEngine.STANDALONE}:
-                process_cmd = [
-                    sys.executable,
-                    sys.modules[TaskExecutor.__module__].__file__,
-                    '-j', job_id,
-                    '-n', component_name,
-                    '-t', task_id,
-                    '-v', task_version,
-                    '-r', role,
-                    '-p', party_id,
-                    '-c', task_parameters_path,
-                    '--run_ip', RuntimeConfig.JOB_SERVER_HOST,
-                    '--job_server', '{}:{}'.format(RuntimeConfig.JOB_SERVER_HOST, RuntimeConfig.HTTP_PORT),
-                ]
-            elif run_parameters.computing_engine == ComputingEngine.SPARK:
-                if "SPARK_HOME" not in os.environ:
-                    raise EnvironmentError("SPARK_HOME not found")
-                spark_home = os.environ["SPARK_HOME"]
-
-                # additional configs
-                spark_submit_config = run_parameters.spark_run
-
-                deploy_mode = spark_submit_config.get("deploy-mode", "client")
-                if deploy_mode not in ["client"]:
-                    raise ValueError(f"deploy mode {deploy_mode} not supported")
-
-                spark_submit_cmd = os.path.join(spark_home, "bin/spark-submit")
-                process_cmd = [spark_submit_cmd, f'--name={task_id}#{role}']
-                for k, v in spark_submit_config.items():
-                    if k != "conf":
-                        process_cmd.append(f'--{k}={v}')
-                if "conf" in spark_submit_config:
-                    for ck, cv in spark_submit_config["conf"].items():
-                        process_cmd.append(f'--conf')
-                        process_cmd.append(f'{ck}={cv}')
-                process_cmd.extend([
-                    sys.modules[TaskExecutor.__module__].__file__,
-                    '-j', job_id,
-                    '-n', component_name,
-                    '-t', task_id,
-                    '-v', task_version,
-                    '-r', role,
-                    '-p', party_id,
-                    '-c', task_parameters_path,
-                    '--run_ip', RuntimeConfig.JOB_SERVER_HOST,
-                    '--job_server', '{}:{}'.format(RuntimeConfig.JOB_SERVER_HOST, RuntimeConfig.HTTP_PORT),
-                ])
-            else:
-                raise ValueError(f"${run_parameters.computing_engine} is not supported")
-
-            task_log_dir = os.path.join(job_utils.get_job_log_directory(job_id=job_id), role, party_id, component_name)
-            task_job_dir = os.path.join(job_utils.get_job_directory(job_id=job_id), role, party_id, component_name)
-            schedule_logger(job_id).info(
-                'job {} task {} {} on {} {} executor subprocess is ready'.format(job_id, task_id, task_version, role, party_id))
-            p = job_utils.run_subprocess(job_id=job_id, config_dir=task_dir, process_cmd=process_cmd, log_dir=task_log_dir, job_dir=task_job_dir)
-            if p:
-                task_info["party_status"] = TaskStatus.RUNNING
-                #task_info["run_pid"] = p.pid
+            subprocess = True
+            task_info["engine_conf"] = {"computing_engine": run_parameters.computing_engine}
+            backend_engine = build_engine(run_parameters.computing_engine)
+            status = backend_engine.run(job_id=job_id, component_name=component_name, task_id=task_id,
+                                        task_version=task_version, role=role, party_id=party_id,
+                                        task_parameters_path=task_parameters_path, run_parameters=run_parameters,
+                                        task_info=task_info, user_name=kwargs.get("user_id"))
+            if status:
                 task_info["start_time"] = current_timestamp()
                 task_executor_process_start_status = True
             else:
-                task_info["party_status"] = TaskStatus.FAILED
+                is_failed = True
         except Exception as e:
             schedule_logger(job_id).exception(e)
-            task_info["party_status"] = TaskStatus.FAILED
+            is_failed = True
         finally:
             try:
                 cls.update_task(task_info=task_info)
                 cls.update_task_status(task_info=task_info)
+                if is_failed:
+                    task_info["party_status"] = TaskStatus.FAILED
+                    cls.update_task_status(task_info=task_info)
             except Exception as e:
                 schedule_logger(job_id).exception(e)
             schedule_logger(job_id).info(
@@ -236,11 +188,8 @@ class TaskController(object):
     def kill_task(cls, task: Task):
         kill_status = False
         try:
-            # kill task executor
-            kill_status_code = job_utils.kill_task_executor_process(task)
-            # session stop
-            if kill_status_code == KillProcessStatusCode.KILLED or task.f_status not in {TaskStatus.WAITING}:
-                job_utils.start_session_stop(task)
+            backend_engine = build_engine(task.f_engine_conf.get("computing_engine"))
+            backend_engine.kill(task)
         except Exception as e:
             schedule_logger(task.f_job_id).exception(e)
         else:
@@ -272,17 +221,4 @@ class TaskController(object):
             return True
         else:
             return False
-
-    @classmethod
-    def query_task_input_args(cls, job_id, task_id, role, party_id, job_args, job_parameters, input_dsl, filter_type=None, filter_attr=None):
-        task_run_args = TaskExecutor.get_task_run_args(job_id=job_id, role=role, party_id=party_id,
-                                                       task_id=task_id,
-                                                       job_args=job_args,
-                                                       job_parameters=job_parameters,
-                                                       task_parameters={},
-                                                       input_dsl=input_dsl,
-                                                       filter_type=filter_type,
-                                                       filter_attr=filter_attr
-                                                       )
-        return task_run_args
 

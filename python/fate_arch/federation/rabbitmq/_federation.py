@@ -190,9 +190,9 @@ class Federation(FederationABC):
         log_str = f"[rabbitmq.get](name={name}, tag={tag}, parties={parties})"
         LOGGER.debug(f"[{log_str}]start to get")
 
-        for party in parties:
-            if not _get_tag_not_duplicate(name, tag, party):
-                raise ValueError(f"[{log_str}]get from {party} with duplicate tag")
+        # for party in parties:
+        #     if not _get_tag_not_duplicate(name, tag, party):
+        #         raise ValueError(f"[{log_str}]get from {party} with duplicate tag")
 
         _name_dtype_keys = [
             _SPLIT_.join([party.role, party.party_id, name, tag, "get"])
@@ -276,8 +276,8 @@ class Federation(FederationABC):
     ) -> typing.NoReturn:
         log_str = f"[rabbitmq.remote](name={name}, tag={tag}, parties={parties})"
 
-        if not _remote_tag_not_duplicate(name, tag, parties):
-            raise ValueError(f"[{log_str}]remote to {parties} with duplicate tag")
+        # if not _remote_tag_not_duplicate(name, tag, parties):
+        #     raise ValueError(f"[{log_str}]remote to {parties} with duplicate tag")
 
         _name_dtype_keys = [
             _SPLIT_.join([party.role, party.party_id, name, tag, "remote"])

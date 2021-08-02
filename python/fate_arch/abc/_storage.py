@@ -82,6 +82,14 @@ class StorageTableMetaABC(metaclass=abc.ABCMeta):
         ...
 
     @abc.abstractmethod
+    def get_extend_sid(self):
+        ...
+
+    @abc.abstractmethod
+    def get_auto_increasing_sid(self):
+        ...
+
+    @abc.abstractmethod
     def get_have_head(self):
         ...
 
@@ -161,6 +169,10 @@ class StorageTableABC(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def destroy(self):
+        ...
+
+    @abc.abstractmethod
+    def check_address(self):
         ...
 
 

@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import os
 import argparse
 import importlib
+import os
 import traceback
 
 from fate_arch.common import file_utils, EngineType, profile
@@ -26,8 +26,11 @@ from fate_arch.computing import ComputingEngine
 
 from fate_flow.entity.types import TaskStatus, ProcessRole, RunParameters
 from fate_flow.entity.runtime_config import RuntimeConfig
+from fate_flow.manager.data_manager import DataTableTracker
 from fate_flow.operation.job_tracker import Tracker
 from fate_flow.components.checkpoint import CheckpointManager
+from fate_arch import storage
+from fate_flow.scheduling_apps.client.operation_client import OperationClient
 from fate_flow.utils import job_utils, schedule_utils
 from fate_flow.scheduling_apps.client import ControllerClient, TrackerClient
 from fate_flow.db.db_models import TrackingOutputDataInfo, fill_db_model_object
@@ -39,34 +42,14 @@ class TaskExecutor(object):
     REPORT_TO_DRIVER_FIELDS = ["run_ip", "run_pid", "party_status", "update_time", "end_time", "elapsed"]
 
     @classmethod
-    def run_task(cls):
+    def run_task(cls, **kwargs):
         task_info = {}
         try:
-            parser = argparse.ArgumentParser()
-            parser.add_argument('-j', '--job_id', required=True, type=str, help="job id")
-            parser.add_argument('-n', '--component_name', required=True, type=str,
-                                help="component name")
-            parser.add_argument('-t', '--task_id', required=True, type=str, help="task id")
-            parser.add_argument('-v', '--task_version', required=True, type=int, help="task version")
-            parser.add_argument('-r', '--role', required=True, type=str, help="role")
-            parser.add_argument('-p', '--party_id', required=True, type=int, help="party id")
-            parser.add_argument('-c', '--config', required=True, type=str, help="task parameters")
-            parser.add_argument('--run_ip', help="run ip", type=str)
-            parser.add_argument('--job_server', help="job server", type=str)
-            args = parser.parse_args()
-            schedule_logger(args.job_id).info('enter task process')
-            schedule_logger(args.job_id).info(args)
-            # init function args
-            if args.job_server:
-                RuntimeConfig.init_config(JOB_SERVER_HOST=args.job_server.split(':')[0],
-                                          HTTP_PORT=args.job_server.split(':')[1])
+            job_id, component_name, task_id, task_version, role, party_id, run_ip, config, job_server = cls.get_run_task_args(kwargs)
+            if job_server:
+                RuntimeConfig.init_config(JOB_SERVER_HOST=job_server.split(':')[0],
+                                          HTTP_PORT=job_server.split(':')[1])
                 RuntimeConfig.set_process_role(ProcessRole.EXECUTOR)
-            job_id = args.job_id
-            component_name = args.component_name
-            task_id = args.task_id
-            task_version = args.task_version
-            role = args.role
-            party_id = args.party_id
             executor_pid = os.getpid()
             task_info.update({
                 "job_id": job_id,
@@ -75,11 +58,12 @@ class TaskExecutor(object):
                 "task_version": task_version,
                 "role": role,
                 "party_id": party_id,
-                "run_ip": args.run_ip,
+                "run_ip": run_ip,
                 "run_pid": executor_pid
             })
             start_time = current_timestamp()
-            job_conf = job_utils.get_job_conf(job_id, role)
+            operation_client = OperationClient()
+            job_conf = operation_client.get_job_conf(job_id, role)
             job_dsl = job_conf["job_dsl_path"]
             job_runtime_conf = job_conf["job_runtime_conf_path"]
             dsl_parser = schedule_utils.get_job_dsl_parser(dsl=job_dsl,
@@ -97,7 +81,11 @@ class TaskExecutor(object):
             task_input_dsl = component.get_input()
             task_output_dsl = component.get_output()
             component_parameters_on_party['output_data_name'] = task_output_dsl.get('data')
-            task_parameters = RunParameters(**file_utils.load_json_conf(args.config))
+            json_conf = operation_client.load_json_conf(job_id, config)
+            user_name = dsl_parser.get_job_parameters().get(role, {}).get(party_id, {}).get("user", '')
+            schedule_logger(job_id).info(f"user name:{user_name}")
+            src_user = json_conf.get("src_user")
+            task_parameters = RunParameters(**json_conf)
             job_parameters = task_parameters
             if job_parameters.assistant_role:
                 TaskExecutor.monkey_patch()
@@ -153,15 +141,15 @@ class TaskExecutor(object):
             schedule_logger().info('Run {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id))
             schedule_logger().info("Component parameters on party {}".format(component_parameters_on_party))
             schedule_logger().info("Task input dsl {}".format(task_input_dsl))
-            task_run_args = cls.get_task_run_args(job_id=job_id, role=role, party_id=party_id,
-                                                  task_id=task_id,
-                                                  task_version=task_version,
-                                                  job_args=job_args_on_party,
-                                                  job_parameters=job_parameters,
-                                                  task_parameters=task_parameters,
-                                                  input_dsl=task_input_dsl,
-                                                  )
-            if module_name.lower() in {"upload", "download", "reader", "writer"}:
+            task_run_args, input_table_list = cls.get_task_run_args(job_id=job_id, role=role, party_id=party_id,
+                                                                    task_id=task_id,
+                                                                    task_version=task_version,
+                                                                    job_args=job_args_on_party,
+                                                                    job_parameters=job_parameters,
+                                                                    task_parameters=task_parameters,
+                                                                    input_dsl=task_input_dsl,
+                                                                    )
+            if module_name in {"Upload", "Download", "Reader", "Writer"}:
                 task_run_args["job_parameters"] = job_parameters
 
             run_object = getattr(importlib.import_module(run_class_package), run_class_name)
@@ -178,24 +166,28 @@ class TaskExecutor(object):
                 run_object.warm_start(component_parameters_on_party, task_run_args)
             sess.wait_remote_all_done()
             profile.profile_ends()
-
             output_data = run_object.save_data()
             if not isinstance(output_data, list):
                 output_data = [output_data]
+            output_table_list = []
             for index, data in enumerate(output_data):
-                data_name = task_output_dsl['data'][index] if task_output_dsl.get('data') else str(index)
+                data_name = task_output_dsl.get('data')[index] if task_output_dsl.get('data') else '{}'.format(index)
                 persistent_table_namespace, persistent_table_name = tracker.save_output_data(
                     computing_table=data,
                     output_storage_engine=job_parameters.storage_engine,
-                    output_storage_address=job_parameters.engines_address.get(EngineType.STORAGE, {}))
+                    output_storage_address=job_parameters.engines_address.get(EngineType.STORAGE, {}),
+                    user_name=user_name)
                 if persistent_table_namespace and persistent_table_name:
                     tracker.log_output_data_info(data_name=data_name,
                                                  table_namespace=persistent_table_namespace,
                                                  table_name=persistent_table_name)
+                    output_table_list.append({"namespace": persistent_table_namespace, "name": persistent_table_name})
+            TaskExecutor.log_output_data_table_tracker(job_id, input_table_list, output_table_list)
             output_model = run_object.export_model()
             # There is only one model output at the current dsl version.
             tracker.save_output_model(output_model,
-                                      task_output_dsl['model'][0] if task_output_dsl.get('model') else 'default')
+                                      task_output_dsl['model'][0] if task_output_dsl.get('model') else 'default',
+                                      tracker_client=tracker_client)
             task_info["party_status"] = TaskStatus.SUCCESS
         except Exception as e:
             traceback.print_exc()
@@ -225,6 +217,67 @@ class TaskExecutor(object):
         return task_info
 
     @classmethod
+    def get_run_task_args(cls, args):
+        if args:
+            job_id = args.get("job_id")
+            component_name = args.get("component_name")
+            task_id = args.get("task_id")
+            task_version = args.get("task_version")
+            role = args.get("role")
+            party_id = args.get("party_id")
+            config = args.get("config")
+            run_ip = args.get("run_ip")
+            job_server = args.get("job_server")
+        else:
+            parser = argparse.ArgumentParser()
+            parser.add_argument('-j', '--job_id', required=True, type=str, help="job id")
+            parser.add_argument('-n', '--component_name', required=True, type=str,
+                                help="component name")
+            parser.add_argument('-t', '--task_id', required=True, type=str, help="task id")
+            parser.add_argument('-v', '--task_version', required=True, type=int, help="task version")
+            parser.add_argument('-r', '--role', required=True, type=str, help="role")
+            parser.add_argument('-p', '--party_id', required=True, type=int, help="party id")
+            parser.add_argument('-c', '--config', required=True, type=str, help="task parameters")
+            parser.add_argument('--run_ip', help="run ip", type=str)
+            parser.add_argument('--job_server', help="job server", type=str)
+            args = parser.parse_args()
+            schedule_logger(args.job_id).info('enter task process')
+            schedule_logger(args.job_id).info(args)
+            # init function args
+            job_id = args.job_id
+            component_name = args.component_name
+            task_id = args.task_id
+            task_version = args.task_version
+            role = args.role
+            party_id = args.party_id
+            run_ip = args.run_ip
+            config = args.config
+            job_server = args.job_server
+        schedule_logger(job_id).info('enter task process')
+        return job_id, component_name, task_id, task_version, role, party_id, run_ip, config, job_server
+
+    @classmethod
+    def log_output_data_table_tracker(cls, job_id, input_table_list, output_table_list):
+        try:
+            parent_number = 0
+            if len(input_table_list) > 1 and len(output_table_list)>1:
+                # TODO
+                return
+            for input_table in input_table_list:
+                for output_table in output_table_list:
+                    DataTableTracker.create_table_tracker(output_table.get("name"), output_table.get("namespace"),
+                                                          entity_info={
+                                                              "have_parent": True,
+                                                              "parent_table_namespace": input_table.get("namespace"),
+                                                              "parent_table_name": input_table.get("name"),
+                                                              "parent_number": parent_number,
+                                                              "job_id": job_id
+                                                          })
+                parent_number +=1
+        except Exception as e:
+            schedule_logger().exception(e)
+
+    @classmethod
     def get_job_args_on_party(cls, dsl_parser, job_runtime_conf, role, party_id):
         party_index = job_runtime_conf["role"][role].index(int(party_id))
         job_args = dsl_parser.get_args_input()
@@ -237,6 +290,7 @@ class TaskExecutor(object):
                           input_dsl, filter_type=None, filter_attr=None, get_input_table=False):
         task_run_args = {}
         input_table = {}
+        input_table_info_list = []
         if 'idmapping' in role:
             return {}
         for input_type, input_detail in input_dsl.items():
@@ -253,16 +307,19 @@ class TaskExecutor(object):
                         data_key_item = data_key.split('.')
                         search_component_name, search_data_name = data_key_item[0], data_key_item[1]
                         storage_table_meta = None
+                        tracker_client = TrackerClient(job_id=job_id, role=role, party_id=party_id,
+                                                       component_name=search_component_name)
                         if search_component_name == 'args':
                             if job_args.get('data', {}).get(search_data_name).get('namespace', '') and job_args.get(
                                     'data', {}).get(search_data_name).get('name', ''):
+                                # storage_table_meta = tracker_client.get_table_meta(table_name=job_args['data'][search_data_name]['name'],
+                                #                                                    table_namespace=job_args['data'][search_data_name]['namespace'])
                                 storage_table_meta = storage.StorageTableMeta(
                                     name=job_args['data'][search_data_name]['name'],
                                     namespace=job_args['data'][search_data_name]['namespace'])
                         else:
-                            tracker_client = TrackerClient(job_id=job_id, role=role, party_id=party_id,
-                                                           component_name=search_component_name)
-                            upstream_output_table_infos_json = tracker_client.get_output_data_info(search_data_name)
+                            upstream_output_table_infos_json = tracker_client.get_output_data_info(
+                                data_name=search_data_name)
                             if upstream_output_table_infos_json:
                                 tracker = Tracker(job_id=job_id, role=role, party_id=party_id,
                                                   component_name=search_component_name)
@@ -270,7 +327,7 @@ class TaskExecutor(object):
                                 for _ in upstream_output_table_infos_json:
                                     upstream_output_table_infos.append(fill_db_model_object(
                                         Tracker.get_dynamic_db_model(TrackingOutputDataInfo, job_id)(), _))
-                                output_tables_meta = tracker.get_output_data_table(upstream_output_table_infos)
+                                output_tables_meta = tracker.get_output_data_table(output_data_infos=upstream_output_table_infos)
                                 if output_tables_meta:
                                     storage_table_meta = output_tables_meta.get(search_data_name, None)
                         args_from_component = this_type_args[search_component_name] = this_type_args.get(
@@ -285,6 +342,8 @@ class TaskExecutor(object):
                                 storage_table_meta.get_address(),
                                 schema=storage_table_meta.get_schema(),
                                 partitions=task_parameters.computing_partitions)
+                            input_table_info_list.append({'namespace': storage_table_meta.get_namespace(),
+                                                          'name': storage_table_meta.get_name()})
                         else:
                             computing_table = None
 
@@ -304,14 +363,16 @@ class TaskExecutor(object):
                         search_component_name, search_model_alias = dsl_model_key_items[1], dsl_model_key_items[2]
                     else:
                         raise Exception('get input {} failed'.format(input_type))
-                    models = Tracker(job_id=job_id, role=role, party_id=party_id, component_name=search_component_name,
+                    tracker_client = TrackerClient(job_id=job_id, role=role, party_id=party_id, component_name=search_component_name
+                                                   , model_id=job_parameters.model_id, model_version=job_parameters.model_version)
+                    tracker = Tracker(job_id=job_id, role=role, party_id=party_id, component_name=search_component_name,
                                      model_id=job_parameters.model_id,
-                                     model_version=job_parameters.model_version).get_output_model(
-                        model_alias=search_model_alias)
+                                     model_version=job_parameters.model_version)
+                    models = tracker_client.read_component_output_model(search_model_alias, tracker)
                     this_type_args[search_component_name] = models
         if get_input_table:
             return input_table
-        return task_run_args
+        return task_run_args, input_table_info_list
 
     @classmethod
     def report_task_update_to_driver(cls, task_info):
@@ -343,5 +404,5 @@ class TaskExecutor(object):
 
 
 if __name__ == '__main__':
-    _task_info = TaskExecutor.run_task()
-    TaskExecutor.report_task_update_to_driver(_task_info)
+    task_info = TaskExecutor.run_task()
+    TaskExecutor.report_task_update_to_driver(task_info=task_info)

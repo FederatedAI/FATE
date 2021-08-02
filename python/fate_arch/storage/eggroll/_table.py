@@ -65,6 +65,15 @@ class StorageTable(StorageTableBase):
     def put_all(self, kv_list: Iterable, **kwargs):
         return self._table.put_all(kv_list)
 
+    def table(self):
+        return self._table
+
+    def union(self, other):
+        return self._table.union(other.table(), func=lambda v1, v2 : v1)
+
+    def save_as(self, dest_name, dest_namespace, partitions=None, schema=None):
+        return self._table.save_as(name=dest_name, namespace=dest_namespace)
+
     def collect(self, **kwargs) -> list:
         return self._table.get_all(**kwargs)
 

@@ -85,10 +85,13 @@ class StorageTableBase(StorageTableABC):
         src_table_meta = self.get_meta()
         pass
 
+    def check_address(self):
+        return True
+
 
 class StorageTableMeta(StorageTableMetaABC):
 
-    def __init__(self, name, namespace, new=False):
+    def __init__(self, name, namespace, new=False, create_address=True):
         self.name = name
         self.namespace = namespace
         self.address = None
@@ -99,6 +102,8 @@ class StorageTableMeta(StorageTableMetaABC):
         self.in_serialized = None
         self.have_head = None
         self.id_delimiter = None
+        self.extend_sid = None
+        self.auto_increasing_sid = None
         self.schema = None
         self.count = None
         self.part_of_data = None
@@ -112,12 +117,13 @@ class StorageTableMeta(StorageTableMetaABC):
         if self.part_of_data is None:
             self.part_of_data = []
         if not new:
-            self.build()
+            self.build(create_address)
 
-    def build(self):
+    def build(self, create_address):
         for k, v in self.table_meta.__dict__["__data__"].items():
             setattr(self, k.lstrip("f_"), v)
-        self.address = self.create_address(storage_engine=self.engine, address_dict=self.address)
+        if create_address:
+            self.address = self.create_address(storage_engine=self.engine, address_dict=self.address)
 
     def __new__(cls, *args, **kwargs):
         if not kwargs.get("new", False):
@@ -217,7 +223,9 @@ class StorageTableMeta(StorageTableMetaABC):
             operate = table_meta.update(update_fields)
         if count:
             self.count = count
-        return operate.execute() > 0
+        _return = operate.execute()
+        _meta = StorageTableMeta(name=self.name, namespace=self.namespace)
+        return _return > 0, _meta
 
     @DB.connection_context()
     def destroy_metas(self):
@@ -264,6 +272,12 @@ class StorageTableMeta(StorageTableMetaABC):
 
     def get_id_delimiter(self):
         return self.id_delimiter
+
+    def get_extend_sid(self):
+        return self.extend_sid
+
+    def get_auto_increasing_sid(self):
+        return self.auto_increasing_sid
 
     def get_have_head(self):
         return self.have_head
