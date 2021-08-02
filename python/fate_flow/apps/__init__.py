@@ -51,6 +51,9 @@ for path in pages_path:
 
     api_version = getattr(page, 'api_version', API_VERSION)
     page_name = getattr(page, 'page_name', page_name)
+
+    if not isinstance(page.manager, Blueprint):
+        raise TypeError('page.manager should be {!r}, got {!r}. filepath: {!s}'.format(Blueprint, page.manager, path))
     app.register_blueprint(page.manager, url_prefix=f'/{api_version}/{page_name}')
 
 stat_logger.info('imported pages: %s', ' '.join(str(path) for path in pages_path))
