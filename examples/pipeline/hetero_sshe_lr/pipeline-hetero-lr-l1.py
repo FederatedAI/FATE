@@ -43,7 +43,7 @@ def main(config="../../config.yaml", namespace=""):
     work_mode = config.work_mode
     parties = config.parties
     guest = parties.guest[0]
-    hosts = parties.host
+    hosts = parties.host[0]
 
     guest_train_data = {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"}
     host_train_data = {"name": "breast_hetero_host", "namespace": f"experiment{namespace}"}
@@ -84,21 +84,24 @@ def main(config="../../config.yaml", namespace=""):
 
     lr_param = {
         "name": "hetero_sshe_lr_0",
-        "penalty": "L2",
-        "optimizer": "rmsprop",
+        "penalty": "L1",
+        "optimizer": "sgd",
         "tol": 0.0001,
         "alpha": 0.01,
-        "max_iter": 3,
+        "max_iter": 30,
         "early_stop": "diff",
         "batch_size": -1,
         "learning_rate": 0.15,
         "init_param": {
             "init_method": "zeros",
-            "fit_intercept": False
+            "fit_intercept": True
         },
         "encrypt_param": {
             "key_length": 1024
-        }
+        },
+        "review_every_iter": True,
+        "compute_loss": True,
+        "review_strategy": "respectively"
     }
 
     hetero_sshe_lr_0 = HeteroSSHELR(**lr_param)

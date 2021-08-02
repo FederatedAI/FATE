@@ -93,8 +93,8 @@ def main(config="../../config.yaml", namespace=""):
 
     lr_param = {
         "name": "hetero_sshe_lr_0",
-        "penalty": "L2",
-        "optimizer": "rmsprop",
+        "penalty": None,
+        "optimizer": "sgd",
         "tol": 0.01,
         "alpha": 0.01,
         "max_iter": 30,
@@ -106,7 +106,9 @@ def main(config="../../config.yaml", namespace=""):
         "init_param": {
             "init_method": "random_uniform"
         },
-        "review_strategy": "all_review_in_guest"
+        "review_strategy": "all_review_in_guest",
+        "review_every_iter": False,
+        "compute_loss": True,
     }
 
     hetero_sshe_lr_0 = HeteroSSHELR(**lr_param)

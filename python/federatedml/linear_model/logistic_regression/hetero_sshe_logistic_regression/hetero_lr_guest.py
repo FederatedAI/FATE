@@ -116,7 +116,7 @@ class HeteroLRGuest(HeteroLRBase):
                                            encoder=self.fixpoint_encoder, suffix=ga2_suffix)
 
         # wb = wb - gb2 * self.model_param.learning_rate
-        # ga2_2 = ga2_2.reshape(ga2_2.shape[0])
+        ga2_2 = ga2_2.reshape(ga2_2.shape[0])
         # LOGGER.debug(f"wa shape: {wa.shape}, ga_shape: {ga2_2.shape}")
         # wa = wa - ga2_2 * self.model_param.learning_rate
         # wa = wa.reshape(wa.shape[-1])
@@ -142,10 +142,9 @@ class HeteroLRGuest(HeteroLRBase):
 
     def check_converge_by_weights(self, last_w, new_w, suffix):
         if self.is_respectively_reviewed:
-            return self._respectively_check(last_w[0], new_w, suffix)
+            return self._respectively_check(last_w, new_w, suffix)
         else:
-            for host_weights in self.hosted_model_weights:
-                new_w = np.append(new_w, host_weights.unboxed)
+            new_w = np.append(new_w, self.host_model_weights.unboxed)
             return self._unbalanced_check(new_w, suffix)
 
     def _respectively_check(self, last_w, new_w, suffix):
@@ -223,8 +222,7 @@ class HeteroLRGuest(HeteroLRBase):
                               coef=self.model_weights.coef_,
                               intercept=self.model_weights.intercept_)
         pred_prob = data_instances.mapValues(f)
-        LOGGER.debug(f"host_model_weights: {self.hosted_model_weights}")
-        for idx, host_weights in enumerate(self.hosted_model_weights):
+        for idx, host_weights in enumerate([self.host_model_weights]):
             encrypted_host_weight = self.cipher.recursive_encrypt(host_weights.coef_)
             self.transfer_variable.encrypted_host_weights.remote(encrypted_host_weight,
                                                                  role=consts.HOST,
@@ -240,20 +238,11 @@ class HeteroLRGuest(HeteroLRBase):
 
     def _get_param(self):
         if self.need_one_vs_rest:
-            # one_vs_rest_class = list(map(str, self.one_vs_rest_obj.classes))
             one_vs_rest_result = self.one_vs_rest_obj.save(lr_model_param_pb2.SingleModel)
             single_result = {'header': self.header, 'need_one_vs_rest': True, "best_iteration": -1}
         else:
             one_vs_rest_result = None
             single_result = self.get_single_model_param()
-            # if not self.is_respectively_reviewed:
-            #     host_models = []
-            #     for idx, hw in enumerate(self.hosted_model_weights):
-            #         host_weights = lr_model_param_pb2.HostWeights(
-            #             host_weights=list(hw.unboxed),
-            #             party_id=str(self.component_properties.host_party_idlist[idx]))
-            #         host_models.append(host_weights)
-            #     single_result["host_models"] = host_models
 
             single_result['need_one_vs_rest'] = False
         single_result['one_vs_rest_result'] = one_vs_rest_result
@@ -265,7 +254,7 @@ class HeteroLRGuest(HeteroLRBase):
         result = super().get_single_model_param(model_weights, header)
         if not self.is_respectively_reviewed:
             host_models = []
-            for idx, hw in enumerate(self.hosted_model_weights):
+            for idx, hw in enumerate([self.host_model_weights]):
                 host_weights = lr_model_param_pb2.HostWeights(
                     host_weights=list(hw.unboxed),
                     party_id=str(self.component_properties.host_party_idlist[idx]))
@@ -276,19 +265,15 @@ class HeteroLRGuest(HeteroLRBase):
     def load_single_model(self, single_model_obj):
         super(HeteroLRGuest, self).load_single_model(single_model_obj)
         if not self.is_respectively_reviewed:
-            host_models = list(single_model_obj.host_models)
-            LOGGER.debug(f"host_models: {host_models}")
-
-            self.hosted_model_weights = []
-            for hw in host_models:
-                weights = np.array(hw.host_weights)
-                self.hosted_model_weights.append(LinearModelWeights(weights, fit_intercept=False))
+            hw = list(single_model_obj.host_models)[0]
+            weights = np.array(hw.host_weights)
+            self.host_model_weights = LinearModelWeights(weights, fit_intercept=False)
 
     def get_model_summary(self):
         summary = super(HeteroLRGuest, self).get_model_summary()
-        if len(self.hosted_model_weights) > 0:
+        if self.host_model_weights is not None:
             host_weights = {}
-            for idx, hw in enumerate(self.hosted_model_weights):
+            for idx, hw in enumerate([self.host_model_weights]):
                 host_weights[f"host_{idx}"] = list(hw.unboxed)
             summary["host_weights"] = host_weights
         return summary

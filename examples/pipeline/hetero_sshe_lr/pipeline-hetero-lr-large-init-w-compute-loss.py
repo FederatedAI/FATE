@@ -86,16 +86,16 @@ def main(config="../../config.yaml", namespace=""):
         "name": "hetero_sshe_lr_0",
         "penalty": "L2",
         "tol": 0.0001,
-        "alpha": 0.01,
-        "max_iter": 10,
+        "alpha": 10,
+        "max_iter": 30,
         "early_stop": "weight_diff",
         "batch_size": -1,
-        "learning_rate": 0.2,
-        "decay": 0,
+        "learning_rate": 0.3,
+        "decay": 0.5,
         "init_param": {
             "init_method": "const",
-            "init_const": 20,
-            "fit_intercept": True
+            "init_const": 200,
+            "fit_intercept": False
         },
         "encrypt_param": {
             "key_length": 1024

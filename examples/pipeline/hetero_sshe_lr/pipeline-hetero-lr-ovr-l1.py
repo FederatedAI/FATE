@@ -45,8 +45,8 @@ def main(config="../../config.yaml", namespace=""):
     guest = parties.guest[0]
     hosts = parties.host[0]
 
-    guest_train_data = {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"}
-    host_train_data = {"name": "breast_hetero_host", "namespace": f"experiment{namespace}"}
+    guest_train_data = {"name": "vehicle_scale_hetero_guest", "namespace": f"experiment{namespace}"}
+    host_train_data = {"name": "vehicle_scale_hetero_host", "namespace": f"experiment{namespace}"}
     # guest_train_data = {"name": "default_credit_hetero_guest", "namespace": f"experiment{namespace}"}
     # host_train_data = {"name": "default_credit_hetero_host", "namespace": f"experiment{namespace}"}
 
@@ -84,27 +84,30 @@ def main(config="../../config.yaml", namespace=""):
 
     lr_param = {
         "name": "hetero_sshe_lr_0",
-        "penalty": "L2",
-        "optimizer": "rmsprop",
-        "tol": 0.01,
-        "alpha": 0.01,
-        "max_iter": 100,
+        "penalty": "L1",
+        "optimizer": "sgd",
+        "tol": 0.0001,
+        "alpha": 0.001,
+        "max_iter": 30,
         "early_stop": "diff",
         "batch_size": -1,
         "learning_rate": 0.15,
         "init_param": {
             "init_method": "zeros",
-            "fit_intercept": True
+            "fit_intercept": False
         },
         "encrypt_param": {
             "key_length": 1024
-        }
+        },
+        "review_every_iter": True,
+        "compute_loss": True,
+        "review_strategy": "respectively"
     }
 
     hetero_sshe_lr_0 = HeteroSSHELR(**lr_param)
     pipeline.add_component(hetero_sshe_lr_0, data=Data(train_data=intersection_0.output.data))
 
-    evaluation_0 = Evaluation(name="evaluation_0", eval_type="binary")
+    evaluation_0 = Evaluation(name="evaluation_0", eval_type="multi")
     pipeline.add_component(evaluation_0, data=Data(data=hetero_sshe_lr_0.output.data))
 
     pipeline.compile()
@@ -115,6 +118,19 @@ def main(config="../../config.yaml", namespace=""):
     # query component summary
     prettify(pipeline.get_component("hetero_sshe_lr_0").get_summary())
     prettify(pipeline.get_component("evaluation_0").get_summary())
+
+    pipeline.deploy_component([dataio_0, intersection_0, hetero_sshe_lr_0])
+
+    predict_pipeline = PipeLine()
+    # add data reader onto predict pipeline
+    predict_pipeline.add_component(reader_0)
+    # add selected components from train pipeline onto predict pipeline
+    # specify data source
+    predict_pipeline.add_component(pipeline,
+                                   data=Data(predict_input={pipeline.dataio_0.input.data: reader_0.output.data}))
+    # run predict model
+    predict_pipeline.predict(job_parameters)
+
     return pipeline
 
 

@@ -218,6 +218,8 @@ class LogisticRegressionParam(BaseParam):
             if self.early_stop in ["diff", 'abs'] and not self.compute_loss:
                 raise ValueError(f"sshe lr param early_stop: {self.early_stop} should calculate loss."
                                  f"Please set 'compute_loss' to be True")
+            if self.early_stop == "weight_diff" and not self.review_every_iter:
+                raise ValueError(f"When early_stop strategy is weight_diff, weight should be reviewed every iter.")
 
         self.encrypt_param.check()
         self.predict_param.check()
@@ -242,6 +244,12 @@ class LogisticRegressionParam(BaseParam):
                 )
             if type(self.validation_freqs).__name__ == "int" and self.validation_freqs <= 0:
                 raise ValueError("validation strategy param's validate_freqs should greater than 0")
+            if self.review_strategy == "all_review_in_guest":
+                raise ValueError(f"When review strategy is all_review_in_guest, validation every iter"
+                                 f" is not supported.")
+            if self.review_every_iter is False:
+                raise ValueError(f"When review strategy is all_review_in_guest, review_every_iter "
+                                 f"should be True.")
 
         if self.early_stopping_rounds is None:
             pass

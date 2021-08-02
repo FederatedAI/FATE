@@ -94,7 +94,7 @@ def main(config="../../config.yaml", namespace=""):
     lr_param = {
         "name": "hetero_sshe_lr_0",
         "penalty": "L2",
-        "optimizer": "rmsprop",
+        "optimizer": "sgd",
         "tol": 0.0001,
         "alpha": 0.01,
         "max_iter": 30,
@@ -105,7 +105,10 @@ def main(config="../../config.yaml", namespace=""):
         "learning_rate": 0.15,
         "init_param": {
             "init_method": "zeros"
-        }
+        },
+        "review_strategy": "respectively",
+        "review_every_iter": True,
+        "compute_loss": True
     }
 
     hetero_sshe_lr_0 = HeteroSSHELR(**lr_param)

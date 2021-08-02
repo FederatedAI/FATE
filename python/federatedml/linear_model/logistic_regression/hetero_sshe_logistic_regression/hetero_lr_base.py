@@ -50,7 +50,7 @@ class HeteroLRBase(SSHEModelBase, ABC):
         # self.features = None
         self.labels = None
         self.label_tensor = None
-        self.hosted_model_weights: list = []
+        self.host_model_weights = None
         self.encoded_batch_num = []
         self.one_vs_rest_obj = None
 
@@ -86,6 +86,14 @@ class HeteroLRBase(SSHEModelBase, ABC):
     @property
     def is_respectively_reviewed(self):
         return self.model_param.review_strategy == "respectively"
+
+    def share_value(self, fix_point_encoder, value=None, tensor_name=''):
+        if value is None:
+            value = self.other_party
+
+        return fixedpoint_numpy.FixedPointTensor.from_source(tensor_name, value,
+                                                             encoder=fix_point_encoder,
+                                                             q_field=self.random_field)
 
     def share_model(self, w, fix_point_encoder, n_iter=-1):
         source = [w, self.other_party]
@@ -142,10 +150,8 @@ class HeteroLRBase(SSHEModelBase, ABC):
     def _init_weights(self, model_shape):
         return self.initializer.init_model(model_shape, init_params=self.init_param_obj)
 
-    def check_converge_by_loss(self, loss_list, suffix):
+    def check_converge_by_loss(self, loss, suffix):
         if self.role == consts.HOST:
-            loss = np.sum(loss_list) / self.batch_generator.batch_nums
-            self.loss_history.append(loss)
             self.is_converged = self.converge_func.is_converge(loss)
             self.transfer_variable.is_converged.remote(self.is_converged, suffix=suffix)
         else:
@@ -159,10 +165,10 @@ class HeteroLRBase(SSHEModelBase, ABC):
         # self.batch_generator.initialize_batch_generator(data_instances, self.batch_size)
         model_shape = self.get_features_shape(data_instances)
         w = self._init_weights(model_shape)
+        last_models = w
         self.model_weights = LinearModelWeights(l=w,
                                                 fit_intercept=self.model_param.init_param.fit_intercept)
         self.batch_generator.initialize_batch_generator(data_instances, batch_size=self.batch_size)
-        last_models = [w, self.hosted_model_weights]
 
         remote_pubkey = self.transfer_pubkey()
         with SPDZ(
@@ -179,6 +185,7 @@ class HeteroLRBase(SSHEModelBase, ABC):
                                                                                  encoder=self.fixpoint_encoder)
 
             w_self, w_remote = self.share_model(w, self.fixpoint_encoder)
+            LOGGER.debug(f"first_w_self shape: {w_self.shape}, w_remote_shape: {w_remote.shape}")
 
             batch_data_generator = self.batch_generator.generate_batch_data()
             encoded_batch_data = []
@@ -212,24 +219,48 @@ class HeteroLRBase(SSHEModelBase, ABC):
                                                                  features=batch_data, suffix=current_suffix)
 
                     if self.review_every_iter:
-                        new_g = self.review_gradients(self_g, remote_g)
+                        LOGGER.debug(f"self_g shape: {self_g.shape}, remote_g_shape: {remote_g}")
 
-                        self.model_weights = self.optimizer.update_model(self.model_weights, new_g,
-                                                                         has_applied=False)
-                        w_self, w_remote = self.share_model(self.model_weights.unboxed, self.fixpoint_encoder)
+                        new_g, host_g = self.review_models(self_g, remote_g)
+                        LOGGER.debug(f"new_g shape: {new_g.shape}, host_g_shape: {host_g}")
+
+                        if new_g is not None:
+                            self.model_weights = self.optimizer.update_model(self.model_weights, new_g,
+                                                                             has_applied=False)
+                        else:
+                            self.model_weights = LinearModelWeights(
+                                l=np.zeros(self_g.shape),
+                                fit_intercept=self.model_param.init_param.fit_intercept)
+                        if host_g is not None:
+                            self.host_model_weights = LinearModelWeights(
+                                l=host_g,
+                                fit_intercept=False)
+                        w_self, w_remote = self.share_model(self.model_weights.unboxed, self.fixpoint_encoder,
+                                                            n_iter=self.n_iter_)
                     else:
                         w_self -= self_g * self.optimizer.decay_learning_rate()
                         w_remote -= remote_g * self.optimizer.decay_learning_rate()
 
+                    LOGGER.debug(f"other_w_self shape: {w_self.shape}, w_remote_shape: {w_remote.shape}")
+
                     if self.cal_loss:
                         loss_list.append(self.compute_loss(suffix=current_suffix))
 
+                if self.cal_loss:
+                    if self.role == consts.HOST:
+                        loss = np.sum(loss_list) / self.batch_generator.batch_nums
+                        self.loss_history.append(loss)
+                    else:
+                        loss = None
+
                 if self.converge_func_name in ["diff", "abs"]:
-                    self.is_converged = self.check_converge_by_loss(loss_list, suffix=(self.n_iter_,))
+                    self.is_converged = self.check_converge_by_loss(loss, suffix=(self.n_iter_,))
                 elif self.converge_func_name == "weight_diff":
-                    self.is_converged = self.check_converge_by_weights(last_w=last_models, new_w=new_w,
-                                                                       suffix=(self.n_iter_,))
-                    last_models = [new_w, copy.deepcopy(self.hosted_model_weights)]
+                    self.is_converged = self.check_converge_by_weights(
+                        last_w=last_models,
+                        new_w=self.model_weights.unboxed,
+                        suffix=(self.n_iter_,))
+                    last_models = copy.deepcopy(self.model_weights.unboxed)
                 else:
                     raise ValueError(f"Cannot recognize early_stop function: {self.converge_func_name}")
 
@@ -246,30 +277,51 @@ class HeteroLRBase(SSHEModelBase, ABC):
                 self.n_iter_ += 1
 
             # Finally reconstruct
-            if self.cal_loss:
-                new_w = self.review_models(w_self, w_remote)
-                # LOGGER.debug(f"new_w: {new_w}")
-                self.model_weights = LinearModelWeights(l=new_w,
-                                                        fit_intercept=self.model_param.init_param.fit_intercept)
+            if not self.review_every_iter:
+                new_w, host_weights = self.review_models(w_self, w_remote)
+                if new_w is not None:
+                    self.model_weights = LinearModelWeights(
+                        l=new_w,
+                        fit_intercept=self.model_param.init_param.fit_intercept)
+
+                if host_weights is not None:
+                    self.host_model_weights = LinearModelWeights(
+                        l=host_weights,
+                        fit_intercept=False)
 
         LOGGER.debug(f"loss_history: {self.loss_history}")
         if self.validation_strategy and self.validation_strategy.has_saved_best_model():
             self.load_model(self.validation_strategy.cur_best_model)
         self.set_summary(self.get_model_summary())
 
-    def review_gradients(self, self_g, remote_g):
-        if self.model_param.review_strategy == "respectively":
-            if self.role == consts.GUEST:
-                new_g = self_g.reconstruct_unilateral(tensor_name=f"gb_{self.n_iter_}")
-                remote_g.broadcast_reconstruct_share(tensor_name=f"ga_{self.n_iter_}")
-            else:
-                remote_g.broadcast_reconstruct_share(tensor_name=f"gb_{self.n_iter_}")
-                new_g = self_g.reconstruct_unilateral(tensor_name=f"ga_{self.n_iter_}")
-        else:
-            raise NotImplementedError(f"review strategy: {self.model_param.review_strategy} has not been implemented.")
-        return new_g
+    # def review_gradients(self, self_g, remote_g):
+    #     if self.model_param.review_strategy == "respectively":
+    #         if self.role == consts.GUEST:
+    #             new_g = self_g.reconstruct_unilateral(tensor_name=f"gb_{self.n_iter_}")
+    #             remote_g.broadcast_reconstruct_share(tensor_name=f"ga_{self.n_iter_}")
+    #         else:
+    #             remote_g.broadcast_reconstruct_share(tensor_name=f"gb_{self.n_iter_}")
+    #             new_g = self_g.reconstruct_unilateral(tensor_name=f"ga_{self.n_iter_}")
+    #     elif self.model_param.review_strategy == "all_review_in_guest":
+    #
+    #         if self.role == consts.GUEST:
+    #             new_w = self_g.reconstruct_unilateral(tensor_name=f"wb_{self.n_iter_}")
+    #             hosted_weights = w_remote.reconstruct_unilateral(tensor_name=f"wa_{self.n_iter_}")
+    #             self.host_model_weights = [LinearModelWeights(l=hosted_weights, fit_intercept=False)]
+    #         else:
+    #             if w_remote.shape[0] > 2:
+    #                 raise ValueError("Too many features in Guest. Review strategy: 'all_review_in_guest' "
+    #                                  "should not be used.")
+    #             w_remote.broadcast_reconstruct_share(tensor_name=f"wb_{self.n_iter_}")
+    #
+    #             w_self.broadcast_reconstruct_share(tensor_name=f"wa_{self.n_iter_}")
+    #             new_w = np.zeros(w_self.shape)
+    #     else:
+    #         raise NotImplementedError(f"review strategy: {self.model_param.review_strategy} has not been implemented.")
+    #     return new_g
 
     def review_models(self, w_self, w_remote):
+        host_weights = None
         if self.model_param.review_strategy == "respectively":
             if self.role == consts.GUEST:
                 new_w = w_self.reconstruct_unilateral(tensor_name=f"wb_{self.n_iter_}")
@@ -282,8 +334,8 @@ class HeteroLRBase(SSHEModelBase, ABC):
 
             if self.role == consts.GUEST:
                 new_w = w_self.reconstruct_unilateral(tensor_name=f"wb_{self.n_iter_}")
-                hosted_weights = w_remote.reconstruct_unilateral(tensor_name=f"wa_{self.n_iter_}")
-                self.hosted_model_weights = [LinearModelWeights(l=hosted_weights, fit_intercept=False)]
+                host_weights = w_remote.reconstruct_unilateral(tensor_name=f"wa_{self.n_iter_}")
+                # self.host_model_weights = [LinearModelWeights(l=hosted_weights, fit_intercept=False)]
             else:
                 if w_remote.shape[0] > 2:
                     raise ValueError("Too many features in Guest. Review strategy: 'all_review_in_guest' "
@@ -291,17 +343,18 @@ class HeteroLRBase(SSHEModelBase, ABC):
                 w_remote.broadcast_reconstruct_share(tensor_name=f"wb_{self.n_iter_}")
 
                 w_self.broadcast_reconstruct_share(tensor_name=f"wa_{self.n_iter_}")
-                new_w = np.zeros(w_self.shape)
+                # new_w = np.zeros(w_self.shape)
+                new_w = None
         else:
             raise NotImplementedError(f"review strategy: {self.model_param.review_strategy} has not been implemented.")
-        self.model_weights = LinearModelWeights(l=new_w,
-                                                fit_intercept=self.model_param.init_param.fit_intercept)
-        return new_w
+        # self.model_weights = LinearModelWeights(l=new_w,
+        #                                         fit_intercept=self.model_param.init_param.fit_intercept)
+        return new_w, host_weights
 
     def share_z(self, suffix, **kwargs):
         if self.role == consts.HOST:
             for var_name in ["z", "z_square"]:
-            # for var_name in ["z"]:
+                # for var_name in ["z"]:
                 z = kwargs[var_name]
                 encrypt_z = self.cipher.distribute_encrypt(z.value)
                 self.transfer_variable.encrypted_share_matrix.remote(encrypt_z, role=consts.GUEST,
@@ -309,7 +362,7 @@ class HeteroLRBase(SSHEModelBase, ABC):
         else:
             res = []
             for var_name in ["z", "z_square"]:
-            # for var_name in ["z"]:
+                # for var_name in ["z"]:
                 dest_role = consts.GUEST if self.role == consts.HOST else consts.HOST
                 z_table = self.transfer_variable.encrypted_share_matrix.get(role=dest_role, idx=0,
                                                                             suffix=(var_name,) + suffix)

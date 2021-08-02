@@ -45,10 +45,10 @@ def main(config="../../config.yaml", namespace=""):
     guest = parties.guest[0]
     hosts = parties.host[0]
 
-    # guest_train_data = {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"}
-    # host_train_data = {"name": "breast_hetero_host", "namespace": f"experiment{namespace}"}
-    guest_train_data = {"name": "default_credit_hetero_guest", "namespace": f"experiment{namespace}"}
-    host_train_data = {"name": "default_credit_hetero_host", "namespace": f"experiment{namespace}"}
+    guest_train_data = {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"}
+    host_train_data = {"name": "breast_hetero_host", "namespace": f"experiment{namespace}"}
+    # guest_train_data = {"name": "default_credit_hetero_guest", "namespace": f"experiment{namespace}"}
+    # host_train_data = {"name": "default_credit_hetero_host", "namespace": f"experiment{namespace}"}
 
     # initialize pipeline
     pipeline = PipeLine()
@@ -85,7 +85,7 @@ def main(config="../../config.yaml", namespace=""):
     lr_param = {
         "name": "hetero_sshe_lr_0",
         "penalty": "L2",
-        "optimizer": "rmsprop",
+        "optimizer": "sgd",
         "tol": 0.0001,
         "alpha": 0.01,
         "max_iter": 30,
@@ -98,7 +98,10 @@ def main(config="../../config.yaml", namespace=""):
         },
         "encrypt_param": {
             "key_length": 1024
-        }
+        },
+        "review_every_iter": True,
+        "compute_loss": True,
+        "review_strategy": "respectively"
     }
 
     hetero_sshe_lr_0 = HeteroSSHELR(**lr_param)
