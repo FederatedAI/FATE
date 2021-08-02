@@ -64,8 +64,8 @@ class KFold(BaseCrossValidator):
         data_sids = np.array(data_sids)
         # if self.shuffle:
         #     np.random.shuffle(data_sids)
-
-        kf = sk_KFold(n_splits=self.n_splits, shuffle=self.shuffle, random_state=self.random_seed)
+        random_state = self.random_seed if self.shuffle else None
+        kf = sk_KFold(n_splits=self.n_splits, shuffle=self.shuffle, random_state=random_state)
 
         n = 0
         for train, test in kf.split(data_sids):

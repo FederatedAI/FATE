@@ -25,7 +25,7 @@ from werkzeug.serving import run_simple
 
 from fate_flow.utils.proto_compatibility import proxy_pb2_grpc
 from fate_flow.apps import app
-
+from fate_flow.apps.component_app import manager as component_app_manager
 from fate_flow.db.db_models import init_database_tables as init_flow_db
 from fate_arch.storage.metastore.db_models import init_database_tables as init_arch_db
 from fate_flow.scheduler.detector import Detector
@@ -37,9 +37,10 @@ from fate_flow.settings import IP, HTTP_PORT, GRPC_PORT, _ONE_DAY_IN_SECONDS, st
 from fate_flow.utils.authentication_utils import PrivilegeAuth
 from fate_flow.utils.grpc_utils import UnaryService
 from fate_flow.db.db_services import service_db
-
+from fate_flow.utils.model_utils import models_group_by_party_model_id_and_model_version
 from fate_flow.utils.xthread import ThreadPoolExecutor
 from fate_flow.utils import job_utils
+from fate_arch.common.log import schedule_logger
 
 
 if __name__ == '__main__':
@@ -59,8 +60,8 @@ if __name__ == '__main__':
     PrivilegeAuth.init()
     service_db().register_models()
     ResourceManager.initialize()
-    Detector(interval=5 * 1000).start()
-    DAGScheduler(interval=2 * 1000).start()
+    Detector(interval=5 * 1000, logger=detect_logger).start()
+    DAGScheduler(interval=2 * 1000, logger=schedule_logger()).start()
     thread_pool_executor = ThreadPoolExecutor(max_workers=GRPC_SERVER_MAX_WORKERS)
     stat_logger.info(f"start grpc server thread pool by {thread_pool_executor._max_workers} max workers")
     server = grpc.server(thread_pool=thread_pool_executor,
