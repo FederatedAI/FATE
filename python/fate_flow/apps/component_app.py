@@ -16,19 +16,9 @@
 from flask import request
 
 from fate_arch.common.file_utils import get_federatedml_setting_conf_directory
-from fate_flow.settings import stat_logger
 from fate_flow.utils.api_utils import error_response, get_json_result
 from fate_flow.utils.detect_utils import check_config
 from fate_flow.scheduler.dsl_parser import DSLParser, DSLParserV2
-
-
-page_name = 'component'
-
-
-@manager.errorhandler(500)
-def internal_server_error(e):
-    stat_logger.exception(e)
-    return error_response(500, str(e))
 
 
 @manager.route('/validate', methods=['POST'])

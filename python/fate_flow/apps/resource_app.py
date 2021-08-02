@@ -13,14 +13,11 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
-from flask import Flask, request
+from flask import request
 
 from fate_flow.manager.resource_manager import ResourceManager
 from fate_flow.utils import detect_utils
 from fate_flow.utils.api_utils import get_json_result
-
-manager = Flask(__name__)
 
 
 @manager.route('/query', methods=['post'])
