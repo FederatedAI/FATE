@@ -22,6 +22,7 @@ from fate_arch.common import log
 from fate_arch.common.base_utils import serialize_b64, deserialize_b64
 from fate_flow.entity.types import RetCode, RunParameters
 from fate_flow.entity.metric import Metric, MetricMeta
+from fate_flow.model import parse_proto_object
 from fate_flow.operation.job_tracker import Tracker
 from fate_flow.utils import api_utils
 
@@ -201,7 +202,7 @@ class TrackerClient(object):
         else:
             model_buffers = {}
             for model_name, v in response['data'].items():
-                model_buffers[model_name] = tracker.pipelined_model.parse_proto_object(buffer_name=v[0], buffer_object_serialized_string=base64.b64decode(v[1].encode()))
+                model_buffers[model_name] = parse_proto_object(buffer_name=v[0], serialized_string=base64.b64decode(v[1].encode()))
             return model_buffers
 
     def log_output_data_info(self, data_name: str, table_namespace: str, table_name: str):

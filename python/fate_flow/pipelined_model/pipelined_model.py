@@ -123,8 +123,8 @@ class PipelinedModel(Locker):
             with open(os.path.join(component_model_storage_path, model_name), "rb") as fr:
                 buffer_object_serialized_string = fr.read()
                 if parse:
-                    model_buffers[model_name] = self.parse_proto_object(buffer_name=buffer_name,
-                                                                        buffer_object_serialized_string=buffer_object_serialized_string)
+                    model_buffers[model_name] = parse_proto_object(buffer_name=buffer_name,
+                                                                   serialized_string=buffer_object_serialized_string)
                 else:
                     model_buffers[model_name] = [buffer_name, base64.b64encode(buffer_object_serialized_string).decode()]
         return model_buffers
