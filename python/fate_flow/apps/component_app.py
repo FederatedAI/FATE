@@ -13,7 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from flask import Flask, request
+from flask import request
 
 from fate_arch.common.file_utils import get_federatedml_setting_conf_directory
 from fate_flow.settings import stat_logger
@@ -22,7 +22,7 @@ from fate_flow.utils.detect_utils import check_config
 from fate_flow.scheduler.dsl_parser import DSLParser, DSLParserV2
 
 
-manager = Flask(__name__)
+page_name = 'component'
 
 
 @manager.errorhandler(500)

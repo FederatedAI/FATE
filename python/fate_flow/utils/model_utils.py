@@ -27,7 +27,6 @@ from fate_flow.pipelined_model.pipelined_model import PipelinedModel
 
 from fate_flow.db.db_models import DB, MachineLearningModelInfo as MLModel
 from fate_flow.db.db_services import service_db
-from fate_flow.utils.service_utils import ServiceUtils
 
 gen_key_string_separator = '#'
 
@@ -240,7 +239,6 @@ def check_if_deployed(role, party_id, model_id, model_version):
                 if pipeline.parent:
                     return False
         return True
-
 
 
 @DB.connection_context()
