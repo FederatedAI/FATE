@@ -107,7 +107,7 @@ class HeteroLinRGuest(HeteroLinRBase):
             self.is_converged = self.converge_procedure.sync_converge_info(suffix=(self.n_iter_,))
             LOGGER.info("iter: {}, is_converged: {}".format(self.n_iter_, self.is_converged))
 
-            # LOGGER.debug("model weights is {}".format(self.model_weights.coef_))
+            self.add_checkpoint(step_index=self.n_iter_)
 
             if self.validation_strategy:
                 LOGGER.debug('LinR guest running validation')

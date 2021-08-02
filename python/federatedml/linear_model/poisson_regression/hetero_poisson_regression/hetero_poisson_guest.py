@@ -108,6 +108,8 @@ class HeteroPoissonGuest(HeteroPoissonBase):
             self.is_converged = self.converge_procedure.sync_converge_info(suffix=(self.n_iter_,))
             LOGGER.info("iter: {},  is_converged: {}".format(self.n_iter_, self.is_converged))
 
+            self.add_checkpoint(step_index=self.n_iter_)
+
             if self.validation_strategy:
                 LOGGER.debug('Poisson guest running validation')
                 self.validation_strategy.validate(self, self.n_iter_)
