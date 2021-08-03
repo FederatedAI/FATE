@@ -14,7 +14,6 @@
 #  limitations under the License.
 #
 
-from federatedml.protobuf.generated.intersect_param_pb2 import PHKey
 from federatedml.secureprotol.symmetric_encryption.cryptor_executor import CryptoExecutor
 from federatedml.secureprotol.symmetric_encryption.pohlig_hellman_encryption import PohligHellmanCipherKey
 from federatedml.statistic.intersect.dh_intersect.dh_intersect_base import DhIntersect
@@ -142,21 +141,19 @@ class DhIntersectionGuest(DhIntersect):
 
         return intersect_ids
 
-    def get_intersect_key(self):
-        mod_base, exponent = {}, {}
-        for i, party_id in enumerate(self.host_party_id_list):
-            cipher_core = self.commutative_cipher[i].cipher_core
-            mod_base[party_id] = str(cipher_core.mod_base)
-            exponent[party_id] = str(cipher_core.exponent)
+    def get_intersect_key(self, party_id):
+        idx = self.host_party_id_list.index(party_id)
+        cipher_core = self.commutative_cipher[idx].cipher_core
+        intersect_key = {"mod_base": str(cipher_core.mod_base),
+                        "exponent": str(cipher_core.exponent)}
+        return {"intersect_key": intersect_key}
 
-        ph_key = PHKey(mod_base=mod_base, exponent=exponent)
-        return ph_key
-
-    def load_intersect_key(self, intersect_key):
+    def load_intersect_key(self, cache_dict):
         commutative_cipher = []
         for host_party in self.host_party_id_list:
-            mod_base = int(intersect_key.mod_base[host_party])
-            exponent = int(intersect_key.exponent[host_party])
+            intersect_key = cache_dict[host_party]["meta"]["intersect_key"]
+            mod_base = int(intersect_key["mod_base"])
+            exponent = int(intersect_key["exponent"])
             ph_key = PohligHellmanCipherKey(mod_base, exponent)
             commutative_cipher.append(CryptoExecutor(ph_key))
         self.commutative_cipher = commutative_cipher
@@ -182,17 +179,17 @@ class DhIntersectionGuest(DhIntersect):
                                                   reserve_original_key=True) for i in range(self.host_count)]
         LOGGER.info("encrypted remote id for the 2nd time")
 
-        cache_id_dict = {}
+        cache_dict = {}
+        intersect_meta = self.get_intersect_method_meta()
         for i, party_id in enumerate(self.host_party_id_list):
-            id_list_remote_second[i].schema = {"cache_id": cache_id_list[i]}
-            cache_id_dict[party_id] = cache_id_list[i]
+            cache_dict[party_id] = {"data": id_list_remote_second[i],
+                                    "cache_id": cache_id_list[i],
+                                    "intersect_meta": intersect_meta,
+                                    "intersect_key": self.get_intersect_key(party_id)}
+        # self.cache_id = cache_id_dict
+        return cache_dict
 
-        # self.id_list_remote_second = id_list_remote_second
-        self.cache_id = cache_id_dict
-
-        return id_list_remote_second
-
-    def get_intersect_doubly_encrypted_id_from_cache(self, data_instances, cache):
+    def get_intersect_doubly_encrypted_id_from_cache(self, data_instances, cache_dict):
         self.host_count = len(self.commutative_cipher)
         self.id_list_local_first = [self._encrypt_id(data_instances,
                                                      cipher,
@@ -212,10 +209,11 @@ class DhIntersectionGuest(DhIntersect):
         self.id_list_local_second = self._sync_doubly_encrypted_id_list()  # get (EEg, Eg)
 
         # find intersection per host
-        id_list_intersect_cipher_cipher = [self.extract_intersect_ids(cache[i],
+        cache_list = self.extract_cache_list(cache_dict)
+        id_list_intersect_cipher_cipher = [self.extract_intersect_ids(cache_list[i],
                                                                       self.id_list_local_second[i])
                                            for i in range(self.host_count)]  # (EEi, -1)
         LOGGER.info("encrypted intersection ids found")
-        self.id_list_remote_second = cache
+        self.id_list_remote_second = cache_list
 
         return id_list_intersect_cipher_cipher

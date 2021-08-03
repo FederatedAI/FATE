@@ -14,7 +14,6 @@
 #  limitations under the License.
 #
 
-from federatedml.protobuf.generated.intersect_meta_pb2 import DHMeta
 from federatedml.secureprotol.hash.hash_factory import Hash
 from federatedml.secureprotol.symmetric_encryption.cryptor_executor import CryptoExecutor
 from federatedml.secureprotol.symmetric_encryption.pohlig_hellman_encryption import PohligHellmanCipherKey
@@ -52,8 +51,9 @@ class DhIntersect(Intersect):
         return (restored_id, k)
     """
     def get_intersect_method_meta(self):
-        return DHMeta(hash_method=self.dh_params.hash_method,
-                      salt=self.salt)
+        dh_meta = {"hash_method": self.dh_params.hash_method,
+                   "salt": self.salt}
+        return {"intersect_meta": dh_meta}
 
     @staticmethod
     def _encrypt_id(data_instances, cipher, reserve_original_key=False, hash_operator=None, salt='',
@@ -131,7 +131,7 @@ class DhIntersect(Intersect):
     def decrypt_intersect_doubly_encrypted_id(self, id_list_intersect_cipher_cipher):
         raise NotImplementedError("This method should not be called here")
 
-    def get_intersect_doubly_encrypted_id_from_cache(self, data_instances, cache):
+    def get_intersect_doubly_encrypted_id_from_cache(self, data_instances, cache_dict):
         raise NotImplementedError("This method should not be called here")
 
     def run_intersect(self, data_instances):

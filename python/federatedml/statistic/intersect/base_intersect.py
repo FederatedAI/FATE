@@ -18,9 +18,7 @@ import functools
 import numpy as np
 import uuid
 
-from federatedml.param.intersect_param import IntersectParam, IntersectPreProcessParam
-from federatedml.protobuf.generated.intersect_meta_pb2 import IntersectModelMeta, IntersectPreProcessMeta
-from federatedml.protobuf.generated.intersect_param_pb2 import Filter, IntersectModelParam, RSAKey, PHKey
+from federatedml.param.intersect_param import IntersectParam
 from federatedml.statistic.intersect.intersect_preprocess import BitArray
 from federatedml.transfer_variable.transfer_class.intersection_func_transfer_variable import IntersectionFuncTransferVariable
 from federatedml.util import LOGGER, consts
@@ -86,14 +84,15 @@ class Intersect(object):
         self._host_id_list = host_id_list
 
     def get_intersect_method_meta(self):
-        return IntersectModelMeta()
-
-    def get_intersect_key(self):
         pass
 
-    def load_intersect_key(self, intersect_key):
+    def get_intersect_key(self, party_id):
         pass
 
+    def load_intersect_key(self, cache_dict):
+        pass
+
+    """
     def _get_meta(self):
         preprocess_params = IntersectPreProcessMeta(
             false_positive_rate=self.intersect_preprocess_params.false_positive_rate,
@@ -150,6 +149,7 @@ class Intersect(object):
                                                 cache_id=self.cache_id)
         return param_obj
 
+
     def get_model(self):
         meta_obj = self._get_meta()
         param_obj = self._get_param()
@@ -183,6 +183,7 @@ class Intersect(object):
         elif meta_obj.intersect_method == consts.DH:
             self.load_intersect_key(param_obj.ph_encrypt_key)
         self.cache_id = dict(param_obj.cache_id)
+    """
 
     def run_intersect(self, data_instances):
         raise NotImplementedError("method should not be called here")
@@ -192,6 +193,10 @@ class Intersect(object):
 
     def generate_cache(self, data_instances):
         raise NotImplementedError("method should not be called here")
+
+    def extract_cache_list(self, cache_dict):
+        cache_list = [v.get("data") for v in cache_dict.values()]
+        return cache_list
 
     def run_cache_intersect(self, data_instances, cache):
         raise NotImplementedError("method should not be called here")

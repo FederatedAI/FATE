@@ -16,7 +16,6 @@
 
 import uuid
 
-from federatedml.protobuf.generated.intersect_param_pb2 import PHKey
 from federatedml.secureprotol.symmetric_encryption.cryptor_executor import CryptoExecutor
 from federatedml.secureprotol.symmetric_encryption.pohlig_hellman_encryption import PohligHellmanCipherKey
 from federatedml.statistic.intersect.dh_intersect.dh_intersect_base import DhIntersect
@@ -96,17 +95,16 @@ class DhIntersectionHost(DhIntersect):
 
         return intersect_ids
 
-    def get_intersect_key(self):
+    def get_intersect_key(self, party_id=None):
         cipher_core = self.commutative_cipher.cipher_core
-        mod_base = str(cipher_core.mod_base)
-        exponent = str(cipher_core.exponent)
-        ph_key = PHKey(mod_base={self.guest_party_id: mod_base},
-                       exponent={self.guest_party_id: exponent})
-        return ph_key
+        intersect_key = {"mod_base": str(cipher_core.mod_base),
+                         "exponent": str(cipher_core.exponent)}
+        return {"intersect_key": intersect_key}
 
-    def load_intersect_key(self, intersect_key):
-        mod_base = int(intersect_key.mod_base[self.guest_party_id])
-        exponent = int(intersect_key.exponent[self.guest_party_id])
+    def load_intersect_key(self, cache_dict):
+        intersect_key = cache_dict[self.guest_party_id]["meta"]["intersect_key"]
+        mod_base = int(intersect_key["mod_base"])
+        exponent = int(intersect_key["exponent"])
         ph_key = PohligHellmanCipherKey(mod_base, exponent)
         self.commutative_cipher = CryptoExecutor(ph_key)
 
@@ -129,18 +127,24 @@ class DhIntersectionHost(DhIntersect):
                                                reserve_original_value=True)
         LOGGER.info("encrypted local id for the 1st time")
 
-        cache_schema = {"cache_id": cache_id}
-        id_list_local_first.schema = cache_schema
+        # cache_schema = {"cache_id": cache_id}
+        # id_list_local_first.schema = cache_schema
 
         id_only = id_list_local_first.mapValues(lambda v: None)
         self.transfer_variable.id_ciphertext_list_exchange_h2g.remote(id_only,
                                                                       role=consts.GUEST,
                                                                       idx=0)
         LOGGER.info("sent id 1st ciphertext list to guest")
+        cache_dict = {
+            self.guest_party_id: {
+                "data": id_list_local_first,
+                "cache_id": cache_id,
+                "intersect_meta": self.get_intersect_method_meta(),
+                "intersect_key": self.get_intersect_key()
+            }}
+        return cache_dict
 
-        return id_list_local_first
-
-    def get_intersect_doubly_encrypted_id_from_cache(self, data_instances, cache):
+    def get_intersect_doubly_encrypted_id_from_cache(self, data_instances, cache_dict):
         id_list_remote_first = self.transfer_variable.id_ciphertext_list_exchange_g2h.get(idx=0)
         LOGGER.info("got id 1st ciphertext list from guest")
 
@@ -149,5 +153,5 @@ class DhIntersectionHost(DhIntersect):
                                                  self.commutative_cipher,
                                                  reserve_original_key=True)  # (EEg, Eg)
         LOGGER.info("encrypted guest id for the 2nd time")
-        self.id_list_local_first = cache[0]
+        self.id_list_local_first = self.extract_cache_list(cache_dict)[0]
         self._sync_doubly_encrypted_id_list(id_list_remote_second)

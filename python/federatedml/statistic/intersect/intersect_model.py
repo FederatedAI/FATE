@@ -147,8 +147,8 @@ class IntersectModelBase(ModelBase):
         return result_data
 
     def callback(self):
-        meta_info = {"intersect_method": self.model_param.intersect_method,
-                     "join_method": self.model_param.join_method}
+        """meta_info = {"intersect_method": self.model_param.intersect_method,
+                     "join_method": self.model_param.join_method}"""
         self.callback_metric(metric_name=self.metric_name,
                              metric_namespace=self.metric_namespace,
                              metric_data=[Metric("intersect_count", self.intersect_num),
@@ -256,30 +256,17 @@ class IntersectModelBase(ModelBase):
     def check_consistency(self):
         pass
 
-    def export_model(self):
-        return self.intersection_obj.get_model()
-
-    def load_intersect_meta(self, meta_obj):
-        self.model_param.intersect_method = meta_obj.intersect_method
-        self.model_param.join_method = meta_obj.join_method
-        self.model_param.sync_intersect_ids = meta_obj.sync_intersect_ids
-        self.model_param.only_output_key = meta_obj.only_output_key
+    def load_intersect_meta(self, meta_dict):
         if self.model_param.intersect_method == consts.RSA:
-            rsa_params = meta_obj.rsa_params
-            self.model_param.rsa_params.hash_method = rsa_params.hash_method
-            self.model_param.rsa_params.final_hash_method = rsa_params.final_hash_method
-            self.model_param.rsa_params.salt = rsa_params.salt
-            self.model_param.rsa_params.random_bit = rsa_params.random_bit
+            rsa_params = meta_dict["intersect_meta"]
+            self.model_param.rsa_params.hash_method = rsa_params["hash_method"]
+            self.model_param.rsa_params.final_hash_method = rsa_params["final_hash_method"]
+            self.model_param.rsa_params.salt = rsa_params["salt"]
+            self.model_param.rsa_params.random_bit = rsa_params["random_bit"]
         elif self.model_param.intersect_method == consts.DH:
-            dh_params = meta_obj.dh_params
-            self.model_param.dh_params.hash_method = dh_params.hash_method
-            self.model_param.dh_params.salt = dh_params.salt
-
-    def load_model(self, model_dict):
-        model_dict = list(model_dict.get('model').values())[0]
-        self.load_intersect_meta(model_dict[self.model_meta_name])
-        self.init_intersect_method()
-        self.intersection_obj.load_model(model_dict)
+            dh_params = meta_dict["intersect_meta"]
+            self.model_param.dh_params.hash_method = dh_params["hash_method"]
+            self.model_param.dh_params.salt = dh_params["salt"]
 
     def make_filter_process(self, data_instances, hash_operator):
         raise NotImplementedError("This method should not be called here")
@@ -298,7 +285,10 @@ class IntersectModelBase(ModelBase):
         return data
 
     def transform(self, data_inst):
-        data, cache = list(data_inst.values())[0], [list(data_inst.values())[1]]
+        data, cache_dict = data_inst.values(), self.component_properties.cache
+        #@TODO: load meta & intersect_key
+        self.load_intersect_meta([cache_dict.values()][0]["meta"])
+        self.intersection_obj.load_intersect_key(cache_dict)
         # verify cache id
         # if data_overview.check_with_inst_id(data) or self.model_param.repeated_id_process:
         if data_overview.check_with_inst_id(data):
@@ -327,19 +317,14 @@ class IntersectModelBase(ModelBase):
             intersect_data = match_data
 
         if self.role == consts.HOST:
-            cache_id = self.intersection_obj.cache_id[self.guest_party_id]
-            if cache_id != cache[0].schema.get("cache_id"):
-                raise ValueError(f"cache_id of model and input cache table do not match. Please check!")
+            cache_id = cache_dict[self.guest_party_id]["meta"].get("cache_id")
             self.transfer_variable.cache_id.remote(cache_id, role=consts.GUEST, idx=0)
             guest_cache_id = self.transfer_variable.cache_id.get(role=consts.GUEST, idx=0)
             if guest_cache_id != cache_id:
                 raise ValueError(f"cache_id check failed. cache_id from host & guest must match.")
         elif self.role == consts.GUEST:
             for i, party_id in enumerate(self.host_party_id_list):
-                cache_id = self.intersection_obj.cache_id[party_id]
-                 #@todo: need to deal with multi-host case where partyid sequence diff from data input order in dsl
-                if cache[i].schema.get("cache_id") != cache_id:
-                    raise ValueError(f"cache_id of model and input cache table do not match. Please check!")
+                cache_id = cache_dict[party_id]["meta"].get("cache_id")
                 self.transfer_variable.cache_id.remote(cache_id,
                                                        role=consts.HOST,
                                                        idx=i)
@@ -349,7 +334,7 @@ class IntersectModelBase(ModelBase):
         else:
             raise ValueError(f"Role {self.role} cannot run intersection transform.")
 
-        self.intersect_ids = self.intersection_obj.run_cache_intersect(intersect_data, cache)
+        self.intersect_ids = self.intersection_obj.run_cache_intersect(intersect_data, cache_dict)
         if self.use_match_id_process:
             if not self.model_param.sync_intersect_ids:
                 self.intersect_ids = proc_obj.expand(self.intersect_ids,

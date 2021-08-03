@@ -16,7 +16,6 @@
 
 import gmpy2
 
-from federatedml.protobuf.generated.intersect_param_pb2 import RSAKey
 from federatedml.statistic.intersect.rsa_intersect.rsa_intersect_base import RsaIntersect
 from federatedml.util import consts, LOGGER
 
@@ -246,16 +245,18 @@ class RsaIntersectionGuest(RsaIntersect):
 
         return intersect_ids
 
-    def get_intersect_key(self):
-        rsa_key = RSAKey(rcv_e=dict(zip(self.host_party_id_list, map(str, self.rcv_e))),
-                         rcv_n=dict(zip(self.host_party_id_list, map(str, self.rcv_n))))
-        return rsa_key
+    def get_intersect_key(self, party_id):
+        idx = self.host_party_id_list.index(party_id)
+        intersect_key = {"rcv_n": str(self.rcv_n[idx]),
+                         "rcv_e": str(self.rcv_e[idx])}
+        return {"intersect_key": intersect_key}
 
-    def load_intersect_key(self, intersect_key):
+    def load_intersect_key(self, cache_meta):
         self.rcv_e, self.rcv_n = [], []
         for host_party in self.host_party_id_list:
-            self.rcv_e.append(int(intersect_key.rcv_e[host_party]))
-            self.rcv_n.append(int(intersect_key.rcv_n[host_party]))
+            intersect_key = cache_meta[host_party]["meta"]["intersect_key"]
+            self.rcv_e.append(int(intersect_key["rcv_e"]))
+            self.rcv_n.append(int(intersect_key["rcv_n"]))
 
     def run_cardinality(self, data_instances):
         LOGGER.info(f"run cardinality_only with RSA")
@@ -319,11 +320,6 @@ class RsaIntersectionGuest(RsaIntersect):
 
     def generate_cache(self, data_instances):
         LOGGER.info("Run RSA intersect cache")
-        # generate r
-        # count = data_instances.count()
-        # self.r = self.generate_r_base(self.random_bit, count, self.random_base_fraction)
-        # LOGGER.info(f"Generate {len(self.r)} r values.")
-
         # receives public key e & n
         public_keys = self.transfer_variable.host_pubkey.get(-1)
         # LOGGER.debug(f"Get RSA host_public_key:{public_keys} from Host")
@@ -337,16 +333,18 @@ class RsaIntersectionGuest(RsaIntersect):
         host_prvkey_ids_list = self.get_host_prvkey_ids()
         LOGGER.info("Get host_prvkey_ids")
 
-        cache_id_dict = {}
+        cache_dict = {}
+        intersect_meta = self.get_intersect_method_meta()
         for i, party_id in enumerate(self.host_party_id_list):
-            host_prvkey_ids_list[i].schema = {"cache_id": cache_id_list[i]}
-            cache_id_dict[party_id] = cache_id_list[i]
+            cache_dict[party_id] = {"data": host_prvkey_ids_list[i],
+                                    "cache_id": cache_id_list[i],
+                                    "intersect_meta": intersect_meta,
+                                    "intersect_key": self.get_intersect_key(party_id)}
 
-        self.cache_id = cache_id_dict
+        # self.cache_id = cache_id_dict
+        return cache_dict
 
-        return host_prvkey_ids_list[0]
-
-    def cache_unified_calculation_process(self, data_instances, cache):
+    def cache_unified_calculation_process(self, data_instances, cache_dict):
         LOGGER.info("RSA intersect using cache.")
 
         pubkey_ids_process_list = [self.pubkey_id_process(data_instances,
@@ -385,7 +383,7 @@ class RsaIntersectionGuest(RsaIntersect):
         sid_host_sign_guest_ids_list = [g.map(lambda k, v: (v[1], v[0])) for g in host_sign_guest_ids_list]
 
         # intersect table(hash(guest_ids_process/r), sid)
-        host_prvkey_ids_list = cache
+        host_prvkey_ids_list = self.extract_cache_list(cache_dict)
         encrypt_intersect_ids_list = [v.join(host_prvkey_ids_list[i], lambda sid, h: sid) for i, v in
                                       enumerate(sid_host_sign_guest_ids_list)]
 

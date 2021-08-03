@@ -17,7 +17,6 @@
 import random
 
 from federatedml.param.intersect_param import DEFAULT_RANDOM_BIT
-from federatedml.protobuf.generated.intersect_meta_pb2 import RSAMeta
 from federatedml.secureprotol import gmpy_math
 from federatedml.secureprotol.encrypt import RsaEncrypt
 from federatedml.secureprotol.hash.hash_factory import Hash
@@ -58,10 +57,11 @@ class RsaIntersect(Intersect):
         self.salt = self.rsa_params.salt
 
     def get_intersect_method_meta(self):
-        return RSAMeta(hash_method=self.rsa_params.hash_method,
-                       final_hash_method=self.rsa_params.final_hash_method,
-                       salt=self.salt,
-                       random_bit=self.random_bit)
+        rsa_meta = {"hash_method": self.rsa_params.hash_method,
+                    "final_hash_method": self.rsa_params.final_hash_method,
+                    "salt": self.salt,
+                    "random_bit": self.random_bit}
+        return {"intersect_meta": rsa_meta}
 
     @staticmethod
     def extend_pair(v1, v2):
@@ -175,7 +175,7 @@ class RsaIntersect(Intersect):
     def unified_calculation_process(self, data_instances):
         raise NotImplementedError("This method should not be called here")
 
-    def cache_unified_calculation_process(self, data_instances, cache):
+    def cache_unified_calculation_process(self, data_instances, cache_dict):
         raise NotImplementedError("This method should not be called here")
 
     def run_intersect(self, data_instances):
