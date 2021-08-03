@@ -42,10 +42,10 @@ from fate_flow.db.db_models import init_database_tables as init_flow_db
 from fate_arch.storage.metastore.db_models import init_database_tables as init_arch_db
 from fate_flow.scheduler.detector import Detector
 from fate_flow.scheduler.dag_scheduler import DAGScheduler
-from fate_flow.entity.runtime_config import RuntimeConfig
+from fate_flow.runtime_config import RuntimeConfig
 from fate_flow.entity.types import ProcessRole
 from fate_flow.manager.resource_manager import ResourceManager
-from fate_flow.settings import IP, HTTP_PORT, GRPC_PORT, _ONE_DAY_IN_SECONDS, stat_logger, API_VERSION, GRPC_SERVER_MAX_WORKERS
+from fate_flow.settings import WORK_MODE, IP, HTTP_PORT, GRPC_PORT, _ONE_DAY_IN_SECONDS, stat_logger, API_VERSION, GRPC_SERVER_MAX_WORKERS
 from fate_flow.utils.api_utils import get_json_result
 from fate_flow.utils.authentication_utils import PrivilegeAuth
 from fate_flow.utils.grpc_utils import UnaryService
@@ -94,10 +94,14 @@ if __name__ == '__main__':
     # init runtime config
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--standalone_node', default=False, help="if standalone node mode or not ", action='store_true')
+    parser.add_argument('--debug', default=False, help="debug mode", action='store_true')
     args = parser.parse_args()
+    debug_mode = args.debug
     RuntimeConfig.init_env()
+    RuntimeConfig.init_config(WORK_MODE=WORK_MODE)
+    RuntimeConfig.init_config(JOB_SERVER_HOST=IP, HTTP_PORT=HTTP_PORT)
     RuntimeConfig.set_process_role(ProcessRole.DRIVER)
+    RuntimeConfig.load_component_registry()
     PrivilegeAuth.init()
     ServiceUtils.register()
     ResourceManager.initialize()
@@ -116,7 +120,7 @@ if __name__ == '__main__':
     # start http server
     try:
         stat_logger.info("FATE Flow http server start...")
-        run_simple(hostname=IP, port=HTTP_PORT, application=app, threaded=True)
+        run_simple(hostname=IP, port=HTTP_PORT, application=app, threaded=True, use_reloader=debug_mode, use_debugger=debug_mode)
     except OSError as e:
         traceback.print_exc()
         os.kill(os.getpid(), signal.SIGKILL)

@@ -16,37 +16,27 @@
 import argparse
 
 from fate_arch.common.log import schedule_logger
-from fate_arch.session import Session
+from fate_arch import session
 
 
 class SessionStop(object):
     @classmethod
     def run(cls):
         parser = argparse.ArgumentParser()
-        parser.add_argument('-j', '--job_id', required=True, type=str, help="job id")
+        parser.add_argument('--session', required=True, type=str, help="session manager id")
         parser.add_argument('--computing', help="computing engine", type=str)
         parser.add_argument('--federation', help="federation engine", type=str)
         parser.add_argument('--storage', help="storage engine", type=str)
         parser.add_argument('-c', '--command', required=True, type=str, help="command")
         args = parser.parse_args()
-        session_job_id = args.job_id
-        fate_job_id = session_job_id.split('_')[0]
+        session_id = args.session
+        fate_job_id = session_id.split('_')[0]
         command = args.command
-        with Session(computing_type=args.computing, federation_type=args.federation) as session:
-            session.init_computing(computing_session_id=session_job_id)
-            try:
-                schedule_logger(fate_job_id).info('start {} session {}'.format(command, session.computing.session_id))
-                if command == 'stop':
-                    session.computing.stop()
-                elif command == 'kill':
-                    session.computing.kill()
-                else:
-                    schedule_logger(fate_job_id).info(
-                        '{} session {} failed, this command is not supported'.format(command,
-                                                                                     session.computing.session_id))
-                schedule_logger(fate_job_id).info('{} session {} success'.format(command, session.computing.session_id))
-            except Exception as e:
-                schedule_logger().exception(e)
+        with session.Session(session_id=session_id,
+                             computing=args.computing,
+                             federation=args.federation,
+                             logger=schedule_logger(fate_job_id)) as sess:
+            sess.destroy_all_sessions()
 
 
 if __name__ == '__main__':

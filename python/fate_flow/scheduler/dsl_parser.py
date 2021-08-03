@@ -26,12 +26,18 @@
 # =============================================================================
 
 import copy
+import importlib
 import json
-import os
 
 from fate_flow.settings import stat_logger
-from fate_flow.utils import parameter_util
-from fate_flow.utils.dsl_exception import *
+from fate_flow.utils.dsl_exception import DSLNotExistError, ComponentFieldNotExistError, \
+    ModuleFieldNotExistError, ComponentInputTypeError, ComponentInputModelValueTypeError, \
+    ModelInputComponentNotExistError, ModelInputNameNotExistError, ComponentInputDataTypeError, \
+    ComponentInputDataValueTypeError, DataInputComponentNotExistError, DataInputNameNotExistError, \
+    ComponentNotExistError, ModeError, DataNotExistInSubmitConfError, ComponentOutputTypeError, \
+    ComponentOutputKeyTypeError, LoopError, ComponentMultiMappingError, NamingIndexError, \
+    NamingError, NamingFormatError, DeployComponentNotExistError, ModuleNotExistError
+from fate_flow.utils.runtime_conf_parse_util import RuntimeConfParserUtil
 
 
 class Component(object):
@@ -43,9 +49,22 @@ class Component(object):
         self.role_parameters = {}
         self.input = {}
         self.output = {}
+        self.component_provider = None
 
-    def set_input(self, input):
-        self.input = input
+    def copy(self):
+        copy_obj = Component()
+        copy_obj.set_module(self.module)
+        copy_obj.set_name(self.name)
+        copy_obj.set_input(self.input)
+        copy_obj.set_downstream(self.downstream)
+        copy_obj.set_upstream(self.upstream)
+        copy_obj.set_role_parameters(self.role_parameters)
+        copy_obj.set_output(self.output)
+
+        return copy_obj
+
+    def set_input(self, inp):
+        self.input = inp
 
     def get_input(self):
         return self.input
@@ -58,6 +77,12 @@ class Component(object):
 
     def get_module(self):
         return self.module
+
+    def set_component_provider(self, interface):
+        self.component_provider = interface
+
+    def get_component_provider(self):
+        return self.component_provider
 
     def get_name(self):
         return self.name
@@ -80,8 +105,8 @@ class Component(object):
     def set_downstream(self, downstream):
         self.downstream = downstream
 
-    def set_role_parameters(self, role_parametes):
-        self.role_parameters = role_parametes
+    def set_role_parameters(self, role_parameters):
+        self.role_parameters = role_parameters
 
     def get_role_parameters(self):
         return self.role_parameters
@@ -101,13 +126,18 @@ class BaseDSLParser(object):
         self.predict_dsl = {}
         self.runtime_conf = {}
         self.pipeline_runtime_conf = {}
-        self.setting_conf_prefix = None
         self.graph_dependency = None
         self.args_input = None
-        self.args_datakey = None
+        self.args_data_key = None
         self.args_input_to_check = set()
         self.next_component_to_topo = set()
         self.job_parameters = {}
+        self.provider_cache = {}
+        self.job_providers = {}
+        self.version = 2
+        self.local_role = None
+        self.local_party_id = None
+        self.predict_runtime_conf = {}
 
     def _init_components(self, mode="train", version=1, **kwargs):
         if not self.dsl:
@@ -141,7 +171,6 @@ class BaseDSLParser(object):
         self.component_upstream = [[] for i in range(len(self.components))]
 
         components_details = self.dsl.get("components")
-
         components_output = self._find_outputs()
 
         for name in self.component_name_index.keys():
@@ -180,10 +209,9 @@ class BaseDSLParser(object):
                                     raise ModelInputNameNotExistError(component=name, input_model=module_name,
                                                                       other_info=input_model_name)
 
-                                idx_dependendy = self.component_name_index.get(module_name)
-                                self.component_downstream[idx_dependendy].append(name)
+                                idx_dependency = self.component_name_index.get(module_name)
+                                self.component_downstream[idx_dependency].append(name)
                                 self.component_upstream[idx].append(module_name)
-                                # self.component_upstream_model_relation_set.add((name, module_name))
 
                                 if model_key == "model":
                                     self.train_input_model[name] = module_name
@@ -218,10 +246,9 @@ class BaseDSLParser(object):
                                 raise DataInputNameNotExistError(component=name, input_data=module_name,
                                                                  other_info=input_data_name)
 
-                            idx_dependendy = self.component_name_index.get(module_name)
-                            self.component_downstream[idx_dependendy].append(name)
+                            idx_dependency = self.component_name_index.get(module_name)
+                            self.component_downstream[idx_dependency].append(name)
                             self.component_upstream[idx].append(module_name)
-                            # self.component_upstream_data_relation_set.add((name, module_name))
 
         self.in_degree = [0 for i in range(len(self.components))]
         for i in range(len(self.components)):
@@ -239,64 +266,52 @@ class BaseDSLParser(object):
             self.components[i].set_upstream(self.component_upstream[i])
             self.components[i].set_downstream(self.component_downstream[i])
 
-    def _init_component_setting(self, setting_conf_prefix, runtime_conf, version=1, redundant_param_check=True):
+    def _init_component_setting(self,
+                                component,
+                                provider_detail,
+                                provider_name,
+                                provider_version,
+                                local_role,
+                                local_party_id,
+                                runtime_conf,
+                                redundant_param_check=True):
         """
         init top input
         """
-        for i in range(len(self.topo_rank)):
-            idx = self.topo_rank[i]
-            name = self.components[idx].get_name()
-            if self.train_input_model.get(name, None) is None:
-                module = self.components[idx].get_module()
-                if version == 1:
-                    role_parameters = parameter_util.ParameterUtil.override_parameter(setting_conf_prefix,
-                                                                                      runtime_conf,
-                                                                                      module,
-                                                                                      name,
-                                                                                      redundant_param_check=redundant_param_check)
-                else:
-                    role_parameters = parameter_util.ParameterUtilV2.override_parameter(setting_conf_prefix,
-                                                                                        runtime_conf,
-                                                                                        module,
-                                                                                        name,
-                                                                                        redundant_param_check=redundant_param_check)
+        pos = self.component_name_index[component]
+        module = self.components[pos].get_module()
 
-                self.components[idx].set_role_parameters(role_parameters)
+        parent_path = [component]
+        cur_component = component
+        while True:
+            if self.train_input_model.get(cur_component, None) is None:
+                break
             else:
-                up_component = self.train_input_model.get(name)
-                up_idx = self.component_name_index.get(up_component)
-                self.components[idx].set_role_parameters(self.components[up_idx].get_role_parameters())
+                cur_component = self.train_input_model.get(cur_component)
+                parent_path.append(cur_component)
 
-    def get_next_components(self, module_name=None):
-        next_components = []
-        if module_name is None:
-            for i in range(len(self.components)):
-                if self.in_degree[i] == 0:
-                    next_components.append(self.components[i])
-        else:
-            if module_name not in self.component_name_index:
-                raise ValueError("{} module_name not find!".format(module_name))
+        provider = RuntimeConfParserUtil.instantiate_component_provider(provider_detail,
+                                                                        provider_name=provider_name,
+                                                                        provider_version=provider_version)
 
-            idx = self.component_name_index.get(module_name)
+        role_parameters = RuntimeConfParserUtil.get_component_parameters(provider,
+                                                                         runtime_conf,
+                                                                         module,
+                                                                         cur_component,
+                                                                         redundant_param_check=redundant_param_check,
+                                                                         conf_version=self.version,
+                                                                         local_role=local_role,
+                                                                         local_party_id=local_party_id)
 
-            """add abnormal detection"""
-            component_name = self.components[idx].get_name()
-            if self.in_degree[idx] != 0:
-                raise DegreeNotZeroError(component_name)
+        for component in parent_path:
+            idx = self.component_name_index.get(component)
+            self.components[idx].set_component_provider(provider)
+            self.components[idx].set_role_parameters(role_parameters)
 
-            if component_name in self.next_component_to_topo:
-                raise ComponentDuplicateError(component=component_name)
-            self.next_component_to_topo.add(component_name)
+        return role_parameters
 
-            for i in range(len(self.component_downstream[idx])):
-                downstream_idx = self.component_name_index.get(self.component_downstream[idx][i])
-
-                self.in_degree[downstream_idx] -= 1
-
-                if self.in_degree[downstream_idx] == 0:
-                    next_components.append(self.components[downstream_idx])
-
-        return next_components
+    def parse_component_parameters(self, *args, **kwargs):
+        raise NotImplementedError
 
     def get_component_info(self, component_name):
         if component_name not in self.component_name_index:
@@ -464,17 +479,6 @@ class BaseDSLParser(object):
 
             if not dependence_dict[name]:
                 del dependence_dict[name]
-            # upstream = self.component_upstream[self.component_name_index.get(name)]
-            # if upstream:
-            #     dependence_dict[name] = []
-            #     for up_component in upstream:
-            #         if (name, up_component) in self.component_upstream_data_relation_set:
-            #             dependence_dict[name].append({"component_name": up_component,
-            #                                           "type": "data"})
-
-            #         if (name, up_component) in self.component_upstream_model_relation_set:
-            #             dependence_dict[name].append({"component_name": up_component,
-            #                                           "type": "model"})
 
         component_list = [None for i in range(len(self.components))]
         topo_rank_reverse_mapping = {}
@@ -490,44 +494,8 @@ class BaseDSLParser(object):
                            "component_module": component_module,
                            "component_need_run": {}}
 
-        if self.mode == "train":
-            runtime_conf = self.runtime_conf
-        else:
-            runtime_conf = self.pipeline_runtime_conf
-
-        self.graph_dependency = {}
-        for role in runtime_conf["role"]:
-            self.graph_dependency[role] = {}
-            dependency_list = [copy.deepcopy(base_dependency) for i in range(len(runtime_conf["role"].get(role)))]
-
-            for rank in range(len(self.topo_rank)):
-                idx = self.topo_rank[rank]
-                name = self.components[idx].get_name()
-                module = self.components[idx].get_module()
-                parameters = self.components[idx].get_role_parameters()
-
-                if role not in parameters:
-                    for i in range(len(dependency_list)):
-                        dependency_list[i]["component_need_run"][name] = False
-                else:
-                    if self.train_input_model.get(name, None) is None:
-                        param_class = parameter_util.ParameterUtil.get_param_class_name(self.setting_conf_prefix,
-                                                                                        module)
-                        for i in range(len(dependency_list)):
-                            if parameters[role][i].get(param_class) is None \
-                                    or parameters[role][i][param_class].get("need_run") is False:
-                                dependency_list[i]["component_need_run"][name] = False
-                            else:
-                                dependency_list[i]["component_need_run"][name] = True
-                    else:
-                        input_model_name = self.train_input_model.get(name)
-                        for i in range(len(dependency_list)):
-                            dependency_list[i]["component_need_run"][name] = dependency_list[i]["component_need_run"][
-                                input_model_name]
-
-            for i in range(len(runtime_conf["role"].get(role))):
-                party_id = runtime_conf["role"].get(role)[i]
-                self.graph_dependency[role][party_id] = dependency_list[i]
+        self.graph_dependency = base_dependency
+        # self.graph_dependency = self.extract_need_run_status(base_dependency, component_parameters)
 
     def get_dsl_hierarchical_structure(self):
         max_depth = [0] * len(self.components)
@@ -550,14 +518,34 @@ class BaseDSLParser(object):
 
         return name_component_maps, hierarchical_structure
 
-    def get_dependency(self, role, party_id):
-        if role not in self.graph_dependency:
-            raise ValueError("role {} is unknown, can not extract component dependency".format(role))
+    def get_dependency(self):
+        return self.graph_dependency
 
-        if party_id not in self.graph_dependency[role]:
-            raise ValueError("party id {} is unknown, can not extract component dependency".format(party_id))
+    def get_dependency_with_parameters(self, component_parameters):
+        return self.extract_need_run_status(self.graph_dependency, component_parameters)
 
-        return self.graph_dependency[role][party_id]
+    def extract_need_run_status(self, graph_dependency, component_parameters):
+        for rank in range(len(self.topo_rank)):
+            idx = self.topo_rank[rank]
+            name = self.components[idx].get_name()
+            parameters = component_parameters.get(name)
+
+            if not parameters:
+                graph_dependency["component_need_run"][name] = False
+            else:
+                if self.train_input_model.get(name, None) is None:
+                    param_name = "ComponentParam"
+                    if parameters.get(param_name) is None \
+                        or parameters[param_name].get("need_run") is False:
+                        graph_dependency["component_need_run"][name] = False
+                    else:
+                        graph_dependency["component_need_run"][name] = True
+                else:
+                    input_model_name = self.train_input_model.get(name)
+                    graph_dependency["component_need_run"][name] = graph_dependency["component_need_run"][
+                            input_model_name]
+
+        return graph_dependency
 
     @staticmethod
     def verify_dsl(dsl, mode="train"):
@@ -567,12 +555,12 @@ class BaseDSLParser(object):
     def deploy_component(*args, **kwargs):
         raise NotImplementedError
 
-    def _auto_deduction(self, setting_conf_prefix=None, deploy_cpns=None, version=1, erase_top_data_input=False):
+    def _auto_deduction(self, deploy_cpns=None, version=1, erase_top_data_input=False):
         self.predict_dsl = {"components": {}}
         self.predict_components = []
         mapping_list = {}
         for i in range(len(self.topo_rank)):
-            self.predict_components.append(copy.deepcopy(self.components[self.topo_rank[i]]))
+            self.predict_components.append(self.components[self.topo_rank[i]].copy())
             mapping_list[self.predict_components[-1].get_name()] = i
 
         output_data_maps = {}
@@ -584,16 +572,7 @@ class BaseDSLParser(object):
                 if version != 2:
                     raise ValueError("Reader component can only be set in dsl_version 2")
 
-                # if self.get_need_deploy_parameter(name=name,
-                #                                   setting_conf_prefix=setting_conf_prefix,
-                #                                   deploy_cpns=deploy_cpns):
-                #     raise ValueError(
-                #         "Reader component should not be include in predict process, it should be just as an input placeholder")
-
-                # continue
-
             if self.get_need_deploy_parameter(name=name,
-                                              setting_conf_prefix=setting_conf_prefix,
                                               deploy_cpns=deploy_cpns):
 
                 self.predict_dsl["components"][name] = {"module": self.predict_components[i].get_module()}
@@ -645,7 +624,6 @@ class BaseDSLParser(object):
                                         pre_name = input_data.split(".")[0]
                                         data_suffix = input_data.split(".")[1]
                                         if self.get_need_deploy_parameter(name=pre_name,
-                                                                          setting_conf_prefix=setting_conf_prefix,
                                                                           deploy_cpns=deploy_cpns):
                                             self.predict_dsl["components"][name]["input"]["data"][data_value].append(
                                                 input_data)
@@ -702,7 +680,6 @@ class BaseDSLParser(object):
                 up_input_data_component_name = up_input_data.split(".", -1)[0]
                 if up_input_data_component_name == "args" or self.get_need_deploy_parameter(
                         name=up_input_data_component_name,
-                        setting_conf_prefix=setting_conf_prefix,
                         deploy_cpns=deploy_cpns):
                     output_data_maps[name][output_data_str] = [up_input_data]
                 elif self.components[
@@ -718,22 +695,8 @@ class BaseDSLParser(object):
 
     def _check_args_input(self):
         for key in self.args_input_to_check:
-            if key not in self.args_datakey:
+            if key not in self.args_data_key:
                 raise DataNotExistInSubmitConfError(msg=key)
-
-    def gen_predict_dsl_by_role(self, role):
-        if not self.predict_dsl:
-            return self.predict_dsl
-
-        role_predict_dsl = copy.deepcopy(self.predict_dsl)
-        component_list = list(self.predict_dsl.get("components").keys())
-        for component in component_list:
-            idx = self.component_name_index.get(component)
-            role_parameters = self.components[idx].get_role_parameters()
-            if role in role_parameters:
-                role_predict_dsl["components"][component]["CodePath"] = role_parameters[role][0].get("CodePath")
-
-        return role_predict_dsl
 
     def get_runtime_conf(self):
         return self.runtime_conf
@@ -744,11 +707,23 @@ class BaseDSLParser(object):
     def get_args_input(self):
         return self.args_input
 
-    def get_need_deploy_parameter(self, name, setting_conf_prefix=None, deploy_cpns=None):
-        raise NotImplementedError
+    def get_need_deploy_parameter(self, name, deploy_cpns=None):
+        if deploy_cpns is not None:
+            return name in deploy_cpns
+
+        return False
 
     def get_job_parameters(self):
         return self.job_parameters
+
+    def get_job_providers(self, provider_detail=None, local_role=None, local_party_id=None):
+        if self.job_providers:
+            return self.job_providers
+        else:
+            self.job_providers = RuntimeConfParserUtil.get_job_providers(self.dsl, provider_detail, local_role,
+                                                                         local_party_id, self.job_parameters)
+
+            return self.job_providers
 
     @staticmethod
     def _gen_predict_data_mapping():
@@ -760,6 +735,10 @@ class BaseDSLParser(object):
 
 
 class DSLParser(BaseDSLParser):
+    def __init__(self):
+        super(DSLParser, self).__init__()
+        self.version = 1
+
     def _check_component_valid_names(self):
         occur_times = {}
         max_index = {}
@@ -814,23 +793,9 @@ class DSLParser(BaseDSLParser):
         dsl_parser._init_components(mode=mode, version=1)
         dsl_parser._find_dependencies(mode=mode, version=1)
 
-    # @staticmethod
-    # def deploy_component(components, train_dsl):
-    #     training_cpns = set(train_dsl.get("components").keys())
-    #     deploy_cpns = set(components)
-    #     if len(deploy_cpns & training_cpns) != len(deploy_cpns):
-    #         raise DeployComponentNotExistError(msg=deploy_cpns - training_cpns)
-
-    #     dsl_parser = DSLParser()
-    #     dsl_parser.dsl = train_dsl
-    #     dsl_parser._init_components()
-    #     dsl_parser._find_dependencies()
-    #     dsl_parser._auto_deduction(deploy_cpns=deploy_cpns)
-
-    #     return dsl_parser.predict_dsl
-
     def run(self, pipeline_dsl=None, pipeline_runtime_conf=None, dsl=None, runtime_conf=None,
-            setting_conf_prefix=None, mode="train", *args, **kwargs):
+            provider_detail=None, mode="train", local_role=None,
+            local_party_id=None, *args, **kwargs):
 
         if mode not in ["train", "predict"]:
             raise ModeError("")
@@ -841,69 +806,96 @@ class DSLParser(BaseDSLParser):
         self.runtime_conf = runtime_conf
         self.pipeline_runtime_conf = pipeline_runtime_conf
         self.mode = mode
-        self.setting_conf_prefix = setting_conf_prefix
+        self.local_role = local_role
+        self.local_party_id = local_party_id
 
         if mode == "train":
-            self._init_component_setting(setting_conf_prefix, self.runtime_conf)
-            self.job_parameters = parameter_util.ParameterUtil.get_job_parameters(self.runtime_conf)
-        else:
-            predict_runtime_conf = parameter_util.ParameterUtil.merge_dict(pipeline_runtime_conf, runtime_conf)
-            self._init_component_setting(setting_conf_prefix, predict_runtime_conf, redundant_param_check=False)
-            self.job_parameters = parameter_util.ParameterUtil.get_job_parameters(predict_runtime_conf)
+            self.job_parameters = RuntimeConfParserUtil.get_job_parameters(self.runtime_conf,
+                                                                           conf_version=1)
 
-        self.args_input, self.args_datakey = parameter_util.ParameterUtil.get_args_input(runtime_conf, module="args")
+        elif mode == "predict":
+            predict_runtime_conf = RuntimeConfParserUtil.merge_dict(pipeline_runtime_conf, runtime_conf)
+            self.predict_runtime_conf = predict_runtime_conf
+            self.job_parameters = RuntimeConfParserUtil.get_job_parameters(predict_runtime_conf,
+                                                                           conf_version=1)
+
+        self.args_input, self.args_data_key = RuntimeConfParserUtil.get_input_parameters(runtime_conf,
+                                                                                         conf_version=1)
         self._check_args_input()
-
-        if mode == "train":
-            self._auto_deduction(setting_conf_prefix)
 
         self.prepare_graph_dependency_info()
 
         return self.components
 
+    def generate_predict_dsl(self, deploy_detail):
+        if deploy_detail:
+            deploy_cpns = set()
+            for component, need_deploy in deploy_detail.items():
+                if need_deploy:
+                    deploy_cpns.add(component)
+
+            self._auto_deduction(deploy_cpns)
+
+        return self.predict_dsl
+
     def _check_args_input(self):
         for key in self.args_input_to_check:
-            if key not in self.args_datakey:
+            if key not in self.args_data_key:
                 raise DataNotExistInSubmitConfError(msg=key)
 
-    def get_need_deploy_parameter(self, name, setting_conf_prefix=None, deploy_cpns=None):
-        if deploy_cpns is not None:
-            return name in deploy_cpns
+    def get_component_need_deploy_info(self, component, provider_detail, job_providers):
+        if "need_deploy" in self.dsl["components"][component]:
+            return self.dsl["components"][component].get("need_deploy")
 
-        if "need_deploy" in self.dsl["components"][name]:
-            return self.dsl["components"][name].get("need_deploy")
+        provider_info = job_providers[component]["provider"]
+        name = provider_info["name"]
+        version = provider_info["version"]
+        provider = RuntimeConfParserUtil.instantiate_component_provider(provider_detail,
+                                                                        provider_name=name,
+                                                                        provider_version=version)
 
-        module = self.dsl["components"][name].get("module")
+        module = self.dsl["components"][component].get("module")
+        if hasattr(provider, "need_deploy"):
+            return provider.need_deploy(module)
 
-        setting_conf_path = os.path.join(setting_conf_prefix, module + ".json")
-        if not os.path.isfile(setting_conf_path):
-            raise ModuleNotExistError(component=name, module=module)
+        return True
 
-        need_deploy = True
-        with open(os.path.join(setting_conf_prefix, module + ".json"), "r") as fin:
-            setting_dict = json.loads(fin.read())
-            need_deploy = setting_dict.get("need_deploy", True)
-
-        return need_deploy
-
-    def get_predict_dsl(self, role, predict_dsl=None, setting_conf_prefix=None):
+    def get_predict_dsl(self, predict_dsl=None, component_parameters=None):
         if predict_dsl is not None:
             return predict_dsl
-        return self.gen_predict_dsl_by_role(role)
+        return self.add_module_info_to_predict_dsl(component_parameters)
 
-    def gen_predict_dsl_by_role(self, role):
+    def add_module_info_to_predict_dsl(self, component_parameters):
         if not self.predict_dsl:
             return self.predict_dsl
 
-        role_predict_dsl = copy.deepcopy(self.predict_dsl)
         component_list = list(self.predict_dsl.get("components").keys())
         for component in component_list:
-            idx = self.component_name_index.get(component)
-            role_parameters = self.components[idx].get_role_parameters()
-            if role in role_parameters:
-                role_predict_dsl["components"][component]["CodePath"] = role_parameters[role][0].get("CodePath")
+            parameters = component_parameters.get(component)
+            if parameters:
+                self.predict_dsl["components"][component]["CodePath"] = parameters.get("CodePath")
 
-        return role_predict_dsl
+        return self.predict_dsl
+
+    def parse_component_parameters(self, component_name, provider_detail, provider_name,
+                                   provider_version, local_role, local_party_id):
+        if self.mode == "predict":
+            runtime_conf = self.predict_runtime_conf
+            redundant_param_check = False
+        else:
+            runtime_conf = self.runtime_conf
+            redundant_param_check = True
+
+        parameters = self._init_component_setting(component_name,
+                                                  provider_detail,
+                                                  provider_name,
+                                                  provider_version,
+                                                  local_role,
+                                                  local_party_id,
+                                                  runtime_conf,
+                                                  redundant_param_check)
+
+        return parameters
 
     @staticmethod
     def _gen_predict_data_mapping():
@@ -914,46 +906,19 @@ class DSLParser(BaseDSLParser):
             yield data_key, data_value
 
     @staticmethod
-    def generate_predict_conf_template(predict_dsl, train_conf, model_id, model_version):
-        if not train_conf.get("role") or not train_conf.get("initiator"):
-            raise ValueError("role and initiator should be contain in job's trainconf")
-
-        predict_conf = dict()
-        predict_conf["initiator"] = train_conf.get("initiator")
-        predict_conf["role"] = train_conf.get("role")
-
-        predict_conf["job_parameters"] = train_conf.get("job_parameters", {})
-        predict_conf["job_parameters"]["job_type"] = "predict"
-        predict_conf["job_parameters"]["model_id"] = model_id
-        predict_conf["job_parameters"]["model_version"] = model_version
-
-        predict_conf["role_parameters"] = {}
-
-        for role in predict_conf["role"]:
-            if role not in ["guest", "host"]:
-                continue
-
-            args_input = set()
-            for _, module_info in predict_dsl.get("components", {}).items():
-                data_set = module_info.get("input", {}).get("data", {})
-                for data_key in data_set:
-                    for data in data_set[data_key]:
-                        if data.split(".", -1)[0] == "args":
-                            args_input.add(data.split(".", -1)[1])
-
-            predict_conf["role_parameters"][role] = {"args": {"data": {}}}
-            fill_template = {}
-            for data_key in args_input:
-                fill_template[data_key] = [{"name": "name_to_be_filled_" + str(i),
-                                            "namespace": "namespace_to_be_filled_" + str(i)}
-                                           for i in range(len(predict_conf["role"].get(role)))]
-
-            predict_conf["role_parameters"][role] = {"args": {"data": fill_template}}
-
-        return predict_conf
+    def generate_predict_conf_template(train_dsl, train_conf, model_id, model_version):
+        return RuntimeConfParserUtil.generate_predict_conf_template(train_dsl,
+                                                                    train_conf,
+                                                                    model_id,
+                                                                    model_version,
+                                                                    conf_version=1)
 
 
 class DSLParserV2(BaseDSLParser):
+    def __init__(self):
+        super(DSLParserV2, self).__init__()
+        self.version = 2
+
     def _check_component_valid_names(self):
         for component in self.components:
             name = component.get_name()
@@ -986,7 +951,8 @@ class DSLParserV2(BaseDSLParser):
         return dsl_parser.predict_dsl
 
     def run(self, pipeline_runtime_conf=None, dsl=None, runtime_conf=None,
-            setting_conf_prefix=None, mode="train", *args, **kwargs):
+            provider_detail=None, mode="train",
+            local_role=None, local_party_id=None, *args, **kwargs):
 
         if mode not in ["train", "predict"]:
             raise ModeError("")
@@ -997,18 +963,22 @@ class DSLParserV2(BaseDSLParser):
         self.runtime_conf = runtime_conf
         self.pipeline_runtime_conf = pipeline_runtime_conf
         self.mode = mode
-        self.setting_conf_prefix = setting_conf_prefix
+        self.local_role = local_role
+        self.local_party_id = local_party_id
 
         if mode == "train":
-            self._init_component_setting(setting_conf_prefix, self.runtime_conf, version=2)
-            self.job_parameters = parameter_util.ParameterUtilV2.get_job_parameters(self.runtime_conf)
-        else:
-            predict_runtime_conf = parameter_util.ParameterUtilV2.merge_dict(pipeline_runtime_conf, runtime_conf)
-            self._init_component_setting(setting_conf_prefix, predict_runtime_conf, version=2)
-            self.job_parameters = parameter_util.ParameterUtilV2.get_job_parameters(predict_runtime_conf)
+            self.job_parameters = RuntimeConfParserUtil.get_job_parameters(self.runtime_conf,
+                                                                           conf_version=2)
 
-        self.args_input = parameter_util.ParameterUtilV2.get_input_parameters(runtime_conf,
-                                                                              components=self._get_reader_components())
+        else:
+            predict_runtime_conf = RuntimeConfParserUtil.merge_dict(pipeline_runtime_conf, runtime_conf)
+            self.predict_runtime_conf = predict_runtime_conf
+            self.job_parameters = RuntimeConfParserUtil.get_job_parameters(predict_runtime_conf,
+                                                                           conf_version=2)
+
+        self.args_input = RuntimeConfParserUtil.get_input_parameters(runtime_conf,
+                                                                     components=self._get_reader_components(),
+                                                                     conf_version=2)
 
         self.prepare_graph_dependency_info()
 
@@ -1028,22 +998,71 @@ class DSLParserV2(BaseDSLParser):
 
         return False
 
-    def get_predict_dsl(self, role, predict_dsl=None, setting_conf_prefix=None):
+    @staticmethod
+    def get_job_providers_by_conf(dsl, runtime_conf, provider_detail,
+                                  local_role, local_party_id, predict_conf=None):
+        if not predict_conf:
+            job_parameters = RuntimeConfParserUtil.get_job_parameters(runtime_conf,
+                                                                      conf_version=2)
+        else:
+            train_job_parameters = RuntimeConfParserUtil.get_job_parameters(runtime_conf,
+                                                                            conf_version=2)
+            predict_job_parameters = RuntimeConfParserUtil.get_job_parameters(runtime_conf,
+                                                                              conf_version=2)
+            job_parameters = RuntimeConfParserUtil.merge_dict(predict_job_parameters, train_job_parameters)
+
+        job_providers = RuntimeConfParserUtil.get_job_providers(dsl, provider_detail, local_role,
+                                                                local_party_id, job_parameters)
+
+        return job_providers
+
+    @staticmethod
+    def get_module_object_name(module, local_role, provider_detail,
+                               provider_name, provider_version):
+        if not provider_detail:
+            raise ValueError("Component Providers should be provided")
+
+        provider = RuntimeConfParserUtil.instantiate_component_provider(provider_detail,
+                                                                        provider_name=provider_name,
+                                                                        provider_version=provider_version)
+        module_obj_name = RuntimeConfParserUtil.get_module_name(role=local_role,
+                                                                module=module,
+                                                                provider=provider)
+
+        return module_obj_name
+
+    @staticmethod
+    def get_predict_dsl(predict_dsl=None, module_object_dict=None):
         if not predict_dsl:
             return {}
 
         role_predict_dsl = copy.deepcopy(predict_dsl)
         component_list = list(predict_dsl.get("components").keys())
-        for component in component_list:
-            code_path = parameter_util.ParameterUtilV2.get_code_path(role=role,
-                                                                     module=predict_dsl["components"][component][
-                                                                         "module"],
-                                                                     module_alias=component,
-                                                                     setting_conf_prefix=setting_conf_prefix)
-            if code_path:
-                role_predict_dsl["components"][component]["CodePath"] = code_path
 
-        return role_predict_dsl
+        for component in component_list:
+            module_object = module_object_dict.get(component)
+            if module_object:
+                role_predict_dsl["components"][component]["CodePath"] = module_object
+
+            return role_predict_dsl
+
+    def parse_component_parameters(self, component_name, provider_detail, provider_name, provider_version, local_role, local_party_id):
+        if self.mode == "predict":
+            runtime_conf = self.predict_runtime_conf
+        else:
+            runtime_conf = self.runtime_conf
+
+        redundant_param_check = True
+        parameters = self._init_component_setting(component_name,
+                                                  provider_detail,
+                                                  provider_name,
+                                                  provider_version,
+                                                  local_role,
+                                                  local_party_id,
+                                                  runtime_conf,
+                                                  redundant_param_check)
+
+        return parameters
 
     @staticmethod
     def _gen_predict_data_mapping():
@@ -1054,38 +1073,9 @@ class DSLParserV2(BaseDSLParser):
             yield data_key, data_value
 
     @staticmethod
-    def generate_predict_conf_template(predict_dsl, train_conf, model_id, model_version):
-        if not train_conf.get("role") or not train_conf.get("initiator"):
-            raise ValueError("role and initiator should be contain in job's trainconf")
-
-        predict_conf = dict()
-        predict_conf["dsl_version"] = 2
-        predict_conf["role"] = train_conf.get("role")
-        predict_conf["initiator"] = train_conf.get("initiator")
-
-        predict_conf["job_parameters"] = train_conf.get("job_parameters", {})
-        predict_conf["job_parameters"]["common"].update({"model_id": model_id,
-                                                         "model_version": model_version,
-                                                         "job_type": "predict"})
-
-        predict_conf["component_parameters"] = {"role": {}}
-
-        for role in predict_conf["role"]:
-            if role not in ["guest", "host"]:
-                continue
-
-            reader_components = []
-            for module_alias, module_info in predict_dsl.get("components", {}).items():
-                if module_info["module"] == "Reader":
-                    reader_components.append(module_alias)
-
-            predict_conf["component_parameters"]["role"][role] = dict()
-            fill_template = {}
-            for idx, reader_alias in enumerate(reader_components):
-                fill_template[reader_alias] = {"table": {"name": "name_to_be_filled_" + str(idx),
-                                                         "namespace": "namespace_to_be_filled_" + str(idx)}}
-
-            for idx in range(len(predict_conf["role"][role])):
-                predict_conf["component_parameters"]["role"][role][str(idx)] = fill_template
-
-        return predict_conf
+    def generate_predict_conf_template(train_dsl, train_conf, model_id, model_version):
+        return RuntimeConfParserUtil.generate_predict_conf_template(train_dsl,
+                                                                    train_conf,
+                                                                    model_id,
+                                                                    model_version,
+                                                                    conf_version=2)

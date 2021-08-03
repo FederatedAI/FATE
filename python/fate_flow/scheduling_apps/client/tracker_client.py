@@ -17,7 +17,8 @@ from typing import List
 
 from fate_arch.common import log
 from fate_arch.common.base_utils import serialize_b64
-from fate_flow.entity.types import RetCode, RunParameters
+from fate_flow.entity.types import RetCode
+from fate_flow.entity.run_parameters import RunParameters
 from fate_flow.entity.metric import Metric, MetricMeta
 from fate_flow.operation.job_tracker import Tracker
 from fate_flow.utils import api_utils

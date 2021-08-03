@@ -14,7 +14,8 @@
 #  limitations under the License.
 #
 from fate_arch import storage
-from fate_flow.entity.types import RunParameters
+from fate_arch.session import Session
+from fate_flow.entity.run_parameters import RunParameters
 from fate_flow.operation.job_saver import JobSaver
 from fate_flow.operation.job_tracker import Tracker
 from fate_flow.operation.task_executor import TaskExecutor
@@ -52,7 +53,7 @@ def table_add():
                                    retmsg='The data table already exists.'
                                           'If you still want to continue uploading, please add the parameter -drop.'
                                           '1 means to add again after deleting the table')
-    with storage.Session.build(storage_engine=engine, options=request_data.get("options")) as storage_session:
+    with Session().new_storage(storage_engine=engine, options=request_data.get("options")) as storage_session:
         storage_session.create_table(address=address, name=name, namespace=namespace, partitions=request_data.get('partitions', None),
                                      hava_head=request_data.get("head"), id_delimiter=request_data.get("id_delimiter"), in_serialized=in_serialized)
     return get_json_result(data={"table_name": name, "namespace": namespace})
@@ -64,7 +65,7 @@ def table_delete():
     table_name = request_data.get('table_name')
     namespace = request_data.get('namespace')
     data = None
-    with storage.Session.build(name=table_name, namespace=namespace) as storage_session:
+    with Session().new_storage(name=table_name, namespace=namespace) as storage_session:
         table = storage_session.get_table()
         if table:
             table.destroy()

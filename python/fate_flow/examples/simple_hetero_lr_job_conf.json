@@ -11,11 +11,13 @@
     },
     "job_parameters": {
         "common": {
-            "work_mode": 1,
+            "work_mode": 0,
             "backend": 0,
             "task_parallelism": 1,
             "task_cores": 2,
-            "computing_partitions": 8
+            "auto_retries": 1,
+            "computing_partitions": 8,
+            "component_provider": "fate_federated_algorithm"
         }
     },
     "component_parameters": {

@@ -1,0 +1,24 @@
+{
+    "components" : {
+        "reader_0": {
+            "module": "Reader",
+            "output": {
+                "data": ["table"]
+            }
+        },
+        "hetero_feature_binning_0": {
+            "module": "HeteroFeatureBinning",
+            "input": {
+                "data": {
+                    "data": [
+                        "reader_0.table"
+                    ]
+                }
+            },
+            "output": {
+                "data": ["train"],
+                "model": ["hetero_feature_binning"]
+            }
+        }
+    }
+}

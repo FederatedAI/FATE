@@ -13,17 +13,17 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from fate_arch import storage
 from fate_arch.common.base_utils import current_timestamp
 from fate_flow.db.db_models import DB, Job
-from fate_arch.storage import StorageSessionBase
+from fate_arch.session import Session
 from fate_arch.common.log import detect_logger
 from fate_flow.scheduler.federated_scheduler import FederatedScheduler
-from fate_flow.entity.types import JobStatus, TaskStatus, EndStatus
+from fate_flow.entity.run_status import JobStatus, TaskStatus, EndStatus
 from fate_flow.utils import cron, job_utils
-from fate_flow.entity.runtime_config import RuntimeConfig
+from fate_flow.runtime_config import RuntimeConfig
 from fate_flow.operation.job_saver import JobSaver
 from fate_flow.manager.resource_manager import ResourceManager
+from fate_arch.common import EngineType
 
 
 class Detector(cron.Cron):
@@ -117,13 +117,30 @@ class Detector(cron.Cron):
 
     @classmethod
     def detect_expired_session(cls):
-        detect_logger().info('start detect expired session')
-        sessions_record = StorageSessionBase.query_expired_sessions_record(ttl=5 * 60 * 60 * 1000)
-        for session_record in sessions_record:
-            detect_logger().info('start stop session id {}'.format(session_record.f_session_id))
-            session = storage.Session.build(session_id=session_record.f_session_id, storage_engine=session_record.f_engine_name)
-            session.destroy_session()
-            detect_logger().info('session id {} success'.format(session_record.f_session_id))
+        ttl = 5 * 60 * 60 * 1000
+        detect_logger().info(f'start detect expired session by ttl {ttl/1000} s')
+        try:
+            session_records = Session.query_sessions(create_time=[None, current_timestamp() - ttl])
+            for session_record in session_records:
+                engine_session_id = session_record.f_engine_session_id
+                detect_logger().info(f'start stop session id {engine_session_id}')
+                try:
+                    if session_record.f_engine_type == EngineType.COMPUTING:
+                        with Session(computing=session_record.f_engine_name, logger=detect_logger()) as sess:
+                            sess.add_computing(computing_session_id=engine_session_id)
+                            sess.destroy_computing()
+                    elif session_record.f_engine_type == EngineType.STORAGE:
+                        with Session(storage=session_record.f_engine_name, logger=detect_logger()) as sess:
+                            sess.add_storage(storage_session_id=session_record.f_engine_session_id, storage_engine=session_record.f_engine_name)
+                            sess.destroy_storage()
+                except Exception as e:
+                    detect_logger().error(f'stop session id {engine_session_id} error', e)
+                finally:
+                    detect_logger().info(f'finish stop session id {engine_session_id}')
+        except Exception as e:
+            detect_logger().error('detect expired session error', e)
+        finally:
+            detect_logger().info('finish detect expired session')
 
     @classmethod
     def request_stop_jobs(cls, jobs: [Job], stop_msg, stop_status):

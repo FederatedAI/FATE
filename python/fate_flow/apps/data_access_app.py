@@ -18,7 +18,7 @@ import shutil
 
 from flask import Flask, request
 
-from fate_flow.entity.types import StatusSet
+from fate_flow.entity.run_status import StatusSet
 from fate_arch import storage
 from fate_arch.common.base_utils import json_loads
 from fate_flow.settings import stat_logger, UPLOAD_DATA_FROM_CLIENT
@@ -148,6 +148,8 @@ def gen_data_access_job_config(config_data, access_module):
     for _ in job_parameters_fields:
         if _ in config_data:
             job_runtime_conf["job_parameters"]["common"][_] = config_data[_]
+    #todo: component_type may be not in job parameter
+    job_runtime_conf["job_parameters"]["common"]["component_provider"] = "fate_flow_tools"
     job_runtime_conf["role"][initiator_role] = [initiator_party_id]
     job_dsl = {
         "components": {}

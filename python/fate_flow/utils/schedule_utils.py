@@ -13,9 +13,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import os
-
-from fate_arch.common import file_utils
 from fate_flow.db.db_models import DB, Job
 from fate_flow.scheduler.dsl_parser import DSLParser, DSLParserV2
 from fate_flow.utils.config_adapter import JobRuntimeConfigAdapter
@@ -36,25 +33,20 @@ def get_job_dsl_parser_by_job_id(job_id):
 def get_job_dsl_parser(dsl=None, runtime_conf=None, pipeline_dsl=None, train_runtime_conf=None):
     parser_version = str(runtime_conf.get('dsl_version', '1'))
     dsl_parser = get_dsl_parser_by_version(parser_version)
-    default_runtime_conf_path = os.path.join(file_utils.get_python_base_directory(),
-                                             *['federatedml', 'conf', 'default_runtime_conf'])
-    setting_conf_path = os.path.join(file_utils.get_python_base_directory(), *['federatedml', 'conf', 'setting_conf'])
     job_type = JobRuntimeConfigAdapter(runtime_conf).get_job_type()
     dsl_parser.run(dsl=dsl,
                    runtime_conf=runtime_conf,
                    pipeline_dsl=pipeline_dsl,
                    pipeline_runtime_conf=train_runtime_conf,
-                   default_runtime_conf_prefix=default_runtime_conf_path,
-                   setting_conf_prefix=setting_conf_path,
                    mode=job_type)
     return dsl_parser
 
 
-def federated_order_reset(dest_partys, scheduler_partys_info):
+def federated_order_reset(dest_parties, scheduler_partys_info):
     dest_partys_new = []
     scheduler = []
     dest_party_ids_dict = {}
-    for dest_role, dest_party_ids in dest_partys:
+    for dest_role, dest_party_ids in dest_parties:
         from copy import deepcopy
         new_dest_party_ids = deepcopy(dest_party_ids)
         dest_party_ids_dict[dest_role] = new_dest_party_ids

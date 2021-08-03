@@ -19,7 +19,7 @@ import time
 
 from fate_arch.common.base_utils import current_timestamp
 from fate_flow.db.db_models import DB, Job, Task
-from fate_flow.entity.types import JobStatus, TaskStatus, EndStatus
+from fate_flow.entity.run_status import JobStatus, TaskStatus, EndStatus
 from fate_arch.common.log import schedule_logger, sql_logger
 import peewee
 
@@ -251,6 +251,21 @@ class JobSaver(object):
             return list(tasks_group.values())
         else:
             return [task for task in tasks]
+
+    @classmethod
+    @DB.connection_context()
+    def check_task(cls, job_id, role, party_id, components: list):
+        filters = [
+            Task.f_job_id == job_id,
+            Task.f_role == role,
+            Task.f_party_id == party_id,
+            Task.f_component_name << components
+        ]
+        tasks = Task.select().where(*filters)
+        if tasks and len(tasks) == len(components):
+            return True
+        else:
+            return False
 
     @classmethod
     def get_latest_tasks(cls, tasks):

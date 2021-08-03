@@ -86,11 +86,16 @@ class BaseModel(Model):
 
         self.f_update_time = current_timestamp()
         self.f_update_date = timestamp_to_date(self.f_update_time)
+        for f_n in {"read_access", "write_access"}:
+            if getattr(self, f"f_{f_n}_time", None) and hasattr(self, f"f_{f_n}_date"):
+                setattr(self, f"f_{f_n}_date", timestamp_to_date(getattr(self, f"f_{f_n}_time")))
         return super(BaseModel, self).save(*args, **kwargs)
 
     @classmethod
     def update(cls, __data=None, **update):
-        for f_n in {"start", "end"}:
+        if hasattr(cls, "f_update_time"):
+            __data[operator.attrgetter("f_update_time")(cls)] = current_timestamp()
+        for f_n in {"start", "end", "update", "read_access", "write_access"}:
             if hasattr(cls, f"f_{f_n}_time") and hasattr(cls, f"f_{f_n}_date"):
                 k = operator.attrgetter(f"f_{f_n}_time")(cls)
                 if k in __data and __data[k]:

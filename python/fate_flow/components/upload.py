@@ -18,12 +18,13 @@ import shutil
 import time
 
 from fate_arch.common import log, file_utils, EngineType, path_utils
-from fate_arch.storage import StorageEngine, EggRollStorageType
+from fate_arch.storage import StorageEngine, EggRollStoreType
 from fate_flow.entity.metric import Metric, MetricMeta
 from fate_flow.utils import job_utils, data_utils
 from fate_flow.scheduling_apps.client import ControllerClient
 from fate_arch import storage
 from fate_flow.components.component_base import ComponentBase
+from fate_arch.session import Session
 
 LOGGER = log.getLogger()
 
@@ -37,7 +38,7 @@ class Upload(ComponentBase):
         self.table = None
 
     def run(self, component_parameters=None, args=None):
-        self.parameters = component_parameters["UploadParam"]
+        self.parameters = component_parameters["ComponentParam"]
         LOGGER.info(self.parameters)
         LOGGER.info(args)
         self.parameters["role"] = component_parameters["role"]
@@ -72,39 +73,42 @@ class Upload(ComponentBase):
         partitions = self.parameters["partition"]
         if partitions <= 0 or partitions >= self.MAX_PARTITIONS:
             raise Exception("Error number of partition, it should between %d and %d" % (0, self.MAX_PARTITIONS))
-        with storage.Session.build(session_id=job_utils.generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id, suffix="storage", random_end=True), namespace=namespace, name=name) as storage_session:
-            if self.parameters.get("destroy", False):
+        session = Session(session_id=job_utils.generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id))
+        if self.parameters.get("destroy", False):
+            storage_session = session.storage(namespace=namespace, name=name)
+            if storage_session:
                 table = storage_session.get_table()
                 if table:
                     LOGGER.info(f"destroy table name: {name} namespace: {namespace} engine: {table.get_engine()}")
                     table.destroy()
                 else:
                     LOGGER.info(f"can not found table name: {name} namespace: {namespace}, pass destroy")
+            else:
+                LOGGER.info(f"can not found table name: {name} namespace: {namespace}, pass destroy")
         address_dict = storage_address.copy()
-        with storage.Session.build(session_id=job_utils.generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id, suffix="storage", random_end=True),
-                                   storage_engine=storage_engine, options=self.parameters.get("options")) as storage_session:
-            if storage_engine in {StorageEngine.EGGROLL, StorageEngine.STANDALONE}:
-                upload_address = {"name": name, "namespace": namespace, "storage_type": EggRollStorageType.ROLLPAIR_LMDB}
-            elif storage_engine in {StorageEngine.MYSQL}:
-                upload_address = {"db": namespace, "name": name}
-            elif storage_engine in {StorageEngine.PATH}:
-                upload_address = {"path": self.parameters["file"]}
-            elif storage_engine in {StorageEngine.HDFS}:
-                upload_address = {"path": data_utils.default_input_fs_path(name=name, namespace=namespace, prefix=address_dict.get("path_prefix"))}
-            else:
-                raise RuntimeError(f"can not support this storage engine: {storage_engine}")
-            address_dict.update(upload_address)
-            LOGGER.info(f"upload to {storage_engine} storage, address: {address_dict}")
-            address = storage.StorageTableMeta.create_address(storage_engine=storage_engine, address_dict=address_dict)
-            self.parameters["partitions"] = partitions
-            self.parameters["name"] = name
-            self.table = storage_session.create_table(address=address, **self.parameters)
-            data_table_count = None
-            if storage_engine not in [StorageEngine.PATH]:
-                data_table_count = self.save_data_table(job_id, name, namespace, head)
-            else:
-                data_table_count = self.get_data_table_count(self.parameters["file"], name, namespace)
-            self.table.get_meta().update_metas(in_serialized=True)
+        storage_session = session.storage(storage_engine=storage_engine, options=self.parameters.get("options"))
+        if storage_engine in {StorageEngine.EGGROLL, StorageEngine.STANDALONE}:
+            upload_address = {"name": name, "namespace": namespace, "storage_type": EggRollStoreType.ROLLPAIR_LMDB}
+        elif storage_engine in {StorageEngine.MYSQL}:
+            upload_address = {"db": namespace, "name": name}
+        elif storage_engine in {StorageEngine.PATH}:
+            upload_address = {"path": self.parameters["file"]}
+        elif storage_engine in {StorageEngine.HDFS}:
+            upload_address = {"path": data_utils.default_input_fs_path(name=name, namespace=namespace, prefix=address_dict.get("path_prefix"))}
+        else:
+            raise RuntimeError(f"can not support this storage engine: {storage_engine}")
+        address_dict.update(upload_address)
+        LOGGER.info(f"upload to {storage_engine} storage, address: {address_dict}")
+        address = storage.StorageTableMeta.create_address(storage_engine=storage_engine, address_dict=address_dict)
+        self.parameters["partitions"] = partitions
+        self.parameters["name"] = name
+        self.table = storage_session.create_table(address=address, **self.parameters)
+        data_table_count = None
+        if storage_engine not in [StorageEngine.PATH]:
+            data_table_count = self.save_data_table(job_id, name, namespace, head)
+        else:
+            data_table_count = self.get_data_table_count(self.parameters["file"], name, namespace)
+        self.table.meta.update_metas(in_serialized=True)
         LOGGER.info("------------load data finish!-----------------")
         # rm tmp file
         try:
@@ -126,7 +130,7 @@ class Upload(ComponentBase):
             if head is True:
                 data_head = fin.readline()
                 input_feature_count -= 1
-                self.table.get_meta().update_metas(schema=data_utils.get_header_schema(header_line=data_head, id_delimiter=self.parameters["id_delimiter"]))
+                self.table.meta.update_metas(schema=data_utils.get_header_schema(header_line=data_head, id_delimiter=self.parameters["id_delimiter"]))
             n = 0
             while True:
                 data = list()
@@ -141,10 +145,10 @@ class Upload(ComponentBase):
                     ControllerClient.update_job(job_info=job_info)
                     self.table.put_all(data)
                     if n == 0:
-                        self.table.get_meta().update_metas(part_of_data=data)
+                        self.table.meta.update_metas(part_of_data=data)
                 else:
                     table_count = self.table.count()
-                    self.table.get_meta().update_metas(count=table_count, partitions=self.parameters["partition"])
+                    self.table.meta.update_metas(count=table_count, partitions=self.parameters["partition"])
                     self.save_meta(dst_table_namespace=dst_table_namespace, dst_table_name=dst_table_name, table_count=table_count)
                     return table_count
                 n += 1
@@ -177,5 +181,5 @@ class Upload(ComponentBase):
     def get_data_table_count(self, path, name, namespace):
         count = path_utils.get_data_table_count(path)
         self.save_meta(dst_table_namespace=namespace, dst_table_name=name, table_count=count)
-        self.table.get_meta().update_metas(count=count)
+        self.table.meta.update_metas(count=count)
         return count

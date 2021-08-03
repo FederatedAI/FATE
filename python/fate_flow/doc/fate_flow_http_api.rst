@@ -243,7 +243,7 @@ Job
 -  request structure
 
    - train_dsl: Required, String: training dsl
-   - cpn_str: Required, String or Array: list of components which are chose to be used
+   - cpn_str: Required, String or Array: list of fate_components which are chose to be used
    - filename: Optional, String: generated dsl storing path
 
 -  response structure
@@ -665,7 +665,7 @@ Model
 
    - model_version: Required, Integer: model version
    - model_id: Required, String: model id
-   - cpn_list: Optional, String: array-like string that contains components
+   - cpn_list: Optional, String: array-like string that contains fate_components
    - cpn_path: Optional, String: file path of plain text which stores component list
    - dsl_path: Optional, String: file path of plain text which stores dsl content
 

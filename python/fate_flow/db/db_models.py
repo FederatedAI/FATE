@@ -28,7 +28,7 @@ from fate_arch.common import log, file_utils
 from fate_arch.storage.metastore.base_model import JSONField, BaseModel, LongTextField, DateTimeField
 from fate_arch.common import WorkMode
 from fate_flow.settings import DATABASE, WORK_MODE, stat_logger
-from fate_flow.entity.runtime_config import RuntimeConfig
+from fate_flow.runtime_config import RuntimeConfig
 
 
 LOGGER = log.getLogger()
@@ -52,7 +52,7 @@ class BaseDataBase(object):
         database_config = DATABASE.copy()
         db_name = database_config.pop("name")
         if WORK_MODE == WorkMode.STANDALONE:
-            self.database_connection = APSWDatabase(os.path.join(file_utils.get_project_base_directory(), 'fate_flow_sqlite.db'))
+            self.database_connection = APSWDatabase(os.path.join(file_utils.get_python_base_directory(), 'fate_flow_sqlite.db'))
             RuntimeConfig.init_config(USE_LOCAL_DATABASE=True)
             stat_logger.info('init sqlite database on standalone mode successfully')
         elif WORK_MODE == WorkMode.CLUSTER:
@@ -158,6 +158,7 @@ class Task(DataBaseModel):
     # multi-party common configuration
     f_job_id = CharField(max_length=25, index=True)
     f_component_name = TextField()
+    f_component_module = CharField(max_length=200, index=True)
     f_task_id = CharField(max_length=100, index=True)
     f_task_version = BigIntegerField(index=True)
     f_initiator_role = CharField(max_length=50, index=True)
@@ -166,6 +167,8 @@ class Task(DataBaseModel):
     f_federated_status_collect_type = CharField(max_length=10, index=True)
     f_status = CharField(max_length=50, index=True)
     f_status_code = IntegerField(null=True, index=True)
+    f_auto_retries = IntegerField(default=0, index=True)
+    f_auto_retry_delay = IntegerField(default=0)
     # this party configuration
     f_role = CharField(max_length=50, index=True)
     f_party_id = CharField(max_length=10, index=True)
@@ -173,6 +176,8 @@ class Task(DataBaseModel):
     f_run_ip = CharField(max_length=100, null=True)
     f_run_pid = IntegerField(null=True)
     f_party_status = CharField(max_length=50, index=True)
+    f_provider_info = JSONField()
+    f_component_parameters = JSONField()
 
     f_start_time = BigIntegerField(null=True)
     f_start_date = DateTimeField(null=True)

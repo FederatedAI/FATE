@@ -18,6 +18,7 @@ import os
 from fate_arch.common import log
 from fate_flow.entity.metric import Metric, MetricMeta
 from fate_arch import storage
+from fate_arch.session import Session
 from fate_flow.utils import job_utils
 from fate_flow.scheduling_apps.client import ControllerClient
 from fate_flow.components.component_base import ComponentBase
@@ -32,38 +33,37 @@ class Download(ComponentBase):
         self.parameters = {}
 
     def run(self, component_parameters=None, args=None):
-        self.parameters = component_parameters["DownloadParam"]
+        self.parameters = component_parameters["ComponentParam"]
         self.parameters["role"] = component_parameters["role"]
         self.parameters["local"] = component_parameters["local"]
         name, namespace = self.parameters.get("name"), self.parameters.get("namespace")
-        with open(os.path.abspath(self.parameters["output_path"]), "w") as fout:
-            with storage.Session.build(session_id=job_utils.generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id, suffix="storage", random_end=True),
-                                       name=name,
-                                       namespace=namespace) as storage_session:
-                data_table = storage_session.get_table()
-                count = data_table.count()
-                LOGGER.info('===== begin to export data =====')
-                lines = 0
-                job_info = {}
-                job_info["job_id"] = self.tracker.job_id
-                job_info["role"] = self.tracker.role
-                job_info["party_id"] = self.tracker.party_id
-                for key, value in data_table.collect():
-                    if not value:
-                        fout.write(key + "\n")
-                    else:
-                        fout.write(key + self.parameters.get("delimiter", ",") + str(value) + "\n")
-                    lines += 1
-                    if lines % 2000 == 0:
-                        LOGGER.info("===== export {} lines =====".format(lines))
-                    if lines % 10000 == 0:
-                        job_info["progress"] = lines/count*100//1
-                        ControllerClient.update_job(job_info=job_info)
-                job_info["progress"] = 100
-                ControllerClient.update_job(job_info=job_info)
-                self.callback_metric(metric_name='data_access',
-                                     metric_namespace='download',
-                                     metric_data=[Metric("count", data_table.count())])
+        with open(os.path.abspath(self.parameters["output_path"]), "w") as fw:
+            session = Session(job_utils.generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id))
+            storage_session = session.new_storage(name=name, namespace=namespace)
+            data_table = storage_session.get_table()
+            count = data_table.count()
+            LOGGER.info('===== begin to export data =====')
+            lines = 0
+            job_info = {}
+            job_info["job_id"] = self.tracker.job_id
+            job_info["role"] = self.tracker.role
+            job_info["party_id"] = self.tracker.party_id
+            for key, value in data_table.collect():
+                if not value:
+                    fw.write(key + "\n")
+                else:
+                    fw.write(key + self.parameters.get("delimiter", ",") + str(value) + "\n")
+                lines += 1
+                if lines % 2000 == 0:
+                    LOGGER.info("===== export {} lines =====".format(lines))
+                if lines % 10000 == 0:
+                    job_info["progress"] = lines/count*100//1
+                    ControllerClient.update_job(job_info=job_info)
+            job_info["progress"] = 100
+            ControllerClient.update_job(job_info=job_info)
+            self.callback_metric(metric_name='data_access',
+                                 metric_namespace='download',
+                                 metric_data=[Metric("count", data_table.count())])
             LOGGER.info("===== export {} lines totally =====".format(lines))
             LOGGER.info('===== export data finish =====')
             LOGGER.info('===== export data file path:{} ====='.format(os.path.abspath(self.parameters["output_path"])))

@@ -26,6 +26,7 @@ from fate_arch.common import log, hdfs_utils
 from fate_arch.common.profile import computing_profile
 from fate_arch.computing.spark._materialize import materialize, unmaterialize
 from scipy.stats import hypergeom
+from fate_arch.computing._type import ComputingEngine
 
 LOGGER = log.getLogger()
 
@@ -33,6 +34,11 @@ LOGGER = log.getLogger()
 class Table(CTableABC):
     def __init__(self, rdd):
         self._rdd = rdd
+        self._engine = ComputingEngine.SPARK
+
+    @property
+    def engine(self):
+        return self._engine
 
     def __getstate__(self):
         pass

@@ -14,24 +14,9 @@
 #  limitations under the License.
 #
 from fate_arch.common import base_utils
-import numpy
+from fate_flow.entity.types import InputSearchType
 
 from fate_arch import storage
-from federatedml.feature.sparse_vector import SparseVector
-
-
-def dataset_to_list(src):
-    if isinstance(src, numpy.ndarray):
-        return src.tolist()
-    elif isinstance(src, list):
-        return src
-    elif isinstance(src, SparseVector):
-        vector = [0] * src.get_shape()
-        for idx, v in src.get_all_data():
-            vector[idx] = v
-        return vector
-    else:
-        return [src]
 
 
 def get_header_schema(header_line, id_delimiter):
@@ -73,3 +58,12 @@ def get_input_data_min_partitions(input_data, role, party_id):
                 if not min_partition or min_partition > table_partition:
                     min_partition = table_partition
     return min_partition
+
+
+def get_input_search_type(parameters):
+    if "name" in parameters and "namespace" in parameters:
+        return InputSearchType.TABLE_INFO
+    elif "job_id" in parameters and "component_name" in parameters and "data" in parameters:
+        return InputSearchType.JOB_COMPONENT_OUTPUT
+    else:
+        return InputSearchType.UNKNOWN

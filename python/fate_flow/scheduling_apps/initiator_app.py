@@ -44,8 +44,9 @@ def stop_job(job_id, role, party_id, stop_status):
 
 @manager.route('/<job_id>/<role>/<party_id>/rerun', methods=['POST'])
 def rerun_job(job_id, role, party_id):
-    DAGScheduler.rerun_job(job_id=job_id, initiator_role=role, initiator_party_id=party_id,
-                           component_name=request.json.get("component_name"))
+    DAGScheduler.set_job_rerun(job_id=job_id, initiator_role=role, initiator_party_id=party_id,
+                               component_name=request.json.get("component_name"),
+                               auto=False)
     return get_json_result(retcode=0, retmsg='success')
 
 

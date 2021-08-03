@@ -13,24 +13,30 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from fate_flow.utils.authentication_utils import authentication_check
-from federatedml.protobuf.generated import pipeline_pb2
-from fate_arch.common.log import schedule_logger
-from fate_arch.common import EngineType, string_utils
-from fate_flow.entity.types import JobStatus, EndStatus, RunParameters
-from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.operation.job_tracker import Tracker
-from fate_flow.settings import USE_AUTHENTICATION, DEFAULT_TASK_PARALLELISM, DEFAULT_FEDERATED_STATUS_COLLECT_TYPE
-from fate_flow.utils import job_utils, schedule_utils, data_utils
-from fate_flow.operation.job_saver import JobSaver
-from fate_arch.common.base_utils import json_dumps, current_timestamp
-from fate_flow.controller.task_controller import TaskController
-from fate_flow.manager.resource_manager import ResourceManager
-from fate_arch.common import WorkMode, Backend
-from fate_arch.common import FederatedMode
+import sys
+import os
+from fate_arch.common import engine_utils
 from fate_arch.computing import ComputingEngine
-from fate_arch.federation import FederationEngine
-from fate_arch.storage import StorageEngine
+from fate_arch.common import EngineType
+from fate_arch.common.base_utils import json_dumps, current_timestamp, fate_uuid
+from fate_arch.common.log import schedule_logger
+from fate_flow.controller.task_controller import TaskController
+from fate_flow.entity.run_status import JobStatus, EndStatus
+from fate_flow.entity.run_parameters import RunParameters
+from fate_flow.entity.component_provider import ComponentProvider
+from fate_flow.entity.types import InputSearchType
+from fate_flow.manager.resource_manager import ResourceManager
+from fate_flow.operation.job_saver import JobSaver
+from fate_flow.operation.job_tracker import Tracker
+from fate_flow.protobuf.python import pipeline_pb2
+from fate_flow.runtime_config import RuntimeConfig
+from fate_flow.settings import USE_AUTHENTICATION
+from fate_flow import job_default_settings
+from fate_flow.utils import job_utils, schedule_utils, data_utils
+from fate_flow.component_env_utils import dsl_utils
+from fate_flow.utils.authentication_utils import authentication_check
+from fate_flow.operation.task_initializer import TaskInitializer
+import subprocess
 
 
 class JobController(object):
@@ -57,7 +63,7 @@ class JobController(object):
             is_initiator = True
         else:
             is_initiator = False
-        job_info["status"] = JobStatus.WAITING
+        job_info["status"] = JobStatus.READY
         # this party configuration
         job_info["role"] = role
         job_info["party_id"] = party_id
@@ -79,61 +85,47 @@ class JobController(object):
 
         cls.initialize_tasks(job_id=job_id, role=role, party_id=party_id, run_on_this_party=True,
                              initiator_role=job_info["initiator_role"], initiator_party_id=job_info["initiator_party_id"], job_parameters=job_parameters, dsl_parser=dsl_parser)
-        job_parameters = job_info['runtime_conf_on_party']['job_parameters']
         roles = job_info['roles']
         cls.initialize_job_tracker(job_id=job_id, role=role, party_id=party_id,
                                    job_parameters=job_parameters, roles=roles, is_initiator=is_initiator, dsl_parser=dsl_parser)
         JobSaver.create_job(job_info=job_info)
 
     @classmethod
-    def backend_compatibility(cls, job_parameters: RunParameters):
-        # compatible with previous 1.5 versions
-        if job_parameters.computing_engine is None or job_parameters.federation_engine is None:
-            if job_parameters.work_mode is None or job_parameters.backend is None:
-                raise RuntimeError("unable to find compatible backend engines")
-            work_mode = WorkMode(job_parameters.work_mode)
-            backend = Backend(job_parameters.backend)
-            if backend == Backend.EGGROLL:
-                if work_mode == WorkMode.CLUSTER:
-                    job_parameters.computing_engine = ComputingEngine.EGGROLL
-                    job_parameters.federation_engine = FederationEngine.EGGROLL
-                    job_parameters.storage_engine = StorageEngine.EGGROLL
-                else:
-                    job_parameters.computing_engine = ComputingEngine.STANDALONE
-                    job_parameters.federation_engine = FederationEngine.STANDALONE
-                    job_parameters.storage_engine = StorageEngine.STANDALONE
-            elif backend == Backend.SPARK_PULSAR:
-                job_parameters.computing_engine = ComputingEngine.SPARK
-                job_parameters.federation_engine = FederationEngine.PULSAR
-                job_parameters.storage_engine = StorageEngine.HDFS
-            elif backend == Backend.SPARK_RABBITMQ:
-                job_parameters.computing_engine = ComputingEngine.SPARK
-                job_parameters.federation_engine = FederationEngine.RABBITMQ
-                job_parameters.storage_engine = StorageEngine.HDFS
-                # add mq info
-                federation_info = {}
-                federation_info['union_name'] = string_utils.random_string(4)
-                federation_info['policy_id'] = string_utils.random_string(10)
-                job_parameters.federation_info = federation_info
+    def get_job_engines(cls, job_parameters: RunParameters):
+        kwargs = {}
+        for k in {EngineType.COMPUTING, EngineType.FEDERATION, EngineType.STORAGE}:
+            kwargs[k] = getattr(job_parameters, f"{k}_engine", None)
+        engines = engine_utils.engines_compatibility(
+            work_mode=job_parameters.work_mode,
+            backend=job_parameters.backend,
+            federated_mode=job_parameters.federated_mode,
+            **kwargs
+        )
+        for k in {EngineType.COMPUTING, EngineType.FEDERATION, EngineType.STORAGE}:
+            setattr(job_parameters, f"{k}_engine", engines[k])
+        job_parameters.federated_mode = engines["federated_mode"]
 
-        if job_parameters.federated_mode is None:
-            if job_parameters.computing_engine in [ComputingEngine.EGGROLL, ComputingEngine.SPARK]:
-                job_parameters.federated_mode = FederatedMode.MULTIPLE
-            elif job_parameters.computing_engine in [ComputingEngine.STANDALONE]:
-                job_parameters.federated_mode = FederatedMode.SINGLE
+    @classmethod
+    def fill_default_job_parameters(cls, job_id, job_parameters: RunParameters):
+        keys = {"task_parallelism", "auto_retries", "auto_retry_delay", "federated_status_collect_type"}
+        for key in keys:
+            if hasattr(job_parameters, key) and getattr(job_parameters, key) is None:
+                if hasattr(job_default_settings, key.upper()):
+                    setattr(job_parameters, key, getattr(job_default_settings, key.upper()))
+                else:
+                    schedule_logger(job_id=job_id).warning(f"can not found {key} job parameter default value from job_default_settings")
 
     @classmethod
     def adapt_job_parameters(cls, role, job_parameters: RunParameters, create_initiator_baseline=False):
         ResourceManager.adapt_engine_parameters(
             role=role, job_parameters=job_parameters, create_initiator_baseline=create_initiator_baseline)
-        if create_initiator_baseline:
-            if job_parameters.task_parallelism is None:
-                job_parameters.task_parallelism = DEFAULT_TASK_PARALLELISM
-            if job_parameters.federated_status_collect_type is None:
-                job_parameters.federated_status_collect_type = DEFAULT_FEDERATED_STATUS_COLLECT_TYPE
         if create_initiator_baseline and not job_parameters.computing_partitions:
             job_parameters.computing_partitions = job_parameters.adaptation_parameters[
                 "task_cores_per_node"] * job_parameters.adaptation_parameters["task_nodes"]
+        if not job_parameters.component_provider or not job_parameters.component_version:
+            #todo: component type may be not from job parameters
+            job_parameters.component_provider, job_parameters.component_version = job_utils.get_default_component_use(
+                component_provider=job_parameters.component_provider)
 
     @classmethod
     def get_job_engines_address(cls, job_parameters: RunParameters):
@@ -172,31 +164,75 @@ class JobController(object):
         common_task_info["initiator_party_id"] = initiator_party_id
         common_task_info["role"] = role
         common_task_info["party_id"] = party_id
+        common_task_info["run_on_this_party"] = run_on_this_party
         common_task_info["federated_mode"] = job_parameters.federated_mode
         common_task_info["federated_status_collect_type"] = job_parameters.federated_status_collect_type
+        common_task_info["auto_retries"] = job_parameters.auto_retries
+        common_task_info["auto_retry_delay"] = job_parameters.auto_retry_delay
         if task_version:
             common_task_info["task_version"] = task_version
-        if not component_name:
-            components = dsl_parser.get_topology_components()
-        else:
-            components = [dsl_parser.get_component_info(
-                component_name=component_name)]
-        for component in components:
-            component_parameters = component.get_role_parameters()
-            for parameters_on_party in component_parameters.get(common_task_info["role"], []):
-                if parameters_on_party.get('local', {}).get('party_id') == common_task_info["party_id"]:
-                    task_info = {}
-                    task_info.update(common_task_info)
-                    task_info["component_name"] = component.get_name()
-                    TaskController.create_task(
-                        role=role, party_id=party_id, run_on_this_party=run_on_this_party, task_info=task_info)
+        provider_group = dsl_utils.get_job_provider_group(dsl_parser=dsl_parser,
+                                                          role=role,
+                                                          party_id=party_id,
+                                                          component_name=component_name)
+        for group_key, group_info in provider_group.items():
+            initialized_config = {}
+            initialized_config.update(group_info)
+            initialized_config["common_task_info"] = common_task_info
+            cls.start_initializer(job_id=job_id,
+                                  role=role,
+                                  party_id=party_id,
+                                  initialized_config=initialized_config)
 
     @classmethod
-    def initialize_job_tracker(cls, job_id, role, party_id, job_parameters, roles, is_initiator, dsl_parser):
+    def start_initializer(cls, job_id, role, party_id, initialized_config):
+        initializer_id = fate_uuid()
+        initialized_components = initialized_config["components"]
+        party_id = str(party_id)
+        schedule_logger(job_id).info('try to start job {} task initializer {} subprocess to initialize {} on {} {}'.format(job_id, initializer_id, initialized_components, role, party_id))
+        initialize_dir = os.path.join(job_utils.get_job_directory(job_id=job_id), role, party_id, f"initialize_{initializer_id}")
+        os.makedirs(initialize_dir, exist_ok=True)
+        initialized_config_path = os.path.join(initialize_dir, f'initialized_config.json')
+        with open(initialized_config_path, 'w') as fw:
+            fw.write(json_dumps(initialized_config))
+
+        process_cmd = [
+            sys.executable,
+            sys.modules[TaskInitializer.__module__].__file__,
+            '-j', job_id,
+            '-r', role,
+            '-p', party_id,
+            '-c', initialized_config_path,
+            '--run_ip', RuntimeConfig.JOB_SERVER_HOST,
+            '--job_server', '{}:{}'.format(RuntimeConfig.JOB_SERVER_HOST, RuntimeConfig.HTTP_PORT),
+        ]
+        log_dir = os.path.join(job_utils.get_job_log_directory(job_id=job_id), role, party_id, f"initialize_{initializer_id}")
+        provider = ComponentProvider(**initialized_config["provider"])
+        p = job_utils.run_subprocess(job_id=job_id, config_dir=initialize_dir, process_cmd=process_cmd, extra_env=provider.env, log_dir=log_dir, job_dir=initialize_dir)
+        schedule_logger(job_id).info('job {} task initializer {} on {} {} subprocess pid {} is ready'.format(job_id, initializer_id, role, party_id, p.pid))
+        try:
+            p.communicate(timeout=5)
+            # return code always 0 because of server wait_child_process, can not use to check
+            st = JobSaver.check_task(job_id=job_id, role=role, party_id=party_id, components=initialized_components)
+            schedule_logger(job_id).info('job {} initialize {} on {} {} {}'.format(job_id, initialized_components, role, party_id, "successfully" if st else "failed"))
+            #todo: check
+            """
+            if not st:
+                raise Exception(job_utils.get_subprocess_std(log_dir=log_dir))
+            """
+        except subprocess.TimeoutExpired as e:
+            err = f"job {job_id} task initializer {initializer_id} on {role} {party_id} subprocess pid {p.pid} run timeout"
+            schedule_logger(job_id).exception(err, e)
+            p.kill()
+            raise Exception(err)
+
+    @classmethod
+    def initialize_job_tracker(cls, job_id, role, party_id, job_parameters: RunParameters, roles, is_initiator, dsl_parser):
         tracker = Tracker(job_id=job_id, role=role, party_id=party_id,
-                          model_id=job_parameters["model_id"],
-                          model_version=job_parameters["model_version"])
-        if job_parameters.get("job_type", "") != "predict":
+                          model_id=job_parameters.model_id,
+                          model_version=job_parameters.model_version,
+                          job_parameters=job_parameters)
+        if job_parameters.job_type != "predict":
             tracker.init_pipelined_model()
         partner = {}
         show_role = {}
@@ -245,8 +281,13 @@ class JobController(object):
                         else:
                             for key in _role_party_args[_party_index].keys():
                                 for _data_type, _data_location in _role_party_args[_party_index][key].items():
-                                    dataset[_role][_party_id][key] = '{}.{}'.format(
-                                        _data_location['namespace'], _data_location['name'])
+                                    search_type = data_utils.get_input_search_type(parameters=_data_location)
+                                    if search_type == InputSearchType.TABLE_INFO:
+                                        dataset[_role][_party_id][key] = '{}.{}'.format(_data_location['namespace'], _data_location['name'])
+                                    elif search_type == InputSearchType.JOB_COMPONENT_OUTPUT:
+                                        dataset[_role][_party_id][key] = '{}.{}.{}'.format(_data_location['job_id'], _data_location['component_name'], _data_location['data'])
+                                    else:
+                                        dataset[_role][_party_id][key] = "unknown"
         return dataset
 
     @classmethod
@@ -343,10 +384,10 @@ class JobController(object):
         initiator_party_id = runtime_conf_on_party['initiator']['party_id']
         if job_type == 'predict':
             return
-        dag = schedule_utils.get_job_dsl_parser(dsl=job_dsl,
-                                                runtime_conf=job_runtime_conf,
-                                                train_runtime_conf=train_runtime_conf)
-        predict_dsl = dag.get_predict_dsl(role=role)
+        dsl_parser = schedule_utils.get_job_dsl_parser(dsl=job_dsl,
+                                                                    runtime_conf=job_runtime_conf,
+                                                                    train_runtime_conf=train_runtime_conf)
+        predict_dsl = dsl_parser.get_predict_dsl(role=role)
         pipeline = pipeline_pb2.Pipeline()
         pipeline.inference_dsl = json_dumps(predict_dsl, byte=True)
         pipeline.train_dsl = json_dumps(job_dsl, byte=True)
@@ -366,7 +407,7 @@ class JobController(object):
         pipeline.parent_info = json_dumps({}, byte=True)
 
         tracker = Tracker(job_id=job_id, role=role, party_id=party_id,
-                          model_id=model_id, model_version=model_version)
+                          model_id=model_id, model_version=model_version, job_parameters=RunParameters(**job_parameters))
         tracker.save_pipelined_model(pipelined_buffer_object=pipeline)
         if role != 'local':
             tracker.save_machine_learning_model_info()

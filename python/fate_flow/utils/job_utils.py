@@ -20,19 +20,20 @@ import subprocess
 import sys
 import threading
 import typing
-
 import psutil
-
 from fate_arch.common import file_utils
 from fate_arch.common.base_utils import json_dumps, fate_uuid, current_timestamp
 from fate_arch.common.log import schedule_logger
 from fate_flow.db.db_models import DB, Job, Task
-from fate_flow.entity.types import JobStatus
-from fate_flow.entity.types import TaskStatus, RunParameters, KillProcessStatusCode
-from fate_flow.settings import stat_logger, JOB_DEFAULT_TIMEOUT, WORK_MODE, FATE_BOARD_DASHBOARD_ENDPOINT
+from fate_flow.entity.types import KillProcessRetCode
+from fate_flow.entity.run_status import JobStatus, TaskStatus
+from fate_flow.entity.run_parameters import RunParameters
+from fate_flow.runtime_config import RuntimeConfig
+from fate_flow.settings import stat_logger, WORK_MODE, FATE_BOARD_DASHBOARD_ENDPOINT, SUBPROCESS_STD_LOG_NAME
 from fate_flow.utils import detect_utils, model_utils
 from fate_flow.utils import session_utils
 from fate_flow.utils.service_utils import ServiceUtils
+from fate_flow import job_default_settings
 
 
 class IdCounter(object):
@@ -203,17 +204,6 @@ def get_model_configuration(job_id, role, party_id):
     return {}, {}, {}
 
 
-    # models = MLModel.select(MLModel.f_dsl, MLModel.f_runtime_conf,
-    #                         MLModel.f_train_runtime_conf).where(MLModel.f_job_id == job_id,
-    #                                                             MLModel.f_role == role,
-    #                                                             MLModel.f_party_id == party_id)
-    # if models:
-    #     model = models[0]
-    #     return model.f_dsl, model.f_runtime_conf, model.f_train_runtime_conf
-    # else:
-    #     return {}, {}, {}
-
-
 @DB.connection_context()
 def get_job_parameters(job_id, role, party_id):
     jobs = Job.select(Job.f_runtime_conf_on_party).where(Job.f_job_id == job_id,
@@ -238,12 +228,19 @@ def get_job_dsl(job_id, role, party_id):
         return {}
 
 
-def job_virtual_component_name():
+def job_pipeline_component_name():
     return "pipeline"
 
 
-def job_virtual_component_module_name():
+def job_pipeline_component_module_name():
     return "Pipeline"
+
+
+def get_default_component_use(component_provider):
+    component_version = RuntimeConfig.COMPONENT_REGISTRY["provider"].get(component_provider, {}).get("default", {}).get("version", None)
+    if not component_provider or not component_version:
+        raise Exception("can not found default component use")
+    return component_provider, component_version
 
 
 @DB.connection_context()
@@ -288,7 +285,7 @@ def check_job_process(pid):
 
 def check_job_is_timeout(job: Job):
     job_parameters = job.f_runtime_conf_on_party["job_parameters"]
-    timeout = job_parameters.get("timeout", JOB_DEFAULT_TIMEOUT)
+    timeout = job_parameters.get("timeout", job_default_settings.JOB_DEFAULT_TIMEOUT)
     now_time = current_timestamp()
     running_time = (now_time - job.f_create_time)/1000
     if running_time > timeout:
@@ -306,13 +303,13 @@ def check_process_by_keyword(keywords):
     return ret == 0
 
 
-def run_subprocess(job_id, config_dir, process_cmd, log_dir=None, job_dir=None):
+def run_subprocess(job_id, config_dir, process_cmd, extra_env: dict = None, log_dir=None, job_dir=None):
     schedule_logger(job_id=job_id).info('start process command: {}'.format(' '.join(process_cmd)))
 
     os.makedirs(config_dir, exist_ok=True)
     if log_dir:
         os.makedirs(log_dir, exist_ok=True)
-    std_log = open(os.path.join(log_dir if log_dir else config_dir, 'std.log'), 'w')
+    std_log = open(os.path.join(log_dir if log_dir else config_dir, SUBPROCESS_STD_LOG_NAME), 'w')
     pid_path = os.path.join(config_dir, 'pid')
 
     if os.name == 'nt':
@@ -321,11 +318,20 @@ def run_subprocess(job_id, config_dir, process_cmd, log_dir=None, job_dir=None):
         startupinfo.wShowWindow = subprocess.SW_HIDE
     else:
         startupinfo = None
+    subprocess_env = None
+    if extra_env:
+        subprocess_env = os.environ.copy()
+        for name, value in extra_env.items():
+            if name.endswith("PATH"):
+                subprocess_env[name] = subprocess_env.get(name, "") + f":{value}"
+            else:
+                subprocess_env[name] = value
     p = subprocess.Popen(process_cmd,
                          stdout=std_log,
                          stderr=std_log,
                          startupinfo=startupinfo,
                          cwd=job_dir,
+                         env=subprocess_env
                          )
     with open(pid_path, 'w') as f:
         f.truncate()
@@ -333,6 +339,12 @@ def run_subprocess(job_id, config_dir, process_cmd, log_dir=None, job_dir=None):
         f.flush()
     schedule_logger(job_id=job_id).info('start process command: {} successfully, pid is {}'.format(' '.join(process_cmd), p.pid))
     return p
+
+
+def get_subprocess_std(log_dir):
+    with open(os.path.join(log_dir, SUBPROCESS_STD_LOG_NAME), "r") as fr:
+        text = fr.read()
+    return text
 
 
 def wait_child_process(signum, frame):
@@ -391,19 +403,19 @@ def kill_task_executor_process(task: Task, only_child=False):
         if not task.f_run_pid:
             schedule_logger(task.f_job_id).info("job {} task {} {} {} with {} party status no process pid".format(
                 task.f_job_id, task.f_task_id, task.f_role, task.f_party_id, task.f_party_status))
-            return KillProcessStatusCode.NOT_FOUND
+            return KillProcessRetCode.NOT_FOUND
         pid = int(task.f_run_pid)
         schedule_logger(task.f_job_id).info("try to stop job {} task {} {} {} with {} party status process pid:{}".format(
             task.f_job_id, task.f_task_id, task.f_role, task.f_party_id, task.f_party_status, pid))
         if not check_job_process(pid):
             schedule_logger(task.f_job_id).info("can not found job {} task {} {} {} with {} party status process pid:{}".format(
                 task.f_job_id, task.f_task_id, task.f_role, task.f_party_id, task.f_party_status, pid))
-            return KillProcessStatusCode.NOT_FOUND
+            return KillProcessRetCode.NOT_FOUND
         p = psutil.Process(int(pid))
         if not is_task_executor_process(task=task, process=p):
             schedule_logger(task.f_job_id).warning("this pid {} is not job {} task {} {} {} executor".format(
                 pid, task.f_job_id, task.f_task_id, task.f_role, task.f_party_id))
-            return KillProcessStatusCode.ERROR_PID
+            return KillProcessRetCode.ERROR_PID
         for child in p.children(recursive=True):
             if check_job_process(child.pid) and is_task_executor_process(task=task, process=child):
                 child.kill()
@@ -412,25 +424,25 @@ def kill_task_executor_process(task: Task, only_child=False):
                 p.kill()
         schedule_logger(task.f_job_id).info("successfully stop job {} task {} {} {} process pid:{}".format(
             task.f_job_id, task.f_task_id, task.f_role, task.f_party_id, pid))
-        return KillProcessStatusCode.KILLED
+        return KillProcessRetCode.KILLED
     except Exception as e:
         raise e
 
 
 def start_session_stop(task):
     job_parameters = RunParameters(**get_job_parameters(job_id=task.f_job_id, role=task.f_role, party_id=task.f_party_id))
-    computing_session_id = generate_session_id(task.f_task_id, task.f_task_version, task.f_role, task.f_party_id)
+    session_manager_id = generate_session_id(task.f_task_id, task.f_task_version, task.f_role, task.f_party_id)
     if task.f_status != TaskStatus.WAITING:
-        schedule_logger(task.f_job_id).info(f'start run subprocess to stop task session {computing_session_id}')
+        schedule_logger(task.f_job_id).info(f'start run subprocess to stop task sessions {session_manager_id}')
     else:
-        schedule_logger(task.f_job_id).info(f'task is waiting, pass stop session {computing_session_id}')
+        schedule_logger(task.f_job_id).info(f'task is waiting, pass stop sessions {session_manager_id}')
         return
     task_dir = os.path.join(get_job_directory(job_id=task.f_job_id), task.f_role,
                             task.f_party_id, task.f_component_name, 'session_stop')
     os.makedirs(task_dir, exist_ok=True)
     process_cmd = [
         'python3', sys.modules[session_utils.SessionStop.__module__].__file__,
-        '-j', computing_session_id,
+        '--session', session_manager_id,
         '--computing', job_parameters.computing_engine,
         '--federation', job_parameters.federation_engine,
         '--storage', job_parameters.storage_engine,
@@ -458,7 +470,7 @@ def get_timeout(job_id, timeout, runtime_conf, dsl):
 
 def job_default_timeout(runtime_conf, dsl):
     # future versions will improve
-    timeout = JOB_DEFAULT_TIMEOUT
+    timeout = job_default_settings.JOB_DEFAULT_TIMEOUT
     return timeout
 
 

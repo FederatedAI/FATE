@@ -6,7 +6,7 @@ import requests
 from fate_arch.common import file_utils, conf_utils
 
 from fate_flow.settings import HTTP_PORT, API_VERSION, WORK_MODE, FATEFLOW_SERVICE_NAME
-from fate_flow.entity.types import JobStatus
+from fate_flow.entity.run_status import JobStatus
 
 
 class TestDataAccess(unittest.TestCase):

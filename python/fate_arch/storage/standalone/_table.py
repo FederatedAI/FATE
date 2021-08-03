@@ -16,7 +16,7 @@
 from typing import Iterable
 
 from fate_arch._standalone import Session
-from fate_arch.storage import StorageEngine, StandaloneStorageType
+from fate_arch.storage import StorageEngine, StandaloneStoreType
 from fate_arch.storage import StorageTableBase
 
 
@@ -27,7 +27,7 @@ class StorageTable(StorageTableBase):
                  name: str = None,
                  namespace: str = None,
                  partitions: int = 1,
-                 storage_type: StandaloneStorageType = None,
+                 store_type: StandaloneStoreType = None,
                  options=None):
         super(StorageTable, self).__init__(name=name, namespace=namespace)
         self._session = session
@@ -35,10 +35,10 @@ class StorageTable(StorageTableBase):
         self._name = name
         self._namespace = namespace
         self._partitions = partitions
-        self._type = storage_type if storage_type else StandaloneStorageType.ROLLPAIR_LMDB
+        self._store_type = store_type if store_type else StandaloneStoreType.ROLLPAIR_LMDB
         self._options = options if options else {}
         self._storage_engine = StorageEngine.STANDALONE
-        need_cleanup = self._type == StandaloneStorageType.ROLLPAIR_IN_MEMORY
+        need_cleanup = self._store_type == StandaloneStoreType.ROLLPAIR_IN_MEMORY
         self._table = self._session.create_table(namespace=self._namespace, name=self._name, partitions=partitions,
                                                  need_cleanup=need_cleanup, error_if_exist=False)
 
@@ -54,8 +54,8 @@ class StorageTable(StorageTableBase):
     def get_engine(self):
         return self._storage_engine
 
-    def get_type(self):
-        return self._type
+    def get_store_type(self):
+        return self._store_type
 
     def get_partitions(self):
         return self._table.partitions
@@ -64,9 +64,11 @@ class StorageTable(StorageTableBase):
         return self._options
 
     def put_all(self, kv_list: Iterable, **kwargs):
+        super(StorageTable, self).update_write_access_time()
         return self._table.put_all(kv_list)
 
     def collect(self, **kwargs):
+        super(StorageTable, self).update_read_access_time()
         return self._table.collect(**kwargs)
 
     def destroy(self):
@@ -75,5 +77,5 @@ class StorageTable(StorageTableBase):
 
     def count(self):
         count = self._table.count()
-        self.get_meta().update_metas(count=count)
+        self.meta.update_metas(count=count)
         return count

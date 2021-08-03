@@ -84,6 +84,12 @@ def timestamp_to_date(timestamp, format_string="%Y-%m-%d %H:%M:%S"):
     return str_date
 
 
+def date_string_to_timestamp(time_str, format_string="%Y-%m-%d %H:%M:%S"):
+    time_array = time.strptime(time_str, format_string)
+    time_stamp = int(time.mktime(time_array) * 1000)
+    return time_stamp
+
+
 def serialize_b64(src, to_str=False):
     dest = base64.b64encode(pickle.dumps(src))
     if not to_str:

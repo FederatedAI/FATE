@@ -14,12 +14,18 @@
 #  limitations under the License.
 #
 from fate_arch.common import FederatedCommunicationType
-from fate_flow.entity.types import TaskStatus, EndStatus, StatusSet, SchedulingStatusCode, FederatedSchedulingStatusCode, RetCode
+from fate_flow.entity.types import RetCode
+from fate_flow.entity.run_status import StatusSet, TaskStatus, EndStatus, AutoRerunStatus
+from fate_flow.entity.run_status import FederatedSchedulingStatusCode
+from fate_flow.entity.run_status import SchedulingStatusCode
+from fate_flow.entity.run_parameters import RunParameters
 from fate_flow.utils import job_utils
 from fate_flow.scheduler.federated_scheduler import FederatedScheduler
 from fate_flow.operation.job_saver import JobSaver
 from fate_arch.common.log import schedule_logger
 from fate_flow.manager.resource_manager import ResourceManager
+from fate_flow.controller.job_controller import JobController
+from fate_flow.db.db_models import Job, Task
 
 
 class TaskScheduler(object):
@@ -28,11 +34,16 @@ class TaskScheduler(object):
         schedule_logger(job_id=job.f_job_id).info("scheduling job {} tasks".format(job.f_job_id))
         initiator_tasks_group = JobSaver.get_tasks_asc(job_id=job.f_job_id, role=job.f_role, party_id=job.f_party_id)
         waiting_tasks = []
+        auto_rerun_tasks = []
         for initiator_task in initiator_tasks_group.values():
-            # collect all party task party status
             if job.f_runtime_conf_on_party["job_parameters"]["federated_status_collect_type"] == FederatedCommunicationType.PULL:
+                # collect all parties task party status and store it in the database now
                 cls.collect_task_of_all_party(job=job, initiator_task=initiator_task)
-            new_task_status = cls.federated_task_status(job_id=initiator_task.f_job_id, task_id=initiator_task.f_task_id, task_version=initiator_task.f_task_version)
+            else:
+                # all parties report task party status and store it in the initiator database when federated_status_collect_type is push
+                pass
+            # get all parties party task status and calculate
+            new_task_status = cls.get_federated_task_status(job_id=initiator_task.f_job_id, task_id=initiator_task.f_task_id, task_version=initiator_task.f_task_version)
             task_status_have_update = False
             if new_task_status != initiator_task.f_status:
                 task_status_have_update = True
@@ -43,6 +54,12 @@ class TaskScheduler(object):
                 waiting_tasks.append(initiator_task)
             elif task_status_have_update and EndStatus.contains(initiator_task.f_status):
                 FederatedScheduler.stop_task(job=job, task=initiator_task, stop_status=initiator_task.f_status)
+                if not canceled and AutoRerunStatus.contains(initiator_task.f_status):
+                    if initiator_task.f_auto_retries > 0:
+                        auto_rerun_tasks.append(initiator_task)
+                        schedule_logger(job_id=job.f_job_id).info(f"job {job.f_job_id} task {initiator_task.f_task_id} {initiator_task.f_status} will be retried")
+                    else:
+                        schedule_logger(job_id=job.f_job_id).info(f"job {job.f_job_id} task {initiator_task.f_task_id} {initiator_task.f_status} has no retry count")
 
         scheduling_status_code = SchedulingStatusCode.NO_NEXT
         if not canceled:
@@ -73,7 +90,7 @@ class TaskScheduler(object):
         else:
             schedule_logger(job_id=job.f_job_id).info("have cancel signal, pass start job {} tasks".format(job.f_job_id))
         schedule_logger(job_id=job.f_job_id).info("finish scheduling job {} tasks".format(job.f_job_id))
-        return scheduling_status_code, initiator_tasks_group.values()
+        return scheduling_status_code, auto_rerun_tasks, initiator_tasks_group.values()
 
     @classmethod
     def start_task(cls, job, task):
@@ -100,10 +117,41 @@ class TaskScheduler(object):
             return SchedulingStatusCode.FAILED
 
     @classmethod
+    def prepare_rerun_task(cls, job: Job, task: Task, dsl_parser, auto=True):
+        job_id = job.f_job_id
+        can_rerun = False
+        if task.f_status in {TaskStatus.WAITING, TaskStatus.SUCCESS}:
+            schedule_logger(job_id=job_id).info(f"task {task.f_task_id} {task.f_task_version} is {task.f_status}, pass create new version")
+            if task.f_status == TaskStatus.WAITING:
+                can_rerun = True
+        elif auto and task.f_auto_retries < 1:
+            schedule_logger(job_id=job_id).info(f"task {task.f_task_id} has no retry count, can not rerun")
+        else:
+            # stop old version task
+            FederatedScheduler.stop_task(job=job, task=task, stop_status=TaskStatus.CANCELED)
+            FederatedScheduler.clean_task(job=job, task=task, content_type="metrics")
+            # create new version task
+            task.f_task_version = task.f_task_version + 1
+            task.f_auto_retries = task.f_auto_retries - 1
+            task.f_run_pid = None
+            task.f_run_ip = None
+            FederatedScheduler.create_task(job=job, task=task)
+            # Save the status information of all participants in the initiator for scheduling
+            schedule_logger(job_id=job_id).info(f"create task {task.f_task_id} new version {task.f_task_version}")
+            for _role, _party_ids in job.f_runtime_conf_on_party["role"].items():
+                for _party_id in _party_ids:
+                    if _role == job.f_initiator_role and _party_id == job.f_initiator_party_id:
+                        continue
+                    JobController.initialize_tasks(job_id, _role, _party_id, False, job.f_initiator_role, job.f_initiator_party_id, RunParameters(**job.f_runtime_conf_on_party["job_parameters"]), dsl_parser, component_name=task.f_component_name, task_version=task.f_task_version)
+            schedule_logger(job_id=job_id).info(f"create task {task.f_task_id} new version {task.f_task_version} successfully")
+            can_rerun = True
+        return can_rerun
+
+    @classmethod
     def collect_task_of_all_party(cls, job, initiator_task, set_status=None):
         tasks_on_all_party = JobSaver.query_task(task_id=initiator_task.f_task_id, task_version=initiator_task.f_task_version)
         tasks_status_on_all = set([task.f_status for task in tasks_on_all_party])
-        if not len(tasks_status_on_all) > 1 and not TaskStatus.RUNNING in tasks_status_on_all:
+        if not len(tasks_status_on_all) > 1 and TaskStatus.RUNNING not in tasks_status_on_all:
             return
         status, federated_response = FederatedScheduler.collect_task(job=job, task=initiator_task)
         if status != FederatedSchedulingStatusCode.SUCCESS:
@@ -127,7 +175,7 @@ class TaskScheduler(object):
                     JobSaver.update_task_status(task_info=tmp_task_info)
 
     @classmethod
-    def federated_task_status(cls, job_id, task_id, task_version):
+    def get_federated_task_status(cls, job_id, task_id, task_version):
         tasks_on_all_party = JobSaver.query_task(task_id=task_id, task_version=task_version)
         status_flag = 0
         # idmapping role status can only be ignored if all non-idmapping roles success

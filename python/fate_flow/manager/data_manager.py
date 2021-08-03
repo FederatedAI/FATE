@@ -16,6 +16,7 @@
 import operator
 
 from fate_arch import storage
+from fate_arch.session import Session
 from fate_flow.settings import stat_logger
 from fate_flow.db.db_models import DB, TrackingMetric
 
@@ -42,7 +43,7 @@ def delete_tables_by_table_infos(output_data_table_infos):
         namespace = output_data_table_info.f_table_namespace
         table_info = {'table_name': table_name, 'namespace': namespace}
         if table_name and namespace and table_info not in data:
-            with storage.Session.build(name=table_name, namespace=namespace) as storage_session:
+            with Session().new_storage(name=table_name, namespace=namespace) as storage_session:
                 table = storage_session.get_table()
                 try:
                     table.destroy()

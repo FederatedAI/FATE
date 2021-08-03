@@ -26,12 +26,13 @@ from fate_arch.common.log import audit_logger, schedule_logger
 from fate_arch.common import FederatedMode
 from fate_arch.common import conf_utils
 from fate_arch.common import CoordinationProxyService, CoordinationCommunicationProtocol
-from fate_flow.settings import DEFAULT_REMOTE_REQUEST_TIMEOUT, CHECK_NODES_IDENTITY,\
+from fate_flow.settings import CHECK_NODES_IDENTITY,\
     FATE_MANAGER_GET_NODE_INFO_ENDPOINT, HEADERS, API_VERSION, stat_logger
 from fate_flow.utils.grpc_utils import wrap_grpc_packet, get_command_federation_channel, gen_routing_metadata, \
     forward_grpc_packet
 from fate_flow.utils.service_utils import ServiceUtils
-from fate_flow.entity.runtime_config import RuntimeConfig
+from fate_flow.runtime_config import RuntimeConfig
+from fate_flow import job_default_settings
 
 
 def get_json_result(retcode=0, retmsg='success', data=None, job_id=None, meta=None):
@@ -58,7 +59,7 @@ def error_response(response_code, retmsg):
 
 
 def federated_api(job_id, method, endpoint, src_party_id, dest_party_id, src_role, json_body, federated_mode, api_version=API_VERSION,
-                  overall_timeout=DEFAULT_REMOTE_REQUEST_TIMEOUT):
+                  overall_timeout=job_default_settings.DEFAULT_REMOTE_REQUEST_TIMEOUT):
     if int(dest_party_id) == 0:
         federated_mode = FederatedMode.SINGLE
     if federated_mode == FederatedMode.SINGLE:
@@ -113,7 +114,7 @@ def get_federated_proxy_address(src_party_id, dest_party_id):
         raise RuntimeError(f"can not support coordinate proxy config {proxy_config}")
 
 
-def federated_coordination_on_http(job_id, method, host, port, endpoint, src_party_id, src_role, dest_party_id, json_body, api_version=API_VERSION, overall_timeout=DEFAULT_REMOTE_REQUEST_TIMEOUT, try_times=3):
+def federated_coordination_on_http(job_id, method, host, port, endpoint, src_party_id, src_role, dest_party_id, json_body, api_version=API_VERSION, overall_timeout=job_default_settings.DEFAULT_REMOTE_REQUEST_TIMEOUT, try_times=3):
     endpoint = f"/{api_version}{endpoint}"
     exception = None
     for t in range(try_times):
@@ -139,7 +140,7 @@ def federated_coordination_on_http(job_id, method, host, port, endpoint, src_par
 
 
 def federated_coordination_on_grpc(job_id, method, host, port, endpoint, src_party_id, src_role, dest_party_id, json_body, api_version=API_VERSION,
-                                   overall_timeout=DEFAULT_REMOTE_REQUEST_TIMEOUT, try_times=3):
+                                   overall_timeout=job_default_settings.DEFAULT_REMOTE_REQUEST_TIMEOUT, try_times=3):
     endpoint = f"/{api_version}{endpoint}"
     json_body['src_role'] = src_role
     json_body['src_party_id'] = src_party_id
@@ -180,7 +181,7 @@ def proxy_api(role, _job_id, request_config):
     dest_party_id = request_config.get('header').get('dest_party_id')
     json_body = request_config.get('body')
     _packet = forward_grpc_packet(json_body, method, endpoint, src_party_id, dest_party_id, job_id=job_id, role=role,
-                                  overall_timeout=DEFAULT_REMOTE_REQUEST_TIMEOUT)
+                                  overall_timeout=job_default_settings.DEFAULT_REMOTE_REQUEST_TIMEOUT)
     _routing_metadata = gen_routing_metadata(src_party_id=src_party_id, dest_party_id=dest_party_id)
     host, port, protocol = get_federated_proxy_address(src_party_id, dest_party_id)
     channel, stub = get_command_federation_channel(host, port)

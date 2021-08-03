@@ -24,10 +24,11 @@ from os.path import join, getsize
 from fate_arch.common import file_utils
 from fate_arch.protobuf.python import default_empty_fill_pb2
 from fate_flow.settings import stat_logger, TEMP_DIRECTORY
+from fate_flow.entity.types import ComponentProviderName
 
 
 class PipelinedModel(object):
-    def __init__(self, model_id, model_version):
+    def __init__(self, model_id, model_version, component_type: ComponentProviderName = None, component_version = None):
         """
         Support operations on FATE PipelinedModels
         TODO: add lock
@@ -38,10 +39,13 @@ class PipelinedModel(object):
         self.model_version = model_version
         self.model_path = os.path.join(file_utils.get_project_base_directory(), "model_local_cache", model_id, model_version)
         self.define_proto_path = os.path.join(self.model_path, "define", "proto")
+        self.define_proto_generated_path = os.path.join(self.model_path, "define", "proto_generated_python")
         self.define_meta_path = os.path.join(self.model_path, "define", "define_meta.yaml")
         self.variables_index_path = os.path.join(self.model_path, "variables", "index")
         self.variables_data_path = os.path.join(self.model_path, "variables", "data")
         self.default_archive_format = "zip"
+        self.component_type = component_type
+        self.component_version = component_version
 
     def create_pipelined_model(self):
         if os.path.exists(self.model_path):
@@ -52,7 +56,8 @@ class PipelinedModel(object):
             os.makedirs(self.model_path, exist_ok=False)
         for path in [self.variables_index_path, self.variables_data_path]:
             os.makedirs(path, exist_ok=False)
-        shutil.copytree(os.path.join(file_utils.get_python_base_directory(), "federatedml", "protobuf", "proto"), self.define_proto_path)
+        shutil.copytree(os.path.join(file_utils.get_python_base_directory(), "fate_flow", "protobuf", "python"), self.define_proto_path)
+        shutil.copytree(os.path.join(file_utils.get_python_base_directory(), "fate_flow", "protobuf", "python"), self.define_proto_generated_path)
         with open(self.define_meta_path, "w", encoding="utf-8") as fw:
             yaml.dump({"describe": "This is the model definition meta"}, fw, Dumper=yaml.RoundTripDumper)
 
@@ -195,15 +200,20 @@ class PipelinedModel(object):
                 stat_logger.exception(e2)
                 raise e1
 
-    @classmethod
-    def get_proto_buffer_class(cls, buffer_name):
-        package_path = os.path.join(file_utils.get_python_base_directory(), 'federatedml', 'protobuf', 'generated')
+    def get_proto_buffer_class(self, buffer_name):
+        #package_path = os.path.join(file_utils.get_python_base_directory(), 'federatedml', 'protobuf', 'generated')
+        package_path = self.define_proto_generated_path
+        print("get_proto_buffer_class")
+        print(buffer_name)
+        print(package_path)
         package_python_path = 'federatedml.protobuf.generated'
         for f in os.listdir(package_path):
+            print(f)
             if f.startswith('.'):
                 continue
             try:
                 proto_module = importlib.import_module(package_python_path + '.' + f.rstrip('.py'))
+                print(proto_module)
                 for name, obj in inspect.getmembers(proto_module):
                     if inspect.isclass(obj) and name == buffer_name:
                         return obj

@@ -71,6 +71,10 @@ fate_on_spark:
     host: 127.0.0.1
     http_port: 9300
     grpc_port: 9310
+fate_on_standalone:
+  standalone:
+    cores_per_node: 20
+    nodes: 1
 model_store_address:
   storage: mysql
   name: model

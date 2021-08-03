@@ -16,7 +16,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from fate_flow.entity.types import RunParameters
+from fate_flow.entity.run_parameters import RunParameters
 
 
 class JobRuntimeConfigAdapter(object):

@@ -15,19 +15,21 @@
 #
 import sys
 
-from fate_arch.common import FederatedCommunicationType
+from fate_arch.common import FederatedCommunicationType, file_utils
 from fate_arch.common.log import schedule_logger
 from fate_flow.db.db_models import Task
 from fate_flow.operation.task_executor import TaskExecutor
 from fate_flow.scheduler.federated_scheduler import FederatedScheduler
-from fate_flow.entity.types import TaskStatus, EndStatus, KillProcessStatusCode
-from fate_flow.entity.runtime_config import RuntimeConfig
+from fate_flow.entity.run_status import TaskStatus, EndStatus
+from fate_flow.entity.types import KillProcessRetCode
+from fate_flow.entity.component_provider import ComponentProvider
+from fate_flow.runtime_config import RuntimeConfig
 from fate_flow.utils import job_utils
 import os
 from fate_flow.operation.job_saver import JobSaver
 from fate_arch.common.base_utils import json_dumps, current_timestamp
 from fate_arch.common import base_utils
-from fate_flow.entity.types import RunParameters
+from fate_flow.entity.run_parameters import RunParameters
 from fate_flow.manager.resource_manager import ResourceManager
 from fate_flow.operation.job_tracker import Tracker
 from fate_arch.computing import ComputingEngine
@@ -78,6 +80,7 @@ class TaskController(object):
             "party_id": party_id,
         }
         try:
+            task = JobSaver.query_task(task_id=task_id, task_version=task_version)[0]
             task_dir = os.path.join(job_utils.get_job_directory(job_id=job_id), role, party_id, component_name, task_id, task_version)
             os.makedirs(task_dir, exist_ok=True)
             task_parameters_path = os.path.join(task_dir, 'task_parameters.json')
@@ -88,6 +91,8 @@ class TaskController(object):
             run_parameters = RunParameters(**run_parameters_dict)
 
             schedule_logger(job_id=job_id).info(f"use computing engine {run_parameters.computing_engine}")
+
+            provider = ComponentProvider(**task.f_provider_info)
 
             if run_parameters.computing_engine in {ComputingEngine.EGGROLL, ComputingEngine.STANDALONE}:
                 process_cmd = [
@@ -143,7 +148,7 @@ class TaskController(object):
             task_job_dir = os.path.join(job_utils.get_job_directory(job_id=job_id), role, party_id, component_name)
             schedule_logger(job_id).info(
                 'job {} task {} {} on {} {} executor subprocess is ready'.format(job_id, task_id, task_version, role, party_id))
-            p = job_utils.run_subprocess(job_id=job_id, config_dir=task_dir, process_cmd=process_cmd, log_dir=task_log_dir, job_dir=task_job_dir)
+            p = job_utils.run_subprocess(job_id=job_id, config_dir=task_dir, process_cmd=process_cmd, extra_env=provider.env, log_dir=task_log_dir, job_dir=task_job_dir)
             if p:
                 task_info["party_status"] = TaskStatus.RUNNING
                 #task_info["run_pid"] = p.pid
@@ -239,7 +244,7 @@ class TaskController(object):
             # kill task executor
             kill_status_code = job_utils.kill_task_executor_process(task)
             # session stop
-            if kill_status_code == KillProcessStatusCode.KILLED or task.f_status not in {TaskStatus.WAITING}:
+            if kill_status_code == KillProcessRetCode.KILLED or task.f_status not in {TaskStatus.WAITING}:
                 job_utils.start_session_stop(task)
         except Exception as e:
             schedule_logger(task.f_job_id).exception(e)

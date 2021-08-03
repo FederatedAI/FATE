@@ -24,16 +24,17 @@ from google.protobuf import json_format
 
 from fate_arch.common.base_utils import fate_uuid
 from fate_arch import storage
+from fate_arch.session import Session
 from fate_flow.db.db_models import Job, DB
 from fate_flow.manager.data_manager import delete_metric_data
 from fate_flow.operation.job_tracker import Tracker
 from fate_flow.operation.job_saver import JobSaver
 from fate_flow.scheduler.federated_scheduler import FederatedScheduler
 from fate_flow.settings import stat_logger, TEMP_DIRECTORY
-from fate_flow.utils import job_utils, data_utils, detect_utils, schedule_utils
+from fate_flow.utils import job_utils, detect_utils, schedule_utils
 from fate_flow.utils.api_utils import get_json_result, error_response
 from fate_flow.utils.config_adapter import JobRuntimeConfigAdapter
-from federatedml.feature.instance import Instance
+from fate_flow.component_env_utils import feature_utils
 
 manager = Flask(__name__)
 
@@ -139,25 +140,22 @@ def component_metric_delete():
 def component_parameters():
     request_data = request.json
     check_request_parameters(request_data)
-    job_id = request_data.get('job_id', '')
-    job_dsl_parser = schedule_utils.get_job_dsl_parser_by_job_id(job_id=job_id)
-    if job_dsl_parser:
-        component = job_dsl_parser.get_component_info(request_data['component_name'])
-        parameters = component.get_role_parameters()
-        for role, partys_parameters in parameters.items():
-            for party_parameters in partys_parameters:
-                if party_parameters.get('local', {}).get('role', '') == request_data['role'] and party_parameters.get(
-                        'local', {}).get('party_id', '') == int(request_data['party_id']):
-                    output_parameters = {}
-                    output_parameters['module'] = party_parameters.get('module', '')
-                    for p_k, p_v in party_parameters.items():
-                        if p_k.endswith('Param'):
-                            output_parameters[p_k] = p_v
-                    return get_json_result(retcode=0, retmsg='success', data=output_parameters)
-        else:
-            return get_json_result(retcode=0, retmsg='can not found this component parameters')
+    tasks = JobSaver.query_task(only_latest=True, **request_data)
+    if not tasks:
+        return get_json_result(retcode=101, retmsg='can not found this task')
+    parameters = tasks[0].f_component_paramters
+    for role, partys_parameters in parameters.items():
+        for party_parameters in partys_parameters:
+            if party_parameters.get('local', {}).get('role', '') == request_data['role'] and party_parameters.get(
+                    'local', {}).get('party_id', '') == int(request_data['party_id']):
+                output_parameters = {}
+                output_parameters['module'] = party_parameters.get('module', '')
+                for p_k, p_v in party_parameters.items():
+                    if p_k.endswith('Param'):
+                        output_parameters[p_k] = p_v
+                return get_json_result(retcode=0, retmsg='success', data=output_parameters)
     else:
-        return get_json_result(retcode=101, retmsg='can not found this job')
+        return get_json_result(retcode=0, retmsg='can not found this component parameters')
 
 
 @manager.route('/component/output/model', methods=['post'])
@@ -188,9 +186,9 @@ def component_output_model():
     tracker = Tracker(job_id=request_data['job_id'], component_name=request_data['component_name'],
                       role=request_data['role'], party_id=request_data['party_id'], model_id=model_id,
                       model_version=model_version)
-    dag = schedule_utils.get_job_dsl_parser(dsl=job_dsl, runtime_conf=job_runtime_conf,
-                                            train_runtime_conf=train_runtime_conf)
-    component = dag.get_component_info(request_data['component_name'])
+    dsl_parser = schedule_utils.get_job_dsl_parser(dsl=job_dsl, runtime_conf=job_runtime_conf,
+                                                   train_runtime_conf=train_runtime_conf)
+    component = dsl_parser.get_component_info(request_data['component_name'])
     output_model_json = {}
     # There is only one model output at the current dsl version.
     output_model = tracker.get_output_model(component.get_output()['model'][0] if component.get_output().get('model') else 'default')
@@ -273,7 +271,7 @@ def component_output_data_download():
         output_data_file_path = "{}/{}.csv".format(output_tmp_dir, output_name)
         os.makedirs(os.path.dirname(output_data_file_path), exist_ok=True)
         with open(output_data_file_path, 'w') as fw:
-            with storage.Session.build(name=output_table_meta.get_name(), namespace=output_table_meta.get_namespace()) as storage_session:
+            with Session().new_storage(name=output_table_meta.get_name(), namespace=output_table_meta.get_namespace()) as storage_session:
                 output_table = storage_session.get_table()
                 for k, v in output_table.collect():
                     data_line, have_data_label, is_str, have_weight = get_component_output_data_line(src_key=k, src_value=v)
@@ -368,12 +366,6 @@ def get_component_output_tables_meta(task_data):
     check_request_parameters(task_data)
     tracker = Tracker(job_id=task_data['job_id'], component_name=task_data['component_name'],
                       role=task_data['role'], party_id=task_data['party_id'])
-    job_dsl_parser = schedule_utils.get_job_dsl_parser_by_job_id(job_id=task_data['job_id'])
-    if not job_dsl_parser:
-        raise Exception('can not get dag parser, please check if the parameters are correct')
-    component = job_dsl_parser.get_component_info(task_data['component_name'])
-    if not component:
-        raise Exception('can not found component, please check if the parameters are correct')
     output_data_table_infos = tracker.get_output_data_info()
     output_tables_meta = tracker.get_output_data_table(output_data_infos=output_data_table_infos)
     return output_tables_meta
@@ -384,11 +376,11 @@ def get_component_output_data_line(src_key, src_value):
     have_weight = False
     data_line = [src_key]
     is_str = False
-    if isinstance(src_value, Instance):
+    if isinstance(src_value, feature_utils.Instance):
         if src_value.label is not None:
             data_line.append(src_value.label)
             have_data_label = True
-        data_line.extend(data_utils.dataset_to_list(src_value.features))
+        data_line.extend(feature_utils.dataset_to_list(src_value.features))
         if src_value.weight is not None:
             have_weight = True
             data_line.append(src_value.weight)
@@ -396,7 +388,7 @@ def get_component_output_data_line(src_key, src_value):
         data_line.extend([value for value in src_value.split(',')])
         is_str = True
     else:
-        data_line.extend(data_utils.dataset_to_list(src_value))
+        data_line.extend(feature_utils.dataset_to_list(src_value))
     return data_line, have_data_label, is_str, have_weight
 
 

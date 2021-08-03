@@ -10,12 +10,11 @@ class StandaloneAddress(AddressABC):
 
 
 class EggRollAddress(AddressABC):
-    def __init__(self, host=None, port=None, home=None, name=None, namespace=None, storage_type=None):
+    def __init__(self, host=None, port=None, home=None, name=None, namespace=None):
         self.host = host
         self.port = port
         self.name = name
         self.namespace = namespace
-        self.storage_type = storage_type
         self.home = home
 
 

@@ -16,11 +16,7 @@
 # -*- coding: utf-8 -*-
 import os
 
-from fate_arch.computing import ComputingEngine
-from fate_arch.federation import FederationEngine
-from fate_arch.storage import StorageEngine
-from fate_arch.common import file_utils, log, EngineType
-from fate_flow.entity.runtime_config import RuntimeConfig
+from fate_arch.common import file_utils, log
 from fate_arch.common.conf_utils import get_base_config
 import __main__
 
@@ -32,6 +28,8 @@ MAIN_MODULE = os.path.relpath(__main__.__file__)
 SERVER_MODULE = "fate_flow_server.py"
 TEMP_DIRECTORY = os.path.join(
     file_utils.get_project_base_directory(), "temp", "fate_flow")
+FATE_FLOW_DIRECTORY = os.path.join(file_utils.get_python_base_directory(), "fate_flow")
+SUBPROCESS_STD_LOG_NAME = "std.log"
 HEADERS = {
     "Content-Type": "application/json",
     "Connection": "close",
@@ -54,41 +52,6 @@ FATE_SERVICES_REGISTERED_PATH = {
     "fateflow": "/FATE-SERVICES/flow/online/transfer/providers",
     "servings": "/FATE-SERVICES/serving/online/publishLoad/providers",
 }
-
-# Resource
-TOTAL_CORES_OVERWEIGHT_PERCENT = 1  # 1 means no overweight
-TOTAL_MEMORY_OVERWEIGHT_PERCENT = 1  # 1 means no overweight
-DEFAULT_TASK_PARALLELISM = 1
-DEFAULT_TASK_CORES = 4
-DEFAULT_TASK_MEMORY = 0  # mb
-MAX_CORES_PERCENT_PER_JOB = 1  # 1 means total
-STANDALONE_BACKEND_VIRTUAL_CORES_PER_NODE = 20
-IGNORE_RESOURCE_ROLES = {"arbiter"}
-SUPPORT_IGNORE_RESOURCE_ENGINES = {
-    ComputingEngine.EGGROLL, ComputingEngine.STANDALONE}
-
-# Storage engine is used for component output data
-SUPPORT_BACKENDS_ENTRANCE = {
-    "fate_on_eggroll": {
-        EngineType.COMPUTING: [(ComputingEngine.EGGROLL, "clustermanager")],
-        EngineType.STORAGE: [(StorageEngine.EGGROLL, "clustermanager")],
-        EngineType.FEDERATION: [(FederationEngine.EGGROLL, "rollsite")],
-    },
-    "fate_on_spark": {
-        EngineType.COMPUTING: [(ComputingEngine.SPARK, "spark")],
-        EngineType.STORAGE: [(StorageEngine.HDFS, "hdfs")],
-        EngineType.FEDERATION: [
-            (FederationEngine.RABBITMQ, "rabbitmq"), (FederationEngine.PULSAR, "pulsar")]
-    }
-}
-
-# Scheduling
-DEFAULT_REMOTE_REQUEST_TIMEOUT = 30 * 1000  # ms
-DEFAULT_FEDERATED_COMMAND_TRYS = 3
-JOB_DEFAULT_TIMEOUT = 3 * 24 * 60 * 60
-JOB_START_TIMEOUT = 60 * 1000  # ms
-END_STATUS_JOB_SCHEDULING_TIME_LIMIT = 5 * 60 * 1000  # ms
-END_STATUS_JOB_SCHEDULING_UPDATES = 1
 
 # Endpoint
 FATE_FLOW_MODEL_TRANSFER_ENDPOINT = "/v1/model/transfer"
@@ -114,7 +77,3 @@ PRIVILEGE_COMMAND_WHITELIST = []
 CHECK_NODES_IDENTITY = False
 DEFAULT_FEDERATED_STATUS_COLLECT_TYPE = get_base_config(
     FATEFLOW_SERVICE_NAME, {}).get("default_federated_status_collect_type", "PUSH")
-
-# Init
-RuntimeConfig.init_config(WORK_MODE=WORK_MODE)
-RuntimeConfig.init_config(JOB_SERVER_HOST=IP, HTTP_PORT=HTTP_PORT)

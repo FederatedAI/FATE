@@ -19,43 +19,31 @@ import typing
 
 from fate_arch.common import EngineType
 from fate_arch.common import base_utils
-from fate_arch.common.conf_utils import get_base_config
 from fate_arch.common.log import schedule_logger
 from fate_arch.computing import ComputingEngine
+from fate_arch.common import engine_utils
 from fate_flow.db.db_models import DB, EngineRegistry, Job
-from fate_flow.entity.types import ResourceOperation, RunParameters
-from fate_flow.settings import stat_logger, STANDALONE_BACKEND_VIRTUAL_CORES_PER_NODE, SUPPORT_BACKENDS_ENTRANCE, \
-    MAX_CORES_PERCENT_PER_JOB, DEFAULT_TASK_CORES, IGNORE_RESOURCE_ROLES, SUPPORT_IGNORE_RESOURCE_ENGINES, TOTAL_CORES_OVERWEIGHT_PERCENT, TOTAL_MEMORY_OVERWEIGHT_PERCENT
+from fate_flow.entity.types import ResourceOperation
+from fate_flow.entity.run_parameters import RunParameters
+from fate_flow.settings import stat_logger
 from fate_flow.utils import job_utils
+from fate_flow import job_default_settings
 
 
 class ResourceManager(object):
     @classmethod
     def initialize(cls):
-        for backend_name, backend_engines in SUPPORT_BACKENDS_ENTRANCE.items():
-            for engine_type, engine_keys_list in backend_engines.items():
-                for engine_keys in engine_keys_list:
-                    engine_config = get_base_config(backend_name, {}).get(engine_keys[1], {})
-                    if engine_config:
-                        cls.register_engine(engine_type=engine_type, engine_name=engine_keys[0], engine_entrance=engine_keys[1], engine_config=engine_config)
-
-        # initialize standalone engine
-        for backend_engines in SUPPORT_BACKENDS_ENTRANCE.values():
-            for engine_type in backend_engines.keys():
-                engine_name = "STANDALONE"
-                engine_entrance = "fateflow"
-                engine_config = {
-                    "nodes": 1,
-                    "cores_per_node": STANDALONE_BACKEND_VIRTUAL_CORES_PER_NODE,
-                }
-                cls.register_engine(engine_type=engine_type, engine_name=engine_name, engine_entrance=engine_entrance, engine_config=engine_config)
+        engines_config, engine_group_map = engine_utils.get_engines_config_from_conf(group_map=True)
+        for engine_type, engine_configs in engines_config.items():
+            for engine_name, engine_config in engine_configs.items():
+                cls.register_engine(engine_type=engine_type, engine_name=engine_name, engine_entrance=engine_group_map[engine_type][engine_name], engine_config=engine_config)
 
     @classmethod
     @DB.connection_context()
     def register_engine(cls, engine_type, engine_name, engine_entrance, engine_config):
         nodes = engine_config.get("nodes", 1)
-        cores = engine_config.get("cores_per_node", 0) * nodes * TOTAL_CORES_OVERWEIGHT_PERCENT
-        memory = engine_config.get("memory_per_node", 0) * nodes * TOTAL_MEMORY_OVERWEIGHT_PERCENT
+        cores = engine_config.get("cores_per_node", 0) * nodes * job_default_settings.TOTAL_CORES_OVERWEIGHT_PERCENT
+        memory = engine_config.get("memory_per_node", 0) * nodes * job_default_settings.TOTAL_MEMORY_OVERWEIGHT_PERCENT
         filters = [EngineRegistry.f_engine_type == engine_type, EngineRegistry.f_engine_name == engine_name]
         resources = EngineRegistry.select().where(*filters)
         if resources:
@@ -97,7 +85,7 @@ class ResourceManager(object):
     @classmethod
     def check_resource_apply(cls, job_parameters: RunParameters, role, party_id, engines_info):
         computing_engine, cores, memory = cls.calculate_job_resource(job_parameters=job_parameters, role=role, party_id=party_id)
-        max_cores_per_job = math.floor(engines_info[EngineType.COMPUTING].f_cores * MAX_CORES_PERCENT_PER_JOB)
+        max_cores_per_job = math.floor(engines_info[EngineType.COMPUTING].f_cores * job_default_settings.MAX_CORES_PERCENT_PER_JOB)
         if cores > max_cores_per_job:
             return False, cores, max_cores_per_job
         else:
@@ -186,7 +174,7 @@ class ResourceManager(object):
                 "task_cores_per_node": 0,
                 "task_memory_per_node": 0,
                 # request_task_cores base on initiator and distribute to all parties, using job conf parameters or initiator fateflow server default settings
-                "request_task_cores": int(job_parameters.task_cores) if job_parameters.task_cores else DEFAULT_TASK_CORES,
+                "request_task_cores": int(job_parameters.task_cores) if job_parameters.task_cores else job_default_settings.TASK_CORES,
                 "if_initiator_baseline": True
             }
         else:
@@ -227,7 +215,7 @@ class ResourceManager(object):
                                                           role=role,
                                                           party_id=party_id)
             job_parameters = RunParameters(**job_parameters)
-        if role in IGNORE_RESOURCE_ROLES and job_parameters.computing_engine in SUPPORT_IGNORE_RESOURCE_ENGINES:
+        if role in job_default_settings.IGNORE_RESOURCE_ROLES and job_parameters.computing_engine in job_default_settings.SUPPORT_IGNORE_RESOURCE_ENGINES:
             cores = 0
             memory = 0
         else:
@@ -244,7 +232,7 @@ class ResourceManager(object):
                                                           role=task_info["role"],
                                                           party_id=task_info["party_id"])
             task_parameters = RunParameters(**job_parameters)
-        if task_info["role"] in IGNORE_RESOURCE_ROLES and task_parameters.computing_engine in SUPPORT_IGNORE_RESOURCE_ENGINES:
+        if task_info["role"] in job_default_settings.IGNORE_RESOURCE_ROLES and task_parameters.computing_engine in job_default_settings.SUPPORT_IGNORE_RESOURCE_ENGINES:
             cores_per_task = 0
             memory_per_task = 0
         else:

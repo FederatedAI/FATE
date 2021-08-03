@@ -62,7 +62,7 @@ class StorageTableMetaABC(metaclass=abc.ABCMeta):
         ...
 
     @abc.abstractmethod
-    def get_type(self):
+    def get_store_type(self):
         ...
 
     @abc.abstractmethod
@@ -124,7 +124,7 @@ class StorageTableABC(metaclass=abc.ABCMeta):
         ...
 
     @abc.abstractmethod
-    def get_type(self):
+    def get_store_type(self):
         ...
 
     @abc.abstractmethod
@@ -135,12 +135,14 @@ class StorageTableABC(metaclass=abc.ABCMeta):
     def get_partitions(self):
         ...
 
+    @property
     @abc.abstractmethod
-    def set_meta(self, meta: StorageTableMetaABC):
+    def meta(self) -> StorageTableMetaABC:
         ...
 
+    @meta.setter
     @abc.abstractmethod
-    def get_meta(self) -> StorageTableMetaABC:
+    def meta(self, meta: StorageTableMetaABC):
         ...
 
     @abc.abstractmethod
@@ -179,7 +181,7 @@ class StorageSessionABC(metaclass=abc.ABCMeta):
         ...
 
     @abc.abstractmethod
-    def query_expired_sessions_record(self, ttl) -> []:
+    def destroy(self):
         ...
 
     @abc.abstractmethod

@@ -19,7 +19,7 @@ from typing import Iterable
 
 
 from fate_arch.common.log import getLogger
-from fate_arch.storage import StorageEngine, FileStorageType
+from fate_arch.storage import StorageEngine, FileStoreType
 from fate_arch.storage import StorageTableBase
 
 LOGGER = getLogger()
@@ -31,7 +31,7 @@ class StorageTable(StorageTableBase):
                  name: str = None,
                  namespace: str = None,
                  partitions: int = 1,
-                 storage_type: FileStorageType = None,
+                 store_type: FileStoreType = None,
                  delimiter=None,
                  options=None):
         super(StorageTable, self).__init__(name=name, namespace=namespace)
@@ -39,7 +39,7 @@ class StorageTable(StorageTableBase):
         self._name = name
         self._namespace = namespace
         self._partitions = partitions
-        self._type = storage_type if storage_type else FileStorageType.CSV
+        self._store_type = store_type if store_type else FileStoreType.CSV
         self._options = options if options else {}
         self._engine = StorageEngine.FILE
         self._delimiter = delimiter
@@ -56,8 +56,8 @@ class StorageTable(StorageTableBase):
     def get_engine(self):
         return self._engine
 
-    def get_type(self):
-        return self._type
+    def get_store_type(self):
+        return self._store_type
 
     def get_partitions(self):
         return self._partitions
@@ -70,7 +70,7 @@ class StorageTable(StorageTableBase):
 
     def collect(self, **kwargs) -> list:
         if not self._delimiter:
-            if self._type == FileStorageType.CSV:
+            if self._store_type == FileStoreType.CSV:
                 self._delimiter = ','
         pass
 

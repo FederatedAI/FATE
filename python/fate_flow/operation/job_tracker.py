@@ -15,7 +15,7 @@
 #
 import operator
 import copy
-from typing import List
+import typing
 
 from fate_arch.common import EngineType, Party
 from fate_arch.computing import ComputingEngine
@@ -26,12 +26,12 @@ from fate_arch.common.log import schedule_logger
 from fate_flow.db.db_models import (DB, Job, TrackingMetric, TrackingOutputDataInfo,
                                     ComponentSummary, MachineLearningModelInfo as MLModel)
 from fate_flow.entity.metric import Metric, MetricMeta
-from fate_flow.entity.runtime_config import RuntimeConfig
+from fate_flow.runtime_config import RuntimeConfig
 from fate_flow.pipelined_model import pipelined_model
 from fate_arch import storage
 from fate_flow.utils import model_utils, job_utils, data_utils
 from fate_arch import session
-from fate_flow.entity.types import RunParameters
+from fate_flow.entity.run_parameters import RunParameters
 
 
 class Tracker(object):
@@ -52,23 +52,25 @@ class Tracker(object):
                  job_parameters: RunParameters = None
                  ):
         self.job_id = job_id
+        self.job_parameters = job_parameters
         self.role = role
         self.party_id = party_id
+        self.component_name = component_name if component_name else job_utils.job_pipeline_component_name()
+        self.module_name = component_module_name if component_module_name else job_utils.job_pipeline_component_module_name()
+        self.task_id = task_id
+        self.task_version = task_version
+
         self.model_id = model_id
         self.party_model_id = model_utils.gen_party_model_id(model_id=model_id, role=role, party_id=party_id)
         self.model_version = model_version
         self.pipelined_model = None
         if self.party_model_id and self.model_version:
             self.pipelined_model = pipelined_model.PipelinedModel(model_id=self.party_model_id,
-                                                                  model_version=self.model_version)
+                                                                  model_version=self.model_version,
+                                                                  component_type=self.job_parameters.component_provider if self.job_parameters else None,
+                                                                  component_version=self.job_parameters.component_version if self.job_parameters else None)
 
-        self.component_name = component_name if component_name else job_utils.job_virtual_component_name()
-        self.module_name = component_module_name if component_module_name else job_utils.job_virtual_component_module_name()
-        self.task_id = task_id
-        self.task_version = task_version
-        self.job_parameters = job_parameters
-
-    def save_metric_data(self, metric_namespace: str, metric_name: str, metrics: List[Metric], job_level=False):
+    def save_metric_data(self, metric_namespace: str, metric_name: str, metrics: typing.List[Metric], job_level=False):
         schedule_logger(self.job_id).info(
             'save job {} component {} on {} {} {} {} metric data'.format(self.job_id, self.component_name, self.role,
                                                                          self.party_id, metric_namespace, metric_name))
@@ -122,38 +124,17 @@ class Tracker(object):
             schedule_logger(self.job_id).info(
                 'persisting the component output temporary table to {} {}'.format(output_table_namespace,
                                                                                   output_table_name))
-            partitions = computing_table.partitions
-            schedule_logger(self.job_id).info('output data table partitions is {}'.format(partitions))
-            address_dict = output_storage_address.copy()
-            if output_storage_engine == StorageEngine.EGGROLL:
-                address_dict.update({"name": output_table_name, "namespace": output_table_namespace, "storage_type": storage.EggRollStorageType.ROLLPAIR_LMDB})
-            elif output_storage_engine == StorageEngine.STANDALONE:
-                address_dict.update({"name": output_table_name, "namespace": output_table_namespace, "storage_type": storage.StandaloneStorageType.ROLLPAIR_LMDB})
-            elif output_storage_engine == StorageEngine.HDFS:
-                address_dict.update({"path": data_utils.default_output_fs_path(name=output_table_name, namespace=output_table_namespace, prefix=address_dict.get("path_prefix"))})
-            else:
-                raise RuntimeError(f"{output_storage_engine} storage is not supported")
-            address = storage.StorageTableMeta.create_address(storage_engine=output_storage_engine, address_dict=address_dict)
-            schema = {}
-            # persistent table
-            computing_table.save(address, schema=schema, partitions=partitions)
-            part_of_data = []
-            part_of_limit = 100
-            for k, v in computing_table.collect():
-                part_of_data.append((k, v))
-                part_of_limit -= 1
-                if part_of_limit == 0:
-                    break
-            table_count = computing_table.count()
-            table_meta = storage.StorageTableMeta(name=output_table_name, namespace=output_table_namespace, new=True)
-            table_meta.address = address
-            table_meta.partitions = computing_table.partitions
-            table_meta.engine = output_storage_engine
-            table_meta.type = storage.EggRollStorageType.ROLLPAIR_LMDB
-            table_meta.schema = schema
-            table_meta.part_of_data = part_of_data
-            table_meta.count = table_count
-            table_meta.create()
+
+            schedule_logger(self.job_id).info('output data table partitions is {}'.format(computing_table.partitions))
+
+            if output_storage_engine == StorageEngine.HDFS:
+                output_storage_address.update({"path": data_utils.default_output_fs_path(name=output_table_name, namespace=output_table_namespace, prefix=output_storage_address.get("path_prefix"))})
+
+            session.Session.persistent(computing_table=computing_table,
+                                       table_namespace=output_table_namespace,
+                                       table_name=output_table_name,
+                                       engine=output_storage_engine,
+                                       engine_address=output_storage_address)
             return output_table_namespace, output_table_name
         else:
             schedule_logger(self.job_id).info('task id {} output data table is none'.format(self.task_id))
@@ -204,7 +185,7 @@ class Tracker(object):
         try:
             tracking_metric = self.get_dynamic_db_model(TrackingMetric, self.job_id)()
             tracking_metric.f_job_id = self.job_id
-            tracking_metric.f_component_name = (self.component_name if not job_level else job_utils.job_virtual_component_name())
+            tracking_metric.f_component_name = (self.component_name if not job_level else job_utils.job_pipeline_component_name())
             tracking_metric.f_task_id = self.task_id
             tracking_metric.f_task_version = self.task_version
             tracking_metric.f_role = self.role
@@ -338,7 +319,7 @@ class Tracker(object):
             tracking_metric_model = self.get_dynamic_db_model(TrackingMetric, self.job_id)
             tracking_metrics = tracking_metric_model.select(tracking_metric_model.f_key, tracking_metric_model.f_value).where(
                 tracking_metric_model.f_job_id == self.job_id,
-                tracking_metric_model.f_component_name == (self.component_name if not job_level else job_utils.job_virtual_component_name()),
+                tracking_metric_model.f_component_name == (self.component_name if not job_level else job_utils.job_pipeline_component_name()),
                 tracking_metric_model.f_role == self.role,
                 tracking_metric_model.f_party_id == self.party_id,
                 tracking_metric_model.f_metric_namespace == metric_namespace,
@@ -392,7 +373,7 @@ class Tracker(object):
 
     @classmethod
     @DB.connection_context()
-    def query_output_data_infos(cls, **kwargs):
+    def query_output_data_infos(cls, **kwargs) -> typing.List[TrackingOutputDataInfo]:
         tracking_output_data_info_model = cls.get_dynamic_db_model(TrackingOutputDataInfo, kwargs.get("job_id"))
         filters = []
         for f_n, f_v in kwargs.items():
@@ -411,7 +392,7 @@ class Tracker(object):
                 output_data_infos_group[group_key] = output_data_info
             elif output_data_info.f_task_version > output_data_infos_group[group_key].f_task_version:
                 output_data_infos_group[group_key] = output_data_info
-        return output_data_infos_group.values()
+        return list(output_data_infos_group.values())
 
     @classmethod
     def get_output_data_group_key(cls, task_id, data_name):
@@ -423,7 +404,7 @@ class Tracker(object):
                                                                              self.role,
                                                                              self.party_id))
         try:
-            sess = session.Session(computing_type=self.job_parameters.computing_engine, federation_type=self.job_parameters.federation_engine)
+            sess = session.Session(computing=self.job_parameters.computing_engine, federation=self.job_parameters.federation_engine)
             # clean up temporary tables
             computing_temp_namespace = job_utils.generate_session_id(task_id=self.task_id,
                                                                      task_version=self.task_version,
@@ -434,42 +415,45 @@ class Tracker(object):
             else:
                 session_options = {}
             sess.init_computing(computing_session_id=f"{computing_temp_namespace}_clean", options=session_options)
-            sess.computing.cleanup(namespace=computing_temp_namespace, name="*")
-            schedule_logger(self.job_id).info('clean table by namespace {} on {} {} done'.format(computing_temp_namespace,
-                                                                                                 self.role,
-                                                                                                 self.party_id))
-            # clean up the last tables of the federation
-            federation_temp_namespace = job_utils.generate_task_version_id(self.task_id, self.task_version)
-            sess.computing.cleanup(namespace=federation_temp_namespace, name="*")
-            schedule_logger(self.job_id).info('clean table by namespace {} on {} {} done'.format(federation_temp_namespace,
-                                                                                                 self.role,
-                                                                                                 self.party_id))
-            sess.computing.stop()
-            if self.job_parameters.federation_engine == FederationEngine.RABBITMQ and self.role != "local":
-                schedule_logger(self.job_id).info('rabbitmq start clean up')
-                parties = [Party(k, p) for k, v in runtime_conf['role'].items() for p in v]
-                federation_session_id = job_utils.generate_task_version_id(self.task_id, self.task_version)
-                component_parameters_on_party = copy.deepcopy(runtime_conf)
-                component_parameters_on_party["local"] = {"role": self.role, "party_id": self.party_id}
-                sess.init_federation(federation_session_id=federation_session_id,
-                                     runtime_conf=component_parameters_on_party,
-                                     service_conf=self.job_parameters.engines_address.get(EngineType.FEDERATION, {}))
-                sess._federation_session.cleanup(parties)
-                schedule_logger(self.job_id).info('rabbitmq clean up success')
+            try:
+                sess.computing.cleanup(namespace=computing_temp_namespace, name="*")
+                schedule_logger(self.job_id).info('clean table by namespace {} on {} {} done'.format(computing_temp_namespace,
+                                                                                                     self.role,
+                                                                                                     self.party_id))
+                # clean up the last tables of the federation
+                federation_temp_namespace = job_utils.generate_task_version_id(self.task_id, self.task_version)
+                sess.computing.cleanup(namespace=federation_temp_namespace, name="*")
+                schedule_logger(self.job_id).info('clean table by namespace {} on {} {} done'.format(federation_temp_namespace,
+                                                                                                     self.role,
+                                                                                                     self.party_id))
+                if self.job_parameters.federation_engine == FederationEngine.RABBITMQ and self.role != "local":
+                    schedule_logger(self.job_id).info('rabbitmq start clean up')
+                    parties = [Party(k, p) for k, v in runtime_conf['role'].items() for p in v]
+                    federation_session_id = job_utils.generate_task_version_id(self.task_id, self.task_version)
+                    component_parameters_on_party = copy.deepcopy(runtime_conf)
+                    component_parameters_on_party["local"] = {"role": self.role, "party_id": self.party_id}
+                    sess.init_federation(federation_session_id=federation_session_id,
+                                         runtime_conf=component_parameters_on_party,
+                                         service_conf=self.job_parameters.engines_address.get(EngineType.FEDERATION, {}))
+                    sess._federation_session.cleanup(parties)
+                    schedule_logger(self.job_id).info('rabbitmq clean up success')
 
-            #TODO optimize the clean process
-            if self.job_parameters.federation_engine == FederationEngine.PULSAR and self.role != "local": 
-                schedule_logger(self.job_id).info('start to clean up pulsar topics')
-                parties = [Party(k, p) for k, v in runtime_conf['role'].items() for p in v]
-                federation_session_id = job_utils.generate_task_version_id(self.task_id, self.task_version)
-                component_parameters_on_party = copy.deepcopy(runtime_conf)
-                component_parameters_on_party["local"] = {"role": self.role, "party_id": self.party_id}
-                sess.init_federation(federation_session_id=federation_session_id,
-                                     runtime_conf=component_parameters_on_party,
-                                     service_conf=self.job_parameters.engines_address.get(EngineType.FEDERATION, {}))
-                sess._federation_session.cleanup(parties)
-                schedule_logger(self.job_id).info('pulsar topic clean up success')
-                
+                #TODO optimize the clean process
+                if self.job_parameters.federation_engine == FederationEngine.PULSAR and self.role != "local":
+                    schedule_logger(self.job_id).info('start to clean up pulsar topics')
+                    parties = [Party(k, p) for k, v in runtime_conf['role'].items() for p in v]
+                    federation_session_id = job_utils.generate_task_version_id(self.task_id, self.task_version)
+                    component_parameters_on_party = copy.deepcopy(runtime_conf)
+                    component_parameters_on_party["local"] = {"role": self.role, "party_id": self.party_id}
+                    sess.init_federation(federation_session_id=federation_session_id,
+                                         runtime_conf=component_parameters_on_party,
+                                         service_conf=self.job_parameters.engines_address.get(EngineType.FEDERATION, {}))
+                    sess._federation_session.cleanup(parties)
+                    schedule_logger(self.job_id).info('pulsar topic clean up success')
+            except Exception as e:
+                schedule_logger(self.job_id).error("cleanup error")
+            finally:
+                sess.destroy_all_sessions()
             return True
         except Exception as e:
             schedule_logger(self.job_id).exception(e)

@@ -21,8 +21,10 @@ from fate_arch.common import file_utils, log, EngineType, profile
 from fate_arch.common.base_utils import current_timestamp, timestamp_to_date
 from fate_arch.common.log import schedule_logger, getLogger
 from fate_arch import session
-from fate_flow.entity.types import TaskStatus, ProcessRole, RunParameters
-from fate_flow.entity.runtime_config import RuntimeConfig
+from fate_flow.entity.types import ProcessRole
+from fate_flow.entity.run_status import TaskStatus
+from fate_flow.entity.run_parameters import RunParameters
+from fate_flow.runtime_config import RuntimeConfig
 from fate_flow.operation.job_tracker import Tracker
 from fate_arch import storage
 from fate_flow.utils import job_utils, schedule_utils
@@ -30,6 +32,7 @@ from fate_flow.scheduling_apps.client import ControllerClient
 from fate_flow.scheduling_apps.client import TrackerClient
 from fate_flow.db.db_models import TrackingOutputDataInfo, fill_db_model_object
 from fate_arch.computing import ComputingEngine
+from fate_flow.component_env_utils import dsl_utils
 
 LOGGER = getLogger()
 
@@ -53,19 +56,25 @@ class TaskExecutor(object):
             parser.add_argument('--run_ip', help="run ip", type=str)
             parser.add_argument('--job_server', help="job server", type=str)
             args = parser.parse_args()
-            schedule_logger(args.job_id).info('enter task process')
-            schedule_logger(args.job_id).info(args)
-            # init function args
-            if args.job_server:
-                RuntimeConfig.init_config(JOB_SERVER_HOST=args.job_server.split(':')[0],
-                                          HTTP_PORT=args.job_server.split(':')[1])
-                RuntimeConfig.set_process_role(ProcessRole.EXECUTOR)
             job_id = args.job_id
             component_name = args.component_name
             task_id = args.task_id
             task_version = args.task_version
             role = args.role
             party_id = args.party_id
+            schedule_logger(job_id).info('enter task executor process')
+            schedule_logger(job_id).info(args)
+            schedule_logger(job_id).info("python env: {}, python path: {}".format(os.getenv("VIRTUAL_ENV"), os.getenv("PYTHONPATH")))
+            # init function args
+            if args.job_server:
+                RuntimeConfig.init_config(JOB_SERVER_HOST=args.job_server.split(':')[0],
+                                          HTTP_PORT=args.job_server.split(':')[1])
+                RuntimeConfig.set_process_role(ProcessRole.EXECUTOR)
+            RuntimeConfig.load_component_registry()
+            task_parameters = RunParameters(**file_utils.load_json_conf(args.config))
+            job_parameters = task_parameters
+            if job_parameters.assistant_role:
+                TaskExecutor.monkey_patch()
             executor_pid = os.getpid()
             task_info.update({
                 "job_id": job_id,
@@ -84,22 +93,18 @@ class TaskExecutor(object):
             dsl_parser = schedule_utils.get_job_dsl_parser(dsl=job_dsl,
                                                            runtime_conf=job_runtime_conf,
                                                            train_runtime_conf=job_conf["train_runtime_conf_path"],
-                                                           pipeline_dsl=job_conf["pipeline_dsl_path"]
-                                                           )
-            party_index = job_runtime_conf["role"][role].index(party_id)
+                                                           pipeline_dsl=job_conf["pipeline_dsl_path"])
             job_args_on_party = TaskExecutor.get_job_args_on_party(dsl_parser, job_runtime_conf, role, party_id)
             component = dsl_parser.get_component_info(component_name=component_name)
-            component_parameters = component.get_role_parameters()
-            component_parameters_on_party = component_parameters[role][
-                party_index] if role in component_parameters else {}
+            component_provider, component_parameters_on_party = dsl_utils.get_component_run_info(dsl_parser=dsl_parser,
+                                                                                                 component_name=component_name,
+                                                                                                 role=role,
+                                                                                                 party_id=party_id)
+
             module_name = component.get_module()
             task_input_dsl = component.get_input()
             task_output_dsl = component.get_output()
             component_parameters_on_party['output_data_name'] = task_output_dsl.get('data')
-            task_parameters = RunParameters(**file_utils.load_json_conf(args.config))
-            job_parameters = task_parameters
-            if job_parameters.assistant_role:
-                TaskExecutor.monkey_patch()
             job_log_dir = os.path.join(job_utils.get_job_log_directory(job_id=job_id), role, str(party_id))
             task_log_dir = os.path.join(job_log_dir, component_name)
             log.LoggerFactory.set_directory(directory=task_log_dir, parent_log_dir=job_log_dir,
@@ -120,9 +125,6 @@ class TaskExecutor(object):
                                            model_version=job_parameters.model_version,
                                            component_module_name=module_name,
                                            job_parameters=job_parameters)
-            run_class_paths = component_parameters_on_party.get('CodePath').split('/')
-            run_class_package = '.'.join(run_class_paths[:-2]) + '.' + run_class_paths[-2].replace('.py', '')
-            run_class_name = run_class_paths[-1]
             task_info["party_status"] = TaskStatus.RUNNING
             cls.report_task_update_to_driver(task_info=task_info)
 
@@ -137,7 +139,9 @@ class TaskExecutor(object):
             else:
                 session_options = {}
 
-            sess = session.Session(computing_type=job_parameters.computing_engine, federation_type=job_parameters.federation_engine)
+            sess = session.Session(session_id=job_utils.generate_session_id(task_id, task_version, role, party_id),
+                                   computing=job_parameters.computing_engine,
+                                   federation=job_parameters.federation_engine)
             computing_session_id = job_utils.generate_session_id(task_id, task_version, role, party_id)
             sess.init_computing(computing_session_id=computing_session_id, options=session_options)
             federation_session_id = job_utils.generate_task_version_id(task_id, task_version)
@@ -160,7 +164,9 @@ class TaskExecutor(object):
                                                   )
             if module_name in {"Upload", "Download", "Reader", "Writer"}:
                 task_run_args["job_parameters"] = job_parameters
-            run_object = getattr(importlib.import_module(run_class_package), run_class_name)()
+
+            component_framework = dsl_utils.get_component_framework_interface(provider=component_provider)
+            run_object = component_framework.get_module(module_name, role)
             run_object.set_tracker(tracker=tracker_client)
             run_object.set_task_version_id(task_version_id=job_utils.generate_task_version_id(task_id, task_version))
             # add profile logs
