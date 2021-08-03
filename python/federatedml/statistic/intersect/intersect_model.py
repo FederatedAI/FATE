@@ -367,11 +367,6 @@ class IntersectModelBase(ModelBase):
 
         return result_data
 
-    def obtain_data(self, data_list):
-        if len(data_list) == 1:
-            return data_list[0]
-        return data_list
-
 
 class IntersectHost(IntersectModelBase):
     def __init__(self):
