@@ -95,7 +95,7 @@ class HeteroPoissonHost(HeteroPoissonBase):
 
             LOGGER.info("Get is_converged flag from arbiter:{}".format(self.is_converged))
 
-            self.add_checkpoint(step_index=self.n_iter_)
+            self.add_checkpoint(step_index=self.n_iter_, step_name=self.flowid)
 
             if self.validation_strategy:
                 LOGGER.debug('Poisson host running validation')
