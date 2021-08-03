@@ -13,22 +13,11 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
-from flask import Flask, request
+from flask import request
 
 from fate_arch.common.base_utils import deserialize_b64
 from fate_flow.operation.job_tracker import Tracker
-from fate_flow.settings import stat_logger
 from fate_flow.utils.api_utils import get_json_result
-from fate_arch.common import log
-
-manager = Flask(__name__)
-
-
-@manager.errorhandler(500)
-def internal_server_error(e):
-    stat_logger.exception(e)
-    return get_json_result(retcode=100, retmsg=log.exception_to_trace_string(e))
 
 
 @manager.route('/<job_id>/<component_name>/<task_id>/<task_version>/<role>/<party_id>/metric_data/save',
@@ -53,6 +42,49 @@ def save_metric_meta(job_id, component_name, task_version, task_id, role, party_
     tracker.save_metric_meta(metric_namespace=request_data['metric_namespace'], metric_name=request_data['metric_name'],
                              metric_meta=metric_meta, job_level=request_data['job_level'])
     return get_json_result()
+
+
+@manager.route('/<job_id>/<component_name>/<task_id>/<task_version>/<role>/<party_id>/table_meta/create',
+               methods=['POST'])
+def create_table_meta(job_id, component_name, task_version, task_id, role, party_id):
+    request_data = request.json
+    tracker = Tracker(job_id=job_id, component_name=component_name, task_id=task_id, task_version=task_version,
+                      role=role, party_id=party_id)
+    tracker.save_table_meta(request_data)
+    return get_json_result()
+
+@manager.route('/<job_id>/<component_name>/<task_id>/<task_version>/<role>/<party_id>/table_meta/get',
+               methods=['POST'])
+def get_table_meta(job_id, component_name, task_version, task_id, role, party_id):
+    request_data = request.json
+    tracker = Tracker(job_id=job_id, component_name=component_name, task_id=task_id, task_version=task_version,
+                      role=role, party_id=party_id)
+    table_meta_dict = tracker.get_table_meta(request_data)
+    return get_json_result(data=table_meta_dict)
+
+
+@manager.route('/<job_id>/<component_name>/<task_id>/<task_version>/<role>/<party_id>/component_model/save',
+               methods=['POST'])
+def save_component_model(job_id, component_name, task_version, task_id, role, party_id):
+    request_data = request.json
+    model_id = request_data.get("model_id")
+    model_version = request_data.get("model_version")
+    tracker = Tracker(job_id=job_id, component_name=component_name, task_id=task_id, task_version=task_version,
+                      role=role, party_id=party_id, model_id=model_id, model_version=model_version)
+    tracker.write_output_model(request_data.get("component_model"))
+    return get_json_result()
+
+
+@manager.route('/<job_id>/<component_name>/<task_id>/<task_version>/<role>/<party_id>/component_model/get',
+               methods=['POST'])
+def get_component_model(job_id, component_name, task_version, task_id, role, party_id):
+    request_data = request.json
+    model_id = request_data.get("model_id")
+    model_version = request_data.get("model_version")
+    tracker = Tracker(job_id=job_id, component_name=component_name, task_id=task_id, task_version=task_version,
+                      role=role, party_id=party_id, model_id=model_id, model_version=model_version)
+    data = tracker.get_output_model(model_alias=request_data.get("search_model_alias"), parse=False)
+    return get_json_result(data=data)
 
 
 @manager.route('/<job_id>/<component_name>/<task_id>/<task_version>/<role>/<party_id>/output_data_info/save',

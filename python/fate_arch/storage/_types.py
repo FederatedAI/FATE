@@ -24,6 +24,8 @@ class StorageEngine(object):
     SIMPLE = 'SIMPLE'
     FILE = 'FILE'
     PATH = 'PATH'
+    HIVE = 'HIVE'
+    LINKIS_HIVE = 'LINKIS_HIVE'
 
 
 class StandaloneStoreType(object):
@@ -67,6 +69,14 @@ class MySQLStoreType(object):
     ISAM = "ISAM"
     HEAP = "HEAP"
     DEFAULT = None
+
+
+class HiveStorageType(object):
+    DEFAULT = "HDFS"
+
+
+class LinkisHiveStorageType(object):
+    DEFAULT = "HDFS"
 
 
 class StorageTableMetaType(object):

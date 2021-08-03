@@ -66,6 +66,15 @@ class StorageTable(StorageTableBase):
         super(StorageTable, self).update_write_access_time()
         return self._table.put_all(kv_list)
 
+    def table(self):
+        return self._table
+
+    def union(self, other):
+        return self._table.union(other.table(), func=lambda v1, v2 : v1)
+
+    def save_as(self, dest_name, dest_namespace, partitions=None, schema=None):
+        return self._table.save_as(name=dest_name, namespace=dest_namespace)
+
     def collect(self, **kwargs) -> list:
         super(StorageTable, self).update_read_access_time()
         return self._table.get_all(**kwargs)

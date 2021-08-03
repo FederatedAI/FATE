@@ -13,19 +13,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from flask import Flask, request
+from flask import request
 
-from fate_flow.settings import stat_logger
 from fate_flow.utils.api_utils import get_json_result
 from fate_flow.utils.authentication_utils import modify_permission, PrivilegeAuth
-
-manager = Flask(__name__)
-
-
-@manager.errorhandler(500)
-def internal_server_error(e):
-    stat_logger.exception(e)
-    return get_json_result(retcode=100, retmsg=str(e))
 
 
 @manager.route('/grant/privilege', methods=['post'])
@@ -42,9 +33,16 @@ def delete_permission():
 
 @manager.route('/query/privilege', methods=['post'])
 def query_privilege():
-    privilege_dict = PrivilegeAuth.get_permission_config(request.json.get('src_party_id'), request.json.get('src_role'))
-    return get_json_result(retcode=0, retmsg='success', data={'src_party_id': request.json.get('src_party_id'),
-                                                              'role': request.json.get('src_role'),
-                                                              'privilege_role': privilege_dict.get('privilege_role',[]),
-                                                              'privilege_command': privilege_dict.get('privilege_command', []),
-                                                              'privilege_component': privilege_dict.get('privilege_component', [])})
+    privilege_dict = PrivilegeAuth.get_permission_config(request.json.get('src_party_id', "*"), request.json.get('src_role', "*"))
+    data = {'src_party_id': request.json.get('src_party_id', "*"),
+            'role': request.json.get('src_role', "*"),
+            'privilege_role': privilege_dict.get('privilege_role', []),
+            'privilege_command': privilege_dict.get('privilege_command', []),
+            'privilege_component': privilege_dict.get('privilege_component', [])}
+    if request.json.get("src_user") and request.json.get("dest_user"):
+        data = {
+            "src_user": request.json.get("src_user"),
+            "dest_user": request.json.get("dest_user"),
+            "privilege_dataset": privilege_dict.get('privilege_dataset', {}).get(request.json.get("src_user"), {}).get(request.json.get("dest_user"), [])
+        }
+    return get_json_result(retcode=0, retmsg='success', data=data)

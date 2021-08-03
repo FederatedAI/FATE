@@ -17,8 +17,8 @@ from fate_arch.storage import DEFAULT_ID_DELIMITER
 
 
 class UploadParam:
-    def __init__(self, file="", head=1, id_delimiter=DEFAULT_ID_DELIMITER, partition=10,
-                 namespace="", name="", storage_engine="", storage_address=None, destroy=False):
+    def __init__(self, file="", head=1, id_delimiter=DEFAULT_ID_DELIMITER, partition=10, namespace="", name="",
+                 storage_engine="", storage_address=None, destroy=False, extend_sid=False, auto_increasing_sid=False):
         self.file = file
         self.head = head
         self.id_delimiter = id_delimiter
@@ -28,6 +28,8 @@ class UploadParam:
         self.storage_engine = storage_engine
         self.storage_address = storage_address
         self.destroy = destroy
+        self.extend_sid = extend_sid
+        self.auto_increasing_sid = auto_increasing_sid
 
     def check(self):
         return True

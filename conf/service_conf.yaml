@@ -47,6 +47,24 @@ fate_on_spark:
     home:
     cores_per_node: 20
     nodes: 2
+  linkis_spark:
+    cores_per_node: 20
+    nodes: 2
+    host: 127.0.0.1
+    port: 9001
+    token_code: MLSS
+    python_path: /data/projects/fate/python
+  hive:
+    host: 127.0.0.1
+    port: 10000
+    auth:
+    configuration:
+    kerberos_service_name:
+    username:
+    password:
+  linkis_hive:
+    host: 127.0.0.1
+    port: 9001
   hdfs:
     name_node: hdfs://fate-cluster
     # default /
@@ -63,6 +81,9 @@ fate_on_spark:
     host: 192.168.0.5
     port: 6650
     mng_port: 8080
+    cluster: standalone
+    # all parties should use a same tenant
+    tenant: fl-tenant
     # message ttl in minutes
     topic_ttl: 5
     # default conf/pulsar_route_table.yaml

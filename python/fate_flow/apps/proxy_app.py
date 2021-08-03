@@ -13,28 +13,20 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+from flask import request
 from flask.json import jsonify
 
 from fate_arch.common import FederatedMode
-from fate_flow.utils import job_utils
-from flask import Flask, request
-
-from fate_flow.settings import stat_logger
-from fate_flow.utils.api_utils import get_json_result, federated_api, forward_api, proxy_api
-
-manager = Flask(__name__)
+from fate_flow.utils.api_utils import federated_api, forward_api, proxy_api
 
 
-@manager.errorhandler(500)
-def internal_server_error(e):
-    stat_logger.exception(e)
-    return get_json_result(retcode=100, retmsg=str(e))
+page_name = 'forward'
 
 
 @manager.route('/<role>', methods=['post'])
 def start_proxy(role):
     request_config = request.json or request.form.to_dict()
-    _job_id = job_utils.generate_job_id()
+    _job_id = f"{role}_forward"
     if role in ['marketplace']:
         response = proxy_api(role, _job_id, request_config)
     else:

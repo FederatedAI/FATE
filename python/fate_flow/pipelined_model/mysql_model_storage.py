@@ -105,10 +105,10 @@ class MysqlModelStorage(ModelStorageBase):
                 if not model_archive_data:
                     raise Exception("Restore model {} {} from mysql failed: {}".format(
                         model_id, model_version, "can not get model archive data"))
-                with open(model.archive_model_file_path(), "wb") as fw:
+                with open(model.archive_model_file_path, "wb") as fw:
                     fw.write(model_archive_data)
-                model.unpack_model(model.archive_model_file_path())
-                LOGGER.info("Restore model to {} from mysql successfully".format(model.archive_model_file_path()))
+                model.unpack_model(model.archive_model_file_path)
+                LOGGER.info("Restore model to {} from mysql successfully".format(model.archive_model_file_path))
             self.close_connection()
         except Exception as e:
             LOGGER.exception(e)

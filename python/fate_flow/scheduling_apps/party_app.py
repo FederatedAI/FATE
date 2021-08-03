@@ -13,26 +13,15 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
-from flask import Flask, request
+from flask import request
 
 from fate_flow.entity.types import RetCode
 from fate_flow.controller.job_controller import JobController
 from fate_flow.controller.task_controller import TaskController
-from fate_flow.settings import stat_logger
 from fate_flow.utils.api_utils import get_json_result
 from fate_flow.utils.authentication_utils import request_authority_certification
 from fate_flow.operation.job_saver import JobSaver
-from fate_arch.common import log
 from fate_flow.manager.resource_manager import ResourceManager
-
-manager = Flask(__name__)
-
-
-@manager.errorhandler(500)
-def internal_server_error(e):
-    stat_logger.exception(e)
-    return get_json_result(retcode=RetCode.EXCEPTION_ERROR, retmsg=log.exception_to_trace_string(e))
 
 
 # execute command on every party

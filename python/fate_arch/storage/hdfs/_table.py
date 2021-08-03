@@ -112,6 +112,9 @@ class StorageTable(StorageTableBase):
         self._hdfs_client.copy_file(src=self._path, dst=address.path)
         return StorageTable(address=address, partitions=partitions, name=name, namespace=namespace, **kwargs)
 
+    def check_address(self):
+        return self._exist()
+
     def close(self):
         pass
 

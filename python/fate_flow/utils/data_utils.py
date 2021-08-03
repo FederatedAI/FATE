@@ -19,9 +19,27 @@ from fate_flow.entity.types import InputSearchType
 from fate_arch import storage
 
 
-def get_header_schema(header_line, id_delimiter):
+def get_header_schema(header_line, id_delimiter, extend_sid=True):
     header_source_item = header_line.split(id_delimiter)
-    return {'header': id_delimiter.join(header_source_item[1:]).strip(), 'sid': header_source_item[0].strip()}
+    if extend_sid:
+        header = id_delimiter.join(header_source_item).strip()
+        sid = "sid"
+    else:
+        header = id_delimiter.join(header_source_item[1:]).strip()
+        sid = header_source_item[0].strip()
+    return {'header': header, 'sid': sid}
+
+
+def get_sid_data_line(values, id_delimiter, fate_uuid, line_index, **kwargs):
+    return fate_uuid+str(line_index), list_to_str(values, id_delimiter=id_delimiter)
+
+
+def get_auto_increasing_sid_data_line(values, id_delimiter, line_index, **kwargs):
+    return line_index, list_to_str(values, id_delimiter=id_delimiter)
+
+
+def get_data_line(values, id_delimiter, **kwargs):
+    return values[0], list_to_str(values[1:], id_delimiter=id_delimiter)
 
 
 def list_to_str(input_list, id_delimiter):

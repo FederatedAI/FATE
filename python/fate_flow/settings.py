@@ -18,13 +18,11 @@ import os
 
 from fate_arch.common import file_utils, log
 from fate_arch.common.conf_utils import get_base_config
-import __main__
 
 
 # Server
 API_VERSION = "v1"
 FATEFLOW_SERVICE_NAME = "fateflow"
-MAIN_MODULE = os.path.relpath(__main__.__file__)
 SERVER_MODULE = "fate_flow_server.py"
 TEMP_DIRECTORY = os.path.join(
     file_utils.get_project_base_directory(), "temp", "fate_flow")
@@ -46,11 +44,14 @@ WORK_MODE = get_base_config("work_mode", 0)
 DATABASE = get_base_config("database", {})
 MODEL_STORE_ADDRESS = get_base_config("model_store_address", {})
 
+LINKIS_SPARK_CONFIG = get_base_config("fate_on_spark", {}).get("linkis_spark")
+
 # Registry
-SERVICES_SUPPORT_REGISTRY = ["servings", "fateflow"]
-FATE_SERVICES_REGISTERED_PATH = {
-    "fateflow": "/FATE-SERVICES/flow/online/transfer/providers",
-    "servings": "/FATE-SERVICES/serving/online/publishLoad/providers",
+FATE_SERVICES_REGISTRY = {
+    'zookeeper': {
+        'fateflow': "/FATE-SERVICES/flow/online/transfer/providers",
+        'servings': "/FATE-SERVICES/serving/online/publishLoad/providers",
+    },
 }
 
 # Endpoint
@@ -58,7 +59,23 @@ FATE_FLOW_MODEL_TRANSFER_ENDPOINT = "/v1/model/transfer"
 FATE_MANAGER_GET_NODE_INFO_ENDPOINT = "/fate-manager/api/site/secretinfo"
 FATE_MANAGER_NODE_CHECK_ENDPOINT = "/fate-manager/api/site/checksite"
 FATE_BOARD_DASHBOARD_ENDPOINT = "/index.html#/dashboard?job_id={}&role={}&party_id={}"
-
+# linkis spark config
+LINKIS_EXECUTE_ENTRANCE = "/api/rest_j/v1/entrance/execute"
+LINKIS_KILL_ENTRANCE = "/api/rest_j/v1/entrance/execID/kill"
+LINKIS_QUERT_STATUS = "/api/rest_j/v1/entrance/execID/status"
+LINKIS_SUBMIT_PARAMS = {
+     "configuration": {
+        "startup": {
+            "spark.python.version": "/data/anaconda3/bin/python",
+            "archives": "hdfs:///apps-data/fate/python.zip#python,hdfs:///apps-data/fate/fate_guest.zip#fate_guest",
+            "spark.executorEnv.PYTHONPATH": "./fate_guest/python:$PYTHONPATH",
+            "wds.linkis.rm.yarnqueue": "dws",
+            "spark.pyspark.python": "python/bin/python"
+        }
+    }
+}
+LINKIS_RUNTYPE = "py"
+LINKIS_LABELS = {"tenant": "fate"}
 # Logger
 log.LoggerFactory.LEVEL = 10
 # {CRITICAL: 50, FATAL:50, ERROR:40, WARNING:30, WARN:30, INFO:20, DEBUG:10, NOTSET:0}
@@ -71,9 +88,15 @@ data_manager_logger = log.getLogger("fate_flow_data_manager")
 peewee_logger = log.getLogger("peewee")
 
 # Switch
+# upload
 UPLOAD_DATA_FROM_CLIENT = True
+
+# authentication
 USE_AUTHENTICATION = False
+USE_DATA_AUTHENTICATION = False
+AUTOMATIC_AUTHORIZATION_OUTPUT_DATA = True
 PRIVILEGE_COMMAND_WHITELIST = []
+
 CHECK_NODES_IDENTITY = False
 DEFAULT_FEDERATED_STATUS_COLLECT_TYPE = get_base_config(
     FATEFLOW_SERVICE_NAME, {}).get("default_federated_status_collect_type", "PUSH")

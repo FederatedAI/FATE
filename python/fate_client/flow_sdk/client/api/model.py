@@ -131,3 +131,9 @@ class Model(BaseFlowAPI):
         config_data, dsl_data = preprocess(**kwargs)
         return self._post(url='model/query', json=config_data)
 
+    def homo_convert(self, conf_path):
+        if not os.path.exists(conf_path):
+            raise FileNotFoundError('Invalid conf path, file not exists.')
+        kwargs = locals()
+        config_data, dsl_data = preprocess(**kwargs)
+        return self._post(url='model/homo/convert', json=config_data)

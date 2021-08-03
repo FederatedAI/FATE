@@ -16,10 +16,12 @@
 import os
 import shutil
 import time
+import uuid
 
 from fate_arch.common import log, file_utils, EngineType, path_utils
 from fate_arch.storage import StorageEngine, EggRollStoreType
 from fate_flow.entity.metric import Metric, MetricMeta
+from fate_flow.manager.data_manager import DataTableTracker
 from fate_flow.utils import job_utils, data_utils
 from fate_flow.scheduling_apps.client import ControllerClient
 from fate_arch import storage
@@ -33,7 +35,7 @@ class Upload(ComponentBase):
     def __init__(self):
         super(Upload, self).__init__()
         self.MAX_PARTITIONS = 1024
-        self.MAX_BYTES = 1024*1024*8
+        self.MAX_BYTES = 1024*1024*8*500
         self.parameters = {}
         self.table = None
 
@@ -109,6 +111,33 @@ class Upload(ComponentBase):
         else:
             data_table_count = self.get_data_table_count(self.parameters["file"], name, namespace)
         self.table.meta.update_metas(in_serialized=True)
+        upload_address = {}
+        with storage.Session.build(session_id=job_utils.generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id, suffix="storage", random_end=True),
+                                   storage_engine=storage_engine, options=self.parameters.get("options")) as storage_session:
+            if storage_engine in {StorageEngine.EGGROLL, StorageEngine.STANDALONE}:
+                upload_address = {"name": name, "namespace": namespace, "storage_type": EggRollStorageType.ROLLPAIR_LMDB}
+            elif storage_engine in {StorageEngine.MYSQL}:
+                if not address_dict.get("db") or not address_dict.get("name"):
+                    upload_address = {"db": namespace, "name": name}
+            elif storage_engine in {StorageEngine.PATH}:
+                upload_address = {"path": self.parameters["file"]}
+            elif storage_engine in {StorageEngine.HDFS}:
+                upload_address = {"path": data_utils.default_input_fs_path(name=name, namespace=namespace, prefix=address_dict.get("path_prefix"))}
+            else:
+                raise RuntimeError(f"can not support this storage engine: {storage_engine}")
+            address_dict.update(upload_address)
+            LOGGER.info(f"upload to {storage_engine} storage, address: {address_dict}")
+            address = storage.StorageTableMeta.create_address(storage_engine=storage_engine, address_dict=address_dict)
+            self.parameters["partitions"] = partitions
+            self.parameters["name"] = name
+            self.table = storage_session.create_table(address=address, **self.parameters)
+            data_table_count = None
+            if storage_engine not in [StorageEngine.PATH]:
+                data_table_count = self.save_data_table(job_id, name, namespace, head)
+            else:
+                data_table_count = self.get_data_table_count(self.parameters["file"], name, namespace)
+            DataTableTracker.create_table_tracker(table_name=name, table_namespace=namespace, entity_info={"job_id": job_id, "have_parent": False})
+            self.table.get_meta().update_metas(in_serialized=True)
         LOGGER.info("------------load data finish!-----------------")
         # rm tmp file
         try:
@@ -131,14 +160,35 @@ class Upload(ComponentBase):
                 data_head = fin.readline()
                 input_feature_count -= 1
                 self.table.meta.update_metas(schema=data_utils.get_header_schema(header_line=data_head, id_delimiter=self.parameters["id_delimiter"]))
+                self.table.get_meta().update_metas(
+                    schema=data_utils.get_header_schema(header_line=data_head,
+                                                        id_delimiter=self.parameters["id_delimiter"],
+                                                        extend_sid=self.parameters["extend_sid"]),
+                    auto_increasing_sid=self.parameters["auto_increasing_sid"],
+                    extend_sid=self.parameters["extend_sid"]
+                )
             n = 0
+            fate_uuid = uuid.uuid1().hex
+            if not self.parameters["extend_sid"]:
+                get_line = data_utils.get_data_line
+            elif not self.parameters["auto_increasing_sid"]:
+                get_line = data_utils.get_sid_data_line
+            else:
+                get_line = data_utils.get_auto_increasing_sid_data_line
             while True:
                 data = list()
                 lines = fin.readlines(self.MAX_BYTES)
+                line_index = 0
                 if lines:
+                    # self.append_data_line(lines, data, n)
                     for line in lines:
                         values = line.rstrip().split(self.parameters["id_delimiter"])
-                        data.append((values[0], data_utils.list_to_str(values[1:], id_delimiter=self.parameters["id_delimiter"])))
+                        k, v = get_line(values=values, line_index=line_index, extend_sid=self.parameters["extend_sid"],
+                                        auto_increasing_sid=self.parameters["auto_increasing_sid"],
+                                        id_delimiter=self.parameters["id_delimiter"],
+                                        fate_uuid=fate_uuid)
+                        data.append((k, v))
+                        line_index += 1
                     lines_count += len(data)
                     save_progress = lines_count/input_feature_count*100//1
                     job_info = {'progress': save_progress, "job_id": job_id, "role": self.parameters["local"]['role'], "party_id": self.parameters["local"]['party_id']}
@@ -149,6 +199,8 @@ class Upload(ComponentBase):
                 else:
                     table_count = self.table.count()
                     self.table.meta.update_metas(count=table_count, partitions=self.parameters["partition"])
+                    self.table.get_meta().update_metas(count=table_count, partitions=self.parameters["partition"],
+                                                       extend_sid=self.parameters["extend_sid"])
                     self.save_meta(dst_table_namespace=dst_table_namespace, dst_table_name=dst_table_name, table_count=table_count)
                     return table_count
                 n += 1

@@ -26,6 +26,7 @@ from fate_arch.common.file_utils import get_project_base_directory
 from fate_flow.pipelined_model.pipelined_model import PipelinedModel
 
 from fate_flow.db.db_models import DB, MachineLearningModelInfo as MLModel
+from fate_flow.db.db_services import service_db
 
 gen_key_string_separator = '#'
 
@@ -173,18 +174,20 @@ def save_model_info(model_info):
             setattr(model, attr_name, v)
         elif hasattr(MLModel, k):
             setattr(model, k, v)
+
     try:
         rows = model.save(force_insert=True)
         if rows != 1:
-            raise Exception("Create {} failed".format(MLModel))
-        return model
+            raise Exception("Save to database failed")
     except peewee.IntegrityError as e:
-        if e.args[0] == 1062:
-            sql_logger(job_id=model_info.get("job_id", "fate_flow")).warning(e)
-        else:
+        if e.args[0] != 1062:
             raise Exception("Create {} failed:\n{}".format(MLModel, e))
+        sql_logger(job_id=model_info.get("job_id", "fate_flow")).warning(e)
     except Exception as e:
         raise Exception("Create {} failed:\n{}".format(MLModel, e))
+    else:
+        service_db().register_model(model.f_model_id, model.f_model_version)
+        return model
 
 
 def compare_version(version: str, target_version: str):
@@ -236,3 +239,19 @@ def check_if_deployed(role, party_id, model_id, model_version):
                 if pipeline.parent:
                     return False
         return True
+
+
+@DB.connection_context()
+def models_group_by_party_model_id_and_model_version():
+    args = [
+        MLModel.f_role,
+        MLModel.f_party_id,
+        MLModel.f_model_id,
+        MLModel.f_model_version,
+    ]
+    models = MLModel.select(*args).group_by(*args)
+    for model in models:
+        model.f_party_model_id = gen_party_model_id(role=model.f_role,
+                                                    party_id=model.f_party_id,
+                                                    model_id=model.f_model_id)
+    return models

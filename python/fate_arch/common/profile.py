@@ -94,7 +94,7 @@ class _ComputingTimer(object):
 
     @classmethod
     def computing_statistics_table(cls):
-        stack_table = beautifultable.BeautifulTable(110, precision=4)
+        stack_table = beautifultable.BeautifulTable(110, precision=4, detect_numerics=False)
         stack_table.set_style(beautifultable.STYLE_BOX_ROUNDED)
         stack_table.columns.header = ["function", "n", "sum(s)", "mean(s)", "max(s)", "stack_hash", "stack"]
         stack_table.columns.alignment["stack"] = beautifultable.ALIGN_LEFT

@@ -16,7 +16,9 @@
 import sys
 
 from fate_arch.common import FederatedCommunicationType, file_utils
+from fate_arch.common import FederatedCommunicationType
 from fate_arch.common.log import schedule_logger
+from fate_flow.controller.engine_adapt import build_engine
 from fate_flow.db.db_models import Task
 from fate_flow.operation.task_executor import TaskExecutor
 from fate_flow.scheduler.federated_scheduler import FederatedScheduler
@@ -24,6 +26,7 @@ from fate_flow.entity.run_status import TaskStatus, EndStatus
 from fate_flow.entity.types import KillProcessRetCode
 from fate_flow.entity.component_provider import ComponentProvider
 from fate_flow.runtime_config import RuntimeConfig
+from fate_flow.entity.types import TaskStatus, EndStatus
 from fate_flow.utils import job_utils
 import os
 from fate_flow.operation.job_saver import JobSaver
@@ -32,7 +35,6 @@ from fate_arch.common import base_utils
 from fate_flow.entity.run_parameters import RunParameters
 from fate_flow.manager.resource_manager import ResourceManager
 from fate_flow.operation.job_tracker import Tracker
-from fate_arch.computing import ComputingEngine
 from fate_flow.utils.authentication_utils import PrivilegeAuth
 
 
@@ -78,13 +80,16 @@ class TaskController(object):
             "task_version": task_version,
             "role": role,
             "party_id": party_id,
+            "party_status": TaskStatus.RUNNING
         }
+        is_failed = False
         try:
             task = JobSaver.query_task(task_id=task_id, task_version=task_version)[0]
             task_dir = os.path.join(job_utils.get_job_directory(job_id=job_id), role, party_id, component_name, task_id, task_version)
             os.makedirs(task_dir, exist_ok=True)
             task_parameters_path = os.path.join(task_dir, 'task_parameters.json')
             run_parameters_dict = job_utils.get_job_parameters(job_id, role, party_id)
+            run_parameters_dict["src_user"] = kwargs.get("src_user")
             with open(task_parameters_path, 'w') as fw:
                 fw.write(json_dumps(run_parameters_dict))
 
@@ -155,14 +160,17 @@ class TaskController(object):
                 task_info["start_time"] = current_timestamp()
                 task_executor_process_start_status = True
             else:
-                task_info["party_status"] = TaskStatus.FAILED
+                is_failed = True
         except Exception as e:
             schedule_logger(job_id).exception(e)
-            task_info["party_status"] = TaskStatus.FAILED
+            is_failed = True
         finally:
             try:
                 cls.update_task(task_info=task_info)
                 cls.update_task_status(task_info=task_info)
+                if is_failed:
+                    task_info["party_status"] = TaskStatus.FAILED
+                    cls.update_task_status(task_info=task_info)
             except Exception as e:
                 schedule_logger(job_id).exception(e)
             schedule_logger(job_id).info(
@@ -246,6 +254,8 @@ class TaskController(object):
             # session stop
             if kill_status_code == KillProcessRetCode.KILLED or task.f_status not in {TaskStatus.WAITING}:
                 job_utils.start_session_stop(task)
+            backend_engine = build_engine(task.f_engine_conf.get("computing_engine"))
+            backend_engine.kill(task)
         except Exception as e:
             schedule_logger(task.f_job_id).exception(e)
         else:
@@ -277,17 +287,4 @@ class TaskController(object):
             return True
         else:
             return False
-
-    @classmethod
-    def query_task_input_args(cls, job_id, task_id, role, party_id, job_args, job_parameters, input_dsl, filter_type=None, filter_attr=None):
-        task_run_args = TaskExecutor.get_task_run_args(job_id=job_id, role=role, party_id=party_id,
-                                                       task_id=task_id,
-                                                       job_args=job_args,
-                                                       job_parameters=job_parameters,
-                                                       task_parameters={},
-                                                       input_dsl=input_dsl,
-                                                       filter_type=filter_type,
-                                                       filter_attr=filter_attr
-                                                       )
-        return task_run_args
 
