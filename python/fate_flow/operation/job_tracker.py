@@ -155,7 +155,7 @@ class Tracker(object):
                 if part_of_limit == 0:
                     break
             table_count = computing_table.count()
-            table_meta = storage.StorageTableMeta(name=output_table_name, namespace=output_table_namespace, new=True if not meta_schema else False)
+            table_meta = storage.StorageTableMeta(name=output_table_name, namespace=output_table_namespace, new=True)
             table_meta.address = address
             table_meta.partitions = computing_table.partitions
             table_meta.engine = output_storage_engine
@@ -163,7 +163,7 @@ class Tracker(object):
             table_meta.schema = schema
             table_meta.part_of_data = part_of_data
             table_meta.count = table_count
-            if not tracker_client or not meta_schema:
+            if not tracker_client and not meta_schema:
                 table_meta.create()
             if tracker_client:
                 tracker_client.create_table_meta(table_meta)
@@ -238,7 +238,7 @@ class Tracker(object):
 
     def save_pipelined_model(self, pipelined_buffer_object):
         self.save_output_model({'Pipeline': pipelined_buffer_object}, 'pipeline')
-        self.pipelined_model.save_pipeline(pipelined_buffer_object=pipelined_buffer_object)
+        self.pipelined_model.save_pipeline(buffer_object=pipelined_buffer_object)
 
     def get_component_define(self):
         return self.pipelined_model.get_component_define(component_name=self.component_name)
