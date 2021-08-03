@@ -26,7 +26,7 @@ from federatedml.param.evaluation_param import EvaluateParam
 from federatedml.statistic.data_overview import header_alignment
 from federatedml.util import LOGGER
 from federatedml.util import abnormal_detection
-from federatedml.util.component_properties import ComponentProperties
+from federatedml.util.component_properties import ComponentProperties, RunningFuncs
 from federatedml.util.param_extract import ParamExtract
 
 
@@ -48,6 +48,7 @@ class ModelBase(object):
         self.component_properties = ComponentProperties()
         self._summary = dict()
         self._align_cache = dict()
+        self.step_name = ''
 
     def _init_runtime_parameters(self, component_parameters):
         param_extractor = ParamExtract()
@@ -81,12 +82,18 @@ class ModelBase(object):
         # self.need_run = need_run
         self.component_properties.need_run = need_run
 
-    def run(self, component_parameters=None, args=None):
+    def warm_start(self, component_parameters=None, args=None):
         self._init_runtime_parameters(component_parameters)
         self.component_properties.parse_dsl_args(args)
-
-        running_funcs = self.component_properties.extract_running_rules(args, self)
+        train_data, validate_data, test_data, data = self.component_properties.extract_input_data(args, self)
+        running_funcs = RunningFuncs()
+        latest_checkpoint = self.get_latest_checkpoint()
+        running_funcs.add_func(self.load_model, [latest_checkpoint])
+        running_funcs = self.component_properties.warm_start_process(args, self, train_data, validate_data)
         LOGGER.debug(f"running_funcs: {running_funcs.todo_func_list}")
+        self._execute_running_funcs(running_funcs)
+
+    def _execute_running_funcs(self, running_funcs):
         saved_result = []
         for func, params, save_result, use_previews in running_funcs:
             # for func, params in zip(todo_func_list, todo_func_params):
@@ -106,10 +113,16 @@ class ModelBase(object):
 
         if len(saved_result) == 1:
             self.data_output = saved_result[0]
-            # LOGGER.debug("One data: {}".format(self.data_output.first()[1].features))
         LOGGER.debug("saved_result is : {}, data_output: {}".format(saved_result, self.data_output))
-        # self.check_consistency()
         self.save_summary()
+
+    def run(self, component_parameters=None, args=None):
+        self._init_runtime_parameters(component_parameters)
+        self.component_properties.parse_dsl_args(args)
+
+        running_funcs = self.component_properties.extract_running_rules(args, self)
+        LOGGER.debug(f"running_funcs: {running_funcs.todo_func_list}")
+        self._execute_running_funcs(running_funcs)
 
     def get_metrics_param(self):
         return EvaluateParam(eval_type="binary",
@@ -173,12 +186,26 @@ class ModelBase(object):
 
         return '_'.join(map(str, [name_prefix, self.flowid]))
 
+    def set_step_name(self, step_name):
+        self.step_name = step_name
+
     def set_tracker(self, tracker):
         self.tracker = tracker
 
     def set_checkpoint_manager(self, checkpoint_manager):
         checkpoint_manager.load_checkpoints_from_disk()
         self.checkpoint_manager = checkpoint_manager
+
+    def add_checkpoint(self, step_index, step_name=None, to_save_model=None):
+        step_name = step_name if step_name is not None else self.step_name
+        to_save_model = to_save_model if to_save_model is not None else self.export_model()
+        _checkpoint = self.checkpoint_manager.new_checkpoint(step_index=step_index, step_name=step_name)
+        _checkpoint.save(to_save_model)
+        LOGGER.debug(f"current checkpoint num: {self.checkpoint_manager.checkpoints_number}")
+        return _checkpoint
+
+    def get_latest_checkpoint(self):
+        return self.checkpoint_manager.latest_checkpoint.read()
 
     @staticmethod
     def set_predict_data_schema(predict_datas, schemas):
@@ -194,6 +221,14 @@ class ModelBase(object):
             predict_data.schema = {"header": ["label", "predict_result", "predict_score", "predict_detail", "type"],
                                    "sid_name": schema.get('sid_name')}
         return predict_data
+
+    def add_checkpoint(self, step_index, step_name=None, to_save_model=None):
+        step_name = step_name if step_name is not None else self.step_name
+        to_save_model = to_save_model if to_save_model is not None else self.export_model()
+        _checkpoint = self.checkpoint_manager.new_checkpoint(step_index=step_index, step_name=step_name)
+        _checkpoint.save(to_save_model)
+        LOGGER.debug(f"current checkpoint num: {self.checkpoint_manager.checkpoints_number}")
+        return _checkpoint
 
     @staticmethod
     def predict_score_to_output(data_instances, predict_score, classes=None, threshold=0.5):

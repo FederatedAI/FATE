@@ -49,6 +49,7 @@ class ComponentProperties(object):
         self.need_cv = False
         self.need_run = False
         self.need_stepwise = False
+        self.is_warm_start = False
         self.has_model = False
         self.has_isometric_model = False
         self.has_train_data = False
@@ -78,6 +79,11 @@ class ComponentProperties(object):
             need_run = True
         self.need_run = need_run
         LOGGER.debug("need_run: {}, need_cv: {}".format(self.need_run, self.need_cv))
+
+        try:
+            self.is_warm_start = param.is_warm_start
+        except AttributeError:
+            self.is_warm_start = False
 
         try:
             need_stepwise = param.stepwise_param.need_stepwise
@@ -144,16 +150,16 @@ class ComponentProperties(object):
                 raise DSLConfigError("When test_data input has been configured, model "
                                      "input should be configured too.")
 
-        if self.has_model:
-            if self.has_train_data:
-                raise DSLConfigError("train_data input and model input should not be "
-                                     "configured simultaneously")
-            if self.has_isometric_model:
-                raise DSLConfigError("model and isometric_model should not be "
-                                     "configured simultaneously")
-            if not self.has_test_data and not self.has_normal_input_data:
-                raise DSLConfigError("When model has been set, either test_data or "
-                                     "data should be provided")
+        # if self.has_model:
+        #     if self.has_train_data:
+        #         raise DSLConfigError("train_data input and model input should not be "
+        #                              "configured simultaneously")
+        #     if self.has_isometric_model:
+        #         raise DSLConfigError("model and isometric_model should not be "
+        #                              "configured simultaneously")
+        #     if not self.has_test_data and not self.has_normal_input_data:
+        #         raise DSLConfigError("When model has been set, either test_data or "
+        #                              "data should be provided")
 
         if self.need_cv or self.need_stepwise:
             if not self.has_train_data:
@@ -161,12 +167,18 @@ class ComponentProperties(object):
                                      "task or stepwise task")
             if self.has_validate_data or self.has_normal_input_data or \
                     self.has_test_data:
-                raise DSLConfigError("Train_data should be set only in cross-validate "
-                                     "task or stepwise task")
+                raise DSLConfigError("Train_data should be set only if it is a cross-validate "
+                                     "task or a stepwise task")
 
             if self.has_model or self.has_isometric_model:
                 raise DSLConfigError("In cross-validate task or stepwise task, model "
                                      "or isometric_model should not be configured")
+
+        if self.is_warm_start:
+            if not self.has_model:
+                raise DSLConfigError("Model should be provided in warm start mode")
+            if self.has_test_data:
+                raise DSLConfigError("Test data should not be provided for warm start mode")
 
     def extract_input_data(self, args, model):
         data_sets = args.get("data")
@@ -232,6 +244,47 @@ class ComponentProperties(object):
                      f"test_data: {test_data}, data: {data}")
         return train_data, validate_data, test_data, data
 
+    def warm_start_process(self, running_funcs, model, train_data, validate_data, schema=None):
+        if schema is None:
+            for d in [train_data, validate_data]:
+                if d is not None:
+                    schema = d.schema
+                    break
+        running_funcs = self._train_process(running_funcs, model, train_data, validate_data,
+                                            test_data=None, schema=schema)
+        return running_funcs
+
+    def _train_process(self, running_funcs, model, train_data, validate_data, test_data, schema):
+        if self.has_train_data and self.has_validate_data:
+            # todo_func_list.extend([model.set_flowid, model.fit, model.set_flowid, model.predict])
+            # todo_func_params.extend([['fit'], [train_data], ['validate'], [train_data, 'validate']])
+            running_funcs.add_func(model.set_flowid, ['fit'])
+            running_funcs.add_func(model.fit, [train_data, validate_data])
+            running_funcs.add_func(model.set_flowid, ['validate'])
+            running_funcs.add_func(model.predict, [train_data], save_result=True)
+            running_funcs.add_func(model.set_flowid, ['predict'])
+            running_funcs.add_func(model.predict, [validate_data], save_result=True)
+            running_funcs.add_func(self.union_data, ["train", "validate"], use_previews=True, save_result=True)
+            running_funcs.add_func(model.set_predict_data_schema, [schema],
+                                   use_previews=True, save_result=True)
+
+        elif self.has_train_data:
+            running_funcs.add_func(model.set_flowid, ['fit'])
+            running_funcs.add_func(model.fit, [train_data])
+            running_funcs.add_func(model.set_flowid, ['validate'])
+            running_funcs.add_func(model.predict, [train_data], save_result=True)
+            running_funcs.add_func(self.union_data, ["train"], use_previews=True, save_result=True)
+            running_funcs.add_func(model.set_predict_data_schema, [schema],
+                                   use_previews=True, save_result=True)
+
+        elif self.has_test_data:
+            running_funcs.add_func(model.set_flowid, ['predict'])
+            running_funcs.add_func(model.predict, [test_data], save_result=True)
+            running_funcs.add_func(self.union_data, ["predict"], use_previews=True, save_result=True)
+            running_funcs.add_func(model.set_predict_data_schema, [schema],
+                                   use_previews=True, save_result=True)
+        return running_funcs
+
     def extract_running_rules(self, args, model):
 
         # train_data, eval_data, data = self.extract_input_data(args)
@@ -262,34 +315,10 @@ class ComponentProperties(object):
         if self.has_model or self.has_isometric_model:
             running_funcs.add_func(model.load_model, [args])
 
-        if self.has_train_data and self.has_validate_data:
-            # todo_func_list.extend([model.set_flowid, model.fit, model.set_flowid, model.predict])
-            # todo_func_params.extend([['fit'], [train_data], ['validate'], [train_data, 'validate']])
-            running_funcs.add_func(model.set_flowid, ['fit'])
-            running_funcs.add_func(model.fit, [train_data, validate_data])
-            running_funcs.add_func(model.set_flowid, ['validate'])
-            running_funcs.add_func(model.predict, [train_data], save_result=True)
-            running_funcs.add_func(model.set_flowid, ['predict'])
-            running_funcs.add_func(model.predict, [validate_data], save_result=True)
-            running_funcs.add_func(self.union_data, ["train", "validate"], use_previews=True, save_result=True)
-            running_funcs.add_func(model.set_predict_data_schema, [schema],
-                                   use_previews=True, save_result=True)
+        if self.is_warm_start:
+            return self.warm_start_process(running_funcs, model, train_data, validate_data, schema)
 
-        elif self.has_train_data:
-            running_funcs.add_func(model.set_flowid, ['fit'])
-            running_funcs.add_func(model.fit, [train_data])
-            running_funcs.add_func(model.set_flowid, ['validate'])
-            running_funcs.add_func(model.predict, [train_data], save_result=True)
-            running_funcs.add_func(self.union_data, ["train"], use_previews=True, save_result=True)
-            running_funcs.add_func(model.set_predict_data_schema, [schema],
-                                   use_previews=True, save_result=True)
-
-        elif self.has_test_data:
-            running_funcs.add_func(model.set_flowid, ['predict'])
-            running_funcs.add_func(model.predict, [test_data], save_result=True)
-            running_funcs.add_func(self.union_data, ["predict"], use_previews=True, save_result=True)
-            running_funcs.add_func(model.set_predict_data_schema, [schema],
-                                   use_previews=True, save_result=True)
+        running_funcs = self._train_process(running_funcs, model, train_data, validate_data, test_data, schema)
 
         if self.has_normal_input_data and not self.has_model:
             running_funcs.add_func(model.extract_data, [data], save_result=True)

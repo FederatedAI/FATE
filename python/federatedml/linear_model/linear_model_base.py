@@ -101,6 +101,7 @@ class BaseLinearModel(ModelBase):
         raise NotImplementedError("This method should be be called here")
 
     def export_model(self):
+        LOGGER.debug(f"called export model")
         meta_obj = self._get_meta()
         param_obj = self._get_param()
         result = {

@@ -246,26 +246,26 @@ class BaseDSLParser(object):
         for i in range(len(self.topo_rank)):
             idx = self.topo_rank[i]
             name = self.components[idx].get_name()
-            if self.train_input_model.get(name, None) is None:
-                module = self.components[idx].get_module()
-                if version == 1:
-                    role_parameters = parameter_util.ParameterUtil.override_parameter(setting_conf_prefix,
-                                                                                      runtime_conf,
-                                                                                      module,
-                                                                                      name,
-                                                                                      redundant_param_check=redundant_param_check)
-                else:
-                    role_parameters = parameter_util.ParameterUtilV2.override_parameter(setting_conf_prefix,
-                                                                                        runtime_conf,
-                                                                                        module,
-                                                                                        name,
-                                                                                        redundant_param_check=redundant_param_check)
-
-                self.components[idx].set_role_parameters(role_parameters)
+            # if self.train_input_model.get(name, None) is None:
+            module = self.components[idx].get_module()
+            if version == 1:
+                role_parameters = parameter_util.ParameterUtil.override_parameter(setting_conf_prefix,
+                                                                                  runtime_conf,
+                                                                                  module,
+                                                                                  name,
+                                                                                  redundant_param_check=redundant_param_check)
             else:
-                up_component = self.train_input_model.get(name)
-                up_idx = self.component_name_index.get(up_component)
-                self.components[idx].set_role_parameters(self.components[up_idx].get_role_parameters())
+                role_parameters = parameter_util.ParameterUtilV2.override_parameter(setting_conf_prefix,
+                                                                                    runtime_conf,
+                                                                                    module,
+                                                                                    name,
+                                                                                    redundant_param_check=redundant_param_check)
+
+            self.components[idx].set_role_parameters(role_parameters)
+            # else:
+            #     up_component = self.train_input_model.get(name)
+            #     up_idx = self.component_name_index.get(up_component)
+            #     self.components[idx].set_role_parameters(self.components[up_idx].get_role_parameters())
 
     def get_next_components(self, module_name=None):
         next_components = []

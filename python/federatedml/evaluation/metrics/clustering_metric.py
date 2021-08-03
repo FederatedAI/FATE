@@ -1,5 +1,5 @@
 import numpy as np
-from sklearn.metrics import jaccard_similarity_score
+from sklearn.metrics import jaccard_score as jaccard_similarity_score
 from sklearn.metrics import fowlkes_mallows_score
 from sklearn.metrics import adjusted_rand_score
 
