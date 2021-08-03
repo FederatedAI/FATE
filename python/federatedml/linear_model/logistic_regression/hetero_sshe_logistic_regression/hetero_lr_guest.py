@@ -74,7 +74,7 @@ class HeteroLRGuest(HeteroLRBase):
         return sigmoid_z
 
     def cal_prediction(self, w_self, w_remote, features, spdz, suffix):
-        if self.cal_loss:
+        if not self.review_every_iter:
             z = self._cal_z_in_share(w_self, w_remote, features, suffix)
         else:
             LOGGER.debug(f"Calculate z directly.")

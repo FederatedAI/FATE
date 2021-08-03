@@ -55,7 +55,7 @@ class HeteroLRHost(HeteroLRBase):
         return z
 
     def cal_prediction(self, w_self, w_remote, features, spdz, suffix):
-        if self.cal_loss:
+        if not self.review_every_iter:
             z = self._cal_z_in_share(w_self, w_remote, features, suffix)
         else:
             z = features.dot_array(self.model_weights.unboxed, fit_intercept=self.fit_intercept)
