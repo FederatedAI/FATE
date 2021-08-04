@@ -453,28 +453,25 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
                                                                   main=importance.main_type
                                                                   ))
         model_param.feature_importances.extend(feature_importance_param)
-        LOGGER.debug('feat importance param {}'.format(feature_importance_param))
         model_param.feature_name_fid_mapping.update(self.feature_name_fid_mapping)
-
-        self.load_feature_importance(model_param.feature_importances)
-
-        LOGGER.debug('self importance is {}'.format(self.feature_importances_))
-
         param_name = consts.HETERO_SBT_GUEST_MODEL + "Param"
 
         return param_name, model_param
 
     def set_model_meta(self, model_meta):
 
-        self.booster_meta = model_meta.tree_meta
+        if not self.is_warm_start:
+            # these hyper parameters are not needed in warm start setting
+            self.boosting_round = model_meta.num_trees
+            self.tol = model_meta.tol
+            self.n_iter_no_change = model_meta.n_iter_no_change
+            self.bin_num = model_meta.quantile_meta.bin_num
+
         self.learning_rate = model_meta.learning_rate
-        self.boosting_round = model_meta.num_trees
-        self.bin_num = model_meta.quantile_meta.bin_num
+        self.booster_meta = model_meta.tree_meta
         self.objective_param.objective = model_meta.objective_meta.objective
         self.objective_param.params = list(model_meta.objective_meta.param)
         self.task_type = model_meta.task_type
-        self.n_iter_no_change = model_meta.n_iter_no_change
-        self.tol = model_meta.tol
 
     def set_model_param(self, model_param):
 
@@ -485,6 +482,6 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         self.booster_dim = model_param.tree_dim
         self.num_classes = model_param.num_classes
         self.feature_name_fid_mapping.update(model_param.feature_name_fid_mapping)
-
+        self.load_feature_importance(model_param.feature_importances)
         # initialize loss function
         self.loss = self.get_loss_function()

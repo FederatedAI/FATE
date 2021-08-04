@@ -18,6 +18,15 @@
         "arbiter"
       ]
     },
+    "start_and_end_round": {
+      "src": [
+        "guest",
+        "host"
+      ],
+      "dst": [
+        "arbiter"
+      ]
+    },
     "stop_flag": {
       "src": [
         "arbiter"

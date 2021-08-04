@@ -247,8 +247,9 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         return param_name, model_param
 
     def set_model_meta(self, model_meta):
+        if not self.is_warm_start:
+            self.boosting_round = model_meta.num_trees
         self.booster_meta = model_meta.tree_meta
-        self.boosting_round = model_meta.num_trees
         self.bin_num = model_meta.quantile_meta.bin_num
 
     def set_model_param(self, model_param):

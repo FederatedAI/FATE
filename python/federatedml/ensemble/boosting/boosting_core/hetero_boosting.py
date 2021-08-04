@@ -135,9 +135,16 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
         LOGGER.info("sync predict start round {}".format(predict_round))
         self.transfer_variable.predict_start_round.remote(predict_round, role=consts.HOST, idx=-1,)
 
-    def prepare_warm_start(self, data_inst):
+    def prepare_warm_start(self, data_inst, classes):
+        # adjust parameter for warm start
         warm_start_y_hat = self.predict(data_inst, ret_format='raw')
         self.y_hat = warm_start_y_hat
+        self.boosting_round += self.start_round
+        # check classes
+        assert set(classes).issubset(set(self.classes_)), 'warm start label alignment failed: cur labels {},' \
+                                                          'previous model labels {}'.format(classes, self.classes_)
+        # check fid
+        self.feat_name_check(data_inst, self.feature_name_fid_mapping)
 
     def fit(self, data_inst, validate_data=None):
 
@@ -149,18 +156,22 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
 
         self.y = self.get_label(self.data_bin)
 
-        self.classes_, self.num_classes, self.booster_dim = self.check_label()
+        self.start_round = len(self.boosting_model_list)
+
+        if not self.is_warm_start:
+            self.feature_name_fid_mapping = self.gen_feature_fid_mapping(data_inst.schema)
+            self.classes_, self.num_classes, self.booster_dim = self.check_label()
+            self.loss = self.get_loss_function()
+            self.y_hat, self.init_score = self.get_init_score(self.y, self.num_classes)
+        else:
+            classes_, num_classes, booster_dim = self.check_label()
+            self.prepare_warm_start(data_inst, classes_)
 
         LOGGER.info('class index is {}'.format(self.classes_))
 
-        self.loss = self.get_loss_function()
-
         self.sync_booster_dim()
 
-        self.y_hat, self.init_score = self.get_init_score(self.y, self.num_classes)
-
-        if self.is_warm_start:
-            self.prepare_warm_start(data_inst)
+        self.start_round = len(self.boosting_model_list)
 
         self.generate_encrypter()
 
@@ -172,7 +183,7 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
 
         self.validation_strategy = self.init_validation_strategy(data_inst, validate_data)
 
-        for epoch_idx in range(self.boosting_round):
+        for epoch_idx in range(self.start_round, self.boosting_round):
 
             LOGGER.info('cur epoch idx is {}'.format(epoch_idx))
 
@@ -290,15 +301,17 @@ class HeteroBoostingHost(HeteroBoosting, ABC):
         LOGGER.info('begin to fit a hetero boosting model, model is {}'.format(self.model_name))
 
         self.data_bin, self.bin_split_points, self.bin_sparse_points = self.prepare_data(data_inst)
-        self.sync_booster_dim()
-        self.generate_encrypter()
 
+        self.start_round = len(self.boosting_model_list)
         if self.is_warm_start:
             self.prepare_warm_start(data_inst)
+            self.boosting_round += self.start_round
 
+        self.sync_booster_dim()
+        self.generate_encrypter()
         self.validation_strategy = self.init_validation_strategy(data_inst, validate_data)
 
-        for epoch_idx in range(self.boosting_round):
+        for epoch_idx in range(self.start_round, self.boosting_round):
 
             LOGGER.info('cur epoch idx is {}'.format(epoch_idx))
 
