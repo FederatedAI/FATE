@@ -49,7 +49,8 @@ class RsaIntersect(Intersect):
         self.random_bit = self.rsa_params.random_bit
         if param.random_bit is not None and self.random_bit == DEFAULT_RANDOM_BIT:
             self.random_bit = param.random_bit
-            LOGGER.warning(f"'random_bit' of IntersectParam will be deprecated in future version, please sepcify random_bit within RSAParams.")
+            LOGGER.warning(f"param 'random_bit' of IntersectParam will be deprecated in future version, "
+                           f"please use 'random_bit' in RSAParams.")
         self.split_calculation = self.rsa_params.split_calculation
         self.random_base_fraction = self.rsa_params.random_base_fraction
         self.first_hash_operator = Hash(self.rsa_params.hash_method, False)
@@ -187,8 +188,6 @@ class RsaIntersect(Intersect):
             intersect_ids = self.split_calculation_process(hash_data_instances)
         else:
             intersect_ids = self.unified_calculation_process(data_instances)
-        # if not self.only_output_key:
-        #    intersect_ids = self._get_value_from_data(intersect_ids, data_instances)
         return intersect_ids
 
     def run_cache_intersect(self, data_instances, cache):

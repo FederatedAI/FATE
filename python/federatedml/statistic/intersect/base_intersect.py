@@ -15,13 +15,12 @@
 #
 
 import functools
-import numpy as np
 import uuid
 
 from federatedml.param.intersect_param import IntersectParam
 from federatedml.statistic.intersect.intersect_preprocess import BitArray
 from federatedml.transfer_variable.transfer_class.intersection_func_transfer_variable import IntersectionFuncTransferVariable
-from federatedml.util import LOGGER, consts
+from federatedml.util import LOGGER
 
 
 class Intersect(object):

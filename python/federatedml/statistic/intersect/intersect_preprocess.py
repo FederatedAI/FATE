@@ -42,7 +42,7 @@ class BitArray(object):
         random_state = np.random.RandomState(self.random_state)
         def f(n):
             return str(n)[2:]
-        return list(map(f, np.round(random_state.random(self.hash_func_count), 8)))
+        return list(map(f, np.round(random_state.random(self.hash_func_count), SALT_LENGTH)))
 
     @property
     def sparsity(self):

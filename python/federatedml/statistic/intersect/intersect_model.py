@@ -383,7 +383,7 @@ class IntersectHost(IntersectModelBase):
         elif self.model_param.intersect_method == consts.RAW:
             self.intersection_obj = RawIntersectionHost()
             self.intersection_obj.tracker = self.tracker
-            # self.intersection_obj.task_version_id = self.task_version_id
+            self.intersection_obj.task_version_id = self.task_version_id
 
         elif self.model_param.intersect_method == consts.DH:
             self.intersection_obj = DhIntersectionHost()
@@ -430,7 +430,7 @@ class IntersectGuest(IntersectModelBase):
         elif self.model_param.intersect_method == consts.RAW:
             self.intersection_obj = RawIntersectionGuest()
             self.intersection_obj.tracker = self.tracker
-            # self.intersection_obj.task_version_id = self.task_version_id
+            self.intersection_obj.task_version_id = self.task_version_id
 
         elif self.model_param.intersect_method == consts.DH:
             self.intersection_obj = DhIntersectionGuest()
