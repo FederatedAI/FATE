@@ -14,7 +14,6 @@
 #  limitations under the License.
 #
 # -*- coding: utf-8 -*-
-from fate_arch.computing import ComputingEngine
 from fate_arch.common.conf_utils import get_base_config
 from fate_flow.settings import FATEFLOW_SERVICE_NAME
 
@@ -25,11 +24,6 @@ TASK_PARALLELISM = 1
 TASK_CORES = 4
 TASK_MEMORY = 0  # mb
 MAX_CORES_PERCENT_PER_JOB = 1  # 1 means total
-IGNORE_RESOURCE_ROLES = {"arbiter"}
-SUPPORT_IGNORE_RESOURCE_ENGINES = {
-    ComputingEngine.EGGROLL, ComputingEngine.STANDALONE
-}
-
 
 # Scheduling
 DEFAULT_REMOTE_REQUEST_TIMEOUT = 30 * 1000  # ms

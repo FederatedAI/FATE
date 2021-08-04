@@ -18,24 +18,24 @@ from copy import deepcopy
 import requests
 
 from fate_arch.common.log import schedule_logger
-from fate_flow.controller.engine_operation.base import BaseEngine
+from fate_flow.controller.engine_controller.engine import EngineABC
 from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.entity.types import LinkisJobStatus, KillProcessStatusCode
+from fate_flow.entity.types import KillProcessRetCode
+from fate_flow.entity.run_status import LinkisJobStatus
 from fate_flow.settings import LINKIS_SPARK_CONFIG, LINKIS_EXECUTE_ENTRANCE, LINKIS_SUBMIT_PARAMS, LINKIS_RUNTYPE, \
     LINKIS_LABELS, LINKIS_QUERT_STATUS, LINKIS_KILL_ENTRANCE, detect_logger
+from fate_flow.db.db_models import Task
 
 
-class LinkisSparkEngine(BaseEngine):
-    @staticmethod
-    def run(job_id, component_name, task_id, task_version, role, party_id, task_parameters_path, run_parameters,
-            task_info, user_name, **kwargs):
+class LinkisSparkEngine(EngineABC):
+    def run(self, task: Task, run_parameters, run_parameters_path, config_dir, log_dir, cwd_dir, **kwargs):
         linkis_execute_url = "http://{}:{}{}".format(LINKIS_SPARK_CONFIG.get("host"),
                                                      LINKIS_SPARK_CONFIG.get("port"),
                                                      LINKIS_EXECUTE_ENTRANCE)
         headers = {"Token-Code": LINKIS_SPARK_CONFIG.get("token_code"),
-                   "Token-User": user_name,
+                   "Token-User": kwargs.get("user_name"),
                    "Content-Type": "application/json"}
-        schedule_logger(job_id).info(f"headers:{headers}")
+        schedule_logger(Task.f_job_id).info(f"headers:{headers}")
         python_path = LINKIS_SPARK_CONFIG.get("python_path")
         execution_code = 'import sys\nsys.path.append("{}")\n' \
                          'from fate_flow.operation.task_executor import TaskExecutor\n' \
@@ -43,11 +43,11 @@ class LinkisSparkEngine(BaseEngine):
                          'task_id="{}",task_version={},role="{}",party_id={},' \
                          'run_ip="{}",config="{}",job_server="{}")\n' \
                          'TaskExecutor.report_task_update_to_driver(task_info=task_info)'. \
-            format(python_path, job_id, component_name, task_id, task_version, role, party_id, RuntimeConfig.JOB_SERVER_HOST,
-                   task_parameters_path, '{}:{}'.format(RuntimeConfig.JOB_SERVER_HOST, RuntimeConfig.HTTP_PORT))
-        schedule_logger(job_id).info(f"execution code:{execution_code}")
+            format(python_path, task.f_job_id, task.f_component_name, task.f_task_id, task.f_task_version, task.f_role, task.f_party_id, RuntimeConfig.JOB_SERVER_HOST,
+                   run_parameters_path, '{}:{}'.format(RuntimeConfig.JOB_SERVER_HOST, RuntimeConfig.HTTP_PORT))
+        schedule_logger(task.f_job_id).info(f"execution code:{execution_code}")
         params = deepcopy(LINKIS_SUBMIT_PARAMS)
-        schedule_logger(job_id).info(f"spark run parameters:{run_parameters.spark_run}")
+        schedule_logger(task.f_job_id).info(f"spark run parameters:{run_parameters.spark_run}")
         for spark_key, v in run_parameters.spark_run.items():
             if spark_key in ["spark.executor.memory", "spark.driver.memory", "spark.executor.instances",
                              "wds.linkis.rm.yarnqueue"]:
@@ -61,23 +61,25 @@ class LinkisSparkEngine(BaseEngine):
             "source": {},
             "labels": LINKIS_LABELS
         }
-        schedule_logger(job_id).info(f'submit linkis spark, data:{data}')
+        schedule_logger(task.f_job_id).info(f'submit linkis spark, data:{data}')
+        task_info = {
+            "engine_conf": {}
+        }
         task_info["engine_conf"]["data"] = data
         task_info["engine_conf"]["headers"] = headers
         res = requests.post(url=linkis_execute_url, headers=headers, json=data)
-        schedule_logger(job_id).info(f"start linkis spark task: {res.text}")
+        schedule_logger(task.f_job_id).info(f"start linkis spark task: {res.text}")
         if res.status_code == 200:
             if res.json().get("status"):
                 raise Exception(f"submit linkis spark failed: {res.json()}")
             task_info["engine_conf"]["execID"] = res.json().get("data").get("execID")
             task_info["engine_conf"]["taskID"] = res.json().get("data").get("taskID")
-            schedule_logger(job_id).info('submit linkis spark success')
+            schedule_logger(task.f_job_id).info('submit linkis spark success')
         else:
             raise Exception(f"submit linkis spark failed: {res.text}")
-        return True
+        return task_info
 
-    @staticmethod
-    def kill(task):
+    def kill(self, task: Task):
         linkis_query_url = "http://{}:{}{}".format(LINKIS_SPARK_CONFIG.get("host"),
                                                    LINKIS_SPARK_CONFIG.get("port"),
                                                    LINKIS_QUERT_STATUS.replace("execID",
@@ -96,10 +98,9 @@ class LinkisSparkEngine(BaseEngine):
             schedule_logger(task.f_job_id).info(f"kill result:{kill_result}")
             if kill_result.status_code == 200:
                 pass
-        return KillProcessStatusCode.KILLED
+        return KillProcessRetCode.KILLED
 
-    @staticmethod
-    def is_alive(task):
+    def is_alive(self, task):
         process_exist = True
         try:
             linkis_query_url = "http://{}:{}{}".format(LINKIS_SPARK_CONFIG.get("host"),

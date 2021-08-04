@@ -19,8 +19,7 @@ from fate_arch.common import engine_utils
 from fate_arch.computing import ComputingEngine
 from fate_arch.common import EngineType
 from fate_arch.common.base_utils import json_dumps, current_timestamp, fate_uuid
-from fate_flow.utils.authentication_utils import authentication_check, data_authentication_check
-from federatedml.protobuf.generated import pipeline_pb2
+from fate_flow.utils.authentication_utils import data_authentication_check
 from fate_arch.common.log import schedule_logger
 from fate_flow.controller.task_controller import TaskController
 from fate_flow.entity.run_status import JobStatus, EndStatus
@@ -30,8 +29,7 @@ from fate_flow.entity.types import InputSearchType
 from fate_flow.manager.resource_manager import ResourceManager
 from fate_flow.operation.job_saver import JobSaver
 from fate_flow.operation.job_tracker import Tracker
-from fate_flow.settings import USE_AUTHENTICATION, DEFAULT_TASK_PARALLELISM, DEFAULT_FEDERATED_STATUS_COLLECT_TYPE, \
-    USE_DATA_AUTHENTICATION
+from fate_flow.settings import USE_DATA_AUTHENTICATION
 from fate_flow.protobuf.python import pipeline_pb2
 from fate_flow.runtime_config import RuntimeConfig
 from fate_flow.settings import USE_AUTHENTICATION
@@ -233,7 +231,7 @@ class JobController(object):
         ]
         log_dir = os.path.join(job_utils.get_job_log_directory(job_id=job_id), role, party_id, f"initialize_{initializer_id}")
         provider = ComponentProvider(**initialized_config["provider"])
-        p = job_utils.run_subprocess(job_id=job_id, config_dir=initialize_dir, process_cmd=process_cmd, extra_env=provider.env, log_dir=log_dir, job_dir=initialize_dir)
+        p = job_utils.run_subprocess(job_id=job_id, config_dir=initialize_dir, process_cmd=process_cmd, extra_env=provider.env, log_dir=log_dir, cwd_dir=initialize_dir)
         schedule_logger(job_id).info('job {} task initializer {} on {} {} subprocess pid {} is ready'.format(job_id, initializer_id, role, party_id, p.pid))
         try:
             p.communicate(timeout=5)

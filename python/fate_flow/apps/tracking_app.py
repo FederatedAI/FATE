@@ -23,7 +23,6 @@ from flask import request, send_file, jsonify
 from google.protobuf import json_format
 
 from fate_arch.common.base_utils import fate_uuid
-from fate_arch import storage
 from fate_arch.session import Session
 from fate_flow.db.db_models import Job, DB
 from fate_flow.manager.data_manager import delete_metric_data
@@ -361,28 +360,18 @@ def get_component_output_tables_meta(task_data):
 def get_component_output_data_line(src_key, src_value):
     data_line = [src_key]
     is_str = False
-    if isinstance(src_value, feature_utils.Instance):
-        if src_value.label is not None:
-            data_line.append(src_value.label)
-            have_data_label = True
-        data_line.extend(feature_utils.dataset_to_list(src_value.features))
-        if src_value.weight is not None:
-            have_weight = True
-            data_line.append(src_value.weight)
     extend_header = []
-    if isinstance(src_value, Instance):
+    if isinstance(src_value, feature_utils.Instance):
         for inst in ["inst_id", "label", "weight"]:
             if getattr(src_value, inst) is not None:
                 data_line.append(getattr(src_value, inst))
                 extend_header.append(inst)
-        data_line.extend(data_utils.dataset_to_list(src_value.features))
+        data_line.extend(feature_utils.dataset_to_list(src_value.features))
     elif isinstance(src_value, str):
         data_line.extend([value for value in src_value.split(',')])
         is_str = True
     else:
         data_line.extend(feature_utils.dataset_to_list(src_value))
-    return data_line, have_data_label, is_str, have_weight
-        data_line.extend(data_utils.dataset_to_list(src_value))
     return data_line, is_str, extend_header
 
 

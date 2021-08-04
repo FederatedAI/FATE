@@ -16,7 +16,7 @@
 from pyhive import hive
 
 from fate_arch.common.address import HiveAddress
-from fate_arch.storage import StorageSessionBase, StorageEngine, HiveStorageType
+from fate_arch.storage import StorageSessionBase, StorageEngine, HiveStoreType
 from fate_arch.abc import AddressABC
 
 
@@ -31,7 +31,7 @@ class StorageSession(StorageSessionBase):
         pass
 
     def table(self, name, namespace, address: AddressABC, partitions,
-              storage_type: HiveStorageType = HiveStorageType.DEFAULT, options=None, **kwargs):
+              storage_type: HiveStoreType = HiveStoreType.DEFAULT, options=None, **kwargs):
         self.address = address
         if isinstance(address, HiveAddress):
             from fate_arch.storage.hive._table import StorageTable

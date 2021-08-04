@@ -17,7 +17,7 @@ import time
 
 import requests
 
-from fate_arch.storage import StorageEngine, LinkisHiveStorageType
+from fate_arch.storage import StorageEngine, LinkisHiveStoreType
 from fate_arch.storage import StorageTableBase
 from fate_arch.storage.linkis_hive._settings import Token_Code, Token_User, STATUS_URI, EXECUTE_URI
 
@@ -28,7 +28,7 @@ class StorageTable(StorageTableBase):
                  name: str = None,
                  namespace: str = None,
                  partitions: int = 1,
-                 storage_type: LinkisHiveStorageType = None,
+                 storage_type: LinkisHiveStoreType = None,
                  options=None):
         super(StorageTable, self).__init__(name=name, namespace=namespace)
         self._address = address
@@ -37,7 +37,7 @@ class StorageTable(StorageTableBase):
         self._partitions = partitions
         self._options = options if options else {}
         self._storage_engine = StorageEngine.LINKIS_HIVE
-        self._type = storage_type if storage_type else LinkisHiveStorageType.DEFAULT
+        self._type = storage_type if storage_type else LinkisHiveStoreType.DEFAULT
 
     def execute_entrance(self, sql):
         execute_url = f"http://{self._address.host}:{self._address.port}{EXECUTE_URI}"

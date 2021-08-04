@@ -52,6 +52,16 @@ class Relationship(object):
                 "default": FederationEngine.RABBITMQ,
                 "support": [FederationEngine.PULSAR, FederationEngine.RABBITMQ]
             },
+        },
+        ComputingEngine.LINKIS_SPARK: {
+            EngineType.STORAGE: {
+                "default": StorageEngine.LINKIS_HIVE,
+                "support": [StorageEngine.LINKIS_HIVE]
+            },
+            EngineType.FEDERATION: {
+                "default": FederationEngine.RABBITMQ,
+                "support": [FederationEngine.PULSAR, FederationEngine.RABBITMQ]
+            },
         }
     }
     EngineToAddress = {

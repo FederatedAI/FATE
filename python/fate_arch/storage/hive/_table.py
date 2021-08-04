@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 
-from fate_arch.storage import StorageEngine, HiveStorageType
+from fate_arch.storage import StorageEngine, HiveStoreType
 from fate_arch.storage import StorageTableBase
 
 
@@ -26,7 +26,7 @@ class StorageTable(StorageTableBase):
                  name: str = None,
                  namespace: str = None,
                  partitions: int = 1,
-                 storage_type: HiveStorageType = None,
+                 storage_type: HiveStoreType = None,
                  options=None):
         super(StorageTable, self).__init__(name=name, namespace=namespace)
         self.cur = cur
@@ -37,7 +37,7 @@ class StorageTable(StorageTableBase):
         self._partitions = partitions
         self._options = options if options else {}
         self._storage_engine = StorageEngine.HIVE
-        self._type = storage_type if storage_type else HiveStorageType.DEFAULT
+        self._type = storage_type if storage_type else HiveStoreType.DEFAULT
 
     def execute(self, sql, select=True):
         self.cur.execute(sql)

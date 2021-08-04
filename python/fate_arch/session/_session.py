@@ -21,10 +21,8 @@ import operator
 from fate_arch.common import engine_utils, EngineType
 from fate_arch.relation_ship import Relationship
 from fate_arch.abc import CSessionABC, FederationABC, CTableABC, StorageSessionABC
-from fate_arch.common import Backend, WorkMode, log, base_utils
-from fate_arch.abc import CSessionABC, CTableABC, FederationABC
+from fate_arch.common import log, base_utils
 from fate_arch.common import Backend, WorkMode, remote_status
-from fate_arch.common.log import getLogger
 from fate_arch.computing import ComputingEngine
 from fate_arch.federation import FederationEngine
 from fate_arch.storage import StorageEngine, StorageSessionBase
@@ -259,6 +257,12 @@ class Session(object):
         elif storage_engine == StorageEngine.HDFS:
             from fate_arch.storage.hdfs import StorageSession
             storage_session = StorageSession(session_id=storage_session_id, options=kwargs.get("options", {}))
+        elif storage_engine == StorageEngine.HIVE:
+            from fate_arch.storage.hive import StorageSession
+            storage_session = StorageSession(session_id=storage_session_id, options=kwargs.get("options", {}))
+        elif storage_engine == StorageEngine.LINKIS_HIVE:
+            from fate_arch.storage.linkis_hive import StorageSession
+            storage_session = StorageSession(session_id=storage_session_id, options=kwargs.get("options", {}))
         elif storage_engine == StorageEngine.FILE:
             from fate_arch.storage.file import StorageSession
             storage_session = StorageSession(session_id=storage_session_id, options=kwargs.get("options", {}))
@@ -273,13 +277,14 @@ class Session(object):
         return storage_session
 
     @classmethod
-    def persistent(cls, computing_table: CTableABC, table_namespace, table_name, engine=None, engine_address=None, store_type=None):
+    def persistent(cls, computing_table: CTableABC, table_namespace, table_name, engine=None, engine_address=None, store_type=None, token: typing.Dict = None):
         return StorageSessionBase.persistent(computing_table=computing_table,
                                              table_namespace=table_namespace,
                                              table_name=table_name,
                                              engine=engine,
                                              engine_address=engine_address,
-                                             store_type=store_type)
+                                             store_type=store_type,
+                                             token=token)
 
     @property
     def computing(self) -> CSessionABC:

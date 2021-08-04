@@ -50,15 +50,18 @@ def table_add():
     schema = None
     if id_name and feature_name:
         schema = {'header': feature_name, 'sid': id_name}
-    with storage.Session.build(storage_engine=engine, options=request_data.get("options")) as storage_session:
-        table = storage_session.create_table(address=address, name=name, namespace=namespace,
-                                             partitions=request_data.get('partitions', None),
-                                             hava_head=request_data.get("head"), schema=schema,
-                                             id_delimiter=request_data.get("id_delimiter"), in_serialized=in_serialized)
-        if not table.check_address():
-            table.destroy()
-            return get_json_result(retcode=100, retmsg=f'engine {engine} address {address_dict} is not exist')
+    sess = Session()
+    storage_session = sess.storage(storage_engine=engine, options=request_data.get("options"))
+    table = storage_session.create_table(address=address, name=name, namespace=namespace,
+                                         partitions=request_data.get('partitions', None),
+                                         hava_head=request_data.get("head"), schema=schema,
+                                         id_delimiter=request_data.get("id_delimiter"), in_serialized=in_serialized)
+    if not table.check_address():
+        table.destroy()
+        sess.destroy_all_sessions()
+        return get_json_result(retcode=100, retmsg=f'engine {engine} address {address_dict} is not exist')
     return get_json_result(data={"table_name": name, "namespace": namespace})
+
 
 
 @manager.route('/delete', methods=['post'])
@@ -67,11 +70,13 @@ def table_delete():
     table_name = request_data.get('table_name')
     namespace = request_data.get('namespace')
     data = None
-    with Session().new_storage(name=table_name, namespace=namespace) as storage_session:
-        table = storage_session.get_table()
-        if table:
-            table.destroy()
-            data = {'table_name': table_name, 'namespace': namespace}
+    sess = Session()
+    storage_session = sess.storage(name=table_name, namespace=namespace)
+    table = storage_session.get_table()
+    if table:
+        table.destroy()
+        data = {'table_name': table_name, 'namespace': namespace}
+    sess.destroy_all_sessions()
     if data:
         return get_json_result(data=data)
     return get_json_result(retcode=101, retmsg='no find table')

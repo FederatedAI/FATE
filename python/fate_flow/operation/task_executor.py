@@ -20,17 +20,12 @@ import traceback
 
 from fate_arch.common import file_utils, EngineType, profile
 from fate_arch.common.base_utils import current_timestamp, timestamp_to_date
-from fate_arch.common.log import schedule_logger, getLogger
 from fate_arch import session
 from fate_flow.entity.types import ProcessRole
 from fate_flow.entity.run_status import TaskStatus
 from fate_flow.entity.run_parameters import RunParameters
 from fate_flow.runtime_config import RuntimeConfig
 from fate_arch.common.log import schedule_logger, getLogger, LoggerFactory
-from fate_arch import session, storage
-from fate_arch.computing import ComputingEngine
-
-from fate_flow.entity.types import TaskStatus, ProcessRole, RunParameters
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.manager.data_manager import DataTableTracker
 from fate_flow.operation.job_tracker import Tracker
@@ -116,14 +111,11 @@ class TaskExecutor(object):
                                                                                                  role=role,
                                                                                                  party_id=party_id)
 
-            component = dsl_parser.get_component_info(component_name)
-            component_parameters = component.get_role_parameters()
-            component_parameters_on_party = component_parameters[role][
-                party_index] if role in component_parameters else {}
             module_name = component.get_module()
             task_input_dsl = component.get_input()
             task_output_dsl = component.get_output()
             component_parameters_on_party['output_data_name'] = task_output_dsl.get('data')
+
             json_conf = operation_client.load_json_conf(job_id, config)
             user_name = dsl_parser.get_job_parameters().get(role, {}).get(party_id, {}).get("user", '')
             schedule_logger(job_id).info(f"user name:{user_name}")
@@ -137,21 +129,6 @@ class TaskExecutor(object):
             LoggerFactory.set_directory(directory=task_log_dir, parent_log_dir=job_log_dir,
                                         append_to_parent_log=True, force=True)
 
-            tracker = Tracker(job_id=job_id, role=role, party_id=party_id, component_name=component_name,
-                              task_id=task_id,
-                              task_version=task_version,
-                              model_id=job_parameters.model_id,
-                              model_version=job_parameters.model_version,
-                              component_module_name=module_name,
-                              job_parameters=job_parameters)
-            tracker_client = TrackerClient(job_id=job_id, role=role, party_id=party_id,
-                                           component_name=component_name,
-                                           task_id=task_id,
-                                           task_version=task_version,
-                                           model_id=job_parameters.model_id,
-                                           model_version=job_parameters.model_version,
-                                           component_module_name=module_name,
-                                           job_parameters=job_parameters)
             kwargs = {
                 'job_id': job_id,
                 'role': role,
@@ -168,9 +145,6 @@ class TaskExecutor(object):
             tracker_client = TrackerClient(**kwargs)
             checkpoint_manager = CheckpointManager(**kwargs, max_to_keep=3)
 
-            run_class_paths = component_parameters_on_party.get('CodePath').split('/')
-            run_class_package = '.'.join(run_class_paths[:-2]) + '.' + run_class_paths[-2].replace('.py', '')
-            run_class_name = run_class_paths[-1]
             task_info["party_status"] = TaskStatus.RUNNING
             cls.report_task_update_to_driver(task_info)
 
@@ -188,8 +162,6 @@ class TaskExecutor(object):
             sess = session.Session(session_id=job_utils.generate_session_id(task_id, task_version, role, party_id),
                                    computing=job_parameters.computing_engine,
                                    federation=job_parameters.federation_engine)
-            sess = session.Session(computing_type=job_parameters.computing_engine,
-                                   federation_type=job_parameters.federation_engine)
             computing_session_id = job_utils.generate_session_id(task_id, task_version, role, party_id)
             sess.init_computing(computing_session_id=computing_session_id, options=session_options)
             federation_session_id = job_utils.generate_task_version_id(task_id, task_version)
@@ -216,13 +188,8 @@ class TaskExecutor(object):
             component_framework = dsl_utils.get_component_framework_interface(provider=component_provider)
             run_object = component_framework.get_module(module_name, role)
             run_object.set_tracker(tracker=tracker_client)
-            run_object.set_task_version_id(task_version_id=job_utils.generate_task_version_id(task_id, task_version))
-
-            run_object = getattr(importlib.import_module(run_class_package), run_class_name)
-            run_object = run_object()
-            run_object.set_tracker(tracker_client)
             run_object.set_checkpoint_manager(checkpoint_manager)
-            run_object.set_task_version_id(job_utils.generate_task_version_id(task_id, task_version))
+            run_object.set_task_version_id(task_version_id=job_utils.generate_task_version_id(task_id, task_version))
 
             # add profile logs
             profile.profile_start()

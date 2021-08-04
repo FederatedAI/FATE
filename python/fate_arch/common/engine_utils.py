@@ -46,6 +46,8 @@ def engines_compatibility(work_mode: typing.Union[WorkMode, int] = None,
             values = (ComputingEngine.SPARK, FederationEngine.RABBITMQ)
         elif backend == Backend.SPARK_PULSAR:
             values = (ComputingEngine.SPARK, FederationEngine.PULSAR)
+        elif backend == Backend.LINKIS_SPARK_RABBITMQ:
+            values = (ComputingEngine.LINKIS_SPARK, FederationEngine.RABBITMQ)
         else:
             raise RuntimeError(f"unable to find default engines by work_mode: {work_mode} backend: {backend}")
 

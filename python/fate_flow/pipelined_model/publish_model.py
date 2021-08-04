@@ -26,8 +26,7 @@ from fate_flow.settings import stat_logger
 from fate_flow.utils import model_utils
 from fate_flow.pipelined_model import pipelined_model
 from fate_flow.pipelined_model.homo_model_deployer.model_deploy import model_deploy
-from federatedml.protobuf.homo_model_convert.homo_model_convert import \
-    model_convert, save_converted_model, load_converted_model, get_default_target_framework
+from flow_components.fate_federated_algorithm.v1_7_0.federatedml.protobuf.homo_model_convert.homo_model_convert import model_convert, save_converted_model, load_converted_model, get_default_target_framework
 
 
 def generate_publish_model_info(config_data):

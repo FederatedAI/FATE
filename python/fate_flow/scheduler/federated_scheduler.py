@@ -200,7 +200,7 @@ class FederatedScheduler(object):
         return status_code, response
 
     @classmethod
-    def task_command(cls, job, task, command, command_body=None, parallel=False):
+    def task_command(cls, job, task, command, command_body=None, parallel=False, need_user=False):
         federated_response = {}
         job_parameters = job.f_runtime_conf_on_party["job_parameters"]
         tasks = JobSaver.query_task(task_id=task.f_task_id, task_version=task.f_task_version)
@@ -209,6 +209,10 @@ class FederatedScheduler(object):
             dest_role, dest_party_id = task.f_role, task.f_party_id
             federated_response[dest_role] = federated_response.get(dest_role, {})
             endpoint = f"/party/{task.f_job_id}/{task.f_component_name}/{task.f_task_id}/{task.f_task_version}/{dest_role}/{dest_party_id}/{command}"
+            if need_user:
+                command_body["user_id"] = job.f_user.get(dest_role, {}).get(str(dest_party_id), "")
+                schedule_logger(job_id=job.f_job_id).info(f'user:{job.f_user}, dest_role:{dest_role}, dest_party_id:{dest_party_id}')
+                schedule_logger(job_id=job.f_job_id).info(f'command_body: {command_body}')
             args = (job.f_job_id, job.f_role, job.f_party_id, dest_role, dest_party_id, endpoint, command_body, job_parameters["federated_mode"], federated_response)
             if parallel:
                 t = threading.Thread(target=cls.federated_command, args=args)
@@ -249,53 +253,6 @@ class FederatedScheduler(object):
         federated_response[dest_role][dest_party_id] = response
         et = base_utils.current_timestamp()
         schedule_logger(job_id).info(f"send {endpoint} federated command use {et - st} ms")
-
-    @classmethod
-    def task_command(cls, job, task, command, command_body=None, need_user=False):
-        federated_response = {}
-        job_parameters = job.f_runtime_conf_on_party["job_parameters"]
-        dsl_parser = schedule_utils.get_job_dsl_parser(dsl=job.f_dsl, runtime_conf=job.f_runtime_conf_on_party, train_runtime_conf=job.f_train_runtime_conf)
-        component = dsl_parser.get_component_info(component_name=task.f_component_name)
-        component_parameters = component.get_role_parameters()
-        for dest_role, parameters_on_partys in component_parameters.items():
-            federated_response[dest_role] = {}
-            for parameters_on_party in parameters_on_partys:
-                dest_party_id = parameters_on_party.get('local', {}).get('party_id')
-                try:
-                    if need_user:
-                        command_body["user_id"] = job.f_user.get(dest_role, {}).get(str(dest_party_id), "")
-                        schedule_logger(job_id=job.f_job_id).info(f'user:{job.f_user}, dest_role:{dest_role}, dest_party_id:{dest_party_id}')
-                        schedule_logger(job_id=job.f_job_id).info(f'command_body: {command_body}')
-                    response = federated_api(job_id=task.f_job_id,
-                                             method='POST',
-                                             endpoint='/party/{}/{}/{}/{}/{}/{}/{}'.format(
-                                                 task.f_job_id,
-                                                 task.f_component_name,
-                                                 task.f_task_id,
-                                                 task.f_task_version,
-                                                 dest_role,
-                                                 dest_party_id,
-                                                 command
-                                             ),
-                                             src_party_id=job.f_initiator_party_id,
-                                             dest_party_id=dest_party_id,
-                                             src_role=job.f_initiator_role,
-                                             json_body=command_body if command_body else {},
-                                             federated_mode=job_parameters["federated_mode"])
-                    federated_response[dest_role][dest_party_id] = response
-                except Exception as e:
-                    federated_response[dest_role][dest_party_id] = {
-                        "retcode": RetCode.FEDERATED_ERROR,
-                        "retmsg": "Federated schedule error, {}".format(str(e))
-                    }
-                if federated_response[dest_role][dest_party_id]["retcode"]:
-                    schedule_logger(job_id=job.f_job_id).warning("an error occurred while {} the task to role {} party {}: \n{}".format(
-                        command,
-                        dest_role,
-                        dest_party_id,
-                        federated_response[dest_role][dest_party_id]["retmsg"]
-                    ))
-        return cls.return_federated_response(federated_response=federated_response)
 
     @classmethod
     def report_task_to_initiator(cls, task: Task):

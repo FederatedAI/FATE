@@ -32,7 +32,6 @@ from fate_flow.runtime_config import RuntimeConfig
 from fate_flow.settings import stat_logger, WORK_MODE, FATE_BOARD_DASHBOARD_ENDPOINT, SUBPROCESS_STD_LOG_NAME
 from fate_flow.utils import detect_utils, model_utils
 from fate_flow.utils import session_utils
-from fate_flow.utils.service_utils import ServiceUtils
 from fate_flow import job_default_settings
 from fate_arch.common.conf_utils import get_base_config
 
@@ -96,12 +95,12 @@ def generate_task_input_data_namespace(task_id, task_version, role, party_id):
                                                       party_id=party_id))
 
 
-def get_job_directory(job_id):
-    return os.path.join(file_utils.get_project_base_directory(), 'jobs', job_id)
+def get_job_directory(job_id, *args):
+    return os.path.join(file_utils.get_project_base_directory(), 'jobs', job_id, *args)
 
 
-def get_job_log_directory(job_id):
-    return os.path.join(file_utils.get_project_base_directory(), 'logs', job_id)
+def get_job_log_directory(job_id, *args):
+    return os.path.join(file_utils.get_project_base_directory(), 'logs', job_id, *args)
 
 
 def check_config(config: typing.Dict, required_parameters: typing.List):
@@ -317,7 +316,7 @@ def check_process_by_keyword(keywords):
     return ret == 0
 
 
-def run_subprocess(job_id, config_dir, process_cmd, extra_env: dict = None, log_dir=None, job_dir=None):
+def run_subprocess(job_id, config_dir, process_cmd, extra_env: dict = None, log_dir=None, cwd_dir=None):
     schedule_logger(job_id=job_id).info('start process command: {}'.format(' '.join(process_cmd)))
 
     os.makedirs(config_dir, exist_ok=True)
@@ -344,7 +343,7 @@ def run_subprocess(job_id, config_dir, process_cmd, extra_env: dict = None, log_
                          stdout=std_log,
                          stderr=std_log,
                          startupinfo=startupinfo,
-                         cwd=job_dir,
+                         cwd=cwd_dir,
                          env=subprocess_env
                          )
     with open(pid_path, 'w') as f:

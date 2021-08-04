@@ -16,17 +16,20 @@
 
 
 import abc
+import typing
+
+from fate_flow.db.db_models import Task
 
 
-class BaseEngine(metaclass=abc.ABCMeta):
+class EngineABC(metaclass=abc.ABCMeta):
     @abc.abstractmethod
-    def run(self, **kwargs):
+    def run(self, task: Task, run_parameters, run_parameters_path, config_dir, log_dir, cwd_dir, **kwargs) -> typing.Dict:
         ...
 
     @abc.abstractmethod
-    def kill(self, **kwargs):
+    def kill(self, task: Task):
         ...
 
     @abc.abstractmethod
-    def is_alive(self, **kwargs):
+    def is_alive(self, task: Task):
         ...

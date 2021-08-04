@@ -628,29 +628,26 @@ class BaseDSLParser(object):
                                             self.predict_dsl["components"][name]["input"]["data"][data_value].append(
                                                 input_data)
                                         else:
-                                            self.predict_dsl["components"][name]["input"]["data"][data_value].extend(
-                                                output_data_maps[pre_name][data_suffix])
+                                            self.predict_dsl["components"][name]["input"]["data"][data_value] = \
+                                                output_data_maps[
+                                                    pre_name][data_suffix]
 
                                 break
 
                         if version == 2 and erase_top_data_input:
-                            input_dep = {}
+                            is_top_component = True
                             for data_key, data_set in self.predict_dsl["components"][name]["input"]["data"].items():
-                                final_data_set = []
                                 for input_data in data_set:
                                     cpn_alias = input_data.split(".")[0]
                                     if cpn_alias == "args":
-                                        final_data_set.append(input_data)
-                                    elif cpn_alias in self.predict_dsl["components"]:
-                                        final_data_set.append(input_data)
+                                        is_top_component = False
+                                        break
 
-                                if final_data_set:
-                                    input_dep[data_key] = final_data_set
+                                    if cpn_alias in self.predict_dsl["components"]:
+                                        is_top_component = False
 
-                            if not input_dep:
+                            if is_top_component:
                                 del self.predict_dsl["components"][name]["input"]["data"]
-                            else:
-                                self.predict_dsl["components"][name]["input"]["data"] = input_dep
 
             else:
                 name = self.predict_components[i].get_name()
@@ -735,19 +732,6 @@ class BaseDSLParser(object):
     @staticmethod
     def generate_predict_conf_template(train_dsl, train_conf, model_id, model_version):
         raise NotImplementedError
-
-    @staticmethod
-    def validate_component_param(setting_conf_prefix, runtime_conf, component_name, module, version=1):
-        util = parameter_util.ParameterUtil if version == 1 else parameter_util.ParameterUtilV2
-        try:
-            util.override_parameter(setting_conf_prefix,
-                                    runtime_conf,
-                                    module,
-                                    component_name,
-                                    redundant_param_check=True)
-            return 0
-        except Exception as e:
-            raise ValueError(f"{e}")
 
 
 class DSLParser(BaseDSLParser):
@@ -929,14 +913,6 @@ class DSLParser(BaseDSLParser):
                                                                     model_version,
                                                                     conf_version=1)
 
-    @staticmethod
-    def validate_component_param(setting_conf_prefix, runtime_conf, component_name, module, *args):
-        return BaseDSLParser.validate_component_param(setting_conf_prefix,
-                                                      runtime_conf,
-                                                      component_name,
-                                                      module,
-                                                      version=1)
-
 
 class DSLParserV2(BaseDSLParser):
     def __init__(self):
@@ -1103,12 +1079,3 @@ class DSLParserV2(BaseDSLParser):
                                                                     model_id,
                                                                     model_version,
                                                                     conf_version=2)
-
-    @staticmethod
-    def validate_component_param(setting_conf_prefix, runtime_conf, component_name, module, *args):
-        return BaseDSLParser.validate_component_param(setting_conf_prefix,
-                                                      runtime_conf,
-                                                      component_name,
-                                                      module,
-                                                      version=2)
-

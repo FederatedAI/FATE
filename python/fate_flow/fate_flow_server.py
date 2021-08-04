@@ -32,8 +32,7 @@ from fate_flow.scheduler.dag_scheduler import DAGScheduler
 from fate_flow.runtime_config import RuntimeConfig
 from fate_flow.entity.types import ProcessRole
 from fate_flow.manager.resource_manager import ResourceManager
-from fate_flow.settings import WORK_MODE, IP, HTTP_PORT, GRPC_PORT, _ONE_DAY_IN_SECONDS, stat_logger, API_VERSION, GRPC_SERVER_MAX_WORKERS
-from fate_flow.utils.api_utils import get_json_result
+from fate_flow.settings import WORK_MODE
 from fate_flow.settings import IP, HTTP_PORT, GRPC_PORT, _ONE_DAY_IN_SECONDS, stat_logger, GRPC_SERVER_MAX_WORKERS, detect_logger
 from fate_flow.utils.authentication_utils import PrivilegeAuth
 from fate_flow.utils.grpc_utils import UnaryService

@@ -14,6 +14,7 @@
 #  limitations under the License.
 #
 import os.path
+import typing
 
 from fate_arch.abc import StorageSessionABC, StorageTableABC, CTableABC
 from fate_arch.common import EngineType, engine_utils
@@ -79,7 +80,7 @@ class StorageSessionBase(StorageSessionABC):
         raise NotImplementedError()
 
     @classmethod
-    def persistent(cls, computing_table: CTableABC, table_namespace, table_name, engine=None, engine_address=None, store_type=None):
+    def persistent(cls, computing_table: CTableABC, table_namespace, table_name, engine=None, engine_address=None, store_type=None, token: typing.Dict = None):
         if engine:
             if engine not in Relationship.Computing.get(computing_table.engine, {}).get(EngineType.STORAGE, {}).get("support", []):
                 raise Exception(f"storage engine {engine} not supported with computing engine {computing_table.engine}")
@@ -100,6 +101,10 @@ class StorageSessionBase(StorageSessionABC):
         elif engine == StorageEngine.STANDALONE:
             address_dict.update({"name": table_name, "namespace": table_namespace})
             store_type = StandaloneStoreType.ROLLPAIR_LMDB if store_type is None else store_type
+        elif engine == StorageEngine.HIVE:
+            address_dict.update({"name": table_name, "database": table_namespace})
+        elif engine == StorageEngine.LINKIS_HIVE:
+            address_dict.update({"database": None, "name": f"{table_namespace}_{table_name}", "username": token.get("username", "")})
         elif engine == StorageEngine.HDFS:
             address_dict.update({"path": os.path.join(address_dict.get("path_prefix", ""), table_namespace, table_name)})
         else:

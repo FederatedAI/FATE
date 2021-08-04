@@ -66,10 +66,8 @@ class PipelinedModel(Locker):
         with self.lock:
             for path in [self.variables_index_path, self.variables_data_path]:
                 os.makedirs(path)
-            shutil.copytree(file_utils.get_python_base_directory("federatedml", "protobuf", "proto"),
-                            self.define_proto_path)
-        shutil.copytree(os.path.join(file_utils.get_python_base_directory(), "fate_flow", "protobuf", "python"), self.define_proto_path)
-        shutil.copytree(os.path.join(file_utils.get_python_base_directory(), "fate_flow", "protobuf", "python"), self.define_proto_generated_path)
+            shutil.copytree(file_utils.get_python_base_directory("fate_flow", "protobuf", "proto"), self.define_proto_path)
+            shutil.copytree(file_utils.get_python_base_directory("fate_flow", "protobuf", "python"), self.define_proto_generated_path)
             with open(self.define_meta_path, "x", encoding="utf-8") as fw:
                 yaml.dump({"describe": "This is the model definition meta"}, fw, Dumper=yaml.RoundTripDumper)
 

@@ -88,8 +88,8 @@
       "1.7.0": {
         "path": [
           "flow_components",
-          "federatedml",
-          "v1_7_0",
+          "fate_federated_algorithm",
+          "1_7_0",
           "federatedml"
         ],
         "class_path": {

@@ -95,7 +95,7 @@ def job_status(job_id, role, party_id, status):
 
 @manager.route('/<job_id>/<role>/<party_id>/model', methods=['POST'])
 def save_pipelined_model(job_id, role, party_id):
-    #JobController.save_pipelined_model(job_id=job_id, role=role, party_id=party_id)
+    JobController.save_pipelined_model(job_id=job_id, role=role, party_id=party_id)
     return get_json_result(retcode=0, retmsg='success')
 
 

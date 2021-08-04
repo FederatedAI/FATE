@@ -22,7 +22,7 @@ from collections import deque, OrderedDict
 from ruamel import yaml
 
 from fate_flow.settings import stat_logger
-from fate_flow.entity.types import RunParameters
+from fate_flow.entity.run_parameters import RunParameters
 from fate_flow.model import serialize_buffer_object, parse_proto_object, Locker
 from fate_arch.common.file_utils import get_project_base_directory
 

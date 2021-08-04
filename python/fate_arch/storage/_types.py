@@ -71,11 +71,11 @@ class MySQLStoreType(object):
     DEFAULT = None
 
 
-class HiveStorageType(object):
+class HiveStoreType(object):
     DEFAULT = "HDFS"
 
 
-class LinkisHiveStorageType(object):
+class LinkisHiveStoreType(object):
     DEFAULT = "HDFS"
 
 

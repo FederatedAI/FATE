@@ -29,7 +29,6 @@ from fate_flow.settings import CHECK_NODES_IDENTITY,\
     FATE_MANAGER_GET_NODE_INFO_ENDPOINT, HEADERS, API_VERSION, stat_logger
 from fate_flow.utils.grpc_utils import wrap_grpc_packet, get_command_federation_channel, gen_routing_metadata, \
     forward_grpc_packet
-from fate_flow.utils.service_utils import ServiceUtils
 from fate_flow.runtime_config import RuntimeConfig
 from fate_flow import job_default_settings
 from fate_flow.entity.runtime_config import RuntimeConfig

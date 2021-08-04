@@ -18,6 +18,7 @@ import os
 
 from fate_arch.common import file_utils, log
 from fate_arch.common.conf_utils import get_base_config
+from fate_arch.computing import ComputingEngine
 
 
 # Server
@@ -44,8 +45,6 @@ WORK_MODE = get_base_config("work_mode", 0)
 DATABASE = get_base_config("database", {})
 MODEL_STORE_ADDRESS = get_base_config("model_store_address", {})
 
-LINKIS_SPARK_CONFIG = get_base_config("fate_on_spark", {}).get("linkis_spark")
-
 # Registry
 FATE_SERVICES_REGISTRY = {
     'zookeeper': {
@@ -54,17 +53,24 @@ FATE_SERVICES_REGISTRY = {
     },
 }
 
-# Endpoint
-FATE_FLOW_MODEL_TRANSFER_ENDPOINT = "/v1/model/transfer"
-FATE_MANAGER_GET_NODE_INFO_ENDPOINT = "/fate-manager/api/site/secretinfo"
-FATE_MANAGER_NODE_CHECK_ENDPOINT = "/fate-manager/api/site/checksite"
-FATE_BOARD_DASHBOARD_ENDPOINT = "/index.html#/dashboard?job_id={}&role={}&party_id={}"
+# Engine
+IGNORE_RESOURCE_COMPUTING_ENGINE = {
+    ComputingEngine.LINKIS_SPARK
+}
+
+IGNORE_RESOURCE_ROLES = {"arbiter"}
+
+SUPPORT_IGNORE_RESOURCE_ENGINES = {
+    ComputingEngine.EGGROLL, ComputingEngine.STANDALONE
+}
+
 # linkis spark config
+LINKIS_SPARK_CONFIG = get_base_config("fate_on_spark", {}).get("linkis_spark")
 LINKIS_EXECUTE_ENTRANCE = "/api/rest_j/v1/entrance/execute"
 LINKIS_KILL_ENTRANCE = "/api/rest_j/v1/entrance/execID/kill"
 LINKIS_QUERT_STATUS = "/api/rest_j/v1/entrance/execID/status"
 LINKIS_SUBMIT_PARAMS = {
-     "configuration": {
+    "configuration": {
         "startup": {
             "spark.python.version": "/data/anaconda3/bin/python",
             "archives": "hdfs:///apps-data/fate/python.zip#python,hdfs:///apps-data/fate/fate_guest.zip#fate_guest",
@@ -76,6 +82,13 @@ LINKIS_SUBMIT_PARAMS = {
 }
 LINKIS_RUNTYPE = "py"
 LINKIS_LABELS = {"tenant": "fate"}
+
+# Endpoint
+FATE_FLOW_MODEL_TRANSFER_ENDPOINT = "/v1/model/transfer"
+FATE_MANAGER_GET_NODE_INFO_ENDPOINT = "/fate-manager/api/site/secretinfo"
+FATE_MANAGER_NODE_CHECK_ENDPOINT = "/fate-manager/api/site/checksite"
+FATE_BOARD_DASHBOARD_ENDPOINT = "/index.html#/dashboard?job_id={}&role={}&party_id={}"
+
 # Logger
 log.LoggerFactory.LEVEL = 10
 # {CRITICAL: 50, FATAL:50, ERROR:40, WARNING:30, WARN:30, INFO:20, DEBUG:10, NOTSET:0}

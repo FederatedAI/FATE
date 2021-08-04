@@ -14,9 +14,9 @@
 #  limitations under the License.
 #
 from fate_arch.computing import ComputingEngine
-from fate_flow.controller.engine_operation.eggroll import EggrollEngine
-from fate_flow.controller.engine_operation.linkis_spark import LinkisSparkEngine
-from fate_flow.controller.engine_operation.spark import SparkEngine
+from fate_flow.controller.engine_controller.eggroll import EggrollEngine
+from fate_flow.controller.engine_controller.linkis_spark import LinkisSparkEngine
+from fate_flow.controller.engine_controller.spark import SparkEngine
 
 
 def build_engine(computing_engine):

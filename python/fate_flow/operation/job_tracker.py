@@ -135,7 +135,8 @@ class Tracker(object):
                                        table_namespace=output_table_namespace,
                                        table_name=output_table_name,
                                        engine=output_storage_engine,
-                                       engine_address=output_storage_address)
+                                       engine_address=output_storage_address,
+                                       token={"username": user_name})
             return output_table_namespace, output_table_name
         else:
             schedule_logger(self.job_id).info('task id {} output data table is none'.format(self.task_id))
@@ -446,18 +447,19 @@ class Tracker(object):
                 session_options = {"eggroll.session.processors.per.node": 1}
             else:
                 session_options = {}
-            sess.init_computing(computing_session_id=f"{computing_temp_namespace}_clean", options=session_options)
             try:
-                sess.computing.cleanup(namespace=computing_temp_namespace, name="*")
-                schedule_logger(self.job_id).info('clean table by namespace {} on {} {} done'.format(computing_temp_namespace,
-                                                                                                     self.role,
-                                                                                                     self.party_id))
-                # clean up the last tables of the federation
-                federation_temp_namespace = job_utils.generate_task_version_id(self.task_id, self.task_version)
-                sess.computing.cleanup(namespace=federation_temp_namespace, name="*")
-                schedule_logger(self.job_id).info('clean table by namespace {} on {} {} done'.format(federation_temp_namespace,
-                                                                                                     self.role,
-                                                                                                     self.party_id))
+                if self.job_parameters.computing_engine != ComputingEngine.LINKIS_SPARK:
+                    sess.init_computing(computing_session_id=f"{computing_temp_namespace}_clean", options=session_options)
+                    sess.computing.cleanup(namespace=computing_temp_namespace, name="*")
+                    schedule_logger(self.job_id).info('clean table by namespace {} on {} {} done'.format(computing_temp_namespace,
+                                                                                                         self.role,
+                                                                                                         self.party_id))
+                    # clean up the last tables of the federation
+                    federation_temp_namespace = job_utils.generate_task_version_id(self.task_id, self.task_version)
+                    sess.computing.cleanup(namespace=federation_temp_namespace, name="*")
+                    schedule_logger(self.job_id).info('clean table by namespace {} on {} {} done'.format(federation_temp_namespace,
+                                                                                                         self.role,
+                                                                                                         self.party_id))
                 if self.job_parameters.federation_engine == FederationEngine.RABBITMQ and self.role != "local":
                     schedule_logger(self.job_id).info('rabbitmq start clean up')
                     parties = [Party(k, p) for k, v in runtime_conf['role'].items() for p in v]

@@ -26,11 +26,8 @@ from fate_arch.common import engine_utils
 from fate_flow.db.db_models import DB, EngineRegistry, Job
 from fate_flow.entity.types import ResourceOperation
 from fate_flow.entity.run_parameters import RunParameters
-from fate_flow.settings import stat_logger
-from fate_flow.entity.types import ResourceOperation, RunParameters
+from fate_flow.settings import stat_logger, IGNORE_RESOURCE_COMPUTING_ENGINE, IGNORE_RESOURCE_ROLES, SUPPORT_IGNORE_RESOURCE_ENGINES
 from fate_flow.operation.job_saver import JobSaver
-from fate_flow.settings import stat_logger, STANDALONE_BACKEND_VIRTUAL_CORES_PER_NODE, SUPPORT_BACKENDS_ENTRANCE, \
-    MAX_CORES_PERCENT_PER_JOB, DEFAULT_TASK_CORES, IGNORE_RESOURCE_ROLES, SUPPORT_IGNORE_RESOURCE_ENGINES, TOTAL_CORES_OVERWEIGHT_PERCENT, TOTAL_MEMORY_OVERWEIGHT_PERCENT
 from fate_flow.utils import job_utils
 from fate_flow import job_default_settings
 
@@ -243,8 +240,7 @@ class ResourceManager(object):
                                                           role=role,
                                                           party_id=party_id)
             job_parameters = RunParameters(**job_parameters)
-        if role in job_default_settings.IGNORE_RESOURCE_ROLES and job_parameters.computing_engine in job_default_settings.SUPPORT_IGNORE_RESOURCE_ENGINES:
-        if job_parameters.backend == Backend.LINKIS_SPARK_RABBITMQ:
+        if job_parameters.computing_engine in IGNORE_RESOURCE_COMPUTING_ENGINE:
             cores = 0
             memory = 0
         elif role in IGNORE_RESOURCE_ROLES and job_parameters.computing_engine in SUPPORT_IGNORE_RESOURCE_ENGINES:
@@ -264,8 +260,7 @@ class ResourceManager(object):
                                                           role=task_info["role"],
                                                           party_id=task_info["party_id"])
             task_parameters = RunParameters(**job_parameters)
-        if task_info["role"] in job_default_settings.IGNORE_RESOURCE_ROLES and task_parameters.computing_engine in job_default_settings.SUPPORT_IGNORE_RESOURCE_ENGINES:
-        if task_parameters.backend == Backend.LINKIS_SPARK_RABBITMQ:
+        if task_parameters.computing_engine in IGNORE_RESOURCE_COMPUTING_ENGINE:
             cores_per_task = 0
             memory_per_task = 0
         elif task_info["role"] in IGNORE_RESOURCE_ROLES and task_parameters.computing_engine in SUPPORT_IGNORE_RESOURCE_ENGINES:

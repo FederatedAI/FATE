@@ -65,8 +65,8 @@ class Reader(ComponentBase):
             output_namespace=output_table_namespace,
             computing_engine=computing_engine,
             output_storage_address=output_storage_address)
-        session = Session(session_id=job_utils.generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id))
-        input_table_session = session.new_storage(storage_engine=input_table_meta.get_engine())
+        sess = Session(session_id=job_utils.generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id))
+        input_table_session = sess.storage(storage_engine=input_table_meta.get_engine())
         input_table = input_table_session.get_table(name=input_table_meta.get_name(),
                                                     namespace=input_table_meta.get_namespace())
         # update real count to meta info
@@ -78,7 +78,7 @@ class Reader(ComponentBase):
         else:
             LOGGER.info(f"the {input_table_meta.get_engine()} input table needs to be transform format")
         LOGGER.info("reader create storage session2")
-        output_table_session = session.new_storage(storage_engine=output_table_engine)
+        output_table_session = sess.storage(storage_engine=output_table_engine)
         output_table = output_table_session.create_table(address=output_table_address,
                                                          name=output_table_name,
                                                          namespace=output_table_namespace,
@@ -133,7 +133,8 @@ class Reader(ComponentBase):
                                      metric_meta=MetricMeta(name='reader', metric_type='data_info',
                                                             extra_metas=data_info))
 
-    def get_input_table_info(self, parameters, role, party_id):
+    @staticmethod
+    def get_input_table_info(parameters, role, party_id):
         search_type = data_utils.get_input_search_type(parameters)
         if search_type == InputSearchType.TABLE_INFO:
             return parameters["namespace"], parameters["name"]
@@ -151,7 +152,8 @@ class Reader(ComponentBase):
         else:
             raise ParameterException(f"can not found input table info by parameters {parameters}")
 
-    def convert_check(self, input_name, input_namespace, output_name, output_namespace,
+    @staticmethod
+    def convert_check(input_name, input_namespace, output_name, output_namespace,
                       computing_engine: ComputingEngine = ComputingEngine.EGGROLL, output_storage_address={}) -> (
             StorageTableMetaABC, AddressABC, StorageEngine):
         input_table_meta = StorageTableMeta(name=input_name, namespace=input_namespace)
@@ -201,11 +203,6 @@ class Reader(ComponentBase):
             raise RuntimeError(f"can not support computing engine {computing_engine}")
         return input_table_meta, output_table_address, output_table_engine
 
-    def copy_table(self, src_table: StorageTableABC, dest_table: StorageTableABC):
-        count = 0
-        data_temp = []
-        part_of_data = []
-        src_table_meta = src_table.meta
     def deal_linkis_hive(self, src_table: StorageTableABC, dest_table: StorageTableABC):
         from pyspark.sql import SparkSession
         import functools
@@ -218,7 +215,7 @@ class Reader(ComponentBase):
         LOGGER.info(f"columns: {src_data.columns}")
         header_source_item = list(src_data.columns)
 
-        id_delimiter = src_table.get_meta().get_id_delimiter()
+        id_delimiter = src_table.meta.get_id_delimiter()
         LOGGER.info(f"id_delimiter: {id_delimiter}")
         LOGGER.info(f"src_data: {src_data}")
         src_data.applymap(lambda x: str(x))
@@ -230,7 +227,7 @@ class Reader(ComponentBase):
         LOGGER.info(f"database:{dest_table.get_address().database}, name:{dest_table.get_address().name}")
         dest_table.put_all(dest_data)
         schema = {'header': id_delimiter.join(header_source_item[1:]).strip(), 'sid': header_source_item[0].strip()}
-        dest_table.get_meta().update_metas(schema=schema)
+        dest_table.meta.update_metas(schema=schema)
 
     def convert_join(self, x, delimitor=","):
         import pickle
@@ -250,7 +247,7 @@ class Reader(ComponentBase):
             self.copy_table(src_table, dest_table)
 
     def to_save(self, src_table, dest_table):
-        src_table_meta = src_table.get_meta()
+        src_table_meta = src_table.meta
         sess = session.Session(computing_type=self.job_parameters.computing_engine,
                                federation_type=self.job_parameters.federation_engine)
         computing_session_id = job_utils.generate_session_id(self.tracker.task_id, self.tracker.task_version,
@@ -274,11 +271,11 @@ class Reader(ComponentBase):
                                                   meta_schema=meta_schema)
         LOGGER.info(f"save {dest_table.get_namespace()} {dest_table.get_name()} success")
 
-    def copy_table(self, src_table, dest_table):
+    def copy_table(self, src_table: StorageTableABC, dest_table: StorageTableABC):
         count = 0
         data_temp = []
         part_of_data = []
-        src_table_meta = src_table.get_meta()
+        src_table_meta = src_table.meta
         schema = {}
         if not src_table_meta.get_in_serialized():
             if src_table_meta.get_have_head():
@@ -287,7 +284,7 @@ class Reader(ComponentBase):
                 get_head = True
             line_index = 0
             fate_uuid = uuid.uuid1().hex
-            if not src_table.get_meta().get_extend_sid():
+            if not src_table.meta.get_extend_sid():
                 get_line = data_utils.get_data_line
             elif not src_table_meta.get_auto_increasing_sid():
                 get_line = data_utils.get_sid_data_line
@@ -302,10 +299,10 @@ class Reader(ComponentBase):
                 values = line.rstrip().split(src_table.meta.get_id_delimiter())
                 k, v = values[0], data_utils.list_to_str(values[1:],
                                                          id_delimiter=src_table.meta.get_id_delimiter())
-                values = line.rstrip().split(src_table.get_meta().get_id_delimiter())
-                k, v = get_line(values=values, line_index=line_index, extend_sid=src_table.get_meta().get_extend_sid(),
-                                auto_increasing_sid=src_table.get_meta().get_auto_increasing_sid(),
-                                id_delimiter=src_table.get_meta().get_id_delimiter(),
+                values = line.rstrip().split(src_table.meta.get_id_delimiter())
+                k, v = get_line(values=values, line_index=line_index, extend_sid=src_table.meta.get_extend_sid(),
+                                auto_increasing_sid=src_table.meta.get_auto_increasing_sid(),
+                                id_delimiter=src_table.meta.get_id_delimiter(),
                                 fate_uuid=fate_uuid)
                 line_index += 1
                 count = self.put_in_table(table=dest_table, k=k, v=v, temp=data_temp, count=count,
