@@ -68,6 +68,9 @@ class DenseFeatureTransformer(object):
         self.header = None
         self.sid_name = None
         self.exclusive_data_type_fid_map = {}
+        self.match_id_name = data_transform_param.match_id_name
+        self.match_id_index = data_transform_param.match_id_index
+        self.with_match_id = data_transform_param.with_match_id
 
     def generate_header(self, input_data, mode="fit"):
         header = input_data.schema["header"].lower()
@@ -79,27 +82,34 @@ class DenseFeatureTransformer(object):
             raise ValueError("dense input-format should have header schema")
 
         header_gen = None
+        if self.with_match_id:
+            if self.match_id_name:
+                self.match_id_index = header.split(self.delimitor, -1).index(self.match_id_name)
+            else:
+                self.match_id_name = header.split(self.delimitor, -1)[self.match_id_index]
+
         if self.with_label:
             if mode == "fit":
                 if not header:
                     raise ValueError("dense input-format for fit stage should not be None if with_label is true")
 
                 self.label_idx = header.split(self.delimitor, -1).index(self.label_name)
-
-                header_gen = header.split(self.delimitor, -1)[: self.label_idx] + \
-                             header.split(self.delimitor, -1)[self.label_idx + 1:] or None
+                header_list = header.split(self.delimitor, -1)
+                header_gen = header_list[:self.label_idx] + header_list[self.label_idx + 1:]
             elif header:
                 header_list = header.split(self.delimitor, -1)
                 if self.label_name in header_list:
                     self.label_idx = header_list.index(self.label_name)
-
-                    header_gen = header.split(self.delimitor, -1)[: self.label_idx] + \
-                                 header.split(self.delimitor, -1)[self.label_idx + 1:] or None
+                    header_gen = header_list[:self.label_idx] + header_list[self.label_idx + 1:]
                 else:
                     self.label_idx = None
-                    header_gen = header.split(self.delimitor, -1)
+                    header_gen = header_list
         elif header:
             header_gen = header.split(self.delimitor, -1)
+
+        if self.with_match_id:
+            idx = header_gen.index(self.match_id_name)
+            header_gen = header_gen[: idx] + header_gen[idx + 1:]
 
         self.header = header_gen
         self.sid_name = sid_name
@@ -111,8 +121,41 @@ class DenseFeatureTransformer(object):
                     self.exclusive_data_type_fid_map[i] = self.exclusive_data_type[col_name]
 
     def get_schema(self):
-        schema = make_schema(self.header, self.sid_name, self.label_name)
+        schema = make_schema(self.header, self.sid_name, self.label_name, self.match_id_name)
         return schema
+
+    def extract_feature_value(self, value):
+        value = value.split(self.delimitor, -1)
+        if not self.header:
+            return []
+        elif self.with_match_id and self.label_idx is not None:
+            if len(value) == 2:
+                return []
+            elif len(value) < 2:
+                raise ValueError("Only {} column is found, can not extract match_id and label")
+            else:
+                idx1 = self.match_id_index
+                idx2 = self.label_idx
+                if idx1 > idx2:
+                    idx1, idx2 = idx2, idx1
+
+                return value[:idx1] + value[idx1 + 1: idx2] + value[idx2 + 1:]
+        elif self.with_match_id:
+            if len(value) < 1:
+                raise ValueError("Only 0 column is found, can not extract match_id")
+            elif len(value) == 1:
+                return []
+            else:
+                return value[:self.match_id_index] + value[self.match_id_index + 1:]
+        elif self.label_idx is not None:
+            if len(value) < 1:
+                raise ValueError("Only 0 column is found, can not extract label")
+            elif len(value) == 1:
+                return []
+            else:
+                return value[:self.label_idx] + value[self.label_idx + 1:]
+        else:
+            return value
 
     def read_data(self, input_data, mode="fit"):
         LOGGER.info("start to read dense data and change data to instance")
@@ -120,59 +163,55 @@ class DenseFeatureTransformer(object):
         abnormal_detection.empty_table_detection(input_data)
 
         input_data_labels = None
+        input_data_match_id = None
 
         fit_header = None
         if mode == "transform":
             fit_header = self.header
 
         self.generate_header(input_data, mode=mode)
+        input_data_features = input_data.mapValues(self.extract_feature_value)
 
         if self.label_idx is not None:
             data_shape = data_overview.get_data_shape(input_data)
             if not data_shape or self.label_idx >= data_shape:
-                raise ValueError("input data's value is empty, it does not contain a label")
-
-            input_data_features = input_data.mapValues(
-                lambda value: [] if data_shape == 1 else value.split(self.delimitor, -1)[:self.label_idx] + value.split(
-                    self.delimitor, -1)[self.label_idx + 1:])
+                raise ValueError("input data's value is empty or it does not contain a label")
 
             input_data_labels = input_data.mapValues(lambda value: value.split(self.delimitor, -1)[self.label_idx])
 
-        else:
-            input_data_features = input_data.mapValues(
-                lambda value: [] if not self.header else value.split(self.delimitor, -1))
+        if self.with_match_id:
+            input_data_match_id = input_data.mapValues(lambda value: value.split(self.delimitor, -1)[self.match_id_index])
 
         if mode == "fit":
-            data_instance = self.fit(input_data, input_data_features, input_data_labels)
+            data_instance = self.fit(input_data, input_data_features, input_data_labels, input_data_match_id)
         else:
-            data_instance = self.transform(input_data_features, input_data_labels)
-            # data_instance = ModelBase.align_data_header(data_instance, fit_header)
+            data_instance = self.transform(input_data_features, input_data_labels, input_data_match_id)
             data_instance = data_overview.header_alignment(data_instance, fit_header)
 
         return data_instance
 
-    def fit(self, input_data, input_data_features, input_data_labels):
+    def fit(self, input_data, input_data_features, input_data_labels, input_data_match_id):
         schema = self.get_schema()
         set_schema(input_data_features, schema)
 
         input_data_features = self.fill_missing_value(input_data_features, "fit")
         input_data_features = self.replace_outlier_value(input_data_features, "fit")
 
-        data_instance = self.gen_data_instance(input_data_features, input_data_labels)
+        data_instance = self.gen_data_instance(input_data_features, input_data_labels, input_data_match_id)
 
         set_schema(data_instance, schema)
 
         return data_instance
 
     @assert_io_num_rows_equal
-    def transform(self, input_data_features, input_data_labels):
+    def transform(self, input_data_features, input_data_labels, input_data_match_id):
         schema = make_schema(self.header, self.sid_name, self.label_name)
 
         set_schema(input_data_features, schema)
         input_data_features = self.fill_missing_value(input_data_features, "transform")
         input_data_features = self.replace_outlier_value(input_data_features, "transform")
 
-        data_instance = self.gen_data_instance(input_data_features, input_data_labels)
+        data_instance = self.gen_data_instance(input_data_features, input_data_labels, input_data_match_id)
         set_schema(data_instance, schema)
 
         return data_instance
@@ -218,15 +257,21 @@ class DenseFeatureTransformer(object):
 
         return input_data_features
 
-    def gen_data_instance(self, input_data_features, input_data_labels):
+    def gen_data_instance(self, input_data_features, input_data_labels, input_data_match_id):
         if self.label_idx is not None:
             data_instance = input_data_features.join(input_data_labels,
-                                                     lambda features, label:
-                                                     self.to_instance(features, label))
+                                                     lambda features, label: self.to_instance(features, label))
         else:
             data_instance = input_data_features.mapValues(lambda features: self.to_instance(features))
 
+        if self.with_match_id:
+            data_instance = data_instance.join(input_data_match_id, self.append_match_id)
+
         return data_instance
+
+    def append_match_id(self, inst, match_id):
+        inst.inst_id = match_id
+        return inst
 
     def to_instance(self, features, label=None):
         if self.header is None and len(features) != 0:
@@ -899,7 +944,7 @@ class DataTransform(ModelBase):
         return model_dict
 
 
-def make_schema(header=None, sid_name=None, label_name=None):
+def make_schema(header=None, sid_name=None, label_name=None, match_id_name=None):
     schema = {}
     if header:
         schema["header"] = header
@@ -909,6 +954,10 @@ def make_schema(header=None, sid_name=None, label_name=None):
 
     if label_name:
         schema["label_name"] = label_name
+
+    if match_id_name:
+        schema["match_id_name"] = match_id_name
+
     ModelBase.check_schema_content(schema)
     return schema
 
