@@ -16,24 +16,19 @@
 import os
 import shutil
 
-from flask import Flask, request
+from flask import request
 
 from fate_flow.entity.types import StatusSet
 from fate_arch import storage
 from fate_arch.common.base_utils import json_loads
-from fate_flow.settings import stat_logger, UPLOAD_DATA_FROM_CLIENT
+from fate_flow.settings import UPLOAD_DATA_FROM_CLIENT
 from fate_flow.utils.api_utils import get_json_result
 from fate_flow.utils import detect_utils, job_utils
 from fate_flow.scheduler.dag_scheduler import DAGScheduler
 from fate_flow.operation.job_saver import JobSaver
 
-manager = Flask(__name__)
 
-
-@manager.errorhandler(500)
-def internal_server_error(e):
-    stat_logger.exception(e)
-    return get_json_result(retcode=100, retmsg=str(e))
+page_name = 'data'
 
 
 @manager.route('/<access_module>', methods=['post'])
@@ -164,6 +159,8 @@ def gen_data_access_job_config(config_data, access_module):
                 "storage_engine",
                 "storage_address",
                 "destroy",
+                "extend_sid",
+                "auto_increasing_sid"
             }
         job_runtime_conf["component_parameters"]["role"][initiator_role]["0"]["upload_0"] = {}
         for p in parameters:

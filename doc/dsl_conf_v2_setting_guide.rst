@@ -326,7 +326,7 @@ configuration
      - way to collect federated job status; PUSH: participants report to initiator, PULL: initiator regularly queries from all participants
 
    * - timeout
-     - 604800
+     - 259200 (3 days)
      - positive int
      - time elapse (in second) for a job to timeout
 

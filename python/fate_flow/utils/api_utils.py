@@ -30,9 +30,10 @@ from fate_flow.settings import DEFAULT_REMOTE_REQUEST_TIMEOUT, CHECK_NODES_IDENT
 from fate_flow.utils.grpc_utils import wrap_grpc_packet, get_command_federation_channel, gen_routing_metadata, \
     forward_grpc_packet
 from fate_flow.entity.runtime_config import RuntimeConfig
+from fate_flow.entity.types import RetCode
 
 
-def get_json_result(retcode=0, retmsg='success', data=None, job_id=None, meta=None):
+def get_json_result(retcode=RetCode.SUCCESS, retmsg='success', data=None, job_id=None, meta=None):
     result_dict = {"retcode": retcode, "retmsg": retmsg, "data": data, "jobId": job_id, "meta": meta}
     response = {}
     for key, value in result_dict.items():
@@ -46,9 +47,9 @@ def get_json_result(retcode=0, retmsg='success', data=None, job_id=None, meta=No
 def server_error_response(e):
     stat_logger.exception(e)
     if len(e.args) > 1:
-        return get_json_result(retcode=100, retmsg=str(e.args[0]), data=e.args[1])
+        return get_json_result(retcode=RetCode.EXCEPTION_ERROR, retmsg=str(e.args[0]), data=e.args[1])
     else:
-        return get_json_result(retcode=100, retmsg=str(e))
+        return get_json_result(retcode=RetCode.EXCEPTION_ERROR, retmsg=str(e))
 
 
 def error_response(response_code, retmsg):
@@ -114,6 +115,8 @@ def get_federated_proxy_address(src_party_id, dest_party_id):
 def federated_coordination_on_http(job_id, method, host, port, endpoint, src_party_id, src_role, dest_party_id, json_body, api_version=API_VERSION, overall_timeout=DEFAULT_REMOTE_REQUEST_TIMEOUT, try_times=3):
     endpoint = f"/{api_version}{endpoint}"
     exception = None
+    json_body['src_role'] = src_role
+    json_body['src_party_id'] = src_party_id
     for t in range(try_times):
         try:
             url = "http://{}:{}{}".format(host, port, endpoint)

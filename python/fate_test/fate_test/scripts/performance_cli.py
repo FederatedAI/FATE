@@ -39,15 +39,15 @@ from fate_test.scripts._utils import _load_testsuites, _upload_data, _delete_dat
 @click.option('-r', '--replace', default="{}", type=JSON_STRING,
               help="a json string represents mapping for replacing fields in data/conf/dsl")
 @click.option('-m', '--timeout', type=int, default=3600,
-              help="Task timeout duration")
+              help="maximun running time of job")
 @click.option('-e', '--max-iter', type=int, help="When the algorithm model is LR, the number of iterations is set")
 @click.option('-d', '--max-depth', type=int,
               help="When the algorithm model is SecureBoost, set the number of model layers")
-@click.option('-n', '--num-trees', type=int, help="When the algorithm model is SecureBoost, set the number of trees")
+@click.option('-nt', '--num-trees', type=int, help="When the algorithm model is SecureBoost, set the number of trees")
 @click.option('-p', '--task-cores', type=int, help="processors per node")
-@click.option('-j', '--update-job-parameters', default="{}", type=JSON_STRING,
+@click.option('-uj', '--update-job-parameters', default="{}", type=JSON_STRING,
               help="a json string represents mapping for replacing fields in conf.job_parameters")
-@click.option('-c', '--update-component-parameters', default="{}", type=JSON_STRING,
+@click.option('-uc', '--update-component-parameters', default="{}", type=JSON_STRING,
               help="a json string represents mapping for replacing fields in conf.component_parameters")
 @click.option("--skip-data", is_flag=True, default=False,
               help="skip uploading data specified in testsuite")
@@ -57,7 +57,7 @@ from fate_test.scripts._utils import _load_testsuites, _upload_data, _delete_dat
 def run_task(ctx, job_type, include, replace, timeout, update_job_parameters, update_component_parameters,
              max_iter, max_depth, num_trees, task_cores, skip_data, clean_data, **kwargs):
     """
-    Test the performance of big data tasks
+    Test the performance of big data tasks, alias: bp
     """
     ctx.obj.update(**kwargs)
     ctx.obj.post_process()
@@ -81,6 +81,9 @@ def run_task(ctx, job_type, include, replace, timeout, update_job_parameters, up
     echo.echo(f"testsuite namespace: {namespace}", fg='red')
     echo.echo("loading testsuites:")
     suites = _load_testsuites(includes=include, excludes=tuple(), glob=None)
+    for i, suite in enumerate(suites):
+        echo.echo(f"\tdataset({len(suite.dataset)}) dsl jobs({len(suite.jobs)}) {suite.path}")
+
     if not yes and not click.confirm("running?"):
         return
 

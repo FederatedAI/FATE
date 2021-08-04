@@ -20,25 +20,11 @@ import time
 import traceback
 
 import grpc
-from flask import Flask
 from grpc._cython import cygrpc
 from werkzeug.serving import run_simple
-from werkzeug.wsgi import DispatcherMiddleware
 
 from fate_flow.utils.proto_compatibility import proxy_pb2_grpc
-from fate_flow.apps.data_access_app import manager as data_access_app_manager
-from fate_flow.apps.job_app import manager as job_app_manager
-from fate_flow.apps.model_app import manager as model_app_manager
-from fate_flow.apps.pipeline_app import manager as pipeline_app_manager
-from fate_flow.apps.table_app import manager as table_app_manager
-from fate_flow.apps.tracking_app import manager as tracking_app_manager
-from fate_flow.apps.permission_app import manager as permission_app_manager
-from fate_flow.apps.version_app import manager as version_app_manager
-from fate_flow.apps.proxy_app import manager as proxy_app_manager
-from fate_flow.apps.info_app import manager as info_app_manager
-from fate_flow.scheduling_apps.initiator_app import manager as initiator_app_manager
-from fate_flow.scheduling_apps.party_app import manager as party_app_manager
-from fate_flow.scheduling_apps.tracker_app import manager as tracker_app_manager
+from fate_flow.apps import app
 from fate_flow.db.db_models import init_database_tables as init_flow_db
 from fate_arch.storage.metastore.db_models import init_database_tables as init_arch_db
 from fate_flow.scheduler.detector import Detector
@@ -46,48 +32,16 @@ from fate_flow.scheduler.dag_scheduler import DAGScheduler
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.entity.types import ProcessRole
 from fate_flow.manager.resource_manager import ResourceManager
-from fate_flow.settings import IP, HTTP_PORT, GRPC_PORT, _ONE_DAY_IN_SECONDS, stat_logger, API_VERSION, GRPC_SERVER_MAX_WORKERS
-from fate_flow.utils.api_utils import get_json_result
+from fate_flow.settings import IP, HTTP_PORT, GRPC_PORT, _ONE_DAY_IN_SECONDS, stat_logger, GRPC_SERVER_MAX_WORKERS, detect_logger
 from fate_flow.utils.authentication_utils import PrivilegeAuth
 from fate_flow.utils.grpc_utils import UnaryService
 from fate_flow.db.db_services import service_db
-
 from fate_flow.utils.xthread import ThreadPoolExecutor
 from fate_flow.utils import job_utils
-
-'''
-Initialize the manager
-'''
-
-manager = Flask(__name__)
-
-
-@manager.errorhandler(500)
-def internal_server_error(e):
-    stat_logger.exception(e)
-    return get_json_result(retcode=100, retmsg=str(e))
+from fate_arch.common.log import schedule_logger
 
 
 if __name__ == '__main__':
-    manager.url_map.strict_slashes = False
-    app = DispatcherMiddleware(
-        manager,
-        {
-            '/{}/data'.format(API_VERSION): data_access_app_manager,
-            '/{}/model'.format(API_VERSION): model_app_manager,
-            '/{}/job'.format(API_VERSION): job_app_manager,
-            '/{}/table'.format(API_VERSION): table_app_manager,
-            '/{}/tracking'.format(API_VERSION): tracking_app_manager,
-            '/{}/pipeline'.format(API_VERSION): pipeline_app_manager,
-            '/{}/permission'.format(API_VERSION): permission_app_manager,
-            '/{}/version'.format(API_VERSION): version_app_manager,
-            '/{}/party'.format(API_VERSION): party_app_manager,
-            '/{}/initiator'.format(API_VERSION): initiator_app_manager,
-            '/{}/tracker'.format(API_VERSION): tracker_app_manager,
-            '/{}/forward'.format(API_VERSION): proxy_app_manager,
-            '/{}/info'.format(API_VERSION): info_app_manager,
-        }
-    )
     # init
     # signal.signal(signal.SIGTERM, job_utils.cleaning)
     signal.signal(signal.SIGCHLD, job_utils.wait_child_process)
@@ -104,8 +58,8 @@ if __name__ == '__main__':
     PrivilegeAuth.init()
     service_db().register_models()
     ResourceManager.initialize()
-    Detector(interval=5 * 1000).start()
-    DAGScheduler(interval=2 * 1000).start()
+    Detector(interval=5 * 1000, logger=detect_logger).start()
+    DAGScheduler(interval=2 * 1000, logger=schedule_logger()).start()
     thread_pool_executor = ThreadPoolExecutor(max_workers=GRPC_SERVER_MAX_WORKERS)
     stat_logger.info(f"start grpc server thread pool by {thread_pool_executor._max_workers} max workers")
     server = grpc.server(thread_pool=thread_pool_executor,

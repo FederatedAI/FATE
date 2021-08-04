@@ -42,6 +42,7 @@ class ModelBase(object):
         self.task_version_id = ''
         self.need_one_vs_rest = False
         self.tracker = None
+        self.checkpoint_manager = None
         self.cv_fold = 0
         self.validation_freqs = None
         self.component_properties = ComponentProperties()
@@ -174,6 +175,10 @@ class ModelBase(object):
 
     def set_tracker(self, tracker):
         self.tracker = tracker
+
+    def set_checkpoint_manager(self, checkpoint_manager):
+        checkpoint_manager.load_checkpoints_from_disk()
+        self.checkpoint_manager = checkpoint_manager
 
     @staticmethod
     def set_predict_data_schema(predict_datas, schemas):
