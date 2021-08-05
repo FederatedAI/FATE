@@ -159,6 +159,8 @@ def gen_data_access_job_config(config_data, access_module):
                 "storage_engine",
                 "storage_address",
                 "destroy",
+                "extend_sid",
+                "auto_increasing_sid"
             }
         job_runtime_conf["component_parameters"]["role"][initiator_role]["0"]["upload_0"] = {}
         for p in parameters:

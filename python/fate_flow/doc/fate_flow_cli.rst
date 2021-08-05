@@ -308,7 +308,7 @@ Model
 load
 ^^^^
 
--  description: load model.
+-  description: load model. Need to deploy model first if `dsl_version` == `2`.
 -  parameter:
 
    -  -c --config: config path, Required
@@ -350,7 +350,7 @@ load
 bind
 ^^^^
 
--  description: bind model.
+-  description: bind model. Need to deploy model first if `dsl_version` == `2`.
 -  parameter:
 
    -  -c --config: config path, Required

@@ -24,22 +24,29 @@ from eggroll.roll_site.roll_site import RollSiteContext
 from fate_arch.abc import FederationABC
 from fate_arch.common.log import getLogger
 from fate_arch.computing.eggroll import Table
-from fate_arch.federation._split import _is_split_head, _split_get, _is_splitable_obj, _get_splits
+from fate_arch.federation._split import (
+    _is_split_head,
+    _split_get,
+    _is_splitable_obj,
+    _get_splits,
+)
+from fate_arch.common import remote_status
 
 LOGGER = getLogger()
 
 
 class Federation(FederationABC):
-
     def __init__(self, rp_ctx, rs_session_id, party, proxy_endpoint):
-        LOGGER.debug(f"[federation.eggroll]init federation: "
-                     f"rp_session_id={rp_ctx.session_id}, rs_session_id={rs_session_id}, "
-                     f"party={party}, proxy_endpoint={proxy_endpoint}")
+        LOGGER.debug(
+            f"[federation.eggroll]init federation: "
+            f"rp_session_id={rp_ctx.session_id}, rs_session_id={rs_session_id}, "
+            f"party={party}, proxy_endpoint={proxy_endpoint}"
+        )
 
         options = {
-            'self_role': party.role,
-            'self_party_id': party.party_id,
-            'proxy_endpoint': proxy_endpoint
+            "self_role": party.role,
+            "self_party_id": party.party_id,
+            "proxy_endpoint": proxy_endpoint,
         }
         self._rsc = RollSiteContext(rs_session_id, rp_ctx=rp_ctx, options=options)
         LOGGER.debug(f"[federation.eggroll]init federation context done")
@@ -66,9 +73,11 @@ def _remote(v, name, tag, parties, rsc, gc):
 
     t = _get_type(v)
     if t == _FederationValueType.ROLL_PAIR:
-        LOGGER.debug(f"[{log_str}]remote "
-                     f"RollPair(namespace={v.get_namespace()}, name={v.get_name()}, partitions={v.get_partitions()})")
-        gc.add_gc_action(tag, v, 'destroy', {})
+        LOGGER.debug(
+            f"[{log_str}]remote "
+            f"RollPair(namespace={v.get_namespace()}, name={v.get_name()}, partitions={v.get_partitions()})"
+        )
+        gc.add_gc_action(tag, v, "destroy", {})
         _push_with_exception_handle(rsc, v, name, tag, parties)
         return
 
@@ -130,14 +139,21 @@ def _push_with_exception_handle(rsc, v, name, tag, parties):
     def _remote_exception_re_raise(f, p):
         try:
             f.result()
-            LOGGER.debug(f"[federation.eggroll.remote.{name}.{tag}]future to remote to party: {p} done")
+            LOGGER.debug(
+                f"[federation.eggroll.remote.{name}.{tag}]future to remote to party: {p} done"
+            )
         except Exception as e:
             pid = os.getpid()
-            LOGGER.exception(f"[federation.eggroll.remote.{name}.{tag}]future to remote to party: {p} fail,"
-                             f" terminating process(pid={pid})")
+            LOGGER.exception(
+                f"[federation.eggroll.remote.{name}.{tag}]future to remote to party: {p} fail,"
+                f" terminating process(pid={pid})"
+            )
             import traceback
-            print(f"federation.eggroll.remote.{name}.{tag} future to remote to party: {p} fail,"
-                  f" terminating process {pid}, traceback: {traceback.format_exc()}")
+
+            print(
+                f"federation.eggroll.remote.{name}.{tag} future to remote to party: {p} fail,"
+                f" terminating process {pid}, traceback: {traceback.format_exc()}"
+            )
             os.kill(pid, signal.SIGTERM)
             raise e
 
@@ -151,6 +167,8 @@ def _push_with_exception_handle(rsc, v, name, tag, parties):
     futures = rs.push(obj=v, parties=parties)
     for party, future in zip(parties, futures):
         future.add_done_callback(_get_call_back_func(party))
+
+    remote_status.add_remote_futures(futures)
     return rs
 
 
@@ -173,9 +191,11 @@ def _get_value_post_process(v, name, tag, party, rsc, gc):
 
     # got a roll pair
     if isinstance(v, RollPair):
-        LOGGER.debug(f"[{log_str}] got "
-                     f"RollPair(namespace={v.get_namespace()}, name={v.get_name()}, partitions={v.get_partitions()})")
-        gc.add_gc_action(tag, v, 'destroy', {})
+        LOGGER.debug(
+            f"[{log_str}] got "
+            f"RollPair(namespace={v.get_namespace()}, name={v.get_name()}, partitions={v.get_partitions()})"
+        )
+        gc.add_gc_action(tag, v, "destroy", {})
         return v
 
     # got large object in splits
@@ -184,7 +204,9 @@ def _get_value_post_process(v, name, tag, party, rsc, gc):
         LOGGER.debug(f"[{log_str}]is split object, num_split={num_split}")
         split_objs = []
         for k in range(num_split):
-            split_obj = _split_rs = rsc.load(name, tag=f"{tag}.__part_{k}").pull([party])[0].result()
+            split_obj = _split_rs = (
+                rsc.load(name, tag=f"{tag}.__part_{k}").pull([party])[0].result()
+            )
             LOGGER.debug(f"[{log_str}]got split ({k}/{num_split})")
             split_objs.append(split_obj)
         obj = _split_get(split_objs)

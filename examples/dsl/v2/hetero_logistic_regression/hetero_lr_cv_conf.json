@@ -5,50 +5,24 @@
         "party_id": 10000
     },
     "role": {
-        "guest": [
-            10000
+        "arbiter": [
+            9999
         ],
         "host": [
             9999
         ],
-        "arbiter": [
-            9999
+        "guest": [
+            10000
         ]
     },
     "job_parameters": {
         "common": {
-            "job_type": "train",
             "backend": 0,
-            "work_mode": 0
+            "work_mode": 0,
+            "job_type": "train"
         }
     },
     "component_parameters": {
-        "common": {
-            "dataio_0": {
-                "output_format": "dense"
-            },
-            "hetero_lr_0": {
-                "penalty": "L2",
-                "tol": 0.0001,
-                "alpha": 0.01,
-                "optimizer": "rmsprop",
-                "batch_size": -1,
-                "learning_rate": 0.15,
-                "init_param": {
-                    "init_method": "zeros"
-                },
-                "max_iter": 10,
-                "early_stop": "diff",
-                "cv_param": {
-                    "n_splits": 3,
-                    "shuffle": false,
-                    "random_seed": 103,
-                    "need_cv": true,
-                    "output_fold_history": true,
-                    "history_value_type": "score"
-                }
-            }
-        },
         "role": {
             "host": {
                 "0": {
@@ -74,6 +48,30 @@
                     "dataio_0": {
                         "with_label": true
                     }
+                }
+            }
+        },
+        "common": {
+            "dataio_0": {
+                "output_format": "dense"
+            },
+            "hetero_lr_0": {
+                "penalty": "L2",
+                "tol": 0.0001,
+                "alpha": 0.01,
+                "optimizer": "rmsprop",
+                "batch_size": -1,
+                "learning_rate": 0.15,
+                "init_param": {
+                    "init_method": "zeros"
+                },
+                "max_iter": 10,
+                "early_stop": "diff",
+                "cv_param": {
+                    "n_splits": 3,
+                    "shuffle": false,
+                    "random_seed": 103,
+                    "need_cv": true
                 }
             }
         }

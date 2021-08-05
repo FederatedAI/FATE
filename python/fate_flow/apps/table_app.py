@@ -24,6 +24,7 @@ from flask import request
 
 
 @manager.route('/add', methods=['post'])
+@manager.route('/bind', methods=['post'])
 def table_add():
     request_data = request.json
     detect_utils.check_config(request_data, required_arguments=["engine", "address", "namespace", "name", ("head", (0, 1)), "id_delimiter"])
@@ -32,7 +33,7 @@ def table_add():
     name = request_data.get('name')
     namespace = request_data.get('namespace')
     address = storage.StorageTableMeta.create_address(storage_engine=engine, address_dict=address_dict)
-    in_serialized = request_data.get("in_serialized", 1 if engine in {storage.StorageEngine.STANDALONE, storage.StorageEngine.EGGROLL} else 0)
+    in_serialized = request_data.get("in_serialized", 1 if engine in {storage.StorageEngine.STANDALONE, storage.StorageEngine.EGGROLL, storage.StorageEngine.MYSQL} else 0)
     destroy = (int(request_data.get("drop", 0)) == 1)
     data_table_meta = storage.StorageTableMeta(name=name, namespace=namespace)
     if data_table_meta:
@@ -43,9 +44,19 @@ def table_add():
                                    retmsg='The data table already exists.'
                                           'If you still want to continue uploading, please add the parameter -drop.'
                                           '1 means to add again after deleting the table')
+    id_name = request_data.get("id_name")
+    feature_name = request_data.get("feature_name")
+    schema = None
+    if id_name and feature_name:
+        schema = {'header': feature_name, 'sid': id_name}
     with storage.Session.build(storage_engine=engine, options=request_data.get("options")) as storage_session:
-        storage_session.create_table(address=address, name=name, namespace=namespace, partitions=request_data.get('partitions', None),
-                                     hava_head=request_data.get("head"), id_delimiter=request_data.get("id_delimiter"), in_serialized=in_serialized)
+        table = storage_session.create_table(address=address, name=name, namespace=namespace,
+                                             partitions=request_data.get('partitions', None),
+                                             hava_head=request_data.get("head"), schema=schema,
+                                             id_delimiter=request_data.get("id_delimiter"), in_serialized=in_serialized)
+        if not table.check_address():
+            table.destroy()
+            return get_json_result(retcode=100, retmsg=f'engine {engine} address {address_dict} is not exist')
     return get_json_result(data={"table_name": name, "namespace": namespace})
 
 
@@ -86,10 +97,12 @@ def table_api(table_func):
         table_schema = None
         table_name, namespace = config.get("name") or config.get("table_name"), config.get("namespace")
         table_meta = storage.StorageTableMeta(name=table_name, namespace=namespace)
+        address = None
         if table_meta:
             table_key_count = table_meta.get_count()
             table_partition = table_meta.get_partitions()
             table_schema = table_meta.get_schema()
+            address = table_meta.get_address().__dict__
             exist = 1
         else:
             exist = 0
@@ -98,7 +111,8 @@ def table_api(table_func):
                                      "exist": exist,
                                      "count": table_key_count,
                                      "partition": table_partition,
-                                     "schema": table_schema})
+                                     "schema": table_schema,
+                                     "address": address})
     else:
         return get_json_result()
 

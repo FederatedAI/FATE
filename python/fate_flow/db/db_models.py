@@ -113,6 +113,7 @@ class Job(DataBaseModel):
     f_initiator_party_id = CharField(max_length=50, index=True)
     f_status = CharField(max_length=50, index=True)
     f_status_code = IntegerField(null=True, index=True)
+    f_user = JSONField()
     # this party configuration
     f_role = CharField(max_length=50, index=True)
     f_party_id = CharField(max_length=10, index=True)
@@ -165,6 +166,7 @@ class Task(DataBaseModel):
     f_run_ip = CharField(max_length=100, null=True)
     f_run_pid = IntegerField(null=True)
     f_party_status = CharField(max_length=50, index=True)
+    f_engine_conf = JSONField(null=True)
 
     f_start_time = BigIntegerField(null=True)
     f_start_date = DateTimeField(null=True)
@@ -277,6 +279,23 @@ class MachineLearningModelInfo(DataBaseModel):
     class Meta:
         db_table = "t_machine_learning_model_info"
         primary_key = CompositeKey('f_role', 'f_party_id', 'f_model_id', 'f_model_version')
+
+
+class DataTableTracking(DataBaseModel):
+    f_table_id = BigAutoField(primary_key=True)
+    f_table_name = CharField(max_length=300, null=True)
+    f_table_namespace = CharField(max_length=300, null=True)
+    f_job_id = CharField(max_length=25, index=True, null=True)
+    f_have_parent = BooleanField(default=False)
+    f_parent_number = IntegerField(default=0)
+
+    f_parent_table_name = CharField(max_length=500, null=True)
+    f_parent_table_namespace = CharField(max_length=500, null=True)
+    f_source_table_name = CharField(max_length=500, null=True)
+    f_source_table_namespace = CharField(max_length=500, null=True)
+
+    class Meta:
+        db_table = "t_data_table_tracking"
 
 
 class ModelTag(DataBaseModel):
