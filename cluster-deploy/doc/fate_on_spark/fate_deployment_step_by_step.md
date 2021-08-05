@@ -142,8 +142,8 @@ wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/python-env-minic
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/jdk-8u192-linux-x64.tar.gz
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/mysql-fate-8.0.13.tar.gz
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/openresty-1.17.9.2.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/pip-packages-fate-1.5.1.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_1.5.1_release.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/pip-packages-fate-1.6.1.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_1.6.1_release.tar.gz
 
 #scp packages to 192.168.0.1和192.168.0.2
 scp *.tar.gz app@192.168.0.1:/data/projects/install
@@ -275,7 +275,7 @@ cd /data/projects/install
 tar xvf pip-packages-fate-*.tar.gz
 source /data/projects/fate/common/python/venv/bin/activate
 pip install python-env/setuptools-42.0.2-py2.py3-none-any.whl
-pip install -r pip-packages-fate-1.5.1/requirements.txt -f ./pip-packages-fate-1.5.1 --no-index
+pip install -r pip-packages-fate-1.6.1/requirements.txt -f ./pip-packages-fate-1.6.1 --no-index
 pip list | wc -l
 ```
 

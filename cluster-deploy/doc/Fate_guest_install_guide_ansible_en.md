@@ -265,8 +265,8 @@ Go to the /data/projects/ directory of the execution node and execute:
 ```
 #Note: The URL link has a line break. When copying, adjust it into one line
 cd /data/projects/
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/ansible_nfate_1.5.1_release-1.0.0.tar.gz
-tar xzf ansible_nfate_1.5.1_release-1.0.0.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/ansible_nfate_1.6.1_release-1.0.0.tar.gz
+tar xzf ansible_nfate_1.6.1_release-1.0.0.tar.gz
 ```
 
 ## 4.4 Profile Modification and Examples

@@ -254,8 +254,8 @@ Go to the /data/projects/ directory of the execution node and execute:
 
 ```
 cd /data/projects/
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate_cluster_install_1.5.1_release-c7-u18.tar.gz
-tar xzf fate_cluster_install_1.5.1_release-c7-u18.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate_cluster_install_1.6.1_release-c7-u18.tar.gz
+tar xzf fate_cluster_install_1.6.1_release-c7-u18.tar.gz
 ```
 
 ## 5.2 Pre-Deployment Check
@@ -291,7 +291,7 @@ Description of Profile setup.conf
 | Configuration Item| Item Value| Description
 |----------|----------|----------
 | roles| Default: "host", "guest"| The deployment roles: host or guest
-| version| Default: 1.5.1| The version of FATE
+| version| Default: 1.6.1| The version of FATE
 | pbase| Default: /data/projects| The root directory of the project
 | lbase| Default: /data/logs| Keep the default value and do not modify
 | ssh\_user| Default: app| The user who connects the destination machine by ssh, and the owner of the deployed file
@@ -326,7 +326,7 @@ Description of Profile setup.conf
 #to install role
 roles=( "host" "guest" )
 
-version="1.5.1"
+version="1.6.1"
 #project base
 pbase="/data/projects"
 #log directory
@@ -391,7 +391,7 @@ nodemanager_port=4671
 #to install role
 roles=( "host" )
 
-version="1.5.1"
+version="1.6.1"
 #project base
 pbase="/data/projects"
 #log directory
