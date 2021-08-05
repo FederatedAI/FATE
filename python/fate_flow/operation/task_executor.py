@@ -47,42 +47,15 @@ class TaskExecutor(object):
     def run_task(cls, **kwargs):
         task_info = {}
         try:
-            parser = argparse.ArgumentParser()
-            parser.add_argument('-j', '--job_id', required=True, type=str, help="job id")
-            parser.add_argument('-n', '--component_name', required=True, type=str,
-                                help="component name")
-            parser.add_argument('-t', '--task_id', required=True, type=str, help="task id")
-            parser.add_argument('-v', '--task_version', required=True, type=int, help="task version")
-            parser.add_argument('-r', '--role', required=True, type=str, help="role")
-            parser.add_argument('-p', '--party_id', required=True, type=int, help="party id")
-            parser.add_argument('-c', '--config', required=True, type=str, help="task parameters")
-            parser.add_argument('--run_ip', help="run ip", type=str)
-            parser.add_argument('--job_server', help="job server", type=str)
-            args = parser.parse_args()
-            job_id = args.job_id
-            component_name = args.component_name
-            task_id = args.task_id
-            task_version = args.task_version
-            role = args.role
-            party_id = args.party_id
+            job_id, component_name, task_id, task_version, role, party_id, run_ip, config, job_server = cls.get_run_task_args(kwargs)
             schedule_logger(job_id).info('enter task executor process')
-            schedule_logger(job_id).info(args)
             schedule_logger(job_id).info("python env: {}, python path: {}".format(os.getenv("VIRTUAL_ENV"), os.getenv("PYTHONPATH")))
             # init function args
-            if args.job_server:
-                RuntimeConfig.init_config(JOB_SERVER_HOST=args.job_server.split(':')[0],
-                                          HTTP_PORT=args.job_server.split(':')[1])
-                RuntimeConfig.set_process_role(ProcessRole.EXECUTOR)
-            RuntimeConfig.load_component_registry()
-            task_parameters = RunParameters(**file_utils.load_json_conf(args.config))
-            job_parameters = task_parameters
-            if job_parameters.assistant_role:
-                TaskExecutor.monkey_patch()
-            job_id, component_name, task_id, task_version, role, party_id, run_ip, config, job_server = cls.get_run_task_args(kwargs)
             if job_server:
                 RuntimeConfig.init_config(JOB_SERVER_HOST=job_server.split(':')[0],
                                           HTTP_PORT=job_server.split(':')[1])
                 RuntimeConfig.set_process_role(ProcessRole.EXECUTOR)
+            RuntimeConfig.load_component_registry()
             executor_pid = os.getpid()
             task_info.update({
                 "job_id": job_id,
@@ -96,37 +69,39 @@ class TaskExecutor(object):
             })
             start_time = current_timestamp()
             operation_client = OperationClient()
-            job_conf = operation_client.get_job_conf(job_id, role)
+            job_conf = operation_client.get_job_conf(job_id, role, party_id)
             job_dsl = job_conf["job_dsl_path"]
             job_runtime_conf = job_conf["job_runtime_conf_path"]
+            task_parameters_conf = operation_client.load_json_conf(job_id, config)
+
+            job_log_dir = os.path.join(job_utils.get_job_log_directory(job_id=job_id), role, str(party_id))
+            task_log_dir = os.path.join(job_log_dir, component_name)
+            LoggerFactory.set_directory(directory=task_log_dir, parent_log_dir=job_log_dir,
+                                        append_to_parent_log=True, force=True)
+
             dsl_parser = schedule_utils.get_job_dsl_parser(dsl=job_dsl,
                                                            runtime_conf=job_runtime_conf,
                                                            train_runtime_conf=job_conf["train_runtime_conf_path"],
                                                            pipeline_dsl=job_conf["pipeline_dsl_path"])
+
+            user_name = dsl_parser.get_job_parameters().get(role, {}).get(party_id, {}).get("user", '')
+            schedule_logger(job_id).info(f"user name:{user_name}")
+            src_user = task_parameters_conf.get("src_user")
+            task_parameters = RunParameters(**task_parameters_conf)
+            job_parameters = task_parameters
+            if job_parameters.assistant_role:
+                TaskExecutor.monkey_patch()
+
             job_args_on_party = TaskExecutor.get_job_args_on_party(dsl_parser, job_runtime_conf, role, party_id)
             component = dsl_parser.get_component_info(component_name=component_name)
             component_provider, component_parameters_on_party = dsl_utils.get_component_run_info(dsl_parser=dsl_parser,
                                                                                                  component_name=component_name,
                                                                                                  role=role,
                                                                                                  party_id=party_id)
-
             module_name = component.get_module()
             task_input_dsl = component.get_input()
             task_output_dsl = component.get_output()
             component_parameters_on_party['output_data_name'] = task_output_dsl.get('data')
-
-            json_conf = operation_client.load_json_conf(job_id, config)
-            user_name = dsl_parser.get_job_parameters().get(role, {}).get(party_id, {}).get("user", '')
-            schedule_logger(job_id).info(f"user name:{user_name}")
-            src_user = json_conf.get("src_user")
-            task_parameters = RunParameters(**json_conf)
-            job_parameters = task_parameters
-            if job_parameters.assistant_role:
-                TaskExecutor.monkey_patch()
-            job_log_dir = os.path.join(job_utils.get_job_log_directory(job_id=job_id), role, str(party_id))
-            task_log_dir = os.path.join(job_log_dir, component_name)
-            LoggerFactory.set_directory(directory=task_log_dir, parent_log_dir=job_log_dir,
-                                        append_to_parent_log=True, force=True)
 
             kwargs = {
                 'job_id': job_id,
@@ -285,7 +260,6 @@ class TaskExecutor(object):
             run_ip = args.run_ip
             config = args.config
             job_server = args.job_server
-        schedule_logger(job_id).info('enter task process')
         return job_id, component_name, task_id, task_version, role, party_id, run_ip, config, job_server
 
     @classmethod

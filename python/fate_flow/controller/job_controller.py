@@ -97,9 +97,11 @@ class JobController(object):
             job_parameters=job_parameters)
         cls.check_parameters(job_parameters=job_parameters,
                              role=role, party_id=party_id, engines_info=engines_info)
+        # update job parameters on party
         job_info["runtime_conf_on_party"]["job_parameters"] = job_parameters.to_dict()
         job_utils.save_job_conf(job_id=job_id,
                                 role=role,
+                                party_id=party_id,
                                 job_dsl=dsl,
                                 job_runtime_conf=runtime_conf,
                                 job_runtime_conf_on_party=job_info["runtime_conf_on_party"],
@@ -178,6 +180,11 @@ class JobController(object):
                 msg = "please use task_cores job parameters to set request task cores or you can customize it with spark_run job parameters"
             raise RuntimeError(
                 f"max cores per job is {max_cores_per_job} base on (fate_flow/settings#MAX_CORES_PERCENT_PER_JOB * conf/service_conf.yaml#nodes * conf/service_conf.yaml#cores_per_node), expect {cores_submit} cores, {msg}, {msg2}")
+
+    @classmethod
+    def update_component_parameters(cls, job_id, parameters):
+        job_utils.get_job_configuration
+        pass
 
     @classmethod
     def initialize_tasks(cls, job_id, role, party_id, run_on_this_party, initiator_role, initiator_party_id, job_parameters: RunParameters, dsl_parser, component_name=None, task_version=None):

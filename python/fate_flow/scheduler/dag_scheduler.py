@@ -83,6 +83,7 @@ class DAGScheduler(Cron):
 
         path_dict = job_utils.save_job_conf(job_id=job_id,
                                             role=job.f_initiator_role,
+                                            party_id=job.f_initiator_party_id,
                                             job_dsl=job_dsl,
                                             job_runtime_conf=job_runtime_conf,
                                             job_runtime_conf_on_party={},
@@ -100,8 +101,8 @@ class DAGScheduler(Cron):
 
         job.f_runtime_conf = conf_adapter.update_common_parameters(common_parameters=common_job_parameters)
         dsl_parser = schedule_utils.get_job_dsl_parser(dsl=job.f_dsl,
-                                                                    runtime_conf=job.f_runtime_conf,
-                                                                    train_runtime_conf=job.f_train_runtime_conf)
+                                                       runtime_conf=job.f_runtime_conf,
+                                                       train_runtime_conf=job.f_train_runtime_conf)
 
         # initiator runtime conf as template
         job.f_runtime_conf_on_party = job.f_runtime_conf.copy()
@@ -355,8 +356,8 @@ class DAGScheduler(Cron):
                 tasks = JobSaver.query_task(job_id=job_id, role=initiator_role, party_id=initiator_party_id)
         job_can_rerun = False
         dsl_parser = schedule_utils.get_job_dsl_parser(dsl=job.f_dsl,
-                                                                    runtime_conf=job.f_runtime_conf_on_party,
-                                                                    train_runtime_conf=job.f_train_runtime_conf)
+                                                       runtime_conf=job.f_runtime_conf_on_party,
+                                                       train_runtime_conf=job.f_train_runtime_conf)
         for task in tasks:
             job_can_rerun = job_can_rerun or TaskScheduler.prepare_rerun_task(job=job, task=task, dsl_parser=dsl_parser, auto=auto)
         if job_can_rerun:

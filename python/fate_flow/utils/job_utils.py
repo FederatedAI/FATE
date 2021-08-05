@@ -144,8 +144,8 @@ def new_runtime_conf(job_dir, method, module, role, party_id):
     return os.path.join(conf_path_dir, 'runtime_conf.json')
 
 
-def save_job_conf(job_id, role, job_dsl, job_runtime_conf, job_runtime_conf_on_party, train_runtime_conf, pipeline_dsl=None):
-    path_dict = get_job_conf_path(job_id=job_id, role=role)
+def save_job_conf(job_id, role, party_id, job_dsl, job_runtime_conf, job_runtime_conf_on_party, train_runtime_conf, pipeline_dsl=None):
+    path_dict = get_job_conf_path(job_id=job_id, role=role, party_id=party_id)
     os.makedirs(os.path.dirname(path_dict.get('job_dsl_path')), exist_ok=True)
     os.makedirs(os.path.dirname(path_dict.get('job_runtime_conf_on_party_path')), exist_ok=True)
     for data, conf_path in [(job_dsl, path_dict['job_dsl_path']),
@@ -162,11 +162,11 @@ def save_job_conf(job_id, role, job_dsl, job_runtime_conf, job_runtime_conf_on_p
     return path_dict
 
 
-def get_job_conf_path(job_id, role):
+def get_job_conf_path(job_id, role, party_id):
     job_dir = get_job_directory(job_id)
     job_dsl_path = os.path.join(job_dir, 'job_dsl.json')
     job_runtime_conf_path = os.path.join(job_dir, 'job_runtime_conf.json')
-    job_runtime_conf_on_party_path = os.path.join(job_dir, role, 'job_runtime_on_party_conf.json')
+    job_runtime_conf_on_party_path = os.path.join(job_dir, role, str(party_id), 'job_runtime_on_party_conf.json')
     train_runtime_conf_path = os.path.join(job_dir, 'train_runtime_conf.json')
     pipeline_dsl_path = os.path.join(job_dir, 'pipeline_dsl.json')
     return {'job_dsl_path': job_dsl_path,
@@ -176,9 +176,9 @@ def get_job_conf_path(job_id, role):
             'pipeline_dsl_path': pipeline_dsl_path}
 
 
-def get_job_conf(job_id, role):
+def get_job_conf(job_id, role, party_id):
     conf_dict = {}
-    for key, path in get_job_conf_path(job_id, role).items():
+    for key, path in get_job_conf_path(job_id, role, party_id).items():
         config = file_utils.load_json_conf(path)
         conf_dict[key] = config
     return conf_dict

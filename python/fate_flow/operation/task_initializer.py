@@ -56,7 +56,7 @@ class TaskInitializer(object):
             start_time = current_timestamp()
             RuntimeConfig.load_component_registry()
 
-            job_conf = job_utils.get_job_conf(job_id, role)
+            job_conf = job_utils.get_job_conf(job_id, role, party_id)
             job_dsl = job_conf["job_dsl_path"]
             job_runtime_conf = job_conf["job_runtime_conf_path"]
             dsl_parser = schedule_utils.get_job_dsl_parser(dsl=job_dsl,

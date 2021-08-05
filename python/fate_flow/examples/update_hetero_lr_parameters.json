@@ -1,0 +1,20 @@
+{
+  "common": {
+    "intersect_0": {
+      "intersect_method": "raw",
+      "sync_intersect_ids": true,
+      "only_output_key": false
+    },
+    "hetero_lr_0": {
+      "penalty": "L2",
+      "optimizer": "rmsprop",
+      "alpha": 0.01,
+      "max_iter": 3,
+      "batch_size": 320,
+      "learning_rate": 0.15,
+      "init_param": {
+        "init_method": "random_uniform"
+      }
+    }
+  }
+}
