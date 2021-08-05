@@ -82,7 +82,7 @@ class StorageTable(StorageTableBase):
             count = ret[0][0]
         except:
             count = 0
-        self.get_meta().update_metas(count=count)
+        self.meta.update_metas(count=count)
         return count
 
     def collect(self, **kwargs) -> list:
@@ -92,7 +92,7 @@ class StorageTable(StorageTableBase):
         sql = 'select {} from {}'.format(','.join(id_feature_name), self._address.name)
         data = self.execute(sql)
         for i in data:
-            yield i[0], self.get_meta().get_id_delimiter().join(list(i[1:]))
+            yield i[0], self.meta.get_id_delimiter().join(list(i[1:]))
 
     def put_all(self, kv_list, **kwargs):
         id_name, feature_name_list, id_delimiter = self.get_id_feature_name()
@@ -109,9 +109,9 @@ class StorageTable(StorageTableBase):
         self.con.commit()
 
     def get_id_feature_name(self):
-        id = self.get_meta().get_schema().get('sid', 'id')
-        header = self.get_meta().get_schema().get('header')
-        id_delimiter = self.get_meta().get_id_delimiter()
+        id = self.meta.get_schema().get('sid', 'id')
+        header = self.meta.get_schema().get('header')
+        id_delimiter = self.meta.get_id_delimiter()
         if header:
             if isinstance(header, str):
                 feature_list = header.split(id_delimiter)

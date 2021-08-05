@@ -76,7 +76,7 @@ class TaskController(object):
         }
         is_failed = False
         try:
-            task = JobSaver.query_task(task_id=task_id, task_version=task_version)[0]
+            task = JobSaver.query_task(task_id=task_id, task_version=task_version, role=role, party_id=party_id)[0]
 
             config_dir = job_utils.get_job_directory(job_id, role, party_id, component_name, task_id, task_version)
             os.makedirs(config_dir, exist_ok=True)

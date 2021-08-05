@@ -90,7 +90,7 @@ def job_status(job_id, role, party_id, status):
     if JobController.update_job_status(job_info=job_info):
         return get_json_result(retcode=0, retmsg='success')
     else:
-        return get_json_result(retcode=RetCode.OPERATING_ERROR, retmsg="update job status failed")
+        return get_json_result(retcode=RetCode.OPERATING_ERROR, retmsg="update job status does not take effect")
 
 
 @manager.route('/<job_id>/<role>/<party_id>/model', methods=['POST'])

@@ -16,6 +16,7 @@
 
 import operator
 import time
+import typing
 
 from fate_arch.common.base_utils import current_timestamp
 from fate_flow.db.db_models import DB, Job, Task
@@ -233,7 +234,7 @@ class JobSaver(object):
 
     @classmethod
     @DB.connection_context()
-    def query_task(cls, only_latest=True, reverse=None, order_by=None, **kwargs):
+    def query_task(cls, only_latest=True, reverse=None, order_by=None, **kwargs) -> typing.List[Task]:
         filters = []
         for f_n, f_v in kwargs.items():
             attr_name = 'f_%s' % f_n

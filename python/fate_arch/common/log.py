@@ -87,7 +87,7 @@ class LoggerFactory(object):
     def get_logger(class_name=None):
         with LoggerFactory.lock:
             if class_name in LoggerFactory.logger_dict.keys():
-                logger, hanlder = LoggerFactory.logger_dict[class_name]
+                logger, handler = LoggerFactory.logger_dict[class_name]
                 if not logger:
                     logger, handler = LoggerFactory.init_logger(class_name)
             else:
@@ -95,7 +95,7 @@ class LoggerFactory(object):
             return logger
 
     @staticmethod
-    def get_global_hanlder(logger_name, level=None, log_dir=None):
+    def get_global_handler(logger_name, level=None, log_dir=None):
         if not LoggerFactory.LOG_DIR:
             return logging.StreamHandler()
         if log_dir:
@@ -151,6 +151,7 @@ class LoggerFactory(object):
         with LoggerFactory.lock:
             logger = logging.getLogger(class_name)
             logger.setLevel(LoggerFactory.LEVEL)
+            logger.propagate = False
             handler = None
             if class_name:
                 handler = LoggerFactory.get_handler(class_name)
@@ -161,6 +162,9 @@ class LoggerFactory(object):
                 LoggerFactory.logger_dict["default"] = logger, handler
 
             LoggerFactory.assemble_global_handler(logger)
+            #print(class_name)
+            #print(logger.parent)
+            #print(logger.parent.handlers)
 
             return logger, handler
 
@@ -170,13 +174,13 @@ class LoggerFactory(object):
             for level in LoggerFactory.levels:
                 if level >= LoggerFactory.LEVEL:
                     level_logger_name = logging._levelToName[level]
-                    logger.addHandler(LoggerFactory.get_global_hanlder(level_logger_name, level))
+                    logger.addHandler(LoggerFactory.get_global_handler(level_logger_name, level))
         if LoggerFactory.append_to_parent_log and LoggerFactory.PARENT_LOG_DIR:
             for level in LoggerFactory.levels:
                 if level >= LoggerFactory.LEVEL:
                     level_logger_name = logging._levelToName[level]
                     logger.addHandler(
-                        LoggerFactory.get_global_hanlder(level_logger_name, level, LoggerFactory.PARENT_LOG_DIR))
+                        LoggerFactory.get_global_handler(level_logger_name, level, LoggerFactory.PARENT_LOG_DIR))
 
     @staticmethod
     def get_schedule_logger(job_id='', log_type='schedule'):

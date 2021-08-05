@@ -14,6 +14,7 @@
 #  limitations under the License.
 #
 from fate_arch.common import log
+from fate_flow.scheduling_apps.client.tracker_client import TrackerClient
 
 LOGGER = log.getLogger()
 
@@ -21,7 +22,7 @@ LOGGER = log.getLogger()
 class ComponentBase(object):
     def __init__(self):
         self.task_version_id = ''
-        self.tracker = None
+        self.tracker: TrackerClient = None
         self.checkpoint_manager = None
         self.model_output = None
         self.data_output = None
@@ -29,7 +30,7 @@ class ComponentBase(object):
     def run(self, component_parameters: dict = None, run_args: dict = None):
         pass
 
-    def set_tracker(self, tracker):
+    def set_tracker(self, tracker: TrackerClient):
         self.tracker = tracker
 
     def set_checkpoint_manager(self, checkpoint_manager):

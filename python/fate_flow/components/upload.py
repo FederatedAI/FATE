@@ -136,7 +136,7 @@ class Upload(ComponentBase):
                 data_head = fin.readline()
                 input_feature_count -= 1
                 self.table.meta.update_metas(schema=data_utils.get_header_schema(header_line=data_head, id_delimiter=self.parameters["id_delimiter"]))
-                self.table.get_meta().update_metas(
+                self.table.meta.update_metas(
                     schema=data_utils.get_header_schema(header_line=data_head,
                                                         id_delimiter=self.parameters["id_delimiter"],
                                                         extend_sid=self.parameters["extend_sid"]),
@@ -175,7 +175,7 @@ class Upload(ComponentBase):
                 else:
                     table_count = self.table.count()
                     self.table.meta.update_metas(count=table_count, partitions=self.parameters["partition"])
-                    self.table.get_meta().update_metas(count=table_count, partitions=self.parameters["partition"],
+                    self.table.meta.update_metas(count=table_count, partitions=self.parameters["partition"],
                                                        extend_sid=self.parameters["extend_sid"])
                     self.save_meta(dst_table_namespace=dst_table_namespace, dst_table_name=dst_table_name, table_count=table_count)
                     return table_count

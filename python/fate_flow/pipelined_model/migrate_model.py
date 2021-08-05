@@ -24,7 +24,7 @@ from fate_arch.common.base_utils import json_loads, json_dumps
 from fate_arch.common.file_utils import get_project_base_directory
 from fate_flow.settings import stat_logger
 from fate_flow.utils import model_utils
-from flow_components.fate_federated_algorithm.v1_7_0.federatedml.protobuf.model_migrate.model_migrate import model_migration
+#from flow_components.fate_federated_algorithm.v1_7_0.federatedml.protobuf.model_migrate.model_migrate import model_migration
 from fate_flow.utils.config_adapter import JobRuntimeConfigAdapter
 
 

@@ -18,6 +18,7 @@ import typing
 import uuid
 import operator
 
+import peewee
 from fate_arch.common import engine_utils, EngineType
 from fate_arch.relation_ship import Relationship
 from fate_arch.abc import CSessionABC, FederationABC, CTableABC, StorageSessionABC
@@ -320,9 +321,15 @@ class Session(object):
         # TODO: engine address
         session_record.f_engine_address = {}
         session_record.f_create_time = base_utils.current_timestamp()
-        effect_count = session_record.save(force_insert=True)
-        if effect_count != 1:
-            raise RuntimeError(f"save storage session record for manager {self._session_id}, {engine_type} {engine_name} {engine_session_id} failed")
+        msg = f"save storage session record for manager {self._session_id}, {engine_type} {engine_name} {engine_session_id}"
+        try:
+            effect_count = session_record.save(force_insert=True)
+            if effect_count != 1:
+                raise RuntimeError(f"{msg} failed")
+        except peewee.IntegrityError as e:
+            LOGGER.warning(e)
+        except Exception as e:
+            raise RuntimeError(f"{msg} exception", e)
         self._logger.info(f"save session record for manager {self._session_id}, {engine_type} {engine_name} {engine_session_id} successfully")
 
     @DB.connection_context()

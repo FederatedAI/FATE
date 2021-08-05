@@ -14,11 +14,13 @@
 #  limitations under the License.
 #
 
+def start_log(msg):
+    return f"start to {msg}"
 
-class ReaderParam:
-    def __init__(self, table=None):
-        self.table = table
 
-    def check(self):
-        return True
+def successful_log(msg):
+    return f"{msg} successfully"
 
+
+def failed_log(msg):
+    return f"failed to {msg}"

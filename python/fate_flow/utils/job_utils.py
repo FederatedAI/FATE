@@ -317,6 +317,7 @@ def check_process_by_keyword(keywords):
 
 
 def run_subprocess(job_id, config_dir, process_cmd, extra_env: dict = None, log_dir=None, cwd_dir=None):
+    process_cmd = [str(cmd) for cmd in process_cmd]
     schedule_logger(job_id=job_id).info('start process command: {}'.format(' '.join(process_cmd)))
 
     os.makedirs(config_dir, exist_ok=True)

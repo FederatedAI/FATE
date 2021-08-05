@@ -31,7 +31,6 @@ from fate_flow.utils.grpc_utils import wrap_grpc_packet, get_command_federation_
     forward_grpc_packet
 from fate_flow.runtime_config import RuntimeConfig
 from fate_flow import job_default_settings
-from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.entity.types import RetCode
 
 
@@ -138,7 +137,7 @@ def federated_coordination_on_http(job_id, method, host, port, endpoint, src_par
             schedule_logger(job_id).warning(f"remote http request {endpoint} error, sleep and try again")
             time.sleep(2 * (t+1))
     else:
-        raise Exception('remote http request error: {}'.format(exception))
+        raise exception
 
 
 def federated_coordination_on_grpc(job_id, method, host, port, endpoint, src_party_id, src_role, dest_party_id, json_body, api_version=API_VERSION,

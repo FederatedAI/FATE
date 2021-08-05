@@ -18,7 +18,7 @@ import sys
 
 from fate_arch.common.log import schedule_logger
 from fate_flow.controller.engine_controller.engine import EngineABC
-from fate_flow.entity.runtime_config import RuntimeConfig
+from fate_flow.runtime_config import RuntimeConfig
 from fate_flow.entity.run_status import TaskStatus
 from fate_flow.entity.types import KillProcessRetCode
 from fate_flow.operation.task_executor import TaskExecutor
@@ -32,15 +32,15 @@ class EggrollEngine(EngineABC):
         process_cmd = [
             sys.executable,
             sys.modules[TaskExecutor.__module__].__file__,
-            '-j', task.f_job_id,
-            '-n', task.f_component_name,
-            '-t', task.f_task_id,
-            '-v', task.f_task_version,
-            '-r', task.f_role,
-            '-p', task.f_party_id,
-            '-c', run_parameters_path,
-            '--run_ip', RuntimeConfig.JOB_SERVER_HOST,
-            '--job_server', '{}:{}'.format(RuntimeConfig.JOB_SERVER_HOST, RuntimeConfig.HTTP_PORT),
+            "-j", task.f_job_id,
+            "-n", task.f_component_name,
+            "-t", task.f_task_id,
+            "-v", task.f_task_version,
+            "-r", task.f_role,
+            "-p", task.f_party_id,
+            "-c", run_parameters_path,
+            "--run_ip", RuntimeConfig.JOB_SERVER_HOST,
+            "--job_server", f"{RuntimeConfig.JOB_SERVER_HOST}:{RuntimeConfig.HTTP_PORT}",
         ]
 
         provider = ComponentProvider(**task.f_provider_info)

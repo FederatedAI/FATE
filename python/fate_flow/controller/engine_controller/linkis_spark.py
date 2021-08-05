@@ -19,7 +19,7 @@ import requests
 
 from fate_arch.common.log import schedule_logger
 from fate_flow.controller.engine_controller.engine import EngineABC
-from fate_flow.entity.runtime_config import RuntimeConfig
+from fate_flow.runtime_config import RuntimeConfig
 from fate_flow.entity.types import KillProcessRetCode
 from fate_flow.entity.run_status import LinkisJobStatus
 from fate_flow.settings import LINKIS_SPARK_CONFIG, LINKIS_EXECUTE_ENTRANCE, LINKIS_SUBMIT_PARAMS, LINKIS_RUNTYPE, \

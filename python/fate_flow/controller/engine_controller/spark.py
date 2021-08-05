@@ -18,7 +18,7 @@ import sys
 
 from fate_arch.common.log import schedule_logger
 from fate_flow.controller.engine_controller.engine import EngineABC
-from fate_flow.entity.runtime_config import RuntimeConfig
+from fate_flow.runtime_config import RuntimeConfig
 from fate_flow.entity.types import KillProcessRetCode
 from fate_flow.entity.run_status import TaskStatus
 from fate_flow.operation.task_executor import TaskExecutor
@@ -40,25 +40,25 @@ class SparkEngine(EngineABC):
             raise ValueError(f"deploy mode {deploy_mode} not supported")
 
         spark_submit_cmd = os.path.join(spark_home, "bin/spark-submit")
-        process_cmd = [spark_submit_cmd, f'--name={task.f_task_id}#{task.f_role}']
+        process_cmd = [spark_submit_cmd, f"--name={task.f_task_id}#{task.f_role}"]
         for k, v in spark_submit_config.items():
             if k != "conf":
-                process_cmd.append(f'--{k}={v}')
+                process_cmd.append(f"--{k}={v}")
         if "conf" in spark_submit_config:
             for ck, cv in spark_submit_config["conf"].items():
-                process_cmd.append(f'--conf')
-                process_cmd.append(f'{ck}={cv}')
+                process_cmd.append(f"--conf")
+                process_cmd.append(f"{ck}={cv}")
         process_cmd.extend([
             sys.modules[TaskExecutor.__module__].__file__,
-            '-j', task.f_job_id,
-            '-n', task.f_component_name,
-            '-t', task.f_task_id,
-            '-v', task.f_task_version,
-            '-r', task.f_role,
-            '-p', task.f_party_id,
-            '-c', run_parameter_path,
-            '--run_ip', RuntimeConfig.JOB_SERVER_HOST,
-            '--job_server', '{}:{}'.format(RuntimeConfig.JOB_SERVER_HOST, RuntimeConfig.HTTP_PORT),
+            "-j", task.f_job_id,
+            "-n", task.f_component_name,
+            "-t", task.f_task_id,
+            "-v", task.f_task_version,
+            "-r", task.f_role,
+            "-p", task.f_party_id,
+            "-c", run_parameter_path,
+            "--run_ip", RuntimeConfig.JOB_SERVER_HOST,
+            "--job_server", f"{RuntimeConfig.JOB_SERVER_HOST}:{RuntimeConfig.HTTP_PORT}",
         ])
 
 

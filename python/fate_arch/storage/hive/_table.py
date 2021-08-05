@@ -82,14 +82,14 @@ class StorageTable(StorageTableBase):
             count = ret[0][0]
         except:
             count = 0
-        self.get_meta().update_metas(count=count)
+        self.meta.update_metas(count=count)
         return count
 
     def collect(self, **kwargs) -> list:
         sql = 'select * from {}'.format(self._address.name)
         data = self.execute(sql)
         for i in data:
-            yield i[0], self.get_meta().get_id_delimiter().join(list(i[1:]))
+            yield i[0], self.meta.get_id_delimiter().join(list(i[1:]))
 
     def put_all(self, kv_list, **kwargs):
         pass

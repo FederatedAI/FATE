@@ -116,7 +116,7 @@ class StorageTableMetaModel(DataBaseModel):
 
 
 class SessionRecord(DataBaseModel):
-    f_engine_session_id = CharField(max_length=150, null=False, primary_key=True)
+    f_engine_session_id = CharField(max_length=150, null=False, index=True)
     f_manager_session_id = CharField(max_length=150, null=False, index=True)
     f_engine_type = CharField(max_length=10, index=True)
     f_engine_name = CharField(max_length=50, index=True)
@@ -124,3 +124,4 @@ class SessionRecord(DataBaseModel):
 
     class Meta:
         db_table = "t_session_record"
+        primary_key = CompositeKey("f_engine_type", "f_engine_name", "f_engine_session_id")

@@ -26,7 +26,6 @@ from fate_flow.entity.run_status import TaskStatus
 from fate_flow.entity.run_parameters import RunParameters
 from fate_flow.runtime_config import RuntimeConfig
 from fate_arch.common.log import schedule_logger, getLogger, LoggerFactory
-from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.manager.data_manager import DataTableTracker
 from fate_flow.operation.job_tracker import Tracker
 from fate_flow.components.checkpoint import CheckpointManager

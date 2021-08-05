@@ -45,9 +45,8 @@ class Reader(ComponentBase):
 
     def run(self, component_parameters=None, args=None):
         self.parameters = component_parameters["ComponentParam"]
-        self.parameters = component_parameters["ReaderParam"]
         self.job_parameters = args["job_parameters"]
-        output_storage_address = args["job_parameters"].engines_address[EngineType.STORAGE]
+        output_storage_address = self.job_parameters.engines_address[EngineType.STORAGE]
         # only support one input table
         table_key = [key for key in self.parameters.keys()][0]
 
@@ -55,7 +54,6 @@ class Reader(ComponentBase):
                                                                             role=self.tracker.role,
                                                                             party_id=self.tracker.party_id)
 
-        computing_engine = args["job_parameters"].computing_engine
         output_table_namespace, output_table_name = data_utils.default_output_table_info(task_id=self.tracker.task_id,
                                                                                          task_version=self.tracker.task_version)
         input_table_meta, output_table_address, output_table_engine = self.convert_check(
@@ -63,7 +61,7 @@ class Reader(ComponentBase):
             input_namespace=input_table_namespace,
             output_name=output_table_name,
             output_namespace=output_table_namespace,
-            computing_engine=computing_engine,
+            computing_engine=self.job_parameters.computing_engine,
             output_storage_address=output_storage_address)
         sess = Session(session_id=job_utils.generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id))
         input_table_session = sess.storage(storage_engine=input_table_meta.get_engine())
@@ -74,7 +72,7 @@ class Reader(ComponentBase):
         # Table replication is required
         if input_table_meta.get_engine() != output_table_engine:
             LOGGER.info(
-                f"the {input_table_meta.get_engine()} engine input table needs to be converted to {output_table_engine} engine to support computing engine {computing_engine}")
+                f"the {input_table_meta.get_engine()} engine input table needs to be converted to {output_table_engine} engine to support computing engine {self.job_parameters.computing_engine}")
         else:
             LOGGER.info(f"the {input_table_meta.get_engine()} input table needs to be transform format")
         LOGGER.info("reader create storage session2")

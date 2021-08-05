@@ -227,9 +227,9 @@ class JobController(object):
             '-p', party_id,
             '-c', initialized_config_path,
             '--run_ip', RuntimeConfig.JOB_SERVER_HOST,
-            '--job_server', '{}:{}'.format(RuntimeConfig.JOB_SERVER_HOST, RuntimeConfig.HTTP_PORT),
+            '--job_server', f'{RuntimeConfig.JOB_SERVER_HOST}:{RuntimeConfig.HTTP_PORT}',
         ]
-        log_dir = os.path.join(job_utils.get_job_log_directory(job_id=job_id), role, party_id, f"initialize_{initializer_id}")
+        log_dir = os.path.join(job_utils.get_job_log_directory(job_id=job_id), role, party_id, "initialize", initializer_id)
         provider = ComponentProvider(**initialized_config["provider"])
         p = job_utils.run_subprocess(job_id=job_id, config_dir=initialize_dir, process_cmd=process_cmd, extra_env=provider.env, log_dir=log_dir, cwd_dir=initialize_dir)
         schedule_logger(job_id).info('job {} task initializer {} on {} {} subprocess pid {} is ready'.format(job_id, initializer_id, role, party_id, p.pid))

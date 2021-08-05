@@ -52,8 +52,8 @@ class Detector(cron.Cron):
                     process_exist = build_engine(task.f_engine_conf.get("computing_engine")).is_alive(task)
                     if not process_exist:
                         detect_logger(job_id=task.f_job_id).info(
-                                'job {} task {} {} on {} {} process {} does not exist'.format(
-                                    task.f_job_id,
+                                'the {} task {} {} on {} {} process {} does not exist'.format(
+                                    task.f_party_status,
                                     task.f_task_id,
                                     task.f_task_version,
                                     task.f_role,
@@ -128,8 +128,9 @@ class Detector(cron.Cron):
         try:
             session_records = Session.query_sessions(create_time=[None, current_timestamp() - ttl])
             for session_record in session_records:
+                msg = f"{session_record.f_engine_type} engine session {session_record.f_engine_session_id}"
                 engine_session_id = session_record.f_engine_session_id
-                detect_logger().info(f'start stop session id {engine_session_id}')
+                detect_logger().info(f'start stop {msg}')
                 try:
                     if session_record.f_engine_type == EngineType.COMPUTING:
                         with Session(computing=session_record.f_engine_name, logger=detect_logger()) as sess:
@@ -140,9 +141,9 @@ class Detector(cron.Cron):
                             sess.add_storage(storage_session_id=session_record.f_engine_session_id, storage_engine=session_record.f_engine_name)
                             sess.destroy_storage()
                 except Exception as e:
-                    detect_logger().error(f'stop session id {engine_session_id} error', e)
+                    detect_logger().error(f'stop {msg} error', e)
                 finally:
-                    detect_logger().info(f'finish stop session id {engine_session_id}')
+                    detect_logger().info(f'stop {msg} successfully')
         except Exception as e:
             detect_logger().error('detect expired session error', e)
         finally:
