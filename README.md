@@ -91,9 +91,9 @@ FATE also provides many other documents in [doc](./doc/). These documents can he
 
 *  Submit contributions using [pull requests](https://github.com/FederatedAI/FATE/pulls)
 
-* Bilibili: (https://space.bilibili.com/457797601?from=search&seid=6776229889454067000)
+* Bilibili:(https://space.bilibili.com/457797601?from=search&seid=6776229889454067000)
 
-* Twitter: (https://twitter.com/FateFedAI)
+* Twitter:(https://twitter.com/FateFedAI)
 
 ### License
 [Apache License 2.0](LICENSE)
