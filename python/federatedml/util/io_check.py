@@ -39,3 +39,43 @@ def assert_io_num_rows_equal(func):
         return result
 
     return _func
+
+
+def check_with_inst_id(data_instances):
+    instance = data_instances.first()[1]
+    if type(instance).__name__ == "Instance" and instance.with_inst_id:
+        return True
+    return False
+
+
+def check_is_instance(data_instances):
+    instance = data_instances.first()[1]
+    if type(instance).__name__ == "Instance":
+        return True
+    return False
+
+
+def assert_match_id_consistent(func):
+    def _func(*args, **kwargs):
+        input_with_inst_id = None
+        all_args = []
+        all_args.extend(args)
+        all_args.extend(kwargs.values())
+        for arg in all_args:
+            if is_table(arg):
+                input_with_inst_id = check_with_inst_id(arg)
+                break
+
+        result = func(*args, **kwargs)
+
+        if input_with_inst_id is not None and is_table(result):
+            if check_is_instance(result):
+                result_with_inst_id = check_with_inst_id(result)
+                LOGGER.debug(f"Input with match id: {input_with_inst_id} -> output with match id: {result_with_inst_id}")
+                if input_with_inst_id and not result_with_inst_id:
+                    raise EnvironmentError(
+                        f"Input with match id: {input_with_inst_id} -> output with match id: {result_with_inst_id}，"
+                        f"func: {func}")
+        return result
+
+    return _func
