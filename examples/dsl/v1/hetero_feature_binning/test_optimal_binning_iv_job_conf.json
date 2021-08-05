@@ -59,6 +59,11 @@
                 "output_format": [
                     "dense"
                 ]
+            },
+            "hetero_feature_binning_0": {
+                "transform_param": {
+                    "transform_type": [null]
+                }
             }
         }
     },
