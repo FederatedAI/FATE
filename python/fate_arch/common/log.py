@@ -58,7 +58,7 @@ class LoggerFactory(object):
             LoggerFactory.append_to_parent_log = append_to_parent_log
         with LoggerFactory.lock:
             if not directory:
-                directory = os.path.join(file_utils.get_project_base_directory(), 'logs')
+                directory = file_utils.get_project_base_directory("logs")
             if not LoggerFactory.LOG_DIR or force:
                 LoggerFactory.LOG_DIR = directory
             if LoggerFactory.log_share:
@@ -82,6 +82,13 @@ class LoggerFactory(object):
                     logger.addHandler(_hanlder)
                 LoggerFactory.assemble_global_handler(logger)
                 LoggerFactory.logger_dict[className] = logger, _hanlder
+
+    @staticmethod
+    def new_logger(name):
+        logger = logging.getLogger(name)
+        logger.propagate = False
+        logger.setLevel(LoggerFactory.LEVEL)
+        return logger
 
     @staticmethod
     def get_logger(class_name=None):
@@ -149,9 +156,7 @@ class LoggerFactory(object):
     @staticmethod
     def init_logger(class_name):
         with LoggerFactory.lock:
-            logger = logging.getLogger(class_name)
-            logger.setLevel(LoggerFactory.LEVEL)
-            logger.propagate = False
+            logger = LoggerFactory.new_logger(class_name)
             handler = None
             if class_name:
                 handler = LoggerFactory.get_handler(class_name)
@@ -162,10 +167,6 @@ class LoggerFactory(object):
                 LoggerFactory.logger_dict["default"] = logger, handler
 
             LoggerFactory.assemble_global_handler(logger)
-            #print(class_name)
-            #print(logger.parent)
-            #print(logger.parent.handlers)
-
             return logger, handler
 
     @staticmethod
@@ -183,9 +184,9 @@ class LoggerFactory(object):
                         LoggerFactory.get_global_handler(level_logger_name, level, LoggerFactory.PARENT_LOG_DIR))
 
     @staticmethod
-    def get_schedule_logger(job_id='', log_type='schedule'):
-        fate_flow_log_dir = os.path.join(file_utils.get_project_base_directory(), 'logs', 'fate_flow')
-        job_log_dir = os.path.join(file_utils.get_project_base_directory(), 'logs', job_id)
+    def get_job_logger(job_id, log_type):
+        fate_flow_log_dir = file_utils.get_project_base_directory('logs', 'fate_flow')
+        job_log_dir = file_utils.get_project_base_directory('logs', job_id)
         if not job_id:
             log_dirs = [fate_flow_log_dir]
         else:
@@ -201,8 +202,7 @@ class LoggerFactory(object):
         else:
             os.makedirs(job_log_dir, exist_ok=True)
             os.makedirs(fate_flow_log_dir, exist_ok=True)
-        logger = logging.getLogger('{}_{}'.format(job_id, log_type))
-        logger.setLevel(LoggerFactory.LEVEL)
+        logger = LoggerFactory.new_logger(f"{job_id}_{log_type}")
         for job_log_dir in log_dirs:
             handler = LoggerFactory.get_handler(class_name=None, level=LoggerFactory.LEVEL,
                                                 log_dir=job_log_dir, log_type=log_type)
@@ -247,28 +247,28 @@ def schedule_logger(job_id=None, delete=False):
         key = job_id + 'schedule'
         if key in LoggerFactory.schedule_logger_dict:
             return LoggerFactory.schedule_logger_dict[key]
-        return LoggerFactory.get_schedule_logger(job_id)
+        return LoggerFactory.get_job_logger(job_id, "schedule")
 
 
 def audit_logger(job_id='', log_type='audit'):
     key = job_id + log_type
     if key in LoggerFactory.schedule_logger_dict.keys():
         return LoggerFactory.schedule_logger_dict[key]
-    return LoggerFactory.get_schedule_logger(job_id=job_id, log_type=log_type)
+    return LoggerFactory.get_job_logger(job_id=job_id, log_type=log_type)
 
 
 def sql_logger(job_id='', log_type='sql'):
     key = job_id + log_type
     if key in LoggerFactory.schedule_logger_dict.keys():
         return LoggerFactory.schedule_logger_dict[key]
-    return LoggerFactory.get_schedule_logger(job_id=job_id, log_type=log_type)
+    return LoggerFactory.get_job_logger(job_id=job_id, log_type=log_type)
 
 
 def detect_logger(job_id='', log_type='detect'):
     key = job_id + log_type
     if key in LoggerFactory.schedule_logger_dict.keys():
         return LoggerFactory.schedule_logger_dict[key]
-    return LoggerFactory.get_schedule_logger(job_id=job_id, log_type=log_type)
+    return LoggerFactory.get_job_logger(job_id=job_id, log_type=log_type)
 
 
 def exception_to_trace_string(ex):
