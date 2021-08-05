@@ -36,6 +36,16 @@ This section introduces the Pipeline scripts for different types of tasks.
 
     script: pipeline-intersect-repeated-id.py
 
+9. DH Intersection:
+
+    script: pipeline-intersect-dh.py
+
+10. DH Multi-host Intersection:  
+    script: pipeline-intersect-dh-multi.py
+
+11. RAW Intersect of 200 Union Components as Input:
+    script: pipeline-intersect-with-union.py
+
 Users can run a pipeline job directly:
 
     python ${pipeline_script}

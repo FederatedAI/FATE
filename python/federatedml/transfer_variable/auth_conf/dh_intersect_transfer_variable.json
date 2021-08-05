@@ -1,0 +1,60 @@
+{
+  "federatedml.transfer_variable.transfer_class.dh_intersect_transfer_variable.DhIntersectTransferVariable": {
+    "commutative_cipher_public_knowledge": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "host"
+      ]
+    },
+    "id_ciphertext_list_exchange_g2h": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "host"
+      ]
+    },
+    "id_ciphertext_list_exchange_h2g": {
+      "src": [
+        "host"
+      ],
+      "dst": [
+        "guest"
+      ]
+    },
+    "doubly_encrypted_id_list": {
+      "src": [
+        "host"
+      ],
+      "dst": [
+        "guest"
+      ]
+    },
+    "intersect_ids": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "host"
+      ]
+    },
+    "cardinality": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "host"
+      ]
+    },
+    "host_filter": {
+      "src": [
+        "host"
+      ],
+      "dst": [
+        "guest"
+      ]
+    }
+  }
+}

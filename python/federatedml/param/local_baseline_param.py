@@ -22,6 +22,7 @@ import copy
 from federatedml.param.base_param import BaseParam
 from federatedml.param.predict_param import PredictParam
 
+
 class LocalBaselineParam(BaseParam):
     """
     Define the local baseline model param

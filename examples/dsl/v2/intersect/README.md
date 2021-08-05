@@ -41,7 +41,14 @@ This section introduces the dsl and conf for usage of different type of task.
     - runtime_config : test_intersect_job_repeated_id_conf.json  
     
     This dsl is an example of intersection witch guest data has repeated ids, while host data has not.
-     
+
+9. DH Intersection:  
+    - dsl: test_intersect_job_dsl.json  
+    - runtime_config : test_intersect_job_dh_conf.json
+  
+10. DH Multi-host Intersection:  
+    - dsl: test_intersect_job_dsl.json  
+    - runtime_config : test_intersect_job_dh_multi_conf.json
    
 Users can use following commands to running the task.
 
