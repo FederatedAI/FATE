@@ -19,11 +19,16 @@ from importlib.util import spec_from_file_location, module_from_spec
 
 from flask import Flask, Blueprint
 
-from fate_flow.settings import API_VERSION, stat_logger
+from fate_flow.settings import API_VERSION, stat_logger, access_logger
 from fate_flow.utils.api_utils import server_error_response
+import logging
 
 
 __all__ = ['app']
+
+logger = logging.getLogger('flask.app')
+for h in access_logger.handlers:
+    logger.addHandler(h)
 
 app = Flask(__name__)
 app.url_map.strict_slashes = False

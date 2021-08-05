@@ -92,6 +92,7 @@
           "v1_7_0",
           "federatedml"
         ],
+        "venv": "xxxxx",
         "class_path": {
         }
       }

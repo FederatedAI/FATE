@@ -18,6 +18,7 @@ import signal
 import sys
 import time
 import traceback
+import logging
 
 import grpc
 from grpc._cython import cygrpc
@@ -33,7 +34,7 @@ from fate_flow.runtime_config import RuntimeConfig
 from fate_flow.entity.types import ProcessRole
 from fate_flow.manager.resource_manager import ResourceManager
 from fate_flow.settings import WORK_MODE
-from fate_flow.settings import IP, HTTP_PORT, GRPC_PORT, _ONE_DAY_IN_SECONDS, stat_logger, GRPC_SERVER_MAX_WORKERS, detect_logger
+from fate_flow.settings import IP, HTTP_PORT, GRPC_PORT, _ONE_DAY_IN_SECONDS, stat_logger, GRPC_SERVER_MAX_WORKERS, detect_logger, access_logger
 from fate_flow.utils.authentication_utils import PrivilegeAuth
 from fate_flow.utils.grpc_utils import UnaryService
 from fate_flow.db.db_services import service_db
@@ -78,6 +79,9 @@ if __name__ == '__main__':
     # start http server
     try:
         stat_logger.info("FATE Flow http server start...")
+        werkzeug_logger = logging.getLogger("werkzeug")
+        for h in access_logger.handlers:
+            werkzeug_logger.addHandler(h)
         run_simple(hostname=IP, port=HTTP_PORT, application=app, threaded=True, use_reloader=debug_mode, use_debugger=debug_mode)
     except OSError as e:
         traceback.print_exc()
