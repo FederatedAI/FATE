@@ -56,18 +56,26 @@
     },
     "loss": {
       "src": [
+        "host"
+      ],
+      "dst": [
+        "guest"
+      ]
+    },
+    "is_converged": {
+      "src": [
         "guest"
       ],
       "dst": [
         "host"
       ]
     },
-    "is_converged": {
+    "wxy_sum": {
       "src": [
-        "host"
+        "guest"
       ],
       "dst": [
-        "guest"
+        "host"
       ]
     }
   }

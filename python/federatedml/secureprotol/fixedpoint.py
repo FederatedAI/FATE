@@ -359,5 +359,5 @@ class FixedPointEndec(object):
     def decode(self, integer_tensor):
         return self._basic_op(integer_tensor, op=self.decode_number)
 
-    def truncate(self, integer_tensor):
+    def truncate(self, integer_tensor, *args, **kwargs):
         return self._basic_op(integer_tensor, op=self.__truncate_op)

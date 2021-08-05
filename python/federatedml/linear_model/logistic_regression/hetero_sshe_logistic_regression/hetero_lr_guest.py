@@ -61,12 +61,12 @@ class HeteroLRGuest(HeteroLRBase):
         z = z1 + za_share + zb_share
         return z
 
-    def _compute_sigmoid(self, z, remote_z, remote_z_square):
-        z_square = z * z
+    def _compute_sigmoid(self, z, remote_z):
+        # z_square = z * z
 
         complete_z = remote_z + z
-        self.z_square = z_square + remote_z_square
-        self.z_square = self.z_square + 2 * remote_z * z
+        # self.z_square = z_square + remote_z_square
+        # self.z_square = self.z_square + 2 * remote_z * z
         sigmoid_z = complete_z * 0.2 + 0.5
 
         # complete_z_cube = remote_z_cube + remote_z_square * z * 3 + remote_z * z_square * 3 + z_cube
@@ -83,8 +83,8 @@ class HeteroLRGuest(HeteroLRBase):
         # z = z.convert_to_array_tensor()
         # new_w = z.reconstruct_unilateral(tensor_name=f"z_{self.n_iter_}")
         # raise ValueError(f"reconstructed z: {new_w}")
-        remote_z, remote_z_square = self.share_z(suffix=suffix)
-        sigmoid_z = self._compute_sigmoid(z, remote_z, remote_z_square)
+        remote_z = self.share_encrypted_value(suffix=suffix, is_remote=False, z=None)[0]
+        sigmoid_z = self._compute_sigmoid(z, remote_z)
 
         # sigmoid_z = complete_z * 0.2 + 0.5
         self.encrypted_wx = sigmoid_z
@@ -123,21 +123,46 @@ class HeteroLRGuest(HeteroLRBase):
 
         return ga2_2, gb2
 
-    def compute_loss(self, suffix):
+    # def compute_loss(self, suffix):
+    #     """
+    #     Use Taylor series expand log loss:
+    #     Loss = - y * log(h(x)) - (1-y) * log(1 - h(x)) where h(x) = 1/(1+exp(-wx))
+    #     Then loss' = - (1/N)*∑(log(1/2) - 1/2*wx + wxy + 1/8(wx)^2)
+    #     """
+    #     encoded_1_n = self.encoded_batch_num[suffix[1]]
+    #     wxy = self.encrypted_wx.dot_local(self.label_tensor)
+    #     loss_table = - np.log(0.5) + 0.5 * self.encrypted_wx - 0.125 * self.z_square
+    #
+    #     loss = (loss_table.value.reduce(operator.add) + wxy) * encoded_1_n
+    #     loss_norm = self.optimizer.loss_norm(self.model_weights)
+    #     if loss_norm:
+    #         loss += loss_norm
+    #     self.transfer_variable.loss.remote(loss, suffix=suffix)
+    #     return loss
+
+    def compute_loss(self, spdz, suffix):
         """
         Use Taylor series expand log loss:
         Loss = - y * log(h(x)) - (1-y) * log(1 - h(x)) where h(x) = 1/(1+exp(-wx))
         Then loss' = - (1/N)*∑(log(1/2) - 1/2*wx + wxy + 1/8(wx)^2)
         """
-        encoded_1_n = self.encoded_batch_num[suffix[1]]
-        wxy = self.encrypted_wx.dot_local(self.label_tensor)
-        loss_table = - np.log(0.5) + 0.5 * self.encrypted_wx - 0.125 * self.z_square
 
-        loss = (loss_table.value.reduce(operator.add) + wxy) * encoded_1_n
+        shared_wx = self.share_matrix(self.encrypted_wx, suffix=suffix)
+        wxy = spdz.dot(shared_wx, self.shared_y, ("wxy",) + suffix).get()
+        LOGGER.debug(f"wxy_value: {wxy}")
+        # wxy_sum = wxy_tensor.value[0]
+        # self.transfer_variable.wxy_sum.remote(wxy_tensor, suffix=suffix)
+        wx_square = shared_wx * shared_wx
+        # LOGGER.debug(f"shared_wx: {shared_wx}, wx_square: {wx_square}, wxy_sum: {wxy_sum}")
+        self.share_encrypted_value(suffix=suffix, is_remote=True, wx=shared_wx,
+                                   wx_square=wx_square)
+
+        loss = self.transfer_variable.loss.get(idx=0, suffix=suffix)
+        loss = self.cipher.decrypt(loss)
         loss_norm = self.optimizer.loss_norm(self.model_weights)
+        LOGGER.debug(f"loss: {loss}, loss_norm: {loss_norm}")
         if loss_norm:
             loss += loss_norm
-        self.transfer_variable.loss.remote(loss, suffix=suffix)
         return loss
 
     def check_converge_by_weights(self, last_w, new_w, suffix):

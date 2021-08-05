@@ -63,7 +63,7 @@ class HeteroLRHost(HeteroLRBase):
         z_square = z * z
         # z_cube = z_square * z
 
-        self.share_z(suffix=suffix, z=z, z_square=z_square)
+        self.share_encrypted_value(suffix=suffix, is_remote=True, z=z)
 
         shared_sigmoid_z = self.received_share_matrix(self.cipher,
                                                       q_field=z.q_field,
@@ -79,24 +79,39 @@ class HeteroLRHost(HeteroLRBase):
         ga = fixedpoint_numpy.FixedPointTensor(ga, q_field=error.q_field,
                                                endec=self.fixpoint_encoder)
         ga2_1 = self.secure_matrix_mul_passive(features, suffix=("ga2",) + suffix)
-        learning_rate = self.fixpoint_encoder.encode(self.model_param.learning_rate)
         ga_new = ga + ga2_1.reshape(ga2_1.shape[0])
 
         LOGGER.debug(f"wa shape: {wa.shape}, ga_shape: {ga_new.shape}, gb_shape: {gb1.shape}")
-        # wa = wa - ga_new * learning_rate
-        # wb = wb - gb1 * learning_rate
-        # wa = wa.reshape(wa.shape[-1])
-
         return ga_new, gb1
 
-    def compute_loss(self, suffix):
-        loss = self.transfer_variable.loss.get(idx=0, suffix=suffix)
-        loss = self.cipher.decrypt(loss.value[0][0])
+    def compute_loss(self, spdz, suffix):
+
+        shared_wx = self.received_share_matrix(self.cipher, q_field=self.random_field,
+                                               encoder=self.fixpoint_encoder, suffix=suffix)
+        LOGGER.debug(f"share_wx: {type(shared_wx)}, shared_y: {type(self.shared_y)}")
+        wxy = spdz.dot(shared_wx, self.shared_y, ("wxy",) + suffix).get()
+        # wxy_sum = wxy_tensor.value[0]
+        # wxy_sum_guest = self.transfer_variable.wxy_sum.get(idx=0, suffix=suffix)
+        # wxy = wxy_tensor + wxy_sum_guest
+        LOGGER.debug(f"wxy_value: {wxy}")
+        wx_guest, wx_square_guest = self.share_encrypted_value(suffix=suffix, is_remote=False,
+                                                               wx=None, wx_square=None)
+
+        encrypted_wx = shared_wx + wx_guest
+
+        encrypted_wx_sqaure = shared_wx * shared_wx + wx_square_guest + 2 * shared_wx * wx_guest
+        # encrypted_wx_sqaure = wx_square_guest
+        LOGGER.debug(f"encoded_batch_num: {self.encoded_batch_num}, suffix: {suffix}")
+        encoded_1_n = self.encoded_batch_num[suffix[2]]
+        LOGGER.debug(f"encoded_1_n: {encoded_1_n.decode()}")
+        loss = ((0.125 * encrypted_wx_sqaure - 0.5 * encrypted_wx).value.reduce(operator.add) +
+                wxy) * encoded_1_n * -1 - np.log(0.5)
+        # loss = ((0.125 * encrypted_wx_sqaure - 0.5 * encrypted_wx).value.reduce(operator.add)) * encoded_1_n * -1 - np.log(0.5)
         loss_norm = self.optimizer.loss_norm(self.model_weights)
         if loss_norm is not None:
             loss += loss_norm
-        LOGGER.debug(f"recevided loss: {loss}")
-        return loss
+        LOGGER.debug(f"loss: {loss}")
+        self.transfer_variable.loss.remote(loss[0][0], suffix=suffix)
 
     def check_converge_by_weights(self, last_w, new_w, suffix):
         if self.is_respectively_reviewed:

@@ -37,5 +37,6 @@ class SSHEModelTransferVariable(BaseTransferVariables):
         self.host_prob = self._create_variable(name='host_prob', src=['host'], dst=['guest'])
         self.pubkey = self._create_variable(name='pubkey', src=['guest', "host"], dst=['host', "guest"])
         self.encrypted_host_weights = self._create_variable(name='encrypted_host_weights', src=['guest'], dst=['host'])
-        self.loss = self._create_variable(name='loss', src=['guest'], dst=['host'])
-        self.is_converged = self._create_variable(name='is_converged', src=['host'], dst=['guest'])
+        self.loss = self._create_variable(name='loss', src=['host'], dst=['guest'])
+        self.is_converged = self._create_variable(name='is_converged', src=['guest'], dst=['host'])
+        self.wxy_sum = self._create_variable(name='wxy_sum', src=['guest'], dst=['host'])

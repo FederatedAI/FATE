@@ -87,12 +87,12 @@ class SSHEModelBase(BaseLinearModel, ABC):
         if isinstance(matrix_tensor, fixedpoint_table.FixedPointTensor):
             random_tensor = fixedpoint_table.FixedPointTensor.from_value(value=r,
                                                                          encoder=matrix_tensor.endec,
-                                                                         q_field=self.fixpoint_encoder.n)
+                                                                         q_field=self.random_field)
             to_share = matrix_tensor.value.join(random_tensor.value, operator.sub)
         elif isinstance(matrix_tensor, fixedpoint_numpy.FixedPointTensor):
             random_tensor = fixedpoint_numpy.FixedPointTensor.from_value(value=r,
                                                                          encoder=matrix_tensor.endec,
-                                                                         q_field=self.fixpoint_encoder.n)
+                                                                         q_field=self.random_field)
             to_share = (matrix_tensor - random_tensor).value
         else:
             raise ValueError(f"Share_matrix input error, type of input: {type(matrix_tensor)}")

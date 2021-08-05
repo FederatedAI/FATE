@@ -31,7 +31,8 @@ from federatedml.util import fate_operator
 
 
 def _table_binary_op(x, y, q_field, op):
-    return x.join(y, lambda a, b: op(a, b) % q_field)
+    # return x.join(y, lambda a, b: op(a, b) % q_field)
+    return x.join(y, lambda a, b: op(a, b))
 
 
 def _table_scalar_op(x, d, op):
