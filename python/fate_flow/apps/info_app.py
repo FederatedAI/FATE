@@ -13,17 +13,18 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from fate_arch.common import WorkMode
-from fate_arch.common.conf_utils import get_base_config
+import socket
+
+from fate_arch.common import WorkMode, CoordinationProxyService
 from fate_flow.utils.api_utils import error_response, get_json_result
 from fate_flow.settings import Settings
+from fate_flow.db.db_models import DB
 
 
 @manager.route('/fateboard', methods=['POST'])
 def get_fateboard_info():
-    fateboard = get_base_config('fateboard', {})
-    host = fateboard.get('host')
-    port = fateboard.get('port')
+    host = Settings.FATEBOARD.get('host')
+    port = Settings.FATEBOARD.get('port')
     if not host or not port:
         return error_response(404, 'fateboard is not configured')
     return get_json_result(data={
@@ -35,10 +36,30 @@ def get_fateboard_info():
 @manager.route('/mysql', methods=['POST'])
 def get_mysql_info():
     if Settings.WORK_MODE != WorkMode.CLUSTER:
-        return error_response(503, 'mysql only available on cluster mode')
+        return error_response(404, 'mysql only available on cluster mode')
+
+    try:
+        with DB.connection_context():
+            DB.random()
+    except Exception as e:
+        return error_response(503, str(e))
+
+    return error_response(200)
 
 
+# TODO: send greetings message using grpc protocol
 @manager.route('/eggroll', methods=['POST'])
 def get_eggroll_info():
     if Settings.WORK_MODE != WorkMode.CLUSTER:
-        return error_response(503, 'eggroll only available on cluster mode')
+        return error_response(404, 'eggroll only available on cluster mode')
+
+    if Settings.PROXY != CoordinationProxyService.ROLLSITE:
+        return error_response(404, 'coordination communication protocol is not rollsite')
+
+    conf = Settings.FATE_ON_EGGROLL['rollsite']
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        r = s.connect_ex((conf['host'], conf['port']))
+        if r != 0:
+            return error_response(503)
+
+    return error_response(200)

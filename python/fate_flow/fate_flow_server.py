@@ -56,7 +56,10 @@ if __name__ == '__main__':
     RuntimeConfig.init_env()
     RuntimeConfig.set_process_role(ProcessRole.DRIVER)
     PrivilegeAuth.init()
-    service_db().register_models()
+
+    RuntimeConfig.service_db = service_db()
+    RuntimeConfig.service_db.register_models()
+
     ResourceManager.initialize()
     Detector(interval=5 * 1000, logger=detect_logger).start()
     DAGScheduler(interval=2 * 1000, logger=schedule_logger()).start()

@@ -32,7 +32,6 @@ from fate_flow.entity.types import TaskStatus, RunParameters, KillProcessStatusC
 from fate_flow.settings import stat_logger, JOB_DEFAULT_TIMEOUT, Settings, FATE_BOARD_DASHBOARD_ENDPOINT
 from fate_flow.utils import detect_utils, model_utils
 from fate_flow.utils import session_utils
-from fate_arch.common.conf_utils import get_base_config
 
 
 class JobIdGenerator(object):
@@ -477,8 +476,8 @@ def job_default_timeout(runtime_conf, dsl):
 
 def get_board_url(job_id, role, party_id):
     board_url = "http://{}:{}{}".format(
-        get_base_config("fateboard", {}).get("host"),
-        get_base_config("fateboard", {}).get("port"),
+        Settings.FATEBOARD.get("host"),
+        Settings.FATEBOARD.get("port"),
         FATE_BOARD_DASHBOARD_ENDPOINT).format(job_id, role, party_id)
     return board_url
 

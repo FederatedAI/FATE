@@ -19,7 +19,6 @@ from ruamel import yaml
 
 from fate_flow.settings import Settings, FATE_FLOW_MODEL_TRANSFER_ENDPOINT
 from fate_arch.common.base_utils import json_loads
-from fate_arch.common.conf_utils import get_base_config
 from fate_arch.protobuf.python import model_service_pb2
 from fate_arch.protobuf.python import model_service_pb2_grpc
 from fate_flow.settings import stat_logger
@@ -66,7 +65,7 @@ def load_model(config_data):
             load_model_request.loadType = config_data['job_parameters'].get("load_type", "FATEFLOW")
             # make use of 'model.transfer.url' in serving server
             use_serving_url = config_data['job_parameters'].get('use_transfer_url_on_serving', False)
-            if not get_base_config('use_registry') and not use_serving_url:
+            if not Settings.USE_REGISTRY and not use_serving_url:
                 load_model_request.filePath = f"http://{Settings.IP}:{Settings.HTTP_PORT}{FATE_FLOW_MODEL_TRANSFER_ENDPOINT}"
             else:
                 load_model_request.filePath = config_data['job_parameters'].get("file_path", "")

@@ -18,16 +18,34 @@ from pathlib import Path
 from time import time
 from base64 import b64encode
 from hmac import HMAC
+from logging.config import dictConfig
 from datetime import datetime, timezone
 from importlib.util import spec_from_file_location, module_from_spec
 
 from flask import Flask, Blueprint, request
 
-from fate_flow.settings import Settings, API_VERSION, stat_logger, MAX_TIMESTAMP_INTERVAL
+from fate_flow.settings import API_VERSION, Settings, stat_logger, MAX_TIMESTAMP_INTERVAL
 from fate_flow.utils.api_utils import server_error_response, error_response
 
 
 __all__ = ['app']
+
+# https://stackoverflow.com/questions/56905756/how-to-make-flask-log-to-stdout-instead-of-stderr
+dictConfig({
+    'version': 1,
+    'formatters': {'default': {
+        'format': '[%(asctime)s] %(levelname)s in %(module)s: %(message)s',
+    }},
+    'handlers': {'wsgi': {
+        'class': 'logging.StreamHandler',
+        'stream': 'ext://sys.stdout',
+        'formatter': 'default'
+    }},
+    'root': {
+        'level': 'INFO',
+        'handlers': ['wsgi']
+    }
+})
 
 app = Flask(__name__)
 app.url_map.strict_slashes = False
@@ -45,6 +63,7 @@ for path in pages_path:
 
     spec = spec_from_file_location(module_name, path)
     page = module_from_spec(spec)
+    page.app = app
     page.manager = Blueprint(page_name, module_name)
     sys.modules[module_name] = page
     spec.loader.exec_module(page)

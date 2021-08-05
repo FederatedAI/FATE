@@ -3,27 +3,26 @@ import time
 import unittest
 
 import requests
-from fate_arch.common import file_utils, conf_utils
 
-from fate_flow.settings import Settings, API_VERSION, FATEFLOW_SERVICE_NAME
+from fate_arch.common.file_utils import get_project_base_directory
+from fate_flow.settings import Settings, API_VERSION
 from fate_flow.entity.types import JobStatus
 
 
 class TestDataAccess(unittest.TestCase):
     def setUp(self):
-        self.data_dir = os.path.join(file_utils.get_project_base_directory(), "examples", "data")
+        self.data_dir = os.path.join(get_project_base_directory(), "examples", "data")
         self.upload_guest_config = {"file": os.path.join(self.data_dir, "breast_hetero_guest.csv"), "head": 1,
                                     "partition": 10, "work_mode": Settings.WORK_MODE, "namespace": "experiment",
                                     "table_name": "breast_hetero_guest", "use_local_data": 0, 'drop': 1, 'backend': 0, "id_delimiter": ',',}
         self.upload_host_config = {"file": os.path.join(self.data_dir, "breast_hetero_host.csv"), "head": 1,
                                    "partition": 10, "work_mode": Settings.WORK_MODE, "namespace": "experiment",
                                    "table_name": "breast_hetero_host", "use_local_data": 0, 'drop': 1, 'backend': 0, "id_delimiter": ',',}
-        self.download_config = {"output_path": os.path.join(file_utils.get_project_base_directory(),
+        self.download_config = {"output_path": os.path.join(get_project_base_directory(),
                                                             "fate_flow/fate_flow_unittest_breast_b.csv"),
                                 "work_mode": Settings.WORK_MODE, "namespace": "experiment",
                                 "table_name": "breast_hetero_guest"}
-        ip = conf_utils.get_base_config(FATEFLOW_SERVICE_NAME).get("host")
-        self.server_url = "http://{}:{}/{}".format(ip, Settings.HTTP_PORT, API_VERSION)
+        self.server_url = "http://{}:{}/{}".format(Settings.IP, Settings.HTTP_PORT, API_VERSION)
 
     def test_upload_guest(self):
         response = requests.post("/".join([self.server_url, 'data', 'upload']), json=self.upload_guest_config)
@@ -62,5 +61,3 @@ class TestDataAccess(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-
-

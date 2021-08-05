@@ -6,10 +6,9 @@ from kazoo.client import KazooClient
 from kazoo.security import make_digest_acl
 from kazoo.exceptions import ZookeeperError, NodeExistsError, NoNodeError
 
-from fate_arch.common.conf_utils import get_base_config
 from fate_flow.settings import Settings, FATE_FLOW_MODEL_TRANSFER_ENDPOINT, \
     FATE_SERVICES_REGISTRY, stat_logger
-from fate_flow.db.db_models import MachineLearningModelInfo as MLModel
+from fate_flow.utils.model_utils import models_group_by_party_model_id_and_model_version
 from fate_flow.errors.error_services import *
 
 
@@ -40,17 +39,17 @@ def get_model_download_endpoint():
     return f'http://{Settings.IP}:{Settings.HTTP_PORT}{FATE_FLOW_MODEL_TRANSFER_ENDPOINT}'
 
 
-def get_model_download_url(model_id, model_version):
+def get_model_download_url(party_model_id, model_version):
     """Get the full url of model download.
 
-    :param str model_id: The model id, `#` will be replaced with `_`.
+    :param str party_model_id: The party model id, `#` will be replaced with `_`.
     :param str model_version: The model version.
     :return: The download url.
     :rtype: str
     """
     return '{endpoint}/{model_id}/{model_version}'.format(
         endpoint=get_model_download_endpoint(),
-        model_id=model_id.replace('#', '_'),
+        model_id=party_model_id.replace('#', '_'),
         model_version=model_version,
     )
 
@@ -105,25 +104,25 @@ class ServicesDB(abc.ABC):
         except ServicesError as e:
             stat_logger.exception(e)
 
-    def register_model(self, model_id, model_version):
+    def register_model(self, party_model_id, model_version):
         """Call `self.insert` for insert a service url to database.
         Currently, only `fateflow` (model download) urls are supported.
 
-        :param str model_id: The model id, `#` will be replaced with `_`.
+        :param str party_model_id: The party model id, `#` will be replaced with `_`.
         :param str model_version: The model version.
         :return: None
         """
-        self.insert('fateflow', get_model_download_url(model_id, model_version))
+        self.insert('fateflow', get_model_download_url(party_model_id, model_version))
 
-    def unregister_model(self, model_id, model_version):
+    def unregister_model(self, party_model_id, model_version):
         """Call `self.delete` for delete a service url from database.
         Currently, only `fateflow` (model download) urls are supported.
 
-        :param str model_id: The model id, `#` will be replaced with `_`.
+        :param str party_model_id: The party model id, `#` will be replaced with `_`.
         :param str model_version: The model version.
         :return: None
         """
-        self.delete('fateflow', get_model_download_url(model_id, model_version))
+        self.delete('fateflow', get_model_download_url(party_model_id, model_version))
 
     @abc.abstractmethod
     def _get_urls(self, service_name):
@@ -144,26 +143,21 @@ class ServicesDB(abc.ABC):
             stat_logger.exception(e)
             return []
 
-    @property
-    def models(self):
-        return (MLModel.select(MLModel.f_model_id, MLModel.f_model_version).
-                group_by(MLModel.f_model_id, MLModel.f_model_version))
-
     def register_models(self):
         """Register all service urls of each model to database on this node.
 
         :return: None
         """
-        for model in self.models:
-            self.register_model(model.f_model_id, model.f_model_version)
+        for model in models_group_by_party_model_id_and_model_version():
+            self.register_model(model.f_party_model_id, model.f_model_version)
 
     def unregister_models(self):
         """Unregister all service urls of each model to database on this node.
 
         :return: None
         """
-        for model in self.models:
-            self.unregister_model(model.f_model_id, model.f_model_version)
+        for model in models_group_by_party_model_id_and_model_version():
+            self.unregister_model(model.f_party_model_id, model.f_model_version)
 
 
 class ZooKeeperDB(ServicesDB):
@@ -174,20 +168,16 @@ class ZooKeeperDB(ServicesDB):
     supported_services = znodes.keys()
 
     def __init__(self):
-        config = get_base_config('zookeeper')
-        if not isinstance(config, dict) or not config:
-            raise ZooKeeperNotConfigured()
-
-        hosts = config.get('hosts')
+        hosts = Settings.ZOOKEEPER.get('hosts')
         if not isinstance(hosts, list) or not hosts:
             raise ZooKeeperNotConfigured()
 
         client_kwargs = {'hosts': hosts}
 
-        use_acl = config.get('use_acl', False)
+        use_acl = Settings.ZOOKEEPER.get('use_acl', False)
         if use_acl:
-            username = config.get('user')
-            password = config.get('password')
+            username = Settings.ZOOKEEPER.get('user')
+            password = Settings.ZOOKEEPER.get('password')
             if not username or not password:
                 raise MissingZooKeeperUsernameOrPassword()
 
@@ -251,7 +241,7 @@ class FallbackDB(ServicesDB):
        It cannot insert or delete the service url.
 
     """
-    supported_services = ['fateflow', 'servings']
+    supported_services = ('fateflow', 'servings')
 
     def _insert(self, *args, **kwargs):
         pass
@@ -263,7 +253,7 @@ class FallbackDB(ServicesDB):
         if service_name == 'fateflow':
             return [get_model_download_endpoint()]
 
-        urls = get_base_config(service_name, [])
+        urls = getattr(Settings, service_name.upper(), [])
         if isinstance(urls, dict):
             urls = urls.get('hosts', [])
         if not isinstance(urls, list):
@@ -278,7 +268,7 @@ def service_db():
     :return ZooKeeperDB if `use_registry` is `True`, else FallbackDB.
             FallbackDB is a compatible class and it actually does nothing.
     """
-    use_registry = get_base_config('use_registry', False)
+    use_registry = Settings.USE_REGISTRY
     if not use_registry:
         return FallbackDB()
     if isinstance(use_registry, str):

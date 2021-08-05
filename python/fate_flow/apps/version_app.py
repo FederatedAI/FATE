@@ -35,9 +35,8 @@ def get_fate_version_info():
 def set_fate_server_info():
     # manager
     federated_id = request.json.get("federatedId")
-    manager_conf = conf_utils.get_base_config("fatemanager", {})
-    manager_conf["federatedId"] = federated_id
-    conf_utils.update_config("fatemanager", manager_conf)
+    Settings.FATEMANAGER["federatedId"] = federated_id
+    conf_utils.update_config("fatemanager", Settings.FATEMANAGER)
     return get_json_result(data={"federatedId": federated_id})
 
 

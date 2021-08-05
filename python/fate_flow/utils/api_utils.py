@@ -21,10 +21,9 @@ from flask import jsonify, Response
 from werkzeug.http import HTTP_STATUS_CODES
 
 from fate_arch.common.base_utils import json_loads, json_dumps
-from fate_arch.common.conf_utils import get_base_config
 from fate_arch.common.log import audit_logger, schedule_logger
 from fate_arch.common import FederatedMode, CoordinationProxyService, CoordinationCommunicationProtocol
-from fate_flow.settings import DEFAULT_REMOTE_REQUEST_TIMEOUT, CHECK_NODES_IDENTITY,\
+from fate_flow.settings import Settings, DEFAULT_REMOTE_REQUEST_TIMEOUT, CHECK_NODES_IDENTITY,\
     FATE_MANAGER_GET_NODE_INFO_ENDPOINT, HEADERS, API_VERSION, stat_logger
 from fate_flow.utils.grpc_utils import wrap_grpc_packet, get_command_federation_channel, gen_routing_metadata, \
     forward_grpc_packet
@@ -86,22 +85,20 @@ def local_api(job_id, method, endpoint, json_body, api_version=API_VERSION, try_
 
 
 def get_federated_proxy_address(src_party_id, dest_party_id):
-    proxy_config = get_base_config("fateflow", {}).get("proxy", None)
-    protocol_config = get_base_config("fateflow", {}).get("protocol", "default")
-    if isinstance(proxy_config, str):
-        if proxy_config == CoordinationProxyService.ROLLSITE:
-            proxy_address = get_base_config("fate_on_eggroll", {}).get(proxy_config)
+    if isinstance(Settings.PROXY, str):
+        if Settings.PROXY == CoordinationProxyService.ROLLSITE:
+            proxy_address = Settings.FATE_ON_EGGROLL.get(Settings.PROXY)
             return proxy_address["host"], proxy_address.get("grpc_port", proxy_address["port"]), CoordinationCommunicationProtocol.GRPC
-        elif proxy_config == CoordinationProxyService.NGINX:
-            proxy_address = get_base_config("fate_on_spark", {}).get(proxy_config)
-            protocol = CoordinationCommunicationProtocol.HTTP if protocol_config == "default" else protocol_config
+        elif Settings.PROXY == CoordinationProxyService.NGINX:
+            proxy_address = Settings.FATE_ON_SPARK.get(Settings.PROXY)
+            protocol = CoordinationCommunicationProtocol.HTTP if Settings.PROTOCOL == "default" else Settings.PROTOCOL
             return proxy_address["host"], proxy_address[f"{protocol}_port"], protocol
         else:
-            raise RuntimeError(f"can not support coordinate proxy {proxy_config}")
-    elif isinstance(proxy_config, dict):
-        proxy_address = proxy_config
-        protocol = CoordinationCommunicationProtocol.HTTP if protocol_config == "default" else protocol_config
-        proxy_name = proxy_config.get("name", CoordinationProxyService.FATEFLOW)
+            raise RuntimeError(f"can not support coordinate proxy {Settings.PROXY}")
+    elif isinstance(Settings.PROXY, dict):
+        proxy_address = Settings.PROXY
+        protocol = CoordinationCommunicationProtocol.HTTP if Settings.PROTOCOL == "default" else Settings.PROTOCOL
+        proxy_name = Settings.PROXY.get("name", CoordinationProxyService.FATEFLOW)
         if proxy_name == CoordinationProxyService.FATEFLOW and str(dest_party_id) == str(src_party_id):
             host = RuntimeConfig.JOB_SERVER_HOST
             port = RuntimeConfig.HTTP_PORT
@@ -110,7 +107,7 @@ def get_federated_proxy_address(src_party_id, dest_party_id):
             port = proxy_address[f"{protocol}_port"]
         return host, port, protocol
     else:
-        raise RuntimeError(f"can not support coordinate proxy config {proxy_config}")
+        raise RuntimeError(f"can not support coordinate proxy config {Settings.PROXY}")
 
 
 def federated_coordination_on_http(job_id, method, host, port, endpoint, src_party_id, src_role, dest_party_id, json_body, api_version=API_VERSION, overall_timeout=DEFAULT_REMOTE_REQUEST_TIMEOUT, try_times=3):
@@ -194,9 +191,7 @@ def proxy_api(role, _job_id, request_config):
 
 def forward_api(role, request_config):
     endpoint = request_config.get('header', {}).get('endpoint')
-    ip = get_base_config(role, {}).get("host", "127.0.0.1")
-    port = get_base_config(role, {}).get("port")
-    url = "http://{}:{}{}".format(ip, port, endpoint)
+    url = "http://{}:{}{}".format(Settings.IP, Settings.HTTP_PORT, endpoint)
     method = request_config.get('header', {}).get('method', 'post')
     audit_logger().info('api request: {}'.format(url))
     action = getattr(requests, method.lower(), None)
@@ -209,12 +204,12 @@ def forward_api(role, request_config):
 def get_node_identity(json_body, src_party_id):
     params = {
         'partyId': int(src_party_id),
-        'federatedId': get_base_config("fatemanager", {}).get("federatedId")
+        'federatedId': Settings.FATEMANAGER.get("federatedId"),
     }
     try:
         response = requests.post(url="http://{}:{}{}".format(
-            get_base_config("fatemanager", {}).get("host"),
-            get_base_config("fatemanager", {}).get("port"),
+            Settings.FATEMANAGER.get("host"),
+            Settings.FATEMANAGER.get("port"),
             FATE_MANAGER_GET_NODE_INFO_ENDPOINT), json=params)
         json_body['appKey'] = response.json().get('data').get('appKey')
         json_body['appSecret'] = response.json().get('data').get('appSecret')

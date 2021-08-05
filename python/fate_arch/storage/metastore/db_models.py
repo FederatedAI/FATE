@@ -21,15 +21,15 @@ from peewee import CharField, IntegerField, BigIntegerField, TextField, Composit
 from playhouse.apsw_ext import APSWDatabase
 from playhouse.pool import PooledMySQLDatabase
 
-from fate_arch.storage.metastore.base_model import JSONField, SerializedField, BaseModel
+from fate_arch.common import WorkMode, file_utils, log
 from fate_arch.common.conf_utils import get_base_config
-from fate_arch.common import WorkMode, file_utils
-from fate_arch.common import log
+from fate_arch.storage.metastore.base_model import JSONField, SerializedField, BaseModel
+
+
+LOGGER = log.getLogger()
 
 DATABASE = get_base_config("database", {})
 WORK_MODE = get_base_config('work_mode', 0)
-
-LOGGER = log.getLogger()
 
 
 def singleton(cls, *args, **kw):
@@ -51,7 +51,6 @@ class BaseDataBase(object):
         db_name = database_config.pop("name")
         if WORK_MODE == WorkMode.STANDALONE:
             self.database_connection = APSWDatabase(os.path.join(file_utils.get_project_base_directory(), 'fate_flow_sqlite.db'))
-
         elif WORK_MODE == WorkMode.CLUSTER:
             self.database_connection = PooledMySQLDatabase(db_name, **database_config)
         else:

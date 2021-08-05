@@ -38,10 +38,10 @@ from fate_flow.utils.api_utils import get_json_result, federated_api, error_resp
 from fate_flow.utils import job_utils, model_utils, schedule_utils
 from fate_flow.utils.detect_utils import check_config
 from fate_flow.utils.model_utils import gen_party_model_id, check_if_deployed
+from fate_flow.utils.config_adapter import JobRuntimeConfigAdapter
+from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.entity.types import ModelOperation, TagOperation
 from fate_arch.common import file_utils, WorkMode, FederatedMode
-from fate_flow.utils.config_adapter import JobRuntimeConfigAdapter
-from fate_flow.db.db_services import service_db
 
 
 @manager.route('/load', methods=['POST'])
@@ -196,7 +196,7 @@ def do_migrate_model():
 @manager.route('/load/do', methods=['POST'])
 def do_load_model():
     request_data = request.json
-    request_data['servings'] = service_db().get_servings('servings')
+    request_data['servings'] = RuntimeConfig.service_db.get_servings('servings')
     if not check_if_deployed(role=request_data['local']['role'],
                              party_id=request_data['local']['party_id'],
                              model_id=request_data['job_parameters']['model_id'],
@@ -264,7 +264,7 @@ def bind_model_service():
                                           "Please check if the model version is valid.".format(request_config.get('job_id')))
     if not request_config.get('servings'):
         # get my party all servings
-        request_config['servings'] = service_db().get_urls('servings')
+        request_config['servings'] = RuntimeConfig.service_db.get_urls('servings')
     service_id = request_config.get('service_id')
     if not service_id:
         return get_json_result(retcode=101, retmsg='no service id')
