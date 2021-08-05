@@ -262,7 +262,7 @@ class IntersectPreProcessParam(BaseParam):
                      default '', only effective for preprocessing
 
     random_state: seed for random salt generator when constructing hash functions,
-                  salt is appended to hash result by hash_method when performing insertion, default 42
+                  salt is appended to hash result by hash_method when performing insertion, default None
 
     filter_owner: str, role that constructs filter, either guest or host, default guest,
                   only effective for preprocessing
@@ -270,7 +270,7 @@ class IntersectPreProcessParam(BaseParam):
     """
 
     def __init__(self, false_positive_rate=1e-3, encrypt_method=consts.RSA, hash_method='sha256',
-                 preprocess_method='sha256', preprocess_salt='', random_state=42, filter_owner=consts.GUEST):
+                 preprocess_method='sha256', preprocess_salt='', random_state=None, filter_owner=consts.GUEST):
         super().__init__()
         self.false_positive_rate = false_positive_rate
         self.encrypt_method = encrypt_method
@@ -281,7 +281,7 @@ class IntersectPreProcessParam(BaseParam):
         self.filter_owner = filter_owner
 
     def check(self):
-        descr = "intersect preporcess param's false_positive_rate "
+        descr = "intersect preprocess param's false_positive_rate "
         self.check_decimal_float(self.false_positive_rate, descr)
         self.check_positive_number(self.false_positive_rate, descr)
         if self.false_positive_rate > 0.5:
@@ -290,26 +290,27 @@ class IntersectPreProcessParam(BaseParam):
         descr = "intersect preprocess param's encrypt_method "
         self.encrypt_method = self.check_and_change_lower(self.encrypt_method, [consts.RSA], descr)
 
-        descr = "intersect preporcess param's random_state "
-        self.check_nonnegative_number(self.random_state, descr)
+        descr = "intersect preprocess param's random_state "
+        if self.random_state:
+            self.check_nonnegative_number(self.random_state, descr)
 
-        descr = "intersect preporcess param's hash_method "
+        descr = "intersect preprocess param's hash_method "
         self.hash_method = self.check_and_change_lower(self.hash_method,
                                                        [consts.MD5, consts.SHA1, consts.SHA224,
                                                         consts.SHA256, consts.SHA384, consts.SHA512,
                                                         consts.SM3],
                                                        descr)
-        descr = "intersect preporcess param's preprocess_salt "
+        descr = "intersect preprocess param's preprocess_salt "
         self.check_string(self.preprocess_salt, descr)
 
-        descr = "intersect preporcess param's preprocess_method "
+        descr = "intersect preprocess param's preprocess_method "
         self.preprocess_method = self.check_and_change_lower(self.preprocess_method,
                                                              [consts.MD5, consts.SHA1, consts.SHA224,
                                                              consts.SHA256, consts.SHA384, consts.SHA512,
                                                              consts.SM3],
                                                              descr)
 
-        descr = "intersect preporcess param's filter_owner "
+        descr = "intersect preprocess param's filter_owner "
         self.filter_owner = self.check_and_change_lower(self.filter_owner,
                                                         [consts.GUEST, consts.HOST],
                                                         descr)
