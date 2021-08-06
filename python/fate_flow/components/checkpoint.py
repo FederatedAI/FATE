@@ -23,9 +23,8 @@ from ruamel import yaml
 
 from fate_flow.settings import stat_logger
 from fate_flow.entity.types import RunParameters
-from fate_flow.utils.model_utils import gen_party_model_id
-from fate_arch.common.file_utils import get_project_base_directory
 from fate_flow.model import serialize_buffer_object, parse_proto_object, Locker
+from fate_arch.common.file_utils import get_project_base_directory
 
 
 class Checkpoint(Locker):
@@ -69,11 +68,9 @@ class Checkpoint(Locker):
             for model_name, model in data['models'].items():
                 (self.directory / model['filename']).write_bytes(model_strings[model_name])
             self.database.write_text(yaml.dump(data, Dumper=yaml.RoundTripDumper), 'utf8')
-
         stat_logger.info(f'Checkpoint saved. path: {self.directory}')
-        return self.directory
 
-    def read_database(self):
+    def read(self):
         with self.lock:
             data = yaml.safe_load(self.database.read_text('utf8'))
             if data['step_index'] != self.step_index or data['step_name'] != self.step_name:
@@ -82,13 +79,6 @@ class Checkpoint(Locker):
                                  f'expected step_index: {self.step_index} actual step_index: {data["step_index"]} '
                                  f'expected step_name: {self.step_name} actual step_index: {data["step_name"]}')
 
-        self.create_time = datetime.fromisoformat(data['create_time'])
-        return data
-
-    def read(self):
-        data = self.read_database()
-
-        with self.lock:
             for model_name, model in data['models'].items():
                 model['filepath'] = self.directory / model['filename']
                 if not model['filepath'].exists():
@@ -104,6 +94,7 @@ class Checkpoint(Locker):
                 raise ValueError('Checkpoint may be incorrect: hash dose not match. '
                                  f'filepath: {model["filepath"]} expected: {model["sha1"]} actual: {sha1}')
 
+        self.create_time = datetime.fromisoformat(data['create_time'])
         return {model_name: parse_proto_object(model['buffer_name'], model_strings[model_name])
                 for model_name, model in data['models'].items()}
 
@@ -112,13 +103,10 @@ class Checkpoint(Locker):
         rmtree(self.directory)
         self.directory.mkdir(0o755)
 
-    def to_dict(self):
-        return self.read_database()
-
 
 class CheckpointManager:
 
-    def __init__(self, job_id: str = None, role: str = None, party_id: int = None,
+    def __init__(self, job_id: str, role: str, party_id: int,
                  model_id: str = None, model_version: str = None,
                  component_name: str = None, component_module_name: str = None,
                  task_id: str = None, task_version: int = None,
@@ -130,7 +118,6 @@ class CheckpointManager:
         self.party_id = party_id
         self.model_id = model_id
         self.model_version = model_version
-        self.party_model_id = gen_party_model_id(self.model_id, self.role, self.party_id)
         self.component_name = component_name if component_name else 'pipeline'
         self.module_name = component_module_name if component_module_name else 'Pipeline'
         self.task_id = task_id
@@ -138,7 +125,7 @@ class CheckpointManager:
         self.job_parameters = job_parameters
 
         self.directory = (Path(get_project_base_directory()) / 'model_local_cache' /
-                          self.party_model_id / self.model_version / 'checkpoint' / self.component_name)
+                          model_id / model_version / 'checkpoint' / self.component_name)
         self.directory.mkdir(0o755, True, True)
 
         if isinstance(max_to_keep, int):
@@ -217,6 +204,3 @@ class CheckpointManager:
         self.checkpoints = deque(maxlen=self.max_checkpoints_number)
         rmtree(self.directory)
         self.directory.mkdir(0o755)
-
-    def to_dict(self):
-        return [checkpoint.to_dict() for checkpoint in self.checkpoints]

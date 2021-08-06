@@ -82,8 +82,7 @@ def deploy(config_data):
         parser.verify_dsl(predict_dsl, "predict")
         inference_dsl = parser.get_predict_dsl(role=local_role,
                                                predict_dsl=predict_dsl,
-                                               setting_conf_prefix=os.path.join(file_utils.get_python_base_directory(),
-                                                                                *['federatedml', 'conf', 'setting_conf']))
+                                               setting_conf_prefix=file_utils.get_federatedml_setting_conf_directory())
         pipeline.inference_dsl = json_dumps(inference_dsl, byte=True)
         if model_utils.compare_version(pipeline.fate_version, '1.5.0') == 'gt':
             pipeline.parent_info = json_dumps({'parent_model_id': model_id, 'parent_model_version': model_version}, byte=True)
