@@ -1,5 +1,5 @@
 {
-  "service_id": "sklearn-lr",
+  "service_id": "test-service",
   "model_id": "arbiter-10000#guest-9999#host-10000#model",
   "model_version": "202006122009345696314",
   "role": "guest",
@@ -10,14 +10,13 @@
     "protocol_version": "v1",
     "namespace": "default",
     "config_file_content": "<content of kube_config file>",
-    "config_file": "<path to the kube_config file, only used by flow client to fill the config_file_content field>",
-    "replace": false,
+    "replace": true,
     "skip_create_storage_secret": false,
     "model_storage_type": "minio",
     "model_storage_parameters": {
       "endpoint": "minio:9000",
-      "access_key": "",
-      "secret_key": "",
+      "access_key": "<acceess_key>",
+      "secret_key": "<secret_key>",
       "secure": false,
       "region": ""
     }

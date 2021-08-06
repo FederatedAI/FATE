@@ -411,3 +411,39 @@ def homo_convert_model(ctx, **kwargs):
     """
     config_data, dsl_data = preprocess(**kwargs)
     access_server('post', ctx, 'model/homo/convert', config_data)
+
+
+@model.command("homo-deploy", short_help="Deploy trained homogenous model")
+@cli_args.CONF_PATH
+@click.pass_context
+def homo_deploy_model(ctx, **kwargs):
+    """
+    \b
+    - DESCRIPTION:
+        Deploy trained homogenous model to a target online serving system. The model must be
+        converted beforehand.
+        Currently the supported target serving system is KFServing. Refer to the example json
+        for detailed parameters.
+
+    \b
+    - USAGE:
+        flow model homo-deploy -c fate_flow/examples/homo_deploy_model.json
+    """
+    config_data, dsl_data = preprocess(**kwargs)
+    if config_data.get('deployment_type') == "kfserving":
+        kube_config = config_data.get('deployment_parameters', {}).get('config_file')
+        if kube_config:
+            if check_abs_path(kube_config):
+                with open(kube_config, 'r') as fp:
+                    config_data['deployment_parameters']['config_file_content'] = fp.read()
+                del config_data['deployment_parameters']['config_file']
+            else:
+                prettify(
+                    {
+                        "retcode": 100,
+                        "retmsg": "The kube_config file is obtained from the fate flow client machine, "
+                                  "but it does not exist. Please check the path: {}".format(kube_config)
+                    }
+                )
+                return
+    access_server('post', ctx, 'model/homo/deploy', config_data)

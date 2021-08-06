@@ -743,6 +743,24 @@ Model
 
     flow model homo-convert -c fate_flow/examples/homo_convert_model.json
 
+``homo-deploy``
+~~~~~~~~~~
+
+-  *Description*: Deploy trained homogeneous model to an online serving system. Currently KFServing is supported.
+-  *Arguments*:
+
++-------+--------------+-----------+-------------------+------------+-----------------------------------+
+| No.   | Argument     | Flag\_1   | Flag\_2           | Required   | Description                       |
++=======+==============+===========+===================+============+===================================+
+| 1     | conf\_path   | ``-c``    | ``--conf-path``   | Yes        | Runtime configuration file path   |
++-------+--------------+-----------+-------------------+------------+-----------------------------------+
+
+-  *Examples*:
+
+.. code:: bash
+
+    flow model homo-deploy -c fate_flow/examples/homo_deploy_model.json
+
 
 Tag
 ---
