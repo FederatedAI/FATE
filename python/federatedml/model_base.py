@@ -24,6 +24,7 @@ from fate_arch.computing import is_table
 
 from federatedml.param.evaluation_param import EvaluateParam
 from federatedml.statistic.data_overview import header_alignment, check_with_inst_id
+from federatedml.feature.instance import Instance
 from federatedml.util.io_check import assert_match_id_consistent
 from federatedml.util import LOGGER
 from federatedml.util import abnormal_detection
@@ -194,11 +195,11 @@ class ModelBase(object):
             predict_data = predict_datas
             schema = schemas
         if predict_data is not None:
-            if len(predict_data.first()[1]) == 6:
-                header = ["inst_id", "label", "predict_result", "predict_score", "predict_detail", "type"]
-            else:
-                header = ["label", "predict_result", "predict_score", "predict_detail", "type"]
-            # header = ["label", "predict_result", "predict_score", "predict_detail", "type"]
+            # if len(predict_data.first()[1]) == 6:
+            #     header = ["inst_id", "label", "predict_result", "predict_score", "predict_detail", "type"]
+            # else:
+            #     header = ["label", "predict_result", "predict_score", "predict_detail", "type"]
+            header = ["label", "predict_result", "predict_score", "predict_detail", "type"]
             predict_data.schema = {"header": header,
                                    "sid_name": schema.get('sid_name')}
         return predict_data
@@ -244,17 +245,16 @@ class ModelBase(object):
         else:
             raise ValueError(f"Model's classes type is {type(classes)}, classes must be None or list of length no less than 2.")
 
-        has_match_id = check_with_inst_id(data_instances)
+        # has_match_id = check_with_inst_id(data_instances)
 
         def _transfer(instance, pred_res):
-            instance.features = pred_res
-            return instance
+            return Instance(features=pred_res, inst_id=instance.inst_id)
 
-        if has_match_id:
-            match_id_table = data_instances.mapValues(lambda x: [x.inst_id])
-            predict_result = predict_result.join(match_id_table, lambda p, m: m + p)
+        # if has_match_id:
+            # match_id_table = data_instances.mapValues(lambda x: [x.inst_id])
+            # predict_result = predict_result.join(match_id_table, lambda p, m: m + p)
 
-            # predict_result = data_instances.join(predict_result, _transfer)
+        predict_result = data_instances.join(predict_result, _transfer)
 
         return predict_result
 
