@@ -1,6 +1,6 @@
 {
-    "file": "/home/mingchao/fate/examples/data/breast_homo_guest.csv",
-    "table_name": "breast_homo_guest",
+    "file": "/home/mingchao/fate/examples/data/breast_homo_host.csv",
+    "table_name": "breast_homo_host",
     "namespace": "experiment",
     "head": 1,
     "extend_sid": true,

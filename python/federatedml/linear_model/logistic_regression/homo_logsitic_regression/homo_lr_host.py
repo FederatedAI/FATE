@@ -26,6 +26,9 @@ from federatedml.linear_model.logistic_regression.homo_logsitic_regression.homo_
 from federatedml.model_selection import MiniBatch
 from federatedml.optim.gradient.homo_lr_gradient import LogisticGradient, TaylorLogisticGradient
 from federatedml.protobuf.generated import lr_model_param_pb2
+from federatedml.optim import activation
+from federatedml.feature.instance import Instance
+from federatedml.util.fate_operator import vec_dot
 from federatedml.util import LOGGER
 from federatedml.util import consts
 from federatedml.util import fate_operator
@@ -172,22 +175,33 @@ class HomoLRHost(HomoLRBase):
         pubkey = self.cipher.gen_paillier_pubkey(enable=self.use_encrypt, suffix=suffix)
         if self.use_encrypt:
             self.cipher_operator.set_public_key(pubkey)
-
-        if self.use_encrypt:
             final_model = self.transfer_variable.aggregated_model.get(idx=0, suffix=suffix)
             model_weights = LogisticRegressionWeights(final_model.unboxed, self.fit_intercept)
             wx = self.compute_wx(data_instances, model_weights.coef_, model_weights.intercept_)
             self.transfer_variable.predict_wx.remote(wx, consts.ARBITER, 0, suffix=suffix)
             predict_result = self.transfer_variable.predict_result.get(idx=0, suffix=suffix)
-            predict_result = predict_result.join(data_instances, lambda p, d: [d.label, p, None,
-                                                                               {"0": None, "1": None}])
+            predict_result = predict_result.join(data_instances, lambda p, d:
+                                                 Instance(features=[d.label, p, None, {"0": None, "1": None}],
+                                                          inst_id=d.inst_id)
+                                                 )
+
+
+            # Instance([d.label, p, None,
+            #                                                                    {"0": None, "1": None}])
 
         else:
-            predict_wx = self.compute_wx(data_instances, self.model_weights.coef_, self.model_weights.intercept_)
-            pred_table = self.classify(predict_wx, self.model_param.predict_param.threshold)
-            predict_result = data_instances.mapValues(lambda x: x.label)
-            predict_result = pred_table.join(predict_result, lambda x, y: [y, x[1], x[0],
-                                                                           {"1": x[0], "0": 1 - x[0]}])
+            # predict_wx = self.compute_wx(data_instances, self.model_weights.coef_, self.model_weights.intercept_)
+            # pred_table = self.classify(predict_wx, self.model_param.predict_param.threshold)
+            # predict_result = data_instances.mapValues(lambda x: x.label)
+
+            pred_prob = data_instances.mapValues(
+                lambda v: activation.sigmoid(vec_dot(v.features, self.model_weights.coef_)
+                                             + self.model_weights.intercept_))
+            predict_result = self.predict_score_to_output(data_instances, pred_prob, classes=[0, 1],
+                                                          threshold=self.model_param.predict_param.threshold)
+
+            # predict_result = pred_table.join(predict_result, lambda x, y: [y, x[1], x[0],
+            #                                                                {"1": x[0], "0": 1 - x[0]}])
         return predict_result
 
     def _get_param(self):

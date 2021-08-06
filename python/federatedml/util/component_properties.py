@@ -16,8 +16,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from fate_arch.computing import is_table
+import copy
+import functools
 
+import numpy as np
+
+from fate_arch.computing import is_table
 from federatedml.util import LOGGER
 
 
@@ -313,10 +317,19 @@ class ComponentProperties(object):
 
         assert len(previews_data) == len(name_list)
 
+        def _append_name(value, name):
+            inst = copy.deepcopy(value)
+            if isinstance(inst.features, list):
+                inst.features.append(name)
+            else:
+                inst.features = np.append(inst.features, name)
+            return inst
+
         result_data = None
         for data, name in zip(previews_data, name_list):
             # LOGGER.debug("before mapValues, one data: {}".format(data.first()))
-            data = data.mapValues(lambda value: value + [name])
+            f = functools.partial(_append_name, name=name)
+            data = data.mapValues(f)
             # LOGGER.debug("after mapValues, one data: {}".format(data.first()))
 
             if result_data is None:
@@ -331,5 +344,3 @@ class ComponentProperties(object):
 
     def set_union_func(self, func):
         self.union_data = func
-
-
