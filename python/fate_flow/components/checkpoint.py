@@ -16,6 +16,7 @@
 import hashlib
 from pathlib import Path
 from shutil import rmtree
+from base64 import b64encode
 from datetime import datetime
 from collections import deque, OrderedDict
 
@@ -30,12 +31,14 @@ from fate_flow.model import serialize_buffer_object, parse_proto_object, Locker
 
 class Checkpoint(Locker):
 
-    def __init__(self, directory: Path, step_index: int, step_name: str):
+    def __init__(self, directory: Path, step_index: int, step_name: str, mkdir: bool = True):
         self.step_index = step_index
         self.step_name = step_name
+        self.mkdir = mkdir
         self.create_time = None
         directory = directory / f'{step_index}#{step_name}'
-        directory.mkdir(0o755, True, True)
+        if self.mkdir:
+            directory.mkdir(0o755, True, True)
         self.database = directory / 'database.yaml'
 
         super().__init__(directory)
@@ -85,7 +88,7 @@ class Checkpoint(Locker):
         self.create_time = datetime.fromisoformat(data['create_time'])
         return data
 
-    def read(self):
+    def read(self, parse_models=True, include_database=False):
         data = self.read_database()
 
         with self.lock:
@@ -104,16 +107,23 @@ class Checkpoint(Locker):
                 raise ValueError('Checkpoint may be incorrect: hash dose not match. '
                                  f'filepath: {model["filepath"]} expected: {model["sha1"]} actual: {sha1}')
 
-        return {model_name: parse_proto_object(model['buffer_name'], model_strings[model_name])
-                for model_name, model in data['models'].items()}
+        data['models'] = {
+            model_name: parse_proto_object(model['buffer_name'], model_strings[model_name])
+            if parse_models else b64encode(model_strings[model_name]).decode('ascii')
+            for model_name, model in data['models'].items()
+        }
+        return data if include_database else data['models']
 
     def remove(self):
         self.create_time = None
         rmtree(self.directory)
-        self.directory.mkdir(0o755)
+        if self.mkdir:
+            self.directory.mkdir(0o755)
 
-    def to_dict(self):
-        return self.read_database()
+    def to_dict(self, include_models=False):
+        if not include_models:
+            return self.read_database()
+        return self.read(False, True)
 
 
 class CheckpointManager:
@@ -123,7 +133,7 @@ class CheckpointManager:
                  component_name: str = None, component_module_name: str = None,
                  task_id: str = None, task_version: int = None,
                  job_parameters: RunParameters = None,
-                 max_to_keep: int = None
+                 max_to_keep: int = None, mkdir: bool = True,
                  ):
         self.job_id = job_id
         self.role = role
@@ -136,10 +146,12 @@ class CheckpointManager:
         self.task_id = task_id
         self.task_version = task_version
         self.job_parameters = job_parameters
+        self.mkdir = mkdir
 
         self.directory = (Path(get_project_base_directory()) / 'model_local_cache' /
                           self.party_model_id / self.model_version / 'checkpoint' / self.component_name)
-        self.directory.mkdir(0o755, True, True)
+        if self.mkdir:
+            self.directory.mkdir(0o755, True, True)
 
         if isinstance(max_to_keep, int):
             if max_to_keep <= 0:
@@ -216,7 +228,8 @@ class CheckpointManager:
     def clean(self):
         self.checkpoints = deque(maxlen=self.max_checkpoints_number)
         rmtree(self.directory)
-        self.directory.mkdir(0o755)
+        if self.mkdir:
+            self.directory.mkdir(0o755)
 
-    def to_dict(self):
-        return [checkpoint.to_dict() for checkpoint in self.checkpoints]
+    def to_dict(self, include_models=False):
+        return [checkpoint.to_dict(include_models) for checkpoint in self.checkpoints]
