@@ -15,6 +15,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import os
 import numpy as np
 
 from fate_arch import storage
@@ -27,7 +28,7 @@ from fate_flow.utils import job_utils, data_utils
 from fate_flow.components.component_base import ComponentBase
 
 LOGGER = log.getLogger()
-MAX_NUM = 10000
+MAX_NUM = int(os.getenv('FATE_FLOW_UPLOAD_MAX_NUM', 10000))
 
 
 class Reader(ComponentBase):

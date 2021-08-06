@@ -84,8 +84,8 @@ fate_on_spark:
     cluster: standalone
     # all parties should use a same tenant
     tenant: fl-tenant
-    # message ttl in minutes
-    topic_ttl: 5
+    # message retention in minutes, -1 means unlimited.
+    topic_ttl: -1
     # default conf/pulsar_route_table.yaml
     route_table:
   nginx:

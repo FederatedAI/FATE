@@ -32,7 +32,9 @@ class Upload(ComponentBase):
     def __init__(self):
         super(Upload, self).__init__()
         self.MAX_PARTITIONS = 1024
-        self.MAX_BYTES = 1024*1024*8
+        # configurable by env
+        # TODO, make it configurable in config file
+        self.MAX_BYTES = int(os.getenv("FATE_FLOW_UPLOAD_MAX_BYTES", 1024*1024*8))
         self.parameters = {}
         self.table = None
 
