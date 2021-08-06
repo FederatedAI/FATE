@@ -67,6 +67,10 @@ class BaseFeatureBinning(ModelBase):
 
         self.transform_type = self.model_param.transform_param.transform_type
 
+        if self.role == consts.HOST:
+            if self.transform_type == "woe":
+                raise ValueError("Host party do not support woe transform now.")
+
         if self.model_param.method == consts.QUANTILE:
             self.binning_obj = QuantileBinning(self.model_param)
         elif self.model_param.method == consts.BUCKET:
