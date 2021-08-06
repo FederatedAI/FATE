@@ -34,7 +34,9 @@ def stop_job(job_id, role, party_id, stop_status):
 def rerun_job(job_id, role, party_id):
     DAGScheduler.set_job_rerun(job_id=job_id, initiator_role=role, initiator_party_id=party_id,
                                component_name=request.json.get("component_name"),
+                               force=request.json.get("force", False),
                                auto=False)
+    #todo: 判断状态
     return get_json_result(retcode=0, retmsg='success')
 
 

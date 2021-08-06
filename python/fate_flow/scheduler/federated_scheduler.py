@@ -39,6 +39,10 @@ class FederatedScheduler(object):
         return cls.job_command(job=job, command="create", command_body=job.to_human_model_dict(), parallel=True)
 
     @classmethod
+    def update_parameter(cls, job: Job, updated_parameters):
+        return cls.job_command(job=job, command="parameter/update", command_body=updated_parameters, parallel=True)
+
+    @classmethod
     def resource_for_job(cls, job, operation_type, specific_dest=None):
         schedule_logger(job_id=job.f_job_id).info(f"try to {operation_type} job {job.f_job_id} resource")
         status_code, response = cls.job_command(job=job, command=f"resource/{operation_type}", specific_dest=specific_dest)

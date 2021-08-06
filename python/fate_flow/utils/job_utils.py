@@ -25,7 +25,7 @@ from fate_arch.common import file_utils
 from fate_arch.common.base_utils import json_dumps, fate_uuid, current_timestamp
 from fate_arch.common.log import schedule_logger
 from fate_flow.db.db_models import DB, Job, Task
-from fate_flow.entity.types import KillProcessRetCode
+from fate_flow.entity.types import KillProcessRetCode, JobConfiguration
 from fate_flow.entity.run_status import JobStatus, TaskStatus
 from fate_flow.entity.run_parameters import RunParameters
 from fate_flow.runtime_config import RuntimeConfig
@@ -185,24 +185,26 @@ def get_job_conf(job_id, role, party_id):
 
 
 @DB.connection_context()
-def get_job_configuration(job_id, role, party_id, tasks=None):
-    if tasks:
-        jobs_run_conf = {}
-        for task in tasks:
-            jobs = Job.select(Job.f_job_id, Job.f_runtime_conf_on_party, Job.f_description).where(Job.f_job_id == task.f_job_id)
-            job = jobs[0]
-            jobs_run_conf[job.f_job_id] = job.f_runtime_conf_on_party["component_parameters"]["role"]["local"]["0"]["upload_0"]
-            jobs_run_conf[job.f_job_id]["notes"] = job.f_description
-        return jobs_run_conf
-    else:
-        jobs = Job.select(Job.f_dsl, Job.f_runtime_conf, Job.f_train_runtime_conf, Job.f_runtime_conf_on_party).where(Job.f_job_id == job_id,
-                                                                                                                      Job.f_role == role,
-                                                                                                                      Job.f_party_id == party_id)
+def get_job_configuration(job_id, role, party_id) -> JobConfiguration:
+    jobs = Job.select(Job.f_dsl, Job.f_runtime_conf, Job.f_train_runtime_conf, Job.f_runtime_conf_on_party).where(Job.f_job_id == job_id,
+                                                                                                                  Job.f_role == role,
+                                                                                                                  Job.f_party_id == party_id)
     if jobs:
         job = jobs[0]
-        return job.f_dsl, job.f_runtime_conf, job.f_runtime_conf_on_party, job.f_train_runtime_conf
+        return JobConfiguration(**job.to_human_model_dict())
     else:
-        return {}, {}, {}, {}
+        return None
+
+
+@DB.connection_context()
+def get_upload_job_configuration_summary(upload_tasks: typing.List[Task]):
+    jobs_run_conf = {}
+    for task in upload_tasks:
+        jobs = Job.select(Job.f_job_id, Job.f_runtime_conf_on_party, Job.f_description).where(Job.f_job_id == task.f_job_id)
+        job = jobs[0]
+        jobs_run_conf[job.f_job_id] = job.f_runtime_conf_on_party["component_parameters"]["role"]["local"]["0"]["upload_0"]
+        jobs_run_conf[job.f_job_id]["notes"] = job.f_description
+    return jobs_run_conf
 
 
 @DB.connection_context()

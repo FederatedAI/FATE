@@ -116,35 +116,47 @@ class TaskScheduler(object):
             return SchedulingStatusCode.FAILED
 
     @classmethod
-    def prepare_rerun_task(cls, job: Job, task: Task, dsl_parser, auto=True):
+    def prepare_rerun_task(cls, job: Job, task: Task, dsl_parser, auto=False, force=False):
         job_id = job.f_job_id
         can_rerun = False
-        if task.f_status in {TaskStatus.WAITING, TaskStatus.SUCCESS}:
-            schedule_logger(job_id=job_id).info(f"task {task.f_task_id} {task.f_task_version} is {task.f_status}, pass create new version")
-            if task.f_status == TaskStatus.WAITING:
-                can_rerun = True
-        elif auto and task.f_auto_retries < 1:
-            schedule_logger(job_id=job_id).info(f"task {task.f_task_id} has no retry count, can not rerun")
-        else:
-            # stop old version task
-            FederatedScheduler.stop_task(job=job, task=task, stop_status=TaskStatus.CANCELED)
-            FederatedScheduler.clean_task(job=job, task=task, content_type="metrics")
-            # create new version task
-            task.f_task_version = task.f_task_version + 1
-            task.f_auto_retries = task.f_auto_retries - 1
-            task.f_run_pid = None
-            task.f_run_ip = None
-            FederatedScheduler.create_task(job=job, task=task)
-            # Save the status information of all participants in the initiator for scheduling
-            schedule_logger(job_id=job_id).info(f"create task {task.f_task_id} new version {task.f_task_version}")
-            for _role, _party_ids in job.f_runtime_conf_on_party["role"].items():
-                for _party_id in _party_ids:
-                    if _role == job.f_initiator_role and _party_id == job.f_initiator_party_id:
-                        continue
-                    JobController.initialize_tasks(job_id, _role, _party_id, False, job.f_initiator_role, job.f_initiator_party_id, RunParameters(**job.f_runtime_conf_on_party["job_parameters"]), dsl_parser, component_name=task.f_component_name, task_version=task.f_task_version)
-            schedule_logger(job_id=job_id).info(f"create task {task.f_task_id} new version {task.f_task_version} successfully")
+        if force:
             can_rerun = True
+            auto = False
+            schedule_logger(job_id).info(f"task {task.f_task_id} {task.f_task_version} with {task.f_status} was forced to rerun")
+        elif task.f_status in {TaskStatus.SUCCESS}:
+            schedule_logger(job_id=job_id).info(f"task {task.f_task_id} {task.f_task_version} is {task.f_status} and not force reruen, pass rerun")
+        elif auto and task.f_auto_retries < 1:
+            schedule_logger(job_id=job_id).info(f"task {task.f_task_id} has no retry count, pass rerun")
+        else:
+            can_rerun = True
+        if can_rerun:
+            if task.f_status != TaskStatus.WAITING:
+                cls.create_new_version_task(job=job,
+                                            task=task,
+                                            dsl_parser=dsl_parser,
+                                            auto=auto)
         return can_rerun
+
+    @classmethod
+    def create_new_version_task(cls, job, task, dsl_parser, auto):
+        # stop old version task
+        FederatedScheduler.stop_task(job=job, task=task, stop_status=TaskStatus.CANCELED)
+        FederatedScheduler.clean_task(job=job, task=task, content_type="metrics")
+        # create new version task
+        task.f_task_version = task.f_task_version + 1
+        if auto:
+            task.f_auto_retries = task.f_auto_retries - 1
+        task.f_run_pid = None
+        task.f_run_ip = None
+        FederatedScheduler.create_task(job=job, task=task)
+        # Save the status information of all participants in the initiator for scheduling
+        schedule_logger(job_id=job.f_job_id).info(f"create task {task.f_task_id} new version {task.f_task_version}")
+        for _role, _party_ids in job.f_runtime_conf_on_party["role"].items():
+            for _party_id in _party_ids:
+                if _role == job.f_initiator_role and _party_id == job.f_initiator_party_id:
+                    continue
+                JobController.initialize_tasks(job.f_job_id, _role, _party_id, False, job.f_initiator_role, job.f_initiator_party_id, RunParameters(**job.f_runtime_conf_on_party["job_parameters"]), dsl_parser, component_name=task.f_component_name, task_version=task.f_task_version, auto_retries=task.f_auto_retries)
+        schedule_logger(job_id=job.f_job_id).info(f"create task {task.f_task_id} new version {task.f_task_version} successfully")
 
     @classmethod
     def collect_task_of_all_party(cls, job, initiator_task, set_status=None):

@@ -78,6 +78,12 @@ def update_job(job_id, role, party_id):
     return get_json_result(retcode=0, retmsg='success')
 
 
+@manager.route('/<job_id>/<role>/<party_id>/parameter/update', methods=['POST'])
+def update_parameters(job_id, role, party_id):
+    JobController.update_parameter(job_id=job_id, role=role, party_id=party_id, updated_parameters=request.json)
+    return get_json_result(retcode=0, retmsg='success')
+
+
 @manager.route('/<job_id>/<role>/<party_id>/status/<status>', methods=['POST'])
 def job_status(job_id, role, party_id, status):
     job_info = {}

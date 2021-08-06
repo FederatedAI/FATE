@@ -21,7 +21,7 @@ import traceback
 from fate_arch.common import file_utils, EngineType, profile
 from fate_arch.common.base_utils import current_timestamp, timestamp_to_date
 from fate_arch import session
-from fate_flow.entity.types import ProcessRole
+from fate_flow.entity.types import ProcessRole, JobConfiguration
 from fate_flow.entity.run_status import TaskStatus
 from fate_flow.entity.run_parameters import RunParameters
 from fate_flow.runtime_config import RuntimeConfig
@@ -48,8 +48,8 @@ class TaskExecutor(object):
         task_info = {}
         try:
             job_id, component_name, task_id, task_version, role, party_id, run_ip, config, job_server = cls.get_run_task_args(kwargs)
-            schedule_logger(job_id).info('enter task executor process')
-            schedule_logger(job_id).info("python env: {}, python path: {}".format(os.getenv("VIRTUAL_ENV"), os.getenv("PYTHONPATH")))
+            schedule_logger().info('\nenter task executor process')
+            schedule_logger().info("python env: {}, python path: {}".format(os.getenv("VIRTUAL_ENV"), os.getenv("PYTHONPATH")))
             # init function args
             if job_server:
                 RuntimeConfig.init_config(JOB_SERVER_HOST=job_server.split(':')[0],
@@ -69,9 +69,7 @@ class TaskExecutor(object):
             })
             start_time = current_timestamp()
             operation_client = OperationClient()
-            job_conf = operation_client.get_job_conf(job_id, role, party_id)
-            job_dsl = job_conf["job_dsl_path"]
-            job_runtime_conf = job_conf["job_runtime_conf_path"]
+            job_configuration = JobConfiguration(**operation_client.get_job_conf(job_id, role, party_id))
             task_parameters_conf = operation_client.load_json_conf(job_id, config)
 
             job_log_dir = os.path.join(job_utils.get_job_log_directory(job_id=job_id), role, str(party_id))
@@ -79,20 +77,20 @@ class TaskExecutor(object):
             LoggerFactory.set_directory(directory=task_log_dir, parent_log_dir=job_log_dir,
                                         append_to_parent_log=True, force=True)
 
-            dsl_parser = schedule_utils.get_job_dsl_parser(dsl=job_dsl,
-                                                           runtime_conf=job_runtime_conf,
-                                                           train_runtime_conf=job_conf["train_runtime_conf_path"],
-                                                           pipeline_dsl=job_conf["pipeline_dsl_path"])
+            dsl_parser = schedule_utils.get_job_dsl_parser(dsl=job_configuration.dsl,
+                                                           runtime_conf=job_configuration.runtime_conf,
+                                                           train_runtime_conf=job_configuration.train_runtime_conf,
+                                                           pipeline_dsl=None)
 
             user_name = dsl_parser.get_job_parameters().get(role, {}).get(party_id, {}).get("user", '')
-            schedule_logger(job_id).info(f"user name:{user_name}")
+            schedule_logger().info(f"user name:{user_name}")
             src_user = task_parameters_conf.get("src_user")
             task_parameters = RunParameters(**task_parameters_conf)
             job_parameters = task_parameters
             if job_parameters.assistant_role:
                 TaskExecutor.monkey_patch()
 
-            job_args_on_party = TaskExecutor.get_job_args_on_party(dsl_parser, job_runtime_conf, role, party_id)
+            job_args_on_party = TaskExecutor.get_job_args_on_party(dsl_parser, job_configuration.runtime_conf_on_party, role, party_id)
             component = dsl_parser.get_component_info(component_name=component_name)
             component_provider, component_parameters_on_party = dsl_utils.get_component_run_info(dsl_parser=dsl_parser,
                                                                                                  component_name=component_name,

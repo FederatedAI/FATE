@@ -153,12 +153,12 @@ def component_parameters():
 def component_output_model():
     request_data = request.json
     check_request_parameters(request_data)
-    job_dsl, job_runtime_conf, runtime_conf_on_party, train_runtime_conf = job_utils.get_job_configuration(job_id=request_data['job_id'],
-                                                                                                           role=request_data['role'],
-                                                                                                           party_id=request_data['party_id'])
+    job_configuration = job_utils.get_job_configuration(job_id=request_data['job_id'],
+                                                        role=request_data['role'],
+                                                        party_id=request_data['party_id'])
     try:
-        model_id = runtime_conf_on_party['job_parameters']['model_id']
-        model_version = runtime_conf_on_party['job_parameters']['model_version']
+        model_id = job_configuration.runtime_conf_on_party['job_parameters']['model_id']
+        model_version = job_configuration.runtime_conf_on_party['job_parameters']['model_version']
     except Exception as e:
         job_dsl, job_runtime_conf, train_runtime_conf = job_utils.get_model_configuration(job_id=request_data['job_id'],
                                                                                           role=request_data['role'],

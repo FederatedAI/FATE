@@ -25,7 +25,7 @@ from fate_arch.common.base_utils import json_loads, json_dumps
 from fate_flow.scheduler.dag_scheduler import DAGScheduler
 from fate_flow.scheduler.federated_scheduler import FederatedScheduler
 from fate_flow.settings import stat_logger, TEMP_DIRECTORY
-from fate_flow.utils import job_utils, detect_utils, schedule_utils
+from fate_flow.utils import job_utils, detect_utils, schedule_utils, log_utils
 from fate_flow.entity.run_status import FederatedSchedulingStatusCode, JobStatus
 from fate_flow.utils.api_utils import get_json_result, error_response
 from fate_flow.entity.types import RetCode
@@ -109,6 +109,21 @@ def update_job():
         JobSaver.update_job(job_info={'description': job_info.get('notes', ''), 'job_id': job_info['job_id'], 'role': job_info['role'],
                                       'party_id': job_info['party_id']})
         return get_json_result(retcode=0, retmsg='success')
+
+
+@manager.route('/parameter/update', methods=['POST'])
+def update_parameters():
+    job_info = request.json
+    detect_utils.check_config(job_info, required_arguments=["job_id"])
+    component_parameters = job_info.pop("component_parameters", None)
+    job_parameters = job_info.pop("job_parameters", None)
+    job_info["is_initiator"] = True
+    jobs = JobSaver.query_job(**job_info)
+    if not jobs:
+        return get_json_result(retcode=RetCode.DATA_ERROR, retmsg=log_utils.failed_log(f"query job by {job_info}"))
+    else:
+        retcode, retdata = DAGScheduler.update_parameters(jobs[0], job_parameters, component_parameters)
+        return get_json_result(retcode=retcode, data=retdata)
 
 
 @manager.route('/config', methods=['POST'])

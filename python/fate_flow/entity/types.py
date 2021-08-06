@@ -85,3 +85,35 @@ class InputSearchType(IntEnum):
     UNKNOWN = 0
     TABLE_INFO = 1
     JOB_COMPONENT_OUTPUT = 2
+
+
+class JobConfiguration:
+    def __init__(self, dsl, runtime_conf, runtime_conf_on_party, train_runtime_conf, **kwargs):
+        self._dsl = dsl
+        self._runtime_conf = runtime_conf
+        self._runtime_conf_on_party = runtime_conf_on_party
+        self._train_runtime_conf = train_runtime_conf
+
+    @property
+    def dsl(self):
+        return self._dsl
+
+    @property
+    def runtime_conf(self):
+        return self._runtime_conf
+
+    @property
+    def runtime_conf_on_party(self):
+        return self._runtime_conf_on_party
+
+    @property
+    def train_runtime_conf(self):
+        return self._train_runtime_conf
+
+    def to_dict(self):
+        d = {}
+        for k, v in self.__dict__.items():
+            if v is None:
+                continue
+            d[k.lstrip("_")] = v
+        return d

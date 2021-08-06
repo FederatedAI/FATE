@@ -101,7 +101,7 @@ def upload_history():
         tasks = tasks[-1::-1]
     else:
         tasks = tasks[-1:-limit - 1:-1]
-    jobs_run_conf = job_utils.get_job_configuration(None, None, None, tasks)
+    jobs_run_conf = job_utils.get_upload_job_configuration_summary(upload_tasks=tasks)
     data = get_upload_info(jobs_run_conf=jobs_run_conf)
     return get_json_result(retcode=0, retmsg='success', data=data)
 

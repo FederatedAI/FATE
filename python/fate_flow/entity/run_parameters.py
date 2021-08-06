@@ -16,7 +16,7 @@
 from fate_arch.common import WorkMode, Backend
 
 
-class RunParameters(object):
+class RunParameters:
     def __init__(self, **kwargs):
         self.job_type = "train"
         self.work_mode = WorkMode.STANDALONE

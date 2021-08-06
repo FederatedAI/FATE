@@ -20,4 +20,5 @@
 5. Using {} instead of Dict
 6. Using [] instead of List
 7. Function parameters need to be typed
+8. Function return need to be typed
 8. Any expression is as clear and unambiguous as possible

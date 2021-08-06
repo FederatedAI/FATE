@@ -64,9 +64,9 @@ class DAGScheduler(Cron):
             pipeline_model = tracker.get_output_model('pipeline')
             train_runtime_conf = json_loads(pipeline_model['Pipeline'].train_runtime_conf)
             if not model_utils.check_if_deployed(role=job_initiator['role'],
-                                             party_id=job_initiator['party_id'],
-                                             model_id=common_job_parameters.model_id,
-                                             model_version=common_job_parameters.model_version):
+                                                 party_id=job_initiator['party_id'],
+                                                 model_id=common_job_parameters.model_id,
+                                                 model_version=common_job_parameters.model_version):
                 raise Exception(f"Model {common_job_parameters.model_id} {common_job_parameters.model_version} has not been deployed yet.")
             job_dsl = json_loads(pipeline_model['Pipeline'].inference_dsl)
 
@@ -95,10 +95,7 @@ class DAGScheduler(Cron):
             raise Exception("initiator party id error {}".format(job.f_initiator_party_id))
 
         # create common parameters on initiator
-        JobController.get_job_engines(job_parameters=common_job_parameters)
-        JobController.fill_default_job_parameters(job_id=job_id, job_parameters=common_job_parameters)
-        JobController.adapt_job_parameters(role=job.f_initiator_role, job_parameters=common_job_parameters, create_initiator_baseline=True)
-
+        JobController.create_common_job_parameters(job_id=job.f_job_id, initiator_role=job.f_initiator_role, common_job_parameters=common_job_parameters)
         job.f_runtime_conf = conf_adapter.update_common_parameters(common_parameters=common_job_parameters)
         dsl_parser = schedule_utils.get_job_dsl_parser(dsl=job.f_dsl,
                                                        runtime_conf=job.f_runtime_conf,
@@ -139,6 +136,26 @@ class DAGScheduler(Cron):
         }
         submit_result.update(path_dict)
         return submit_result
+
+    @classmethod
+    def update_parameters(cls, job, job_parameters, component_parameters):
+        updated_job_parameters, updated_component_parameters, updated_components = JobController.gen_updated_parameters(job_id=job.f_job_id,
+                                                                                                                        initiator_role=job.f_initiator_role,
+                                                                                                                        initiator_party_id=job.f_initiator_party_id,
+                                                                                                                        input_job_parameters=job_parameters,
+                                                                                                                        input_component_parameters=component_parameters
+                                                                                                                        )
+        schedule_logger(job.f_job_id).info(f"components {updated_components} parameters has been updated")
+        updated_parameters = {
+            "job_parameters": updated_job_parameters,
+            "component_parameters": updated_component_parameters,
+            "components": updated_components
+        }
+        status_code, response = FederatedScheduler.update_parameter(job, updated_parameters=updated_parameters)
+        if status_code == FederatedSchedulingStatusCode.SUCCESS:
+            return RetCode.SUCCESS, updated_parameters
+        else:
+            return RetCode.OPERATING_ERROR, response
 
     def run_do(self):
         schedule_logger().info("start schedule waiting jobs")
@@ -342,7 +359,7 @@ class DAGScheduler(Cron):
         schedule_logger(job_id=job.f_job_id).info("finish scheduling job {}".format(job.f_job_id))
 
     @classmethod
-    def set_job_rerun(cls, job_id, initiator_role, initiator_party_id, auto, tasks=None, component_name=None):
+    def set_job_rerun(cls, job_id, initiator_role, initiator_party_id, auto, force=False, tasks=None, component_name=None):
         schedule_logger(job_id=job_id).info(f"try to rerun job {job_id} on initiator {initiator_role} {initiator_party_id}")
         jobs = JobSaver.query_job(job_id=job_id, role=initiator_role, party_id=initiator_party_id)
         if jobs:
@@ -351,15 +368,17 @@ class DAGScheduler(Cron):
             raise RuntimeError(f"can not found job {job_id} on initiator {initiator_role} {initiator_party_id}")
         if not tasks:
             if component_name != job_utils.job_pipeline_component_name():
+                #todo: found all downstream components by input component
                 tasks = JobSaver.query_task(job_id=job_id, role=initiator_role, party_id=initiator_party_id, component_name=component_name)
             else:
+                # rerun all tasks
                 tasks = JobSaver.query_task(job_id=job_id, role=initiator_role, party_id=initiator_party_id)
         job_can_rerun = False
         dsl_parser = schedule_utils.get_job_dsl_parser(dsl=job.f_dsl,
                                                        runtime_conf=job.f_runtime_conf_on_party,
                                                        train_runtime_conf=job.f_train_runtime_conf)
         for task in tasks:
-            job_can_rerun = job_can_rerun or TaskScheduler.prepare_rerun_task(job=job, task=task, dsl_parser=dsl_parser, auto=auto)
+            job_can_rerun = TaskScheduler.prepare_rerun_task(job=job, task=task, dsl_parser=dsl_parser, auto=auto, force=force) or job_can_rerun
         if job_can_rerun:
             schedule_logger(job_id=job_id).info(f"job {job_id} set rerun signal")
             status = cls.rerun_signal(job_id=job_id, set_or_reset=True)
@@ -367,9 +386,11 @@ class DAGScheduler(Cron):
                 schedule_logger(job_id=job_id).info(f"job {job_id} set rerun signal successfully")
             else:
                 schedule_logger(job_id=job_id).info(f"job {job_id} set rerun signal failed")
+            return True
         else:
             FederatedScheduler.sync_job_status(job=job)
             schedule_logger(job_id=job_id).info(f"job {job_id} no task to rerun")
+            return False
 
     @classmethod
     def update_job_on_initiator(cls, initiator_job: Job, update_fields: list):

@@ -23,8 +23,10 @@ from fate_arch.common import file_utils
 @manager.route('/job_config/get', methods=['POST'])
 def get_config():
     request_data = request.json
-    job_conf = job_utils.get_job_conf(request_data.get("job_id"), request_data.get("role"), request_data.get("party_id"))
-    return get_json_result(retcode=0, retmsg='success', data=job_conf)
+    job_configuration = job_utils.get_job_configuration(job_id=request_data.get("job_id"),
+                                                        role=request_data.get("role"),
+                                                        party_id=request_data.get("party_id"))
+    return get_json_result(retcode=0, retmsg='success', data=job_configuration.to_dict())
 
 
 @manager.route('/json_conf/load', methods=['POST'])
