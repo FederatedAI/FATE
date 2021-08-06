@@ -198,6 +198,7 @@ class ModelBase(object):
                 header = ["inst_id", "label", "predict_result", "predict_score", "predict_detail", "type"]
             else:
                 header = ["label", "predict_result", "predict_score", "predict_detail", "type"]
+            # header = ["label", "predict_result", "predict_score", "predict_detail", "type"]
             predict_data.schema = {"header": header,
                                    "sid_name": schema.get('sid_name')}
         return predict_data
@@ -217,11 +218,6 @@ class ModelBase(object):
         -------
         Table, predict result
         """
-        match_id_table = None
-        has_match_id = check_with_inst_id(data_instances)
-        if has_match_id:
-            match_id_table = data_instances.mapValues(lambda x: [x.inst_id])
-
         # regression
         if classes is None:
             predict_result = data_instances.join(predict_score, lambda d, pred: [d.label, pred,
@@ -248,8 +244,17 @@ class ModelBase(object):
         else:
             raise ValueError(f"Model's classes type is {type(classes)}, classes must be None or list of length no less than 2.")
 
+        has_match_id = check_with_inst_id(data_instances)
+
+        def _transfer(instance, pred_res):
+            instance.features = pred_res
+            return instance
+
         if has_match_id:
+            match_id_table = data_instances.mapValues(lambda x: [x.inst_id])
             predict_result = predict_result.join(match_id_table, lambda p, m: m + p)
+
+            # predict_result = data_instances.join(predict_result, _transfer)
 
         return predict_result
 
