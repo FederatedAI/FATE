@@ -300,7 +300,7 @@ class Evaluation(ModelBase):
                     continue
                 sample = eval_data.take(1)[0]
                 # label, predict_type, predict_score, predict_detail, type
-                if type(sample[1]) != list or len(sample[1]) != 5:
+                if type(sample[1].features) != list or len(sample[1].features) != 5:
                     raise ValueError('length of table header mismatch, expected length is 5, got:{},'
                                      'please check the input of the Evaluation Module, result of '
                                      'cross validation is not supported.'.format(sample))
