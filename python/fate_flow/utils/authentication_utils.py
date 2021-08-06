@@ -16,11 +16,13 @@
 import functools
 import json
 import os
+import time
 
 from flask import request
 
 from fate_arch.common import file_utils
-from fate_flow.settings import USE_AUTHENTICATION, PRIVILEGE_COMMAND_WHITELIST, stat_logger
+from fate_flow.settings import USE_AUTHENTICATION, PRIVILEGE_COMMAND_WHITELIST, stat_logger, \
+    AUTHENTICATION_DEFAULT_TIMEOUT, USE_DEFAULT_TIMEOUT
 
 
 class PrivilegeAuth(object):
@@ -145,6 +147,7 @@ class PrivilegeAuth(object):
                 if not src_user or not dest_user:
                     raise Exception("Required parameters: src_user and dest_user")
                 if not delete:
+                    cls.set_default_timeout(privilege_dataset)
                     if local_storage.get(src_party_id, {}):
                         if local_storage.get(src_party_id).get(src_role, {}):
                             if local_storage.get(src_party_id).get(src_role).get("privilege_dataset"):
@@ -152,8 +155,11 @@ class PrivilegeAuth(object):
                                     if local_storage.get(src_party_id).get(src_role).get("privilege_dataset").get(
                                         src_user, {}).get(dest_user, []):
                                         for table in privilege_dataset:
-                                            if table not in local_storage[src_party_id][src_role]["privilege_dataset"][src_user][dest_user]:
+                                            privilege_dataset_table_list = [_[0] for _ in local_storage[src_party_id][src_role]["privilege_dataset"][src_user][dest_user]]
+                                            if table[0] not in privilege_dataset_table_list:
                                                 local_storage[src_party_id][src_role]["privilege_dataset"][src_user][dest_user].append(table)
+                                            else:
+                                                local_storage[src_party_id][src_role]["privilege_dataset"][src_user][dest_user][privilege_dataset_table_list.index(table[0])] = table
                                     else:
                                         local_storage[src_party_id][src_role]["privilege_dataset"][src_user] = {dest_user: privilege_dataset}
                                 else:
@@ -167,10 +173,10 @@ class PrivilegeAuth(object):
                 else:
                     if isinstance(privilege_dataset, list):
                         for table in privilege_dataset:
-                            try:
-                                local_storage[src_party_id][src_role]["privilege_dataset"][src_user][dest_user].remove(table)
-                            except:
-                                stat_logger.exception('{} is not authorized ,it cannot be deleted'.format(table))
+                            user_privilege_dataset = local_storage[src_party_id][src_role]["privilege_dataset"][src_user][dest_user]
+                            for _table in user_privilege_dataset:
+                                if _table[0] == table:
+                                    user_privilege_dataset.remove(_table)
                     elif privilege_dataset in ["all", "ALL", "*"]:
                         local_storage[src_party_id][src_role]["privilege_dataset"][src_user][dest_user] = []
             stat_logger.info('add permission successfully')
@@ -183,6 +189,15 @@ class PrivilegeAuth(object):
             PrivilegeAuth.privilege_cache = new_json
             json.dump(new_json, fp, indent=4, separators=(',', ': '))
             fp.close()
+
+    @classmethod
+    def set_default_timeout(cls, privilege_dataset):
+        for index, table in enumerate(privilege_dataset):
+            if isinstance(table, list):
+                table[1] = int(time.time()) + int(table[1])
+            else:
+                privilege_dataset[index] = [table, int(time.time())+AUTHENTICATION_DEFAULT_TIMEOUT if USE_DEFAULT_TIMEOUT else None]
+
 
     @classmethod
     def read_cloud_config_center(cls, src_party_id, src_role):
@@ -319,11 +334,14 @@ def data_authentication_check(src_role, src_party_id, src_user, dest_user, datas
         raise Exception(f"no found src user {src_user} or dest user {dest_user}")
     if src_user == dest_user:
         return
+    license = []
     for dataset in dataset_list:
-        if dataset not in PrivilegeAuth.privilege_cache.get("*", {}).get("*", {}).get('privilege_dataset', {}).get(src_user, {}).get(dest_user, []):
-            if dataset not in PrivilegeAuth.get_permission_config("*", "*").get('privilege_dataset', {}).get(src_user, {}).get(dest_user, []):
-                raise Exception(f'src user {src_user} dest user {dest_user} dataset {dataset} authentication check failed')
-
+        for dataset_item in PrivilegeAuth.get_permission_config("*", "*").get('privilege_dataset', {}).get(src_user, {}).get(dest_user, []):
+            if dataset_item[0] == dataset and (not dataset_item[1] or int(time.time()) < dataset_item[1]):
+                license.append(True)
+                break
+    if len(license) != len(dataset_list):
+        raise Exception(f'src user {src_user} dest user {dest_user} dataset {dataset_list} authentication check failed')
 
 
 def check_constraint(job_runtime_conf, job_dsl):
