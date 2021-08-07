@@ -13,20 +13,17 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
 import math
-import operator
 import typing
 
 from fate_arch.common import EngineType, Backend
 from fate_arch.common import base_utils
-from fate_arch.common.conf_utils import get_base_config
 from fate_arch.common.log import schedule_logger
 from fate_arch.computing import ComputingEngine
 from fate_flow.db.db_models import DB, EngineRegistry, Job
 from fate_flow.entity.types import ResourceOperation, RunParameters
 from fate_flow.operation.job_saver import JobSaver
-from fate_flow.settings import stat_logger, STANDALONE_BACKEND_VIRTUAL_CORES_PER_NODE, SUPPORT_BACKENDS_ENTRANCE, \
+from fate_flow.settings import stat_logger, Settings, STANDALONE_BACKEND_VIRTUAL_CORES_PER_NODE, SUPPORT_BACKENDS_ENTRANCE, \
     MAX_CORES_PERCENT_PER_JOB, DEFAULT_TASK_CORES, IGNORE_RESOURCE_ROLES, SUPPORT_IGNORE_RESOURCE_ENGINES, TOTAL_CORES_OVERWEIGHT_PERCENT, TOTAL_MEMORY_OVERWEIGHT_PERCENT
 from fate_flow.utils import job_utils
 
@@ -37,7 +34,7 @@ class ResourceManager(object):
         for backend_name, backend_engines in SUPPORT_BACKENDS_ENTRANCE.items():
             for engine_type, engine_keys_list in backend_engines.items():
                 for engine_keys in engine_keys_list:
-                    engine_config = get_base_config(backend_name, {}).get(engine_keys[1], {})
+                    engine_config = getattr(Settings, backend_name, {}).get(engine_keys[1], {})
                     if engine_config:
                         cls.register_engine(engine_type=engine_type, engine_name=engine_keys[0], engine_entrance=engine_keys[1], engine_config=engine_config)
 
@@ -359,5 +356,3 @@ class ResourceManager(object):
                                                 EngineRegistry.f_engine_name == engine_name)
         if engines:
             return engines[0]
-        else:
-            return None

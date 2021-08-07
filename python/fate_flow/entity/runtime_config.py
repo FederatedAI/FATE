@@ -13,7 +13,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
 from fate_arch.common.versions import get_versions
 
 
@@ -35,17 +34,17 @@ class RuntimeConfig(object):
     @classmethod
     def init_config(cls, **kwargs):
         for k, v in kwargs.items():
-            if hasattr(RuntimeConfig, k):
-                setattr(RuntimeConfig, k, v)
+            if hasattr(cls, k):
+                setattr(cls, k, v)
 
     @classmethod
     def init_env(cls):
-        RuntimeConfig.ENV.update(get_versions())
+        cls.ENV.update(get_versions())
 
     @classmethod
     def get_env(cls, key):
-        return RuntimeConfig.ENV.get(key, None)
+        return cls.ENV.get(key, None)
 
     @classmethod
     def set_process_role(cls, process_role: PROCESS_ROLE):
-        RuntimeConfig.PROCESS_ROLE = process_role
+        cls.PROCESS_ROLE = process_role

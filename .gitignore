@@ -35,3 +35,6 @@ venv
 .vscode/*
 /eggroll/
 /fateboard/
+
+# user defined config
+/conf/local.*.yaml

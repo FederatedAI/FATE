@@ -13,14 +13,11 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
-from fate_flow.settings import DEFAULT_FEDERATED_COMMAND_TRYS
 from fate_flow.utils.api_utils import federated_api
 from fate_arch.common.log import schedule_logger
 from fate_flow.entity.types import RetCode, FederatedSchedulingStatusCode
 from fate_flow.db.db_models import Job, Task
 from fate_flow.utils import schedule_utils
-from fate_flow.utils.config_adapter import JobRuntimeConfigAdapter
 
 
 class FederatedScheduler(object):

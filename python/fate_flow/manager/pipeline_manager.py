@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 from fate_flow.settings import stat_logger
-from fate_flow.utils import job_utils, detect_utils, schedule_utils
+from fate_flow.utils import detect_utils, schedule_utils
 from fate_flow.operation.job_saver import JobSaver
 
 
