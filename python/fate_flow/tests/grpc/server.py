@@ -20,8 +20,8 @@ from grpc._cython import cygrpc
 
 from fate_arch.common.base_utils import json_dumps, json_loads
 from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.settings import FATEFLOW_SERVICE_NAME, HEADERS, DEFAULT_REMOTE_REQUEST_TIMEOUT
-from fate_flow.settings import IP, GRPC_PORT, stat_logger
+from fate_flow.settings import FATEFLOW_SERVICE_NAME, DEFAULT_REMOTE_REQUEST_TIMEOUT
+from fate_flow.settings import Settings, stat_logger
 from fate_flow.utils.proto_compatibility import basic_meta_pb2
 from fate_flow.utils.proto_compatibility import proxy_pb2
 from fate_flow.utils.proto_compatibility import proxy_pb2_grpc
@@ -31,7 +31,7 @@ from fate_flow.tests.grpc.xthread import ThreadPoolExecutor
 
 
 def wrap_grpc_packet(json_body, http_method, url, src_party_id, dst_party_id, job_id=None, overall_timeout=DEFAULT_REMOTE_REQUEST_TIMEOUT):
-    _src_end_point = basic_meta_pb2.Endpoint(ip=IP, port=GRPC_PORT)
+    _src_end_point = basic_meta_pb2.Endpoint(ip=Settings.IP, port=Settings.GRPC_PORT)
     _src = proxy_pb2.Topic(name=job_id, partyId="{}".format(src_party_id), role=FATEFLOW_SERVICE_NAME, callback=_src_end_point)
     _dst = proxy_pb2.Topic(name=job_id, partyId="{}".format(dst_party_id), role=FATEFLOW_SERVICE_NAME, callback=None)
     _task = proxy_pb2.Task(taskId=job_id)

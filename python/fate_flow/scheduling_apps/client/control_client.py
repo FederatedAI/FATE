@@ -14,7 +14,6 @@
 #  limitations under the License.
 #
 from fate_arch.common import log
-from fate_flow.settings import API_VERSION
 from fate_flow.utils import api_utils
 
 LOGGER = log.getLogger()

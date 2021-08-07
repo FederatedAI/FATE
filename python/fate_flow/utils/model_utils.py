@@ -19,14 +19,16 @@ import operator
 from collections import OrderedDict
 
 import peewee
+
 from fate_arch.common.log import sql_logger
-from fate_flow.settings import stat_logger
 from fate_arch.common.base_utils import json_loads, current_timestamp
 from fate_arch.common.file_utils import get_project_base_directory
-from fate_flow.pipelined_model.pipelined_model import PipelinedModel
 
+from fate_flow.settings import stat_logger
+from fate_flow.entity.runtime_config import RuntimeConfig
+from fate_flow.pipelined_model.pipelined_model import PipelinedModel
 from fate_flow.db.db_models import DB, MachineLearningModelInfo as MLModel
-from fate_flow.db.db_services import service_db
+
 
 gen_key_string_separator = '#'
 
@@ -182,12 +184,17 @@ def save_model_info(model_info):
     except peewee.IntegrityError as e:
         if e.args[0] != 1062:
             raise Exception("Create {} failed:\n{}".format(MLModel, e))
+
         sql_logger(job_id=model_info.get("job_id", "fate_flow")).warning(e)
+        return
     except Exception as e:
         raise Exception("Create {} failed:\n{}".format(MLModel, e))
-    else:
-        service_db().register_model(model.f_model_id, model.f_model_version)
-        return model
+
+    RuntimeConfig.service_db.register_model(gen_party_model_id(
+        role=model.f_role, party_id=model.f_party_id, model_id=model.f_model_id
+    ), model.f_model_version)
+
+    return model
 
 
 def compare_version(version: str, target_version: str):

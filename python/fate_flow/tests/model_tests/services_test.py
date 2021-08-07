@@ -10,48 +10,9 @@ from fate_flow.db import db_services
 from fate_flow.errors.error_services import *
 from fate_flow.db.db_models import DB, MachineLearningModelInfo as MLModel
 
-from fate_flow.tests.utils import override_base_config
-
 
 model_download_url = 'http://127.0.0.1:9380/v1/model/transfer/arbiter-10000_guest-9999_host-10000_model/202105060929263278441'
 escaped_model_download_url = '/FATE-SERVICES/flow/online/transfer/providers/http%3A%2F%2F127.0.0.1%3A9380%2Fv1%2Fmodel%2Ftransfer%2Farbiter-10000_guest-9999_host-10000_model%2F202105060929263278441'
-
-
-class TestInitializeZooKeeperDB(unittest.TestCase):
-
-    def test_initialize_services_db(self):
-        with patch('fate_flow.db.db_services.get_base_config', side_effect=override_base_config({
-            'use_registry': True,
-        })):
-            service_db = db_services.service_db()
-            self.assertEqual(type(service_db), db_services.ZooKeeperDB)
-            self.assertNotEqual(type(service_db), db_services.FallbackDB)
-            self.assertEqual(type(service_db.client), KazooClient)
-
-    def test_zookeeper_not_configured(self):
-        with patch('fate_flow.db.db_services.get_base_config', side_effect=override_base_config({
-            'use_registry': True,
-            'zookeeper': None,
-        })), self.assertRaisesRegex(ZooKeeperNotConfigured, ZooKeeperNotConfigured.message):
-            db_services.service_db()
-
-        with patch('fate_flow.db.db_services.get_base_config', side_effect=override_base_config({
-            'use_registry': True,
-            'zookeeper': {
-                'hosts': None
-            },
-        })), self.assertRaisesRegex(ZooKeeperNotConfigured, ZooKeeperNotConfigured.message):
-            db_services.service_db()
-
-    def test_missing_zookeeper_username_or_password(self):
-        with patch('fate_flow.db.db_services.get_base_config', side_effect=override_base_config({
-            'use_registry': True,
-            'zookeeper': {
-                'hosts': ['127.0.0.1:2281'],
-                'use_acl': True,
-            },
-        })), self.assertRaisesRegex(MissingZooKeeperUsernameOrPassword, MissingZooKeeperUsernameOrPassword.message):
-            db_services.service_db()
 
 
 class TestZooKeeperDB(unittest.TestCase):
@@ -60,22 +21,41 @@ class TestZooKeeperDB(unittest.TestCase):
         # required environment: ZOOKEEPER_HOSTS
         # optional environment: ZOOKEEPER_USERNAME, ZOOKEEPER_PASSWORD
         config = {
-            'use_registry': 'ZooKeeper',
-            'zookeeper': {
-                'hosts': os.environ['ZOOKEEPER_HOSTS'].split(','),
-                'use_acl': False,
-            }
+            'hosts': os.environ['ZOOKEEPER_HOSTS'].split(','),
+            'use_acl': False,
         }
         username = os.environ.get('ZOOKEEPER_USERNAME')
         password = os.environ.get('ZOOKEEPER_PASSWORD')
         if username and password:
-            config['zookeeper'].update({
+            config.update({
                 'use_acl': True,
                 'username': username,
                 'password': password,
             })
-        with patch('fate_flow.db.db_services.get_base_config', side_effect=override_base_config(config)):
+
+        with patch.object(db_services.Settings, 'USE_REGISTRY', 'ZooKeeper'), \
+                patch.object(db_services.Settings, 'ZOOKEEPER', config):
             self.service_db = db_services.service_db()
+
+    def test_services_db(self):
+        self.assertEqual(type(self.service_db), db_services.ZooKeeperDB)
+        self.assertNotEqual(type(self.service_db), db_services.FallbackDB)
+        self.assertEqual(type(self.service_db.client), KazooClient)
+
+    def test_zookeeper_not_configured(self):
+        with patch.object(db_services.Settings, 'USE_REGISTRY', True), \
+            patch.object(db_services.Settings, 'ZOOKEEPER', {'hosts': None}), \
+                self.assertRaisesRegex(ZooKeeperNotConfigured, ZooKeeperNotConfigured.message):
+            db_services.service_db()
+
+    def test_missing_zookeeper_username_or_password(self):
+        with patch.object(db_services.Settings, 'USE_REGISTRY', True), \
+            patch.object(db_services.Settings, 'ZOOKEEPER', {
+                'hosts': ['127.0.0.1:2281'],
+                'use_acl': True,
+            }), self.assertRaisesRegex(
+                MissingZooKeeperUsernameOrPassword, MissingZooKeeperUsernameOrPassword.message):
+            db_services.service_db()
 
     def test_get_znode_path(self):
         self.assertEqual(self.service_db._get_znode_path('fateflow', model_download_url), escaped_model_download_url)
@@ -128,7 +108,7 @@ class TestZooKeeperDB(unittest.TestCase):
                 f_initiator_role='host', f_work_mode=0
             )
             model.save(force_insert=True)
-        self.assertEqual(self.service_db.models.count(), 100)
+        self.assertEqual(db_services.models_group_by_party_model_id_and_model_version().count(), 100)
 
         with patch.object(self.service_db, '_insert') as insert:
             self.service_db.register_models()
@@ -143,10 +123,7 @@ class TestZooKeeperDB(unittest.TestCase):
 class TestFallbackDB(unittest.TestCase):
 
     def setUp(self):
-        config = {
-            'use_registry': False
-        }
-        with patch('fate_flow.db.db_services.get_base_config', side_effect=override_base_config(config)):
+        with patch.object(db_services.Settings, 'USE_REGISTRY', False):
             self.service_db = db_services.service_db()
 
     def test_get_urls(self):

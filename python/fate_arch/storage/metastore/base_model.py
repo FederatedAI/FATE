@@ -17,9 +17,11 @@ import json
 import operator
 
 from peewee import Model, BigIntegerField, TextField, CompositeKey
+
 from fate_arch.common.base_utils import current_timestamp, serialize_b64, deserialize_b64, timestamp_to_date
 from fate_arch.common.conf_utils import get_base_config
 from fate_arch.common import WorkMode
+
 
 WORK_MODE = get_base_config('work_mode', 0)
 if WORK_MODE == WorkMode.STANDALONE:

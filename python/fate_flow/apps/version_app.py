@@ -18,19 +18,29 @@ from flask import request
 from fate_arch.common import conf_utils
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.utils.api_utils import get_json_result
+from fate_flow.settings import Settings
 
 
 @manager.route('/get', methods=['POST'])
 def get_fate_version_info():
-    version = RuntimeConfig.get_env(request.json.get('module', 'FATE'))
-    return get_json_result(data={request.json.get('module'): version})
+    module = request.json.get('module', 'FATE')
+    version = RuntimeConfig.get_env(module)
+    return get_json_result(data={
+        module: version,
+        'API': Settings.API_VERSION,
+    })
 
 
 @manager.route('/set', methods=['POST'])
 def set_fate_server_info():
     # manager
     federated_id = request.json.get("federatedId")
-    manager_conf = conf_utils.get_base_config("fatemanager", {})
-    manager_conf["federatedId"] = federated_id
-    conf_utils.update_config("fatemanager", manager_conf)
+    Settings.FATEMANAGER["federatedId"] = federated_id
+    conf_utils.update_config("fatemanager", Settings.FATEMANAGER)
     return get_json_result(data={"federatedId": federated_id})
+
+
+@manager.route('/reload', methods=['POST'])
+def reload_settings():
+    Settings.load()
+    return get_json_result()
