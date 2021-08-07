@@ -97,6 +97,7 @@ for component in job_providers.keys():
     provider_version = provider_info["version"]
     module_object = dsl_parser_v2.get_module_object_name(module, "guest", provider_detail,
                                                          provider_name, provider_version)
+    print(f"{component} {module} {module_object}")
 
     module_object_name_mapping[component] = module_object
 

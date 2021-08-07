@@ -23,6 +23,7 @@ import hashlib
 from os.path import join, getsize
 from fate_arch.common import file_utils
 from fate_arch.protobuf.python import default_empty_fill_pb2
+from fate_flow.protobuf.python.pipeline_pb2 import Pipeline
 from fate_flow.model import serialize_buffer_object, parse_proto_object, Locker
 from fate_flow.settings import stat_logger, TEMP_DIRECTORY
 from fate_flow.entity.types import ComponentProviderName
@@ -52,6 +53,8 @@ class PipelinedModel(Locker):
         self.variables_index_path = os.path.join(self.model_path, "variables", "index")
         self.variables_data_path = os.path.join(self.model_path, "variables", "data")
         self.default_archive_format = "zip"
+        self.pipeline_model_name = "Pipeline"
+        self.pipeline_model_alias = "pipeline"
         self.component_type = component_type
         self.component_version = component_version
 
@@ -115,7 +118,7 @@ class PipelinedModel(Locker):
                                    component_module_name=component_model["component_module_name"],
                                    model_alias=component_model["model_alias"],
                                    model_proto_index=component_model["model_proto_index"])
-        stat_logger.info("Save {} {} successfully".format(component_model["component_name"],
+        stat_logger.info("save {} {} successfully".format(component_model["component_name"],
                                                           component_model["model_alias"]))
 
     def read_component_model(self, component_name, model_alias, parse=True):
@@ -129,6 +132,24 @@ class PipelinedModel(Locker):
                 if parse:
                     model_buffers[model_name] = parse_proto_object(buffer_name=buffer_name,
                                                                    serialized_string=buffer_object_serialized_string)
+                else:
+                    model_buffers[model_name] = [buffer_name, base64.b64encode(buffer_object_serialized_string).decode()]
+        return model_buffers
+
+
+    def read_pipelined_model(self, component_name, parse=True):
+        model_alias = self.pipeline_model_alias
+        component_model_storage_path = os.path.join(self.variables_data_path, component_name, model_alias)
+        model_proto_index = self.get_model_proto_index(component_name=component_name,
+                                                       model_alias=model_alias)
+        model_buffers = {}
+        for model_name, buffer_name in model_proto_index.items():
+            with open(os.path.join(component_model_storage_path, model_name), "rb") as fr:
+                buffer_object_serialized_string = fr.read()
+                if parse:
+                    model_buffers[model_name] = parse_proto_object(buffer_name=buffer_name,
+                                                                   serialized_string=buffer_object_serialized_string,
+                                                                   buffer_object=Pipeline)
                 else:
                     model_buffers[model_name] = [buffer_name, base64.b64encode(buffer_object_serialized_string).decode()]
         return model_buffers

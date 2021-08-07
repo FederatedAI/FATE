@@ -330,7 +330,7 @@ class JobController(object):
                           model_version=job_parameters.model_version,
                           job_parameters=job_parameters)
         if job_parameters.job_type != "predict":
-            tracker.init_pipelined_model()
+            tracker.init_pipeline_model()
         partner = {}
         show_role = {}
         for _role, _role_party in roles.items():
@@ -486,7 +486,13 @@ class JobController(object):
         dsl_parser = schedule_utils.get_job_dsl_parser(dsl=job_configuration.dsl,
                                                        runtime_conf=job_configuration.runtime_conf,
                                                        train_runtime_conf=job_configuration.train_runtime_conf)
-        predict_dsl = dsl_parser.get_predict_dsl(role=role)
+
+        components_parameters = {}
+        tasks = JobSaver.query_task(job_id=job_id, role=role, party_id=party_id, only_latest=True)
+        for task in tasks:
+            components_parameters[task.f_component_name] = task.f_component_parameters
+        predict_dsl = schedule_utils.get_predict_dsl(dsl_parser, dsl=job_configuration.dsl, components_parameters=components_parameters)
+
         pipeline = pipeline_pb2.Pipeline()
         pipeline.inference_dsl = json_dumps(predict_dsl, byte=True)
         pipeline.train_dsl = json_dumps(job_configuration.dsl, byte=True)
@@ -507,7 +513,7 @@ class JobController(object):
 
         tracker = Tracker(job_id=job_id, role=role, party_id=party_id,
                           model_id=model_id, model_version=model_version, job_parameters=RunParameters(**job_parameters))
-        tracker.save_pipelined_model(pipelined_buffer_object=pipeline)
+        tracker.save_pipeline_model(pipeline_buffer_object=pipeline)
         if role != 'local':
             tracker.save_machine_learning_model_info()
         schedule_logger(job_id).info(

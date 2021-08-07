@@ -180,7 +180,7 @@ class Tracker(object):
                 output_tables_meta[output_data_info.f_data_name] = data_table_meta
         return output_tables_meta
 
-    def init_pipelined_model(self):
+    def init_pipeline_model(self):
         self.pipelined_model.create_pipelined_model()
 
     def save_output_model(self, model_buffers: dict, model_alias: str, tracker_client=None):
@@ -204,9 +204,9 @@ class Tracker(object):
         model_buffers = self.pipelined_model.collect_models()
         return model_buffers
 
-    def save_pipelined_model(self, pipelined_buffer_object):
-        self.save_output_model({'Pipeline': pipelined_buffer_object}, 'pipeline')
-        self.pipelined_model.save_pipeline(pipelined_buffer_object=pipelined_buffer_object)
+    def save_pipeline_model(self, pipeline_buffer_object):
+        self.save_output_model({self.pipelined_model.pipeline_model_name: pipeline_buffer_object}, self.pipelined_model.pipeline_model_alias)
+        self.pipelined_model.save_pipeline(buffer_object=pipeline_buffer_object)
 
     def get_component_define(self):
         return self.pipelined_model.get_component_define(component_name=self.component_name)
@@ -502,7 +502,7 @@ class Tracker(object):
                                          MLModel.f_party_id == self.party_id)
             if not record:
                 job = Job.get_or_none(Job.f_job_id == self.job_id)
-                pipeline = self.pipelined_model.read_component_model('pipeline', 'pipeline')['Pipeline']
+                pipeline = self.pipelined_model.read_pipelined_model(component_name=job_utils.job_pipeline_component_name())[self.pipelined_model.pipeline_model_name]
                 if job:
                     job_data = job.to_json()
                     model_info = {
