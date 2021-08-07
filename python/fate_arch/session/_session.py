@@ -343,40 +343,7 @@ class Session(object):
     @classmethod
     @DB.connection_context()
     def query_sessions(cls, reverse=None, order_by=None, **kwargs):
-        filters = []
-        for f_n, f_v in kwargs.items():
-            attr_name = 'f_%s' % f_n
-            if attr_name in ['f_create_time', 'f_start_time', 'f_end_time', 'f_elapsed'] and isinstance(f_v, list):
-                if attr_name == 'f_elapsed':
-                    lt_value = f_v[0]
-                    gt_value = f_v[1]
-                else:
-                    # time type: %Y-%m-%d %H:%M:%S
-                    lt_value = base_utils.date_string_to_timestamp(f_v[0]) if isinstance(f_v[0], str) else f_v[0]
-                    gt_value = base_utils.date_string_to_timestamp(f_v[1]) if isinstance(f_v[1], str) else f_v[1]
-                if lt_value is not None and gt_value is not None:
-                    filters.append(getattr(SessionRecord, attr_name).between(lt_value, gt_value))
-                elif lt_value is not None:
-                    filters.append(operator.attrgetter(attr_name)(SessionRecord) >= lt_value)
-                elif gt_value is not None:
-                    filters.append(operator.attrgetter(attr_name)(SessionRecord) <= gt_value)
-            elif hasattr(SessionRecord, attr_name):
-                if isinstance(f_v, set):
-                    filters.append(operator.attrgetter(attr_name)(SessionRecord) << f_v)
-                else:
-                    filters.append(operator.attrgetter(attr_name)(SessionRecord) == f_v)
-        if filters:
-            session_records = SessionRecord.select().where(*filters)
-            if reverse is not None:
-                if not order_by or not hasattr(SessionRecord, f"f_{order_by}"):
-                    order_by = "create_time"
-                if reverse is True:
-                    session_records = session_records.order_by(getattr(SessionRecord, f"f_{order_by}").desc())
-                elif reverse is False:
-                    session_records = session_records.order_by(getattr(SessionRecord, f"f_{order_by}").asc())
-            return [session_record for session_record in session_records]
-        else:
-            return []
+        return SessionRecord.query(reverse=reverse, order_by=order_by, **kwargs)
 
     @DB.connection_context()
     def get_session_from_record(self):

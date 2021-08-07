@@ -14,7 +14,6 @@
 #  limitations under the License.
 #
 import importlib
-import json
 
 from fate_flow.entity.component_provider import ComponentProvider
 from fate_flow.runtime_config import RuntimeConfig

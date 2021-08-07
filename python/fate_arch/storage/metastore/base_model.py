@@ -17,7 +17,7 @@ import json
 import operator
 import typing
 
-from peewee import Field, IntegerField, FloatField, BigIntegerField, TextField, Model, CompositeKey
+from peewee import Field, IntegerField, FloatField, BigIntegerField, TextField, Model, CompositeKey, Metadata
 from fate_arch.common.base_utils import current_timestamp, serialize_b64, deserialize_b64, timestamp_to_date, date_string_to_timestamp
 from fate_arch.common.conf_utils import get_base_config
 from fate_arch.common import WorkMode
@@ -97,6 +97,10 @@ class BaseModel(Model):
             for k in only_primary_with:
                 human_model_dict[k] = model_dict["f_%s" % k]
         return human_model_dict
+
+    @property
+    def meta(self) -> Metadata:
+        return self._meta
 
     @classmethod
     def get_primary_keys_name(cls):

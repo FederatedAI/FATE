@@ -38,7 +38,7 @@ def local_cache_required(method):
 
 
 class PipelinedModel(Locker):
-    def __init__(self, model_id, model_version,  component_type: ComponentProviderName = None, component_version = None):
+    def __init__(self, model_id, model_version):
         """
         Support operations on FATE PipelinedModels
         :param model_id: the model id stored at the local party.
@@ -55,9 +55,6 @@ class PipelinedModel(Locker):
         self.default_archive_format = "zip"
         self.pipeline_model_name = "Pipeline"
         self.pipeline_model_alias = "pipeline"
-        self.component_type = component_type
-        self.component_version = component_version
-
         super().__init__(self.model_path)
 
     def create_pipelined_model(self):

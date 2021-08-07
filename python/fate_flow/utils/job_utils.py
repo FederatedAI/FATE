@@ -251,13 +251,6 @@ def job_pipeline_component_module_name():
     return "Pipeline"
 
 
-def get_default_component_use(component_provider):
-    component_version = RuntimeConfig.COMPONENT_REGISTRY["provider"].get(component_provider, {}).get("default", {}).get("version", None)
-    if not component_provider or not component_version:
-        raise Exception("can not found default component use")
-    return component_provider, component_version
-
-
 @DB.connection_context()
 def list_job(limit):
     if limit > 0:

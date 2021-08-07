@@ -124,7 +124,6 @@ class ResourceManager(object):
             return_resource_job_list.append(job_info)
         return return_resource_job_list
 
-
     @classmethod
     @DB.connection_context()
     def resource_for_job(cls, job_id, role, party_id, operation_type):

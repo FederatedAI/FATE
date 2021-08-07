@@ -158,10 +158,6 @@ class JobController(object):
         if create_initiator_baseline and not job_parameters.computing_partitions:
             job_parameters.computing_partitions = job_parameters.adaptation_parameters[
                 "task_cores_per_node"] * job_parameters.adaptation_parameters["task_nodes"]
-        if not job_parameters.component_provider or not job_parameters.component_version:
-            #todo: component type may be not from job parameters
-            job_parameters.component_provider, job_parameters.component_version = job_utils.get_default_component_use(
-                component_provider=job_parameters.component_provider)
 
     @classmethod
     def get_job_engines_address(cls, job_parameters: RunParameters):

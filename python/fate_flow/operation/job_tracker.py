@@ -66,9 +66,7 @@ class Tracker(object):
         self.pipelined_model = None
         if self.party_model_id and self.model_version:
             self.pipelined_model = pipelined_model.PipelinedModel(model_id=self.party_model_id,
-                                                                  model_version=self.model_version,
-                                                                  component_type=self.job_parameters.component_provider if self.job_parameters else None,
-                                                                  component_version=self.job_parameters.component_version if self.job_parameters else None)
+                                                                  model_version=self.model_version)
 
     def save_metric_data(self, metric_namespace: str, metric_name: str, metrics: typing.List[Metric], job_level=False):
         schedule_logger(self.job_id).info(
