@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import os
 import argparse
 import importlib
-import os
 import traceback
 
 from fate_arch.common import file_utils, EngineType, profile
@@ -166,6 +166,7 @@ class TaskExecutor(object):
                 run_object.warm_start(component_parameters_on_party, task_run_args)
             sess.wait_remote_all_done()
             profile.profile_ends()
+
             output_data = run_object.save_data()
             if not isinstance(output_data, list):
                 output_data = [output_data]
@@ -327,7 +328,7 @@ class TaskExecutor(object):
                                 for _ in upstream_output_table_infos_json:
                                     upstream_output_table_infos.append(fill_db_model_object(
                                         Tracker.get_dynamic_db_model(TrackingOutputDataInfo, job_id)(), _))
-                                output_tables_meta = tracker.get_output_data_table(output_data_infos=upstream_output_table_infos)
+                                output_tables_meta = tracker.get_output_data_table(upstream_output_table_infos)
                                 if output_tables_meta:
                                     storage_table_meta = output_tables_meta.get(search_data_name, None)
                         args_from_component = this_type_args[search_component_name] = this_type_args.get(
@@ -404,5 +405,5 @@ class TaskExecutor(object):
 
 
 if __name__ == '__main__':
-    task_info = TaskExecutor.run_task()
-    TaskExecutor.report_task_update_to_driver(task_info=task_info)
+    _task_info = TaskExecutor.run_task()
+    TaskExecutor.report_task_update_to_driver(_task_info)

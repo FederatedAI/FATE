@@ -17,7 +17,7 @@ import os
 import click
 from ruamel import yaml
 from flow_client.flow_cli.utils.cli_utils import prettify
-from flow_client.flow_cli.commands import (component, data, job, model, queue, task, table, tag)
+from flow_client.flow_cli.commands import (component, data, job, model, queue, task, table, tag, checkpoint)
 
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
@@ -139,3 +139,8 @@ flow_cli.add_command(queue.queue)
 flow_cli.add_command(task.task)
 flow_cli.add_command(table.table)
 flow_cli.add_command(tag.tag)
+flow_cli.add_command(checkpoint.checkpoint)
+
+
+if __name__ == '__main__':
+    flow_cli()

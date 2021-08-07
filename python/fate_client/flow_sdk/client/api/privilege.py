@@ -17,7 +17,7 @@ from flow_sdk.client.api.base import BaseFlowAPI
 from flow_sdk.utils import preprocess, check_config
 
 
-class Priviledge(BaseFlowAPI):
+class Privilege(BaseFlowAPI):
     def query(self, src_party_id, src_role):
         kwargs = locals()
         config_data, dsl_data = preprocess(**kwargs)

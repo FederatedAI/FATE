@@ -1,6 +1,6 @@
 openapi: 3.0.0
 info:
-  version: '1.5.2'
+  version: '1.7.1'
   title: Fate Flow
 paths:
   '/v1/info/fateboard':
