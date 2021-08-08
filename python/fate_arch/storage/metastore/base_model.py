@@ -116,7 +116,8 @@ class BaseModel(Model):
         filters = []
         for f_n, f_v in kwargs.items():
             attr_name = 'f_%s' % f_n
-            if isinstance(f_v, list):
+            if type(f_v) in {list, set}:
+                f_v = list(f_v)
                 if is_continuous_field(type(getattr(cls, attr_name))):
                     if len(f_v) == 2:
                         for i, v in enumerate(f_v):
