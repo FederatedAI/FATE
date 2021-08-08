@@ -16,9 +16,9 @@
 import sys
 import requests
 import json
-from fate_flow.settings import API_VERSION, Settings
+from fate_flow.settings import API_VERSION, ServiceSettings
 
-fate_flow_server_host = 'http://127.0.0.1:{}/{}'.format(Settings.HTTP_PORT, API_VERSION)
+fate_flow_server_host = 'http://127.0.0.1:{}/{}'.format(ServiceSettings.HTTP_PORT, API_VERSION)
 job_id = sys.argv[1]
 role = sys.argv[2]
 party_id = int(sys.argv[3])

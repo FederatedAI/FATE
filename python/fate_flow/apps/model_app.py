@@ -32,7 +32,7 @@ from flask import request, send_file, Response
 from fate_flow.pipelined_model.migrate_model import compare_roles
 from fate_flow.pipelined_model.pipelined_model import PipelinedModel
 from fate_flow.scheduler.dag_scheduler import DAGScheduler
-from fate_flow.settings import stat_logger, Settings, TEMP_DIRECTORY
+from fate_flow.settings import stat_logger, ServiceSettings, TEMP_DIRECTORY
 from fate_flow.pipelined_model import migrate_model, pipelined_model, publish_model, deploy_model
 from fate_flow.utils.api_utils import get_json_result, federated_api, error_response
 from fate_flow.utils import job_utils, model_utils, schedule_utils
@@ -540,7 +540,7 @@ def gen_model_operation_job_config(config_data: dict, model_operation: ModelOper
         component_parameters = dict()
         component_parameters["model_id"] = [config_data["model_id"]]
         component_parameters["model_version"] = [config_data["model_version"]]
-        component_parameters["store_address"] = [Settings.MODEL_STORE_ADDRESS]
+        component_parameters["store_address"] = [ServiceSettings.MODEL_STORE_ADDRESS]
         if model_operation == ModelOperation.STORE:
             component_parameters["force_update"] = [config_data.get("force_update", False)]
         job_runtime_conf["role_parameters"][initiator_role] = {component_name: component_parameters}

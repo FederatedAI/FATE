@@ -20,9 +20,8 @@ from grpc._cython import cygrpc
 
 from fate_arch.common.base_utils import json_dumps, json_loads
 from fate_flow.runtime_config import RuntimeConfig
-from fate_flow import job_default_settings
-from fate_flow.settings import FATEFLOW_SERVICE_NAME
-from fate_flow.settings import Settings, stat_logger
+from fate_flow.settings import FATE_FLOW_SERVICE_NAME
+from fate_flow.settings import ServiceSettings, stat_logger, JobDefaultSettings
 from fate_flow.utils.proto_compatibility import basic_meta_pb2
 from fate_flow.utils.proto_compatibility import proxy_pb2
 from fate_flow.utils.proto_compatibility import proxy_pb2_grpc
@@ -31,12 +30,13 @@ import sys
 from fate_flow.tests.grpc.xthread import ThreadPoolExecutor
 
 
-def wrap_grpc_packet(json_body, http_method, url, src_party_id, dst_party_id, job_id=None, overall_timeout=job_default_settings.DEFAULT_REMOTE_REQUEST_TIMEOUT):
-    _src_end_point = basic_meta_pb2.Endpoint(ip=Settings.IP, port=Settings.GRPC_PORT)
-    _src = proxy_pb2.Topic(name=job_id, partyId="{}".format(src_party_id), role=FATEFLOW_SERVICE_NAME, callback=_src_end_point)
-    _dst = proxy_pb2.Topic(name=job_id, partyId="{}".format(dst_party_id), role=FATEFLOW_SERVICE_NAME, callback=None)
+def wrap_grpc_packet(json_body, http_method, url, src_party_id, dst_party_id, job_id=None, overall_timeout=None):
+    overall_timeout = JobDefaultSettings.default_remote_request_timeout if overall_timeout is None else overall_timeout
+    _src_end_point = basic_meta_pb2.Endpoint(ip=ServiceSettings.HOST, port=ServiceSettings.GRPC_PORT)
+    _src = proxy_pb2.Topic(name=job_id, partyId="{}".format(src_party_id), role=FATE_FLOW_SERVICE_NAME, callback=_src_end_point)
+    _dst = proxy_pb2.Topic(name=job_id, partyId="{}".format(dst_party_id), role=FATE_FLOW_SERVICE_NAME, callback=None)
     _task = proxy_pb2.Task(taskId=job_id)
-    _command = proxy_pb2.Command(name=FATEFLOW_SERVICE_NAME)
+    _command = proxy_pb2.Command(name=FATE_FLOW_SERVICE_NAME)
     _conf = proxy_pb2.Conf(overallTimeout=overall_timeout)
     _meta = proxy_pb2.Metadata(src=_src, dst=_dst, task=_task, command=_command, operator=http_method, conf=_conf)
     _data = proxy_pb2.Data(key=url, value=bytes(json_dumps(json_body), 'utf-8'))

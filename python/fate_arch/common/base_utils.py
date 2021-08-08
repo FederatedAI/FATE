@@ -43,6 +43,8 @@ class CustomJSONEncoder(json.JSONEncoder):
             return str(obj)
         elif issubclass(type(obj), Enum) or issubclass(type(obj), IntEnum):
             return obj.value
+        elif isinstance(obj, set):
+            return list(obj)
         else:
             return json.JSONEncoder.default(self, obj)
 

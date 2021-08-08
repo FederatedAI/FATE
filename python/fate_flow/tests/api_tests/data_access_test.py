@@ -6,23 +6,23 @@ import requests
 
 from fate_flow.entity.run_status import JobStatus
 from fate_arch.common.file_utils import get_project_base_directory
-from fate_flow.settings import Settings, API_VERSION
+from fate_flow.settings import ServiceSettings, API_VERSION
 
 
 class TestDataAccess(unittest.TestCase):
     def setUp(self):
         self.data_dir = os.path.join(get_project_base_directory(), "examples", "data")
         self.upload_guest_config = {"file": os.path.join(self.data_dir, "breast_hetero_guest.csv"), "head": 1,
-                                    "partition": 10, "work_mode": Settings.WORK_MODE, "namespace": "experiment",
-                                    "table_name": "breast_hetero_guest", "use_local_data": 0, 'drop': 1, 'backend': 0, "id_delimiter": ',',}
+                                    "partition": 10, "work_mode": ServiceSettings.WORK_MODE, "namespace": "experiment",
+                                    "table_name": "breast_hetero_guest", "use_local_data": 0, 'drop': 1, 'backend': 0, "id_delimiter": ',', }
         self.upload_host_config = {"file": os.path.join(self.data_dir, "breast_hetero_host.csv"), "head": 1,
-                                   "partition": 10, "work_mode": Settings.WORK_MODE, "namespace": "experiment",
-                                   "table_name": "breast_hetero_host", "use_local_data": 0, 'drop': 1, 'backend': 0, "id_delimiter": ',',}
+                                   "partition": 10, "work_mode": ServiceSettings.WORK_MODE, "namespace": "experiment",
+                                   "table_name": "breast_hetero_host", "use_local_data": 0, 'drop': 1, 'backend': 0, "id_delimiter": ',', }
         self.download_config = {"output_path": os.path.join(get_project_base_directory(),
                                                             "fate_flow/fate_flow_unittest_breast_b.csv"),
-                                "work_mode": Settings.WORK_MODE, "namespace": "experiment",
+                                "work_mode": ServiceSettings.WORK_MODE, "namespace": "experiment",
                                 "table_name": "breast_hetero_guest"}
-        self.server_url = "http://{}:{}/{}".format(Settings.IP, Settings.HTTP_PORT, API_VERSION)
+        self.server_url = "http://{}:{}/{}".format(ServiceSettings.HOST, ServiceSettings.HTTP_PORT, API_VERSION)
 
     def test_upload_guest(self):
         response = requests.post("/".join([self.server_url, 'data', 'upload']), json=self.upload_guest_config)

@@ -25,9 +25,9 @@ from fate_flow.db.db_models import DB, EngineRegistry, Job
 from fate_flow.entity.types import ResourceOperation
 from fate_flow.entity.run_parameters import RunParameters
 from fate_flow.operation.job_saver import JobSaver
-from fate_flow.settings import stat_logger, Settings, IGNORE_RESOURCE_ROLES, SUPPORT_IGNORE_RESOURCE_ENGINES,IGNORE_RESOURCE_COMPUTING_ENGINE
+from fate_flow.settings import stat_logger, ServiceSettings, IGNORE_RESOURCE_ROLES, SUPPORT_IGNORE_RESOURCE_ENGINES,IGNORE_RESOURCE_COMPUTING_ENGINE
 from fate_flow.utils import job_utils
-from fate_flow import job_default_settings
+from fate_flow.settings import JobDefaultSettings
 
 
 class ResourceManager(object):
@@ -42,8 +42,8 @@ class ResourceManager(object):
     @DB.connection_context()
     def register_engine(cls, engine_type, engine_name, engine_entrance, engine_config):
         nodes = engine_config.get("nodes", 1)
-        cores = engine_config.get("cores_per_node", 0) * nodes * job_default_settings.TOTAL_CORES_OVERWEIGHT_PERCENT
-        memory = engine_config.get("memory_per_node", 0) * nodes * job_default_settings.TOTAL_MEMORY_OVERWEIGHT_PERCENT
+        cores = engine_config.get("cores_per_node", 0) * nodes * JobDefaultSettings.total_cores_overweight_percent
+        memory = engine_config.get("memory_per_node", 0) * nodes * JobDefaultSettings.total_memory_overweight_percent
         filters = [EngineRegistry.f_engine_type == engine_type, EngineRegistry.f_engine_name == engine_name]
         resources = EngineRegistry.select().where(*filters)
         if resources:
@@ -85,7 +85,7 @@ class ResourceManager(object):
     @classmethod
     def check_resource_apply(cls, job_parameters: RunParameters, role, party_id, engines_info):
         computing_engine, cores, memory = cls.calculate_job_resource(job_parameters=job_parameters, role=role, party_id=party_id)
-        max_cores_per_job = math.floor(engines_info[EngineType.COMPUTING].f_cores * job_default_settings.MAX_CORES_PERCENT_PER_JOB)
+        max_cores_per_job = math.floor(engines_info[EngineType.COMPUTING].f_cores * JobDefaultSettings.max_cores_percent_per_job)
         if cores > max_cores_per_job:
             return False, cores, max_cores_per_job
         else:
@@ -196,7 +196,7 @@ class ResourceManager(object):
                 "task_cores_per_node": 0,
                 "task_memory_per_node": 0,
                 # request_task_cores base on initiator and distribute to all parties, using job conf parameters or initiator fateflow server default settings
-                "request_task_cores": int(job_parameters.task_cores) if job_parameters.task_cores else job_default_settings.TASK_CORES,
+                "request_task_cores": int(job_parameters.task_cores) if job_parameters.task_cores else JobDefaultSettings.task_cores,
                 "if_initiator_baseline": True
             }
         else:

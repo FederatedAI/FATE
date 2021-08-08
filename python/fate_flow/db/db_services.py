@@ -6,7 +6,7 @@ from kazoo.client import KazooClient
 from kazoo.security import make_digest_acl
 from kazoo.exceptions import ZookeeperError, NodeExistsError, NoNodeError
 
-from fate_flow.settings import Settings, FATE_FLOW_MODEL_TRANSFER_ENDPOINT, \
+from fate_flow.settings import ServiceSettings, FATE_FLOW_MODEL_TRANSFER_ENDPOINT, \
     FATE_SERVICES_REGISTRY, stat_logger
 from fate_flow.utils.model_utils import models_group_by_party_model_id_and_model_version
 from fate_flow.errors.error_services import *
@@ -36,7 +36,7 @@ def get_model_download_endpoint():
     :rtype: str
     """
 
-    return f'http://{Settings.IP}:{Settings.HTTP_PORT}{FATE_FLOW_MODEL_TRANSFER_ENDPOINT}'
+    return f'http://{ServiceSettings.HOST}:{ServiceSettings.HTTP_PORT}{FATE_FLOW_MODEL_TRANSFER_ENDPOINT}'
 
 
 def get_model_download_url(party_model_id, model_version):
@@ -168,16 +168,16 @@ class ZooKeeperDB(ServicesDB):
     supported_services = znodes.keys()
 
     def __init__(self):
-        hosts = Settings.ZOOKEEPER.get('hosts')
+        hosts = ServiceSettings.ZOOKEEPER.get('hosts')
         if not isinstance(hosts, list) or not hosts:
             raise ZooKeeperNotConfigured()
 
         client_kwargs = {'hosts': hosts}
 
-        use_acl = Settings.ZOOKEEPER.get('use_acl', False)
+        use_acl = ServiceSettings.ZOOKEEPER.get('use_acl', False)
         if use_acl:
-            username = Settings.ZOOKEEPER.get('user')
-            password = Settings.ZOOKEEPER.get('password')
+            username = ServiceSettings.ZOOKEEPER.get('user')
+            password = ServiceSettings.ZOOKEEPER.get('password')
             if not username or not password:
                 raise MissingZooKeeperUsernameOrPassword()
 
@@ -253,7 +253,7 @@ class FallbackDB(ServicesDB):
         if service_name == 'fateflow':
             return [get_model_download_endpoint()]
 
-        urls = getattr(Settings, service_name.upper(), [])
+        urls = getattr(ServiceSettings, service_name.upper(), [])
         if isinstance(urls, dict):
             urls = urls.get('hosts', [])
         if not isinstance(urls, list):
@@ -268,7 +268,7 @@ def service_db():
     :return ZooKeeperDB if `use_registry` is `True`, else FallbackDB.
             FallbackDB is a compatible class and it actually does nothing.
     """
-    use_registry = Settings.USE_REGISTRY
+    use_registry = ServiceSettings.USE_REGISTRY
     if not use_registry:
         return FallbackDB()
     if isinstance(use_registry, str):

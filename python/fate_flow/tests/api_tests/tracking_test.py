@@ -7,7 +7,7 @@ import requests
 
 from fate_flow.entity.run_status import EndStatus, JobStatus
 from fate_arch.common.file_utils import load_json_conf, get_python_base_directory
-from fate_flow.settings import Settings, API_VERSION
+from fate_flow.settings import ServiceSettings, API_VERSION
 
 
 class TestTracking(unittest.TestCase):
@@ -17,17 +17,17 @@ class TestTracking(unittest.TestCase):
         self.dsl_path = 'fate_flow/examples/test_hetero_lr_job_dsl.json'
         self.config_path = 'fate_flow/examples/test_hetero_lr_job_conf.json'
         self.test_component_name = 'hetero_feature_selection_0'
-        self.server_url = "http://{}:{}/{}".format(Settings.IP, Settings.HTTP_PORT, API_VERSION)
-        self.party_info = load_json_conf(os.path.abspath(os.path.join('./jobs', 'party_info.json'))) if Settings.WORK_MODE else None
-        self.guest_party_id = self.party_info['guest'] if Settings.WORK_MODE else 9999
-        self.host_party_id = self.party_info['host'] if Settings.WORK_MODE else 10000
+        self.server_url = "http://{}:{}/{}".format(ServiceSettings.HOST, ServiceSettings.HTTP_PORT, API_VERSION)
+        self.party_info = load_json_conf(os.path.abspath(os.path.join('./jobs', 'party_info.json'))) if ServiceSettings.WORK_MODE else None
+        self.guest_party_id = self.party_info['guest'] if ServiceSettings.WORK_MODE else 9999
+        self.host_party_id = self.party_info['host'] if ServiceSettings.WORK_MODE else 10000
 
     def test_tracking(self):
         with open(os.path.join(get_python_base_directory(), self.dsl_path), 'r') as f:
             dsl_data = json.load(f)
         with open(os.path.join(get_python_base_directory(), self.config_path), 'r') as f:
             config_data = json.load(f)
-            config_data['job_parameters']['work_mode'] = Settings.WORK_MODE
+            config_data['job_parameters']['work_mode'] = ServiceSettings.WORK_MODE
             config_data[ "initiator"]["party_id"] = self.guest_party_id
             config_data["role"] = {
                 "guest": [self.guest_party_id],

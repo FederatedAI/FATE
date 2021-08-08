@@ -33,7 +33,7 @@ from fate_flow.scheduler.dag_scheduler import DAGScheduler
 from fate_flow.runtime_config import RuntimeConfig
 from fate_flow.entity.types import ProcessRole
 from fate_flow.manager.resource_manager import ResourceManager
-from fate_flow.settings import Settings, _ONE_DAY_IN_SECONDS, stat_logger, GRPC_SERVER_MAX_WORKERS, detect_logger, access_logger
+from fate_flow.settings import ServiceSettings, _ONE_DAY_IN_SECONDS, stat_logger, GRPC_SERVER_MAX_WORKERS, detect_logger, access_logger
 from fate_flow.utils.authentication_utils import PrivilegeAuth
 from fate_flow.utils.grpc_utils import UnaryService
 from fate_flow.db.db_services import service_db
@@ -56,7 +56,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     debug_mode = args.debug
     RuntimeConfig.init_env()
-    RuntimeConfig.init_config(WORK_MODE=Settings.WORK_MODE, JOB_SERVER_HOST=Settings.IP, HTTP_PORT=Settings.HTTP_PORT)
+    RuntimeConfig.init_config(WORK_MODE=ServiceSettings.WORK_MODE, JOB_SERVER_HOST=ServiceSettings.HOST, HTTP_PORT=ServiceSettings.HTTP_PORT)
     RuntimeConfig.set_process_role(ProcessRole.DRIVER)
     RuntimeConfig.load_component_registry()
     RuntimeConfig.service_db = service_db()
@@ -72,7 +72,7 @@ if __name__ == '__main__':
                                   (cygrpc.ChannelArgKey.max_receive_message_length, -1)])
 
     proxy_pb2_grpc.add_DataTransferServiceServicer_to_server(UnaryService(), server)
-    server.add_insecure_port("{}:{}".format(Settings.IP, Settings.GRPC_PORT))
+    server.add_insecure_port("{}:{}".format(ServiceSettings.HOST, ServiceSettings.GRPC_PORT))
     server.start()
     stat_logger.info("FATE Flow grpc server start successfully")
     # start http server
@@ -81,7 +81,7 @@ if __name__ == '__main__':
         werkzeug_logger = logging.getLogger("werkzeug")
         for h in access_logger.handlers:
             werkzeug_logger.addHandler(h)
-        run_simple(hostname=Settings.IP, port=Settings.HTTP_PORT, application=app, threaded=True, use_reloader=debug_mode, use_debugger=debug_mode)
+        run_simple(hostname=ServiceSettings.HOST, port=ServiceSettings.HTTP_PORT, application=app, threaded=True, use_reloader=debug_mode, use_debugger=debug_mode)
     except OSError as e:
         traceback.print_exc()
         os.kill(os.getpid(), signal.SIGKILL)

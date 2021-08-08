@@ -28,11 +28,10 @@ from fate_flow.db.db_models import DB, Job, Task
 from fate_flow.entity.types import KillProcessRetCode, JobConfiguration
 from fate_flow.entity.run_status import JobStatus, TaskStatus
 from fate_flow.entity.run_parameters import RunParameters
-from fate_flow.settings import SUBPROCESS_STD_LOG_NAME
-from fate_flow.settings import stat_logger, Settings, FATE_BOARD_DASHBOARD_ENDPOINT
+from fate_flow.settings import SUBPROCESS_STD_LOG_NAME, JobDefaultSettings
+from fate_flow.settings import stat_logger, ServiceSettings, FATE_BOARD_DASHBOARD_ENDPOINT
 from fate_flow.utils import detect_utils, model_utils
 from fate_flow.utils import session_utils
-from fate_flow import job_default_settings
 
 
 class JobIdGenerator(object):
@@ -123,7 +122,7 @@ def check_job_runtime_conf(runtime_conf: typing.Dict):
 def runtime_conf_basic(if_local=False):
     job_runtime_conf = {
         "initiator": {},
-        "job_parameters": {"work_mode": Settings.WORK_MODE},
+        "job_parameters": {"work_mode": ServiceSettings.WORK_MODE},
         "role": {},
         "role_parameters": {}
     }
@@ -292,7 +291,7 @@ def check_job_process(pid):
 
 def check_job_is_timeout(job: Job):
     job_parameters = job.f_runtime_conf_on_party["job_parameters"]
-    timeout = job_parameters.get("timeout", job_default_settings.JOB_DEFAULT_TIMEOUT)
+    timeout = job_parameters.get("timeout", JobDefaultSettings.job_default_timeout)
     now_time = current_timestamp()
     running_time = (now_time - job.f_create_time)/1000
     if running_time > timeout:
@@ -363,10 +362,10 @@ def wait_child_process(signum, frame):
                 stat_logger.info('no child process was immediately available')
                 break
             exitcode = status >> 8
-            stat_logger.info('child process %s exit with exitcode %s', child_pid, exitcode)
+            stat_logger.info(f'child process {child_pid} exit with exitcode {exitcode}')
     except OSError as e:
         if e.errno == errno.ECHILD:
-            stat_logger.warning('current process has no existing unwaited-for child processes.')
+            stat_logger.info('current process has no existing unwaited-for child processes.')
         else:
             raise
 
@@ -478,13 +477,13 @@ def get_timeout(job_id, timeout, runtime_conf, dsl):
 
 def job_default_timeout(runtime_conf, dsl):
     # future versions will improve
-    timeout = job_default_settings.JOB_DEFAULT_TIMEOUT
+    timeout = JobDefaultSettings.job_default_timeout
     return timeout
 
 
 def get_board_url(job_id, role, party_id):
     board_url = "http://{}:{}{}".format(
-        Settings.FATEBOARD.get("host"),
-        Settings.FATEBOARD.get("port"),
+        ServiceSettings.FATEBOARD.get("host"),
+        ServiceSettings.FATEBOARD.get("port"),
         FATE_BOARD_DASHBOARD_ENDPOINT).format(job_id, role, party_id)
     return board_url

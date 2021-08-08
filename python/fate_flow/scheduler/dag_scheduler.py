@@ -25,14 +25,13 @@ from fate_flow.entity.types import ResourceOperation, RetCode
 from fate_flow.entity.run_status import StatusSet, JobStatus, TaskStatus, EndStatus
 from fate_flow.entity.run_status import FederatedSchedulingStatusCode
 from fate_flow.entity.run_status import SchedulingStatusCode
-from fate_flow.entity.run_parameters import RunParameters
 from fate_flow.operation.job_tracker import Tracker
 from fate_flow.controller.job_controller import JobController
 from fate_flow.utils import detect_utils, job_utils, schedule_utils, authentication_utils
 from fate_flow.utils.config_adapter import JobRuntimeConfigAdapter
 from fate_flow.utils import model_utils
 from fate_flow.utils.cron import Cron
-from fate_flow import job_default_settings
+from fate_flow.settings import JobDefaultSettings
 
 
 class DAGScheduler(Cron):
@@ -210,7 +209,7 @@ class DAGScheduler(Cron):
         schedule_logger().info("schedule rerun jobs finished")
 
         schedule_logger().info("start schedule end status jobs to update status")
-        jobs = JobSaver.query_job(is_initiator=True, status=set(EndStatus.status_list()), end_time=[current_timestamp() - job_default_settings.END_STATUS_JOB_SCHEDULING_TIME_LIMIT, current_timestamp()])
+        jobs = JobSaver.query_job(is_initiator=True, status=set(EndStatus.status_list()), end_time=[current_timestamp() - JobDefaultSettings.end_status_job_scheduling_time_limit, current_timestamp()])
         schedule_logger().info(f"have {len(jobs)} end status jobs")
         for job in jobs:
             schedule_logger().info(f"schedule end status job {job.f_job_id}")
@@ -511,7 +510,7 @@ class DAGScheduler(Cron):
     @DB.connection_context()
     def end_scheduling_updates(cls, job_id):
         operate = Job.update({Job.f_end_scheduling_updates: Job.f_end_scheduling_updates + 1}).where(Job.f_job_id == job_id,
-                                                                                                     Job.f_end_scheduling_updates < job_default_settings.END_STATUS_JOB_SCHEDULING_UPDATES)
+                                                                                                     Job.f_end_scheduling_updates < JobDefaultSettings.end_status_job_scheduling_updates)
         update_status = operate.execute() > 0
         return update_status
 

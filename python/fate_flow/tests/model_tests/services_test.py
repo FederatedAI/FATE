@@ -33,8 +33,8 @@ class TestZooKeeperDB(unittest.TestCase):
                 'password': password,
             })
 
-        with patch.object(db_services.Settings, 'USE_REGISTRY', 'ZooKeeper'), \
-                patch.object(db_services.Settings, 'ZOOKEEPER', config):
+        with patch.object(db_services.ServiceSettings, 'USE_REGISTRY', 'ZooKeeper'), \
+                patch.object(db_services.ServiceSettings, 'ZOOKEEPER', config):
             self.service_db = db_services.service_db()
 
     def test_services_db(self):
@@ -43,14 +43,14 @@ class TestZooKeeperDB(unittest.TestCase):
         self.assertEqual(type(self.service_db.client), KazooClient)
 
     def test_zookeeper_not_configured(self):
-        with patch.object(db_services.Settings, 'USE_REGISTRY', True), \
-            patch.object(db_services.Settings, 'ZOOKEEPER', {'hosts': None}), \
+        with patch.object(db_services.ServiceSettings, 'USE_REGISTRY', True), \
+            patch.object(db_services.ServiceSettings, 'ZOOKEEPER', {'hosts': None}), \
                 self.assertRaisesRegex(ZooKeeperNotConfigured, ZooKeeperNotConfigured.message):
             db_services.service_db()
 
     def test_missing_zookeeper_username_or_password(self):
-        with patch.object(db_services.Settings, 'USE_REGISTRY', True), \
-            patch.object(db_services.Settings, 'ZOOKEEPER', {
+        with patch.object(db_services.ServiceSettings, 'USE_REGISTRY', True), \
+            patch.object(db_services.ServiceSettings, 'ZOOKEEPER', {
                 'hosts': ['127.0.0.1:2281'],
                 'use_acl': True,
             }), self.assertRaisesRegex(
@@ -123,7 +123,7 @@ class TestZooKeeperDB(unittest.TestCase):
 class TestFallbackDB(unittest.TestCase):
 
     def setUp(self):
-        with patch.object(db_services.Settings, 'USE_REGISTRY', False):
+        with patch.object(db_services.ServiceSettings, 'USE_REGISTRY', False):
             self.service_db = db_services.service_db()
 
     def test_get_urls(self):

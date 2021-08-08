@@ -15,29 +15,35 @@
 #
 import os
 from pathlib import Path
-
-from fate_arch.common.conf_utils import get_base_config
 from fate_arch.computing import ComputingEngine
 from fate_arch.common import file_utils, log
-from fate_arch.common.conf_utils import SERVICE_CONF
+from fate_arch.common.conf_utils import SERVICE_CONF, get_base_config
 
 
 # Server
 API_VERSION = "v1"
-FATEFLOW_SERVICE_NAME = "fateflow"
+FATE_FLOW_SERVICE_NAME = "fateflow"
 SERVER_MODULE = "fate_flow_server.py"
-TEMP_DIRECTORY = os.path.join(
-    file_utils.get_project_base_directory(), "temp", "fate_flow")
+TEMP_DIRECTORY = os.path.join(file_utils.get_project_base_directory(), "temp", "fate_flow")
 FATE_FLOW_DIRECTORY = os.path.join(file_utils.get_python_base_directory(), "fate_flow")
+FATE_FLOW_JOB_DEFAULT_PARAMETERS_PATH = os.path.join(FATE_FLOW_DIRECTORY, "job_default_settings.yaml")
 SUBPROCESS_STD_LOG_NAME = "std.log"
 HEADERS = {
     "Content-Type": "application/json",
     "Connection": "close",
-    "service": FATEFLOW_SERVICE_NAME
+    "service": FATE_FLOW_SERVICE_NAME
 }
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 GRPC_SERVER_MAX_WORKERS = None
 MAX_TIMESTAMP_INTERVAL = 60
+
+IP = get_base_config(FATE_FLOW_SERVICE_NAME, {}).get("host", "127.0.0.1")
+HTTP_PORT = get_base_config(FATE_FLOW_SERVICE_NAME, {}).get("http_port")
+GRPC_PORT = get_base_config(FATE_FLOW_SERVICE_NAME, {}).get("grpc_port")
+
+WORK_MODE = get_base_config("work_mode", 0)
+DATABASE = get_base_config("database", {})
+MODEL_STORE_ADDRESS = get_base_config("model_store_address", {})
 
 # Registry
 FATE_SERVICES_REGISTRY = {
@@ -104,11 +110,28 @@ AUTOMATIC_AUTHORIZATION_OUTPUT_DATA = True
 USE_DEFAULT_TIMEOUT = False
 AUTHENTICATION_DEFAULT_TIMEOUT = 30 * 24 * 60 * 60 # s
 PRIVILEGE_COMMAND_WHITELIST = []
-
 CHECK_NODES_IDENTITY = False
 
 
-class Settings:
+class SettingsInMemory:
+    @classmethod
+    def get_all(cls):
+        settings = {}
+        for k, v in cls.__dict__.items():
+            if not callable(getattr(cls, k)) and not k.startswith("__") and not k.startswith("_"):
+                settings[k] = v
+        return settings
+
+
+class ServiceSettings(SettingsInMemory):
+    HOST = None
+    HTTP_PORT = None
+    GRPC_PORT = None
+    HTTP_APP_KEY = None
+    HTTP_SECRET_KEY = None
+    PROTOCOL = None
+    LINKIS_SPARK_CONFIG = None
+
     @classmethod
     def load(cls):
         path = Path(file_utils.get_project_base_directory()) / 'conf' / SERVICE_CONF
@@ -123,13 +146,12 @@ class Settings:
             if not isinstance(local_conf, dict):
                 raise ValueError('invalid local config file')
 
-        cls.IP = conf.get(FATEFLOW_SERVICE_NAME, {}).pop('host', '127.0.0.1')
         cls.LINKIS_SPARK_CONFIG = conf.get('fate_on_spark', {}).get('linkis_spark')
 
         for k, v in conf.items():
-            if k == FATEFLOW_SERVICE_NAME:
+            if k == FATE_FLOW_SERVICE_NAME:
                 if not isinstance(v, dict):
-                    raise ValueError(f'{FATEFLOW_SERVICE_NAME} is not a dict')
+                    raise ValueError(f'{FATE_FLOW_SERVICE_NAME} is not a dict')
 
                 for key, val in v.items():
                     setattr(cls, key.upper(), val)
@@ -137,7 +159,7 @@ class Settings:
                 setattr(cls, k.upper(), v)
 
         for k, v in local_conf.items():
-            if k == FATEFLOW_SERVICE_NAME:
+            if k == FATE_FLOW_SERVICE_NAME:
                 if isinstance(v, dict):
                     for key, val in v.items():
                         key = key.upper()
@@ -147,9 +169,41 @@ class Settings:
                 k = k.upper()
                 if hasattr(cls, k) and type(getattr(cls, k)) == type(v):
                     setattr(cls, k, v)
+        return cls.get_all()
 
-Settings.load()
 
-# 1.7 merge
-DEFAULT_FEDERATED_STATUS_COLLECT_TYPE = get_base_config(
-    FATEFLOW_SERVICE_NAME, {}).get("default_federated_status_collect_type", "PUSH")
+class JobDefaultSettings(SettingsInMemory):
+    # Resource
+    total_cores_overweight_percent = None
+    total_memory_overweight_percent = None
+    task_parallelism = None
+    task_cores = None
+    task_memory = None
+    max_cores_percent_per_job = None
+
+    # scheduling
+    default_remote_request_timeout = None
+    default_federated_command_trys = None
+    job_default_timeout = None
+    end_status_job_scheduling_time_limit = None
+    end_status_job_scheduling_updates = None
+    auto_retries = None
+    auto_retry_delay = None
+    default_federated_status_collect_type = None
+
+    @classmethod
+    def load(cls):
+        conf = file_utils.load_yaml_conf(FATE_FLOW_JOB_DEFAULT_PARAMETERS_PATH)
+        if not isinstance(conf, dict):
+            raise ValueError('invalid config file')
+
+        for k, v in conf.items():
+            if hasattr(cls, k):
+                setattr(cls, k, v)
+            else:
+                stat_logger.warning(f"job default parameter not supported {k}")
+
+        return cls.get_all()
+
+ServiceSettings.load()
+JobDefaultSettings.load()

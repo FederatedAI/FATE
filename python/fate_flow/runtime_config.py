@@ -21,7 +21,7 @@ from fate_flow.settings import FATE_FLOW_DIRECTORY
 from fate_flow.entity.types import ComponentProviderName
 
 
-class RuntimeConfig(object):
+class RuntimeConfig:
     WORK_MODE = None
     COMPUTING_ENGINE = None
     FEDERATION_ENGINE = None

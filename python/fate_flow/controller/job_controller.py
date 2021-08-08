@@ -31,8 +31,7 @@ from fate_flow.operation.job_saver import JobSaver
 from fate_flow.operation.job_tracker import Tracker
 from fate_flow.protobuf.python import pipeline_pb2
 from fate_flow.runtime_config import RuntimeConfig
-from fate_flow import job_default_settings
-from fate_flow.settings import USE_AUTHENTICATION, Settings, USE_DATA_AUTHENTICATION
+from fate_flow.settings import USE_AUTHENTICATION, ServiceSettings, USE_DATA_AUTHENTICATION, JobDefaultSettings
 from fate_flow.utils import job_utils, schedule_utils, data_utils
 from fate_flow.component_env_utils import dsl_utils
 from fate_flow.utils.authentication_utils import authentication_check
@@ -145,8 +144,8 @@ class JobController(object):
         keys = {"task_parallelism", "auto_retries", "auto_retry_delay", "federated_status_collect_type"}
         for key in keys:
             if hasattr(job_parameters, key) and getattr(job_parameters, key) is None:
-                if hasattr(job_default_settings, key.upper()):
-                    setattr(job_parameters, key, getattr(job_default_settings, key.upper()))
+                if hasattr(JobDefaultSettings, key):
+                    setattr(job_parameters, key, getattr(JobDefaultSettings, key))
                 else:
                     schedule_logger(job_id=job_id).warning(f"can not found {key} job parameter default value from job_default_settings")
 
@@ -156,9 +155,9 @@ class JobController(object):
             role=role, job_parameters=job_parameters, create_initiator_baseline=create_initiator_baseline)
         if create_initiator_baseline:
             if job_parameters.task_parallelism is None:
-                job_parameters.task_parallelism = job_default_settings.DEFAULT_TASK_PARALLELISM
+                job_parameters.task_parallelism = JobDefaultSettings.task_parallelism
             if job_parameters.federated_status_collect_type is None:
-                job_parameters.federated_status_collect_type = Settings.DEFAULT_FEDERATED_STATUS_COLLECT_TYPE
+                job_parameters.federated_status_collect_type = JobDefaultSettings.default_federated_status_collect_type
         if create_initiator_baseline and not job_parameters.computing_partitions:
             job_parameters.computing_partitions = job_parameters.adaptation_parameters[
                 "task_cores_per_node"] * job_parameters.adaptation_parameters["task_nodes"]
