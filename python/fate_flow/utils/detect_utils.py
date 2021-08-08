@@ -17,6 +17,9 @@ import typing
 
 
 def check_config(config: typing.Dict, required_arguments: typing.List):
+    if not config or not isinstance(config, dict):
+        raise TypeError('no parameters')
+
     no_arguments = []
     error_arguments = []
     for require_argument in required_arguments:
@@ -29,10 +32,11 @@ def check_config(config: typing.Dict, required_arguments: typing.List):
                 error_arguments.append(require_argument)
         elif require_argument not in config:
             no_arguments.append(require_argument)
+
     if no_arguments or error_arguments:
         error_string = ""
         if no_arguments:
-            error_string += "required parameters are missing: {};".format(",".join(no_arguments))
+            error_string += "required parameters are missing: {}; ".format(",".join(no_arguments))
         if error_arguments:
             error_string += "required parameter values: {}".format(",".join(["{}={}".format(a[0], a[1]) for a in error_arguments]))
-        raise Exception(error_string)
+        raise KeyError(error_string)

@@ -91,8 +91,9 @@ class StorageTable(StorageTableBase):
         id_feature_name.extend(feature_name_list)
         sql = 'select {} from {}'.format(','.join(id_feature_name), self._address.name)
         data = self.execute(sql)
-        for i in data:
-            yield i[0], self.meta.get_id_delimiter().join(list(i[1:]))
+        for line in data:
+            feature_list = [str(feature) for feature in list(line[1:])]
+            yield line[0], self.meta.get_id_delimiter().join(feature_list)
 
     def put_all(self, kv_list, **kwargs):
         id_name, feature_name_list, id_delimiter = self.get_id_feature_name()

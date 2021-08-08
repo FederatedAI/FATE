@@ -34,6 +34,7 @@ from fate_flow.protobuf.python import pipeline_pb2
 from fate_flow.runtime_config import RuntimeConfig
 from fate_flow.settings import USE_AUTHENTICATION
 from fate_flow import job_default_settings
+from fate_flow.settings import USE_AUTHENTICATION, DEFAULT_TASK_PARALLELISM, Settings, USE_DATA_AUTHENTICATION
 from fate_flow.utils import job_utils, schedule_utils, data_utils
 from fate_flow.component_env_utils import dsl_utils
 from fate_flow.utils.authentication_utils import authentication_check
@@ -155,6 +156,11 @@ class JobController(object):
     def adapt_job_parameters(cls, role, job_parameters: RunParameters, create_initiator_baseline=False):
         ResourceManager.adapt_engine_parameters(
             role=role, job_parameters=job_parameters, create_initiator_baseline=create_initiator_baseline)
+        if create_initiator_baseline:
+            if job_parameters.task_parallelism is None:
+                job_parameters.task_parallelism = DEFAULT_TASK_PARALLELISM
+            if job_parameters.federated_status_collect_type is None:
+                job_parameters.federated_status_collect_type = Settings.DEFAULT_FEDERATED_STATUS_COLLECT_TYPE
         if create_initiator_baseline and not job_parameters.computing_partitions:
             job_parameters.computing_partitions = job_parameters.adaptation_parameters[
                 "task_cores_per_node"] * job_parameters.adaptation_parameters["task_nodes"]

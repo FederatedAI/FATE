@@ -6,6 +6,8 @@ fateflow:
   host: 127.0.0.1
   http_port: 9380
   grpc_port: 9360
+  http_app_key:
+  http_secret_key:
   # support rollsite/nginx/fateflow as a coordination proxy
   # rollsite support fate on eggroll, use grpc protocol
   # nginx support fate on eggroll and fate on spark, use http or grpc protocol, default is http
@@ -118,4 +120,3 @@ fatemanager:
   host: 127.0.0.1
   port: 8001
   federatedId: 0
-

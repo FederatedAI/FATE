@@ -28,6 +28,8 @@ from fate_arch.storage.metastore.base_model import JSONField, BaseModel, LongTex
 from fate_arch.common import WorkMode
 from fate_flow.settings import DATABASE, WORK_MODE, stat_logger
 from fate_flow.runtime_config import RuntimeConfig
+from fate_flow.settings import Settings, stat_logger
+from fate_flow.entity.runtime_config import RuntimeConfig
 
 
 LOGGER = log.getLogger()
@@ -48,13 +50,13 @@ def singleton(cls, *args, **kw):
 @singleton
 class BaseDataBase(object):
     def __init__(self):
-        database_config = DATABASE.copy()
+        database_config = Settings.DATABASE.copy()
         db_name = database_config.pop("name")
-        if WORK_MODE == WorkMode.STANDALONE:
-            self.database_connection = APSWDatabase(os.path.join(file_utils.get_python_base_directory(), 'fate_flow_sqlite.db'))
+        if Settings.WORK_MODE == WorkMode.STANDALONE:
+            self.database_connection = APSWDatabase(os.path.join(file_utils.get_project_base_directory(), 'fate_flow_sqlite.db'))
             RuntimeConfig.init_config(USE_LOCAL_DATABASE=True)
             stat_logger.info('init sqlite database on standalone mode successfully')
-        elif WORK_MODE == WorkMode.CLUSTER:
+        elif Settings.WORK_MODE == WorkMode.CLUSTER:
             self.database_connection = PooledMySQLDatabase(db_name, **database_config)
             stat_logger.info('init mysql database on cluster mode successfully')
             RuntimeConfig.init_config(USE_LOCAL_DATABASE=False)

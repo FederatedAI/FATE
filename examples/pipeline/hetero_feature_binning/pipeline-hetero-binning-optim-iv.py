@@ -57,7 +57,7 @@ def main(config="../../config.yaml", namespace=""):
         "transform_param": {
             "transform_cols": -1,
             "transform_names": None,
-            "transform_type": "woe"
+            "transform_type": "bin_num"
         }
     }
     pipeline = common_tools.make_normal_dsl(config, namespace, param, dataset='default_credit')

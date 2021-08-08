@@ -4,10 +4,12 @@ import time
 import unittest
 
 import requests
-from fate_arch.common import file_utils, conf_utils
 
 from fate_flow.settings import HTTP_PORT, API_VERSION, WORK_MODE, FATEFLOW_SERVICE_NAME
 from fate_flow.entity.run_status import EndStatus, JobStatus
+from fate_arch.common.file_utils import load_json_conf, get_python_base_directory
+from fate_flow.settings import Settings, API_VERSION
+from fate_flow.entity.types import EndStatus, JobStatus
 
 
 class TestTracking(unittest.TestCase):
@@ -17,18 +19,17 @@ class TestTracking(unittest.TestCase):
         self.dsl_path = 'fate_flow/examples/test_hetero_lr_job_dsl.json'
         self.config_path = 'fate_flow/examples/test_hetero_lr_job_conf.json'
         self.test_component_name = 'hetero_feature_selection_0'
-        ip = conf_utils.get_base_config(FATEFLOW_SERVICE_NAME).get("host")
-        self.server_url = "http://{}:{}/{}".format(ip, HTTP_PORT, API_VERSION)
-        self.party_info = file_utils.load_json_conf(os.path.abspath(os.path.join('./jobs', 'party_info.json'))) if WORK_MODE else None
-        self.guest_party_id = self.party_info['guest'] if WORK_MODE else 9999
-        self.host_party_id = self.party_info['host'] if WORK_MODE else 10000
+        self.server_url = "http://{}:{}/{}".format(Settings.IP, Settings.HTTP_PORT, API_VERSION)
+        self.party_info = load_json_conf(os.path.abspath(os.path.join('./jobs', 'party_info.json'))) if Settings.WORK_MODE else None
+        self.guest_party_id = self.party_info['guest'] if Settings.WORK_MODE else 9999
+        self.host_party_id = self.party_info['host'] if Settings.WORK_MODE else 10000
 
     def test_tracking(self):
-        with open(os.path.join(file_utils.get_python_base_directory(), self.dsl_path), 'r') as f:
+        with open(os.path.join(get_python_base_directory(), self.dsl_path), 'r') as f:
             dsl_data = json.load(f)
-        with open(os.path.join(file_utils.get_python_base_directory(), self.config_path), 'r') as f:
+        with open(os.path.join(get_python_base_directory(), self.config_path), 'r') as f:
             config_data = json.load(f)
-            config_data['job_parameters']['work_mode'] = WORK_MODE
+            config_data['job_parameters']['work_mode'] = Settings.WORK_MODE
             config_data[ "initiator"]["party_id"] = self.guest_party_id
             config_data["role"] = {
                 "guest": [self.guest_party_id],
@@ -79,7 +80,7 @@ class TestTracking(unittest.TestCase):
 
 def test_component(self, fun):
     job_id = os.listdir(os.path.abspath(os.path.join(self.success_job_dir)))[-1]
-    job_info = file_utils.load_json_conf(os.path.abspath(os.path.join(self.success_job_dir, job_id)))
+    job_info = load_json_conf(os.path.abspath(os.path.join(self.success_job_dir, job_id)))
     data = {'job_id': job_id, 'role': job_info['f_role'], 'party_id': job_info['f_party_id'], 'component_name': self.test_component_name}
     if 'download' in fun:
         response = requests.get("/".join([self.server_url, "tracking", fun]), json=data, stream=True)

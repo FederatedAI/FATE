@@ -135,6 +135,54 @@ class Tracker(object):
                                        engine=output_storage_engine,
                                        engine_address=output_storage_address,
                                        token={"username": user_name})
+            # 1.7 dev
+            partitions = computing_table.partitions
+            schedule_logger(self.job_id).info('output data table partitions is {}'.format(partitions))
+            if isinstance(output_storage_address, dict):
+                address_dict = output_storage_address.copy()
+                if output_storage_engine == StorageEngine.EGGROLL:
+                    address_dict.update({"name": output_table_name, "namespace": output_table_namespace, "storage_type": storage.EggRollStorageType.ROLLPAIR_LMDB})
+                elif output_storage_engine == StorageEngine.STANDALONE:
+                    address_dict.update({"name": output_table_name, "namespace": output_table_namespace, "storage_type": storage.StandaloneStorageType.ROLLPAIR_LMDB})
+                elif output_storage_engine == StorageEngine.HDFS:
+                    address_dict.update({"path": data_utils.default_output_fs_path(name=output_table_name, namespace=output_table_namespace, prefix=address_dict.get("path_prefix"))})
+                elif output_storage_engine == StorageEngine.HIVE:
+                    address_dict.update({"database": output_table_namespace, "name": output_table_name})
+                elif output_storage_engine == StorageEngine.LINKIS_HIVE:
+                    address_dict.update({"database": None, "name": f"{output_table_namespace}_{output_table_name}", "username": user_name})
+                else:
+                    raise RuntimeError(f"{output_storage_engine} storage is not supported")
+                address = storage.StorageTableMeta.create_address(storage_engine=output_storage_engine,
+                                                                  address_dict=address_dict)
+            else:
+                address = output_storage_address
+            schema = {}
+            # persistent table
+            computing_table.save(address, schema=schema, partitions=partitions)
+            schema = schema if not meta_schema else meta_schema
+            part_of_data = []
+            part_of_limit = 100
+            for k, v in computing_table.collect():
+                part_of_data.append((k, v))
+                part_of_limit -= 1
+                if part_of_limit == 0:
+                    break
+            table_count = computing_table.count()
+            table_meta = storage.StorageTableMeta(name=output_table_name, namespace=output_table_namespace, new=True)
+            table_meta.address = address
+            table_meta.partitions = computing_table.partitions
+            table_meta.engine = output_storage_engine
+            table_meta.type = storage.EggRollStorageType.ROLLPAIR_LMDB
+            table_meta.schema = schema
+            table_meta.part_of_data = part_of_data
+            table_meta.count = table_count
+            if not tracker_client and not meta_schema:
+                table_meta.create()
+            if tracker_client:
+                tracker_client.create_table_meta(table_meta)
+            else:
+                table_meta.update_metas(schema=schema, part_of_data=part_of_data, count=table_count)
+
             return output_table_namespace, output_table_name
         else:
             schedule_logger(self.job_id).info('task id {} output data table is none'.format(self.task_id))
@@ -205,6 +253,9 @@ class Tracker(object):
     def save_pipeline_model(self, pipeline_buffer_object):
         self.save_output_model({self.pipelined_model.pipeline_model_name: pipeline_buffer_object}, self.pipelined_model.pipeline_model_alias)
         self.pipelined_model.save_pipeline(buffer_object=pipeline_buffer_object)
+    def save_pipelined_model(self, pipelined_buffer_object):
+        self.save_output_model({'Pipeline': pipelined_buffer_object}, 'pipeline')
+        self.pipelined_model.save_pipeline(buffer_object=pipelined_buffer_object)
 
     def get_component_define(self):
         return self.pipelined_model.get_component_define(component_name=self.component_name)

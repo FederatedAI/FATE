@@ -13,12 +13,18 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-# -*- coding: utf-8 -*-
 import os
+from pathlib import Path
 
 from fate_arch.common import file_utils, log
 from fate_arch.common.conf_utils import get_base_config
 from fate_arch.computing import ComputingEngine
+from fate_arch.computing import ComputingEngine
+from fate_arch.federation import FederationEngine
+from fate_arch.storage import StorageEngine
+from fate_arch.common import file_utils, log, EngineType
+from fate_flow.entity.runtime_config import RuntimeConfig
+from fate_arch.common.conf_utils import SERVICE_CONF
 
 
 # Server
@@ -44,6 +50,8 @@ GRPC_PORT = get_base_config(FATEFLOW_SERVICE_NAME, {}).get("grpc_port")
 WORK_MODE = get_base_config("work_mode", 0)
 DATABASE = get_base_config("database", {})
 MODEL_STORE_ADDRESS = get_base_config("model_store_address", {})
+
+MAX_TIMESTAMP_INTERVAL = 60
 
 # Registry
 FATE_SERVICES_REGISTRY = {
@@ -108,8 +116,59 @@ UPLOAD_DATA_FROM_CLIENT = True
 USE_AUTHENTICATION = False
 USE_DATA_AUTHENTICATION = False
 AUTOMATIC_AUTHORIZATION_OUTPUT_DATA = True
+USE_DEFAULT_TIMEOUT = False
+AUTHENTICATION_DEFAULT_TIMEOUT = 30 * 24 * 60 * 60 # s
 PRIVILEGE_COMMAND_WHITELIST = []
 
 CHECK_NODES_IDENTITY = False
+
+
+class Settings:
+
+    @classmethod
+    def load(cls):
+        path = Path(file_utils.get_project_base_directory()) / 'conf' / SERVICE_CONF
+        conf = file_utils.load_yaml_conf(path)
+        if not isinstance(conf, dict):
+            raise ValueError('invalid config file')
+
+        local_conf = {}
+        local_path = path.with_name(f'local.{SERVICE_CONF}')
+        if local_path.exists():
+            local_conf = file_utils.load_yaml_conf(local_path)
+            if not isinstance(local_conf, dict):
+                raise ValueError('invalid local config file')
+
+        cls.IP = conf.get(FATEFLOW_SERVICE_NAME, {}).pop('host', '127.0.0.1')
+        cls.LINKIS_SPARK_CONFIG = conf.get('fate_on_spark', {}).get('linkis_spark')
+
+        for k, v in conf.items():
+            if k == FATEFLOW_SERVICE_NAME:
+                if not isinstance(v, dict):
+                    raise ValueError(f'{FATEFLOW_SERVICE_NAME} is not a dict')
+
+                for key, val in v.items():
+                    setattr(cls, key.upper(), val)
+            else:
+                setattr(cls, k.upper(), v)
+
+        for k, v in local_conf.items():
+            if k == FATEFLOW_SERVICE_NAME:
+                if isinstance(v, dict):
+                    for key, val in v.items():
+                        key = key.upper()
+                        if hasattr(cls, key):
+                            setattr(cls, key, val)
+            else:
+                k = k.upper()
+                if hasattr(cls, k) and type(getattr(cls, k)) == type(v):
+                    setattr(cls, k, v)
+
+        RuntimeConfig.init_config(WORK_MODE=cls.WORK_MODE, JOB_SERVER_HOST=cls.IP, HTTP_PORT=cls.HTTP_PORT)
+
+
+Settings.load()
+
+# 1.7 merge
 DEFAULT_FEDERATED_STATUS_COLLECT_TYPE = get_base_config(
     FATEFLOW_SERVICE_NAME, {}).get("default_federated_status_collect_type", "PUSH")

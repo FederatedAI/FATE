@@ -41,7 +41,7 @@ pulsar-client==2.8.0
 fastavro==1.4.1
 
 # python 3.6
-backports-datetime-fromisoformat
+backports-datetime-fromisoformat==1.0.0
 
 # addtional requirements for eggroll
 grpcio==1.24.3

@@ -30,6 +30,9 @@ from fate_flow.entity.run_status import JobStatus, TaskStatus
 from fate_flow.entity.run_parameters import RunParameters
 from fate_flow.runtime_config import RuntimeConfig
 from fate_flow.settings import stat_logger, WORK_MODE, FATE_BOARD_DASHBOARD_ENDPOINT, SUBPROCESS_STD_LOG_NAME
+from fate_flow.entity.types import JobStatus
+from fate_flow.entity.types import TaskStatus, RunParameters, KillProcessStatusCode
+from fate_flow.settings import stat_logger, JOB_DEFAULT_TIMEOUT, Settings, FATE_BOARD_DASHBOARD_ENDPOINT
 from fate_flow.utils import detect_utils, model_utils
 from fate_flow.utils import session_utils
 from fate_flow import job_default_settings
@@ -124,7 +127,7 @@ def check_job_runtime_conf(runtime_conf: typing.Dict):
 def runtime_conf_basic(if_local=False):
     job_runtime_conf = {
         "initiator": {},
-        "job_parameters": {"work_mode": WORK_MODE},
+        "job_parameters": {"work_mode": Settings.WORK_MODE},
         "role": {},
         "role_parameters": {}
     }
@@ -485,8 +488,8 @@ def job_default_timeout(runtime_conf, dsl):
 
 def get_board_url(job_id, role, party_id):
     board_url = "http://{}:{}{}".format(
-        get_base_config("fateboard", {}).get("host"),
-        get_base_config("fateboard", {}).get("port"),
+        Settings.FATEBOARD.get("host"),
+        Settings.FATEBOARD.get("port"),
         FATE_BOARD_DASHBOARD_ENDPOINT).format(job_id, role, party_id)
     return board_url
 
