@@ -30,9 +30,8 @@ from fate_flow.db.db_models import init_database_tables as init_flow_db
 from fate_arch.storage.metastore.db_models import init_database_tables as init_arch_db
 from fate_flow.scheduler.detector import Detector
 from fate_flow.scheduler.dag_scheduler import DAGScheduler
-from fate_flow.runtime_config import RuntimeConfig
+from fate_flow.db.runtime_config import RuntimeConfig
 from fate_flow.entity.types import ProcessRole
-from fate_flow.manager.resource_manager import ResourceManager
 from fate_flow.settings import HOST, HTTP_PORT, GRPC_PORT, WORK_MODE, _ONE_DAY_IN_SECONDS, stat_logger, GRPC_SERVER_MAX_WORKERS, detect_logger, access_logger
 from fate_flow.utils.authentication_utils import PrivilegeAuth
 from fate_flow.utils.grpc_utils import UnaryService
@@ -40,6 +39,7 @@ from fate_flow.db.db_services import service_db
 from fate_flow.utils.xthread import ThreadPoolExecutor
 from fate_flow.utils import job_utils
 from fate_arch.common.log import schedule_logger
+from fate_flow.db.config_manager import ConfigManager
 
 
 if __name__ == '__main__':
@@ -55,13 +55,13 @@ if __name__ == '__main__':
     parser.add_argument('--debug', default=False, help="debug mode", action='store_true')
     args = parser.parse_args()
     debug_mode = args.debug
+    ConfigManager.load()
     RuntimeConfig.init_env()
     RuntimeConfig.init_config(WORK_MODE=WORK_MODE, JOB_SERVER_HOST=HOST, HTTP_PORT=HTTP_PORT)
     RuntimeConfig.set_process_role(ProcessRole.DRIVER)
     RuntimeConfig.load_component_registry()
     RuntimeConfig.service_db = service_db()
     RuntimeConfig.service_db.register_models()
-    ResourceManager.initialize()
     PrivilegeAuth.init()
     Detector(interval=5 * 1000, logger=detect_logger).start()
     DAGScheduler(interval=2 * 1000, logger=schedule_logger()).start()

@@ -13,15 +13,14 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import os.path
-
 from fate_arch.common.versions import get_versions
 from fate_arch.common import file_utils
-from fate_flow.settings import FATE_FLOW_DIRECTORY
+from fate_flow.settings import FATE_FLOW_DEFAULT_COMPONENT_REGISTRY_PATH
 from fate_flow.entity.types import ComponentProviderName
+from .reload_config_base import ReloadConfigBase
 
 
-class RuntimeConfig:
+class RuntimeConfig(ReloadConfigBase):
     WORK_MODE = None
     COMPUTING_ENGINE = None
     FEDERATION_ENGINE = None
@@ -57,7 +56,7 @@ class RuntimeConfig:
 
     @classmethod
     def load_component_registry(cls):
-        component_registry = file_utils.load_json_conf(os.path.join(FATE_FLOW_DIRECTORY, "component_registry.json"))
+        component_registry = file_utils.load_json_conf(FATE_FLOW_DEFAULT_COMPONENT_REGISTRY_PATH)
         RuntimeConfig.COMPONENT_REGISTRY.update(component_registry)
         for provider_name, provider_info in component_registry.get("provider", {}).items():
             if not ComponentProviderName.contains(provider_name):

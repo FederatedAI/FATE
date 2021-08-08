@@ -14,10 +14,9 @@
 #  limitations under the License.
 #
 import os
-from pathlib import Path
 from fate_arch.computing import ComputingEngine
 from fate_arch.common import file_utils, log
-from fate_arch.common.conf_utils import SERVICE_CONF, get_base_config
+from fate_arch.common.conf_utils import get_base_config
 
 
 # Server
@@ -26,7 +25,8 @@ FATE_FLOW_SERVICE_NAME = "fateflow"
 SERVER_MODULE = "fate_flow_server.py"
 TEMP_DIRECTORY = os.path.join(file_utils.get_project_base_directory(), "temp", "fate_flow")
 FATE_FLOW_DIRECTORY = os.path.join(file_utils.get_python_base_directory(), "fate_flow")
-FATE_FLOW_JOB_DEFAULT_PARAMETERS_PATH = os.path.join(FATE_FLOW_DIRECTORY, "job_default_settings.yaml")
+FATE_FLOW_JOB_DEFAULT_CONFIG_PATH = os.path.join(FATE_FLOW_DIRECTORY, "job_default_config.yaml")
+FATE_FLOW_DEFAULT_COMPONENT_REGISTRY_PATH = os.path.join(FATE_FLOW_DIRECTORY, "component_registry.json")
 SUBPROCESS_STD_LOG_NAME = "std.log"
 HEADERS = {
     "Content-Type": "application/json",
@@ -118,91 +118,3 @@ USE_DEFAULT_TIMEOUT = False
 AUTHENTICATION_DEFAULT_TIMEOUT = 30 * 24 * 60 * 60 # s
 PRIVILEGE_COMMAND_WHITELIST = []
 CHECK_NODES_IDENTITY = False
-
-
-class SettingsInMemory:
-    @classmethod
-    def get_all(cls):
-        settings = {}
-        for k, v in cls.__dict__.items():
-            if not callable(getattr(cls, k)) and not k.startswith("__") and not k.startswith("_"):
-                settings[k] = v
-        return settings
-
-
-class ServiceSettings(SettingsInMemory):
-    @classmethod
-    def load(cls):
-        path = Path(file_utils.get_project_base_directory()) / 'conf' / SERVICE_CONF
-        conf = file_utils.load_yaml_conf(path)
-        if not isinstance(conf, dict):
-            raise ValueError('invalid config file')
-
-        local_conf = {}
-        local_path = path.with_name(f'local.{SERVICE_CONF}')
-        if local_path.exists():
-            local_conf = file_utils.load_yaml_conf(local_path)
-            if not isinstance(local_conf, dict):
-                raise ValueError('invalid local config file')
-
-        cls.LINKIS_SPARK_CONFIG = conf.get('fate_on_spark', {}).get('linkis_spark')
-
-        for k, v in conf.items():
-            if k in FATE_FLOW_SERVER_START_CONFIG_ITEMS:
-                pass
-            else:
-                if not isinstance(v, dict):
-                    raise ValueError(f'{k} is not a dict, external services config must be a dict')
-                setattr(cls, k.upper(), v)
-
-        """
-        for k, v in local_conf.items():
-            if k == FATE_FLOW_SERVICE_NAME:
-                if isinstance(v, dict):
-                    for key, val in v.items():
-                        key = key.upper()
-                        if hasattr(cls, key):
-                            setattr(cls, key, val)
-            else:
-                k = k.upper()
-                if hasattr(cls, k) and type(getattr(cls, k)) == type(v):
-                    setattr(cls, k, v)
-        """
-        return cls.get_all()
-
-
-class JobDefaultSettings(SettingsInMemory):
-    # Resource
-    total_cores_overweight_percent = None
-    total_memory_overweight_percent = None
-    task_parallelism = None
-    task_cores = None
-    task_memory = None
-    max_cores_percent_per_job = None
-
-    # scheduling
-    default_remote_request_timeout = None
-    default_federated_command_trys = None
-    job_default_timeout = None
-    end_status_job_scheduling_time_limit = None
-    end_status_job_scheduling_updates = None
-    auto_retries = None
-    auto_retry_delay = None
-    default_federated_status_collect_type = None
-
-    @classmethod
-    def load(cls):
-        conf = file_utils.load_yaml_conf(FATE_FLOW_JOB_DEFAULT_PARAMETERS_PATH)
-        if not isinstance(conf, dict):
-            raise ValueError('invalid config file')
-
-        for k, v in conf.items():
-            if hasattr(cls, k):
-                setattr(cls, k, v)
-            else:
-                stat_logger.warning(f"job default parameter not supported {k}")
-
-        return cls.get_all()
-
-ServiceSettings.load()
-JobDefaultSettings.load()

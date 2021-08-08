@@ -7,7 +7,7 @@ import requests
 
 from fate_flow.entity.run_status import EndStatus, JobStatus
 from fate_arch.common.file_utils import load_json_conf, get_python_base_directory
-from fate_flow.settings import ServiceSettings, API_VERSION, HOST, HTTP_PORT, WORK_MODE
+from fate_flow.settings import API_VERSION, HOST, HTTP_PORT, WORK_MODE
 
 
 class TestTracking(unittest.TestCase):

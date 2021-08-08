@@ -6,7 +6,7 @@ import requests
 
 from fate_flow.entity.run_status import JobStatus
 from fate_arch.common.file_utils import get_project_base_directory
-from fate_flow.settings import ServiceSettings, API_VERSION, HOST, HTTP_PORT, WORK_MODE
+from fate_flow.settings import API_VERSION, HOST, HTTP_PORT, WORK_MODE
 
 
 server_url = "http://{}:{}/{}".format(HOST, HTTP_PORT, API_VERSION)

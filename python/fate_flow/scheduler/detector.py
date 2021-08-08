@@ -13,9 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import requests
 
-from fate_arch import storage
 from fate_arch.common.base_utils import current_timestamp
 from fate_flow.controller.engine_adapt import build_engine
 from fate_flow.db.db_models import DB, Job
@@ -24,7 +22,7 @@ from fate_arch.common.log import detect_logger
 from fate_flow.scheduler.federated_scheduler import FederatedScheduler
 from fate_flow.entity.run_status import JobStatus, TaskStatus, EndStatus
 from fate_flow.utils import cron, job_utils
-from fate_flow.runtime_config import RuntimeConfig
+from fate_flow.db.runtime_config import RuntimeConfig
 from fate_flow.operation.job_saver import JobSaver
 from fate_flow.manager.resource_manager import ResourceManager
 from fate_arch.common import EngineType

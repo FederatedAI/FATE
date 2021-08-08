@@ -16,7 +16,7 @@
 import importlib
 
 from fate_flow.entity.component_provider import ComponentProvider
-from fate_flow.runtime_config import RuntimeConfig
+from fate_flow.db.runtime_config import RuntimeConfig
 
 
 def component_provider(provider_info):

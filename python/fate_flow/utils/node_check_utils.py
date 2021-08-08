@@ -15,7 +15,8 @@
 #
 import requests
 
-from fate_flow.settings import ServiceSettings, CHECK_NODES_IDENTITY, FATE_MANAGER_NODE_CHECK_ENDPOINT
+from fate_flow.settings import CHECK_NODES_IDENTITY, FATE_MANAGER_NODE_CHECK_ENDPOINT
+from fate_flow.db.service_registry import ServiceRegistry
 
 
 def nodes_check(src_party_id, src_role, appKey, appSecret, dst_party_id):
@@ -26,12 +27,12 @@ def nodes_check(src_party_id, src_role, appKey, appSecret, dst_party_id):
             'appKey': appKey,
             'appSecret': appSecret,
             'dstPartyId': int(dst_party_id),
-            'federatedId': ServiceSettings.FATEMANAGER.get("federatedId")
+            'federatedId': ServiceRegistry.FATEMANAGER.get("federatedId")
         }
         try:
             response = requests.post(url="http://{}:{}{}".format(
-                ServiceSettings.FATEMANAGER.get("host"),
-                ServiceSettings.FATEMANAGER.get("port"),
+                ServiceRegistry.FATEMANAGER.get("host"),
+                ServiceRegistry.FATEMANAGER.get("port"),
                 FATE_MANAGER_NODE_CHECK_ENDPOINT), json=body).json()
             if response['code'] != 0:
                 raise Exception(str(response['msg']))

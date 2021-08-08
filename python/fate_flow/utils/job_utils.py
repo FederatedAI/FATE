@@ -28,8 +28,10 @@ from fate_flow.db.db_models import DB, Job, Task
 from fate_flow.entity.types import KillProcessRetCode, JobConfiguration
 from fate_flow.entity.run_status import JobStatus, TaskStatus
 from fate_flow.entity.run_parameters import RunParameters
-from fate_flow.settings import SUBPROCESS_STD_LOG_NAME, JobDefaultSettings, WORK_MODE
-from fate_flow.settings import stat_logger, ServiceSettings, FATE_BOARD_DASHBOARD_ENDPOINT
+from fate_flow.settings import SUBPROCESS_STD_LOG_NAME, WORK_MODE
+from fate_flow.db.job_default_config import JobDefaultConfig
+from fate_flow.settings import stat_logger, FATE_BOARD_DASHBOARD_ENDPOINT
+from fate_flow.db.service_registry import ServiceRegistry
 from fate_flow.utils import detect_utils, model_utils
 from fate_flow.utils import session_utils
 
@@ -291,7 +293,7 @@ def check_job_process(pid):
 
 def check_job_is_timeout(job: Job):
     job_parameters = job.f_runtime_conf_on_party["job_parameters"]
-    timeout = job_parameters.get("timeout", JobDefaultSettings.job_default_timeout)
+    timeout = job_parameters.get("timeout", JobDefaultConfig.job_default_timeout)
     now_time = current_timestamp()
     running_time = (now_time - job.f_create_time)/1000
     if running_time > timeout:
@@ -477,13 +479,13 @@ def get_timeout(job_id, timeout, runtime_conf, dsl):
 
 def job_default_timeout(runtime_conf, dsl):
     # future versions will improve
-    timeout = JobDefaultSettings.job_default_timeout
+    timeout = JobDefaultConfig.job_default_timeout
     return timeout
 
 
 def get_board_url(job_id, role, party_id):
     board_url = "http://{}:{}{}".format(
-        ServiceSettings.FATEBOARD.get("host"),
-        ServiceSettings.FATEBOARD.get("port"),
+        ServiceRegistry.FATEBOARD.get("host"),
+        ServiceRegistry.FATEBOARD.get("port"),
         FATE_BOARD_DASHBOARD_ENDPOINT).format(job_id, role, party_id)
     return board_url

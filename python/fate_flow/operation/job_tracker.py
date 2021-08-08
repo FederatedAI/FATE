@@ -26,7 +26,7 @@ from fate_arch.common.log import schedule_logger
 from fate_flow.db.db_models import (DB, Job, TrackingMetric, TrackingOutputDataInfo,
                                     ComponentSummary, MachineLearningModelInfo as MLModel)
 from fate_flow.entity.metric import Metric, MetricMeta
-from fate_flow.runtime_config import RuntimeConfig
+from fate_flow.db.runtime_config import RuntimeConfig
 from fate_flow.pipelined_model import pipelined_model
 from fate_arch import storage
 from fate_flow.utils import model_utils, job_utils, data_utils

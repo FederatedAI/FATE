@@ -23,11 +23,13 @@ from werkzeug.http import HTTP_STATUS_CODES
 from fate_arch.common.base_utils import json_loads, json_dumps
 from fate_arch.common.log import audit_logger, schedule_logger
 from fate_arch.common import FederatedMode, CoordinationProxyService, CoordinationCommunicationProtocol
-from fate_flow.settings import ServiceSettings, CHECK_NODES_IDENTITY,\
-    FATE_MANAGER_GET_NODE_INFO_ENDPOINT, HEADERS, API_VERSION, stat_logger, JobDefaultSettings, HOST, HTTP_PORT, WORK_MODE, PROXY, PROXY_PROTOCOL
+from fate_flow.settings import CHECK_NODES_IDENTITY,\
+    FATE_MANAGER_GET_NODE_INFO_ENDPOINT, HEADERS, API_VERSION, stat_logger, HOST, HTTP_PORT, PROXY, PROXY_PROTOCOL
+from fate_flow.db.job_default_config import JobDefaultConfig
+from fate_flow.db.service_registry import ServiceRegistry
 from fate_flow.utils.grpc_utils import wrap_grpc_packet, get_command_federation_channel, gen_routing_metadata, \
     forward_grpc_packet
-from fate_flow.runtime_config import RuntimeConfig
+from fate_flow.db.runtime_config import RuntimeConfig
 from fate_flow.entity.types import RetCode
 
 
@@ -58,7 +60,7 @@ def error_response(response_code, retmsg=None):
 
 def federated_api(job_id, method, endpoint, src_party_id, dest_party_id, src_role, json_body, federated_mode, api_version=API_VERSION,
                   overall_timeout=None):
-    overall_timeout = JobDefaultSettings.default_remote_request_timeout if overall_timeout is None else overall_timeout
+    overall_timeout = JobDefaultConfig.default_remote_request_timeout if overall_timeout is None else overall_timeout
     if int(dest_party_id) == 0:
         federated_mode = FederatedMode.SINGLE
     if federated_mode == FederatedMode.SINGLE:
@@ -88,10 +90,10 @@ def local_api(job_id, method, endpoint, json_body, api_version=API_VERSION, try_
 def get_federated_proxy_address(src_party_id, dest_party_id):
     if isinstance(PROXY, str):
         if PROXY == CoordinationProxyService.ROLLSITE:
-            proxy_address = ServiceSettings.FATE_ON_EGGROLL.get(PROXY)
+            proxy_address = ServiceRegistry.FATE_ON_EGGROLL.get(PROXY)
             return proxy_address["host"], proxy_address.get("grpc_port", proxy_address["port"]), CoordinationCommunicationProtocol.GRPC
         elif PROXY == CoordinationProxyService.NGINX:
-            proxy_address = ServiceSettings.FATE_ON_SPARK.get(PROXY)
+            proxy_address = ServiceRegistry.FATE_ON_SPARK.get(PROXY)
             protocol = CoordinationCommunicationProtocol.HTTP if PROXY_PROTOCOL == "default" else PROXY_PROTOCOL
             return proxy_address["host"], proxy_address[f"{protocol}_port"], protocol
         else:
@@ -112,7 +114,7 @@ def get_federated_proxy_address(src_party_id, dest_party_id):
 
 
 def federated_coordination_on_http(job_id, method, host, port, endpoint, src_party_id, src_role, dest_party_id, json_body, api_version=API_VERSION, overall_timeout=None, try_times=3):
-    overall_timeout = JobDefaultSettings.default_remote_request_timeout if overall_timeout is None else overall_timeout
+    overall_timeout = JobDefaultConfig.default_remote_request_timeout if overall_timeout is None else overall_timeout
     endpoint = f"/{api_version}{endpoint}"
     exception = None
     json_body['src_role'] = src_role
@@ -141,7 +143,7 @@ def federated_coordination_on_http(job_id, method, host, port, endpoint, src_par
 
 def federated_coordination_on_grpc(job_id, method, host, port, endpoint, src_party_id, src_role, dest_party_id, json_body, api_version=API_VERSION,
                                    overall_timeout=None, try_times=3):
-    overall_timeout = JobDefaultSettings.default_remote_request_timeout if overall_timeout is None else overall_timeout
+    overall_timeout = JobDefaultConfig.default_remote_request_timeout if overall_timeout is None else overall_timeout
     endpoint = f"/{api_version}{endpoint}"
     json_body['src_role'] = src_role
     json_body['src_party_id'] = src_party_id
@@ -206,12 +208,12 @@ def forward_api(role, request_config):
 def get_node_identity(json_body, src_party_id):
     params = {
         'partyId': int(src_party_id),
-        'federatedId': ServiceSettings.FATEMANAGER.get("federatedId"),
+        'federatedId': ServiceRegistry.FATEMANAGER.get("federatedId"),
     }
     try:
         response = requests.post(url="http://{}:{}{}".format(
-            ServiceSettings.FATEMANAGER.get("host"),
-            ServiceSettings.FATEMANAGER.get("port"),
+            ServiceRegistry.FATEMANAGER.get("host"),
+            ServiceRegistry.FATEMANAGER.get("port"),
             FATE_MANAGER_GET_NODE_INFO_ENDPOINT), json=params)
         json_body['appKey'] = response.json().get('data').get('appKey')
         json_body['appSecret'] = response.json().get('data').get('appSecret')

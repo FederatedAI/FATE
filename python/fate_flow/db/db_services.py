@@ -6,8 +6,9 @@ from kazoo.client import KazooClient
 from kazoo.security import make_digest_acl
 from kazoo.exceptions import ZookeeperError, NodeExistsError, NoNodeError
 
-from fate_flow.settings import ServiceSettings, FATE_FLOW_MODEL_TRANSFER_ENDPOINT, \
+from fate_flow.settings import FATE_FLOW_MODEL_TRANSFER_ENDPOINT, \
     FATE_SERVICES_REGISTRY, stat_logger, HOST, HTTP_PORT, ZOOKEEPER, USE_REGISTRY
+from fate_flow.db.service_registry import ServiceRegistry
 from fate_flow.utils.model_utils import models_group_by_party_model_id_and_model_version
 from fate_flow.errors.error_services import *
 
@@ -252,7 +253,7 @@ class FallbackDB(ServicesDB):
         if service_name == 'fateflow':
             return [get_model_download_endpoint()]
 
-        urls = getattr(ServiceSettings, service_name.upper(), [])
+        urls = getattr(ServiceRegistry, service_name.upper(), [])
         if isinstance(urls, dict):
             urls = urls.get('hosts', [])
         if not isinstance(urls, list):

@@ -13,12 +13,11 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import os
 import sys
 
 from fate_arch.common.log import schedule_logger
 from fate_flow.controller.engine_controller.engine import EngineABC
-from fate_flow.runtime_config import RuntimeConfig
+from fate_flow.db.runtime_config import RuntimeConfig
 from fate_flow.entity.run_status import TaskStatus
 from fate_flow.entity.types import KillProcessRetCode
 from fate_flow.operation.task_executor import TaskExecutor
