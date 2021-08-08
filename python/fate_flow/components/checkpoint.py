@@ -24,8 +24,6 @@ from ruamel import yaml
 
 from fate_flow.settings import stat_logger
 from fate_flow.entity.run_parameters import RunParameters
-from fate_flow.model import serialize_buffer_object, parse_proto_object, Locker
-from fate_flow.entity.types import RunParameters
 from fate_flow.utils.model_utils import gen_party_model_id
 from fate_arch.common.file_utils import get_project_base_directory
 from fate_flow.model import serialize_buffer_object, parse_proto_object, Locker

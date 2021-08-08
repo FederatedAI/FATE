@@ -29,12 +29,10 @@ from fate_flow.entity.types import InputSearchType
 from fate_flow.manager.resource_manager import ResourceManager
 from fate_flow.operation.job_saver import JobSaver
 from fate_flow.operation.job_tracker import Tracker
-from fate_flow.settings import USE_DATA_AUTHENTICATION
 from fate_flow.protobuf.python import pipeline_pb2
 from fate_flow.runtime_config import RuntimeConfig
-from fate_flow.settings import USE_AUTHENTICATION
 from fate_flow import job_default_settings
-from fate_flow.settings import USE_AUTHENTICATION, DEFAULT_TASK_PARALLELISM, Settings, USE_DATA_AUTHENTICATION
+from fate_flow.settings import USE_AUTHENTICATION, Settings, USE_DATA_AUTHENTICATION
 from fate_flow.utils import job_utils, schedule_utils, data_utils
 from fate_flow.component_env_utils import dsl_utils
 from fate_flow.utils.authentication_utils import authentication_check
@@ -158,7 +156,7 @@ class JobController(object):
             role=role, job_parameters=job_parameters, create_initiator_baseline=create_initiator_baseline)
         if create_initiator_baseline:
             if job_parameters.task_parallelism is None:
-                job_parameters.task_parallelism = DEFAULT_TASK_PARALLELISM
+                job_parameters.task_parallelism = job_default_settings.DEFAULT_TASK_PARALLELISM
             if job_parameters.federated_status_collect_type is None:
                 job_parameters.federated_status_collect_type = Settings.DEFAULT_FEDERATED_STATUS_COLLECT_TYPE
         if create_initiator_baseline and not job_parameters.computing_partitions:

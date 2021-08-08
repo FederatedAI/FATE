@@ -24,10 +24,8 @@ from fate_arch.common import engine_utils
 from fate_flow.db.db_models import DB, EngineRegistry, Job
 from fate_flow.entity.types import ResourceOperation
 from fate_flow.entity.run_parameters import RunParameters
-from fate_flow.settings import stat_logger, IGNORE_RESOURCE_COMPUTING_ENGINE, IGNORE_RESOURCE_ROLES, SUPPORT_IGNORE_RESOURCE_ENGINES
 from fate_flow.operation.job_saver import JobSaver
-from fate_flow.settings import stat_logger, Settings, STANDALONE_BACKEND_VIRTUAL_CORES_PER_NODE, SUPPORT_BACKENDS_ENTRANCE, \
-    MAX_CORES_PERCENT_PER_JOB, DEFAULT_TASK_CORES, IGNORE_RESOURCE_ROLES, SUPPORT_IGNORE_RESOURCE_ENGINES, TOTAL_CORES_OVERWEIGHT_PERCENT, TOTAL_MEMORY_OVERWEIGHT_PERCENT
+from fate_flow.settings import stat_logger, Settings, IGNORE_RESOURCE_ROLES, SUPPORT_IGNORE_RESOURCE_ENGINES,IGNORE_RESOURCE_COMPUTING_ENGINE
 from fate_flow.utils import job_utils
 from fate_flow import job_default_settings
 
@@ -39,24 +37,6 @@ class ResourceManager(object):
         for engine_type, engine_configs in engines_config.items():
             for engine_name, engine_config in engine_configs.items():
                 cls.register_engine(engine_type=engine_type, engine_name=engine_name, engine_entrance=engine_group_map[engine_type][engine_name], engine_config=engine_config)
-        #dev 1.7
-        for backend_name, backend_engines in SUPPORT_BACKENDS_ENTRANCE.items():
-            for engine_type, engine_keys_list in backend_engines.items():
-                for engine_keys in engine_keys_list:
-                    engine_config = getattr(Settings, backend_name, {}).get(engine_keys[1], {})
-                    if engine_config:
-                        cls.register_engine(engine_type=engine_type, engine_name=engine_keys[0], engine_entrance=engine_keys[1], engine_config=engine_config)
-
-        # initialize standalone engine
-        for backend_engines in SUPPORT_BACKENDS_ENTRANCE.values():
-            for engine_type in backend_engines.keys():
-                engine_name = "STANDALONE"
-                engine_entrance = "fateflow"
-                engine_config = {
-                    "nodes": 1,
-                    "cores_per_node": STANDALONE_BACKEND_VIRTUAL_CORES_PER_NODE,
-                }
-                cls.register_engine(engine_type=engine_type, engine_name=engine_name, engine_entrance=engine_entrance, engine_config=engine_config)
 
     @classmethod
     @DB.connection_context()

@@ -15,9 +15,11 @@
 #
 from pyspark import SparkContext
 sc = SparkContext('local', 'test')
-sc.parallelize()
-#logFile = "file:///Users/jingwang/Documents/tools/spark-2.1.1-bin-hadoop2.7/README.md"
-#logData = sc.textFile(logFile, 2).cache()
-#numAs = logData.filter(lambda line: 'a' in line).count()
-#numBs = logData.filter(lambda line: 'b' in line).count()
-#print('Lines with a: %s, Lines with b: %s' % (numAs, numBs))
+a = []
+for i in range(10):
+    a.append((i, str(i)))
+rdd1 = sc.parallelize(a)
+rdd2 = rdd1.mapValues(f=lambda x: x + "1")
+
+for k, v in rdd2.collect():
+    print(f"{type(k)}: {k} {type(v)} {v}")

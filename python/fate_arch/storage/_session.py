@@ -80,7 +80,7 @@ class StorageSessionBase(StorageSessionABC):
         raise NotImplementedError()
 
     @classmethod
-    def persistent(cls, computing_table: CTableABC, table_namespace, table_name, engine=None, engine_address=None, store_type=None, token: typing.Dict = None):
+    def persistent(cls, computing_table: CTableABC, table_namespace, table_name, schema=None, engine=None, engine_address=None, store_type=None, token: typing.Dict = None):
         if engine:
             if engine not in Relationship.Computing.get(computing_table.engine, {}).get(EngineType.STORAGE, {}).get("support", []):
                 raise Exception(f"storage engine {engine} not supported with computing engine {computing_table.engine}")
@@ -110,7 +110,7 @@ class StorageSessionBase(StorageSessionABC):
         else:
             raise RuntimeError(f"{engine} storage is not supported")
         address = StorageTableMeta.create_address(storage_engine=engine, address_dict=address_dict)
-        schema = {}
+        schema = schema if schema else {}
         computing_table.save(address, schema=schema, partitions=partitions, store_type=store_type)
         part_of_data = []
         part_of_limit = 100

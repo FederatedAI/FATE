@@ -16,14 +16,9 @@
 import os
 from pathlib import Path
 
-from fate_arch.common import file_utils, log
 from fate_arch.common.conf_utils import get_base_config
 from fate_arch.computing import ComputingEngine
-from fate_arch.computing import ComputingEngine
-from fate_arch.federation import FederationEngine
-from fate_arch.storage import StorageEngine
-from fate_arch.common import file_utils, log, EngineType
-from fate_flow.entity.runtime_config import RuntimeConfig
+from fate_arch.common import file_utils, log
 from fate_arch.common.conf_utils import SERVICE_CONF
 
 
@@ -42,15 +37,6 @@ HEADERS = {
 }
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 GRPC_SERVER_MAX_WORKERS = None
-
-IP = get_base_config(FATEFLOW_SERVICE_NAME, {}).get("host", "127.0.0.1")
-HTTP_PORT = get_base_config(FATEFLOW_SERVICE_NAME, {}).get("http_port")
-GRPC_PORT = get_base_config(FATEFLOW_SERVICE_NAME, {}).get("grpc_port")
-
-WORK_MODE = get_base_config("work_mode", 0)
-DATABASE = get_base_config("database", {})
-MODEL_STORE_ADDRESS = get_base_config("model_store_address", {})
-
 MAX_TIMESTAMP_INTERVAL = 60
 
 # Registry
@@ -73,7 +59,6 @@ SUPPORT_IGNORE_RESOURCE_ENGINES = {
 }
 
 # linkis spark config
-LINKIS_SPARK_CONFIG = get_base_config("fate_on_spark", {}).get("linkis_spark")
 LINKIS_EXECUTE_ENTRANCE = "/api/rest_j/v1/entrance/execute"
 LINKIS_KILL_ENTRANCE = "/api/rest_j/v1/entrance/execID/kill"
 LINKIS_QUERT_STATUS = "/api/rest_j/v1/entrance/execID/status"
@@ -124,7 +109,6 @@ CHECK_NODES_IDENTITY = False
 
 
 class Settings:
-
     @classmethod
     def load(cls):
         path = Path(file_utils.get_project_base_directory()) / 'conf' / SERVICE_CONF
@@ -163,9 +147,6 @@ class Settings:
                 k = k.upper()
                 if hasattr(cls, k) and type(getattr(cls, k)) == type(v):
                     setattr(cls, k, v)
-
-        RuntimeConfig.init_config(WORK_MODE=cls.WORK_MODE, JOB_SERVER_HOST=cls.IP, HTTP_PORT=cls.HTTP_PORT)
-
 
 Settings.load()
 

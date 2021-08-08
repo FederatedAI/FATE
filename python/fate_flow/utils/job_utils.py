@@ -28,15 +28,11 @@ from fate_flow.db.db_models import DB, Job, Task
 from fate_flow.entity.types import KillProcessRetCode, JobConfiguration
 from fate_flow.entity.run_status import JobStatus, TaskStatus
 from fate_flow.entity.run_parameters import RunParameters
-from fate_flow.runtime_config import RuntimeConfig
-from fate_flow.settings import stat_logger, WORK_MODE, FATE_BOARD_DASHBOARD_ENDPOINT, SUBPROCESS_STD_LOG_NAME
-from fate_flow.entity.types import JobStatus
-from fate_flow.entity.types import TaskStatus, RunParameters, KillProcessStatusCode
-from fate_flow.settings import stat_logger, JOB_DEFAULT_TIMEOUT, Settings, FATE_BOARD_DASHBOARD_ENDPOINT
+from fate_flow.settings import SUBPROCESS_STD_LOG_NAME
+from fate_flow.settings import stat_logger, Settings, FATE_BOARD_DASHBOARD_ENDPOINT
 from fate_flow.utils import detect_utils, model_utils
 from fate_flow.utils import session_utils
 from fate_flow import job_default_settings
-from fate_arch.common.conf_utils import get_base_config
 
 
 class JobIdGenerator(object):
@@ -492,15 +488,3 @@ def get_board_url(job_id, role, party_id):
         Settings.FATEBOARD.get("port"),
         FATE_BOARD_DASHBOARD_ENDPOINT).format(job_id, role, party_id)
     return board_url
-
-if __name__ == "__main__":
-    from concurrent.futures import ThreadPoolExecutor, as_completed
-    with ThreadPoolExecutor(max_workers=50) as t:
-        obj_list = []
-        for page in range(1, 50):
-            obj = t.submit(new_generate_job_id)
-            obj_list.append(obj)
-
-        for future in as_completed(obj_list):
-            data = future.result()
-            print(f"main: {data}")

@@ -19,9 +19,6 @@ import typing
 
 from peewee import Field, IntegerField, FloatField, BigIntegerField, TextField, Model, CompositeKey, Metadata
 from fate_arch.common.base_utils import current_timestamp, serialize_b64, deserialize_b64, timestamp_to_date, date_string_to_timestamp
-from peewee import Model, BigIntegerField, TextField, CompositeKey
-
-from fate_arch.common.base_utils import current_timestamp, serialize_b64, deserialize_b64, timestamp_to_date
 from fate_arch.common.conf_utils import get_base_config
 from fate_arch.common import WorkMode
 

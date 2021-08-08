@@ -4,11 +4,9 @@ import unittest
 
 import requests
 
-from fate_flow.settings import HTTP_PORT, API_VERSION, WORK_MODE, FATEFLOW_SERVICE_NAME
 from fate_flow.entity.run_status import JobStatus
 from fate_arch.common.file_utils import get_project_base_directory
 from fate_flow.settings import Settings, API_VERSION
-from fate_flow.entity.types import JobStatus
 
 
 class TestDataAccess(unittest.TestCase):

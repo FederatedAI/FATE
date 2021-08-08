@@ -22,7 +22,6 @@ from fate_flow.entity.run_status import FederatedSchedulingStatusCode
 from fate_flow.db.db_models import Job, Task
 from fate_flow.operation.job_saver import JobSaver
 import threading
-from fate_flow.utils import schedule_utils
 
 
 class FederatedScheduler(object):

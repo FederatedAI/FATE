@@ -258,15 +258,15 @@ class Reader(ComponentBase):
                                                                          id_delimiter=src_table_meta.get_id_delimiter(),
                                                                          in_serialized=src_table_meta.get_in_serialized())
         LOGGER.info(f"schema: {src_table_meta.get_schema()}")
-        meta_schema = src_table_meta.get_schema()
+        schema = src_table_meta.get_schema()
         if not src_table_meta.get_in_serialized():
             header_line = src_computing_table.take()
-            meta_schema = data_utils.get_header_schema(header_line=header_line, id_delimiter=src_table_meta.get_id_delimiter())
+            schema = data_utils.get_header_schema(header_line=header_line, id_delimiter=src_table_meta.get_id_delimiter())
         self.tracker.job_tracker.save_output_data(src_computing_table, output_storage_engine=dest_table.get_engine(),
                                                   output_storage_address=dest_table.get_address(),
                                                   output_table_namespace=dest_table.get_namespace(),
                                                   output_table_name=dest_table.get_name(),
-                                                  meta_schema=meta_schema)
+                                                  schema=schema)
         LOGGER.info(f"save {dest_table.get_namespace()} {dest_table.get_name()} success")
 
     def copy_table(self, src_table: StorageTableABC, dest_table: StorageTableABC):

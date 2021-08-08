@@ -20,10 +20,8 @@ from fate_flow.utils.proto_compatibility import basic_meta_pb2
 from fate_flow.utils.proto_compatibility import proxy_pb2, proxy_pb2_grpc
 import grpc
 
-from fate_flow.settings import FATEFLOW_SERVICE_NAME, IP, GRPC_PORT, HEADERS
 from fate_flow.runtime_config import RuntimeConfig
-from fate_flow.settings import FATEFLOW_SERVICE_NAME, Settings, HEADERS, DEFAULT_REMOTE_REQUEST_TIMEOUT
-from fate_flow.entity.runtime_config import RuntimeConfig
+from fate_flow.settings import FATEFLOW_SERVICE_NAME, Settings, HEADERS
 from fate_flow.utils.node_check_utils import nodes_check
 from fate_arch.common.base_utils import json_dumps, json_loads
 from fate_flow import job_default_settings
@@ -46,10 +44,8 @@ def gen_routing_metadata(src_party_id, dest_party_id):
     return routing_head
 
 
-def wrap_grpc_packet(json_body, http_method, url, src_party_id, dst_party_id, job_id=None, overall_timeout=DEFAULT_REMOTE_REQUEST_TIMEOUT):
-    _src_end_point = basic_meta_pb2.Endpoint(ip=Settings.IP, port=Settings.GRPC_PORT)
 def wrap_grpc_packet(json_body, http_method, url, src_party_id, dst_party_id, job_id=None, overall_timeout=job_default_settings.DEFAULT_REMOTE_REQUEST_TIMEOUT):
-    _src_end_point = basic_meta_pb2.Endpoint(ip=IP, port=GRPC_PORT)
+    _src_end_point = basic_meta_pb2.Endpoint(ip=Settings.IP, port=Settings.GRPC_PORT)
     _src = proxy_pb2.Topic(name=job_id, partyId="{}".format(src_party_id), role=FATEFLOW_SERVICE_NAME, callback=_src_end_point)
     _dst = proxy_pb2.Topic(name=job_id, partyId="{}".format(dst_party_id), role=FATEFLOW_SERVICE_NAME, callback=None)
     _task = proxy_pb2.Task(taskId=job_id)
@@ -106,10 +102,8 @@ class UnaryService(proxy_pb2_grpc.DataTransferServiceServicer):
 
 
 def forward_grpc_packet(_json_body, _method, _url, _src_party_id, _dst_party_id, role, job_id=None,
-                        overall_timeout=DEFAULT_REMOTE_REQUEST_TIMEOUT):
-    _src_end_point = basic_meta_pb2.Endpoint(ip=Settings.IP, port=Settings.GRPC_PORT)
                         overall_timeout=job_default_settings.DEFAULT_REMOTE_REQUEST_TIMEOUT):
-    _src_end_point = basic_meta_pb2.Endpoint(ip=IP, port=GRPC_PORT)
+    _src_end_point = basic_meta_pb2.Endpoint(ip=Settings.IP, port=Settings.GRPC_PORT)
     _src = proxy_pb2.Topic(name=job_id, partyId="{}".format(_src_party_id), role=FATEFLOW_SERVICE_NAME, callback=_src_end_point)
     _dst = proxy_pb2.Topic(name=job_id, partyId="{}".format(_dst_party_id), role=role, callback=None)
     _task = proxy_pb2.Task(taskId=job_id)

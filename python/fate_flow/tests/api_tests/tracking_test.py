@@ -5,11 +5,9 @@ import unittest
 
 import requests
 
-from fate_flow.settings import HTTP_PORT, API_VERSION, WORK_MODE, FATEFLOW_SERVICE_NAME
 from fate_flow.entity.run_status import EndStatus, JobStatus
 from fate_arch.common.file_utils import load_json_conf, get_python_base_directory
 from fate_flow.settings import Settings, API_VERSION
-from fate_flow.entity.types import EndStatus, JobStatus
 
 
 class TestTracking(unittest.TestCase):
