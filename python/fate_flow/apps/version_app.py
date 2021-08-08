@@ -44,6 +44,5 @@ def set_fate_server_info():
 def reload_settings():
     settings = {
         "job_default_settings": JobDefaultSettings.load(),
-        "service_settings": ServiceSettings.load()
     }
     return get_json_result(data=settings)

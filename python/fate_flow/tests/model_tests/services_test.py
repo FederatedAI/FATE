@@ -9,6 +9,7 @@ from kazoo.exceptions import NodeExistsError, NoNodeError
 from fate_flow.db import db_services
 from fate_flow.errors.error_services import *
 from fate_flow.db.db_models import DB, MachineLearningModelInfo as MLModel
+from fate_flow import settings
 
 
 model_download_url = 'http://127.0.0.1:9380/v1/model/transfer/arbiter-10000_guest-9999_host-10000_model/202105060929263278441'

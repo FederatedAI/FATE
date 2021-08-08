@@ -7,7 +7,7 @@ from kazoo.security import make_digest_acl
 from kazoo.exceptions import ZookeeperError, NodeExistsError, NoNodeError
 
 from fate_flow.settings import ServiceSettings, FATE_FLOW_MODEL_TRANSFER_ENDPOINT, \
-    FATE_SERVICES_REGISTRY, stat_logger
+    FATE_SERVICES_REGISTRY, stat_logger, HOST, HTTP_PORT, ZOOKEEPER, USE_REGISTRY
 from fate_flow.utils.model_utils import models_group_by_party_model_id_and_model_version
 from fate_flow.errors.error_services import *
 
@@ -35,8 +35,7 @@ def get_model_download_endpoint():
     :return: The url endpoint.
     :rtype: str
     """
-
-    return f'http://{ServiceSettings.HOST}:{ServiceSettings.HTTP_PORT}{FATE_FLOW_MODEL_TRANSFER_ENDPOINT}'
+    return f'http://{HOST}:{HTTP_PORT}{FATE_FLOW_MODEL_TRANSFER_ENDPOINT}'
 
 
 def get_model_download_url(party_model_id, model_version):
@@ -168,16 +167,16 @@ class ZooKeeperDB(ServicesDB):
     supported_services = znodes.keys()
 
     def __init__(self):
-        hosts = ServiceSettings.ZOOKEEPER.get('hosts')
+        hosts = ZOOKEEPER.get('hosts')
         if not isinstance(hosts, list) or not hosts:
             raise ZooKeeperNotConfigured()
 
         client_kwargs = {'hosts': hosts}
 
-        use_acl = ServiceSettings.ZOOKEEPER.get('use_acl', False)
+        use_acl = ZOOKEEPER.get('use_acl', False)
         if use_acl:
-            username = ServiceSettings.ZOOKEEPER.get('user')
-            password = ServiceSettings.ZOOKEEPER.get('password')
+            username = ZOOKEEPER.get('user')
+            password = ZOOKEEPER.get('password')
             if not username or not password:
                 raise MissingZooKeeperUsernameOrPassword()
 
@@ -268,7 +267,7 @@ def service_db():
     :return ZooKeeperDB if `use_registry` is `True`, else FallbackDB.
             FallbackDB is a compatible class and it actually does nothing.
     """
-    use_registry = ServiceSettings.USE_REGISTRY
+    use_registry = USE_REGISTRY
     if not use_registry:
         return FallbackDB()
     if isinstance(use_registry, str):

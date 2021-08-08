@@ -28,7 +28,7 @@ from fate_flow.db.db_models import DB, Job, Task
 from fate_flow.entity.types import KillProcessRetCode, JobConfiguration
 from fate_flow.entity.run_status import JobStatus, TaskStatus
 from fate_flow.entity.run_parameters import RunParameters
-from fate_flow.settings import SUBPROCESS_STD_LOG_NAME, JobDefaultSettings
+from fate_flow.settings import SUBPROCESS_STD_LOG_NAME, JobDefaultSettings, WORK_MODE
 from fate_flow.settings import stat_logger, ServiceSettings, FATE_BOARD_DASHBOARD_ENDPOINT
 from fate_flow.utils import detect_utils, model_utils
 from fate_flow.utils import session_utils
@@ -122,7 +122,7 @@ def check_job_runtime_conf(runtime_conf: typing.Dict):
 def runtime_conf_basic(if_local=False):
     job_runtime_conf = {
         "initiator": {},
-        "job_parameters": {"work_mode": ServiceSettings.WORK_MODE},
+        "job_parameters": {"work_mode": WORK_MODE},
         "role": {},
         "role_parameters": {}
     }

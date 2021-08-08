@@ -37,13 +37,20 @@ _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 GRPC_SERVER_MAX_WORKERS = None
 MAX_TIMESTAMP_INTERVAL = 60
 
-IP = get_base_config(FATE_FLOW_SERVICE_NAME, {}).get("host", "127.0.0.1")
+WORK_MODE = get_base_config("work_mode", 0)
+USE_REGISTRY = get_base_config("use_registry")
+
+HOST = get_base_config(FATE_FLOW_SERVICE_NAME, {}).get("host", "127.0.0.1")
 HTTP_PORT = get_base_config(FATE_FLOW_SERVICE_NAME, {}).get("http_port")
 GRPC_PORT = get_base_config(FATE_FLOW_SERVICE_NAME, {}).get("grpc_port")
+HTTP_APP_KEY = get_base_config(FATE_FLOW_SERVICE_NAME, {}).get("http_app_key")
+HTTP_SECRET_KEY = get_base_config(FATE_FLOW_SERVICE_NAME, {}).get("http_secret_key")
+PROXY = get_base_config(FATE_FLOW_SERVICE_NAME, {}).get("proxy")
+PROXY_PROTOCOL = get_base_config(FATE_FLOW_SERVICE_NAME, {}).get("protocol")
 
-WORK_MODE = get_base_config("work_mode", 0)
 DATABASE = get_base_config("database", {})
-MODEL_STORE_ADDRESS = get_base_config("model_store_address", {})
+ZOOKEEPER = get_base_config("zookeeper", {})
+FATE_FLOW_SERVER_START_CONFIG_ITEMS = {"work_mode", "use_registry", "use_deserialize_safe_module", FATE_FLOW_SERVICE_NAME, "database", "zookeeper"}
 
 # Registry
 FATE_SERVICES_REGISTRY = {
@@ -124,14 +131,6 @@ class SettingsInMemory:
 
 
 class ServiceSettings(SettingsInMemory):
-    HOST = None
-    HTTP_PORT = None
-    GRPC_PORT = None
-    HTTP_APP_KEY = None
-    HTTP_SECRET_KEY = None
-    PROTOCOL = None
-    LINKIS_SPARK_CONFIG = None
-
     @classmethod
     def load(cls):
         path = Path(file_utils.get_project_base_directory()) / 'conf' / SERVICE_CONF
@@ -149,15 +148,14 @@ class ServiceSettings(SettingsInMemory):
         cls.LINKIS_SPARK_CONFIG = conf.get('fate_on_spark', {}).get('linkis_spark')
 
         for k, v in conf.items():
-            if k == FATE_FLOW_SERVICE_NAME:
-                if not isinstance(v, dict):
-                    raise ValueError(f'{FATE_FLOW_SERVICE_NAME} is not a dict')
-
-                for key, val in v.items():
-                    setattr(cls, key.upper(), val)
+            if k in FATE_FLOW_SERVER_START_CONFIG_ITEMS:
+                pass
             else:
+                if not isinstance(v, dict):
+                    raise ValueError(f'{k} is not a dict, external services config must be a dict')
                 setattr(cls, k.upper(), v)
 
+        """
         for k, v in local_conf.items():
             if k == FATE_FLOW_SERVICE_NAME:
                 if isinstance(v, dict):
@@ -169,6 +167,7 @@ class ServiceSettings(SettingsInMemory):
                 k = k.upper()
                 if hasattr(cls, k) and type(getattr(cls, k)) == type(v):
                     setattr(cls, k, v)
+        """
         return cls.get_all()
 
 

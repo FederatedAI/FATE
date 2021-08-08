@@ -22,7 +22,7 @@ from datetime import datetime, timezone
 from importlib.util import spec_from_file_location, module_from_spec
 from flask import Flask, Blueprint, request
 from fate_arch.common.base_utils import CustomJSONEncoder
-from fate_flow.settings import ServiceSettings, MAX_TIMESTAMP_INTERVAL
+from fate_flow.settings import HTTP_APP_KEY, HTTP_SECRET_KEY, MAX_TIMESTAMP_INTERVAL
 from fate_flow.utils.api_utils import error_response
 from fate_flow.settings import API_VERSION, stat_logger, access_logger
 from fate_flow.utils.api_utils import server_error_response
@@ -69,7 +69,7 @@ stat_logger.info('imported pages: %s', ' '.join(str(path) for path in pages_path
 
 @app.before_request
 def authentication():
-    if not (ServiceSettings.HTTP_APP_KEY and ServiceSettings.HTTP_SECRET_KEY):
+    if not (HTTP_APP_KEY and HTTP_SECRET_KEY):
         return
 
     required_headers = {
@@ -93,10 +93,10 @@ def authentication():
     if not request.headers['NONCE']:
         return error_response(400, 'Invalid NONCE')
 
-    if request.headers['APP_KEY'] != ServiceSettings.HTTP_APP_KEY:
+    if request.headers['APP_KEY'] != HTTP_APP_KEY:
         return error_response(401, 'Unknown APP_KEY')
 
-    signature = b64encode(HMAC(ServiceSettings.HTTP_SECRET_KEY.encode('ascii'), b'\n'.join([
+    signature = b64encode(HMAC(HTTP_SECRET_KEY.encode('ascii'), b'\n'.join([
         request.headers['TIMESTAMP'].encode('ascii'),
         request.headers['NONCE'].encode('ascii'),
         request.headers['APP_KEY'].encode('ascii'),
