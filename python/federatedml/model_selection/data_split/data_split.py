@@ -289,22 +289,19 @@ class DataSplitter(ModelBase):
                                                             extra_metas=metas))
 
     @staticmethod
+    def _match_id(data_inst, ids):
+        id_table = computing_session.parallelize(ids, include_key=False, partition=data_inst.partitions)
+        return data_inst.join(id_table.map(lambda k, v: (v, 1)), lambda v1, v2: v1)
+
+    @staticmethod
     def _set_output_table_schema(data_inst, schema):
         if schema is not None and data_inst.count() > 0:
             data_io.set_schema(data_inst, schema)
 
     def split_data(self, data_inst, id_train, id_validate, id_test):
-        id_train_table = computing_session.parallelize(id_train, include_key=False, partition=data_inst.partitions)
-        id_train_table = id_train_table.map(lambda k, v: (v, 1))
-        train_data = data_inst.join(id_train_table, lambda v1, v2: v1)
-
-        id_validate_table = computing_session.parallelize(id_validate, include_key=False, partition=data_inst.partitions)
-        id_validate_table = id_validate_table.map(lambda k, v: (v, 1))
-        validate_data = data_inst.join(id_validate_table, lambda v1, v2: v1)
-
-        id_test_table = computing_session.parallelize(id_test, include_key=False, partition=data_inst.partitions)
-        id_test_table = id_test_table.map(lambda k, v: (v, 1))
-        test_data = data_inst.join(id_test_table, lambda v1, v2: v1)
+        train_data = DataSplitter._match_id(data_inst, id_train)
+        validate_data = DataSplitter._match_id(data_inst, id_validate)
+        test_data = DataSplitter._match_id(data_inst, id_test)
 
         schema = getattr(data_inst, "schema", None)
         self._set_output_table_schema(train_data, schema)
