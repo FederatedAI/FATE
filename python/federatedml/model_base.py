@@ -196,14 +196,6 @@ class ModelBase(object):
         checkpoint_manager.load_checkpoints_from_disk()
         self.checkpoint_manager = checkpoint_manager
 
-    def add_checkpoint(self, step_index, step_name=None, to_save_model=None):
-        step_name = step_name if step_name is not None else self.step_name
-        to_save_model = to_save_model if to_save_model is not None else self.export_model()
-        _checkpoint = self.checkpoint_manager.new_checkpoint(step_index=step_index, step_name=step_name)
-        _checkpoint.save(to_save_model)
-        LOGGER.debug(f"current checkpoint num: {self.checkpoint_manager.checkpoints_number}")
-        return _checkpoint
-
     def get_latest_checkpoint(self):
         return self.checkpoint_manager.latest_checkpoint.read()
 
