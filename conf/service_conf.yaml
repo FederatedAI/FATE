@@ -23,11 +23,6 @@ fateflow:
   proxy: rollsite
   # support default/http/grpc
   protocol: default
-  # It can also be specified in the job configuration using the federated_status_collect_type parameter
-  default_federated_status_collect_type: PULL
-fateboard:
-  host: 127.0.0.1
-  port: 8080
 database:
   name: fate_flow
   user: fate
@@ -36,6 +31,20 @@ database:
   port: 3306
   max_connections: 100
   stale_timeout: 30
+zookeeper:
+  hosts:
+    - 127.0.0.1:2281
+  use_acl: true
+  user: fate
+  password: fate
+# external services
+fateboard:
+  host: 127.0.0.1
+  port: 8080
+fate_on_standalone:
+  standalone:
+    cores_per_node: 20
+    nodes: 1
 fate_on_eggroll:
   clustermanager:
     cores_per_node: 16
@@ -106,12 +115,6 @@ model_store_address:
 servings:
   hosts:
     - 127.0.0.1:8000
-zookeeper:
-  hosts:
-    - 127.0.0.1:2281
-  use_acl: true
-  user: fate
-  password: fate
 fatemanager:
   host: 127.0.0.1
   port: 8001

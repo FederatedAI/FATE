@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 from fate_arch.common.address import LinkisHiveAddress
-from fate_arch.storage import StorageSessionBase, StorageEngine, LinkisHiveStorageType
+from fate_arch.storage import StorageSessionBase, StorageEngine, LinkisHiveStoreType
 from fate_arch.abc import AddressABC
 
 
@@ -29,7 +29,7 @@ class StorageSession(StorageSessionBase):
         pass
 
     def table(self, name, namespace, address: AddressABC, partitions,
-              storage_type: LinkisHiveStorageType = LinkisHiveStorageType.DEFAULT, options=None, **kwargs):
+              storage_type: LinkisHiveStoreType = LinkisHiveStoreType.DEFAULT, options=None, **kwargs):
         self.address = address
         if isinstance(address, LinkisHiveAddress):
             from fate_arch.storage.linkis_hive._table import StorageTable

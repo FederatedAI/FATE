@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 
-from fate_arch.storage import StorageSessionBase, StorageEngine, EggRollStorageType
+from fate_arch.storage import StorageSessionBase, StorageEngine, EggRollStoreType
 from fate_arch.abc import AddressABC
 from fate_arch.common.address import EggRollAddress
 
@@ -25,19 +25,21 @@ class StorageSession(StorageSessionBase):
         self._options = options if options else {}
         self._rp_session = None
         self._rpc = None
+        self.create()
 
     def create(self):
-        from eggroll.core.session import session_init
-        from eggroll.roll_pair.roll_pair import RollPairContext
-        self._options['eggroll.session.deploy.mode'] = "cluster"
-        self._rp_session = session_init(session_id=self._session_id, options=self._options)
-        self._rpc = RollPairContext(session=self._rp_session)
-        self._session_id = self._rp_session.get_session_id()
+        if self._rp_session is None or self._rpc is None:
+            from eggroll.core.session import session_init
+            from eggroll.roll_pair.roll_pair import RollPairContext
+            self._options['eggroll.session.deploy.mode'] = "cluster"
+            self._rp_session = session_init(session_id=self._session_id, options=self._options)
+            self._rpc = RollPairContext(session=self._rp_session)
+            self._session_id = self._rp_session.get_session_id()
 
-    def table(self, name, namespace, address: AddressABC, partitions, storage_type: EggRollStorageType = EggRollStorageType.ROLLPAIR_LMDB, options=None, **kwargs):
+    def table(self, name, namespace, address: AddressABC, partitions, store_type: EggRollStoreType = EggRollStoreType.ROLLPAIR_LMDB, options=None, **kwargs):
         if isinstance(address, EggRollAddress):
             from fate_arch.storage.eggroll._table import StorageTable
-            return StorageTable(context=self._rpc, name=name, namespace=namespace, address=address, partitions=partitions, storage_type=storage_type, options=options)
+            return StorageTable(context=self._rpc, name=name, namespace=namespace, address=address, partitions=partitions, store_type=store_type, options=options)
         raise NotImplementedError(f"address type {type(address)} not supported with eggroll storage")
 
     def cleanup(self, name, namespace):
