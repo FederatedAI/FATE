@@ -293,7 +293,7 @@ def check_job_process(pid):
 
 def check_job_is_timeout(job: Job):
     job_parameters = job.f_runtime_conf_on_party["job_parameters"]
-    timeout = job_parameters.get("timeout", JobDefaultConfig.job_default_timeout)
+    timeout = job_parameters.get("timeout", JobDefaultConfig.job_timeout)
     now_time = current_timestamp()
     running_time = (now_time - job.f_create_time)/1000
     if running_time > timeout:
@@ -479,7 +479,7 @@ def get_timeout(job_id, timeout, runtime_conf, dsl):
 
 def job_default_timeout(runtime_conf, dsl):
     # future versions will improve
-    timeout = JobDefaultConfig.job_default_timeout
+    timeout = JobDefaultConfig.job_timeout
     return timeout
 
 

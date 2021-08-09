@@ -60,7 +60,7 @@ def error_response(response_code, retmsg=None):
 
 def federated_api(job_id, method, endpoint, src_party_id, dest_party_id, src_role, json_body, federated_mode, api_version=API_VERSION,
                   overall_timeout=None):
-    overall_timeout = JobDefaultConfig.default_remote_request_timeout if overall_timeout is None else overall_timeout
+    overall_timeout = JobDefaultConfig.remote_request_timeout if overall_timeout is None else overall_timeout
     if int(dest_party_id) == 0:
         federated_mode = FederatedMode.SINGLE
     if federated_mode == FederatedMode.SINGLE:
@@ -114,7 +114,7 @@ def get_federated_proxy_address(src_party_id, dest_party_id):
 
 
 def federated_coordination_on_http(job_id, method, host, port, endpoint, src_party_id, src_role, dest_party_id, json_body, api_version=API_VERSION, overall_timeout=None, try_times=3):
-    overall_timeout = JobDefaultConfig.default_remote_request_timeout if overall_timeout is None else overall_timeout
+    overall_timeout = JobDefaultConfig.remote_request_timeout if overall_timeout is None else overall_timeout
     endpoint = f"/{api_version}{endpoint}"
     exception = None
     json_body['src_role'] = src_role
@@ -143,7 +143,7 @@ def federated_coordination_on_http(job_id, method, host, port, endpoint, src_par
 
 def federated_coordination_on_grpc(job_id, method, host, port, endpoint, src_party_id, src_role, dest_party_id, json_body, api_version=API_VERSION,
                                    overall_timeout=None, try_times=3):
-    overall_timeout = JobDefaultConfig.default_remote_request_timeout if overall_timeout is None else overall_timeout
+    overall_timeout = JobDefaultConfig.remote_request_timeout if overall_timeout is None else overall_timeout
     endpoint = f"/{api_version}{endpoint}"
     json_body['src_role'] = src_role
     json_body['src_party_id'] = src_party_id

@@ -28,14 +28,14 @@ class JobDefaultConfig(ReloadConfigBase):
     max_cores_percent_per_job = None
 
     # scheduling
-    default_remote_request_timeout = None
-    default_federated_command_trys = None
-    job_default_timeout = None
+    remote_request_timeout = None
+    federated_command_trys = None
+    job_timeout = None
     end_status_job_scheduling_time_limit = None
     end_status_job_scheduling_updates = None
     auto_retries = None
     auto_retry_delay = None
-    default_federated_status_collect_type = None
+    federated_status_collect_type = None
 
     @classmethod
     def load(cls):

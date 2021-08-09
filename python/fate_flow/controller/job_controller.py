@@ -158,7 +158,7 @@ class JobController(object):
             if job_parameters.task_parallelism is None:
                 job_parameters.task_parallelism = JobDefaultConfig.task_parallelism
             if job_parameters.federated_status_collect_type is None:
-                job_parameters.federated_status_collect_type = JobDefaultConfig.default_federated_status_collect_type
+                job_parameters.federated_status_collect_type = JobDefaultConfig.federated_status_collect_type
         if create_initiator_baseline and not job_parameters.computing_partitions:
             job_parameters.computing_partitions = job_parameters.adaptation_parameters[
                 "task_cores_per_node"] * job_parameters.adaptation_parameters["task_nodes"]

@@ -7,12 +7,12 @@ task_memory: 0  # mb
 max_cores_percent_per_job: 1  # 1 means total
 
 # scheduling
-default_remote_request_timeout: 30000  # ms
-default_federated_command_trys: 3
-job_default_timeout: 259200 # s
+job_timeout: 259200 # s
+remote_request_timeout: 30000  # ms
+federated_command_trys: 3
 end_status_job_scheduling_time_limit: 300000 # ms
 end_status_job_scheduling_updates: 1
 auto_retries: 0
 auto_retry_delay: 1  #seconds
 # It can also be specified in the job configuration using the federated_status_collect_type parameter
-default_federated_status_collect_type: PULL
+federated_status_collect_type: PULL
