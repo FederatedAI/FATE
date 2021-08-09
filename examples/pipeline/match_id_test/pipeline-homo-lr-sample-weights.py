@@ -99,6 +99,7 @@ def main(config="../../config.yaml", namespace=""):
 
     pipeline.add_component(homo_lr_0, data=Data(train_data=sample_weight_0.output.data))
     pipeline.add_component(evaluation_0, data=Data(data=homo_lr_0.output.data))
+    evaluation_0.get_party_instance(role='host', party_id=host).component_param(need_run=False)
 
     # compile pipeline once finished adding modules, this step will form conf and dsl files for running job
     pipeline.compile()
