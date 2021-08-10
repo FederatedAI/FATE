@@ -22,7 +22,9 @@ from federatedml.param.hetero_kmeans_param import KmeansParam
 from federatedml.protobuf.generated import hetero_kmeans_meta_pb2, hetero_kmeans_param_pb2
 from federatedml.transfer_variable.transfer_class.hetero_kmeans_transfer_variable import HeteroKmeansTransferVariable
 from federatedml.util import abnormal_detection
+from federatedml.feature.instance import Instance
 from federatedml.util import consts
+import functools
 
 LOGGER = log.getLogger()
 
@@ -135,6 +137,9 @@ class BaseKmeansModel(ModelBase):
         #    return
 
     def reset_union(self):
+        def _add_name(inst, name):
+            return Instance(features=inst.features + [name], inst_id=inst.inst_id)
+
         def kmeans_union(previews_data, name_list):
             if len(previews_data) == 0:
                 return None
@@ -147,8 +152,10 @@ class BaseKmeansModel(ModelBase):
             if self.role == consts.ARBITER:
                 data_outputs = []
                 for data_output, name in zip(previews_data, name_list):
-                    data_output1 = data_output[0].mapValues(lambda value: value + [name])
-                    data_output2 = data_output[1].mapValues(lambda value: value + [name])
+                    f = functools.partial(_add_name, name=name)
+
+                    data_output1 = data_output[0].mapValues(f)
+                    data_output2 = data_output[1].mapValues(f)
                     data_outputs.append([data_output1, data_output2])
             else:
                 data_output1 = sub_union(previews_data, name_list)
@@ -159,7 +166,8 @@ class BaseKmeansModel(ModelBase):
             result_data = None
             for data, name in zip(data_output, name_list):
                 # LOGGER.debug("before mapValues, one data: {}".format(data.first()))
-                data = data.mapValues(lambda value: value + [name])
+                f = functools.partial(_add_name, name=name)
+                data = data.mapValues(f)
                 # LOGGER.debug("after mapValues, one data: {}".format(data.first()))
 
                 if result_data is None:

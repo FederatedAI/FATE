@@ -20,12 +20,12 @@ from fate_arch.session import computing_session as session
 from fate_flow.entity.metric import Metric
 from fate_flow.entity.metric import MetricMeta
 from federatedml.evaluation.metrics import clustering_metric
+from federatedml.feature.instance import Instance
 from federatedml.framework.hetero.procedure import table_aggregator
 from federatedml.param.hetero_kmeans_param import KmeansParam
 from federatedml.unsupervised_learning.kmeans.kmeans_model_base import BaseKmeansModel
 from federatedml.util import LOGGER
 from federatedml.util import consts
-from federatedml.framework.weights import NumpyWeights
 
 
 class HeteroKmeansArbiter(BaseKmeansModel):
@@ -155,7 +155,8 @@ class HeteroKmeansArbiter(BaseKmeansModel):
             c_key = dist_table[i][0]
             result.append(tuple(
                 [int(c_key),
-                 [dist_table[i][1], dist_table_dbi[i][2], cluster_max_radius[c_key], list(cluster_dist._weights)]]))
+                 Instance(features=[dist_table[i][1], dist_table_dbi[i][2],
+                                    cluster_max_radius[c_key], list(cluster_dist._weights)])]))
         predict_result1 = session.parallelize(result, partition=res_dict.partitions, include_key=True)
-        predict_result2 = dist_cluster_table_out
+        predict_result2 = dist_cluster_table_out.mapValues(lambda x: Instance(features=x))
         return predict_result1, predict_result2

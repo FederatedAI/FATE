@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
-import copy
-
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -18,6 +15,8 @@ import copy
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import copy
+
 from federatedml.param.base_param import BaseParam
 from federatedml.util import consts
 
@@ -281,6 +280,7 @@ class CorrelationFilterParam(BaseParam):
     select_federated: bool, default: True
         Whether select federated with other parties or based on local variables
     """
+
     def __init__(self, sort_metric='iv', threshold=0.1, select_federated=True):
         super().__init__()
         self.sort_metric = sort_metric

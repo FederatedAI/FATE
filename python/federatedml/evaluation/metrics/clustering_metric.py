@@ -10,7 +10,7 @@ class JaccardSimilarityScore(object):
     """
 
     def compute(self, labels, pred_scores):
-        return jaccard_similarity_score(labels, pred_scores)
+        return jaccard_similarity_score(labels, pred_scores, average="weighted")
 
 
 class FowlkesMallowsScore(object):
