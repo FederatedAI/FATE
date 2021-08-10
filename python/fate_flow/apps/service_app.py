@@ -19,6 +19,7 @@ from fate_arch.common import conf_utils
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.settings import stat_logger
 from fate_flow.utils.api_utils import get_json_result
+from fate_flow.utils.service_utils import ServiceUtils
 
 manager = Flask(__name__)
 
@@ -37,16 +38,5 @@ def get_fate_version_info():
 
 @manager.route('/registry', methods=['POST'])
 def service_registry():
-    update_server = {}
-    service_config = request.json
-    registry_service_list = ["fatemanager", "studio"]
-    for k, v in service_config.items():
-        if k not in registry_service_list:
-            continue
-        manager_conf = conf_utils.get_base_config(k, {})
-        if not manager_conf:
-            manager_conf = v
-        manager_conf.update(v)
-        conf_utils.update_config(k, manager_conf)
-        update_server[k] = manager_conf
+    update_server = ServiceUtils.register_service(request.json)
     return get_json_result(data={"update_server": update_server})

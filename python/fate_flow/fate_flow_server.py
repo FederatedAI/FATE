@@ -33,7 +33,7 @@ from fate_flow.apps.pipeline_app import manager as pipeline_app_manager
 from fate_flow.apps.table_app import manager as table_app_manager
 from fate_flow.apps.tracking_app import manager as tracking_app_manager
 from fate_flow.apps.permission_app import manager as permission_app_manager
-from fate_flow.apps.version_app import manager as version_app_manager
+from fate_flow.apps.service_app import manager as service_app_manager
 from fate_flow.apps.proxy_app import manager as proxy_app_manager
 from fate_flow.apps.info_app import manager as info_app_manager
 from fate_flow.apps.component_app import manager as component_app_manager
@@ -83,14 +83,14 @@ if __name__ == '__main__':
             '/{}/tracking'.format(API_VERSION): tracking_app_manager,
             '/{}/pipeline'.format(API_VERSION): pipeline_app_manager,
             '/{}/permission'.format(API_VERSION): permission_app_manager,
-            '/{}/version'.format(API_VERSION): version_app_manager,
+            '/{}/version'.format(API_VERSION): service_app_manager,
+            '/{}/service'.format(API_VERSION): service_app_manager,
             '/{}/party'.format(API_VERSION): party_app_manager,
             '/{}/initiator'.format(API_VERSION): initiator_app_manager,
             '/{}/tracker'.format(API_VERSION): tracker_app_manager,
             '/{}/forward'.format(API_VERSION): proxy_app_manager,
             '/{}/info'.format(API_VERSION): info_app_manager,
             '/{}/operation'.format(API_VERSION): operation_app_manager,
-            '/{}/forward'.format(API_VERSION): proxy_app_manager,
             '/{}/component'.format(API_VERSION): component_app_manager,
         }
     )
