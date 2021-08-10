@@ -201,7 +201,8 @@ class ModelBase(object):
             #     header = ["label", "predict_result", "predict_score", "predict_detail", "type"]
             header = ["label", "predict_result", "predict_score", "predict_detail", "type"]
             predict_data.schema = {"header": header,
-                                   "sid_name": schema.get('sid_name')}
+                                   "sid_name": schema.get('sid_name'),
+                                   "content_type": "predict_result"}
         return predict_data
 
     @staticmethod

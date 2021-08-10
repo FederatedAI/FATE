@@ -193,14 +193,21 @@ class BaseKmeansModel(ModelBase):
             if data_output1 is not None:
                 data_output1.schema = {
                     "header": ["cluster_sample_count", "cluster_inner_dist", "inter_cluster_dist"],
-                    "sid_name": "cluster_index"}
+                    "sid_name": "cluster_index",
+                    "content_type": "cluster_result"
+                }
             if data_output2 is not None:
                 data_output2.schema = {"header": ["predicted_cluster_index", "distance"],
-                                       "sid_name": "id"}
+                                       "sid_name": "id",
+                                       "content_type": "cluster_result"}
+
             predict_datas = [data_output1, data_output2]
         else:
             data_output = predict_data
             if data_output is not None:
-                data_output.schema = {"header": ["label", "predicted label"], "sid_name": schema.get('sid_name')}
+                data_output.schema = {"header": ["label", "predicted label"],
+                                      "sid_name": schema.get('sid_name'),
+                                      "content_type": "cluster_result"}
+
             predict_datas = [data_output, None]
         return predict_datas
