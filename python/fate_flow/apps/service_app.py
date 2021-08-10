@@ -35,11 +35,18 @@ def get_fate_version_info():
     return get_json_result(data={request.json.get('module'): version})
 
 
-@manager.route('/set', methods=['POST'])
-def set_fate_server_info():
-    # manager
-    federated_id = request.json.get("federatedId")
-    manager_conf = conf_utils.get_base_config("fatemanager", {})
-    manager_conf["federatedId"] = federated_id
-    conf_utils.update_config("fatemanager", manager_conf)
-    return get_json_result(data={"federatedId": federated_id})
+@manager.route('/registry', methods=['POST'])
+def service_registry():
+    update_server = {}
+    service_config = request.json
+    registry_service_list = ["fatemanager", "studio"]
+    for k, v in service_config.items():
+        if k not in registry_service_list:
+            continue
+        manager_conf = conf_utils.get_base_config(k, {})
+        if not manager_conf:
+            manager_conf = v
+        manager_conf.update(v)
+        conf_utils.update_config(k, manager_conf)
+        update_server[k] = manager_conf
+    return get_json_result(data={"update_server": update_server})
