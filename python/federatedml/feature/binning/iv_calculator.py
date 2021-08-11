@@ -303,7 +303,8 @@ class IvCalculator(object):
         non_event_total = 0
         for bin_res in data_event_count:
             if len(bin_res) != 2:
-                assert 1 == 2, f"data_event_count: {data_event_count}, bin_res: {bin_res}"
+                raise ValueError(f"bin_res should has length of 2,"
+                                 f" data_event_count: {data_event_count}, bin_res: {bin_res}")
             event_total += bin_res[0]
             non_event_total += bin_res[1]
 
