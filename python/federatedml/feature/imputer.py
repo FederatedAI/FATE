@@ -202,11 +202,11 @@ class Imputer(object):
             if output_format is not None:
                 f = functools.partial(Imputer.__replace_missing_value_with_cols_transform_value_format,
                                       transform_list=cols_transform_value, missing_value_list=self.missing_value_list,
-                                      output_format=output_format, skip_cols=skip_cols)
+                                      output_format=output_format, skip_cols=set(skip_cols))
             else:
                 f = functools.partial(Imputer.__replace_missing_value_with_cols_transform_value,
                                       transform_list=cols_transform_value, missing_value_list=self.missing_value_list,
-                                      skip_cols=skip_cols)
+                                      skip_cols=set(skip_cols))
 
             transform_data = data.mapValues(f)
             self.cols_replace_method = replace_method_per_col
@@ -250,11 +250,11 @@ class Imputer(object):
                 f = functools.partial(Imputer.__replace_missing_value_with_cols_transform_value_format,
                                       transform_list=transform_value, missing_value_list=self.missing_value_list,
                                       output_format=output_format,
-                                      skip_cols=skip_cols)
+                                      skip_cols=set(skip_cols))
             else:
                 f = functools.partial(Imputer.__replace_missing_value_with_cols_transform_value,
                                       transform_list=transform_value, missing_value_list=self.missing_value_list,
-                                      skip_cols=skip_cols)
+                                      skip_cols=set(skip_cols))
         else:
             raise ValueError("Unknown replace area {} in Imputer".format(replace_area))
 
