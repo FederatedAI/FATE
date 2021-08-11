@@ -17,5 +17,36 @@ from flow_sdk.client.api.base import BaseFlowAPI
 
 
 class Version(BaseFlowAPI):
-    def get(self):
-        return self._post(url='version/get')
+
+    def api(self):
+        return self._post(url='version/get').get('API')
+
+    def fate(self):
+        return self._post(url='version/get', json={'module': 'FATE'}).get('FATE')
+
+    def fate_flow(self):
+        return self._post(url='version/get', json={'module': 'FATEFlow'}).get('FATEFlow')
+
+    def fate_board(self):
+        return self._post(url='version/get', json={'module': 'FATEBoard'}).get('FATEBoard')
+
+    def centos(self):
+        return self._post(url='version/get', json={'module': 'CENTOS'}).get('CENTOS')
+
+    def ubuntu(self):
+        return self._post(url='version/get', json={'module': 'UBUNTU'}).get('UBUNTU')
+
+    def python(self):
+        return self._post(url='version/get', json={'module': 'PYTHON'}).get('PYTHON')
+
+    def jdk(self):
+        return self._post(url='version/get', json={'module': 'JDK'}).get('JDK')
+
+    def maven(self):
+        return self._post(url='version/get', json={'module': 'MAVEN'}).get('MAVEN')
+
+    def eggroll(self):
+        return self._post(url='version/get', json={'module': 'EGGROLL'}).get('EGGROLL')
+
+    def spark(self):
+        return self._post(url='version/get', json={'module': 'SPARK'}).get('SPARK')
