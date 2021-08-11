@@ -116,6 +116,8 @@ class BaseModel(Model):
         filters = []
         for f_n, f_v in kwargs.items():
             attr_name = 'f_%s' % f_n
+            if not hasattr(cls, attr_name):
+                continue
             if type(f_v) in {list, set}:
                 f_v = list(f_v)
                 if is_continuous_field(type(getattr(cls, attr_name))):
