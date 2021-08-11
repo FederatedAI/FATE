@@ -28,7 +28,7 @@ class FlowClient(BaseFlowClient):
     tag = api.Tag()
     privilege = api.Privilege()
     checkpoint = api.Checkpoint()
-    flow_version = api.Version()
+    fate_version = api.Version()
 
     def __init__(self, ip, port, version):
         super().__init__(ip, port, version)
