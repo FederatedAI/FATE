@@ -1,0 +1,66 @@
+{
+    "dsl_version": 2,
+    "initiator": {
+        "role": "guest",
+        "party_id": 10000
+    },
+    "role": {
+        "host": [
+            9999
+        ],
+        "guest": [
+            10000
+        ]
+    },
+    "job_parameters": {
+        "common": {
+            "backend": 0,
+            "work_mode": 0,
+            "job_type": "train"
+        }
+    },
+    "component_parameters": {
+        "role": {
+            "host": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "dataio_0": {
+                        "with_label": false
+                    }
+                }
+            },
+            "guest": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_guest",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "dataio_0": {
+                        "with_label": true
+                    }
+                }
+            }
+        },
+        "common": {
+            "dataio_0": {
+                "output_format": "dense"
+            },
+            "statistic_0": {
+                "statistics": [
+                    "95%",
+                    "coefficient_of_variance",
+                    "stddev"
+                ],
+                "column_names": [],
+                "column_indexes": -1
+            }
+        }
+    }
+}

@@ -10,12 +10,11 @@ class StandaloneAddress(AddressABC):
 
 
 class EggRollAddress(AddressABC):
-    def __init__(self, host=None, port=None, home=None, name=None, namespace=None, storage_type=None):
+    def __init__(self, host=None, port=None, home=None, name=None, namespace=None):
         self.host = host
         self.port = port
         self.name = name
         self.namespace = namespace
-        self.storage_type = storage_type
         self.home = home
 
 
@@ -38,6 +37,34 @@ class MysqlAddress(AddressABC):
         self.port = port
         self.db = db
         self.name = name
+
+
+class HiveAddress(AddressABC):
+    def __init__(self, host, name, port=10000, username=None, database='default', auth='NONE', configuration=None,
+                 kerberos_service_name=None, password=None):
+        self.host = host
+        self.username = username
+        self.port = port
+        self.database = database
+        self.auth = auth
+        self.configuration = configuration
+        self.kerberos_service_name = kerberos_service_name
+        self.password = password
+        self.name = name
+
+
+class LinkisHiveAddress(AddressABC):
+    def __init__(self, host="127.0.0.1", port=9001, username='', database='', name='', run_type='hql',
+                 execute_application_name='hive', source={}, params={}):
+        self.host = host
+        self.port = port
+        self.username = username
+        self.database = database if database else f"{username}_ind"
+        self.name = name
+        self.run_type = run_type
+        self.execute_application_name = execute_application_name
+        self.source=source
+        self.params = params
 
 
 class FileAddress(AddressABC):

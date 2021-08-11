@@ -11,3 +11,5 @@ flow_test_template:
   predict_conf_path: /examples/flow_test_template/homo_lr/homo-lr-normal-predict-conf.json
   predict_dsl_path: /examples/flow_test_template/homo_lr/homo-lr-normal-predict-dsl.json
   upload_conf_path: /examples/flow_test_template/homo_lr/upload_conf.json
+  homo_deploy_path: /examples/flow_test_template/homo_lr/deploy_conf.json
+  homo_deploy_kube_config_path: /examples/flow_test_template/homo_lr/kube_config.yaml

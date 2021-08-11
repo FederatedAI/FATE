@@ -23,6 +23,7 @@ from federatedml.framework.weights import ListWeights, TransferableWeights
 from federatedml.secureprotol.fate_paillier import PaillierEncryptedNumber
 from federatedml.util import LOGGER
 
+
 class LinearModelWeights(ListWeights):
     def __init__(self, l, fit_intercept, raise_overflow_error=True):
         l = np.array(l)

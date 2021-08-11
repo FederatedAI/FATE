@@ -23,7 +23,7 @@ import peewee
 from fate_arch.abc import StorageTableMetaABC, StorageTableABC, AddressABC
 from fate_arch.common.base_utils import current_timestamp
 from fate_arch.common.log import getLogger
-from fate_arch.storage import Relationship
+from fate_arch.relation_ship import Relationship
 from fate_arch.storage.metastore.db_models import DB, StorageTableMetaModel
 
 MAX_NUM = 10000
@@ -36,17 +36,21 @@ class StorageTableBase(StorageTableABC):
         self._name = name
         self._namespace = namespace
         self._meta = None
+        self._read_access_time = None
+        self._write_access_time = None
 
     def destroy(self):
         # destroy schema
         self._meta.destroy_metas()
         # subclass method needs do: super().destroy()
 
-    def set_meta(self, meta):
-        self._meta = meta
-
-    def get_meta(self):
+    @property
+    def meta(self):
         return self._meta
+
+    @meta.setter
+    def meta(self, meta):
+        self._meta = meta
 
     def get_name(self):
         pass
@@ -60,7 +64,7 @@ class StorageTableBase(StorageTableABC):
     def get_engine(self):
         pass
 
-    def get_type(self):
+    def get_store_type(self):
         pass
 
     def get_options(self):
@@ -68,6 +72,22 @@ class StorageTableBase(StorageTableABC):
 
     def get_partitions(self):
         pass
+
+    @property
+    def read_access_time(self):
+        return self._read_access_time
+
+    def update_read_access_time(self, read_access_time=None):
+        read_access_time = current_timestamp() if not read_access_time else read_access_time
+        self._meta.update_metas(read_access_time=read_access_time)
+
+    @property
+    def write_access_time(self):
+        return self._write_access_time
+
+    def update_write_access_time(self, write_access_time=None):
+        write_access_time = current_timestamp() if not write_access_time else write_access_time
+        self._meta.update_metas(write_access_time=write_access_time)
 
     def put_all(self, kv_list: Iterable, **kwargs):
         pass
@@ -82,29 +102,35 @@ class StorageTableBase(StorageTableABC):
         pass
 
     def save_as(self, dest_name, dest_namespace, partitions=None, schema=None):
-        src_table_meta = self.get_meta()
-        pass
+        src_table_meta = self.meta
+
+    def check_address(self):
+        return True
 
 
 class StorageTableMeta(StorageTableMetaABC):
 
-    def __init__(self, name, namespace, new=False):
+    def __init__(self, name, namespace, new=False, create_address=True):
         self.name = name
         self.namespace = namespace
         self.address = None
         self.engine = None
-        self.type = None
+        self.store_type = None
         self.options = None
         self.partitions = None
         self.in_serialized = None
         self.have_head = None
         self.id_delimiter = None
+        self.extend_sid = None
+        self.auto_increasing_sid = None
         self.schema = None
         self.count = None
         self.part_of_data = None
         self.description = None
         self.create_time = None
         self.update_time = None
+        self.read_access_time = None
+        self.write_access_time = None
         if self.options is None:
             self.options = {}
         if self.schema is None:
@@ -112,12 +138,13 @@ class StorageTableMeta(StorageTableMetaABC):
         if self.part_of_data is None:
             self.part_of_data = []
         if not new:
-            self.build()
+            self.build(create_address)
 
-    def build(self):
+    def build(self, create_address):
         for k, v in self.table_meta.__dict__["__data__"].items():
             setattr(self, k.lstrip("f_"), v)
-        self.address = self.create_address(storage_engine=self.engine, address_dict=self.address)
+        if create_address:
+            self.address = self.create_address(storage_engine=self.engine, address_dict=self.address)
 
     def __new__(cls, *args, **kwargs):
         if not kwargs.get("new", False):
@@ -217,7 +244,9 @@ class StorageTableMeta(StorageTableMetaABC):
             operate = table_meta.update(update_fields)
         if count:
             self.count = count
-        return operate.execute() > 0
+        _return = operate.execute()
+        _meta = StorageTableMeta(name=self.name, namespace=self.namespace)
+        return _return > 0, _meta
 
     @DB.connection_context()
     def destroy_metas(self):
@@ -250,8 +279,8 @@ class StorageTableMeta(StorageTableMetaABC):
     def get_engine(self):
         return self.engine
 
-    def get_type(self):
-        return self.type
+    def get_store_type(self):
+        return self.store_type
 
     def get_options(self):
         return self.options
@@ -264,6 +293,12 @@ class StorageTableMeta(StorageTableMetaABC):
 
     def get_id_delimiter(self):
         return self.id_delimiter
+
+    def get_extend_sid(self):
+        return self.extend_sid
+
+    def get_auto_increasing_sid(self):
+        return self.auto_increasing_sid
 
     def get_have_head(self):
         return self.have_head

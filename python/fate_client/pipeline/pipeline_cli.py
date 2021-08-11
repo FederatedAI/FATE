@@ -33,6 +33,7 @@ def cli():
               help="Path to pipeline logs directory.")
 @click.option("--ip", type=click.STRING, help="Fate flow server ip address.")
 @click.option("--port", type=click.INT, help="Fate flow server port.")
+@click.option("-r", "--system-user", type=click.STRING, help="system user role")
 def _init(**kwargs):
     """
         \b
@@ -46,12 +47,13 @@ def _init(**kwargs):
         \b
         - USAGE:
             pipeline init -c config.yaml
-            pipeline init --ip 10.1.2.3 --port 9380 --log-directory ./logs
+            pipeline init --ip 10.1.2.3 --port 9380 --log-directory ./logs --system-user guest
     """
     config_path = kwargs.get("config_path")
     ip = kwargs.get("ip")
     port = kwargs.get("port")
     log_directory = kwargs.get("log_directory")
+    system_user = kwargs.get("system_user")
 
     if config_path is None and (ip is None or port is None):
         print(
@@ -72,6 +74,12 @@ def _init(**kwargs):
         config["port"] = port
     if log_directory:
         config["log_directory"] = Path(log_directory).resolve().__str__()
+
+    if system_user:
+        system_user = system_user.lower()
+        if system_user not in ["guest", "host", "arbiter"]:
+            raise ValueError(f"system_user {system_user} is not valid. Must be one of (guest, host, arbiter)")
+        config["system_setting"] = {"role": system_user}
 
     with default_config.open("w") as fout:
         yaml.dump(config, fout, Dumper=yaml.RoundTripDumper)
