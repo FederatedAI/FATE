@@ -215,6 +215,9 @@ class MQChannel(object):
                 # set cursor to latest confirmed
                 if self._latest_confirmed is not None:
                     self._consumer_receive.seek(self._latest_confirmed)
+                # otherwise set cursor to first message
+                else:
+                    self._consumer_receive.seek(pulsar.MessageId.earliest)
 
             except Exception as e:
                 LOGGER.debug(
