@@ -19,34 +19,34 @@ from flow_sdk.client.api.base import BaseFlowAPI
 class Version(BaseFlowAPI):
 
     def api(self):
-        return self._post(url='version/get').get('API')
+        return self._post(url='version/get').get('data', {}).get('API')
 
     def fate(self):
-        return self._post(url='version/get', json={'module': 'FATE'}).get('FATE')
+        return self._post(url='version/get', json={'module': 'FATE'}).get('data', {}).get('FATE')
 
     def fate_flow(self):
-        return self._post(url='version/get', json={'module': 'FATEFlow'}).get('FATEFlow')
+        return self._post(url='version/get', json={'module': 'FATEFlow'}).get('data', {}).get('FATEFlow')
 
     def fate_board(self):
-        return self._post(url='version/get', json={'module': 'FATEBoard'}).get('FATEBoard')
+        return self._post(url='version/get', json={'module': 'FATEBoard'}).get('data', {}).get('FATEBoard')
 
     def centos(self):
-        return self._post(url='version/get', json={'module': 'CENTOS'}).get('CENTOS')
+        return self._post(url='version/get', json={'module': 'CENTOS'}).get('data', {}).get('CENTOS')
 
     def ubuntu(self):
-        return self._post(url='version/get', json={'module': 'UBUNTU'}).get('UBUNTU')
+        return self._post(url='version/get', json={'module': 'UBUNTU'}).get('data', {}).get('UBUNTU')
 
     def python(self):
-        return self._post(url='version/get', json={'module': 'PYTHON'}).get('PYTHON')
+        return self._post(url='version/get', json={'module': 'PYTHON'}).get('data', {}).get('PYTHON')
 
     def jdk(self):
-        return self._post(url='version/get', json={'module': 'JDK'}).get('JDK')
+        return self._post(url='version/get', json={'module': 'JDK'}).get('data', {}).get('JDK')
 
     def maven(self):
-        return self._post(url='version/get', json={'module': 'MAVEN'}).get('MAVEN')
+        return self._post(url='version/get', json={'module': 'MAVEN'}).get('data', {}).get('MAVEN')
 
     def eggroll(self):
-        return self._post(url='version/get', json={'module': 'EGGROLL'}).get('EGGROLL')
+        return self._post(url='version/get', json={'module': 'EGGROLL'}).get('data', {}).get('EGGROLL')
 
     def spark(self):
-        return self._post(url='version/get', json={'module': 'SPARK'}).get('SPARK')
+        return self._post(url='version/get', json={'module': 'SPARK'}).get('data', {}).get('SPARK')
