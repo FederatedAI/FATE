@@ -1,6 +1,6 @@
 api_version: v1
-ip:
-port:
+ip: 127.0.0.1
+port: 9380
 server_conf_path:
 app_key:
 secret_key:
