@@ -1,5 +1,5 @@
 {
-    "file": "/home/mingchao/fate/examples/data/breast_homo_host.csv",
+    "file": "/fate/examples/data/breast_homo_host.csv",
     "table_name": "breast_homo_host",
     "namespace": "experiment",
     "head": 1,
