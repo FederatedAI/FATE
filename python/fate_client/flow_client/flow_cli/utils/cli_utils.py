@@ -73,7 +73,7 @@ def access_server(method, ctx, postfix, json_data=None, echo=True, **kwargs):
         if ctx.obj.get('app_key') and ctx.obj.get('secret_key'):
             timestamp = str(round(time() * 1000))
             nonce = str(uuid1())
-            signature = b64encode(HMAC(ctx.obj.get['secret_key'].encode('ascii'), b'\n'.join([
+            signature = b64encode(HMAC(ctx.obj['secret_key'].encode('ascii'), b'\n'.join([
                 timestamp.encode('ascii'),
                 nonce.encode('ascii'),
                 ctx.obj['app_key'].encode('ascii'),
