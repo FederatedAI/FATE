@@ -62,6 +62,8 @@ def run_task(ctx, job_type, include, replace, timeout, update_job_parameters, up
     ctx.obj.update(**kwargs)
     ctx.obj.post_process()
     config_inst = ctx.obj["config"]
+    config_inst.extend_sid = ctx.obj["extend_sid"]
+    config_inst.auto_increasing_sid = ctx.obj["auto_increasing_sid"]
     namespace = ctx.obj["namespace"]
     yes = ctx.obj["yes"]
     data_namespace_mangling = ctx.obj["namespace_mangling"]

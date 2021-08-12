@@ -37,6 +37,8 @@ def run_benchmark(ctx, include, exclude, glob, skip_data, tol, clean_data, **kwa
     ctx.obj.post_process()
     namespace = ctx.obj["namespace"]
     config_inst = ctx.obj["config"]
+    config_inst.extend_sid = ctx.obj["extend_sid"]
+    config_inst.auto_increasing_sid = ctx.obj["auto_increasing_sid"]
     if clean_data is None:
         clean_data = config_inst.clean_data
     data_namespace_mangling = ctx.obj["namespace_mangling"]
