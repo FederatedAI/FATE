@@ -13,12 +13,11 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import json
 import operator
 import typing
 
 from peewee import Field, IntegerField, FloatField, BigIntegerField, TextField, Model, CompositeKey, Metadata
-from fate_arch.common.base_utils import current_timestamp, serialize_b64, deserialize_b64, timestamp_to_date, date_string_to_timestamp
+from fate_arch.common.base_utils import current_timestamp, serialize_b64, deserialize_b64, timestamp_to_date, date_string_to_timestamp, json_dumps, json_loads
 from fate_arch.common.conf_utils import get_base_config
 from fate_arch.common import WorkMode
 
@@ -43,12 +42,12 @@ class JSONField(LongTextField):
     def db_value(self, value):
         if value is None:
             value = {}
-        return json.dumps(value)
+        return json_dumps(value)
 
     def python_value(self, value):
         if value is None:
             return {}
-        return json.loads(value)
+        return json_loads(value)
 
 
 class SerializedField(LongTextField):

@@ -26,7 +26,7 @@ from fate_arch.common import log, base_utils
 from fate_arch.common import Backend, WorkMode, remote_status
 from fate_arch.computing import ComputingEngine
 from fate_arch.federation import FederationEngine
-from fate_arch.storage import StorageEngine, StorageSessionBase
+from fate_arch.storage import StorageEngine, StorageSessionBase, StorageTableMeta
 from fate_arch.storage.metastore.db_models import DB, SessionRecord, init_database_tables
 from fate_arch.session._parties import PartiesInfo
 
@@ -278,7 +278,7 @@ class Session(object):
         return storage_session
 
     @classmethod
-    def persistent(cls, computing_table: CTableABC, table_namespace, table_name, schema=None, engine=None, engine_address=None, store_type=None, token: typing.Dict = None):
+    def persistent(cls, computing_table: CTableABC, table_namespace, table_name, schema=None, engine=None, engine_address=None, store_type=None, token: typing.Dict = None) -> StorageTableMeta:
         return StorageSessionBase.persistent(computing_table=computing_table,
                                              table_namespace=table_namespace,
                                              table_name=table_name,
