@@ -24,10 +24,10 @@ class SharedOptions(object):
         "backend": (('-b', '--backend'),
                     dict(type=int, help="Manual specify backend, 0 for eggroll, 1 for spark", default=None),
                     None),
-        "extend_sid": ('--extend_sid',
+        "extend_sid": (('--extend_sid', ),
                        dict(type=bool, is_flag=True, help="whether to append uuid as sid when uploading data",
                             default=None), False),
-        "auto_increasing_sid": ('--auto_increasing_sid',
+        "auto_increasing_sid": (('--auto_increasing_sid', ),
                                 dict(type=bool, is_flag=True, help="whether to generate sid value starting at 0",
                                      default=None), False),
     }
