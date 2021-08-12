@@ -31,6 +31,7 @@ from pipeline.component.component_base import Component
 from pipeline.component.reader import Reader
 from pipeline.interface import Data
 from pipeline.interface import Model
+from pipeline.interface import Cache
 from pipeline.utils import tools
 from pipeline.utils.invoker.job_submitter import JobInvoker
 from pipeline.utils.logger import LOGGER
@@ -150,7 +151,7 @@ class PipeLine(object):
         return self._roles[role].index(party_id)
 
     @LOGGER.catch(reraise=True)
-    def add_component(self, component, data=None, model=None):
+    def add_component(self, component, data=None, model=None, cache=None):
         if isinstance(component, PipeLine):
             if component.is_deploy() is False:
                 raise ValueError("To use a training pipeline object as predict component, should deploy model first")
@@ -214,6 +215,17 @@ class PipeLine(object):
                     self._components_input[component.name][attr.strip("_")] = val
                 else:
                     self._components_input[component.name][attr.strip("_")] = [val]
+
+        if cache is not None:
+            if not isinstance(cache, Cache):
+                raise ValueError("cache input of component {} should be passed by cache object".format(component.name))
+
+            attr = cache.cache
+            if not isinstance(attr, list):
+                attr = [attr]
+
+            self._components_input[component.name]["cache"] = attr
+
         return self
 
     @LOGGER.catch(reraise=True)
@@ -267,11 +279,13 @@ class PipeLine(object):
 
             if hasattr(component, "output"):
                 component_dsl["output"] = {}
-                if hasattr(component.output, "data_output"):
-                    component_dsl["output"]["data"] = component.output.data_output
+                output_attrs = {"data": "data_output",
+                                "model": "model_output",
+                                "cache": "cache_output"}
 
-                if hasattr(component.output, "model"):
-                    component_dsl["output"]["model"] = component.output.model_output
+                for output_key, attr in output_attrs.items():
+                    if hasattr(component.output, attr):
+                        component_dsl["output"][output_key] = getattr(component.output, attr)
 
             self._train_dsl["components"][name] = component_dsl
 
@@ -579,6 +593,7 @@ class PipeLine(object):
 
             if isinstance(self._components.get(deploy_cpns[-1]), Reader):
                 raise ValueError("Reader should not be include in predict pipeline")
+
         res_dict = self._job_invoker.model_deploy(model_id=self._model_info.model_id,
                                                   model_version=self._model_info.model_version,
                                                   cpn_list=deploy_cpns)
