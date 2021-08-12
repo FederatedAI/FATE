@@ -29,6 +29,44 @@ _ml_base = Path(__file__).resolve().parent.parent.parent
 LOGGER = log.getLogger()
 
 
+class _RunnerDocorator:
+    def __init__(self, meta) -> None:
+        self._roles = set()
+        self._meta = meta
+
+    @property
+    def on_guest(self):
+        self._roles.add("guest")
+        return self
+
+    @property
+    def on_host(self):
+        self._roles.add("host")
+        return self
+
+    @property
+    def on_arbiter(self):
+        self._roles.add("arbiter")
+        return self
+
+    @property
+    def on_local(self):
+        self._roles.add("local")
+        return self
+
+    def __call__(self, cls):
+        if isinstance(cls, ModelBase):
+            for role in self._roles:
+                self._meta._role_to_runner_cls[role] = cls
+        elif inspect.isfunction(cls):
+            for role in self._roles:
+                self._meta._role_to_runner_cls_getter[role] = cls
+        else:
+            raise NotImplementedError(f"type of {cls} not supported")
+
+        return cls
+
+
 class ComponentMeta:
     __name_to_obj: typing.Dict[str, "ComponentMeta"] = {}
 
@@ -41,23 +79,16 @@ class ComponentMeta:
 
         self.__name_to_obj[name] = self
 
-    def impl_runner(self, *args: str):
-        def _wrap(cls):
-            if isinstance(cls, ModelBase):
-                for role in args:
-                    self._role_to_runner_cls[role] = cls
-            elif inspect.isfunction(cls):
-                for role in args:
-                    self._role_to_runner_cls_getter[role] = cls
-            else:
-                raise NotImplementedError(f"type of {cls} not supported")
-
-            return cls
-
-        return _wrap
+    @classmethod
+    def get_meta(cls, name):
+        return cls.__name_to_obj[name]
 
     @property
-    def impl_param(self):
+    def bind_runner(self):
+        return _RunnerDocorator(self)
+
+    @property
+    def bind_param(self):
         def _wrap(cls):
             if isinstance(cls, BaseParam):
                 self._param_cls = cls
@@ -75,10 +106,6 @@ class ComponentMeta:
                 module=self.__module__,
             )
         }
-
-    @classmethod
-    def get_meta(cls, name):
-        return cls.__name_to_obj[name]
 
     def _get_runner(self, role: str):
         if role in self._role_to_runner_cls:
@@ -146,157 +173,3 @@ class Components:
             importlib.import_module(cache["module"])
 
         return ComponentMeta.get_meta(name)
-
-
-"""
-define components
-"""
-dataio_cpn_meta = ComponentMeta("DataIO")
-
-
-@dataio_cpn_meta.impl_param
-def dataio_param():
-    from federatedml.param.dataio_param import DataIOParam
-
-    return DataIOParam
-
-
-@dataio_cpn_meta.impl_runner("guest", "host")
-def dataio_runner():
-    from federatedml.util.data_io import DataIO
-
-    return DataIO
-
-
-hetero_binning_cpn_meta = ComponentMeta("HeteroFeatureBinning")
-
-
-@hetero_binning_cpn_meta.impl_param
-def hetero_feature_binning_param():
-    from federatedml.param.feature_binning_param import HeteroFeatureBinningParam
-
-    return HeteroFeatureBinningParam
-
-
-@hetero_binning_cpn_meta.impl_runner("guest")
-def hetero_feature_binning_guest_runner():
-    from federatedml.feature.hetero_feature_binning.hetero_binning_guest import (
-        HeteroFeatureBinningGuest,
-    )
-
-    return HeteroFeatureBinningGuest
-
-
-@hetero_binning_cpn_meta.impl_runner("host")
-def hetero_feature_binning_host_runner():
-    from federatedml.feature.hetero_feature_binning.hetero_binning_host import (
-        HeteroFeatureBinningHost,
-    )
-
-    return HeteroFeatureBinningHost
-
-
-hetero_feature_selection_cpn_meta = ComponentMeta("HeteroFeatureSelection")
-
-
-@hetero_feature_selection_cpn_meta.impl_param
-def hetero_feature_selection_param():
-    from federatedml.param.feature_selection_param import FeatureSelectionParam
-
-    return FeatureSelectionParam
-
-
-@hetero_feature_selection_cpn_meta.impl_runner("guest")
-def hetero_feature_selection_guest_runner():
-    from federatedml.feature.hetero_feature_selection.feature_selection_guest import (
-        HeteroFeatureSelectionGuest,
-    )
-
-    return HeteroFeatureSelectionGuest
-
-
-@hetero_feature_selection_cpn_meta.impl_runner("host")
-def hetero_feature_selection_host_runner():
-    from federatedml.feature.hetero_feature_selection.feature_selection_host import (
-        HeteroFeatureSelectionHost,
-    )
-
-    return HeteroFeatureSelectionHost
-
-
-intersection_cpn_meta = ComponentMeta("Intersection")
-
-
-@intersection_cpn_meta.impl_param
-def intersection_param():
-    from federatedml.param.intersect_param import IntersectParam
-
-    return IntersectParam
-
-
-@intersection_cpn_meta.impl_runner("guest")
-def intersection_guest_runner():
-    from federatedml.statistic.intersect.intersect_model import IntersectGuest
-
-    return IntersectGuest
-
-
-@intersection_cpn_meta.impl_runner("host")
-def intersection_host_runner():
-    from federatedml.statistic.intersect.intersect_model import IntersectHost
-
-    return IntersectHost
-
-
-hetero_lr_cpn_meta = ComponentMeta("HeteroLR")
-
-
-@hetero_lr_cpn_meta.impl_param
-def hetero_lr_param():
-    from federatedml.param.logistic_regression_param import HeteroLogisticParam
-
-    return HeteroLogisticParam
-
-
-@hetero_lr_cpn_meta.impl_runner("guest")
-def hetero_lr_runner_guest():
-    from federatedml.linear_model.logistic_regression.hetero_logistic_regression.hetero_lr_guest import (
-        HeteroLRGuest,
-    )
-
-    return HeteroLRGuest
-
-
-@hetero_lr_cpn_meta.impl_runner("host")
-def hetero_lr_runner_host():
-    from federatedml.linear_model.logistic_regression.hetero_logistic_regression.hetero_lr_host import (
-        HeteroLRHost,
-    )
-
-    return HeteroLRHost
-
-
-@hetero_lr_cpn_meta.impl_runner("arbiter")
-def hetero_lr_runner_arbiter():
-    from federatedml.linear_model.logistic_regression.hetero_logistic_regression.hetero_lr_arbiter import (
-        HeteroLRArbiter,
-    )
-
-    return HeteroLRArbiter
-
-
-evaluation_cpn_meta = ComponentMeta("Evaluation")
-
-
-@evaluation_cpn_meta.impl_param
-def evaluation_param():
-    from federatedml.param.evaluation_param import EvaluateParam
-
-    return EvaluateParam
-
-
-@evaluation_cpn_meta.impl_runner("guest", "host", "arbiter")
-def evaluation_runner():
-    from federatedml.evaluation.evaluation import Evaluation
-
-    return Evaluation
