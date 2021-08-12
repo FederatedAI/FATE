@@ -172,4 +172,7 @@ class Components:
         if cache:
             importlib.import_module(cache["module"])
 
+        else:
+            import federatedml.components.algorithms
+
         return ComponentMeta.get_meta(name)
