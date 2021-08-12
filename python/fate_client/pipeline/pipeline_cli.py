@@ -118,25 +118,25 @@ def _check():
     """
         \b
         - DESCRIPTION:
-            Pipeline Config Check Command. Will check for Flow Connection Status.
+            Pipeline Config Check Command. Will check for Flow server status and Flow version.
 
         \b
         - USAGE:
             pipeline config check
     """
-    try:
-        from pipeline.backend import config as conf
-        if conf.FlowConfig.IP is None:
-            click.echo(f"Flow server ip not yet configured. Please specify setting with pipeline initialization tool.")
-            return
-        if conf.FlowConfig.PORT is None:
-            click.echo(f"Flow server port not yet configured. Please specify setting with pipeline initialization tool.")
+    from pipeline.backend import config as conf
+    if conf.FlowConfig.IP is None:
+        click.echo(f"Flow server ip not yet configured. Please specify setting with pipeline initialization tool.")
+        return
+    if conf.FlowConfig.PORT is None:
+        click.echo(f"Flow server port not yet configured. Please specify setting with pipeline initialization tool.")
 
-        client = FlowClient(ip=conf.FlowConfig.IP, port=conf.FlowConfig.PORT, version=conf.SERVER_VERSION)
-        click.echo(f"Flow server status normal, Flow version: {client.remote_version.fate_flow()}")
-    except:
+    client = FlowClient(ip=conf.FlowConfig.IP, port=conf.FlowConfig.PORT, version=conf.SERVER_VERSION)
+    version = client.remote_version.fate_flow()
+    if version is None:
         click.echo(f"Flow server not responsive. Please check flow server ip and port setting.")
-
+    else:
+        click.echo(f"Flow server status normal, Flow version: {version}")
 
 cli.add_command(_init)
 cli.add_command(config_group)
