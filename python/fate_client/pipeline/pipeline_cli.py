@@ -133,7 +133,7 @@ def _check():
             click.echo(f"Flow server port not yet configured. Please specify setting with pipeline initialization tool.")
 
         client = FlowClient(ip=conf.FlowConfig.IP, port=conf.FlowConfig.PORT, version=conf.SERVER_VERSION)
-        click.echo(f"Flow server status normal, flow version: {client.version.get()}")
+        click.echo(f"Flow server status normal, Flow version: {client.remote_version.fate_flow()}")
     except:
         click.echo(f"Flow server not responsive. Please check flow server ip and port setting.")
 
