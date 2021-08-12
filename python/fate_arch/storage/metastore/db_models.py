@@ -52,7 +52,7 @@ class BaseDataBase(object):
         db_name = database_config.pop("name")
         if WORK_MODE == WorkMode.STANDALONE:
             from playhouse.apsw_ext import APSWDatabase
-            self.database_connection = APSWDatabase(os.path.join(file_utils.get_project_base_directory(), 'fate_flow_sqlite.db'))
+            self.database_connection = APSWDatabase(file_utils.get_project_base_directory("fate_sqlite.db"))
         elif WORK_MODE == WorkMode.CLUSTER:
             from playhouse.pool import PooledMySQLDatabase
             self.database_connection = PooledMySQLDatabase(db_name, **database_config)

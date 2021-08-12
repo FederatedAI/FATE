@@ -88,3 +88,19 @@ class Party(object):
 
     def __eq__(self, other):
         return self.party_id == other.party_id and self.role == other.role
+
+
+class DTable:
+    def __init__(self, namespace, name, partitions=None):
+        self.name = name
+        self.namespace = namespace
+        self.partitions = partitions
+
+    def __str__(self):
+        return f"DTable(namespace={self.namespace}, name={self.name})"
+
+    def __repr__(self):
+        return self.__str__()
+
+    def __eq__(self, other):
+        return self.namespace == other.namespace and self.name == other.name
