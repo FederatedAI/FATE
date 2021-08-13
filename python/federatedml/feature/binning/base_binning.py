@@ -166,8 +166,8 @@ class BaseBinning(object):
 
         f = functools.partial(BaseBinning.bin_data,
                               split_points=split_points,
-                              cols_dict=self.bin_inner_param.get_need_cal_iv_cols_map(),
-                              header=self.header,
+                              cols_dict=bin_cols_map,
+                              header=header,
                               is_sparse=is_sparse)
         data_bin_dict = data_instances.mapValues(f)
         return data_bin_dict

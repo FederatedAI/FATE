@@ -68,7 +68,7 @@ class HeteroFeatureBinningGuest(BaseFeatureBinning):
                                                           split_points=split_points,
                                                           labels=self.labels,
                                                           label_counts=label_counts,
-                                                          bin_cols_map=self.bin_inner_param.bin_cols_map,
+                                                          bin_cols_map=self.bin_inner_param.get_need_cal_iv_cols_map(),
                                                           label_table=label_table)
 
         if self.model_param.local_only:
