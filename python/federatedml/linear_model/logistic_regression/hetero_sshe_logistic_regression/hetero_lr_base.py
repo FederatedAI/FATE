@@ -53,6 +53,7 @@ class HeteroLRBase(SSHEModelBase, ABC):
         self.host_model_weights = None
         self.encoded_batch_num = []
         self.one_vs_rest_obj = None
+        self.shared_y = None
 
     def _init_model(self, params: LogisticRegressionParam):
         super()._init_model(params)
@@ -95,24 +96,24 @@ class HeteroLRBase(SSHEModelBase, ABC):
                                                              encoder=fix_point_encoder,
                                                              q_field=self.random_field)
 
-    def share_model(self, w, fix_point_encoder, n_iter=-1):
+    def share_model(self, w, fix_point_encoder, suffix):
         source = [w, self.other_party]
         if self.local_party.role == consts.GUEST:
             wb, wa = (
-                fixedpoint_numpy.FixedPointTensor.from_source(f"wb_{n_iter}", source[0],
+                fixedpoint_numpy.FixedPointTensor.from_source(f"wb_{suffix}", source[0],
                                                               encoder=fix_point_encoder,
                                                               q_field=self.random_field),
-                fixedpoint_numpy.FixedPointTensor.from_source(f"wa_{n_iter}", source[1],
+                fixedpoint_numpy.FixedPointTensor.from_source(f"wa_{suffix}", source[1],
                                                               encoder=fix_point_encoder,
                                                               q_field=self.random_field),
             )
             return wb, wa
         else:
             wa, wb = (
-                fixedpoint_numpy.FixedPointTensor.from_source(f"wa_{n_iter}", source[0],
+                fixedpoint_numpy.FixedPointTensor.from_source(f"wa_{suffix}", source[0],
                                                               encoder=fix_point_encoder,
                                                               q_field=self.random_field),
-                fixedpoint_numpy.FixedPointTensor.from_source(f"wb_{n_iter}", source[1],
+                fixedpoint_numpy.FixedPointTensor.from_source(f"wb_{suffix}", source[1],
                                                               encoder=fix_point_encoder,
                                                               q_field=self.random_field),
             )
@@ -175,6 +176,7 @@ class HeteroLRBase(SSHEModelBase, ABC):
                 "sshe_lr",
                 local_party=self.local_party,
                 all_parties=self.parties,
+                q_field=self.random_field,
                 use_mix_rand=self.model_param.use_mix_rand,
         ) as spdz:
             self.fixpoint_encoder = self.create_fixpoint_encoder(remote_pubkey.n)
@@ -188,7 +190,7 @@ class HeteroLRBase(SSHEModelBase, ABC):
                 self.shared_y = self.share_table(self.fixpoint_encoder, value=value, tensor_name="label")
                 LOGGER.debug(f"shared_y: {self.shared_y}, type: {type(self.shared_y)}")
 
-            w_self, w_remote = self.share_model(w, self.fixpoint_encoder)
+            w_self, w_remote = self.share_model(w, self.fixpoint_encoder, suffix="init")
             LOGGER.debug(f"first_w_self shape: {w_self.shape}, w_remote_shape: {w_remote.shape}")
 
             batch_data_generator = self.batch_generator.generate_batch_data()
@@ -225,7 +227,7 @@ class HeteroLRBase(SSHEModelBase, ABC):
                     if self.review_every_iter:
                         LOGGER.debug(f"self_g shape: {self_g.shape}, remote_g_shape: {remote_g}")
 
-                        new_g, host_g = self.review_models(self_g, remote_g)
+                        new_g, host_g = self.review_models(self_g, remote_g, suffix=(self.n_iter_, batch_idx))
                         LOGGER.debug(f"new_g shape: {new_g.shape}, host_g_shape: {host_g}")
 
                         if new_g is not None:
@@ -240,7 +242,7 @@ class HeteroLRBase(SSHEModelBase, ABC):
                                 l=host_g,
                                 fit_intercept=False)
                         w_self, w_remote = self.share_model(self.model_weights.unboxed, self.fixpoint_encoder,
-                                                            n_iter=self.n_iter_)
+                                                            suffix=(self.n_iter_, batch_idx))
                     else:
                         w_self -= self_g * self.optimizer.decay_learning_rate()
                         w_remote -= remote_g * self.optimizer.decay_learning_rate()
@@ -283,7 +285,7 @@ class HeteroLRBase(SSHEModelBase, ABC):
 
             # Finally reconstruct
             if not self.review_every_iter:
-                new_w, host_weights = self.review_models(w_self, w_remote)
+                new_w, host_weights = self.review_models(w_self, w_remote, suffix=("final",))
                 if new_w is not None:
                     self.model_weights = LinearModelWeights(
                         l=new_w,
@@ -299,59 +301,36 @@ class HeteroLRBase(SSHEModelBase, ABC):
             self.load_model(self.validation_strategy.cur_best_model)
         self.set_summary(self.get_model_summary())
 
-    def review_models(self, w_self, w_remote):
+    def review_models(self, w_self, w_remote, suffix=None):
+        if suffix is None:
+             suffix = self.n_iter_
         host_weights = None
         if self.model_param.review_strategy == "respectively":
             if self.role == consts.GUEST:
-                new_w = w_self.reconstruct_unilateral(tensor_name=f"wb_{self.n_iter_}")
-                w_remote.broadcast_reconstruct_share(tensor_name=f"wa_{self.n_iter_}")
+                new_w = w_self.reconstruct_unilateral(tensor_name=f"wb_{suffix}")
+                w_remote.broadcast_reconstruct_share(tensor_name=f"wa_{suffix}")
             else:
-                w_remote.broadcast_reconstruct_share(tensor_name=f"wb_{self.n_iter_}")
-                new_w = w_self.reconstruct_unilateral(tensor_name=f"wa_{self.n_iter_}")
+                w_remote.broadcast_reconstruct_share(tensor_name=f"wb_{suffix}")
+                new_w = w_self.reconstruct_unilateral(tensor_name=f"wa_{suffix}")
 
         elif self.model_param.review_strategy == "all_review_in_guest":
 
             if self.role == consts.GUEST:
-                new_w = w_self.reconstruct_unilateral(tensor_name=f"wb_{self.n_iter_}")
-                host_weights = w_remote.reconstruct_unilateral(tensor_name=f"wa_{self.n_iter_}")
+                new_w = w_self.reconstruct_unilateral(tensor_name=f"wb_{suffix}")
+                host_weights = w_remote.reconstruct_unilateral(tensor_name=f"wa_{suffix}")
                 # self.host_model_weights = [LinearModelWeights(l=hosted_weights, fit_intercept=False)]
             else:
                 if w_remote.shape[0] > 2:
                     raise ValueError("Too many features in Guest. Review strategy: 'all_review_in_guest' "
                                      "should not be used.")
-                w_remote.broadcast_reconstruct_share(tensor_name=f"wb_{self.n_iter_}")
+                w_remote.broadcast_reconstruct_share(tensor_name=f"wb_{suffix}")
 
-                w_self.broadcast_reconstruct_share(tensor_name=f"wa_{self.n_iter_}")
+                w_self.broadcast_reconstruct_share(tensor_name=f"wa_{suffix}")
                 # new_w = np.zeros(w_self.shape)
                 new_w = None
         else:
             raise NotImplementedError(f"review strategy: {self.model_param.review_strategy} has not been implemented.")
-        # self.model_weights = LinearModelWeights(l=new_w,
-        #                                         fit_intercept=self.model_param.init_param.fit_intercept)
         return new_w, host_weights
-
-    # def share_z(self, suffix, **kwargs):
-    #     if self.role == consts.HOST:
-    #         for var_name in ["z", "z_square"]:
-    #             # for var_name in ["z"]:
-    #             z = kwargs[var_name]
-    #             encrypt_z = self.cipher.distribute_encrypt(z.value)
-    #             self.transfer_variable.encrypted_share_matrix.remote(encrypt_z, role=consts.GUEST,
-    #                                                                  suffix=(var_name,) + suffix)
-    #     else:
-    #         res = []
-    #         for var_name in ["z", "z_square"]:
-    #             # for var_name in ["z"]:
-    #             dest_role = consts.GUEST if self.role == consts.HOST else consts.HOST
-    #             z_table = self.transfer_variable.encrypted_share_matrix.get(role=dest_role, idx=0,
-    #                                                                         suffix=(var_name,) + suffix)
-    #             # z_table = self.transfer_variable.encrypted_share_matrix.get_parties(
-    #             #     self.other_party,
-    #             #     suffix=(var_name,) + suffix)[0]
-    #             res.append(fixedpoint_table.PaillierFixedPointTensor(
-    #                 z_table, q_field=self.fixpoint_encoder.n, endec=self.fixpoint_encoder))
-    #         # return res[0], res[1], res[2]
-    #         return res[0], res[1]
 
     def share_encrypted_value(self, suffix, is_remote, **kwargs):
         if is_remote:

@@ -297,10 +297,7 @@ class FixedPointNumber(object):
             return self * -1
 
     def __mod__(self, other):
-        if other != self.n:
-            LOGGER.warning(f"Modding a number that is not equal to self's field.")
         return FixedPointNumber(self.encoding % other, self.exponent, n=self.n, max_int=self.max_int)
-
 
 
 class FixedPointEndec(object):
