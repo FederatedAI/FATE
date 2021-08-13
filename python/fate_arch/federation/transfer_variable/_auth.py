@@ -34,7 +34,8 @@ def _get_transfer_conf():
         return _transfer_auth
 
     _transfer_auth = {}
-    path = Path(__file__).parent.joinpath(_TRANSFER_CONF_PATH).resolve()
+    import federatedml
+    path = Path(federatedml.__file__).parent.joinpath(conf_utils.TRANSFER_CONF)
     if not path.is_file():
         raise NameError(f"transfer variable path conf: {path} not found")
 
@@ -43,7 +44,7 @@ def _get_transfer_conf():
 
     transfer_conf_files = []
     for base_dir in conf.get('paths', []):
-        full_path = path.parent.parent.joinpath(base_dir)
+        full_path = path.parent.joinpath(base_dir)
         if full_path.is_file():
             if full_path.suffix == ".json":
                 transfer_conf_files.append([full_path])

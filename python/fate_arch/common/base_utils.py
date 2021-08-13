@@ -43,6 +43,8 @@ class CustomJSONEncoder(json.JSONEncoder):
             return str(obj)
         elif issubclass(type(obj), Enum) or issubclass(type(obj), IntEnum):
             return obj.value
+        elif isinstance(obj, set):
+            return list(obj)
         else:
             return json.JSONEncoder.default(self, obj)
 
@@ -82,6 +84,12 @@ def timestamp_to_date(timestamp, format_string="%Y-%m-%d %H:%M:%S"):
     time_array = time.localtime(timestamp)
     str_date = time.strftime(format_string, time_array)
     return str_date
+
+
+def date_string_to_timestamp(time_str, format_string="%Y-%m-%d %H:%M:%S"):
+    time_array = time.strptime(time_str, format_string)
+    time_stamp = int(time.mktime(time_array) * 1000)
+    return time_stamp
 
 
 def serialize_b64(src, to_str=False):

@@ -15,7 +15,7 @@
 #
 
 from typing import Iterable
-from fate_arch.storage import StorageTableBase, StorageEngine, EggRollStorageType
+from fate_arch.storage import StorageTableBase, StorageEngine, EggRollStoreType
 
 
 class StorageTable(StorageTableBase):
@@ -25,18 +25,18 @@ class StorageTable(StorageTableBase):
                  namespace,
                  address,
                  partitions: int = None,
-                 storage_type: EggRollStorageType = None,
+                 store_type: EggRollStoreType = None,
                  options=None):
         super(StorageTable, self).__init__(name=name, namespace=namespace)
         self._context = context
         self._address = address
         self._partitions = partitions if partitions else 1
-        self._type = storage_type if storage_type else EggRollStorageType.ROLLPAIR_LMDB
+        self._store_type = store_type if store_type else EggRollStoreType.ROLLPAIR_LMDB
         self._options = options if options else {}
         self._engine = StorageEngine.EGGROLL
 
-        if self._type:
-            self._options["store_type"] = self._type
+        if self._store_type:
+            self._options["store_type"] = self._store_type
         self._options["total_partitions"] = partitions
         self._options["create_if_missing"] = True
         self._table = self._context.load(namespace=self._namespace, name=self._name, options=self._options)
@@ -53,8 +53,8 @@ class StorageTable(StorageTableBase):
     def get_engine(self):
         return self._engine
 
-    def get_type(self):
-        return self._type
+    def get_store_type(self):
+        return self._store_type
 
     def get_partitions(self):
         return self._table.get_partitions()
@@ -63,9 +63,20 @@ class StorageTable(StorageTableBase):
         return self._options
 
     def put_all(self, kv_list: Iterable, **kwargs):
+        super(StorageTable, self).update_write_access_time()
         return self._table.put_all(kv_list)
 
+    def table(self):
+        return self._table
+
+    def union(self, other):
+        return self._table.union(other.table(), func=lambda v1, v2 : v1)
+
+    def save_as(self, dest_name, dest_namespace, partitions=None, schema=None):
+        return self._table.save_as(name=dest_name, namespace=dest_namespace)
+
     def collect(self, **kwargs) -> list:
+        super(StorageTable, self).update_read_access_time()
         return self._table.get_all(**kwargs)
 
     def destroy(self):
@@ -74,5 +85,5 @@ class StorageTable(StorageTableBase):
 
     def count(self, **kwargs):
         count = self._table.count()
-        self.get_meta().update_metas(count=count)
+        self.meta.update_metas(count=count)
         return count

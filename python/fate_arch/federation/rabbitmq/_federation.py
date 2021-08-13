@@ -26,7 +26,7 @@ import pika
 # noinspection PyPackageRequirements
 from pyspark import SparkContext, RDD
 
-from fate_arch.common import conf_utils, file_utils
+from fate_arch.common import conf_utils, file_utils, string_utils
 from fate_arch.abc import FederationABC, GarbageCollectionABC
 from fate_arch.common import Party
 from fate_arch.common.log import getLogger
@@ -135,11 +135,16 @@ class Federation(FederationABC):
         base_user = rabbitmq_config.get("user")
         base_password = rabbitmq_config.get("password")
 
+        """
         federation_info = runtime_conf.get("job_parameters", {}).get(
             "federation_info", {}
         )
         union_name = federation_info.get("union_name")
         policy_id = federation_info.get("policy_id")
+        """
+
+        union_name = string_utils.random_string(4)
+        policy_id = string_utils.random_string(10)
 
         rabbitmq_run = runtime_conf.get("job_parameters", {}).get("rabbitmq_run", {})
         LOGGER.debug(f"rabbitmq_run: {rabbitmq_run}")
@@ -190,9 +195,9 @@ class Federation(FederationABC):
         log_str = f"[rabbitmq.get](name={name}, tag={tag}, parties={parties})"
         LOGGER.debug(f"[{log_str}]start to get")
 
-        for party in parties:
-            if not _get_tag_not_duplicate(name, tag, party):
-                raise ValueError(f"[{log_str}]get from {party} with duplicate tag")
+        # for party in parties:
+        #     if not _get_tag_not_duplicate(name, tag, party):
+        #         raise ValueError(f"[{log_str}]get from {party} with duplicate tag")
 
         _name_dtype_keys = [
             _SPLIT_.join([party.role, party.party_id, name, tag, "get"])
@@ -276,8 +281,8 @@ class Federation(FederationABC):
     ) -> typing.NoReturn:
         log_str = f"[rabbitmq.remote](name={name}, tag={tag}, parties={parties})"
 
-        if not _remote_tag_not_duplicate(name, tag, parties):
-            raise ValueError(f"[{log_str}]remote to {parties} with duplicate tag")
+        # if not _remote_tag_not_duplicate(name, tag, parties):
+        #     raise ValueError(f"[{log_str}]remote to {parties} with duplicate tag")
 
         _name_dtype_keys = [
             _SPLIT_.join([party.role, party.party_id, name, tag, "remote"])

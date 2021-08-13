@@ -50,7 +50,11 @@ def main(config="../../config.yaml", namespace=""):
         "validation_freqs": 3,
         "early_stopping_rounds": 3,
         "init_param": {
-            "init_method": "zeros"
+            "init_method": "zeros",
+            "fit_intercept": True
+        },
+        "encrypt_param": {
+            "key_length": 2048
         },
         "cv_param": {
             "n_splits": 5,
@@ -65,7 +69,7 @@ def main(config="../../config.yaml", namespace=""):
     job_parameters = JobParameters(backend=backend, work_mode=work_mode)
     pipeline.fit(job_parameters)
     # query component summary
-    common_tools.prettify(pipeline.get_component("hetero_lr_0").get_summary())
+    common_tools.prettify(pipeline.get_component("evaluation_0").get_summary())
 
 
 if __name__ == "__main__":

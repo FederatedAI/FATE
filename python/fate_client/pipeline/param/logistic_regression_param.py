@@ -232,8 +232,8 @@ class LogisticParam(BaseParam):
 
         if self.floating_point_precision is not None and \
                 (not isinstance(self.floating_point_precision, int) or\
-                 self.floating_point_precision < 0 or self.floating_point_precision > 64):
-            raise ValueError("floating point precision should be null or a integer between 0 and 64")
+                 self.floating_point_precision < 0 or self.floating_point_precision > 63):
+            raise ValueError("floating point precision should be null or a integer between 0 and 63")
         return True
 
 
@@ -266,7 +266,7 @@ class HomoLogisticParam(LogisticParam):
                  decay=1, decay_sqrt=True,
                  aggregate_iters=1, multi_class='ovr', validation_freqs=None,
                  early_stopping_rounds=None,
-                 metrics=['auc', 'ks'], floating_point_precision=23,
+                 metrics=['auc', 'ks'],
                  use_first_metric_only=False,
                  use_proximal=False,
                  mu=0.1
@@ -278,7 +278,6 @@ class HomoLogisticParam(LogisticParam):
                                                 encrypt_param=encrypt_param, predict_param=predict_param,
                                                 cv_param=cv_param, multi_class=multi_class,
                                                 validation_freqs=validation_freqs,
-                                                floating_point_precision=floating_point_precision,
                                                 decay=decay, decay_sqrt=decay_sqrt,
                                                 early_stopping_rounds=early_stopping_rounds,
                                                 metrics=metrics, use_first_metric_only=use_first_metric_only)
@@ -325,6 +324,7 @@ class HeteroLogisticParam(LogisticParam):
                  decay=1, decay_sqrt=True, sqn_param=StochasticQuasiNewtonParam(),
                  multi_class='ovr', validation_freqs=None, early_stopping_rounds=None,
                  metrics=['auc', 'ks'], floating_point_precision=23,
+                 encrypt_param=EncryptParam(),
                  use_first_metric_only=False, stepwise_param=StepwiseParam()
                  ):
         super(HeteroLogisticParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
@@ -337,6 +337,7 @@ class HeteroLogisticParam(LogisticParam):
                                                   validation_freqs=validation_freqs,
                                                   early_stopping_rounds=early_stopping_rounds,
                                                   metrics=metrics, floating_point_precision=floating_point_precision,
+                                                  encrypt_param=encrypt_param,
                                                   use_first_metric_only=use_first_metric_only,
                                                   stepwise_param=stepwise_param)
         self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)

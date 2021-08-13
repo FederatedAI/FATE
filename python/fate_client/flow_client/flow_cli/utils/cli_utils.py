@@ -16,13 +16,17 @@
 import os
 import sys
 import json
-import click
-import socket
 import typing
 import tarfile
-import requests
 import traceback
 import configparser
+from time import time
+from uuid import uuid1
+from base64 import b64encode
+from hmac import HMAC
+
+import click
+import requests
 from flask import Response
 
 
@@ -62,13 +66,30 @@ def prettify(response, verbose=True):
 
 def access_server(method, ctx, postfix, json_data=None, echo=True, **kwargs):
     if ctx.obj.get('init', False):
+        sess = requests.Session()
+        prepped = requests.Request(method, '/'.join([ctx.obj['server_url'], postfix]),
+                                   json=json_data, **kwargs).prepare()
+
+        if ctx.obj.get('app_key') and ctx.obj.get('secret_key'):
+            timestamp = str(round(time() * 1000))
+            nonce = str(uuid1())
+            signature = b64encode(HMAC(ctx.obj['secret_key'].encode('ascii'), b'\n'.join([
+                timestamp.encode('ascii'),
+                nonce.encode('ascii'),
+                ctx.obj['app_key'].encode('ascii'),
+                prepped.path_url.encode('ascii'),
+                prepped.body,
+            ]), 'sha1').digest()).decode('ascii')
+
+            prepped.headers.update({
+                'TIMESTAMP': timestamp,
+                'NONCE': nonce,
+                'APP_KEY': ctx.obj['app_key'],
+                'SIGNATURE': signature,
+            })
+
         try:
-            url = "/".join([ctx.obj['server_url'], postfix])
-            response = {}
-            if method == 'get':
-                response = requests.get(url=url, json=json_data, **kwargs)
-            elif method == 'post':
-                response = requests.post(url=url, json=json_data, **kwargs)
+            response = sess.send(prepped)
             if echo:
                 prettify(response)
                 return

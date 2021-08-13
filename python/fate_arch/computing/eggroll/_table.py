@@ -20,6 +20,7 @@ import typing
 from fate_arch.abc import CTableABC
 from fate_arch.common import log
 from fate_arch.common.profile import computing_profile
+from fate_arch.computing._type import ComputingEngine
 
 LOGGER = log.getLogger()
 
@@ -28,6 +29,11 @@ class Table(CTableABC):
 
     def __init__(self, rp):
         self._rp = rp
+        self._engine = ComputingEngine.EGGROLL
+
+    @property
+    def engine(self):
+        return self._engine
 
     @property
     def partitions(self):
@@ -37,8 +43,9 @@ class Table(CTableABC):
     def save(self, address, partitions, schema: dict, **kwargs):
         options = kwargs.get("options", {})
         from fate_arch.common.address import EggRollAddress
+        from fate_arch.storage import EggRollStoreType
         if isinstance(address, EggRollAddress):
-            options["store_type"] = address.storage_type
+            options["store_type"] = kwargs.get("store_type", EggRollStoreType.ROLLPAIR_LMDB)
             self._rp.save_as(name=address.name, namespace=address.namespace, partition=partitions, options=options)
             schema.update(self.schema)
             return
@@ -121,7 +128,7 @@ class Table(CTableABC):
                 sampled_table = self._rp.sample(fraction=frac, seed=seed)
                 sampled_count = sampled_table.count()
                 if sampled_count < num:
-                    frac += 0.1
+                    frac *= 1.1
                 else:
                     break
 

@@ -16,10 +16,14 @@ class Backend(IntEnum):
     EGGROLL = 0
     SPARK_RABBITMQ = 1
     SPARK_PULSAR = 2
+    LINKIS_SPARK_RABBITMQ = 3
     STANDALONE = 1
 
     def is_spark_rabbitmq(self):
         return self.value == self.SPARK_RABBITMQ
+
+    def is_linkis_spark_rabbitmq(self):
+        return self.value == self.LINKIS_SPARK_RABBITMQ
 
     def is_spark_pulsar(self):
         return self.value == self.SPARK_PULSAR
@@ -84,3 +88,19 @@ class Party(object):
 
     def __eq__(self, other):
         return self.party_id == other.party_id and self.role == other.role
+
+
+class DTable:
+    def __init__(self, namespace, name, partitions=None):
+        self.name = name
+        self.namespace = namespace
+        self.partitions = partitions
+
+    def __str__(self):
+        return f"DTable(namespace={self.namespace}, name={self.name})"
+
+    def __repr__(self):
+        return self.__str__()
+
+    def __eq__(self, other):
+        return self.namespace == other.namespace and self.name == other.name

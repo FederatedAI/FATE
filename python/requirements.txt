@@ -16,6 +16,7 @@ peewee==3.9.3
 psutil>=5.7.0
 pycryptodomex==3.6.6
 PyMySQL==0.9.3
+pyspark==3.1.2
 python-dotenv==0.13.0
 redis==3.0.1
 requests==2.23.0
@@ -35,10 +36,15 @@ cryptography==3.2.1
 libsm3py==0.0.1
 sortedcontainers==2.2.2
 pytorch-lightning>=1.2.1
-pulsar-client==2.7.0
+filelock==3.0.12
+pulsar-client==2.8.0
+fastavro==1.4.1
+
+# python 3.6
+backports-datetime-fromisoformat==1.0.0
 
 # addtional requirements for eggroll
-grpcio>=1.24.3
+grpcio==1.24.3
 grpcio-tools==1.24.3
 numba==0.50.0
 llvmlite==0.33.0

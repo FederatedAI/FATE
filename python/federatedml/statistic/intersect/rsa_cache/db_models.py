@@ -17,7 +17,6 @@ import inspect
 import os
 import sys
 
-import __main__
 from peewee import Model, CharField, BigIntegerField, TextField, CompositeKey
 from playhouse.pool import PooledMySQLDatabase
 from playhouse.apsw_ext import APSWDatabase
@@ -25,7 +24,7 @@ from playhouse.apsw_ext import APSWDatabase
 from federatedml.util import LOGGER
 from arch.api.utils.core_utils import current_timestamp
 from fate_arch.common import WorkMode
-from fate_flow.settings import DATABASE, WORK_MODE, stat_logger
+from fate_flow.settings import Settings, stat_logger
 
 
 def singleton(cls, *args, **kw):
@@ -43,12 +42,12 @@ def singleton(cls, *args, **kw):
 @singleton
 class BaseDataBase(object):
     def __init__(self):
-        database_config = DATABASE.copy()
+        database_config = Settings.DATABASE.copy()
         db_name = database_config.pop("name")
-        if WORK_MODE == WorkMode.STANDALONE:
+        if Settings.WORK_MODE == WorkMode.STANDALONE:
             self.database_connection = APSWDatabase('fate_flow_sqlite.db')
             stat_logger.info('init sqlite database on standalone mode successfully')
-        elif WORK_MODE == WorkMode.CLUSTER:
+        elif Settings.WORK_MODE == WorkMode.CLUSTER:
             self.database_connection = PooledMySQLDatabase(db_name, **database_config)
             stat_logger.info('init mysql database on cluster mode successfully')
         else:

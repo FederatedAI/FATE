@@ -122,9 +122,10 @@ class JobConf(object):
         self.role = parties.extract_role(
             {role: len(parties) for role, parties in self.role.items()}
         )
-        self.update_job_common_parameters(
-            work_mode=work_mode, backend=backend, timeout=timeout
-        )
+        if timeout > 0:
+            self.update_job_common_parameters(work_mode=work_mode, backend=backend, timeout=timeout)
+        else:
+            self.update_job_common_parameters(work_mode=work_mode, backend=backend)
 
         for key, value in job_parameters.items():
             self.update_parameters(parameters=self.job_parameters, key=key, value=value)
@@ -330,9 +331,9 @@ class Testsuite(object):
         while self._ready_jobs:
             yield self._ready_jobs.pop()
 
-    def pretty_final_summary(self):
+    def pretty_final_summary(self, time_consuming):
         table = prettytable.PrettyTable(
-            ["job_name", "job_id", "status", "exception_id", "rest_dependency"]
+            ["job_name", "job_id", "status", "time_consuming", "exception_id", "rest_dependency"]
         )
         for status in self.get_final_status().values():
             table.add_row(
@@ -340,6 +341,7 @@ class Testsuite(object):
                     status.name,
                     status.job_id,
                     status.status,
+                    "".join([str(time_consuming), "s"]),
                     status.exception_id,
                     ",".join(status.rest_dependency),
                 ]
@@ -408,7 +410,6 @@ class FinalStatus(object):
         self.status = status
         self.exception_id = exception_id
         self.rest_dependency = rest_dependency or []
-
 
 class BenchmarkJob(object):
     def __init__(self, job_name: str, script_path: Path, conf_path: Path):
