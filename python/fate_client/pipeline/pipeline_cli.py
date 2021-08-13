@@ -102,7 +102,7 @@ def _show():
     """
         \b
         - DESCRIPTION:
-            Pipeline Config Show Command. Will show config details.
+            Show pipeline config details for Flow server.
 
         \b
         - USAGE:
@@ -118,7 +118,7 @@ def _check():
     """
         \b
         - DESCRIPTION:
-            Pipeline Config Check Command. Will check for Flow server status and Flow version.
+            Check for Flow server status and Flow version.
 
         \b
         - USAGE:
