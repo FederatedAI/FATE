@@ -20,13 +20,11 @@ import inspect
 import typing
 from pathlib import Path
 
-from fate_arch.common import log
 from federatedml.model_base import ModelBase
 from federatedml.param.base_param import BaseParam
+from federatedml.util import LOGGER
 
 _ml_base = Path(__file__).resolve().parent.parent.parent
-
-LOGGER = log.getLogger()
 
 
 class _RunnerDocorator:
