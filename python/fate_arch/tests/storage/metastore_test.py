@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 import unittest
-from fate_arch.storage.metastore import base_model
+from fate_arch.metastore import base_model
 
 
 class TestBaseModel(unittest.TestCase):
@@ -24,7 +24,7 @@ class TestBaseModel(unittest.TestCase):
     def test(self):
         from peewee import IntegerField, FloatField, AutoField, BigAutoField, BigIntegerField, BitField
         from peewee import CharField, TextField, BooleanField, BigBitField
-        from fate_arch.storage.metastore.base_model import JSONField, LongTextField
+        from fate_arch.metastore.base_model import JSONField, LongTextField
         for f in {IntegerField, FloatField, AutoField, BigAutoField, BigIntegerField, BitField}:
             self.assertEqual(base_model.is_continuous_field(f), True)
         for f in {CharField, TextField, BooleanField, BigBitField}:

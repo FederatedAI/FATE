@@ -17,6 +17,7 @@ import os
 from fate_arch.common import file_utils
 
 SERVICE_CONF = "service_conf.yaml"
+TRANSFER_CONF = "transfer_conf.yaml"
 
 
 def conf_realpath(conf_name):

@@ -24,7 +24,7 @@ from fate_arch.abc import StorageTableMetaABC, StorageTableABC, AddressABC
 from fate_arch.common.base_utils import current_timestamp
 from fate_arch.common.log import getLogger
 from fate_arch.relation_ship import Relationship
-from fate_arch.storage.metastore.db_models import DB, StorageTableMetaModel
+from fate_arch.metastore.db_models import DB, StorageTableMetaModel
 
 MAX_NUM = 10000
 

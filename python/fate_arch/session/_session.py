@@ -26,7 +26,7 @@ from fate_arch.common import Backend, WorkMode, remote_status
 from fate_arch.computing import ComputingEngine
 from fate_arch.federation import FederationEngine
 from fate_arch.storage import StorageEngine, StorageSessionBase, StorageTableMeta
-from fate_arch.storage.metastore.db_models import DB, SessionRecord, init_database_tables
+from fate_arch.metastore.db_models import DB, SessionRecord, init_database_tables
 from fate_arch.session._parties import PartiesInfo
 
 LOGGER = log.getLogger()
