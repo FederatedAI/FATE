@@ -52,10 +52,10 @@ def engines_compatibility(work_mode: typing.Union[WorkMode, int] = None,
                 values = (ComputingEngine.LINKIS_SPARK, FederationEngine.RABBITMQ)
             else:
                 raise RuntimeError(f"unable to find default engines by work_mode: {work_mode} backend: {backend}")
-        elif get_base_config("default_engines", {}).get("computing"):
+        elif get_base_config("default_engines", {}).get("computing") is not None:
             default_engines = get_base_config("default_engines")
-            values = (default_engines["computing"].upper(), default_engines["federation"].upper() if "federation" in default_engines else None)
-            engines["storage"] = default_engines.get("storage", None)
+            values = (default_engines["computing"].upper(), default_engines["federation"].upper() if default_engines.get("federation") is not None else None)
+            engines["storage"] = default_engines["storage"].upper() if default_engines.get("storage") is not None else None
         else:
             raise RuntimeError(f"must provide backend or set default engines on conf/service_conf.yaml")
         engines.update(dict(zip(keys[:2], values)))
