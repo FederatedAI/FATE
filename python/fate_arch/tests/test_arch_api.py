@@ -17,11 +17,17 @@ import uuid
 
 import numpy as np
 from fate_arch import session
+from fate_arch.computing import ComputingEngine
+from fate_arch.federation import FederationEngine
+from fate_arch.storage import StorageEngine
 
 work_mode = 0
 backend = 0
 
-sess = session.Session.create(work_mode=work_mode, backend=backend)
+#sess = session.Session.create(computing=ComputingEngine.STANDALONE, federation=FederationEngine.STANDALONE, storage=StorageEngine.STANDALONE)
+#sess = session.Session.create(computing=ComputingEngine.STANDALONE)
+#sess = session.Session.create(work_mode=work_mode, backend=backend)
+sess = session.Session.create(work_mode=work_mode)
 sess.init_computing().as_default()
 
 data = []

@@ -19,9 +19,6 @@ import sys
 
 from peewee import CharField, IntegerField, BigIntegerField, TextField, CompositeKey, BooleanField
 from fate_arch.storage.metastore.base_model import DateTimeField
-from playhouse.apsw_ext import APSWDatabase
-from playhouse.pool import PooledMySQLDatabase
-
 from fate_arch.common import WorkMode, file_utils, log
 from fate_arch.common.conf_utils import get_base_config
 from fate_arch.storage.metastore.base_model import JSONField, SerializedField, BaseModel

@@ -17,7 +17,6 @@ import os
 from fate_arch.common import file_utils
 
 SERVICE_CONF = "service_conf.yaml"
-TRANSFER_CONF = "transfer_conf.yaml"
 
 
 def conf_realpath(conf_name):
@@ -25,7 +24,6 @@ def conf_realpath(conf_name):
     return os.path.join(file_utils.get_project_base_directory(), conf_path)
 
 
-# TODO: use fate_flow.settings.Settings instead
 def get_base_config(key, default=None, conf_name=SERVICE_CONF):
     try:
         local_config = file_utils.load_yaml_conf(conf_realpath('local.' + conf_name))
