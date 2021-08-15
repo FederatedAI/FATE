@@ -83,13 +83,17 @@ class MQChannel(object):
         self._latest_confirmed = None
         self._first_confirmed = None
 
+        self._subscription_config = {}
+        if self._extra_args.get("subscription") is not None:
+            self._subscription_config.update(self._extra_args["subscription"])
+
         self._producer_config = {}
-        if extra_args.get("producer") is not None:
-            self._producer_config.update(extra_args["producer"])
+        if self._extra_args.get("producer") is not None:
+            self._producer_config.update(self._extra_args["producer"])
 
         self._consumer_config = {}
-        if extra_args.get("consumer") is not None:
-            self._consumer_config.update(extra_args["consumer"])
+        if self._extra_args.get("consumer") is not None:
+            self._consumer_config.update(self._extra_args["consumer"])
 
     @property
     def party_id(self):
@@ -113,10 +117,20 @@ class MQChannel(object):
     def consume(self):
         self._get_or_create_consumer()
 
-        LOGGER.debug("receive topic: {}".format(
-            self._consumer_receive.topic()))
-        message = self._consumer_receive.receive()
-        return message
+        try:
+            LOGGER.debug("receive topic: {}".format(
+                self._consumer_receive.topic()))
+            receive_timeout = self._consumer_config.get(
+                'receive_timeout_millis', None)
+            if receive_timeout is not None:
+                LOGGER.debug(
+                    f"receive timeout millis {receive_timeout}")
+            message = self._consumer_receive.receive(
+                timeout_millis=receive_timeout)
+            return message
+        except Exception:
+            self._consumer_receive.seek(pulsar.MessageId.earliest)
+            raise TimeoutError("meet receive timeout, try to reset the cursor")
 
     @connection_retry
     def basic_ack(self, message):
@@ -135,7 +149,7 @@ class MQChannel(object):
     @connection_retry
     def unack_all(self):
         self._get_or_create_consumer()
-        self._consumer_receive.seek(self._first_confirmed)
+        self._consumer_receive.seek(pulsar.MessageId.earliest)
 
     def cancel(self):
         if self._consumer_conn is not None:
@@ -209,7 +223,7 @@ class MQChannel(object):
                     consumer_name=UNIQUE_CONSUMER_NAME,
                     initial_position=pulsar.InitialPosition.Earliest,
                     replicate_subscription_state_enabled=True,
-                    **self._consumer_config,
+                    **self._subscription_config,
                 )
 
                 # set cursor to latest confirmed
