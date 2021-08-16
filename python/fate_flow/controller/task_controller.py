@@ -189,7 +189,8 @@ class TaskController(object):
         kill_status = False
         try:
             backend_engine = build_engine(task.f_engine_conf.get("computing_engine"))
-            backend_engine.kill(task)
+            if backend_engine:
+                backend_engine.kill(task)
         except Exception as e:
             schedule_logger(task.f_job_id).exception(e)
         else:
