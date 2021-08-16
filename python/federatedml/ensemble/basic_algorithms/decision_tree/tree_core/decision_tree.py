@@ -199,6 +199,8 @@ class DecisionTree(BasicAlgorithms, ABC):
                                                               sparse_optimization=sparse_opt,
                                                               cur_to_split_nodes=cur_to_split_nodes,
                                                               bin_num=bin_num)
+        LOGGER.info("compute node histograms done")
+
         return acc_histograms
 
     """
