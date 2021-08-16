@@ -53,7 +53,7 @@ class _RunnerDocorator:
         return self
 
     def __call__(self, cls):
-        if isinstance(cls, ModelBase):
+        if inspect.isclass(cls) and issubclass(cls, ModelBase):
             for role in self._roles:
                 self._meta._role_to_runner_cls[role] = cls
         elif inspect.isfunction(cls):
@@ -88,7 +88,7 @@ class ComponentMeta:
     @property
     def bind_param(self):
         def _wrap(cls):
-            if isinstance(cls, BaseParam):
+            if inspect.isclass(cls) and issubclass(cls, BaseParam):
                 self._param_cls = cls
             elif inspect.isfunction(cls):
                 self._param_cls_getter = cls
