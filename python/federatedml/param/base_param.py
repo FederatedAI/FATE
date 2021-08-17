@@ -49,7 +49,7 @@ class BaseParam(object):
             config_json=conf,
             param_parse_depth=0,
             valid_check=not allow_redundant,
-            name=self._name,
+            name=getattr(self, "_name", None),
         )
 
     def validate(self):

@@ -85,7 +85,7 @@ class ParamExtract(object):
                 if var not in inst_variables:
                     redundant.append(var)
 
-            if redundant:
+            if redundant and name is not None:
                 raise ValueError(f"cpn `{name}` has redundant parameters {redundant}")
 
         return param
