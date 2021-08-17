@@ -18,6 +18,8 @@ import click
 from pathlib import Path
 from ruamel import yaml
 
+from flow_sdk.client import FlowClient
+
 default_config = Path(__file__).parent.joinpath("config.yaml").resolve()
 
 
@@ -87,7 +89,57 @@ def _init(**kwargs):
     print("Pipeline configuration succeeded.")
 
 
+@click.group("config", help="pipeline config tool")
+def config_group():
+    """
+    pipeline config
+    """
+    pass
+
+
+@config_group.command(name="show")
+def _show():
+    """
+        \b
+        - DESCRIPTION:
+            Show pipeline config details for Flow server.
+
+        \b
+        - USAGE:
+            pipeline config show
+    """
+    with Path(default_config).open("r") as fin:
+        config = yaml.safe_load(fin)
+        click.echo(f"\nPipeline Config: {yaml.dump(config)}")
+
+
+@config_group.command(name="check")
+def _check():
+    """
+        \b
+        - DESCRIPTION:
+            Check for Flow server status and Flow version.
+
+        \b
+        - USAGE:
+            pipeline config check
+    """
+    from pipeline.backend import config as conf
+    if conf.FlowConfig.IP is None:
+        click.echo(f"Flow server ip not yet configured. Please specify setting with pipeline initialization tool.")
+        return
+    if conf.FlowConfig.PORT is None:
+        click.echo(f"Flow server port not yet configured. Please specify setting with pipeline initialization tool.")
+
+    client = FlowClient(ip=conf.FlowConfig.IP, port=conf.FlowConfig.PORT, version=conf.SERVER_VERSION)
+    version = client.remote_version.fate_flow()
+    if version is None:
+        click.echo(f"Flow server not responsive. Please check flow server ip and port setting.")
+    else:
+        click.echo(f"Flow server status normal, Flow version: {version}")
+
 cli.add_command(_init)
+cli.add_command(config_group)
 
 
 if __name__ == '__main__':

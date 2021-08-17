@@ -189,10 +189,9 @@ class ComponentProperties(object):
                 or self.has_test_data
             ):
                 raise DSLConfigError(
-                    "Train_data should be set only in cross-validate "
-                    "task or stepwise task"
+                    "Train_data should be set only if it is a cross-validate "
+                    "task or a stepwise task"
                 )
-
             if self.has_model or self.has_isometric_model:
                 raise DSLConfigError(
                     "In cross-validate task or stepwise task, model "

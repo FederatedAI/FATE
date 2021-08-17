@@ -49,9 +49,8 @@ class BaseFlowClient:
         self.port = port
         self.version = version
 
-        if app_key and secret_key:
-            self.app_key = app_key
-            self.secret_key = secret_key
+        self.app_key = app_key if app_key and secret_key else None
+        self.secret_key = secret_key if app_key and secret_key else None
 
     def _request(self, method, url, **kwargs):
         prepped = requests.Request(method, self.API_BASE_URL + url, **kwargs).prepare()
