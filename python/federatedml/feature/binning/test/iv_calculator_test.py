@@ -43,7 +43,7 @@ class TestIvCalculator(unittest.TestCase):
         bin_obj = self._bin_obj_generator()
         small_table = self.gen_data(10000, 50, 2)
         split_points = bin_obj.fit_split_points(small_table)
-        iv_calculator = IvCalculator(adjustment_factor=0.5)
+        iv_calculator = IvCalculator(adjustment_factor=0.5, role="guest", party_id=9999)
         ivs = iv_calculator.cal_local_iv(small_table, split_points)
         print(f"iv result: {ivs.summary()}")
 
