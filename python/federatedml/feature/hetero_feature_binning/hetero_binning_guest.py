@@ -157,6 +157,7 @@ class HeteroFeatureBinningGuest(BaseFeatureBinning):
         host_bin_methods = encrypted_bin_info['bin_method']
         category_names = encrypted_bin_info['category_names']
         result_counts_dict = dict(result_counts_table.collect())
+        host_party_id = self.component_properties.host_party_idlist[host_idx]
         if host_bin_methods == consts.OPTIMAL:
             if len(result_counts) > 2:
                 raise ValueError("Have not supported optimal binning in multi-class data yet")
@@ -171,12 +172,15 @@ class HeteroFeatureBinningGuest(BaseFeatureBinning):
                 if col_name in category_names:
                     optimal_counts[col_name] = counts
             LOGGER.debug(f"optimal_counts: {optimal_counts}")
-            bin_res = self.iv_calculator.cal_iv_from_counts(optimal_counts, labels=label_elements)
+            bin_res = self.iv_calculator.cal_iv_from_counts(optimal_counts, labels=label_elements,
+                                                            role=consts.HOST, party_id=host_party_id)
             # category_bins = {x: y for x, y in result_counts.items() if x in category_names}
             # host_binning_obj.cal_iv_woe(category_bins, self.model_param.adjustment_factor)
         else:
             bin_res = self.iv_calculator.cal_iv_from_counts(result_counts_table,
-                                                            label_elements)
+                                                            label_elements,
+                                                            role=consts.HOST,
+                                                            party_id=host_party_id)
         return bin_res
 
     def cipher_decompress(self, encrypted_bin_sum, cipher):

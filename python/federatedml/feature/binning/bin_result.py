@@ -207,7 +207,7 @@ class BinResults(object):
         for col_name, col_bin_result in self.all_cols_results.items():
             bin_res_dict = col_bin_result.generate_pb_dict()
             col_result_dict[col_name] = feature_binning_param_pb2.IVParam(**bin_res_dict)
-        # LOGGER.debug("In generated_pb, role: {}, party_id: {}".format(self.role, self.party_id))
+        LOGGER.debug("In generated_pb, role: {}, party_id: {}".format(self.role, self.party_id))
         result_pb = feature_binning_param_pb2.FeatureBinningResult(binning_result=col_result_dict,
                                                                    role=self.role,
                                                                    party_id=str(self.party_id))

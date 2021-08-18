@@ -88,7 +88,9 @@ class BaseFeatureBinning(ModelBase):
         else:
             raise ValueError("Binning method: {} is not supported yet".format(self.model_param.method))
 
-        self.iv_calculator = IvCalculator(self.model_param.adjustment_factor)
+        self.iv_calculator = IvCalculator(self.model_param.adjustment_factor,
+                                          role=self.role,
+                                          party_id=self.component_properties.local_partyid)
         # self.binning_obj.set_role_party(self.role, self.component_properties.local_partyid)
 
     @staticmethod
