@@ -302,6 +302,20 @@ table_delete
       python fate_flow_client.py -f table_delete -n $namespace -t $table_name
       python fate_flow_client.py -f table_delete -j $job_id
 
+table_bind
+^^^^^^^^^^^^
+
+-  description: bind a table to FATE Storage
+-  parameter:
+
+   -  -c --config: config path, Required
+
+
+   .. code:: bash
+
+      python fate_flow_client.py -f table_bind -c examples/bind_mysql_table.json
+
+
 Model
 ~~~~~
 
