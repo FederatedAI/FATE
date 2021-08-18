@@ -17,7 +17,6 @@ import copy
 import getpass
 import json
 import pickle
-import sys
 import time
 from types import SimpleNamespace
 
@@ -63,6 +62,8 @@ class PipeLine(object):
         self._predict_pipeline = []
         self._deploy = False
         self._system_role = SystemSetting.system_setting().get("role")
+        self.online = self.OnlineCommand(self)
+        self._load = False
 
     @LOGGER.catch(reraise=True)
     def set_initiator(self, role, party_id):
@@ -90,6 +91,9 @@ class PipeLine(object):
                 "components": self._components,
                 "stage": self._stage
                 }
+
+    def get_predict_model_info(self):
+        return copy.deepcopy(self._predict_model_info)
 
     def get_train_dsl(self):
         return copy.deepcopy(self._train_dsl)
@@ -563,7 +567,7 @@ class PipeLine(object):
     @LOGGER.catch(reraise=True)
     def deploy_component(self, components=None):
         if self._train_dsl is None:
-            raise ValueError("Before deploy model, training should be finish!!!")
+            raise ValueError("Before deploy model, training should be finished!!!")
 
         if components is None:
             components = self._components
@@ -585,6 +589,8 @@ class PipeLine(object):
         res_dict = self._job_invoker.model_deploy(model_id=self._model_info.model_id,
                                                   model_version=self._model_info.model_version,
                                                   cpn_list=deploy_cpns)
+        self._predict_model_info = SimpleNamespace(model_id=res_dict["model_id"],
+                                                   model_version=res_dict["model_version"])
 
         self._predict_dsl = self._job_invoker.get_predict_dsl(model_id=res_dict["model_id"],
                                                               model_version=res_dict["model_version"])
@@ -596,6 +602,9 @@ class PipeLine(object):
 
     def is_deploy(self):
         return self._deploy
+
+    def is_load(self):
+        return self._load
 
     @LOGGER.catch(reraise=True)
     def init_predict_config(self, config):
@@ -612,7 +621,7 @@ class PipeLine(object):
     @LOGGER.catch(reraise=True)
     def get_component_input_msg(self):
         if VERSION != 2:
-            raise ValueError("In DSL Version 1，only need to config data from args, no need special component")
+            raise ValueError("In DSL Version 1，only need to config data from args, do not need special component")
 
         need_input = {}
         for cpn_name, config in self._predict_dsl["components"].items():
@@ -678,3 +687,36 @@ class PipeLine(object):
 
     def __setstate__(self, state):
         vars(self).update(state)
+
+    class OnlineCommand(object):
+        def __init__(self, pipeline_obj):
+            self.pipeline_obj = pipeline_obj
+
+        def _feed_online_conf(self):
+            conf = {"initiator": self.pipeline_obj._get_initiator_conf(),
+                    "role": self.pipeline_obj._roles}
+            predict_model_info = self.pipeline_obj.get_predict_model_info()
+            train_work_mode = self.pipeline_obj.get_train_conf().get("job_parameters").get("common").get("work_mode")
+            if train_work_mode != WorkMode.CLUSTER:
+                raise ValueError(f"to use FATE serving online inference service, work mode must be CLUSTER.")
+            conf["job_parameters"] = {"model_id": predict_model_info.model_id,
+                                      "model_version": predict_model_info.model_version,
+                                      "work_mode": WorkMode.CLUSTER}
+            return conf
+
+        def load(self, file_path=None):
+            if not self.pipeline_obj.is_deploy():
+                raise ValueError(f"to load model for online inference, must deploy components first.")
+            file_path = file_path if file_path else ""
+            load_conf = self._feed_online_conf()
+            load_conf["job_parameters"]["file_path"] = file_path
+            self.pipeline_obj._job_invoker.load_model(load_conf)
+            self.pipeline_obj._load = True
+
+        def bind(self, service_id, *servings):
+            if not self.pipeline_obj.is_deploy() or not self.pipeline_obj.is_load():
+                raise ValueError(f"to bind model to online service, must deploy and load model first.")
+            bind_conf = self._feed_online_conf()
+            bind_conf["service_id"] = service_id
+            bind_conf["servings"] = list(servings)
+            self.pipeline_obj._job_invoker.bind_model(bind_conf)
