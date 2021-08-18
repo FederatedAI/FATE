@@ -670,32 +670,32 @@ class BaseDSLParser(object):
                     continue
 
                 output_data_maps[name] = {}
-                output_data_str = output_data[0]
-                if "train_data" in input_data or "eval_data" in input_data or "test_data" in input_data:
-                    if "train_data" in input_data:
-                        up_input_data = input_data.get("train_data")[0]
-                    elif "eval_data" in input_data:
-                        up_input_data = input_data.get("eval_data")[0]
+                for output_data_str in output_data:
+                    if "train_data" in input_data or "eval_data" in input_data or "test_data" in input_data:
+                        if "train_data" in input_data:
+                            up_input_data = input_data.get("train_data")[0]
+                        elif "eval_data" in input_data:
+                            up_input_data = input_data.get("eval_data")[0]
+                        else:
+                            up_input_data = input_data.get("test_data")[0]
+                    elif "data" in input_data:
+                        up_input_data = input_data.get("data")[0]
                     else:
-                        up_input_data = input_data.get("test_data")[0]
-                elif "data" in input_data:
-                    up_input_data = input_data.get("data")[0]
-                else:
-                    raise ValueError("train data or eval data or validate data or data should be set")
+                        raise ValueError("train data or eval data or validate data or data should be set")
 
-                up_input_data_component_name = up_input_data.split(".", -1)[0]
-                if up_input_data_component_name == "args" or self.get_need_deploy_parameter(
-                        name=up_input_data_component_name,
-                        setting_conf_prefix=setting_conf_prefix,
-                        deploy_cpns=deploy_cpns):
-                    output_data_maps[name][output_data_str] = [up_input_data]
-                elif self.components[
-                    self.component_name_index.get(up_input_data_component_name)].get_module() == "Reader":
-                    output_data_maps[name][output_data_str] = [up_input_data]
-                else:
-                    up_input_data_suf = up_input_data.split(".", -1)[-1]
-                    output_data_maps[name][output_data_str] = output_data_maps[up_input_data_component_name][
-                        up_input_data_suf]
+                    up_input_data_component_name = up_input_data.split(".", -1)[0]
+                    if up_input_data_component_name == "args" or self.get_need_deploy_parameter(
+                            name=up_input_data_component_name,
+                            setting_conf_prefix=setting_conf_prefix,
+                            deploy_cpns=deploy_cpns):
+                        output_data_maps[name][output_data_str] = [up_input_data]
+                    elif self.components[
+                        self.component_name_index.get(up_input_data_component_name)].get_module() == "Reader":
+                        output_data_maps[name][output_data_str] = [up_input_data]
+                    else:
+                        up_input_data_suf = up_input_data.split(".", -1)[-1]
+                        output_data_maps[name][output_data_str] = output_data_maps[up_input_data_component_name][
+                            up_input_data_suf]
 
     def run(self, *args, **kwargs):
         pass
