@@ -171,6 +171,15 @@ class Components:
             importlib.import_module(cache["module"])
 
         else:
-            import federatedml.components.algorithms
+            _components_base = Path(__file__).resolve().parent
+            for p in _components_base.glob("**/*.py"):
+                module_name = (
+                    p.absolute()
+                    .relative_to(_ml_base)
+                    .with_suffix("")
+                    .__str__()
+                    .replace("/", ".")
+                )
+                importlib.import_module(module_name)
 
         return ComponentMeta.get_meta(name)
