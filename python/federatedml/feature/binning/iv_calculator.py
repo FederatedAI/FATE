@@ -26,8 +26,10 @@ from federatedml.util import LOGGER
 
 
 class IvCalculator(object):
-    def __init__(self, adjustment_factor):
+    def __init__(self, adjustment_factor, role, party_id):
         self.adjustment_factor = adjustment_factor
+        self.role = role
+        self.party_id = party_id
 
     def cal_local_iv(self, data_instances, split_points,
                      labels=None, label_counts=None, bin_cols_map=None,
@@ -65,13 +67,16 @@ class IvCalculator(object):
             label_table = self.convert_label(data_instances, labels)
 
         result_counts = self.cal_bin_label(data_bin_table, sparse_bin_points, label_table, label_counts)
-        multi_bin_res = self.cal_iv_from_counts(result_counts, labels)
+        multi_bin_res = self.cal_iv_from_counts(result_counts, labels,
+                                                role=self.role,
+                                                party_id=self.party_id)
         for col_name, sp in split_points.items():
             multi_bin_res.put_col_split_points(col_name, sp)
         return multi_bin_res
 
-    def cal_iv_from_counts(self, result_counts, labels):
+    def cal_iv_from_counts(self, result_counts, labels, role, party_id):
         result = MultiClassBinResult(labels)
+        result.set_role_party(role, party_id)
         if len(labels) == 2:
             col_result_obj_dict = self.cal_single_label_iv_woe(result_counts,
                                                                self.adjustment_factor)
