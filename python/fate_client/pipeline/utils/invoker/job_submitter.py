@@ -31,40 +31,11 @@ from pipeline.backend.config import StatusCode
 from pipeline.utils.logger import LOGGER
 
 
-class JobFunc:
-    SUBMIT_JOB = "submit_job"
-    UPLOAD = "upload"
-    COMPONENT_OUTPUT_MODEL = "component_output_model"
-    COMPONENT_METRIC = "component_metric_all"
-    JOB_STATUS = "query_job"
-    TASK_STATUS = "query_task"
-    COMPONENT_OUTPUT_DATA = "component_output_data"
-    COMPONENT_OUTPUT_DATA_TABLE = "component_output_data_table"
-    DEPLOY_COMPONENT = "deo"
-
-
 class JobInvoker(object):
     def __init__(self):
         self.client = FlowClient(ip=conf.FlowConfig.IP, port=conf.FlowConfig.PORT, version=conf.SERVER_VERSION)
 
-    @classmethod
-    def _run_cmd(cls, cmd, output_while_running=False):
-        subp = subprocess.Popen(cmd,
-                                shell=False,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT)
-        if not output_while_running:
-            stdout, stderr = subp.communicate()
-            return stdout.decode("utf-8")
-        else:
-            for line in subp.stdout:
-                if line == "":
-                    continue
-                else:
-                    # print(line.strip())
-                    LOGGER.debug(f"{line.strip()}")
-
-    def submit_job(self, dsl=None, submit_conf=None):
+    def submit_job(self, dsl=None, submit_conf=None, callback_func=None):
         dsl_path = None
         with tempfile.TemporaryDirectory() as job_dir:
             if dsl:
@@ -79,6 +50,8 @@ class JobInvoker(object):
                 fout.write(json.dumps(submit_conf))
 
             result = self.client.job.submit(conf_path=submit_path, dsl_path=dsl_path)
+            if callback_func is not None:
+                callback_func(result)
             try:
                 if 'retcode' not in result or result["retcode"] != 0:
                     raise ValueError(f"retcode err")

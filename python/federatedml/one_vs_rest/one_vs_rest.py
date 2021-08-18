@@ -142,13 +142,6 @@ class OneVsRest(object):
 
                 LOGGER.info("start classifier fit")
                 classifier.fit_binary(data_instances_mask_label, validate_data=validate_mask_label_data)
-            #     header = data_instances.schema.get("header")
-            #     data_instances_mask_label = self._mask_data_label(data_instances, label=label)
-            #     data_instances_mask_label.schema['header'] = header
-            #     LOGGER.info("finish mask label:{}".format(label))
-            #
-            #     LOGGER.info("start classifier fit")
-            #     classifier.fit_binary(data_instances_mask_label)
             else:
                 LOGGER.info("start classifier fit")
                 classifier.fit_binary(data_instances, validate_data=validate_data)

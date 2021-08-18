@@ -15,23 +15,23 @@
 #
 
 from federatedml.util.param_extract import ParamExtract
-from federatedml.framework.scheduler.setting_conf_plugins import Components
+from federatedml.components.components import Components
 
 
-def get_support_role(module, roles=None):
-    return Components.get(module).get_supported_roles(roles)
+def get_support_role(module, roles=None, cache=None):
+    return Components.get(module, cache).get_supported_roles()
 
 
-def get_module(module, role):
-    return Components.get(module).get_run_obj(role)
+def get_module(module, role, cache=None):
+    return Components.get(module, cache).get_run_obj(role)
 
 
-def get_module_name(module, role):
-    return Components.get(module).get_run_obj_name(role)
+def get_module_name(module, role, cache=None):
+    return Components.get(module, cache).get_run_obj_name(role)
 
 
-def get_module_param(module, alias):
-    return Components.get(module).get_param_obj(alias)
+def get_module_param(module, alias, cache=None):
+    return Components.get(module, cache).get_param_obj(alias)
 
 
 # this interface only support for dsl v1
