@@ -99,7 +99,7 @@ packages = \
  'federatedml.linear_model.linear_regression.images',
  'federatedml.linear_model.logistic_regression',
  'federatedml.linear_model.logistic_regression.hetero_logistic_regression',
- 'federatedml.linear_model.logistic_regression.homo_logsitic_regression',
+ 'federatedml.linear_model.logistic_regression.homo_logistic_regression',
  'federatedml.linear_model.logistic_regression.images',
  'federatedml.linear_model.poisson_regression',
  'federatedml.linear_model.poisson_regression.hetero_poisson_regression',
