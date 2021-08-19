@@ -105,7 +105,7 @@ def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
         "optimizer": param["optimizer"],
         "batch_size": param["batch_size"],
         "early_stop": "diff",
-        "compute_loss": False,
+        "compute_loss": True,
         "tol": 1e-5,
         "init_param": {
             "init_method": param.get("init_method", 'random_uniform'),
