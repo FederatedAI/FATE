@@ -312,7 +312,7 @@ First, trained pipeline must be deployed before loading and binding model to onl
    # deploy select components
    pipeline.deploy_component([dataio_0, hetero_lr_0])
    # deploy all components
-   # note that Reader component cannot be deployed. Always deploy pipeline with Reader by specified component list.
+   # note that Reader component cannot be deployed. Always deploy pipeline with Reader by specifying component list.
    pipeline.deploy_component()
 
 Then load model, file path to model storage may be supplied.
