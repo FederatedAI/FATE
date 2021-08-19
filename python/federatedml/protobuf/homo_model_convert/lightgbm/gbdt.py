@@ -325,11 +325,26 @@ def sbt_to_lgb(model_param: BoostingTreeModelParam,
     return result
 
 
+def save_lgb(model: lgb.Booster, path):
+    model_str = model.model_to_string()
+    f = open(path, 'w')
+    f.write(model_str)
+    f.close()
+
+
+def load_lgb(path):
+    f = open(path, 'r')
+    model_str = f.read()
+    f.close()
+    lgb_model = lgb.Booster(model_str=model_str)
+    return lgb_model
+
+
 class HomoSBTComponentConverter(ComponentConverterBase):
 
     @staticmethod
     def get_target_modules():
-        return ['HomoSBT']
+        return ['HomoSecureboost']
 
     def convert(self, model_dict):
 
