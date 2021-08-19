@@ -48,7 +48,6 @@ class ComponentProperties(object):
     def __init__(self):
         self.need_cv = False
         self.need_run = False
-        self.need_explain = False
         self.need_stepwise = False
         self.has_model = False
         self.has_isometric_model = False
@@ -79,13 +78,7 @@ class ComponentProperties(object):
             need_run = True
         self.need_run = need_run
 
-        try:
-            self.need_explain = param.model_interpret_param.need_explain
-        except AttributeError:
-            self.need_explain = False
-
-        LOGGER.debug(f"need_run: {self.need_run}, need_cv: {self.need_cv},"
-                     f" need_explain: {self.need_explain}")
+        LOGGER.debug(f"need_run: {self.need_run}, need_cv: {self.need_cv}")
 
         try:
             need_stepwise = param.stepwise_param.need_stepwise
@@ -269,10 +262,6 @@ class ComponentProperties(object):
 
         if self.has_model or self.has_isometric_model:
             running_funcs.add_func(model.load_model, [args])
-
-        if self.need_explain:
-            running_funcs.add_func(model.explain, [train_data, validate_data], save_result=True)
-            return running_funcs
 
         if self.has_train_data and self.has_validate_data:
             # todo_func_list.extend([model.set_flowid, model.fit, model.set_flowid, model.predict])
