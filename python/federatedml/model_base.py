@@ -17,19 +17,41 @@
 #
 
 import copy
+import typing
 
 import numpy as np
-
 from fate_arch.computing import is_table
 
 from federatedml.param.evaluation_param import EvaluateParam
-from federatedml.statistic.data_overview import header_alignment, check_with_inst_id
-from federatedml.feature.instance import Instance
-from federatedml.util.io_check import assert_match_id_consistent
-from federatedml.util import LOGGER
-from federatedml.util import abnormal_detection
+from federatedml.protobuf import deserialize_models
+from federatedml.statistic.data_overview import header_alignment
+from federatedml.util import LOGGER, abnormal_detection
 from federatedml.util.component_properties import ComponentProperties
-from federatedml.util.param_extract import ParamExtract
+
+
+class ComponentOutput:
+    def __init__(self, data, models) -> None:
+        self._data = data
+        if not isinstance(self._data, list):
+            self._data = [data]
+
+        self._models = models
+        if self._models is None:
+            self._models = {}
+
+    @property
+    def data(self) -> list:
+        return self._data
+
+    @property
+    def model(self):
+        serialized_models: typing.Dict[str, typing.Tuple[str, str]] = {}
+        for model_name, buffer_object in self._models.items():
+            serialized_string = buffer_object.SerializeToString()
+            pb_name = type(buffer_object).__name__
+            serialized_models[model_name] = (pb_name, serialized_string)
+
+        return serialized_models
 
 
 class ModelBase(object):
@@ -40,8 +62,8 @@ class ModelBase(object):
         self.data_output = None
         self.model_param = None
         self.transfer_variable = None
-        self.flowid = ''
-        self.task_version_id = ''
+        self.flowid = ""
+        self.task_version_id = ""
         self.need_one_vs_rest = False
         self.tracker = None
         self.checkpoint_manager = None
@@ -50,14 +72,6 @@ class ModelBase(object):
         self.component_properties = ComponentProperties()
         self._summary = dict()
         self._align_cache = dict()
-
-    def _init_runtime_parameters(self, component_parameters):
-        param_extractor = ParamExtract()
-        param = param_extractor.parse_param_from_config(self.model_param, component_parameters)
-        param.check()
-        self.role = self.component_properties.parse_component_param(component_parameters, param).role
-        self._init_model(param)
-        return param
 
     @property
     def need_cv(self):
@@ -78,16 +92,45 @@ class ModelBase(object):
         pass
 
     def _parse_need_run(self, model_dict, model_meta_name):
-        meta_obj = list(model_dict.get('model').values())[0].get(model_meta_name)
+        meta_obj = list(model_dict.get("model").values())[0].get(model_meta_name)
         need_run = meta_obj.need_run
         # self.need_run = need_run
         self.component_properties.need_run = need_run
 
-    def run(self, component_parameters=None, args=None):
-        self._init_runtime_parameters(component_parameters)
-        self.component_properties.parse_dsl_args(args)
+    def run(
+        self,
+        cpn_input,
+        warn_start: bool,
+    ):
+        self.task_version_id = cpn_input.task_version_id
+        self.tracker = cpn_input.tracker
+        self.checkpoint_manager = cpn_input.checkpoint_manager
 
-        running_funcs = self.component_properties.extract_running_rules(args, self)
+        # deserialize models
+        deserialize_models(cpn_input.models)
+        if not warn_start:
+            self._run(cpn_input)
+        else:
+            self._warn_start(cpn_input)
+
+        return ComponentOutput(self.save_data(), self.export_model())
+
+    def _run(self, cpn_input):
+        # paramters
+        self.model_param.update(cpn_input.parameters)
+        self.model_param.check()
+        self.component_properties.parse_component_param(
+            cpn_input.roles, self.model_param
+        )
+        self.role = self.component_properties.role
+        self.component_properties.parse_dsl_args(cpn_input.datasets, cpn_input.models)
+
+        # init component, implemented by subclasses
+        self._init_model(self.model_param)
+
+        running_funcs = self.component_properties.extract_running_rules(
+            datasets=cpn_input.datasets, models=cpn_input.models, cpn=self
+        )
         LOGGER.debug(f"running_funcs: {running_funcs.todo_func_list}")
         saved_result = []
         for func, params, save_result, use_previews in running_funcs:
@@ -98,12 +141,10 @@ class ModelBase(object):
                 else:
                     real_param = saved_result
                 LOGGER.debug("func: {}".format(func))
-                detected_func = assert_match_id_consistent(func)
-                this_data_output = detected_func(*real_param)
+                this_data_output = func(*real_param)
                 saved_result = []
             else:
-                detected_func = assert_match_id_consistent(func)
-                this_data_output = detected_func(*params)
+                this_data_output = func(*params)
 
             if save_result:
                 saved_result.append(this_data_output)
@@ -111,20 +152,29 @@ class ModelBase(object):
         if len(saved_result) == 1:
             self.data_output = saved_result[0]
             # LOGGER.debug("One data: {}".format(self.data_output.first()[1].features))
-        LOGGER.debug("saved_result is : {}, data_output: {}".format(saved_result, self.data_output))
+        LOGGER.debug(
+            "saved_result is : {}, data_output: {}".format(
+                saved_result, self.data_output
+            )
+        )
         # self.check_consistency()
         self.save_summary()
 
+        return ComponentOutput(self.save_data(), self.export_model())
+
     def get_metrics_param(self):
-        return EvaluateParam(eval_type="binary",
-                             pos_label=1)
+        return EvaluateParam(eval_type="binary", pos_label=1)
 
     def check_consistency(self):
         if not is_table(self.data_output):
             return
-        if self.component_properties.input_data_count + self.component_properties.input_eval_data_count != \
-                self.data_output.count() and \
-                self.component_properties.input_data_count != self.component_properties.input_eval_data_count:
+        if (
+            self.component_properties.input_data_count
+            + self.component_properties.input_eval_data_count
+            != self.data_output.count()
+            and self.component_properties.input_data_count
+            != self.component_properties.input_eval_data_count
+        ):
             raise ValueError("Input data count does not match with output data count")
 
     def predict(self, data_inst):
@@ -164,18 +214,20 @@ class ModelBase(object):
 
     def set_transfer_variable(self):
         if self.transfer_variable is not None:
-            LOGGER.debug("set flowid to transfer_variable, flowid: {}".format(self.flowid))
+            LOGGER.debug(
+                "set flowid to transfer_variable, flowid: {}".format(self.flowid)
+            )
             self.transfer_variable.set_flowid(self.flowid)
 
     def set_task_version_id(self, task_version_id):
-        """ task_version_id: jobid + component_name, reserved variable """
+        """task_version_id: jobid + component_name, reserved variable"""
         self.task_version_id = task_version_id
 
     def get_metric_name(self, name_prefix):
         if not self.need_cv:
             return name_prefix
 
-        return '_'.join(map(str, [name_prefix, self.flowid]))
+        return "_".join(map(str, [name_prefix, self.flowid]))
 
     def set_tracker(self, tracker):
         self.tracker = tracker
@@ -195,18 +247,22 @@ class ModelBase(object):
             predict_data = predict_datas
             schema = schemas
         if predict_data is not None:
-            # if len(predict_data.first()[1]) == 6:
-            #     header = ["inst_id", "label", "predict_result", "predict_score", "predict_detail", "type"]
-            # else:
-            #     header = ["label", "predict_result", "predict_score", "predict_detail", "type"]
-            header = ["label", "predict_result", "predict_score", "predict_detail", "type"]
-            predict_data.schema = {"header": header,
-                                   "sid_name": schema.get('sid_name'),
-                                   "content_type": "predict_result"}
+            predict_data.schema = {
+                "header": [
+                    "label",
+                    "predict_result",
+                    "predict_score",
+                    "predict_detail",
+                    "type",
+                ],
+                "sid_name": schema.get("sid_name"),
+            }
         return predict_data
 
     @staticmethod
-    def predict_score_to_output(data_instances, predict_score, classes=None, threshold=0.5):
+    def predict_score_to_output(
+        data_instances, predict_score, classes=None, threshold=0.5
+    ):
         """
         Get predict result output
         Parameters
@@ -220,67 +276,80 @@ class ModelBase(object):
         -------
         Table, predict result
         """
+
         # regression
         if classes is None:
-            predict_result = data_instances.join(predict_score, lambda d, pred: [d.label, pred,
-                                                                                 pred, {"label": pred}])
+            predict_result = data_instances.join(
+                predict_score, lambda d, pred: [d.label, pred, pred, {"label": pred}]
+            )
         # binary
         elif isinstance(classes, list) and len(classes) == 2:
             class_neg, class_pos = classes[0], classes[1]
-            pred_label = predict_score.mapValues(lambda x: class_pos if x > threshold else class_neg)
+            pred_label = predict_score.mapValues(
+                lambda x: class_pos if x > threshold else class_neg
+            )
             predict_result = data_instances.mapValues(lambda x: x.label)
             predict_result = predict_result.join(predict_score, lambda x, y: (x, y))
             class_neg_name, class_pos_name = str(class_neg), str(class_pos)
-            predict_result = predict_result.join(pred_label, lambda x, y: [x[0], y, x[1],
-                                                                           {class_neg_name: (1 - x[1]),
-                                                                            class_pos_name: x[1]}])
+            predict_result = predict_result.join(
+                pred_label,
+                lambda x, y: [
+                    x[0],
+                    y,
+                    x[1],
+                    {class_neg_name: (1 - x[1]), class_pos_name: x[1]},
+                ],
+            )
 
         # multi-label: input = array of predicted score of all labels
         elif isinstance(classes, list) and len(classes) > 2:
             # pred_label = predict_score.mapValues(lambda x: classes[x.index(max(x))])
             classes = [str(val) for val in classes]
             predict_result = data_instances.mapValues(lambda x: x.label)
-            predict_result = predict_result.join(predict_score, lambda x, y: [x, int(classes[np.argmax(y)]),
-                                                                              float(np.max(y)),
-                                                                              dict(zip(classes, list(y)))])
+            predict_result = predict_result.join(
+                predict_score,
+                lambda x, y: [
+                    x,
+                    int(classes[np.argmax(y)]),
+                    float(np.max(y)),
+                    dict(zip(classes, list(y))),
+                ],
+            )
         else:
-            raise ValueError(f"Model's classes type is {type(classes)}, classes must be None or list of length no less than 2.")
-
-        # has_match_id = check_with_inst_id(data_instances)
-
-        def _transfer(instance, pred_res):
-            return Instance(features=pred_res, inst_id=instance.inst_id)
-
-        # if has_match_id:
-            # match_id_table = data_instances.mapValues(lambda x: [x.inst_id])
-            # predict_result = predict_result.join(match_id_table, lambda p, m: m + p)
-
-        predict_result = data_instances.join(predict_result, _transfer)
+            raise ValueError(
+                f"Model's classes type is {type(classes)}, classes must be None or list of length no less than 2."
+            )
 
         return predict_result
 
     def callback_meta(self, metric_name, metric_namespace, metric_meta):
         if self.need_cv:
-            metric_name = '.'.join([metric_name, str(self.cv_fold)])
-            flow_id_list = self.flowid.split('.')
-            LOGGER.debug("Need cv, change callback_meta, flow_id_list: {}".format(flow_id_list))
+            metric_name = ".".join([metric_name, str(self.cv_fold)])
+            flow_id_list = self.flowid.split(".")
+            LOGGER.debug(
+                "Need cv, change callback_meta, flow_id_list: {}".format(flow_id_list)
+            )
             if len(flow_id_list) > 1:
-                curve_name = '.'.join(flow_id_list[1:])
-                metric_meta.update_metas({'curve_name': curve_name})
+                curve_name = ".".join(flow_id_list[1:])
+                metric_meta.update_metas({"curve_name": curve_name})
         else:
-            metric_meta.update_metas({'curve_name': metric_name})
+            metric_meta.update_metas({"curve_name": metric_name})
 
-        self.tracker.set_metric_meta(metric_name=metric_name,
-                                     metric_namespace=metric_namespace,
-                                     metric_meta=metric_meta)
+        self.tracker.set_metric_meta(
+            metric_name=metric_name,
+            metric_namespace=metric_namespace,
+            metric_meta=metric_meta,
+        )
 
     def callback_metric(self, metric_name, metric_namespace, metric_data):
         if self.need_cv:
-            metric_name = '.'.join([metric_name, str(self.cv_fold)])
+            metric_name = ".".join([metric_name, str(self.cv_fold)])
 
-        self.tracker.log_metric_data(metric_name=metric_name,
-                                     metric_namespace=metric_namespace,
-                                     metrics=metric_data)
+        self.tracker.log_metric_data(
+            metric_name=metric_name,
+            metric_namespace=metric_namespace,
+            metrics=metric_data,
+        )
 
     def save_summary(self):
         self.tracker.log_component_summary(summary_data=self.summary())
@@ -304,7 +373,9 @@ class ModelBase(object):
         """
 
         if not isinstance(new_summary, dict):
-            raise ValueError(f"summary should be of dict type, received {type(new_summary)} instead.")
+            raise ValueError(
+                f"summary should be of dict type, received {type(new_summary)} instead."
+            )
         self._summary = copy.deepcopy(new_summary)
 
     def add_summary(self, new_key, new_value):
@@ -322,12 +393,14 @@ class ModelBase(object):
 
         original_value = self._summary.get(new_key, None)
         if original_value is not None:
-            LOGGER.warning(f"{new_key} already exists in model summary."
-                           f"Corresponding value {original_value} will be replaced by {new_value}")
+            LOGGER.warning(
+                f"{new_key} already exists in model summary."
+                f"Corresponding value {original_value} will be replaced by {new_value}"
+            )
         self._summary[new_key] = new_value
         # LOGGER.debug(f"{new_key}: {new_value} added to summary.")
 
-    def merge_summary(self, new_content, suffix=None, suffix_sep='_'):
+    def merge_summary(self, new_content, suffix=None, suffix_sep="_"):
         """
         Merge new content into model summary
         Parameters
@@ -342,8 +415,10 @@ class ModelBase(object):
         """
 
         if not isinstance(new_content, dict):
-            raise ValueError(f"To merge new content into model summary, "
-                             f"value must be of dict type, received {type(new_content)} instead.")
+            raise ValueError(
+                f"To merge new content into model summary, "
+                f"value must be of dict type, received {type(new_content)} instead."
+            )
         new_summary = self.summary()
         keyset = new_summary.keys() | new_content.keys()
         for key in keyset:
@@ -388,7 +463,9 @@ class ModelBase(object):
         """
         result_data = self._align_cache.get(id(data_instances))
         if result_data is None:
-            result_data = header_alignment(data_instances=data_instances, pre_header=pre_header)
+            result_data = header_alignment(
+                data_instances=data_instances, pre_header=pre_header
+            )
             self._align_cache[id(data_instances)] = result_data
         return result_data
 

@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 
-from fate_arch.storage import StorageEngine, HiveStorageType
+from fate_arch.storage import StorageEngine, HiveStoreType
 from fate_arch.storage import StorageTableBase
 
 
@@ -26,7 +26,7 @@ class StorageTable(StorageTableBase):
                  name: str = None,
                  namespace: str = None,
                  partitions: int = 1,
-                 storage_type: HiveStorageType = None,
+                 storage_type: HiveStoreType = None,
                  options=None):
         super(StorageTable, self).__init__(name=name, namespace=namespace)
         self.cur = cur
@@ -37,7 +37,7 @@ class StorageTable(StorageTableBase):
         self._partitions = partitions
         self._options = options if options else {}
         self._storage_engine = StorageEngine.HIVE
-        self._type = storage_type if storage_type else HiveStorageType.DEFAULT
+        self._type = storage_type if storage_type else HiveStoreType.DEFAULT
 
     def execute(self, sql, select=True):
         self.cur.execute(sql)
@@ -82,14 +82,14 @@ class StorageTable(StorageTableBase):
             count = ret[0][0]
         except:
             count = 0
-        self.get_meta().update_metas(count=count)
+        self.meta.update_metas(count=count)
         return count
 
     def collect(self, **kwargs) -> list:
         sql = 'select * from {}'.format(self._address.name)
         data = self.execute(sql)
         for i in data:
-            yield i[0], self.get_meta().get_id_delimiter().join(list(i[1:]))
+            yield i[0], self.meta.get_id_delimiter().join(list(i[1:]))
 
     def put_all(self, kv_list, **kwargs):
         pass

@@ -43,6 +43,10 @@ FATE is `/data/projects/fate`.
       pipeline init --ip 127.0.0.1 --port 9380
       # optionally, set log directory of Pipeline
       pipeline init --ip 127.0.0.1 --port 9380 --log-directory {desired log path}
+      # show pipeline config details
+      pipeline config show
+      # check Flow server status according to config
+      pipeline config check
 
 4. upload data with FATE-Pipeline
 

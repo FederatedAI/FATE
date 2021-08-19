@@ -616,6 +616,17 @@ Functions
 | 1     | conf\_path   | string   | Yes        | Configuration file path   |
 +-------+--------------+----------+------------+---------------------------+
 
+``homo_deploy(conf_path)``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+-  *Description*\ ： Deploy trained homogeneous model to an online serving system. Currently KFServing is supported.
+-  *Arguments*\ ：
+
++-------+--------------+----------+------------+---------------------------+
+| No.   | Argument     | Type     | Required   | Description               |
++=======+==============+==========+============+===========================+
+| 1     | conf\_path   | string   | Yes        | Configuration file path   |
++-------+--------------+----------+------------+---------------------------+
 
 
 Tag Operations

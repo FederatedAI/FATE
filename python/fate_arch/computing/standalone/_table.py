@@ -20,6 +20,7 @@ import typing
 from fate_arch.abc import CTableABC
 from fate_arch.common import log
 from fate_arch.common.profile import computing_profile
+from fate_arch.computing._type import ComputingEngine
 
 LOGGER = log.getLogger()
 
@@ -27,6 +28,11 @@ LOGGER = log.getLogger()
 class Table(CTableABC):
     def __init__(self, table):
         self._table = table
+        self._engine = ComputingEngine.STANDALONE
+
+    @property
+    def engine(self):
+        return self._engine
 
     def __getstate__(self):
         pass

@@ -216,6 +216,14 @@ class LogisticParam(BaseParam):
                     self.decay_sqrt))
         self.stepwise_param.check()
 
+        if self.validation_freqs is not None:
+            if type(self.validation_freqs).__name__ not in ["int", "list", "tuple", "set"]:
+                raise ValueError(
+                    "validation strategy param's validate_freqs's type not supported , should be int or list or tuple or set"
+                )
+            if type(self.validation_freqs).__name__ == "int" and self.validation_freqs <= 0:
+                raise ValueError("validation strategy param's validate_freqs should greater than 0")
+
         if self.early_stopping_rounds is None:
             pass
         elif isinstance(self.early_stopping_rounds, int):

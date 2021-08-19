@@ -94,7 +94,8 @@ class IVPercentileSelectionParam(BaseParam):
 
     def check(self):
         descr = "IV selection param's"
-        self.check_decimal_float(self.percentile_threshold, descr)
+        if self.percentile_threshold != 0 or self.percentile_threshold != 1:
+            self.check_decimal_float(self.percentile_threshold, descr)
         self.check_boolean(self.local_only, descr)
         return True
 
@@ -445,7 +446,8 @@ class FeatureSelectionParam(BaseParam):
                  manually_param=ManuallyFilterParam(),
                  percentage_value_param=PercentageValueParam(),
                  iv_param=CommonFilterParam(metrics=consts.IV),
-                 statistic_param=CommonFilterParam(metrics=consts.MEAN),
+                 statistic_param=CommonFilterParam(metrics=consts.MEAN,
+                                                   select_federated=False),
                  psi_param=CommonFilterParam(metrics=consts.PSI,
                                              take_high=False),
                  vif_param=CommonFilterParam(metrics=consts.VIF,
@@ -521,6 +523,9 @@ class FeatureSelectionParam(BaseParam):
                 raise ValueError("For iv filter, metrics should be 'iv'")
 
         self.statistic_param.check()
+        if self.statistic_param.select_federated is True:
+            raise ValueError("Statistic Filter does not support select federated.")
+
         self.psi_param.check()
         for th in self.psi_param.take_high:
             if th:

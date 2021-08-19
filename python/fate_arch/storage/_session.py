@@ -13,65 +13,21 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import os.path
+import typing
 
-
-from fate_arch.abc import StorageSessionABC, StorageTableABC
-from fate_arch.common import compatibility_utils, EngineType
-from fate_arch.common.base_utils import fate_uuid, current_timestamp
+from fate_arch.abc import StorageSessionABC, StorageTableABC, CTableABC
+from fate_arch.common import EngineType, engine_utils
 from fate_arch.common.log import getLogger
-from fate_arch.computing import ComputingEngine
 from fate_arch.storage._table import StorageTableMeta
-from fate_arch.storage._types import StorageEngine, Relationship
-from fate_arch.storage.metastore.db_models import DB, StorageTableMetaModel, SessionRecord
+from fate_arch.storage._types import StorageEngine, EggRollStoreType, StandaloneStoreType
+from fate_arch.relation_ship import Relationship
+from fate_arch.metastore.db_models import DB, StorageTableMetaModel
+from fate_arch.common.base_utils import current_timestamp
 
 MAX_NUM = 10000
 
 LOGGER = getLogger()
-
-
-class Session(object):
-    @classmethod
-    def build(cls, session_id=None, storage_engine=None, computing_engine=None, **kwargs):
-        session_id = session_id if session_id else fate_uuid()
-        # Find the storage engine type
-        if storage_engine is None and kwargs.get("name") and kwargs.get("namespace"):
-            storage_engine, address, partitions = StorageSessionBase.get_storage_info(name=kwargs.get("name"),
-                                                                                      namespace=kwargs.get("namespace"))
-        if storage_engine is None and computing_engine is None:
-            computing_engine, federation_engine, federation_mode = compatibility_utils.backend_compatibility(**kwargs)
-        if storage_engine is None and computing_engine:
-            # Gets the computing engine default storage engine
-            storage_engine = Relationship.CompToStore.get(computing_engine)[0]
-
-        if storage_engine == StorageEngine.EGGROLL:
-            from fate_arch.storage.eggroll import StorageSession
-            storage_session = StorageSession(session_id=session_id, options=kwargs.get("options", {}))
-        elif storage_engine == StorageEngine.STANDALONE:
-            from fate_arch.storage.standalone import StorageSession
-            storage_session = StorageSession(session_id=session_id, options=kwargs.get("options", {}))
-        elif storage_engine == StorageEngine.MYSQL:
-            from fate_arch.storage.mysql import StorageSession
-            storage_session = StorageSession(session_id=session_id, options=kwargs.get("options", {}))
-        elif storage_engine == StorageEngine.HDFS:
-            from fate_arch.storage.hdfs import StorageSession
-            storage_session = StorageSession(session_id=session_id, options=kwargs.get("options", {}))
-        elif storage_engine == StorageEngine.FILE:
-            from fate_arch.storage.file import StorageSession
-            storage_session = StorageSession(session_id=session_id, options=kwargs.get("options", {}))
-        elif storage_engine == StorageEngine.PATH:
-            from fate_arch.storage.path import StorageSession
-            storage_session = StorageSession(session_id=session_id, options=kwargs.get("options", {}))
-        elif storage_engine == StorageEngine.HIVE:
-            from fate_arch.storage.hive import StorageSession
-            storage_session = StorageSession(session_id=session_id, options=kwargs.get("options", {}))
-        elif storage_engine == StorageEngine.LINKIS_HIVE:
-            from fate_arch.storage.linkis_hive import StorageSession
-            storage_session = StorageSession(session_id=session_id, options=kwargs.get("options", {}))
-        else:
-            raise NotImplementedError(f"can not be initialized with storage engine: {storage_engine}")
-        if kwargs.get("name") and kwargs.get("namespace"):
-            storage_session.set_default(name=kwargs["name"], namespace=kwargs["namespace"])
-        return storage_session
 
 
 class StorageSessionBase(StorageSessionABC):
@@ -91,10 +47,10 @@ class StorageSessionBase(StorageSessionABC):
         table_meta.address = table.get_address()
         table_meta.partitions = table.get_partitions()
         table_meta.engine = table.get_engine()
-        table_meta.type = table.get_type()
+        table_meta.store_type = table.get_store_type()
         table_meta.options = table.get_options()
         table_meta.create()
-        table.set_meta(table_meta)
+        table.meta = table_meta
         # update count on meta
         # table.count()
         return table
@@ -113,15 +69,68 @@ class StorageSessionBase(StorageSessionABC):
                                namespace=meta.get_namespace(),
                                address=meta.get_address(),
                                partitions=meta.get_partitions(),
-                               storage_type=meta.get_type(),
+                               store_type=meta.get_store_type(),
                                options=meta.get_options())
-            table.set_meta(meta)
+            table.meta = meta
             return table
         else:
             return None
 
-    def table(self, name, namespace, address, partitions, storage_type=None, options=None, **kwargs) -> StorageTableABC:
+    def table(self, name, namespace, address, partitions, store_type=None, options=None, **kwargs) -> StorageTableABC:
         raise NotImplementedError()
+
+    @classmethod
+    def persistent(cls, computing_table: CTableABC, table_namespace, table_name, schema=None, engine=None, engine_address=None, store_type=None, token: typing.Dict = None) -> StorageTableMeta:
+        if engine:
+            if engine not in Relationship.Computing.get(computing_table.engine, {}).get(EngineType.STORAGE, {}).get("support", []):
+                raise Exception(f"storage engine {engine} not supported with computing engine {computing_table.engine}")
+        else:
+            engine = Relationship.Computing.get(computing_table.engine, {}).get(EngineType.STORAGE, {}).get("default", None)
+            if not engine:
+                raise Exception(f"can not found {computing_table.engine} default storage engine")
+        if engine_address is None:
+            # find engine address from service_conf.yaml
+            engine_address = engine_utils.get_engines_config_from_conf().get(EngineType.STORAGE, {}).get(engine, None)
+        if engine_address is None:
+            raise Exception("no engine address")
+        address_dict = engine_address.copy()
+        partitions = computing_table.partitions
+        if engine == StorageEngine.EGGROLL:
+            address_dict.update({"name": table_name, "namespace": table_namespace})
+            store_type = EggRollStoreType.ROLLPAIR_LMDB if store_type is None else store_type
+        elif engine == StorageEngine.STANDALONE:
+            address_dict.update({"name": table_name, "namespace": table_namespace})
+            store_type = StandaloneStoreType.ROLLPAIR_LMDB if store_type is None else store_type
+        elif engine == StorageEngine.HIVE:
+            address_dict.update({"name": table_name, "database": table_namespace})
+        elif engine == StorageEngine.LINKIS_HIVE:
+            address_dict.update({"database": None, "name": f"{table_namespace}_{table_name}", "username": token.get("username", "")})
+        elif engine == StorageEngine.HDFS:
+            address_dict.update({"path": os.path.join(address_dict.get("path_prefix", ""), table_namespace, table_name)})
+        else:
+            raise RuntimeError(f"{engine} storage is not supported")
+        address = StorageTableMeta.create_address(storage_engine=engine, address_dict=address_dict)
+        schema = schema if schema else {}
+        computing_table.save(address, schema=schema, partitions=partitions, store_type=store_type)
+        part_of_data = []
+        part_of_limit = 100
+        for k, v in computing_table.collect():
+            part_of_data.append((k, v))
+            part_of_limit -= 1
+            if part_of_limit == 0:
+                break
+        table_count = computing_table.count()
+        table_meta = StorageTableMeta(name=table_name, namespace=table_namespace, new=True)
+        table_meta.address = address
+        table_meta.partitions = computing_table.partitions
+        table_meta.engine = engine
+        table_meta.store_type = store_type
+        table_meta.schema = schema
+        table_meta.part_of_data = part_of_data
+        table_meta.count = table_count
+        table_meta.write_access_time = current_timestamp()
+        table_meta.create()
+        return table_meta
 
     @classmethod
     @DB.connection_context()
@@ -139,52 +148,17 @@ class StorageSessionBase(StorageSessionABC):
             return None, None, None
 
     def __enter__(self):
-        with DB.connection_context():
-            session_record = SessionRecord()
-            session_record.f_session_id = self._session_id
-            session_record.f_engine_name = self._engine_name
-            session_record.f_engine_type = EngineType.STORAGE
-            # TODO: engine address
-            session_record.f_engine_address = {}
-            session_record.f_create_time = current_timestamp()
-            rows = session_record.save(force_insert=True)
-            if rows != 1:
-                raise Exception(f"create session record {self._session_id} failed")
-            LOGGER.debug(f"save session {self._session_id} record")
         self.create()
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self.close()
-        with DB.connection_context():
-            rows = SessionRecord.delete().where(SessionRecord.f_session_id == self._session_id).execute()
-            if rows > 0:
-                LOGGER.debug(f"delete session {self._session_id} record")
-            else:
-                LOGGER.warning(f"failed delete session {self._session_id} record")
+        self.destroy()
 
-    def destroy_session(self):
-        try:
-            self.close()
-        except:
-            pass
-        with DB.connection_context():
-            rows = SessionRecord.delete().where(SessionRecord.f_session_id == self._session_id).execute()
-            if rows > 0:
-                LOGGER.debug(f"delete session {self._session_id} record")
-            else:
-                LOGGER.warning(f"failed delete session {self._session_id} record")
-
-    @classmethod
-    @DB.connection_context()
-    def query_expired_sessions_record(cls, ttl) -> [SessionRecord]:
-        sessions_record = SessionRecord.select().where(SessionRecord.f_create_time < (current_timestamp() - ttl))
-        return [session_record for session_record in sessions_record]
-
-    def close(self):
+    def destroy(self):
         try:
             self.stop()
         except Exception as e:
+            LOGGER.warning(f"stop storage session {self._session_id} failed, try to kill", e)
             self.kill()
 
     def stop(self):
@@ -193,5 +167,6 @@ class StorageSessionBase(StorageSessionABC):
     def kill(self):
         raise NotImplementedError()
 
+    @property
     def session_id(self):
         return self._session_id

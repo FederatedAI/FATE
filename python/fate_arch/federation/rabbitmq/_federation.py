@@ -26,7 +26,7 @@ import pika
 # noinspection PyPackageRequirements
 from pyspark import SparkContext, RDD
 
-from fate_arch.common import conf_utils, file_utils
+from fate_arch.common import conf_utils, file_utils, string_utils
 from fate_arch.abc import FederationABC, GarbageCollectionABC
 from fate_arch.common import Party
 from fate_arch.common.log import getLogger
@@ -135,11 +135,16 @@ class Federation(FederationABC):
         base_user = rabbitmq_config.get("user")
         base_password = rabbitmq_config.get("password")
 
+        """
         federation_info = runtime_conf.get("job_parameters", {}).get(
             "federation_info", {}
         )
         union_name = federation_info.get("union_name")
         policy_id = federation_info.get("policy_id")
+        """
+
+        union_name = string_utils.random_string(4)
+        policy_id = string_utils.random_string(10)
 
         rabbitmq_run = runtime_conf.get("job_parameters", {}).get("rabbitmq_run", {})
         LOGGER.debug(f"rabbitmq_run: {rabbitmq_run}")

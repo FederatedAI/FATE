@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 
-from fate_arch.storage import StorageEngine, MySQLStorageType
+from fate_arch.storage import StorageEngine, MySQLStoreType
 from fate_arch.storage import StorageTableBase
 
 
@@ -26,7 +26,7 @@ class StorageTable(StorageTableBase):
                  name: str = None,
                  namespace: str = None,
                  partitions: int = 1,
-                 storage_type: MySQLStorageType = None,
+                 store_type: MySQLStoreType = None,
                  options=None):
         super(StorageTable, self).__init__(name=name, namespace=namespace)
         self.cur = cur
@@ -35,10 +35,9 @@ class StorageTable(StorageTableBase):
         self._name = name
         self._namespace = namespace
         self._partitions = partitions
-        self._storage_type = storage_type
+        self._store_type = store_type if store_type else MySQLStoreType.InnoDB
         self._options = options if options else {}
         self._storage_engine = StorageEngine.MYSQL
-        self._type = storage_type if storage_type else MySQLStorageType.InnoDB
 
     def execute(self, sql, select=True):
         self.cur.execute(sql)
@@ -68,8 +67,8 @@ class StorageTable(StorageTableBase):
     def get_address(self):
         return self._address
 
-    def get_type(self):
-        return self._type
+    def get_store_type(self):
+        return self._store_type
 
     def get_options(self):
         return self._options
@@ -83,7 +82,7 @@ class StorageTable(StorageTableBase):
             count = ret[0][0]
         except:
             count = 0
-        self.get_meta().update_metas(count=count)
+        self.meta.update_metas(count=count)
         return count
 
     def collect(self, **kwargs) -> list:
@@ -92,8 +91,9 @@ class StorageTable(StorageTableBase):
         id_feature_name.extend(feature_name_list)
         sql = 'select {} from {}'.format(','.join(id_feature_name), self._address.name)
         data = self.execute(sql)
-        for i in data:
-            yield i[0], self.get_meta().get_id_delimiter().join(list(i[1:]))
+        for line in data:
+            feature_list = [str(feature) for feature in list(line[1:])]
+            yield line[0], self.meta.get_id_delimiter().join(feature_list)
 
     def put_all(self, kv_list, **kwargs):
         id_name, feature_name_list, id_delimiter = self.get_id_feature_name()
@@ -110,9 +110,9 @@ class StorageTable(StorageTableBase):
         self.con.commit()
 
     def get_id_feature_name(self):
-        id = self.get_meta().get_schema().get('sid', 'id')
-        header = self.get_meta().get_schema().get('header')
-        id_delimiter = self.get_meta().get_id_delimiter()
+        id = self.meta.get_schema().get('sid', 'id')
+        header = self.meta.get_schema().get('header')
+        id_delimiter = self.meta.get_id_delimiter()
         if header:
             if isinstance(header, str):
                 feature_list = header.split(id_delimiter)

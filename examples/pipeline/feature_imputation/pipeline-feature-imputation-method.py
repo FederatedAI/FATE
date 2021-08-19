@@ -32,14 +32,13 @@ def main(config="../../config.yaml", namespace=""):
     parties = config.parties
     guest = parties.guest[0]
     host = parties.host[0]
-    arbiter = parties.arbiter[0]
     backend = config.backend
     work_mode = config.work_mode
 
     guest_train_data = {"name": "dvisits_hetero_guest", "namespace": f"experiment{namespace}"}
     host_train_data = {"name": "dvisits_hetero_host", "namespace": f"experiment{namespace}"}
 
-    pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=host, arbiter=arbiter)
+    pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=host)
 
     reader_0 = Reader(name="reader_0")
     reader_0.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data)
