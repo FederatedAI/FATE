@@ -17,14 +17,13 @@
 import json
 import os
 
-from cachetools import LRUCache
-from cachetools import cached
+from cachetools import LRUCache, cached
 from ruamel import yaml
 
 PROJECT_BASE = os.getenv("FATE_DEPLOY_BASE")
 
 
-def get_project_base_directory():
+def get_project_base_directory(*args):
     global PROJECT_BASE
     if PROJECT_BASE is None:
         PROJECT_BASE = os.path.abspath(
@@ -35,11 +34,17 @@ def get_project_base_directory():
                 os.pardir,
             )
         )
+    if args:
+        return os.path.join(PROJECT_BASE, *args)
     return PROJECT_BASE
 
 
-def get_python_base_directory():
-    return os.path.join(get_project_base_directory(), "python")
+def get_python_base_directory(*args):
+    return get_project_base_directory("python", *args)
+
+
+def get_federatedml_setting_conf_directory():
+    return os.path.join(get_python_base_directory(), 'federatedml', 'conf', 'setting_conf')
 
 
 @cached(cache=LRUCache(maxsize=10))

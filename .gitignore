@@ -9,6 +9,7 @@ __pycache__
 .project
 *.prefs
 _build
+venv
 
 # excluded paths
 /arch/core/target/
@@ -34,3 +35,6 @@ _build
 .vscode/*
 /eggroll/
 /fateboard/
+
+# user defined config
+/conf/local.*.yaml

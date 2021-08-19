@@ -17,6 +17,7 @@
 #
 
 import random
+from collections.abc import Mapping
 
 from federatedml.secureprotol import gmpy_math
 from federatedml.secureprotol.fixedpoint import FixedPointNumber
@@ -51,7 +52,6 @@ class PaillierKeypair(object):
 class PaillierPublicKey(object):
     """Contains a public key and associated encryption methods.
     """
-
     def __init__(self, n):
         self.g = n + 1
         self.n = n
@@ -113,7 +113,6 @@ class PaillierPublicKey(object):
 class PaillierPrivateKey(object):
     """Contains a private key and associated decryption method.
     """
-
     def __init__(self, public_key, p, q):
         if not p * q == public_key.n:
             raise ValueError("given public key does not match the given p and q")
@@ -342,3 +341,4 @@ class PaillierEncryptedNumber(object):
         ciphertext = gmpy_math.mpz(e_x) * gmpy_math.mpz(e_y) % self.public_key.nsquare
 
         return PaillierEncryptedNumber(self.public_key, int(ciphertext), exponent)
+

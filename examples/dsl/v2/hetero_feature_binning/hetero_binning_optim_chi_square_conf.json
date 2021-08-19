@@ -5,15 +5,17 @@
         "party_id": 10000
     },
     "role": {
-        "guest": [
-            10000
-        ],
         "host": [
             9999
+        ],
+        "guest": [
+            10000
         ]
     },
     "job_parameters": {
         "common": {
+            "backend": 0,
+            "work_mode": 0,
             "job_type": "train"
         }
     },
@@ -60,12 +62,12 @@
                 "bin_names": null,
                 "category_indexes": null,
                 "category_names": null,
-                "local_only": false,
                 "transform_param": {
                     "transform_cols": -1,
                     "transform_names": null,
                     "transform_type": "bin_num"
                 },
+                "local_only": false,
                 "optimal_binning_param": {
                     "metric_method": "chi_square",
                     "min_bin_pct": 0.05,

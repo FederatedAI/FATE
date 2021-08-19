@@ -5,34 +5,22 @@
         "party_id": 10000
     },
     "role": {
-        "guest": [
-            10000
-        ],
         "host": [
             9999
+        ],
+        "guest": [
+            10000
         ]
     },
     "job_parameters": {
         "common": {
+            "backend": 0,
+            "work_mode": 0,
             "job_type": "train"
         }
     },
     "component_parameters": {
         "role": {
-            "host": {
-                "0": {
-                    "reader_0": {
-                        "table": {
-                            "name": "breast_hetero_host",
-                            "namespace": "experiment"
-                        }
-                    },
-                    "dataio_0": {
-                        "with_label": false,
-                        "output_format": "dense"
-                    }
-                }
-            },
             "guest": {
                 "0": {
                     "reader_0": {
@@ -43,6 +31,20 @@
                     },
                     "dataio_0": {
                         "with_label": true,
+                        "output_format": "dense"
+                    }
+                }
+            },
+            "host": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "dataio_0": {
+                        "with_label": false,
                         "output_format": "dense"
                     }
                 }
@@ -62,12 +64,12 @@
                     0
                 ],
                 "category_names": null,
-                "local_only": false,
                 "transform_param": {
                     "transform_cols": -1,
                     "transform_names": null,
                     "transform_type": "bin_num"
                 },
+                "local_only": false,
                 "optimal_binning_param": {
                     "metric_method": "iv",
                     "min_bin_pct": 0.05,

@@ -155,9 +155,15 @@ def get_role(conf: Config):
                    'server_url': "http://{}/{}".format(flow_services, config['api_version']),
                    'train_auc': config['train_auc'],
                    'component_name': config['component_name'],
+                   'component_is_homo': config.get('component_is_homo', False),
                    'metric_output_path': config['metric_output_path'],
                    'model_output_path': config['model_output_path'],
                    'cache_directory': conf.cache_directory,
                    'data_base_dir': conf.data_base_dir
                    }
+    if flow_test_template.get('homo_deploy_path'):
+        config_json['homo_deploy_path'] = os.path.abspath(conf.data_base_dir) + flow_test_template['homo_deploy_path']
+    if flow_test_template.get('homo_deploy_kube_config_path'):
+        config_json['homo_deploy_kube_config_path'] = os.path.abspath(conf.data_base_dir) + \
+                                                      flow_test_template['homo_deploy_kube_config_path']
     return config_json

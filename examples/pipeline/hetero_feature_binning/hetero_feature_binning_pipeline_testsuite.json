@@ -47,6 +47,30 @@
             "table_name": "default_credit_hetero_host",
             "namespace": "experiment",
             "role": "host_1"
+        },
+        {
+            "file": "examples/data/vehicle_scale_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "vehicle_scale_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/vehicle_scale_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "vehicle_scale_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/vehicle_scale_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "vehicle_scale_hetero_host",
+            "namespace": "experiment",
+            "role": "host_1"
         }
     ],
     "pipeline_tasks": {
@@ -106,6 +130,15 @@
         },
         "hetero-binning-multi-host-sparse-optimal": {
             "script": "pipeline-hetero-binning-multi-host-sparse-optimal.py"
+        },
+        "hetero-binning-multiclass": {
+            "script": "pipeline-hetero-binning-multiclass.py"
+        },
+        "hetero-binning-multiclass-multihost": {
+            "script": "pipeline-hetero-binning-multiclass-multihost.py"
+        },
+        "hetero-binning-multiclass-multihost-woe": {
+            "script": "pipeline-hetero-binning-multiclass-multihost-woe.py"
         }
     }
 }

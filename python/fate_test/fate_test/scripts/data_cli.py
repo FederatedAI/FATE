@@ -121,6 +121,8 @@ def delete(ctx, include, exclude, glob, yes, suite_type, **kwargs):
               help="Generated data will be uploaded")
 @click.option('--remove-data', is_flag=True, default=False,
               help="The generated data will be deleted")
+@click.option('--parallelize', is_flag=True, default=False,
+              help="It is directly used to upload data, and will not generate data")
 @click.option('--use-local-data', is_flag=True, default=False,
               help="The existing data of the server will be uploaded, This parameter is not recommended for "
                    "distributed applications")
@@ -128,7 +130,7 @@ def delete(ctx, include, exclude, glob, yes, suite_type, **kwargs):
 @click.pass_context
 def generate(ctx, include, host_data_type, encryption_type, match_rate, sparsity, guest_data_size,
              host_data_size, guest_feature_num, host_feature_num, output_path, force, split_host, upload_data,
-             remove_data, use_local_data, **kwargs):
+             remove_data, use_local_data, parallelize, **kwargs):
     """
     create data defined in suite config files
     """
@@ -142,7 +144,8 @@ def generate(ctx, include, host_data_type, encryption_type, match_rate, sparsity
     if host_data_size is None:
         host_data_size = guest_data_size
     suites = _load_testsuites(includes=include, excludes=tuple(), glob=None)
-    suites += _load_testsuites(includes=include, excludes=tuple(), glob=None, suffix="benchmark.json", suite_type="benchmark")
+    suites += _load_testsuites(includes=include, excludes=tuple(), glob=None,
+                               suffix="benchmark.json", suite_type="benchmark")
     for suite in suites:
         if upload_data:
             echo.echo(f"\tdataget({len(suite.dataset)}) dataset({len(suite.dataset)}) {suite.path}")
@@ -152,7 +155,7 @@ def generate(ctx, include, host_data_type, encryption_type, match_rate, sparsity
         return
 
     _big_data_task(include, guest_data_size, host_data_size, guest_feature_num, host_feature_num, host_data_type,
-                   config_inst, encryption_type, match_rate, sparsity, force, split_host, output_path)
+                   config_inst, encryption_type, match_rate, sparsity, force, split_host, output_path, parallelize)
     if upload_data:
         if use_local_data:
             _config.use_local_data = 0

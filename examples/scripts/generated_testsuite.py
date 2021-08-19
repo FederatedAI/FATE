@@ -170,7 +170,7 @@ def do_generated(file_path, fold_name, template_path, yaml_file):
     with open(suite_path, 'w', encoding='utf-8') as json_file:
         json.dump(pipeline_suite, json_file, ensure_ascii=False, indent=4)
 
-    # shutil.rmtree(replaced_path)
+    shutil.rmtree(replaced_path)
     print("Generate testsuite and dsl&conf finished!")
     # os.system('rm -rf {}'.format(replaced_path))
 

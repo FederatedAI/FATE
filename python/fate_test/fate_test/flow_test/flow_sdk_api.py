@@ -87,7 +87,7 @@ class TestModel(object):
 
         elif command == 'view':
             try:
-                stdout = self.client.job.view(job_id=self.job_id)
+                stdout = self.client.job.view(job_id=self.job_id, role="guest")
                 if stdout.get('retcode'):
                     self.error_log('job view: {}'.format(stdout.get('retmsg')) + '\n')
                 if len(stdout.get("data")) == len(list(get_dict_from_file(self.dsl_path)['components'].keys())) - 1:
@@ -216,7 +216,10 @@ class TestModel(object):
                                                           component_name=self.component_name)
                 if stdout.get('retcode'):
                     self.error_log('component parameters: {}'.format(stdout.get('retmsg')) + '\n')
-                if stdout.get("data").get("HeteroLogisticParam").get("max_iter") == max_iter:
+                if ((self.component_name == "hetero_lr_0" and
+                         stdout.get("data").get("HeteroLogisticParam").get("max_iter") == max_iter) or
+                    (self.component_name == "homo_lr_0" and
+                         stdout.get("data").get("HomoLogisticParam").get("max_iter") == max_iter)):
                     return stdout.get('retcode')
             except Exception:
                 return
@@ -411,7 +414,7 @@ class TestModel(object):
                 return
 
     def model_api(self, command, remove_path=None, model_path=None, tag_name=None, load_path=None, bind_path=None,
-                  remove=False):
+                  homo_deploy_path=None, homo_deploy_kube_config_path=None, remove=False):
         if command == 'model/load':
             try:
                 stdout = self.client.model.load(conf_path=load_path)
@@ -511,6 +514,47 @@ class TestModel(object):
             except Exception:
                 return
 
+        elif command == 'model/homo/convert':
+            config_data = {
+                "model_id": self.model_id,
+                "model_version": self.model_version,
+                "role": "guest",
+                "party_id": self.guest_party_id[0],
+            }
+            config_file_path = self.cache_directory + 'model_homo_convert.json'
+            with open(config_file_path, 'w') as fp:
+                json.dump(config_data, fp)
+            try:
+                stdout = self.client.model.homo_convert(conf_path=config_file_path)
+                if stdout.get('retcode'):
+                    self.error_log('model homo convert: {}'.format(stdout.get('retmsg')) + '\n')
+                return stdout.get('retcode')
+            except Exception:
+                return
+            
+        elif command == 'model/homo/deploy':
+            job_data = {
+                "model_id": self.model_id,
+                "model_version": self.model_version,
+                "role": "guest",
+                "party_id": self.guest_party_id[0],
+                "component_name": self.component_name
+            }
+            config_data = get_dict_from_file(homo_deploy_path)
+            config_data.update(job_data)
+            if homo_deploy_kube_config_path:
+                config_data['deployment_parameters']['config_file'] = homo_deploy_kube_config_path
+            config_file_path = self.cache_directory + 'model_homo_deploy.json'
+            with open(config_file_path, 'w') as fp:
+                json.dump(config_data, fp)
+            try:
+                stdout = self.client.model.homo_deploy(conf_path=config_file_path)
+                if stdout.get('retcode'):
+                    self.error_log('model homo deploy: {}'.format(stdout.get('retmsg')) + '\n')
+                return stdout.get('retcode')
+            except Exception:
+                return
+
         elif command == 'model_tag/model':
             try:
                 stdout = self.client.model.tag_model(job_id=self.job_id, tag_name=tag_name, remove=remove)
@@ -594,7 +638,7 @@ class TestModel(object):
             else:
                 return
 
-    def set_config(self, guest_party_id, host_party_id, arbiter_party_id, path, work_mode):
+    def set_config(self, guest_party_id, host_party_id, arbiter_party_id, path, work_mode, component_name):
         config = get_dict_from_file(path)
         config["initiator"]["party_id"] = guest_party_id[0]
         config["role"]["guest"] = guest_party_id
@@ -608,11 +652,11 @@ class TestModel(object):
         self.guest_party_id = guest_party_id
         self.host_party_id = host_party_id
         self.arbiter_party_id = arbiter_party_id
-        hetero_conf_file_path = self.cache_directory + 'hetero_conf_file.json'
-        with open(hetero_conf_file_path, 'w') as fp:
+        conf_file_path = self.cache_directory + 'conf_file.json'
+        with open(conf_file_path, 'w') as fp:
             json.dump(config, fp)
-        self.conf_path = hetero_conf_file_path
-        return config['component_parameters']['common']['hetero_lr_0']['max_iter']
+        self.conf_path = conf_file_path
+        return config['component_parameters']['common'][component_name]['max_iter']
 
 
 def judging_state(retcode):
@@ -639,7 +683,8 @@ def run_test_api(config_json):
     remove_path = str(config_json[
                           'data_base_dir']) + '/model_local_cache/guest#{}#arbiter-{}#guest-{}#host-{}#model/'.format(
         guest_party_id[0], arbiter_party_id[0], guest_party_id[0], host_party_id[0])
-    max_iter = test_api.set_config(guest_party_id, host_party_id, arbiter_party_id, conf_path, work_mode)
+    max_iter = test_api.set_config(guest_party_id, host_party_id, arbiter_party_id, conf_path, work_mode,
+                                   config_json['component_name'])
 
     data = PrettyTable()
     data.set_style(ORGMODE)
@@ -703,8 +748,17 @@ def run_test_api(config_json):
     model = PrettyTable()
     model.set_style(ORGMODE)
     model.field_names = ['model api name', 'status']
-    model.add_row(['model load', judging_state(test_api.model_api('model/load'))])
-    model.add_row(['model bind', judging_state(test_api.model_api('model/bind'))])
+    if config_json.get('component_is_homo'):
+        homo_deploy_path = config_json.get('homo_deploy_path')
+        homo_deploy_kube_config_path = config_json.get('homo_deploy_kube_config_path')
+        model.add_row(['model homo convert', judging_state(test_api.model_api('model/homo/convert'))])
+        model.add_row(['model homo deploy',
+                      judging_state(test_api.model_api('model/homo/deploy',
+                                                       homo_deploy_path=homo_deploy_path,
+                                                       homo_deploy_kube_config_path=homo_deploy_kube_config_path))])
+    else:
+        model.add_row(['model load', judging_state(test_api.model_api('model/load'))])
+        model.add_row(['model bind', judging_state(test_api.model_api('model/bind'))])
     status, model_path = test_api.model_api('model/export')
     model.add_row(['model export', judging_state(status)])
     model.add_row(['model  import', (judging_state(

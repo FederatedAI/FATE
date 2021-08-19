@@ -216,6 +216,14 @@ class LogisticParam(BaseParam):
                     self.decay_sqrt))
         self.stepwise_param.check()
 
+        if self.validation_freqs is not None:
+            if type(self.validation_freqs).__name__ not in ["int", "list", "tuple", "set"]:
+                raise ValueError(
+                    "validation strategy param's validate_freqs's type not supported , should be int or list or tuple or set"
+                )
+            if type(self.validation_freqs).__name__ == "int" and self.validation_freqs <= 0:
+                raise ValueError("validation strategy param's validate_freqs should greater than 0")
+
         if self.early_stopping_rounds is None:
             pass
         elif isinstance(self.early_stopping_rounds, int):
@@ -324,6 +332,7 @@ class HeteroLogisticParam(LogisticParam):
                  decay=1, decay_sqrt=True, sqn_param=StochasticQuasiNewtonParam(),
                  multi_class='ovr', validation_freqs=None, early_stopping_rounds=None,
                  metrics=['auc', 'ks'], floating_point_precision=23,
+                 encrypt_param=EncryptParam(),
                  use_first_metric_only=False, stepwise_param=StepwiseParam()
                  ):
         super(HeteroLogisticParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
@@ -336,6 +345,7 @@ class HeteroLogisticParam(LogisticParam):
                                                   validation_freqs=validation_freqs,
                                                   early_stopping_rounds=early_stopping_rounds,
                                                   metrics=metrics, floating_point_precision=floating_point_precision,
+                                                  encrypt_param=encrypt_param,
                                                   use_first_metric_only=use_first_metric_only,
                                                   stepwise_param=stepwise_param)
         self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)

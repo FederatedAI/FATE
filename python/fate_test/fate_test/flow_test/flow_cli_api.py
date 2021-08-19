@@ -79,7 +79,8 @@ class TestModel(object):
 
         elif command == 'data_view_query':
             try:
-                subp = subprocess.Popen(["python", self.fate_flow_path, "-f", command, "-j", self.job_id],
+                subp = subprocess.Popen(["python", self.fate_flow_path, "-f", command, "-j", self.job_id,
+                                         "-r", "guest"],
                                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                 stdout, stderr = subp.communicate()
                 stdout = json.loads(stdout.decode("utf-8"))
@@ -234,7 +235,10 @@ class TestModel(object):
                 stdout = json.loads(stdout.decode("utf-8"))
                 if stdout.get('retcode'):
                     self.error_log('component parameters: {}'.format(stdout.get('retmsg')) + '\n')
-                if stdout.get("data").get("HeteroLogisticParam").get("max_iter") == max_iter:
+                if ((self.component_name == "hetero_lr_0" and
+                         stdout.get("data").get("HeteroLogisticParam").get("max_iter") == max_iter) or
+                    (self.component_name == "homo_lr_0" and
+                         stdout.get("data").get("HomoLogisticParam").get("max_iter") == max_iter)):
                     return stdout.get('retcode')
             except Exception:
                 return
@@ -482,7 +486,7 @@ class TestModel(object):
             else:
                 return
 
-    def set_config(self, guest_party_id, host_party_id, arbiter_party_id, path, work_mode):
+    def set_config(self, guest_party_id, host_party_id, arbiter_party_id, path, work_mode, component_name):
         config = get_dict_from_file(path)
         config["initiator"]["party_id"] = guest_party_id[0]
         config["role"]["guest"] = guest_party_id
@@ -496,11 +500,11 @@ class TestModel(object):
         self.guest_party_id = guest_party_id
         self.host_party_id = host_party_id
         self.arbiter_party_id = arbiter_party_id
-        hetero_conf_file_path = self.cache_directory + 'hetero_conf_file.json'
-        with open(hetero_conf_file_path, 'w') as fp:
+        conf_file_path = self.cache_directory + 'conf_file.json'
+        with open(conf_file_path, 'w') as fp:
             json.dump(config, fp)
-        self.conf_path = hetero_conf_file_path
-        return config['component_parameters']['common']['hetero_lr_0']['max_iter']
+        self.conf_path = conf_file_path
+        return config['component_parameters']['common'][component_name]['max_iter']
 
 
 def judging_state(retcode):
@@ -528,7 +532,8 @@ def run_test_api(config_json):
     remove_path = str(config_json[
                           'data_base_dir']) + '/model_local_cache/guest#{}#arbiter-{}#guest-{}#host-{}#model/'.format(
         guest_party_id[0], arbiter_party_id[0], guest_party_id[0], host_party_id[0])
-    max_iter = test_api.set_config(guest_party_id, host_party_id, arbiter_party_id, conf_path, work_mode)
+    max_iter = test_api.set_config(guest_party_id, host_party_id, arbiter_party_id, conf_path, work_mode,
+                                   config_json['component_name'])
 
     data = PrettyTable()
     data.set_style(ORGMODE)
@@ -575,8 +580,9 @@ def run_test_api(config_json):
     model = PrettyTable()
     model.set_style(ORGMODE)
     model.field_names = ['model api name', 'status']
-    model.add_row(['model load', judging_state(test_api.model_api('load'))])
-    model.add_row(['model bind', judging_state(test_api.model_api('bind'))])
+    if not config_json.get('component_is_homo'):
+        model.add_row(['model load', judging_state(test_api.model_api('load'))])
+        model.add_row(['model bind', judging_state(test_api.model_api('bind'))])
     status, model_path = test_api.model_api('export')
     model.add_row(['model export', judging_state(status)])
     model.add_row(['model  import', (judging_state(
