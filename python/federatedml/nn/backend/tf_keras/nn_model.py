@@ -144,7 +144,7 @@ def restore_keras_nn_model(model_bytes):
 
 
 class KerasNNModel(NNModel):
-    def  __init__(self, sess, model):
+    def __init__(self, sess, model):
         self._sess: tf.Session = sess
         self._model: tf.keras.Sequential = model
         self._trainable_weights = {
