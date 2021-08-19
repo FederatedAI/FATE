@@ -26,6 +26,7 @@ from federatedml.param.init_model_param import InitParam
 from federatedml.param.predict_param import PredictParam
 from federatedml.param.stepwise_param import StepwiseParam
 from federatedml.param.sqn_param import StochasticQuasiNewtonParam
+from federatedml.param.callback_param import CallbackParam
 from federatedml.util import consts
 
 
@@ -77,6 +78,8 @@ class LogisticParam(BaseParam):
 
     predict_param: PredictParam object, default: default PredictParam object
 
+    callback_param: CallbackParam object
+
     cv_param: CrossValidationParam object, default: default CrossValidationParam object
 
     multi_class: str, 'ovr', default: 'ovr'
@@ -111,7 +114,8 @@ class LogisticParam(BaseParam):
                  multi_class='ovr', validation_freqs=None, early_stopping_rounds=None,
                  stepwise_param=StepwiseParam(), floating_point_precision=23,
                  metrics=None, is_warm_start=False,
-                 use_first_metric_only=False
+                 use_first_metric_only=False,
+                 callback_param=CallbackParam()
                  ):
         super(LogisticParam, self).__init__()
         self.penalty = penalty
@@ -136,6 +140,7 @@ class LogisticParam(BaseParam):
         self.use_first_metric_only = use_first_metric_only
         self.floating_point_precision = floating_point_precision
         self.is_warm_start = is_warm_start
+        self.callback_param = callback_param
 
     def check(self):
         descr = "logistic_param's"

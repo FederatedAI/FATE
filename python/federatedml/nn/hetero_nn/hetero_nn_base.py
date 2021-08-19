@@ -21,7 +21,7 @@ from federatedml.model_selection import start_cross_validation
 from federatedml.param.hetero_nn_param import HeteroNNParam
 from federatedml.transfer_variable.transfer_class.hetero_nn_transfer_variable import HeteroNNTransferVariable
 from federatedml.util import consts
-from federatedml.util.validation_strategy import ValidationStrategy
+from federatedml.callbacks.validation_strategy import ValidationStrategy
 
 
 class HeteroNNBase(ModelBase):

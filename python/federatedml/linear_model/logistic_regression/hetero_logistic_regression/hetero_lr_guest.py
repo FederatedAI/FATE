@@ -82,7 +82,8 @@ class HeteroLRGuest(HeteroLRBase):
         LOGGER.info("Enter hetero_lr_guest fit")
         self.header = self.get_header(data_instances)
 
-        self.validation_strategy = self.init_validation_strategy(data_instances, validate_data)
+        self.callback_list.on_train_begin(data_instances, validate_data)
+
         data_instances = data_instances.mapValues(HeteroLRGuest.load_data)
         LOGGER.debug(f"MODEL_STEP After load data, data count: {data_instances.count()}")
         self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
@@ -104,6 +105,7 @@ class HeteroLRGuest(HeteroLRBase):
             self.model_weights = LinearModelWeights(w, fit_intercept=self.fit_intercept)
 
         while self.n_iter_ < self.max_iter:
+            self.callback_list.on_epoch_start(self.n_iter_)
             LOGGER.info("iter:{}".format(self.n_iter_))
             batch_data_generator = self.batch_generator.generate_batch_data()
             self.optimizer.set_iters(self.n_iter_)
@@ -134,13 +136,16 @@ class HeteroLRGuest(HeteroLRBase):
             LOGGER.info("iter: {},  is_converged: {}".format(self.n_iter_, self.is_converged))
 
             self.add_checkpoint(step_index=self.n_iter_, step_name=self.flowid)
-
-            if self.validation_strategy:
-                LOGGER.debug('LR guest running validation')
-                self.validation_strategy.validate(self, self.n_iter_)
-                if self.validation_strategy.need_stop():
-                    LOGGER.debug('early stopping triggered')
-                    break
+            #
+            # if self.validation_strategy:
+            #     LOGGER.debug('LR guest running validation')
+            #     self.validation_strategy.validate(self, self.n_iter_)
+            #     if self.validation_strategy.need_stop():
+            #         LOGGER.debug('early stopping triggered')
+            #         break
+            self.callback_list.on_epoch_end(self.n_iter_)
+            if self.stop_training:
+                break
 
             self.n_iter_ += 1
 

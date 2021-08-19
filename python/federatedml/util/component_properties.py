@@ -256,8 +256,7 @@ class ComponentProperties(object):
 
     def _train_process(self, running_funcs, model, train_data, validate_data, test_data, schema):
         if self.has_train_data and self.has_validate_data:
-            # todo_func_list.extend([model.set_flowid, model.fit, model.set_flowid, model.predict])
-            # todo_func_params.extend([['fit'], [train_data], ['validate'], [train_data, 'validate']])
+
             running_funcs.add_func(model.set_flowid, ['fit'])
             running_funcs.add_func(model.fit, [train_data, validate_data])
             running_funcs.add_func(model.set_flowid, ['validate'])

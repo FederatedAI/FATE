@@ -28,9 +28,10 @@ from federatedml.param.evaluation_param import EvaluateParam
 from federatedml.evaluation.performance_recorder import PerformanceRecorder
 from federatedml.transfer_variable.transfer_class.validation_strategy_transfer_variable import  \
     ValidationStrategyVariable
+from federatedml.callbacks.callback_base import CallbackBase
 
 
-class ValidationStrategy(object):
+class ValidationStrategy(CallbackBase):
     """
     This module is used for evaluating the performance of model during training process.
         it will be called only in fit process of models.
@@ -371,3 +372,14 @@ class ValidationStrategy(object):
 
         if self.early_stopping_rounds and self.mode == consts.HETERO:
             self.update_early_stopping_status(epoch, model)
+
+    def on_train_begin(self, train_data=None, validate_data=None):
+        self.set_train_data(train_data)
+        self.set_validate_data(validate_data)
+
+    def on_epoch_end(self, model, epoch):
+        LOGGER.debug('running validation')
+        self.validate(model, epoch)
+        if self.need_stop():
+            LOGGER.debug('early stopping triggered')
+            model.stop_training = True

@@ -93,7 +93,9 @@ class HeteroLRHost(HeteroLRBase):
         self._abnormal_detection(data_instances)
         self.check_abnormal_values(data_instances)
         self.check_abnormal_values(validate_data)
-        self.validation_strategy = self.init_validation_strategy(data_instances, validate_data)
+        # self.validation_strategy = self.init_validation_strategy(data_instances, validate_data)
+        self.callback_list.on_train_begin(data_instances, validate_data)
+
         LOGGER.debug(f"MODEL_STEP Start fin_binary, data count: {data_instances.count()}")
 
         self.header = self.get_header(data_instances)
@@ -117,6 +119,8 @@ class HeteroLRHost(HeteroLRBase):
             self.model_weights = LinearModelWeights(w, fit_intercept=self.init_param_obj.fit_intercept)
 
         while self.n_iter_ < self.max_iter:
+            self.callback_list.on_epoch_start(self.n_iter_)
+
             LOGGER.info("iter:" + str(self.n_iter_))
             batch_data_generator = self.batch_generator.generate_batch_data()
             batch_index = 0
@@ -144,12 +148,17 @@ class HeteroLRHost(HeteroLRBase):
             LOGGER.debug(f"flowid: {self.flowid}, step_index: {self.n_iter_}")
             self.add_checkpoint(step_index=self.n_iter_, step_name=self.flowid)
 
-            if self.validation_strategy:
-                LOGGER.debug('LR host running validation')
-                self.validation_strategy.validate(self, self.n_iter_)
-                if self.validation_strategy.need_stop():
-                    LOGGER.debug('early stopping triggered')
-                    break
+            # if self.validation_strategy:
+            #     LOGGER.debug('LR host running validation')
+            #     self.validation_strategy.validate(self, self.n_iter_)
+            #     if self.validation_strategy.need_stop():
+            #         LOGGER.debug('early stopping triggered')
+            #         break
+
+            self.callback_list.on_epoch_end(self.n_iter_)
+            if self.stop_training:
+                break
+
             self.n_iter_ += 1
             if self.is_converged:
                 break

@@ -28,6 +28,7 @@ from federatedml.util import LOGGER
 from federatedml.util import abnormal_detection
 from federatedml.util.component_properties import ComponentProperties, RunningFuncs
 from federatedml.util.param_extract import ParamExtract
+from federatedml.callbacks.callback_list import CallbackList
 
 
 class ModelBase(object):
@@ -49,6 +50,7 @@ class ModelBase(object):
         self._summary = dict()
         self._align_cache = dict()
         self.step_name = ''
+        self.callback_list: CallbackList
 
     def _init_runtime_parameters(self, component_parameters):
         param_extractor = ParamExtract()
@@ -56,6 +58,10 @@ class ModelBase(object):
         param.check()
         self.role = self.component_properties.parse_component_param(component_parameters, param).role
         self._init_model(param)
+        self.callback_list = CallbackList(self.role, self.mode, self)
+        if hasattr(param, "callback_param"):
+            callback_param = getattr(param, "callback_param")
+            self.callback_list.init_callback_list(callback_param)
         return param
 
     @property

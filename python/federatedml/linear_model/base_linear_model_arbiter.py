@@ -20,7 +20,7 @@ from federatedml.linear_model.linear_model_base import BaseLinearModel
 from federatedml.util import LOGGER
 from federatedml.util import consts
 from federatedml.util import fate_operator
-from federatedml.util.validation_strategy import ValidationStrategy
+from federatedml.callbacks.validation_strategy import ValidationStrategy
 
 
 class HeteroBaseArbiter(BaseLinearModel):
