@@ -305,7 +305,8 @@ fit or predict state and the constructed dsl if exists.
 Use Online Inference Service(FATE-Serving) with Pipeline
 --------------------------------------------------------
 
-First, trained pipeline must be deployed before loading and binding model to online service.
+First, trained pipeline must be deployed before loading and binding model to
+online service `FATE-Serving <https://github.com/FederatedAI/FATE-Serving>`__.
 
 .. code:: python
 
@@ -331,10 +332,20 @@ Last, bind model to chosen service. Optionally, provide select FATE-Serving addr
    pipeline.online.bind("service_1", "127.0.0.1")
 
 
+Convert Homo Model to Formats from Other Machine Learning System
+----------------------------------------------------------------
+
+To convert a trained homo model into formats of other machine learning system, use **convert** interface.
+
+.. code:: python
+
+   pipeline.convert()
+
+
 Upload Data
 -----------
 
-Pipeline provides functionality to upload local data table. Please refer
+PipeLine provides functionality to upload local data table. Please refer
 to `upload demo <./demo/pipeline-upload.py>`__ for a quick example. Note
 that uploading data can be added all at once, and the pipeline used to
 perform upload can be either training or prediction pipeline (or, a

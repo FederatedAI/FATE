@@ -418,7 +418,7 @@ class JobInvoker(object):
         # result = self.client.model.load(load_conf)
         result = self.client.model.load(submit_path)
         if result is None or 'retcode' not in result:
-            raise ValueError("Call flow load is failed, check if fate_flow server is up!")
+            raise ValueError("Call flow load failed, check if fate_flow server is up!")
         elif result["retcode"] != 0:
             raise ValueError("Cannot load model, error msg is {}".format(result["retmsg"]))
         else:
@@ -432,8 +432,22 @@ class JobInvoker(object):
         # result = self.client.model.bind(bind_conf)
         result = self.client.model.bind(submit_path)
         if result is None or 'retcode' not in result:
-            raise ValueError("Call flow bind is failed, check if fate_flow server is up!")
+            raise ValueError("Call flow bind failed, check if fate_flow server is up!")
         elif result["retcode"] != 0:
             raise ValueError("Cannot bind model, error msg is {}".format(result["retmsg"]))
         else:
             return result["retmsg"]
+
+    def convert_homo_model(self, convert_conf):
+        with tempfile.TemporaryDirectory() as job_dir:
+            submit_path = os.path.join(job_dir, "job_runtime_conf.json")
+            with open(submit_path, "w") as fout:
+                fout.write(json.dumps(convert_conf))
+        # result = self.client.model.bind(convert_conf)
+        result = self.client.model.homo_convert(submit_path)
+        if result is None or 'retcode' not in result:
+            raise ValueError("Call flow homo convert failed, check if fate_flow server is up!")
+        elif result["retcode"] != 0:
+            raise ValueError("Cannot bind model, error msg is {}".format(result["retmsg"]))
+        else:
+            return result["data"]

@@ -64,6 +64,7 @@ class PipeLine(object):
         self._system_role = SystemSetting.system_setting().get("role")
         self.online = self.OnlineCommand(self)
         self._load = False
+        self.homo_model = self.HomoModel(self)
 
     @LOGGER.catch(reraise=True)
     def set_initiator(self, role, party_id):
@@ -94,6 +95,9 @@ class PipeLine(object):
 
     def get_predict_model_info(self):
         return copy.deepcopy(self._predict_model_info)
+
+    def get_model_info(self):
+        return copy.deepcopy(self._model_info)
 
     def get_train_dsl(self):
         return copy.deepcopy(self._train_dsl)
@@ -720,3 +724,23 @@ class PipeLine(object):
             bind_conf["service_id"] = service_id
             bind_conf["servings"] = list(servings)
             self.pipeline_obj._job_invoker.bind_model(bind_conf)
+
+    class HomoModel(object):
+        def __init__(self, pipeline_obj):
+            self.pipeline_obj = pipeline_obj
+
+        def _feed_homo_conf(self, framework_name):
+            model_info = self.pipeline_obj.get_model_info()
+            conf = {"role": self.pipeline_obj._initiator.role,
+                    "party_id": self.pipeline_obj._initiator.party_id,
+                    "model_id": model_info.model_id,
+                    "model_version": model_info.model_version
+                    }
+            if framework_name:
+                conf["framework_name"] = framework_name
+            return conf
+
+        def convert(self, framework_name=None):
+            conf = self._feed_homo_conf(framework_name)
+            res_dict = self.pipeline_obj._job_invoker.convert_homo_model(conf)
+            #@TODO: return saved file path
