@@ -150,25 +150,28 @@ def _search_components(path):
         # or skip ?
         raise e
     _obj_pairs = inspect.getmembers(module, lambda obj: isinstance(obj, ComponentMeta))
-    return _obj_pairs
+    return _obj_pairs, module_name
 
 
 class Components:
+    provider_version = None
+    provider_name = None
+
     @classmethod
     def get_names(cls) -> typing.Dict[str, dict]:
         names = {}
         _components_base = Path(__file__).resolve().parent
         for p in _components_base.glob("**/*.py"):
-            for name, obj in _search_components(p):
-                info = obj.register_info()
-                LOGGER.info(f"component register {name} with cache info {info}")
-                names.update(info)
+            obj_pairs, module_name = _search_components(p)
+            for name, obj in obj_pairs:
+                names[obj.name] = {"module": module_name}
+                LOGGER.info(f"component register {obj.name} with cache info {module_name}")
         return names
 
     @classmethod
     def get(cls, name: str, cache) -> ComponentMeta:
         if cache:
-            importlib.import_module(cache["module"])
+            importlib.import_module(cache[name]["module"])
 
         else:
             _components_base = Path(__file__).resolve().parent
