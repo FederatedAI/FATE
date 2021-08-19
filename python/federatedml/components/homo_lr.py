@@ -29,7 +29,7 @@ def homo_lr_param():
 
 @homo_lr_cpn_meta.bind_runner.on_guest
 def homo_lr_runner_guest():
-    from federatedml.linear_model.logistic_regression.homo_logsitic_regression.homo_lr_guest import (
+    from federatedml.linear_model.logistic_regression.homo_logistic_regression.homo_lr_guest import (
         HomoLRGuest,
     )
 
@@ -38,7 +38,7 @@ def homo_lr_runner_guest():
 
 @homo_lr_cpn_meta.bind_runner.on_host
 def homo_lr_runner_host():
-    from federatedml.linear_model.logistic_regression.homo_logsitic_regression.homo_lr_host import (
+    from federatedml.linear_model.logistic_regression.homo_logistic_regression.homo_lr_host import (
         HomoLRHost,
     )
 
@@ -47,7 +47,7 @@ def homo_lr_runner_host():
 
 @homo_lr_cpn_meta.bind_runner.on_arbiter
 def homo_lr_runner_arbiter():
-    from federatedml.linear_model.logistic_regression.homo_logsitic_regression.homo_lr_arbiter import (
+    from federatedml.linear_model.logistic_regression.homo_logistic_regression.homo_lr_arbiter import (
         HomoLRArbiter,
     )
 
