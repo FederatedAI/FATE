@@ -24,6 +24,7 @@ from .component_converter import ComponentConverterBase
 SKLEARN_FILENAME = "sklearn.joblib"
 PYTORCH_FILENAME = "pytorch.pth"
 TF_DIRNAME = "tensorflow_saved_model"
+LGB_FILENAME = "lgb.txt"
 
 
 def _get_component_converter(module_name: str,
@@ -34,6 +35,9 @@ def _get_component_converter(module_name: str,
         framework_name = "pytorch"
     elif framework_name in ["sklearn", "scikit-learn"]:
         framework_name = "sklearn"
+    elif framework_name in ['lightgbm']:
+        framework_name = 'lightgbm'
+
     package_name = "." + framework_name
     parent_package = importlib.import_module(package_name, __package__)
     parent_package_path = os.path.dirname(os.path.realpath(parent_package.__file__))
@@ -69,6 +73,8 @@ def get_default_target_framework(model_contents: dict,
             framework_name = "pytorch"
         else:
             framework_name = "tf_keras"
+    elif module_name == 'HomoSecureboost':
+        framework_name = 'lightgbm'
     else:
         LOGGER.debug(f"Module {module_name} is not a supported homogeneous model")
     return framework_name
@@ -87,6 +93,9 @@ def model_convert(model_contents: dict,
     :return: the converted framework name and a instance of the model object from
              the specified framework.
     """
+
+    LOGGER.info('cwj is here')
+
     if not framework_name:
         framework_name = get_default_target_framework(model_contents, module_name)
         if not framework_name:
@@ -96,7 +105,9 @@ def model_convert(model_contents: dict,
         LOGGER.warn(f"Module {module_name} cannot be converted to framework {framework_name}")
         return None, None
     LOGGER.info(f"Converting {module_name} module to a model of framework {target_framework}")
-    return target_framework, component_converter.convert(model_contents)
+    a, b = target_framework, component_converter.convert(model_contents)
+    LOGGER.info('cwj a b {} {}'.format(a, b))
+    return a, b
 
 
 def _get_model_saver_loader(framework_name: str):
@@ -109,6 +120,9 @@ def _get_model_saver_loader(framework_name: str):
     elif framework_name in ["tensorflow", "tf", "tf_keras"]:
         import tensorflow
         return tensorflow.saved_model.save, tensorflow.saved_model.load, TF_DIRNAME
+    elif framework_name in ['lightgbm']:
+        from federatedml.protobuf.homo_model_convert.lightgbm.gbdt import save_lgb, load_lgb
+        return save_lgb, load_lgb, LGB_FILENAME
     else:
         raise NotImplementedError("save method for framework: {} is not implemented"
                                   .format(framework_name))
