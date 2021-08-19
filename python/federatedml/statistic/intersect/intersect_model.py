@@ -147,8 +147,8 @@ class IntersectModelBase(ModelBase):
         return result_data
 
     def callback(self):
-        """meta_info = {"intersect_method": self.model_param.intersect_method,
-                     "join_method": self.model_param.join_method}"""
+        meta_info = {"intersect_method": self.model_param.intersect_method,
+                     "join_method": self.model_param.join_method}
         self.callback_metric(metric_name=self.metric_name,
                              metric_namespace=self.metric_namespace,
                              metric_data=[Metric("intersect_count", self.intersect_num),
@@ -157,7 +157,9 @@ class IntersectModelBase(ModelBase):
                                           Metric("unmatched_rate", self.unmatched_rate)])
         self.tracker.set_metric_meta(metric_namespace=self.metric_namespace,
                                      metric_name=self.metric_name,
-                                     metric_meta=MetricMeta(name=self.metric_name, metric_type=self.metric_type),
+                                     metric_meta=MetricMeta(name=self.metric_name,
+                                                            metric_type=self.metric_type,
+                                                            extra_metas=meta_info)
                                      )
 
     def fit(self, data):
