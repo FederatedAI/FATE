@@ -22,7 +22,7 @@ from fate_arch.common.log import getLogger
 from fate_arch.storage._table import StorageTableMeta
 from fate_arch.storage._types import StorageEngine, EggRollStoreType, StandaloneStoreType
 from fate_arch.relation_ship import Relationship
-from fate_arch.storage.metastore.db_models import DB, StorageTableMetaModel
+from fate_arch.metastore.db_models import DB, StorageTableMetaModel
 from fate_arch.common.base_utils import current_timestamp
 
 MAX_NUM = 10000

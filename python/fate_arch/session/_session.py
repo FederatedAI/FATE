@@ -16,7 +16,6 @@
 import threading
 import typing
 import uuid
-import operator
 
 import peewee
 from fate_arch.common import engine_utils, EngineType
@@ -27,7 +26,7 @@ from fate_arch.common import Backend, WorkMode, remote_status
 from fate_arch.computing import ComputingEngine
 from fate_arch.federation import FederationEngine
 from fate_arch.storage import StorageEngine, StorageSessionBase, StorageTableMeta
-from fate_arch.storage.metastore.db_models import DB, SessionRecord, init_database_tables
+from fate_arch.metastore.db_models import DB, SessionRecord, init_database_tables
 from fate_arch.session._parties import PartiesInfo
 
 LOGGER = log.getLogger()
@@ -37,7 +36,10 @@ class Session(object):
     @staticmethod
     def create(backend: typing.Union[Backend, int] = None,
                work_mode: typing.Union[WorkMode, int] = None, **kwargs):
-        engines = engine_utils.engines_compatibility(**locals())
+        new_kwargs = locals().copy()
+        new_kwargs.update(kwargs)
+        engines = engine_utils.engines_compatibility(**new_kwargs)
+        LOGGER.info(f"using engines: {engines}")
         return Session(**engines)
 
     def __init__(self, computing: ComputingEngine = None, federation: FederationEngine = None, storage: StorageEngine = None, session_id: str = None, logger=None, **kwargs):
