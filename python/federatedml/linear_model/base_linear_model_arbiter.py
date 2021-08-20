@@ -74,7 +74,7 @@ class HeteroBaseArbiter(BaseLinearModel):
         self.gradient_loss_operator.set_total_batch_nums(self.batch_generator.batch_num)
 
         self.validation_strategy = self.init_validation_strategy(data_instances, validate_data)
-
+        LOGGER.debug(f"n_ter: {self.n_iter_}, max_iter: {self.max_iter}")
         while self.n_iter_ < self.max_iter:
             iter_loss = None
             batch_data_generator = self.batch_generator.generate_batch_data()

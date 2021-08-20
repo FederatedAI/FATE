@@ -31,7 +31,7 @@ from federatedml.feature.instance import Instance
 from federatedml.util.io_check import assert_match_id_consistent
 from federatedml.util import LOGGER
 from federatedml.util import abnormal_detection
-from federatedml.util.component_properties import ComponentProperties
+from federatedml.util.component_properties import ComponentProperties, RunningFuncs
 
 
 class ComponentOutput:
@@ -105,7 +105,7 @@ class ModelBase(object):
     def run(
         self,
         cpn_input,
-        warn_start: bool,
+        retry: bool,
     ):
         self.task_version_id = cpn_input.task_version_id
         self.tracker = cpn_input.tracker
@@ -113,12 +113,55 @@ class ModelBase(object):
 
         # deserialize models
         deserialize_models(cpn_input.models)
-        if not warn_start:
+        if not retry:
             self._run(cpn_input)
         else:
-            self._warn_start(cpn_input)
+            self._warm_start(cpn_input)
 
         return ComponentOutput(self.save_data(), self.export_model())
+
+    def _warm_start(self, cpn_input):
+        self.model_param.update(cpn_input.parameters)
+        self.model_param.check()
+        self.component_properties.parse_component_param(
+            cpn_input.roles, self.model_param
+        )
+        self.role = self.component_properties.role
+        self.component_properties.parse_dsl_args(cpn_input.datasets, cpn_input.models)
+
+        train_data, validate_data, test_data, data = self.component_properties.extract_input_data(
+            datasets=cpn_input.datasets,
+            model=self
+        )
+        running_funcs = RunningFuncs()
+        latest_checkpoint = self.checkpoint_manager.get_latest_checkpoint()
+        running_funcs.add_func(self.load_model, [latest_checkpoint])
+        running_funcs = self.component_properties.warm_start_process(running_funcs, self, train_data, validate_data)
+        LOGGER.debug(f"running_funcs: {running_funcs.todo_func_list}")
+        self._execute_running_funcs(running_funcs)
+
+    def _execute_running_funcs(self, running_funcs):
+        saved_result = []
+        for func, params, save_result, use_previews in running_funcs:
+            # for func, params in zip(todo_func_list, todo_func_params):
+            if use_previews:
+                if params:
+                    real_param = [saved_result, params]
+                else:
+                    real_param = saved_result
+                LOGGER.debug("func: {}".format(func))
+                this_data_output = func(*real_param)
+                saved_result = []
+            else:
+                this_data_output = func(*params)
+
+            if save_result:
+                saved_result.append(this_data_output)
+
+        if len(saved_result) == 1:
+            self.data_output = saved_result[0]
+        LOGGER.debug("saved_result is : {}, data_output: {}".format(saved_result, self.data_output))
+        self.save_summary()
 
     def _run(self, cpn_input):
         # paramters
@@ -127,6 +170,7 @@ class ModelBase(object):
         self.component_properties.parse_component_param(
             cpn_input.roles, self.model_param
         )
+        LOGGER.debug(f"model_params: {self.model_param.__dict__}")
         self.role = self.component_properties.role
         self.component_properties.parse_dsl_args(cpn_input.datasets, cpn_input.models)
 
@@ -137,35 +181,7 @@ class ModelBase(object):
             datasets=cpn_input.datasets, models=cpn_input.models, cpn=self
         )
         LOGGER.debug(f"running_funcs: {running_funcs.todo_func_list}")
-        saved_result = []
-        for func, params, save_result, use_previews in running_funcs:
-            # for func, params in zip(todo_func_list, todo_func_params):
-            if use_previews:
-                if params:
-                    real_param = [saved_result, params]
-                else:
-                    real_param = saved_result
-                LOGGER.debug("func: {}".format(func))
-                detected_func = assert_match_id_consistent(func)
-                this_data_output = detected_func(*real_param)
-                saved_result = []
-            else:
-                detected_func = assert_match_id_consistent(func)
-                this_data_output = detected_func(*params)
-
-            if save_result:
-                saved_result.append(this_data_output)
-
-        if len(saved_result) == 1:
-            self.data_output = saved_result[0]
-            # LOGGER.debug("One data: {}".format(self.data_output.first()[1].features))
-        LOGGER.debug(
-            "saved_result is : {}, data_output: {}".format(
-                saved_result, self.data_output
-            )
-        )
-        # self.check_consistency()
-        self.save_summary()
+        self._execute_running_funcs(running_funcs)
 
         return ComponentOutput(self.save_data(), self.export_model())
 
