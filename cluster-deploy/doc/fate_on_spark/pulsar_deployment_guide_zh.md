@@ -36,9 +36,6 @@ $ cd /data/projects/common/apache-pulsar-2.7.0
 1. 编辑"conf/standalone.conf"文件, 修改如下：
 
 ``` bash
-# 设置消息自动确认时间
-ttlDurationDefaultInSeconds=180
-
 # 打开自动删除非活跃topic功能
 brokerDeleteInactiveTopicsEnabled=true
 
