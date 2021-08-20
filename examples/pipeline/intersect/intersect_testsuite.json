@@ -60,6 +60,12 @@
         },
         "repeated_id": {
             "script": "./pipeline-intersect-repeated-id.py"
+        },
+        "dh_interect": {
+            "script": "./pipeline-intersect-dh.py"
+        },
+        "dh_interect_mutli": {
+            "script": "./pipeline-intersect-dh-multi.py"
         }
     }
 }

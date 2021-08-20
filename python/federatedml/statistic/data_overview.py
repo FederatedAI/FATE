@@ -218,6 +218,13 @@ def rubbish_clear(rubbish_list):
             LOGGER.warning("destroy Dtable error,:{}, but this can be ignored sometimes".format(e))
 
 
+def check_with_inst_id(data_instances):
+    instance = data_instances.first()[1]
+    if isinstance(instance, Instance) and instance.with_inst_id:
+        return True
+    return False
+
+
 class DataStatistics(object):
     def __init__(self):
         self.multivariate_statistic_obj = None

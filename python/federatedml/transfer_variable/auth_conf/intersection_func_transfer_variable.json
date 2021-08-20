@@ -31,6 +31,56 @@
       "dst": [
         "host"
       ]
+    },
+    "join_id_from_guest": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "host"
+      ]
+    },
+    "join_id_from_host": {
+      "src": [
+        "host"
+      ],
+      "dst": [
+        "guest"
+      ]
+    },
+    "intersect_filter_from_host": {
+      "src": [
+        "host"
+      ],
+      "dst": [
+        "guest"
+      ]
+    },
+    "intersect_filter_from_guest": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "host"
+      ]
+    },
+    "cache_id": {
+      "src": [
+        "guest",
+        "host"
+      ],
+      "dst": [
+        "host",
+        "guest"
+      ]
+    },
+    "cache_id_from_host": {
+      "src": [
+        "host"
+      ],
+      "dst": [
+        "guest"
+      ]
     }
   }
 }

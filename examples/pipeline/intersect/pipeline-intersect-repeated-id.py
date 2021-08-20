@@ -46,7 +46,8 @@ def main(config="../../config.yaml", namespace=""):
 
     dataio_0 = DataIO(name="dataio_0")
 
-    dataio_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=False, output_format="dense", exclusive_data_type={"id":"str"})
+    dataio_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=False, output_format="dense",
+                                                                              exclusive_data_type={"id":"str"})
     dataio_0.get_party_instance(role='host', party_id=host).component_param(with_label=False, output_format="dense")
 
     param = {

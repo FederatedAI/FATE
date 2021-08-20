@@ -39,6 +39,10 @@ L2_PENALTY = 'L2'
 FLOAT_ZERO = 1e-8
 OVERFLOW_THRESHOLD = 1e8
 
+OT_HAUCK = 'OT_Hauck'
+CE_PH = 'CommutativeEncryptionPohligHellman'
+AES = 'aes'
+
 PARAM_MAXDEPTH = 5
 MAX_CLASSNUM = 1000
 MIN_BATCH_SIZE = 10
@@ -49,6 +53,7 @@ HOMO = "homo"
 
 RAW = "raw"
 RSA = "rsa"
+DH = "dh"
 
 # evaluation
 AUC = "auc"
@@ -256,7 +261,12 @@ COL = 'col'
 PHONE = 'phone'
 IMEI = 'imei'
 MD5 = 'md5'
+SHA1 = 'sha1'
+SHA224 = 'sha224'
 SHA256 = 'sha256'
+SHA384 = 'sha384'
+SHA512 = 'sha512'
+SM3 = 'sm3'
 INTERSECT_CACHE_TAG = 'Za'
 
 SHARE_INFO_COL_NAME = "share_info"
@@ -296,3 +306,9 @@ MAX_SAMPLE_OUTPUT_LIMIT = 10 ** 6
 
 # Hetero NN Selective BP Strategy
 SELECTIVE_SIZE = 1024
+
+# intersect join methods
+INNER_JOIN = "inner_join"
+LEFT_JOIN = "left_join"
+
+DEFAULT_KEY_LENGTH = 1024

@@ -54,6 +54,7 @@ HOMO = "homo"
 
 RAW = "raw"
 RSA = "rsa"
+DH = "dh"
 
 # evaluation
 AUC = "auc"
@@ -321,3 +322,12 @@ MAX_SAMPLE_OUTPUT_LIMIT = 10 ** 6
 
 # Hetero NN Selective BP Strategy
 SELECTIVE_SIZE = 1024
+
+# intersect join methods
+INNER_JOIN = "inner_join"
+LEFT_JOIN = "left_join"
+
+DEFAULT_KEY_LENGTH = 1024
+
+MIN_HASH_FUNC_COUNT = 4
+MAX_HASH_FUNC_COUNT = 32

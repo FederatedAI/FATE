@@ -38,13 +38,19 @@ With RSA intersection, participants can get their intersection ids securely and 
 RAW Intersection
 ----------------
 
-This intersection mode implements the simple intersection method in which a participant sends all its ids to another participant, and the other
+This mode implements the simple intersection method in which a participant sends all its ids to another participant, and the other
 participant finds their common ids. Finally, the joining role will send the intersection ids to the sender.
+
+DH Intersection
+---------------
+
+This mode implements secure intersection based on symmetric encryption with Pohlig–Hellman commutative cipher.
+DH Intersection is also used in `Secure Information Retrieval(SIR) module <../../secure_information_retrieval>`_.
 
 Multi-Host Intersection
 -----------------------
 
-Both RSA and RAW intersection support multi-host scenario. It means a guest can perform intersection with more than one host simultaneously and get the common ids among all participants.
+RSA, RAW, and DH intersection support multi-host scenario. It means a guest can perform intersection with more than one host simultaneously and get the common ids among all participants.
 
 .. figure:: ./images/multi_hosts.png
    :align: center
@@ -58,47 +64,49 @@ First, guest will run intersection with each host and get respective overlapping
 Then, guest will find common IDs from all intersection results. Optionally,
 guest will send common IDs to every host.
 
-Repeated ID intersection
-------------------------
+Match ID(Repeated ID) intersection
+----------------------------------
 
-We support repeated id intersection for some applications.
-In this case, one should provide the mask id to be mapped to repeated ids.
-For instances, in Guest, your data is
+Starting at ver 1.7, it is recommended to assign random sid to uploaded data.
+Intersection module then automatically checks for and process data with instance ID.
+
+Note that parameters for original repeated ID process such as `repeated_id_process` are deprecated in ver 1.7.
+Specify `join_id_owner` to the role whose sid to be kept.
+For instances, when `join_id_owner` is set to Guest(default), Guest's data is
 
 ::
 
-   mask_id, id, value
-   alice_1, alice, 2
-   alice_2, alice, 3
-   bob, bob, 4
+   sid, id, value
+   123, alice, 2
+   125, alice, 3
+   130, bob, 4
 
 In Host, you data is
 
 ::
 
-   id, value
-   alice, 5
-   bob, 6
+   sid, id, value
+   210, alice, 5
+   232, alice, 5
+   212, bob, 4
 
 After intersection, guest will get the intersection results:
 
 ::
 
-   mask_id, value
-   alice_1, 2
-   alice_2, 3
-   bob, 4
+   sid, id, value
+   123, alice, 2
+   125, alice, 3
+   130, bob, 4
 
-And in host:
+And for Host:
 
 ::
 
-   id, value
-   alice_1, 5
-   alice_2, 5
-   bob, 4
-
-Set parameter `repeated_id_process` to true if you wish to use this mapping function for repeated ids.
+   sid, id, value
+   123, alice, 5
+   125, alice, 5
+   130, bob, 4
 
 Param
 ------
@@ -109,13 +117,21 @@ Param
 Feature
 -------
 
-Both RSA and RAW intersection support:
+RSA, RAW, and DH intersection methods support:
 
-1. Multi-host modeling task. The detailed configuration for multi-host modeling task is located `here. <../../../../doc/dsl_conf_v2_setting_guide.rst#multi-host-configuration>`_
+1. Multi-host PSI task. The detailed configuration for multi-host task can be found `here. <../../../../doc/dsl_conf_v2_setting_guide.rst#multi-host-configuration>`_
 
-2. Repeated ID intersection using ID expanding.
+2. Match ID intersection using ID expanding.
 
 3. Configurable hashing methods, including sha256, md5, and sm3; hash operators of RSA intersection can be configured separately, please refer `here <../../param/intersect_param.py>`_ for more details.
+
+4. Preprocessing step to pre-filter Host's data for faster PSI
+
+RAW and DH intersection methods also support:
+
+1. PSI with cache
+
+2. intersection cardinality estimation
 
 RAW intersection supports the following extra feature:
 

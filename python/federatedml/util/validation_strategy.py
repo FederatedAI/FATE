@@ -28,6 +28,7 @@ from federatedml.param.evaluation_param import EvaluateParam
 from federatedml.evaluation.performance_recorder import PerformanceRecorder
 from federatedml.transfer_variable.transfer_class.validation_strategy_transfer_variable import  \
     ValidationStrategyVariable
+from federatedml.feature.instance import Instance
 
 
 class ValidationStrategy(object):
@@ -264,11 +265,16 @@ class ValidationStrategy(object):
         return eval_result_dict
 
     @staticmethod
+    def _add_data_type_map_func(value, data_type):
+        new_pred_rs = Instance(features=value.features + [data_type], inst_id=value.inst_id)
+        return new_pred_rs
+
+    @staticmethod
     def add_data_type(predicts, data_type: str):
         """
         predict data add data_type
         """
-        predicts = predicts.mapValues(lambda value: value + [data_type])
+        predicts = predicts.mapValues(lambda value: ValidationStrategy._add_data_type_map_func(value, data_type))
         return predicts
 
     def handle_precompute_scores(self, precompute_scores, data_type):

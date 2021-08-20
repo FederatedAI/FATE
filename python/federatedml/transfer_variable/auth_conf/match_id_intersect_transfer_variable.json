@@ -1,5 +1,5 @@
 {
-  "federatedml.transfer_variable.transfer_class.repeated_id_intersect_transfer_variable.RepeatedIDIntersectTransferVariable": {
+  "federatedml.transfer_variable.transfer_class.match_id_intersect_transfer_variable.MatchIDIntersectTransferVariable": {
     "id_map_from_guest": {
       "src": [
         "guest"

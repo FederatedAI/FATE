@@ -16,9 +16,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+
+import copy
 import numpy
 
 from federatedml.util import LOGGER
+from federatedml.feature.instance import Instance
 from federatedml.transfer_variable.transfer_class import feldman_verifiable_sum_transfer_variable
 from federatedml.param.feldman_verifiable_sum_param import FeldmanVerifiableSumParam
 from federatedml.statistic.feldman_verifiable_sum.base_feldman_verifiable_sum import BaseFeldmanVerifiableSum
@@ -47,7 +50,9 @@ class FeldmanVerifiableSumGuest(BaseFeldmanVerifiableSum):
             for idx, label in enumerate(data_inst.schema.get('header')):
                 if idx in self.sum_cols:
                     header.append(label)
-            self.output_schema = {"header": header, "sid_name": data_inst.schema.get('sid_name')}
+            schema = copy.deepcopy(data_inst.schema)
+            schema["header"] = header
+            self.output_schema = schema
 
     def select_data_by_idx(self, values):
         data = []
@@ -103,6 +108,8 @@ class FeldmanVerifiableSumGuest(BaseFeldmanVerifiableSum):
         self.reconstruct()
 
         LOGGER.info("success to calculate privacy sum")
+        self.secret_sum = self.secret_sum.join(data_inst, lambda s, v: Instance(features=numpy.array(s),
+                                                                                inst_id=v.inst_id))
 
         self.secret_sum.schema = self.output_schema
 

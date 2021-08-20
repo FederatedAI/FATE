@@ -26,6 +26,11 @@ from federatedml.param.evaluation_param import EvaluateParam
 from federatedml.protobuf import deserialize_models
 from federatedml.statistic.data_overview import header_alignment
 from federatedml.util import LOGGER, abnormal_detection
+from federatedml.statistic.data_overview import header_alignment, check_with_inst_id
+from federatedml.feature.instance import Instance
+from federatedml.util.io_check import assert_match_id_consistent
+from federatedml.util import LOGGER
+from federatedml.util import abnormal_detection
 from federatedml.util.component_properties import ComponentProperties
 
 
@@ -141,10 +146,12 @@ class ModelBase(object):
                 else:
                     real_param = saved_result
                 LOGGER.debug("func: {}".format(func))
-                this_data_output = func(*real_param)
+                detected_func = assert_match_id_consistent(func)
+                this_data_output = detected_func(*real_param)
                 saved_result = []
             else:
-                this_data_output = func(*params)
+                detected_func = assert_match_id_consistent(func)
+                this_data_output = detected_func(*params)
 
             if save_result:
                 saved_result.append(this_data_output)
@@ -276,7 +283,6 @@ class ModelBase(object):
         -------
         Table, predict result
         """
-
         # regression
         if classes is None:
             predict_result = data_instances.join(
@@ -319,6 +325,17 @@ class ModelBase(object):
             raise ValueError(
                 f"Model's classes type is {type(classes)}, classes must be None or list of length no less than 2."
             )
+
+        # has_match_id = check_with_inst_id(data_instances)
+
+        def _transfer(instance, pred_res):
+            return Instance(features=pred_res, inst_id=instance.inst_id)
+
+        # if has_match_id:
+            # match_id_table = data_instances.mapValues(lambda x: [x.inst_id])
+            # predict_result = predict_result.join(match_id_table, lambda p, m: m + p)
+
+        predict_result = data_instances.join(predict_result, _transfer)
 
         return predict_result
 
