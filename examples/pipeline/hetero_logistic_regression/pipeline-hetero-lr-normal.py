@@ -61,6 +61,10 @@ def main(config="../../config.yaml", namespace=""):
             "shuffle": False,
             "random_seed": 103,
             "need_cv": False
+        },
+        "callback_param": {
+            "callbacks": ["ModelCheckpoint"],
+            "save_freq": "epoch"
         }
     }
 

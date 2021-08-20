@@ -14,7 +14,27 @@
 #  limitations under the License.
 
 from federatedml.callbacks.callback_base import CallbackBase
+from federatedml.util import LOGGER
 
 
 class ModelCheckpoint(CallbackBase):
-    pass
+    def __init__(self, model, save_freq):
+        self.model = model
+        if save_freq == "epoch":
+            save_freq = 1
+        self.save_freq = save_freq
+        self.save_count = 0
+
+    def add_checkpoint(self, step_index, step_name=None, to_save_model=None):
+        step_name = step_name if step_name is not None else self.model.step_name
+        to_save_model = to_save_model if to_save_model is not None else self.model.export_model()
+        _checkpoint = self.model.checkpoint_manager.new_checkpoint(step_index=step_index, step_name=step_name)
+        _checkpoint.save(to_save_model)
+        LOGGER.debug(f"current checkpoint num: {self.model.checkpoint_manager.checkpoints_number}")
+        return _checkpoint
+
+    def on_epoch_end(self, model, epoch):
+        if epoch % self.save_freq == 0:
+            self.add_checkpoint(step_index=epoch)
+            self.save_count += 1
+

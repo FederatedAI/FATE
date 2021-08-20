@@ -277,7 +277,7 @@ class HomoLogisticParam(LogisticParam):
                  metrics=['auc', 'ks'],
                  use_first_metric_only=False,
                  use_proximal=False, is_warm_start=False,
-                 mu=0.1
+                 mu=0.1, callback_param=CallbackParam()
                  ):
         super(HomoLogisticParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
                                                 batch_size=batch_size,
@@ -289,7 +289,8 @@ class HomoLogisticParam(LogisticParam):
                                                 decay=decay, decay_sqrt=decay_sqrt,
                                                 early_stopping_rounds=early_stopping_rounds,
                                                 metrics=metrics, use_first_metric_only=use_first_metric_only,
-                                                is_warm_start=is_warm_start)
+                                                is_warm_start=is_warm_start,
+                                                callback_param=callback_param)
         self.re_encrypt_batches = re_encrypt_batches
         self.aggregate_iters = aggregate_iters
         self.use_proximal = use_proximal
@@ -335,7 +336,7 @@ class HeteroLogisticParam(LogisticParam):
                  metrics=['auc', 'ks'], floating_point_precision=23,
                  encrypt_param=EncryptParam(),
                  use_first_metric_only=False, stepwise_param=StepwiseParam(),
-                 is_warm_start=False
+                 is_warm_start=False, callback_param=CallbackParam()
                  ):
         super(HeteroLogisticParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
                                                   batch_size=batch_size,
@@ -350,7 +351,7 @@ class HeteroLogisticParam(LogisticParam):
                                                   encrypt_param=encrypt_param,
                                                   use_first_metric_only=use_first_metric_only,
                                                   stepwise_param=stepwise_param,
-                                                  is_warm_start=is_warm_start)
+                                                  is_warm_start=is_warm_start, callback_param=callback_param)
         self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
         self.sqn_param = copy.deepcopy(sqn_param)
 

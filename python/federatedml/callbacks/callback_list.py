@@ -14,6 +14,7 @@
 #  limitations under the License.
 
 from federatedml.callbacks.validation_strategy import ValidationStrategy
+from federatedml.callbacks.model_checkpoint import ModelCheckpoint
 from federatedml.param.callback_param import CallbackParam
 
 
@@ -32,6 +33,10 @@ class CallbackList(object):
                                                      callback_param.early_stopping_rounds,
                                                      callback_param.use_first_metric_only)
             self.callback_list.append(validation_strategy)
+        if "ModelCheckpoint" in callback_param.callbacks:
+            model_checkpoint = ModelCheckpoint(model=self.model,
+                                               save_freq=callback_param.save_freq)
+            self.callback_list.append(model_checkpoint)
 
     def on_train_begin(self, train_data=None, validate_data=None):
         for callback_func in self.callback_list:

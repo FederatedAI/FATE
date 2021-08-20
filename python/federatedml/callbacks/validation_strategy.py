@@ -23,7 +23,6 @@
 import copy
 from federatedml.util import LOGGER
 from federatedml.util import consts
-from federatedml.evaluation.evaluation import Evaluation
 from federatedml.param.evaluation_param import EvaluateParam
 from federatedml.evaluation.performance_recorder import PerformanceRecorder
 from federatedml.transfer_variable.transfer_class.validation_strategy_transfer_variable import  \
@@ -232,6 +231,7 @@ class ValidationStrategy(CallbackBase):
         evaluate_param: EvaluateParam = model.get_metrics_param()
         evaluate_param.check_single_value_default_metric()
 
+        from federatedml.evaluation.evaluation import Evaluation
         eval_obj = Evaluation()
         eval_type = evaluate_param.eval_type
 

@@ -135,14 +135,6 @@ class HeteroLRGuest(HeteroLRBase):
             self.is_converged = self.converge_procedure.sync_converge_info(suffix=(self.n_iter_,))
             LOGGER.info("iter: {},  is_converged: {}".format(self.n_iter_, self.is_converged))
 
-            self.add_checkpoint(step_index=self.n_iter_, step_name=self.flowid)
-            #
-            # if self.validation_strategy:
-            #     LOGGER.debug('LR guest running validation')
-            #     self.validation_strategy.validate(self, self.n_iter_)
-            #     if self.validation_strategy.need_stop():
-            #         LOGGER.debug('early stopping triggered')
-            #         break
             self.callback_list.on_epoch_end(self.n_iter_)
             if self.stop_training:
                 break
