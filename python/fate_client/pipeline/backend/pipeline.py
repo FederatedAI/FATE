@@ -64,7 +64,7 @@ class PipeLine(object):
         self._system_role = SystemSetting.system_setting().get("role")
         self.online = self.OnlineCommand(self)
         self._load = False
-        self.homo_model = self.HomoModel(self)
+        self.engine = self.Engine(self)
 
     @LOGGER.catch(reraise=True)
     def set_initiator(self, role, party_id):
@@ -708,6 +708,7 @@ class PipeLine(object):
                                       "work_mode": WorkMode.CLUSTER}
             return conf
 
+        @LOGGER.catch(reraise=True)
         def load(self, file_path=None):
             if not self.pipeline_obj.is_deploy():
                 raise ValueError(f"to load model for online inference, must deploy components first.")
@@ -717,6 +718,7 @@ class PipeLine(object):
             self.pipeline_obj._job_invoker.load_model(load_conf)
             self.pipeline_obj._load = True
 
+        @LOGGER.catch(reraise=True)
         def bind(self, service_id, *servings):
             if not self.pipeline_obj.is_deploy() or not self.pipeline_obj.is_load():
                 raise ValueError(f"to bind model to online service, must deploy and load model first.")
@@ -725,7 +727,7 @@ class PipeLine(object):
             bind_conf["servings"] = list(servings)
             self.pipeline_obj._job_invoker.bind_model(bind_conf)
 
-    class HomoModel(object):
+    class Engine(object):
         def __init__(self, pipeline_obj):
             self.pipeline_obj = pipeline_obj
 
@@ -740,7 +742,10 @@ class PipeLine(object):
                 conf["framework_name"] = framework_name
             return conf
 
+        @LOGGER.catch(reraise=True)
         def convert(self, framework_name=None):
+            if self.pipeline_obj._train_dsl is None:
+                raise ValueError("Before converting homo model, training should be finished!!!")
             conf = self._feed_homo_conf(framework_name)
             res_dict = self.pipeline_obj._job_invoker.convert_homo_model(conf)
             #@TODO: return saved file path

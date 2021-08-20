@@ -443,11 +443,11 @@ class JobInvoker(object):
             submit_path = os.path.join(job_dir, "job_runtime_conf.json")
             with open(submit_path, "w") as fout:
                 fout.write(json.dumps(convert_conf))
-        # result = self.client.model.bind(convert_conf)
+        # result = self.client.model.homo_convert(convert_conf)
         result = self.client.model.homo_convert(submit_path)
         if result is None or 'retcode' not in result:
             raise ValueError("Call flow homo convert failed, check if fate_flow server is up!")
         elif result["retcode"] != 0:
-            raise ValueError("Cannot bind model, error msg is {}".format(result["retmsg"]))
+            raise ValueError("Cannot convert homo model, error msg is {}".format(result["retmsg"]))
         else:
             return result["data"]
