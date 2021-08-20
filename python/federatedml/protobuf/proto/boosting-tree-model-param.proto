@@ -19,6 +19,7 @@ message DecisionTreeModelParam {
     repeated NodeParam tree_ = 1;
     map<int32, double> split_maskdict = 2;
     map<int32, int32> missing_dir_maskdict = 3;
+    map<int32, int32> leaf_count = 4;
 }
 
 message FeatureImportanceInfo {
