@@ -65,7 +65,34 @@ class FederatedCommunicationType(object):
     PULL = "PULL"
 
 
-class Party(object):
+class BaseType:
+    def to_dict(self):
+        return dict([(k.lstrip("_"), v) for k, v in self.__dict__.items()])
+
+    def to_dict_with_type(self):
+        def _dict(obj):
+            module = None
+            if issubclass(obj.__class__, BaseType):
+                data = {}
+                for attr, v in obj.__dict__.items():
+                    k = attr.lstrip("_")
+                    data[k] = _dict(v)
+                module = obj.__module__
+            elif isinstance(obj, (list, tuple)):
+                data = []
+                for i, vv in enumerate(obj):
+                    data.append(_dict(vv))
+            elif isinstance(obj, dict):
+                data = {}
+                for _k, vv in obj.items():
+                    data[_k] = _dict(vv)
+            else:
+                data = obj
+            return {"type": obj.__class__.__name__, "data": data, "module": module}
+        return _dict(self)
+
+
+class Party(BaseType):
     """
     Uniquely identify
     """
@@ -90,17 +117,29 @@ class Party(object):
         return self.party_id == other.party_id and self.role == other.role
 
 
-class DTable:
+class DTable(BaseType):
     def __init__(self, namespace, name, partitions=None):
-        self.name = name
-        self.namespace = namespace
-        self.partitions = partitions
+        self._name = name
+        self._namespace = namespace
+        self._partitions = partitions
 
     def __str__(self):
-        return f"DTable(namespace={self.namespace}, name={self.name})"
+        return f"DTable(namespace={self._namespace}, name={self._name})"
 
     def __repr__(self):
         return self.__str__()
 
     def __eq__(self, other):
-        return self.namespace == other.namespace and self.name == other.name
+        return self._namespace == other.namespace and self._name == other.name
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def namespace(self):
+        return self._namespace
+
+    @property
+    def partitions(self):
+        return self._partitions

@@ -15,6 +15,7 @@
 #
 import operator
 import typing
+from enum import IntEnum
 
 from peewee import Field, IntegerField, FloatField, BigIntegerField, TextField, Model, CompositeKey, Metadata
 from fate_arch.common.base_utils import current_timestamp, serialize_b64, deserialize_b64, timestamp_to_date, date_string_to_timestamp, json_dumps, json_loads
@@ -34,11 +35,21 @@ CONTINUOUS_FIELD_TYPE = {IntegerField, FloatField, DateTimeField}
 AUTO_DATE_TIMESTAMP_FIELD_PREFIX = {"create", "start", "end", "update", "read_access", "write_access"}
 
 
+class SerializedType(IntEnum):
+    PICKLE = 1
+    JSON = 2
+
+
 class LongTextField(TextField):
     field_type = 'LONGTEXT'
 
 
 class JSONField(LongTextField):
+    def __init__(self, object_hook=None, object_pairs_hook=None, **kwargs):
+        self._object_hook = object_hook
+        self._object_pairs_hook = object_pairs_hook
+        super().__init__(**kwargs)
+
     def db_value(self, value):
         if value is None:
             value = {}
@@ -47,15 +58,35 @@ class JSONField(LongTextField):
     def python_value(self, value):
         if value is None:
             return {}
-        return json_loads(value)
+        return json_loads(value, object_hook=self._object_hook, object_pairs_hook=self._object_pairs_hook)
 
 
 class SerializedField(LongTextField):
+    def __init__(self, serialized_type=SerializedType.PICKLE, object_hook=None, object_pairs_hook=None, **kwargs):
+        self._serialized_type = serialized_type
+        self._object_hook = object_hook
+        self._object_pairs_hook = object_pairs_hook
+        super().__init__(**kwargs)
+
     def db_value(self, value):
-        return serialize_b64(value, to_str=True)
+        if self._serialized_type == SerializedType.PICKLE:
+            return serialize_b64(value, to_str=True)
+        elif self._serialized_type == SerializedType.JSON:
+            if value is None:
+                return None
+            return json_dumps(value, with_type=True)
+        else:
+            raise ValueError(f"the serialized type {self._serialized_type} is not supported")
 
     def python_value(self, value):
-        return deserialize_b64(value)
+        if self._serialized_type == SerializedType.PICKLE:
+            return deserialize_b64(value)
+        elif self._serialized_type == SerializedType.JSON:
+            if value is None:
+                return {}
+            return json_loads(value, object_hook=self._object_hook, object_pairs_hook=self._object_pairs_hook)
+        else:
+            raise ValueError(f"the serialized type {self._serialized_type} is not supported")
 
 
 def is_continuous_field(cls: typing.Type) -> bool:
@@ -115,7 +146,7 @@ class BaseModel(Model):
         filters = []
         for f_n, f_v in kwargs.items():
             attr_name = 'f_%s' % f_n
-            if not hasattr(cls, attr_name):
+            if not hasattr(cls, attr_name) or f_v is None:
                 continue
             if type(f_v) in {list, set}:
                 f_v = list(f_v)
