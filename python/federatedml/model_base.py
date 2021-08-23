@@ -133,7 +133,7 @@ class ModelBase(object):
         )
         self.role = self.component_properties.role
         self.component_properties.parse_dsl_args(cpn_input.datasets, cpn_input.models)
-        self.component_properties.parse_cache(cpn_input.cache)
+        self.component_properties.parse_caches(cpn_input.caches)
         # init component, implemented by subclasses
         self._init_model(self.model_param)
 

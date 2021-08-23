@@ -66,10 +66,10 @@ class ComponentProperties(object):
         self.guest_partyid = -1
         self.input_data_count = 0
         self.input_eval_data_count = 0
-        self.cache = None
+        self.caches = None
 
-    def parse_cache(self, cache):
-        self.cache = cache
+    def parse_caches(self, caches):
+        self.cache = caches
 
     def parse_component_param(self, roles, param):
 
