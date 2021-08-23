@@ -889,6 +889,9 @@ class DataIO(ModelBase):
             if summary_buf:
                 self.set_summary(summary_buf)
 
+        #test
+        self.cache_output = ({"t1": data_inst}, {"test": {"a": 1}})
+
         return data_inst
 
     def transform(self, data_inst):
