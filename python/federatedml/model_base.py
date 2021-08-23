@@ -30,7 +30,7 @@ from federatedml.util.component_properties import ComponentProperties
 
 
 class ComponentOutput:
-    def __init__(self, data, models) -> None:
+    def __init__(self, data, models, cache: typing.List[tuple]) -> None:
         self._data = data
         if not isinstance(self._data, list):
             self._data = [data]
@@ -38,6 +38,10 @@ class ComponentOutput:
         self._models = models
         if self._models is None:
             self._models = {}
+
+        self._cache = cache
+        if not isinstance(self._cache, list):
+            self._cache = [cache]
 
     @property
     def data(self) -> list:
@@ -53,6 +57,10 @@ class ComponentOutput:
 
         return serialized_models
 
+    @property
+    def cache(self):
+        return self._cache
+
 
 class ModelBase(object):
     def __init__(self):
@@ -60,6 +68,7 @@ class ModelBase(object):
         self.mode = None
         self.role = None
         self.data_output = None
+        self.cache_output = None
         self.model_param = None
         self.transfer_variable = None
         self.flowid = ""
@@ -113,7 +122,7 @@ class ModelBase(object):
         else:
             self._warn_start(cpn_input)
 
-        return ComponentOutput(self.save_data(), self.export_model())
+        return ComponentOutput(self.save_data(), self.export_model(), self.save_cache())
 
     def _run(self, cpn_input):
         # paramters
@@ -160,7 +169,7 @@ class ModelBase(object):
         # self.check_consistency()
         self.save_summary()
 
-        return ComponentOutput(self.save_data(), self.export_model())
+        return ComponentOutput(self.save_data(), self.export_model(), self.save_cache())
 
     def get_metrics_param(self):
         return EvaluateParam(eval_type="binary", pos_label=1)
@@ -206,6 +215,9 @@ class ModelBase(object):
 
     def export_model(self):
         return self.model_output
+
+    def save_cache(self):
+        return self.cache_output
 
     def set_flowid(self, flowid):
         # self.flowid = '.'.join([self.task_version_id, str(flowid)])
