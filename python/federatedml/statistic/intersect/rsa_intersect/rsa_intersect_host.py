@@ -52,7 +52,7 @@ class RsaIntersectionHost(RsaIntersect):
         # LOGGER.info(f"Generate {len(self.r)} r values.")
 
         # receive guest key for even ids
-        guest_public_key = self.transfer_variable.guest_pubkey.get(0)
+        guest_public_key = self.transfer_variable.guest_pubkey.get(idx=0)
         # LOGGER.debug("Get guest_public_key:{} from Guest".format(guest_public_key))
         LOGGER.info(f"Get guest_public_key from Guest")
 
@@ -195,6 +195,7 @@ class RsaIntersectionHost(RsaIntersect):
 
         return intersect_ids
 
+    """
     def get_intersect_key(self, party_id=None):
         intersect_key = {"e": str(self.e),
                          "d": str(self.d),
@@ -203,10 +204,22 @@ class RsaIntersectionHost(RsaIntersect):
                          "q": str(self.q),
                          "cp": str(self.cp),
                          "cq": str(self.cq)}
-        return {"intersect_key": intersect_key}
+        return intersect_key
+    """
 
+    def get_intersect_key(self, party_id=None):
+        intersect_key = {"e": self.e,
+                         "d": self.d,
+                         "n": self.n,
+                         "p": self.p,
+                         "q": self.q,
+                         "cp": self.cp,
+                         "cq": self.cq}
+        return intersect_key
+
+    """
     def load_intersect_key(self, cache_meta):
-        intersect_key = cache_meta[self.guest_party_id]["meta"]["intersect_key"]
+        intersect_key = cache_meta[self.guest_party_id]["intersect_key"]
         self.e = int(intersect_key["e"])
         self.d = int(intersect_key["d"])
         self.n = int(intersect_key["n"])
@@ -214,6 +227,17 @@ class RsaIntersectionHost(RsaIntersect):
         self.q = int(intersect_key["q"])
         self.cp = int(intersect_key["cp"])
         self.cq = int(intersect_key["cq"])
+    """
+
+    def load_intersect_key(self, cache_meta):
+        intersect_key = cache_meta[self.guest_party_id]["intersect_key"]
+        self.e = intersect_key["e"]
+        self.d = intersect_key["d"]
+        self.n = intersect_key["n"]
+        self.p = intersect_key["p"]
+        self.q = intersect_key["q"]
+        self.cp = intersect_key["cp"]
+        self.cq = intersect_key["cq"]
 
     def run_cardinality(self, data_instances):
         LOGGER.info(f"run cardinality_only with RSA")
@@ -309,17 +333,15 @@ class RsaIntersectionHost(RsaIntersect):
         LOGGER.info("Remote host_ids_process to Guest.")
 
         # prvkey_ids_process_pair.schema = cache_schema
-        cache_dict = {
-            self.guest_party_id:{
-                "data": prvkey_ids_process_pair,
-                "cache_id": cache_id,
-                "intersect_meta": self.get_intersect_method_meta(),
-                "intersect_key": self.get_intersect_key()}}
-        return cache_dict
+        cache_data = {self.guest_party_id: prvkey_ids_process_pair}
+        cache_meta = {self.guest_party_id: {"cache_id": cache_id,
+                                            "intersect_meta": self.get_intersect_method_meta(),
+                                            "intersect_key": self.get_intersect_key()}}
+        return cache_data, cache_meta
 
-    def cache_unified_calculation_process(self, data_instances, cache_dict):
+    def cache_unified_calculation_process(self, data_instances, cache_data):
         LOGGER.info("RSA intersect using cache.")
-        cache = self.extract_cache_list(cache_dict)[0]
+        cache = self.extract_cache_list(cache_data, self.guest_party_id)[0]
 
         # Recv guest ids
         guest_pubkey_ids = self.transfer_variable.guest_pubkey_ids.get(idx=0)

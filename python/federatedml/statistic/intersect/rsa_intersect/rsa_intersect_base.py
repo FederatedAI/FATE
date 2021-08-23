@@ -62,7 +62,7 @@ class RsaIntersect(Intersect):
                     "final_hash_method": self.rsa_params.final_hash_method,
                     "salt": self.salt,
                     "random_bit": self.random_bit}
-        return {"intersect_meta": rsa_meta}
+        return rsa_meta
 
     @staticmethod
     def extend_pair(v1, v2):
@@ -176,7 +176,7 @@ class RsaIntersect(Intersect):
     def unified_calculation_process(self, data_instances):
         raise NotImplementedError("This method should not be called here")
 
-    def cache_unified_calculation_process(self, data_instances, cache_dict):
+    def cache_unified_calculation_process(self, data_instances, cache_set):
         raise NotImplementedError("This method should not be called here")
 
     def run_intersect(self, data_instances):
@@ -190,9 +190,9 @@ class RsaIntersect(Intersect):
             intersect_ids = self.unified_calculation_process(data_instances)
         return intersect_ids
 
-    def run_cache_intersect(self, data_instances, cache):
+    def run_cache_intersect(self, data_instances, cache_data):
         LOGGER.info("Start RSA Intersection with cache")
         if self.split_calculation:
             LOGGER.warning(f"split_calculation not applicable to cache-enabled RSA intersection.")
-        intersect_ids = self.cache_unified_calculation_process(data_instances, cache)
+        intersect_ids = self.cache_unified_calculation_process(data_instances, cache_data)
         return intersect_ids

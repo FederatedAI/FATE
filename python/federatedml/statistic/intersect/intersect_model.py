@@ -287,16 +287,16 @@ class IntersectModelBase(ModelBase):
         return data
 
     def transform(self, data_inst):
-        data, cache_dict = data_inst.values(), self.component_properties.cache
-        #@TODO: load meta & intersect_key
-        self.load_intersect_meta([cache_dict.values()][0]["meta"])
-        self.intersection_obj.load_intersect_key(cache_dict)
+        # data = data_inst.values()
+        cache_data, cache_meta = self.component_properties.cache
+        self.load_intersect_meta(list(cache_meta.values())[0])
+        self.intersection_obj.load_intersect_key(cache_meta)
         # verify cache id
         # if data_overview.check_with_inst_id(data) or self.model_param.repeated_id_process:
-        if data_overview.check_with_inst_id(data):
+        if data_overview.check_with_inst_id(data_inst):
             self.use_match_id_process = True
             LOGGER.info(f"use match_id_process")
-        intersect_data = data
+        intersect_data = data_inst
         if self.use_match_id_process:
             if len(self.host_party_id_list) > 1 and self.model_param.sample_id_generator != consts.GUEST:
                 raise ValueError("While multi-host, sample_id_generator should be guest.")
@@ -313,20 +313,20 @@ class IntersectModelBase(ModelBase):
 
             proc_obj = MatchIDIntersect(sample_id_generator=self.model_param.sample_id_generator, role=self.role)
             proc_obj.new_sample_id = self.model_param.new_sample_id
-            if data_overview.check_with_inst_id(data) or self.model_param.with_sample_id:
+            if data_overview.check_with_inst_id(data_inst) or self.model_param.with_sample_id:
                 proc_obj.use_sample_id()
-            match_data = proc_obj.recover(data=data)
+            match_data = proc_obj.recover(data=data_inst)
             intersect_data = match_data
 
         if self.role == consts.HOST:
-            cache_id = cache_dict[self.guest_party_id]["meta"].get("cache_id")
+            cache_id = cache_meta[self.guest_party_id].get("cache_id")
             self.transfer_variable.cache_id.remote(cache_id, role=consts.GUEST, idx=0)
             guest_cache_id = self.transfer_variable.cache_id.get(role=consts.GUEST, idx=0)
             if guest_cache_id != cache_id:
                 raise ValueError(f"cache_id check failed. cache_id from host & guest must match.")
         elif self.role == consts.GUEST:
             for i, party_id in enumerate(self.host_party_id_list):
-                cache_id = cache_dict[party_id]["meta"].get("cache_id")
+                cache_id = cache_meta[party_id].get("cache_id")
                 self.transfer_variable.cache_id.remote(cache_id,
                                                        role=consts.HOST,
                                                        idx=i)
@@ -336,7 +336,7 @@ class IntersectModelBase(ModelBase):
         else:
             raise ValueError(f"Role {self.role} cannot run intersection transform.")
 
-        self.intersect_ids = self.intersection_obj.run_cache_intersect(intersect_data, cache_dict)
+        self.intersect_ids = self.intersection_obj.run_cache_intersect(intersect_data, cache_data)
         if self.use_match_id_process:
             if not self.model_param.sync_intersect_ids:
                 self.intersect_ids = proc_obj.expand(self.intersect_ids,
@@ -346,25 +346,25 @@ class IntersectModelBase(ModelBase):
                 self.intersect_ids = proc_obj.expand(self.intersect_ids, match_data=match_data)
             if self.intersect_ids and self.model_param.only_output_key:
                 self.intersect_ids = self.intersect_ids.mapValues(lambda v: Instance(inst_id=v.inst_id))
-                self.intersect_ids.schema = {"match_id_name": data.schema["match_id_name"],
-                                             "sid_name": data.schema["sid_name"]}
+                self.intersect_ids.schema = {"match_id_name": data_inst.schema["match_id_name"],
+                                             "sid_name": data_inst.schema["sid_name"]}
 
         LOGGER.info("Finish intersection")
 
         if self.intersect_ids:
             self.intersect_num = self.intersect_ids.count()
-            self.intersect_rate = self.intersect_num / data.count()
+            self.intersect_rate = self.intersect_num / data_inst.count()
 
         self.set_summary(self.get_model_summary())
         self.callback()
 
         result_data = self.intersect_ids
         if not self.use_match_id_process and not self.intersection_obj.only_output_key and result_data:
-            result_data = self.intersection_obj.get_value_from_data(result_data, data)
+            result_data = self.intersection_obj.get_value_from_data(result_data, data_inst)
             LOGGER.debug(f"not only_output_key, restore value called")
 
         if self.model_param.join_method == consts.LEFT_JOIN:
-            result_data = self.__sync_join_id(data, self.intersect_ids)
+            result_data = self.__sync_join_id(data_inst, self.intersect_ids)
             result_data.schema = self.intersect_ids.schema
 
         return result_data

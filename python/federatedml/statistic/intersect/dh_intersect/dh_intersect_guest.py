@@ -144,18 +144,27 @@ class DhIntersectionGuest(DhIntersect):
     def get_intersect_key(self, party_id):
         idx = self.host_party_id_list.index(party_id)
         cipher_core = self.commutative_cipher[idx].cipher_core
+        """
         intersect_key = {"mod_base": str(cipher_core.mod_base),
                         "exponent": str(cipher_core.exponent)}
-        return {"intersect_key": intersect_key}
+        """
+        intersect_key = {"mod_base": cipher_core.mod_base,
+                         "exponent": cipher_core.exponent}
+        return intersect_key
 
-    def load_intersect_key(self, cache_dict):
+    def load_intersect_key(self, cache_meta):
         commutative_cipher = []
         for host_party in self.host_party_id_list:
-            intersect_key = cache_dict[host_party]["meta"]["intersect_key"]
+            intersect_key = cache_meta[host_party]["intersect_key"]
+            """
             mod_base = int(intersect_key["mod_base"])
             exponent = int(intersect_key["exponent"])
+            """
+            mod_base = intersect_key["mod_base"]
+            exponent = intersect_key["exponent"]
             ph_key = PohligHellmanCipherKey(mod_base, exponent)
             commutative_cipher.append(CryptoExecutor(ph_key))
+
         self.commutative_cipher = commutative_cipher
 
     def generate_cache(self, data_instances):
@@ -179,17 +188,19 @@ class DhIntersectionGuest(DhIntersect):
                                                   reserve_original_key=True) for i in range(self.host_count)]
         LOGGER.info("encrypted remote id for the 2nd time")
 
-        cache_dict = {}
+        cache_data, cache_meta = {}, {}
         intersect_meta = self.get_intersect_method_meta()
         for i, party_id in enumerate(self.host_party_id_list):
-            cache_dict[party_id] = {"data": id_list_remote_second[i],
-                                    "cache_id": cache_id_list[i],
-                                    "intersect_meta": intersect_meta,
-                                    "intersect_key": self.get_intersect_key(party_id)}
-        # self.cache_id = cache_id_dict
-        return cache_dict
+            meta = {"cache_id": cache_id_list[i],
+                    "intersect_meta": intersect_meta,
+                    "intersect_key": self.get_intersect_key(party_id)}
+            cache_meta[party_id] = meta
+            cache_data[party_id] = id_list_remote_second[i]
 
-    def get_intersect_doubly_encrypted_id_from_cache(self, data_instances, cache_dict):
+        # self.cache_id = cache_id_dict
+        return cache_data, cache_meta
+
+    def get_intersect_doubly_encrypted_id_from_cache(self, data_instances, cache_data):
         self.host_count = len(self.commutative_cipher)
         self.id_list_local_first = [self._encrypt_id(data_instances,
                                                      cipher,
@@ -209,7 +220,7 @@ class DhIntersectionGuest(DhIntersect):
         self.id_list_local_second = self._sync_doubly_encrypted_id_list()  # get (EEg, Eg)
 
         # find intersection per host
-        cache_list = self.extract_cache_list(cache_dict)
+        cache_list = self.extract_cache_list(cache_data, self.host_party_id_list)
         id_list_intersect_cipher_cipher = [self.extract_intersect_ids(cache_list[i],
                                                                       self.id_list_local_second[i])
                                            for i in range(self.host_count)]  # (EEi, -1)

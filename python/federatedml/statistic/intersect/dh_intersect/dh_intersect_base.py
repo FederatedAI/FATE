@@ -50,10 +50,11 @@ class DhIntersect(Intersect):
             restored_id = k
         return (restored_id, k)
     """
+
     def get_intersect_method_meta(self):
         dh_meta = {"hash_method": self.dh_params.hash_method,
                    "salt": self.salt}
-        return {"intersect_meta": dh_meta}
+        return dh_meta
 
     @staticmethod
     def _encrypt_id(data_instances, cipher, reserve_original_key=False, hash_operator=None, salt='',
@@ -131,7 +132,7 @@ class DhIntersect(Intersect):
     def decrypt_intersect_doubly_encrypted_id(self, id_list_intersect_cipher_cipher):
         raise NotImplementedError("This method should not be called here")
 
-    def get_intersect_doubly_encrypted_id_from_cache(self, data_instances, cache_dict):
+    def get_intersect_doubly_encrypted_id_from_cache(self, data_instances, cache_set):
         raise NotImplementedError("This method should not be called here")
 
     def run_intersect(self, data_instances):
@@ -140,8 +141,8 @@ class DhIntersect(Intersect):
         intersect_ids = self.decrypt_intersect_doubly_encrypted_id(id_list_intersect_cipher_cipher)
         return intersect_ids
 
-    def run_cache_intersect(self, data_instances, cache):
+    def run_cache_intersect(self, data_instances, cache_data):
         LOGGER.info("Start DH Intersection with cache")
-        id_list_intersect_cipher_cipher = self.get_intersect_doubly_encrypted_id_from_cache(data_instances, cache)
+        id_list_intersect_cipher_cipher = self.get_intersect_doubly_encrypted_id_from_cache(data_instances, cache_data)
         intersect_ids = self.decrypt_intersect_doubly_encrypted_id(id_list_intersect_cipher_cipher)
         return intersect_ids

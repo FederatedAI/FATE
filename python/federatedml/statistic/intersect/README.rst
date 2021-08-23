@@ -131,8 +131,8 @@ RAW and DH intersection methods also support:
 
 1. PSI with cache
 
-2. intersection cardinality estimation
-
 RAW intersection supports the following extra feature:
 
 1. base64 encoding may be used for all hashing methods.
+
+RSA intersection is used for intersection cardinality estimation.

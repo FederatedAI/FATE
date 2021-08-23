@@ -88,7 +88,7 @@ class Intersect(object):
     def get_intersect_key(self, party_id):
         pass
 
-    def load_intersect_key(self, cache_dict):
+    def load_intersect_key(self, cache_meta):
         pass
 
     """
@@ -193,11 +193,14 @@ class Intersect(object):
     def generate_cache(self, data_instances):
         raise NotImplementedError("method should not be called here")
 
-    def extract_cache_list(self, cache_dict):
-        cache_list = [v.get("data") for v in cache_dict.values()]
+    @staticmethod
+    def extract_cache_list(cache_data, party_list):
+        if not isinstance(party_list, list):
+            party_list = [party_list]
+        cache_list = [cache_data.get(party_id) for party_id in party_list]
         return cache_list
 
-    def run_cache_intersect(self, data_instances, cache):
+    def run_cache_intersect(self, data_instances, cache_data):
         raise NotImplementedError("method should not be called here")
 
     def set_flowid(self, flowid=0):
