@@ -20,6 +20,7 @@ import copy
 import typing
 
 import numpy as np
+from google.protobuf import json_format
 from fate_arch.computing import is_table
 
 from federatedml.param.evaluation_param import EvaluateParam
@@ -49,11 +50,11 @@ class ComponentOutput:
 
     @property
     def model(self):
-        serialized_models: typing.Dict[str, typing.Tuple[str, str]] = {}
+        serialized_models: typing.Dict[str, typing.Tuple[str, bytes, dict]] = {}
         for model_name, buffer_object in self._models.items():
             serialized_string = buffer_object.SerializeToString()
             pb_name = type(buffer_object).__name__
-            serialized_models[model_name] = (pb_name, serialized_string)
+            serialized_models[model_name] = (pb_name, serialized_string, json_format.MessageToDict(buffer_object, including_default_value_fields=True))
 
         return serialized_models
 
