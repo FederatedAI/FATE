@@ -66,6 +66,7 @@ class HeteroNNGuest(HeteroNNBase):
         self.converge_func = converge_func_factory(self.early_stop, self.tol)
 
     def _build_model(self):
+        # return a hetero NN model with keras backend
         self.model = model_builder("guest", self.hetero_nn_param)
         self.model.set_transfer_variable(self.transfer_variable)
 
@@ -77,8 +78,10 @@ class HeteroNNGuest(HeteroNNBase):
                                       extra_metas={"unit_name": "iters"}))
 
     def fit(self, data_inst, validate_data=None):
+
         self.validation_strategy = self.init_validation_strategy(data_inst, validate_data)
         self._build_model()
+        # collect data from dtable to form data loader
         self.prepare_batch_data(self.batch_generator, data_inst)
         if not self.input_shape:
             self.model.set_empty()
@@ -90,8 +93,8 @@ class HeteroNNGuest(HeteroNNBase):
             epoch_loss = 0
 
             for batch_idx in range(len(self.data_x)):
+                # hetero NN model
                 batch_loss = self.model.train(self.data_x[batch_idx], self.data_y[batch_idx], cur_epoch, batch_idx)
-
                 epoch_loss += batch_loss
 
             epoch_loss /= len(self.data_x)
@@ -101,7 +104,6 @@ class HeteroNNGuest(HeteroNNBase):
             self.callback_metric("loss",
                                  "train",
                                  [Metric(cur_epoch, epoch_loss)])
-
             self.history_loss.append(epoch_loss)
 
             if self.validation_strategy:
@@ -226,6 +228,7 @@ class HeteroNNGuest(HeteroNNBase):
             return EvaluateParam(eval_type="regression", metrics=self.metrics)
 
     def prepare_batch_data(self, batch_generator, data_inst):
+
         self._header = data_inst.schema["header"]
         batch_generator.initialize_batch_generator(data_inst, self.batch_size)
         batch_data_generator = batch_generator.generate_batch_data()

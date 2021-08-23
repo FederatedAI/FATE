@@ -86,7 +86,6 @@ class HeteroNNKerasGuestModel(HeteroNNGuestModel):
             if self.bottom_model is None:
                 self.bottom_model_input_shape = x.shape[1]
                 self._build_bottom_model()
-
             guest_bottom_output = self.bottom_model.forward(x)
         else:
             guest_bottom_output = None

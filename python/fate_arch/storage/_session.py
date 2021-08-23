@@ -80,7 +80,7 @@ class StorageSessionBase(StorageSessionABC):
         raise NotImplementedError()
 
     @classmethod
-    def persistent(cls, computing_table: CTableABC, table_namespace, table_name, schema=None, engine=None, engine_address=None, store_type=None, token: typing.Dict = None) -> StorageTableMeta:
+    def persistent(cls, computing_table: CTableABC, table_namespace, table_name, schema=None, part_of_data=None, engine=None, engine_address=None, store_type=None, token: typing.Dict = None) -> StorageTableMeta:
         if engine:
             if engine not in Relationship.Computing.get(computing_table.engine, {}).get(EngineType.STORAGE, {}).get("support", []):
                 raise Exception(f"storage engine {engine} not supported with computing engine {computing_table.engine}")
@@ -112,13 +112,6 @@ class StorageSessionBase(StorageSessionABC):
         address = StorageTableMeta.create_address(storage_engine=engine, address_dict=address_dict)
         schema = schema if schema else {}
         computing_table.save(address, schema=schema, partitions=partitions, store_type=store_type)
-        part_of_data = []
-        part_of_limit = 100
-        for k, v in computing_table.collect():
-            part_of_data.append((k, v))
-            part_of_limit -= 1
-            if part_of_limit == 0:
-                break
         table_count = computing_table.count()
         table_meta = StorageTableMeta(name=table_name, namespace=table_namespace, new=True)
         table_meta.address = address
@@ -126,7 +119,7 @@ class StorageSessionBase(StorageSessionABC):
         table_meta.engine = engine
         table_meta.store_type = store_type
         table_meta.schema = schema
-        table_meta.part_of_data = part_of_data
+        table_meta.part_of_data = part_of_data if part_of_data else {}
         table_meta.count = table_count
         table_meta.write_access_time = current_timestamp()
         table_meta.create()
