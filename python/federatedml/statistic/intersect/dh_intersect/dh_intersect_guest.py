@@ -144,24 +144,20 @@ class DhIntersectionGuest(DhIntersect):
     def get_intersect_key(self, party_id):
         idx = self.host_party_id_list.index(party_id)
         cipher_core = self.commutative_cipher[idx].cipher_core
-        """
+
         intersect_key = {"mod_base": str(cipher_core.mod_base),
                         "exponent": str(cipher_core.exponent)}
-        """
-        intersect_key = {"mod_base": cipher_core.mod_base,
-                         "exponent": cipher_core.exponent}
+
         return intersect_key
 
     def load_intersect_key(self, cache_meta):
         commutative_cipher = []
         for host_party in self.host_party_id_list:
             intersect_key = cache_meta[host_party]["intersect_key"]
-            """
+
             mod_base = int(intersect_key["mod_base"])
             exponent = int(intersect_key["exponent"])
-            """
-            mod_base = intersect_key["mod_base"]
-            exponent = intersect_key["exponent"]
+
             ph_key = PohligHellmanCipherKey(mod_base, exponent)
             commutative_cipher.append(CryptoExecutor(ph_key))
 

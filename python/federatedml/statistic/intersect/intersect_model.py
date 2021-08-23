@@ -188,7 +188,8 @@ class IntersectModelBase(ModelBase):
                 self.proc_obj.use_sample_id()
             match_data = self.proc_obj.recover(data=data)
             if self.intersection_obj.run_cache:
-                return self.intersection_obj.generate_cache(match_data)
+                self.cache_output = self.intersection_obj.generate_cache(match_data)
+                return data
             if self.intersection_obj.cardinality_only:
                 self.intersection_obj.run_cardinality(match_data)
             else:
@@ -198,7 +199,8 @@ class IntersectModelBase(ModelBase):
                 self.intersect_ids = self.intersection_obj.run_intersect(intersect_data)
         else:
             if self.intersection_obj.run_cache:
-                return self.intersection_obj.generate_cache(data)
+                self.cache_output = self.intersection_obj.generate_cache(data)
+                return data
             if self.intersection_obj.cardinality_only:
                 self.intersection_obj.run_cardinality(data)
             else:
@@ -288,7 +290,7 @@ class IntersectModelBase(ModelBase):
 
     def transform(self, data_inst):
         # data = data_inst.values()
-        cache_data, cache_meta = self.component_properties.cache
+        cache_data, cache_meta = self.component_properties.caches
         self.load_intersect_meta(list(cache_meta.values())[0])
         self.intersection_obj.load_intersect_key(cache_meta)
         # verify cache id

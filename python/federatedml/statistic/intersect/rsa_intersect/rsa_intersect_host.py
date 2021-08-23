@@ -195,7 +195,6 @@ class RsaIntersectionHost(RsaIntersect):
 
         return intersect_ids
 
-    """
     def get_intersect_key(self, party_id=None):
         intersect_key = {"e": str(self.e),
                          "d": str(self.d),
@@ -205,19 +204,7 @@ class RsaIntersectionHost(RsaIntersect):
                          "cp": str(self.cp),
                          "cq": str(self.cq)}
         return intersect_key
-    """
 
-    def get_intersect_key(self, party_id=None):
-        intersect_key = {"e": self.e,
-                         "d": self.d,
-                         "n": self.n,
-                         "p": self.p,
-                         "q": self.q,
-                         "cp": self.cp,
-                         "cq": self.cq}
-        return intersect_key
-
-    """
     def load_intersect_key(self, cache_meta):
         intersect_key = cache_meta[self.guest_party_id]["intersect_key"]
         self.e = int(intersect_key["e"])
@@ -227,17 +214,6 @@ class RsaIntersectionHost(RsaIntersect):
         self.q = int(intersect_key["q"])
         self.cp = int(intersect_key["cp"])
         self.cq = int(intersect_key["cq"])
-    """
-
-    def load_intersect_key(self, cache_meta):
-        intersect_key = cache_meta[self.guest_party_id]["intersect_key"]
-        self.e = intersect_key["e"]
-        self.d = intersect_key["d"]
-        self.n = intersect_key["n"]
-        self.p = intersect_key["p"]
-        self.q = intersect_key["q"]
-        self.cp = intersect_key["cp"]
-        self.cq = intersect_key["cq"]
 
     def run_cardinality(self, data_instances):
         LOGGER.info(f"run cardinality_only with RSA")

@@ -247,24 +247,17 @@ class RsaIntersectionGuest(RsaIntersect):
 
     def get_intersect_key(self, party_id):
         idx = self.host_party_id_list.index(party_id)
-        """
         intersect_key = {"rcv_n": str(self.rcv_n[idx]),
                          "rcv_e": str(self.rcv_e[idx])}
-        """
-        intersect_key = {"rcv_n": self.rcv_n[idx],
-                         "rcv_e": self.rcv_e[idx]}
         return intersect_key
 
     def load_intersect_key(self, cache_meta):
         self.rcv_e, self.rcv_n = [], []
         for host_party in self.host_party_id_list:
             intersect_key = cache_meta[host_party]["intersect_key"]
-            """
+
             self.rcv_e.append(int(intersect_key["rcv_e"]))
             self.rcv_n.append(int(intersect_key["rcv_n"]))
-            """
-            self.rcv_e.append(intersect_key["rcv_e"])
-            self.rcv_n.append(intersect_key["rcv_n"])
 
     def run_cardinality(self, data_instances):
         LOGGER.info(f"run cardinality_only with RSA")
