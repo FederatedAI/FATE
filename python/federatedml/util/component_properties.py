@@ -69,7 +69,7 @@ class ComponentProperties(object):
         self.caches = None
 
     def parse_caches(self, caches):
-        self.cache = caches
+        self.caches = caches
 
     def parse_component_param(self, roles, param):
 
