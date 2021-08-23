@@ -20,6 +20,7 @@ import copy
 import typing
 
 import numpy as np
+from google.protobuf import json_format
 from fate_arch.computing import is_table
 
 from federatedml.param.evaluation_param import EvaluateParam
@@ -30,7 +31,7 @@ from federatedml.util.component_properties import ComponentProperties
 
 
 class ComponentOutput:
-    def __init__(self, data, models) -> None:
+    def __init__(self, data, models, cache: typing.List[tuple]) -> None:
         self._data = data
         if not isinstance(self._data, list):
             self._data = [data]
@@ -39,19 +40,27 @@ class ComponentOutput:
         if self._models is None:
             self._models = {}
 
+        self._cache = cache
+        if not isinstance(self._cache, list):
+            self._cache = [cache]
+
     @property
     def data(self) -> list:
         return self._data
 
     @property
     def model(self):
-        serialized_models: typing.Dict[str, typing.Tuple[str, str]] = {}
+        serialized_models: typing.Dict[str, typing.Tuple[str, bytes, dict]] = {}
         for model_name, buffer_object in self._models.items():
             serialized_string = buffer_object.SerializeToString()
             pb_name = type(buffer_object).__name__
-            serialized_models[model_name] = (pb_name, serialized_string)
+            serialized_models[model_name] = (pb_name, serialized_string, json_format.MessageToDict(buffer_object, including_default_value_fields=True))
 
         return serialized_models
+
+    @property
+    def cache(self):
+        return self._cache
 
 
 class ModelBase(object):
@@ -60,6 +69,7 @@ class ModelBase(object):
         self.mode = None
         self.role = None
         self.data_output = None
+        self.cache_output = None
         self.model_param = None
         self.transfer_variable = None
         self.flowid = ""
@@ -113,7 +123,7 @@ class ModelBase(object):
         else:
             self._warn_start(cpn_input)
 
-        return ComponentOutput(self.save_data(), self.export_model())
+        return ComponentOutput(self.save_data(), self.export_model(), self.save_cache())
 
     def _run(self, cpn_input):
         # paramters
@@ -124,7 +134,7 @@ class ModelBase(object):
         )
         self.role = self.component_properties.role
         self.component_properties.parse_dsl_args(cpn_input.datasets, cpn_input.models)
-
+        self.component_properties.parse_caches(cpn_input.caches)
         # init component, implemented by subclasses
         self._init_model(self.model_param)
 
@@ -160,7 +170,7 @@ class ModelBase(object):
         # self.check_consistency()
         self.save_summary()
 
-        return ComponentOutput(self.save_data(), self.export_model())
+        return ComponentOutput(self.save_data(), self.export_model(), self.save_cache())
 
     def get_metrics_param(self):
         return EvaluateParam(eval_type="binary", pos_label=1)
@@ -206,6 +216,9 @@ class ModelBase(object):
 
     def export_model(self):
         return self.model_output
+
+    def save_cache(self):
+        return self.cache_output
 
     def set_flowid(self, flowid):
         # self.flowid = '.'.join([self.task_version_id, str(flowid)])

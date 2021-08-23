@@ -22,9 +22,9 @@ data_transform_cpn_meta = ComponentMeta("DataTransform")
 
 @data_transform_cpn_meta.bind_param
 def intersection_param():
-    from federatedml.param.intersect_param import IntersectParam
+    from federatedml.param.data_transform_param import DataTransformParam
 
-    return IntersectParam
+    return DataTransformParam
 
 
 @data_transform_cpn_meta.bind_runner.on_guest.on_host
