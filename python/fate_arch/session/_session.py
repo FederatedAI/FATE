@@ -280,11 +280,12 @@ class Session(object):
         return storage_session
 
     @classmethod
-    def persistent(cls, computing_table: CTableABC, table_namespace, table_name, schema=None, engine=None, engine_address=None, store_type=None, token: typing.Dict = None) -> StorageTableMeta:
+    def persistent(cls, computing_table: CTableABC, table_namespace, table_name, schema=None, part_of_data=None, engine=None, engine_address=None, store_type=None, token: typing.Dict = None) -> StorageTableMeta:
         return StorageSessionBase.persistent(computing_table=computing_table,
                                              table_namespace=table_namespace,
                                              table_name=table_name,
                                              schema=schema,
+                                             part_of_data=part_of_data,
                                              engine=engine,
                                              engine_address=engine_address,
                                              store_type=store_type,
