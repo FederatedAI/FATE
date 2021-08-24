@@ -49,6 +49,14 @@ This section introduces the dsl and conf for usage of different type of task.
 10. DH Multi-host Intersection:  
     - dsl: test_intersect_job_dsl.json  
     - runtime_config : test_intersect_job_dh_multi_conf.json
+    
+11. RSA Intersection with Cache:  
+    - dsl: test_intersect_job_cache_dsl.json  
+    - runtime_config : test_intersect_job_rsa_cache_conf.json
+    
+12. DH Intersection with Cache:  
+    - dsl: test_intersect_job_cache_dsl.json  
+    - runtime_config : test_intersect_job_dh_cache_conf.json
    
 Users can use following commands to running the task.
 

@@ -73,6 +73,14 @@
         "dh_intersect_multi": {
             "conf": "./test_intersect_job_dh_multi_conf.json",
             "dsl": "./test_intersect_job_dsl.json"
+        },
+        "rsa_cache_intersect": {
+            "conf": "./test_intersect_job_rsa_cache_conf.json",
+            "dsl": "./test_intersect_job_cache_dsl.json"
+        },
+        "dh_cache_intersect": {
+            "conf": "./test_intersect_job_dh_cache_conf.json",
+            "dsl": "./test_intersect_job_cache_dsl.json"
         }
     }
 }

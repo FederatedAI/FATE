@@ -52,8 +52,6 @@ def main(config="../../config.yaml", namespace=""):
     param = {
         "intersect_method": "dh",
         "sync_intersect_ids": True,
-        "join_role": "host",
-        "with_encode": True,
         "only_output_key": True,
         "dh_params": {
             "hash_method": "sha256",
