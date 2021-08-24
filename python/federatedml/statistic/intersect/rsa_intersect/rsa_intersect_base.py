@@ -58,7 +58,8 @@ class RsaIntersect(Intersect):
         self.salt = self.rsa_params.salt
 
     def get_intersect_method_meta(self):
-        rsa_meta = {"hash_method": self.rsa_params.hash_method,
+        rsa_meta = {"intersect_method": self.intersect_method,
+                    "hash_method": self.rsa_params.hash_method,
                     "final_hash_method": self.rsa_params.final_hash_method,
                     "salt": self.salt,
                     "random_bit": self.random_bit}

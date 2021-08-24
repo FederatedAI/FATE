@@ -52,7 +52,8 @@ class DhIntersect(Intersect):
     """
 
     def get_intersect_method_meta(self):
-        dh_meta = {"hash_method": self.dh_params.hash_method,
+        dh_meta = {"intersect_method": self.intersect_method,
+                   "hash_method": self.dh_params.hash_method,
                    "salt": self.salt}
         return dh_meta
 

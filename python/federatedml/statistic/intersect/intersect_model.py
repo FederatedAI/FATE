@@ -162,6 +162,17 @@ class IntersectModelBase(ModelBase):
                                                             extra_metas=meta_info)
                                      )
 
+    def callback_cache_meta(self, intersect_meta):
+        self.callback_metric(metric_name=self.metric_name,
+                             metric_namespace=self.metric_namespace,
+                             metric_data=[Metric("host_count", len(self.host_party_id_list))])
+        self.tracker.set_metric_meta(metric_namespace=self.metric_namespace,
+                                     metric_name=self.metric_name,
+                                     metric_meta=MetricMeta(name=self.metric_name,
+                                                            metric_type=self.metric_type,
+                                                            extra_metas=intersect_meta)
+                                     )
+
     def fit(self, data):
         self.init_intersect_method()
         if data_overview.check_with_inst_id(data):
@@ -260,17 +271,19 @@ class IntersectModelBase(ModelBase):
     def check_consistency(self):
         pass
 
-    def load_intersect_meta(self, meta_dict):
+    def load_intersect_meta(self, intersect_meta):
         if self.model_param.intersect_method == consts.RSA:
-            rsa_params = meta_dict["intersect_meta"]
-            self.model_param.rsa_params.hash_method = rsa_params["hash_method"]
-            self.model_param.rsa_params.final_hash_method = rsa_params["final_hash_method"]
-            self.model_param.rsa_params.salt = rsa_params["salt"]
-            self.model_param.rsa_params.random_bit = rsa_params["random_bit"]
+            if intersect_meta["intersect_method"] != consts.RSA:
+                raise ValueError(f"Current intersect method must match to cache record.")
+            self.model_param.rsa_params.hash_method = intersect_meta["hash_method"]
+            self.model_param.rsa_params.final_hash_method = intersect_meta["final_hash_method"]
+            self.model_param.rsa_params.salt = intersect_meta["salt"]
+            self.model_param.rsa_params.random_bit = intersect_meta["random_bit"]
         elif self.model_param.intersect_method == consts.DH:
-            dh_params = meta_dict["intersect_meta"]
-            self.model_param.dh_params.hash_method = dh_params["hash_method"]
-            self.model_param.dh_params.salt = dh_params["salt"]
+            if intersect_meta["intersect_method"] != consts.DH:
+                raise ValueError(f"Current intersect method must match to cache record.")
+            self.model_param.dh_params.hash_method = intersect_meta["hash_method"]
+            self.model_param.dh_params.salt = intersect_meta["salt"]
 
     def make_filter_process(self, data_instances, hash_operator):
         raise NotImplementedError("This method should not be called here")
@@ -291,7 +304,9 @@ class IntersectModelBase(ModelBase):
     def transform(self, data_inst):
         # data = data_inst.values()
         cache_data, cache_meta = self.component_properties.caches
-        self.load_intersect_meta(list(cache_meta.values())[0])
+        intersect_meta = list(cache_meta.values())[0]["intersect_meta"]
+        self.callback_cache_meta(intersect_meta)
+        self.load_intersect_meta(intersect_meta)
         self.intersection_obj.load_intersect_key(cache_meta)
         # verify cache id
         # if data_overview.check_with_inst_id(data) or self.model_param.repeated_id_process:
