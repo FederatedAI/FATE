@@ -29,5 +29,6 @@ message DataTransformMeta {
    DataTransformOutlierMeta outlier_meta = 11;
    bool need_run = 12;
    map<string, string> exclusive_data_type = 13;
+   bool with_match_id = 14;
 }
 
