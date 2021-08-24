@@ -27,7 +27,7 @@ from federatedml.util import LOGGER
 class LinearModelWeights(ListWeights):
     def __init__(self, l, fit_intercept, raise_overflow_error=True):
         l = np.array(l)
-        if not isinstance(l[0], PaillierEncryptedNumber):
+        if len(l) > 0 and not isinstance(l[0], PaillierEncryptedNumber):
             if np.max(np.abs(l)) > 1e8:
                 if raise_overflow_error:
                     raise RuntimeError("The model weights are overflow, please check if the "
@@ -50,7 +50,7 @@ class LinearModelWeights(ListWeights):
     @property
     def intercept_(self):
         if self.fit_intercept:
-            return self._weights[-1]
+            return 0.0 if len(self._weights) == 0 else self._weights[-1]
         return 0.0
 
     def binary_op(self, other: 'LinearModelWeights', func, inplace):
@@ -63,3 +63,6 @@ class LinearModelWeights(ListWeights):
             for k, v in enumerate(self._weights):
                 _w.append(func(self._weights[k], other._weights[k]))
             return LinearModelWeights(_w, self.fit_intercept)
+
+    def __repr__(self):
+        return f"weights: {self.coef_}, intercept: {self.intercept_}"

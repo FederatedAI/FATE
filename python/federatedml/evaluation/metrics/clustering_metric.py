@@ -1,5 +1,5 @@
 import numpy as np
-from sklearn.metrics import jaccard_similarity_score
+from sklearn.metrics import jaccard_score as jaccard_similarity_score
 from sklearn.metrics import fowlkes_mallows_score
 from sklearn.metrics import adjusted_rand_score
 
@@ -10,7 +10,7 @@ class JaccardSimilarityScore(object):
     """
 
     def compute(self, labels, pred_scores):
-        return jaccard_similarity_score(labels, pred_scores)
+        return jaccard_similarity_score(labels, pred_scores, average="weighted")
 
 
 class FowlkesMallowsScore(object):

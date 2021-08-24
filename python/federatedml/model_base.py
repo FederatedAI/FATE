@@ -28,6 +28,7 @@ from federatedml.protobuf import deserialize_models
 from federatedml.statistic.data_overview import header_alignment
 from federatedml.util import LOGGER, abnormal_detection
 from federatedml.util.component_properties import ComponentProperties
+from federatedml.callbacks.callback_list import CallbackList
 
 
 class ComponentOutput:
@@ -82,6 +83,8 @@ class ModelBase(object):
         self.component_properties = ComponentProperties()
         self._summary = dict()
         self._align_cache = dict()
+        self.callback_list: CallbackList
+        self.stop_training = False
 
     @property
     def need_cv(self):
@@ -137,6 +140,11 @@ class ModelBase(object):
         self.component_properties.parse_caches(cpn_input.caches)
         # init component, implemented by subclasses
         self._init_model(self.model_param)
+
+        self.callback_list = CallbackList(self.role, self.mode, self)
+        if hasattr(self.model_param, "callback_param"):
+            callback_param = getattr(self.model_param, "callback_param")
+            self.callback_list.init_callback_list(callback_param)
 
         running_funcs = self.component_properties.extract_running_rules(
             datasets=cpn_input.datasets, models=cpn_input.models, cpn=self

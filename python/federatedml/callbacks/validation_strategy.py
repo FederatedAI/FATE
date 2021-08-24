@@ -23,14 +23,15 @@
 import copy
 from federatedml.util import LOGGER
 from federatedml.util import consts
-from federatedml.evaluation.evaluation import Evaluation
 from federatedml.param.evaluation_param import EvaluateParam
 from federatedml.evaluation.performance_recorder import PerformanceRecorder
 from federatedml.transfer_variable.transfer_class.validation_strategy_transfer_variable import  \
     ValidationStrategyVariable
+from federatedml.callbacks.callback_base import CallbackBase
+from federatedml.feature.instance import Instance
 
 
-class ValidationStrategy(object):
+class ValidationStrategy(CallbackBase):
     """
     This module is used for evaluating the performance of model during training process.
         it will be called only in fit process of models.
@@ -231,6 +232,7 @@ class ValidationStrategy(object):
         evaluate_param: EvaluateParam = model.get_metrics_param()
         evaluate_param.check_single_value_default_metric()
 
+        from federatedml.evaluation.evaluation import Evaluation
         eval_obj = Evaluation()
         eval_type = evaluate_param.eval_type
 
@@ -264,11 +266,16 @@ class ValidationStrategy(object):
         return eval_result_dict
 
     @staticmethod
+    def _add_data_type_map_func(value, data_type):
+        new_pred_rs = Instance(features=value.features + [data_type], inst_id=value.inst_id)
+        return new_pred_rs
+
+    @staticmethod
     def add_data_type(predicts, data_type: str):
         """
         predict data add data_type
         """
-        predicts = predicts.mapValues(lambda value: value + [data_type])
+        predicts = predicts.mapValues(lambda value: ValidationStrategy._add_data_type_map_func(value, data_type))
         return predicts
 
     def handle_precompute_scores(self, precompute_scores, data_type):
@@ -371,3 +378,14 @@ class ValidationStrategy(object):
 
         if self.early_stopping_rounds and self.mode == consts.HETERO:
             self.update_early_stopping_status(epoch, model)
+
+    def on_train_begin(self, train_data=None, validate_data=None):
+        self.set_train_data(train_data)
+        self.set_validate_data(validate_data)
+
+    def on_epoch_end(self, model, epoch):
+        LOGGER.debug('running validation')
+        self.validate(model, epoch)
+        if self.need_stop():
+            LOGGER.debug('early stopping triggered')
+            model.stop_training = True

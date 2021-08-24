@@ -20,7 +20,7 @@ from federatedml.linear_model.linear_model_base import BaseLinearModel
 from federatedml.util import LOGGER
 from federatedml.util import consts
 from federatedml.util import fate_operator
-from federatedml.util.validation_strategy import ValidationStrategy
+from federatedml.callbacks.validation_strategy import ValidationStrategy
 
 
 class HeteroBaseArbiter(BaseLinearModel):
@@ -125,13 +125,9 @@ class HeteroBaseArbiter(BaseLinearModel):
 
             self.converge_procedure.sync_converge_info(self.is_converged, suffix=(self.n_iter_,))
 
-            if self.validation_strategy:
-                LOGGER.debug('Linear Arbiter running validation')
-                self.validation_strategy.validate(self, self.n_iter_)
-                if self.validation_strategy.need_stop():
-                    LOGGER.debug('early stopping triggered')
-                    self.best_iteration = self.n_iter_
-                    break
+            self.callback_list.on_epoch_end(self.n_iter_)
+            if self.stop_training:
+                break
 
             self.n_iter_ += 1
             if self.is_converged:

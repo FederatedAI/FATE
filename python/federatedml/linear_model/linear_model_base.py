@@ -31,7 +31,7 @@ from federatedml.statistic import data_overview
 from federatedml.util import LOGGER
 from federatedml.util import abnormal_detection
 from federatedml.util import consts
-from federatedml.util.validation_strategy import ValidationStrategy
+from federatedml.callbacks.validation_strategy import ValidationStrategy
 
 
 class BaseLinearModel(ModelBase):
@@ -60,6 +60,7 @@ class BaseLinearModel(ModelBase):
         self.need_call_back_loss = True
         self.init_param_obj = None
         self.validation_strategy = None
+        self.stop_training = False
 
     def _init_model(self, params):
         self.model_param = params
@@ -101,6 +102,7 @@ class BaseLinearModel(ModelBase):
         raise NotImplementedError("This method should be be called here")
 
     def export_model(self):
+        LOGGER.debug(f"called export model")
         meta_obj = self._get_meta()
         param_obj = self._get_param()
         result = {
