@@ -1,0 +1,65 @@
+{
+    "dsl_version": 2,
+    "initiator": {
+        "role": "guest",
+        "party_id": 10000
+    },
+    "role": {
+        "host": [
+            9999
+        ],
+        "guest": [
+            10000
+        ]
+    },
+    "job_parameters": {
+        "common": {
+            "job_type": "train",
+            "work_mode": 0,
+            "backend": 0
+        }
+    },
+    "component_parameters": {
+        "role": {
+            "host": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "tag_value_1000_140",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "reader_1": {
+                        "table": {
+                            "name": "tag_value_1000_140",
+                            "namespace": "experiment"
+                        }
+                    }
+                }
+            },
+            "guest": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "tag_value_1000_140",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "reader_1": {
+                        "table": {
+                            "name": "tag_value_1000_140",
+                            "namespace": "experiment"
+                        }
+                    }
+                }
+            }
+        },
+        "common": {
+            "data_transform_0": {
+                "input_format": "tag",
+                "tag_with_value": true,
+                "with_match_id": true
+            }
+        }
+    }
+}
