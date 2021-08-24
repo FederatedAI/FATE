@@ -125,7 +125,7 @@ def run_task(ctx, job_type, include, replace, timeout, update_job_parameters, up
                 echo.echo(f"[{i + 1}/{len(suites)}]elapse {timedelta(seconds=int(time.time() - start))}", fg='red')
                 if not skip_data and clean_data:
                     _delete_data(client, suite)
-                echo.echo(suite.pretty_final_summary(int(time_consuming)), fg='red')
+                echo.echo(suite.pretty_final_summary(time_consuming), fg='red')
 
             except Exception:
                 exception_id = uuid.uuid1()
@@ -146,6 +146,7 @@ def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Conf
                            show_eta=False,
                            show_pos=True,
                            width=24) as bar:
+        time_list = []
         for job in suite.jobs_iter():
             start = time.time()
             job_progress = JobProgress(job.job_name)
@@ -268,7 +269,8 @@ def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Conf
                 storage_tag = "_".join(['FATE', fate_version, storage_tag, job.job_name])
                 save_quality(storage_tag, performance_dir, time_consuming)
             echo.stdout_newline()
-            return time_consuming
+            time_list.append(time_consuming)
+        return [str(int(i)) + "s" for i in time_list]
 
 
 def _run_pipeline_jobs(config: Config, suite: Testsuite, namespace: str, data_namespace_mangling: bool):
