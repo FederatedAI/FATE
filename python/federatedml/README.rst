@@ -317,6 +317,13 @@ Algorithm List
      -
      -
 
+   * - `Label Transform`_
+     - Label Transform
+     - Replaces label values of input data instances and predict results
+     - Table, values are Instances or prediction results
+     - Table, values with transformed label values
+     -
+     - LabelTransform Model
 
 
 .. _DataIO: util/README.rst
@@ -353,6 +360,7 @@ Algorithm List
 .. _Scorecard: statistic/scorecard/README.rst
 .. _Sample Weight: util/README.rst
 .. _Feldman Verifiable Sum: statistic/feldman_verifiable_sum/README.rst
+.. _Label Transform: util/README.rst
 
 
 Secure Protocol
