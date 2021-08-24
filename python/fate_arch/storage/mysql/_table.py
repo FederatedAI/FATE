@@ -124,11 +124,20 @@ class StorageTable(StorageTableBase):
             raise Exception("mysql table need data header")
         return id, feature_list, id_delimiter
 
-
     def destroy(self):
         super().destroy()
         sql = 'drop table {}'.format(self._address.name)
         return self.execute(sql)
+
+    def check_address(self):
+        schema = self.meta.get_schema()
+        if schema:
+            sql = 'SELECT {},{} FROM {}'.format(schema.get('sid'), schema.get('header'), self._address.name)
+            feature_data = self.execute(sql)
+            for feature in feature_data:
+                if feature:
+                    break
+        return True
 
     @staticmethod
     def get_meta_header(feature_name_list):
