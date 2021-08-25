@@ -53,6 +53,3 @@ class HeteroLinRBase(BaseLinearRegression):
             LOGGER.debug("In _init_model, optimizer: {}, gradient_loss_operator: {}".format(
                 params.optimizer, self.gradient_loss_operator
             ))
-
-    def transform(self, data_inst):
-        return data_inst
