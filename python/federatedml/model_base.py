@@ -27,7 +27,8 @@ from federatedml.param.evaluation_param import EvaluateParam
 from federatedml.protobuf import deserialize_models
 from federatedml.statistic.data_overview import header_alignment
 from federatedml.util import LOGGER, abnormal_detection
-from federatedml.util.component_properties import ComponentProperties
+from federatedml.util.io_check import assert_match_id_consistent
+from federatedml.util.component_properties import ComponentProperties, RunningFuncs
 from federatedml.callbacks.callback_list import CallbackList
 
 
@@ -90,6 +91,7 @@ class ModelBase(object):
         self.component_properties = ComponentProperties()
         self._summary = dict()
         self._align_cache = dict()
+        self.step_name = ''
         self.callback_list: CallbackList
         self.stop_training = False
 
@@ -125,7 +127,7 @@ class ModelBase(object):
         # deserialize models
         deserialize_models(cpn_input.models)
 
-        method = (self._warm_start if retry and
+        method = (self._retry if retry and
                   self.checkpoint_manager is not None and
                   self.checkpoint_manager.latest_checkpoint is not None
                   else self._run)
@@ -185,8 +187,60 @@ class ModelBase(object):
 
         return ComponentOutput(self.save_data(), self.export_model(), self.save_cache())
 
-    def _warm_start(self, cpn_input):
-        pass
+    def _retry(self, cpn_input):
+        self.model_param.update(cpn_input.parameters)
+        self.model_param.check()
+        self.component_properties.parse_component_param(
+            cpn_input.roles, self.model_param
+        )
+        self.role = self.component_properties.role
+        self.component_properties.parse_dsl_args(cpn_input.datasets, cpn_input.models)
+        self.component_properties.parse_caches(cpn_input.caches)
+        # init component, implemented by subclasses
+        self._init_model(self.model_param)
+
+        self.callback_list = CallbackList(self.role, self.mode, self)
+        if hasattr(self.model_param, "callback_param"):
+            callback_param = getattr(self.model_param, "callback_param")
+            self.callback_list.init_callback_list(callback_param)
+
+        train_data, validate_data, test_data, data = self.component_properties.extract_input_data(
+            datasets=cpn_input.datasets, model=self
+        )
+
+        running_funcs = RunningFuncs()
+        latest_checkpoint = self.get_latest_checkpoint()
+        running_funcs.add_func(self.load_model, [latest_checkpoint])
+        running_funcs = self.component_properties.warm_start_process(
+            running_funcs, self, train_data, validate_data)
+        LOGGER.debug(f"running_funcs: {running_funcs.todo_func_list}")
+        self._execute_running_funcs(running_funcs)
+
+    def _execute_running_funcs(self, running_funcs):
+        saved_result = []
+        for func, params, save_result, use_previews in running_funcs:
+            # for func, params in zip(todo_func_list, todo_func_params):
+            if use_previews:
+                if params:
+                    real_param = [saved_result, params]
+                else:
+                    real_param = saved_result
+                LOGGER.debug("func: {}".format(func))
+                detected_func = assert_match_id_consistent(func)
+                this_data_output = detected_func(*real_param)
+                saved_result = []
+            else:
+                detected_func = assert_match_id_consistent(func)
+                this_data_output = detected_func(*params)
+
+            if save_result:
+                saved_result.append(this_data_output)
+
+        if len(saved_result) == 1:
+            self.data_output = saved_result[0]
+        LOGGER.debug("saved_result is : {}, data_output: {}".format(saved_result, self.data_output))
+        self.save_summary()
+
 
     def get_metrics_param(self):
         return EvaluateParam(eval_type="binary", pos_label=1)
@@ -379,6 +433,9 @@ class ModelBase(object):
             metric_namespace=metric_namespace,
             metrics=metric_data,
         )
+
+    def get_latest_checkpoint(self):
+        return self.checkpoint_manager.latest_checkpoint.read()
 
     def save_summary(self):
         self.tracker.log_component_summary(summary_data=self.summary())

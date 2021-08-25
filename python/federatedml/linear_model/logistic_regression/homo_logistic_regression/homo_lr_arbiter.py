@@ -54,9 +54,11 @@ class HomoLRArbiter(HomoLRBase):
         self.re_encrypt_times = self.cipher.set_re_cipher_time(host_ciphers)
         max_iter = self.max_iter
         # validation_strategy = self.init_validation_strategy()
+        self.callback_list.on_train_begin(data_instances, validate_data)
 
         while self.n_iter_ < max_iter + 1:
             suffix = (self.n_iter_,)
+            self.callback_list.on_epoch_start(self.n_iter_)
 
             if ((self.n_iter_ + 1) % self.aggregate_iters == 0) or self.n_iter_ == max_iter:
                 merged_model = self.aggregator.aggregate_and_broadcast(ciphers_dict=host_ciphers,
@@ -90,6 +92,9 @@ class HomoLRArbiter(HomoLRBase):
                                   re_encrypt_batches=self.re_encrypt_batches)
 
             # validation_strategy.validate(self, self.n_iter_)
+            self.callback_list.on_epoch_end(self.n_iter_)
+            if self.stop_training:
+                break
             self.n_iter_ += 1
 
         LOGGER.info("Finish Training task, total iters: {}".format(self.n_iter_))
