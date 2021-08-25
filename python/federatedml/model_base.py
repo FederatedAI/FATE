@@ -102,12 +102,12 @@ class MetricMeta:
 # type hint
 class TrackerClient(object):
     def log_job_metric_data(
-        self, metric_namespace: str, metric_name: str, metrics: List[Metric]
+        self, metric_namespace: str, metric_name: str, metrics: typing.List[Metric]
     ):
         ...
 
     def log_metric_data(
-        self, metric_namespace: str, metric_name: str, metrics: List[Metric]
+        self, metric_namespace: str, metric_name: str, metrics: typing.List[Metric]
     ):
         ...
 
@@ -115,7 +115,7 @@ class TrackerClient(object):
         self,
         metric_namespace: str,
         metric_name: str,
-        metrics: List[Metric],
+        metrics: typing.List[Metric],
         job_level=False,
     ):
         ...
