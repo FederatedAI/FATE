@@ -72,11 +72,11 @@ class Encrypt(object):
         return result
 
     def distribute_decrypt(self, X):
-        decrypt_table = X.mapValues(lambda x: self.decrypt(x))
+        decrypt_table = X.mapValues(lambda x: self.recursive_decrypt(x))
         return decrypt_table
 
     def distribute_encrypt(self, X):
-        encrypt_table = X.mapValues(lambda x: self.encrypt(x))
+        encrypt_table = X.mapValues(lambda x: self.recursive_encrypt(x))
         return encrypt_table
 
     def _recursive_func(self, obj, func):
