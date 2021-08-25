@@ -58,7 +58,7 @@ class HomoLRArbiter(HomoLRBase):
 
         while self.n_iter_ < max_iter + 1:
             suffix = (self.n_iter_,)
-            self.callback_list.on_epoch_start(self.n_iter_)
+            self.callback_list.on_epoch_begin(self.n_iter_)
 
             if ((self.n_iter_ + 1) % self.aggregate_iters == 0) or self.n_iter_ == max_iter:
                 merged_model = self.aggregator.aggregate_and_broadcast(ciphers_dict=host_ciphers,

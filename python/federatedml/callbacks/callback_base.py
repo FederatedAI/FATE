@@ -18,7 +18,7 @@ class CallbackBase(object):
     def on_train_begin(self, train_data=None, validate_data=None):
         pass
 
-    def on_epoch_start(self, model, epoch):
+    def on_epoch_begin(self, model, epoch):
         pass
 
     def on_epoch_end(self, model, epoch):

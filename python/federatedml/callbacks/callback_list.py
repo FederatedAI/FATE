@@ -51,6 +51,6 @@ class CallbackList(object):
         for callback_func in self.callback_list:
             callback_func.on_epoch_end(self.model, epoch)
 
-    def on_epoch_start(self, epoch):
+    def on_epoch_begin(self, epoch):
         for callback_func in self.callback_list:
-            callback_func.on_epoch_start(self.model, epoch)
+            callback_func.on_epoch_begin(self.model, epoch)
