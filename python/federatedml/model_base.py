@@ -29,6 +29,7 @@ from federatedml.util import LOGGER, abnormal_detection
 from federatedml.util.io_check import assert_match_id_consistent
 from federatedml.util.component_properties import ComponentProperties, RunningFuncs
 from federatedml.callbacks.callback_list import CallbackList
+from federatedml.feature.instance import Instance
 
 
 class ComponentOutput:
@@ -416,7 +417,7 @@ class ModelBase(object):
         return "_".join(map(str, [name_prefix, self.flowid]))
 
     def set_tracker(self, tracker):
-        self.tracker = tracker
+        self._tracker = tracker
 
     def set_checkpoint_manager(self, checkpoint_manager):
         checkpoint_manager.load_checkpoints_from_disk()
@@ -442,6 +443,7 @@ class ModelBase(object):
                     "type",
                 ],
                 "sid_name": schema.get("sid_name"),
+                "content_type": "predict_result"
             }
         return predict_data
 
@@ -505,6 +507,11 @@ class ModelBase(object):
             raise ValueError(
                 f"Model's classes type is {type(classes)}, classes must be None or list of length no less than 2."
             )
+
+        def _transfer(instance, pred_res):
+            return Instance(features=pred_res, inst_id=instance.inst_id)
+
+        predict_result = data_instances.join(predict_result, _transfer)
 
         return predict_result
 

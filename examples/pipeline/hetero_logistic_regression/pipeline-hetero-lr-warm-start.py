@@ -98,7 +98,12 @@ def main(config="../../config.yaml", namespace=""):
             "key_length": 1024
         },
         "callback_param": {
-            "callbacks": ["ModelCheckpoint", "EarlyStopping"]
+            "callbacks": ["ModelCheckpoint"],
+            "validation_freqs": 1,
+            "early_stopping_rounds": 1,
+            "metrics": None,
+            "use_first_metric_only": False,
+            "save_freq": 1
         }
     }
 

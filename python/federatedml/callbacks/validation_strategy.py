@@ -380,8 +380,9 @@ class ValidationStrategy(CallbackBase):
             self.update_early_stopping_status(epoch, model)
 
     def on_train_begin(self, train_data=None, validate_data=None):
-        self.set_train_data(train_data)
-        self.set_validate_data(validate_data)
+        if self.role != consts.ARBITER:
+            self.set_train_data(train_data)
+            self.set_validate_data(validate_data)
 
     def on_epoch_end(self, model, epoch):
         LOGGER.debug('running validation')

@@ -68,6 +68,7 @@ class ComponentProperties(object):
         self.input_eval_data_count = 0
         self.caches = None
         self.is_warm_start = False
+        self.has_arbiter = False
 
     def parse_caches(self, caches):
         self.caches = caches
@@ -92,7 +93,7 @@ class ComponentProperties(object):
         except AttributeError:
             need_stepwise = False
         self.need_stepwise = need_stepwise
-
+        self.has_arbiter = roles["role"].get("arbiter") is None
         self.role = roles["local"]["role"]
         self.host_party_idlist = roles["role"].get("host")
         self.local_partyid = roles["local"].get("party_id")

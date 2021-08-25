@@ -16,6 +16,7 @@
 from federatedml.callbacks.validation_strategy import ValidationStrategy
 from federatedml.callbacks.model_checkpoint import ModelCheckpoint
 from federatedml.param.callback_param import CallbackParam
+from federatedml.util import LOGGER
 
 
 class CallbackList(object):
@@ -26,12 +27,16 @@ class CallbackList(object):
         self.callback_list = []
 
     def init_callback_list(self, callback_param: CallbackParam):
+        LOGGER.debug(f"self_model: {self.model}")
+
         if "EarlyStopping" in callback_param.callbacks or \
                 "PerformanceEvaluate" in callback_param.callbacks:
+            has_arbiter = self.model.component_properties.has_arbiter
             validation_strategy = ValidationStrategy(self.role, self.mode,
                                                      callback_param.validation_freqs,
                                                      callback_param.early_stopping_rounds,
-                                                     callback_param.use_first_metric_only)
+                                                     callback_param.use_first_metric_only,
+                                                     arbiter_comm=has_arbiter)
             self.callback_list.append(validation_strategy)
         if "ModelCheckpoint" in callback_param.callbacks:
             model_checkpoint = ModelCheckpoint(model=self.model,
