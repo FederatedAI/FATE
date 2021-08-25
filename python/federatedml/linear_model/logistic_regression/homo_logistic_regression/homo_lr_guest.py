@@ -64,7 +64,7 @@ class HomoLRGuest(HomoLRBase):
         self.prev_round_weights = copy.deepcopy(model_weights)
 
         while self.n_iter_ < max_iter + 1:
-            self.callback_list.on_epoch_start(self.n_iter_)
+            self.callback_list.on_epoch_begin(self.n_iter_)
             batch_data_generator = mini_batch_obj.mini_batch_data_generator()
 
             self.optimizer.set_iters(self.n_iter_)

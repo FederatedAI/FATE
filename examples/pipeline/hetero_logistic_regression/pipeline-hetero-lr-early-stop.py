@@ -47,10 +47,14 @@ def main(config="../../config.yaml", namespace=""):
         "early_stop": "diff",
         "batch_size": -1,
         "learning_rate": 0.15,
-        "validation_freqs": 1,
-        "early_stopping_rounds": 3,
-        "metrics": [],
-        "use_first_metric_only": False,
+        "callback_param": {
+            "callbacks": ["ModelCheckpoint", "EarlyStopping"],
+            "validation_freqs": 1,
+            "early_stopping_rounds": 1,
+            "metrics": None,
+            "use_first_metric_only": False,
+            "save_freq": 1
+        },
         "init_param": {
             "init_method": "zeros"
         },

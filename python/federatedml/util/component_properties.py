@@ -16,8 +16,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from fate_arch.computing import is_table
+import copy
+import functools
 
+import numpy as np
+
+from fate_arch.computing import is_table
 from federatedml.util import LOGGER
 
 
@@ -36,10 +40,10 @@ class RunningFuncs(object):
 
     def __iter__(self):
         for func, params, save_result, use_previews in zip(
-            self.todo_func_list,
-            self.todo_func_params,
-            self.save_result,
-            self.use_previews_result,
+                self.todo_func_list,
+                self.todo_func_params,
+                self.save_result,
+                self.use_previews_result,
         ):
             yield func, params, save_result, use_previews
 
@@ -68,6 +72,7 @@ class ComponentProperties(object):
         self.input_eval_data_count = 0
         self.caches = None
         self.is_warm_start = False
+        self.has_arbiter = False
 
     def parse_caches(self, caches):
         self.caches = caches
@@ -92,7 +97,7 @@ class ComponentProperties(object):
         except AttributeError:
             need_stepwise = False
         self.need_stepwise = need_stepwise
-
+        self.has_arbiter = roles["role"].get("arbiter") is not None
         self.role = roles["local"]["role"]
         self.host_party_idlist = roles["role"].get("host")
         self.local_partyid = roles["local"].get("party_id")
@@ -167,23 +172,6 @@ class ComponentProperties(object):
                     "input should be configured too."
                 )
 
-        # if self.has_model:
-        #     if self.has_train_data:
-        #         raise DSLConfigError(
-        #             "train_data input and model input should not be "
-        #             "configured simultaneously"
-        #         )
-        #     if self.has_isometric_model:
-        #         raise DSLConfigError(
-        #             "model and isometric_model should not be "
-        #             "configured simultaneously"
-        #         )
-        #     if not self.has_test_data and not self.has_normal_input_data:
-        #         raise DSLConfigError(
-        #             "When model has been set, either test_data or "
-        #             "data should be provided"
-        #         )
-
         if self.need_cv or self.need_stepwise:
             if not self.has_train_data:
                 raise DSLConfigError(
@@ -191,9 +179,9 @@ class ComponentProperties(object):
                     "task or stepwise task"
                 )
             if (
-                self.has_validate_data
-                or self.has_normal_input_data
-                or self.has_test_data
+                    self.has_validate_data
+                    or self.has_normal_input_data
+                    or self.has_test_data
             ):
                 raise DSLConfigError(
                     "Train_data should be set only if it is a cross-validate "
@@ -359,109 +347,6 @@ class ComponentProperties(object):
 
         return running_funcs
 
-
-    # def extract_running_rules(self, datasets, models, cpn):
-    #
-    #     # train_data, eval_data, data = self.extract_input_data(args)
-    #     train_data, validate_data, test_data, data = self.extract_input_data(
-    #         datasets, cpn
-    #     )
-    #
-    #     running_funcs = RunningFuncs()
-    #     schema = None
-    #     for d in [train_data, validate_data, test_data]:
-    #         if d is not None:
-    #             schema = d.schema
-    #             break
-    #
-    #     if not self.need_run:
-    #         running_funcs.add_func(cpn.pass_data, [data], save_result=True)
-    #         return running_funcs
-    #
-    #     if self.need_cv:
-    #         running_funcs.add_func(cpn.cross_validation, [train_data], save_result=True)
-    #         return running_funcs
-    #
-    #     if self.need_stepwise:
-    #         running_funcs.add_func(cpn.stepwise, [train_data], save_result=True)
-    #         running_funcs.add_func(
-    #             self.union_data, ["train"], use_previews=True, save_result=True
-    #         )
-    #         running_funcs.add_func(
-    #             cpn.set_predict_data_schema,
-    #             [schema],
-    #             use_previews=True,
-    #             save_result=True,
-    #         )
-    #         return running_funcs
-    #
-    #     if self.has_model or self.has_isometric_model:
-    #         running_funcs.add_func(cpn.load_model, [models])
-    #
-    #     if self.has_train_data and self.has_validate_data:
-    #         # todo_func_list.extend([model.set_flowid, model.fit, model.set_flowid, model.predict])
-    #         # todo_func_params.extend([['fit'], [train_data], ['validate'], [train_data, 'validate']])
-    #         running_funcs.add_func(cpn.set_flowid, ["fit"])
-    #         running_funcs.add_func(cpn.fit, [train_data, validate_data])
-    #         running_funcs.add_func(cpn.set_flowid, ["validate"])
-    #         running_funcs.add_func(cpn.predict, [train_data], save_result=True)
-    #         running_funcs.add_func(cpn.set_flowid, ["predict"])
-    #         running_funcs.add_func(cpn.predict, [validate_data], save_result=True)
-    #         running_funcs.add_func(
-    #             self.union_data,
-    #             ["train", "validate"],
-    #             use_previews=True,
-    #             save_result=True,
-    #         )
-    #         running_funcs.add_func(
-    #             cpn.set_predict_data_schema,
-    #             [schema],
-    #             use_previews=True,
-    #             save_result=True,
-    #         )
-    #
-    #     elif self.has_train_data:
-    #         running_funcs.add_func(cpn.set_flowid, ["fit"])
-    #         running_funcs.add_func(cpn.fit, [train_data])
-    #         running_funcs.add_func(cpn.set_flowid, ["validate"])
-    #         running_funcs.add_func(cpn.predict, [train_data], save_result=True)
-    #         running_funcs.add_func(
-    #             self.union_data, ["train"], use_previews=True, save_result=True
-    #         )
-    #         running_funcs.add_func(
-    #             cpn.set_predict_data_schema,
-    #             [schema],
-    #             use_previews=True,
-    #             save_result=True,
-    #         )
-    #
-    #     elif self.has_test_data:
-    #         running_funcs.add_func(cpn.set_flowid, ["predict"])
-    #         running_funcs.add_func(cpn.predict, [test_data], save_result=True)
-    #         running_funcs.add_func(
-    #             self.union_data, ["predict"], use_previews=True, save_result=True
-    #         )
-    #         running_funcs.add_func(
-    #             cpn.set_predict_data_schema,
-    #             [schema],
-    #             use_previews=True,
-    #             save_result=True,
-    #         )
-    #
-    #     if self.has_normal_input_data and not self.has_model:
-    #         running_funcs.add_func(cpn.extract_data, [data], save_result=True)
-    #         running_funcs.add_func(cpn.set_flowid, ["fit"])
-    #         running_funcs.add_func(cpn.fit, [], use_previews=True, save_result=True)
-    #
-    #     if self.has_normal_input_data and self.has_model:
-    #         running_funcs.add_func(cpn.extract_data, [data], save_result=True)
-    #         running_funcs.add_func(cpn.set_flowid, ["transform"])
-    #         running_funcs.add_func(
-    #             cpn.transform, [], use_previews=True, save_result=True
-    #         )
-    #
-    #     return running_funcs
-
     @staticmethod
     def union_data(previews_data, name_list):
         if len(previews_data) == 0:
@@ -472,10 +357,19 @@ class ComponentProperties(object):
 
         assert len(previews_data) == len(name_list)
 
+        def _append_name(value, name):
+            inst = copy.deepcopy(value)
+            if isinstance(inst.features, list):
+                inst.features.append(name)
+            else:
+                inst.features = np.append(inst.features, name)
+            return inst
+
         result_data = None
         for data, name in zip(previews_data, name_list):
             # LOGGER.debug("before mapValues, one data: {}".format(data.first()))
-            data = data.mapValues(lambda value: value + [name])
+            f = functools.partial(_append_name, name=name)
+            data = data.mapValues(f)
             # LOGGER.debug("after mapValues, one data: {}".format(data.first()))
 
             if result_data is None:

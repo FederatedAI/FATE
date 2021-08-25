@@ -77,7 +77,7 @@ class HeteroBaseArbiter(BaseLinearModel):
         self.callback_list.on_train_begin(data_instances, validate_data)
 
         while self.n_iter_ < self.max_iter:
-            self.callback_list.on_epoch_start(self.n_iter_)
+            self.callback_list.on_epoch_begin(self.n_iter_)
             iter_loss = None
             batch_data_generator = self.batch_generator.generate_batch_data()
             total_gradient = None
