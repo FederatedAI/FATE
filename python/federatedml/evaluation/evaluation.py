@@ -299,7 +299,8 @@ class Evaluation(ModelBase):
                 if eval_data is None:
                     continue
                 sample = eval_data.take(1)[0]
-                if type(sample[1]) != list or len(sample[1]) != 5:  # label, predict_type, predict_score, predict_detail, type
+                # label, predict_type, predict_score, predict_detail, type
+                if type(sample[1].features) != list or len(sample[1].features) != 5:
                     raise ValueError('length of table header mismatch, expected length is 5, got:{},'
                                      'please check the input of the Evaluation Module, result of '
                                      'cross validation is not supported.'.format(sample))
@@ -316,9 +317,13 @@ class Evaluation(ModelBase):
                 LOGGER.debug('data with {} is None, skip metric computation'.format(key))
                 continue
 
-            eval_data_local = list(eval_data.collect())
-            if len(eval_data_local) == 0:
+            collected_data = list(eval_data.collect())
+            if len(collected_data) == 0:
                 continue
+
+            eval_data_local = []
+            for k, v in collected_data:
+                eval_data_local.append((k, v.features))
 
             split_data_with_label = self.split_data_with_type(eval_data_local)
 

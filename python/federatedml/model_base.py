@@ -229,7 +229,7 @@ class ModelBase(object):
         deserialize_models(cpn_input.models)
 
         method = (
-            self._warm_start
+            self._retry
             if retry
             and self.checkpoint_manager is not None
             and self.checkpoint_manager.latest_checkpoint is not None

@@ -390,3 +390,6 @@ class ValidationStrategy(CallbackBase):
         if self.need_stop():
             LOGGER.debug('early stopping triggered')
             model.stop_training = True
+            if self.has_saved_best_model():
+                model.load_model(self.cur_best_model)
+                setattr(model, "best_iteration", self.best_iteration)
