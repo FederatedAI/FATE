@@ -17,18 +17,18 @@
 
 from .components import ComponentMeta
 
-onehost_encoder_cpn_meta = ComponentMeta("OneHostEncoder")
+onehot_encoder_cpn_meta = ComponentMeta("OneHotEncoder")
 
 
-@onehost_encoder_cpn_meta.bind_param
-def onehost_encoder_param():
+@onehot_encoder_cpn_meta.bind_param
+def onehot_encoder_param():
     from federatedml.param.onehot_encoder_param import OneHotEncoderParam
 
     return OneHotEncoderParam
 
 
-@onehost_encoder_cpn_meta.bind_runner.on_guest.on_host
-def onehost_encoder_client_runner():
+@onehot_encoder_cpn_meta.bind_runner.on_guest.on_host
+def onehot_encoder_client_runner():
     from federatedml.feature.one_hot_encoder import OneHotEncoder
 
     return OneHotEncoder
