@@ -341,7 +341,7 @@ class Testsuite(object):
                     status.name,
                     status.job_id,
                     status.status,
-                    "".join([str(time_consuming), "s"]),
+                    time_consuming.pop(0),
                     status.exception_id,
                     ",".join(status.rest_dependency),
                 ]
