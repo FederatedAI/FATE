@@ -19,9 +19,8 @@ import copy
 import typing
 
 import numpy as np
-from google.protobuf import json_format
-
 from fate_arch.computing import is_table
+from google.protobuf import json_format
 
 from federatedml.param.evaluation_param import EvaluateParam
 from federatedml.protobuf import deserialize_models
@@ -55,7 +54,9 @@ class ComponentOutput:
         for model_name, buffer_object in self._models.items():
             serialized_string = buffer_object.SerializeToString()
             pb_name = type(buffer_object).__name__
-            json_format_dict = json_format.MessageToDict(buffer_object, including_default_value_fields=True)
+            json_format_dict = json_format.MessageToDict(
+                buffer_object, including_default_value_fields=True
+            )
 
             serialized_models[model_name] = (
                 pb_name,
@@ -70,6 +71,98 @@ class ComponentOutput:
         return self._cache
 
 
+class MetricType:
+    LOSS = "LOSS"
+
+
+class Metric:
+    def __init__(self, key, value: float, timestamp: float = None):
+        self.key = key
+        self.value = value
+        self.timestamp = timestamp
+
+
+class MetricMeta:
+    def __init__(self, name: str, metric_type: MetricType, extra_metas: dict = None):
+        self.name = name
+        self.metric_type = metric_type
+        self.metas = {}
+        if extra_metas:
+            self.metas.update(extra_metas)
+        self.metas["name"] = name
+        self.metas["metric_type"] = metric_type
+
+    def update_metas(self, metas: dict):
+        self.metas.update(metas)
+
+    def to_dict(self):
+        return self.metas
+
+
+# type hint
+class TrackerClient(object):
+    def log_job_metric_data(
+        self, metric_namespace: str, metric_name: str, metrics: List[Metric]
+    ):
+        ...
+
+    def log_metric_data(
+        self, metric_namespace: str, metric_name: str, metrics: List[Metric]
+    ):
+        ...
+
+    def log_metric_data_common(
+        self,
+        metric_namespace: str,
+        metric_name: str,
+        metrics: List[Metric],
+        job_level=False,
+    ):
+        ...
+
+    def set_job_metric_meta(
+        self, metric_namespace: str, metric_name: str, metric_meta: MetricMeta
+    ):
+        ...
+
+    def set_metric_meta(
+        self, metric_namespace: str, metric_name: str, metric_meta: MetricMeta
+    ):
+        ...
+
+    def set_metric_meta_common(
+        self,
+        metric_namespace: str,
+        metric_name: str,
+        metric_meta: MetricMeta,
+        job_level=False,
+    ):
+        ...
+
+    def create_table_meta(self, table_meta):
+        ...
+
+    def get_table_meta(self, table_name, table_namespace):
+        ...
+
+    def save_component_output_model(self, component_model):
+        ...
+
+    def read_component_output_model(self, search_model_alias, tracker):
+        ...
+
+    def log_output_data_info(
+        self, data_name: str, table_namespace: str, table_name: str
+    ):
+        ...
+
+    def get_output_data_info(self, data_name=None):
+        ...
+
+    def log_component_summary(self, summary_data: dict):
+        ...
+
+
 class ModelBase(object):
     def __init__(self):
         self.model_output = None
@@ -82,13 +175,19 @@ class ModelBase(object):
         self.flowid = ""
         self.task_version_id = ""
         self.need_one_vs_rest = False
-        self.tracker = None
         self.checkpoint_manager = None
         self.cv_fold = 0
         self.validation_freqs = None
         self.component_properties = ComponentProperties()
         self._summary = dict()
         self._align_cache = dict()
+        self._tracker = None
+
+    @property
+    def tracker(self) -> TrackerClient:
+        if self._tracker is None:
+            raise RuntimeError(f"use tracker before set")
+        return self._tracker
 
     @property
     def need_cv(self):
@@ -116,16 +215,19 @@ class ModelBase(object):
 
     def run(self, cpn_input, retry: bool = True):
         self.task_version_id = cpn_input.task_version_id
-        self.tracker = cpn_input.tracker
+        self._tracker = cpn_input.tracker
         self.checkpoint_manager = cpn_input.checkpoint_manager
 
         # deserialize models
         deserialize_models(cpn_input.models)
 
-        method = (self._warm_start if retry and
-                  self.checkpoint_manager is not None and
-                  self.checkpoint_manager.latest_checkpoint is not None
-                  else self._run)
+        method = (
+            self._warm_start
+            if retry
+            and self.checkpoint_manager is not None
+            and self.checkpoint_manager.latest_checkpoint is not None
+            else self._run
+        )
         method(cpn_input)
 
         return ComponentOutput(self.save_data(), self.export_model(), self.save_cache())
