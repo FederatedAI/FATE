@@ -115,7 +115,7 @@ def run_suite(ctx, replace, include, exclude, glob, timeout, update_job_paramete
                     _delete_data(client, suite)
                 echo.echo(f"[{i + 1}/{len(suites)}]elapse {timedelta(seconds=int(time.time() - start))}", fg='red')
                 if not skip_dsl_jobs or not skip_pipeline_jobs:
-                    echo.echo(suite.pretty_final_summary(int(time_consuming)), fg='red')
+                    echo.echo(suite.pretty_final_summary(time_consuming), fg='red')
 
             except Exception:
                 exception_id = uuid.uuid1()
@@ -136,6 +136,7 @@ def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Conf
                            show_eta=False,
                            show_pos=True,
                            width=24) as bar:
+        time_list = []
         for job in suite.jobs_iter():
             job_progress = JobProgress(job.job_name)
             start = time.time()
@@ -242,7 +243,8 @@ def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Conf
                         suite.remove_dependency(job.job_name)
             update_bar(0)
             echo.stdout_newline()
-            return time.time() - start
+            time_list.append(time.time() - start)
+        return [str(int(i)) + "s" for i in time_list]
 
 
 def _run_pipeline_jobs(config: Config, suite: Testsuite, namespace: str, data_namespace_mangling: bool):
