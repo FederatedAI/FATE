@@ -82,7 +82,8 @@ class HeteroLRGuest(HeteroLRBase):
         LOGGER.info("Enter hetero_lr_guest fit")
         self.header = self.get_header(data_instances)
 
-        self.validation_strategy = self.init_validation_strategy(data_instances, validate_data)
+        self.callback_list.on_train_begin(data_instances, validate_data)
+
         data_instances = data_instances.mapValues(HeteroLRGuest.load_data)
         LOGGER.debug(f"MODEL_STEP After load data, data count: {data_instances.count()}")
         self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
@@ -99,10 +100,12 @@ class HeteroLRGuest(HeteroLRBase):
         LOGGER.info("Start initialize model.")
         LOGGER.info("fit_intercept:{}".format(self.init_param_obj.fit_intercept))
         model_shape = self.get_features_shape(data_instances)
-        w = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
-        self.model_weights = LinearModelWeights(w, fit_intercept=self.fit_intercept)
+        if not self.component_properties.is_warm_start:
+            w = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
+            self.model_weights = LinearModelWeights(w, fit_intercept=self.fit_intercept)
 
         while self.n_iter_ < self.max_iter:
+            self.callback_list.on_epoch_begin(self.n_iter_)
             LOGGER.info("iter:{}".format(self.n_iter_))
             batch_data_generator = self.batch_generator.generate_batch_data()
             self.optimizer.set_iters(self.n_iter_)
@@ -123,26 +126,18 @@ class HeteroLRGuest(HeteroLRBase):
                             self.n_iter_,
                             batch_index)
 
-                # LOGGER.debug('optim_guest_gradient: {}'.format(optim_guest_gradient))
-                # training_info = {"iteration": self.n_iter_, "batch_index": batch_index}
-                # self.update_local_model(fore_gradient, data_instances, self.model_weights.coef_, **training_info)
-
                 loss_norm = self.optimizer.loss_norm(self.model_weights)
                 self.gradient_loss_operator.compute_loss(data_instances, self.model_weights, self.n_iter_, batch_index, loss_norm)
 
                 self.model_weights = self.optimizer.update_model(self.model_weights, optim_guest_gradient)
                 batch_index += 1
-                # LOGGER.debug("lr_weight, iters: {}, update_model: {}".format(self.n_iter_, self.model_weights.unboxed))
 
             self.is_converged = self.converge_procedure.sync_converge_info(suffix=(self.n_iter_,))
             LOGGER.info("iter: {},  is_converged: {}".format(self.n_iter_, self.is_converged))
 
-            if self.validation_strategy:
-                LOGGER.debug('LR guest running validation')
-                self.validation_strategy.validate(self, self.n_iter_)
-                if self.validation_strategy.need_stop():
-                    LOGGER.debug('early stopping triggered')
-                    break
+            self.callback_list.on_epoch_end(self.n_iter_)
+            if self.stop_training:
+                break
 
             self.n_iter_ += 1
 

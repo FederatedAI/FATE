@@ -12,8 +12,3 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-#
-# from federatedml.logistic_regression import homo_logsitic_regression, hetero_logistic_regression
-# from federatedml.logistic_regression.logistic_regression import LogisticRegression
-#
-# __all__ = ['homo_logsitic_regression', 'hetero_logistic_regression', 'LogisticRegression']

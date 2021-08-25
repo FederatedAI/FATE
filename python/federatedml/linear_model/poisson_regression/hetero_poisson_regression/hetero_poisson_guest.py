@@ -72,8 +72,9 @@ class HeteroPoissonGuest(HeteroPoissonBase):
         LOGGER.info("Start initialize model.")
         LOGGER.info("fit_intercept:{}".format(self.init_param_obj.fit_intercept))
         model_shape = self.get_features_shape(data_instances)
-        w = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
-        self.model_weights = LinearModelWeights(w, fit_intercept=self.fit_intercept, raise_overflow_error=False)
+        if not self.component_properties.is_warm_start:
+            w = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
+            self.model_weights = LinearModelWeights(w, fit_intercept=self.fit_intercept, raise_overflow_error=False)
 
         while self.n_iter_ < self.max_iter:
             LOGGER.info("iter:{}".format(self.n_iter_))
@@ -82,14 +83,12 @@ class HeteroPoissonGuest(HeteroPoissonBase):
             self.optimizer.set_iters(self.n_iter_)
             batch_index = 0
             for batch_data in batch_data_generator:
-                # transforms features of raw input 'batch_data_inst' into more representative features 'batch_feat_inst'
-                batch_feat_inst = self.transform(batch_data)
                 # compute offset of this batch
-                batch_offset = exposure.join(batch_feat_inst, lambda ei, d: HeteroPoissonBase.safe_log(ei))
+                batch_offset = exposure.join(batch_data, lambda ei, d: HeteroPoissonBase.safe_log(ei))
 
                 # Start gradient procedure
                 optimized_gradient = self.gradient_loss_operator.compute_gradient_procedure(
-                    batch_feat_inst,
+                    batch_data,
                     self.encrypted_calculator,
                     self.model_weights,
                     self.optimizer,
@@ -108,6 +107,8 @@ class HeteroPoissonGuest(HeteroPoissonBase):
 
             self.is_converged = self.converge_procedure.sync_converge_info(suffix=(self.n_iter_,))
             LOGGER.info("iter: {},  is_converged: {}".format(self.n_iter_, self.is_converged))
+
+            self.add_checkpoint(step_index=self.n_iter_, step_name=self.flowid)
 
             if self.validation_strategy:
                 LOGGER.debug('Poisson guest running validation')
@@ -146,9 +147,8 @@ class HeteroPoissonGuest(HeteroPoissonBase):
         exposure = data_instances.mapValues(lambda v: HeteroPoissonBase.load_exposure(v, exposure_index))
 
         data_instances = self.align_data_header(data_instances, self.header)
-        data_features = self.transform(data_instances)
 
-        pred_guest = self.compute_mu(data_features, self.model_weights.coef_, self.model_weights.intercept_, exposure)
+        pred_guest = self.compute_mu(data_instances, self.model_weights.coef_, self.model_weights.intercept_, exposure)
         pred_host = self.transfer_variable.host_partial_prediction.get(idx=0)
 
         LOGGER.info("Get prediction from Host")

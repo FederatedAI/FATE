@@ -46,7 +46,7 @@ class DataTransformParam(BaseParam):
     tag_value_delimitor: str, use if input_format is 'tag' and 'tag_with_value' is True,
                          delimitor of tag[delimitor]value column value.
 
-    missing_fill : bool, need to fill missing value or not, accepted only True/False, default: False
+    missing_fill : bool, need to fill missing value or not, accepted only True/False, default: True
 
     default_value : None or single object type or list, the value to replace missing value.
                     if None, it will use default value define in federatedml/feature/imputer.py,
@@ -83,6 +83,8 @@ class DataTransformParam(BaseParam):
 
     output_format : str, accepted 'dense','sparse' only in this version. default: 'dense'
 
+    with_match_id: bool, True if dataset has match_id, default: False
+
     """
 
     def __init__(self, input_format="dense", delimitor=',', data_type='float64',
@@ -93,7 +95,7 @@ class DataTransformParam(BaseParam):
                  outlier_impute=None, outlier_replace_value=0,
                  with_label=False, label_name='y',
                  label_type='int', output_format='dense', need_run=True,
-                 with_match_id=True, match_id_name=None, match_id_index=-1):
+                 with_match_id=False):
         self.input_format = input_format
         self.delimitor = delimitor
         self.data_type = data_type
@@ -114,8 +116,6 @@ class DataTransformParam(BaseParam):
         self.output_format = output_format
         self.need_run = need_run
         self.with_match_id = with_match_id
-        self.match_id_name = match_id_name
-        self.match_id_index = match_id_index
 
     def check(self):
 
@@ -151,7 +151,7 @@ class DataTransformParam(BaseParam):
 
         if self.with_label:
             if not isinstance(self.label_name, str):
-                raise ValueError("data transform param's label_name {} should be str".format(self.label_name))
+                raise ValueError("data_transform param's label_name {} should be str".format(self.label_name))
 
             self.label_type = self.check_and_change_lower(self.label_type,
                                                           ["int", "int64", "float", "float64", "str", "long"],
@@ -159,8 +159,5 @@ class DataTransformParam(BaseParam):
 
         if self.exclusive_data_type is not None and not isinstance(self.exclusive_data_type, dict):
             raise ValueError("exclusive_data_type is should be None or a dict")
-
-        if self.with_match_id and self.match_id_name is None and self.match_id_index == -1:
-            raise ValueError("If with id is True, id name should not be None")
 
         return True

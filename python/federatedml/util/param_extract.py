@@ -89,29 +89,3 @@ class ParamExtract(object):
                 raise ValueError(f"cpn `{name}` has redundant parameters {redundant}")
 
         return param
-
-    @staticmethod
-    def change_param_to_dict(obj):
-        ret_dict = {}
-
-        variable_dict = obj.__dict__
-        for variable in variable_dict:
-            attr = getattr(obj, variable)
-            if attr and type(attr).__name__ not in dir(builtins):
-                ret_dict[variable] = ParamExtract.change_param_to_dict(attr)
-            else:
-                ret_dict[variable] = attr
-
-        return ret_dict
-
-    @staticmethod
-    def get_not_builtin_types(obj):
-        ret_dict = {}
-
-        variable_dict = obj.__dict__
-        for variable in variable_dict:
-            attr = getattr(obj, variable)
-            if attr and type(attr).__name__ not in dir(builtins):
-                ret_dict[variable] = ParamExtract.get_not_builtin_types(attr)
-
-        return ret_dict

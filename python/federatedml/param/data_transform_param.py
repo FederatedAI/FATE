@@ -83,6 +83,8 @@ class DataTransformParam(BaseParam):
 
     output_format : str, accepted 'dense','sparse' only in this version. default: 'dense'
 
+    with_match_id: bool, True if dataset has match_id, default: False
+
     """
 
     def __init__(self, input_format="dense", delimitor=',', data_type='float64',
@@ -93,7 +95,7 @@ class DataTransformParam(BaseParam):
                  outlier_impute=None, outlier_replace_value=0,
                  with_label=False, label_name='y',
                  label_type='int', output_format='dense', need_run=True,
-                 with_match_id=True, match_id_name=None, match_id_index=-1):
+                 with_match_id=False):
         self.input_format = input_format
         self.delimitor = delimitor
         self.data_type = data_type
@@ -114,8 +116,6 @@ class DataTransformParam(BaseParam):
         self.output_format = output_format
         self.need_run = need_run
         self.with_match_id = with_match_id
-        self.match_id_name = match_id_name
-        self.match_id_index = match_id_index
 
     def check(self):
 
@@ -160,7 +160,7 @@ class DataTransformParam(BaseParam):
         if self.exclusive_data_type is not None and not isinstance(self.exclusive_data_type, dict):
             raise ValueError("exclusive_data_type is should be None or a dict")
 
-        if self.with_match_id and self.match_id_name is None and self.match_id_index == -1:
-            raise ValueError("If with id is True, id name should not be None")
+        if not isinstance(self.with_match_id, bool):
+            raise ValueError("with_match_id should be boolean variable, but {} find".format(self.with_match_id))
 
         return True

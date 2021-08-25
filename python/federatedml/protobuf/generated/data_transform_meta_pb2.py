@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='com.webank.ai.fate.core.mlmodel.buffer',
   syntax='proto3',
   serialized_options=_b('B\017DataIOMetaProto'),
-  serialized_pb=_b('\n\x19\x64\x61ta-transform-meta.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"W\n\x18\x44\x61taTransformImputerMeta\x12\x12\n\nis_imputer\x18\x01 \x01(\x08\x12\x10\n\x08strategy\x18\x02 \x01(\t\x12\x15\n\rmissing_value\x18\x03 \x03(\t\"W\n\x18\x44\x61taTransformOutlierMeta\x12\x12\n\nis_outlier\x18\x01 \x01(\x08\x12\x10\n\x08strategy\x18\x02 \x01(\t\x12\x15\n\routlier_value\x18\x03 \x03(\t\"\xc2\x04\n\x11\x44\x61taTransformMeta\x12\x14\n\x0cinput_format\x18\x01 \x01(\t\x12\x11\n\tdelimitor\x18\x02 \x01(\t\x12\x11\n\tdata_type\x18\x03 \x01(\t\x12\x16\n\x0etag_with_value\x18\x04 \x01(\x08\x12\x1b\n\x13tag_value_delimitor\x18\x05 \x01(\t\x12\x12\n\nwith_label\x18\x06 \x01(\x08\x12\x12\n\nlabel_name\x18\x07 \x01(\t\x12\x12\n\nlabel_type\x18\x08 \x01(\t\x12\x15\n\routput_format\x18\t \x01(\t\x12V\n\x0cimputer_meta\x18\n \x01(\x0b\x32@.com.webank.ai.fate.core.mlmodel.buffer.DataTransformImputerMeta\x12V\n\x0coutlier_meta\x18\x0b \x01(\x0b\x32@.com.webank.ai.fate.core.mlmodel.buffer.DataTransformOutlierMeta\x12\x10\n\x08need_run\x18\x0c \x01(\x08\x12m\n\x13\x65xclusive_data_type\x18\r \x03(\x0b\x32P.com.webank.ai.fate.core.mlmodel.buffer.DataTransformMeta.ExclusiveDataTypeEntry\x1a\x38\n\x16\x45xclusiveDataTypeEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\x42\x11\x42\x0f\x44\x61taIOMetaProtob\x06proto3')
+  serialized_pb=_b('\n\x19\x64\x61ta-transform-meta.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"W\n\x18\x44\x61taTransformImputerMeta\x12\x12\n\nis_imputer\x18\x01 \x01(\x08\x12\x10\n\x08strategy\x18\x02 \x01(\t\x12\x15\n\rmissing_value\x18\x03 \x03(\t\"W\n\x18\x44\x61taTransformOutlierMeta\x12\x12\n\nis_outlier\x18\x01 \x01(\x08\x12\x10\n\x08strategy\x18\x02 \x01(\t\x12\x15\n\routlier_value\x18\x03 \x03(\t\"\xf0\x04\n\x11\x44\x61taTransformMeta\x12\x14\n\x0cinput_format\x18\x01 \x01(\t\x12\x11\n\tdelimitor\x18\x02 \x01(\t\x12\x11\n\tdata_type\x18\x03 \x01(\t\x12\x16\n\x0etag_with_value\x18\x04 \x01(\x08\x12\x1b\n\x13tag_value_delimitor\x18\x05 \x01(\t\x12\x12\n\nwith_label\x18\x06 \x01(\x08\x12\x12\n\nlabel_name\x18\x07 \x01(\t\x12\x12\n\nlabel_type\x18\x08 \x01(\t\x12\x15\n\routput_format\x18\t \x01(\t\x12V\n\x0cimputer_meta\x18\n \x01(\x0b\x32@.com.webank.ai.fate.core.mlmodel.buffer.DataTransformImputerMeta\x12V\n\x0coutlier_meta\x18\x0b \x01(\x0b\x32@.com.webank.ai.fate.core.mlmodel.buffer.DataTransformOutlierMeta\x12\x10\n\x08need_run\x18\x0c \x01(\x08\x12m\n\x13\x65xclusive_data_type\x18\r \x03(\x0b\x32P.com.webank.ai.fate.core.mlmodel.buffer.DataTransformMeta.ExclusiveDataTypeEntry\x12\x15\n\rwith_match_id\x18\x0e \x01(\x08\x12\x15\n\rmatch_id_name\x18\x0f \x01(\t\x1a\x38\n\x16\x45xclusiveDataTypeEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\x42\x11\x42\x0f\x44\x61taIOMetaProtob\x06proto3')
 )
 
 
@@ -149,8 +149,8 @@ _DATATRANSFORMMETA_EXCLUSIVEDATATYPEENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=770,
-  serialized_end=826,
+  serialized_start=816,
+  serialized_end=872,
 )
 
 _DATATRANSFORMMETA = _descriptor.Descriptor(
@@ -251,6 +251,20 @@ _DATATRANSFORMMETA = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='with_match_id', full_name='com.webank.ai.fate.core.mlmodel.buffer.DataTransformMeta.with_match_id', index=13,
+      number=14, type=8, cpp_type=7, label=1,
+      has_default_value=False, default_value=False,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='match_id_name', full_name='com.webank.ai.fate.core.mlmodel.buffer.DataTransformMeta.match_id_name', index=14,
+      number=15, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -264,7 +278,7 @@ _DATATRANSFORMMETA = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=248,
-  serialized_end=826,
+  serialized_end=872,
 )
 
 _DATATRANSFORMMETA_EXCLUSIVEDATATYPEENTRY.containing_type = _DATATRANSFORMMETA

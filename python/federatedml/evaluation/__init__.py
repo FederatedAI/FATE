@@ -14,6 +14,6 @@
 #  limitations under the License.
 #
 
-from federatedml.evaluation.evaluation import Evaluation
-
-__all__ = ["Evaluation"]
+# from federatedml.evaluation.evaluation import Evaluation
+#
+# __all__ = ["Evaluation"]
