@@ -163,12 +163,16 @@ class IntersectModelBase(ModelBase):
                                      )
 
     def callback_cache_meta(self, intersect_meta):
-        self.callback_metric(metric_name=self.metric_name,
-                             metric_namespace=self.metric_namespace,
-                             metric_data=[Metric("host_count", len(self.host_party_id_list))])
-        self.tracker.set_metric_meta(metric_namespace=self.metric_namespace,
-                                     metric_name=self.metric_name,
-                                     metric_meta=MetricMeta(name=self.metric_name,
+        """
+        self.callback_metric(f"{self.metric_name}_cache_meta",
+                             f"{self.metric_namespace}_CACHE",
+                             metric_data=[Metric("intersect_cache_meta", 0)])
+        """
+        metric_namespace = f"{self.metric_namespace}_CACHE"
+        metric_name = f"{self.metric_name}_cache_meta"
+        self.tracker.set_metric_meta(metric_namespace=metric_namespace,
+                                     metric_name=metric_name,
+                                     metric_meta=MetricMeta(name=f"{self.metric_name}_cache_meta",
                                                             metric_type=self.metric_type,
                                                             extra_metas=intersect_meta)
                                      )
@@ -200,6 +204,8 @@ class IntersectModelBase(ModelBase):
             match_data = self.proc_obj.recover(data=data)
             if self.intersection_obj.run_cache:
                 self.cache_output = self.intersection_obj.generate_cache(match_data)
+                intersect_meta = self.intersection_obj.get_intersect_method_meta()
+                self.callback_cache_meta(intersect_meta)
                 return data
             if self.intersection_obj.cardinality_only:
                 self.intersection_obj.run_cardinality(match_data)
@@ -211,6 +217,9 @@ class IntersectModelBase(ModelBase):
         else:
             if self.intersection_obj.run_cache:
                 self.cache_output = self.intersection_obj.generate_cache(data)
+                intersect_meta = self.intersection_obj.get_intersect_method_meta()
+                # LOGGER.debug(f"callback intersect meta is: {intersect_meta}")
+                self.callback_cache_meta(intersect_meta)
                 return data
             if self.intersection_obj.cardinality_only:
                 self.intersection_obj.run_cardinality(data)
@@ -302,14 +311,13 @@ class IntersectModelBase(ModelBase):
         return data
 
     def transform(self, data_inst):
-        # data = data_inst.values()
         cache_data, cache_meta = self.component_properties.caches
         intersect_meta = list(cache_meta.values())[0]["intersect_meta"]
+        # LOGGER.debug(f"intersect_meta is: {intersect_meta}")
         self.callback_cache_meta(intersect_meta)
         self.load_intersect_meta(intersect_meta)
         self.intersection_obj.load_intersect_key(cache_meta)
-        # verify cache id
-        # if data_overview.check_with_inst_id(data) or self.model_param.repeated_id_process:
+
         if data_overview.check_with_inst_id(data_inst):
             self.use_match_id_process = True
             LOGGER.info(f"use match_id_process")
