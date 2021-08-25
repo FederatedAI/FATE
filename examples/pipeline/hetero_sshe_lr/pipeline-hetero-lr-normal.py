@@ -99,9 +99,9 @@ def main(config="../../config.yaml", namespace=""):
         "encrypt_param": {
             "key_length": 1024
         },
-        "review_every_iter": True,
+        "reveal_every_iter": True,
         "compute_loss": True,
-        "review_strategy": "respectively"
+        "reveal_strategy": "respectively"
     }
 
     hetero_sshe_lr_0 = HeteroSSHELR(**lr_param)
@@ -119,17 +119,17 @@ def main(config="../../config.yaml", namespace=""):
     prettify(pipeline.get_component("hetero_sshe_lr_0").get_summary())
     prettify(pipeline.get_component("evaluation_0").get_summary())
 
-    pipeline.deploy_component([dataio_0, intersection_0, hetero_sshe_lr_0])
-
-    predict_pipeline = PipeLine()
-    # add data reader onto predict pipeline
-    predict_pipeline.add_component(reader_0)
-    # add selected components from train pipeline onto predict pipeline
-    # specify data source
-    predict_pipeline.add_component(pipeline,
-                                   data=Data(predict_input={pipeline.dataio_0.input.data: reader_0.output.data}))
-    # run predict model
-    predict_pipeline.predict(job_parameters)
+    # pipeline.deploy_component([dataio_0, intersection_0, hetero_sshe_lr_0])
+    #
+    # predict_pipeline = PipeLine()
+    # # add data reader onto predict pipeline
+    # predict_pipeline.add_component(reader_0)
+    # # add selected components from train pipeline onto predict pipeline
+    # # specify data source
+    # predict_pipeline.add_component(pipeline,
+    #                                data=Data(predict_input={pipeline.dataio_0.input.data: reader_0.output.data}))
+    # # run predict model
+    # predict_pipeline.predict(job_parameters)
 
     return pipeline
 

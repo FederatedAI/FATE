@@ -106,8 +106,8 @@ def main(config="../../config.yaml", namespace=""):
         "init_param": {
             "init_method": "zeros"
         },
-        "review_strategy": "respectively",
-        "review_every_iter": True,
+        "reveal_strategy": "respectively",
+        "reveal_every_iter": True,
         "compute_loss": True
     }
 

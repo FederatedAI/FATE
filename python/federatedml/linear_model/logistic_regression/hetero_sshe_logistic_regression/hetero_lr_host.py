@@ -114,7 +114,7 @@ class HeteroLRHost(HeteroLRBase):
         self.transfer_variable.loss.remote(loss[0][0], suffix=suffix)
 
     def check_converge_by_weights(self, last_w, new_w, suffix):
-        if self.is_respectively_reviewed:
+        if self.is_respectively_reveal:
             return self._respectively_check(last_w[0], new_w, suffix)
         else:
             return self._unbalanced_check(suffix)
@@ -135,10 +135,10 @@ class HeteroLRHost(HeteroLRBase):
             self.one_vs_rest_obj.predict(data_instances)
             return
 
-        LOGGER.debug(f"Before_predict_review_strategy: {self.model_param.review_strategy},"
-                     f" {self.is_respectively_reviewed}")
+        LOGGER.debug(f"Before_predict_review_strategy: {self.model_param.reveal_strategy},"
+                     f" {self.is_respectively_reveal}")
 
-        if self.is_respectively_reviewed:
+        if self.is_respectively_reveal:
             return self._respectively_predict(data_instances)
         else:
             return self._unbalanced_predict(data_instances)

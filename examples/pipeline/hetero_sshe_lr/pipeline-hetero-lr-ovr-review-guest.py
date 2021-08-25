@@ -120,8 +120,8 @@ def main(config="../../config.yaml", namespace=""):
         "init_param": {
             "init_method": "random_uniform"
         },
-        "review_strategy": "all_review_in_guest",
-        "review_every_iter": False,
+        "reveal_strategy": "all_review_in_guest",
+        "reveal_every_iter": False,
         "compute_loss": True,
     }
 

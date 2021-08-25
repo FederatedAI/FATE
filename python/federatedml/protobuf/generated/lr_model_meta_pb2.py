@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='com.webank.ai.fate.core.mlmodel.buffer',
   syntax='proto3',
   serialized_options=_b('B\020LRModelMetaProto'),
-  serialized_pb=_b('\n\x13lr-model-meta.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\" \n\x0bPredictMeta\x12\x11\n\tthreshold\x18\x01 \x01(\x01\"\xe6\x02\n\x0bLRModelMeta\x12\x0f\n\x07penalty\x18\x01 \x01(\t\x12\x0b\n\x03tol\x18\x02 \x01(\x01\x12\r\n\x05\x61lpha\x18\x03 \x01(\x01\x12\x11\n\toptimizer\x18\x04 \x01(\t\x12\x14\n\x0cparty_weight\x18\x05 \x01(\x01\x12\x12\n\nbatch_size\x18\x06 \x01(\x03\x12\x15\n\rlearning_rate\x18\x07 \x01(\x01\x12\x10\n\x08max_iter\x18\x08 \x01(\x03\x12\x12\n\nearly_stop\x18\t \x01(\t\x12\x1a\n\x12re_encrypt_batches\x18\n \x01(\x03\x12\x15\n\rfit_intercept\x18\x0b \x01(\x08\x12\x18\n\x10need_one_vs_rest\x18\x0c \x01(\x08\x12J\n\rpredict_param\x18\r \x01(\x0b\x32\x33.com.webank.ai.fate.core.mlmodel.buffer.PredictMeta\x12\x17\n\x0freview_strategy\x18\x0e \x01(\tB\x12\x42\x10LRModelMetaProtob\x06proto3')
+  serialized_pb=_b('\n\x13lr-model-meta.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\" \n\x0bPredictMeta\x12\x11\n\tthreshold\x18\x01 \x01(\x01\"\xe6\x02\n\x0bLRModelMeta\x12\x0f\n\x07penalty\x18\x01 \x01(\t\x12\x0b\n\x03tol\x18\x02 \x01(\x01\x12\r\n\x05\x61lpha\x18\x03 \x01(\x01\x12\x11\n\toptimizer\x18\x04 \x01(\t\x12\x14\n\x0cparty_weight\x18\x05 \x01(\x01\x12\x12\n\nbatch_size\x18\x06 \x01(\x03\x12\x15\n\rlearning_rate\x18\x07 \x01(\x01\x12\x10\n\x08max_iter\x18\x08 \x01(\x03\x12\x12\n\nearly_stop\x18\t \x01(\t\x12\x1a\n\x12re_encrypt_batches\x18\n \x01(\x03\x12\x15\n\rfit_intercept\x18\x0b \x01(\x08\x12\x18\n\x10need_one_vs_rest\x18\x0c \x01(\x08\x12J\n\rpredict_param\x18\r \x01(\x0b\x32\x33.com.webank.ai.fate.core.mlmodel.buffer.PredictMeta\x12\x17\n\x0freveal_strategy\x18\x0e \x01(\tB\x12\x42\x10LRModelMetaProtob\x06proto3')
 )
 
 
@@ -156,7 +156,7 @@ _LRMODELMETA = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='review_strategy', full_name='com.webank.ai.fate.core.mlmodel.buffer.LRModelMeta.review_strategy', index=13,
+      name='reveal_strategy', full_name='com.webank.ai.fate.core.mlmodel.buffer.LRModelMeta.reveal_strategy', index=13,
       number=14, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,

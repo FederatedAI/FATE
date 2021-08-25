@@ -39,7 +39,7 @@ class HeteroLRGuest(HeteroLRBase):
 
     def _init_model(self, params):
         super()._init_model(params)
-        if not self.is_respectively_reviewed:
+        if not self.is_respectively_reveal:
             self.converge_func = converge_func_factory("weight_diff", params.tol)
 
     def transfer_pubkey(self):
@@ -166,7 +166,7 @@ class HeteroLRGuest(HeteroLRBase):
         return loss
 
     def check_converge_by_weights(self, last_w, new_w, suffix):
-        if self.is_respectively_reviewed:
+        if self.is_respectively_reveal:
             return self._respectively_check(last_w, new_w, suffix)
         else:
             new_w = np.append(new_w, self.host_model_weights.unboxed)
@@ -209,9 +209,9 @@ class HeteroLRGuest(HeteroLRBase):
             predict_result = self.one_vs_rest_obj.predict(data_instances)
             return predict_result
         LOGGER.debug(
-            f"Before_predict_review_strategy: {self.model_param.review_strategy}, {self.is_respectively_reviewed}")
+            f"Before_predict_review_strategy: {self.model_param.reveal_strategy}, {self.is_respectively_reveal}")
 
-        if self.is_respectively_reviewed:
+        if self.is_respectively_reveal:
             return self._respectively_predict(data_instances)
         else:
             return self._unbalanced_predict(data_instances)
@@ -277,7 +277,7 @@ class HeteroLRGuest(HeteroLRBase):
 
     def get_single_model_param(self, model_weights=None, header=None):
         result = super().get_single_model_param(model_weights, header)
-        if not self.is_respectively_reviewed:
+        if not self.is_respectively_reveal:
             host_models = []
             for idx, hw in enumerate([self.host_model_weights]):
                 host_weights = lr_model_param_pb2.HostWeights(
@@ -289,7 +289,7 @@ class HeteroLRGuest(HeteroLRBase):
 
     def load_single_model(self, single_model_obj):
         super(HeteroLRGuest, self).load_single_model(single_model_obj)
-        if not self.is_respectively_reviewed:
+        if not self.is_respectively_reveal:
             hw = list(single_model_obj.host_models)[0]
             weights = np.array(hw.host_weights)
             self.host_model_weights = LinearModelWeights(weights, fit_intercept=False)

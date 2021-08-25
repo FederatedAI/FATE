@@ -13,7 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-ALLOW_REVIEW_GUEST_ONLY = True
+ALLOW_REVEAL_GUEST_ONLY = True
 
 ARBITER = 'arbiter'
 HOST = 'host'

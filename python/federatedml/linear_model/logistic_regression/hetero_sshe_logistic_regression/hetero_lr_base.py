@@ -63,7 +63,7 @@ class HeteroLRBase(SSHEModelBase, ABC):
         self.one_vs_rest_obj = one_vs_rest_factory(self, role=self.role, mode=self.mode, has_arbiter=False)
         self.cal_loss = self.model_param.compute_loss
         self.converge_func_name = params.early_stop
-        self.review_every_iter = params.review_every_iter
+        self.review_every_iter = params.reveal_every_iter
 
     def get_model_summary(self):
         header = self.header
@@ -85,8 +85,8 @@ class HeteroLRBase(SSHEModelBase, ABC):
         return summary
 
     @property
-    def is_respectively_reviewed(self):
-        return self.model_param.review_strategy == "respectively"
+    def is_respectively_reveal(self):
+        return self.model_param.reveal_strategy == "respectively"
 
     def share_table(self, fix_point_encoder, value=None, tensor_name=''):
         if value is None:
@@ -305,7 +305,7 @@ class HeteroLRBase(SSHEModelBase, ABC):
         if suffix is None:
              suffix = self.n_iter_
         host_weights = None
-        if self.model_param.review_strategy == "respectively":
+        if self.model_param.reveal_strategy == "respectively":
             if self.role == consts.GUEST:
                 new_w = w_self.reconstruct_unilateral(tensor_name=f"wb_{suffix}")
                 w_remote.broadcast_reconstruct_share(tensor_name=f"wa_{suffix}")
@@ -313,7 +313,7 @@ class HeteroLRBase(SSHEModelBase, ABC):
                 w_remote.broadcast_reconstruct_share(tensor_name=f"wb_{suffix}")
                 new_w = w_self.reconstruct_unilateral(tensor_name=f"wa_{suffix}")
 
-        elif self.model_param.review_strategy == "all_review_in_guest":
+        elif self.model_param.reveal_strategy == "all_review_in_guest":
 
             if self.role == consts.GUEST:
                 new_w = w_self.reconstruct_unilateral(tensor_name=f"wb_{suffix}")
@@ -329,7 +329,7 @@ class HeteroLRBase(SSHEModelBase, ABC):
                 # new_w = np.zeros(w_self.shape)
                 new_w = None
         else:
-            raise NotImplementedError(f"review strategy: {self.model_param.review_strategy} has not been implemented.")
+            raise NotImplementedError(f"review strategy: {self.model_param.reveal_strategy} has not been implemented.")
         return new_w, host_weights
 
     def share_encrypted_value(self, suffix, is_remote, **kwargs):
@@ -360,7 +360,7 @@ class HeteroLRBase(SSHEModelBase, ABC):
                                                           early_stop=self.model_param.early_stop,
                                                           fit_intercept=self.fit_intercept,
                                                           need_one_vs_rest=self.need_one_vs_rest,
-                                                          review_strategy=self.model_param.review_strategy)
+                                                          reveal_strategy=self.model_param.reveal_strategy)
         return meta_protobuf_obj
 
     def get_single_model_param(self, model_weights=None, header=None):
@@ -390,8 +390,8 @@ class HeteroLRBase(SSHEModelBase, ABC):
         if self.init_param_obj is None:
             self.init_param_obj = InitParam()
         self.init_param_obj.fit_intercept = meta_obj.fit_intercept
-        self.model_param.review_strategy = meta_obj.review_strategy
-        LOGGER.debug(f"review_strategy: {self.model_param.review_strategy}, {self.is_respectively_reviewed}")
+        self.model_param.reveal_strategy = meta_obj.reveal_strategy
+        LOGGER.debug(f"review_strategy: {self.model_param.reveal_strategy}, {self.is_respectively_reveal}")
         self.header = list(result_obj.header)
         # For hetero-lr arbiter predict function
         need_one_vs_rest = result_obj.need_one_vs_rest

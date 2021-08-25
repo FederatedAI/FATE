@@ -91,13 +91,9 @@ class LogisticRegressionParam(BaseParam):
     use_first_metric_only: bool, default: False
         Indicate whether use the first metric only for early stopping judgement.
 
-    floating_point_precision: None or integer, if not None, use floating_point_precision-bit to speed up calculation,
-                               e.g.: convert an x to round(x * 2**floating_point_precision) during Paillier operation, divide
-                                      the result by 2**floating_point_precision in the end.
-
-    review_strategy: str, "respectively", "all_review_in_guest", default: "respectively"
-        "respectively": Means guest and host can review their own part of weights only.
-        "all_review_in_guest": All the weights will be reviewed in guest only.
+    reveal_strategy: str, "respectively", "all_reveal_in_guest", default: "respectively"
+        "respectively": Means guest and host can reveal their own part of weights only.
+        "all_reveal_in_guest": All the weights will be revealed in guest only.
             This is use to protect the situation that, guest provided label only.
             Since if host obtain the model weights, it can use this model to steal
             label info of guest. However, to protect host's info, this function works
@@ -107,7 +103,7 @@ class LogisticRegressionParam(BaseParam):
     compute_loss: bool, default True
         Indicate whether to compute loss or not.
 
-    review_every_iter: bool, default: True
+    reveal_every_iter: bool, default: True
         Whether reconstruct model weights every iteration. If so, Regularization is available.
         The performance will be better as well since the algorithm process is simplified.
 
@@ -123,8 +119,8 @@ class LogisticRegressionParam(BaseParam):
                  multi_class='ovr', validation_freqs=None, early_stopping_rounds=None,
                  metrics=None,
                  use_first_metric_only=False, use_mix_rand=False,
-                 random_field=1 << 20, review_strategy="respectively", compute_loss=True,
-                 review_every_iter=True
+                 random_field=1 << 20, reveal_strategy="respectively", compute_loss=True,
+                 reveal_every_iter=True
                  ):
         super(LogisticRegressionParam, self).__init__()
         self.penalty = penalty
@@ -147,9 +143,9 @@ class LogisticRegressionParam(BaseParam):
         self.metrics = metrics or []
         self.use_first_metric_only = use_first_metric_only
         self.use_mix_rand = use_mix_rand
-        self.review_strategy = review_strategy
+        self.reveal_strategy = reveal_strategy
         self.compute_loss = compute_loss
-        self.review_every_iter = review_every_iter
+        self.reveal_every_iter = reveal_every_iter
 
     def check(self):
         descr = "logistic_param's"
@@ -164,9 +160,9 @@ class LogisticRegressionParam(BaseParam):
             if self.penalty not in [consts.L1_PENALTY, consts.L2_PENALTY]:
                 raise ValueError(
                     "logistic_param's penalty not supported, penalty should be 'L1', 'L2' or 'none'")
-            if not self.review_every_iter:
+            if not self.reveal_every_iter:
                 raise ValueError(
-                    f"When penalty is {self.penalty}, review_every_iter should be true."
+                    f"When penalty is {self.penalty}, reveal_every_iter should be true."
                 )
 
         if not isinstance(self.tol, (int, float)):
@@ -218,8 +214,8 @@ class LogisticRegressionParam(BaseParam):
             if self.early_stop in ["diff", 'abs'] and not self.compute_loss:
                 raise ValueError(f"sshe lr param early_stop: {self.early_stop} should calculate loss."
                                  f"Please set 'compute_loss' to be True")
-            if self.early_stop == "weight_diff" and not self.review_every_iter:
-                raise ValueError(f"When early_stop strategy is weight_diff, weight should be reviewed every iter.")
+            if self.early_stop == "weight_diff" and not self.reveal_every_iter:
+                raise ValueError(f"When early_stop strategy is weight_diff, weight should be revealed every iter.")
 
         self.encrypt_param.check()
         self.predict_param.check()
@@ -244,11 +240,11 @@ class LogisticRegressionParam(BaseParam):
                 )
             if type(self.validation_freqs).__name__ == "int" and self.validation_freqs <= 0:
                 raise ValueError("validation strategy param's validate_freqs should greater than 0")
-            if self.review_strategy == "all_review_in_guest":
-                raise ValueError(f"When review strategy is all_review_in_guest, validation every iter"
+            if self.reveal_strategy == "all_reveal_in_guest":
+                raise ValueError(f"When reveal strategy is all_reveal_in_guest, validation every iter"
                                  f" is not supported.")
-            if self.review_every_iter is False:
-                raise ValueError(f"When review strategy is all_review_in_guest, review_every_iter "
+            if self.reveal_every_iter is False:
+                raise ValueError(f"When reveal strategy is all_reveal_in_guest, reveal_every_iter "
                                  f"should be True.")
 
         if self.early_stopping_rounds is None:
@@ -265,11 +261,11 @@ class LogisticRegressionParam(BaseParam):
         if not isinstance(self.use_first_metric_only, bool):
             raise ValueError("use_first_metric_only should be a boolean")
 
-        self.review_strategy = self.review_strategy.lower()
-        self.check_valid_value(self.review_strategy, descr, ["respectively", "all_review_in_guest"])
-        if not consts.ALLOW_REVIEW_GUEST_ONLY and self.review_strategy == "all_review_in_guest":
-            raise PermissionError("review strategy: all_review_in_guest has not been authorized.")
-        if self.review_strategy == "all_review_in_guest" and self.review_every_iter:
-            raise PermissionError("review strategy: all_review_in_guest mode is not allow to review every iter.")
-        self.check_boolean(self.review_every_iter, descr)
+        self.reveal_strategy = self.reveal_strategy.lower()
+        self.check_valid_value(self.reveal_strategy, descr, ["respectively", "all_reveal_in_guest"])
+        if not consts.ALLOW_REVEAL_GUEST_ONLY and self.reveal_strategy == "all_reveal_in_guest":
+            raise PermissionError("reveal strategy: all_reveal_in_guest has not been authorized.")
+        if self.reveal_strategy == "all_reveal_in_guest" and self.reveal_every_iter:
+            raise PermissionError("reveal strategy: all_reveal_in_guest mode is not allow to reveal every iter.")
+        self.check_boolean(self.reveal_every_iter, descr)
         return True

@@ -99,9 +99,9 @@ def main(config="../../config.yaml", namespace=""):
         "encrypt_param": {
             "key_length": 1024
         },
-        "review_every_iter": False,
+        "reveal_every_iter": False,
         "compute_loss": True,
-        "review_strategy": "respectively"
+        "reveal_strategy": "respectively"
     }
 
     hetero_sshe_lr_0 = HeteroSSHELR(**lr_param)
