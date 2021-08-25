@@ -61,6 +61,7 @@ class BaseLinearModel(ModelBase):
         self.init_param_obj = None
         self.validation_strategy = None
         self.stop_training = False
+        self.best_iteration = -1
 
     def _init_model(self, params):
         self.model_param = params

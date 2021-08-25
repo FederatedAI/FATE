@@ -29,6 +29,7 @@ from federatedml.util import LOGGER, abnormal_detection
 from federatedml.util.io_check import assert_match_id_consistent
 from federatedml.util.component_properties import ComponentProperties, RunningFuncs
 from federatedml.callbacks.callback_list import CallbackList
+from federatedml.feature.instance import Instance
 
 
 class ComponentOutput:
@@ -228,7 +229,7 @@ class ModelBase(object):
         deserialize_models(cpn_input.models)
 
         method = (
-            self._warm_start
+            self._retry
             if retry
             and self.checkpoint_manager is not None
             and self.checkpoint_manager.latest_checkpoint is not None
@@ -442,6 +443,7 @@ class ModelBase(object):
                     "type",
                 ],
                 "sid_name": schema.get("sid_name"),
+                "content_type": "predict_result"
             }
         return predict_data
 
@@ -505,6 +507,11 @@ class ModelBase(object):
             raise ValueError(
                 f"Model's classes type is {type(classes)}, classes must be None or list of length no less than 2."
             )
+
+        def _transfer(instance, pred_res):
+            return Instance(features=pred_res, inst_id=instance.inst_id)
+
+        predict_result = data_instances.join(predict_result, _transfer)
 
         return predict_result
 
