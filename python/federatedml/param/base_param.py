@@ -20,10 +20,21 @@ import builtins
 import json
 import os
 from federatedml.util import consts
-from federatedml.util.param_extract import ParamExtract
+import typing
+
+
+def deprecated_param(*names):
+    def _decorator(cls):
+        for name in names:
+            cls._deprecated_params_set[name] = False
+        return cls
+
+    return _decorator
 
 
 class BaseParam(object):
+    _deprecated_params_set: typing.MutableMapping[str, bool] = {}
+
     def __init__(self):
         pass
 
@@ -35,7 +46,23 @@ class BaseParam(object):
         raise NotImplementedError("Parameter Object should have be check")
 
     def as_dict(self):
-        return ParamExtract().change_param_to_dict(self)
+        def _recursive_convert_obj_to_dict(obj):
+            ret_dict = {}
+            for variable in obj.__dict__:
+
+                # ignore default deprecated params
+                if not self._deprecated_params_set.get(variable, True):
+                    continue
+
+                attr = getattr(obj, variable)
+                if attr and type(attr).__name__ not in dir(builtins):
+                    ret_dict[variable] = _recursive_convert_obj_to_dict(attr)
+                else:
+                    ret_dict[variable] = attr
+
+            return ret_dict
+
+        return _recursive_convert_obj_to_dict(self)
 
     @classmethod
     def from_dict(cls, conf):
@@ -44,13 +71,55 @@ class BaseParam(object):
         return obj
 
     def update(self, conf, allow_redundant=False):
-        return ParamExtract().recursive_parse_param_from_config(
-            param=self,
-            config_json=conf,
-            param_parse_depth=0,
-            valid_check=not allow_redundant,
-            name=getattr(self, "_name", None),
-        )
+        def _recursive_update_param(param, config, depth):
+            if depth > consts.PARAM_MAXDEPTH:
+                raise ValueError("Param define nesting too deep!!!, can not parse it")
+
+            inst_variables = param.__dict__
+            redundant_attrs = []
+            for config_key, config_value in config.items():
+                # redundant attr
+                if config_key not in inst_variables:
+                    # set inner attr
+                    if config_key.startswith("_"):
+                        setattr(param, config_key, config_value)
+                    else:
+                        redundant_attrs.append(config_key)
+                    continue
+
+                # deprecated param set
+                if config_key in self._deprecated_params_set:
+                    self._deprecated_params_set[config_key] = True
+
+                # supported attr
+                attr = getattr(param, config_key)
+                if type(attr).__name__ in dir(builtins) or attr is None:
+                    setattr(param, config_key, config_value)
+
+                else:
+                    # recursive set obj attr
+                    sub_params = _recursive_update_param(attr, config_value, depth + 1)
+                    setattr(param, config_key, sub_params)
+
+            if not allow_redundant and redundant_attrs:
+                raise ValueError(
+                    f"cpn `{getattr(self, '_name', type(self))}` has redundant parameters: `{[redundant_attrs]}`"
+                )
+            return param
+
+        return _recursive_update_param(param=self, config=conf, depth=0)
+
+    def extract_not_buildin(self):
+        def _get_not_builtin_types(obj):
+            ret_dict = {}
+            for variable in obj.__dict__:
+                attr = getattr(obj, variable)
+                if attr and type(attr).__name__ not in dir(builtins):
+                    ret_dict[variable] = _get_not_builtin_types(attr)
+
+            return ret_dict
+
+        return _get_not_builtin_types(self)
 
     def validate(self):
         self.builtin_types = dir(builtins)

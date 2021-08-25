@@ -60,14 +60,16 @@ class HomoLRHost(HomoLRBase):
         self.init_schema(data_instances)
         # validation_strategy = self.init_validation_strategy(data_instances, validate_data)
         self._client_check_data(data_instances)
+        self.callback_list.on_train_begin(data_instances, validate_data)
 
         pubkey = self.cipher.gen_paillier_pubkey(enable=self.use_encrypt, suffix=('fit',))
         if self.use_encrypt:
             self.cipher_operator.set_public_key(pubkey)
 
-        self.model_weights = self._init_model_variables(data_instances)
-        w = self.cipher_operator.encrypt_list(self.model_weights.unboxed)
-        self.model_weights = LogisticRegressionWeights(w, self.model_weights.fit_intercept)
+        if not self.component_properties.is_warm_start:
+            self.model_weights = self._init_model_variables(data_instances)
+            w = self.cipher_operator.encrypt_list(self.model_weights.unboxed)
+            self.model_weights = LogisticRegressionWeights(w, self.model_weights.fit_intercept)
 
         # LOGGER.debug("After init, model_weights: {}".format(self.model_weights.unboxed))
 
@@ -88,6 +90,8 @@ class HomoLRHost(HomoLRBase):
         self.prev_round_weights = copy.deepcopy(model_weights)
         degree = 0
         while self.n_iter_ < self.max_iter + 1:
+            self.callback_list.on_epoch_begin(self.n_iter_)
+
             batch_data_generator = mini_batch_obj.mini_batch_data_generator()
 
             if ((self.n_iter_ + 1) % self.aggregate_iters == 0) or self.n_iter_ == self.max_iter:
@@ -139,6 +143,9 @@ class HomoLRHost(HomoLRBase):
                 batch_num += 1
 
             # validation_strategy.validate(self, self.n_iter_)
+            self.callback_list.on_epoch_end(self.n_iter_)
+            if self.stop_training:
+                break
             self.n_iter_ += 1
 
         self.set_summary(self.get_model_summary())

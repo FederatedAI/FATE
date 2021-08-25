@@ -75,11 +75,9 @@ class BaseLinearRegression(BaseLinearModel):
     def _get_param(self):
         header = self.header
         # LOGGER.debug("In get_param, header: {}".format(header))
-        if header is None:
-            param_protobuf_obj = linr_model_param_pb2.LinRModelParam(best_iteration=-1)
-            return param_protobuf_obj
-
-        weight_dict, intercept_ = self.get_weight_intercept_dict(header)
+        weight_dict, intercept_ = {}, None
+        if header is not None:
+            weight_dict, intercept_ = self.get_weight_intercept_dict(header)
 
         best_iteration = -1 if self.validation_strategy is None else self.validation_strategy.best_iteration
         param_protobuf_obj = linr_model_param_pb2.LinRModelParam(iters=self.n_iter_,

@@ -80,13 +80,13 @@ class HeteroLRBase(BaseLogisticRegression):
         if header is None:
             return {}
         weight_dict, intercept_ = self.get_weight_intercept_dict(header)
-        best_iteration = -1 if self.validation_strategy is None else self.validation_strategy.best_iteration
+        # best_iteration = -1 if self.validation_strategy is None else self.validation_strategy.best_iteration
 
         summary = {"coef": weight_dict,
                    "intercept": intercept_,
                    "is_converged": self.is_converged,
                    "one_vs_rest": self.need_one_vs_rest,
-                   "best_iteration": best_iteration}
+                   "best_iteration": self.best_iteration}
 
         if self.validation_strategy:
             validation_summary = self.validation_strategy.summary()

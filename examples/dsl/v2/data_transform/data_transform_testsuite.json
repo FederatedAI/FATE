@@ -53,6 +53,14 @@
         "data_transform_tag_value": {
             "conf": "./test_data_transform_tag_value_conf.json",
             "dsl": "./test_data_transform_dsl.json"
+        },
+        "data_transform_match_id_dense": {
+            "conf": "./test_data_transform_dense_match_id_conf.json",
+            "dsl": "./test_data_transform_match_id_dsl.json"
+        },
+        "data_transform_match_id_tag_value": {
+            "conf": "./test_data_transform_tag_value_match_id_conf.json",
+            "dsl": "./test_data_transform_match_id_dsl.json"
         }
     }
 }

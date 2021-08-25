@@ -93,7 +93,9 @@ class HeteroLRHost(HeteroLRBase):
         self._abnormal_detection(data_instances)
         self.check_abnormal_values(data_instances)
         self.check_abnormal_values(validate_data)
-        self.validation_strategy = self.init_validation_strategy(data_instances, validate_data)
+        # self.validation_strategy = self.init_validation_strategy(data_instances, validate_data)
+        self.callback_list.on_train_begin(data_instances, validate_data)
+
         LOGGER.debug(f"MODEL_STEP Start fin_binary, data count: {data_instances.count()}")
 
         self.header = self.get_header(data_instances)
@@ -111,11 +113,14 @@ class HeteroLRHost(HeteroLRBase):
         model_shape = self.get_features_shape(data_instances)
         if self.init_param_obj.fit_intercept:
             self.init_param_obj.fit_intercept = False
-        w = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
-        # LOGGER.debug("model_shape: {}, w shape: {}, w: {}".format(model_shape, w.shape, w))
-        self.model_weights = LinearModelWeights(w, fit_intercept=self.init_param_obj.fit_intercept)
+
+        if not self.component_properties.is_warm_start:
+            w = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
+            self.model_weights = LinearModelWeights(w, fit_intercept=self.init_param_obj.fit_intercept)
 
         while self.n_iter_ < self.max_iter:
+            self.callback_list.on_epoch_begin(self.n_iter_)
+
             LOGGER.info("iter:" + str(self.n_iter_))
             batch_data_generator = self.batch_generator.generate_batch_data()
             batch_index = 0
@@ -140,13 +145,12 @@ class HeteroLRHost(HeteroLRBase):
 
             LOGGER.info("Get is_converged flag from arbiter:{}".format(self.is_converged))
             LOGGER.info("iter: {}, is_converged: {}".format(self.n_iter_, self.is_converged))
+            LOGGER.debug(f"flowid: {self.flowid}, step_index: {self.n_iter_}")
 
-            if self.validation_strategy:
-                LOGGER.debug('LR host running validation')
-                self.validation_strategy.validate(self, self.n_iter_)
-                if self.validation_strategy.need_stop():
-                    LOGGER.debug('early stopping triggered')
-                    break
+            self.callback_list.on_epoch_end(self.n_iter_)
+            if self.stop_training:
+                break
+
             self.n_iter_ += 1
             if self.is_converged:
                 break

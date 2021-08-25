@@ -26,6 +26,7 @@ from federatedml.param.init_model_param import InitParam
 from federatedml.param.predict_param import PredictParam
 from federatedml.param.stepwise_param import StepwiseParam
 from federatedml.param.sqn_param import StochasticQuasiNewtonParam
+from federatedml.param.callback_param import CallbackParam
 from federatedml.util import consts
 
 
@@ -77,6 +78,8 @@ class LogisticParam(BaseParam):
 
     predict_param: PredictParam object, default: default PredictParam object
 
+    callback_param: CallbackParam object
+
     cv_param: CrossValidationParam object, default: default CrossValidationParam object
 
     multi_class: str, 'ovr', default: 'ovr'
@@ -111,7 +114,8 @@ class LogisticParam(BaseParam):
                  multi_class='ovr', validation_freqs=None, early_stopping_rounds=None,
                  stepwise_param=StepwiseParam(), floating_point_precision=23,
                  metrics=None,
-                 use_first_metric_only=False
+                 use_first_metric_only=False,
+                 callback_param=CallbackParam()
                  ):
         super(LogisticParam, self).__init__()
         self.penalty = penalty
@@ -135,6 +139,7 @@ class LogisticParam(BaseParam):
         self.metrics = metrics or []
         self.use_first_metric_only = use_first_metric_only
         self.floating_point_precision = floating_point_precision
+        self.callback_param = callback_param
 
     def check(self):
         descr = "logistic_param's"
@@ -216,14 +221,6 @@ class LogisticParam(BaseParam):
                     self.decay_sqrt))
         self.stepwise_param.check()
 
-        if self.validation_freqs is not None:
-            if type(self.validation_freqs).__name__ not in ["int", "list", "tuple", "set"]:
-                raise ValueError(
-                    "validation strategy param's validate_freqs's type not supported , should be int or list or tuple or set"
-                )
-            if type(self.validation_freqs).__name__ == "int" and self.validation_freqs <= 0:
-                raise ValueError("validation strategy param's validate_freqs should greater than 0")
-
         if self.early_stopping_rounds is None:
             pass
         elif isinstance(self.early_stopping_rounds, int):
@@ -277,7 +274,7 @@ class HomoLogisticParam(LogisticParam):
                  metrics=['auc', 'ks'],
                  use_first_metric_only=False,
                  use_proximal=False,
-                 mu=0.1
+                 mu=0.1, callback_param=CallbackParam()
                  ):
         super(HomoLogisticParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
                                                 batch_size=batch_size,
@@ -288,7 +285,8 @@ class HomoLogisticParam(LogisticParam):
                                                 validation_freqs=validation_freqs,
                                                 decay=decay, decay_sqrt=decay_sqrt,
                                                 early_stopping_rounds=early_stopping_rounds,
-                                                metrics=metrics, use_first_metric_only=use_first_metric_only)
+                                                metrics=metrics, use_first_metric_only=use_first_metric_only,
+                                                callback_param=callback_param)
         self.re_encrypt_batches = re_encrypt_batches
         self.aggregate_iters = aggregate_iters
         self.use_proximal = use_proximal
@@ -333,7 +331,8 @@ class HeteroLogisticParam(LogisticParam):
                  multi_class='ovr', validation_freqs=None, early_stopping_rounds=None,
                  metrics=['auc', 'ks'], floating_point_precision=23,
                  encrypt_param=EncryptParam(),
-                 use_first_metric_only=False, stepwise_param=StepwiseParam()
+                 use_first_metric_only=False, stepwise_param=StepwiseParam(),
+                 callback_param=CallbackParam()
                  ):
         super(HeteroLogisticParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
                                                   batch_size=batch_size,
@@ -347,7 +346,8 @@ class HeteroLogisticParam(LogisticParam):
                                                   metrics=metrics, floating_point_precision=floating_point_precision,
                                                   encrypt_param=encrypt_param,
                                                   use_first_metric_only=use_first_metric_only,
-                                                  stepwise_param=stepwise_param)
+                                                  stepwise_param=stepwise_param,
+                                                  callback_param=callback_param)
         self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
         self.sqn_param = copy.deepcopy(sqn_param)
 
