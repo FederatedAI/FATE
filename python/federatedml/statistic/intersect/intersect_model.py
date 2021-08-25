@@ -178,6 +178,8 @@ class IntersectModelBase(ModelBase):
                                      )
 
     def fit(self, data):
+        if self.component_properties.caches:
+            return self.intersect_online_process(data, self.component_properties.caches)
         self.init_intersect_method()
         if data_overview.check_with_inst_id(data):
             self.use_match_id_process = True
@@ -310,8 +312,8 @@ class IntersectModelBase(ModelBase):
             LOGGER.debug(f"after preprocess, data count: {data.count()}")
         return data
 
-    def transform(self, data_inst):
-        cache_data, cache_meta = self.component_properties.caches
+    def intersect_online_process(self, data_inst, caches):
+        cache_data, cache_meta = caches
         intersect_meta = list(cache_meta.values())[0]["intersect_meta"]
         # LOGGER.debug(f"intersect_meta is: {intersect_meta}")
         self.callback_cache_meta(intersect_meta)
