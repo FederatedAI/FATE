@@ -353,7 +353,7 @@ class ModelBase(object):
         return "_".join(map(str, [name_prefix, self.flowid]))
 
     def set_tracker(self, tracker):
-        self.tracker = tracker
+        self._tracker = tracker
 
     def set_checkpoint_manager(self, checkpoint_manager):
         checkpoint_manager.load_checkpoints_from_disk()
