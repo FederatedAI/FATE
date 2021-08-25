@@ -15,12 +15,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
 import copy
 import typing
 
 import numpy as np
 from google.protobuf import json_format
+
 from fate_arch.computing import is_table
 
 from federatedml.param.evaluation_param import EvaluateParam
@@ -52,10 +52,17 @@ class ComponentOutput:
     @property
     def model(self):
         serialized_models: typing.Dict[str, typing.Tuple[str, bytes, dict]] = {}
+
         for model_name, buffer_object in self._models.items():
             serialized_string = buffer_object.SerializeToString()
             pb_name = type(buffer_object).__name__
-            serialized_models[model_name] = (pb_name, serialized_string, json_format.MessageToDict(buffer_object, including_default_value_fields=True))
+            json_format_dict = json_format.MessageToDict(buffer_object, including_default_value_fields=True)
+
+            serialized_models[model_name] = (
+                pb_name,
+                serialized_string,
+                json_format_dict,
+            )
 
         return serialized_models
 
@@ -110,21 +117,19 @@ class ModelBase(object):
         # self.need_run = need_run
         self.component_properties.need_run = need_run
 
-    def run(
-        self,
-        cpn_input,
-        warn_start: bool,
-    ):
+    def run(self, cpn_input, retry: bool = True):
         self.task_version_id = cpn_input.task_version_id
         self.tracker = cpn_input.tracker
         self.checkpoint_manager = cpn_input.checkpoint_manager
 
         # deserialize models
         deserialize_models(cpn_input.models)
-        if not warn_start:
-            self._run(cpn_input)
-        else:
-            self._warn_start(cpn_input)
+
+        method = (self._warm_start if retry and
+                  self.checkpoint_manager is not None and
+                  self.checkpoint_manager.latest_checkpoint is not None
+                  else self._run)
+        method(cpn_input)
 
         return ComponentOutput(self.save_data(), self.export_model(), self.save_cache())
 
@@ -179,6 +184,9 @@ class ModelBase(object):
         self.save_summary()
 
         return ComponentOutput(self.save_data(), self.export_model(), self.save_cache())
+
+    def _warm_start(self, cpn_input):
+        pass
 
     def get_metrics_param(self):
         return EvaluateParam(eval_type="binary", pos_label=1)
