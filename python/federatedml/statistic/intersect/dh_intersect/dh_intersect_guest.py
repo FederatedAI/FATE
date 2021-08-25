@@ -153,7 +153,7 @@ class DhIntersectionGuest(DhIntersect):
     def load_intersect_key(self, cache_meta):
         commutative_cipher = []
         for host_party in self.host_party_id_list:
-            intersect_key = cache_meta[host_party]["intersect_key"]
+            intersect_key = cache_meta[str(host_party)]["intersect_key"]
 
             mod_base = int(intersect_key["mod_base"])
             exponent = int(intersect_key["exponent"])

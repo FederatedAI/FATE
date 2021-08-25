@@ -206,7 +206,7 @@ class RsaIntersectionHost(RsaIntersect):
         return intersect_key
 
     def load_intersect_key(self, cache_meta):
-        intersect_key = cache_meta[self.guest_party_id]["intersect_key"]
+        intersect_key = cache_meta[str(self.guest_party_id)]["intersect_key"]
         self.e = int(intersect_key["e"])
         self.d = int(intersect_key["d"])
         self.n = int(intersect_key["n"])

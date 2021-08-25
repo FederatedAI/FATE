@@ -254,7 +254,7 @@ class RsaIntersectionGuest(RsaIntersect):
     def load_intersect_key(self, cache_meta):
         self.rcv_e, self.rcv_n = [], []
         for host_party in self.host_party_id_list:
-            intersect_key = cache_meta[host_party]["intersect_key"]
+            intersect_key = cache_meta[str(host_party)]["intersect_key"]
 
             self.rcv_e.append(int(intersect_key["rcv_e"]))
             self.rcv_n.append(int(intersect_key["rcv_n"]))

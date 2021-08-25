@@ -91,99 +91,6 @@ class Intersect(object):
     def load_intersect_key(self, cache_meta):
         pass
 
-    """
-    def _get_meta(self):
-        preprocess_params = IntersectPreProcessMeta(
-            false_positive_rate=self.intersect_preprocess_params.false_positive_rate,
-            encrypt_method=self.intersect_preprocess_params.encrypt_method,
-            hash_method=self.intersect_preprocess_params.hash_method,
-            random_state=self.intersect_preprocess_params.random_state)
-        if self.intersect_method == consts.RSA:
-            meta_obj = IntersectModelMeta(intersect_method=self.intersect_method,
-                                          intersect_preprocess_params=preprocess_params,
-                                          sync_intersect_ids=self.sync_intersect_ids,
-                                          only_output_key=self.only_output_key,
-                                          join_method=self.model_param.join_method,
-                                          rsa_params=self.get_intersect_method_meta())
-        elif self.intersect_method == consts.DH:
-            meta_obj = IntersectModelMeta(intersect_method=self.intersect_method,
-                                          intersect_preprocess_params=preprocess_params,
-                                          sync_intersect_ids=self.sync_intersect_ids,
-                                          only_output_key=self.only_output_key,
-                                          join_method=self.model_param.join_method,
-                                          dh_params=self.get_intersect_method_meta())
-        else:
-            meta_obj = IntersectModelMeta(intersect_method=self.intersect_method,
-                                          intersect_preprocess_params=preprocess_params,
-                                          sync_intersect_ids=self.sync_intersect_ids,
-                                          only_output_key=self.only_output_key,
-                                          join_method=self.model_param.join_method)
-        return meta_obj
-
-    def _get_param(self):
-        param_obj = IntersectModelParam()
-        if self.cardinality_only:
-            intersect_filter = Filter()
-            rsa_encrypt_key = RSAKey()
-            ph_encrypt_key = PHKey()
-            if self.filter:
-                intersect_filter = Filter(bit_count=self.filter.bit_count,
-                                          filter_array=self.filter.get_array(),
-                                          filter_id=self.filter.id,
-                                          salt=self.filter.salt,
-                                          hash_func_count=self.filter.hash_func_count)
-            if self.intersect_method == consts.RSA:
-                rsa_encrypt_key = self.get_intersect_key()
-            param_obj = IntersectModelParam(intersect_filter=intersect_filter,
-                                            rsa_encrypt_key=rsa_encrypt_key,
-                                            ph_encrypt_key=ph_encrypt_key)
-        elif self.run_cache:
-            if self.intersect_method == consts.RSA:
-                rsa_encrypt_key = self.get_intersect_key()
-                param_obj = IntersectModelParam(rsa_encrypt_key=rsa_encrypt_key,
-                                                cache_id=self.cache_id)
-            elif self.intersect_method == consts.DH:
-                ph_encrypt_key = self.get_intersect_key()
-                param_obj = IntersectModelParam(ph_encrypt_key=ph_encrypt_key,
-                                                cache_id=self.cache_id)
-        return param_obj
-
-
-    def get_model(self):
-        meta_obj = self._get_meta()
-        param_obj = self._get_param()
-
-        result = {
-            self.model_meta_name: meta_obj,
-            self.model_param_name: param_obj
-        }
-        return result
-
-    def load_model(self, model_dict):
-        meta_obj, param_obj = model_dict[self.model_meta_name], model_dict[self.model_param_name]
-        proprocess_params = meta_obj.intersect_preprocess_params
-        # self.intersect_preprocess_params = IntersectPreProcessParam(**proprocess_params)
-        self.intersect_preprocess_params.false_positive_rate = proprocess_params.false_positive_rate
-        self.intersect_preprocess_params.hash_method = proprocess_params.hash_method
-        self.intersect_preprocess_params.random_state = proprocess_params.random_state
-        self.intersect_preprocess_params.encrypt_method = proprocess_params.encrypt_method
-        if param_obj.intersect_filter and param_obj.intersect_filter.bit_count > 0:
-            filter_obj = param_obj.filter
-            filter_array = np.array(filter_obj.filter_array)
-            self.filter = BitArray(bit_count=filter_obj.bit_count,
-                                   hash_func_count=filter_obj.hash_func_count,
-                                   hash_method=proprocess_params.hash_method,
-                                   random_state=proprocess_params.random_state,
-                                   salt=list(filter_obj.salt))
-            self.filter.id = filter_obj.id
-            self.filter.set_array(filter_array)
-        if meta_obj.intersect_method == consts.RSA:
-            self.load_intersect_key(param_obj.rsa_encrypt_key)
-        elif meta_obj.intersect_method == consts.DH:
-            self.load_intersect_key(param_obj.ph_encrypt_key)
-        self.cache_id = dict(param_obj.cache_id)
-    """
-
     def run_intersect(self, data_instances):
         raise NotImplementedError("method should not be called here")
 
@@ -197,7 +104,7 @@ class Intersect(object):
     def extract_cache_list(cache_data, party_list):
         if not isinstance(party_list, list):
             party_list = [party_list]
-        cache_list = [cache_data.get(party_id) for party_id in party_list]
+        cache_list = [cache_data.get(str(party_id)) for party_id in party_list]
         return cache_list
 
     def run_cache_intersect(self, data_instances, cache_data):

@@ -168,9 +168,8 @@ class IntersectModelBase(ModelBase):
                              f"{self.metric_namespace}_CACHE",
                              metric_data=[Metric("intersect_cache_meta", 0)])
         """
-        metric_namespace = f"{self.metric_namespace}_CACHE"
         metric_name = f"{self.metric_name}_cache_meta"
-        self.tracker.set_metric_meta(metric_namespace=metric_namespace,
+        self.tracker.set_metric_meta(metric_namespace=self.metric_namespace,
                                      metric_name=metric_name,
                                      metric_meta=MetricMeta(name=f"{self.metric_name}_cache_meta",
                                                             metric_type=self.metric_type,
@@ -295,6 +294,8 @@ class IntersectModelBase(ModelBase):
                 raise ValueError(f"Current intersect method must match to cache record.")
             self.model_param.dh_params.hash_method = intersect_meta["hash_method"]
             self.model_param.dh_params.salt = intersect_meta["salt"]
+        else:
+            raise ValueError(f"{self.model_param.intersect_method} does not support cache.")
 
     def make_filter_process(self, data_instances, hash_operator):
         raise NotImplementedError("This method should not be called here")
@@ -313,11 +314,13 @@ class IntersectModelBase(ModelBase):
         return data
 
     def intersect_online_process(self, data_inst, caches):
-        cache_data, cache_meta = caches
+        # LOGGER.debug(f"caches is: {caches}")
+        cache_data, cache_meta = list(caches.values())[0]
         intersect_meta = list(cache_meta.values())[0]["intersect_meta"]
         # LOGGER.debug(f"intersect_meta is: {intersect_meta}")
         self.callback_cache_meta(intersect_meta)
         self.load_intersect_meta(intersect_meta)
+        self.init_intersect_method()
         self.intersection_obj.load_intersect_key(cache_meta)
 
         if data_overview.check_with_inst_id(data_inst):
@@ -346,14 +349,14 @@ class IntersectModelBase(ModelBase):
             intersect_data = match_data
 
         if self.role == consts.HOST:
-            cache_id = cache_meta[self.guest_party_id].get("cache_id")
+            cache_id = cache_meta[str(self.guest_party_id)].get("cache_id")
             self.transfer_variable.cache_id.remote(cache_id, role=consts.GUEST, idx=0)
             guest_cache_id = self.transfer_variable.cache_id.get(role=consts.GUEST, idx=0)
             if guest_cache_id != cache_id:
                 raise ValueError(f"cache_id check failed. cache_id from host & guest must match.")
         elif self.role == consts.GUEST:
             for i, party_id in enumerate(self.host_party_id_list):
-                cache_id = cache_meta[party_id].get("cache_id")
+                cache_id = cache_meta[str(party_id)].get("cache_id")
                 self.transfer_variable.cache_id.remote(cache_id,
                                                        role=consts.HOST,
                                                        idx=i)

@@ -104,7 +104,7 @@ class DhIntersectionHost(DhIntersect):
         return intersect_key
 
     def load_intersect_key(self, cache_meta):
-        intersect_key = cache_meta[self.guest_party_id]["intersect_key"]
+        intersect_key = cache_meta[str(self.guest_party_id)]["intersect_key"]
 
         mod_base = int(intersect_key["mod_base"])
         exponent = int(intersect_key["exponent"])
