@@ -320,6 +320,15 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
      -
      -
 
+   * - `Label Transform`_
+     - 标签转换
+     - 转化输入数据与预测结果的标签值
+     - Table, 值为Instance或预测结果
+     - Table, 值为标签转化后的Instance或预测结果
+     -
+     - LabelTransform Model
+
+
 .. _DataIO: util/README.rst
 .. _DataTransform:: util/README.rst
 .. _Intersect: statistic/intersect/README.rst
@@ -354,6 +363,7 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
 .. _Scorecard: statistic/scorecard/README.rst
 .. _Sample Weight: util/README.rst
 .. _Feldman Verifiable Sum: statistic/feldman_verifiable_sum/README.rst
+.. _Label Transform: util/README.rst
 
 
 安全协议

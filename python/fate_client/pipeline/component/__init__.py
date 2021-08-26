@@ -32,6 +32,7 @@ from pipeline.component.feldman_verifiable_sum import FeldmanVerifiableSum
 from pipeline.component.sample_weight import SampleWeight
 from pipeline.component.sbt_feature_transformer import SBTTransformer
 from pipeline.component.feature_imputation import FeatureImputation
+from pipeline.component.label_transform import LabelTransform
 
 
 __all__ = ["DataStatistics", "DataIO", "Evaluation", "HeteroDataSplit",
@@ -41,5 +42,6 @@ __all__ = ["DataStatistics", "DataIO", "Evaluation", "HeteroDataSplit",
            "HomoLR", "HomoNN", "HomoSecureBoost", "HomoFeatureBinning", "Intersection",
            "LocalBaseline", "OneHotEncoder", "PSI", "Reader", "Scorecard",
            "FederatedSample", "FeatureScale", "Union", "ColumnExpand", "FeldmanVerifiableSum",
-           "SampleWeight", "DataTransform", "SBTTransformer", "FeatureImputation"]
+           "SampleWeight", "DataTransform", "SBTTransformer", "FeatureImputation",
+           "LabelTransform"]
 
