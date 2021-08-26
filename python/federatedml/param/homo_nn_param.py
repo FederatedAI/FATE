@@ -56,21 +56,23 @@ class HomoNNParam(BaseParam):
         encode_label : encode label to one_hot.
     """
 
-    def __init__(self,
-                 api_version: int = 0,
-                 secure_aggregate: bool = True,
-                 aggregate_every_n_epoch: int = 1,
-                 config_type: str = "nn",
-                 nn_define: dict = None,
-                 optimizer: typing.Union[str, dict, SimpleNamespace] = 'SGD',
-                 loss: str = None,
-                 metrics: typing.Union[str, list] = None,
-                 max_iter: int = 100,
-                 batch_size: int = -1,
-                 early_stop: typing.Union[str, dict, SimpleNamespace] = "diff",
-                 encode_label: bool = False,
-                 predict_param=PredictParam(),
-                 cv_param=CrossValidationParam()):
+    def __init__(
+        self,
+        api_version: int = 0,
+        secure_aggregate: bool = True,
+        aggregate_every_n_epoch: int = 1,
+        config_type: str = "nn",
+        nn_define: dict = None,
+        optimizer: typing.Union[str, dict, SimpleNamespace] = "SGD",
+        loss: str = None,
+        metrics: typing.Union[str, list] = None,
+        max_iter: int = 100,
+        batch_size: int = -1,
+        early_stop: typing.Union[str, dict, SimpleNamespace] = "diff",
+        encode_label: bool = False,
+        predict_param=PredictParam(),
+        cv_param=CrossValidationParam(),
+    ):
         super(HomoNNParam, self).__init__()
 
         self.api_version = api_version
@@ -102,6 +104,7 @@ class HomoNNParam(BaseParam):
 
     def generate_pb(self):
         from federatedml.protobuf.generated import nn_model_meta_pb2
+
         pb = nn_model_meta_pb2.HomoNNParam()
         pb.secure_aggregate = self.secure_aggregate
         pb.encode_label = self.encode_label
@@ -151,11 +154,15 @@ class HomoNNParam(BaseParam):
         self.batch_size = pb.batch_size
         self.max_iter = pb.max_iter
 
-        self.early_stop = _parse_early_stop(dict(early_stop=pb.early_stop.early_stop, eps=pb.early_stop.eps))
+        self.early_stop = _parse_early_stop(
+            dict(early_stop=pb.early_stop.early_stop, eps=pb.early_stop.eps)
+        )
 
         self.metrics = list(pb.metrics)
 
-        self.optimizer = _parse_optimizer(dict(optimizer=pb.optimizer.optimizer, **json.loads(pb.optimizer.args)))
+        self.optimizer = _parse_optimizer(
+            dict(optimizer=pb.optimizer.optimizer, **json.loads(pb.optimizer.args))
+        )
         self.loss = pb.loss
         return pb
 
@@ -202,19 +209,19 @@ def _parse_optimizer(param):
 
 def _parse_early_stop(param):
     """
-       Examples:
+    Examples:
 
-           1. "early_stop": "diff"
-           2. "early_stop": {
-                   "early_stop": "diff",
-                   "eps": 0.0001
-               }
+        1. "early_stop": "diff"
+        2. "early_stop": {
+                "early_stop": "diff",
+                "eps": 0.0001
+            }
     """
     default_eps = 0.0001
     if isinstance(param, str):
         return SimpleNamespace(converge_func=param, eps=default_eps)
     elif isinstance(param, dict):
-        early_stop = param.get("early_stop", None)
+        early_stop = param.get("early_stop", param.get("converge_func"))
         eps = param.get("eps", default_eps)
         if not early_stop:
             raise ValueError(f"early_stop config: {param} invalid")

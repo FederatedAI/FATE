@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package com.webank.ai.fate.core.mlmodel.buffer;
+option java_outer_classname = "LabelTransformParamProto";
+
+message LabelTransformParam {
+    map<string, string> label_encoder = 1;
+    map<string, string> encoder_key_type = 2;
+    map<string, string> encoder_value_type = 3;
+}

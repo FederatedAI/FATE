@@ -17,18 +17,18 @@
 
 from .components import ComponentMeta
 
-onehot_encoder_cpn_meta = ComponentMeta("OneHotEncoder")
+label_transform_cpn_meta = ComponentMeta("LabelTransform")
 
 
-@onehot_encoder_cpn_meta.bind_param
-def onehot_encoder_param():
-    from federatedml.param.onehot_encoder_param import OneHotEncoderParam
+@label_transform_cpn_meta.bind_param
+def label_transform_param():
+    from federatedml.param.label_transform_param import LabelTransformParam
 
-    return OneHotEncoderParam
+    return LabelTransformParam
 
 
-@onehot_encoder_cpn_meta.bind_runner.on_guest.on_host
-def onehot_encoder_client_runner():
-    from federatedml.feature.one_hot_encoder import OneHotEncoder
+@label_transform_cpn_meta.bind_runner.on_guest.on_host
+def label_transform_client_runner():
+    from federatedml.util.label_transform import LabelTransformer
 
-    return OneHotEncoder
+    return LabelTransformer
