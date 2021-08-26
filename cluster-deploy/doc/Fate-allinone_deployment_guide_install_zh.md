@@ -303,7 +303,7 @@ vi fate-cluster-install/allInone/conf/setup.conf
 | 配置项              | 配置项值                                              | 说明                                                         |
 | ------------------- | ----------------------------------------------------- | ------------------------------------------------------------ |
 | roles               | 默认："host" "guest"                                  | 部署的角色，有HOST端、GUEST端                                |
-| version             | 默认：1.5.1                                           | Fate 版本号                                                  |
+| version             | 默认：1.6.1                                           | Fate 版本号                                                  |
 | pbase               | 默认： /data/projects                                 | 项目根目录                                                   |
 | lbase               | 默认：/data/logs                                      | 保持默认不要修改                                             |
 | ssh_user            | 默认：app                                             | ssh连接目标机器的用户，也是部署后文件的属主                  |
