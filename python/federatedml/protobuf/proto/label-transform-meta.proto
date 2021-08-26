@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+package com.webank.ai.fate.core.mlmodel.buffer;
+option java_outer_classname = "LabelTransformMetaProto";
+
+message LabelTransformMeta{
+    bool need_run = 1;
+}

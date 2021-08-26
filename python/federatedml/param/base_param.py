@@ -20,9 +20,21 @@ import builtins
 import json
 import os
 from federatedml.util import consts
+import typing
+
+
+def deprecated_param(*names):
+    def _decorator(cls):
+        for name in names:
+            cls._deprecated_params_set[name] = False
+        return cls
+
+    return _decorator
 
 
 class BaseParam(object):
+    _deprecated_params_set: typing.MutableMapping[str, bool] = {}
+
     def __init__(self):
         pass
 
@@ -37,6 +49,11 @@ class BaseParam(object):
         def _recursive_convert_obj_to_dict(obj):
             ret_dict = {}
             for variable in obj.__dict__:
+
+                # ignore default deprecated params
+                if not self._deprecated_params_set.get(variable, True):
+                    continue
+
                 attr = getattr(obj, variable)
                 if attr and type(attr).__name__ not in dir(builtins):
                     ret_dict[variable] = _recursive_convert_obj_to_dict(attr)
@@ -69,6 +86,10 @@ class BaseParam(object):
                     else:
                         redundant_attrs.append(config_key)
                     continue
+
+                # deprecated param set
+                if config_key in self._deprecated_params_set:
+                    self._deprecated_params_set[config_key] = True
 
                 # supported attr
                 attr = getattr(param, config_key)

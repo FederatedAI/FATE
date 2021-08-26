@@ -50,6 +50,7 @@ class FeldmanVerifiableSumGuest(BaseFeldmanVerifiableSum):
             for idx, label in enumerate(data_inst.schema.get('header')):
                 if idx in self.sum_cols:
                     header.append(label)
+            # self.output_schema = {"header": header, "sid_name": data_inst.schema.get('sid_name')}
             schema = copy.deepcopy(data_inst.schema)
             schema["header"] = header
             self.output_schema = schema

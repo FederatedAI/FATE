@@ -342,7 +342,7 @@ class Testsuite(object):
                     status.name,
                     status.job_id,
                     status.status,
-                    time_consuming.pop(0),
+                    time_consuming.pop(0) if status.job_id != "-" else "-",
                     status.exception_id,
                     ",".join(status.rest_dependency),
                 ]
