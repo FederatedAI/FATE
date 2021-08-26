@@ -52,7 +52,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         self.zero_as_missing = param.zero_as_missing
         self.complete_secure = param.complete_secure
         self.sparse_opt_para = param.sparse_optimization
-        self.round_decimal = param.cipher_compress_error
+        self.cipher_compressing = param.cipher_compress
         self.new_ver = param.new_ver
 
         if self.use_missing:
@@ -118,8 +118,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
                   goss_subsample=self.enable_goss,
                   bin_num=self.bin_num,
                   complete_secure=True if (self.complete_secure and epoch_idx == 0) else False,
-                  cipher_compressing=self.round_decimal is not None,
-                  round_decimal=self.round_decimal,
+                  cipher_compressing=self.cipher_compressing,
                   new_ver=self.new_ver
                   )
 
