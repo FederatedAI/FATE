@@ -66,6 +66,12 @@
         },
         "dh_interect_mutli": {
             "script": "./pipeline-intersect-dh-multi.py"
+        },
+        "rsa_intersect_cache": {
+            "script": "./pipeline-intersect-rsa-cache.py"
+        },
+        "dh_intersect_cache": {
+            "script": "./pipeline-intersect-dh-cache.py"
         }
     }
 }

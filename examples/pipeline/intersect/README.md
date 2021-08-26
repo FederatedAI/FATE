@@ -46,6 +46,15 @@ This section introduces the Pipeline scripts for different types of tasks.
 11. RAW Intersect of 200 Union Components as Input:
     script: pipeline-intersect-with-union.py
 
+12. RSA Intersect with Cache:
+    script: pipeline-intersect-rsa-cache.py
+ 
+12. DH Intersect with Cache:
+    script: pipeline-intersect-dh-cache.py   
+    
+13. RSA Intersect with Cache Loader:
+    script: pipeline-intersect-rsa-cache-loader.py
+    
 Users can run a pipeline job directly:
 
     python ${pipeline_script}

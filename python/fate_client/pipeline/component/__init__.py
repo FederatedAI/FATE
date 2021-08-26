@@ -33,7 +33,7 @@ from pipeline.component.sample_weight import SampleWeight
 from pipeline.component.sbt_feature_transformer import SBTTransformer
 from pipeline.component.feature_imputation import FeatureImputation
 from pipeline.component.secure_information_retrieval import SecureInformationRetrieval
-
+from pipeline.component.cache_loader import CacheLoader
 
 __all__ = ["DataStatistics", "DataIO", "Evaluation", "HeteroDataSplit",
            "HeteroFastSecureBoost", "HeteroFeatureBinning", "HeteroFeatureSelection",
@@ -42,5 +42,6 @@ __all__ = ["DataStatistics", "DataIO", "Evaluation", "HeteroDataSplit",
            "HomoLR", "HomoNN", "HomoSecureBoost", "HomoFeatureBinning", "Intersection",
            "LocalBaseline", "OneHotEncoder", "PSI", "Reader", "Scorecard",
            "FederatedSample", "FeatureScale", "Union", "ColumnExpand", "FeldmanVerifiableSum",
-           "SampleWeight", "DataTransform", "SBTTransformer", "FeatureImputation", "SecureInformationRetrieval"]
+           "SampleWeight", "DataTransform", "SBTTransformer", "FeatureImputation", "SecureInformationRetrieval",
+           "CacheLoader"]
 
