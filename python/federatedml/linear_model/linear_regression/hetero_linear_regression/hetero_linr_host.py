@@ -47,10 +47,9 @@ class HeteroLinRHost(HeteroLinRBase):
 
         LOGGER.info("Enter hetero_linR host")
         self._abnormal_detection(data_instances)
-
-        self.validation_strategy = self.init_validation_strategy(data_instances, validate_data)
-
         self.header = self.get_header(data_instances)
+        self.callback_list.on_train_begin(data_instances, validate_data)
+
         self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
 
         self.batch_generator.initialize_batch_generator(data_instances)
@@ -71,6 +70,7 @@ class HeteroLinRHost(HeteroLinRBase):
             self.model_weights = LinearModelWeights(w, fit_intercept=self.fit_intercept, raise_overflow_error=False)
 
         while self.n_iter_ < self.max_iter:
+            self.callback_list.on_epoch_begin(self.n_iter_)
             LOGGER.info("iter:" + str(self.n_iter_))
             self.optimizer.set_iters(self.n_iter_)
             batch_data_generator = self.batch_generator.generate_batch_data()
@@ -94,14 +94,9 @@ class HeteroLinRHost(HeteroLinRBase):
 
             LOGGER.info("Get is_converged flag from arbiter:{}".format(self.is_converged))
 
-            self.add_checkpoint(step_index=self.n_iter_, step_name=self.flowid)
-
-            if self.validation_strategy:
-                LOGGER.debug('LinR host running validation')
-                self.validation_strategy.validate(self, self.n_iter_)
-                if self.validation_strategy.need_stop():
-                    LOGGER.debug('early stopping triggered')
-                    break
+            self.callback_list.on_epoch_end(self.n_iter_)
+            if self.stop_training:
+                break
 
             self.n_iter_ += 1
             LOGGER.info("iter: {}, is_converged: {}".format(self.n_iter_, self.is_converged))
