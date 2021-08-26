@@ -339,7 +339,7 @@ To convert a trained homo model into formats of other machine learning system, u
 
 .. code:: python
 
-   pipeline.engine.convert()
+   pipeline.model_convert.convert()
 
 
 Upload Data

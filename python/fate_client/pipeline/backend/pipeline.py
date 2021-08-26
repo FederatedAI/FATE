@@ -25,6 +25,7 @@ from pipeline.backend.config import Role
 from pipeline.backend.config import StatusCode
 from pipeline.backend.config import VERSION
 from pipeline.backend.config import SystemSetting
+from pipeline.backend._operation import OnlineCommand, ModelConvert
 from pipeline.backend.task_info import TaskInfo
 from pipeline.component.component_base import Component
 from pipeline.component.reader import Reader
@@ -62,9 +63,9 @@ class PipeLine(object):
         self._predict_pipeline = []
         self._deploy = False
         self._system_role = SystemSetting.system_setting().get("role")
-        self.online = self.OnlineCommand(self)
+        self.online = OnlineCommand(self)
         self._load = False
-        self.engine = self.Engine(self)
+        self.model_convert = ModelConvert(self)
 
     @LOGGER.catch(reraise=True)
     def set_initiator(self, role, party_id):
@@ -691,61 +692,3 @@ class PipeLine(object):
 
     def __setstate__(self, state):
         vars(self).update(state)
-
-    class OnlineCommand(object):
-        def __init__(self, pipeline_obj):
-            self.pipeline_obj = pipeline_obj
-
-        def _feed_online_conf(self):
-            conf = {"initiator": self.pipeline_obj._get_initiator_conf(),
-                    "role": self.pipeline_obj._roles}
-            predict_model_info = self.pipeline_obj.get_predict_model_info()
-            train_work_mode = self.pipeline_obj.get_train_conf().get("job_parameters").get("common").get("work_mode")
-            if train_work_mode != WorkMode.CLUSTER:
-                raise ValueError(f"to use FATE serving online inference service, work mode must be CLUSTER.")
-            conf["job_parameters"] = {"model_id": predict_model_info.model_id,
-                                      "model_version": predict_model_info.model_version,
-                                      "work_mode": WorkMode.CLUSTER}
-            return conf
-
-        @LOGGER.catch(reraise=True)
-        def load(self, file_path=None):
-            if not self.pipeline_obj.is_deploy():
-                raise ValueError(f"to load model for online inference, must deploy components first.")
-            file_path = file_path if file_path else ""
-            load_conf = self._feed_online_conf()
-            load_conf["job_parameters"]["file_path"] = file_path
-            self.pipeline_obj._job_invoker.load_model(load_conf)
-            self.pipeline_obj._load = True
-
-        @LOGGER.catch(reraise=True)
-        def bind(self, service_id, *servings):
-            if not self.pipeline_obj.is_deploy() or not self.pipeline_obj.is_load():
-                raise ValueError(f"to bind model to online service, must deploy and load model first.")
-            bind_conf = self._feed_online_conf()
-            bind_conf["service_id"] = service_id
-            bind_conf["servings"] = list(servings)
-            self.pipeline_obj._job_invoker.bind_model(bind_conf)
-
-    class Engine(object):
-        def __init__(self, pipeline_obj):
-            self.pipeline_obj = pipeline_obj
-
-        def _feed_homo_conf(self, framework_name):
-            model_info = self.pipeline_obj.get_model_info()
-            conf = {"role": self.pipeline_obj._initiator.role,
-                    "party_id": self.pipeline_obj._initiator.party_id,
-                    "model_id": model_info.model_id,
-                    "model_version": model_info.model_version
-                    }
-            if framework_name:
-                conf["framework_name"] = framework_name
-            return conf
-
-        @LOGGER.catch(reraise=True)
-        def convert(self, framework_name=None):
-            if self.pipeline_obj._train_dsl is None:
-                raise ValueError("Before converting homo model, training should be finished!!!")
-            conf = self._feed_homo_conf(framework_name)
-            res_dict = self.pipeline_obj._job_invoker.convert_homo_model(conf)
-            #@TODO: return saved file path
