@@ -1,0 +1,16 @@
+{
+  "mappings": {
+    "my_type": {
+      "properties": {
+        "my_field": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword"
+            }
+          }
+        }
+      }
+    }
+  }
+}
