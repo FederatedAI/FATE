@@ -476,8 +476,7 @@ class Boosting(ModelBase, ABC):
                                                           threshold=self.predict_param.threshold)
 
         elif self.task_type == consts.REGRESSION:
-            predict_result = data_inst.join(predicts, lambda inst, pred: [inst.label, float(pred), float(pred),
-                                                                          {"label": float(pred)}])
+            predict_result = self.predict_score_to_output(data_inst, predict_score=predicts, classes=None)
 
         else:
             raise NotImplementedError("task type {} not supported yet".format(self.task_type))
