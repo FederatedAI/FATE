@@ -389,7 +389,11 @@ class ValidationStrategy(CallbackBase):
         self.validate(model, epoch)
         if self.need_stop():
             LOGGER.debug('early stopping triggered')
-            model.stop_training = True
-            if self.has_saved_best_model():
-                model.load_model(self.cur_best_model)
-                setattr(model, "best_iteration", self.best_iteration)
+            model.callback_variables.stop_training = True
+
+    def on_train_end(self, model):
+        if self.has_saved_best_model():
+            model.load_model(self.cur_best_model)
+            model.callback_variables.best_iteration = self.best_iteration
+
+        model.callback_variables.validation_summary = self.summary()

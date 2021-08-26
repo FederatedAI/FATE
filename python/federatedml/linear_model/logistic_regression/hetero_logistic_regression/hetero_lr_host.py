@@ -154,8 +154,6 @@ class HeteroLRHost(HeteroLRBase):
             self.n_iter_ += 1
             if self.is_converged:
                 break
-        if self.validation_strategy and self.validation_strategy.has_saved_best_model():
-            self.load_model(self.validation_strategy.cur_best_model)
         self.set_summary(self.get_model_summary())
 
         # LOGGER.debug("Final lr weights: {}".format(self.model_weights.unboxed))
