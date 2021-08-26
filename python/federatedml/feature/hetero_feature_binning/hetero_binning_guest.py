@@ -54,12 +54,6 @@ class HeteroFeatureBinningGuest(BaseFeatureBinning):
         if len(label_counts_dict) > 2:
             if self.model_param.method == consts.OPTIMAL:
                 raise ValueError("Have not supported optimal binning in multi-class data yet")
-            # self.multi_class_iv(data_instances, label_counts)
-        #     return
-
-        # data_instances = data_instances.mapValues(self.load_data)
-        # self.set_schema(data_instances)
-        # label_table = data_instances.mapValues(lambda x: x.label)
 
         self.labels = list(label_counts_dict.keys())
         label_counts = [label_counts_dict[k] for k in self.labels]
@@ -72,9 +66,7 @@ class HeteroFeatureBinningGuest(BaseFeatureBinning):
                                                           label_table=label_table)
 
         if self.model_param.local_only:
-            # LOGGER.info("This is a local only binning fit")
-            # self.binning_obj.cal_local_iv(data_instances, label_table=label_table,
-            #                               label_counts=label_counts)
+
             self.transform(data_instances)
             self.set_summary(self.bin_result.summary())
             return self.data_output
@@ -84,9 +76,6 @@ class HeteroFeatureBinningGuest(BaseFeatureBinning):
             cipher.generate_key(self.model_param.encrypt_param.key_length)
         else:
             raise NotImplementedError("encrypt method not supported yet")
-
-        # from federatedml.secureprotol.encrypt import FakeEncrypt
-        # cipher = FakeEncrypt()
 
         self.federated_iv(data_instances=data_instances, label_table=label_table,
                           cipher=cipher, result_counts=label_counts_dict, label_elements=self.labels)
@@ -98,7 +87,6 @@ class HeteroFeatureBinningGuest(BaseFeatureBinning):
         self.set_schema(data_instances)
         self.transform(data_instances)
         LOGGER.info("Finish feature binning fit and transform")
-        total_summary['test'] = 'test'
         self.set_summary(total_summary)
         return self.data_output
 

@@ -86,10 +86,13 @@ class HeteroLRBase(BaseLogisticRegression):
                    "intercept": intercept_,
                    "is_converged": self.is_converged,
                    "one_vs_rest": self.need_one_vs_rest,
-                   "best_iteration": self.best_iteration}
+                   "best_iteration": self.callback_variables.best_iteration}
 
-        if self.validation_strategy:
-            validation_summary = self.validation_strategy.summary()
-            if validation_summary:
-                summary["validation_metrics"] = validation_summary
+        if self.callback_variables.validation_summary is not None:
+            summary["validation_metrics"] = self.callback_variables.validation_summary
+
+        # if self.validation_strategy:
+        #     validation_summary = self.validation_strategy.summary()
+        #     if validation_summary:
+        #         summary["validation_metrics"] = validation_summary
         return summary

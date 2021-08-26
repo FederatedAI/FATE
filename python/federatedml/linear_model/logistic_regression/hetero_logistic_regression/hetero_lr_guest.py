@@ -144,6 +144,8 @@ class HeteroLRGuest(HeteroLRBase):
             if self.is_converged:
                 break
 
+        self.callback_list.on_train_end()
+
         self.set_summary(self.get_model_summary())
 
     @assert_io_num_rows_equal

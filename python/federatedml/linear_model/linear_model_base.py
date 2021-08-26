@@ -59,9 +59,6 @@ class BaseLinearModel(ModelBase):
         self.need_one_vs_rest = False
         self.need_call_back_loss = True
         self.init_param_obj = None
-        self.validation_strategy = None
-        self.stop_training = False
-        self.best_iteration = -1
 
     def _init_model(self, params):
         self.model_param = params
