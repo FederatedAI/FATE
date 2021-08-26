@@ -90,7 +90,6 @@ class HeteroLRBase(BaseLogisticRegression):
 
         if self.callback_variables.validation_summary is not None:
             summary["validation_metrics"] = self.callback_variables.validation_summary
-
         # if self.validation_strategy:
         #     validation_summary = self.validation_strategy.summary()
         #     if validation_summary:

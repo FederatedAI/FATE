@@ -394,6 +394,6 @@ class ValidationStrategy(CallbackBase):
     def on_train_end(self, model):
         if self.has_saved_best_model():
             model.load_model(self.cur_best_model)
-            model.callback_variables.best_iteration = self.cur_best_model
+            model.callback_variables.best_iteration = self.best_iteration
 
         model.callback_variables.validation_summary = self.summary()
