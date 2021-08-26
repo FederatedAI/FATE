@@ -517,8 +517,10 @@ def judging_state(retcode):
 def run_test_api(config_json):
     output_path = './output/flow_test_data/'
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    fate_flow_path = str(config_json['data_base_dir']) + '/python/fate_flow/fate_flow_client.py'
-    test_api = TestModel(fate_flow_path, config_json['component_name'])
+    fate_flow_path = config_json['data_base_dir'].parent.parent / 'fate_flow' / 'fate_flow_client.py'
+    if not fate_flow_path.exists():
+        raise FileNotFoundError(f'fate_flow not found. filepath: {fate_flow_path}')
+    test_api = TestModel(str(fate_flow_path), config_json['component_name'])
     test_api.dsl_path = config_json['train_dsl_path']
     test_api.cache_directory = config_json['cache_directory']
     test_api.output_path = str(os.path.abspath(output_path)) + '/'

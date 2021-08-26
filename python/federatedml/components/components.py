@@ -68,14 +68,27 @@ class _RunnerDocorator:
 class ComponentMeta:
     __name_to_obj: typing.Dict[str, "ComponentMeta"] = {}
 
-    def __init__(self, name) -> None:
-        self.name = name
+    def __init__(self, name, *others) -> None:
+        if len(others) > 0:
+            self._alias = [name, *others]
+            self._name = "|".join(self._alias)
+        else:
+            self._alias = [name]
+            self._name = name
         self._role_to_runner_cls = {}
         self._role_to_runner_cls_getter = {}  # lazy
         self._param_cls = None
         self._param_cls_getter = None  # lazy
 
         self.__name_to_obj[name] = self
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def alias(self):
+        return self._alias
 
     @classmethod
     def get_meta(cls, name):
@@ -97,13 +110,6 @@ class ComponentMeta:
             return cls
 
         return _wrap
-
-    def register_info(self):
-        return {
-            self.name: dict(
-                module=self.__module__,
-            )
-        }
 
     def _get_runner(self, role: str):
         if role in self._role_to_runner_cls:
@@ -164,8 +170,11 @@ class Components:
         for p in _components_base.glob("**/*.py"):
             obj_pairs, module_name = _search_components(p)
             for name, obj in obj_pairs:
-                names[obj.name] = {"module": module_name}
-                LOGGER.info(f"component register {obj.name} with cache info {module_name}")
+                for alias in obj.alias:
+                    names[alias] = {"module": module_name}
+                LOGGER.info(
+                    f"component register {obj.name} with cache info {module_name}"
+                )
         return names
 
     @classmethod
