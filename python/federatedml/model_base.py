@@ -102,6 +102,13 @@ class MetricMeta:
         return self.metas
 
 
+class CallbacksVariable(object):
+    def __init__(self):
+        self.stop_training = False
+        self.best_iteration = -1
+        self.validation_summary = None
+
+
 # type hint
 class TrackerClient(object):
     def log_job_metric_data(
@@ -187,7 +194,7 @@ class ModelBase(object):
         self._tracker = None
         self.step_name = ''
         self.callback_list: CallbackList
-        self.stop_training = False
+        self.callback_variables = CallbacksVariable()
 
     @property
     def tracker(self) -> TrackerClient:
@@ -195,6 +202,9 @@ class ModelBase(object):
             raise RuntimeError(f"use tracker before set")
         return self._tracker
 
+    @property
+    def stop_training(self):
+        return self.callback_variables.stop_training
 
     @property
     def need_cv(self):
