@@ -51,6 +51,13 @@
                             "name": "default_credit_hetero_host",
                             "namespace": "experiment"
                         }
+                    },
+                    "hetero_feature_binning_0": {
+                        "transform_param": {
+                            "transform_cols": -1,
+                            "transform_names": null,
+                            "transform_type": null
+                        }
                     }
                 }
             }

@@ -161,6 +161,7 @@ class HeteroLRBase(SSHEModelBase, ABC):
 
     def fit_binary(self, data_instances, validate_data=None):
         LOGGER.info("Start to hetero_sshe_logistic_regression")
+        self.callback_list.on_train_begin(data_instances, validate_data)
 
         self.validation_strategy = self.init_validation_strategy(data_instances, validate_data)
         # self.batch_generator.initialize_batch_generator(data_instances, self.batch_size)
@@ -204,6 +205,8 @@ class HeteroLRBase(SSHEModelBase, ABC):
                                                       endec=self.fixpoint_encoder))
 
             while self.n_iter_ < self.max_iter:
+                self.callback_list.on_epoch_begin(self.n_iter_)
+
                 loss_list = []
                 self.optimizer.set_iters(self.n_iter_)
                 for batch_idx, batch_data in enumerate(encoded_batch_data):
@@ -272,12 +275,9 @@ class HeteroLRBase(SSHEModelBase, ABC):
                     raise ValueError(f"Cannot recognize early_stop function: {self.converge_func_name}")
 
                 LOGGER.info("iter: {},  is_converged: {}".format(self.n_iter_, self.is_converged))
-                if self.validation_strategy:
-                    LOGGER.debug('LR guest running validation')
-                    self.validation_strategy.validate(self, self.n_iter_)
-                    if self.validation_strategy.need_stop():
-                        LOGGER.debug('early stopping triggered')
-                        break
+                self.callback_list.on_epoch_end(self.n_iter_)
+                if self.stop_training:
+                    break
 
                 if self.is_converged:
                     break
@@ -297,8 +297,6 @@ class HeteroLRBase(SSHEModelBase, ABC):
                         fit_intercept=False)
 
         LOGGER.debug(f"loss_history: {self.loss_history}")
-        if self.validation_strategy and self.validation_strategy.has_saved_best_model():
-            self.load_model(self.validation_strategy.cur_best_model)
         self.set_summary(self.get_model_summary())
 
     def review_models(self, w_self, w_remote, suffix=None):
