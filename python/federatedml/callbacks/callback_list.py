@@ -43,14 +43,24 @@ class CallbackList(object):
                                                save_freq=callback_param.save_freq)
             self.callback_list.append(model_checkpoint)
 
+    def get_validation_strategy(self):
+        for callback_func in self.callback_list:
+            if isinstance(callback_func, ValidationStrategy):
+                return callback_func
+        return None
+
     def on_train_begin(self, train_data=None, validate_data=None):
         for callback_func in self.callback_list:
             callback_func.on_train_begin(train_data, validate_data)
 
-    def on_epoch_end(self, epoch, ):
+    def on_epoch_end(self, epoch):
         for callback_func in self.callback_list:
             callback_func.on_epoch_end(self.model, epoch)
 
     def on_epoch_begin(self, epoch):
         for callback_func in self.callback_list:
             callback_func.on_epoch_begin(self.model, epoch)
+
+    def on_train_end(self):
+        for callback_func in self.callback_list:
+            callback_func.on_train_end(self.model)
