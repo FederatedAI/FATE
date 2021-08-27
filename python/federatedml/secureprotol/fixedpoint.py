@@ -41,6 +41,11 @@ class FixedPointNumber(object):
         self.exponent = exponent
 
     @classmethod
+    def calculate_exponent_from_precision(cls, precision):
+        exponent = math.floor(math.log(precision, cls.BASE))
+        return exponent
+
+    @classmethod
     def encode(cls, scalar, n=None, max_int=None, precision=None, max_exponent=None):
         """return an encoding of an int or float.
         """
@@ -70,7 +75,7 @@ class FixedPointNumber(object):
                 raise TypeError("Don't know the precision of type %s."
                                 % type(scalar))
         else:
-            exponent = math.floor(math.log(precision, cls.BASE))
+            exponent = cls.calculate_exponent_from_precision(precision)
 
         if max_exponent is not None:
             exponent = max(max_exponent, exponent)
@@ -113,7 +118,7 @@ class FixedPointNumber(object):
         return FixedPointNumber(new_encoding, new_exponent, self.n, self.max_int)
 
     def __align_exponent(self, x, y):
-        """return x,y with same exponet
+        """return x,y with same exponent
         """
         if x.exponent < y.exponent:
             x = x.increase_exponent_to(y.exponent)

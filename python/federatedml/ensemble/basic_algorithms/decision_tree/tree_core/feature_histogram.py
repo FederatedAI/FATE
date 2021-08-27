@@ -46,17 +46,19 @@ class HistogramBag(object):
     holds histograms
     """
 
-    def __init__(self, tensor: list, hid: int = -1, p_hid: int = -1):
+    def __init__(self, tensor: list, hid: int = -1, p_hid: int = -1, tensor_type='list'):
 
         """
         :param tensor: list returned by calculate_histogram
         :param hid: histogram id
         :param p_hid: parent node histogram id
+        :param tensor_type: 'list' or 'array'
         """
 
         self.hid = hid
         self.p_hid = p_hid
         self.bag = tensor
+        self.tensor_type = tensor_type
 
     def binary_op(self, other, func, inplace=False):
 
@@ -78,10 +80,22 @@ class HistogramBag(object):
         return self if inplace else newbag
 
     def __add__(self, other):
-        return self.binary_op(other, add, inplace=False)
+        if self.tensor_type == 'list':
+            return self.binary_op(other, add, inplace=False)
+        elif self.tensor_type == 'array':
+            self.bag += other.bag
+            return self
+        else:
+            raise ValueError('unknown tensor type')
 
     def __sub__(self, other):
-        return self.binary_op(other, sub, inplace=False)
+        if self.tensor_type == 'list':
+            return self.binary_op(other, sub, inplace=False)
+        elif self.tensor_type == 'array':
+            self.bag -= other.bag
+            return self
+        else:
+            raise ValueError('unknown tensor type')
 
     def __len__(self):
         return len(self.bag)
@@ -531,10 +545,15 @@ class FeatureHistogram(object):
                 node_histograms[node_idx][fid][value][1] += hess[rid]
                 node_histograms[node_idx][fid][value][2] += 1
 
-                # node feature total sum value
-                zero_optim[node_idx][fid][0] += grad[rid]
-                zero_optim[node_idx][fid][1] += hess[rid]
-                zero_optim[node_idx][fid][2] += 1
+        for nid in range(node_num):
+            # cal feature level g_h incrementally
+            for fid in range(bin_split_points.shape[0]):
+                if valid_features is not None and valid_features[fid] is False:
+                    continue
+                for bin_index in range(len(node_histograms[nid][fid])):
+                    zero_optim[nid][fid][0] += node_histograms[nid][fid][bin_index][0]
+                    zero_optim[nid][fid][1] += node_histograms[nid][fid][bin_index][1]
+                    zero_optim[nid][fid][2] += node_histograms[nid][fid][bin_index][2]
 
         for node_idx in range(node_num):
             for fid in range(bin_split_points.shape[0]):
