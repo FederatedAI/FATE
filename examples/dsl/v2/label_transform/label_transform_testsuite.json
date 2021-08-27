@@ -24,7 +24,7 @@
         },
         "label-transform-encoder": {
             "conf": "./label_transform_encoder_conf.json",
-            "dsl": "./label_transform_dsl.json"
+            "dsl": "./label_transform_encoder_dsl.json"
         }
     }
 }
