@@ -58,7 +58,7 @@ def main(config="../../config.yaml", namespace=""):
     reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
 
     # define DataIO components
-    dataio_0 = DataTransform(name="dataio_0", with_match_id=True, match_id_name="id",
+    data_transform_0 = DataTransform(name="data_transform_0", with_match_id=True, match_id_name="id",
                              with_label=True, output_format="dense")  # start component numbering at 0
 
     scale_0 = FeatureScale(name='scale_0')
@@ -92,9 +92,9 @@ def main(config="../../config.yaml", namespace=""):
     evaluation_0 = Evaluation(name='evaluation_0')
     # add components to pipeline, in order of task execution
     pipeline.add_component(reader_0)
-    pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
+    pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
     # set data input sources of intersection components
-    pipeline.add_component(scale_0, data=Data(data=dataio_0.output.data))
+    pipeline.add_component(scale_0, data=Data(data=data_transform_0.output.data))
     pipeline.add_component(sample_weight_0, data=Data(data=scale_0.output.data))
 
     pipeline.add_component(homo_lr_0, data=Data(train_data=sample_weight_0.output.data))

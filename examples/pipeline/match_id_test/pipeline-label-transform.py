@@ -55,12 +55,13 @@ def main(config="../../config.yaml", namespace=""):
     reader_0.get_party_instance(role="guest", party_id=guest).component_param(table=guest_train_data)
     reader_0.get_party_instance(role="host", party_id=host).component_param(table=host_train_data)
 
-    data_transform_0 = DataTransform(name="data_transform_0")  # start component numbering at 0
+    data_transform_0 = DataTransform(name="data_transform_0", with_match_id=True, match_id_name="id")  # start component numbering at 0
     data_transform_0_guest_party_instance = data_transform_0.get_party_instance(role="guest", party_id=guest)
+    # configure DataIO for guest
     data_transform_0_guest_party_instance.component_param(with_label=True, output_format="dense")
     data_transform_0.get_party_instance(role="host", party_id=host).component_param(with_label=False,
                                                                             output_format="dense")
-    intersection_0 = Intersection(name="intersection_0")
+    intersection_0 = Intersection(name="intersection_0", join_method="left_join", sample_id_generator="host")
 
     label_transform_0 = LabelTransform(name="label_transform_0")
     label_transform_0.get_party_instance(role="host", party_id=host).component_param(need_run=False)
@@ -74,7 +75,6 @@ def main(config="../../config.yaml", namespace=""):
 
     label_transform_1 = LabelTransform(name="label_transform_1")
     evaluation_0 = Evaluation(name="evaluation_0", eval_type="binary", pos_label=1)
-
 
     # add components to pipeline, in order of task execution
     pipeline.add_component(reader_0)
