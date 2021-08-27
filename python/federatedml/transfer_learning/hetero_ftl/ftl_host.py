@@ -167,12 +167,12 @@ class FTLHost(FTL):
         self.initialize_nn(input_shape=self.x_shape)
         self.feat_dim = self.nn._model.output_shape[1]
         self.constant_k = 1 / self.feat_dim
-        self.validation_strategy = self.init_validation_strategy(data_inst, validate_data)
+        self.callback_list.on_train_begin(data_inst, validate_data)
 
         for epoch_idx in range(self.epochs):
 
             LOGGER.debug('fitting epoch {}'.format(epoch_idx))
-
+            self.callback_list.on_epoch_begin(epoch_idx)
             self.overlap_ub, self.overlap_ub_2, self.mapping_comp_b = self.batch_compute_components(data_loader)
             send_components = [self.overlap_ub, self.overlap_ub_2, self.mapping_comp_b]
             guest_components = self.exchange_components(send_components, epoch_idx)
@@ -192,11 +192,7 @@ class FTLHost(FTL):
                 if local_round_idx + 1 != self.local_round:
                     self.overlap_ub, self.overlap_ub_2, self.mapping_comp_b = self.batch_compute_components(data_loader)
 
-            if self.validation_strategy is not None:
-                self.validation_strategy.validate(self, epoch_idx)
-                if self.validation_strategy.need_stop():
-                    LOGGER.debug('early stopping triggered')
-                    break
+            self.callback_list.on_epoch_end(epoch_idx)
 
             if self.n_iter_no_change is True:
                 stop_flag = self.sync_stop_flag(epoch_idx)

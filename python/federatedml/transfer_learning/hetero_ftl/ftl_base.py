@@ -165,14 +165,6 @@ class FTL(ModelBase):
 
         return encrypted_tensors
 
-    def init_validation_strategy(self, train_data=None, validate_data=None):
-        validation_strategy = ValidationStrategy(self.role, consts.HETERO, self.validation_freqs,
-                                                 self.early_stopping_rounds, self.use_first_metric_only,
-                                                 arbiter_comm=False)
-        validation_strategy.set_train_data(train_data)
-        validation_strategy.set_validate_data(validate_data)
-        return validation_strategy
-
     def learning_rate_decay(self, learning_rate, epoch):
         """
         learning_rate decay

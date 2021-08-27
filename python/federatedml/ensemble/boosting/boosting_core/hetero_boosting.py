@@ -157,17 +157,19 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
 
         self.generate_encrypter()
 
+        self.callback_list.on_train_begin(data_inst, validate_data)
+
         self.callback_meta("loss",
                            "train",
                            MetricMeta(name="train",
                                       metric_type="LOSS",
                                       extra_metas={"unit_name": "iters"}))
 
-        self.validation_strategy = self.init_validation_strategy(data_inst, validate_data)
-
         for epoch_idx in range(self.boosting_round):
 
             LOGGER.info('cur epoch idx is {}'.format(epoch_idx))
+
+            self.callback_list.on_epoch_begin(epoch_idx)
 
             for class_idx in range(self.booster_dim):
 
@@ -192,22 +194,14 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
                                  "train",
                                  [Metric(epoch_idx, loss)])
 
-            if self.validation_strategy:
-                self.validation_strategy.validate(self, epoch_idx, use_precomputed_train=True,
-                                                  train_scores=self.score_to_predict_result(data_inst, self.y_hat))
-
-            should_stop_a, should_stop_b = False, False
-            if self.validation_strategy is not None:
-                if self.validation_strategy.need_stop():
-                    should_stop_a = True
-
+            # check validation
+            self.callback_list.on_epoch_end(epoch_idx)
+            should_stop = False, False
             if self.n_iter_no_change and self.check_convergence(loss):
-                should_stop_b = True
+                should_stop = True
                 self.is_converged = True
-
             self.sync_stop_flag(self.is_converged, epoch_idx)
-
-            if should_stop_a or should_stop_b:
+            if self.stop_training or should_stop:
                 break
 
         self.callback_meta("loss",
@@ -215,10 +209,6 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
                            MetricMeta(name="train",
                                       metric_type="LOSS",
                                       extra_metas={"Best": min(self.history_loss)}))
-
-        if self.validation_strategy and self.validation_strategy.has_saved_best_model():
-            LOGGER.info('best model exported')
-            self.load_model(self.validation_strategy.cur_best_model)
 
         # get summary
         self.set_summary(self.generate_summary())
@@ -283,11 +273,13 @@ class HeteroBoostingHost(HeteroBoosting, ABC):
         self.sync_booster_dim()
         self.generate_encrypter()
 
-        self.validation_strategy = self.init_validation_strategy(data_inst, validate_data)
+        self.callback_list.on_train_begin(data_inst, validate_data)
 
         for epoch_idx in range(self.boosting_round):
 
             LOGGER.info('cur epoch idx is {}'.format(epoch_idx))
+
+            self.callback_list.on_epoch_begin(epoch_idx)
 
             for class_idx in range(self.booster_dim):
                 # fit a booster
@@ -297,22 +289,11 @@ class HeteroBoostingHost(HeteroBoosting, ABC):
                     self.booster_meta = booster_meta
                     self.boosting_model_list.append(booster_param)
 
-            if self.validation_strategy:
-                self.validation_strategy.validate(self, epoch_idx, use_precomputed_train=True, train_scores=None)
-
-            should_stop_a = False
-            if self.validation_strategy is not None:
-                if self.validation_strategy.need_stop():
-                    should_stop_a = True
-
-            should_stop_b = self.sync_stop_flag(epoch_idx)
-            self.is_converged = should_stop_b
-            if should_stop_a or should_stop_b:
+            self.callback_list.on_epoch_end(epoch_idx)
+            should_stop = self.sync_stop_flag(epoch_idx)
+            self.is_converged = should_stop
+            if should_stop:
                 break
-
-        if self.validation_strategy and self.validation_strategy.has_saved_best_model():
-            LOGGER.info('best model exported')
-            self.load_model(self.validation_strategy.cur_best_model)
 
         self.set_summary(self.generate_summary())
 

@@ -289,7 +289,7 @@ class FTLGuest(FTL):
         self.initialize_nn(input_shape=self.x_shape)
         self.feat_dim = self.nn._model.output_shape[1]
         self.constant_k = 1 / self.feat_dim
-        self.validation_strategy = self.init_validation_strategy(data_inst, validate_data)
+        self.callback_list.on_train_begin(train_data=data_inst, validate_data=validate_data)
 
         self.callback_meta("loss",
                            "train",
@@ -303,6 +303,8 @@ class FTLGuest(FTL):
         for epoch_idx in range(self.epochs):
 
             LOGGER.debug('fitting epoch {}'.format(epoch_idx))
+
+            self.callback_list.on_epoch_begin(epoch_idx)
 
             host_components = self.exchange_components(self.send_components, epoch_idx=epoch_idx)
 
@@ -335,12 +337,7 @@ class FTLGuest(FTL):
                 self.phi, self.phi_product, self.overlap_ua, self.send_components = self.batch_compute_components(
                     data_loader)
 
-            # check early_stopping_rounds
-            if self.validation_strategy is not None:
-                self.validation_strategy.validate(self, epoch_idx)
-                if self.validation_strategy.need_stop():
-                    LOGGER.debug('early stopping triggered')
-                    break
+            self.callback_list.on_epoch_end(epoch_idx)
 
             # check n_iter_no_change
             if self.n_iter_no_change is True:
