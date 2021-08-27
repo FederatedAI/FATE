@@ -18,7 +18,6 @@ import argparse
 
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component import LabelTransform
-from pipeline.component import Evaluation
 from pipeline.component import HeteroLR
 from pipeline.component import DataIO
 from pipeline.component import Intersection
@@ -74,7 +73,6 @@ def main(config="../../config.yaml", namespace=""):
                                floating_point_precision=23)
 
     label_transform_1 = LabelTransform(name="label_transform_1")
-    evaluation_0 = Evaluation(name="evaluation_0", eval_type="binary", pos_label=0)
 
 
     # add components to pipeline, in order of task execution
@@ -84,7 +82,6 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.add_component(label_transform_0, data=Data(data=intersection_0.output.data))
     pipeline.add_component(hetero_lr_0, data=Data(train_data=label_transform_0.output.data))
     pipeline.add_component(label_transform_1, data=Data(data=hetero_lr_0.output.data), model=Model(label_transform_0.output.model))
-    pipeline.add_component(evaluation_0, data=Data(data=label_transform_1.output.data))
 
     # compile pipeline once finished adding modules, this step will form conf and dsl files for running job
     pipeline.compile()

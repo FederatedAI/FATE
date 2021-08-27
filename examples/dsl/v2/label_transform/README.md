@@ -11,7 +11,7 @@ This section introduces the dsl & conf files for different types of tasks.
 
 2. Label Transform Task with Encoder(with given label mapping):
 
-    - dsl: label_transform_dsl.json  
+    - dsl: label_transform_encoder_dsl.json  
     - runtime_config : label_transform_encoder_conf.json
 
 Users can use following commands to running the task.
