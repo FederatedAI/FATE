@@ -144,6 +144,9 @@ class HomoBoostingClient(Boosting, ABC):
             local_loss = self.compute_loss(self.y_hat, self.y)
             self.aggregator.send_local_loss(local_loss, self.data_bin.count(), suffix=(epoch_idx,))
 
+            validation_strategy = self.callback_list.get_validation_strategy()
+            if validation_strategy:
+                validation_strategy.set_precomputed_train_scores(self.score_to_predict_result(data_inst, self.y_hat))
             self.callback_list.on_epoch_end(epoch_idx)
 
             # check stop flag if n_iter_no_change is True

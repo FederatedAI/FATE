@@ -195,6 +195,10 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
                                  [Metric(epoch_idx, loss)])
 
             # check validation
+            validation_strategy = self.callback_list.get_validation_strategy()
+            if validation_strategy:
+                validation_strategy.set_precomputed_train_scores(self.score_to_predict_result(data_inst, self.y_hat))
+
             self.callback_list.on_epoch_end(epoch_idx)
             should_stop = False, False
             if self.n_iter_no_change and self.check_convergence(loss):
@@ -289,6 +293,9 @@ class HeteroBoostingHost(HeteroBoosting, ABC):
                     self.booster_meta = booster_meta
                     self.boosting_model_list.append(booster_param)
 
+            validation_strategy = self.callback_list.get_validation_strategy()
+            if validation_strategy:
+                validation_strategy.set_precomputed_train_scores(None)
             self.callback_list.on_epoch_end(epoch_idx)
             should_stop = self.sync_stop_flag(epoch_idx)
             self.is_converged = should_stop
