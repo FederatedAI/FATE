@@ -12,8 +12,9 @@ Input
 ~~~~~
 
 ``Input`` encapsulates all upstream input to a component in a job workflow.
-There are two classes of ``input``: ``data`` and ``model``. Not all components have
-both classes of input, and a component may accept only some types of the class.
+There are three classes of ``input``: ``data``, ``cache``, and ``model``. Not all components have
+all three classes of input, and a component may accept only some types of the class.
+Note that only ``Intersection`` may have ``cache`` input.
 For information on each components' input, check the `list <#component-list>`_ below.
 
 Here is an example to access a component's input:
@@ -29,8 +30,9 @@ Here is an example to access a component's input:
 Output
 ~~~~~~
 
-Same as ``Input``, ``Output`` encapsulates output ``data`` and ``model`` of component
-in a FATE job. Not all components have both classes of outputs.
+Same as ``Input``, ``Output`` encapsulates output ``data``, ``cache``, and ``model`` of component
+in a FATE job. Not all components have all classes of outputs. Note that only ``Intersection``
+may have ``cache`` output.
 For information on each components' output, check the `list <#component-list>`_ below.
 
 Here is an example to access a component's output:
@@ -198,6 +200,29 @@ important features.
    not have ``model`` output. For information on valid model
    types of each components, check the `list <#component-list>`_ below.
 
+
+Cache
+~~~~~
+
+``Cache`` is only available for ``Intersection`` component.
+Please refer `here <../../../examples/pipeline/intersect/pipeline-intersect-rsa-cache.py>`__ for an example of using cache with intersection.
+
+Below code sets cache output from ``intersection_0`` as cache input of ``intersection_1``.
+
+.. code:: python
+
+   pipeline.add_component(intersection_1, data=Data(data=dataio_0.output.data), cache=Cache(intersect_0.output.cache))
+
+To load cache from another job, use ``CacheLoader`` component.
+In this `demo <../../../../examples/pipeline/intersect/pipeline-intersect-rsa-cache-loader.py>`__, result from
+some previous job is loaded into ``intersection_0`` as cache input.
+
+.. code:: python
+
+   pipeline.add_component(cache_loader_0)
+   pipeline.add_component(intersect_0, data=Data(data=dataio_0.output.data), cache=Cache(cache_loader_0.output.cache))
+
+
 Parameter
 ~~~~~~~~~
 
@@ -284,8 +309,8 @@ Below lists input and output elements of each component.
      - Compute intersect data set of multiple parties without leakage of difference set information. Mainly used in hetero scenario task.
      - data
      - data
-     - model
-     - model
+     - None
+     - None
 
    * - `Federated Sampling`_
      - FederatedSample
@@ -503,14 +528,37 @@ Below lists input and output elements of each component.
      - None
      - None
 
+   * - `Secure Information Retrieval`_
+     - Secure Information Retrieval
+     - This component will securely retrieve designated feature(s) or label value
+     - data
+     - data
+     - None
+     - model
+
    * - `Sample Weight`_
      - Sample Weight
-     - Sample Weight assigns weight to instances according to user-specified parameters
+     - This component assigns weight to instances according to user-specified parameters
      - data
      - data
      - model
      - model
 
+   * - `Feature Imputation`_
+     - Feature Imputation
+     - This component imputes missing features using arbitrary methods/values
+     - data
+     - data
+     - model
+     - model
+
+   * - `Label Transform`_
+     - Label Transform
+     - This component replaces label with designated values
+     - data
+     - data
+     - model
+     - model
 
 
 .. _DataIO: ../../../federatedml/util/README.rst
@@ -544,6 +592,9 @@ Below lists input and output elements of each component.
 .. _Scorecard: ../../../federatedml/statistic/scorecard/README.rst
 .. _Feldman Verifiable Sum: ../../../federatedml/statistic/feldman_verifiable_sum/README.rst
 .. _Sample Weight: ../../../federatedml/util/README.rst
+.. _Secure Information Retrieval: ../../../federatedml/secure_information_retrieval
+.. _Feature Imputation: ../../../federatedml/feature/README.rst
+.. _Label Transform:: ../../../federatedml/util/README.rst
 
 
 Params
