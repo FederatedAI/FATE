@@ -9,7 +9,7 @@
 
 ### 三. WeDataSphere相关组件部署
 
-请参阅部署指南：
+请参阅部署指南：[WeDataSphere](https://github.com/WeBankFinTech/WeDataSphere)
 
 
 ### 四. 修改配置
@@ -30,7 +30,7 @@
       host: xxx.xxx.xxx.xxx
       port: 9001
   ```
-  其中, host和port:linkis请求入口地址; token_code:linkis分配的Token-Code; python_path:
+  其中, host和port:linkis请求入口地址; token_code:linkis分配的Token-Code; python_path:fate依赖路径
 
 - ### rabbitmq相关配置
 
