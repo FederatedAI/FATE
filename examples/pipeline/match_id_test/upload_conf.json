@@ -1,0 +1,11 @@
+{
+    "file": "/fate/examples/data/breast_homo_host.csv",
+    "table_name": "breast_homo_host",
+    "namespace": "experiment",
+    "head": 1,
+    "extend_sid": true,
+    "auto_increasing_sid": false,
+    "partition": 8,
+    "work_mode": 0,
+    "backend": 0
+}

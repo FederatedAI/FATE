@@ -154,6 +154,8 @@ class Config(object):
         self.party_to_service_id = {}
         self.service_id_to_service = {}
         self.tunnel_id_to_tunnel = {}
+        self.extend_sid = None
+        self.auto_increasing_sid = None
 
         tunnel_id = 0
         service_id = 0

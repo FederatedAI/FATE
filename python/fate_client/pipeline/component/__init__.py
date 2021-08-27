@@ -34,6 +34,8 @@ from pipeline.component.sbt_feature_transformer import SBTTransformer
 from pipeline.component.feature_imputation import FeatureImputation
 from pipeline.component.label_transform import LabelTransform
 
+from pipeline.component.secure_information_retrieval import SecureInformationRetrieval
+from pipeline.component.cache_loader import CacheLoader
 
 __all__ = ["DataStatistics", "DataIO", "Evaluation", "HeteroDataSplit",
            "HeteroFastSecureBoost", "HeteroFeatureBinning", "HeteroFeatureSelection",
@@ -43,5 +45,5 @@ __all__ = ["DataStatistics", "DataIO", "Evaluation", "HeteroDataSplit",
            "LocalBaseline", "OneHotEncoder", "PSI", "Reader", "Scorecard",
            "FederatedSample", "FeatureScale", "Union", "ColumnExpand", "FeldmanVerifiableSum",
            "SampleWeight", "DataTransform", "SBTTransformer", "FeatureImputation",
-           "LabelTransform"]
+           "LabelTransform", "SecureInformationRetrieval", "CacheLoader"]
 
