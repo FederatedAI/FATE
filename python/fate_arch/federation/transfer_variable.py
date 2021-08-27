@@ -15,17 +15,71 @@
 #
 import hashlib
 import typing
+from collections import deque
 from typing import Union
 
+from fate_arch.abc import GarbageCollectionABC
 from fate_arch.common import Party, profile
 from fate_arch.common.log import getLogger
-from fate_arch.federation.transfer_variable._auth import _check_variable_auth_conf
-from fate_arch.federation.transfer_variable._cleaner import IterationGC
-from fate_arch.federation.transfer_variable._namespace import FederationTagNamespace
 from fate_arch.session import get_latest_opened
 
 __all__ = ["Variable", "BaseTransferVariables"]
+
 LOGGER = getLogger()
+
+
+class FederationTagNamespace(object):
+    __namespace = "default"
+
+    @classmethod
+    def set_namespace(cls, namespace):
+        cls.__namespace = namespace
+
+    @classmethod
+    def generate_tag(cls, *suffix):
+        tags = (cls.__namespace, *map(str, suffix))
+        return ".".join(tags)
+
+
+class IterationGC(GarbageCollectionABC):
+    def __init__(self, capacity=2):
+        self._ashcan: deque[typing.List[typing.Tuple[typing.Any, str, dict]]] = deque()
+        self._last_tag: typing.Optional[str] = None
+        self._capacity = capacity
+        self._enable = True
+
+    def add_gc_action(self, tag: str, obj, method, args_dict):
+        if self._last_tag == tag:
+            self._ashcan[-1].append((obj, method, args_dict))
+        else:
+            self._ashcan.append([(obj, method, args_dict)])
+            self._last_tag = tag
+
+    def disable(self):
+        self._enable = False
+
+    def set_capacity(self, capacity):
+        self._capacity = capacity
+
+    def gc(self):
+        if not self._enable:
+            return
+        if len(self._ashcan) <= self._capacity:
+            return
+        self._safe_gc_call(self._ashcan.popleft())
+
+    def clean(self):
+        while self._ashcan:
+            self._safe_gc_call(self._ashcan.pop())
+
+    @staticmethod
+    def _safe_gc_call(actions: typing.List[typing.Tuple[typing.Any, str, dict]]):
+        for obj, method, args_dict in actions:
+            try:
+                LOGGER.debug(f"[CLEAN]deleting {obj}, {method}, {args_dict}")
+                getattr(obj, method)(**args_dict)
+            except Exception as e:
+                LOGGER.debug(f"[CLEAN]this could be ignore {e}")
 
 
 class Variable(object):
@@ -33,15 +87,7 @@ class Variable(object):
     variable to distinguish federation by name
     """
 
-    __disable_auth_check = False
     __instances: typing.MutableMapping[str, "Variable"] = {}
-
-    @classmethod
-    def _disable_auth_check(cls):
-        """
-        used in auth conf generation, don't call this in real application
-        """
-        cls.__disable_auth_check = True
 
     @classmethod
     def get_or_create(
@@ -60,14 +106,6 @@ class Variable(object):
             raise RuntimeError(
                 f"{self.__instances[name]} with {name} already initialized, which expected to be an singleton object."
             )
-
-        if not self.__disable_auth_check:
-            auth_src, auth_dst = _check_variable_auth_conf(name)
-            if set(src) != set(auth_src) or set(dst) != set(auth_dst):
-                raise RuntimeError(
-                    f"Variable {name} auth error, "
-                    f"acquired: src={src}, dst={dst}, allowed: src={auth_src}, dst={auth_dst}"
-                )
 
         assert (
             len(name.split(".")) >= 3
