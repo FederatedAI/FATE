@@ -53,6 +53,7 @@ class BaseFlowClient:
         self.secret_key = secret_key if app_key and secret_key else None
 
     def _request(self, method, url, **kwargs):
+        stream = kwargs.pop('stream', self._http.stream)
         prepped = requests.Request(method, self.API_BASE_URL + url, **kwargs).prepare()
 
         if self.app_key and self.secret_key:
@@ -74,7 +75,7 @@ class BaseFlowClient:
             })
 
         try:
-            response = self._http.send(prepped)
+            response = self._http.send(prepped, stream=stream)
         except Exception as e:
             response = {
                 'retcode': 100,
