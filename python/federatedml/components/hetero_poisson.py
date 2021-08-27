@@ -17,18 +17,18 @@
 
 from .components import ComponentMeta
 
-hetero_possion_cpn_meta = ComponentMeta("HeteroPossion")
+hetero_poisson_cpn_meta = ComponentMeta("HeteroPoisson")
 
 
-@hetero_possion_cpn_meta.bind_param
-def hetero_possion_param():
+@hetero_poisson_cpn_meta.bind_param
+def hetero_poisson_param():
     from federatedml.param.poisson_regression_param import PoissonParam
 
     return PoissonParam
 
 
-@hetero_possion_cpn_meta.bind_runner.on_guest
-def hetero_possion_runner_guest():
+@hetero_poisson_cpn_meta.bind_runner.on_guest
+def hetero_poisson_runner_guest():
     from federatedml.linear_model.poisson_regression.hetero_poisson_regression.hetero_poisson_guest import (
         HeteroPoissonGuest,
     )
@@ -36,8 +36,8 @@ def hetero_possion_runner_guest():
     return HeteroPoissonGuest
 
 
-@hetero_possion_cpn_meta.bind_runner.on_host
-def hetero_possion_runner_host():
+@hetero_poisson_cpn_meta.bind_runner.on_host
+def hetero_poisson_runner_host():
     from federatedml.linear_model.poisson_regression.hetero_poisson_regression.hetero_poisson_host import (
         HeteroPoissonHost,
     )
@@ -45,8 +45,8 @@ def hetero_possion_runner_host():
     return HeteroPoissonHost
 
 
-@hetero_possion_cpn_meta.bind_runner.on_arbiter
-def hetero_possion_runner_arbiter():
+@hetero_poisson_cpn_meta.bind_runner.on_arbiter
+def hetero_poisson_runner_arbiter():
     from federatedml.linear_model.poisson_regression.hetero_poisson_regression.hetero_poisson_arbiter import (
         HeteroPoissonArbiter,
     )

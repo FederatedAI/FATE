@@ -74,9 +74,17 @@ def main(config="../../config.yaml", namespace=""):
                                learning_rate=0.15, decay=0.0, decay_sqrt=False,
                                init_param={"init_method": "zeros"},
                                encrypted_mode_calculator_param={"mode": "fast"},
-                               validation_freqs=1, early_stopping_rounds=5,
-                               metrics=["mean_absolute_error", "root_mean_squared_error"],
-                               use_first_metric_only=False)
+                               callback_param={"callbacks": ["EarlyStopping", "PerformanceEvaluate"],
+                                               "validation_freqs": 1,
+                                               "early_stopping_rounds": 5,
+                                               "metrics": [
+                                                   "mean_absolute_error",
+                                                   "root_mean_squared_error"
+                                               ],
+                                               "use_first_metric_only": False,
+                                               "save_freq": 1
+                                               }
+                               )
 
     pipeline.add_component(reader_0)
     pipeline.add_component(reader_1)
