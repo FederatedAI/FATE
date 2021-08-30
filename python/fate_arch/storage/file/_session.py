@@ -14,14 +14,14 @@
 #  limitations under the License.
 #
 
-from fate_arch.storage import StorageSessionBase
+from fate_arch.storage import StorageSessionBase, StorageEngine
 from fate_arch.abc import AddressABC
 from fate_arch.common.address import FileAddress
 
 
 class StorageSession(StorageSessionBase):
     def __init__(self, session_id, options=None):
-        super(StorageSession, self).__init__(session_id=session_id)
+        super(StorageSession, self).__init__(session_id=session_id, engine_name=StorageEngine.FILE)
         self.options = options
 
     def create(self):
