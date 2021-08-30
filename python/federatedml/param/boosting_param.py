@@ -22,6 +22,7 @@ from federatedml.param.encrypt_param import EncryptParam
 from federatedml.param.encrypted_mode_calculation_param import EncryptedModeCalculatorParam
 from federatedml.param.cross_validation_param import CrossValidationParam
 from federatedml.param.predict_param import PredictParam
+from federatedml.param.callback_param import CallbackParam
 from federatedml.util import consts, LOGGER
 import copy
 import collections
@@ -462,7 +463,8 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
                  complete_secure=False, metrics=None, use_first_metric_only=False, random_seed=100,
                  binning_error=consts.DEFAULT_RELATIVE_ERROR,
                  sparse_optimization=False, run_goss=False, top_rate=0.2, other_rate=0.1,
-                 cipher_compress_error=None, cipher_compress=True, new_ver=True):
+                 cipher_compress_error=None, cipher_compress=True, new_ver=True,
+                 callback_param=CallbackParam()):
 
         super(HeteroSecureBoostParam, self).__init__(task_type, objective_param, learning_rate, num_trees,
                                                      subsample_feature_rate, n_iter_no_change, tol, encrypt_param,
@@ -483,6 +485,7 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         self.cipher_compress_error = cipher_compress_error
         self.cipher_compress = cipher_compress
         self.new_ver = new_ver
+        self.callback_param = callback_param
 
     def check(self):
 
@@ -521,7 +524,7 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
                  complete_secure=False, tree_num_per_party=1, guest_depth=1, host_depth=1, work_mode='mix', metrics=None,
                  sparse_optimization=False, random_seed=100, binning_error=consts.DEFAULT_RELATIVE_ERROR,
                  cipher_compress_error=None, new_ver=True, run_goss=False, cipher_compress=True,
-                 top_rate=0.2, other_rate=0.1):
+                 top_rate=0.2, other_rate=0.1, callback_param=CallbackParam()):
 
         """
         work_mode：
@@ -556,6 +559,7 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
         self.guest_depth = guest_depth
         self.host_depth = host_depth
         self.work_mode = work_mode
+        self.callback_param = callback_param
 
     def check(self):
 
@@ -587,8 +591,8 @@ class HomoSecureBoostParam(BoostingParam):
                  learning_rate=0.3, num_trees=5, subsample_feature_rate=1, n_iter_no_change=True,
                  tol=0.0001, bin_num=32, predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  validation_freqs=None, use_missing=False, zero_as_missing=False, random_seed=100,
-                 binning_error=consts.DEFAULT_RELATIVE_ERROR, backend=consts.DISTRIBUTED_BACKEND
-                 ):
+                 binning_error=consts.DEFAULT_RELATIVE_ERROR, backend=consts.DISTRIBUTED_BACKEND,
+                 callback_param=CallbackParam()):
         super(HomoSecureBoostParam, self).__init__(task_type=task_type,
                                                    objective_param=objective_param,
                                                    learning_rate=learning_rate,
@@ -607,6 +611,7 @@ class HomoSecureBoostParam(BoostingParam):
         self.zero_as_missing = zero_as_missing
         self.tree_param = tree_param
         self.backend = backend
+        self.callback_param = callback_param
 
     def check(self):
         super(HomoSecureBoostParam, self).check()
