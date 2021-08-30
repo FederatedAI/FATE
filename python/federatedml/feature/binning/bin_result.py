@@ -139,6 +139,9 @@ class SplitPointsResult(object):
             split_points_result.append(self.split_results[col_name])
         return np.array(split_points_result)
 
+    def to_json(self):
+        return {k: list(v) for k, v in self.split_results.items()}
+
 
 class BinResults(object):
     def __init__(self):

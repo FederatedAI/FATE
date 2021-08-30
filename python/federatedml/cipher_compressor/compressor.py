@@ -64,6 +64,9 @@ class PackingCipherTensor(object):
             self.ciphers = ciphers
             self.dim = 1
 
+    # def __len__(self):
+    #     return self.dim
+
     def __add__(self, other):
 
         new_cipher_list = []
@@ -139,6 +142,7 @@ class NormalCipherPackage(CipherPackage):
     def unpack(self, decrypter):
 
         if type(decrypter) == PaillierEncrypt:
+            LOGGER.debug(f"cipher_text: {self._cipher_text}")
             compressed_plain_text = decrypter.privacy_key.raw_decrypt(self._cipher_text.ciphertext())
         elif type(decrypter) == IterativeAffineEncrypt:
             compressed_plain_text = decrypter.key.raw_decrypt(self._cipher_text)
@@ -195,6 +199,7 @@ class PackingCipherTensorPackage(CipherPackage):
 
     def unpack(self, decrypter):
 
+        LOGGER.debug('cwj package {}'.format(self.normal_package._cipher_text))
         compressed_part = self.normal_package.unpack(decrypter)
         de_rs = []
         if len(self.cached_list) != 0:
@@ -236,6 +241,7 @@ class CipherCompressorHost(object):
     def compress(self, encrypted_obj_list):
 
         rs = []
+        encrypted_obj_list = list(encrypted_obj_list)
         cur_package = self._package_class(self._padding_length, self._capacity)
         for c in encrypted_obj_list:
             if not cur_package.has_space():
