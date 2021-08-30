@@ -25,6 +25,7 @@ from pipeline.param import consts
 from pipeline.param.encrypt_param import EncryptParam
 from pipeline.param.encrypted_mode_calculation_param import EncryptedModeCalculatorParam
 from pipeline.param.predict_param import PredictParam
+from pipeline.param.callback_param import CallbackParam
 
 
 class FTLParam(BaseParam):
@@ -36,7 +37,7 @@ class FTLParam(BaseParam):
                  encrypte_param=EncryptParam(),
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(mode="confusion_opt"),
                  predict_param=PredictParam(), mode='plain', communication_efficient=False,
-                 local_round=5,):
+                 local_round=5, callback_param=CallbackParam()):
 
         """
         Args:
@@ -92,6 +93,7 @@ class FTLParam(BaseParam):
         self.mode = mode
         self.communication_efficient = communication_efficient
         self.local_round = local_round
+        self.callback_param = callback_param
 
     def check(self):
         self.intersect_param.check()
@@ -129,7 +131,10 @@ class FTLParam(BaseParam):
 
         assert type(self.communication_efficient) is bool, 'communication efficient must be a boolean'
         assert self.mode in ['encrypted', 'plain'], 'mode options: encrpyted or plain, but {} is offered'.format(self.mode)
-        assert type(self.epochs) == int and self.epochs > 0
+
+        self.check_positive_integer(self.epochs, 'epochs')
+        self.check_positive_number(self.alpha, 'alpha')
+        self.check_positive_integer(self.local_round, 'local round')
 
     @staticmethod
     def _parse_optimizer(opt):

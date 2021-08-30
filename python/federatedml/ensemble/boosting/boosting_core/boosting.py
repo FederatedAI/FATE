@@ -90,7 +90,6 @@ class Boosting(ModelBase, ABC):
         self.loss = None   # loss func
         self.predict_y_hat = None  # accumulated predict value for predicting mode
         self.history_loss = []  # list holds loss history
-        self.validation_strategy = None
         self.metrics = None
         self.is_converged = False
 
@@ -272,17 +271,6 @@ class Boosting(ModelBase, ABC):
     Functions
     """
 
-    def init_validation_strategy(self, train_data=None, validate_data=None):
-        """
-        initialize validation_strategy
-        """
-        validation_strategy = ValidationStrategy(self.role, self.mode, self.validation_freqs,
-                                                 self.early_stopping_rounds, self.use_first_metric_only, arbiter_comm=False)
-
-        validation_strategy.set_train_data(train_data)
-        validation_strategy.set_validate_data(validate_data)
-        return validation_strategy
-
     def cross_validation(self, data_instances):
         return start_cross_validation.run(self, data_instances)
 
@@ -360,28 +348,6 @@ class Boosting(ModelBase, ABC):
             self.convergence = converge_func_factory("diff", self.tol)
 
         return self.convergence.is_converge(loss)
-
-    def check_stop_condition(self, loss):
-
-        """
-        check early stopping and loss convergence
-        """
-
-        should_stop_a, should_stop_b = False, False
-
-        if self.validation_strategy is not None:
-            if self.validation_strategy.need_stop():
-                should_stop_a = True
-
-        if self.n_iter_no_change and self.check_convergence(loss):
-            should_stop_b = True
-            self.is_converged = True
-
-        if should_stop_a or should_stop_b:
-            LOGGER.debug('stop triggered, stop triggered by {}'.
-                         format('early stop' if should_stop_a else 'n_iter_no change'))
-
-        return should_stop_a or should_stop_b
 
     @staticmethod
     def accumulate_y_hat(val, new_val, lr=0.1, idx=0):

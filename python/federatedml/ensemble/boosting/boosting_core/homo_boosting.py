@@ -95,7 +95,7 @@ class HomoBoostingClient(Boosting, ABC):
         self.sync_feature_num()
 
         # initialize validation strategy
-        self.validation_strategy = self.init_validation_strategy(train_data=data_inst, validate_data=validate_data, )
+        self.callback_list.on_train_begin(data_inst, validate_data)
 
         # check labels
         local_classes = self.check_label(self.data_bin)
@@ -126,6 +126,8 @@ class HomoBoostingClient(Boosting, ABC):
 
             LOGGER.info('cur epoch idx is {}'.format(epoch_idx))
 
+            self.callback_list.on_epoch_begin(epoch_idx)
+
             for class_idx in range(self.booster_dim):
 
                 # fit a booster
@@ -142,9 +144,10 @@ class HomoBoostingClient(Boosting, ABC):
             local_loss = self.compute_loss(self.y_hat, self.y)
             self.aggregator.send_local_loss(local_loss, self.data_bin.count(), suffix=(epoch_idx,))
 
-            if self.validation_strategy:
-                self.validation_strategy.validate(self, epoch_idx, use_precomputed_train=True,
-                                                  train_scores=self.score_to_predict_result(data_inst, self.y_hat))
+            validation_strategy = self.callback_list.get_validation_strategy()
+            if validation_strategy:
+                validation_strategy.set_precomputed_train_scores(self.score_to_predict_result(data_inst, self.y_hat))
+            self.callback_list.on_epoch_end(epoch_idx)
 
             # check stop flag if n_iter_no_change is True
             if self.n_iter_no_change:

@@ -25,6 +25,7 @@ from federatedml.util import consts
 from federatedml.param.encrypt_param import EncryptParam
 from federatedml.param.encrypted_mode_calculation_param import EncryptedModeCalculatorParam
 from federatedml.param.predict_param import PredictParam
+from federatedml.param.callback_param import CallbackParam
 
 
 class FTLParam(BaseParam):
@@ -36,7 +37,7 @@ class FTLParam(BaseParam):
                  encrypte_param=EncryptParam(),
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(mode="confusion_opt"),
                  predict_param=PredictParam(), mode='plain', communication_efficient=False,
-                 local_round=5,):
+                 local_round=5, callback_param=CallbackParam()):
 
         """
         Args:
@@ -92,6 +93,7 @@ class FTLParam(BaseParam):
         self.mode = mode
         self.communication_efficient = communication_efficient
         self.local_round = local_round
+        self.callback_param = callback_param
 
     def check(self):
         self.intersect_param.check()

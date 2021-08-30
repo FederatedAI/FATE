@@ -150,10 +150,10 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
     def generate_summary(self) -> dict:
 
         summary = {'loss_history': self.history_loss,
-                   'best_iteration': -1 if not self.validation_strategy else self.validation_strategy.best_iteration,
+                   'best_iteration': self.callback_variables.best_iteration,
                    'feature_importance': self.make_readable_feature_importance(self.feature_name_fid_mapping,
                                                                                self.feature_importances_),
-                   'validation_metrics': None if not self.validation_strategy else self.validation_strategy.summary(),
+                   'validation_metrics': self.callback_variables.validation_summary,
                    'is_converged': self.is_converged}
 
         return summary
@@ -412,7 +412,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         model_param.classes_.extend(map(str, self.classes_))
         model_param.num_classes = self.num_classes
         model_param.model_name = consts.HETERO_SBT
-        model_param.best_iteration = -1 if self.validation_strategy is None else self.validation_strategy.best_iteration
+        model_param.best_iteration = self.callback_variables.best_iteration
 
         feature_importances = list(self.feature_importances_.items())
         feature_importances = sorted(feature_importances, key=itemgetter(1), reverse=True)

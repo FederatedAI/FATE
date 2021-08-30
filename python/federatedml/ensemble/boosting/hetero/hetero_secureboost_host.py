@@ -134,7 +134,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
 
     def generate_summary(self) -> dict:
 
-        summary = {'best_iteration': self.validation_strategy.best_iteration, 'is_converged': self.is_converged}
+        summary = {'best_iteration': self.callback_variables.best_iteration, 'is_converged': self.is_converged}
 
         LOGGER.debug('summary is {}'.format(summary))
 
@@ -239,7 +239,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         model_param.anonymous_name_mapping.update(anonymous_name_mapping)
         model_param.feature_name_fid_mapping.update(self.feature_name_fid_mapping)
         model_param.model_name = consts.HETERO_SBT
-        model_param.best_iteration = -1 if self.validation_strategy is None else self.validation_strategy.best_iteration
+        model_param.best_iteration = self.callback_variables.best_iteration
 
         param_name = "HeteroSecureBoostingTreeHostParam"
 
