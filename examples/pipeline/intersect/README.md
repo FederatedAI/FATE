@@ -32,21 +32,17 @@ This section introduces the Pipeline scripts for different types of tasks.
 
     script: pipeline-intersect-multi-raw.py
 
-8. Repeated-id Intersection:
-
-    script: pipeline-intersect-repeated-id.py
-
-9. DH Intersection:
+8. DH Intersection:
 
     script: pipeline-intersect-dh.py
 
-10. DH Multi-host Intersection:  
+9. DH Multi-host Intersection:  
     script: pipeline-intersect-dh-multi.py
 
-11. RAW Intersect of 200 Union Components as Input:
+10. RAW Intersect of 200 Union Components as Input:
     script: pipeline-intersect-with-union.py
 
-12. RSA Intersect with Cache:
+11. RSA Intersect with Cache:
     script: pipeline-intersect-rsa-cache.py
  
 12. DH Intersect with Cache:
