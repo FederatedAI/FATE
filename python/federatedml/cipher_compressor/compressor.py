@@ -199,7 +199,6 @@ class PackingCipherTensorPackage(CipherPackage):
 
     def unpack(self, decrypter):
 
-        LOGGER.debug('cwj package {}'.format(self.normal_package._cipher_text))
         compressed_part = self.normal_package.unpack(decrypter)
         de_rs = []
         if len(self.cached_list) != 0:
