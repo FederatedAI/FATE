@@ -235,6 +235,19 @@ def client_export_model(self):
     return _build_model_dict(meta=client_get_meta(self), param=client_get_param(self))
 
 
+def arbiter_export_model(self):
+    return _build_model_dict(meta=arbiter_get_meta(self), param=arbiter_get_param(self))
+
+
+def arbiter_get_meta(self):
+    from federatedml.protobuf.generated import nn_model_meta_pb2
+
+    meta_pb = nn_model_meta_pb2.NNModelMeta()
+    meta_pb.params.CopyFrom(self.model_param.generate_pb())
+    meta_pb.aggregate_iter = self.aggregate_iteration_num
+    return meta_pb
+
+
 def client_get_meta(self):
     from federatedml.protobuf.generated import nn_model_meta_pb2
 
@@ -255,8 +268,15 @@ def client_get_param(self):
     return param_pb
 
 
-def client_load_model(self, meta_obj, model_obj):
-    self.model_param.restore_from_pb(meta_obj.params)
+def arbiter_get_param(self):
+    from federatedml.protobuf.generated import nn_model_param_pb2
+
+    param_pb = nn_model_param_pb2.NNModelParam()
+    return param_pb
+
+
+def client_load_model(self, meta_obj, model_obj, is_warm_start_mode):
+    self.model_param.restore_from_pb(meta_obj.params, is_warm_start_mode)
     client_set_params(self, self.model_param)
     self.aggregate_iteration_num = meta_obj.aggregate_iter
     self.nn_model = restore_nn_model(self.config_type, model_obj.saved_model_bytes)
@@ -266,6 +286,11 @@ def client_load_model(self, meta_obj, model_obj):
         label = json.loads(item.label)
         mapped = json.loads(item.mapped)
         self._label_align_mapping[label] = mapped
+
+
+def arbiter_load_model(self, meta_obj, model_obj, is_warm_start_mode):
+    self.model_param.restore_from_pb(meta_obj.params, is_warm_start_mode)
+    self.aggregate_iteration_num = meta_obj.aggregate_iter
 
 
 def client_predict(self, data_inst):

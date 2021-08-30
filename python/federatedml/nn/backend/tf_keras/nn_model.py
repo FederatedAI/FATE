@@ -87,10 +87,6 @@ def _init_session():
     return sess
 
 
-def _load_model(nn_struct_json):
-    return tf.keras.models.model_from_json(nn_struct_json, custom_objects={})
-
-
 def _modify_model_input_shape(nn_struct, input_shape):
     import copy
     import json
@@ -121,31 +117,19 @@ def _modify_model_input_shape(nn_struct, input_shape):
 
 
 def build_keras(nn_define, loss, optimizer, metrics, **kwargs):
+    _init_session()
     nn_define_json = _modify_model_input_shape(
         nn_define, kwargs.get("input_shape", None)
     )
-
-    sess = _init_session()
-
-    model = _load_model(nn_struct_json=nn_define_json)
-    model = _compile_model(model=model, loss=loss, optimizer=optimizer, metrics=metrics)
-    return KerasNNModel(sess, model)
-
-
-def from_keras_sequential_model(model, loss, optimizer, metrics):
-    sess = _init_session()
-
-    model = _compile_model(model=model, loss=loss, optimizer=optimizer, metrics=metrics)
-    return KerasNNModel(sess, model)
-
-
-def restore_keras_nn_model(model_bytes):
-    return KerasNNModel.restore_model(model_bytes)
+    model = tf.keras.models.model_from_json(nn_define_json, custom_objects={})
+    keras_model = KerasNNModel(model)
+    keras_model.compile(loss=loss, optimizer=optimizer, metrics=metrics)
+    return keras_model
 
 
 class KerasNNModel(NNModel):
-    def __init__(self, sess, model):
-        self._sess: tf.Session = sess
+    def __init__(self, model):
+        self._sess: tf.Session = _init_session()
         self._model: tf.keras.Sequential = model
         self._trainable_weights = {
             self._trim_device_str(v.name): v for v in self._model.trainable_weights
@@ -153,6 +137,13 @@ class KerasNNModel(NNModel):
 
         self._initialize_variables()
         self._loss = None
+
+    def compile(self, loss, optimizer, metrics):
+        optimizer_instance = getattr(tf.keras.optimizers, optimizer.optimizer)(
+            **optimizer.kwargs
+        )
+        loss_fn = getattr(losses, loss)
+        self._model.compile(optimizer=optimizer_instance, loss=loss_fn, metrics=metrics)
 
     def _initialize_variables(self):
         uninitialized_var_names = [
@@ -288,7 +279,6 @@ class KerasNNModel(NNModel):
     def restore_model(
         model_bytes,
     ):  # todo: restore optimizer to support incremental learning
-        sess = _init_session()
         model_base = "./restore_model"
         if not os.path.exists(model_base):
             os.mkdir(model_base)
@@ -317,7 +307,7 @@ class KerasNNModel(NNModel):
 
         model = load_model(f"{model_path}")
 
-        return KerasNNModel(sess, model)
+        return KerasNNModel(model)
 
     def export_optimizer_config(self):
         return self._model.optimizer.get_config()
