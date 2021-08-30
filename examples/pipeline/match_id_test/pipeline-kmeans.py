@@ -39,8 +39,8 @@ def main(config="../../config.yaml", namespace=""):
     backend = config.backend
     work_mode = config.work_mode
 
-    guest_train_data = {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"}
-    host_train_data = {"name": "breast_hetero_host", "namespace": f"experiment{namespace}"}
+    guest_train_data = {"name": "breast_hetero_guest", "namespace": f"experiment_sid{namespace}"}
+    host_train_data = {"name": "breast_hetero_host", "namespace": f"experiment_sid{namespace}"}
 
     # initialize pipeline
     pipeline = PipeLine()
@@ -56,7 +56,7 @@ def main(config="../../config.yaml", namespace=""):
     # configure Reader for host
     reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
 
-    data_transform_0 = DataTransform(name="data_transform_0", with_match_id=True, match_id_name="id")
+    data_transform_0 = DataTransform(name="data_transform_0", with_match_id=True)
     data_transform_0_guest_party_instance = data_transform_0.get_party_instance(role='guest', party_id=guest)
     # configure DataIO for guest
     data_transform_0_guest_party_instance.component_param(with_label=True, output_format="dense")

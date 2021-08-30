@@ -5,7 +5,7 @@
             "head": 1,
             "partition": 16,
             "table_name": "breast_hetero_guest",
-            "namespace": "experiment",
+            "namespace": "experiment_sid",
             "role": "guest_0"
         },
         {
@@ -13,7 +13,7 @@
             "head": 1,
             "partition": 16,
             "table_name": "breast_hetero_host",
-            "namespace": "experiment",
+            "namespace": "experiment_sid",
             "role": "host_0"
         },
         {
@@ -21,7 +21,7 @@
             "head": 1,
             "partition": 16,
             "table_name": "breast_homo_guest",
-            "namespace": "experiment",
+            "namespace": "experiment_sid",
             "role": "guest_0"
         },
         {
@@ -29,7 +29,7 @@
             "head": 1,
             "partition": 16,
             "table_name": "breast_homo_host",
-            "namespace": "experiment",
+            "namespace": "experiment_sid",
             "role": "host_0"
         },
         {
@@ -37,7 +37,7 @@
             "head": 1,
             "partition": 16,
             "table_name": "breast_homo_test",
-            "namespace": "experiment",
+            "namespace": "experiment_sid",
             "role": "guest_0"
         },
         {
@@ -45,7 +45,7 @@
             "head": 1,
             "partition": 16,
             "table_name": "breast_homo_test",
-            "namespace": "experiment",
+            "namespace": "experiment_sid",
             "role": "host_0"
         }
     ],
@@ -57,7 +57,7 @@
             "script": "./pipeline-label-transform.py"
         },
         "feature-imputation": {
-            "script": "./pipeline-feature-imputation.py"
+            "script": "./pipeline-feature-imputation-designated.py"
         },
         "feldman-verifiable-sum": {
             "script": "./pipeline-feldman-verifiable-sum.py"
@@ -69,16 +69,13 @@
             "script": "./pipeline-hetero-lr-feature-engineering.py"
         },
         "homo-lr-sample-weights": {
-            "script": "./pipeline-homo-lr-sample-wegihts.py"
+            "script": "./pipeline-homo-lr-sample-weights.py"
         },
         "homo-lr-train-eval": {
             "script": "./pipeline-homo-lr-train-eval.py"
         },
         "kmeans": {
             "script": "./pipeline-kmeans.py"
-        },
-        "hetero-label-transform": {
-            "script": "./pipeline-label-transform.py"
         }
     }
 }

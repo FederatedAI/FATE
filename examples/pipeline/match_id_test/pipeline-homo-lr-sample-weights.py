@@ -40,8 +40,8 @@ def main(config="../../config.yaml", namespace=""):
     backend = config.backend
     work_mode = config.work_mode
 
-    guest_train_data = {"name": "breast_homo_guest", "namespace": f"experiment{namespace}"}
-    host_train_data = {"name": "breast_homo_host", "namespace": f"experiment{namespace}"}
+    guest_train_data = {"name": "breast_homo_guest", "namespace": f"experiment_sid{namespace}"}
+    host_train_data = {"name": "breast_homo_host", "namespace": f"experiment_sid{namespace}"}
 
     # initialize pipeline
     pipeline = PipeLine()
@@ -58,7 +58,7 @@ def main(config="../../config.yaml", namespace=""):
     reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
 
     # define DataIO components
-    data_transform_0 = DataTransform(name="data_transform_0", with_match_id=True, match_id_name="id",
+    data_transform_0 = DataTransform(name="data_transform_0", with_match_id=True,
                              with_label=True, output_format="dense")  # start component numbering at 0
 
     scale_0 = FeatureScale(name='scale_0')
