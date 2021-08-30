@@ -116,10 +116,6 @@ def build_optimzer(optim, model):
         print("not support")
 
 
-def restore_pytorch_nn_model(model_bytes):
-    return PytorchNNModel.restore_model(model_bytes)
-
-
 class PytorchNNModel(NNModel):
     def __init__(self, model, optimizer=None, loss=None, metrics=None):
         self._model: torch.nn.Sequential = model

@@ -47,8 +47,9 @@ def server_init_model(self, param):
 
 
 def server_fit(self, data_inst):
-    label_mapping = HomoLabelEncoderArbiter().label_alignment()
-    LOGGER.info(f"label mapping: {label_mapping}")
+    if not self.component_properties.is_warm_start:
+        label_mapping = HomoLabelEncoderArbiter().label_alignment()
+        LOGGER.info(f"label mapping: {label_mapping}")
     while self.aggregate_iteration_num < self.max_aggregate_iteration_num:
         self.model = self.aggregator.weighted_mean_model(suffix=_suffix(self))
         self.aggregator.send_aggregated_model(model=self.model, suffix=_suffix(self))
@@ -137,20 +138,22 @@ def client_init_model(self, param):
 
 def client_fit(self, data_inst):
     self._header = data_inst.schema["header"]
-    client_align_labels(self, data_inst=data_inst)
+    if not self.component_properties.is_warm_start:
+        client_align_labels(self, data_inst=data_inst)
     data = self.data_converter.convert(
         data_inst,
         batch_size=self.batch_size,
         encode_label=self.encode_label,
         label_mapping=self._label_align_mapping,
     )
-    self.nn_model = self.model_builder(
-        input_shape=data.get_shape()[0],
-        nn_define=self.nn_define,
-        optimizer=self.optimizer,
-        loss=self.loss,
-        metrics=self.metrics,
-    )
+    if not self.component_properties.is_warm_start:
+        self.nn_model = self.model_builder(
+            input_shape=data.get_shape()[0],
+            nn_define=self.nn_define,
+            optimizer=self.optimizer,
+            loss=self.loss,
+            metrics=self.metrics,
+        )
 
     epoch_degree = float(len(data)) * self.aggregate_every_n_epoch
 
