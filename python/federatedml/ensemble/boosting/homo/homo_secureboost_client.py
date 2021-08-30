@@ -239,7 +239,7 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
 
         summary = {'feature_importance': make_readable_feature_importance(self.feature_name_fid_mapping,
                                                                           self.feature_importance),
-                   'validation_metrics': None if not self.validation_strategy else self.validation_strategy.summary()}
+                   'validation_metrics': self.callback_variables.validation_summary}
 
         return summary
 

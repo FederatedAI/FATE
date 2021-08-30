@@ -150,10 +150,10 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
     def generate_summary(self) -> dict:
 
         summary = {'loss_history': self.history_loss,
-                   'best_iteration': -1 if not self.validation_strategy else self.validation_strategy.best_iteration,
+                   'best_iteration': self.callback_variables.best_iteration,
                    'feature_importance': self.make_readable_feature_importance(self.feature_name_fid_mapping,
                                                                                self.feature_importances_),
-                   'validation_metrics': None if not self.validation_strategy else self.validation_strategy.summary(),
+                   'validation_metrics': self.callback_variables.validation_summary,
                    'is_converged': self.is_converged}
 
         return summary

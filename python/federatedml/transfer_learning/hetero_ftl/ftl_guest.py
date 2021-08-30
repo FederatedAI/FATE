@@ -255,9 +255,8 @@ class FTLGuest(FTL):
     def generate_summary(self):
 
         summary = {'loss_history': self.history_loss,
-                   "best_iteration": -1 if self.validation_strategy is None else self.validation_strategy.best_iteration}
-        if self.validation_strategy:
-            summary['validation_metrics'] = self.validation_strategy.summary()
+                   "best_iteration": self.callback_variables.best_iteration}
+        summary['validation_metrics'] = self.callback_variables.validation_summary
 
         return summary
 

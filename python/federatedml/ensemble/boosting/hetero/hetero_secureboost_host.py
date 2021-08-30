@@ -134,7 +134,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
 
     def generate_summary(self) -> dict:
 
-        summary = {'best_iteration': self.validation_strategy.best_iteration, 'is_converged': self.is_converged}
+        summary = {'best_iteration': self.callback_variables.best_iteration, 'is_converged': self.is_converged}
 
         LOGGER.debug('summary is {}'.format(summary))
 

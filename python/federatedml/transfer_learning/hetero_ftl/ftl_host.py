@@ -205,7 +205,7 @@ class FTLHost(FTL):
 
     def generate_summary(self):
 
-        summary = {"best_iteration": -1 if self.validation_strategy is None else self.validation_strategy.best_iteration}
+        summary = {"best_iteration": self.callback_variables.best_iteration}
         return summary
 
     @assert_io_num_rows_equal
