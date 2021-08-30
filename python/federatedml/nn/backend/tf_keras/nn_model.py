@@ -70,16 +70,6 @@ def _zip_dir_as_bytes(path):
     return zip_bytes
 
 
-def _compile_model(model, loss, optimizer, metrics):
-    optimizer_instance = getattr(tf.keras.optimizers, optimizer.optimizer)(
-        **optimizer.kwargs
-    )
-    # losses = getattr(tf.keras.losses, loss)
-    loss_fn = getattr(losses, loss)
-    model.compile(loss=loss_fn, optimizer=optimizer_instance, metrics=metrics)
-    return model
-
-
 def _init_session():
     sess = backend.get_session()
     get_default_graph()

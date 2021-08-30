@@ -123,6 +123,11 @@ class PytorchNNModel(NNModel):
         self._loss = loss
         self._metrics = metrics
 
+    def compile(self, loss, optimizer, metrics):
+        self._optimizer = optimizer
+        self._loss = loss
+        self._metrics = metrics
+
     def get_model_weights(self) -> OrderDictWeights:
         return OrderDictWeights(self._model.state_dict())
 

@@ -115,7 +115,7 @@ def get_nn_builder(config_type):
 
 
 def restore_nn_model(config_type, model_bytes):
-    if config_type == "nn" or "kears":
+    if config_type == "nn" or config_type == "keras":
         from federatedml.nn.backend.tf_keras.nn_model import KerasNNModel
 
         return KerasNNModel.restore_model(model_bytes)

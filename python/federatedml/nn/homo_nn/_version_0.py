@@ -283,6 +283,10 @@ def client_load_model(self, meta_obj, model_obj, is_warm_start_mode):
     client_set_params(self, self.model_param)
     self.aggregate_iteration_num = meta_obj.aggregate_iter
     self.nn_model = restore_nn_model(self.config_type, model_obj.saved_model_bytes)
+    if self.component_properties.is_warm_start:
+        self.nn_model.compile(
+            loss=self.loss, optimizer=self.optimizer, metrics=self.metrics
+        )
     self._header = list(model_obj.header)
     self._label_align_mapping = {}
     for item in model_obj.label_mapping:
