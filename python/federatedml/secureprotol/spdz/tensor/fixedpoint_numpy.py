@@ -31,13 +31,15 @@ class FixedPointEndec(object):
 
     def decode(self, integer_tensor: np.ndarray):
         value = integer_tensor % self.field
-        gate = value > self.field / 2
+        gate = value > self.field // 2
         neg_nums = (value - self.field) * gate
         pos_nums = value * (1 - gate)
         result = (neg_nums + pos_nums) / (self.base ** self.precision_fractional)
         return result
 
     def encode(self, float_tensor, check_range=True):
+        if isinstance(float_tensor, (float, np.float)):
+            float_tensor = np.array(float_tensor)
         if isinstance(float_tensor, np.ndarray):
             upscaled = (float_tensor * self.base ** self.precision_fractional).astype(np.int64)
             if check_range:
@@ -47,7 +49,7 @@ class FixedPointEndec(object):
 
             field_element = upscaled % self.field
             return field_element
-        if is_table(float_tensor):
+        elif is_table(float_tensor):
             s = self.base ** self.precision_fractional
             upscaled = float_tensor.mapValues(lambda x: (x * s).astype(np.int64))
             if check_range:
@@ -56,6 +58,8 @@ class FixedPointEndec(object):
                 )
             field_element = upscaled.mapValues(lambda x: x % self.field)
             return field_element
+        else:
+            raise ValueError(f"unsupported type: {type(float_tensor)}")
 
     def truncate(self, integer_tensor, idx=0):
         if idx == 0:
@@ -76,10 +80,14 @@ class FixedPointTensor(TensorBase):
     def shape(self):
         return self.value.shape
 
+    def reshape(self, shape):
+        return self._boxed(self.value.reshape(shape))
+
     def dot(self, other, target_name=None):
         return self.einsum(other, "ij,ik->jk", target_name)
 
-    def sub_matrix(self, tensor_name: str, row_indices=None, col_indices=None, rm_row_indices=None, rm_col_indices=None):
+    def sub_matrix(self, tensor_name: str, row_indices=None, col_indices=None, rm_row_indices=None,
+                   rm_col_indices=None):
         if row_indices is not None:
             x_indices = list(row_indices)
         elif row_indices is None and rm_row_indices is not None:
@@ -111,9 +119,11 @@ class FixedPointTensor(TensorBase):
         if isinstance(source, np.ndarray):
             source = encoder.encode(source)
             _pre = urand_tensor(q_field, source)
+            # assert 1 == 2, f"q_field: {q_field}, _pre: {_pre.max()}"
             spdz.communicator.remote_share(share=_pre, tensor_name=tensor_name, party=spdz.other_parties[0])
             for _party in spdz.other_parties[1:]:
                 r = urand_tensor(q_field, source)
+                r = encoder.encode(r)
                 spdz.communicator.remote_share(share=r - _pre, tensor_name=tensor_name, party=_party)
                 _pre = r
             share = source - _pre
@@ -122,6 +132,20 @@ class FixedPointTensor(TensorBase):
         else:
             raise ValueError(f"type={type(source)}")
         return FixedPointTensor(share, spdz.q_field, encoder, tensor_name)
+
+    @classmethod
+    def from_value(cls, value, **kwargs):
+        spdz = cls.get_spdz()
+        q_field = kwargs['q_field'] if 'q_field' in kwargs else spdz.q_field
+        if 'encoder' in kwargs:
+            encoder = kwargs['encoder']
+        else:
+            base = kwargs['base'] if 'base' in kwargs else 10
+            frac = kwargs['frac'] if 'frac' in kwargs else 4
+            encoder = FixedPointEndec(q_field, base, frac)
+        tensor_name = kwargs.get("tensor_name")
+        # return FixedPointTensor(value, q_field, encoder, tensor_name)
+        return cls(value, q_field, encoder, tensor_name)
 
     def einsum(self, other: 'FixedPointTensor', einsum_expr, target_name=None):
         spdz = self.get_spdz()
@@ -168,6 +192,35 @@ class FixedPointTensor(TensorBase):
             share_val %= self.q_field
         return share_val
 
+    def reconstruct_unilateral(self, tensor_name=None):
+        from federatedml.secureprotol.spdz import SPDZ
+        spdz = SPDZ.get_instance()
+        share_val = self.value
+        name = tensor_name or self.tensor_name
+        if name is None:
+            raise ValueError("name not specified")
+        # get shares from other parties
+        for other_share in spdz.communicator.get_rescontruct_shares(name):
+            share_val = share_val + other_share
+
+        share_val = self.endec.decode(share_val)
+        return share_val
+
+    def transpose(self):
+        value = self.value.transpose()
+        return self._boxed(value)
+
+    def broadcast_reconstruct_share(self, tensor_name=None):
+        from federatedml.secureprotol.spdz import SPDZ
+        spdz = SPDZ.get_instance()
+        share_val = self.value
+        name = tensor_name or self.tensor_name
+        if name is None:
+            raise ValueError("name not specified")
+        # remote share to other parties
+        spdz.communicator.broadcast_rescontruct_share(share_val, name)
+        return share_val
+
     def _boxed(self, value, tensor_name=None):
         return FixedPointTensor(value=value, q_field=self.q_field, endec=self.endec, tensor_name=tensor_name)
 
@@ -178,17 +231,20 @@ class FixedPointTensor(TensorBase):
         return self.__str__()
 
     def _raw_add(self, other):
-        z_value = (self.value + other) % self.q_field
+        # z_value = (self.value + other) % self.q_field
+        z_value = (self.value + other)
         return self._boxed(z_value)
 
     def _raw_sub(self, other):
-        z_value = (self.value - other) % self.q_field
+        # z_value = (self.value - other) % self.q_field
+        z_value = (self.value - other)
         return self._boxed(z_value)
 
     def __add__(self, other):
         if isinstance(other, FixedPointTensor):
             return self._raw_add(other.value)
-        z_value = (self.value + self.endec.encode(other / 2)) % self.q_field
+        # z_value = (self.value + self.endec.encode(other / 2)) % self.q_field
+        z_value = (self.value + self.endec.encode(other / 2))
         return self._boxed(z_value)
 
     def __radd__(self, other):
@@ -198,7 +254,8 @@ class FixedPointTensor(TensorBase):
     def __sub__(self, other):
         if isinstance(other, FixedPointTensor):
             return self._raw_sub(other.value)
-        z_value = (self.value - self.endec.encode(other / 2)) % self.q_field
+        # z_value = (self.value - self.endec.encode(other / 2)) % self.q_field
+        z_value = (self.value - self.endec.encode(other / 2))
         return self._boxed(z_value)
 
     def __rsub__(self, other):
@@ -206,14 +263,40 @@ class FixedPointTensor(TensorBase):
         return self._boxed(z_value)
 
     def __mul__(self, other):
-        if not isinstance(other, (int, np.integer)):
-            raise NotImplementedError("__mul__ support integer only")
+        # if not isinstance(other, (int, np.integer)):
+        #     raise NotImplementedError("__mul__ support integer only")
         return self._boxed(self.value * other)
 
     def __rmul__(self, other):
-        if not isinstance(other, (int, np.integer)):
-            raise NotImplementedError("__rmul__ support integer only")
+        # if not isinstance(other, (int, np.integer)):
+        #     raise NotImplementedError("__rmul__ support integer only")
         return self._boxed(self.value * other)
 
     def __matmul__(self, other):
         return self.einsum(other, "ij,jk->ik")
+
+
+class PaillierFixedPointTensor(FixedPointTensor):
+
+    def _raw_add(self, other):
+        z_value = (self.value + other)
+        return self._boxed(z_value)
+
+    def _raw_sub(self, other):
+        z_value = (self.value - other)
+        return self._boxed(z_value)
+
+    def _boxed(self, value, tensor_name=None):
+        return PaillierFixedPointTensor(value=value, q_field=self.q_field, endec=self.endec, tensor_name=tensor_name)
+
+    def __add__(self, other):
+        if isinstance(other, FixedPointTensor):
+            return self._raw_add(other.value)
+        else:
+            return self._raw_add(other)
+
+    def __radd__(self, other):
+        if isinstance(other, FixedPointTensor):
+            return self._raw_add(other.value)
+        else:
+            return self._raw_add(other)

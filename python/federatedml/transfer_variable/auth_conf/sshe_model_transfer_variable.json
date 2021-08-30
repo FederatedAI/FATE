@@ -1,0 +1,82 @@
+{
+  "federatedml.transfer_variable.transfer_class.sshe_model_transfer_variable.SSHEModelTransferVariable": {
+    "share_matrix": {
+      "src": [
+        "guest",
+        "host"
+      ],
+      "dst": [
+        "host",
+        "guest"
+      ]
+    },
+    "encrypted_share_matrix": {
+      "src": [
+        "guest",
+        "host"
+      ],
+      "dst": [
+        "host",
+        "guest"
+      ]
+    },
+    "share_error": {
+      "src": [
+        "host"
+      ],
+      "dst": [
+        "guest"
+      ]
+    },
+    "host_prob": {
+      "src": [
+        "host"
+      ],
+      "dst": [
+        "guest"
+      ]
+    },
+    "pubkey": {
+      "src": [
+        "guest",
+        "host"
+      ],
+      "dst": [
+        "host",
+        "guest"
+      ]
+    },
+    "encrypted_host_weights": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "host"
+      ]
+    },
+    "loss": {
+      "src": [
+        "host"
+      ],
+      "dst": [
+        "guest"
+      ]
+    },
+    "is_converged": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "host"
+      ]
+    },
+    "wxy_sum": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "host"
+      ]
+    }
+  }
+}
