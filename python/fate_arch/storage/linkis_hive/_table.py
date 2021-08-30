@@ -117,15 +117,12 @@ class StorageTable(StorageTableBase):
         return count
 
     def collect(self, **kwargs):
-        from fate_arch.common.log import schedule_logger
         if kwargs.get("is_spark"):
             from pyspark.sql import SparkSession
             session = SparkSession.builder.enableHiveSupport().getOrCreate()
             data = session.sql(f"select * from {self._address.database}.{self._address.name}")
-            schedule_logger('wzh_test').info(data)
             return data
         else:
-            schedule_logger('wzh_test').info(f"no spark")
             sql = 'select * from {}.{}'.format(self._address.database, self._address.name)
             data = self.execute(sql)
             for i in data:
