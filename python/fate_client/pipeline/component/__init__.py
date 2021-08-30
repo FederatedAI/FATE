@@ -36,6 +36,7 @@ from pipeline.component.label_transform import LabelTransform
 
 from pipeline.component.secure_information_retrieval import SecureInformationRetrieval
 from pipeline.component.cache_loader import CacheLoader
+from pipeline.component.model_loader import ModelLoader
 
 __all__ = ["DataStatistics", "DataIO", "Evaluation", "HeteroDataSplit",
            "HeteroFastSecureBoost", "HeteroFeatureBinning", "HeteroFeatureSelection",
@@ -45,5 +46,5 @@ __all__ = ["DataStatistics", "DataIO", "Evaluation", "HeteroDataSplit",
            "LocalBaseline", "OneHotEncoder", "PSI", "Reader", "Scorecard",
            "FederatedSample", "FeatureScale", "Union", "ColumnExpand", "FeldmanVerifiableSum",
            "SampleWeight", "DataTransform", "SBTTransformer", "FeatureImputation",
-           "LabelTransform", "SecureInformationRetrieval", "CacheLoader"]
+           "LabelTransform", "SecureInformationRetrieval", "CacheLoader", "ModelLoader"]
 
