@@ -178,6 +178,8 @@ class StorageTableMeta(StorageTableMetaABC):
             if e.args[0] == 1062:
                 # warning
                 pass
+            elif isinstance(e.args[0], str) and "UNIQUE constraint failed" in e.args[0]:
+                pass
             else:
                 raise e
         except Exception as e:
