@@ -87,6 +87,43 @@ class HomoNNServer(HomoNNBase):
             aggregator.dataset_align()
             aggregator.fit(self.callback_loss)
 
+    def export_model(self):
+        if self.is_version_0():
+            from federatedml.nn.homo_nn import _version_0
+
+            return _version_0.arbiter_export_model(self=self)
+
+        else:
+            return self._trainer.export_model(self.param)
+
+    def load_model(self, model_dict):
+        model_dict = list(model_dict["model"].values())[0]
+        model_obj = _extract_param(model_dict)
+        meta_obj = _extract_meta(model_dict)
+
+        # compatibility
+        if not hasattr(model_obj, "api_version"):
+            self.set_version(0)
+        else:
+            self.set_version(model_obj.api_version)
+
+        if self.is_version_0():
+            from federatedml.nn.homo_nn import _version_0
+
+            _version_0.arbiter_load_model(
+                self=self,
+                meta_obj=meta_obj,
+                model_obj=model_obj,
+                is_warm_start_mode=self.component_properties.is_warm_start,
+            )
+        else:
+            from federatedml.nn.homo_nn._torch import PyTorchFederatedTrainer
+
+            self._trainer = PyTorchFederatedTrainer.load_model(
+                model_obj=model_obj, meta_obj=meta_obj, param=self.param
+            )
+            self._init_model(self.model_param)
+
 
 class HomoNNClient(HomoNNBase):
     def __init__(self, trans_var):
@@ -166,7 +203,10 @@ class HomoNNClient(HomoNNBase):
             from federatedml.nn.homo_nn import _version_0
 
             _version_0.client_load_model(
-                self=self, meta_obj=meta_obj, model_obj=model_obj
+                self=self,
+                meta_obj=meta_obj,
+                model_obj=model_obj,
+                is_warm_start_mode=self.component_properties.is_warm_start,
             )
         else:
             from federatedml.nn.homo_nn._torch import PyTorchFederatedTrainer

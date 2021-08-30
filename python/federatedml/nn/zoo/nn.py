@@ -17,11 +17,7 @@
 from tensorflow.keras import Sequential
 
 from federatedml.nn.backend.tf_keras.layers import get_builder, has_builder
-from federatedml.nn.backend.tf_keras.nn_model import (
-    from_keras_sequential_model,
-    KerasNNModel,
-    restore_keras_nn_model,
-)
+from federatedml.nn.backend.tf_keras.nn_model import KerasNNModel
 
 
 def build_nn_model(
@@ -48,9 +44,10 @@ def build_nn_model(
         else:
             raise ValueError(f"dnn not support layer {layer}")
 
-    return from_keras_sequential_model(
-        model=model, loss=loss, optimizer=optimizer, metrics=metrics
-    )
+    keras_model = KerasNNModel(model)
+    keras_model.compile(loss=loss, optimizer=optimizer, metrics=metrics)
+
+    return keras_model
 
 
 def restore_nn_model(config_type, model_bytes):
@@ -59,4 +56,4 @@ def restore_nn_model(config_type, model_bytes):
 
         return restore_pytorch_nn_model(model_bytes)
     else:
-        return restore_keras_nn_model(model_bytes)
+        return KerasNNModel.restore_model(model_bytes)
