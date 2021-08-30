@@ -75,7 +75,7 @@ class StorageTable(StorageTableBase):
         return self._options
 
     def count(self, **kwargs):
-        sql = 'select count(*) from {}'.format(self._name)
+        sql = 'select count(*) from {}'.format(self._address._name)
         try:
             self.cur.execute(sql)
             self.con.commit()
