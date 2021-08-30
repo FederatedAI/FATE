@@ -82,7 +82,6 @@ def main(config="../../config.yaml", namespace=""):
     # set train & validate data of hetero_lr_0 component
 
     pipeline.add_component(hetero_kmeans_0, data=Data(train_data=intersection_0.output.data))
-    print(f"data: {hetero_kmeans_0.output.data.data[0]}")
     pipeline.add_component(evaluation_0, data=Data(data=hetero_kmeans_0.output.data.data[0]))
 
     # compile pipeline once finished adding modules, this step will form conf and dsl files for running job
