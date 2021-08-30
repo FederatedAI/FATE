@@ -200,7 +200,7 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
                 validation_strategy.set_precomputed_train_scores(self.score_to_predict_result(data_inst, self.y_hat))
 
             self.callback_list.on_epoch_end(epoch_idx)
-            should_stop = False, False
+            should_stop = False
             if self.n_iter_no_change and self.check_convergence(loss):
                 should_stop = True
                 self.is_converged = True

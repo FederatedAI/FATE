@@ -25,6 +25,7 @@ from pipeline.param import consts
 from pipeline.param.encrypt_param import EncryptParam
 from pipeline.param.encrypted_mode_calculation_param import EncryptedModeCalculatorParam
 from pipeline.param.predict_param import PredictParam
+from pipeline.param.callback_param import CallbackParam
 
 
 class FTLParam(BaseParam):

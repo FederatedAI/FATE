@@ -294,6 +294,10 @@ HETERO_SBT = 'hetero_sbt'
 HETERO_FAST_SBT_MIX = 'hetero_fast_sbt_mix'
 HETERO_FAST_SBT_LAYERED = 'hetero_fast_sbt_layered'
 
+# homm sbt backend
+MEMORY_BACKEND = 'memory'
+DISTRIBUTED_BACKEND = 'distributed'
+
 # column_expand
 MANUAL = 'manual'
 

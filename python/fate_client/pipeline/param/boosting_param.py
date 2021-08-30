@@ -23,6 +23,7 @@ from pipeline.param.encrypted_mode_calculation_param import EncryptedModeCalcula
 from pipeline.param.cross_validation_param import CrossValidationParam
 from pipeline.param.predict_param import PredictParam
 from pipeline.param import consts
+from pipeline.param.callback_param import CallbackParam
 import copy
 import collections
 
