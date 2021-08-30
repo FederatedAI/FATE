@@ -20,16 +20,146 @@
     },
     "component_parameters": {
         "role": {
+            "host": {
+                "0": {
+                    "dataio_0": {
+                        "with_label": false
+                    },
+                    "reader_1": {
+                        "table": {
+                            "name": "breast_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "hetero_nn_0": {
+                        "bottom_nn_define": {
+                            "class_name": "Sequential",
+                            "config": {
+                                "name": "sequential_3",
+                                "layers": [
+                                    {
+                                        "class_name": "InputLayer",
+                                        "config": {
+                                            "batch_input_shape": [
+                                                null,
+                                                20
+                                            ],
+                                            "dtype": "float32",
+                                            "sparse": false,
+                                            "ragged": false,
+                                            "name": "dense_3_input"
+                                        }
+                                    },
+                                    {
+                                        "class_name": "Dense",
+                                        "config": {
+                                            "name": "dense_3",
+                                            "trainable": true,
+                                            "batch_input_shape": [
+                                                null,
+                                                20
+                                            ],
+                                            "dtype": "float32",
+                                            "units": 3,
+                                            "activation": "relu",
+                                            "use_bias": true,
+                                            "kernel_initializer": {
+                                                "class_name": "Constant",
+                                                "config": {
+                                                    "value": 1
+                                                }
+                                            },
+                                            "bias_initializer": {
+                                                "class_name": "Zeros",
+                                                "config": {}
+                                            },
+                                            "kernel_regularizer": null,
+                                            "bias_regularizer": null,
+                                            "activity_regularizer": null,
+                                            "kernel_constraint": null,
+                                            "bias_constraint": null
+                                        }
+                                    }
+                                ]
+                            },
+                            "keras_version": "2.4.0",
+                            "backend": "tensorflow"
+                        },
+                        "interactive_layer_define": {
+                            "class_name": "Sequential",
+                            "config": {
+                                "name": "sequential_4",
+                                "layers": [
+                                    {
+                                        "class_name": "InputLayer",
+                                        "config": {
+                                            "batch_input_shape": [
+                                                null,
+                                                2
+                                            ],
+                                            "dtype": "float32",
+                                            "sparse": false,
+                                            "ragged": false,
+                                            "name": "dense_4_input"
+                                        }
+                                    },
+                                    {
+                                        "class_name": "Dense",
+                                        "config": {
+                                            "name": "dense_4",
+                                            "trainable": true,
+                                            "batch_input_shape": [
+                                                null,
+                                                2
+                                            ],
+                                            "dtype": "float32",
+                                            "units": 2,
+                                            "activation": "linear",
+                                            "use_bias": true,
+                                            "kernel_initializer": {
+                                                "class_name": "Constant",
+                                                "config": {
+                                                    "value": 1
+                                                }
+                                            },
+                                            "bias_initializer": {
+                                                "class_name": "Zeros",
+                                                "config": {}
+                                            },
+                                            "kernel_regularizer": null,
+                                            "bias_regularizer": null,
+                                            "activity_regularizer": null,
+                                            "kernel_constraint": null,
+                                            "bias_constraint": null
+                                        }
+                                    }
+                                ]
+                            },
+                            "keras_version": "2.4.0",
+                            "backend": "tensorflow"
+                        }
+                    },
+                    "dataio_1": {
+                        "with_label": false
+                    },
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    }
+                }
+            },
             "guest": {
                 "0": {
+                    "dataio_0": {
+                        "with_label": true
+                    },
                     "reader_1": {
                         "table": {
                             "name": "breast_hetero_guest",
                             "namespace": "experiment"
                         }
-                    },
-                    "dataio_1": {
-                        "with_label": true
                     },
                     "hetero_nn_0": {
                         "bottom_nn_define": {
@@ -192,162 +322,24 @@
                             "backend": "tensorflow"
                         }
                     },
+                    "dataio_1": {
+                        "with_label": true
+                    },
                     "reader_0": {
                         "table": {
                             "name": "breast_hetero_guest",
                             "namespace": "experiment"
                         }
-                    },
-                    "dataio_0": {
-                        "with_label": true
-                    }
-                }
-            },
-            "host": {
-                "0": {
-                    "reader_1": {
-                        "table": {
-                            "name": "breast_hetero_host",
-                            "namespace": "experiment"
-                        }
-                    },
-                    "dataio_1": {
-                        "with_label": false
-                    },
-                    "hetero_nn_0": {
-                        "bottom_nn_define": {
-                            "class_name": "Sequential",
-                            "config": {
-                                "name": "sequential_3",
-                                "layers": [
-                                    {
-                                        "class_name": "InputLayer",
-                                        "config": {
-                                            "batch_input_shape": [
-                                                null,
-                                                20
-                                            ],
-                                            "dtype": "float32",
-                                            "sparse": false,
-                                            "ragged": false,
-                                            "name": "dense_3_input"
-                                        }
-                                    },
-                                    {
-                                        "class_name": "Dense",
-                                        "config": {
-                                            "name": "dense_3",
-                                            "trainable": true,
-                                            "batch_input_shape": [
-                                                null,
-                                                20
-                                            ],
-                                            "dtype": "float32",
-                                            "units": 3,
-                                            "activation": "relu",
-                                            "use_bias": true,
-                                            "kernel_initializer": {
-                                                "class_name": "Constant",
-                                                "config": {
-                                                    "value": 1
-                                                }
-                                            },
-                                            "bias_initializer": {
-                                                "class_name": "Zeros",
-                                                "config": {}
-                                            },
-                                            "kernel_regularizer": null,
-                                            "bias_regularizer": null,
-                                            "activity_regularizer": null,
-                                            "kernel_constraint": null,
-                                            "bias_constraint": null
-                                        }
-                                    }
-                                ]
-                            },
-                            "keras_version": "2.4.0",
-                            "backend": "tensorflow"
-                        },
-                        "interactive_layer_define": {
-                            "class_name": "Sequential",
-                            "config": {
-                                "name": "sequential_4",
-                                "layers": [
-                                    {
-                                        "class_name": "InputLayer",
-                                        "config": {
-                                            "batch_input_shape": [
-                                                null,
-                                                2
-                                            ],
-                                            "dtype": "float32",
-                                            "sparse": false,
-                                            "ragged": false,
-                                            "name": "dense_4_input"
-                                        }
-                                    },
-                                    {
-                                        "class_name": "Dense",
-                                        "config": {
-                                            "name": "dense_4",
-                                            "trainable": true,
-                                            "batch_input_shape": [
-                                                null,
-                                                2
-                                            ],
-                                            "dtype": "float32",
-                                            "units": 2,
-                                            "activation": "linear",
-                                            "use_bias": true,
-                                            "kernel_initializer": {
-                                                "class_name": "Constant",
-                                                "config": {
-                                                    "value": 1
-                                                }
-                                            },
-                                            "bias_initializer": {
-                                                "class_name": "Zeros",
-                                                "config": {}
-                                            },
-                                            "kernel_regularizer": null,
-                                            "bias_regularizer": null,
-                                            "activity_regularizer": null,
-                                            "kernel_constraint": null,
-                                            "bias_constraint": null
-                                        }
-                                    }
-                                ]
-                            },
-                            "keras_version": "2.4.0",
-                            "backend": "tensorflow"
-                        }
-                    },
-                    "reader_0": {
-                        "table": {
-                            "name": "breast_hetero_host",
-                            "namespace": "experiment"
-                        }
-                    },
-                    "dataio_0": {
-                        "with_label": false
                     }
                 }
             }
         },
         "common": {
             "hetero_nn_0": {
-                "epochs": 100,
+                "epochs": 10,
                 "interactive_layer_lr": 0.15,
                 "batch_size": -1,
                 "early_stop": "diff",
-                "callback_param": {
-                    "callbacks": [
-                        "EarlyStopping"
-                    ],
-                    "validation_freqs": 1,
-                    "early_stopping_rounds": 15,
-                    "use_first_metric_only": true
-                },
                 "optimizer": {
                     "learning_rate": 0.15,
                     "decay": 0.0,
@@ -365,6 +357,8 @@
                 "config_type": "keras"
             },
             "hetero_nn_1": {
+                "epochs": 10,
+                "interactive_layer_lr": 0.05,
                 "optimizer": null,
                 "loss": null,
                 "metrics": null,

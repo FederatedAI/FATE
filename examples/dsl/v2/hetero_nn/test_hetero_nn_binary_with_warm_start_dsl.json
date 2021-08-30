@@ -113,7 +113,7 @@
             "module": "HeteroNN",
             "input": {
                 "data": {
-                    "test_data": [
+                    "train_data": [
                         "intersection_1.data"
                     ]
                 },
