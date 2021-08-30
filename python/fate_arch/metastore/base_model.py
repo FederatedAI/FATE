@@ -113,7 +113,10 @@ class BaseModel(Model):
     f_update_date = DateTimeField(null=True)
 
     def to_json(self):
-        #todo: rename to "to_dict"?
+        # This function is obsolete
+        return self.to_dict()
+
+    def to_dict(self):
         return self.__dict__['__data__']
 
     def to_human_model_dict(self, only_primary_with: list = None):

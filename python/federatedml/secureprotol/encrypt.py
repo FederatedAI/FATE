@@ -79,11 +79,11 @@ class Encrypt(object):
         return result
 
     def distribute_decrypt(self, X):
-        decrypt_table = X.mapValues(lambda x: self.decrypt(x))
+        decrypt_table = X.mapValues(lambda x: self.recursive_decrypt(x))
         return decrypt_table
 
     def distribute_encrypt(self, X):
-        encrypt_table = X.mapValues(lambda x: self.encrypt(x))
+        encrypt_table = X.mapValues(lambda x: self.recursive_encrypt(x))
         return encrypt_table
 
     def _recursive_func(self, obj, func):
@@ -121,6 +121,8 @@ class RsaEncrypt(Encrypt):
         self.e = None
         self.d = None
         self.n = None
+        self.p = None
+        self.q = None
 
     def generate_key(self, rsa_bit=1024):
         random_generator = Random.new().read
@@ -128,9 +130,11 @@ class RsaEncrypt(Encrypt):
         self.e = rsa.e
         self.d = rsa.d
         self.n = rsa.n
+        self.p = rsa.p
+        self.q = rsa.q
 
     def get_key_pair(self):
-        return self.e, self.d, self.n
+        return self.e, self.d, self.n, self.p, self.q
 
     def set_public_key(self, public_key):
         self.e = public_key["e"]
@@ -147,6 +151,9 @@ class RsaEncrypt(Encrypt):
         return self.d, self.n
 
     def encrypt(self, value):
+        if self.e is not None and self.n is not None and self.p is not None and self.q is not None:
+            cp, cq = gmpy_math.crt_coefficient(self.p, self.q)
+            return gmpy_math.powmod_crt(value, self.e, self.n, self.p, self.q, cp, cq)
         if self.e is not None and self.n is not None:
             return gmpy_math.powmod(value, self.e, self.n)
         else:

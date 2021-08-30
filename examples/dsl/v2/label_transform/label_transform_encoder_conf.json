@@ -45,9 +45,6 @@
             "label_transform_0": {
                 "label_encoder": {"0": 1, "1": 0},
                 "label_list": [0, 1]
-            },
-            "evaluation_0": {
-                "eval_type": "binary"
             }
         },
         "role": {

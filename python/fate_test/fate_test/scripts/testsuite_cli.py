@@ -65,6 +65,8 @@ def run_suite(ctx, replace, include, exclude, glob, timeout, update_job_paramete
     ctx.obj.update(**kwargs)
     ctx.obj.post_process()
     config_inst = ctx.obj["config"]
+    config_inst.extend_sid = ctx.obj["extend_sid"]
+    config_inst.auto_increasing_sid = ctx.obj["auto_increasing_sid"]
     if clean_data is None:
         clean_data = config_inst.clean_data
     namespace = ctx.obj["namespace"]

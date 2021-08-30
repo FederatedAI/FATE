@@ -20,6 +20,7 @@
 import copy
 
 from federatedml.param.base_param import BaseParam
+from federatedml.param.callback_param import CallbackParam
 from federatedml.param.encrypt_param import EncryptParam
 from federatedml.param.encrypted_mode_calculation_param import EncryptedModeCalculatorParam
 from federatedml.param.cross_validation_param import CrossValidationParam
@@ -107,6 +108,8 @@ class PoissonParam(BaseParam):
                                e.g.: convert an x to round(x * 2**floating_point_precision) during Paillier operation, divide
                                       the result by 2**floating_point_precision in the end.
 
+    callback_param: CallbackParam object
+
     """
 
     def __init__(self, penalty='L2',
@@ -119,7 +122,7 @@ class PoissonParam(BaseParam):
                  cv_param=CrossValidationParam(), stepwise_param=StepwiseParam(),
                  decay=1, decay_sqrt=True,
                  validation_freqs=None, early_stopping_rounds=None, metrics=None, use_first_metric_only=False,
-                 floating_point_precision=23):
+                 floating_point_precision=23, callback_param=CallbackParam()):
         super(PoissonParam, self).__init__()
         self.penalty = penalty
         self.tol = tol
@@ -144,6 +147,7 @@ class PoissonParam(BaseParam):
         self.metrics = metrics or []
         self.use_first_metric_only = use_first_metric_only
         self.floating_point_precision = floating_point_precision
+        self.callback_param = callback_param
 
     def check(self):
         descr = "poisson_regression_param's "
@@ -261,5 +265,6 @@ class PoissonParam(BaseParam):
                 (not isinstance(self.floating_point_precision, int) or
                  self.floating_point_precision < 0 or self.floating_point_precision > 64):
             raise ValueError("floating point precision should be null or a integer between 0 and 64")
+        self.callback_param.check()
 
         return True

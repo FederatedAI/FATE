@@ -17,7 +17,6 @@ import copy
 import getpass
 import json
 import pickle
-import sys
 import time
 from types import SimpleNamespace
 
@@ -26,6 +25,7 @@ from pipeline.backend.config import Role
 from pipeline.backend.config import StatusCode
 from pipeline.backend.config import VERSION
 from pipeline.backend.config import SystemSetting
+from pipeline.backend._operation import OnlineCommand, ModelConvert
 from pipeline.backend.task_info import TaskInfo
 from pipeline.component.component_base import Component
 from pipeline.component.reader import Reader
@@ -64,6 +64,9 @@ class PipeLine(object):
         self._predict_pipeline = []
         self._deploy = False
         self._system_role = SystemSetting.system_setting().get("role")
+        self.online = OnlineCommand(self)
+        self._load = False
+        self.model_convert = ModelConvert(self)
 
     @LOGGER.catch(reraise=True)
     def set_initiator(self, role, party_id):
@@ -91,6 +94,12 @@ class PipeLine(object):
                 "components": self._components,
                 "stage": self._stage
                 }
+
+    def get_predict_model_info(self):
+        return copy.deepcopy(self._predict_model_info)
+
+    def get_model_info(self):
+        return copy.deepcopy(self._model_info)
 
     def get_train_dsl(self):
         return copy.deepcopy(self._train_dsl)
@@ -577,7 +586,7 @@ class PipeLine(object):
     @LOGGER.catch(reraise=True)
     def deploy_component(self, components=None):
         if self._train_dsl is None:
-            raise ValueError("Before deploy model, training should be finish!!!")
+            raise ValueError("Before deploy model, training should be finished!!!")
 
         if components is None:
             components = self._components
@@ -600,6 +609,8 @@ class PipeLine(object):
         res_dict = self._job_invoker.model_deploy(model_id=self._model_info.model_id,
                                                   model_version=self._model_info.model_version,
                                                   cpn_list=deploy_cpns)
+        self._predict_model_info = SimpleNamespace(model_id=res_dict["model_id"],
+                                                   model_version=res_dict["model_version"])
 
         self._predict_dsl = self._job_invoker.get_predict_dsl(model_id=res_dict["model_id"],
                                                               model_version=res_dict["model_version"])
@@ -611,6 +622,9 @@ class PipeLine(object):
 
     def is_deploy(self):
         return self._deploy
+
+    def is_load(self):
+        return self._load
 
     @LOGGER.catch(reraise=True)
     def init_predict_config(self, config):
@@ -627,7 +641,7 @@ class PipeLine(object):
     @LOGGER.catch(reraise=True)
     def get_component_input_msg(self):
         if VERSION != 2:
-            raise ValueError("In DSL Version 1，only need to config data from args, no need special component")
+            raise ValueError("In DSL Version 1，only need to config data from args, do not need special component")
 
         need_input = {}
         for cpn_name, config in self._predict_dsl["components"].items():

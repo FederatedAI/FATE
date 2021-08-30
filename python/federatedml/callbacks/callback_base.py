@@ -23,3 +23,6 @@ class CallbackBase(object):
 
     def on_epoch_end(self, model, epoch):
         pass
+
+    def on_train_end(self, model):
+        pass
