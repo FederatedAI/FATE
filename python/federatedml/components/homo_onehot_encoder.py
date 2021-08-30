@@ -17,25 +17,25 @@
 
 from .components import ComponentMeta
 
-homo_onehost_encoder_cpn_meta = ComponentMeta("HomoOnehostEncoder")
+homo_onehot_encoder_cpn_meta = ComponentMeta("HomoOnehotEncoder")
 
 
-@homo_onehost_encoder_cpn_meta.bind_param
-def homo_onehost_encoder_param():
+@homo_onehot_encoder_cpn_meta.bind_param
+def homo_onehot_encoder_param():
     from federatedml.param.homo_onehot_encoder_param import HomoOneHotParam
 
     return HomoOneHotParam
 
 
-@homo_onehost_encoder_cpn_meta.bind_runner.on_guest.on_host
-def homo_onehost_encoder_client():
+@homo_onehot_encoder_cpn_meta.bind_runner.on_guest.on_host
+def homo_onehot_encoder_client():
     from federatedml.feature.homo_onehot.homo_ohe_base import HomoOneHotBase
 
     return HomoOneHotBase
 
 
-@homo_onehost_encoder_cpn_meta.bind_runner.on_arbiter
-def homo_onehost_encoder_arbiter():
+@homo_onehot_encoder_cpn_meta.bind_runner.on_arbiter
+def homo_onehot_encoder_arbiter():
     from federatedml.feature.homo_onehot.homo_ohe_arbiter import HomoOneHotArbiter
 
     return HomoOneHotArbiter
