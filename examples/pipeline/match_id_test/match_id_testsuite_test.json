@@ -76,6 +76,9 @@
         },
         "kmeans": {
             "script": "./pipeline-kmeans.py"
+        },
+        "sir": {
+            "script": "./secure-information-retrieval.py"
         }
     }
 }
