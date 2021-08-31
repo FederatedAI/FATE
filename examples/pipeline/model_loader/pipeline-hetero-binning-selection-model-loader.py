@@ -55,7 +55,7 @@ def main(config="../../config.yaml", namespace=""):
 
     param = {
         "model_id": "guest-10000#host-9999#model",
-        "model_version": "202108301215480133870",
+        "model_version": "202108301602196678300",
         "component_name": "hetero_feature_binning_0",
         "step_index": None
     }

@@ -169,3 +169,6 @@ class IsometricModel(object):
         if metric_name not in self.valid_value_name:
             return None
         return self._metric_info[self._metric_names.index(metric_name)]
+
+    def get_all_metric_info(self):
+        return self._metric_info
