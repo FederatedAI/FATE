@@ -46,9 +46,10 @@ pyarrow==0.17.1
 
 # addtional requirements for fate-client
 click>=7.1.2,<8.0.0
+colorama>=0.4.4
 loguru>=0.5.1,<0.6.0
 torch==1.4.0
+poetry>=0.12
 prettytable>=1.0.0,<2.0.0
 setuptools>=50.0,<51.0
 sshtunnel>=0.1.5,<0.2.0
-colorama>=0.4.4
