@@ -19,7 +19,6 @@ from federatedml.util import consts
 from federatedml.nn.hetero_nn.backend.paillier_tensor import PaillierTensor
 from federatedml.protobuf.generated.ftl_model_param_pb2 import FTLModelParam
 from federatedml.protobuf.generated.ftl_model_meta_pb2 import FTLModelMeta, FTLPredictParam, FTLOptimizerParam
-from federatedml.util.validation_strategy import ValidationStrategy
 
 
 class FTL(ModelBase):
