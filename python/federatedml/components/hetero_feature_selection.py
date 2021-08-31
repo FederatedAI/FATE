@@ -27,19 +27,10 @@ def hetero_feature_selection_param():
     return FeatureSelectionParam
 
 
-@hetero_feature_selection_cpn_meta.bind_runner.on_guest
-def hetero_feature_selection_guest_runner():
-    from federatedml.feature.hetero_feature_selection.feature_selection_guest import (
-        HeteroFeatureSelectionGuest,
+@hetero_feature_selection_cpn_meta.bind_runner.on_guest.on_host
+def hetero_feature_selection_runner():
+    from federatedml.feature.hetero_feature_selection.base_feature_selection import (
+        BaseHeteroFeatureSelection,
     )
 
-    return HeteroFeatureSelectionGuest
-
-
-@hetero_feature_selection_cpn_meta.bind_runner.on_host
-def hetero_feature_selection_host_runner():
-    from federatedml.feature.hetero_feature_selection.feature_selection_host import (
-        HeteroFeatureSelectionHost,
-    )
-
-    return HeteroFeatureSelectionHost
+    return BaseHeteroFeatureSelection
