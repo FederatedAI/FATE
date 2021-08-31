@@ -32,6 +32,25 @@ from federatedml.callbacks.callback_list import CallbackList
 from federatedml.feature.instance import Instance
 
 
+def serialize_models(models):
+    serialized_models: typing.Dict[str, typing.Tuple[str, bytes, dict]] = {}
+
+    for model_name, buffer_object in models.items():
+        serialized_string = buffer_object.SerializeToString()
+        pb_name = type(buffer_object).__name__
+        json_format_dict = json_format.MessageToDict(
+            buffer_object, including_default_value_fields=True
+        )
+
+        serialized_models[model_name] = (
+            pb_name,
+            serialized_string,
+            json_format_dict,
+        )
+
+    return serialized_models
+
+
 class ComponentOutput:
     def __init__(self, data, models, cache: typing.List[tuple]) -> None:
         self._data = data
@@ -52,22 +71,7 @@ class ComponentOutput:
 
     @property
     def model(self):
-        serialized_models: typing.Dict[str, typing.Tuple[str, bytes, dict]] = {}
-
-        for model_name, buffer_object in self._models.items():
-            serialized_string = buffer_object.SerializeToString()
-            pb_name = type(buffer_object).__name__
-            json_format_dict = json_format.MessageToDict(
-                buffer_object, including_default_value_fields=True
-            )
-
-            serialized_models[model_name] = (
-                pb_name,
-                serialized_string,
-                json_format_dict,
-            )
-
-        return serialized_models
+        return serialize_models(self._models)
 
     @property
     def cache(self):
@@ -355,6 +359,8 @@ class ModelBase(object):
         LOGGER.debug("saved_result is : {}, data_output: {}".format(saved_result, self.data_output))
         self.save_summary()
 
+    def export_serialized_models(self):
+        return serialize_models(self.export_model())
 
     def get_metrics_param(self):
         return EvaluateParam(eval_type="binary", pos_label=1)

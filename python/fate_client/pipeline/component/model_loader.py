@@ -33,6 +33,6 @@ class ModelLoader(Component, CheckpointParam):
         CheckpointParam.__init__(self, **new_kwargs)
         self.input = Input(self.name)
         self.output = Output(self.name, has_model=True, has_cache=False, has_data=False)
-        self._module_name = "Checkpoint"
+        self._module_name = "ModelLoader"
 
 

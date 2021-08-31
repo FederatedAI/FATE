@@ -121,7 +121,7 @@ def main(config="../../config.yaml", namespace=""):
             "init_method": "random_uniform"
         },
         "reveal_strategy": "all_review_in_guest",
-        "reveal_every_iter": False,
+        "reveal_every_iter": True,
         "compute_loss": True,
     }
 

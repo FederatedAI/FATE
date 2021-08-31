@@ -43,7 +43,7 @@ def main(config="../../config.yaml", namespace=""):
         "optimizer": "nesterov_momentum_sgd",
         "tol": 1e-05,
         "alpha": 0.0001,
-        "max_iter": 10,
+        "max_iter": 1,
         "early_stop": "diff",
         "multi_class": "ovr",
         "batch_size": -1,
