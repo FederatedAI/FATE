@@ -72,42 +72,46 @@ Both rsa and raw intersection support multi-host. It means a guest can do inters
 See in `figure 2`, this is a introduction to a guest intersect with two hosts, and it is the same as more than two hosts. Firstly, guest will intersect with each host and get overlapping IDs respectively. Secondly, guest will find common IDs from all intersection results. Finally,
 guest will send common IDs to every host if necessary.
 
-Repeated ID intersection
+Left Join Intersection
 ------------------------
 
-We support repeated id intersection for some applications. For this case, one should provide the mask id which map to the repeated ids.   
+We support left join intersection. To use this join method, one should use data with match_id,
+and specify "sample_id_generator" in job config.
+Please refer `here <../../../examples/pipeline/match_id_test>`__ for examples.
+
 For instances, in Guest, your data is
 ::
 
-   mask_id, id, value
-   alice_1, alice, 2
-   alice_2, alice, 3
-   bob, bob, 4
+   sample_id, id, value
+   123, alice, 0
+   124, alice, 3
+   125, bob, 4
 
 In Host, you data is
 ::
 
-   id, value
-   alice, 5
-   bob, 6
+   sample_id, id, value
+   1, alice, 2
+   2, alice, 3
+   3, bob, 5
 
-After intersecting, guest will get the intersection results:  
+After intersection, guest will get the intersection results:
 ::
 
-   mask_id, value
-   alice_1, 2
-   alice_2, 3
-   bob, 4
+   sample_id, id, value
+   123, alice, 0
+   124, alice, 3
+   125, bob, 4
 
 And in host:
 ::
 
-   id, value
-   alice_1, 5
-   alice_2, 5
-   bob, 4
+   sample_id, id, value
+   123, alice, 2
+   124, alice, 3
+   125, bob, 5
 
-This switch is "repeated_id_process" in the parameter of intersection, set it to true if you want to use this function.
+This switch is "join_method" in the parameter of intersection, set it to "left_join" if you want to use this function.
 
 Param
 ------

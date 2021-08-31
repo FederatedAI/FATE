@@ -380,9 +380,13 @@ class InteractiveHostDenseLayer(object):
         if self.fixed_point_encoder:
             decrypted_guest_forward = decrypted_guest_forward.decode(self.fixed_point_encoder)
 
-        if self.acc_noise is None:
+        if self.input_shape is None:
             self.input_shape = host_input.shape[1]
             self.output_unit = self.get_interactive_layer_output_unit()
+
+        if self.acc_noise is None:
+            # self.input_shape = host_input.shape[1]
+            # self.output_unit = self.get_interactive_layer_output_unit()
             self.acc_noise = np.zeros((self.input_shape, self.output_unit))
 
         mask_table = None

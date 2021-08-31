@@ -134,7 +134,7 @@ class HomoNNParam(BaseParam):
         pb.loss = self.loss
         return pb
 
-    def restore_from_pb(self, pb):
+    def restore_from_pb(self, pb, is_warm_start_mode: bool = False):
         self.secure_aggregate = pb.secure_aggregate
         self.encode_label = pb.encode_label
         self.aggregate_every_n_epoch = pb.aggregate_every_n_epoch
@@ -144,7 +144,7 @@ class HomoNNParam(BaseParam):
             for layer in pb.nn_define:
                 self.nn_define.append(json.loads(layer))
         elif self.config_type == "keras":
-            self.nn_define = pb.nn_define[0]
+            self.nn_define = json.loads(pb.nn_define[0])
         elif self.config_type == "pytorch":
             for layer in pb.nn_define:
                 self.nn_define.append(json.loads(layer))
@@ -152,17 +152,15 @@ class HomoNNParam(BaseParam):
             raise ValueError(f"{self.config_type} is not supported")
 
         self.batch_size = pb.batch_size
-        self.max_iter = pb.max_iter
-
+        if not is_warm_start_mode:
+            self.max_iter = pb.max_iter
+            self.optimizer = _parse_optimizer(
+                dict(optimizer=pb.optimizer.optimizer, **json.loads(pb.optimizer.args))
+            )
         self.early_stop = _parse_early_stop(
             dict(early_stop=pb.early_stop.early_stop, eps=pb.early_stop.eps)
         )
-
         self.metrics = list(pb.metrics)
-
-        self.optimizer = _parse_optimizer(
-            dict(optimizer=pb.optimizer.optimizer, **json.loads(pb.optimizer.args))
-        )
         self.loss = pb.loss
         return pb
 

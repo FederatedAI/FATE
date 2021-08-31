@@ -231,7 +231,8 @@ class Imputer(object):
             else:
                 shape = data_overview.get_data_shape(data)
             replace_value = [replace_value for _ in range(shape)]
-            self.cols_replace_method = [replace_method for _ in range(shape)]
+            header = get_header(data)
+            self.cols_replace_method = {feature: replace_method for feature in header}
 
             return transform_data, replace_value
 

@@ -21,7 +21,6 @@ from federatedml.model_selection import start_cross_validation
 from federatedml.param.hetero_nn_param import HeteroNNParam
 from federatedml.transfer_variable.transfer_class.hetero_nn_transfer_variable import HeteroNNTransferVariable
 from federatedml.util import consts
-from federatedml.util.validation_strategy import ValidationStrategy
 
 
 class HeteroNNBase(ModelBase):
@@ -92,13 +91,6 @@ class HeteroNNBase(ModelBase):
         new_flowid = ".".join(self.flowid.split(".", -1)[: -1])
         self.set_flowid(new_flowid)
 
-    def init_validation_strategy(self, train_data=None, validate_data=None):
-        validation_strategy = ValidationStrategy(self.role, self.mode, self.validation_freqs,
-                                                 self.early_stopping_rounds, self.use_first_metric_only, arbiter_comm=False)
-        validation_strategy.set_train_data(train_data)
-        validation_strategy.set_validate_data(validate_data)
-        return validation_strategy
-
     def _build_bottom_model(self):
         pass
 
@@ -114,10 +106,11 @@ class HeteroNNBase(ModelBase):
     def _restore_model_meta(self, meta):
         # self.hetero_nn_param.interactive_layer_lr = meta.interactive_layer_lr
         self.hetero_nn_param.task_type = meta.task_type
-        self.batch_size = meta.batch_size
-        self.epochs = meta.epochs
-        self.tol = meta.tol
-        self.early_stop = meta.early_stop
+        if not self.component_properties.is_warm_start:
+            self.batch_size = meta.batch_size
+            self.epochs = meta.epochs
+            self.tol = meta.tol
+            self.early_stop = meta.early_stop
 
         self.model.set_hetero_nn_model_meta(meta.hetero_nn_model_meta)
 

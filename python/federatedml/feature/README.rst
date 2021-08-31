@@ -200,10 +200,10 @@ Param
 
 Feature Imputation
 ==================
-Feature Imputation fills missing values on dense instances.
+Feature Imputation imputes missing features on dense instances using user-specified method(s) and value(s).
 Imputation can be done on select columns using arbitrary methods. Please refer
 `here <../../../examples/pipeline/feature_imputation>`_ for examples.
-this
+
 
 Param
 ------

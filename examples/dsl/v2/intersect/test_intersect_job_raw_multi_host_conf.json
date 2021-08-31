@@ -24,7 +24,14 @@
             "intersect_0": {
                 "intersect_method": "raw",
                 "sync_intersect_ids": true,
-                "only_output_key": true
+                "only_output_key": true,
+                "raw_params": {
+                    "use_hash": true,
+                    "hash_method": "sha256",
+                    "salt": "12345",
+                    "base64": false,
+                    "join_role": "guest"
+                }
             }
         },
         "role": {

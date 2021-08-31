@@ -193,14 +193,15 @@ class BaseModel(Model):
 
     @classmethod
     def update(cls, __data=None, **update):
-        if hasattr(cls, "f_update_time"):
-            __data[operator.attrgetter("f_update_time")(cls)] = current_timestamp()
-        fields = AUTO_DATE_TIMESTAMP_FIELD_PREFIX.copy()
-        # create can not be updated
-        fields.remove("create")
-        for f_n in fields:
-            if hasattr(cls, f"f_{f_n}_time") and hasattr(cls, f"f_{f_n}_date"):
-                k = operator.attrgetter(f"f_{f_n}_time")(cls)
-                if k in __data and __data[k]:
-                    __data[operator.attrgetter(f"f_{f_n}_date")(cls)] = timestamp_to_date(__data[k])
+        if __data:
+            if hasattr(cls, "f_update_time"):
+                __data[operator.attrgetter("f_update_time")(cls)] = current_timestamp()
+            fields = AUTO_DATE_TIMESTAMP_FIELD_PREFIX.copy()
+            # create can not be updated
+            fields.remove("create")
+            for f_n in fields:
+                if hasattr(cls, f"f_{f_n}_time") and hasattr(cls, f"f_{f_n}_date"):
+                    k = operator.attrgetter(f"f_{f_n}_time")(cls)
+                    if k in __data and __data[k]:
+                        __data[operator.attrgetter(f"f_{f_n}_date")(cls)] = timestamp_to_date(__data[k])
         return super().update(__data, **update)

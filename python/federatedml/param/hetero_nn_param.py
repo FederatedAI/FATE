@@ -21,6 +21,7 @@ import copy
 from types import SimpleNamespace
 
 from federatedml.param.base_param import BaseParam
+from federatedml.param.callback_param import CallbackParam
 from federatedml.param.cross_validation_param import CrossValidationParam
 from federatedml.param.encrypt_param import EncryptParam
 from federatedml.param.encrypted_mode_calculation_param import EncryptedModeCalculatorParam
@@ -132,7 +133,8 @@ class HeteroNNParam(BaseParam):
                  use_first_metric_only=True,
                  selector_param=SelectorParam(),
                  floating_point_precision=23,
-                 drop_out_keep_rate=1.0):
+                 drop_out_keep_rate=1.0,
+                 callback_param=CallbackParam()):
         super(HeteroNNParam, self).__init__()
 
         self.task_type = task_type
@@ -161,6 +163,8 @@ class HeteroNNParam(BaseParam):
         self.floating_point_precision = floating_point_precision
 
         self.drop_out_keep_rate = drop_out_keep_rate
+
+        self.callback_param = callback_param
 
     def check(self):
         self.optimizer = self._parse_optimizer(self.optimizer)
@@ -254,5 +258,7 @@ class HeteroNNParam(BaseParam):
                 raise ValueError(f"optimizer config: {opt} invalid")
             kwargs = {k: v for k, v in opt.items() if k != "optimizer"}
             return SimpleNamespace(optimizer=optimizer, kwargs=kwargs)
+        elif opt is None:
+            return None
         else:
             raise ValueError(f"invalid type for optimize: {type(opt)}")

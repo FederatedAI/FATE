@@ -63,7 +63,9 @@ def main(config="../../config.yaml", namespace=""):
         "oblivious_transfer_protocol": "OT_Hauck",
         "commutative_encryption": "CommutativeEncryptionPohligHellman",
         "non_committing_encryption": "aes",
-        "key_size": 1024,
+        "dh_params": {
+            "key_length": 1024
+        },
         "raw_retrieval": False,
         "target_cols": ["x0", "x3"]
     }

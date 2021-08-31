@@ -312,10 +312,18 @@ Algorithm List
    * - `Feldman Verifiable Sum`_
      - Feldman Verifiable Sum
      - This component will sum multiple privacy values without exposing data
-     - Table, values are addend
+     - Table, values to sum
      - Table, values are sum results
      -
      -
+
+   * - `Feature Imputation`_
+     - Feature Imputation
+     - This component imputes missing features using arbitrary methods/values
+     - Table, values are Instances
+     - Table, values with missing features filled
+     -
+     - FeatureImputation Model
 
    * - `Label Transform`_
      - Label Transform
@@ -360,6 +368,7 @@ Algorithm List
 .. _Scorecard: statistic/scorecard/README.rst
 .. _Sample Weight: util/README.rst
 .. _Feldman Verifiable Sum: statistic/feldman_verifiable_sum/README.rst
+.. _Feature Imputation: feature/README.rst
 .. _Label Transform: util/README.rst
 
 

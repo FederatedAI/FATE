@@ -15,14 +15,14 @@
 #
 
 import argparse
-
-from pipeline.backend.pipeline import PipeLine
-from pipeline.component.dataio import DataIO
-from pipeline.component.intersection import Intersection
-from pipeline.component.reader import Reader
-from pipeline.interface import Data, Model
 from pipeline.utils.tools import load_job_config
 from pipeline.runtime.entity import JobParameters
+from pipeline.backend.pipeline import PipeLine
+from pipeline.component import DataTransform
+from pipeline.component import FeatureImputation
+from pipeline.component import Intersection
+from pipeline.component import Reader
+from pipeline.interface import Data
 
 
 def main(config="../../config.yaml", namespace=""):
@@ -35,8 +35,8 @@ def main(config="../../config.yaml", namespace=""):
     backend = config.backend
     work_mode = config.work_mode
 
-    guest_train_data = {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"}
-    host_train_data = {"name": "breast_hetero_host", "namespace": f"experiment{namespace}"}
+    guest_train_data = {"name": "breast_hetero_guest", "namespace": f"experiment_sid{namespace}"}
+    host_train_data = {"name": "breast_hetero_host", "namespace": f"experiment_sid{namespace}"}
 
     pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=host)
 
@@ -44,34 +44,17 @@ def main(config="../../config.yaml", namespace=""):
     reader_0.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data)
     reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
 
-    dataio_0 = DataIO(name="dataio_0")
+    data_transform_0 = DataTransform(name="data_transform_0", with_label=False, with_match_id=True)
 
-    dataio_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=False, output_format="dense")
-    dataio_0.get_party_instance(role='host', party_id=host).component_param(with_label=False, output_format="dense")
-
-    param = {
-        "intersect_method": "rsa",
-        "sync_intersect_ids": False,
-        "only_output_key": True,
-        "rsa_params": {
-            "hash_method": "sha256",
-            "final_hash_method": "sha256",
-            "key_length": 1024
-        },
-        "intersect_cache_param": {
-            "run_cache": True
-        }
-    }
-    intersect_0 = Intersection(name="intersect_0", **param)
-
-    intersect_1 = Intersection(name="intersect_1")
+    intersection_0 = Intersection(name="intersection_0")
+    feature_imputation_0 = FeatureImputation(name="feature_imputation_0",
+                                             missing_fill_method="designated",
+                                             default_value=42, missing_impute=[0])
 
     pipeline.add_component(reader_0)
-    pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
-    pipeline.add_component(intersect_0, data=Data(data=dataio_0.output.data))
-    pipeline.add_component(intersect_1, data=Data(data=[dataio_0.output.data, intersect_0.output.data]),
-                           model=Model(model=intersect_0.output.model))
-
+    pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
+    pipeline.add_component(intersection_0, data=Data(data=data_transform_0.output.data))
+    pipeline.add_component(feature_imputation_0, data=Data(data=intersection_0.output.data))
     pipeline.compile()
 
     job_parameters = JobParameters(backend=backend, work_mode=work_mode)
@@ -87,4 +70,3 @@ if __name__ == "__main__":
         main(args.config)
     else:
         main()
-

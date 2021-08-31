@@ -20,11 +20,10 @@
 import numpy as np
 
 from fate_arch.session import computing_session as session
-from federatedml.model_base import ModelBase
+from federatedml.model_base import ModelBase, ComponentOutput
 from federatedml.param.secure_add_example_param import SecureAddExampleParam
 from federatedml.transfer_variable.transfer_class.secure_add_example_transfer_variable import \
     SecureAddExampleTransferVariable
-from federatedml.util.param_extract import ParamExtract
 from federatedml.util import LOGGER
 
 
@@ -44,16 +43,14 @@ class SecureAddGuest(ModelBase):
         self.data_output = None
         self.model_output = None
 
-    def _init_runtime_parameters(self, component_parameters):
-        param_extracter = ParamExtract()
-        param = param_extracter.parse_param_from_config(self.model_param, component_parameters)
-        self._init_model(param)
-        return param
-    
-    def _init_model(self, model_param):
-        self.data_num = model_param.data_num
-        self.partition = model_param.partition
-        self.seed = model_param.seed
+    def _init_runtime_parameters(self, cpn_input):
+        self.model_param.update(cpn_input.parameters)
+        self._init_model()
+
+    def _init_model(self):
+        self.data_num = self.model_param.data_num
+        self.partition = self.model_param.partition
+        self.seed = self.model_param.seed
 
     def _init_data(self):
         kvs = [(i, 1) for i in range(self.data_num)]
@@ -95,9 +92,10 @@ class SecureAddGuest(ModelBase):
         
         return host_sum
 
-    def run(self, component_parameters=None, args=None):
+    def run(self, cpn_input):
         LOGGER.info("begin to init parameters of secure add example guest")
-        self._init_runtime_parameters(component_parameters)
+
+        self._init_runtime_parameters(cpn_input)
 
         LOGGER.info("begin to make guest data")
         self._init_data()
@@ -122,3 +120,5 @@ class SecureAddGuest(ModelBase):
         assert (np.abs(secure_sum - self.data_num * 2) < 1e-6)
 
         LOGGER.info("success to calculate secure_sum, it is {}".format(secure_sum))
+
+        return ComponentOutput(self.save_data(), self.export_model(), self.save_cache())
