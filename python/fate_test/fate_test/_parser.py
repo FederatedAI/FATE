@@ -167,7 +167,10 @@ class JobConf(object):
         if isinstance(parameters, dict):
             for keys in parameters:
                 if keys == key:
-                    parameters.update({key: value})
+                    if isinstance(value, dict):
+                        parameters[keys].update(value)
+                    else:
+                        parameters.update({key: value})
                 elif (
                     isinstance(parameters[keys], dict) and parameters[keys] is not None
                 ):
@@ -180,6 +183,8 @@ class JobConf(object):
             parameters = self.others_kwargs.get("component_parameters").get("role")
 
         for key in keys:
+            if key is None:
+                break
             parameters = parameters[key]
         return parameters
 
@@ -227,8 +232,13 @@ class Job(object):
             name_dict["data"] = job_configs["data_deps"][assembly]
         if job_configs.get("model_deps", None):
             pre_works_value.append("model_deps")
-        if job_configs.get("deps", None):
+        elif job_configs.get("deps", None):
             pre_works_value.append("model_deps")
+        if job_configs.get("cache_deps", None):
+            pre_works_value.append("cache_deps")
+        if job_configs.get("model_loader_deps", None):
+            pre_works_value.append("model_loader_deps")
+
 
         if job_configs.get("model_deps", None):
             pre_works.append(job_configs["model_deps"])
@@ -236,9 +246,16 @@ class Job(object):
         elif job_configs.get("deps", None):
             pre_works.append(job_configs["deps"])
             name_dict["name"] = job_configs["deps"]
-        elif job_configs.get("data_deps", None):
+        if job_configs.get("data_deps", None):
             pre_works.append(list(job_configs["data_deps"].keys())[0])
             name_dict["name"] = list(job_configs["data_deps"].keys())[0]
+        if job_configs.get("cache_deps", None):
+            pre_works.append(job_configs["cache_deps"])
+            name_dict["name"] = job_configs["cache_deps"]
+        if job_configs.get("model_loader_deps", None):
+            pre_works.append(job_configs["model_loader_deps"])
+            name_dict["name"] = job_configs["model_loader_deps"]
+
         pre_works_value.append(name_dict)
         _config.deps_alter[job_name] = pre_works_value
 
@@ -358,11 +375,15 @@ class Testsuite(object):
     def remove_dependency(self, name):
         del self._dependency[name]
 
-    def feed_dep_info(self, job, name, model_info=None, table_info=None):
+    def feed_dep_info(self, job, name, model_info=None, table_info=None, cache_info=None, model_loader_info=None):
         if model_info is not None:
             job.set_pre_work(name, **model_info)
         if table_info is not None:
             job.set_input_data(table_info["hierarchy"], table_info["table_info"])
+        if cache_info is not None:
+            job.set_input_data(cache_info["hierarchy"], cache_info["cache_info"])
+        if cache_info is not None:
+            job.set_input_data(model_loader_info["hierarchy"], model_loader_info["model_loader_info"])
         if name in job.pre_works:
             job.pre_works.remove(name)
         if job.is_submit_ready():

@@ -217,7 +217,7 @@ def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Conf
                     if suite.model_in_dep(job.job_name):
                         dependent_jobs = suite.get_dependent_jobs(job.job_name)
                         for predict_job in dependent_jobs:
-                            model_info, table_info = None, None
+                            model_info, table_info, cache_info, model_loader_info = None, None, None, None
                             for i in _config.deps_alter[predict_job.job_name]:
                                 if isinstance(i, dict):
                                     name = i.get('name')
@@ -257,8 +257,24 @@ def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Conf
                                         _raise()
                                 else:
                                     model_info = response.model_info
+                            if 'cache_deps' in _config.deps_alter[predict_job.job_name]:
+                                cache_dsl = predict_job.job_dsl.as_dict()
+                                cache_info = []
+                                for cpn in cache_dsl.get("components").keys():
+                                    if "CacheLoader" in cache_dsl.get("components").get(cpn).get("module"):
+                                        cache_info.append({cpn: {'job_id': response.job_id}})
+                                cache_info = {'hierarchy': [""], 'cache_info': cache_info}
+                            if 'model_loader_deps' in _config.deps_alter[predict_job.job_name]:
+                                model_loader_dsl = predict_job.job_dsl.as_dict()
+                                model_loader_info = []
+                                for cpn in model_loader_dsl.get("components").keys():
+                                    if "ModelLoader" in cache_dsl.get("components").get(cpn).get("module"):
+                                        model_loader_info.append({cpn: response.model_info})
+                                model_loader_info = {'hierarchy': [""], 'model_loader_info': model_loader_info}
 
-                            suite.feed_dep_info(predict_job, name, model_info=model_info, table_info=table_info)
+                            suite.feed_dep_info(predict_job, name, model_info=model_info, table_info=table_info,
+                                                cache_info=cache_info, model_loader_info=model_loader_info)
+                        suite.remove_dependency(job.job_name)
             update_bar(0)
             time_consuming = time.time() - start
             performance_dir = "/".join(
