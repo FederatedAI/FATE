@@ -24,7 +24,7 @@ requests_toolbelt==0.9.1
 ruamel-yaml==0.16.10
 scikit-learn==0.24.2
 scipy==1.1.0
-tensorflow>=2.4.1
+tensorflow==2.3.4
 torch==1.4.0
 torch-model-archiver==0.3.1
 torchvision==0.5.0

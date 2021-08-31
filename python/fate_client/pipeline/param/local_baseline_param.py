@@ -49,9 +49,9 @@ class LocalBaselineParam(BaseParam):
     def check(self):
         descr = "local baseline param"
 
-        self.mode = self.check_and_change_lower(self.model_name,
-                                                   ["logisticregression"],
-                                                   descr)
+        self.model_name = self.check_and_change_lower(self.model_name,
+                                                      ["logisticregression"],
+                                                      descr)
         self.check_boolean(self.need_run, descr)
         if self.model_opts is not None:
             if not isinstance(self.model_opts, dict):
