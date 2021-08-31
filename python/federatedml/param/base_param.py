@@ -118,7 +118,7 @@ class BaseParam(object):
 
         return _recursive_update_param(param=self, config=conf, depth=0)
 
-    def extract_not_buildin(self):
+    def extract_not_builtin(self):
         def _get_not_builtin_types(obj):
             ret_dict = {}
             for variable in obj.__dict__:
