@@ -27,7 +27,8 @@ class ModelCheckpoint(CallbackBase):
 
     def add_checkpoint(self, step_index, step_name=None, to_save_model=None):
         step_name = step_name if step_name is not None else self.model.step_name
-        to_save_model = to_save_model if to_save_model is not None else self.model.export_model()
+
+        to_save_model = to_save_model if to_save_model is not None else self.model.export_serialized_models()
         _checkpoint = self.model.checkpoint_manager.new_checkpoint(step_index=step_index, step_name=step_name)
         _checkpoint.save(to_save_model)
         LOGGER.debug(f"current checkpoint num: {self.model.checkpoint_manager.checkpoints_number}")

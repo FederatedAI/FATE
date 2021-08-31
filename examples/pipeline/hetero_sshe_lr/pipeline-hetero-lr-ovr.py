@@ -99,7 +99,7 @@ def main(config="../../config.yaml", namespace=""):
         "encrypt_param": {
             "key_length": 1024
         },
-        "reveal_every_iter": False,
+        "reveal_every_iter": True,
         "compute_loss": True,
         "reveal_strategy": "respectively"
     }
