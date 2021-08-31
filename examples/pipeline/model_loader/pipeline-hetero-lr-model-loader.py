@@ -85,7 +85,7 @@ def main(config="../../config.yaml", namespace=""):
 
     param = {
         "model_id": "arbiter-9999#guest-10000#host-9999#model",
-        "model_version": "202108301413554284110",
+        "model_version": "202108311438379703480",
         "component_name": "hetero_lr_0",
         "step_index": 2
     }

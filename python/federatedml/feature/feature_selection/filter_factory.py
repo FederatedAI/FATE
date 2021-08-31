@@ -18,10 +18,11 @@
 
 import copy
 
+from federatedml.feature.feature_selection.correlation_filter import CorrelationFilter
 from federatedml.feature.feature_selection.iso_model_filter import IsoModelFilter, FederatedIsoModelFilter
+from federatedml.feature.feature_selection.iv_filter import IVFilter
 from federatedml.feature.feature_selection.manually_filter import ManuallyFilter
 from federatedml.feature.feature_selection.percentage_value_filter import PercentageValueFilter
-from federatedml.feature.feature_selection.correlation_filter import CorrelationFilter
 from federatedml.param import feature_selection_param
 from federatedml.param.feature_selection_param import FeatureSelectionParam
 from federatedml.util import LOGGER
@@ -57,10 +58,8 @@ def get_filter(filter_name, model_param: FeatureSelectionParam, role=consts.GUES
 
     elif filter_name == consts.IV_VALUE_THRES:
         iv_value_param = model_param.iv_value_param
-        iv_param = feature_selection_param.CommonFilterParam(
-            metrics=consts.IV,
+        iv_param = feature_selection_param.IVFilterParam(
             filter_type='threshold',
-            take_high=True,
             threshold=iv_value_param.value_threshold,
             host_thresholds=iv_value_param.host_thresholds,
             select_federated=not iv_value_param.local_only
@@ -69,15 +68,13 @@ def get_filter(filter_name, model_param: FeatureSelectionParam, role=consts.GUES
         iso_model = model.isometric_models.get(consts.BINNING_MODEL)
         if iso_model is None:
             raise ValueError("None of binning model has provided when using iv filter")
-        return FederatedIsoModelFilter(iv_param, iso_model,
-                                       role=role, cpp=model.component_properties)
+        return IVFilter(iv_param, iso_model,
+                        role=role, cpp=model.component_properties)
 
     elif filter_name == consts.IV_PERCENTILE:
         iv_percentile_param = model_param.iv_percentile_param
-        iv_param = feature_selection_param.CommonFilterParam(
-            metrics=consts.IV,
+        iv_param = feature_selection_param.IVFilterParam(
             filter_type='top_percentile',
-            take_high=True,
             threshold=iv_percentile_param.percentile_threshold,
             select_federated=not iv_percentile_param.local_only
         )
@@ -85,15 +82,13 @@ def get_filter(filter_name, model_param: FeatureSelectionParam, role=consts.GUES
         iso_model = model.isometric_models.get(consts.BINNING_MODEL)
         if iso_model is None:
             raise ValueError("None of binning model has provided when using iv filter")
-        return FederatedIsoModelFilter(iv_param, iso_model,
-                                       role=role, cpp=model.component_properties)
+        return IVFilter(iv_param, iso_model,
+                        role=role, cpp=model.component_properties)
 
     elif filter_name == consts.IV_TOP_K:
         iv_top_k_param = model_param.iv_top_k_param
-        iv_param = feature_selection_param.CommonFilterParam(
-            metrics=consts.IV,
+        iv_param = feature_selection_param.IVFilterParam(
             filter_type='top_k',
-            take_high=True,
             threshold=iv_top_k_param.k,
             select_federated=not iv_top_k_param.local_only
         )
@@ -101,8 +96,8 @@ def get_filter(filter_name, model_param: FeatureSelectionParam, role=consts.GUES
         iso_model = model.isometric_models.get(consts.BINNING_MODEL)
         if iso_model is None:
             raise ValueError("None of binning model has provided when using iv filter")
-        return FederatedIsoModelFilter(iv_param, iso_model,
-                                       role=role, cpp=model.component_properties)
+        return IVFilter(iv_param, iso_model,
+                        role=role, cpp=model.component_properties)
 
     elif filter_name == consts.COEFFICIENT_OF_VARIATION_VALUE_THRES:
         variance_coe_param = model_param.variance_coe_param
@@ -150,8 +145,8 @@ def get_filter(filter_name, model_param: FeatureSelectionParam, role=consts.GUES
         iso_model = model.isometric_models.get(consts.BINNING_MODEL)
         if iso_model is None:
             raise ValueError("None of iv model has provided when using iv filter")
-        return FederatedIsoModelFilter(this_param, iso_model,
-                                       role=role, cpp=model.component_properties)
+        return IVFilter(this_param, iso_model,
+                        role=role, cpp=model.component_properties)
 
     elif filter_name == consts.HETERO_SBT_FILTER:
         sbt_param = model_param.sbt_param

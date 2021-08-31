@@ -165,7 +165,9 @@ class FederatedIsoModelFilter(IsoModelFilter):
 
         # for idx, m in enumerate(self.metrics):
         value_obj = self.iso_model.get_metric_info(m)
+        self._fix_with_value_obj(value_obj, suffix)
 
+    def _fix_with_value_obj(self, value_obj, suffix):
         all_feature_values = value_obj.get_partial_values(self.selection_properties.select_col_names)
         col_names = [("guest", x) for x in self.selection_properties.select_col_names]
         if self.select_federated:

@@ -156,6 +156,7 @@ class HomoBoostingClient(Boosting, ABC):
                     LOGGER.info('n_iter_no_change stop triggered')
                     break
 
+        self.callback_list.on_train_end()
         self.set_summary(self.generate_summary())
 
     @assert_io_num_rows_equal
@@ -245,6 +246,7 @@ class HomoBoostingArbiter(Boosting, ABC):
                                       metric_type="LOSS",
                                       extra_metas={"Best": min(self.history_loss)}))
 
+        self.callback_list.on_train_end()
         self.set_summary(self.generate_summary())
 
     def predict(self, data_inst=None):

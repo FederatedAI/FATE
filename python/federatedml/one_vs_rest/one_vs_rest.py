@@ -16,14 +16,13 @@
 
 import copy
 import functools
-import time
 
-from federatedml.protobuf.generated import one_vs_rest_param_pb2
+from federatedml.feature.instance import Instance
 from federatedml.transfer_variable.transfer_class.one_vs_rest_transfer_variable import OneVsRestTransferVariable
+from federatedml.util import LOGGER
 from federatedml.util import consts
 from federatedml.util.classify_label_checker import ClassifyLabelChecker
 from federatedml.util.io_check import assert_io_num_rows_equal
-from federatedml.util import LOGGER
 
 
 class OneVsRest(object):
@@ -157,9 +156,10 @@ class OneVsRest(object):
         prob result is available for guest party only.
         """
         if self.role == consts.GUEST:
-            prob = predict_res_list[0].mapValues(lambda r: [r[2]])
+            # assert 1 == 2, f"predict_res_list: {predict_res_list[0].first()[1].features}"
+            prob = predict_res_list[0].mapValues(lambda r: [r.features[2]])
             for predict_res in predict_res_list[1:]:
-                prob = prob.join(predict_res, lambda p, r: p + [r[2]])
+                prob = prob.join(predict_res, lambda p, r: p + [r.features[2]])
         else:
             prob = None
         return prob
@@ -193,10 +193,16 @@ class OneVsRest(object):
             f = functools.partial(self.__get_multi_class_res, classes=list(self.classes))
             multi_classes_res = prob.mapValues(f)
             predict_res = data_instances.join(multi_classes_res, lambda d, m: [d.label, m[0], m[1], m[2]])
+
+            def _transfer(instance, pred_res):
+                return Instance(features=pred_res, inst_id=instance.inst_id)
+
+            predict_res = data_instances.join(predict_res, _transfer)
         else:
             predict_res = None
         #
         # LOGGER.info("finish OneVsRest Predict, return predict results.")
+
         return predict_res
 
     def save(self, single_model_pb):

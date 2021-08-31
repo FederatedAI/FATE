@@ -348,6 +348,7 @@ class FTLGuest(FTL):
 
             LOGGER.debug('fitting epoch {} done, loss is {}'.format(epoch_idx, loss))
 
+        self.callback_list.on_train_end()
         self.callback_meta("loss",
                            "train",
                            MetricMeta(name="train",

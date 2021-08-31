@@ -260,6 +260,7 @@ class HeteroLRBase(SSHEModelBase, ABC):
                     if self.role == consts.GUEST:
                         loss = np.sum(loss_list) / self.batch_generator.batch_nums
                         self.loss_history.append(loss)
+                        self.callback_loss(self.n_iter_, loss)
                     else:
                         loss = None
 

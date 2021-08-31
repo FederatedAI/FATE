@@ -30,16 +30,16 @@ def sbt_feature_transformer_param():
 @sbt_feature_transformer_cpn_meta.bind_runner.on_guest
 def sbt_feature_transformer_guest_runner():
     from federatedml.feature.sbt_feature_transformer.sbt_feature_transformer import (
-        HeteroSecureBoostingTreeGuest,
+        HeteroSBTFeatureTransformerGuest,
     )
 
-    return HeteroSecureBoostingTreeGuest
+    return HeteroSBTFeatureTransformerGuest
 
 
 @sbt_feature_transformer_cpn_meta.bind_runner.on_host
 def sbt_feature_transformer_host_runner():
     from federatedml.feature.sbt_feature_transformer.sbt_feature_transformer import (
-        HeteroFastSecureBoostingTreeHost,
+         HeteroSBTFeatureTransformerHost,
     )
 
-    return HeteroFastSecureBoostingTreeHost
+    return HeteroSBTFeatureTransformerHost
