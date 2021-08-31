@@ -24,6 +24,8 @@ from federatedml.feature.instance import Instance
 from federatedml.framework.hetero.procedure import table_aggregator
 from federatedml.param.hetero_kmeans_param import KmeansParam
 from federatedml.unsupervised_learning.kmeans.kmeans_model_base import BaseKmeansModel
+
+# Do not delete this import
 from federatedml.framework.weights import NumpyWeights
 
 from federatedml.util import LOGGER
