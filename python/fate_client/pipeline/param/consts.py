@@ -13,6 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+ALLOW_REVEAL_GUEST_ONLY = True
 
 ARBITER = 'arbiter'
 HOST = 'host'
@@ -292,6 +293,10 @@ HOMO_SBT = 'homo_sbt'
 HETERO_SBT = 'hetero_sbt'
 HETERO_FAST_SBT_MIX = 'hetero_fast_sbt_mix'
 HETERO_FAST_SBT_LAYERED = 'hetero_fast_sbt_layered'
+
+# homm sbt backend
+MEMORY_BACKEND = 'memory'
+DISTRIBUTED_BACKEND = 'distributed'
 
 # column_expand
 MANUAL = 'manual'

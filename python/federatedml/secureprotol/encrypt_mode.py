@@ -64,7 +64,7 @@ class EncryptModeCalculator(object):
     @staticmethod
     def add_enc_zero(obj, enc_zero):
         if isinstance(obj, np.ndarray):
-            return enc_zero + obj
+            return obj + enc_zero
         elif isinstance(obj, Iterable):
             return type(obj)(
                 EncryptModeCalculator.add_enc_zero(o, enc_zero) if isinstance(o, Iterable) else o + enc_zero for o in

@@ -50,12 +50,6 @@
         },
         "data_transform_tag_value": {
             "script": "pipeline-data-transform-tag-value.py"
-        },
-        "data_transform_match_id_dense": {
-            "script": "pipeline-data-transform-dense-match-id.py"
-        },
-        "data_transform_match_id_tag_value": {
-            "script": "pipeline-data-transform-tag-value-match-id.py"
         }
     }
 }

@@ -31,6 +31,7 @@ class FeatureImputation(ModelBase):
         self.summary_obj = None
         self.missing_impute_rate = None
         self.skip_cols = []
+        self.cols_replace_method = None
         self.header = None
         from federatedml.param.feature_imputation_param import FeatureImputationParam
         self.model_param = FeatureImputationParam()
@@ -64,7 +65,7 @@ class FeatureImputation(ModelBase):
 
     def save_model(self):
         meta_obj, param_obj = save_feature_imputer_model(missing_fill=True,
-                                                         missing_replace_method=self.missing_fill_method,
+                                                         cols_replace_method=self.cols_replace_method,
                                                          missing_impute=self.missing_impute,
                                                          missing_fill_value=self.default_value,
                                                          missing_replace_rate=self.missing_impute_rate,
@@ -99,6 +100,7 @@ class FeatureImputation(ModelBase):
             self.missing_impute = imputer_processor.get_missing_value_list()
         self.missing_impute_rate = imputer_processor.get_impute_rate("fit")
         self.header = get_header(imputed_data)
+        self.cols_replace_method =imputer_processor.cols_replace_method
         self.skip_cols = imputer_processor.get_skip_cols()
         self.set_summary(self.get_summary())
 
@@ -120,6 +122,7 @@ class FeatureImputation(ModelBase):
 
 def save_feature_imputer_model(missing_fill=False,
                                missing_replace_method=None,
+                               cols_replace_method=None,
                                missing_impute=None,
                                missing_fill_value=None,
                                missing_replace_rate=None,
@@ -149,6 +152,10 @@ def save_feature_imputer_model(missing_fill=False,
         if missing_replace_rate is not None:
             missing_replace_rate_dict = dict(zip(header, missing_replace_rate))
             model_param.missing_value_ratio.update(missing_replace_rate_dict)
+
+        if cols_replace_method is not None:
+            cols_replace_method = {k: str(v) for k, v in cols_replace_method.items()}
+            model_param.cols_replace_method.update(cols_replace_method)
 
         model_param.skip_cols.extend(skip_cols)
 

@@ -72,6 +72,12 @@ class ValidationStrategy(CallbackBase):
         self.first_metric = None
         self._evaluation_summary = {}
 
+        # precompute scores
+        self.cached_train_scores = None
+        self.cached_validate_scores = None
+        self.use_precompute_train_scores = False
+        self.use_precompute_validate_scores = False
+
         if early_stopping_rounds is not None:
             if early_stopping_rounds <= 0:
                 raise ValueError('early stopping error should be larger than 0')
@@ -311,24 +317,19 @@ class ValidationStrategy(CallbackBase):
 
         return predicts
 
-    def validate(self, model, epoch,
-                 use_precomputed_train=False,
-                 use_precomputed_validate=False,
-                 train_scores=None,
-                 validate_scores=None):
+    def set_precomputed_train_scores(self, train_scores):
+        self.use_precompute_train_scores = True
+        self.cached_train_scores = train_scores
+
+    def set_precomputed_validate_scores(self, validate_scores):
+        self.use_precompute_validate_scores = True
+        self.cached_validate_scores = validate_scores
+
+    def validate(self, model, epoch):
 
         """
         :param model: model instance, which has predict function
         :param epoch: int, epoch idx for generating flow id
-        :param use_precomputed_validate: bool, use precomputed train scores or not, if True, check validate_scores
-        :param use_precomputed_train: bool, use precomputed validate scores or not, if True, check train_scores
-        :param validate_scores: dtable, key is sample id, value is a list contains precomputed predict scores.
-                                             once offered, skip calling
-                                             model.predict(self.validate_data) and use this as validate_predicts
-        :param train_scores: dtable, key is sample id, value is a list contains precomputed predict scores.
-                                             once offered, skip calling
-                                             model.predict(self.train_data) and use this as validate_predicts
-        :return:
         """
 
         LOGGER.debug("begin to check validate status, need_run_validation is {}".format(self.need_run_validation(epoch)))
@@ -339,15 +340,15 @@ class ValidationStrategy(CallbackBase):
         if self.mode == consts.HOMO and self.role == consts.ARBITER:
             return
 
-        if not use_precomputed_train:  # call model.predict()
+        if not self.use_precompute_train_scores:  # call model.predict()
             train_predicts = self.get_predict_result(model, epoch, self.train_data, "train")
         else:  # use precomputed scores
-            train_predicts = self.handle_precompute_scores(train_scores, 'train')
+            train_predicts = self.handle_precompute_scores(self.cached_train_scores, 'train')
 
-        if not use_precomputed_validate:  # call model.predict()
+        if not self.use_precompute_validate_scores:  # call model.predict()
             validate_predicts = self.get_predict_result(model, epoch, self.validate_data, "validate")
         else:  # use precomputed scores
-            validate_predicts = self.handle_precompute_scores(validate_scores, 'validate')
+            validate_predicts = self.handle_precompute_scores(self.cached_validate_scores, 'validate')
 
         if train_predicts is not None or validate_predicts is not None:
 

@@ -382,8 +382,11 @@ class IntersectModelBase(ModelBase):
         LOGGER.info("Finish intersection")
 
         if self.intersect_ids:
+            data_count = data_inst.count()
             self.intersect_num = self.intersect_ids.count()
-            self.intersect_rate = self.intersect_num / data_inst.count()
+            self.intersect_rate = self.intersect_num / data_count
+            self.unmatched_num = data_count - self.intersect_num
+            self.unmatched_rate = 1 - self.intersect_rate
 
         self.set_summary(self.get_model_summary())
         self.callback()

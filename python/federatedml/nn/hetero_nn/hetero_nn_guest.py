@@ -54,7 +54,6 @@ class HeteroNNGuest(HeteroNNBase):
         self.num_label = 2
 
         self.input_shape = None
-        self.validation_strategy = None
         self._summary_buf = {"history_loss": [],
                              "is_converged": False,
                              "best_iteration": -1}
@@ -78,10 +77,14 @@ class HeteroNNGuest(HeteroNNBase):
                                       extra_metas={"unit_name": "iters"}))
 
     def fit(self, data_inst, validate_data=None):
+        self.callback_list.on_train_begin(data_inst, validate_data)
 
-        self.validation_strategy = self.init_validation_strategy(data_inst, validate_data)
-        self._build_model()
-        # collect data from dtable to form data loader
+        # collect data from table to form data loader
+        if not self.component_properties.is_warm_start:
+            self._build_model()
+        else:
+            self.model.warm_start()
+
         self.prepare_batch_data(self.batch_generator, data_inst)
         if not self.input_shape:
             self.model.set_empty()
@@ -90,11 +93,13 @@ class HeteroNNGuest(HeteroNNBase):
         cur_epoch = 0
         while cur_epoch < self.epochs:
             LOGGER.debug("cur epoch is {}".format(cur_epoch))
+            self.callback_list.on_epoch_begin(cur_epoch)
             epoch_loss = 0
 
             for batch_idx in range(len(self.data_x)):
                 # hetero NN model
                 batch_loss = self.model.train(self.data_x[batch_idx], self.data_y[batch_idx], cur_epoch, batch_idx)
+
                 epoch_loss += batch_loss
 
             epoch_loss /= len(self.data_x)
@@ -104,13 +109,13 @@ class HeteroNNGuest(HeteroNNBase):
             self.callback_metric("loss",
                                  "train",
                                  [Metric(cur_epoch, epoch_loss)])
+
             self.history_loss.append(epoch_loss)
 
-            if self.validation_strategy:
-                self.validation_strategy.validate(self, cur_epoch)
-                if self.validation_strategy.need_stop():
-                    LOGGER.debug('early stopping triggered')
-                    break
+            self.callback_list.on_epoch_end(cur_epoch)
+            if self.callback_variables.stop_training:
+                LOGGER.debug('early stopping triggered')
+                break
 
             if self.hetero_nn_param.selector_param.method:
                 # when use selective bp, loss converge will be disabled
@@ -132,8 +137,9 @@ class HeteroNNGuest(HeteroNNBase):
         if cur_epoch == self.epochs:
             LOGGER.debug("Training process reach max training epochs {} and not converged".format(self.epochs))
 
-        if self.validation_strategy and self.validation_strategy.has_saved_best_model():
-            self.load_model(self.validation_strategy.cur_best_model)
+        self.callback_list.on_train_end()
+        # if self.validation_strategy and self.validation_strategy.has_saved_best_model():
+        #     self.load_model(self.validation_strategy.cur_best_model)
 
         self.set_summary(self._get_model_summary())
 
@@ -180,13 +186,16 @@ class HeteroNNGuest(HeteroNNBase):
         self._restore_model_param(param)
 
     def _get_model_summary(self):
-        self._summary_buf["best_iteration"] = -1 if self.validation_strategy is None else self.validation_strategy.best_iteration
+        # self._summary_buf["best_iteration"] = -1 if self.validation_strategy is None else self.validation_strategy.best_iteration
         self._summary_buf["history_loss"] = self.history_loss
-
+        if self.callback_variables.validation_summary:
+            self._summary_buf["validation_metrics"] = self.callback_variables.validation_summary
+        """
         if self.validation_strategy:
             validation_summary = self.validation_strategy.summary()
             if validation_summary:
                 self._summary_buf["validation_metrics"] = validation_summary
+        """
 
         return self._summary_buf
 
@@ -209,7 +218,8 @@ class HeteroNNGuest(HeteroNNBase):
         model_param.iter_epoch = self.iter_epoch
         model_param.hetero_nn_model_param.CopyFrom(self.model.get_hetero_nn_model_param())
         model_param.num_label = self.num_label
-        model_param.best_iteration = -1 if self.validation_strategy is None else self.validation_strategy.best_iteration
+        model_param.best_iteration = self.callback_variables.best_iteration
+        # model_param.best_iteration = -1 if self.validation_strategy is None else self.validation_strategy.best_iteration
         model_param.header.extend(self._header)
 
         for loss in self.history_loss:
@@ -228,7 +238,6 @@ class HeteroNNGuest(HeteroNNBase):
             return EvaluateParam(eval_type="regression", metrics=self.metrics)
 
     def prepare_batch_data(self, batch_generator, data_inst):
-
         self._header = data_inst.schema["header"]
         batch_generator.initialize_batch_generator(data_inst, self.batch_size)
         batch_data_generator = batch_generator.generate_batch_data()
