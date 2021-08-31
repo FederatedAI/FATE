@@ -200,6 +200,7 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
                 validation_strategy.set_precomputed_train_scores(self.score_to_predict_result(data_inst, self.y_hat))
 
             self.callback_list.on_epoch_end(epoch_idx)
+
             should_stop = False
             if self.n_iter_no_change and self.check_convergence(loss):
                 should_stop = True
@@ -207,6 +208,8 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
             self.sync_stop_flag(self.is_converged, epoch_idx)
             if self.stop_training or should_stop:
                 break
+
+        self.callback_list.on_train_end()
 
         self.callback_meta("loss",
                            "train",
@@ -302,6 +305,7 @@ class HeteroBoostingHost(HeteroBoosting, ABC):
             if should_stop:
                 break
 
+        self.callback_list.on_train_end()
         self.set_summary(self.generate_summary())
 
     def lazy_predict(self, data_inst):

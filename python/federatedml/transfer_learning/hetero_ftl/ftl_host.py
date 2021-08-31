@@ -201,6 +201,7 @@ class FTLHost(FTL):
 
             LOGGER.debug('fitting epoch {} done'.format(epoch_idx))
 
+        self.callback_list.on_train_end()
         self.set_summary(self.generate_summary())
 
     def generate_summary(self):
