@@ -83,7 +83,7 @@ Input
 ~~~~~~
 
 `Input <./component/README.rst>`__ encapsulates all input of a component, including
-``Data`` and ``Model`` input. To access ``input`` of a component,
+``Data``, ``Cache``, and ``Model`` input. To access ``input`` of a component,
 reference its ``input`` attribute:
 
 .. code:: python
@@ -94,7 +94,7 @@ Output
 ~~~~~~
 
 `Output <./component/README.rst>`__ encapsulates all output result of a component, including
-``Data`` and ``Model`` output. To access ``Output`` from a component,
+``Data``, ``Cache``, and ``Model`` output. To access ``Output`` from a component,
 reference its ``output`` attribute:
 
 .. code:: python
@@ -114,6 +114,14 @@ Model
 ``Model`` defines model input and output of components. Similar to ``Data``, the two
 types of ``models`` are used for different purposes.
 For more information, please refer `here <./component/README.rst>`__.
+
+Cache
+~~~~~
+
+``Caches`` wraps cache input and output of ``Intersection`` component.
+Only ``Intersection`` component may have ``cache`` input or output.
+For more information, please refer `here <./component/README.rst>`__.
+
 
 Build A Pipeline
 ----------------
@@ -302,10 +310,50 @@ fit or predict state and the constructed dsl if exists.
 
    pipeline.describe()
 
+Use Online Inference Service(FATE-Serving) with Pipeline
+--------------------------------------------------------
+
+First, trained pipeline must be deployed before loading and binding model to
+online service `FATE-Serving <https://github.com/FederatedAI/FATE-Serving>`__.
+
+.. code:: python
+
+   # deploy select components
+   pipeline.deploy_component([dataio_0, hetero_lr_0])
+   # deploy all components
+   # note that Reader component cannot be deployed. Always deploy pipeline with Reader by specifying component list.
+   pipeline.deploy_component()
+
+Then load model, file path to model storage may be supplied.
+
+.. code:: python
+
+   pipeline.online.load()
+
+Last, bind model to chosen service. Optionally, provide select FATE-Serving address(es).
+
+.. code:: python
+
+   # by default, bind model to all FATE-Serving addresses
+   pipeline.online.bind("service_1")
+   # bind model to specified FATE-Serving address(es) only
+   pipeline.online.bind("service_1", "127.0.0.1")
+
+
+Convert Homo Model to Formats from Other Machine Learning System
+----------------------------------------------------------------
+
+To convert a trained homo model into formats of other machine learning system, use **convert** interface.
+
+.. code:: python
+
+   pipeline.model_convert.convert()
+
+
 Upload Data
 -----------
 
-Pipeline provides functionality to upload local data table. Please refer
+PipeLine provides functionality to upload local data table. Please refer
 to `upload demo <./demo/pipeline-upload.py>`__ for a quick example. Note
 that uploading data can be added all at once, and the pipeline used to
 perform upload can be either training or prediction pipeline (or, a

@@ -40,13 +40,17 @@
                 },
                 "decay": 0.0,
                 "decay_sqrt": false,
-                "validation_freqs": 1,
-                "early_stopping_rounds": 5,
-                "metrics": [
-                    "mean_absolute_error",
-                    "root_mean_squared_error"
-                ],
-                "use_first_metric_only": false
+                "callback_param": {
+                    "callbacks": ["EarlyStopping", "PerformanceEvaluate"],
+                    "validation_freqs": 1,
+                    "early_stopping_rounds": 5,
+                    "metrics": [
+                        "mean_absolute_error",
+                        "root_mean_squared_error"
+                    ],
+                    "use_first_metric_only": false,
+                    "save_freq": 1
+                }
             }
         },
         "role": {

@@ -93,8 +93,30 @@ How to Use
 
     :normalize: bool, default False. Whether to normalize sample weight extracted from `sample_weight_name` column
 
-    :need_run: bool, whether to run this module or not
+    :need_run: bool, whether to run this module
 
     .. Note::
 
         If both ``class_weight`` and ``sample_weight_name`` are provided, values from column of ``sample_weight_name`` will be used.
+
+
+Label Transform
+===============
+
+Label Transform replaces label with designated values.
+
+User may specify encoder to transform labels into designated values.
+If no specification is provided, module will automatically encodes label into categorical label values(integers)
+starting at 0.
+
+
+How to Use
+----------
+
+:params:
+
+    :label_encoder: None, dict, specify (label, encoded label) key-value pairs for transforming labels to new values.
+
+    :label_list: None, list, list all input labels, used for matching types of original keys in label_encoder dict
+
+    :need_run: bool, whether to run this module

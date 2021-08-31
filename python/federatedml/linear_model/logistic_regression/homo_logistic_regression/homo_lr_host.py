@@ -24,6 +24,9 @@ from federatedml.framework.homo.procedure import paillier_cipher
 from federatedml.linear_model.linear_model_weight import LinearModelWeights as LogisticRegressionWeights
 from federatedml.linear_model.logistic_regression.homo_logistic_regression.homo_lr_base import HomoLRBase
 from federatedml.model_selection import MiniBatch
+from federatedml.feature.instance import Instance
+from federatedml.optim import activation
+from federatedml.util.fate_operator import vec_dot
 from federatedml.optim.gradient.homo_lr_gradient import LogisticGradient, TaylorLogisticGradient
 from federatedml.protobuf.generated import lr_model_param_pb2
 from federatedml.util import LOGGER
@@ -60,14 +63,16 @@ class HomoLRHost(HomoLRBase):
         self.init_schema(data_instances)
         # validation_strategy = self.init_validation_strategy(data_instances, validate_data)
         self._client_check_data(data_instances)
+        self.callback_list.on_train_begin(data_instances, validate_data)
 
         pubkey = self.cipher.gen_paillier_pubkey(enable=self.use_encrypt, suffix=('fit',))
         if self.use_encrypt:
             self.cipher_operator.set_public_key(pubkey)
 
-        self.model_weights = self._init_model_variables(data_instances)
-        w = self.cipher_operator.encrypt_list(self.model_weights.unboxed)
-        self.model_weights = LogisticRegressionWeights(w, self.model_weights.fit_intercept)
+        if not self.component_properties.is_warm_start:
+            self.model_weights = self._init_model_variables(data_instances)
+            w = self.cipher_operator.encrypt_list(self.model_weights.unboxed)
+            self.model_weights = LogisticRegressionWeights(w, self.model_weights.fit_intercept)
 
         # LOGGER.debug("After init, model_weights: {}".format(self.model_weights.unboxed))
 
@@ -88,6 +93,8 @@ class HomoLRHost(HomoLRBase):
         self.prev_round_weights = copy.deepcopy(model_weights)
         degree = 0
         while self.n_iter_ < self.max_iter + 1:
+            self.callback_list.on_epoch_begin(self.n_iter_)
+
             batch_data_generator = mini_batch_obj.mini_batch_data_generator()
 
             if ((self.n_iter_ + 1) % self.aggregate_iters == 0) or self.n_iter_ == self.max_iter:
@@ -139,6 +146,9 @@ class HomoLRHost(HomoLRBase):
                 batch_num += 1
 
             # validation_strategy.validate(self, self.n_iter_)
+            self.callback_list.on_epoch_end(self.n_iter_)
+            if self.stop_training:
+                break
             self.n_iter_ += 1
 
         self.set_summary(self.get_model_summary())
@@ -179,15 +189,20 @@ class HomoLRHost(HomoLRBase):
             wx = self.compute_wx(data_instances, model_weights.coef_, model_weights.intercept_)
             self.transfer_variable.predict_wx.remote(wx, consts.ARBITER, 0, suffix=suffix)
             predict_result = self.transfer_variable.predict_result.get(idx=0, suffix=suffix)
-            predict_result = predict_result.join(data_instances, lambda p, d: [d.label, p, None,
-                                                                               {"0": None, "1": None}])
-
+            # predict_result = predict_result.join(data_instances, lambda p, d: [d.label, p, None,
+            #                                                                    {"0": None, "1": None}])
+            predict_result = predict_result.join(data_instances, lambda p, d:
+                                                 Instance(features=[d.label, p, None, {"0": None, "1": None}],
+                                                          inst_id=d.inst_id)
+                                                 )
         else:
-            predict_wx = self.compute_wx(data_instances, self.model_weights.coef_, self.model_weights.intercept_)
-            pred_table = self.classify(predict_wx, self.model_param.predict_param.threshold)
-            predict_result = data_instances.mapValues(lambda x: x.label)
-            predict_result = pred_table.join(predict_result, lambda x, y: [y, x[1], x[0],
-                                                                           {"1": x[0], "0": 1 - x[0]}])
+            pred_prob = data_instances.mapValues(
+                lambda v: activation.sigmoid(vec_dot(v.features, self.model_weights.coef_)
+                                             + self.model_weights.intercept_))
+            predict_result = self.predict_score_to_output(data_instances, pred_prob, classes=[0, 1],
+                                                          threshold=self.model_param.predict_param.threshold)
+
+
         return predict_result
 
     def _get_param(self):

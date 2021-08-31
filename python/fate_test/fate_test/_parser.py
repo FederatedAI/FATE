@@ -81,7 +81,8 @@ class Data(object):
         return Data(config=kwargs, role_str=role_str)
 
     def update(self, config: Config):
-        self.config.update(dict(work_mode=config.work_mode, backend=config.backend))
+        self.config.update(dict(work_mode=config.work_mode, backend=config.backend, extend_sid=config.extend_sid,
+                                auto_increasing_sid=config.auto_increasing_sid))
 
 
 class JobConf(object):
@@ -341,7 +342,7 @@ class Testsuite(object):
                     status.name,
                     status.job_id,
                     status.status,
-                    "".join([str(time_consuming), "s"]),
+                    time_consuming.pop(0) if status.job_id != "-" else "-",
                     status.exception_id,
                     ",".join(status.rest_dependency),
                 ]

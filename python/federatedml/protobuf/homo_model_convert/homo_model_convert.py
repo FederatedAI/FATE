@@ -94,8 +94,6 @@ def model_convert(model_contents: dict,
              the specified framework.
     """
 
-    LOGGER.info('cwj is here')
-
     if not framework_name:
         framework_name = get_default_target_framework(model_contents, module_name)
         if not framework_name:
@@ -105,9 +103,8 @@ def model_convert(model_contents: dict,
         LOGGER.warn(f"Module {module_name} cannot be converted to framework {framework_name}")
         return None, None
     LOGGER.info(f"Converting {module_name} module to a model of framework {target_framework}")
-    a, b = target_framework, component_converter.convert(model_contents)
-    LOGGER.info('cwj a b {} {}'.format(a, b))
-    return a, b
+
+    return target_framework, component_converter.convert(model_contents)
 
 
 def _get_model_saver_loader(framework_name: str):

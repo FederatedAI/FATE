@@ -55,7 +55,13 @@ def main(config="../../config.yaml", namespace=""):
     param = {
         "intersect_method": "raw",
         "sync_intersect_ids": True,
-        "only_output_key": True
+        "only_output_key": True,
+        "raw_params": {
+            "use_hash": True,
+            "hash_method": "sha256",
+            "salt": "12345",
+            "join_role": "guest"
+        }
     }
     intersect_0 = Intersection(name="intersect_0", **param)
 

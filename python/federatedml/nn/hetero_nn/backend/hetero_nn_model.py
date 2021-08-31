@@ -86,6 +86,7 @@ class HeteroNNKerasGuestModel(HeteroNNGuestModel):
             if self.bottom_model is None:
                 self.bottom_model_input_shape = x.shape[1]
                 self._build_bottom_model()
+
             guest_bottom_output = self.bottom_model.forward(x)
         else:
             guest_bottom_output = None
@@ -205,14 +206,15 @@ class HeteroNNKerasGuestModel(HeteroNNGuestModel):
         self.interactive_layer_define = json.loads(model_meta.interactive_layer_define)
         self.loss = model_meta.loss
 
-        """
         self.metrics = []
         for metric in self.metrics:
             self.metrics.append(metric)
-        """
 
-        self.optimizer.optimizer = model_meta.optimizer_param.optimizer
-        self.optimizer.kwargs = json.loads(model_meta.optimizer_param.kwargs)
+        if self.optimizer is None:
+            from types import SimpleNamespace
+            self.optimizer = SimpleNamespace(optimizer=None, kwargs={})
+            self.optimizer.optimizer = model_meta.optimizer_param.optimizer
+            self.optimizer.kwargs = json.loads(model_meta.optimizer_param.kwargs)
 
     def set_transfer_variable(self, transfer_variable):
         self.transfer_variable = transfer_variable
@@ -269,6 +271,10 @@ class HeteroNNKerasGuestModel(HeteroNNGuestModel):
         self._build_interactive_model()
 
         self.interactive_model.restore_model(interactive_model_param)
+
+    def warm_start(self):
+        self.bottom_model.recompile(self.optimizer)
+        self.top_model.recompile(self.loss, self.optimizer, self.metrics)
 
 
 class HeteroNNKerasHostModel(HeteroNNHostModel):
@@ -327,6 +333,9 @@ class HeteroNNKerasHostModel(HeteroNNHostModel):
         self._build_interactive_model()
         self.interactive_model.restore_model(interactive_layer_param)
 
+    def warm_start(self):
+        self.bottom_model.recompile(self.optimizer)
+
     def set_transfer_variable(self, transfer_variable):
         self.transfer_variable = transfer_variable
 
@@ -371,8 +380,11 @@ class HeteroNNKerasHostModel(HeteroNNHostModel):
         elif self.config_type == 'keras':
             self.bottom_nn_define = json.loads(model_meta.bottom_nn_define[0])
 
-        self.optimizer.optimizer = model_meta.optimizer_param.optimizer
-        self.optimizer.kwargs = json.loads(model_meta.optimizer_param.kwargs)
+        if self.optimizer is None:
+            from types import SimpleNamespace
+            self.optimizer = SimpleNamespace(optimizer=None, kwargs={})
+            self.optimizer.optimizer = model_meta.optimizer_param.optimizer
+            self.optimizer.kwargs = json.loads(model_meta.optimizer_param.kwargs)
 
     def set_hetero_nn_model_param(self, model_param):
         self.bottom_model_input_shape = model_param.bottom_model_input_shape

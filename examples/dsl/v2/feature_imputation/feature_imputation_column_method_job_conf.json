@@ -38,14 +38,15 @@
                             "name": "dvisits_hetero_guest",
                             "namespace": "experiment"
                         }
-                    }
-                },
-                "feature_imputation_0": {
-                    "col_missing_fill_method": {
-                        "doctorco": "min",
-                        "hscore": "designated"
+                    },
+                    "feature_imputation_0": {
+                        "col_missing_fill_method": {
+                            "doctorco": "min",
+                            "hscore": "designated"
+                        }
                     }
                 }
+
             }
         },
         "common": {

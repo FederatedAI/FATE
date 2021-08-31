@@ -15,19 +15,40 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
 import copy
 import typing
 
 import numpy as np
-from google.protobuf import json_format
 from fate_arch.computing import is_table
+from google.protobuf import json_format
 
 from federatedml.param.evaluation_param import EvaluateParam
 from federatedml.protobuf import deserialize_models
 from federatedml.statistic.data_overview import header_alignment
 from federatedml.util import LOGGER, abnormal_detection
-from federatedml.util.component_properties import ComponentProperties
+from federatedml.util.io_check import assert_match_id_consistent
+from federatedml.util.component_properties import ComponentProperties, RunningFuncs
+from federatedml.callbacks.callback_list import CallbackList
+from federatedml.feature.instance import Instance
+
+
+def serialize_models(models):
+    serialized_models: typing.Dict[str, typing.Tuple[str, bytes, dict]] = {}
+
+    for model_name, buffer_object in models.items():
+        serialized_string = buffer_object.SerializeToString()
+        pb_name = type(buffer_object).__name__
+        json_format_dict = json_format.MessageToDict(
+            buffer_object, including_default_value_fields=True
+        )
+
+        serialized_models[model_name] = (
+            pb_name,
+            serialized_string,
+            json_format_dict,
+        )
+
+    return serialized_models
 
 
 class ComponentOutput:
@@ -50,17 +71,110 @@ class ComponentOutput:
 
     @property
     def model(self):
-        serialized_models: typing.Dict[str, typing.Tuple[str, bytes, dict]] = {}
-        for model_name, buffer_object in self._models.items():
-            serialized_string = buffer_object.SerializeToString()
-            pb_name = type(buffer_object).__name__
-            serialized_models[model_name] = (pb_name, serialized_string, json_format.MessageToDict(buffer_object, including_default_value_fields=True))
-
-        return serialized_models
+        return serialize_models(self._models)
 
     @property
     def cache(self):
         return self._cache
+
+
+class MetricType:
+    LOSS = "LOSS"
+
+
+class Metric:
+    def __init__(self, key, value: float, timestamp: float = None):
+        self.key = key
+        self.value = value
+        self.timestamp = timestamp
+
+
+class MetricMeta:
+    def __init__(self, name: str, metric_type: MetricType, extra_metas: dict = None):
+        self.name = name
+        self.metric_type = metric_type
+        self.metas = {}
+        if extra_metas:
+            self.metas.update(extra_metas)
+        self.metas["name"] = name
+        self.metas["metric_type"] = metric_type
+
+    def update_metas(self, metas: dict):
+        self.metas.update(metas)
+
+    def to_dict(self):
+        return self.metas
+
+
+class CallbacksVariable(object):
+    def __init__(self):
+        self.stop_training = False
+        self.best_iteration = -1
+        self.validation_summary = None
+
+
+# type hint
+class TrackerClient(object):
+    def log_job_metric_data(
+        self, metric_namespace: str, metric_name: str, metrics: typing.List[Metric]
+    ):
+        ...
+
+    def log_metric_data(
+        self, metric_namespace: str, metric_name: str, metrics: typing.List[Metric]
+    ):
+        ...
+
+    def log_metric_data_common(
+        self,
+        metric_namespace: str,
+        metric_name: str,
+        metrics: typing.List[Metric],
+        job_level=False,
+    ):
+        ...
+
+    def set_job_metric_meta(
+        self, metric_namespace: str, metric_name: str, metric_meta: MetricMeta
+    ):
+        ...
+
+    def set_metric_meta(
+        self, metric_namespace: str, metric_name: str, metric_meta: MetricMeta
+    ):
+        ...
+
+    def set_metric_meta_common(
+        self,
+        metric_namespace: str,
+        metric_name: str,
+        metric_meta: MetricMeta,
+        job_level=False,
+    ):
+        ...
+
+    def create_table_meta(self, table_meta):
+        ...
+
+    def get_table_meta(self, table_name, table_namespace):
+        ...
+
+    def save_component_output_model(self, component_model):
+        ...
+
+    def read_component_output_model(self, search_model_alias, tracker):
+        ...
+
+    def log_output_data_info(
+        self, data_name: str, table_namespace: str, table_name: str
+    ):
+        ...
+
+    def get_output_data_info(self, data_name=None):
+        ...
+
+    def log_component_summary(self, summary_data: dict):
+        ...
 
 
 class ModelBase(object):
@@ -75,13 +189,26 @@ class ModelBase(object):
         self.flowid = ""
         self.task_version_id = ""
         self.need_one_vs_rest = False
-        self.tracker = None
         self.checkpoint_manager = None
         self.cv_fold = 0
         self.validation_freqs = None
         self.component_properties = ComponentProperties()
         self._summary = dict()
         self._align_cache = dict()
+        self._tracker = None
+        self.step_name = ''
+        self.callback_list: CallbackList
+        self.callback_variables = CallbacksVariable()
+
+    @property
+    def tracker(self) -> TrackerClient:
+        if self._tracker is None:
+            raise RuntimeError(f"use tracker before set")
+        return self._tracker
+
+    @property
+    def stop_training(self):
+        return self.callback_variables.stop_training
 
     @property
     def need_cv(self):
@@ -107,21 +234,22 @@ class ModelBase(object):
         # self.need_run = need_run
         self.component_properties.need_run = need_run
 
-    def run(
-        self,
-        cpn_input,
-        warn_start: bool,
-    ):
+    def run(self, cpn_input, retry: bool = True):
         self.task_version_id = cpn_input.task_version_id
-        self.tracker = cpn_input.tracker
+        self._tracker = cpn_input.tracker
         self.checkpoint_manager = cpn_input.checkpoint_manager
 
         # deserialize models
         deserialize_models(cpn_input.models)
-        if not warn_start:
-            self._run(cpn_input)
-        else:
-            self._warn_start(cpn_input)
+
+        method = (
+            self._retry
+            if retry
+            and self.checkpoint_manager is not None
+            and self.checkpoint_manager.latest_checkpoint is not None
+            else self._run
+        )
+        method(cpn_input)
 
         return ComponentOutput(self.save_data(), self.export_model(), self.save_cache())
 
@@ -137,6 +265,11 @@ class ModelBase(object):
         self.component_properties.parse_caches(cpn_input.caches)
         # init component, implemented by subclasses
         self._init_model(self.model_param)
+
+        self.callback_list = CallbackList(self.role, self.mode, self)
+        if hasattr(self.model_param, "callback_param"):
+            callback_param = getattr(self.model_param, "callback_param")
+            self.callback_list.init_callback_list(callback_param)
 
         running_funcs = self.component_properties.extract_running_rules(
             datasets=cpn_input.datasets, models=cpn_input.models, cpn=self
@@ -171,6 +304,63 @@ class ModelBase(object):
         self.save_summary()
 
         return ComponentOutput(self.save_data(), self.export_model(), self.save_cache())
+
+    def _retry(self, cpn_input):
+        self.model_param.update(cpn_input.parameters)
+        self.model_param.check()
+        self.component_properties.parse_component_param(
+            cpn_input.roles, self.model_param
+        )
+        self.role = self.component_properties.role
+        self.component_properties.parse_dsl_args(cpn_input.datasets, cpn_input.models)
+        self.component_properties.parse_caches(cpn_input.caches)
+        # init component, implemented by subclasses
+        self._init_model(self.model_param)
+
+        self.callback_list = CallbackList(self.role, self.mode, self)
+        if hasattr(self.model_param, "callback_param"):
+            callback_param = getattr(self.model_param, "callback_param")
+            self.callback_list.init_callback_list(callback_param)
+
+        train_data, validate_data, test_data, data = self.component_properties.extract_input_data(
+            datasets=cpn_input.datasets, model=self
+        )
+
+        running_funcs = RunningFuncs()
+        latest_checkpoint = self.get_latest_checkpoint()
+        running_funcs.add_func(self.load_model, [latest_checkpoint])
+        running_funcs = self.component_properties.warm_start_process(
+            running_funcs, self, train_data, validate_data)
+        LOGGER.debug(f"running_funcs: {running_funcs.todo_func_list}")
+        self._execute_running_funcs(running_funcs)
+
+    def _execute_running_funcs(self, running_funcs):
+        saved_result = []
+        for func, params, save_result, use_previews in running_funcs:
+            # for func, params in zip(todo_func_list, todo_func_params):
+            if use_previews:
+                if params:
+                    real_param = [saved_result, params]
+                else:
+                    real_param = saved_result
+                LOGGER.debug("func: {}".format(func))
+                detected_func = assert_match_id_consistent(func)
+                this_data_output = detected_func(*real_param)
+                saved_result = []
+            else:
+                detected_func = assert_match_id_consistent(func)
+                this_data_output = detected_func(*params)
+
+            if save_result:
+                saved_result.append(this_data_output)
+
+        if len(saved_result) == 1:
+            self.data_output = saved_result[0]
+        LOGGER.debug("saved_result is : {}, data_output: {}".format(saved_result, self.data_output))
+        self.save_summary()
+
+    def export_serialized_models(self):
+        return serialize_models(self.export_model())
 
     def get_metrics_param(self):
         return EvaluateParam(eval_type="binary", pos_label=1)
@@ -243,7 +433,7 @@ class ModelBase(object):
         return "_".join(map(str, [name_prefix, self.flowid]))
 
     def set_tracker(self, tracker):
-        self.tracker = tracker
+        self._tracker = tracker
 
     def set_checkpoint_manager(self, checkpoint_manager):
         checkpoint_manager.load_checkpoints_from_disk()
@@ -269,6 +459,7 @@ class ModelBase(object):
                     "type",
                 ],
                 "sid_name": schema.get("sid_name"),
+                "content_type": "predict_result"
             }
         return predict_data
 
@@ -333,6 +524,11 @@ class ModelBase(object):
                 f"Model's classes type is {type(classes)}, classes must be None or list of length no less than 2."
             )
 
+        def _transfer(instance, pred_res):
+            return Instance(features=pred_res, inst_id=instance.inst_id)
+
+        predict_result = data_instances.join(predict_result, _transfer)
+
         return predict_result
 
     def callback_meta(self, metric_name, metric_namespace, metric_meta):
@@ -363,6 +559,9 @@ class ModelBase(object):
             metric_namespace=metric_namespace,
             metrics=metric_data,
         )
+
+    def get_latest_checkpoint(self):
+        return self.checkpoint_manager.latest_checkpoint.read()
 
     def save_summary(self):
         self.tracker.log_component_summary(summary_data=self.summary())

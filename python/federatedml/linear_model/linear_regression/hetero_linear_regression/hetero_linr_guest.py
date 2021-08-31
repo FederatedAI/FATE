@@ -58,8 +58,8 @@ class HeteroLinRGuest(HeteroLinRBase):
         LOGGER.info("Enter hetero_linR_guest fit")
         self._abnormal_detection(data_instances)
         self.header = self.get_header(data_instances)
-
-        self.validation_strategy = self.init_validation_strategy(data_instances, validate_data)
+        self.callback_list.on_train_begin(data_instances, validate_data)
+        # self.validation_strategy = self.init_validation_strategy(data_instances, validate_data)
 
         self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
 
@@ -75,23 +75,21 @@ class HeteroLinRGuest(HeteroLinRBase):
         LOGGER.info("Start initialize model.")
         LOGGER.info("fit_intercept:{}".format(self.init_param_obj.fit_intercept))
         model_shape = self.get_features_shape(data_instances)
-        w = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
-        self.model_weights = LinearModelWeights(w, fit_intercept=self.fit_intercept,
-                                                raise_overflow_error=False)
+        if not self.component_properties.is_warm_start:
+            w = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
+            self.model_weights = LinearModelWeights(w, fit_intercept=self.fit_intercept, raise_overflow_error=False)
 
         while self.n_iter_ < self.max_iter:
+            self.callback_list.on_epoch_begin(self.n_iter_)
             LOGGER.info("iter:{}".format(self.n_iter_))
             # each iter will get the same batch_data_generator
             batch_data_generator = self.batch_generator.generate_batch_data()
             self.optimizer.set_iters(self.n_iter_)
             batch_index = 0
             for batch_data in batch_data_generator:
-                # transforms features of raw input 'batch_data_inst' into more representative features 'batch_feat_inst'
-                batch_feat_inst = self.transform(batch_data)
-
                 # Start gradient procedure
                 optim_guest_gradient = self.gradient_loss_operator.compute_gradient_procedure(
-                    batch_feat_inst,
+                    batch_data,
                     self.encrypted_calculator,
                     self.model_weights,
                     self.optimizer,
@@ -104,20 +102,13 @@ class HeteroLinRGuest(HeteroLinRBase):
 
                 self.model_weights = self.optimizer.update_model(self.model_weights, optim_guest_gradient)
                 batch_index += 1
-                # LOGGER.debug(
-                #     "model_weights, iters: {}, update_model: {}".format(self.n_iter_, self.model_weights.unboxed))
 
             self.is_converged = self.converge_procedure.sync_converge_info(suffix=(self.n_iter_,))
             LOGGER.info("iter: {}, is_converged: {}".format(self.n_iter_, self.is_converged))
 
-            # LOGGER.debug("model weights is {}".format(self.model_weights.coef_))
-
-            if self.validation_strategy:
-                LOGGER.debug('LinR guest running validation')
-                self.validation_strategy.validate(self, self.n_iter_)
-                if self.validation_strategy.need_stop():
-                    LOGGER.debug('early stopping triggered')
-                    break
+            self.callback_list.on_epoch_end(self.n_iter_)
+            if self.stop_training:
+                break
 
             self.n_iter_ += 1
             if self.is_converged:
@@ -144,8 +135,7 @@ class HeteroLinRGuest(HeteroLinRBase):
 
         self._abnormal_detection(data_instances)
         data_instances = self.align_data_header(data_instances, self.header)
-        data_features = self.transform(data_instances)
-        pred = self.compute_wx(data_features, self.model_weights.coef_, self.model_weights.intercept_)
+        pred = self.compute_wx(data_instances, self.model_weights.coef_, self.model_weights.intercept_)
         host_preds = self.transfer_variable.host_partial_prediction.get(idx=-1)
         LOGGER.info("Get prediction from Host")
 

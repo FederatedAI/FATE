@@ -22,6 +22,7 @@ from federatedml.feature.binning.base_binning import BaseBinning
 from federatedml.feature.binning.bin_result import BinColResults, MultiClassBinResult
 from federatedml.statistic import data_overview
 from federatedml.feature.sparse_vector import SparseVector
+from federatedml.cipher_compressor.compressor import PackingCipherTensor
 from federatedml.util import LOGGER
 
 
@@ -128,10 +129,6 @@ class IvCalculator(object):
 
         result_counts = data_bin_with_label.mapReducePartitions(f, self.aggregate_partition_label)
 
-        f = functools.partial(self.fill_sparse_result,
-                              sparse_bin_points=sparse_bin_points,
-                              label_counts=label_counts)
-        result_counts = result_counts.map(f)
         return result_counts
 
     def cal_single_label_iv_woe(self, result_counts, adjustment_factor):
@@ -247,9 +244,14 @@ class IvCalculator(object):
                 result_sum.setdefault(col_name, [])
                 col_sum = result_sum[col_name]
                 while bin_idx >= len(col_sum):
-                    col_sum.append(np.zeros(len(y)))
-                if bin_idx == sparse_bin_points[col_name]:
-                    continue
+                    if isinstance(y, PackingCipherTensor):
+                        zero_y = np.zeros(y.dim)
+                        col_sum.append(PackingCipherTensor(zero_y.tolist()))
+                    else:
+                        col_sum.append(np.zeros(len(y)))
+
+                # if bin_idx == sparse_bin_points[col_name]:
+                #     continue
                 col_sum[bin_idx] = col_sum[bin_idx] + y
         return list(result_sum.items())
 

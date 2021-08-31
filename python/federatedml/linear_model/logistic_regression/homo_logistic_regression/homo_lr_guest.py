@@ -47,10 +47,13 @@ class HomoLRGuest(HomoLRBase):
         self._abnormal_detection(data_instances)
         self.check_abnormal_values(data_instances)
         self.init_schema(data_instances)
-
         self._client_check_data(data_instances)
-        validation_strategy = self.init_validation_strategy(data_instances, validate_data)
-        self.model_weights = self._init_model_variables(data_instances)
+
+        self.callback_list.on_train_begin(data_instances, validate_data)
+
+        # validation_strategy = self.init_validation_strategy(data_instances, validate_data)
+        if not self.component_properties.is_warm_start:
+            self.model_weights = self._init_model_variables(data_instances)
 
         max_iter = self.max_iter
         # total_data_num = data_instances.count()
@@ -61,6 +64,7 @@ class HomoLRGuest(HomoLRBase):
         self.prev_round_weights = copy.deepcopy(model_weights)
 
         while self.n_iter_ < max_iter + 1:
+            self.callback_list.on_epoch_begin(self.n_iter_)
             batch_data_generator = mini_batch_obj.mini_batch_data_generator()
 
             self.optimizer.set_iters(self.n_iter_)
@@ -107,7 +111,11 @@ class HomoLRGuest(HomoLRBase):
                 batch_num += 1
                 degree += n
 
-            validation_strategy.validate(self, self.n_iter_)
+            # validation_strategy.validate(self, self.n_iter_)
+            self.callback_list.on_epoch_end(self.n_iter_)
+            if self.stop_training:
+                break
+
             self.n_iter_ += 1
         self.set_summary(self.get_model_summary())
 

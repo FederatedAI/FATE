@@ -96,6 +96,9 @@
         "train_complete_secure": {
             "script": "./pipeline-hetero-sbt-binary-complete-secure.py"
         },
+        "train_binary_without_cipher_compress": {
+            "script": "./pipeline-hetero-sbt-binary-no-cipher-compress.py"
+        },
         "train_binary_predict": {
             "script": "./pipeline-hetero-sbt-binary-with-predict.py"
         },

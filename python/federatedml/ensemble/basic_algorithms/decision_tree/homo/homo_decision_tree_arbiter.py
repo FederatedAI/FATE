@@ -123,18 +123,14 @@ class HomoDecisionTreeArbiter(DecisionTree):
             split_info = []
             # get cur layer node num:
             cur_layer_node_num = self.sync_node_sample_numbers(suffix=(dep, self.epoch_idx, self.tree_idx))
-            LOGGER.debug('{} nodes to split at this layer'.format(cur_layer_node_num))
 
             layer_stored_hist = {}
 
             for batch_id, i in enumerate(range(0, cur_layer_node_num, self.max_split_nodes)):
-                
-                LOGGER.debug('cur batch id is {}'.format(batch_id))
 
                 left_node_histogram = self.sync_local_histogram(suffix=(batch_id, dep, self.epoch_idx, self.tree_idx))
 
                 all_histograms = self.histogram_subtraction(left_node_histogram, self.stored_histograms)
-            
                 # store histogram
                 for hist in all_histograms:
                     layer_stored_hist[hist.hid] = hist
@@ -144,7 +140,6 @@ class HomoDecisionTreeArbiter(DecisionTree):
                 split_info += best_splits
 
             self.stored_histograms = layer_stored_hist
-
             self.sync_best_splits(split_info, suffix=(dep, self.epoch_idx))
             LOGGER.debug('best_splits_sent')
 
