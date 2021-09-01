@@ -7,7 +7,7 @@ Flask==1.0.2
 gmpy2==2.0.8
 kazoo==2.6.1
 lmdb==0.98
-numpy>=1.18.4
+numpy>=1.18.4, <1.19.0
 peewee==3.9.3
 psutil>=5.7.0
 pycryptodomex==3.6.6
@@ -48,7 +48,6 @@ pyarrow==0.17.1
 click>=7.1.2,<8.0.0
 colorama>=0.4.4
 loguru>=0.5.1,<0.6.0
-torch==1.4.0
 poetry>=0.12
 prettytable>=1.0.0,<2.0.0
 setuptools>=50.0,<51.0
