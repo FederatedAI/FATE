@@ -90,6 +90,10 @@
             "conf": "hetero_binning_optim_ks_conf.json",
             "dsl": "hetero_binning_optim_ks_dsl.json"
         },
+        "hetero_binning_multiclass_multihost": {
+            "conf": "hetero_binning_multiclass_multihost_conf.json",
+            "dsl": "hetero_binning_multiclass_multihost_dsl.json"
+        },
         "hetero_binning_bucket_binning": {
             "conf": "hetero_binning_bucket_binning_conf.json",
             "dsl": "hetero_binning_bucket_binning_dsl.json"
@@ -109,6 +113,10 @@
         "hetero_binning_sparse_optimal_gini": {
             "conf": "hetero_binning_sparse_optimal_gini_conf.json",
             "dsl": "hetero_binning_sparse_optimal_gini_dsl.json"
+        },
+        "hetero_binning_multiclass_multihost_woe": {
+            "conf": "hetero_binning_multiclass_multihost_woe_conf.json",
+            "dsl": "hetero_binning_multiclass_multihost_woe_dsl.json"
         },
         "hetero_binning_multi_host": {
             "conf": "hetero_binning_multi_host_conf.json",
@@ -146,21 +154,13 @@
             "conf": "hetero_binning_quantile_binning_conf.json",
             "dsl": "hetero_binning_quantile_binning_dsl.json"
         },
-        "hetero_binning_multi_host_sparse_optimal": {
-            "conf": "hetero_binning_multi_host_sparse_optimal_conf.json",
-            "dsl": "hetero_binning_multi_host_sparse_optimal_dsl.json"
-        },
         "hetero_binning_multiclass": {
             "conf": "hetero_binning_multiclass_conf.json",
             "dsl": "hetero_binning_multiclass_dsl.json"
         },
-        "hetero_binning_multiclass_multihost": {
-            "conf": "hetero_binning_multiclass_multihost_conf.json",
-            "dsl": "hetero_binning_multiclass_multihost_dsl.json"
-        },
-        "hetero_binning_multiclass_multihost_woe": {
-            "conf": "hetero_binning_multiclass_multihost_woe_conf.json",
-            "dsl": "hetero_binning_multiclass_multihost_woe_dsl.json"
+        "hetero_binning_multi_host_sparse_optimal": {
+            "conf": "hetero_binning_multi_host_sparse_optimal_conf.json",
+            "dsl": "hetero_binning_multi_host_sparse_optimal_dsl.json"
         }
     }
 }
