@@ -80,7 +80,8 @@ class ComponentMeta:
         self._param_cls = None
         self._param_cls_getter = None  # lazy
 
-        self.__name_to_obj[name] = self
+        for alias in self._alias:
+            self.__name_to_obj[alias] = self
 
     @property
     def name(self):

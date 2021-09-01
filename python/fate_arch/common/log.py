@@ -26,8 +26,7 @@ from fate_arch.common import file_utils
 
 class LoggerFactory(object):
     TYPE = "FILE"
-    LOG_FORMAT = "[%(levelname)s] [%(asctime)s] [%(process)s:%(thread)s] - %(filename)s[line:%(lineno)d]: %(message)s"
-    JOB_LOG_FORMAT = "[%(levelname)s] [jobid] [%(asctime)s] [%(process)s:%(thread)s] - %(filename)s[line:%(lineno)d]: %(message)s"
+    LOG_FORMAT = "[%(levelname)s] [%(asctime)s] [jobId] [%(process)s:%(thread)s] - [%(module)s.%(funcName)s] [line:%(lineno)d]: %(message)s"
     LEVEL = logging.DEBUG
     logger_dict = {}
     global_handler_dict = {}
@@ -74,14 +73,14 @@ class LoggerFactory(object):
             LoggerFactory.global_handler_dict = {}
             for className, (logger, handler) in LoggerFactory.logger_dict.items():
                 logger.removeHandler(handler)
-                _hanlder = None
+                _handler = None
                 if handler:
                     handler.close()
                 if className != "default":
-                    _hanlder = LoggerFactory.get_handler(className)
-                    logger.addHandler(_hanlder)
+                    _handler = LoggerFactory.get_handler(className)
+                    logger.addHandler(_handler)
                 LoggerFactory.assemble_global_handler(logger)
-                LoggerFactory.logger_dict[className] = logger, _hanlder
+                LoggerFactory.logger_dict[className] = logger, _handler
 
     @staticmethod
     def new_logger(name):
@@ -130,10 +129,11 @@ class LoggerFactory(object):
         else:
             log_file = os.path.join(log_dir, "fate_flow_{}.log".format(
                 log_type) if level == LoggerFactory.LEVEL else 'fate_flow_{}_error.log'.format(log_type))
+        job_id = job_id or os.getenv("FATE_JOB_ID")
         if job_id:
-            formatter = logging.Formatter(LoggerFactory.JOB_LOG_FORMAT.replace("jobid", job_id))
+            formatter = logging.Formatter(LoggerFactory.LOG_FORMAT.replace("jobId", job_id))
         else:
-            formatter = logging.Formatter(LoggerFactory.LOG_FORMAT)
+            formatter = logging.Formatter(LoggerFactory.LOG_FORMAT.replace("jobId", "Server"))
         if LoggerFactory.log_share:
             handler = ROpenHandler(log_file,
                                    when='D',
@@ -205,9 +205,9 @@ class LoggerFactory(object):
         logger = LoggerFactory.new_logger(f"{job_id}_{log_type}")
         for job_log_dir in log_dirs:
             handler = LoggerFactory.get_handler(class_name=None, level=LoggerFactory.LEVEL,
-                                                log_dir=job_log_dir, log_type=log_type)
+                                                log_dir=job_log_dir, log_type=log_type, job_id=job_id)
             error_handler = LoggerFactory.get_handler(class_name=None, level=logging.ERROR,
-                                                      log_dir=job_log_dir, log_type=log_type)
+                                                      log_dir=job_log_dir, log_type=log_type, job_id=job_id)
             logger.addHandler(handler)
             logger.addHandler(error_handler)
         with LoggerFactory.lock:

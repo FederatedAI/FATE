@@ -263,6 +263,21 @@ class CommonFilterParam(BaseParam):
             self.check_boolean(v, descr)
 
 
+class IVFilterParam(CommonFilterParam):
+    """
+    Parameters
+    ----------
+    mul_class_merge_type: str or list, default: "average"
+        Indicate how to merge multi-class iv results. Support "average", "min" and "max".
+
+    """
+    def __init__(self, filter_type='threshold', threshold=1,
+                 host_thresholds=None, select_federated=True, mul_class_merge_type="average"):
+        super().__init__(metrics='iv', filter_type=filter_type, take_high=True, threshold=threshold,
+                         host_thresholds=host_thresholds, select_federated=select_federated)
+        self.mul_class_merge_type = mul_class_merge_type
+
+
 class CorrelationFilterParam(BaseParam):
     """
     This filter follow this specific rules:
@@ -281,7 +296,6 @@ class CorrelationFilterParam(BaseParam):
     select_federated: bool, default: True
         Whether select federated with other parties or based on local variables
     """
-
     def __init__(self, sort_metric='iv', threshold=0.1, select_federated=True):
         super().__init__()
         self.sort_metric = sort_metric
@@ -445,9 +459,8 @@ class FeatureSelectionParam(BaseParam):
                  outlier_param=OutlierColsSelectionParam(),
                  manually_param=ManuallyFilterParam(),
                  percentage_value_param=PercentageValueParam(),
-                 iv_param=CommonFilterParam(metrics=consts.IV),
-                 statistic_param=CommonFilterParam(metrics=consts.MEAN,
-                                                   select_federated=False),
+                 iv_param=IVFilterParam(),
+                 statistic_param=CommonFilterParam(metrics=consts.MEAN),
                  psi_param=CommonFilterParam(metrics=consts.PSI,
                                              take_high=False),
                  vif_param=CommonFilterParam(metrics=consts.VIF,
@@ -523,9 +536,6 @@ class FeatureSelectionParam(BaseParam):
                 raise ValueError("For iv filter, metrics should be 'iv'")
 
         self.statistic_param.check()
-        if self.statistic_param.select_federated is True:
-            raise ValueError("Statistic Filter does not support select federated.")
-
         self.psi_param.check()
         for th in self.psi_param.take_high:
             if th:
