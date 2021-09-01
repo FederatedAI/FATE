@@ -23,6 +23,10 @@
         "role": {
             "guest": {
                 "0": {
+                    "dataio_1": {
+                        "with_label": true,
+                        "output_format": "dense"
+                    },
                     "reader_1": {
                         "table": {
                             "name": "vehicle_scale_hetero_guest",
@@ -38,15 +42,15 @@
                     "dataio_0": {
                         "with_label": true,
                         "output_format": "dense"
-                    },
-                    "dataio_1": {
-                        "with_label": true,
-                        "output_format": "dense"
                     }
                 }
             },
             "host": {
                 "0": {
+                    "dataio_1": {
+                        "with_label": true,
+                        "output_format": "dense"
+                    },
                     "reader_1": {
                         "table": {
                             "name": "vehicle_scale_hetero_host",
@@ -61,10 +65,6 @@
                     },
                     "dataio_0": {
                         "with_label": false,
-                        "output_format": "dense"
-                    },
-                    "dataio_1": {
-                        "with_label": true,
                         "output_format": "dense"
                     }
                 }

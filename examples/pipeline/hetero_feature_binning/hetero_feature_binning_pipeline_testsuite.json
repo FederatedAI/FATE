@@ -86,6 +86,9 @@
         "hetero-binning-optim-ks": {
             "script": "pipeline-hetero-binning-optim-ks.py"
         },
+        "hetero-binning-multiclass-multihost": {
+            "script": "pipeline-hetero-binning-multiclass-multihost.py"
+        },
         "hetero-binning-bucket-binning": {
             "script": "pipeline-hetero-binning-bucket-binning.py"
         },
@@ -100,6 +103,9 @@
         },
         "hetero-binning-sparse-optimal-gini": {
             "script": "pipeline-hetero-binning-sparse-optimal-gini.py"
+        },
+        "hetero-binning-multiclass-multihost-woe": {
+            "script": "pipeline-hetero-binning-multiclass-multihost-woe.py"
         },
         "hetero-binning-multi-host": {
             "script": "pipeline-hetero-binning-multi-host.py"
@@ -128,17 +134,11 @@
         "hetero-binning-quantile-binning": {
             "script": "pipeline-hetero-binning-quantile-binning.py"
         },
-        "hetero-binning-multi-host-sparse-optimal": {
-            "script": "pipeline-hetero-binning-multi-host-sparse-optimal.py"
-        },
         "hetero-binning-multiclass": {
             "script": "pipeline-hetero-binning-multiclass.py"
         },
-        "hetero-binning-multiclass-multihost": {
-            "script": "pipeline-hetero-binning-multiclass-multihost.py"
-        },
-        "hetero-binning-multiclass-multihost-woe": {
-            "script": "pipeline-hetero-binning-multiclass-multihost-woe.py"
+        "hetero-binning-multi-host-sparse-optimal": {
+            "script": "pipeline-hetero-binning-multi-host-sparse-optimal.py"
         }
     }
 }
