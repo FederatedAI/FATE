@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from setuptools import setup
 
-packages = ["fate_test", "fate_test.scripts"]
+packages = ["fate_test", "fate_test.scripts", "fate_test.flow_test"]
 
 package_data = {"": ["*"]}
 
