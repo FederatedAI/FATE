@@ -192,6 +192,7 @@ class FTL(ModelBase):
             data_inst = self.check_label(data_inst)
 
         overlap_samples = intersect_obj.run_intersect(data_inst)  # find intersect ids
+        overlap_samples = intersect_obj.get_value_from_data(overlap_samples, data_inst)
         non_overlap_samples = data_inst.subtractByKey(overlap_samples)
 
         LOGGER.debug('num of overlap/non-overlap sampels: {}/{}'.format(overlap_samples.count(),
