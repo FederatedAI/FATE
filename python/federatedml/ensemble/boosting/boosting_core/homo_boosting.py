@@ -25,10 +25,9 @@ class HomoBoostingClient(Boosting, ABC):
     def __init__(self):
         super(HomoBoostingClient, self).__init__()
         self.transfer_inst = HomoBoostingTransferVariable()
-        self.aggregator = HomoBoostClientAggregator()
         self.model_param = HomoSecureBoostParam()
-        self.binning_obj = HomoFeatureBinningClient()
         self.mode = consts.HOMO
+        self.aggregator, self.binning_obj = None, None  # they will be initialized in fit()
 
     def federated_binning(self,  data_instance):
 
@@ -71,6 +70,10 @@ class HomoBoostingClient(Boosting, ABC):
         self.transfer_inst.feature_number.remote(self.feature_num, role=consts.ARBITER, idx=-1, suffix=('feat_num', ))
 
     def fit(self, data_inst, validate_data=None):
+
+        # aggregator initialize
+        self.aggregator = HomoBoostClientAggregator()
+        self.binning_obj = HomoFeatureBinningClient()
 
         # binning
         data_inst = self.data_alignment(data_inst)
@@ -165,10 +168,9 @@ class HomoBoostingArbiter(Boosting, ABC):
 
     def __init__(self):
         super(HomoBoostingArbiter, self).__init__()
-        self.aggregator = HomoBoostArbiterAggregator()
         self.transfer_inst = HomoBoostingTransferVariable()
         self.check_convergence_func = None
-        self.binning_obj = HomoFeatureBinningServer()
+        self.aggregator, self.binning_obj = None, None
 
     def federated_binning(self):
         self.binning_obj.average_run()
@@ -183,6 +185,10 @@ class HomoBoostingArbiter(Boosting, ABC):
         pass
 
     def fit(self, data_inst, validate_data=None):
+
+        # initialize aggregator obj
+        self.aggregator = HomoBoostArbiterAggregator()
+        self.binning_obj = HomoFeatureBinningServer()
 
         self.federated_binning()
         # initializing
