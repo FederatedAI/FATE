@@ -196,7 +196,7 @@ class ModelBase(object):
         self._summary = dict()
         self._align_cache = dict()
         self._tracker = None
-        self.step_name = ''
+        self.step_name = 'step name'
         self.callback_list: CallbackList
         self.callback_variables = CallbacksVariable()
 
