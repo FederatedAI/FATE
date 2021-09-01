@@ -177,7 +177,7 @@ class JobConf(object):
                     self.update_component_parameters(key, value, parameters[keys])
 
     def get_component_parameters(self, keys):
-        if keys is None:
+        if len(keys) == 0:
             return self.others_kwargs.get("component_parameters") if self.dsl_version == 2 else self.others_kwargs.get(
                 "role_parameters")
         if self.dsl_version == 1:
