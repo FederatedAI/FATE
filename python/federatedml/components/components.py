@@ -145,12 +145,11 @@ class ComponentMeta:
 
 def _search_components(path):
     try:
-        module_name = (
+        module_name = '.'.join(
             path.absolute()
             .relative_to(_ml_base)
             .with_suffix("")
-            .__str__()
-            .replace("/", ".")
+            .parts
         )
         module = importlib.import_module(module_name)
     except ImportError as e:
@@ -186,12 +185,11 @@ class Components:
         else:
             _components_base = Path(__file__).resolve().parent
             for p in _components_base.glob("**/*.py"):
-                module_name = (
+                module_name = '.'.join(
                     p.absolute()
                     .relative_to(_ml_base)
                     .with_suffix("")
-                    .__str__()
-                    .replace("/", ".")
+                    .parts
                 )
                 importlib.import_module(module_name)
 
