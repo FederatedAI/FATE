@@ -4,7 +4,7 @@ from federatedml.util import consts
 from federatedml.transfer_learning.hetero_ftl.ftl_base import FTL
 from federatedml.util import LOGGER
 from federatedml.transfer_learning.hetero_ftl.ftl_dataloder import FTLDataLoader
-from federatedml.statistic.intersect import RsaIntersectionHost
+from federatedml.statistic.intersect import RsaIntersectionGuest
 from fate_flow.entity.metric import Metric
 from fate_flow.entity.metric import MetricMeta
 from federatedml.optim.convergence import converge_func_factory
@@ -34,7 +34,7 @@ class FTLGuest(FTL):
         self.role = consts.GUEST
 
     def init_intersect_obj(self):
-        intersect_obj = RsaIntersectionHost()
+        intersect_obj = RsaIntersectionGuest()
         intersect_obj.guest_party_id = self.component_properties.local_partyid
         intersect_obj.host_party_id_list = self.component_properties.host_party_idlist
         intersect_obj.load_params(self.intersect_param)
