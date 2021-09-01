@@ -382,7 +382,7 @@ class Testsuite(object):
             job.set_input_data(table_info["hierarchy"], table_info["table_info"])
         if cache_info is not None:
             job.set_input_data(cache_info["hierarchy"], cache_info["cache_info"])
-        if cache_info is not None:
+        if model_loader_info is not None:
             job.set_input_data(model_loader_info["hierarchy"], model_loader_info["model_loader_info"])
         if name in job.pre_works:
             job.pre_works.remove(name)
