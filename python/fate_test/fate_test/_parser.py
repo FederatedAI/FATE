@@ -111,13 +111,13 @@ class JobConf(object):
         return self.others_kwargs.get("dsl_version", 1)
 
     def update(
-        self,
-        parties: Parties,
-        work_mode,
-        backend,
-        timeout,
-        job_parameters,
-        component_parameters,
+            self,
+            parties: Parties,
+            work_mode,
+            backend,
+            timeout,
+            job_parameters,
+            component_parameters,
     ):
         self.initiator = parties.extract_initiator_role(self.initiator["role"])
         self.role = parties.extract_role(
@@ -172,19 +172,20 @@ class JobConf(object):
                     else:
                         parameters.update({key: value})
                 elif (
-                    isinstance(parameters[keys], dict) and parameters[keys] is not None
+                        isinstance(parameters[keys], dict) and parameters[keys] is not None
                 ):
                     self.update_component_parameters(key, value, parameters[keys])
 
     def get_component_parameters(self, keys):
+        if keys is None:
+            return self.others_kwargs.get("component_parameters") if self.dsl_version == 2 else self.others_kwargs.get(
+                "role_parameters")
         if self.dsl_version == 1:
             parameters = self.others_kwargs.get("role_parameters")
         else:
             parameters = self.others_kwargs.get("component_parameters").get("role")
 
         for key in keys:
-            if key is None:
-                break
             parameters = parameters[key]
         return parameters
 
@@ -205,11 +206,11 @@ class JobDSL(object):
 
 class Job(object):
     def __init__(
-        self,
-        job_name: str,
-        job_conf: JobConf,
-        job_dsl: typing.Optional[JobDSL],
-        pre_works: list,
+            self,
+            job_name: str,
+            job_conf: JobConf,
+            job_dsl: typing.Optional[JobDSL],
+            pre_works: list,
     ):
         self.job_name = job_name
         self.job_conf = job_conf
@@ -238,7 +239,6 @@ class Job(object):
             pre_works_value.append("cache_deps")
         if job_configs.get("model_loader_deps", None):
             pre_works_value.append("model_loader_deps")
-
 
         if job_configs.get("model_deps", None):
             pre_works.append(job_configs["model_deps"])
@@ -295,11 +295,11 @@ class PipelineJob(object):
 
 class Testsuite(object):
     def __init__(
-        self,
-        dataset: typing.List[Data],
-        jobs: typing.List[Job],
-        pipeline_jobs: typing.List[PipelineJob],
-        path: Path,
+            self,
+            dataset: typing.List[Data],
+            jobs: typing.List[Job],
+            pipeline_jobs: typing.List[PipelineJob],
+            path: Path,
     ):
         self.dataset = dataset
         self.jobs = jobs
@@ -405,7 +405,7 @@ class Testsuite(object):
         return failed
 
     def update_status(
-        self, job_name, job_id: str = None, status: str = None, exception_id: str = None
+            self, job_name, job_id: str = None, status: str = None, exception_id: str = None
     ):
         for k, v in locals().items():
             if k != "job_name" and v is not None:
@@ -420,18 +420,19 @@ class Testsuite(object):
 
 class FinalStatus(object):
     def __init__(
-        self,
-        name: str,
-        job_id: str = "-",
-        status: str = "not submitted",
-        exception_id: str = "-",
-        rest_dependency: typing.List[str] = None,
+            self,
+            name: str,
+            job_id: str = "-",
+            status: str = "not submitted",
+            exception_id: str = "-",
+            rest_dependency: typing.List[str] = None,
     ):
         self.name = name
         self.job_id = job_id
         self.status = status
         self.exception_id = exception_id
         self.rest_dependency = rest_dependency or []
+
 
 class BenchmarkJob(object):
     def __init__(self, job_name: str, script_path: Path, conf_path: Path):
@@ -442,7 +443,7 @@ class BenchmarkJob(object):
 
 class BenchmarkPair(object):
     def __init__(
-        self, pair_name: str, jobs: typing.List[BenchmarkJob], compare_setting: dict
+            self, pair_name: str, jobs: typing.List[BenchmarkJob], compare_setting: dict
     ):
         self.pair_name = pair_name
         self.jobs = jobs
@@ -451,7 +452,7 @@ class BenchmarkPair(object):
 
 class BenchmarkSuite(object):
     def __init__(
-        self, dataset: typing.List[Data], pairs: typing.List[BenchmarkPair], path: Path
+            self, dataset: typing.List[Data], pairs: typing.List[BenchmarkPair], path: Path
     ):
         self.dataset = dataset
         self.pairs = pairs
