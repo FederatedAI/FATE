@@ -268,7 +268,7 @@ def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Conf
                                 model_loader_dsl = predict_job.job_dsl.as_dict()
                                 model_loader_info = []
                                 for cpn in model_loader_dsl.get("components").keys():
-                                    if "ModelLoader" in model_loader_info.get("components").get(cpn).get("module"):
+                                    if "ModelLoader" in model_loader_dsl.get("components").get(cpn).get("module"):
                                         model_loader_info.append({cpn: response.model_info})
                                 model_loader_info = {'hierarchy': [""], 'model_loader_info': model_loader_info}
 
