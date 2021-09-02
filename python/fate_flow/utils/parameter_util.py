@@ -440,3 +440,68 @@ class ParameterUtilV2(BaseParameterUtil):
                 ret[role][partyid_list[idx]] = parameters
 
         return ret
+
+    @classmethod
+    def get_predict_runtime_conf(cls, train_conf, predict_conf):
+        runtime_conf = copy.deepcopy(train_conf)
+        train_role = train_conf.get("role")
+        predict_role = predict_conf.get("role")
+        if len(train_conf) < len(predict_role):
+            raise ValueError(f"Predict roles is {predict_role}, train roles is {train_conf}, "
+                             "predict roles should be subset of train role")
+
+        for role in train_role:
+            if role not in predict_role:
+                del runtime_conf["role"][role]
+
+                if runtime_conf.get("job_parameters", {}).get("role", {}).get(role):
+                    del runtime_conf["job_parameters"]["role"][role]
+
+                if runtime_conf.get("component_parameters", {}).get("role", {}).get(role):
+                    del runtime_conf["component_parameters"]["role"][role]
+
+                continue
+
+            train_party_ids = train_role[role]
+            predict_party_ids = predict_role[role]
+
+            diff = False
+            for idx, party_id in enumerate(predict_party_ids):
+                if party_id not in train_party_ids:
+                    raise ValueError(f"Predict role: {role} party_id: {party_id} not occurs in training")
+                if train_party_ids[idx] != party_id:
+                    diff = True
+
+            if not diff and len(train_party_ids) == len(predict_party_ids):
+                continue
+
+            for p_type in ["job_parameters", "component_parameters"]:
+                if not runtime_conf.get(p_type, {}).get("role", {}).get(role):
+                    continue
+
+                conf = runtime_conf[p_type]["role"][role]
+                party_keys = conf.keys()
+                new_conf = {}
+                for party_key in party_keys:
+                    party_list = party_key.split("|", -1)
+                    new_party_list = []
+                    for party in party_list:
+                        party_id = train_party_ids[int(party)]
+                        if party_id in predict_party_ids:
+                            new_idx = predict_party_ids.index(party_id)
+                            new_party_list.append(str(new_idx))
+
+                    if not new_party_list:
+                        continue
+
+                    new_party_key = new_party_list[0] if len(new_party_list) == 1 else "|".join(new_party_list)
+
+                    if new_party_key not in new_conf:
+                        new_conf[new_party_key] = {}
+                    new_conf[new_party_key].update(conf[party_key])
+
+                runtime_conf[p_type]["role"][role] = new_conf
+
+        runtime_conf = cls.merge_dict(runtime_conf, predict_conf)
+
+        return runtime_conf
