@@ -17,9 +17,7 @@ from federatedml.param.boosting_param import HomoSecureBoostParam
 from fate_flow.entity.metric import Metric
 from fate_flow.entity.metric import MetricMeta
 from federatedml.util.io_check import assert_io_num_rows_equal
-
-from federatedml.feature.homo_feature_binning import recursive_query_binning
-from federatedml.param.feature_binning_param import HomoFeatureBinningParam
+from federatedml.param.feature_binning_param import FeatureBinningParam
 
 
 class HomoBoostingClient(Boosting, ABC):
@@ -27,25 +25,21 @@ class HomoBoostingClient(Boosting, ABC):
     def __init__(self):
         super(HomoBoostingClient, self).__init__()
         self.transfer_inst = HomoBoostingTransferVariable()
-        self.aggregator = HomoBoostClientAggregator()
         self.model_param = HomoSecureBoostParam()
-        self.binning_obj = HomoFeatureBinningClient()
         self.mode = consts.HOMO
+        self.aggregator, self.binning_obj = None, None  # they will be initialized in fit()
 
     def federated_binning(self,  data_instance):
 
-        binning_param = HomoFeatureBinningParam(method=consts.RECURSIVE_QUERY, bin_num=self.bin_num,
-                                                error=self.binning_error)
+        binning_param = FeatureBinningParam(bin_num=self.bin_num, error=self.binning_error)
+        self.binning_obj.bin_param = binning_param
 
         if self.use_missing:
-            self.binning_obj = recursive_query_binning.Client(params=binning_param, abnormal_list=[NoneType()],
-                                                              role=self.role)
+            binning_result = self.binning_obj.average_run(data_instances=data_instance, abnormal_list=[NoneType()])
         else:
-            self.binning_obj = recursive_query_binning.Client(params=binning_param, role=self.role)
+            binning_result = self.binning_obj.average_run(data_instances=data_instance,)
 
-        self.binning_obj.fit_split_points(data_instance)
-
-        return self.binning_obj.convert_feature_to_bin(data_instance)
+        return self.binning_obj.convert_feature_to_bin(data_instance, binning_result)
 
     def check_label(self, data_inst, ) -> List[int]:
 
@@ -76,6 +70,10 @@ class HomoBoostingClient(Boosting, ABC):
         self.transfer_inst.feature_number.remote(self.feature_num, role=consts.ARBITER, idx=-1, suffix=('feat_num', ))
 
     def fit(self, data_inst, validate_data=None):
+
+        # aggregator initialize
+        self.aggregator = HomoBoostClientAggregator()
+        self.binning_obj = HomoFeatureBinningClient()
 
         # binning
         data_inst = self.data_alignment(data_inst)
@@ -126,7 +124,9 @@ class HomoBoostingClient(Boosting, ABC):
 
                 # fit a booster
                 model = self.fit_a_booster(epoch_idx, class_idx)
+
                 booster_meta, booster_param = model.get_model()
+
                 if booster_meta is not None and booster_param is not None:
                     self.booster_meta = booster_meta
                     self.boosting_model_list.append(booster_param)
@@ -168,22 +168,12 @@ class HomoBoostingArbiter(Boosting, ABC):
 
     def __init__(self):
         super(HomoBoostingArbiter, self).__init__()
-        self.aggregator = HomoBoostArbiterAggregator()
         self.transfer_inst = HomoBoostingTransferVariable()
         self.check_convergence_func = None
-        self.binning_obj = HomoFeatureBinningServer()
+        self.aggregator, self.binning_obj = None, None
 
-    def federated_binning(self,):
-
-        binning_param = HomoFeatureBinningParam(method=consts.RECURSIVE_QUERY, bin_num=self.bin_num,
-                                                error=self.binning_error)
-
-        if self.use_missing:
-            self.binning_obj = recursive_query_binning.Server(binning_param, abnormal_list=[NoneType()])
-        else:
-            self.binning_obj = recursive_query_binning.Server(binning_param, abnormal_list=[])
-
-        self.binning_obj.fit_split_points(None)
+    def federated_binning(self):
+        self.binning_obj.average_run()
 
     def sync_feature_num(self):
         feature_num_list = self.transfer_inst.feature_number.get(idx=-1, suffix=('feat_num',))
@@ -195,6 +185,10 @@ class HomoBoostingArbiter(Boosting, ABC):
         pass
 
     def fit(self, data_inst, validate_data=None):
+
+        # initialize aggregator obj
+        self.aggregator = HomoBoostArbiterAggregator()
+        self.binning_obj = HomoFeatureBinningServer()
 
         self.federated_binning()
         # initializing
@@ -249,6 +243,7 @@ class HomoBoostingArbiter(Boosting, ABC):
     @abc.abstractmethod
     def load_booster(self, model_meta, model_param, epoch_idx, booster_idx):
         raise NotImplementedError()
+
 
 
 
