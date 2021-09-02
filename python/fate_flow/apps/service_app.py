@@ -40,3 +40,9 @@ def get_fate_version_info():
 def service_registry():
     update_server = ServiceUtils.register_service(request.json)
     return get_json_result(data={"update_server": update_server})
+
+
+@manager.route('/query', methods=['POST'])
+def service_query():
+    service_info = ServiceUtils.get(request.json.get("service_name"))
+    return get_json_result(data={"service_info": service_info})

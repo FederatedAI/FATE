@@ -34,7 +34,7 @@ requests = ">=2.24.0"
 click = "^7.1.2"
 "ruamel.yaml" = "^0.16.10"
 loguru = "^0.5.1"
-tensorflow = ">=2.4.1"
+tensorflow = "==2.3.4"
 torch = "1.4.0"
 flask = "^1.0.2"
 setuptools = "^50.0"
@@ -46,5 +46,5 @@ flow = "flow_client.flow:flow_cli"
 pipeline = "pipeline.pipeline_cli:cli"
 
 [build-system]
-requires = ["poetry>=0.12", "setuptools>=49.6.0,<50"]
+requires = ["poetry>=0.12", "setuptools>=50.0,<51.0"]
 build-backend = "poetry.masonry.api"

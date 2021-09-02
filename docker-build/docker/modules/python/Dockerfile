@@ -10,6 +10,7 @@ ARG version
 COPY  python /data/projects/fate/python
 COPY  eggroll /data/projects/fate/eggroll
 COPY  examples /data/projects/fate/examples
+COPY  conf /data/projects/fate/conf
 COPY  fate.env /data/projects/fate/
 
 RUN mkdir -p ./fml_agent/data
