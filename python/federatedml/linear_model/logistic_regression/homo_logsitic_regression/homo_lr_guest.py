@@ -38,12 +38,15 @@ class HomoLRGuest(HomoLRBase):
         self.gradient_operator = LogisticGradient()
         self.loss_history = []
         self.role = consts.GUEST
-        self.aggregator = aggregator.Guest()
+        # self.aggregator = aggregator.Guest()
 
     def _init_model(self, params):
         super()._init_model(params)
 
     def fit(self, data_instances, validate_data=None):
+        self.aggregator = aggregator.Guest()
+        self.aggregator.register_aggregator(self.transfer_variable)
+
         self._abnormal_detection(data_instances)
         self.check_abnormal_values(data_instances)
         self.init_schema(data_instances)

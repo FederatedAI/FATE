@@ -39,7 +39,7 @@ class HomoLRHost(HomoLRBase):
         self.loss_history = []
         self.is_converged = False
         self.role = consts.HOST
-        self.aggregator = aggregator.Host()
+        # self.aggregator = aggregator.Host()
         self.model_weights = None
         self.cipher = paillier_cipher.Host()
 
@@ -55,6 +55,9 @@ class HomoLRHost(HomoLRBase):
             self.gradient_operator = LogisticGradient()
 
     def fit(self, data_instances, validate_data=None):
+        self.aggregator = aggregator.Host()
+        self.aggregator.register_aggregator(self.transfer_variable)
+
         self._abnormal_detection(data_instances)
         self.check_abnormal_values(data_instances)
         self.init_schema(data_instances)
