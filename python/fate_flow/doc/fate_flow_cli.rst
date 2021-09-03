@@ -313,7 +313,7 @@ table_bind
 
    .. code:: bash
 
-      python fate_flow_client.py -f table_bind -c examples/bind_mysql_table.json
+      python fate_flow_client.py -f table_bind -c examples/table_bind/bind_hdfs_table.json
 
 
 Model
