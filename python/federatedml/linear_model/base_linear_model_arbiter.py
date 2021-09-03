@@ -134,6 +134,9 @@ class HeteroBaseArbiter(BaseLinearModel):
             self.n_iter_ += 1
             if self.is_converged:
                 break
+        LOGGER.debug(f"Finish_train, n_iter: {self.n_iter_}")
+        self.callback_list.on_train_end()
+
         summary = {"loss_history": self.loss_history,
                    "is_converged": self.is_converged,
                    "best_iteration": self.best_iteration}
