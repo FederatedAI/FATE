@@ -302,13 +302,27 @@ table_delete
       python fate_flow_client.py -f table_delete -n $namespace -t $table_name
       python fate_flow_client.py -f table_delete -j $job_id
 
+table_bind
+^^^^^^^^^^^^
+
+-  description: bind a table to FATE Storage
+-  parameter:
+
+   -  -c --config: config path, Required
+
+
+   .. code:: bash
+
+      python fate_flow_client.py -f table_bind -c examples/table_bind/bind_hdfs_table.json
+
+
 Model
 ~~~~~
 
 load
 ^^^^
 
--  description: load model.
+-  description: load model. Need to deploy model first if `dsl_version` == `2`.
 -  parameter:
 
    -  -c --config: config path, Required
@@ -350,7 +364,7 @@ load
 bind
 ^^^^
 
--  description: bind model.
+-  description: bind model. Need to deploy model first if `dsl_version` == `2`.
 -  parameter:
 
    -  -c --config: config path, Required

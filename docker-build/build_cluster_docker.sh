@@ -150,10 +150,12 @@ buildModule() {
         [ -d ${SOURCE_DIR}/docker-build/docker/modules/python/python ] && rm -rf ${SOURCE_DIR}/docker-build/docker/modules/python/python
         [ -d ${SOURCE_DIR}/docker-build/docker/modules/python/eggroll ] && rm -rf ${SOURCE_DIR}/docker-build/docker/modules/python/eggroll
         [ -d ${SOURCE_DIR}/docker-build/docker/modules/python/examples ] && rm -rf ${SOURCE_DIR}/docker-build/docker/modules/python/examples
+        [ -d ${SOURCE_DIR}/docker-build/docker/modules/python/conf ] && rm -rf ${SOURCE_DIR}/docker-build/docker/modules/python/conf
         [ -d ${SOURCE_DIR}/docker-build/docker/modules/python/fate.env ] && rm -rf ${SOURCE_DIR}/docker-build/docker/modules/python/fate.env
         cp -r ${package_dir}/python ${SOURCE_DIR}/docker-build/docker/modules/python/python
         cp -r ${package_dir}/eggroll ${SOURCE_DIR}/docker-build/docker/modules/python/eggroll
         cp -r ${package_dir}/examples ${SOURCE_DIR}/docker-build/docker/modules/python/examples
+        cp -r ${package_dir}/conf ${SOURCE_DIR}/docker-build/docker/modules/python/conf
         cp -r ${package_dir}/fate.env ${SOURCE_DIR}/docker-build/docker/modules/python/fate.env
 
         # handle fateboard
@@ -168,7 +170,11 @@ buildModule() {
 
         cd ${SOURCE_DIR}
 
+        [ -f ${SOURCE_DIR}/docker-build/docker/modules/python-nn/requirements.txt ] && rm ${SOURCE_DIR}/docker-build/docker/modules/python-nn/requirements.txt
+        ln ${SOURCE_DIR}/python/requirements.txt ${SOURCE_DIR}/docker-build/docker/modules/python-nn/requirements.txt
         for module in "python" "fateboard" "eggroll" "python-nn"; do
+        echo "START BUILDING BASE IMAGE"
+        cd ${WORKING_DIR}
                 echo "### START BUILDING ${module} ###"
                 docker build --build-arg version=${version} --build-arg fateboard_version=${fateboard_version} --build-arg PREFIX=${PREFIX} --build-arg BASE_TAG=${BASE_TAG} --no-cache -t ${PREFIX}/${module}:${TAG} -f ${SOURCE_DIR}/docker-build/docker/modules/${module}/Dockerfile ${SOURCE_DIR}/docker-build/docker/modules/${module}
                 echo "### FINISH BUILDING ${module} ###"
@@ -178,9 +184,13 @@ buildModule() {
         # clean up
         rm -rf ${SOURCE_DIR}/docker-build/docker/modules/python/python
         rm -rf ${SOURCE_DIR}/docker-build/docker/modules/python/eggroll
+        rm -rf ${SOURCE_DIR}/docker-build/docker/modules/python/examples
+        rm -rf ${SOURCE_DIR}/docker-build/docker/modules/python/conf
+        rm -rf ${SOURCE_DIR}/docker-build/docker/modules/python/fate.env
         rm -rf ${SOURCE_DIR}/docker-build/docker/modules/fateboard/fateboard
         rm -rf ${SOURCE_DIR}/docker-build/docker/modules/eggroll/eggroll
         rm -rf ${SOURCE_DIR}/docker-build/docker/modules/eggroll/python
+        rm -rf ${SOURCE_DIR}/docker-build/docker/modules/python-nn/requirements.txt
 
         echo ""
 }

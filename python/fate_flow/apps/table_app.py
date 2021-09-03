@@ -33,6 +33,7 @@ def internal_server_error(e):
 
 
 @manager.route('/add', methods=['post'])
+@manager.route('/bind', methods=['post'])
 def table_add():
     request_data = request.json
     detect_utils.check_config(request_data, required_arguments=["engine", "address", "namespace", "name", ("head", (0, 1)), "id_delimiter"])
@@ -41,7 +42,7 @@ def table_add():
     name = request_data.get('name')
     namespace = request_data.get('namespace')
     address = storage.StorageTableMeta.create_address(storage_engine=engine, address_dict=address_dict)
-    in_serialized = request_data.get("in_serialized", 1 if engine in {storage.StorageEngine.STANDALONE, storage.StorageEngine.EGGROLL} else 0)
+    in_serialized = request_data.get("in_serialized", 1 if engine in {storage.StorageEngine.STANDALONE, storage.StorageEngine.EGGROLL, storage.StorageEngine.MYSQL} else 0)
     destroy = (int(request_data.get("drop", 0)) == 1)
     data_table_meta = storage.StorageTableMeta(name=name, namespace=namespace)
     if data_table_meta:
@@ -52,9 +53,15 @@ def table_add():
                                    retmsg='The data table already exists.'
                                           'If you still want to continue uploading, please add the parameter -drop.'
                                           '1 means to add again after deleting the table')
+    id_name = request_data.get("id_name")
+    feature_name = request_data.get("feature_name")
+    schema = None
+    if id_name and feature_name:
+        schema = {'header': feature_name, 'sid': id_name}
     with storage.Session.build(storage_engine=engine, options=request_data.get("options")) as storage_session:
         storage_session.create_table(address=address, name=name, namespace=namespace, partitions=request_data.get('partitions', None),
-                                     hava_head=request_data.get("head"), id_delimiter=request_data.get("id_delimiter"), in_serialized=in_serialized)
+                                     hava_head=request_data.get("head"), id_delimiter=request_data.get("id_delimiter"), in_serialized=in_serialized,
+                                     schema=schema)
     return get_json_result(data={"table_name": name, "namespace": namespace})
 
 
@@ -119,8 +126,11 @@ def get_job_all_table(job):
                                                    )
     _, hierarchical_structure = dsl_parser.get_dsl_hierarchical_structure()
     component_table = {}
-    component_output_tables = Tracker.query_output_data_infos(job_id=job.f_job_id, role=job.f_role,
-                                                              party_id=job.f_party_id)
+    try:
+        component_output_tables = Tracker.query_output_data_infos(job_id=job.f_job_id, role=job.f_role,
+                                                                  party_id=job.f_party_id)
+    except:
+        component_output_tables = []
     for component_name_list in hierarchical_structure:
         for component_name in component_name_list:
             component_table[component_name] = {}
@@ -136,7 +146,8 @@ def get_job_all_table(job):
 
 def get_component_input_table(dsl_parser, job, component_name):
     component = dsl_parser.get_component_info(component_name=component_name)
-    if 'reader' in component_name:
+    module_name = get_component_module(component_name, job.f_dsl)
+    if 'reader' in module_name.lower():
         component_parameters = component.get_role_parameters()
         return component_parameters[job.f_role][0]['ReaderParam']
     task_input_dsl = component.get_input()
@@ -157,3 +168,7 @@ def get_component_input_table(dsl_parser, job, component_name):
                                                            get_input_table=True
                                                            )
     return component_input_table
+
+
+def get_component_module(component_name, job_dsl):
+    return job_dsl["components"][component_name]["module"].lower()

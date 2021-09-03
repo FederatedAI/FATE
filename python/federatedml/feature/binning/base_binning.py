@@ -17,10 +17,10 @@
 #  limitations under the License.
 
 import bisect
+import copy
 import functools
 import math
 import random
-import copy
 
 from federatedml.feature.binning.bin_inner_param import BinInnerParam
 from federatedml.feature.binning.bin_result import BinColResults, BinResults
@@ -67,11 +67,23 @@ class BaseBinning(object):
     def _default_setting(self, header):
         if self.bin_inner_param is not None:
             return
-        bin_inner_param = BinInnerParam()
-        bin_inner_param.set_header(header)
-        bin_inner_param.set_bin_all()
-        bin_inner_param.set_transform_all()
-        self.set_bin_inner_param(bin_inner_param)
+        self.bin_inner_param = BinInnerParam()
+
+        self.bin_inner_param.set_header(header)
+        if self.params.bin_indexes == -1:
+            self.bin_inner_param.set_bin_all()
+        else:
+            self.bin_inner_param.add_bin_indexes(self.params.bin_indexes)
+            self.bin_inner_param.add_bin_names(self.params.bin_names)
+
+        self.bin_inner_param.add_category_indexes(self.params.category_indexes)
+        self.bin_inner_param.add_category_names(self.params.category_names)
+
+        if self.params.transform_param.transform_cols == -1:
+            self.bin_inner_param.set_transform_all()
+        else:
+            self.bin_inner_param.add_transform_bin_indexes(self.params.transform_param.transform_cols)
+            self.bin_inner_param.add_transform_bin_names(self.params.transform_param.transform_names)
 
     def fit_split_points(self, data_instances):
         """
@@ -158,7 +170,7 @@ class BaseBinning(object):
 
         f = functools.partial(self.bin_data,
                               split_points=split_points,
-                              cols_dict=self.bin_inner_param.bin_cols_map,
+                              cols_dict=self.bin_inner_param.get_need_cal_iv_cols_map(),
                               header=self.header,
                               is_sparse=is_sparse)
         data_bin_dict = data_instances.mapValues(f)

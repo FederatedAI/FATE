@@ -68,3 +68,41 @@ def delete(ctx, **kwargs):
     """
     config_data, dsl_data = preprocess(**kwargs)
     access_server('post', ctx, 'table/delete', config_data)
+
+
+@table.command("add", short_help="Add Table Command")
+@cli_args.CONF_PATH
+@click.pass_context
+def add(ctx, **kwargs):
+    """
+    - DESCRIPTION:
+
+    \b
+    Add a address to fate address.
+    Used to be 'table_add'.
+
+    \b
+    - USAGE:
+        flow table add -c fate_flow/examples/bind_hdfs_table.json
+    """
+    config_data, _ = preprocess(**kwargs)
+    access_server('post', ctx, 'table/add', config_data)
+
+
+@table.command("bind", short_help="Bind Table Command")
+@cli_args.CONF_PATH
+@click.pass_context
+def bind(ctx, **kwargs):
+    """
+    - DESCRIPTION:
+
+    \b
+    Bind a address to fate address.
+    Used to be 'table_bind'.
+
+    \b
+    - USAGE:
+        flow table bind -c fate_flow/examples/bind_hdfs_table.json
+    """
+    config_data, _ = preprocess(**kwargs)
+    access_server('post', ctx, 'table/bind', config_data)

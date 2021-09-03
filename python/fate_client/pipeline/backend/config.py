@@ -68,11 +68,11 @@ class FlowConfig(object):
     IP = conf.get("ip", None)
     if IP is None:
         raise ValueError(f"IP not configured. "
-                         f"Please use command line tool pipeline config or modify setting file pipeline/config.yaml")
+                         f"Please use command line tool pipeline init to set Flow server IP.")
     PORT = conf.get("port", None)
     if PORT is None:
         raise ValueError(f"PORT not configured. "
-                         f"Please use command line tool pipeline config or modify setting file pipeline/config.yaml")
+                         f"Please use command line tool pipeline init to set Flow server port")
 
 
 class LogPath(object):
@@ -102,3 +102,12 @@ class LogFormat(object):
     SIMPLE = '<green>[{time:HH:mm:ss}]</green><level>{message}</level>'
     NORMAL = '<green>{time:YYYY-MM-DD HH:mm:ss}</green> | ' \
              '<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>'
+
+
+class SystemSetting(object):
+    @classmethod
+    def system_setting(cls):
+        conf = get_default_config()
+        system_setting = conf.get("system_setting", {})
+        # system_role = system_setting.get("role", None)
+        return system_setting

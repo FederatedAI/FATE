@@ -13,13 +13,13 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import uuid
-
 from flask import Flask, request
-from flask.json import jsonify
 
+from fate_arch.common import conf_utils
+from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.settings import stat_logger
-from fate_flow.utils.api_utils import get_json_result, forward_api
+from fate_flow.utils.api_utils import get_json_result
+from fate_flow.utils.service_utils import ServiceUtils
 
 manager = Flask(__name__)
 
@@ -30,15 +30,19 @@ def internal_server_error(e):
     return get_json_result(retcode=100, retmsg=str(e))
 
 
-@manager.route('/<role>', methods=['POST'])
-def start_forward(role):
-    request_config = request.json or request.form.to_dict()
-    response = forward_api(job_id=request_config.get('header').get('job_id', uuid.uuid1().hex),
-                           method=request_config.get('header').get('method', 'POST'),
-                           endpoint=request_config.get('header').get('endpoint'),
-                           src_party_id=request_config.get('header').get('src_party_id'),
-                           dest_party_id=request_config.get('header').get('dest_party_id'),
-                           role=role,
-                           json_body=request_config.get('body')
-                           )
-    return jsonify(response)
+@manager.route('/get', methods=['POST'])
+def get_fate_version_info():
+    version = RuntimeConfig.get_env(request.json.get('module', 'FATE'))
+    return get_json_result(data={request.json.get('module'): version})
+
+
+@manager.route('/registry', methods=['POST'])
+def service_registry():
+    update_server = ServiceUtils.register_service(request.json)
+    return get_json_result(data={"update_server": update_server})
+
+
+@manager.route('/query', methods=['POST'])
+def service_query():
+    service_info = ServiceUtils.get(request.json.get("service_name"))
+    return get_json_result(data={"service_info": service_info})

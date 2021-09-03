@@ -13,12 +13,15 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+
 from flask import Flask, request
 
-from fate_arch.common import conf_utils
-from fate_flow.entity.runtime_config import RuntimeConfig
+from fate_flow.entity.types import RetCode
 from fate_flow.settings import stat_logger
+from fate_flow.utils import job_utils
 from fate_flow.utils.api_utils import get_json_result
+from fate_arch.common import log, file_utils
+
 
 manager = Flask(__name__)
 
@@ -26,20 +29,16 @@ manager = Flask(__name__)
 @manager.errorhandler(500)
 def internal_server_error(e):
     stat_logger.exception(e)
-    return get_json_result(retcode=100, retmsg=str(e))
+    return get_json_result(retcode=RetCode.EXCEPTION_ERROR, retmsg=log.exception_to_trace_string(e))
 
 
-@manager.route('/get', methods=['POST'])
-def get_fate_version_info():
-    version = RuntimeConfig.get_env(request.json.get('module', 'FATE'))
-    return get_json_result(data={request.json.get('module'): version})
+@manager.route('/job_config/get', methods=['POST'])
+def get_config():
+    request_data = request.json
+    job_conf = job_utils.get_job_conf(request_data.get("job_id"), request_data.get("role"))
+    return get_json_result(retcode=0, retmsg='success', data=job_conf)
 
-
-@manager.route('/set', methods=['POST'])
-def set_fate_server_info():
-    # manager
-    federated_id = request.json.get("federatedId")
-    manager_conf = conf_utils.get_base_config("fatemanager", {})
-    manager_conf["federatedId"] = federated_id
-    conf_utils.update_config("fatemanager", manager_conf)
-    return get_json_result(data={"federatedId": federated_id})
+@manager.route('/json_conf/load', methods=['POST'])
+def load_json_conf():
+    job_conf = file_utils.load_json_conf(request.json.get("config_path"))
+    return get_json_result(retcode=0, retmsg='success', data=job_conf)

@@ -18,8 +18,6 @@ import os
 import sys
 
 from peewee import CharField, IntegerField, BigIntegerField, TextField, CompositeKey, BooleanField
-from playhouse.apsw_ext import APSWDatabase
-from playhouse.pool import PooledMySQLDatabase
 
 from fate_arch.storage.metastore.base_model import JSONField, SerializedField, BaseModel
 from fate_arch.common.conf_utils import get_base_config
@@ -50,9 +48,11 @@ class BaseDataBase(object):
         database_config = DATABASE.copy()
         db_name = database_config.pop("name")
         if WORK_MODE == WorkMode.STANDALONE:
+            from playhouse.apsw_ext import APSWDatabase
             self.database_connection = APSWDatabase(os.path.join(file_utils.get_project_base_directory(), 'fate_flow_sqlite.db'))
 
         elif WORK_MODE == WorkMode.CLUSTER:
+            from playhouse.pool import PooledMySQLDatabase
             self.database_connection = PooledMySQLDatabase(db_name, **database_config)
         else:
             raise Exception('can not init database')

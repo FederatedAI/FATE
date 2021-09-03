@@ -1,3 +1,16 @@
+# Release 1.6.1
+## Major Features and Improvements
+
+> Fate-Flow
+* Support fate on WeDataSphere mode
+* Support mysql storage engine
+* Added service-related interfaces
+* Support registering the model download urls to zookeeper
+
+## Bug Fixes
+* Fix model local cache
+
+
 # Release 1.6.0
 ## Major Features and Improvements
 

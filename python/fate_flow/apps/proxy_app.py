@@ -34,7 +34,7 @@ def internal_server_error(e):
 @manager.route('/<role>', methods=['post'])
 def start_proxy(role):
     request_config = request.json or request.form.to_dict()
-    _job_id = job_utils.generate_job_id()
+    _job_id = f"{role}_forward"
     if role in ['marketplace']:
         response = proxy_api(role, _job_id, request_config)
     else:

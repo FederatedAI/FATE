@@ -40,6 +40,8 @@ Usage
 
 ##### [HTTP API](./doc/fate_flow_http_api.rst)
 
+##### [DATA ACCESS](./doc/Data_Access_Guide_zh.md)
+
 ##### [Training Examples](../../examples/README.rst)
 
 ##### [Online Inference Examples](../../doc/model_publish_with_serving_guide.md)

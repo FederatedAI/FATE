@@ -191,8 +191,8 @@ Job Runtime Conf用于设置各个参与方的信息, 作业的参数及各个�
 .. code:: json
 
    "initiator": {
-       "role": "guest",     
-       "party_id": 9999 
+       "role": "guest",
+       "party_id": 9999
    }
 
 3.2 所有参与方
@@ -206,11 +206,11 @@ Job Runtime Conf用于设置各个参与方的信息, 作业的参数及各个�
 
 .. code:: json
 
-   "role": { 
-       "guest": [9999], 
-       "host": [10000], 
+   "role": {
+       "guest": [9999],
+       "host": [10000],
        "arbiter": [10000]
-   } 
+   }
 
 4. 系统运行参数
 ~~~~~~~~~~~~~~~
@@ -306,7 +306,7 @@ Job Runtime Conf用于设置各个参与方的信息, 作业的参数及各个�
      - 多方运行状态收集模式，PUSH表示每个参与方主动上报到发起方，PULL表示发起方定期向各个参与方拉取
 
    * - timeout
-     - 604800
+     - 259200 (3天)
      - 正整数
      - 任务超时时间,单位秒
 

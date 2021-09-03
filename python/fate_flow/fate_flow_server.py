@@ -33,11 +33,14 @@ from fate_flow.apps.pipeline_app import manager as pipeline_app_manager
 from fate_flow.apps.table_app import manager as table_app_manager
 from fate_flow.apps.tracking_app import manager as tracking_app_manager
 from fate_flow.apps.permission_app import manager as permission_app_manager
-from fate_flow.apps.version_app import manager as version_app_manager
+from fate_flow.apps.service_app import manager as service_app_manager
 from fate_flow.apps.proxy_app import manager as proxy_app_manager
+from fate_flow.apps.info_app import manager as info_app_manager
+from fate_flow.apps.component_app import manager as component_app_manager
 from fate_flow.scheduling_apps.initiator_app import manager as initiator_app_manager
 from fate_flow.scheduling_apps.party_app import manager as party_app_manager
 from fate_flow.scheduling_apps.tracker_app import manager as tracker_app_manager
+from fate_flow.scheduling_apps.operation_app import manager as operation_app_manager
 from fate_flow.db.db_models import init_database_tables as init_flow_db
 from fate_arch.storage.metastore.db_models import init_database_tables as init_arch_db
 from fate_flow.scheduler.detector import Detector
@@ -45,13 +48,15 @@ from fate_flow.scheduler.dag_scheduler import DAGScheduler
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.entity.types import ProcessRole
 from fate_flow.manager.resource_manager import ResourceManager
-from fate_flow.settings import IP, HTTP_PORT, GRPC_PORT, _ONE_DAY_IN_SECONDS, stat_logger, API_VERSION, GRPC_SERVER_MAX_WORKERS
+from fate_flow.settings import IP, HTTP_PORT, GRPC_PORT, _ONE_DAY_IN_SECONDS, stat_logger, detect_logger, API_VERSION, GRPC_SERVER_MAX_WORKERS
 from fate_flow.utils.api_utils import get_json_result
 from fate_flow.utils.authentication_utils import PrivilegeAuth
 from fate_flow.utils.grpc_utils import UnaryService
 from fate_flow.utils.service_utils import ServiceUtils
+from fate_flow.utils.model_utils import models_group_by_party_model_id_and_model_version
 from fate_flow.utils.xthread import ThreadPoolExecutor
 from fate_flow.utils import job_utils
+from fate_arch.common.log import schedule_logger
 
 '''
 Initialize the manager
@@ -78,11 +83,15 @@ if __name__ == '__main__':
             '/{}/tracking'.format(API_VERSION): tracking_app_manager,
             '/{}/pipeline'.format(API_VERSION): pipeline_app_manager,
             '/{}/permission'.format(API_VERSION): permission_app_manager,
-            '/{}/version'.format(API_VERSION): version_app_manager,
+            '/{}/version'.format(API_VERSION): service_app_manager,
+            '/{}/service'.format(API_VERSION): service_app_manager,
             '/{}/party'.format(API_VERSION): party_app_manager,
             '/{}/initiator'.format(API_VERSION): initiator_app_manager,
             '/{}/tracker'.format(API_VERSION): tracker_app_manager,
-            '/{}/forward'.format(API_VERSION): proxy_app_manager
+            '/{}/forward'.format(API_VERSION): proxy_app_manager,
+            '/{}/info'.format(API_VERSION): info_app_manager,
+            '/{}/operation'.format(API_VERSION): operation_app_manager,
+            '/{}/component'.format(API_VERSION): component_app_manager,
         }
     )
     # init
@@ -100,9 +109,10 @@ if __name__ == '__main__':
     RuntimeConfig.set_process_role(ProcessRole.DRIVER)
     PrivilegeAuth.init()
     ServiceUtils.register()
+    ServiceUtils.register_models(models_group_by_party_model_id_and_model_version())
     ResourceManager.initialize()
-    Detector(interval=5 * 1000).start()
-    DAGScheduler(interval=2 * 1000).start()
+    Detector(interval=5 * 1000, logger=detect_logger).start()
+    DAGScheduler(interval=2 * 1000, logger=schedule_logger()).start()
     thread_pool_executor = ThreadPoolExecutor(max_workers=GRPC_SERVER_MAX_WORKERS)
     stat_logger.info(f"start grpc server thread pool by {thread_pool_executor._max_workers} max workers")
     server = grpc.server(thread_pool=thread_pool_executor,
