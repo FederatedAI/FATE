@@ -271,6 +271,10 @@ class Variable(object):
             parties = party_info.roles_to_parties(role)
 
         if idx >= 0:
+            if idx >= len(parties):
+                raise RuntimeError(
+                    f"try to remote to {idx}th party while only {len(parties)} configurated: {parties}, check {self._name}"
+                )
             parties = parties[idx]
         return self.remote_parties(obj=obj, parties=parties, suffix=suffix)
 
@@ -299,11 +303,14 @@ class Variable(object):
         if isinstance(idx, list):
             rtn = self.get_parties(parties=[src_parties[i] for i in idx], suffix=suffix)
         elif isinstance(idx, int):
-            rtn = (
-                self.get_parties(parties=src_parties, suffix=suffix)
-                if idx < 0
-                else self.get_parties(parties=src_parties[idx], suffix=suffix)[0]
-            )
+            if idx < 0:
+                rtn = self.get_parties(parties=src_parties, suffix=suffix)
+            else:
+                if idx >= len(src_parties):
+                    raise RuntimeError(
+                        f"try to get from {idx}th party while only {len(src_parties)} configurated: {src_parties}, check {self._name}"
+                    )
+                rtn = self.get_parties(parties=src_parties[idx], suffix=suffix)[0]
         else:
             raise ValueError(
                 f"illegal idx type: {type(idx)}, supported types: int or list of int"
