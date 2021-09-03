@@ -40,6 +40,8 @@ FATE-Flow关键点:
 
 ##### [HTTP API](./doc/fate_flow_http_api.rst)
 
+##### [数据接入](./doc/Data_Access_Guide_zh.md)
+
 ##### [训练样例](../../examples/README_zh.rst)
 
 ##### [在线推理样例](../../doc/model_publish_with_serving_guide_zh.md)
