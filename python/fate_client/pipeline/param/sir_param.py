@@ -79,7 +79,7 @@ class SecureInformationRetrievalParam(BaseParam):
         if self.key_size:
             self.check_positive_integer(self.key_size, descr+"key_size")
             if self.key_size < 1024:
-                raise ValueError(f"key length must be >= 1024")
+                raise ValueError(f"key size must be >= 1024")
         self.check_boolean(self.raw_retrieval, descr)
         if not isinstance(self.target_cols, list):
             self.target_cols = [self.target_cols]
