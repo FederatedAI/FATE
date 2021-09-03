@@ -1,14 +1,31 @@
 # Release 1.6.1
 ## Major Features and Improvements
+Federatedml:
+1. Support single party prediction
+2. SIR support non-ascii id
+3. Selection support local iv filter
+4. Adjustable Paillier key length for Hetero LR
+5. Binning support iv calculation on categorical features
+6. Hetero LR one vs rest support evaluation during training
 
-> Fate-Flow
-* Support fate on WeDataSphere mode
-* Support mysql storage engine
-* Added service-related interfaces
-* Support registering the model download urls to zookeeper
+FATE-Flow:
+1. Support mysql storage engine;
+2. Added service registry interface;
+3. Added service query interface;
+4. Support fate on WeDataSphere mode
+5. Add lock when writing `model_local_cache`
+6. Register the model download urls to zookeeper
 
-## Bug Fixes
-* Fix model local cache
+## Bug-Fix:
+1. Fix error for deploying module with lack of partial upstream modules in multi-input cases
+2. Fix error for deploying module with multiple output, like data-statistics
+2. Fix job id length no more than 25 limitation
+3. Fix error when loss function of Hetero SecureBoost set to log-cosh
+4. Fix setting predict label to string-type error when Hetero SecureBoost predicts
+5. Fix error for HeteroLR without intercept
+6. Fix quantile error of Data Statistics with specified columns
+7. Fix string parsing error of OneHot with specified columns
+8. Some parameters can now take 0 or 1 integer values when valid range is [0, 1]
 
 
 # Release 1.6.0
