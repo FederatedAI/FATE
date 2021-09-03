@@ -40,7 +40,7 @@ Usage
 
 ##### [HTTP API](./doc/fate_flow_http_api.rst)
 
-##### [DATE ACCESS](./doc/Data_Access_Guide_zh.md)
+##### [DATA ACCESS](./doc/Data_Access_Guide_zh.md)
 
 ##### [Training Examples](../../examples/README.rst)
 
