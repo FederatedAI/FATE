@@ -62,6 +62,7 @@ class ComponentProperties(object):
         self.guest_partyid = -1
         self.input_data_count = 0
         self.input_eval_data_count = 0
+        self.has_arbiter = False
 
     def parse_component_param(self, component_parameters, param):
 
@@ -89,6 +90,9 @@ class ComponentProperties(object):
         self.host_party_idlist = component_parameters["role"].get("host")
         self.local_partyid = component_parameters["local"].get("party_id")
         self.guest_partyid = component_parameters["role"].get("guest")
+        self.has_arbiter = True if component_parameters['role'].get("arbiter") is not None else False
+        LOGGER.debug(f"has_arbiter: {self.has_arbiter}")
+
         if self.guest_partyid is not None:
             self.guest_partyid = self.guest_partyid[0]
         return self
