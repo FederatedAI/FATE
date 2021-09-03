@@ -154,6 +154,7 @@ class HeteroLRHost(HeteroLRBase):
             self.n_iter_ += 1
             if self.is_converged:
                 break
+        self.callback_list.on_train_end()
         self.set_summary(self.get_model_summary())
 
         # LOGGER.debug("Final lr weights: {}".format(self.model_weights.unboxed))
