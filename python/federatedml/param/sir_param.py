@@ -34,7 +34,7 @@ class SecureInformationRetrievalParam(BaseParam):
 
     dh_params: params for Pohlig-Hellman Encryption
 
-    key_size: int >= 768, the key length of the commutative cipher;
+    key_size: int, value >= 1024, the key length of the commutative cipher;
         note that this param will be deprecated in future, please specify key_length in PHParam instead.
 
     raw_retrieval: bool, perform raw retrieval if raw_retrieval
@@ -78,6 +78,8 @@ class SecureInformationRetrievalParam(BaseParam):
         self.dh_params.check()
         if self.key_size:
             self.check_positive_integer(self.key_size, descr+"key_size")
+            if self.key_size < 1024:
+                raise ValueError(f"key size must be >= 1024")
         self.check_boolean(self.raw_retrieval, descr)
         if not isinstance(self.target_cols, list):
             self.target_cols = [self.target_cols]
