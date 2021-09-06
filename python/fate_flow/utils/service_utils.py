@@ -72,14 +72,13 @@ class ServiceUtils(object):
             raise Exception('loading servings node  failed from zookeeper: {}'.format(e))
 
     @classmethod
-    def register(cls, party_model_id=None, model_version=None):
+    def register(cls, zk=None, party_model_id=None, model_version=None):
         if not get_base_config('use_registry', False):
             return
-
-        zk = ServiceUtils.get_zk()
-        zk.start()
-        atexit.register(zk.stop)
-
+        if not zk:
+            zk = ServiceUtils.get_zk()
+            zk.start()
+            atexit.register(zk.stop)
         model_transfer_url = 'http://{}:{}{}'.format(IP, HTTP_PORT, FATE_FLOW_MODEL_TRANSFER_ENDPOINT)
         if party_model_id is not None and model_version is not None:
             model_transfer_url += '/{}/{}'.format(party_model_id.replace('#', '~'), model_version)
@@ -97,9 +96,11 @@ class ServiceUtils(object):
     def register_models(cls, models):
         if not get_base_config('use_registry', False):
             return
-
+        zk = ServiceUtils.get_zk()
+        zk.start()
+        atexit.register(zk.stop)
         for model in models:
-            cls.register(model.f_party_model_id, model.f_model_version)
+            cls.register(zk, model.f_party_model_id, model.f_model_version)
 
     @classmethod
     def register_service(cls, service_config):
