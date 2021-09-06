@@ -179,11 +179,12 @@ def save_model_info(model_info):
         rows = model.save(force_insert=True)
         if rows != 1:
             raise Exception("Create {} failed".format(MLModel))
-        ServiceUtils.register(RuntimeConfig.zk_client,
-                              gen_party_model_id(role=model.f_role,
-                                                 party_id=model.f_party_id,
-                                                 model_id=model.f_model_id),
-                              model.f_model_version)
+        if RuntimeConfig.zk_client is not None:
+            ServiceUtils.register(RuntimeConfig.zk_client,
+                                  gen_party_model_id(role=model.f_role,
+                                                     party_id=model.f_party_id,
+                                                     model_id=model.f_model_id),
+                                  model.f_model_version)
         return model
     except peewee.IntegrityError as e:
         if e.args[0] == 1062:

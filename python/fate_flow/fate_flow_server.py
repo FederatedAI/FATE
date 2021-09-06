@@ -110,9 +110,8 @@ if __name__ == '__main__':
     RuntimeConfig.set_process_role(ProcessRole.DRIVER)
     PrivilegeAuth.init()
 
-    zk_client = ServiceUtils.get_zk()
-    if zk_client is not None:
-        RuntimeConfig.zk_client = zk_client
+    RuntimeConfig.zk_client = ServiceUtils.get_zk()
+    if RuntimeConfig.zk_client is not None:
         RuntimeConfig.zk_client.start()
         atexit.register(RuntimeConfig.zk_client.stop)
         ServiceUtils.register(RuntimeConfig.zk_client)
