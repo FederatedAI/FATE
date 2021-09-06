@@ -442,7 +442,7 @@ class Boosting(ModelBase, ABC):
                                                           threshold=self.predict_param.threshold)
 
         elif self.task_type == consts.REGRESSION:
-            predicts = predicts.mapValues(lambda x: list(x))
+            predicts = predicts.mapValues(lambda x: x[0])
             predict_result = self.predict_score_to_output(data_inst, predict_score=predicts, classes=None)
 
         else:
