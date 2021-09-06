@@ -560,6 +560,18 @@ class ModelBase(object):
             metrics=metric_data,
         )
 
+    def callback_warm_start_init_iter(self, iter_num):
+        metric_meta = MetricMeta(name='train',
+                                 metric_type="init_iter",
+                                 extra_metas={
+                                     "unit_name": "iters",
+                                 })
+
+        self.callback_meta(metric_name='init_iter', metric_namespace='train', metric_meta=metric_meta)
+        self.callback_metric(metric_name='init_iter',
+                             metric_namespace='train',
+                             metric_data=[Metric("init_iter", iter_num)])
+
     def get_latest_checkpoint(self):
         return self.checkpoint_manager.latest_checkpoint.read()
 
