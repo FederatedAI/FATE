@@ -81,6 +81,9 @@ class SecureInformationRetrievalParam(BaseParam):
             if self.key_size < 1024:
                 raise ValueError(f"key size must be >= 1024")
         self.check_boolean(self.raw_retrieval, descr)
+        if self.raw_retrieval:
+            LOGGER.warning(f"SIR param 'raw_retrieval' will be deprecated in future release, "
+                           f"please set security_level = 0 to perform raw retrieval.")
         if not isinstance(self.target_cols, list):
             self.target_cols = [self.target_cols]
         for col in self.target_cols:
