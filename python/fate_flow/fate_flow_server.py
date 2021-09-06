@@ -18,6 +18,7 @@ import signal
 import sys
 import time
 import traceback
+import atexit
 
 import grpc
 from flask import Flask
@@ -108,8 +109,13 @@ if __name__ == '__main__':
     RuntimeConfig.init_env()
     RuntimeConfig.set_process_role(ProcessRole.DRIVER)
     PrivilegeAuth.init()
-    ServiceUtils.register()
-    ServiceUtils.register_models(models_group_by_party_model_id_and_model_version())
+
+    RuntimeConfig.zk_client = ServiceUtils.get_zk()
+    RuntimeConfig.zk_client.start()
+    atexit.register(RuntimeConfig.zk_client.stop)
+    ServiceUtils.register(RuntimeConfig.zk_client)
+    ServiceUtils.register_models(RuntimeConfig.zk_client, models_group_by_party_model_id_and_model_version())
+
     ResourceManager.initialize()
     Detector(interval=5 * 1000, logger=detect_logger).start()
     DAGScheduler(interval=2 * 1000, logger=schedule_logger()).start()
