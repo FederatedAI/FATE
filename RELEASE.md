@@ -1,6 +1,6 @@
 # Release 1.6.1
 ## Major Features and Improvements
-> Federatedml:
+> FederatedML
 * Support single party prediction
 * SIR support non-ascii id
 * Selection support local iv filter
