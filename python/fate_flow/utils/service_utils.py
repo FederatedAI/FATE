@@ -49,6 +49,9 @@ class ServiceUtils(object):
 
     @classmethod
     def get_zk(cls, ):
+        if not get_base_config('use_registry', False):
+            return
+
         zk_config = get_base_config("zookeeper", {})
         if zk_config.get("use_acl", False):
             default_acl = make_digest_acl(zk_config.get("user", ""), zk_config.get("password", ""), all=True)
@@ -60,6 +63,9 @@ class ServiceUtils(object):
 
     @classmethod
     def get_from_registry(cls, service_name):
+        if not get_base_config('use_registry', False):
+            return
+
         try:
             zk = ServiceUtils.get_zk()
             zk.start()
