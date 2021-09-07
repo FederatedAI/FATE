@@ -47,10 +47,11 @@ class HeteroPoissonHost(HeteroPoissonBase):
 
         LOGGER.info("Enter hetero_poisson host")
         self._abnormal_detection(data_instances)
-
-        self.validation_strategy = self.init_validation_strategy(data_instances, validate_data)
+        # self.validation_strategy = self.init_validation_strategy(data_instances, validate_data)
 
         self.header = self.get_header(data_instances)
+        self.callback_list.on_train_begin(data_instances, validate_data)
+
         self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
 
         self.batch_generator.initialize_batch_generator(data_instances)
@@ -64,8 +65,9 @@ class HeteroPoissonHost(HeteroPoissonBase):
         model_shape = self.get_features_shape(data_instances)
         if self.init_param_obj.fit_intercept:
             self.init_param_obj.fit_intercept = False
-        w = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
-        self.model_weights = LinearModelWeights(w, fit_intercept=self.fit_intercept)
+        if not self.component_properties.is_warm_start:
+            w = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
+            self.model_weights = LinearModelWeights(w, fit_intercept=self.fit_intercept, raise_overflow_error=False)
 
         while self.n_iter_ < self.max_iter:
             LOGGER.info("iter:" + str(self.n_iter_))
@@ -75,16 +77,17 @@ class HeteroPoissonHost(HeteroPoissonBase):
 
             batch_index = 0
             for batch_data in batch_data_generator:
-                batch_feat_inst = self.transform(batch_data)
+                self.callback_list.on_epoch_begin(self.n_iter_)
+                LOGGER.info("iter:" + str(self.n_iter_))
                 optim_host_gradient = self.gradient_loss_operator.compute_gradient_procedure(
-                    batch_feat_inst,
+                    batch_data,
                     self.encrypted_calculator,
                     self.model_weights,
                     self.optimizer,
                     self.n_iter_,
                     batch_index)
 
-                self.gradient_loss_operator.compute_loss(batch_feat_inst, self.model_weights,
+                self.gradient_loss_operator.compute_loss(batch_data, self.model_weights,
                                                          self.encrypted_calculator, self.optimizer,
                                                          self.n_iter_, batch_index, self.cipher_operator)
 
@@ -95,12 +98,9 @@ class HeteroPoissonHost(HeteroPoissonBase):
 
             LOGGER.info("Get is_converged flag from arbiter:{}".format(self.is_converged))
 
-            if self.validation_strategy:
-                LOGGER.debug('Poisson host running validation')
-                self.validation_strategy.validate(self, self.n_iter_)
-                if self.validation_strategy.need_stop():
-                    LOGGER.debug('early stopping triggered')
-                    break
+            self.callback_list.on_epoch_end(self.n_iter_)
+            if self.stop_training:
+                break
 
             self.n_iter_ += 1
             LOGGER.info("iter: {}, is_converged: {}".format(self.n_iter_, self.is_converged))
@@ -127,8 +127,7 @@ class HeteroPoissonHost(HeteroPoissonBase):
 
         self._abnormal_detection(data_instances)
         data_instances = self.align_data_header(data_instances, self.header)
-        data_features = self.transform(data_instances)
-        pred_host = self.compute_mu(data_features, self.model_weights.coef_, self.model_weights.intercept_)
+        pred_host = self.compute_mu(data_instances, self.model_weights.coef_, self.model_weights.intercept_)
         self.transfer_variable.host_partial_prediction.remote(pred_host, role=consts.GUEST, idx=0)
 
         LOGGER.info("Remote partial prediction to Guest")

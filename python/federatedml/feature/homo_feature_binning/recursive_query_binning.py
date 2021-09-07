@@ -91,7 +91,7 @@ class Client(homo_binning_base.Client):
                     if np.abs(v - last) > consts.FLOAT_ZERO:
                         res.append(v)
                     last = v
-                sp = res
+                sp = np.array(res)
             self.bin_results.put_col_split_points(col_name, sp)
         return self.bin_results.all_split_points
 

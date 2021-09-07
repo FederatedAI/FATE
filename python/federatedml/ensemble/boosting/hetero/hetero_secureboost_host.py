@@ -52,7 +52,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         self.zero_as_missing = param.zero_as_missing
         self.complete_secure = param.complete_secure
         self.sparse_opt_para = param.sparse_optimization
-        self.round_decimal = param.cipher_compress_error
+        self.cipher_compressing = param.cipher_compress
         self.new_ver = param.new_ver
 
         if self.use_missing:
@@ -118,8 +118,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
                   goss_subsample=self.enable_goss,
                   bin_num=self.bin_num,
                   complete_secure=True if (self.complete_secure and epoch_idx == 0) else False,
-                  cipher_compressing=self.round_decimal is not None,
-                  round_decimal=self.round_decimal,
+                  cipher_compressing=self.cipher_compressing,
                   new_ver=self.new_ver
                   )
 
@@ -135,7 +134,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
 
     def generate_summary(self) -> dict:
 
-        summary = {'best_iteration': self.validation_strategy.best_iteration, 'is_converged': self.is_converged}
+        summary = {'best_iteration': self.callback_variables.best_iteration, 'is_converged': self.is_converged}
 
         LOGGER.debug('summary is {}'.format(summary))
 
@@ -240,7 +239,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         model_param.anonymous_name_mapping.update(anonymous_name_mapping)
         model_param.feature_name_fid_mapping.update(self.feature_name_fid_mapping)
         model_param.model_name = consts.HETERO_SBT
-        model_param.best_iteration = -1 if self.validation_strategy is None else self.validation_strategy.best_iteration
+        model_param.best_iteration = self.callback_variables.best_iteration
 
         param_name = "HeteroSecureBoostingTreeHostParam"
 

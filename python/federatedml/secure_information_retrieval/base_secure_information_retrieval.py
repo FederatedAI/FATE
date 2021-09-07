@@ -16,13 +16,14 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import functools
+
 
 from federatedml.protobuf.generated import sir_meta_pb2, sir_param_pb2
 from fate_flow.entity.metric import Metric, MetricMeta
 from federatedml.model_base import ModelBase
 from federatedml.param.sir_param import SecureInformationRetrievalParam
-from federatedml.util import abnormal_detection, LOGGER
+from federatedml.statistic.intersect.match_id_process import MatchIDIntersect
+from federatedml.util import consts, abnormal_detection
 from federatedml.transfer_variable.transfer_class.secure_information_retrieval_transfer_variable import \
     SecureInformationRetrievalTransferVariable
 
@@ -44,6 +45,13 @@ class BaseSecureInformationRetrieval(ModelBase):
         self.block_num = None       # N in 1-N OT
         self.coverage = None        # the percentage of transactions whose values are successfully retrieved
 
+        self.dh_params = None
+        self.intersection_obj = None
+        self.proc_obj = None
+        self.with_inst_id = None
+        self.need_label = False
+        self.target_cols = None
+
         # For callback
         self.metric_name = "sir"
         self.metric_namespace = "train"
@@ -55,6 +63,10 @@ class BaseSecureInformationRetrieval(ModelBase):
 
         self.model_param = param
         self.security_level = self.model_param.security_level
+        self.dh_params = self.model_param.dh_params
+        if self.model_param.key_size is not None and self.dh_params.key_length == consts.DEFAULT_KEY_LENGTH:
+            self.dh_params.key_length = self.model_param.key_size
+        self.target_cols = self.model_param.target_cols
 
     def _init_transfer_variable(self):
         self.transfer_variable.natural_indexation.disable_auto_clean()
@@ -68,26 +80,30 @@ class BaseSecureInformationRetrieval(ModelBase):
         abnormal_detection.empty_table_detection(data_instances)
         abnormal_detection.empty_feature_detection(data_instances)
 
-    def _encrypt_id(self, data_instance, mode):
-        pass
+    """    
+    @staticmethod
+    def record_original_id(k, v):
+        if isinstance(k, str):
+            restored_id = conversion.int_to_str(conversion.str_to_int(k))
+        else:
+            restored_id = k
+        return (restored_id, k)
+    """
 
-    def _decrypt_id(self, data_instance, mode):
-        pass
+    def _check_need_label(self):
+        return len(self.target_cols) == 0
 
-    def _sync_commutative_cipher_public_knowledge(self):
-        """
-        guest -> host public knowledge
-        :return:
-        """
-        pass
+    def _recover_match_id(self, data_instance):
+        self.proc_obj = MatchIDIntersect(sample_id_generator=consts.GUEST, role=self.intersection_obj.role)
+        self.proc_obj.new_join_id = False
+        self.proc_obj.use_sample_id()
+        match_data = self.proc_obj.recover(data=data_instance)
+        return match_data
 
-    def _exchange_id_list(self, id_list):
-        """
+    def _restore_sample_id(self, data_instances):
+        restore_data = self.proc_obj.expand(data_instances, owner_only=True)
 
-        :param id_list: Table in the form (id, 0)
-        :return:
-        """
-        pass
+        return restore_data
 
     def _raw_information_retrieval(self, data_instance):
         """
@@ -101,14 +117,6 @@ class BaseSecureInformationRetrieval(ModelBase):
         """
         Cooperatively parse the security level index
         :param data_instance:
-        :return:
-        """
-        pass
-
-    def _sync_doubly_encrypted_id_list(self, id_list):
-        """
-        host -> guest
-        :param id_list:
         :return:
         """
         pass
@@ -140,20 +148,6 @@ class BaseSecureInformationRetrieval(ModelBase):
         host -> guest
         :param id_block:
         :param time: int
-        :return:
-        """
-
-    def _sync_intersect_cipher_cipher(self, id_list):
-        """
-        guest -> host
-        :param id_list:
-        :return:
-        """
-
-    def _sync_intersect_cipher(self, id_list):
-        """
-        host -> guest
-        :param id_list:
         :return:
         """
 
@@ -234,15 +228,10 @@ class BaseSecureInformationRetrieval(ModelBase):
                                          metric_name=self.metric_name,
                                          metric_meta=MetricMeta(self.metric_name, metric_type="INTERSECTION"))
 
+    """
     @staticmethod
     def _set_schema(data_instance, id_name=None, label_name=None, feature_name=None):
-        """
-
-        :param data_instance: Table
-        :param id_name: str
-        :param label_name: str
-        :return:
-        """
+    
         if id_name is not None:
             data_instance.schema['sid_name'] = id_name
         if label_name is not None:
@@ -265,97 +254,6 @@ class BaseSecureInformationRetrieval(ModelBase):
 
     @staticmethod
     def log_schema(tab):
-        """
-
-        :param tab: Table
-        :return:
-        """
+        
         LOGGER.debug("tab schema = {}".format(tab.schema))
-
-
-class CryptoExecutor(object):
-    def __init__(self, cipher_core):
-        self.cipher_core = cipher_core
-
-    def init(self):
-        self.cipher_core.init()
-
-    def renew(self, cipher_core):
-        self.cipher_core = cipher_core
-
-    def map_encrypt(self, plaintable, mode):
-        """
-        Process the input Table as (k, v)
-        (k, enc_k) for mode == 0
-        (enc_k, -1) for mode == 1
-        (enc_k, v) for mode == 2
-        (k, (enc_k, v)) for mode == 3
-        :param plaintable: Table
-        :param mode: int
-        :return: Table
-        """
-        if mode == 0:
-            return plaintable.map(lambda k, v: (k, self.cipher_core.encrypt(k)))
-        elif mode == 1:
-            return plaintable.map(lambda k, v: (self.cipher_core.encrypt(k), -1))
-        elif mode == 2:
-            return plaintable.map(lambda k, v: (self.cipher_core.encrypt(k), v))
-        elif mode == 3:
-            return plaintable.map(lambda k, v: (k, (self.cipher_core.encrypt(k), v)))
-        else:
-            raise ValueError("Unsupported mode for crypto_executor map encryption")
-
-    def map_values_encrypt(self, plaintable, mode):
-        """
-        Process the input Table as v
-        enc_v if mode == 0
-        :param plaintable: Table
-        :param mode: int
-        :return:
-        """
-        if mode == 0:
-            return plaintable.mapValues(lambda v: self.cipher_core.encrypt(v))
-        else:
-            raise ValueError("Unsupported mode for crypto_executor map_values encryption")
-
-    def map_decrypt(self, ciphertable, mode):
-        """
-        Process the input Table as (k, v)
-        (k, dec_k) for mode == 0
-        (dec_k, -1) for mode == 1
-        (dec_k, v) for mode == 2
-        (k, (dec_k, v)) for mode == 3
-        :param ciphertable: Table
-        :param mode: int
-        :return: Table
-        """
-        if mode == 0:
-            return ciphertable.map(lambda k, v: (k, self.cipher_core.decrypt(k)))
-        elif mode == 1:
-            return ciphertable.map(lambda k, v: (self.cipher_core.decrypt(k), -1))
-        elif mode == 2:
-            return ciphertable.map(lambda k, v: (self.cipher_core.decrypt(k), v))
-        elif mode == 3:
-            return ciphertable.map(lambda k, v: (k, (self.cipher_core.decrypt(k), v)))
-        else:
-            raise ValueError("Unsupported mode for crypto_executor map decryption")
-
-    def map_values_decrypt(self, ciphertable, mode):
-        """
-        Process the input Table as v
-        dec_v if mode == 0
-        decode(dec_v) if mode == 1
-        :param ciphertable: Table
-        :param mode: int
-        :return:
-        """
-        if mode == 0:
-            return ciphertable.mapValues(lambda v: self.cipher_core.decrypt(v))
-        elif mode == 1:
-            f = functools.partial(self.cipher_core.decrypt, decode_output=True)
-            return ciphertable.mapValues(lambda v: f(v))
-        else:
-            raise ValueError("Unsupported mode for crypto_executor map_values encryption")
-
-    def get_nonce(self):
-        return self.cipher_core.get_nonce()
+    """

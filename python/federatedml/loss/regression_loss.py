@@ -179,7 +179,7 @@ class LogCoshLoss(object):
         y_inst = y.mapValues(lambda label: Instance(features=np.asarray([label])))
         y_inst.schema = {"header": ["label"]}
         statistics = MultivariateStatisticalSummary(y_inst, -1)
-        mean = statistics.get_mean()
+        mean = statistics.get_mean()["label"]
         return y.mapValues(lambda x: np.asarray([mean])), np.asarray([mean])
 
     @staticmethod

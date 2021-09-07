@@ -45,7 +45,7 @@ def main(config="../../config.yaml", namespace=""):
         "alpha": 0.01,
         "max_iter": 30,
         "early_stop": "diff",
-        "batch_size": -1,
+        "batch_size": 320,
         "learning_rate": 0.15,
         "init_param": {
             "init_method": "zeros"
@@ -61,6 +61,10 @@ def main(config="../../config.yaml", namespace=""):
             "shuffle": False,
             "random_seed": 103,
             "need_cv": False
+        },
+        "callback_param": {
+            "callbacks": ["ModelCheckpoint"],
+            "save_freq": "epoch"
         }
     }
 

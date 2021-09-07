@@ -53,7 +53,7 @@ def upload(ctx, **kwargs):
         flow data upload -c fate_flow/examples/upload_guest.json
         flow data upload -c fate_flow/examples/upload_host.json --verbose --drop
     """
-    kwargs['drop'] = 1 if kwargs['drop'] else 2
+    kwargs['drop'] = 1 if kwargs['drop'] else 0
     kwargs['verbose'] = int(kwargs['verbose'])
     config_data, dsl_data = preprocess(**kwargs)
     if config_data.get('use_local_data', 1):

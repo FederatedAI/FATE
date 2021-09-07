@@ -257,7 +257,7 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
      - Column Expand模型
 
    * - `Secure Information Retrieval`_
-     -
+     - 安全信息检索
      - 通过不经意传输协议安全取回所需数值
      - Table, 值为Instance
      - Table, 值为取回数值
@@ -310,7 +310,7 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
      - Table, 值为Instance
      - Table, 值为加权后Instance
      -
-     -
+     - SampleWeight Model
 
    * - `Feldman Verifiable Sum`_
      - 费尔德曼秘密分享求和
@@ -319,6 +319,23 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
      - Table, 值为求和结果
      -
      -
+
+   * - `Feature Imputation`_
+     - 特征填充
+     - 使用指定方法、数值填充特征缺失值
+     - Table, 值为Instance
+     - Table, 值为填充后Instance
+     - Feature Imputation Model
+     - FeatureImputation Model
+
+   * - `Label Transform`_
+     - 标签转换
+     - 转化输入数据与预测结果的标签值
+     - Table, 值为Instance或预测结果
+     - Table, 值为标签转化后的Instance或预测结果
+     -
+     - LabelTransform Model
+
 
 .. _DataIO: util/README.rst
 .. _DataTransform:: util/README.rst
@@ -354,6 +371,8 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
 .. _Scorecard: statistic/scorecard/README.rst
 .. _Sample Weight: util/README.rst
 .. _Feldman Verifiable Sum: statistic/feldman_verifiable_sum/README.rst
+.. _Feature Imputation: feature/README.rst
+.. _Label Transform: util/README.rst
 
 
 安全协议

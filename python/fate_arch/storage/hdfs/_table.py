@@ -21,7 +21,7 @@ from pyarrow import fs
 
 from fate_arch.common import hdfs_utils
 from fate_arch.common.log import getLogger
-from fate_arch.storage import StorageEngine, HDFSStorageType
+from fate_arch.storage import StorageEngine, HDFSStoreType
 from fate_arch.storage import StorageTableBase
 
 LOGGER = getLogger()
@@ -33,14 +33,14 @@ class StorageTable(StorageTableBase):
                  name: str = None,
                  namespace: str = None,
                  partitions: int = None,
-                 storage_type: HDFSStorageType = None,
+                 store_type: HDFSStoreType = None,
                  options=None):
         super(StorageTable, self).__init__(name=name, namespace=namespace)
         self._address = address
         self._name = name
         self._namespace = namespace
         self._partitions = partitions if partitions else 1
-        self._type = storage_type if storage_type else HDFSStorageType.DISK
+        self._store_type = store_type if store_type else HDFSStoreType.DISK
         self._options = options if options else {}
         self._engine = StorageEngine.HDFS
 
@@ -64,8 +64,8 @@ class StorageTable(StorageTableBase):
     def get_engine(self):
         return self._engine
 
-    def get_type(self):
-        return self._type
+    def get_store_type(self):
+        return self._store_type
 
     def get_partitions(self):
         return self._partitions
@@ -104,13 +104,16 @@ class StorageTable(StorageTableBase):
         count = 0
         for _ in self._as_generator():
             count += 1
-        self.get_meta().update_metas(count=count)
+        self.meta.update_metas(count=count)
         return count
 
     def save_as(self, address, partitions=None, name=None, namespace=None, schema=None, **kwargs):
         super().save_as(name, namespace, partitions=partitions, schema=schema)
         self._hdfs_client.copy_file(src=self._path, dst=address.path)
         return StorageTable(address=address, partitions=partitions, name=name, namespace=namespace, **kwargs)
+
+    def check_address(self):
+        return self._exist()
 
     def close(self):
         pass

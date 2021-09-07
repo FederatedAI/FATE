@@ -33,11 +33,11 @@ class CSession(CSessionABC):
 
     def load(self, address: AddressABC, partitions: int, schema: dict, **kwargs):
         from fate_arch.common.address import StandaloneAddress
-        from fate_arch.storage import StandaloneStorageType
+        from fate_arch.storage import StandaloneStoreType
 
         if isinstance(address, StandaloneAddress):
             raw_table = self._session.load(address.name, address.namespace)
-            if address.storage_type != StandaloneStorageType.ROLLPAIR_IN_MEMORY:
+            if address.storage_type != StandaloneStoreType.ROLLPAIR_IN_MEMORY:
                 raw_table = raw_table.save_as(
                     name=f"{address.name}_{fate_uuid()}",
                     namespace=address.namespace,

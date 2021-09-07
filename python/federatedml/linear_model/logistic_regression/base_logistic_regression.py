@@ -73,6 +73,10 @@ class BaseLogisticRegression(BaseLinearModel):
         self.header = self.header if self.header else []
         LOGGER.debug("In get_param, self.need_one_vs_rest: {}".format(self.need_one_vs_rest))
 
+        if self.need_cv:
+            param_protobuf_obj = lr_model_param_pb2.LRModelParam()
+            return param_protobuf_obj
+
         if self.need_one_vs_rest:
             # one_vs_rest_class = list(map(str, self.one_vs_rest_obj.classes))
             one_vs_rest_result = self.one_vs_rest_obj.save(lr_model_param_pb2.SingleModel)

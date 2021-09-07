@@ -18,7 +18,7 @@ from pipeline.backend.config import IODataType
 
 
 class Output(object):
-    def __init__(self, name, data_type='single', has_data=True, has_model=True, output_unit=1):
+    def __init__(self, name, data_type='single', has_data=True, has_model=True, has_cache=False, output_unit=1):
         if has_model:
             self.model = Model(name).model
             self.model_output = Model(name).get_all_output()
@@ -33,6 +33,10 @@ class Output(object):
             else:
                 self.data = NoLimitOutputData(name, output_unit)
                 self.data_output = NoLimitOutputData(name, output_unit).get_all_output()
+
+        if has_cache:
+            self.cache = Cache(name).cache
+            self.cache_output = Cache(name).get_all_output()
 
 
 class Model(object):
@@ -95,3 +99,16 @@ class NoLimitOutputData(object):
 
     def get_all_output(self):
         return ["data_" + str(i) for i in range(self.output_unit)]
+
+
+class Cache(object):
+    def __init__(self, prefix):
+        self.prefix = prefix
+
+    @property
+    def cache(self):
+        return ".".join([self.prefix, "cache"])
+
+    @staticmethod
+    def get_all_output():
+        return ["cache"]

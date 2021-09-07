@@ -273,7 +273,6 @@ class BoostingParam(BaseParam):
         self.metrics = metrics
         self.random_seed = random_seed
         self.binning_error = binning_error
-        self.is_warm_start = is_warm_start
 
     def check(self):
 
@@ -446,12 +445,10 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
 
         other_rate: float, the retain ratio of small gradient data, used when run_goss is True
 
-        cipher_compress_error： int between [0-15], default is None. The parameter to control pallier cipher compressing.
-                        When cipher compressing is enabled, communication cost will be reduced, algorithms may run f
-                        aster due to lower decrypt cost. However, performance will be influenced by the precision
-                        loss caused by cipher compress.
-                        'None' means disable cipher compress.
-                        A specified integer indicates the rounding decimal precision.
+        cipher_compress_error： This param is now abandoned
+
+        cipher_compress: bool, default is True, use cipher compressing to reduce computation cost and transfer cost
+
         """
 
     def __init__(self, tree_param: DecisionTreeParam = DecisionTreeParam(), task_type=consts.CLASSIFICATION,
@@ -465,7 +462,8 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
                  complete_secure=False, metrics=None, use_first_metric_only=False, random_seed=100,
                  binning_error=consts.DEFAULT_RELATIVE_ERROR,
                  sparse_optimization=False, run_goss=False, top_rate=0.2, other_rate=0.1,
-                 cipher_compress_error=None, new_ver=True, is_warm_start=False):
+                 cipher_compress_error=None, cipher_compress=True, new_ver=True,
+                 callback_param=CallbackParam(), is_warm_start=False):
 
         super(HeteroSecureBoostParam, self).__init__(task_type, objective_param, learning_rate, num_trees,
                                                      subsample_feature_rate, n_iter_no_change, tol, encrypt_param,
@@ -484,7 +482,9 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         self.top_rate = top_rate
         self.other_rate = other_rate
         self.cipher_compress_error = cipher_compress_error
+        self.cipher_compress = cipher_compress
         self.new_ver = new_ver
+        self.callback_param = callback_param
 
     def check(self):
 
@@ -502,6 +502,7 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         self.check_positive_number(self.other_rate, 'other_rate')
         self.check_positive_number(self.top_rate, 'top_rate')
         self.check_boolean(self.new_ver, 'code version switcher')
+        self.check_boolean(self.cipher_compress, 'cipher compress')
 
         if self.top_rate + self.other_rate >= 1:
             raise ValueError('sum of top rate and other rate should be smaller than 1')
@@ -543,7 +544,7 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
                  complete_secure=False, tree_num_per_party=1, guest_depth=1, host_depth=1, work_mode='mix', metrics=None,
                  sparse_optimization=False, random_seed=100, binning_error=consts.DEFAULT_RELATIVE_ERROR,
                  cipher_compress_error=None, new_ver=True, run_goss=False, top_rate=0.2, other_rate=0.1,
-                 is_warm_start=False):
+                 is_warm_start=False, callback_param=CallbackParam()):
 
         """
         work_mode：
@@ -571,6 +572,7 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
                                                          binning_error=binning_error,
                                                          cipher_compress_error=cipher_compress_error,
                                                          new_ver=new_ver,
+                                                         cipher_compress=cipher_compress,
                                                          run_goss=run_goss, top_rate=top_rate, other_rate=other_rate,
                                                          is_warm_start=is_warm_start)
 
@@ -578,6 +580,7 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
         self.guest_depth = guest_depth
         self.host_depth = host_depth
         self.work_mode = work_mode
+        self.callback_param = callback_param
 
     def check(self):
 
@@ -599,13 +602,18 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
 
 class HomoSecureBoostParam(BoostingParam):
 
+    """
+    backend: str, defalt is 'distributed', allowed values are: 'distributed', 'memory'
+            decides which backend to use when computing histograms for homo-sbt
+    """
+
     def __init__(self, tree_param: DecisionTreeParam = DecisionTreeParam(), task_type=consts.CLASSIFICATION,
                  objective_param=ObjectiveParam(),
                  learning_rate=0.3, num_trees=5, subsample_feature_rate=1, n_iter_no_change=True,
                  tol=0.0001, bin_num=32, predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  validation_freqs=None, use_missing=False, zero_as_missing=False, random_seed=100,
-                 binning_error=consts.DEFAULT_RELATIVE_ERROR, is_warm_start=False
-                 ):
+                 binning_error=consts.DEFAULT_RELATIVE_ERROR, backend=consts.DISTRIBUTED_BACKEND,
+                 callback_param=CallbackParam(), is_warm_start=False):
         super(HomoSecureBoostParam, self).__init__(task_type=task_type,
                                                    objective_param=objective_param,
                                                    learning_rate=learning_rate,
@@ -624,6 +632,8 @@ class HomoSecureBoostParam(BoostingParam):
         self.use_missing = use_missing
         self.zero_as_missing = zero_as_missing
         self.tree_param = tree_param
+        self.backend = backend
+        self.callback_param = callback_param
 
     def check(self):
         super(HomoSecureBoostParam, self).check()
@@ -632,4 +642,6 @@ class HomoSecureBoostParam(BoostingParam):
             raise ValueError('use missing should be bool type')
         if type(self.zero_as_missing) != bool:
             raise ValueError('zero as missing should be bool type')
+        if self.backend not in [consts.MEMORY_BACKEND, consts.DISTRIBUTED_BACKEND]:
+            raise ValueError('unsupported backend')
         return True

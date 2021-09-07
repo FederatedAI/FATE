@@ -53,6 +53,7 @@ def main(config="../../config.yaml", namespace=""):
         "bin_num": 10,
         "bin_indexes": -1,
         "bin_names": None,
+        "category_indexes": [0, 1, 2],
         "category_names": None,
         "adjustment_factor": 0.5,
         "local_only": False,

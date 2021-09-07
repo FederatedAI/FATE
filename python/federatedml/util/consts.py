@@ -13,6 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+ALLOW_REVEAL_GUEST_ONLY = True
 
 ARBITER = 'arbiter'
 HOST = 'host'
@@ -54,6 +55,7 @@ HOMO = "homo"
 
 RAW = "raw"
 RSA = "rsa"
+DH = "dh"
 
 # evaluation
 AUC = "auc"
@@ -304,6 +306,10 @@ HETERO_FAST_SBT_HOST_MODEL = "HeteroFastSecureBoostingTreeHost"
 # tree decimal round to prevent float error
 TREE_DECIMAL_ROUND = 10
 
+# homm sbt backend
+MEMORY_BACKEND = 'memory'
+DISTRIBUTED_BACKEND = 'distributed'
+
 # column_expand
 MANUAL = 'manual'
 
@@ -321,3 +327,12 @@ MAX_SAMPLE_OUTPUT_LIMIT = 10 ** 6
 
 # Hetero NN Selective BP Strategy
 SELECTIVE_SIZE = 1024
+
+# intersect join methods
+INNER_JOIN = "inner_join"
+LEFT_JOIN = "left_join"
+
+DEFAULT_KEY_LENGTH = 1024
+
+MIN_HASH_FUNC_COUNT = 4
+MAX_HASH_FUNC_COUNT = 32

@@ -96,11 +96,19 @@ def main(config="../../config.yaml", namespace=""):
         },
         "encrypt_param": {
             "key_length": 1024
+        },
+        "callback_param": {
+            "callbacks": ["ModelCheckpoint"],
+            "validation_freqs": 1,
+            "early_stopping_rounds": 1,
+            "metrics": None,
+            "use_first_metric_only": False,
+            "save_freq": 1
         }
     }
 
     hetero_lr_0 = HeteroLR(name="hetero_lr_0", max_iter=3, **lr_param)
-    hetero_lr_1 = HeteroLR(name="hetero_lr_1", is_warm_start=True, max_iter=30, **lr_param)
+    hetero_lr_1 = HeteroLR(name="hetero_lr_1", max_iter=30, **lr_param)
 
     pipeline.add_component(hetero_lr_0, data=Data(train_data=intersection_0.output.data))
     pipeline.add_component(hetero_lr_1, data=Data(train_data=intersection_0.output.data),

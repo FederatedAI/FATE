@@ -1,5 +1,6 @@
 from abc import ABC
 import abc
+import numpy as np
 from federatedml.ensemble.boosting.boosting_core import Boosting
 from federatedml.feature.homo_feature_binning.homo_split_points import HomoFeatureBinningClient, \
                                                                       HomoFeatureBinningServer
@@ -40,6 +41,7 @@ class HomoBoostingClient(Boosting, ABC):
         if self.use_missing:
             self.binning_obj = recursive_query_binning.Client(params=binning_param, abnormal_list=[NoneType()],
                                                               role=self.role)
+            LOGGER.debug('use missing')
         else:
             self.binning_obj = recursive_query_binning.Client(params=binning_param, role=self.role)
 
@@ -79,11 +81,15 @@ class HomoBoostingClient(Boosting, ABC):
         self.transfer_inst.start_and_end_round.remote((self.start_round, self.boosting_round),
                                                       role=consts.ARBITER, idx=-1)
 
+    def data_preporcess(self, data_inst):
+        # transform to sparse and binning
+        data_inst = self.data_alignment(data_inst)
+        self.data_bin, self.bin_split_points, self.bin_sparse_points = self.federated_binning(data_inst)
+
     def fit(self, data_inst, validate_data=None):
 
         # binning
-        data_inst = self.data_alignment(data_inst)
-        self.data_bin, self.bin_split_points, self.bin_sparse_points = self.federated_binning(data_inst)
+        self.data_preporcess(data_inst)
 
         # fid mapping and warm start check
         if not self.is_warm_start:
@@ -98,7 +104,7 @@ class HomoBoostingClient(Boosting, ABC):
         self.sync_feature_num()
 
         # initialize validation strategy
-        self.validation_strategy = self.init_validation_strategy(train_data=data_inst, validate_data=validate_data, )
+        self.callback_list.on_train_begin(data_inst, validate_data)
 
         # check labels
         local_classes = self.check_label(self.data_bin)
@@ -117,6 +123,7 @@ class HomoBoostingClient(Boosting, ABC):
             self.check_label_starts_from_zero(self.classes_)
             # set labels
             self.num_classes = len(new_label_mapping)
+            LOGGER.info('aligned labels are {}, num_classes is {}'.format(aligned_label, self.num_classes))
             self.y = self.data_bin.mapValues(lambda instance: new_label_mapping[instance.label])
             # set tree dimension
             self.booster_dim = self.num_classes if self.num_classes > 2 else 1
@@ -142,6 +149,8 @@ class HomoBoostingClient(Boosting, ABC):
 
             LOGGER.info('cur epoch idx is {}'.format(epoch_idx))
 
+            self.callback_list.on_epoch_begin(epoch_idx)
+
             for class_idx in range(self.booster_dim):
 
                 # fit a booster
@@ -158,8 +167,10 @@ class HomoBoostingClient(Boosting, ABC):
             local_loss = self.compute_loss(self.y_hat, self.y)
             self.aggregator.send_local_loss(local_loss, self.data_bin.count(), suffix=(epoch_idx,))
 
-            if self.validation_strategy:
-                self.validation_strategy.validate(self, epoch_idx)
+            validation_strategy = self.callback_list.get_validation_strategy()
+            if validation_strategy:
+                validation_strategy.set_precomputed_train_scores(self.score_to_predict_result(data_inst, self.y_hat))
+            self.callback_list.on_epoch_end(epoch_idx)
 
             # check stop flag if n_iter_no_change is True
             if self.n_iter_no_change:
@@ -168,6 +179,7 @@ class HomoBoostingClient(Boosting, ABC):
                     LOGGER.info('n_iter_no_change stop triggered')
                     break
 
+        self.callback_list.on_train_end()
         self.set_summary(self.generate_summary())
 
     @assert_io_num_rows_equal
@@ -266,6 +278,7 @@ class HomoBoostingArbiter(Boosting, ABC):
                                       metric_type="LOSS",
                                       extra_metas={"Best": min(self.history_loss)}))
 
+        self.callback_list.on_train_end()
         self.set_summary(self.generate_summary())
 
     def predict(self, data_inst=None):

@@ -1,0 +1,84 @@
+{
+    "data": [
+        {
+            "file": "examples/data/breast_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_guest",
+            "namespace": "experiment_sid",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/breast_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_host",
+            "namespace": "experiment_sid",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/breast_homo_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_homo_guest",
+            "namespace": "experiment_sid",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/breast_homo_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_homo_host",
+            "namespace": "experiment_sid",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/breast_homo_test.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_homo_test",
+            "namespace": "experiment_sid",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/breast_homo_test.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_homo_test",
+            "namespace": "experiment_sid",
+            "role": "host_0"
+        }
+    ],
+    "pipeline_tasks": {
+        "data-transform": {
+            "script": "./pipeline-data-transform-dense.py"
+        },
+        "label-transform": {
+            "script": "./pipeline-label-transform.py"
+        },
+        "feature-imputation": {
+            "script": "./pipeline-feature-imputation-designated.py"
+        },
+        "feldman-verifiable-sum": {
+            "script": "./pipeline-feldman-verifiable-sum.py"
+        },
+        "hetero-lr": {
+            "script": "./pipeline-hetero-lr.py"
+        },
+        "hetero-lr-feature-engineering": {
+            "script": "./pipeline-hetero-lr-feature-engineering.py"
+        },
+        "homo-lr-sample-weights": {
+            "script": "./pipeline-homo-lr-sample-weights.py"
+        },
+        "homo-lr-train-eval": {
+            "script": "./pipeline-homo-lr-train-eval.py"
+        },
+        "kmeans": {
+            "script": "./pipeline-kmeans.py"
+        },
+        "sir": {
+            "script": "./secure-information-retrieval.py"
+        }
+    }
+}

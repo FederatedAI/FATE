@@ -41,6 +41,16 @@ def get_features_shape(data_instances):
         return None
 
 
+def get_instance_shape(instance):
+    if instance is None:
+        return None
+
+    if type(instance.features).__name__ == consts.SPARSE_VECTOR:
+        return instance.features.get_shape()
+    else:
+        return instance.features.shape[0]
+
+
 def max_abs_sample_weight_map_func(kv_iter):
 
     max_weight = -1
@@ -141,7 +151,7 @@ def is_empty_feature(data_instances):
 
 def is_sparse_data(data_instance):
     first_data = data_instance.first()
-    if type(first_data[1]).__name__ in ['ndarray', 'list']:
+    if type(first_data[1]).__name__ in ['ndarray', 'list', 'tuple']:
         return False
 
     data_feature = first_data[1].features
@@ -192,6 +202,24 @@ def get_label_count(data_instances):
     return class_weight
 
 
+def get_predict_result_labels(data):
+    def _get_labels(score_inst):
+        labels = set()
+        for idx, result in score_inst:
+            true_label = result.features[0]
+            predict_label = result.features[1]
+            labels.add(true_label)
+            labels.add(predict_label)
+        return labels
+
+    label_set = data.applyPartitions(_get_labels)
+    label_set = label_set.reduce(lambda x1, x2: x1.union(x2))
+    if len(label_set) > consts.MAX_CLASSNUM:
+        raise ValueError("In Classify Task, max dif classes should be no more than %d" % (consts.MAX_CLASSNUM))
+
+    return label_set
+
+
 def rubbish_clear(rubbish_list):
     """
     Temporary procession for resource recovery. This will be discarded in next version because of our new resource recovery plan
@@ -206,6 +234,13 @@ def rubbish_clear(rubbish_list):
             r.destroy()
         except Exception as e:
             LOGGER.warning("destroy Dtable error,:{}, but this can be ignored sometimes".format(e))
+
+
+def check_with_inst_id(data_instances):
+    instance = data_instances.first()[1]
+    if isinstance(instance, Instance) and instance.with_inst_id:
+        return True
+    return False
 
 
 class DataStatistics(object):
