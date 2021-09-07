@@ -25,6 +25,7 @@ from fate_arch.common.base_utils import json_loads, current_timestamp
 from fate_arch.common.file_utils import get_project_base_directory
 from fate_flow.pipelined_model.pipelined_model import PipelinedModel
 
+from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.db.db_models import DB, MachineLearningModelInfo as MLModel
 from fate_flow.utils.service_utils import ServiceUtils
 
@@ -178,10 +179,12 @@ def save_model_info(model_info):
         rows = model.save(force_insert=True)
         if rows != 1:
             raise Exception("Create {} failed".format(MLModel))
-        ServiceUtils.register(gen_party_model_id(role=model.f_role,
-                                                 party_id=model.f_party_id,
-                                                 model_id=model.f_model_id),
-                              model.f_model_version)
+        if RuntimeConfig.zk_client is not None:
+            ServiceUtils.register(RuntimeConfig.zk_client,
+                                  gen_party_model_id(role=model.f_role,
+                                                     party_id=model.f_party_id,
+                                                     model_id=model.f_model_id),
+                                  model.f_model_version)
         return model
     except peewee.IntegrityError as e:
         if e.args[0] == 1062:

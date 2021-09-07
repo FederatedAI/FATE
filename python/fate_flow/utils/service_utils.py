@@ -13,7 +13,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import atexit
 import socket
 from urllib import parse
 
@@ -50,6 +49,9 @@ class ServiceUtils(object):
 
     @classmethod
     def get_zk(cls, ):
+        if not get_base_config('use_registry', False):
+            return
+
         zk_config = get_base_config("zookeeper", {})
         if zk_config.get("use_acl", False):
             default_acl = make_digest_acl(zk_config.get("user", ""), zk_config.get("password", ""), all=True)
@@ -61,6 +63,9 @@ class ServiceUtils(object):
 
     @classmethod
     def get_from_registry(cls, service_name):
+        if not get_base_config('use_registry', False):
+            return
+
         try:
             zk = ServiceUtils.get_zk()
             zk.start()
@@ -72,13 +77,9 @@ class ServiceUtils(object):
             raise Exception('loading servings node  failed from zookeeper: {}'.format(e))
 
     @classmethod
-    def register(cls, party_model_id=None, model_version=None):
+    def register(cls, zk, party_model_id=None, model_version=None):
         if not get_base_config('use_registry', False):
             return
-
-        zk = ServiceUtils.get_zk()
-        zk.start()
-        atexit.register(zk.stop)
 
         model_transfer_url = 'http://{}:{}{}'.format(IP, HTTP_PORT, FATE_FLOW_MODEL_TRANSFER_ENDPOINT)
         if party_model_id is not None and model_version is not None:
@@ -94,12 +95,12 @@ class ServiceUtils(object):
             stat_logger.exception(e)
 
     @classmethod
-    def register_models(cls, models):
+    def register_models(cls, zk, models):
         if not get_base_config('use_registry', False):
             return
 
         for model in models:
-            cls.register(model.f_party_model_id, model.f_model_version)
+            cls.register(zk, model.f_party_model_id, model.f_model_version)
 
     @classmethod
     def register_service(cls, service_config):
