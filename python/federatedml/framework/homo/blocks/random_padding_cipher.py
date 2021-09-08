@@ -57,11 +57,11 @@ class Client(object):
     def create_cipher(self) -> PadsCipher:
         LOGGER.info("synchronizing uuid")
         uuid = self._uuid.generate_uuid()
-        LOGGER.info(f"local uuid={uuid}")
+        LOGGER.info(f"got local uuid")
 
         LOGGER.info("Diffie-Hellman keys exchanging")
         exchanged_keys = self._dh.key_exchange(uuid)
-        LOGGER.info(f"Diffie-Hellman exchanged keys {exchanged_keys}")
+        LOGGER.info(f"got Diffie-Hellman exchanged keys")
 
         cipher = PadsCipher()
         cipher.set_self_uuid(uuid)
