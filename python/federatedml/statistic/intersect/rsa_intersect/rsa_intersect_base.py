@@ -47,10 +47,12 @@ class RsaIntersect(Intersect):
         super().load_params(param=param)
         self.rsa_params = param.rsa_params
         self.random_bit = self.rsa_params.random_bit
+        """
         if param.random_bit is not None and self.random_bit == DEFAULT_RANDOM_BIT:
             self.random_bit = param.random_bit
             LOGGER.warning(f"param 'random_bit' of IntersectParam will be deprecated in future version, "
                            f"please use 'random_bit' in RSAParams.")
+        """
         self.split_calculation = self.rsa_params.split_calculation
         self.random_base_fraction = self.rsa_params.random_base_fraction
         self.first_hash_operator = Hash(self.rsa_params.hash_method, False)

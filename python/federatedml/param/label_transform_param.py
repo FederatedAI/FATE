@@ -30,9 +30,12 @@ class LabelTransformParam(BaseParam):
 
     label_encoder : None, dict, default : None
         Specify (label, encoded label) key-value pairs for transforming labels to new values.
+        e.g. {"Yes": 1, "No": 0}
 
     label_list : None, list, default : None
-        List all input labels, used for matching types of original keys in label_encoder dict
+        List all input labels, used for matching types of original keys in label_encoder dict,
+        length should match key count in label_encoder
+        e.g. ["Yes", "No"]
 
     need_run: bool, default: True
         Specify whether to run label transform
@@ -57,6 +60,8 @@ class LabelTransformParam(BaseParam):
         if self.label_list is not None:
             if not isinstance(self.label_list, list):
                 raise ValueError(f"{model_param_descr} label_list should be list type")
+            if self.label_encoder and len(self.label_list) != len(self.label_encoder.keys()):
+                raise ValueError(f"label_list length should match label_encoder key count")
 
         LOGGER.debug("Finish label transformer parameter check!")
         return True

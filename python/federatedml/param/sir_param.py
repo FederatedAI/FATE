@@ -17,11 +17,12 @@
 #  limitations under the License.
 #
 
-from federatedml.param.base_param import BaseParam
+from federatedml.param.base_param import BaseParam, deprecated_param
 from federatedml.param.intersect_param import DHParam
 from federatedml.util import consts, LOGGER
 
 
+@deprecated_param("key_size")
 class SecureInformationRetrievalParam(BaseParam):
     """
     security_level: float [0, 1]; if security_level == 0, then do raw data retrieval
@@ -75,11 +76,14 @@ class SecureInformationRetrievalParam(BaseParam):
         self.non_committing_encryption = self.check_and_change_lower(self.non_committing_encryption,
                                                                      [consts.AES.lower()],
                                                                      descr + "non_committing_encryption")
-        self.dh_params.check()
-        if self.key_size:
+        if self._warn_to_deprecate_param("key_size", descr, "dh_param's key_length"):
+            """
             self.check_positive_integer(self.key_size, descr+"key_size")
             if self.key_size < 1024:
                 raise ValueError(f"key size must be >= 1024")
+            """
+            self.dh_params.key_length = self.key_size
+        self.dh_params.check()
         self.check_boolean(self.raw_retrieval, descr)
         if self.raw_retrieval:
             LOGGER.warning(f"SIR param 'raw_retrieval' will be deprecated in future release, "
