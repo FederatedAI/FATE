@@ -309,5 +309,7 @@ class BaseParam(object):
 
     def _warn_to_deprecate_param(self, param_name, descr, new_param):
         if self._deprecated_params_set.get(param_name):
-            LOGGER.warning(f"{descr} {param_name} will be deprecated in future release, please use {new_param} instead.")
+            LOGGER.warning(f"{descr} {param_name} will be deprecated in future release; "
+                           f"please use {new_param} instead.")
             return True
+        return False
