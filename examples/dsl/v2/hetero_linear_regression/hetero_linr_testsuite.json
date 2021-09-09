@@ -59,6 +59,10 @@
         "linr_sparse": {
             "conf": "./test_hetero_linr_train_sparse_job_conf.json",
             "dsl": "./test_hetero_linr_train_sparse_job_dsl.json"
+        },
+        "linr_sample_weight": {
+            "conf": "./test_hetero_linr_train_sample_weight_job_conf.json",
+            "dsl": "./test_hetero_linr_train_sample_weight_job_dsl.json"
         }
     }
 }
