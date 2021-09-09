@@ -65,3 +65,7 @@ class SparseVector(object):
 
     def set_sparse_vector(self, sparse_vec):
         self.sparse_vec = sparse_vec
+
+    @staticmethod
+    def is_sparse_vector():
+        return True
