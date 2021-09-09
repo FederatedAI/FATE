@@ -22,6 +22,8 @@ import numpy as np
 from fate_arch.computing import is_table
 from google.protobuf import json_format
 
+from fate_flow.entity.metric import Metric
+from fate_flow.entity.metric import MetricMeta
 from federatedml.param.evaluation_param import EvaluateParam
 from federatedml.protobuf import deserialize_models
 from federatedml.statistic.data_overview import header_alignment
@@ -82,28 +84,28 @@ class MetricType:
     LOSS = "LOSS"
 
 
-class Metric:
-    def __init__(self, key, value: float, timestamp: float = None):
-        self.key = key
-        self.value = value
-        self.timestamp = timestamp
-
-
-class MetricMeta:
-    def __init__(self, name: str, metric_type: MetricType, extra_metas: dict = None):
-        self.name = name
-        self.metric_type = metric_type
-        self.metas = {}
-        if extra_metas:
-            self.metas.update(extra_metas)
-        self.metas["name"] = name
-        self.metas["metric_type"] = metric_type
-
-    def update_metas(self, metas: dict):
-        self.metas.update(metas)
-
-    def to_dict(self):
-        return self.metas
+# class Metric:
+#     def __init__(self, key, value: float, timestamp: float = None):
+#         self.key = key
+#         self.value = value
+#         self.timestamp = timestamp
+#
+#
+# class MetricMeta:
+#     def __init__(self, name: str, metric_type: MetricType, extra_metas: dict = None):
+#         self.name = name
+#         self.metric_type = metric_type
+#         self.metas = {}
+#         if extra_metas:
+#             self.metas.update(extra_metas)
+#         self.metas["name"] = name
+#         self.metas["metric_type"] = metric_type
+#
+#     def update_metas(self, metas: dict):
+#         self.metas.update(metas)
+#
+#     def to_dict(self):
+#         return self.metas
 
 
 class CallbacksVariable(object):
