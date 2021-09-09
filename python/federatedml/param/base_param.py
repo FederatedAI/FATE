@@ -19,7 +19,7 @@
 import builtins
 import json
 import os
-from federatedml.util import consts
+from federatedml.util import consts, LOGGER
 import typing
 
 
@@ -302,3 +302,14 @@ class BaseParam(object):
     @staticmethod
     def _not_in(value, wrong_value_list):
         return value not in wrong_value_list
+
+    def _warn_deprecated_param(self, param_name, descr):
+        if self._deprecated_params_set.get(param_name):
+            LOGGER.warning(f"{descr} {param_name} is deprecated and ignored in this version.")
+
+    def _warn_to_deprecate_param(self, param_name, descr, new_param):
+        if self._deprecated_params_set.get(param_name):
+            LOGGER.warning(f"{descr} {param_name} will be deprecated in future release; "
+                           f"please use {new_param} instead.")
+            return True
+        return False
