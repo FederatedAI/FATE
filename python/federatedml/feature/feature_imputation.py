@@ -92,6 +92,11 @@ class FeatureImputation(ModelBase):
     def fit(self, data):
         LOGGER.info(f"Enter Feature Imputation fit")
         imputer_processor = Imputer(self.missing_impute)
+        self.header = get_header(data)
+        if self.col_missing_fill_method:
+            for k in self.col_missing_fill_method.keys():
+                if k not in self.header:
+                    raise ValueError(f"{k} not found in data header. Please check col_missing_fill_method keys.")
         imputed_data, self.default_value = imputer_processor.fit(data,
                                                                  replace_method=self.missing_fill_method,
                                                                  replace_value=self.default_value,
@@ -99,8 +104,8 @@ class FeatureImputation(ModelBase):
         if self.missing_impute is None:
             self.missing_impute = imputer_processor.get_missing_value_list()
         self.missing_impute_rate = imputer_processor.get_impute_rate("fit")
-        self.header = get_header(imputed_data)
-        self.cols_replace_method =imputer_processor.cols_replace_method
+        # self.header = get_header(imputed_data)
+        self.cols_replace_method = imputer_processor.cols_replace_method
         self.skip_cols = imputer_processor.get_skip_cols()
         self.set_summary(self.get_summary())
 
