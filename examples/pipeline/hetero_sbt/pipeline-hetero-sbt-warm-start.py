@@ -85,8 +85,8 @@ def main(config="../../config.yaml", namespace=""):
     # secure boost component
     hetero_secure_boost_0 = HeteroSecureBoost(name="hetero_secure_boost_0",
                                               num_trees=3,
-                                              task_type="regression",
-                                              objective_param={"objective": "lse"},
+                                              task_type="classification",
+                                              objective_param={"objective": "cross_entropy"},
                                               encrypt_param={"method": "iterativeAffine"},
                                               tree_param={"max_depth": 3},
                                               validation_freqs=1)
@@ -94,10 +94,11 @@ def main(config="../../config.yaml", namespace=""):
     hetero_secure_boost_1 = HeteroSecureBoost(name="hetero_secure_boost_0",
                                               num_trees=3,
                                               task_type="regression",
-                                              objective_param={"objective": "lse"},
+                                              objective_param={"objective": "cross_entropy"},
                                               encrypt_param={"method": "iterativeAffine"},
                                               tree_param={"max_depth": 3},
-                                              validation_freqs=1)
+                                              validation_freqs=1,
+                                              is_warm_start=True)
 
     pipeline.add_component(hetero_secure_boost_0, data=Data(train_data=intersection_0.output.data))
     pipeline.add_component(hetero_secure_boost_1, data=Data(train_data=intersection_0.output.data),
