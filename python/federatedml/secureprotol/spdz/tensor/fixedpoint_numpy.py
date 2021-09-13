@@ -20,52 +20,7 @@ from fate_arch.session import is_table
 from federatedml.secureprotol.spdz.beaver_triples import beaver_triplets
 from federatedml.secureprotol.spdz.tensor.base import TensorBase
 from federatedml.secureprotol.spdz.utils.random_utils import urand_tensor
-
-
-class FixedPointEndec(object):
-
-    def __init__(self, field: int, base: int, precision_fractional: int):
-        self.field = field
-        self.base = base
-        self.precision_fractional = precision_fractional
-
-    def decode(self, integer_tensor: np.ndarray):
-        value = integer_tensor % self.field
-        gate = value > self.field // 2
-        neg_nums = (value - self.field) * gate
-        pos_nums = value * (1 - gate)
-        result = (neg_nums + pos_nums) / (self.base ** self.precision_fractional)
-        return result
-
-    def encode(self, float_tensor, check_range=True):
-        if isinstance(float_tensor, (float, np.float)):
-            float_tensor = np.array(float_tensor)
-        if isinstance(float_tensor, np.ndarray):
-            upscaled = (float_tensor * self.base ** self.precision_fractional).astype(np.int64)
-            if check_range:
-                assert (np.abs(upscaled) < (self.field / 2)).all(), (
-                    f"{float_tensor} cannot be correctly embedded: choose bigger field or a lower precision"
-                )
-
-            field_element = upscaled % self.field
-            return field_element
-        elif is_table(float_tensor):
-            s = self.base ** self.precision_fractional
-            upscaled = float_tensor.mapValues(lambda x: (x * s).astype(np.int64))
-            if check_range:
-                assert upscaled.filter(lambda k, v: (np.abs(v) >= self.field / 2).any()).count() == 0, (
-                    f"{float_tensor} cannot be correctly embedded: choose bigger field or a lower precision"
-                )
-            field_element = upscaled.mapValues(lambda x: x % self.field)
-            return field_element
-        else:
-            raise ValueError(f"unsupported type: {type(float_tensor)}")
-
-    def truncate(self, integer_tensor, idx=0):
-        if idx == 0:
-            return self.field - (self.field - integer_tensor) // (self.base ** self.precision_fractional)
-        else:
-            return integer_tensor // (self.base ** self.precision_fractional)
+from federatedml.secureprotol.spdz.tensor.fixedpoint_endec import FixedPointEndec
 
 
 class FixedPointTensor(TensorBase):
@@ -116,36 +71,34 @@ class FixedPointTensor(TensorBase):
             base = kwargs['base'] if 'base' in kwargs else 10
             frac = kwargs['frac'] if 'frac' in kwargs else 4
             encoder = FixedPointEndec(q_field, base, frac)
+        
+        
         if isinstance(source, np.ndarray):
             source = encoder.encode(source)
             _pre = urand_tensor(q_field, source)
-            # assert 1 == 2, f"q_field: {q_field}, _pre: {_pre.max()}"
-            spdz.communicator.remote_share(share=_pre, tensor_name=tensor_name, party=spdz.other_parties[0])
-            for _party in spdz.other_parties[1:]:
-                r = urand_tensor(q_field, source)
-                r = encoder.encode(r)
+            share = _pre
+            for _party in spdz.other_parties[:-1]:
+                r = urand_tensor(q_field, source)                
                 spdz.communicator.remote_share(share=r - _pre, tensor_name=tensor_name, party=_party)
-                _pre = r
-            share = source - _pre
+                _pre = r                
+            spdz.communicator.remote_share(share=source - _pre, tensor_name=tensor_name, party=_party)
+        
+#         if isinstance(source, np.ndarray):
+#             source = encoder.encode(source)
+#             _pre = urand_tensor(q_field, source)
+#             # assert 1 == 2, f"q_field: {q_field}, _pre: {_pre.max()}"
+#             spdz.communicator.remote_share(share=_pre, tensor_name=tensor_name, party=spdz.other_parties[0])
+#             for _party in spdz.other_parties[1:]:
+#                 r = urand_tensor(q_field, source)
+#                 r = encoder.encode(r)
+#                 spdz.communicator.remote_share(share=r - _pre, tensor_name=tensor_name, party=_party)
+#                 _pre = r
+#             share = source - _pre
         elif isinstance(source, Party):
             share = spdz.communicator.get_share(tensor_name=tensor_name, party=source)[0]
         else:
             raise ValueError(f"type={type(source)}")
         return FixedPointTensor(share, spdz.q_field, encoder, tensor_name)
-
-    @classmethod
-    def from_value(cls, value, **kwargs):
-        spdz = cls.get_spdz()
-        q_field = kwargs['q_field'] if 'q_field' in kwargs else spdz.q_field
-        if 'encoder' in kwargs:
-            encoder = kwargs['encoder']
-        else:
-            base = kwargs['base'] if 'base' in kwargs else 10
-            frac = kwargs['frac'] if 'frac' in kwargs else 4
-            encoder = FixedPointEndec(q_field, base, frac)
-        tensor_name = kwargs.get("tensor_name")
-        # return FixedPointTensor(value, q_field, encoder, tensor_name)
-        return cls(value, q_field, encoder, tensor_name)
 
     def einsum(self, other: 'FixedPointTensor', einsum_expr, target_name=None):
         spdz = self.get_spdz()
@@ -168,13 +121,10 @@ class FixedPointTensor(TensorBase):
         share = self._boxed(cross)
         return share
 
-    def get(self, tensor_name=None):
-        """
-        rescontruct and decode
-        """
-        return self.endec.decode(self.rescontruct(tensor_name))
+    def get(self, tensor_name=None, broadcast=True):
+        return self.endec.decode(self.rescontruct(tensor_name, broadcast))
 
-    def rescontruct(self, tensor_name=None):
+    def rescontruct(self, tensor_name=None, broadcast=True):
         from federatedml.secureprotol.spdz import SPDZ
         spdz = SPDZ.get_instance()
         share_val = self.value
@@ -184,26 +134,13 @@ class FixedPointTensor(TensorBase):
             raise ValueError("name not specified")
 
         # remote share to other parties
-        spdz.communicator.broadcast_rescontruct_share(share_val, name)
+        if broadcast:
+            spdz.communicator.broadcast_rescontruct_share(share_val, name)
 
         # get shares from other parties
         for other_share in spdz.communicator.get_rescontruct_shares(name):
             share_val += other_share
             share_val %= self.q_field
-        return share_val
-
-    def reconstruct_unilateral(self, tensor_name=None):
-        from federatedml.secureprotol.spdz import SPDZ
-        spdz = SPDZ.get_instance()
-        share_val = self.value
-        name = tensor_name or self.tensor_name
-        if name is None:
-            raise ValueError("name not specified")
-        # get shares from other parties
-        for other_share in spdz.communicator.get_rescontruct_shares(name):
-            share_val = share_val + other_share
-
-        share_val = self.endec.decode(share_val)
         return share_val
 
     def transpose(self):

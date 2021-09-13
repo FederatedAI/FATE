@@ -20,9 +20,6 @@ import sys
 
 import numpy as np
 
-from fate_arch.session import is_table
-from federatedml.util import LOGGER
-
 
 class FixedPointNumber(object):
     """Represents a float or int fixedpoit encoding;.
@@ -139,7 +136,7 @@ class FixedPointNumber(object):
         if isinstance(other, FixedPointNumber):
             return self.__add_fixpointnumber(other)
         elif type(other).__name__ == "PaillierEncryptedNumber":
-            return other + self
+            return other + self.decode()
         else:
             return self.__add_scalar(other)
 
@@ -149,10 +146,15 @@ class FixedPointNumber(object):
     def __sub__(self, other):
         if isinstance(other, FixedPointNumber):
             return self.__sub_fixpointnumber(other)
+        elif type(other).__name__ == "PaillierEncryptedNumber":
+            return (other - self.decode()) * -1
         else:
             return self.__sub_scalar(other)
 
     def __rsub__(self, other):
+        if type(other).__name__ == "PaillierEncryptedNumber":
+            return other - self.decode()
+                
         x = self.__sub__(other)
         x = -1 * x.decode()
         return self.encode(x, n=self.n, max_int=self.max_int)
@@ -164,7 +166,7 @@ class FixedPointNumber(object):
         if isinstance(other, FixedPointNumber):
             return self.__mul_fixpointnumber(other)
         elif type(other).__name__ == "PaillierEncryptedNumber":
-            return other * self
+            return other * self.decode()
         else:
             return self.__mul_scalar(other)
 
@@ -252,16 +254,19 @@ class FixedPointNumber(object):
             other = self.encode(other.decode(), n=self.n, max_int=self.max_int)
         x, y = self.__align_exponent(self, other)
         encoding = (x.encoding + y.encoding) % self.n
-        added_num = FixedPointNumber(encoding, x.exponent, n=self.n, max_int=self.max_int)
-        return self.__truncate(added_num)
-
+        return FixedPointNumber(encoding, x.exponent, n=self.n, max_int=self.max_int) 
+    
     def __add_scalar(self, scalar):
         encoded = self.encode(scalar, n=self.n, max_int=self.max_int)
         return self.__add_fixpointnumber(encoded)
 
     def __sub_fixpointnumber(self, other):
-        scalar = -1 * other.decode()
-        return self.__add_scalar(scalar)
+        if self.n != other.n:
+            other = self.encode(other.decode(), n=self.n, max_int=self.max_int)
+        x, y = self.__align_exponent(self, other)
+        encoding = (x.encoding - y.encoding) % self.n
+
+        return FixedPointNumber(encoding, x.exponent, n=self.n, max_int=self.max_int)
 
     def __sub_scalar(self, scalar):
         scalar = -1 * scalar
@@ -293,10 +298,9 @@ class FixedPointNumber(object):
 
 
 class FixedPointEndec(object):
-    def __init__(self, n):
-        self.g = n + 1
-        self.n = n
-        self.nsquare = n * n
+    
+    def __init__(self, n):       
+        self.n = n       
         self.max_int = n // 3 - 1
 
     @staticmethod
@@ -318,6 +322,7 @@ class FixedPointEndec(object):
 
     @classmethod
     def _basic_op(cls, tensor, op):
+        from fate_arch.session import is_table
         if isinstance(tensor, np.ndarray):
             arr = np.zeros(shape=tensor.shape, dtype=object)
             view = arr.view().reshape(-1)

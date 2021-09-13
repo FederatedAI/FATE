@@ -25,6 +25,7 @@ from federatedml.secureprotol.spdz.tensor import fixedpoint_numpy
 from federatedml.secureprotol.spdz.tensor.base import TensorBase
 from federatedml.secureprotol.spdz.utils import NamingService
 from federatedml.secureprotol.spdz.utils.random_utils import urand_tensor
+from federatedml.secureprotol.spdz.tensor.fixedpoint_endec import FixedPointEndec
 from federatedml.secureprotol.fixedpoint import FixedPointNumber
 from federatedml.util import LOGGER
 from federatedml.util import fate_operator
@@ -136,19 +137,6 @@ class FixedPointTensor(TensorBase):
         return fixedpoint_numpy.FixedPointTensor(array, q_field=self.q_field, endec=self.endec)
 
     @classmethod
-    def from_value(cls, value, **kwargs):
-        spdz = cls.get_spdz()
-        q_field = kwargs['q_field'] if 'q_field' in kwargs else spdz.q_field
-        if 'encoder' in kwargs:
-            encoder = kwargs['encoder']
-        else:
-            base = kwargs['base'] if 'base' in kwargs else 10
-            frac = kwargs['frac'] if 'frac' in kwargs else 4
-            encoder = fixedpoint_numpy.FixedPointEndec(q_field, base, frac)
-        tensor_name = kwargs.get("tensor_name")
-        return cls(value, q_field, encoder, tensor_name)
-
-    @classmethod
     def from_source(cls, tensor_name, source, **kwargs):
         spdz = cls.get_spdz()
         if 'encoder' in kwargs:
@@ -157,38 +145,41 @@ class FixedPointTensor(TensorBase):
             base = kwargs['base'] if 'base' in kwargs else 10
             frac = kwargs['frac'] if 'frac' in kwargs else 4
             q_field = kwargs['q_field'] if 'q_field' in kwargs else spdz.q_field
-            encoder = fixedpoint_numpy.FixedPointEndec(q_field, base, frac)
+            encoder = FixedPointEndec(q_field, base, frac)
+        
         if is_table(source):
             source = encoder.encode(source)
             _pre = urand_tensor(spdz.q_field, source, use_mix=spdz.use_mix_rand)
-            spdz.communicator.remote_share(share=_pre, tensor_name=tensor_name, party=spdz.other_parties[0])
-            for _party in spdz.other_parties[1:]:
+            share = _pre
+                      
+            for _party in spdz.other_parties[:-1]:
                 r = urand_tensor(spdz.q_field, source, use_mix=spdz.use_mix_rand)
                 spdz.communicator.remote_share(share=_table_binary_op(r, _pre, spdz.q_field, operator.sub),
                                                tensor_name=tensor_name, party=_party)
-                _pre = r
-            share = _table_binary_op(source, _pre, spdz.q_field, operator.sub)
-        elif isinstance(source, np.ndarray):
-            source = encoder.encode(source)
-            _pre = urand_tensor(spdz.q_field, source, use_mix=spdz.use_mix_rand)
-            spdz.communicator.remote_share(share=_pre, tensor_name=tensor_name, party=spdz.other_parties[0])
-            for _party in spdz.other_parties[1:]:
-                r = urand_tensor(spdz.q_field, source, use_mix=spdz.use_mix_rand)
-                spdz.communicator.remote_share(share=(r - _pre) % spdz.q_field,
+                _pre = r            
+            spdz.communicator.remote_share(share=_table_binary_op(source, _pre, spdz.q_field, operator.sub),
                                                tensor_name=tensor_name, party=_party)
-                _pre = r
-            share = (source - _pre) % spdz.q_field
+            
+#         if is_table(source):
+#             source = encoder.encode(source)
+#             _pre = urand_tensor(spdz.q_field, source, use_mix=spdz.use_mix_rand)
+#             spdz.communicator.remote_share(share=_pre, tensor_name=tensor_name, party=spdz.other_parties[0])
+#             for _party in spdz.other_parties[1:]:
+#                 r = urand_tensor(spdz.q_field, source, use_mix=spdz.use_mix_rand)
+#                 spdz.communicator.remote_share(share=_table_binary_op(r, _pre, spdz.q_field, operator.sub),
+#                                                tensor_name=tensor_name, party=_party)
+#                 _pre = r
+#             share = _table_binary_op(source, _pre, spdz.q_field, operator.sub)
         elif isinstance(source, Party):
             share = spdz.communicator.get_share(tensor_name=tensor_name, party=source)[0]
         else:
             raise ValueError(f"type={type(source)}")
         return FixedPointTensor(share, spdz.q_field, encoder, tensor_name)
 
-    def get(self, tensor_name=None):
-        LOGGER.debug(f"start get")
-        return self.rescontruct(tensor_name)
+    def get(self, tensor_name=None, broadcast=True):
+        return self.endec.decode(self.rescontruct(tensor_name, broadcast))
 
-    def rescontruct(self, tensor_name=None):
+    def rescontruct(self, tensor_name=None, broadcast=True):
         from federatedml.secureprotol.spdz import SPDZ
         spdz = SPDZ.get_instance()
         share_val = self.value
@@ -198,7 +189,8 @@ class FixedPointTensor(TensorBase):
             raise ValueError("name not specified")
 
         # remote share to other parties
-        spdz.communicator.broadcast_rescontruct_share(share_val, name)
+        if broadcast:
+            spdz.communicator.broadcast_rescontruct_share(share_val, name)
 
         # get shares from other parties
         for other_share in spdz.communicator.get_rescontruct_shares(name):
@@ -213,15 +205,6 @@ class FixedPointTensor(TensorBase):
 
     def as_name(self, tensor_name):
         return self._boxed(value=self.value, tensor_name=tensor_name)
-
-    @staticmethod
-    def is_encrypted_number(table):
-        value = table.first()[1]
-        while isinstance(value, Iterable):
-            value = value[0]
-        if type(value).__name__ == "PaillierEncryptedNumber":
-            return True
-        return False
 
     def _basic_op(self, other, op):
 
