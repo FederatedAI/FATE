@@ -74,8 +74,6 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
         else:
             host_forward = self.host_forwards[0]
             host_wx_square = host_wx_squares[0]
-            if self.use_sample_weight:
-                host_wx_square = host_wx_square.join(data_instances, lambda wx, d: wx * d.weight ** 2)
 
             wxy_square = self.half_d.mapValues(lambda x: np.square(x)).reduce(reduce_add)
 
@@ -94,17 +92,12 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
         y = ∇2^F(w_t)s_t = g' * s = (1/N)*∑(x * s) * x
         define forward_hess = (1/N)*∑(x * s)
         """
-        if self.use_sample_weight:
-            forwards = data_instances.mapValues(
-                lambda v: (np.dot(v.features, delta_s.coef_) + delta_s.intercept_, v.weight))
-        else:
-            forwards = data_instances.mapValues(
-                lambda v: (np.dot(v.features, delta_s.coef_) + delta_s.intercept_))
+        forwards = data_instances.mapValues(
+            lambda v: (np.dot(v.features, delta_s.coef_) + delta_s.intercept_))
         for host_forward in host_forwards:
-            if self.use_sample_weight:
-                forwards = forwards.join(host_forward, lambda g, h: (g[0] + h) * g[1])
-            else:
-                forwards = forwards.join(host_forward, lambda g, h: g + h)
+            forwards = forwards.join(host_forward, lambda g, h: g + h)
+        if self.use_sample_weight:
+            forwards = forwards.join(data_instances, lambda h, d: h * d.weight)
         hess_vector = hetero_linear_model_gradient.compute_gradient(data_instances,
                                                                     forwards,
                                                                     delta_s.fit_intercept)

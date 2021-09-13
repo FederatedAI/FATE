@@ -65,6 +65,8 @@ class HeteroLinRGuest(HeteroLinRBase):
         self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
 
         if with_weight(data_instances):
+            if self.model_param.early_stop == "diff":
+                LOGGER.warning("input data with weight, please use 'weight_diff' for 'early_stop'.")
             data_instances = scale_sample_weight(data_instances)
             self.gradient_loss_operator.set_use_sample_weight()
             LOGGER.debug(f"instance weight scaled; use weighted gradient loss operator")
