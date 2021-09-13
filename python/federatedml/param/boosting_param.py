@@ -508,6 +508,9 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         if self.top_rate + self.other_rate >= 1:
             raise ValueError('sum of top rate and other rate should be smaller than 1')
 
+        if self.sparse_optimization and self.cipher_compress:
+            raise ValueError('cipher compress is not supported in sparse optimization mode')
+
         return True
 
 

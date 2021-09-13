@@ -128,7 +128,7 @@ def show_log(job_id, log_level):
         info_log = os.path.join(log_path, "INFO.log")
         with open(info_log, "r") as fin:
             for line in fin:
-                if line.find("secure_add_guest.py[line") != -1:
+                if line.find("secure_add_guest") != -1:
                     print (line.strip())
 
 

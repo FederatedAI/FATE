@@ -61,6 +61,23 @@ class JSONField(LongTextField):
         return json_loads(value, object_hook=self._object_hook, object_pairs_hook=self._object_pairs_hook)
 
 
+class ListField(LongTextField):
+    def __init__(self, object_hook=None, object_pairs_hook=None, **kwargs):
+        self._object_hook = object_hook
+        self._object_pairs_hook = object_pairs_hook
+        super().__init__(**kwargs)
+
+    def db_value(self, value):
+        if value is None:
+            value = []
+        return json_dumps(value)
+
+    def python_value(self, value):
+        if value is None:
+            value = "[]"
+        return json_loads(value, object_hook=self._object_hook, object_pairs_hook=self._object_pairs_hook)
+
+
 class SerializedField(LongTextField):
     def __init__(self, serialized_type=SerializedType.PICKLE, object_hook=None, object_pairs_hook=None, **kwargs):
         self._serialized_type = serialized_type

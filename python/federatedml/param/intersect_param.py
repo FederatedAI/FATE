@@ -18,7 +18,7 @@
 #
 import copy
 
-from federatedml.param.base_param import BaseParam
+from federatedml.param.base_param import BaseParam, deprecated_param
 from federatedml.util import consts, LOGGER
 
 DEFAULT_RANDOM_BIT = 128
@@ -130,7 +130,7 @@ class RSAParam(BaseParam):
     random_base_fraction: positive float, if not None, generate (fraction * public key id count) of r for encryption and reuse generated r;
         note that value greater than 0.99 will be taken as 1, and value less than 0.01 will be rounded up to 0.01
 
-    key_length: positive int, bit count of rsa key, default 1024
+    key_length: int, value >= 1024, bit count of rsa key, default 1024
 
     random_bit: positive int, it will define the size of blinding factor in rsa algorithm, default 128
 
@@ -169,6 +169,8 @@ class RSAParam(BaseParam):
             self.check_decimal_float(self.random_base_fraction, f"{descr}random_base_fraction")
 
         self.check_positive_integer(self.key_length, f"{descr}key_length")
+        if self.key_length < 1024:
+            raise ValueError(f"key length must be >= 1024")
         self.check_positive_integer(self.random_bit, f"{descr}random_bit")
 
         LOGGER.debug("Finish RSAParam parameter check!")
@@ -186,7 +188,7 @@ class DHParam(BaseParam):
     hash_method: str, the hash method of src data string, support none, md5, sha1, sha 224, sha256, sha384, sha512, sm3,
         default sha256
 
-    key_length: positive int, value >= 768 is suggested, the key length of the commutative cipher p, default 1024
+    key_length: int, value >= 1024, the key length of the commutative cipher p, default 1024
 
     """
 
@@ -207,6 +209,8 @@ class DHParam(BaseParam):
                                                        f"{descr}hash_method")
 
         self.check_positive_integer(self.key_length, f"{descr}key_length")
+        if self.key_length < 1024:
+            raise ValueError(f"key length must be >= 1024")
 
         LOGGER.debug("Finish DHParam parameter check!")
         return True
@@ -319,6 +323,8 @@ class IntersectPreProcessParam(BaseParam):
         return True
 
 
+@deprecated_param("random_bit", "join_role", "with_encode", "encode_params", "intersect_cache_param",
+                  "repeated_id_process", "repeated_id_owner", "allow_info_share", "info_owner", "with_sample_id")
 class IntersectParam(BaseParam):
     """
     Define the intersect method
@@ -441,12 +447,14 @@ class IntersectParam(BaseParam):
                                                             [consts.RSA, consts.RAW, consts.DH],
                                                             f"{descr}intersect_method")
 
-        self.check_positive_integer(self.random_bit, f"{descr}random_bit")
+        if self._warn_to_deprecate_param("random_bit", descr, "rsa_params' 'random_bit'"):
+            self.rsa_params.random_bit = self.random_bit
+
         self.check_boolean(self.sync_intersect_ids, f"{descr}intersect_ids")
-        self.join_role = self.check_and_change_lower(self.join_role,
-                                                     [consts.GUEST, consts.HOST],
-                                                     f"{descr}join_role")
-        self.check_boolean(self.with_encode, f"{descr}with_encode")
+
+        if self._warn_to_deprecate_param("join_role", descr, "raw_params' 'join_role'"):
+            self.raw_params.join_role = self.join_role
+
         self.check_boolean(self.only_output_key, f"{descr}only_output_key")
         """
         if type(self.repeated_id_process).__name__ != "bool":
@@ -464,8 +472,9 @@ class IntersectParam(BaseParam):
                                                       [consts.GUEST, consts.HOST],
                                                       f"{descr}info_owner")
         self.check_boolean(self.with_sample_id, f"{descr}with_sample_id")
-        """
-        if self.repeated_id_process:
+        
+
+        if self._deprecated_params_set.get("repeated_id_process"):
             LOGGER.warning(f"parameter repeated_id_process is ignored")
         if self.repeated_id_owner:
             LOGGER.warning(f"parameter repeated_id_owner is ignored")
@@ -475,6 +484,7 @@ class IntersectParam(BaseParam):
             LOGGER.warning(f"parameter info_owner is ignored")
         if self.with_sample_id:
             LOGGER.warning(f"parameter with_sample_id is ignored.")
+        """
 
         self.join_method = self.check_and_change_lower(self.join_method, [consts.INNER_JOIN, consts.LEFT_JOIN],
                                                        f"{descr}join_method")
@@ -488,11 +498,19 @@ class IntersectParam(BaseParam):
                 raise ValueError(f"Cannot perform left join without sync intersect ids")
 
         self.check_boolean(self.run_cache, f"{descr} run_cache")
-        self.encode_params.check()
+        if self._warn_to_deprecate_param("encode_param", descr, "raw_params") or \
+            self._warn_to_deprecate_param("with_encode", descr, "raw_params' 'use_hash'"):
+            # self.encode_params.check()
+            LOGGER.warning(f"Param values from encode_param will override raw_params settings.")
+            self.raw_params.use_hash = self.with_encode
+            self.raw_params.hash_method = self.encode_params.encode_method
+            self.raw_params.salt = self.encode_params.salt
+            self.raw_params.base64 = self.encode_params.base64
+
         self.raw_params.check()
         self.rsa_params.check()
         self.dh_params.check()
-        self.intersect_cache_param.check()
+        # self.intersect_cache_param.check()
         self.check_boolean(self.cardinality_only, f"{descr}cardinality_only")
         self.check_boolean(self.sync_cardinality, f"{descr}sync_cardinality")
         self.check_boolean(self.run_preprocess, f"{descr}run_preprocess")
@@ -516,5 +534,11 @@ class IntersectParam(BaseParam):
                 raise ValueError(f"cache is not available for cardinality_only mode.")
             if self.run_preprocess:
                 raise ValueError(f"Preprocessing does not support cache.")
+
+        deprecated_param_list = ["repeated_id_process", "repeated_id_owner", "intersect_cache_param",
+                                 "allow_info_share", "info_owner", "with_sample_id"]
+        for param in deprecated_param_list:
+            self._warn_deprecated_param(param, descr)
+
         LOGGER.debug("Finish intersect parameter check!")
         return True

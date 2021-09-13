@@ -80,7 +80,8 @@ class ComponentMeta:
         self._param_cls = None
         self._param_cls_getter = None  # lazy
 
-        self.__name_to_obj[name] = self
+        for alias in self._alias:
+            self.__name_to_obj[alias] = self
 
     @property
     def name(self):
@@ -144,12 +145,11 @@ class ComponentMeta:
 
 def _search_components(path):
     try:
-        module_name = (
+        module_name = '.'.join(
             path.absolute()
             .relative_to(_ml_base)
             .with_suffix("")
-            .__str__()
-            .replace("/", ".")
+            .parts
         )
         module = importlib.import_module(module_name)
     except ImportError as e:
@@ -185,12 +185,11 @@ class Components:
         else:
             _components_base = Path(__file__).resolve().parent
             for p in _components_base.glob("**/*.py"):
-                module_name = (
+                module_name = '.'.join(
                     p.absolute()
                     .relative_to(_ml_base)
                     .with_suffix("")
-                    .__str__()
-                    .replace("/", ".")
+                    .parts
                 )
                 importlib.import_module(module_name)
 
