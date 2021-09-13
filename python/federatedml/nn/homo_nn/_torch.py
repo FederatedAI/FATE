@@ -184,8 +184,9 @@ class PyTorchSAServerContext(_PyTorchSAContext):
         self._eps = eps
         self._loss = math.inf
 
-    def init(self):
+    def init(self, init_aggregation_iteration=0):
         self.random_padding_cipher.exchange_secret_keys()
+        self._aggregation_iteration = init_aggregation_iteration
 
     def send_model(self, aggregated_tensors):
         return self.aggregator.send_aggregated_model(
@@ -500,44 +501,63 @@ def make_predict_dataset(data, trainer: PyTorchFederatedTrainer):
     )
 
 
-def build_trainer(
-    param: HomoNNParam,
-    data,
-):
-    total_epoch = param.aggregate_every_n_epoch * param.max_iter
-    context = PyTorchSAClientContext(
-        max_num_aggregation=param.max_iter,
-        aggregate_every_n_epoch=param.aggregate_every_n_epoch,
-    )
-    pl_trainer = pl.Trainer(
-        max_epochs=total_epoch,
-        min_epochs=total_epoch,
-        callbacks=[EarlyStopCallback(context)],
-        num_sanity_val_steps=0,
-    )
-    context.init()
+def build_trainer(param: HomoNNParam, data, should_label_align=True, trainer=None):
     header = data.schema["header"]
-    pl_model = FedLightModule(
-        context,
-        layers_config=param.nn_define,
-        optimizer_config=param.optimizer,
-        loss_config={"loss": param.loss},
-    )
-    dataset = make_dataset(data=data, expected_label_type=pl_model.expected_label_type)
+    if trainer is None:
+        total_epoch = param.aggregate_every_n_epoch * param.max_iter
+        context = PyTorchSAClientContext(
+            max_num_aggregation=param.max_iter,
+            aggregate_every_n_epoch=param.aggregate_every_n_epoch,
+        )
+        pl_trainer = pl.Trainer(
+            max_epochs=total_epoch,
+            min_epochs=total_epoch,
+            callbacks=[EarlyStopCallback(context)],
+            num_sanity_val_steps=0,
+        )
+        context.init()
+        pl_model = FedLightModule(
+            context,
+            layers_config=param.nn_define,
+            optimizer_config=param.optimizer,
+            loss_config={"loss": param.loss},
+        )
+        expected_label_type = pl_model.expected_label_type
+        dataset = make_dataset(
+            data=data,
+            is_train=should_label_align,
+            expected_label_type=expected_label_type,
+        )
 
-    batch_size = param.batch_size
-    if batch_size < 0:
-        batch_size = len(dataset)
-    dataloader = torch.utils.data.DataLoader(
-        dataset=dataset, batch_size=batch_size, num_workers=1
-    )
-    trainer = PyTorchFederatedTrainer(
-        pl_trainer=pl_trainer,
-        header=header,
-        label_mapping=dataset.get_label_align_mapping(),
-        pl_model=pl_model,
-        context=context,
-    )
+        batch_size = param.batch_size
+        if batch_size < 0:
+            batch_size = len(dataset)
+        dataloader = torch.utils.data.DataLoader(
+            dataset=dataset, batch_size=batch_size, num_workers=1
+        )
+        trainer = PyTorchFederatedTrainer(
+            pl_trainer=pl_trainer,
+            header=header,
+            label_mapping=dataset.get_label_align_mapping(),
+            pl_model=pl_model,
+            context=context,
+        )
+    else:
+        trainer.context.init()
+        expected_label_type = trainer.pl_model.expected_label_type
+
+        dataset = make_dataset(
+            data=data,
+            is_train=should_label_align,
+            expected_label_type=expected_label_type,
+        )
+
+        batch_size = param.batch_size
+        if batch_size < 0:
+            batch_size = len(dataset)
+        dataloader = torch.utils.data.DataLoader(
+            dataset=dataset, batch_size=batch_size, num_workers=1
+        )
     return trainer, dataloader
 
 
@@ -568,6 +588,23 @@ class PytorchFederatedAggregator(object):
             if is_converged:
                 break
 
+    def export_model(self, param):
+
+        param_pb = nn_model_param_pb2.NNModelParam()
+
+        # save api_version
+        param_pb.api_version = param.api_version
+
+        meta_pb = nn_model_meta_pb2.NNModelMeta()
+        meta_pb.params.CopyFrom(param.generate_pb())
+        meta_pb.aggregate_iter = self.context.aggregation_iteration
+
+        return {_consts.MODEL_META_NAME: meta_pb, _consts.MODEL_PARAM_NAME: param_pb}
+
+    @classmethod
+    def load_model(cls, model_obj, meta_obj, param):
+        param.restore_from_pb(meta_obj.params)
+
     @staticmethod
     def dataset_align():
         LOGGER.info("start label alignment")
@@ -575,10 +612,10 @@ class PytorchFederatedAggregator(object):
         LOGGER.info(f"label aligned, mapping: {label_mapping}")
 
 
-def build_aggregator(param: HomoNNParam):
+def build_aggregator(param: HomoNNParam, init_iteration=0):
     context = PyTorchSAServerContext(
         max_num_aggregation=param.max_iter, eps=param.early_stop.eps
     )
-    context.init()
+    context.init(init_aggregation_iteration=init_iteration)
     fed_aggregator = PytorchFederatedAggregator(context)
     return fed_aggregator

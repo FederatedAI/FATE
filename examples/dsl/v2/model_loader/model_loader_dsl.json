@@ -44,14 +44,25 @@
                 ]
             }
         },
-        "hetero_feature_binning_0": {
-            "module": "HeteroFeatureBinning",
+        "model_loader_0": {
+            "module": "ModelLoader",
+            "output": {
+                "model": [
+                    "model"
+                ]
+            }
+        },
+        "hetero_feature_selection_0": {
+            "module": "HeteroFeatureSelection",
             "input": {
                 "data": {
                     "data": [
                         "intersection_0.data"
                     ]
-                }
+                },
+                "isometric_model": [
+                    "model_loader_0.model"
+                ]
             },
             "output": {
                 "data": [

@@ -260,6 +260,7 @@ class HeteroLRBase(SSHEModelBase, ABC):
                     if self.role == consts.GUEST:
                         loss = np.sum(loss_list) / self.batch_generator.batch_nums
                         self.loss_history.append(loss)
+                        self.callback_loss(self.n_iter_, loss)
                     else:
                         loss = None
 
@@ -311,7 +312,7 @@ class HeteroLRBase(SSHEModelBase, ABC):
                 w_remote.broadcast_reconstruct_share(tensor_name=f"wb_{suffix}")
                 new_w = w_self.reconstruct_unilateral(tensor_name=f"wa_{suffix}")
 
-        elif self.model_param.reveal_strategy == "all_review_in_guest":
+        elif self.model_param.reveal_strategy == "all_reveal_in_guest":
 
             if self.role == consts.GUEST:
                 new_w = w_self.reconstruct_unilateral(tensor_name=f"wb_{suffix}")
@@ -319,7 +320,7 @@ class HeteroLRBase(SSHEModelBase, ABC):
                 # self.host_model_weights = [LinearModelWeights(l=hosted_weights, fit_intercept=False)]
             else:
                 if w_remote.shape[0] > 2:
-                    raise ValueError("Too many features in Guest. Review strategy: 'all_review_in_guest' "
+                    raise ValueError("Too many features in Guest. Review strategy: 'all_reveal_in_guest' "
                                      "should not be used.")
                 w_remote.broadcast_reconstruct_share(tensor_name=f"wb_{suffix}")
 

@@ -23,13 +23,13 @@
         "role": {
             "host": {
                 "0": {
-                    "reader_1": {
+                    "reader_0": {
                         "table": {
                             "name": "breast_hetero_host",
                             "namespace": "experiment"
                         }
                     },
-                    "reader_0": {
+                    "reader_1": {
                         "table": {
                             "name": "breast_hetero_host",
                             "namespace": "experiment"
@@ -42,13 +42,13 @@
             },
             "guest": {
                 "0": {
-                    "reader_1": {
+                    "reader_0": {
                         "table": {
                             "name": "breast_hetero_guest",
                             "namespace": "experiment"
                         }
                     },
-                    "reader_0": {
+                    "reader_1": {
                         "table": {
                             "name": "breast_hetero_guest",
                             "namespace": "experiment"

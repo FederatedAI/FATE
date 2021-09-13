@@ -30,7 +30,7 @@ def engines_compatibility(work_mode: typing.Union[WorkMode, int] = None,
     engines = {}
     for k in keys:
         if kwargs.get(k) is not None:
-            engines[k] = kwargs[k]
+            engines[k] = kwargs[k].upper()
     if kwargs.get("computing") is None and work_mode is None:
         raise RuntimeError("must provide computing engine parameters or work_mode parameters")
     if kwargs.get("computing") is None and kwargs.get("federation") is None:

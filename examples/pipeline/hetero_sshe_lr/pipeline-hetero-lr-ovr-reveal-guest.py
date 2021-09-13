@@ -107,21 +107,19 @@ def main(config="../../config.yaml", namespace=""):
                            model=Model(hetero_feature_selection_0.output.model))
     lr_param = {
         "name": "hetero_sshe_lr_0",
-        "penalty": "L2",
-        "optimizer": "rmsprop",
-        "tol": 0.01,
+        "penalty": None,
+        "optimizer": "sgd",
+        "tol": 0.0001,
         "alpha": 0.01,
         "max_iter": 1,
         "early_stop": "diff",
         "batch_size": -1,
-        "validation_freqs": 1,
-        "early_stopping_rounds": 3,
         "learning_rate": 0.15,
         "init_param": {
             "init_method": "random_uniform"
         },
-        "reveal_strategy": "all_review_in_guest",
-        "reveal_every_iter": True,
+        "reveal_strategy": "all_reveal_in_guest",
+        "reveal_every_iter": False,
         "compute_loss": True,
     }
 

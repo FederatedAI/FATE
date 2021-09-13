@@ -37,6 +37,14 @@
                 }
             },
             "host": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    }
+                },
                 "1": {
                     "reader_0": {
                         "table": {
@@ -49,14 +57,6 @@
                     "dataio_0": {
                         "with_label": false,
                         "output_format": "dense"
-                    }
-                },
-                "0": {
-                    "reader_0": {
-                        "table": {
-                            "name": "breast_hetero_host",
-                            "namespace": "experiment"
-                        }
                     }
                 }
             }

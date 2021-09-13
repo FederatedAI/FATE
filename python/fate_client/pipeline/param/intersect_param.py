@@ -126,7 +126,7 @@ class RSAParam(BaseParam):
     random_base_fraction: positive float, if not None, generate (fraction * public key id count) of r for encryption and reuse generated r;
         note that value greater than 0.99 will be taken as 1, and value less than 0.01 will be rounded up to 0.01
 
-    key_length: positive int, bit count of rsa key, default 1024
+    key_length: int, value >= 1024, bit count of rsa key, default 1024
 
     random_bit: positive int, it will define the size of blinding factor in rsa algorithm, default 128
 
@@ -165,6 +165,8 @@ class RSAParam(BaseParam):
             self.check_decimal_float(self.random_base_fraction, f"{descr}random_base_fraction")
 
         self.check_positive_integer(self.key_length, f"{descr}key_length")
+        if self.key_length < 1024:
+            raise ValueError(f"key length must be >= 1024")
         self.check_positive_integer(self.random_bit, f"{descr}random_bit")
 
         return True
@@ -181,7 +183,7 @@ class DHParam(BaseParam):
     hash_method: str, the hash method of src data string, support none, md5, sha1, sha 224, sha256, sha384, sha512, sm3,
         default sha256
 
-    key_length: positive int, value >= 768 is suggested, the key length of the commutative cipher p, default 1024
+    key_length: int, value >= 1024, the key length of the commutative cipher p, default 1024
 
     """
 
@@ -202,6 +204,8 @@ class DHParam(BaseParam):
                                                        f"{descr}hash_method")
 
         self.check_positive_integer(self.key_length, f"{descr}key_length")
+        if self.key_length < 1024:
+            raise ValueError(f"key length must be >= 1024")
 
         return True
 

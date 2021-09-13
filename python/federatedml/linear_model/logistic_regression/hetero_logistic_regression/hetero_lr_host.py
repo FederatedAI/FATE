@@ -117,6 +117,8 @@ class HeteroLRHost(HeteroLRBase):
         if not self.component_properties.is_warm_start:
             w = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
             self.model_weights = LinearModelWeights(w, fit_intercept=self.init_param_obj.fit_intercept)
+        else:
+            self.callback_warm_start_init_iter(self.n_iter_)
 
         while self.n_iter_ < self.max_iter:
             self.callback_list.on_epoch_begin(self.n_iter_)
@@ -154,6 +156,7 @@ class HeteroLRHost(HeteroLRBase):
             self.n_iter_ += 1
             if self.is_converged:
                 break
+        self.callback_list.on_train_end()
         self.set_summary(self.get_model_summary())
 
         # LOGGER.debug("Final lr weights: {}".format(self.model_weights.unboxed))

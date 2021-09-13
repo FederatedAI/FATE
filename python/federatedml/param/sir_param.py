@@ -17,11 +17,12 @@
 #  limitations under the License.
 #
 
-from federatedml.param.base_param import BaseParam
+from federatedml.param.base_param import BaseParam, deprecated_param
 from federatedml.param.intersect_param import DHParam
 from federatedml.util import consts, LOGGER
 
 
+@deprecated_param("key_size", "raw_retrieval")
 class SecureInformationRetrievalParam(BaseParam):
     """
     security_level: float [0, 1]; if security_level == 0, then do raw data retrieval
@@ -34,7 +35,7 @@ class SecureInformationRetrievalParam(BaseParam):
 
     dh_params: params for Pohlig-Hellman Encryption
 
-    key_size: int >= 768, the key length of the commutative cipher;
+    key_size: int, value >= 1024, the key length of the commutative cipher;
         note that this param will be deprecated in future, please specify key_length in PHParam instead.
 
     raw_retrieval: bool, perform raw retrieval if raw_retrieval
@@ -75,10 +76,11 @@ class SecureInformationRetrievalParam(BaseParam):
         self.non_committing_encryption = self.check_and_change_lower(self.non_committing_encryption,
                                                                      [consts.AES.lower()],
                                                                      descr + "non_committing_encryption")
+        if self._warn_to_deprecate_param("key_size", descr, "dh_param's key_length"):
+            self.dh_params.key_length = self.key_size
         self.dh_params.check()
-        if self.key_size:
-            self.check_positive_integer(self.key_size, descr+"key_size")
-        self.check_boolean(self.raw_retrieval, descr)
+        if self._warn_to_deprecate_param("raw_retrieval", descr, "dh_param's security_level = 0"):
+            self.check_boolean(self.raw_retrieval, descr)
         if not isinstance(self.target_cols, list):
             self.target_cols = [self.target_cols]
         for col in self.target_cols:

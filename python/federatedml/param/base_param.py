@@ -19,7 +19,7 @@
 import builtins
 import json
 import os
-from federatedml.util import consts
+from federatedml.util import consts, LOGGER
 import typing
 
 
@@ -44,6 +44,12 @@ class BaseParam(object):
 
     def check(self):
         raise NotImplementedError("Parameter Object should have be check")
+
+    def get_user_feeded(self):
+        if not hasattr(self, "_user_feeded_params"):
+            return []
+        else:
+            return getattr(self, "_user_feeded_params")
 
     def as_dict(self):
         def _recursive_convert_obj_to_dict(obj):
@@ -105,11 +111,14 @@ class BaseParam(object):
                 raise ValueError(
                     f"cpn `{getattr(self, '_name', type(self))}` has redundant parameters: `{[redundant_attrs]}`"
                 )
+
+            if getattr(self, "_user_feeded_params", None) is None:
+                setattr(self, "_user_feeded_params", list(conf.keys()))
             return param
 
         return _recursive_update_param(param=self, config=conf, depth=0)
 
-    def extract_not_buildin(self):
+    def extract_not_builtin(self):
         def _get_not_builtin_types(obj):
             ret_dict = {}
             for variable in obj.__dict__:
@@ -293,3 +302,14 @@ class BaseParam(object):
     @staticmethod
     def _not_in(value, wrong_value_list):
         return value not in wrong_value_list
+
+    def _warn_deprecated_param(self, param_name, descr):
+        if self._deprecated_params_set.get(param_name):
+            LOGGER.warning(f"{descr} {param_name} is deprecated and ignored in this version.")
+
+    def _warn_to_deprecate_param(self, param_name, descr, new_param):
+        if self._deprecated_params_set.get(param_name):
+            LOGGER.warning(f"{descr} {param_name} will be deprecated in future release; "
+                           f"please use {new_param} instead.")
+            return True
+        return False

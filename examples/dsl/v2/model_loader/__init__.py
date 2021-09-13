@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -15,10 +12,3 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-
-
-from federatedml.feature.hetero_feature_selection.base_feature_selection import BaseHeteroFeatureSelection
-
-
-class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):
-    pass

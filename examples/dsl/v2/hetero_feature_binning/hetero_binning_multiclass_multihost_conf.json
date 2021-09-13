@@ -24,16 +24,6 @@
         "role": {
             "guest": {
                 "0": {
-                    "dataio_0": {
-                        "with_label": true,
-                        "output_format": "dense"
-                    },
-                    "reader_0": {
-                        "table": {
-                            "name": "vehicle_scale_hetero_guest",
-                            "namespace": "experiment"
-                        }
-                    },
                     "dataio_1": {
                         "with_label": true,
                         "output_format": "dense"
@@ -43,21 +33,21 @@
                             "name": "vehicle_scale_hetero_guest",
                             "namespace": "experiment"
                         }
+                    },
+                    "reader_0": {
+                        "table": {
+                            "name": "vehicle_scale_hetero_guest",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "dataio_0": {
+                        "with_label": true,
+                        "output_format": "dense"
                     }
                 }
             },
             "host": {
                 "0|1": {
-                    "dataio_0": {
-                        "with_label": false,
-                        "output_format": "dense"
-                    },
-                    "reader_0": {
-                        "table": {
-                            "name": "vehicle_scale_hetero_host",
-                            "namespace": "experiment"
-                        }
-                    },
                     "dataio_1": {
                         "with_label": true,
                         "output_format": "dense"
@@ -67,6 +57,16 @@
                             "name": "vehicle_scale_hetero_host",
                             "namespace": "experiment"
                         }
+                    },
+                    "reader_0": {
+                        "table": {
+                            "name": "vehicle_scale_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "dataio_0": {
+                        "with_label": false,
+                        "output_format": "dense"
                     }
                 }
             }
