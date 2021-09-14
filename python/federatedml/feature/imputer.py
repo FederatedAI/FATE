@@ -67,7 +67,7 @@ class Imputer(object):
             raise ValueError("Unknown mode of {}".format(mode))
 
     @staticmethod
-    def __replace_missing_value_with_cols_transform_value_format(data, transform_list, missing_value_list,
+    def replace_missing_value_with_cols_transform_value_format(data, transform_list, missing_value_list,
                                                                  output_format, skip_cols):
         _data = copy.deepcopy(data)
         replace_cols_index_list = []
@@ -89,7 +89,7 @@ class Imputer(object):
         return _data, replace_cols_index_list
 
     @staticmethod
-    def __replace_missing_value_with_cols_transform_value(data, transform_list, missing_value_list, skip_cols):
+    def replace_missing_value_with_cols_transform_value(data, transform_list, missing_value_list, skip_cols):
         _data = copy.deepcopy(data)
         replace_cols_index_list = []
         if isinstance(_data, Instance):
@@ -106,7 +106,7 @@ class Imputer(object):
         return _data, replace_cols_index_list
 
     @staticmethod
-    def __replace_missing_value_with_replace_value_format(data, replace_value, missing_value_list, output_format):
+    def replace_missing_value_with_replace_value_format(data, replace_value, missing_value_list, output_format):
         _data = copy.deepcopy(data)
         replace_cols_index_list = []
         if isinstance(_data, Instance):
@@ -127,7 +127,7 @@ class Imputer(object):
         return _data, replace_cols_index_list
 
     @staticmethod
-    def __replace_missing_value_with_replace_value(data, replace_value, missing_value_list):
+    def replace_missing_value_with_replace_value(data, replace_value, missing_value_list):
         _data = copy.deepcopy(data)
         replace_cols_index_list = []
         if isinstance(_data, Instance):
@@ -209,11 +209,11 @@ class Imputer(object):
             self.skip_cols = skip_cols
             skip_cols = [get_header(data).index(v) for v in skip_cols]
             if output_format is not None:
-                f = functools.partial(Imputer.__replace_missing_value_with_cols_transform_value_format,
+                f = functools.partial(Imputer.replace_missing_value_with_cols_transform_value_format,
                                       transform_list=cols_transform_value, missing_value_list=self.missing_value_list,
                                       output_format=output_format, skip_cols=set(skip_cols))
             else:
-                f = functools.partial(Imputer.__replace_missing_value_with_cols_transform_value,
+                f = functools.partial(Imputer.replace_missing_value_with_cols_transform_value,
                                       transform_list=cols_transform_value, missing_value_list=self.missing_value_list,
                                       skip_cols=set(skip_cols))
 
@@ -227,11 +227,11 @@ class Imputer(object):
             if replace_value is None:
                 raise ValueError("Replace value should not be None")
             if output_format is not None:
-                f = functools.partial(Imputer.__replace_missing_value_with_replace_value_format,
+                f = functools.partial(Imputer.replace_missing_value_with_replace_value_format,
                                       replace_value=replace_value, missing_value_list=self.missing_value_list,
                                       output_format=output_format)
             else:
-                f = functools.partial(Imputer.__replace_missing_value_with_replace_value, replace_value=replace_value,
+                f = functools.partial(Imputer.replace_missing_value_with_replace_value, replace_value=replace_value,
                                       missing_value_list=self.missing_value_list)
             transform_data = data.mapValues(f)
             LOGGER.info("finish replace missing value with replace value {}, replace method is:{}".format(replace_value,
@@ -250,11 +250,11 @@ class Imputer(object):
         self.skip_cols = skip_cols
         skip_cols = [get_header(data).index(v) for v in skip_cols]
         if output_format is not None:
-            f = functools.partial(Imputer.__replace_missing_value_with_cols_transform_value_format,
+            f = functools.partial(Imputer.replace_missing_value_with_cols_transform_value_format,
                                   transform_list=cols_transform_value, missing_value_list=self.missing_value_list,
                                   output_format=output_format, skip_cols=set(skip_cols))
         else:
-            f = functools.partial(Imputer.__replace_missing_value_with_cols_transform_value,
+            f = functools.partial(Imputer.replace_missing_value_with_cols_transform_value,
                                   transform_list=cols_transform_value, missing_value_list=self.missing_value_list,
                                   skip_cols=set(skip_cols))
 
@@ -268,20 +268,20 @@ class Imputer(object):
         skip_cols = [get_header(data).index(v) for v in skip_cols]
         if replace_area == 'all':
             if output_format is not None:
-                f = functools.partial(Imputer.__replace_missing_value_with_replace_value_format,
+                f = functools.partial(Imputer.replace_missing_value_with_replace_value_format,
                                       replace_value=transform_value, missing_value_list=self.missing_value_list,
                                       output_format=output_format)
             else:
-                f = functools.partial(Imputer.__replace_missing_value_with_replace_value,
+                f = functools.partial(Imputer.replace_missing_value_with_replace_value,
                                       replace_value=transform_value, missing_value_list=self.missing_value_list)
         elif replace_area == 'col':
             if output_format is not None:
-                f = functools.partial(Imputer.__replace_missing_value_with_cols_transform_value_format,
+                f = functools.partial(Imputer.replace_missing_value_with_cols_transform_value_format,
                                       transform_list=transform_value, missing_value_list=self.missing_value_list,
                                       output_format=output_format,
                                       skip_cols=set(skip_cols))
             else:
-                f = functools.partial(Imputer.__replace_missing_value_with_cols_transform_value,
+                f = functools.partial(Imputer.replace_missing_value_with_cols_transform_value,
                                       transform_list=transform_value, missing_value_list=self.missing_value_list,
                                       skip_cols=set(skip_cols))
         else:
