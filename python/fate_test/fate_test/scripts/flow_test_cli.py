@@ -161,4 +161,9 @@ def get_role(conf: Config):
                    'cache_directory': conf.cache_directory,
                    'data_base_dir': conf.data_base_dir
                    }
+    if flow_test_template.get('homo_deploy_path'):
+        config_json['homo_deploy_path'] = os.path.abspath(conf.data_base_dir) + flow_test_template['homo_deploy_path']
+    if flow_test_template.get('homo_deploy_kube_config_path'):
+        config_json['homo_deploy_kube_config_path'] = os.path.abspath(conf.data_base_dir) + \
+                                                      flow_test_template['homo_deploy_kube_config_path']
     return config_json

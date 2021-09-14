@@ -20,6 +20,13 @@ class FeatureImportance(object):
         else:
             self.importance_2 += val
 
+    def from_protobuf(self, feature_importance):
+        self.main_type = feature_importance.main
+        self.importance = feature_importance.importance
+        self.importance_2 = feature_importance.importance2
+        if self.main_type == 'split':
+            self.importance = int(self.importance)
+
     def __cmp__(self, other):
 
         if self.importance > other.importance:

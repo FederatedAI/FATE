@@ -59,6 +59,7 @@ class HeteroBoosting(Boosting, ABC):
         self.use_first_metric_only = param.use_first_metric_only
 
     def generate_encrypter(self):
+
         LOGGER.info("generate encrypter")
         if self.encrypt_param.method.lower() == consts.PAILLIER.lower():
             self.encrypter = PaillierEncrypt()
@@ -72,8 +73,7 @@ class HeteroBoosting(Boosting, ABC):
             self.encrypter.generate_key(key_size=self.encrypt_param.key_length,
                                         randomized=True)
         else:
-            raise NotImplementedError("encrypt method not supported yes!!!")
-
+            raise NotImplementedError("unknown encrypt type {}".format(type(self.encrypt_param.method.lower())))
         self.encrypted_calculator = EncryptModeCalculator(self.encrypter, self.calculated_mode, self.re_encrypted_rate)
 
     def check_label(self):
@@ -135,6 +135,17 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
         LOGGER.info("sync predict start round {}".format(predict_round))
         self.transfer_variable.predict_start_round.remote(predict_round, role=consts.HOST, idx=-1,)
 
+    def prepare_warm_start(self, data_inst, classes):
+        # adjust parameter for warm start
+        warm_start_y_hat = self.predict(data_inst, ret_format='raw')
+        self.y_hat = warm_start_y_hat
+        self.boosting_round += self.start_round
+        # check classes
+        assert set(classes).issubset(set(self.classes_)), 'warm start label alignment failed: cur labels {},' \
+                                                          'previous model labels {}'.format(classes, self.classes_)
+        # check fid
+        self.feat_name_check(data_inst, self.feature_name_fid_mapping)
+
     def fit(self, data_inst, validate_data=None):
 
         LOGGER.info('begin to fit a hetero boosting model, model is {}'.format(self.model_name))
@@ -145,17 +156,26 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
 
         self.y = self.get_label(self.data_bin)
 
-        self.classes_, self.num_classes, self.booster_dim = self.check_label()
+        self.start_round = len(self.boosting_model_list)
+
+        if not self.is_warm_start:
+            self.feature_name_fid_mapping = self.gen_feature_fid_mapping(data_inst.schema)
+            self.classes_, self.num_classes, self.booster_dim = self.check_label()
+            self.loss = self.get_loss_function()
+            self.y_hat, self.init_score = self.get_init_score(self.y, self.num_classes)
+        else:
+            classes_, num_classes, booster_dim = self.check_label()
+            self.prepare_warm_start(data_inst, classes_)
 
         LOGGER.info('class index is {}'.format(self.classes_))
 
-        self.loss = self.get_loss_function()
-
         self.sync_booster_dim()
 
-        self.y_hat, self.init_score = self.get_init_score(self.y, self.num_classes)
+        self.start_round = len(self.boosting_model_list)
 
         self.generate_encrypter()
+
+        self.callback_list.on_train_begin(data_inst, validate_data)
 
         self.callback_meta("loss",
                            "train",
@@ -163,11 +183,11 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
                                       metric_type="LOSS",
                                       extra_metas={"unit_name": "iters"}))
 
-        self.validation_strategy = self.init_validation_strategy(data_inst, validate_data)
-
-        for epoch_idx in range(self.boosting_round):
+        for epoch_idx in range(self.start_round, self.boosting_round):
 
             LOGGER.info('cur epoch idx is {}'.format(epoch_idx))
+
+            self.callback_list.on_epoch_begin(epoch_idx)
 
             for class_idx in range(self.booster_dim):
 
@@ -192,33 +212,28 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
                                  "train",
                                  [Metric(epoch_idx, loss)])
 
-            if self.validation_strategy:
-                self.validation_strategy.validate(self, epoch_idx, use_precomputed_train=True,
-                                                  train_scores=self.score_to_predict_result(data_inst, self.y_hat))
+            # check validation
+            validation_strategy = self.callback_list.get_validation_strategy()
+            if validation_strategy:
+                validation_strategy.set_precomputed_train_scores(self.score_to_predict_result(data_inst, self.y_hat))
 
-            should_stop_a, should_stop_b = False, False
-            if self.validation_strategy is not None:
-                if self.validation_strategy.need_stop():
-                    should_stop_a = True
+            self.callback_list.on_epoch_end(epoch_idx)
 
+            should_stop = False
             if self.n_iter_no_change and self.check_convergence(loss):
-                should_stop_b = True
+                should_stop = True
                 self.is_converged = True
-
             self.sync_stop_flag(self.is_converged, epoch_idx)
-
-            if should_stop_a or should_stop_b:
+            if self.stop_training or should_stop:
                 break
+
+        self.callback_list.on_train_end()
 
         self.callback_meta("loss",
                            "train",
                            MetricMeta(name="train",
                                       metric_type="LOSS",
                                       extra_metas={"Best": min(self.history_loss)}))
-
-        if self.validation_strategy and self.validation_strategy.has_saved_best_model():
-            LOGGER.info('best model exported')
-            self.load_model(self.validation_strategy.cur_best_model)
 
         # get summary
         self.set_summary(self.generate_summary())
@@ -275,19 +290,29 @@ class HeteroBoostingHost(HeteroBoosting, ABC):
     def sync_predict_start_round(self,):
         return self.transfer_variable.predict_start_round.get(idx=0,)
 
+    def prepare_warm_start(self, data_inst):
+        self.predict(data_inst)
+
     def fit(self, data_inst, validate_data=None):
 
         LOGGER.info('begin to fit a hetero boosting model, model is {}'.format(self.model_name))
 
         self.data_bin, self.bin_split_points, self.bin_sparse_points = self.prepare_data(data_inst)
+
+        self.start_round = len(self.boosting_model_list)
+        if self.is_warm_start:
+            self.prepare_warm_start(data_inst)
+            self.boosting_round += self.start_round
+
         self.sync_booster_dim()
         self.generate_encrypter()
+        self.callback_list.on_train_begin(data_inst, validate_data)
 
-        self.validation_strategy = self.init_validation_strategy(data_inst, validate_data)
-
-        for epoch_idx in range(self.boosting_round):
+        for epoch_idx in range(self.start_round, self.boosting_round):
 
             LOGGER.info('cur epoch idx is {}'.format(epoch_idx))
+
+            self.callback_list.on_epoch_begin(epoch_idx)
 
             for class_idx in range(self.booster_dim):
                 # fit a booster
@@ -297,23 +322,16 @@ class HeteroBoostingHost(HeteroBoosting, ABC):
                     self.booster_meta = booster_meta
                     self.boosting_model_list.append(booster_param)
 
-            if self.validation_strategy:
-                self.validation_strategy.validate(self, epoch_idx, use_precomputed_train=True, train_scores=None)
-
-            should_stop_a = False
-            if self.validation_strategy is not None:
-                if self.validation_strategy.need_stop():
-                    should_stop_a = True
-
-            should_stop_b = self.sync_stop_flag(epoch_idx)
-            self.is_converged = should_stop_b
-            if should_stop_a or should_stop_b:
+            validation_strategy = self.callback_list.get_validation_strategy()
+            if validation_strategy:
+                validation_strategy.set_precomputed_train_scores(None)
+            self.callback_list.on_epoch_end(epoch_idx)
+            should_stop = self.sync_stop_flag(epoch_idx)
+            self.is_converged = should_stop
+            if should_stop:
                 break
 
-        if self.validation_strategy and self.validation_strategy.has_saved_best_model():
-            LOGGER.info('best model exported')
-            self.load_model(self.validation_strategy.cur_best_model)
-
+        self.callback_list.on_train_end()
         self.set_summary(self.generate_summary())
 
     def lazy_predict(self, data_inst):

@@ -37,6 +37,19 @@ class CTableABC(metaclass=ABCMeta):
 
     @property
     @abc.abstractmethod
+    def engine(self):
+        """
+        get the engine name of table
+
+        Returns
+        ------
+        int
+           number of partitions
+        """
+        ...
+
+    @property
+    @abc.abstractmethod
     def partitions(self):
         """
         get the partitions of table

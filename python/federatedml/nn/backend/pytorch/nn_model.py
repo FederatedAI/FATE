@@ -116,13 +116,14 @@ def build_optimzer(optim, model):
         print("not support")
 
 
-def restore_pytorch_nn_model(model_bytes):
-    return PytorchNNModel.restore_model(model_bytes)
-
-
 class PytorchNNModel(NNModel):
     def __init__(self, model, optimizer=None, loss=None, metrics=None):
         self._model: torch.nn.Sequential = model
+        self._optimizer = optimizer
+        self._loss = loss
+        self._metrics = metrics
+
+    def compile(self, loss, optimizer, metrics):
         self._optimizer = optimizer
         self._loss = loss
         self._metrics = metrics
@@ -261,21 +262,17 @@ class PytorchNNModel(NNModel):
         return result
 
     def export_model(self):
-        f = tempfile.TemporaryFile()
-        try:
+        with tempfile.TemporaryFile() as f:
             torch.save(self._model, f)
             f.seek(0)
-            model_bytes = f.read()
-            return model_bytes
-        finally:
-            f.close()
+            return f.read()
 
-    def restore_model(model_bytes):
-        f = tempfile.TemporaryFile()
-        f.write(model_bytes)
-        f.seek(0)
-        model = torch.load(f)
-        f.close()
+    @classmethod
+    def restore_model(cls, model_bytes):
+        with tempfile.TemporaryFile() as f:
+            f.write(model_bytes)
+            f.seek(0)
+            model = torch.load(f)
         return PytorchNNModel(model)
 
 
@@ -345,6 +342,3 @@ class PytorchData(data.Dataset):
 class PytorchDataConverter(DataConverter):
     def convert(self, data, *args, **kwargs):
         return PytorchData(data, *args, **kwargs)
-
-
-

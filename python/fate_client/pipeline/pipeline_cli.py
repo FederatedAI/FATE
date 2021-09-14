@@ -18,6 +18,8 @@ import click
 from pathlib import Path
 from ruamel import yaml
 
+from flow_sdk.client import FlowClient
+
 default_config = Path(__file__).parent.joinpath("config.yaml").resolve()
 
 
@@ -33,6 +35,7 @@ def cli():
               help="Path to pipeline logs directory.")
 @click.option("--ip", type=click.STRING, help="Fate flow server ip address.")
 @click.option("--port", type=click.INT, help="Fate flow server port.")
+@click.option("-r", "--system-user", type=click.STRING, help="system user role")
 def _init(**kwargs):
     """
         \b
@@ -46,12 +49,13 @@ def _init(**kwargs):
         \b
         - USAGE:
             pipeline init -c config.yaml
-            pipeline init --ip 10.1.2.3 --port 9380 --log-directory ./logs
+            pipeline init --ip 10.1.2.3 --port 9380 --log-directory ./logs --system-user guest
     """
     config_path = kwargs.get("config_path")
     ip = kwargs.get("ip")
     port = kwargs.get("port")
     log_directory = kwargs.get("log_directory")
+    system_user = kwargs.get("system_user")
 
     if config_path is None and (ip is None or port is None):
         print(
@@ -73,13 +77,69 @@ def _init(**kwargs):
     if log_directory:
         config["log_directory"] = Path(log_directory).resolve().__str__()
 
+    if system_user:
+        system_user = system_user.lower()
+        if system_user not in ["guest", "host", "arbiter"]:
+            raise ValueError(f"system_user {system_user} is not valid. Must be one of (guest, host, arbiter)")
+        config["system_setting"] = {"role": system_user}
+
     with default_config.open("w") as fout:
         yaml.dump(config, fout, Dumper=yaml.RoundTripDumper)
 
     print("Pipeline configuration succeeded.")
 
 
+@click.group("config", help="pipeline config tool")
+def config_group():
+    """
+    pipeline config
+    """
+    pass
+
+
+@config_group.command(name="show")
+def _show():
+    """
+        \b
+        - DESCRIPTION:
+            Show pipeline config details for Flow server.
+
+        \b
+        - USAGE:
+            pipeline config show
+    """
+    with Path(default_config).open("r") as fin:
+        config = yaml.safe_load(fin)
+        click.echo(f"\nPipeline Config: {yaml.dump(config)}")
+
+
+@config_group.command(name="check")
+def _check():
+    """
+        \b
+        - DESCRIPTION:
+            Check for Flow server status and Flow version.
+
+        \b
+        - USAGE:
+            pipeline config check
+    """
+    from pipeline.backend import config as conf
+    if conf.FlowConfig.IP is None:
+        click.echo(f"Flow server ip not yet configured. Please specify setting with pipeline initialization tool.")
+        return
+    if conf.FlowConfig.PORT is None:
+        click.echo(f"Flow server port not yet configured. Please specify setting with pipeline initialization tool.")
+
+    client = FlowClient(ip=conf.FlowConfig.IP, port=conf.FlowConfig.PORT, version=conf.SERVER_VERSION)
+    version = client.remote_version.fate_flow()
+    if version is None:
+        click.echo(f"Flow server not responsive. Please check flow server ip and port setting.")
+    else:
+        click.echo(f"Flow server status normal, Flow version: {version}")
+
 cli.add_command(_init)
+cli.add_command(config_group)
 
 
 if __name__ == '__main__':

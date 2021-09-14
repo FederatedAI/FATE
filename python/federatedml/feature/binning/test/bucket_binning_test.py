@@ -19,12 +19,13 @@ import unittest
 import numpy as np
 
 from fate_arch.session import computing_session as session
+
 session.init("123")
 
 from federatedml.feature.binning.bucket_binning import BucketBinning
 from federatedml.feature.instance import Instance
 from federatedml.param.feature_binning_param import FeatureBinningParam
-from federatedml.statistic import data_overview
+from federatedml.feature.binning.iv_calculator import IvCalculator
 
 
 class TestBucketBinning(unittest.TestCase):
@@ -39,7 +40,7 @@ class TestBucketBinning(unittest.TestCase):
             if 100 < i < 500:
                 continue
             tmp = i * np.ones(self.feature_num)
-            inst = Instance(inst_id=i, features=tmp, label=i%2)
+            inst = Instance(inst_id=i, features=tmp, label=i % 2)
             tmp_pair = (str(i), inst)
             final_result.append(tmp_pair)
             numpy_array.append(tmp)
@@ -63,10 +64,13 @@ class TestBucketBinning(unittest.TestCase):
         for kth, s_p in enumerate(split_point):
             expect_s_p = (self.data_num - 1) / self.bin_num * (kth + 1)
             self.assertEqual(s_p, expect_s_p)
-        label_counts = data_overview.get_label_count(self.table)
-
-        bucket_bin.cal_local_iv(self.table, label_counts=label_counts)
-        for col_name, iv_attr in bucket_bin.bin_results.all_cols_results.items():
+        iv_calculator = IvCalculator(0.5,
+                                     "guest",
+                                     9999)
+        iv_res = iv_calculator.cal_local_iv(self.table, split_points=split_points,
+                                            bin_cols_map={"x1": 1, "x2": 2})
+        # for col_name, iv_attr in bucket_bin.bin_results.all_cols_results.items():
+        for col_name, iv_attr in iv_res.bin_results[0].all_cols_results.items():
             # print('col_name: {}, iv: {}, woe_array: {}'.format(col_name, iv_attr.iv, iv_attr.woe_array))
             assert abs(iv_attr.iv - 0.00364386529386804) < 1e-6
 

@@ -69,9 +69,16 @@ def main(config="../../config.yaml", namespace=""):
     hetero_poisson_0 = HeteroPoisson(name="hetero_poisson_0", early_stop="weight_diff", max_iter=20,
                                      exposure_colname="exposure", optimizer="rmsprop", tol=0.001,
                                      alpha=100.0, batch_size=-1, learning_rate=0.01, penalty="L2",
-                                     validation_freqs=5, early_stopping_rounds=5,
-                                     metrics= ["mean_absolute_error", "root_mean_squared_error"],
-                                     use_first_metric_only=False, decay_sqrt=False,
+                                     callback_param={"callbacks": ["EarlyStopping", "PerformanceEvaluate"],
+                                                     "validation_freqs": 1,
+                                                     "early_stopping_rounds": 5,
+                                                     "metrics": [
+                                                         "mean_absolute_error",
+                                                         "root_mean_squared_error"
+                                                     ],
+                                                     "use_first_metric_only": False,
+                                                     "save_freq": 1
+                                                     },
                                      init_param={"init_method": "zeros"},
                                      encrypted_mode_calculator_param={"mode": "fast"})
 

@@ -113,7 +113,7 @@ class LogisticParam(BaseParam):
                  decay=1, decay_sqrt=True,
                  multi_class='ovr', validation_freqs=None, early_stopping_rounds=None,
                  stepwise_param=StepwiseParam(), floating_point_precision=23,
-                 metrics=None, is_warm_start=False,
+                 metrics=None,
                  use_first_metric_only=False,
                  callback_param=CallbackParam()
                  ):
@@ -139,7 +139,6 @@ class LogisticParam(BaseParam):
         self.metrics = metrics or []
         self.use_first_metric_only = use_first_metric_only
         self.floating_point_precision = floating_point_precision
-        self.is_warm_start = is_warm_start
         self.callback_param = callback_param
 
     def check(self):
@@ -155,8 +154,6 @@ class LogisticParam(BaseParam):
             if self.penalty not in [consts.L1_PENALTY, consts.L2_PENALTY, 'NONE']:
                 raise ValueError(
                     "logistic_param's penalty not supported, penalty should be 'L1', 'L2' or 'none'")
-
-        self.check_boolean(self.is_warm_start, descr)
 
         if not isinstance(self.tol, (int, float)):
             raise ValueError(
@@ -276,7 +273,7 @@ class HomoLogisticParam(LogisticParam):
                  early_stopping_rounds=None,
                  metrics=['auc', 'ks'],
                  use_first_metric_only=False,
-                 use_proximal=False, is_warm_start=False,
+                 use_proximal=False,
                  mu=0.1, callback_param=CallbackParam()
                  ):
         super(HomoLogisticParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
@@ -289,7 +286,6 @@ class HomoLogisticParam(LogisticParam):
                                                 decay=decay, decay_sqrt=decay_sqrt,
                                                 early_stopping_rounds=early_stopping_rounds,
                                                 metrics=metrics, use_first_metric_only=use_first_metric_only,
-                                                is_warm_start=is_warm_start,
                                                 callback_param=callback_param)
         self.re_encrypt_batches = re_encrypt_batches
         self.aggregate_iters = aggregate_iters
@@ -336,7 +332,7 @@ class HeteroLogisticParam(LogisticParam):
                  metrics=['auc', 'ks'], floating_point_precision=23,
                  encrypt_param=EncryptParam(),
                  use_first_metric_only=False, stepwise_param=StepwiseParam(),
-                 is_warm_start=False, callback_param=CallbackParam()
+                 callback_param=CallbackParam()
                  ):
         super(HeteroLogisticParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
                                                   batch_size=batch_size,
@@ -351,7 +347,7 @@ class HeteroLogisticParam(LogisticParam):
                                                   encrypt_param=encrypt_param,
                                                   use_first_metric_only=use_first_metric_only,
                                                   stepwise_param=stepwise_param,
-                                                  is_warm_start=is_warm_start, callback_param=callback_param)
+                                                  callback_param=callback_param)
         self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
         self.sqn_param = copy.deepcopy(sqn_param)
 
@@ -360,4 +356,3 @@ class HeteroLogisticParam(LogisticParam):
         self.encrypted_mode_calculator_param.check()
         self.sqn_param.check()
         return True
-

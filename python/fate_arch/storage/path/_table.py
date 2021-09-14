@@ -17,7 +17,7 @@ from typing import Iterable
 
 from fate_arch.common import path_utils
 from fate_arch.common.log import getLogger
-from fate_arch.storage import StorageEngine, PathStorageType
+from fate_arch.storage import StorageEngine, PathStoreType
 from fate_arch.storage import StorageTableBase
 
 LOGGER = getLogger()
@@ -29,14 +29,14 @@ class StorageTable(StorageTableBase):
                  name: str = None,
                  namespace: str = None,
                  partitions: int = None,
-                 storage_type: PathStorageType = None,
+                 store_type: PathStoreType = None,
                  options=None):
         super(StorageTable, self).__init__(name=name, namespace=namespace)
         self._address = address
         self._name = name
         self._namespace = namespace
         self._partitions = partitions if partitions else 1
-        self._type = storage_type if storage_type else PathStorageType.PICTURE
+        self._store_type = store_type if store_type else PathStoreType.PICTURE
         self._options = options if options else {}
         self._engine = StorageEngine.PATH
 
@@ -52,8 +52,8 @@ class StorageTable(StorageTableBase):
     def get_engine(self):
         return self._engine
 
-    def get_type(self):
-        return self._type
+    def get_store_type(self):
+        return self._store_type
 
     def get_partitions(self):
         return self._partitions
@@ -75,7 +75,7 @@ class StorageTable(StorageTableBase):
 
     def count(self):
         count = path_utils.get_data_table_count(self._address.path)
-        self.get_meta().update_metas(count=count)
+        self.meta.update_metas(count=count)
         return count
 
     def save_as(self, address, partitions=None, name=None, namespace=None, schema=None, **kwargs):

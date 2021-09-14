@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 
-from fate_arch.storage import StorageEngine, MySQLStorageType
+from fate_arch.storage import StorageEngine, MySQLStoreType
 from fate_arch.storage import StorageTableBase
 
 
@@ -26,7 +26,7 @@ class StorageTable(StorageTableBase):
                  name: str = None,
                  namespace: str = None,
                  partitions: int = 1,
-                 storage_type: MySQLStorageType = None,
+                 store_type: MySQLStoreType = None,
                  options=None):
         super(StorageTable, self).__init__(name=name, namespace=namespace)
         self.cur = cur
@@ -35,10 +35,9 @@ class StorageTable(StorageTableBase):
         self._name = name
         self._namespace = namespace
         self._partitions = partitions
-        self._storage_type = storage_type
+        self._store_type = store_type if store_type else MySQLStoreType.InnoDB
         self._options = options if options else {}
         self._storage_engine = StorageEngine.MYSQL
-        self._type = storage_type if storage_type else MySQLStorageType.InnoDB
 
     def execute(self, sql, select=True):
         self.cur.execute(sql)
@@ -68,8 +67,8 @@ class StorageTable(StorageTableBase):
     def get_address(self):
         return self._address
 
-    def get_type(self):
-        return self._type
+    def get_store_type(self):
+        return self._store_type
 
     def get_options(self):
         return self._options
@@ -83,25 +82,69 @@ class StorageTable(StorageTableBase):
             count = ret[0][0]
         except:
             count = 0
+        self.meta.update_metas(count=count)
         return count
 
     def collect(self, **kwargs) -> list:
-        sql = 'select * from {}'.format(self._name)
+        id_name, feature_name_list, _ = self.get_id_feature_name()
+        id_feature_name = [id_name]
+        id_feature_name.extend(feature_name_list)
+        sql = 'select {} from {}'.format(','.join(id_feature_name), self._address.name)
         data = self.execute(sql)
-        return data
+        for line in data:
+            feature_list = [str(feature) for feature in list(line[1:])]
+            yield line[0], self.meta.get_id_delimiter().join(feature_list)
 
     def put_all(self, kv_list, **kwargs):
-        create_table = 'create table if not exists {}(id varchar(50) NOT NULL, features LONGTEXT, PRIMARY KEY(id))'.format(
-            self._address.name)
+        id_name, feature_name_list, id_delimiter = self.get_id_feature_name()
+        feature_sql, feature_list = StorageTable.get_meta_header(feature_name_list)
+        id_size = "varchar(100)"
+        create_table = 'create table if not exists {}({} {} NOT NULL, {} PRIMARY KEY({}))'.format(
+            self._address.name, id_name, id_size, feature_sql, id_name)
         self.cur.execute(create_table)
-        sql = 'REPLACE INTO {}(id, features)  VALUES'.format(self._address.name)
+        sql = 'REPLACE INTO {}({}, {})  VALUES'.format(self._address.name, id_name, ','.join(feature_list))
         for kv in kv_list:
-            sql += '("{}", "{}"),'.format(kv[0], kv[1])
+            sql += '("{}", "{}"),'.format(kv[0], '", "'.join(kv[1].split(id_delimiter)))
         sql = ','.join(sql.split(',')[:-1]) + ';'
         self.cur.execute(sql)
         self.con.commit()
 
+    def get_id_feature_name(self):
+        id = self.meta.get_schema().get('sid', 'id')
+        header = self.meta.get_schema().get('header')
+        id_delimiter = self.meta.get_id_delimiter()
+        if header:
+            if isinstance(header, str):
+                feature_list = header.split(id_delimiter)
+            elif isinstance(header, list):
+                feature_list = header
+            else:
+                feature_list = [header]
+        else:
+            raise Exception("mysql table need data header")
+        return id, feature_list, id_delimiter
+
     def destroy(self):
         super().destroy()
-        sql = 'drop table {}'.format(self._name)
+        sql = 'drop table {}'.format(self._address.name)
         return self.execute(sql)
+
+    def check_address(self):
+        schema = self.meta.get_schema()
+        if schema:
+            sql = 'SELECT {},{} FROM {}'.format(schema.get('sid'), schema.get('header'), self._address.name)
+            feature_data = self.execute(sql)
+            for feature in feature_data:
+                if feature:
+                    break
+        return True
+
+    @staticmethod
+    def get_meta_header(feature_name_list):
+        create_features = ''
+        feature_list = []
+        feature_size = "varchar(255)"
+        for feature_name in feature_name_list:
+            create_features += '{} {},'.format(feature_name, feature_size)
+            feature_list.append(feature_name)
+        return create_features, feature_list

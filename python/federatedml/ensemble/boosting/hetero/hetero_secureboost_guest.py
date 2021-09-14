@@ -8,6 +8,7 @@ from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import Objectiv
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import QuantileMeta
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import BoostingTreeModelParam
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import FeatureImportanceInfo
+from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.feature_importance import FeatureImportance
 from federatedml.ensemble.boosting.boosting_core import HeteroBoostingGuest
 from federatedml.param.boosting_param import HeteroSecureBoostParam, DecisionTreeParam
 from federatedml.ensemble.basic_algorithms import HeteroDecisionTreeGuest
@@ -38,7 +39,6 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         self.max_sample_weight = 1
         self.max_sample_weight_computed = False
         self.cipher_compressing = False
-        self.round_decimal = None
 
         self.enable_goss = False  # GOSS
         self.top_rate = None
@@ -55,7 +55,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         self.enable_goss = param.run_goss
         self.top_rate = param.top_rate
         self.other_rate = param.other_rate
-        self.round_decimal = param.cipher_compress_error
+        self.cipher_compressing = param.cipher_compress
         self.new_ver = param.new_ver
 
         if self.use_missing:
@@ -122,15 +122,14 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
                   data_bin=self.data_bin, bin_split_points=self.bin_split_points, bin_sparse_points=self.bin_sparse_points,
                   grad_and_hess=g_h,
                   encrypter=self.encrypter, encrypted_mode_calculator=self.encrypted_calculator,
+                  task_type=self.task_type,
                   valid_features=self.sample_valid_features(),
                   host_party_list=self.component_properties.host_party_idlist,
                   runtime_idx=self.component_properties.local_partyid,
                   goss_subsample=self.enable_goss,
                   top_rate=self.top_rate, other_rate=self.other_rate,
                   complete_secure=True if (self.cur_epoch_idx == 0 and self.complete_secure) else False,
-                  cipher_compressing=self.round_decimal is not None,
-                  round_decimal=self.round_decimal,
-                  encrypt_key_length=self.encrypt_param.key_length,
+                  cipher_compressing=self.cipher_compressing,
                   max_sample_weight=self.max_sample_weight,
                   new_ver=self.new_ver
                   )
@@ -152,10 +151,10 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
     def generate_summary(self) -> dict:
 
         summary = {'loss_history': self.history_loss,
-                   'best_iteration': -1 if not self.validation_strategy else self.validation_strategy.best_iteration,
+                   'best_iteration': self.callback_variables.best_iteration,
                    'feature_importance': self.make_readable_feature_importance(self.feature_name_fid_mapping,
                                                                                self.feature_importances_),
-                   'validation_metrics': None if not self.validation_strategy else self.validation_strategy.summary(),
+                   'validation_metrics': self.callback_variables.validation_summary,
                    'is_converged': self.is_converged}
 
         return summary
@@ -341,7 +340,10 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
             return predict_result
 
     @assert_io_num_rows_equal
-    def predict(self, data_inst, pred_leaf=False):
+    def predict(self, data_inst, ret_format='std'):
+
+        # standard format, leaf indices, raw score
+        assert ret_format in ['std', 'leaf', 'raw'], 'illegal ret format'
 
         LOGGER.info('running prediction')
         cache_dataset_key = self.predict_data_cache.get_data_key(data_inst)
@@ -365,26 +367,40 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
                 trees.append(tree)
 
         predict_cache = None
-
         tree_num = len(trees)
 
         if last_round != 0:
             predict_cache = self.predict_data_cache.predict_data_at(cache_dataset_key, min(rounds, last_round))
             LOGGER.info('load predict cache of round {}'.format(min(rounds, last_round)))
 
-        if tree_num == 0 and predict_cache is not None and not pred_leaf:
+        if tree_num == 0 and predict_cache is not None and not (ret_format == 'leaf'):
             return self.score_to_predict_result(data_inst, predict_cache)
 
-        predict_rs = self.boosting_fast_predict(processed_data, trees=trees, predict_cache=predict_cache, pred_leaf=pred_leaf)
+        predict_rs = self.boosting_fast_predict(processed_data, trees=trees, predict_cache=predict_cache,
+                                                pred_leaf=(ret_format == 'leaf'))
+
+        if ret_format == 'leaf':
+            return predict_rs  # predict result is leaf position
+
         self.predict_data_cache.add_data(cache_dataset_key, predict_rs, cur_boosting_round=rounds)
         LOGGER.debug('adding predict rs {}'.format(predict_rs))
         LOGGER.debug('last round is {}'.format(self.predict_data_cache.predict_data_last_round(cache_dataset_key)))
 
-        if pred_leaf:
-            return predict_rs  # predict result is leaf position
-
+        if ret_format == 'raw':
+            return predict_rs
         else:
             return self.score_to_predict_result(data_inst, predict_rs)
+
+    def load_feature_importance(self, feat_importance_param):
+        param = list(feat_importance_param)
+        rs_dict = {}
+        for fp in param:
+            key = (fp.sitename, fp.fid)
+            importance = FeatureImportance()
+            importance.from_protobuf(fp)
+            rs_dict[key] = importance
+
+        self.feature_importances_ = rs_dict
 
     def get_model_meta(self):
         model_meta = BoostingTreeModelMeta()
@@ -414,7 +430,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         model_param.classes_.extend(map(str, self.classes_))
         model_param.num_classes = self.num_classes
         model_param.model_name = consts.HETERO_SBT
-        model_param.best_iteration = -1 if self.validation_strategy is None else self.validation_strategy.best_iteration
+        model_param.best_iteration = self.callback_variables.best_iteration
 
         feature_importances = list(self.feature_importances_.items())
         feature_importances = sorted(feature_importances, key=itemgetter(1), reverse=True)
@@ -435,25 +451,28 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
                                                                   main=importance.main_type
                                                                   ))
         model_param.feature_importances.extend(feature_importance_param)
-        LOGGER.debug('feat importance param {}'.format(feature_importance_param))
         model_param.feature_name_fid_mapping.update(self.feature_name_fid_mapping)
-
         param_name = consts.HETERO_SBT_GUEST_MODEL + "Param"
 
         return param_name, model_param
 
     def set_model_meta(self, model_meta):
-        self.booster_meta = model_meta.tree_meta
+
+        if not self.is_warm_start:
+            # these hyper parameters are not needed in warm start setting
+            self.boosting_round = model_meta.num_trees
+            self.tol = model_meta.tol
+            self.n_iter_no_change = model_meta.n_iter_no_change
+            self.bin_num = model_meta.quantile_meta.bin_num
+
         self.learning_rate = model_meta.learning_rate
-        self.boosting_round = model_meta.num_trees
-        self.bin_num = model_meta.quantile_meta.bin_num
+        self.booster_meta = model_meta.tree_meta
         self.objective_param.objective = model_meta.objective_meta.objective
         self.objective_param.params = list(model_meta.objective_meta.param)
         self.task_type = model_meta.task_type
-        self.n_iter_no_change = model_meta.n_iter_no_change
-        self.tol = model_meta.tol
 
     def set_model_param(self, model_param):
+
         self.boosting_model_list = list(model_param.trees_)
         self.init_score = np.array(list(model_param.init_score))
         self.history_loss = list(model_param.losses)
@@ -461,6 +480,6 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         self.booster_dim = model_param.tree_dim
         self.num_classes = model_param.num_classes
         self.feature_name_fid_mapping.update(model_param.feature_name_fid_mapping)
-
+        self.load_feature_importance(model_param.feature_importances)
         # initialize loss function
         self.loss = self.get_loss_function()

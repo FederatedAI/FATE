@@ -47,7 +47,6 @@ class IterativeAffineCipher(object):
         i = 0
         for key_size in key_size_array:
             n = random.SystemRandom().getrandbits(key_size)
-            a = 0
             while True:
                 a_ratio = random.SystemRandom().random()
                 a_size = int(key_size * a_ratio)
@@ -74,7 +73,6 @@ class IterativeAffineCipher(object):
         i = 0
         for key_size in key_size_array:
             n = random.SystemRandom().getrandbits(key_size)
-            a = 0
             while True:
                 a_ratio = random.SystemRandom().random()
                 a_size = int(key_size * a_ratio)
@@ -86,6 +84,7 @@ class IterativeAffineCipher(object):
             n_array[i] = n
             a_array[i] = a
             i = i + 1
+
         return DeterministicIterativeAffineCipherKey(a_array, n_array, encode_precision)
 
 
@@ -125,11 +124,15 @@ class RandomizedIterativeAffineCipherKey(IterativeAffineCipherKey):
     def decrypt(self, ciphertext):
         if isinstance(ciphertext, int) is True and ciphertext is 0:
             return 0
-        return self.affine_encoder.decode(self.raw_decrypt(ciphertext))
+
+        return self.affine_encoder.decode(self.raw_decrypt(ciphertext), ciphertext.mult_times)
 
     def raw_encrypt(self, plaintext):
         plaintext = self.encode(plaintext)
-        ciphertext = RandomizedIterativeAffineCiphertext(plaintext[0], plaintext[1], self.n_array[-1])
+        ciphertext = RandomizedIterativeAffineCiphertext(plaintext[0],
+                                                         plaintext[1],
+                                                         self.n_array[-1],
+                                                         self.affine_encoder.mult)
         for i in range(self.key_round):
             ciphertext = self.raw_encrypt_round(ciphertext, i)
         return ciphertext
@@ -150,7 +153,7 @@ class RandomizedIterativeAffineCipherKey(IterativeAffineCipherKey):
 
     def encode(self, plaintext):
         y = random.SystemRandom().getrandbits(160)
-        return y * self.g % self.n_array[0], (plaintext + y * self.h) % self.n_array[0]
+        return int(mpz(y) * self.g % self.n_array[0]), (plaintext + y * self.h) % self.n_array[0]
 
     def decode(self, ciphertext):
         intermediate_result = (ciphertext.cipher2 - self.x * ciphertext.cipher1) % self.n_array[0]
@@ -161,15 +164,16 @@ class RandomizedIterativeAffineCipherKey(IterativeAffineCipherKey):
     def raw_encrypt_round(self, plaintext, round_index):
         return RandomizedIterativeAffineCiphertext(
             plaintext.cipher1,
-            (self.a_array[round_index] * plaintext.cipher2) % self.n_array[round_index],
-            plaintext.n_final
+            int(mpz(self.a_array[round_index]) * plaintext.cipher2 % self.n_array[round_index]),
+            plaintext.n_final,
+            self.affine_encoder.mult
         )
 
     def raw_decrypt_round(self, ciphertext1, ciphertext2, round_index):
         cur_n = self.n_array[self.key_round - 1 - round_index]
         cur_a_inv = self.a_inv_array[self.key_round - 1 - round_index]
         plaintext1 = ciphertext1 % cur_n
-        plaintext2 = (cur_a_inv * (ciphertext2 % cur_n)) % cur_n
+        plaintext2 = cur_a_inv * ciphertext2 % cur_n
         if plaintext1 / cur_n > 0.9:
             plaintext1 -= cur_n
         if plaintext2 / cur_n > 0.9:
@@ -208,8 +212,9 @@ class DeterministicIterativeAffineCipherKey(IterativeAffineCipherKey):
         )
 
     def raw_decrypt_round(self, ciphertext, round_index):
-        plaintext = int((mpz(self.a_inv_array[self.key_round - 1 - round_index]) * mpz(ciphertext)) \
+        plaintext = int((mpz(self.a_inv_array[self.key_round - 1 - round_index]) * ciphertext) \
                     % self.n_array[self.key_round - 1 - round_index])
+
         if plaintext / self.n_array[self.key_round - 1 - round_index] > 0.9:
             return plaintext - self.n_array[self.key_round - 1 - round_index]
         else:
@@ -236,17 +241,17 @@ class RandomizedIterativeAffineCiphertext(IterativeAffineCiphertext):
             if self.mult_times > other.mult_times:
                 mult_times_diff = self.mult_times - other.mult_times
                 return RandomizedIterativeAffineCiphertext(
-                    cipher1=(self.cipher1 + other.cipher1) * other.multiple * mult_times_diff % self.n_final,
-                    cipher2=(self.cipher2 + other.cipher2) * other.multiple * mult_times_diff % self.n_final,
+                    cipher1=(self.cipher1 + other.cipher1 * other.multiple * mult_times_diff) % self.n_final,
+                    cipher2=(self.cipher2 + other.cipher2 * other.multiple * mult_times_diff) % self.n_final,
                     n_final=self.n_final,
                     multiple=self.multiple,
                     mult_times=self.mult_times
                 )
             elif self.mult_times < other.mult_times:
-                mult_times_diff = self.mult_times - other.mult_times
+                mult_times_diff = other.mult_times - self.mult_times
                 return RandomizedIterativeAffineCiphertext(
-                    cipher1=(self.cipher1 + other.cipher1) * self.multiple * mult_times_diff % self.n_final,
-                    cipher2=(self.cipher2 + other.cipher2) * other.multiple * mult_times_diff % self.n_final,
+                    cipher1=(other.cipher1 + self.cipher1 * self.multiple * mult_times_diff) % self.n_final,
+                    cipher2=(other.cipher2 + self.cipher2 * self.multiple * mult_times_diff) % self.n_final,
                     n_final=self.n_final,
                     multiple=self.multiple,
                     mult_times=other.mult_times
@@ -257,7 +262,7 @@ class RandomizedIterativeAffineCiphertext(IterativeAffineCiphertext):
                     cipher2=(self.cipher2 + other.cipher2) % self.n_final,
                     n_final=self.n_final,
                     multiple=self.multiple,
-                    mult_times=other.mult_times
+                    mult_times=self.mult_times
                 )
         elif type(other) is int and other == 0:
             return self

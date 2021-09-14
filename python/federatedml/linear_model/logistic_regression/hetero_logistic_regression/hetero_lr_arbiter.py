@@ -30,7 +30,7 @@ class HeteroLRArbiter(HeteroBaseArbiter, HeteroLRBase):
         self.gradient_loss_operator = hetero_lr_gradient_and_loss.Arbiter()
         self.model_param = HeteroLogisticParam()
         self.n_iter_ = 0
-        self.header = None
+        self.header = []
         self.is_converged = False
         self.model_param_name = 'HeteroLogisticRegressionParam'
         self.model_meta_name = 'HeteroLogisticRegressionMeta'

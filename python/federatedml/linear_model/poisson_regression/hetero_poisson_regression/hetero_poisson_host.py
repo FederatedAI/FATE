@@ -47,10 +47,11 @@ class HeteroPoissonHost(HeteroPoissonBase):
 
         LOGGER.info("Enter hetero_poisson host")
         self._abnormal_detection(data_instances)
-
-        self.validation_strategy = self.init_validation_strategy(data_instances, validate_data)
+        # self.validation_strategy = self.init_validation_strategy(data_instances, validate_data)
 
         self.header = self.get_header(data_instances)
+        self.callback_list.on_train_begin(data_instances, validate_data)
+
         self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
 
         self.batch_generator.initialize_batch_generator(data_instances)
@@ -67,6 +68,8 @@ class HeteroPoissonHost(HeteroPoissonBase):
         if not self.component_properties.is_warm_start:
             w = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
             self.model_weights = LinearModelWeights(w, fit_intercept=self.fit_intercept, raise_overflow_error=False)
+        else:
+            self.callback_warm_start_init_iter(self.n_iter_)
 
         while self.n_iter_ < self.max_iter:
             LOGGER.info("iter:" + str(self.n_iter_))
@@ -76,6 +79,8 @@ class HeteroPoissonHost(HeteroPoissonBase):
 
             batch_index = 0
             for batch_data in batch_data_generator:
+                self.callback_list.on_epoch_begin(self.n_iter_)
+                LOGGER.info("iter:" + str(self.n_iter_))
                 optim_host_gradient = self.gradient_loss_operator.compute_gradient_procedure(
                     batch_data,
                     self.encrypted_calculator,
@@ -95,14 +100,9 @@ class HeteroPoissonHost(HeteroPoissonBase):
 
             LOGGER.info("Get is_converged flag from arbiter:{}".format(self.is_converged))
 
-            self.add_checkpoint(step_index=self.n_iter_, step_name=self.flowid)
-
-            if self.validation_strategy:
-                LOGGER.debug('Poisson host running validation')
-                self.validation_strategy.validate(self, self.n_iter_)
-                if self.validation_strategy.need_stop():
-                    LOGGER.debug('early stopping triggered')
-                    break
+            self.callback_list.on_epoch_end(self.n_iter_)
+            if self.stop_training:
+                break
 
             self.n_iter_ += 1
             LOGGER.info("iter: {}, is_converged: {}".format(self.n_iter_, self.is_converged))

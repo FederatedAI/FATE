@@ -13,14 +13,14 @@ from federatedml.feature.sparse_vector import SparseVector
 from federatedml.model_base import ModelBase
 from federatedml.feature.fate_element_type import NoneType
 from federatedml.ensemble.basic_algorithms import BasicAlgorithms
-from federatedml.loss import FairLoss
-from federatedml.loss import HuberLoss
-from federatedml.loss import LeastAbsoluteErrorLoss
-from federatedml.loss import LeastSquaredErrorLoss
-from federatedml.loss import LogCoshLoss
-from federatedml.loss import SigmoidBinaryCrossEntropyLoss
-from federatedml.loss import SoftmaxCrossEntropyLoss
-from federatedml.loss import TweedieLoss
+from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.loss import FairLoss
+from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.loss import HuberLoss
+from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.loss import LeastAbsoluteErrorLoss
+from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.loss import LeastSquaredErrorLoss
+from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.loss import LogCoshLoss
+from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.loss import TweedieLoss
+from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.loss import SigmoidBinaryCrossEntropyLoss
+from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.loss import SoftmaxCrossEntropyLoss
 from federatedml.param.evaluation_param import EvaluateParam
 from federatedml.ensemble.boosting.boosting_core.predict_cache import PredictDataCache
 from federatedml.statistic import data_overview
@@ -40,6 +40,7 @@ class Boosting(ModelBase, ABC):
         # input hyper parameter
         self.task_type = None
         self.learning_rate = None
+        self.start_round = None
         self.boosting_round = None
         self.n_iter_no_change = None
         self.tol = 0.0
@@ -82,7 +83,7 @@ class Boosting(ModelBase, ABC):
         # training
         self.feature_num = None  # feature number
         self.init_score = None  # init score
-        self.num_classes = 1 # number of classes
+        self.num_classes = 1  # number of classes
         self.convergence = None  # function to check loss convergence
         self.classes_ = []  # list of class indices
         self.y = None   # label
@@ -90,7 +91,6 @@ class Boosting(ModelBase, ABC):
         self.loss = None   # loss func
         self.predict_y_hat = None  # accumulated predict value for predicting mode
         self.history_loss = []  # list holds loss history
-        self.validation_strategy = None
         self.metrics = None
         self.is_converged = False
 
@@ -116,6 +116,8 @@ class Boosting(ModelBase, ABC):
         self.metrics = boosting_param.metrics
         self.subsample_feature_rate = boosting_param.subsample_feature_rate
         self.binning_error = boosting_param.binning_error
+        self.is_warm_start = self.component_properties.is_warm_start
+        LOGGER.debug('warm start is {}'.format(self.is_warm_start))
 
         if boosting_param.random_seed is not None:
             self.random_seed = boosting_param.random_seed
@@ -249,8 +251,9 @@ class Boosting(ModelBase, ABC):
             data_inst: training data
         Returns: data_bin, data_split_points, data_sparse_point
         """
-        self.feature_name_fid_mapping = self.gen_feature_fid_mapping(data_inst.schema)
+        # to sprase vec
         data_inst = self.data_alignment(data_inst)
+        # binning
         return self.convert_feature_to_bin(data_inst, self.use_missing)
 
     @abc.abstractmethod
@@ -272,19 +275,16 @@ class Boosting(ModelBase, ABC):
     Functions
     """
 
-    def init_validation_strategy(self, train_data=None, validate_data=None):
-        """
-        initialize validation_strategy
-        """
-        validation_strategy = ValidationStrategy(self.role, self.mode, self.validation_freqs,
-                                                 self.early_stopping_rounds, self.use_first_metric_only, arbiter_comm=False)
-
-        validation_strategy.set_train_data(train_data)
-        validation_strategy.set_validate_data(validate_data)
-        return validation_strategy
-
     def cross_validation(self, data_instances):
         return start_cross_validation.run(self, data_instances)
+
+    def feat_name_check(self, data_inst, feat_name_fid_mapping):
+
+        previous_model_feat_name = set(feat_name_fid_mapping.values())
+        cur_data_feat_name = set(data_inst.schema['header'])
+        assert previous_model_feat_name == cur_data_feat_name, 'feature alignment failed, diff: {}'\
+            .format(previous_model_feat_name.symmetric_difference(cur_data_feat_name))
+        LOGGER.debug('warm start feat name {}, {}'.format(previous_model_feat_name, cur_data_feat_name))
 
     def get_loss_function(self):
         loss_type = self.objective_param.objective
@@ -361,33 +361,11 @@ class Boosting(ModelBase, ABC):
 
         return self.convergence.is_converge(loss)
 
-    def check_stop_condition(self, loss):
-
-        """
-        check early stopping and loss convergence
-        """
-
-        should_stop_a, should_stop_b = False, False
-
-        if self.validation_strategy is not None:
-            if self.validation_strategy.need_stop():
-                should_stop_a = True
-
-        if self.n_iter_no_change and self.check_convergence(loss):
-            should_stop_b = True
-            self.is_converged = True
-
-        if should_stop_a or should_stop_b:
-            LOGGER.debug('stop triggered, stop triggered by {}'.
-                         format('early stop' if should_stop_a else 'n_iter_no change'))
-
-        return should_stop_a or should_stop_b
-
     @staticmethod
     def accumulate_y_hat(val, new_val, lr=0.1, idx=0):
-        copied_val = copy.deepcopy(val)
-        copied_val[idx] += lr * new_val
-        return copied_val
+        z_vec = np.zeros(len(val))
+        z_vec[idx] = lr * new_val
+        return z_vec + val
 
     def generate_flowid(self, round_num, dim):
         LOGGER.info("generate flowid, flowid {}".format(self.flowid))
@@ -476,8 +454,8 @@ class Boosting(ModelBase, ABC):
                                                           threshold=self.predict_param.threshold)
 
         elif self.task_type == consts.REGRESSION:
-            predict_result = data_inst.join(predicts, lambda inst, pred: [inst.label, float(pred), float(pred),
-                                                                          {"label": float(pred)}])
+            predicts = predicts.mapValues(lambda x: x[0])
+            predict_result = self.predict_score_to_output(data_inst, predict_score=predicts, classes=None)
 
         else:
             raise NotImplementedError("task type {} not supported yet".format(self.task_type))

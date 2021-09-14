@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
-import copy
-
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -18,6 +15,8 @@ import copy
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import copy
+
 from federatedml.param.base_param import BaseParam
 from federatedml.util import consts
 
@@ -95,7 +94,8 @@ class IVPercentileSelectionParam(BaseParam):
 
     def check(self):
         descr = "IV selection param's"
-        self.check_decimal_float(self.percentile_threshold, descr)
+        if self.percentile_threshold != 0 or self.percentile_threshold != 1:
+            self.check_decimal_float(self.percentile_threshold, descr)
         self.check_boolean(self.local_only, descr)
         return True
 
@@ -261,6 +261,21 @@ class CommonFilterParam(BaseParam):
         assert isinstance(self.select_federated, list)
         for v in self.select_federated:
             self.check_boolean(v, descr)
+
+
+class IVFilterParam(CommonFilterParam):
+    """
+    Parameters
+    ----------
+    mul_class_merge_type: str or list, default: "average"
+        Indicate how to merge multi-class iv results. Support "average", "min" and "max".
+
+    """
+    def __init__(self, filter_type='threshold', threshold=1,
+                 host_thresholds=None, select_federated=True, mul_class_merge_type="average"):
+        super().__init__(metrics='iv', filter_type=filter_type, take_high=True, threshold=threshold,
+                         host_thresholds=host_thresholds, select_federated=select_federated)
+        self.mul_class_merge_type = mul_class_merge_type
 
 
 class CorrelationFilterParam(BaseParam):
@@ -444,7 +459,7 @@ class FeatureSelectionParam(BaseParam):
                  outlier_param=OutlierColsSelectionParam(),
                  manually_param=ManuallyFilterParam(),
                  percentage_value_param=PercentageValueParam(),
-                 iv_param=CommonFilterParam(metrics=consts.IV),
+                 iv_param=IVFilterParam(),
                  statistic_param=CommonFilterParam(metrics=consts.MEAN),
                  psi_param=CommonFilterParam(metrics=consts.PSI,
                                              take_high=False),

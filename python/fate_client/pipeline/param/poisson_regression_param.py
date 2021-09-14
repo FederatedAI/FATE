@@ -20,6 +20,7 @@
 import copy
 
 from pipeline.param.base_param import BaseParam
+from pipeline.param.callback_param import CallbackParam
 from pipeline.param.encrypt_param import EncryptParam
 from pipeline.param.encrypted_mode_calculation_param import EncryptedModeCalculatorParam
 from pipeline.param.cross_validation_param import CrossValidationParam
@@ -106,6 +107,7 @@ class PoissonParam(BaseParam):
     floating_point_precision: None or integer, if not None, use floating_point_precision-bit to speed up calculation,
                                e.g.: convert an x to round(x * 2**floating_point_precision) during Paillier operation, divide
                                       the result by 2**floating_point_precision in the end.
+    callback_param: CallbackParam object
 
     """
 
@@ -119,7 +121,7 @@ class PoissonParam(BaseParam):
                  cv_param=CrossValidationParam(), stepwise_param=StepwiseParam(),
                  decay=1, decay_sqrt=True,
                  validation_freqs=None, early_stopping_rounds=None, metrics=None, use_first_metric_only=False,
-                 floating_point_precision=23, is_warm_start=False):
+                 floating_point_precision=23, callback_param=CallbackParam()):
         super(PoissonParam, self).__init__()
         self.penalty = penalty
         self.tol = tol
@@ -144,7 +146,7 @@ class PoissonParam(BaseParam):
         self.metrics = metrics or []
         self.use_first_metric_only = use_first_metric_only
         self.floating_point_precision = floating_point_precision
-        self.is_warm_start = is_warm_start
+        self.callback_param = callback_param
 
     def check(self):
         descr = "poisson_regression_param's "
@@ -262,5 +264,6 @@ class PoissonParam(BaseParam):
                 (not isinstance(self.floating_point_precision, int) or
                  self.floating_point_precision < 0 or self.floating_point_precision > 64):
             raise ValueError("floating point precision should be null or a integer between 0 and 64")
-        self.check_boolean(self.is_warm_start, "is_warm_start")
+
+        self.callback_param.check()
         return True

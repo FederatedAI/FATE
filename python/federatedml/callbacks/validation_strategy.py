@@ -28,6 +28,7 @@ from federatedml.evaluation.performance_recorder import PerformanceRecorder
 from federatedml.transfer_variable.transfer_class.validation_strategy_transfer_variable import  \
     ValidationStrategyVariable
 from federatedml.callbacks.callback_base import CallbackBase
+from federatedml.feature.instance import Instance
 
 
 class ValidationStrategy(CallbackBase):
@@ -70,6 +71,12 @@ class ValidationStrategy(CallbackBase):
         self.use_first_metric_only = use_first_metric_only
         self.first_metric = None
         self._evaluation_summary = {}
+
+        # precompute scores
+        self.cached_train_scores = None
+        self.cached_validate_scores = None
+        self.use_precompute_train_scores = False
+        self.use_precompute_validate_scores = False
 
         if early_stopping_rounds is not None:
             if early_stopping_rounds <= 0:
@@ -265,11 +272,16 @@ class ValidationStrategy(CallbackBase):
         return eval_result_dict
 
     @staticmethod
+    def _add_data_type_map_func(value, data_type):
+        new_pred_rs = Instance(features=value.features + [data_type], inst_id=value.inst_id)
+        return new_pred_rs
+
+    @staticmethod
     def add_data_type(predicts, data_type: str):
         """
         predict data add data_type
         """
-        predicts = predicts.mapValues(lambda value: value + [data_type])
+        predicts = predicts.mapValues(lambda value: ValidationStrategy._add_data_type_map_func(value, data_type))
         return predicts
 
     def handle_precompute_scores(self, precompute_scores, data_type):
@@ -305,24 +317,19 @@ class ValidationStrategy(CallbackBase):
 
         return predicts
 
-    def validate(self, model, epoch,
-                 use_precomputed_train=False,
-                 use_precomputed_validate=False,
-                 train_scores=None,
-                 validate_scores=None):
+    def set_precomputed_train_scores(self, train_scores):
+        self.use_precompute_train_scores = True
+        self.cached_train_scores = train_scores
+
+    def set_precomputed_validate_scores(self, validate_scores):
+        self.use_precompute_validate_scores = True
+        self.cached_validate_scores = validate_scores
+
+    def validate(self, model, epoch):
 
         """
         :param model: model instance, which has predict function
         :param epoch: int, epoch idx for generating flow id
-        :param use_precomputed_validate: bool, use precomputed train scores or not, if True, check validate_scores
-        :param use_precomputed_train: bool, use precomputed validate scores or not, if True, check train_scores
-        :param validate_scores: dtable, key is sample id, value is a list contains precomputed predict scores.
-                                             once offered, skip calling
-                                             model.predict(self.validate_data) and use this as validate_predicts
-        :param train_scores: dtable, key is sample id, value is a list contains precomputed predict scores.
-                                             once offered, skip calling
-                                             model.predict(self.train_data) and use this as validate_predicts
-        :return:
         """
 
         LOGGER.debug("begin to check validate status, need_run_validation is {}".format(self.need_run_validation(epoch)))
@@ -333,15 +340,15 @@ class ValidationStrategy(CallbackBase):
         if self.mode == consts.HOMO and self.role == consts.ARBITER:
             return
 
-        if not use_precomputed_train:  # call model.predict()
+        if not self.use_precompute_train_scores:  # call model.predict()
             train_predicts = self.get_predict_result(model, epoch, self.train_data, "train")
         else:  # use precomputed scores
-            train_predicts = self.handle_precompute_scores(train_scores, 'train')
+            train_predicts = self.handle_precompute_scores(self.cached_train_scores, 'train')
 
-        if not use_precomputed_validate:  # call model.predict()
+        if not self.use_precompute_validate_scores:  # call model.predict()
             validate_predicts = self.get_predict_result(model, epoch, self.validate_data, "validate")
         else:  # use precomputed scores
-            validate_predicts = self.handle_precompute_scores(validate_scores, 'validate')
+            validate_predicts = self.handle_precompute_scores(self.cached_validate_scores, 'validate')
 
         if train_predicts is not None or validate_predicts is not None:
 
@@ -374,12 +381,20 @@ class ValidationStrategy(CallbackBase):
             self.update_early_stopping_status(epoch, model)
 
     def on_train_begin(self, train_data=None, validate_data=None):
-        self.set_train_data(train_data)
-        self.set_validate_data(validate_data)
+        if self.role != consts.ARBITER:
+            self.set_train_data(train_data)
+            self.set_validate_data(validate_data)
 
     def on_epoch_end(self, model, epoch):
         LOGGER.debug('running validation')
         self.validate(model, epoch)
         if self.need_stop():
             LOGGER.debug('early stopping triggered')
-            model.stop_training = True
+            model.callback_variables.stop_training = True
+
+    def on_train_end(self, model):
+        if self.has_saved_best_model():
+            model.load_model(self.cur_best_model)
+            model.callback_variables.best_iteration = self.best_iteration
+
+        model.callback_variables.validation_summary = self.summary()

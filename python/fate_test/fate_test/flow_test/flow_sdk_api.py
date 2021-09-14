@@ -414,7 +414,7 @@ class TestModel(object):
                 return
 
     def model_api(self, command, remove_path=None, model_path=None, tag_name=None, load_path=None, bind_path=None,
-                  remove=False):
+                  homo_deploy_path=None, homo_deploy_kube_config_path=None, remove=False):
         if command == 'model/load':
             try:
                 stdout = self.client.model.load(conf_path=load_path)
@@ -528,6 +528,29 @@ class TestModel(object):
                 stdout = self.client.model.homo_convert(conf_path=config_file_path)
                 if stdout.get('retcode'):
                     self.error_log('model homo convert: {}'.format(stdout.get('retmsg')) + '\n')
+                return stdout.get('retcode')
+            except Exception:
+                return
+            
+        elif command == 'model/homo/deploy':
+            job_data = {
+                "model_id": self.model_id,
+                "model_version": self.model_version,
+                "role": "guest",
+                "party_id": self.guest_party_id[0],
+                "component_name": self.component_name
+            }
+            config_data = get_dict_from_file(homo_deploy_path)
+            config_data.update(job_data)
+            if homo_deploy_kube_config_path:
+                config_data['deployment_parameters']['config_file'] = homo_deploy_kube_config_path
+            config_file_path = self.cache_directory + 'model_homo_deploy.json'
+            with open(config_file_path, 'w') as fp:
+                json.dump(config_data, fp)
+            try:
+                stdout = self.client.model.homo_deploy(conf_path=config_file_path)
+                if stdout.get('retcode'):
+                    self.error_log('model homo deploy: {}'.format(stdout.get('retmsg')) + '\n')
                 return stdout.get('retcode')
             except Exception:
                 return
@@ -726,7 +749,13 @@ def run_test_api(config_json):
     model.set_style(ORGMODE)
     model.field_names = ['model api name', 'status']
     if config_json.get('component_is_homo'):
+        homo_deploy_path = config_json.get('homo_deploy_path')
+        homo_deploy_kube_config_path = config_json.get('homo_deploy_kube_config_path')
         model.add_row(['model homo convert', judging_state(test_api.model_api('model/homo/convert'))])
+        model.add_row(['model homo deploy',
+                      judging_state(test_api.model_api('model/homo/deploy',
+                                                       homo_deploy_path=homo_deploy_path,
+                                                       homo_deploy_kube_config_path=homo_deploy_kube_config_path))])
     else:
         model.add_row(['model load', judging_state(test_api.model_api('model/load'))])
         model.add_row(['model bind', judging_state(test_api.model_api('model/bind'))])

@@ -47,7 +47,7 @@ Algorithm List
 
    * - `DataIO`_
      - DataIO
-     - This component transforms user-uploaded date into Instance object(deprecate in FATe-v1.7, use DataTransform instead).
+     - This component transforms user-uploaded data into Instance object(deprecate in FATe-v1.7, use DataTransform instead).
      - Table, values are raw data.
      - Transformed Table, values are data instance defined `here <./feature/instance.py>`_
      -
@@ -55,7 +55,7 @@ Algorithm List
 
    * - `DataTransform`_
      - DataTransform
-     - This component transforms user-uploaded date into Instance object.
+     - This component transforms user-uploaded data into Instance object.
      - Table, values are raw data.
      - Transformed Table, values are data instance defined `here <./feature/instance.py>`_
      -
@@ -307,16 +307,31 @@ Algorithm List
      - Table, values are instance
      - Table, values are weighted instance
      -
-     -
+     - SampleWeight Model
 
    * - `Feldman Verifiable Sum`_
      - Feldman Verifiable Sum
      - This component will sum multiple privacy values without exposing data
-     - Table, values are addend
+     - Table, values to sum
      - Table, values are sum results
      -
      -
 
+   * - `Feature Imputation`_
+     - Feature Imputation
+     - This component imputes missing features using arbitrary methods/values
+     - Table, values are Instances
+     - Table, values with missing features filled
+     -
+     - FeatureImputation Model
+
+   * - `Label Transform`_
+     - Label Transform
+     - Replaces label values of input data instances and predict results
+     - Table, values are Instances or prediction results
+     - Table, values with transformed label values
+     -
+     - LabelTransform Model
 
 
 .. _DataIO: util/README.rst
@@ -353,6 +368,8 @@ Algorithm List
 .. _Scorecard: statistic/scorecard/README.rst
 .. _Sample Weight: util/README.rst
 .. _Feldman Verifiable Sum: statistic/feldman_verifiable_sum/README.rst
+.. _Feature Imputation: feature/README.rst
+.. _Label Transform: util/README.rst
 
 
 Secure Protocol

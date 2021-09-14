@@ -13,95 +13,87 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import pickle
 import hashlib
 from pathlib import Path
 from shutil import rmtree
-from datetime import datetime
+from datetime import datetime, timezone
 from collections import deque, OrderedDict
 
-from ruamel import yaml
+from filelock import FileLock
 
 from fate_flow.settings import stat_logger
 from fate_flow.entity.types import RunParameters
-from fate_flow.model import serialize_buffer_object, parse_proto_object, Locker
 from fate_arch.common.file_utils import get_project_base_directory
 
 
-class Checkpoint(Locker):
+class Checkpoint:
 
     def __init__(self, directory: Path, step_index: int, step_name: str):
         self.step_index = step_index
         self.step_name = step_name
         self.create_time = None
-        directory = directory / f'{step_index}#{step_name}'
-        directory.mkdir(0o755, True, True)
-        self.database = directory / 'database.yaml'
+        self.filepath = directory / f'{step_index}#{step_name}.pickle'
+        self.hashpath = self.filepath.with_suffix('.sha1')
+        self.lock = self._lock
 
-        super().__init__(directory)
+    @property
+    def _lock(self):
+        return FileLock(self.filepath.with_suffix('.lock'))
+
+    def __deepcopy__(self, memo):
+        return self
+
+    # https://docs.python.org/3/library/pickle.html#handling-stateful-objects
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state.pop('lock')
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self.lock = self._lock
 
     @property
     def available(self):
-        return self.database.exists()
+        return self.filepath.exists() and self.hashpath.exists()
 
-    def save(self, model_buffers):
-        if not model_buffers:
-            raise ValueError('model_buffers is empty.')
-
-        self.create_time = datetime.utcnow()
-        data = {
-            'step_index': self.step_index,
-            'step_name': self.step_name,
-            'create_time': self.create_time.isoformat(),
-            'models': {},
-        }
-
-        model_strings = {}
-        for model_name, buffer_object in model_buffers.items():
-            model_strings[model_name] = serialize_buffer_object(buffer_object)
-            data['models'][model_name] = {
-                'filename': f'{model_name}.pb',
-                'sha1': hashlib.sha1(model_strings[model_name]).hexdigest(),
-                'buffer_name': type(buffer_object).__name__,
-            }
+    def save(self, data):
+        pickled = pickle.dumps(data, pickle.HIGHEST_PROTOCOL)
+        sha1 = hashlib.sha1(pickled).hexdigest()
 
         with self.lock:
-            for model_name, model in data['models'].items():
-                (self.directory / model['filename']).write_bytes(model_strings[model_name])
-            self.database.write_text(yaml.dump(data, Dumper=yaml.RoundTripDumper), 'utf8')
-        stat_logger.info(f'Checkpoint saved. path: {self.directory}')
+            self.filepath.write_bytes(pickled)
+            self.hashpath.write_text(sha1, 'utf8')
+            self.create_time = datetime.utcnow()
+
+        stat_logger.info(f'Checkpoint saved. filepath: {self.filepath} sha1: {sha1}')
+        return self.filepath
 
     def read(self):
+        if not self.hashpath.exists():
+            raise FileNotFoundError(f'Hash file is not found, checkpoint may be incorrect. '
+                                    f'filepath: {self.hashpath}')
+
         with self.lock:
-            data = yaml.safe_load(self.database.read_text('utf8'))
-            if data['step_index'] != self.step_index or data['step_name'] != self.step_name:
-                raise ValueError('Checkpoint may be incorrect: step_index or step_name dose not match. '
-                                 f'filepath: {self.database} '
-                                 f'expected step_index: {self.step_index} actual step_index: {data["step_index"]} '
-                                 f'expected step_name: {self.step_name} actual step_index: {data["step_name"]}')
+            sha1_orig = self.hashpath.read_text('utf8')
+            pickled = self.filepath.read_bytes()
+            self.create_time = datetime.fromtimestamp(self.filepath.stat().st_mtime, tz=timezone.utc)
 
-            for model_name, model in data['models'].items():
-                model['filepath'] = self.directory / model['filename']
-                if not model['filepath'].exists():
-                    raise FileNotFoundError('Checkpoint is incorrect: protobuf file not found. '
-                                            f'filepath: {model["filepath"]}')
+        sha1 = hashlib.sha1(pickled).hexdigest()
+        if sha1 != sha1_orig:
+            raise ValueError(f'Hash dose not match, checkpoint may be incorrect. '
+                             f'expected: {sha1_orig} actual: {sha1}')
 
-            model_strings = {model_name: model['filepath'].read_bytes()
-                             for model_name, model in data['models'].items()}
-
-        for model_name, model in data['models'].items():
-            sha1 = hashlib.sha1(model_strings[model_name]).hexdigest()
-            if sha1 != model['sha1']:
-                raise ValueError('Checkpoint may be incorrect: hash dose not match. '
-                                 f'filepath: {model["filepath"]} expected: {model["sha1"]} actual: {sha1}')
-
-        self.create_time = datetime.fromisoformat(data['create_time'])
-        return {model_name: parse_proto_object(model['buffer_name'], model_strings[model_name])
-                for model_name, model in data['models'].items()}
+        return pickle.loads(pickled)
 
     def remove(self):
-        self.create_time = None
-        rmtree(self.directory)
-        self.directory.mkdir(0o755)
+        with self.lock:
+            for i in (self.hashpath, self.filepath):
+                try:
+                    i.unlink()
+                except FileNotFoundError:
+                    pass
 
 
 class CheckpointManager:
@@ -137,16 +129,12 @@ class CheckpointManager:
 
     def load_checkpoints_from_disk(self):
         checkpoints = []
-        for directory in self.directory.glob('*'):
-            if not directory.is_dir() or '#' not in directory.name:
+        for filepath in self.directory.glob('*.pickle'):
+            if not filepath.with_suffix('.sha1').exists():
                 continue
 
-            step_index, step_name = directory.name.split('#', 1)
-            checkpoint = Checkpoint(self.directory, int(step_index), step_name)
-
-            if not checkpoint.available:
-                continue
-            checkpoints.append(checkpoint)
+            step_index, step_name = filepath.name.rsplit('.', 1)[0].split('#', 1)
+            checkpoints.append(Checkpoint(self.directory, int(step_index), step_name))
 
         self.checkpoints = deque(sorted(checkpoints, key=lambda i: i.step_index), self.max_checkpoints_number)
 
@@ -202,5 +190,5 @@ class CheckpointManager:
 
     def clean(self):
         self.checkpoints = deque(maxlen=self.max_checkpoints_number)
-        rmtree(self.directory)
+        rmtree(self.directory, True)
         self.directory.mkdir(0o755)

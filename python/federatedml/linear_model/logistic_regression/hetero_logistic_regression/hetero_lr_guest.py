@@ -103,9 +103,11 @@ class HeteroLRGuest(HeteroLRBase):
         if not self.component_properties.is_warm_start:
             w = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
             self.model_weights = LinearModelWeights(w, fit_intercept=self.fit_intercept)
+        else:
+            self.callback_warm_start_init_iter(self.n_iter_)
 
         while self.n_iter_ < self.max_iter:
-            self.callback_list.on_epoch_start(self.n_iter_)
+            self.callback_list.on_epoch_begin(self.n_iter_)
             LOGGER.info("iter:{}".format(self.n_iter_))
             batch_data_generator = self.batch_generator.generate_batch_data()
             self.optimizer.set_iters(self.n_iter_)
@@ -143,9 +145,8 @@ class HeteroLRGuest(HeteroLRBase):
 
             if self.is_converged:
                 break
+        self.callback_list.on_train_end()
 
-        if self.validation_strategy and self.validation_strategy.has_saved_best_model():
-            self.load_model(self.validation_strategy.cur_best_model)
         self.set_summary(self.get_model_summary())
 
     @assert_io_num_rows_equal

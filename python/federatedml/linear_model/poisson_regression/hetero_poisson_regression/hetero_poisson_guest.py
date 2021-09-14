@@ -49,8 +49,9 @@ class HeteroPoissonGuest(HeteroPoissonBase):
         LOGGER.info("Enter hetero_poisson_guest fit")
         self._abnormal_detection(data_instances)
         self.header = copy.deepcopy(self.get_header(data_instances))
+        self.callback_list.on_train_begin(data_instances, validate_data)
 
-        self.validation_strategy = self.init_validation_strategy(data_instances, validate_data)
+        # self.validation_strategy = self.init_validation_strategy(data_instances, validate_data)
 
         self.exposure_index = self.get_exposure_index(self.header, self.exposure_colname)
         exposure_index = self.exposure_index
@@ -75,8 +76,11 @@ class HeteroPoissonGuest(HeteroPoissonBase):
         if not self.component_properties.is_warm_start:
             w = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
             self.model_weights = LinearModelWeights(w, fit_intercept=self.fit_intercept, raise_overflow_error=False)
+        else:
+            self.callback_warm_start_init_iter(self.n_iter_)
 
         while self.n_iter_ < self.max_iter:
+            self.callback_list.on_epoch_begin(self.n_iter_)
             LOGGER.info("iter:{}".format(self.n_iter_))
             # each iter will get the same batch_data_generator
             batch_data_generator = self.batch_generator.generate_batch_data()
@@ -108,14 +112,10 @@ class HeteroPoissonGuest(HeteroPoissonBase):
             self.is_converged = self.converge_procedure.sync_converge_info(suffix=(self.n_iter_,))
             LOGGER.info("iter: {},  is_converged: {}".format(self.n_iter_, self.is_converged))
 
-            self.add_checkpoint(step_index=self.n_iter_, step_name=self.flowid)
+            self.callback_list.on_epoch_end(self.n_iter_)
+            if self.stop_training:
+                break
 
-            if self.validation_strategy:
-                LOGGER.debug('Poisson guest running validation')
-                self.validation_strategy.validate(self, self.n_iter_)
-                if self.validation_strategy.need_stop():
-                    LOGGER.debug('early stopping triggered')
-                    break
             self.n_iter_ += 1
             if self.is_converged:
                 break

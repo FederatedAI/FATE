@@ -26,19 +26,18 @@ from federatedml.util import consts
 
 class BinningAdapter(BaseAdapter):
 
-    def convert(self, model_meta, model_param):
-        values_dict = dict(model_param.binning_result.binning_result)
+    def _load_one_class(self, local_result, remote_results):
+        values_dict = dict(local_result.binning_result)
         values = []
         col_names = []
         for n, v in values_dict.items():
             values.append(v.iv)
             col_names.append(n)
-        host_results = list(model_param.host_results)
         # LOGGER.debug(f"In binning adapter convert, host_results: {host_results}")
-        host_party_ids = [int(x.party_id) for x in host_results]
+        host_party_ids = [int(x.party_id) for x in remote_results]
         host_values = []
         host_col_names = []
-        for host_obj in host_results:
+        for host_obj in remote_results:
             binning_result = dict(host_obj.binning_result)
             h_values = []
             h_col_names = []
@@ -56,6 +55,26 @@ class BinningAdapter(BaseAdapter):
             host_values=host_values,
             host_col_names=host_col_names
         )
+        return single_info
+
+    def convert(self, model_meta, model_param):
+
+        multi_class_result = model_param.multi_class_result
+        has_remote_result = multi_class_result.has_host_result
+        label_counts = len(list(multi_class_result.labels))
+        local_results = list(multi_class_result.results)
+        host_results = list(multi_class_result.host_results)
+
         result = isometric_model.IsometricModel()
-        result.add_metric_value(metric_name=consts.IV, metric_info=single_info)
+        for idx, lr in enumerate(local_results):
+            if label_counts == 2:
+                result.add_metric_value(metric_name=f"iv",
+                                        metric_info=self._load_one_class(lr, host_results))
+            else:
+                if has_remote_result:
+                    remote_results = [hs for i, hs in enumerate(host_results) if (i % label_counts) == idx]
+                else:
+                    remote_results = []
+                result.add_metric_value(metric_name=f"iv",
+                                        metric_info=self._load_one_class(lr, remote_results))
         return result
