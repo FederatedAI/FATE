@@ -138,6 +138,7 @@ class HomoBoostingClient(Boosting, ABC):
         if self.is_warm_start:
             self.y_hat = self.predict(data_inst, ret_format='raw')
             self.boosting_round += self.start_round
+            self.callback_warm_start_init_iter(self.start_round)
         else:
             self.y_hat, self.init_score = self.get_init_score(self.y, self.num_classes)
 

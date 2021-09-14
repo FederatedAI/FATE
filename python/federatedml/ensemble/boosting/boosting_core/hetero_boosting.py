@@ -145,6 +145,7 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
                                                           'previous model labels {}'.format(classes, self.classes_)
         # check fid
         self.feat_name_check(data_inst, self.feature_name_fid_mapping)
+        self.callback_warm_start_init_iter(self.start_round)
 
     def fit(self, data_inst, validate_data=None):
 
@@ -292,6 +293,7 @@ class HeteroBoostingHost(HeteroBoosting, ABC):
 
     def prepare_warm_start(self, data_inst):
         self.predict(data_inst)
+        self.callback_warm_start_init_iter(self.start_round)
 
     def fit(self, data_inst, validate_data=None):
 
