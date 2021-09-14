@@ -233,7 +233,7 @@ class HeteroSBTFeatureTransformerGuest(HeteroSBTFeatureTransformerBase):
         self._abnormal_detection(data_inst)
         # predict instances to get leaf indexes
         LOGGER.info('tree model running prediction')
-        predict_rs = self.tree_model.predict(data_inst, pred_leaf=True)
+        predict_rs = self.tree_model.predict(data_inst, ret_format='leaf')
         LOGGER.info('tree model prediction done')
 
         # transform pred result to new data table
