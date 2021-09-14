@@ -23,9 +23,9 @@ def _suffix(self):
 
 
 def server_init_model(self, param):
-    self.aggregate_iteration_num = 0
+    self.aggregate_iteration_num = -1
     self.aggregator = secure_mean_aggregator.Server(
-        self.transfer_variable.secure_aggregator_trans_var
+        self.transfer_variable.secure_aggregator_trans_var, enable_secure_aggregate=False,
     )
     self.loss_scatter = loss_scatter.Server(
         self.transfer_variable.loss_scatter_trans_var
@@ -50,14 +50,17 @@ def server_fit(self, data_inst):
     if not self.component_properties.is_warm_start:
         label_mapping = HomoLabelEncoderArbiter().label_alignment()
         LOGGER.info(f"label mapping: {label_mapping}")
-    while self.aggregate_iteration_num < self.max_aggregate_iteration_num:
+    while self.aggregate_iteration_num + 1 < self.max_aggregate_iteration_num:
+        # update iteration num
+        self.aggregate_iteration_num += 1
+
+        self.callback_list.on_epoch_begin(self.aggregate_iteration_num)
         self.model = self.aggregator.weighted_mean_model(suffix=_suffix(self))
         self.aggregator.send_aggregated_model(model=self.model, suffix=_suffix(self))
-
+        self.callback_list.on_epoch_end(self.aggregate_iteration_num)
         if server_is_converged(self):
             LOGGER.info(f"early stop at iter {self.aggregate_iteration_num}")
             break
-        self.aggregate_iteration_num += 1
     else:
         LOGGER.warn(f"reach max iter: {self.aggregate_iteration_num}, not converged")
     self.set_summary(self._summary)
@@ -123,9 +126,10 @@ def client_set_params(self, param):
 
 
 def client_init_model(self, param):
-    self.aggregate_iteration_num = 0
+    self.aggregate_iteration_num = -1
     self.aggregator = secure_mean_aggregator.Client(
-        self.transfer_variable.secure_aggregator_trans_var
+        self.transfer_variable.secure_aggregator_trans_var, enable_secure_aggregate=False,
+
     )
     self.loss_scatter = loss_scatter.Client(
         self.transfer_variable.loss_scatter_trans_var
@@ -157,7 +161,11 @@ def client_fit(self, data_inst):
 
     epoch_degree = float(len(data)) * self.aggregate_every_n_epoch
 
-    while self.aggregate_iteration_num < self.max_aggregate_iteration_num:
+    while self.aggregate_iteration_num + 1 < self.max_aggregate_iteration_num:
+        # update iteration num
+        self.aggregate_iteration_num += 1 
+
+        self.callback_list.on_epoch_begin(self.aggregate_iteration_num)
         LOGGER.info(f"start {self.aggregate_iteration_num}_th aggregation")
 
         # train
@@ -171,7 +179,7 @@ def client_fit(self, data_inst):
         )
         weights = self.aggregator.get_aggregated_model(suffix=_suffix(self))
         self.nn_model.set_model_weights(weights=weights)
-
+        self.callback_list.on_epoch_end(self.aggregate_iteration_num)
         # calc loss and check convergence
         if client_is_converged(self, data, epoch_degree):
             LOGGER.info(f"early stop at iter {self.aggregate_iteration_num}")
@@ -180,7 +188,6 @@ def client_fit(self, data_inst):
         LOGGER.info(
             f"role {self.role} finish {self.aggregate_iteration_num}_th aggregation"
         )
-        self.aggregate_iteration_num += 1
     else:
         LOGGER.warn(f"reach max iter: {self.aggregate_iteration_num}, not converged")
 
