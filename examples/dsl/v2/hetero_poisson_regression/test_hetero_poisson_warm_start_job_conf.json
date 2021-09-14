@@ -40,7 +40,10 @@
                     "mode": "fast"
                 },
                 "decay_sqrt": false,
-                "exposure_colname": "exposure"
+                "exposure_colname": "exposure",
+                "callback_param": {
+                    "callbacks": ["ModelCheckpoint"]
+                }
             },
             "hetero_poisson_1": {
                 "penalty": "L2",

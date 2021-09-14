@@ -58,6 +58,7 @@ def main(config="../../config.yaml", namespace=""):
     hetero_poisson_0 = HeteroPoisson(name="hetero_poisson_0", early_stop="weight_diff", max_iter=3,
                                      alpha=100.0, batch_size=-1, learning_rate=0.01, optimizer="rmsprop",
                                      exposure_colname="exposure", decay_sqrt=False, tol=0.001,
+                                     callback_param={"callbacks": ["ModelCheckpoint"]},
                                      init_param={"init_method": "zeros"}, penalty="L2",
                                      encrypted_mode_calculator_param={"mode": "fast"})
 

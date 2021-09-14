@@ -39,6 +39,9 @@
                 "encrypted_mode_calculator_param": {
                     "mode": "fast"
                 },
+                "callback_param": {
+                    "callbacks": ["ModelCheckpoint"]
+                },
                 "decay": 0.0,
                 "decay_sqrt": false,
                 "floating_point_precision": 23

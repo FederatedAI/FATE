@@ -57,13 +57,14 @@ def main(config="../../config.yaml", namespace=""):
     hetero_linr_0 = HeteroLinR(name="hetero_linr_0", penalty="L2", optimizer="sgd", tol=0.001,
                                alpha=0.01, max_iter=5, early_stop="weight_diff", batch_size=-1,
                                learning_rate=0.15, decay=0.0, decay_sqrt=False,
+                               callback_param={"callbacks": ["ModelCheckpoint"]},
                                init_param={"init_method": "zeros"},
                                encrypted_mode_calculator_param={"mode": "fast"},
                                floating_point_precision=23)
 
     evaluation_0 = Evaluation(name="evaluation_0", eval_type="regression", pos_label=1)
 
-    hetero_linr_1 = HeteroLinR(name="hetero_linr_1", is_warm_start=True, max_iter=15,
+    hetero_linr_1 = HeteroLinR(name="hetero_linr_1", max_iter=15,
                                penalty="L2", optimizer="sgd", tol=0.001,
                                alpha=0.01, early_stop="weight_diff", batch_size=-1,
                                learning_rate=0.15, decay=0.0, decay_sqrt=False,
