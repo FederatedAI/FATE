@@ -168,6 +168,10 @@ class HeteroLRHost(HeteroLRBase):
     #     return param_protobuf_obj
 
     def _get_param(self):
+        if self.need_cv:
+            param_protobuf_obj = lr_model_param_pb2.LRModelParam()
+            return param_protobuf_obj
+
         self.header = self.header if self.header else []
         LOGGER.debug("In get_param, self.need_one_vs_rest: {}".format(self.need_one_vs_rest))
 
