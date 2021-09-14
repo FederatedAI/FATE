@@ -47,6 +47,13 @@ DH Intersection
 This mode implements secure intersection based on symmetric encryption with Pohlig–Hellman commutative cipher.
 DH Intersection is also used in `Secure Information Retrieval(SIR) module <../../secure_information_retrieval>`_.
 
+Intersection With Cache
+-----------------------
+
+Intersection may be conducted as online/offline phases.
+Both RSA and DH Intersection support cache. For examples employing cache mechanism,
+please refer `here <../../../../examples/pipeline/intersect>`_.
+
 Multi-Host Intersection
 -----------------------
 

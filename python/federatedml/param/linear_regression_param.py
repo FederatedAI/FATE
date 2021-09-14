@@ -19,7 +19,7 @@
 
 import copy
 
-from federatedml.param.base_param import BaseParam
+from federatedml.param.base_param import BaseParam, deprecated_param
 from federatedml.param.callback_param import CallbackParam
 from federatedml.param.encrypt_param import EncryptParam
 from federatedml.param.encrypted_mode_calculation_param import EncryptedModeCalculatorParam
@@ -31,6 +31,7 @@ from federatedml.param.stepwise_param import StepwiseParam
 from federatedml.util import consts
 
 
+@deprecated_param("validation_freqs", "metrics", "early_stopping_rounds", "use_first_metric_only")
 class LinearParam(BaseParam):
     """
     Parameters used for Linear Regression.
@@ -221,29 +222,20 @@ class LinearParam(BaseParam):
             raise ValueError(
                 descr + "decay_sqrt {} not supported, should be 'bool'".format(self.decay)
             )
-        if self.validation_freqs is not None:
-            if type(self.validation_freqs).__name__ not in ["int", "list", "tuple", "set"]:
-                raise ValueError(
-                    "validation strategy param's validate_freqs's type not supported , should be int or list or tuple or set"
-                )
-            if type(self.validation_freqs).__name__ == "int" and self.validation_freqs <= 0:
-                raise ValueError("validation strategy param's validate_freqs should greater than 0")
         self.sqn_param.check()
         self.stepwise_param.check()
 
-        if self.early_stopping_rounds is None:
-            pass
-        elif isinstance(self.early_stopping_rounds, int):
-            if self.early_stopping_rounds < 1:
-                raise ValueError("early stopping rounds should be larger than 0 when it's integer")
-            if self.validation_freqs is None:
-                raise ValueError("validation freqs must be set when early stopping is enabled")
+        if self._warn_to_deprecate_param("validation_freqs", descr, "callback_param's 'validation_freqs'"):
+            self.callback_param.early_stopping_rounds = self.early_stopping_rounds
 
-        if self.metrics is not None and not isinstance(self.metrics, list):
-            raise ValueError("metrics should be a list")
+        if self._warn_to_deprecate_param("early_stopping_rounds", descr, "callback_param's 'early_stopping_rounds'"):
+            self.callback_param.early_stopping_rounds = self.early_stopping_rounds
 
-        if not isinstance(self.use_first_metric_only, bool):
-            raise ValueError("use_first_metric_only should be a boolean")
+        if self._warn_to_deprecate_param("metrics", descr, "callback_param's 'metrics'"):
+            self.callback_param.metrics = self.metrics
+
+        if self._warn_to_deprecate_param("use_first_metric_only", descr, "callback_param's 'use_first_metric_only'"):
+            self.callback_param.use_first_metric_only = self.use_first_metric_only
 
         if self.floating_point_precision is not None and \
                 (not isinstance(self.floating_point_precision, int) or

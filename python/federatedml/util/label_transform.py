@@ -48,7 +48,7 @@ class LabelTransformer(ModelBase):
         self.label_list = params.label_list
         self.need_run = params.need_run
 
-    def get_label_encoder(self, data):
+    def update_label_encoder(self, data):
         if self.label_encoder is not None:
             LOGGER.info(f"label encoder provided")
             if self.label_list is not None:
@@ -69,8 +69,7 @@ class LabelTransformer(ModelBase):
             self.encoder_key_type = {str(k): type(k).__name__ for k in self.label_encoder.keys()}
         self.encoder_value_type = {str(k): type(v).__name__ for k, v in self.label_encoder.items()}
 
-        label_encoder = {load_value_to_type(k, self.encoder_key_type[str(k)]): v for k, v in self.label_encoder.items()}
-        return label_encoder
+        self.label_encoder = {load_value_to_type(k, self.encoder_key_type[str(k)]): v for k, v in self.label_encoder.items()}
 
     def _get_meta(self):
         meta = label_transform_meta_pb2.LabelTransformMeta(
@@ -130,17 +129,26 @@ class LabelTransformer(ModelBase):
     @staticmethod
     def replace_instance_label(instance, label_encoder):
         new_instance = copy.deepcopy(instance)
-        new_instance.label = label_encoder[instance.label]
+        label_replace_val = label_encoder.get(instance.label)
+        if label_replace_val is None:
+            raise ValueError(f"{instance.label} not found in given label encoder")
+        new_instance.label = label_replace_val
         return new_instance
 
     @staticmethod
     def replace_predict_label(predict_inst, label_encoder):
         transform_predict_inst = copy.deepcopy(predict_inst)
         true_label, predict_label, predict_score, predict_detail, result_type = transform_predict_inst.features
-        true_label, predict_label = label_encoder[true_label], label_encoder[predict_label]
+        # true_label, predict_label = label_encoder[true_label], label_encoder[predict_label]
+        true_label_replace_val, predict_label_replace_val = label_encoder.get(true_label), label_encoder.get(predict_label)
+        if true_label_replace_val is None:
+            raise ValueError(f"{true_label_replace_val} not found in given label encoder")
+        if predict_label_replace_val is None:
+            raise ValueError(f"{predict_label_replace_val} not found in given label encoder")
         label_encoder_detail = {str(k): v for k, v in label_encoder.items()}
         predict_detail = {label_encoder_detail[label]: score for label, score in predict_detail.items()}
-        transform_predict_inst.features = [true_label, predict_label, predict_score, predict_detail, result_type]
+        transform_predict_inst.features = [true_label_replace_val, predict_label_replace_val, predict_score,
+                                           predict_detail, result_type]
         return transform_predict_inst
 
     @staticmethod
@@ -186,7 +194,7 @@ class LabelTransformer(ModelBase):
 
     def fit(self, data):
         LOGGER.info(f"Enter Label Transform Fit")
-        self.label_encoder = self.get_label_encoder(data)
+        self.update_label_encoder(data)
 
         result_data = LabelTransformer.transform_data_label(data, self.label_encoder)
         result_data.schema = data.schema
