@@ -47,8 +47,6 @@ def main(config="../../config.yaml", namespace=""):
     arbiter = parties.arbiter[0]
     guest_train_data = {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"}
     host_train_data = {"name": "breast_hetero_host", "namespace": f"experiment{namespace}"}
-    # guest_train_data = {"name": "default_credit_hetero_guest", "namespace": f"experiment{namespace}"}
-    # host_train_data = {"name": "default_credit_hetero_host", "namespace": f"experiment{namespace}"}
 
     # initialize pipeline
     pipeline = PipeLine()
@@ -97,8 +95,7 @@ def main(config="../../config.yaml", namespace=""):
                                               objective_param={"objective": "cross_entropy"},
                                               encrypt_param={"method": "iterativeAffine"},
                                               tree_param={"max_depth": 3},
-                                              validation_freqs=1,
-                                              is_warm_start=True)
+                                              validation_freqs=1)
 
     pipeline.add_component(hetero_secure_boost_0, data=Data(train_data=intersection_0.output.data))
     pipeline.add_component(hetero_secure_boost_1, data=Data(train_data=intersection_0.output.data),
