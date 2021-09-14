@@ -170,6 +170,9 @@ class Imputer(object):
         summary_obj = MultivariateStatisticalSummary(data, -1, abnormal_list=self.missing_value_list)
         header = get_header(data)
         cols_transform_value = {}
+        if isinstance(replace_value, list):
+            if len(replace_value) != len(header):
+                raise ValueError(f"replace value {replace_value} length does not match with header {header}, please check.")
         for i, feature in enumerate(header):
             if replace_method[feature] is None:
                 transform_value = None
@@ -182,18 +185,24 @@ class Imputer(object):
             elif replace_method[feature] == consts.MEDIAN:
                 transform_value = summary_obj.get_median()[feature]
             elif replace_method[feature] == consts.DESIGNATED:
-                transform_value = replace_value
+                if isinstance(replace_value, list):
+                    transform_value = replace_value[i]
+                else:
+                    transform_value = replace_value
+                LOGGER.debug(f"replace value for feature {feature} is: {transform_value}")
             else:
                 raise ValueError("Unknown replace method:{}".format(replace_method))
             cols_transform_value[feature] = transform_value
 
         cols_transform_value = [round(cols_transform_value[key], 6) for key in header if cols_transform_value[key]]
         # cols_transform_value = {i: round(cols_transform_value[key], 6) for i, key in enumerate(header)}
+        LOGGER.debug(f"cols_transform value is: {cols_transform_value}")
         return cols_transform_value
 
     def __fit_replace(self, data, replace_method, replace_value=None, output_format=None,
                       col_replace_method=None):
-        if (replace_method is not None and replace_method != consts.DESIGNATED) or col_replace_method is not None:
+        """
+        if replace_method is not None or col_replace_method is not None:
             replace_method_per_col, skip_cols = self.__get_cols_transform_method(data, replace_method, col_replace_method)
             cols_transform_value = self.__get_cols_transform_value(data, replace_method_per_col,
                                                                    replace_value=replace_value)
@@ -213,6 +222,7 @@ class Imputer(object):
             LOGGER.info(
                 "finish replace missing value with cols transform value, replace method is {}".format(replace_method))
             return transform_data, cols_transform_value
+
         else:
             if replace_value is None:
                 raise ValueError("Replace value should not be None")
@@ -233,8 +243,26 @@ class Imputer(object):
             replace_value = [replace_value for _ in range(shape)]
             header = get_header(data)
             self.cols_replace_method = {feature: replace_method for feature in header}
+        """
+        replace_method_per_col, skip_cols = self.__get_cols_transform_method(data, replace_method, col_replace_method)
+        cols_transform_value = self.__get_cols_transform_value(data, replace_method_per_col,
+                                                               replace_value=replace_value)
+        self.skip_cols = skip_cols
+        skip_cols = [get_header(data).index(v) for v in skip_cols]
+        if output_format is not None:
+            f = functools.partial(Imputer.__replace_missing_value_with_cols_transform_value_format,
+                                  transform_list=cols_transform_value, missing_value_list=self.missing_value_list,
+                                  output_format=output_format, skip_cols=set(skip_cols))
+        else:
+            f = functools.partial(Imputer.__replace_missing_value_with_cols_transform_value,
+                                  transform_list=cols_transform_value, missing_value_list=self.missing_value_list,
+                                  skip_cols=set(skip_cols))
 
-            return transform_data, replace_value
+        transform_data = data.mapValues(f)
+        self.cols_replace_method = replace_method_per_col
+        LOGGER.info(
+            "finish replace missing value with cols transform value, replace method is {}".format(replace_method))
+        return transform_data, cols_transform_value
 
     def __transform_replace(self, data, transform_value, replace_area, output_format, skip_cols):
         skip_cols = [get_header(data).index(v) for v in skip_cols]
