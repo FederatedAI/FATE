@@ -212,7 +212,6 @@ class HomoNNClient(HomoNNBase):
         else:
             self.set_version(model_obj.api_version)
 
-        print("api_version", self._api_version)
         if self.is_version_0():
             from federatedml.nn.homo_nn import _version_0
 

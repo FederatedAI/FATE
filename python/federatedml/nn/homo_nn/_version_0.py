@@ -50,6 +50,8 @@ def server_fit(self, data_inst):
     if not self.component_properties.is_warm_start:
         label_mapping = HomoLabelEncoderArbiter().label_alignment()
         LOGGER.info(f"label mapping: {label_mapping}")
+    else:
+        self.callback_warm_start_init_iter(self.aggregate_iteration_num + 1)
     while self.aggregate_iteration_num + 1 < self.max_aggregate_iteration_num:
         # update iteration num
         self.aggregate_iteration_num += 1
@@ -158,6 +160,8 @@ def client_fit(self, data_inst):
             loss=self.loss,
             metrics=self.metrics,
         )
+    else:
+        self.callback_warm_start_init_iter(self.aggregate_iteration_num + 1)
 
     epoch_degree = float(len(data)) * self.aggregate_every_n_epoch
 
