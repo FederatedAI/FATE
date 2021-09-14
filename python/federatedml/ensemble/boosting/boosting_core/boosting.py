@@ -117,6 +117,7 @@ class Boosting(ModelBase, ABC):
         self.subsample_feature_rate = boosting_param.subsample_feature_rate
         self.binning_error = boosting_param.binning_error
         self.is_warm_start = self.component_properties.is_warm_start
+        LOGGER.debug('warm start is {}'.format(self.is_warm_start))
 
         if boosting_param.random_seed is not None:
             self.random_seed = boosting_param.random_seed

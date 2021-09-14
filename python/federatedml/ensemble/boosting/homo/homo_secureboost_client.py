@@ -32,7 +32,7 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
         self.zero_as_missing = False
         self.cur_epoch_idx = -1
         self.grad_and_hess = None
-        self.feature_importance = {}
+        self.feature_importance_ = {}
         self.model_param = HomoSecureBoostParam()
 
         # memory back end
@@ -82,10 +82,10 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
     def update_feature_importance(self, tree_feature_importance):
 
         for fid in tree_feature_importance:
-            if fid not in self.feature_importance:
-                self.feature_importance[fid] = tree_feature_importance[fid]
+            if fid not in self.feature_importance_:
+                self.feature_importance_[fid] = tree_feature_importance[fid]
             else:
-                self.feature_importance[fid] += tree_feature_importance[fid]
+                self.feature_importance_[fid] += tree_feature_importance[fid]
 
     """
     Functions for memory backends
@@ -211,7 +211,7 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
             weights = weights.reshape((-1, class_num))
             return np.sum(weights * learning_rate, axis=0) + init_score
         else:
-            return float(np.sum(weights * learning_rate, axis=0) + init_score)
+            return np.sum(weights * learning_rate, axis=0) + init_score
 
     def fast_homo_tree_predict(self, data_inst, ret_format='std'):
 
@@ -248,7 +248,7 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
     def generate_summary(self) -> dict:
 
         summary = {'feature_importance': make_readable_feature_importance(self.feature_name_fid_mapping,
-                                                                          self.feature_importance),
+                                                                          self.feature_importance_),
                    'validation_metrics': self.callback_variables.validation_summary}
 
         return summary
@@ -259,14 +259,16 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
         return tree_inst
 
     def load_feature_importance(self, feat_importance_param):
+        
         param = list(feat_importance_param)
         rs_dict = {}
         for fp in param:
-            key = (fp.sitename, fp.fid)
+            key = fp.fid
             importance = FeatureImportance()
             importance.from_protobuf(fp)
             rs_dict[key] = importance
-        self.feature_importances_ = rs_dict
+        self.feature_importance_ = rs_dict
+        LOGGER.debug('load feature importance": {}'.format(self.feature_importance_))
 
     def set_model_param(self, model_param):
 
@@ -305,7 +307,7 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
         model_param.best_iteration = -1
         model_param.model_name = consts.HOMO_SBT
 
-        feature_importance = list(self.feature_importance.items())
+        feature_importance = list(self.feature_importance_.items())
         feature_importance = sorted(feature_importance, key=itemgetter(1), reverse=True)
         feature_importance_param = []
         for fid, importance in feature_importance:

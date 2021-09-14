@@ -89,9 +89,9 @@ def main(config="../../config.yaml", namespace=""):
                                               tree_param={"max_depth": 3},
                                               validation_freqs=1)
 
-    hetero_secure_boost_1 = HeteroSecureBoost(name="hetero_secure_boost_0",
+    hetero_secure_boost_1 = HeteroSecureBoost(name="hetero_secure_boost_1",
                                               num_trees=3,
-                                              task_type="regression",
+                                              task_type="classification",
                                               objective_param={"objective": "cross_entropy"},
                                               encrypt_param={"method": "iterativeAffine"},
                                               tree_param={"max_depth": 3},
