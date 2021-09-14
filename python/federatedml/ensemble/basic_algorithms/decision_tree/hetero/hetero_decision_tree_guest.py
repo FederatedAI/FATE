@@ -823,9 +823,11 @@ class HeteroDecisionTreeGuest(DecisionTree):
         model_meta.use_missing = self.use_missing
         model_meta.zero_as_missing = self.zero_as_missing
 
+
         return model_meta
 
     def set_model_meta(self, model_meta):
+
         self.max_depth = model_meta.max_depth
         self.min_sample_split = model_meta.min_sample_split
         self.min_impurity_split = model_meta.min_impurity_split

@@ -12,6 +12,7 @@ from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import Objectiv
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import QuantileMeta
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import BoostingTreeModelParam
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import FeatureImportanceInfo
+from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.feature_importance import FeatureImportance
 from federatedml.ensemble import HeteroSecureBoostingTreeGuest
 from federatedml.util.io_check import assert_io_num_rows_equal
 from federatedml.feature.fate_element_type import NoneType
@@ -31,7 +32,7 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
         self.zero_as_missing = False
         self.cur_epoch_idx = -1
         self.grad_and_hess = None
-        self.feature_importance = {}
+        self.feature_importance_ = {}
         self.model_param = HomoSecureBoostParam()
 
         # memory back end
@@ -81,10 +82,10 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
     def update_feature_importance(self, tree_feature_importance):
 
         for fid in tree_feature_importance:
-            if fid not in self.feature_importance:
-                self.feature_importance[fid] = tree_feature_importance[fid]
+            if fid not in self.feature_importance_:
+                self.feature_importance_[fid] = tree_feature_importance[fid]
             else:
-                self.feature_importance[fid] += tree_feature_importance[fid]
+                self.feature_importance_[fid] += tree_feature_importance[fid]
 
     """
     Functions for memory backends
@@ -172,6 +173,7 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
             self.grad_and_hess = self.compute_local_grad_and_hess(self.y_hat)
             self.cur_epoch_idx = epoch_idx
 
+        LOGGER.debug('grad and hess is {}'.format(list(self.grad_and_hess.collect())))
         subtree_g_h = self.get_subtree_grad_and_hess(self.grad_and_hess, booster_dim)
         flow_id = self.generate_flowid(epoch_idx, booster_dim)
         new_tree = HomoDecisionTreeClient(self.tree_param, self.data_bin, self.bin_split_points,
@@ -209,9 +211,11 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
             weights = weights.reshape((-1, class_num))
             return np.sum(weights * learning_rate, axis=0) + init_score
         else:
-            return float(np.sum(weights * learning_rate, axis=0) + init_score)
+            return np.sum(weights * learning_rate, axis=0) + init_score
 
-    def fast_homo_tree_predict(self, data_inst):
+    def fast_homo_tree_predict(self, data_inst, ret_format='std'):
+
+        assert ret_format in ['std', 'raw'], 'illegal ret format'
 
         LOGGER.info('running fast homo tree predict')
         to_predict_data = self.data_and_header_alignment(data_inst)
@@ -228,17 +232,23 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
                                  zero_as_missing=self.zero_as_missing, use_missing=self.use_missing,
                                  learning_rate=self.learning_rate, class_num=self.booster_dim)
         predict_rs = to_predict_data.mapValues(func)
-        return self.score_to_predict_result(data_inst, predict_rs)
+
+        if ret_format == 'std':
+            return self.score_to_predict_result(data_inst, predict_rs)
+        elif ret_format == 'raw':
+            return predict_rs
+        else:
+            raise ValueError('illegal ret format')
 
     @assert_io_num_rows_equal
-    def predict(self, data_inst):
-        rs = self.fast_homo_tree_predict(data_inst)
-        return rs
+    def predict(self, data_inst, ret_format='std'):
+        return self.fast_homo_tree_predict(data_inst, ret_format=ret_format)
+
 
     def generate_summary(self) -> dict:
 
         summary = {'feature_importance': make_readable_feature_importance(self.feature_name_fid_mapping,
-                                                                          self.feature_importance),
+                                                                          self.feature_importance_),
                    'validation_metrics': self.callback_variables.validation_summary}
 
         return summary
@@ -248,28 +258,43 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
         tree_inst.load_model(model_meta=model_meta, model_param=model_param)
         return tree_inst
 
+    def load_feature_importance(self, feat_importance_param):
+        
+        param = list(feat_importance_param)
+        rs_dict = {}
+        for fp in param:
+            key = fp.fid
+            importance = FeatureImportance()
+            importance.from_protobuf(fp)
+            rs_dict[key] = importance
+        self.feature_importance_ = rs_dict
+        LOGGER.debug('load feature importance": {}'.format(self.feature_importance_))
+
     def set_model_param(self, model_param):
+
         self.boosting_model_list = list(model_param.trees_)
         self.init_score = np.array(list(model_param.init_score))
         self.classes_ = list(map(int, model_param.classes_))
         self.booster_dim = model_param.tree_dim
         self.num_classes = model_param.num_classes
         self.feature_name_fid_mapping.update(model_param.feature_name_fid_mapping)
-
+        self.load_feature_importance(model_param.feature_importances)
         # initialize loss function
         self.loss = self.get_loss_function()
 
     def set_model_meta(self, model_meta):
 
-        self.booster_meta = model_meta.tree_meta
+        if not self.is_warm_start:
+            self.boosting_round = model_meta.num_trees
+            self.n_iter_no_change = model_meta.n_iter_no_change
+            self.tol = model_meta.tol
+            self.bin_num = model_meta.quantile_meta.bin_num
+
         self.learning_rate = model_meta.learning_rate
-        self.boosting_round = model_meta.num_trees
-        self.bin_num = model_meta.quantile_meta.bin_num
+        self.booster_meta = model_meta.tree_meta
         self.objective_param.objective = model_meta.objective_meta.objective
         self.objective_param.params = list(model_meta.objective_meta.param)
         self.task_type = model_meta.task_type
-        self.n_iter_no_change = model_meta.n_iter_no_change
-        self.tol = model_meta.tol
 
     def get_model_param(self):
         model_param = BoostingTreeModelParam()
@@ -282,7 +307,7 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
         model_param.best_iteration = -1
         model_param.model_name = consts.HOMO_SBT
 
-        feature_importance = list(self.feature_importance.items())
+        feature_importance = list(self.feature_importance_.items())
         feature_importance = sorted(feature_importance, key=itemgetter(1), reverse=True)
         feature_importance_param = []
         for fid, importance in feature_importance:

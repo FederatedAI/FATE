@@ -62,7 +62,7 @@ class HomoDecisionTreeClient(DecisionTree):
         self.cur_layer_node = []
         self.runtime_idx = 0
         self.sitename = consts.GUEST
-        self.feature_importance = {}
+        self.feature_importance_ = {}
 
         # memory backend
         self.arr_bin_data = None
@@ -272,7 +272,7 @@ class HomoDecisionTreeClient(DecisionTree):
         return inst2node.mapValues(func)
 
     def get_feature_importance(self):
-        return self.feature_importance
+        return self.feature_importance_
 
     def convert_bin_to_real(self):
         """
