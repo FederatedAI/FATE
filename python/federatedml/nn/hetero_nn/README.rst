@@ -117,6 +117,6 @@ Other features
 - Support low floating-point optimization since FATE-v1.6.0
 - Support drop out strategy of interactive layer since FATE-v1.6.0
 
-[1] Qiao Zhang, Cong Wang, Hongyi Wu, Chunsheng Xin and Tran V. Phuong. GELU-Net: A Globally Encrypted, Locally Unencrypted Deep Neural Network for Privacy-Preserved Learning.
+[1] Zhang Q, Wang C, Wu H, et al. GELU-Net: A Globally Encrypted, Locally Unencrypted Deep Neural Network for Privacy-Preserved Learning[C]//IJCAI. 2018: 3933-3939.
 
-[2] Yifei Zhang, Hao Zhu. Deep Neural Network for Collaborative Machine Learning with Additively Homomorphic Encryption.IJCAI FL Workshop 2019
+[2] Zhang Y, Zhu H. Additively Homomorphical Encryption based Deep Neural Network for Asymmetrically Collaborative Machine Learning[J]. arXiv preprint arXiv:2007.06849, 2020. 
