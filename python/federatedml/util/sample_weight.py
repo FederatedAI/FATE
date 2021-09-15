@@ -19,7 +19,7 @@
 import copy
 import numpy as np
 
-from fate_flow.entity.metric import Metric, MetricMeta
+from federatedml.model_base import Metric, MetricMeta
 from federatedml.model_base import ModelBase
 from federatedml.statistic import data_overview
 from federatedml.param.sample_weight_param import SampleWeightParam

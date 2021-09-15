@@ -18,7 +18,7 @@ import math
 import numpy as np
 
 from fate_arch import session
-from fate_flow.entity.metric import MetricMeta
+from federatedml.model_base import MetricMeta
 from federatedml.model_base import ModelBase
 from federatedml.param.pearson_param import PearsonParam
 from federatedml.secureprotol.spdz import SPDZ

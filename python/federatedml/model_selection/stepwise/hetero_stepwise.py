@@ -22,7 +22,7 @@ from google.protobuf.json_format import MessageToDict
 from sklearn import metrics
 from sklearn.linear_model import LogisticRegression, LinearRegression
 
-from fate_flow.entity.metric import Metric, MetricMeta
+from federatedml.model_base import Metric, MetricMeta
 from federatedml.evaluation.metrics.regression_metric import IC, IC_Approx
 from federatedml.model_selection.stepwise.step import Step
 from federatedml.statistic import data_overview

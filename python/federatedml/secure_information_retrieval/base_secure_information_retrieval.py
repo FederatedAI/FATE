@@ -19,7 +19,7 @@
 
 
 from federatedml.protobuf.generated import sir_meta_pb2, sir_param_pb2
-from fate_flow.entity.metric import Metric, MetricMeta
+from federatedml.model_base import Metric, MetricMeta
 from federatedml.model_base import ModelBase
 from federatedml.param.sir_param import SecureInformationRetrievalParam
 from federatedml.statistic.intersect.match_id_process import MatchIDIntersect
