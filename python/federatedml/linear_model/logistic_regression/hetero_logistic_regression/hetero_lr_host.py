@@ -119,6 +119,7 @@ class HeteroLRHost(HeteroLRBase):
             self.model_weights = LinearModelWeights(w, fit_intercept=self.init_param_obj.fit_intercept)
         else:
             self.callback_warm_start_init_iter(self.n_iter_)
+            self.n_iter_ += 1
 
         while self.n_iter_ < self.max_iter:
             self.callback_list.on_epoch_begin(self.n_iter_)
