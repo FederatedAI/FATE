@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 from fate_arch.computing import is_table
-from fate_flow.entity.metric import Metric, MetricMeta
+from federatedml.model_base import Metric, MetricMeta
 from federatedml.framework.homo.blocks.base import HomoTransferBase
 from federatedml.framework.homo.blocks.has_converged import HasConvergedTransVar
 from federatedml.framework.homo.blocks.loss_scatter import LossScatterTransVar

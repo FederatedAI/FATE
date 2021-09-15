@@ -16,7 +16,7 @@
 from collections import defaultdict
 import math
 from federatedml.util import LOGGER
-from fate_flow.entity.metric import Metric, MetricMeta
+from federatedml.model_base import Metric, MetricMeta
 from federatedml.param import EvaluateParam
 from federatedml.util import consts
 from federatedml.model_base import ModelBase
