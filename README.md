@@ -26,16 +26,37 @@ tree-based algorithms, deep learning and transfer learning.
 - Native [Cluster-deploy](./cluster-deploy).
 - [Run unittest](./python/federatedml/test/)
 - [Run Job with FATE-PipeLine](./doc/tutorial/pipeline/fate_client_pipeline_tutotial.rst)
-- [Run Job with DSL json conf](./doc/tutorial/dsl_conf)
+- [Run Job with DSL json conf](./doc/tutorial/dsl_conf/dsl_conf_v2_setting_guide.rst)
 - [Run Job on Jupyter Notebook](./doc/tutorial/pipeline/pipeline_tutorial_0.ipynb)
 
-## Doc
-### API doc
-FATE provides some API documents in [doc-api](https://fate.readthedocs.io/en/latest/?badge=latest)
-### Develop Guide doc
-How to develop your federated learning algorithm using FATE? you can see FATE develop guide document in [develop-guide](./doc/develop_guide.rst)
-### Other doc
-FATE also provides many other documents in [doc](./doc/). These documents can help you understand FATE better.
+## Documentation 
+
+### Understand FATE Design 
+
+- [FATE structure]
+- [Modules]
+- [Algorithm Parameters]
+- [Papers & Articles]
+
+### Tools & Services
+
+- [FATE-Flow](https://github.com/FederatedAI/FATE-Flow)
+- [FATE-Board](https://github.com/FederatedAI/FATE-Board)
+- [FATE-Serving](https://github.com/FederatedAI/FATE-Serving)
+- [FATE-Cloud](https://github.com/FederatedAI/FATE-Cloud)
+
+### Contribute to FATE
+
+- [develop guide](./doc/community/develop_guide.rst)
+- [setting guide for developing FATE-Client](./python/fate_client/DEV_README.rst)
+
+### API References
+
+- [Computing API](./doc/api/computing.rst)
+- [Federation API](./doc/api/federation.rst)
+- [Flow SDK API](https://fate.readthedocs.io/en/latest/_build_temp/python/fate_client/flow_sdk/README.html)
+- [Flow Client](https://fate.readthedocs.io/en/latest/_build_temp/python/fate_client/flow_client/README.html#)
+- [Pipeline]()
 
 ## Getting Involved
 
