@@ -244,8 +244,18 @@ class LogisticParam(BaseParam):
                  self.floating_point_precision < 0 or self.floating_point_precision > 63):
             raise ValueError("floating point precision should be null or a integer between 0 and 63")
 
-        for p in deprecated_param_list:
-            self._warn_deprecated_param(p, descr)
+        if self._warn_to_deprecate_param("validation_freqs", descr, "callback_param's 'validation_freqs'"):
+            self.callback_param.early_stopping_rounds = self.early_stopping_rounds
+
+        if self._warn_to_deprecate_param("early_stopping_rounds", descr, "callback_param's 'early_stopping_rounds'"):
+            self.callback_param.early_stopping_rounds = self.early_stopping_rounds
+
+        if self._warn_to_deprecate_param("metrics", descr, "callback_param's 'metrics'"):
+            self.callback_param.metrics = self.metrics
+
+        if self._warn_to_deprecate_param("use_first_metric_only", descr, "callback_param's 'use_first_metric_only'"):
+            self.callback_param.use_first_metric_only = self.use_first_metric_only
+
 
         return True
 
