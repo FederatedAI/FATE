@@ -32,8 +32,7 @@ from federatedml.util import fate_operator
 
 
 def _table_binary_op(x, y, q_field, op):
-    # return x.join(y, lambda a, b: op(a, b) % q_field)
-    return x.join(y, lambda a, b: op(a, b))
+    return x.join(y, lambda a, b: op(a, b) % q_field)
 
 
 def _table_scalar_op(x, d, op):
@@ -111,30 +110,30 @@ class FixedPointTensor(TensorBase):
     def shape(self):
         return self.value.count(), len(self.value.first()[1])
 
-    def dot_local(self, other: 'FixedPointTensor', target_name=None):
-        if target_name is None:
-            target_name = NamingService.get_instance().next()
-        res = table_dot(self.value, other.value)
-        return fixedpoint_numpy.FixedPointTensor(res, self.q_field, self.endec, target_name)
-
-    def dot_array(self, array, fit_intercept=False):
-        def _dot(x):
-            if fit_intercept:
-                coef = array[:-1]
-                bias = array[-1]
-                res = fate_operator.vec_dot(x, coef) + bias
-            else:
-                res = fate_operator.vec_dot(x, array)
-
-            if not isinstance(res, np.ndarray):
-                res = np.array([res])
-            return res
-
-        return self._boxed(self.value.mapValues(_dot))
-
-    def convert_to_array_tensor(self):
-        array = np.array([x[1] for x in self.value.collect()])
-        return fixedpoint_numpy.FixedPointTensor(array, q_field=self.q_field, endec=self.endec)
+    # def dot_local(self, other: 'FixedPointTensor', target_name=None):
+    #     if target_name is None:
+    #         target_name = NamingService.get_instance().next()
+    #     res = table_dot(self.value, other.value)
+    #     return fixedpoint_numpy.FixedPointTensor(res, self.q_field, self.endec, target_name)
+    #
+    # def dot_array(self, array, fit_intercept=False):
+    #     def _dot(x):
+    #         if fit_intercept:
+    #             coef = array[:-1]
+    #             bias = array[-1]
+    #             res = fate_operator.vec_dot(x, coef) + bias
+    #         else:
+    #             res = fate_operator.vec_dot(x, array)
+    #
+    #         if not isinstance(res, np.ndarray):
+    #             res = np.array([res])
+    #         return res
+    #
+    #     return self._boxed(self.value.mapValues(_dot))
+    #
+    # def convert_to_array_tensor(self):
+    #     array = np.array([x[1] for x in self.value.collect()])
+    #     return fixedpoint_numpy.FixedPointTensor(array, q_field=self.q_field, endec=self.endec)
 
     @classmethod
     def from_source(cls, tensor_name, source, **kwargs):

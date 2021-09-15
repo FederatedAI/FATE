@@ -16,7 +16,6 @@
 import numpy as np
 
 from fate_arch.common import Party
-from fate_arch.session import is_table
 from federatedml.secureprotol.spdz.beaver_triples import beaver_triplets
 from federatedml.secureprotol.spdz.tensor.base import TensorBase
 from federatedml.secureprotol.spdz.utils.random_utils import urand_tensor
@@ -168,20 +167,17 @@ class FixedPointTensor(TensorBase):
         return self.__str__()
 
     def _raw_add(self, other):
-        # z_value = (self.value + other) % self.q_field
-        z_value = (self.value + other)
+        z_value = (self.value + other) % self.q_field
         return self._boxed(z_value)
 
     def _raw_sub(self, other):
-        # z_value = (self.value - other) % self.q_field
-        z_value = (self.value - other)
+        z_value = (self.value - other) % self.q_field
         return self._boxed(z_value)
 
     def __add__(self, other):
         if isinstance(other, FixedPointTensor):
             return self._raw_add(other.value)
-        # z_value = (self.value + self.endec.encode(other / 2)) % self.q_field
-        z_value = (self.value + self.endec.encode(other / 2))
+        z_value = (self.value + self.endec.encode(other / 2)) % self.q_field
         return self._boxed(z_value)
 
     def __radd__(self, other):
@@ -191,8 +187,7 @@ class FixedPointTensor(TensorBase):
     def __sub__(self, other):
         if isinstance(other, FixedPointTensor):
             return self._raw_sub(other.value)
-        # z_value = (self.value - self.endec.encode(other / 2)) % self.q_field
-        z_value = (self.value - self.endec.encode(other / 2))
+        z_value = (self.value - self.endec.encode(other / 2)) % self.q_field
         return self._boxed(z_value)
 
     def __rsub__(self, other):
