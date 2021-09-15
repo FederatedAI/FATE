@@ -1,32 +1,27 @@
-apsw-wheels==3.36.0.post1
+apsw==3.9.2.post1
 beautifultable==1.0.0
 cachetools==3.0.0
 cloudpickle==0.6.1
 cos-python-sdk-v5==1.8.0
 Flask==1.0.2
 gmpy2==2.0.8
-joblib==1.0.1
 kazoo==2.6.1
-kfserving==0.5.1
-kubernetes>=12.0.1
 lmdb==0.98
-minio>=6.0.2
-numpy>=1.18.4
+numpy>=1.18.4, <1.19.0
 peewee==3.9.3
 psutil>=5.7.0
 pycryptodomex==3.6.6
-PyMySQL==1.0.2
+PyMySQL==0.9.3
 pyspark==3.1.2
 python-dotenv==0.13.0
 redis==3.0.1
-requests==2.23.0
+requests==2.24.0
 requests_toolbelt==0.9.1
 ruamel-yaml==0.16.10
-scikit-learn==0.24.2
+scikit-learn==0.19.2
 scipy==1.1.0
 tensorflow==2.3.4
 torch==1.4.0
-torch-model-archiver==0.3.1
 torchvision==0.5.0
 Werkzeug==0.15.3
 coverage==4.5.2
@@ -35,13 +30,10 @@ pandas==1.1.5
 cryptography==3.2.1
 libsm3py==0.0.1
 sortedcontainers==2.2.2
-pytorch-lightning>=1.2.1
+pytorch-lightning>=1.2.1,<1.4.0
 filelock==3.0.12
 pulsar-client==2.8.0
 fastavro==1.4.1
-
-# python 3.6
-backports-datetime-fromisoformat==1.0.0
 
 # addtional requirements for eggroll
 grpcio==1.24.3
@@ -51,3 +43,13 @@ llvmlite==0.33.0
 phe>=1.4.0
 protobuf>=3.6.1
 pyarrow==0.17.1
+
+# addtional requirements for fate-client
+click>=7.1.2,<8.0.0
+colorama>=0.4.4
+loguru>=0.5.1,<0.6.0
+poetry>=0.12
+prettytable>=1.0.0,<2.0.0
+setuptools>=50.0,<51.0
+sshtunnel>=0.1.5,<0.2.0
+packaging<21.0,>=20.4
