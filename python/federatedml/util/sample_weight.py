@@ -40,6 +40,7 @@ class SampleWeight(ModelBase):
         self.model_param_name = "SampleWeightModelParam"
         self.weight_mode = None
         self.header = None
+        self.class_weight_dict = None
 
     def _init_model(self, params):
         self.model_param = params
@@ -100,15 +101,18 @@ class SampleWeight(ModelBase):
 
     def transform_weighted_instance(self, data_instances, weight_loc):
         if self.class_weight and self.class_weight == 'balanced':
-            self.class_weight = SampleWeight.get_class_weight(data_instances)
-        return SampleWeight.assign_sample_weight(data_instances, self.class_weight, weight_loc, self.normalize)
+            self.class_weight_dict = SampleWeight.get_class_weight(data_instances)
+        else:
+            if self.class_weight_dict is None:
+                self.class_weight_dict = self.class_weight
+        return SampleWeight.assign_sample_weight(data_instances, self.class_weight_dict, weight_loc, self.normalize)
 
     def callback_info(self):
         class_weight = None
         classes = None
-        if self.class_weight:
-            class_weight = {str(k): v for k, v in self.class_weight.items()}
-            classes = sorted([str(k) for k in self.class_weight.keys()])
+        if self.class_weight_dict:
+            class_weight = {str(k): v for k, v in self.class_weight_dict.items()}
+            classes = sorted([str(k) for k in self.class_weight_dict.keys()])
         # LOGGER.debug(f"callback class weight is: {class_weight}")
 
         metric_meta = MetricMeta(name='train',
@@ -129,11 +133,11 @@ class SampleWeight(ModelBase):
 
     def export_model(self):
         meta_obj = SampleWeightModelMeta(sample_weight_name=self.sample_weight_name,
-                                    normalize=self.normalize,
-                                    need_run=self.need_run)
+                                         normalize=self.normalize,
+                                         need_run=self.need_run)
         param_obj = SampleWeightModelParam(header=self.header,
-                                      weight_mode = self.weight_mode,
-                                      class_weight=self.class_weight)
+                                           weight_mode = self.weight_mode,
+                                           class_weight=self.class_weight_dict)
         result = {
             self.model_meta_name: meta_obj,
             self.model_param_name: param_obj
@@ -148,7 +152,7 @@ class SampleWeight(ModelBase):
         self.need_run = meta_obj.need_run
         self.weight_mode = param_obj.weight_mode
         if self.weight_mode == "class weight":
-            self.class_weight = {k: v for k, v in param_obj.class_weight.items()}
+            self.class_weight_dict = {k: v for k, v in param_obj.class_weight.items()}
         elif self.weight_mode == "sample weight name":
             self.sample_weight_name = meta_obj.sample_weight_name
             self.normalize = meta_obj.normalize
