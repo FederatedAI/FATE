@@ -41,6 +41,10 @@
         "sample-weight-multi-host": {
             "conf": "./sample_weight_multi_host_job_conf.json",
             "dsl": "./sample_weight_job_dsl.json"
+        },
+        "sample-weight-transform": {
+            "conf": "./sample_weight_balanced_job_conf.json",
+            "dsl": "./sample_weight_transform_job_dsl.json"
         }
     }
 }

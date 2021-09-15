@@ -243,6 +243,25 @@ def check_with_inst_id(data_instances):
     return False
 
 
+def scale_sample_weight(data_instances):
+    data_count = data_instances.count()
+    def _sum_all_weight(kv_iterator):
+        weight_sum = 0
+        for _, v in kv_iterator:
+            weight_sum += v.weight
+        return weight_sum
+    total_weight = data_instances.mapPartitions(_sum_all_weight).reduce(lambda x, y: x + y)
+    # LOGGER.debug(f"weight_sum is : {total_weight}")
+    scale_factor = data_count / total_weight
+    # LOGGER.debug(f"scale factor is : {total_weight}")
+    def _replace_weight(instance):
+        new_weight = instance.weight * scale_factor
+        instance.set_weight(new_weight)
+        return instance
+    scaled_instances = data_instances.mapValues(lambda v: _replace_weight(v))
+    return scaled_instances
+
+
 class DataStatistics(object):
     def __init__(self):
         self.multivariate_statistic_obj = None

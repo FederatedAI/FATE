@@ -21,6 +21,10 @@ This section introduces the dsl and conf for different types of tasks.
 
     script: pipeline-sample-weight-multi-host.py
 
+5. Sample Weight Transform Task:
+
+    script: pipeline-sample-weight-transform.py
+
 Users can use following commands to run pipeline job directly.
 
     python ${pipeline_script}
