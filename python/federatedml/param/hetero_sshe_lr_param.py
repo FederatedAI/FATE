@@ -115,9 +115,7 @@ class LogisticRegressionParam(BaseParam):
                  max_iter=100, early_stop='diff', encrypt_param=EncryptParam(),
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  decay=1, decay_sqrt=True,
-                 multi_class='ovr', validation_freqs=None, early_stopping_rounds=None,
-                 metrics=None,
-                 use_first_metric_only=False, use_mix_rand=False,
+                 multi_class='ovr', use_mix_rand=False,
                  random_field=1 << 20, reveal_strategy="respectively", compute_loss=True,
                  reveal_every_iter=True,
                  callback_param=CallbackParam()

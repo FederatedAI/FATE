@@ -17,7 +17,7 @@
 #
 import copy
 
-from federatedml.param.base_param import BaseParam
+from federatedml.param.base_param import BaseParam, deprecated_param
 from federatedml.util import consts
 
 
@@ -386,6 +386,12 @@ class ManuallyFilterParam(BaseParam):
         return True
 
 
+deprecated_param_list = ["iv_value_param", "iv_percentile_param",
+                         "iv_top_k_param", "variance_coe_param", "unique_param",
+                         "outlier_param"]
+
+
+@deprecated_param(*deprecated_param_list)
 class FeatureSelectionParam(BaseParam):
     """
     Define the feature selection parameters.
@@ -558,3 +564,10 @@ class FeatureSelectionParam(BaseParam):
                 raise ValueError("For VIF filter, metrics should be 'vif'")
 
         self.correlation_param.check()
+
+        self._warn_to_deprecate_param("iv_value_param", descr, "iv_param")
+        self._warn_to_deprecate_param("iv_percentile_param", descr, "iv_param")
+        self._warn_to_deprecate_param("iv_top_k_param", descr, "iv_param")
+        self._warn_to_deprecate_param("variance_coe_param", descr, "statistic_param")
+        self._warn_to_deprecate_param("unique_param", descr, "statistic_param")
+        self._warn_to_deprecate_param("outlier_param", descr, "statistic_param")
