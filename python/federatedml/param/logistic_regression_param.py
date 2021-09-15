@@ -18,18 +18,22 @@
 #
 import copy
 
-from federatedml.param.base_param import BaseParam
+from federatedml.param.base_param import BaseParam, deprecated_param
+from federatedml.param.callback_param import CallbackParam
 from federatedml.param.cross_validation_param import CrossValidationParam
 from federatedml.param.encrypt_param import EncryptParam
 from federatedml.param.encrypted_mode_calculation_param import EncryptedModeCalculatorParam
 from federatedml.param.init_model_param import InitParam
 from federatedml.param.predict_param import PredictParam
-from federatedml.param.stepwise_param import StepwiseParam
 from federatedml.param.sqn_param import StochasticQuasiNewtonParam
-from federatedml.param.callback_param import CallbackParam
+from federatedml.param.stepwise_param import StepwiseParam
 from federatedml.util import consts
 
+deprecated_param_list = ["early_stopping_rounds", "validation_freqs", "metrics",
+                         "use_first_metric_only"]
 
+
+@deprecated_param(*deprecated_param_list)
 class LogisticParam(BaseParam):
     """
     Parameters used for Logistic Regression both for Homo mode or Hetero mode.
@@ -236,9 +240,13 @@ class LogisticParam(BaseParam):
             raise ValueError("use_first_metric_only should be a boolean")
 
         if self.floating_point_precision is not None and \
-                (not isinstance(self.floating_point_precision, int) or\
+                (not isinstance(self.floating_point_precision, int) or \
                  self.floating_point_precision < 0 or self.floating_point_precision > 63):
             raise ValueError("floating point precision should be null or a integer between 0 and 63")
+
+        for p in deprecated_param_list:
+            self._warn_deprecated_param(p, descr)
+
         return True
 
 
@@ -262,6 +270,7 @@ class HomoLogisticParam(LogisticParam):
         To scale the proximal term
 
     """
+
     def __init__(self, penalty='L2',
                  tol=1e-4, alpha=1.0, optimizer='rmsprop',
                  batch_size=-1, learning_rate=0.01, init_param=InitParam(),
