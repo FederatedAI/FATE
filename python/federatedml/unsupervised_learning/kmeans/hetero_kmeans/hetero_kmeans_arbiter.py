@@ -17,8 +17,8 @@
 import numpy as np
 
 from fate_arch.session import computing_session as session
-from fate_flow.entity.metric import Metric
-from fate_flow.entity.metric import MetricMeta
+from federatedml.model_base import Metric
+from federatedml.model_base import MetricMeta
 from federatedml.evaluation.metrics import clustering_metric
 from federatedml.feature.instance import Instance
 from federatedml.framework.hetero.procedure import table_aggregator

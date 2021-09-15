@@ -1,7 +1,7 @@
 import json
 
 from fate_arch.session import computing_session
-from fate_flow.entity.metric import MetricMeta, Metric
+from federatedml.model_base import MetricMeta, Metric
 from federatedml.framework.homo.blocks import (
     secure_mean_aggregator,
     loss_scatter,
