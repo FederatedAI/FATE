@@ -49,3 +49,4 @@ class HeteroLinRTransferVariable(BaseTransferVariables):
         self.loss_intermediate = self._create_variable(name='loss_intermediate', src=['host'], dst=['guest'])
         self.paillier_pubkey = self._create_variable(name='paillier_pubkey', src=['arbiter'], dst=['host', 'guest'])
         self.sqn_sample_index = self._create_variable(name='sqn_sample_index', src=['guest'], dst=['host'])
+        self.use_async = self._create_variable(name='use_async', src=['guest'], dst=['host'])

@@ -221,8 +221,6 @@ class Guest(HeteroGradientBase):
         half_g = self.compute_gradient(data_instances, self.half_d, False)
         self.host_forwards = self.get_host_forward(suffix=current_suffix)
         host_forward = self.host_forwards[0]
-        if self.use_sample_weight:
-            host_forward = host_forward.join(data_instances, lambda h, v: h * v.weight)
         host_half_g = self.compute_gradient(data_instances, host_forward, False)
         unilateral_gradient = half_g + host_half_g
         if model_weights.fit_intercept:
