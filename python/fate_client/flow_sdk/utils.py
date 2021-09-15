@@ -67,36 +67,32 @@ def check_config(config: typing.Dict, required_arguments: typing.List):
 
 
 def preprocess(**kwargs):
-    config_data = {}
-    if "self" in kwargs:
-        kwargs.pop("self")
+    kwargs.pop('self', None)
+    config_data = kwargs.pop('config_data', {})
+    dsl_data = kwargs.pop('dsl_data', {})
 
-    if kwargs.get("conf_path"):
-        conf_path = os.path.abspath(kwargs.get("conf_path"))
-        with open(conf_path, "r") as conf_fp:
-            config_data = json.load(conf_fp)
+    output_path = kwargs.pop('output_path', None)
+    if output_path is not None:
+        config_data['output_path'] = os.path.abspath(output_path)
 
-        if config_data.get("output_path"):
-            config_data["output_path"] = os.path.abspath(config_data["output_path"])
+    local = config_data.pop('local', {})
+    party_id = kwargs.pop('party_id', None)
+    role = kwargs.pop('role', None)
+    if party_id is not None:
+        local['party_id'] = int(party_id)
+    if role is not None:
+        local['role'] = role
+    if local:
+        config_data['local'] = local
 
-        if ("party_id" in kwargs.keys()) or ("role" in kwargs.keys()):
-            config_data["local"] = config_data.get("local", {})
-            if kwargs.get("party_id"):
-                config_data["local"]["party_id"] = kwargs.get("party_id")
-            if kwargs.get("role"):
-                config_data["local"]["role"] = kwargs.get("role")
+    for k, v in kwargs.items():
+        if v is not None:
+            if k in {'job_id', 'model_version'}:
+                v = str(v)
+            elif k in {'party_id', 'step_index'}:
+                v = int(v)
+            config_data[k] = v
 
-    config_data.update(dict((k, v) for k, v in kwargs.items() if v is not None))
-
-    for key in ["job_id", "party_id"]:
-        if isinstance(config_data.get(key), int):
-            config_data[key] = str(config_data[key])
-
-    dsl_data = {}
-    if kwargs.get("dsl_path"):
-        dsl_path = os.path.abspath(kwargs.get("dsl_path"))
-        with open(dsl_path, "r") as dsl_fp:
-            dsl_data = json.load(dsl_fp)
     return config_data, dsl_data
 
 
