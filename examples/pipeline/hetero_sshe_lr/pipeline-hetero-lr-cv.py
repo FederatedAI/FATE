@@ -18,7 +18,7 @@ import argparse
 import json
 
 from pipeline.backend.pipeline import PipeLine
-from pipeline.component.hetero_secureboost import HeteroSecureBoost
+from pipeline.component.hetero_sshe_lr import HeteroSSHELR
 from pipeline.component.dataio import DataIO
 from pipeline.component.evaluation import Evaluation
 from pipeline.component.intersection import Intersection
@@ -44,16 +44,18 @@ def main(config="../../config.yaml", namespace=""):
     parties = config.parties
     guest = parties.guest[0]
     hosts = parties.host[0]
-    arbiter = parties.arbiter[0]
+
     guest_train_data = {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"}
     host_train_data = {"name": "breast_hetero_host", "namespace": f"experiment{namespace}"}
+    # guest_train_data = {"name": "default_credit_hetero_guest", "namespace": f"experiment{namespace}"}
+    # host_train_data = {"name": "default_credit_hetero_host", "namespace": f"experiment{namespace}"}
 
     # initialize pipeline
     pipeline = PipeLine()
     # set job initiator
     pipeline.set_initiator(role='guest', party_id=guest)
     # set participants information
-    pipeline.set_roles(guest=guest, host=hosts, arbiter=arbiter)
+    pipeline.set_roles(guest=guest, host=hosts)
 
     # define Reader components to read in data
     reader_0 = Reader(name="reader_0")
@@ -80,29 +82,36 @@ def main(config="../../config.yaml", namespace=""):
 
     pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
 
-    # secure boost component
-    hetero_secure_boost_0 = HeteroSecureBoost(name="hetero_secure_boost_0",
-                                              num_trees=3,
-                                              task_type="classification",
-                                              objective_param={"objective": "cross_entropy"},
-                                              encrypt_param={"method": "iterativeAffine"},
-                                              tree_param={"max_depth": 3},
-                                              validation_freqs=1)
+    lr_param = {
+        "name": "hetero_sshe_lr_0",
+        "penalty": "L2",
+        "optimizer": "sgd",
+        "tol": 0.0001,
+        "alpha": 0.01,
+        "max_iter": 30,
+        "early_stop": "diff",
+        "batch_size": -1,
+        "learning_rate": 0.15,
+        "init_param": {
+            "init_method": "zeros",
+            "fit_intercept": True
+        },
+        "encrypt_param": {
+            "key_length": 1024
+        },
+        "cv_param": {
+            "n_splits": 3,
+            "shuffle": False,
+            "random_seed": 103,
+            "need_cv": True
+        },
+        "reveal_every_iter": True,
+        "compute_loss": True,
+        "reveal_strategy": "respectively"
+    }
 
-    hetero_secure_boost_1 = HeteroSecureBoost(name="hetero_secure_boost_1",
-                                              num_trees=3,
-                                              task_type="classification",
-                                              objective_param={"objective": "cross_entropy"},
-                                              encrypt_param={"method": "iterativeAffine"},
-                                              tree_param={"max_depth": 3},
-                                              validation_freqs=1)
-
-    pipeline.add_component(hetero_secure_boost_0, data=Data(train_data=intersection_0.output.data))
-    pipeline.add_component(hetero_secure_boost_1, data=Data(train_data=intersection_0.output.data),
-                           model=Model(model=hetero_secure_boost_0.output.model))
-
-    evaluation_0 = Evaluation(name="evaluation_0", eval_type="binary")
-    pipeline.add_component(evaluation_0, data=Data(data=hetero_secure_boost_1.output.data))
+    hetero_sshe_lr_0 = HeteroSSHELR(**lr_param)
+    pipeline.add_component(hetero_sshe_lr_0, data=Data(train_data=intersection_0.output.data))
 
     pipeline.compile()
 
@@ -110,9 +119,19 @@ def main(config="../../config.yaml", namespace=""):
     job_parameters = JobParameters(backend=backend, work_mode=work_mode)
     pipeline.fit(job_parameters)
     # query component summary
-    prettify(pipeline.get_component("hetero_secure_boost_0").get_summary())
-    prettify(pipeline.get_component("hetero_secure_boost_1").get_summary())
-    prettify(pipeline.get_component("evaluation_0").get_summary())
+    prettify(pipeline.get_component("hetero_sshe_lr_0").get_summary())
+
+    # pipeline.deploy_component([dataio_0, intersection_0, hetero_sshe_lr_0])
+    #
+    # predict_pipeline = PipeLine()
+    # # add data reader onto predict pipeline
+    # predict_pipeline.add_component(reader_0)
+    # # add selected components from train pipeline onto predict pipeline
+    # # specify data source
+    # predict_pipeline.add_component(pipeline,
+    #                                data=Data(predict_input={pipeline.dataio_0.input.data: reader_0.output.data}))
+    # # run predict model
+    # predict_pipeline.predict(job_parameters)
 
     return pipeline
 

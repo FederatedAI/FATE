@@ -74,7 +74,7 @@ class JobInvoker(object):
 
             result = self.client.data.upload(conf_path=submit_path, verbose=1, drop=drop)
             try:
-                if 'retcode' not in result or result["retcode"] != 0 or result["retcode"] != 0:
+                if 'retcode' not in result or result["retcode"] != 0:
                     raise ValueError
 
                 if "jobId" not in result:

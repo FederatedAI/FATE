@@ -376,7 +376,8 @@ class Session(object):
     def cleanup(self, name, namespace):
         data_path = _get_data_dir()
         if not data_path.is_dir():
-            raise EnvironmentError(f"illegal data dir: {data_path}")
+            LOGGER.error(f"illegal data dir: {data_path}")
+            return
 
         # e.g.: '/fate/data/202109081519036144070_reader_0_0_host_10000'
         namespace_dir = data_path.joinpath(namespace)
@@ -388,7 +389,9 @@ class Session(object):
             namespace_dir = namespace_dir.with_name(stem)
 
             if not namespace_dir.is_dir():
-                raise EnvironmentError(f"namespace dir {namespace_dir} does not exist")
+                # TODO: find the reason
+                LOGGER.warning(f"namespace dir {namespace_dir} does not exist")
+                return
 
         for table in namespace_dir.glob(name):
             shutil.rmtree(table)
