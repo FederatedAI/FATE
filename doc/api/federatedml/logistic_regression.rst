@@ -11,7 +11,7 @@ Homogeneous LR
 
 As the name suggested, in HomoLR, the feature spaces of guest and hosts are identical. An optional encryption mode for computing gradients is provided for host parties. By doing this, the plain model is not available for this host any more. 
 
-.. figure:: images/HomoLR.png
+.. figure:: ../../images/HomoLR.png
    :alt: samples
    :width: 500
    :name: lr figure 1
@@ -28,7 +28,7 @@ Heterogeneous LR
 
 The HeteroLR carries out the federated learning in a different way. As shown in Figure 2, A sample alignment process is conducted before training. This sample alignment process is to identify overlapping samples stored in databases of the two involved parties. The federated model is built based on those overlapping samples. The whole sample alignment process will **not** leak confidential information (e.g., sample ids) on the two parties since it is conducted in an encrypted way. Check out `[paper 1] <https://arxiv.org/abs/1711.10677>`_ for more details. 
 
-.. figure:: images/HeteroLR.png
+.. figure:: ../../images/HeteroLR.png
    :width: 500
    :name: lr figure 2
    :align: center
@@ -45,7 +45,7 @@ Multi-host hetero-lr
 
 For multi-host scenario, the gradient computation still keep the same as single-host case. However, we use the second-norm of the difference of model weights between two consecutive iterations as the convergence criterion. Since the arbiter can obtain the completed model weight, the convergence decision is happening in Arbiter.
 
-.. figure:: images/hetero_lr_multi_host.png
+.. figure:: ../../images/hetero_lr_multi_host.png
    :width: 500
    :name: lr figure 3
    :align: center

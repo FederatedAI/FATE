@@ -12,7 +12,7 @@ Heterogeneous LinR
 The process of HeteroLinR training is shown below:
 
 
-.. figure:: images/HeteroLinR.png
+.. figure:: ../../images/HeteroLinR.png
    :align: center
    :width: 500
    :name: linaer figure 1
