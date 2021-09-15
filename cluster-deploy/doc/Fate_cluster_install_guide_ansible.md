@@ -887,4 +887,4 @@ partitions （roll pair分区数）= egg_num * n
 1. egg_num：配置task_cores或者配置eggroll_run中processors_per_node参数
 2. partitions：配置computing_partitions
 
-更多关于作业提交配置请参考[dsl_conf_v2_setting_guide_zh](../../doc/dsl_conf_v2_setting_guide_zh.rst)
+更多关于作业提交配置请参考[dsl_conf_v2_setting_guide_zh](../../doc/tutorial/dsl_conf/dsl_conf_v2_setting_guide_zh.rst)
