@@ -1,7 +1,7 @@
 Components
 ==========
 
-Each ``Component`` wraps a `FederatedML <../../../federatedml>`__ ``Module``.
+Each ``Component`` wraps a `FederatedML <./federatedml_module.rst>`__ ``Module``.
 ``Modules`` implement machine learning algorithms on federated learning,
 while ``Components`` provide convenient interface for easy model building.
 

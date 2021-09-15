@@ -14,7 +14,7 @@ revealing no information on private data.
 
 The following figure shows the proposed Federated SecureBoost framework.
 
-.. figure:: images/secureboost.png
+.. figure::  ../../images/secureboost.png
    :align: center
    :width: 500
 
@@ -48,7 +48,7 @@ the active party decrypts them and finds the best gains. If the best-gain featur
 the active party sends the encoded (feature, split_bin_val) to back to the owner party. The following
 figure shows the process of finding split in federated tree building.
 
-.. figure:: images/split_finding.png
+.. figure:: ../../images/split_finding.png
    :align: center
    :width: 500
    
@@ -58,7 +58,7 @@ The parties continue the split finding process until tree construction finishes.
 the detailed split information of the tree nodes where the split features are provided by the party.
 The following figure shows the final structure of a single decision tree.
 
-.. figure:: images/tree_structure.png
+.. figure:: ../../images/tree_structure.png
    :align: center
    :width: 500
    
@@ -70,7 +70,7 @@ whether going to left child node or right; otherwise, the active party sends the
 the passive party checks its lookup table and sends back which branch should the current node goes to.
 This process stops until the current node is a leave. The following figure shows the federated inference process.
 
-.. figure:: images/federated_inference.png
+.. figure:: ../../images/federated_inference.png
    :align: center
    :width: 500
 
@@ -111,9 +111,9 @@ Other features
 * Support missing value in train and predict process
 * Support evaluate training and validate data during training process
 * Support another homomorphic encryption method called "Iterative Affine" since FATE-1.1 
-* Support early stopping in FATE-1.4, to use early stopping, see `[Boosting Tree Param] <../param/boosting_param.py>`_
+* Support early stopping in FATE-1.4, to use early stopping, see `[Boosting Tree Param] <../../../python/federatedml/param/boosting_param.py>`_
 * Support sparse data optimization in FATE-1.5. You can activate it by setting "sparse_optimization" as true in conf.
-  Notice that this feature may increase memory consumption. See `here <../../param/boosting_param.py>`__.
+  Notice that this feature may increase memory consumption. See `here <../../../python/federatedml/param/boosting_param.py>`__.
 * Support feature subsample random seed setting in FATE-1.5
 * Support feature binning error setting.
 
@@ -126,7 +126,7 @@ leaking any data sample.
 
 The figure below shows the overall framework of the homo SecureBoost algorithm.
 
-.. figure:: images/homo_framework.png
+.. figure:: ../../images/homo_framework.png
    :align: center
    :width: 500
 
@@ -150,7 +150,7 @@ The key steps of learning a Homo SecureBoost model are described below:
     
    (2) The server applies secure aggregations: every local histogram plus a random number, and these numbers can cancel each other out. By this way server can get the global histogram without knowing any local histograms and data leakage is prevented. Figure below shows how histogram secure aggregations are conducted.
 
-       .. figure:: images/secure_agg.png
+       .. figure:: ../../images/secure_agg.png
           :align: center
           :width: 500
 
@@ -160,7 +160,7 @@ The key steps of learning a Homo SecureBoost model are described below:
     
    (4) After getting the best split points, clients build the next layer for the current decision tree and re-assign samples. If current decision tree reaches the max depth or stop conditions are fulfilled, stop build the current tree, else go back to step (1). Figure below shows the procedure of fitting a decision tree.
 
-       .. figure:: images/homo_fit.png
+       .. figure:: ../../images/homo_fit.png
           :align: center
           :width: 500
 
@@ -213,7 +213,7 @@ Hetero Complete Secureboost
 Now Hetero SecureBoost adds a new option: complete_secure. Once enabled, the boosting model will only use guest features
 to build the first decision tree. This can avoid label leakages, accord to `[SecureBoost: A Lossless Federated Learning Framework]. <https://arxiv.org/abs/1901.08755>`_
 
-       .. figure:: images/complete_secure.png
+       .. figure:: ../../images/complete_secure.png
           :align: center
           :width: 500
 
@@ -243,7 +243,7 @@ split points with the assistant of the guest party. The structures of host trees
 the host side while leaf weights will be preserved on the guest side. In this way, encryption and communication costs
 are reduced by half. (If there are two parties)
 
-       .. figure:: images/mix_tree.png
+       .. figure:: ../../images/mix_tree.png
           :align: center
           :width: 500
 
@@ -252,7 +252,7 @@ are reduced by half. (If there are two parties)
 While conducting inference, every party will traverse its trees locally. All hosts will send the final leaf id to
 guests and the guest retrieves leaf weights using received leaf id. The prediction only needs one communication in mix mode.
 
-        .. figure:: images/mix_procedure.png
+        .. figure:: ../../images/mix_procedure.png
           :align: center
           :width: 500
 
@@ -266,7 +266,7 @@ The host will be responsible for building the first "host_depth" layers, with th
 be responsible
 for the next "guest_depth" layers. All trees will be built in this 'layered' manner.
 
-        .. figure:: images/layered_tree.png
+        .. figure:: ../../images/layered_tree.png
           :align: center
           :width: 500
 
@@ -276,7 +276,7 @@ The benefits of layered mod is obvious, like the mix mode, parts of communicatio
 in the process of training. When predicting, we only need one communication because all host can conduct inferences of
 host layers locally.
 
-        .. figure:: images/layered_procedure.png
+        .. figure:: ../../images/layered_procedure.png
           :align: center
           :width: 500
 

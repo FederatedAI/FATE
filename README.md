@@ -34,7 +34,7 @@ tree-based algorithms, deep learning and transfer learning.
 ### Understand FATE Design 
 
 - [FATE structure]
-- [Modules]
+- [Modules](./doc/api/federatedml/federatedml_module.rst)
 - [Algorithm Parameters]
 - [Papers & Articles]
 
@@ -48,15 +48,15 @@ tree-based algorithms, deep learning and transfer learning.
 ### Contribute to FATE
 
 - [develop guide](./doc/community/develop_guide.rst)
-- [setting guide for developing FATE-Client](./python/fate_client/DEV_README.rst)
+- [develop guide for FATE-Client](./doc/community/fate_client_develop_guide.rst)
 
 ### API References
 
 - [Computing API](./doc/api/computing.rst)
 - [Federation API](./doc/api/federation.rst)
-- [Flow SDK API](https://fate.readthedocs.io/en/latest/_build_temp/python/fate_client/flow_sdk/README.html)
-- [Flow Client](https://fate.readthedocs.io/en/latest/_build_temp/python/fate_client/flow_client/README.html#)
-- [Pipeline]()
+- [Flow SDK API](./doc/api/flow_sdk.rst)
+- [Flow Client](./doc/api/flow_client.rst)
+- [Pipeline](./doc/api/pipeline.rst)
 
 ## Getting Involved
 

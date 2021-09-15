@@ -16,7 +16,7 @@ FederatedML includes implementation of many common machine learning algorithms o
 
 5. Secure Protocol: Provides multiple security protocols for secure multi-party computing and interaction between participants.
 
-.. image:: ../../doc/images/federatedml_structure.png
+.. image:: ../doc/images/federatedml_structure.png
    :width: 800
    :align: center
    :alt: federatedml structure
@@ -49,7 +49,7 @@ Algorithm List
      - DataIO
      - This component transforms user-uploaded data into Instance object(deprecate in FATe-v1.7, use DataTransform instead).
      - Table, values are raw data.
-     - Transformed Table, values are data instance defined `here <./feature/instance.py>`_
+     - Transformed Table, values are data instance defined `here <../python/federatedml/feature/instance.py>`_
      -
      - DataIO Model
 
@@ -57,7 +57,7 @@ Algorithm List
      - DataTransform
      - This component transforms user-uploaded data into Instance object.
      - Table, values are raw data.
-     - Transformed Table, values are data instance defined `here <./feature/instance.py>`_
+     - Transformed Table, values are data instance defined `here <../python/federatedml/feature/instance.py>`_
      -
      - DataTransform Model
 
@@ -334,42 +334,42 @@ Algorithm List
      - LabelTransform Model
 
 
-.. _DataIO: util/README.rst
-.. _DataTransform: util/README.rst
-.. _Intersect: statistic/intersect/README.rst
-.. _Federated Sampling: feature/README.rst
-.. _Feature Scale: feature/README.rst
-.. _Hetero Feature Binning: feature/README.rst
-.. _Homo Feature Binning: feature/README.rst
-.. _OneHot Encoder: feature/README.rst
-.. _Hetero Feature Selection: feature/README.rst
-.. _Union: statistic/union/README.rst
-.. _Hetero-LR: linear_model/logistic_regression/README.rst
-.. _Local Baseline: local_baseline/README.rst
-.. _Hetero-LinR: linear_model/linear_regression/README.rst
-.. _Hetero-Poisson: linear_model/poisson_regression/README.rst
-.. _Homo-LR: linear_model/logistic_regression/README.rst
-.. _Homo-NN: nn/homo_nn/README.rst
-.. _Hetero Secure Boosting: ensemble/README.rst
+.. _DataIO: util.rst
+.. _DataTransform: util.rst
+.. _Intersect: intersect.rst
+.. _Federated Sampling: feature.rst
+.. _Feature Scale: feature.rst
+.. _Hetero Feature Binning: feature.rst
+.. _Homo Feature Binning: feature.rst
+.. _OneHot Encoder: feature.rst
+.. _Hetero Feature Selection: feature.rst
+.. _Union: statistic.rst
+.. _Hetero-LR: logistic_regressionE.rst
+.. _Local Baseline: local_baseline.rst
+.. _Hetero-LinR: linear_regression.rst
+.. _Hetero-Poisson: poisson_regression.rst
+.. _Homo-LR: logistic_regression.rst
+.. _Homo-NN: homo_nn.rst
+.. _Hetero Secure Boosting: ensemble.rst
 .. _Hetero Secure Boost Feature Transformer: feature/sbt_feature_transformer
-.. _Evaluation: evaluation/README.rst
-.. _Hetero Pearson: statistic/correlation/README.rst
-.. _Hetero-NN: nn/hetero_nn/README.rst
-.. _Homo Secure Boosting: ensemble/README.rst
-.. _Data Split: model_selection/data_split/README.rst
-.. _Homo OneHot Encoder: feature/README.rst
-.. _Column Expand: feature/README.rst
-.. _Secure Information Retrieval: secure_information_retrieval
-.. _Hetero KMeans: unsupervised_learning/kmeans/README.rst
-.. _Data Statistics: statistic/README.rst
-.. _PSI: statistic/psi/README.rst
-.. _Hetero Federated Transfer Learning: transfer_learning/hetero_ftl/README.rst
-.. _Hetero Fast Secure Boosting: ensemble/README.rst
-.. _Scorecard: statistic/scorecard/README.rst
-.. _Sample Weight: util/README.rst
-.. _Feldman Verifiable Sum: statistic/feldman_verifiable_sum/README.rst
-.. _Feature Imputation: feature/README.rst
-.. _Label Transform: util/README.rst
+.. _Evaluation: evaluation.rst
+.. _Hetero Pearson: correlation.rst
+.. _Hetero-NN: hetero_nn.rst
+.. _Homo Secure Boosting: ensemble.rst
+.. _Data Split: data_split.rst
+.. _Homo OneHot Encoder: feature.rst
+.. _Column Expand: feature.rst
+.. _Secure Information Retrieval: sir.rst
+.. _Hetero KMeans: hetero_kmeans.rst
+.. _Data Statistics: statistic.rst
+.. _PSI: psi.rst
+.. _Hetero Federated Transfer Learning: hetero_ftl.rst
+.. _Hetero Fast Secure Boosting: ensemble.rst
+.. _Scorecard: scorecard.rst
+.. _Sample Weight: util.rst
+.. _Feldman Verifiable Sum: feldman_verifiable_sum.rst
+.. _Feature Imputation: feature.rst
+.. _Label Transform: util.rst
 
 
 Secure Protocol
