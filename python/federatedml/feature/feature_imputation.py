@@ -145,7 +145,7 @@ def save_feature_imputer_model(missing_fill=False,
             model_meta.missing_value.extend(map(str, missing_impute))
             model_meta.missing_value_type.extend([type(v).__name__ for v in missing_impute])
 
-        if missing_fill_value is not None:
+        if missing_fill_value is not None and header is not None:
             fill_header = [col for col in header if col not in skip_cols]
             feature_value_dict = dict(zip(fill_header, map(str, missing_fill_value)))
 
