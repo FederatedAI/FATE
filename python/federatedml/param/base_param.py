@@ -19,12 +19,14 @@
 import builtins
 import json
 import os
-from federatedml.util import consts, LOGGER
+
+from federatedml.util import LOGGER, consts
 
 _DEPRECATED_ATTR = "_deprecated_params_set"
 _USER_FEEDED_ATTR = "_user_feeded_params"
-def deprecated_param(*names):
 
+
+def deprecated_param(*names):
     def _decorator(cls: "BaseParam"):
         if not cls._has_deprecated_params_set():
             cls._init_deprecated_params_set()
@@ -37,7 +39,6 @@ def deprecated_param(*names):
 
 
 class BaseParam(object):
-
     def __init__(self):
         pass
 
@@ -48,31 +49,33 @@ class BaseParam(object):
     def check(self):
         raise NotImplementedError("Parameter Object should have be check")
 
-    @classmethod 
+    @classmethod
     def _has_deprecated_params_set(cls):
         return hasattr(cls, _DEPRECATED_ATTR)
-    
-    @classmethod 
+
+    @classmethod
     def _init_deprecated_params_set(cls):
         setattr(cls, _DEPRECATED_ATTR, {})
-    @classmethod 
+
+    @classmethod
     def _get_deprecated_params_set(cls):
         return getattr(cls, _DEPRECATED_ATTR, {})
-    @classmethod 
+
+    @classmethod
     def _set_deprecated_params(cls, name, status):
         cls._get_deprecated_params_set()[name] = status
-    
-    @classmethod 
+
+    @classmethod
     def _get_deprecated_param_status(cls, name, default):
         return cls._get_deprecated_params_set().get(name, default)
-    
+
     def get_user_feeded(self):
         return getattr(self, _USER_FEEDED_ATTR, [])
 
-    @classmethod 
+    @classmethod
     def get_deprecate_params(cls):
         return getattr(cls, _DEPRECATED_ATTR, {})
-           
+
     def as_dict(self):
         def _recursive_convert_obj_to_dict(obj):
             ret_dict = {}
@@ -327,11 +330,15 @@ class BaseParam(object):
 
     def _warn_deprecated_param(self, param_name, descr):
         if self._deprecated_params_set.get(param_name):
-            LOGGER.warning(f"{descr} {param_name} is deprecated and ignored in this version.")
+            LOGGER.warning(
+                f"{descr} {param_name} is deprecated and ignored in this version."
+            )
 
     def _warn_to_deprecate_param(self, param_name, descr, new_param):
         if self._deprecated_params_set.get(param_name):
-            LOGGER.warning(f"{descr} {param_name} will be deprecated in future release; "
-                           f"please use {new_param} instead.")
+            LOGGER.warning(
+                f"{descr} {param_name} will be deprecated in future release; "
+                f"please use {new_param} instead."
+            )
             return True
         return False
