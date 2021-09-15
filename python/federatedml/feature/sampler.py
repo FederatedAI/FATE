@@ -19,8 +19,8 @@ import random
 from sklearn.utils import resample
 
 from fate_arch.session import computing_session as session
-from fate_flow.entity.metric import Metric
-from fate_flow.entity.metric import MetricMeta
+from federatedml.model_base import Metric
+from federatedml.model_base import MetricMeta
 from federatedml.model_base import ModelBase
 from federatedml.param.sample_param import SampleParam
 from federatedml.transfer_variable.transfer_class.sample_transfer_variable import SampleTransferVariable

@@ -16,7 +16,7 @@
 
 import uuid
 
-from fate_flow.entity.metric import Metric, MetricMeta
+from federatedml.model_base import Metric, MetricMeta
 from federatedml.feature.instance import Instance
 from federatedml.model_base import ModelBase
 from federatedml.param.intersect_param import IntersectParam

@@ -18,8 +18,8 @@
 
 import numpy as np
 
-from fate_flow.entity.metric import Metric
-from fate_flow.entity.metric import MetricMeta
+from federatedml.model_base import Metric
+from federatedml.model_base import MetricMeta
 from federatedml.feature.sparse_vector import SparseVector
 from federatedml.model_base import ModelBase
 from federatedml.model_selection import start_cross_validation
