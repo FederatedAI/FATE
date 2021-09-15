@@ -50,7 +50,6 @@ class HeteroNNGuest(HeteroNNBase):
         self.model = None
         self.role = consts.GUEST
         self.history_loss = []
-        self.iter_epoch = 0
         self.num_label = 2
 
         self.input_shape = None
@@ -82,16 +81,19 @@ class HeteroNNGuest(HeteroNNBase):
         # collect data from table to form data loader
         if not self.component_properties.is_warm_start:
             self._build_model()
+            cur_epoch = 0
         else:
             self.model.warm_start()
+            self.callback_warm_start_init_iter(self.history_iter_epoch)
+            cur_epoch = self.history_iter_epoch + 1
 
         self.prepare_batch_data(self.batch_generator, data_inst)
         if not self.input_shape:
             self.model.set_empty()
 
         self._set_loss_callback_info()
-        cur_epoch = 0
         while cur_epoch < self.epochs:
+            self.iter_epoch = cur_epoch
             LOGGER.debug("cur epoch is {}".format(cur_epoch))
             self.callback_list.on_epoch_begin(cur_epoch)
             epoch_loss = 0
