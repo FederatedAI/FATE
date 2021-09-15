@@ -37,6 +37,9 @@
         },
         "sample-weight-multi-host": {
             "script": "./pipeline-sample-weight-multi-host.py"
+        },
+        "sample-weight-transform": {
+            "script": "./pipeline-sample-weight-transform.py"
         }
     }
 }
