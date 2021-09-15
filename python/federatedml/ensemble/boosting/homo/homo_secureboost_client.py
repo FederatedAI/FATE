@@ -1,6 +1,7 @@
 import numpy as np
 import functools
 import copy
+from federatedml.feature.sparse_vector import SparseVector
 from typing import List
 from operator import itemgetter
 from federatedml.ensemble.boosting.boosting_core.homo_boosting import HomoBoostingClient
@@ -123,6 +124,15 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
         inst.features = arr
         return inst
 
+    @staticmethod
+    def _sparse_recover(inst, feat_num):
+
+        arr = np.zeros(feat_num)
+        for k, v in inst.features.sparse_vec.items():
+            arr[k] = v
+        inst.features = arr
+        return inst
+
     def data_preporcess(self, data_inst):
         """
         override parent function
@@ -130,13 +140,21 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
         need_transform_to_sparse = self.backend == consts.DISTRIBUTED_BACKEND or\
                                    (self.backend == consts.MEMORY_BACKEND and self.use_missing and self.zero_as_missing)
 
+        backup_schema = copy.deepcopy(data_inst.schema)
+        if self.backend == consts.MEMORY_BACKEND:
+            # memory backend only support dense format input
+            data_example = data_inst.take(1)[0][1]
+            if type(data_example.features) == SparseVector:
+                recover_func = functools.partial(self._sparse_recover, feat_num=len(data_inst.schema['header']))
+                data_inst = data_inst.mapValues(recover_func)
+                data_inst.schema = backup_schema
+
         if need_transform_to_sparse:
             data_inst = self.data_alignment(data_inst)
         elif self.use_missing:
             # fill nan
-            schema = copy.deepcopy(data_inst.schema)
             data_inst = data_inst.mapValues(self._fill_nan)
-            data_inst.schema = schema
+            data_inst.schema = backup_schema
 
         self.data_bin, self.bin_split_points, self.bin_sparse_points = self.federated_binning(data_inst)
 
