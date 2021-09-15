@@ -22,6 +22,7 @@ from federatedml.linear_model.linear_model_weight import LinearModelWeights
 from federatedml.linear_model.poisson_regression.hetero_poisson_regression.hetero_poisson_base import HeteroPoissonBase
 from federatedml.optim.gradient import hetero_poisson_gradient_and_loss
 from federatedml.secureprotol import EncryptModeCalculator
+from federatedml.statistic.data_overview import with_weight
 from federatedml.util import LOGGER
 from federatedml.util import consts
 from federatedml.util.io_check import assert_io_num_rows_equal
@@ -52,6 +53,8 @@ class HeteroPoissonGuest(HeteroPoissonBase):
         self.callback_list.on_train_begin(data_instances, validate_data)
 
         # self.validation_strategy = self.init_validation_strategy(data_instances, validate_data)
+        if with_weight(data_instances):
+            LOGGER.warning("input data with weight. Poisson regression does not support weighted training.")
 
         self.exposure_index = self.get_exposure_index(self.header, self.exposure_colname)
         exposure_index = self.exposure_index

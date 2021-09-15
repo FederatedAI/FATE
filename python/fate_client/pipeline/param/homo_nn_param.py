@@ -21,6 +21,8 @@ import typing
 from types import SimpleNamespace
 
 from pipeline.param.base_param import BaseParam
+
+from pipeline.param.callback_param import CallbackParam
 from pipeline.param.cross_validation_param import CrossValidationParam
 from pipeline.param.predict_param import PredictParam
 import json
@@ -56,20 +58,23 @@ class HomoNNParam(BaseParam):
         encode_label : encode label to one_hot.
     """
 
-    def __init__(self,
-                 secure_aggregate: bool = True,
-                 aggregate_every_n_epoch: int = 1,
-                 config_type: str = "nn",
-                 nn_define: dict = None,
-                 optimizer: typing.Union[str, dict, SimpleNamespace] = 'SGD',
-                 loss: str = None,
-                 metrics: typing.Union[str, list] = None,
-                 max_iter: int = 100,
-                 batch_size: int = -1,
-                 early_stop: typing.Union[str, dict, SimpleNamespace] = "diff",
-                 encode_label: bool = False,
-                 predict_param=PredictParam(),
-                 cv_param=CrossValidationParam()):
+    def __init__(
+        self,
+        secure_aggregate: bool = True,
+        aggregate_every_n_epoch: int = 1,
+        config_type: str = "nn",
+        nn_define: dict = None,
+        optimizer: typing.Union[str, dict, SimpleNamespace] = "SGD",
+        loss: str = None,
+        metrics: typing.Union[str, list] = None,
+        max_iter: int = 100,
+        batch_size: int = -1,
+        early_stop: typing.Union[str, dict, SimpleNamespace] = "diff",
+        encode_label: bool = False,
+        predict_param=PredictParam(),
+        cv_param=CrossValidationParam(),
+        callback_param=CallbackParam(),
+    ):
         super(HomoNNParam, self).__init__()
 
         self.secure_aggregate = secure_aggregate
@@ -88,6 +93,7 @@ class HomoNNParam(BaseParam):
 
         self.predict_param = copy.deepcopy(predict_param)
         self.cv_param = copy.deepcopy(cv_param)
+        self.callback_param = callback_param
 
     def check(self):
         supported_config_type = ["nn", "keras", "pytorch"]
@@ -117,11 +123,15 @@ class HomoNNParam(BaseParam):
         self.batch_size = pb.batch_size
         self.max_iter = pb.max_iter
 
-        self.early_stop = _parse_early_stop(dict(early_stop=pb.early_stop.early_stop, eps=pb.early_stop.eps))
+        self.early_stop = _parse_early_stop(
+            dict(early_stop=pb.early_stop.early_stop, eps=pb.early_stop.eps)
+        )
 
         self.metrics = list(pb.metrics)
 
-        self.optimizer = _parse_optimizer(dict(optimizer=pb.optimizer.optimizer, **json.loads(pb.optimizer.args)))
+        self.optimizer = _parse_optimizer(
+            dict(optimizer=pb.optimizer.optimizer, **json.loads(pb.optimizer.args))
+        )
         self.loss = pb.loss
         return pb
 
@@ -168,13 +178,13 @@ def _parse_optimizer(param):
 
 def _parse_early_stop(param):
     """
-       Examples:
+    Examples:
 
-           1. "early_stop": "diff"
-           2. "early_stop": {
-                   "early_stop": "diff",
-                   "eps": 0.0001
-               }
+        1. "early_stop": "diff"
+        2. "early_stop": {
+                "early_stop": "diff",
+                "eps": 0.0001
+            }
     """
     default_eps = 0.0001
     if isinstance(param, str):
