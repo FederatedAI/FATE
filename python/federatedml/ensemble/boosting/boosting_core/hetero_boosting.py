@@ -294,6 +294,7 @@ class HeteroBoostingHost(HeteroBoosting, ABC):
     def prepare_warm_start(self, data_inst):
         self.predict(data_inst)
         self.callback_warm_start_init_iter(self.start_round)
+        self.feat_name_check(data_inst, self.feature_name_fid_mapping)
 
     def fit(self, data_inst, validate_data=None):
 
@@ -305,6 +306,8 @@ class HeteroBoostingHost(HeteroBoosting, ABC):
         if self.is_warm_start:
             self.prepare_warm_start(data_inst)
             self.boosting_round += self.start_round
+        else:
+            self.feature_name_fid_mapping = self.gen_feature_fid_mapping(data_inst.schema)
 
         self.sync_booster_dim()
         self.generate_encrypter()
