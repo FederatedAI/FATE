@@ -76,7 +76,7 @@ class BaseParam(object):
 
                 # ignore default deprecated params
                 if (
-                    variable in self._get_or_init_depreacated_params()
+                    variable in self._get_or_init_deprecated_params()
                     and not variable in self._get_or_init_feeded_deprecated_params()
                 ):
                     continue
