@@ -29,7 +29,7 @@ _USER_FEEDED_ATTR = "_user_feeded_params"
 
 def deprecated_param(*names):
     def _decorator(cls: "BaseParam"):
-        deprecated = cls._get_or_init_depreacated_param_names()
+        deprecated = cls._get_or_init_deprecated_params()
         for name in names:
             deprecated.add(name)
         return cls
@@ -49,7 +49,7 @@ class BaseParam(object):
         raise NotImplementedError("Parameter Object should have be check")
 
     @classmethod
-    def _get_or_init_depreacated_params(cls):
+    def _get_or_init_deprecated_params(cls):
         if not hasattr(cls, _DEPRECATED_PARAMS):
             setattr(cls, _DEPRECATED_PARAMS, set())
         return getattr(cls, _DEPRECATED_PARAMS)
@@ -57,7 +57,7 @@ class BaseParam(object):
     def _get_or_init_feeded_deprecated_params(self):
         if not hasattr(self, _FEEDED_DEPRECATED_PARAMS):
             setattr(self, _FEEDED_DEPRECATED_PARAMS, set())
-        return getattr(cls, _FEEDED_DEPRECATED_PARAMS)
+        return getattr(self, _FEEDED_DEPRECATED_PARAMS)
 
     def get_user_feeded(self):
         return getattr(self, _USER_FEEDED_ATTR, [])
@@ -65,7 +65,7 @@ class BaseParam(object):
     def get_feeded_deprecated_params(self):
         return self._get_or_init_feeded_deprecated_params()
 
-    @preperty
+    @property
     def _deprecated_params_set(self):
         return {name: True for name in self.get_feeded_deprecated_params()}
 
@@ -115,7 +115,7 @@ class BaseParam(object):
                     continue
 
                 # deprecated param set
-                if config_key in self._get_or_init_depreacated_params():
+                if config_key in self._get_or_init_deprecated_params():
                     self._get_or_init_feeded_deprecated_params().add(config_key)
 
                 # supported attr
