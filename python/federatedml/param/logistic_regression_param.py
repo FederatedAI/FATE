@@ -18,7 +18,7 @@
 #
 import copy
 
-from federatedml.param.base_param import BaseParam, deprecated_param
+from federatedml.param.base_param import BaseParam
 from federatedml.param.callback_param import CallbackParam
 from federatedml.param.cross_validation_param import CrossValidationParam
 from federatedml.param.encrypt_param import EncryptParam
@@ -29,11 +29,7 @@ from federatedml.param.sqn_param import StochasticQuasiNewtonParam
 from federatedml.param.stepwise_param import StepwiseParam
 from federatedml.util import consts
 
-deprecated_param_list = ["early_stopping_rounds", "validation_freqs", "metrics",
-                         "use_first_metric_only"]
 
-
-@deprecated_param(*deprecated_param_list)
 class LogisticParam(BaseParam):
     """
     Parameters used for Logistic Regression both for Homo mode or Hetero mode.
@@ -243,19 +239,6 @@ class LogisticParam(BaseParam):
                 (not isinstance(self.floating_point_precision, int) or \
                  self.floating_point_precision < 0 or self.floating_point_precision > 63):
             raise ValueError("floating point precision should be null or a integer between 0 and 63")
-
-        if self._warn_to_deprecate_param("validation_freqs", descr, "callback_param's 'validation_freqs'"):
-            self.callback_param.early_stopping_rounds = self.early_stopping_rounds
-
-        if self._warn_to_deprecate_param("early_stopping_rounds", descr, "callback_param's 'early_stopping_rounds'"):
-            self.callback_param.early_stopping_rounds = self.early_stopping_rounds
-
-        if self._warn_to_deprecate_param("metrics", descr, "callback_param's 'metrics'"):
-            self.callback_param.metrics = self.metrics
-
-        if self._warn_to_deprecate_param("use_first_metric_only", descr, "callback_param's 'use_first_metric_only'"):
-            self.callback_param.use_first_metric_only = self.use_first_metric_only
-
 
         return True
 
