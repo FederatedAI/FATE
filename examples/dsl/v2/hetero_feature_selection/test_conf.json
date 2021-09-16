@@ -1,0 +1,250 @@
+{
+  "job_parameters": {
+    "common": {
+      "job_type": "train",
+      "work_mode": 0
+    }
+  },
+  "dsl_version": 2,
+  "component_parameters": {
+    "role": {
+      "host": {
+        "0": {
+          "HeteroFeatureSelection_0": {
+            "manually_param": {
+              "filter_out_indexes": null,
+              "left_col_indexes": null,
+              "filter_out_names": null,
+              "left_col_names": [
+                "333553"
+              ]
+            }
+          },
+          "DataIO_0": {},
+          "Reader_0": {
+            "table": {
+              "name": "binary_560",
+              "namespace": "namespace-host"
+            }
+          },
+          "HeteroFeatureBinning_0": {},
+          "Intersection_0": {}
+        }
+      },
+      "guest": {
+        "0": {
+          "HeteroFeatureSelection_0": {
+            "manually_param": {
+              "filter_out_indexes": null,
+              "left_col_indexes": null,
+              "filter_out_names": [
+                "3333335553"
+              ],
+              "left_col_names": null
+            }
+          },
+          "DataIO_0": {
+            "label_type": "int",
+            "with_label": true,
+            "label_name": "y"
+          },
+          "Reader_0": {
+            "table": {
+              "name": "binary_560",
+              "namespace": "test"
+            }
+          },
+          "HeteroFeatureBinning_0": {},
+          "Intersection_0": {}
+        }
+      }
+    },
+    "common": {
+      "HeteroFeatureSelection_0": {
+        "unique_param": {
+          "eps": 0.000010
+        },
+        "statistic_param": {
+          "filter_type": [
+            "threshold"
+          ],
+          "select_federated": true,
+          "threshold": [
+            1
+          ],
+          "metrics": [
+            "mean"
+          ],
+          "take_high": true,
+          "host_thresholds": null
+        },
+        "outlier_param": {
+          "percentile": 1,
+          "upper_threshold": 1
+        },
+        "manually_param": {
+          "filter_out_indexes": null,
+          "left_col_indexes": null,
+          "filter_out_names": null,
+          "left_col_names": [
+            "3334"
+          ]
+        },
+        "select_names": [],
+        "iv_percentile_param": {
+          "local_only": false,
+          "percentile_threshold": 1
+        },
+        "sbt_param": {
+          "filter_type": [
+            "threshold"
+          ],
+          "select_federated": true,
+          "threshold": [
+            1
+          ],
+          "metrics": [
+            "feature_importance"
+          ],
+          "take_high": true,
+          "host_thresholds": null
+        },
+        "iv_top_k_param": {
+          "local_only": false,
+          "k": 10
+        },
+        "filter_methods": [
+          "manually"
+        ],
+        "psi_param": {
+          "filter_type": [
+            "threshold"
+          ],
+          "select_federated": true,
+          "threshold": [
+            1
+          ],
+          "metrics": [
+            "psi"
+          ],
+          "take_high": false,
+          "host_thresholds": null
+        },
+        "variance_coe_param": {
+          "value_threshold": 1
+        },
+        "iv_value_param": {
+          "local_only": false,
+          "value_threshold": 0.02,
+          "host_thresholds": null
+        },
+        "iv_param": {
+          "filter_type": [
+            "threshold"
+          ],
+          "select_federated": true,
+          "threshold": [
+            0.02
+          ],
+          "metrics": [
+            "iv"
+          ],
+          "take_high": true,
+          "host_thresholds": null
+        },
+        "percentage_value_param": {
+          "upper_pct": 1
+        },
+        "need_run": true,
+        "select_col_indexes": -1
+      },
+      "DataIO_0": {
+        "outlier_replace_value": 0,
+        "default_value": 0,
+        "label_type": "int",
+        "delimitor": ",",
+        "input_format": "dense",
+        "tag_value_delimitor": ":",
+        "outlier_replace": false,
+        "output_format": "dense",
+        "tag_with_value": false,
+        "data_type": "float64",
+        "with_label": false,
+        "need_run": true,
+        "label_name": "y",
+        "missing_fill": false
+      },
+      "HeteroFeatureBinning_0": {
+        "bin_names": [
+          "x1",
+          "x2",
+          "x3"
+        ],
+        "method": "optimal",
+        "bin_num": 10,
+        "category_names": [],
+        "error": 0.00010,
+        "transform_param": {
+          "transform_type": "bin_num",
+          "transform_cols": -1,
+          "transform_names": []
+        },
+        "category_indexes": null,
+        "optimal_binning_param": {
+          "metric_method": "gini",
+          "mixture": true,
+          "init_bin_nums": 1000,
+          "adjustment_factor": null,
+          "max_bin": null,
+          "init_bucket_method": "bucket",
+          "max_bin_pct": 0.95,
+          "min_bin_pct": 0.05
+        },
+        "skip_static": false,
+        "compress_thres": 10000,
+        "local_only": false,
+        "head_size": 10000,
+        "adjustment_factor": 0.5,
+        "need_run": true,
+        "bin_indexes": -1
+      },
+      "Intersection_0": {
+        "info_owner": "guest",
+        "intersect_method": "raw",
+        "encode_params": {
+          "salt": "",
+          "base64": false,
+          "encode_method": "none"
+        },
+        "intersect_cache_param": {
+          "encrypt_type": "sha256",
+          "use_cache": false,
+          "id_type": "phone"
+        },
+        "join_role": "guest",
+        "only_output_key": false,
+        "random_bit": 128,
+        "allow_info_share": false,
+        "repeated_id_process": false,
+        "repeated_id_owner": "guest",
+        "sync_intersect_ids": true,
+        "with_encode": false
+      }
+    }
+  },
+  "role": {
+    "arbiter": [
+      6666
+    ],
+    "host": [
+      6666
+    ],
+    "guest": [
+      6665
+    ]
+  },
+  "initiator": {
+    "role": "guest",
+    "party_id": 6665
+  }
+}

@@ -112,13 +112,13 @@ def main(config="../../config.yaml", namespace=""):
     hetero_lr_2 = HeteroLR(name="hetero_lr_2", max_iter=30, **lr_param)
 
     pipeline.add_component(hetero_lr_0, data=Data(train_data=intersection_0.output.data))
-    pipeline.add_component(hetero_lr_1, data=Data(train_data=intersection_0.output.data),
-                           model=Model(model=hetero_lr_0.output.model))
-    pipeline.add_component(hetero_lr_2, data=Data(train_data=intersection_0.output.data))
-
-    evaluation_0 = Evaluation(name="evaluation_0", eval_type="binary")
-    pipeline.add_component(evaluation_0, data=Data(data=[hetero_lr_1.output.data,
-                                                         hetero_lr_2.output.data]))
+    # pipeline.add_component(hetero_lr_1, data=Data(train_data=intersection_0.output.data),
+    #                        model=Model(model=hetero_lr_0.output.model))
+    # pipeline.add_component(hetero_lr_2, data=Data(train_data=intersection_0.output.data))
+    #
+    # evaluation_0 = Evaluation(name="evaluation_0", eval_type="binary")
+    # pipeline.add_component(evaluation_0, data=Data(data=[hetero_lr_1.output.data,
+    #                                                      hetero_lr_2.output.data]))
 
     pipeline.compile()
 
