@@ -101,6 +101,10 @@ class HeteroLRHost(HeteroLRBase):
         self.header = self.get_header(data_instances)
         self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
 
+        if self.transfer_variable.use_async.get(idx=0):
+            LOGGER.debug(f"set_use_async")
+            self.gradient_loss_operator.set_use_async()
+
         self.batch_generator.initialize_batch_generator(data_instances)
         self.gradient_loss_operator.set_total_batch_nums(self.batch_generator.batch_nums)
 
@@ -119,6 +123,7 @@ class HeteroLRHost(HeteroLRBase):
             self.model_weights = LinearModelWeights(w, fit_intercept=self.init_param_obj.fit_intercept)
         else:
             self.callback_warm_start_init_iter(self.n_iter_)
+            self.n_iter_ += 1
 
         while self.n_iter_ < self.max_iter:
             self.callback_list.on_epoch_begin(self.n_iter_)

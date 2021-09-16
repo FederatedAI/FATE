@@ -16,6 +16,7 @@
 import copy
 
 from federatedml.param.base_param import BaseParam
+from federatedml.param.cross_validation_param import CrossValidationParam
 from federatedml.param.callback_param import CallbackParam
 from federatedml.param.encrypt_param import EncryptParam
 from federatedml.param.init_model_param import InitParam
@@ -112,11 +113,9 @@ class LogisticRegressionParam(BaseParam):
                  tol=1e-4, alpha=1.0, optimizer='sgd',
                  batch_size=-1, learning_rate=0.01, init_param=InitParam(),
                  max_iter=100, early_stop='diff', encrypt_param=EncryptParam(),
-                 predict_param=PredictParam(),
+                 predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  decay=1, decay_sqrt=True,
-                 multi_class='ovr', validation_freqs=None, early_stopping_rounds=None,
-                 metrics=None,
-                 use_first_metric_only=False, use_mix_rand=False,
+                 multi_class='ovr', use_mix_rand=False,
                  random_field=1 << 20, reveal_strategy="respectively", compute_loss=True,
                  reveal_every_iter=True,
                  callback_param=CallbackParam()
@@ -146,6 +145,7 @@ class LogisticRegressionParam(BaseParam):
         self.compute_loss = compute_loss
         self.reveal_every_iter = reveal_every_iter
         self.callback_param = callback_param
+        self.cv_param = cv_param
 
     def check(self):
         descr = "logistic_param's"
@@ -269,4 +269,5 @@ class LogisticRegressionParam(BaseParam):
             raise PermissionError("reveal strategy: all_reveal_in_guest mode is not allow to reveal every iter.")
         self.check_boolean(self.reveal_every_iter, descr)
         self.callback_param.check()
+        self.cv_param.check()
         return True

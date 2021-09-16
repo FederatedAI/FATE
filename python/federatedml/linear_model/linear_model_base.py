@@ -18,8 +18,8 @@
 
 import numpy as np
 
-from fate_flow.entity.metric import Metric
-from fate_flow.entity.metric import MetricMeta
+from federatedml.model_base import Metric
+from federatedml.model_base import MetricMeta
 from federatedml.feature.sparse_vector import SparseVector
 from federatedml.model_base import ModelBase
 from federatedml.model_selection import start_cross_validation
@@ -75,6 +75,9 @@ class BaseLinearModel(ModelBase):
         self.early_stopping_rounds = params.early_stopping_rounds
         self.metrics = params.metrics
         self.use_first_metric_only = params.use_first_metric_only
+        # if len(self.component_properties.host_party_idlist) == 1:
+        #     LOGGER.debug(f"set_use_async")
+        #     self.gradient_loss_operator.set_use_async()
 
     def get_features_shape(self, data_instances):
         if self.feature_shape is not None:

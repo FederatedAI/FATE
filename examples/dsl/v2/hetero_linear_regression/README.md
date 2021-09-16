@@ -58,6 +58,11 @@ This section introduces the dsl and conf for different types of tasks.
 
     runtime_config : test_hetero_linr_train_sparse_job_conf.json
 
+9. Train Task with Weighted Instances:
+    
+     dsl: test_hetero_linr_train_sample_weight_job_job_dsl.json
+
+    runtime_config : test_hetero_linr_train_sample_weight_job_conf.json
 
 Users can use following commands to run a task.
 

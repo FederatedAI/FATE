@@ -29,8 +29,8 @@ from federatedml.feature.binning.quantile_binning import QuantileBinning
 from federatedml.util.classify_label_checker import ClassifyLabelChecker
 from federatedml.util.classify_label_checker import RegressionLabelChecker
 from federatedml.util import LOGGER
-from fate_flow.entity.metric import Metric
-from fate_flow.entity.metric import MetricMeta
+from federatedml.model_base import Metric
+from federatedml.model_base import MetricMeta
 from federatedml.transfer_variable.transfer_class.hetero_boosting_transfer_variable import \
     HeteroBoostingTransferVariable
 from federatedml.util.io_check import assert_io_num_rows_equal
@@ -145,6 +145,7 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
                                                           'previous model labels {}'.format(classes, self.classes_)
         # check fid
         self.feat_name_check(data_inst, self.feature_name_fid_mapping)
+        self.callback_warm_start_init_iter(self.start_round)
 
     def fit(self, data_inst, validate_data=None):
 
@@ -292,6 +293,8 @@ class HeteroBoostingHost(HeteroBoosting, ABC):
 
     def prepare_warm_start(self, data_inst):
         self.predict(data_inst)
+        self.callback_warm_start_init_iter(self.start_round)
+        self.feat_name_check(data_inst, self.feature_name_fid_mapping)
 
     def fit(self, data_inst, validate_data=None):
 
@@ -303,6 +306,8 @@ class HeteroBoostingHost(HeteroBoosting, ABC):
         if self.is_warm_start:
             self.prepare_warm_start(data_inst)
             self.boosting_round += self.start_round
+        else:
+            self.feature_name_fid_mapping = self.gen_feature_fid_mapping(data_inst.schema)
 
         self.sync_booster_dim()
         self.generate_encrypter()

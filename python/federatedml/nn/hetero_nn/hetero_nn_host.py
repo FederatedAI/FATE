@@ -76,14 +76,16 @@ class HeteroNNHost(HeteroNNBase):
 
         if not self.component_properties.is_warm_start:
             self._build_model()
+            cur_epoch = 0
         else:
             self.model.warm_start()
+            self.callback_warm_start_init_iter(self.history_iter_epoch)
+            cur_epoch = self.history_iter_epoch + 1
 
         self.prepare_batch_data(self.batch_generator, data_inst)
 
-        cur_epoch = 0
-
         while cur_epoch < self.epochs:
+            self.iter_epoch = cur_epoch
             for batch_idx in range(len(self.data_x)):
                 self.model.train(self.data_x[batch_idx], cur_epoch, batch_idx)
 
@@ -141,9 +143,9 @@ class HeteroNNHost(HeteroNNBase):
 
     def _get_model_param(self):
         model_param = HeteroNNParam()
+        model_param.iter_epoch = self.iter_epoch
         model_param.header.extend(self._header)
         model_param.hetero_nn_model_param.CopyFrom(self.model.get_hetero_nn_model_param())
         model_param.best_iteration = self.callback_variables.best_iteration
-        # model_param.best_iteration = -1 if self.validation_strategy is None else self.validation_strategy.best_iteration
 
         return model_param

@@ -24,7 +24,7 @@ from federatedml.util import LOGGER
 from federatedml.util import consts
 from federatedml.ensemble import HeteroSecureBoostingTreeGuest, HeteroSecureBoostingTreeHost
 from federatedml.ensemble import HeteroFastSecureBoostingTreeGuest, HeteroFastSecureBoostingTreeHost
-from fate_flow.entity.metric import MetricMeta
+from federatedml.model_base import MetricMeta
 from federatedml.util import abnormal_detection
 from federatedml.param.sbt_feature_transformer_param import SBTTransformerParam
 from federatedml.feature.sparse_vector import SparseVector

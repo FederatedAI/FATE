@@ -23,6 +23,7 @@ from types import SimpleNamespace
 from federatedml.param.base_param import BaseParam
 from federatedml.param.cross_validation_param import CrossValidationParam
 from federatedml.param.predict_param import PredictParam
+from federatedml.param.callback_param import CallbackParam
 import json
 
 
@@ -72,6 +73,7 @@ class HomoNNParam(BaseParam):
         encode_label: bool = False,
         predict_param=PredictParam(),
         cv_param=CrossValidationParam(),
+        callback_param=CallbackParam(),
     ):
         super(HomoNNParam, self).__init__()
 
@@ -93,6 +95,7 @@ class HomoNNParam(BaseParam):
 
         self.predict_param = copy.deepcopy(predict_param)
         self.cv_param = copy.deepcopy(cv_param)
+        self.callback_param = callback_param
 
     def check(self):
         supported_config_type = ["nn", "keras", "pytorch"]

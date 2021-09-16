@@ -54,6 +54,9 @@ class HomoLRGuest(HomoLRBase):
         # validation_strategy = self.init_validation_strategy(data_instances, validate_data)
         if not self.component_properties.is_warm_start:
             self.model_weights = self._init_model_variables(data_instances)
+        else:
+            self.callback_warm_start_init_iter(self.n_iter_)
+            self.n_iter_ += 1
 
         max_iter = self.max_iter
         # total_data_num = data_instances.count()

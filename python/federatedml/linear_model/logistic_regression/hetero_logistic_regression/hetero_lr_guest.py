@@ -23,6 +23,7 @@ from federatedml.linear_model.logistic_regression.hetero_logistic_regression.het
 from federatedml.optim import activation
 from federatedml.optim.gradient import hetero_lr_gradient_and_loss
 from federatedml.secureprotol import EncryptModeCalculator
+from federatedml.statistic.data_overview import with_weight, scale_sample_weight
 from federatedml.util import LOGGER
 from federatedml.util import consts
 from federatedml.util.io_check import assert_io_num_rows_equal
@@ -88,6 +89,20 @@ class HeteroLRGuest(HeteroLRBase):
         LOGGER.debug(f"MODEL_STEP After load data, data count: {data_instances.count()}")
         self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
 
+        use_async = False
+        if with_weight(data_instances):
+            if self.model_param.early_stop == "diff":
+                LOGGER.warning("input data with weight, please use 'weight_diff' for 'early_stop'.")
+            data_instances = scale_sample_weight(data_instances)
+            self.gradient_loss_operator.set_use_sample_weight()
+            LOGGER.debug(f"instance weight scaled; use weighted gradient loss operator")
+            # LOGGER.debug(f"data_instances after scale: {[v[1].weight for v in list(data_instances.collect())]}")
+        elif len(self.component_properties.host_party_idlist) == 1:
+            LOGGER.debug(f"set_use_async")
+            self.gradient_loss_operator.set_use_async()
+            use_async = True
+        self.transfer_variable.use_async.remote(use_async)
+
         LOGGER.info("Generate mini-batch from input data")
         self.batch_generator.initialize_batch_generator(data_instances, self.batch_size)
         self.gradient_loss_operator.set_total_batch_nums(self.batch_generator.batch_nums)
@@ -105,6 +120,7 @@ class HeteroLRGuest(HeteroLRBase):
             self.model_weights = LinearModelWeights(w, fit_intercept=self.fit_intercept)
         else:
             self.callback_warm_start_init_iter(self.n_iter_)
+            self.n_iter_ += 1
 
         while self.n_iter_ < self.max_iter:
             self.callback_list.on_epoch_begin(self.n_iter_)
@@ -121,15 +137,16 @@ class HeteroLRGuest(HeteroLRBase):
                 LOGGER.debug("iter: {}, before compute gradient, data count: {}".format(self.n_iter_,
                                                                                         batch_feat_inst.count()))
                 optim_guest_gradient = self.gradient_loss_operator.compute_gradient_procedure(
-                            batch_feat_inst,
-                            self.encrypted_calculator,
-                            self.model_weights,
-                            self.optimizer,
-                            self.n_iter_,
-                            batch_index)
+                    batch_feat_inst,
+                    self.encrypted_calculator,
+                    self.model_weights,
+                    self.optimizer,
+                    self.n_iter_,
+                    batch_index)
 
                 loss_norm = self.optimizer.loss_norm(self.model_weights)
-                self.gradient_loss_operator.compute_loss(data_instances, self.model_weights, self.n_iter_, batch_index, loss_norm)
+                self.gradient_loss_operator.compute_loss(data_instances, self.model_weights, self.n_iter_, batch_index,
+                                                         loss_norm)
 
                 self.model_weights = self.optimizer.update_model(self.model_weights, optim_guest_gradient)
                 batch_index += 1

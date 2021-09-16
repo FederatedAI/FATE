@@ -20,6 +20,7 @@ from federatedml.linear_model.linear_model_weight import LinearModelWeights
 from federatedml.linear_model.linear_regression.hetero_linear_regression.hetero_linr_base import HeteroLinRBase
 from federatedml.optim.gradient import hetero_linr_gradient_and_loss
 from federatedml.secureprotol import EncryptModeCalculator
+from federatedml.statistic.data_overview import with_weight, scale_sample_weight
 from federatedml.util import LOGGER
 from federatedml.util import consts
 from federatedml.util.io_check import assert_io_num_rows_equal
@@ -62,6 +63,20 @@ class HeteroLinRGuest(HeteroLinRBase):
         # self.validation_strategy = self.init_validation_strategy(data_instances, validate_data)
 
         self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
+
+        use_async = False
+        if with_weight(data_instances):
+            if self.model_param.early_stop == "diff":
+                LOGGER.warning("input data with weight, please use 'weight_diff' for 'early_stop'.")
+            data_instances = scale_sample_weight(data_instances)
+            self.gradient_loss_operator.set_use_sample_weight()
+            LOGGER.debug(f"instance weight scaled; use weighted gradient loss operator")
+            # LOGGER.debug(f"data_instances after scale: {[v[1].weight for v in list(data_instances.collect())]}")
+        elif len(self.component_properties.host_party_idlist) == 1:
+            LOGGER.debug(f"set_use_async")
+            self.gradient_loss_operator.set_use_async()
+            use_async = True
+        self.transfer_variable.use_async.remote(use_async)
 
         LOGGER.info("Generate mini-batch from input data")
         self.batch_generator.initialize_batch_generator(data_instances, self.batch_size)

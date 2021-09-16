@@ -46,6 +46,9 @@
         },
         "linr_sparse": {
             "script": "./pipeline-hetero-linr-sparse.py"
+        },
+        "linr_sample-weight": {
+            "script": "./pipeline-hetero-linr-sample-weight.py"
         }
     }
 }

@@ -260,6 +260,10 @@ class HeteroLRGuest(HeteroLRBase):
         return predict_result
 
     def _get_param(self):
+        if self.need_cv:
+            param_protobuf_obj = lr_model_param_pb2.LRModelParam()
+            return param_protobuf_obj
+
         if self.need_one_vs_rest:
             one_vs_rest_result = self.one_vs_rest_obj.save(lr_model_param_pb2.SingleModel)
             single_result = {'header': self.header, 'need_one_vs_rest': True, "best_iteration": -1}

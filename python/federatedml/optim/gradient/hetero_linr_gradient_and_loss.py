@@ -39,10 +39,10 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
     def compute_half_d(self, data_instances, w, cipher, batch_index, current_suffix):
         if self.use_sample_weight:
             self.half_d = data_instances.mapValues(
-                lambda v: (vec_dot(v.features, w.coef_) + w.intercept_) * v.weight - v.label * v.weight)
+                lambda v: (vec_dot(v.features, w.coef_) + w.intercept_ - v.label) * v.weight)
         else:
             self.half_d = data_instances.mapValues(
-                lambda v: (vec_dot(v.features, w.coef_) + w.intercept_) - v.label)
+                lambda v: vec_dot(v.features, w.coef_) + w.intercept_ - v.label)
         return self.half_d
 
     def compute_and_aggregate_forwards(self, data_instances, half_g, encrypted_half_g, batch_index,
@@ -96,6 +96,8 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
             lambda v: (np.dot(v.features, delta_s.coef_) + delta_s.intercept_))
         for host_forward in host_forwards:
             forwards = forwards.join(host_forward, lambda g, h: g + h)
+        if self.use_sample_weight:
+            forwards = forwards.join(data_instances, lambda h, d: h * d.weight)
         hess_vector = hetero_linear_model_gradient.compute_gradient(data_instances,
                                                                     forwards,
                                                                     delta_s.fit_intercept)
@@ -114,21 +116,13 @@ class Host(hetero_linear_model_gradient.Host, loss_sync.Host):
                                  transfer_variables.loss_intermediate)
 
     def compute_forwards(self, data_instances, model_weights):
-        if self.use_sample_weight:
-            wx = data_instances.mapValues(
-                lambda v: (vec_dot(v.features, model_weights.coef_) + model_weights.intercept_) * v.weight)
-        else:
-            wx = data_instances.mapValues(
-                lambda v: vec_dot(v.features, model_weights.coef_) + model_weights.intercept_)
+        wx = data_instances.mapValues(
+            lambda v: vec_dot(v.features, model_weights.coef_) + model_weights.intercept_)
         return wx
 
     def compute_half_g(self, data_instances, w, cipher, batch_index):
-        if self.use_sample_weight:
-            half_g = data_instances.mapValues(
-                lambda v: (vec_dot(v.features, w.coef_) + w.intercept_) * v.weight)
-        else:
-            half_g = data_instances.mapValues(
-                lambda v: vec_dot(v.features, w.coef_) + w.intercept_)
+        half_g = data_instances.mapValues(
+            lambda v: vec_dot(v.features, w.coef_) + w.intercept_)
         encrypt_half_g = cipher[batch_index].encrypt(half_g)
         return half_g, encrypt_half_g
 
