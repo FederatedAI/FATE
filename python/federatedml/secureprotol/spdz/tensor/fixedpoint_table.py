@@ -32,6 +32,9 @@ from federatedml.util import fate_operator
 
 
 def _table_binary_op(x, y, q_field, op):
+    return x.join(y, lambda a, b: op(a, b))
+
+def _table_binary_mod_op(x, y, q_field, op):
     return x.join(y, lambda a, b: op(a, b) % q_field)
 
 
@@ -110,31 +113,6 @@ class FixedPointTensor(TensorBase):
     def shape(self):
         return self.value.count(), len(self.value.first()[1])
 
-    # def dot_local(self, other: 'FixedPointTensor', target_name=None):
-    #     if target_name is None:
-    #         target_name = NamingService.get_instance().next()
-    #     res = table_dot(self.value, other.value)
-    #     return fixedpoint_numpy.FixedPointTensor(res, self.q_field, self.endec, target_name)
-    #
-    # def dot_array(self, array, fit_intercept=False):
-    #     def _dot(x):
-    #         if fit_intercept:
-    #             coef = array[:-1]
-    #             bias = array[-1]
-    #             res = fate_operator.vec_dot(x, coef) + bias
-    #         else:
-    #             res = fate_operator.vec_dot(x, array)
-    #
-    #         if not isinstance(res, np.ndarray):
-    #             res = np.array([res])
-    #         return res
-    #
-    #     return self._boxed(self.value.mapValues(_dot))
-    #
-    # def convert_to_array_tensor(self):
-    #     array = np.array([x[1] for x in self.value.collect()])
-    #     return fixedpoint_numpy.FixedPointTensor(array, q_field=self.q_field, endec=self.endec)
-
     @classmethod
     def from_source(cls, tensor_name, source, **kwargs):
         spdz = cls.get_spdz()
@@ -153,22 +131,12 @@ class FixedPointTensor(TensorBase):
                       
             for _party in spdz.other_parties[:-1]:
                 r = urand_tensor(spdz.q_field, source, use_mix=spdz.use_mix_rand)
-                spdz.communicator.remote_share(share=_table_binary_op(r, _pre, spdz.q_field, operator.sub),
+                spdz.communicator.remote_share(share=_table_binary_mod_op(r, _pre, spdz.q_field, operator.sub),
                                                tensor_name=tensor_name, party=_party)
                 _pre = r            
-            spdz.communicator.remote_share(share=_table_binary_op(source, _pre, spdz.q_field, operator.sub),
+            spdz.communicator.remote_share(share=_table_binary_mod_op(source, _pre, spdz.q_field, operator.sub),
                                                tensor_name=tensor_name, party=_party)
-            
-#         if is_table(source):
-#             source = encoder.encode(source)
-#             _pre = urand_tensor(spdz.q_field, source, use_mix=spdz.use_mix_rand)
-#             spdz.communicator.remote_share(share=_pre, tensor_name=tensor_name, party=spdz.other_parties[0])
-#             for _party in spdz.other_parties[1:]:
-#                 r = urand_tensor(spdz.q_field, source, use_mix=spdz.use_mix_rand)
-#                 spdz.communicator.remote_share(share=_table_binary_op(r, _pre, spdz.q_field, operator.sub),
-#                                                tensor_name=tensor_name, party=_party)
-#                 _pre = r
-#             share = _table_binary_op(source, _pre, spdz.q_field, operator.sub)
+
         elif isinstance(source, Party):
             share = spdz.communicator.get_share(tensor_name=tensor_name, party=source)[0]
         else:
@@ -193,7 +161,7 @@ class FixedPointTensor(TensorBase):
 
         # get shares from other parties
         for other_share in spdz.communicator.get_rescontruct_shares(name):
-            share_val = _table_binary_op(share_val, other_share, self.q_field, operator.add)
+            share_val = _table_binary_mod_op(share_val, other_share, self.q_field, operator.add)
         return share_val
 
     def __str__(self):
@@ -217,7 +185,7 @@ class FixedPointTensor(TensorBase):
         if self.is_encrypted_number(other):
             z_value = self.value.join(other, op)
         else:
-            z_value = _table_binary_op(self.value, other, self.q_field, op)
+            z_value = _table_binary_mod_op(self.value, other, self.q_field, op)
 
         return self._boxed(z_value)
 
@@ -248,36 +216,86 @@ class FixedPointTensor(TensorBase):
         return FixedPointTensor(value=value, q_field=self.q_field, endec=self.endec, tensor_name=tensor_name)
 
 
-class PaillierFixedPointTensor(FixedPointTensor):
+class PaillierFixedPointTensor(TensorBase):
+    def __init__(self, value, tensor_name: str = None):
+        super().__init__(q_field=None, tensor_name)
+        self.value = value
 
-    def dot_array(self, array, fit_intercept=False):
-        def _dot(x):
-            res = fate_operator.vec_dot(x, array)
+    def dot_local(self, y, target_name=None):
+        def _vec_dot(x, y):
+            res = np.dot(x, y)
             if not isinstance(res, np.ndarray):
                 res = np.array([res])
             return res
 
-        return self._boxed(self.value.mapValues(_dot))
+        if isinstance(y, np.ndarray):
+            res = self.value.mapValues(_vec_dot)
+            return self._boxed(res, target_name)
 
-    def dot_local(self, other: 'FixedPointTensor', target_name=None):
-        if target_name is None:
-            target_name = NamingService.get_instance().next()
-        res = table_dot(self.value, other.value)
-        return fixedpoint_numpy.PaillierFixedPointTensor(res, self.q_field, self.endec, target_name)
+        elif is_table(y):
+            res = table_dot(self.value, y)
+            return fixedpoint_numpy.PaillierFixedPointTensor(res, target_name)
+        else:
+            raise ValueError(f"type={type(y)}")
 
-    def _basic_op(self, other, op):
-        if isinstance(other, (float, np.float)):
-            other = self.endec.encode(other)
-            z_value = _table_scalar_op(self.value, other, op)
-            return self._boxed(z_value)
-        elif isinstance(other, (int, np.int, FixedPointNumber)):
-            z_value = _table_scalar_op(self.value, other, op)
-            return self._boxed(z_value)
+    def __add__(self, other)
+        if isinstance(other, PaillierFixedPointTensor):
+            return self._boxed(_table_binary_op(self.value, other.value, operator.add))
+        else:
+            return self._boxed(_table_binary_op(self.value, other, operator.add))
 
-        if isinstance(other, FixedPointTensor):
-            other = other.value
-        z_value = self.value.join(other, op)
-        return self._boxed(z_value)
+    def __radd__(self, other):
+        return self.__add__(other)
+
+    def __sub__(self, other):
+        if isinstance(other, PaillierFixedPointTensor):
+            return self._boxed(_table_binary_op(self.value, other.value, operator.sub))
+        else:
+            return self._boxed(_table_binary_op(self.value, other, operator.sub))
+
+    def __rsub__(self, other):
+        if isinstance(other, PaillierFixedPointTensor):
+            return self._boxed(_table_binary_op(other.value, self.value, operator.sub))
+        else:
+            return self._boxed(_table_binary_op(other, self.value, operator.sub))
+
+    def __mul__(self, other):
+        return self._boxed(_table_scalar_op(self.value, other, operator.mul))
+
+    def __rmul__(self, other):
+        return self.__mul__(other)
 
     def _boxed(self, value, tensor_name=None):
-        return PaillierFixedPointTensor(value=value, q_field=self.q_field, endec=self.endec, tensor_name=tensor_name)
+        return PaillierFixedPointTensor(value=value, tensor_name=tensor_name)
+
+    @classmethod
+    def from_source(cls, tensor_name, source, **kwargs):
+        spdz = cls.get_spdz()
+        if 'encoder' in kwargs:
+            encoder = kwargs['encoder']
+        else:
+            base = kwargs['base'] if 'base' in kwargs else 10
+            frac = kwargs['frac'] if 'frac' in kwargs else 4
+            q_field = kwargs['q_field'] if 'q_field' in kwargs else spdz.q_field
+            encoder = FixedPointEndec(q_field, base, frac)
+
+        if is_table(source):
+            _pre = urand_tensor(spdz.q_field, source, use_mix=spdz.use_mix_rand)
+            share = _pre
+
+            for _party in spdz.other_parties[:-1]:
+                r = urand_tensor(spdz.q_field, source, use_mix=spdz.use_mix_rand)
+                spdz.communicator.remote_share(share=_table_binary_op(r, _pre, operator.sub),
+                                               tensor_name=tensor_name, party=_party)
+                _pre = r
+            spdz.communicator.remote_share(share=_table_binary_op(source, _pre, operator.sub),
+                                           tensor_name=tensor_name, party=_party)
+
+            return FixedPointTensor(share, spdz.q_field, encoder, tensor_name)
+
+        elif isinstance(source, Party):
+            share = spdz.communicator.get_share(tensor_name=tensor_name, party=source)[0]
+            return PaillierFixedPointTensor(share, tensor_name)
+        else:
+            raise ValueError(f"type={type(source)}")
+

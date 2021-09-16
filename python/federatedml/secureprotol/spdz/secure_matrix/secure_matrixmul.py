@@ -12,22 +12,38 @@ class SecureMatrixMul(object):
         self.transfer_variable = SSHEModelTransferVariable()
         self.role = None
 
-    def _dot(self, array):
-        def _dot(x):
-            res = fate_operator.vec_dot(x, array)
+    @classmethod
+    def table_dot(cls, a_table, b_table):
+        def _table_dot_func(it):
+            ret = None
+            for _, (x, y) in it:
+                if ret is None:
+                    ret = np.tensordot(x, y, [[], []])
+                else:
+                    ret += np.tensordot(x, y, [[], []])
+            return ret
+
+        return a_table.join(b_table, lambda x, y: [x, y]) \
+            .applyPartitions(lambda it: _table_dot_func(it)) \
+            .reduce(lambda x, y: x + y)
+
+    @classmethod
+    def dot(cls, matrix, y):
+        def _vec_dot(x, y):
+            res = np.dot(x, y)
             if not isinstance(res, np.ndarray):
                 res = np.array([res])
             return res
 
-        if isinstance(share, np.ndarray):
-            xy = self._dot(matrix, share)
-        else:
-            share_tensor = fixedpoint_table.PaillierFixedPointTensor(
-                share, q_field=matrix.q_field, encoder=matrix.endec)
-            xy = matrix.dot_local(share_tensor)
-        LOGGER.debug(f"Finish dot")
+        if isinstance(y, np.ndarray):
+            res = matrix.mapValues(_vec_dot)
+            return res
 
-        return self._boxed(self.value.mapValues(_dot))
+        elif is_table(y):
+            res = cls.table_dot(matrix, y)
+            return res
+        else:
+            raise ValueError(f"type={type(y)}")
 
     def secure_matrix_mul(self, matrix, cipher=None, suffix=tuple()):
         curt_suffix = ("secure_matrix_mul",) + suffix
@@ -52,8 +68,8 @@ class SecureMatrixMul(object):
                                                             suffix=curt_suffix)
             LOGGER.debug(f"Make share tensor")
             # share dtype : PaillerTensor;
-            xy = self._dot(matrix, share)
-            share_tensor = ShareMarixinSecretSharingWithHe.from_source(tensor_name, xy, cipher, q_field, encoder)
+            res = cls.dot(matrix, share)
+            share_tensor = ShareMarixinSecretSharingWithHe.from_source(tensor_name, res, cipher, q_field, encoder)
 
             return share_tensor
 
@@ -64,25 +80,25 @@ class ShareMarixinSecretSharingWithHe(object):
 
     @classmethod
     def from_source(cls, tensor_name, source, cipher, q_field, encoder, fixedpoint_numpy=True):
-        if isinstance(source, fixedpoint_table.FixedPointTensor):
-            random_tensor = fixedpoint_table.FixedPointTensor.from_source(tensor_name, source,
+        if is_table(source):
+            random_tensor = fixedpoint_table.PaillierFixedPointTensor.from_source(tensor_name, source,
                                                           encoder=encoder,
                                                           q_field=q_field)
             return random_tensor
 
-        elif isinstance(source,  fixedpoint_numpy.FixedPointTensor):
-            random_tensor = fixedpoint_numpy.FixedPointTensor.from_source(tensor_name, source,
+        elif isinstance(source,  np.ndarray):
+            random_tensor = fixedpoint_numpy.PaillierFixedPointTensor.from_source(tensor_name, source,
                                                                           encoder=encoder,
                                                                           q_field=q_field)
             return random_tensor
 
         elif isinstance(source, Party):
             if fixedpoint_numpy:
-                share_tensor = fixedpoint_numpy.FixedPointTensor.from_source(tensor_name, source,
+                share_tensor = fixedpoint_numpy.PaillierFixedPointTensor.from_source(tensor_name, source,
                                                                          encoder=encoder,
                                                                          q_field=q_field)
             else:
-                share_tensor = fixedpoint_table.FixedPointTensor.from_source(tensor_name, source,
+                share_tensor = fixedpoint_table.PaillierFixedPointTensor.from_source(tensor_name, source,
                                                                              encoder=encoder,
                                                                              q_field=q_field)
 
