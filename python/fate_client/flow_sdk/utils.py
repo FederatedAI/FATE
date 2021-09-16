@@ -79,9 +79,9 @@ def preprocess(**kwargs):
     party_id = kwargs.pop('party_id', None)
     role = kwargs.pop('role', None)
     if party_id is not None:
-        local['party_id'] = int(party_id)
+        kwargs['party_id'] = local['party_id'] = int(party_id)
     if role is not None:
-        local['role'] = role
+        kwargs['role'] = local['role'] = role
     if local:
         config_data['local'] = local
 
