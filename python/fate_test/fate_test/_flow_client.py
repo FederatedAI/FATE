@@ -247,7 +247,7 @@ class FLOWClient(object):
         elif request == 'table/delete':
             stdout = client.table.delete(table_name=param['table_name'], namespace=param['namespace'])
         elif request == 'job/submit':
-            stdout = client.job.submit(config_data=param['job_runtime_conf'], dsl_path=param['job_dsl'])
+            stdout = client.job.submit(config_data=param['job_runtime_conf'], dsl_data=param['job_dsl'])
         elif request == 'job/query':
             stdout = client.job.query(job_id=param['job_id'], role=param['role'])
         elif request == 'model/deploy':
