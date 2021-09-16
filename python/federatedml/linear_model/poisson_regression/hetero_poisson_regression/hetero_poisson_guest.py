@@ -78,6 +78,7 @@ class HeteroPoissonGuest(HeteroPoissonBase):
             self.model_weights = LinearModelWeights(w, fit_intercept=self.fit_intercept, raise_overflow_error=False)
         else:
             self.callback_warm_start_init_iter(self.n_iter_)
+            self.n_iter_ += 1
 
         while self.n_iter_ < self.max_iter:
             self.callback_list.on_epoch_begin(self.n_iter_)
@@ -119,8 +120,7 @@ class HeteroPoissonGuest(HeteroPoissonBase):
             self.n_iter_ += 1
             if self.is_converged:
                 break
-        if self.validation_strategy and self.validation_strategy.has_saved_best_model():
-            self.load_model(self.validation_strategy.cur_best_model)
+        self.callback_list.on_train_end()
         self.set_summary(self.get_model_summary())
 
     @assert_io_num_rows_equal
