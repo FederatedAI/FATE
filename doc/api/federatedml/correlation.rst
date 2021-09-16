@@ -7,17 +7,17 @@ Introduction
 
 Pearson Correlation Coefficient is a measure of the linear correlation between two variables, X and Y, defined as,
 
-.. figure:: img/pearson.png
+.. figure:: ../../images/pearson.png
    	:align: center
 
 Let 
 
-.. figure:: img/standard.png
+.. figure:: ../../images/standard.png
    	:align: center
 
 then,
 
-.. figure:: img/rewrited.png
+.. figure:: ../../images/rewrited.png
    	:align: center
 
 
@@ -25,7 +25,7 @@ Implementation Detail
 ---------------------
 
 We use an MPC protocol called SPDZ for Heterogeneous Pearson Correlation Coefficient calculation. 
-For more details, one can refer to `[README]. <../../secureprotol/README.rst>`_
+For more details, one can refer `[here]. <secureprotol.rst>`_
 
 
 Param
@@ -49,4 +49,4 @@ How to Use
     	if both params are provided, the union of columns indicated are used for calculation.  
 
 :examples:
-    There is an example :download:`[conf] <../../../../examples/dsl/v2/hetero_pearson/test_conf.json>` and :download:`[dsl] <../../../../examples/dsl/v2/hetero_pearson/test_dsl.json>`
+    There is an example :download:`[conf] <../../../examples/dsl/v2/hetero_pearson/test_conf.json>` and :download:`[dsl] <../../../examples/dsl/v2/hetero_pearson/test_dsl.json>`

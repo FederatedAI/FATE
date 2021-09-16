@@ -14,7 +14,7 @@ Our Intersection module tries to solve Privacy-Preserving Entity Match problem.
 This module helps two and more parties to find common entry ids without leaking non-overlapping ids.
 The process is illustrated below in `figure 1`.
 
-.. figure:: images/rsa_intersection.png
+.. figure:: ../../images/rsa_intersection.png
    :width: 500
    :align: center
    :name: figure 1
@@ -52,14 +52,14 @@ Intersection With Cache
 
 Intersection may be conducted as online/offline phases.
 Both RSA and DH Intersection support cache. For examples employing cache mechanism,
-please refer `here <../../../../examples/pipeline/intersect>`_.
+please refer `here <../../../examples/pipeline/intersect>`_.
 
 Multi-Host Intersection
 -----------------------
 
 RSA, RAW, and DH intersection support multi-host scenario. It means a guest can perform intersection with more than one host simultaneously and get the common ids among all participants.
 
-.. figure:: ./images/multi_hosts.png
+.. figure:: ../../images/multi_host_intersect.png
    :align: center
    :width: 500
    :name: figure 2
@@ -126,11 +126,11 @@ Feature
 
 RSA, RAW, and DH intersection methods support:
 
-1. Multi-host PSI task. The detailed configuration for multi-host task can be found `here. <../../../../doc/dsl_conf_v2_setting_guide.rst#multi-host-configuration>`_
+1. Multi-host PSI task. The detailed configuration for multi-host task can be found `here. <../../tutorial/dsl_conf/dsl_conf_v2_setting_guide.rst#multi-host-configuration>`_
 
 2. Match ID intersection using ID expanding.
 
-3. Configurable hashing methods, including sha256, md5, and sm3; hash operators of RSA intersection can be configured separately, please refer `here <../../param/intersect_param.py>`_ for more details.
+3. Configurable hashing methods, including sha256, md5, and sm3; hash operators of RSA intersection can be configured separately, please refer `here <../../../python/federatedml/param/intersect_param.py>`_ for more details.
 
 4. Preprocessing step to pre-filter Host's data for faster PSI
 

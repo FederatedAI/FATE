@@ -394,17 +394,17 @@ Secure Protocol
 * `Feldman Verifiable Secret Sharing`_
 
 
-.. _Encrypt: secureprotol/README.rst#encrypt
-.. _Paillier encryption: secureprotol/README.rst#paillier-encryption
-.. _Affine Homomorphic Encryption: secureprotol/README.rst#affine-homomorphic-encryption
-.. _IterativeAffine Homomorphic Encryption: secureprotol/README.rst#iterativeaffine-homomorphic-encryption
-.. _RSA encryption: secureprotol/README.rst#rst-encryption
-.. _Fake encryption: secureprotol/README.rst#fake-encryption
-.. _Encode: secureprotol/README.rst#encode
-.. _Diffne Hellman Key Exchange: secureprotol/README.rst#diffne-hellman-key-exchange
-.. _SecretShare MPC Protocol(SPDZ): secureprotol/README.rst#secretshare-mpc-protocol-spdz
-.. _Oblivious Transfer: secureprotol/README.rst#oblivious-transfer
-.. _Feldman Verifiable Secret Sharing: secureprotol/README.rst#feldman-verifiable-secret-sharing
+.. _Encrypt: secureprotol.rst#encrypt
+.. _Paillier encryption: secureprotol.rst#paillier-encryption
+.. _Affine Homomorphic Encryption: secureprotol.rst#affine-homomorphic-encryption
+.. _IterativeAffine Homomorphic Encryption: secureprotol.rst#iterativeaffine-homomorphic-encryption
+.. _RSA encryption: secureprotol.rst#rst-encryption
+.. _Fake encryption: secureprotol.rst#fake-encryption
+.. _Encode: secureprotol.rst#encode
+.. _Diffne Hellman Key Exchange: secureprotol.rst#diffne-hellman-key-exchange
+.. _SecretShare MPC Protocol(SPDZ): secureprotol.rst#secretshare-mpc-protocol-spdz
+.. _Oblivious Transfer: secureprotol.rst#oblivious-transfer
+.. _Feldman Verifiable Secret Sharing: secureprotol.rst#feldman-verifiable-secret-sharing
 
 
 Params

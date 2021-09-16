@@ -59,7 +59,7 @@ Features
 
 9. Support sparse format data as input.
 
-10. Support stepwise. For details on stepwise mode, please refer `[here]. <../../model_selection/stepwise/README.rst>`_
+10. Support stepwise. For details on stepwise mode, please refer `[here]. <stepwise.rst>`_
 
 
 .. note::

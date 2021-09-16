@@ -13,7 +13,7 @@ How to Use
 
 This component can be used to retrieve specific feature value(s) or label value, with arbitrary security level.
 
-There is an `[example] <../../../../examples/pipeline/secure_information_retrieval>`_
+There is an `[example] <../../../examples/pipeline/secure_information_retrieval>`_
 
 Param
 -------------------

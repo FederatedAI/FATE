@@ -131,4 +131,4 @@ Features
 
     7. Support stepwise. For details on stepwise mode, please refer [`stepwise`_].
 
-.. _stepwise: ../../model_selection/stepwise/README.rst
+.. _stepwise: stepwise.rst

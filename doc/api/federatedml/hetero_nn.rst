@@ -13,7 +13,7 @@ Basic FrameWork
 
 The following figure shows the proposed Federated Heterogeneous Neural Network framework.
 
-.. figure:: images/hetero_nn_framework.png
+.. figure:: ../../images/hetero_nn_framework.png
    :width: 500
    :align: center
 

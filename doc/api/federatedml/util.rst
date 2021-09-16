@@ -2,7 +2,7 @@ DataTransform(DataIO)
 ======
 
 Data IO is the most basic component of Fate Algorithm module. 
-It transforms the input Table to a Table whose values are Instance Object defined `here <../feature/instance.py>`_,
+It transforms the input Table to a Table whose values are Instance Object defined `here <../../../python/federatedml/feature/instance.py>`_,
 and what's more, the transformed table is the input data format of all other algorithm module, such as intersect、
 homo LR and hetero LR、SecureBoost and so on.
 

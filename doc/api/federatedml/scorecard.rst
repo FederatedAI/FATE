@@ -40,5 +40,5 @@ How to Use
     :need_run: Indicate if this module needs to be run, default True
 
 :examples:
-    There is an example `[conf] <../../../../examples/dsl/v2/scorecard/test_scorecard_job_conf.json>`_
-    and `[dsl] <../../../../examples/dsl/v2/scorecard/test_scorecard_job_dsl.json>`_
+    There is an example `[conf] <../../../examples/dsl/v2/scorecard/test_scorecard_job_conf.json>`_
+    and `[dsl] <../../../examples/dsl/v2/scorecard/test_scorecard_job_dsl.json>`_

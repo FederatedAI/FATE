@@ -7,7 +7,7 @@ Currently, we provide quantile binning and bucket binning methods. To achieve qu
 
 As for calculating the federated iv and woe values, the following figure can describe the principle properly.
 
-.. figure:: ./images/binning_principle.png
+.. figure:: ../../images/binning_principle.png
    :width: 850
    :align: center
 
@@ -17,7 +17,7 @@ As the figure shows, B party which has the data labels encrypt its labels with A
 
 For multiple hosts, it is similar with one host case. Guest sends its encrypted label information to all hosts, and each of the hosts calculates and sends back the static info.
 
-.. figure:: ./images/multiple_host_binning.png
+.. figure:: ../../images/multiple_host_binning.png
    :width: 850
    :alt: samples
    :align: center
@@ -26,7 +26,7 @@ For multiple hosts, it is similar with one host case. Guest sends its encrypted 
 
 For optimal binning, each party use quantile binning or bucket binning find initial split points. Then Guest will send encrypted labels to Host. Host use them calculate histogram of each bin and send back to Guest. Then start optimal binning methods.
 
-.. figure:: ./images/optimal_binning.png
+.. figure:: ../../images/optimal_binning.png
    :width: 850
    :align: center
 
@@ -101,7 +101,7 @@ Features
 
 Besides, we support multi-host federated feature selection for iv filters. Hosts encode feature names and send the feature ids that are involved in feature selection. Guest use iv filters' logic to judge whether a feature is left or not. Then guest sends result back to hosts. Hosts decode feature ids back to feature names and obtain selection results.
 
-.. figure:: images/multi_host_selection.png
+.. figure:: ../../images/multi_host_selection.png
    :width: 850
    :align: center
 
@@ -186,7 +186,7 @@ A feature engineering module that encodes sample using leaf indices predicted by
 Samples will be transformed into sparse 0-1 vectors after encoding.
 See `[original paper] <https://research.fb.com/wp-content/uploads/2016/11/practical-lessons-from-predicting-clicks-on-ads-at-facebook.pdf>`_ for its details.
 
-.. figure:: images/gbdt_lr.png
+.. figure:: ../../images/gbdt_lr.png
    :width: 500
    :align: center
 

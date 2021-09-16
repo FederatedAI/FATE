@@ -11,14 +11,14 @@ of common users among different participants without exposing private data.
 Here, three participants of the federation process is given, Party A represents Guest, party B and party C represent Host.
 The process of Feldman Verifiable Sum is shown below:
 
-.. figure:: images/feldman_verifiable_sum.png
+.. figure:: ../../images/feldman_verifiable_sum.png
    :align: center
    :width: 500
 
    Figure 1: Process of Feldman Verifiable Sum
 
 
-.. figure:: images/share_sub-key.png
+.. figure:: ../../images/share_sub-key.png
    :align: center
    :width: 500
 
@@ -33,7 +33,7 @@ How to Use
 In general, this component can be used in the data preprocessing stage to count some features. It supports integers and
 floating-point numbers from - 2 ^ 63 to 2 ^ 64. By default, the maximum precision is set to 6 decimal places.
 
-There is an `[example] <../../../../examples/pipeline/feldman_verifiable_sum>`_
+There is an `[example] <../../../examples/pipeline/feldman_verifiable_sum>`_
 
 Param
 -------------------
