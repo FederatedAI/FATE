@@ -19,7 +19,8 @@
 
 import copy
 
-from federatedml.param.base_param import BaseParam, deprecated_param
+# from federatedml.param.base_param import BaseParam, deprecated_param
+from federatedml.param.base_param import BaseParam
 from federatedml.param.callback_param import CallbackParam
 from federatedml.param.encrypt_param import EncryptParam
 from federatedml.param.encrypted_mode_calculation_param import EncryptedModeCalculatorParam
@@ -30,7 +31,7 @@ from federatedml.param.stepwise_param import StepwiseParam
 from federatedml.util import consts
 
 
-@deprecated_param("validation_freqs", "metrics", "early_stopping_rounds", "use_first_metric_only")
+# @deprecated_param("validation_freqs", "metrics", "early_stopping_rounds", "use_first_metric_only")
 class PoissonParam(BaseParam):
     """
     Parameters used for Poisson Regression.
@@ -242,6 +243,7 @@ class PoissonParam(BaseParam):
 
         self.stepwise_param.check()
 
+        """
         if self._warn_to_deprecate_param("validation_freqs", descr, "callback_param's 'validation_freqs'"):
             self.callback_param.early_stopping_rounds = self.early_stopping_rounds
 
@@ -253,7 +255,7 @@ class PoissonParam(BaseParam):
 
         if self._warn_to_deprecate_param("use_first_metric_only", descr, "callback_param's 'use_first_metric_only'"):
             self.callback_param.use_first_metric_only = self.use_first_metric_only
-
+        """
         if self.floating_point_precision is not None and \
                 (not isinstance(self.floating_point_precision, int) or
                  self.floating_point_precision < 0 or self.floating_point_precision > 64):
