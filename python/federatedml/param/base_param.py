@@ -86,39 +86,24 @@ class BaseParam(object):
         return {name: True for name in self.get_feeded_deprecated_params()}
 
     def as_dict(self):
-        # deprecated_params_set = self._get_or_init_deprecated_params_set()
-        # feeded_deprecated_params_set = self._get_or_init_feeded_deprecated_params_set()
-        # user_feeded_params_set = self._get_or_init_user_feeded_params_set()
-
-        def _recursive_convert_obj_to_dict(obj, prefix):
+        def _recursive_convert_obj_to_dict(obj):
             ret_dict = {}
             for attr_name in list(obj.__dict__):
-
-                # # ignore non user feeded deprecated params
-                # full_variable_name = f"{prefix}{attr_name}"
-                # # if (
-                # #     full_variable_name in deprecated_params_set
-                # #     and not full_variable_name in feeded_deprecated_params_set
-                # # ):
-                # if not full_variable_name in user_feeded_params_set:
-                #     continue
-
                 # get attr
                 attr = getattr(obj, attr_name)
                 if attr and type(attr).__name__ not in dir(builtins):
                     ret_dict[attr_name] = _recursive_convert_obj_to_dict(
-                        attr, prefix=f"{prefix}{attr_name}."
+                        attr
                     )
                 else:
                     ret_dict[attr_name] = attr
 
             return ret_dict
 
-        return _recursive_convert_obj_to_dict(self, prefix="")
+        return _recursive_convert_obj_to_dict(self)
 
     def update(self, conf, allow_redundant=False):
         update_from_raw_conf = conf.get(_IS_RAW_CONF, True)
-
         if update_from_raw_conf:
             deprecated_params_set = self._get_or_init_deprecated_params_set()
             feeded_deprecated_params_set = (
@@ -170,9 +155,10 @@ class BaseParam(object):
                     setattr(param, config_key, sub_params)
 
             if not allow_redundant and redundant_attrs:
-                raise ValueError(
-                    f"cpn `{getattr(self, '_name', type(self))}` has redundant parameters: `{[redundant_attrs]}`"
-                )
+                pass
+                # raise ValueError(
+                #     f"cpn `{getattr(self, '_name', type(self))}` has redundant parameters: `{[redundant_attrs]}`"
+                # )
 
             return param
 
