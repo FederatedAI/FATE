@@ -44,7 +44,7 @@ FATE官方网站：<https://fate.fedai.org/>
 - [FATE-Serving](https://github.com/FederatedAI/FATE-Serving)
 - [FATE-Cloud](https://github.com/FederatedAI/FATE-Cloud)
 
-### 为FATE贡献代码
+### 贡献代码
 
 - [开发指南](./doc/community/develop_guide.rst)
 - [FATE-Client开发指南](./doc/community/fate_client_develop_guide.rst)
