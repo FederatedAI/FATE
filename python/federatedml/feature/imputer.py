@@ -194,7 +194,8 @@ class Imputer(object):
                 raise ValueError("Unknown replace method:{}".format(replace_method))
             cols_transform_value[feature] = transform_value
 
-        cols_transform_value = [round(cols_transform_value[key], 6) for key in header if cols_transform_value[key]]
+        LOGGER.debug(f"cols_transform value is: {cols_transform_value}")
+        cols_transform_value = [cols_transform_value[key] for key in header]
         # cols_transform_value = {i: round(cols_transform_value[key], 6) for i, key in enumerate(header)}
         LOGGER.debug(f"cols_transform value is: {cols_transform_value}")
         return cols_transform_value
