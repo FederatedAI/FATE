@@ -15,8 +15,8 @@ from federatedml.ensemble.boosting.boosting_core.homo_boosting_aggregator import
     HomoBoostClientAggregator
 from federatedml.optim.convergence import converge_func_factory
 from federatedml.param.boosting_param import HomoSecureBoostParam
-from fate_flow.entity.metric import Metric
-from fate_flow.entity.metric import MetricMeta
+from federatedml.model_base import Metric
+from federatedml.model_base import MetricMeta
 from federatedml.util.io_check import assert_io_num_rows_equal
 
 from federatedml.feature.homo_feature_binning import recursive_query_binning
@@ -138,6 +138,7 @@ class HomoBoostingClient(Boosting, ABC):
         if self.is_warm_start:
             self.y_hat = self.predict(data_inst, ret_format='raw')
             self.boosting_round += self.start_round
+            self.callback_warm_start_init_iter(self.start_round)
         else:
             self.y_hat, self.init_score = self.get_init_score(self.y, self.num_classes)
 

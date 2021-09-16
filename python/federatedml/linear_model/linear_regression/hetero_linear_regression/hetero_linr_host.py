@@ -52,6 +52,10 @@ class HeteroLinRHost(HeteroLinRBase):
 
         self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
 
+        if self.transfer_variable.use_async.get(idx=0):
+            LOGGER.debug(f"set_use_async")
+            self.gradient_loss_operator.set_use_async()
+
         self.batch_generator.initialize_batch_generator(data_instances)
         self.gradient_loss_operator.set_total_batch_nums(self.batch_generator.batch_nums)
 

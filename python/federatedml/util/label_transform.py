@@ -19,7 +19,7 @@
 import copy
 import numpy as np
 
-from fate_flow.entity.metric import Metric, MetricMeta
+from federatedml.model_base import Metric, MetricMeta
 from federatedml.model_base import ModelBase
 from federatedml.param.label_transform_param import LabelTransformParam
 from federatedml.protobuf.generated import label_transform_meta_pb2, label_transform_param_pb2

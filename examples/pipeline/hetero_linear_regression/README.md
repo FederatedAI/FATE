@@ -28,6 +28,9 @@ This section introduces the Pipeline scripts for different types of tasks.
     
     script: pipeline-hetero-linr-sparse.py
 
+7. Train Task with Weighted Instances:
+    
+    script: pipeline-hetero-linr-sample-weight.py
 
 Users can run a pipeline job directly:
 

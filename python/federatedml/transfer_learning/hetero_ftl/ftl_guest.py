@@ -5,8 +5,8 @@ from federatedml.transfer_learning.hetero_ftl.ftl_base import FTL
 from federatedml.util import LOGGER
 from federatedml.transfer_learning.hetero_ftl.ftl_dataloder import FTLDataLoader
 from federatedml.statistic.intersect import RsaIntersectionGuest
-from fate_flow.entity.metric import Metric
-from fate_flow.entity.metric import MetricMeta
+from federatedml.model_base import Metric
+from federatedml.model_base import MetricMeta
 from federatedml.optim.convergence import converge_func_factory
 from federatedml.nn.hetero_nn.backend.paillier_tensor import PaillierTensor
 from federatedml.optim.activation import sigmoid

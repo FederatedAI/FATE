@@ -19,22 +19,26 @@
 import builtins
 import json
 import os
-from federatedml.util import consts, LOGGER
-import typing
+
+from federatedml.util import LOGGER, consts
+
+_FEEDED_DEPRECATED_PARAMS = "_feeded_deprecated_params"
+_DEPRECATED_PARAMS = "_deprecated_params"
+_USER_FEEDED_PARAMS = "_user_feeded_params"
+_IS_RAW_CONF = "_is_raw_conf"
 
 
 def deprecated_param(*names):
-    def _decorator(cls):
+    def _decorator(cls: "BaseParam"):
+        deprecated = cls._get_or_init_deprecated_params_set()
         for name in names:
-            cls._deprecated_params_set[name] = False
+            deprecated.add(name)
         return cls
 
     return _decorator
 
 
 class BaseParam(object):
-    _deprecated_params_set: typing.MutableMapping[str, bool] = {}
-
     def __init__(self):
         pass
 
@@ -45,39 +49,90 @@ class BaseParam(object):
     def check(self):
         raise NotImplementedError("Parameter Object should have be check")
 
+    @classmethod
+    def _get_or_init_deprecated_params_set(cls):
+        if not hasattr(cls, _DEPRECATED_PARAMS):
+            setattr(cls, _DEPRECATED_PARAMS, set())
+        return getattr(cls, _DEPRECATED_PARAMS)
+
+    def _get_or_init_feeded_deprecated_params_set(self, conf=None):
+        if not hasattr(self, _FEEDED_DEPRECATED_PARAMS):
+            if conf is None:
+                setattr(self, _FEEDED_DEPRECATED_PARAMS, set())
+            else:
+                setattr(
+                    self,
+                    _FEEDED_DEPRECATED_PARAMS,
+                    set(conf[_FEEDED_DEPRECATED_PARAMS]),
+                )
+        return getattr(self, _FEEDED_DEPRECATED_PARAMS)
+
+    def _get_or_init_user_feeded_params_set(self, conf=None):
+        if not hasattr(self, _USER_FEEDED_PARAMS):
+            if conf is None:
+                setattr(self, _USER_FEEDED_PARAMS, set())
+            else:
+                setattr(self, _USER_FEEDED_PARAMS, set(conf[_USER_FEEDED_PARAMS]))
+        return getattr(self, _USER_FEEDED_PARAMS)
+
     def get_user_feeded(self):
-        if not hasattr(self, "_user_feeded_params"):
-            return []
-        else:
-            return getattr(self, "_user_feeded_params")
+        return self._get_or_init_user_feeded_params_set()
+
+    def get_feeded_deprecated_params(self):
+        return self._get_or_init_feeded_deprecated_params_set()
+
+    @property
+    def _deprecated_params_set(self):
+        return {name: True for name in self.get_feeded_deprecated_params()}
 
     def as_dict(self):
-        def _recursive_convert_obj_to_dict(obj):
+        # deprecated_params_set = self._get_or_init_deprecated_params_set()
+        # feeded_deprecated_params_set = self._get_or_init_feeded_deprecated_params_set()
+        # user_feeded_params_set = self._get_or_init_user_feeded_params_set()
+
+        def _recursive_convert_obj_to_dict(obj, prefix):
             ret_dict = {}
-            for variable in obj.__dict__:
+            for attr_name in list(obj.__dict__):
 
-                # ignore default deprecated params
-                if not self._deprecated_params_set.get(variable, True):
-                    continue
+                # # ignore non user feeded deprecated params
+                # full_variable_name = f"{prefix}{attr_name}"
+                # # if (
+                # #     full_variable_name in deprecated_params_set
+                # #     and not full_variable_name in feeded_deprecated_params_set
+                # # ):
+                # if not full_variable_name in user_feeded_params_set:
+                #     continue
 
-                attr = getattr(obj, variable)
+                # get attr
+                attr = getattr(obj, attr_name)
                 if attr and type(attr).__name__ not in dir(builtins):
-                    ret_dict[variable] = _recursive_convert_obj_to_dict(attr)
+                    ret_dict[attr_name] = _recursive_convert_obj_to_dict(
+                        attr, prefix=f"{prefix}{attr_name}."
+                    )
                 else:
-                    ret_dict[variable] = attr
+                    ret_dict[attr_name] = attr
 
             return ret_dict
 
-        return _recursive_convert_obj_to_dict(self)
-
-    @classmethod
-    def from_dict(cls, conf):
-        obj = cls()
-        obj.update(conf)
-        return obj
+        return _recursive_convert_obj_to_dict(self, prefix="")
 
     def update(self, conf, allow_redundant=False):
-        def _recursive_update_param(param, config, depth):
+        update_from_raw_conf = conf.get(_IS_RAW_CONF, True)
+
+        if update_from_raw_conf:
+            deprecated_params_set = self._get_or_init_deprecated_params_set()
+            feeded_deprecated_params_set = (
+                self._get_or_init_feeded_deprecated_params_set()
+            )
+            user_feeded_params_set = self._get_or_init_user_feeded_params_set()
+            setattr(self, _IS_RAW_CONF, False)
+        else:
+            feeded_deprecated_params_set = (
+                self._get_or_init_feeded_deprecated_params_set(conf)
+            )
+            user_feeded_params_set = self._get_or_init_user_feeded_params_set(conf)
+
+        def _recursive_update_param(param, config, depth, prefix):
             if depth > consts.PARAM_MAXDEPTH:
                 raise ValueError("Param define nesting too deep!!!, can not parse it")
 
@@ -86,16 +141,21 @@ class BaseParam(object):
             for config_key, config_value in config.items():
                 # redundant attr
                 if config_key not in inst_variables:
-                    # set inner attr
-                    if config_key.startswith("_"):
+                    if not update_from_raw_conf and config_key.startswith("_"):
                         setattr(param, config_key, config_value)
                     else:
                         redundant_attrs.append(config_key)
                     continue
 
-                # deprecated param set
-                if config_key in self._deprecated_params_set:
-                    self._deprecated_params_set[config_key] = True
+                full_config_key = f"{prefix}{config_key}"
+
+                if update_from_raw_conf:
+                    # add user feeded params
+                    user_feeded_params_set.add(full_config_key)
+
+                    # update user feeded deprecated param set
+                    if full_config_key in deprecated_params_set:
+                        feeded_deprecated_params_set.add(full_config_key)
 
                 # supported attr
                 attr = getattr(param, config_key)
@@ -104,7 +164,9 @@ class BaseParam(object):
 
                 else:
                     # recursive set obj attr
-                    sub_params = _recursive_update_param(attr, config_value, depth + 1)
+                    sub_params = _recursive_update_param(
+                        attr, config_value, depth + 1, prefix=f"{prefix}{config_key}."
+                    )
                     setattr(param, config_key, sub_params)
 
             if not allow_redundant and redundant_attrs:
@@ -112,11 +174,9 @@ class BaseParam(object):
                     f"cpn `{getattr(self, '_name', type(self))}` has redundant parameters: `{[redundant_attrs]}`"
                 )
 
-            if getattr(self, "_user_feeded_params", None) is None:
-                setattr(self, "_user_feeded_params", list(conf.keys()))
             return param
 
-        return _recursive_update_param(param=self, config=conf, depth=0)
+        return _recursive_update_param(param=self, config=conf, depth=0, prefix="")
 
     def extract_not_builtin(self):
         def _get_not_builtin_types(obj):
@@ -148,7 +208,6 @@ class BaseParam(object):
         )
 
         validation_json = None
-        print("param validation path is {}".format(home_dir))
 
         try:
             with open(param_validation_path, "r") as fin:
@@ -305,11 +364,15 @@ class BaseParam(object):
 
     def _warn_deprecated_param(self, param_name, descr):
         if self._deprecated_params_set.get(param_name):
-            LOGGER.warning(f"{descr} {param_name} is deprecated and ignored in this version.")
+            LOGGER.warning(
+                f"{descr} {param_name} is deprecated and ignored in this version."
+            )
 
     def _warn_to_deprecate_param(self, param_name, descr, new_param):
         if self._deprecated_params_set.get(param_name):
-            LOGGER.warning(f"{descr} {param_name} will be deprecated in future release; "
-                           f"please use {new_param} instead.")
+            LOGGER.warning(
+                f"{descr} {param_name} will be deprecated in future release; "
+                f"please use {new_param} instead."
+            )
             return True
         return False

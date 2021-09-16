@@ -17,12 +17,13 @@
 #  limitations under the License.
 #
 
-from federatedml.param.base_param import BaseParam, deprecated_param
+# from federatedml.param.base_param import BaseParam, deprecated_param
+from federatedml.param.base_param import BaseParam
 from federatedml.param.intersect_param import DHParam
 from federatedml.util import consts, LOGGER
 
 
-@deprecated_param("key_size", "raw_retrieval")
+# @deprecated_param("key_size", "raw_retrieval")
 class SecureInformationRetrievalParam(BaseParam):
     """
     security_level: float [0, 1]; if security_level == 0, then do raw data retrieval
@@ -76,11 +77,11 @@ class SecureInformationRetrievalParam(BaseParam):
         self.non_committing_encryption = self.check_and_change_lower(self.non_committing_encryption,
                                                                      [consts.AES.lower()],
                                                                      descr + "non_committing_encryption")
-        if self._warn_to_deprecate_param("key_size", descr, "dh_param's key_length"):
-            self.dh_params.key_length = self.key_size
+        # if self._warn_to_deprecate_param("key_size", descr, "dh_param's key_length"):
+        #    self.dh_params.key_length = self.key_size
         self.dh_params.check()
-        if self._warn_to_deprecate_param("raw_retrieval", descr, "dh_param's security_level = 0"):
-            self.check_boolean(self.raw_retrieval, descr)
+        # if self._warn_to_deprecate_param("raw_retrieval", descr, "dh_param's security_level = 0"):
+        #    self.check_boolean(self.raw_retrieval, descr)
         if not isinstance(self.target_cols, list):
             self.target_cols = [self.target_cols]
         for col in self.target_cols:

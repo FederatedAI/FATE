@@ -29,6 +29,11 @@ This section introduces the dsl and conf for different types of tasks.
 
     runtime_config : sample_weight_multi_host_job_conf.json
 
+5. Sample Weight Transform Task:
+
+    dsl: sample_weight_transform_job_dsl.json
+
+    runtime_config : sample_weight_balanced_job_conf.json
 
 Users can use following commands to run the task.
 
