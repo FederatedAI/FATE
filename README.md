@@ -21,9 +21,9 @@ tree-based algorithms, deep learning and transfer learning.
 ### Quick Start
 
 - [Deployment by Docker Compose](https://github.com/FederatedAI/KubeFATE/tree/master/docker-deploy)
-- Native [Standalone-deploy](./standalone-deploy/)
+- [Native Standalone-deploy](./standalone-deploy/)
 - [Deployment on Kubernetes](https://github.com/FederatedAI/KubeFATE/blob/master/k8s-deploy).
-- Native [Cluster-deploy](./cluster-deploy).
+- [Native Cluster-deploy](./cluster-deploy).
 - [Run unittest](./python/federatedml/test/)
 - [Run Job with FATE-PipeLine](./doc/tutorial/pipeline/fate_client_pipeline_tutotial.rst)
 - [Run Job with DSL json conf](./doc/tutorial/dsl_conf/dsl_conf_v2_setting_guide.rst)
@@ -35,8 +35,8 @@ tree-based algorithms, deep learning and transfer learning.
 
 - [FATE structure]
 - [Modules](./doc/api/federatedml/federatedml_module.rst)
-- [Algorithm Parameters]
-- [Papers & Articles]
+- [Algorithm Parameters](./python/federatedml/param)
+- [Papers & Articles](./doc/resources)
 
 ### Tools & Services
 
@@ -60,13 +60,10 @@ tree-based algorithms, deep learning and transfer learning.
 
 ## Getting Involved
 
-*  Join our maillist [Fate-FedAI Group IO](https://groups.io/g/Fate-FedAI). You can ask questions and participate in the development discussion.
-
-*  For any frequently asked questions, you can check in [FAQ](https://github.com/FederatedAI/FATE/wiki).
-
-*  Please report bugs by submitting [issues](https://github.com/FederatedAI/FATE/issues).
-
-*  Submit contributions using [pull requests](https://github.com/FederatedAI/FATE/pulls)
+- [Fate-FedAI Group IO](https://groups.io/g/Fate-FedAI)
+- [FAQ](https://github.com/FederatedAI/FATE/wiki)
+- [issues](https://github.com/FederatedAI/FATE/issues)
+- [pull requests](https://github.com/FederatedAI/FATE/pulls)
 
 
 ### License
