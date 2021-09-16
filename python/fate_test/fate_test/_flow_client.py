@@ -106,6 +106,7 @@ class FLOWClient(object):
             time.sleep(1)
 
     def _save_json(self, file, file_name):
+        """
         file = json.dumps(file, indent=4)
         file_path = os.path.join(str(self._cache_directory), file_name)
         try:
@@ -114,6 +115,8 @@ class FLOWClient(object):
         except Exception as e:
             raise Exception(f"write error==>{e}")
         return file_path
+        """
+        return file
 
     def _upload_data(self, conf, output_path=None, verbose=0, drop=1):
         if output_path is not None:
@@ -240,11 +243,11 @@ class FLOWClient(object):
     def flow_client(self, request, param, verbose=0, drop=0):
         client = FlowClient(self.address.split(':')[0], self.address.split(':')[1], self.version)
         if request == 'data/upload':
-            stdout = client.data.upload(conf_path=param, verbose=verbose, drop=drop)
+            stdout = client.data.upload(config_data=param, verbose=verbose, drop=drop)
         elif request == 'table/delete':
             stdout = client.table.delete(table_name=param['table_name'], namespace=param['namespace'])
         elif request == 'job/submit':
-            stdout = client.job.submit(conf_path=param['job_runtime_conf'], dsl_path=param['job_dsl'])
+            stdout = client.job.submit(config_data=param['job_runtime_conf'], dsl_path=param['job_dsl'])
         elif request == 'job/query':
             stdout = client.job.query(job_id=param['job_id'], role=param['role'])
         elif request == 'model/deploy':
