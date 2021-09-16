@@ -1,0 +1,84 @@
+{
+  "components": {
+    "HeteroFeatureSelection_0": {
+      "output": {
+        "data": [
+          "data_0"
+        ],
+        "model": [
+          "model"
+        ]
+      },
+      "input": {
+        "data": {
+          "data": [
+            "Intersection_0.data_0"
+          ]
+        },
+        "isometric_model": [
+          "HeteroFeatureBinning_0.model"
+        ]
+      },
+      "module": "HeteroFeatureSelection"
+    },
+    "DataIO_0": {
+      "output": {
+        "data": [
+          "data_0"
+        ],
+        "model": [
+          "model"
+        ]
+      },
+      "input": {
+        "data": {
+          "data": [
+            "Reader_0.data_0"
+          ]
+        }
+      },
+      "module": "DataIO"
+    },
+    "Reader_0": {
+      "output": {
+        "data": [
+          "data_0"
+        ]
+      },
+      "module": "Reader"
+    },
+    "HeteroFeatureBinning_0": {
+      "output": {
+        "data": [
+          "data_0"
+        ],
+        "model": [
+          "model"
+        ]
+      },
+      "input": {
+        "data": {
+          "data": [
+            "Intersection_0.data_0"
+          ]
+        }
+      },
+      "module": "HeteroFeatureBinning"
+    },
+    "Intersection_0": {
+      "output": {
+        "data": [
+          "data_0"
+        ]
+      },
+      "input": {
+        "data": {
+          "data": [
+            "DataIO_0.data_0"
+          ]
+        }
+      },
+      "module": "Intersection"
+    }
+  }
+}

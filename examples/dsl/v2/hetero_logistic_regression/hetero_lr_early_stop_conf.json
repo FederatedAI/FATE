@@ -85,15 +85,19 @@
                     "random_seed": 103,
                     "need_cv": false
                 },
-                "validation_freqs": 1,
-                "early_stopping_rounds": 3,
-                "metrics": [],
-                "use_first_metric_only": false,
                 "sqn_param": {
                     "update_interval_L": 3,
                     "memory_M": 5,
                     "sample_size": 5000,
                     "random_seed": null
+                },
+                "callback_param": {
+                    "callbacks": ["ModelCheckpoint", "EarlyStopping"],
+                    "validation_freqs": 1,
+                    "early_stopping_rounds": 1,
+                    "metrics": null,
+                    "use_first_metric_only": false,
+                    "save_freq": 1
                 }
             },
             "evaluation_0": {

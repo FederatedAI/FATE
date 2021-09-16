@@ -72,7 +72,7 @@ class BaseParam(object):
     def as_dict(self):
         def _recursive_convert_obj_to_dict(obj):
             ret_dict = {}
-            for variable in obj.__dict__:
+            for variable in list(obj.__dict__):
 
                 # ignore default deprecated params
                 if (

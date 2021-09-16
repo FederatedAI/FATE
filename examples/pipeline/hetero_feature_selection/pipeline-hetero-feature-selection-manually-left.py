@@ -44,7 +44,7 @@ def main(config="../../config.yaml", namespace=""):
         "manually_param": {
             "filter_out_indexes": None,
             "filter_out_names": None,
-            "left_col_indexes": [0, 1, 2],
+            "left_col_indexes": None,
             "left_col_names": ["x3"]
         }}
 

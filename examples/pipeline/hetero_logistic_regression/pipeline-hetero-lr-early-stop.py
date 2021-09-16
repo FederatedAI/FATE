@@ -73,6 +73,11 @@ def main(config="../../config.yaml", namespace=""):
     }
 
     pipeline = common_tools.make_normal_dsl(config, namespace, lr_param, has_validate=True)
+    p = pipeline.get_train_conf()
+    dsl = pipeline.get_train_dsl()
+    import pprint
+    pprint.pprint(dsl)
+    # exit(0)
     # fit model
     job_parameters = JobParameters(backend=backend, work_mode=work_mode)
     pipeline.fit(job_parameters)

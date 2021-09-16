@@ -1,8 +1,8 @@
 {
-    "file": "examples/data/breast_hetero_guest.csv",
+    "file": "/home/mingchao/fate_1.7/python/component_plugins/fate/examples/data/hetero_unnitest_repeated_guest.csv",
     "head": 1,
-    "partition": 16,
+    "partition": 4,
     "work_mode": 0,
-    "table_name": "breast_hetero_guest",
+    "table_name": "hetero_unnitest_repeated_guest",
     "namespace": "experiment"
 }

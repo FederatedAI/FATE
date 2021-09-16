@@ -244,6 +244,19 @@ class LogisticParam(BaseParam):
                  self.floating_point_precision < 0 or self.floating_point_precision > 63):
             raise ValueError("floating point precision should be null or a integer between 0 and 63")
 
+        for p in ["early_stopping_rounds", "validation_freqs", "metrics",
+                  "use_first_metric_only"]:
+            if self._warn_to_deprecate_param(p, "", ""):
+                # assert 1 == 2, f"{self._deprecated_params_set}, {self.get_user_feeded()}"
+                if "callback_param" in self.get_user_feeded():
+                    import pprint
+                    pprint.pprint(f"{self._deprecated_params_set}, {self.get_user_feeded()}")
+                    raise ValueError(f"{p} and callback param should not be set simultaneously，"
+                                     f"{self._deprecated_params_set}, {self.get_user_feeded()}")
+                else:
+                    self.callback_param.callbacks = ["PerformanceEvaluate"]
+                break
+
         if self._warn_to_deprecate_param("validation_freqs", descr, "callback_param's 'validation_freqs'"):
             self.callback_param.early_stopping_rounds = self.early_stopping_rounds
 
@@ -255,7 +268,6 @@ class LogisticParam(BaseParam):
 
         if self._warn_to_deprecate_param("use_first_metric_only", descr, "callback_param's 'use_first_metric_only'"):
             self.callback_param.use_first_metric_only = self.use_first_metric_only
-
 
         return True
 
