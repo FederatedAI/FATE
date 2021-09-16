@@ -22,17 +22,16 @@ import os
 
 from federatedml.util import LOGGER, consts
 
-_DEPRECATED_ATTR = "_deprecated_params_set"
+_FEEDED_DEPRECATED_PARAMS = "_feeded_deprecated_params"
+_DEPRECATED_PARAMS = "_deprecated_params"
 _USER_FEEDED_ATTR = "_user_feeded_params"
 
 
 def deprecated_param(*names):
     def _decorator(cls: "BaseParam"):
-        if not cls._has_deprecated_params_set():
-            cls._init_deprecated_params_set()
-
+        deprecated = cls._get_or_init_depreacated_param_names()
         for name in names:
-            cls._set_deprecated_params(name, False)
+            deprecated.add(name)
         return cls
 
     return _decorator
@@ -50,31 +49,25 @@ class BaseParam(object):
         raise NotImplementedError("Parameter Object should have be check")
 
     @classmethod
-    def _has_deprecated_params_set(cls):
-        return hasattr(cls, _DEPRECATED_ATTR)
+    def _get_or_init_depreacated_params(cls):
+        if not hasattr(cls, _DEPRECATED_PARAMS):
+            setattr(cls, _DEPRECATED_PARAMS, set())
+        return getattr(cls, _DEPRECATED_PARAMS)
 
-    @classmethod
-    def _init_deprecated_params_set(cls):
-        setattr(cls, _DEPRECATED_ATTR, {})
-
-    @classmethod
-    def _get_deprecated_params_set(cls):
-        return getattr(cls, _DEPRECATED_ATTR, {})
-
-    @classmethod
-    def _set_deprecated_params(cls, name, status):
-        cls._get_deprecated_params_set()[name] = status
-
-    @classmethod
-    def _get_deprecated_param_status(cls, name, default):
-        return cls._get_deprecated_params_set().get(name, default)
+    def _get_or_init_feeded_deprecated_params(self):
+        if not hasattr(self, _FEEDED_DEPRECATED_PARAMS):
+            setattr(self, _FEEDED_DEPRECATED_PARAMS, set())
+        return getattr(cls, _FEEDED_DEPRECATED_PARAMS)
 
     def get_user_feeded(self):
         return getattr(self, _USER_FEEDED_ATTR, [])
 
-    @classmethod
-    def get_deprecate_params(cls):
-        return getattr(cls, _DEPRECATED_ATTR, {})
+    def get_feeded_deprecated_params(self):
+        return self._get_or_init_feeded_deprecated_params()
+
+    @preperty
+    def _deprecated_params_set(self):
+        return {name: True for name in self.get_feeded_deprecated_params()}
 
     def as_dict(self):
         def _recursive_convert_obj_to_dict(obj):
@@ -82,7 +75,10 @@ class BaseParam(object):
             for variable in obj.__dict__:
 
                 # ignore default deprecated params
-                if not self._get_deprecated_param_status(variable, True):
+                if (
+                    variable in self._get_or_init_depreacated_params()
+                    and not variable in self._get_or_init_feeded_deprecated_params()
+                ):
                     continue
 
                 attr = getattr(obj, variable)
@@ -119,8 +115,8 @@ class BaseParam(object):
                     continue
 
                 # deprecated param set
-                if config_key in self._get_deprecated_params_set():
-                    self._set_deprecated_params(config_key, status=True)
+                if config_key in self._get_or_init_depreacated_params():
+                    self._get_or_init_feeded_deprecated_params().add(config_key)
 
                 # supported attr
                 attr = getattr(param, config_key)
