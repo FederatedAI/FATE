@@ -1,3 +1,20 @@
+#
+#  Copyright 2021 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
+
+
 import numpy as np
 
 from fate_arch.common import Party
@@ -5,6 +22,7 @@ from fate_arch.session import is_table
 from federatedml.secureprotol.spdz.tensor import fixedpoint_numpy, fixedpoint_table
 from federatedml.secureprotol.spdz.tensor.fixedpoint_endec import FixedPointEndec
 from federatedml.transfer_variable.transfer_class.sshe_model_transfer_variable import SSHEModelTransferVariable
+from federatedml.util import consts
 
 
 class SecureMatrixMul(object):
@@ -36,7 +54,7 @@ class SecureMatrixMul(object):
             return res
 
         if isinstance(y, np.ndarray):
-            res = matrix.mapValues(_vec_dot)
+            res = matrix.mapValues(lambda x: _vec_dot(x, y))
             return res
 
         elif is_table(y):
@@ -81,40 +99,44 @@ class ShareMarixinSecretSharingWithHe(object):
     @classmethod
     def from_source(cls, tensor_name, source, cipher, q_field, encoder, fixedpoint_numpy=True):
         if is_table(source):
-            random_tensor = fixedpoint_table.PaillierFixedPointTensor.from_source(tensor_name, source,
+            share_tensor = fixedpoint_table.PaillierFixedPointTensor.from_source(tensor_name, source,
                                                           encoder=encoder,
                                                           q_field=q_field)
-            return random_tensor
+            return share_tensor
 
         elif isinstance(source,  np.ndarray):
-            random_tensor = fixedpoint_numpy.PaillierFixedPointTensor.from_source(tensor_name, source,
+            share_tensor = fixedpoint_numpy.PaillierFixedPointTensor.from_source(tensor_name, source,
                                                                           encoder=encoder,
                                                                           q_field=q_field)
-            return random_tensor
+            return share_tensor
 
         elif isinstance(source, Party):
             if fixedpoint_numpy:
                 share_tensor = fixedpoint_numpy.PaillierFixedPointTensor.from_source(tensor_name, source,
                                                                          encoder=encoder,
-                                                                         q_field=q_field)
+                                                                         q_field=q_field,
+                                                                         cipher = cipher)
             else:
                 share_tensor = fixedpoint_table.PaillierFixedPointTensor.from_source(tensor_name, source,
                                                                              encoder=encoder,
-                                                                             q_field=q_field)
+                                                                             q_field=q_field,
+                                                                             cipher = cipher)
 
-            if isinstance(share_tensor.value, numpy.ndarray):
-                share = cipher.recursive_decrypt(share_tensor.value)
-                share = encoder.encode(share)
-                return fixedpoint_numpy.FixedPointTensor(value=share,
-                                                         q_field=q_field,
-                                                         endec=encoder)
-            elif is_table(share_tensor.value):
-                share = cipher.distribute_decrypt(share_tensor.value)
-                share = encoder.encode(share)
-                return fixedpoint_table.FixedPointTensor(share, q_field=q_field, encoder=encoder)
+            return share_tensor
 
-            else:
-                raise ValueError(f"type={type(share_tensor.value)}")
+            # if isinstance(share_tensor.value, numpy.ndarray):
+            #     share = cipher.recursive_decrypt(share_tensor.value)
+            #     share = encoder.encode(share)
+            #     return fixedpoint_numpy.FixedPointTensor(value=share,
+            #                                              q_field=q_field,
+            #                                              endec=encoder)
+            # elif is_table(share_tensor.value):
+            #     share = cipher.distribute_decrypt(share_tensor.value)
+            #     share = encoder.encode(share)
+            #     return fixedpoint_table.FixedPointTensor(share, q_field=q_field, encoder=encoder)
+            #
+            # else:
+            #     raise ValueError(f"type={type(share_tensor.value)}")
 
         else:
             raise ValueError(f"type={type(source)}")
