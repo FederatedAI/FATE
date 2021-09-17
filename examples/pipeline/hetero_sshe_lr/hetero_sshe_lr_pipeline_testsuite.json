@@ -42,8 +42,35 @@
         }
     ],
     "pipeline_tasks": {
+        "hetero-lr-warm-start": {
+            "script": "pipeline-hetero-lr-warm-start.py"
+        },
+        "hetero-lr-ovr-l1": {
+            "script": "pipeline-hetero-lr-ovr-l1.py"
+        },
+        "hetero-lr-l1": {
+            "script": "pipeline-hetero-lr-l1.py"
+        },
+        "hetero-lr-compute-loss-not-review": {
+            "script": "pipeline-hetero-lr-compute-loss-not-review.py"
+        },
+        "hetero-lr-compute-loss": {
+            "script": "pipeline-hetero-lr-compute-loss.py"
+        },
         "hetero-lr-ovr": {
             "script": "pipeline-hetero-lr-ovr.py"
+        },
+        "hetero-lr-large-init-w-compute-loss": {
+            "script": "pipeline-hetero-lr-large-init-w-compute-loss.py"
+        },
+        "hetero-lr-all-reveal-in-guest": {
+            "script": "pipeline-hetero-lr-all-reveal-in-guest.py"
+        },
+        "hetero-lr-ovr-reveal-guest": {
+            "script": "pipeline-hetero-lr-ovr-reveal-guest.py"
+        },
+        "hetero-lr-ovr-none-penalty": {
+            "script": "pipeline-hetero-lr-ovr-none-penalty.py"
         },
         "hetero-lr-normal": {
             "script": "pipeline-hetero-lr-normal.py"
@@ -51,17 +78,11 @@
         "hetero-lr-with-validate": {
             "script": "pipeline-hetero-lr-with-validate.py"
         },
-        "hetero-lr-ovr-review-guest": {
-            "script": "pipeline-hetero-lr-ovr-review-guest.py"
+        "hetero-lr-normal-not-fit-intercept": {
+            "script": "pipeline-hetero-lr-normal-not-fit-intercept.py"
         },
-        "hetero-lr-all-review-in-guest": {
-            "script": "pipeline-hetero-lr-all-review-in-guest.py"
-        },
-        "hetero-lr-normal-fit-intercept": {
-            "script": "pipeline-hetero-lr-normal-fit-intercept.py"
-        },
-        "hetero-lr-with-unilateral-review-validate": {
-            "script": "pipeline-hetero-lr-with-unilateral-review-validate.py"
+        "hetero-lr-cv": {
+            "script": "pipeline-hetero-lr-cv.py"
         }
     }
 }
