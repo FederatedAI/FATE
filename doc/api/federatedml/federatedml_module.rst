@@ -16,7 +16,7 @@ FederatedML includes implementation of many common machine learning algorithms o
 
 5. Secure Protocol: Provides multiple security protocols for secure multi-party computing and interaction between participants.
 
-.. image:: ../doc/images/federatedml_structure.png
+.. image:: ../../images/federatedml_structure.png
    :width: 800
    :align: center
    :alt: federatedml structure
@@ -337,13 +337,13 @@ Algorithm List
 .. _DataIO: util.rst
 .. _DataTransform: util.rst
 .. _Intersect: intersect.rst
-.. _Federated Sampling: feature.rst
-.. _Feature Scale: feature.rst
-.. _Hetero Feature Binning: feature.rst
+.. _Federated Sampling: feature.rst#federated-sampling
+.. _Feature Scale: feature.rst#feature-scale
+.. _Hetero Feature Binning: feature.rst#hetero-feature-binning
 .. _Homo Feature Binning: feature.rst
-.. _OneHot Encoder: feature.rst
-.. _Hetero Feature Selection: feature.rst
-.. _Union: statistic.rst
+.. _OneHot Encoder: feature.rst#onehot-encoder
+.. _Hetero Feature Selection: feature.rst#hetero-feature-selection
+.. _Union: union.rst
 .. _Hetero-LR: logistic_regressionE.rst
 .. _Local Baseline: local_baseline.rst
 .. _Hetero-LinR: linear_regression.rst
@@ -351,14 +351,14 @@ Algorithm List
 .. _Homo-LR: logistic_regression.rst
 .. _Homo-NN: homo_nn.rst
 .. _Hetero Secure Boosting: ensemble.rst
-.. _Hetero Secure Boost Feature Transformer: feature/sbt_feature_transformer
+.. _Hetero Secure Boost Feature Transformer: feature.rst#sbt-feature-transformer
 .. _Evaluation: evaluation.rst
 .. _Hetero Pearson: correlation.rst
 .. _Hetero-NN: hetero_nn.rst
 .. _Homo Secure Boosting: ensemble.rst
 .. _Data Split: data_split.rst
-.. _Homo OneHot Encoder: feature.rst
-.. _Column Expand: feature.rst
+.. _Homo OneHot Encoder: feature.rst#homo-onehot-encoder
+.. _Column Expand: feature.rst#column-expand
 .. _Secure Information Retrieval: sir.rst
 .. _Hetero KMeans: hetero_kmeans.rst
 .. _Data Statistics: statistic.rst
@@ -366,10 +366,10 @@ Algorithm List
 .. _Hetero Federated Transfer Learning: hetero_ftl.rst
 .. _Hetero Fast Secure Boosting: ensemble.rst
 .. _Scorecard: scorecard.rst
-.. _Sample Weight: util.rst
+.. _Sample Weight: util.rst#sample-weight
 .. _Feldman Verifiable Sum: feldman_verifiable_sum.rst
-.. _Feature Imputation: feature.rst
-.. _Label Transform: util.rst
+.. _Feature Imputation: feature.rst#feature-imputation
+.. _Label Transform: util.rst#label-transform
 
 
 Secure Protocol

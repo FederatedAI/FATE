@@ -15,12 +15,12 @@ where H is Hessian matrix of w.
 However, getting Hessian matrix is computational expensive. Thus, a more feasible solution is to use quansi-newton methods. We implement a stochastic quansi-newton method whose process can be shown as below.
 
  <div style="text-align:center", align=center>
-<img src="../images/sqn_1.png" alt="samples" width="500" height="300" /><br/>
+<img src="../../images/sqn_1.png" alt="samples" width="500" height="300" /><br/>
 Figure 1： Stochastic Quasi-Newton Method
 </div>
 
  <div style="text-align:center", align=center>
-<img src="../images/sqn_2.png" alt="samples" width="500" height="300" /><br/>
+<img src="../../images/sqn_2.png" alt="samples" width="500" height="300" /><br/>
 Figure 2： Hessian Updating
 </div>
 

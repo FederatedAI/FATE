@@ -25,9 +25,9 @@ tree-based algorithms, deep learning and transfer learning.
 - [Deployment on Kubernetes](https://github.com/FederatedAI/KubeFATE/blob/master/k8s-deploy).
 - [Native Cluster-deploy](./cluster-deploy).
 - [Run unittest](./python/federatedml/test/)
-- [Run Job with FATE-PipeLine](./doc/tutorial/pipeline/fate_client_pipeline_tutotial.rst)
+- [Run Job with FATE-Pipeline](./doc/tutorial/pipeline/fate_client_pipeline_tutotial.rst)
+- [FATE-Pipeline Tutorial in Jupyter Notebook](./doc/tutorial/pipeline/pipeline_tutorial_0.ipynb)
 - [Run Job with DSL json conf](./doc/tutorial/dsl_conf/dsl_conf_v2_setting_guide.rst)
-- [Run Job on Jupyter Notebook](./doc/tutorial/pipeline/pipeline_tutorial_0.ipynb)
 
 ## Documentation 
 
@@ -52,8 +52,8 @@ tree-based algorithms, deep learning and transfer learning.
 
 ### API References
 
-- [Computing API](./doc/api/computing.rst)
-- [Federation API](./doc/api/federation.rst)
+- [Computing API](https://fate.readthedocs.io/en/latest/_build_temp/doc/api/computing.html)
+- [Federation API](https://fate.readthedocs.io/en/latest/_build_temp/doc/api/federation.html)
 - [Flow SDK API](./doc/api/flow_sdk.rst)
 - [Flow Client](./doc/api/flow_client.rst)
 - [Pipeline](./doc/api/pipeline.rst)

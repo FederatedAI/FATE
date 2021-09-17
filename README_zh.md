@@ -13,9 +13,7 @@ FATE项目使用多方安全计算 (MPC) 以及同态加密 (HE) 技术构建底
 FATE官方网站：<https://fate.fedai.org/>
 
 
-
 ## 教程
-
 
 ### 快速开始
 
@@ -26,7 +24,7 @@ FATE官方网站：<https://fate.fedai.org/>
 - [单元测试](./python/federatedml/test/)
 - [使用FATE-PipeLine启动任务](./doc/tutorial/pipeline/fate_client_pipeline_tutotial.rst)
 - [使用DSL json conf启动任务](./doc/tutorial/dsl_conf/dsl_conf_v2_setting_guide.rst)
-- [在Jupyter Notebook使用FATE](./doc/tutorial/pipeline/pipeline_tutorial_0.ipynb)
+- [在Jupyter Notebook使用FATE-Pipeline](./doc/tutorial/pipeline/pipeline_tutorial_0.ipynb)
 
 ## 文档
 
@@ -51,8 +49,8 @@ FATE官方网站：<https://fate.fedai.org/>
 
 ### API文档
 
-- [Computing API](./doc/api/computing.rst)
-- [Federation API](./doc/api/federation.rst)
+- [Computing API](https://fate.readthedocs.io/en/latest/_build_temp/doc/api/computing.html)
+- [Federation API](https://fate.readthedocs.io/en/latest/_build_temp/doc/api/federation.html)
 - [Flow SDK API](./doc/api/flow_sdk.rst)
 - [Flow Client](./doc/api/flow_client.rst)
 - [Pipeline](./doc/api/pipeline.rst)

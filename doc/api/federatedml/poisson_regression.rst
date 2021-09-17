@@ -10,7 +10,7 @@ Heterogeneous Poisson
 
 The process of HeteroPoisson training is shown below:
 
-.. figure:: images/HeteroPoisson.png
+.. figure:: ../../images/HeteroPoisson.png
    :width: 500
    :name: possion figure 1
    :align: center

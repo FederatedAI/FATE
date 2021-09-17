@@ -12,7 +12,7 @@ FATE currently offers three prerequisite modules:
 2. random_padding_cipher: Implements the model's encryption process, including uuid synchronization, random seed generation based on dh key exchange and cipher generation.
 3. paillier_cipher: Used by Home-LR, mainly about paillier secret protocol.
 ##### aggregator
-<img src="./images/aggregator.png" alt="aggregator" width="700" height="800" /><br/>
+<img src="../../images/aggregator.png" alt="aggregator" width="700" height="800" /><br/>
 
 aggregator.py response for model aggregation:
 
@@ -34,7 +34,7 @@ Guest:
 
 
 ##### random_padding_cipher
-<img src="./images/random_padding_cipher.png" alt="random_padding_cipher" width="600" height="600" /><br/>
+<img src="../../images/random_padding_cipher.png" alt="random_padding_cipher" width="600" height="600" /><br/>
 
 random_padding_cipher.py create a cipher for each client(Guest/Host):
 
@@ -56,7 +56,7 @@ Client:(Guest/Host):
 ```
 
 ##### paillier_cipher
-<img src="./images/paillier_cipher.png" alt="paillier_cipher" width="450" height="600" /><br/>
+<img src="../../images/paillier_cipher.png" alt="paillier_cipher" width="450" height="600" /><br/>
 
 paillier_cipher.py create a cipher for hosts:
 
