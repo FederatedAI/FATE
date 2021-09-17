@@ -27,6 +27,10 @@
             "conf": "./test_hetero_poisson_predict_job_conf.json",
             "dsl": "./test_hetero_poisson_predict_job_dsl.json"
         },
+        "poisson-warm-start": {
+            "conf": "./test_hetero_poisson_warm_start_job_conf.json",
+            "dsl": "./test_hetero_poisson_warm_start_job_dsl.json"
+        },
         "poisson-validate": {
             "conf": "./test_hetero_poisson_validate_job_conf.json",
             "dsl": "./test_hetero_poisson_validate_job_dsl.json"

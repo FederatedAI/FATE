@@ -21,6 +21,9 @@
         "poisson-train": {
             "script": "./pipeline-hetero-poisson.py"
         },
+        "poisson-warm-start": {
+            "script": "./pipeline-hetero-poisson-warm-start.py"
+        },
         "poisson-validate": {
             "script": "./pipeline-hetero-poisson-validate.py"
         },
