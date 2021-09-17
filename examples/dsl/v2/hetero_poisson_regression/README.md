@@ -15,22 +15,28 @@ This section introduces the dsl and conf for different types of tasks.
 
     dsl: test_hetero_poisson_predict_job_dsl.json
 
-    runtime_config : test_hetero_predict_train_job_conf.json
-    
-3.  Validate Task (with early-stopping parameter specified):
+    runtime_config : test_hetero_predict_job_conf.json
+
+3. Warm Start Task:
+
+    dsl: test_hetero_poisson_warm_start_job_dsl.json
+
+    runtime_config : test_hetero_warm_start_job_conf.json
+      
+4.  Validate Task (with early-stopping parameter specified):
 
     dsl: test_hetero_poisson_validate_job_dsl.json
 
     runtime_config : test_hetero_poisson_validate_job_conf.json
   
-4. Train Task with Sparse Data:
+5. Train Task with Sparse Data:
     
     dsl: test_hetero_poisson_train_sparse_job_dsl.json
 
     runtime_config : test_hetero_poisson_train_sparse_job_conf.json
     (with exposure variable column name specified)
 
-5. Cross Validation Task:
+6. Cross Validation Task:
 
     dsl: test_hetero_poisson_cv_job_dsl.json
 

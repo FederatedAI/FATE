@@ -41,8 +41,8 @@ def main(config="../../config.yaml", namespace=""):
     backend = config.backend
     work_mode = config.work_mode
 
-    guest_train_data = {"name": "hetero_unnitest_guest", "namespace": f"experiment{namespace}"}
-    host_train_data = {"name": "hetero_unnitest_host", "namespace": f"experiment{namespace}"}
+    guest_train_data = {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"}
+    host_train_data = {"name": "breast_hetero_host", "namespace": f"experiment{namespace}"}
 
     # initialize pipeline
     pipeline = PipeLine()
@@ -75,7 +75,7 @@ def main(config="../../config.yaml", namespace=""):
         "max_iter": 3,
         "early_stop": "diff",
         "batch_size": 320,
-        "learning_rate": 15,
+        "learning_rate": 0.15,
         "decay": 0,
         "decay_sqrt": True,
         "init_param": {

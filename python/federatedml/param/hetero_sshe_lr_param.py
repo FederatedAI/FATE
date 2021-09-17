@@ -76,20 +76,6 @@ class LogisticRegressionParam(BaseParam):
     multi_class: str, 'ovr', default: 'ovr'
         If it is a multi_class task, indicate what strategy to use. Currently, support 'ovr' short for one_vs_rest only.
 
-    validation_freqs: int, list, tuple, set, or None
-        validation frequency during training.
-
-    early_stopping_rounds: int, default: None
-        Will stop training if one metric doesn’t improve in last early_stopping_round rounds
-
-    metrics: list or None, default: None
-        Indicate when executing evaluation during train process, which metrics will be used. If set as empty,
-        default metrics for specific task type will be used. As for binary classification, default metrics are
-        ['auc', 'ks']
-
-    use_first_metric_only: bool, default: False
-        Indicate whether use the first metric only for early stopping judgement.
-
     reveal_strategy: str, "respectively", "all_reveal_in_guest", default: "respectively"
         "respectively": Means guest and host can reveal their own part of weights only.
         "all_reveal_in_guest": All the weights will be revealed in guest only.
@@ -115,9 +101,7 @@ class LogisticRegressionParam(BaseParam):
                  max_iter=100, early_stop='diff', encrypt_param=EncryptParam(),
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  decay=1, decay_sqrt=True,
-                 multi_class='ovr', validation_freqs=None, early_stopping_rounds=None,
-                 metrics=None,
-                 use_first_metric_only=False, use_mix_rand=False,
+                 multi_class='ovr', use_mix_rand=False,
                  random_field=1 << 20, reveal_strategy="respectively", compute_loss=True,
                  reveal_every_iter=True,
                  callback_param=CallbackParam()
@@ -138,10 +122,6 @@ class LogisticRegressionParam(BaseParam):
         self.decay = decay
         self.decay_sqrt = decay_sqrt
         self.multi_class = multi_class
-        self.validation_freqs = validation_freqs
-        self.early_stopping_rounds = early_stopping_rounds
-        self.metrics = metrics or []
-        self.use_first_metric_only = use_first_metric_only
         self.use_mix_rand = use_mix_rand
         self.reveal_strategy = reveal_strategy
         self.compute_loss = compute_loss
@@ -235,12 +215,13 @@ class LogisticRegressionParam(BaseParam):
                 "logistic_param's decay_sqrt {} not supported, should be 'bool'".format(
                     self.decay_sqrt))
 
-        if self.validation_freqs is not None:
-            if type(self.validation_freqs).__name__ not in ["int", "list", "tuple", "set"]:
+        if self.callback_param.validation_freqs is not None:
+            if type(self.callback_param.validation_freqs).__name__ not in ["int", "list", "tuple", "set"]:
                 raise ValueError(
                     "validation strategy param's validate_freqs's type not supported , should be int or list or tuple or set"
                 )
-            if type(self.validation_freqs).__name__ == "int" and self.validation_freqs <= 0:
+            if type(self.callback_param.validation_freqs).__name__ == "int" and \
+                    self.callback_param.validation_freqs <= 0:
                 raise ValueError("validation strategy param's validate_freqs should greater than 0")
             if self.reveal_strategy == "all_reveal_in_guest":
                 raise ValueError(f"When reveal strategy is all_reveal_in_guest, validation every iter"
@@ -249,18 +230,19 @@ class LogisticRegressionParam(BaseParam):
                 raise ValueError(f"When reveal strategy is all_reveal_in_guest, reveal_every_iter "
                                  f"should be True.")
 
-        if self.early_stopping_rounds is None:
+        if self.callback_param.early_stopping_rounds is None:
             pass
-        elif isinstance(self.early_stopping_rounds, int):
-            if self.early_stopping_rounds < 1:
+        elif isinstance(self.callback_param.early_stopping_rounds, int):
+            if self.callback_param.early_stopping_rounds < 1:
                 raise ValueError("early stopping rounds should be larger than 0 when it's integer")
-            if self.validation_freqs is None:
+            if self.callback_param.validation_freqs is None:
                 raise ValueError("validation freqs must be set when early stopping is enabled")
 
-        if self.metrics is not None and not isinstance(self.metrics, list):
+        if self.callback_param.metrics is not None and\
+                not isinstance(self.callback_param.metrics, list):
             raise ValueError("metrics should be a list")
 
-        if not isinstance(self.use_first_metric_only, bool):
+        if not isinstance(self.callback_param.use_first_metric_only, bool):
             raise ValueError("use_first_metric_only should be a boolean")
 
         self.reveal_strategy = self.reveal_strategy.lower()

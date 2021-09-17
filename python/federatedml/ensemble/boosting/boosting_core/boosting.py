@@ -93,6 +93,7 @@ class Boosting(ModelBase, ABC):
         self.history_loss = []  # list holds loss history
         self.metrics = None
         self.is_converged = False
+        self.is_warm_start = False # warm start parameter
 
         # cache and header alignment
         self.predict_data_cache = PredictDataCache()

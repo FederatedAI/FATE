@@ -22,11 +22,12 @@ from flow_sdk.utils import preprocess, start_cluster_standalone_job_server, get_
 
 
 class Data(BaseFlowAPI):
-    def upload(self, conf_path, verbose=0, drop=0):
+    def upload(self, config_data, verbose=0, drop=0):
         kwargs = locals()
-        kwargs['drop'] = int(kwargs['drop']) if int(kwargs['drop']) else 2
+        kwargs['drop'] = int(kwargs['drop'])
         kwargs['verbose'] = int(kwargs['verbose'])
         config_data, dsl_data = preprocess(**kwargs)
+
         if config_data.get('use_local_data', 1):
             file_name = config_data.get('file')
             if not os.path.isabs(file_name):
@@ -58,31 +59,28 @@ class Data(BaseFlowAPI):
         else:
             return self._post(url='data/upload', json=config_data)
 
-    def download(self, conf_path):
+    def download(self, config_data):
         kwargs = locals()
         config_data, dsl_data = preprocess(**kwargs)
         response = self._post(url='data/download', json=config_data)
-        try:
-            if response['retcode'] == 999:
-                start_cluster_standalone_job_server()
-                return self._post(url='data/download', json=config_data)
-            else:
-                return response
-        except:
-            pass
+
+        if response['retcode'] == 999:
+            start_cluster_standalone_job_server()
+            return self._post(url='data/download', json=config_data)
+
+        return response
 
     def upload_history(self, limit=10, job_id=None):
         kwargs = locals()
         config_data, dsl_data = preprocess(**kwargs)
         response = self._post(url='data/upload/history', json=config_data)
-        try:
-            if response['retcode'] == 999:
-                start_cluster_standalone_job_server()
-                return self._post(url='data/upload/history', json=config_data)
-            else:
-                return response
-        except:
-            pass
 
+        if response['retcode'] == 999:
+            start_cluster_standalone_job_server()
+            return self._post(url='data/upload/history', json=config_data)
+
+        return response
+
+    # TODO
     def download_history(self):
         pass
