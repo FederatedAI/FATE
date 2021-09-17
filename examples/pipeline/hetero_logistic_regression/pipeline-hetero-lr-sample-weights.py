@@ -75,7 +75,7 @@ def main(config="../../config.yaml", namespace=""):
         "max_iter": 3,
         "early_stop": "diff",
         "batch_size": 320,
-        "learning_rate": 15,
+        "learning_rate": 0.15,
         "decay": 0,
         "decay_sqrt": True,
         "init_param": {
