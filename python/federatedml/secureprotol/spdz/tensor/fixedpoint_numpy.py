@@ -40,6 +40,17 @@ class FixedPointTensor(TensorBase):
     def dot(self, other, target_name=None):
         return self.einsum(other, "ij,ik->jk", target_name)
 
+    def dot_local(self, other, target_name=None):
+        if isinstance(other, FixedPointTensor):
+            other = other.value
+
+        res = np.dot(x, y) % self.q_field
+        res = self.endec.truncate(res, self.get_spdz().party_idx)
+
+        if not isinstance(res, np.ndarray):
+            res = np.array([res])
+        self._boxed(res, target_name)
+
     def sub_matrix(self, tensor_name: str, row_indices=None, col_indices=None, rm_row_indices=None,
                    rm_col_indices=None):
         if row_indices is not None:
@@ -166,32 +177,35 @@ class FixedPointTensor(TensorBase):
     def __add__(self, other):
         if isinstance(other, FixedPointTensor):
             return self._raw_add(other.value)
-        z_value = (self.value + self.endec.encode(other / 2)) % self.q_field
+        z_value = (self.value + self.endec.encode(other)) % self.q_field
         return self._boxed(z_value)
 
     def __radd__(self, other):
-        z_value = (self.endec.encode(other / 2) + self.value) % self.q_field
-        return self._boxed(z_value)
+        return self.__add__(other)
 
     def __sub__(self, other):
         if isinstance(other, FixedPointTensor):
             return self._raw_sub(other.value)
-        z_value = (self.value - self.endec.encode(other / 2)) % self.q_field
+        z_value = (self.value - self.endec.encode(other)) % self.q_field
         return self._boxed(z_value)
 
     def __rsub__(self, other):
-        z_value = (self.endec.encode(other / 2) - self.value) % self.q_field
+        if isinstance(other, FixedPointTensor):
+            return other - self
+        z_value = (self.endec.encode(other) - self.value) % self.q_field
         return self._boxed(z_value)
 
     def __mul__(self, other):
-        # if not isinstance(other, (int, np.integer)):
-        #     raise NotImplementedError("__mul__ support integer only")
-        return self._boxed(self.value * other)
+        if isinstance(other, FixedPointTensor):
+            raise NotImplementedError("__mul__ support scalar only")
+
+        z_value = self.value * self.endec.encode(other)
+        z_value = z_value % self.q_field
+        z_value = self.endec.truncate(z_value, self.get_spdz().party_idx)
+        return self._boxed(z_value)
 
     def __rmul__(self, other):
-        # if not isinstance(other, (int, np.integer)):
-        #     raise NotImplementedError("__rmul__ support integer only")
-        return self._boxed(self.value * other)
+        self.__mul__(other)
 
     def __matmul__(self, other):
         return self.einsum(other, "ij,jk->ik")
@@ -204,6 +218,9 @@ class PaillierFixedPointTensor(TensorBase):
         self.cipher = cipher
 
     def dot(self, other, target_name=None):
+        if isinstance(other, FixedPointTensor):
+            other = other.value
+
         res = np.dot(x.value, other)
         if not isinstance(res, np.ndarray):
             res = np.array([res])

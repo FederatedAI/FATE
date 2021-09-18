@@ -110,6 +110,28 @@ class FixedPointTensor(TensorBase):
         share = fixedpoint_numpy.FixedPointTensor(cross, self.q_field, self.endec, target_name)
         return share
 
+    def dot_local(self, other, target_name=None):
+        def _vec_dot(x, y):
+            res = np.dot(x, y) % self.q_field
+            res = self.endec.truncate(res, self.get_spdz().party_idx)
+            if not isinstance(res, np.ndarray):
+                res = np.array([res])
+            return res
+
+        if isinstance(other, FixedPointTensor) or isinstance(other, fixedpoint_numpy.FixedPointTensor):
+            other = other.value
+
+        if isinstance(other, np.ndarray):
+            res = self.value.mapValues(lambda x : _vec_dot(x, other))
+            return self._boxed(res, target_name)
+
+        elif is_table(other):
+            res = table_dot_mod(self.value, other)
+            res = self.endec.truncate(res, self.get_spdz().party_idx)
+            return fixedpoint_numpy.FixedPointTensor(res, target_name)
+        else:
+            raise ValueError(f"type={type(y)}")
+
     @property
     def shape(self):
         return self.value.count(), len(self.value.first()[1])
@@ -170,39 +192,37 @@ class FixedPointTensor(TensorBase):
     def as_name(self, tensor_name):
         return self._boxed(value=self.value, tensor_name=tensor_name)
 
-    def _basic_op(self, other, op):
-
-        if isinstance(other, (int, np.int, float, np.float, FixedPointNumber)):
-            z_value = _table_scalar_op(self.value, other, op)
-            return self._boxed(z_value)
-
+    def __add__(self, other):
         if isinstance(other, FixedPointTensor):
             other = other.value
-
-        if self.is_encrypted_number(other):
-            z_value = self.value.join(other, op)
-        else:
-            z_value = _table_binary_mod_op(self.value, other, self.q_field, op)
-
+        z_value = _table_binary_mod_op(self.value, other, self.q_field, operator.add)
         return self._boxed(z_value)
 
-    def __add__(self, other):
-        return self._basic_op(other, operator.add)
-
     def __radd__(self, other):
-        return self._basic_op(other, operator.add)
+        return self.__add__(other)
 
     def __sub__(self, other):
-        return self._basic_op(other, operator.sub)
+        if isinstance(other, FixedPointTensor):
+            other = other.value
+        z_value = _table_binary_mod_op(self.value, other, self.q_field, operator.sub)
+        return self._boxed(z_value)
 
     def __rsub__(self, other):
-        return self._basic_op(other, operator.sub)
-
-    def __rmul__(self, other):
-        return self._basic_op(other, operator.mul)
+        if isinstance(other, FixedPointTensor):
+            return other - self
+        z_value = _table_binary_mod_op(other, self.value, self.q_field, operator.sub)
+        return self._boxed(z_value)
 
     def __mul__(self, other):
-        return self._basic_op(other, operator.mul)
+        if isinstance(other, FixedPointTensor):
+            raise NotImplementedError("__mul__ support scalar only")
+
+        z_value = _table_scalar_mod_op(self.value, other)
+        z_value = self.endec.truncate(z_value, self.get_spdz().party_idx)
+        return self._boxed(z_value)
+
+    def __rmul__(self, other):
+        self.__mul__(other)
 
     def __mod__(self, other):
         if not isinstance(other, (int, np.integer)):
@@ -225,6 +245,9 @@ class PaillierFixedPointTensor(TensorBase):
             if not isinstance(res, np.ndarray):
                 res = np.array([res])
             return res
+
+        if isinstance(other, FixedPointTensor) or isinstance(other, fixedpoint_numpy.FixedPointTensor):
+            other = other.value
 
         if isinstance(other, np.ndarray):
             res = self.value.mapValues(lambda x : _vec_dot(x, other))
