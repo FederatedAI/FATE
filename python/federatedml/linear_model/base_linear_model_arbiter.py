@@ -78,7 +78,7 @@ class HeteroBaseArbiter(BaseLinearModel):
 
         if self.component_properties.is_warm_start:
             self.callback_warm_start_init_iter(self.n_iter_)
-            self.n_iter_ += 1
+            # self.n_iter_ += 1
 
         while self.n_iter_ < self.max_iter:
             self.callback_list.on_epoch_begin(self.n_iter_)
