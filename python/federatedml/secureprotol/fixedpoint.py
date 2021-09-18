@@ -307,7 +307,7 @@ class FixedPointEndec(object):
     def table_op(x, op):
         arr = np.zeros(shape=x.shape, dtype=object)
         view = arr.view().reshape(-1)
-        x_array = x.view().reshape(-1
+        x_array = x.view().reshape(-1)
         for i in range(arr.size):
             view[i] = op(x_array[i])
         return arr
@@ -355,3 +355,4 @@ class FixedPointEndec(object):
 
     def truncate(self, integer_tensor, *args, **kwargs):
         return self._basic_op(integer_tensor, op=self.__truncate_op)
+

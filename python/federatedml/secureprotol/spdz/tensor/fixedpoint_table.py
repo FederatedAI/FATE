@@ -234,6 +234,8 @@ class FixedPointTensor(TensorBase):
 
 
 class PaillierFixedPointTensor(TensorBase):
+    __array_ufunc__ = None
+
     def __init__(self, value, tensor_name: str = None, cipher=None):
         super().__init__(q_field=None, tensor_name=tensor_name)
         self.value = value
@@ -316,7 +318,7 @@ class PaillierFixedPointTensor(TensorBase):
                 spdz.communicator.remote_share(share=_table_binary_op(r, _pre, operator.sub),
                                                tensor_name=tensor_name, party=_party)
                 _pre = r
-            spdz.communicator.remote_share(share=_table_binary_op(source, _pre, operator.sub),
+            spdz.communicator.remote_share(share=_table_binary_op(source, encoder.decode(_pre), operator.sub),
                                            tensor_name=tensor_name, party=_party)
 
             return FixedPointTensor(value=share,
