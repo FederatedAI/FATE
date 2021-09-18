@@ -226,6 +226,15 @@ class LinearParam(BaseParam):
         self.sqn_param.check()
         self.stepwise_param.check()
 
+        for p in ["early_stopping_rounds", "validation_freqs", "metrics",
+                  "use_first_metric_only"]:
+            if self._warn_to_deprecate_param(p, "", ""):
+                if "callback_param" in self.get_user_feeded():
+                    raise ValueError(f"{p} and callback param should not be set simultaneously")
+                else:
+                    self.callback_param.callbacks = ["PerformanceEvaluate"]
+                break
+
         if self._warn_to_deprecate_param("validation_freqs", descr, "callback_param's 'validation_freqs'"):
             self.callback_param.validation_freqs = self.validation_freqs
 

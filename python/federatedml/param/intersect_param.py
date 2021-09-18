@@ -450,43 +450,24 @@ class IntersectParam(BaseParam):
                                                             f"{descr}intersect_method")
 
         if self._warn_to_deprecate_param("random_bit", descr, "rsa_params' 'random_bit'"):
+            if "rsa_params.random_bit" in self.get_user_feeded():
+                raise ValueError(f"random_bit and rsa_params.random_bit should not be set simultaneously")
             self.rsa_params.random_bit = self.random_bit
 
         self.check_boolean(self.sync_intersect_ids, f"{descr}intersect_ids")
 
+        if self._warn_to_deprecate_param("encode_param", "", ""):
+            if "raw_params" in self.get_user_feeded():
+                raise ValueError(f"encode_param and raw_params should not be set simultaneously")
+            else:
+                self.callback_param.callbacks = ["PerformanceEvaluate"]
+
         if self._warn_to_deprecate_param("join_role", descr, "raw_params' 'join_role'"):
+            if "raw_params.join_role" in self.get_user_feeded():
+                raise ValueError(f"join_role and raw_params.join_role should not be set simultaneously")
             self.raw_params.join_role = self.join_role
 
         self.check_boolean(self.only_output_key, f"{descr}only_output_key")
-        """
-        if type(self.repeated_id_process).__name__ != "bool":
-        raise ValueError(
-            "intersect param's repeated_id_process {} not supported, should be bool type".format(
-                self.repeated_id_process))
-        self.repeated_id_owner = self.check_and_change_lower(self.repeated_id_owner,
-                                                             [consts.GUEST],
-                                                             f"{descr}repeated_id_owner")
-        if type(self.allow_info_share).__name__ != "bool":
-            raise ValueError(
-                "intersect param's allow_info_sync {} not supported, should be bool type".format(
-                    self.allow_info_share))
-        self.info_owner = self.check_and_change_lower(self.info_owner,
-                                                      [consts.GUEST, consts.HOST],
-                                                      f"{descr}info_owner")
-        self.check_boolean(self.with_sample_id, f"{descr}with_sample_id")
-        
-
-        if self._deprecated_params_set.get("repeated_id_process"):
-            LOGGER.warning(f"parameter repeated_id_process is ignored")
-        if self.repeated_id_owner:
-            LOGGER.warning(f"parameter repeated_id_owner is ignored")
-        if self.allow_info_share:
-            LOGGER.warning(f"parameter allow_info_share is ignored")
-        if self.info_owner:
-            LOGGER.warning(f"parameter info_owner is ignored")
-        if self.with_sample_id:
-            LOGGER.warning(f"parameter with_sample_id is ignored.")
-        """
 
         self.join_method = self.check_and_change_lower(self.join_method, [consts.INNER_JOIN, consts.LEFT_JOIN],
                                                        f"{descr}join_method")
