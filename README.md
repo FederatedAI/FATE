@@ -6,7 +6,7 @@
   <img src="./doc/images/FATE_logo.png">
 </div>
 
-[DOC](./doc) | [Quick Start](./examples/pipeline/README.rst) | [中文](./README_zh.md)
+[DOC](./doc) | [Quick Start](doc/tutorial/pipeline/pipeline_guide.rst) | [中文](./README_zh.md)
 
 FATE (Federated AI Technology Enabler) is an open-source project initiated by Webank's AI Department to provide a secure computing framework to support federated AI ecosystem. 
 It implements secure computation protocols based on homomorphic encryption and multi-party computation (MPC). 

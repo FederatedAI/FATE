@@ -115,7 +115,7 @@ bash ./python/federatedml/test/run_test.sh
    ```
 
 
-Please refer [here](../examples/pipeline/README.rst) for a quick start tutorial.
+Please refer [here](../doc/tutorial/pipeline/pipeline_guide.rst) for a quick start tutorial.
 
 You can also experience the fateboard access via a browser:
 Http://hostip:8080.

@@ -1,14 +1,14 @@
-Pipeline Examples
-=================
+Pipeline Guide
+==============
 
 Introduction
 -------------
 
 We provide some example scripts of running
-FATE jobs with `FATE-Pipeline <../../python/fate_client/README.rst>`_.
+FATE jobs with `FATE-Pipeline <../../../examples/pipeline>`_.
 
-Please refer to the document linked above for details on FATE-Pipeline and FATE-Flow CLI v2.
-DSL version of provided Pipeline examples can be found `here <../dsl/v2>`_.
+Please refer `here <../../api/pipeline.rst>`_ for details on FATE-Pipeline.
+DSL version of provided Pipeline examples can be found `here <../../../examples/dsl/v2>`_.
 
 
 Quick Start
@@ -52,7 +52,7 @@ FATE is `/data/projects/fate`.
 
    Before start a modeling task, the data to be used should be uploaded. Typically, a party is usually a cluster which include multiple nodes. Thus, when we upload these data, the data will be allocated to those nodes.
 
-   We have provided an example script to upload data:  `here <./demo/pipeline-upload.py>`_.
+   We have provided an example script to upload data:  `here <../../../examples/pipeline/demo/pipeline-upload.py>`_.
 
 User may modify file path and table name to upload arbitrary data following instructions in the script.
 
@@ -108,7 +108,7 @@ User may modify file path and table name to upload arbitrary data following inst
       cd /data/projects/fate
       python examples/pipeline/demo/pipeline-quick-demo.py
 
-   The details of each step of this demo can be shown `here <./demo/pipeline-quick-demo.py>`_.
+   The details of each step of this demo can be shown `here <../../../examples/pipeline/demo/pipeline-quick-demo.py>`_.
 
    This quick demo shows how to build to a heterogeneous SecureBoost job using uploaded data from previous step.
    Note that data are uploaded to the same machine in the previous step. To run the below job with cluster deployment,
@@ -137,7 +137,7 @@ User may modify file path and table name to upload arbitrary data following inst
       cd /data/projects/fate
       python examples/pipeline/demo/pipeline-mini-demo.py
 
-   This `script <./demo/pipeline-mini-demo.py>`_ trains a heterogeneous logistic regression model and then runs prediction with the trained model.
+   This `script <../../../examples/pipeline/demo/pipeline-mini-demo.py>`_ trains a heterogeneous logistic regression model and then runs prediction with the trained model.
 
    ::
 
@@ -154,7 +154,7 @@ User may modify file path and table name to upload arbitrary data following inst
 
    After having completed the fit job, script will invoke a predict job with the trained model.
    Note that ``Evaluation`` component is added to the prediction workflow. For more information on using
-   FATE-Pipeline, please refer to this `guide <../../python/fate_client/pipeline/README.rst>`_.
+   FATE-Pipeline, please refer to this `guide <../../api/pipeline.rst>`_.
 
    ::
 
