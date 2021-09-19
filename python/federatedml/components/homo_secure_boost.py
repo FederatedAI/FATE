@@ -17,7 +17,7 @@
 
 from .components import ComponentMeta
 
-homo_secure_boost_cpn_meta = ComponentMeta("HomoSecureBoost")
+homo_secure_boost_cpn_meta = ComponentMeta("HomoSecureBoost", "HomoSecureboost")
 
 
 @homo_secure_boost_cpn_meta.bind_param

@@ -33,31 +33,12 @@ class RawIntersect(Intersect):
         # self.sync_intersect_ids = param.sync_intersect_ids
         super().load_params(param=param)
         self.raw_params = param.raw_params
-        if param.with_encode:
-            self.use_hash = param.with_encode
-            LOGGER.warning(f"with_encode of IntersectParam will be deprecated in future."
-                           f"Please use 'use_hash' within RAWParam instead.")
-            self.hash_method = param.encode_params.encode_method
-            LOGGER.warning(f"EncodeParam will be deprecated in future."
-                           f"Please use 'hash_method' within RAWParam instead.")
-            self.base64 = param.encode_params.base64
-            LOGGER.warning(f"EncodeParam will be deprecated in future."
-                           f"Please use 'base64' within RAWParam instead.")
-            self.salt = param.encode_params.salt
-            LOGGER.warning(f"EncodeParam will be deprecated in future."
-                           f"Please use 'salt' within RAWParam instead.")
-        else:
-            self.use_hash = self.raw_params.use_hash
-            self.hash_method = self.raw_params.hash_method
-            self.base64 = self.raw_params.base64
-            self.salt = self.raw_params.salt
+        self.use_hash = self.raw_params.use_hash
+        self.hash_method = self.raw_params.hash_method
+        self.base64 = self.raw_params.base64
+        self.salt = self.raw_params.salt
 
         self.join_role = self.raw_params.join_role
-        if param.join_role != consts.GUEST:
-            self.join_role = param.join_role
-            LOGGER.warning(f"join_encode of IntersectParam will be deprecated in future."
-                           f"Please use 'join_role' within RAWParam instead.")
-
         self.hash_operator = Hash(self.hash_method, self.base64)
 
     def intersect_send_id(self, data_instances):
@@ -180,11 +161,12 @@ class RawIntersect(Intersect):
         else:
             intersect_ids = hash_intersect_ids
 
+        """
         if self.task_version_id is not None:
             namespace = "#".join([str(self.guest_party_id), str(self.host_party_id), "mountain"])
             for k, v in enumerate(recv_ids_list):
                 table_name = '_'.join([self.task_version_id, str(k)])
                 self.tracker.job_tracker.save_as_table(v, table_name, namespace)
                 LOGGER.info("save guest_{}'s id in name:{}, namespace:{}".format(k, table_name, namespace))
-
+        """
         return intersect_ids

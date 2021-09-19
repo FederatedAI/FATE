@@ -19,6 +19,7 @@ import copy
 import typing
 
 import numpy as np
+from fate_arch.common.base_utils import timestamp_to_date
 from fate_arch.computing import is_table
 from google.protobuf import json_format
 
@@ -81,29 +82,27 @@ class ComponentOutput:
 class MetricType:
     LOSS = "LOSS"
 
-
 class Metric:
     def __init__(self, key, value: float, timestamp: float = None):
         self.key = key
         self.value = value
         self.timestamp = timestamp
-
+    
+    def to_dict(self):
+        return dict(key=self.key, value=self.value, timestamp = self.timestamp)
 
 class MetricMeta:
     def __init__(self, name: str, metric_type: MetricType, extra_metas: dict = None):
         self.name = name
         self.metric_type = metric_type
         self.metas = {}
-        if extra_metas:
-            self.metas.update(extra_metas)
-        self.metas["name"] = name
-        self.metas["metric_type"] = metric_type
+        self.extra_metas = extra_metas
 
     def update_metas(self, metas: dict):
         self.metas.update(metas)
 
     def to_dict(self):
-        return self.metas
+        return dict(name=self.name, metric_type=self.metric_type, metas=self.metas, extra_metas=self.extra_metas)
 
 
 class CallbacksVariable(object):
@@ -113,69 +112,19 @@ class CallbacksVariable(object):
         self.validation_summary = None
 
 
-# type hint
-class TrackerClient(object):
-    def log_job_metric_data(
-        self, metric_namespace: str, metric_name: str, metrics: typing.List[Metric]
-    ):
-        ...
-
+class WarpedTrackerClient:
+    def __init__(self, tracker) -> None:
+        self._tracker = tracker
     def log_metric_data(
         self, metric_namespace: str, metric_name: str, metrics: typing.List[Metric]
     ):
-        ...
+        return self._tracker.log_metric_data(metric_namespace=metric_namespace, metric_name=metric_name, metrics = [metric.to_dict() for metric in metrics])
 
-    def log_metric_data_common(
-        self,
-        metric_namespace: str,
-        metric_name: str,
-        metrics: typing.List[Metric],
-        job_level=False,
-    ):
-        ...
-
-    def set_job_metric_meta(
-        self, metric_namespace: str, metric_name: str, metric_meta: MetricMeta
-    ):
-        ...
-
-    def set_metric_meta(
-        self, metric_namespace: str, metric_name: str, metric_meta: MetricMeta
-    ):
-        ...
-
-    def set_metric_meta_common(
-        self,
-        metric_namespace: str,
-        metric_name: str,
-        metric_meta: MetricMeta,
-        job_level=False,
-    ):
-        ...
-
-    def create_table_meta(self, table_meta):
-        ...
-
-    def get_table_meta(self, table_name, table_namespace):
-        ...
-
-    def save_component_output_model(self, component_model):
-        ...
-
-    def read_component_output_model(self, search_model_alias, tracker):
-        ...
-
-    def log_output_data_info(
-        self, data_name: str, table_namespace: str, table_name: str
-    ):
-        ...
-
-    def get_output_data_info(self, data_name=None):
-        ...
+    def set_metric_meta(self, metric_namespace: str, metric_name: str, metric_meta: MetricMeta):
+        return self._tracker.set_metric_meta(metric_namespace=metric_namespace, metric_name=metric_name, metric_meta=metric_meta.to_dict())
 
     def log_component_summary(self, summary_data: dict):
-        ...
-
+        return self._tracker.log_component_summary(summary_data=summary_data)
 
 class ModelBase(object):
     def __init__(self):
@@ -196,15 +145,19 @@ class ModelBase(object):
         self._summary = dict()
         self._align_cache = dict()
         self._tracker = None
-        self.step_name = 'step name'
+        self.step_name = 'step_name'
         self.callback_list: CallbackList
         self.callback_variables = CallbacksVariable()
 
     @property
-    def tracker(self) -> TrackerClient:
+    def tracker(self) -> WarpedTrackerClient:
         if self._tracker is None:
             raise RuntimeError(f"use tracker before set")
         return self._tracker
+    
+    @tracker.setter
+    def tracker(self, value):
+        self._tracker = WarpedTrackerClient(value)
 
     @property
     def stop_training(self):
@@ -236,7 +189,7 @@ class ModelBase(object):
 
     def run(self, cpn_input, retry: bool = True):
         self.task_version_id = cpn_input.task_version_id
-        self._tracker = cpn_input.tracker
+        self.tracker = cpn_input.tracker
         self.checkpoint_manager = cpn_input.checkpoint_manager
 
         # deserialize models
@@ -531,7 +484,7 @@ class ModelBase(object):
 
         return predict_result
 
-    def callback_meta(self, metric_name, metric_namespace, metric_meta):
+    def callback_meta(self, metric_name, metric_namespace, metric_meta: MetricMeta):
         if self.need_cv:
             metric_name = ".".join([metric_name, str(self.cv_fold)])
             flow_id_list = self.flowid.split(".")
@@ -550,7 +503,7 @@ class ModelBase(object):
             metric_meta=metric_meta,
         )
 
-    def callback_metric(self, metric_name, metric_namespace, metric_data):
+    def callback_metric(self, metric_name, metric_namespace, metric_data: typing.List[Metric]):
         if self.need_cv:
             metric_name = ".".join([metric_name, str(self.cv_fold)])
 
@@ -559,6 +512,18 @@ class ModelBase(object):
             metric_namespace=metric_namespace,
             metrics=metric_data,
         )
+
+    def callback_warm_start_init_iter(self, iter_num):
+        metric_meta = MetricMeta(name='train',
+                                 metric_type="init_iter",
+                                 extra_metas={
+                                     "unit_name": "iters",
+                                 })
+
+        self.callback_meta(metric_name='init_iter', metric_namespace='train', metric_meta=metric_meta)
+        self.callback_metric(metric_name='init_iter',
+                             metric_namespace='train',
+                             metric_data=[Metric("init_iter", iter_num)])
 
     def get_latest_checkpoint(self):
         return self.checkpoint_manager.latest_checkpoint.read()

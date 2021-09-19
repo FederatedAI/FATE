@@ -69,17 +69,16 @@ def create_new_runtime_config():
             "host": {"0": {"user": user_name}},
         }
 
-    new_config_path = gen_unique_path()
-
-    with open(new_config_path, "w") as fout:
-        json_str = json.dumps(conf_dict, indent=1)
-        fout.write(json_str + "\n")
-
-    return new_config_path
+    return conf_dict
 
 
-def exec_task(dsl_path, config_path):
-    result = flow_client.job.submit(conf_path=config_path, dsl_path=dsl_path)
+def exec_task(dsl_path, config_data):
+    dsl_dict = {}
+    if dsl_path:
+        with open(dsl_path, "r") as fin:
+            dsl_dict = json.loads(fin.read())
+
+    result = flow_client.job.submit(config_data=config_data, dsl_data=dsl_dict)
     pprint.pprint (result["data"])
     try:
         status = result["retcode"]
@@ -128,7 +127,7 @@ def show_log(job_id, log_level):
         info_log = os.path.join(log_path, "INFO.log")
         with open(info_log, "r") as fin:
             for line in fin:
-                if line.find("secure_add_guest.py[line") != -1:
+                if line.find("secure_add_guest") != -1:
                     print (line.strip())
 
 

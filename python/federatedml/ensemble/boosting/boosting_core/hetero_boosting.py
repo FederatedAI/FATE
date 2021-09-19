@@ -22,15 +22,15 @@ import abc
 from federatedml.ensemble.boosting.boosting_core import Boosting
 from federatedml.param.boosting_param import HeteroBoostingParam
 from federatedml.secureprotol import IterativeAffineEncrypt
-from federatedml.secureprotol import PaillierEncrypt, FakeEncrypt
+from federatedml.secureprotol import PaillierEncrypt
 from federatedml.secureprotol.encrypt_mode import EncryptModeCalculator
 from federatedml.util import consts
 from federatedml.feature.binning.quantile_binning import QuantileBinning
 from federatedml.util.classify_label_checker import ClassifyLabelChecker
 from federatedml.util.classify_label_checker import RegressionLabelChecker
 from federatedml.util import LOGGER
-from fate_flow.entity.metric import Metric
-from fate_flow.entity.metric import MetricMeta
+from federatedml.model_base import Metric
+from federatedml.model_base import MetricMeta
 from federatedml.transfer_variable.transfer_class.hetero_boosting_transfer_variable import \
     HeteroBoostingTransferVariable
 from federatedml.util.io_check import assert_io_num_rows_equal
@@ -135,6 +135,18 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
         LOGGER.info("sync predict start round {}".format(predict_round))
         self.transfer_variable.predict_start_round.remote(predict_round, role=consts.HOST, idx=-1,)
 
+    def prepare_warm_start(self, data_inst, classes):
+        # adjust parameter for warm start
+        warm_start_y_hat = self.predict(data_inst, ret_format='raw')
+        self.y_hat = warm_start_y_hat
+        self.boosting_round += self.start_round
+        # check classes
+        assert set(classes).issubset(set(self.classes_)), 'warm start label alignment failed: cur labels {},' \
+                                                          'previous model labels {}'.format(classes, self.classes_)
+        # check fid
+        self.feat_name_check(data_inst, self.feature_name_fid_mapping)
+        self.callback_warm_start_init_iter(self.start_round)
+
     def fit(self, data_inst, validate_data=None):
 
         LOGGER.info('begin to fit a hetero boosting model, model is {}'.format(self.model_name))
@@ -145,15 +157,22 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
 
         self.y = self.get_label(self.data_bin)
 
-        self.classes_, self.num_classes, self.booster_dim = self.check_label()
+        self.start_round = len(self.boosting_model_list)
+
+        if not self.is_warm_start:
+            self.feature_name_fid_mapping = self.gen_feature_fid_mapping(data_inst.schema)
+            self.classes_, self.num_classes, self.booster_dim = self.check_label()
+            self.loss = self.get_loss_function()
+            self.y_hat, self.init_score = self.get_init_score(self.y, self.num_classes)
+        else:
+            classes_, num_classes, booster_dim = self.check_label()
+            self.prepare_warm_start(data_inst, classes_)
 
         LOGGER.info('class index is {}'.format(self.classes_))
 
-        self.loss = self.get_loss_function()
-
         self.sync_booster_dim()
 
-        self.y_hat, self.init_score = self.get_init_score(self.y, self.num_classes)
+        self.start_round = len(self.boosting_model_list)
 
         self.generate_encrypter()
 
@@ -165,7 +184,7 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
                                       metric_type="LOSS",
                                       extra_metas={"unit_name": "iters"}))
 
-        for epoch_idx in range(self.boosting_round):
+        for epoch_idx in range(self.start_round, self.boosting_round):
 
             LOGGER.info('cur epoch idx is {}'.format(epoch_idx))
 
@@ -272,17 +291,29 @@ class HeteroBoostingHost(HeteroBoosting, ABC):
     def sync_predict_start_round(self,):
         return self.transfer_variable.predict_start_round.get(idx=0,)
 
+    def prepare_warm_start(self, data_inst):
+        self.predict(data_inst)
+        self.callback_warm_start_init_iter(self.start_round)
+        self.feat_name_check(data_inst, self.feature_name_fid_mapping)
+
     def fit(self, data_inst, validate_data=None):
 
         LOGGER.info('begin to fit a hetero boosting model, model is {}'.format(self.model_name))
 
         self.data_bin, self.bin_split_points, self.bin_sparse_points = self.prepare_data(data_inst)
+
+        self.start_round = len(self.boosting_model_list)
+        if self.is_warm_start:
+            self.prepare_warm_start(data_inst)
+            self.boosting_round += self.start_round
+        else:
+            self.feature_name_fid_mapping = self.gen_feature_fid_mapping(data_inst.schema)
+
         self.sync_booster_dim()
         self.generate_encrypter()
-
         self.callback_list.on_train_begin(data_inst, validate_data)
 
-        for epoch_idx in range(self.boosting_round):
+        for epoch_idx in range(self.start_round, self.boosting_round):
 
             LOGGER.info('cur epoch idx is {}'.format(epoch_idx))
 

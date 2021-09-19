@@ -1,5 +1,5 @@
 import unittest
-from federatedml.util.validation_strategy import ValidationStrategy
+from federatedml.callbacks.validation_strategy import ValidationStrategy
 import numpy as np
 from federatedml.util import consts
 from federatedml.param.evaluation_param import EvaluateParam

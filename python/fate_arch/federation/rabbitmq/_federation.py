@@ -34,6 +34,7 @@ from fate_arch.computing.spark import get_storage_level, Table
 from fate_arch.computing.spark._materialize import materialize
 from fate_arch.federation.rabbitmq._mq_channel import MQChannel
 from fate_arch.federation.rabbitmq._rabbit_manager import RabbitManager
+from fate_arch.federation._datastream import Datastream
 
 
 LOGGER = getLogger()
@@ -42,30 +43,6 @@ LOGGER = getLogger()
 DEFAULT_MESSAGE_MAX_SIZE = 1048576
 NAME_DTYPE_TAG = "<dtype>"
 _SPLIT_ = "^"
-
-
-# Datastream is a wraper of StringIO, it receives kv pairs and dump it to json string
-class Datastream(object):
-    def __init__(self):
-        self._string = io.StringIO()
-        self._string.write("[")
-
-    def get_size(self):
-        return sys.getsizeof(self._string.getvalue())
-
-    def get_data(self):
-        self._string.write("]")
-        return self._string.getvalue()
-
-    def append(self, kv: dict):
-        # add ',' if not the first element
-        if self._string.getvalue() != "[":
-            self._string.write(",")
-        json.dump(kv, self._string)
-
-    def clear(self):
-        self._string.close()
-        self.__init__()
 
 
 class FederationDataType(object):

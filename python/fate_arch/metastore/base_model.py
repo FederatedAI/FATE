@@ -123,6 +123,10 @@ def auto_date_timestamp_field():
     return {f"{f}_time" for f in AUTO_DATE_TIMESTAMP_FIELD_PREFIX}
 
 
+def auto_date_timestamp_db_field():
+    return {f"f_{f}_time" for f in AUTO_DATE_TIMESTAMP_FIELD_PREFIX}
+
+
 class BaseModel(Model):
     f_create_time = BigIntegerField(null=True)
     f_create_date = DateTimeField(null=True)

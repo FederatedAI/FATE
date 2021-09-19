@@ -21,20 +21,6 @@
     },
     "component_parameters": {
         "role": {
-            "guest": {
-                "0": {
-                    "reader_0": {
-                        "table": {
-                            "name": "breast_hetero_guest",
-                            "namespace": "experiment"
-                        }
-                    },
-                    "dataio_0": {
-                        "with_label": true,
-                        "output_format": "dense"
-                    }
-                }
-            },
             "host": {
                 "0": {
                     "reader_0": {
@@ -46,6 +32,20 @@
                     "dataio_0": {
                         "with_label": false,
                         "output_format": "sparse"
+                    }
+                }
+            },
+            "guest": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_guest",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "dataio_0": {
+                        "with_label": true,
+                        "output_format": "dense"
                     }
                 }
             }

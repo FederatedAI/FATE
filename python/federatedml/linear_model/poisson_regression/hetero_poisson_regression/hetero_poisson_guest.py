@@ -22,6 +22,7 @@ from federatedml.linear_model.linear_model_weight import LinearModelWeights
 from federatedml.linear_model.poisson_regression.hetero_poisson_regression.hetero_poisson_base import HeteroPoissonBase
 from federatedml.optim.gradient import hetero_poisson_gradient_and_loss
 from federatedml.secureprotol import EncryptModeCalculator
+from federatedml.statistic.data_overview import with_weight
 from federatedml.util import LOGGER
 from federatedml.util import consts
 from federatedml.util.io_check import assert_io_num_rows_equal
@@ -52,6 +53,8 @@ class HeteroPoissonGuest(HeteroPoissonBase):
         self.callback_list.on_train_begin(data_instances, validate_data)
 
         # self.validation_strategy = self.init_validation_strategy(data_instances, validate_data)
+        if with_weight(data_instances):
+            LOGGER.warning("input data with weight. Poisson regression does not support weighted training.")
 
         self.exposure_index = self.get_exposure_index(self.header, self.exposure_colname)
         exposure_index = self.exposure_index
@@ -76,6 +79,9 @@ class HeteroPoissonGuest(HeteroPoissonBase):
         if not self.component_properties.is_warm_start:
             w = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
             self.model_weights = LinearModelWeights(w, fit_intercept=self.fit_intercept, raise_overflow_error=False)
+        else:
+            self.callback_warm_start_init_iter(self.n_iter_)
+            self.n_iter_ += 1
 
         while self.n_iter_ < self.max_iter:
             self.callback_list.on_epoch_begin(self.n_iter_)
@@ -117,8 +123,7 @@ class HeteroPoissonGuest(HeteroPoissonBase):
             self.n_iter_ += 1
             if self.is_converged:
                 break
-        if self.validation_strategy and self.validation_strategy.has_saved_best_model():
-            self.load_model(self.validation_strategy.cur_best_model)
+        self.callback_list.on_train_end()
         self.set_summary(self.get_model_summary())
 
     @assert_io_num_rows_equal

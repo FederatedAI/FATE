@@ -163,13 +163,20 @@ class HeteroLRBase(SSHEModelBase, ABC):
         LOGGER.info("Start to hetero_sshe_logistic_regression")
         self.callback_list.on_train_begin(data_instances, validate_data)
 
-        self.validation_strategy = self.init_validation_strategy(data_instances, validate_data)
+        # self.validation_strategy = self.init_validation_strategy(data_instances, validate_data)
         # self.batch_generator.initialize_batch_generator(data_instances, self.batch_size)
         model_shape = self.get_features_shape(data_instances)
-        w = self._init_weights(model_shape)
-        last_models = w
-        self.model_weights = LinearModelWeights(l=w,
-                                                fit_intercept=self.model_param.init_param.fit_intercept)
+        if not self.component_properties.is_warm_start:
+            w = self._init_weights(model_shape)
+            last_models = w
+            self.model_weights = LinearModelWeights(l=w,
+                                                    fit_intercept=self.model_param.init_param.fit_intercept)
+        else:
+            last_models = self.model_weights.unboxed
+            w = last_models
+            self.callback_warm_start_init_iter(self.n_iter_)
+            self.n_iter_ += 1
+
         self.batch_generator.initialize_batch_generator(data_instances, batch_size=self.batch_size)
 
         remote_pubkey = self.transfer_pubkey()

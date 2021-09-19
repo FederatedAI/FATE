@@ -16,6 +16,7 @@
 import copy
 
 from pipeline.param.base_param import BaseParam
+from pipeline.param.cross_validation_param import CrossValidationParam
 from pipeline.param.encrypt_param import EncryptParam
 from pipeline.param.init_model_param import InitParam
 from pipeline.param.predict_param import PredictParam
@@ -112,7 +113,7 @@ class LogisticRegressionParam(BaseParam):
                  tol=1e-4, alpha=1.0, optimizer='sgd',
                  batch_size=-1, learning_rate=0.01, init_param=InitParam(),
                  max_iter=100, early_stop='diff', encrypt_param=EncryptParam(),
-                 predict_param=PredictParam(),
+                 predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  decay=1, decay_sqrt=True,
                  multi_class='ovr', validation_freqs=None, early_stopping_rounds=None,
                  metrics=None,
@@ -146,6 +147,7 @@ class LogisticRegressionParam(BaseParam):
         self.compute_loss = compute_loss
         self.reveal_every_iter = reveal_every_iter
         self.callback_param = callback_param
+        self.cv_param = cv_param
 
     def check(self):
         descr = "logistic_param's"
@@ -269,4 +271,5 @@ class LogisticRegressionParam(BaseParam):
             raise PermissionError("reveal strategy: all_reveal_in_guest mode is not allow to reveal every iter.")
         self.check_boolean(self.reveal_every_iter, descr)
         self.callback_param.check()
+        self.cv_param.check()
         return True

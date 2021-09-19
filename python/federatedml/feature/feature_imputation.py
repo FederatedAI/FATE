@@ -92,6 +92,11 @@ class FeatureImputation(ModelBase):
     def fit(self, data):
         LOGGER.info(f"Enter Feature Imputation fit")
         imputer_processor = Imputer(self.missing_impute)
+        self.header = get_header(data)
+        if self.col_missing_fill_method:
+            for k in self.col_missing_fill_method.keys():
+                if k not in self.header:
+                    raise ValueError(f"{k} not found in data header. Please check col_missing_fill_method keys.")
         imputed_data, self.default_value = imputer_processor.fit(data,
                                                                  replace_method=self.missing_fill_method,
                                                                  replace_value=self.default_value,
@@ -99,8 +104,8 @@ class FeatureImputation(ModelBase):
         if self.missing_impute is None:
             self.missing_impute = imputer_processor.get_missing_value_list()
         self.missing_impute_rate = imputer_processor.get_impute_rate("fit")
-        self.header = get_header(imputed_data)
-        self.cols_replace_method =imputer_processor.cols_replace_method
+        # self.header = get_header(imputed_data)
+        self.cols_replace_method = imputer_processor.cols_replace_method
         self.skip_cols = imputer_processor.get_skip_cols()
         self.set_summary(self.get_summary())
 
@@ -140,7 +145,7 @@ def save_feature_imputer_model(missing_fill=False,
             model_meta.missing_value.extend(map(str, missing_impute))
             model_meta.missing_value_type.extend([type(v).__name__ for v in missing_impute])
 
-        if missing_fill_value is not None:
+        if missing_fill_value is not None and header is not None:
             fill_header = [col for col in header if col not in skip_cols]
             feature_value_dict = dict(zip(fill_header, map(str, missing_fill_value)))
 

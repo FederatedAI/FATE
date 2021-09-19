@@ -28,7 +28,6 @@ import copy
 import collections
 
 
-
 class ObjectiveParam(BaseParam):
     """
     Define objective parameters that used in federated ml.
@@ -509,6 +508,9 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         if self.top_rate + self.other_rate >= 1:
             raise ValueError('sum of top rate and other rate should be smaller than 1')
 
+        if self.sparse_optimization and self.cipher_compress:
+            raise ValueError('cipher compress is not supported in sparse optimization mode')
+
         return True
 
 
@@ -524,8 +526,8 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
                  validation_freqs=None, early_stopping_rounds=None, use_missing=False, zero_as_missing=False,
                  complete_secure=False, tree_num_per_party=1, guest_depth=1, host_depth=1, work_mode='mix', metrics=None,
                  sparse_optimization=False, random_seed=100, binning_error=consts.DEFAULT_RELATIVE_ERROR,
-                 cipher_compress_error=None, new_ver=True, run_goss=False, cipher_compress=True,
-                 top_rate=0.2, other_rate=0.1, callback_param=CallbackParam()):
+                 cipher_compress_error=None, new_ver=True, run_goss=False, top_rate=0.2, other_rate=0.1,
+                 cipher_compress=True, callback_param=CallbackParam()):
 
         """
         work_mode：
@@ -554,7 +556,8 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
                                                          cipher_compress_error=cipher_compress_error,
                                                          new_ver=new_ver,
                                                          cipher_compress=cipher_compress,
-                                                         run_goss=run_goss, top_rate=top_rate, other_rate=other_rate)
+                                                         run_goss=run_goss, top_rate=top_rate, other_rate=other_rate
+                                                         )
 
         self.tree_num_per_party = tree_num_per_party
         self.guest_depth = guest_depth
