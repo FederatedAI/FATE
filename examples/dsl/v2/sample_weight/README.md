@@ -13,7 +13,7 @@ This section introduces the dsl and conf for different types of tasks.
 
 2. Column Name Task:
 
-    dsl: sample_weight_job_dsl.json
+    dsl: sample_weight_name_job_dsl.json
 
     runtime_config : sample_weight_name_job_conf.json
 
