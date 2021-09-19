@@ -95,7 +95,7 @@ def main(config="../../config.yaml", namespace=""):
         "name": "hetero_sshe_lr_0",
         "penalty": None,
         "optimizer": "sgd",
-        "tol": 0.01,
+        "tol": 0.0001,
         "alpha": 0.01,
         "max_iter": 30,
         "early_stop": "diff",

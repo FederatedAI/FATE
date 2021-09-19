@@ -76,6 +76,10 @@ class HeteroBaseArbiter(BaseLinearModel):
         # self.validation_strategy = self.init_validation_strategy(data_instances, validate_data)
         self.callback_list.on_train_begin(data_instances, validate_data)
 
+        if self.component_properties.is_warm_start:
+            self.callback_warm_start_init_iter(self.n_iter_)
+            self.n_iter_ += 1
+
         while self.n_iter_ < self.max_iter:
             self.callback_list.on_epoch_begin(self.n_iter_)
             iter_loss = None
@@ -134,6 +138,9 @@ class HeteroBaseArbiter(BaseLinearModel):
             self.n_iter_ += 1
             if self.is_converged:
                 break
+        LOGGER.debug(f"Finish_train, n_iter: {self.n_iter_}")
+        self.callback_list.on_train_end()
+
         summary = {"loss_history": self.loss_history,
                    "is_converged": self.is_converged,
                    "best_iteration": self.best_iteration}

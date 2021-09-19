@@ -161,10 +161,9 @@ class FixedPointNumber(object):
         return self.__mul__(other)
 
     def __mul__(self, other):
-        from federatedml.secureprotol.fate_paillier import PaillierEncryptedNumber
         if isinstance(other, FixedPointNumber):
             return self.__mul_fixpointnumber(other)
-        elif isinstance(other, PaillierEncryptedNumber):
+        elif type(other).__name__ == "PaillierEncryptedNumber":
             return other * self
         else:
             return self.__mul_scalar(other)

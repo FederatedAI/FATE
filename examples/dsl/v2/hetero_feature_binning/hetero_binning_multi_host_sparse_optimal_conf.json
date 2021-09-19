@@ -31,18 +31,18 @@
                         }
                     }
                 },
+                "0|1": {
+                    "dataio_0": {
+                        "with_label": false,
+                        "output_format": "sparse"
+                    }
+                },
                 "0": {
                     "reader_0": {
                         "table": {
                             "name": "breast_hetero_host",
                             "namespace": "experiment"
                         }
-                    }
-                },
-                "0|1": {
-                    "dataio_0": {
-                        "with_label": false,
-                        "output_format": "sparse"
                     }
                 }
             },

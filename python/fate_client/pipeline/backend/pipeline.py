@@ -242,7 +242,8 @@ class PipeLine(object):
 
     @LOGGER.catch(reraise=True)
     def add_upload_data(self, file, table_name, namespace, head=1, partition=16,
-                        id_delimiter=",", backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE):
+                        id_delimiter=",", backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE,
+                        extend_sid=False, auto_increasing_sid=False):
         data_conf = {"file": file,
                      "table_name": table_name,
                      "namespace": namespace,
@@ -250,7 +251,9 @@ class PipeLine(object):
                      "partition": partition,
                      "id_delimiter": id_delimiter,
                      "backend": backend,
-                     "work_mode": work_mode}
+                     "work_mode": work_mode,
+                     "extend_sid": extend_sid,
+                     "auto_increasing_sid": auto_increasing_sid}
         self._upload_conf.append(data_conf)
 
     def _get_task_inst(self, job_id, name, init_role, party_id):

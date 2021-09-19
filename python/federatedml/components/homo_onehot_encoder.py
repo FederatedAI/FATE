@@ -17,7 +17,7 @@
 
 from .components import ComponentMeta
 
-homo_onehot_encoder_cpn_meta = ComponentMeta("HomoOnehotEncoder")
+homo_onehot_encoder_cpn_meta = ComponentMeta("HomoOneHotEncoder")
 
 
 @homo_onehot_encoder_cpn_meta.bind_param

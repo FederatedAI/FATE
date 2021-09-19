@@ -15,9 +15,10 @@ from federatedml.ensemble.boosting.boosting_core.homo_boosting_aggregator import
     HomoBoostClientAggregator
 from federatedml.optim.convergence import converge_func_factory
 from federatedml.param.boosting_param import HomoSecureBoostParam
-from fate_flow.entity.metric import Metric
-from fate_flow.entity.metric import MetricMeta
+from federatedml.model_base import Metric
+from federatedml.model_base import MetricMeta
 from federatedml.util.io_check import assert_io_num_rows_equal
+
 from federatedml.feature.homo_feature_binning import recursive_query_binning
 from federatedml.param.feature_binning_param import HomoFeatureBinningParam
 
@@ -76,6 +77,10 @@ class HomoBoostingClient(Boosting, ABC):
     def sync_feature_num(self):
         self.transfer_inst.feature_number.remote(self.feature_num, role=consts.ARBITER, idx=-1, suffix=('feat_num', ))
 
+    def sync_start_round_and_end_round(self):
+        self.transfer_inst.start_and_end_round.remote((self.start_round, self.boosting_round),
+                                                      role=consts.ARBITER, idx=-1)
+
     def data_preporcess(self, data_inst):
         # transform to sparse and binning
         data_inst = self.data_alignment(data_inst)
@@ -83,10 +88,14 @@ class HomoBoostingClient(Boosting, ABC):
 
     def fit(self, data_inst, validate_data=None):
 
+        # binning
         self.data_preporcess(data_inst)
 
-        # fid mapping
-        self.feature_name_fid_mapping = self.gen_feature_fid_mapping(data_inst.schema)
+        # fid mapping and warm start check
+        if not self.is_warm_start:
+            self.feature_name_fid_mapping = self.gen_feature_fid_mapping(data_inst.schema)
+        else:
+            self.feat_name_check(data_inst, self.feature_name_fid_mapping)
 
         # set feature_num
         self.feature_num = self.bin_split_points.shape[0]
@@ -100,10 +109,16 @@ class HomoBoostingClient(Boosting, ABC):
         # check labels
         local_classes = self.check_label(self.data_bin)
 
+        # set start round
+        self.start_round = len(self.boosting_model_list)
+
         # sync label class and set y
         if self.task_type == consts.CLASSIFICATION:
 
             aligned_label, new_label_mapping = HomoLabelEncoderClient().label_alignment(local_classes)
+            if self.is_warm_start:
+                assert set(aligned_label) == set(self.classes_), 'warm start label alignment failed, differences: {}'.\
+                    format(set(aligned_label).symmetric_difference(set(self.classes_)))
             self.classes_ = aligned_label
             self.check_label_starts_from_zero(self.classes_)
             # set labels
@@ -112,17 +127,26 @@ class HomoBoostingClient(Boosting, ABC):
             self.y = self.data_bin.mapValues(lambda instance: new_label_mapping[instance.label])
             # set tree dimension
             self.booster_dim = self.num_classes if self.num_classes > 2 else 1
+
         else:
             self.y = self.data_bin.mapValues(lambda instance: instance.label)
 
         # set loss function
         self.loss = self.get_loss_function()
 
-        # set y_hat_val
-        self.y_hat, self.init_score = self.get_init_score(self.y, self.num_classes)
+        # set y_hat_val, if warm start predict cur samples
+        if self.is_warm_start:
+            self.y_hat = self.predict(data_inst, ret_format='raw')
+            self.boosting_round += self.start_round
+            self.callback_warm_start_init_iter(self.start_round)
+        else:
+            self.y_hat, self.init_score = self.get_init_score(self.y, self.num_classes)
+
+        # sync start round and end round
+        self.sync_start_round_and_end_round()
 
         LOGGER.info('begin to fit a boosting tree')
-        for epoch_idx in range(self.boosting_round):
+        for epoch_idx in range(self.start_round, self.boosting_round):
 
             LOGGER.info('cur epoch idx is {}'.format(epoch_idx))
 
@@ -198,7 +222,13 @@ class HomoBoostingArbiter(Boosting, ABC):
         feature_num_list = self.transfer_inst.feature_number.get(idx=-1, suffix=('feat_num',))
         for num in feature_num_list[1:]:
             assert feature_num_list[0] == num
+
         return feature_num_list[0]
+
+    def sync_start_round_and_end_round(self):
+        r_list = self.transfer_inst.start_and_end_round.get(-1)
+        LOGGER.info('get start/end round from clients: {}'.format(r_list))
+        self.start_round, self.boosting_round = r_list[0]
 
     def check_label(self):
         pass
@@ -217,8 +247,11 @@ class HomoBoostingArbiter(Boosting, ABC):
         if self.n_iter_no_change:
             self.check_convergence_func = converge_func_factory("diff", self.tol)
 
+        # sync start round and end round
+        self.sync_start_round_and_end_round()
+
         LOGGER.info('begin to fit a boosting tree')
-        for epoch_idx in range(self.boosting_round):
+        for epoch_idx in range(self.start_round, self.boosting_round):
 
             LOGGER.info('cur epoch idx is {}'.format(epoch_idx))
 

@@ -133,6 +133,8 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
             lambda v: (vec_dot(v.features, delta_s.coef_) + delta_s.intercept_) * 0.25)
         for host_forward in host_forwards:
             forwards = forwards.join(host_forward, lambda g, h: g + (h * 0.25))
+        if self.use_sample_weight:
+            forwards = forwards.join(data_instances, lambda h, d: h * d.weight)
         # forward_hess = forwards.mapValues(lambda x: 0.25 * x / sample_size)
         hess_vector = self.compute_gradient(data_instances,
                                             forwards,
@@ -156,11 +158,8 @@ class Host(hetero_linear_model_gradient.Host, loss_sync.Host):
         forwards = 1/4 * wx
         """
         # wx = data_instances.mapValues(lambda v: vec_dot(v.features, model_weights.coef_) + model_weights.intercept_)
-        if self.use_sample_weight:
-            self.forwards = data_instances.mapValues(
-                lambda v: 0.25 * vec_dot(v.features, model_weights.coef_) * v.weight)
-        else:
-            self.forwards = data_instances.mapValues(lambda v: 0.25 * vec_dot(v.features, model_weights.coef_))
+
+        self.forwards = data_instances.mapValues(lambda v: 0.25 * vec_dot(v.features, model_weights.coef_))
         return self.forwards
 
     def compute_half_g(self, data_instances, w, cipher, batch_index):

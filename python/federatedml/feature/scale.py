@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 
-from fate_flow.entity.metric import MetricMeta
+from federatedml.model_base import MetricMeta
 from federatedml.feature.feature_scale.min_max_scale import MinMaxScale
 from federatedml.feature.feature_scale.standard_scale import StandardScale
 from federatedml.model_base import ModelBase

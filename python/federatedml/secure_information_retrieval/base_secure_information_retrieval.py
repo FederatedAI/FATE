@@ -19,7 +19,7 @@
 
 
 from federatedml.protobuf.generated import sir_meta_pb2, sir_param_pb2
-from fate_flow.entity.metric import Metric, MetricMeta
+from federatedml.model_base import Metric, MetricMeta
 from federatedml.model_base import ModelBase
 from federatedml.param.sir_param import SecureInformationRetrievalParam
 from federatedml.statistic.intersect.match_id_process import MatchIDIntersect
@@ -64,8 +64,6 @@ class BaseSecureInformationRetrieval(ModelBase):
         self.model_param = param
         self.security_level = self.model_param.security_level
         self.dh_params = self.model_param.dh_params
-        if self.model_param.key_size is not None and self.dh_params.key_length == consts.DEFAULT_KEY_LENGTH:
-            self.dh_params.key_length = self.model_param.key_size
         self.target_cols = self.model_param.target_cols
 
     def _init_transfer_variable(self):

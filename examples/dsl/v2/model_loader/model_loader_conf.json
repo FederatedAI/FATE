@@ -1,0 +1,118 @@
+{
+    "dsl_version": 2,
+    "initiator": {
+        "role": "guest",
+        "party_id": 10000
+    },
+    "role": {
+        "host": [
+            9999
+        ],
+        "guest": [
+            10000
+        ]
+    },
+    "job_parameters": {
+        "common": {
+            "job_type": "train",
+            "work_mode": 0,
+            "backend": 0,
+            "computing_engine": "STANDALONE",
+            "federation_engine": "STANDALONE",
+            "storage_engine": "STANDALONE",
+            "engines_address": {},
+            "federated_mode": "SINGLE",
+            "task_parallelism": 1,
+            "computing_partitions": 4,
+            "federated_status_collect_type": "PUSH",
+            "model_id": "guest-10000#host-9999#model",
+            "model_version": "202109011505283266270",
+            "auto_retries": 0,
+            "auto_retry_delay": 1,
+            "eggroll_run": {},
+            "spark_run": {},
+            "rabbitmq_run": {},
+            "pulsar_run": {},
+            "adaptation_parameters": {
+                "task_nodes": 1,
+                "task_cores_per_node": 4,
+                "task_memory_per_node": 0,
+                "request_task_cores": 4,
+                "if_initiator_baseline": true
+            }
+        }
+    },
+    "component_parameters": {
+        "role": {
+            "host": {
+                "0": {
+                    "dataio_0": {
+                        "with_label": false
+                    },
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    }
+                }
+            },
+            "guest": {
+                "0": {
+                    "dataio_0": {
+                        "with_label": true
+                    },
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_guest",
+                            "namespace": "experiment"
+                        }
+                    }
+                }
+            }
+        },
+        "common": {
+            "model_loader_0": {
+                "model_id": "guest-10000#host-9999#model",
+                "model_version": "202108301602196678300",
+                "component_name": "hetero_feature_binning_0",
+                "step_index": null
+            },
+            "hetero_feature_selection_0": {
+                "select_col_indexes": -1,
+                "select_names": [],
+                "filter_methods": [
+                    "iv_filter"
+                ],
+                "iv_param": {
+                    "metrics": [
+                        "iv",
+                        "iv",
+                        "iv"
+                    ],
+                    "filter_type": [
+                        "threshold",
+                        "top_k",
+                        "top_percentile"
+                    ],
+                    "take_high": true,
+                    "threshold": [
+                        0.03,
+                        15,
+                        0.7
+                    ],
+                    "host_thresholds": [
+                        [
+                            0.15
+                        ],
+                        null,
+                        null
+                    ],
+                    "select_federated": true
+                }
+            }
+        }
+    },
+    "dsl_path": "/tmp/tmpm_8r9w_n/job_dsl.json",
+    "conf_path": "/tmp/tmpm_8r9w_n/job_runtime_conf.json"
+}

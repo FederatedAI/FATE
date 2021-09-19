@@ -39,8 +39,6 @@ class HeteroLRGuest(HeteroLRBase):
 
     def _init_model(self, params):
         super()._init_model(params)
-        if not self.is_respectively_reveal:
-            self.converge_func = converge_func_factory("weight_diff", params.tol)
 
     def transfer_pubkey(self):
         public_key = self.cipher.public_key
@@ -67,7 +65,7 @@ class HeteroLRGuest(HeteroLRBase):
         complete_z = remote_z + z
         # self.z_square = z_square + remote_z_square
         # self.z_square = self.z_square + 2 * remote_z * z
-        sigmoid_z = complete_z * 0.2 + 0.5
+        sigmoid_z = complete_z * 0.25 + 0.5
 
         # complete_z_cube = remote_z_cube + remote_z_square * z * 3 + remote_z * z_square * 3 + z_cube
         # sigmoid_z = complete_z * 0.197 - complete_z_cube * 0.004 + 0.5
@@ -262,6 +260,10 @@ class HeteroLRGuest(HeteroLRBase):
         return predict_result
 
     def _get_param(self):
+        if self.need_cv:
+            param_protobuf_obj = lr_model_param_pb2.LRModelParam()
+            return param_protobuf_obj
+
         if self.need_one_vs_rest:
             one_vs_rest_result = self.one_vs_rest_obj.save(lr_model_param_pb2.SingleModel)
             single_result = {'header': self.header, 'need_one_vs_rest': True, "best_iteration": -1}

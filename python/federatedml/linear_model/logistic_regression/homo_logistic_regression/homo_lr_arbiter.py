@@ -56,6 +56,10 @@ class HomoLRArbiter(HomoLRBase):
         # validation_strategy = self.init_validation_strategy()
         self.callback_list.on_train_begin(data_instances, validate_data)
 
+        if self.component_properties.is_warm_start:
+            self.callback_warm_start_init_iter(self.n_iter_)
+            self.n_iter_ += 1
+
         while self.n_iter_ < max_iter + 1:
             suffix = (self.n_iter_,)
             self.callback_list.on_epoch_begin(self.n_iter_)
