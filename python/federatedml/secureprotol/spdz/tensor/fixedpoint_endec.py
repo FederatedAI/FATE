@@ -24,6 +24,9 @@ class FixedPointEndec(object):
         self.base = base
         self.precision_fractional = precision_fractional
 
+    def __getstate__(self):
+        pass
+
     def _decode(self, integer_tensor: np.ndarray):
         value = integer_tensor % self.field
         gate = value > self.field // 2
