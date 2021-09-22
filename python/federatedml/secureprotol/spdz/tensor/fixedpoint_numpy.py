@@ -16,56 +16,10 @@
 import numpy as np
 
 from fate_arch.common import Party
-from fate_arch.session import is_table
 from federatedml.secureprotol.spdz.beaver_triples import beaver_triplets
 from federatedml.secureprotol.spdz.tensor.base import TensorBase
 from federatedml.secureprotol.spdz.utils.random_utils import urand_tensor
-
-
-class FixedPointEndec(object):
-
-    def __init__(self, field: int, base: int, precision_fractional: int):
-        self.field = field
-        self.base = base
-        self.precision_fractional = precision_fractional
-
-    def decode(self, integer_tensor: np.ndarray):
-        value = integer_tensor % self.field
-        gate = value > self.field // 2
-        neg_nums = (value - self.field) * gate
-        pos_nums = value * (1 - gate)
-        result = (neg_nums + pos_nums) / (self.base ** self.precision_fractional)
-        return result
-
-    def encode(self, float_tensor, check_range=True):
-        if isinstance(float_tensor, (float, np.float)):
-            float_tensor = np.array(float_tensor)
-        if isinstance(float_tensor, np.ndarray):
-            upscaled = (float_tensor * self.base ** self.precision_fractional).astype(np.int64)
-            if check_range:
-                assert (np.abs(upscaled) < (self.field / 2)).all(), (
-                    f"{float_tensor} cannot be correctly embedded: choose bigger field or a lower precision"
-                )
-
-            field_element = upscaled % self.field
-            return field_element
-        elif is_table(float_tensor):
-            s = self.base ** self.precision_fractional
-            upscaled = float_tensor.mapValues(lambda x: (x * s).astype(np.int64))
-            if check_range:
-                assert upscaled.filter(lambda k, v: (np.abs(v) >= self.field / 2).any()).count() == 0, (
-                    f"{float_tensor} cannot be correctly embedded: choose bigger field or a lower precision"
-                )
-            field_element = upscaled.mapValues(lambda x: x % self.field)
-            return field_element
-        else:
-            raise ValueError(f"unsupported type: {type(float_tensor)}")
-
-    def truncate(self, integer_tensor, idx=0):
-        if idx == 0:
-            return self.field - (self.field - integer_tensor) // (self.base ** self.precision_fractional)
-        else:
-            return integer_tensor // (self.base ** self.precision_fractional)
+from federatedml.secureprotol.spdz.tensor.fixedpoint_endec import FixedPointEndec
 
 
 class FixedPointTensor(TensorBase):
@@ -85,6 +39,17 @@ class FixedPointTensor(TensorBase):
 
     def dot(self, other, target_name=None):
         return self.einsum(other, "ij,ik->jk", target_name)
+
+    def dot_local(self, other, target_name=None):
+        if isinstance(other, FixedPointTensor):
+            other = other.value
+
+        res = np.dot(x, y) % self.q_field
+        res = self.endec.truncate(res, self.get_spdz().party_idx)
+
+        if not isinstance(res, np.ndarray):
+            res = np.array([res])
+        self._boxed(res, target_name)
 
     def sub_matrix(self, tensor_name: str, row_indices=None, col_indices=None, rm_row_indices=None,
                    rm_col_indices=None):
@@ -119,33 +84,17 @@ class FixedPointTensor(TensorBase):
         if isinstance(source, np.ndarray):
             source = encoder.encode(source)
             _pre = urand_tensor(q_field, source)
-            # assert 1 == 2, f"q_field: {q_field}, _pre: {_pre.max()}"
             spdz.communicator.remote_share(share=_pre, tensor_name=tensor_name, party=spdz.other_parties[0])
             for _party in spdz.other_parties[1:]:
                 r = urand_tensor(q_field, source)
-                r = encoder.encode(r)
-                spdz.communicator.remote_share(share=r - _pre, tensor_name=tensor_name, party=_party)
+                spdz.communicator.remote_share(share=(r - _pre) % q_field, tensor_name=tensor_name, party=_party)
                 _pre = r
-            share = source - _pre
+            share = (source - _pre) % q_field
         elif isinstance(source, Party):
             share = spdz.communicator.get_share(tensor_name=tensor_name, party=source)[0]
         else:
             raise ValueError(f"type={type(source)}")
         return FixedPointTensor(share, spdz.q_field, encoder, tensor_name)
-
-    @classmethod
-    def from_value(cls, value, **kwargs):
-        spdz = cls.get_spdz()
-        q_field = kwargs['q_field'] if 'q_field' in kwargs else spdz.q_field
-        if 'encoder' in kwargs:
-            encoder = kwargs['encoder']
-        else:
-            base = kwargs['base'] if 'base' in kwargs else 10
-            frac = kwargs['frac'] if 'frac' in kwargs else 4
-            encoder = FixedPointEndec(q_field, base, frac)
-        tensor_name = kwargs.get("tensor_name")
-        # return FixedPointTensor(value, q_field, encoder, tensor_name)
-        return cls(value, q_field, encoder, tensor_name)
 
     def einsum(self, other: 'FixedPointTensor', einsum_expr, target_name=None):
         spdz = self.get_spdz()
@@ -168,13 +117,10 @@ class FixedPointTensor(TensorBase):
         share = self._boxed(cross)
         return share
 
-    def get(self, tensor_name=None):
-        """
-        rescontruct and decode
-        """
-        return self.endec.decode(self.rescontruct(tensor_name))
+    def get(self, tensor_name=None, broadcast=True):
+        return self.endec.decode(self.rescontruct(tensor_name, broadcast))
 
-    def rescontruct(self, tensor_name=None):
+    def rescontruct(self, tensor_name=None, broadcast=True):
         from federatedml.secureprotol.spdz import SPDZ
         spdz = SPDZ.get_instance()
         share_val = self.value
@@ -184,26 +130,13 @@ class FixedPointTensor(TensorBase):
             raise ValueError("name not specified")
 
         # remote share to other parties
-        spdz.communicator.broadcast_rescontruct_share(share_val, name)
+        if broadcast:
+            spdz.communicator.broadcast_rescontruct_share(share_val, name)
 
         # get shares from other parties
         for other_share in spdz.communicator.get_rescontruct_shares(name):
             share_val += other_share
             share_val %= self.q_field
-        return share_val
-
-    def reconstruct_unilateral(self, tensor_name=None):
-        from federatedml.secureprotol.spdz import SPDZ
-        spdz = SPDZ.get_instance()
-        share_val = self.value
-        name = tensor_name or self.tensor_name
-        if name is None:
-            raise ValueError("name not specified")
-        # get shares from other parties
-        for other_share in spdz.communicator.get_rescontruct_shares(name):
-            share_val = share_val + other_share
-
-        share_val = self.endec.decode(share_val)
         return share_val
 
     def transpose(self):
@@ -230,36 +163,105 @@ class FixedPointTensor(TensorBase):
     def __repr__(self):
         return self.__str__()
 
+    def as_name(self, tensor_name):
+        return self._boxed(value=self.value, tensor_name=tensor_name)
+
     def _raw_add(self, other):
-        # z_value = (self.value + other) % self.q_field
-        z_value = (self.value + other)
+        z_value = (self.value + other) % self.q_field
         return self._boxed(z_value)
 
     def _raw_sub(self, other):
-        # z_value = (self.value - other) % self.q_field
-        z_value = (self.value - other)
+        z_value = (self.value - other) % self.q_field
         return self._boxed(z_value)
 
     def __add__(self, other):
         if isinstance(other, FixedPointTensor):
             return self._raw_add(other.value)
-        # z_value = (self.value + self.endec.encode(other / 2)) % self.q_field
-        z_value = (self.value + self.endec.encode(other / 2))
+        z_value = (self.value + self.endec.encode(other)) % self.q_field
         return self._boxed(z_value)
 
     def __radd__(self, other):
-        z_value = (self.endec.encode(other / 2) + self.value) % self.q_field
-        return self._boxed(z_value)
+        return self.__add__(other)
 
     def __sub__(self, other):
         if isinstance(other, FixedPointTensor):
             return self._raw_sub(other.value)
-        # z_value = (self.value - self.endec.encode(other / 2)) % self.q_field
-        z_value = (self.value - self.endec.encode(other / 2))
+        z_value = (self.value - self.endec.encode(other)) % self.q_field
         return self._boxed(z_value)
 
     def __rsub__(self, other):
-        z_value = (self.endec.encode(other / 2) - self.value) % self.q_field
+        if isinstance(other, FixedPointTensor):
+            return other - self
+        z_value = (self.endec.encode(other) - self.value) % self.q_field
+        return self._boxed(z_value)
+
+    def __mul__(self, other):
+        if isinstance(other, FixedPointTensor):
+            raise NotImplementedError("__mul__ support scalar only")
+
+        z_value = self.value * self.endec.encode(other)
+        z_value = z_value % self.q_field
+        z_value = self.endec.truncate(z_value, self.get_spdz().party_idx)
+        return self._boxed(z_value)
+
+    def __rmul__(self, other):
+        self.__mul__(other)
+
+    def __matmul__(self, other):
+        return self.einsum(other, "ij,jk->ik")
+
+
+class PaillierFixedPointTensor(TensorBase):
+    __array_ufunc__ = None
+
+    def __init__(self, value, tensor_name: str = None, cipher=None):
+        super().__init__(q_field=None, tensor_name=tensor_name)
+        self.value = value
+        self.cipher = cipher
+
+    def dot(self, other, target_name=None):
+        if isinstance(other, FixedPointTensor):
+            other = other.value
+
+        res = np.dot(x.value, other)
+        if not isinstance(res, np.ndarray):
+            res = np.array([res])
+        self._boxed(res, target_name)
+
+    def __str__(self):
+        return f"{self.tensor_name}: {self.value}"
+
+    def __repr__(self):
+        return self.__str__()
+
+    def _raw_add(self, other):
+        z_value = (self.value + other)
+        return self._boxed(z_value)
+
+    def _raw_sub(self, other):
+        z_value = (self.value - other)
+        return self._boxed(z_value)
+
+    def __add__(self, other)
+        if isinstance(other, PaillierFixedPointTensor):
+            return self._raw_add(other.value)
+        else:
+            return self._raw_add(other)
+
+    def __radd__(self, other):
+        return self.__add__(other)
+
+    def __sub__(self, other):
+        if isinstance(other, PaillierFixedPointTensor):
+            return self._raw_sub(other.value)
+        else:
+            return self._raw_sub(other)
+
+    def __rsub__(self, other):
+        if isinstance(other, PaillierFixedPointTensor):
+            z_value = other.value - self.value
+        else:
+            z_value = other - self.value
         return self._boxed(z_value)
 
     def __mul__(self, other):
@@ -268,35 +270,45 @@ class FixedPointTensor(TensorBase):
         return self._boxed(self.value * other)
 
     def __rmul__(self, other):
-        # if not isinstance(other, (int, np.integer)):
-        #     raise NotImplementedError("__rmul__ support integer only")
-        return self._boxed(self.value * other)
-
-    def __matmul__(self, other):
-        return self.einsum(other, "ij,jk->ik")
-
-
-class PaillierFixedPointTensor(FixedPointTensor):
-
-    def _raw_add(self, other):
-        z_value = (self.value + other)
-        return self._boxed(z_value)
-
-    def _raw_sub(self, other):
-        z_value = (self.value - other)
-        return self._boxed(z_value)
+       self.__mul__(other)
 
     def _boxed(self, value, tensor_name=None):
-        return PaillierFixedPointTensor(value=value, q_field=self.q_field, endec=self.endec, tensor_name=tensor_name)
+        return PaillierFixedPointTensor(value=value, tensor_name=tensor_name)
 
-    def __add__(self, other):
-        if isinstance(other, FixedPointTensor):
-            return self._raw_add(other.value)
+    @classmethod
+    def from_source(cls, tensor_name, source, **kwargs):
+        spdz = cls.get_spdz()
+        q_field = kwargs['q_field'] if 'q_field' in kwargs else spdz.q_field
+        cipher = kwargs['cipher']
+        if 'encoder' in kwargs:
+            encoder = kwargs['encoder']
         else:
-            return self._raw_add(other)
+            base = kwargs['base'] if 'base' in kwargs else 10
+            frac = kwargs['frac'] if 'frac' in kwargs else 4
+            encoder = FixedPointEndec(q_field, base, frac)
 
-    def __radd__(self, other):
-        if isinstance(other, FixedPointTensor):
-            return self._raw_add(other.value)
+        if isinstance(source, np.ndarray):
+            _pre = urand_tensor(q_field, source)
+            share = _pre
+            for _party in spdz.other_parties[:-1]:
+                r = urand_tensor(q_field, source)
+                spdz.communicator.remote_share(share=r - _pre, tensor_name=tensor_name, party=_party)
+                _pre = r
+            spdz.communicator.remote_share(share=source - encoder.decode(_pre), tensor_name=tensor_name, party=_party)
+            return FixedPointTensor(value=share,
+                                    q_field=q_field,
+                                    endec=encoder,
+                                    tensor_name=tensor_name)
+
+        elif isinstance(source, Party):
+            share = spdz.communicator.get_share(tensor_name=tensor_name, party=source)[0]
+
+            share = cipher.recursive_decrypt(share)
+            share = encoder.encode(share)
+            return FixedPointTensor(value=share,
+                                    q_field=q_field,
+                                    endec=encoder,
+                                    tensor_name=tensor_name)
         else:
-            return self._raw_add(other)
+            raise ValueError(f"type={type(source)}")
+
