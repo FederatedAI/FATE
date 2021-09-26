@@ -26,11 +26,9 @@ def conf_realpath(conf_name):
 
 
 def get_base_config(key, default=None, conf_name=SERVICE_CONF):
-    try:
-        local_config = file_utils.load_yaml_conf(conf_realpath('local.' + conf_name))
-    except Exception:
-        pass
-    else:
+    local_path = conf_realpath(f'local.{conf_name}')
+    if os.path.exists(local_path):
+        local_config = file_utils.load_yaml_conf(local_path)
         if isinstance(local_config, dict) and key in local_config:
             return local_config[key]
 
