@@ -53,6 +53,8 @@ class HomoBinningClient(BaseFeatureBinning):
         self.model_param = HomoFeatureBinningParam()
 
     def _init_model(self, model_param: HomoFeatureBinningParam):
+        self.transform_type = self.model_param.transform_param.transform_type
+
         self.model_param = model_param
         if self.model_param.method == consts.VIRTUAL_SUMMARY:
             self.binning_obj = virtual_summary_binning.Client(self.model_param)

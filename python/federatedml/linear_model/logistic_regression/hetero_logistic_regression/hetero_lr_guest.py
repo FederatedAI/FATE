@@ -120,7 +120,6 @@ class HeteroLRGuest(HeteroLRBase):
             self.model_weights = LinearModelWeights(w, fit_intercept=self.fit_intercept)
         else:
             self.callback_warm_start_init_iter(self.n_iter_)
-            self.n_iter_ += 1
 
         while self.n_iter_ < self.max_iter:
             self.callback_list.on_epoch_begin(self.n_iter_)
@@ -155,10 +154,10 @@ class HeteroLRGuest(HeteroLRBase):
             LOGGER.info("iter: {},  is_converged: {}".format(self.n_iter_, self.is_converged))
 
             self.callback_list.on_epoch_end(self.n_iter_)
+            self.n_iter_ += 1
+
             if self.stop_training:
                 break
-
-            self.n_iter_ += 1
 
             if self.is_converged:
                 break
