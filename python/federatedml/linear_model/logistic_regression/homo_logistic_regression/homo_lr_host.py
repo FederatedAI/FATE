@@ -75,7 +75,6 @@ class HomoLRHost(HomoLRBase):
             self.model_weights = LogisticRegressionWeights(w, self.model_weights.fit_intercept)
         else:
             self.callback_warm_start_init_iter(self.n_iter_)
-            self.n_iter_ += 1
 
         # LOGGER.debug("After init, model_weights: {}".format(self.model_weights.unboxed))
 
@@ -150,9 +149,9 @@ class HomoLRHost(HomoLRBase):
 
             # validation_strategy.validate(self, self.n_iter_)
             self.callback_list.on_epoch_end(self.n_iter_)
+            self.n_iter_ += 1
             if self.stop_training:
                 break
-            self.n_iter_ += 1
 
         self.set_summary(self.get_model_summary())
         LOGGER.info("Finish Training task, total iters: {}".format(self.n_iter_))
