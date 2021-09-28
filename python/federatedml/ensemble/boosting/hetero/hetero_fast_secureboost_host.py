@@ -23,6 +23,7 @@ class HeteroFastSecureBoostingTreeHost(HeteroSecureBoostingTreeHost):
         self.guest_depth = 0
         self.host_depth = 0
         self.work_mode = consts.MIX_TREE
+        self.init_tree_plan = False
         self.tree_plan = []
         self.model_param = HeteroFastSecureBoostParam()
         self.model_name = 'HeteroFastSecureBoost'
@@ -38,12 +39,14 @@ class HeteroFastSecureBoostingTreeHost(HeteroSecureBoostingTreeHost):
 
     def get_tree_plan(self, idx):
 
-        if len(self.tree_plan) == 0:
-            self.tree_plan = plan.create_tree_plan(self.work_mode, k=self.tree_num_per_party, tree_num=self.boosting_round,
-                                                   host_list=self.component_properties.host_party_idlist,
-                                                   complete_secure=self.complete_secure)
-            LOGGER.info('tree plan is {}'.format(self.tree_plan))
+        if not self.init_tree_plan:
+            tree_plan = plan.create_tree_plan(self.work_mode, k=self.tree_num_per_party, tree_num=self.boosting_round,
+                                              host_list=self.component_properties.host_party_idlist,
+                                              complete_secure=self.complete_secure)
+            self.tree_plan += tree_plan
+            self.init_tree_plan = True
 
+        LOGGER.info('tree plan is {}'.format(self.tree_plan))
         return self.tree_plan[idx]
 
     def update_feature_importance(self, tree_feature_importance):
