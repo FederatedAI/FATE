@@ -21,8 +21,8 @@ import numpy as np
 from federatedml.linear_model.linear_model_weight import LinearModelWeights
 from federatedml.linear_model.logistic_regression.hetero_sshe_logistic_regression.hetero_lr_base import HeteroLRBase
 from federatedml.optim import activation
-from federatedml.optim.convergence import converge_func_factory
 from federatedml.protobuf.generated import lr_model_param_pb2
+from federatedml.secureprotol.spdz.secure_matrix.secure_matrix import SecureMatrix
 from federatedml.secureprotol.spdz.tensor import fixedpoint_numpy, fixedpoint_table
 from federatedml.util import LOGGER, consts
 from federatedml.util import fate_operator
@@ -48,14 +48,25 @@ class HeteroLRGuest(HeteroLRBase):
         return remote_pubkey
 
     def _cal_z_in_share(self, w_self, w_remote, features, suffix):
-        z1 = features.dot_array(w_self.value, fit_intercept=self.fit_intercept)
+        z1 = features.dot_local(w_self.value, fit_intercept=self.fit_intercept)
 
         za_suffix = ("za",) + suffix
-        self.secure_matrix_mul_active(w_remote, cipher=self.cipher, suffix=za_suffix)
-        za_share = self.received_share_matrix(self.cipher, q_field=self.fixpoint_encoder.n,
-                                              encoder=self.fixpoint_encoder, suffix=za_suffix)
-        zb_share = self.secure_matrix_mul_passive(features,
-                                                  suffix=("zb",) + suffix)
+
+        za_share = self.secure_matrix_obj.secure_matrix_mul(w_remote,
+                                                            tensor_name=".".join(za_suffix),
+                                                            cipher=self.cipher,
+                                                            suffix=za_suffix)
+        zb_suffix = ("zb",) + suffix
+        zb_share = self.secure_matrix_obj.secure_matrix_mul(features,
+                                                            tensor_name=".".join(zb_suffix),
+                                                            cipher=None,
+                                                            suffix=zb_suffix)
+        # self.secure_matrix_mul_active(w_remote, cipher=self.cipher, suffix=za_suffix)
+        # za_share = self.received_share_matrix(self.cipher, q_field=self.fixpoint_encoder.n,
+        #                                       encoder=self.fixpoint_encoder, suffix=za_suffix)
+        # zb_share = self.secure_matrix_mul_passive(features,
+        #                                           suffix=("zb",) + suffix)
+
         z = z1 + za_share + zb_share
         return z
 
@@ -76,42 +87,55 @@ class HeteroLRGuest(HeteroLRBase):
             z = self._cal_z_in_share(w_self, w_remote, features, suffix)
         else:
             LOGGER.debug(f"Calculate z directly.")
-            z = features.dot_array(self.model_weights.unboxed, fit_intercept=self.fit_intercept)
+            z = features.dot_local(self.model_weights.coef_)
+            if self.model_weights.fit_intercept:
+                z.value = z.value.mapValues(lambda x: x + self.model_weights.intercept_)
 
-        # z = z.convert_to_array_tensor()
-        # new_w = z.reconstruct_unilateral(tensor_name=f"z_{self.n_iter_}")
-        # raise ValueError(f"reconstructed z: {new_w}")
         remote_z = self.share_encrypted_value(suffix=suffix, is_remote=False, z=None)[0]
         sigmoid_z = self._compute_sigmoid(z, remote_z)
 
         # sigmoid_z = complete_z * 0.2 + 0.5
         self.encrypted_wx = sigmoid_z
         encrypted_error = sigmoid_z.value.join(self.labels, operator.sub)
-        self.encrypted_error = fixedpoint_table.PaillierFixedPointTensor.from_value(
-            encrypted_error,
-            q_field=self.fixpoint_encoder.n,
-            encoder=self.fixpoint_encoder
+        self.encrypted_error = fixedpoint_table.PaillierFixedPointTensor(
+            encrypted_error
         )
-        shared_sigmoid_z = self.share_matrix(sigmoid_z, suffix=("sigmoid_z",) + suffix)
+        # shared_sigmoid_z = self.share_matrix(sigmoid_z, suffix=("sigmoid_z",) + suffix)
+        tensor_name = ".".join(("sigmoid_z",) + suffix)
+        shared_sigmoid_z = SecureMatrix.from_source(tensor_name,
+                                                    sigmoid_z,
+                                                    self.cipher,
+                                                    self.fixpoint_encoder.n,
+                                                    self.fixpoint_encoder)
         return shared_sigmoid_z
 
     def compute_gradient(self, wa, wb, error, features, suffix):
-        encoded_1_n = self.encoded_batch_num[suffix[1]]
+        encoded_1_n = self.encoded_batch_num[int(suffix[1])]
         error_1_n = error * encoded_1_n
 
         encrypt_g = self.encrypted_error.value.join(features.value, operator.mul).reduce(operator.add) * encoded_1_n
         if self.fit_intercept:
             bias = self.encrypted_error.value.reduce(operator.add) * encoded_1_n
             encrypt_g = np.array(list(encrypt_g) + list(bias))
-        encrypt_g = fixedpoint_numpy.PaillierFixedPointTensor(encrypt_g, q_field=error.q_field,
-                                                              endec=self.fixpoint_encoder)
-        gb2 = self.share_matrix(encrypt_g, suffix=("encrypt_g",) + suffix)
+        encrypt_g = fixedpoint_numpy.PaillierFixedPointTensor(encrypt_g)
+        # gb2 = self.share_matrix(encrypt_g, suffix=("encrypt_g",) + suffix)
+        tensor_name = ".".join(("encrypt_g",) + suffix)
+        gb2 = SecureMatrix.from_source(tensor_name,
+                                       encrypt_g,
+                                       self.cipher,
+                                       self.fixpoint_encoder.n,
+                                       self.fixpoint_encoder)
 
         ga2_suffix = ("ga2",) + suffix
-        self.secure_matrix_mul_active(error_1_n, cipher=self.cipher,
-                                      suffix=ga2_suffix)
-        ga2_2 = self.received_share_matrix(self.cipher, q_field=self.fixpoint_encoder.n,
-                                           encoder=self.fixpoint_encoder, suffix=ga2_suffix)
+        ga2_2 = self.secure_matrix_obj.secure_matrix_mul(error_1_n,
+                                                         tensor_name=".".join(ga2_suffix),
+                                                         cipher=self.cipher,
+                                                         suffix=ga2_suffix)
+
+        # self.secure_matrix_mul_active(error_1_n, cipher=self.cipher,
+        #                               suffix=ga2_suffix)
+        # ga2_2 = self.received_share_matrix(self.cipher, q_field=self.fixpoint_encoder.n,
+        #                                    encoder=self.fixpoint_encoder, suffix=ga2_suffix)
 
         # wb = wb - gb2 * self.model_param.learning_rate
         ga2_2 = ga2_2.reshape(ga2_2.shape[0])
@@ -121,23 +145,6 @@ class HeteroLRGuest(HeteroLRBase):
 
         return ga2_2, gb2
 
-    # def compute_loss(self, suffix):
-    #     """
-    #     Use Taylor series expand log loss:
-    #     Loss = - y * log(h(x)) - (1-y) * log(1 - h(x)) where h(x) = 1/(1+exp(-wx))
-    #     Then loss' = - (1/N)*∑(log(1/2) - 1/2*wx + wxy + 1/8(wx)^2)
-    #     """
-    #     encoded_1_n = self.encoded_batch_num[suffix[1]]
-    #     wxy = self.encrypted_wx.dot_local(self.label_tensor)
-    #     loss_table = - np.log(0.5) + 0.5 * self.encrypted_wx - 0.125 * self.z_square
-    #
-    #     loss = (loss_table.value.reduce(operator.add) + wxy) * encoded_1_n
-    #     loss_norm = self.optimizer.loss_norm(self.model_weights)
-    #     if loss_norm:
-    #         loss += loss_norm
-    #     self.transfer_variable.loss.remote(loss, suffix=suffix)
-    #     return loss
-
     def compute_loss(self, spdz, suffix):
         """
         Use Taylor series expand log loss:
@@ -145,7 +152,15 @@ class HeteroLRGuest(HeteroLRBase):
         Then loss' = - (1/N)*∑(log(1/2) - 1/2*wx + wxy + 1/8(wx)^2)
         """
 
-        shared_wx = self.share_matrix(self.encrypted_wx, suffix=suffix)
+        # shared_wx = self.share_matrix(self.encrypted_wx, suffix=suffix)
+
+        tensor_name = ".".join(("shared_wx",) + suffix)
+        shared_wx = SecureMatrix.from_source(tensor_name,
+                                             self.encrypted_wx,
+                                             self.cipher,
+                                             self.fixpoint_encoder.n,
+                                             self.fixpoint_encoder)
+
         wxy = spdz.dot(shared_wx, self.shared_y, ("wxy",) + suffix).get()
         LOGGER.debug(f"wxy_value: {wxy}")
         # wxy_sum = wxy_tensor.value[0]

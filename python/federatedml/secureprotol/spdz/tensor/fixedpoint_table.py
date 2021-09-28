@@ -15,6 +15,7 @@
 #
 import operator
 from collections import Iterable
+import functools
 
 import numpy as np
 
@@ -31,7 +32,7 @@ from federatedml.util import LOGGER
 from federatedml.util import fate_operator
 
 
-def _table_binary_op(x, y, q_field, op):
+def _table_binary_op(x, y, op):
     return x.join(y, lambda a, b: op(a, b))
 
 
@@ -111,9 +112,10 @@ class FixedPointTensor(TensorBase):
         return share
 
     def dot_local(self, other, target_name=None):
-        def _vec_dot(x, y):
-            res = np.dot(x, y) % self.q_field
-            res = self.endec.truncate(res, self.get_spdz().party_idx)
+
+        def _vec_dot(x, y, party_idx, q_field, endec):
+            res = np.dot(x, y) % q_field
+            res = endec.truncate(res, party_idx)
             if not isinstance(res, np.ndarray):
                 res = np.array([res])
             return res
@@ -122,15 +124,23 @@ class FixedPointTensor(TensorBase):
             other = other.value
 
         if isinstance(other, np.ndarray):
-            res = self.value.mapValues(lambda x : _vec_dot(x, other))
+            party_idx = self.get_spdz().party_idx
+            f = functools.partial(_vec_dot, y=other,
+                                  party_idx=party_idx,
+                                  q_field=self.q_field,
+                                  endec=self.endec)
+            res = self.value.mapValues(f)
             return self._boxed(res, target_name)
 
         elif is_table(other):
-            res = table_dot_mod(self.value, other)
+            res = table_dot_mod(self.value, other, self.q_field)
             res = self.endec.truncate(res, self.get_spdz().party_idx)
-            return fixedpoint_numpy.FixedPointTensor(res, target_name)
+            return fixedpoint_numpy.FixedPointTensor(res,
+                                                     self.q_field,
+                                                     self.endec,
+                                                     target_name)
         else:
-            raise ValueError(f"type={type(y)}")
+            raise ValueError(f"type={type(other)}")
 
     @property
     def shape(self):
@@ -217,7 +227,7 @@ class FixedPointTensor(TensorBase):
         if isinstance(other, FixedPointTensor):
             raise NotImplementedError("__mul__ support scalar only")
 
-        z_value = _table_scalar_mod_op(self.value, other)
+        z_value = _table_scalar_mod_op(self.value, other, self.q_field, operator.mul)
         z_value = self.endec.truncate(z_value, self.get_spdz().party_idx)
         return self._boxed(z_value)
 
@@ -259,7 +269,7 @@ class PaillierFixedPointTensor(TensorBase):
             res = table_dot(self.value, other)
             return fixedpoint_numpy.PaillierFixedPointTensor(res, target_name)
         else:
-            raise ValueError(f"type={type(y)}")
+            raise ValueError(f"type={type(other)}")
 
     def __str__(self):
         return f"{self.tensor_name}: {self.value}"
@@ -267,11 +277,13 @@ class PaillierFixedPointTensor(TensorBase):
     def __repr__(self):
         return self.__str__()
 
-    def __add__(self, other)
-        if isinstance(other, PaillierFixedPointTensor):
+    def __add__(self, other):
+        if isinstance(other, (PaillierFixedPointTensor, FixedPointTensor)):
             return self._boxed(_table_binary_op(self.value, other.value, operator.add))
-        else:
+        elif is_table(other):
             return self._boxed(_table_binary_op(self.value, other, operator.add))
+        else:
+            return self._boxed(self.value.mapValues(lambda x: x + other))
 
     def __radd__(self, other):
         return self.__add__(other)
@@ -300,13 +312,13 @@ class PaillierFixedPointTensor(TensorBase):
     @classmethod
     def from_source(cls, tensor_name, source, **kwargs):
         spdz = cls.get_spdz()
-        cipher = kwargs['cipher']
+        q_field = kwargs['q_field'] if 'q_field' in kwargs else spdz.q_field
+
         if 'encoder' in kwargs:
             encoder = kwargs['encoder']
         else:
             base = kwargs['base'] if 'base' in kwargs else 10
             frac = kwargs['frac'] if 'frac' in kwargs else 4
-            q_field = kwargs['q_field'] if 'q_field' in kwargs else spdz.q_field
             encoder = FixedPointEndec(q_field, base, frac)
 
         if is_table(source):
@@ -315,12 +327,11 @@ class PaillierFixedPointTensor(TensorBase):
 
             for _party in spdz.other_parties[:-1]:
                 r = urand_tensor(spdz.q_field, source, use_mix=spdz.use_mix_rand)
-                spdz.communicator.remote_share(share=_table_binary_op(r, _pre, operator.sub),
+                spdz.communicator.remote_share(share=_table_binary_mod_op(r, _pre, q_field, operator.sub),
                                                tensor_name=tensor_name, party=_party)
                 _pre = r
             spdz.communicator.remote_share(share=_table_binary_op(source, encoder.decode(_pre), operator.sub),
-                                           tensor_name=tensor_name, party=_party)
-
+                                           tensor_name=tensor_name, party=spdz.other_parties[-1])
             return FixedPointTensor(value=share,
                                     q_field=q_field,
                                     endec=encoder,
@@ -328,9 +339,14 @@ class PaillierFixedPointTensor(TensorBase):
 
         elif isinstance(source, Party):
             share = spdz.communicator.get_share(tensor_name=tensor_name, party=source)[0]
+            is_cipher_source = kwargs['is_cipher_source'] if 'is_cipher_source' in kwargs else True
+            if is_cipher_source:
+                cipher = kwargs.get("cipher")
+                if cipher is None:
+                    raise ValueError("Cipher is not provided")
 
-            share = cipher.distribute_decrypt(share)
-            share = encoder.encode(share)
+                share = cipher.distribute_decrypt(share)
+                share = encoder.encode(share)
             return FixedPointTensor(value=share,
                                     q_field=q_field,
                                     endec=encoder,

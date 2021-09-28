@@ -92,6 +92,8 @@ class LogisticRegressionParam(BaseParam):
         Whether reconstruct model weights every iteration. If so, Regularization is available.
         The performance will be better as well since the algorithm process is simplified.
 
+    random_field: int, default: 2 << 60
+        The range of random number used
 
     """
 
@@ -102,9 +104,9 @@ class LogisticRegressionParam(BaseParam):
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  decay=1, decay_sqrt=True,
                  multi_class='ovr', use_mix_rand=False,
-                 random_field=1 << 20, reveal_strategy="respectively", compute_loss=True,
+                 random_field=1 << 60, reveal_strategy="respectively", compute_loss=True,
                  reveal_every_iter=True,
-                 callback_param=CallbackParam()
+                 callback_param=CallbackParam(),
                  ):
         super(LogisticRegressionParam, self).__init__()
         self.penalty = penalty
