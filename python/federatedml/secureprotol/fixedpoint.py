@@ -22,7 +22,7 @@ import numpy as np
 
 
 class FixedPointNumber(object):
-    """Represents a float or int fixedpoit encoding;.
+    """Represents a float or int fixedpoint encoding;.
     """
     BASE = 16
     LOG2_BASE = math.log(BASE, 2)
@@ -139,7 +139,7 @@ class FixedPointNumber(object):
 
     def __add__(self, other):
         if isinstance(other, FixedPointNumber):
-            return self.__add_fixpointnumber(other)
+            return self.__add_fixedpointnumber(other)
         elif type(other).__name__ == "PaillierEncryptedNumber":
             return other + self.decode()
         else:
@@ -150,7 +150,7 @@ class FixedPointNumber(object):
 
     def __sub__(self, other):
         if isinstance(other, FixedPointNumber):
-            return self.__sub_fixpointnumber(other)
+            return self.__sub_fixedpointnumber(other)
         elif type(other).__name__ == "PaillierEncryptedNumber":
             return (other - self.decode()) * -1
         else:
@@ -169,7 +169,7 @@ class FixedPointNumber(object):
 
     def __mul__(self, other):
         if isinstance(other, FixedPointNumber):
-            return self.__mul_fixpointnumber(other)
+            return self.__mul_fixedpointnumber(other)
         elif type(other).__name__ == "PaillierEncryptedNumber":
             return other * self.decode()
         else:
@@ -254,7 +254,7 @@ class FixedPointNumber(object):
         else:
             return False
 
-    def __add_fixpointnumber(self, other):
+    def __add_fixedpointnumber(self, other):
         if self.n != other.n:
             other = self.encode(other.decode(), n=self.n, max_int=self.max_int)
         x, y = self.__align_exponent(self, other)
@@ -263,9 +263,9 @@ class FixedPointNumber(object):
     
     def __add_scalar(self, scalar):
         encoded = self.encode(scalar, n=self.n, max_int=self.max_int)
-        return self.__add_fixpointnumber(encoded)
+        return self.__add_fixedpointnumber(encoded)
 
-    def __sub_fixpointnumber(self, other):
+    def __sub_fixedpointnumber(self, other):
         if self.n != other.n:
             other = self.encode(other.decode(), n=self.n, max_int=self.max_int)
         x, y = self.__align_exponent(self, other)
@@ -277,7 +277,7 @@ class FixedPointNumber(object):
         scalar = -1 * scalar
         return self.__add_scalar(scalar)
 
-    def __mul_fixpointnumber(self, other):
+    def __mul_fixedpointnumber(self, other):
         if self.n != other.n:
             raise ValueError(f"Multiplying number with different field")
         encoding = (self.encoding * other.encoding) % self.n
@@ -288,7 +288,7 @@ class FixedPointNumber(object):
 
     def __mul_scalar(self, scalar):
         encoded = self.encode(scalar, n=self.n, max_int=self.max_int)
-        return self.__mul_fixpointnumber(encoded)
+        return self.__mul_fixedpointnumber(encoded)
 
     def __abs__(self):
         if self.encoding <= self.max_int:
