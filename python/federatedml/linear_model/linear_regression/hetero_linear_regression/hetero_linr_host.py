@@ -52,6 +52,10 @@ class HeteroLinRHost(HeteroLinRBase):
 
         self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
 
+        if self.transfer_variable.use_async.get(idx=0):
+            LOGGER.debug(f"set_use_async")
+            self.gradient_loss_operator.set_use_async()
+
         self.batch_generator.initialize_batch_generator(data_instances)
         self.gradient_loss_operator.set_total_batch_nums(self.batch_generator.batch_nums)
 
@@ -70,6 +74,7 @@ class HeteroLinRHost(HeteroLinRBase):
             self.model_weights = LinearModelWeights(w, fit_intercept=self.fit_intercept, raise_overflow_error=False)
         else:
             self.callback_warm_start_init_iter(self.n_iter_)
+            self.n_iter_ += 1
 
         while self.n_iter_ < self.max_iter:
             self.callback_list.on_epoch_begin(self.n_iter_)
@@ -104,10 +109,8 @@ class HeteroLinRHost(HeteroLinRBase):
             LOGGER.info("iter: {}, is_converged: {}".format(self.n_iter_, self.is_converged))
             if self.is_converged:
                 break
-        if not self.is_converged:
-            LOGGER.info("Reach max iter {}, train model finish!".format(self.max_iter))
-        if self.validation_strategy and self.validation_strategy.has_saved_best_model():
-            self.load_model(self.validation_strategy.cur_best_model)
+        self.callback_list.on_train_end()
+
         self.set_summary(self.get_model_summary())
         # LOGGER.debug(f"summary content is: {self.summary()}")
 

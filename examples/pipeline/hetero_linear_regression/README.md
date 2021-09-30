@@ -8,26 +8,33 @@ This section introduces the Pipeline scripts for different types of tasks.
 
     script: pipeline-hetero-linr.py
 
-2. Validate Task (with early-stopping parameters specified):
+2. Warm-start Task:
+
+    script: pipeline-hetero-linr-warm-start.py
+
+3. Validate Task (with early-stopping parameters specified):
 
     script: pipeline-hetero-linr-validate.py
 
-3. Cross Validation Task:
+4. Cross Validation Task:
 
     script: pipeline-hetero-linr-cv.py
 
-4. Multi-host Train & Predict Task:
+5. Multi-host Train & Predict Task:
 
     script: pipeline-hetero-linr-multi-host.py
 
-5. Multi-host Cross Validation Task:
+6. Multi-host Cross Validation Task:
 
     script: pipeline-hetero-linr-multi-host-cv.py
 
-6. Train Task with Sparse Data:
+7. Train Task with Sparse Data:
     
     script: pipeline-hetero-linr-sparse.py
 
+7. Train Task with Weighted Instances:
+    
+    script: pipeline-hetero-linr-sample-weight.py
 
 Users can run a pipeline job directly:
 

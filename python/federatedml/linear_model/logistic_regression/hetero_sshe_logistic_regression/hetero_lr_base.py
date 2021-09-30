@@ -22,26 +22,34 @@ from abc import ABC
 
 import numpy as np
 
+from fate_arch import session
+from federatedml.framework.hetero.procedure import batch_generator
+from federatedml.linear_model.linear_model_base import BaseLinearModel
 from federatedml.linear_model.linear_model_weight import LinearModelWeights
-from federatedml.linear_model.sshe_model.sshe_model_base import SSHEModelBase
 from federatedml.one_vs_rest.one_vs_rest import one_vs_rest_factory
 from federatedml.param.hetero_sshe_lr_param import LogisticRegressionParam
 from federatedml.param.logistic_regression_param import InitParam
 from federatedml.protobuf.generated import lr_model_meta_pb2
 from federatedml.secureprotol import PaillierEncrypt
+from federatedml.secureprotol.fixedpoint import FixedPointEndec
 from federatedml.secureprotol.spdz import SPDZ
+from federatedml.secureprotol.spdz.secure_matrix.secure_matrix import SecureMatrix
 from federatedml.secureprotol.spdz.tensor import fixedpoint_numpy, fixedpoint_table
+from federatedml.transfer_variable.transfer_class.batch_generator_transfer_variable import \
+    BatchGeneratorTransferVariable
+from federatedml.transfer_variable.transfer_class.converge_checker_transfer_variable import \
+    ConvergeCheckerTransferVariable
 from federatedml.transfer_variable.transfer_class.sshe_model_transfer_variable import SSHEModelTransferVariable
 from federatedml.util import LOGGER
 from federatedml.util import consts
 
 
-class HeteroLRBase(SSHEModelBase, ABC):
+class HeteroLRBase(BaseLinearModel, ABC):
     def __init__(self):
         super().__init__()
-        self.model_name = 'HeteroLogisticRegression'
-        self.model_param_name = 'HeteroLogisticRegressionParam'
-        self.model_meta_name = 'HeteroLogisticRegressionMeta'
+        self.model_name = 'HeteroSSHELogisticRegression'
+        self.model_param_name = 'HeteroSSHELogisticRegressionParam'
+        self.model_meta_name = 'HeteroSSHELogisticRegressionMeta'
         self.mode = consts.HETERO
         self.cipher = None
         self.gradient_loss_operator = None
@@ -54,6 +62,8 @@ class HeteroLRBase(SSHEModelBase, ABC):
         self.encoded_batch_num = []
         self.one_vs_rest_obj = None
         self.shared_y = None
+        self.secure_matrix_obj: SecureMatrix
+        self._set_parties()
 
     def _init_model(self, params: LogisticRegressionParam):
         super()._init_model(params)
@@ -64,6 +74,29 @@ class HeteroLRBase(SSHEModelBase, ABC):
         self.cal_loss = self.model_param.compute_loss
         self.converge_func_name = params.early_stop
         self.review_every_iter = params.reveal_every_iter
+        self.random_field = params.random_field
+        # self.fixpoint_filed = self.random_field ** 2
+        self.fixpoint_filed = 2 << 128
+        self.batch_generator = batch_generator.Guest() if self.role == consts.GUEST else batch_generator.Host()
+        self.batch_generator.register_batch_generator(BatchGeneratorTransferVariable(), has_arbiter=False)
+        self.fixpoint_encoder = FixedPointEndec(n=self.fixpoint_filed)
+        self.converge_transfer_variable = ConvergeCheckerTransferVariable()
+        self.secure_matrix_obj = SecureMatrix(party=self.local_party,
+                                              q_field=self.fixpoint_filed)
+
+    def _set_parties(self):
+        parties = []
+        guest_parties = session.get_latest_opened().parties.roles_to_parties(["guest"])
+        host_parties = session.get_latest_opened().parties.roles_to_parties(["host"])
+        parties.extend(guest_parties)
+        parties.extend(host_parties)
+
+        local_party = session.get_latest_opened().parties.local_party
+        other_party = parties[0] if parties[0] != local_party else parties[1]
+
+        self.parties = parties
+        self.local_party = local_party
+        self.other_party = other_party
 
     def get_model_summary(self):
         header = self.header
@@ -163,16 +196,20 @@ class HeteroLRBase(SSHEModelBase, ABC):
         LOGGER.info("Start to hetero_sshe_logistic_regression")
         self.callback_list.on_train_begin(data_instances, validate_data)
 
-        self.validation_strategy = self.init_validation_strategy(data_instances, validate_data)
-        # self.batch_generator.initialize_batch_generator(data_instances, self.batch_size)
         model_shape = self.get_features_shape(data_instances)
-        w = self._init_weights(model_shape)
-        last_models = w
-        self.model_weights = LinearModelWeights(l=w,
-                                                fit_intercept=self.model_param.init_param.fit_intercept)
+        if not self.component_properties.is_warm_start:
+            w = self._init_weights(model_shape)
+            last_models = w
+            self.model_weights = LinearModelWeights(l=w,
+                                                    fit_intercept=self.model_param.init_param.fit_intercept)
+        else:
+            last_models = self.model_weights.unboxed
+            w = last_models
+            self.callback_warm_start_init_iter(self.n_iter_)
+
         self.batch_generator.initialize_batch_generator(data_instances, batch_size=self.batch_size)
 
-        remote_pubkey = self.transfer_pubkey()
+        # remote_pubkey = self.transfer_pubkey()
         with SPDZ(
                 "sshe_lr",
                 local_party=self.local_party,
@@ -180,12 +217,12 @@ class HeteroLRBase(SSHEModelBase, ABC):
                 q_field=self.random_field,
                 use_mix_rand=self.model_param.use_mix_rand,
         ) as spdz:
-            self.fixpoint_encoder = self.create_fixpoint_encoder(remote_pubkey.n)
+            # self.fixpoint_encoder = self.create_fixpoint_encoder(remote_pubkey.n)
             if self.role == consts.GUEST:
                 self.labels = data_instances.mapValues(lambda x: np.array([x.label], dtype=int))
-                self.label_tensor = fixedpoint_table.FixedPointTensor.from_value(self.labels,
-                                                                                 q_field=self.fixpoint_encoder.n,
-                                                                                 encoder=self.fixpoint_encoder)
+                self.label_tensor = fixedpoint_table.FixedPointTensor(self.labels,
+                                                                      q_field=self.fixpoint_encoder.n,
+                                                                      endec=self.fixpoint_encoder)
             if self.cal_loss:
                 value = self.label_tensor.value if self.role == consts.GUEST else None
                 self.shared_y = self.share_table(self.fixpoint_encoder, value=value, tensor_name="label")
@@ -198,7 +235,9 @@ class HeteroLRBase(SSHEModelBase, ABC):
             encoded_batch_data = []
             for batch_data in batch_data_generator:
                 batch_features = batch_data.mapValues(lambda x: x.features)
-                self.encoded_batch_num.append(self.fixpoint_encoder.encode(1 / batch_data.count()))
+                # self.encoded_batch_num.append(self.fixpoint_encoder.encode(1 / batch_data.count()))
+                self.encoded_batch_num.append(1 / batch_data.count())
+
                 encoded_batch_data.append(
                     fixedpoint_table.FixedPointTensor(self.fixpoint_encoder.encode(batch_features),
                                                       q_field=self.fixpoint_encoder.n,
@@ -206,20 +245,22 @@ class HeteroLRBase(SSHEModelBase, ABC):
 
             while self.n_iter_ < self.max_iter:
                 self.callback_list.on_epoch_begin(self.n_iter_)
+                LOGGER.debug(f"n_iter: {self.n_iter_}")
 
                 loss_list = []
                 self.optimizer.set_iters(self.n_iter_)
                 for batch_idx, batch_data in enumerate(encoded_batch_data):
-
-                    LOGGER.debug(f"n_iter: {self.n_iter_}")
-                    current_suffix = (self.n_iter_, batch_idx)
+                    current_suffix = (str(self.n_iter_), str(batch_idx))
                     y = self.cal_prediction(w_self, w_remote, features=batch_data, spdz=spdz, suffix=current_suffix)
 
                     if self.role == consts.GUEST:
                         error = y.value.join(self.labels, operator.sub)
-                        error = fixedpoint_table.FixedPointTensor.from_value(error,
-                                                                             q_field=self.fixpoint_encoder.n,
-                                                                             encoder=self.fixpoint_encoder)
+                        error = error.mapValues(lambda x: self.fixpoint_encoder.encode(x))
+                        LOGGER.debug(f"tmc, error: {error.first()}")
+
+                        error = fixedpoint_table.FixedPointTensor(error,
+                                                                  q_field=self.fixpoint_encoder.n,
+                                                                  endec=self.fixpoint_encoder)
                         remote_g, self_g = self.compute_gradient(wa=w_remote, wb=w_self, error=error,
                                                                  features=batch_data,
                                                                  suffix=current_suffix)
@@ -277,12 +318,13 @@ class HeteroLRBase(SSHEModelBase, ABC):
 
                 LOGGER.info("iter: {},  is_converged: {}".format(self.n_iter_, self.is_converged))
                 self.callback_list.on_epoch_end(self.n_iter_)
+                self.n_iter_ += 1
+
                 if self.stop_training:
                     break
 
                 if self.is_converged:
                     break
-                self.n_iter_ += 1
 
             # Finally reconstruct
             if not self.review_every_iter:
@@ -302,7 +344,7 @@ class HeteroLRBase(SSHEModelBase, ABC):
 
     def review_models(self, w_self, w_remote, suffix=None):
         if suffix is None:
-             suffix = self.n_iter_
+            suffix = self.n_iter_
         host_weights = None
         if self.model_param.reveal_strategy == "respectively":
             if self.role == consts.GUEST:
@@ -344,8 +386,7 @@ class HeteroLRBase(SSHEModelBase, ABC):
                 dest_role = consts.GUEST if self.role == consts.HOST else consts.HOST
                 z_table = self.transfer_variable.encrypted_share_matrix.get(role=dest_role, idx=0,
                                                                             suffix=(var_name,) + suffix)
-                res.append(fixedpoint_table.PaillierFixedPointTensor(
-                    z_table, q_field=self.fixpoint_encoder.n, endec=self.fixpoint_encoder))
+                res.append(fixedpoint_table.PaillierFixedPointTensor(z_table))
             return tuple(res)
 
     def _get_meta(self):

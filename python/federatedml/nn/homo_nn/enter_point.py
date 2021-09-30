@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 from fate_arch.computing import is_table
-from fate_flow.entity.metric import Metric, MetricMeta
+from federatedml.model_base import Metric, MetricMeta
 from federatedml.framework.homo.blocks.base import HomoTransferBase
 from federatedml.framework.homo.blocks.has_converged import HasConvergedTransVar
 from federatedml.framework.homo.blocks.loss_scatter import LossScatterTransVar
@@ -76,6 +76,7 @@ class HomoNNServer(HomoNNBase):
         )
 
     def fit(self, data_inst):
+        self.callback_list.on_train_begin(data_inst, None)
         if self.is_version_0():
             from federatedml.nn.homo_nn import _version_0
 
@@ -91,6 +92,8 @@ class HomoNNServer(HomoNNBase):
             if not self.component_properties.is_warm_start:
                 self.aggregator.dataset_align()
             self.aggregator.fit(self.callback_loss)
+
+        self.callback_list.on_train_end()
 
     def export_model(self):
         if self.is_version_0():
@@ -142,6 +145,7 @@ class HomoNNClient(HomoNNBase):
             _version_0.client_init_model(self, param)
 
     def fit(self, data, *args):
+        self.callback_list.on_train_begin(data, None)
         if self.is_version_0():
             from federatedml.nn.homo_nn import _version_0
 
@@ -161,6 +165,7 @@ class HomoNNClient(HomoNNBase):
             self.set_summary(self._trainer.summary())
             # save model to local filesystem
             self._trainer.save_checkpoint()
+        self.callback_list.on_train_end()
 
     def predict(self, data):
 
@@ -207,7 +212,6 @@ class HomoNNClient(HomoNNBase):
         else:
             self.set_version(model_obj.api_version)
 
-        print("api_version", self._api_version)
         if self.is_version_0():
             from federatedml.nn.homo_nn import _version_0
 

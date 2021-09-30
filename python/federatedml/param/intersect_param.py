@@ -16,9 +16,11 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+
 import copy
 
-from federatedml.param.base_param import BaseParam, deprecated_param
+# from federatedml.param.base_param import BaseParam, deprecated_param
+from federatedml.param.base_param import BaseParam
 from federatedml.util import consts, LOGGER
 
 DEFAULT_RANDOM_BIT = 128
@@ -323,8 +325,8 @@ class IntersectPreProcessParam(BaseParam):
         return True
 
 
-@deprecated_param("random_bit", "join_role", "with_encode", "encode_params", "intersect_cache_param",
-                  "repeated_id_process", "repeated_id_owner", "allow_info_share", "info_owner", "with_sample_id")
+# @deprecated_param("random_bit", "join_role", "with_encode", "encode_params", "intersect_cache_param",
+#                   "repeated_id_process", "repeated_id_owner", "allow_info_share", "info_owner", "with_sample_id")
 class IntersectParam(BaseParam):
     """
     Define the intersect method
@@ -447,13 +449,13 @@ class IntersectParam(BaseParam):
                                                             [consts.RSA, consts.RAW, consts.DH],
                                                             f"{descr}intersect_method")
 
-        if self._warn_to_deprecate_param("random_bit", descr, "rsa_params' 'random_bit'"):
-            self.rsa_params.random_bit = self.random_bit
+        # if self._warn_to_deprecate_param("random_bit", descr, "rsa_params' 'random_bit'"):
+        #    self.rsa_params.random_bit = self.random_bit
 
         self.check_boolean(self.sync_intersect_ids, f"{descr}intersect_ids")
 
-        if self._warn_to_deprecate_param("join_role", descr, "raw_params' 'join_role'"):
-            self.raw_params.join_role = self.join_role
+        # if self._warn_to_deprecate_param("join_role", descr, "raw_params' 'join_role'"):
+        #    self.raw_params.join_role = self.join_role
 
         self.check_boolean(self.only_output_key, f"{descr}only_output_key")
         """
@@ -498,6 +500,7 @@ class IntersectParam(BaseParam):
                 raise ValueError(f"Cannot perform left join without sync intersect ids")
 
         self.check_boolean(self.run_cache, f"{descr} run_cache")
+        """
         if self._warn_to_deprecate_param("encode_param", descr, "raw_params") or \
             self._warn_to_deprecate_param("with_encode", descr, "raw_params' 'use_hash'"):
             # self.encode_params.check()
@@ -506,6 +509,7 @@ class IntersectParam(BaseParam):
             self.raw_params.hash_method = self.encode_params.encode_method
             self.raw_params.salt = self.encode_params.salt
             self.raw_params.base64 = self.encode_params.base64
+        """
 
         self.raw_params.check()
         self.rsa_params.check()
@@ -535,10 +539,12 @@ class IntersectParam(BaseParam):
             if self.run_preprocess:
                 raise ValueError(f"Preprocessing does not support cache.")
 
+        """
         deprecated_param_list = ["repeated_id_process", "repeated_id_owner", "intersect_cache_param",
                                  "allow_info_share", "info_owner", "with_sample_id"]
         for param in deprecated_param_list:
             self._warn_deprecated_param(param, descr)
+        """
 
         LOGGER.debug("Finish intersect parameter check!")
         return True

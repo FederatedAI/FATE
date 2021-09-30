@@ -32,7 +32,7 @@ class SecureMatrix(object):
         self.party = party
         self.q_field = q_field
         self.encoder = None
-        self.get_or_creat_fixedpointendec()
+        self.get_or_create_endec(self.q_field)
 
     def get_or_create_endec(self, q_field, **kwargs):
         if self.encoder is None:
@@ -102,7 +102,11 @@ class SecureMatrix(object):
                                                             idx=0,
                                                             suffix=curt_suffix)
             LOGGER.debug(f"Make share tensor")
+            if isinstance(matrix, (fixedpoint_table.FixedPointTensor,
+                                   fixedpoint_table.PaillierFixedPointTensor)):
+                matrix = matrix.value
             ret = SecureMatrix.dot(matrix, share)
+            LOGGER.debug(f"tmc, ret: {ret}")
             share_tensor = SecureMatrix.from_source(tensor_name,
                                                     ret,
                                                     cipher,
@@ -112,7 +116,7 @@ class SecureMatrix(object):
             return share_tensor
 
     @classmethod
-    def from_source(cls, tensor_name, source, cipher, q_field, encoder, fixedpoint_table=True):
+    def from_source(cls, tensor_name, source, cipher, q_field, encoder, is_fixedpoint_table=True):
         if is_table(source):
             share_tensor = fixedpoint_table.PaillierFixedPointTensor.from_source(tensor_name=tensor_name,
                                                                                  source=source,
@@ -127,8 +131,12 @@ class SecureMatrix(object):
                                                                                  q_field=q_field)
             return share_tensor
 
+        elif isinstance(source, (fixedpoint_table.PaillierFixedPointTensor,
+                                 fixedpoint_numpy.PaillierFixedPointTensor)):
+            return cls.from_source(tensor_name, source.value, cipher, q_field, encoder, is_fixedpoint_table)
+
         elif isinstance(source, Party):
-            if fixedpoint_table:
+            if is_fixedpoint_table:
                 share_tensor = fixedpoint_table.PaillierFixedPointTensor.from_source(tensor_name=tensor_name,
                                                                                      source=source,
                                                                                      encoder=encoder,

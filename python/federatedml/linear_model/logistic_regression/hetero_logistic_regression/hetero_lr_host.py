@@ -101,6 +101,10 @@ class HeteroLRHost(HeteroLRBase):
         self.header = self.get_header(data_instances)
         self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
 
+        if self.transfer_variable.use_async.get(idx=0):
+            LOGGER.debug(f"set_use_async")
+            self.gradient_loss_operator.set_use_async()
+
         self.batch_generator.initialize_batch_generator(data_instances)
         self.gradient_loss_operator.set_total_batch_nums(self.batch_generator.batch_nums)
 
@@ -150,10 +154,10 @@ class HeteroLRHost(HeteroLRBase):
             LOGGER.debug(f"flowid: {self.flowid}, step_index: {self.n_iter_}")
 
             self.callback_list.on_epoch_end(self.n_iter_)
+            self.n_iter_ += 1
             if self.stop_training:
                 break
 
-            self.n_iter_ += 1
             if self.is_converged:
                 break
         self.callback_list.on_train_end()

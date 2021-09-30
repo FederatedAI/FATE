@@ -58,6 +58,9 @@ class HeteroNNBase(ModelBase):
 
         self.floating_point_precision = None
 
+        self.history_iter_epoch = 0
+        self.iter_epoch = 0
+
     def _init_model(self, hetero_nn_param):
         self.interactive_layer_lr = hetero_nn_param.interactive_layer_lr
         self.epochs = hetero_nn_param.epochs
@@ -117,6 +120,8 @@ class HeteroNNBase(ModelBase):
     def _restore_model_param(self, param):
         self.model.set_hetero_nn_model_param(param.hetero_nn_model_param)
         self._header = list(param.header)
+        self.history_iter_epoch = param.iter_epoch
+        self.iter_epoch = param.iter_epoch
 
     def set_partition(self, data_inst):
         self.partition = data_inst.partitions

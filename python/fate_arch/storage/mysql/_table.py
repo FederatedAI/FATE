@@ -74,7 +74,7 @@ class StorageTable(StorageTableBase):
         return self._options
 
     def count(self, **kwargs):
-        sql = 'select count(*) from {}'.format(self._name)
+        sql = 'select count(*) from {}'.format(self._address.name)
         try:
             self.cur.execute(sql)
             self.con.commit()
@@ -127,7 +127,8 @@ class StorageTable(StorageTableBase):
     def destroy(self):
         super().destroy()
         sql = 'drop table {}'.format(self._address.name)
-        return self.execute(sql)
+        self.cur.execute(sql)
+        self.con.commit()
 
     def check_address(self):
         schema = self.meta.get_schema()

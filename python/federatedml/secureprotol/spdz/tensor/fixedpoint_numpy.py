@@ -44,12 +44,12 @@ class FixedPointTensor(TensorBase):
         if isinstance(other, FixedPointTensor):
             other = other.value
 
-        res = np.dot(x, y) % self.q_field
+        res = np.dot(self.value, other) % self.q_field
         res = self.endec.truncate(res, self.get_spdz().party_idx)
 
         if not isinstance(res, np.ndarray):
             res = np.array([res])
-        self._boxed(res, target_name)
+        return self._boxed(res, target_name)
 
     def sub_matrix(self, tensor_name: str, row_indices=None, col_indices=None, rm_row_indices=None,
                    rm_col_indices=None):
@@ -107,8 +107,8 @@ class FixedPointTensor(TensorBase):
                                   q_field=self.q_field, he_key_pair=(spdz.public_key, spdz.private_key),
                                   communicator=spdz.communicator, name=target_name)
 
-        x_add_a = self._raw_add(a).rescontruct(f"{target_name}_confuse_x")
-        y_add_b = other._raw_add(b).rescontruct(f"{target_name}_confuse_y")
+        x_add_a = self._raw_add(a).reconstruct(f"{target_name}_confuse_x")
+        y_add_b = other._raw_add(b).reconstruct(f"{target_name}_confuse_y")
         cross = c - _dot_func(a, y_add_b) - _dot_func(x_add_a, b)
         if spdz.party_idx == 0:
             cross += _dot_func(x_add_a, y_add_b)
@@ -118,9 +118,9 @@ class FixedPointTensor(TensorBase):
         return share
 
     def get(self, tensor_name=None, broadcast=True):
-        return self.endec.decode(self.rescontruct(tensor_name, broadcast))
+        return self.endec.decode(self.reconstruct(tensor_name, broadcast))
 
-    def rescontruct(self, tensor_name=None, broadcast=True):
+    def reconstruct(self, tensor_name=None, broadcast=True):
         from federatedml.secureprotol.spdz import SPDZ
         spdz = SPDZ.get_instance()
         share_val = self.value
@@ -223,10 +223,10 @@ class PaillierFixedPointTensor(TensorBase):
         if isinstance(other, FixedPointTensor):
             other = other.value
 
-        res = np.dot(x.value, other)
+        res = np.dot(self.value, other)
         if not isinstance(res, np.ndarray):
             res = np.array([res])
-        self._boxed(res, target_name)
+        return self._boxed(res, target_name)
 
     def __str__(self):
         return f"{self.tensor_name}: {self.value}"
@@ -242,7 +242,7 @@ class PaillierFixedPointTensor(TensorBase):
         z_value = (self.value - other)
         return self._boxed(z_value)
 
-    def __add__(self, other)
+    def __add__(self, other):
         if isinstance(other, PaillierFixedPointTensor):
             return self._raw_add(other.value)
         else:
@@ -265,12 +265,10 @@ class PaillierFixedPointTensor(TensorBase):
         return self._boxed(z_value)
 
     def __mul__(self, other):
-        # if not isinstance(other, (int, np.integer)):
-        #     raise NotImplementedError("__mul__ support integer only")
         return self._boxed(self.value * other)
 
     def __rmul__(self, other):
-       self.__mul__(other)
+        self.__mul__(other)
 
     def _boxed(self, value, tensor_name=None):
         return PaillierFixedPointTensor(value=value, tensor_name=tensor_name)
@@ -279,7 +277,6 @@ class PaillierFixedPointTensor(TensorBase):
     def from_source(cls, tensor_name, source, **kwargs):
         spdz = cls.get_spdz()
         q_field = kwargs['q_field'] if 'q_field' in kwargs else spdz.q_field
-        cipher = kwargs['cipher']
         if 'encoder' in kwargs:
             encoder = kwargs['encoder']
         else:
@@ -294,7 +291,9 @@ class PaillierFixedPointTensor(TensorBase):
                 r = urand_tensor(q_field, source)
                 spdz.communicator.remote_share(share=r - _pre, tensor_name=tensor_name, party=_party)
                 _pre = r
-            spdz.communicator.remote_share(share=source - encoder.decode(_pre), tensor_name=tensor_name, party=_party)
+            spdz.communicator.remote_share(share=source - encoder.decode(_pre),
+                                           tensor_name=tensor_name,
+                                           party=spdz.other_parties[-1])
             return FixedPointTensor(value=share,
                                     q_field=q_field,
                                     endec=encoder,
@@ -303,8 +302,11 @@ class PaillierFixedPointTensor(TensorBase):
         elif isinstance(source, Party):
             share = spdz.communicator.get_share(tensor_name=tensor_name, party=source)[0]
 
-            share = cipher.recursive_decrypt(share)
-            share = encoder.encode(share)
+            is_cipher_source = kwargs['is_cipher_source'] if 'is_cipher_source' in kwargs else True
+            if is_cipher_source:
+                cipher = kwargs['cipher']
+                share = cipher.recursive_decrypt(share)
+                share = encoder.encode(share)
             return FixedPointTensor(value=share,
                                     q_field=q_field,
                                     endec=encoder,

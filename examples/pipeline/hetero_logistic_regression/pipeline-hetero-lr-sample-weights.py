@@ -63,23 +63,23 @@ def main(config="../../config.yaml", namespace=""):
     dataio_0.get_party_instance(role="host", party_id=host).component_param(with_label=False)
     intersect_0 = Intersection(name='intersect_0')
 
-    scale_0 = FeatureScale(name='scale_0')
+    scale_0 = FeatureScale(name='scale_0', need_run=False)
     sample_weight_0 = SampleWeight(name="sample_weight_0", class_weight={"0": 1, "1": 2})
     sample_weight_0.get_party_instance(role="host", party_id=host).component_param(need_run=False)
 
     param = {
-        "penalty": "L2",
-        "optimizer": "rmsprop",
+        "penalty": None,
+        "optimizer": "sgd",
         "tol": 1e-05,
         "alpha": 0.01,
         "max_iter": 3,
         "early_stop": "diff",
         "batch_size": 320,
         "learning_rate": 0.15,
-        "decay": 1.0,
+        "decay": 0,
         "decay_sqrt": True,
         "init_param": {
-            "init_method": "zeros"
+            "init_method": "ones"
         },
         "cv_param": {
             "n_splits": 5,

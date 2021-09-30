@@ -106,7 +106,8 @@ class StorageSessionBase(StorageSessionABC):
         elif engine == StorageEngine.LINKIS_HIVE:
             address_dict.update({"database": None, "name": f"{table_namespace}_{table_name}", "username": token.get("username", "")})
         elif engine == StorageEngine.HDFS:
-            address_dict.update({"path": os.path.join(address_dict.get("path_prefix", ""), table_namespace, table_name)})
+            if not address_dict.get("path"):
+                address_dict.update({"path": os.path.join(address_dict.get("path_prefix", ""), table_namespace, table_name)})
         else:
             raise RuntimeError(f"{engine} storage is not supported")
         address = StorageTableMeta.create_address(storage_engine=engine, address_dict=address_dict)

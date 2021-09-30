@@ -84,6 +84,9 @@ class FixedPointNumber(object):
         int_fixpoint = int(round(scalar * pow(cls.BASE, exponent)))
 
         if abs(int_fixpoint) > max_int:
+            assert 1 == 2, f"scalar: {scalar}, int_fix_popint: {int_fixpoint}," \
+                           f"max_int: {max_int}" \
+                           f" base: {cls.BASE}, {exponent}"
             raise ValueError('Integer needs to be within +/- %d but got %d'
                              % (max_int, int_fixpoint))
 
@@ -102,7 +105,9 @@ class FixedPointNumber(object):
             # Negative
             mantissa = self.encoding - self.n
         else:
-            raise OverflowError('Overflow detected in decode number')
+            raise OverflowError(f'Overflow detected in decode number, encoding: {self.encoding}，'
+                                f'{self.exponent}'
+                                f' {self.n}')
 
         return mantissa * pow(self.BASE, -self.exponent)
 
@@ -348,6 +353,8 @@ class FixedPointEndec(object):
 
     @staticmethod
     def decode_number(number):
+        if isinstance(number, (int, np.int16, np.int32, np.int64)):
+            return number
         return number.decode()
 
     def decode(self, integer_tensor):

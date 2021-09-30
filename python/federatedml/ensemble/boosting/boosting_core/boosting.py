@@ -40,6 +40,7 @@ class Boosting(ModelBase, ABC):
         # input hyper parameter
         self.task_type = None
         self.learning_rate = None
+        self.start_round = None
         self.boosting_round = None
         self.n_iter_no_change = None
         self.tol = 0.0
@@ -82,7 +83,7 @@ class Boosting(ModelBase, ABC):
         # training
         self.feature_num = None  # feature number
         self.init_score = None  # init score
-        self.num_classes = 1 # number of classes
+        self.num_classes = 1  # number of classes
         self.convergence = None  # function to check loss convergence
         self.classes_ = []  # list of class indices
         self.y = None   # label
@@ -92,6 +93,7 @@ class Boosting(ModelBase, ABC):
         self.history_loss = []  # list holds loss history
         self.metrics = None
         self.is_converged = False
+        self.is_warm_start = False # warm start parameter
 
         # cache and header alignment
         self.predict_data_cache = PredictDataCache()
@@ -115,6 +117,8 @@ class Boosting(ModelBase, ABC):
         self.metrics = boosting_param.metrics
         self.subsample_feature_rate = boosting_param.subsample_feature_rate
         self.binning_error = boosting_param.binning_error
+        self.is_warm_start = self.component_properties.is_warm_start
+        LOGGER.debug('warm start is {}'.format(self.is_warm_start))
 
         if boosting_param.random_seed is not None:
             self.random_seed = boosting_param.random_seed
@@ -248,8 +252,9 @@ class Boosting(ModelBase, ABC):
             data_inst: training data
         Returns: data_bin, data_split_points, data_sparse_point
         """
-        self.feature_name_fid_mapping = self.gen_feature_fid_mapping(data_inst.schema)
+        # to sprase vec
         data_inst = self.data_alignment(data_inst)
+        # binning
         return self.convert_feature_to_bin(data_inst, self.use_missing)
 
     @abc.abstractmethod
@@ -273,6 +278,14 @@ class Boosting(ModelBase, ABC):
 
     def cross_validation(self, data_instances):
         return start_cross_validation.run(self, data_instances)
+
+    def feat_name_check(self, data_inst, feat_name_fid_mapping):
+
+        previous_model_feat_name = set(feat_name_fid_mapping.values())
+        cur_data_feat_name = set(data_inst.schema['header'])
+        assert previous_model_feat_name == cur_data_feat_name, 'feature alignment failed, diff: {}'\
+            .format(previous_model_feat_name.symmetric_difference(cur_data_feat_name))
+        LOGGER.debug('warm start feat name {}, {}'.format(previous_model_feat_name, cur_data_feat_name))
 
     def get_loss_function(self):
         loss_type = self.objective_param.objective
