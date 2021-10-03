@@ -1,0 +1,36 @@
+ 1 {
+   2   "federatedml.transfer_variable.transfer_class.hdp_vfl_transfer_variable.HdpVflTransferVariable": {
+   3     "batch_data_index": {
+   4       "src": [
+   5         "guest"
+   6       ],
+   7       "dst": [
+   8         "host"
+   9       ]
+  10     },
+  11     "batch_info": {
+  12       "src": [
+  13         "guest"
+  14       ],
+  15       "dst": [
+  16         "host"
+  17       ]
+  18     },
+  19     "ir_b": {
+  20       "src": [
+  21         "host"
+  22       ],
+  23       "dst": [
+  24         "guest"
+  25       ]
+  26     },
+  27     "ir_a": {
+  28       "src": [
+  29         "guest"
+  30       ],
+  31       "dst": [
+  32         "host"
+  33       ]
+  34     }
+  35   }
+  36 }
