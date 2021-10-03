@@ -1,0 +1,20 @@
+ 1 {
+   2   "federatedml.transfer_variable.transfer_class.norm_data_transfer_variable.NormDataTransferVariable": {
+   3     "guest_to_host": {
+   4       "src": [
+   5         "guest"
+   6       ],
+   7       "dst": [
+   8         "host"
+   9       ]
+  10     },
+  11     "host_to_guest": {
+  12       "src": [
+  13         "host"
+  14       ],
+  15       "dst": [
+  16         "guest"
+  17       ]
+  18     }
+  19   }
+  20 }
