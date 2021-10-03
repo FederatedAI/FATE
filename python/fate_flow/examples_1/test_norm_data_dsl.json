@@ -1,0 +1,57 @@
+{
+  "components": {
+    "reader_0": {
+      "module": "Reader",
+      "output": {
+        "data": ["table"]
+      }
+    },
+    "dataio_0": {
+      "module": "DataIO",
+      "input": {
+        "data": {
+          "data": ["reader_0.table"]
+        }
+      },
+      "output": {
+        "data": ["train"]
+      },
+      "need_deploy": true
+    },
+    "intersection_0": {
+      "module": "Intersection",
+      "input": {
+          "data": {
+              "data": [
+                  "dataio_0.train"
+              ]
+          }
+      },
+      "output": {
+          "data": ["train"]
+      }
+    },
+    "norm_data_0": {
+      "module": "NormData",
+      "input": {
+        "data": {
+          "data": ["intersection_0.train"]
+        }
+      },
+      "output": {
+        "data": ["train"]
+      }
+    },
+    "hdp_vfl_0": {
+      "module": "HdpVfl",
+      "input": {
+        "data": {
+          "data": ["norm_data_0.train"]
+        }
+      },
+      "output": {
+        "data": ["train"]
+      }
+    }
+  }
+}
