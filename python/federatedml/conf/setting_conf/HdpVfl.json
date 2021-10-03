@@ -1,0 +1,15 @@
+{
+  "module_path":"federatedml/linear_model/logistic_regression/hdp_vfl",
+  "param_class":"federatedml/param/hdp_vfl_param.py/HdpVflParam",
+  "role":
+  {
+    "guest":
+    {
+      "program": "hdp_vfl_guest.py/HdpVflGuest"
+    },
+    "host":
+    {
+      "program": "hdp_vfl_host.py/HdpVflHost"
+    }
+  }
+}

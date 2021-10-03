@@ -1,0 +1,12 @@
+{
+  "module_path": "federatedml/statistic/norm_data",
+  "param_class": "federatedml/param/norm_data_param.py/NormDataParam",
+  "role": {
+    "guest": {
+      "program": "norm_data_guest.py/NormDataGuest"
+    },
+    "host": {
+      "program": "norm_data_host.py/NormDataHost"
+    }
+  }
+}
