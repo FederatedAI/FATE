@@ -44,12 +44,12 @@ class FixedPointTensor(TensorBase):
         if isinstance(other, FixedPointTensor):
             other = other.value
 
-        res = np.dot(self.value, other) % self.q_field
-        res = self.endec.truncate(res, self.get_spdz().party_idx)
+        ret = np.dot(self.value, other) % self.q_field
+        ret = self.endec.truncate(ret, self.get_spdz().party_idx)
 
-        if not isinstance(res, np.ndarray):
-            res = np.array([res])
-        return self._boxed(res, target_name)
+        if not isinstance(ret, np.ndarray):
+            ret = np.array([ret])
+        return self._boxed(ret, target_name)
 
     def sub_matrix(self, tensor_name: str, row_indices=None, col_indices=None, rm_row_indices=None,
                    rm_col_indices=None):
@@ -223,10 +223,10 @@ class PaillierFixedPointTensor(TensorBase):
         if isinstance(other, FixedPointTensor):
             other = other.value
 
-        res = np.dot(self.value, other)
-        if not isinstance(res, np.ndarray):
-            res = np.array([res])
-        return self._boxed(res, target_name)
+        ret = np.dot(self.value, other)
+        if not isinstance(ret, np.ndarray):
+            ret = np.array([ret])
+        return self._boxed(ret, target_name)
 
     def __str__(self):
         return f"{self.tensor_name}: {self.value}"

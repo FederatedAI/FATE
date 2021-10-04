@@ -111,11 +111,11 @@ class FixedPointTensor(TensorBase):
     def dot_local(self, other, target_name=None):
 
         def _vec_dot(x, y, party_idx, q_field, endec):
-            res = np.dot(x, y) % q_field
-            res = endec.truncate(res, party_idx)
-            if not isinstance(res, np.ndarray):
-                res = np.array([res])
-            return res
+            ret = np.dot(x, y) % q_field
+            ret = endec.truncate(ret, party_idx)
+            if not isinstance(ret, np.ndarray):
+                ret = np.array([ret])
+            return ret
 
         if isinstance(other, FixedPointTensor) or isinstance(other, fixedpoint_numpy.FixedPointTensor):
             other = other.value
@@ -126,13 +126,13 @@ class FixedPointTensor(TensorBase):
                                   party_idx=party_idx,
                                   q_field=self.q_field,
                                   endec=self.endec)
-            res = self.value.mapValues(f)
-            return self._boxed(res, target_name)
+            ret = self.value.mapValues(f)
+            return self._boxed(ret, target_name)
 
         elif is_table(other):
-            res = table_dot_mod(self.value, other, self.q_field)
-            res = self.endec.truncate(res, self.get_spdz().party_idx)
-            return fixedpoint_numpy.FixedPointTensor(res,
+            ret = table_dot_mod(self.value, other, self.q_field)
+            ret = self.endec.truncate(ret, self.get_spdz().party_idx)
+            return fixedpoint_numpy.FixedPointTensor(ret,
                                                      self.q_field,
                                                      self.endec,
                                                      target_name)
@@ -250,21 +250,21 @@ class PaillierFixedPointTensor(TensorBase):
 
     def dot(self, other, target_name=None):
         def _vec_dot(x, y):
-            res = np.dot(x, y)
-            if not isinstance(res, np.ndarray):
-                res = np.array([res])
-            return res
+            ret = np.dot(x, y)
+            if not isinstance(ret, np.ndarray):
+                ret = np.array([ret])
+            return ret
 
         if isinstance(other, FixedPointTensor) or isinstance(other, fixedpoint_numpy.FixedPointTensor):
             other = other.value
 
         if isinstance(other, np.ndarray):
-            res = self.value.mapValues(lambda x : _vec_dot(x, other))
-            return self._boxed(res, target_name)
+            ret = self.value.mapValues(lambda x : _vec_dot(x, other))
+            return self._boxed(ret, target_name)
 
         elif is_table(other):
-            res = table_dot(self.value, other)
-            return fixedpoint_numpy.PaillierFixedPointTensor(res, target_name)
+            ret = table_dot(self.value, other)
+            return fixedpoint_numpy.PaillierFixedPointTensor(ret, target_name)
         else:
             raise ValueError(f"type={type(other)}")
 
