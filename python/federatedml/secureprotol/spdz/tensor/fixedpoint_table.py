@@ -27,9 +27,6 @@ from federatedml.secureprotol.spdz.tensor.base import TensorBase
 from federatedml.secureprotol.spdz.utils import NamingService
 from federatedml.secureprotol.spdz.utils.random_utils import urand_tensor
 from federatedml.secureprotol.spdz.tensor.fixedpoint_endec import FixedPointEndec
-from federatedml.secureprotol.fixedpoint import FixedPointNumber
-from federatedml.util import LOGGER
-from federatedml.util import fate_operator
 
 
 def _table_binary_op(x, y, op):
@@ -283,7 +280,7 @@ class PaillierFixedPointTensor(TensorBase):
         elif is_table(other):
             return self._boxed(_table_binary_op(self.value, other, operator.add))
         else:
-            return self._boxed(self.value.mapValues(lambda x: x + other))
+            return self._boxed(_table_scalar_op(self.value, other, operator.add))
 
     def __radd__(self, other):
         return self.__add__(other)
@@ -291,14 +288,18 @@ class PaillierFixedPointTensor(TensorBase):
     def __sub__(self, other):
         if isinstance(other, PaillierFixedPointTensor):
             return self._boxed(_table_binary_op(self.value, other.value, operator.sub))
-        else:
+        elif is_table(other):
             return self._boxed(_table_binary_op(self.value, other, operator.sub))
+        else:
+            return self._boxed(_table_scalar_op(self.value, other, operator.sub))
 
     def __rsub__(self, other):
         if isinstance(other, PaillierFixedPointTensor):
             return self._boxed(_table_binary_op(other.value, self.value, operator.sub))
-        else:
+        elif is_table(other):
             return self._boxed(_table_binary_op(other, self.value, operator.sub))
+        else:
+            return self._boxed(_table_scalar_op(self.value, other, -1 * operator.sub))
 
     def __mul__(self, other):
         return self._boxed(_table_scalar_op(self.value, other, operator.mul))
