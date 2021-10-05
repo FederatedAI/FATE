@@ -34,8 +34,7 @@ LOGGER = log.getLogger()
 
 class Session(object):
     @staticmethod
-    def create(backend: typing.Union[Backend, int] = None,
-               work_mode: typing.Union[WorkMode, int] = None, **kwargs):
+    def create(work_mode: typing.Union[WorkMode, int] = None, **kwargs):
         new_kwargs = locals().copy()
         new_kwargs.update(kwargs)
         engines = engine_utils.engines_compatibility(**new_kwargs)
