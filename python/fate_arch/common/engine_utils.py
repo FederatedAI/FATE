@@ -15,35 +15,37 @@
 #
 import typing
 
-from fate_arch.common import WorkMode, Backend, FederatedMode, conf_utils
+from fate_arch.common import WorkMode,  FederatedMode, conf_utils
 from fate_arch.computing import ComputingEngine
 from fate_arch.federation import FederationEngine
-from fate_arch.storage import StorageEngine
 from fate_arch.relation_ship import Relationship
 from fate_arch.common import EngineType
 from fate_arch.common.conf_utils import get_base_config
 
 
-def engines_compatibility(work_mode: typing.Union[WorkMode, int] = None, **kwargs):
+def get_engines(work_mode: typing.Union[WorkMode, int] = None, options=None):
     keys = ["computing", "federation", "storage", "federated_mode"]
     engines = {}
     for k in keys:
-        if kwargs.get(k) is not None:
-            engines[k] = kwargs[k].upper()
-    if kwargs.get("computing") is None and work_mode is None:
+        if options.get(k) is not None:
+            engines[k] = options[k].upper()
+
+    if isinstance(work_mode, int):
+        work_mode = WorkMode(work_mode)
+
+    if engines.get("computing") is None and work_mode is None:
         raise RuntimeError("must provide computing engine parameters or work_mode parameters")
 
-    if kwargs.get("computing") is None and kwargs.get("federation") is None:
-        if isinstance(work_mode, int):
-            work_mode = WorkMode(work_mode)
-
+    if engines.get("computing") is None and engines.get("federation") is None:
         if work_mode == WorkMode.STANDALONE:
             values = (ComputingEngine.STANDALONE, FederationEngine.STANDALONE)
 
         elif get_base_config("default_engines", {}).get("computing") is not None:
             default_engines = get_base_config("default_engines")
-            values = (default_engines["computing"].upper(), default_engines["federation"].upper() if default_engines.get("federation") is not None else None)
-            engines["storage"] = default_engines["storage"].upper() if default_engines.get("storage") is not None else None
+            values = (default_engines["computing"].upper(),
+                      default_engines["federation"].upper() if default_engines.get("federation") is not None else None)
+            engines["storage"] = default_engines["storage"].upper() if default_engines.get(
+                "storage") is not None else None
 
         else:
             raise RuntimeError(f"must provide backend or set default engines on conf/service_conf.yaml")
@@ -63,6 +65,12 @@ def engines_compatibility(work_mode: typing.Union[WorkMode, int] = None, **kwarg
         else:
             engines["federated_mode"] = FederatedMode.MULTIPLE
 
+    return engines
+
+
+def engines_compatibility(work_mode: typing.Union[WorkMode, int] = None, **kwargs):
+    RuntimeWarning(f"engines_compatibility function will be deprecated, use get_engines instead")
+    engines = get_engines(work_mode, options=kwargs)
     return engines
 
 
