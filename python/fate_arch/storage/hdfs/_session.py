@@ -21,7 +21,7 @@ from fate_arch.common.address import HDFSAddress
 
 class StorageSession(StorageSessionBase):
     def __init__(self, session_id, options=None):
-        super(StorageSession, self).__init__(session_id=session_id, engine_name=StorageEngine.HDFS)
+        super(StorageSession, self).__init__(session_id=session_id, engine=StorageEngine.HDFS)
 
     def create(self):
         pass

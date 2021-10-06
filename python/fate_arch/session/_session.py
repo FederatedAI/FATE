@@ -123,12 +123,6 @@ class Session(object):
             self._computing_type = ComputingEngine.LINKIS_SPARK
             return self
 
-        if self._computing_type == ComputingEngine.LOCAL_SPARK:
-            from fate_arch.computing.spark import CSession
-            self._computing_session = CSession(session_id=computing_session_id)
-            self._computing_type = ComputingEngine.LOCAL_SPARK
-            return self
-
         raise RuntimeError(f"{self._computing_type} not supported")
 
     def init_federation(
@@ -252,46 +246,57 @@ class Session(object):
         if storage_engine == StorageEngine.EGGROLL:
             from fate_arch.storage.eggroll import StorageSession
             storage_session = StorageSession(session_id=storage_session_id, options=kwargs.get("options", {}))
+
         elif storage_engine == StorageEngine.STANDALONE:
             from fate_arch.storage.standalone import StorageSession
             storage_session = StorageSession(session_id=storage_session_id, options=kwargs.get("options", {}))
+
         elif storage_engine == StorageEngine.MYSQL:
             from fate_arch.storage.mysql import StorageSession
             storage_session = StorageSession(session_id=storage_session_id, options=kwargs.get("options", {}))
+
         elif storage_engine == StorageEngine.HDFS:
             from fate_arch.storage.hdfs import StorageSession
             storage_session = StorageSession(session_id=storage_session_id, options=kwargs.get("options", {}))
+
         elif storage_engine == StorageEngine.HIVE:
             from fate_arch.storage.hive import StorageSession
             storage_session = StorageSession(session_id=storage_session_id, options=kwargs.get("options", {}))
+
         elif storage_engine == StorageEngine.LINKIS_HIVE:
             from fate_arch.storage.linkis_hive import StorageSession
             storage_session = StorageSession(session_id=storage_session_id, options=kwargs.get("options", {}))
+
         elif storage_engine == StorageEngine.FILE:
             from fate_arch.storage.file import StorageSession
             storage_session = StorageSession(session_id=storage_session_id, options=kwargs.get("options", {}))
+
         elif storage_engine == StorageEngine.PATH:
             from fate_arch.storage.path import StorageSession
             storage_session = StorageSession(session_id=storage_session_id, options=kwargs.get("options", {}))
+
         else:
             raise NotImplementedError(f"can not be initialized with storage engine: {storage_engine}")
+
         if kwargs.get("name") and kwargs.get("namespace"):
             storage_session.set_default(name=kwargs["name"], namespace=kwargs["namespace"])
+
         self._storage_session[storage_session_id] = storage_session
+
         return storage_session
 
-    # @classmethod
-    # def persistent(cls, computing_table: CTableABC, table_namespace, table_name, schema=None, part_of_data=None,
-    #                engine=None, engine_address=None, store_type=None, token: typing.Dict = None) -> StorageTableMeta:
-    #     return StorageSessionBase.persistent(computing_table=computing_table,
-    #                                          table_namespace=table_namespace,
-    #                                          table_name=table_name,
-    #                                          schema=schema,
-    #                                          part_of_data=part_of_data,
-    #                                          engine=engine,
-    #                                          engine_address=engine_address,
-    #                                          store_type=store_type,
-    #                                          token=token)
+    @classmethod
+    def persistent(cls, computing_table: CTableABC, table_namespace, table_name, schema=None, part_of_data=None,
+                   engine=None, engine_address=None, store_type=None, token: typing.Dict = None) -> StorageTableMeta:
+        return StorageSessionBase.persistent(computing_table=computing_table,
+                                             table_namespace=table_namespace,
+                                             table_name=table_name,
+                                             schema=schema,
+                                             part_of_data=part_of_data,
+                                             engine=engine,
+                                             engine_address=engine_address,
+                                             store_type=store_type,
+                                             token=token)
 
     @property
     def computing(self) -> CSessionABC:

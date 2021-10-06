@@ -31,14 +31,14 @@ LOGGER = getLogger()
 
 
 class StorageSessionBase(StorageSessionABC):
-    def __init__(self, session_id, engine_name):
+    def __init__(self, session_id, engine):
         self._session_id = session_id
-        self._engine_name = engine_name
-        self._default_name = None
-        self._default_namespace = None
+        self._engine = engine
+        # self._default_name = None
+        # self._default_namespace = None
 
-    def create(self):
-        raise NotImplementedError()
+    # def create(self):
+    #     raise NotImplementedError()
 
     def create_table(self, address, name, namespace, partitions=None, **kwargs):
         table = self.table(address=address, name=name, namespace=namespace, partitions=partitions, **kwargs)
@@ -55,14 +55,14 @@ class StorageSessionBase(StorageSessionABC):
         # table.count()
         return table
 
-    def set_default(self, name, namespace):
-        self._default_name = name
-        self._default_namespace = namespace
+    # def set_default(self, name, namespace):
+    #     self._default_name = name
+    #     self._default_namespace = namespace
 
-    def get_table(self, name=None, namespace=None):
-        if not name or not namespace:
-            name = self._default_name
-            namespace = self._default_namespace
+    def get_table(self, name, namespace):
+        # if not name or not namespace:
+        #     name = self._default_name
+        #     namespace = self._default_namespace
         meta = StorageTableMeta(name=name, namespace=namespace)
         if meta:
             table = self.table(name=meta.get_name(),
@@ -80,7 +80,9 @@ class StorageSessionBase(StorageSessionABC):
         raise NotImplementedError()
 
     @classmethod
-    def persistent(cls, computing_table: CTableABC, table_namespace, table_name, schema=None, part_of_data=None, engine=None, engine_address=None, store_type=None, token: typing.Dict = None) -> StorageTableMeta:
+    def persistent(cls, computing_table: CTableABC, namespace, name, schema=None,
+                   part_of_data=None, engine=None, engine_address=None,
+                   store_type=None, token: typing.Dict = None) -> StorageTableMeta:
         if engine:
             if engine not in Relationship.Computing.get(computing_table.engine, {}).get(EngineType.STORAGE, {}).get("support", []):
                 raise Exception(f"storage engine {engine} not supported with computing engine {computing_table.engine}")
@@ -95,26 +97,36 @@ class StorageSessionBase(StorageSessionABC):
             raise Exception("no engine address")
         address_dict = engine_address.copy()
         partitions = computing_table.partitions
-        if engine == StorageEngine.EGGROLL:
-            address_dict.update({"name": table_name, "namespace": table_namespace})
-            store_type = EggRollStoreType.ROLLPAIR_LMDB if store_type is None else store_type
-        elif engine == StorageEngine.STANDALONE:
-            address_dict.update({"name": table_name, "namespace": table_namespace})
+
+        if engine == StorageEngine.STANDALONE:
+            address_dict.update({"name": name, "namespace": namespace})
             store_type = StandaloneStoreType.ROLLPAIR_LMDB if store_type is None else store_type
+
+        elif engine == StorageEngine.EGGROLL:
+            address_dict.update({"name": name, "namespace": namespace})
+            store_type = EggRollStoreType.ROLLPAIR_LMDB if store_type is None else store_type
+
         elif engine == StorageEngine.HIVE:
-            address_dict.update({"name": table_name, "database": table_namespace})
+            address_dict.update({"name": name, "database": namespace})
+
         elif engine == StorageEngine.LINKIS_HIVE:
-            address_dict.update({"database": None, "name": f"{table_namespace}_{table_name}", "username": token.get("username", "")})
+            address_dict.update({"database": None, "name": f"{namespace}_{name}", "username": token.get("username", "")})
+
         elif engine == StorageEngine.HDFS:
             if not address_dict.get("path"):
-                address_dict.update({"path": os.path.join(address_dict.get("path_prefix", ""), table_namespace, table_name)})
+                address_dict.update({"path": os.path.join(address_dict.get("path_prefix", ""), namespace, name)})
+
+        elif engine == StorageEngine.LOCALFS:
+            if not address_dict.get("path"):
+                address_dict.update({"path": os.path.join(address_dict.get("path_prefix", ""), namespace, name)})
+
         else:
             raise RuntimeError(f"{engine} storage is not supported")
         address = StorageTableMeta.create_address(storage_engine=engine, address_dict=address_dict)
         schema = schema if schema else {}
         computing_table.save(address, schema=schema, partitions=partitions, store_type=store_type)
         table_count = computing_table.count()
-        table_meta = StorageTableMeta(name=table_name, namespace=table_namespace, new=True)
+        table_meta = StorageTableMeta(name=name, namespace=namespace, new=True)
         table_meta.address = address
         table_meta.partitions = computing_table.partitions
         table_meta.engine = engine
@@ -142,7 +154,7 @@ class StorageSessionBase(StorageSessionABC):
             return None, None, None
 
     def __enter__(self):
-        self.create()
+        # self.create()
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):

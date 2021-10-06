@@ -52,25 +52,32 @@ class StorageTable(StorageTableBase):
             LOGGER.warning(f"load libhdfs failed: {e}")
         self._hdfs_client = fs.HadoopFileSystem.from_uri(self._path)
 
-    def get_name(self):
+    @property
+    def name(self):
         return self._name
 
-    def get_namespace(self):
+    @property
+    def namespace(self):
         return self._namespace
 
-    def get_address(self):
+    @property
+    def address(self):
         return self._address
 
-    def get_engine(self):
+    @property
+    def engine(self):
         return self._engine
 
-    def get_store_type(self):
+    @property
+    def store_type(self):
         return self._store_type
 
-    def get_partitions(self):
+    @property
+    def partitions(self):
         return self._partitions
 
-    def get_options(self):
+    @property
+    def options(self):
         return self._options
 
     def put_all(self, kv_list: Iterable, append=True, assume_file_exist=False, **kwargs):

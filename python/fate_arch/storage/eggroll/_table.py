@@ -41,25 +41,32 @@ class StorageTable(StorageTableBase):
         self._options["create_if_missing"] = True
         self._table = self._context.load(namespace=self._namespace, name=self._name, options=self._options)
 
-    def get_name(self):
+    @property
+    def name(self):
         return self._name
 
-    def get_namespace(self):
+    @property
+    def namespace(self):
         return self._namespace
 
-    def get_address(self):
+    @property
+    def address(self):
         return self._address
 
-    def get_engine(self):
+    @property
+    def engine(self):
         return self._engine
 
-    def get_store_type(self):
+    @property
+    def store_type(self):
         return self._store_type
 
-    def get_partitions(self):
+    @property
+    def partitions(self):
         return self._table.get_partitions()
 
-    def get_options(self):
+    @property
+    def options(self):
         return self._options
 
     def put_all(self, kv_list: Iterable, **kwargs):
@@ -72,8 +79,8 @@ class StorageTable(StorageTableBase):
     def union(self, other):
         return self._table.union(other.table(), func=lambda v1, v2 : v1)
 
-    def save_as(self, dest_name, dest_namespace, partitions=None, schema=None):
-        return self._table.save_as(name=dest_name, namespace=dest_namespace)
+    def save_as(self, name, namespace, partitions=None, schema=None):
+        return self._table.save_as(name=name, namespace=namespace)
 
     def collect(self, **kwargs) -> list:
         super(StorageTable, self).update_read_access_time()

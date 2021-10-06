@@ -52,25 +52,32 @@ class StorageTableBase(StorageTableABC):
     def meta(self, meta):
         self._meta = meta
 
-    def get_name(self):
+    @property
+    def name(self):
         pass
 
-    def get_namespace(self):
+    @property
+    def namespace(self):
         pass
 
-    def get_address(self):
+    @property
+    def address(self):
         pass
 
-    def get_engine(self):
+    @property
+    def engine(self):
         pass
 
-    def get_store_type(self):
+    @property
+    def store_type(self):
         pass
 
-    def get_options(self):
+    @property
+    def partitions(self):
         pass
 
-    def get_partitions(self):
+    @property
+    def options(self):
         pass
 
     @property
@@ -101,8 +108,9 @@ class StorageTableBase(StorageTableABC):
     def count(self):
         pass
 
-    def save_as(self, dest_name, dest_namespace, partitions=None, schema=None):
-        src_table_meta = self.meta
+    def save_as(self, name, namespace, partitions=None, schema=None):
+        pass
+        # src_table_meta = self.meta
 
     def check_address(self):
         return True

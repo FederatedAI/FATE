@@ -16,18 +16,18 @@
 
 from fate_arch.storage import StorageSessionBase, StorageEngine
 from fate_arch.abc import AddressABC
-from fate_arch.common.address import PathAddress
+from fate_arch.common.address import LocalFSAddress
 
 
 class StorageSession(StorageSessionBase):
     def __init__(self, session_id, options=None):
-        super(StorageSession, self).__init__(session_id=session_id, engine_name=StorageEngine.LOCAL)
+        super(StorageSession, self).__init__(session_id=session_id, engine_name=StorageEngine.LOCALFS)
 
     def create(self):
         pass
 
     def table(self, address: AddressABC, name, namespace, partitions, storage_type=None, options=None, **kwargs):
-        if isinstance(address, PathAddress):
+        if isinstance(address, LocalFSAddress):
             from fate_arch.storage.local._table import StorageTable
             return StorageTable(address=address, name=name, namespace=namespace,
                                 partitions=partitions, storage_type=storage_type, options=options)

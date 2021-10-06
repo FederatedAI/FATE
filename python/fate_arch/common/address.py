@@ -10,9 +10,7 @@ class StandaloneAddress(AddressABC):
 
 
 class EggRollAddress(AddressABC):
-    def __init__(self, host=None, port=None, home=None, name=None, namespace=None):
-        self.host = host
-        self.port = port
+    def __init__(self, home=None, name=None, namespace=None):
         self.name = name
         self.namespace = namespace
         self.home = home
@@ -71,3 +69,9 @@ class FileAddress(AddressABC):
     def __init__(self, path, path_type):
         self.path = path
         self.path_type = path_type
+
+
+class LocalFSAddress(AddressABC):
+    def __init__(self, name_node, path=None):
+        self.name_node = name_node
+        self.path = path

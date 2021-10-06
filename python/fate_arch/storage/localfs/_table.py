@@ -22,7 +22,7 @@ from pyarrow import fs
 
 from fate_arch.common import hdfs_utils
 from fate_arch.common.log import getLogger
-from fate_arch.storage import StorageEngine, PathStorageType
+from fate_arch.storage import StorageEngine, LocalFSStoreType
 from fate_arch.storage import StorageTableBase
 
 LOGGER = getLogger()
@@ -35,44 +35,45 @@ class StorageTable(StorageTableBase):
                  name: str = None,
                  namespace: str = None,
                  partitions: int = None,
-                 storage_type: PathStorageType = None,
+                 storage_type: LocalFSStoreType = None,
                  options=None):
         super(StorageTable, self).__init__(name=name, namespace=namespace)
         self._address = address
         self._name = name
         self._namespace = namespace
         self._partitions = partitions if partitions else 1
-        self._type = storage_type if storage_type else PathStorageType.PICTURE
+        self._store_type = storage_type if storage_type else LocalFSStoreType.DISK
         self._options = options if options else {}
-        self._engine = StorageEngine.LOCAL
+        self._engine = StorageEngine.LOCALFS
 
         self._local_fs_client = fs.LocalFileSystem()
 
-    def _get_data_dir():
-        return _data_dir
-
-    def _get_storage_dir(*args):
-        return _data_dir.joinpath(*args)
-
-    def get_name(self):
+    @property
+    def name(self):
         return self._name
 
-    def get_namespace(self):
+    @property
+    def namespace(self):
         return self._namespace
 
-    def get_address(self):
+    @property
+    def address(self):
         return self._address
 
+    @property
     def get_engine(self):
         return self._engine
 
-    def get_type(self):
-        return self._type
+    @property
+    def store_type(self):
+        return self._store_type
 
-    def get_partitions(self):
+    @property
+    def partitions(self):
         return self._partitions
 
-    def get_options(self):
+    @property
+    def options(self):
         return self._options
 
     @property

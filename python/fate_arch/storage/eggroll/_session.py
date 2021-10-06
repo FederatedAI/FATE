@@ -17,24 +17,25 @@
 from fate_arch.storage import StorageSessionBase, StorageEngine, EggRollStoreType
 from fate_arch.abc import AddressABC
 from fate_arch.common.address import EggRollAddress
+from eggroll.core.session import session_init
+from eggroll.roll_pair.roll_pair import RollPairContext
 
 
 class StorageSession(StorageSessionBase):
     def __init__(self, session_id, options=None):
-        super(StorageSession, self).__init__(session_id=session_id, engine_name=StorageEngine.EGGROLL)
+        super(StorageSession, self).__init__(session_id=session_id, engine=StorageEngine.EGGROLL)
         self._options = options if options else {}
-        self._rp_session = None
-        self._rpc = None
-        self.create()
+        self._options['eggroll.session.deploy.mode'] = "cluster"
+        self._rp_session = session_init(session_id=self._session_id, options=self._options)
+        self._rpc = RollPairContext(session=self._rp_session)
+        self._session_id = self._rp_session.get_session_id()
 
-    def create(self):
-        if self._rp_session is None or self._rpc is None:
-            from eggroll.core.session import session_init
-            from eggroll.roll_pair.roll_pair import RollPairContext
-            self._options['eggroll.session.deploy.mode'] = "cluster"
-            self._rp_session = session_init(session_id=self._session_id, options=self._options)
-            self._rpc = RollPairContext(session=self._rp_session)
-            self._session_id = self._rp_session.get_session_id()
+    # def create(self):
+    #     if self._rp_session is None or self._rpc is None:
+    #         self._options['eggroll.session.deploy.mode'] = "cluster"
+    #         self._rp_session = session_init(session_id=self._session_id, options=self._options)
+    #         self._rpc = RollPairContext(session=self._rp_session)
+    #         self._session_id = self._rp_session.get_session_id()
 
     def table(self, name, namespace, address: AddressABC, partitions, store_type: EggRollStoreType = EggRollStoreType.ROLLPAIR_LMDB, options=None, **kwargs):
         if isinstance(address, EggRollAddress):

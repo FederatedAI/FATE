@@ -37,30 +37,37 @@ class StorageTable(StorageTableBase):
         self._partitions = partitions
         self._store_type = store_type if store_type else StandaloneStoreType.ROLLPAIR_LMDB
         self._options = options if options else {}
-        self._storage_engine = StorageEngine.STANDALONE
+        self._engine = StorageEngine.STANDALONE
         need_cleanup = self._store_type == StandaloneStoreType.ROLLPAIR_IN_MEMORY
         self._table = self._session.create_table(namespace=self._namespace, name=self._name, partitions=partitions,
                                                  need_cleanup=need_cleanup, error_if_exist=False)
 
-    def get_name(self):
-        return self._table.name
+    @property
+    def name(self):
+        return self._name
 
-    def get_namespace(self):
-        return self._table.namespace
+    @property
+    def namespace(self):
+        return self._namespace
 
-    def get_address(self):
+    @property
+    def address(self):
         return self._address
 
-    def get_engine(self):
-        return self._storage_engine
+    @property
+    def engine(self):
+        return self._engine
 
-    def get_store_type(self):
+    @property
+    def store_type(self):
         return self._store_type
 
-    def get_partitions(self):
+    @property
+    def partitions(self):
         return self._table.partitions
 
-    def get_options(self):
+    @property
+    def options(self):
         return self._options
 
     def put_all(self, kv_list: Iterable, **kwargs):
