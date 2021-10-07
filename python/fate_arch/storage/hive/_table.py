@@ -36,8 +36,36 @@ class StorageTable(StorageTableBase):
         self._namespace = namespace
         self._partitions = partitions
         self._options = options if options else {}
-        self._storage_engine = StorageEngine.HIVE
-        self._type = storage_type if storage_type else HiveStoreType.DEFAULT
+        self._engine = StorageEngine.HIVE
+        self._store_type = storage_type if storage_type else HiveStoreType.DEFAULT
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def namespace(self):
+        return self._namespace
+
+    @property
+    def address(self):
+        return self._address
+
+    @property
+    def engine(self):
+        return self._engine
+
+    @property
+    def store_type(self):
+        return self._store_type
+
+    @property
+    def partitions(self):
+        return self._partitions
+
+    @property
+    def options(self):
+        return self._options
 
     def execute(self, sql, select=True):
         self.cur.execute(sql)
@@ -51,27 +79,6 @@ class StorageTable(StorageTableBase):
         else:
             result = self.cur.fetchall()
             return result
-
-    def get_partitions(self):
-        return self._partitions
-
-    def get_name(self):
-        return self._name
-
-    def get_namespace(self):
-        return self._namespace
-
-    def get_engine(self):
-        return self._storage_engine
-
-    def get_address(self):
-        return self._address
-
-    def get_type(self):
-        return self._type
-
-    def get_options(self):
-        return self._options
 
     def count(self, **kwargs):
         sql = 'select count(*) from {}'.format(self._address.name)

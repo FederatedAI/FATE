@@ -115,32 +115,39 @@ class StorageTableMetaABC(metaclass=abc.ABCMeta):
 
 
 class StorageTableABC(metaclass=abc.ABCMeta):
+    @property
     @abc.abstractmethod
-    def get_name(self):
+    def name(self):
         ...
 
+    @property
     @abc.abstractmethod
-    def get_namespace(self):
+    def namespace(self):
         ...
 
+    @property
     @abc.abstractmethod
-    def get_address(self):
+    def address(self):
         ...
 
+    @property
     @abc.abstractmethod
-    def get_engine(self):
+    def engine(self):
         ...
 
+    @property
     @abc.abstractmethod
-    def get_store_type(self):
+    def store_type(self):
         ...
 
+    @property
     @abc.abstractmethod
-    def get_options(self):
+    def options(self):
         ...
 
+    @property
     @abc.abstractmethod
-    def get_partitions(self):
+    def partitions(self):
         ...
 
     @property
@@ -186,6 +193,10 @@ class StorageSessionABC(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def get_table(self, name, namespace) -> StorageTableABC:
+        ...
+
+    @abc.abstractmethod
+    def table(self, name, namespace, address, partitions, store_type=None, options=None, **kwargs) -> StorageTableABC:
         ...
 
     @abc.abstractmethod

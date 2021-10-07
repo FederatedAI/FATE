@@ -36,6 +36,15 @@ class MysqlAddress(AddressABC):
         self.db = db
         self.name = name
 
+    def __hash__(self):
+        return (self.host, self.port, self.db, self.name).__hash__()
+
+    def __str__(self):
+        return f"MysqlAddress(db={self.db}, name={self.name})"
+
+    def __repr__(self):
+        return self.__str__()
+
 
 class HiveAddress(AddressABC):
     def __init__(self, host, name, port=10000, username=None, database='default', auth='NONE', configuration=None,

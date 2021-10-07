@@ -23,9 +23,6 @@ class StorageSession(StorageSessionBase):
     def __init__(self, session_id, options=None):
         super(StorageSession, self).__init__(session_id=session_id, engine=StorageEngine.HDFS)
 
-    def create(self):
-        pass
-
     def table(self, address: AddressABC, name, namespace, partitions, store_type=None, options=None, **kwargs):
         if isinstance(address, HDFSAddress):
             from fate_arch.storage.hdfs._table import StorageTable

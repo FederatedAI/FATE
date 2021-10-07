@@ -27,9 +27,6 @@ class StorageSession(StorageSessionBase):
         self.cur = None
         self.address = None
 
-    def create(self):
-        pass
-
     def table(self, name, namespace, address: AddressABC, partitions,
               storage_type: HiveStoreType = HiveStoreType.DEFAULT, options=None, **kwargs):
         self.address = address

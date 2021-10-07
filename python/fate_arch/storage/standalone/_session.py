@@ -21,7 +21,7 @@ from fate_arch._standalone import Session
 
 class StorageSession(StorageSessionBase):
     def __init__(self, session_id, options=None):
-        super(StorageSession, self).__init__(session_id=session_id, engine_name=StorageEngine.STANDALONE)
+        super(StorageSession, self).__init__(session_id=session_id, engine=StorageEngine.STANDALONE)
         self._options = options if options else {}
         self._session = Session(session_id=self._session_id)
 
