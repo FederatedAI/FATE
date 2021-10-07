@@ -25,7 +25,6 @@ from fate_arch.relation_ship import Relationship
 from fate_arch.metastore.db_models import DB, StorageTableMetaModel
 from fate_arch.common.base_utils import current_timestamp
 
-MAX_NUM = 10000
 
 LOGGER = getLogger()
 
@@ -34,35 +33,23 @@ class StorageSessionBase(StorageSessionABC):
     def __init__(self, session_id, engine):
         self._session_id = session_id
         self._engine = engine
-        # self._default_name = None
-        # self._default_namespace = None
-
-    # def create(self):
-    #     raise NotImplementedError()
 
     def create_table(self, address, name, namespace, partitions=None, **kwargs):
         table = self.table(address=address, name=name, namespace=namespace, partitions=partitions, **kwargs)
         table_meta = StorageTableMeta(name=name, namespace=namespace, new=True)
         table_meta.set_metas(**kwargs)
-        table_meta.address = table.get_address()
-        table_meta.partitions = table.get_partitions()
-        table_meta.engine = table.get_engine()
-        table_meta.store_type = table.get_store_type()
-        table_meta.options = table.get_options()
+        table_meta.address = table.address
+        table_meta.partitions = table.partitions
+        table_meta.engine = table.engine()
+        table_meta.store_type = table.store_type
+        table_meta.options = table.options
         table_meta.create()
         table.meta = table_meta
         # update count on meta
         # table.count()
         return table
 
-    # def set_default(self, name, namespace):
-    #     self._default_name = name
-    #     self._default_namespace = namespace
-
     def get_table(self, name, namespace):
-        # if not name or not namespace:
-        #     name = self._default_name
-        #     namespace = self._default_namespace
         meta = StorageTableMeta(name=name, namespace=namespace)
         if meta:
             table = self.table(name=meta.get_name(),
@@ -75,6 +62,38 @@ class StorageSessionBase(StorageSessionABC):
             return table
         else:
             return None
+
+    @classmethod
+    def get_table_meta(cls, name, namespace):
+        meta = StorageTableMeta(name=name, namespace=namespace)
+        return meta
+
+    # todo: if use get_table_meta, may be better;
+    @classmethod
+    def get_table_info(cls, name, namespace):
+        meta = StorageTableMeta(name=name, namespace=namespace)
+        if meta:
+            engine = meta.get_engine()
+            address = meta.get_address()
+            partitions = meta.get_partitions()
+            return engine, address, partitions
+        else:
+            return None, None, None
+
+    # @classmethod
+    # @DB.connection_context()
+    # def get_storage_info(cls, name, namespace):
+    #     metas = StorageTableMetaModel.select().where(StorageTableMetaModel.f_name == name,
+    #                                                  StorageTableMetaModel.f_namespace == namespace)
+    #     if metas:
+    #         meta = metas[0]
+    #         engine = meta.f_engine
+    #         address_dict = meta.f_address
+    #         address = StorageTableMeta.create_address(storage_engine=engine, address_dict=address_dict)
+    #         partitions = meta.f_partitions
+    #         return engine, address, partitions
+    #     else:
+    #         return None, None, None
 
     def table(self, name, namespace, address, partitions, store_type=None, options=None, **kwargs) -> StorageTableABC:
         raise NotImplementedError()
@@ -138,21 +157,6 @@ class StorageSessionBase(StorageSessionABC):
         table_meta.create()
         return table_meta
 
-    @classmethod
-    @DB.connection_context()
-    def get_storage_info(cls, name, namespace):
-        metas = StorageTableMetaModel.select().where(StorageTableMetaModel.f_name == name,
-                                                     StorageTableMetaModel.f_namespace == namespace)
-        if metas:
-            meta = metas[0]
-            engine = meta.f_engine
-            address_dict = meta.f_address
-            address = StorageTableMeta.create_address(storage_engine=engine, address_dict=address_dict)
-            partitions = meta.f_partitions
-            return engine, address, partitions
-        else:
-            return None, None, None
-
     def __enter__(self):
         # self.create()
         return self
@@ -176,3 +180,7 @@ class StorageSessionBase(StorageSessionABC):
     @property
     def session_id(self):
         return self._session_id
+
+    @property
+    def engine(self):
+        return self._engine

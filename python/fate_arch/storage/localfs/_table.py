@@ -93,6 +93,7 @@ class StorageTable(StorageTableBase):
             stream = self._local_fs_client.open_output_stream(
                 path=self._path, compression=None)
 
+        # todo: when append, counter is not right;
         counter = 0
         with io.TextIOWrapper(stream) as writer:
             for k, v in kv_list:

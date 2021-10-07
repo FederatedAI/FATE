@@ -30,13 +30,6 @@ class StorageSession(StorageSessionBase):
         self._rpc = RollPairContext(session=self._rp_session)
         self._session_id = self._rp_session.get_session_id()
 
-    # def create(self):
-    #     if self._rp_session is None or self._rpc is None:
-    #         self._options['eggroll.session.deploy.mode'] = "cluster"
-    #         self._rp_session = session_init(session_id=self._session_id, options=self._options)
-    #         self._rpc = RollPairContext(session=self._rp_session)
-    #         self._session_id = self._rp_session.get_session_id()
-
     def table(self, name, namespace,
               address: AddressABC, partitions,
               store_type: EggRollStoreType = EggRollStoreType.ROLLPAIR_LMDB, options=None, **kwargs):

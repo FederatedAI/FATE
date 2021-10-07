@@ -87,6 +87,7 @@ class StorageTable(StorageTableBase):
         else:
             stream = self._hdfs_client.open_output_stream(path=self._path, compression=None)
 
+        # todo: when append, counter is not right;
         counter = 0
         with io.TextIOWrapper(stream) as writer:
             for k, v in kv_list:

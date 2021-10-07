@@ -219,3 +219,8 @@ class StorageSessionABC(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def session_id(self) -> str:
         ...
+
+    @property
+    @abc.abstractmethod
+    def engine(self) -> str:
+        ...

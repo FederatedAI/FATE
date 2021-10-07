@@ -19,7 +19,6 @@ import uuid
 
 import peewee
 from fate_arch.common import engine_utils, EngineType
-from fate_arch.relation_ship import Relationship
 from fate_arch.abc import CSessionABC, FederationABC, CTableABC, StorageSessionABC
 from fate_arch.common import log, base_utils
 from fate_arch.common import WorkMode, remote_status
@@ -36,9 +35,10 @@ class Session(object):
     def __init__(self, session_id: str = None, work_mode: typing.Union[WorkMode, int] = None, options=None):
         engines = engine_utils.get_engines(work_mode, options)
         LOGGER.info(f"using engines: {engines}")
-        self._computing_type = engines.get("computing", None)
-        self._federation_type = engines.get("federation", None)
-        self._storage_engine = engines.get("storage", None)
+        self._work_mode = work_mode
+        self._computing_type = engines.get(EngineType.COMPUTING, None)
+        self._federation_type = engines.get(EngineType.FEDERATION, None)
+        self._storage_engine = engines.get(EngineType.STORAGE, None)
         self._computing_session: typing.Optional[CSessionABC] = None
         self._federation_session: typing.Optional[FederationABC] = None
         self._storage_session: typing.Dict[StorageSessionABC] = {}
@@ -103,7 +103,7 @@ class Session(object):
         if self._computing_type == ComputingEngine.EGGROLL:
             from fate_arch.computing.eggroll import CSession
 
-            work_mode = kwargs.get("work_mode", WorkMode.CLUSTER)
+            work_mode = self._work_mode
             options = kwargs.get("options", {})
             self._computing_session = CSession(
                 session_id=computing_session_id, work_mode=work_mode, options=options
@@ -221,22 +221,22 @@ class Session(object):
 
         raise RuntimeError(f"{self._federation_type} not supported")
 
-    def new_storage(self, storage_session_id=None, storage_engine=None, computing_engine=None, record: bool = True,
-                    **kwargs):
+    def _get_or_create_storage(self,
+                               storage_session_id=None,
+                               storage_engine=None,
+                               record: bool = True,
+                               **kwargs):
         storage_session_id = f"{self._session_id}_storage_{uuid.uuid1()}" if not storage_session_id else storage_session_id
+
         if storage_session_id in self._storage_session:
-            raise RuntimeError(f"the storage session id {storage_session_id} already exists")
-        if kwargs.get("name") and kwargs.get("namespace"):
-            storage_engine, address, partitions = StorageSessionBase.get_storage_info(name=kwargs.get("name"),
-                                                                                      namespace=kwargs.get("namespace"))
-            if not storage_engine:
-                return None
-        if storage_engine is None and computing_engine is None:
-            computing_engine, federation_engine, federation_mode = engine_utils.engines_compatibility(**kwargs)
-        if storage_engine is None and computing_engine:
-            # Gets the computing engine default storage engine
-            storage_engine = Relationship.Computing.get(computing_engine, {}).get(EngineType.STORAGE, {}).get("default",
-                                                                                                              None)
+            return self._storage_session[storage_session_id]
+        else:
+            if storage_engine is None:
+                storage_engine = self._storage_engine
+
+        for session in self._storage_session.values():
+            if storage_engine == session.engine:
+                return session
 
         if record:
             self.save_record(engine_type=EngineType.STORAGE,
@@ -275,11 +275,12 @@ class Session(object):
             from fate_arch.storage.path import StorageSession
             storage_session = StorageSession(session_id=storage_session_id, options=kwargs.get("options", {}))
 
+        elif storage_engine == StorageEngine.LOCALFS:
+            from fate_arch.storage.localfs import StorageSession
+            storage_session = StorageSession(session_id=storage_session_id, options=kwargs.get("options", {}))
+
         else:
             raise NotImplementedError(f"can not be initialized with storage engine: {storage_engine}")
-
-        if kwargs.get("name") and kwargs.get("namespace"):
-            storage_session.set_default(name=kwargs["name"], namespace=kwargs["namespace"])
 
         self._storage_session[storage_session_id] = storage_session
 
@@ -307,7 +308,7 @@ class Session(object):
         return self._federation_session
 
     def storage(self, **kwargs):
-        return self.new_storage(**kwargs)
+        return self._get_or_create_storage(**kwargs)
 
     @property
     def parties(self):
@@ -366,11 +367,13 @@ class Session(object):
         for session_record in session_records:
             engine_session_id = session_record.f_engine_session_id
             if session_record.f_engine_type == EngineType.COMPUTING:
-                self.add_computing(computing_session_id=engine_session_id)
+                self._init_computing_if_not_valid(computing_session_id=engine_session_id)
             elif session_record.f_engine_type == EngineType.STORAGE:
-                self.add_storage(storage_session_id=engine_session_id, storage_engine=session_record.f_engine_name)
+                self._get_or_create_storage(storage_session_id=engine_session_id,
+                                            storage_engine=session_record.f_engine_name,
+                                            record=False)
 
-    def add_computing(self, computing_session_id):
+    def _init_computing_if_not_valid(self, computing_session_id):
         if not self.is_computing_valid:
             self.init_computing(computing_session_id=computing_session_id, record=False)
             return True
@@ -382,21 +385,14 @@ class Session(object):
             # already exists
             return True
 
-    def add_storage(self, storage_session_id, storage_engine):
-        if storage_session_id not in self._storage_session:
-            self.new_storage(storage_session_id=storage_session_id,
-                             storage_engine=storage_engine,
-                             record=False)
-        return True
-
     def destroy_all_sessions(self):
         self._logger.info(f"start destroy manager session {self._session_id} all sessions")
         self.get_session_from_record()
-        self.destroy_storage()
-        self.destroy_computing()
+        self.destroy_storage_session()
+        self.destroy_computing_session()
         self._logger.info(f"finish destroy manager session {self._session_id} all sessions")
 
-    def destroy_computing(self):
+    def destroy_computing_session(self):
         if self.is_computing_valid:
             try:
                 self._logger.info(f"try to destroy computing session {self._computing_session.session_id}")
@@ -409,7 +405,7 @@ class Session(object):
             except Exception as e:
                 self._logger.info(f"destroy computing session {self._computing_session.session_id} failed", e)
 
-    def destroy_storage(self):
+    def destroy_storage_session(self):
         for session_id, session in self._storage_session.items():
             try:
                 self._logger.info(f"try to destroy storage session {session_id}")

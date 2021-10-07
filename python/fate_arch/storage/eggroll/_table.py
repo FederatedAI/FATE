@@ -73,13 +73,12 @@ class StorageTable(StorageTableBase):
         super(StorageTable, self).update_write_access_time()
         return self._table.put_all(kv_list)
 
-    def table(self):
-        return self._table
-
+    # todo
     def union(self, other):
         return self._table.union(other.table(), func=lambda v1, v2 : v1)
 
     def save_as(self, name, namespace, partitions=None, schema=None):
+        super().save_as(name, namespace, partitions=partitions, schema=schema)
         return self._table.save_as(name=name, namespace=namespace)
 
     def collect(self, **kwargs) -> list:
@@ -91,6 +90,7 @@ class StorageTable(StorageTableBase):
         return self._table.destroy()
 
     def count(self, **kwargs):
+        super(StorageTable, self).update_read_access_time()
         count = self._table.count()
         self.meta.update_metas(count=count)
         return count

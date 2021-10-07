@@ -25,10 +25,6 @@ class StorageSession(StorageSessionBase):
         self._options = options if options else {}
         self._session = Session(session_id=self._session_id)
 
-    # def create(self):
-    #     if self._session is None:
-    #         self._session = Session(session_id=self._session_id)
-
     def table(self, address: AddressABC, name, namespace, partitions, store_type=None, options=None, **kwargs):
         if isinstance(address, StandaloneAddress):
             from fate_arch.storage.standalone._table import StorageTable
