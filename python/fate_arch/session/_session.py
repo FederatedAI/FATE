@@ -18,7 +18,7 @@ import typing
 import uuid
 
 import peewee
-from fate_arch.common import engine_utils, EngineType
+from fate_arch.common import WorkMode, engine_utils, EngineType
 from fate_arch.abc import CSessionABC, FederationABC, CTableABC, StorageSessionABC
 from fate_arch.common import log, base_utils
 from fate_arch.common import WorkMode, remote_status
@@ -35,7 +35,18 @@ class Session(object):
     def __init__(self, session_id: str = None, work_mode: typing.Union[WorkMode, int] = None, options=None):
         engines = engine_utils.get_engines(work_mode, options)
         LOGGER.info(f"using engines: {engines}")
-        self._work_mode = work_mode
+        if work_mode is None:
+            computing_type = engines.get(EngineType.COMPUTING, None)
+            if computing_type is None:
+                raise RuntimeError(f"must set default engines on conf/service_conf.yaml")
+            else:
+                if computing_type == ComputingEngine.STANDALONE:
+                    self._work_mode = WorkMode.STANDALONE
+                else:
+                    self._work_mode = WorkMode.CLUSTER
+        else:
+            self._work_mode = work_mode
+
         self._computing_type = engines.get(EngineType.COMPUTING, None)
         self._federation_type = engines.get(EngineType.FEDERATION, None)
         self._storage_engine = engines.get(EngineType.STORAGE, None)
