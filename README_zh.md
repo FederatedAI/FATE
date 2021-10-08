@@ -4,7 +4,7 @@
   <img src="./doc/images/FATE_logo.png">
 </div>
 
-[DOC](./doc) | [Quick Start](./examples/dsl/v2) | [English](./README.md)
+[DOC](./doc) | [Quick Start](doc/tutorial/pipeline/pipeline_guide.rst) | [English](./README.md)
 
 FATE (Federated AI Technology Enabler) 是微众银行AI部门发起的开源项目，为联邦学习生态系统提供了可靠的安全计算框架。
 FATE项目使用多方安全计算 (MPC) 以及同态加密 (HE) 技术构建底层安全计算协议，以此支持不同种类的机器学习的安全计算，
