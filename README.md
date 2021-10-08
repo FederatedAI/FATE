@@ -57,6 +57,7 @@ tree-based algorithms, deep learning and transfer learning.
 - [Flow SDK API](./doc/api/flow_sdk.rst)
 - [Flow Client](./doc/api/flow_client.rst)
 - [Pipeline](./doc/api/pipeline.rst)
+- [FATE Test](./doc/api/fate_test.rst)
 
 ## Getting Involved
 
