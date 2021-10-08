@@ -42,7 +42,7 @@ This article will introduce the deployment of FATE cluster using ansible deploym
 
 Example deployment in two parties
 
-![](./images/arch_en.png)
+![](doc/images/arch_en.png)
 
 ## 2.Detailed Design
 
@@ -234,7 +234,7 @@ yum install -y epel-release
 
 ------
 
-![](./images/deploy_cluster_en.png)
+![](doc/images/deploy_cluster_en.png)
 
 ### 4.2 System Check
 
