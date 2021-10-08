@@ -35,7 +35,7 @@ class StorageSession(StorageSessionBase):
             address_key = MysqlAddress(user=None,
                                        passwd=None,
                                        host=address.host,
-                                       port=address.host,
+                                       port=address.port,
                                        db=address.db,
                                        name=None)
 

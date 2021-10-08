@@ -73,10 +73,11 @@ class StorageTable(StorageTableBase):
         super(StorageTable, self).update_write_access_time()
         return self._table.put_all(kv_list)
 
-    # todo
+    # todo: must be fixed , result must be wrapped.
     def union(self, other):
         return self._table.union(other.table(), func=lambda v1, v2 : v1)
 
+    # todo: must be fixed , result must be wrapped.
     def save_as(self, name, namespace, partitions=None, schema=None):
         super().save_as(name, namespace, partitions=partitions, schema=schema)
         return self._table.save_as(name=name, namespace=namespace)

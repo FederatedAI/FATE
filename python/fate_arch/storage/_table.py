@@ -26,8 +26,6 @@ from fate_arch.common.log import getLogger
 from fate_arch.relation_ship import Relationship
 from fate_arch.metastore.db_models import DB, StorageTableMetaModel
 
-MAX_NUM = 10000
-
 LOGGER = getLogger()
 
 
@@ -38,19 +36,6 @@ class StorageTableBase(StorageTableABC):
         self._meta = None
         self._read_access_time = None
         self._write_access_time = None
-
-    def destroy(self):
-        # destroy schema
-        self._meta.destroy_metas()
-        # subclass method needs do: super().destroy()
-
-    @property
-    def meta(self):
-        return self._meta
-
-    @meta.setter
-    def meta(self, meta):
-        self._meta = meta
 
     @property
     def name(self):
@@ -79,6 +64,28 @@ class StorageTableBase(StorageTableABC):
     @property
     def options(self):
         pass
+
+    @property
+    def meta(self):
+        return self._meta
+
+    @meta.setter
+    def meta(self, meta):
+        self._meta = meta
+
+    def update_meta(self,
+                    schema=None,
+                    count=None,
+                    part_of_data=None,
+                    description=None,
+                    partitions=None,
+                    **kwargs):
+        self._meta.update_metas(schema=schema,
+                                count=count,
+                                part_of_data=part_of_data,
+                                description=description,
+                                partitions=partitions,
+                                **kwargs)
 
     @property
     def read_access_time(self):
@@ -114,6 +121,11 @@ class StorageTableBase(StorageTableABC):
 
     def check_address(self):
         return True
+
+    def destroy(self):
+        # destroy schema
+        self._meta.destroy_metas()
+        # subclass method needs do: super().destroy()
 
 
 class StorageTableMeta(StorageTableMetaABC):
@@ -223,7 +235,8 @@ class StorageTableMeta(StorageTableMetaABC):
             return []
 
     @DB.connection_context()
-    def update_metas(self, schema=None, count=None, part_of_data=None, description=None, partitions=None, in_serialized=None, **kwargs):
+    def update_metas(self, schema=None, count=None, part_of_data=None, description=None, partitions=None,
+                     in_serialized=None, **kwargs):
         meta_info = {}
         for k, v in locals().items():
             if k not in ["self", "kwargs", "meta_info"] and v is not None:

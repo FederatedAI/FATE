@@ -68,10 +68,10 @@ def get_engines(work_mode: typing.Union[WorkMode, int] = None, options=None):
     return engines
 
 
-def engines_compatibility(work_mode: typing.Union[WorkMode, int] = None, **kwargs):
-    RuntimeWarning(f"engines_compatibility function will be deprecated, use get_engines instead")
-    engines = get_engines(work_mode, options=kwargs)
-    return engines
+# def engines_compatibility(work_mode: typing.Union[WorkMode, int] = None, **kwargs):
+#     RuntimeWarning(f"engines_compatibility function will be deprecated, use get_engines instead")
+#     engines = get_engines(work_mode, options=kwargs)
+#     return engines
 
 
 def get_engines_config_from_conf(group_map=False):

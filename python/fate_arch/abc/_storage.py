@@ -196,12 +196,16 @@ class StorageSessionABC(metaclass=abc.ABCMeta):
         ...
 
     @abc.abstractmethod
-    def table(self, name, namespace, address, partitions, store_type=None, options=None, **kwargs) -> StorageTableABC:
+    def get_table_meta(self, name, namespace) -> StorageTableMetaABC:
         ...
 
-    @abc.abstractmethod
-    def get_storage_info(self, name, namespace):
-        ...
+    # @abc.abstractmethod
+    # def table(self, name, namespace, address, partitions, store_type=None, options=None, **kwargs) -> StorageTableABC:
+    #     ...
+
+    # @abc.abstractmethod
+    # def get_storage_info(self, name, namespace):
+    #     ...
 
     @abc.abstractmethod
     def destroy(self):

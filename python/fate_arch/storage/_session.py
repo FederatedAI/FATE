@@ -68,17 +68,17 @@ class StorageSessionBase(StorageSessionABC):
         meta = StorageTableMeta(name=name, namespace=namespace)
         return meta
 
-    # todo: if use get_table_meta, may be better;
-    @classmethod
-    def get_table_info(cls, name, namespace):
-        meta = StorageTableMeta(name=name, namespace=namespace)
-        if meta:
-            engine = meta.get_engine()
-            address = meta.get_address()
-            partitions = meta.get_partitions()
-            return engine, address, partitions
-        else:
-            return None, None, None
+    # # todo: if use get_table_meta, may be better;
+    # @classmethod
+    # def get_table_info(cls, name, namespace):
+    #     meta = StorageTableMeta(name=name, namespace=namespace)
+    #     if meta:
+    #         engine = meta.get_engine()
+    #         address = meta.get_address()
+    #         partitions = meta.get_partitions()
+    #         return engine, address, partitions
+    #     else:
+    #         return None, None, None
 
     # @classmethod
     # @DB.connection_context()
@@ -95,8 +95,8 @@ class StorageSessionBase(StorageSessionABC):
     #     else:
     #         return None, None, None
 
-    def table(self, name, namespace, address, partitions, store_type=None, options=None, **kwargs) -> StorageTableABC:
-        raise NotImplementedError()
+    # def table(self, name, namespace, address, partitions, store_type=None, options=None, **kwargs) -> StorageTableABC:
+    #     raise NotImplementedError()
 
     @classmethod
     def persistent(cls, computing_table: CTableABC, namespace, name, schema=None,

@@ -115,6 +115,7 @@ class StorageTable(StorageTableBase):
         self.meta.update_metas(count=count)
         return count
 
+    # todo: how to update meta; default meta is None
     def save_as(self, address, partitions=None, name=None, namespace=None, schema=None, **kwargs):
         super().save_as(name, namespace, partitions=partitions, schema=schema)
         self._hdfs_client.copy_file(src=self._path, dst=address.path)

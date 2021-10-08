@@ -29,7 +29,6 @@ LOGGER = getLogger()
 
 
 class StorageTable(StorageTableBase):
-
     def __init__(self,
                  address=None,
                  name: str = None,
