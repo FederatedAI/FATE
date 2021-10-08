@@ -28,7 +28,7 @@
 
    请按照以下步骤操作:
 
-    注意，请用实际的版本号替换下文中的${version},参考[fate.env](../../fate.env)文件中的FATE版本！
+    注意，请用实际的版本号替换下文中的${version},参考[fate.env](../../../fate.env)文件中的FATE版本！
 
    ```   
    #获取安装包
@@ -72,7 +72,7 @@
 
 5. 安装FATE-Client和FATE-Test
    
-   为方便使用FATE，我们提供了便捷的交互工具[FATE-Client](../../python/fate_client)以及测试工具[FATE-Test](../../python/fate_test).
+   为方便使用FATE，我们提供了便捷的交互工具[FATE-Client](../../../python/fate_client)以及测试工具[FATE-Test](../../../python/fate_test).
    
    请在环境内使用以下指令安装：
    
@@ -82,7 +82,7 @@
    ```
 
 
-有些用例算法在 [examples](../../examples/dsl/v2) 文件夹下, 请尝试使用。
+有些用例算法在 [examples](../../../examples/dsl/v2) 文件夹下, 请尝试使用。
 
 您还可以通过浏览器体验算法过程看板，访问：Http://hostip:8080。
 
@@ -100,7 +100,7 @@
 
 2. 下载独立版本的压缩包并解压缩。
 
-    注意，请用实际的版本号替换下文中的${version},参考[fate.env](../../fate.env)文件中的FATE版本！
+    注意，请用实际的版本号替换下文中的${version},参考[fate.env](../../../fate.env)文件中的FATE版本！
 
    ```
    wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/standalone_fate_master_${version}.tar.gz
@@ -109,7 +109,7 @@
 
 3. 进入FATE目录并执行init.sh。
 
-    注意，请用实际的版本号替换下文中的${version},参考[fate.env](../../fate.env)文件中的FATE版本！
+    注意，请用实际的版本号替换下文中的${version},参考[fate.env](../../../fate.env)文件中的FATE版本！
 
    ```
    cd standalone_fate_master_${version}
@@ -118,7 +118,7 @@
 
 4. 测试
 
-    注意，请用实际的版本号替换下文中的${version},参考[fate.env](../../fate.env)文件中的FATE版本！
+    注意，请用实际的版本号替换下文中的${version},参考[fate.env](../../../fate.env)文件中的FATE版本！
 
    - 单元测试
    
@@ -150,7 +150,7 @@
 
 5. 安装FATE-Client和FATE-Test
    
-   为方便使用FATE，我们提供了便捷的交互工具[FATE-Client](../../python/fate_client)以及测试工具[FATE-Test](../../python/fate_test).
+   为方便使用FATE，我们提供了便捷的交互工具[FATE-Client](../../../python/fate_client)以及测试工具[FATE-Test](../../../python/fate_test).
    
    请在环境内使用以下指令安装：
    
@@ -160,6 +160,6 @@
    ```
    
 
-有些用例算法在 [examples](../../examples/dsl/v2) 文件夹下, 请尝试使用。
+有些用例算法在 [examples](../../../examples/dsl/v2) 文件夹下, 请尝试使用。
 
 您还可以通过浏览器体验算法过程看板，访问：Http://hostip:8080。
