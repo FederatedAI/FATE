@@ -16,19 +16,14 @@
 from fate_arch.abc import AddressABC
 from fate_arch.common.address import StandaloneAddress
 from fate_arch.storage import StorageSessionBase, StorageEngine
+from fate_arch._standalone import Session
 
 
 class StorageSession(StorageSessionBase):
     def __init__(self, session_id, options=None):
-        super(StorageSession, self).__init__(session_id=session_id, engine_name=StorageEngine.STANDALONE)
+        super(StorageSession, self).__init__(session_id=session_id, engine=StorageEngine.STANDALONE)
         self._options = options if options else {}
-        self._session = None
-        self.create()
-
-    def create(self):
-        if self._session is None:
-            from fate_arch._standalone import Session
-            self._session = Session(session_id=self._session_id)
+        self._session = Session(session_id=self._session_id)
 
     def table(self, address: AddressABC, name, namespace, partitions, store_type=None, options=None, **kwargs):
         if isinstance(address, StandaloneAddress):

@@ -29,56 +29,63 @@ class StorageTable(StorageTableBase):
                  store_type: MySQLStoreType = None,
                  options=None):
         super(StorageTable, self).__init__(name=name, namespace=namespace)
-        self.cur = cur
-        self.con = con
+        self._cur = cur
+        self._con = con
         self._address = address
         self._name = name
         self._namespace = namespace
         self._partitions = partitions
         self._store_type = store_type if store_type else MySQLStoreType.InnoDB
         self._options = options if options else {}
-        self._storage_engine = StorageEngine.MYSQL
+        self._engine = StorageEngine.MYSQL
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def namespace(self):
+        return self._namespace
+
+    @property
+    def address(self):
+        return self._address
+
+    @property
+    def engine(self):
+        return self._engine
+
+    @property
+    def store_type(self):
+        return self._store_type
+
+    @property
+    def partitions(self):
+        return self._partitions
+
+    @property
+    def options(self):
+        return self._options
 
     def execute(self, sql, select=True):
-        self.cur.execute(sql)
+        self._cur.execute(sql)
         if select:
             while True:
-                result = self.cur.fetchone()
+                result = self._cur.fetchone()
                 if result:
                     yield result
                 else:
                     break
         else:
-            result = self.cur.fetchall()
+            result = self._cur.fetchall()
             return result
-
-    def get_partitions(self):
-        return self._partitions
-
-    def get_name(self):
-        return self._name
-
-    def get_namespace(self):
-        return self._namespace
-
-    def get_engine(self):
-        return self._storage_engine
-
-    def get_address(self):
-        return self._address
-
-    def get_store_type(self):
-        return self._store_type
-
-    def get_options(self):
-        return self._options
 
     def count(self, **kwargs):
         sql = 'select count(*) from {}'.format(self._address.name)
         try:
-            self.cur.execute(sql)
-            self.con.commit()
-            ret = self.cur.fetchall()
+            self._cur.execute(sql)
+            # self.con.commit()
+            ret = self._cur.fetchall()
             count = ret[0][0]
         except:
             count = 0
@@ -101,13 +108,13 @@ class StorageTable(StorageTableBase):
         id_size = "varchar(100)"
         create_table = 'create table if not exists {}({} {} NOT NULL, {} PRIMARY KEY({}))'.format(
             self._address.name, id_name, id_size, feature_sql, id_name)
-        self.cur.execute(create_table)
+        self._cur.execute(create_table)
         sql = 'REPLACE INTO {}({}, {})  VALUES'.format(self._address.name, id_name, ','.join(feature_list))
         for kv in kv_list:
             sql += '("{}", "{}"),'.format(kv[0], '", "'.join(kv[1].split(id_delimiter)))
         sql = ','.join(sql.split(',')[:-1]) + ';'
-        self.cur.execute(sql)
-        self.con.commit()
+        self._cur.execute(sql)
+        self._con.commit()
 
     def get_id_feature_name(self):
         id = self.meta.get_schema().get('sid', 'id')
@@ -127,8 +134,8 @@ class StorageTable(StorageTableBase):
     def destroy(self):
         super().destroy()
         sql = 'drop table {}'.format(self._address.name)
-        self.cur.execute(sql)
-        self.con.commit()
+        self._cur.execute(sql)
+        self._con.commit()
 
     def check_address(self):
         schema = self.meta.get_schema()

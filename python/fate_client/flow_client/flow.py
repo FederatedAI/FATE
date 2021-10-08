@@ -42,25 +42,24 @@ def flow_cli(ctx):
         is_server_conf_exist = os.path.exists(config["server_conf_path"])
 
     if is_server_conf_exist:
-        try:
-            with open(config.get("server_conf_path")) as server_conf_fp:
-                server_conf = yaml.safe_load(server_conf_fp)
-            ip = server_conf.get("fateflow", {}).get("host")
-            ctx.obj["http_port"] = server_conf.get("fateflow", {}).get("http_port")
-            ctx.obj["server_url"] = "http://{}:{}/{}".format(ip, ctx.obj["http_port"], config["api_version"])
-        except Exception:
-            return
+        with open(config.get("server_conf_path")) as server_conf_fp:
+            server_conf = yaml.safe_load(server_conf_fp)["fateflow"]
+
+        ctx.obj["http_port"] = server_conf["http_port"]
+        ctx.obj["server_url"] = f"http://{server_conf['host']}:{ctx.obj['http_port']}/{ctx.obj['api_version']}"
+
+        if server_conf.get('http_app_key') and server_conf.get('http_secret_key'):
+            ctx.obj['app_key'] = server_conf['http_app_key']
+            ctx.obj['secret_key'] = server_conf['http_secret_key']
     else:
-        if config.get("ip") and config.get("port"):
-            ip = config.get("ip")
-            ctx.obj["http_port"] = int(config.get("port"))
-            ctx.obj["server_url"] = "http://{}:{}/{}".format(ip, ctx.obj["http_port"], config["api_version"])
+        ctx.obj["http_port"] = int(config["port"])
+        ctx.obj["server_url"] = f"http://{config['ip']}:{ctx.obj['http_port']}/{config['api_version']}"
+
+        if config.get('app_key') and config.get('secret_key'):
+            ctx.obj['app_key'] = config['app_key']
+            ctx.obj['secret_key'] = config['secret_key']
 
     ctx.obj["init"] = is_server_conf_exist or (config.get("ip") and config.get("port"))
-
-    if config.get('app_key') and config.get('secret_key'):
-        ctx.obj['app_key'] = config['app_key']
-        ctx.obj['secret_key'] = config['secret_key']
 
 
 @flow_cli.command("init", short_help="Flow CLI Init Command")

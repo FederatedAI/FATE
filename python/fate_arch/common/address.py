@@ -10,9 +10,7 @@ class StandaloneAddress(AddressABC):
 
 
 class EggRollAddress(AddressABC):
-    def __init__(self, host=None, port=None, home=None, name=None, namespace=None):
-        self.host = host
-        self.port = port
+    def __init__(self, home=None, name=None, namespace=None):
         self.name = name
         self.namespace = namespace
         self.home = home
@@ -37,6 +35,15 @@ class MysqlAddress(AddressABC):
         self.port = port
         self.db = db
         self.name = name
+
+    def __hash__(self):
+        return (self.host, self.port, self.db, self.name).__hash__()
+
+    def __str__(self):
+        return f"MysqlAddress(db={self.db}, name={self.name})"
+
+    def __repr__(self):
+        return self.__str__()
 
 
 class HiveAddress(AddressABC):
@@ -68,3 +75,9 @@ class FileAddress(AddressABC):
     def __init__(self, path, path_type):
         self.path = path
         self.path_type = path_type
+
+
+class LocalFSAddress(AddressABC):
+    def __init__(self, name_node, path=None):
+        self.name_node = name_node
+        self.path = path

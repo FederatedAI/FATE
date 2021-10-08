@@ -22,13 +22,10 @@ from fate_arch.abc import AddressABC
 
 class StorageSession(StorageSessionBase):
     def __init__(self, session_id, options=None):
-        super(StorageSession, self).__init__(session_id=session_id, engine_name=StorageEngine.HIVE)
+        super(StorageSession, self).__init__(session_id=session_id, engine=StorageEngine.HIVE)
         self.con = None
         self.cur = None
         self.address = None
-
-    def create(self):
-        pass
 
     def table(self, name, namespace, address: AddressABC, partitions,
               storage_type: HiveStoreType = HiveStoreType.DEFAULT, options=None, **kwargs):

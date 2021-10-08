@@ -139,6 +139,7 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
         # adjust parameter for warm start
         warm_start_y_hat = self.predict(data_inst, ret_format='raw')
         self.y_hat = warm_start_y_hat
+        self.start_round = len(self.boosting_model_list) // self.booster_dim
         self.boosting_round += self.start_round
         # check classes
         assert set(classes).issubset(set(self.classes_)), 'warm start label alignment failed: cur labels {},' \
@@ -151,13 +152,13 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
 
         LOGGER.info('begin to fit a hetero boosting model, model is {}'.format(self.model_name))
 
+        self.start_round = 0
+
         self.data_inst = data_inst
 
         self.data_bin, self.bin_split_points, self.bin_sparse_points = self.prepare_data(data_inst)
 
         self.y = self.get_label(self.data_bin)
-
-        self.start_round = len(self.boosting_model_list)
 
         if not self.is_warm_start:
             self.feature_name_fid_mapping = self.gen_feature_fid_mapping(data_inst.schema)
@@ -171,8 +172,6 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
         LOGGER.info('class index is {}'.format(self.classes_))
 
         self.sync_booster_dim()
-
-        self.start_round = len(self.boosting_model_list)
 
         self.generate_encrypter()
 
@@ -295,17 +294,19 @@ class HeteroBoostingHost(HeteroBoosting, ABC):
         self.predict(data_inst)
         self.callback_warm_start_init_iter(self.start_round)
         self.feat_name_check(data_inst, self.feature_name_fid_mapping)
+        self.start_round = len(self.boosting_model_list) // self.booster_dim
+        self.boosting_round += self.start_round
 
     def fit(self, data_inst, validate_data=None):
 
         LOGGER.info('begin to fit a hetero boosting model, model is {}'.format(self.model_name))
 
+        self.start_round = 0
+
         self.data_bin, self.bin_split_points, self.bin_sparse_points = self.prepare_data(data_inst)
 
-        self.start_round = len(self.boosting_model_list)
         if self.is_warm_start:
             self.prepare_warm_start(data_inst)
-            self.boosting_round += self.start_round
         else:
             self.feature_name_fid_mapping = self.gen_feature_fid_mapping(data_inst.schema)
 

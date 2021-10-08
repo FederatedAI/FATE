@@ -17,7 +17,7 @@ from fate_arch.computing import ComputingEngine
 from fate_arch.federation import FederationEngine
 from fate_arch.storage import StorageEngine
 from fate_arch.common.address import StandaloneAddress, EggRollAddress, HDFSAddress, MysqlAddress, FileAddress, \
-    PathAddress, HiveAddress
+    PathAddress, HiveAddress, LocalFSAddress
 from fate_arch.common import EngineType
 
 
@@ -46,7 +46,7 @@ class Relationship(object):
         ComputingEngine.SPARK: {
             EngineType.STORAGE: {
                 "default": StorageEngine.HDFS,
-                "support": [StorageEngine.HDFS]
+                "support": [StorageEngine.HDFS, StorageEngine.LOCALFS]
             },
             EngineType.FEDERATION: {
                 "default": FederationEngine.RABBITMQ,
@@ -64,6 +64,7 @@ class Relationship(object):
             },
         }
     }
+
     EngineToAddress = {
         StorageEngine.STANDALONE: StandaloneAddress,
         StorageEngine.EGGROLL: EggRollAddress,
@@ -71,8 +72,10 @@ class Relationship(object):
         StorageEngine.HIVE: HiveAddress,
         StorageEngine.MYSQL: MysqlAddress,
         StorageEngine.FILE: FileAddress,
+        StorageEngine.LOCALFS: LocalFSAddress,
         StorageEngine.PATH: PathAddress
     }
+
     EngineConfMap = {
         "fate_on_standalone": {
             EngineType.COMPUTING: [(ComputingEngine.STANDALONE, "standalone")],
@@ -86,7 +89,7 @@ class Relationship(object):
         },
         "fate_on_spark": {
             EngineType.COMPUTING: [(ComputingEngine.SPARK, "spark")],
-            EngineType.STORAGE: [(StorageEngine.HDFS, "hdfs")],
+            EngineType.STORAGE: [(StorageEngine.HDFS, "hdfs"), (StorageEngine.LOCALFS, "localfs")],
             EngineType.FEDERATION: [(FederationEngine.RABBITMQ, "rabbitmq"), (FederationEngine.PULSAR, "pulsar")]
         },
     }

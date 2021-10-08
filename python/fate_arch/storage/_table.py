@@ -26,8 +26,6 @@ from fate_arch.common.log import getLogger
 from fate_arch.relation_ship import Relationship
 from fate_arch.metastore.db_models import DB, StorageTableMetaModel
 
-MAX_NUM = 10000
-
 LOGGER = getLogger()
 
 
@@ -39,10 +37,33 @@ class StorageTableBase(StorageTableABC):
         self._read_access_time = None
         self._write_access_time = None
 
-    def destroy(self):
-        # destroy schema
-        self._meta.destroy_metas()
-        # subclass method needs do: super().destroy()
+    @property
+    def name(self):
+        pass
+
+    @property
+    def namespace(self):
+        pass
+
+    @property
+    def address(self):
+        pass
+
+    @property
+    def engine(self):
+        pass
+
+    @property
+    def store_type(self):
+        pass
+
+    @property
+    def partitions(self):
+        pass
+
+    @property
+    def options(self):
+        pass
 
     @property
     def meta(self):
@@ -52,26 +73,30 @@ class StorageTableBase(StorageTableABC):
     def meta(self, meta):
         self._meta = meta
 
-    def get_name(self):
-        pass
+    def update_meta(self,
+                    schema=None,
+                    count=None,
+                    part_of_data=None,
+                    description=None,
+                    partitions=None,
+                    **kwargs):
+        self._meta.update_metas(schema=schema,
+                                count=count,
+                                part_of_data=part_of_data,
+                                description=description,
+                                partitions=partitions,
+                                **kwargs)
 
-    def get_namespace(self):
-        pass
-
-    def get_address(self):
-        pass
-
-    def get_engine(self):
-        pass
-
-    def get_store_type(self):
-        pass
-
-    def get_options(self):
-        pass
-
-    def get_partitions(self):
-        pass
+    def create_meta(self, **kwargs):
+        table_meta = StorageTableMeta(name=self._name, namespace=self._namespace, new=True)
+        table_meta.set_metas(**kwargs)
+        table_meta.address = self.address
+        table_meta.partitions = self.partitions
+        table_meta.engine = self.engine
+        table_meta.store_type = self.store_type
+        table_meta.options = self.options
+        table_meta.create()
+        self.meta = table_meta
 
     @property
     def read_access_time(self):
@@ -101,11 +126,17 @@ class StorageTableBase(StorageTableABC):
     def count(self):
         pass
 
-    def save_as(self, dest_name, dest_namespace, partitions=None, schema=None):
-        src_table_meta = self.meta
+    def save_as(self, name, namespace, partitions=None, schema=None):
+        pass
+        # src_table_meta = self.meta
 
     def check_address(self):
         return True
+
+    def destroy(self):
+        # destroy schema
+        self._meta.destroy_metas()
+        # subclass method needs do: super().destroy()
 
 
 class StorageTableMeta(StorageTableMetaABC):
@@ -215,7 +246,8 @@ class StorageTableMeta(StorageTableMetaABC):
             return []
 
     @DB.connection_context()
-    def update_metas(self, schema=None, count=None, part_of_data=None, description=None, partitions=None, in_serialized=None, **kwargs):
+    def update_metas(self, schema=None, count=None, part_of_data=None, description=None, partitions=None,
+                     in_serialized=None, **kwargs):
         meta_info = {}
         for k, v in locals().items():
             if k not in ["self", "kwargs", "meta_info"] and v is not None:

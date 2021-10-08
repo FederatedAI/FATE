@@ -13,14 +13,15 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import sys
-import json
 import inspect
+import json
+import sys
 import traceback
-from time import time
-from uuid import uuid1
 from base64 import b64encode
 from hmac import HMAC
+from time import time
+from urllib.parse import quote, urlencode
+from uuid import uuid1
 
 import requests
 
@@ -64,7 +65,9 @@ class BaseFlowClient:
                 nonce.encode('ascii'),
                 self.app_key.encode('ascii'),
                 prepped.path_url.encode('ascii'),
-                prepped.body,
+                prepped.body if kwargs.get('json') else b'',
+                urlencode(sorted(kwargs['data'].items()), quote_via=quote, safe='-._~').encode('ascii')
+                if kwargs.get('data') and isinstance(kwargs['data'], dict) else b'',
             ]), 'sha1').digest()).decode('ascii')
 
             prepped.headers.update({

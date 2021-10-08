@@ -36,8 +36,36 @@ class StorageTable(StorageTableBase):
         self._namespace = namespace
         self._partitions = partitions
         self._options = options if options else {}
-        self._storage_engine = StorageEngine.LINKIS_HIVE
-        self._type = storage_type if storage_type else LinkisHiveStoreType.DEFAULT
+        self._engine = StorageEngine.LINKIS_HIVE
+        self._store_type = storage_type if storage_type else LinkisHiveStoreType.DEFAULT
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def namespace(self):
+        return self._namespace
+
+    @property
+    def address(self):
+        return self._address
+
+    @property
+    def engine(self):
+        return self._engine
+
+    @property
+    def store_type(self):
+        return self._store_type
+
+    @property
+    def partitions(self):
+        return self._partitions
+
+    @property
+    def options(self):
+        return self._options
 
     def execute_entrance(self, sql):
         execute_url = f"http://{self._address.host}:{self._address.port}{EXECUTE_URI}"
@@ -85,27 +113,6 @@ class StorageTable(StorageTableBase):
                 break
             time.sleep(1)
         return self.result_entrance()
-
-    def get_partitions(self):
-        return self._partitions
-
-    def get_name(self):
-        return self._name
-
-    def get_namespace(self):
-        return self._namespace
-
-    def get_engine(self):
-        return self._storage_engine
-
-    def get_address(self):
-        return self._address
-
-    def get_type(self):
-        return self._type
-
-    def get_options(self):
-        return self._options
 
     def count(self, **kwargs):
         sql = 'select count(*) from {}'.format(self._address.name)
