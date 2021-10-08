@@ -27,7 +27,7 @@ https://fate.fedai.org
    :maxdepth: 3
    :caption: Algorithms
 
-   FederatedML <_build_temp/python/federatedml/README>
+   FederatedML <_build_temp/doc/federatedml>
    Examples <_build_temp/examples/README>
 
 .. toctree::
@@ -42,22 +42,22 @@ https://fate.fedai.org
    :maxdepth: 3
    :caption: FATE Clients
 
-   Flow SDK <_build_temp/python/fate_client/flow_sdk/README>
-   Flow Client <_build_temp/python/fate_client/flow_client/README>
-   Pipeline <_build_temp/python/fate_client/pipeline/README>
+   Flow SDK <_build_temp/doc/api/flow_sdk>
+   Flow Client <_build_temp/doc/api/flow_client>
+   Pipeline <_build_temp/doc/api/pipeline>
 
 .. toctree::
    :maxdepth: 3
    :caption: FATE Test
 
-   FATE TEST <_build_temp/python/fate_test/README>
+   FATE TEST <_build_temp/doc/api/fate_test>
 
 
 .. toctree::
    :maxdepth: 3
    :caption: Develop
 
-   Develop Guide <_build_temp/doc/develop_guide>
+   Develop Guide <_build_temp/doc/community/develop_guide>
 
 .. toctree::
    :maxdepth: 3
@@ -70,4 +70,4 @@ https://fate.fedai.org
    :maxdepth: 2
    :caption: Materials
 
-   _build_temp/doc/materials
+   _build_temp/doc/resources/materials
