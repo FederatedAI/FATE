@@ -17,7 +17,7 @@ from fate_arch.computing import ComputingEngine
 from fate_arch.federation import FederationEngine
 from fate_arch.storage import StorageEngine
 from fate_arch.common.address import StandaloneAddress, EggRollAddress, HDFSAddress, MysqlAddress, FileAddress, \
-    PathAddress
+    PathAddress, HiveAddress
 from fate_arch.common import EngineType
 
 
@@ -68,6 +68,7 @@ class Relationship(object):
         StorageEngine.STANDALONE: StandaloneAddress,
         StorageEngine.EGGROLL: EggRollAddress,
         StorageEngine.HDFS: HDFSAddress,
+        StorageEngine.HIVE: HiveAddress,
         StorageEngine.MYSQL: MysqlAddress,
         StorageEngine.FILE: FileAddress,
         StorageEngine.PATH: PathAddress

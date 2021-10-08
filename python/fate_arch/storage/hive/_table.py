@@ -37,7 +37,7 @@ class StorageTable(StorageTableBase):
         self._partitions = partitions
         self._options = options if options else {}
         self._storage_engine = StorageEngine.HIVE
-        self._type = storage_type if storage_type else HiveStoreType.DEFAULT
+        self._store_type = storage_type if storage_type else HiveStoreType.DEFAULT
 
     def execute(self, sql, select=True):
         self.cur.execute(sql)
@@ -67,8 +67,8 @@ class StorageTable(StorageTableBase):
     def get_address(self):
         return self._address
 
-    def get_type(self):
-        return self._type
+    def get_store_type(self):
+        return self._store_type
 
     def get_options(self):
         return self._options
@@ -86,29 +86,66 @@ class StorageTable(StorageTableBase):
         return count
 
     def collect(self, **kwargs) -> list:
-        sql = 'select * from {}'.format(self._address.name)
+        id_name, feature_name_list, _ = self.get_id_feature_name()
+        id_feature_name = [id_name]
+        id_feature_name.extend(feature_name_list)
+        sql = 'select {} from {}'.format(','.join(id_feature_name), self._address.name)
         data = self.execute(sql)
-        for i in data:
-            yield i[0], self.meta.get_id_delimiter().join(list(i[1:]))
+        for line in data:
+            feature_list = [str(feature) for feature in list(line[1:])]
+            yield line[0], self.meta.get_id_delimiter().join(feature_list)
 
     def put_all(self, kv_list, **kwargs):
-        pass
+        id_name, feature_name_list, id_delimiter = self.get_id_feature_name()
+        feature_sql, feature_list = StorageTable.get_meta_header(feature_name_list)
+        id_size = "varchar(100)"
+        create_table = "create table if not exists {}({} {} NOT NULL, {}) row format delimited fields terminated by" \
+                       " ','".format(self._address.name, id_name, id_size, feature_sql.strip(','))
+        self.cur.execute(create_table)
+        sql = 'INSERT INTO {}({}, {})  VALUES'.format(self._address.name, id_name, ','.join(feature_list))
+        for kv in kv_list:
+            sql += '("{}", "{}"),'.format(kv[0], '", "'.join(kv[1].split(id_delimiter)))
+        sql = ','.join(sql.split(',')[:-1])
+        self.cur.execute(sql)
+        self.con.commit()
+
+    def get_id_feature_name(self):
+        id = self.meta.get_schema().get('sid', 'id')
+        header = self.meta.get_schema().get('header')
+        id_delimiter = self.meta.get_id_delimiter()
+        if header:
+            if isinstance(header, str):
+                feature_list = header.split(id_delimiter)
+            elif isinstance(header, list):
+                feature_list = header
+            else:
+                feature_list = [header]
+        else:
+            raise Exception("hive table need data header")
+        return id, feature_list, id_delimiter
 
     def destroy(self):
         super().destroy()
-        sql = 'drop table {}'.format(self._name)
-        return self.execute(sql)
+        sql = 'drop table {}'.format(self._address.name)
+        self.cur.execute(sql)
+        self.con.commit()
+
+    def check_address(self):
+        schema = self.meta.get_schema()
+        if schema:
+            sql = 'SELECT {},{} FROM {}'.format(schema.get('sid'), schema.get('header'), self._address.name)
+            feature_data = self.execute(sql)
+            for feature in feature_data:
+                if feature:
+                    break
+        return True
 
     @staticmethod
-    def get_meta_header(feature_name_list, feature_num):
+    def get_meta_header(feature_name_list):
         create_features = ''
         feature_list = []
-        if feature_name_list:
-            for feature_name in feature_name_list:
-                create_features += '{} LONGTEXT,'.format(feature_name)
-                feature_list.append(feature_name)
-        else:
-            for i in range(0, feature_num):
-                create_features += '{} LONGTEXT,'.format(f'feature_{i}')
-                feature_list.append(f'feature_{i}')
+        feature_size = "varchar(255)"
+        for feature_name in feature_name_list:
+            create_features += '{} {},'.format(feature_name, feature_size)
+            feature_list.append(feature_name)
         return create_features, feature_list
