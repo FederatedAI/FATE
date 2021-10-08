@@ -36,9 +36,6 @@ $ cd /data/projects/common/apache-pulsar-2.7.0
 
 ``` bash
 
-# Setting time to confirm message automatically
-ttlDurationDefaultInSeconds=180
-
 # Enable to delete inactive topic
 brokerDeleteInactiveTopicsEnabled=true
 

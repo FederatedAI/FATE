@@ -110,7 +110,7 @@ class HomoBoostingClient(Boosting, ABC):
         local_classes = self.check_label(self.data_bin)
 
         # set start round
-        self.start_round = len(self.boosting_model_list)
+        self.start_round = len(self.boosting_model_list) // self.booster_dim
 
         # sync label class and set y
         if self.task_type == consts.CLASSIFICATION:

@@ -2,9 +2,9 @@
 
 The Cluster version provides four deployment methods, which can be selected according to your actual situation:
 
-- Install Cluster [Chinese guide](./doc/Fate_cluster_install_guide_ansible.md) 
-- Install AllinOne [Chinese guide](./doc/Fate-allinone_deployment_guide_install_zh.md)
-- Install Exchange Step By Step [Chinese guide](./doc/Fate-exchange_deployment_guide_zh.md)
+- Install Cluster [Chinese guide](doc/fate_on_eggroll/Fate_cluster_install_guide_ansible.md) 
+- Install AllinOne [Chinese guide](doc/fate_on_eggroll/Fate-allinone_deployment_guide_install_zh.md)
+- Install Exchange Step By Step [Chinese guide](doc/fate_on_eggroll/Fate-exchange_deployment_guide_zh.md)
 
 ## 1. General Introduction
 
@@ -42,7 +42,7 @@ This article will introduce the deployment of FATE cluster using ansible deploym
 
 Example deployment in two parties
 
-![](./images/arch_en.png)
+![](doc/images/arch_en.png)
 
 ## 2.Detailed Design
 
@@ -234,7 +234,7 @@ yum install -y epel-release
 
 ------
 
-![](./images/deploy_cluster_en.png)
+![](doc/images/deploy_cluster_en.png)
 
 ### 4.2 System Check
 
