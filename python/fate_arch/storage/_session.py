@@ -36,17 +36,18 @@ class StorageSessionBase(StorageSessionABC):
 
     def create_table(self, address, name, namespace, partitions=None, **kwargs):
         table = self.table(address=address, name=name, namespace=namespace, partitions=partitions, **kwargs)
-        table_meta = StorageTableMeta(name=name, namespace=namespace, new=True)
-        table_meta.set_metas(**kwargs)
-        table_meta.address = table.address
-        table_meta.partitions = table.partitions
-        table_meta.engine = table.engine()
-        table_meta.store_type = table.store_type
-        table_meta.options = table.options
-        table_meta.create()
-        table.meta = table_meta
-        # update count on meta
-        # table.count()
+        # table_meta = StorageTableMeta(name=name, namespace=namespace, new=True)
+        # table_meta.set_metas(**kwargs)
+        # table_meta.address = table.address
+        # table_meta.partitions = table.partitions
+        # table_meta.engine = table.engine
+        # table_meta.store_type = table.store_type
+        # table_meta.options = table.options
+        # table_meta.create()
+        # table.meta = table_meta
+        # # update count on meta
+        # # table.count()
+        table.create_meta(**kwargs)
         return table
 
     def get_table(self, name, namespace):

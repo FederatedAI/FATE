@@ -161,6 +161,20 @@ class StorageTableABC(metaclass=abc.ABCMeta):
         ...
 
     @abc.abstractmethod
+    def update_meta(self,
+                    schema=None,
+                    count=None,
+                    part_of_data=None,
+                    description=None,
+                    partitions=None,
+                    **kwargs) -> StorageTableMetaABC:
+        ...
+
+    @abc.abstractmethod
+    def create_meta(self, **kwargs) -> StorageTableMetaABC:
+        ...
+
+    @abc.abstractmethod
     def put_all(self, kv_list: Iterable, **kwargs):
         ...
 

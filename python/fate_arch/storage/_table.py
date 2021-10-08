@@ -87,6 +87,17 @@ class StorageTableBase(StorageTableABC):
                                 partitions=partitions,
                                 **kwargs)
 
+    def create_meta(self, **kwargs):
+        table_meta = StorageTableMeta(name=self._name, namespace=self._namespace, new=True)
+        table_meta.set_metas(**kwargs)
+        table_meta.address = self.address
+        table_meta.partitions = self.partitions
+        table_meta.engine = self.engine
+        table_meta.store_type = self.store_type
+        table_meta.options = self.options
+        table_meta.create()
+        self.meta = table_meta
+
     @property
     def read_access_time(self):
         return self._read_access_time
