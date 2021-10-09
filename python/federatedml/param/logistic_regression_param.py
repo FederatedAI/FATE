@@ -247,10 +247,7 @@ class LogisticParam(BaseParam):
         for p in ["early_stopping_rounds", "validation_freqs", "metrics",
                   "use_first_metric_only"]:
             if self._warn_to_deprecate_param(p, "", ""):
-                # assert 1 == 2, f"{self._deprecated_params_set}, {self.get_user_feeded()}"
                 if "callback_param" in self.get_user_feeded():
-                    import pprint
-                    pprint.pprint(f"{self._deprecated_params_set}, {self.get_user_feeded()}")
                     raise ValueError(f"{p} and callback param should not be set simultaneously，"
                                      f"{self._deprecated_params_set}, {self.get_user_feeded()}")
                 else:
