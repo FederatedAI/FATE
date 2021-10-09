@@ -21,54 +21,33 @@ from fate_arch.storage import StorageTableBase
 
 
 class StorageTable(StorageTableBase):
-    def __init__(self,
-                 session: Session,
-                 address=None,
-                 name: str = None,
-                 namespace: str = None,
-                 partitions: int = 1,
-                 store_type: StandaloneStoreType = None,
-                 options=None):
-        super(StorageTable, self).__init__(name=name, namespace=namespace)
+    def __init__(
+        self,
+        session: Session,
+        address=None,
+        name: str = None,
+        namespace: str = None,
+        partitions: int = 1,
+        store_type: StandaloneStoreType = StandaloneStoreType.ROLLPAIR_LMDB,
+        options=None,
+    ):
+        super(StorageTable, self).__init__(
+            name=name,
+            namespace=namespace,
+            address=address,
+            partitions=partitions,
+            options=options,
+            engine=StorageEngine.STANDALONE,
+            store_type=store_type,
+        )
         self._session = session
-        self._address = address
-        self._name = name
-        self._namespace = namespace
-        self._partitions = partitions
-        self._store_type = store_type if store_type else StandaloneStoreType.ROLLPAIR_LMDB
-        self._options = options if options else {}
-        self._engine = StorageEngine.STANDALONE
-        need_cleanup = self._store_type == StandaloneStoreType.ROLLPAIR_IN_MEMORY
-        self._table = self._session.create_table(namespace=self._namespace, name=self._name, partitions=partitions,
-                                                 need_cleanup=need_cleanup, error_if_exist=False)
-
-    @property
-    def name(self):
-        return self._name
-
-    @property
-    def namespace(self):
-        return self._namespace
-
-    @property
-    def address(self):
-        return self._address
-
-    @property
-    def engine(self):
-        return self._engine
-
-    @property
-    def store_type(self):
-        return self._store_type
-
-    @property
-    def partitions(self):
-        return self._table.partitions
-
-    @property
-    def options(self):
-        return self._options
+        self._table = self._session.create_table(
+            namespace=self._namespace,
+            name=self._name,
+            partitions=partitions,
+            need_cleanup=self._store_type == StandaloneStoreType.ROLLPAIR_IN_MEMORY,
+            error_if_exist=False,
+        )
 
     def _put_all(self, kv_list: Iterable, **kwargs):
         return self._table.put_all(kv_list)
@@ -78,6 +57,6 @@ class StorageTable(StorageTableBase):
 
     def _count(self):
         return self._table.count()
-    
+
     def _destroy(self):
         return self._table.destroy()

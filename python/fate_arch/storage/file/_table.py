@@ -26,44 +26,26 @@ LOGGER = getLogger()
 
 
 class StorageTable(StorageTableBase):
-    def __init__(self,
-                 address=None,
-                 name: str = None,
-                 namespace: str = None,
-                 partitions: int = 1,
-                 store_type: FileStoreType = None,
-                 delimiter=None,
-                 options=None):
-        super(StorageTable, self).__init__(name=name, namespace=namespace)
-        self._address = address
-        self._name = name
-        self._namespace = namespace
-        self._partitions = partitions
-        self._store_type = store_type if store_type else FileStoreType.CSV
-        self._options = options if options else {}
-        self._engine = StorageEngine.FILE
+    def __init__(
+        self,
+        address=None,
+        name: str = None,
+        namespace: str = None,
+        partitions: int = 1,
+        store_type: FileStoreType = FileStoreType.CSV,
+        delimiter=None,
+        options=None,
+    ):
+        super(StorageTable, self).__init__(
+            name=name,
+            namespace=namespace,
+            address=address,
+            partitions=partitions,
+            options=options,
+            engine=StorageEngine.FILE,
+            store_type=store_type,
+        )
         self._delimiter = delimiter
-
-    def get_name(self):
-        return self._name
-
-    def get_namespace(self):
-        return self._namespace
-
-    def get_address(self):
-        return self._address
-
-    def get_engine(self):
-        return self._engine
-
-    def get_store_type(self):
-        return self._store_type
-
-    def get_partitions(self):
-        return self._partitions
-
-    def get_options(self):
-        return self._options
 
     def _put_all(self, kv_list: Iterable, **kwargs):
         pass
@@ -71,7 +53,7 @@ class StorageTable(StorageTableBase):
     def _collect(self, **kwargs) -> list:
         if not self._delimiter:
             if self._store_type == FileStoreType.CSV:
-                self._delimiter = ','
+                self._delimiter = ","
         pass
 
     def _destroy(self):
@@ -80,7 +62,8 @@ class StorageTable(StorageTableBase):
     def _count(self):
         pass
 
-    def save_as(self, address, partitions=None, name=None, namespace=None, schema=None, **kwargs):
+    def save_as(
+        self, address, partitions=None, name=None, namespace=None, schema=None, **kwargs
+    ):
         super().save_as(name, namespace, partitions=partitions, schema=schema)
         pass
-

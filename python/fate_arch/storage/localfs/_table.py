@@ -24,73 +24,52 @@ from fate_arch.common import hdfs_utils
 from fate_arch.common.log import getLogger
 from fate_arch.storage import StorageEngine, LocalFSStoreType
 from fate_arch.storage import StorageTableBase
+from fate_client.flow_client.flow_cli.commands.table import add
 
 LOGGER = getLogger()
 
 
 class StorageTable(StorageTableBase):
-    def __init__(self,
-                 address=None,
-                 name: str = None,
-                 namespace: str = None,
-                 partitions: int = None,
-                 storage_type: LocalFSStoreType = None,
-                 options=None):
-        super(StorageTable, self).__init__(name=name, namespace=namespace)
-        self._address = address
-        self._name = name
-        self._namespace = namespace
-        self._partitions = partitions if partitions else 1
-        self._store_type = storage_type if storage_type else LocalFSStoreType.DISK
-        self._options = options if options else {}
-        self._engine = StorageEngine.LOCALFS
-
+    def __init__(
+        self,
+        address=None,
+        name: str = None,
+        namespace: str = None,
+        partitions: int = 1,
+        storage_type: LocalFSStoreType = LocalFSStoreType.DISK,
+        options=None,
+    ):
+        super(StorageTable, self).__init__(
+            name=name,
+            namespace=namespace,
+            address=address,
+            partitions=partitions,
+            options=options,
+            engine=StorageEngine.LOCALFS,
+            store_type=storage_type,
+        )
         self._local_fs_client = fs.LocalFileSystem()
-
-    @property
-    def name(self):
-        return self._name
-
-    @property
-    def namespace(self):
-        return self._namespace
-
-    @property
-    def address(self):
-        return self._address
-
-    @property
-    def get_engine(self):
-        return self._engine
-
-    @property
-    def store_type(self):
-        return self._store_type
-
-    @property
-    def partitions(self):
-        return self._partitions
-
-    @property
-    def options(self):
-        return self._options
 
     @property
     def path(self):
         return self._address.path
 
-    def _put_all(self, kv_list: Iterable, append=True, assume_file_exist=False, **kwargs):
+    def _put_all(
+        self, kv_list: Iterable, append=True, assume_file_exist=False, **kwargs
+    ):
         LOGGER.info(f"put in file: {self._path}")
 
         # always create the directory first, otherwise the following creation of file will fail.
-        self._local_fs_client.create_dir('/'.join(self._path.split('/')[:-1]))
+        self._local_fs_client.create_dir("/".join(self._path.split("/")[:-1]))
 
         if append and (assume_file_exist or self._exist()):
             stream = self._local_fs_client.open_append_stream(
-                path=self._path, compression=None)
+                path=self._path, compression=None
+            )
         else:
             stream = self._local_fs_client.open_output_stream(
-                path=self._path, compression=None)
+                path=self._path, compression=None
+            )
 
         # todo: when append, counter is not right;
         counter = 0
@@ -122,10 +101,18 @@ class StorageTable(StorageTableBase):
             count += 1
         return count
 
-    def save_as(self, address, partitions=None, name=None, namespace=None, schema=None, **kwargs):
+    def save_as(
+        self, address, partitions=None, name=None, namespace=None, schema=None, **kwargs
+    ):
         super().save_as(name, namespace, partitions=partitions, schema=schema)
         self._local_fs_client.copy_file(src=self._path, dst=address.path)
-        return StorageTable(address=address, partitions=partitions, name=name, namespace=namespace, **kwargs)
+        return StorageTable(
+            address=address,
+            partitions=partitions,
+            name=name,
+            namespace=namespace,
+            **kwargs,
+        )
 
     def close(self):
         pass
@@ -140,8 +127,10 @@ class StorageTable(StorageTableBase):
             raise FileNotFoundError(f"file {self._path} not found")
 
         elif info.type == fs.FileType.File:
-            with io.TextIOWrapper(buffer=self._local_fs_client.open_input_stream(self._path),
-                                  encoding="utf-8") as reader:
+            with io.TextIOWrapper(
+                buffer=self._local_fs_client.open_input_stream(self._path),
+                encoding="utf-8",
+            ) as reader:
                 for line in reader:
                     yield line
 
@@ -151,10 +140,14 @@ class StorageTable(StorageTableBase):
             for file_info in file_infos:
                 if file_info.base_name == "_SUCCESS":
                     continue
-                assert file_info.is_file, f"{self._path} is directory contains a subdirectory: {file_info.path}"
+                assert (
+                    file_info.is_file
+                ), f"{self._path} is directory contains a subdirectory: {file_info.path}"
                 with io.TextIOWrapper(
-                        buffer=self._local_fs_client.open_input_stream(
-                            f"{self._address.file_path:}/{file_info.path}"),
-                        encoding="utf-8") as reader:
+                    buffer=self._local_fs_client.open_input_stream(
+                        f"{self._address.file_path:}/{file_info.path}"
+                    ),
+                    encoding="utf-8",
+                ) as reader:
                     for line in reader:
                         yield line

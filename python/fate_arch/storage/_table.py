@@ -30,48 +30,62 @@ LOGGER = getLogger()
 
 
 class StorageTableBase(StorageTableABC):
-    def __init__(self, name, namespace):
+    def __init__(self, name, namespace, address, partitions, options, engine, store_type):
         self._name = name
         self._namespace = namespace
+        self._address = address
+        self._partitions = partitions
+        self._options = options if options else {}
+        self._engine = engine
+        self._store_type = store_type
+
         self._meta = None
         self._read_access_time = None
         self._write_access_time = None
 
     @property
     def name(self):
-        pass
+        return self._name
 
     @property
     def namespace(self):
-        pass
+        return self._namespace
 
     @property
     def address(self):
-        pass
-
-    @property
-    def engine(self):
-        pass
-
-    @property
-    def store_type(self):
-        pass
-
+        return self._address
+    
     @property
     def partitions(self):
-        pass
+        return self._partitions
 
     @property
     def options(self):
-        pass
+        return self._options
 
+    @property
+    def engine(self):
+        return self._engine
+
+    @property
+    def store_type(self):
+        return self._store_type 
+    
     @property
     def meta(self):
         return self._meta
-
+    
     @meta.setter
     def meta(self, meta):
         self._meta = meta
+    
+    @property
+    def read_access_time(self):
+        return self._read_access_time
+
+    @property
+    def write_access_time(self):
+        return self._write_access_time
     
     def update_meta(self,
                     schema=None,
@@ -98,13 +112,6 @@ class StorageTableBase(StorageTableABC):
         table_meta.create()
         self._meta = table_meta
 
-    @property
-    def read_access_time(self):
-        return self._read_access_time
-
-    @property
-    def write_access_time(self):
-        return self._write_access_time
     
     def put_all(self, kv_list: Iterable, **kwargs):
         self._update_write_access_time()
