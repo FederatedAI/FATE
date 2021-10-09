@@ -80,7 +80,7 @@ class StorageTable(StorageTableBase):
     def options(self):
         return self._options
 
-    def put_all(self, kv_list: Iterable, append=True, assume_file_exist=False, **kwargs):
+    def _put_all(self, kv_list: Iterable, append=True, assume_file_exist=False, **kwargs):
         LOGGER.info(f"put in hdfs file: {self._path}")
         if append and (assume_file_exist or self._exist()):
             stream = self._hdfs_client.open_append_stream(path=self._path, compression=None)
@@ -96,23 +96,21 @@ class StorageTable(StorageTableBase):
                 counter = counter + 1
         self._meta.update_metas(count=counter)
 
-    def collect(self, **kwargs) -> list:
+    def _collect(self, **kwargs) -> list:
         for line in self._as_generator():
             yield hdfs_utils.deserialize(line.rstrip())
 
-    def read(self) -> list:
+    def _read(self) -> list:
         for line in self._as_generator():
             yield line
 
-    def destroy(self):
-        super().destroy()
+    def _destroy(self):
         self._hdfs_client.delete_file(self._path)
 
-    def count(self):
+    def _count(self):
         count = 0
         for _ in self._as_generator():
             count += 1
-        self.meta.update_metas(count=count)
         return count
 
     def save_as(self, address, partitions=None, name=None, namespace=None, schema=None, **kwargs):

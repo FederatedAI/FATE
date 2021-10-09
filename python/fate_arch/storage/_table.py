@@ -72,7 +72,7 @@ class StorageTableBase(StorageTableABC):
     @meta.setter
     def meta(self, meta):
         self._meta = meta
-
+    
     def update_meta(self,
                     schema=None,
                     count=None,
@@ -96,48 +96,66 @@ class StorageTableBase(StorageTableABC):
         table_meta.store_type = self.store_type
         table_meta.options = self.options
         table_meta.create()
-        self.meta = table_meta
+        self._meta = table_meta
 
     @property
     def read_access_time(self):
         return self._read_access_time
 
-    def update_read_access_time(self, read_access_time=None):
-        read_access_time = current_timestamp() if not read_access_time else read_access_time
-        self._meta.update_metas(read_access_time=read_access_time)
-
     @property
     def write_access_time(self):
         return self._write_access_time
+    
+    def put_all(self, kv_list: Iterable, **kwargs):
+        self._update_write_access_time()
+        self._put_all(kv_list, **kwargs)
 
-    def update_write_access_time(self, write_access_time=None):
+    def collect(self, **kwargs) -> list:
+        self._update_read_access_time()
+        return self._collect(**kwargs)
+
+    def count(self):
+        self._update_read_access_time()
+        count = self._count()
+        self.meta.update_metas(count=count)
+
+    def read(self):
+        self._update_read_access_time()
+        return self._read()
+    
+    def destroy(self):
+        self.meta.destroy_metas()
+        self._destory()
+
+    def _update_read_access_time(self, read_access_time=None):
+        read_access_time = current_timestamp() if not read_access_time else read_access_time
+        self._meta.update_metas(read_access_time=read_access_time)
+
+    def _update_write_access_time(self, write_access_time=None):
         write_access_time = current_timestamp() if not write_access_time else write_access_time
         self._meta.update_metas(write_access_time=write_access_time)
 
-    def put_all(self, kv_list: Iterable, **kwargs):
+    # to be implement 
+    def _put_all(self, kv_list: Iterable, **kwargs):
         pass
 
-    def collect(self, **kwargs) -> list:
+    def _collect(self, **kwargs) -> list:
+        pass
+    
+    def _count(self):
+        pass
+    
+    def _read(self):
         pass
 
-    def read(self) -> list:
+    def _destory(self):
         pass
-
-    def count(self):
-        pass
-
+    
     def save_as(self, name, namespace, partitions=None, schema=None):
         pass
-        # src_table_meta = self.meta
 
     def check_address(self):
         return True
-
-    def destroy(self):
-        # destroy schema
-        self._meta.destroy_metas()
-        # subclass method needs do: super().destroy()
-
 
 class StorageTableMeta(StorageTableMetaABC):
 

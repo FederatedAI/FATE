@@ -76,10 +76,10 @@ class StorageTable(StorageTableBase):
         return self._options
 
     @property
-    def _path(self):
+    def path(self):
         return self._address.path
 
-    def put_all(self, kv_list: Iterable, append=True, assume_file_exist=False, **kwargs):
+    def _put_all(self, kv_list: Iterable, append=True, assume_file_exist=False, **kwargs):
         LOGGER.info(f"put in file: {self._path}")
 
         # always create the directory first, otherwise the following creation of file will fail.
@@ -101,28 +101,25 @@ class StorageTable(StorageTableBase):
                 counter = counter + 1
         self._meta.update_metas(count=counter)
 
-    def collect(self, **kwargs) -> list:
+    def _collect(self, **kwargs) -> list:
         for line in self._as_generator():
             yield hdfs_utils.deserialize(line.rstrip())
 
-    def read(self) -> list:
+    def _read(self) -> list:
         for line in self._as_generator():
             yield line
 
-    def destroy(self):
-        super().destroy()
-
+    def _destroy(self):
         # use try/catch to avoid stop while deleting an non-exist file
         try:
             self._local_fs_client.delete_file(self._path)
         except Exception as e:
             LOGGER.debug(e)
 
-    def count(self):
+    def _count(self):
         count = 0
         for _ in self._as_generator():
             count += 1
-        self.get_meta().update_metas(count=count)
         return count
 
     def save_as(self, address, partitions=None, name=None, namespace=None, schema=None, **kwargs):

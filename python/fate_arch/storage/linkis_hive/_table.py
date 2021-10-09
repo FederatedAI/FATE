@@ -114,16 +114,15 @@ class StorageTable(StorageTableBase):
             time.sleep(1)
         return self.result_entrance()
 
-    def count(self, **kwargs):
+    def _count(self, **kwargs):
         sql = 'select count(*) from {}'.format(self._address.name)
         try:
             count = self.execute(sql)
         except:
             count = 0
-        self.meta.update_metas(count=count)
         return count
 
-    def collect(self, **kwargs):
+    def _collect(self, **kwargs):
         from fate_arch.common.log import schedule_logger
         if kwargs.get("is_spark"):
             from pyspark.sql import SparkSession
@@ -138,14 +137,13 @@ class StorageTable(StorageTableBase):
             for i in data:
                 yield i[0], self.meta.get_id_delimiter().join(list(i[1:]))
 
-    def put_all(self, kv_pd, **kwargs):
+    def _put_all(self, kv_pd, **kwargs):
         from pyspark.sql import SparkSession
         session = SparkSession.builder.enableHiveSupport().getOrCreate()
         session.sql("use {}".format(self._address.database))
         spark_df = session.createDataFrame(kv_pd)
         spark_df.write.saveAsTable(self._address.name, format="orc")
 
-    def destroy(self):
-        super().destroy()
+    def _destroy(self):
         sql = 'drop table {}.{}'.format(self._address.database, self._address.name)
         return self.execute(sql)

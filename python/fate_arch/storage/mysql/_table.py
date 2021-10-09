@@ -80,7 +80,7 @@ class StorageTable(StorageTableBase):
             result = self._cur.fetchall()
             return result
 
-    def count(self, **kwargs):
+    def _count(self):
         sql = 'select count(*) from {}'.format(self._address.name)
         try:
             self._cur.execute(sql)
@@ -89,10 +89,9 @@ class StorageTable(StorageTableBase):
             count = ret[0][0]
         except:
             count = 0
-        self.meta.update_metas(count=count)
         return count
 
-    def collect(self, **kwargs) -> list:
+    def _collect(self, **kwargs) -> list:
         id_name, feature_name_list, _ = self.get_id_feature_name()
         id_feature_name = [id_name]
         id_feature_name.extend(feature_name_list)
@@ -102,7 +101,7 @@ class StorageTable(StorageTableBase):
             feature_list = [str(feature) for feature in list(line[1:])]
             yield line[0], self.meta.get_id_delimiter().join(feature_list)
 
-    def put_all(self, kv_list, **kwargs):
+    def _put_all(self, kv_list, **kwargs):
         id_name, feature_name_list, id_delimiter = self.get_id_feature_name()
         feature_sql, feature_list = StorageTable.get_meta_header(feature_name_list)
         id_size = "varchar(100)"
@@ -113,6 +112,11 @@ class StorageTable(StorageTableBase):
         for kv in kv_list:
             sql += '("{}", "{}"),'.format(kv[0], '", "'.join(kv[1].split(id_delimiter)))
         sql = ','.join(sql.split(',')[:-1]) + ';'
+        self._cur.execute(sql)
+        self._con.commit()
+
+    def _destroy(self):
+        sql = 'drop table {}'.format(self._address.name)
         self._cur.execute(sql)
         self._con.commit()
 
@@ -130,13 +134,7 @@ class StorageTable(StorageTableBase):
         else:
             raise Exception("mysql table need data header")
         return id, feature_list, id_delimiter
-
-    def destroy(self):
-        super().destroy()
-        sql = 'drop table {}'.format(self._address.name)
-        self._cur.execute(sql)
-        self._con.commit()
-
+    
     def check_address(self):
         schema = self.meta.get_schema()
         if schema:

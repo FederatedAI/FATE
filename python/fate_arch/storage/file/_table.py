@@ -65,20 +65,19 @@ class StorageTable(StorageTableBase):
     def get_options(self):
         return self._options
 
-    def put_all(self, kv_list: Iterable, **kwargs):
+    def _put_all(self, kv_list: Iterable, **kwargs):
         pass
 
-    def collect(self, **kwargs) -> list:
+    def _collect(self, **kwargs) -> list:
         if not self._delimiter:
             if self._store_type == FileStoreType.CSV:
                 self._delimiter = ','
         pass
 
-    def destroy(self):
-        super().destroy()
+    def _destroy(self):
         pass
 
-    def count(self):
+    def _count(self):
         pass
 
     def save_as(self, address, partitions=None, name=None, namespace=None, schema=None, **kwargs):

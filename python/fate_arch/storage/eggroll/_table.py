@@ -69,9 +69,6 @@ class StorageTable(StorageTableBase):
     def options(self):
         return self._options
 
-    def put_all(self, kv_list: Iterable, **kwargs):
-        super(StorageTable, self).update_write_access_time()
-        return self._table.put_all(kv_list)
 
     # todo: must be fixed , result must be wrapped.
     def union(self, other):
@@ -81,17 +78,15 @@ class StorageTable(StorageTableBase):
     def save_as(self, name, namespace, partitions=None, schema=None):
         super().save_as(name, namespace, partitions=partitions, schema=schema)
         return self._table.save_as(name=name, namespace=namespace)
-
-    def collect(self, **kwargs) -> list:
-        super(StorageTable, self).update_read_access_time()
+   
+    def _put_all(self, kv_list: Iterable, **kwargs):
+        return self._table.put_all(kv_list)
+    
+    def _collect(self, **kwargs) -> list:
         return self._table.get_all(**kwargs)
 
-    def destroy(self):
-        super().destroy()
+    def _destroy(self):
         return self._table.destroy()
 
-    def count(self, **kwargs):
-        super(StorageTable, self).update_read_access_time()
-        count = self._table.count()
-        self.meta.update_metas(count=count)
-        return count
+    def _count(self, **kwargs):
+        return self._table.count()

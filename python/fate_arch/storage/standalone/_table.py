@@ -70,19 +70,14 @@ class StorageTable(StorageTableBase):
     def options(self):
         return self._options
 
-    def put_all(self, kv_list: Iterable, **kwargs):
-        super(StorageTable, self).update_write_access_time()
+    def _put_all(self, kv_list: Iterable, **kwargs):
         return self._table.put_all(kv_list)
 
-    def collect(self, **kwargs):
-        super(StorageTable, self).update_read_access_time()
+    def _collect(self, **kwargs):
         return self._table.collect(**kwargs)
 
-    def destroy(self):
-        super().destroy()
+    def _count(self):
+        return self._table.count()
+    
+    def _destroy(self):
         return self._table.destroy()
-
-    def count(self):
-        count = self._table.count()
-        self.meta.update_metas(count=count)
-        return count

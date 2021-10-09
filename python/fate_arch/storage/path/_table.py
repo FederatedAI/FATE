@@ -61,22 +61,17 @@ class StorageTable(StorageTableBase):
     def get_options(self):
         return self._options
 
-    def put_all(self, kv_list: Iterable, append=True, assume_file_exist=False, **kwargs):
+    def _collect(self, **kwargs) -> list:
+        return []
+
+    def _read(self) -> list:
+        return []
+
+    def _destroy(self):
         pass
 
-    def collect(self, **kwargs) -> list:
-        return []
-
-    def read(self) -> list:
-        return []
-
-    def destroy(self):
-        super().destroy()
-
-    def count(self):
-        count = path_utils.get_data_table_count(self._address.path)
-        self.meta.update_metas(count=count)
-        return count
+    def _count(self):
+        return path_utils.get_data_table_count(self._address.path)
 
     def save_as(self, address, partitions=None, name=None, namespace=None, schema=None, **kwargs):
         return None

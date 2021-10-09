@@ -80,7 +80,7 @@ class StorageTable(StorageTableBase):
             result = self.cur.fetchall()
             return result
 
-    def count(self, **kwargs):
+    def _count(self, **kwargs):
         sql = 'select count(*) from {}'.format(self._address.name)
         try:
             self.cur.execute(sql)
@@ -89,20 +89,18 @@ class StorageTable(StorageTableBase):
             count = ret[0][0]
         except:
             count = 0
-        self.meta.update_metas(count=count)
         return count
 
-    def collect(self, **kwargs) -> list:
+    def _collect(self, **kwargs) -> list:
         sql = 'select * from {}'.format(self._address.name)
         data = self.execute(sql)
         for i in data:
             yield i[0], self.meta.get_id_delimiter().join(list(i[1:]))
 
-    def put_all(self, kv_list, **kwargs):
+    def _put_all(self, kv_list, **kwargs):
         pass
 
-    def destroy(self):
-        super().destroy()
+    def _destroy(self):
         sql = 'drop table {}'.format(self._name)
         return self.execute(sql)
 
