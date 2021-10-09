@@ -30,6 +30,8 @@ def flow_cli(ctx):
     Fate Flow Client
     """
     ctx.ensure_object(dict)
+    if ctx.invoked_subcommand == 'init':
+        return
 
     with open(os.path.join(os.path.dirname(__file__), "settings.yaml"), "r") as fin:
         config = yaml.safe_load(fin)
