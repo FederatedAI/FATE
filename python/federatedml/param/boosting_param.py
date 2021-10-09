@@ -17,7 +17,7 @@
 #  limitations under the License.
 #
 
-from federatedml.param.base_param import BaseParam
+from federatedml.param.base_param import BaseParam, deprecated_param
 from federatedml.param.encrypt_param import EncryptParam
 from federatedml.param.encrypted_mode_calculation_param import EncryptedModeCalculatorParam
 from federatedml.param.cross_validation_param import CrossValidationParam
@@ -26,6 +26,10 @@ from federatedml.param.callback_param import CallbackParam
 from federatedml.util import consts, LOGGER
 import copy
 import collections
+
+hetero_deprecated_param_list = ["early_stopping_rounds", "validation_freqs", "metrics", "use_first_metric_only"]
+
+homo_deprecated_param_list = ["validation_freqs", "metrics"]
 
 
 class ObjectiveParam(BaseParam):
@@ -374,6 +378,7 @@ class HeteroBoostingParam(BoostingParam):
         return True
 
 
+@deprecated_param(*hetero_deprecated_param_list)
 class HeteroSecureBoostParam(HeteroBoostingParam):
     """
         Define boosting tree parameters that used in federated ml.
@@ -505,6 +510,17 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         self.check_boolean(self.new_ver, 'code version switcher')
         self.check_boolean(self.cipher_compress, 'cipher compress')
 
+        for p in ["early_stopping_rounds", "validation_freqs", "metrics",
+                  "use_first_metric_only"]:
+            # if self._warn_to_deprecate_param(p, "", ""):
+            if self._deprecated_params_set.get(p):
+                if "callback_param" in self.get_user_feeded():
+                    raise ValueError(f"{p} and callback param should not be set simultaneously，"
+                                     f"{self._deprecated_params_set}, {self.get_user_feeded()}")
+                else:
+                    self.callback_param.callbacks = ["PerformanceEvaluate"]
+                break
+
         if self.top_rate + self.other_rate >= 1:
             raise ValueError('sum of top rate and other rate should be smaller than 1')
 
@@ -583,6 +599,7 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
         return True
 
 
+@deprecated_param(*homo_deprecated_param_list)
 class HomoSecureBoostParam(BoostingParam):
 
     """
@@ -618,6 +635,7 @@ class HomoSecureBoostParam(BoostingParam):
         self.callback_param = callback_param
 
     def check(self):
+
         super(HomoSecureBoostParam, self).check()
         self.tree_param.check()
         if type(self.use_missing) != bool:
@@ -626,4 +644,15 @@ class HomoSecureBoostParam(BoostingParam):
             raise ValueError('zero as missing should be bool type')
         if self.backend not in [consts.MEMORY_BACKEND, consts.DISTRIBUTED_BACKEND]:
             raise ValueError('unsupported backend')
+
+        for p in ["validation_freqs", "metrics"]:
+            # if self._warn_to_deprecate_param(p, "", ""):
+            if self._deprecated_params_set.get(p):
+                if "callback_param" in self.get_user_feeded():
+                    raise ValueError(f"{p} and callback param should not be set simultaneously，"
+                                     f"{self._deprecated_params_set}, {self.get_user_feeded()}")
+                else:
+                    self.callback_param.callbacks = ["PerformanceEvaluate"]
+                break
+
         return True
