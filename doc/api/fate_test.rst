@@ -3,7 +3,7 @@ FATE Test
 
 A collection of useful tools to running FATE's test.
 
-.. image:: images/tutorial.gif
+.. image:: ../images/tutorial.gif
    :align: center
    :alt: tutorial
 
