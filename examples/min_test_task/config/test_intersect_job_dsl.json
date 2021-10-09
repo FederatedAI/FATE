@@ -1,18 +1,31 @@
 {
-    "components" : {
+    "components": {
+        "reader_0": {
+            "module": "Reader",
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
+        },
         "dataio_0": {
             "module": "DataIO",
             "input": {
                 "data": {
                     "data": [
-                        "args.data"
+                        "reader_0.data"
                     ]
                 }
             },
             "output": {
-                "data": ["data"]
+                "data": [
+                    "data"
+                ],
+                "model": [
+                    "model"
+                ]
             }
-         },
+        },
         "intersect_0": {
             "module": "Intersection",
             "input": {
@@ -23,7 +36,9 @@
                 }
             },
             "output": {
-                "data": ["intersect_data"],
+                "data": [
+                    "data"
+                ]
             }
         }
     }
