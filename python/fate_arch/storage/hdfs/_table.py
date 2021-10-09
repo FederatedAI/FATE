@@ -55,6 +55,9 @@ class StorageTable(StorageTableBase):
             LOGGER.warning(f"load libhdfs failed: {e}")
         self._hdfs_client = fs.HadoopFileSystem.from_uri(self._path)
 
+    def check_address(self):
+        return self._exist()
+    
     def _put_all(
         self, kv_list: Iterable, append=True, assume_file_exist=False, **kwargs
     ):
@@ -94,7 +97,7 @@ class StorageTable(StorageTableBase):
             count += 1
         return count
 
-    def save_as(
+    def _save_as(
         self, address, partitions=None, name=None, namespace=None, schema=None, **kwargs
     ):
         self._hdfs_client.copy_file(src=self._path, dst=address.path)
@@ -108,8 +111,6 @@ class StorageTable(StorageTableBase):
         table.create_meta(**kwargs)
         return table
 
-    def check_address(self):
-        return self._exist()
 
     def close(self):
         pass

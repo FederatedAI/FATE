@@ -54,8 +54,3 @@ class StorageTable(StorageTableBase):
 
     def _count(self):
         return path_utils.get_data_table_count(self._address.path)
-
-    def save_as(
-        self, address, partitions=None, name=None, namespace=None, schema=None, **kwargs
-    ):
-        return None
