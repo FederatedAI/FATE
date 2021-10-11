@@ -28,7 +28,6 @@ import copy
 import collections
 
 hetero_deprecated_param_list = ["early_stopping_rounds", "validation_freqs", "metrics", "use_first_metric_only"]
-
 homo_deprecated_param_list = ["validation_freqs", "metrics"]
 
 
@@ -521,6 +520,20 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
                     self.callback_param.callbacks = ["PerformanceEvaluate"]
                 break
 
+        descr = "boosting_param's"
+
+        if self._warn_to_deprecate_param("validation_freqs", descr, "callback_param's 'validation_freqs'"):
+            self.callback_param.validation_freqs = self.validation_freqs
+
+        if self._warn_to_deprecate_param("early_stopping_rounds", descr, "callback_param's 'early_stopping_rounds'"):
+            self.callback_param.early_stopping_rounds = self.early_stopping_rounds
+
+        if self._warn_to_deprecate_param("metrics", descr, "callback_param's 'metrics'"):
+            self.callback_param.metrics = self.metrics
+
+        if self._warn_to_deprecate_param("use_first_metric_only", descr, "callback_param's 'use_first_metric_only'"):
+            self.callback_param.use_first_metric_only = self.use_first_metric_only
+
         if self.top_rate + self.other_rate >= 1:
             raise ValueError('sum of top rate and other rate should be smaller than 1')
 
@@ -654,5 +667,13 @@ class HomoSecureBoostParam(BoostingParam):
                 else:
                     self.callback_param.callbacks = ["PerformanceEvaluate"]
                 break
+
+        descr = "boosting_param's"
+
+        if self._warn_to_deprecate_param("validation_freqs", descr, "callback_param's 'validation_freqs'"):
+            self.callback_param.validation_freqs = self.validation_freqs
+
+        if self._warn_to_deprecate_param("metrics", descr, "callback_param's 'metrics'"):
+            self.callback_param.metrics = self.metrics
 
         return True
