@@ -19,53 +19,28 @@ from fate_arch.storage import StorageTableBase
 
 
 class StorageTable(StorageTableBase):
-    def __init__(self,
-                 cur,
-                 con,
-                 address=None,
-                 name: str = None,
-                 namespace: str = None,
-                 partitions: int = 1,
-                 storage_type: HiveStoreType = None,
-                 options=None):
-        super(StorageTable, self).__init__(name=name, namespace=namespace)
+    def __init__(
+        self,
+        cur,
+        con,
+        address=None,
+        name: str = None,
+        namespace: str = None,
+        partitions: int = 1,
+        storage_type: HiveStoreType = HiveStoreType.DEFAULT,
+        options=None,
+    ):
+        super(StorageTable, self).__init__(
+            name=name,
+            namespace=namespace,
+            address=address,
+            partitions=partitions,
+            options=options,
+            engine=StorageEngine.HIVE,
+            store_type=storage_type,
+        )
         self.cur = cur
         self.con = con
-        self._address = address
-        self._name = name
-        self._namespace = namespace
-        self._partitions = partitions
-        self._options = options if options else {}
-        self._engine = StorageEngine.HIVE
-        self._store_type = storage_type if storage_type else HiveStoreType.DEFAULT
-
-    @property
-    def name(self):
-        return self._name
-
-    @property
-    def namespace(self):
-        return self._namespace
-
-    @property
-    def address(self):
-        return self._address
-
-    @property
-    def engine(self):
-        return self._engine
-
-    @property
-    def store_type(self):
-        return self._store_type
-
-    @property
-    def partitions(self):
-        return self._partitions
-
-    @property
-    def options(self):
-        return self._options
 
     def execute(self, sql, select=True):
         self.cur.execute(sql)
@@ -80,8 +55,22 @@ class StorageTable(StorageTableBase):
             result = self.cur.fetchall()
             return result
 
-    def count(self, **kwargs):
-        sql = 'select count(*) from {}'.format(self._address.name)
+    @staticmethod
+    def get_meta_header(feature_name_list, feature_num):
+        create_features = ""
+        feature_list = []
+        if feature_name_list:
+            for feature_name in feature_name_list:
+                create_features += "{} LONGTEXT,".format(feature_name)
+                feature_list.append(feature_name)
+        else:
+            for i in range(0, feature_num):
+                create_features += "{} LONGTEXT,".format(f"feature_{i}")
+                feature_list.append(f"feature_{i}")
+        return create_features, feature_list
+
+    def _count(self, **kwargs):
+        sql = "select count(*) from {}".format(self._address.name)
         try:
             self.cur.execute(sql)
             self.con.commit()
@@ -89,33 +78,17 @@ class StorageTable(StorageTableBase):
             count = ret[0][0]
         except:
             count = 0
-        self.meta.update_metas(count=count)
         return count
 
-    def collect(self, **kwargs) -> list:
-        sql = 'select * from {}'.format(self._address.name)
+    def _collect(self, **kwargs) -> list:
+        sql = "select * from {}".format(self._address.name)
         data = self.execute(sql)
         for i in data:
             yield i[0], self.meta.get_id_delimiter().join(list(i[1:]))
 
-    def put_all(self, kv_list, **kwargs):
+    def _put_all(self, kv_list, **kwargs):
         pass
 
-    def destroy(self):
-        super().destroy()
-        sql = 'drop table {}'.format(self._name)
+    def _destroy(self):
+        sql = "drop table {}".format(self._name)
         return self.execute(sql)
-
-    @staticmethod
-    def get_meta_header(feature_name_list, feature_num):
-        create_features = ''
-        feature_list = []
-        if feature_name_list:
-            for feature_name in feature_name_list:
-                create_features += '{} LONGTEXT,'.format(feature_name)
-                feature_list.append(feature_name)
-        else:
-            for i in range(0, feature_num):
-                create_features += '{} LONGTEXT,'.format(f'feature_{i}')
-                feature_list.append(f'feature_{i}')
-        return create_features, feature_list

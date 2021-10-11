@@ -28,64 +28,48 @@ LOGGER = getLogger()
 
 
 class StorageTable(StorageTableBase):
-    def __init__(self,
-                 address=None,
-                 name: str = None,
-                 namespace: str = None,
-                 partitions: int = None,
-                 store_type: HDFSStoreType = None,
-                 options=None):
-        super(StorageTable, self).__init__(name=name, namespace=namespace)
-        self._address = address
-        self._name = name
-        self._namespace = namespace
-        self._partitions = partitions if partitions else 1
-        self._store_type = store_type if store_type else HDFSStoreType.DISK
-        self._options = options if options else {}
-        self._engine = StorageEngine.HDFS
-
+    def __init__(
+        self,
+        address=None,
+        name: str = None,
+        namespace: str = None,
+        partitions: int = 1,
+        store_type: HDFSStoreType = HDFSStoreType.DISK,
+        options=None,
+    ):
+        super(StorageTable, self).__init__(
+            name=name,
+            namespace=namespace,
+            address=address,
+            partitions=partitions,
+            options=options,
+            engine=StorageEngine.HDFS,
+            store_type=store_type,
+        )
         # tricky way to load libhdfs
         try:
             from pyarrow import HadoopFileSystem
+
             HadoopFileSystem(self._path)
         except Exception as e:
             LOGGER.warning(f"load libhdfs failed: {e}")
         self._hdfs_client = fs.HadoopFileSystem.from_uri(self._path)
 
-    @property
-    def name(self):
-        return self._name
-
-    @property
-    def namespace(self):
-        return self._namespace
-
-    @property
-    def address(self):
-        return self._address
-
-    @property
-    def engine(self):
-        return self._engine
-
-    @property
-    def store_type(self):
-        return self._store_type
-
-    @property
-    def partitions(self):
-        return self._partitions
-
-    @property
-    def options(self):
-        return self._options
-
-    def put_all(self, kv_list: Iterable, append=True, assume_file_exist=False, **kwargs):
+    def check_address(self):
+        return self._exist()
+    
+    def _put_all(
+        self, kv_list: Iterable, append=True, assume_file_exist=False, **kwargs
+    ):
         LOGGER.info(f"put in hdfs file: {self._path}")
         if append and (assume_file_exist or self._exist()):
-            stream = self._hdfs_client.open_append_stream(path=self._path, compression=None)
+            stream = self._hdfs_client.open_append_stream(
+                path=self._path, compression=None
+            )
         else:
-            stream = self._hdfs_client.open_output_stream(path=self._path, compression=None)
+            stream = self._hdfs_client.open_output_stream(
+                path=self._path, compression=None
+            )
 
         # todo: when append, counter is not right;
         counter = 0
@@ -96,33 +80,37 @@ class StorageTable(StorageTableBase):
                 counter = counter + 1
         self._meta.update_metas(count=counter)
 
-    def collect(self, **kwargs) -> list:
+    def _collect(self, **kwargs) -> list:
         for line in self._as_generator():
             yield hdfs_utils.deserialize(line.rstrip())
 
-    def read(self) -> list:
+    def _read(self) -> list:
         for line in self._as_generator():
             yield line
 
-    def destroy(self):
-        super().destroy()
+    def _destroy(self):
         self._hdfs_client.delete_file(self._path)
 
-    def count(self):
+    def _count(self):
         count = 0
         for _ in self._as_generator():
             count += 1
-        self.meta.update_metas(count=count)
         return count
 
-    def save_as(self, address, partitions=None, name=None, namespace=None, schema=None, **kwargs):
+    def _save_as(
+        self, address, partitions=None, name=None, namespace=None, schema=None, **kwargs
+    ):
         self._hdfs_client.copy_file(src=self._path, dst=address.path)
-        table = StorageTable(address=address, partitions=partitions, name=name, namespace=namespace, **kwargs)
+        table = StorageTable(
+            address=address,
+            partitions=partitions,
+            name=name,
+            namespace=namespace,
+            **kwargs,
+        )
         table.create_meta(**kwargs)
         return table
 
-    def check_address(self):
-        return self._exist()
 
     def close(self):
         pass
@@ -141,8 +129,9 @@ class StorageTable(StorageTableBase):
             raise FileNotFoundError(f"file {self._path} not found")
 
         elif info.type == fs.FileType.File:
-            with io.TextIOWrapper(buffer=self._hdfs_client.open_input_stream(self._path),
-                                  encoding="utf-8") as reader:
+            with io.TextIOWrapper(
+                buffer=self._hdfs_client.open_input_stream(self._path), encoding="utf-8"
+            ) as reader:
                 for line in reader:
                     yield line
 
@@ -152,9 +141,14 @@ class StorageTable(StorageTableBase):
             for file_info in file_infos:
                 if file_info.base_name == "_SUCCESS":
                     continue
-                assert file_info.is_file, f"{self._path} is directory contains a subdirectory: {file_info.path}"
+                assert (
+                    file_info.is_file
+                ), f"{self._path} is directory contains a subdirectory: {file_info.path}"
                 with io.TextIOWrapper(
-                        buffer=self._hdfs_client.open_input_stream(f"{self._address.name_node}/{file_info.path}"),
-                        encoding="utf-8") as reader:
+                    buffer=self._hdfs_client.open_input_stream(
+                        f"{self._address.name_node}/{file_info.path}"
+                    ),
+                    encoding="utf-8",
+                ) as reader:
                     for line in reader:
                         yield line

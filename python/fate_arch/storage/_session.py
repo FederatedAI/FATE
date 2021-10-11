@@ -52,7 +52,7 @@ class StorageSessionBase(StorageSessionABC):
 
     def get_table(self, name, namespace):
         meta = StorageTableMeta(name=name, namespace=namespace)
-        if meta.get("table_meta", None):
+        if meta:
             table = self.table(name=meta.get_name(),
                                namespace=meta.get_namespace(),
                                address=meta.get_address(),
