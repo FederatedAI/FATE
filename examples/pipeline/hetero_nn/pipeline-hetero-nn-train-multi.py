@@ -71,7 +71,7 @@ def main(config="../../config.yaml", namespace=""):
                                      kernel_initializer=initializers.Constant(value=1)))
     host_nn_0.set_interactve_layer(Dense(units=2, input_shape=(2,),
                                          kernel_initializer=initializers.Constant(value=1)))
-    hetero_nn_0.compile(optimizer=optimizers.Adam(lr=0.15), metrics=["accuracy"], loss="categorical_crossentropy")
+    hetero_nn_0.compile(optimizer=optimizers.Adam(lr=0.15), loss="categorical_crossentropy")
 
     hetero_nn_1 = HeteroNN(name="hetero_nn_1")
 

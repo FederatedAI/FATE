@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import collections
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -21,6 +20,7 @@ import copy
 from types import SimpleNamespace
 
 from federatedml.param.base_param import BaseParam
+from federatedml.param.base_param import deprecated_param
 from federatedml.param.callback_param import CallbackParam
 from federatedml.param.cross_validation_param import CrossValidationParam
 from federatedml.param.encrypt_param import EncryptParam
@@ -61,6 +61,7 @@ class SelectorParam(object):
             raise ValueError("min_prob should be numeric")
 
 
+@deprecated_param("validation_freqs", "early_stopping_rounds", "metrics", "use_first_metric_only")
 class HeteroNNParam(BaseParam):
     """
     Parameters used for Hetero Neural Network.
@@ -78,15 +79,6 @@ class HeteroNNParam(BaseParam):
                 with optional key-value pairs such as learning rate.
             defaults to "SGD"
         loss:  str, a string to define loss function used
-        early_stopping_rounds: int, default: None
-        Will stop training if one metric doesn’t improve in last early_stopping_round rounds
-        metrics: list, default: None
-            Indicate when executing evaluation during train process, which metrics will be used. If not set,
-            default metrics for specific task type will be used. As for binary classification, default metrics are
-            ['auc', 'ks'], for regression tasks, default metrics are ['root_mean_squared_error', 'mean_absolute_error'],
-            [ACCURACY, PRECISION, RECALL] for multi-classification task
-        use_first_metric_only: bool, default: False
-            Indicate whether to use the first metric in `metrics` as the only criterion for early stopping judgement.
         epochs: int, the maximum iteration for aggregation in training.
         batch_size : int, batch size when updating model.
             -1 means use all data in a batch. i.e. Not to use mini-batch strategy.
@@ -94,20 +86,11 @@ class HeteroNNParam(BaseParam):
         early_stop : str, accept 'diff' only in this version, default: 'diff'
             Method used to judge converge or not.
                 a)	diff： Use difference of loss between two iterations to judge whether converge.
-        validation_freqs: None or positive integer or container object in python. Do validation in training process or Not.
-                  if equals None, will not do validation in train process;
-                  if equals positive integer, will validate data every validation_freqs epochs passes;
-                  if container object in python, will validate data if epochs belong to this container.
-                    e.g. validation_freqs = [10, 15], will validate data when epoch equals to 10 and 15.
-                  Default: None
-                  The default value is None, 1 is suggested. You can set it to a number larger than 1 in order to
-                  speed up training by skipping validation rounds. When it is larger than 1, a number which is
-                  divisible by "epochs" is recommended, otherwise, you will miss the validation scores
-                  of last training epoch.
         floating_point_precision: None or integer, if not None, means use floating_point_precision-bit to speed up calculation,
                                    e.g.: convert an x to round(x * 2**floating_point_precision) during Paillier operation, divide
                                           the result by 2**floating_point_precision in the end.
         drop_out_keep_rate: float, should betweend 0 and 1, if not equals to 1.0, will enabled drop out
+        callback_param: CallbackParam object
     """
 
     def __init__(self,
@@ -201,27 +184,8 @@ class HeteroNNParam(BaseParam):
         if self.early_stop != "diff":
             raise ValueError("early stop should be diff in this version")
 
-        if self.validation_freqs is None:
-            pass
-        elif isinstance(self.validation_freqs, int):
-            if self.validation_freqs < 1:
-                raise ValueError("validation_freqs should be larger than 0 when it's integer")
-        elif not isinstance(self.validation_freqs, collections.Container):
-            raise ValueError("validation_freqs should be None or positive integer or container")
-
-        if self.early_stopping_rounds and not isinstance(self.early_stopping_rounds, int):
-            raise ValueError("early stopping rounds should be None or int larger than 0")
-        if self.early_stopping_rounds and isinstance(self.early_stopping_rounds, int):
-            if self.early_stopping_rounds < 1:
-                raise ValueError("early stopping should be larger than 0 when it's integer")
-            if not self.validation_freqs:
-                raise ValueError("If early stopping rounds is setting, validation_freqs should not be null")
-
         if self.metrics is not None and not isinstance(self.metrics, list):
             raise ValueError("metrics should be a list")
-
-        if not isinstance(self.use_first_metric_only, bool):
-            raise ValueError("use_first_metric_only should be a boolean")
 
         if self.floating_point_precision is not None and \
                 (not isinstance(self.floating_point_precision, int) or\
@@ -236,6 +200,31 @@ class HeteroNNParam(BaseParam):
         self.encrypted_model_calculator_param.check()
         self.predict_param.check()
         self.selector_param.check()
+
+        descr = "hetero nn param's "
+
+        for p in ["early_stopping_rounds", "validation_freqs",
+                  "use_first_metric_only"]:
+            if self._deprecated_params_set.get(p):
+                if "callback_param" in self.get_user_feeded():
+                    raise ValueError(f"{p} and callback param should not be set simultaneously，"
+                                     f"{self._deprecated_params_set}, {self.get_user_feeded()}")
+                else:
+                    self.callback_param.callbacks = ["PerformanceEvaluate"]
+                break
+
+        if self._warn_to_deprecate_param("validation_freqs", descr, "callback_param's 'validation_freqs'"):
+            self.callback_param.validation_freqs = self.validation_freqs
+
+        if self._warn_to_deprecate_param("early_stopping_rounds", descr, "callback_param's 'early_stopping_rounds'"):
+            self.callback_param.early_stopping_rounds = self.early_stopping_rounds
+
+        if self._warn_to_deprecate_param("metrics", descr, "callback_param's 'metrics'"):
+            if self.metrics:
+                self.callback_param.metrics = self.metrics
+
+        if self._warn_to_deprecate_param("use_first_metric_only", descr, "callback_param's 'use_first_metric_only'"):
+            self.callback_param.use_first_metric_only = self.use_first_metric_only
 
     @staticmethod
     def _parse_optimizer(opt):
@@ -262,3 +251,5 @@ class HeteroNNParam(BaseParam):
             return None
         else:
             raise ValueError(f"invalid type for optimize: {type(opt)}")
+
+

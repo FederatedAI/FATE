@@ -336,18 +336,21 @@
         },
         "common": {
             "hetero_nn_0": {
-                "epochs": 1,
-                "validation_freqs": 1,
+                "epochs": 3,
                 "interactive_layer_lr": 0.15,
                 "batch_size": -1,
                 "early_stop": "diff",
-                "early_stopping_rounds": 15,
-                "use_first_metric_only": true,
                 "callback_param": {
                     "callbacks": [
                         "ModelCheckpoint"
                     ],
-                    "save_freq": "epoch"
+                    "save_freq": "epoch",
+                    "validation_freqs": 1,
+                    "use_first_metric_only": true,
+                    "early_stopping_rounds": 15,
+                    "metrics": [
+                        "AUC"
+                    ]
                 },
                 "optimizer": {
                     "learning_rate": 0.15,
@@ -357,9 +360,6 @@
                     "optimizer": "SGD"
                 },
                 "loss": "binary_crossentropy",
-                "metrics": [
-                    "AUC"
-                ],
                 "bottom_nn_define": null,
                 "top_nn_define": null,
                 "interactive_layer_define": null,
@@ -367,8 +367,6 @@
             },
             "hetero_nn_1": {
                 "optimizer": null,
-                "loss": null,
-                "metrics": null,
                 "bottom_nn_define": null,
                 "top_nn_define": null,
                 "interactive_layer_define": null,
