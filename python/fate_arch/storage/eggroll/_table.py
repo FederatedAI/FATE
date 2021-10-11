@@ -46,13 +46,18 @@ class StorageTable(StorageTableBase):
             namespace=self._namespace, name=self._name, options=self._options
         )
 
-    # todo: must be fixed , result must be wrapped.
-    def union(self, other):
-        return self._table.union(other.table(), func=lambda v1, v2: v1)
+    def _save_as(self, address, name, namespace, partitions=None, schema=None, **kwargs):
+        self._table.save_as(name=name, namespace=namespace)
 
-    # todo: must be fixed , result must be wrapped.
-    def _save_as(self, name, namespace, partitions=None, schema=None, **kwargs):
-        return self._table.save_as(name=name, namespace=namespace)
+        table = StorageTable(
+            address=address,
+            partitions=partitions,
+            name=name,
+            namespace=namespace,
+            **kwargs,
+        )
+
+        return table
 
     def _put_all(self, kv_list: Iterable, **kwargs):
         return self._table.put_all(kv_list)

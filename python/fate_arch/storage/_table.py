@@ -28,6 +28,7 @@ from fate_arch.metastore.db_models import DB, StorageTableMetaModel
 
 LOGGER = getLogger()
 
+
 class StorageTableBase(StorageTableABC):
     def __init__(self, name, namespace, address, partitions, options, engine, store_type):
         self._name = name
@@ -103,13 +104,15 @@ class StorageTableBase(StorageTableABC):
     def create_meta(self, **kwargs):
         table_meta = StorageTableMeta(name=self._name, namespace=self._namespace, new=True)
         table_meta.set_metas(**kwargs)
-        table_meta.address = self.address
-        table_meta.partitions = self.partitions
-        table_meta.engine = self.engine
-        table_meta.store_type = self.store_type
-        table_meta.options = self.options
+        table_meta.address = self._address
+        table_meta.partitions = self._partitions
+        table_meta.engine = self._engine
+        table_meta.store_type = self._store_type
+        table_meta.options = self._options
         table_meta.create()
         self._meta = table_meta
+
+        return table_meta
     
     def check_address(self):
         return True
@@ -135,8 +138,10 @@ class StorageTableBase(StorageTableABC):
         self.meta.destroy_metas()
         self._destory()
     
-    def save_as(self, name, namespace, partitions=None, schema=None, **kwargs):
-        self._save_as(name, namespace, partitions, schema, **kwargs)
+    def save_as(self, address, name, namespace, partitions=None, schema=None, **kwargs):
+        table = self._save_as(address, name, namespace, partitions, schema, **kwargs)
+        table.create_meta(**kwargs)
+        return table
 
     def _update_read_access_time(self, read_access_time=None):
         read_access_time = current_timestamp() if not read_access_time else read_access_time
@@ -162,10 +167,9 @@ class StorageTableBase(StorageTableABC):
     def _destory(self):
         raise NotImplementedError()
     
-    def _save_as(self, name, namespace, partitions=None, schema=None, **kwargs):
+    def _save_as(self, address, name, namespace, partitions=None, schema=None, **kwargs):
         raise NotImplementedError()
 
-   
 
 class StorageTableMeta(StorageTableMetaABC):
 
@@ -218,6 +222,12 @@ class StorageTableMeta(StorageTableMetaABC):
             return self
         else:
             return super().__new__(cls)
+
+    def exists(self):
+        if hasattr(self, "table_meta"):
+            return True
+        else:
+            return False
 
     @DB.connection_context()
     def create(self):
