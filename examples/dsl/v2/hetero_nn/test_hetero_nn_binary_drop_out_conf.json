@@ -34,9 +34,6 @@
                     "optimizer": "SGD"
                 },
                 "loss": "binary_crossentropy",
-                "metrics": [
-                    "AUC"
-                ],
 			    "drop_out_keep_rate": 0.8,
                 "bottom_nn_define": {
                     "class_name": "Sequential",
@@ -171,8 +168,6 @@
             },
             "hetero_nn_1": {
                 "optimizer": null,
-                "loss": null,
-                "metrics": null,
                 "bottom_nn_define": null,
                 "top_nn_define": null,
                 "interactive_layer_define": null,

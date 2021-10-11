@@ -72,7 +72,8 @@ def main(config="../../config.yaml", namespace=""):
                                "callbacks": ["EarlyStopping"],
                                "validation_freqs": 1,
                                "early_stopping_rounds": 15,
-                               "use_first_metric_only": True
+                               "use_first_metric_only": True,
+                               "metrics": ["AUC"]
                            })
 
     guest_nn_0 = hetero_nn_0.get_party_instance(role='guest', party_id=guest)
@@ -87,7 +88,7 @@ def main(config="../../config.yaml", namespace=""):
                                      kernel_initializer=initializers.Constant(value=1)))
     host_nn_0.set_interactve_layer(Dense(units=2, input_shape=(2,),
                                          kernel_initializer=initializers.Constant(value=1)))
-    hetero_nn_0.compile(optimizer=optimizers.SGD(lr=0.15), metrics=["AUC"], loss="binary_crossentropy")
+    hetero_nn_0.compile(optimizer=optimizers.SGD(lr=0.15), loss="binary_crossentropy")
 
     hetero_nn_1 = HeteroNN(name="hetero_nn_1")
 

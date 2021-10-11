@@ -36,9 +36,6 @@
                     "optimizer": "Adam"
                 },
                 "loss": "categorical_crossentropy",
-                "metrics": [
-                    "accuracy"
-                ],
                 "bottom_nn_define": {
                     "class_name": "Sequential",
                     "config": {
@@ -173,7 +170,6 @@
             "hetero_nn_1": {
                 "optimizer": null,
                 "loss": null,
-                "metrics": null,
                 "bottom_nn_define": null,
                 "top_nn_define": null,
                 "interactive_layer_define": null,
