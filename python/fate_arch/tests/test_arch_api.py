@@ -48,4 +48,3 @@ for k, v in t2.collect():
     print(v)
 
 sess.destroy_all_sessions()
-
