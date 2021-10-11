@@ -145,7 +145,7 @@ class HeteroNNParam(BaseParam):
 
         self.drop_out_keep_rate = drop_out_keep_rate
 
-        self.callback_param = callback_param
+        self.callback_param = copy.deepcopy(callback_param)
 
     def check(self):
         self.optimizer = self._parse_optimizer(self.optimizer)
