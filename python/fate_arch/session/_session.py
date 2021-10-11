@@ -371,9 +371,9 @@ class Session(object):
         return SessionRecord.query(reverse=reverse, order_by=order_by, **kwargs)
 
     @DB.connection_context()
-    def get_session_from_record(self):
+    def get_session_from_record(self, **kwargs):
         self._logger.info(f"query by manager session id {self._session_id}")
-        session_records = self.query_sessions(manager_session_id=self._session_id)
+        session_records = self.query_sessions(manager_session_id=self._session_id, **kwargs)
         self._logger.info([session_record.f_engine_session_id for session_record in session_records])
         for session_record in session_records:
             engine_session_id = session_record.f_engine_session_id
@@ -396,9 +396,9 @@ class Session(object):
             # already exists
             return True
 
-    def destroy_all_sessions(self):
+    def destroy_all_sessions(self, **kwargs):
         self._logger.info(f"start destroy manager session {self._session_id} all sessions")
-        self.get_session_from_record()
+        self.get_session_from_record(**kwargs)
         self.destroy_storage_session()
         self.destroy_computing_session()
         self._logger.info(f"finish destroy manager session {self._session_id} all sessions")

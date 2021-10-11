@@ -50,10 +50,10 @@ class StorageTable(StorageTableBase):
         try:
             from pyarrow import HadoopFileSystem
 
-            HadoopFileSystem(self._path)
+            HadoopFileSystem(self.path)
         except Exception as e:
             LOGGER.warning(f"load libhdfs failed: {e}")
-        self._hdfs_client = fs.HadoopFileSystem.from_uri(self._path)
+        self._hdfs_client = fs.HadoopFileSystem.from_uri(self.path)
 
     def check_address(self):
         return self._exist()
@@ -61,18 +61,17 @@ class StorageTable(StorageTableBase):
     def _put_all(
         self, kv_list: Iterable, append=True, assume_file_exist=False, **kwargs
     ):
-        LOGGER.info(f"put in hdfs file: {self._path}")
+        LOGGER.info(f"put in hdfs file: {self.path}")
         if append and (assume_file_exist or self._exist()):
             stream = self._hdfs_client.open_append_stream(
-                path=self._path, compression=None
+                path=self.path, compression=None
             )
         else:
             stream = self._hdfs_client.open_output_stream(
-                path=self._path, compression=None
+                path=self.path, compression=None
             )
 
-        # todo: when append, counter is not right;
-        counter = 0
+        counter = self._meta.get_count()
         with io.TextIOWrapper(stream) as writer:
             for k, v in kv_list:
                 writer.write(hdfs_utils.serialize(k, v))
@@ -89,7 +88,7 @@ class StorageTable(StorageTableBase):
             yield line
 
     def _destroy(self):
-        self._hdfs_client.delete_file(self._path)
+        self._hdfs_client.delete_file(self.path)
 
     def _count(self):
         count = 0
@@ -100,7 +99,7 @@ class StorageTable(StorageTableBase):
     def _save_as(
         self, address, partitions=None, name=None, namespace=None, schema=None, **kwargs
     ):
-        self._hdfs_client.copy_file(src=self._path, dst=address.path)
+        self._hdfs_client.copy_file(src=self.path, dst=address.path)
         table = StorageTable(
             address=address,
             partitions=partitions,
@@ -108,29 +107,27 @@ class StorageTable(StorageTableBase):
             namespace=namespace,
             **kwargs,
         )
-        table.create_meta(**kwargs)
         return table
-
 
     def close(self):
         pass
 
     @property
-    def _path(self) -> str:
+    def path(self) -> str:
         return f"{self._address.name_node}/{self._address.path}"
 
     def _exist(self):
-        info = self._hdfs_client.get_file_info([self._path])[0]
+        info = self._hdfs_client.get_file_info([self.path])[0]
         return info.type != fs.FileType.NotFound
 
     def _as_generator(self):
-        info = self._hdfs_client.get_file_info([self._path])[0]
+        info = self._hdfs_client.get_file_info([self.path])[0]
         if info.type == fs.FileType.NotFound:
-            raise FileNotFoundError(f"file {self._path} not found")
+            raise FileNotFoundError(f"file {self.path} not found")
 
         elif info.type == fs.FileType.File:
             with io.TextIOWrapper(
-                buffer=self._hdfs_client.open_input_stream(self._path), encoding="utf-8"
+                buffer=self._hdfs_client.open_input_stream(self.path), encoding="utf-8"
             ) as reader:
                 for line in reader:
                     yield line
@@ -143,7 +140,7 @@ class StorageTable(StorageTableBase):
                     continue
                 assert (
                     file_info.is_file
-                ), f"{self._path} is directory contains a subdirectory: {file_info.path}"
+                ), f"{self.path} is directory contains a subdirectory: {file_info.path}"
                 with io.TextIOWrapper(
                     buffer=self._hdfs_client.open_input_stream(
                         f"{self._address.name_node}/{file_info.path}"

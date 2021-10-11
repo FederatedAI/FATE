@@ -16,13 +16,13 @@
 import os.path
 import typing
 
-from fate_arch.abc import StorageSessionABC, StorageTableABC, CTableABC
+from fate_arch.abc import StorageSessionABC,  CTableABC
 from fate_arch.common import EngineType, engine_utils
 from fate_arch.common.log import getLogger
 from fate_arch.storage._table import StorageTableMeta
-from fate_arch.storage._types import StorageEngine, EggRollStoreType, StandaloneStoreType
+from fate_arch.storage._types import StorageEngine, EggRollStoreType, StandaloneStoreType, HDFSStoreType, HiveStoreType, \
+    LinkisHiveStoreType, LocalFSStoreType
 from fate_arch.relation_ship import Relationship
-from fate_arch.metastore.db_models import DB, StorageTableMetaModel
 from fate_arch.common.base_utils import current_timestamp
 
 
@@ -36,23 +36,12 @@ class StorageSessionBase(StorageSessionABC):
 
     def create_table(self, address, name, namespace, partitions=None, **kwargs):
         table = self.table(address=address, name=name, namespace=namespace, partitions=partitions, **kwargs)
-        # table_meta = StorageTableMeta(name=name, namespace=namespace, new=True)
-        # table_meta.set_metas(**kwargs)
-        # table_meta.address = table.address
-        # table_meta.partitions = table.partitions
-        # table_meta.engine = table.engine
-        # table_meta.store_type = table.store_type
-        # table_meta.options = table.options
-        # table_meta.create()
-        # table.meta = table_meta
-        # # update count on meta
-        # # table.count()
         table.create_meta(**kwargs)
         return table
 
     def get_table(self, name, namespace):
         meta = StorageTableMeta(name=name, namespace=namespace)
-        if meta:
+        if meta.exists():
             table = self.table(name=meta.get_name(),
                                namespace=meta.get_namespace(),
                                address=meta.get_address(),
@@ -67,37 +56,10 @@ class StorageSessionBase(StorageSessionABC):
     @classmethod
     def get_table_meta(cls, name, namespace):
         meta = StorageTableMeta(name=name, namespace=namespace)
-        return meta
-
-    # # todo: if use get_table_meta, may be better;
-    # @classmethod
-    # def get_table_info(cls, name, namespace):
-    #     meta = StorageTableMeta(name=name, namespace=namespace)
-    #     if meta:
-    #         engine = meta.get_engine()
-    #         address = meta.get_address()
-    #         partitions = meta.get_partitions()
-    #         return engine, address, partitions
-    #     else:
-    #         return None, None, None
-
-    # @classmethod
-    # @DB.connection_context()
-    # def get_storage_info(cls, name, namespace):
-    #     metas = StorageTableMetaModel.select().where(StorageTableMetaModel.f_name == name,
-    #                                                  StorageTableMetaModel.f_namespace == namespace)
-    #     if metas:
-    #         meta = metas[0]
-    #         engine = meta.f_engine
-    #         address_dict = meta.f_address
-    #         address = StorageTableMeta.create_address(storage_engine=engine, address_dict=address_dict)
-    #         partitions = meta.f_partitions
-    #         return engine, address, partitions
-    #     else:
-    #         return None, None, None
-
-    # def table(self, name, namespace, address, partitions, store_type=None, options=None, **kwargs) -> StorageTableABC:
-    #     raise NotImplementedError()
+        if meta.exists():
+            return meta
+        else:
+            return None
 
     @classmethod
     def persistent(cls, computing_table: CTableABC, namespace, name, schema=None,
@@ -127,18 +89,22 @@ class StorageSessionBase(StorageSessionABC):
             store_type = EggRollStoreType.ROLLPAIR_LMDB if store_type is None else store_type
 
         elif engine == StorageEngine.HIVE:
-            address_dict.update({"name": name, "database": namespace})
+            address_dict.update({"database": None, "name": f"{namespace}_{name}"})
+            store_type = HiveStoreType.DEFAULT if store_type is None else store_type
 
         elif engine == StorageEngine.LINKIS_HIVE:
             address_dict.update({"database": None, "name": f"{namespace}_{name}", "username": token.get("username", "")})
+            store_type = LinkisHiveStoreType.DEFAULT if store_type is None else store_type
 
         elif engine == StorageEngine.HDFS:
             if not address_dict.get("path"):
                 address_dict.update({"path": os.path.join(address_dict.get("path_prefix", ""), namespace, name)})
+            store_type = HDFSStoreType.DISK if store_type is None else store_type
 
         elif engine == StorageEngine.LOCALFS:
             if not address_dict.get("path"):
                 address_dict.update({"path": os.path.join(address_dict.get("path_prefix", ""), namespace, name)})
+            store_type = LocalFSStoreType.DISK if store_type is None else store_type
 
         else:
             raise RuntimeError(f"{engine} storage is not supported")
@@ -159,7 +125,6 @@ class StorageSessionBase(StorageSessionABC):
         return table_meta
 
     def __enter__(self):
-        # self.create()
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
