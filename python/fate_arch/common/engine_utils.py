@@ -27,7 +27,7 @@ def get_engines(work_mode: typing.Union[WorkMode, int] = None, options=None):
     keys = [EngineType.COMPUTING, EngineType.FEDERATION, EngineType.STORAGE, "federated_mode"]
     engines = {}
     for k in keys:
-        if options.get(k) is not None:
+        if options is not None and options.get(k, None) is not None:
             engines[k] = options[k].upper()
 
     if isinstance(work_mode, int):
