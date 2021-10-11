@@ -30,49 +30,63 @@ LOGGER = getLogger()
 
 
 class StorageTableBase(StorageTableABC):
-    def __init__(self, name, namespace):
+    def __init__(self, name, namespace, address, partitions, options, engine, store_type):
         self._name = name
         self._namespace = namespace
+        self._address = address
+        self._partitions = partitions
+        self._options = options if options else {}
+        self._engine = engine
+        self._store_type = store_type
+
         self._meta = None
         self._read_access_time = None
         self._write_access_time = None
 
     @property
     def name(self):
-        pass
+        return self._name
 
     @property
     def namespace(self):
-        pass
+        return self._namespace
 
     @property
     def address(self):
-        pass
-
-    @property
-    def engine(self):
-        pass
-
-    @property
-    def store_type(self):
-        pass
-
+        return self._address
+    
     @property
     def partitions(self):
-        pass
+        return self._partitions
 
     @property
     def options(self):
-        pass
+        return self._options
 
+    @property
+    def engine(self):
+        return self._engine
+
+    @property
+    def store_type(self):
+        return self._store_type 
+    
     @property
     def meta(self):
         return self._meta
-
+    
     @meta.setter
     def meta(self, meta):
         self._meta = meta
+    
+    @property
+    def read_access_time(self):
+        return self._read_access_time
 
+    @property
+    def write_access_time(self):
+        return self._write_access_time
+    
     def update_meta(self,
                     schema=None,
                     count=None,
@@ -90,53 +104,71 @@ class StorageTableBase(StorageTableABC):
     def create_meta(self, **kwargs):
         table_meta = StorageTableMeta(name=self._name, namespace=self._namespace, new=True)
         table_meta.set_metas(**kwargs)
-        table_meta.address = self.address
-        table_meta.partitions = self.partitions
-        table_meta.engine = self.engine
-        table_meta.store_type = self.store_type
-        table_meta.options = self.options
+        table_meta.address = self._address
+        table_meta.partitions = self._partitions
+        table_meta.engine = self._engine
+        table_meta.store_type = self._store_type
+        table_meta.options = self._options
         table_meta.create()
-        self.meta = table_meta
+        self._meta = table_meta
 
-    @property
-    def read_access_time(self):
-        return self._read_access_time
-
-    def update_read_access_time(self, read_access_time=None):
-        read_access_time = current_timestamp() if not read_access_time else read_access_time
-        self._meta.update_metas(read_access_time=read_access_time)
-
-    @property
-    def write_access_time(self):
-        return self._write_access_time
-
-    def update_write_access_time(self, write_access_time=None):
-        write_access_time = current_timestamp() if not write_access_time else write_access_time
-        self._meta.update_metas(write_access_time=write_access_time)
-
-    def put_all(self, kv_list: Iterable, **kwargs):
-        pass
-
-    def collect(self, **kwargs) -> list:
-        pass
-
-    def read(self) -> list:
-        pass
-
-    def count(self):
-        pass
-
-    def save_as(self, name, namespace, partitions=None, schema=None):
-        pass
-        # src_table_meta = self.meta
-
+        return table_meta
+    
     def check_address(self):
         return True
 
+    def put_all(self, kv_list: Iterable, **kwargs):
+        self._update_write_access_time()
+        self._put_all(kv_list, **kwargs)
+    
+    def collect(self, **kwargs) -> list:
+        self._update_read_access_time()
+        return self._collect(**kwargs)
+    
+    def count(self):
+        self._update_read_access_time()
+        count = self._count()
+        self.meta.update_metas(count=count)
+    
+    def read(self):
+        self._update_read_access_time()
+        return self._read()
+
     def destroy(self):
-        # destroy schema
-        self._meta.destroy_metas()
-        # subclass method needs do: super().destroy()
+        self.meta.destroy_metas()
+        self._destory()
+    
+    def save_as(self, address, name, namespace, partitions=None, schema=None, **kwargs):
+        table = self._save_as(address, name, namespace, partitions, schema, **kwargs)
+        table.create_meta(**kwargs)
+        return table
+
+    def _update_read_access_time(self, read_access_time=None):
+        read_access_time = current_timestamp() if not read_access_time else read_access_time
+        self._meta.update_metas(read_access_time=read_access_time)
+
+    def _update_write_access_time(self, write_access_time=None):
+        write_access_time = current_timestamp() if not write_access_time else write_access_time
+        self._meta.update_metas(write_access_time=write_access_time)
+
+    # to be implemented 
+    def _put_all(self, kv_list: Iterable, **kwargs):
+        raise NotImplementedError()
+
+    def _collect(self, **kwargs) -> list:
+        raise NotImplementedError()
+    
+    def _count(self):
+        raise NotImplementedError()
+    
+    def _read(self):
+        raise NotImplementedError()
+
+    def _destory(self):
+        raise NotImplementedError()
+    
+    def _save_as(self, address, name, namespace, partitions=None, schema=None, **kwargs):
+        raise NotImplementedError()
 
 
 class StorageTableMeta(StorageTableMetaABC):
@@ -190,6 +222,12 @@ class StorageTableMeta(StorageTableMetaABC):
             return self
         else:
             return super().__new__(cls)
+
+    def exists(self):
+        if hasattr(self, "table_meta"):
+            return True
+        else:
+            return False
 
     @DB.connection_context()
     def create(self):
