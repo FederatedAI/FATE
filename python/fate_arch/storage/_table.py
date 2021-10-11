@@ -136,7 +136,7 @@ class StorageTableBase(StorageTableABC):
 
     def destroy(self):
         self.meta.destroy_metas()
-        self._destory()
+        self._destroy()
     
     def save_as(self, address, name, namespace, partitions=None, schema=None, **kwargs):
         table = self._save_as(address, name, namespace, partitions, schema, **kwargs)
@@ -164,7 +164,7 @@ class StorageTableBase(StorageTableABC):
     def _read(self):
         raise NotImplementedError()
 
-    def _destory(self):
+    def _destroy(self):
         raise NotImplementedError()
     
     def _save_as(self, address, name, namespace, partitions=None, schema=None, **kwargs):

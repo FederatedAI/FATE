@@ -137,6 +137,9 @@ class StorageSessionBase(StorageSessionABC):
             LOGGER.warning(f"stop storage session {self._session_id} failed, try to kill", e)
             self.kill()
 
+    def table(self, address, name, namespace, partitions=None, **kwargs):
+        raise NotImplementedError()
+
     def stop(self):
         raise NotImplementedError()
 
