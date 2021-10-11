@@ -13,7 +13,11 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import os
+import pickle
+import uuid
 
+from fate_arch.common.file_utils import get_project_base_directory
 from fate_arch.storage import StorageEngine, HiveStoreType
 from fate_arch.storage import StorageTableBase
 
@@ -106,17 +110,19 @@ class StorageTable(StorageTableBase):
 
     def put_all(self, kv_list, **kwargs):
         id_name, feature_name_list, id_delimiter = self.get_id_feature_name()
-        feature_sql, feature_list = StorageTable.get_meta_header(feature_name_list)
-        id_size = "varchar(100)"
-        create_table = "create table if not exists {}({} {} NOT NULL, {}) row format delimited fields terminated by" \
-                       " ','".format(self._address.name, id_name, id_size, feature_sql.strip(','))
+        create_table = "create table if not exists {}(k varchar(128) NOT NULL, v string) row format delimited fields terminated by" \
+                       " '{}'".format(self._address.name, id_delimiter)
         self.cur.execute(create_table)
-        sql = 'INSERT INTO {}({}, {})  VALUES'.format(self._address.name, id_name, ','.join(feature_list))
-        for kv in kv_list:
-            sql += '("{}", "{}"),'.format(kv[0], '", "'.join(kv[1].split(id_delimiter)))
-        sql = ','.join(sql.split(',')[:-1])
+        # load local file or hdfs file
+        temp_path = os.path.join(get_project_base_directory(), 'temp_data', uuid.uuid1().hex)
+        os.makedirs(os.path.dirname(temp_path), exist_ok=True)
+        with open(temp_path, 'w') as f:
+            for k, v in kv_list:
+                f.write(f'{id_delimiter}'.join([k, pickle.dumps(v).hex()]) + "\n")
+        sql = "load data local inpath '{}' overwrite into table {}".format(temp_path, self._address.name)
         self.cur.execute(sql)
         self.con.commit()
+        os.remove(temp_path)
 
     def get_id_feature_name(self):
         id = self.meta.get_schema().get('sid', 'id')
