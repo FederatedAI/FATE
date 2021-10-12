@@ -8,7 +8,7 @@
                 ]
             }
         },
-        "dataio_0": {
+        "data_transform_0": {
             "input": {
                 "data": {
                     "data": [
@@ -16,10 +16,10 @@
                     ]
                 },
                 "model": [
-                    "pipeline.dataio_0.model"
+                    "pipeline.data_transform_0.model"
                 ]
             },
-            "module": "DataIO",
+            "module": "DataTransform",
             "output": {
                 "data": [
                     "data"
@@ -30,7 +30,7 @@
             "input": {
                 "data": {
                     "data": [
-                        "dataio_0.data"
+                        "data_transform_0.data"
                     ]
                 }
             },

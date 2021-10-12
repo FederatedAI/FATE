@@ -17,7 +17,7 @@
 import argparse
 
 from pipeline.backend.pipeline import PipeLine
-from pipeline.component import DataIO
+from pipeline.component import DataTransform
 from pipeline.component import Evaluation
 from pipeline.component import HeteroPoisson
 from pipeline.component import Intersection
@@ -48,12 +48,12 @@ def main(config="../../config.yaml", namespace=""):
     reader_0.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data)
     reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
 
-    dataio_0 = DataIO(name="dataio_0", output_format="sparse")
+    data_transform_0 = DataTransform(name="data_transform_0", output_format="sparse")
 
-    dataio_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True,
+    data_transform_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True,
                                                                               label_name="doctorco",
                                                                               label_type="float")
-    dataio_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
+    data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
 
     intersection_0 = Intersection(name="intersection_0")
     hetero_poisson_0 = HeteroPoisson(name="hetero_poisson_0", early_stop="weight_diff", max_iter=2,
@@ -68,8 +68,8 @@ def main(config="../../config.yaml", namespace=""):
     evaluation_0.get_party_instance(role='host', party_id=host).component_param(need_run=False)
 
     pipeline.add_component(reader_0)
-    pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
-    pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
+    pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
+    pipeline.add_component(intersection_0, data=Data(data=data_transform_0.output.data))
     pipeline.add_component(hetero_poisson_0, data=Data(train_data=intersection_0.output.data))
     pipeline.add_component(evaluation_0, data=Data(data=hetero_poisson_0.output.data))
 

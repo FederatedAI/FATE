@@ -18,7 +18,7 @@ import argparse
 
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component import ColumnExpand
-from pipeline.component import DataIO
+from pipeline.component import DataTransform
 from pipeline.component import Reader
 from pipeline.interface import Data
 
@@ -53,17 +53,17 @@ def main(config="../../config.yaml", namespace=""):
                                                                                      method="manual",
                                                                                      append_header=["x_0", "x_1", "x_2", "x_3"],
                                                                                      fill_value=[0, 0.2, 0.5, 1])
-    # define DataIO components
-    dataio_0 = DataIO(name="dataio_0")  # start component numbering at 0
-    # get DataIO party instance of guest
-    dataio_0_guest_party_instance = dataio_0.get_party_instance(role="guest", party_id=guest)
-    # configure DataIO for guest
-    dataio_0_guest_party_instance.component_param(with_label=True, output_format="dense")
+    # define DataTransform components
+    data_transform_0 = DataTransform(name="data_transform_0")  # start component numbering at 0
+    # get DataTransform party instance of guest
+    data_transform_0_guest_party_instance = data_transform_0.get_party_instance(role="guest", party_id=guest)
+    # configure DataTransform for guest
+    data_transform_0_guest_party_instance.component_param(with_label=True, output_format="dense")
 
     # add components to pipeline, in order of task execution
     pipeline.add_component(reader_0)
     pipeline.add_component(column_expand_0, data=Data(data=reader_0.output.data))
-    pipeline.add_component(dataio_0, data=Data(data=column_expand_0.output.data))
+    pipeline.add_component(data_transform_0, data=Data(data=column_expand_0.output.data))
     # compile pipeline once finished adding modules, this step will form conf and dsl files for running job
     pipeline.compile()
 
