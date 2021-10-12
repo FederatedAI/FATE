@@ -298,6 +298,11 @@ class Session(object):
         return storage_session
 
     @classmethod
+    def get_table_meta(cls, name, namespace):
+        meta = StorageSessionBase.get_table_meta(name=name, namespace=namespace)
+        return meta
+
+    @classmethod
     def persistent(cls, computing_table: CTableABC, namespace, name, schema=None, part_of_data=None,
                    engine=None, engine_address=None, store_type=None, token: typing.Dict = None) -> StorageTableMeta:
         return StorageSessionBase.persistent(computing_table=computing_table,
