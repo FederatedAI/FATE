@@ -129,6 +129,7 @@ class StorageTableBase(StorageTableABC):
         self._update_read_access_time()
         count = self._count()
         self.meta.update_metas(count=count)
+        return count
     
     def read(self):
         self._update_read_access_time()

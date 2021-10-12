@@ -22,7 +22,7 @@ from fate_arch import session
 work_mode = 0
 
 sess = session.Session(work_mode=work_mode)
-sess.init_computing().as_default()
+sess.init_computing()
 
 data = []
 for i in range(10):
@@ -30,7 +30,7 @@ for i in range(10):
     features = ",".join([str(x) for x in features])
     data.append((i, features))
 
-c_table = session.get_latest_opened().computing.parallelize(data, include_key=True, partition=4)
+c_table = session.get_session().computing.parallelize(data, include_key=True, partition=4)
 for k, v in c_table.collect():
     print(v)
 print()
@@ -43,7 +43,7 @@ for k, v in s_table.collect():
     print(v)
 print()
 
-t2 = session.get_latest_opened().computing.load(table_meta.get_address(), partitions=table_meta.get_partitions(), schema=table_meta.get_schema())
+t2 = session.get_session().computing.load(table_meta.get_address(), partitions=table_meta.get_partitions(), schema=table_meta.get_schema())
 for k, v in t2.collect():
     print(v)
 
