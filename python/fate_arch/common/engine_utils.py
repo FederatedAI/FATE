@@ -23,37 +23,56 @@ from fate_arch.relation_ship import Relationship
 from fate_arch.common import EngineType
 
 
+def get_engine_class_members(engine_class) -> list:
+    members = []
+    for k, v in engine_class.__dict__.items():
+        if k in ["__module__", "__dict__", "__weakref__", "__doc__"]:
+            continue
+        members.append(v)
+    return members
+
+
 def get_engines(work_mode: typing.Union[WorkMode, int] = None, options=None):
     keys = [EngineType.COMPUTING, EngineType.FEDERATION, EngineType.STORAGE, "federated_mode"]
     engines = {}
     for k in keys:
-        if options.get(k) is not None:
+        if options is not None and options.get(k, None) is not None:
             engines[k] = options[k].upper()
 
     if isinstance(work_mode, int):
         work_mode = WorkMode(work_mode)
-
-    if engines.get(EngineType.COMPUTING) is None and work_mode is None:
-        raise RuntimeError("must provide computing engine parameters or work_mode parameters")
 
     if work_mode == WorkMode.STANDALONE:
         engines[EngineType.COMPUTING] = ComputingEngine.STANDALONE
         engines[EngineType.FEDERATION] = FederationEngine.STANDALONE
         engines[EngineType.STORAGE] = StorageEngine.STANDALONE
 
-    if engines.get(EngineType.COMPUTING) is None and engines.get(EngineType.FEDERATION) is None:
+    if engines.get(EngineType.COMPUTING) is None:
         if conf_utils.get_base_config("default_engines", {}).get(EngineType.COMPUTING) is not None:
             default_engines = conf_utils.get_base_config("default_engines")
-            engines[EngineType.COMPUTING] = default_engines[EngineType.COMPUTING].upper()
-            engines[EngineType.FEDERATION] = default_engines[EngineType.FEDERATION].upper() \
-                if default_engines.get(EngineType.FEDERATION) is not None else None
-            engines[EngineType.STORAGE] = default_engines[EngineType.STORAGE].upper() if default_engines.get(
-                EngineType.STORAGE) is not None else None
+
+            engines[EngineType.COMPUTING] = default_engines[EngineType.COMPUTING].upper() \
+                if default_engines.get(EngineType.COMPUTING) is not None else None
+
+            if engines.get(EngineType.FEDERATION) is None:
+                engines[EngineType.FEDERATION] = default_engines[EngineType.FEDERATION].upper() \
+                    if default_engines.get(EngineType.FEDERATION) is not None else None
+
+            if engines.get(EngineType.STORAGE) is None:
+                engines[EngineType.STORAGE] = default_engines[EngineType.STORAGE].upper() \
+                    if default_engines.get(EngineType.STORAGE) is not None else None
         else:
-            raise RuntimeError(f"must set default engines on conf/service_conf.yaml")
+            raise RuntimeError(f"must set default_engines on conf/service_conf.yaml")
+
+    if engines.get(EngineType.COMPUTING) is None:
+        raise RuntimeError(f"{EngineType.COMPUTING} is None,"
+                           f"Please check work_mode parameter or default_engines on conf/service_conf.yaml")
+
+    if engines[EngineType.COMPUTING] not in get_engine_class_members(ComputingEngine):
+        raise RuntimeError(f"{engines[EngineType.COMPUTING]} is illegal")
 
     # set default storage engine and federation engine by computing engine
-    for t in {EngineType.STORAGE, EngineType.FEDERATION}:
+    for t in (EngineType.STORAGE, EngineType.FEDERATION):
         if engines.get(t) is None:
             # use default relation engine
             engines[t] = Relationship.Computing[engines[EngineType.COMPUTING]][t]["default"]
@@ -64,6 +83,16 @@ def get_engines(work_mode: typing.Union[WorkMode, int] = None, options=None):
             engines["federated_mode"] = FederatedMode.SINGLE
         else:
             engines["federated_mode"] = FederatedMode.MULTIPLE
+
+    if engines[EngineType.STORAGE] not in get_engine_class_members(StorageEngine):
+        raise RuntimeError(f"{engines[EngineType.STORAGE]} is illegal")
+
+    if engines[EngineType.FEDERATION] not in get_engine_class_members(FederationEngine):
+        raise RuntimeError(f"{engines[EngineType.FEDERATION]} is illegal")
+
+    for t in (EngineType.STORAGE, EngineType.FEDERATION):
+        if engines[t] not in Relationship.Computing[engines[EngineType.COMPUTING]][t]["support"]:
+            raise RuntimeError(f"{engines[t]} is supported in {engines[EngineType.COMPUTING]}")
 
     return engines
 
