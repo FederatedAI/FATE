@@ -24,7 +24,7 @@ from fate_arch.common import log, base_utils
 from fate_arch.common import WorkMode, remote_status
 from fate_arch.computing import ComputingEngine
 from fate_arch.federation import FederationEngine
-from fate_arch.storage import StorageEngine, StorageSessionBase, StorageTableMeta
+from fate_arch.storage import StorageEngine, StorageSessionBase
 from fate_arch.metastore.db_models import DB, SessionRecord, init_database_tables
 from fate_arch.session._parties import PartiesInfo
 
@@ -281,10 +281,6 @@ class Session(object):
             from fate_arch.storage.linkis_hive import StorageSession
             storage_session = StorageSession(session_id=storage_session_id, options=kwargs.get("options", {}))
 
-        elif storage_engine == StorageEngine.FILE:
-            from fate_arch.storage.file import StorageSession
-            storage_session = StorageSession(session_id=storage_session_id, options=kwargs.get("options", {}))
-
         elif storage_engine == StorageEngine.PATH:
             from fate_arch.storage.path import StorageSession
             storage_session = StorageSession(session_id=storage_session_id, options=kwargs.get("options", {}))
@@ -455,7 +451,7 @@ def get_session() -> Session:
 def get_parties() -> PartiesInfo:
     return get_session().parties
 
-def get_computing_session() -> CSessionABC
+def get_computing_session() -> CSessionABC:
     return get_session().computing
 
 # noinspection PyPep8Naming

@@ -22,7 +22,6 @@ class StorageEngine(object):
     HDFS = 'HDFS'
     MYSQL = 'MYSQL'
     SIMPLE = 'SIMPLE'
-    FILE = 'FILE'
     PATH = 'PATH'
     HIVE = 'HIVE'
     LINKIS_HIVE = 'LINKIS_HIVE'
