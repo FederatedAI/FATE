@@ -111,13 +111,13 @@ class JobConf(object):
         return self.others_kwargs.get("dsl_version", 1)
 
     def update(
-        self,
-        parties: Parties,
-        work_mode,
-        backend,
-        timeout,
-        job_parameters,
-        component_parameters,
+            self,
+            parties: Parties,
+            work_mode,
+            backend,
+            timeout,
+            job_parameters,
+            component_parameters,
     ):
         self.initiator = parties.extract_initiator_role(self.initiator["role"])
         self.role = parties.extract_role(
@@ -167,13 +167,19 @@ class JobConf(object):
         if isinstance(parameters, dict):
             for keys in parameters:
                 if keys == key:
-                    parameters.update({key: value})
+                    if isinstance(value, dict):
+                        parameters[keys].update(value)
+                    else:
+                        parameters.update({key: value})
                 elif (
-                    isinstance(parameters[keys], dict) and parameters[keys] is not None
+                        isinstance(parameters[keys], dict) and parameters[keys] is not None
                 ):
                     self.update_component_parameters(key, value, parameters[keys])
 
     def get_component_parameters(self, keys):
+        if len(keys) == 0:
+            return self.others_kwargs.get("component_parameters") if self.dsl_version == 2 else self.others_kwargs.get(
+                "role_parameters")
         if self.dsl_version == 1:
             parameters = self.others_kwargs.get("role_parameters")
         else:
@@ -200,11 +206,11 @@ class JobDSL(object):
 
 class Job(object):
     def __init__(
-        self,
-        job_name: str,
-        job_conf: JobConf,
-        job_dsl: typing.Optional[JobDSL],
-        pre_works: list,
+            self,
+            job_name: str,
+            job_conf: JobConf,
+            job_dsl: typing.Optional[JobDSL],
+            pre_works: list,
     ):
         self.job_name = job_name
         self.job_conf = job_conf
@@ -227,8 +233,12 @@ class Job(object):
             name_dict["data"] = job_configs["data_deps"][assembly]
         if job_configs.get("model_deps", None):
             pre_works_value.append("model_deps")
-        if job_configs.get("deps", None):
+        elif job_configs.get("deps", None):
             pre_works_value.append("model_deps")
+        if job_configs.get("cache_deps", None):
+            pre_works_value.append("cache_deps")
+        if job_configs.get("model_loader_deps", None):
+            pre_works_value.append("model_loader_deps")
 
         if job_configs.get("model_deps", None):
             pre_works.append(job_configs["model_deps"])
@@ -236,9 +246,16 @@ class Job(object):
         elif job_configs.get("deps", None):
             pre_works.append(job_configs["deps"])
             name_dict["name"] = job_configs["deps"]
-        elif job_configs.get("data_deps", None):
+        if job_configs.get("data_deps", None):
             pre_works.append(list(job_configs["data_deps"].keys())[0])
             name_dict["name"] = list(job_configs["data_deps"].keys())[0]
+        if job_configs.get("cache_deps", None):
+            pre_works.append(job_configs["cache_deps"])
+            name_dict["name"] = job_configs["cache_deps"]
+        if job_configs.get("model_loader_deps", None):
+            pre_works.append(job_configs["model_loader_deps"])
+            name_dict["name"] = job_configs["model_loader_deps"]
+
         pre_works_value.append(name_dict)
         _config.deps_alter[job_name] = pre_works_value
 
@@ -278,11 +295,11 @@ class PipelineJob(object):
 
 class Testsuite(object):
     def __init__(
-        self,
-        dataset: typing.List[Data],
-        jobs: typing.List[Job],
-        pipeline_jobs: typing.List[PipelineJob],
-        path: Path,
+            self,
+            dataset: typing.List[Data],
+            jobs: typing.List[Job],
+            pipeline_jobs: typing.List[PipelineJob],
+            path: Path,
     ):
         self.dataset = dataset
         self.jobs = jobs
@@ -358,11 +375,15 @@ class Testsuite(object):
     def remove_dependency(self, name):
         del self._dependency[name]
 
-    def feed_dep_info(self, job, name, model_info=None, table_info=None):
+    def feed_dep_info(self, job, name, model_info=None, table_info=None, cache_info=None, model_loader_info=None):
         if model_info is not None:
             job.set_pre_work(name, **model_info)
         if table_info is not None:
             job.set_input_data(table_info["hierarchy"], table_info["table_info"])
+        if cache_info is not None:
+            job.set_input_data(cache_info["hierarchy"], cache_info["cache_info"])
+        if model_loader_info is not None:
+            job.set_input_data(model_loader_info["hierarchy"], model_loader_info["model_loader_info"])
         if name in job.pre_works:
             job.pre_works.remove(name)
         if job.is_submit_ready():
@@ -384,7 +405,7 @@ class Testsuite(object):
         return failed
 
     def update_status(
-        self, job_name, job_id: str = None, status: str = None, exception_id: str = None
+            self, job_name, job_id: str = None, status: str = None, exception_id: str = None
     ):
         for k, v in locals().items():
             if k != "job_name" and v is not None:
@@ -399,18 +420,19 @@ class Testsuite(object):
 
 class FinalStatus(object):
     def __init__(
-        self,
-        name: str,
-        job_id: str = "-",
-        status: str = "not submitted",
-        exception_id: str = "-",
-        rest_dependency: typing.List[str] = None,
+            self,
+            name: str,
+            job_id: str = "-",
+            status: str = "not submitted",
+            exception_id: str = "-",
+            rest_dependency: typing.List[str] = None,
     ):
         self.name = name
         self.job_id = job_id
         self.status = status
         self.exception_id = exception_id
         self.rest_dependency = rest_dependency or []
+
 
 class BenchmarkJob(object):
     def __init__(self, job_name: str, script_path: Path, conf_path: Path):
@@ -421,7 +443,7 @@ class BenchmarkJob(object):
 
 class BenchmarkPair(object):
     def __init__(
-        self, pair_name: str, jobs: typing.List[BenchmarkJob], compare_setting: dict
+            self, pair_name: str, jobs: typing.List[BenchmarkJob], compare_setting: dict
     ):
         self.pair_name = pair_name
         self.jobs = jobs
@@ -430,7 +452,7 @@ class BenchmarkPair(object):
 
 class BenchmarkSuite(object):
     def __init__(
-        self, dataset: typing.List[Data], pairs: typing.List[BenchmarkPair], path: Path
+            self, dataset: typing.List[Data], pairs: typing.List[BenchmarkPair], path: Path
     ):
         self.dataset = dataset
         self.pairs = pairs

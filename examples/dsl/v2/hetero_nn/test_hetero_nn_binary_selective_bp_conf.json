@@ -34,9 +34,6 @@
                     "optimizer": "SGD"
                 },
                 "loss": "binary_crossentropy",
-                "metrics": [
-                    "AUC"
-                ],
 			    "selector_param": {
 			  	    "method": "relative"
 		  	    },
@@ -173,8 +170,6 @@
             },
             "hetero_nn_1": {
                 "optimizer": null,
-                "loss": null,
-                "metrics": null,
                 "bottom_nn_define": null,
                 "top_nn_define": null,
                 "interactive_layer_define": null,

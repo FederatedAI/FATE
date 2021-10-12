@@ -13,17 +13,18 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import configparser
+import json
 import os
 import sys
-import json
-import typing
 import tarfile
 import traceback
-import configparser
-from time import time
-from uuid import uuid1
+import typing
 from base64 import b64encode
 from hmac import HMAC
+from time import time
+from urllib.parse import quote, urlencode
+from uuid import uuid1
 
 import click
 import requests
@@ -79,7 +80,9 @@ def access_server(method, ctx, postfix, json_data=None, echo=True, **kwargs):
                 nonce.encode('ascii'),
                 ctx.obj['app_key'].encode('ascii'),
                 prepped.path_url.encode('ascii'),
-                prepped.body,
+                prepped.body if json_data else b'',
+                urlencode(sorted(kwargs['data'].items()), quote_via=quote, safe='-._~').encode('ascii')
+                if kwargs.get('data') and isinstance(kwargs['data'], dict) else b'',
             ]), 'sha1').digest()).decode('ascii')
 
             prepped.headers.update({

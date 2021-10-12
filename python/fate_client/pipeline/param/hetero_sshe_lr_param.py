@@ -146,7 +146,7 @@ class LogisticRegressionParam(BaseParam):
         self.reveal_strategy = reveal_strategy
         self.compute_loss = compute_loss
         self.reveal_every_iter = reveal_every_iter
-        self.callback_param = callback_param
+        self.callback_param = copy.deepcopy(callback_param)
         self.cv_param = cv_param
 
     def check(self):

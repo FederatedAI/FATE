@@ -31,8 +31,6 @@ class HeteroNN(Component):
 
         explicit_parameters = kwargs["explict_parameters"]
         explicit_parameters["optimizer"] = None
-        explicit_parameters["loss"] = None
-        explicit_parameters["metrics"] = None
         explicit_parameters["bottom_nn_define"] = None
         explicit_parameters["top_nn_define"] = None
         explicit_parameters["interactive_layer_define"] = None
@@ -48,9 +46,7 @@ class HeteroNN(Component):
         self.output = Output(self.name, data_type='single')
         self._module_name = "HeteroNN"
         self.optimizer = None
-        self.loss = None
         self.config_type = "keras"
-        self.metrics = None
         self.bottom_nn_define = None
         self.top_nn_define = None
         self.interactive_layer_define = None
@@ -82,8 +78,14 @@ class HeteroNN(Component):
 
         model = self.get_bottom_model()
         self.optimizer = model.get_optimizer_config(optimizer)
-        self.loss = model.get_loss_config(loss)
-        self.metrics = metrics
+
+        if loss:
+            setattr(self, "loss", model.get_loss_config(loss))
+            self._component_parameter_keywords.add("loss")
+        if metrics:
+            setattr(self, "metrics", metrics)
+            self._component_parameter_keywords.add("metrics")
+
         self.config_type = model.get_layer_type()
 
         self._compile_common_network_config()

@@ -93,7 +93,7 @@ class FTLParam(BaseParam):
         self.mode = mode
         self.communication_efficient = communication_efficient
         self.local_round = local_round
-        self.callback_param = callback_param
+        self.callback_param = copy.deepcopy(callback_param)
 
     def check(self):
         self.intersect_param.check()

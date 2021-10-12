@@ -268,6 +268,7 @@ tlsCertificateFilePath=/opt/pulsar/certs/broker.cert.pem
 tlsKeyFilePath=/opt/pulsar/certs/broker.key-pk8.pem
 tlsTrustCertsFilePath=/opt/pulsar/certs/ca.cert.pem
 bookkeeperTLSTrustCertsFilePath=/opt/pulsar/certs/ca.cert.pem
+brokerClientTlsEnabled=true
 ```
 
 3. 启动pulsar
