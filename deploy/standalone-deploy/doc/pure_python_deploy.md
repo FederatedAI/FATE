@@ -105,7 +105,7 @@ bash ./python/federatedml/test/run_test.sh
 
 10. Install FATE-Client and FATE-Test
 
-   To conveniently interact with FATE, we provide tools [FATE-Client](../python/fate_client) and [FATE-Test](../python/fate_test).
+   To conveniently interact with FATE, we provide tools [FATE-Client](../../../python/fate_client) and [FATE-Test](../../../python/fate_test).
 
    Install FATE-Client and FATE-Test with the following commands:
 
@@ -115,7 +115,7 @@ bash ./python/federatedml/test/run_test.sh
    ```
 
 
-Please refer [here](../doc/tutorial/pipeline/pipeline_guide.rst) for a quick start tutorial.
+Please refer [here](../../../examples/pipeline/README.rst) for a quick start tutorial.
 
 You can also experience the fateboard access via a browser:
 Http://hostip:8080.
@@ -125,4 +125,4 @@ For more details about fateboard description and deployment guide, please refer 
 
 Congratulations, You are all set. 
 
-You can enjoy your FATE by following this [tutorial](../examples)
+You can enjoy your FATE by following this [tutorial](../../../examples)

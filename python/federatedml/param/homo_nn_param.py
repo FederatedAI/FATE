@@ -95,7 +95,7 @@ class HomoNNParam(BaseParam):
 
         self.predict_param = copy.deepcopy(predict_param)
         self.cv_param = copy.deepcopy(cv_param)
-        self.callback_param = callback_param
+        self.callback_param = copy.deepcopy(callback_param)
 
     def check(self):
         supported_config_type = ["nn", "keras", "pytorch"]

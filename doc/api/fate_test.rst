@@ -384,6 +384,42 @@ A testsuite includes the following elements:
         }
     }
 
+  - cache_deps: component output cache from previous task to be used as designated cache loader input for current task(only used for intersect dsl tasks)
+
+    .. code-block:: json
+
+        "tasks": {
+        "intersect-cache": {
+            "conf": "./test_intersect_cache_job_conf.json",
+            "dsl": "./test_intersect_cache_job_dsl.json"
+        },
+        "intersect-cache-loader": {
+            "conf": "./test_intersect_cache_loader_job_conf.json",
+            "dsl": "./test_intersect_cache_loader_job_dsl.json",
+            "cache_deps": {
+                "intersect-cache"
+            }
+        }
+    }
+
+  - model_loader_deps: component output model from previous task to be used as designated model loader input for current task(only used for dsl tasks)
+
+    .. code-block:: json
+
+        "tasks": {
+        "hetero-lr": {
+            "conf": "./test_hetero_lr_job_conf.json",
+            "dsl": "./test_hetero_lr_job_dsl.json"
+        },
+        "hetero-lr-model-loader": {
+            "conf": "./test_hetero_lr_model_loader_job_conf.json",
+            "dsl": "./test_hetero_lr_model_loader_job_dsl.json",
+            "model_loader_deps": {
+                "hetero-lr"
+            }
+        }
+    }
+
 
 
 Benchmark Quality

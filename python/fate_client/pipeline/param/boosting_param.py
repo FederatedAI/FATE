@@ -485,7 +485,7 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         self.cipher_compress_error = cipher_compress_error
         self.cipher_compress = cipher_compress
         self.new_ver = new_ver
-        self.callback_param = callback_param
+        self.callback_param = copy.deepcopy(callback_param)
 
     def check(self):
 
@@ -563,7 +563,7 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
         self.guest_depth = guest_depth
         self.host_depth = host_depth
         self.work_mode = work_mode
-        self.callback_param = callback_param
+        self.callback_param = copy.deepcopy(callback_param)
 
     def check(self):
 
@@ -615,7 +615,7 @@ class HomoSecureBoostParam(BoostingParam):
         self.zero_as_missing = zero_as_missing
         self.tree_param = tree_param
         self.backend = backend
-        self.callback_param = callback_param
+        self.callback_param = copy.deepcopy(callback_param)
 
     def check(self):
         super(HomoSecureBoostParam, self).check()
