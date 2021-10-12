@@ -32,7 +32,17 @@ LOGGER = log.getLogger()
 
 
 class Session(object):
+    __SESSION = None
+
+    @classmethod
+    def get_session(cls):
+        return cls.__SESSION
+
     def __init__(self, session_id: str = None, work_mode: typing.Union[WorkMode, int] = None, options=None):
+
+        if self.__SESSION is not None:
+            raise RuntimeError(f"Session already init")
+        
         engines = engine_utils.get_engines(work_mode, options)
         LOGGER.info(f"using engines: {engines}")
         if work_mode is None:
@@ -60,9 +70,7 @@ class Session(object):
         self._logger.info(f"create manager session {self._session_id}")
 
         # add to session environment
-        _RuntimeSessionEnvironment.add_session(self)
-
-        self._logger.info(f"thread environment had sessions {_RuntimeSessionEnvironment.get_all()}")
+        self.__SESSION = self
 
         # init meta db
         init_database_tables()
@@ -71,16 +79,10 @@ class Session(object):
     def session_id(self) -> str:
         return self._session_id
 
-    def as_default(self):
-        _RuntimeSessionEnvironment.as_default_opened(self)
-        return self
-
     def _open(self):
-        _RuntimeSessionEnvironment.open_non_default_session(self)
         return self
 
     def _close(self):
-        _RuntimeSessionEnvironment.close_non_default_session(self)
         return self
 
     def __enter__(self):
@@ -437,83 +439,25 @@ class Session(object):
         LOGGER.info(f"remote futures: {remote_status._remote_futures}, all done")
 
 
-class _RuntimeSessionEnvironment(object):
-    __DEFAULT = None
-    __SESSIONS = threading.local()
+def get_session() -> Session:
+    return Session.get_session()
 
-    @classmethod
-    def get_all(cls):
-        return cls.__SESSIONS.CREATED
+def get_parties() -> PartiesInfo:
+    return get_session().parties
 
-    @classmethod
-    def add_session(cls, session: "Session"):
-        if not hasattr(cls.__SESSIONS, "CREATED"):
-            cls.__SESSIONS.CREATED = {}
-        cls.__SESSIONS.CREATED[session.session_id] = session
-
-    @classmethod
-    def has_non_default_session_opened(cls):
-        if (
-                getattr(cls.__SESSIONS, "OPENED_STACK", None) is not None
-                and cls.__SESSIONS.OPENED_STACK
-        ):
-            return True
-        return False
-
-    @classmethod
-    def get_non_default_session(cls):
-        return cls.__SESSIONS.OPENED_STACK[-1]
-
-    @classmethod
-    def open_non_default_session(cls, session):
-        if not hasattr(cls.__SESSIONS, "OPENED_STACK"):
-            cls.__SESSIONS.OPENED_STACK = []
-        cls.__SESSIONS.OPENED_STACK.append(session)
-
-    @classmethod
-    def close_non_default_session(cls, session: Session):
-        if (
-                not hasattr(cls.__SESSIONS, "OPENED_STACK")
-                or len(cls.__SESSIONS.OPENED_STACK) == 0
-        ):
-            raise RuntimeError(f"non_default_session stack empty, nothing to close")
-        least: Session = cls.__SESSIONS.OPENED_STACK.pop()
-        cls.__SESSIONS.CREATED.pop(session.session_id)
-        if least.session_id != session.session_id:
-            raise RuntimeError(
-                f"least opened session({least.session_id}) should be close first! "
-                f"while try to close {session.session_id}. all session: {cls.__SESSIONS.OPENED_STACK}"
-            )
-
-    @classmethod
-    def has_default_session_opened(cls):
-        return cls.__DEFAULT is not None
-
-    @classmethod
-    def get_default_session(cls):
-        return cls.__DEFAULT
-
-    @classmethod
-    def as_default_opened(cls, session):
-        cls.__DEFAULT = session
-
-    @classmethod
-    def get_latest_opened(cls) -> Session:
-        if not cls.has_non_default_session_opened():
-            if not cls.has_default_session_opened():
-                raise RuntimeError(f"no session opened")
-            else:
-                return cls.get_default_session()
-        else:
-            return cls.get_non_default_session()
-
-
-def get_latest_opened() -> Session:
-    return _RuntimeSessionEnvironment.get_latest_opened()
-
+def get_computing_session() -> CSessionABC
+    return get_session().computing
 
 # noinspection PyPep8Naming
-class runtime_parties(object):
+class computing_session(object):
     @staticmethod
-    def roles_to_parties(roles: typing.Iterable, strict=True):
-        return get_latest_opened().parties.roles_to_parties(roles=roles, strict=strict)
+    def init(session_id, work_mode=0, options=None):
+        Session(work_mode=work_mode, options=options).init_computing(session_id)
+
+    @staticmethod
+    def parallelize(data: typing.Iterable, partition: int, include_key: bool, **kwargs) -> CTableABC:
+        return get_computing_session().parallelize(data, partition=partition, include_key=include_key, **kwargs)
+
+    @staticmethod
+    def stop():
+        get_computing_session().stop()
