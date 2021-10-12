@@ -51,6 +51,10 @@ fate_on_spark:
     name_node: hdfs://fate-cluster
     # default /
     path_prefix:
+  localfs:
+    name_node:
+    # default /
+    path_prefix:
   rabbitmq:
     host: 192.168.0.4
     mng_port: 12345
