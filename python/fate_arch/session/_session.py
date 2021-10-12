@@ -42,7 +42,9 @@ class Session(object):
 
         if self.__SESSION is not None:
             raise RuntimeError(f"Session already init")
-        
+
+        if options is None:
+            options = {}
         engines = engine_utils.get_engines(work_mode, options)
         LOGGER.info(f"using engines: {engines}")
         if work_mode is None:
@@ -419,9 +421,9 @@ class Session(object):
                 except:
                     self._computing_session.kill()
                 self._logger.info(f"destroy computing session {self._computing_session.session_id} successfully")
-                self.delete_session_record(engine_session_id=self._computing_session.session_id)
             except Exception as e:
                 self._logger.info(f"destroy computing session {self._computing_session.session_id} failed", e)
+            self.delete_session_record(engine_session_id=self._computing_session.session_id)
 
     def destroy_storage_session(self):
         for session_id, session in self._storage_session.items():
@@ -429,9 +431,9 @@ class Session(object):
                 self._logger.info(f"try to destroy storage session {session_id}")
                 session.destroy()
                 self._logger.info(f"destroy storage session {session_id} successfully")
-                self.delete_session_record(engine_session_id=session_id)
             except Exception as e:
                 self._logger.exception(f"destroy storage session {session_id} failed", e)
+            self.delete_session_record(engine_session_id=session_id)
 
     def wait_remote_all_done(self, timeout=None):
         LOGGER.info(f"remote futures: {remote_status._remote_futures}, waiting...")
@@ -445,7 +447,7 @@ def get_session() -> Session:
 def get_parties() -> PartiesInfo:
     return get_session().parties
 
-def get_computing_session() -> CSessionABC
+def get_computing_session() -> CSessionABC:
     return get_session().computing
 
 # noinspection PyPep8Naming

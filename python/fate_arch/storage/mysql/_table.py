@@ -16,7 +16,6 @@
 
 from fate_arch.storage import StorageEngine, MySQLStoreType
 from fate_arch.storage import StorageTableBase
-from fate_client.flow_client.flow_cli.commands.table import add
 
 
 class StorageTable(StorageTableBase):

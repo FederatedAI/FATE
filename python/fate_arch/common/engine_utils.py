@@ -36,7 +36,7 @@ def get_engines(work_mode: typing.Union[WorkMode, int] = None, options=None):
     keys = [EngineType.COMPUTING, EngineType.FEDERATION, EngineType.STORAGE, "federated_mode"]
     engines = {}
     for k in keys:
-        if options is not None and options.get(k, None) is not None:
+        if options.get(k, None) is not None:
             engines[k] = options[k].upper()
 
     if isinstance(work_mode, int):
@@ -90,9 +90,9 @@ def get_engines(work_mode: typing.Union[WorkMode, int] = None, options=None):
     if engines[EngineType.FEDERATION] not in get_engine_class_members(FederationEngine):
         raise RuntimeError(f"{engines[EngineType.FEDERATION]} is illegal")
 
-    for t in (EngineType.FEDERATION):
+    for t in [EngineType.FEDERATION]:
         if engines[t] not in Relationship.Computing[engines[EngineType.COMPUTING]][t]["support"]:
-            raise RuntimeError(f"{engines[t]} is supported in {engines[EngineType.COMPUTING]}")
+            raise RuntimeError(f"{engines[t]} is not supported in {engines[EngineType.COMPUTING]}")
 
     return engines
 

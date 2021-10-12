@@ -43,28 +43,28 @@ class StorageTable(StorageTableBase):
             engine=StorageEngine.HIVE,
             store_type=storage_type,
         )
-        self.cur = cur
-        self.con = con
+        self._cur = cur
+        self._con = con
 
     def execute(self, sql, select=True):
-        self.cur.execute(sql)
+        self._cur.execute(sql)
         if select:
             while True:
-                result = self.cur.fetchone()
+                result = self._cur.fetchone()
                 if result:
                     yield result
                 else:
                     break
         else:
-            result = self.cur.fetchall()
+            result = self._cur.fetchall()
             return result
 
     def _count(self, **kwargs):
         sql = 'select count(*) from {}'.format(self._address.name)
         try:
-            self.cur.execute(sql)
-            self.con.commit()
-            ret = self.cur.fetchall()
+            self._cur.execute(sql)
+            self._con.commit()
+            ret = self._cur.fetchall()
             count = ret[0][0]
         except:
             count = 0
@@ -81,7 +81,7 @@ class StorageTable(StorageTableBase):
         id_name, feature_name_list, id_delimiter = self.get_id_feature_name()
         create_table = "create table if not exists {}(k varchar(128) NOT NULL, v string) row format delimited fields terminated by" \
                        " '{}'".format(self._address.name, id_delimiter)
-        self.cur.execute(create_table)
+        self._cur.execute(create_table)
         # load local file or hdfs file
         temp_path = os.path.join(get_project_base_directory(), 'temp_data', uuid.uuid1().hex)
         os.makedirs(os.path.dirname(temp_path), exist_ok=True)
@@ -89,8 +89,8 @@ class StorageTable(StorageTableBase):
             for k, v in kv_list:
                 f.write(f'{id_delimiter}'.join([k, pickle.dumps(v).hex()]) + "\n")
         sql = "load data local inpath '{}' overwrite into table {}".format(temp_path, self._address.name)
-        self.cur.execute(sql)
-        self.con.commit()
+        self._cur.execute(sql)
+        self._con.commit()
         os.remove(temp_path)
 
     def get_id_feature_name(self):
