@@ -30,7 +30,7 @@ output of one module is set to be the input of another module. By tracing
 how one data set is processed through FATE modules, we can see that a
 FATE job is in fact formed by a sequence of sub-tasks. For example, in
 the `mini demo <../python/fate_client/pipeline/demo/pipeline-mini-demo.py>`__ above, guest’s data is
-first read in by ``Reader``, then loaded into ``DataIO``. Overlapping
+first read in by ``Reader``, then loaded into ``DataTransform``. Overlapping
 ids between guest and host are then found by running data through
 ``Intersection``. Finally, ``HeteroLR`` model is fit on the data. Each
 listed modules run a small task with the data, and together they
@@ -88,7 +88,7 @@ reference its ``input`` attribute:
 
 .. code:: python
 
-   input_all = dataio_0.input
+   input_all = data_transform_0.input
 
 Output
 ~~~~~~
@@ -99,7 +99,7 @@ reference its ``output`` attribute:
 
 .. code:: python
 
-   output_all = dataio_0.output
+   output_all = data_transform_0.output
 
 Data
 ~~~~
@@ -145,27 +145,27 @@ can process data. Define a ``Reader`` component:
 
    reader_0 = Reader(name="reader_0")
 
-In most cases, ``DataIO`` follows ``Reader`` to transform data into
+In most cases, ``DataTransform`` follows ``Reader`` to transform data into
 DataInstance format, which can then be used for data engineering and
 model training. Some components (such as ``Union`` and ``Intersection``)
 can run directly on non-DataInstance tables.
 
 All pipeline components can be configured individually for different
-roles by setting ``get_party_instance``. For instance, ``DataIO``
+roles by setting ``get_party_instance``. For instance, ``DataTransform``
 component can be configured specifically for guest like this:
 
 .. code:: python
 
-   dataio_0 = DataIO(name="dataio_0")
-   guest_component_instance = dataio_0.get_party_instance(role='guest', party_id=9999)
+   data_transform_0 = DataTransform(name="data_transform_0")
+   guest_component_instance = data_transform_0.get_party_instance(role='guest', party_id=9999)
    guest_component_instance.component_param(with_label=True, output_format="dense")
 
 To include a component in a pipeline, use ``add_component``. To add the
-``DataIO`` component to the previously created pipeline, try this:
+``DataTransform`` component to the previously created pipeline, try this:
 
 .. code:: python
 
-   pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
+   pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
 
 
 Build Fate NN Model In Keras Style
@@ -205,7 +205,7 @@ Add it to pipeline:
 
 .. code:: python
 
-    pipeline.add_component(homo_nn, data=Data(train_data=dataio_0.output.data))
+    pipeline.add_component(homo_nn, data=Data(train_data=data_transform_0.output.data))
 
 Init Runtime JobParameters
 --------------------------
@@ -251,7 +251,7 @@ step marks selected components to be used by prediction pipeline.
 .. code:: python
 
    # deploy select components
-   pipeline.deploy_component([dataio_0, hetero_lr_0])
+   pipeline.deploy_component([data_transform_0, hetero_lr_0])
    # deploy all components
    # note that Reader component cannot be deployed. Always deploy pipeline with Reader by specified component list.
    pipeline.deploy_component()
@@ -267,7 +267,7 @@ prediction.
    predict_pipeline = PipeLine()
    predict_pipeline.add_component(reader_0)
    predict_pipeline.add_component(pipeline,
-                                  data=Data(predict_input={pipeline.dataio_0.input.data: reader_0.output.data}))
+                                  data=Data(predict_input={pipeline.data_transform_0.input.data: reader_0.output.data}))
 
 Prediction can then be initiated on the new pipeline.
 
@@ -319,7 +319,7 @@ online service `FATE-Serving <https://github.com/FederatedAI/FATE-Serving>`__.
 .. code:: python
 
    # deploy select components
-   pipeline.deploy_component([dataio_0, hetero_lr_0])
+   pipeline.deploy_component([data_transform_0, hetero_lr_0])
    # deploy all components
    # note that Reader component cannot be deployed. Always deploy pipeline with Reader by specifying component list.
    pipeline.deploy_component()
