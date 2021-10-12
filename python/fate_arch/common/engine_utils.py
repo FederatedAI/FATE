@@ -90,7 +90,7 @@ def get_engines(work_mode: typing.Union[WorkMode, int] = None, options=None):
     if engines[EngineType.FEDERATION] not in get_engine_class_members(FederationEngine):
         raise RuntimeError(f"{engines[EngineType.FEDERATION]} is illegal")
 
-    for t in (EngineType.STORAGE, EngineType.FEDERATION):
+    for t in (EngineType.FEDERATION):
         if engines[t] not in Relationship.Computing[engines[EngineType.COMPUTING]][t]["support"]:
             raise RuntimeError(f"{engines[t]} is supported in {engines[EngineType.COMPUTING]}")
 
