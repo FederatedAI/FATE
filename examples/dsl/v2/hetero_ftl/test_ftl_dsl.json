@@ -9,7 +9,7 @@
             }
         },
         "dataio_0": {
-            "module": "DataIO",
+            "module": "DataTransform",
             "input": {
                 "data": {
                     "data": [
