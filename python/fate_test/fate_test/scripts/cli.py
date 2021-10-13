@@ -62,3 +62,9 @@ def cli(ctx, **kwargs):
 
 if __name__ == '__main__':
     cli(obj=SharedOptions())
+
+
+# TODO:
+# 1. automatically upload the dataset before running each test suite
+# 2. make each test suite can be run separately
+# 3. print the job id on each test suite
