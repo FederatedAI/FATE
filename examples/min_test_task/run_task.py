@@ -249,7 +249,7 @@ class TrainTask(TaskManager):
     def _deploy_model(self):
         start_task_cmd = ['flow', "model", "deploy", "--model-id", self.model_id,
                           "--model-version", self.model_version, "--cpn-list",
-                          f"reader_0, dataio_0, intersection_0, {self.train_component_name}"]
+                          f"reader_0, data_transform_0, intersection_0, {self.train_component_name}"]
         stdout = self.start_task(start_task_cmd)
         status = stdout["retcode"]
         if status != 0:
