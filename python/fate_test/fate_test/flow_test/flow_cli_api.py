@@ -339,10 +339,11 @@ class TestModel(object):
     def data_upload(self, upload_path, work_mode, table_index=None):
         upload_file = get_dict_from_file(upload_path)
         upload_file['file'] = str(self.data_base_dir.joinpath(upload_file['file']).resolve())
+        upload_file['drop'] = 1
         upload_file['use_local_data'] = 0
         upload_file['work_mode'] = work_mode
         if table_index is not None:
-            upload_file['table_name'] = f'test_api_{table_index}'
+            upload_file['table_name'] = f'{upload_file["file"]}_{table_index}'
 
         upload_path = self.cache_directory + 'upload_file.json'
         with open(upload_path, 'w') as fp:

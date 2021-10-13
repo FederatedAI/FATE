@@ -10,7 +10,7 @@ from fate_test.flow_test.flow_process import get_dict_from_file
 
 
 class TestModel(object):
-    def __init__(self, server_url, component_name):
+    def __init__(self, data_base_dir, server_url, component_name):
         self.conf_path = None
         self.dsl_path = None
         self.job_id = None
@@ -21,6 +21,8 @@ class TestModel(object):
         self.arbiter_party_id = None
         self.output_path = None
         self.cache_directory = None
+
+        self.data_base_dir = data_base_dir
         self.component_name = component_name
         self.client = FlowClient(server_url.split(':')[0], server_url.split(':')[1].split('/')[0],
                                  server_url.split(':')[1].split('/')[1])
@@ -318,9 +320,13 @@ class TestModel(object):
 
     def data_upload(self, upload_path, work_mode, table_index=None):
         upload_file = get_dict_from_file(upload_path)
-        upload_file.update({"use_local_data": 0, "work_mode": work_mode})
+        upload_file['file'] = str(self.data_base_dir.joinpath(upload_file['file']).resolve())
+        upload_file['drop'] = 1
+        upload_file['use_local_data'] = 0
+        upload_file['work_mode'] = work_mode
         if table_index is not None:
-            upload_file.update({"table_name": upload_file["file"] + f'_{table_index}'})
+            upload_file['table_name'] = f'{upload_file["file"]}_{table_index}'
+
         upload_path = self.cache_directory + 'upload_file.json'
         with open(upload_path, 'w') as fp:
             json.dump(upload_file, fp)
@@ -666,7 +672,7 @@ def judging_state(retcode):
 def run_test_api(config_json):
     output_path = './output/flow_test_data/'
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    test_api = TestModel(config_json['server_url'].split('//')[1], config_json['component_name'])
+    test_api = TestModel(config_json['data_base_dir'], config_json['server_url'].split('//')[1], config_json['component_name'])
     test_api.dsl_path = config_json['train_dsl_path']
     test_api.cache_directory = config_json['cache_directory']
     test_api.output_path = str(os.path.abspath(output_path)) + '/'
