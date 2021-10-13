@@ -14,7 +14,7 @@ This section introduces the Pipeline scripts for different types of tasks.
 
 3. Union Task on Table:
 
-    script: pipeline-union-dataio.py
+    script: pipeline-union-data-transform.py
     
 4. Union Task on TagValue Table (with duplicated ids):
     

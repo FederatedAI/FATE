@@ -22,7 +22,7 @@
                 "allow_missing": false,
                 "keep_duplicate": true
             },
-            "dataio_0": {
+            "data_transform_0": {
                 "input_format": "tag",
                 "delimitor": ",",
                 "tag_with_value": true,

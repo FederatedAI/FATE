@@ -17,7 +17,7 @@
 import argparse
 
 from pipeline.backend.pipeline import PipeLine
-from pipeline.component import DataIO
+from pipeline.component import DataTransform
 from pipeline.component import Evaluation
 from pipeline.component import HeteroLR
 from pipeline.component import SampleWeight
@@ -52,10 +52,10 @@ def main(config="../../config.yaml", namespace=""):
     reader_0.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data)
     reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
 
-    dataio_0 = DataIO(name="dataio_0")
-    dataio_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True, label_name="y",
+    data_transform_0 = DataTransform(name="data_transform_0")
+    data_transform_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True, label_name="y",
                                                                              label_type="int", output_format="dense")
-    dataio_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
+    data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
 
     intersection_0 = Intersection(name="intersection_0")
 
@@ -110,8 +110,8 @@ def main(config="../../config.yaml", namespace=""):
     # evaluation_0.get_party_instance(role='host', party_id=host).component_param(need_run=False)
 
     pipeline.add_component(reader_0)
-    pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
-    pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
+    pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
+    pipeline.add_component(intersection_0, data=Data(data=data_transform_0.output.data))
     pipeline.add_component(sample_weight_0, data=Data(data=intersection_0.output.data))
     pipeline.add_component(hetero_feature_binning_0, data=Data(data=sample_weight_0.output.data))
     pipeline.add_component(hetero_feature_selection_0, data=Data(data=hetero_feature_binning_0.output.data),

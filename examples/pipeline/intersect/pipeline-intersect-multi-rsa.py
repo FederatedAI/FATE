@@ -17,7 +17,7 @@
 import argparse
 
 from pipeline.backend.pipeline import PipeLine
-from pipeline.component.dataio import DataIO
+from pipeline.component import DataTransform
 from pipeline.component.intersection import Intersection
 from pipeline.component.reader import Reader
 from pipeline.interface.data import Data
@@ -47,11 +47,11 @@ def main(config="../../config.yaml", namespace=""):
     reader_0.get_party_instance(role='host', party_id=hosts[1]).component_param(table=host_train_data[1])
 
 
-    dataio_0 = DataIO(name="dataio_0")
+    data_transform_0 = DataTransform(name="data_transform_0")
 
-    dataio_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=False, output_format="dense")
-    dataio_0.get_party_instance(role='host', party_id=hosts[0]).component_param(with_label=False, output_format="dense")
-    dataio_0.get_party_instance(role='host', party_id=hosts[1]).component_param(with_label=False, output_format="dense")
+    data_transform_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=False, output_format="dense")
+    data_transform_0.get_party_instance(role='host', party_id=hosts[0]).component_param(with_label=False, output_format="dense")
+    data_transform_0.get_party_instance(role='host', party_id=hosts[1]).component_param(with_label=False, output_format="dense")
 
     param = {
         "intersect_method": "rsa",
@@ -66,8 +66,8 @@ def main(config="../../config.yaml", namespace=""):
     intersect_0 = Intersection(name="intersect_0", **param)
 
     pipeline.add_component(reader_0)
-    pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
-    pipeline.add_component(intersect_0, data=Data(data=dataio_0.output.data))
+    pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
+    pipeline.add_component(intersect_0, data=Data(data=data_transform_0.output.data))
 
     pipeline.compile()
 

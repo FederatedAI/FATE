@@ -73,7 +73,7 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": false
                     },
                     "sample_weight_0": {
@@ -95,7 +95,7 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": true,
                         "label_name": "y",
                         "label_type": "int",
