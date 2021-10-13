@@ -17,7 +17,7 @@
 import argparse
 
 from pipeline.backend.pipeline import PipeLine
-from pipeline.component.data_transform import DataTransform
+from pipeline.component import DataTransform
 from pipeline.component.homo_secureboost import HomoSecureBoost
 from pipeline.component.reader import Reader
 from pipeline.interface.data import Data
