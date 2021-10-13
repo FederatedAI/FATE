@@ -142,11 +142,11 @@ fi
 ------------
 
 在目标服务器（192.168.0.1 具备外网环境）app用户下执行:
-
+备注：用具体FATE版本号替换${version}
 ```
 cd /data/projects/install
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/jdk-8u192-linux-x64.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_1.6.0_release.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_${version}_release.tar.gz
 ```
 
 ## 5.2 操作系统参数检查
