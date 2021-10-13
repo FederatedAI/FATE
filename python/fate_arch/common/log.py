@@ -231,46 +231,6 @@ def getLogger(className=None, useLevelFile=False):
     return LoggerFactory.get_logger(className)
 
 
-def schedule_logger(job_id=None, delete=False):
-    if not job_id:
-        return getLogger("fate_flow_schedule")
-    else:
-        if delete:
-            with LoggerFactory.lock:
-                try:
-                    for key in LoggerFactory.schedule_logger_dict.keys():
-                        if job_id in key:
-                            del LoggerFactory.schedule_logger_dict[key]
-                except:
-                    pass
-            return True
-        key = job_id + 'schedule'
-        if key in LoggerFactory.schedule_logger_dict:
-            return LoggerFactory.schedule_logger_dict[key]
-        return LoggerFactory.get_job_logger(job_id, "schedule")
-
-
-def audit_logger(job_id='', log_type='audit'):
-    key = job_id + log_type
-    if key in LoggerFactory.schedule_logger_dict.keys():
-        return LoggerFactory.schedule_logger_dict[key]
-    return LoggerFactory.get_job_logger(job_id=job_id, log_type=log_type)
-
-
-def sql_logger(job_id='', log_type='sql'):
-    key = job_id + log_type
-    if key in LoggerFactory.schedule_logger_dict.keys():
-        return LoggerFactory.schedule_logger_dict[key]
-    return LoggerFactory.get_job_logger(job_id=job_id, log_type=log_type)
-
-
-def detect_logger(job_id='', log_type='detect'):
-    key = job_id + log_type
-    if key in LoggerFactory.schedule_logger_dict.keys():
-        return LoggerFactory.schedule_logger_dict[key]
-    return LoggerFactory.get_job_logger(job_id=job_id, log_type=log_type)
-
-
 def exception_to_trace_string(ex):
     return "".join(traceback.TracebackException.from_exception(ex).format())
 
