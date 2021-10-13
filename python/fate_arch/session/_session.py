@@ -48,6 +48,11 @@ class Session(object):
     @classmethod
     def _is_initialized(cls)
         return cls.__IS_INITIALIZED
+    
+    @classmethod
+    def _reset_singleton(cls):
+        cls.__SESSION = None
+        cls.__IS_INITIALIZED = False
 
     @classmethod
     def _as_initialized(cls)
@@ -106,7 +111,7 @@ class Session(object):
         return self
 
     def _close(self):
-        return self
+        self._reset_singleton()
 
     def __enter__(self):
         return self._open()
