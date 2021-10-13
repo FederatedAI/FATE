@@ -38,7 +38,7 @@ class Session(object):
     @classmethod
     def __new__(cls, *args, **kwargs):
         if cls.__SESSION is None:
-            cls.__SESSION = super().__new__(cls, *args, **kwargs)
+            cls.__SESSION = object.__new__(cls)
         return cls.__SESSION
 
     @classmethod
