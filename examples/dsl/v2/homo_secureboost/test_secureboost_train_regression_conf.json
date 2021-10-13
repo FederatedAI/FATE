@@ -48,12 +48,12 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": true,
                         "label_type": "float",
                         "output_format": "dense"
                     },
-                    "dataio_1": {
+                    "data_transform_1": {
                         "with_label": true,
                         "label_type": "float",
                         "output_format": "dense"
@@ -74,12 +74,12 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": true,
                         "label_type": "float",
                         "output_format": "dense"
                     },
-                    "dataio_1": {
+                    "data_transform_1": {
                         "with_label": true,
                         "label_type": "float",
                         "output_format": "dense"
