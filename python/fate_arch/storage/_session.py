@@ -56,7 +56,7 @@ class StorageSessionBase(StorageSessionABC):
     @classmethod
     def get_table_meta(cls, name, namespace):
         meta = StorageTableMeta(name=name, namespace=namespace)
-        if meta.exists():
+        if meta and meta.exists():
             return meta
         else:
             return None
