@@ -216,10 +216,7 @@ class TestModel(object):
                                                           component_name=self.component_name)
                 if stdout.get('retcode'):
                     self.error_log('component parameters: {}'.format(stdout.get('retmsg')) + '\n')
-                if ((self.component_name == "hetero_lr_0" and
-                         stdout.get("data").get("HeteroLogisticParam").get("max_iter") == max_iter) or
-                    (self.component_name == "homo_lr_0" and
-                         stdout.get("data").get("HomoLogisticParam").get("max_iter") == max_iter)):
+                if stdout.get('data', {}).get('ComponentParam', {}).get('max_iter', {}) == max_iter:
                     return stdout.get('retcode')
             except Exception:
                 return
@@ -531,7 +528,7 @@ class TestModel(object):
                 return stdout.get('retcode')
             except Exception:
                 return
-            
+
         elif command == 'model/homo/deploy':
             job_data = {
                 "model_id": self.model_id,

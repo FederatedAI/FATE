@@ -250,10 +250,7 @@ class TestModel(Base):
                 if response.status_code == 200:
                     if response.json().get('retcode'):
                         self.error_log('component parameters: {}'.format(response.json().get('retmsg')) + '\n')
-                    if ((self.component_name == "hetero_lr_0" and
-                            response.json().get("data").get("HeteroLogisticParam").get("max_iter") == max_iter) or
-                        (self.component_name == "homo_lr_0" and
-                            response.json().get("data").get("HomoLogisticParam").get("max_iter") == max_iter)):
+                    if response.json().get('data', {}).get('ComponentParam', {}).get('max_iter', {}) == max_iter:
                         return response.json().get('retcode')
             except Exception:
                 return

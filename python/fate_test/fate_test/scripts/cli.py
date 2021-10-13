@@ -65,6 +65,7 @@ if __name__ == '__main__':
 
 
 # TODO:
-# 1. automatically upload the dataset before running each test suite
+# 1. make sure the datasets `breast_hetero_host` and breast_hetero_guest` exist
+#    before running each test suite
 # 2. make each test suite can be run separately
 # 3. print the job id on each test suite
