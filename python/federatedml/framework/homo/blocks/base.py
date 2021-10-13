@@ -13,7 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from fate_arch import session
+from fate_arch.session import get_parties
 from federatedml.transfer_variable.base_transfer_variable import Variable, BaseTransferVariables
 from federatedml.util import consts
 
@@ -38,7 +38,7 @@ class HomoTransferBase(BaseTransferVariables):
 
     @staticmethod
     def get_parties(roles):
-        return session.get_latest_opened().parties.roles_to_parties(roles=roles)
+        return get_parties().roles_to_parties(roles=roles)
 
     @property
     def client_parties(self):
