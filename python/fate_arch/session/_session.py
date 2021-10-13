@@ -37,6 +37,10 @@ class Session(object):
     @classmethod
     def get_session(cls):
         return cls.__SESSION
+    
+    @classmethod
+    def set_session(cls, sess):
+        cls.__SESSION = sess
 
     def __init__(self, session_id: str = None, work_mode: typing.Union[WorkMode, int] = None, options=None):
 
@@ -71,7 +75,7 @@ class Session(object):
         self._logger.info(f"create manager session {self._session_id}")
 
         # add to session environment
-        self.__SESSION = self
+        self.set_session(self)
 
         # init meta db
         init_database_tables()
