@@ -39,7 +39,6 @@ class Session(object):
     def __new__(cls, *args, **kwargs):
         if cls.__SESSION is None:
             cls.__SESSION = super().__new__(cls, *args, **kwargs)
-            cls.__IS_INITIALIZED = True
         return cls.__SESSION
 
     @classmethod
@@ -50,6 +49,10 @@ class Session(object):
     def _is_initialized(cls)
         return cls.__IS_INITIALIZED
 
+    @classmethod
+    def _as_initialized(cls)
+        cls.__IS_INITIALIZED = True
+    
     def __init__(self, session_id: str = None, work_mode: typing.Union[WorkMode, int] = None, options=None):
         if self._is_initialized:
             sess = self._get_session()
@@ -91,6 +94,9 @@ class Session(object):
 
         # init meta db
         init_database_tables()
+
+        # mark initialized
+        self._as_initialized()
 
     @property
     def session_id(self) -> str:
