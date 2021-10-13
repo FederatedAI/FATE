@@ -10,24 +10,24 @@ https://fate.fedai.org
    :glob:
    :maxdepth: 2
 
-   Standalone <_build_temp/standalone-deploy/README>
-   Cluster <_build_temp/cluster-deploy/README>
+   Standalone <_build_temp/deploy/standalone-deploy/README>
+   Cluster <_build_temp/deploy/cluster-deploy/README>
 
 
 .. toctree::
    :caption: Quick Start
    :maxdepth: 3
 
-   Quick Start <_build_temp/examples/pipeline/README>
-   Data Upload <_build_temp/doc/upload_data_guide>
-   V1 Configuration <_build_temp/doc/dsl_conf_v1_setting_guide>
-   V2 Configuration <_build_temp/doc/dsl_conf_v2_setting_guide>
+   Quick Start <_build_temp/doc/tutorial/pipeline/pipeline_guide>
+   Data Upload <_build_temp/doc/tutorial/dsl_conf/upload_data_guide>
+   V1 Configuration <_build_temp/doc/tutorial/dsl_conf/dsl_conf_v1_setting_guide>
+   V2 Configuration <_build_temp/doc/tutorial/dsl_conf/dsl_conf_v2_setting_guide>
 
 .. toctree::
    :maxdepth: 3
    :caption: Algorithms
 
-   FederatedML <_build_temp/doc/federatedml>
+   FederatedML <_build_temp/doc/api/federatedml>
    Examples <_build_temp/examples/README>
 
 .. toctree::
