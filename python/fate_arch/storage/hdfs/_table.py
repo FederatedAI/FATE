@@ -71,7 +71,7 @@ class StorageTable(StorageTableBase):
                 path=self.path, compression=None
             )
 
-        counter = self._meta.get_count()
+        counter = self._meta.get_count() if self._meta.get_count() else 0
         with io.TextIOWrapper(stream) as writer:
             for k, v in kv_list:
                 writer.write(hdfs_utils.serialize(k, v))

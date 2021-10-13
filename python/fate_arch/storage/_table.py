@@ -136,8 +136,8 @@ class StorageTableBase(StorageTableABC):
         return self._read()
 
     def destroy(self):
-        self._destroy()
         self.meta.destroy_metas()
+        self._destroy()
 
     def save_as(self, address, name, namespace, partitions=None, schema=None, **kwargs):
         table = self._save_as(address, name, namespace, partitions, schema, **kwargs)
