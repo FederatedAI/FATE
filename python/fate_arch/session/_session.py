@@ -44,7 +44,7 @@ class Session(object):
 
     def __init__(self, session_id: str = None, work_mode: typing.Union[WorkMode, int] = None, options=None):
 
-        if self.__SESSION is not None:
+        if self.get_session() is not None:
             raise RuntimeError(f"Session already init")
         if options is None:
             options = {}
@@ -79,6 +79,12 @@ class Session(object):
 
         # init meta db
         init_database_tables()
+
+    @classmethod 
+    def get_or_create(cls, session_id: str = None, work_mode: typing.Union[WorkMode, int] = None, options=None):
+        if get_session is None:
+            Session(session_id=session_id, work_mode=work_mode, options=options)
+        return get_session()
 
     @property
     def session_id(self) -> str:
