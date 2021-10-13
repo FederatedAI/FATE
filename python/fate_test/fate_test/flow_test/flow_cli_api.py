@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 import shutil
 import time
 import subprocess
@@ -10,9 +11,10 @@ from fate_test.flow_test.flow_process import get_dict_from_file
 
 
 class TestModel(object):
-    def __init__(self, fate_flow_path, component_name):
+    def __init__(self, data_base_dir, fate_flow_path, component_name):
         self.conf_path = None
         self.dsl_path = None
+        # TODO: do not set it in `self.submit_job`
         self.job_id = None
         self.model_id = None
         self.model_version = None
@@ -21,8 +23,14 @@ class TestModel(object):
         self.arbiter_party_id = None
         self.output_path = None
         self.cache_directory = None
-        self.component_name = component_name
+
+        self.data_base_dir = data_base_dir
         self.fate_flow_path = fate_flow_path
+        self.component_name = component_name
+
+        self.python_bin = sys.executable or 'python'
+
+
         self.request_api_info_path = './cli_api.log'
         if os.path.exists(self.request_api_info_path):
             os.remove(self.request_api_info_path)
@@ -33,7 +41,7 @@ class TestModel(object):
 
     def submit_job(self, stop=True):
         try:
-            subp = subprocess.Popen(["python", self.fate_flow_path, "-f", "submit_job", "-d", self.dsl_path,
+            subp = subprocess.Popen([self.python_bin, self.fate_flow_path, "-f", "submit_job", "-d", self.dsl_path,
                                      "-c", self.conf_path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             stdout, stderr = subp.communicate()
             stdout = json.loads(stdout.decode("utf-8"))
@@ -53,7 +61,7 @@ class TestModel(object):
             self.submit_job()
             time.sleep(5)
             try:
-                subp = subprocess.Popen(["python", self.fate_flow_path, "-f", command, "-j", self.job_id],
+                subp = subprocess.Popen([self.python_bin, self.fate_flow_path, "-f", command, "-j", self.job_id],
                                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                 stdout, stderr = subp.communicate()
                 stdout = json.loads(stdout.decode("utf-8"))
@@ -67,7 +75,7 @@ class TestModel(object):
         elif command == 'job_log':
             log_file_dir = os.path.join(self.output_path, 'job_{}_log'.format(self.job_id))
             try:
-                subp = subprocess.Popen(["python", self.fate_flow_path, "-f", command, "-j", self.job_id, "-o",
+                subp = subprocess.Popen([self.python_bin, self.fate_flow_path, "-f", command, "-j", self.job_id, "-o",
                                          log_file_dir], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                 stdout, stderr = subp.communicate()
                 stdout = json.loads(stdout.decode("utf-8"))
@@ -79,7 +87,7 @@ class TestModel(object):
 
         elif command == 'data_view_query':
             try:
-                subp = subprocess.Popen(["python", self.fate_flow_path, "-f", command, "-j", self.job_id,
+                subp = subprocess.Popen([self.python_bin, self.fate_flow_path, "-f", command, "-j", self.job_id,
                                          "-r", "guest"],
                                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                 stdout, stderr = subp.communicate()
@@ -93,13 +101,13 @@ class TestModel(object):
 
         elif command == 'clean_job':
             try:
-                subp = subprocess.Popen(["python", self.fate_flow_path, "-f", command, "-j", self.job_id],
+                subp = subprocess.Popen([self.python_bin, self.fate_flow_path, "-f", command, "-j", self.job_id],
                                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                 stdout, stderr = subp.communicate()
                 stdout = json.loads(stdout.decode("utf-8"))
                 if stdout.get('retcode'):
                     self.error_log('clean job: {}'.format(stdout.get('retmsg')) + '\n')
-                subp = subprocess.Popen(["python", self.fate_flow_path, "-f", "component_metrics", "-j", self.job_id,
+                subp = subprocess.Popen([self.python_bin, self.fate_flow_path, "-f", "component_metrics", "-j", self.job_id,
                                          "-r", "guest", "-p", str(self.guest_party_id[0]), "-cpn", 'evaluation_0'],
                                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                 metric, stderr = subp.communicate()
@@ -111,7 +119,7 @@ class TestModel(object):
 
         elif command == 'clean_queue':
             try:
-                subp = subprocess.Popen(["python", self.fate_flow_path, "-f", command],
+                subp = subprocess.Popen([self.python_bin, self.fate_flow_path, "-f", command],
                                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                 stdout, stderr = subp.communicate()
                 stdout = json.loads(stdout.decode("utf-8"))
@@ -128,7 +136,7 @@ class TestModel(object):
         time.sleep(1)
         try:
             if not queue:
-                subp = subprocess.Popen(["python", self.fate_flow_path, "-f", "query_job", "-j", job_id],
+                subp = subprocess.Popen([self.python_bin, self.fate_flow_path, "-f", "query_job", "-j", job_id],
                                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                 stdout, stderr = subp.communicate()
                 stdout = json.loads(stdout.decode("utf-8"))
@@ -137,7 +145,7 @@ class TestModel(object):
                 else:
                     self.error_log('query job: {}'.format(stdout.get('retmsg')) + '\n')
             else:
-                subp = subprocess.Popen(["python", self.fate_flow_path, "-f", "query_job", "-j", job_id, "-s",
+                subp = subprocess.Popen([self.python_bin, self.fate_flow_path, "-f", "query_job", "-j", job_id, "-s",
                                          "waiting"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                 stdout, stderr = subp.communicate()
                 stdout = json.loads(stdout.decode("utf-8"))
@@ -148,7 +156,7 @@ class TestModel(object):
 
     def job_config(self, max_iter):
         try:
-            subp = subprocess.Popen(["python", self.fate_flow_path, "-f", "job_config", "-j", self.job_id, "-r",
+            subp = subprocess.Popen([self.python_bin, self.fate_flow_path, "-f", "job_config", "-j", self.job_id, "-r",
                                      "guest", "-p", str(self.guest_party_id[0]), "-o", self.output_path],
                                     stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             stdout, stderr = subp.communicate()
@@ -166,7 +174,7 @@ class TestModel(object):
     def query_task(self):
         try:
             subp = subprocess.Popen(
-                ["python", self.fate_flow_path, "-f", "query_task", "-j", self.job_id, "-r", "guest",
+                [self.python_bin, self.fate_flow_path, "-f", "query_task", "-j", self.job_id, "-r", "guest",
                  "-p", str(self.guest_party_id[0]), "-cpn", self.component_name],
                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             stdout, stderr = subp.communicate()
@@ -184,7 +192,7 @@ class TestModel(object):
         if command == 'component_output_data':
             try:
                 subp = subprocess.Popen(
-                    ["python", self.fate_flow_path, "-f", command, "-j", self.job_id, "-r",
+                    [self.python_bin, self.fate_flow_path, "-f", command, "-j", self.job_id, "-r",
                      "guest", "-p", str(self.guest_party_id[0]), "-cpn", self.component_name, "-o",
                      component_output_path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                 stdout, stderr = subp.communicate()
@@ -198,7 +206,7 @@ class TestModel(object):
         elif command == 'component_output_data_table':
             try:
                 subp = subprocess.Popen(
-                    ["python", self.fate_flow_path, "-f", command, "-j", self.job_id, "-r",
+                    [self.python_bin, self.fate_flow_path, "-f", command, "-j", self.job_id, "-r",
                      "guest", "-p", str(self.guest_party_id[0]), "-cpn", self.component_name],
                     stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                 stdout, stderr = subp.communicate()
@@ -214,7 +222,7 @@ class TestModel(object):
 
         elif command == 'component_output_model':
             try:
-                subp = subprocess.Popen(["python", self.fate_flow_path, "-f", command, "-r", "guest",
+                subp = subprocess.Popen([self.python_bin, self.fate_flow_path, "-f", command, "-r", "guest",
                                          "-j", self.job_id, "-p", str(self.guest_party_id[0]), "-cpn", self.component_name],
                                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                 stdout, stderr = subp.communicate()
@@ -228,24 +236,21 @@ class TestModel(object):
 
         elif command == 'component_parameters':
             try:
-                subp = subprocess.Popen(["python", self.fate_flow_path, "-f", command, "-j", self.job_id,
+                subp = subprocess.Popen([self.python_bin, self.fate_flow_path, "-f", command, "-j", self.job_id,
                                          "-r", "guest", "-p", str(self.guest_party_id[0]), "-cpn", self.component_name],
                                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                 stdout, stderr = subp.communicate()
                 stdout = json.loads(stdout.decode("utf-8"))
                 if stdout.get('retcode'):
                     self.error_log('component parameters: {}'.format(stdout.get('retmsg')) + '\n')
-                if ((self.component_name == "hetero_lr_0" and
-                         stdout.get("data").get("HeteroLogisticParam").get("max_iter") == max_iter) or
-                    (self.component_name == "homo_lr_0" and
-                         stdout.get("data").get("HomoLogisticParam").get("max_iter") == max_iter)):
+                if stdout.get('data', {}).get('ComponentParam', {}).get('max_iter', {}) == max_iter:
                     return stdout.get('retcode')
             except Exception:
                 return
 
         elif command == 'component_metrics':
             try:
-                subp = subprocess.Popen(["python", self.fate_flow_path, "-f", command, "-j", self.job_id,
+                subp = subprocess.Popen([self.python_bin, self.fate_flow_path, "-f", command, "-j", self.job_id,
                                          "-r", "guest", "-p", str(self.guest_party_id[0]), "-cpn", 'evaluation_0'],
                                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                 stdout, stderr = subp.communicate()
@@ -262,7 +267,7 @@ class TestModel(object):
 
         elif command == 'component_metric_all':
             try:
-                subp = subprocess.Popen(["python", self.fate_flow_path, "-f", command, "-j", self.job_id,
+                subp = subprocess.Popen([self.python_bin, self.fate_flow_path, "-f", command, "-j", self.job_id,
                                          "-r", "guest", "-p", str(self.guest_party_id[0]), "-cpn", 'evaluation_0'],
                                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                 stdout, stderr = subp.communicate()
@@ -279,14 +284,14 @@ class TestModel(object):
 
         elif command == 'component_metric_delete':
             try:
-                subp = subprocess.Popen(["python", self.fate_flow_path, "-f", command, "-j",
+                subp = subprocess.Popen([self.python_bin, self.fate_flow_path, "-f", command, "-j",
                                          self.job_id, "-r", "guest", "-p", str(self.guest_party_id[0]), "-cpn",
                                          'evaluation_0'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                 stdout, stderr = subp.communicate()
                 stdout = json.loads(stdout.decode("utf-8"))
                 if stdout.get('retcode'):
                     self.error_log('component metric delete: {}'.format(stdout.get('retmsg')) + '\n')
-                subp = subprocess.Popen(["python", self.fate_flow_path, "-f", "component_metrics", "-j", self.job_id,
+                subp = subprocess.Popen([self.python_bin, self.fate_flow_path, "-f", "component_metrics", "-j", self.job_id,
                                          "-r", "guest", "-p", str(self.guest_party_id[0]), "-cpn", 'evaluation_0'],
                                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                 metric, stderr = subp.communicate()
@@ -299,7 +304,7 @@ class TestModel(object):
     def table_api(self, command, table_name):
         if command == 'table_info':
             try:
-                subp = subprocess.Popen(["python", self.fate_flow_path, "-f", command, "-t",
+                subp = subprocess.Popen([self.python_bin, self.fate_flow_path, "-f", command, "-t",
                                          table_name['table_name'], "-n", table_name['namespace']],
                                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                 stdout, stderr = subp.communicate()
@@ -314,14 +319,14 @@ class TestModel(object):
 
         elif command == 'table_delete':
             try:
-                subp = subprocess.Popen(["python", self.fate_flow_path, "-f", command, "-t",
+                subp = subprocess.Popen([self.python_bin, self.fate_flow_path, "-f", command, "-t",
                                          table_name['table_name'], "-n", table_name['namespace']],
                                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                 stdout, stderr = subp.communicate()
                 stdout = json.loads(stdout.decode("utf-8"))
                 if stdout.get('retcode'):
                     self.error_log('table delete: {}'.format(stdout.get('retmsg')) + '\n')
-                subp = subprocess.Popen(["python", self.fate_flow_path, "-f", "table_delete", "-t",
+                subp = subprocess.Popen([self.python_bin, self.fate_flow_path, "-f", "table_delete", "-t",
                                          table_name['table_name'], "-n", table_name['namespace']],
                                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                 stdout, stderr = subp.communicate()
@@ -333,14 +338,18 @@ class TestModel(object):
 
     def data_upload(self, upload_path, work_mode, table_index=None):
         upload_file = get_dict_from_file(upload_path)
-        upload_file.update({"use_local_data": 0, "work_mode": work_mode})
+        upload_file['file'] = str(self.data_base_dir.joinpath(upload_file['file']).resolve())
+        upload_file['use_local_data'] = 0
+        upload_file['work_mode'] = work_mode
         if table_index is not None:
-            upload_file.update({"table_name": f'test_api_{table_index}'})
+            upload_file['table_name'] = f'test_api_{table_index}'
+
         upload_path = self.cache_directory + 'upload_file.json'
         with open(upload_path, 'w') as fp:
             json.dump(upload_file, fp)
+
         try:
-            subp = subprocess.Popen(["python", self.fate_flow_path, "-f", "upload", "-c", upload_path, "-drop", "1"],
+            subp = subprocess.Popen([self.python_bin, self.fate_flow_path, "-f", "upload", "-c", upload_path, "-drop", "1"],
                                     stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             stdout, stderr = subp.communicate()
             stdout = json.loads(stdout.decode("utf-8"))
@@ -361,7 +370,7 @@ class TestModel(object):
         with open(config_file_path, 'w') as fp:
             json.dump(download_config, fp)
         try:
-            subp = subprocess.Popen(["python", self.fate_flow_path, "-f", "download", "-c", config_file_path],
+            subp = subprocess.Popen([self.python_bin, self.fate_flow_path, "-f", "download", "-c", config_file_path],
                                     stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             stdout, stderr = subp.communicate()
             stdout = json.loads(stdout.decode("utf-8"))
@@ -374,7 +383,7 @@ class TestModel(object):
     def data_upload_history(self, conf_file, work_mode):
         self.data_upload(conf_file, work_mode=work_mode, table_index=1)
         try:
-            subp = subprocess.Popen(["python", self.fate_flow_path, "-f", "upload_history", "-limit", "2"],
+            subp = subprocess.Popen([self.python_bin, self.fate_flow_path, "-f", "upload_history", "-limit", "2"],
                                     stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             stdout, stderr = subp.communicate()
             stdout = json.loads(stdout.decode("utf-8"))
@@ -388,7 +397,7 @@ class TestModel(object):
     def model_api(self, command, remove_path=None, model_path=None, load_path=None, bind_path=None):
         if command == 'load':
             try:
-                subp = subprocess.Popen(["python", self.fate_flow_path, "-f", command, "-c", load_path],
+                subp = subprocess.Popen([self.python_bin, self.fate_flow_path, "-f", command, "-c", load_path],
                                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                 stdout, stderr = subp.communicate()
                 stdout = json.loads(stdout.decode("utf-8"))
@@ -400,7 +409,7 @@ class TestModel(object):
 
         elif command == 'bind':
             try:
-                subp = subprocess.Popen(["python", self.fate_flow_path, "-f", command, "-c", bind_path],
+                subp = subprocess.Popen([self.python_bin, self.fate_flow_path, "-f", command, "-c", bind_path],
                                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                 stdout, stderr = subp.communicate()
                 stdout = json.loads(stdout.decode("utf-8"))
@@ -426,7 +435,7 @@ class TestModel(object):
                 remove_path = Path(remove_path + self.model_version)
                 if os.path.isdir(remove_path):
                     shutil.rmtree(remove_path)
-                subp = subprocess.Popen(["python", self.fate_flow_path, "-f", command, "-c", config_file_path],
+                subp = subprocess.Popen([self.python_bin, self.fate_flow_path, "-f", command, "-c", config_file_path],
                                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                 stdout, stderr = subp.communicate()
                 stdout = json.loads(stdout.decode("utf-8"))
@@ -447,7 +456,7 @@ class TestModel(object):
             config_file_path = self.cache_directory + 'model_export.json'
             with open(config_file_path, 'w') as fp:
                 json.dump(config_data, fp)
-            subp = subprocess.Popen(["python", self.fate_flow_path, "-f", command, "-c", config_file_path, "-o",
+            subp = subprocess.Popen([self.python_bin, self.fate_flow_path, "-f", command, "-c", config_file_path, "-o",
                                      self.output_path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             stdout, stderr = subp.communicate()
             stdout = json.loads(stdout.decode("utf-8"))
@@ -468,7 +477,7 @@ class TestModel(object):
             with open(config_file_path, 'w') as fp:
                 json.dump(config_data, fp)
 
-            subp = subprocess.Popen(["python", self.fate_flow_path, "-f", command, "-c", config_file_path],
+            subp = subprocess.Popen([self.python_bin, self.fate_flow_path, "-f", command, "-c", config_file_path],
                                     stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             stdout, stderr = subp.communicate()
             stdout = json.loads(stdout.decode("utf-8"))
@@ -517,13 +526,16 @@ def judging_state(retcode):
 def run_test_api(config_json):
     output_path = './output/flow_test_data/'
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
     fate_flow_path = config_json['data_base_dir'].parent.parent / 'fate_flow' / 'fate_flow_client.py'
     if not fate_flow_path.exists():
         raise FileNotFoundError(f'fate_flow not found. filepath: {fate_flow_path}')
-    test_api = TestModel(str(fate_flow_path), config_json['component_name'])
+
+    test_api = TestModel(config_json['data_base_dir'], str(fate_flow_path), config_json['component_name'])
     test_api.dsl_path = config_json['train_dsl_path']
     test_api.cache_directory = config_json['cache_directory']
     test_api.output_path = str(os.path.abspath(output_path)) + '/'
+
     conf_path = config_json['train_conf_path']
     guest_party_id = config_json['guest_party_id']
     host_party_id = config_json['host_party_id']
@@ -536,6 +548,9 @@ def run_test_api(config_json):
         guest_party_id[0], arbiter_party_id[0], guest_party_id[0], host_party_id[0])
     max_iter = test_api.set_config(guest_party_id, host_party_id, arbiter_party_id, conf_path, work_mode,
                                    config_json['component_name'])
+
+    # # TODO: do not set `test_api.job_id` in `test_api.submit_job`
+    # test_api.submit_job(stop=False)
 
     data = PrettyTable()
     data.set_style(ORGMODE)
@@ -579,6 +594,7 @@ def run_test_api(config_json):
     component.add_row(['metrics', judging_state(test_api.component_api('component_metrics'))])
     component.add_row(['metrics all', judging_state(test_api.component_api('component_metric_all'))])
 
+    # TODO: fix the path
     model = PrettyTable()
     model.set_style(ORGMODE)
     model.field_names = ['model api name', 'status']
@@ -587,17 +603,19 @@ def run_test_api(config_json):
         model.add_row(['model bind', judging_state(test_api.model_api('bind'))])
     status, model_path = test_api.model_api('export')
     model.add_row(['model export', judging_state(status)])
-    model.add_row(['model  import', (judging_state(
+    model.add_row(['model import', (judging_state(
         test_api.model_api('import', remove_path=remove_path, model_path=model_path)))])
     model.add_row(['model store', (judging_state(test_api.model_api('store')))])
     model.add_row(['model restore', (judging_state(test_api.model_api('restore')))])
     print(model.get_string(title="model api"))
+
     component.add_row(['metrics delete', judging_state(test_api.component_api('component_metric_delete'))])
     print(component.get_string(title="component api"))
 
     test_api.submit_job()
     test_api.submit_job()
     test_api.submit_job()
+
     job.add_row(['clean job', judging_state(test_api.job_api('clean_job'))])
     job.add_row(['clean queue', judging_state(test_api.job_api('clean_queue'))])
     print(job.get_string(title="job api"))
