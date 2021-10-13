@@ -52,6 +52,13 @@ class Session(object):
 
     def __init__(self, session_id: str = None, work_mode: typing.Union[WorkMode, int] = None, options=None):
         if self._is_initialized:
+            sess = self._get_session()
+            if session_id is not None and sess._session_id != session_id:
+                raise RuntimeError(
+                    f"session already init with session id = {sess._session_id}, it's ambiguity to provide session id = {session_id} again")
+            if work_mode is not None and sess._work_mode != work_mode:
+                raise RuntimeError(
+                    f"session already init with work_mode = {sess._work_mode}, it's ambiguity to provide work_mode = {work_mode} again")
             return
         
         if options is None:
