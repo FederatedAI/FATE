@@ -346,7 +346,10 @@
                     ],
                     "validation_freqs": 1,
                     "early_stopping_rounds": 15,
-                    "use_first_metric_only": true
+                    "use_first_metric_only": true,
+                    "metrics": [
+                        "AUC"
+                    ]
                 },
                 "optimizer": {
                     "learning_rate": 0.15,
@@ -356,9 +359,6 @@
                     "optimizer": "SGD"
                 },
                 "loss": "binary_crossentropy",
-                "metrics": [
-                    "AUC"
-                ],
                 "bottom_nn_define": null,
                 "top_nn_define": null,
                 "interactive_layer_define": null,
@@ -366,8 +366,6 @@
             },
             "hetero_nn_1": {
                 "optimizer": null,
-                "loss": null,
-                "metrics": null,
                 "bottom_nn_define": null,
                 "top_nn_define": null,
                 "interactive_layer_define": null,

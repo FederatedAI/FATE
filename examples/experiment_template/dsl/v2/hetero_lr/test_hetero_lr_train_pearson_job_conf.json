@@ -121,7 +121,7 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_0": {
+                    "data_transform_0": {
                         "missing_fill": true,
                         "missing_fill_method": "mean",
                         "outlier_replace": false,
@@ -133,7 +133,7 @@
                         "label_type": "int",
                         "output_format": "dense"
                     },
-                    "dataio_1": {
+                    "data_transform_1": {
                         "missing_fill": true,
                         "missing_fill_method": "mean",
                         "outlier_replace": false,
@@ -161,14 +161,14 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_0": {
+                    "data_transform_0": {
                         "input_format": "tag",
                         "delimitor": ";",
                         "tag_with_value": true,
                         "with_label": false,
                         "output_format": "dense"
                     },
-                    "dataio_1": {
+                    "data_transform_1": {
                         "input_format": "tag",
                         "delimitor": ";",
                         "tag_with_value": true,

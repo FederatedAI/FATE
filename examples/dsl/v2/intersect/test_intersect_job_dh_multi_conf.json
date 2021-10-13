@@ -41,7 +41,7 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": false,
                         "output_format": "dense"
                     }
@@ -53,7 +53,7 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": false,
                         "output_format": "dense"
                     }
@@ -67,7 +67,7 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": false,
                         "output_format": "dense"
                     }

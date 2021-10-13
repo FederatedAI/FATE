@@ -155,10 +155,9 @@ class BaseParam(object):
                     setattr(param, config_key, sub_params)
 
             if not allow_redundant and redundant_attrs:
-                pass
-                # raise ValueError(
-                #     f"cpn `{getattr(self, '_name', type(self))}` has redundant parameters: `{[redundant_attrs]}`"
-                # )
+                raise ValueError(
+                    f"cpn `{getattr(self, '_name', type(self))}` has redundant parameters: `{[redundant_attrs]}`"
+                )
 
             return param
 

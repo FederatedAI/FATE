@@ -25,8 +25,7 @@ from fate_arch.storage.linkis_hive._settings import (
     STATUS_URI,
     EXECUTE_URI,
 )
-from fate_client.flow_client.flow_cli.commands.table import add
-from fate_client.pipeline.constant import StoreEngine
+
 
 
 class StorageTable(StorageTableBase):

@@ -17,7 +17,7 @@
 import argparse
 
 from pipeline.backend.pipeline import PipeLine
-from pipeline.component.dataio import DataIO
+from pipeline.component import DataTransform
 from pipeline.component.hetero_ftl import HeteroFTL
 from pipeline.component.reader import Reader
 from pipeline.interface.data import Data
@@ -48,9 +48,9 @@ def main(config="../../config.yaml", namespace=""):
     reader_0.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data)
     reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
 
-    dataio_0 = DataIO(name="dataio_0")
-    dataio_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True, output_format="dense")
-    dataio_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
+    data_transform_0 = DataTransform(name="data_transform_0")
+    data_transform_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True, output_format="dense")
+    data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
 
     hetero_ftl_0 = HeteroFTL(name='hetero_ftl_0',
                              epochs=10, alpha=1, batch_size=-1, mode='plain')
@@ -63,8 +63,8 @@ def main(config="../../config.yaml", namespace=""):
     evaluation_0 = Evaluation(name='evaluation_0', eval_type="binary")
 
     pipeline.add_component(reader_0)
-    pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
-    pipeline.add_component(hetero_ftl_0, data=Data(train_data=dataio_0.output.data))
+    pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
+    pipeline.add_component(hetero_ftl_0, data=Data(train_data=data_transform_0.output.data))
     pipeline.add_component(evaluation_0, data=Data(data=hetero_ftl_0.output.data))
 
     pipeline.compile()
@@ -74,7 +74,7 @@ def main(config="../../config.yaml", namespace=""):
 
     # predict
     # deploy required components
-    pipeline.deploy_component([dataio_0, hetero_ftl_0])
+    pipeline.deploy_component([data_transform_0, hetero_ftl_0])
 
     predict_pipeline = PipeLine()
     # add data reader onto predict pipeline
@@ -82,7 +82,7 @@ def main(config="../../config.yaml", namespace=""):
     # add selected components from train pipeline onto predict pipeline
     # specify data source
     predict_pipeline.add_component(pipeline,
-                                   data=Data(predict_input={pipeline.dataio_0.input.data: reader_0.output.data}))
+                                   data=Data(predict_input={pipeline.data_transform_0.input.data: reader_0.output.data}))
     # run predict model
     predict_pipeline.predict(job_parameters)
 

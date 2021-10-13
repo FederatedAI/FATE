@@ -119,7 +119,8 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
 
         tree = HeteroDecisionTreeGuest(tree_param=self.tree_param)
         tree.init(flowid=self.generate_flowid(epoch_idx, booster_dim),
-                  data_bin=self.data_bin, bin_split_points=self.bin_split_points, bin_sparse_points=self.bin_sparse_points,
+                  data_bin=self.data_bin, bin_split_points=self.bin_split_points,
+                  bin_sparse_points=self.bin_sparse_points,
                   grad_and_hess=g_h,
                   encrypter=self.encrypter, encrypted_mode_calculator=self.encrypted_calculator,
                   task_type=self.task_type,
@@ -177,7 +178,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         rs = tree.traverse_tree(tree_=tree.tree_node, data_inst=sample, predict_state=(cur_node_idx, -1),
                                 decoder=tree.decode, sitename=tree.sitename, use_missing=tree.use_missing,
                                 split_maskdict=tree.split_maskdict, missing_dir_maskdict=tree.missing_dir_maskdict,
-                                return_leaf_id=True)
+                                zero_as_missing=tree.zero_as_missing, return_leaf_id=True)
 
         if not isinstance(rs, tuple):
             reach_leaf = True

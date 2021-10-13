@@ -18,9 +18,9 @@
         }
     ],
     "tasks": {
-        "union-dataio": {
-            "conf": "./test_union_dataio_job_conf.json",
-            "dsl": "./test_union_dataio_job_dsl.json"
+        "union-data-transform": {
+            "conf": "./test_union_data_transform_job_conf.json",
+            "dsl": "./test_union_data_transform_job_dsl.json"
         },
         "union-validate": {
             "conf": "./test_union_validate_job_conf.json",

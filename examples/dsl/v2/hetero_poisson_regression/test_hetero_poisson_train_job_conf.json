@@ -50,7 +50,7 @@
         "role": {
             "guest": {
                 "0": {
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": true,
                         "label_name": "doctorco",
                         "label_type": "float",
@@ -69,7 +69,7 @@
                     "evaluation_0": {
                         "need_run": false
                     },
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": false
                     },
                     "reader_0": {

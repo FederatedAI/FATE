@@ -50,7 +50,7 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_1": {
+                    "data_transform_1": {
                         "with_label": true,
                         "output_format": "dense"
                     },
@@ -60,7 +60,7 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": true,
                         "output_format": "dense"
                     }
@@ -74,7 +74,7 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_1": {
+                    "data_transform_1": {
                         "with_label": false
                     },
                     "reader_1": {
@@ -83,7 +83,7 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": false
                     }
                 }

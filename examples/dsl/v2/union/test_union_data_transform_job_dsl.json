@@ -32,8 +32,8 @@
                 ]
             }
         },
-        "dataio_0": {
-            "module": "DataIO",
+        "data_transform_0": {
+            "module": "DataTransform",
             "input": {
                 "data": {
                     "data": [

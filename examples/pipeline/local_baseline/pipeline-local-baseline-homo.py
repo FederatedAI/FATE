@@ -17,7 +17,7 @@
 import argparse
 
 from pipeline.backend.pipeline import PipeLine
-from pipeline.component import DataIO
+from pipeline.component import DataTransform
 from pipeline.component import Evaluation
 from pipeline.component import HomoLR
 from pipeline.component import LocalBaseline
@@ -47,7 +47,7 @@ def main(config="../../config.yaml", namespace=""):
     reader_0.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data)
     reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
 
-    dataio_0 = DataIO(name="dataio_0", with_label=True, output_format="dense",
+    data_transform_0 = DataTransform(name="data_transform_0", with_label=True, output_format="dense",
                       label_type="int", label_name="y")
 
     homo_lr_0 = HomoLR(name="homo_lr_0", penalty="L2", optimizer="sgd",
@@ -65,9 +65,9 @@ def main(config="../../config.yaml", namespace=""):
     evaluation_0.get_party_instance(role='host', party_id=host).component_param(need_run=False)
 
     pipeline.add_component(reader_0)
-    pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
-    pipeline.add_component(homo_lr_0, data=Data(train_data=dataio_0.output.data))
-    pipeline.add_component(local_baseline_0, data=Data(train_data=dataio_0.output.data))
+    pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
+    pipeline.add_component(homo_lr_0, data=Data(train_data=data_transform_0.output.data))
+    pipeline.add_component(local_baseline_0, data=Data(train_data=data_transform_0.output.data))
     pipeline.add_component(evaluation_0, data=Data(data=[homo_lr_0.output.data, local_baseline_0.output.data]))
 
     pipeline.compile()
@@ -76,12 +76,12 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.fit(job_parameters)
 
     # predict
-    pipeline.deploy_component([dataio_0, homo_lr_0, local_baseline_0])
+    pipeline.deploy_component([data_transform_0, homo_lr_0, local_baseline_0])
 
     predict_pipeline = PipeLine()
     predict_pipeline.add_component(reader_0)
     predict_pipeline.add_component(pipeline,
-                                   data=Data(predict_input={pipeline.dataio_0.input.data: reader_0.output.data}))
+                                   data=Data(predict_input={pipeline.data_transform_0.input.data: reader_0.output.data}))
     predict_pipeline.add_component(evaluation_0, data=Data(data=[homo_lr_0.output.data, local_baseline_0.output.data]))
     predict_pipeline.predict(job_parameters)
 
