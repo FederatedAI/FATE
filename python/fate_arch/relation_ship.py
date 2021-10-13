@@ -16,8 +16,9 @@
 from fate_arch.computing import ComputingEngine
 from fate_arch.federation import FederationEngine
 from fate_arch.storage import StorageEngine
-from fate_arch.common.address import StandaloneAddress, EggRollAddress, HDFSAddress, MysqlAddress, FileAddress, \
-    PathAddress, HiveAddress, LocalFSAddress
+from fate_arch.common.address import StandaloneAddress, EggRollAddress, HDFSAddress, \
+    MysqlAddress, \
+    PathAddress, LocalFSAddress, HiveAddress, LinkisHiveAddress
 from fate_arch.common import EngineType
 
 
@@ -46,7 +47,7 @@ class Relationship(object):
         ComputingEngine.SPARK: {
             EngineType.STORAGE: {
                 "default": StorageEngine.HDFS,
-                "support": [StorageEngine.HDFS, StorageEngine.LOCALFS]
+                "support": [StorageEngine.HDFS, StorageEngine.HIVE, StorageEngine.LOCALFS]
             },
             EngineType.FEDERATION: {
                 "default": FederationEngine.RABBITMQ,
@@ -69,9 +70,9 @@ class Relationship(object):
         StorageEngine.STANDALONE: StandaloneAddress,
         StorageEngine.EGGROLL: EggRollAddress,
         StorageEngine.HDFS: HDFSAddress,
-        StorageEngine.HIVE: HiveAddress,
         StorageEngine.MYSQL: MysqlAddress,
-        StorageEngine.FILE: FileAddress,
+        StorageEngine.HIVE: HiveAddress,
+        StorageEngine.LINKIS_HIVE: LinkisHiveAddress,
         StorageEngine.LOCALFS: LocalFSAddress,
         StorageEngine.PATH: PathAddress
     }
@@ -88,8 +89,9 @@ class Relationship(object):
             EngineType.FEDERATION: [(FederationEngine.EGGROLL, "rollsite")],
         },
         "fate_on_spark": {
-            EngineType.COMPUTING: [(ComputingEngine.SPARK, "spark")],
-            EngineType.STORAGE: [(StorageEngine.HDFS, "hdfs"), (StorageEngine.LOCALFS, "localfs")],
+            EngineType.COMPUTING: [(ComputingEngine.SPARK, "spark"), (ComputingEngine.LINKIS_SPARK, "linkis_spark")],
+            EngineType.STORAGE: [(StorageEngine.HDFS, "hdfs"), (StorageEngine.HIVE, "hive"),
+                                 (StorageEngine.LINKIS_HIVE, "linkis_hive"),(StorageEngine.LOCALFS, "localfs")],
             EngineType.FEDERATION: [(FederationEngine.RABBITMQ, "rabbitmq"), (FederationEngine.PULSAR, "pulsar")]
         },
     }

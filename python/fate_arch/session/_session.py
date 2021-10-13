@@ -19,12 +19,12 @@ import uuid
 
 import peewee
 from fate_arch.common import  engine_utils, EngineType
-from fate_arch.abc import CSessionABC, FederationABC, CTableABC, StorageSessionABC
+from fate_arch.abc import CSessionABC, FederationABC, CTableABC, StorageSessionABC, StorageTableABC, StorageTableMetaABC
 from fate_arch.common import log, base_utils
 from fate_arch.common import WorkMode, remote_status
 from fate_arch.computing import ComputingEngine
 from fate_arch.federation import FederationEngine
-from fate_arch.storage import StorageEngine, StorageSessionBase, StorageTableMeta
+from fate_arch.storage import StorageEngine, StorageSessionBase
 from fate_arch.metastore.db_models import DB, SessionRecord, init_database_tables
 from fate_arch.session._parties import PartiesInfo
 
@@ -42,7 +42,6 @@ class Session(object):
 
         if self.__SESSION is not None:
             raise RuntimeError(f"Session already init")
-
         if options is None:
             options = {}
         engines = engine_utils.get_engines(work_mode, options)
@@ -240,7 +239,7 @@ class Session(object):
                                storage_session_id=None,
                                storage_engine=None,
                                record: bool = True,
-                               **kwargs):
+                               **kwargs) -> StorageSessionABC:
         storage_session_id = f"{self._session_id}_storage_{uuid.uuid1()}" if not storage_session_id else storage_session_id
 
         if storage_session_id in self._storage_session:
@@ -282,10 +281,6 @@ class Session(object):
             from fate_arch.storage.linkis_hive import StorageSession
             storage_session = StorageSession(session_id=storage_session_id, options=kwargs.get("options", {}))
 
-        elif storage_engine == StorageEngine.FILE:
-            from fate_arch.storage.file import StorageSession
-            storage_session = StorageSession(session_id=storage_session_id, options=kwargs.get("options", {}))
-
         elif storage_engine == StorageEngine.PATH:
             from fate_arch.storage.path import StorageSession
             storage_session = StorageSession(session_id=storage_session_id, options=kwargs.get("options", {}))
@@ -301,14 +296,23 @@ class Session(object):
 
         return storage_session
 
+    def get_table(self, name, namespace) -> typing.Union[StorageTableABC, None]:
+        meta = Session.get_table_meta(name=name, namespace=namespace)
+        if meta is None:
+            return None
+        engine = meta.get_engine()
+        storage_session = self._get_or_create_storage(storage_engine=engine)
+        table = storage_session.get_table(name=name, namespace=namespace)
+        return table
+
     @classmethod
-    def get_table_meta(cls, name, namespace):
+    def get_table_meta(cls, name, namespace) -> typing.Union[StorageTableMetaABC, None]:
         meta = StorageSessionBase.get_table_meta(name=name, namespace=namespace)
         return meta
 
     @classmethod
     def persistent(cls, computing_table: CTableABC, namespace, name, schema=None, part_of_data=None,
-                   engine=None, engine_address=None, store_type=None, token: typing.Dict = None) -> StorageTableMeta:
+                   engine=None, engine_address=None, store_type=None, token: typing.Dict = None) -> StorageTableMetaABC:
         return StorageSessionBase.persistent(computing_table=computing_table,
                                              namespace=namespace,
                                              name=name,

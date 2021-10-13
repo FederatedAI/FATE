@@ -125,13 +125,6 @@ class LinkisHiveAddress(AddressABC):
         return self.__str__()
 
 
-# todo: maybe remove
-class FileAddress(AddressABC):
-    def __init__(self, path, path_type):
-        self.path = path
-        self.path_type = path_type
-
-
 class LocalFSAddress(AddressABC):
     def __init__(self, name_node, path=None):
         self.name_node = name_node
