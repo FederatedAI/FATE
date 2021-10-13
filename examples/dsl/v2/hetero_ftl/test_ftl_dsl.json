@@ -8,7 +8,7 @@
                 ]
             }
         },
-        "dataio_0": {
+        "data_transform_0": {
             "module": "DataTransform",
             "input": {
                 "data": {
@@ -31,7 +31,7 @@
             "input": {
                 "data": {
                     "train_data": [
-                        "dataio_0.data"
+                        "data_transform_0.data"
                     ]
                 }
             },
