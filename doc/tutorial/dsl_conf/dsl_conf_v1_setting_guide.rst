@@ -5,7 +5,7 @@ DSL & Task Submit Runtime Conf Setting V1
 .. _中文: dsl_conf_v1_setting_guide_zh.rst
 
 
-To make the modeling task more flexible, currently, FATE use its own domain-specific language(DSL) to describe modeling task. With usage of this DSL, modeling components such as data-io, feature-engineering and classification/regression module etc. can be combined as a Directed Acyclic Graph(DAG). Therefore, user can take and combine the algorithm components flexibly according to their needs.
+To make the modeling task more flexible, currently, FATE use its own domain-specific language(DSL) to describe modeling task. With usage of this DSL, modeling components such as data-transform, feature-engineering and classification/regression module etc. can be combined as a Directed Acyclic Graph(DAG). Therefore, user can take and combine the algorithm components flexibly according to their needs.
 
 In addition, each component has their own parameters to be configured. Also, the configuration may differ from party to party. For convenience, FATE configure all parameters for all parties and all components in one file. This guide will show you how to create such a configure file.
 
@@ -28,8 +28,8 @@ Then each component should be defined on the second level. Here is an example of
 
 ::
   
-  "dataio_0": {
-        "module": "DataIO",
+  "data_transform_0": {
+        "module": "DataTransform",
         "input": {
             "data": {
                 "data": [
@@ -39,7 +39,7 @@ Then each component should be defined on the second level. Here is an example of
         },
         "output": {
             "data": ["train"],
-            "model": ["dataio"]
+            "model": ["model"]
         },
         "need_deploy": true
     }
@@ -75,7 +75,7 @@ Field Specification
             "input": {
                 "data": {
                     "data": [
-                        "dataio_1.validate_data"
+                        "data_transform_1.validate_data"
                     ]
                 },
                 "model": [
@@ -168,7 +168,7 @@ Besides the dsl conf, user also need to prepare a submit runtime conf to set the
           ]
         }
       },
-      "dataio_0": {
+      "data_transform_0": {
         "with_label": [
           true
         ],
@@ -186,7 +186,7 @@ Besides the dsl conf, user also need to prepare a submit runtime conf to set the
           ]
         }
       },
-      "dataio_0": {
+      "data_transform_0": {
          ...
       }
       ...
@@ -273,7 +273,7 @@ Each parameter set for host should also be list in a list. The number of element
           ]
         }
       },
-      "dataio_0": {
+      "data_transform_0": {
         "with_label": [false, false, false],
         "output_format": ["dense", "dense", "dense"],
         "outlier_replace": [true, true, true]

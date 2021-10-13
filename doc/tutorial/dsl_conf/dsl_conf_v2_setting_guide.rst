@@ -7,7 +7,7 @@ DSL & Task Submit Runtime Conf Setting V2
 
 
 To make the modeling task more flexible, currently, FATE uses its own domain-specific language(DSL)
-to describe modeling task. With usage of this DSL, modeling components such as data-io,
+to describe modeling task. With usage of this DSL, modeling components such as data-transform,
 feature-engineering and classification/regression module etc. can be combined as a Directed Acyclic Graph(DAG).
 Therefore, user can take and combine the algorithm components flexibly according to their needs.
 
@@ -48,8 +48,8 @@ Then each component should be defined on the second level. Here is an example of
 
 .. code-block:: json
 
-  "dataio_0": {
-        "module": "DataIO",
+  "data_transform_0": {
+        "module": "DataTransform",
         "input": {
             "data": {
                 "data": [
@@ -59,7 +59,7 @@ Then each component should be defined on the second level. Here is an example of
         },
         "output": {
             "data": ["train"],
-            "model": ["dataio"]
+            "model": ["model"]
         }
     }
 
@@ -121,7 +121,7 @@ this component has "output" field only, like the following:
           "input": {
               "data": {
                   "data": [
-                      "dataio_1.validate_data"
+                      "data_transform_1.validate_data"
                   ]
               },
               "model": [
@@ -554,7 +554,7 @@ Note: current version now supports checking on both fields of specification.
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 -  Configuration of modules ``intersection_0``\ & \ ``hetero_lr_0``\ are put inside ``common``, thus applies to all participants
--  Configuration of modules \ ``reader_0``\ & \ ``dataio_0``\ are specified for each participant
+-  Configuration of modules \ ``reader_0``\ & \ ``data_transform_0``\ are specified for each participant
 -  Names of the above modules are specified in dsl file
 
 .. code:: json
@@ -584,7 +584,7 @@ Note: current version now supports checking on both fields of specification.
            "reader_0": {
              "table": {"name": "breast_hetero_guest", "namespace": "experiment"}
            },
-           "dataio_0":{
+           "data_transform_0":{
              "with_label": true,
              "label_name": "y",
              "label_type": "int",
@@ -597,7 +597,7 @@ Note: current version now supports checking on both fields of specification.
            "reader_0": {
              "table": {"name": "breast_hetero_host", "namespace": "experiment"}
            },
-           "dataio_0":{
+           "data_transform_0":{
              "with_label": false,
              "output_format": "dense"
            }
@@ -701,8 +701,8 @@ training dsl:
                 ]
             }
         },
-        "dataio_0": {
-            "module": "DataIO",
+        "data_transform_0": {
+            "module": "DataTransform",
             "input": {
                 "data": {
                     "data": [
@@ -724,7 +724,7 @@ training dsl:
             "input": {
                 "data": {
                     "data": [
-                        "dataio_0.data"
+                        "data_transform_0.data"
                     ]
                 }
             },
@@ -767,8 +767,8 @@ predict dsl:
                 ]
             }
         },
-        "dataio_0": {
-            "module": "DataIO",
+        "data_transform_0": {
+            "module": "DataTransform",
             "input": {
                 "data": {
                     "data": [
@@ -790,7 +790,7 @@ predict dsl:
             "input": {
                 "data": {
                     "data": [
-                        "dataio_0.data"
+                        "data_transform_0.data"
                     ]
                 }
             },

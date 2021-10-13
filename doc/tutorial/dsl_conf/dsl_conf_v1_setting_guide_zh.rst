@@ -4,7 +4,7 @@ DSL 配置和运行配置 V1
 
 .. _ENG: dsl_conf_v1_setting_guide.rst
 
-为了让任务模型的构建更加灵活，目前 FATE 使用了一套自定的领域特定语言 (DSL) 来描述任务。在 DSL 中，各种模块（例如数据读写 data_io，特征工程 feature-engineering， 回归 regression，分类 classification）可以通向一个有向无环图 （DAG） 组织起来。通过各种方式，用户可以根据自身的需要，灵活地组合各种算法模块。
+为了让任务模型的构建更加灵活，目前 FATE 使用了一套自定的领域特定语言 (DSL) 来描述任务。在 DSL 中，各种模块（例如数据读写 data-transform，特征工程 feature-engineering， 回归 regression，分类 classification）可以通向一个有向无环图 （DAG） 组织起来。通过各种方式，用户可以根据自身的需要，灵活地组合各种算法模块。
 
 除此之外，每个模块都有不同的参数需要配置，不同的 party 对于同一个模块的参数也可能有所区别。为了简化这种情况，对于每一个模块，FATE 会将所有 party 的不同参数保存到同一个运行配置文件（Submit Runtime Conf）中，并且所有的 party 都将共用这个配置文件。这个指南将会告诉你如何创建一个 DSL 配置文件。
 
@@ -26,8 +26,8 @@ DSL 的配置文件采用 json 格式，实际上，整个配置文件就是一�
 
 ::
   
-  "dataio_0": {
-        "module": "DataIO",
+  "data_transform_0": {
+        "module": "DataTransform",
         "input": {
             "data": {
                 "data": [
@@ -37,13 +37,13 @@ DSL 的配置文件采用 json 格式，实际上，整个配置文件就是一�
         },
         "output": {
             "data": ["train"],
-            "model": ["dataio"]
+            "model": ["model"]
         },
         "need_deploy": true
     }
 
 
-正如这个例子，用户需要使用模块名加数字 `\_num` 作为对应模块的 key，例如 `dataio_0`，并且数字应从 0 开始计数。
+正如这个例子，用户需要使用模块名加数字 `\_num` 作为对应模块的 key，例如 `data_transform_0`，并且数字应从 0 开始计数。
 
 参数说明
 ^^^^^^^^^^^
@@ -70,7 +70,7 @@ DSL 的配置文件采用 json 格式，实际上，整个配置文件就是一�
               "input": {
                 "data": {
                   "data": [
-                    "dataio_1.eval_data"
+                    "data_transform_1.eval_data"
                   ]
                 },
                 "model": [
@@ -156,7 +156,7 @@ DSL 的配置文件采用 json 格式，实际上，整个配置文件就是一�
               ]
             }
           },
-          "dataio_0": {
+          "data_transform_0": {
             "with_label": [
               true
             ],
@@ -174,7 +174,7 @@ DSL 的配置文件采用 json 格式，实际上，整个配置文件就是一�
               ]
             }
           },
-          "dataio_0": {
+          "data_transform_0": {
              ...
           }
           ...
@@ -261,7 +261,7 @@ DSL 的配置文件采用 json 格式，实际上，整个配置文件就是一�
          ]
        }
      },
-     "dataio_0": {
+     "data_transform_0": {
      "with_label": [false, false, false],
      "output_format": ["dense", "dense", "dense"],
      "outlier_replace": [true, true, true]

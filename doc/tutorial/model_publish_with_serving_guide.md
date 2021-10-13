@@ -10,7 +10,7 @@
 
 # 2. Cluster Deploy
 
-Offline Cluster for Training(FATE), please refer to: https://github.com/FederatedAI/FATE/tree/master/cluster-deploy/doc
+Offline Cluster for Training(FATE), please refer to: https://github.com/FederatedAI/FATE/tree/master/deploy/cluster-deploy/doc
 
 Online Cluster for Inference(FATE-Serving)，please refer to: https://github.com/FederatedAI/FATE-Serving/wiki
 
