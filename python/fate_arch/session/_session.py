@@ -33,19 +33,27 @@ LOGGER = log.getLogger()
 
 class Session(object):
     __SESSION = None
+    __IS_INITIALIZED = False
 
     @classmethod
-    def get_session(cls):
+    def __new__(cls, *args, **kwargs):
+        if cls.__SESSION is None:
+            cls.__SESSION = super().__new__(cls, *args, **kwargs)
+            cls.__IS_INITIALIZED = True
         return cls.__SESSION
-    
+
     @classmethod
-    def set_session(cls, sess):
-        cls.__SESSION = sess
+    def _get_session(cls):
+        return cls.__SESSION
+
+    @classmethod
+    def _is_initialized(cls)
+        return cls.__IS_INITIALIZED
 
     def __init__(self, session_id: str = None, work_mode: typing.Union[WorkMode, int] = None, options=None):
-
-        if self.get_session() is not None:
-            raise RuntimeError(f"Session already init")
+        if self._is_initialized:
+            return
+        
         if options is None:
             options = {}
         engines = engine_utils.get_engines(work_mode, options)
@@ -74,17 +82,8 @@ class Session(object):
 
         self._logger.info(f"create manager session {self._session_id}")
 
-        # add to session environment
-        self.set_session(self)
-
         # init meta db
         init_database_tables()
-
-    @classmethod 
-    def get_or_create(cls, session_id: str = None, work_mode: typing.Union[WorkMode, int] = None, options=None):
-        if get_session is None:
-            Session(session_id=session_id, work_mode=work_mode, options=options)
-        return get_session()
 
     @property
     def session_id(self) -> str:
@@ -456,7 +455,7 @@ class Session(object):
 
 
 def get_session() -> Session:
-    return Session.get_session()
+    return Session._get_session()
 
 def get_parties() -> PartiesInfo:
     return get_session().parties
