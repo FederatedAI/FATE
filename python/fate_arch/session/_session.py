@@ -46,15 +46,15 @@ class Session(object):
         return cls.__SESSION
 
     @classmethod
-    def _is_initialized(cls)
+    def _is_initialized(cls):
         return cls.__IS_INITIALIZED
 
     @classmethod
-    def _as_initialized(cls)
+    def _as_initialized(cls):
         cls.__IS_INITIALIZED = True
     
     def __init__(self, session_id: str = None, work_mode: typing.Union[WorkMode, int] = None, options=None):
-        if self._is_initialized:
+        if self._is_initialized():
             sess = self._get_session()
             if session_id is not None and sess._session_id != session_id:
                 raise RuntimeError(
@@ -447,9 +447,9 @@ class Session(object):
                 except:
                     self._computing_session.kill()
                 self._logger.info(f"destroy computing session {self._computing_session.session_id} successfully")
-                self.delete_session_record(engine_session_id=self._computing_session.session_id)
             except Exception as e:
                 self._logger.info(f"destroy computing session {self._computing_session.session_id} failed", e)
+            self.delete_session_record(engine_session_id=self._computing_session.session_id)
 
     def destroy_storage_session(self):
         for session_id, session in self._storage_session.items():
@@ -457,9 +457,9 @@ class Session(object):
                 self._logger.info(f"try to destroy storage session {session_id}")
                 session.destroy()
                 self._logger.info(f"destroy storage session {session_id} successfully")
-                self.delete_session_record(engine_session_id=session_id)
             except Exception as e:
                 self._logger.exception(f"destroy storage session {session_id} failed", e)
+            self.delete_session_record(engine_session_id=session_id)
 
     def wait_remote_all_done(self, timeout=None):
         LOGGER.info(f"remote futures: {remote_status._remote_futures}, waiting...")

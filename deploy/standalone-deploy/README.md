@@ -14,7 +14,7 @@ The stand-alone version provides 2 deployment methods, which can be selected acc
 
 - Install FATE  in Host 
 
-You can also refer to [Chinese guide](./doc/Fate-standalone_deployment_guide_zh.md) 
+You can also refer to [Chinese guide](doc/Fate-standalone_deployment_guide_zh.md) 
 
 
 #### 1) Install FATE using Docker*(Recommended)* 
@@ -29,7 +29,7 @@ It is strongly recommended to use docker, which greatly reduces the possibility 
 
    please follow the below step:
 
-    Please replace ${version} below with the real version you want to use， refer to version of FATE in [fate.env](../fate.env).
+    Please replace ${version} below with the real version you want to use， refer to version of FATE in [fate.env](../../fate.env).
 
 ```
 #Get code
@@ -73,7 +73,7 @@ bash install_standalone_docker.sh
 
 5. Install FATE-Client and FATE-Test
 
-   To conveniently interact with FATE, we provide tools [FATE-Client](../python/fate_client) and [FATE-Test](../python/fate_test).
+   To conveniently interact with FATE, we provide tools [FATE-Client](../../python/fate_client) and [FATE-Test](../../python/fate_test).
 
    Install FATE-Client and FATE-Test with the following commands:
 
@@ -83,7 +83,7 @@ bash install_standalone_docker.sh
    ```
    
 
-There are a few algorithms under [examples](../examples/dsl/v2) folder, try them out!
+There are a few algorithms under [examples](../../examples/dsl/v2) folder, try them out!
 
 You can also experience the fateboard access via a browser:
 Http://hostip:8080.
@@ -102,7 +102,7 @@ Http://hostip:8080.
 
 2. Download the compressed package of stand-alone version and decompress it.
 
-    Please replace ${version} below with the real version you want to use， refer to version of FATE in [fate.env](../fate.env).
+    Please replace ${version} below with the real version you want to use， refer to version of FATE in [fate.env](../../fate.env).
    ```   
    wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/standalone_fate_master_${version}.tar.gz
    tar -xzvf  standalone_fate_master_${version}.tar.gz
@@ -110,7 +110,7 @@ Http://hostip:8080.
 
 3. Enter FATE directory and execute the init.sh.
 
-    Please replace ${version} below with the real version you want to use， refer to version of FATE in [fate.env](../fate.env).
+    Please replace ${version} below with the real version you want to use， refer to version of FATE in [fate.env](../../fate.env).
 
    ```   
    cd standalone_fate_master_${version}
@@ -119,7 +119,7 @@ Http://hostip:8080.
 
 4. Test
 
-    Please replace ${version} below with the real version you want to use， refer to version of FATE in [fate.env](../fate.env).
+    Please replace ${version} below with the real version you want to use， refer to version of FATE in [fate.env](../../fate.env).
 
    - Unit Test
 
@@ -151,7 +151,7 @@ Http://hostip:8080.
 
 5. Install FATE-Client and FATE-Test
 
-   To conveniently interact with FATE, we provide tools [FATE-Client](../python/fate_client) and [FATE-Test](../python/fate_test).
+   To conveniently interact with FATE, we provide tools [FATE-Client](../../python/fate_client) and [FATE-Test](../../python/fate_test).
 
    Install FATE-Client and FATE-Test with the following commands:
 
@@ -161,7 +161,7 @@ Http://hostip:8080.
    ```
 
 
-There are a few algorithms under [examples](../examples/dsl/v2) folder, try them out!
+There are a few algorithms under [examples](../../examples/dsl/v2) folder, try them out!
 
 You can also experience the fateboard access via a browser:
 Http://hostip:8080.

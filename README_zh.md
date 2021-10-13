@@ -29,7 +29,7 @@ FATE支持Linux或Mac操作系统，当前FATE支持：
 
 FATE为开发人员提供了单机部署架构版本。单机部署版本可以帮助开发人员快速开发以及测试FATE。该版本支持两种类型：1）Docker；2）手动编译。
 
-具体细节请参阅单机部署指南：[standalone-deploy](./standalone-deploy/)。
+具体细节请参阅单机部署指南：[standalone-deploy](deploy/standalone-deploy/)。
 
 ##### 集群部署
 

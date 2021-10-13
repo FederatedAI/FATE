@@ -41,7 +41,7 @@ class StorageSessionBase(StorageSessionABC):
 
     def get_table(self, name, namespace):
         meta = StorageTableMeta(name=name, namespace=namespace)
-        if meta.exists():
+        if meta and meta.exists():
             table = self.table(name=meta.get_name(),
                                namespace=meta.get_namespace(),
                                address=meta.get_address(),
@@ -56,7 +56,7 @@ class StorageSessionBase(StorageSessionABC):
     @classmethod
     def get_table_meta(cls, name, namespace):
         meta = StorageTableMeta(name=name, namespace=namespace)
-        if meta.exists():
+        if meta and meta.exists():
             return meta
         else:
             return None
@@ -137,7 +137,7 @@ class StorageSessionBase(StorageSessionABC):
             LOGGER.warning(f"stop storage session {self._session_id} failed, try to kill", e)
             self.kill()
 
-    def table(self, address, name, namespace, partitions=None, **kwargs):
+    def table(self, name, namespace, address, store_type, partitions=None, **kwargs):
         raise NotImplementedError()
 
     def stop(self):

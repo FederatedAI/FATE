@@ -157,7 +157,10 @@ class Table(CTableABC):
 
     @computing_profile
     def take(self, n=1, **kwargs):
-        return self._rdd.take(n)
+        _value = self._rdd.take(n)
+        if kwargs.get("filter", False):
+            self._rdd = self._rdd.filter(lambda xy: xy not in [_xy for _xy in _value])
+        return _value
 
     @computing_profile
     def first(self, **kwargs):

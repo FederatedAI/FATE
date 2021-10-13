@@ -138,7 +138,7 @@ class StorageTableBase(StorageTableABC):
     def destroy(self):
         self.meta.destroy_metas()
         self._destroy()
-    
+
     def save_as(self, address, name, namespace, partitions=None, schema=None, **kwargs):
         table = self._save_as(address, name, namespace, partitions, schema, **kwargs)
         table.create_meta(**kwargs)
@@ -185,7 +185,7 @@ class StorageTableMeta(StorageTableMetaABC):
         self.in_serialized = None
         self.have_head = None
         self.id_delimiter = None
-        self.extend_sid = None
+        self.extend_sid = False
         self.auto_increasing_sid = None
         self.schema = None
         self.count = None
