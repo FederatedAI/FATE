@@ -12,10 +12,10 @@ import pandas as pd
 import numpy as np
 
 from fate_arch import storage
-from fate_arch.common import WorkMode, Backend
+# from fate_arch.common import WorkMode, Backend
 from fate_flow.utils import data_utils
-from fate_arch.session import Session
-from fate_arch.storage import StorageEngine
+# from fate_arch.session import Session
+# from fate_arch.storage import StorageEngine
 from fate_test._config import Config
 
 sys.setrecursionlimit(1000000)
