@@ -78,8 +78,6 @@ def main(config="../../config.yaml", param="./linr_config.yaml", namespace=""):
 
     param = {
         "penalty": param["penalty"],
-        "validation_freqs": None,
-        "early_stopping_rounds": None,
         "max_iter": param["max_iter"],
         "optimizer": param["optimizer"],
         "learning_rate": param["learning_rate"],

@@ -47,8 +47,11 @@ def main(config="../../config.yaml", namespace=""):
         "early_stop": "diff",
         "batch_size": -1,
         "learning_rate": 0.15,
-        "validation_freqs": 1,
-        "early_stopping_rounds": 3,
+        "callback_param": {
+            "callbacks": ["EarlyStopping"],
+            "validation_freqs": 1,
+            "early_stopping_rounds": 3
+        },
         "init_param": {
             "init_method": "zeros"
         },
