@@ -32,38 +32,21 @@ LOGGER = log.getLogger()
 
 
 class Session(object):
-    __SESSION = None
-    __IS_INITIALIZED = False
+    __GLOBAL_SESSION = None
 
     @classmethod
-    def __new__(cls, *args, **kwargs):
-        if cls.__SESSION is None:
-            cls.__SESSION = object.__new__(cls)
-        return cls.__SESSION
+    def global(cls):
+        return cls.__GLOBAL_SESSION
 
     @classmethod
-    def _get_session(cls):
-        return cls.__SESSION
+    def _as_global(cls, sess):
+        cls.__GLOBAL_SESSION = sess
 
-    @classmethod
-    def _is_initialized(cls):
-        return cls.__IS_INITIALIZED
+    def as_global(self):
+        self._as_global(self)
+        return self
 
-    @classmethod
-    def _as_initialized(cls):
-        cls.__IS_INITIALIZED = True
-    
     def __init__(self, session_id: str = None, work_mode: typing.Union[WorkMode, int] = None, options=None):
-        if self._is_initialized():
-            sess = self._get_session()
-            if session_id is not None and sess._session_id != session_id:
-                raise RuntimeError(
-                    f"session already init with session id = {sess._session_id}, it's ambiguity to provide session id = {session_id} again")
-            if work_mode is not None and sess._work_mode != work_mode:
-                raise RuntimeError(
-                    f"session already init with work_mode = {sess._work_mode}, it's ambiguity to provide work_mode = {work_mode} again")
-            return
-        
         if options is None:
             options = {}
         engines = engine_utils.get_engines(work_mode, options)
@@ -95,9 +78,6 @@ class Session(object):
         # init meta db
         init_database_tables()
 
-        # mark initialized
-        self._as_initialized()
-
     @property
     def session_id(self) -> str:
         return self._session_id
@@ -106,7 +86,7 @@ class Session(object):
         return self
 
     def _close(self):
-        return self
+        pass
 
     def __enter__(self):
         return self._open()
@@ -468,7 +448,7 @@ class Session(object):
 
 
 def get_session() -> Session:
-    return Session._get_session()
+    return Session.global()
 
 def get_parties() -> PartiesInfo:
     return get_session().parties
@@ -489,3 +469,4 @@ class computing_session(object):
     @staticmethod
     def stop():
         get_computing_session().stop()
+
