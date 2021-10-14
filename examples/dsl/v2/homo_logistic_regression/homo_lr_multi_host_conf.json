@@ -25,7 +25,7 @@
     },
     "component_parameters": {
         "common": {
-            "dataio_0": {
+            "data_transform_0": {
                 "with_label": true,
                 "output_format": "dense"
             },

@@ -74,9 +74,9 @@
             "conf": "hetero_lr_l1_conf.json",
             "dsl": "hetero_lr_l1_dsl.json"
         },
-        "hetero_lr_compute_loss_not_review": {
-            "conf": "hetero_lr_compute_loss_not_review_conf.json",
-            "dsl": "hetero_lr_compute_loss_not_review_dsl.json"
+        "hetero_lr_compute_loss_not_reveal": {
+            "conf": "hetero_lr_compute_loss_not_reveal_conf.json",
+            "dsl": "hetero_lr_compute_loss_not_reveal_dsl.json"
         },
         "hetero_lr_compute_loss": {
             "conf": "hetero_lr_compute_loss_conf.json",

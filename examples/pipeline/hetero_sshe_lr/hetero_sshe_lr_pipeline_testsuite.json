@@ -51,8 +51,8 @@
         "hetero-lr-l1": {
             "script": "pipeline-hetero-lr-l1.py"
         },
-        "hetero-lr-compute-loss-not-review": {
-            "script": "pipeline-hetero-lr-compute-loss-not-review.py"
+        "hetero-lr-compute-loss-not-reveal": {
+            "script": "pipeline-hetero-lr-compute-loss-not-reveal.py"
         },
         "hetero-lr-compute-loss": {
             "script": "pipeline-hetero-lr-compute-loss.py"

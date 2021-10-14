@@ -98,9 +98,7 @@
                     "init_method": "zeros"
                 },
                 "max_iter": 5,
-                "early_stop": "diff",
-                "validation_freqs": null,
-                "early_stopping_rounds": null
+                "early_stop": "diff"
             }
         },
         "role": {
