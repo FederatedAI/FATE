@@ -86,7 +86,7 @@ class Session(object):
         return self
 
     def _close(self):
-        pass
+        self.destroy_all_sessions()
 
     def __enter__(self):
         return self._open()
