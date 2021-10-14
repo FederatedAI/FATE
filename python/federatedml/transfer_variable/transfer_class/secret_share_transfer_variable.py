@@ -34,3 +34,4 @@ class SecretShareTransferVariable(BaseTransferVariables):
         self.multiply_triplets_encrypted = self._create_variable(name='multiply_triplets_encrypted', src=['guest', 'host'], dst=['guest', 'host'])
         self.rescontruct = self._create_variable(name='rescontruct', src=['guest', 'host'], dst=['guest', 'host'])
         self.share = self._create_variable(name='share', src=['guest', 'host'], dst=['guest', 'host'])
+        self.encrypted_share_matrix = self._create_variable(name='encrypted_share_matrix', src=['guest', "host"], dst=['host', "guest"])

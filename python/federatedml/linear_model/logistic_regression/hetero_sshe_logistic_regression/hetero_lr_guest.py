@@ -48,7 +48,7 @@ class HeteroLRGuest(HeteroLRBase):
         return remote_pubkey
 
     def _cal_z_in_share(self, w_self, w_remote, features, suffix):
-        z1 = features.dot_local(w_self.value, fit_intercept=self.fit_intercept)
+        z1 = features.dot_local(w_self)
 
         za_suffix = ("za",) + suffix
 
@@ -130,7 +130,8 @@ class HeteroLRGuest(HeteroLRBase):
         ga2_2 = self.secure_matrix_obj.secure_matrix_mul(error_1_n,
                                                          tensor_name=".".join(ga2_suffix),
                                                          cipher=self.cipher,
-                                                         suffix=ga2_suffix)
+                                                         suffix=ga2_suffix,
+                                                         is_fixedpoint_table=False)
 
         # self.secure_matrix_mul_active(error_1_n, cipher=self.cipher,
         #                               suffix=ga2_suffix)
@@ -139,7 +140,7 @@ class HeteroLRGuest(HeteroLRBase):
 
         # wb = wb - gb2 * self.model_param.learning_rate
         ga2_2 = ga2_2.reshape(ga2_2.shape[0])
-        # LOGGER.debug(f"wa shape: {wa.shape}, ga_shape: {ga2_2.shape}")
+        LOGGER.debug(f"wa shape: {wa.shape}, ga_shape: {ga2_2.shape}, {ga2_2.value[0].__dict__}")
         # wa = wa - ga2_2 * self.model_param.learning_rate
         # wa = wa.reshape(wa.shape[-1])
 
@@ -162,7 +163,7 @@ class HeteroLRGuest(HeteroLRBase):
                                              self.fixpoint_encoder)
 
         wxy = spdz.dot(shared_wx, self.shared_y, ("wxy",) + suffix).get()
-        LOGGER.debug(f"wxy_value: {wxy}")
+        LOGGER.debug(f"wxy_value: {wxy}, shared_wx: {shared_wx.value.first()}")
         # wxy_sum = wxy_tensor.value[0]
         # self.transfer_variable.wxy_sum.remote(wxy_tensor, suffix=suffix)
         wx_square = shared_wx * shared_wx

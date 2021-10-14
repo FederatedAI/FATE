@@ -19,17 +19,18 @@ import numpy as np
 
 from fate_arch.common import Party
 from fate_arch.session import is_table
-from federatedml.secureprotol.spdz.tensor import fixedpoint_numpy, fixedpoint_table
 from federatedml.secureprotol.fixedpoint import FixedPointEndec
-from federatedml.transfer_variable.transfer_class.sshe_model_transfer_variable import SSHEModelTransferVariable
+from federatedml.secureprotol.spdz.tensor import fixedpoint_numpy, fixedpoint_table
+from federatedml.transfer_variable.transfer_class.secret_share_transfer_variable import SecretShareTransferVariable
 from federatedml.util import consts, LOGGER
 
 
 class SecureMatrix(object):
     # SecureMatrix in SecretSharing With He;
-    def __init__(self, party: Party, q_field):
-        self.transfer_variable = SSHEModelTransferVariable()
+    def __init__(self, party: Party, q_field, other_party):
+        self.transfer_variable = SecretShareTransferVariable()
         self.party = party
+        self.other_party = other_party
         self.q_field = q_field
         self.encoder = None
         self.get_or_create_endec(self.q_field)
@@ -72,7 +73,7 @@ class SecureMatrix(object):
         else:
             raise ValueError(f"type={type(y)}")
 
-    def secure_matrix_mul(self, matrix, tensor_name, cipher=None, suffix=tuple()):
+    def secure_matrix_mul(self, matrix, tensor_name, cipher=None, suffix=tuple(), is_fixedpoint_table=True):
         curt_suffix = ("secure_matrix_mul",) + suffix
         dst_role = consts.GUEST if self.party.role == consts.HOST else consts.HOST
 
@@ -84,23 +85,25 @@ class SecureMatrix(object):
                 encrypt_mat = cipher.recursive_encrypt(de_matrix)
 
             # remote encrypted matrix;
-            self.transfer_variable.share_matrix.remote(encrypt_mat,
-                                                       role=dst_role,
-                                                       idx=0,
-                                                       suffix=curt_suffix)
+            LOGGER.debug(f"In_secure_matrix_mul, encrypt_mat: {encrypt_mat}")
+            self.transfer_variable.encrypted_share_matrix.remote(encrypt_mat,
+                                                                 role=dst_role,
+                                                                 idx=0,
+                                                                 suffix=curt_suffix)
 
             share_tensor = SecureMatrix.from_source(tensor_name,
-                                                    self.party,
+                                                    self.other_party,
                                                     cipher,
                                                     self.q_field,
-                                                    self.encoder)
+                                                    self.encoder,
+                                                    is_fixedpoint_table=is_fixedpoint_table)
 
             return share_tensor
 
         else:
-            share = self.transfer_variable.share_matrix.get(role=dst_role,
-                                                            idx=0,
-                                                            suffix=curt_suffix)
+            share = self.transfer_variable.encrypted_share_matrix.get(role=dst_role,
+                                                                      idx=0,
+                                                                      suffix=curt_suffix)
             LOGGER.debug(f"Make share tensor")
             if isinstance(matrix, (fixedpoint_table.FixedPointTensor,
                                    fixedpoint_table.PaillierFixedPointTensor)):

@@ -348,6 +348,8 @@ class FixedPointEndec(object):
         return self._basic_op(float_tensor, op=f)
 
     def __truncate_op(self, a):
+        if not isinstance(a, FixedPointNumber):
+            return a
         scalar = a.decode()
         return FixedPointNumber.encode(scalar, n=self.n, max_int=self.max_int)
 
