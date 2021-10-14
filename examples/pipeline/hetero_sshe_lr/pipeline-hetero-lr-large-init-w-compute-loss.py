@@ -19,7 +19,7 @@ import json
 
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component.hetero_sshe_lr import HeteroSSHELR
-from pipeline.component.dataio import DataIO
+from pipeline.component import DataTransform
 from pipeline.component.evaluation import Evaluation
 from pipeline.component.intersection import Intersection
 from pipeline.component.reader import Reader
@@ -64,23 +64,23 @@ def main(config="../../config.yaml", namespace=""):
     # configure Reader for host
     reader_0.get_party_instance(role='host', party_id=hosts).component_param(table=host_train_data)
 
-    dataio_0 = DataIO(name="dataio_0", output_format='dense')
+    data_transform_0 = DataTransform(name="data_transform_0", output_format='dense')
 
-    # get DataIO party instance of guest
-    dataio_0_guest_party_instance = dataio_0.get_party_instance(role='guest', party_id=guest)
-    # configure DataIO for guest
-    dataio_0_guest_party_instance.component_param(with_label=True)
-    # get and configure DataIO party instance of host
-    dataio_0.get_party_instance(role='host', party_id=hosts).component_param(with_label=False)
+    # get DataTransform party instance of guest
+    data_transform_0_guest_party_instance = data_transform_0.get_party_instance(role='guest', party_id=guest)
+    # configure DataTransform for guest
+    data_transform_0_guest_party_instance.component_param(with_label=True)
+    # get and configure DataTransform party instance of host
+    data_transform_0.get_party_instance(role='host', party_id=hosts).component_param(with_label=False)
 
     # define Intersection components
     intersection_0 = Intersection(name="intersection_0")
 
     pipeline.add_component(reader_0)
 
-    pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
+    pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
 
-    pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
+    pipeline.add_component(intersection_0, data=Data(data=data_transform_0.output.data))
 
     lr_param = {
         "name": "hetero_sshe_lr_0",
@@ -117,7 +117,7 @@ def main(config="../../config.yaml", namespace=""):
     prettify(pipeline.get_component("hetero_sshe_lr_0").get_summary())
     prettify(pipeline.get_component("evaluation_0").get_summary())
 
-    pipeline.deploy_component([dataio_0, intersection_0, hetero_sshe_lr_0])
+    pipeline.deploy_component([data_transform_0, intersection_0, hetero_sshe_lr_0])
 
     predict_pipeline = PipeLine()
     # add data reader onto predict pipeline
@@ -125,7 +125,7 @@ def main(config="../../config.yaml", namespace=""):
     # add selected components from train pipeline onto predict pipeline
     # specify data source
     predict_pipeline.add_component(pipeline,
-                                   data=Data(predict_input={pipeline.dataio_0.input.data: reader_0.output.data}))
+                                   data=Data(predict_input={pipeline.data_transform_0.input.data: reader_0.output.data}))
     # run predict model
     predict_pipeline.predict(job_parameters)
 
