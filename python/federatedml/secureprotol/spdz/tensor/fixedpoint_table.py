@@ -93,9 +93,9 @@ class FixedPointTensor(TensorBase):
         spdz = self.get_spdz()
         if target_name is None:
             target_name = NamingService.get_instance().next()
-
+        q_field = 2 ** 32
         a, b, c = beaver_triplets(a_tensor=self.value, b_tensor=other.value, dot=table_dot,
-                                  q_field=self.q_field, he_key_pair=(spdz.public_key, spdz.private_key),
+                                  q_field=q_field, he_key_pair=(spdz.public_key, spdz.private_key),
                                   communicator=spdz.communicator, name=target_name)
 
         x_add_a = (self + a).rescontruct(f"{target_name}_confuse_x")
@@ -190,16 +190,19 @@ class FixedPointTensor(TensorBase):
             share_val = _table_binary_mod_op(share_val, other_share, self.q_field, operator.add)
         return share_val
 
-    def __str__(self):
-        return f"{self.tensor_name}: {self.value}"
-
-    def __repr__(self):
-        return self.__str__()
+    # def __str__(self):
+    #     return f"{self.tensor_name}: {self.value}"
+    #
+    # def __repr__(self):
+    #     return self.__str__()
 
     def as_name(self, tensor_name):
         return self._boxed(value=self.value, tensor_name=tensor_name)
 
     def __add__(self, other):
+        if isinstance(other, PaillierFixedPointTensor):
+            return other + self
+
         if isinstance(other, FixedPointTensor):
             other = other.value
         z_value = _table_binary_mod_op(self.value, other, self.q_field, operator.add)
@@ -222,14 +225,17 @@ class FixedPointTensor(TensorBase):
 
     def __mul__(self, other):
         if isinstance(other, FixedPointTensor):
-            raise NotImplementedError("__mul__ support scalar only")
-
-        z_value = _table_scalar_mod_op(self.value, other, self.q_field, operator.mul)
+            # raise NotImplementedError("__mul__ support scalar only")
+            z_value = _table_binary_mod_op(self.value, other.value, self.q_field, operator.mul)
+        elif isinstance(other, PaillierFixedPointTensor):
+            return other * self
+        else:
+            z_value = _table_scalar_mod_op(self.value, other, self.q_field, operator.mul)
         z_value = self.endec.truncate(z_value, self.get_spdz().party_idx)
         return self._boxed(z_value)
 
     def __rmul__(self, other):
-        self.__mul__(other)
+        return self.__mul__(other)
 
     def __mod__(self, other):
         if not isinstance(other, (int, np.integer)):
@@ -268,11 +274,11 @@ class PaillierFixedPointTensor(TensorBase):
         else:
             raise ValueError(f"type={type(other)}")
 
-    def __str__(self):
-        return f"{self.tensor_name}: {self.value}"
-
-    def __repr__(self):
-        return self.__str__()
+    # def __str__(self):
+    #     return f"{self.tensor_name}: {self.value}"
+    #
+    # def __repr__(self):
+    #     return self.__str__()
 
     def __add__(self, other):
         if isinstance(other, (PaillierFixedPointTensor, FixedPointTensor)):
@@ -302,7 +308,12 @@ class PaillierFixedPointTensor(TensorBase):
             return self._boxed(_table_scalar_op(self.value, other, -1 * operator.sub))
 
     def __mul__(self, other):
-        return self._boxed(_table_scalar_op(self.value, other, operator.mul))
+        if isinstance(other, FixedPointTensor):
+            # raise NotImplementedError("__mul__ support scalar only")
+            z_value = _table_binary_op(self.value, other.value, operator.mul)
+        else:
+            z_value = _table_scalar_op(self.value, other, operator.mul)
+        return self._boxed(z_value)
 
     def __rmul__(self, other):
         return self.__mul__(other)

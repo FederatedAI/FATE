@@ -30,7 +30,6 @@ from federatedml.transfer_variable.base_transfer_variable import BaseTransferVar
 class SSHEModelTransferVariable(BaseTransferVariables):
     def __init__(self, flowid=0):
         super().__init__(flowid)
-        self.share_matrix = self._create_variable(name='share_matrix', src=['guest', "host"], dst=['host', "guest"])
         self.encrypted_share_matrix = self._create_variable(name='encrypted_share_matrix', src=['guest', "host"],
                                                             dst=['host', "guest"])
         self.share_error = self._create_variable(name='share_error', src=["host"], dst=["guest"])

@@ -45,7 +45,7 @@ class HeteroLRHost(HeteroLRBase):
         return self.initializer.init_model(model_shape, init_params=self.init_param_obj)
 
     def _cal_z_in_share(self, w_self, w_remote, features, suffix):
-        z1 = features.dot_array(w_self.value)
+        z1 = features.dot_local(w_self)
 
         za_suffix = ("za",) + suffix
         za_share = self.secure_matrix_obj.secure_matrix_mul(features,
@@ -100,8 +100,12 @@ class HeteroLRHost(HeteroLRBase):
                                        self.fixpoint_encoder.n,
                                        self.fixpoint_encoder,
                                        is_fixedpoint_table=False)
+        ga = error * features
+        ga = ga.value.reduce(operator.add)
+        LOGGER.debug(f"ga: {ga}, encoded_1_n: {encoded_1_n}")
+        ga = ga * encoded_1_n
 
-        ga = error.value.join(features.value, operator.mul).reduce(operator.add) * encoded_1_n
+        # ga = error.value.join(features.value, operator.mul).reduce(operator.add) * encoded_1_n
         ga = fixedpoint_numpy.FixedPointTensor(ga, q_field=error.q_field,
                                                endec=self.fixpoint_encoder)
 
@@ -138,12 +142,11 @@ class HeteroLRHost(HeteroLRBase):
                                                                wx=None, wx_square=None)
 
         encrypted_wx = shared_wx + wx_guest
-
         encrypted_wx_sqaure = shared_wx * shared_wx + wx_square_guest + 2 * shared_wx * wx_guest
         # encrypted_wx_sqaure = wx_square_guest
         LOGGER.debug(f"encoded_batch_num: {self.encoded_batch_num}, suffix: {suffix}")
         encoded_1_n = self.encoded_batch_num[int(suffix[2])]
-        LOGGER.debug(f"encoded_1_n: {encoded_1_n.decode()}")
+        LOGGER.debug(f"tmc, type: {encrypted_wx_sqaure}, {encrypted_wx}, {encoded_1_n}, {wxy}")
         loss = ((0.125 * encrypted_wx_sqaure - 0.5 * encrypted_wx).value.reduce(operator.add) +
                 wxy) * encoded_1_n * -1 - np.log(0.5)
         # loss = ((0.125 * encrypted_wx_sqaure - 0.5 * encrypted_wx).value.reduce(operator.add)) * encoded_1_n * -1 - np.log(0.5)

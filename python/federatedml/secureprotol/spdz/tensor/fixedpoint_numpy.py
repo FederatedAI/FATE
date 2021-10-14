@@ -20,6 +20,7 @@ from federatedml.secureprotol.spdz.beaver_triples import beaver_triplets
 from federatedml.secureprotol.spdz.tensor.base import TensorBase
 from federatedml.secureprotol.spdz.utils.random_utils import urand_tensor
 from federatedml.secureprotol.spdz.tensor.fixedpoint_endec import FixedPointEndec
+from federatedml.util import LOGGER
 
 
 class FixedPointTensor(TensorBase):
@@ -124,6 +125,8 @@ class FixedPointTensor(TensorBase):
         from federatedml.secureprotol.spdz import SPDZ
         spdz = SPDZ.get_instance()
         share_val = self.value
+        LOGGER.debug(f"share_val: {share_val}")
+
         name = tensor_name or self.tensor_name
 
         if name is None:
@@ -135,6 +138,7 @@ class FixedPointTensor(TensorBase):
 
         # get shares from other parties
         for other_share in spdz.communicator.get_rescontruct_shares(name):
+            LOGGER.debug(f"share_val: {share_val}, other_share: {other_share}")
             share_val += other_share
             share_val %= self.q_field
         return share_val
@@ -285,10 +289,10 @@ class PaillierFixedPointTensor(TensorBase):
             encoder = FixedPointEndec(q_field, base, frac)
 
         if isinstance(source, np.ndarray):
-            _pre = urand_tensor(q_field, source)
+            _pre = urand_tensor(spdz.q_field, source)
             share = _pre
             for _party in spdz.other_parties[:-1]:
-                r = urand_tensor(q_field, source)
+                r = urand_tensor(spdz.q_field, source)
                 spdz.communicator.remote_share(share=r - _pre, tensor_name=tensor_name, party=_party)
                 _pre = r
             spdz.communicator.remote_share(share=source - encoder.decode(_pre),

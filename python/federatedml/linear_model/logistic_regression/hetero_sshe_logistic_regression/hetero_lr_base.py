@@ -76,13 +76,14 @@ class HeteroLRBase(BaseLinearModel, ABC):
         self.review_every_iter = params.reveal_every_iter
         self.random_field = params.random_field
         # self.fixpoint_filed = self.random_field ** 2
-        self.fixpoint_filed = 2 << 128
+        self.fixpoint_filed = 293973345475167247070445277780365744413 ** 2
         self.batch_generator = batch_generator.Guest() if self.role == consts.GUEST else batch_generator.Host()
         self.batch_generator.register_batch_generator(BatchGeneratorTransferVariable(), has_arbiter=False)
         self.fixpoint_encoder = FixedPointEndec(n=self.fixpoint_filed)
         self.converge_transfer_variable = ConvergeCheckerTransferVariable()
         self.secure_matrix_obj = SecureMatrix(party=self.local_party,
-                                              q_field=self.fixpoint_filed)
+                                              q_field=self.fixpoint_filed,
+                                              other_party=self.other_party)
 
     def _set_parties(self):
         parties = []
@@ -269,14 +270,19 @@ class HeteroLRBase(BaseLinearModel, ABC):
                                                                  features=batch_data, suffix=current_suffix)
 
                     if self.review_every_iter:
-                        LOGGER.debug(f"self_g shape: {self_g.shape}, remote_g_shape: {remote_g}")
+                        LOGGER.debug(f"self_g shape: {self_g.shape}, remote_g_shape: {remote_g}，"
+                                     f"self_g: {self_g}")
 
                         new_g, host_g = self.review_models(self_g, remote_g, suffix=(self.n_iter_, batch_idx))
-                        LOGGER.debug(f"new_g shape: {new_g.shape}, host_g_shape: {host_g}")
+                        LOGGER.debug(f"new_g shape: {new_g.shape}, new_g: {new_g} host_g_shape: {host_g},"
+                                     f"self.model_param.reveal_strategy: {self.model_param.reveal_strategy}")
 
                         if new_g is not None:
+                            new_g = np.array([x.decode() for x in new_g])
+                            LOGGER.debug(f"before review, {self.model_weights.unboxed}, {new_g}")
                             self.model_weights = self.optimizer.update_model(self.model_weights, new_g,
                                                                              has_applied=False)
+                            LOGGER.debug(f"after review, {self.model_weights.unboxed}")
                         else:
                             self.model_weights = LinearModelWeights(
                                 l=np.zeros(self_g.shape),
@@ -347,18 +353,30 @@ class HeteroLRBase(BaseLinearModel, ABC):
             suffix = self.n_iter_
         host_weights = None
         if self.model_param.reveal_strategy == "respectively":
+
             if self.role == consts.GUEST:
-                new_w = w_self.reconstruct_unilateral(tensor_name=f"wb_{suffix}")
+                new_w = w_self.reconstruct(tensor_name=f"wb_{suffix}",
+                                           broadcast=False)
                 w_remote.broadcast_reconstruct_share(tensor_name=f"wa_{suffix}")
+
+                # new_w = w_self.reconstruct_unilateral(tensor_name=f"wb_{suffix}")
+                # w_remote.broadcast_reconstruct_share(tensor_name=f"wa_{suffix}")
             else:
                 w_remote.broadcast_reconstruct_share(tensor_name=f"wb_{suffix}")
-                new_w = w_self.reconstruct_unilateral(tensor_name=f"wa_{suffix}")
+                new_w = w_self.reconstruct(tensor_name=f"wa_{suffix}",
+                                           broadcast=False)
+            #     w_remote.broadcast_reconstruct_share(tensor_name=f"wb_{suffix}")
+            #     new_w = w_self.reconstruct_unilateral(tensor_name=f"wa_{suffix}")
 
         elif self.model_param.reveal_strategy == "all_reveal_in_guest":
 
             if self.role == consts.GUEST:
-                new_w = w_self.reconstruct_unilateral(tensor_name=f"wb_{suffix}")
-                host_weights = w_remote.reconstruct_unilateral(tensor_name=f"wa_{suffix}")
+                new_w = w_self.reconstruct(tensor_name=f"wb_{suffix}",
+                                           broadcast=False)
+                host_weights = w_remote.reconstruct(tensor_name=f"wa_{suffix}",
+                                                    broadcast=False)
+                # new_w = w_self.reconstruct_unilateral(tensor_name=f"wb_{suffix}")
+                # host_weights = w_remote.reconstruct_unilateral(tensor_name=f"wa_{suffix}")
                 # self.host_model_weights = [LinearModelWeights(l=hosted_weights, fit_intercept=False)]
             else:
                 if w_remote.shape[0] > 2:

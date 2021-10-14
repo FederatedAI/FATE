@@ -104,7 +104,7 @@ class LogisticRegressionParam(BaseParam):
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  decay=1, decay_sqrt=True,
                  multi_class='ovr', use_mix_rand=False,
-                 random_field=1 << 60, reveal_strategy="respectively", compute_loss=True,
+                 random_field=2 ** 16, reveal_strategy="respectively", compute_loss=True,
                  reveal_every_iter=True,
                  callback_param=CallbackParam(),
                  ):
