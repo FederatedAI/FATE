@@ -56,7 +56,7 @@ class HeteroPearson(ModelBase):
         # since multi-host not supported yet, we assume parties are one from guest and one from host
         parties = []
         guest_parties = get_parties().roles_to_parties(["guest"])
-        host_parties = get_parties().parties.roles_to_parties(["host"])
+        host_parties = get_parties().roles_to_parties(["host"])
         if len(guest_parties) != 1 or len(host_parties) != 1:
             raise ValueError(
                 f"one guest and one host required, "
