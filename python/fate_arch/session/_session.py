@@ -391,13 +391,17 @@ class Session(object):
         session_records = self.query_sessions(manager_session_id=self._session_id, **kwargs)
         self._logger.info([session_record.f_engine_session_id for session_record in session_records])
         for session_record in session_records:
-            engine_session_id = session_record.f_engine_session_id
-            if session_record.f_engine_type == EngineType.COMPUTING:
-                self._init_computing_if_not_valid(computing_session_id=engine_session_id)
-            elif session_record.f_engine_type == EngineType.STORAGE:
-                self._get_or_create_storage(storage_session_id=engine_session_id,
-                                            storage_engine=session_record.f_engine_name,
-                                            record=False)
+            try:
+                engine_session_id = session_record.f_engine_session_id
+                if session_record.f_engine_type == EngineType.COMPUTING:
+                    self._init_computing_if_not_valid(computing_session_id=engine_session_id)
+                elif session_record.f_engine_type == EngineType.STORAGE:
+                    self._get_or_create_storage(storage_session_id=engine_session_id,
+                                                storage_engine=session_record.f_engine_name,
+                                                record=False)
+            except Exception as e:
+                self._logger.error(e)
+                self.delete_session_record(engine_session_id=session_record.f_engine_session_id)
 
     def _init_computing_if_not_valid(self, computing_session_id):
         if not self.is_computing_valid:
