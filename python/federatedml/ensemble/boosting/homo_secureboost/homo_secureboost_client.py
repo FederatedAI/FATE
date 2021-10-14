@@ -262,7 +262,6 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
     def predict(self, data_inst, ret_format='std'):
         return self.fast_homo_tree_predict(data_inst, ret_format=ret_format)
 
-
     def generate_summary(self) -> dict:
 
         summary = {'feature_importance': make_readable_feature_importance(self.feature_name_fid_mapping,

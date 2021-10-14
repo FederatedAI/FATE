@@ -2,10 +2,10 @@ from typing import List
 import numpy as np
 import functools
 from operator import itemgetter
-from federatedml.ensemble.boosting.hetero.hetero_secureboost_host import HeteroSecureBoostingTreeHost
+from federatedml.ensemble.boosting.hetero_secoreboost.hetero_secureboost_host import HeteroSecureBoostingTreeHost
 from federatedml.param.boosting_param import HeteroFastSecureBoostParam
 from federatedml.ensemble.basic_algorithms import HeteroFastDecisionTreeHost
-from federatedml.ensemble.boosting.hetero import hetero_fast_secureboost_plan as plan
+from federatedml.ensemble.boosting.hetero_secoreboost import hetero_fast_secureboost_plan as plan
 from federatedml.ensemble import HeteroSecureBoostingTreeGuest
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import FeatureImportanceInfo
 from federatedml.util import LOGGER
