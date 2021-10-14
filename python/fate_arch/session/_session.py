@@ -35,7 +35,7 @@ class Session(object):
     __GLOBAL_SESSION = None
 
     @classmethod
-    def global(cls):
+    def get_global(cls):
         return cls.__GLOBAL_SESSION
 
     @classmethod
@@ -448,7 +448,7 @@ class Session(object):
 
 
 def get_session() -> Session:
-    return Session.global()
+    return Session.get_global()
 
 def get_parties() -> PartiesInfo:
     return get_session().parties
