@@ -75,6 +75,16 @@ class Table(CTableABC):
             _repartition.toDF().write.saveAsTable(f"{address.database}.{address.name}")
             schema.update(self.schema)
             return
+
+        from fate_arch.common.address import LocalFSAddress
+
+        if isinstance(address, LocalFSAddress):
+            self._rdd.map(lambda x: hdfs_utils.serialize(x[0], x[1])).repartition(
+                partitions
+            ).saveAsTextFile(f"{address.name_node}/{address.path}")
+            schema.update(self.schema)
+            return
+
         raise NotImplementedError(
             f"address type {type(address)} not supported with spark backend"
         )
@@ -184,6 +194,21 @@ class Table(CTableABC):
 
 
 def from_hdfs(paths: str, partitions, in_serialized=True, id_delimiter=None):
+    # noinspection PyPackageRequirements
+    from pyspark import SparkContext
+
+    sc = SparkContext.getOrCreate()
+    fun = hdfs_utils.deserialize if in_serialized else lambda x: (x.partition(id_delimiter)[0],
+                                                                  x.partition(id_delimiter)[2])
+    rdd = materialize(
+        sc.textFile(paths, partitions)
+        .map(fun)
+        .repartition(partitions)
+    )
+    return Table(rdd=rdd)
+
+
+def from_localfs(paths: str, partitions, in_serialized=True, id_delimiter=None):
     # noinspection PyPackageRequirements
     from pyspark import SparkContext
 

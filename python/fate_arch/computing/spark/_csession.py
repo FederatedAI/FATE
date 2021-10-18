@@ -18,7 +18,8 @@ from typing import Iterable
 
 from fate_arch.abc import AddressABC
 from fate_arch.abc import CSessionABC
-from fate_arch.computing.spark._table import from_hdfs, from_rdd, from_hive
+from fate_arch.common.address import LocalFSAddress
+from fate_arch.computing.spark._table import from_hdfs, from_rdd, from_hive, from_localfs
 from fate_arch.common import log
 
 LOGGER = log.getLogger()
@@ -39,9 +40,6 @@ class CSession(CSessionABC):
                               in_serialized=kwargs.get("in_serialized", True), id_delimiter=kwargs.get("id_delimiter", ','))
             table.schema = schema
             return table
-        from fate_arch.common.address import FileAddress
-        if isinstance(address, FileAddress):
-            return address
 
         from fate_arch.common.address import PathAddress
         if isinstance(address, PathAddress):
@@ -56,6 +54,12 @@ class CSession(CSessionABC):
                 db_name=address.database,
                 partitions=partitions,
             )
+            table.schema = schema
+            return table
+
+        if isinstance(address, LocalFSAddress):
+            table = from_localfs(paths=f"{address.name_node}/{address.path}", partitions=partitions,
+                              in_serialized=kwargs.get("in_serialized", True), id_delimiter=kwargs.get("id_delimiter", ','))
             table.schema = schema
             return table
 
