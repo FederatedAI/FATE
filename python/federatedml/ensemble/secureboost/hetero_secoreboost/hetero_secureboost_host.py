@@ -15,6 +15,8 @@ from federatedml.transfer_variable.transfer_class.hetero_secure_boosting_predict
     HeteroSecureBoostTransferVariable
 from federatedml.ensemble.secureboost.secureboost_util.tree_model_io import produce_hetero_tree_learner, \
     load_hetero_tree_learner
+from federatedml.ensemble.secureboost.secureboost_util.boosting_tree_predict import sbt_host_predict, \
+    mix_sbt_host_predict
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import BoostingTreeModelMeta
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import QuantileMeta
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import BoostingTreeModelParam
@@ -47,6 +49,8 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         self.host_depth = 0
         self.init_tree_plan = False
         self.tree_plan = []
+
+        self.predict_transfer_inst = HeteroSecureBoostTransferVariable()
 
     def _init_model(self, param: HeteroSecureBoostParam):
 
@@ -201,7 +205,10 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
             LOGGER.info('no tree for predicting, prediction done')
             return
 
-        self.boosting_fast_predict(processed_data, trees=trees)
+        if self.work_mode == consts.MIX_TREE:
+            mix_sbt_host_predict(processed_data, self.predict_transfer_inst, trees)
+        else:
+            sbt_host_predict(processed_data, self.predict_transfer_inst, trees)
 
     def get_model_meta(self):
         model_meta = BoostingTreeModelMeta()

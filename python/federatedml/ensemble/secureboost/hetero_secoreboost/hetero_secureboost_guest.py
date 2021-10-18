@@ -6,7 +6,6 @@ from federatedml.util import consts
 from federatedml.util import LOGGER
 from federatedml.ensemble.boosting import HeteroBoostingGuest
 from federatedml.param.boosting_param import HeteroSecureBoostParam, DecisionTreeParam
-from federatedml.ensemble.basic_algorithms import HeteroDecisionTreeGuest
 from federatedml.util.io_check import assert_io_num_rows_equal
 from federatedml.util.anonymous_generator import generate_anonymous
 from federatedml.statistic.data_overview import with_weight, get_max_sample_weight
@@ -21,6 +20,8 @@ from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import Boostin
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import FeatureImportanceInfo
 from federatedml.ensemble.secureboost.secureboost_util.tree_model_io import load_hetero_tree_learner, \
     produce_hetero_tree_learner
+from federatedml.ensemble.secureboost.secureboost_util.boosting_tree_predict import sbt_guest_predict, \
+    mix_sbt_guest_predict
 
 
 class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
@@ -160,6 +161,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         fast_sbt = (self.work_mode != consts.STD_TREE)
         if fast_sbt:
             tree_type, target_host_id = self.get_tree_plan(epoch_idx)
+            self.check_host_number(tree_type)
 
         tree = produce_hetero_tree_learner(role=self.role, tree_param=self.tree_param, flow_id=flow_id,
                                            data_bin=self.data_bin, bin_split_points=self.bin_split_points,
@@ -210,34 +212,6 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         return summary
 
     @staticmethod
-    def generate_leaf_pos_dict(x, tree_num):
-        """
-        x: just occupy the first parameter position
-        return: a numpy array record sample pos, and a counter counting how many trees reach a leaf node
-        """
-        node_pos = np.zeros(tree_num, dtype=np.int64) + 0
-        reach_leaf_node = np.zeros(tree_num, dtype=np.bool)
-        return {'node_pos': node_pos, 'reach_leaf_node': reach_leaf_node}
-
-    @staticmethod
-    def traverse_a_tree(tree: HeteroDecisionTreeGuest, sample, cur_node_idx):
-
-        reach_leaf = False
-        # only need nid here, predict state is not needed
-        rs = tree.traverse_tree(tree_=tree.tree_node, data_inst=sample, predict_state=(cur_node_idx, -1),
-                                decoder=tree.decode, sitename=tree.sitename, use_missing=tree.use_missing,
-                                split_maskdict=tree.split_maskdict, missing_dir_maskdict=tree.missing_dir_maskdict,
-                                zero_as_missing=tree.zero_as_missing, return_leaf_id=True)
-
-        if not isinstance(rs, tuple):
-            reach_leaf = True
-            leaf_id = rs
-            return leaf_id, reach_leaf
-        else:
-            cur_node_idx = rs[0]
-            return cur_node_idx, reach_leaf
-
-    @staticmethod
     def make_readable_feature_importance(fid_mapping, feature_importances):
         """
         replace feature id by real feature name
@@ -255,139 +229,6 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
                 new_fi[fid_mapping[id_]] = feature_importances[id_].importance
 
         return new_fi
-
-    @staticmethod
-    def traverse_trees(node_pos, sample, trees: List[HeteroDecisionTreeGuest]):
-
-        if node_pos['reach_leaf_node'].all():
-            return node_pos
-
-        for t_idx, tree in enumerate(trees):
-
-            cur_node_idx = node_pos['node_pos'][t_idx]
-
-            # reach leaf
-            if cur_node_idx == -1:
-                continue
-
-            rs, reach_leaf = HeteroSecureBoostingTreeGuest.traverse_a_tree(tree, sample, cur_node_idx)
-
-            if reach_leaf:
-                node_pos['reach_leaf_node'][t_idx] = True
-
-            node_pos['node_pos'][t_idx] = rs
-
-        return node_pos
-
-    @staticmethod
-    def merge_predict_pos(node_pos1, node_pos2):
-
-        pos_arr1 = node_pos1['node_pos']
-        pos_arr2 = node_pos2['node_pos']
-        stack_arr = np.stack([pos_arr1, pos_arr2])
-        node_pos1['node_pos'] = np.max(stack_arr, axis=0)
-        return node_pos1
-
-    @staticmethod
-    def add_y_hat(leaf_pos, init_score, learning_rate, trees: List[HeteroDecisionTreeGuest], multi_class_num=None):
-
-        # finally node pos will hold weights
-        weights = []
-        for leaf_idx, tree in zip(leaf_pos, trees):
-            weights.append(tree.tree_node[int(leaf_idx)].weight)
-        weights = np.array(weights)
-        if multi_class_num > 2:
-            weights = weights.reshape((-1, multi_class_num))
-        return np.sum(weights * learning_rate, axis=0) + init_score
-
-    @staticmethod
-    def get_predict_scores(leaf_pos, learning_rate, init_score, trees: List[HeteroDecisionTreeGuest]
-                           , multi_class_num=-1, predict_cache=None):
-
-        if predict_cache:
-            init_score = 0  # prevent init_score re-add
-
-        predict_func = functools.partial(HeteroSecureBoostingTreeGuest.add_y_hat,
-                                         learning_rate=learning_rate, init_score=init_score, trees=trees,
-                                         multi_class_num=multi_class_num)
-        predict_result = leaf_pos.mapValues(predict_func)
-
-        if predict_cache:
-            predict_result = predict_result.join(predict_cache, lambda v1, v2: v1+v2)
-
-        return predict_result
-
-    @staticmethod
-    def save_leaf_pos_helper(v1, v2):
-
-        reach_leaf_idx = v2['reach_leaf_node']
-        select_idx = reach_leaf_idx & (v2['node_pos'] != -1)  # reach leaf and are not recorded( if recorded idx is -1)
-        v1[select_idx] = v2['node_pos'][select_idx]
-        return v1
-
-    @staticmethod
-    def mask_leaf_pos(v):
-
-        reach_leaf_idx = v['reach_leaf_node']
-        v['node_pos'][reach_leaf_idx] = -1
-        return v
-
-    def save_leaf_pos_and_mask_leaf_pos(self, node_pos_tb, final_leaf_pos):
-
-        # save leaf pos
-        saved_leaf_pos = final_leaf_pos.join(node_pos_tb, self.save_leaf_pos_helper)
-        rest_part = final_leaf_pos.subtractByKey(saved_leaf_pos)
-        final_leaf_pos = saved_leaf_pos.union(rest_part)
-        # mask leaf pos
-        node_pos_tb = node_pos_tb.mapValues(self.mask_leaf_pos)
-
-        return node_pos_tb, final_leaf_pos
-
-    def boosting_fast_predict(self, data_inst, trees: List[HeteroDecisionTreeGuest], predict_cache=None,
-                              pred_leaf=False):
-
-        tree_num = len(trees)
-        generate_func = functools.partial(self.generate_leaf_pos_dict, tree_num=tree_num)
-        node_pos_tb = data_inst.mapValues(generate_func)  # record node pos
-        final_leaf_pos = data_inst.mapValues(lambda x: np.zeros(tree_num, dtype=np.int64) + np.nan)  # record final leaf pos
-        traverse_func = functools.partial(self.traverse_trees, trees=trees)
-        comm_round = 0
-
-        while True:
-
-            LOGGER.info('cur predict round is {}'.format(comm_round))
-
-            node_pos_tb = node_pos_tb.join(data_inst, traverse_func)
-            node_pos_tb, final_leaf_pos = self.save_leaf_pos_and_mask_leaf_pos(node_pos_tb, final_leaf_pos)
-
-            # remove sample that reaches leaves of all trees
-            reach_leaf_samples = node_pos_tb.filter(lambda key, value: value['reach_leaf_node'].all())
-            node_pos_tb = node_pos_tb.subtractByKey(reach_leaf_samples)
-
-            if node_pos_tb.count() == 0:
-                self.predict_transfer_inst.predict_stop_flag.remote(True, idx=-1, suffix=(comm_round, ))
-                break
-
-            self.predict_transfer_inst.predict_stop_flag.remote(False, idx=-1, suffix=(comm_round, ))
-            self.predict_transfer_inst.guest_predict_data.remote(node_pos_tb, idx=-1, suffix=(comm_round, ))
-
-            host_pos_tbs = self.predict_transfer_inst.host_predict_data.get(idx=-1, suffix=(comm_round, ))
-
-            for host_pos_tb in host_pos_tbs:
-                node_pos_tb = node_pos_tb.join(host_pos_tb, self.merge_predict_pos)
-
-            comm_round += 1
-
-        LOGGER.info('federated prediction process done')
-
-        if pred_leaf:  # return leaf position only
-            return final_leaf_pos
-
-        else:  # get final predict scores from leaf pos
-            predict_result = self.get_predict_scores(leaf_pos=final_leaf_pos, learning_rate=self.learning_rate,
-                                                     init_score=self.init_score, trees=trees,
-                                                     multi_class_num=self.booster_dim, predict_cache=predict_cache)
-            return predict_result
 
     @assert_io_num_rows_equal
     def predict(self, data_inst, ret_format='std'):
@@ -426,8 +267,14 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         if tree_num == 0 and predict_cache is not None and not (ret_format == 'leaf'):
             return self.score_to_predict_result(data_inst, predict_cache)
 
-        predict_rs = self.boosting_fast_predict(processed_data, trees=trees, predict_cache=predict_cache,
-                                                pred_leaf=(ret_format == 'leaf'))
+        if self.work_mode == consts.MIX_TREE:
+            predict_rs = mix_sbt_guest_predict(processed_data, self.transfer_variable, trees, self.learning_rate,
+                                               self.init_score, self.booster_dim, predict_cache,
+                                               pred_leaf=(ret_format == 'leaf'))
+        else:
+            predict_rs = sbt_guest_predict(processed_data, self.transfer_variable, trees, self.learning_rate,
+                                           self.init_score, self.booster_dim, predict_cache,
+                                           pred_leaf=(ret_format == 'leaf'))
 
         if ret_format == 'leaf':
             return predict_rs  # predict result is leaf position
