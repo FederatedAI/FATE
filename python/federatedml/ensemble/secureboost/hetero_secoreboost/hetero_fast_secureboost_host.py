@@ -1,15 +1,16 @@
-from typing import List
-import numpy as np
 import functools
+import numpy as np
+from typing import List
 from operator import itemgetter
-from federatedml.ensemble.boosting.hetero_secoreboost.hetero_secureboost_host import HeteroSecureBoostingTreeHost
-from federatedml.param.boosting_param import HeteroFastSecureBoostParam
-from federatedml.ensemble.basic_algorithms import HeteroFastDecisionTreeHost
-from federatedml.ensemble.boosting.hetero_secoreboost import hetero_fast_secureboost_plan as plan
-from federatedml.ensemble import HeteroSecureBoostingTreeGuest
-from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import FeatureImportanceInfo
 from federatedml.util import LOGGER
 from federatedml.util import consts
+from federatedml.param.boosting_param import HeteroFastSecureBoostParam
+from federatedml.ensemble import HeteroSecureBoostingTreeGuest
+from federatedml.ensemble.basic_algorithms import HeteroFastDecisionTreeHost
+from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import FeatureImportanceInfo
+from federatedml.ensemble.secureboost.secureboost_util import hetero_fast_secureboost_plan as plan
+from federatedml.ensemble.secureboost.hetero_secoreboost.hetero_secureboost_host import HeteroSecureBoostingTreeHost
+
 
 make_readable_feature_importance = HeteroSecureBoostingTreeGuest.make_readable_feature_importance
 
@@ -67,6 +68,7 @@ class HeteroFastSecureBoostingTreeHost(HeteroSecureBoostingTreeHost):
         tree_type, target_host_id = self.get_tree_plan(epoch_idx)
         self.check_host_number(tree_type)
         self.check_run_sp_opt()
+
         tree = HeteroFastDecisionTreeHost(tree_param=self.tree_param)
         tree.init(flowid=self.generate_flowid(epoch_idx, booster_dim),
                   valid_features=self.sample_valid_features(),

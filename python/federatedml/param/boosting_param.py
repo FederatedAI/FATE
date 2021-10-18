@@ -454,6 +454,26 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
 
         cipher_compress: bool, default is True, use cipher compressing to reduce computation cost and transfer cost
 
+        work_mode：
+
+            std: standard sbt setting
+
+            mix:  alternate using guest/host features to build trees. For example, the first 'tree_num_per_party' trees
+                  use guest features,
+                  the second k trees use host features, and so on
+
+            layered: only support 2 party, when running layered mode, first 'host_depth' layer will use host features,
+                     and then next 'guest_depth' will only use guest features
+
+        tree_num_per_party: every party will alternate build 'tree_num_per_party' trees until reach max tree num, this
+                            param is valid when work_mode is mix
+
+        guest_depth: guest will build last guest_depth of a decision tree using guest features, is valid when work mode
+                     is layered
+
+        host depth: host will build first host_depth of a decision tree using host features, is valid when work mode is
+                    layered
+
         """
 
     def __init__(self, tree_param: DecisionTreeParam = DecisionTreeParam(), task_type=consts.CLASSIFICATION,
@@ -467,13 +487,14 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
                  complete_secure=False, metrics=None, use_first_metric_only=False, random_seed=100,
                  binning_error=consts.DEFAULT_RELATIVE_ERROR,
                  sparse_optimization=False, run_goss=False, top_rate=0.2, other_rate=0.1,
-                 cipher_compress_error=None, cipher_compress=True, new_ver=True,
-                 callback_param=CallbackParam()):
+                 cipher_compress_error=None, cipher_compress=True, new_ver=True, work_mode=consts.STD_TREE,
+                 tree_num_per_party=1, guest_depth=2, host_depth=3, callback_param=CallbackParam()):
 
         super(HeteroSecureBoostParam, self).__init__(task_type, objective_param, learning_rate, num_trees,
                                                      subsample_feature_rate, n_iter_no_change, tol, encrypt_param,
                                                      bin_num, encrypted_mode_calculator_param, predict_param, cv_param,
-                                                     validation_freqs, early_stopping_rounds, metrics=metrics,
+                                                     validation_freqs, early_stopping_rounds,
+                                                     metrics=metrics,
                                                      use_first_metric_only=use_first_metric_only,
                                                      random_seed=random_seed,
                                                      binning_error=binning_error)
@@ -489,6 +510,10 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         self.cipher_compress_error = cipher_compress_error
         self.cipher_compress = cipher_compress
         self.new_ver = new_ver
+        self.work_mode = work_mode
+        self.tree_num_per_party = tree_num_per_party
+        self.guest_depth = guest_depth
+        self.host_depth = host_depth
         self.callback_param = copy.deepcopy(callback_param)
 
     def check(self):
@@ -539,6 +564,18 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
 
         if self.sparse_optimization and self.cipher_compress:
             raise ValueError('cipher compress is not supported in sparse optimization mode')
+
+        if type(self.guest_depth).__name__ not in ["int", "long"] or self.guest_depth <= 0:
+            raise ValueError("guest_depth should be larger than 0")
+        if type(self.host_depth).__name__ not in ["int", "long"] or self.host_depth <= 0:
+            raise ValueError("host_depth should be larger than 0")
+        if type(self.tree_num_per_party).__name__ not in ["int", "long"] or self.tree_num_per_party <= 0:
+            raise ValueError("tree_num_per_party should be larger than 0")
+
+        work_modes = [consts.MIX_TREE, consts.LAYERED_TREE, consts.STD_TREE]
+        if self.work_mode not in work_modes:
+            raise ValueError('only work_modes: {} are supported, input work mode is {}'.
+                             format(work_modes, self.work_mode))
 
         return True
 

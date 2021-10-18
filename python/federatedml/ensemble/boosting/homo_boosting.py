@@ -1,7 +1,7 @@
 from abc import ABC
 import abc
 import numpy as np
-from federatedml.ensemble.boosting.boosting_core import Boosting
+from federatedml.ensemble.boosting.boosting import Boosting
 from federatedml.feature.homo_feature_binning.homo_split_points import HomoFeatureBinningClient, \
                                                                       HomoFeatureBinningServer
 from federatedml.util.classify_label_checker import ClassifyLabelChecker, RegressionLabelChecker
@@ -11,7 +11,7 @@ from federatedml.transfer_variable.transfer_class.homo_boosting_transfer_variabl
 from typing import List
 from federatedml.feature.fate_element_type import NoneType
 from federatedml.util import LOGGER
-from federatedml.ensemble.boosting.boosting_core.homo_boosting_aggregator import HomoBoostArbiterAggregator, \
+from federatedml.ensemble.boosting.homo_boosting_aggregator import HomoBoostArbiterAggregator, \
     HomoBoostClientAggregator
 from federatedml.optim.convergence import converge_func_factory
 from federatedml.param.boosting_param import HomoSecureBoostParam

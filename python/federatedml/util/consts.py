@@ -195,6 +195,7 @@ MAX_SPLIT_NODES = 2 ** 16
 MAX_SPLITINFO_TO_COMPUTE = 2 ** 10
 NORMAL_TREE = 'normal'
 COMPLETE_SECURE_TREE = 'complete_secure'
+STD_TREE = 'std'
 MIX_TREE = 'mix'
 LAYERED_TREE = 'layered'
 

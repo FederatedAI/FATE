@@ -5,17 +5,20 @@ import numpy as np
 from scipy import sparse as sp
 from federatedml.util import LOGGER
 from federatedml.util import consts
+from federatedml.feature.fate_element_type import NoneType
+from federatedml.util.io_check import assert_io_num_rows_equal
+from federatedml.util.anonymous_generator import generate_anonymous
+from federatedml.ensemble.basic_algorithms import HeteroDecisionTreeHost
+from federatedml.ensemble.boosting import HeteroBoostingHost
+from federatedml.param.boosting_param import HeteroSecureBoostParam, DecisionTreeParam
+from federatedml.transfer_variable.transfer_class.hetero_secure_boosting_predict_transfer_variable import \
+    HeteroSecureBoostTransferVariable
+from federatedml.ensemble.secureboost.secureboost_util.tree_model_io import produce_hetero_tree_learner, \
+    load_hetero_tree_learner
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import BoostingTreeModelMeta
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import QuantileMeta
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import BoostingTreeModelParam
-from federatedml.ensemble.boosting.boosting_core import HeteroBoostingHost
-from federatedml.param.boosting_param import HeteroSecureBoostParam, DecisionTreeParam
-from federatedml.ensemble.basic_algorithms import HeteroDecisionTreeHost
-from federatedml.transfer_variable.transfer_class.hetero_secure_boosting_predict_transfer_variable import \
-    HeteroSecureBoostTransferVariable
-from federatedml.util.io_check import assert_io_num_rows_equal
-from federatedml.util.anonymous_generator import generate_anonymous
-from federatedml.feature.fate_element_type import NoneType
+from federatedml.ensemble.secureboost.secureboost_util import hetero_fast_secureboost_plan as plan
 
 
 class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
@@ -36,12 +39,14 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         self.round_decimal = None
         self.new_ver = True
 
-        # for fast hist
-        self.sparse_opt_para = False
-        self.run_sparse_opt = False
-        self.has_transformed_data = False
-        self.data_bin_dense = None
-        self.predict_transfer_inst = HeteroSecureBoostTransferVariable()
+        self.work_mode = consts.STD_TREE
+
+        # fast sbt param
+        self.tree_num_per_party = 1
+        self.guest_depth = 0
+        self.host_depth = 0
+        self.init_tree_plan = False
+        self.tree_plan = []
 
     def _init_model(self, param: HeteroSecureBoostParam):
 
@@ -55,81 +60,67 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         self.cipher_compressing = param.cipher_compress
         self.new_ver = param.new_ver
 
+        self.tree_num_per_party = param.tree_num_per_party
+        self.work_mode = param.work_mode
+        self.guest_depth = param.guest_depth
+        self.host_depth = param.host_depth
+
         if self.use_missing:
             self.tree_param.use_missing = self.use_missing
             self.tree_param.zero_as_missing = self.zero_as_missing
 
-    @staticmethod
-    def sparse_to_array(data, feature_sparse_point_array, use_missing, zero_as_missing):
-        new_data = copy.deepcopy(data)
-        new_feature_sparse_point_array = copy.deepcopy(feature_sparse_point_array)
-        for k, v in data.features.get_all_data():
-            if v == NoneType():
-                value = -1
-            else:
-                value = v
-            new_feature_sparse_point_array[k] = value
+    def get_tree_plan(self, idx):
 
-        # as most sparse point is bin-0
-        # when mark it as a missing value (-1), offset it to make it sparse
-        if not use_missing or (use_missing and not zero_as_missing):
-            offset = 0
-        else:
-            offset = 1
-        new_data.features = sp.csc_matrix(np.array(new_feature_sparse_point_array) + offset)
-        return new_data
+        if not self.init_tree_plan:
+            tree_plan = plan.create_tree_plan(self.work_mode, k=self.tree_num_per_party, tree_num=self.boosting_round,
+                                              host_list=self.component_properties.host_party_idlist,
+                                              complete_secure=self.complete_secure)
+            self.tree_plan += tree_plan
+            self.init_tree_plan = True
 
-    def check_run_sp_opt(self):
-        # if run fast hist, generate dense d_dtable and set related variables
-        self.run_sparse_opt = (self.encrypt_param.method.lower() == consts.ITERATIVEAFFINE.lower()) and \
-                              self.sparse_opt_para
-
-        if self.run_sparse_opt:
-            LOGGER.info('host is running fast histogram mode')
-
-        # for fast hist computation, data preparation
-        if self.run_sparse_opt and not self.has_transformed_data:
-            # start data transformation for fast histogram mode
-            if not self.use_missing or (self.use_missing and not self.zero_as_missing):
-                feature_sparse_point_array = [self.bin_sparse_points[i] for i in range(len(self.bin_sparse_points))]
-            else:
-                feature_sparse_point_array = [-1 for i in range(len(self.bin_sparse_points))]
-            sparse_to_array = functools.partial(
-                HeteroSecureBoostingTreeHost.sparse_to_array,
-                feature_sparse_point_array=feature_sparse_point_array,
-                use_missing=self.use_missing,
-                zero_as_missing=self.zero_as_missing
-            )
-            self.data_bin_dense = self.data_bin.mapValues(sparse_to_array)
-
-            self.has_transformed_data = True
+        LOGGER.info('tree plan is {}'.format(self.tree_plan))
+        return self.tree_plan[idx]
 
     def fit_a_booster(self, epoch_idx: int, booster_dim: int):
 
-        self.check_run_sp_opt()
-        tree = HeteroDecisionTreeHost(tree_param=self.tree_param)
-        tree.init(flowid=self.generate_flowid(epoch_idx, booster_dim),
-                  valid_features=self.sample_valid_features(),
-                  data_bin=self.data_bin, bin_split_points=self.bin_split_points,
-                  bin_sparse_points=self.bin_sparse_points,
-                  run_sprase_opt=self.run_sparse_opt,
-                  data_bin_dense=self.data_bin_dense,
-                  runtime_idx=self.component_properties.local_partyid,
-                  goss_subsample=self.enable_goss,
-                  bin_num=self.bin_num,
-                  complete_secure=True if (self.complete_secure and epoch_idx == 0) else False,
-                  cipher_compressing=self.cipher_compressing,
-                  new_ver=self.new_ver
-                  )
+        flow_id = self.generate_flowid(epoch_idx, booster_dim)
+        complete_secure = True if (self.cur_epoch_idx == 0 and self.complete_secure) else False
+        fast_sbt = (self.work_mode != consts.STD_TREE)
+
+        tree_type, target_host_id = None, None
+        if fast_sbt:
+            tree_type, target_host_id = self.get_tree_plan(epoch_idx)
+
+        tree = produce_hetero_tree_learner(role=self.role, tree_param=self.tree_param, flow_id=flow_id,
+                                           data_bin=self.data_bin, bin_split_points=self.bin_split_points,
+                                           bin_sparse_points=self.bin_sparse_points, task_type=self.task_type,
+                                           valid_features=self.sample_valid_features(),
+                                           host_party_list=self.component_properties.host_party_idlist,
+                                           runtime_idx=self.component_properties.local_partyid,
+                                           cipher_compress=self.cipher_compressing,
+                                           complete_secure=complete_secure,
+                                           fast_sbt=fast_sbt, tree_type=tree_type, target_host_id=target_host_id,
+                                           guest_depth=self.guest_depth, host_depth=self.host_depth
+                                           )
 
         tree.fit()
+
         return tree
 
     def load_booster(self, model_meta, model_param, epoch_idx, booster_idx):
-        tree = HeteroDecisionTreeHost(self.tree_param)
-        tree.load_model(model_meta, model_param)
-        tree.set_flowid(self.generate_flowid(epoch_idx, booster_idx))
-        tree.set_runtime_idx(self.component_properties.local_partyid)
+
+        flow_id = self.generate_flowid(epoch_idx, booster_idx)
+        runtime_idx = self.component_properties.local_partyid
+        fast_sbt = (self.work_mode != consts.STD_TREE)
+        tree_type, target_host_id = None, None
+
+        if fast_sbt:
+            tree_type, target_host_id = self.get_tree_plan(epoch_idx)
+
+        tree = load_hetero_tree_learner(self.role, self.tree_param, model_meta, model_param, flow_id,
+                                        runtime_idx,
+                                        fast_sbt=fast_sbt, tree_type=tree_type, target_host_id=target_host_id)
+
         return tree
 
     def generate_summary(self) -> dict:
@@ -217,6 +208,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         model_meta.tree_meta.CopyFrom(self.booster_meta)
         model_meta.num_trees = self.boosting_round
         model_meta.quantile_meta.CopyFrom(QuantileMeta(bin_num=self.bin_num))
+        model_meta.work_mode = self.work_mode
         meta_name = "HeteroSecureBoostingTreeHostMeta"
         return meta_name, model_meta
 
@@ -240,7 +232,8 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         model_param.feature_name_fid_mapping.update(self.feature_name_fid_mapping)
         model_param.model_name = consts.HETERO_SBT
         model_param.best_iteration = self.callback_variables.best_iteration
-
+        model_param.tree_plan.extend(plan.encode_plan(self.tree_plan))
+        
         param_name = "HeteroSecureBoostingTreeHostParam"
 
         return param_name, model_param
@@ -250,8 +243,10 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
             self.boosting_round = model_meta.num_trees
         self.booster_meta = model_meta.tree_meta
         self.bin_num = model_meta.quantile_meta.bin_num
+        self.work_mode = model_meta.work_mode
 
     def set_model_param(self, model_param):
         self.boosting_model_list = list(model_param.trees_)
         self.booster_dim = model_param.tree_dim
         self.feature_name_fid_mapping.update(model_param.feature_name_fid_mapping)
+        self.tree_plan = plan.decode_plan(model_param.tree_plan)

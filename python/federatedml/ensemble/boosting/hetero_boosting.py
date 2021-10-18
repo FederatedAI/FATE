@@ -19,7 +19,7 @@
 
 from abc import ABC
 import abc
-from federatedml.ensemble.boosting.boosting_core import Boosting
+from federatedml.ensemble.boosting import Boosting
 from federatedml.param.boosting_param import HeteroBoostingParam
 from federatedml.secureprotol import IterativeAffineEncrypt
 from federatedml.secureprotol import PaillierEncrypt

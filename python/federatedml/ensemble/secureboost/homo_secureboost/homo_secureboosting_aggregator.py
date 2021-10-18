@@ -1,8 +1,8 @@
 from typing import List, Dict
 from federatedml.util import LOGGER
-from federatedml.framework.homo.blocks import secure_sum_aggregator, loss_scatter, has_converged
 from federatedml.framework.weights import DictWeights
 from federatedml.ensemble import HistogramBag, FeatureHistogramWeights
+from federatedml.framework.homo.blocks import secure_sum_aggregator, loss_scatter, has_converged
 
 
 class SecureBoostArbiterAggregator(object):

@@ -1,9 +1,9 @@
 import numpy as np
-from federatedml.ensemble.boosting.boosting_core.homo_boosting import HomoBoostingArbiter
-from federatedml.param.boosting_param import HomoSecureBoostParam
-from federatedml.ensemble.basic_algorithms.decision_tree.homo.homo_decision_tree_arbiter import HomoDecisionTreeArbiter
 from numpy import random
 from federatedml.util import LOGGER
+from federatedml.ensemble.boosting.homo_boosting import HomoBoostingArbiter
+from federatedml.param.boosting_param import HomoSecureBoostParam
+from federatedml.ensemble.basic_algorithms.decision_tree.homo.homo_decision_tree_arbiter import HomoDecisionTreeArbiter
 
 
 class HomoSecureBoostingTreeArbiter(HomoBoostingArbiter):

@@ -1,3 +1,6 @@
+import copy
+import functools
+import typing
 from abc import ABC
 import abc
 from numpy import random
@@ -8,7 +11,6 @@ from federatedml.param.feature_binning_param import FeatureBinningParam
 from federatedml.model_selection import start_cross_validation
 from federatedml.util import abnormal_detection
 from federatedml.util import consts
-from federatedml.callbacks.validation_strategy import ValidationStrategy
 from federatedml.feature.sparse_vector import SparseVector
 from federatedml.model_base import ModelBase
 from federatedml.feature.fate_element_type import NoneType
@@ -22,14 +24,10 @@ from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.loss import T
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.loss import SigmoidBinaryCrossEntropyLoss
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.loss import SoftmaxCrossEntropyLoss
 from federatedml.param.evaluation_param import EvaluateParam
-from federatedml.ensemble.boosting.boosting_core.predict_cache import PredictDataCache
+from federatedml.ensemble.boosting.predict_cache import PredictDataCache
 from federatedml.statistic import data_overview
 from federatedml.optim.convergence import converge_func_factory
 from federatedml.util import LOGGER
-import copy
-
-import functools
-import typing
 
 
 class Boosting(ModelBase, ABC):

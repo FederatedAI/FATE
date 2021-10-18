@@ -1,23 +1,26 @@
-from operator import itemgetter
 import numpy as np
-from federatedml.util import LOGGER
-from typing import List
 import functools
+from typing import List
+from operator import itemgetter
+from federatedml.util import consts
+from federatedml.util import LOGGER
+from federatedml.ensemble.boosting import HeteroBoostingGuest
+from federatedml.param.boosting_param import HeteroSecureBoostParam, DecisionTreeParam
+from federatedml.ensemble.basic_algorithms import HeteroDecisionTreeGuest
+from federatedml.util.io_check import assert_io_num_rows_equal
+from federatedml.util.anonymous_generator import generate_anonymous
+from federatedml.statistic.data_overview import with_weight, get_max_sample_weight
+from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.feature_importance import FeatureImportance
+from federatedml.transfer_variable.transfer_class.hetero_secure_boosting_predict_transfer_variable import \
+    HeteroSecureBoostTransferVariable
+from federatedml.ensemble.secureboost.secureboost_util import hetero_fast_secureboost_plan as plan
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import BoostingTreeModelMeta
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import ObjectiveMeta
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import QuantileMeta
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import BoostingTreeModelParam
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import FeatureImportanceInfo
-from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.feature_importance import FeatureImportance
-from federatedml.ensemble.boosting.boosting_core import HeteroBoostingGuest
-from federatedml.param.boosting_param import HeteroSecureBoostParam, DecisionTreeParam
-from federatedml.ensemble.basic_algorithms import HeteroDecisionTreeGuest
-from federatedml.util import consts
-from federatedml.transfer_variable.transfer_class.hetero_secure_boosting_predict_transfer_variable import \
-    HeteroSecureBoostTransferVariable
-from federatedml.util.io_check import assert_io_num_rows_equal
-from federatedml.util.anonymous_generator import generate_anonymous
-from federatedml.statistic.data_overview import with_weight, get_max_sample_weight
+from federatedml.ensemble.secureboost.secureboost_util.tree_model_io import load_hetero_tree_learner, \
+    produce_hetero_tree_learner
 
 
 class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
@@ -45,6 +48,15 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         self.other_rate = None
         self.new_ver = True
 
+        self.work_mode = consts.STD_TREE  # default work mode is std
+
+        # fast sbt param
+        self.tree_num_per_party = 1
+        self.guest_depth = 0
+        self.host_depth = 0
+        self.init_tree_plan = False
+        self.tree_plan = []
+
     def _init_model(self, param: HeteroSecureBoostParam):
 
         super(HeteroSecureBoostingTreeGuest, self)._init_model(param)
@@ -57,6 +69,12 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         self.other_rate = param.other_rate
         self.cipher_compressing = param.cipher_compress
         self.new_ver = param.new_ver
+
+        # fast sbt param
+        self.tree_num_per_party = param.tree_num_per_party
+        self.work_mode = param.work_mode
+        self.guest_depth = param.guest_depth
+        self.host_depth = param.host_depth
 
         if self.use_missing:
             self.tree_param.use_missing = self.use_missing
@@ -76,6 +94,24 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
                     self.max_sample_weight_computed = True
 
         return grad_and_hess
+
+    def get_tree_plan(self, idx):
+
+        if not self.init_tree_plan:
+            tree_plan = plan.create_tree_plan(self.work_mode, k=self.tree_num_per_party, tree_num=self.boosting_round,
+                                              host_list=self.component_properties.host_party_idlist,
+                                              complete_secure=self.complete_secure)
+            self.tree_plan += tree_plan
+            self.init_tree_plan = True
+
+        LOGGER.info('tree plan is {}'.format(self.tree_plan))
+        return self.tree_plan[idx]
+
+    def check_host_number(self, tree_type):
+        host_num = len(self.component_properties.host_party_idlist)
+        LOGGER.info('host number is {}'.format(host_num))
+        if tree_type == plan.tree_type_dict['layered_tree']:
+            assert host_num == 1, 'only 1 host party is allowed in layered mode'
 
     def compute_grad_and_hess(self, y_hat, y, data_with_sample_weight=None):
 
@@ -117,36 +153,49 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
 
         g_h = self.get_grad_and_hess(self.grad_and_hess, booster_dim)
 
-        tree = HeteroDecisionTreeGuest(tree_param=self.tree_param)
-        tree.init(flowid=self.generate_flowid(epoch_idx, booster_dim),
-                  data_bin=self.data_bin, bin_split_points=self.bin_split_points,
-                  bin_sparse_points=self.bin_sparse_points,
-                  grad_and_hess=g_h,
-                  encrypter=self.encrypter, encrypted_mode_calculator=self.encrypted_calculator,
-                  task_type=self.task_type,
-                  valid_features=self.sample_valid_features(),
-                  host_party_list=self.component_properties.host_party_idlist,
-                  runtime_idx=self.component_properties.local_partyid,
-                  goss_subsample=self.enable_goss,
-                  top_rate=self.top_rate, other_rate=self.other_rate,
-                  complete_secure=True if (self.cur_epoch_idx == 0 and self.complete_secure) else False,
-                  cipher_compressing=self.cipher_compressing,
-                  max_sample_weight=self.max_sample_weight,
-                  new_ver=self.new_ver
-                  )
+        flow_id = self.generate_flowid(epoch_idx, booster_dim)
+        complete_secure = True if (self.cur_epoch_idx == 0 and self.complete_secure) else False
+
+        tree_type, target_host_id = None, None
+        fast_sbt = (self.work_mode != consts.STD_TREE)
+        if fast_sbt:
+            tree_type, target_host_id = self.get_tree_plan(epoch_idx)
+
+        tree = produce_hetero_tree_learner(role=self.role, tree_param=self.tree_param, flow_id=flow_id,
+                                           data_bin=self.data_bin, bin_split_points=self.bin_split_points,
+                                           bin_sparse_points=self.bin_sparse_points, task_type=self.task_type,
+                                           valid_features=self.sample_valid_features(),
+                                           host_party_list=self.component_properties.host_party_idlist,
+                                           runtime_idx=self.component_properties.local_partyid,
+                                           cipher_compress=self.cipher_compressing,
+                                           g_h=g_h, encrypter=self.encrypter, en_calculator=self.encrypted_calculator,
+                                           goss_subsample=self.enable_goss, top_rate=self.top_rate, other_rate=self.other_rate,
+                                           complete_secure=complete_secure, max_sample_weights=self.max_sample_weight,
+                                           fast_sbt=fast_sbt, tree_type=tree_type, target_host_id=target_host_id,
+                                           guest_depth=self.guest_depth, host_depth=self.host_depth
+                                           )
 
         tree.fit()
-
         self.update_feature_importance(tree.get_feature_importance())
 
         return tree
 
     def load_booster(self, model_meta, model_param, epoch_idx, booster_idx):
-        tree = HeteroDecisionTreeGuest(self.tree_param)
-        tree.load_model(model_meta, model_param)
-        tree.set_flowid(self.generate_flowid(epoch_idx, booster_idx))
-        tree.set_runtime_idx(self.component_properties.local_partyid)
-        tree.set_host_party_idlist(self.component_properties.host_party_idlist)
+
+        flow_id = self.generate_flowid(epoch_idx, booster_idx)
+        runtime_idx = self.component_properties.local_partyid
+        host_list = self.component_properties.host_party_idlist
+        fast_sbt = (self.work_mode != consts.STD_TREE)
+        tree_type, target_host_id = None, None
+
+        if fast_sbt:
+            tree_type, target_host_id = self.get_tree_plan(epoch_idx)
+
+        tree = load_hetero_tree_learner(role=self.role, tree_param=self.tree_param, model_meta=model_meta,
+                                        model_param=model_param,
+                                        flow_id=flow_id, runtime_idx=runtime_idx, host_party_list=host_list,
+                                        fast_sbt=fast_sbt, tree_type=tree_type, target_host_id=target_host_id)
+
         return tree
 
     def generate_summary(self) -> dict:
@@ -416,6 +465,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         model_meta.task_type = self.task_type
         model_meta.n_iter_no_change = self.n_iter_no_change
         model_meta.tol = self.tol
+        model_meta.work_mode = self.work_mode
         meta_name = consts.HETERO_SBT_GUEST_MODEL + "Meta"
 
         return meta_name, model_meta
@@ -453,6 +503,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
                                                                   ))
         model_param.feature_importances.extend(feature_importance_param)
         model_param.feature_name_fid_mapping.update(self.feature_name_fid_mapping)
+        model_param.tree_plan.extend(plan.encode_plan(self.tree_plan))
         param_name = consts.HETERO_SBT_GUEST_MODEL + "Param"
 
         return param_name, model_param
@@ -471,6 +522,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         self.objective_param.objective = model_meta.objective_meta.objective
         self.objective_param.params = list(model_meta.objective_meta.param)
         self.task_type = model_meta.task_type
+        self.work_mode = model_meta.work_mode
 
     def set_model_param(self, model_param):
 
@@ -484,3 +536,5 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         self.load_feature_importance(model_param.feature_importances)
         # initialize loss function
         self.loss = self.get_loss_function()
+        # init model tree plan if it exists
+        self.tree_plan = plan.decode_plan(model_param.tree_plan)
