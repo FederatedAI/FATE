@@ -14,9 +14,9 @@
 #  limitations under the License.
 #
 import os
-import pickle
 import uuid
 
+from fate_arch.common import hive_utils
 from fate_arch.common.file_utils import get_project_base_directory
 from fate_arch.storage import StorageEngine, HiveStoreType
 from fate_arch.storage import StorageTableBase
@@ -73,8 +73,17 @@ class StorageTable(StorageTableBase):
     def _collect(self, **kwargs) -> list:
         sql = "select * from {}".format(self._address.name)
         data = self.execute(sql)
-        for i in data:
-            yield i[0], self.meta.get_id_delimiter().join(list(i[1:]))
+        for line in data:
+            yield hive_utils.deserialize_line(line)
+
+    def _read(self) -> list:
+        id_name, feature_name_list, _ = self._get_id_feature_name()
+        id_feature_name = [id_name]
+        id_feature_name.extend(feature_name_list)
+        sql = "select {} from {}".format(",".join(id_feature_name), self._address.name)
+        data = self.execute(sql)
+        for line in data:
+            yield hive_utils.read_line(line)
 
 
     def _put_all(self, kv_list, **kwargs):
@@ -87,7 +96,7 @@ class StorageTable(StorageTableBase):
         os.makedirs(os.path.dirname(temp_path), exist_ok=True)
         with open(temp_path, 'w') as f:
             for k, v in kv_list:
-                f.write(f'{id_delimiter}'.join([k, pickle.dumps(v).hex()]) + "\n")
+                f.write(hive_utils.serialize_line(k, v))
         sql = "load data local inpath '{}' overwrite into table {}".format(temp_path, self._address.name)
         self._cur.execute(sql)
         self._con.commit()
@@ -119,8 +128,8 @@ class StorageTable(StorageTableBase):
             feature_data = self.execute(sql)
             for feature in feature_data:
                 if feature:
-                    break
-        return True
+                    return True
+        return False
 
     @staticmethod
     def get_meta_header(feature_name_list):
@@ -131,3 +140,18 @@ class StorageTable(StorageTableBase):
             create_features += '{} {},'.format(feature_name, feature_size)
             feature_list.append(feature_name)
         return create_features, feature_list
+
+    def _get_id_feature_name(self):
+        id = self.meta.get_schema().get("sid", "id")
+        header = self.meta.get_schema().get("header")
+        id_delimiter = self.meta.get_id_delimiter()
+        if header:
+            if isinstance(header, str):
+                feature_list = header.split(id_delimiter)
+            elif isinstance(header, list):
+                feature_list = header
+            else:
+                feature_list = [header]
+        else:
+            raise Exception("mysql table need data header")
+        return id, feature_list, id_delimiter
