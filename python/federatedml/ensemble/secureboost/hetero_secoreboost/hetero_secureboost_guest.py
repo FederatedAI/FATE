@@ -22,6 +22,7 @@ from federatedml.ensemble.secureboost.secureboost_util.tree_model_io import load
     produce_hetero_tree_learner
 from federatedml.ensemble.secureboost.secureboost_util.boosting_tree_predict import sbt_guest_predict, \
     mix_sbt_guest_predict
+from federatedml.ensemble.secureboost.secureboost_util.subsample import goss_sampling
 
 
 class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
@@ -42,6 +43,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         self.model_name = 'HeteroSecureBoost'
         self.max_sample_weight = 1
         self.max_sample_weight_computed = False
+        self.re_compute_goss_sample_weight = False
         self.cipher_compressing = False
 
         self.enable_goss = False  # GOSS
@@ -119,8 +121,8 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         LOGGER.info("compute grad and hess")
         loss_method = self.loss
         if self.task_type == consts.CLASSIFICATION:
-            grad_and_hess = y.join(y_hat, lambda y, f_val: \
-                (loss_method.compute_grad(y, loss_method.predict(f_val)), \
+            grad_and_hess = y.join(y_hat, lambda y, f_val:\
+                (loss_method.compute_grad(y, loss_method.predict(f_val)),\
                  loss_method.compute_hess(y, loss_method.predict(f_val))))
         else:
             grad_and_hess = y.join(y_hat, lambda y, f_val:
@@ -146,11 +148,37 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
                 self.feature_importances_[fid] += tree_feature_importance[fid]
         LOGGER.debug('cur feature importance {}'.format(self.feature_importances_))
 
-    def fit_a_learner(self, epoch_idx: int, booster_dim: int):
+    def goss_sample(self):
+
+        sampled_gh = goss_sampling(self.grad_and_hess, self.top_rate, self.other_rate)
+        return sampled_gh
+
+    def on_epoch_prepare(self, epoch_idx):
+        """
+
+        Parameters
+        ----------
+        epoch_idx cur epoch idx
+
+        Returns None
+        -------
+
+        Prepare g, h, sample weights, sampling at the beginning of every epoch
+
+        """
 
         if self.cur_epoch_idx != epoch_idx:
             self.grad_and_hess = self.compute_grad_and_hess(self.y_hat, self.y, self.data_inst)
             self.cur_epoch_idx = epoch_idx
+            # goss sampling
+            if self.enable_goss:
+                if not self.re_compute_goss_sample_weight:
+                    self.max_sample_weight = self.max_sample_weight * ((1 - self.top_rate) / self.other_rate)
+                self.grad_and_hess = self.goss_sample()
+
+    def fit_a_learner(self, epoch_idx: int, booster_dim: int):
+
+        self.on_epoch_prepare(epoch_idx)
 
         g_h = self.get_grad_and_hess(self.grad_and_hess, booster_dim)
 
@@ -172,7 +200,6 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
                                            cipher_compress=self.cipher_compressing,
                                            g_h=g_h, encrypter=self.encrypter, en_calculator=self.encrypted_calculator,
                                            goss_subsample=self.enable_goss,
-                                           top_rate=self.top_rate, other_rate=self.other_rate,
                                            complete_secure=complete_secure, max_sample_weights=self.max_sample_weight,
                                            fast_sbt=fast_sbt, tree_type=tree_type, target_host_id=target_host_id,
                                            guest_depth=self.guest_depth, host_depth=self.host_depth

@@ -19,8 +19,8 @@ def goss_sampling(grad_and_hess, top_rate, other_rate):
     id_list, g_list, h_list = [], [], []
     for id_, g_h in g_h_generator:
         id_list.append(id_)
-        g_list.append(g_h[0])
-        h_list.append(g_h[1])
+        g_list.append(g_h[0].sum())  # if it is multi-classification case, we need to sum g
+        h_list.append(g_h[1].sum())  # sum h
 
     id_type = type(id_list[0])
     id_list = np.array(id_list)

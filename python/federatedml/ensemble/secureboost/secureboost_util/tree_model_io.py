@@ -9,7 +9,7 @@ def produce_hetero_tree_learner(role, tree_param: DecisionTreeParam, flow_id, da
                                 runtime_idx,
                                 cipher_compress=True,
                                 g_h=None, encrypter=None, en_calculator=None,  # guest only
-                                goss_subsample=False, top_rate=0.1, other_rate=0.2, complete_secure=False,
+                                goss_subsample=False, complete_secure=False,
                                 max_sample_weights=1.0,
                                 bin_num=None,  # host only
                                 fast_sbt=False,
@@ -37,8 +37,6 @@ def produce_hetero_tree_learner(role, tree_param: DecisionTreeParam, flow_id, da
                   host_party_list=host_party_list,
                   runtime_idx=runtime_idx,
                   goss_subsample=goss_subsample,
-                  top_rate=top_rate,
-                  other_rate=other_rate,
                   complete_secure=complete_secure,
                   cipher_compressing=cipher_compress,
                   max_sample_weight=max_sample_weights
