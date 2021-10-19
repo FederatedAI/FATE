@@ -2,13 +2,13 @@ from typing import List
 import functools
 import copy
 import numpy as np
-from scipy import sparse as sp
+from operator import itemgetter
 from federatedml.util import LOGGER
 from federatedml.util import consts
-from federatedml.feature.fate_element_type import NoneType
 from federatedml.util.io_check import assert_io_num_rows_equal
 from federatedml.util.anonymous_generator import generate_anonymous
-from federatedml.ensemble.basic_algorithms import HeteroDecisionTreeHost
+from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import FeatureImportanceInfo
+from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.feature_importance import FeatureImportance
 from federatedml.ensemble.boosting import HeteroBoostingHost
 from federatedml.param.boosting_param import HeteroSecureBoostParam, DecisionTreeParam
 from federatedml.transfer_variable.transfer_class.hetero_secure_boosting_predict_transfer_variable import \
@@ -49,6 +49,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         self.host_depth = 0
         self.init_tree_plan = False
         self.tree_plan = []
+        self.feature_importances_ = {}
 
         self.predict_transfer_inst = HeteroSecureBoostTransferVariable()
 
@@ -85,6 +86,24 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         LOGGER.info('tree plan is {}'.format(self.tree_plan))
         return self.tree_plan[idx]
 
+    def update_feature_importance(self, tree_feature_importance):
+        for fid in tree_feature_importance:
+            if fid not in self.feature_importances_:
+                self.feature_importances_[fid] = tree_feature_importance[fid]
+            else:
+                self.feature_importances_[fid] += tree_feature_importance[fid]
+
+    def load_feature_importance(self, feat_importance_param):
+        param = list(feat_importance_param)
+        rs_dict = {}
+        for fp in param:
+            key = (fp.sitename, fp.fid)
+            importance = FeatureImportance()
+            importance.from_protobuf(fp)
+            rs_dict[key] = importance
+
+        self.feature_importances_ = rs_dict
+
     def fit_a_learner(self, epoch_idx: int, booster_dim: int):
 
         flow_id = self.generate_flowid(epoch_idx, booster_dim)
@@ -109,6 +128,9 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
 
         tree.fit()
 
+        if self.work_mode == consts.MIX_TREE:
+            self.update_feature_importance(tree.get_feature_importance())
+
         return tree
 
     def load_learner(self, model_meta, model_param, epoch_idx, booster_idx):
@@ -130,11 +152,9 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
     def generate_summary(self) -> dict:
 
         summary = {'best_iteration': self.callback_variables.best_iteration, 'is_converged': self.is_converged}
-
         LOGGER.debug('summary is {}'.format(summary))
 
         return summary
-
 
     @assert_io_num_rows_equal
     def predict(self, data_inst):
@@ -193,6 +213,19 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         model_param.model_name = consts.HETERO_SBT
         model_param.best_iteration = self.callback_variables.best_iteration
         model_param.tree_plan.extend(plan.encode_plan(self.tree_plan))
+
+        if self.work_mode == consts.MIX_TREE:
+            # in mix mode, host can output feature importance
+            feature_importances = list(self.feature_importances_.items())
+            feature_importances = sorted(feature_importances, key=itemgetter(1), reverse=True)
+            feature_importance_param = []
+            LOGGER.debug('host feat importance is {}'.format(feature_importances))
+            for fid, importance in feature_importances:
+                feature_importance_param.append(FeatureImportanceInfo(sitename=self.role,
+                                                                      fid=fid,
+                                                                      importance=importance.importance,
+                                                                      fullname=self.feature_name_fid_mapping[fid]))
+            model_param.feature_importances.extend(feature_importance_param)
         
         param_name = "HeteroSecureBoostingTreeHostParam"
 
@@ -210,3 +243,5 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         self.booster_dim = model_param.tree_dim
         self.feature_name_fid_mapping.update(model_param.feature_name_fid_mapping)
         self.tree_plan = plan.decode_plan(model_param.tree_plan)
+        if self.work_mode == consts.MIX_TREE:
+            self.load_feature_importance(model_param.feature_importances)
