@@ -135,53 +135,6 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
 
         return summary
 
-    @staticmethod
-    def traverse_a_tree(tree: HeteroDecisionTreeHost, sample, cur_node_idx):
-
-        nid, _ = tree.traverse_tree(predict_state=(cur_node_idx, -1), data_inst=sample,
-                                    decoder=tree.decode, split_maskdict=tree.split_maskdict,
-                                    missing_dir_maskdict=tree.missing_dir_maskdict, sitename=tree.sitename,
-                                    tree_=tree.tree_node, zero_as_missing=tree.zero_as_missing,
-                                    use_missing=tree.use_missing)
-
-        return nid, _
-
-    @staticmethod
-    def traverse_trees(leaf_pos, sample, trees: List[HeteroDecisionTreeHost]):
-
-        for t_idx, tree in enumerate(trees):
-
-            cur_node_idx = leaf_pos['node_pos'][t_idx]
-            # idx is set as -1 when a sample reaches leaf
-            if cur_node_idx == -1:
-                continue
-            nid, _ = HeteroSecureBoostingTreeHost.traverse_a_tree(tree, sample, cur_node_idx)
-            leaf_pos['node_pos'][t_idx] = nid
-
-        return leaf_pos
-
-    def boosting_fast_predict(self, data_inst, trees: List[HeteroDecisionTreeHost]):
-
-        comm_round = 0
-
-        traverse_func = functools.partial(self.traverse_trees, trees=trees)
-
-        while True:
-
-            LOGGER.debug('cur predict round is {}'.format(comm_round))
-
-            stop_flag = self.predict_transfer_inst.predict_stop_flag.get(idx=0, suffix=(comm_round, ))
-            if stop_flag:
-                break
-
-            guest_node_pos = self.predict_transfer_inst.guest_predict_data.get(idx=0, suffix=(comm_round, ))
-            host_node_pos = guest_node_pos.join(data_inst, traverse_func)
-            if guest_node_pos.count() != host_node_pos.count():
-                raise ValueError('sample count mismatch: guest table {}, host table {}'.format(guest_node_pos.count(),
-                                                                                               host_node_pos.count()))
-            self.predict_transfer_inst.host_predict_data.remote(host_node_pos, idx=-1, suffix=(comm_round, ))
-
-            comm_round += 1
 
     @assert_io_num_rows_equal
     def predict(self, data_inst):
