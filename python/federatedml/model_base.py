@@ -82,6 +82,7 @@ class ComponentOutput:
 class MetricType:
     LOSS = "LOSS"
 
+
 class Metric:
     def __init__(self, key, value: float, timestamp: float = None):
         self.key = key
@@ -115,6 +116,7 @@ class CallbacksVariable(object):
 class WarpedTrackerClient:
     def __init__(self, tracker) -> None:
         self._tracker = tracker
+
     def log_metric_data(
         self, metric_namespace: str, metric_name: str, metrics: typing.List[Metric]
     ):
@@ -125,6 +127,7 @@ class WarpedTrackerClient:
 
     def log_component_summary(self, summary_data: dict):
         return self._tracker.log_component_summary(summary_data=summary_data)
+
 
 class ModelBase(object):
     def __init__(self):

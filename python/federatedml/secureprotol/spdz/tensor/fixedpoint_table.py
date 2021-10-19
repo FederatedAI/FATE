@@ -146,28 +146,28 @@ class FixedPointTensor(TensorBase):
     @classmethod
     def from_source(cls, tensor_name, source, **kwargs):
         spdz = cls.get_spdz()
+        q_field = kwargs['q_field'] if 'q_field' in kwargs else spdz.q_field
         if 'encoder' in kwargs:
             encoder = kwargs['encoder']
         else:
             base = kwargs['base'] if 'base' in kwargs else 10
             frac = kwargs['frac'] if 'frac' in kwargs else 4
-            q_field = kwargs['q_field'] if 'q_field' in kwargs else spdz.q_field
             encoder = fixedpoint_numpy.FixedPointEndec(q_field, base, frac)
         if is_table(source):
             source = encoder.encode(source)
-            _pre = urand_tensor(spdz.q_field, source, use_mix=spdz.use_mix_rand)
+            _pre = urand_tensor(q_field, source, use_mix=spdz.use_mix_rand)
             spdz.communicator.remote_share(share=_pre, tensor_name=tensor_name, party=spdz.other_parties[0])
             for _party in spdz.other_parties[1:]:
-                r = urand_tensor(spdz.q_field, source, use_mix=spdz.use_mix_rand)
-                spdz.communicator.remote_share(share=_table_binary_mod_op(r, _pre, spdz.q_field, operator.sub),
+                r = urand_tensor(q_field, source, use_mix=spdz.use_mix_rand)
+                spdz.communicator.remote_share(share=_table_binary_mod_op(r, _pre, q_field, operator.sub),
                                                tensor_name=tensor_name, party=_party)
                 _pre = r
-            share = _table_binary_mod_op(source, _pre, spdz.q_field, operator.sub)
+            share = _table_binary_mod_op(source, _pre, q_field, operator.sub)
         elif isinstance(source, Party):
             share = spdz.communicator.get_share(tensor_name=tensor_name, party=source)[0]
         else:
             raise ValueError(f"type={type(source)}")
-        return FixedPointTensor(share, spdz.q_field, encoder, tensor_name)
+        return FixedPointTensor(share, q_field, encoder, tensor_name)
 
     def get(self, tensor_name=None, broadcast=True):
         return self.endec.decode(self.rescontruct(tensor_name, broadcast))
@@ -334,11 +334,11 @@ class PaillierFixedPointTensor(TensorBase):
             encoder = FixedPointEndec(q_field, base, frac)
 
         if is_table(source):
-            _pre = urand_tensor(spdz.q_field, source, use_mix=spdz.use_mix_rand)
+            _pre = urand_tensor(q_field, source, use_mix=spdz.use_mix_rand)
             share = _pre
 
             for _party in spdz.other_parties[:-1]:
-                r = urand_tensor(spdz.q_field, source, use_mix=spdz.use_mix_rand)
+                r = urand_tensor(q_field, source, use_mix=spdz.use_mix_rand)
                 spdz.communicator.remote_share(share=_table_binary_mod_op(r, _pre, q_field, operator.sub),
                                                tensor_name=tensor_name, party=_party)
                 _pre = r

@@ -95,7 +95,7 @@ class FixedPointTensor(TensorBase):
             share = spdz.communicator.get_share(tensor_name=tensor_name, party=source)[0]
         else:
             raise ValueError(f"type={type(source)}")
-        return FixedPointTensor(share, spdz.q_field, encoder, tensor_name)
+        return FixedPointTensor(share, q_field, encoder, tensor_name)
 
     def einsum(self, other: 'FixedPointTensor', einsum_expr, target_name=None):
         spdz = self.get_spdz()
@@ -289,10 +289,10 @@ class PaillierFixedPointTensor(TensorBase):
             encoder = FixedPointEndec(q_field, base, frac)
 
         if isinstance(source, np.ndarray):
-            _pre = urand_tensor(spdz.q_field, source)
+            _pre = urand_tensor(q_field, source)
             share = _pre
             for _party in spdz.other_parties[:-1]:
-                r = urand_tensor(spdz.q_field, source)
+                r = urand_tensor(q_field, source)
                 spdz.communicator.remote_share(share=r - _pre, tensor_name=tensor_name, party=_party)
                 _pre = r
             spdz.communicator.remote_share(share=source - encoder.decode(_pre),
