@@ -93,9 +93,9 @@ class FixedPointTensor(TensorBase):
         spdz = self.get_spdz()
         if target_name is None:
             target_name = NamingService.get_instance().next()
-        q_field = 2 ** 32
+        # q_field = 2 ** 32
         a, b, c = beaver_triplets(a_tensor=self.value, b_tensor=other.value, dot=table_dot,
-                                  q_field=q_field, he_key_pair=(spdz.public_key, spdz.private_key),
+                                  q_field=self.q_field, he_key_pair=(spdz.public_key, spdz.private_key),
                                   communicator=spdz.communicator, name=target_name)
 
         x_add_a = (self + a).rescontruct(f"{target_name}_confuse_x")
