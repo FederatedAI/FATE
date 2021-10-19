@@ -91,8 +91,6 @@ def main(config="../../config.yaml", param="./vechile_config.yaml", namespace=""
     intersection_0 = Intersection(name="intersection_0")
 
     lr_param = {
-        "validation_freqs": None,
-        "early_stopping_rounds": None,
     }
 
     config_param = {

@@ -44,11 +44,14 @@ def main(config="../../config.yaml", namespace=""):
         "tol": 0.0001,
         "alpha": 0.01,
         "max_iter": 30,
+        "callback_param": {
+            "callbacks": ["EarlyStopping"],
+            "validation_freqs": 3,
+            "early_stopping_rounds": 3
+        },
         "early_stop": "diff",
         "batch_size": -1,
         "learning_rate": 0.15,
-        "validation_freqs": 3,
-        "early_stopping_rounds": 3,
         "init_param": {
             "init_method": "zeros",
             "fit_intercept": True

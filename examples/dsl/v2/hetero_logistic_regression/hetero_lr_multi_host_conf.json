@@ -27,7 +27,7 @@
         "role": {
             "guest": {
                 "0": {
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": true
                     },
                     "reader_0": {
@@ -40,7 +40,7 @@
             },
             "host": {
                 "0|1": {
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": false
                     },
                     "reader_0": {
@@ -53,7 +53,7 @@
             }
         },
         "common": {
-            "dataio_0": {
+            "data_transform_0": {
                 "output_format": "dense"
             },
             "hetero_lr_0": {
