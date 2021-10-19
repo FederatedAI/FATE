@@ -18,13 +18,12 @@ import argparse
 import json
 
 from pipeline.backend.pipeline import PipeLine
-from pipeline.component.hetero_sshe_lr import HeteroSSHELR
+from pipeline.component import HeteroSSHELR
 from pipeline.component import DataTransform
-from pipeline.component.evaluation import Evaluation
-from pipeline.component.intersection import Intersection
-from pipeline.component.reader import Reader
-from pipeline.interface.data import Data
-from pipeline.interface.model import Model
+from pipeline.component import Evaluation
+from pipeline.component import Intersection
+from pipeline.component import Reader
+from pipeline.interface import Data
 from pipeline.runtime.entity import JobParameters
 from pipeline.utils.tools import load_job_config
 

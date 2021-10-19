@@ -18,10 +18,9 @@ import argparse
 import json
 
 from pipeline.backend.pipeline import PipeLine
+from pipeline.component import HeteroSSHELR
 from pipeline.component import DataTransform
 from pipeline.component import Evaluation
-from pipeline.component import HeteroFeatureSelection
-from pipeline.component import HeteroSSHELR
 from pipeline.component import Intersection
 from pipeline.component import Reader
 from pipeline.interface import Data
@@ -44,7 +43,7 @@ def main(config="../../config.yaml", namespace=""):
     parties = config.parties
     guest = parties.guest[0]
     hosts = parties.host[0]
-
+    arbiter = parties.arbiter[0]
     guest_train_data = {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"}
     host_train_data = {"name": "breast_hetero_host", "namespace": f"experiment{namespace}"}
 
@@ -53,7 +52,7 @@ def main(config="../../config.yaml", namespace=""):
     # set job initiator
     pipeline.set_initiator(role='guest', party_id=guest)
     # set participants information
-    pipeline.set_roles(guest=guest, host=hosts)
+    pipeline.set_roles(guest=guest, host=hosts, arbiter=arbiter)
 
     # define Reader components to read in data
     reader_0 = Reader(name="reader_0")
@@ -74,45 +73,37 @@ def main(config="../../config.yaml", namespace=""):
     # define Intersection components
     intersection_0 = Intersection(name="intersection_0")
 
-    selection_param = {
-        "select_col_indexes": -1,
-        "filter_methods": ["manually"]
-    }
-    hetero_feature_selection_0 = HeteroFeatureSelection(name="hetero_feature_selection_0",
-                                                        **selection_param)
-    hetero_feature_selection_0.get_party_instance(role='guest', party_id=guest).component_param(
-        manually_param={"left_col_indexes": [0]}
-    )
-
     pipeline.add_component(reader_0)
 
     pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
 
     pipeline.add_component(intersection_0, data=Data(data=data_transform_0.output.data))
-    pipeline.add_component(hetero_feature_selection_0, data=Data(data=intersection_0.output.data))
 
     lr_param = {
-        "name": "hetero_sshe_lr_0",
-        "penalty": None,
+        "penalty": "L2",
         "optimizer": "sgd",
-        "tol": 0.0001,
+        "tol": 0.00001,
         "alpha": 0.01,
-        "max_iter": 30,
         "early_stop": "diff",
         "batch_size": -1,
-        "validation_freqs": None,
-        "early_stopping_rounds": None,
-        "learning_rate": 0.15,
+        "learning_rate": 0.1,
         "init_param": {
-            "init_method": "random_uniform"
+            "init_method": "random_uniform",
+            "fit_intercept": True
         },
-        "reveal_strategy": "all_reveal_in_guest",
-        "reveal_every_iter": False,
-        "compute_loss": True,
+        "callback_param": {
+            "callbacks": ["ModelCheckpoint"],
+            "validation_freqs": 1,
+            "early_stopping_rounds": 1,
+            "metrics": None,
+            "use_first_metric_only": False,
+            "save_freq": 1
+        }
     }
 
-    hetero_sshe_lr_0 = HeteroSSHELR(**lr_param)
-    pipeline.add_component(hetero_sshe_lr_0, data=Data(train_data=hetero_feature_selection_0.output.data))
+    hetero_sshe_lr_0 = HeteroSSHELR(name="hetero_sshe_lr_0", max_iter=8, **lr_param)
+
+    pipeline.add_component(hetero_sshe_lr_0, data=Data(train_data=intersection_0.output.data))
 
     evaluation_0 = Evaluation(name="evaluation_0", eval_type="binary")
     pipeline.add_component(evaluation_0, data=Data(data=hetero_sshe_lr_0.output.data))

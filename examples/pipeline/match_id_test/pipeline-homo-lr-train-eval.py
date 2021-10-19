@@ -18,12 +18,12 @@ import argparse
 
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component import DataTransform
-from pipeline.component.homo_lr import HomoLR
-from pipeline.component.reader import Reader
-from pipeline.interface.data import Data
-from pipeline.interface.model import Model
-from pipeline.component.evaluation import Evaluation
-from pipeline.component.scale import FeatureScale
+from pipeline.component import HomoLR
+from pipeline.component import Reader
+from pipeline.component import Evaluation
+from pipeline.component import FeatureScale
+from pipeline.interface import Data
+from pipeline.interface import Model
 from pipeline.utils.tools import load_job_config
 from pipeline.runtime.entity import JobParameters
 import json
