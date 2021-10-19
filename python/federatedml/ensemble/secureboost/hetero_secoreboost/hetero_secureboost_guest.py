@@ -1,6 +1,4 @@
 import numpy as np
-import functools
-from typing import List
 from operator import itemgetter
 from federatedml.util import consts
 from federatedml.util import LOGGER
@@ -12,7 +10,7 @@ from federatedml.statistic.data_overview import with_weight, get_max_sample_weig
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.feature_importance import FeatureImportance
 from federatedml.transfer_variable.transfer_class.hetero_secure_boosting_predict_transfer_variable import \
     HeteroSecureBoostTransferVariable
-from federatedml.ensemble.secureboost.secureboost_util import hetero_fast_secureboost_plan as plan
+from federatedml.ensemble.basic_algorithms.decision_tree.tree_core import tree_plan as plan
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import BoostingTreeModelMeta
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import ObjectiveMeta
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import QuantileMeta

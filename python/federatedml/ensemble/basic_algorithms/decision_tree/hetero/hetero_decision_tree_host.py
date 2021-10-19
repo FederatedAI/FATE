@@ -9,7 +9,6 @@ from federatedml.transfer_variable.transfer_class.hetero_decision_tree_transfer_
     HeteroDecisionTreeTransferVariable
 from federatedml.util import consts
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.g_h_optim import PackedGHCompressor
-from federatedml.feature.fate_element_type import NoneType
 import functools
 
 

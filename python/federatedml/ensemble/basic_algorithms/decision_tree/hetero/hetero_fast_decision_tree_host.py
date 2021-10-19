@@ -2,7 +2,7 @@ import numpy as np
 import functools
 import copy
 from federatedml.ensemble.basic_algorithms import HeteroDecisionTreeHost
-from federatedml.ensemble.boosting.hetero import hetero_fast_secureboost_plan as plan
+from federatedml.ensemble.basic_algorithms.decision_tree.tree_core import tree_plan as plan
 from federatedml.util import consts
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.splitter import SplitInfo
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.node import Node

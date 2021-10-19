@@ -20,7 +20,7 @@ from federatedml.ensemble.secureboost.secureboost_util.boosting_tree_predict imp
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import BoostingTreeModelMeta
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import QuantileMeta
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import BoostingTreeModelParam
-from federatedml.ensemble.secureboost.secureboost_util import hetero_fast_secureboost_plan as plan
+from federatedml.ensemble.basic_algorithms.decision_tree.tree_core import tree_plan as plan
 
 
 class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
