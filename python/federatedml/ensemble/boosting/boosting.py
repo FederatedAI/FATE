@@ -412,7 +412,7 @@ class Boosting(ModelBase, ABC):
         return y_hat, init_score
 
     @abc.abstractmethod
-    def fit_a_booster(self, *args) -> BasicAlgorithms:
+    def fit_a_learner(self, *args) -> BasicAlgorithms:
         """
         fit a booster and return it
         """
@@ -423,7 +423,7 @@ class Boosting(ModelBase, ABC):
     """
 
     @abc.abstractmethod
-    def load_booster(self, *args):
+    def load_learner(self, *args):
         """
         load a booster
         """

@@ -155,7 +155,7 @@ class HomoBoostingClient(Boosting, ABC):
             for class_idx in range(self.booster_dim):
 
                 # fit a booster
-                model = self.fit_a_booster(epoch_idx, class_idx)
+                model = self.fit_a_learner(epoch_idx, class_idx)
                 booster_meta, booster_param = model.get_model()
                 if booster_meta is not None and booster_param is not None:
                     self.booster_meta = booster_meta
@@ -189,11 +189,11 @@ class HomoBoostingClient(Boosting, ABC):
         raise NotImplementedError('predict func is not implemented')
 
     @abc.abstractmethod
-    def fit_a_booster(self, epoch_idx: int, booster_dim: int):
+    def fit_a_learner(self, epoch_idx: int, booster_dim: int):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def load_booster(self, model_meta, model_param, epoch_idx, booster_idx):
+    def load_learner(self, model_meta, model_param, epoch_idx, booster_idx):
         raise NotImplementedError()
 
 
@@ -256,7 +256,7 @@ class HomoBoostingArbiter(Boosting, ABC):
             LOGGER.info('cur epoch idx is {}'.format(epoch_idx))
 
             for class_idx in range(self.booster_dim):
-                model = self.fit_a_booster(epoch_idx, class_idx)
+                model = self.fit_a_learner(epoch_idx, class_idx)
 
             global_loss = self.aggregator.aggregate_loss(suffix=(epoch_idx,))
             self.history_loss.append(global_loss)
@@ -286,11 +286,11 @@ class HomoBoostingArbiter(Boosting, ABC):
         LOGGER.debug('arbiter skip prediction')
 
     @abc.abstractmethod
-    def fit_a_booster(self, epoch_idx: int, booster_dim: int):
+    def fit_a_learner(self, epoch_idx: int, booster_dim: int):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def load_booster(self, model_meta, model_param, epoch_idx, booster_idx):
+    def load_learner(self, model_meta, model_param, epoch_idx, booster_idx):
         raise NotImplementedError()
 
 

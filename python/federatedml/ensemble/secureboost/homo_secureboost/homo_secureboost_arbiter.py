@@ -42,7 +42,7 @@ class HomoSecureBoostingTreeArbiter(HomoBoostingArbiter):
 
         return valid_features
 
-    def fit_a_booster(self, epoch_idx: int, booster_dim: int):
+    def fit_a_learner(self, epoch_idx: int, booster_dim: int):
 
         valid_feature = self.sample_valid_features()
         self.send_valid_features(valid_feature, epoch_idx, booster_dim)
@@ -62,7 +62,7 @@ class HomoSecureBoostingTreeArbiter(HomoBoostingArbiter):
     def get_cur_model(self):
         return None
 
-    def load_booster(self, model_meta, model_param, epoch_idx, booster_idx):
+    def load_learner(self, model_meta, model_param, epoch_idx, booster_idx):
         pass
 
     def set_model_param(self, model_param):

@@ -192,7 +192,7 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
             for class_idx in range(self.booster_dim):
 
                 # fit a booster
-                model = self.fit_a_booster(epoch_idx, class_idx)
+                model = self.fit_a_learner(epoch_idx, class_idx)
 
                 booster_meta, booster_param = model.get_model()
 
@@ -244,11 +244,11 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
         raise NotImplementedError('predict func is not implemented')
 
     @abc.abstractmethod
-    def fit_a_booster(self, epoch_idx: int, booster_dim: int):
+    def fit_a_learner(self, epoch_idx: int, booster_dim: int):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def load_booster(self, model_meta, model_param, epoch_idx, booster_idx):
+    def load_learner(self, model_meta, model_param, epoch_idx, booster_idx):
         raise NotImplementedError()
 
     @abc.abstractmethod
@@ -322,7 +322,7 @@ class HeteroBoostingHost(HeteroBoosting, ABC):
 
             for class_idx in range(self.booster_dim):
                 # fit a booster
-                model = self.fit_a_booster(epoch_idx, class_idx)  # need to implement
+                model = self.fit_a_learner(epoch_idx, class_idx)  # need to implement
                 booster_meta, booster_param = model.get_model()
                 if booster_meta is not None and booster_param is not None:
                     self.booster_meta = booster_meta
@@ -352,7 +352,7 @@ class HeteroBoostingHost(HeteroBoosting, ABC):
 
         for idx in range(predict_start_round, rounds):
             for booster_idx in range(self.booster_dim):
-                model = self.load_booster(self.booster_meta,
+                model = self.load_learner(self.booster_meta,
                                           self.boosting_model_list[idx * self.booster_dim + booster_idx],
                                           idx, booster_idx)
                 model.predict(data_inst)
@@ -365,11 +365,11 @@ class HeteroBoostingHost(HeteroBoosting, ABC):
         self.lazy_predict(data_inst)
 
     @abc.abstractmethod
-    def load_booster(self, model_meta, model_param, epoch_idx, booster_idx):
+    def load_learner(self, model_meta, model_param, epoch_idx, booster_idx):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def fit_a_booster(self, epoch_idx: int, booster_dim: int):
+    def fit_a_learner(self, epoch_idx: int, booster_dim: int):
         raise NotImplementedError()
 
     @abc.abstractmethod

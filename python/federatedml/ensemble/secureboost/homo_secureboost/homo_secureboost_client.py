@@ -181,7 +181,7 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
         self.bin_arr = np.asfortranarray(np.stack(bin_arr, axis=0).astype(np.uint8))
         self.sample_id_arr = np.array(id_list)
 
-    def fit_a_booster(self, epoch_idx: int, booster_dim: int):
+    def fit_a_learner(self, epoch_idx: int, booster_dim: int):
 
         valid_features = self.get_valid_features(epoch_idx, booster_dim)
         LOGGER.debug('valid features are {}'.format(valid_features))
@@ -241,7 +241,7 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
         rounds = len(self.boosting_model_list) // self.booster_dim
         for idx in range(0, rounds):
             for booster_idx in range(self.booster_dim):
-                model = self.load_booster(self.booster_meta,
+                model = self.load_learner(self.booster_meta,
                                           self.boosting_model_list[idx * self.booster_dim + booster_idx],
                                           idx, booster_idx)
                 tree_list.append(model)
@@ -270,7 +270,7 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
 
         return summary
 
-    def load_booster(self, model_meta, model_param, epoch_idx, booster_idx):
+    def load_learner(self, model_meta, model_param, epoch_idx, booster_idx):
         tree_inst = HomoDecisionTreeClient(tree_param=self.tree_param, mode='predict')
         tree_inst.load_model(model_meta=model_meta, model_param=model_param)
         return tree_inst

@@ -146,7 +146,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
                 self.feature_importances_[fid] += tree_feature_importance[fid]
         LOGGER.debug('cur feature importance {}'.format(self.feature_importances_))
 
-    def fit_a_booster(self, epoch_idx: int, booster_dim: int):
+    def fit_a_learner(self, epoch_idx: int, booster_dim: int):
 
         if self.cur_epoch_idx != epoch_idx:
             self.grad_and_hess = self.compute_grad_and_hess(self.y_hat, self.y, self.data_inst)
@@ -171,7 +171,8 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
                                            runtime_idx=self.component_properties.local_partyid,
                                            cipher_compress=self.cipher_compressing,
                                            g_h=g_h, encrypter=self.encrypter, en_calculator=self.encrypted_calculator,
-                                           goss_subsample=self.enable_goss, top_rate=self.top_rate, other_rate=self.other_rate,
+                                           goss_subsample=self.enable_goss,
+                                           top_rate=self.top_rate, other_rate=self.other_rate,
                                            complete_secure=complete_secure, max_sample_weights=self.max_sample_weight,
                                            fast_sbt=fast_sbt, tree_type=tree_type, target_host_id=target_host_id,
                                            guest_depth=self.guest_depth, host_depth=self.host_depth
@@ -182,7 +183,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
 
         return tree
 
-    def load_booster(self, model_meta, model_param, epoch_idx, booster_idx):
+    def load_learner(self, model_meta, model_param, epoch_idx, booster_idx):
 
         flow_id = self.generate_flowid(epoch_idx, booster_idx)
         runtime_idx = self.component_properties.local_partyid
@@ -252,7 +253,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
 
         for idx in range(last_round, rounds):
             for booster_idx in range(self.booster_dim):
-                tree = self.load_booster(self.booster_meta,
+                tree = self.load_learner(self.booster_meta,
                                          self.boosting_model_list[idx * self.booster_dim + booster_idx],
                                          idx, booster_idx)
                 trees.append(tree)
@@ -268,13 +269,13 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
             return self.score_to_predict_result(data_inst, predict_cache)
 
         if self.work_mode == consts.MIX_TREE:
-            predict_rs = mix_sbt_guest_predict(processed_data, self.transfer_variable, trees, self.learning_rate,
-                                               self.init_score, self.booster_dim, predict_cache,
-                                               pred_leaf=(ret_format == 'leaf'))
+            pred_func = mix_sbt_guest_predict
         else:
-            predict_rs = sbt_guest_predict(processed_data, self.transfer_variable, trees, self.learning_rate,
-                                           self.init_score, self.booster_dim, predict_cache,
-                                           pred_leaf=(ret_format == 'leaf'))
+            pred_func = sbt_guest_predict
+
+        predict_rs = pred_func(processed_data, self.transfer_variable, trees, self.learning_rate,
+                               self.init_score, self.booster_dim, predict_cache,
+                               pred_leaf=(ret_format == 'leaf'))
 
         if ret_format == 'leaf':
             return predict_rs  # predict result is leaf position

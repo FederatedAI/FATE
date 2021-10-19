@@ -85,7 +85,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         LOGGER.info('tree plan is {}'.format(self.tree_plan))
         return self.tree_plan[idx]
 
-    def fit_a_booster(self, epoch_idx: int, booster_dim: int):
+    def fit_a_learner(self, epoch_idx: int, booster_dim: int):
 
         flow_id = self.generate_flowid(epoch_idx, booster_dim)
         complete_secure = True if (self.cur_epoch_idx == 0 and self.complete_secure) else False
@@ -111,7 +111,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
 
         return tree
 
-    def load_booster(self, model_meta, model_param, epoch_idx, booster_idx):
+    def load_learner(self, model_meta, model_param, epoch_idx, booster_idx):
 
         flow_id = self.generate_flowid(epoch_idx, booster_idx)
         runtime_idx = self.component_properties.local_partyid
@@ -196,7 +196,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         trees = []
         for idx in range(predict_start_round, rounds):
             for booster_idx in range(self.booster_dim):
-                tree = self.load_booster(self.booster_meta,
+                tree = self.load_learner(self.booster_meta,
                                          self.boosting_model_list[idx * self.booster_dim + booster_idx],
                                          idx, booster_idx)
                 trees.append(tree)
