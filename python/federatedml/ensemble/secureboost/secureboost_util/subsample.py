@@ -9,7 +9,6 @@ def random_sampling():
     """
     pass
 
-
 def goss_sampling(grad_and_hess, top_rate, other_rate):
     """
     sampling method introduced in LightGBM
@@ -19,16 +18,18 @@ def goss_sampling(grad_and_hess, top_rate, other_rate):
     id_list, g_list, h_list = [], [], []
     for id_, g_h in g_h_generator:
         id_list.append(id_)
-        g_list.append(g_h[0].sum())  # if it is multi-classification case, we need to sum g
-        h_list.append(g_h[1].sum())  # sum h
+        g_list.append(g_h[0])
+        h_list.append(g_h[1])
 
     id_type = type(id_list[0])
     id_list = np.array(id_list)
 
     g_arr = np.array(g_list).astype(np.float64)
     h_arr = np.array(h_list).astype(np.float64)
-    abs_g_list_arr = np.abs(g_arr)
-    sorted_idx = np.argsort(-abs_g_list_arr, kind='stable')
+
+    g_sum_arr = np.abs(g_arr).sum(axis=1)  # if it is multi-classification case, we need to sum g
+    abs_g_list_arr = g_sum_arr
+    sorted_idx = np.argsort(-abs_g_list_arr, kind='stable')  # stable sample result
 
     a_part_num = int(sample_num * top_rate)
     b_part_num = int(sample_num * other_rate)
