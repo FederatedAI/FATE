@@ -485,7 +485,11 @@ class IntersectParam(BaseParam):
         if self._warn_to_deprecate_param("encode_params", descr, "raw_params") or \
             self._warn_to_deprecate_param("with_encode", descr, "raw_params' 'use_hash'"):
             # self.encode_params.check()
-            LOGGER.warning(f"Param values from encode_param will override raw_params settings.")
+            if "with_encode" in self.get_user_feeded() and "raw_params.use_hash" in self.get_user_feeded():
+                raise ValueError(f"'raw_params' and 'encode_params should not be set simultaneously.")
+            if "raw_params" in self.get_user_feeded() and "encode_params" in self.get_user_feeded():
+                raise ValueError(f"'raw_params' and 'encode_params should not be set simultaneously.")
+            LOGGER.warning(f"Param values from 'encode_param' will override 'raw_params' settings.")
             self.raw_params.use_hash = self.with_encode
             self.raw_params.hash_method = self.encode_params.encode_method
             self.raw_params.salt = self.encode_params.salt
