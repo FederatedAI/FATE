@@ -196,12 +196,11 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
         flow_id = self.generate_flowid(epoch_idx, booster_dim)
         new_tree = HomoDecisionTreeClient(self.tree_param, self.data_bin, self.bin_split_points,
                                           self.bin_sparse_points, subtree_g_h, valid_feature=valid_features
-                                          , epoch_idx=epoch_idx, role=self.role, flow_id=flow_id, tree_idx=\
-                                          booster_dim, mode='train')
+                                          , epoch_idx=epoch_idx, role=self.role, flow_id=flow_id, tree_idx=booster_dim,
+                                          mode='train')
 
         if self.backend == consts.DISTRIBUTED_BACKEND:
             new_tree.fit()
-            LOGGER.debug('running memory fit')
         elif self.backend == consts.MEMORY_BACKEND:
             # memory backend needed variable
             LOGGER.debug('running memory fit')
