@@ -40,6 +40,9 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
         self.backend = consts.DISTRIBUTED_BACKEND
         self.bin_arr, self.sample_id_arr = None, None
 
+        # mo tree
+        self.multi_mode = consts.SINGLE_OUTPUT
+
     def _init_model(self, boosting_param: HomoSecureBoostParam):
 
         super(HomoSecureBoostingTreeClient, self)._init_model(boosting_param)
@@ -47,6 +50,7 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
         self.zero_as_missing = boosting_param.zero_as_missing
         self.tree_param = boosting_param.tree_param
         self.backend = boosting_param.backend
+        self.multi_mode = boosting_param.multi_mode
 
         if self.use_missing:
             self.tree_param.use_missing = self.use_missing

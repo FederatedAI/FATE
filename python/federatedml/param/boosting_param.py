@@ -488,7 +488,8 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
                  binning_error=consts.DEFAULT_RELATIVE_ERROR,
                  sparse_optimization=False, run_goss=False, top_rate=0.2, other_rate=0.1,
                  cipher_compress_error=None, cipher_compress=True, new_ver=True, work_mode=consts.STD_TREE,
-                 tree_num_per_party=1, guest_depth=2, host_depth=3, callback_param=CallbackParam()):
+                 tree_num_per_party=1, guest_depth=2, host_depth=3, callback_param=CallbackParam(),
+                 multi_mode=consts.SINGLE_OUTPUT):
 
         super(HeteroSecureBoostParam, self).__init__(task_type, objective_param, learning_rate, num_trees,
                                                      subsample_feature_rate, n_iter_no_change, tol, encrypt_param,
@@ -515,6 +516,7 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         self.guest_depth = guest_depth
         self.host_depth = host_depth
         self.callback_param = copy.deepcopy(callback_param)
+        self.multi_mode = multi_mode
 
     def check(self):
 
@@ -577,74 +579,8 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
             raise ValueError('only work_modes: {} are supported, input work mode is {}'.
                              format(work_modes, self.work_mode))
 
-        return True
-
-
-class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
-
-    def __init__(self, tree_param: DecisionTreeParam = DecisionTreeParam(), task_type=consts.CLASSIFICATION,
-                 objective_param=ObjectiveParam(),
-                 learning_rate=0.3, num_trees=5, subsample_feature_rate=1, n_iter_no_change=True,
-                 tol=0.0001, encrypt_param=EncryptParam(),
-                 bin_num=32,
-                 encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
-                 predict_param=PredictParam(), cv_param=CrossValidationParam(),
-                 validation_freqs=None, early_stopping_rounds=None, use_missing=False, zero_as_missing=False,
-                 complete_secure=False, tree_num_per_party=1, guest_depth=1, host_depth=1, work_mode='mix', metrics=None,
-                 sparse_optimization=False, random_seed=100, binning_error=consts.DEFAULT_RELATIVE_ERROR,
-                 cipher_compress_error=None, new_ver=True, run_goss=False, top_rate=0.2, other_rate=0.1,
-                 cipher_compress=True, callback_param=CallbackParam()):
-
-        """
-        work_mode：
-            mix:  alternate using guest/host features to build trees. For example, the first 'tree_num_per_party' trees use guest features,
-                  the second k trees use host features, and so on
-            layered: only support 2 party, when running layered mode, first 'host_depth' layer will use host features,
-                     and then next 'guest_depth' will only use guest features
-        tree_num_per_party: every party will alternate build 'tree_num_per_party' trees until reach max tree num, this param is valid when work_mode is
-            mix
-        guest_depth: guest will build last guest_depth of a decision tree using guest features, is valid when work mode
-            is layered
-        host depth: host will build first host_depth of a decision tree using host features, is valid when work mode is
-            layered
-
-        other params are the same as HeteroSecureBoost
-        """
-
-        super(HeteroFastSecureBoostParam, self).__init__(tree_param, task_type, objective_param, learning_rate,
-                                                         num_trees, subsample_feature_rate, n_iter_no_change, tol,
-                                                         encrypt_param, bin_num, encrypted_mode_calculator_param,
-                                                         predict_param, cv_param, validation_freqs, early_stopping_rounds,
-                                                         use_missing, zero_as_missing, complete_secure, metrics=metrics,
-                                                         random_seed=random_seed,
-                                                         sparse_optimization=sparse_optimization,
-                                                         binning_error=binning_error,
-                                                         cipher_compress_error=cipher_compress_error,
-                                                         new_ver=new_ver,
-                                                         cipher_compress=cipher_compress,
-                                                         run_goss=run_goss, top_rate=top_rate, other_rate=other_rate,
-                                                         )
-
-        self.tree_num_per_party = tree_num_per_party
-        self.guest_depth = guest_depth
-        self.host_depth = host_depth
-        self.work_mode = work_mode
-        self.callback_param = copy.deepcopy(callback_param)
-
-    def check(self):
-
-        super(HeteroFastSecureBoostParam, self).check()
-        if type(self.guest_depth).__name__ not in ["int", "long"] or self.guest_depth <= 0:
-            raise ValueError("guest_depth should be larger than 0")
-        if type(self.host_depth).__name__ not in ["int", "long"] or self.host_depth <= 0:
-            raise ValueError("host_depth should be larger than 0")
-        if type(self.tree_num_per_party).__name__ not in ["int", "long"] or self.tree_num_per_party <= 0:
-            raise ValueError("tree_num_per_party should be larger than 0")
-
-        work_modes = [consts.MIX_TREE, consts.LAYERED_TREE]
-        if self.work_mode not in work_modes:
-            raise ValueError('only work_modes: {} are supported, input work mode is {}'.
-                             format(work_modes, self.work_mode))
+        if self.multi_mode not in [consts.SINGLE_OUTPUT, consts.MULTI_OUTPUT]:
+            raise ValueError('unsupported multi-classification mode')
 
         return True
 
@@ -663,7 +599,7 @@ class HomoSecureBoostParam(BoostingParam):
                  tol=0.0001, bin_num=32, predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  validation_freqs=None, use_missing=False, zero_as_missing=False, random_seed=100,
                  binning_error=consts.DEFAULT_RELATIVE_ERROR, backend=consts.DISTRIBUTED_BACKEND,
-                 callback_param=CallbackParam()):
+                 callback_param=CallbackParam(), multi_mode=consts.SINGLE_OUTPUT):
         super(HomoSecureBoostParam, self).__init__(task_type=task_type,
                                                    objective_param=objective_param,
                                                    learning_rate=learning_rate,
@@ -683,6 +619,7 @@ class HomoSecureBoostParam(BoostingParam):
         self.tree_param = copy.deepcopy(tree_param)
         self.backend = backend
         self.callback_param = copy.deepcopy(callback_param)
+        self.multi_mode = multi_mode
 
     def check(self):
 
@@ -694,6 +631,8 @@ class HomoSecureBoostParam(BoostingParam):
             raise ValueError('zero as missing should be bool type')
         if self.backend not in [consts.MEMORY_BACKEND, consts.DISTRIBUTED_BACKEND]:
             raise ValueError('unsupported backend')
+        if self.multi_mode not in [consts.SINGLE_OUTPUT, consts.MULTI_OUTPUT]:
+            raise ValueError('unsupported multi-classification mode')
 
         for p in ["validation_freqs", "metrics"]:
             # if self._warn_to_deprecate_param(p, "", ""):

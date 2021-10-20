@@ -198,6 +198,8 @@ COMPLETE_SECURE_TREE = 'complete_secure'
 STD_TREE = 'std'
 MIX_TREE = 'mix'
 LAYERED_TREE = 'layered'
+SINGLE_OUTPUT = 'single_output'
+MULTI_OUTPUT = 'multi_output'
 
 TRAIN_EVALUATE = 'train_evaluate'
 VALIDATE_EVALUATE = 'validate_evaluate'
