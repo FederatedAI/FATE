@@ -201,7 +201,6 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
 
         if self.backend == consts.DISTRIBUTED_BACKEND:
             new_tree.fit()
-            LOGGER.debug('running memory fit')
         elif self.backend == consts.MEMORY_BACKEND:
             # memory backend needed variable
             LOGGER.debug('running memory fit')
