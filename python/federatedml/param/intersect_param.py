@@ -482,7 +482,7 @@ class IntersectParam(BaseParam):
 
         self.check_boolean(self.run_cache, f"{descr} run_cache")
 
-        if self._warn_to_deprecate_param("encode_param", descr, "raw_params") or \
+        if self._warn_to_deprecate_param("encode_params", descr, "raw_params") or \
             self._warn_to_deprecate_param("with_encode", descr, "raw_params' 'use_hash'"):
             # self.encode_params.check()
             LOGGER.warning(f"Param values from encode_param will override raw_params settings.")
