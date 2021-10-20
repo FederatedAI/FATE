@@ -74,12 +74,16 @@ class HeteroLRBase(BaseLinearModel, ABC):
         self.cal_loss = self.model_param.compute_loss
         self.converge_func_name = params.early_stop
         self.review_every_iter = params.reveal_every_iter
-        self.random_field = params.random_field
+
         # self.fixpoint_filed = self.random_field ** 2
-        self.fixpoint_filed = 293973345475167247070445277780365744413 ** 2
+        self.fixpoint_filed = 293973345475167247070445277780365744413
+        # self.random_field = params.random_field
+
+        self.random_field = self.fixpoint_filed
+
         self.batch_generator = batch_generator.Guest() if self.role == consts.GUEST else batch_generator.Host()
         self.batch_generator.register_batch_generator(BatchGeneratorTransferVariable(), has_arbiter=False)
-        self.fixpoint_encoder = FixedPointEndec(n=self.fixpoint_filed)
+        self.fixedpoint_encoder = FixedPointEndec(n=self.fixpoint_filed)
         self.converge_transfer_variable = ConvergeCheckerTransferVariable()
         self.secure_matrix_obj = SecureMatrix(party=self.local_party,
                                               q_field=self.fixpoint_filed,
@@ -122,33 +126,33 @@ class HeteroLRBase(BaseLinearModel, ABC):
     def is_respectively_reveal(self):
         return self.model_param.reveal_strategy == "respectively"
 
-    def share_table(self, fix_point_encoder, value=None, tensor_name=''):
+    def share_table(self, value=None, tensor_name=''):
         if value is None:
             value = self.other_party
 
         return fixedpoint_table.FixedPointTensor.from_source(tensor_name, value,
-                                                             encoder=fix_point_encoder,
+                                                             encoder=self.fixedpoint_encoder,
                                                              q_field=self.random_field)
 
-    def share_model(self, w, fix_point_encoder, suffix):
+    def share_model(self, w, suffix):
         source = [w, self.other_party]
         if self.local_party.role == consts.GUEST:
             wb, wa = (
                 fixedpoint_numpy.FixedPointTensor.from_source(f"wb_{suffix}", source[0],
-                                                              encoder=fix_point_encoder,
+                                                              encoder=self.fixedpoint_encoder,
                                                               q_field=self.random_field),
                 fixedpoint_numpy.FixedPointTensor.from_source(f"wa_{suffix}", source[1],
-                                                              encoder=fix_point_encoder,
+                                                              encoder=self.fixedpoint_encoder,
                                                               q_field=self.random_field),
             )
             return wb, wa
         else:
             wa, wb = (
                 fixedpoint_numpy.FixedPointTensor.from_source(f"wa_{suffix}", source[0],
-                                                              encoder=fix_point_encoder,
+                                                              encoder=self.fixedpoint_encoder,
                                                               q_field=self.random_field),
                 fixedpoint_numpy.FixedPointTensor.from_source(f"wb_{suffix}", source[1],
-                                                              encoder=fix_point_encoder,
+                                                              encoder=self.fixedpoint_encoder,
                                                               q_field=self.random_field),
             )
             return wa, wb
@@ -218,31 +222,33 @@ class HeteroLRBase(BaseLinearModel, ABC):
                 q_field=self.random_field,
                 use_mix_rand=self.model_param.use_mix_rand,
         ) as spdz:
-            # self.fixpoint_encoder = self.create_fixpoint_encoder(remote_pubkey.n)
             if self.role == consts.GUEST:
                 self.labels = data_instances.mapValues(lambda x: np.array([x.label], dtype=int))
-                self.label_tensor = fixedpoint_table.FixedPointTensor(self.labels,
-                                                                      q_field=self.fixpoint_encoder.n,
-                                                                      endec=self.fixpoint_encoder)
+
+                # todo : dylan
+                label_encoder = self.fixedpoint_encoder.encode(self.labels)
+
+                self.label_tensor = fixedpoint_table.FixedPointTensor(label_encoder,
+                                                                      q_field=self.fixedpoint_encoder.n,
+                                                                      endec=self.fixedpoint_encoder)
             if self.cal_loss:
-                value = self.label_tensor.value if self.role == consts.GUEST else None
-                self.shared_y = self.share_table(self.fixpoint_encoder, value=value, tensor_name="label")
+                value = self.labels if self.role == consts.GUEST else None
+                self.shared_y = self.share_table(value=value, tensor_name="label")
                 LOGGER.debug(f"shared_y: {self.shared_y}, type: {type(self.shared_y)}")
 
-            w_self, w_remote = self.share_model(w, self.fixpoint_encoder, suffix="init")
+            w_self, w_remote = self.share_model(w, suffix="init")
             LOGGER.debug(f"first_w_self shape: {w_self.shape}, w_remote_shape: {w_remote.shape}")
 
             batch_data_generator = self.batch_generator.generate_batch_data()
             encoded_batch_data = []
             for batch_data in batch_data_generator:
                 batch_features = batch_data.mapValues(lambda x: x.features)
-                # self.encoded_batch_num.append(self.fixpoint_encoder.encode(1 / batch_data.count()))
                 self.encoded_batch_num.append(1 / batch_data.count())
 
                 encoded_batch_data.append(
-                    fixedpoint_table.FixedPointTensor(self.fixpoint_encoder.encode(batch_features),
-                                                      q_field=self.fixpoint_encoder.n,
-                                                      endec=self.fixpoint_encoder))
+                    fixedpoint_table.FixedPointTensor(self.fixedpoint_encoder.encode(batch_features),
+                                                      q_field=self.fixedpoint_encoder.n,
+                                                      endec=self.fixedpoint_encoder))
 
             while self.n_iter_ < self.max_iter:
                 self.callback_list.on_epoch_begin(self.n_iter_)
@@ -255,14 +261,9 @@ class HeteroLRBase(BaseLinearModel, ABC):
                     y = self.cal_prediction(w_self, w_remote, features=batch_data, spdz=spdz, suffix=current_suffix)
 
                     if self.role == consts.GUEST:
-                        error = y.value.join(self.labels, operator.sub)
-                        error = error.mapValues(lambda x: self.fixpoint_encoder.encode(x))
-                        LOGGER.debug(f"tmc, error: {error.first()}")
+                        error = y - self.labels
 
-                        error = fixedpoint_table.FixedPointTensor(error,
-                                                                  q_field=self.fixpoint_encoder.n,
-                                                                  endec=self.fixpoint_encoder)
-                        remote_g, self_g = self.compute_gradient(wa=w_remote, wb=w_self, error=error,
+                        self_g, remote_g = self.compute_gradient(wa=w_remote, wb=w_self, error=error,
                                                                  features=batch_data,
                                                                  suffix=current_suffix)
                     else:
@@ -278,7 +279,6 @@ class HeteroLRBase(BaseLinearModel, ABC):
                                      f"self.model_param.reveal_strategy: {self.model_param.reveal_strategy}")
 
                         if new_g is not None:
-                            new_g = np.array([x.decode() for x in new_g])
                             LOGGER.debug(f"before review, {self.model_weights.unboxed}, {new_g}")
                             self.model_weights = self.optimizer.update_model(self.model_weights, new_g,
                                                                              has_applied=False)
@@ -291,7 +291,7 @@ class HeteroLRBase(BaseLinearModel, ABC):
                             self.host_model_weights = LinearModelWeights(
                                 l=host_g,
                                 fit_intercept=False)
-                        w_self, w_remote = self.share_model(self.model_weights.unboxed, self.fixpoint_encoder,
+                        w_self, w_remote = self.share_model(self.model_weights.unboxed,
                                                             suffix=(self.n_iter_, batch_idx))
                     else:
                         w_self -= self_g * self.optimizer.decay_learning_rate()
@@ -355,29 +355,23 @@ class HeteroLRBase(BaseLinearModel, ABC):
         if self.model_param.reveal_strategy == "respectively":
 
             if self.role == consts.GUEST:
-                new_w = w_self.reconstruct(tensor_name=f"wb_{suffix}",
+                new_w = w_self.get(tensor_name=f"wb_{suffix}",
                                            broadcast=False)
                 w_remote.broadcast_reconstruct_share(tensor_name=f"wa_{suffix}")
 
-                # new_w = w_self.reconstruct_unilateral(tensor_name=f"wb_{suffix}")
-                # w_remote.broadcast_reconstruct_share(tensor_name=f"wa_{suffix}")
             else:
                 w_remote.broadcast_reconstruct_share(tensor_name=f"wb_{suffix}")
-                new_w = w_self.reconstruct(tensor_name=f"wa_{suffix}",
+                new_w = w_self.get(tensor_name=f"wa_{suffix}",
                                            broadcast=False)
-            #     w_remote.broadcast_reconstruct_share(tensor_name=f"wb_{suffix}")
-            #     new_w = w_self.reconstruct_unilateral(tensor_name=f"wa_{suffix}")
 
         elif self.model_param.reveal_strategy == "all_reveal_in_guest":
 
             if self.role == consts.GUEST:
-                new_w = w_self.reconstruct(tensor_name=f"wb_{suffix}",
+                new_w = w_self.get(tensor_name=f"wb_{suffix}",
                                            broadcast=False)
-                host_weights = w_remote.reconstruct(tensor_name=f"wa_{suffix}",
+                host_weights = w_remote.get(tensor_name=f"wa_{suffix}",
                                                     broadcast=False)
-                # new_w = w_self.reconstruct_unilateral(tensor_name=f"wb_{suffix}")
-                # host_weights = w_remote.reconstruct_unilateral(tensor_name=f"wa_{suffix}")
-                # self.host_model_weights = [LinearModelWeights(l=hosted_weights, fit_intercept=False)]
+
             else:
                 if w_remote.shape[0] > 2:
                     raise ValueError("Too many features in Guest. Review strategy: 'all_reveal_in_guest' "
@@ -385,7 +379,7 @@ class HeteroLRBase(BaseLinearModel, ABC):
                 w_remote.broadcast_reconstruct_share(tensor_name=f"wb_{suffix}")
 
                 w_self.broadcast_reconstruct_share(tensor_name=f"wa_{suffix}")
-                # new_w = np.zeros(w_self.shape)
+
                 new_w = None
         else:
             raise NotImplementedError(f"review strategy: {self.model_param.reveal_strategy} has not been implemented.")
