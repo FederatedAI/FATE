@@ -81,7 +81,7 @@ class Table(CTableABC):
         if isinstance(address, LocalFSAddress):
             self._rdd.map(lambda x: hdfs_utils.serialize(x[0], x[1])).repartition(
                 partitions
-            ).saveAsTextFile(f"{address.name_node}/{address.path}")
+            ).saveAsTextFile(address.path)
             schema.update(self.schema)
             return
 

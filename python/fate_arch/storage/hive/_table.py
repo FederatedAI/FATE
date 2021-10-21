@@ -97,7 +97,7 @@ class StorageTable(StorageTableBase):
         with open(temp_path, 'w') as f:
             for k, v in kv_list:
                 f.write(hive_utils.serialize_line(k, v))
-        sql = "load data local inpath '{}' overwrite into table {}".format(temp_path, self._address.name)
+        sql = "load data local inpath '{}' into table {}".format(temp_path, self._address.name)
         self._cur.execute(sql)
         self._con.commit()
         os.remove(temp_path)
