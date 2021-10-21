@@ -26,7 +26,7 @@
             "conf": "./test_union_validate_job_conf.json",
             "dsl": "./test_union_validate_job_dsl.json",
             "data_deps": {
-                "union-dataio": {
+                "union-data-transform": {
                     "guest_0": {
                         "reader_0": "union_0",
                         "reader_1": "union_1"
