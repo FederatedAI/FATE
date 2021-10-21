@@ -45,7 +45,6 @@ def main(config="../../config.yaml", param="./hetero_nn_breast_config.yaml", nam
     parties = config.parties
     guest = parties.guest[0]
     host = parties.host[0]
-    backend = config.backend
     work_mode = config.work_mode
 
     guest_train_data = {"name": param["guest_table_name"], "namespace": f"experiment{namespace}"}
@@ -97,7 +96,7 @@ def main(config="../../config.yaml", param="./hetero_nn_breast_config.yaml", nam
 
     pipeline.compile()
 
-    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
+    job_parameters = JobParameters(work_mode=work_mode)
     pipeline.fit(job_parameters)
 
     nn_0_data = pipeline.get_component("hetero_nn_0").get_output_data().get("data")

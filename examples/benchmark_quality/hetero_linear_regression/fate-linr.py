@@ -39,7 +39,6 @@ def main(config="../../config.yaml", param="./linr_config.yaml", namespace=""):
     guest = parties.guest[0]
     host = parties.host[0]
     arbiter = parties.arbiter[0]
-    backend = config.backend
     work_mode = config.work_mode
 
     if isinstance(param, str):
@@ -108,7 +107,7 @@ def main(config="../../config.yaml", param="./linr_config.yaml", namespace=""):
     pipeline.compile()
 
     # fit model
-    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
+    job_parameters = JobParameters(work_mode=work_mode)
     pipeline.fit(job_parameters)
 
     metric_summary = parse_summary_result(pipeline.get_component("evaluation_0").get_summary())

@@ -44,7 +44,6 @@ def main(config="../../config.yaml", param="./xgb_config_binary.yaml", namespace
     guest = parties.guest[0]
     host = parties.host[0]
 
-    backend = config.backend
     work_mode = config.work_mode
 
     # data sets
@@ -107,7 +106,7 @@ def main(config="../../config.yaml", param="./xgb_config_binary.yaml", namespace
     pipeline.add_component(evaluation_0, data=Data(data=hetero_fast_sbt_0.output.data))
 
     pipeline.compile()
-    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
+    job_parameters = JobParameters(work_mode=work_mode)
     pipeline.fit(job_parameters)
 
     sbt_0_data = pipeline.get_component("hetero_fast_sbt_0").get_output_data().get("data")
