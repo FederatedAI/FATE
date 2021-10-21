@@ -18,8 +18,7 @@
     "job_parameters": {
         "common": {
             "job_type": "train",
-            "work_mode": 0,
-            "backend": 0
+            "work_mode": 0
         }
     },
     "component_parameters": {
@@ -88,7 +87,10 @@
                     },
                     "sample_weight_0": {
                         "need_run": true,
-                        "class_weight": {"0": 1, "1": 2}
+                        "class_weight": {
+                            "0": 1,
+                            "1": 2
+                        }
                     }
                 }
             },
