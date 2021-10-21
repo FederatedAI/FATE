@@ -19,6 +19,7 @@ import random
 
 import numpy as np
 from fate_arch.session import is_table
+from federatedml.secureprotol.fixedpoint import FixedPointNumber
 
 
 def rand_tensor(q_field, tensor):
@@ -86,3 +87,32 @@ def urand_tensor(q_field, tensor, use_mix=False):
             view[i] = random.SystemRandom().randint(1, q_field)
         return arr
     raise NotImplementedError(f"type={type(tensor)}")
+
+
+def urand_tensor2(q_field, tensor, use_mix=False):
+    if is_table(tensor):
+        if use_mix:
+            return tensor.mapPartitions(functools.partial(_mix_rand_func, q_field=q_field),
+                                        use_previous_behavior=False,
+                                        preserves_partitioning=True)
+        return tensor.mapValues(
+            lambda x: np.array([FixedPointNumber(encoding=random.SystemRandom().randint(1, q_field),
+                                                 exponent=FixedPointNumber.calculate_exponent_from_precision(precision=2**16)
+                                                 )
+                                for _ in x],
+                               dtype=object))
+    if isinstance(tensor, np.ndarray):
+        arr = np.zeros(shape=tensor.shape, dtype=object)
+        view = arr.view().reshape(-1)
+        for i in range(arr.size):
+            view[i] = FixedPointNumber(encoding=random.SystemRandom().randint(1, q_field),
+                                       exponent=FixedPointNumber.calculate_exponent_from_precision(precision=2**16)
+                                       )
+        return arr
+    raise NotImplementedError(f"type={type(tensor)}")
+
+
+
+
+
+

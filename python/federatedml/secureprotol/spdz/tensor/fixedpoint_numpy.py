@@ -18,7 +18,7 @@ import numpy as np
 from fate_arch.common import Party
 from federatedml.secureprotol.spdz.beaver_triples import beaver_triplets
 from federatedml.secureprotol.spdz.tensor.base import TensorBase
-from federatedml.secureprotol.spdz.utils.random_utils import urand_tensor
+from federatedml.secureprotol.spdz.utils.random_utils import urand_tensor, urand_tensor2
 from federatedml.secureprotol.spdz.tensor.fixedpoint_endec import FixedPointEndec
 from federatedml.util import LOGGER
 
@@ -84,7 +84,7 @@ class FixedPointTensor(TensorBase):
             encoder = FixedPointEndec(q_field, base, frac)
         if isinstance(source, np.ndarray):
             source = encoder.encode(source)
-            _pre = urand_tensor(q_field, source)
+            _pre = urand_tensor2(q_field, source)
             spdz.communicator.remote_share(share=_pre, tensor_name=tensor_name, party=spdz.other_parties[0])
             for _party in spdz.other_parties[1:]:
                 r = urand_tensor(q_field, source)
@@ -95,7 +95,7 @@ class FixedPointTensor(TensorBase):
             share = spdz.communicator.get_share(tensor_name=tensor_name, party=source)[0]
         else:
             raise ValueError(f"type={type(source)}")
-        return FixedPointTensor(share, spdz.q_field, encoder, tensor_name)
+        return FixedPointTensor(share, q_field, encoder, tensor_name)
 
     def einsum(self, other: 'FixedPointTensor', einsum_expr, target_name=None):
         spdz = self.get_spdz()
@@ -162,7 +162,7 @@ class FixedPointTensor(TensorBase):
         return FixedPointTensor(value=value, q_field=self.q_field, endec=self.endec, tensor_name=tensor_name)
 
     def __str__(self):
-        return f"{self.tensor_name}: {self.value}"
+        return f"tensor_name={self.tensor_name}, value={self.value}"
 
     def __repr__(self):
         return self.__str__()
@@ -233,7 +233,7 @@ class PaillierFixedPointTensor(TensorBase):
         return self._boxed(ret, target_name)
 
     def __str__(self):
-        return f"{self.tensor_name}: {self.value}"
+        return f"tensor_name={self.tensor_name}, value={self.value}"
 
     def __repr__(self):
         return self.__str__()
@@ -247,7 +247,7 @@ class PaillierFixedPointTensor(TensorBase):
         return self._boxed(z_value)
 
     def __add__(self, other):
-        if isinstance(other, PaillierFixedPointTensor):
+        if isinstance(other, (PaillierFixedPointTensor, FixedPointTensor)):
             return self._raw_add(other.value)
         else:
             return self._raw_add(other)
@@ -256,20 +256,25 @@ class PaillierFixedPointTensor(TensorBase):
         return self.__add__(other)
 
     def __sub__(self, other):
-        if isinstance(other, PaillierFixedPointTensor):
+        if isinstance(other, (PaillierFixedPointTensor, FixedPointTensor)):
             return self._raw_sub(other.value)
         else:
             return self._raw_sub(other)
 
     def __rsub__(self, other):
-        if isinstance(other, PaillierFixedPointTensor):
+        if isinstance(other, (PaillierFixedPointTensor, FixedPointTensor)):
             z_value = other.value - self.value
         else:
             z_value = other - self.value
         return self._boxed(z_value)
 
     def __mul__(self, other):
-        return self._boxed(self.value * other)
+        if isinstance(other, PaillierFixedPointTensor):
+            raise NotImplementedError("__mul__ not support PaillierFixedPointTensor")
+        elif isinstance(other, FixedPointTensor):
+            return self._boxed(self.value * other.value)
+        else:
+            return self._boxed(self.value * other)
 
     def __rmul__(self, other):
         self.__mul__(other)
@@ -289,15 +294,18 @@ class PaillierFixedPointTensor(TensorBase):
             encoder = FixedPointEndec(q_field, base, frac)
 
         if isinstance(source, np.ndarray):
-            _pre = urand_tensor(spdz.q_field, source)
+            _pre = urand_tensor2(q_field, source)
+            # todo: dylan
             share = _pre
-            for _party in spdz.other_parties[:-1]:
-                r = urand_tensor(spdz.q_field, source)
-                spdz.communicator.remote_share(share=r - _pre, tensor_name=tensor_name, party=_party)
-                _pre = r
+
+            # for _party in spdz.other_parties[:-1]:
+            #     r = urand_tensor(q_field, source)
+            #     spdz.communicator.remote_share(share=r - _pre, tensor_name=tensor_name, party=_party)
+            #     _pre = r
             spdz.communicator.remote_share(share=source - encoder.decode(_pre),
                                            tensor_name=tensor_name,
                                            party=spdz.other_parties[-1])
+
             return FixedPointTensor(value=share,
                                     q_field=q_field,
                                     endec=encoder,

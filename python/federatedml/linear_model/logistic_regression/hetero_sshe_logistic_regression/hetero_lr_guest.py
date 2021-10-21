@@ -36,6 +36,8 @@ class HeteroLRGuest(HeteroLRBase):
         self.encrypted_error = None
         self.encrypted_wx = None
         self.z_square = None
+        self.wx_self = None
+        self.wx_remote = None
 
     def _init_model(self, params):
         super()._init_model(params)
@@ -88,43 +90,38 @@ class HeteroLRGuest(HeteroLRBase):
         else:
             LOGGER.debug(f"Calculate z directly.")
             z = features.dot_local(self.model_weights.coef_)
-            if self.model_weights.fit_intercept:
-                z.value = z.value.mapValues(lambda x: x + self.model_weights.intercept_)
 
-        remote_z = self.share_encrypted_value(suffix=suffix, is_remote=False, z=None)[0]
+            if self.model_weights.fit_intercept:
+                z = z + self.model_weights.intercept_
+
+        remote_z = self.secure_matrix_obj.share_encrypted_matrix(suffix=suffix,
+                                                                 is_remote=False,
+                                                                 cipher=None,
+                                                                 z=None)[0]
+
+        self.wx_self = z
+        self.wx_remote = remote_z
+
         sigmoid_z = self._compute_sigmoid(z, remote_z)
 
-        # sigmoid_z = complete_z * 0.2 + 0.5
         self.encrypted_wx = sigmoid_z
-        encrypted_error = sigmoid_z.value.join(self.labels, operator.sub)
-        self.encrypted_error = fixedpoint_table.PaillierFixedPointTensor(
-            encrypted_error
-        )
-        # shared_sigmoid_z = self.share_matrix(sigmoid_z, suffix=("sigmoid_z",) + suffix)
+
+        self.encrypted_error = sigmoid_z - self.labels
+
         tensor_name = ".".join(("sigmoid_z",) + suffix)
         shared_sigmoid_z = SecureMatrix.from_source(tensor_name,
                                                     sigmoid_z,
                                                     self.cipher,
-                                                    self.fixpoint_encoder.n,
-                                                    self.fixpoint_encoder)
+                                                    self.fixedpoint_encoder.n,
+                                                    self.fixedpoint_encoder)
         return shared_sigmoid_z
 
     def compute_gradient(self, wa, wb, error, features, suffix):
         encoded_1_n = self.encoded_batch_num[int(suffix[1])]
+
         error_1_n = error * encoded_1_n
 
-        encrypt_g = self.encrypted_error.value.join(features.value, operator.mul).reduce(operator.add) * encoded_1_n
-        if self.fit_intercept:
-            bias = self.encrypted_error.value.reduce(operator.add) * encoded_1_n
-            encrypt_g = np.array(list(encrypt_g) + list(bias))
-        encrypt_g = fixedpoint_numpy.PaillierFixedPointTensor(encrypt_g)
-        # gb2 = self.share_matrix(encrypt_g, suffix=("encrypt_g",) + suffix)
-        tensor_name = ".".join(("encrypt_g",) + suffix)
-        gb2 = SecureMatrix.from_source(tensor_name,
-                                       encrypt_g,
-                                       self.cipher,
-                                       self.fixpoint_encoder.n,
-                                       self.fixpoint_encoder)
+        LOGGER.debug(f"error_1_n: {error_1_n}")
 
         ga2_suffix = ("ga2",) + suffix
         ga2_2 = self.secure_matrix_obj.secure_matrix_mul(error_1_n,
@@ -133,51 +130,108 @@ class HeteroLRGuest(HeteroLRBase):
                                                          suffix=ga2_suffix,
                                                          is_fixedpoint_table=False)
 
-        # self.secure_matrix_mul_active(error_1_n, cipher=self.cipher,
-        #                               suffix=ga2_suffix)
-        # ga2_2 = self.received_share_matrix(self.cipher, q_field=self.fixpoint_encoder.n,
-        #                                    encoder=self.fixpoint_encoder, suffix=ga2_suffix)
+        LOGGER.debug(f"ga2_2: {ga2_2}")
 
-        # wb = wb - gb2 * self.model_param.learning_rate
-        ga2_2 = ga2_2.reshape(ga2_2.shape[0])
-        LOGGER.debug(f"wa shape: {wa.shape}, ga_shape: {ga2_2.shape}, {ga2_2.value[0].__dict__}")
-        # wa = wa - ga2_2 * self.model_param.learning_rate
-        # wa = wa.reshape(wa.shape[-1])
+        encrypt_g = self.encrypted_error.dot(features) * encoded_1_n
+        if self.fit_intercept:
+            bias = self.encrypted_error.reduce(operator.add) * encoded_1_n
+            encrypt_g = np.array(list(encrypt_g.value) + list(bias.value))
+            encrypt_g = fixedpoint_numpy.PaillierFixedPointTensor(encrypt_g)
 
-        return ga2_2, gb2
+        LOGGER.debug(f"encrypt_g: {encrypt_g}")
+
+        tensor_name = ".".join(("encrypt_g",) + suffix)
+        gb2 = SecureMatrix.from_source(tensor_name,
+                                       encrypt_g,
+                                       self.cipher,
+                                       self.fixedpoint_encoder.n,
+                                       self.fixedpoint_encoder)
+
+        LOGGER.debug(f"gb2: {gb2}")
+
+        return gb2, ga2_2
 
     def compute_loss(self, spdz, suffix):
         """
-        Use Taylor series expand log loss:
-        Loss = - y * log(h(x)) - (1-y) * log(1 - h(x)) where h(x) = 1/(1+exp(-wx))
-        Then loss' = - (1/N)*∑(log(1/2) - 1/2*wx + wxy + 1/8(wx)^2)
+          Use Taylor series expand log loss:
+          Loss = - y * log(h(x)) - (1-y) * log(1 - h(x)) where h(x) = 1/(1+exp(-wx))
+          Then loss' = - (1/N)*∑(log(1/2) - 1/2*wx + ywx + 1/8(wx)^2)
         """
+        wx = (-0.5 * self.encrypted_wx).reduce(operator.add)
+        ywx = (self.encrypted_wx * self.labels).reduce(operator.add)
+        wx_square = (2 * self.wx_remote * self.wx_self).reduce(operator.add) + \
+                    (self.wx_self * self.wx_self).reduce(operator.add)
 
-        # shared_wx = self.share_matrix(self.encrypted_wx, suffix=suffix)
+        LOGGER.debug(f"wx_square: {wx_square}")
 
-        tensor_name = ".".join(("shared_wx",) + suffix)
-        shared_wx = SecureMatrix.from_source(tensor_name,
-                                             self.encrypted_wx,
-                                             self.cipher,
-                                             self.fixpoint_encoder.n,
-                                             self.fixpoint_encoder)
+        wx_remote_square = self.secure_matrix_obj.share_encrypted_matrix(suffix=suffix,
+                                                                         is_remote=False,
+                                                                         cipher=None,
+                                                                         wx_self_square=None)[0]
 
-        wxy = spdz.dot(shared_wx, self.shared_y, ("wxy",) + suffix).get()
-        LOGGER.debug(f"wxy_value: {wxy}, shared_wx: {shared_wx.value.first()}")
-        # wxy_sum = wxy_tensor.value[0]
-        # self.transfer_variable.wxy_sum.remote(wxy_tensor, suffix=suffix)
-        wx_square = shared_wx * shared_wx
-        # LOGGER.debug(f"shared_wx: {shared_wx}, wx_square: {wx_square}, wxy_sum: {wxy_sum}")
-        self.share_encrypted_value(suffix=suffix, is_remote=True, wx=shared_wx,
-                                   wx_square=wx_square)
+        LOGGER.debug(f"wx_remote_square.get: {wx_remote_square}")
 
-        loss = self.transfer_variable.loss.get(idx=0, suffix=suffix)
-        loss = self.cipher.decrypt(loss)
+        wx_square = (wx_remote_square + wx_square) * 0.125
+
+        LOGGER.debug(f"wx_square: {wx_square}")
+
+        loss = np.array([wx.value, ywx.value, wx_square.value])
+        loss = loss.T[0]
+
+        encoded_1_n = self.encoded_batch_num[int(suffix[2])]
+        loss = loss * (encoded_1_n * -1) - np.log(0.5)
+        loss = fixedpoint_numpy.PaillierFixedPointTensor(loss)
+
+        LOGGER.debug(f"loss: {loss}")
+
+        tensor_name = ".".join(("shared_loss",) + suffix)
+        share_loss = SecureMatrix.from_source(tensor_name=tensor_name,
+                                              source=loss,
+                                              cipher=None,
+                                              q_field=self.fixedpoint_encoder.n,
+                                              encoder=self.fixedpoint_encoder)
+
+        loss = share_loss.get(tensor_name=f"share_loss_{suffix}",
+                              broadcast=False)
+        LOGGER.debug(f"share_loss.get: {loss}")
+        loss = np.sum(loss)
         loss_norm = self.optimizer.loss_norm(self.model_weights)
         LOGGER.debug(f"loss: {loss}, loss_norm: {loss_norm}")
         if loss_norm:
             loss += loss_norm
         return loss
+
+    # def compute_loss_old(self, spdz, suffix):
+    #     """
+    #     Use Taylor series expand log loss:
+    #     Loss = - y * log(h(x)) - (1-y) * log(1 - h(x)) where h(x) = 1/(1+exp(-wx))
+    #     Then loss' = - (1/N)*∑(log(1/2) - 1/2*wx + wxy + 1/8(wx)^2)
+    #     """
+    #
+    #     tensor_name = ".".join(("shared_wx",) + suffix)
+    #     shared_wx = SecureMatrix.from_source(tensor_name,
+    #                                          self.encrypted_wx,
+    #                                          self.cipher,
+    #                                          self.fixedpoint_encoder.n,
+    #                                          self.fixedpoint_encoder)
+    #
+    #     wxy = spdz.dot(shared_wx, self.shared_y, ("wxy",) + suffix).get()
+    #     LOGGER.debug(f"wxy_value: {wxy}, shared_wx: {shared_wx.value.first()}")
+    #
+    #     wx_square = shared_wx * shared_wx
+    #
+    #     LOGGER.debug(f"wx_square: {wx_square}")
+    #
+    #     self.share_encrypted_value(suffix=suffix, is_remote=True, wx=shared_wx,
+    #                                wx_square=wx_square)
+    #
+    #     loss = self.transfer_variable.loss.get(idx=0, suffix=suffix)
+    #     loss = self.cipher.decrypt(loss)
+    #     loss_norm = self.optimizer.loss_norm(self.model_weights)
+    #     LOGGER.debug(f"loss: {loss}, loss_norm: {loss_norm}")
+    #     if loss_norm:
+    #         loss += loss_norm
+    #     return loss
 
     def check_converge_by_weights(self, last_w, new_w, suffix):
         if self.is_respectively_reveal:
