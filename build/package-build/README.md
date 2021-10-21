@@ -13,7 +13,7 @@
 
 ## 3. Build
 ```bash
-git clone https://github.com/FederatedAI/FATE.git -b v1.5.0 --depth=1
+git clone https://github.com/FederatedAI/FATE.git -b v${version} --depth=1
 cd FATE/cluster-deploy
 bash build.sh release all
 ```
@@ -23,13 +23,13 @@ The **all** means that modules needs to be deployed, all means all, supports all
 
 ## 4. Output
 ```bash
-ls -l FATE_install_1.5.0-release.tar.gz
+ls -l FATE_install_${version}-release.tar.gz
 ```
 
 ## 5. Check packages
 ```bash
-tar xzf FATE_install_1.5.0-release.tar.gz
-ls -lrt FATE_install_1.5.0
+tar xzf FATE_install_${version}-release.tar.gz
+ls -lrt FATE_install_${version}
 ```
 You can see the following package:
 - bin.tar.gz

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from setuptools import setup
 
-packages = ["fate_test", "fate_test.scripts"]
+packages = ["fate_test", "fate_test.scripts", "fate_test.flow_test"]
 
 package_data = {"": ["*"]}
 
@@ -10,6 +10,7 @@ install_requires = [
     "fate_client>=0.1,<0.2",
     "loguru>=0.5.1,<0.6.0",
     "pandas>=1.1.5",
+    "poetry>=0.12",
     "prettytable>=1.0.0,<2.0.0",
     "requests>=2.24.0,<3.0.0",
     "requests_toolbelt>=0.9.1,<0.10.0",
