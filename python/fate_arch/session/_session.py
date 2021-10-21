@@ -464,7 +464,7 @@ def get_computing_session() -> CSessionABC:
 class computing_session(object):
     @staticmethod
     def init(session_id, work_mode=0, options=None):
-        Session(work_mode=work_mode, options=options).init_computing(session_id)
+        Session(work_mode=work_mode, options=options).as_global().init_computing(session_id)
 
     @staticmethod
     def parallelize(data: typing.Iterable, partition: int, include_key: bool, **kwargs) -> CTableABC:
