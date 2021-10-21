@@ -20,7 +20,7 @@ import uuid
 import numpy as np
 
 from fate_arch.common import profile
-from fate_arch.session import Session
+from fate_arch.session import computing_session as session
 from federatedml.feature.instance import Instance
 from federatedml.model_selection.data_split import data_split
 from federatedml.param.data_split_param import DataSplitParam
@@ -31,7 +31,7 @@ profile._PROFILE_LOG_ENABLED = False
 class TestDataSplit(unittest.TestCase):
     def setUp(self):
         self.job_id = str(uuid.uuid1())
-        self.session = Session.create(0, 0).init_computing(self.job_id).computing
+        session.init("test_random_sampler_" + self.job_id)
         self.data_splitter = data_split.DataSplitter()
         param_dict = {"random_state": 42,
                   "test_size": 0.2, "train_size": 0.6, "validate_size": 0.2,
@@ -47,7 +47,7 @@ class TestDataSplit(unittest.TestCase):
             inst = Instance(inst_id=i, features=tmp, label=label_tmp)
             tmp = (i, inst)
             final_result.append(tmp)
-        table = self.session.parallelize(final_result,
+        table = session.parallelize(final_result,
                                     include_key=True,
                                     partition=3)
         return table
@@ -83,11 +83,7 @@ class TestDataSplit(unittest.TestCase):
         self.assertAlmostEqual(expect_freq_2, freq_dict[2])
 
     def tearDown(self):
-        self.session.stop()
-        try:
-            self.session.cleanup("*", self.job_id)
-        except EnvironmentError:
-            pass
+        session.stop()
 
 
 if __name__ == '__main__':
