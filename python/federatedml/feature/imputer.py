@@ -175,7 +175,7 @@ class Imputer(object):
                 raise ValueError(f"replace value {replace_value} length does not match with header {header}, please check.")
         for i, feature in enumerate(header):
             if replace_method[feature] is None:
-                transform_value = None
+                transform_value = 0
             elif replace_method[feature] == consts.MIN:
                 transform_value = summary_obj.get_min()[feature]
             elif replace_method[feature] == consts.MAX:
