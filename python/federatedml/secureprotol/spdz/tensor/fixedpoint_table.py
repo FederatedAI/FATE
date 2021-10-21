@@ -139,6 +139,13 @@ class FixedPointTensor(TensorBase):
         else:
             raise ValueError(f"type={type(other)}")
 
+    def reduce(self, func, **kwargs):
+        ret = self.value.reduce(func)
+        return fixedpoint_numpy.FixedPointTensor(ret,
+                                                 self.q_field,
+                                                 self.endec
+                                                 )
+
     @property
     def shape(self):
         return self.value.count(), len(self.value.first()[1])
@@ -202,7 +209,7 @@ class FixedPointTensor(TensorBase):
         return share_val
 
     def __str__(self):
-        return f"tensor_name={self.tensor_name}"
+        return f"tensor_name={self.tensor_name}, value={self.value}"
 
     def __repr__(self):
         return self.__str__()
@@ -285,7 +292,7 @@ class PaillierFixedPointTensor(TensorBase):
                 ret = np.array([ret])
             return ret
 
-        if isinstance(other, FixedPointTensor) or isinstance(other, fixedpoint_numpy.FixedPointTensor):
+        if isinstance(other, (FixedPointTensor,fixedpoint_numpy.FixedPointTensor)):
             other = other.value
 
         if isinstance(other, np.ndarray):
@@ -304,7 +311,7 @@ class PaillierFixedPointTensor(TensorBase):
         return fixedpoint_numpy.PaillierFixedPointTensor(ret)
 
     def __str__(self):
-        return f"tensor_name={self.tensor_name}"
+        return f"tensor_name={self.tensor_name}, value={self.value}"
 
     def __repr__(self):
         return self.__str__()
@@ -340,6 +347,8 @@ class PaillierFixedPointTensor(TensorBase):
         if isinstance(other, FixedPointTensor):
             # raise NotImplementedError("__mul__ support scalar only")
             z_value = _table_binary_op(self.value, other.value, operator.mul)
+        elif is_table(other):
+            z_value = _table_binary_op(self.value, other, operator.mul)
         else:
             z_value = _table_scalar_op(self.value, other, operator.mul)
         return self._boxed(z_value)

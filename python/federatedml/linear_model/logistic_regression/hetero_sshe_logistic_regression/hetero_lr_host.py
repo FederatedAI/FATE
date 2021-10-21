@@ -30,6 +30,7 @@ class HeteroLRHost(HeteroLRBase):
     def __init__(self):
         super().__init__()
         self.data_batch_count = []
+        self.wx_self = None
 
     def transfer_pubkey(self):
         public_key = self.cipher.public_key
@@ -71,15 +72,12 @@ class HeteroLRHost(HeteroLRBase):
         else:
             z = features.dot_local(self.model_weights.coef_)
 
-        # z_square = z * z
-        # z_cube = z_square * z
+        self.wx_self = z
+        self.secure_matrix_obj.share_encrypted_matrix(suffix=suffix,
+                                                      is_remote=True,
+                                                      cipher=self.cipher,
+                                                      z=z)
 
-        self.share_encrypted_value(suffix=suffix, is_remote=True, z=z)
-
-        # shared_sigmoid_z = self.received_share_matrix(self.cipher,
-        #                                               q_field=z.q_field,
-        #                                               encoder=z.endec,
-        #                                               suffix=("sigmoid_z",) + suffix)
         tensor_name = ".".join(("sigmoid_z",) + suffix)
         shared_sigmoid_z = SecureMatrix.from_source(tensor_name,
                                                     self.other_party,
@@ -119,39 +117,70 @@ class HeteroLRHost(HeteroLRBase):
         return ga_new, gb1
 
     def compute_loss(self, spdz, suffix):
+        """
+          Use Taylor series expand log loss:
+          Loss = - y * log(h(x)) - (1-y) * log(1 - h(x)) where h(x) = 1/(1+exp(-wx))
+          Then loss' = - (1/N)*∑(log(1/2) - 1/2*wx + ywx + 1/8(wx)^2)
+        """
+        wx_self_square = (self.wx_self * self.wx_self).reduce(operator.add)
+        LOGGER.debug(f"wx_self_square: {wx_self_square}")
 
-        # shared_wx = self.received_share_matrix(self.cipher, q_field=self.random_field,
-        #                                        encoder=self.fixpoint_encoder, suffix=suffix)
-        tensor_name = ".".join(("shared_wx",) + suffix)
-        shared_wx = SecureMatrix.from_source(tensor_name,
-                                             self.other_party,
-                                             self.cipher,
-                                             self.fixedpoint_encoder.n,
-                                             self.fixedpoint_encoder)
+        self.secure_matrix_obj.share_encrypted_matrix(suffix=suffix,
+                                                      is_remote=True,
+                                                      cipher=self.cipher,
+                                                      wx_self_square=wx_self_square)
 
-        LOGGER.debug(f"share_wx: {type(shared_wx)}, shared_y: {type(self.shared_y)}")
-        wxy = spdz.dot(shared_wx, self.shared_y, ("wxy",) + suffix).get()
-        # wxy_sum = wxy_tensor.value[0]
-        # wxy_sum_guest = self.transfer_variable.wxy_sum.get(idx=0, suffix=suffix)
-        # wxy = wxy_tensor + wxy_sum_guest
-        LOGGER.debug(f"wxy_value: {wxy}")
-        wx_guest, wx_square_guest = self.share_encrypted_value(suffix=suffix, is_remote=False,
-                                                               wx=None, wx_square=None)
+        tensor_name = ".".join(("shared_loss",) + suffix)
+        share_loss = SecureMatrix.from_source(tensor_name=tensor_name,
+                                              source=self.other_party,
+                                              cipher=self.cipher,
+                                              q_field=self.fixedpoint_encoder.n,
+                                              encoder=self.fixedpoint_encoder,
+                                              is_fixedpoint_table=False)
 
-        encrypted_wx = shared_wx + wx_guest
-        encrypted_wx_sqaure = shared_wx * shared_wx + wx_square_guest + 2 * shared_wx * wx_guest
-        # encrypted_wx_sqaure = wx_square_guest
-        LOGGER.debug(f"encoded_batch_num: {self.encoded_batch_num}, suffix: {suffix}")
-        encoded_1_n = self.encoded_batch_num[int(suffix[2])]
-        LOGGER.debug(f"tmc, type: {encrypted_wx_sqaure}, {encrypted_wx}, {encoded_1_n}, {wxy}")
-        loss = ((0.125 * encrypted_wx_sqaure - 0.5 * encrypted_wx).value.reduce(operator.add) +
-                wxy) * encoded_1_n * -1 - np.log(0.5)
-        # loss = ((0.125 * encrypted_wx_sqaure - 0.5 * encrypted_wx).value.reduce(operator.add)) * encoded_1_n * -1 - np.log(0.5)
+        LOGGER.debug(f"share_loss: {share_loss}")
+
         loss_norm = self.optimizer.loss_norm(self.model_weights)
-        if loss_norm is not None:
-            loss += loss_norm
-        LOGGER.debug(f"loss: {loss}")
-        self.transfer_variable.loss.remote(loss[0][0], suffix=suffix)
+        if loss_norm:
+            share_loss += loss_norm/3.0
+
+        LOGGER.debug(f"share_loss+loss_norm: {share_loss}")
+
+        share_loss.broadcast_reconstruct_share(tensor_name=f"share_loss_{suffix}")
+
+    # def compute_loss_old(self, spdz, suffix):
+    #     tensor_name = ".".join(("shared_wx",) + suffix)
+    #     shared_wx = SecureMatrix.from_source(tensor_name,
+    #                                          self.other_party,
+    #                                          self.cipher,
+    #                                          self.fixedpoint_encoder.n,
+    #                                          self.fixedpoint_encoder)
+    #
+    #     LOGGER.debug(f"share_wx: {type(shared_wx)}, shared_y: {type(self.shared_y)}")
+    #
+    #     wxy = spdz.dot(shared_wx, self.shared_y, ("wxy",) + suffix).get()
+    #
+    #     LOGGER.debug(f"wxy_value: {wxy}")
+    #
+    #     wx_guest, wx_square_guest = self.share_encrypted_value(suffix=suffix, is_remote=False,
+    #                                                            wx=None, wx_square=None)
+    #
+    #     encrypted_wx = shared_wx + wx_guest
+    #     encrypted_wx_square = shared_wx * shared_wx + wx_square_guest + 2 * shared_wx * wx_guest
+    #     encoded_1_n = self.encoded_batch_num[int(suffix[2])]
+    #
+    #     LOGGER.debug(f"encoded_batch_num: {self.encoded_batch_num}, suffix: {suffix}")
+    #
+    #     LOGGER.debug(f"tmc, type: {encrypted_wx_square}, {encrypted_wx}, {encoded_1_n}, {wxy}")
+    #
+    #     loss = ((0.125 * encrypted_wx_square - 0.5 * encrypted_wx).reduce(operator.add) +
+    #             wxy) * encoded_1_n * -1 - np.log(0.5)
+    #
+    #     loss_norm = self.optimizer.loss_norm(self.model_weights)
+    #     if loss_norm is not None:
+    #         loss += loss_norm
+    #     LOGGER.debug(f"loss: {loss}")
+    #     self.transfer_variable.loss.remote(loss[0][0], suffix=suffix)
 
     def check_converge_by_weights(self, last_w, new_w, suffix):
         if self.is_respectively_reveal:

@@ -162,7 +162,7 @@ class FixedPointTensor(TensorBase):
         return FixedPointTensor(value=value, q_field=self.q_field, endec=self.endec, tensor_name=tensor_name)
 
     def __str__(self):
-        return f"tensor_name={self.tensor_name}"
+        return f"tensor_name={self.tensor_name}, value={self.value}"
 
     def __repr__(self):
         return self.__str__()
@@ -233,7 +233,7 @@ class PaillierFixedPointTensor(TensorBase):
         return self._boxed(ret, target_name)
 
     def __str__(self):
-        return f"tensor_name={self.tensor_name}"
+        return f"tensor_name={self.tensor_name}, value={self.value}"
 
     def __repr__(self):
         return self.__str__()
@@ -247,7 +247,7 @@ class PaillierFixedPointTensor(TensorBase):
         return self._boxed(z_value)
 
     def __add__(self, other):
-        if isinstance(other, PaillierFixedPointTensor):
+        if isinstance(other, (PaillierFixedPointTensor, FixedPointTensor)):
             return self._raw_add(other.value)
         else:
             return self._raw_add(other)
@@ -256,20 +256,25 @@ class PaillierFixedPointTensor(TensorBase):
         return self.__add__(other)
 
     def __sub__(self, other):
-        if isinstance(other, PaillierFixedPointTensor):
+        if isinstance(other, (PaillierFixedPointTensor, FixedPointTensor)):
             return self._raw_sub(other.value)
         else:
             return self._raw_sub(other)
 
     def __rsub__(self, other):
-        if isinstance(other, PaillierFixedPointTensor):
+        if isinstance(other, (PaillierFixedPointTensor, FixedPointTensor)):
             z_value = other.value - self.value
         else:
             z_value = other - self.value
         return self._boxed(z_value)
 
     def __mul__(self, other):
-        return self._boxed(self.value * other)
+        if isinstance(other, PaillierFixedPointTensor):
+            raise NotImplementedError("__mul__ not support PaillierFixedPointTensor")
+        elif isinstance(other, FixedPointTensor):
+            return self._boxed(self.value * other.value)
+        else:
+            return self._boxed(self.value * other)
 
     def __rmul__(self, other):
         self.__mul__(other)

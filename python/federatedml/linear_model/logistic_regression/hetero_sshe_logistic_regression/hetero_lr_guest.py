@@ -36,6 +36,8 @@ class HeteroLRGuest(HeteroLRBase):
         self.encrypted_error = None
         self.encrypted_wx = None
         self.z_square = None
+        self.wx_self = None
+        self.wx_remote = None
 
     def _init_model(self, params):
         super()._init_model(params)
@@ -92,7 +94,13 @@ class HeteroLRGuest(HeteroLRBase):
             if self.model_weights.fit_intercept:
                 z = z + self.model_weights.intercept_
 
-        remote_z = self.share_encrypted_value(suffix=suffix, is_remote=False, z=None)[0]
+        remote_z = self.secure_matrix_obj.share_encrypted_matrix(suffix=suffix,
+                                                                 is_remote=False,
+                                                                 cipher=None,
+                                                                 z=None)[0]
+
+        self.wx_self = z
+        self.wx_remote = remote_z
 
         sigmoid_z = self._compute_sigmoid(z, remote_z)
 
@@ -145,36 +153,85 @@ class HeteroLRGuest(HeteroLRBase):
 
     def compute_loss(self, spdz, suffix):
         """
-        Use Taylor series expand log loss:
-        Loss = - y * log(h(x)) - (1-y) * log(1 - h(x)) where h(x) = 1/(1+exp(-wx))
-        Then loss' = - (1/N)*∑(log(1/2) - 1/2*wx + wxy + 1/8(wx)^2)
+          Use Taylor series expand log loss:
+          Loss = - y * log(h(x)) - (1-y) * log(1 - h(x)) where h(x) = 1/(1+exp(-wx))
+          Then loss' = - (1/N)*∑(log(1/2) - 1/2*wx + ywx + 1/8(wx)^2)
         """
+        wx = (-0.5 * self.encrypted_wx).reduce(operator.add)
+        ywx = (self.encrypted_wx * self.labels).reduce(operator.add)
+        wx_square = (2 * self.wx_remote * self.wx_self).reduce(operator.add) + \
+                    (self.wx_self * self.wx_self).reduce(operator.add)
 
-        # shared_wx = self.share_matrix(self.encrypted_wx, suffix=suffix)
+        LOGGER.debug(f"wx_square: {wx_square}")
 
-        tensor_name = ".".join(("shared_wx",) + suffix)
-        shared_wx = SecureMatrix.from_source(tensor_name,
-                                             self.encrypted_wx,
-                                             self.cipher,
-                                             self.fixedpoint_encoder.n,
-                                             self.fixedpoint_encoder)
+        wx_remote_square = self.secure_matrix_obj.share_encrypted_matrix(suffix=suffix,
+                                                                         is_remote=False,
+                                                                         cipher=None,
+                                                                         wx_self_square=None)[0]
 
-        wxy = spdz.dot(shared_wx, self.shared_y, ("wxy",) + suffix).get()
-        LOGGER.debug(f"wxy_value: {wxy}, shared_wx: {shared_wx.value.first()}")
-        # wxy_sum = wxy_tensor.value[0]
-        # self.transfer_variable.wxy_sum.remote(wxy_tensor, suffix=suffix)
-        wx_square = shared_wx * shared_wx
-        # LOGGER.debug(f"shared_wx: {shared_wx}, wx_square: {wx_square}, wxy_sum: {wxy_sum}")
-        self.share_encrypted_value(suffix=suffix, is_remote=True, wx=shared_wx,
-                                   wx_square=wx_square)
+        LOGGER.debug(f"wx_remote_square.get: {wx_remote_square}")
 
-        loss = self.transfer_variable.loss.get(idx=0, suffix=suffix)
-        loss = self.cipher.decrypt(loss)
+        wx_square = (wx_remote_square + wx_square) * 0.125
+
+        LOGGER.debug(f"wx_square: {wx_square}")
+
+        loss = np.array([wx.value, ywx.value, wx_square.value])
+        loss = loss.T[0]
+
+        encoded_1_n = self.encoded_batch_num[int(suffix[2])]
+        loss = loss * (encoded_1_n * -1) - np.log(0.5)
+        loss = fixedpoint_numpy.PaillierFixedPointTensor(loss)
+
+        LOGGER.debug(f"loss: {loss}")
+
+        tensor_name = ".".join(("shared_loss",) + suffix)
+        share_loss = SecureMatrix.from_source(tensor_name=tensor_name,
+                                              source=loss,
+                                              cipher=None,
+                                              q_field=self.fixedpoint_encoder.n,
+                                              encoder=self.fixedpoint_encoder)
+
+        loss = share_loss.get(tensor_name=f"share_loss_{suffix}",
+                              broadcast=False)
+        LOGGER.debug(f"share_loss.get: {loss}")
+        loss = np.sum(loss)
         loss_norm = self.optimizer.loss_norm(self.model_weights)
         LOGGER.debug(f"loss: {loss}, loss_norm: {loss_norm}")
         if loss_norm:
             loss += loss_norm
         return loss
+
+    # def compute_loss_old(self, spdz, suffix):
+    #     """
+    #     Use Taylor series expand log loss:
+    #     Loss = - y * log(h(x)) - (1-y) * log(1 - h(x)) where h(x) = 1/(1+exp(-wx))
+    #     Then loss' = - (1/N)*∑(log(1/2) - 1/2*wx + wxy + 1/8(wx)^2)
+    #     """
+    #
+    #     tensor_name = ".".join(("shared_wx",) + suffix)
+    #     shared_wx = SecureMatrix.from_source(tensor_name,
+    #                                          self.encrypted_wx,
+    #                                          self.cipher,
+    #                                          self.fixedpoint_encoder.n,
+    #                                          self.fixedpoint_encoder)
+    #
+    #     wxy = spdz.dot(shared_wx, self.shared_y, ("wxy",) + suffix).get()
+    #     LOGGER.debug(f"wxy_value: {wxy}, shared_wx: {shared_wx.value.first()}")
+    #
+    #     wx_square = shared_wx * shared_wx
+    #
+    #     LOGGER.debug(f"wx_square: {wx_square}")
+    #
+    #     self.share_encrypted_value(suffix=suffix, is_remote=True, wx=shared_wx,
+    #                                wx_square=wx_square)
+    #
+    #     loss = self.transfer_variable.loss.get(idx=0, suffix=suffix)
+    #     loss = self.cipher.decrypt(loss)
+    #     loss_norm = self.optimizer.loss_norm(self.model_weights)
+    #     LOGGER.debug(f"loss: {loss}, loss_norm: {loss_norm}")
+    #     if loss_norm:
+    #         loss += loss_norm
+    #     return loss
 
     def check_converge_by_weights(self, last_w, new_w, suffix):
         if self.is_respectively_reveal:

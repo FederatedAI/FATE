@@ -23,6 +23,7 @@ from abc import ABC
 import numpy as np
 
 from fate_arch import session
+from fate_arch.computing import is_table
 from federatedml.framework.hetero.procedure import batch_generator
 from federatedml.linear_model.linear_model_base import BaseLinearModel
 from federatedml.linear_model.linear_model_weight import LinearModelWeights
@@ -126,13 +127,13 @@ class HeteroLRBase(BaseLinearModel, ABC):
     def is_respectively_reveal(self):
         return self.model_param.reveal_strategy == "respectively"
 
-    def share_table(self, value=None, tensor_name=''):
-        if value is None:
-            value = self.other_party
-
-        return fixedpoint_table.FixedPointTensor.from_source(tensor_name, value,
-                                                             encoder=self.fixedpoint_encoder,
-                                                             q_field=self.random_field)
+    # def share_table(self, value=None, tensor_name=''):
+    #     if value is None:
+    #         value = self.other_party
+    #
+    #     return fixedpoint_table.FixedPointTensor.from_source(tensor_name, value,
+    #                                                          encoder=self.fixedpoint_encoder,
+    #                                                          q_field=self.random_field)
 
     def share_model(self, w, suffix):
         source = [w, self.other_party]
@@ -176,8 +177,6 @@ class HeteroLRBase(BaseLinearModel, ABC):
         self.check_abnormal_values(validate_data)
         classes = self.one_vs_rest_obj.get_data_classes(data_instances)
 
-        # self.fit_binary(data_instances, validate_data)
-
         if len(classes) > 2:
             self.need_one_vs_rest = True
             self.need_call_back_loss = False
@@ -214,7 +213,6 @@ class HeteroLRBase(BaseLinearModel, ABC):
 
         self.batch_generator.initialize_batch_generator(data_instances, batch_size=self.batch_size)
 
-        # remote_pubkey = self.transfer_pubkey()
         with SPDZ(
                 "sshe_lr",
                 local_party=self.local_party,
@@ -224,17 +222,18 @@ class HeteroLRBase(BaseLinearModel, ABC):
         ) as spdz:
             if self.role == consts.GUEST:
                 self.labels = data_instances.mapValues(lambda x: np.array([x.label], dtype=int))
+                # # todo : dylan
+                # label_encoder = self.fixedpoint_encoder.encode(self.labels)
+                #
+                # self.label_tensor = fixedpoint_table.FixedPointTensor(label_encoder,
+                #                                                       q_field=self.fixedpoint_encoder.n,
+                #                                                       endec=self.fixedpoint_encoder)
 
-                # todo : dylan
-                label_encoder = self.fixedpoint_encoder.encode(self.labels)
-
-                self.label_tensor = fixedpoint_table.FixedPointTensor(label_encoder,
-                                                                      q_field=self.fixedpoint_encoder.n,
-                                                                      endec=self.fixedpoint_encoder)
-            if self.cal_loss:
-                value = self.labels if self.role == consts.GUEST else None
-                self.shared_y = self.share_table(value=value, tensor_name="label")
-                LOGGER.debug(f"shared_y: {self.shared_y}, type: {type(self.shared_y)}")
+            # # todo: dylan
+            # if self.cal_loss:
+            #     value = self.labels if self.role == consts.GUEST else None
+            #     self.shared_y = self.share_table(value=value, tensor_name="label")
+            #     LOGGER.debug(f"shared_y: {self.shared_y}, type: {type(self.shared_y)}")
 
             w_self, w_remote = self.share_model(w, suffix="init")
             LOGGER.debug(f"first_w_self shape: {w_self.shape}, w_remote_shape: {w_remote.shape}")
@@ -356,21 +355,21 @@ class HeteroLRBase(BaseLinearModel, ABC):
 
             if self.role == consts.GUEST:
                 new_w = w_self.get(tensor_name=f"wb_{suffix}",
-                                           broadcast=False)
+                                   broadcast=False)
                 w_remote.broadcast_reconstruct_share(tensor_name=f"wa_{suffix}")
 
             else:
                 w_remote.broadcast_reconstruct_share(tensor_name=f"wb_{suffix}")
                 new_w = w_self.get(tensor_name=f"wa_{suffix}",
-                                           broadcast=False)
+                                   broadcast=False)
 
         elif self.model_param.reveal_strategy == "all_reveal_in_guest":
 
             if self.role == consts.GUEST:
                 new_w = w_self.get(tensor_name=f"wb_{suffix}",
-                                           broadcast=False)
+                                   broadcast=False)
                 host_weights = w_remote.get(tensor_name=f"wa_{suffix}",
-                                                    broadcast=False)
+                                            broadcast=False)
 
             else:
                 if w_remote.shape[0] > 2:
@@ -385,21 +384,28 @@ class HeteroLRBase(BaseLinearModel, ABC):
             raise NotImplementedError(f"review strategy: {self.model_param.reveal_strategy} has not been implemented.")
         return new_w, host_weights
 
-    def share_encrypted_value(self, suffix, is_remote, **kwargs):
-        if is_remote:
-            for var_name, var in kwargs.items():
-                dest_role = consts.GUEST if self.role == consts.HOST else consts.HOST
-                encrypt_var = self.cipher.distribute_encrypt(var.value)
-                self.transfer_variable.encrypted_share_matrix.remote(encrypt_var, role=dest_role,
-                                                                     suffix=(var_name,) + suffix)
-        else:
-            res = []
-            for var_name in kwargs.keys():
-                dest_role = consts.GUEST if self.role == consts.HOST else consts.HOST
-                z_table = self.transfer_variable.encrypted_share_matrix.get(role=dest_role, idx=0,
-                                                                            suffix=(var_name,) + suffix)
-                res.append(fixedpoint_table.PaillierFixedPointTensor(z_table))
-            return tuple(res)
+    # def share_encrypted_value(self, suffix, is_remote, **kwargs):
+    #     if is_remote:
+    #         for var_name, var in kwargs.items():
+    #             dest_role = consts.GUEST if self.role == consts.HOST else consts.HOST
+    #             if isinstance(var, fixedpoint_table.FixedPointTensor):
+    #                 encrypt_var = self.cipher.distribute_encrypt(var.value)
+    #             else:
+    #                 encrypt_var = self.cipher.recursive_encrypt(var.value)
+    #             self.transfer_variable.encrypted_share_matrix.remote(encrypt_var, role=dest_role,
+    #                                                                  suffix=(var_name,) + suffix)
+    #     else:
+    #         res = []
+    #         for var_name in kwargs.keys():
+    #             dest_role = consts.GUEST if self.role == consts.HOST else consts.HOST
+    #             z = self.transfer_variable.encrypted_share_matrix.get(role=dest_role, idx=0,
+    #                                                                   suffix=(var_name,) + suffix)
+    #             if is_table(z):
+    #                 res.append(fixedpoint_table.PaillierFixedPointTensor(z))
+    #             else:
+    #                 res.append(fixedpoint_numpy.PaillierFixedPointTensor(z))
+    #
+    #         return tuple(res)
 
     def _get_meta(self):
         meta_protobuf_obj = lr_model_meta_pb2.LRModelMeta(penalty=self.model_param.penalty,
