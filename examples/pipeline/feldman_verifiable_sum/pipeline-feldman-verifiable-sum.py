@@ -18,7 +18,7 @@ import argparse
 
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component import Reader
-from pipeline.component import DataIO
+from pipeline.component import DataTransform
 from pipeline.component import FeldmanVerifiableSum
 from pipeline.interface import Data
 
@@ -54,11 +54,11 @@ def main(config="../../config.yaml", namespace=""):
     # configure Reader for host
     reader_0.get_party_instance(role="host", party_id=hosts).component_param(table=host_train_data)
 
-    dataio_0 = DataIO(name="dataio_0")
-    # get and configure DataIO party instance of guest
-    dataio_0.get_party_instance(role="guest", party_id=guest).component_param(with_label=False, output_format="dense")
-    # get and configure DataIO party instance of host
-    dataio_0.get_party_instance(role="host", party_id=hosts).component_param(with_label=False)
+    data_transform_0 = DataTransform(name="data_transform_0")
+    # get and configure DataTransform party instance of guest
+    data_transform_0.get_party_instance(role="guest", party_id=guest).component_param(with_label=False, output_format="dense")
+    # get and configure DataTransform party instance of host
+    data_transform_0.get_party_instance(role="host", party_id=hosts).component_param(with_label=False)
 
     # define FeldmanVerifiableSum components
     feldmanverifiablesum_0 = FeldmanVerifiableSum(name="feldmanverifiablesum_0")
@@ -69,8 +69,8 @@ def main(config="../../config.yaml", namespace=""):
 
     # add components to pipeline, in order of task execution.
     pipeline.add_component(reader_0)
-    pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
-    pipeline.add_component(feldmanverifiablesum_0, data=Data(data=dataio_0.output.data))
+    pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
+    pipeline.add_component(feldmanverifiablesum_0, data=Data(data=data_transform_0.output.data))
 
     # compile pipeline once finished adding modules, this step will form conf and dsl files for running job
     pipeline.compile()

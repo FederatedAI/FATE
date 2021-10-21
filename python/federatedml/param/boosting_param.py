@@ -478,7 +478,7 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
                                                      random_seed=random_seed,
                                                      binning_error=binning_error)
 
-        self.tree_param = tree_param
+        self.tree_param = copy.deepcopy(tree_param)
         self.zero_as_missing = zero_as_missing
         self.use_missing = use_missing
         self.complete_secure = complete_secure
@@ -643,7 +643,7 @@ class HomoSecureBoostParam(BoostingParam):
                                                    )
         self.use_missing = use_missing
         self.zero_as_missing = zero_as_missing
-        self.tree_param = tree_param
+        self.tree_param = copy.deepcopy(tree_param)
         self.backend = backend
         self.callback_param = copy.deepcopy(callback_param)
 

@@ -57,7 +57,7 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_0": {
+                    "data_transform_0": {
                         "missing_fill": true,
                         "outlier_replace": false,
                         "with_label": true,
@@ -75,7 +75,7 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_0": {
+                    "data_transform_0": {
                         "outlier_replace": false,
                         "with_label": false,
                         "output_format": "dense"

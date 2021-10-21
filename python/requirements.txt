@@ -2,7 +2,7 @@ apsw==3.9.2.post1
 beautifultable==1.0.0
 cachetools==3.0.0
 cloudpickle==0.6.1
-cos-python-sdk-v5==1.8.0
+cos-python-sdk-v5==1.9.10
 Flask==1.0.2
 gmpy2==2.0.8
 joblib==1.0.1
@@ -18,7 +18,7 @@ pycryptodomex==3.6.6
 PyMySQL==0.9.3
 pyspark==3.1.2
 python-dotenv==0.13.0
-redis==3.0.1
+redis==3.5.3
 requests==2.24.0
 requests_toolbelt==0.9.1
 ruamel-yaml==0.16.10
@@ -32,7 +32,7 @@ Werkzeug==0.15.3
 coverage==4.5.2
 pika==1.1.0
 pandas==1.1.5
-cryptography==3.2.1
+cryptography==3.3.2
 libsm3py==0.0.1
 sortedcontainers==2.2.2
 pytorch-lightning>=1.2.1,<1.4.0

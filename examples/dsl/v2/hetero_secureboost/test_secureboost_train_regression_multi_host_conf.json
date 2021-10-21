@@ -43,13 +43,13 @@
         "role": {
             "guest": {
                 "0": {
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": true,
                         "label_name": "motor_speed",
                         "label_type": "float",
                         "output_format": "dense"
                     },
-                    "dataio_1": {
+                    "data_transform_1": {
                         "with_label": true,
                         "label_name": "motor_speed",
                         "label_type": "float",
@@ -71,10 +71,10 @@
             },
             "host": {
                 "1": {
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": false
                     },
-                    "dataio_1": {
+                    "data_transform_1": {
                         "with_label": false
                     },
                     "reader_1": {
@@ -91,10 +91,10 @@
                     }
                 },
                 "0": {
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": false
                     },
-                    "dataio_1": {
+                    "data_transform_1": {
                         "with_label": false
                     },
                     "reader_1": {

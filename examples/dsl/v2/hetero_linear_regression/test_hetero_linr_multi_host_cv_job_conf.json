@@ -52,7 +52,7 @@
         "role": {
             "guest": {
                 "0": {
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": true,
                         "label_name": "motor_speed",
                         "label_type": "float",
@@ -84,7 +84,7 @@
                     }
                 },
                 "0|1": {
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": false
                     }
                 }

@@ -8,62 +8,12 @@
                 ]
             }
         },
-        "reader_1": {
-            "module": "Reader",
-            "output": {
-                "data": [
-                    "data"
-                ]
-            }
-        },
-        "reader_2": {
-            "module": "Reader",
-            "output": {
-                "data": [
-                    "data"
-                ]
-            }
-        },
-        "union_0": {
-            "module": "Union",
+        "data_transform_0": {
+            "module": "DataTransform",
             "input": {
                 "data": {
                     "data": [
-                        "reader_0.data",
-                        "reader_1.data",
-                        "reader_2.data"
-                    ]
-                }
-            },
-            "output": {
-                "data": [
-                    "data"
-                ]
-            }
-        },
-        "union_1": {
-            "module": "Union",
-            "input": {
-                "data": {
-                    "data": [
-                        "reader_0.data",
-                        "reader_1.data",
-                        "reader_2.data"
-                    ]
-                }
-            },
-            "output": {
-                "data": [
-                    "data"
-                ]
-            }
-        },
-        "dataio_0": {
-            "module": "DataIO",
-            "input": {
-                "data": {
-                    "data": [
-                        "union_0.data"
+                        "reader_0.data"
                     ]
                 }
             },
@@ -76,12 +26,30 @@
                 ]
             }
         },
-        "dataio_1": {
-            "module": "DataIO",
+        "intersection_0": {
+            "module": "Intersection",
             "input": {
                 "data": {
                     "data": [
-                        "union_1.data"
+                        "data_transform_0.data"
+                    ]
+                }
+            },
+            "output": {
+                "data": [
+                    "data"
+                ],
+                "cache": [
+                    "cache"
+                ]
+            }
+        },
+        "hetero_sshe_lr_0": {
+            "module": "HeteroSSHELR",
+            "input": {
+                "data": {
+                    "train_data": [
+                        "intersection_0.data"
                     ]
                 }
             },
@@ -91,6 +59,21 @@
                 ],
                 "model": [
                     "model"
+                ]
+            }
+        },
+        "evaluation_0": {
+            "module": "Evaluation",
+            "input": {
+                "data": {
+                    "data": [
+                        "hetero_sshe_lr_0.data"
+                    ]
+                }
+            },
+            "output": {
+                "data": [
+                    "data"
                 ]
             }
         }

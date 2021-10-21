@@ -18,6 +18,7 @@
 #
 import collections
 
+import copy
 from federatedml.param.intersect_param import IntersectParam
 from types import SimpleNamespace
 from federatedml.param.base_param import BaseParam
@@ -84,12 +85,12 @@ class FTLParam(BaseParam):
         self.optimizer = optimizer
         self.nn_define = nn_define
         self.epochs = epochs
-        self.intersect_param = intersect_param
+        self.intersect_param = copy.deepcopy(intersect_param)
         self.config_type = config_type
         self.batch_size = batch_size
-        self.encrypted_mode_calculator_param = encrypted_mode_calculator_param
-        self.encrypt_param = encrypte_param
-        self.predict_param = predict_param
+        self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
+        self.encrypt_param = copy.deepcopy(encrypte_param)
+        self.predict_param = copy.deepcopy(predict_param)
         self.mode = mode
         self.communication_efficient = communication_efficient
         self.local_round = local_round
