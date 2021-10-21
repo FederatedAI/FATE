@@ -167,7 +167,7 @@
             "dsl": "./test_secureboost_train_dsl.json"
         },
         "warm_start_train": {
-           "conf": "./test_secureboost_warm_start_conf.json",
+            "conf": "./test_secureboost_warm_start_conf.json",
             "dsl": "./test_secureboost_warm_start_dsl.json"
         },
         "train_binary_in_memory_backend": {

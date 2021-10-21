@@ -18,8 +18,12 @@
                 }
             },
             "output": {
-                "data": ["data"],
-                "model": ["dataio"]
+                "data": [
+                    "data"
+                ],
+                "model": [
+                    "dataio"
+                ]
             }
         },
         "feldmanverifiablesum_0": {

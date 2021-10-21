@@ -39,7 +39,6 @@ def main(config="../../config.yaml", namespace=""):
     guest = parties.guest[0]
     host = parties.host[0]
 
-    backend = config.backend
     work_mode = config.work_mode
 
     # data sets
@@ -126,7 +125,7 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.add_component(evaluation_1, data=Data(data=local_baseline_1.output.data))
 
     pipeline.compile()
-    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
+    job_parameters = JobParameters(work_mode=work_mode)
     pipeline.fit(job_parameters)
 
 
