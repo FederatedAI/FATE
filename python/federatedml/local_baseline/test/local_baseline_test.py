@@ -63,7 +63,7 @@ class TestLocalBaseline(unittest.TestCase):
         real_predict_result = glm.predict(self.X)
         self.local_baseline_obj.model_fit = glm
         model_predict_result = self.local_baseline_obj.predict(self.table)
-        model_predict_result = np.array([v[1][1] for v in model_predict_result.collect()])
+        model_predict_result = np.array([v[1].features[1] for v in model_predict_result.collect()])
 
         np.testing.assert_array_equal(model_predict_result, real_predict_result)
 
