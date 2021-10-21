@@ -21,6 +21,7 @@ class WorkMode(IntEnum):
     CLUSTER = 1
 
 
+"""
 class Backend(IntEnum):
     EGGROLL = 0
     SPARK_RABBITMQ = 1
@@ -34,7 +35,7 @@ class Backend(IntEnum):
 
     def is_spark_pulsar(self):
         return self.value == self.SPARK_PULSAR
-
+"""
 
 class StoreEngine(IntEnum):
     EGGROLL = 0

@@ -16,7 +16,7 @@
 
 import os
 
-from pipeline.backend.config import Backend, WorkMode
+from pipeline.backend.config import WorkMode
 from pipeline.backend.pipeline import PipeLine
 
 # path to data
@@ -31,8 +31,6 @@ DATA_BASE = "/data/projects/fate"
 def main():
     # parties config
     guest = 9999
-    # 0 for eggroll, 1 for spark
-    backend = Backend.EGGROLL
     # 0 for standalone, 1 for cluster
     work_mode = WorkMode.STANDALONE
     # use the work mode below for cluster deployment
@@ -59,7 +57,7 @@ def main():
                                     head=0, partition=partition)
 
     # upload all data
-    pipeline_upload.upload(work_mode=work_mode, backend=backend, drop=1)
+    pipeline_upload.upload(work_mode=work_mode, drop=1)
 
 
 if __name__ == "__main__":

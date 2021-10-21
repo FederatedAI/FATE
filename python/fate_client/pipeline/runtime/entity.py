@@ -19,7 +19,7 @@ from pipeline.utils.tools import extract_explicit_parameter
 
 class JobParameters(object):
     @extract_explicit_parameter
-    def __init__(self, work_mode=0, job_type="train", backend=0, computing_engine=None, federation_engine=None,
+    def __init__(self, work_mode=0, job_type="train", computing_engine=None, federation_engine=None,
                  storage_engine=None, engines_address=None,federated_mode=None, federation_info=None, task_parallelism=None,
                  federated_status_collect_type=None, federated_data_exchange_type=None, model_id=None, model_version=None,
                  dsl_version=None, timeout=None, eggroll_run=None, spark_run=None, adaptation_parameters=None, **kwargs):

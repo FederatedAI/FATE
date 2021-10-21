@@ -21,9 +21,6 @@ class SharedOptions(object):
         "work_mode": (('-w', '--work-mode'),
                       dict(type=int, help="Manual specify work mode, 0 for local, 1 for cluster", default=None),
                       None),
-        "backend": (('-b', '--backend'),
-                    dict(type=int, help="Manual specify backend, 0 for eggroll, 1 for spark", default=None),
-                    None),
         "extend_sid": (('--extend_sid', ),
                        dict(type=bool, is_flag=True, help="whether to append uuid as sid when uploading data",
                             default=None), False),
@@ -60,8 +57,6 @@ class SharedOptions(object):
         self._options_kwargs['config'] = config
         if self._options_kwargs["work_mode"] is not None:
             config.work_mode = self._options_kwargs["work_mode"]
-        if self._options_kwargs["backend"] is not None:
-            config.backend = self._options_kwargs["backend"]
 
         _set_namespace(self._options_kwargs['namespace_mangling'], self._options_kwargs['namespace'])
 

@@ -15,7 +15,7 @@
 #
 
 
-from pipeline.backend.config import Backend, WorkMode
+from pipeline.backend.config import WorkMode
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component import DataIO
 from pipeline.component import HeteroLR
@@ -31,8 +31,6 @@ def main():
     guest = 9999
     host = 10000
     arbiter = 10000
-    # 0 for eggroll, 1 for spark
-    backend = Backend.EGGROLL
     # 0 for standalone, 1 for cluster
     work_mode = WorkMode.STANDALONE
     # use the work mode below for cluster deployment
@@ -98,7 +96,7 @@ def main():
     pipeline.compile()
 
     # fit model
-    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
+    job_parameters = JobParameters(work_mode=work_mode)
     pipeline.fit(job_parameters)
     # query component summary
     import json
