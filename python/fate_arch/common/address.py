@@ -126,15 +126,14 @@ class LinkisHiveAddress(AddressABC):
 
 
 class LocalFSAddress(AddressABC):
-    def __init__(self, name_node, path=None):
-        self.name_node = name_node
+    def __init__(self, path):
         self.path = path
 
     def __hash__(self):
-        return (self.name_node, self.path).__hash__()
+        return (self.path).__hash__()
 
     def __str__(self):
-        return f"LocalFSAddress(name_node={self.name_node}, path={self.path})"
+        return f"LocalFSAddress(path={self.path})"
 
     def __repr__(self):
         return self.__str__()

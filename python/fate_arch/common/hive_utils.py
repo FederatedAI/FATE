@@ -17,6 +17,21 @@
 import pickle
 from pyspark.sql import Row
 
+_DELIMITER = ','
+NEWLINE = '\n'
+
+
+def deserialize_line(line):
+    return bytes.decode(line[0]), pickle.loads(bytes.fromhex(line[1]))
+
+
+def serialize_line(k, v):
+    return f'{_DELIMITER}'.join([k, pickle.dumps(v).hex()]) + f"{NEWLINE}"
+
+
+def read_line(line_data):
+    line = [str(i) for i in line_data]
+    return  f'{_DELIMITER}'.join(line) + f"{NEWLINE}"
 
 def from_row(r):
     return r.key, pickle.loads(bytes.fromhex(r.value))
