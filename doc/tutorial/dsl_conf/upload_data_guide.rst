@@ -63,8 +63,7 @@ Here is an example showing how to create a upload config file:
     "namespace": "experiment",
     "head": 1,
     "partition": 8,
-    "work_mode": 0,
-    "backend": 0
+    "work_mode": 0
   }
 
 Field Specifications:
@@ -74,7 +73,6 @@ Field Specifications:
 3. head: Specify whether your data file include a header or not
 4. partition: Specify how many partitions used to store the data
 5. work_mode: Specify current work mode: 0 for standalone, 1 for cluster
-6. backend: Specify backend for job: 0 for EGGROLL, 1 for SPARK with RabbitMQ, 2 for SPARK with PULSAR
 
 
 Upload Command

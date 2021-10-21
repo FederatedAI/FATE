@@ -15,12 +15,17 @@ FATE官方网站：<https://fate.fedai.org/>
 
 ## 教程
 
-### 快速开始
+### 部署
 
+#### 单机版
 - [Docker Compose安装](https://github.com/FederatedAI/KubeFATE/tree/master/docker-deploy)
-- [原生单机版安装](./standalone-deploy/)
+- [原生单机版安装](../deploy/standalone-deploy/)
+
+#### 分布式
 - [Kubernetes安装](https://github.com/FederatedAI/KubeFATE/blob/master/k8s-deploy).
-- [原生集群安装](./cluster-deploy).
+- [原生集群安装](../deploy/cluster-deploy).
+
+### 快速开始
 - [单元测试](./python/federatedml/test/)
 - [使用FATE-PipeLine启动任务](./doc/tutorial/pipeline/fate_client_pipeline_tutotial.rst)
 - [使用DSL json conf启动任务](./doc/tutorial/dsl_conf/dsl_conf_v2_setting_guide.rst)

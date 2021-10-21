@@ -18,12 +18,17 @@ tree-based algorithms, deep learning and transfer learning.
 
 ## Getting Started
 
-### Quick Start
+### Deploy
 
+#### Standalone
 - [Deployment by Docker Compose](https://github.com/FederatedAI/KubeFATE/tree/master/docker-deploy)
-- [Native Standalone-deploy](./deploy/standalone-deploy/)
+- [Native Standalone-deploy](../deploy/standalone-deploy/)
+
+#### Cluster
 - [Deployment on Kubernetes](https://github.com/FederatedAI/KubeFATE/blob/master/k8s-deploy).
-- [Native Cluster-deploy](./deploy/cluster-deploy).
+- [Native Cluster-deploy](../deploy/cluster-deploy)
+
+#### Quick Start
 - [Run unittest](./python/federatedml/test/)
 - [Run Job with FATE-Pipeline](./doc/tutorial/pipeline/fate_client_pipeline_tutotial.rst)
 - [FATE-Pipeline Tutorial in Jupyter Notebook](./doc/tutorial/pipeline/pipeline_tutorial_0.ipynb)
