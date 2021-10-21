@@ -78,11 +78,6 @@ class CSession(CSessionABC):
             table.schema = schema
             return table
 
-        from fate_arch.common.address import FileAddress
-
-        if isinstance(address, FileAddress):
-            return address
-
         from fate_arch.common.address import PathAddress
 
         if isinstance(address, PathAddress):
