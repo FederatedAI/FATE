@@ -18,6 +18,7 @@ import collections
 
 from sklearn.model_selection import train_test_split
 
+from fate_arch.session import computing_session
 from federatedml.model_base import Metric, MetricMeta
 from federatedml.feature.binning.base_binning import BaseBinning
 from federatedml.model_base import ModelBase
