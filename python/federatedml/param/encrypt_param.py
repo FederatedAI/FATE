@@ -30,7 +30,7 @@ class EncryptParam(BaseParam):
         If method is 'Paillier', Paillier encryption will be used for federated ml.
         To use non-encryption version in HomoLR, set this to None.
         For detail of Paillier encryption, please check out the paper mentioned in README file.
-        Accepted values: {'Paillier', 'IterativeAffine', 'Random_IterativeAffine'}
+        Accepted values: {'Paillier', 'IterativeAffine', 'RandomIterativeAffine'}
 
     key_length : int, default: 1024
         Used to specify the length of key in this encryption method.

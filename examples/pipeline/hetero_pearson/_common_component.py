@@ -100,7 +100,7 @@ def run_pearson_pipeline(
     )
 
     pipeline.compile()
-    job_parameters = JobParameters(backend=config.backend, work_mode=config.work_mode)
+    job_parameters = JobParameters(work_mode=config.work_mode)
     pipeline.fit(job_parameters)
     return pipeline
 

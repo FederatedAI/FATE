@@ -27,7 +27,7 @@ class TestParamExtract(unittest.TestCase):
         self.init_param = InitParam()
         self.boosting_tree_param = HeteroSecureBoostParam()
         self.config_dict = \
-                {"HeteroSecureBoostParam": {
+                {"ComponentParam": {
                     "init_param": {"init_method": "test_init", "fit_intercept": False},
                     "tree_param": {"criterion_method": "test_decisiontree"},
                     "task_type": "test_boostingtree",

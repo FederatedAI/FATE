@@ -75,7 +75,7 @@ bash install_standalone_docker.sh
 
    To conveniently interact with FATE, we provide tools [FATE-Client](../../python/fate_client) and [FATE-Test](../../python/fate_test).
 
-   Install FATE-Client and FATE-Test with the following commands:
+   Install FATE-Client and FATE-Test with the following commands in the container:
 
    ```
     pip install fate-client

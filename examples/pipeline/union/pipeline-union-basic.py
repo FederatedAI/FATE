@@ -33,7 +33,6 @@ def main(config="../../config.yaml", namespace=""):
         config = load_job_config(config)
     parties = config.parties
     guest = parties.guest[0]
-    backend = config.backend
     work_mode = config.work_mode
 
     guest_train_data = {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"}
@@ -60,7 +59,7 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.add_component(union_0, data=Data(data=[data_transform_0.output.data, data_transform_1.output.data]))
     pipeline.compile()
 
-    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
+    job_parameters = JobParameters(work_mode=work_mode)
     pipeline.fit(job_parameters)
 
 
