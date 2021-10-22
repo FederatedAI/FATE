@@ -78,9 +78,12 @@
                 "max_iter": 30,
                 "early_stop": "diff",
                 "callback_param": {
-                    "callbacks": ["EarlyStopping", "PerformanceEvaluate"],
+                    "callbacks": [
+                        "EarlyStopping",
+                        "PerformanceEvaluate"
+                    ],
                     "validation_freqs": 1,
-                    "early_stopping_rounds": 5
+                    "early_stopping_rounds": 3
                 },
                 "reveal_strategy": "respectively",
                 "compute_loss": true,
