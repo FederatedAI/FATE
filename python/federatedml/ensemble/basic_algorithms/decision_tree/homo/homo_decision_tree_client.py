@@ -559,11 +559,7 @@ class HomoDecisionTreeClient(DecisionTree):
         model_param = DecisionTreeModelParam()
         for node in self.tree_node:
 
-            mo_weight = None
-            weight = node.weight
-            if type(node.weight) == np.ndarray:
-                weight = -1
-                mo_weight = list(node.weight)  # use multi output
+            weight, mo_weight = self.mo_weight_extract(node)
 
             model_param.tree_.add(id=node.id,
                                   sitename=self.role,
@@ -583,9 +579,7 @@ class HomoDecisionTreeClient(DecisionTree):
         self.tree_node = []
         for node_param in model_param.tree_:
 
-            weight = node_param.weight
-            if node_param.mo_weight is not None:
-                weight = np.array(list(node_param.mo_weight))
+            weight = self.mo_weight_load(node_param)
 
             _node = Node(id=node_param.id,
                          sitename=node_param.sitename,

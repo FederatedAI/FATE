@@ -371,6 +371,26 @@ class DecisionTree(BasicAlgorithms, ABC):
             if node.is_leaf:
                 node.weight = self.float_round(node.weight)
 
+    @staticmethod
+    def mo_weight_extract(node):
+
+        mo_weight = None
+        weight = node.weight
+        if type(node.weight) == np.ndarray:
+            weight = -1
+            mo_weight = list(node.weight)  # use multi output
+
+        return weight, mo_weight
+
+    @staticmethod
+    def mo_weight_load(node_param):
+
+        weight = node_param.weight
+        if node_param.mo_weight is not None:
+            weight = np.array(list(node_param.mo_weight))
+
+        return weight
+
     """
     To implement
     """
