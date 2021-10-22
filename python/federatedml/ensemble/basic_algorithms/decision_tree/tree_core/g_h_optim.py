@@ -1,4 +1,5 @@
 import functools
+import numpy as np
 from federatedml.secureprotol.fixedpoint import FixedPointNumber
 from federatedml.secureprotol.encrypt_mode import EncryptModeCalculator
 from federatedml.cipher_compressor.packer import GuestIntegerPacker, cipher_list_to_cipher_tensor
@@ -6,7 +7,6 @@ from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.splitter impo
 from federatedml.util import consts
 from federatedml.cipher_compressor.compressor import CipherCompressorHost, NormalCipherPackage
 from federatedml.cipher_compressor.compressor import PackingCipherTensorPackage
-from federatedml.util import LOGGER
 
 fix_point_precision = 2**52
 REGRESSION_MAX_GRADIENT = 10**9
