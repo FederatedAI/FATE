@@ -210,19 +210,19 @@ Add it to pipeline:
 Init Runtime JobParameters
 --------------------------
 
-To fit or predict, user needs to initialize the runtime environment, like 'backend' and 'work_mode',
+To fit or predict, user needs to initialize the runtime environment, like 'work_mode',
 
 .. code:: python
 
     from pipeline.runtime.entity import JobParameters
-    job_parameters = JobParameters(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE)
+    job_parameters = JobParameters(work_mode=WorkMode.STANDALONE)
 
 Run A Pipeline
 --------------
 
 Having added all components, user needs to first compile pipeline before
 running the designed job. After compilation, the pipeline can then be fit(run
-train job) with appropriate ``Backend`` and ``WorkMode``.
+train job) with appropriate ``WorkMode``.
 
 .. code:: python
 
