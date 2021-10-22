@@ -5,6 +5,7 @@ from federatedml.cipher_compressor.packer import GuestIntegerPacker, cipher_list
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.splitter import SplitInfo
 from federatedml.util import consts
 from federatedml.cipher_compressor.compressor import CipherCompressorHost, NormalCipherPackage
+from federatedml.cipher_compressor.compressor import PackingCipherTensorPackage
 from federatedml.util import LOGGER
 
 fix_point_precision = 2**52
@@ -22,7 +23,11 @@ def g_h_recover_post_func(unpack_rs_list: list, precision):
         h = unpack_rs_list[1] / precision
         return g, h
     else:
-        return None, None
+        g_list, h_list = [], []
+        for g, h in zip(unpack_rs_list[0::2], unpack_rs_list[1::2]):
+            g_list.append(g / precision)
+            h_list.append(h / precision)
+        return np.array(g_list), np.array(h_list)
 
 
 class SplitInfoPackage(NormalCipherPackage):
@@ -51,11 +56,37 @@ class SplitInfoPackage(NormalCipherPackage):
         return self._split_info_without_gh
 
 
+class SplitInfoPackage2(PackingCipherTensorPackage):
+
+    def __init__(self, padding_length, max_capacity):
+        super(SplitInfoPackage2, self).__init__(padding_length, max_capacity)
+        self._split_info_without_gh = []
+        self._cur_splitinfo_contains = 0
+
+    def add(self, split_info):
+
+        split_info_cp = SplitInfo(sitename=split_info.sitename, best_bid=split_info.best_bid,
+                                  best_fid=split_info.best_fid, missing_dir=split_info.missing_dir,
+                                  mask_id=split_info.mask_id, sample_count=split_info.sample_count)
+
+        en_g = split_info.sum_grad
+        super(SplitInfoPackage2, self).add(en_g)
+        self._cur_splitinfo_contains += 1
+        self._split_info_without_gh.append(split_info_cp)
+
+    def unpack(self, decrypter):
+        unpack_rs = super(SplitInfoPackage2, self).unpack(decrypter)
+        for split_info, g_h in zip(self._split_info_without_gh, unpack_rs):
+            split_info.sum_grad = g_h
+
+        return self._split_info_without_gh
+
+
 class GHPacker(object):
 
     def __init__(self, sample_num: int, en_calculator: EncryptModeCalculator,
                        precision=fix_point_precision, max_sample_weight=1.0, task_type=consts.CLASSIFICATION,
-                       g_min=None, g_max=None, sync_para=True):
+                       g_min=None, g_max=None, class_num=1, sync_para=True):
 
         if task_type == consts.CLASSIFICATION:
             g_max = 1.0
@@ -78,7 +109,9 @@ class GHPacker(object):
         self.g_max_int, self.h_max_int = self._compute_packing_parameter(sample_num, precision)
         self.exponent = FixedPointNumber.encode(0, precision=precision).exponent
         self.precision = precision
-        self.packer = GuestIntegerPacker(2, [self.g_max_int, self.h_max_int], encrypt_mode_calculator=en_calculator,
+        self.class_num = class_num
+        self.packer = GuestIntegerPacker(class_num * 2, [self.g_max_int, self.h_max_int] * class_num,
+                                         encrypt_mode_calculator=en_calculator,
                                          sync_para=sync_para)
 
     def _compute_packing_parameter(self, sample_num: int, precision=2 ** 53):
@@ -99,25 +132,29 @@ class GHPacker(object):
     @staticmethod
     def to_fixedpoint(gh, mul, g_offset):
 
-        g, h = gh[0], gh[1]
-        g += g_offset  # to positive
-        g_encoding = GHPacker.fixedpoint_encode(g, mul)
-        h_encoding = GHPacker.fixedpoint_encode(h, mul)
-        return g_encoding, h_encoding
+        en_list = []
+        for g, h in zip(gh[0:len(gh)//2], gh[len(gh)//2:]):
+            g += g_offset  # to positive
+            g_encoding = GHPacker.fixedpoint_encode(g, mul)
+            h_encoding = GHPacker.fixedpoint_encode(h, mul)
+            en_list.append(g_encoding)
+            en_list.append(h_encoding)
+
+        return en_list
 
     def pack_and_encrypt(self, gh):
 
         fixed_int_encode_func = functools.partial(self.to_fixedpoint, mul=self.precision, g_offset=self.g_offset)
         large_int_gh = gh.mapValues(fixed_int_encode_func)
-        en_g_h = self.packer.pack_and_encrypt(large_int_gh, post_process_func=post_func)
+        en_g_h = self.packer.pack_and_encrypt(large_int_gh)
         return en_g_h
 
     def decompress_and_unpack(self, split_info_package_list):
 
         rs = self.packer.decrypt_cipher_packages(split_info_package_list)
         for split_info in rs:
-            g, h = g_h_recover_post_func(self.packer._unpack_an_int(split_info.sum_grad, self.packer._bit_assignment[0]),
-                                         precision=self.precision)
+            unpack_rs = self.packer.unpack_an_int_list(split_info.sum_grad)
+            g, h = g_h_recover_post_func(unpack_rs, fix_point_precision)
             split_info.sum_grad = g - self.g_offset * split_info.sample_count
             split_info.sum_hess = h
 
