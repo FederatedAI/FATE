@@ -558,26 +558,40 @@ class HomoDecisionTreeClient(DecisionTree):
     def get_model_param(self):
         model_param = DecisionTreeModelParam()
         for node in self.tree_node:
+
+            mo_weight = None
+            weight = node.weight
+            if type(node.weight) == np.ndarray:
+                weight = -1
+                mo_weight = list(node.weight)  # use multi output
+
             model_param.tree_.add(id=node.id,
                                   sitename=self.role,
                                   fid=node.fid,
                                   bid=node.bid,
-                                  weight=node.weight,
+                                  weight=weight,
                                   is_leaf=node.is_leaf,
                                   left_nodeid=node.left_nodeid,
                                   right_nodeid=node.right_nodeid,
-                                  missing_dir=node.missing_dir)
+                                  missing_dir=node.missing_dir,
+                                  mo_weight=mo_weight
+                                  )
         model_param.leaf_count.update(self.leaf_count)
         return model_param
 
     def set_model_param(self, model_param):
         self.tree_node = []
         for node_param in model_param.tree_:
+
+            weight = node_param.weight
+            if node_param.mo_weight is not None:
+                weight = np.array(list(node_param.mo_weight))
+
             _node = Node(id=node_param.id,
                          sitename=node_param.sitename,
                          fid=node_param.fid,
                          bid=node_param.bid,
-                         weight=node_param.weight,
+                         weight=weight,
                          is_leaf=node_param.is_leaf,
                          left_nodeid=node_param.left_nodeid,
                          right_nodeid=node_param.right_nodeid,

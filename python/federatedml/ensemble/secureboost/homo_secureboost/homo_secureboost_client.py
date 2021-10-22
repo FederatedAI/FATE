@@ -7,15 +7,15 @@ from federatedml.util import LOGGER
 from federatedml.util import consts
 from federatedml.feature.sparse_vector import SparseVector
 from federatedml.feature.fate_element_type import NoneType
-from federatedml.ensemble.boosting.homo_boosting import HomoBoostingClient
-from federatedml.param.boosting_param import HomoSecureBoostParam
 from federatedml.ensemble import HeteroSecureBoostingTreeGuest
 from federatedml.util.io_check import assert_io_num_rows_equal
-from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import BoostingTreeModelMeta
-from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import ObjectiveMeta
+from federatedml.param.boosting_param import HomoSecureBoostParam
+from federatedml.ensemble.boosting.homo_boosting import HomoBoostingClient
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import QuantileMeta
-from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import BoostingTreeModelParam
+from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import ObjectiveMeta
+from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import BoostingTreeModelMeta
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import FeatureImportanceInfo
+from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import BoostingTreeModelParam
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.feature_importance import FeatureImportance
 from federatedml.ensemble.basic_algorithms.decision_tree.homo.homo_decision_tree_client import HomoDecisionTreeClient
 
@@ -196,10 +196,14 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
             self.cur_epoch_idx = epoch_idx
 
         LOGGER.debug('grad and hess is {}'.format(list(self.grad_and_hess.collect())))
-        subtree_g_h = self.get_subtree_grad_and_hess(self.grad_and_hess, booster_dim)
+        if self.multi_mode == consts.MULTI_OUTPUT:
+            g_h = self.grad_and_hess
+        else:
+            g_h = self.get_subtree_grad_and_hess(self.grad_and_hess, booster_dim)
+
         flow_id = self.generate_flowid(epoch_idx, booster_dim)
         new_tree = HomoDecisionTreeClient(self.tree_param, self.data_bin, self.bin_split_points,
-                                          self.bin_sparse_points, subtree_g_h, valid_feature=valid_features
+                                          self.bin_sparse_points, g_h, valid_feature=valid_features
                                           , epoch_idx=epoch_idx, role=self.role, flow_id=flow_id, tree_idx=booster_dim,
                                           mode='train')
 

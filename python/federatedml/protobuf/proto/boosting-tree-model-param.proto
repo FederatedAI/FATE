@@ -13,6 +13,7 @@ message NodeParam {
     int32 left_nodeid = 7;
     int32 right_nodeid = 8;
 	int32 missing_dir = 9;
+	repeated double mo_weight = 10;
 }
 
 message DecisionTreeModelParam {
