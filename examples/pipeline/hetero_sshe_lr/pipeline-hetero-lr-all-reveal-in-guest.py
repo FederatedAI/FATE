@@ -99,8 +99,6 @@ def main(config="../../config.yaml", namespace=""):
         "max_iter": 30,
         "early_stop": "diff",
         "batch_size": -1,
-        "validation_freqs": None,
-        "early_stopping_rounds": None,
         "learning_rate": 0.15,
         "init_param": {
             "init_method": "random_uniform"
