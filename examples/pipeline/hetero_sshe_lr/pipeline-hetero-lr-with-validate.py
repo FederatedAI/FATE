@@ -99,8 +99,14 @@ def main(config="../../config.yaml", namespace=""):
         "max_iter": 30,
         "early_stop": "diff",
         "batch_size": -1,
-        "validation_freqs": 1,
-        "early_stopping_rounds": 3,
+        "callback_param": {
+            "callbacks": [
+                "EarlyStopping",
+                "PerformanceEvaluate"
+            ],
+            "validation_freqs": 1,
+            "early_stopping_rounds": 3
+        },
         "learning_rate": 0.15,
         "init_param": {
             "init_method": "zeros"
