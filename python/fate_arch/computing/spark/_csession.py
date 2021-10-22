@@ -58,7 +58,7 @@ class CSession(CSessionABC):
             return table
 
         if isinstance(address, LocalFSAddress):
-            table = from_localfs(paths=f"{address.name_node}/{address.path}", partitions=partitions,
+            table = from_localfs(paths=address.path, partitions=partitions,
                               in_serialized=kwargs.get("in_serialized", True), id_delimiter=kwargs.get("id_delimiter", ','))
             table.schema = schema
             return table

@@ -25,7 +25,10 @@ class JobParameters(object):
                  dsl_version=None, timeout=None, eggroll_run=None, spark_run=None, adaptation_parameters=None, **kwargs):
         explicit_parameters = kwargs["explict_parameters"]
         for param_key, param_value in explicit_parameters.items():
-            setattr(self, param_key, param_value)
+            if param_key == "backend":
+                print ("Please don't use parameter backend in Fate' version >= 1.7")
+            else:
+                setattr(self, param_key, param_value)
 
         self.__party_instance = {}
         self._job_param = {}
