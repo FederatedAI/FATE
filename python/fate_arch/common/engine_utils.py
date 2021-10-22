@@ -36,18 +36,21 @@ def get_engines():
     engines = {
         EngineType.COMPUTING: None,
         EngineType.FEDERATION: None,
-        EngineType.STORAGE: None
+        EngineType.STORAGE: None,
     }
 
     # check service_conf.yaml  
-    if conf_utils.get_base_config("default_engines", {}).get(EngineType.COMPUTING) is None:
+    if (
+        conf_utils.get_base_config("default_engines", {}).get(EngineType.COMPUTING)
+        is None
+    ):
         raise RuntimeError(f"must set default_engines on conf/service_conf.yaml")
     default_engines = conf_utils.get_base_config("default_engines")
 
     # computing engine
     if default_engines.get(EngineType.COMPUTING) is None:
         raise RuntimeError(f"{EngineType.COMPUTING} is None,"
-                           f"Please check work_mode parameter or default_engines on conf/service_conf.yaml")
+                           f"Please check default_engines on conf/service_conf.yaml")
     engines[EngineType.COMPUTING] = default_engines[EngineType.COMPUTING].upper()
     if engines[EngineType.COMPUTING] not in get_engine_class_members(ComputingEngine):
         raise RuntimeError(f"{engines[EngineType.COMPUTING]} is illegal")
