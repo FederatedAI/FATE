@@ -21,7 +21,7 @@ import peewee
 from fate_arch.common import  engine_utils, EngineType
 from fate_arch.abc import CSessionABC, FederationABC, CTableABC, StorageSessionABC, StorageTableABC, StorageTableMetaABC
 from fate_arch.common import log, base_utils
-from fate_arch.common import WorkMode, remote_status
+from fate_arch.common import remote_status
 from fate_arch.computing import ComputingEngine
 from fate_arch.federation import FederationEngine
 from fate_arch.storage import StorageEngine, StorageSessionBase
@@ -46,22 +46,14 @@ class Session(object):
         self._as_global(self)
         return self
 
-    def __init__(self, session_id: str = None, work_mode: typing.Union[WorkMode, int] = None, options=None):
+    def __init__(self, session_id: str = None, options=None):
         if options is None:
             options = {}
-        engines = engine_utils.get_engines(work_mode, options)
+        engines = engine_utils.get_engines()
         LOGGER.info(f"using engines: {engines}")
-        if work_mode is None:
-            computing_type = engines.get(EngineType.COMPUTING, None)
-            if computing_type is None:
-                raise RuntimeError(f"must set default engines on conf/service_conf.yaml")
-            else:
-                if computing_type == ComputingEngine.STANDALONE:
-                    self._work_mode = WorkMode.STANDALONE
-                else:
-                    self._work_mode = WorkMode.CLUSTER
-        else:
-            self._work_mode = work_mode
+        computing_type = engines.get(EngineType.COMPUTING, None)
+        if computing_type is None:
+            raise RuntimeError(f"must set default engines on conf/service_conf.yaml")
 
         self._computing_type = engines.get(EngineType.COMPUTING, None)
         self._federation_type = engines.get(EngineType.FEDERATION, None)
@@ -119,10 +111,9 @@ class Session(object):
         if self._computing_type == ComputingEngine.EGGROLL:
             from fate_arch.computing.eggroll import CSession
 
-            work_mode = self._work_mode
             options = kwargs.get("options", {})
             self._computing_session = CSession(
-                session_id=computing_session_id, work_mode=work_mode, options=options
+                session_id=computing_session_id, options=options
             )
             return self
 
@@ -463,8 +454,8 @@ def get_computing_session() -> CSessionABC:
 # noinspection PyPep8Naming
 class computing_session(object):
     @staticmethod
-    def init(session_id, work_mode=0, options=None):
-        Session(work_mode=work_mode, options=options).as_global().init_computing(session_id)
+    def init(session_id, options=None):
+        Session(options=options).as_global().init_computing(session_id)
 
     @staticmethod
     def parallelize(data: typing.Iterable, partition: int, include_key: bool, **kwargs) -> CTableABC:

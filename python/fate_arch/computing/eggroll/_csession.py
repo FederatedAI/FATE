@@ -29,12 +29,10 @@ LOGGER = getLogger()
 
 
 class CSession(CSessionABC):
-    def __init__(self, session_id, work_mode, options: dict = None):
+    def __init__(self, session_id, options: dict = None):
         if options is None:
             options = {}
-        if work_mode == WorkMode.STANDALONE:
-            options["eggroll.session.deploy.mode"] = "standalone"
-        elif work_mode == WorkMode.CLUSTER:
+        if "eggroll.session.deploy.mode" not in options:
             options["eggroll.session.deploy.mode"] = "cluster"
         self._rp_session = session_init(session_id=session_id, options=options)
         self._rpc = runtime_init(session=self._rp_session)
