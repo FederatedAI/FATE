@@ -77,7 +77,7 @@ class HeteroLRBase(BaseLinearModel, ABC):
         self.review_every_iter = params.reveal_every_iter
 
         # self.fixpoint_filed = self.random_field ** 2
-        self.fixpoint_filed = 293973345475167247070445277780365744413
+        self.fixpoint_filed = 293973345475167247070445277780365744413 ** 2
         # self.random_field = params.random_field
 
         self.random_field = self.fixpoint_filed
@@ -161,13 +161,13 @@ class HeteroLRBase(BaseLinearModel, ABC):
     def cal_prediction(self, w_self, w_remote, features, spdz, suffix):
         raise NotImplementedError("Should not call here")
 
-    def compute_gradient(self, wa, wb, error, features, suffix):
+    def compute_gradient(self,  error, features, suffix):
         raise NotImplementedError("Should not call here")
 
     def transfer_pubkey(self):
         raise NotImplementedError("Should not call here")
 
-    def compute_loss(self, spdz, suffix):
+    def compute_loss(self, suffix):
         raise NotImplementedError("Should not call here")
 
     def fit(self, data_instances, validate_data=None):
@@ -236,12 +236,16 @@ class HeteroLRBase(BaseLinearModel, ABC):
             #     LOGGER.debug(f"shared_y: {self.shared_y}, type: {type(self.shared_y)}")
 
             w_self, w_remote = self.share_model(w, suffix="init")
+            last_w_self, last_w_remote = w_self, w_remote
             LOGGER.debug(f"first_w_self shape: {w_self.shape}, w_remote_shape: {w_remote.shape}")
 
             batch_data_generator = self.batch_generator.generate_batch_data()
             encoded_batch_data = []
             for batch_data in batch_data_generator:
-                batch_features = batch_data.mapValues(lambda x: x.features)
+                if self.fit_intercept:
+                    batch_features = batch_data.mapValues(lambda x: np.hstack((x.features, 1.0)))
+                else:
+                    batch_features = batch_data.mapValues(lambda x: x.features)
                 self.encoded_batch_num.append(1 / batch_data.count())
 
                 encoded_batch_data.append(
@@ -262,19 +266,20 @@ class HeteroLRBase(BaseLinearModel, ABC):
                     if self.role == consts.GUEST:
                         error = y - self.labels
 
-                        self_g, remote_g = self.compute_gradient(wa=w_remote, wb=w_self, error=error,
+                        self_g, remote_g = self.compute_gradient(error=error,
                                                                  features=batch_data,
                                                                  suffix=current_suffix)
                     else:
-                        self_g, remote_g = self.compute_gradient(wa=w_self, wb=w_remote, error=y,
-                                                                 features=batch_data, suffix=current_suffix)
+                        self_g, remote_g = self.compute_gradient(error=y,
+                                                                 features=batch_data,
+                                                                 suffix=current_suffix)
 
                     if self.review_every_iter:
                         LOGGER.debug(f"self_g shape: {self_g.shape}, remote_g_shape: {remote_g}，"
                                      f"self_g: {self_g}")
 
-                        new_g, host_g = self.review_models(self_g, remote_g, suffix=(self.n_iter_, batch_idx))
-                        LOGGER.debug(f"new_g shape: {new_g.shape}, new_g: {new_g} host_g_shape: {host_g},"
+                        new_g = self.review_models(self_g, remote_g, suffix=current_suffix)
+                        LOGGER.debug(f"new_g shape: {new_g.shape}, new_g: {new_g}"
                                      f"self.model_param.reveal_strategy: {self.model_param.reveal_strategy}")
 
                         if new_g is not None:
@@ -286,13 +291,14 @@ class HeteroLRBase(BaseLinearModel, ABC):
                             self.model_weights = LinearModelWeights(
                                 l=np.zeros(self_g.shape),
                                 fit_intercept=self.model_param.init_param.fit_intercept)
-                        if host_g is not None:
-                            self.host_model_weights = LinearModelWeights(
-                                l=host_g,
-                                fit_intercept=False)
-                        w_self, w_remote = self.share_model(self.model_weights.unboxed,
-                                                            suffix=(self.n_iter_, batch_idx))
+                        # if host_g is not None:
+                        #     self.host_model_weights = LinearModelWeights(
+                        #         l=host_g,
+                        #         fit_intercept=False)
+                        # w_self, w_remote = self.share_model(self.model_weights.unboxed,
+                        #                                     suffix=(self.n_iter_, batch_idx))
                     else:
+                        # todo: add regular;
                         w_self -= self_g * self.optimizer.decay_learning_rate()
                         w_remote -= remote_g * self.optimizer.decay_learning_rate()
 
@@ -300,7 +306,7 @@ class HeteroLRBase(BaseLinearModel, ABC):
 
                     if self.cal_loss:
                         suffix = ("loss",) + current_suffix
-                        loss_list.append(self.compute_loss(spdz=spdz, suffix=suffix))
+                        loss_list.append(self.compute_loss(suffix=suffix))
 
                 if self.cal_loss:
                     if self.role == consts.GUEST:
@@ -313,11 +319,20 @@ class HeteroLRBase(BaseLinearModel, ABC):
                 if self.converge_func_name in ["diff", "abs"]:
                     self.is_converged = self.check_converge_by_loss(loss, suffix=(self.n_iter_,))
                 elif self.converge_func_name == "weight_diff":
-                    self.is_converged = self.check_converge_by_weights(
-                        last_w=last_models,
-                        new_w=self.model_weights.unboxed,
-                        suffix=(self.n_iter_,))
-                    last_models = copy.deepcopy(self.model_weights.unboxed)
+                    if self.review_every_iter:
+                        self.is_converged = self.check_converge_by_weights(
+                            spdz=None,
+                            last_w=last_models,
+                            new_w=self.model_weights.unboxed,
+                            suffix=(str(self.n_iter_),))
+                        last_models = copy.deepcopy(self.model_weights.unboxed)
+                    else:
+                        self.is_converged = self.check_converge_by_weights(
+                            spdz=spdz,
+                            last_w=(last_w_self, last_w_remote),
+                            new_w=(w_self, w_remote),
+                            suffix=(str(self.n_iter_),))
+                        last_w_self, last_w_remote = copy.deepcopy(w_self), copy.deepcopy(w_remote)
                 else:
                     raise ValueError(f"Cannot recognize early_stop function: {self.converge_func_name}")
 
@@ -333,16 +348,11 @@ class HeteroLRBase(BaseLinearModel, ABC):
 
             # Finally reconstruct
             if not self.review_every_iter:
-                new_w, host_weights = self.review_models(w_self, w_remote, suffix=("final",))
+                new_w = self.review_models(w_self, w_remote, suffix=("final",))
                 if new_w is not None:
                     self.model_weights = LinearModelWeights(
                         l=new_w,
                         fit_intercept=self.model_param.init_param.fit_intercept)
-
-                if host_weights is not None:
-                    self.host_model_weights = LinearModelWeights(
-                        l=host_weights,
-                        fit_intercept=False)
 
         LOGGER.debug(f"loss_history: {self.loss_history}")
         self.set_summary(self.get_model_summary())
@@ -350,7 +360,7 @@ class HeteroLRBase(BaseLinearModel, ABC):
     def review_models(self, w_self, w_remote, suffix=None):
         if suffix is None:
             suffix = self.n_iter_
-        host_weights = None
+
         if self.model_param.reveal_strategy == "respectively":
 
             if self.role == consts.GUEST:
@@ -368,44 +378,20 @@ class HeteroLRBase(BaseLinearModel, ABC):
             if self.role == consts.GUEST:
                 new_w = w_self.get(tensor_name=f"wb_{suffix}",
                                    broadcast=False)
-                host_weights = w_remote.get(tensor_name=f"wa_{suffix}",
-                                            broadcast=False)
-
+                encrypted_w_remote = self.cipher.recursive_encrypt(self.fixedpoint_encoder.decode(w_remote.value))
+                encrypted_w_remote_tensor = fixedpoint_numpy.PaillierFixedPointTensor(value=encrypted_w_remote)
+                encrypted_w_remote_tensor.broadcast_reconstruct_share(tensor_name=f"wa_{suffix}")
             else:
-                if w_remote.shape[0] > 2:
-                    raise ValueError("Too many features in Guest. Review strategy: 'all_reveal_in_guest' "
-                                     "should not be used.")
+                # if w_remote.shape[0] > 2:
+                #     raise ValueError("Too many features in Guest. Review strategy: 'all_reveal_in_guest' "
+                #                      "should not be used.")
                 w_remote.broadcast_reconstruct_share(tensor_name=f"wb_{suffix}")
 
-                w_self.broadcast_reconstruct_share(tensor_name=f"wa_{suffix}")
+                new_w = w_self.reconstruct(tensor_name=f"wa_{suffix}", broadcast=False)
 
-                new_w = None
         else:
             raise NotImplementedError(f"review strategy: {self.model_param.reveal_strategy} has not been implemented.")
-        return new_w, host_weights
-
-    # def share_encrypted_value(self, suffix, is_remote, **kwargs):
-    #     if is_remote:
-    #         for var_name, var in kwargs.items():
-    #             dest_role = consts.GUEST if self.role == consts.HOST else consts.HOST
-    #             if isinstance(var, fixedpoint_table.FixedPointTensor):
-    #                 encrypt_var = self.cipher.distribute_encrypt(var.value)
-    #             else:
-    #                 encrypt_var = self.cipher.recursive_encrypt(var.value)
-    #             self.transfer_variable.encrypted_share_matrix.remote(encrypt_var, role=dest_role,
-    #                                                                  suffix=(var_name,) + suffix)
-    #     else:
-    #         res = []
-    #         for var_name in kwargs.keys():
-    #             dest_role = consts.GUEST if self.role == consts.HOST else consts.HOST
-    #             z = self.transfer_variable.encrypted_share_matrix.get(role=dest_role, idx=0,
-    #                                                                   suffix=(var_name,) + suffix)
-    #             if is_table(z):
-    #                 res.append(fixedpoint_table.PaillierFixedPointTensor(z))
-    #             else:
-    #                 res.append(fixedpoint_numpy.PaillierFixedPointTensor(z))
-    #
-    #         return tuple(res)
+        return new_w
 
     def _get_meta(self):
         meta_protobuf_obj = lr_model_meta_pb2.LRModelMeta(penalty=self.model_param.penalty,
@@ -482,3 +468,7 @@ class HeteroLRBase(BaseLinearModel, ABC):
     def one_vs_rest_fit(self, train_data=None, validate_data=None):
         LOGGER.debug("Class num larger than 2, need to do one_vs_rest")
         self.one_vs_rest_obj.fit(data_instances=train_data, validate_data=validate_data)
+
+    def check_converge_by_weights(self, spdz, last_w, new_w, suffix):
+        raise NotImplementedError()
+

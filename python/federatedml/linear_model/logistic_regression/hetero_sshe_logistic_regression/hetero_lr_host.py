@@ -32,12 +32,12 @@ class HeteroLRHost(HeteroLRBase):
         self.data_batch_count = []
         self.wx_self = None
 
-    def transfer_pubkey(self):
-        public_key = self.cipher.public_key
-        self.transfer_variable.pubkey.remote(public_key, role=consts.GUEST, suffix=("host_pubkey",))
-        remote_pubkey = self.transfer_variable.pubkey.get(role=consts.GUEST, idx=0,
-                                                          suffix=("guest_pubkey",))
-        return remote_pubkey
+    # def transfer_pubkey(self):
+    #     public_key = self.cipher.public_key
+    #     self.transfer_variable.pubkey.remote(public_key, role=consts.GUEST, suffix=("host_pubkey",))
+    #     remote_pubkey = self.transfer_variable.pubkey.get(role=consts.GUEST, idx=0,
+    #                                                       suffix=("guest_pubkey",))
+    #     return remote_pubkey
 
     def _init_weights(self, model_shape):
         # init_param_obj = copy.deepcopy(self.init_param_obj)
@@ -53,16 +53,13 @@ class HeteroLRHost(HeteroLRBase):
                                                             tensor_name=".".join(za_suffix),
                                                             cipher=None,
                                                             suffix=za_suffix)
-        # za_share = self.secure_matrix_mul_passive(features, suffix=("za",) + suffix)
 
         zb_suffix = ("zb",) + suffix
         zb_share = self.secure_matrix_obj.secure_matrix_mul(w_remote,
                                                             tensor_name=".".join(zb_suffix),
                                                             cipher=self.cipher,
                                                             suffix=zb_suffix)
-        # self.secure_matrix_mul_active(w_remote, cipher=self.cipher, suffix=zb_suffix)
-        # zb_share = self.received_share_matrix(self.cipher, q_field=self.fixpoint_encoder.n,
-        #                                       encoder=self.fixpoint_encoder, suffix=zb_suffix)
+
         z = z1 + za_share + zb_share
         return z
 
@@ -87,7 +84,7 @@ class HeteroLRHost(HeteroLRBase):
 
         return shared_sigmoid_z
 
-    def compute_gradient(self, wa, wb, error: fixedpoint_table.FixedPointTensor, features, suffix):
+    def compute_gradient(self, error: fixedpoint_table.FixedPointTensor, features, suffix):
         encoded_1_n = self.encoded_batch_num[int(suffix[1])]
 
         ga = error.dot_local(features)
@@ -116,7 +113,7 @@ class HeteroLRHost(HeteroLRBase):
 
         return ga_new, gb1
 
-    def compute_loss(self, spdz, suffix):
+    def compute_loss(self, suffix):
         """
           Use Taylor series expand log loss:
           Loss = - y * log(h(x)) - (1-y) * log(1 - h(x)) where h(x) = 1/(1+exp(-wx))
@@ -140,9 +137,13 @@ class HeteroLRHost(HeteroLRBase):
 
         LOGGER.debug(f"share_loss: {share_loss}")
 
-        loss_norm = self.optimizer.loss_norm(self.model_weights)
-        if loss_norm:
-            share_loss += loss_norm/3.0
+        # todo: dylan, review & unreview loss_norm;
+        if self.review_every_iter:
+            loss_norm = self.optimizer.loss_norm(self.model_weights)
+            if loss_norm:
+                share_loss += loss_norm/3.0
+        else:
+            pass
 
         LOGGER.debug(f"share_loss+loss_norm: {share_loss}")
 
@@ -182,19 +183,47 @@ class HeteroLRHost(HeteroLRBase):
     #     LOGGER.debug(f"loss: {loss}")
     #     self.transfer_variable.loss.remote(loss[0][0], suffix=suffix)
 
-    def check_converge_by_weights(self, last_w, new_w, suffix):
-        if self.is_respectively_reveal:
-            return self._respectively_check(last_w[0], new_w, suffix)
+    def check_converge_by_weights(self, spdz, last_w, new_w, suffix):
+        if self.review_every_iter:
+            return self._review_every_iter_check(last_w, new_w, suffix)
         else:
-            return self._unbalanced_check(suffix)
+            return self._unreview_every_iter_check(spdz, last_w, new_w, suffix)
 
-    def _respectively_check(self, last_w, new_w, suffix):
+    def _review_every_iter_check(self, last_w, new_w, suffix):
         square_sum = np.sum((last_w - new_w) ** 2)
         self.converge_transfer_variable.square_sum.remote(square_sum, role=consts.GUEST, idx=0, suffix=suffix)
         return self.converge_transfer_variable.converge_info.get(idx=0, suffix=suffix)
 
-    def _unbalanced_check(self, suffix):
-        return self.converge_transfer_variable.converge_info.get(idx=0, suffix=suffix)
+    def _unreview_every_iter_check(self, spdz, last_w, new_w, suffix):
+        last_w_self, last_w_remote = last_w
+        w_self, w_remote = new_w
+        grad_self = w_self - last_w_self
+        grad_remote = w_remote - last_w_remote
+        grad_encode = np.hstack((grad_self.value, grad_remote.value))
+        grad_encode = np.array([grad_encode])
+        grad_tensor_name = ".".join(("check_converge_grad",) + suffix)
+        grad_tensor = fixedpoint_numpy.FixedPointTensor(value=grad_encode,
+                                                        q_field=self.fixedpoint_encoder.n,
+                                                        endec=self.fixedpoint_encoder,
+                                                        tensor_name=grad_tensor_name)
+
+        grad_tensor_transpose_name = ".".join(("check_converge_grad_transpose",) + suffix)
+        grad_tensor_transpose = fixedpoint_numpy.FixedPointTensor(value=grad_encode.T,
+                                                                  q_field=self.fixedpoint_encoder.n,
+                                                                  endec=self.fixedpoint_encoder,
+                                                                  tensor_name=grad_tensor_transpose_name)
+
+        grad_norm_tensor_name = ".".join(("check_converge_grad_norm",) + suffix)
+
+        grad_norm = spdz.dot(grad_tensor, grad_tensor_transpose, target_name=grad_norm_tensor_name).get()
+        LOGGER.info(f"gradient spdz dot.get: {grad_norm}")
+        weight_diff = np.sqrt(grad_norm[0][0])
+        LOGGER.info("iter: {}, weight_diff:{}, is_converged: {}".format(self.n_iter_,
+                                                                        weight_diff, self.is_converged))
+        is_converge = False
+        if weight_diff < self.model_param.tol:
+            is_converge = True
+        return is_converge
 
     def predict(self, data_instances):
         LOGGER.info("Start predict ...")
@@ -207,14 +236,6 @@ class HeteroLRHost(HeteroLRBase):
         LOGGER.debug(f"Before_predict_review_strategy: {self.model_param.reveal_strategy},"
                      f" {self.is_respectively_reveal}")
 
-        if self.is_respectively_reveal:
-            return self._respectively_predict(data_instances)
-        else:
-            return self._unbalanced_predict(data_instances)
-
-    def _respectively_predict(self, data_instances):
-        self.transfer_variable.host_prob.disable_auto_clean()
-
         def _vec_dot(v, coef, intercept):
             return fate_operator.vec_dot(v.features, coef) + intercept
 
@@ -225,11 +246,24 @@ class HeteroLRHost(HeteroLRBase):
         self.transfer_variable.host_prob.remote(prob_host, role=consts.GUEST, idx=0)
         LOGGER.info("Remote probability to Guest")
 
-    def _unbalanced_predict(self, data_instances):
-        encrypted_host_weights = self.transfer_variable.encrypted_host_weights.get(idx=-1)[0]
-        prob_host = data_instances.mapValues(lambda v: fate_operator.vec_dot(v.features, encrypted_host_weights))
-        self.transfer_variable.host_prob.remote(prob_host, role=consts.GUEST, idx=0)
-        LOGGER.info("Remote probability to Guest")
+    # def _respectively_predict(self, data_instances):
+    #     self.transfer_variable.host_prob.disable_auto_clean()
+    #
+    #     def _vec_dot(v, coef, intercept):
+    #         return fate_operator.vec_dot(v.features, coef) + intercept
+    #
+    #     f = functools.partial(_vec_dot,
+    #                           coef=self.model_weights.coef_,
+    #                           intercept=self.model_weights.intercept_)
+    #     prob_host = data_instances.mapValues(f)
+    #     self.transfer_variable.host_prob.remote(prob_host, role=consts.GUEST, idx=0)
+    #     LOGGER.info("Remote probability to Guest")
+    #
+    # def _unbalanced_predict(self, data_instances):
+    #     encrypted_host_weights = self.transfer_variable.encrypted_host_weights.get(idx=-1)[0]
+    #     prob_host = data_instances.mapValues(lambda v: fate_operator.vec_dot(v.features, encrypted_host_weights))
+    #     self.transfer_variable.host_prob.remote(prob_host, role=consts.GUEST, idx=0)
+    #     LOGGER.info("Remote probability to Guest")
 
     # def _get_param(self):
     #     single_result = self.get_single_model_param()

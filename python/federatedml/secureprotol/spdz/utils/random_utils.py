@@ -32,6 +32,28 @@ def rand_tensor(q_field, tensor):
     raise NotImplementedError(f"type={type(tensor)}")
 
 
+def rand_tensor2(q_field, tensor):
+    q_field = 2 ** 32
+    if is_table(tensor):
+        return tensor.mapValues(
+            lambda x: np.array([FixedPointNumber(encoding=np.random.randint(1, q_field),
+                                                 exponent=FixedPointNumber.calculate_exponent_from_precision(
+                                                     precision=2 ** 32)
+                                                 )
+                                for _ in x],
+                               dtype=FixedPointNumber)
+        )
+    if isinstance(tensor, np.ndarray):
+        arr = np.zeros(shape=tensor.shape, dtype=FixedPointNumber)
+        view = arr.view().reshape(-1)
+        for i in range(arr.size):
+            view[i] = FixedPointNumber(encoding=np.random.randint(1, q_field),
+                                       exponent=FixedPointNumber.calculate_exponent_from_precision(precision=2 ** 32)
+                                       )
+        return arr
+    raise NotImplementedError(f"type={type(tensor)}")
+
+
 class _MixRand(object):
     def __init__(self, lower, upper, base_size=1000, inc_velocity=0.1, inc_velocity_deceleration=0.01):
         self._lower = lower
@@ -98,22 +120,17 @@ def urand_tensor2(q_field, tensor, use_mix=False):
                                         preserves_partitioning=True)
         return tensor.mapValues(
             lambda x: np.array([FixedPointNumber(encoding=random.SystemRandom().randint(1, q_field),
-                                                 exponent=FixedPointNumber.calculate_exponent_from_precision(precision=2**16)
+                                                 exponent=FixedPointNumber.calculate_exponent_from_precision(
+                                                     precision=2 ** 32)
                                                  )
                                 for _ in x],
-                               dtype=object))
+                               dtype=FixedPointNumber))
     if isinstance(tensor, np.ndarray):
-        arr = np.zeros(shape=tensor.shape, dtype=object)
+        arr = np.zeros(shape=tensor.shape, dtype=FixedPointNumber)
         view = arr.view().reshape(-1)
         for i in range(arr.size):
             view[i] = FixedPointNumber(encoding=random.SystemRandom().randint(1, q_field),
-                                       exponent=FixedPointNumber.calculate_exponent_from_precision(precision=2**16)
+                                       exponent=FixedPointNumber.calculate_exponent_from_precision(precision=2 ** 32)
                                        )
         return arr
     raise NotImplementedError(f"type={type(tensor)}")
-
-
-
-
-
-

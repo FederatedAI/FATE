@@ -279,7 +279,7 @@ class FixedPointNumber(object):
 
     def __mul_fixedpointnumber(self, other):
         if self.n != other.n:
-            raise ValueError(f"Multiplying number with different field")
+            other = self.encode(other.decode(), n=self.n, max_int=self.max_int)
         encoding = (self.encoding * other.encoding) % self.n
         exponent = self.exponent + other.exponent
         mul_fixedpoint = FixedPointNumber(encoding, exponent, n=self.n, max_int=self.max_int)

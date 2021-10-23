@@ -162,8 +162,17 @@ class LogisticRegressionParam(BaseParam):
                 "logistic_param's optimizer {} not supported, should be str type".format(self.optimizer))
         else:
             self.optimizer = self.optimizer.lower()
-            if self.optimizer not in ['sgd']:
-                raise ValueError("sshe logistic_param's optimizer support sgd only.")
+            if self.reveal_every_iter:
+                if self.optimizer not in ['sgd', 'rmsprop', 'adam', 'adagrad', 'nesterov_momentum_sgd']:
+                    raise ValueError(
+                        "When reveal_every_iter is True, "
+                        "sshe logistic_param's optimizer not supported, optimizer should be"
+                        " 'sgd', 'rmsprop', 'adam', 'nesterov_momentum_sgd', or 'adagrad'")
+            else:
+                if self.optimizer not in ['sgd', 'nesterov_momentum_sgd']:
+                    raise ValueError("When reveal_every_iter is False, "
+                                     "sshe logistic_param's optimizer not supported, optimizer should be"
+                                     " 'sgd', 'nesterov_momentum_sgd'")
 
         if self.batch_size != -1:
             if type(self.batch_size).__name__ not in ["int"] \
@@ -198,8 +207,9 @@ class LogisticRegressionParam(BaseParam):
             if self.early_stop in ["diff", 'abs'] and not self.compute_loss:
                 raise ValueError(f"sshe lr param early_stop: {self.early_stop} should calculate loss."
                                  f"Please set 'compute_loss' to be True")
-            if self.early_stop == "weight_diff" and not self.reveal_every_iter:
-                raise ValueError(f"When early_stop strategy is weight_diff, weight should be revealed every iter.")
+            # todo: dylan
+            # if self.early_stop == "weight_diff" and not self.reveal_every_iter:
+            #     raise ValueError(f"When early_stop strategy is weight_diff, weight should be revealed every iter.")
 
         self.encrypt_param.check()
         self.predict_param.check()
@@ -240,7 +250,7 @@ class LogisticRegressionParam(BaseParam):
             if self.callback_param.validation_freqs is None:
                 raise ValueError("validation freqs must be set when early stopping is enabled")
 
-        if self.callback_param.metrics is not None and\
+        if self.callback_param.metrics is not None and \
                 not isinstance(self.callback_param.metrics, list):
             raise ValueError("metrics should be a list")
 
