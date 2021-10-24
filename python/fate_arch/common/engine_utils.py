@@ -32,44 +32,36 @@ def get_engine_class_members(engine_class) -> list:
     return members
 
 
-def get_engines(work_mode: typing.Union[WorkMode, int] = None, options=None):
-    keys = [EngineType.COMPUTING, EngineType.FEDERATION, EngineType.STORAGE, "federated_mode"]
-    engines = {}
-    for k in keys:
-        if options and options.get(k, None) is not None:
-            engines[k] = options[k].upper()
+def get_engines():
+    engines = {
+        EngineType.COMPUTING: None,
+        EngineType.FEDERATION: None,
+        EngineType.STORAGE: None,
+    }
 
-    if isinstance(work_mode, int):
-        work_mode = WorkMode(work_mode)
+    # check service_conf.yaml
+    if (
+        conf_utils.get_base_config("default_engines", {}).get(EngineType.COMPUTING)
+        is None
+    ):
+        raise RuntimeError(f"must set default_engines on conf/service_conf.yaml")
+    default_engines = conf_utils.get_base_config("default_engines")
 
-    if work_mode == WorkMode.STANDALONE:
-        engines[EngineType.COMPUTING] = ComputingEngine.STANDALONE
-        engines[EngineType.FEDERATION] = FederationEngine.STANDALONE
-        engines[EngineType.STORAGE] = StorageEngine.STANDALONE
-
-    if engines.get(EngineType.COMPUTING) is None:
-        if conf_utils.get_base_config("default_engines", {}).get(EngineType.COMPUTING) is not None:
-            default_engines = conf_utils.get_base_config("default_engines")
-
-            engines[EngineType.COMPUTING] = default_engines[EngineType.COMPUTING].upper() \
-                if default_engines.get(EngineType.COMPUTING) is not None else None
-
-            if engines.get(EngineType.FEDERATION) is None:
-                engines[EngineType.FEDERATION] = default_engines[EngineType.FEDERATION].upper() \
-                    if default_engines.get(EngineType.FEDERATION) is not None else None
-
-            if engines.get(EngineType.STORAGE) is None:
-                engines[EngineType.STORAGE] = default_engines[EngineType.STORAGE].upper() \
-                    if default_engines.get(EngineType.STORAGE) is not None else None
-        else:
-            raise RuntimeError(f"must set default_engines on conf/service_conf.yaml")
-
-    if engines.get(EngineType.COMPUTING) is None:
+    # computing engine
+    if default_engines.get(EngineType.COMPUTING) is None:
         raise RuntimeError(f"{EngineType.COMPUTING} is None,"
-                           f"Please check work_mode parameter or default_engines on conf/service_conf.yaml")
-
+                           f"Please check default_engines on conf/service_conf.yaml")
+    engines[EngineType.COMPUTING] = default_engines[EngineType.COMPUTING].upper()
     if engines[EngineType.COMPUTING] not in get_engine_class_members(ComputingEngine):
         raise RuntimeError(f"{engines[EngineType.COMPUTING]} is illegal")
+
+    # federation engine
+    if default_engines.get(EngineType.FEDERATION) is not None:
+        engines[EngineType.FEDERATION] = default_engines[EngineType.FEDERATION].upper()
+
+    # storage engine
+    if default_engines.get(EngineType.STORAGE) is not None:
+        engines[EngineType.STORAGE] = default_engines[EngineType.STORAGE].upper()
 
     # set default storage engine and federation engine by computing engine
     for t in (EngineType.STORAGE, EngineType.FEDERATION):
@@ -78,11 +70,10 @@ def get_engines(work_mode: typing.Union[WorkMode, int] = None, options=None):
             engines[t] = Relationship.Computing[engines[EngineType.COMPUTING]][t]["default"]
 
     # set default federated mode by federation engine
-    if engines.get("federated_mode") is None:
-        if engines[EngineType.FEDERATION] == FederationEngine.STANDALONE:
-            engines["federated_mode"] = FederatedMode.SINGLE
-        else:
-            engines["federated_mode"] = FederatedMode.MULTIPLE
+    if engines[EngineType.FEDERATION] == FederationEngine.STANDALONE:
+        engines["federated_mode"] = FederatedMode.SINGLE
+    else:
+        engines["federated_mode"] = FederatedMode.MULTIPLE
 
     if engines[EngineType.STORAGE] not in get_engine_class_members(StorageEngine):
         raise RuntimeError(f"{engines[EngineType.STORAGE]} is illegal")
