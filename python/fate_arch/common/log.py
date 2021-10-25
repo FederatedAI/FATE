@@ -134,6 +134,7 @@ class LoggerFactory(object):
             formatter = logging.Formatter(LoggerFactory.LOG_FORMAT.replace("jobId", job_id))
         else:
             formatter = logging.Formatter(LoggerFactory.LOG_FORMAT.replace("jobId", "Server"))
+        os.makedirs(os.path.dirname(log_file), exist_ok=True)
         if LoggerFactory.log_share:
             handler = ROpenHandler(log_file,
                                    when='D',

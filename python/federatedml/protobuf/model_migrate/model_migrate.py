@@ -1,5 +1,6 @@
 from typing import List
 from federatedml.protobuf.model_migrate.converter_factory import converter_factory
+from federatedml.model_base import serialize_models
 import copy
 
 
@@ -38,7 +39,7 @@ def model_migration(model_contents: dict,
     converter = converter_factory(module_name)
     if converter is None:
         # no supported converter, return
-        return model_contents
+        return serialize_models(model_contents)
 
     # replace old id with new id using converter
     guest_mapping_dict = generate_id_mapping(old_guest_list, new_guest_list)
@@ -60,7 +61,7 @@ def model_migration(model_contents: dict,
     if param is None or meta is None:
         raise ValueError('param or meta is None')
 
-    result = converter.convert(param, meta, guest_mapping_dict,
-                               host_mapping_dict, arbiter_mapping_dict)
+    converted_param, converted_meta = converter.convert(param, meta, guest_mapping_dict,
+                                                        host_mapping_dict, arbiter_mapping_dict)
 
-    return {param_key: result[0], meta_key: result[1]}
+    return serialize_models({param_key: converted_param, meta_key: converted_meta})
