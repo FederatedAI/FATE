@@ -8,6 +8,7 @@ def produce_hetero_tree_learner(role, tree_param: DecisionTreeParam, flow_id, da
                                 bin_sparse_points, task_type, valid_features, host_party_list,
                                 runtime_idx,
                                 cipher_compress=True,
+                                mo_tree=False,
                                 g_h=None, encrypter=None, en_calculator=None,  # guest only
                                 goss_subsample=False, complete_secure=False,
                                 max_sample_weights=1.0,
@@ -39,7 +40,8 @@ def produce_hetero_tree_learner(role, tree_param: DecisionTreeParam, flow_id, da
                   goss_subsample=goss_subsample,
                   complete_secure=complete_secure,
                   cipher_compressing=cipher_compress,
-                  max_sample_weight=max_sample_weights
+                  max_sample_weight=max_sample_weights,
+                  mo_tree=mo_tree
                   )
 
     elif role == consts.HOST:
@@ -62,7 +64,8 @@ def produce_hetero_tree_learner(role, tree_param: DecisionTreeParam, flow_id, da
                   complete_secure=complete_secure,
                   cipher_compressing=cipher_compress,
                   bin_num=bin_num,
-                  data_bin_dense=None
+                  data_bin_dense=None,
+                  mo_tree=mo_tree
                   )
 
     else:
