@@ -14,8 +14,6 @@
     },
     "job_parameters": {
         "common": {
-            "job_type": "train",
-            "work_mode": 0,
             "computing_engine": "STANDALONE",
             "federation_engine": "STANDALONE",
             "storage_engine": "STANDALONE",
