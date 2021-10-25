@@ -23,7 +23,8 @@ from fate_arch.common import conf_utils, EngineType
 from fate_arch.common.base_utils import current_timestamp, serialize_b64, deserialize_b64, timestamp_to_date, date_string_to_timestamp, json_dumps, json_loads
 from fate_arch.federation import FederationEngine
 
-is_standalone = conf_utils.get_base_config("default_engines", {}).get(EngineType.FEDERATION) == FederationEngine.STANDALONE
+is_standalone = conf_utils.get_base_config("default_engines", {}).get(EngineType.FEDERATION).upper() == \
+                FederationEngine.STANDALONE
 if is_standalone:
     from playhouse.apsw_ext import DateTimeField
 else:
