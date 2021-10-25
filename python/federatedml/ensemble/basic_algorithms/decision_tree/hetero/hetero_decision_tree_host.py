@@ -52,6 +52,9 @@ class HeteroDecisionTreeHost(DecisionTree):
         # code version control
         self.new_ver = True
 
+        # multi mode
+        self.mo_tree = False
+
     """
     Setting
     """
@@ -75,7 +78,9 @@ class HeteroDecisionTreeHost(DecisionTree):
              goss_subsample=False,
              run_sprase_opt=False,
              cipher_compressing=False,
-             new_ver=True):
+             new_ver=True,
+             mo_tree=False
+             ):
 
         super(HeteroDecisionTreeHost, self).init_data_and_variable(flowid, runtime_idx, data_bin, bin_split_points,
                                                                    bin_sparse_points, valid_features, None)
@@ -88,8 +93,8 @@ class HeteroDecisionTreeHost(DecisionTree):
         self.bin_num = bin_num
         self.run_cipher_compressing = cipher_compressing
         self.feature_num = self.bin_split_points.shape[0]
-
         self.new_ver = new_ver
+        self.mo_tree = mo_tree
 
         self.report_init_status()
 
@@ -209,7 +214,7 @@ class HeteroDecisionTreeHost(DecisionTree):
         LOGGER.info("get encrypted grad and hess")
 
         if self.run_cipher_compressing:
-            self.cipher_compressor = PackedGHCompressor()
+            self.cipher_compressor = PackedGHCompressor(mo_mode=self.mo_tree)
 
         self.grad_and_hess = self.transfer_inst.encrypted_grad_and_hess.get(idx=0)
 

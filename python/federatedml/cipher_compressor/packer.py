@@ -19,12 +19,6 @@ class GuestIntegerPacker(object):
 
     def __init__(self, pack_num: int, pack_num_range: list, encrypt_mode_calculator: EncryptModeCalculator,
                  sync_para=True):
-        """
-        max_int: max int allowed for packing result
-        pack_num: number of int to pack, they must be POSITIVE integer
-        pack_num_range: list of integer, it gives range of every integer to pack
-        need_cipher_compress: if dont need cipher compress, related parameter will be set to 1
-        """
 
         self._pack_num = pack_num
         assert len(pack_num_range) == self._pack_num, 'list len must equal to pack_num'
@@ -66,7 +60,8 @@ class GuestIntegerPacker(object):
                                                                                           compress_parameter))
 
     def cipher_compress_suggest(self):
-        if type(self.calculator.encrypter) == IterativeAffineEncrypt:  # iterativeAffine not support cipher compress
+        # iterativeAffine does not support cipher compress
+        if type(self.calculator.encrypter) == IterativeAffineEncrypt:
             return 1, 1
         compressible = self._bit_assignment[-1]
         total_bit_count = sum(compressible)

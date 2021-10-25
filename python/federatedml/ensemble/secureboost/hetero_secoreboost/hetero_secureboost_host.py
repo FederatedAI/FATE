@@ -51,6 +51,8 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         self.tree_plan = []
         self.feature_importances_ = {}
 
+        self.multi_mode = consts.SINGLE_OUTPUT
+
         self.predict_transfer_inst = HeteroSecureBoostTransferVariable()
 
     def _init_model(self, param: HeteroSecureBoostParam):
@@ -104,6 +106,10 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
 
         self.feature_importances_ = rs_dict
 
+    def preprocess(self):
+        if self.multi_mode == consts.MULTI_OUTPUT:
+            self.booster_dim = 1
+
     def fit_a_learner(self, epoch_idx: int, booster_dim: int):
 
         flow_id = self.generate_flowid(epoch_idx, booster_dim)
@@ -125,7 +131,6 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
                                            fast_sbt=fast_sbt, tree_type=tree_type, target_host_id=target_host_id,
                                            guest_depth=self.guest_depth, host_depth=self.host_depth
                                            )
-
         tree.fit()
 
         if self.work_mode == consts.MIX_TREE:

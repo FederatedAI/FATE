@@ -294,7 +294,8 @@ class BoostingParam(BaseParam):
 
         if type(self.subsample_feature_rate).__name__ not in ["float", "int", "long"] or \
                 self.subsample_feature_rate < 0 or self.subsample_feature_rate > 1:
-            raise ValueError("boosting_core tree param's subsample_feature_rate should be a numeric number between 0 and 1")
+            raise ValueError("boosting_core tree param's subsample_feature_rate should be a numeric number between"
+                             " 0 and 1")
 
         if type(self.n_iter_no_change).__name__ != "bool":
             raise ValueError("boosting_core tree param's n_iter_no_change {} not supported, should be bool type".format(
@@ -454,7 +455,7 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
 
         cipher_compress: bool, default is True, use cipher compressing to reduce computation cost and transfer cost
 
-        work_mode：
+        work_mode：str
 
             std: standard sbt setting
 
@@ -465,15 +466,22 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
             layered: only support 2 party, when running layered mode, first 'host_depth' layer will use host features,
                      and then next 'guest_depth' will only use guest features
 
-        tree_num_per_party: every party will alternate build 'tree_num_per_party' trees until reach max tree num, this
+        tree_num_per_party: int, every party will alternate build 'tree_num_per_party' trees until reach max tree num, this
                             param is valid when work_mode is mix
 
-        guest_depth: guest will build last guest_depth of a decision tree using guest features, is valid when work mode
+        guest_depth: int, guest will build last guest_depth of a decision tree using guest features, is valid when work mode
                      is layered
 
-        host depth: host will build first host_depth of a decision tree using host features, is valid when work mode is
+        host_depth: int, host will build first host_depth of a decision tree using host features, is valid when work mode is
                     layered
 
+
+        multi_mode: str, decide which mode to use when running multi-classification task:
+
+                    single_output standard gbdt multi-classification strategy
+
+                    multi_output every leaf give a multi-dimension predict, using multi_mode can save time
+                                 by learning a model with less trees.
         """
 
     def __init__(self, tree_param: DecisionTreeParam = DecisionTreeParam(), task_type=consts.CLASSIFICATION,
@@ -600,6 +608,7 @@ class HomoSecureBoostParam(BoostingParam):
                  validation_freqs=None, use_missing=False, zero_as_missing=False, random_seed=100,
                  binning_error=consts.DEFAULT_RELATIVE_ERROR, backend=consts.DISTRIBUTED_BACKEND,
                  callback_param=CallbackParam(), multi_mode=consts.SINGLE_OUTPUT):
+
         super(HomoSecureBoostParam, self).__init__(task_type=task_type,
                                                    objective_param=objective_param,
                                                    learning_rate=learning_rate,

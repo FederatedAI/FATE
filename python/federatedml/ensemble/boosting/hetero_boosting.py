@@ -58,6 +58,15 @@ class HeteroBoosting(Boosting, ABC):
         self.early_stopping_rounds = param.early_stopping_rounds
         self.use_first_metric_only = param.use_first_metric_only
 
+
+class HeteroBoostingGuest(HeteroBoosting, ABC):
+
+    def __init__(self):
+        super(HeteroBoostingGuest, self).__init__()
+
+    def _init_model(self, param):
+        super(HeteroBoostingGuest, self)._init_model(param)
+
     def generate_encrypter(self):
 
         LOGGER.info("generate encrypter")
@@ -106,15 +115,6 @@ class HeteroBoosting(Boosting, ABC):
             RegressionLabelChecker.validate_label(self.data_bin)
 
         return classes_, num_classes, booster_dim
-
-
-class HeteroBoostingGuest(HeteroBoosting, ABC):
-
-    def __init__(self):
-        super(HeteroBoostingGuest, self).__init__()
-
-    def _init_model(self, param):
-        super(HeteroBoostingGuest, self)._init_model(param)
 
     def sync_booster_dim(self):
         LOGGER.info("sync booster_dim to host")
@@ -183,6 +183,8 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
                                       metric_type="LOSS",
                                       extra_metas={"unit_name": "iters"}))
 
+        self.preprocess()
+
         for epoch_idx in range(self.start_round, self.boosting_round):
 
             LOGGER.info('cur epoch idx is {}'.format(epoch_idx))
@@ -227,14 +229,13 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
             if self.stop_training or should_stop:
                 break
 
+        self.post_process()
         self.callback_list.on_train_end()
-
         self.callback_meta("loss",
                            "train",
                            MetricMeta(name="train",
                                       metric_type="LOSS",
                                       extra_metas={"Best": min(self.history_loss)}))
-
         # get summary
         self.set_summary(self.generate_summary())
 
@@ -311,8 +312,9 @@ class HeteroBoostingHost(HeteroBoosting, ABC):
             self.feature_name_fid_mapping = self.gen_feature_fid_mapping(data_inst.schema)
 
         self.sync_booster_dim()
-        self.generate_encrypter()
         self.callback_list.on_train_begin(data_inst, validate_data)
+
+        self.preprocess()
 
         for epoch_idx in range(self.start_round, self.boosting_round):
 
@@ -337,6 +339,7 @@ class HeteroBoostingHost(HeteroBoosting, ABC):
             if should_stop:
                 break
 
+        self.post_process()
         self.callback_list.on_train_end()
         self.set_summary(self.generate_summary())
 

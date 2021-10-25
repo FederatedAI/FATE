@@ -58,6 +58,9 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         self.init_tree_plan = False
         self.tree_plan = []
 
+        # multi-classification mode
+        self.multi_mode = consts.SINGLE_OUTPUT
+
     def _init_model(self, param: HeteroSecureBoostParam):
 
         super(HeteroSecureBoostingTreeGuest, self)._init_model(param)
@@ -80,6 +83,8 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         if self.use_missing:
             self.tree_param.use_missing = self.use_missing
             self.tree_param.zero_as_missing = self.zero_as_missing
+
+        self.multi_mode = param.multi_mode
 
     def process_sample_weights(self, grad_and_hess, data_with_sample_weight=None):
 
@@ -174,11 +179,19 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
                     self.max_sample_weight = self.max_sample_weight * ((1 - self.top_rate) / self.other_rate)
                 self.grad_and_hess = self.goss_sample()
 
+    def preprocess(self):
+        if self.multi_mode == consts.MULTI_OUTPUT:
+            # re-set dimension
+            self.booster_dim = 1
+
     def fit_a_learner(self, epoch_idx: int, booster_dim: int):
 
         self.on_epoch_prepare(epoch_idx)
 
-        g_h = self.get_grad_and_hess(self.grad_and_hess, booster_dim)
+        if self.multi_mode == consts.MULTI_OUTPUT:
+            g_h = self.grad_and_hess
+        else:
+            g_h = self.get_grad_and_hess(self.grad_and_hess, booster_dim)
 
         flow_id = self.generate_flowid(epoch_idx, booster_dim)
         complete_secure = True if (self.cur_epoch_idx == 0 and self.complete_secure) else False

@@ -85,8 +85,8 @@ class SplitInfoPackage2(PackingCipherTensorPackage):
 class GHPacker(object):
 
     def __init__(self, sample_num: int, en_calculator: EncryptModeCalculator,
-                       precision=fix_point_precision, max_sample_weight=1.0, task_type=consts.CLASSIFICATION,
-                       g_min=None, g_max=None, class_num=1, sync_para=True):
+                 precision=fix_point_precision, max_sample_weight=1.0, task_type=consts.CLASSIFICATION,
+                 g_min=None, g_max=None, class_num=1, sync_para=True):
 
         if task_type == consts.CLASSIFICATION:
             g_max = 1.0
@@ -147,6 +147,7 @@ class GHPacker(object):
         fixed_int_encode_func = functools.partial(self.to_fixedpoint, mul=self.precision, g_offset=self.g_offset)
         large_int_gh = gh.mapValues(fixed_int_encode_func)
         en_g_h = self.packer.pack_and_encrypt(large_int_gh)
+
         return en_g_h
 
     def decompress_and_unpack(self, split_info_package_list):
@@ -163,8 +164,11 @@ class GHPacker(object):
 
 class PackedGHCompressor(object):
 
-    def __init__(self, sync_para=True):
-        self.compressor = CipherCompressorHost(package_class=SplitInfoPackage, sync_para=sync_para)
+    def __init__(self, sync_para=True, mo_mode=False):
+        package_class = SplitInfoPackage
+        if mo_mode:
+            package_class = SplitInfoPackage2
+        self.compressor = CipherCompressorHost(package_class=package_class, sync_para=sync_para)
 
     def compress_split_info(self, split_info_list, g_h_sum_info):
 

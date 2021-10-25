@@ -43,6 +43,9 @@ class HeteroDecisionTreeGuest(DecisionTree):
         # code version control
         self.new_ver = True
 
+        # mo tree
+        self.mo_tree = False
+
     """
     Node Encode/ Decode
     """
@@ -112,7 +115,9 @@ class HeteroDecisionTreeGuest(DecisionTree):
              goss_subsample=False,
              cipher_compressing=False,
              max_sample_weight=1,
-             new_ver=True):
+             new_ver=True,
+             mo_tree=False
+             ):
 
         super(HeteroDecisionTreeGuest, self).init_data_and_variable(flowid, runtime_idx, data_bin, bin_split_points,
                                                                     bin_sparse_points, valid_features, grad_and_hess)
@@ -123,13 +128,11 @@ class HeteroDecisionTreeGuest(DecisionTree):
         self.encrypted_mode_calculator = encrypted_mode_calculator
         self.complete_secure_tree = complete_secure
         self.host_party_idlist = host_party_list
-
         self.run_goss = goss_subsample
-
         self.run_cipher_compressing = cipher_compressing
         self.max_sample_weight = max_sample_weight
-
         self.task_type = task_type
+        self.mo_tree = mo_tree
 
         # initializing goss settings
         if self.run_goss:
@@ -439,8 +442,8 @@ class HeteroDecisionTreeGuest(DecisionTree):
                                                  suffix=(dep,))
 
     def sync_encrypted_splitinfo_host(self, dep=-1, batch=-1, idx=-1):
-        LOGGER.info("get encrypted splitinfo of depth {}, batch {}".format(dep, batch))
 
+        LOGGER.info("get encrypted splitinfo of depth {}, batch {}".format(dep, batch))
         LOGGER.debug('host idx is {}'.format(idx))
         encrypted_splitinfo_host = self.transfer_inst.encrypted_splitinfo_host.get(idx=idx,
                                                                                    suffix=(dep, batch,))
@@ -782,8 +785,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
             for i in range(len(predict_data_host)):
                 predict_data = predict_data.join(predict_data_host[i],
                                                  lambda state1_nodeid1, state2_nodeid2:
-                                                 state1_nodeid1 if state1_nodeid1[
-                                                                       1] == 0 else state2_nodeid2)
+                                                 state1_nodeid1 if state1_nodeid1[1] == 0 else state2_nodeid2)
 
             site_host_send_times += 1
 

@@ -480,6 +480,12 @@ class Boosting(ModelBase, ABC):
     def set_model_param(self, model_param):
         raise NotImplementedError()
 
+    def preprocess(self):
+        pass
+
+    def post_process(self):
+        pass
+
     def get_cur_model(self):
         meta_name, meta_protobuf = self.get_model_meta()
         param_name, param_protobuf = self.get_model_param()
