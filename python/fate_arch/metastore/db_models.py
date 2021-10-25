@@ -18,8 +18,10 @@ import os
 import sys
 
 from peewee import CharField, IntegerField, BigIntegerField, TextField, CompositeKey, BooleanField
+
+from fate_arch.federation import FederationEngine
 from fate_arch.metastore.base_model import DateTimeField
-from fate_arch.common import WorkMode, file_utils, log
+from fate_arch.common import file_utils, log, EngineType, conf_utils
 from fate_arch.common.conf_utils import get_base_config
 from fate_arch.metastore.base_model import JSONField, SerializedField, BaseModel
 
@@ -27,8 +29,8 @@ from fate_arch.metastore.base_model import JSONField, SerializedField, BaseModel
 LOGGER = log.getLogger()
 
 DATABASE = get_base_config("database", {})
-WORK_MODE = get_base_config('work_mode', 0)
-
+is_standalone = conf_utils.get_base_config("default_engines", {}).get(EngineType.FEDERATION) ==\
+                FederationEngine.STANDALONE
 
 def singleton(cls, *args, **kw):
     instances = {}
@@ -47,14 +49,12 @@ class BaseDataBase(object):
     def __init__(self):
         database_config = DATABASE.copy()
         db_name = database_config.pop("name")
-        if WORK_MODE == WorkMode.STANDALONE:
+        if is_standalone:
             from playhouse.apsw_ext import APSWDatabase
             self.database_connection = APSWDatabase(file_utils.get_project_base_directory("fate_sqlite.db"))
-        elif WORK_MODE == WorkMode.CLUSTER:
+        else:
             from playhouse.pool import PooledMySQLDatabase
             self.database_connection = PooledMySQLDatabase(db_name, **database_config)
-        else:
-            raise Exception('can not init database')
 
 
 DB = BaseDataBase().database_connection

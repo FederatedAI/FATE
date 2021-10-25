@@ -15,7 +15,7 @@
 #
 import typing
 
-from fate_arch.common import WorkMode,  FederatedMode, conf_utils
+from fate_arch.common import FederatedMode, conf_utils
 from fate_arch.computing import ComputingEngine
 from fate_arch.federation import FederationEngine
 from fate_arch.storage import StorageEngine
@@ -86,6 +86,10 @@ def get_engines():
             raise RuntimeError(f"{engines[t]} is not supported in {engines[EngineType.COMPUTING]}")
 
     return engines
+
+
+def is_standalone():
+    return get_engines().get(EngineType.FEDERATION) == FederationEngine.STANDALONE
 
 
 def get_engines_config_from_conf(group_map=False):
