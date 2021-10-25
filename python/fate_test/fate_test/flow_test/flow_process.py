@@ -2,6 +2,7 @@ import json
 import os
 import tarfile
 import time
+import subprocess
 from contextlib import closing
 from datetime import datetime
 
@@ -12,6 +13,14 @@ def get_dict_from_file(file_name):
     with open(file_name, 'r', encoding='utf-8') as f:
         json_info = json.load(f)
     return json_info
+
+
+def serving_connect(serving_setting):
+    subp = subprocess.Popen([f'echo "" | telnet {serving_setting.split(":")[0]} {serving_setting.split(":")[1]}'],
+                            shell=True, stdout=subprocess.PIPE)
+    stdout, stderr = subp.communicate()
+    stdout = stdout.decode("utf-8")
+    return True if f'Connected to {serving_setting.split(":")[0]}' in stdout else False
 
 
 class Base(object):
@@ -356,6 +365,7 @@ def run_fate_flow_test(config_json):
     component_name = config_json['component_name']
     metric_output_path = config_json['metric_output_path']
     model_output_path = config_json['model_output_path']
+    serving_connect_bool = serving_connect(config_json['serving_setting'])
 
     print('submit train job')
     # train
@@ -388,7 +398,7 @@ def run_fate_flow_test(config_json):
         return False
     print('predict job success')
 
-    if not config_json.get('component_is_homo'):
+    if not config_json.get('component_is_homo') and serving_connect_bool:
         # load model
         utilize.load_model()
 

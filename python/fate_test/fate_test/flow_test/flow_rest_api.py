@@ -2,21 +2,25 @@ import json
 import os
 import shutil
 import time
-from datetime import datetime
+import numpy as np
 from pathlib import Path
 
 import requests
 from contextlib import closing
 from prettytable import PrettyTable, ORGMODE
-from fate_test.flow_test.flow_process import Base, get_dict_from_file, download_from_request
+from fate_test.flow_test.flow_process import Base, get_dict_from_file, download_from_request, serving_connect
 
 
 class TestModel(Base):
-    request_api_info_path = './rest_api.log'
-    if os.path.exists(request_api_info_path):
-        os.remove(request_api_info_path)
+    def __init__(self, data_base_dir, server_url, component_name, namespace, work_mode):
+        super().__init__(data_base_dir, server_url, component_name)
+        self.work_mode = work_mode
+        self.request_api_info_path = f'./logs/{namespace}/cli_exception.log'
+        os.makedirs(os.path.dirname(self.request_api_info_path), exist_ok=True)
 
     def error_log(self, retmsg):
+        if retmsg is None:
+            return os.path.abspath(self.request_api_info_path)
         with open(self.request_api_info_path, "a") as f:
             f.write(retmsg)
 
@@ -476,13 +480,14 @@ class TestModel(Base):
                 return
 
     def model_api(self, command, output_path=None, remove_path=None, model_path=None, homo_deploy_path=None,
-                  homo_deploy_kube_config_path=None, arbiter_party_id=None, tag_name=None):
+                  homo_deploy_kube_config_path=None, arbiter_party_id=None, tag_name=None, model_load_conf=None, servings=None):
+        if model_load_conf is not None:
+            model_load_conf["job_parameters"].update({"work_mode": self.work_mode,
+                                                      "model_id": self.model_id,
+                                                      "model_version": self.model_version})
         if command == 'model/load':
-            post_data = {
-                "job_id": self.job_id
-            }
             try:
-                response = requests.post("/".join([self.server_url, "model", "load"]), json=post_data)
+                response = requests.post("/".join([self.server_url, "model", "load"]), json=model_load_conf)
                 if response.status_code == 200:
                     if response.json().get('retcode'):
                         self.error_log('model load: {}'.format(response.json().get('retmsg')) + '\n')
@@ -491,10 +496,8 @@ class TestModel(Base):
                 return
 
         elif command == 'model/bind':
-            post_data = {
-                "job_id": self.job_id,
-                "service_id": f"auto_test_{datetime.strftime(datetime.now(), '%Y%m%d%H%M%S')}"
-            }
+            service_id = "".join([str(i) for i in np.random.randint(9, size=8)])
+            post_data = model_load_conf.update({"service_id": service_id, "servings": [servings]})
             try:
                 response = requests.post("/".join([self.server_url, "model", "bind"]), json=post_data)
                 if response.status_code == 200:
@@ -760,7 +763,7 @@ def judging_state(retcode):
         return 'failed'
 
 
-def run_test_api(config_json):
+def run_test_api(config_json, namespace):
     output_path = './output/flow_test_data/'
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     output_path = str(os.path.abspath(output_path)) + '/'
@@ -770,12 +773,15 @@ def run_test_api(config_json):
     train_conf_path = config_json['train_conf_path']
     train_dsl_path = config_json['train_dsl_path']
     upload_file_path = config_json['upload_file_path']
+    model_file_path = config_json['model_file_path']
     work_mode = config_json['work_mode']
-    remove_path = str(config_json[
-                          'data_base_dir']) + '/model_local_cache/guest#{}#arbiter-{}#guest-{}#host-{}#model/'.format(
+    remove_path = str(config_json['data_base_dir']).split("python")[
+                      0] + '/model_local_cache/guest#{}#arbiter-{}#guest-{}#host-{}#model/'.format(
         guest_party_id[0], arbiter_party_id[0], guest_party_id[0], host_party_id[0])
 
-    test_api = TestModel(config_json['data_base_dir'], config_json['server_url'], component_name=config_json['component_name'])
+    serving_connect_bool = serving_connect(config_json['serving_setting'])
+    test_api = TestModel(config_json['data_base_dir'], config_json['server_url'],
+                         component_name=config_json['component_name'], namespace=namespace, work_mode=work_mode)
     job_conf = test_api.set_config(guest_party_id, host_party_id, arbiter_party_id, train_conf_path, work_mode)
     max_iter = job_conf['component_parameters']['common'][config_json['component_name']]['max_iter']
     test_api.set_dsl(train_dsl_path)
@@ -854,9 +860,14 @@ def run_test_api(config_json):
                        judging_state(test_api.model_api('model/homo/deploy',
                                                         homo_deploy_path=homo_deploy_path,
                                                         homo_deploy_kube_config_path=homo_deploy_kube_config_path))])
-    else:
-        model.add_row(['model load', judging_state(test_api.model_api('model/load'))])
-        model.add_row(['model bind', judging_state(test_api.model_api('model/bind'))])
+    if not config_json.get('component_is_homo') and serving_connect_bool:
+        model_load_conf = get_dict_from_file(model_file_path)
+        model_load_conf["initiator"]["party_id"] = guest_party_id
+        model_load_conf["role"].update(
+            {"guest": [guest_party_id], "host": [host_party_id], "arbiter": [arbiter_party_id]})
+        model.add_row(['model load', judging_state(test_api.model_api('model/load', model_load_conf=model_load_conf))])
+        model.add_row(['model bind', judging_state(test_api.model_api('model/bind', model_load_conf=model_load_conf,
+                                                                      servings=config_json['serving_setting']))])
     status, model_path = test_api.model_api('model/export', output_path=output_path)
     model.add_row(['model export', judging_state(status)])
     model.add_row(['model  import', (judging_state(
@@ -866,8 +877,9 @@ def run_test_api(config_json):
     model.add_row(
         ['model_tag remove', judging_state(test_api.model_api('model_tag/remove', tag_name='model_tag_create'))])
     model.add_row(['model_tag retrieve', judging_state(len(test_api.model_api('model_tag/retrieve')))])
-    model.add_row(
-        ['model migrate', judging_state(test_api.model_api('model/migrate', arbiter_party_id=arbiter_party_id))])
+    if serving_connect_bool:
+        model.add_row(
+            ['model migrate', judging_state(test_api.model_api('model/migrate', arbiter_party_id=arbiter_party_id))])
     model.add_row(['model query', judging_state(test_api.model_api('model/query'))])
     model.add_row(['model deploy', judging_state(test_api.model_api('model/deploy'))])
     model.add_row(['model conf', judging_state(test_api.model_api('model/conf'))])
@@ -885,3 +897,5 @@ def run_test_api(config_json):
     test_api.submit_job()
     queue.add_row(['clean/queue', judging_state(test_api.job_api('clean/queue'))])
     print(queue.get_string(title="queue job"))
+    print('Please check the error content: {}'.format(test_api.error_log(None)))
+

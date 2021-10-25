@@ -2,15 +2,17 @@ import json
 import os
 import shutil
 import time
+import numpy as np
 from pathlib import Path
 
 from flow_sdk.client import FlowClient
 from prettytable import PrettyTable, ORGMODE
-from fate_test.flow_test.flow_process import get_dict_from_file
+from fate_test.flow_test.flow_process import get_dict_from_file, serving_connect
 
 
 class TestModel(object):
-    def __init__(self, data_base_dir, server_url, component_name):
+    def __init__(self, data_base_dir, server_url, component_name, namespace, work_mode):
+        self.work_mode = work_mode
         self.conf_path = None
         self.dsl_path = None
         self.job_id = None
@@ -26,17 +28,19 @@ class TestModel(object):
         self.component_name = component_name
         self.client = FlowClient(server_url.split(':')[0], server_url.split(':')[1].split('/')[0],
                                  server_url.split(':')[1].split('/')[1])
-        self.request_api_info_path = './sdk_api.log'
-        if os.path.exists(self.request_api_info_path):
-            os.remove(self.request_api_info_path)
+        self.request_api_info_path = f'./logs/{namespace}/sdk_exception.log'
+        os.makedirs(os.path.dirname(self.request_api_info_path), exist_ok=True)
 
     def error_log(self, retmsg):
+        if retmsg is None:
+            return os.path.abspath(self.request_api_info_path)
         with open(self.request_api_info_path, "a") as f:
             f.write(retmsg)
 
     def submit_job(self, stop=True):
         try:
-            stdout = self.client.job.submit(conf_path=self.conf_path, dsl_path=self.dsl_path)
+            stdout = self.client.job.submit(config_data=get_dict_from_file(self.conf_path),
+                                            dsl_data=get_dict_from_file(self.dsl_path))
             if stdout.get('retcode'):
                 self.error_log('job submit: {}'.format(stdout.get('retmsg')) + '\n')
             self.job_id = stdout.get("jobId")
@@ -55,7 +59,8 @@ class TestModel(object):
         with open(train_dsl_path, 'w') as fp:
             json.dump(train_dsl, fp)
         try:
-            stdout = self.client.job.generate_dsl(train_dsl_path=train_dsl_path, cpn_list=['dataio_0'])
+            stdout = self.client.job.generate_dsl(train_dsl=get_dict_from_file(train_dsl_path),
+                                                  cpn=['dataio_0'])
             if stdout.get('retcode'):
                 self.error_log('job dsl generate: {}'.format(stdout.get('retmsg')) + '\n')
             if stdout.get('data')['components']['dataio_0']['input']['model'][
@@ -326,12 +331,11 @@ class TestModel(object):
         upload_file['work_mode'] = work_mode
         if table_index is not None:
             upload_file['table_name'] = f'{upload_file["file"]}_{table_index}'
-
-        upload_path = self.cache_directory + 'upload_file.json'
-        with open(upload_path, 'w') as fp:
-            json.dump(upload_file, fp)
+        # upload_path = self.cache_directory + 'upload_file.json'
+        # with open(upload_path, 'w') as fp:
+        #     json.dump(upload_file, fp)
         try:
-            stdout = self.client.data.upload(conf_path=upload_path, drop=1)
+            stdout = self.client.data.upload(config_data=upload_file, drop=1)
             if stdout.get('retcode'):
                 self.error_log('data upload: {}'.format(stdout.get('retmsg')) + '\n')
             return self.query_status(stdout.get("jobId"))
@@ -342,14 +346,14 @@ class TestModel(object):
         download_config = {
             "table_name": table_name['table_name'],
             "namespace": table_name['namespace'],
-            "output_path": output_path + '{}download.csv'.format(self.job_id),
+            "output_path": 'download.csv',
             "work_mode": work_mode
         }
-        config_file_path = self.cache_directory + 'download_config.json'
-        with open(config_file_path, 'w') as fp:
-            json.dump(download_config, fp)
+        # config_file_path = self.cache_directory + 'download_config.json'
+        # with open(config_file_path, 'w') as fp:
+        #     json.dump(download_config, fp)
         try:
-            stdout = self.client.data.download(conf_path=config_file_path)
+            stdout = self.client.data.download(config_data=download_config)
             if stdout.get('retcode'):
                 self.error_log('data download: {}'.format(stdout.get('retmsg')) + '\n')
             return self.query_status(stdout.get("jobId"))
@@ -416,11 +420,16 @@ class TestModel(object):
             except Exception:
                 return
 
-    def model_api(self, command, remove_path=None, model_path=None, tag_name=None, load_path=None, bind_path=None,
-                  homo_deploy_path=None, homo_deploy_kube_config_path=None, remove=False):
+    def model_api(self, command, remove_path=None, model_path=None, tag_name=None, homo_deploy_path=None,
+                  homo_deploy_kube_config_path=None, remove=False, model_load_conf=None, servings=None):
+        if model_load_conf is not None:
+            model_load_conf["job_parameters"].update({"work_mode": self.work_mode,
+                                                      "model_id": self.model_id,
+                                                      "model_version": self.model_version})
+
         if command == 'model/load':
             try:
-                stdout = self.client.model.load(conf_path=load_path)
+                stdout = self.client.model.load(config_data=model_load_conf)
                 if stdout.get('retcode'):
                     self.error_log('model load: {}'.format(stdout.get('retmsg')) + '\n')
                 return stdout.get('retcode')
@@ -428,8 +437,10 @@ class TestModel(object):
                 return
 
         elif command == 'model/bind':
+            service_id = "".join([str(i) for i in np.random.randint(9, size=8)])
+            model_load_conf.update({"service_id": service_id, "servings": [servings]})
             try:
-                stdout = self.client.model.bind(conf_path=bind_path)
+                stdout = self.client.model.bind(config_data=model_load_conf)
                 if stdout.get('retcode'):
                     self.error_log('model bind: {}'.format(stdout.get('retmsg')) + '\n')
                 else:
@@ -445,14 +456,14 @@ class TestModel(object):
                 "party_id": self.guest_party_id[0],
                 "file": model_path
             }
-            config_file_path = self.cache_directory + 'model_import.json'
-            with open(config_file_path, 'w') as fp:
-                json.dump(config_data, fp)
+            # config_file_path = self.cache_directory + 'model_import.json'
+            # with open(config_file_path, 'w') as fp:
+            #     json.dump(config_data, fp)
             try:
                 remove_path = Path(remove_path + self.model_version)
                 if os.path.isdir(remove_path):
                     shutil.rmtree(remove_path)
-                stdout = self.client.model.import_model(conf_path=config_file_path)
+                stdout = self.client.model.import_model(config_data=config_data)
                 if not stdout.get('retcode') and os.path.isdir(remove_path):
                     return 0
                 else:
@@ -468,10 +479,10 @@ class TestModel(object):
                 "party_id": self.guest_party_id[0],
                 "output_path": self.output_path
             }
-            config_file_path = self.cache_directory + 'model_export.json'
-            with open(config_file_path, 'w') as fp:
-                json.dump(config_data, fp)
-            stdout = self.client.model.export_model(conf_path=config_file_path)
+            # config_file_path = self.cache_directory + 'model_export.json'
+            # with open(config_file_path, 'w') as fp:
+            #     json.dump(config_data, fp)
+            stdout = self.client.model.export_model(config_data=config_data)
             if stdout.get('retcode'):
                 self.error_log('model export: {}'.format(stdout.get('retmsg')) + '\n')
             else:
@@ -506,11 +517,11 @@ class TestModel(object):
                 "model_version": self.model_version,
                 "unify_model_version": self.job_id + '_01'
             }
-            config_file_path = self.cache_directory + 'model_migrate.json'
-            with open(config_file_path, 'w') as fp:
-                json.dump(config_data, fp)
+            # config_file_path = self.cache_directory + 'model_migrate.json'
+            # with open(config_file_path, 'w') as fp:
+            #     json.dump(config_data, fp)
             try:
-                stdout = self.client.model.migrate(conf_path=config_file_path)
+                stdout = self.client.model.migrate(config_data=config_data)
                 if stdout.get('retcode'):
                     self.error_log('model migrate: {}'.format(stdout.get('retmsg')) + '\n')
                 return stdout.get('retcode')
@@ -563,7 +574,7 @@ class TestModel(object):
                 stdout = self.client.model.tag_model(job_id=self.job_id, tag_name=tag_name, remove=remove)
                 if stdout.get('retcode'):
                     self.error_log('model tag model: {}'.format(stdout.get('retmsg')) + '\n')
-                return self.model_api('model_tag/list', tag_name=tag_name)
+                return self.model_api('model_tag/list', tag_name=tag_name, remove=True)
             except Exception:
                 return
 
@@ -572,7 +583,9 @@ class TestModel(object):
                 stdout = self.client.model.tag_list(job_id=self.job_id)
                 if stdout.get('retcode'):
                     self.error_log('model tag retrieve: {}'.format(stdout.get('retmsg')) + '\n')
-                if stdout.get('data')['tags'][0].get('name') == tag_name:
+                if remove and len(stdout.get('data').get('tags')) == 0:
+                    return stdout.get('retcode')
+                if stdout.get('data').get('tags')[0].get('name') == tag_name:
                     return stdout.get('retcode')
             except Exception:
                 return
@@ -669,10 +682,12 @@ def judging_state(retcode):
         return 'failed'
 
 
-def run_test_api(config_json):
+def run_test_api(config_json, namespace):
     output_path = './output/flow_test_data/'
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    test_api = TestModel(config_json['data_base_dir'], config_json['server_url'].split('//')[1], config_json['component_name'])
+    work_mode = config_json['work_mode']
+    test_api = TestModel(config_json['data_base_dir'], config_json['server_url'].split('//')[1],
+                         config_json['component_name'], namespace, work_mode)
     test_api.dsl_path = config_json['train_dsl_path']
     test_api.cache_directory = config_json['cache_directory']
     test_api.output_path = str(os.path.abspath(output_path)) + '/'
@@ -681,10 +696,11 @@ def run_test_api(config_json):
     host_party_id = config_json['host_party_id']
     arbiter_party_id = config_json['arbiter_party_id']
     upload_file_path = config_json['upload_file_path']
+    model_file_path = config_json['model_file_path']
     conf_file = get_dict_from_file(upload_file_path)
-    work_mode = config_json['work_mode']
-    remove_path = str(config_json[
-                          'data_base_dir']) + '/model_local_cache/guest#{}#arbiter-{}#guest-{}#host-{}#model/'.format(
+    serving_connect_bool = serving_connect(config_json['serving_setting'])
+    remove_path = str(config_json['data_base_dir']).split("python")[
+                          0] + '/model_local_cache/guest#{}#arbiter-{}#guest-{}#host-{}#model/'.format(
         guest_party_id[0], arbiter_party_id[0], guest_party_id[0], host_party_id[0])
     max_iter = test_api.set_config(guest_party_id, host_party_id, arbiter_party_id, conf_path, work_mode,
                                    config_json['component_name'])
@@ -759,20 +775,28 @@ def run_test_api(config_json):
                       judging_state(test_api.model_api('model/homo/deploy',
                                                        homo_deploy_path=homo_deploy_path,
                                                        homo_deploy_kube_config_path=homo_deploy_kube_config_path))])
-    else:
-        model.add_row(['model load', judging_state(test_api.model_api('model/load'))])
-        model.add_row(['model bind', judging_state(test_api.model_api('model/bind'))])
+    if not config_json.get('component_is_homo') and serving_connect_bool:
+        model_load_conf = get_dict_from_file(model_file_path)
+        model_load_conf["initiator"]["party_id"] = guest_party_id
+        model_load_conf["role"].update(
+            {"guest": [guest_party_id], "host": [host_party_id], "arbiter": [arbiter_party_id]})
+        model.add_row(['model load', judging_state(test_api.model_api('model/load', model_load_conf=model_load_conf))])
+        model.add_row(['model bind', judging_state(test_api.model_api('model/bind', model_load_conf=model_load_conf,
+                                                                      servings=config_json['serving_setting']))])
     status, model_path = test_api.model_api('model/export')
     model.add_row(['model export', judging_state(status)])
     model.add_row(['model  import', (judging_state(
         test_api.model_api('model/import', remove_path=remove_path, model_path=model_path)))])
     model.add_row(['tag model', judging_state(test_api.model_api('model_tag/model', tag_name='model_tag_create'))])
     model.add_row(['tag list', judging_state(test_api.model_api('model_tag/list', tag_name='model_tag_create'))])
-    test_api.model_api('model_tag/model', tag_name='model_tag_create', remove=True)
     model.add_row(
-        ['model migrate', judging_state(test_api.model_api('model/migrate'))])
+        ['tag remove', judging_state(test_api.model_api('model_tag/model', tag_name='model_tag_create', remove=True))])
+    if serving_connect_bool:
+        model.add_row(
+            ['model migrate', judging_state(test_api.model_api('model/migrate'))])
     model.add_row(['model query', judging_state(test_api.model_api('model/query'))])
-    model.add_row(['model deploy', judging_state(test_api.model_api('model/deploy'))])
+    if not config_json.get('component_is_homo') and serving_connect_bool:
+        model.add_row(['model deploy', judging_state(test_api.model_api('model/deploy'))])
     model.add_row(['model conf', judging_state(test_api.model_api('model/conf'))])
     model.add_row(['model dsl', judging_state(test_api.model_api('model/dsl'))])
     print(model.get_string(title="model api"))
@@ -787,3 +811,4 @@ def run_test_api(config_json):
     test_api.submit_job()
     queue.add_row(['clean/queue', judging_state(test_api.job_api('clean/queue'))])
     print(queue.get_string(title="queue job"))
+    print('Please check the error content: {}'.format(test_api.error_log(None)))
