@@ -145,9 +145,10 @@ class LogisticRegressionParam(BaseParam):
                 raise ValueError(
                     "logistic_param's penalty not supported, penalty should be 'L1', 'L2' or 'none'")
             if not self.reveal_every_iter:
-                raise ValueError(
-                    f"When penalty is {self.penalty}, reveal_every_iter should be true."
-                )
+                if self.penalty not in [consts.L2_PENALTY]:
+                    raise ValueError(
+                        f"penalty should be 'L2' or 'none', when reveal_every_iter is False"
+                    )
 
         if not isinstance(self.tol, (int, float)):
             raise ValueError(

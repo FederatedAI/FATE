@@ -192,7 +192,7 @@ class FixedPointTensor(TensorBase):
     def __add__(self, other):
         if isinstance(other, FixedPointTensor):
             return self._raw_add(other.value)
-        z_value = (self.value + self.endec.encode(other)) % self.q_field
+        z_value = (self.value + other) % self.q_field
         return self._boxed(z_value)
 
     def __radd__(self, other):
@@ -201,26 +201,27 @@ class FixedPointTensor(TensorBase):
     def __sub__(self, other):
         if isinstance(other, FixedPointTensor):
             return self._raw_sub(other.value)
-        z_value = (self.value - self.endec.encode(other)) % self.q_field
+        z_value = (self.value - other) % self.q_field
         return self._boxed(z_value)
 
     def __rsub__(self, other):
         if isinstance(other, FixedPointTensor):
             return other - self
-        z_value = (self.endec.encode(other) - self.value) % self.q_field
+        z_value = (other - self.value) % self.q_field
         return self._boxed(z_value)
 
     def __mul__(self, other):
         if isinstance(other, FixedPointTensor):
             raise NotImplementedError("__mul__ support scalar only")
 
-        z_value = self.value * self.endec.encode(other)
+        z_value = self.value * other
         z_value = z_value % self.q_field
         z_value = self.endec.truncate(z_value, self.get_spdz().party_idx)
+
         return self._boxed(z_value)
 
     def __rmul__(self, other):
-        self.__mul__(other)
+        return self.__mul__(other)
 
     def __matmul__(self, other):
         return self.einsum(other, "ij,jk->ik")

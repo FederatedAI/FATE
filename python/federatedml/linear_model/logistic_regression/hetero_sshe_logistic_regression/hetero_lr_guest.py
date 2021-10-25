@@ -42,13 +42,6 @@ class HeteroLRGuest(HeteroLRBase):
     def _init_model(self, params):
         super()._init_model(params)
 
-    # def transfer_pubkey(self):
-    #     public_key = self.cipher.public_key
-    #     self.transfer_variable.pubkey.remote(public_key, role=consts.HOST, suffix=("guest_pubkey",))
-    #     remote_pubkey = self.transfer_variable.pubkey.get(role=consts.HOST, idx=0,
-    #                                                       suffix=("host_pubkey",))
-    #     return remote_pubkey
-
     def _cal_z_in_share(self, w_self, w_remote, features, suffix):
         z1 = features.dot_local(w_self)
 
@@ -79,18 +72,14 @@ class HeteroLRGuest(HeteroLRBase):
         # sigmoid_z = complete_z * 0.197 - complete_z_cube * 0.004 + 0.5
         return sigmoid_z
 
-    def cal_prediction(self, w_self, w_remote, features, spdz, suffix):
+    def forward(self, weights, features, suffix):
         if not self.review_every_iter:
+            w_self, w_remote = weights
             z = self._cal_z_in_share(w_self, w_remote, features, suffix)
         else:
             LOGGER.debug(f"Calculate z directly.")
-
-            if self.model_weights.fit_intercept:
-                weight = np.hstack((self.model_weights.coef_, self.model_weights.intercept_))
-            else:
-                weight = self.model_weights.coef_
-
-            z = features.dot_local(weight)
+            w = weights.unboxed
+            z = features.dot_local(w)
 
         remote_z = self.secure_matrix_obj.share_encrypted_matrix(suffix=suffix,
                                                                  is_remote=False,
@@ -114,7 +103,7 @@ class HeteroLRGuest(HeteroLRBase):
                                                     self.fixedpoint_encoder)
         return shared_sigmoid_z
 
-    def compute_gradient(self, error, features, suffix):
+    def backward(self, error, features, suffix):
         encoded_1_n = self.encoded_batch_num[int(suffix[1])]
 
         error_1_n = error * encoded_1_n
@@ -152,7 +141,7 @@ class HeteroLRGuest(HeteroLRBase):
 
         return gb2, ga2_2
 
-    def compute_loss(self, suffix):
+    def compute_loss(self, weights, suffix):
         """
           Use Taylor series expand log loss:
           Loss = - y * log(h(x)) - (1-y) * log(1 - h(x)) where h(x) = 1/(1+exp(-wx))
@@ -176,9 +165,6 @@ class HeteroLRGuest(HeteroLRBase):
 
         LOGGER.debug(f"wx_square: {wx_square}")
 
-        # loss = np.array([wx.value, ywx.value, wx_square.value])
-        # loss = loss.T[0]
-
         loss = np.hstack((wx.value, ywx.value, wx_square.value))
 
         encoded_1_n = self.encoded_batch_num[int(suffix[2])]
@@ -199,55 +185,48 @@ class HeteroLRGuest(HeteroLRBase):
         LOGGER.debug(f"share_loss.get: {loss}")
         loss = np.sum(loss)
 
-        # todo: dylan, review & unreview loss_norm;
         if self.review_every_iter:
-            loss_norm = self.optimizer.loss_norm(self.model_weights)
+            loss_norm = self.optimizer.loss_norm(weights)
             LOGGER.debug(f"loss: {loss}, loss_norm: {loss_norm}")
             if loss_norm:
                 loss += loss_norm
         else:
-            pass
+            if self.optimizer.penalty == consts.L2_PENALTY:
+                w_self, w_remote = weights
+
+                w_encode = np.hstack((w_remote.value, w_self.value))
+
+                w_encode = np.array([w_encode])
+
+                LOGGER.debug(f"w_encode: {w_encode}")
+                w_tensor_name = ".".join(("loss_norm_w",) + suffix)
+                w_tensor = fixedpoint_numpy.FixedPointTensor(value=w_encode,
+                                                             q_field=self.fixedpoint_encoder.n,
+                                                             endec=self.fixedpoint_encoder,
+                                                             tensor_name=w_tensor_name)
+
+                w_tensor_transpose_name = ".".join(("loss_norm_w_transpose",) + suffix)
+                w_tensor_transpose = fixedpoint_numpy.FixedPointTensor(value=w_encode.T,
+                                                                       q_field=self.fixedpoint_encoder.n,
+                                                                       endec=self.fixedpoint_encoder,
+                                                                       tensor_name=w_tensor_transpose_name)
+
+                loss_norm_tensor_name = ".".join(("loss_norm",) + suffix)
+
+                loss_norm = w_tensor.dot(w_tensor_transpose, target_name=loss_norm_tensor_name).get(broadcast=False)
+                loss_norm = 0.5 * self.alpha * loss_norm[0][0]
+                LOGGER.info(f"gradient spdz dot.get loss norm: {loss_norm}")
+                loss = loss + loss_norm
+
         return loss
 
-    # def compute_loss_old(self, spdz, suffix):
-    #     """
-    #     Use Taylor series expand log loss:
-    #     Loss = - y * log(h(x)) - (1-y) * log(1 - h(x)) where h(x) = 1/(1+exp(-wx))
-    #     Then loss' = - (1/N)*∑(log(1/2) - 1/2*wx + wxy + 1/8(wx)^2)
-    #     """
-    #
-    #     tensor_name = ".".join(("shared_wx",) + suffix)
-    #     shared_wx = SecureMatrix.from_source(tensor_name,
-    #                                          self.encrypted_wx,
-    #                                          self.cipher,
-    #                                          self.fixedpoint_encoder.n,
-    #                                          self.fixedpoint_encoder)
-    #
-    #     wxy = spdz.dot(shared_wx, self.shared_y, ("wxy",) + suffix).get()
-    #     LOGGER.debug(f"wxy_value: {wxy}, shared_wx: {shared_wx.value.first()}")
-    #
-    #     wx_square = shared_wx * shared_wx
-    #
-    #     LOGGER.debug(f"wx_square: {wx_square}")
-    #
-    #     self.share_encrypted_value(suffix=suffix, is_remote=True, wx=shared_wx,
-    #                                wx_square=wx_square)
-    #
-    #     loss = self.transfer_variable.loss.get(idx=0, suffix=suffix)
-    #     loss = self.cipher.decrypt(loss)
-    #     loss_norm = self.optimizer.loss_norm(self.model_weights)
-    #     LOGGER.debug(f"loss: {loss}, loss_norm: {loss_norm}")
-    #     if loss_norm:
-    #         loss += loss_norm
-    #     return loss
-
-    def check_converge_by_weights(self, spdz, last_w, new_w, suffix):
+    def check_converge_by_weights(self, last_w, new_w, suffix):
         if self.review_every_iter:
-            return self._review_every_iter_check(last_w, new_w, suffix)
+            return self._review_every_iter_weights_check(last_w, new_w, suffix)
         else:
-            return self._unreview_every_iter_check(spdz, last_w, new_w, suffix)
+            return self._not_review_every_iter_weights_check(last_w, new_w, suffix)
 
-    def _review_every_iter_check(self, last_w, new_w, suffix):
+    def _review_every_iter_weights_check(self, last_w, new_w, suffix):
         square_sum = np.sum((last_w - new_w) ** 2)
         host_sums = self.converge_transfer_variable.square_sum.get(suffix=suffix)
         for hs in host_sums:
@@ -258,39 +237,6 @@ class HeteroLRGuest(HeteroLRBase):
             is_converge = True
         LOGGER.debug(f"n_iter: {self.n_iter_}, weight_diff: {weight_diff}")
         self.converge_transfer_variable.converge_info.remote(is_converge, role=consts.HOST, suffix=suffix)
-        return is_converge
-
-    def _unreview_every_iter_check(self, spdz, last_w, new_w, suffix):
-        last_w_self, last_w_remote = last_w
-        w_self, w_remote = new_w
-        grad_self = w_self - last_w_self
-        grad_remote = w_remote - last_w_remote
-        grad_encode = np.hstack((grad_remote.value, grad_self.value))
-        grad_encode = np.array([grad_encode])
-
-        LOGGER.debug(f"grad_encode: {grad_encode}")
-        grad_tensor_name = ".".join(("check_converge_grad",) + suffix)
-        grad_tensor = fixedpoint_numpy.FixedPointTensor(value=grad_encode,
-                                                        q_field=self.fixedpoint_encoder.n,
-                                                        endec=self.fixedpoint_encoder,
-                                                        tensor_name=grad_tensor_name)
-
-        grad_tensor_transpose_name = ".".join(("check_converge_grad_transpose",) + suffix)
-        grad_tensor_transpose = fixedpoint_numpy.FixedPointTensor(value=grad_encode.T,
-                                                                  q_field=self.fixedpoint_encoder.n,
-                                                                  endec=self.fixedpoint_encoder,
-                                                                  tensor_name=grad_tensor_transpose_name)
-
-        grad_norm_tensor_name = ".".join(("check_converge_grad_norm",) + suffix)
-
-        grad_norm = spdz.dot(grad_tensor, grad_tensor_transpose, target_name=grad_norm_tensor_name).get()
-        LOGGER.info(f"gradient spdz dot.get: {grad_norm}")
-        weight_diff = np.sqrt(grad_norm[0][0])
-        LOGGER.info("iter: {}, weight_diff:{}, is_converged: {}".format(self.n_iter_,
-                                                                        weight_diff, self.is_converged))
-        is_converge = False
-        if weight_diff < self.model_param.tol:
-            is_converge = True
         return is_converge
 
     @assert_io_num_rows_equal

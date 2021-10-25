@@ -280,9 +280,17 @@ class FixedPointNumber(object):
     def __mul_fixedpointnumber(self, other):
         if self.n != other.n:
             other = self.encode(other.decode(), n=self.n, max_int=self.max_int)
+
+        # n = self.n * self.n
+        # max_int = n // 3 - 1
+
+        n = self.n
+        max_int = self.max_int
+
         encoding = (self.encoding * other.encoding) % self.n
         exponent = self.exponent + other.exponent
-        mul_fixedpoint = FixedPointNumber(encoding, exponent, n=self.n, max_int=self.max_int)
+
+        mul_fixedpoint = FixedPointNumber(encoding, exponent, n=n, max_int=max_int)
         truncate_mul_fixedpoint = self.__truncate(mul_fixedpoint)
         return truncate_mul_fixedpoint
 
@@ -308,60 +316,56 @@ class FixedPointEndec(object):
         self.n = n       
         self.max_int = n // 3 - 1
 
-    @staticmethod
-    def table_op(x, op):
-        arr = np.zeros(shape=x.shape, dtype=object)
-        view = arr.view().reshape(-1)
-        x_array = x.view().reshape(-1)
-        for i in range(arr.size):
-            view[i] = op(x_array[i])
-        return arr
-
-    @staticmethod
-    def table_decode_op(x):
-        arr = np.zeros(shape=x.shape, dtype=object)
-        view = arr.view().reshape(-1)
-        for i in range(arr.size):
-            view[i] = view[i].decode()
-        return arr
-
     @classmethod
-    def _basic_op(cls, tensor, op):
+    def _transform_op(cls, tensor, op):
         from fate_arch.session import is_table
-        if isinstance(tensor, np.ndarray):
-            arr = np.zeros(shape=tensor.shape, dtype=object)
+
+        def _transform(x):
+            arr = np.zeros(shape=x.shape, dtype=object)
             view = arr.view().reshape(-1)
-            t = tensor.view().reshape(-1)
+            x_array = x.view().reshape(-1)
             for i in range(arr.size):
-                view[i] = op(t[i])
+                view[i] = op(x_array[i])
+
             return arr
 
-        elif is_table(tensor):
-            f = functools.partial(cls.table_op, op=op)
-            return tensor.mapValues(f)
-        else:
+        if isinstance(tensor, (int, np.int16, np.int32, np.int64,
+                               float, np.float16, np.float32, np.float64,
+                               FixedPointNumber)):
+            # tensor = np.array([tensor])
+
             return op(tensor)
 
-    def encode(self, float_tensor):
-        f = functools.partial(FixedPointNumber.encode,
-                              n=self.n, max_int=self.max_int)
-        return self._basic_op(float_tensor, op=f)
+        if isinstance(tensor, np.ndarray):
+            z = _transform(tensor)
+            return z
 
-    def __truncate_op(self, a):
-        if not isinstance(a, FixedPointNumber):
-            return a
-        scalar = a.decode()
+        elif is_table(tensor):
+            f = functools.partial(_transform)
+            return tensor.mapValues(f)
+        else:
+            raise ValueError(f"unsupported type: {type(tensor)}")
+
+    def _encode(self, scalar):
         return FixedPointNumber.encode(scalar, n=self.n, max_int=self.max_int)
 
-    @staticmethod
-    def decode_number(number):
-        if isinstance(number, (int, np.int16, np.int32, np.int64)):
-            return number
+    def _decode(self, number):
+        # if isinstance(number, (int, np.int16, np.int32, np.int64)):
+        #     return number
         return number.decode()
 
+    def _truncate(self, number):
+        # if not isinstance(a, FixedPointNumber):
+        #     return a
+        scalar = number.decode()
+        return FixedPointNumber.encode(scalar, n=self.n, max_int=self.max_int)
+
+    def encode(self, float_tensor):
+        return self._transform_op(float_tensor, op=self._encode)
+
     def decode(self, integer_tensor):
-        return self._basic_op(integer_tensor, op=self.decode_number)
+        return self._transform_op(integer_tensor, op=self._decode)
 
     def truncate(self, integer_tensor, *args, **kwargs):
-        return self._basic_op(integer_tensor, op=self.__truncate_op)
+        return self._transform_op(integer_tensor, op=self._truncate)
 
