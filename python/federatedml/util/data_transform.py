@@ -403,6 +403,7 @@ class SparseFeatureTransformer(object):
         self.header = None
         self.sid_name = "sid"
         self.label_name = self.label_name = data_transform_param.label_name
+        self.with_label = data_transform_param.with_label
 
     def get_max_feature_index(self, line, delimitor=' '):
         if line.strip() == '':
@@ -454,8 +455,8 @@ class SparseFeatureTransformer(object):
 
     def gen_data_instance(self, input_data, max_feature):
         params = [self.delimitor, self.data_type,
-                  self.label_type,
-                  self.output_format, max_feature]
+                  self.label_type, self.output_format,
+                  self.with_label, max_feature]
 
         to_instance_with_param = functools.partial(self.to_instance, params)
         data_instance = input_data.mapValues(to_instance_with_param)
@@ -468,21 +469,26 @@ class SparseFeatureTransformer(object):
         data_type = param_list[1]
         label_type = param_list[2]
         output_format = param_list[3]
-        max_fid = param_list[4]
+        with_label = param_list[4]
+        max_fid = param_list[5]
 
         if output_format not in ["dense", "sparse"]:
             raise ValueError("output format {} is not define".format(output_format))
 
         cols = value.split(delimitor, -1)
 
-        label = cols[0]
-        if label_type == 'int':
-            label = int(label)
-        elif label_type in ["float", "float64"]:
-            label = float(label)
+        label = None
+        feature_start_index = 0
+        if with_label:
+            label = cols[0]
+            feature_start_index = 1
+            if label_type == 'int':
+                label = int(label)
+            elif label_type in ["float", "float64"]:
+                label = float(label)
 
         fid_value = []
-        for i in range(1, len(cols)):
+        for i in range(feature_start_index, len(cols)):
             fid, val = cols[i].split(":", -1)
 
             fid = int(fid)
