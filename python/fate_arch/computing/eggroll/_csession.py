@@ -19,7 +19,6 @@ from eggroll.core.session import session_init
 from eggroll.roll_pair.roll_pair import runtime_init
 
 from fate_arch.abc import AddressABC, CSessionABC
-from fate_arch.common import WorkMode
 from fate_arch.common.base_utils import fate_uuid
 from fate_arch.common.log import getLogger
 from fate_arch.common.profile import computing_profile
