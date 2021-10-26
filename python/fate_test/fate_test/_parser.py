@@ -157,6 +157,14 @@ class JobConf(object):
         else:
             self.job_parameters.setdefault("common", {}).update(**kwargs)
 
+    def update_job_type(self, job_type="predict"):
+        if self.dsl_version == 1:
+            if self.job_parameters.get("job_type", None) is None:
+                self.job_parameters.update({"job_type": job_type})
+        else:
+            if self.job_parameters.setdefault("common", {}).get("job_type", None) is None:
+                self.job_parameters.setdefault("common", {}).update({"job_type": job_type})
+
     def update_component_parameters(self, key, value, parameters=None):
         if parameters is None:
             if self.dsl_version == 1:
@@ -271,6 +279,7 @@ class Job(object):
 
     def set_pre_work(self, name, **kwargs):
         self.job_conf.update_job_common_parameters(**kwargs)
+        self.job_conf.update_job_type("predict")
 
     def set_input_data(self, hierarchys, table_info):
         for table_name, hierarchy in zip(table_info, hierarchys):
