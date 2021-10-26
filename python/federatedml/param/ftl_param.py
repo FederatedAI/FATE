@@ -28,7 +28,7 @@ from federatedml.param.encrypted_mode_calculation_param import EncryptedModeCalc
 from federatedml.param.predict_param import PredictParam
 from federatedml.param.callback_param import CallbackParam
 
-deprecated_param_list = ["early_stopping_rounds", "validation_freqs", "metrics", "use_first_metric_only"]
+deprecated_param_list = ["validation_freqs", "metrics"]
 
 
 @deprecated_param(deprecated_param_list)
@@ -125,8 +125,7 @@ class FTLParam(BaseParam):
                 raise ValueError(
                     " {} not supported, should be larger than 10 or -1 represent for all data".format(self.batch_size))
 
-        for p in ["early_stopping_rounds", "validation_freqs", "metrics",
-                  "use_first_metric_only"]:
+        for p in deprecated_param_list:
             # if self._warn_to_deprecate_param(p, "", ""):
             if self._deprecated_params_set.get(p):
                 if "callback_param" in self.get_user_feeded():
@@ -136,19 +135,13 @@ class FTLParam(BaseParam):
                     self.callback_param.callbacks = ["PerformanceEvaluate"]
                 break
 
-        descr = "boosting_param's"
+        descr = "ftl's"
 
         if self._warn_to_deprecate_param("validation_freqs", descr, "callback_param's 'validation_freqs'"):
             self.callback_param.validation_freqs = self.validation_freqs
 
-        if self._warn_to_deprecate_param("early_stopping_rounds", descr, "callback_param's 'early_stopping_rounds'"):
-            self.callback_param.early_stopping_rounds = self.early_stopping_rounds
-
         if self._warn_to_deprecate_param("metrics", descr, "callback_param's 'metrics'"):
             self.callback_param.metrics = self.metrics
-
-        if self._warn_to_deprecate_param("use_first_metric_only", descr, "callback_param's 'use_first_metric_only'"):
-            self.callback_param.use_first_metric_only = self.use_first_metric_only
 
         if self.validation_freqs is None:
             pass
