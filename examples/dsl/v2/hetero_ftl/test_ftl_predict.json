@@ -15,7 +15,8 @@
     "job_parameters": {
         "common": {
             "model_id": "guest-9999#host-10000#model",
-            "model_version": "20201013120134140299386"
+            "model_version": "20201013120134140299386",
+            "job_type": "predict"
         }
     },
     "component_parameters": {
