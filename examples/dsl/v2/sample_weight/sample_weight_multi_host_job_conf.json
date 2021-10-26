@@ -16,12 +16,6 @@
             9999
         ]
     },
-    "job_parameters": {
-        "common": {
-            "job_type": "train",
-            "work_mode": 0
-        }
-    },
     "component_parameters": {
         "common": {
             "hetero_lr_0": {

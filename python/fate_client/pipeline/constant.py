@@ -16,10 +16,10 @@
 from enum import IntEnum
 
 
+"""
 class WorkMode(IntEnum):
     STANDALONE = 0
     CLUSTER = 1
-
 
 class Backend(IntEnum):
     EGGROLL = 0
@@ -34,7 +34,7 @@ class Backend(IntEnum):
 
     def is_spark_pulsar(self):
         return self.value == self.SPARK_PULSAR
-
+"""
 
 class StoreEngine(IntEnum):
     EGGROLL = 0

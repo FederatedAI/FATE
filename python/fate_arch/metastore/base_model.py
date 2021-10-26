@@ -18,18 +18,17 @@ import typing
 from enum import IntEnum
 
 from peewee import Field, IntegerField, FloatField, BigIntegerField, TextField, Model, CompositeKey, Metadata
+
+from fate_arch.common import conf_utils, EngineType
 from fate_arch.common.base_utils import current_timestamp, serialize_b64, deserialize_b64, timestamp_to_date, date_string_to_timestamp, json_dumps, json_loads
-from fate_arch.common.conf_utils import get_base_config
-from fate_arch.common import WorkMode
+from fate_arch.federation import FederationEngine
 
-
-WORK_MODE = get_base_config('work_mode', 0)
-if WORK_MODE == WorkMode.STANDALONE:
+is_standalone = conf_utils.get_base_config("default_engines", {}).get(EngineType.FEDERATION).upper() == \
+                FederationEngine.STANDALONE
+if is_standalone:
     from playhouse.apsw_ext import DateTimeField
-elif WORK_MODE == WorkMode.CLUSTER:
-    from peewee import DateTimeField
 else:
-    raise Exception("can not import sql field")
+    from peewee import DateTimeField
 
 CONTINUOUS_FIELD_TYPE = {IntegerField, FloatField, DateTimeField}
 AUTO_DATE_TIMESTAMP_FIELD_PREFIX = {"create", "start", "end", "update", "read_access", "write_access"}

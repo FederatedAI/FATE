@@ -12,11 +12,6 @@
             10000
         ]
     },
-    "job_parameters": {
-        "common": {
-            "job_type": "train"
-        }
-    },
     "component_parameters": {
         "role": {
             "guest": {
@@ -77,8 +72,14 @@
                 },
                 "max_iter": 30,
                 "early_stop": "diff",
-                "validation_freqs": 1,
-                "early_stopping_rounds": 3,
+                "callback_param": {
+                    "callbacks": [
+                        "EarlyStopping",
+                        "PerformanceEvaluate"
+                    ],
+                    "validation_freqs": 1,
+                    "early_stopping_rounds": 3
+                },
                 "reveal_strategy": "respectively",
                 "compute_loss": true,
                 "reveal_every_iter": true

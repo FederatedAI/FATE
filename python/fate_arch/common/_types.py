@@ -1,15 +1,3 @@
-from enum import IntEnum
-
-
-class WorkMode(IntEnum):
-    STANDALONE = 0
-    CLUSTER = 1
-
-    def is_standalone(self):
-        return self.value == self.STANDALONE
-
-    def is_cluster(self):
-        return self.value == self.CLUSTER
 
 
 class EngineType(object):

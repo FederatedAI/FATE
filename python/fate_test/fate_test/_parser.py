@@ -81,15 +81,15 @@ class Data(object):
         return Data(config=kwargs, role_str=role_str)
 
     def update(self, config: Config):
-        self.config.update(dict(work_mode=config.work_mode, backend=config.backend, extend_sid=config.extend_sid,
+        self.config.update(dict(extend_sid=config.extend_sid,
                                 auto_increasing_sid=config.auto_increasing_sid))
 
 
 class JobConf(object):
-    def __init__(self, initiator: dict, role: dict, job_parameters: dict, **kwargs):
+    def __init__(self, initiator: dict, role: dict, job_parameters=None, **kwargs):
         self.initiator = initiator
         self.role = role
-        self.job_parameters = job_parameters
+        self.job_parameters = job_parameters if job_parameters else {}
         self.others_kwargs = kwargs
 
     def as_dict(self):
@@ -113,8 +113,6 @@ class JobConf(object):
     def update(
             self,
             parties: Parties,
-            work_mode,
-            backend,
             timeout,
             job_parameters,
             component_parameters,
@@ -124,9 +122,10 @@ class JobConf(object):
             {role: len(parties) for role, parties in self.role.items()}
         )
         if timeout > 0:
-            self.update_job_common_parameters(work_mode=work_mode, backend=backend, timeout=timeout)
-        else:
-            self.update_job_common_parameters(work_mode=work_mode, backend=backend)
+            self.update_job_common_parameters(timeout=timeout)
+
+        if timeout > 0:
+            self.update_job_common_parameters(timeout=timeout)
 
         for key, value in job_parameters.items():
             self.update_parameters(parameters=self.job_parameters, key=key, value=value)
@@ -390,15 +389,11 @@ class Testsuite(object):
             self._ready_jobs.appendleft(job)
 
     def reflash_configs(self, config: Config):
-
-        for data in self.dataset:
-            data.config.update(dict(work_mode=config.work_mode, backend=config.backend))
-
         failed = []
         for job in self.jobs:
             try:
                 job.job_conf.update(
-                    config.parties, config.work_mode, config.backend, None, {}, {}
+                    config.parties, None, {}, {}
                 )
             except ValueError as e:
                 failed.append((job, e))
