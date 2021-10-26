@@ -81,8 +81,6 @@ class Data(object):
         return Data(config=kwargs, role_str=role_str)
 
     def update(self, config: Config):
-        """self.config.update(dict(work_mode=config.work_mode, extend_sid=config.extend_sid,
-                                auto_increasing_sid=config.auto_increasing_sid))"""
         self.config.update(dict(extend_sid=config.extend_sid,
                                 auto_increasing_sid=config.auto_increasing_sid))
 
@@ -123,12 +121,9 @@ class JobConf(object):
         self.role = parties.extract_role(
             {role: len(parties) for role, parties in self.role.items()}
         )
-        """
         if timeout > 0:
-            self.update_job_common_parameters(work_mode=work_mode, timeout=timeout)
-        else:
-            self.update_job_common_parameters(work_mode=work_mode)
-        """
+            self.update_job_common_parameters(timeout=timeout)
+
         if timeout > 0:
             self.update_job_common_parameters(timeout=timeout)
 
@@ -394,8 +389,6 @@ class Testsuite(object):
             self._ready_jobs.appendleft(job)
 
     def reflash_configs(self, config: Config):
-        # for data in self.dataset:
-        #    data.config.update(dict(work_mode=config.work_mode))
         failed = []
         for job in self.jobs:
             try:
