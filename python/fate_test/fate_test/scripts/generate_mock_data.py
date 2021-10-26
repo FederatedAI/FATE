@@ -301,7 +301,7 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
         table_namespace_list.append(upload_dict.get('namespace'))
 
     if parallelize:
-        with session.Session(work_mode=conf.work_mode) as sess:
+        with session.Session() as sess:
             session_id = str(uuid.uuid1())
             sess.init_computing(session_id)
             data_save(data_info=date_set, table_names=table_name_list, namespaces=table_namespace_list)

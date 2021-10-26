@@ -12,9 +12,8 @@ from fate_test.flow_test.flow_process import Base, get_dict_from_file, download_
 
 
 class TestModel(Base):
-    def __init__(self, data_base_dir, server_url, component_name, namespace, work_mode):
+    def __init__(self, data_base_dir, server_url, component_name, namespace):
         super().__init__(data_base_dir, server_url, component_name)
-        self.work_mode = work_mode
         self.request_api_info_path = f'./logs/{namespace}/cli_exception.log'
         os.makedirs(os.path.dirname(self.request_api_info_path), exist_ok=True)
 
@@ -371,11 +370,10 @@ class TestModel(Base):
             except Exception:
                 return
 
-    def data_upload(self, post_data, work_mode, table_index=None):
+    def data_upload(self, post_data, table_index=None):
         post_data['file'] = str(self.data_base_dir.joinpath(post_data['file']).resolve())
         post_data['drop'] = 1
         post_data['use_local_data'] = 0
-        post_data['work_mode'] = work_mode
         if table_index is not None:
             post_data['table_name'] = f'{post_data["file"]}_{table_index}'
 
@@ -388,12 +386,11 @@ class TestModel(Base):
         except Exception:
             return
 
-    def data_download(self, table_name, output_path, work_mode):
+    def data_download(self, table_name, output_path):
         post_data = {
             "table_name": table_name['table_name'],
             "namespace": table_name['namespace'],
-            "output_path": output_path + '{}download.csv'.format(self.job_id),
-            "work_mode": work_mode
+            "output_path": output_path + '{}download.csv'.format(self.job_id)
         }
         try:
             response = requests.post("/".join([self.server_url, "data", "download"]), json=post_data)
@@ -404,8 +401,8 @@ class TestModel(Base):
         except Exception:
             return
 
-    def data_upload_history(self, conf_file, work_mode):
-        self.data_upload(conf_file, work_mode=work_mode, table_index=1)
+    def data_upload_history(self, conf_file):
+        self.data_upload(conf_file, table_index=1)
         post_data = {"limit": 2}
         try:
             response = requests.post("/".join([self.server_url, "data", "upload/history"]), json=post_data)
@@ -482,8 +479,7 @@ class TestModel(Base):
     def model_api(self, command, output_path=None, remove_path=None, model_path=None, homo_deploy_path=None,
                   homo_deploy_kube_config_path=None, arbiter_party_id=None, tag_name=None, model_load_conf=None, servings=None):
         if model_load_conf is not None:
-            model_load_conf["job_parameters"].update({"work_mode": self.work_mode,
-                                                      "model_id": self.model_id,
+            model_load_conf["job_parameters"].update({"model_id": self.model_id,
                                                       "model_version": self.model_version})
         if command == 'model/load':
             try:
@@ -774,15 +770,14 @@ def run_test_api(config_json, namespace):
     train_dsl_path = config_json['train_dsl_path']
     upload_file_path = config_json['upload_file_path']
     model_file_path = config_json['model_file_path']
-    work_mode = config_json['work_mode']
     remove_path = str(config_json['data_base_dir']).split("python")[
                       0] + '/model_local_cache/guest#{}#arbiter-{}#guest-{}#host-{}#model/'.format(
         guest_party_id[0], arbiter_party_id[0], guest_party_id[0], host_party_id[0])
 
     serving_connect_bool = serving_connect(config_json['serving_setting'])
     test_api = TestModel(config_json['data_base_dir'], config_json['server_url'],
-                         component_name=config_json['component_name'], namespace=namespace, work_mode=work_mode)
-    job_conf = test_api.set_config(guest_party_id, host_party_id, arbiter_party_id, train_conf_path, work_mode)
+                         component_name=config_json['component_name'], namespace=namespace)
+    job_conf = test_api.set_config(guest_party_id, host_party_id, arbiter_party_id, train_conf_path)
     max_iter = job_conf['component_parameters']['common'][config_json['component_name']]['max_iter']
     test_api.set_dsl(train_dsl_path)
     conf_file = get_dict_from_file(upload_file_path)
@@ -790,9 +785,9 @@ def run_test_api(config_json, namespace):
     data = PrettyTable()
     data.set_style(ORGMODE)
     data.field_names = ['data api name', 'status']
-    data.add_row(['data upload', judging_state(test_api.data_upload(conf_file, work_mode=work_mode))])
-    data.add_row(['data download', judging_state(test_api.data_download(conf_file, output_path, work_mode))])
-    data.add_row(['data upload history', judging_state(test_api.data_upload_history(conf_file, work_mode=work_mode))])
+    data.add_row(['data upload', judging_state(test_api.data_upload(conf_file))])
+    data.add_row(['data download', judging_state(test_api.data_download(conf_file, output_path))])
+    data.add_row(['data upload history', judging_state(test_api.data_upload_history(conf_file))])
     print(data.get_string(title="data api"))
 
     table = PrettyTable()

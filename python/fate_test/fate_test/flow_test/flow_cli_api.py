@@ -12,11 +12,9 @@ from fate_test.flow_test.flow_process import get_dict_from_file, serving_connect
 
 
 class TestModel(object):
-    def __init__(self, data_base_dir, fate_flow_path, component_name, namespace, work_mode):
-        self.work_mode = None
+    def __init__(self, data_base_dir, fate_flow_path, component_name, namespace):
         self.conf_path = None
         self.dsl_path = None
-        # TODO: do not set it in `self.submit_job`
         self.job_id = None
         self.model_id = None
         self.model_version = None
@@ -338,12 +336,11 @@ class TestModel(object):
             except Exception:
                 return
 
-    def data_upload(self, upload_path, work_mode, table_index=None):
+    def data_upload(self, upload_path, table_index=None):
         upload_file = get_dict_from_file(upload_path)
         upload_file['file'] = str(self.data_base_dir.joinpath(upload_file['file']).resolve())
         upload_file['drop'] = 1
         upload_file['use_local_data'] = 0
-        upload_file['work_mode'] = work_mode
         if table_index is not None:
             upload_file['table_name'] = f'{upload_file["file"]}_{table_index}'
 
@@ -362,12 +359,11 @@ class TestModel(object):
         except Exception:
             return
 
-    def data_download(self, table_name, output_path, work_mode):
+    def data_download(self, table_name, output_path):
         download_config = {
             "table_name": table_name['table_name'],
             "namespace": table_name['namespace'],
-            "output_path": output_path + '{}download.csv'.format(self.job_id),
-            "work_mode": work_mode
+            "output_path": output_path + '{}download.csv'.format(self.job_id)
         }
         config_file_path = self.cache_directory + 'download_config.json'
         with open(config_file_path, 'w') as fp:
@@ -383,8 +379,8 @@ class TestModel(object):
         except Exception:
             return
 
-    def data_upload_history(self, conf_file, work_mode):
-        self.data_upload(conf_file, work_mode=work_mode, table_index=1)
+    def data_upload_history(self, conf_file):
+        self.data_upload(conf_file, table_index=1)
         try:
             subp = subprocess.Popen([self.python_bin, self.fate_flow_path, "-f", "upload_history", "-limit", "2"],
                                     stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -399,8 +395,7 @@ class TestModel(object):
 
     def model_api(self, command, remove_path=None, model_path=None, model_load_conf=None, servings=None):
         if model_load_conf is not None:
-            model_load_conf["job_parameters"].update({"work_mode": self.work_mode,
-                                                      "model_id": self.model_id,
+            model_load_conf["job_parameters"].update({"model_id": self.model_id,
                                                       "model_version": self.model_version})
 
         if command == 'load':
@@ -511,15 +506,11 @@ class TestModel(object):
             else:
                 return
 
-    def set_config(self, guest_party_id, host_party_id, arbiter_party_id, path, work_mode, component_name):
+    def set_config(self, guest_party_id, host_party_id, arbiter_party_id, path, component_name):
         config = get_dict_from_file(path)
         config["initiator"]["party_id"] = guest_party_id[0]
         config["role"]["guest"] = guest_party_id
         config["role"]["host"] = host_party_id
-        if config["job_parameters"].get("common"):
-            config["job_parameters"]["common"]["work_mode"] = work_mode
-        else:
-            config["job_parameters"]["work_mode"] = work_mode
         if "arbiter" in config["role"]:
             config["role"]["arbiter"] = arbiter_party_id
         self.guest_party_id = guest_party_id
@@ -546,9 +537,7 @@ def run_test_api(config_json, namespace):
     fate_flow_path = config_json['data_base_dir'].parent.parent / 'fate_flow' / 'fate_flow_client.py'
     if not fate_flow_path.exists():
         raise FileNotFoundError(f'fate_flow not found. filepath: {fate_flow_path}')
-    work_mode = config_json['work_mode']
-    test_api = TestModel(config_json['data_base_dir'], str(fate_flow_path), config_json['component_name'], namespace,
-                         work_mode)
+    test_api = TestModel(config_json['data_base_dir'], str(fate_flow_path), config_json['component_name'], namespace)
     test_api.dsl_path = config_json['train_dsl_path']
     test_api.cache_directory = config_json['cache_directory']
     test_api.output_path = str(os.path.abspath(output_path)) + '/'
@@ -565,16 +554,16 @@ def run_test_api(config_json, namespace):
     remove_path = str(config_json['data_base_dir']).split("python")[
                       0] + '/model_local_cache/guest#{}#arbiter-{}#guest-{}#host-{}#model/'.format(
         guest_party_id[0], arbiter_party_id[0], guest_party_id[0], host_party_id[0])
-    max_iter = test_api.set_config(guest_party_id, host_party_id, arbiter_party_id, conf_path, work_mode,
+    max_iter = test_api.set_config(guest_party_id, host_party_id, arbiter_party_id, conf_path,
                                    config_json['component_name'])
 
     data = PrettyTable()
     data.set_style(ORGMODE)
     data.field_names = ['data api name', 'status']
-    data.add_row(['data upload', judging_state(test_api.data_upload(upload_file_path, work_mode=work_mode))])
-    data.add_row(['data download', judging_state(test_api.data_download(conf_file, output_path, work_mode))])
+    data.add_row(['data upload', judging_state(test_api.data_upload(upload_file_path))])
+    data.add_row(['data download', judging_state(test_api.data_download(conf_file, output_path))])
     data.add_row(
-        ['data upload history', judging_state(test_api.data_upload_history(upload_file_path, work_mode=work_mode))])
+        ['data upload history', judging_state(test_api.data_upload_history(upload_file_path))])
     print(data.get_string(title="data api"))
 
     table = PrettyTable()
