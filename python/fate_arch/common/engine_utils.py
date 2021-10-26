@@ -15,65 +15,81 @@
 #
 import typing
 
-from fate_arch.common import WorkMode, Backend, FederatedMode, conf_utils
+from fate_arch.common import FederatedMode, conf_utils
 from fate_arch.computing import ComputingEngine
 from fate_arch.federation import FederationEngine
 from fate_arch.storage import StorageEngine
 from fate_arch.relation_ship import Relationship
 from fate_arch.common import EngineType
-from fate_arch.common.conf_utils import get_base_config
 
 
-def engines_compatibility(work_mode: typing.Union[WorkMode, int] = None,
-                          backend: typing.Union[Backend, int] = None, **kwargs):
-    keys = ["computing", "federation", "storage", "federated_mode"]
-    engines = {}
-    for k in keys:
-        if kwargs.get(k) is not None:
-            engines[k] = kwargs[k].upper()
-    if kwargs.get("computing") is None and work_mode is None:
-        raise RuntimeError("must provide computing engine parameters or work_mode parameters")
-    if kwargs.get("computing") is None and kwargs.get("federation") is None:
-        if isinstance(work_mode, int):
-            work_mode = WorkMode(work_mode)
-        if backend is not None:
-            if isinstance(backend, int):
-                backend = Backend(backend)
-            if backend == Backend.EGGROLL:
-                if work_mode == WorkMode.CLUSTER:
-                    values = (ComputingEngine.EGGROLL, FederationEngine.EGGROLL)
-                else:
-                    values = (ComputingEngine.STANDALONE, FederationEngine.STANDALONE)
-            elif backend == Backend.SPARK_RABBITMQ:
-                values = (ComputingEngine.SPARK, FederationEngine.RABBITMQ)
-            elif backend == Backend.SPARK_PULSAR:
-                values = (ComputingEngine.SPARK, FederationEngine.PULSAR)
-            elif backend == Backend.LINKIS_SPARK_RABBITMQ:
-                values = (ComputingEngine.LINKIS_SPARK, FederationEngine.RABBITMQ)
-            else:
-                raise RuntimeError(f"unable to find default engines by work_mode: {work_mode} backend: {backend}")
-        elif get_base_config("default_engines", {}).get("computing") is not None:
-            default_engines = get_base_config("default_engines")
-            values = (default_engines["computing"].upper(), default_engines["federation"].upper() if default_engines.get("federation") is not None else None)
-            engines["storage"] = default_engines["storage"].upper() if default_engines.get("storage") is not None else None
-        else:
-            raise RuntimeError(f"must provide backend or set default engines on conf/service_conf.yaml")
-        engines.update(dict(zip(keys[:2], values)))
+def get_engine_class_members(engine_class) -> list:
+    members = []
+    for k, v in engine_class.__dict__.items():
+        if k in ["__module__", "__dict__", "__weakref__", "__doc__"]:
+            continue
+        members.append(v)
+    return members
+
+
+def get_engines():
+    engines = {
+        EngineType.COMPUTING: None,
+        EngineType.FEDERATION: None,
+        EngineType.STORAGE: None,
+    }
+
+    # check service_conf.yaml
+    if (
+        conf_utils.get_base_config("default_engines", {}).get(EngineType.COMPUTING)
+        is None
+    ):
+        raise RuntimeError(f"must set default_engines on conf/service_conf.yaml")
+    default_engines = conf_utils.get_base_config("default_engines")
+
+    # computing engine
+    if default_engines.get(EngineType.COMPUTING) is None:
+        raise RuntimeError(f"{EngineType.COMPUTING} is None,"
+                           f"Please check default_engines on conf/service_conf.yaml")
+    engines[EngineType.COMPUTING] = default_engines[EngineType.COMPUTING].upper()
+    if engines[EngineType.COMPUTING] not in get_engine_class_members(ComputingEngine):
+        raise RuntimeError(f"{engines[EngineType.COMPUTING]} is illegal")
+
+    # federation engine
+    if default_engines.get(EngineType.FEDERATION) is not None:
+        engines[EngineType.FEDERATION] = default_engines[EngineType.FEDERATION].upper()
+
+    # storage engine
+    if default_engines.get(EngineType.STORAGE) is not None:
+        engines[EngineType.STORAGE] = default_engines[EngineType.STORAGE].upper()
 
     # set default storage engine and federation engine by computing engine
-    for t in {EngineType.STORAGE, EngineType.FEDERATION}:
+    for t in (EngineType.STORAGE, EngineType.FEDERATION):
         if engines.get(t) is None:
             # use default relation engine
             engines[t] = Relationship.Computing[engines[EngineType.COMPUTING]][t]["default"]
 
     # set default federated mode by federation engine
-    if engines.get("federated_mode") is None:
-        if engines[EngineType.FEDERATION] == FederationEngine.STANDALONE:
-            engines["federated_mode"] = FederatedMode.SINGLE
-        else:
-            engines["federated_mode"] = FederatedMode.MULTIPLE
+    if engines[EngineType.FEDERATION] == FederationEngine.STANDALONE:
+        engines["federated_mode"] = FederatedMode.SINGLE
+    else:
+        engines["federated_mode"] = FederatedMode.MULTIPLE
+
+    if engines[EngineType.STORAGE] not in get_engine_class_members(StorageEngine):
+        raise RuntimeError(f"{engines[EngineType.STORAGE]} is illegal")
+
+    if engines[EngineType.FEDERATION] not in get_engine_class_members(FederationEngine):
+        raise RuntimeError(f"{engines[EngineType.FEDERATION]} is illegal")
+
+    for t in [EngineType.FEDERATION]:
+        if engines[t] not in Relationship.Computing[engines[EngineType.COMPUTING]][t]["support"]:
+            raise RuntimeError(f"{engines[t]} is not supported in {engines[EngineType.COMPUTING]}")
 
     return engines
+
+
+def is_standalone():
+    return get_engines().get(EngineType.FEDERATION) == FederationEngine.STANDALONE
 
 
 def get_engines_config_from_conf(group_map=False):

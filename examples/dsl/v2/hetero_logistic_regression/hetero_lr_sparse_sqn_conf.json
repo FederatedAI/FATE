@@ -17,7 +17,6 @@
     },
     "job_parameters": {
         "common": {
-            "backend": 0,
             "work_mode": 0,
             "job_type": "train"
         }
@@ -26,7 +25,7 @@
         "role": {
             "host": {
                 "0": {
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": false
                     },
                     "reader_0": {
@@ -39,7 +38,7 @@
             },
             "guest": {
                 "0": {
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": true
                     },
                     "reader_0": {
@@ -52,7 +51,7 @@
             }
         },
         "common": {
-            "dataio_0": {
+            "data_transform_0": {
                 "output_format": "sparse"
             },
             "hetero_lr_0": {

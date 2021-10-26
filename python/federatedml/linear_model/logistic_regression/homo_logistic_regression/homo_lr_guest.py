@@ -38,12 +38,15 @@ class HomoLRGuest(HomoLRBase):
         self.gradient_operator = LogisticGradient()
         self.loss_history = []
         self.role = consts.GUEST
-        self.aggregator = aggregator.Guest()
+        # self.aggregator = aggregator.Guest()
 
     def _init_model(self, params):
         super()._init_model(params)
 
     def fit(self, data_instances, validate_data=None):
+        self.aggregator = aggregator.Guest()
+        self.aggregator.register_aggregator(self.transfer_variable)
+
         self._abnormal_detection(data_instances)
         self.check_abnormal_values(data_instances)
         self.init_schema(data_instances)
@@ -56,7 +59,6 @@ class HomoLRGuest(HomoLRBase):
             self.model_weights = self._init_model_variables(data_instances)
         else:
             self.callback_warm_start_init_iter(self.n_iter_)
-            self.n_iter_ += 1
 
         max_iter = self.max_iter
         # total_data_num = data_instances.count()
@@ -116,10 +118,11 @@ class HomoLRGuest(HomoLRBase):
 
             # validation_strategy.validate(self, self.n_iter_)
             self.callback_list.on_epoch_end(self.n_iter_)
+            self.n_iter_ += 1
+
             if self.stop_training:
                 break
 
-            self.n_iter_ += 1
         self.set_summary(self.get_model_summary())
 
     @assert_io_num_rows_equal

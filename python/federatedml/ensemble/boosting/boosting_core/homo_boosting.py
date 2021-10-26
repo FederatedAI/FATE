@@ -28,10 +28,9 @@ class HomoBoostingClient(Boosting, ABC):
     def __init__(self):
         super(HomoBoostingClient, self).__init__()
         self.transfer_inst = HomoBoostingTransferVariable()
-        self.aggregator = HomoBoostClientAggregator()
         self.model_param = HomoSecureBoostParam()
-        self.binning_obj = HomoFeatureBinningClient()
         self.mode = consts.HOMO
+        self.aggregator, self.binning_obj = None, None
 
     def federated_binning(self,  data_instance):
 
@@ -88,6 +87,11 @@ class HomoBoostingClient(Boosting, ABC):
 
     def fit(self, data_inst, validate_data=None):
 
+        # init aggregator
+        self.aggregator = HomoBoostClientAggregator()
+        self.binning_obj = HomoFeatureBinningClient()
+
+
         # binning
         self.data_preporcess(data_inst)
 
@@ -110,7 +114,7 @@ class HomoBoostingClient(Boosting, ABC):
         local_classes = self.check_label(self.data_bin)
 
         # set start round
-        self.start_round = len(self.boosting_model_list)
+        self.start_round = len(self.boosting_model_list) // self.booster_dim
 
         # sync label class and set y
         if self.task_type == consts.CLASSIFICATION:
@@ -201,10 +205,9 @@ class HomoBoostingArbiter(Boosting, ABC):
 
     def __init__(self):
         super(HomoBoostingArbiter, self).__init__()
-        self.aggregator = HomoBoostArbiterAggregator()
+        self.aggregator, self.binning_obj = None, None
         self.transfer_inst = HomoBoostingTransferVariable()
         self.check_convergence_func = None
-        self.binning_obj = HomoFeatureBinningServer()
 
     def federated_binning(self,):
 
@@ -234,6 +237,10 @@ class HomoBoostingArbiter(Boosting, ABC):
         pass
 
     def fit(self, data_inst, validate_data=None):
+
+        # init aggregator
+        self.aggregator = HomoBoostArbiterAggregator()
+        self.binning_obj = HomoFeatureBinningServer()
 
         self.federated_binning()
         # initializing
@@ -292,6 +299,5 @@ class HomoBoostingArbiter(Boosting, ABC):
     @abc.abstractmethod
     def load_booster(self, model_meta, model_param, epoch_idx, booster_idx):
         raise NotImplementedError()
-
 
 

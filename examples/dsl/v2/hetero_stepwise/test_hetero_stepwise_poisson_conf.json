@@ -17,8 +17,7 @@
     },
     "job_parameters": {
         "common": {
-            "work_mode": 1,
-            "backend": 1
+            "work_mode": 1
         }
     },
     "component_parameters": {
@@ -52,7 +51,7 @@
         "role": {
             "host": {
                 "0": {
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": false
                     },
                     "reader_0": {
@@ -65,7 +64,7 @@
             },
             "guest": {
                 "0": {
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": true,
                         "label_name": "doctorco",
                         "label_type": "float",

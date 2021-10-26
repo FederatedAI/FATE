@@ -19,7 +19,6 @@
     "job_parameters": {
         "common": {
             "work_mode": 0,
-            "backend": 0,
             "job_type": "predict",
             "model_id": "arbiter-10000#guest-9999#host-9999_10000#model",
             "model_version": "20200915205718387358172"
@@ -59,7 +58,7 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": true,
                         "label_name": "motor_speed",
                         "label_type": "float",
@@ -77,7 +76,7 @@
                     }
                 },
                 "0|1": {
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": false
                     }
                 },

@@ -14,10 +14,13 @@
 #  limitations under the License.
 #
 import os
+from pathlib import Path
+
 import click
 from ruamel import yaml
+
+from flow_client.flow_cli.commands import checkpoint, component, data, job, model, queue, table, tag, task
 from flow_client.flow_cli.utils.cli_utils import prettify
-from flow_client.flow_cli.commands import (component, data, job, model, queue, task, table, tag, checkpoint)
 
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
@@ -30,6 +33,8 @@ def flow_cli(ctx):
     Fate Flow Client
     """
     ctx.ensure_object(dict)
+    if ctx.invoked_subcommand == 'init':
+        return
 
     with open(os.path.join(os.path.dirname(__file__), "settings.yaml"), "r") as fin:
         config = yaml.safe_load(fin)
@@ -39,28 +44,33 @@ def flow_cli(ctx):
 
     is_server_conf_exist = False
     if config.get("server_conf_path"):
-        is_server_conf_exist = os.path.exists(config["server_conf_path"])
+        conf_path = Path(config["server_conf_path"])
+        is_server_conf_exist = conf_path.exists()
 
     if is_server_conf_exist:
-        try:
-            with open(config.get("server_conf_path")) as server_conf_fp:
-                server_conf = yaml.safe_load(server_conf_fp)
-            ip = server_conf.get("fateflow", {}).get("host")
-            ctx.obj["http_port"] = server_conf.get("fateflow", {}).get("http_port")
-            ctx.obj["server_url"] = "http://{}:{}/{}".format(ip, ctx.obj["http_port"], config["api_version"])
-        except Exception:
-            return
+        server_conf = yaml.safe_load(conf_path.read_text())["fateflow"]
+
+        local_conf_path = conf_path.with_name(f"local.{conf_path.name}")
+        if local_conf_path.exists():
+            server_conf.update(yaml.safe_load(local_conf_path.read_text()).get("fateflow", {}))
+
+        ctx.obj["http_port"] = server_conf["http_port"]
+        ctx.obj["server_url"] = f"http://{server_conf['host']}:{ctx.obj['http_port']}/{ctx.obj['api_version']}"
+
+        if server_conf.get('http_app_key') and server_conf.get('http_secret_key'):
+            ctx.obj['app_key'] = server_conf['http_app_key']
+            ctx.obj['secret_key'] = server_conf['http_secret_key']
+    elif config.get("ip") and config.get("port"):
+        ctx.obj["http_port"] = int(config["port"])
+        ctx.obj["server_url"] = f"http://{config['ip']}:{ctx.obj['http_port']}/{config['api_version']}"
+
+        if config.get('app_key') and config.get('secret_key'):
+            ctx.obj['app_key'] = config['app_key']
+            ctx.obj['secret_key'] = config['secret_key']
     else:
-        if config.get("ip") and config.get("port"):
-            ip = config.get("ip")
-            ctx.obj["http_port"] = int(config.get("port"))
-            ctx.obj["server_url"] = "http://{}:{}/{}".format(ip, ctx.obj["http_port"], config["api_version"])
+        raise ValueError("Invalid configuration file. Did you run 'flow init'?")
 
     ctx.obj["init"] = is_server_conf_exist or (config.get("ip") and config.get("port"))
-
-    if config.get('app_key') and config.get('secret_key'):
-        ctx.obj['app_key'] = config['app_key']
-        ctx.obj['secret_key'] = config['secret_key']
 
 
 @flow_cli.command("init", short_help="Flow CLI Init Command")

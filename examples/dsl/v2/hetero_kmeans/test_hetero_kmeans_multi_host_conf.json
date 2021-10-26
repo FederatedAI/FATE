@@ -19,7 +19,6 @@
     "job_parameters": {
         "common": {
             "job_type": "train",
-            "backend": 0,
             "work_mode": 0
         }
     },

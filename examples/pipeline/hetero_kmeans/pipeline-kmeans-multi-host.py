@@ -35,7 +35,6 @@ def main(config="../../config.yaml", namespace=""):
     guest = parties.guest[0]
     hosts = parties.host
     arbiter = parties.arbiter[0]
-    backend = config.backend
     work_mode = config.work_mode
 
     guest_train_data = {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"}
@@ -95,7 +94,7 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.compile()
 
     # fit model
-    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
+    job_parameters = JobParameters(work_mode=work_mode)
     pipeline.fit(job_parameters)
     # query component summary
     print(pipeline.get_component("hetero_kmeans_0").get_summary())

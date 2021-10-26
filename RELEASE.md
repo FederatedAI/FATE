@@ -1,3 +1,33 @@
+# Release 1.6.1
+## Major Features and Improvements
+> FederatedML
+* Support single party prediction
+* SIR support non-ascii id
+* Selection support local iv filter
+* Adjustable Paillier key length for Hetero LR
+* Binning support iv calculation on categorical features
+* Hetero LR one vs rest support evaluation during training
+
+> FATE-Flow:
+* Support mysql storage engine;
+* Added service registry interface;
+* Added service query interface;
+* Support fate on WeDataSphere mode
+* Add lock when writing `model_local_cache`
+* Register the model download urls to zookeeper
+
+> Bug-Fix:
+* Fix error for deploying module with lack of partial upstream modules in multi-input cases
+* Fix error for deploying module with multiple output, like data-statistics
+* Fix job id length no more than 25 limitation
+* Fix error when loss function of Hetero SecureBoost set to log-cosh
+* Fix setting predict label to string-type error when Hetero SecureBoost predicts
+* Fix error for HeteroLR without intercept
+* Fix quantile error of Data Statistics with specified columns
+* Fix string parsing error of OneHot with specified columns
+* Some parameters can now take 0 or 1 integer values when valid range is [0, 1]
+
+
 # Release 1.6.0
 ## Major Features and Improvements
 
@@ -30,6 +60,34 @@
 
 * Add Benchmark performance for efficiency comparison; add mock data generation tool; support metrics comparison between training and validation sets
 * FATE-Flow unittest for REST/CLI/SDK API and training-prediction workflow 
+
+# Release 1.5.2
+## Major Features and Improvements
+
+> FederatedML
+* SIR support non-ascii id
+* Selection support local iv filter
+* Adjustable Paillier key length for Hetero LR
+* Binning support iv calculation on categorical features
+* Hetero LR one vs rest support evaluation during training
+
+> Fate-Flow
+* Read data from mysql with ‘table bind’ command to map source table to FATE table
+* FATE cluster push model for one-to-multiple FATE Serving clusters in one party
+
+> System Architecture
+* More efficient ‘sample’ api 
+
+> Bug Fixes
+* Fix error for deploying module with lack of partial upstream modules in multi-input cases
+* Fix job id length no more than 25 limitation
+* Fix error when loss function of Hetero SecureBoost set to log-cosh
+* Fix setting predict label to string-type error when Hetero SecureBoost predicts
+* Fix error for HeteroLR without intercept
+* Fix torch import error
+* Fix quantile error of Data Statistics with specified columns
+* Fix string parsing error of OneHot with specified columns
+* Some parameters can now take 0 or 1 integer values when valid range is [0, 1]
 
 
 # Release 1.5.1

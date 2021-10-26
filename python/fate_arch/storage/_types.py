@@ -22,10 +22,10 @@ class StorageEngine(object):
     HDFS = 'HDFS'
     MYSQL = 'MYSQL'
     SIMPLE = 'SIMPLE'
-    FILE = 'FILE'
     PATH = 'PATH'
     HIVE = 'HIVE'
     LINKIS_HIVE = 'LINKIS_HIVE'
+    LOCALFS = 'LOCALFS'
 
 
 class StandaloneStoreType(object):
@@ -77,6 +77,14 @@ class HiveStoreType(object):
 
 class LinkisHiveStoreType(object):
     DEFAULT = "HDFS"
+
+
+class LocalFSStoreType(object):
+    RAM_DISK = 'RAM_DISK'
+    SSD = 'SSD'
+    DISK = 'DISK'
+    ARCHIVE = 'ARCHIVE'
+    DEFAULT = None
 
 
 class StorageTableMetaType(object):

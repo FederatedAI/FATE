@@ -1016,20 +1016,6 @@ Table
 
     flow table delete -n $NAMESPACE -t $TABLE_NAME
 
-Queue
------
-
-``clean``
-~~~~~~~~~
-
--  *介绍*\ ： 取消所有在队列中的Job。
--  *参数*\ ： 无
--  *示例*\ ：
-
-.. code:: bash
-
-    flow queue clean
-
 ``add``
 ~~~~~~~~~~
 
@@ -1065,3 +1051,18 @@ Queue
 .. code:: bash
 
     flow table bind -c $conf_path
+
+Queue
+-----
+
+``clean``
+~~~~~~~~~
+
+-  *介绍*\ ： 取消所有在队列中的Job。
+-  *参数*\ ： 无
+-  *示例*\ ：
+
+.. code:: bash
+
+    flow queue clean
+

@@ -20,8 +20,8 @@ def insert_extract_code(file_path, fold_name):
     extract(pipeline, __file__)
         """.format(fold_name)
 
-    f_str = f_str.replace('pipeline.fit(backend=backend, work_mode=work_mode)',
-                          '# pipeline.fit(backend=backend, work_mode=work_mode)\n' + code)
+    f_str = f_str.replace('pipeline.fit(work_mode=work_mode)',
+                          '# pipeline.fit(work_mode=work_mode)\n' + code)
     f_str = f_str.replace('common_tools.prettify(pipeline.get_component("hetero_lr_0").get_summary())',
                           '')
     f_str = f_str.replace('common_tools.prettify(pipeline.get_component("evaluation_0").get_summary())',

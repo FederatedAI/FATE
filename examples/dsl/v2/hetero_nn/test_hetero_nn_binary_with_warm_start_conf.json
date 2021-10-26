@@ -14,15 +14,14 @@
     },
     "job_parameters": {
         "common": {
-            "work_mode": 0,
-            "backend": 0
+            "work_mode": 0
         }
     },
     "component_parameters": {
         "role": {
             "host": {
                 "0": {
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": false
                     },
                     "reader_1": {
@@ -139,7 +138,7 @@
                             "backend": "tensorflow"
                         }
                     },
-                    "dataio_1": {
+                    "data_transform_1": {
                         "with_label": false
                     },
                     "reader_0": {
@@ -152,7 +151,7 @@
             },
             "guest": {
                 "0": {
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": true
                     },
                     "reader_1": {
@@ -322,7 +321,7 @@
                             "backend": "tensorflow"
                         }
                     },
-                    "dataio_1": {
+                    "data_transform_1": {
                         "with_label": true
                     },
                     "reader_0": {
@@ -348,9 +347,6 @@
                     "optimizer": "SGD"
                 },
                 "loss": "binary_crossentropy",
-                "metrics": [
-                    "AUC"
-                ],
                 "bottom_nn_define": null,
                 "top_nn_define": null,
                 "interactive_layer_define": null,
@@ -360,8 +356,6 @@
                 "epochs": 10,
                 "interactive_layer_lr": 0.05,
                 "optimizer": null,
-                "loss": null,
-                "metrics": null,
                 "bottom_nn_define": null,
                 "top_nn_define": null,
                 "interactive_layer_define": null,

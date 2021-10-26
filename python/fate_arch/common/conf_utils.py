@@ -14,6 +14,7 @@
 #  limitations under the License.
 #
 import os
+import filelock
 from fate_arch.common import file_utils
 
 SERVICE_CONF = "service_conf.yaml"
@@ -26,11 +27,9 @@ def conf_realpath(conf_name):
 
 
 def get_base_config(key, default=None, conf_name=SERVICE_CONF):
-    try:
-        local_config = file_utils.load_yaml_conf(conf_realpath('local.' + conf_name))
-    except Exception:
-        pass
-    else:
+    local_path = conf_realpath(f'local.{conf_name}')
+    if os.path.exists(local_path):
+        local_config = file_utils.load_yaml_conf(local_path)
         if isinstance(local_config, dict) and key in local_config:
             return local_config[key]
 
@@ -40,8 +39,10 @@ def get_base_config(key, default=None, conf_name=SERVICE_CONF):
 
 
 def update_config(key, value, conf_name=SERVICE_CONF):
-    config = file_utils.load_yaml_conf(conf_realpath(conf_name))
-    if not isinstance(config, dict):
-        config = {}
-    config[key] = value
-    file_utils.rewrite_yaml_conf(conf_realpath(conf_name), config)
+    conf_path = conf_realpath(conf_name=conf_name)
+    if not os.path.isabs(conf_path):
+        conf_path = os.path.join(file_utils.get_project_base_directory(), conf_path)
+    with filelock.FileLock(os.path.join(os.path.dirname(conf_path), ".lock")):
+        config = file_utils.load_yaml_conf(conf_path=conf_path) or dict()
+        config[key] = value
+        file_utils.rewrite_yaml_conf(conf_path=conf_path, config=config)

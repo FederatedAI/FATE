@@ -22,7 +22,7 @@ from pathlib import Path
 
 from ruamel import yaml
 
-temperate = """\
+template = """\
 # 0 for standalone, 1 for cluster
 work_mode: 0
 # 0 for eggroll, 1 for spark
@@ -73,18 +73,24 @@ services:
 
 """
 
-_default_config = Path(__file__).parent.joinpath("fate_test_config.yaml").resolve()
+data_base_dir = Path(__file__).resolve().parents[3]
+if (data_base_dir / 'examples').is_dir():
+    template = template.replace('path(FATE)', str(data_base_dir))
+
+_default_config = Path(__file__).resolve().parent / 'fate_test_config.yaml'
 
 data_switch = None
 use_local_data = 1
 data_alter = dict()
 deps_alter = dict()
 
+
 def create_config(path: Path, override=False):
     if path.exists() and not override:
         raise FileExistsError(f"{path} exists")
+
     with path.open("w") as f:
-        f.write(temperate)
+        f.write(template)
 
 
 def default_config():
@@ -196,7 +202,11 @@ class Config(object):
         if path is not None:
             with path.open("r") as f:
                 config.update(yaml.safe_load(f))
+
+        if config["data_base_dir"] == "path(FATE)":
+            raise ValueError("Invalid 'data_base_dir'.")
         config["data_base_dir"] = path.resolve().joinpath(config["data_base_dir"]).resolve()
+
         config.update(kwargs)
         return Config(config)
 

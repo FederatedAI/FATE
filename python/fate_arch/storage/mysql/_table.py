@@ -19,99 +19,112 @@ from fate_arch.storage import StorageTableBase
 
 
 class StorageTable(StorageTableBase):
-    def __init__(self,
-                 cur,
-                 con,
-                 address=None,
-                 name: str = None,
-                 namespace: str = None,
-                 partitions: int = 1,
-                 store_type: MySQLStoreType = None,
-                 options=None):
-        super(StorageTable, self).__init__(name=name, namespace=namespace)
-        self.cur = cur
-        self.con = con
-        self._address = address
-        self._name = name
-        self._namespace = namespace
-        self._partitions = partitions
-        self._store_type = store_type if store_type else MySQLStoreType.InnoDB
-        self._options = options if options else {}
-        self._storage_engine = StorageEngine.MYSQL
+    def __init__(
+        self,
+        cur,
+        con,
+        address=None,
+        name: str = None,
+        namespace: str = None,
+        partitions: int = 1,
+        store_type: MySQLStoreType = MySQLStoreType.InnoDB,
+        options=None,
+    ):
+        super(StorageTable, self).__init__(
+            name=name,
+            namespace=namespace,
+            address=address,
+            partitions=partitions,
+            options=options,
+            engine=StorageEngine.MYSQL,
+            store_type=store_type,
+        )
+        self._cur = cur
+        self._con = con
 
-    def execute(self, sql, select=True):
-        self.cur.execute(sql)
-        if select:
-            while True:
-                result = self.cur.fetchone()
-                if result:
-                    yield result
-                else:
+    def check_address(self):
+        schema = self.meta.get_schema()
+        if schema:
+            sql = "SELECT {},{} FROM {}".format(
+                schema.get("sid"), schema.get("header"), self._address.name
+            )
+            feature_data = self.execute(sql)
+            for feature in feature_data:
+                if feature:
                     break
-        else:
-            result = self.cur.fetchall()
-            return result
+        return True
 
-    def get_partitions(self):
-        return self._partitions
+    @staticmethod
+    def get_meta_header(feature_name_list):
+        create_features = ""
+        feature_list = []
+        feature_size = "varchar(255)"
+        for feature_name in feature_name_list:
+            create_features += "{} {},".format(feature_name, feature_size)
+            feature_list.append(feature_name)
+        return create_features, feature_list
 
-    def get_name(self):
-        return self._name
-
-    def get_namespace(self):
-        return self._namespace
-
-    def get_engine(self):
-        return self._storage_engine
-
-    def get_address(self):
-        return self._address
-
-    def get_store_type(self):
-        return self._store_type
-
-    def get_options(self):
-        return self._options
-
-    def count(self, **kwargs):
-        sql = 'select count(*) from {}'.format(self._name)
+    def _count(self):
+        sql = "select count(*) from {}".format(self._address.name)
         try:
-            self.cur.execute(sql)
-            self.con.commit()
-            ret = self.cur.fetchall()
+            self._cur.execute(sql)
+            # self.con.commit()
+            ret = self._cur.fetchall()
             count = ret[0][0]
         except:
             count = 0
-        self.meta.update_metas(count=count)
         return count
 
-    def collect(self, **kwargs) -> list:
-        id_name, feature_name_list, _ = self.get_id_feature_name()
+    def _collect(self, **kwargs) -> list:
+        id_name, feature_name_list, _ = self._get_id_feature_name()
         id_feature_name = [id_name]
         id_feature_name.extend(feature_name_list)
-        sql = 'select {} from {}'.format(','.join(id_feature_name), self._address.name)
+        sql = "select {} from {}".format(",".join(id_feature_name), self._address.name)
         data = self.execute(sql)
         for line in data:
             feature_list = [str(feature) for feature in list(line[1:])]
             yield line[0], self.meta.get_id_delimiter().join(feature_list)
 
-    def put_all(self, kv_list, **kwargs):
-        id_name, feature_name_list, id_delimiter = self.get_id_feature_name()
+    def _put_all(self, kv_list, **kwargs):
+        id_name, feature_name_list, id_delimiter = self._get_id_feature_name()
         feature_sql, feature_list = StorageTable.get_meta_header(feature_name_list)
         id_size = "varchar(100)"
-        create_table = 'create table if not exists {}({} {} NOT NULL, {} PRIMARY KEY({}))'.format(
-            self._address.name, id_name, id_size, feature_sql, id_name)
-        self.cur.execute(create_table)
-        sql = 'REPLACE INTO {}({}, {})  VALUES'.format(self._address.name, id_name, ','.join(feature_list))
+        create_table = (
+            "create table if not exists {}({} {} NOT NULL, {} PRIMARY KEY({}))".format(
+                self._address.name, id_name, id_size, feature_sql, id_name
+            )
+        )
+        self._cur.execute(create_table)
+        sql = "REPLACE INTO {}({}, {})  VALUES".format(
+            self._address.name, id_name, ",".join(feature_list)
+        )
         for kv in kv_list:
             sql += '("{}", "{}"),'.format(kv[0], '", "'.join(kv[1].split(id_delimiter)))
-        sql = ','.join(sql.split(',')[:-1]) + ';'
-        self.cur.execute(sql)
-        self.con.commit()
+        sql = ",".join(sql.split(",")[:-1]) + ";"
+        self._cur.execute(sql)
+        self._con.commit()
 
-    def get_id_feature_name(self):
-        id = self.meta.get_schema().get('sid', 'id')
-        header = self.meta.get_schema().get('header')
+    def _destroy(self):
+        sql = "drop table {}".format(self._address.name)
+        self._cur.execute(sql)
+        self._con.commit()
+
+    def execute(self, sql, select=True):
+        self._cur.execute(sql)
+        if select:
+            while True:
+                result = self._cur.fetchone()
+                if result:
+                    yield result
+                else:
+                    break
+        else:
+            result = self._cur.fetchall()
+            return result
+
+    def _get_id_feature_name(self):
+        id = self.meta.get_schema().get("sid", "id")
+        header = self.meta.get_schema().get("header")
         id_delimiter = self.meta.get_id_delimiter()
         if header:
             if isinstance(header, str):
@@ -123,28 +136,3 @@ class StorageTable(StorageTableBase):
         else:
             raise Exception("mysql table need data header")
         return id, feature_list, id_delimiter
-
-    def destroy(self):
-        super().destroy()
-        sql = 'drop table {}'.format(self._address.name)
-        return self.execute(sql)
-
-    def check_address(self):
-        schema = self.meta.get_schema()
-        if schema:
-            sql = 'SELECT {},{} FROM {}'.format(schema.get('sid'), schema.get('header'), self._address.name)
-            feature_data = self.execute(sql)
-            for feature in feature_data:
-                if feature:
-                    break
-        return True
-
-    @staticmethod
-    def get_meta_header(feature_name_list):
-        create_features = ''
-        feature_list = []
-        feature_size = "varchar(255)"
-        for feature_name in feature_name_list:
-            create_features += '{} {},'.format(feature_name, feature_size)
-            feature_list.append(feature_name)
-        return create_features, feature_list

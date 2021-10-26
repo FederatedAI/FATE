@@ -140,7 +140,7 @@ class LinearParam(BaseParam):
         self.metrics = metrics or []
         self.use_first_metric_only = use_first_metric_only
         self.floating_point_precision = floating_point_precision
-        self.callback_param = callback_param
+        self.callback_param = copy.deepcopy(callback_param)
 
     def check(self):
         descr = "linear_regression_param's "

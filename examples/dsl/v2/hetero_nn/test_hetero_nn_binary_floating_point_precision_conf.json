@@ -15,7 +15,6 @@
     "job_parameters": {
         "common": {
             "job_type": "train",
-            "backend": 0,
             "work_mode": 0
         }
     },
@@ -34,9 +33,6 @@
                     "optimizer": "SGD"
                 },
                 "loss": "binary_crossentropy",
-                "metrics": [
-                    "AUC"
-                ],
                 "floating_point_precision": 23,
                 "bottom_nn_define": {
                     "class_name": "Sequential",
@@ -171,8 +167,6 @@
             },
             "hetero_nn_1": {
                 "optimizer": null,
-                "loss": null,
-                "metrics": null,
                 "bottom_nn_define": null,
                 "top_nn_define": null,
                 "interactive_layer_define": null,
@@ -188,7 +182,7 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": true
                     }
                 }
@@ -201,7 +195,7 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": false
                     }
                 }

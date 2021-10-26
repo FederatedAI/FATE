@@ -11,8 +11,7 @@
     },
     "job_parameters": {
         "common": {
-            "work_mode": 0,
-            "backend": 0
+            "work_mode": 0
         }
     },
     "component_parameters": {
@@ -22,7 +21,7 @@
                 "allow_missing": false,
                 "keep_duplicate": true
             },
-            "dataio_0": {
+            "data_transform_0": {
                 "input_format": "tag",
                 "delimitor": ",",
                 "tag_with_value": true,

@@ -42,14 +42,16 @@ class HomoLRHost(HomoLRBase):
         self.loss_history = []
         self.is_converged = False
         self.role = consts.HOST
-        self.aggregator = aggregator.Host()
+        # self.aggregator = aggregator.Host()
         self.model_weights = None
-        self.cipher = paillier_cipher.Host()
+        self.cipher = None
 
     def _init_model(self, params):
         super()._init_model(params)
-        self.cipher.register_paillier_cipher(self.transfer_variable)
+        if self.component_properties.has_arbiter:
+            self.cipher = paillier_cipher.Host()
         if params.encrypt_param.method in [consts.PAILLIER]:
+            self.cipher.register_paillier_cipher(self.transfer_variable)
             self.use_encrypt = True
             self.gradient_operator = TaylorLogisticGradient()
             self.re_encrypt_batches = params.re_encrypt_batches
@@ -58,6 +60,9 @@ class HomoLRHost(HomoLRBase):
             self.gradient_operator = LogisticGradient()
 
     def fit(self, data_instances, validate_data=None):
+        self.aggregator = aggregator.Host()
+        self.aggregator.register_aggregator(self.transfer_variable)
+
         self._abnormal_detection(data_instances)
         self.check_abnormal_values(data_instances)
         self.init_schema(data_instances)
@@ -75,7 +80,6 @@ class HomoLRHost(HomoLRBase):
             self.model_weights = LogisticRegressionWeights(w, self.model_weights.fit_intercept)
         else:
             self.callback_warm_start_init_iter(self.n_iter_)
-            self.n_iter_ += 1
 
         # LOGGER.debug("After init, model_weights: {}".format(self.model_weights.unboxed))
 
@@ -150,9 +154,9 @@ class HomoLRHost(HomoLRBase):
 
             # validation_strategy.validate(self, self.n_iter_)
             self.callback_list.on_epoch_end(self.n_iter_)
+            self.n_iter_ += 1
             if self.stop_training:
                 break
-            self.n_iter_ += 1
 
         self.set_summary(self.get_model_summary())
         LOGGER.info("Finish Training task, total iters: {}".format(self.n_iter_))
@@ -182,11 +186,15 @@ class HomoLRHost(HomoLRBase):
         self.init_schema(data_instances)
         data_instances = self.align_data_header(data_instances, self.header)
         suffix = ('predict',)
-        pubkey = self.cipher.gen_paillier_pubkey(enable=self.use_encrypt, suffix=suffix)
+        if self.component_properties.has_arbiter:
+            pubkey = self.cipher.gen_paillier_pubkey(enable=self.use_encrypt, suffix=suffix)
+        else:
+            if self.use_encrypt:
+                raise ValueError(f"In use_encrypt case, arbiter should be set")
+            pubkey = None
         if self.use_encrypt:
             self.cipher_operator.set_public_key(pubkey)
 
-        if self.use_encrypt:
             final_model = self.transfer_variable.aggregated_model.get(idx=0, suffix=suffix)
             model_weights = LogisticRegressionWeights(final_model.unboxed, self.fit_intercept)
             wx = self.compute_wx(data_instances, model_weights.coef_, model_weights.intercept_)

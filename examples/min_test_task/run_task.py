@@ -315,6 +315,7 @@ class TrainTask(TaskManager):
 class TrainLRTask(TrainTask):
     def __init__(self, data_type, guest_id, host_id, arbiter_id):
         super().__init__(data_type, guest_id, host_id, arbiter_id)
+
         self.dsl_file = hetero_lr_dsl_file
         self.train_component_name = 'hetero_lr_0'
 

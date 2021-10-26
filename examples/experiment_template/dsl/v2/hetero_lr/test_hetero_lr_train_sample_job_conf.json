@@ -17,8 +17,7 @@
     },
     "job_parameters": {
         "common": {
-            "work_mode": 0,
-            "backend": 0
+            "work_mode": 0
         }
     },
     "component_parameters": {
@@ -127,7 +126,7 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_1": {
+                    "data_transform_1": {
                         "missing_fill": true,
                         "missing_fill_method": "mean",
                         "outlier_replace": false,
@@ -145,7 +144,7 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_0": {
+                    "data_transform_0": {
                         "missing_fill": true,
                         "missing_fill_method": "mean",
                         "outlier_replace": false,
@@ -167,7 +166,7 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_1": {
+                    "data_transform_1": {
                         "input_format": "tag",
                         "delimitor": ";",
                         "tag_with_value": true,
@@ -180,7 +179,7 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_0": {
+                    "data_transform_0": {
                         "input_format": "tag",
                         "delimitor": ";",
                         "tag_with_value": true,

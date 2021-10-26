@@ -36,7 +36,7 @@ class HomoLRArbiter(HomoLRBase):
         self.loss_history = []
         self.is_converged = False
         self.role = consts.ARBITER
-        self.aggregator = aggregator.Arbiter()
+        # self.aggregator = aggregator.Arbiter()
         self.model_weights = None
         self.cipher = paillier_cipher.Arbiter()
         self.host_predict_results = []
@@ -46,6 +46,9 @@ class HomoLRArbiter(HomoLRBase):
         self.cipher.register_paillier_cipher(self.transfer_variable)
 
     def fit(self, data_instances=None, validate_data=None):
+        self.aggregator = aggregator.Arbiter()
+        self.aggregator.register_aggregator(self.transfer_variable)
+
         self._server_check_data()
 
         host_ciphers = self.cipher.paillier_keygen(key_length=self.model_param.encrypt_param.key_length,
@@ -58,7 +61,6 @@ class HomoLRArbiter(HomoLRBase):
 
         if self.component_properties.is_warm_start:
             self.callback_warm_start_init_iter(self.n_iter_)
-            self.n_iter_ += 1
 
         while self.n_iter_ < max_iter + 1:
             suffix = (self.n_iter_,)
@@ -97,9 +99,9 @@ class HomoLRArbiter(HomoLRBase):
 
             # validation_strategy.validate(self, self.n_iter_)
             self.callback_list.on_epoch_end(self.n_iter_)
+            self.n_iter_ += 1
             if self.stop_training:
                 break
-            self.n_iter_ += 1
 
         LOGGER.info("Finish Training task, total iters: {}".format(self.n_iter_))
 

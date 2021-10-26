@@ -21,7 +21,7 @@
         "role": {
             "host": {
                 "0": {
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": false
                     },
                     "reader_0": {
@@ -34,7 +34,7 @@
             },
             "guest": {
                 "0": {
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": true
                     },
                     "reader_0": {
@@ -54,7 +54,7 @@
             }
         },
         "common": {
-            "dataio_0": {
+            "data_transform_0": {
                 "output_format": "dense"
             },
             "hetero_feature_selection_0": {
@@ -75,8 +75,6 @@
                 },
                 "max_iter": 30,
                 "early_stop": "diff",
-                "validation_freqs": null,
-                "early_stopping_rounds": null,
                 "reveal_strategy": "all_reveal_in_guest",
                 "compute_loss": true,
                 "reveal_every_iter": false

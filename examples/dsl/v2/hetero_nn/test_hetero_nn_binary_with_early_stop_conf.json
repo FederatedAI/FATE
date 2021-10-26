@@ -14,8 +14,7 @@
     },
     "job_parameters": {
         "common": {
-            "work_mode": 0,
-            "backend": 0
+            "work_mode": 0
         }
     },
     "component_parameters": {
@@ -28,7 +27,7 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_1": {
+                    "data_transform_1": {
                         "with_label": true
                     },
                     "hetero_nn_0": {
@@ -198,7 +197,7 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": true
                     }
                 }
@@ -211,7 +210,7 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_1": {
+                    "data_transform_1": {
                         "with_label": false
                     },
                     "hetero_nn_0": {
@@ -328,7 +327,7 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": false
                     }
                 }
@@ -346,7 +345,10 @@
                     ],
                     "validation_freqs": 1,
                     "early_stopping_rounds": 15,
-                    "use_first_metric_only": true
+                    "use_first_metric_only": true,
+                    "metrics": [
+                        "AUC"
+                    ]
                 },
                 "optimizer": {
                     "learning_rate": 0.15,
@@ -356,9 +358,6 @@
                     "optimizer": "SGD"
                 },
                 "loss": "binary_crossentropy",
-                "metrics": [
-                    "AUC"
-                ],
                 "bottom_nn_define": null,
                 "top_nn_define": null,
                 "interactive_layer_define": null,
@@ -366,8 +365,6 @@
             },
             "hetero_nn_1": {
                 "optimizer": null,
-                "loss": null,
-                "metrics": null,
                 "bottom_nn_define": null,
                 "top_nn_define": null,
                 "interactive_layer_define": null,

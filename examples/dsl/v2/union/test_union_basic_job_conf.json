@@ -11,20 +11,19 @@
     },
     "job_parameters": {
         "common": {
-            "work_mode": 0,
-            "backend": 0
+            "work_mode": 0
         }
     },
     "component_parameters": {
         "common": {
-            "dataio_0": {
+            "data_transform_0": {
                 "missing_fill": false,
                 "outlier_replace": false,
                 "with_label": true,
                 "label_name": "y",
                 "output_format": "dense"
             },
-            "dataio_1": {
+            "data_transform_1": {
                 "missing_fill": false,
                 "outlier_replace": false,
                 "with_label": true,

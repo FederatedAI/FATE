@@ -16,7 +16,6 @@
     "job_parameters": {
         "common": {
             "job_type": "train",
-            "backend": 0,
             "work_mode": 0
         }
     },
@@ -45,7 +44,7 @@
         "role": {
             "host": {
                 "0": {
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": false
                     },
                     "reader_0": {
@@ -54,7 +53,7 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_1": {
+                    "data_transform_1": {
                         "with_label": false
                     },
                     "reader_1": {
@@ -65,7 +64,7 @@
                     }
                 },
                 "1": {
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": false
                     },
                     "reader_0": {
@@ -74,7 +73,7 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_1": {
+                    "data_transform_1": {
                         "with_label": false
                     },
                     "reader_1": {
@@ -87,7 +86,7 @@
             },
             "guest": {
                 "0": {
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": true,
                         "output_format": "dense"
                     },
@@ -97,7 +96,7 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_1": {
+                    "data_transform_1": {
                         "with_label": true,
                         "output_format": "dense"
                     },

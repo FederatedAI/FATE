@@ -250,10 +250,7 @@ class TestModel(Base):
                 if response.status_code == 200:
                     if response.json().get('retcode'):
                         self.error_log('component parameters: {}'.format(response.json().get('retmsg')) + '\n')
-                    if ((self.component_name == "hetero_lr_0" and
-                            response.json().get("data").get("HeteroLogisticParam").get("max_iter") == max_iter) or
-                        (self.component_name == "homo_lr_0" and
-                            response.json().get("data").get("HomoLogisticParam").get("max_iter") == max_iter)):
+                    if response.json().get('data', {}).get('ComponentParam', {}).get('max_iter', {}) == max_iter:
                         return response.json().get('retcode')
             except Exception:
                 return
@@ -371,9 +368,13 @@ class TestModel(Base):
                 return
 
     def data_upload(self, post_data, work_mode, table_index=None):
-        post_data.update({"drop": 1, "use_local_data": 0, "work_mode": work_mode})
+        post_data['file'] = str(self.data_base_dir.joinpath(post_data['file']).resolve())
+        post_data['drop'] = 1
+        post_data['use_local_data'] = 0
+        post_data['work_mode'] = work_mode
         if table_index is not None:
-            post_data.update({"table_name": post_data["file"] + f'_{table_index}'})
+            post_data['table_name'] = f'{post_data["file"]}_{table_index}'
+
         try:
             response = requests.post("/".join([self.server_url, "data", "upload"]), json=post_data)
             if response.status_code == 200:
@@ -774,7 +775,7 @@ def run_test_api(config_json):
                           'data_base_dir']) + '/model_local_cache/guest#{}#arbiter-{}#guest-{}#host-{}#model/'.format(
         guest_party_id[0], arbiter_party_id[0], guest_party_id[0], host_party_id[0])
 
-    test_api = TestModel(config_json['server_url'], component_name=config_json['component_name'])
+    test_api = TestModel(config_json['data_base_dir'], config_json['server_url'], component_name=config_json['component_name'])
     job_conf = test_api.set_config(guest_party_id, host_party_id, arbiter_party_id, train_conf_path, work_mode)
     max_iter = job_conf['component_parameters']['common'][config_json['component_name']]['max_iter']
     test_api.set_dsl(train_dsl_path)

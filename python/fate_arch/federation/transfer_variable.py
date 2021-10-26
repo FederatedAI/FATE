@@ -21,7 +21,7 @@ from typing import Union
 from fate_arch.abc import GarbageCollectionABC
 from fate_arch.common import Party, profile
 from fate_arch.common.log import getLogger
-from fate_arch.session import get_latest_opened
+from fate_arch.session import get_session, get_parties
 
 __all__ = ["Variable", "BaseTransferVariables"]
 
@@ -168,7 +168,7 @@ class Variable(object):
         -------
         None
         """
-        session = get_latest_opened()
+        session = get_session()
         if isinstance(parties, Party):
             parties = [parties]
         if not isinstance(suffix, tuple):
@@ -217,7 +217,7 @@ class Variable(object):
            a list of objects/tables get from parties with same order of ``parties``
 
         """
-        session = get_latest_opened()
+        session = get_session()
         if not isinstance(parties, list):
             parties = [parties]
         if not isinstance(suffix, tuple):
@@ -258,7 +258,7 @@ class Variable(object):
                 The default is -1, which means sent values to parties regardless their party id
             suffix: additional tag suffix, the default is tuple()
         """
-        party_info = get_latest_opened().parties
+        party_info = get_parties()
         if idx >= 0 and role is None:
             raise ValueError("role cannot be None if idx specified")
 
@@ -291,13 +291,13 @@ class Variable(object):
             object or list of object
         """
         if role is None:
-            src_parties = get_latest_opened().parties.roles_to_parties(
+            src_parties = get_parties().roles_to_parties(
                 roles=self._src, strict=False
             )
         else:
             if isinstance(role, str):
                 role = [role]
-            src_parties = get_latest_opened().parties.roles_to_parties(
+            src_parties = get_parties().roles_to_parties(
                 roles=role, strict=False
             )
         if isinstance(idx, list):
@@ -364,7 +364,7 @@ class BaseTransferVariables(object):
            list of parties
 
         """
-        return get_latest_opened().parties.all_parties
+        return get_parties().all_parties
 
     @staticmethod
     def local_party():
@@ -377,4 +377,4 @@ class BaseTransferVariables(object):
            party this program running on
 
         """
-        return get_latest_opened().parties.local_party
+        return get_parties().local_party

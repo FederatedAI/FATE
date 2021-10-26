@@ -42,9 +42,9 @@ class TestLabelTransform(unittest.TestCase):
         self.label_transformer_obj = LabelTransformer()
 
     def test_get_label_encoder(self):
-        label_encoder = self.label_transformer_obj.get_label_encoder(self.table)
+        self.label_transformer_obj.update_label_encoder(self.table)
         c_label_encoder = {"yes": 1, "no": 0}
-        self.assertDictEqual(label_encoder, c_label_encoder)
+        self.assertDictEqual(self.label_transformer_obj.label_encoder, c_label_encoder)
 
     def test_replace_instance_label(self):
         instance = self.table.first()[1]
@@ -57,8 +57,10 @@ class TestLabelTransform(unittest.TestCase):
 
     def test_replace_predict_label(self):
         true_label, predict_label, predict_score, predict_detail, predict_type = 1, 0, 0.1, {"1": 0.1, "0": 0.9}, "train"
-        predict_result = [true_label, predict_label, predict_score, predict_detail, predict_type]
-        r_predict_result = self.label_transformer_obj.replace_predict_label(predict_result, self.predict_label_encoder)
+        predict_result = Instance(inst_id=0,
+                                  features=[true_label, predict_label, predict_score, predict_detail, predict_type])
+        r_predict_instance = self.label_transformer_obj.replace_predict_label(predict_result, self.predict_label_encoder)
+        r_predict_result = r_predict_instance.features
         c_predict_result = ["yes", "no", predict_score, {"yes": 0.1, "no": 0.9}, predict_type]
         self.assertEqual(r_predict_result, c_predict_result)
 

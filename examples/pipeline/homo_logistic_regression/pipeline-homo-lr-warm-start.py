@@ -19,7 +19,7 @@ import json
 
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component import HomoLR
-from pipeline.component.dataio import DataIO
+from pipeline.component import DataTransform
 from pipeline.component.evaluation import Evaluation
 from pipeline.component.reader import Reader
 from pipeline.interface.data import Data
@@ -38,7 +38,6 @@ def prettify(response, verbose=True):
 def main(config="../../config.yaml", namespace=""):
     if isinstance(config, str):
         config = load_job_config(config)
-    backend = config.backend
     work_mode = config.work_mode
     parties = config.parties
     guest = parties.guest[0]
@@ -61,11 +60,11 @@ def main(config="../../config.yaml", namespace=""):
     # configure Reader for host
     reader_0.get_party_instance(role='host', party_id=hosts).component_param(table=host_train_data)
 
-    dataio_0 = DataIO(name="dataio_0", output_format='dense', with_label=True)
+    data_transform_0 = DataTransform(name="data_transform_0", output_format='dense', with_label=True)
 
     pipeline.add_component(reader_0)
 
-    pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
+    pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
 
     lr_param = {
         "penalty": "L2",
@@ -97,21 +96,23 @@ def main(config="../../config.yaml", namespace=""):
     homo_lr_0 = HomoLR(name="homo_lr_0", max_iter=3, **lr_param)
     homo_lr_1 = HomoLR(name="homo_lr_1", max_iter=30, **lr_param)
 
-    pipeline.add_component(homo_lr_0, data=Data(train_data=dataio_0.output.data))
-    pipeline.add_component(homo_lr_1, data=Data(train_data=dataio_0.output.data),
+    homo_lr_2 = HomoLR(name="homo_lr_2", max_iter=30, **lr_param)
+
+    pipeline.add_component(homo_lr_0, data=Data(train_data=data_transform_0.output.data))
+    pipeline.add_component(homo_lr_1, data=Data(train_data=data_transform_0.output.data),
                            model=Model(model=homo_lr_0.output.model))
+    pipeline.add_component(homo_lr_2, data=Data(train_data=data_transform_0.output.data))
 
     evaluation_0 = Evaluation(name="evaluation_0", eval_type="binary")
-    pipeline.add_component(evaluation_0, data=Data(data=homo_lr_1.output.data))
+    pipeline.add_component(evaluation_0, data=Data(data=[homo_lr_1.output.data,
+                                                         homo_lr_2.output.data]))
 
     pipeline.compile()
 
     # fit model
-    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
+    job_parameters = JobParameters(work_mode=work_mode)
     pipeline.fit(job_parameters)
     # query component summary
-    prettify(pipeline.get_component("homo_lr_0").get_summary())
-    prettify(pipeline.get_component("homo_lr_1").get_summary())
     prettify(pipeline.get_component("evaluation_0").get_summary())
     return pipeline
 
