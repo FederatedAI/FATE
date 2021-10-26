@@ -142,6 +142,8 @@ def generate(ctx, include, host_data_type, encryption_type, match_rate, sparsity
     config_inst = ctx.obj["config"]
     config_inst.extend_sid = ctx.obj["extend_sid"]
     config_inst.auto_increasing_sid = ctx.obj["auto_increasing_sid"]
+    if parallelize and upload_data:
+        upload_data = False
     yes = ctx.obj["yes"]
     echo.echo(f"testsuite namespace: {namespace}", fg='red')
     echo.echo("loading testsuites:")
