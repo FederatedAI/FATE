@@ -76,17 +76,9 @@ class LogisticRegressionParam(BaseParam):
     multi_class: str, 'ovr', default: 'ovr'
         If it is a multi_class task, indicate what strategy to use. Currently, support 'ovr' short for one_vs_rest only.
 
-    reveal_strategy: str, "respectively", "all_reveal_in_guest", default: "respectively"
+    reveal_strategy: str, "respectively", "encrypted_reveal_in_host", default: "respectively"
         "respectively": Means guest and host can reveal their own part of weights only.
-        "all_reveal_in_guest": All the weights will be revealed in guest only.
-            This is use to protect the situation that, guest provided label only.
-            Since if host obtain the model weights, it can use this model to steal
-            label info of guest. However, to protect host's info, this function works
-            only when guest provide no features. If there is any feature has been provided
-            in Guest, this param is illegal.
-
-    compute_loss: bool, default True
-        Indicate whether to compute loss or not.
+        "encrypted_reveal_in_host": Means host can be revealed his weights in encrypted mode, and guest can be revealed in normal mode.
 
     reveal_every_iter: bool, default: True
         Whether reconstruct model weights every iteration. If so, Regularization is available.
@@ -104,7 +96,7 @@ class LogisticRegressionParam(BaseParam):
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  decay=1, decay_sqrt=True,
                  multi_class='ovr', use_mix_rand=False,
-                 random_field=2 ** 16, reveal_strategy="respectively", compute_loss=True,
+                 random_field=2 ** 16, reveal_strategy="respectively",
                  reveal_every_iter=True,
                  callback_param=CallbackParam(),
                  ):
@@ -126,7 +118,6 @@ class LogisticRegressionParam(BaseParam):
         self.multi_class = multi_class
         self.use_mix_rand = use_mix_rand
         self.reveal_strategy = reveal_strategy
-        self.compute_loss = compute_loss
         self.reveal_every_iter = reveal_every_iter
         self.callback_param = callback_param
         self.cv_param = cv_param
@@ -205,12 +196,6 @@ class LogisticRegressionParam(BaseParam):
                 raise ValueError(
                     "logistic_param's early_stop not supported, converge_func should be"
                     " 'diff', 'weight_diff' or 'abs'")
-            if self.early_stop in ["diff", 'abs'] and not self.compute_loss:
-                raise ValueError(f"sshe lr param early_stop: {self.early_stop} should calculate loss."
-                                 f"Please set 'compute_loss' to be True")
-            # todo: dylan
-            # if self.early_stop == "weight_diff" and not self.reveal_every_iter:
-            #     raise ValueError(f"When early_stop strategy is weight_diff, weight should be revealed every iter.")
 
         self.encrypt_param.check()
         self.predict_param.check()
@@ -231,17 +216,15 @@ class LogisticRegressionParam(BaseParam):
         if self.callback_param.validation_freqs is not None:
             if type(self.callback_param.validation_freqs).__name__ not in ["int", "list", "tuple", "set"]:
                 raise ValueError(
-                    "validation strategy param's validate_freqs's type not supported , should be int or list or tuple or set"
+                    "validation strategy param's validate_freqs's type not supported ,"
+                    " should be int or list or tuple or set"
                 )
             if type(self.callback_param.validation_freqs).__name__ == "int" and \
                     self.callback_param.validation_freqs <= 0:
                 raise ValueError("validation strategy param's validate_freqs should greater than 0")
-            if self.reveal_strategy == "all_reveal_in_guest":
-                raise ValueError(f"When reveal strategy is all_reveal_in_guest, validation every iter"
-                                 f" is not supported.")
             if self.reveal_every_iter is False:
-                raise ValueError(f"When reveal strategy is all_reveal_in_guest, reveal_every_iter "
-                                 f"should be True.")
+                raise ValueError(f"When reveal_every_iter is False, validation every iter"
+                                 f" is not supported.")
 
         if self.callback_param.early_stopping_rounds is None:
             pass
@@ -259,11 +242,10 @@ class LogisticRegressionParam(BaseParam):
             raise ValueError("use_first_metric_only should be a boolean")
 
         self.reveal_strategy = self.reveal_strategy.lower()
-        self.check_valid_value(self.reveal_strategy, descr, ["respectively", "all_reveal_in_guest"])
-        if not consts.ALLOW_REVEAL_GUEST_ONLY and self.reveal_strategy == "all_reveal_in_guest":
-            raise PermissionError("reveal strategy: all_reveal_in_guest has not been authorized.")
-        if self.reveal_strategy == "all_reveal_in_guest" and self.reveal_every_iter:
-            raise PermissionError("reveal strategy: all_reveal_in_guest mode is not allow to reveal every iter.")
+        self.check_valid_value(self.reveal_strategy, descr, ["respectively", "encrypted_reveal_in_host"])
+
+        if self.reveal_strategy == "encrypted_reveal_in_host" and self.reveal_every_iter:
+            raise PermissionError("reveal strategy: encrypted_reveal_in_host mode is not allow to reveal every iter.")
         self.check_boolean(self.reveal_every_iter, descr)
         self.callback_param.check()
         self.cv_param.check()

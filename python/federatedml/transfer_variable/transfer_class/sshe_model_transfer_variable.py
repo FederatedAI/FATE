@@ -30,12 +30,8 @@ from federatedml.transfer_variable.base_transfer_variable import BaseTransferVar
 class SSHEModelTransferVariable(BaseTransferVariables):
     def __init__(self, flowid=0):
         super().__init__(flowid)
-        self.encrypted_share_matrix = self._create_variable(name='encrypted_share_matrix', src=['guest', "host"],
-                                                            dst=['host', "guest"])
-        self.share_error = self._create_variable(name='share_error', src=["host"], dst=["guest"])
+        self.q_field = self._create_variable(name='q_field', src=['guest', "host"], dst=['host', "guest"])
         self.host_prob = self._create_variable(name='host_prob', src=['host'], dst=['guest'])
-        self.pubkey = self._create_variable(name='pubkey', src=['guest', "host"], dst=['host', "guest"])
-        self.encrypted_host_weights = self._create_variable(name='encrypted_host_weights', src=['guest'], dst=['host'])
         self.loss = self._create_variable(name='loss', src=['host'], dst=['guest'])
         self.is_converged = self._create_variable(name='is_converged', src=['guest'], dst=['host'])
-        self.wxy_sum = self._create_variable(name='wxy_sum', src=['guest'], dst=['host'])
+

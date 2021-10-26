@@ -17,13 +17,11 @@
 #  limitations under the License.
 
 import copy
-import operator
 from abc import ABC
 
 import numpy as np
 
 from fate_arch import session
-from fate_arch.computing import is_table
 from federatedml.framework.hetero.procedure import batch_generator
 from federatedml.linear_model.linear_model_base import BaseLinearModel
 from federatedml.linear_model.linear_model_weight import LinearModelWeights
@@ -53,14 +51,22 @@ class HeteroLRBase(BaseLinearModel, ABC):
         self.model_meta_name = 'HeteroSSHELogisticRegressionMeta'
         self.mode = consts.HETERO
         self.cipher = None
-        self.gradient_loss_operator = None
-        self.converge_procedure = None
+        self.q_field = None
         self.model_param = LogisticRegressionParam()
         self.labels = None
-        self.encoded_batch_num = []
+        self.batch_num = []
         self.one_vs_rest_obj = None
         self.secure_matrix_obj: SecureMatrix
         self._set_parties()
+
+    def _transfer_q_field(self):
+        if self.role == consts.GUEST:
+            q_field = self.cipher.public_key.n
+            self.transfer_variable.q_field.remote(q_field, role=consts.HOST, suffix=("q_field",))
+        else:
+            q_field = self.transfer_variable.q_field.get(role=consts.GUEST, idx=0,
+                                                          suffix=("q_field",))
+        return q_field
 
     def _init_model(self, params: LogisticRegressionParam):
         super()._init_model(params)
@@ -68,22 +74,25 @@ class HeteroLRBase(BaseLinearModel, ABC):
         self.cipher.generate_key(self.model_param.encrypt_param.key_length)
         self.transfer_variable = SSHEModelTransferVariable()
         self.one_vs_rest_obj = one_vs_rest_factory(self, role=self.role, mode=self.mode, has_arbiter=False)
-        self.cal_loss = self.model_param.compute_loss
+
         self.converge_func_name = params.early_stop
         self.review_every_iter = params.reveal_every_iter
 
-        # self.fixpoint_filed = self.random_field ** 2
-        self.fixpoint_filed = 293973345475167247070445277780365744413 ** 2
-        # self.random_field = params.random_field
+        self.q_field = self._transfer_q_field()
+        # self.fixedpoint_filed = 293973345475167247070445277780365744413 ** 2
 
-        self.random_field = self.fixpoint_filed
+        LOGGER.debug(f"q_field: {self.q_field}")
+
+        if not self.review_every_iter:
+            self.self_optimizer = copy.deepcopy(self.optimizer)
+            self.remote_optimizer = copy.deepcopy(self.optimizer)
 
         self.batch_generator = batch_generator.Guest() if self.role == consts.GUEST else batch_generator.Host()
         self.batch_generator.register_batch_generator(BatchGeneratorTransferVariable(), has_arbiter=False)
-        self.fixedpoint_encoder = FixedPointEndec(n=self.fixpoint_filed)
+        self.fixedpoint_encoder = FixedPointEndec(n=self.q_field)
         self.converge_transfer_variable = ConvergeCheckerTransferVariable()
         self.secure_matrix_obj = SecureMatrix(party=self.local_party,
-                                              q_field=self.fixpoint_filed,
+                                              q_field=self.q_field,
                                               other_party=self.other_party)
 
     def _set_parties(self):
@@ -129,20 +138,20 @@ class HeteroLRBase(BaseLinearModel, ABC):
             wb, wa = (
                 fixedpoint_numpy.FixedPointTensor.from_source(f"wb_{suffix}", source[0],
                                                               encoder=self.fixedpoint_encoder,
-                                                              q_field=self.random_field),
+                                                              q_field=self.q_field),
                 fixedpoint_numpy.FixedPointTensor.from_source(f"wa_{suffix}", source[1],
                                                               encoder=self.fixedpoint_encoder,
-                                                              q_field=self.random_field),
+                                                              q_field=self.q_field),
             )
             return wb, wa
         else:
             wa, wb = (
                 fixedpoint_numpy.FixedPointTensor.from_source(f"wa_{suffix}", source[0],
                                                               encoder=self.fixedpoint_encoder,
-                                                              q_field=self.random_field),
+                                                              q_field=self.q_field),
                 fixedpoint_numpy.FixedPointTensor.from_source(f"wb_{suffix}", source[1],
                                                               encoder=self.fixedpoint_encoder,
-                                                              q_field=self.random_field),
+                                                              q_field=self.q_field),
             )
             return wa, wb
 
@@ -186,6 +195,8 @@ class HeteroLRBase(BaseLinearModel, ABC):
         self.callback_list.on_train_begin(data_instances, validate_data)
 
         model_shape = self.get_features_shape(data_instances)
+        instances_count = data_instances.count()
+
         if not self.component_properties.is_warm_start:
             w = self._init_weights(model_shape)
             last_models = w
@@ -202,7 +213,7 @@ class HeteroLRBase(BaseLinearModel, ABC):
                 "sshe_lr",
                 local_party=self.local_party,
                 all_parties=self.parties,
-                q_field=self.random_field,
+                q_field=self.q_field,
                 use_mix_rand=self.model_param.use_mix_rand,
         ) as spdz:
             if self.role == consts.GUEST:
@@ -219,7 +230,7 @@ class HeteroLRBase(BaseLinearModel, ABC):
                     batch_features = batch_data.mapValues(lambda x: np.hstack((x.features, 1.0)))
                 else:
                     batch_features = batch_data.mapValues(lambda x: x.features)
-                self.encoded_batch_num.append(1 / batch_data.count())
+                self.batch_num.append(batch_data.count())
 
                 encoded_batch_data.append(
                     fixedpoint_table.FixedPointTensor(self.fixedpoint_encoder.encode(batch_features),
@@ -231,7 +242,12 @@ class HeteroLRBase(BaseLinearModel, ABC):
                 LOGGER.debug(f"n_iter: {self.n_iter_}")
 
                 loss_list = []
+
                 self.optimizer.set_iters(self.n_iter_)
+                if not self.review_every_iter:
+                    self.self_optimizer.set_iters(self.n_iter_)
+                    self.remote_optimizer.set_iters(self.n_iter_)
+
                 for batch_idx, batch_data in enumerate(encoded_batch_data):
                     current_suffix = (str(self.n_iter_), str(batch_idx))
 
@@ -273,32 +289,34 @@ class HeteroLRBase(BaseLinearModel, ABC):
                                 fit_intercept=self.model_param.init_param.fit_intercept)
                     else:
                         if self.optimizer.penalty == consts.L2_PENALTY:
-                            self_g = self_g + self.optimizer.alpha * w_self
-                            remote_g = remote_g + self.optimizer.alpha * w_remote
+                            self_g = self_g + self.self_optimizer.alpha * w_self
+                            remote_g = remote_g + self.remote_optimizer.alpha * w_remote
 
                         LOGGER.debug(f"before optimizer: {self_g}, {remote_g}")
-                        self_g = self.optimizer.apply_gradients(self_g)
-                        remote_g = self.optimizer.apply_gradients(remote_g)
+                        self_g = self.self_optimizer.apply_gradients(self_g)
+                        remote_g = self.remote_optimizer.apply_gradients(remote_g)
                         LOGGER.debug(f"after optimizer: {self_g}, {remote_g}")
                         w_self -= self_g
                         w_remote -= remote_g
 
                     LOGGER.debug(f"other_w_self shape: {w_self.shape}, w_remote_shape: {w_remote.shape}")
 
-                    if self.cal_loss:
-                        suffix = ("loss",) + current_suffix
-                        if self.review_every_iter:
-                            loss_list.append(self.compute_loss(weights=self.model_weights, suffix=suffix))
-                        else:
-                            loss_list.append(self.compute_loss(weights=(w_self, w_remote), suffix=suffix))
-
-                if self.cal_loss:
-                    if self.role == consts.GUEST:
-                        loss = np.sum(loss_list) / self.batch_generator.batch_nums
-                        self.loss_history.append(loss)
-                        self.callback_loss(self.n_iter_, loss)
+                    suffix = ("loss",) + current_suffix
+                    if self.review_every_iter:
+                        batch_loss = self.compute_loss(weights=self.model_weights, suffix=suffix)
                     else:
-                        loss = None
+                        batch_loss = self.compute_loss(weights=(w_self, w_remote), suffix=suffix)
+
+                    if batch_loss is not None:
+                        batch_loss = batch_loss * self.batch_num[batch_idx]
+                    loss_list.append(batch_loss)
+
+                if self.role == consts.GUEST:
+                    loss = np.sum(loss_list) / instances_count
+                    self.loss_history.append(loss)
+                    self.callback_loss(self.n_iter_, loss)
+                else:
+                    loss = None
 
                 if self.converge_func_name in ["diff", "abs"]:
                     self.is_converged = self.check_converge_by_loss(loss, suffix=(str(self.n_iter_),))
@@ -355,7 +373,7 @@ class HeteroLRBase(BaseLinearModel, ABC):
                 new_w = w_self.get(tensor_name=f"wa_{suffix}",
                                    broadcast=False)
 
-        elif self.model_param.reveal_strategy == "all_reveal_in_guest":
+        elif self.model_param.reveal_strategy == "encrypted_reveal_in_host":
 
             if self.role == consts.GUEST:
                 new_w = w_self.get(tensor_name=f"wb_{suffix}",
@@ -364,9 +382,6 @@ class HeteroLRBase(BaseLinearModel, ABC):
                 encrypted_w_remote_tensor = fixedpoint_numpy.PaillierFixedPointTensor(value=encrypted_w_remote)
                 encrypted_w_remote_tensor.broadcast_reconstruct_share(tensor_name=f"wa_{suffix}")
             else:
-                # if w_remote.shape[0] > 2:
-                #     raise ValueError("Too many features in Guest. Review strategy: 'all_reveal_in_guest' "
-                #                      "should not be used.")
                 w_remote.broadcast_reconstruct_share(tensor_name=f"wb_{suffix}")
 
                 new_w = w_self.reconstruct(tensor_name=f"wa_{suffix}", broadcast=False)

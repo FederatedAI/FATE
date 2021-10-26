@@ -33,8 +33,6 @@ class HeteroLRHost(HeteroLRBase):
         self.wx_self = None
 
     def _init_weights(self, model_shape):
-        # init_param_obj = copy.deepcopy(self.init_param_obj)
-        # init_param_obj.fit_intercept = False
         self.init_param_obj.fit_intercept = False
         return self.initializer.init_model(model_shape, init_params=self.init_param_obj)
 
@@ -80,11 +78,11 @@ class HeteroLRHost(HeteroLRBase):
         return shared_sigmoid_z
 
     def backward(self, error: fixedpoint_table.FixedPointTensor, features, suffix):
-        encoded_1_n = self.encoded_batch_num[int(suffix[1])]
+        batch_num = self.batch_num[int(suffix[1])]
 
         ga = error.dot_local(features)
-        LOGGER.debug(f"ga: {ga}, encoded_1_n: {encoded_1_n}")
-        ga = ga * encoded_1_n
+        LOGGER.debug(f"ga: {ga}, batch_num: {batch_num}")
+        ga = ga * (1 / batch_num)
 
         zb_suffix = ("ga2",) + suffix
         ga2_1 = self.secure_matrix_obj.secure_matrix_mul(features,

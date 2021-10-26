@@ -84,11 +84,9 @@ class FixedPointNumber(object):
         int_fixpoint = int(round(scalar * pow(cls.BASE, exponent)))
 
         if abs(int_fixpoint) > max_int:
-            assert 1 == 2, f"scalar: {scalar}, int_fix_popint: {int_fixpoint}," \
-                           f"max_int: {max_int}" \
-                           f" base: {cls.BASE}, {exponent}"
-            raise ValueError('Integer needs to be within +/- %d but got %d'
-                             % (max_int, int_fixpoint))
+            raise ValueError(f"Integer needs to be within +/- {max_int},but got {int_fixpoint},"
+                             f"basic info, scalar={scalar}, base={cls.BASE}, exponent={exponent}"
+                             )
 
         return cls(int_fixpoint % n, exponent, n, max_int)
 
@@ -159,7 +157,7 @@ class FixedPointNumber(object):
     def __rsub__(self, other):
         if type(other).__name__ == "PaillierEncryptedNumber":
             return other - self.decode()
-                
+
         x = self.__sub__(other)
         x = -1 * x.decode()
         return self.encode(x, n=self.n, max_int=self.max_int)
@@ -259,8 +257,8 @@ class FixedPointNumber(object):
             other = self.encode(other.decode(), n=self.n, max_int=self.max_int)
         x, y = self.__align_exponent(self, other)
         encoding = (x.encoding + y.encoding) % self.n
-        return FixedPointNumber(encoding, x.exponent, n=self.n, max_int=self.max_int) 
-    
+        return FixedPointNumber(encoding, x.exponent, n=self.n, max_int=self.max_int)
+
     def __add_scalar(self, scalar):
         encoded = self.encode(scalar, n=self.n, max_int=self.max_int)
         return self.__add_fixedpointnumber(encoded)
@@ -290,6 +288,11 @@ class FixedPointNumber(object):
         encoding = (self.encoding * other.encoding) % self.n
         exponent = self.exponent + other.exponent
 
+        # if exponent == 0:
+        #     raise ValueError(f"__mul_fixedpointnumber: {self.encoding},"
+        #                      f"{self.exponent}, {other.encoding}, {other.exponent},"
+        #                      f"{encoding}, {exponent}")
+
         mul_fixedpoint = FixedPointNumber(encoding, exponent, n=n, max_int=max_int)
         truncate_mul_fixedpoint = self.__truncate(mul_fixedpoint)
         return truncate_mul_fixedpoint
@@ -311,10 +314,17 @@ class FixedPointNumber(object):
 
 
 class FixedPointEndec(object):
-    
-    def __init__(self, n):       
-        self.n = n       
-        self.max_int = n // 3 - 1
+
+    def __init__(self, n=None, max_int=None):
+        if n is None:
+            self.n = FixedPointNumber.Q
+            self.max_int = self.n // 3 - 1
+        else:
+            self.n = n
+            if max_int is None:
+                self.max_int = self.n // 3 - 1
+            else:
+                self.max_int = max_int
 
     @classmethod
     def _transform_op(cls, tensor, op):
@@ -332,8 +342,6 @@ class FixedPointEndec(object):
         if isinstance(tensor, (int, np.int16, np.int32, np.int64,
                                float, np.float16, np.float32, np.float64,
                                FixedPointNumber)):
-            # tensor = np.array([tensor])
-
             return op(tensor)
 
         if isinstance(tensor, np.ndarray):
@@ -368,4 +376,3 @@ class FixedPointEndec(object):
 
     def truncate(self, integer_tensor, *args, **kwargs):
         return self._transform_op(integer_tensor, op=self._truncate)
-

@@ -18,7 +18,6 @@ import operator
 
 import numpy as np
 
-from federatedml.linear_model.linear_model_weight import LinearModelWeights
 from federatedml.linear_model.logistic_regression.hetero_sshe_logistic_regression.hetero_lr_base import HeteroLRBase
 from federatedml.optim import activation
 from federatedml.protobuf.generated import lr_model_param_pb2
@@ -104,9 +103,9 @@ class HeteroLRGuest(HeteroLRBase):
         return shared_sigmoid_z
 
     def backward(self, error, features, suffix):
-        encoded_1_n = self.encoded_batch_num[int(suffix[1])]
+        batch_num = self.batch_num[int(suffix[1])]
 
-        error_1_n = error * encoded_1_n
+        error_1_n = error * (1 / batch_num)
 
         LOGGER.debug(f"error_1_n: {error_1_n}")
 
@@ -119,14 +118,7 @@ class HeteroLRGuest(HeteroLRBase):
 
         LOGGER.debug(f"ga2_2: {ga2_2}")
 
-        # encrypt_g = self.encrypted_error.dot(features) * encoded_1_n
-        # if self.fit_intercept:
-        #     bias = self.encrypted_error.reduce(operator.add) * encoded_1_n
-        #     # encrypt_g = np.array(list(encrypt_g.value) + list(bias.value))
-        #     encrypt_g = np.hstack((encrypt_g.value, bias.value))
-        #     encrypt_g = fixedpoint_numpy.PaillierFixedPointTensor(encrypt_g)
-
-        encrypt_g = self.encrypted_error.dot(features) * encoded_1_n
+        encrypt_g = self.encrypted_error.dot(features) * (1 / batch_num)
 
         LOGGER.debug(f"encrypt_g: {encrypt_g}")
 
@@ -167,8 +159,8 @@ class HeteroLRGuest(HeteroLRBase):
 
         loss = np.hstack((wx.value, ywx.value, wx_square.value))
 
-        encoded_1_n = self.encoded_batch_num[int(suffix[2])]
-        loss = loss * (encoded_1_n * -1) - np.log(0.5)
+        batch_num = self.batch_num[int(suffix[2])]
+        loss = loss * (-1 / batch_num) - np.log(0.5)
         loss = fixedpoint_numpy.PaillierFixedPointTensor(loss)
 
         LOGGER.debug(f"loss: {loss}")
@@ -214,7 +206,7 @@ class HeteroLRGuest(HeteroLRBase):
                 loss_norm_tensor_name = ".".join(("loss_norm",) + suffix)
 
                 loss_norm = w_tensor.dot(w_tensor_transpose, target_name=loss_norm_tensor_name).get(broadcast=False)
-                loss_norm = 0.5 * self.alpha * loss_norm[0][0]
+                loss_norm = 0.5 * self.optimizer.alpha * loss_norm[0][0]
                 LOGGER.info(f"gradient spdz dot.get loss norm: {loss_norm}")
                 loss = loss + loss_norm
 
@@ -282,51 +274,6 @@ class HeteroLRGuest(HeteroLRBase):
         predict_result = self.predict_score_to_output(data_instances, pred_prob, classes=[0, 1], threshold=threshold)
 
         return predict_result
-
-    # def _respectively_predict(self, data_instances):
-    #     def _vec_dot(v, coef, intercept):
-    #         return fate_operator.vec_dot(v.features, coef) + intercept
-    #
-    #     f = functools.partial(_vec_dot,
-    #                           coef=self.model_weights.coef_,
-    #                           intercept=self.model_weights.intercept_)
-    #     # pred_prob = data_instances.mapValues(lambda v: fate_operator.vec_dot(v.features, self.model_weights.coef_)
-    #     #                                                + self.model_weights.intercept_)
-    #     pred_prob = data_instances.mapValues(f)
-    #     host_probs = self.transfer_variable.host_prob.get(idx=-1)
-    #
-    #     LOGGER.info("Get probability from Host")
-    #
-    #     # guest probability
-    #     for host_prob in host_probs:
-    #         pred_prob = pred_prob.join(host_prob, lambda g, h: g + h)
-    #     pred_prob = pred_prob.mapValues(lambda p: activation.sigmoid(p))
-    #     threshold = self.model_param.predict_param.threshold
-    #     predict_result = self.predict_score_to_output(data_instances, pred_prob, classes=[0, 1], threshold=threshold)
-    #
-    #     return predict_result
-
-    # def _unbalanced_predict(self, data_instances):
-    #     def _vec_dot(v, coef, intercept):
-    #         return fate_operator.vec_dot(v.features, coef) + intercept
-    #
-    #     f = functools.partial(_vec_dot,
-    #                           coef=self.model_weights.coef_,
-    #                           intercept=self.model_weights.intercept_)
-    #     pred_prob = data_instances.mapValues(f)
-    #     for idx, host_weights in enumerate([self.host_model_weights]):
-    #         encrypted_host_weight = self.cipher.recursive_encrypt(host_weights.coef_)
-    #         self.transfer_variable.encrypted_host_weights.remote(encrypted_host_weight,
-    #                                                              role=consts.HOST,
-    #                                                              idx=idx)
-    #     host_probs = self.transfer_variable.host_prob.get(idx=-1)
-    #     for host_prob in host_probs:
-    #         host_prob = self.cipher.distribute_decrypt(host_prob)
-    #         pred_prob = pred_prob.join(host_prob, lambda g, h: g + h)
-    #     pred_prob = pred_prob.mapValues(lambda p: activation.sigmoid(p))
-    #     threshold = self.model_param.predict_param.threshold
-    #     predict_result = self.predict_score_to_output(data_instances, pred_prob, classes=[0, 1], threshold=threshold)
-    #     return predict_result
 
     def _get_param(self):
         if self.need_cv:
