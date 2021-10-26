@@ -19,12 +19,12 @@ import json
 
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component import DataTransform
-from pipeline.component.evaluation import Evaluation
-from pipeline.component.hetero_feature_selection import HeteroFeatureSelection
-from pipeline.component.hetero_sshe_lr import HeteroSSHELR
-from pipeline.component.intersection import Intersection
-from pipeline.component.reader import Reader
-from pipeline.interface.data import Data
+from pipeline.component import Evaluation
+from pipeline.component import HeteroFeatureSelection
+from pipeline.component import HeteroSSHELR
+from pipeline.component import Intersection
+from pipeline.component import Reader
+from pipeline.interface import Data
 from pipeline.runtime.entity import JobParameters
 from pipeline.utils.tools import load_job_config
 
@@ -39,7 +39,6 @@ def prettify(response, verbose=True):
 def main(config="../../config.yaml", namespace=""):
     if isinstance(config, str):
         config = load_job_config(config)
-    backend = config.backend
     work_mode = config.work_mode
     parties = config.parties
     guest = parties.guest[0]
@@ -100,8 +99,6 @@ def main(config="../../config.yaml", namespace=""):
         "max_iter": 30,
         "early_stop": "diff",
         "batch_size": -1,
-        "validation_freqs": None,
-        "early_stopping_rounds": None,
         "learning_rate": 0.15,
         "init_param": {
             "init_method": "random_uniform"
@@ -120,7 +117,7 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.compile()
 
     # fit model
-    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
+    job_parameters = JobParameters(work_mode=work_mode)
     pipeline.fit(job_parameters)
     # query component summary
     prettify(pipeline.get_component("hetero_sshe_lr_0").get_summary())

@@ -16,12 +16,6 @@
             9999
         ]
     },
-    "job_parameters": {
-        "common": {
-            "work_mode": 1,
-            "backend": 0
-        }
-    },
     "component_parameters": {
         "common": {
             "hetero_linr_0": {

@@ -46,5 +46,5 @@ flow = "flow_client.flow:flow_cli"
 pipeline = "pipeline.pipeline_cli:cli"
 
 [build-system]
-requires = ["poetry>=0.12", "setuptools>=49.6.0,<50"]
+requires = ["poetry>=0.12", "setuptools>=50.0,<51.0"]
 build-backend = "poetry.masonry.api"

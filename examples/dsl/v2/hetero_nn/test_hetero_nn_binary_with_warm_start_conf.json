@@ -12,12 +12,6 @@
             10000
         ]
     },
-    "job_parameters": {
-        "common": {
-            "work_mode": 0,
-            "backend": 0
-        }
-    },
     "component_parameters": {
         "role": {
             "host": {

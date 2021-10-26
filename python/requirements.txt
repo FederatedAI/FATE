@@ -51,6 +51,7 @@ llvmlite==0.33.0
 phe>=1.4.0
 protobuf>=3.6.1
 pyarrow==0.17.1
+mmh3=3.0.0
 
 # addtional requirements for fate-client
 click>=7.1.2,<8.0.0

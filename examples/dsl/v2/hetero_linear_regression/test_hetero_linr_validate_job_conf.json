@@ -15,12 +15,6 @@
             9999
         ]
     },
-    "job_parameters": {
-        "common": {
-            "work_mode": 0,
-            "backend": 0
-        }
-    },
     "component_parameters": {
         "common": {
             "hetero_linr_0": {
@@ -41,7 +35,10 @@
                 "decay": 0.0,
                 "decay_sqrt": false,
                 "callback_param": {
-                    "callbacks": ["EarlyStopping", "PerformanceEvaluate"],
+                    "callbacks": [
+                        "EarlyStopping",
+                        "PerformanceEvaluate"
+                    ],
                     "validation_freqs": 1,
                     "early_stopping_rounds": 5,
                     "metrics": [

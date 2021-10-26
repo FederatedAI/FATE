@@ -17,16 +17,16 @@ import json
 
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component import DataTransform
-from pipeline.component.evaluation import Evaluation
-from pipeline.component.hetero_lr import HeteroLR
-from pipeline.component.intersection import Intersection
-from pipeline.component.hetero_feature_binning import HeteroFeatureBinning
-from pipeline.component.hetero_feature_selection import HeteroFeatureSelection
-from pipeline.component.one_hot_encoder import OneHotEncoder
-from pipeline.component.reader import Reader
-from pipeline.component.scale import FeatureScale
-from pipeline.interface.data import Data
-from pipeline.interface.model import Model
+from pipeline.component import Evaluation
+from pipeline.component import HeteroLR
+from pipeline.component import Intersection
+from pipeline.component import HeteroFeatureBinning
+from pipeline.component import HeteroFeatureSelection
+from pipeline.component import OneHotEncoder
+from pipeline.component import Reader
+from pipeline.component import FeatureScale
+from pipeline.interface import Data
+from pipeline.interface import Model
 
 
 def prettify(response, verbose=True):

@@ -12,13 +12,6 @@
             9999
         ]
     },
-    "job_parameters": {
-        "common": {
-            "job_type": "train",
-            "backend": 0,
-            "work_mode": 0
-        }
-    },
     "component_parameters": {
         "common": {
             "hetero_nn_0": {
@@ -34,7 +27,7 @@
                     "optimizer": "SGD"
                 },
                 "loss": "binary_crossentropy",
-			    "drop_out_keep_rate": 0.8,
+                "drop_out_keep_rate": 0.8,
                 "bottom_nn_define": {
                     "class_name": "Sequential",
                     "config": {

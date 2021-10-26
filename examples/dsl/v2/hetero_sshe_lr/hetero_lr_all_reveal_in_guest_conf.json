@@ -12,11 +12,6 @@
             10000
         ]
     },
-    "job_parameters": {
-        "common": {
-            "job_type": "train"
-        }
-    },
     "component_parameters": {
         "role": {
             "host": {
@@ -75,8 +70,6 @@
                 },
                 "max_iter": 30,
                 "early_stop": "diff",
-                "validation_freqs": null,
-                "early_stopping_rounds": null,
                 "reveal_strategy": "all_reveal_in_guest",
                 "compute_loss": true,
                 "reveal_every_iter": false

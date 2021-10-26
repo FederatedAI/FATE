@@ -16,26 +16,16 @@
 
 import os
 
-from pipeline.backend.config import Backend, WorkMode
 from pipeline.backend.pipeline import PipeLine
 
 # path to data
 # default fate installation path
 DATA_BASE = "/data/projects/fate"
 
-# site-package ver
-# import site
-# DATA_BASE = site.getsitepackages()[0]
-
 
 def main():
     # parties config
     guest = 9999
-    # 0 for eggroll, 1 for spark
-    backend = Backend.SPARK
-    # 0 for standalone, 1 for cluster
-    # work_mode = WorkMode.STANDALONE
-    work_mode = WorkMode.CLUSTER
 
     # partition for data storage
     partition = 4
@@ -59,7 +49,7 @@ def main():
                                     head=0, partition=partition,
                                     id_delimiter=",")
     # upload all data
-    pipeline_upload.upload(work_mode=work_mode, backend=backend, drop=1)
+    pipeline_upload.upload(drop=1)
     import json
     print(json.dumps(pipeline_upload._upload_conf(), indent=4))
 
