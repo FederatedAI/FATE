@@ -20,7 +20,6 @@ import pickle
 import time
 from types import SimpleNamespace
 
-from pipeline.backend.config import WorkMode
 from pipeline.backend.config import Role
 from pipeline.backend.config import StatusCode
 from pipeline.backend.config import VERSION
@@ -242,15 +241,13 @@ class PipeLine(object):
 
     @LOGGER.catch(reraise=True)
     def add_upload_data(self, file, table_name, namespace, head=1, partition=16,
-                        id_delimiter=",", work_mode=WorkMode.STANDALONE,
-                        extend_sid=False, auto_increasing_sid=False):
+                        id_delimiter=",", extend_sid=False, auto_increasing_sid=False):
         data_conf = {"file": file,
                      "table_name": table_name,
                      "namespace": namespace,
                      "head": head,
                      "partition": partition,
                      "id_delimiter": id_delimiter,
-                     "work_mode": work_mode,
                      "extend_sid": extend_sid,
                      "auto_increasing_sid": auto_increasing_sid}
         self._upload_conf.append(data_conf)
@@ -336,9 +333,9 @@ class PipeLine(object):
         LOGGER.debug(f"self._train_conf: \n {json.dumps(self._train_conf, indent=4, ensure_ascii=False)}")
         return self._train_conf
 
-    def _construct_upload_conf(self, data_conf, work_mode):
+    def _construct_upload_conf(self, data_conf):
         upload_conf = copy.deepcopy(data_conf)
-        upload_conf["work_mode"] = work_mode
+        # upload_conf["work_mode"] = work_mode
         return upload_conf
 
     def describe(self):
@@ -555,9 +552,9 @@ class PipeLine(object):
                                              self._initiator.party_id)
 
     @LOGGER.catch(reraise=True)
-    def upload(self, work_mode=WorkMode.STANDALONE, drop=0):
+    def upload(self, drop=0):
         for data_conf in self._upload_conf:
-            upload_conf = self._construct_upload_conf(data_conf, work_mode)
+            upload_conf = self._construct_upload_conf(data_conf)
             LOGGER.debug(f"upload_conf is {json.dumps(upload_conf)}")
             self._train_job_id, detail_info = self._job_invoker.upload_data(upload_conf, int(drop))
             self._train_board_url = detail_info["board_url"]

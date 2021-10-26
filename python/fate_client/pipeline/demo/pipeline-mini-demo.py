@@ -15,7 +15,6 @@
 #
 
 
-from pipeline.backend.config import WorkMode
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component import DataIO
 from pipeline.component import HeteroLR
@@ -23,7 +22,6 @@ from pipeline.component import Intersection
 from pipeline.component import Reader
 from pipeline.interface import Data
 from pipeline.interface import Model
-from pipeline.runtime.entity import JobParameters
 
 
 def main():
@@ -31,10 +29,6 @@ def main():
     guest = 9999
     host = 10000
     arbiter = 10000
-    # 0 for standalone, 1 for cluster
-    work_mode = WorkMode.STANDALONE
-    # use the work mode below for cluster deployment
-    # work_mode = WorkMode.CLUSTER
 
     # specify input data name & namespace in database
     guest_train_data = {"name": "breast_hetero_guest", "namespace": "experiment"}
@@ -96,8 +90,7 @@ def main():
     pipeline.compile()
 
     # fit model
-    job_parameters = JobParameters(work_mode=work_mode)
-    pipeline.fit(job_parameters)
+    pipeline.fit()
     # query component summary
     import json
     print(json.dumps(pipeline.get_component("hetero_lr_0").get_summary(), indent=4))

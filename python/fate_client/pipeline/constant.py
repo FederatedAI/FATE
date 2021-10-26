@@ -16,12 +16,11 @@
 from enum import IntEnum
 
 
+"""
 class WorkMode(IntEnum):
     STANDALONE = 0
     CLUSTER = 1
 
-
-"""
 class Backend(IntEnum):
     EGGROLL = 0
     SPARK_RABBITMQ = 1
