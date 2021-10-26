@@ -39,7 +39,6 @@ def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
     guest = parties.guest[0]
     host = parties.host[0]
     arbiter = parties.arbiter[0]
-    backend = config.backend
     work_mode = config.work_mode
 
     if isinstance(param, str):
@@ -94,8 +93,6 @@ def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
     intersection_0 = Intersection(name="intersection_0")
 
     lr_param = {
-        "validation_freqs": None,
-        "early_stopping_rounds": None,
     }
 
     config_param = {
@@ -133,7 +130,7 @@ def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
     pipeline.compile()
 
     # fit model
-    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
+    job_parameters = JobParameters(work_mode=work_mode)
     pipeline.fit(job_parameters)
     lr_0_data = pipeline.get_component("hetero_lr_0").get_output_data().get("data")
     lr_1_data = pipeline.get_component("hetero_lr_1").get_output_data().get("data")

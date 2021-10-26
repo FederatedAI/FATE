@@ -21,7 +21,7 @@ import peewee
 from fate_arch.common import  engine_utils, EngineType
 from fate_arch.abc import CSessionABC, FederationABC, CTableABC, StorageSessionABC, StorageTableABC, StorageTableMetaABC
 from fate_arch.common import log, base_utils
-from fate_arch.common import WorkMode, remote_status
+from fate_arch.common import remote_status
 from fate_arch.computing import ComputingEngine
 from fate_arch.federation import FederationEngine
 from fate_arch.storage import StorageEngine, StorageSessionBase
@@ -32,53 +32,28 @@ LOGGER = log.getLogger()
 
 
 class Session(object):
-    __SESSION = None
-    __IS_INITIALIZED = False
+    __GLOBAL_SESSION = None
 
     @classmethod
-    def __new__(cls, *args, **kwargs):
-        if cls.__SESSION is None:
-            cls.__SESSION = object.__new__(cls)
-        return cls.__SESSION
+    def get_global(cls):
+        return cls.__GLOBAL_SESSION
 
     @classmethod
-    def _get_session(cls):
-        return cls.__SESSION
+    def _as_global(cls, sess):
+        cls.__GLOBAL_SESSION = sess
 
-    @classmethod
-    def _is_initialized(cls):
-        return cls.__IS_INITIALIZED
+    def as_global(self):
+        self._as_global(self)
+        return self
 
-    @classmethod
-    def _as_initialized(cls):
-        cls.__IS_INITIALIZED = True
-    
-    def __init__(self, session_id: str = None, work_mode: typing.Union[WorkMode, int] = None, options=None):
-        if self._is_initialized():
-            sess = self._get_session()
-            if session_id is not None and sess._session_id != session_id:
-                raise RuntimeError(
-                    f"session already init with session id = {sess._session_id}, it's ambiguity to provide session id = {session_id} again")
-            if work_mode is not None and sess._work_mode != work_mode:
-                raise RuntimeError(
-                    f"session already init with work_mode = {sess._work_mode}, it's ambiguity to provide work_mode = {work_mode} again")
-            return
-        
+    def __init__(self, session_id: str = None, options=None):
         if options is None:
             options = {}
-        engines = engine_utils.get_engines(work_mode, options)
+        engines = engine_utils.get_engines()
         LOGGER.info(f"using engines: {engines}")
-        if work_mode is None:
-            computing_type = engines.get(EngineType.COMPUTING, None)
-            if computing_type is None:
-                raise RuntimeError(f"must set default engines on conf/service_conf.yaml")
-            else:
-                if computing_type == ComputingEngine.STANDALONE:
-                    self._work_mode = WorkMode.STANDALONE
-                else:
-                    self._work_mode = WorkMode.CLUSTER
-        else:
-            self._work_mode = work_mode
+        computing_type = engines.get(EngineType.COMPUTING, None)
+        if computing_type is None:
+            raise RuntimeError(f"must set default engines on conf/service_conf.yaml")
 
         self._computing_type = engines.get(EngineType.COMPUTING, None)
         self._federation_type = engines.get(EngineType.FEDERATION, None)
@@ -95,9 +70,6 @@ class Session(object):
         # init meta db
         init_database_tables()
 
-        # mark initialized
-        self._as_initialized()
-
     @property
     def session_id(self) -> str:
         return self._session_id
@@ -106,7 +78,7 @@ class Session(object):
         return self
 
     def _close(self):
-        return self
+        self.destroy_all_sessions()
 
     def __enter__(self):
         return self._open()
@@ -139,10 +111,9 @@ class Session(object):
         if self._computing_type == ComputingEngine.EGGROLL:
             from fate_arch.computing.eggroll import CSession
 
-            work_mode = self._work_mode
             options = kwargs.get("options", {})
             self._computing_session = CSession(
-                session_id=computing_session_id, work_mode=work_mode, options=options
+                session_id=computing_session_id, options=options
             )
             return self
 
@@ -411,13 +382,17 @@ class Session(object):
         session_records = self.query_sessions(manager_session_id=self._session_id, **kwargs)
         self._logger.info([session_record.f_engine_session_id for session_record in session_records])
         for session_record in session_records:
-            engine_session_id = session_record.f_engine_session_id
-            if session_record.f_engine_type == EngineType.COMPUTING:
-                self._init_computing_if_not_valid(computing_session_id=engine_session_id)
-            elif session_record.f_engine_type == EngineType.STORAGE:
-                self._get_or_create_storage(storage_session_id=engine_session_id,
-                                            storage_engine=session_record.f_engine_name,
-                                            record=False)
+            try:
+                engine_session_id = session_record.f_engine_session_id
+                if session_record.f_engine_type == EngineType.COMPUTING:
+                    self._init_computing_if_not_valid(computing_session_id=engine_session_id)
+                elif session_record.f_engine_type == EngineType.STORAGE:
+                    self._get_or_create_storage(storage_session_id=engine_session_id,
+                                                storage_engine=session_record.f_engine_name,
+                                                record=False)
+            except Exception as e:
+                self._logger.error(e)
+                self.delete_session_record(engine_session_id=session_record.f_engine_session_id)
 
     def _init_computing_if_not_valid(self, computing_session_id):
         if not self.is_computing_valid:
@@ -468,7 +443,7 @@ class Session(object):
 
 
 def get_session() -> Session:
-    return Session._get_session()
+    return Session.get_global()
 
 def get_parties() -> PartiesInfo:
     return get_session().parties
@@ -479,8 +454,8 @@ def get_computing_session() -> CSessionABC:
 # noinspection PyPep8Naming
 class computing_session(object):
     @staticmethod
-    def init(session_id, work_mode=0, options=None):
-        Session(work_mode=work_mode, options=options).init_computing(session_id)
+    def init(session_id, options=None):
+        Session(options=options).as_global().init_computing(session_id)
 
     @staticmethod
     def parallelize(data: typing.Iterable, partition: int, include_key: bool, **kwargs) -> CTableABC:
@@ -489,3 +464,4 @@ class computing_session(object):
     @staticmethod
     def stop():
         get_computing_session().stop()
+

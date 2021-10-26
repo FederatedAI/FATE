@@ -17,7 +17,6 @@
     },
     "job_parameters": {
         "common": {
-            "backend": 0,
             "work_mode": 0,
             "job_type": "train"
         }
@@ -32,7 +31,7 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": true
                     },
                     "reader_1": {
@@ -51,7 +50,7 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": false
                     },
                     "reader_1": {
@@ -64,7 +63,7 @@
             }
         },
         "common": {
-            "dataio_0": {
+            "data_transform_0": {
                 "output_format": "dense"
             },
             "hetero_lr_0": {

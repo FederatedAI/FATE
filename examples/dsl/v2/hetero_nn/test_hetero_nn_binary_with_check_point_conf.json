@@ -14,15 +14,14 @@
     },
     "job_parameters": {
         "common": {
-            "work_mode": 0,
-            "backend": 0
+            "work_mode": 0
         }
     },
     "component_parameters": {
         "role": {
             "guest": {
                 "0": {
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": true
                     },
                     "hetero_nn_0": {
@@ -192,7 +191,7 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_1": {
+                    "data_transform_1": {
                         "with_label": true
                     },
                     "reader_0": {
@@ -205,7 +204,7 @@
             },
             "host": {
                 "0": {
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": false
                     },
                     "hetero_nn_0": {
@@ -322,7 +321,7 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_1": {
+                    "data_transform_1": {
                         "with_label": false
                     },
                     "reader_0": {

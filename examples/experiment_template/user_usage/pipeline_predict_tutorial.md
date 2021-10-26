@@ -13,7 +13,7 @@ Import needed components for building a hetero secureboost model:
 
 Codes below give details of building a model 
 ```python
-    from pipeline.backend.config import Backend, WorkMode # configs
+    from pipeline.backend.config import WorkMode # configs
     from pipeline.backend.pipeline import PipeLine # Pipeline 
     from pipeline.component import Reader, DataTransform, Intersection, HeteroSecureBoost # fate components
     from pipeline.interface import Data  # data flow
@@ -52,7 +52,7 @@ Codes below give details of building a model
         .add_component(hetero_secureboost_0, data=Data(train_data=intersect_0.output.data))
 
     # compile & fit pipeline
-    pipeline.compile().fit(JobParameters(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE))
+    pipeline.compile().fit(JobParameters(work_mode=WorkMode.STANDALONE))
     
     # save train pipeline
     pipeline.dump("pipeline_saved.pkl")
@@ -69,7 +69,7 @@ fate components in the training step. We load training pipeline from 'pipeline_s
     from pipeline.backend.pipeline import PipeLine
     from pipeline.component.reader import Reader
     from pipeline.interface.data import Data
-    from pipeline.backend.config import Backend, WorkMode # configs
+    from pipeline.backend.config import WorkMode # configs
     from pipeline.runtime.entity import JobParameters # parameter class
     
     # load train pipeline
@@ -91,7 +91,7 @@ fate components in the training step. We load training pipeline from 'pipeline_s
     # add selected components from train pipeline onto predict pipeline
     predict_pipeline.add_component(pipeline,data=Data(predict_input={pipeline.data_transform_0.input.data: reader_0.output.data}))
     # run predict model
-    predict_pipeline.predict(JobParameters(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE))
+    predict_pipeline.predict(JobParameters(work_mode=WorkMode.STANDALONE))
 ```
 
 

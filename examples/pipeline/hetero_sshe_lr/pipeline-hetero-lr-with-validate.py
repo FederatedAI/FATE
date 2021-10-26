@@ -19,7 +19,7 @@ import json
 
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component.hetero_sshe_lr import HeteroSSHELR
-from pipeline.component.dataio import DataIO
+from pipeline.component import DataTransform
 from pipeline.component.evaluation import Evaluation
 from pipeline.component.intersection import Intersection
 from pipeline.component.reader import Reader
@@ -39,7 +39,6 @@ def prettify(response, verbose=True):
 def main(config="../../config.yaml", namespace=""):
     if isinstance(config, str):
         config = load_job_config(config)
-    backend = config.backend
     work_mode = config.work_mode
     parties = config.parties
     guest = parties.guest[0]
@@ -68,15 +67,15 @@ def main(config="../../config.yaml", namespace=""):
     reader_1.get_party_instance(role='guest', party_id=guest).component_param(table=guest_eval_data)
     reader_1.get_party_instance(role='host', party_id=hosts).component_param(table=host_eval_data)
 
-    dataio_0 = DataIO(name="dataio_0", output_format='dense')
-    dataio_1 = DataIO(name="dataio_1", output_format='dense')
+    data_transform_0 = DataTransform(name="data_transform_0", output_format='dense')
+    data_transform_1 = DataTransform(name="data_transform_1", output_format='dense')
 
-    # get DataIO party instance of guest
-    dataio_0_guest_party_instance = dataio_0.get_party_instance(role='guest', party_id=guest)
-    # configure DataIO for guest
-    dataio_0_guest_party_instance.component_param(with_label=True)
-    # get and configure DataIO party instance of host
-    dataio_0.get_party_instance(role='host', party_id=hosts).component_param(with_label=False)
+    # get DataTransform party instance of guest
+    data_transform_0_guest_party_instance = data_transform_0.get_party_instance(role='guest', party_id=guest)
+    # configure DataTransform for guest
+    data_transform_0_guest_party_instance.component_param(with_label=True)
+    # get and configure DataTransform party instance of host
+    data_transform_0.get_party_instance(role='host', party_id=hosts).component_param(with_label=False)
 
     # define Intersection components
     intersection_0 = Intersection(name="intersection_0")
@@ -85,11 +84,11 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.add_component(reader_0)
     pipeline.add_component(reader_1)
 
-    pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
-    pipeline.add_component(dataio_1, data=Data(data=reader_1.output.data),
-                           model=Model(dataio_0.output.model))
-    pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
-    pipeline.add_component(intersection_1, data=Data(data=dataio_1.output.data))
+    pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
+    pipeline.add_component(data_transform_1, data=Data(data=reader_1.output.data),
+                           model=Model(data_transform_0.output.model))
+    pipeline.add_component(intersection_0, data=Data(data=data_transform_0.output.data))
+    pipeline.add_component(intersection_1, data=Data(data=data_transform_1.output.data))
 
     lr_param = {
         "name": "hetero_sshe_lr_0",
@@ -100,8 +99,14 @@ def main(config="../../config.yaml", namespace=""):
         "max_iter": 30,
         "early_stop": "diff",
         "batch_size": -1,
-        "validation_freqs": 1,
-        "early_stopping_rounds": 3,
+        "callback_param": {
+            "callbacks": [
+                "EarlyStopping",
+                "PerformanceEvaluate"
+            ],
+            "validation_freqs": 1,
+            "early_stopping_rounds": 3
+        },
         "learning_rate": 0.15,
         "init_param": {
             "init_method": "zeros"
@@ -127,7 +132,7 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.compile()
 
     # fit model
-    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
+    job_parameters = JobParameters(work_mode=work_mode)
     pipeline.fit(job_parameters)
     # query component summary
     prettify(pipeline.get_component("hetero_sshe_lr_0").get_summary())

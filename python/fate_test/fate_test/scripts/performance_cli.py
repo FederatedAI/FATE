@@ -170,7 +170,7 @@ def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Conf
                     job.job_conf.update_component_parameters('num_trees', num_trees)
                 if task_cores is not None:
                     job.job_conf.update_job_common_parameters(task_cores=task_cores)
-                job.job_conf.update(config.parties, config.work_mode, config.backend, timeout, update_job_parameters,
+                job.job_conf.update(config.parties, config.work_mode, timeout, update_job_parameters,
                                     update_component_parameters)
             except Exception:
                 _raise()

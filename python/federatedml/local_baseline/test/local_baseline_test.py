@@ -19,7 +19,7 @@ import unittest
 import uuid
 
 from fate_arch.common import profile
-from fate_arch.session import Session
+from fate_arch.session import computing_session as session
 from federatedml.local_baseline.local_baseline import LocalBaseline
 from federatedml.param.local_baseline_param import LocalBaselineParam
 from federatedml.feature.instance import Instance
@@ -31,7 +31,7 @@ profile._PROFILE_LOG_ENABLED = False
 class TestLocalBaseline(unittest.TestCase):
     def setUp(self):
         self.job_id = str(uuid.uuid1())
-        self.session = Session.create(0, 0).init_computing(self.job_id).computing
+        session.init("test_random_sampler_" + self.job_id)
         data_num = 100
         feature_num = 8
         self.prepare_data(data_num, feature_num)
@@ -53,7 +53,7 @@ class TestLocalBaseline(unittest.TestCase):
             inst = Instance(inst_id=i, features=tmp, label=self.y[i])
             tmp = (str(i), inst)
             final_result.append(tmp)
-        table = self.session.parallelize(final_result,
+        table = session.parallelize(final_result,
                                     include_key=True,
                                     partition=3)
         self.table = table
@@ -63,16 +63,12 @@ class TestLocalBaseline(unittest.TestCase):
         real_predict_result = glm.predict(self.X)
         self.local_baseline_obj.model_fit = glm
         model_predict_result = self.local_baseline_obj.predict(self.table)
-        model_predict_result = np.array([v[1][1] for v in model_predict_result.collect()])
+        model_predict_result = np.array([v[1].features[1] for v in model_predict_result.collect()])
 
         np.testing.assert_array_equal(model_predict_result, real_predict_result)
 
     def tearDown(self):
-        self.session.stop()
-        try:
-            self.session.cleanup("*", self.job_id)
-        except EnvironmentError:
-            pass
+        session.stop()
 
 
 if __name__ == '__main__':

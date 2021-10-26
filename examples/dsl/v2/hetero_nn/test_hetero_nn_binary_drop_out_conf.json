@@ -15,7 +15,6 @@
     "job_parameters": {
         "common": {
             "job_type": "train",
-            "backend": 0,
             "work_mode": 0
         }
     },
@@ -34,7 +33,7 @@
                     "optimizer": "SGD"
                 },
                 "loss": "binary_crossentropy",
-			    "drop_out_keep_rate": 0.8,
+                "drop_out_keep_rate": 0.8,
                 "bottom_nn_define": {
                     "class_name": "Sequential",
                     "config": {
@@ -183,7 +182,7 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": true
                     }
                 }
@@ -196,7 +195,7 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": false
                     }
                 }

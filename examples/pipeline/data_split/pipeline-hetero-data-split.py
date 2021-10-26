@@ -17,7 +17,7 @@
 import argparse
 
 from pipeline.backend.pipeline import PipeLine
-from pipeline.component import DataTransfrom
+from pipeline.component import DataTransform
 from pipeline.component import HeteroDataSplit
 from pipeline.component import HeteroLinR
 from pipeline.component import Intersection
@@ -36,7 +36,6 @@ def main(config="../../config.yaml", namespace=""):
     guest = parties.guest[0]
     host = parties.host[0]
     arbiter = parties.arbiter[0]
-    backend = config.backend
     work_mode = config.work_mode
 
     guest_train_data = {"name": "motor_hetero_guest", "namespace": f"experiment{namespace}"}
@@ -48,7 +47,7 @@ def main(config="../../config.yaml", namespace=""):
     reader_0.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data)
     reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
 
-    data_transform_0 = DataTransfrom(name="data_transform_0")
+    data_transform_0 = DataTransform(name="data_transform_0")
     data_transform_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True, label_name="motor_speed",
                                                                               label_type="float", output_format="dense")
     data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
@@ -71,7 +70,7 @@ def main(config="../../config.yaml", namespace=""):
 
     pipeline.compile()
 
-    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
+    job_parameters = JobParameters(work_mode=work_mode)
     pipeline.fit(job_parameters)
 
 

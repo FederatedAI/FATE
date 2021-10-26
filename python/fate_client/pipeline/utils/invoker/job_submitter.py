@@ -101,7 +101,7 @@ class JobInvoker(object):
             except:
                 raise ValueError("job submit failed, err msg: {}".format(result))
         """
-        result = self.client.data.upload(conf_data=submit_conf, verbose=1, drop=drop)
+        result = self.client.data.upload(config_data=submit_conf, verbose=1, drop=drop)
         try:
             if 'retcode' not in result or result["retcode"] != 0:
                 raise ValueError
