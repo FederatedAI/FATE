@@ -13,16 +13,16 @@ import numpy as np
 from fate_test._config import Config
 def import_fate():
     from fate_arch import storage
-    from fate_arch.common import WorkMode
+    # from fate_arch.common import WorkMode
     from fate_flow.utils import data_utils
     from fate_arch import session
     from fate_arch.storage import StorageEngine
     from fate_arch.common.conf_utils import get_base_config
     from fate_arch.storage import EggRollStoreType
-    return storage, WorkMode, data_utils, session, StorageEngine, get_base_config, EggRollStoreType
+    return storage, data_utils, session, StorageEngine, get_base_config, EggRollStoreType
 
 
-storage, WorkMode, data_utils, session, StorageEngine, get_base_config, EggRollStoreType = import_fate()
+storage, data_utils, session, StorageEngine, get_base_config, EggRollStoreType = import_fate()
 
 
 sys.setrecursionlimit(1000000)
