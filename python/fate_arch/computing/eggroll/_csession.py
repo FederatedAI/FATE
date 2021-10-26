@@ -19,7 +19,6 @@ from eggroll.core.session import session_init
 from eggroll.roll_pair.roll_pair import runtime_init
 
 from fate_arch.abc import AddressABC, CSessionABC
-from fate_arch.common import WorkMode
 from fate_arch.common.base_utils import fate_uuid
 from fate_arch.common.log import getLogger
 from fate_arch.common.profile import computing_profile
@@ -29,12 +28,10 @@ LOGGER = getLogger()
 
 
 class CSession(CSessionABC):
-    def __init__(self, session_id, work_mode, options: dict = None):
+    def __init__(self, session_id, options: dict = None):
         if options is None:
             options = {}
-        if work_mode == WorkMode.STANDALONE:
-            options["eggroll.session.deploy.mode"] = "standalone"
-        elif work_mode == WorkMode.CLUSTER:
+        if "eggroll.session.deploy.mode" not in options:
             options["eggroll.session.deploy.mode"] = "cluster"
         self._rp_session = session_init(session_id=session_id, options=options)
         self._rpc = runtime_init(session=self._rp_session)

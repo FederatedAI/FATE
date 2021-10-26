@@ -18,6 +18,7 @@ import typing
 
 from fate_arch.abc import StorageSessionABC,  CTableABC
 from fate_arch.common import EngineType, engine_utils
+from fate_arch.common.data_utils import default_output_fs_path
 from fate_arch.common.log import getLogger
 from fate_arch.storage._table import StorageTableMeta
 from fate_arch.storage._types import StorageEngine, EggRollStoreType, StandaloneStoreType, HDFSStoreType, HiveStoreType, \
@@ -74,9 +75,7 @@ class StorageSessionBase(StorageSessionABC):
                 raise Exception(f"can not found {computing_table.engine} default storage engine")
         if engine_address is None:
             # find engine address from service_conf.yaml
-            engine_address = engine_utils.get_engines_config_from_conf().get(EngineType.STORAGE, {}).get(engine, None)
-        if engine_address is None:
-            raise Exception("no engine address")
+            engine_address = engine_utils.get_engines_config_from_conf().get(EngineType.STORAGE, {}).get(engine, {})
         address_dict = engine_address.copy()
         partitions = computing_table.partitions
 
@@ -89,7 +88,7 @@ class StorageSessionBase(StorageSessionABC):
             store_type = EggRollStoreType.ROLLPAIR_LMDB if store_type is None else store_type
 
         elif engine == StorageEngine.HIVE:
-            address_dict.update({"database": None, "name": f"{namespace}_{name}"})
+            address_dict.update({"database": namespace, "name": f"{name}"})
             store_type = HiveStoreType.DEFAULT if store_type is None else store_type
 
         elif engine == StorageEngine.LINKIS_HIVE:
@@ -98,12 +97,12 @@ class StorageSessionBase(StorageSessionABC):
 
         elif engine == StorageEngine.HDFS:
             if not address_dict.get("path"):
-                address_dict.update({"path": os.path.join(address_dict.get("path_prefix", ""), namespace, name)})
+                address_dict.update({"path": default_output_fs_path(name=name, namespace=namespace, prefix=address_dict.get("path_prefix"))})
             store_type = HDFSStoreType.DISK if store_type is None else store_type
 
         elif engine == StorageEngine.LOCALFS:
             if not address_dict.get("path"):
-                address_dict.update({"path": os.path.join(address_dict.get("path_prefix", ""), namespace, name)})
+                address_dict.update({"path": default_output_fs_path(name=name, namespace=namespace, storage_engine=StorageEngine.LOCALFS)})
             store_type = LocalFSStoreType.DISK if store_type is None else store_type
 
         else:
