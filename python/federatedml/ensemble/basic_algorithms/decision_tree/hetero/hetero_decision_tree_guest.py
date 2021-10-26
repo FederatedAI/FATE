@@ -408,7 +408,8 @@ class HeteroDecisionTreeGuest(DecisionTree):
                                    max_sample_weight=self.max_sample_weight,
                                    en_calculator=self.encrypted_mode_calculator,
                                    g_min=g_min,
-                                   g_max=g_max)
+                                   g_max=g_max,
+                                   mo_mode=self.mo_tree)
             en_grad_hess = self.packer.pack_and_encrypt(self.grad_and_hess)
 
         else:

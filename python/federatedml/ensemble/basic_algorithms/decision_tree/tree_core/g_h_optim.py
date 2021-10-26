@@ -86,7 +86,7 @@ class GHPacker(object):
 
     def __init__(self, sample_num: int, en_calculator: EncryptModeCalculator,
                  precision=fix_point_precision, max_sample_weight=1.0, task_type=consts.CLASSIFICATION,
-                 g_min=None, g_max=None, class_num=1, mo_support=False, sync_para=True):
+                 g_min=None, g_max=None, class_num=1, mo_mode=False, sync_para=True):
 
         if task_type == consts.CLASSIFICATION:
             g_max = 1.0
@@ -110,7 +110,7 @@ class GHPacker(object):
         self.exponent = FixedPointNumber.encode(0, precision=precision).exponent
         self.precision = precision
         self.class_num = class_num
-        self.mo_support = mo_support
+        self.mo_mode = mo_mode
         self.packer = GuestIntegerPacker(class_num * 2, [self.g_max_int, self.h_max_int] * class_num,
                                          encrypt_mode_calculator=en_calculator,
                                          sync_para=sync_para)
@@ -147,7 +147,7 @@ class GHPacker(object):
 
         fixed_int_encode_func = functools.partial(self.to_fixedpoint, mul=self.precision, g_offset=self.g_offset)
         large_int_gh = gh.mapValues(fixed_int_encode_func)
-        if not self.mo_support:
+        if not self.mo_mode:
             en_g_h = self.packer.pack_and_encrypt(large_int_gh, post_process_func=post_func) # take cipher out from list
         else:
             en_g_h = self.packer.pack_and_encrypt(large_int_gh)
