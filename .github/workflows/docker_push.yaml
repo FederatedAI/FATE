@@ -1,17 +1,8 @@
 name: Docker
 
-on:
-  push:
-    # Publish `master` as Docker `latest` image.
-    branches:
-      - master
-
-    # Publish `v1.2.3` tags as releases.
-    tags:
-      - v*
+on: workflow_dispatch
 
 jobs:
-  # no test is required
   push:
     runs-on: ubuntu-18.04
     if: github.event_name == 'push'
