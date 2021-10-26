@@ -67,6 +67,8 @@ FATE官方网站：<https://fate.fedai.org/>
 - [FAQ](https://github.com/FederatedAI/FATE/wiki)
 - [issues](https://github.com/FederatedAI/FATE/issues)
 - [pull requests](https://github.com/FederatedAI/FATE/pulls)
+- [Bilibili: @FATEFedAI](https://space.bilibili.com/457797601?from=search&seid=6776229889454067000)
+- [Twitter: @FATEFedAI](https://twitter.com/FateFedAI)
 
 
 ### License
