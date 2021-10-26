@@ -315,7 +315,7 @@ class FixedPointNumber(object):
 
 class FixedPointEndec(object):
 
-    def __init__(self, n=None, max_int=None):
+    def __init__(self, n=None, max_int=None, *args, **kwargs):
         if n is None:
             self.n = FixedPointNumber.Q
             self.max_int = self.n // 3 - 1
