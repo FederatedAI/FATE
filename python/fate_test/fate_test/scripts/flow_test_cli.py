@@ -146,7 +146,6 @@ def get_role(conf: Config):
                    'host_party_id': [conf.role['host'][0]],
                    'arbiter_party_id': conf.role['arbiter'],
                    'online_serving': conf.serving_setting['serving_setting']['address'],
-                   'work_mode': conf.work_mode,
                    'train_conf_path': os.path.abspath(conf.data_base_dir) + flow_test_template['train_conf_path'],
                    'train_dsl_path': os.path.abspath(conf.data_base_dir) + flow_test_template['train_dsl_path'],
                    'predict_conf_path': os.path.abspath(conf.data_base_dir) + flow_test_template['predict_conf_path'],

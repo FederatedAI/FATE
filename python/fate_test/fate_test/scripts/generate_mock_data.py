@@ -13,7 +13,6 @@ import numpy as np
 from fate_test._config import Config
 def import_fate():
     from fate_arch import storage
-    # from fate_arch.common import WorkMode
     from fate_flow.utils import data_utils
     from fate_arch import session
     from fate_arch.storage import StorageEngine
@@ -106,7 +105,7 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
                 output_data["id"] = id_encryption(encryption_type, section_data_size * batch + start_num,
                                                   section_data_size * (batch + 1) + start_num)
                 slicing_data_size = section_data_size
-            elif section_data_size * batch <= data_num:
+            elif section_data_size * batch < data_num:
                 output_data['id'] = id_encryption(encryption_type, section_data_size * batch + start_num, end_num)
                 slicing_data_size = data_num - section_data_size * batch
             else:
@@ -133,7 +132,7 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
                 df_data_1["id"] = id_encryption(encryption_type, section_data_size * batch + start_num,
                                                 section_data_size * (batch + 1) + start_num)
                 slicing_data_size = section_data_size
-            elif section_data_size * batch <= data_num:
+            elif section_data_size * batch < data_num:
                 df_data_1["id"] = id_encryption(encryption_type, section_data_size * batch + start_num, end_num)
                 slicing_data_size = data_num - section_data_size * batch
             else:
@@ -158,7 +157,7 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
                 output_data["id"] = id_encryption(encryption_type, section_data_size * batch + start_num,
                                                   section_data_size * (batch + 1) + start_num)
                 slicing_data_size = section_data_size
-            elif section_data_size * batch <= data_num:
+            elif section_data_size * batch < data_num:
                 output_data["id"] = id_encryption(encryption_type, section_data_size * batch + start_num, end_num)
                 slicing_data_size = data_num - section_data_size * batch
             else:
@@ -267,8 +266,8 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
                 time.sleep(1)
                 print()
             except Exception:
-                progress.set_switch(False)
-                raise Exception(f"Output file failed")
+               progress.set_switch(False)
+               raise Exception(f"Output file failed")
 
     def run(p):
         while p.get_switch():
