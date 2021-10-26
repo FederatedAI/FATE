@@ -18,11 +18,11 @@ import argparse
 
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component import DataTransform
-from pipeline.component.hetero_kmeans import HeteroKmeans
-from pipeline.component.intersection import Intersection
-from pipeline.component.evaluation import Evaluation
-from pipeline.component.reader import Reader
-from pipeline.interface.data import Data
+from pipeline.component import HeteroKmeans
+from pipeline.component import Intersection
+from pipeline.component import Evaluation
+from pipeline.component import Reader
+from pipeline.interface import Data
 
 from pipeline.utils.tools import load_job_config
 from pipeline.runtime.entity import JobParameters

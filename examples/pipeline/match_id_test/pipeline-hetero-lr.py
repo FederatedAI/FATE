@@ -18,14 +18,10 @@ import argparse
 
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component import DataTransform
-from pipeline.component import Evaluation
 from pipeline.component import HeteroLR
-from pipeline.component import HeteroFeatureSelection
 from pipeline.component import Intersection
 from pipeline.component import Reader
 from pipeline.interface import Data
-from pipeline.interface import Model
-
 from pipeline.utils.tools import load_job_config
 from pipeline.runtime.entity import JobParameters
 

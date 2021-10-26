@@ -18,8 +18,8 @@ import argparse
 
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component import DataTransform
-from pipeline.component.intersection import Intersection
-from pipeline.component.reader import Reader
+from pipeline.component import Intersection
+from pipeline.component import Reader
 from pipeline.interface import Data, Cache
 from pipeline.utils.tools import load_job_config
 from pipeline.runtime.entity import JobParameters

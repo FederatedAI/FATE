@@ -23,10 +23,6 @@ from pathlib import Path
 from ruamel import yaml
 
 template = """\
-# 0 for standalone, 1 for cluster
-work_mode: 0
-# 0 for eggroll, 1 for spark
-backend: 0
 # base dir for data upload conf eg, data_base_dir={FATE}
 # examples/data/breast_hetero_guest.csv -> $data_base_dir/examples/data/breast_hetero_guest.csv
 data_base_dir: path(FATE)
@@ -147,8 +143,6 @@ class Config(object):
     tunnel = namedtuple("tunnel", ["ssh_address", "ssh_username", "ssh_password", "ssh_priv_key", "services_address"])
 
     def __init__(self, config):
-        self.work_mode = config["work_mode"]
-        self.backend = config["backend"]
         self.data_base_dir = config["data_base_dir"]
         self.cache_directory = os.path.join(config["data_base_dir"], config["cache_directory"])
         self.perf_template_dir = os.path.join(config["data_base_dir"], config["performance_template_directory"])
