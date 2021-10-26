@@ -2,6 +2,7 @@ import json
 import os
 import tarfile
 import time
+import subprocess
 from contextlib import closing
 from datetime import datetime
 
@@ -12,6 +13,14 @@ def get_dict_from_file(file_name):
     with open(file_name, 'r', encoding='utf-8') as f:
         json_info = json.load(f)
     return json_info
+
+
+def serving_connect(serving_setting):
+    subp = subprocess.Popen([f'echo "" | telnet {serving_setting.split(":")[0]} {serving_setting.split(":")[1]}'],
+                            shell=True, stdout=subprocess.PIPE)
+    stdout, stderr = subp.communicate()
+    stdout = stdout.decode("utf-8")
+    return True if f'Connected to {serving_setting.split(":")[0]}' in stdout else False
 
 
 class Base(object):
@@ -28,15 +37,11 @@ class Base(object):
         self.server_url = server_url
         self.component_name = component_name
 
-    def set_config(self, guest_party_id, host_party_id, arbiter_party_id, path, work_mode):
+    def set_config(self, guest_party_id, host_party_id, arbiter_party_id, path):
         self.config = get_dict_from_file(path)
         self.config["initiator"]["party_id"] = guest_party_id[0]
         self.config["role"]["guest"] = guest_party_id
         self.config["role"]["host"] = host_party_id
-        if self.config["job_parameters"].get("common"):
-            self.config["job_parameters"]["common"]["work_mode"] = work_mode
-        else:
-            self.config["job_parameters"]["work_mode"] = work_mode
         if "arbiter" in self.config["role"]:
             self.config["role"]["arbiter"] = arbiter_party_id
         self.guest_party_id = guest_party_id
@@ -200,8 +205,8 @@ class TrainLRModel(Base):
 
 
 class PredictLRMode(Base):
-    def set_predict(self, guest_party_id, host_party_id, arbiter_party_id, model_id, model_version, path, work_mode):
-        self.set_config(guest_party_id, host_party_id, arbiter_party_id, path, work_mode)
+    def set_predict(self, guest_party_id, host_party_id, arbiter_party_id, model_id, model_version, path):
+        self.set_config(guest_party_id, host_party_id, arbiter_party_id, path)
         if self.config["job_parameters"].get("common"):
             self.config["job_parameters"]["common"]["model_id"] = model_id
             self.config["job_parameters"]["common"]["model_version"] = model_version
@@ -224,9 +229,9 @@ def download_from_request(http_response, tar_file_name, extract_dir):
 
 
 def train_job(data_base_dir, guest_party_id, host_party_id, arbiter_party_id, train_conf_path, train_dsl_path,
-              server_url, work_mode, component_name, metric_output_path, model_output_path, constant_auc):
+              server_url, component_name, metric_output_path, model_output_path, constant_auc):
     train = TrainLRModel(data_base_dir, server_url, component_name)
-    train.set_config(guest_party_id, host_party_id, arbiter_party_id, train_conf_path, work_mode)
+    train.set_config(guest_party_id, host_party_id, arbiter_party_id, train_conf_path)
     train.set_dsl(train_dsl_path)
     status = train.submit()
     if status:
@@ -243,10 +248,9 @@ def train_job(data_base_dir, guest_party_id, host_party_id, arbiter_party_id, tr
 
 
 def predict_job(data_base_dir, guest_party_id, host_party_id, arbiter_party_id, predict_conf_path, predict_dsl_path,
-                model_id, model_version, server_url, work_mode, component_name):
+                model_id, model_version, server_url, component_name):
     predict = PredictLRMode(data_base_dir, server_url, component_name)
-    predict.set_predict(guest_party_id, host_party_id, arbiter_party_id, model_id, model_version, predict_conf_path,
-                        work_mode)
+    predict.set_predict(guest_party_id, host_party_id, arbiter_party_id, model_id, model_version, predict_conf_path)
     predict.set_dsl(predict_dsl_path)
     status = predict.submit()
     if status:
@@ -351,16 +355,16 @@ def run_fate_flow_test(config_json):
     train_dsl_path = config_json['train_dsl_path']
     server_url = config_json['server_url']
     online_serving = config_json['online_serving']
-    work_mode = config_json['work_mode']
     constant_auc = config_json['train_auc']
     component_name = config_json['component_name']
     metric_output_path = config_json['metric_output_path']
     model_output_path = config_json['model_output_path']
+    serving_connect_bool = serving_connect(config_json['serving_setting'])
 
     print('submit train job')
     # train
     train, train_count = train_job(data_base_dir, guest_party_id, host_party_id, arbiter_party_id, train_conf_path, train_dsl_path,
-                                   server_url, work_mode, component_name, metric_output_path, model_output_path, constant_auc)
+                                   server_url, component_name, metric_output_path, model_output_path, constant_auc)
     if not train:
         print('train job run failed')
         return False
@@ -379,7 +383,7 @@ def run_fate_flow_test(config_json):
     model_version = utilize.deployed_model_version
     print('start submit predict job')
     predict, predict_count = predict_job(data_base_dir, guest_party_id, host_party_id, arbiter_party_id, predict_conf_path,
-                                         predict_dsl_path, model_id, model_version, server_url, work_mode, component_name)
+                                         predict_dsl_path, model_id, model_version, server_url, component_name)
     if not predict:
         print('predict job run failed')
         return False
@@ -388,7 +392,7 @@ def run_fate_flow_test(config_json):
         return False
     print('predict job success')
 
-    if not config_json.get('component_is_homo'):
+    if not config_json.get('component_is_homo') and serving_connect_bool:
         # load model
         utilize.load_model()
 
