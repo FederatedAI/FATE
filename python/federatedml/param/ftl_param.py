@@ -31,7 +31,7 @@ from federatedml.param.callback_param import CallbackParam
 deprecated_param_list = ["validation_freqs", "metrics"]
 
 
-@deprecated_param(deprecated_param_list)
+@deprecated_param(*deprecated_param_list)
 class FTLParam(BaseParam):
 
     def __init__(self, alpha=1, tol=0.000001,
