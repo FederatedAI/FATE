@@ -130,12 +130,11 @@ class TaskManager(object):
 
 
 class TrainTask(TaskManager):
-    def __init__(self, data_type, guest_id, host_id, arbiter_id, work_mode):
+    def __init__(self, data_type, guest_id, host_id, arbiter_id):
         self.method = 'all'
         self.guest_id = guest_id
         self.host_id = host_id
         self.arbiter_id = arbiter_id
-        self.work_mode = work_mode
         self._data_type = data_type
         self.model_id = None
         self.model_version = None
@@ -278,7 +277,6 @@ class TrainTask(TaskManager):
         json_info["role"]["guest"] = [str(self.guest_id)]
         json_info["role"]["host"] = [str(self.host_id)]
         json_info["role"]["arbiter"] = [str(self.arbiter_id)]
-        json_info["job_parameters"]["work_mode"] = self.work_mode
         json_info["job_parameters"]["model_id"] = self.predict_model_id
         json_info["job_parameters"]["model_version"] = self.predict_model_version
 
@@ -315,8 +313,8 @@ class TrainTask(TaskManager):
 
 
 class TrainLRTask(TrainTask):
-    def __init__(self, data_type, guest_id, host_id, arbiter_id, work_mode):
-        super().__init__(data_type, guest_id, host_id, arbiter_id, work_mode)
+    def __init__(self, data_type, guest_id, host_id, arbiter_id):
+        super().__init__(data_type, guest_id, host_id, arbiter_id)
         self.dsl_file = hetero_lr_dsl_file
         self.train_component_name = 'hetero_lr_0'
 
@@ -333,7 +331,6 @@ class TrainLRTask(TrainTask):
         json_info['role']['arbiter'] = [self.arbiter_id]
 
         json_info['initiator']['party_id'] = self.guest_id
-        json_info['job_parameters']["common"]['work_mode'] = self.work_mode
 
         if self.model_id is not None:
             json_info["job_parameters"]["common"]["model_id"] = self.predict_model_id
@@ -372,8 +369,8 @@ class TrainLRTask(TrainTask):
 
 
 class TrainSBTTask(TrainTask):
-    def __init__(self, data_type, guest_id, host_id, arbiter_id, work_mode):
-        super().__init__(data_type, guest_id, host_id, arbiter_id, work_mode)
+    def __init__(self, data_type, guest_id, host_id, arbiter_id):
+        super().__init__(data_type, guest_id, host_id, arbiter_id)
         self.dsl_file = hetero_sbt_dsl_file
         self.train_component_name = 'hetero_secure_boost_0'
 
@@ -389,7 +386,6 @@ class TrainSBTTask(TrainTask):
         json_info['role']['host'] = [self.host_id]
 
         json_info['initiator']['party_id'] = self.guest_id
-        json_info['job_parameters']["common"]['work_mode'] = self.work_mode
 
         if self.model_id is not None:
             json_info["job_parameters"]["common"]["model_id"] = self.predict_model_id
@@ -430,7 +426,6 @@ class TrainSBTTask(TrainTask):
 def main():
     arg_parser = argparse.ArgumentParser()
 
-    arg_parser.add_argument("-m", "--mode", type=int, help="work mode", choices=[0, 1], required=True)
     arg_parser.add_argument("-f", "--file_type", type=str,
                             help="file_type, "
                                  "'fast' means breast data "
@@ -450,7 +445,6 @@ def main():
 
     args = arg_parser.parse_args()
 
-    work_mode = args.mode
     guest_id = args.guest_id
     host_id = args.host_id
     arbiter_id = args.arbiter_id
@@ -458,11 +452,11 @@ def main():
     add_sbt = args.add_sbt
     start_serving = args.serving
 
-    task = TrainLRTask(file_type, guest_id, host_id, arbiter_id, work_mode)
+    task = TrainLRTask(file_type, guest_id, host_id, arbiter_id)
     task.run(start_serving)
 
     if add_sbt:
-        task = TrainSBTTask(file_type, guest_id, host_id, arbiter_id, work_mode)
+        task = TrainSBTTask(file_type, guest_id, host_id, arbiter_id)
         task.run()
 
 
