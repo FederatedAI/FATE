@@ -15,7 +15,6 @@
     },
     "job_parameters": {
         "common": {
-            "work_mode": 0,
             "job_type": "train"
         }
     },
@@ -23,21 +22,11 @@
         "role": {
             "host": {
                 "0|1": {
-                    "dataio_1": {
-                        "with_label": true,
-                        "output_format": "dense"
-                    },
                     "hetero_feature_binning_0": {
                         "transform_param": {
                             "transform_cols": -1,
                             "transform_names": null,
                             "transform_type": "bin_num"
-                        }
-                    },
-                    "reader_0": {
-                        "table": {
-                            "name": "vehicle_scale_hetero_host",
-                            "namespace": "experiment"
                         }
                     },
                     "reader_1": {
@@ -49,24 +38,34 @@
                     "dataio_0": {
                         "with_label": false,
                         "output_format": "dense"
-                    }
-                }
-            },
-            "guest": {
-                "0": {
-                    "reader_0": {
-                        "table": {
-                            "name": "vehicle_scale_hetero_guest",
-                            "namespace": "experiment"
-                        }
                     },
                     "dataio_1": {
                         "with_label": true,
                         "output_format": "dense"
                     },
+                    "reader_0": {
+                        "table": {
+                            "name": "vehicle_scale_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    }
+                }
+            },
+            "guest": {
+                "0": {
                     "dataio_0": {
                         "with_label": true,
                         "output_format": "dense"
+                    },
+                    "dataio_1": {
+                        "with_label": true,
+                        "output_format": "dense"
+                    },
+                    "reader_0": {
+                        "table": {
+                            "name": "vehicle_scale_hetero_guest",
+                            "namespace": "experiment"
+                        }
                     },
                     "reader_1": {
                         "table": {

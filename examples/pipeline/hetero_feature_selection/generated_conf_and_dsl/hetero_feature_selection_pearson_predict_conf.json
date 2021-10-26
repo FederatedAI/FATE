@@ -51,13 +51,18 @@
                 "column_indexes": -1
             },
             "hetero_feature_selection_0": {
+                "correlation_param": {
+                    "threshold": 0.5,
+                    "select_federated": false
+                },
                 "vif_param": {
                     "threshold": 5
                 },
                 "select_col_indexes": -1,
                 "select_names": [],
                 "filter_methods": [
-                    "vif_filter"
+                    "vif_filter",
+                    "correlation_filter"
                 ]
             }
         }

@@ -21,29 +21,49 @@
         "role": {
             "host": {
                 "0": {
-                    "reader_0": {
-                        "table": {
-                            "name": "breast_hetero_host",
-                            "namespace": "experiment"
-                        }
-                    },
                     "dataio_0": {
                         "with_label": false,
                         "output_format": "dense"
+                    },
+                    "reader_0": {
+                        "table": {
+                            "name": "vehicle_scale_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "dataio_1": {
+                        "with_label": true,
+                        "output_format": "dense"
+                    },
+                    "reader_1": {
+                        "table": {
+                            "name": "vehicle_scale_hetero_host",
+                            "namespace": "experiment"
+                        }
                     }
                 }
             },
             "guest": {
                 "0": {
-                    "reader_0": {
-                        "table": {
-                            "name": "breast_hetero_guest",
-                            "namespace": "experiment"
-                        }
-                    },
                     "dataio_0": {
                         "with_label": true,
                         "output_format": "dense"
+                    },
+                    "reader_0": {
+                        "table": {
+                            "name": "vehicle_scale_hetero_guest",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "dataio_1": {
+                        "with_label": true,
+                        "output_format": "dense"
+                    },
+                    "reader_1": {
+                        "table": {
+                            "name": "vehicle_scale_hetero_guest",
+                            "namespace": "experiment"
+                        }
                     }
                 }
             }
@@ -59,7 +79,9 @@
                 "bin_indexes": -1,
                 "bin_names": null,
                 "category_indexes": [
-                    0
+                    0,
+                    1,
+                    2
                 ],
                 "category_names": null,
                 "transform_param": {
@@ -69,12 +91,24 @@
                 },
                 "local_only": false,
                 "optimal_binning_param": {
-                    "metric_method": "iv",
+                    "metric_method": "gini",
                     "min_bin_pct": 0.05,
                     "max_bin_pct": 0.8,
                     "init_bucket_method": "quantile",
                     "init_bin_nums": 100,
                     "mixture": true
+                }
+            },
+            "hetero_feature_selection_0": {
+                "select_col_indexes": -1,
+                "select_names": [],
+                "filter_methods": [
+                    "iv_filter"
+                ],
+                "iv_param": {
+                    "filter_type": "threshold",
+                    "threshold": 2,
+                    "mul_class_merge_type": "max"
                 }
             }
         }
