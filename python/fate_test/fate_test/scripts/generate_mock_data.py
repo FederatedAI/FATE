@@ -166,7 +166,7 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
             output_data['feature'] = feature
             output_data.to_csv(data_path, mode='a+', index=False, header=False)
 
-    def _generate_parallelize_data(start_num, end_num, feature_nums, table_name, namespace, label_flag, data_type):
+    def _generate_parallelize_data(start_num, end_num, feature_nums, table_name, namespace, label_flag, data_type, progress):
         def expand_id_range(k, v):
             if label_flag:
                 return [(id_encryption(encryption_type, ids, ids + 1),
@@ -214,10 +214,7 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
         storage_session = sess.storage()
         s_table = storage_session.get_table(namespace=table_meta.get_namespace(), name=table_meta.get_name())
         if s_table.count() == data_num:
-            print(1)
-            t2 = session.get_session().computing.load(table_meta.get_address(), partitions=table_meta.get_partitions(), schema=table_meta.get_schema())
-            for k, v in t2.collect():
-                print(v)
+            progress.set_time_percent(100)
 
     def data_save(data_info, table_names, namespaces):
         data_count = 0
@@ -251,7 +248,7 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
                         _generate_dens_data(out_path, guest_start_num, guest_end_num, guest_feature_num, label_flag, progress)
                     else:
                         _generate_parallelize_data(guest_start_num, guest_end_num, guest_feature_num,
-                                                   table_names[idx], namespaces[idx], label_flag, data_type)
+                                                   table_names[idx], namespaces[idx], label_flag, data_type, progress)
                 else:
                     if data_type == 'tag' and not parallelize:
                         _generate_tag_data(out_path, host_start_num, host_end_num, host_feature_num, sparsity, progress)
@@ -261,7 +258,7 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
                         _generate_dens_data(out_path, host_start_num, host_end_num, host_feature_num, label_flag, progress)
                     elif parallelize:
                         _generate_parallelize_data(host_start_num, host_end_num, host_feature_num,
-                                                   table_names[idx], namespaces[idx], label_flag, data_type)
+                                                   table_names[idx], namespaces[idx], label_flag, data_type, progress)
                 progress.set_switch(False)
                 time.sleep(1)
                 print()

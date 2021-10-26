@@ -18,7 +18,8 @@
     "job_parameters": {
         "common": {
             "model_id": "arbiter-9999#guest-10000#host-9999#model",
-            "model_version": "20200928191922241821123"
+            "model_version": "20200928191922241821123",
+            "job_type": "predict"
         }
     },
     "component_parameters": {
