@@ -86,10 +86,10 @@ class Data(object):
 
 
 class JobConf(object):
-    def __init__(self, initiator: dict, role: dict, job_parameters: dict, **kwargs):
+    def __init__(self, initiator: dict, role: dict, job_parameters=None, **kwargs):
         self.initiator = initiator
         self.role = role
-        self.job_parameters = job_parameters
+        self.job_parameters = job_parameters if job_parameters else {}
         self.others_kwargs = kwargs
 
     def as_dict(self):
