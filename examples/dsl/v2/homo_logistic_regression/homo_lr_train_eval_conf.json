@@ -48,8 +48,10 @@
                     "random_seed": 33,
                     "need_cv": false
                 },
-                "callbacks": ["EarlyStopping"],
+                "callback_param": {
+                    "callbacks": ["EarlyStopping"],
                     "validation_freqs": 1
+                }
             },
             "evaluation_0": {
                 "eval_type": "binary"
