@@ -266,8 +266,8 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
                 time.sleep(1)
                 print()
             except Exception:
-                progress.set_switch(False)
-                raise Exception(f"Output file failed")
+               progress.set_switch(False)
+               raise Exception(f"Output file failed")
 
     def run(p):
         while p.get_switch():
