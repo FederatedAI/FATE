@@ -14,19 +14,33 @@
 #  limitations under the License.
 #
 import array
-import functools
 import random
 
 import numpy as np
 from fate_arch.session import is_table
+from federatedml.secureprotol.fixedpoint import FixedPointNumber
 
 
 def rand_tensor(q_field, tensor):
+    precision = 2 ** 16
     if is_table(tensor):
         return tensor.mapValues(
-            lambda x: np.random.randint(1, q_field, len(x)).astype(object))
+            lambda x: np.array([FixedPointNumber(encoding=np.random.randint(1, precision),
+                                                 exponent=FixedPointNumber.calculate_exponent_from_precision(
+                                                 precision=q_field),
+                                                 n=q_field
+                                                 )
+                                for _ in x],
+                               dtype=FixedPointNumber)
+        )
     if isinstance(tensor, np.ndarray):
-        arr = np.random.randint(1, q_field, tensor.shape).astype(object)
+        arr = np.zeros(shape=tensor.shape, dtype=FixedPointNumber)
+        view = arr.view().reshape(-1)
+        for i in range(arr.size):
+            view[i] = FixedPointNumber(encoding=np.random.randint(1, precision),
+                                       exponent=FixedPointNumber.calculate_exponent_from_precision(precision=precision),
+                                       n=q_field
+                                       )
         return arr
     raise NotImplementedError(f"type={type(tensor)}")
 
@@ -72,18 +86,27 @@ def _mix_rand_func(it, q_field):
 
 
 def urand_tensor(q_field, tensor, use_mix=False):
+    precision = 2 ** 16
     if is_table(tensor):
-        if use_mix:
-            return tensor.mapPartitions(functools.partial(_mix_rand_func, q_field=q_field),
-                                        use_previous_behavior=False,
-                                        preserves_partitioning=True)
+        # if use_mix:
+        #     return tensor.mapPartitions(functools.partial(_mix_rand_func, q_field=q_field),
+        #                                 use_previous_behavior=False,
+        #                                 preserves_partitioning=True)
         return tensor.mapValues(
-            lambda x: np.array([random.SystemRandom().randint(1, q_field) for _ in x], dtype=object))
+            lambda x: np.array([FixedPointNumber(encoding=random.SystemRandom().randint(1, precision),
+                                                 exponent=FixedPointNumber.calculate_exponent_from_precision(
+                                                     precision=precision),
+                                                 n=q_field
+                                                 )
+                                for _ in x],
+                               dtype=FixedPointNumber))
     if isinstance(tensor, np.ndarray):
-        arr = np.zeros(shape=tensor.shape, dtype=object)
+        arr = np.zeros(shape=tensor.shape, dtype=FixedPointNumber)
         view = arr.view().reshape(-1)
         for i in range(arr.size):
-            view[i] = random.SystemRandom().randint(1, q_field)
+            view[i] = FixedPointNumber(encoding=random.SystemRandom().randint(1, precision),
+                                       exponent=FixedPointNumber.calculate_exponent_from_precision(precision=q_field),
+                                       n=q_field
+                                       )
         return arr
     raise NotImplementedError(f"type={type(tensor)}")
-

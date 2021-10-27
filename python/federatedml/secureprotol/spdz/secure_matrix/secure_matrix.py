@@ -22,7 +22,7 @@ from fate_arch.session import is_table
 from federatedml.secureprotol.fixedpoint import FixedPointEndec
 from federatedml.secureprotol.spdz.tensor import fixedpoint_numpy, fixedpoint_table
 from federatedml.transfer_variable.transfer_class.secret_share_transfer_variable import SecretShareTransferVariable
-from federatedml.util import consts, LOGGER
+from federatedml.util import consts
 
 
 class SecureMatrix(object):
