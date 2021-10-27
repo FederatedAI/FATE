@@ -14,7 +14,6 @@
 #  limitations under the License.
 
 
-import array
 import functools
 import random
 
@@ -29,7 +28,7 @@ def rand_tensor(q_field, tensor):
         return tensor.mapValues(
             lambda x: np.array([FixedPointNumber(encoding=np.random.randint(1, precision),
                                                  exponent=FixedPointNumber.calculate_exponent_from_precision(
-                                                     precision=q_field),
+                                                     precision=precision),
                                                  n=q_field
                                                  )
                                 for _ in x],
@@ -119,7 +118,7 @@ def urand_tensor(q_field, tensor, use_mix=False):
         view = arr.view().reshape(-1)
         for i in range(arr.size):
             view[i] = FixedPointNumber(encoding=random.SystemRandom().randint(1, precision),
-                                       exponent=FixedPointNumber.calculate_exponent_from_precision(precision=q_field),
+                                       exponent=FixedPointNumber.calculate_exponent_from_precision(precision=precision),
                                        n=q_field
                                        )
         return arr
