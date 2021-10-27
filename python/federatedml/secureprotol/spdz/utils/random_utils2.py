@@ -23,10 +23,10 @@ from federatedml.secureprotol.fixedpoint import FixedPointNumber
 
 
 def rand_tensor(q_field, tensor):
-    precision = 2 ** 16
+    precision = 2 ** 64
     if is_table(tensor):
         return tensor.mapValues(
-            lambda x: np.array([FixedPointNumber(encoding=np.random.randint(1, precision),
+            lambda x: np.array([FixedPointNumber(encoding=random.randint(1, precision),
                                                  exponent=FixedPointNumber.calculate_exponent_from_precision(
                                                      precision=precision),
                                                  n=q_field
@@ -38,7 +38,7 @@ def rand_tensor(q_field, tensor):
         arr = np.zeros(shape=tensor.shape, dtype=FixedPointNumber)
         view = arr.view().reshape(-1)
         for i in range(arr.size):
-            view[i] = FixedPointNumber(encoding=np.random.randint(1, precision),
+            view[i] = FixedPointNumber(encoding=random.randint(1, precision),
                                        exponent=FixedPointNumber.calculate_exponent_from_precision(precision=precision),
                                        n=q_field
                                        )
@@ -97,7 +97,7 @@ def _mix_rand_func(it, precision, q_field):
 
 
 def urand_tensor(q_field, tensor, use_mix=False):
-    precision = 2 ** 16
+    precision = 2 ** 64
     if is_table(tensor):
         if use_mix:
             return tensor.mapPartitions(functools.partial(_mix_rand_func,

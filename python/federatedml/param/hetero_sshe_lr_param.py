@@ -84,9 +84,6 @@ class LogisticRegressionParam(BaseParam):
         Whether reconstruct model weights every iteration. If so, Regularization is available.
         The performance will be better as well since the algorithm process is simplified.
 
-    random_field: int, default: 2 << 60
-        The range of random number used
-
     """
 
     def __init__(self, penalty=None,
@@ -95,8 +92,8 @@ class LogisticRegressionParam(BaseParam):
                  max_iter=100, early_stop='diff', encrypt_param=EncryptParam(),
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  decay=1, decay_sqrt=True,
-                 multi_class='ovr', use_mix_rand=False,
-                 random_field=2 ** 16, reveal_strategy="respectively",
+                 multi_class='ovr', use_mix_rand=True,
+                 reveal_strategy="respectively",
                  reveal_every_iter=True,
                  callback_param=CallbackParam(),
                  ):
@@ -112,7 +109,6 @@ class LogisticRegressionParam(BaseParam):
         self.early_stop = early_stop
         self.encrypt_param = encrypt_param
         self.predict_param = copy.deepcopy(predict_param)
-        self.random_field = random_field
         self.decay = decay
         self.decay_sqrt = decay_sqrt
         self.multi_class = multi_class

@@ -24,9 +24,9 @@ from fate_arch.session import is_table
 def rand_tensor(q_field, tensor):
     if is_table(tensor):
         return tensor.mapValues(
-            lambda x: np.random.randint(1, q_field, len(x)).astype(object))
+            lambda x: np.array([random.randint(1, q_field) for _ in x], dtype=object))
     if isinstance(tensor, np.ndarray):
-        arr = np.random.randint(1, q_field, tensor.shape).astype(object)
+        arr = np.array([random.randint(1, q_field) for _ in tensor], dtype=object)
         return arr
     raise NotImplementedError(f"type={type(tensor)}")
 
