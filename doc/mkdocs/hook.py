@@ -28,10 +28,7 @@ def pre_build(*args, **kwargs):
 def create_params_doc():
     os.makedirs(params_doc_target, exist_ok=True)
     for file_name in os.listdir(params_source):
-        if (
-            file_name.endswith(".py")
-            and file_name != "__init__.py"
-        ):
+        if file_name.endswith(".py") and file_name != "__init__.py":
             name = file_name[:-3]
             with open(os.path.join(params_doc_target, f"{name}.md"), "w") as f:
                 f.write(md_template.format(name=name))
@@ -40,5 +37,5 @@ def create_params_doc():
 def clean_params_doc():
     try:
         shutil.rmtree(params_doc_target)
-    except OSError as e:
+    except Exception as e:
         print("Error: %s - %s." % (e.filename, e.strerror))
