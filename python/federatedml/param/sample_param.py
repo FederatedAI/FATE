@@ -26,14 +26,18 @@ class SampleParam(BaseParam):
 
     Parameters
     ----------
-    mode: str, accepted 'random','stratified'' only in this version, specify sample to use, default: 'random'
+    mode: {'random', 'stratified'}'
+        specify sample to use, default: 'random'
 
-    method: str, accepted 'downsample','upsample' only in this version. default: 'downsample'
+    method: {'downsample', 'upsample'}, default: 'downsample'
+        specify sample method
 
-    fractions: None or float or list, if mode equals to random, it should be a float number greater than 0,
-     otherwise a list of elements of pairs like [label_i, sample_rate_i], e.g. [[0, 0.5], [1, 0.8], [2, 0.3]]. default: None
+    fractions: None or float or list
+        if mode equals to random, it should be a float number greater than 0,
+        otherwise a list of elements of pairs like [label_i, sample_rate_i], e.g. [[0, 0.5], [1, 0.8], [2, 0.3]]. default: None
 
     random_state: int, RandomState instance or None, default: None
+        random state
 
     need_run: bool, default True
         Indicate if this module needed to be run

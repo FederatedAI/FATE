@@ -1,4 +1,4 @@
-name: build
+name: build mkdocs image
 
 on: workflow_dispatch
 
@@ -26,6 +26,6 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           context: doc/mkdocs
-          file: docker/Dockerfile
+          file: doc/mkdocs/docker/Dockerfile
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/mkdocs:latest

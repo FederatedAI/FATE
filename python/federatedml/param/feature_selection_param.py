@@ -27,7 +27,7 @@ class UniqueValueParam(BaseParam):
 
     Parameters
     ----------
-    eps: float, default: 1e-5
+    eps : float, default: 1e-5
         The column(s) will be filtered if its difference is smaller than eps.
     """
 
@@ -81,10 +81,8 @@ class IVPercentileSelectionParam(BaseParam):
 
     Parameters
     ----------
-    percentile_threshold: float, 0 <= percentile_threshold <= 1.0, default: 1.0
-        Percentile threshold for iv_percentile method
-
-
+    percentile_threshold: float
+        0 <= percentile_threshold <= 1.0, default: 1.0, Percentile threshold for iv_percentile method
     """
 
     def __init__(self, percentile_threshold=1.0, local_only=False):
@@ -106,8 +104,8 @@ class IVTopKParam(BaseParam):
 
     Parameters
     ----------
-    k: int, should be greater than 0, default: 10
-        Percentile threshold for iv_percentile method
+    k: int
+        should be greater than 0, default: 10, Percentile threshold for iv_percentile method
     """
 
     def __init__(self, k=10, local_only=False):
@@ -342,6 +340,11 @@ class ManuallyFilterParam(BaseParam):
     """
     Specified columns that need to be filtered. If exist, it will be filtered directly, otherwise, ignore it.
 
+    Both Filter_out or left parameters only works for this specific filter. For instances, if you set some columns left
+    in this filter but those columns are filtered by other filters, those columns will NOT left in final.
+
+    Please note that (left_col_indexes & left_col_names) cannot use with (filter_out_indexes & filter_out_names) simultaneously.
+
     Parameters
     ----------
     filter_out_indexes: list of int, default: None
@@ -356,11 +359,6 @@ class ManuallyFilterParam(BaseParam):
     left_col_names: list of string, default: None
         Specify left col names
 
-    Both Filter_out or left parameters only works for this specific filter. For instances, if you set some columns left
-    in this filter but those columns are filtered by other filters, those columns will NOT left in final.
-
-    Please note that (left_col_indexes & left_col_names) cannot use with
-        (filter_out_indexes & filter_out_names) simultaneously.
 
     """
 
@@ -404,12 +402,7 @@ class FeatureSelectionParam(BaseParam):
     select_names : list of string, default: []
         Specify which columns need to calculated. Each element in the list represent for a column name in header.
 
-    filter_methods: list, ["manually", "iv_filter", "statistic_filter",
-                            "psi_filter", “hetero_sbt_filter", "homo_sbt_filter",
-                             "hetero_fast_sbt_filter", "percentage_value",
-                             "vif_filter", "correlation_filter"],
-                 default: ["manually"]
-
+    filter_methods: list of ["manually", "iv_filter", "statistic_filter", "psi_filter", “hetero_sbt_filter", "homo_sbt_filter", "hetero_fast_sbt_filter", "percentage_value", "vif_filter", "correlation_filter"], default: ["manually"]
         The following methods will be deprecated in future version:
         "unique_value", "iv_value_thres", "iv_percentile",
         "coefficient_of_variation_value_thres", "outlier_cols"
@@ -421,32 +414,41 @@ class FeatureSelectionParam(BaseParam):
         e.g. If you have 10 features at the beginning. After first filter method, you have 8 rest. Then, you want
         top 80% highest iv feature. Here, we will choose floor(0.8 * 8) = 6 features instead of 8.
 
-    unique_param: filter the columns if all values in this feature is the same
+    unique_param: UniqueValueParam
+        filter the columns if all values in this feature is the same
 
-    iv_value_param: Use information value to filter columns. If this method is set, a float threshold need to be provided.
+    iv_value_param: IVValueSelectionParam
+        Use information value to filter columns. If this method is set, a float threshold need to be provided.
         Filter those columns whose iv is smaller than threshold. Will be deprecated in the future.
 
-    iv_percentile_param: Use information value to filter columns. If this method is set, a float ratio threshold
+    iv_percentile_param: IVPercentileSelectionParam
+        Use information value to filter columns. If this method is set, a float ratio threshold
         need to be provided. Pick floor(ratio * feature_num) features with higher iv. If multiple features around
         the threshold are same, all those columns will be keep. Will be deprecated in the future.
 
-    variance_coe_param: Use coefficient of variation to judge whether filtered or not.
+    variance_coe_param: VarianceOfCoeSelectionParam
+        Use coefficient of variation to judge whether filtered or not.
         Will be deprecated in the future.
 
-    outlier_param: Filter columns whose certain percentile value is larger than a threshold.
+    outlier_param: OutlierColsSelectionParam
+        Filter columns whose certain percentile value is larger than a threshold.
         Will be deprecated in the future.
 
-    percentage_value_param: Filter the columns that have a value that exceeds a certain percentage.
+    percentage_value_param: PercentageValueParam
+        Filter the columns that have a value that exceeds a certain percentage.
 
-    iv_param: Setting how to filter base on iv. It support take high mode only. All of "threshold",
+    iv_param: IVFilterParam
+        Setting how to filter base on iv. It support take high mode only. All of "threshold",
         "top_k" and "top_percentile" are accepted. Check more details in CommonFilterParam. To
         use this filter, hetero-feature-binning module has to be provided.
 
-    statistic_param: Setting how to filter base on statistic values. All of "threshold",
+    statistic_param: CommonFilterParam
+        Setting how to filter base on statistic values. All of "threshold",
         "top_k" and "top_percentile" are accepted. Check more details in CommonFilterParam.
         To use this filter, data_statistic module has to be provided.
 
-    psi_param: Setting how to filter base on psi values. All of "threshold",
+    psi_param: CommonFilterParam
+        Setting how to filter base on psi values. All of "threshold",
         "top_k" and "top_percentile" are accepted. Its take_high properties should be False
         to choose lower psi features. Check more details in CommonFilterParam.
         To use this filter, data_statistic module has to be provided.

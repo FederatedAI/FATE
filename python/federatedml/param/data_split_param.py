@@ -27,28 +27,28 @@ class DataSplitParam(BaseParam):
 
     Parameters
     ----------
-    random_state : None, int, default: None
+    random_state : None or int, default: None
         Specify the random state for shuffle.
 
-    test_size : None, float, int, default: 0.0
+    test_size : float or int or None, default: 0.0
         Specify test data set size.
         float value specifies fraction of input data set, int value specifies exact number of data instances
 
-    train_size : None, float, int, default: 0.8
+    train_size : float or int or None, default: 0.8
         Specify train data set size.
         float value specifies fraction of input data set, int value specifies exact number of data instances
 
-    validate_size : None, float, int, default: 0.2
+    validate_size : float or int or None, default: 0.2
         Specify validate data set size.
         float value specifies fraction of input data set, int value specifies exact number of data instances
 
-    stratified : boolean, default: False
+    stratified : bool, default: False
         Define whether sampling should be stratified, according to label value.
 
-    shuffle : boolean, default : True
+    shuffle : bool, default: True
         Define whether do shuffle before splitting or not.
 
-    split_points : None, list, default : None
+    split_points : None or list, default : None
         Specify the point(s) by which continuous label values are bucketed into bins for stratified split.
         eg.[0.2] for two bins or [0.1, 1, 3] for 4 bins
 

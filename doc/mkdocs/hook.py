@@ -31,7 +31,6 @@ def create_params_doc():
         if (
             file_name.endswith(".py")
             and file_name != "__init__.py"
-            and (file_name in ["column_expand_param.py"])
         ):
             name = file_name[:-3]
             with open(os.path.join(params_doc_target, f"{name}.md"), "w") as f:

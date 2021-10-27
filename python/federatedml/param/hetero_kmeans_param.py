@@ -24,13 +24,15 @@ class KmeansParam(BaseParam):
     """
     Parameters used for K-means.
     ----------
-    k : int, should be larger than 1 and less than 100 in this version, default 5.
+    k : int, default 5
         The number of the centroids to generate.
+        should be larger than 1 and less than 100 in this version
     max_iter : int, default 300.
         Maximum number of iterations of the hetero-k-means algorithm to run.
     tol : float, default 0.001.
-    random_stat : random seed
-
+        tol
+    random_stat : None or int
+        random seed
     """
 
     def __init__(self, k=5, max_iter=300, tol=0.001, random_stat=None):
