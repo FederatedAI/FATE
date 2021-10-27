@@ -110,7 +110,7 @@ class HeteroLRHost(HeteroLRBase):
         """
           Use Taylor series expand log loss:
           Loss = - y * log(h(x)) - (1-y) * log(1 - h(x)) where h(x) = 1/(1+exp(-wx))
-          Then loss' = - (1/N)*∑(log(1/2) - 1/2*wx + ywx + 1/8(wx)^2)
+          Then loss' = - (1/N)*∑(log(1/2) - 1/2*wx + ywx - 1/8(wx)^2)
         """
         wx_self_square = (self.wx_self * self.wx_self).reduce(operator.add)
         LOGGER.debug(f"wx_self_square: {wx_self_square}")
