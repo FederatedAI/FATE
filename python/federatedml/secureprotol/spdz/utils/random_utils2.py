@@ -12,8 +12,10 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-#
+
+
 import array
+import functools
 import random
 
 import numpy as np
@@ -27,7 +29,7 @@ def rand_tensor(q_field, tensor):
         return tensor.mapValues(
             lambda x: np.array([FixedPointNumber(encoding=np.random.randint(1, precision),
                                                  exponent=FixedPointNumber.calculate_exponent_from_precision(
-                                                 precision=q_field),
+                                                     precision=q_field),
                                                  n=q_field
                                                  )
                                 for _ in x],
@@ -46,27 +48,37 @@ def rand_tensor(q_field, tensor):
 
 
 class _MixRand(object):
-    def __init__(self, lower, upper, base_size=1000, inc_velocity=0.1, inc_velocity_deceleration=0.01):
+    def __init__(self, lower, upper, q_field, base_size=1000, inc_velocity=0.1, inc_velocity_deceleration=0.01):
         self._lower = lower
         if self._lower < 0:
             raise ValueError(f"lower should great than 0, found {self._lower}")
         self._upper = upper
         if self._upper < self._lower:
             raise ValueError(f"requires upper >= lower, yet upper={upper} and lower={lower}")
-        if self._upper <= 0x40000000:
-            self._caches = array.array('i')
-        else:
-            self._caches = array.array('l')
+
+        self._q_field = q_field
+        if self._q_field < self._upper:
+            raise ValueError(f"requires q_field >= upper, yet upper={q_field} and lower={upper}")
+
+        self._caches = []
 
         # generate base random numbers
         for _ in range(base_size):
-            self._caches.append(random.SystemRandom().randint(self._lower, self._upper))
+            rand_num = FixedPointNumber(encoding=random.SystemRandom().randint(self._lower, self._upper),
+                                        exponent=FixedPointNumber.calculate_exponent_from_precision(
+                                            precision=self._upper),
+                                        n=self._q_field)
+            self._caches.append(rand_num)
 
         self._inc_rate = inc_velocity
         self._inc_velocity_deceleration = inc_velocity_deceleration
 
     def _inc(self):
-        self._caches.append(random.SystemRandom().randint(self._lower, self._upper))
+        rand_num = FixedPointNumber(encoding=random.SystemRandom().randint(self._lower, self._upper),
+                                    exponent=FixedPointNumber.calculate_exponent_from_precision(
+                                        precision=self._upper),
+                                    n=self._q_field)
+        self._caches.append(rand_num)
 
     def __next__(self):
         if random.random() < self._inc_rate:
@@ -77,8 +89,8 @@ class _MixRand(object):
         return self
 
 
-def _mix_rand_func(it, q_field):
-    _mix = _MixRand(1, q_field)
+def _mix_rand_func(it, precision, q_field):
+    _mix = _MixRand(1, precision, q_field)
     result = []
     for k, v in it:
         result.append((k, np.array([next(_mix) for _ in v], dtype=object)))
@@ -88,10 +100,12 @@ def _mix_rand_func(it, q_field):
 def urand_tensor(q_field, tensor, use_mix=False):
     precision = 2 ** 16
     if is_table(tensor):
-        # if use_mix:
-        #     return tensor.mapPartitions(functools.partial(_mix_rand_func, q_field=q_field),
-        #                                 use_previous_behavior=False,
-        #                                 preserves_partitioning=True)
+        if use_mix:
+            return tensor.mapPartitions(functools.partial(_mix_rand_func,
+                                                          precision=precision,
+                                                          q_field=q_field),
+                                        use_previous_behavior=False,
+                                        preserves_partitioning=True)
         return tensor.mapValues(
             lambda x: np.array([FixedPointNumber(encoding=random.SystemRandom().randint(1, precision),
                                                  exponent=FixedPointNumber.calculate_exponent_from_precision(
