@@ -72,7 +72,6 @@ with model_id and model_version returned by training job.
         },
         "job_parameters": {
             "common": {
-                "work_mode": 0,
                 "job_type": "predict",
                 "model_id": "guest-10000#host-9999#model", <<-- to replace
                 "model_version": "20200928174750711017114"  <<-- to replace

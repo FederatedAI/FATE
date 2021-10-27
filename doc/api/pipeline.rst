@@ -210,24 +210,20 @@ Add it to pipeline:
 Init Runtime JobParameters
 --------------------------
 
-To fit or predict, user needs to initialize the runtime environment, like 'work_mode',
+In version 1.7 and above, user no longer needs to initialize the runtime environment, like 'work_mode',
 
-.. code:: python
-
-    from pipeline.runtime.entity import JobParameters
-    job_parameters = JobParameters(work_mode=WorkMode.STANDALONE)
 
 Run A Pipeline
 --------------
 
 Having added all components, user needs to first compile pipeline before
 running the designed job. After compilation, the pipeline can then be fit(run
-train job) with appropriate ``WorkMode``.
+train job).
 
 .. code:: python
 
    pipeline.compile()
-   pipeline.fit(job_parameters)
+   pipeline.fit()
 
 Query on Tasks
 --------------
@@ -273,7 +269,7 @@ Prediction can then be initiated on the new pipeline.
 
 .. code:: python
 
-   predict_pipeline.predict(job_parameters)
+   predict_pipeline.predict()
 
 In addition, since pipeline is modular, user may add new components to
 the original pipeline before running prediction.
@@ -281,7 +277,7 @@ the original pipeline before running prediction.
 .. code:: python
 
    predict_pipeline.add_component(evaluation_0, data=Data(data=pipeline.hetero_lr_0.output.data))
-   predict_pipeline.predict(job_parameters)
+   predict_pipeline.predict()
 
 
 Save and Recovery of Pipeline

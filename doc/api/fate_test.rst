@@ -99,7 +99,6 @@ configuration by examples
 
    .. code-block:: yaml
 
-      work_mode: 1 # 0 for standalone, 1 for cluster
       data_base_dir: <path_to_data>
       parties:
         guest: [10000]
@@ -120,7 +119,6 @@ configuration by examples
 
    .. code-block:: yaml
 
-      work_mode: 0 # 0 for standalone, 1 for cluster
       data_base_dir: <path_to_data>
       parties:
         guest: [10000]
