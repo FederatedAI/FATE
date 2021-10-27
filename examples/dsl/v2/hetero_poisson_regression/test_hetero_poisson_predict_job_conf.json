@@ -17,8 +17,6 @@
     },
     "job_parameters": {
         "common": {
-            "work_mode": 1,
-            "job_type": "predict",
             "model_id": "",
             "model_version": ""
         }
