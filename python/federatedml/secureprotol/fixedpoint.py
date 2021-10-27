@@ -31,12 +31,15 @@ class FixedPointNumber(object):
     Q = 293973345475167247070445277780365744413
 
     def __init__(self, encoding, exponent, n=None, max_int=None):
-        self.n = n
-        self.max_int = max_int
-
-        if self.n is None:
-            self.n = self.Q
-            self.max_int = self.Q // 3 - 1
+        if n is None:
+            self.n = FixedPointNumber.Q
+            self.max_int = self.n // 2
+        else:
+            self.n = n
+            if max_int is None:
+                self.max_int = self.n // 2
+            else:
+                self.max_int = max_int
 
         self.encoding = encoding
         self.exponent = exponent
@@ -276,30 +279,39 @@ class FixedPointNumber(object):
         return self.__add_scalar(scalar)
 
     def __mul_fixedpointnumber(self, other):
-        if self.n != other.n:
-            other = self.encode(other.decode(), n=self.n, max_int=self.max_int)
-
-        # n = self.n * self.n
-        # max_int = n // 3 - 1
-
-        n = self.n
-        max_int = self.max_int
-
-        encoding = (self.encoding * other.encoding) % self.n
-        exponent = self.exponent + other.exponent
-
-        # if exponent == 0:
-        #     raise ValueError(f"__mul_fixedpointnumber: {self.encoding},"
-        #                      f"{self.exponent}, {other.encoding}, {other.exponent},"
-        #                      f"{encoding}, {exponent}")
-
-        mul_fixedpoint = FixedPointNumber(encoding, exponent, n=n, max_int=max_int)
-        truncate_mul_fixedpoint = self.__truncate(mul_fixedpoint)
-        return truncate_mul_fixedpoint
+        return self.__mul_scalar(other.decode())
 
     def __mul_scalar(self, scalar):
-        encoded = self.encode(scalar, n=self.n, max_int=self.max_int)
-        return self.__mul_fixedpointnumber(encoded)
+        val = self.decode()
+        z = val * scalar
+        z_encode = FixedPointNumber.encode(z, n=self.n, max_int=self.max_int)
+        return z_encode
+
+    # def __mul_fixedpointnumber(self, other):
+    #     if self.n != other.n:
+    #         other = self.encode(other.decode(), n=self.n, max_int=self.max_int)
+    #
+    #     # n = self.n * self.n
+    #     # max_int = n // 3 - 1
+    #
+    #     n = self.n
+    #     max_int = self.max_int
+    #
+    #     encoding = (self.encoding * other.encoding) % self.n
+    #     exponent = self.exponent + other.exponent
+    #
+    #     # if exponent == 0:
+    #     #     raise ValueError(f"__mul_fixedpointnumber: {self.encoding},"
+    #     #                      f"{self.exponent}, {other.encoding}, {other.exponent},"
+    #     #                      f"{encoding}, {exponent}")
+    #
+    #     mul_fixedpoint = FixedPointNumber(encoding, exponent, n=n, max_int=max_int)
+    #     truncate_mul_fixedpoint = self.__truncate(mul_fixedpoint)
+    #     return truncate_mul_fixedpoint
+
+    # def __mul_scalar(self, scalar):
+    #     encoded = self.encode(scalar, n=self.n, max_int=self.max_int)
+    #     return self.__mul_fixedpointnumber(encoded)
 
     def __abs__(self):
         if self.encoding <= self.max_int:
@@ -315,16 +327,18 @@ class FixedPointNumber(object):
 
 class FixedPointEndec(object):
 
-    def __init__(self, n=None, max_int=None, *args, **kwargs):
+    def __init__(self, n=None, max_int=None, precision=None, *args, **kwargs):
         if n is None:
             self.n = FixedPointNumber.Q
-            self.max_int = self.n // 3 - 1
+            self.max_int = self.n // 2
         else:
             self.n = n
             if max_int is None:
-                self.max_int = self.n // 3 - 1
+                self.max_int = self.n // 2
             else:
                 self.max_int = max_int
+
+        self.precision = precision
 
     @classmethod
     def _transform_op(cls, tensor, op):
@@ -355,7 +369,10 @@ class FixedPointEndec(object):
             raise ValueError(f"unsupported type: {type(tensor)}")
 
     def _encode(self, scalar):
-        return FixedPointNumber.encode(scalar, n=self.n, max_int=self.max_int)
+        return FixedPointNumber.encode(scalar,
+                                       n=self.n,
+                                       max_int=self.max_int,
+                                       precision=self.precision)
 
     def _decode(self, number):
         # if isinstance(number, (int, np.int16, np.int32, np.int64)):

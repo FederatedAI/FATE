@@ -33,12 +33,13 @@ def rand_tensor(q_field, tensor):
 
 
 def rand_tensor2(q_field, tensor):
-    q_field = 2 ** 16
+    precision = 2 ** 16
     if is_table(tensor):
         return tensor.mapValues(
-            lambda x: np.array([FixedPointNumber(encoding=np.random.randint(1, q_field),
+            lambda x: np.array([FixedPointNumber(encoding=np.random.randint(1, precision),
                                                  exponent=FixedPointNumber.calculate_exponent_from_precision(
-                                                     precision=q_field)
+                                                 precision=q_field),
+                                                 n=q_field
                                                  )
                                 for _ in x],
                                dtype=FixedPointNumber)
@@ -47,8 +48,9 @@ def rand_tensor2(q_field, tensor):
         arr = np.zeros(shape=tensor.shape, dtype=FixedPointNumber)
         view = arr.view().reshape(-1)
         for i in range(arr.size):
-            view[i] = FixedPointNumber(encoding=np.random.randint(1, q_field),
-                                       exponent=FixedPointNumber.calculate_exponent_from_precision(precision=q_field)
+            view[i] = FixedPointNumber(encoding=np.random.randint(1, precision),
+                                       exponent=FixedPointNumber.calculate_exponent_from_precision(precision=precision),
+                                       n=q_field
                                        )
         return arr
     raise NotImplementedError(f"type={type(tensor)}")
@@ -112,16 +114,17 @@ def urand_tensor(q_field, tensor, use_mix=False):
 
 
 def urand_tensor2(q_field, tensor, use_mix=False):
-    q_field = 2 ** 16
+    precision = 2 ** 16
     if is_table(tensor):
-        if use_mix:
-            return tensor.mapPartitions(functools.partial(_mix_rand_func, q_field=q_field),
-                                        use_previous_behavior=False,
-                                        preserves_partitioning=True)
+        # if use_mix:
+        #     return tensor.mapPartitions(functools.partial(_mix_rand_func, q_field=q_field),
+        #                                 use_previous_behavior=False,
+        #                                 preserves_partitioning=True)
         return tensor.mapValues(
-            lambda x: np.array([FixedPointNumber(encoding=random.SystemRandom().randint(1, q_field),
+            lambda x: np.array([FixedPointNumber(encoding=random.SystemRandom().randint(1, precision),
                                                  exponent=FixedPointNumber.calculate_exponent_from_precision(
-                                                     precision=q_field)
+                                                     precision=precision),
+                                                 n=q_field
                                                  )
                                 for _ in x],
                                dtype=FixedPointNumber))
@@ -129,8 +132,9 @@ def urand_tensor2(q_field, tensor, use_mix=False):
         arr = np.zeros(shape=tensor.shape, dtype=FixedPointNumber)
         view = arr.view().reshape(-1)
         for i in range(arr.size):
-            view[i] = FixedPointNumber(encoding=random.SystemRandom().randint(1, q_field),
-                                       exponent=FixedPointNumber.calculate_exponent_from_precision(precision=q_field)
+            view[i] = FixedPointNumber(encoding=random.SystemRandom().randint(1, precision),
+                                       exponent=FixedPointNumber.calculate_exponent_from_precision(precision=q_field),
+                                       n=q_field
                                        )
         return arr
     raise NotImplementedError(f"type={type(tensor)}")

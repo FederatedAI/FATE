@@ -23,7 +23,8 @@ from federatedml.secureprotol.spdz.beaver_triples import beaver_triplets
 from federatedml.secureprotol.spdz.tensor import fixedpoint_table
 from federatedml.secureprotol.spdz.tensor.base import TensorBase
 from federatedml.secureprotol.spdz.utils.random_utils import urand_tensor, urand_tensor2
-from federatedml.secureprotol.spdz.tensor.fixedpoint_endec import FixedPointEndec
+# from federatedml.secureprotol.spdz.tensor.fixedpoint_endec import FixedPointEndec
+from federatedml.secureprotol.fixedpoint import FixedPointEndec
 from federatedml.util import LOGGER
 
 
