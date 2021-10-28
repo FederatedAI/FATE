@@ -17,8 +17,7 @@
     },
     "job_parameters": {
         "common": {
-            "job_type": "predict",
-            "work_mode": 0
+            "job_type": "predict"
         }
     },
     "component_parameters": {
