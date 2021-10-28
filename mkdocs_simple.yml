@@ -1,0 +1,110 @@
+site_name: FATE
+repo_name: FederatedAI/FATE
+repo_url: https://github.com/FederatedAI/FATE
+edit_uri: edit/master/doc
+docs_dir: doc
+copyright: © Copyright 2020 WeBank Co., Ltd. | All Rights Reserved.
+
+nav:
+  - Tutorial:
+    - tutorial/index.md
+    - pipeline: 
+      - notebook: tutorial/pipeline/pipeline_tutorial_0.ipynb
+    - model publish: tutorial/model_publish_with_serving_guide.md
+  - API:
+    - Arch:
+      - Computing: api/computing.md
+      - Federation: api/federation.md
+    - Params:
+      - ... | flat | api/params/*.md
+  - FederatedML:
+    - ... | flat | api/federatedml/*.md
+  - Resources:
+    - resources/index.md
+
+theme:
+  name: material
+  custom_dir: "doc/mkdocs/theme"
+  features:
+    - navigation.tabs
+    - navigation.expand
+    - navigation.indexes
+    - navigation.top
+    - navigation.instant
+    - header.autohide
+  icon:
+    repo: fontawesome/brands/github
+  language: en
+  palette: 
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/lightbulb
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate 
+      primary: teal
+      toggle:
+        icon: material/lightbulb-outline
+        name: Switch to light mode
+
+
+plugins:
+  - awesome-pages
+  - macros:
+      module_name: doc/mkdocs/macro
+  - search
+  - i18n:
+      default_language: en
+      languages:
+        zh: 中文
+  
+markdown_extensions:
+  - pymdownx.snippets
+  - mdx_math
+  - admonition
+  - pymdownx.highlight
+  - toc:
+      permalink: true
+  - footnotes
+  - meta
+  - def_list
+  - pymdownx.arithmatex
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.critic
+  - pymdownx.details
+  - pymdownx.inlinehilite
+  - pymdownx.magiclink
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tabbed
+  - pymdownx.tilde
+
+extra:
+  repo_base: https://github.com/FederatedAI/FATE/tree/master
+  github_branch_base_url: https://github.com/FederatedAI/FATE/tree/master
+
+  alternate:
+    - name: English
+      lang: en
+      link: ""
+    - name: 中文
+      lang: zh
+      link: "zh/"
+
+extra_css:
+  - 'mkdocs/css/termynal.css'
+  - 'mkdocs/css/custom.css'
+  - 'mkdocs/css/extra.css'
+  - 'mkdocs/css/landing.css'
+
+extra_javascript:
+  - 'mkdocs/js/termynal.js'
+  - 'mkdocs/js/custom.js'
+  - 'mkdocs/js/lottie-player.js'
+  - 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML'
