@@ -30,16 +30,10 @@ from federatedml.transfer_variable.base_transfer_variable import BaseTransferVar
 class SecureInformationRetrievalTransferVariable(BaseTransferVariables):
     def __init__(self, flowid=0):
         super().__init__(flowid)
-        self.commutative_cipher_public_knowledge = self._create_variable(name='commutative_cipher_public_knowledge', src=['guest'], dst=['host'])
-        self.id_ciphertext_list_exchange_g2h = self._create_variable(name='id_ciphertext_list_exchange_g2h', src=['guest'], dst=['host'])
-        self.id_ciphertext_list_exchange_h2g = self._create_variable(name='id_ciphertext_list_exchange_h2g', src=['host'], dst=['guest'])
         self.data_count = self._create_variable(name='data_count', src=['host'], dst=['guest'])
-        self.doubly_encrypted_id_list = self._create_variable(name='doubly_encrypted_id_list', src=['host'], dst=['guest'])
         self.natural_indexation = self._create_variable(name='natural_indexation', src=['guest'], dst=['host'])
         self.block_num = self._create_variable(name='block_num', src=['guest'], dst=['host'])
         self.id_blocks_ciphertext = self._create_variable(name='id_blocks_ciphertext', src=['host'], dst=['guest'])
-        self.intersect_cipher_cipher = self._create_variable(name='intersect_cipher_cipher', src=['guest'], dst=['host'])
-        self.intersect_cipher = self._create_variable(name='intersect_cipher', src=['host'], dst=['guest'])
         self.raw_id_list = self._create_variable(name='raw_id_list', src=['guest'], dst=['host'])
         self.raw_value_list = self._create_variable(name='raw_value_list', src=['host'], dst=['guest'])
         self.coverage = self._create_variable(name='coverage', src=['guest'], dst=['host'])

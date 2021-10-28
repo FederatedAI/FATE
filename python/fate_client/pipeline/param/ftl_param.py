@@ -17,7 +17,7 @@
 #  limitations under the License.
 #
 import collections
-
+import copy
 from pipeline.param.intersect_param import IntersectParam
 from types import SimpleNamespace
 from pipeline.param.base_param import BaseParam
@@ -25,6 +25,7 @@ from pipeline.param import consts
 from pipeline.param.encrypt_param import EncryptParam
 from pipeline.param.encrypted_mode_calculation_param import EncryptedModeCalculatorParam
 from pipeline.param.predict_param import PredictParam
+from pipeline.param.callback_param import CallbackParam
 
 
 class FTLParam(BaseParam):
@@ -36,7 +37,7 @@ class FTLParam(BaseParam):
                  encrypte_param=EncryptParam(),
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(mode="confusion_opt"),
                  predict_param=PredictParam(), mode='plain', communication_efficient=False,
-                 local_round=5,):
+                 local_round=5, callback_param=CallbackParam()):
 
         """
         Args:
@@ -83,15 +84,16 @@ class FTLParam(BaseParam):
         self.optimizer = optimizer
         self.nn_define = nn_define
         self.epochs = epochs
-        self.intersect_param = intersect_param
+        self.intersect_param = copy.deepcopy(intersect_param)
         self.config_type = config_type
         self.batch_size = batch_size
-        self.encrypted_mode_calculator_param = encrypted_mode_calculator_param
-        self.encrypt_param = encrypte_param
-        self.predict_param = predict_param
+        self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
+        self.encrypt_param = copy.deepcopy(encrypte_param)
+        self.predict_param = copy.deepcopy(predict_param)
         self.mode = mode
         self.communication_efficient = communication_efficient
         self.local_round = local_round
+        self.callback_param = copy.deepcopy(callback_param)
 
     def check(self):
         self.intersect_param.check()
@@ -129,7 +131,10 @@ class FTLParam(BaseParam):
 
         assert type(self.communication_efficient) is bool, 'communication efficient must be a boolean'
         assert self.mode in ['encrypted', 'plain'], 'mode options: encrpyted or plain, but {} is offered'.format(self.mode)
-        assert type(self.epochs) == int and self.epochs > 0
+
+        self.check_positive_integer(self.epochs, 'epochs')
+        self.check_positive_number(self.alpha, 'alpha')
+        self.check_positive_integer(self.local_round, 'local round')
 
     @staticmethod
     def _parse_optimizer(opt):

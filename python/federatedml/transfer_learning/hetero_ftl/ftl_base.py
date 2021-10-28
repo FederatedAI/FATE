@@ -19,7 +19,6 @@ from federatedml.util import consts
 from federatedml.nn.hetero_nn.backend.paillier_tensor import PaillierTensor
 from federatedml.protobuf.generated.ftl_model_param_pb2 import FTLModelParam
 from federatedml.protobuf.generated.ftl_model_meta_pb2 import FTLModelMeta, FTLPredictParam, FTLOptimizerParam
-from federatedml.util.validation_strategy import ValidationStrategy
 
 
 class FTL(ModelBase):
@@ -165,14 +164,6 @@ class FTL(ModelBase):
 
         return encrypted_tensors
 
-    def init_validation_strategy(self, train_data=None, validate_data=None):
-        validation_strategy = ValidationStrategy(self.role, consts.HETERO, self.validation_freqs,
-                                                 self.early_stopping_rounds, self.use_first_metric_only,
-                                                 arbiter_comm=False)
-        validation_strategy.set_train_data(train_data)
-        validation_strategy.set_validate_data(validate_data)
-        return validation_strategy
-
     def learning_rate_decay(self, learning_rate, epoch):
         """
         learning_rate decay
@@ -201,6 +192,7 @@ class FTL(ModelBase):
             data_inst = self.check_label(data_inst)
 
         overlap_samples = intersect_obj.run_intersect(data_inst)  # find intersect ids
+        overlap_samples = intersect_obj.get_value_from_data(overlap_samples, data_inst)
         non_overlap_samples = data_inst.subtractByKey(overlap_samples)
 
         LOGGER.debug('num of overlap/non-overlap sampels: {}/{}'.format(overlap_samples.count(),

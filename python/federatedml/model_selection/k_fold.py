@@ -15,6 +15,7 @@
 #
 
 import copy
+import functools
 
 import numpy as np
 from sklearn.model_selection import KFold as sk_KFold
@@ -111,6 +112,12 @@ class KFold(BaseCrossValidator):
             raise ValueError(f"unknown history value type")
         return history_data
 
+    @staticmethod
+    def _append_name(instance, name):
+        new_inst = copy.deepcopy(instance)
+        new_inst.features.append(name)
+        return new_inst
+
     def run(self, component_parameters, data_inst, original_model, host_do_evaluate):
         self._init_model(component_parameters)
 
@@ -159,7 +166,8 @@ class KFold(BaseCrossValidator):
             # if train_pred_res is not None:
             if self.role == consts.GUEST or host_do_evaluate:
                 fold_name = "_".join(['train', 'fold', str(fold_num)])
-                train_pred_res = train_pred_res.mapValues(lambda value: value + ['train'])
+                f = functools.partial(self._append_name, name='train')
+                train_pred_res = train_pred_res.mapValues(f)
                 train_pred_res = model.set_predict_data_schema(train_pred_res, train_data.schema)
                 # LOGGER.debug(f"train_pred_res schema: {train_pred_res.schema}")
                 self.evaluate(train_pred_res, fold_name, model)
@@ -172,7 +180,8 @@ class KFold(BaseCrossValidator):
             # if pred_res is not None:
             if self.role == consts.GUEST or host_do_evaluate:
                 fold_name = "_".join(['validate', 'fold', str(fold_num)])
-                test_pred_res = test_pred_res.mapValues(lambda value: value + ['validate'])
+                f = functools.partial(self._append_name, name='validate')
+                test_pred_res = test_pred_res.mapValues(f)
                 test_pred_res = model.set_predict_data_schema(test_pred_res, test_data.schema)
                 # LOGGER.debug(f"train_pred_res schema: {test_pred_res.schema}")
                 self.evaluate(test_pred_res, fold_name, model)

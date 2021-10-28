@@ -17,7 +17,7 @@
 import argparse
 
 from pipeline.backend.pipeline import PipeLine
-from pipeline.component import DataIO
+from pipeline.component import DataTransform
 from pipeline.component import HeteroPoisson
 from pipeline.component import Intersection
 from pipeline.component import Reader
@@ -36,7 +36,6 @@ def main(config="../../config.yaml", namespace=""):
     guest = parties.guest[0]
     host = parties.host[0]
     arbiter = parties.arbiter[0]
-    backend = config.backend
     work_mode = config.work_mode
 
     guest_train_data = [{"name": "dvisits_hetero_guest", "namespace": f"experiment{namespace}"},
@@ -56,12 +55,12 @@ def main(config="../../config.yaml", namespace=""):
     reader_1.get_party_instance(role='host', party_id=host).component_param(table=host_train_data[1])
 
 
-    dataio_0 = DataIO(name="dataio_0")
-    dataio_1 = DataIO(name="dataio_1")
+    data_transform_0 = DataTransform(name="data_transform_0")
+    data_transform_1 = DataTransform(name="data_transform_1")
 
-    dataio_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True, label_name="doctorco",
+    data_transform_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True, label_name="doctorco",
                                                                              label_type="float", output_format="dense")
-    dataio_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
+    data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
 
     intersection_0 = Intersection(name="intersection_0")
     intersect_1 = Intersection(name="intersection_1")
@@ -69,24 +68,31 @@ def main(config="../../config.yaml", namespace=""):
     hetero_poisson_0 = HeteroPoisson(name="hetero_poisson_0", early_stop="weight_diff", max_iter=20,
                                      exposure_colname="exposure", optimizer="rmsprop", tol=0.001,
                                      alpha=100.0, batch_size=-1, learning_rate=0.01, penalty="L2",
-                                     validation_freqs=5, early_stopping_rounds=5,
-                                     metrics= ["mean_absolute_error", "root_mean_squared_error"],
-                                     use_first_metric_only=False, decay_sqrt=False,
+                                     callback_param={"callbacks": ["EarlyStopping", "PerformanceEvaluate"],
+                                                     "validation_freqs": 1,
+                                                     "early_stopping_rounds": 5,
+                                                     "metrics": [
+                                                         "mean_absolute_error",
+                                                         "root_mean_squared_error"
+                                                     ],
+                                                     "use_first_metric_only": False,
+                                                     "save_freq": 1
+                                                     },
                                      init_param={"init_method": "zeros"},
                                      encrypted_mode_calculator_param={"mode": "fast"})
 
     pipeline.add_component(reader_0)
     pipeline.add_component(reader_1)
-    pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
-    pipeline.add_component(dataio_1, data=Data(data=reader_1.output.data), model=Model(dataio_0.output.model))
-    pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
-    pipeline.add_component(intersect_1, data=Data(data=dataio_1.output.data))
+    pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
+    pipeline.add_component(data_transform_1, data=Data(data=reader_1.output.data), model=Model(data_transform_0.output.model))
+    pipeline.add_component(intersection_0, data=Data(data=data_transform_0.output.data))
+    pipeline.add_component(intersect_1, data=Data(data=data_transform_1.output.data))
     pipeline.add_component(hetero_poisson_0, data=Data(train_data=intersection_0.output.data,
                                                        validate_data=intersect_1.output.data))
 
     pipeline.compile()
 
-    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
+    job_parameters = JobParameters(work_mode=work_mode)
     pipeline.fit(job_parameters)
 
 

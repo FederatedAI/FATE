@@ -34,7 +34,6 @@ def main(config="../../config.yaml", namespace=""):
     # obtain config
     if isinstance(config, str):
         config = load_job_config(config)
-    backend = config.backend
     work_mode = config.work_mode
 
     lr_param = {
@@ -47,10 +46,14 @@ def main(config="../../config.yaml", namespace=""):
         "early_stop": "diff",
         "batch_size": -1,
         "learning_rate": 0.15,
-        "validation_freqs": 1,
-        "early_stopping_rounds": 3,
-        "metrics": [],
-        "use_first_metric_only": False,
+        "callback_param": {
+            "callbacks": ["ModelCheckpoint", "EarlyStopping"],
+            "validation_freqs": 1,
+            "early_stopping_rounds": 1,
+            "metrics": None,
+            "use_first_metric_only": False,
+            "save_freq": 1
+        },
         "init_param": {
             "init_method": "zeros"
         },
@@ -70,7 +73,7 @@ def main(config="../../config.yaml", namespace=""):
 
     pipeline = common_tools.make_normal_dsl(config, namespace, lr_param, has_validate=True)
     # fit model
-    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
+    job_parameters = JobParameters(work_mode=work_mode)
     pipeline.fit(job_parameters)
     # query component summary
     common_tools.prettify(pipeline.get_component("hetero_lr_0").get_summary())

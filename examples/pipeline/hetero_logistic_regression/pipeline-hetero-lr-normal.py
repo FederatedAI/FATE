@@ -34,7 +34,6 @@ def main(config="../../config.yaml", namespace=""):
     # obtain config
     if isinstance(config, str):
         config = load_job_config(config)
-    backend = config.backend
     work_mode = config.work_mode
 
     lr_param = {
@@ -61,6 +60,10 @@ def main(config="../../config.yaml", namespace=""):
             "shuffle": False,
             "random_seed": 103,
             "need_cv": False
+        },
+        "callback_param": {
+            "callbacks": ["ModelCheckpoint"],
+            "save_freq": "epoch"
         }
     }
 
@@ -73,7 +76,7 @@ def main(config="../../config.yaml", namespace=""):
 
 
     # fit model
-    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
+    job_parameters = JobParameters(work_mode=work_mode)
     pipeline.fit(job_parameters)
     # query component summary
     common_tools.prettify(pipeline.get_component("hetero_lr_0").get_summary())

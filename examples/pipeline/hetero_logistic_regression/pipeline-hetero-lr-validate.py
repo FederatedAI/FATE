@@ -34,7 +34,6 @@ def main(config="../../config.yaml", namespace=""):
     # obtain config
     if isinstance(config, str):
         config = load_job_config(config)
-    backend = config.backend
     work_mode = config.work_mode
 
     lr_param = {
@@ -44,11 +43,14 @@ def main(config="../../config.yaml", namespace=""):
         "tol": 0.0001,
         "alpha": 0.01,
         "max_iter": 30,
+        "callback_param": {
+            "callbacks": ["EarlyStopping"],
+            "validation_freqs": 3,
+            "early_stopping_rounds": 3
+        },
         "early_stop": "diff",
         "batch_size": -1,
         "learning_rate": 0.15,
-        "validation_freqs": 3,
-        "early_stopping_rounds": 3,
         "init_param": {
             "init_method": "zeros",
             "fit_intercept": True
@@ -66,7 +68,7 @@ def main(config="../../config.yaml", namespace=""):
 
     pipeline = common_tools.make_normal_dsl(config, namespace, lr_param, has_validate=True)
     # fit model
-    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
+    job_parameters = JobParameters(work_mode=work_mode)
     pipeline.fit(job_parameters)
     # query component summary
     common_tools.prettify(pipeline.get_component("evaluation_0").get_summary())

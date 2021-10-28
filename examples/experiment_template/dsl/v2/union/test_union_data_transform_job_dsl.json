@@ -1,0 +1,98 @@
+{
+    "components": {
+        "reader_0": {
+            "module": "Reader",
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
+        },
+        "reader_1": {
+            "module": "Reader",
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
+        },
+        "reader_2": {
+            "module": "Reader",
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
+        },
+        "union_0": {
+            "module": "Union",
+            "input": {
+                "data": {
+                    "data": [
+                        "reader_0.data",
+                        "reader_1.data",
+                        "reader_2.data"
+                    ]
+                }
+            },
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
+        },
+        "union_1": {
+            "module": "Union",
+            "input": {
+                "data": {
+                    "data": [
+                        "reader_0.data",
+                        "reader_1.data",
+                        "reader_2.data"
+                    ]
+                }
+            },
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
+        },
+        "data_transform_0": {
+            "module": "DataTransform",
+            "input": {
+                "data": {
+                    "data": [
+                        "union_0.data"
+                    ]
+                }
+            },
+            "output": {
+                "data": [
+                    "data"
+                ],
+                "model": [
+                    "model"
+                ]
+            }
+        },
+        "data_transform_1": {
+            "module": "DataTransform",
+            "input": {
+                "data": {
+                    "data": [
+                        "union_1.data"
+                    ]
+                }
+            },
+            "output": {
+                "data": [
+                    "data"
+                ],
+                "model": [
+                    "model"
+                ]
+            }
+        }
+    }
+}

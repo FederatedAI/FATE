@@ -29,7 +29,7 @@ from fate_arch.federation.pulsar._mq_channel import (
     DEFAULT_SUBSCRIPTION_NAME,
 )
 from fate_arch.federation.pulsar._pulsar_manager import PulsarManager
-from fate_arch.federation.rabbitmq._federation import Datastream
+from fate_arch.federation._datastream import Datastream
 
 
 LOGGER = getLogger()

@@ -32,5 +32,6 @@ class HomoBoostingTransferVariable(BaseTransferVariables):
         super().__init__(flowid)
         self.tree_dim = self._create_variable(name='tree_dim', src=['guest', 'host'], dst=['arbiter'])
         self.feature_number = self._create_variable(name='feature_number', src=['guest', 'host'], dst=['arbiter'])
+        self.start_and_end_round = self._create_variable(name='start_and_end_round', src=['guest', 'host'], dst=['arbiter'])
         self.stop_flag = self._create_variable(name='stop_flag', src=['arbiter'], dst=['guest', 'host'])
         self.valid_features = self._create_variable(name='valid_features', src=['arbiter'], dst=['guest', 'host'])

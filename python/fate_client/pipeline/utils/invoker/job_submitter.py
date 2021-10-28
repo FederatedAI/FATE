@@ -16,8 +16,6 @@
 
 import json
 import os
-import subprocess
-import sys
 import tempfile
 import time
 from datetime import timedelta
@@ -31,40 +29,12 @@ from pipeline.backend.config import StatusCode
 from pipeline.utils.logger import LOGGER
 
 
-class JobFunc:
-    SUBMIT_JOB = "submit_job"
-    UPLOAD = "upload"
-    COMPONENT_OUTPUT_MODEL = "component_output_model"
-    COMPONENT_METRIC = "component_metric_all"
-    JOB_STATUS = "query_job"
-    TASK_STATUS = "query_task"
-    COMPONENT_OUTPUT_DATA = "component_output_data"
-    COMPONENT_OUTPUT_DATA_TABLE = "component_output_data_table"
-    DEPLOY_COMPONENT = "deo"
-
-
 class JobInvoker(object):
     def __init__(self):
         self.client = FlowClient(ip=conf.FlowConfig.IP, port=conf.FlowConfig.PORT, version=conf.SERVER_VERSION)
 
-    @classmethod
-    def _run_cmd(cls, cmd, output_while_running=False):
-        subp = subprocess.Popen(cmd,
-                                shell=False,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT)
-        if not output_while_running:
-            stdout, stderr = subp.communicate()
-            return stdout.decode("utf-8")
-        else:
-            for line in subp.stdout:
-                if line == "":
-                    continue
-                else:
-                    # print(line.strip())
-                    LOGGER.debug(f"{line.strip()}")
-
-    def submit_job(self, dsl=None, submit_conf=None):
+    def submit_job(self, dsl=None, submit_conf=None, callback_func=None):
+        """
         dsl_path = None
         with tempfile.TemporaryDirectory() as job_dir:
             if dsl:
@@ -79,6 +49,8 @@ class JobInvoker(object):
                 fout.write(json.dumps(submit_conf))
 
             result = self.client.job.submit(conf_path=submit_path, dsl_path=dsl_path)
+            if callback_func is not None:
+                callback_func(result)
             try:
                 if 'retcode' not in result or result["retcode"] != 0:
                     raise ValueError(f"retcode err")
@@ -90,10 +62,27 @@ class JobInvoker(object):
                 data = result["data"]
             except ValueError:
                 raise ValueError("job submit failed, err msg: {}".format(result))
+        """
+        LOGGER.debug(f"submit dsl is: \n {json.dumps(dsl, indent=4, ensure_ascii=False)}")
+        LOGGER.debug(f"submit conf is: \n {json.dumps(submit_conf, indent=4, ensure_ascii=False)}")
+        result = self.client.job.submit(config_data=submit_conf, dsl_data=dsl)
+        if callback_func is not None:
+            callback_func(result)
+        try:
+            if 'retcode' not in result or result["retcode"] != 0:
+                raise ValueError(f"retcode err")
 
+            if "jobId" not in result:
+                raise ValueError(f"jobID not in result: {result}")
+
+            job_id = result["jobId"]
+            data = result["data"]
+        except ValueError:
+            raise ValueError("job submit failed, err msg: {}".format(result))
         return job_id, data
 
     def upload_data(self, submit_conf=None, drop=0):
+        """
         with tempfile.TemporaryDirectory() as job_dir:
             submit_path = os.path.join(job_dir, "job_runtime_conf.json")
             with open(submit_path, "w") as fout:
@@ -101,7 +90,7 @@ class JobInvoker(object):
 
             result = self.client.data.upload(conf_path=submit_path, verbose=1, drop=drop)
             try:
-                if 'retcode' not in result or result["retcode"] != 0 or result["retcode"] != 0:
+                if 'retcode' not in result or result["retcode"] != 0:
                     raise ValueError
 
                 if "jobId" not in result:
@@ -111,7 +100,19 @@ class JobInvoker(object):
                 data = result["data"]
             except:
                 raise ValueError("job submit failed, err msg: {}".format(result))
+        """
+        result = self.client.data.upload(config_data=submit_conf, verbose=1, drop=drop)
+        try:
+            if 'retcode' not in result or result["retcode"] != 0:
+                raise ValueError
 
+            if "jobId" not in result:
+                raise ValueError
+
+            job_id = result["jobId"]
+            data = result["data"]
+        except:
+            raise ValueError("job submit failed, err msg: {}".format(result))
         return job_id, data
 
     def monitor_job_status(self, job_id, role, party_id):
@@ -422,7 +423,7 @@ class JobInvoker(object):
             result = self.client.model.deploy(model_id=model_id, model_version=model_version)
 
         if result is None or 'retcode' not in result:
-            raise ValueError("Call flow deploy is failed, check if fate_flow server is start!")
+            raise ValueError("Call flow deploy is failed, check if fate_flow server is up!")
         elif result["retcode"] != 0:
             raise ValueError("Cannot deploy components, error msg is {}".format(result["retmsg"]))
         else:
@@ -431,8 +432,56 @@ class JobInvoker(object):
     def get_predict_dsl(self, model_id, model_version):
         result = self.client.model.get_predict_dsl(model_id=model_id, model_version=model_version)
         if result is None or 'retcode' not in result:
-            raise ValueError("Call flow get predict dsl is failed, check if fate_flow server is start!")
+            raise ValueError("Call flow get predict dsl is failed, check if fate_flow server is up!")
         elif result["retcode"] != 0:
             raise ValueError("Cannot get predict dsl, error msg is {}".format(result["retmsg"]))
+        else:
+            return result["data"]
+
+    def load_model(self, load_conf):
+        """
+        with tempfile.TemporaryDirectory() as job_dir:
+            submit_path = os.path.join(job_dir, "job_runtime_conf.json")
+            with open(submit_path, "w") as fout:
+                fout.write(json.dumps(load_conf))
+        result = self.client.model.load(submit_path)
+        """
+        result = self.client.model.load(load_conf)
+        if result is None or 'retcode' not in result:
+            raise ValueError("Call flow load failed, check if fate_flow server is up!")
+        elif result["retcode"] != 0:
+            raise ValueError("Cannot load model, error msg is {}".format(result["retmsg"]))
+        else:
+            return result["data"]
+
+    def bind_model(self, bind_conf):
+        """
+        with tempfile.TemporaryDirectory() as job_dir:
+            submit_path = os.path.join(job_dir, "job_runtime_conf.json")
+            with open(submit_path, "w") as fout:
+                fout.write(json.dumps(bind_conf))
+        result = self.client.model.bind(submit_path)
+        """
+        result = self.client.model.bind(bind_conf)
+        if result is None or 'retcode' not in result:
+            raise ValueError("Call flow bind failed, check if fate_flow server is up!")
+        elif result["retcode"] != 0:
+            raise ValueError("Cannot bind model, error msg is {}".format(result["retmsg"]))
+        else:
+            return result["retmsg"]
+
+    def convert_homo_model(self, convert_conf):
+        """
+        with tempfile.TemporaryDirectory() as job_dir:
+            submit_path = os.path.join(job_dir, "job_runtime_conf.json")
+            with open(submit_path, "w") as fout:
+                fout.write(json.dumps(convert_conf))
+        result = self.client.model.homo_convert(submit_path)
+        """
+        result = self.client.model.homo_convert(convert_conf)
+        if result is None or 'retcode' not in result:
+            raise ValueError("Call flow homo convert failed, check if fate_flow server is up!")
+        elif result["retcode"] != 0:
+            raise ValueError("Cannot convert homo model, error msg is {}".format(result["retmsg"]))
         else:
             return result["data"]

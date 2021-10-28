@@ -18,17 +18,22 @@
 #
 import copy
 
-from federatedml.param.base_param import BaseParam
+from federatedml.param.base_param import BaseParam, deprecated_param
+from federatedml.param.callback_param import CallbackParam
 from federatedml.param.cross_validation_param import CrossValidationParam
 from federatedml.param.encrypt_param import EncryptParam
 from federatedml.param.encrypted_mode_calculation_param import EncryptedModeCalculatorParam
 from federatedml.param.init_model_param import InitParam
 from federatedml.param.predict_param import PredictParam
-from federatedml.param.stepwise_param import StepwiseParam
 from federatedml.param.sqn_param import StochasticQuasiNewtonParam
+from federatedml.param.stepwise_param import StepwiseParam
 from federatedml.util import consts
 
+deprecated_param_list = ["early_stopping_rounds", "validation_freqs", "metrics",
+                         "use_first_metric_only"]
 
+
+@deprecated_param(*deprecated_param_list)
 class LogisticParam(BaseParam):
     """
     Parameters used for Logistic Regression both for Homo mode or Hetero mode.
@@ -77,6 +82,8 @@ class LogisticParam(BaseParam):
 
     predict_param: PredictParam object, default: default PredictParam object
 
+    callback_param: CallbackParam object
+
     cv_param: CrossValidationParam object, default: default CrossValidationParam object
 
     multi_class: str, 'ovr', default: 'ovr'
@@ -111,7 +118,8 @@ class LogisticParam(BaseParam):
                  multi_class='ovr', validation_freqs=None, early_stopping_rounds=None,
                  stepwise_param=StepwiseParam(), floating_point_precision=23,
                  metrics=None,
-                 use_first_metric_only=False
+                 use_first_metric_only=False,
+                 callback_param=CallbackParam()
                  ):
         super(LogisticParam, self).__init__()
         self.penalty = penalty
@@ -135,6 +143,7 @@ class LogisticParam(BaseParam):
         self.metrics = metrics or []
         self.use_first_metric_only = use_first_metric_only
         self.floating_point_precision = floating_point_precision
+        self.callback_param = copy.deepcopy(callback_param)
 
     def check(self):
         descr = "logistic_param's"
@@ -231,9 +240,32 @@ class LogisticParam(BaseParam):
             raise ValueError("use_first_metric_only should be a boolean")
 
         if self.floating_point_precision is not None and \
-                (not isinstance(self.floating_point_precision, int) or\
+                (not isinstance(self.floating_point_precision, int) or \
                  self.floating_point_precision < 0 or self.floating_point_precision > 63):
             raise ValueError("floating point precision should be null or a integer between 0 and 63")
+
+        for p in ["early_stopping_rounds", "validation_freqs", "metrics",
+                  "use_first_metric_only"]:
+            # if self._warn_to_deprecate_param(p, "", ""):
+            if self._deprecated_params_set.get(p):
+                if "callback_param" in self.get_user_feeded():
+                    raise ValueError(f"{p} and callback param should not be set simultaneously，"
+                                     f"{self._deprecated_params_set}, {self.get_user_feeded()}")
+                else:
+                    self.callback_param.callbacks = ["PerformanceEvaluate"]
+                break
+
+        if self._warn_to_deprecate_param("validation_freqs", descr, "callback_param's 'validation_freqs'"):
+            self.callback_param.validation_freqs = self.validation_freqs
+
+        if self._warn_to_deprecate_param("early_stopping_rounds", descr, "callback_param's 'early_stopping_rounds'"):
+            self.callback_param.early_stopping_rounds = self.early_stopping_rounds
+
+        if self._warn_to_deprecate_param("metrics", descr, "callback_param's 'metrics'"):
+            self.callback_param.metrics = self.metrics
+
+        if self._warn_to_deprecate_param("use_first_metric_only", descr, "callback_param's 'use_first_metric_only'"):
+            self.callback_param.use_first_metric_only = self.use_first_metric_only
         return True
 
 
@@ -257,6 +289,7 @@ class HomoLogisticParam(LogisticParam):
         To scale the proximal term
 
     """
+
     def __init__(self, penalty='L2',
                  tol=1e-4, alpha=1.0, optimizer='rmsprop',
                  batch_size=-1, learning_rate=0.01, init_param=InitParam(),
@@ -269,7 +302,7 @@ class HomoLogisticParam(LogisticParam):
                  metrics=['auc', 'ks'],
                  use_first_metric_only=False,
                  use_proximal=False,
-                 mu=0.1
+                 mu=0.1, callback_param=CallbackParam()
                  ):
         super(HomoLogisticParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
                                                 batch_size=batch_size,
@@ -280,7 +313,8 @@ class HomoLogisticParam(LogisticParam):
                                                 validation_freqs=validation_freqs,
                                                 decay=decay, decay_sqrt=decay_sqrt,
                                                 early_stopping_rounds=early_stopping_rounds,
-                                                metrics=metrics, use_first_metric_only=use_first_metric_only)
+                                                metrics=metrics, use_first_metric_only=use_first_metric_only,
+                                                callback_param=callback_param)
         self.re_encrypt_batches = re_encrypt_batches
         self.aggregate_iters = aggregate_iters
         self.use_proximal = use_proximal
@@ -325,7 +359,8 @@ class HeteroLogisticParam(LogisticParam):
                  multi_class='ovr', validation_freqs=None, early_stopping_rounds=None,
                  metrics=['auc', 'ks'], floating_point_precision=23,
                  encrypt_param=EncryptParam(),
-                 use_first_metric_only=False, stepwise_param=StepwiseParam()
+                 use_first_metric_only=False, stepwise_param=StepwiseParam(),
+                 callback_param=CallbackParam()
                  ):
         super(HeteroLogisticParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
                                                   batch_size=batch_size,
@@ -339,7 +374,8 @@ class HeteroLogisticParam(LogisticParam):
                                                   metrics=metrics, floating_point_precision=floating_point_precision,
                                                   encrypt_param=encrypt_param,
                                                   use_first_metric_only=use_first_metric_only,
-                                                  stepwise_param=stepwise_param)
+                                                  stepwise_param=stepwise_param,
+                                                  callback_param=callback_param)
         self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
         self.sqn_param = copy.deepcopy(sqn_param)
 

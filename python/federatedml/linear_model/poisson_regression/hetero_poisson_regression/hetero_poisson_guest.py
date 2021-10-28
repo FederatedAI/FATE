@@ -22,6 +22,7 @@ from federatedml.linear_model.linear_model_weight import LinearModelWeights
 from federatedml.linear_model.poisson_regression.hetero_poisson_regression.hetero_poisson_base import HeteroPoissonBase
 from federatedml.optim.gradient import hetero_poisson_gradient_and_loss
 from federatedml.secureprotol import EncryptModeCalculator
+from federatedml.statistic.data_overview import with_weight
 from federatedml.util import LOGGER
 from federatedml.util import consts
 from federatedml.util.io_check import assert_io_num_rows_equal
@@ -49,8 +50,11 @@ class HeteroPoissonGuest(HeteroPoissonBase):
         LOGGER.info("Enter hetero_poisson_guest fit")
         self._abnormal_detection(data_instances)
         self.header = copy.deepcopy(self.get_header(data_instances))
+        self.callback_list.on_train_begin(data_instances, validate_data)
 
-        self.validation_strategy = self.init_validation_strategy(data_instances, validate_data)
+        # self.validation_strategy = self.init_validation_strategy(data_instances, validate_data)
+        if with_weight(data_instances):
+            LOGGER.warning("input data with weight. Poisson regression does not support weighted training.")
 
         self.exposure_index = self.get_exposure_index(self.header, self.exposure_colname)
         exposure_index = self.exposure_index
@@ -72,24 +76,26 @@ class HeteroPoissonGuest(HeteroPoissonBase):
         LOGGER.info("Start initialize model.")
         LOGGER.info("fit_intercept:{}".format(self.init_param_obj.fit_intercept))
         model_shape = self.get_features_shape(data_instances)
-        w = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
-        self.model_weights = LinearModelWeights(w, fit_intercept=self.fit_intercept, raise_overflow_error=False)
+        if not self.component_properties.is_warm_start:
+            w = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
+            self.model_weights = LinearModelWeights(w, fit_intercept=self.fit_intercept, raise_overflow_error=False)
+        else:
+            self.callback_warm_start_init_iter(self.n_iter_)
 
         while self.n_iter_ < self.max_iter:
+            self.callback_list.on_epoch_begin(self.n_iter_)
             LOGGER.info("iter:{}".format(self.n_iter_))
             # each iter will get the same batch_data_generator
             batch_data_generator = self.batch_generator.generate_batch_data()
             self.optimizer.set_iters(self.n_iter_)
             batch_index = 0
             for batch_data in batch_data_generator:
-                # transforms features of raw input 'batch_data_inst' into more representative features 'batch_feat_inst'
-                batch_feat_inst = self.transform(batch_data)
                 # compute offset of this batch
-                batch_offset = exposure.join(batch_feat_inst, lambda ei, d: HeteroPoissonBase.safe_log(ei))
+                batch_offset = exposure.join(batch_data, lambda ei, d: HeteroPoissonBase.safe_log(ei))
 
                 # Start gradient procedure
                 optimized_gradient = self.gradient_loss_operator.compute_gradient_procedure(
-                    batch_feat_inst,
+                    batch_data,
                     self.encrypted_calculator,
                     self.model_weights,
                     self.optimizer,
@@ -109,17 +115,15 @@ class HeteroPoissonGuest(HeteroPoissonBase):
             self.is_converged = self.converge_procedure.sync_converge_info(suffix=(self.n_iter_,))
             LOGGER.info("iter: {},  is_converged: {}".format(self.n_iter_, self.is_converged))
 
-            if self.validation_strategy:
-                LOGGER.debug('Poisson guest running validation')
-                self.validation_strategy.validate(self, self.n_iter_)
-                if self.validation_strategy.need_stop():
-                    LOGGER.debug('early stopping triggered')
-                    break
+            self.callback_list.on_epoch_end(self.n_iter_)
             self.n_iter_ += 1
+
+            if self.stop_training:
+                break
+
             if self.is_converged:
                 break
-        if self.validation_strategy and self.validation_strategy.has_saved_best_model():
-            self.load_model(self.validation_strategy.cur_best_model)
+        self.callback_list.on_train_end()
         self.set_summary(self.get_model_summary())
 
     @assert_io_num_rows_equal
@@ -146,9 +150,8 @@ class HeteroPoissonGuest(HeteroPoissonBase):
         exposure = data_instances.mapValues(lambda v: HeteroPoissonBase.load_exposure(v, exposure_index))
 
         data_instances = self.align_data_header(data_instances, self.header)
-        data_features = self.transform(data_instances)
 
-        pred_guest = self.compute_mu(data_features, self.model_weights.coef_, self.model_weights.intercept_, exposure)
+        pred_guest = self.compute_mu(data_instances, self.model_weights.coef_, self.model_weights.intercept_, exposure)
         pred_host = self.transfer_variable.host_partial_prediction.get(idx=0)
 
         LOGGER.info("Get prediction from Host")

@@ -40,7 +40,6 @@ class HeteroNNHost(HeteroNNBase):
         self.role = consts.HOST
 
         self.input_shape = None
-        self.validation_strategy = None
 
     def _init_model(self, hetero_nn_param):
         super(HeteroNNHost, self)._init_model(hetero_nn_param)
@@ -73,21 +72,27 @@ class HeteroNNHost(HeteroNNBase):
         self.model.predict(test_x)
 
     def fit(self, data_inst, validate_data=None):
-        self.validation_strategy = self.init_validation_strategy(data_inst, validate_data)
-        self._build_model()
+        self.callback_list.on_train_begin(data_inst, validate_data)
+
+        if not self.component_properties.is_warm_start:
+            self._build_model()
+            cur_epoch = 0
+        else:
+            self.model.warm_start()
+            self.callback_warm_start_init_iter(self.history_iter_epoch)
+            cur_epoch = self.history_iter_epoch + 1
+
         self.prepare_batch_data(self.batch_generator, data_inst)
 
-        cur_epoch = 0
-
         while cur_epoch < self.epochs:
+            self.iter_epoch = cur_epoch
             for batch_idx in range(len(self.data_x)):
                 self.model.train(self.data_x[batch_idx], cur_epoch, batch_idx)
 
-            if self.validation_strategy:
-                self.validation_strategy.validate(self, cur_epoch)
-                if self.validation_strategy.need_stop():
-                    LOGGER.debug('early stopping triggered')
-                    break
+            self.callback_list.on_epoch_end(cur_epoch)
+            if self.callback_variables.stop_training:
+                LOGGER.debug('early stopping triggered')
+                break
 
             is_converge = self.transfer_variable.is_converge.get(idx=0,
                                                                  suffix=(cur_epoch,))
@@ -98,8 +103,9 @@ class HeteroNNHost(HeteroNNBase):
 
             cur_epoch += 1
 
-        if self.validation_strategy and self.validation_strategy.has_saved_best_model():
-            self.load_model(self.validation_strategy.cur_best_model)
+        self.callback_list.on_train_end()
+        # if self.validation_strategy and self.validation_strategy.has_saved_best_model():
+        #     self.load_model(self.validation_strategy.cur_best_model)
 
     def prepare_batch_data(self, batch_generator, data_inst):
         self._header = data_inst.schema["header"]
@@ -137,8 +143,9 @@ class HeteroNNHost(HeteroNNBase):
 
     def _get_model_param(self):
         model_param = HeteroNNParam()
+        model_param.iter_epoch = self.iter_epoch
         model_param.header.extend(self._header)
         model_param.hetero_nn_model_param.CopyFrom(self.model.get_hetero_nn_model_param())
-        model_param.best_iteration = -1 if self.validation_strategy is None else self.validation_strategy.best_iteration
+        model_param.best_iteration = self.callback_variables.best_iteration
 
         return model_param

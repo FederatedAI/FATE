@@ -33,7 +33,6 @@ def main(config="../../config.yaml", namespace=""):
     # obtain config
     if isinstance(config, str):
         config = load_job_config(config)
-    backend = config.backend
     work_mode = config.work_mode
 
     binning_param = {
@@ -48,7 +47,7 @@ def main(config="../../config.yaml", namespace=""):
         "category_indexes": None,
         "category_names": None,
         "adjustment_factor": 0.5,
-        "local_only": False,
+        "local_only": True,
         "transform_param": {
             "transform_cols": -1,
             "transform_names": None,
@@ -69,14 +68,14 @@ def main(config="../../config.yaml", namespace=""):
             "value_threshold": 1,
             "local_only": True
         },
-        "iv_top_k_param": {
-            "k": 7,
-            "local_only": False
+        "iv_param": {
+            "filter_type": "threshold",
+            "select_federated": False
         }
     }
     pipeline = common_tools.make_normal_dsl(config, namespace, selection_param,
                                             binning_param=binning_param)
-    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
+    job_parameters = JobParameters(work_mode=work_mode)
     pipeline.fit(job_parameters)
     common_tools.prettify(pipeline.get_component("hetero_feature_selection_0").get_summary())
 

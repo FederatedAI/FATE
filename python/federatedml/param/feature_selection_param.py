@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
-import copy
-
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -18,7 +15,9 @@ import copy
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from federatedml.param.base_param import BaseParam
+import copy
+
+from federatedml.param.base_param import BaseParam, deprecated_param
 from federatedml.util import consts
 
 
@@ -95,7 +94,8 @@ class IVPercentileSelectionParam(BaseParam):
 
     def check(self):
         descr = "IV selection param's"
-        self.check_decimal_float(self.percentile_threshold, descr)
+        if self.percentile_threshold != 0 or self.percentile_threshold != 1:
+            self.check_decimal_float(self.percentile_threshold, descr)
         self.check_boolean(self.local_only, descr)
         return True
 
@@ -213,27 +213,8 @@ class CommonFilterParam(BaseParam):
         self.select_federated = select_federated
 
     def check(self):
-        if not isinstance(self.metrics, list):
-            for value_name in ["filter_type", "take_high",
-                               "threshold", "select_federated"]:
-                v = getattr(self, value_name)
-                if isinstance(v, list):
-                    raise ValueError(f"{value_name}: {v} should not be a list when "
-                                     f"metrics: {self.metrics} is not a list")
-                setattr(self, value_name, [v])
-            setattr(self, "metrics", [self.metrics])
-        else:
-            expected_length = len(self.metrics)
-            for value_name in ["filter_type", "take_high",
-                               "threshold", "select_federated"]:
-                v = getattr(self, value_name)
-                if isinstance(v, list):
-                    if len(v) != expected_length:
-                        raise ValueError(f"The parameter {v} should have same length "
-                                         f"with metrics")
-                else:
-                    new_v = [v] * expected_length
-                    setattr(self, value_name, new_v)
+        self._convert_to_list(param_names=["filter_type", "take_high",
+                                           "threshold", "select_federated"])
 
         for v in self.filter_type:
             if v not in ["threshold", "top_k", "top_percentile"]:
@@ -262,6 +243,47 @@ class CommonFilterParam(BaseParam):
         for v in self.select_federated:
             self.check_boolean(v, descr)
 
+    def _convert_to_list(self, param_names):
+        if not isinstance(self.metrics, list):
+            for value_name in param_names:
+                v = getattr(self, value_name)
+                if isinstance(v, list):
+                    raise ValueError(f"{value_name}: {v} should not be a list when "
+                                     f"metrics: {self.metrics} is not a list")
+                setattr(self, value_name, [v])
+            setattr(self, "metrics", [self.metrics])
+        else:
+            expected_length = len(self.metrics)
+            for value_name in param_names:
+                v = getattr(self, value_name)
+                if isinstance(v, list):
+                    if len(v) != expected_length:
+                        raise ValueError(f"The parameter {v} should have same length "
+                                         f"with metrics")
+                else:
+                    new_v = [v] * expected_length
+                    setattr(self, value_name, new_v)
+
+
+class IVFilterParam(CommonFilterParam):
+    """
+    Parameters
+    ----------
+    mul_class_merge_type: str or list, default: "average"
+        Indicate how to merge multi-class iv results. Support "average", "min" and "max".
+
+    """
+
+    def __init__(self, filter_type='threshold', threshold=1,
+                 host_thresholds=None, select_federated=True, mul_class_merge_type="average"):
+        super().__init__(metrics='iv', filter_type=filter_type, take_high=True, threshold=threshold,
+                         host_thresholds=host_thresholds, select_federated=select_federated)
+        self.mul_class_merge_type = mul_class_merge_type
+
+    def check(self):
+        super(IVFilterParam, self).check()
+        self._convert_to_list(param_names=["mul_class_merge_type"])
+
 
 class CorrelationFilterParam(BaseParam):
     """
@@ -281,6 +303,7 @@ class CorrelationFilterParam(BaseParam):
     select_federated: bool, default: True
         Whether select federated with other parties or based on local variables
     """
+
     def __init__(self, sort_metric='iv', threshold=0.1, select_federated=True):
         super().__init__()
         self.sort_metric = sort_metric
@@ -371,6 +394,12 @@ class ManuallyFilterParam(BaseParam):
         return True
 
 
+deprecated_param_list = ["iv_value_param", "iv_percentile_param",
+                         "iv_top_k_param", "variance_coe_param", "unique_param",
+                         "outlier_param"]
+
+
+@deprecated_param(*deprecated_param_list)
 class FeatureSelectionParam(BaseParam):
     """
     Define the feature selection parameters.
@@ -421,6 +450,18 @@ class FeatureSelectionParam(BaseParam):
         "top_k" and "top_percentile" are accepted. Check more details in CommonFilterParam. To
         use this filter, hetero-feature-binning module has to be provided.
 
+        Besides, multi-class iv filter is available if multi-class iv has been calculated in upstream component.
+         There are three mechanisms to select features.
+         Please remind that there exist as many ivs calculated as the number of labels
+          since we use one-vs-rest for multi-class cases.
+
+        Setting different mul_class_merge_type to choose the mechanism used in multi-class cases.
+        * "min": take the minimum iv among all results.
+        * "max": take the maximum ones
+        * "average": take the average among all results.
+        After that, we get unique one iv for each column so that
+        we can use the three mechanism mentioned above to select features.
+
     statistic_param: Setting how to filter base on statistic values. All of "threshold",
         "top_k" and "top_percentile" are accepted. Check more details in CommonFilterParam.
         To use this filter, data_statistic module has to be provided.
@@ -444,7 +485,7 @@ class FeatureSelectionParam(BaseParam):
                  outlier_param=OutlierColsSelectionParam(),
                  manually_param=ManuallyFilterParam(),
                  percentage_value_param=PercentageValueParam(),
-                 iv_param=CommonFilterParam(metrics=consts.IV),
+                 iv_param=IVFilterParam(),
                  statistic_param=CommonFilterParam(metrics=consts.MEAN),
                  psi_param=CommonFilterParam(metrics=consts.PSI,
                                              take_high=False),
@@ -543,3 +584,10 @@ class FeatureSelectionParam(BaseParam):
                 raise ValueError("For VIF filter, metrics should be 'vif'")
 
         self.correlation_param.check()
+
+        self._warn_to_deprecate_param("iv_value_param", descr, "iv_param")
+        self._warn_to_deprecate_param("iv_percentile_param", descr, "iv_param")
+        self._warn_to_deprecate_param("iv_top_k_param", descr, "iv_param")
+        self._warn_to_deprecate_param("variance_coe_param", descr, "statistic_param")
+        self._warn_to_deprecate_param("unique_param", descr, "statistic_param")
+        self._warn_to_deprecate_param("outlier_param", descr, "statistic_param")

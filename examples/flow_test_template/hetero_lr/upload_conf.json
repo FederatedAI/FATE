@@ -1,0 +1,7 @@
+{
+    "file": "examples/data/motor_hetero_mini_guest.csv",
+    "table_name": "motor_hetero_mini_guest",
+    "namespace": "experiment",
+    "head": 1,
+    "partition": 8
+}

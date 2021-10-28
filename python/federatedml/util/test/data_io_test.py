@@ -18,8 +18,9 @@ import random
 import string
 import time
 import unittest
-
 import numpy as np
+
+from types import SimpleNamespace
 from fate_arch.session import computing_session as session
 
 from federatedml.util import consts
@@ -29,9 +30,6 @@ from federatedml.util.data_io import DataIO
 class TestDenseFeatureReader(unittest.TestCase):
     def setUp(self):
         session.init("test_dataio_" + str(random.random()))
-        name1 = "dense_data_" + str(random.random())
-        name2 = "dense_data_" + str(random.random())
-        namespace = "data_io_dense_test"
         data1 = [("a", "1,2,-1,0,0,5"), ("b", "4,5,6,0,1,2")]
         schema = {"header": "x1,x2,x3,x4,x5,x6",
                   "sid": "id"}
@@ -42,29 +40,22 @@ class TestDenseFeatureReader(unittest.TestCase):
         self.table2 = session.parallelize(data2, include_key=True, partition=16)
         self.table2.schema = schema
 
-        self.args1 = {"data":
-            {"data_io_0": {
-                "data": self.table1
-            }
-            }
-        }
-        self.args2 = {"data":
-            {"data_io_1": {
+        self.dataset1 = {"data_io_0": {
+                             "data": self.table1
+                        }
+                        }
+
+        self.dataset2 = {"data_io_1": {
                 "data": self.table2
             }
             }
-        }
+
 
     def test_dense_output_format(self):
         dataio = DataIO()
-        dataio.set_tracker(TrackerMock())
-        component_params = {"DataIOParam":
-                                {"input_format": "dense"
-                                 },
-                            "role": {"guest": [9999], "host": [10000], "arbiter": [10000]},
-                            "local": {"role": "guest", "party_id": 9999}
-                            }
-        dataio.run(component_params, self.args1)
+        component_params = {"input_format": "dense"}
+        cpn_input = get_cpn_input(self.dataset1, component_params)
+        dataio.run(cpn_input)
         data = dataio.save_data().collect()
         result = dict(data)
         self.assertTrue(type(result['a']).__name__ == "Instance")
@@ -75,21 +66,17 @@ class TestDenseFeatureReader(unittest.TestCase):
         label = vala.label
         # self.assertTrue(np.abs(weight - 1.0) < consts.FLOAT_ZERO)
         self.assertTrue(type(features).__name__ == "ndarray")
-        self.assertTrue(label == None)
+        self.assertTrue(label is None)
         self.assertTrue(features.shape[0] == 6)
         self.assertTrue(features.dtype == "float64")
 
     def test_sparse_output_format(self):
         dataio = DataIO()
-        dataio.set_tracker(TrackerMock())
-        component_params = {"DataIOParam":
-                                {"output_format": "sparse",
-                                 "input_format": "dense"
-                                 },
-                            "role": {"guest": [9999], "host": [10000], "arbiter": [10000]},
-                            "local": {"role": "guest", "party_id": 9999}
+        component_params = {"output_format": "sparse",
+                            "input_format": "dense"
                             }
-        dataio.run(component_params, self.args1)
+        cpn_input = get_cpn_input(self.dataset1, component_params)
+        dataio.run(cpn_input)
         data = dataio.save_data().collect()
         result = dict(data)
         vala = result['a']
@@ -100,20 +87,16 @@ class TestDenseFeatureReader(unittest.TestCase):
 
     def test_missing_value_fill(self):
         dataio = DataIO()
-        dataio.set_tracker(TrackerMock())
-        component_params = {"DataIOParam":
-                                {"output_format": "sparse",
-                                 "input_format": "dense",
-                                 "default_value": 100,
-                                 "with_label": False,
-                                 "missing_fill": True,
-                                 "missing_fill_method": "designated",
-                                 "data_type": "int"
-                                 },
-                            "role": {"guest": [9999], "host": [10000], "arbiter": [10000]},
-                            "local": {"role": "guest", "party_id": 9999}
+        component_params = {"output_format": "sparse",
+                            "input_format": "dense",
+                            "default_value": 100,
+                            "with_label": False,
+                            "missing_fill": True,
+                            "missing_fill_method": "designated",
+                            "data_type": "int"
                             }
-        dataio.run(component_params, self.args2)
+        cpn_input = get_cpn_input(self.dataset2, component_params)
+        dataio.run(cpn_input)
         data = dataio.save_data().collect()
         result = dict(data)
         features = result['a'].features
@@ -122,17 +105,13 @@ class TestDenseFeatureReader(unittest.TestCase):
 
     def test_with_label(self):
         dataio = DataIO()
-        dataio.set_tracker(TrackerMock())
-        component_params = {"DataIOParam":
-                                {"output_format": "dense",
-                                 "input_format": "dense",
-                                 "with_label": True,
-                                 "label_name": "x3"
-                                 },
-                            "role": {"guest": [9999], "host": [10000], "arbiter": [10000]},
-                            "local": {"role": "guest", "party_id": 9999}
-                            }
-        dataio.run(component_params, self.args1)
+        component_params = {"output_format": "dense",
+                            "input_format": "dense",
+                            "with_label": True,
+                            "label_name": "x3"
+                           }
+        cpn_input = get_cpn_input(self.dataset1, component_params)
+        dataio.run(cpn_input)
         data = dataio.save_data().collect()
         result = dict(data)
         vala = result['a']
@@ -168,25 +147,20 @@ class TestSparseFeatureReader(unittest.TestCase):
             self.data.append((i, " ".join(row)))
 
         self.table = session.parallelize(self.data, include_key=True, partition=16)
-        self.args = {"data":
-            {"data_io_0": {
-                "data": self.table
-            }
-            }
-        }
+        self.dataset = {"data_io_0": {
+                        "data": self.table
+                        }
+                       }
 
     def test_dense_output_format(self):
         dataio = DataIO()
         dataio.set_tracker(TrackerMock())
-        component_params = {"DataIOParam":
-                                {"output_format": "dense",
-                                 "input_format": "sparse",
-                                 "delimitor": ' '
-                                 },
-                            "role": {"guest": [9999], "host": [10000], "arbiter": [10000]},
-                            "local": {"role": "guest", "party_id": 9999}
+        component_params = {"output_format": "dense",
+                            "input_format": "sparse",
+                            "delimitor": ' '
                             }
-        dataio.run(component_params, self.args)
+        cpn_input = get_cpn_input(self.dataset, component_params)
+        dataio.run(cpn_input)
         insts = list(dataio.save_data().collect())
         for i in range(100):
             features = insts[i][1].features
@@ -207,15 +181,12 @@ class TestSparseFeatureReader(unittest.TestCase):
     def test_sparse_output_format(self):
         dataio = DataIO()
         dataio.set_tracker(TrackerMock())
-        component_params = {"DataIOParam":
-                                {"output_format": "sparse",
-                                 "input_format": "sparse",
-                                 "delimitor": ' '
-                                 },
-                            "role": {"guest": [9999], "host": [10000], "arbiter": [10000]},
-                            "local": {"role": "guest", "party_id": 9999}
+        component_params = {"output_format": "sparse",
+                            "input_format": "sparse",
+                            "delimitor": ' '
                             }
-        dataio.run(component_params, self.args)
+        cpn_input = get_cpn_input(self.dataset, component_params)
+        dataio.run(cpn_input)
         insts = list(dataio.save_data().collect())
         for i in range(100):
             features = insts[i][1].features
@@ -253,34 +224,27 @@ class TestSparseTagReader(unittest.TestCase):
 
         self.table1 = session.parallelize(self.data, include_key=True, partition=16)
         self.table2 = session.parallelize(self.data_with_value, include_key=True, partition=16)
-        self.args1 = {"data":
-            {"data_io_0": {
-                "data": self.table1
-            }
-            }
-        }
-        self.args2 = {"data":
-            {"data_io_1": {
-                "data": self.table2
-            }
-            }
-        }
+        self.dataset1 = {"data_io_0": {
+                         "data": self.table1
+                         }
+                        }
+
+        self.dataset2 = {"data_io_1": {
+                         "data": self.table2
+                         }
+                        }
 
     def test_tag_sparse_output_format(self):
         dataio = DataIO()
-        dataio.set_tracker(TrackerMock())
-        component_params = {"DataIOParam":
-                                {"output_format": "sparse",
-                                 "input_format": "tag",
-                                 "delimitor": ' ',
-                                 "data_type": "int",
-                                 "with_label": False,
-                                 "tag_with_value": False
-                                 },
-                            "role": {"guest": [9999], "host": [10000], "arbiter": [10000]},
-                            "local": {"role": "guest", "party_id": 9999}
+        component_params = {"output_format": "sparse",
+                            "input_format": "tag",
+                            "delimitor": ' ',
+                            "data_type": "int",
+                            "with_label": False,
+                            "tag_with_value": False
                             }
-        dataio.run(component_params, self.args1)
+        cpn_input = get_cpn_input(self.dataset1, component_params)
+        dataio.run(cpn_input)
         tag_insts = dataio.save_data()
         features = [inst.features for key, inst in tag_insts.collect()]
 
@@ -301,19 +265,16 @@ class TestSparseTagReader(unittest.TestCase):
     def test_tag_with_value_sparse_output_format(self):
         dataio = DataIO()
         dataio.set_tracker(TrackerMock())
-        component_params = {"DataIOParam":
-                                {"output_format": "sparse",
-                                 "input_format": "tag",
-                                 "delimitor": ' ',
-                                 "data_type": "float",
-                                 "with_label": False,
-                                 "tag_with_value": True,
-                                 "tag_value_delimitor": ":"
-                                 },
-                            "role": {"guest": [9999], "host": [10000], "arbiter": [10000]},
-                            "local": {"role": "guest", "party_id": 9999}
+        component_params = {"output_format": "sparse",
+                            "input_format": "tag",
+                            "delimitor": ' ',
+                            "data_type": "float",
+                            "with_label": False,
+                            "tag_with_value": True,
+                            "tag_value_delimitor": ":"
                             }
-        dataio.run(component_params, self.args2)
+        cpn_input = get_cpn_input(self.dataset2, component_params)
+        dataio.run(cpn_input)
         tag_insts = dataio.save_data()
         features = [inst.features for key, inst in tag_insts.collect()]
 
@@ -338,18 +299,14 @@ class TestSparseTagReader(unittest.TestCase):
 
     def test_tag_dense_output_format(self):
         dataio = DataIO()
-        dataio.set_tracker(TrackerMock())
-        component_params = {"DataIOParam":
-                                {"output_format": "dense",
-                                 "input_format": "tag",
-                                 "delimitor": ' ',
-                                 "data_type": "int",
-                                 "with_label": False
-                                 },
-                            "role": {"guest": [9999], "host": [10000], "arbiter": [10000]},
-                            "local": {"role": "guest", "party_id": 9999}
+        component_params = {"output_format": "dense",
+                            "input_format": "tag",
+                            "delimitor": ' ',
+                            "data_type": "int",
+                            "with_label": False
                             }
-        dataio.run(component_params, self.args1)
+        cpn_input = get_cpn_input(self.dataset1, component_params)
+        dataio.run(cpn_input)
         tag_insts = dataio.save_data()
         features = [inst.features for key, inst in tag_insts.collect()]
 
@@ -371,19 +328,15 @@ class TestSparseTagReader(unittest.TestCase):
 
     def test_tag_with_value_dense_output_format(self):
         dataio = DataIO()
-        dataio.set_tracker(TrackerMock())
-        component_params = {"DataIOParam":
-                                {"output_format": "dense",
-                                 "input_format": "tag",
-                                 "delimitor": ' ',
-                                 "data_type": "float",
-                                 "with_label": False,
-                                 "tag_with_value": True
-                                 },
-                            "role": {"guest": [9999], "host": [10000], "arbiter": [10000]},
-                            "local": {"role": "guest", "party_id": 9999}
+        component_params = {"output_format": "dense",
+                            "input_format": "tag",
+                            "delimitor": ' ',
+                            "data_type": "float",
+                            "with_label": False,
+                            "tag_with_value": True
                             }
-        dataio.run(component_params, self.args2)
+        cpn_input = get_cpn_input(self.dataset2, component_params)
+        dataio.run(cpn_input)
         tag_insts = dataio.save_data()
         features = [inst.features for key, inst in tag_insts.collect()]
 
@@ -416,6 +369,20 @@ class TestSparseTagReader(unittest.TestCase):
 class TrackerMock(object):
     def log_component_summary(self, *args, **kwargs):
         pass
+
+
+def get_cpn_input(dataset, component_params):
+    cpn_input = SimpleNamespace(task_version_id=str(random.random()),
+                                parameters=component_params,
+                                roles={"role": {"guest": [9999], "host": [10000], "arbiter": [10000]},
+                                       "local": {"role": "guest", "party_id": 9999}},
+                                tracker=TrackerMock(),
+                                checkpoint_manager=None,
+                                datasets=dataset,
+                                models={},
+                                caches={}
+                                )
+    return cpn_input
 
 
 if __name__ == '__main__':

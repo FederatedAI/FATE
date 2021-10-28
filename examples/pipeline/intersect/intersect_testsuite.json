@@ -58,8 +58,17 @@
         "raw_intersect_200c_with_union": {
             "script": "./pipeline-intersect-with-union.py"
         },
-        "repeated_id": {
-            "script": "./pipeline-intersect-repeated-id.py"
+        "dh_interect": {
+            "script": "./pipeline-intersect-dh.py"
+        },
+        "dh_interect_mutli": {
+            "script": "./pipeline-intersect-dh-multi.py"
+        },
+        "rsa_intersect_cache": {
+            "script": "./pipeline-intersect-rsa-cache.py"
+        },
+        "dh_intersect_cache": {
+            "script": "./pipeline-intersect-dh-cache.py"
         }
     }
 }

@@ -19,6 +19,7 @@ import functools
 import numpy as np
 
 from fate_arch.session import computing_session as session
+from federatedml.feature.instance import Instance
 from federatedml.framework.hetero.procedure import table_aggregator
 from federatedml.framework.weights import NumpyWeights
 from federatedml.unsupervised_learning.kmeans.kmeans_model_base import BaseKmeansModel
@@ -107,7 +108,7 @@ class HeteroKmeansClient(BaseKmeansModel):
         self.centroid_list = [v[1] for v in centroid_list]
 
         while self.n_iter_ < self.max_iter:
-            self.send_cluster_dist(self.n_iter_,self.centroid_list)
+            self.send_cluster_dist(self.n_iter_, self.centroid_list)
             d = functools.partial(self.educl_dist, centroid_list=self.centroid_list)
             dist_all_table = data_instances.mapValues(d)
             cluster_result = self.aggregator.aggregate_then_get_table(dist_all_table, suffix=(self.n_iter_,))
@@ -158,7 +159,11 @@ class HeteroKmeansClient(BaseKmeansModel):
         cluster_result_dbi = self.aggregator.aggregate_then_get_table(dist_all_table, suffix='predict_dbi')
         cluster_dist = self.centroid_dist(centroid_new)
         self.aggregator.send_model(NumpyWeights(np.array(cluster_dist)), suffix='predict')
-        predict_result = data_instances.join(cluster_result, lambda v1, v2: [v1.label, int(v2)])
+        LOGGER.debug(f"first_data: {data_instances.first()[1].__dict__}")
+        predict_result = data_instances.join(cluster_result, lambda v1, v2: Instance(
+            features=[v1.label, int(v2)], inst_id=v1.inst_id))
+        LOGGER.debug(f"predict_data: {predict_result.first()[1].__dict__}")
+
         return predict_result
 
 

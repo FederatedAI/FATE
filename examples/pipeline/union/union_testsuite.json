@@ -48,8 +48,8 @@
         "union-basic": {
             "script": "./pipeline-union-basic.py"
         },
-        "union-dataio": {
-            "script": "./pipeline-union-dataio.py"
+        "union-data-transform": {
+            "script": "./pipeline-union-data-transform.py"
         },
         "union-tag": {
             "script": "./pipeline-union-tag-value.py"

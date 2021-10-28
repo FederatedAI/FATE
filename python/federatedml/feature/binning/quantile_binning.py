@@ -27,6 +27,7 @@ from federatedml.param.feature_binning_param import FeatureBinningParam
 from federatedml.statistic import data_overview
 from federatedml.util import LOGGER
 from federatedml.util import consts
+import numpy as np
 
 
 class QuantileBinning(BaseBinning):
@@ -132,7 +133,7 @@ class QuantileBinning(BaseBinning):
                     split_point.append(s_p)
             else:
                 split_point.append(s_p)
-        return split_point
+        return np.array(split_point)
 
     @staticmethod
     def feature_summary(data_iter, params, cols_dict, abnormal_list, header, is_sparse):

@@ -20,7 +20,7 @@ from federatedml.linear_model.linear_model_base import BaseLinearModel
 from federatedml.util import LOGGER
 from federatedml.util import consts
 from federatedml.util import fate_operator
-from federatedml.util.validation_strategy import ValidationStrategy
+from federatedml.callbacks.validation_strategy import ValidationStrategy
 
 
 class HeteroBaseArbiter(BaseLinearModel):
@@ -73,9 +73,14 @@ class HeteroBaseArbiter(BaseLinearModel):
         self.batch_generator.initialize_batch_generator()
         self.gradient_loss_operator.set_total_batch_nums(self.batch_generator.batch_num)
 
-        self.validation_strategy = self.init_validation_strategy(data_instances, validate_data)
+        # self.validation_strategy = self.init_validation_strategy(data_instances, validate_data)
+        self.callback_list.on_train_begin(data_instances, validate_data)
+
+        if self.component_properties.is_warm_start:
+            self.callback_warm_start_init_iter(self.n_iter_)
 
         while self.n_iter_ < self.max_iter:
+            self.callback_list.on_epoch_begin(self.n_iter_)
             iter_loss = None
             batch_data_generator = self.batch_generator.generate_batch_data()
             total_gradient = None
@@ -125,22 +130,21 @@ class HeteroBaseArbiter(BaseLinearModel):
 
             self.converge_procedure.sync_converge_info(self.is_converged, suffix=(self.n_iter_,))
 
-            if self.validation_strategy:
-                LOGGER.debug('Linear Arbiter running validation')
-                self.validation_strategy.validate(self, self.n_iter_)
-                if self.validation_strategy.need_stop():
-                    LOGGER.debug('early stopping triggered')
-                    self.best_iteration = self.n_iter_
-                    break
-
+            self.callback_list.on_epoch_end(self.n_iter_)
             self.n_iter_ += 1
+            if self.stop_training:
+                break
+
             if self.is_converged:
                 break
+        LOGGER.debug(f"Finish_train, n_iter: {self.n_iter_}")
+        self.callback_list.on_train_end()
+
         summary = {"loss_history": self.loss_history,
                    "is_converged": self.is_converged,
                    "best_iteration": self.best_iteration}
-        if self.validation_strategy and self.validation_strategy.has_saved_best_model():
-            self.load_model(self.validation_strategy.cur_best_model)
+        # if self.validation_strategy and self.validation_strategy.has_saved_best_model():
+        #     self.load_model(self.validation_strategy.cur_best_model)
         if self.loss_history is not None and len(self.loss_history) > 0:
             summary["best_iter_loss"] = self.loss_history[self.best_iteration]
 

@@ -23,6 +23,7 @@ from types import SimpleNamespace
 from federatedml.param.base_param import BaseParam
 from federatedml.param.cross_validation_param import CrossValidationParam
 from federatedml.param.predict_param import PredictParam
+from federatedml.param.callback_param import CallbackParam
 import json
 
 
@@ -56,21 +57,24 @@ class HomoNNParam(BaseParam):
         encode_label : encode label to one_hot.
     """
 
-    def __init__(self,
-                 api_version: int = 0,
-                 secure_aggregate: bool = True,
-                 aggregate_every_n_epoch: int = 1,
-                 config_type: str = "nn",
-                 nn_define: dict = None,
-                 optimizer: typing.Union[str, dict, SimpleNamespace] = 'SGD',
-                 loss: str = None,
-                 metrics: typing.Union[str, list] = None,
-                 max_iter: int = 100,
-                 batch_size: int = -1,
-                 early_stop: typing.Union[str, dict, SimpleNamespace] = "diff",
-                 encode_label: bool = False,
-                 predict_param=PredictParam(),
-                 cv_param=CrossValidationParam()):
+    def __init__(
+        self,
+        api_version: int = 0,
+        secure_aggregate: bool = True,
+        aggregate_every_n_epoch: int = 1,
+        config_type: str = "nn",
+        nn_define: dict = None,
+        optimizer: typing.Union[str, dict, SimpleNamespace] = "SGD",
+        loss: str = None,
+        metrics: typing.Union[str, list] = None,
+        max_iter: int = 100,
+        batch_size: int = -1,
+        early_stop: typing.Union[str, dict, SimpleNamespace] = "diff",
+        encode_label: bool = False,
+        predict_param=PredictParam(),
+        cv_param=CrossValidationParam(),
+        callback_param=CallbackParam(),
+    ):
         super(HomoNNParam, self).__init__()
 
         self.api_version = api_version
@@ -91,6 +95,7 @@ class HomoNNParam(BaseParam):
 
         self.predict_param = copy.deepcopy(predict_param)
         self.cv_param = copy.deepcopy(cv_param)
+        self.callback_param = copy.deepcopy(callback_param)
 
     def check(self):
         supported_config_type = ["nn", "keras", "pytorch"]
@@ -102,6 +107,7 @@ class HomoNNParam(BaseParam):
 
     def generate_pb(self):
         from federatedml.protobuf.generated import nn_model_meta_pb2
+
         pb = nn_model_meta_pb2.HomoNNParam()
         pb.secure_aggregate = self.secure_aggregate
         pb.encode_label = self.encode_label
@@ -131,7 +137,7 @@ class HomoNNParam(BaseParam):
         pb.loss = self.loss
         return pb
 
-    def restore_from_pb(self, pb):
+    def restore_from_pb(self, pb, is_warm_start_mode: bool = False):
         self.secure_aggregate = pb.secure_aggregate
         self.encode_label = pb.encode_label
         self.aggregate_every_n_epoch = pb.aggregate_every_n_epoch
@@ -141,7 +147,7 @@ class HomoNNParam(BaseParam):
             for layer in pb.nn_define:
                 self.nn_define.append(json.loads(layer))
         elif self.config_type == "keras":
-            self.nn_define = pb.nn_define[0]
+            self.nn_define = json.loads(pb.nn_define[0])
         elif self.config_type == "pytorch":
             for layer in pb.nn_define:
                 self.nn_define.append(json.loads(layer))
@@ -149,13 +155,15 @@ class HomoNNParam(BaseParam):
             raise ValueError(f"{self.config_type} is not supported")
 
         self.batch_size = pb.batch_size
-        self.max_iter = pb.max_iter
-
-        self.early_stop = _parse_early_stop(dict(early_stop=pb.early_stop.early_stop, eps=pb.early_stop.eps))
-
+        if not is_warm_start_mode:
+            self.max_iter = pb.max_iter
+            self.optimizer = _parse_optimizer(
+                dict(optimizer=pb.optimizer.optimizer, **json.loads(pb.optimizer.args))
+            )
+        self.early_stop = _parse_early_stop(
+            dict(early_stop=pb.early_stop.early_stop, eps=pb.early_stop.eps)
+        )
         self.metrics = list(pb.metrics)
-
-        self.optimizer = _parse_optimizer(dict(optimizer=pb.optimizer.optimizer, **json.loads(pb.optimizer.args)))
         self.loss = pb.loss
         return pb
 
@@ -202,19 +210,19 @@ def _parse_optimizer(param):
 
 def _parse_early_stop(param):
     """
-       Examples:
+    Examples:
 
-           1. "early_stop": "diff"
-           2. "early_stop": {
-                   "early_stop": "diff",
-                   "eps": 0.0001
-               }
+        1. "early_stop": "diff"
+        2. "early_stop": {
+                "early_stop": "diff",
+                "eps": 0.0001
+            }
     """
     default_eps = 0.0001
     if isinstance(param, str):
         return SimpleNamespace(converge_func=param, eps=default_eps)
     elif isinstance(param, dict):
-        early_stop = param.get("early_stop", None)
+        early_stop = param.get("early_stop", param.get("converge_func"))
         eps = param.get("eps", default_eps)
         if not early_stop:
             raise ValueError(f"early_stop config: {param} invalid")

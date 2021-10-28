@@ -2,11 +2,11 @@ import numpy as np
 from fate_arch.session import computing_session as session
 from federatedml.util import consts
 from federatedml.transfer_learning.hetero_ftl.ftl_base import FTL
-from federatedml.statistic.intersect import intersect_guest
 from federatedml.util import LOGGER
 from federatedml.transfer_learning.hetero_ftl.ftl_dataloder import FTLDataLoader
-from fate_flow.entity.metric import Metric
-from fate_flow.entity.metric import MetricMeta
+from federatedml.statistic.intersect import RsaIntersectionGuest
+from federatedml.model_base import Metric
+from federatedml.model_base import MetricMeta
 from federatedml.optim.convergence import converge_func_factory
 from federatedml.nn.hetero_nn.backend.paillier_tensor import PaillierTensor
 from federatedml.optim.activation import sigmoid
@@ -34,7 +34,7 @@ class FTLGuest(FTL):
         self.role = consts.GUEST
 
     def init_intersect_obj(self):
-        intersect_obj = intersect_guest.RsaIntersectionGuest()
+        intersect_obj = RsaIntersectionGuest()
         intersect_obj.guest_party_id = self.component_properties.local_partyid
         intersect_obj.host_party_id_list = self.component_properties.host_party_idlist
         intersect_obj.load_params(self.intersect_param)
@@ -255,9 +255,8 @@ class FTLGuest(FTL):
     def generate_summary(self):
 
         summary = {'loss_history': self.history_loss,
-                   "best_iteration": -1 if self.validation_strategy is None else self.validation_strategy.best_iteration}
-        if self.validation_strategy:
-            summary['validation_metrics'] = self.validation_strategy.summary()
+                   "best_iteration": self.callback_variables.best_iteration}
+        summary['validation_metrics'] = self.callback_variables.validation_summary
 
         return summary
 
@@ -289,7 +288,7 @@ class FTLGuest(FTL):
         self.initialize_nn(input_shape=self.x_shape)
         self.feat_dim = self.nn._model.output_shape[1]
         self.constant_k = 1 / self.feat_dim
-        self.validation_strategy = self.init_validation_strategy(data_inst, validate_data)
+        self.callback_list.on_train_begin(train_data=data_inst, validate_data=validate_data)
 
         self.callback_meta("loss",
                            "train",
@@ -303,6 +302,8 @@ class FTLGuest(FTL):
         for epoch_idx in range(self.epochs):
 
             LOGGER.debug('fitting epoch {}'.format(epoch_idx))
+
+            self.callback_list.on_epoch_begin(epoch_idx)
 
             host_components = self.exchange_components(self.send_components, epoch_idx=epoch_idx)
 
@@ -335,12 +336,7 @@ class FTLGuest(FTL):
                 self.phi, self.phi_product, self.overlap_ua, self.send_components = self.batch_compute_components(
                     data_loader)
 
-            # check early_stopping_rounds
-            if self.validation_strategy is not None:
-                self.validation_strategy.validate(self, epoch_idx)
-                if self.validation_strategy.need_stop():
-                    LOGGER.debug('early stopping triggered')
-                    break
+            self.callback_list.on_epoch_end(epoch_idx)
 
             # check n_iter_no_change
             if self.n_iter_no_change is True:
@@ -352,6 +348,7 @@ class FTLGuest(FTL):
 
             LOGGER.debug('fitting epoch {} done, loss is {}'.format(epoch_idx, loss))
 
+        self.callback_list.on_train_end()
         self.callback_meta("loss",
                            "train",
                            MetricMeta(name="train",

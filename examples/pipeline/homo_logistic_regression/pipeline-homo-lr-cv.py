@@ -18,11 +18,11 @@ import argparse
 import json
 
 from pipeline.backend.pipeline import PipeLine
-from pipeline.component.dataio import DataIO
-from pipeline.component.homo_lr import HomoLR
-from pipeline.component.reader import Reader
-from pipeline.component.scale import FeatureScale
-from pipeline.interface.data import Data
+from pipeline.component import DataTransform
+from pipeline.component import HomoLR
+from pipeline.component import Reader
+from pipeline.component import FeatureScale
+from pipeline.interface import Data
 from pipeline.utils.tools import load_job_config
 from pipeline.runtime.entity import JobParameters
 
@@ -35,7 +35,6 @@ def main(config="../../config.yaml", namespace=""):
     guest = parties.guest[0]
     host = parties.host[0]
     arbiter = parties.arbiter[0]
-    backend = config.backend
     work_mode = config.work_mode
 
     guest_train_data = {"name": "breast_homo_guest", "namespace": f"experiment{namespace}"}
@@ -55,8 +54,8 @@ def main(config="../../config.yaml", namespace=""):
     # configure Reader for host
     reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
 
-    # define DataIO components
-    dataio_0 = DataIO(name="dataio_0", with_label=True, output_format="dense")  # start component numbering at 0
+    # define DataTransform components
+    data_transform_0 = DataTransform(name="data_transform_0", with_label=True, output_format="dense")  # start component numbering at 0
 
     scale_0 = FeatureScale(name='scale_0')
     param = {
@@ -88,16 +87,16 @@ def main(config="../../config.yaml", namespace=""):
 
     # add components to pipeline, in order of task execution
     pipeline.add_component(reader_0)
-    pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
+    pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
     # set data input sources of intersection components
-    pipeline.add_component(scale_0, data=Data(data=dataio_0.output.data))
+    pipeline.add_component(scale_0, data=Data(data=data_transform_0.output.data))
     pipeline.add_component(homo_lr_0, data=Data(train_data=scale_0.output.data))
 
     # compile pipeline once finished adding modules, this step will form conf and dsl files for running job
     pipeline.compile()
 
     # fit model
-    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
+    job_parameters = JobParameters(work_mode=work_mode)
     pipeline.fit(job_parameters)
     # query component summary
     print(json.dumps(pipeline.get_component("homo_lr_0").get_summary(), indent=4, ensure_ascii=False))

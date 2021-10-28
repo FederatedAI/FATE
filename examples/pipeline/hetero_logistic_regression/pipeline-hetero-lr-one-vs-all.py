@@ -34,7 +34,6 @@ def main(config="../../config.yaml", namespace=""):
     # obtain config
     if isinstance(config, str):
         config = load_job_config(config)
-    backend = config.backend
     work_mode = config.work_mode
 
     lr_param = {
@@ -43,7 +42,7 @@ def main(config="../../config.yaml", namespace=""):
         "optimizer": "nesterov_momentum_sgd",
         "tol": 1e-05,
         "alpha": 0.0001,
-        "max_iter": 10,
+        "max_iter": 1,
         "early_stop": "diff",
         "multi_class": "ovr",
         "batch_size": -1,
@@ -55,7 +54,7 @@ def main(config="../../config.yaml", namespace=""):
 
     pipeline = common_tools.make_normal_dsl(config, namespace, lr_param, is_ovr=True)
     # fit model
-    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
+    job_parameters = JobParameters(work_mode=work_mode)
     pipeline.fit(job_parameters)
     # query component summary
     common_tools.prettify(pipeline.get_component("hetero_lr_0").get_summary())

@@ -25,6 +25,7 @@ import uuid
 from enum import Enum, IntEnum
 
 from fate_arch.common.conf_utils import get_base_config
+from fate_arch.common import BaseType
 
 
 use_deserialize_safe_module = get_base_config('use_deserialize_safe_module', False)
@@ -32,7 +33,8 @@ use_deserialize_safe_module = get_base_config('use_deserialize_safe_module', Fal
 
 class CustomJSONEncoder(json.JSONEncoder):
     def __init__(self, **kwargs):
-        super(CustomJSONEncoder, self).__init__(**kwargs)
+        self._with_type = kwargs.pop("with_type", False)
+        super().__init__(**kwargs)
 
     def default(self, obj):
         if isinstance(obj, datetime.datetime):
@@ -43,6 +45,15 @@ class CustomJSONEncoder(json.JSONEncoder):
             return str(obj)
         elif issubclass(type(obj), Enum) or issubclass(type(obj), IntEnum):
             return obj.value
+        elif isinstance(obj, set):
+            return list(obj)
+        elif issubclass(type(obj), BaseType):
+            if not self._with_type:
+                return obj.to_dict()
+            else:
+                return obj.to_dict_with_type()
+        elif isinstance(obj, type):
+            return obj.__name__
         else:
             return json.JSONEncoder.default(self, obj)
 
@@ -59,18 +70,17 @@ def bytes_to_string(byte):
     return byte.decode(encoding="utf-8")
 
 
-def json_dumps(src, byte=False, indent=None):
+def json_dumps(src, byte=False, indent=None, with_type=False):
+    dest = json.dumps(src, indent=indent, cls=CustomJSONEncoder, with_type=with_type)
     if byte:
-        return string_to_bytes(json.dumps(src, indent=indent, cls=CustomJSONEncoder))
-    else:
-        return json.dumps(src, indent=indent, cls=CustomJSONEncoder)
+        dest = string_to_bytes(dest)
+    return dest
 
 
-def json_loads(src, object_pairs_hook=None):
+def json_loads(src, object_hook=None, object_pairs_hook=None):
     if isinstance(src, bytes):
-        return json.loads(bytes_to_string(src), object_pairs_hook=object_pairs_hook)
-    else:
-        return json.loads(src, object_pairs_hook=object_pairs_hook)
+        src = bytes_to_string(src)
+    return json.loads(src, object_hook=object_hook, object_pairs_hook=object_pairs_hook)
 
 
 def current_timestamp():
@@ -82,6 +92,12 @@ def timestamp_to_date(timestamp, format_string="%Y-%m-%d %H:%M:%S"):
     time_array = time.localtime(timestamp)
     str_date = time.strftime(format_string, time_array)
     return str_date
+
+
+def date_string_to_timestamp(time_str, format_string="%Y-%m-%d %H:%M:%S"):
+    time_array = time.strptime(time_str, format_string)
+    time_stamp = int(time.mktime(time_array) * 1000)
+    return time_stamp
 
 
 def serialize_b64(src, to_str=False):

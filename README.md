@@ -33,7 +33,7 @@ FATE can be installed on Linux or Mac. Now, FATE can support two installation ap
 Software environment: JDK 1.8+, Python 3.6, python virtualenv and mysql 5.6+
 
 ##### Standalone Runtime
-FATE provides Standalone runtime architecture for developers. It can help developers quickly test FATE. Standalone support two types of deployment: Docker version and Manual version. Please refer to [Standalone Deployment Guide](./standalone-deploy/).
+FATE provides Standalone runtime architecture for developers. It can help developers quickly test FATE. Standalone support two types of deployment: Docker version and Manual version. Please refer to [Standalone Deployment Guide](deploy/standalone-deploy/).
 
 ##### Cluster Runtime
 FATE also provides a Cluster (distributed) runtime architecture for big data scenario. Migration from Standalone Runtime to Cluster Runtime requires only changes of the configuration. No change of the algorithm is needed. To deploy FATE on a cluster, please refer to [Cluster Deployment Guide](./cluster-deploy).

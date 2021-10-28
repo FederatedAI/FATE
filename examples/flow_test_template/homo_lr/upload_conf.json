@@ -1,0 +1,7 @@
+{
+    "file": "examples/data/breast_homo_guest.csv",
+    "table_name": "breast_homo_guest_test",
+    "namespace": "experiment",
+    "head": 1,
+    "partition": 4
+}

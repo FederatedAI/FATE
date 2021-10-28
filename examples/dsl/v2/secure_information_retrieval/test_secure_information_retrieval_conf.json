@@ -1,0 +1,61 @@
+{
+    "dsl_version": 2,
+    "initiator": {
+        "role": "guest",
+        "party_id": 9999
+    },
+    "role": {
+        "host": [
+            9998
+        ],
+        "guest": [
+            9999
+        ]
+    },
+    "component_parameters": {
+        "role": {
+            "guest": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "data_transform_0": {
+                        "with_label": false
+                    }
+                }
+            },
+            "host": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_guest",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "data_transform_0": {
+                        "with_label": true
+                    }
+                }
+            }
+        },
+        "common": {
+            "secure_information_retrieval_0": {
+                "security_level": 0.5,
+                "oblivious_transfer_protocol": "OT_Hauck",
+                "commutative_encryption": "CommutativeEncryptionPohligHellman",
+                "non_committing_encryption": "aes",
+                "dh_params": {
+                    "key_length": 1024
+                },
+                "raw_retrieval": false,
+                "target_cols": [
+                    "x0",
+                    "x3"
+                ]
+            }
+        }
+    }
+}

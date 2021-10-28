@@ -8,8 +8,8 @@
                 ]
             }
         },
-        "dataio_0": {
-            "module": "DataIO",
+        "data_transform_0": {
+            "module": "DataTransform",
             "input": {
                 "data": {
                     "data": [
@@ -34,8 +34,8 @@
                 ]
             }
         },
-        "dataio_1": {
-            "module": "DataIO",
+        "data_transform_1": {
+            "module": "DataTransform",
             "input": {
                 "data": {
                     "data": [
@@ -43,7 +43,7 @@
                     ]
                 },
                 "model": [
-                    "dataio_0.model"
+                    "data_transform_0.model"
                 ]
             },
             "output": {
@@ -56,14 +56,14 @@
             }
         },
         "homo_secureboost_0": {
-            "module": "HomoSecureboost",
+            "module": "HomoSecureBoost",
             "input": {
                 "data": {
                     "train_data": [
-                        "dataio_0.data"
+                        "data_transform_0.data"
                     ],
                     "validate_data": [
-                        "dataio_1.data"
+                        "data_transform_1.data"
                     ]
                 }
             },

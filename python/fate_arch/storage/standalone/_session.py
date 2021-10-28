@@ -16,23 +16,20 @@
 from fate_arch.abc import AddressABC
 from fate_arch.common.address import StandaloneAddress
 from fate_arch.storage import StorageSessionBase, StorageEngine
+from fate_arch._standalone import Session
 
 
 class StorageSession(StorageSessionBase):
     def __init__(self, session_id, options=None):
-        super(StorageSession, self).__init__(session_id=session_id, engine_name=StorageEngine.STANDALONE)
+        super(StorageSession, self).__init__(session_id=session_id, engine=StorageEngine.STANDALONE)
         self._options = options if options else {}
-        self._session = None
-
-    def create(self):
-        from fate_arch._standalone import Session
         self._session = Session(session_id=self._session_id)
 
-    def table(self, address: AddressABC, name, namespace, partitions, storage_type=None, options=None, **kwargs):
+    def table(self, address: AddressABC, name, namespace, partitions, store_type=None, options=None, **kwargs):
         if isinstance(address, StandaloneAddress):
             from fate_arch.storage.standalone._table import StorageTable
             return StorageTable(session=self._session, name=name, namespace=namespace, address=address,
-                                partitions=partitions, storage_type=storage_type, options=options)
+                                partitions=partitions, store_type=store_type, options=options)
         raise NotImplementedError(f"address type {type(address)} not supported with standalone storage")
 
     def cleanup(self, name, namespace):

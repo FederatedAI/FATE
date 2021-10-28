@@ -38,6 +38,9 @@
             "output": {
                 "data": [
                     "data"
+                ],
+                "cache": [
+                    "cache"
                 ]
             }
         },

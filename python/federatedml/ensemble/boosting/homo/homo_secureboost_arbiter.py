@@ -24,6 +24,9 @@ class HomoSecureBoostingTreeArbiter(HomoBoostingArbiter):
         self.use_missing = boosting_param.use_missing
         self.zero_as_missing = boosting_param.zero_as_missing
         self.tree_param = boosting_param.tree_param
+        if self.use_missing:
+            self.tree_param.use_missing = self.use_missing
+            self.tree_param.zero_as_missing = self.zero_as_missing
 
     def send_valid_features(self, valid_features, epoch_idx, b_idx):
         self.transfer_inst.valid_features.remote(valid_features, idx=-1, suffix=('valid_features', epoch_idx, b_idx))

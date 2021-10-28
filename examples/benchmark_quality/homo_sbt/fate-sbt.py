@@ -44,7 +44,6 @@ def main(config="../../config.yaml", param='./xgb_config_binary.yaml', namespace
     host = parties.host[0]
     arbiter = parties.arbiter[0]
 
-    backend = config.backend
     work_mode = config.work_mode
 
     guest_train_data = {"name": param['data_guest_train'], "namespace": f"experiment{namespace}"}
@@ -93,7 +92,7 @@ def main(config="../../config.yaml", param='./xgb_config_binary.yaml', namespace
     pipeline.add_component(evaluation_0, data=Data(homo_secureboost_0.output.data))
 
     pipeline.compile()
-    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
+    job_parameters = JobParameters(work_mode=work_mode)
     pipeline.fit(job_parameters)
 
     sbt_0_data = pipeline.get_component("homo_secureboost_0").get_output_data().get("data")

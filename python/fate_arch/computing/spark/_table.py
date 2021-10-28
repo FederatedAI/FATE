@@ -27,6 +27,7 @@ from fate_arch.common import log, hdfs_utils, hive_utils
 from fate_arch.common.profile import computing_profile
 from fate_arch.computing.spark._materialize import materialize, unmaterialize
 from scipy.stats import hypergeom
+from fate_arch.computing._type import ComputingEngine
 
 LOGGER = log.getLogger()
 
@@ -34,6 +35,11 @@ LOGGER = log.getLogger()
 class Table(CTableABC):
     def __init__(self, rdd):
         self._rdd: pyspark.RDD = rdd
+        self._engine = ComputingEngine.SPARK
+
+    @property
+    def engine(self):
+        return self._engine
 
     def __getstate__(self):
         pass
@@ -69,6 +75,16 @@ class Table(CTableABC):
             _repartition.toDF().write.saveAsTable(f"{address.database}.{address.name}")
             schema.update(self.schema)
             return
+
+        from fate_arch.common.address import LocalFSAddress
+
+        if isinstance(address, LocalFSAddress):
+            self._rdd.map(lambda x: hdfs_utils.serialize(x[0], x[1])).repartition(
+                partitions
+            ).saveAsTextFile(address.path)
+            schema.update(self.schema)
+            return
+
         raise NotImplementedError(
             f"address type {type(address)} not supported with spark backend"
         )
@@ -151,7 +167,10 @@ class Table(CTableABC):
 
     @computing_profile
     def take(self, n=1, **kwargs):
-        return self._rdd.take(n)
+        _value = self._rdd.take(n)
+        if kwargs.get("filter", False):
+            self._rdd = self._rdd.filter(lambda xy: xy not in [_xy for _xy in _value])
+        return _value
 
     @computing_profile
     def first(self, **kwargs):
@@ -174,14 +193,31 @@ class Table(CTableABC):
         return from_rdd(_union(self._rdd, other._rdd, func))
 
 
-def from_hdfs(paths: str, partitions):
+def from_hdfs(paths: str, partitions, in_serialized=True, id_delimiter=None):
     # noinspection PyPackageRequirements
     from pyspark import SparkContext
 
     sc = SparkContext.getOrCreate()
+    fun = hdfs_utils.deserialize if in_serialized else lambda x: (x.partition(id_delimiter)[0],
+                                                                  x.partition(id_delimiter)[2])
     rdd = materialize(
         sc.textFile(paths, partitions)
-        .map(hdfs_utils.deserialize)
+        .map(fun)
+        .repartition(partitions)
+    )
+    return Table(rdd=rdd)
+
+
+def from_localfs(paths: str, partitions, in_serialized=True, id_delimiter=None):
+    # noinspection PyPackageRequirements
+    from pyspark import SparkContext
+
+    sc = SparkContext.getOrCreate()
+    fun = hdfs_utils.deserialize if in_serialized else lambda x: (x.partition(id_delimiter)[0],
+                                                                  x.partition(id_delimiter)[2])
+    rdd = materialize(
+        sc.textFile(paths, partitions)
+        .map(fun)
         .repartition(partitions)
     )
     return Table(rdd=rdd)

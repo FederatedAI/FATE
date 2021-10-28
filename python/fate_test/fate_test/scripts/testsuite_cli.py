@@ -39,11 +39,11 @@ from fate_test.scripts._utils import _load_testsuites, _upload_data, _delete_dat
               help="a json string represents mapping for replacing fields in data/conf/dsl")
 @click.option("-g", '--glob', type=str,
               help="glob string to filter sub-directory of path specified by <include>")
-@click.option('-m', '--timeout', type=int, default=3600, help="Task timeout duration")
+@click.option('-m', '--timeout', type=int, default=3600, help="maximun running time of job")
 @click.option('-p', '--task-cores', type=int, help="processors per node")
-@click.option('-j', '--update-job-parameters', default="{}", type=JSON_STRING,
+@click.option('-uj', '--update-job-parameters', default="{}", type=JSON_STRING,
               help="a json string represents mapping for replacing fields in conf.job_parameters")
-@click.option('-c', '--update-component-parameters', default="{}", type=JSON_STRING,
+@click.option('-uc', '--update-component-parameters', default="{}", type=JSON_STRING,
               help="a json string represents mapping for replacing fields in conf.component_parameters")
 @click.option("--skip-dsl-jobs", is_flag=True, default=False,
               help="skip dsl jobs defined in testsuite")
@@ -65,6 +65,8 @@ def run_suite(ctx, replace, include, exclude, glob, timeout, update_job_paramete
     ctx.obj.update(**kwargs)
     ctx.obj.post_process()
     config_inst = ctx.obj["config"]
+    config_inst.extend_sid = ctx.obj["extend_sid"]
+    config_inst.auto_increasing_sid = ctx.obj["auto_increasing_sid"]
     if clean_data is None:
         clean_data = config_inst.clean_data
     namespace = ctx.obj["namespace"]
@@ -100,8 +102,8 @@ def run_suite(ctx, replace, include, exclude, glob, timeout, update_job_paramete
                 if not skip_dsl_jobs:
                     echo.stdout_newline()
                     try:
-                        _submit_job(client, suite, namespace, config_inst, timeout, update_job_parameters,
-                                    update_component_parameters, task_cores)
+                        time_consuming = _submit_job(client, suite, namespace, config_inst, timeout,
+                                                     update_job_parameters, update_component_parameters, task_cores)
                     except Exception as e:
                         raise RuntimeError(f"exception occur while submit job for {suite.path}") from e
 
@@ -115,7 +117,7 @@ def run_suite(ctx, replace, include, exclude, glob, timeout, update_job_paramete
                     _delete_data(client, suite)
                 echo.echo(f"[{i + 1}/{len(suites)}]elapse {timedelta(seconds=int(time.time() - start))}", fg='red')
                 if not skip_dsl_jobs or not skip_pipeline_jobs:
-                    echo.echo(suite.pretty_final_summary(), fg='red')
+                    echo.echo(suite.pretty_final_summary(time_consuming), fg='red')
 
             except Exception:
                 exception_id = uuid.uuid1()
@@ -136,9 +138,10 @@ def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Conf
                            show_eta=False,
                            show_pos=True,
                            width=24) as bar:
+        time_list = []
         for job in suite.jobs_iter():
             job_progress = JobProgress(job.job_name)
-
+            start = time.time()
             def _raise():
                 exception_id = str(uuid.uuid1())
                 job_progress.exception(exception_id)
@@ -150,7 +153,7 @@ def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Conf
             try:
                 if task_cores is not None:
                     job.job_conf.update_job_common_parameters(task_cores=task_cores)
-                job.job_conf.update(config.parties, config.work_mode, config.backend, timeout, update_job_parameters,
+                job.job_conf.update(config.parties, timeout, update_job_parameters,
                                     update_component_parameters)
             except Exception:
                 _raise()
@@ -197,7 +200,7 @@ def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Conf
                     if suite.model_in_dep(job.job_name):
                         dependent_jobs = suite.get_dependent_jobs(job.job_name)
                         for predict_job in dependent_jobs:
-                            model_info, table_info = None, None
+                            model_info, table_info, cache_info, model_loader_info = None, None, None, None
                             for i in _config.deps_alter[predict_job.job_name]:
                                 if isinstance(i, dict):
                                     name = i.get('name')
@@ -237,11 +240,29 @@ def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Conf
                                         _raise()
                                 else:
                                     model_info = response.model_info
+                            if 'cache_deps' in _config.deps_alter[predict_job.job_name]:
+                                cache_dsl = predict_job.job_dsl.as_dict()
+                                cache_info = []
+                                for cpn in cache_dsl.get("components").keys():
+                                    if "CacheLoader" in cache_dsl.get("components").get(cpn).get("module"):
+                                        cache_info.append({cpn: {'job_id': response.job_id}})
+                                cache_info = {'hierarchy': [""], 'cache_info': cache_info}
 
-                            suite.feed_dep_info(predict_job, name, model_info=model_info, table_info=table_info)
+                            if 'model_loader_deps' in _config.deps_alter[predict_job.job_name]:
+                                model_loader_dsl = predict_job.job_dsl.as_dict()
+                                model_loader_info = []
+                                for cpn in model_loader_dsl.get("components").keys():
+                                    if "ModelLoader" in model_loader_dsl.get("components").get(cpn).get("module"):
+                                        model_loader_info.append({cpn: response.model_info})
+                                model_loader_info = {'hierarchy': [""], 'model_loader_info': model_loader_info}
+
+                            suite.feed_dep_info(predict_job, name, model_info=model_info, table_info=table_info,
+                                                cache_info=cache_info, model_loader_info=model_loader_info)
                         suite.remove_dependency(job.job_name)
             update_bar(0)
             echo.stdout_newline()
+            time_list.append(time.time() - start)
+        return [str(int(i)) + "s" for i in time_list]
 
 
 def _run_pipeline_jobs(config: Config, suite: Testsuite, namespace: str, data_namespace_mangling: bool):

@@ -18,15 +18,20 @@
 #
 import collections
 
+import copy
 from federatedml.param.intersect_param import IntersectParam
 from types import SimpleNamespace
-from federatedml.param.base_param import BaseParam
+from federatedml.param.base_param import BaseParam, deprecated_param
 from federatedml.util import consts
 from federatedml.param.encrypt_param import EncryptParam
 from federatedml.param.encrypted_mode_calculation_param import EncryptedModeCalculatorParam
 from federatedml.param.predict_param import PredictParam
+from federatedml.param.callback_param import CallbackParam
+
+deprecated_param_list = ["validation_freqs", "metrics"]
 
 
+@deprecated_param(*deprecated_param_list)
 class FTLParam(BaseParam):
 
     def __init__(self, alpha=1, tol=0.000001,
@@ -36,7 +41,7 @@ class FTLParam(BaseParam):
                  encrypte_param=EncryptParam(),
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(mode="confusion_opt"),
                  predict_param=PredictParam(), mode='plain', communication_efficient=False,
-                 local_round=5,):
+                 local_round=5, callback_param=CallbackParam()):
 
         """
         Args:
@@ -83,15 +88,16 @@ class FTLParam(BaseParam):
         self.optimizer = optimizer
         self.nn_define = nn_define
         self.epochs = epochs
-        self.intersect_param = intersect_param
+        self.intersect_param = copy.deepcopy(intersect_param)
         self.config_type = config_type
         self.batch_size = batch_size
-        self.encrypted_mode_calculator_param = encrypted_mode_calculator_param
-        self.encrypt_param = encrypte_param
-        self.predict_param = predict_param
+        self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
+        self.encrypt_param = copy.deepcopy(encrypte_param)
+        self.predict_param = copy.deepcopy(predict_param)
         self.mode = mode
         self.communication_efficient = communication_efficient
         self.local_round = local_round
+        self.callback_param = copy.deepcopy(callback_param)
 
     def check(self):
         self.intersect_param.check()
@@ -118,6 +124,24 @@ class FTLParam(BaseParam):
                     or self.batch_size < consts.MIN_BATCH_SIZE:
                 raise ValueError(
                     " {} not supported, should be larger than 10 or -1 represent for all data".format(self.batch_size))
+
+        for p in deprecated_param_list:
+            # if self._warn_to_deprecate_param(p, "", ""):
+            if self._deprecated_params_set.get(p):
+                if "callback_param" in self.get_user_feeded():
+                    raise ValueError(f"{p} and callback param should not be set simultaneously，"
+                                     f"{self._deprecated_params_set}, {self.get_user_feeded()}")
+                else:
+                    self.callback_param.callbacks = ["PerformanceEvaluate"]
+                break
+
+        descr = "ftl's"
+
+        if self._warn_to_deprecate_param("validation_freqs", descr, "callback_param's 'validation_freqs'"):
+            self.callback_param.validation_freqs = self.validation_freqs
+
+        if self._warn_to_deprecate_param("metrics", descr, "callback_param's 'metrics'"):
+            self.callback_param.metrics = self.metrics
 
         if self.validation_freqs is None:
             pass

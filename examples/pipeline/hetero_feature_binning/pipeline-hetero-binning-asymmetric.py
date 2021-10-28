@@ -34,7 +34,6 @@ def main(config="../../config.yaml", namespace=""):
     # obtain config
     if isinstance(config, str):
         config = load_job_config(config)
-    backend = config.backend
     work_mode = config.work_mode
 
     param = {
@@ -53,6 +52,7 @@ def main(config="../../config.yaml", namespace=""):
         "bin_num": 10,
         "bin_indexes": -1,
         "bin_names": None,
+        "category_indexes": [0, 1, 2],
         "category_names": None,
         "adjustment_factor": 0.5,
         "local_only": False,
@@ -69,7 +69,7 @@ def main(config="../../config.yaml", namespace=""):
     host_param["method"] = 'optimal'
     pipeline = common_tools.make_asymmetric_dsl(config, namespace, guest_param=guest_param,
                                                 host_param=host_param)
-    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
+    job_parameters = JobParameters(work_mode=work_mode)
     pipeline.fit(job_parameters)
     # common_tools.prettify(pipeline.get_component("hetero_feature_binning_0").get_summary())
 

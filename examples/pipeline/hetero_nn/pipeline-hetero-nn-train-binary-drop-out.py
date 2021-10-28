@@ -22,7 +22,7 @@ from tensorflow.keras import optimizers
 from tensorflow.keras.layers import Dense
 
 from pipeline.backend.pipeline import PipeLine
-from pipeline.component import DataIO
+from pipeline.component import DataTransform
 from pipeline.component import Evaluation
 from pipeline.component import HeteroNN
 from pipeline.component import Intersection
@@ -39,7 +39,6 @@ def main(config="../../config.yaml", namespace=""):
     parties = config.parties
     guest = parties.guest[0]
     host = parties.host[0]
-    backend = config.backend
     work_mode = config.work_mode
 
     guest_train_data = {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"}
@@ -51,9 +50,9 @@ def main(config="../../config.yaml", namespace=""):
     reader_0.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data)
     reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
 
-    dataio_0 = DataIO(name="dataio_0")
-    dataio_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True)
-    dataio_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
+    data_transform_0 = DataTransform(name="data_transform_0")
+    data_transform_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True)
+    data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
 
     intersection_0 = Intersection(name="intersection_0")
 
@@ -72,15 +71,15 @@ def main(config="../../config.yaml", namespace=""):
                                      kernel_initializer=initializers.Constant(value=1)))
     host_nn_0.set_interactve_layer(Dense(units=2, input_shape=(2,),
                                          kernel_initializer=initializers.Constant(value=1)))
-    hetero_nn_0.compile(optimizer=optimizers.SGD(lr=0.15), metrics=["AUC"], loss="binary_crossentropy")
+    hetero_nn_0.compile(optimizer=optimizers.SGD(lr=0.15), loss="binary_crossentropy")
 
     hetero_nn_1 = HeteroNN(name="hetero_nn_1")
 
     evaluation_0 = Evaluation(name="evaluation_0")
 
     pipeline.add_component(reader_0)
-    pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
-    pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
+    pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
+    pipeline.add_component(intersection_0, data=Data(data=data_transform_0.output.data))
     pipeline.add_component(hetero_nn_0, data=Data(train_data=intersection_0.output.data))
     pipeline.add_component(hetero_nn_1, data=Data(test_data=intersection_0.output.data),
                            model=Model(model=hetero_nn_0.output.model))
@@ -88,7 +87,7 @@ def main(config="../../config.yaml", namespace=""):
 
     pipeline.compile()
 
-    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
+    job_parameters = JobParameters(work_mode=work_mode)
     pipeline.fit(job_parameters)
 
     print(hetero_nn_0.get_config(roles={"guest": [guest],

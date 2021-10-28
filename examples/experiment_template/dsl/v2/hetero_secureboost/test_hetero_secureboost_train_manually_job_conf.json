@@ -14,8 +14,6 @@
   },
   "job_parameters": {
     "common": {
-      "work_mode": 0,
-      "backend": 0,
       "task_cores": 4
     }
   },

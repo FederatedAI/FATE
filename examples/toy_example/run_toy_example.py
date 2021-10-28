@@ -1,23 +1,23 @@
 import argparse
 import json
 import os
+import pprint
 import random
-import subprocess
-import sys
 import time
+from flow_sdk.client import FlowClient
 
 home_dir = os.path.split(os.path.realpath(__file__))[0]
-fate_flow_path = os.path.join(home_dir, "..", "..", "python", "fate_flow", "fate_flow_client.py")
 dsl_path = os.path.join(home_dir, "toy_example_dsl.json")
 conf_v1_path = os.path.join(home_dir, "toy_example_conf_v1.json")
 conf_v2_path = os.path.join(home_dir, "toy_example_conf_v2.json")
+
+flow_client = None
 
 guest_party_id = -1
 host_party_id = -1
 
 work_mode = 0
 backend = 0
-dsl_version = 1
 
 user_name = ""
 
@@ -37,14 +37,14 @@ def get_timeid():
 def gen_unique_path():
     config_dir = os.path.join(home_dir, "test")
     if not os.path.isdir(config_dir):
-        os.mkdir(config_dir)
+        os.makedirs(config_dir)
 
     return os.path.join(config_dir, "toy_example_conf.json_" + get_timeid())
 
 
 def create_new_runtime_config():
     conf_dict = {}
-    conf_path = conf_v1_path if dsl_version == 1 else conf_v2_path
+    conf_path = conf_v2_path
     with open(conf_path, "r") as fin:
         conf_dict = json.loads(fin.read())
 
@@ -57,113 +57,59 @@ def create_new_runtime_config():
     conf_dict["initiator"]["party_id"] = guest_party_id
     conf_dict["role"]["guest"] = [guest_party_id]
     conf_dict["role"]["host"] = [host_party_id]
-    if dsl_version == 1:
-        conf_dict["job_parameters"]["work_mode"] = work_mode
-        conf_dict["job_parameters"]["backend"] = backend
-    else:
-        conf_dict["job_parameters"]["common"]["work_mode"] = work_mode
-        conf_dict["job_parameters"]["common"]["backend"] = backend
-        conf_dict["job_parameters"]["role"] = {
-            "guest": {"0": {"user": user_name}},
-            "host": {"0": {"user": user_name}},
-        }
+    conf_dict["job_parameters"]["common"]["work_mode"] = work_mode
+    conf_dict["job_parameters"]["common"]["backend"] = backend
+    conf_dict["job_parameters"]["role"] = {
+        "guest": {"0": {"user": user_name}},
+        "host": {"0": {"user": user_name}},
+    }
 
-    new_config_path = gen_unique_path()
-
-    with open(new_config_path, "w") as fout:
-        json_str = json.dumps(conf_dict, indent=1)
-        fout.write(json_str + "\n")
-
-    return new_config_path
+    return conf_dict
 
 
-def exec_task(dsl_path, config_path):
-    subp = subprocess.Popen(["python",
-                             fate_flow_path,
-                             "-f",
-                             "submit_job",
-                             "-d",
-                             dsl_path,
-                             "-c",
-                             config_path],
-                            shell=False,
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.STDOUT)
+def exec_task(dsl_path, config_data):
+    dsl_dict = {}
+    if dsl_path:
+        with open(dsl_path, "r") as fin:
+            dsl_dict = json.loads(fin.read())
 
-    stdout, stderr = subp.communicate()
-    stdout = stdout.decode("utf-8")
-    print("stdout:" + str(stdout))
-
-    status = -1
+    result = flow_client.job.submit(config_data=config_data, dsl_data=dsl_dict)
+    pprint.pprint (result["data"])
     try:
-        stdout = json.loads(stdout)
-        status = stdout["retcode"]
+        status = result["retcode"]
     except:
-        raise ValueError("failed to exec task, stderr is {}, stdout is {}".format(stderr, stdout))
+        raise ValueError("failed to exec task, msg is {}".format(result))
 
     if status != 0:
         raise ValueError(
-            "failed to exec task, status:{}, stderr is {} stdout:{}".format(status, stderr, stdout))
+            "failed to exec task, status_code:{}, msg is {}".format(status, result))
 
-    jobid = stdout["jobId"]
-    return jobid
+    job_id = result["jobId"]
+    return job_id
 
 
-def get_job_status(jobid):
-    subp = subprocess.Popen(["python",
-                             fate_flow_path,
-                             "-f",
-                             "query_job",
-                             "-j",
-                             jobid,
-                             "-r",
-                             "guest"],
-                            shell=False,
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.STDOUT)
-
-    stdout, stderr = subp.communicate()
-    stdout = stdout.decode("utf-8")
-
-    retcode = -1
+def get_job_status(job_id):
+    result = flow_client.job.query(job_id=job_id, role="guest", party_id=guest_party_id)
     try:
-        stdout = json.loads(stdout)
-        retcode = stdout["retcode"]
+        retcode = result["retcode"]
     except:
         return "query job status failed"
 
     if retcode != 0:
         return "query job status failed"
 
-    status = stdout["data"][0]["f_status"]
+    status = result["data"][0]["f_status"]
     return status
 
 
-def show_log(jobid, log_level):
+def show_log(job_id, log_level):
     log_dir = os.path.join(home_dir, "test", "log")
-    log_path = os.path.join(log_dir, "job_" + jobid + "_log", "guest", str(guest_party_id), "secure_add_example_0")
+    log_path = os.path.join(log_dir, "job_" + job_id + "_log", "guest", str(guest_party_id), "secure_add_example_0")
     if not os.path.isdir(log_dir):
-        os.mkdir(log_dir)
+        os.makedirs(log_dir)
+    result = flow_client.job.log(job_id=job_id, output_path=log_dir)
 
-    subp = subprocess.Popen(["python",
-                             fate_flow_path,
-                             "-f",
-                             "job_log",
-                             "-j",
-                             jobid,
-                             "-o",
-                             log_dir],
-                            shell=False,
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.STDOUT)
-
-    stdout = subp.communicate()[0]
-    try:
-        stdout = json.loads(stdout)
-    except:
-        raise ValueError("Can not download logs from fate_flow server, error msg is {}".format(stdout))
-
-    if 'retcode' not in stdout or stdout['retcode'] != 0:
+    if 'retcode' not in result or result['retcode'] != 0:
         raise ValueError("Can not download logs from fate_flow server, error msg is {}".format(stdout))
 
     if log_level == "error":
@@ -176,7 +122,7 @@ def show_log(jobid, log_level):
         info_log = os.path.join(log_path, "INFO.log")
         with open(info_log, "r") as fin:
             for line in fin:
-                if line.find("secure_add_guest.py[line") != -1:
+                if line.find("secure_add_guest") != -1:
                     print (line.strip())
 
 
@@ -208,10 +154,10 @@ if __name__ == "__main__":
     arg_parser.add_argument("host_party_id", type=int, help="please input host party id")
     arg_parser.add_argument("work_mode", type=int,
                             help="please input work_mode, 0 stands for standalone, 1  stands for cluster")
+    arg_parser.add_argument("flow_server_ip", type=str, help="please input flow server'ip")
+    arg_parser.add_argument("flow_server_port", type=int, help="please input flow server port")
     arg_parser.add_argument("-b", "--backend", type=int, default=0,
                             help="please input backend, 0 stands for eggroll, 1 stands for spark")
-    arg_parser.add_argument("-v", "--dsl_version", type=int, default=1,
-                            help="please input dsl version to use")
     arg_parser.add_argument("-u", "--user_name", type=str, help="please input user name")
 
     args = arg_parser.parse_args()
@@ -220,8 +166,11 @@ if __name__ == "__main__":
     host_party_id = args.host_party_id
     work_mode = args.work_mode
     backend = args.backend
-    dsl_version = args.dsl_version
     user_name = args.user_name
+
+    ip = args.flow_server_ip
+    port = args.flow_server_port
+    flow_client = FlowClient(ip=ip, port=port, version="v1")
 
     runtime_config = create_new_runtime_config()
 

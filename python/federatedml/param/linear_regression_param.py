@@ -19,7 +19,9 @@
 
 import copy
 
+from federatedml.param.base_param import BaseParam, deprecated_param
 from federatedml.param.base_param import BaseParam
+from federatedml.param.callback_param import CallbackParam
 from federatedml.param.encrypt_param import EncryptParam
 from federatedml.param.encrypted_mode_calculation_param import EncryptedModeCalculatorParam
 from federatedml.param.cross_validation_param import CrossValidationParam
@@ -30,6 +32,7 @@ from federatedml.param.stepwise_param import StepwiseParam
 from federatedml.util import consts
 
 
+@deprecated_param("validation_freqs", "metrics", "early_stopping_rounds", "use_first_metric_only")
 class LinearParam(BaseParam):
     """
     Parameters used for Linear Regression.
@@ -102,6 +105,7 @@ class LinearParam(BaseParam):
     floating_point_precision: None or integer, if not None, use floating_point_precision-bit to speed up calculation,
                                e.g.: convert an x to round(x * 2**floating_point_precision) during Paillier operation, divide
                                       the result by 2**floating_point_precision in the end.
+    callback_param: CallbackParam object
 
     """
 
@@ -113,7 +117,7 @@ class LinearParam(BaseParam):
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
                  cv_param=CrossValidationParam(), decay=1, decay_sqrt=True, validation_freqs=None,
                  early_stopping_rounds=None, stepwise_param=StepwiseParam(), metrics=None, use_first_metric_only=False,
-                 floating_point_precision=23):
+                 floating_point_precision=23, callback_param=CallbackParam()):
         super(LinearParam, self).__init__()
         self.penalty = penalty
         self.tol = tol
@@ -137,6 +141,7 @@ class LinearParam(BaseParam):
         self.metrics = metrics or []
         self.use_first_metric_only = use_first_metric_only
         self.floating_point_precision = floating_point_precision
+        self.callback_param = copy.deepcopy(callback_param)
 
     def check(self):
         descr = "linear_regression_param's "
@@ -218,33 +223,33 @@ class LinearParam(BaseParam):
             raise ValueError(
                 descr + "decay_sqrt {} not supported, should be 'bool'".format(self.decay)
             )
-        if self.validation_freqs is not None:
-            if type(self.validation_freqs).__name__ not in ["int", "list", "tuple", "set"]:
-                raise ValueError(
-                    "validation strategy param's validate_freqs's type not supported , should be int or list or tuple or set"
-                )
-            if type(self.validation_freqs).__name__ == "int" and self.validation_freqs <= 0:
-                raise ValueError("validation strategy param's validate_freqs should greater than 0")
         self.sqn_param.check()
         self.stepwise_param.check()
 
-        if self.early_stopping_rounds is None:
-            pass
-        elif isinstance(self.early_stopping_rounds, int):
-            if self.early_stopping_rounds < 1:
-                raise ValueError("early stopping rounds should be larger than 0 when it's integer")
-            if self.validation_freqs is None:
-                raise ValueError("validation freqs must be set when early stopping is enabled")
+        for p in ["early_stopping_rounds", "validation_freqs", "metrics",
+                  "use_first_metric_only"]:
+            if self._warn_to_deprecate_param(p, "", ""):
+                if "callback_param" in self.get_user_feeded():
+                    raise ValueError(f"{p} and callback param should not be set simultaneously")
+                else:
+                    self.callback_param.callbacks = ["PerformanceEvaluate"]
+                break
 
-        if self.metrics is not None and not isinstance(self.metrics, list):
-            raise ValueError("metrics should be a list")
+        if self._warn_to_deprecate_param("validation_freqs", descr, "callback_param's 'validation_freqs'"):
+            self.callback_param.validation_freqs = self.validation_freqs
 
-        if not isinstance(self.use_first_metric_only, bool):
-            raise ValueError("use_first_metric_only should be a boolean")
+        if self._warn_to_deprecate_param("early_stopping_rounds", descr, "callback_param's 'early_stopping_rounds'"):
+            self.callback_param.early_stopping_rounds = self.early_stopping_rounds
+
+        if self._warn_to_deprecate_param("metrics", descr, "callback_param's 'metrics'"):
+            self.callback_param.metrics = self.metrics
+
+        if self._warn_to_deprecate_param("use_first_metric_only", descr, "callback_param's 'use_first_metric_only'"):
+            self.callback_param.use_first_metric_only = self.use_first_metric_only
 
         if self.floating_point_precision is not None and \
                 (not isinstance(self.floating_point_precision, int) or
                  self.floating_point_precision < 0 or self.floating_point_precision > 64):
             raise ValueError("floating point precision should be null or a integer between 0 and 64")
-
+        self.callback_param.check()
         return True

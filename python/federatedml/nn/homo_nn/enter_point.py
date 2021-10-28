@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 from fate_arch.computing import is_table
-from fate_flow.entity.metric import Metric, MetricMeta
+from federatedml.model_base import Metric, MetricMeta
 from federatedml.framework.homo.blocks.base import HomoTransferBase
 from federatedml.framework.homo.blocks.has_converged import HasConvergedTransVar
 from federatedml.framework.homo.blocks.loss_scatter import LossScatterTransVar
@@ -22,7 +22,7 @@ from federatedml.framework.homo.blocks.secure_aggregator import SecureAggregator
 from federatedml.model_base import ModelBase
 from federatedml.nn.homo_nn._consts import _extract_meta, _extract_param
 from federatedml.param.homo_nn_param import HomoNNParam
-from federatedml.util import consts
+from federatedml.util import component_properties, consts
 from federatedml.util import LOGGER
 
 
@@ -47,6 +47,7 @@ class HomoNNBase(ModelBase):
 class HomoNNServer(HomoNNBase):
     def __init__(self, trans_var):
         super().__init__(trans_var=trans_var)
+        self._init_iteration = 0
 
     def _init_model(self, param: HomoNNParam):
         super()._init_model(param)
@@ -75,6 +76,7 @@ class HomoNNServer(HomoNNBase):
         )
 
     def fit(self, data_inst):
+        self.callback_list.on_train_begin(data_inst, None)
         if self.is_version_0():
             from federatedml.nn.homo_nn import _version_0
 
@@ -83,9 +85,51 @@ class HomoNNServer(HomoNNBase):
         else:
             from federatedml.nn.homo_nn._torch import build_aggregator
 
-            aggregator = build_aggregator(self.param)
-            aggregator.dataset_align()
-            aggregator.fit(self.callback_loss)
+            self.aggregator = build_aggregator(
+                self.param, init_iteration=self._init_iteration
+            )
+
+            if not self.component_properties.is_warm_start:
+                self.aggregator.dataset_align()
+            self.aggregator.fit(self.callback_loss)
+
+        self.callback_list.on_train_end()
+
+    def export_model(self):
+        if self.is_version_0():
+            from federatedml.nn.homo_nn import _version_0
+
+            return _version_0.arbiter_export_model(self=self)
+
+        else:
+            return self.aggregator.export_model(param=self.param)
+
+    def load_model(self, model_dict):
+        model_dict = list(model_dict["model"].values())[0]
+        model_obj = _extract_param(model_dict)
+        meta_obj = _extract_meta(model_dict)
+
+        # compatibility
+        if not hasattr(model_obj, "api_version"):
+            self.set_version(0)
+        else:
+            self.set_version(model_obj.api_version)
+
+        if self.is_version_0():
+            from federatedml.nn.homo_nn import _version_0
+
+            _version_0.arbiter_load_model(
+                self=self,
+                meta_obj=meta_obj,
+                model_obj=model_obj,
+                is_warm_start_mode=self.component_properties.is_warm_start,
+            )
+        else:
+            self._init_iteration = meta_obj.aggregate_iter
+            self.param.restore_from_pb(
+                meta_obj.params,
+                is_warm_start_mode=self.component_properties.is_warm_start,
+            )
 
 
 class HomoNNClient(HomoNNBase):
@@ -101,6 +145,7 @@ class HomoNNClient(HomoNNBase):
             _version_0.client_init_model(self, param)
 
     def fit(self, data, *args):
+        self.callback_list.on_train_begin(data, None)
         if self.is_version_0():
             from federatedml.nn.homo_nn import _version_0
 
@@ -108,14 +153,19 @@ class HomoNNClient(HomoNNBase):
         else:
             from federatedml.nn.homo_nn._torch import build_trainer
 
+            if not self.component_properties.is_warm_start:
+                self._trainer = None
             self._trainer, dataloader = build_trainer(
                 param=self.param,
                 data=data,
+                should_label_align=not self.component_properties.is_warm_start,
+                trainer=self._trainer,
             )
             self._trainer.fit(dataloader)
             self.set_summary(self._trainer.summary())
             # save model to local filesystem
             self._trainer.save_checkpoint()
+        self.callback_list.on_train_end()
 
     def predict(self, data):
 
@@ -166,7 +216,10 @@ class HomoNNClient(HomoNNBase):
             from federatedml.nn.homo_nn import _version_0
 
             _version_0.client_load_model(
-                self=self, meta_obj=meta_obj, model_obj=model_obj
+                self=self,
+                meta_obj=meta_obj,
+                model_obj=model_obj,
+                is_warm_start_mode=self.component_properties.is_warm_start,
             )
         else:
             from federatedml.nn.homo_nn._torch import PyTorchFederatedTrainer
@@ -174,7 +227,6 @@ class HomoNNClient(HomoNNBase):
             self._trainer = PyTorchFederatedTrainer.load_model(
                 model_obj=model_obj, meta_obj=meta_obj, param=self.param
             )
-            self._init_model(self.model_param)
 
 
 # server: Arbiter, clients: Guest and Hosts

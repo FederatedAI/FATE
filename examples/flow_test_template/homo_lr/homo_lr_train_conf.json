@@ -1,0 +1,83 @@
+{
+    "dsl_version": 2,
+    "initiator": {
+        "role": "guest",
+        "party_id": 10000
+    },
+    "role": {
+        "guest": [
+            10000
+        ],
+        "host": [
+            9999
+        ],
+        "arbiter": [
+            9999
+        ]
+    },
+    "job_parameters": {
+        "common": {
+            "job_type": "train"
+        }
+    },
+    "component_parameters": {
+        "common": {
+            "data_transform_0": {
+                "with_label": true,
+                "output_format": "dense"
+            },
+            "homo_lr_0": {
+                "penalty": "L2",
+                "tol": 1e-05,
+                "alpha": 0.01,
+                "optimizer": "sgd",
+                "batch_size": -1,
+                "learning_rate": 0.15,
+                "init_param": {
+                    "init_method": "zeros"
+                },
+                "max_iter": 30,
+                "early_stop": "diff",
+                "encrypt_param": {
+                    "method": null
+                },
+                "cv_param": {
+                    "n_splits": 4,
+                    "shuffle": true,
+                    "random_seed": 33,
+                    "need_cv": false
+                },
+                "decay": 1,
+                "decay_sqrt": true
+            },
+            "evaluation_0": {
+                "eval_type": "binary"
+            }
+        },
+        "role": {
+            "host": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_homo_host",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "evaluation_0": {
+                        "need_run": false
+                    }
+                }
+            },
+            "guest": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_homo_guest",
+                            "namespace": "experiment"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

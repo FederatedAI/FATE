@@ -13,10 +13,7 @@
         ]
     },
     "job_parameters": {
-        "common": {
-            "work_mode": 0,
-            "backend": 0
-        }
+        "common": {}
     },
     "component_parameters": {
         "common": {

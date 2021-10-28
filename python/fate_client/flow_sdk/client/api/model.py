@@ -21,39 +21,30 @@ from flow_sdk.utils import preprocess, get_project_base_directory
 
 
 class Model(BaseFlowAPI):
-    def load(self, conf_path=None, job_id=None):
-        kwargs = locals()
-        if not kwargs.get("conf_path") and not kwargs.get("job_id"):
-            response = {
+    def load(self, config_data=None, job_id=None):
+        if config_data is None and job_id is None:
+            return {
                 "retcode": 100,
                 "retmsg": "Load model failed. No arguments received, "
                           "please provide one of arguments from job id and conf path."
             }
-        else:
-            if kwargs.get("conf_path") and kwargs.get("job_id"):
-                response = {
-                    "retcode": 100,
-                    "retmsg": "Load model failed. Please do not provide job id and "
-                              "conf path at the same time."
-                }
-            else:
-                config_data, dsl_data = preprocess(**kwargs)
-                self._post(url='model/load', json=config_data)
-        if not os.path.exists(conf_path):
-            raise FileNotFoundError('Invalid conf path, file not exists.')
+        if config_data is not None and job_id is not None:
+            return {
+                "retcode": 100,
+                "retmsg": "Load model failed. Please do not provide job id and "
+                          "conf path at the same time."
+            }
+
+        kwargs = locals()
         config_data, dsl_data = preprocess(**kwargs)
         return self._post(url='model/load', json=config_data)
 
-    def bind(self, conf_path, job_id=None):
-        if not os.path.exists(conf_path):
-            raise FileNotFoundError('Invalid conf path, file not exists.')
+    def bind(self, config_data, job_id=None):
         kwargs = locals()
         config_data, dsl_data = preprocess(**kwargs)
         return self._post(url='model/bind', json=config_data)
 
-    def import_model(self, conf_path, from_database=False):
-        if not os.path.exists(conf_path):
-            raise FileNotFoundError('Invalid conf path, file not exists.')
+    def import_model(self, config_data, from_database=False):
         kwargs = locals()
         config_data, dsl_data = preprocess(**kwargs)
         if not kwargs.pop("from_database"):
@@ -68,9 +59,7 @@ class Model(BaseFlowAPI):
             return self._post(url='model/import', data=config_data, files=files)
         return self._post(url='model/restore', json=config_data)
 
-    def export_model(self, conf_path, to_database=False):
-        if not os.path.exists(conf_path):
-            raise FileNotFoundError('Invalid conf path, file not exists.')
+    def export_model(self, config_data, to_database=False):
         kwargs = locals()
         config_data, dsl_data = preprocess(**kwargs)
         if not config_data.pop("to_database"):
@@ -91,9 +80,7 @@ class Model(BaseFlowAPI):
             return response
         return self._post(url='model/store', json=config_data)
 
-    def migrate(self, conf_path):
-        if not os.path.exists(conf_path):
-            raise FileNotFoundError('Invalid conf path, file not exists.')
+    def migrate(self, config_data):
         kwargs = locals()
         config_data, dsl_data = preprocess(**kwargs)
         return self._post(url='model/migrate', json=config_data)
@@ -131,3 +118,24 @@ class Model(BaseFlowAPI):
         config_data, dsl_data = preprocess(**kwargs)
         return self._post(url='model/query', json=config_data)
 
+    def homo_convert(self, config_data):
+        kwargs = locals()
+        config_data, dsl_data = preprocess(**kwargs)
+        return self._post(url='model/homo/convert', json=config_data)
+
+    def homo_deploy(self, config_data):
+        kwargs = locals()
+        config_data, dsl_data = preprocess(**kwargs)
+        if config_data.get('deployment_type') == "kfserving":
+            kube_config = config_data.get('deployment_parameters', {}).get('config_file')
+            if kube_config:
+                if not os.path.isabs(kube_config):
+                    kube_config = os.path.join(get_project_base_directory(), kube_config)
+                if os.path.exists(kube_config):
+                    with open(kube_config, 'r') as fp:
+                        config_data['deployment_parameters']['config_file_content'] = fp.read()
+                    del config_data['deployment_parameters']['config_file']
+                else:
+                    raise Exception('The kube_config file is obtained from the fate flow client machine, '
+                                    'but it does not exist, please check the path: {}'.format(kube_config))
+        return self._post(url='model/homo/deploy', json=config_data)
