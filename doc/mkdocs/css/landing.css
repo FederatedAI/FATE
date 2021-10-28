@@ -8,20 +8,6 @@
     linear-gradient(to bottom, var(--md-primary-fg-color), #2196f3 100%, var(--md-default-bg-color) 100%)
 }
 
-@media screen and (min-width: 60em) {
-  .tx-container {
-    background:
-      url("/mkdocs/assets/images/wave-regular.svg") no-repeat bottom,
-      linear-gradient(to bottom, var(--md-primary-fg-color), #2196f3 99%, var(--md-default-bg-color) 99%)
-  }
-
-  [data-md-color-scheme=slate] .tx-container {
-    background:
-      url("/mkdocs/assets/images/wave-slate.svg") no-repeat bottom,
-      linear-gradient(to bottom, var(--md-primary-fg-color), #2196f3 99%, var(--md-default-bg-color) 99%)
-  }
-}
-
 .tx-landing {
   margin: 0 .8rem;
   color: var(--md-primary-bg-color)
