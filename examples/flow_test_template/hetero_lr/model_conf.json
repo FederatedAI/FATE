@@ -1,5 +1,5 @@
 {
-    "service_id": "",
+
     "initiator": {
         "party_id": "10000",
         "role": "guest"
@@ -10,9 +10,11 @@
         "arbiter": ["10000"]
     },
     "job_parameters": {
+        "work_mode": 0,
         "model_id": "arbiter-10000#guest-10000#host-10000#model",
         "model_version": "2019081217340125761469"
     },
-    "servings": [
-    ]
+    "service_id": "123456",
+    "servings": ["127.0.0.1"]
 }
+
