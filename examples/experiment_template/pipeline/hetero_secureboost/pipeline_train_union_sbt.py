@@ -36,7 +36,6 @@ def main(config="../../config.yaml", namespace=""):
     parties = config.parties
     guest = parties.guest[0]
     host = parties.host[0]
-    work_mode = config.work_mode
 
     guest_train_data_0 = {"name": "breast_hetero_guest", "namespace": "experiment"}
     guest_train_data_1 = {"name": "breast_hetero_guest", "namespace": "experiment"}
@@ -206,8 +205,7 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.compile()
 
     # fit model
-    job_parameters = JobParameters(work_mode=work_mode)
-    pipeline.fit(job_parameters)
+    pipeline.fit()
     # query component summary
     print(pipeline.get_component("hetero_secureboost_0").get_summary())
 

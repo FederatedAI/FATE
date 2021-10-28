@@ -14,8 +14,7 @@
     },
     "job_parameters": {
         "common": {
-            "job_type": "train",
-            "work_mode": 0
+            "job_type": "train"
         }
     },
     "component_parameters": {
