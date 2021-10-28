@@ -1,0 +1,140 @@
+联邦机器学习
+============
+
+\[[ENG](federatedml_module.md)\]
+
+Federatedml模块包括许多常见机器学习算法联邦化实现。所有模块均采用去耦的模块化方法开发，以增强模块的可扩展性。具体来说，我们提供：
+
+1.  联邦统计: 包括隐私交集计算，并集计算，皮尔逊系数, PSI等
+2.  联邦特征工程：包括联邦采样，联邦特征分箱，联邦特征选择等。
+3.  联邦机器学习算法：包括横向和纵向的联邦LR, GBDT， DNN，迁移学习等
+4.  模型评估：提供对二分类，多分类，回归评估，聚类评估，联邦和单边对比评估
+5.  安全协议：提供了多种安全协议，以进行更安全的多方交互计算。
+
+![Figure 1： Federated Machine Learning
+Framework](../../doc/images/federatedml_structure.png){.align-center
+width="800px"}
+
+算法清单
+--------
+
+  ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  算法                                                模块名                   描述                                                                                                                                                                                         数据输入                                     数据输出                                        模型输入                                     模型输出
+  --------------------------------------------------- ------------------------ -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- -------------------------------------------- ----------------------------------------------- -------------------------------------------- ----------------------------------------------
+  Reader                                              Reader                   当输入数据的存储引擎当前计算引擎不支持时，会自动转存到FATE集群适配计算引擎的组件输出存储引擎；当输入数据的存储格式非FATE支持存储格式时，会自动转换格式，并存储到FATE集群的组件输出存储引擎   用户原始存储数据                             转换后原始数据                                                                               
+
+  [DataIO](util.md)                                  DataIO                   该组件将原始数据转换为Instance对象(FATE-v1.7后会逐步弃用，使用DataTransform)。                                                                                                               Table，值为原始数据                          转换后的数据表，值为在 :                                                                     DataIO模型
+                                                                                                                                                                                                                                                                                                                         [federatedml/feature/instance.py]{.title-ref}                                                
+                                                                                                                                                                                                                                                                                                                         中定义的Data Instance的实例                                                                  
+
+  [DataTransform](util.md)                           DataTransform            该组件将原始数据转换为Instance对象。                                                                                                                                                         Table，值为原始数据                          转换后的数据表，值为在 :                                                                     DataTransform模型
+                                                                                                                                                                                                                                                                                                                         [federatedml/feature/instance.py]{.title-ref}                                                
+                                                                                                                                                                                                                                                                                                                         中定义的Data Instance的实例                                                                  
+
+  [Intersect](intersect.md)                          Intersection             计算两方的相交数据集，而不会泄漏任何差异数据集的信息。主要用于纵向任务。                                                                                                                     Table                                        两方Table中相交的部分                                                                        Intersect模型
+
+  [Federated                                          FederatedSample          对数据进行联邦采样，使得数据分布在各方之间变得平衡。这一模块同时支持单机和集群版本。                                                                                                         Table                                        采样后的数据，同时支持随机采样和分层采样                                                     
+  Sampling](feature.md#federated-sampling)                                                                                                                                                                                                                                                                                                                                                                           
+
+  [Feature Scale](feature.md#feature-scale)          FeatureScale             特征归一化和标准化。                                                                                                                                                                         Table，其值为instance                        转换后的Table                                   变换系数，例如最小值/最大值，平均值/标准差   
+
+  [Hetero Feature                                     Hetero Feature Binning   使用分箱的输入数据，计算每个列的iv和woe，并根据合并后的信息转换数据。                                                                                                                        Table，在guest中有标签y，在host中没有标签y   转换后的Table                                                                                每列的iv/woe，分裂点，事件计数，非事件计数等
+  Binning](feature.md#hetero-feature-binning)                                                                                                                                                                                                                                                                                                                                                                        
+
+  [Homo Feature Binning](feature.md)                 Homo Feature Binning     计算横向场景的等频分箱                                                                                                                                                                       Table                                        转换后的Table                                                                                每列的分裂点
+
+  [OneHot Encoder](feature.md#onehot-encoder)        OneHotEncoder            将一列转换为One-Hot格式。                                                                                                                                                                    Table, 值为Instance                          转换了带有新列名的Table                                                                      原始列名和特征值到新列名的映射
+
+  [Hetero Feature                                     HeteroFeatureSelection   提供多种类型的filter。每个filter都可以根据用户配置选择列。                                                                                                                                   Table, 值为Instance                          转换的Table具有新的header和已过滤的数据实例     模型输入如果使用iv                           每列是否留下
+  Selection](feature.md#hetero-feature-selection)                                                                                                                                                                                                                                                                                                                       filters，则需要hetero\_binning模型           
+
+  [Union](union.md)                                  Union                    将多个数据表合并成一个。                                                                                                                                                                     Tables                                       多个Tables合并后的Table                                                                      
+
+  [Hetero-LR](logistic_regressionE.md)               HeteroLR                 通过多方构建纵向逻辑回归模块。                                                                                                                                                               Table, 值为Instance                                                                                                                       Logistic回归模型，由模型本身和模型参数组成
+
+  [Local Baseline](local_baseline.md)                LocalBaseline            使用本地数据运行sklearn Logistic回归模型。                                                                                                                                                   Table, 值为Instance                                                                                                                       
+
+  [Hetero-LinR](linear_regression.md)                HeteroLinR               通过多方建立纵向线性回归模块。                                                                                                                                                               Table, 值为Instance                                                                                                                       线性回归模型，由模型本身和模型参数组成
+
+  [Hetero-Poisson](poisson_regression.md)            HeteroPoisson            通过多方构建纵向泊松回归模块。                                                                                                                                                               Table, 值为Instance                                                                                                                       泊松回归模型，由模型本身和模型参数组成
+
+  [Homo-LR](logistic_regression.md)                  HomoLR                   通过多方构建横向逻辑回归模块。                                                                                                                                                               Table, 值为Instance                                                                                                                       Logistic回归模型，由模型本身和模型参数组成
+
+  [Homo-NN](homo_nn.md)                              HomoNN                   通过多方构建横向神经网络模块。                                                                                                                                                               Table, 值为Instance                                                                                                                       神经网络模型，由模型本身和模型参数组成
+
+  [Hetero Secure Boosting](ensemble.md)              HeteroSecureBoost        通过多方构建纵向Secure Boost模块。                                                                                                                                                           Table，值为Instance                                                                                                                       SecureBoost模型，由模型本身和模型参数组成
+
+  [Hetero Fast Secure Boosting](ensemble.md)         HeteroFastSecureBoost    使用分层/混合模式快速构建树模型                                                                                                                                                              Table，值为Instance                          Table，值为Instance                                                                          FastSecureBoost模型
+
+  [Hetero Secure Boost Feature                        SBT Feature Transformer  利用SBT叶子为特征编码                                                                                                                                                                        Table，值为Instance                          Table，值为Instance                                                                          SBT Transformer模型
+  Transformer](feature.md#sbt-feature-transformer)                                                                                                                                                                                                                                                                                                                                                                   
+
+  [Evaluation](evaluation.md)                        Evaluation               为用户输出模型评估指标。                                                                                                                                                                     Table(s), 值为Instance                                                                                                                    
+
+  [Hetero Pearson](correlation.md)                   HeteroPearson            计算来自不同方的特征的Pearson相关系数。                                                                                                                                                      Table, 值为Instance                                                                                                                       
+
+  [Hetero-NN](hetero_nn.md)                          HeteroNN                 构建纵向神经网络模块。                                                                                                                                                                       Table, 值为Instance                                                                                                                       纵向神经网络模型
+
+  [Homo Secure Boosting](ensemble.md)                HomoSecureBoost          通过多方构建横向Secure Boost模块                                                                                                                                                             Table, 值为Instance                                                                                                                       SecureBoost模型，由模型本身和模型参数组成
+
+  [Homo OneHot                                        横向 OneHotEncoder       将一列转换为One-Hot格式。                                                                                                                                                                    Table, 值为Instance                          转换了带有新列名的Table                                                                      原始列名和特征值到新列名的映射
+  Encoder](feature.md#homo-onehot-encoder)                                                                                                                                                                                                                                                                                                                                                                           
+
+  [Data Split](data_split.md)                        数据切分                 将输入数据集按用户自定义比例或样本量切分为3份子数据集                                                                                                                                        Table, 值为Instance                          3 Tables                                                                                     
+
+  [Column Expand](feature.md#column-expand)                                   对原始Table添加任意列数的任意数值                                                                                                                                                            Table, 值为原始数据                          转换后带有新数列与列名的Table                                                                Column Expand模型
+
+  [Secure Information Retrieval](sir.md)             安全信息检索             通过不经意传输协议安全取回所需数值                                                                                                                                                           Table, 值为Instance                          Table, 值为取回数值                                                                          
+
+  [Hetero Federated Transfer                          纵向联邦迁移学习         在两个party间构建联邦迁移模型                                                                                                                                                                Table, 值为Instance                                                                                                                       FTL神经网络模型参数等
+  Learning](hetero_ftl.md)                                                                                                                                                                                                                                                                                                                                                                                           
+
+  [PSI](psi.md)                                      PSI模块                  计算两个表特征间的PSI值                                                                                                                                                                      Table, 值为Instance                                                                                                                       PSI 结果
+
+  [Hetero KMeans](hetero_kmeans.md)                  纵向 K均值算法           构建K均值模块                                                                                                                                                                                Table, 值为Instance                          Table, 值为Instance; Arbiter方输出2个Table                                                   Hetero KMeans模型
+
+  [Data Statistics](statistic.md)                    数据统计                 这个组件会对数据做一些统计工作，包括统计均值，最大最小值，中位数等                                                                                                                           Table, 值为Instance                          Table                                                                                        Statistic Result
+
+  [Scorecard](scorecard.md)                          评分卡                   转换二分类预测分数至信用分                                                                                                                                                                   Table, 值为二分类预测结果                    Table, 值为转化后信用分结果                                                                  
+
+  [Sample Weight](util.md#sample-weight)             样本加权                 根据用户设置对输入数据加权                                                                                                                                                                   Table, 值为Instance                          Table, 值为加权后Instance                                                                    SampleWeight Model
+
+  [Feldman Verifiable                                 费尔德曼秘密分享求和     不暴露隐私数据的前提下进行多方隐私数据求和                                                                                                                                                   Table, 值为加数或被加数                      Table, 值为求和结果                                                                          
+  Sum](feldman_verifiable_sum.md)                                                                                                                                                                                                                                                                                                                                                                                    
+
+  [Feature                                            特征填充                 使用指定方法、数值填充特征缺失值                                                                                                                                                             Table, 值为Instance                          Table, 值为填充后Instance                       Feature Imputation Model                     FeatureImputation Model
+  Imputation](feature.md#feature-imputation)                                                                                                                                                                                                                                                                                                                                                                         
+
+  [Label Transform](util.md#label-transform)         标签转换                 转化输入数据与预测结果的标签值                                                                                                                                                               Table, 值为Instance或预测结果                Table, 值为标签转化后的Instance或预测结果                                                    LabelTransform Model
+  ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+  : 算法清单
+
+安全协议
+--------
+
+-   [Encrypt](secureprotol.md#encrypt)
+    -   [Paillier encryption](secureprotol.md#paillier-encryption)
+    -   [Affine Homomorphic
+        Encryption](secureprotol.md#affine-homomorphic-encryption)
+    -   [IterativeAffine Homomorphic
+        Encryption](secureprotol.md#iterativeaffine-homomorphic-encryption)
+    -   [RSA encryption](secureprotol.md#rst-encryption)
+    -   [Fake encryption](secureprotol.md#fake-encryption)
+-   [Encode](secureprotol.md#encode)
+-   [Diffne Hellman Key
+    Exchange](secureprotol.md#diffne-hellman-key-exchange)
+-   [SecretShare MPC
+    Protocol(SPDZ)](secureprotol.md#secretshare-mpc-protocol-spdz)
+-   [Oblivious Transfer](secureprotol.md#oblivious-transfer)
+-   [Feldman Verifiable Secret
+    Sharing](secureprotol.md#feldman-verifiable-secret-sharing)
+
+> n
+
+Params
+------
+
+::: {.automodule}
+federatedml.param
+:::
