@@ -1,15 +1,21 @@
 {
-    "components" : {
+    "components": {
         "column_expand_0": {
             "module": "ColumnExpand",
             "input": {
                 "data": {
-                        "data": ["args.data"]
+                    "data": [
+                        "args.data"
+                    ]
                 }
             },
             "output": {
-                "data": ["data"],
-                "model": ["model"]
+                "data": [
+                    "data"
+                ],
+                "model": [
+                    "model"
+                ]
             }
         },
         "dataio_0": {

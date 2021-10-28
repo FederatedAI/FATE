@@ -1,5 +1,5 @@
 {
-    "components" : {
+    "components": {
         "dataio_0": {
             "module": "DataIO",
             "input": {
@@ -10,10 +10,14 @@
                 }
             },
             "output": {
-                "data": ["train_data"],
-                "model": ["dataio"]
+                "data": [
+                    "train_data"
+                ],
+                "model": [
+                    "dataio"
+                ]
             }
-         },
+        },
         "dataio_1": {
             "module": "DataIO",
             "input": {
@@ -27,69 +31,93 @@
                 ]
             },
             "output": {
-                "data": ["eval_data"],
-                "model": ["dataio"]
+                "data": [
+                    "eval_data"
+                ],
+                "model": [
+                    "dataio"
+                ]
             }
-         },
-         "intersection_0": {
-             "module": "Intersection",
-             "input": {
-                 "data": {
-                     "data": [
-                         "dataio_0.train_data"
-                     ]
-                 }
-             },
-             "output": {
-                 "data": ["train"]
-             }
-         },
-         "intersection_1": {
-             "module": "Intersection",
-             "input": {
-                 "data": {
-                     "data": [
-                         "dataio_1.eval_data"
-                     ]
-                 }
-             },
-             "output": {
-                 "data": ["eval_data"]
-             }
-         },
+        },
+        "intersection_0": {
+            "module": "Intersection",
+            "input": {
+                "data": {
+                    "data": [
+                        "dataio_0.train_data"
+                    ]
+                }
+            },
+            "output": {
+                "data": [
+                    "train"
+                ]
+            }
+        },
+        "intersection_1": {
+            "module": "Intersection",
+            "input": {
+                "data": {
+                    "data": [
+                        "dataio_1.eval_data"
+                    ]
+                }
+            },
+            "output": {
+                "data": [
+                    "eval_data"
+                ]
+            }
+        },
         "hetero_lr_0": {
             "module": "HeteroLR",
             "input": {
                 "data": {
-                    "train_data": ["intersection_0.train"],
-                    "eval_data": ["intersection_1.eval_data"]
+                    "train_data": [
+                        "intersection_0.train"
+                    ],
+                    "eval_data": [
+                        "intersection_1.eval_data"
+                    ]
                 }
             },
             "output": {
-                "data": ["hetero_lr_data"],
-                "model": ["hetero_lr_model"]
+                "data": [
+                    "hetero_lr_data"
+                ],
+                "model": [
+                    "hetero_lr_model"
+                ]
             }
         },
         "hetero_lr_1": {
             "module": "HeteroLR",
             "input": {
                 "data": {
-                    "eval_data": ["intersection_1.eval_data"]
+                    "eval_data": [
+                        "intersection_1.eval_data"
+                    ]
                 },
                 "model": [
                     "hetero_lr_0.hetero_lr_model"
                 ]
             },
             "output": {
-                "data": ["hetero_lr_data"],
-                "model": ["hetero_lr_model"]
+                "data": [
+                    "hetero_lr_data"
+                ],
+                "model": [
+                    "hetero_lr_model"
+                ]
             }
         },
         "evaluation_0": {
             "module": "Evaluation",
             "input": {
                 "data": {
-                    "data": ["hetero_lr_0.hetero_lr_data"]
+                    "data": [
+                        "hetero_lr_0.hetero_lr_data"
+                    ]
                 }
             }
         }

@@ -1,27 +1,39 @@
 {
-    "components" : {
+    "components": {
         "union_0": {
             "module": "Union",
             "input": {
                 "data": {
-                        "data_0": ["args.data0"],
-                        "data_1": ["args.data1"]
+                    "data_0": [
+                        "args.data0"
+                    ],
+                    "data_1": [
+                        "args.data1"
+                    ]
                 }
             },
             "output": {
-                "data": ["data"]
+                "data": [
+                    "data"
+                ]
             }
         },
         "union_1": {
             "module": "Union",
             "input": {
                 "data": {
-                        "data_0": ["args.data0"],
-                        "data_1": ["args.data1"]
+                    "data_0": [
+                        "args.data0"
+                    ],
+                    "data_1": [
+                        "args.data1"
+                    ]
                 }
             },
             "output": {
-                "data": ["data"]
+                "data": [
+                    "data"
+                ]
             }
         },
         "dataio_0": {
@@ -34,8 +46,12 @@
                 }
             },
             "output": {
-                "data": ["data"],
-                "model": ["dataio"]
+                "data": [
+                    "data"
+                ],
+                "model": [
+                    "dataio"
+                ]
             }
         },
         "dataio_1": {
@@ -48,8 +64,12 @@
                 }
             },
             "output": {
-                "data": ["data"],
-                "model": ["dataio"]
+                "data": [
+                    "data"
+                ],
+                "model": [
+                    "dataio"
+                ]
             }
         }
     }
