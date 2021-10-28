@@ -25,8 +25,9 @@ from federatedml.secureprotol.spdz.beaver_triples import beaver_triplets
 from federatedml.secureprotol.spdz.tensor import fixedpoint_numpy
 from federatedml.secureprotol.spdz.tensor.base import TensorBase
 from federatedml.secureprotol.spdz.utils import NamingService
-from federatedml.secureprotol.spdz.utils.random_utils import urand_tensor, urand_tensor2
-from federatedml.secureprotol.spdz.tensor.fixedpoint_endec import FixedPointEndec
+from federatedml.secureprotol.spdz.utils import urand_tensor
+# from federatedml.secureprotol.spdz.tensor.fixedpoint_endec import FixedPointEndec
+from federatedml.secureprotol.fixedpoint import FixedPointEndec
 
 
 def _table_binary_op(x, y, op):
@@ -93,7 +94,7 @@ class FixedPointTensor(TensorBase):
         spdz = self.get_spdz()
         if target_name is None:
             target_name = NamingService.get_instance().next()
-        # q_field = 2 ** 32
+
         a, b, c = beaver_triplets(a_tensor=self.value, b_tensor=other.value, dot=table_dot,
                                   q_field=self.q_field, he_key_pair=(spdz.public_key, spdz.private_key),
                                   communicator=spdz.communicator, name=target_name)
@@ -159,10 +160,10 @@ class FixedPointTensor(TensorBase):
         else:
             base = kwargs['base'] if 'base' in kwargs else 10
             frac = kwargs['frac'] if 'frac' in kwargs else 4
-            encoder = fixedpoint_numpy.FixedPointEndec(q_field, base, frac)
+            encoder = FixedPointEndec(q_field, base, frac)
         if is_table(source):
             source = encoder.encode(source)
-            _pre = urand_tensor2(q_field, source, use_mix=spdz.use_mix_rand)
+            _pre = urand_tensor(q_field, source, use_mix=spdz.use_mix_rand)
             spdz.communicator.remote_share(share=_pre, tensor_name=tensor_name, party=spdz.other_parties[0])
             for _party in spdz.other_parties[1:]:
                 r = urand_tensor(q_field, source, use_mix=spdz.use_mix_rand)
@@ -296,7 +297,7 @@ class PaillierFixedPointTensor(TensorBase):
             other = other.value
 
         if isinstance(other, np.ndarray):
-            ret = self.value.mapValues(lambda x : _vec_dot(x, other))
+            ret = self.value.mapValues(lambda x: _vec_dot(x, other))
             return self._boxed(ret, target_name)
 
         elif is_table(other):
@@ -372,8 +373,8 @@ class PaillierFixedPointTensor(TensorBase):
             encoder = FixedPointEndec(q_field, base, frac)
 
         if is_table(source):
-            _pre = urand_tensor2(q_field, source, use_mix=spdz.use_mix_rand)
-            # todo: dylan
+            _pre = urand_tensor(q_field, source, use_mix=spdz.use_mix_rand)
+
             share = _pre
             # for _party in spdz.other_parties[:-1]:
             #     r = urand_tensor(q_field, source, use_mix=spdz.use_mix_rand)

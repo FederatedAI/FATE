@@ -32,16 +32,7 @@ class HeteroLRHost(HeteroLRBase):
         self.data_batch_count = []
         self.wx_self = None
 
-    def transfer_pubkey(self):
-        public_key = self.cipher.public_key
-        self.transfer_variable.pubkey.remote(public_key, role=consts.GUEST, suffix=("host_pubkey",))
-        remote_pubkey = self.transfer_variable.pubkey.get(role=consts.GUEST, idx=0,
-                                                          suffix=("guest_pubkey",))
-        return remote_pubkey
-
     def _init_weights(self, model_shape):
-        # init_param_obj = copy.deepcopy(self.init_param_obj)
-        # init_param_obj.fit_intercept = False
         self.init_param_obj.fit_intercept = False
         return self.initializer.init_model(model_shape, init_params=self.init_param_obj)
 
@@ -53,24 +44,23 @@ class HeteroLRHost(HeteroLRBase):
                                                             tensor_name=".".join(za_suffix),
                                                             cipher=None,
                                                             suffix=za_suffix)
-        # za_share = self.secure_matrix_mul_passive(features, suffix=("za",) + suffix)
 
         zb_suffix = ("zb",) + suffix
         zb_share = self.secure_matrix_obj.secure_matrix_mul(w_remote,
                                                             tensor_name=".".join(zb_suffix),
                                                             cipher=self.cipher,
                                                             suffix=zb_suffix)
-        # self.secure_matrix_mul_active(w_remote, cipher=self.cipher, suffix=zb_suffix)
-        # zb_share = self.received_share_matrix(self.cipher, q_field=self.fixpoint_encoder.n,
-        #                                       encoder=self.fixpoint_encoder, suffix=zb_suffix)
+
         z = z1 + za_share + zb_share
         return z
 
-    def cal_prediction(self, w_self, w_remote, features, spdz, suffix):
+    def forward(self, weights, features, suffix):
         if not self.review_every_iter:
+            w_self, w_remote = weights
             z = self._cal_z_in_share(w_self, w_remote, features, suffix)
         else:
-            z = features.dot_local(self.model_weights.coef_)
+            w = weights.unboxed
+            z = features.dot_local(w)
 
         self.wx_self = z
         self.secure_matrix_obj.share_encrypted_matrix(suffix=suffix,
@@ -87,12 +77,12 @@ class HeteroLRHost(HeteroLRBase):
 
         return shared_sigmoid_z
 
-    def compute_gradient(self, wa, wb, error: fixedpoint_table.FixedPointTensor, features, suffix):
-        encoded_1_n = self.encoded_batch_num[int(suffix[1])]
+    def backward(self, error: fixedpoint_table.FixedPointTensor, features, suffix):
+        batch_num = self.batch_num[int(suffix[1])]
 
         ga = error.dot_local(features)
-        LOGGER.debug(f"ga: {ga}, encoded_1_n: {encoded_1_n}")
-        ga = ga * encoded_1_n
+        LOGGER.debug(f"ga: {ga}, batch_num: {batch_num}")
+        ga = ga * (1 / batch_num)
 
         zb_suffix = ("ga2",) + suffix
         ga2_1 = self.secure_matrix_obj.secure_matrix_mul(features,
@@ -116,11 +106,11 @@ class HeteroLRHost(HeteroLRBase):
 
         return ga_new, gb1
 
-    def compute_loss(self, spdz, suffix):
+    def compute_loss(self, weights=None, suffix=None):
         """
           Use Taylor series expand log loss:
           Loss = - y * log(h(x)) - (1-y) * log(1 - h(x)) where h(x) = 1/(1+exp(-wx))
-          Then loss' = - (1/N)*∑(log(1/2) - 1/2*wx + ywx + 1/8(wx)^2)
+          Then loss' = - (1/N)*∑(log(1/2) - 1/2*wx + ywx - 1/8(wx)^2)
         """
         wx_self_square = (self.wx_self * self.wx_self).reduce(operator.add)
         LOGGER.debug(f"wx_self_square: {wx_self_square}")
@@ -140,60 +130,49 @@ class HeteroLRHost(HeteroLRBase):
 
         LOGGER.debug(f"share_loss: {share_loss}")
 
-        loss_norm = self.optimizer.loss_norm(self.model_weights)
-        if loss_norm:
-            share_loss += loss_norm/3.0
+        # todo: dylan, review & unreview loss_norm;
+        if self.review_every_iter:
+            loss_norm = self.optimizer.loss_norm(weights)
+            if loss_norm:
+                share_loss += loss_norm/3.0
+            LOGGER.debug(f"share_loss+loss_norm: {share_loss}")
+            share_loss.broadcast_reconstruct_share(tensor_name=f"share_loss_{suffix}")
+        else:
+            share_loss.broadcast_reconstruct_share(tensor_name=f"share_loss_{suffix}")
+            if self.optimizer.penalty == consts.L2_PENALTY:
+                w_self, w_remote = weights
 
-        LOGGER.debug(f"share_loss+loss_norm: {share_loss}")
+                w_encode = np.hstack((w_self.value, w_remote.value))
 
-        share_loss.broadcast_reconstruct_share(tensor_name=f"share_loss_{suffix}")
+                w_encode = np.array([w_encode])
 
-    # def compute_loss_old(self, spdz, suffix):
-    #     tensor_name = ".".join(("shared_wx",) + suffix)
-    #     shared_wx = SecureMatrix.from_source(tensor_name,
-    #                                          self.other_party,
-    #                                          self.cipher,
-    #                                          self.fixedpoint_encoder.n,
-    #                                          self.fixedpoint_encoder)
-    #
-    #     LOGGER.debug(f"share_wx: {type(shared_wx)}, shared_y: {type(self.shared_y)}")
-    #
-    #     wxy = spdz.dot(shared_wx, self.shared_y, ("wxy",) + suffix).get()
-    #
-    #     LOGGER.debug(f"wxy_value: {wxy}")
-    #
-    #     wx_guest, wx_square_guest = self.share_encrypted_value(suffix=suffix, is_remote=False,
-    #                                                            wx=None, wx_square=None)
-    #
-    #     encrypted_wx = shared_wx + wx_guest
-    #     encrypted_wx_square = shared_wx * shared_wx + wx_square_guest + 2 * shared_wx * wx_guest
-    #     encoded_1_n = self.encoded_batch_num[int(suffix[2])]
-    #
-    #     LOGGER.debug(f"encoded_batch_num: {self.encoded_batch_num}, suffix: {suffix}")
-    #
-    #     LOGGER.debug(f"tmc, type: {encrypted_wx_square}, {encrypted_wx}, {encoded_1_n}, {wxy}")
-    #
-    #     loss = ((0.125 * encrypted_wx_square - 0.5 * encrypted_wx).reduce(operator.add) +
-    #             wxy) * encoded_1_n * -1 - np.log(0.5)
-    #
-    #     loss_norm = self.optimizer.loss_norm(self.model_weights)
-    #     if loss_norm is not None:
-    #         loss += loss_norm
-    #     LOGGER.debug(f"loss: {loss}")
-    #     self.transfer_variable.loss.remote(loss[0][0], suffix=suffix)
+                LOGGER.debug(f"w_encode: {w_encode}")
+                w_tensor_name = ".".join(("loss_norm_w",) + suffix)
+                w_tensor = fixedpoint_numpy.FixedPointTensor(value=w_encode,
+                                                             q_field=self.fixedpoint_encoder.n,
+                                                             endec=self.fixedpoint_encoder,
+                                                             tensor_name=w_tensor_name)
+
+                w_tensor_transpose_name = ".".join(("loss_norm_w_transpose",) + suffix)
+                w_tensor_transpose = fixedpoint_numpy.FixedPointTensor(value=w_encode.T,
+                                                                       q_field=self.fixedpoint_encoder.n,
+                                                                       endec=self.fixedpoint_encoder,
+                                                                       tensor_name=w_tensor_transpose_name)
+
+                loss_norm_tensor_name = ".".join(("loss_norm",) + suffix)
+
+                loss_norm = w_tensor.dot(w_tensor_transpose, target_name=loss_norm_tensor_name)
+                loss_norm.broadcast_reconstruct_share()
 
     def check_converge_by_weights(self, last_w, new_w, suffix):
-        if self.is_respectively_reveal:
-            return self._respectively_check(last_w[0], new_w, suffix)
+        if self.review_every_iter:
+            return self._review_every_iter_weights_check(last_w, new_w, suffix)
         else:
-            return self._unbalanced_check(suffix)
+            return self._not_review_every_iter_weights_check(last_w, new_w, suffix)
 
-    def _respectively_check(self, last_w, new_w, suffix):
+    def _review_every_iter_weights_check(self, last_w, new_w, suffix):
         square_sum = np.sum((last_w - new_w) ** 2)
         self.converge_transfer_variable.square_sum.remote(square_sum, role=consts.GUEST, idx=0, suffix=suffix)
-        return self.converge_transfer_variable.converge_info.get(idx=0, suffix=suffix)
-
-    def _unbalanced_check(self, suffix):
         return self.converge_transfer_variable.converge_info.get(idx=0, suffix=suffix)
 
     def predict(self, data_instances):
@@ -207,14 +186,6 @@ class HeteroLRHost(HeteroLRBase):
         LOGGER.debug(f"Before_predict_review_strategy: {self.model_param.reveal_strategy},"
                      f" {self.is_respectively_reveal}")
 
-        if self.is_respectively_reveal:
-            return self._respectively_predict(data_instances)
-        else:
-            return self._unbalanced_predict(data_instances)
-
-    def _respectively_predict(self, data_instances):
-        self.transfer_variable.host_prob.disable_auto_clean()
-
         def _vec_dot(v, coef, intercept):
             return fate_operator.vec_dot(v.features, coef) + intercept
 
@@ -224,18 +195,6 @@ class HeteroLRHost(HeteroLRBase):
         prob_host = data_instances.mapValues(f)
         self.transfer_variable.host_prob.remote(prob_host, role=consts.GUEST, idx=0)
         LOGGER.info("Remote probability to Guest")
-
-    def _unbalanced_predict(self, data_instances):
-        encrypted_host_weights = self.transfer_variable.encrypted_host_weights.get(idx=-1)[0]
-        prob_host = data_instances.mapValues(lambda v: fate_operator.vec_dot(v.features, encrypted_host_weights))
-        self.transfer_variable.host_prob.remote(prob_host, role=consts.GUEST, idx=0)
-        LOGGER.info("Remote probability to Guest")
-
-    # def _get_param(self):
-    #     single_result = self.get_single_model_param()
-    #     single_result['need_one_vs_rest'] = False
-    #     param_protobuf_obj = lr_model_param_pb2.LRModelParam(**single_result)
-    #     return param_protobuf_obj
 
     def _get_param(self):
         if self.need_cv:
@@ -258,3 +217,4 @@ class HeteroLRHost(HeteroLRBase):
         param_protobuf_obj = lr_model_param_pb2.LRModelParam(**single_result)
 
         return param_protobuf_obj
+

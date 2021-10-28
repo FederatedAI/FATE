@@ -15,13 +15,13 @@
 
 import copy
 
-from pipeline.param.base_param import BaseParam
-from pipeline.param.cross_validation_param import CrossValidationParam
-from pipeline.param.encrypt_param import EncryptParam
-from pipeline.param.init_model_param import InitParam
-from pipeline.param.predict_param import PredictParam
-from pipeline.param.callback_param import CallbackParam
-from pipeline.param import consts
+from federatedml.param.base_param import BaseParam
+from federatedml.param.cross_validation_param import CrossValidationParam
+from federatedml.param.callback_param import CallbackParam
+from federatedml.param.encrypt_param import EncryptParam
+from federatedml.param.init_model_param import InitParam
+from federatedml.param.predict_param import PredictParam
+from federatedml.util import consts
 
 
 class LogisticRegressionParam(BaseParam):
@@ -76,36 +76,13 @@ class LogisticRegressionParam(BaseParam):
     multi_class: str, 'ovr', default: 'ovr'
         If it is a multi_class task, indicate what strategy to use. Currently, support 'ovr' short for one_vs_rest only.
 
-    validation_freqs: int, list, tuple, set, or None
-        validation frequency during training.
-
-    early_stopping_rounds: int, default: None
-        Will stop training if one metric doesn’t improve in last early_stopping_round rounds
-
-    metrics: list or None, default: None
-        Indicate when executing evaluation during train process, which metrics will be used. If set as empty,
-        default metrics for specific task type will be used. As for binary classification, default metrics are
-        ['auc', 'ks']
-
-    use_first_metric_only: bool, default: False
-        Indicate whether use the first metric only for early stopping judgement.
-
-    reveal_strategy: str, "respectively", "all_reveal_in_guest", default: "respectively"
+    reveal_strategy: str, "respectively", "encrypted_reveal_in_host", default: "respectively"
         "respectively": Means guest and host can reveal their own part of weights only.
-        "all_reveal_in_guest": All the weights will be revealed in guest only.
-            This is use to protect the situation that, guest provided label only.
-            Since if host obtain the model weights, it can use this model to steal
-            label info of guest. However, to protect host's info, this function works
-            only when guest provide no features. If there is any feature has been provided
-            in Guest, this param is illegal.
-
-    compute_loss: bool, default True
-        Indicate whether to compute loss or not.
+        "encrypted_reveal_in_host": Means host can be revealed his weights in encrypted mode, and guest can be revealed in normal mode.
 
     reveal_every_iter: bool, default: True
         Whether reconstruct model weights every iteration. If so, Regularization is available.
         The performance will be better as well since the algorithm process is simplified.
-
 
     """
 
@@ -115,12 +92,10 @@ class LogisticRegressionParam(BaseParam):
                  max_iter=100, early_stop='diff', encrypt_param=EncryptParam(),
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  decay=1, decay_sqrt=True,
-                 multi_class='ovr', validation_freqs=None, early_stopping_rounds=None,
-                 metrics=None,
-                 use_first_metric_only=False, use_mix_rand=False,
-                 random_field=1 << 20, reveal_strategy="respectively", compute_loss=True,
+                 multi_class='ovr', use_mix_rand=True,
+                 reveal_strategy="respectively",
                  reveal_every_iter=True,
-                 callback_param=CallbackParam()
+                 callback_param=CallbackParam(),
                  ):
         super(LogisticRegressionParam, self).__init__()
         self.penalty = penalty
@@ -134,19 +109,13 @@ class LogisticRegressionParam(BaseParam):
         self.early_stop = early_stop
         self.encrypt_param = encrypt_param
         self.predict_param = copy.deepcopy(predict_param)
-        self.random_field = random_field
         self.decay = decay
         self.decay_sqrt = decay_sqrt
         self.multi_class = multi_class
-        self.validation_freqs = validation_freqs
-        self.early_stopping_rounds = early_stopping_rounds
-        self.metrics = metrics or []
-        self.use_first_metric_only = use_first_metric_only
         self.use_mix_rand = use_mix_rand
         self.reveal_strategy = reveal_strategy
-        self.compute_loss = compute_loss
         self.reveal_every_iter = reveal_every_iter
-        self.callback_param = copy.deepcopy(callback_param)
+        self.callback_param = callback_param
         self.cv_param = cv_param
 
     def check(self):
@@ -163,9 +132,10 @@ class LogisticRegressionParam(BaseParam):
                 raise ValueError(
                     "logistic_param's penalty not supported, penalty should be 'L1', 'L2' or 'none'")
             if not self.reveal_every_iter:
-                raise ValueError(
-                    f"When penalty is {self.penalty}, reveal_every_iter should be true."
-                )
+                if self.penalty not in [consts.L2_PENALTY]:
+                    raise ValueError(
+                        f"penalty should be 'L2' or 'none', when reveal_every_iter is False"
+                    )
 
         if not isinstance(self.tol, (int, float)):
             raise ValueError(
@@ -180,8 +150,17 @@ class LogisticRegressionParam(BaseParam):
                 "logistic_param's optimizer {} not supported, should be str type".format(self.optimizer))
         else:
             self.optimizer = self.optimizer.lower()
-            if self.optimizer not in ['sgd']:
-                raise ValueError("sshe logistic_param's optimizer support sgd only.")
+            if self.reveal_every_iter:
+                if self.optimizer not in ['sgd', 'rmsprop', 'adam', 'adagrad', 'nesterov_momentum_sgd']:
+                    raise ValueError(
+                        "When reveal_every_iter is True, "
+                        "sshe logistic_param's optimizer not supported, optimizer should be"
+                        " 'sgd', 'rmsprop', 'adam', 'nesterov_momentum_sgd', or 'adagrad'")
+            else:
+                if self.optimizer not in ['sgd', 'nesterov_momentum_sgd']:
+                    raise ValueError("When reveal_every_iter is False, "
+                                     "sshe logistic_param's optimizer not supported, optimizer should be"
+                                     " 'sgd', 'nesterov_momentum_sgd'")
 
         if self.batch_size != -1:
             if type(self.batch_size).__name__ not in ["int"] \
@@ -213,11 +192,6 @@ class LogisticRegressionParam(BaseParam):
                 raise ValueError(
                     "logistic_param's early_stop not supported, converge_func should be"
                     " 'diff', 'weight_diff' or 'abs'")
-            if self.early_stop in ["diff", 'abs'] and not self.compute_loss:
-                raise ValueError(f"sshe lr param early_stop: {self.early_stop} should calculate loss."
-                                 f"Please set 'compute_loss' to be True")
-            if self.early_stop == "weight_diff" and not self.reveal_every_iter:
-                raise ValueError(f"When early_stop strategy is weight_diff, weight should be revealed every iter.")
 
         self.encrypt_param.check()
         self.predict_param.check()
@@ -235,40 +209,39 @@ class LogisticRegressionParam(BaseParam):
                 "logistic_param's decay_sqrt {} not supported, should be 'bool'".format(
                     self.decay_sqrt))
 
-        if self.validation_freqs is not None:
-            if type(self.validation_freqs).__name__ not in ["int", "list", "tuple", "set"]:
+        if self.callback_param.validation_freqs is not None:
+            if type(self.callback_param.validation_freqs).__name__ not in ["int", "list", "tuple", "set"]:
                 raise ValueError(
-                    "validation strategy param's validate_freqs's type not supported , should be int or list or tuple or set"
+                    "validation strategy param's validate_freqs's type not supported ,"
+                    " should be int or list or tuple or set"
                 )
-            if type(self.validation_freqs).__name__ == "int" and self.validation_freqs <= 0:
+            if type(self.callback_param.validation_freqs).__name__ == "int" and \
+                    self.callback_param.validation_freqs <= 0:
                 raise ValueError("validation strategy param's validate_freqs should greater than 0")
-            if self.reveal_strategy == "all_reveal_in_guest":
-                raise ValueError(f"When reveal strategy is all_reveal_in_guest, validation every iter"
-                                 f" is not supported.")
             if self.reveal_every_iter is False:
-                raise ValueError(f"When reveal strategy is all_reveal_in_guest, reveal_every_iter "
-                                 f"should be True.")
+                raise ValueError(f"When reveal_every_iter is False, validation every iter"
+                                 f" is not supported.")
 
-        if self.early_stopping_rounds is None:
+        if self.callback_param.early_stopping_rounds is None:
             pass
-        elif isinstance(self.early_stopping_rounds, int):
-            if self.early_stopping_rounds < 1:
+        elif isinstance(self.callback_param.early_stopping_rounds, int):
+            if self.callback_param.early_stopping_rounds < 1:
                 raise ValueError("early stopping rounds should be larger than 0 when it's integer")
-            if self.validation_freqs is None:
+            if self.callback_param.validation_freqs is None:
                 raise ValueError("validation freqs must be set when early stopping is enabled")
 
-        if self.metrics is not None and not isinstance(self.metrics, list):
+        if self.callback_param.metrics is not None and \
+                not isinstance(self.callback_param.metrics, list):
             raise ValueError("metrics should be a list")
 
-        if not isinstance(self.use_first_metric_only, bool):
+        if not isinstance(self.callback_param.use_first_metric_only, bool):
             raise ValueError("use_first_metric_only should be a boolean")
 
         self.reveal_strategy = self.reveal_strategy.lower()
-        self.check_valid_value(self.reveal_strategy, descr, ["respectively", "all_reveal_in_guest"])
-        if not consts.ALLOW_REVEAL_GUEST_ONLY and self.reveal_strategy == "all_reveal_in_guest":
-            raise PermissionError("reveal strategy: all_reveal_in_guest has not been authorized.")
-        if self.reveal_strategy == "all_reveal_in_guest" and self.reveal_every_iter:
-            raise PermissionError("reveal strategy: all_reveal_in_guest mode is not allow to reveal every iter.")
+        self.check_valid_value(self.reveal_strategy, descr, ["respectively", "encrypted_reveal_in_host"])
+
+        if self.reveal_strategy == "encrypted_reveal_in_host" and self.reveal_every_iter:
+            raise PermissionError("reveal strategy: encrypted_reveal_in_host mode is not allow to reveal every iter.")
         self.check_boolean(self.reveal_every_iter, descr)
         self.callback_param.check()
         self.cv_param.check()
