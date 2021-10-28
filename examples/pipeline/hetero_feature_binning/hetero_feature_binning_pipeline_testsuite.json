@@ -155,6 +155,9 @@
         },
         "hetero-binning-multi-host-sparse-optimal": {
             "script": "pipeline-hetero-binning-multi-host-sparse-optimal.py"
+        },
+        "hetero-binning-missing-value": {
+            "script": "pipeline-hetero-binning-missing-value.py"
         }
     }
 }

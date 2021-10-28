@@ -21,7 +21,12 @@
         "role": {
             "host": {
                 "0": {
-                    "reader_1": {
+                    "hetero_feature_binning_0": {
+                        "transform_param": {
+                            "transform_type": null
+                        }
+                    },
+                    "reader_0": {
                         "table": {
                             "name": "breast_hetero_host",
                             "namespace": "experiment"
@@ -29,32 +34,19 @@
                     },
                     "dataio_0": {
                         "with_label": false
-                    },
-                    "reader_0": {
-                        "table": {
-                            "name": "breast_hetero_host",
-                            "namespace": "experiment"
-                        }
                     }
                 }
             },
             "guest": {
                 "0": {
-                    "reader_1": {
+                    "reader_0": {
                         "table": {
                             "name": "breast_hetero_guest",
                             "namespace": "experiment"
                         }
                     },
                     "dataio_0": {
-                        "with_label": true,
-                        "output_format": "dense"
-                    },
-                    "reader_0": {
-                        "table": {
-                            "name": "breast_hetero_guest",
-                            "namespace": "experiment"
-                        }
+                        "with_label": true
                     }
                 }
             }
@@ -72,17 +64,15 @@
                 "category_indexes": null,
                 "category_names": null,
                 "transform_param": {
-                    "transform_cols": -1,
+                    "transform_cols": [
+                        0,
+                        1,
+                        2
+                    ],
                     "transform_names": null,
-                    "transform_type": "bin_num"
+                    "transform_type": "woe"
                 },
-                "skip_static": true,
                 "local_only": false
-            },
-            "one_hot_encoder_0": {
-                "transform_col_indexes": -1,
-                "transform_col_names": [],
-                "need_run": true
             }
         }
     }
