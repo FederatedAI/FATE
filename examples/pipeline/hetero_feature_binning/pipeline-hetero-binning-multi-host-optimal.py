@@ -26,7 +26,6 @@ sys.path.append(cur_path)
 
 from examples.pipeline.hetero_feature_binning import common_tools
 from pipeline.utils.tools import load_job_config
-from pipeline.runtime.entity import JobParameters
 
 
 def main(config="../../config.yaml", namespace=""):
@@ -62,8 +61,7 @@ def main(config="../../config.yaml", namespace=""):
     }
     pipeline = common_tools.make_normal_dsl(config, namespace,
                                             is_multi_host=True, bin_param=param)
-    job_parameters = JobParameters()
-    pipeline.fit(job_parameters)
+    pipeline.fit()
     # common_tools.prettify(pipeline.get_component("hetero_feature_binning_0").get_summary())
 
 

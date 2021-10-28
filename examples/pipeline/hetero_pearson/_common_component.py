@@ -22,7 +22,6 @@ from pipeline.component.intersection import Intersection
 from pipeline.component.reader import Reader
 from pipeline.interface.data import Data
 from pipeline.utils.tools import load_job_config
-from pipeline.runtime.entity import JobParameters
 
 
 class dataset_meta(type):
@@ -100,8 +99,7 @@ def run_pearson_pipeline(
     )
 
     pipeline.compile()
-    job_parameters = JobParameters(work_mode=config.work_mode)
-    pipeline.fit(job_parameters)
+    pipeline.fit()
     return pipeline
 
 

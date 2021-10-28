@@ -23,7 +23,6 @@ from pipeline.component import HeteroLR
 from pipeline.component import Intersection
 from pipeline.component import Reader
 from pipeline.interface import Data
-from pipeline.runtime.entity import JobParameters
 
 
 def main():
@@ -91,8 +90,7 @@ def main():
     pipeline.compile()
 
     # fit model
-    job_parameters = JobParameters(work_mode=work_mode)
-    pipeline.fit(job_parameters)
+    pipeline.fit()
     # query component summary
     import json
     print (json.dumps(pipeline.get_component("hetero_lr_0").get_summary(), indent=4))
