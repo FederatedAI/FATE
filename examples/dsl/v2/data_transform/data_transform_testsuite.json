@@ -39,6 +39,22 @@
             "table_name": "tag_value_1000_140",
             "namespace": "experiment",
             "role": "host_0"
+        },
+                {
+            "file": "examples/data/svmlight_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "svmlight_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/svmlight_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "svmlight_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
         }
     ],
     "tasks": {
@@ -53,6 +69,10 @@
         "data_transform_tag_value": {
             "conf": "./test_data_transform_tag_value_conf.json",
             "dsl": "./test_data_transform_dsl.json"
+        },
+        "data_transform_svmlight": {
+            "conf": "./test_data_transform_tag_value_conf.json",
+            "dsl": "./test_data_transform_validate_dsl.json"
         }
     }
 }

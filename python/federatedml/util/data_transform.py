@@ -446,20 +446,22 @@ class SparseFeatureTransformer(object):
         self.label_name = data_transform_param.label_name
         self.with_match_id = data_transform_param.with_match_id
         self.match_id_name = "match_id" if self.with_match_id else None
+        self.with_label = data_transform_param.with_label
 
     def get_max_feature_index(self, line, delimitor=' '):
         if line.strip() == '':
             raise ValueError("find an empty line, please check!!!")
 
         cols = line.split(delimitor, -1)
+        offset = 0
         if self.with_match_id:
-            if len(cols) <= 2:
-                return -1
-            return max([int(fid_value.split(":", -1)[0]) for fid_value in cols[2:]])
-        else:
-            if len(cols) <= 1:
-                return -1
-            return max([int(fid_value.split(":", -1)[0]) for fid_value in cols[1:]])
+            offset += 1
+        if self.with_label:
+            offset += 1
+
+        if len(cols) <= offset:
+            return -1
+        return max([int(fid_value.split(":", -1)[0]) for fid_value in cols[offset:]])
 
     def generate_header(self, max_feature):
         self.header = [str(i) for i in range(max_feature + 1)]
@@ -494,7 +496,7 @@ class SparseFeatureTransformer(object):
         return data_instance
 
     def transform(self, input_data):
-        max_feature = len(self.header)
+        max_feature = len(self.header) - 1
 
         data_instance = self.gen_data_instance(input_data, max_feature)
         return data_instance
@@ -529,7 +531,6 @@ class SparseFeatureTransformer(object):
             next_idx = 1
         else:
             match_id = None
-
 
         label = None
         if with_label:
@@ -583,6 +584,7 @@ class SparseFeatureTransformer(object):
                                                                     sid_name=self.sid_name,
                                                                     label_name=self.label_name,
                                                                     with_match_id=self.with_match_id,
+                                                                    with_label=self.with_label,
                                                                     model_name="SparseFeatureTransformer")
 
         missing_imputer_meta, missing_imputer_param = save_missing_imputer_model(missing_fill=False,
@@ -601,7 +603,7 @@ class SparseFeatureTransformer(object):
                 }
 
     def load_model(self, model_meta, model_param):
-        self.delimitor, self.data_type, _0, _1, _2, _3, \
+        self.delimitor, self.data_type, _0, _1, _2, self.with_label, \
         self.label_type, self.output_format, self.header, self.sid_name, self.label_name, self.with_match_id = \
             load_data_transform_model(
                 "SparseFeatureTransformer",
