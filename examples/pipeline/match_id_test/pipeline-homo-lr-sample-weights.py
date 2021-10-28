@@ -25,7 +25,6 @@ from pipeline.component import HomoLR
 from pipeline.component import Reader
 from pipeline.component import FeatureScale
 from pipeline.interface import Data
-from pipeline.runtime.entity import JobParameters
 from pipeline.utils.tools import load_job_config
 
 

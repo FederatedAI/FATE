@@ -24,7 +24,6 @@ from pipeline.component import Intersection
 from pipeline.component import Reader
 from pipeline.interface import Data
 from pipeline.interface import Model
-from pipeline.runtime.entity import JobParameters
 from pipeline.utils.tools import load_job_config
 
 

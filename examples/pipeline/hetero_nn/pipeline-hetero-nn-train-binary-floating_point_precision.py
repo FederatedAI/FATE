@@ -16,7 +16,6 @@
 
 import argparse
 
-from pipeline.runtime.entity import JobParameters
 from tensorflow.keras import initializers
 from tensorflow.keras import optimizers
 from tensorflow.keras.layers import Dense

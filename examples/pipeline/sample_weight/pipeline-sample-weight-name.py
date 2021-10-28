@@ -27,7 +27,6 @@ from pipeline.component import FeatureScale
 from pipeline.interface import Data
 
 from pipeline.utils.tools import load_job_config
-from pipeline.runtime.entity import JobParameters
 
 
 def main(config="../../config.yaml", namespace=""):

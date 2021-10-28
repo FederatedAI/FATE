@@ -29,7 +29,6 @@ from pipeline.component import Intersection
 from pipeline.component import Reader
 from pipeline.interface import Data
 from pipeline.interface import Model
-from pipeline.runtime.entity import JobParameters
 
 
 def main(config="../../config.yaml", namespace=""):

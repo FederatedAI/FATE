@@ -16,7 +16,6 @@
 
 import argparse
 
-from pipeline.runtime.entity import JobParameters
 
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component import DataTransform

@@ -50,7 +50,7 @@ def main(config="../../config.yaml", namespace=""):
                                     head=0, partition=partition,
                                     id_delimiter=",")
     # upload both data
-    pipeline_upload.upload(work_mode=work_mode, backend=backend, drop=1)
+    pipeline_upload.upload(drop=1)
 
 
 if __name__ == "__main__":

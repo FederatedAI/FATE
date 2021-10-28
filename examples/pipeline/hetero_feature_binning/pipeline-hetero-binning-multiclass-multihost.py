@@ -26,7 +26,6 @@ from pipeline.component.intersection import Intersection
 from pipeline.component.hetero_feature_binning import HeteroFeatureBinning
 
 from pipeline.utils.tools import load_job_config
-from pipeline.runtime.entity import JobParameters
 
 
 def main(config="../../config.yaml", namespace=""):
@@ -104,7 +103,6 @@ def main(config="../../config.yaml", namespace=""):
                            model=Model(hetero_feature_binning_0.output.model))
 
     pipeline.compile()
-    job_parameters = JobParameters()
     pipeline.fit()
 
     # predict

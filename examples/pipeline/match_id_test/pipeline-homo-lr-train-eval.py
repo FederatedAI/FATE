@@ -25,7 +25,6 @@ from pipeline.component import FeatureScale
 from pipeline.interface import Data
 from pipeline.interface import Model
 from pipeline.utils.tools import load_job_config
-from pipeline.runtime.entity import JobParameters
 import json
 
 

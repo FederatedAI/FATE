@@ -25,7 +25,6 @@ from pipeline.component.evaluation import Evaluation
 from pipeline.interface.model import Model
 
 from pipeline.utils.tools import load_job_config
-from pipeline.runtime.entity import JobParameters
 
 
 def main(config="../../config.yaml", namespace=""):

@@ -25,7 +25,6 @@ from pipeline.component.reader import Reader
 from pipeline.interface.data import Data
 from pipeline.interface.model import Model
 from pipeline.component.data_statistics import DataStatistics
-from pipeline.runtime.entity import JobParameters
 from pipeline.utils.tools import load_job_config
 
 

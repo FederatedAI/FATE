@@ -52,7 +52,7 @@ def main(config="../../config.yaml", namespace=""):
                                     id_delimiter=",",
                                     extend_sid=True)
     # upload both data
-    pipeline_upload.upload(work_mode=work_mode, backend=backend, drop=1)
+    pipeline_upload.upload(drop=1)
 
 
 if __name__ == "__main__":

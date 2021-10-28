@@ -22,7 +22,6 @@ from pipeline.component.dataio import DataIO
 from pipeline.component.homo_feature_binning import HomoFeatureBinning
 from pipeline.component.reader import Reader
 from pipeline.interface.data import Data
-from pipeline.runtime.entity import JobParameters
 from pipeline.utils.tools import load_job_config
 
 

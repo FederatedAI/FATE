@@ -26,7 +26,6 @@ sys.path.append(cur_path)
 
 from examples.pipeline.hetero_feature_binning import common_tools
 from pipeline.utils.tools import load_job_config
-from pipeline.runtime.entity import JobParameters
 import copy
 
 
@@ -68,7 +67,6 @@ def main(config="../../config.yaml", namespace=""):
     host_param["method"] = 'optimal'
     pipeline = common_tools.make_asymmetric_dsl(config, namespace, guest_param=guest_param,
                                                 host_param=host_param)
-    job_parameters = JobParameters()
     pipeline.fit()
     # common_tools.prettify(pipeline.get_component("hetero_feature_binning_0").get_summary())
 

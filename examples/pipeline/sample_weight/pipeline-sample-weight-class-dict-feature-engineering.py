@@ -29,7 +29,6 @@ from pipeline.component import Reader
 from pipeline.interface import Data, Model
 
 from pipeline.utils.tools import load_job_config
-from pipeline.runtime.entity import JobParameters
 
 
 def main(config="../../config.yaml", namespace=""):
