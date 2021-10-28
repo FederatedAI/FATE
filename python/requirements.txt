@@ -1,4 +1,4 @@
-apsw==3.9.2.post1
+apsw<3.10
 beautifultable==1.0.0
 cachetools==3.0.0
 cloudpickle==0.6.1
@@ -50,8 +50,8 @@ numba==0.50.0
 llvmlite==0.33.0
 phe>=1.4.0
 protobuf>=3.6.1
-pyarrow==0.17.1
-mmh3=3.0.0
+pyarrow==2.0.0
+mmh3==3.0.0
 
 # addtional requirements for fate-client
 click>=7.1.2,<8.0.0
