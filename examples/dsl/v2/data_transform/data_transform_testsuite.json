@@ -40,7 +40,7 @@
             "namespace": "experiment",
             "role": "host_0"
         },
-                {
+        {
             "file": "examples/data/svmlight_host.csv",
             "head": 1,
             "partition": 16,
