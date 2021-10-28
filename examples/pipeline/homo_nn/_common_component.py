@@ -93,7 +93,7 @@ def run_homo_nn_pipeline(config, namespace, data: dict, nn_component, num_host):
     pipeline.add_component(nn_component, data=Data(train_data=dataio_0.output.data))
     pipeline.compile()
     job_parameters = JobParameters(work_mode=config.work_mode)
-    pipeline.fit(job_parameters)
+    pipeline.fit()
     print(pipeline.get_component("homo_nn_0").get_summary())
     pipeline.deploy_component([dataio_0, nn_component])
 

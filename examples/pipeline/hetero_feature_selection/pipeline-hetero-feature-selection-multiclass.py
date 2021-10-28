@@ -39,7 +39,6 @@ def main(config="../../config.yaml", namespace=""):
     guest = parties.guest[0]
     host = parties.host[0]
 
-    work_mode = config.work_mode
 
     guest_train_data = {"name": "vehicle_scale_hetero_guest", "namespace": f"experiment{namespace}"}
     guest_validate_data = {"name": "vehicle_scale_hetero_guest", "namespace": f"experiment{namespace}"}
@@ -122,8 +121,7 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.add_component(hetero_feature_selection_1, data=Data(data=hetero_feature_binning_1.output.data),
                            model=Model(hetero_feature_selection_0.output.model))
     pipeline.compile()
-    job_parameters = JobParameters(work_mode=work_mode)
-    pipeline.fit(job_parameters)
+    pipeline.fit()
 
     # predict
     # deploy required components

@@ -145,10 +145,8 @@ def main(config="../../config.yaml", namespace=""):
     # obtain config
     if isinstance(config, str):
         config = load_job_config(config)
-    work_mode = config.work_mode
     pipeline = make_normal_dsl(config, namespace)
-    job_parameters = JobParameters(work_mode=work_mode)
-    pipeline.fit(job_parameters)
+    pipeline.fit()
     common_tools.prettify(pipeline.get_component("hetero_feature_selection_0").get_summary())
     common_tools.prettify(pipeline.get_component("evaluation_0").get_summary())
 

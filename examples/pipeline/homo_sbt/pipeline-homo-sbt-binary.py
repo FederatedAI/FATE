@@ -39,7 +39,6 @@ def main(config="../../config.yaml", namespace=""):
     host = parties.host[0]
     arbiter = parties.arbiter[0]
 
-    work_mode = config.work_mode
 
     guest_train_data = {"name": "breast_homo_guest", "namespace": f"experiment{namespace}"}
     guest_validate_data = {"name": "breast_homo_test", "namespace": f"experiment{namespace}"}
@@ -84,8 +83,7 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.add_component(evaluation_0, data=Data(homo_secureboost_0.output.data))
 
     pipeline.compile()
-    job_parameters = JobParameters(work_mode=work_mode)
-    pipeline.fit(job_parameters)
+    pipeline.fit()
 
 
 if __name__ == "__main__":

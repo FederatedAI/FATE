@@ -34,7 +34,6 @@ def main(config="../../config.yaml", namespace=""):
     # obtain config
     if isinstance(config, str):
         config = load_job_config(config)
-    work_mode = config.work_mode
 
     param = {
         "method": "quantile",
@@ -69,8 +68,8 @@ def main(config="../../config.yaml", namespace=""):
     host_param["method"] = 'optimal'
     pipeline = common_tools.make_asymmetric_dsl(config, namespace, guest_param=guest_param,
                                                 host_param=host_param)
-    job_parameters = JobParameters(work_mode=work_mode)
-    pipeline.fit(job_parameters)
+    job_parameters = JobParameters()
+    pipeline.fit()
     # common_tools.prettify(pipeline.get_component("hetero_feature_binning_0").get_summary())
 
 
