@@ -134,7 +134,7 @@ class HeteroLRHost(HeteroLRBase):
         if self.review_every_iter:
             loss_norm = self.optimizer.loss_norm(weights)
             if loss_norm:
-                share_loss += loss_norm/3.0
+                share_loss += loss_norm
             LOGGER.debug(f"share_loss+loss_norm: {share_loss}")
             share_loss.broadcast_reconstruct_share(tensor_name=f"share_loss_{suffix}")
         else:

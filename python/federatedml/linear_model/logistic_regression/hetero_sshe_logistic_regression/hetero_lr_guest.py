@@ -157,11 +157,8 @@ class HeteroLRGuest(HeteroLRBase):
 
         LOGGER.debug(f"wx_square: {wx_square}")
 
-        loss = np.hstack((wx.value, ywx.value, wx_square.value))
-
         batch_num = self.batch_num[int(suffix[2])]
-        loss = loss * (-1 / batch_num) - np.log(0.5)
-        loss = fixedpoint_numpy.PaillierFixedPointTensor(loss)
+        loss = (wx + ywx + wx_square) * (-1 / batch_num) - np.log(0.5)
 
         LOGGER.debug(f"loss: {loss}")
 
@@ -173,9 +170,8 @@ class HeteroLRGuest(HeteroLRBase):
                                               encoder=self.fixedpoint_encoder)
 
         loss = share_loss.get(tensor_name=f"share_loss_{suffix}",
-                              broadcast=False)
+                              broadcast=False)[0]
         LOGGER.debug(f"share_loss.get: {loss}")
-        loss = np.sum(loss)
 
         if self.review_every_iter:
             loss_norm = self.optimizer.loss_norm(weights)
