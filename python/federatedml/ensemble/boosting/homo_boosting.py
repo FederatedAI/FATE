@@ -145,6 +145,8 @@ class HomoBoostingClient(Boosting, ABC):
         # sync start round and end round
         self.sync_start_round_and_end_round()
 
+        self.preprocess()
+
         LOGGER.info('begin to fit a boosting tree')
         for epoch_idx in range(self.start_round, self.boosting_round):
 
@@ -180,6 +182,7 @@ class HomoBoostingClient(Boosting, ABC):
                     LOGGER.info('n_iter_no_change stop triggered')
                     break
 
+        self.post_process()
         self.callback_list.on_train_end()
         self.set_summary(self.generate_summary())
 
@@ -251,6 +254,7 @@ class HomoBoostingArbiter(Boosting, ABC):
         self.sync_start_round_and_end_round()
 
         LOGGER.info('begin to fit a boosting tree')
+        self.preprocess()
         for epoch_idx in range(self.start_round, self.boosting_round):
 
             LOGGER.info('cur epoch idx is {}'.format(epoch_idx))
@@ -278,7 +282,7 @@ class HomoBoostingArbiter(Boosting, ABC):
                            MetricMeta(name="train",
                                       metric_type="LOSS",
                                       extra_metas={"Best": min(self.history_loss)}))
-
+        self.post_process()
         self.callback_list.on_train_end()
         self.set_summary(self.generate_summary())
 

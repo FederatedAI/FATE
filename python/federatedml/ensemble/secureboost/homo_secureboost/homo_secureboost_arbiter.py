@@ -1,6 +1,7 @@
 import numpy as np
 from numpy import random
 from federatedml.util import LOGGER
+from federatedml.util import consts
 from federatedml.ensemble.boosting.homo_boosting import HomoBoostingArbiter
 from federatedml.param.boosting_param import HomoSecureBoostParam
 from federatedml.ensemble.basic_algorithms.decision_tree.homo.homo_decision_tree_arbiter import HomoDecisionTreeArbiter
@@ -19,11 +20,14 @@ class HomoSecureBoostingTreeArbiter(HomoBoostingArbiter):
         self.feature_importances_ = {}
         self.model_param = HomoSecureBoostParam()
 
+        self.multi_mode = consts.SINGLE_OUTPUT
+
     def _init_model(self, boosting_param: HomoSecureBoostParam):
         super(HomoSecureBoostingTreeArbiter, self)._init_model(boosting_param)
         self.use_missing = boosting_param.use_missing
         self.zero_as_missing = boosting_param.zero_as_missing
         self.tree_param = boosting_param.tree_param
+        self.multi_mode = boosting_param.multi_mode
         if self.use_missing:
             self.tree_param.use_missing = self.use_missing
             self.tree_param.zero_as_missing = self.zero_as_missing
@@ -41,6 +45,10 @@ class HomoSecureBoostingTreeArbiter(HomoBoostingArbiter):
             valid_features[fid] = True
 
         return valid_features
+
+    def preprocess(self):
+        if self.multi_mode == consts.MULTI_OUTPUT:
+            self.booster_dim = 1
 
     def fit_a_learner(self, epoch_idx: int, booster_dim: int):
 

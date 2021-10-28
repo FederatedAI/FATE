@@ -185,6 +185,11 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
         self.bin_arr = np.asfortranarray(np.stack(bin_arr, axis=0).astype(np.uint8))
         self.sample_id_arr = np.array(id_list)
 
+    def preprocess(self):
+
+        if self.multi_mode == consts.MULTI_OUTPUT:
+            self.booster_dim = 1
+
     def fit_a_learner(self, epoch_idx: int, booster_dim: int):
 
         valid_features = self.get_valid_features(epoch_idx, booster_dim)
