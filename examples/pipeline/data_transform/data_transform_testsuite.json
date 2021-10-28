@@ -39,6 +39,22 @@
             "table_name": "tag_value_1000_140",
             "namespace": "experiment",
             "role": "host_0"
+        },
+        {
+            "file": "examples/data/svmlight_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "svmlight_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/svmlight_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "svmlight_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
         }
     ],
     "pipeline_tasks": {
@@ -50,6 +66,9 @@
         },
         "data_transform_tag_value": {
             "script": "pipeline-data-transform-tag-value.py"
+        },
+        "data_transform_svmlight": {
+            "script": "pipeline-data-transform-svmlight.py"
         }
     }
 }
