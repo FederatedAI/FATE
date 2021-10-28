@@ -112,7 +112,7 @@ def main(config="../../config.yaml", namespace=""):
 
     pipeline.compile()
     job_parameters = JobParameters()
-    pipeline.fit(job_parameters)
+    pipeline.fit()
 
     # predict
     # deploy required components

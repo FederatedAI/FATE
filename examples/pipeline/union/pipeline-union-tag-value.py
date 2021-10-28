@@ -32,7 +32,6 @@ def main(config="../../config.yaml", namespace=""):
         config = load_job_config(config)
     parties = config.parties
     guest = parties.guest[0]
-    work_mode = config.work_mode
 
     guest_train_data = [{"name": "tag_value_1", "namespace": f"experiment{namespace}"},
                         {"name": "tag_value_2", "namespace": f"experiment{namespace}"},
@@ -62,8 +61,7 @@ def main(config="../../config.yaml", namespace=""):
 
     pipeline.compile()
 
-    job_parameters = JobParameters(work_mode=work_mode)
-    pipeline.fit(job_parameters)
+    pipeline.fit()
 
 
 if __name__ == "__main__":

@@ -84,7 +84,7 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.compile()
 
     job_parameters = JobParameters()
-    pipeline.fit(job_parameters)
+    pipeline.fit()
 
     pipeline.deploy_component([dataio_0, intersection_0, hetero_feature_binning_0])
 

@@ -41,7 +41,6 @@ def main(config="../../config.yaml", namespace=""):
     if isinstance(config, str):
         config = load_job_config(config)
     backend = config.backend
-    work_mode = config.work_mode
     parties = config.parties
     guest = parties.guest[0]
     hosts = parties.host[0]
@@ -125,7 +124,7 @@ def main(config="../../config.yaml", namespace=""):
 
     # fit model
     job_parameters = JobParameters(backend=backend, work_mode=work_mode)
-    pipeline.fit(job_parameters)
+    pipeline.fit()
     # query component summary
     prettify(pipeline.get_component("hetero_sshe_lr_0").get_summary())
     prettify(pipeline.get_component("evaluation_0").get_summary())

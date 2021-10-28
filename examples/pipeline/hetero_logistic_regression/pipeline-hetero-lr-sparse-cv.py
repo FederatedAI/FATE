@@ -34,7 +34,6 @@ def main(config="../../config.yaml", namespace=""):
     # obtain config
     if isinstance(config, str):
         config = load_job_config(config)
-    work_mode = config.work_mode
 
     lr_param = {
         "name": "hetero_lr_0",
@@ -60,8 +59,7 @@ def main(config="../../config.yaml", namespace=""):
     pipeline = common_tools.make_normal_dsl(config, namespace, lr_param, is_dense=False,
                                             need_evaluation=False)
     # fit model
-    job_parameters = JobParameters(work_mode=work_mode)
-    pipeline.fit(job_parameters)
+    pipeline.fit()
     # query component summary
     common_tools.prettify(pipeline.get_component("hetero_lr_0").get_summary())
 

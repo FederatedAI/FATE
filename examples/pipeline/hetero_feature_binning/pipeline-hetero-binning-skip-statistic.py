@@ -55,7 +55,7 @@ def main(config="../../config.yaml", namespace=""):
     }
     pipeline = common_tools.make_add_one_hot_dsl(config, namespace, param)
     job_parameters = JobParameters()
-    pipeline.fit(job_parameters)
+    pipeline.fit()
     # common_tools.prettify(pipeline.get_component("hetero_feature_binning_0").get_summary())
 
 

@@ -33,7 +33,6 @@ def main(config="../../config.yaml", namespace=""):
     # obtain config
     if isinstance(config, str):
         config = load_job_config(config)
-    work_mode = config.work_mode
 
     fast_sbt_param = {
         "name": "fast_secureboost_0",
@@ -75,8 +74,7 @@ def main(config="../../config.yaml", namespace=""):
         }}
     pipeline = common_tools.make_normal_dsl(config, namespace, selection_param,
                                             fast_sbt_param=fast_sbt_param)
-    job_parameters = JobParameters(work_mode=work_mode)
-    pipeline.fit(job_parameters)
+    pipeline.fit()
     common_tools.prettify(pipeline.get_component("hetero_feature_selection_0").get_summary())
 
 

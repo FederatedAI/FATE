@@ -36,7 +36,6 @@ def main(config="../../config.yaml", namespace=""):
     guest = parties.guest[0]
     host = parties.host[0]
     arbiter = parties.arbiter[0]
-    work_mode = config.work_mode
 
     guest_train_data = {"name": "breast_homo_guest", "namespace": f"experiment{namespace}"}
     host_train_data = {"name": "breast_homo_host", "namespace": f"experiment{namespace}"}
@@ -100,8 +99,7 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.compile()
 
     # fit model
-    job_parameters = JobParameters(work_mode=work_mode)
-    pipeline.fit(job_parameters)
+    pipeline.fit()
 
     deploy_components = [data_transform_0, scale_0, homo_lr_0]
     pipeline.deploy_component(components=deploy_components)
