@@ -21,6 +21,10 @@
         "role": {
             "guest": {
                 "0": {
+                    "dataio_0": {
+                        "with_label": true,
+                        "output_format": "dense"
+                    },
                     "reader_0": {
                         "table": {
                             "name": "breast_hetero_guest",
@@ -56,15 +60,15 @@
                             "init_bin_nums": 100,
                             "mixture": true
                         }
-                    },
-                    "dataio_0": {
-                        "with_label": true,
-                        "output_format": "dense"
                     }
                 }
             },
             "host": {
                 "0": {
+                    "dataio_0": {
+                        "with_label": false,
+                        "output_format": "dense"
+                    },
                     "reader_0": {
                         "table": {
                             "name": "breast_hetero_host",
@@ -100,10 +104,6 @@
                             "init_bin_nums": 100,
                             "mixture": true
                         }
-                    },
-                    "dataio_0": {
-                        "with_label": false,
-                        "output_format": "dense"
                     }
                 }
             }

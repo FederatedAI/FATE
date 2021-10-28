@@ -33,7 +33,6 @@ def main(config="../../config.yaml", namespace=""):
     # obtain config
     if isinstance(config, str):
         config = load_job_config(config)
-    work_mode = config.work_mode
     param = {
         "name": "hetero_feature_binning_0",
         "method": "optimal",
@@ -60,7 +59,7 @@ def main(config="../../config.yaml", namespace=""):
         }
     }
     pipeline = common_tools.make_normal_dsl(config, namespace, param, dataset='default_credit')
-    job_parameters = JobParameters(work_mode=work_mode)
+    job_parameters = JobParameters()
     pipeline.fit(job_parameters)
     # common_tools.prettify(pipeline.get_component("hetero_feature_binning_0").get_summary())
 

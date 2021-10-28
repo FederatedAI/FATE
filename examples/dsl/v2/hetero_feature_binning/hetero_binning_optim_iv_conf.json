@@ -19,20 +19,6 @@
     },
     "component_parameters": {
         "role": {
-            "guest": {
-                "0": {
-                    "dataio_0": {
-                        "with_label": true,
-                        "output_format": "dense"
-                    },
-                    "reader_0": {
-                        "table": {
-                            "name": "default_credit_hetero_guest",
-                            "namespace": "experiment"
-                        }
-                    }
-                }
-            },
             "host": {
                 "0": {
                     "dataio_0": {
@@ -42,6 +28,20 @@
                     "reader_0": {
                         "table": {
                             "name": "default_credit_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    }
+                }
+            },
+            "guest": {
+                "0": {
+                    "dataio_0": {
+                        "with_label": true,
+                        "output_format": "dense"
+                    },
+                    "reader_0": {
+                        "table": {
+                            "name": "default_credit_hetero_guest",
                             "namespace": "experiment"
                         }
                     }

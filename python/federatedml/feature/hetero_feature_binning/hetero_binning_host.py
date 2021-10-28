@@ -39,6 +39,12 @@ class HeteroFeatureBinningHost(BaseFeatureBinning):
         # self._parse_cols(data_instances)
         self._setup_bin_inner_param(data_instances, self.model_param)
 
+        if self.model_param.method == consts.OPTIMAL:
+            has_missing_value = self.iv_calculator.check_containing_missing_value(data_instances)
+            for idx in self.bin_inner_param.bin_indexes:
+                if idx in has_missing_value:
+                    raise ValueError(f"Optimal Binning do not support missing value now.")
+
         # Calculates split points of datas in self party
         split_points = self.binning_obj.fit_split_points(data_instances)
         if self.model_param.skip_static:
