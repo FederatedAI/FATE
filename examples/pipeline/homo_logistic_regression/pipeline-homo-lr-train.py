@@ -111,7 +111,7 @@ def main(config="../../config.yaml", namespace=""):
     predict_pipeline.add_component(pipeline,
                                    data=Data(predict_input={pipeline.data_transform_0.input.data: reader_0.output.data}))
     predict_pipeline.compile()
-    predict_pipeline.predict(job_parameters)
+    predict_pipeline.predict()
 
     dsl_json = predict_pipeline.get_predict_dsl()
     conf_json = predict_pipeline.get_predict_conf()

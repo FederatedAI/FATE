@@ -122,7 +122,7 @@ def main():
     # add evaluation component to predict pipeline
     predict_pipeline.add_component(evaluation_0, data=Data(data=pipeline.hetero_lr_0.output.data))
     # run predict model
-    predict_pipeline.predict(job_parameters)
+    predict_pipeline.predict()
 
 
 if __name__ == "__main__":

@@ -109,7 +109,7 @@ def main(config="../../config.yaml", namespace=""):
                                    data=Data(predict_input={pipeline.data_transform_0.input.data: reader_0.output.data}))
 
     # run predict model
-    predict_pipeline.predict(job_parameters)
+    predict_pipeline.predict()
 
 
 if __name__ == "__main__":

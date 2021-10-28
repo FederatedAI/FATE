@@ -89,7 +89,7 @@ def main(config="../../config.yaml", namespace=""):
     predict_pipeline.add_component(pipeline,
                                    data=Data(predict_input={pipeline.data_transform_0.input.data: reader_0.output.data}))
     # run predict model
-    predict_pipeline.predict(job_parameters)
+    predict_pipeline.predict()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("PIPELINE DEMO")
