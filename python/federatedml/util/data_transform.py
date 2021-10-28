@@ -502,7 +502,7 @@ class SparseFeatureTransformer(object):
     def gen_data_instance(self, input_data, max_feature):
         params = [self.delimitor, self.data_type,
                   self.label_type, self.with_match_id,
-                  self.output_format, max_feature]
+                  self.output_format, self.with_label, max_feature]
 
         to_instance_with_param = functools.partial(self.to_instance, params)
         data_instance = input_data.mapValues(to_instance_with_param)
@@ -516,7 +516,8 @@ class SparseFeatureTransformer(object):
         label_type = param_list[2]
         with_match_id = param_list[3]
         output_format = param_list[4]
-        max_fid = param_list[5]
+        with_label = param_list[5]
+        max_fid = param_list[6]
 
         if output_format not in ["dense", "sparse"]:
             raise ValueError("output format {} is not define".format(output_format))
@@ -529,13 +530,15 @@ class SparseFeatureTransformer(object):
         else:
             match_id = None
 
-        label = cols[next_idx]
-        if label_type == 'int':
-            label = int(label)
-        elif label_type in ["float", "float64"]:
-            label = float(label)
 
-        next_idx += 1
+        label = None
+        if with_label:
+            label = cols[next_idx]
+            if label_type == 'int':
+                label = int(label)
+            elif label_type in ["float", "float64"]:
+                label = float(label)
+            next_idx += 1
 
         fid_value = []
         for i in range(next_idx, len(cols)):
