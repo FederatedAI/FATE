@@ -450,6 +450,18 @@ class FeatureSelectionParam(BaseParam):
         "top_k" and "top_percentile" are accepted. Check more details in CommonFilterParam. To
         use this filter, hetero-feature-binning module has to be provided.
 
+        Besides, multi-class iv filter is available if multi-class iv has been calculated in upstream component.
+         There are three mechanisms to select features.
+         Please remind that there exist as many ivs calculated as the number of labels
+          since we use one-vs-rest for multi-class cases.
+
+        Setting different mul_class_merge_type to choose the mechanism used in multi-class cases.
+        * "min": take the minimum iv among all results.
+        * "max": take the maximum ones
+        * "average": take the average among all results.
+        After that, we get unique one iv for each column so that
+        we can use the three mechanism mentioned above to select features.
+
     statistic_param: Setting how to filter base on statistic values. All of "threshold",
         "top_k" and "top_percentile" are accepted. Check more details in CommonFilterParam.
         To use this filter, data_statistic module has to be provided.
