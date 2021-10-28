@@ -27,9 +27,13 @@ Coefficient calculation. For more details, one can refer
 Param
 -----
 
-::: {.automodule}
-federatedml.param.pearson\_param
-:::
+::: federatedml.param.pearson_param
+    rendering:
+      heading_level: 3
+      show_source: true
+      show_root_heading: true
+      show_root_toc_entry: false
+      show_root_full_path: false
 
 How to Use
 ----------
@@ -48,14 +52,10 @@ column\_names
 
 :   names of columns use for calculation.
 
-> ::: {.note}
-> ::: {.admonition-title}
-> Note
-> :::
->
+:memo: NOTE 
 > if both params are provided, the union of columns indicated are used
 > for calculation.
-> :::
+
 
 examples
 

@@ -38,6 +38,11 @@ and clustering. Available metrics include:
 Param
 -----
 
-::: {.automodule}
-federatedml.param.evaluation\_param
-:::
+::: federatedml.param.evaluation_param
+    rendering:
+      heading_level: 3
+      show_source: true
+      show_root_heading: true
+      show_root_toc_entry: false
+      show_root_full_path: false
+

@@ -262,9 +262,14 @@ Homo SecureBoost supports the following applications:
 
 ### Param
 
-::: {.automodule}
-federatedml.param.boosting\_param
-:::
+::: federatedml.param.boosting_param
+    rendering:
+      heading_level: 3
+      show_source: true
+      show_root_heading: true
+      show_root_toc_entry: false
+      show_root_full_path: false
+
 
 Hetero Complete Secureboost
 \-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\--

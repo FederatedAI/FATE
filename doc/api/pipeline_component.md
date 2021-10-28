@@ -187,10 +187,7 @@ pipeline.add_component(hetero_feature_selection_0,
                        isometric_model=Model(hetero_feature_binning_0.output.model))
 ```
 
-::: {.warning}
-::: {.admonition-title}
-Warning
-:::
+:memo: NOTE 
 
 Please note that when using [stepwise]{.title-ref} or [cross
 validation]{.title-ref} method, components do not have `model` output.
@@ -420,7 +417,7 @@ Below lists input and output elements of each component.
                                                                                                                missing features using                                                       
                                                                                                                arbitrary methods/values                                                     
 
-  [Label Transform](:%20./federatedml/util.md)                         Label Transform          This component replaces      data              data             model        model
+  [Label Transform](./federatedml/util.md)                         Label Transform          This component replaces      data              data             model        model
                                                                                                                label with designated values                                                 
   ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -429,6 +426,11 @@ Below lists input and output elements of each component.
 Params
 ------
 
-::: {.automodule}
-pipeline/param
-:::
+::: federatedml.param
+    rendering:
+      heading_level: 3
+      show_source: true
+      show_root_heading: true
+      show_root_toc_entry: false
+      show_root_full_path: false
+

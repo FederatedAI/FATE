@@ -192,14 +192,11 @@ class name is LogisticParam.
 This step is needed only when this module is federated, which means
 there exists information interaction between different parties.
 
-::: {.note}
-::: {.admonition-title}
-Note
-:::
+:memo: NOTE
 
 this json file should be put under the folder
 [transfer\_class](../python/federatedml/transfer_variable/transfer_class)
-:::
+
 
 In this python file, you would need to create a \"transfer\_variable\"
 class and inherit the BaseTransferVariables class. Then, define each
@@ -423,14 +420,10 @@ modeling task.
     flow data upload -c upload_data.json
     ```
 
-    ::: {.note}
-    ::: {.admonition-title}
-    Note
-    :::
+    :memo: NOTE
 
     This step is needed for every data-provide node(i.e. Guest and
     Host).
-    :::
 
 2. Start your modeling task
 

@@ -148,9 +148,13 @@ Part III
 Param
 -----
 
-::: {.automodule}
-federatedml.param.hetero\_nn\_param
-:::
+::: federatedml.param.hetero_nn_param
+    rendering:
+      heading_level: 3
+      show_source: true
+      show_root_heading: true
+      show_root_toc_entry: false
+      show_root_full_path: false
 
 Other features
 --------------

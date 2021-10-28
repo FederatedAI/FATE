@@ -4,7 +4,7 @@
   <img src="./doc/images/FATE_logo.png">
 </div>
 
-[DOC](./doc) | [Quick Start](doc/tutorial/pipeline/pipeline_guide.rst) | [English](./README.md)
+[DOC](./doc) | [Quick Start](doc/tutorial/pipeline/pipeline_guide.md) | [English](./README.md)
 
 FATE (Federated AI Technology Enabler) 是微众银行AI部门发起的开源项目，为联邦学习生态系统提供了可靠的安全计算框架。
 FATE项目使用多方安全计算 (MPC) 以及同态加密 (HE) 技术构建底层安全计算协议，以此支持不同种类的机器学习的安全计算，
@@ -27,8 +27,8 @@ FATE官方网站：<https://fate.fedai.org/>
 
 ### 快速开始
 - [单元测试](./python/federatedml/test/)
-- [使用FATE-PipeLine启动任务](./doc/tutorial/pipeline/fate_client_pipeline_tutotial.rst)
-- [使用DSL json conf启动任务](./doc/tutorial/dsl_conf/dsl_conf_v2_setting_guide.rst)
+- [使用FATE-PipeLine启动任务](./doc/tutorial/pipeline/fate_client_pipeline_tutotial.md)
+- [使用DSL json conf启动任务](./doc/tutorial/dsl_conf/dsl_conf_v2_setting_guide.md)
 - [在Jupyter Notebook使用FATE-Pipeline](./doc/tutorial/pipeline/pipeline_tutorial_0.ipynb)
 
 ## 文档
@@ -36,7 +36,7 @@ FATE官方网站：<https://fate.fedai.org/>
 ### 理解FATE设计
 
 - [FATE structure]
-- [组件](./doc/api/federatedml/federatedml_module.rst)
+- [组件](./doc/api/federatedml/federatedml_module.md)
 - [算法参数](./python/federatedml/param)
 - [论文与资料](./doc/resources)
 
@@ -49,17 +49,17 @@ FATE官方网站：<https://fate.fedai.org/>
 
 ### 贡献代码
 
-- [开发指南](./doc/community/develop_guide.rst)
-- [FATE-Client开发指南](./doc/community/fate_client_develop_guide.rst)
+- [开发指南](./doc/community/develop_guide.md)
+- [FATE-Client开发指南](./doc/community/fate_client_develop_guide.md)
 
 ### API文档
 
-- [Computing API](https://fate.readthedocs.io/en/latest/_build_temp/doc/api/computing.html)
-- [Federation API](https://fate.readthedocs.io/en/latest/_build_temp/doc/api/federation.html)
-- [Flow SDK API](./doc/api/flow_sdk.rst)
-- [Flow Client](./doc/api/flow_client.rst)
-- [Pipeline](./doc/api/pipeline.rst)
-- [FATE Test](./doc/api/fate_test.rst)
+- [Computing API](./doc/api/computing.md)
+- [Federation API](./doc/api/federation.md)
+- [Flow SDK API](./doc/api/flow_sdk.md)
+- [Flow Client](./doc/api/flow_client.md)
+- [Pipeline](./doc/api/pipeline.md)
+- [FATE Test](./doc/api/fate_test.md)
 
 ## 了解更多
 

@@ -32,6 +32,11 @@ For examples of using Local Baseline module, please refer
 Param
 -----
 
-::: {.automodule}
-federatedml.param.local\_baseline\_param
-:::
+::: federatedml.param.local_baseline_param
+    rendering:
+      heading_level: 3
+      show_source: true
+      show_root_heading: true
+      show_root_toc_entry: false
+      show_root_full_path: false
+

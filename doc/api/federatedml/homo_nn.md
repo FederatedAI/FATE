@@ -42,9 +42,14 @@ model.
 Param
 -----
 
-::: {.automodule}
-federatedml.param.homo\_nn\_param
-:::
+::: federatedml.param.homo_nn_param
+    rendering:
+      heading_level: 3
+      show_source: true
+      show_root_heading: true
+      show_root_toc_entry: false
+      show_root_full_path: false
+
 
 Features
 --------
@@ -323,10 +328,7 @@ Linear
 Use
 ---
 
-::: {.note}
-::: {.admonition-title}
-Note
-:::
+:memo: NOTE
 
 For more information on task configuration, please refer to the
 [\[doc\]](../../../../examples/dsl/v2/README.md) under example first.
@@ -352,10 +354,7 @@ structure is:
           "max_iter": 10
     }
 
-::: {.note}
-::: {.admonition-title}
-Note
-:::
+:memo: NOTE
 
 Some detailed examples can be found in the example directory
 :::

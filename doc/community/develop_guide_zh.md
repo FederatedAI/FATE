@@ -172,10 +172,7 @@ b.  设置 conf.json 的字段规范。
 
 仅在此模块被联邦时（即不同参与方之间存在信息交互）才需要执行此步骤。
 
-::: {.note}
-::: {.admonition-title}
-Note
-:::
+:memo: NOTE
 
 应将其放在
 [transfer\_class](../python/federatedml/transfer_variable/transfer_class)

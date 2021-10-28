@@ -6,7 +6,7 @@
   <img src="./doc/images/FATE_logo.png">
 </div>
 
-[DOC](./doc) | [Quick Start](doc/tutorial/pipeline/pipeline_guide.rst) | [中文](./README_zh.md)
+[DOC](./doc) | [Quick Start](doc/tutorial/pipeline/pipeline_guide.md) | [中文](./README_zh.md)
 
 FATE (Federated AI Technology Enabler) is an open-source project initiated by Webank's AI Department to provide a secure computing framework to support federated AI ecosystem. 
 It implements secure computation protocols based on homomorphic encryption and multi-party computation (MPC). 
@@ -30,16 +30,16 @@ tree-based algorithms, deep learning and transfer learning.
 
 #### Quick Start
 - [Run unittest](./python/federatedml/test/)
-- [Run Job with FATE-Pipeline](./doc/tutorial/pipeline/fate_client_pipeline_tutotial.rst)
+- [Run Job with FATE-Pipeline](./doc/tutorial/pipeline/fate_client_pipeline_tutotial.md)
 - [FATE-Pipeline Tutorial in Jupyter Notebook](./doc/tutorial/pipeline/pipeline_tutorial_0.ipynb)
-- [Run Job with DSL json conf](./doc/tutorial/dsl_conf/dsl_conf_v2_setting_guide.rst)
+- [Run Job with DSL json conf](./doc/tutorial/dsl_conf/dsl_conf_v2_setting_guide.md)
 
 ## Documentation 
 
 ### Understand FATE Design 
 
 - [FATE structure]
-- [Modules](./doc/api/federatedml/federatedml_module.rst)
+- [Modules](./doc/api/federatedml/federatedml_module.md)
 - [Algorithm Parameters](./python/federatedml/param)
 - [Papers & Articles](./doc/resources)
 
@@ -52,17 +52,17 @@ tree-based algorithms, deep learning and transfer learning.
 
 ### Contribute to FATE
 
-- [develop guide](./doc/community/develop_guide.rst)
-- [develop guide for FATE-Client](./doc/community/fate_client_develop_guide.rst)
+- [develop guide](./doc/community/develop_guide.md)
+- [develop guide for FATE-Client](./doc/community/fate_client_develop_guide.md)
 
 ### API References
 
-- [Computing API](https://fate.readthedocs.io/en/latest/_build_temp/doc/api/computing.html)
-- [Federation API](https://fate.readthedocs.io/en/latest/_build_temp/doc/api/federation.html)
-- [Flow SDK API](./doc/api/flow_sdk.rst)
-- [Flow Client](./doc/api/flow_client.rst)
-- [Pipeline](./doc/api/pipeline.rst)
-- [FATE Test](./doc/api/fate_test.rst)
+- [Computing API](./doc/api/computing.md)
+- [Federation API](./doc/api/federation.md)
+- [Flow SDK API](./doc/api/flow_sdk.md)
+- [Flow Client](./doc/api/flow_client.md)
+- [Pipeline](./doc/api/pipeline.md)
+- [FATE Test](./doc/api/fate_test.md)
 
 ## Getting Involved
 

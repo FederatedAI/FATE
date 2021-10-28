@@ -57,9 +57,14 @@ tag input format
 Param
 -----
 
-::: {.automodule}
-federatedml.param.dataio\_param
-:::
+::: federatedml.param.dataio_param
+    rendering:
+      heading_level: 3
+      show_source: true
+      show_root_heading: true
+      show_root_toc_entry: false
+      show_root_full_path: false
+
 
 Other Features of DataIO
 ------------------------
@@ -71,9 +76,6 @@ Other Features of DataIO
 
 Please check out federatedmd/feature/imputer.py for more details.
 
-::: {.literalinclude}
-../feature/imputer.py
-:::
 
 Sample Weight
 =============
@@ -119,11 +121,8 @@ need\_run
 
 :   bool, whether to run this module
 
-> ::: {.note}
-> ::: {.admonition-title}
-> Note
-> :::
->
+:memo: NOTE
+
 > If both `class_weight` and `sample_weight_name` are provided, values
 > from column of `sample_weight_name` will be used.
 > :::

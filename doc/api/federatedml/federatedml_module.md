@@ -224,6 +224,11 @@ Secure Protocol
 Params
 ------
 
-::: {.automodule}
-federatedml.param
-:::
+::: federatedml.param
+    rendering:
+      heading_level: 3
+      show_source: true
+      show_root_heading: true
+      show_root_toc_entry: false
+      show_root_full_path: false
+

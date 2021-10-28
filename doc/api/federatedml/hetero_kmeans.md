@@ -42,9 +42,13 @@ zero when aggregating at arbiter.
 Param
 -----
 
-::: {.automodule}
-federatedml.param.hetero\_kmeans\_param
-:::
+::: federatedml.param.hetero_kmeans_param
+    rendering:
+      heading_level: 3
+      show_source: true
+      show_root_heading: true
+      show_root_toc_entry: false
+      show_root_full_path: false
 
 Features
 --------

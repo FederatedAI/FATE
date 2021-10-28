@@ -36,9 +36,14 @@ details on the secure model-building process, please refer to this
 Param
 -----
 
-::: {.automodule}
-federatedml.param.linear\_regression\_param
-:::
+::: federatedml.param.linear_regression_param
+    rendering:
+      heading_level: 3
+      show_source: true
+      show_root_heading: true
+      show_root_toc_entry: false
+      show_root_full_path: false
+
 
 Features
 --------

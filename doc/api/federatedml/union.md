@@ -82,6 +82,11 @@ For more example job configuration and dsl setting files, please refer
 Param
 -----
 
-::: {.automodule}
-federatedml.param.union\_param
-:::
+::: federatedml.param.union_param
+    rendering:
+      heading_level: 3
+      show_source: true
+      show_root_heading: true
+      show_root_toc_entry: false
+      show_root_full_path: false
+

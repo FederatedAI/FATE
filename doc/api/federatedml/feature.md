@@ -54,9 +54,14 @@ case.
 Param
 -----
 
-::: {.automodule}
-federatedml.param.feature\_binning\_param
-:::
+::: federatedml.param.feature_binning_param
+    rendering:
+      heading_level: 3
+      show_source: true
+      show_root_heading: true
+      show_root_toc_entry: false
+      show_root_full_path: false
+
 
 Features
 --------
@@ -86,9 +91,14 @@ selection.
 Param
 -----
 
-::: {.automodule}
-federatedml.param.feature\_selection\_param
-:::
+::: federatedml.param.feature_selection_param
+    rendering:
+      heading_level: 3
+      show_source: true
+      show_root_heading: true
+      show_root_toc_entry: false
+      show_root_full_path: false
+
 
 Features
 --------
@@ -166,9 +176,14 @@ list each specify the sample ratio of corresponding label. e.g.
 Param
 -----
 
-::: {.automodule}
-federatedml.param.sample\_param
-:::
+::: federatedml.param.sample_param
+    rendering:
+      heading_level: 3
+      show_source: true
+      show_root_heading: true
+      show_root_toc_entry: false
+      show_root_full_path: false
+
 
 Feature Scale
 =============
@@ -185,9 +200,14 @@ Feature Scale module supports min-max scale and standard scale.
 Param
 -----
 
-::: {.automodule}
-federatedml.param.scale\_param
-:::
+::: federatedml.param.scale_param
+    rendering:
+      heading_level: 3
+      show_source: true
+      show_root_heading: true
+      show_root_toc_entry: false
+      show_root_full_path: false
+
 
 OneHot Encoder
 ==============
@@ -199,9 +219,14 @@ wiki\]](https://en.wikipedia.org/wiki/One-hot)
 Param
 -----
 
-::: {.automodule}
-federatedml.param.onehot\_encoder\_param
-:::
+::: federatedml.param.onehot_encoder_param
+    rendering:
+      heading_level: 3
+      show_source: true
+      show_root_heading: true
+      show_root_toc_entry: false
+      show_root_full_path: false
+
 
 Homo OneHot Encoder
 ===================
@@ -213,9 +238,14 @@ wiki\]](https://en.wikipedia.org/wiki/One-hot)
 Param
 -----
 
-::: {.automodule}
-federatedml.param.homo\_onehot\_encoder\_param
-:::
+::: federatedml.param.homo_onehot_encoder_param
+    rendering:
+      heading_level: 3
+      show_source: true
+      show_root_heading: true
+      show_root_toc_entry: false
+      show_root_full_path: false
+
 
 Column Expand
 =============
@@ -227,9 +257,14 @@ data), before data entering Data Transform.
 Param
 -----
 
-::: {.automodule}
-federatedml.param.column\_expand\_param
-:::
+::: federatedml.param.column_expand_param
+    rendering:
+      heading_level: 3
+      show_source: true
+      show_root_heading: true
+      show_root_toc_entry: false
+      show_root_full_path: false
+
 
 SBT Feature Transformer
 =======================
@@ -246,9 +281,14 @@ indices\</div\>](../../images/gbdt_lr.png){.align-center width="500px"}
 Param
 -----
 
-::: {.automodule}
-federatedml.param.sbt\_feature\_transformer\_param
-:::
+::: federatedml.param.sbt_feature_transformer_param
+    rendering:
+      heading_level: 3
+      show_source: true
+      show_root_heading: true
+      show_root_toc_entry: false
+      show_root_full_path: false
+
 
 Feature Imputation
 ==================
@@ -261,6 +301,10 @@ columns using arbitrary methods. Please refer
 Param
 -----
 
-::: {.automodule}
-federatedml.param.feature\_imputation\_param
-:::
+::: federatedml.param.feature_imputation_param
+    rendering:
+      heading_level: 3
+      show_source: true
+      show_root_heading: true
+      show_root_toc_entry: false
+      show_root_full_path: false

@@ -88,10 +88,7 @@ Features
 10. Support stepwise. For details on stepwise mode, please refer
     [\[here\].](stepwise.md)
 
-::: {.note}
-::: {.admonition-title}
-Note
-:::
+:memo: NOTE
 
 The performance of poisson regression is highly dependent on model meta
 and the underlying distribution of given data. We provide here some
