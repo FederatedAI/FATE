@@ -7,6 +7,7 @@ copyright: © Copyright 2020 WeBank Co., Ltd. | All Rights Reserved.
 
 nav:
   - Tutorial:
+    - tutorial/index.md
     - pipeline: 
       - notebook: tutorial/pipeline/pipeline_tutorial_0.ipynb
     - model publish: tutorial/model_publish_with_serving_guide.md
@@ -23,6 +24,7 @@ nav:
 
 theme:
   name: material
+  custom_dir: "doc/mkdocs/theme"
   features:
     - navigation.tabs
     - navigation.expand
@@ -124,8 +126,11 @@ extra:
 extra_css:
   - 'mkdocs/css/termynal.css'
   - 'mkdocs/css/custom.css'
+  - 'mkdocs/css/extra.css'
+  - 'mkdocs/css/landing.css'
 
 extra_javascript:
   - 'mkdocs/js/termynal.js'
   - 'mkdocs/js/custom.js'
+  - 'mkdocs/js/lottie-player.js'
   - 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML'
