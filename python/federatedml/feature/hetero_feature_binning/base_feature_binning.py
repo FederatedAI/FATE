@@ -64,6 +64,7 @@ class BaseFeatureBinning(ModelBase):
         self.model_param = FeatureBinningParam()
         self.bin_inner_param = BinInnerParam()
         self.bin_result = MultiClassBinResult(labels=[0, 1])
+        self.has_missing_value = False
         self.labels = []
 
     def _init_model(self, params: FeatureBinningParam):
