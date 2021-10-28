@@ -19,6 +19,7 @@ PyMySQL==0.9.3
 pyspark==3.1.2
 python-dotenv==0.13.0
 redis==3.5.3
+urllib3==1.25.11
 requests==2.24.0
 requests_toolbelt==0.9.1
 ruamel-yaml==0.16.10
@@ -36,7 +37,7 @@ cryptography==3.3.2
 libsm3py==0.0.1
 sortedcontainers==2.2.2
 pytorch-lightning>=1.2.1,<1.4.0
-filelock==3.0.12
+filelock==3.3.1
 pulsar-client==2.8.0
 fastavro==1.4.1
 
