@@ -35,6 +35,8 @@ For optimal binning, each party use quantile binning or bucket binning find init
 
 There exist two kinds of methods, merge-optimal binning and split-optimal binning. When choosing metrics as iv, gini or chi-square, merge type optimal binning will be used. On the other hand, if ks is choosed, split type optimal binning will be used.
 
+Binning module supports multi-class data to calculate iv and woe too. To achieve it, one-vs-rest mechanism is used. Each label will be chosen iteratively as event case. All other cases will be treated as non-event cases. Therefore, we can obtain a set of iv&woe result for each label case.
+
 Param
 ------
 
@@ -63,6 +65,8 @@ Features
 
 9. Support asymmetric binning methods on Host & Guest sides.
 
+10. Support multi-class iv&woe calculation.
+
 
 Hetero Feature Selection
 ========================
@@ -88,6 +92,12 @@ Features
     * threshold value: Filter those columns whose iv is smaller than threshold. You can also set different threshold for each party.
     * top-k: Sort features from larger iv to smaller and take top k features in the sorted result.
     * top-percentile. Sort features from larger to smaller and take top percentile.
+
+    Besides, multi-class iv filter is available if multi-class iv has been calculated in upstream component. There are three mechanisms to select features. Please remind that there exist as many ivs calculated as the number of labels since we use one-vs-rest for multi-class cases.
+    * "min": take the minimum iv among all results.
+    * "max": take the maximum ones
+    * "average": take the average among all results.
+    After that, we get unique one iv for each column so that we can use the three mechanism mentioned above to select features.
 
 3. statistic_filter: Use statistic values calculate from DataStatistic component. Support coefficient of variance, missing value, percentile value etc. You can pick the columns with higher statistic values or smaller values as you need.
 
