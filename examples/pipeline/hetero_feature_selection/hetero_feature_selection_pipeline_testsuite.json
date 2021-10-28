@@ -63,14 +63,23 @@
         "hetero-feature-selection-multi-iso": {
             "script": "pipeline-hetero-feature-selection-multi-iso.py"
         },
+        "hetero-feature-selection-pearson-predict": {
+            "script": "pipeline-hetero-feature-selection-pearson-predict.py"
+        },
         "hetero-feature-selection-manually": {
             "script": "pipeline-hetero-feature-selection-manually.py"
         },
         "hetero-feature-selection-iv-top-k": {
             "script": "pipeline-hetero-feature-selection-iv-top-k.py"
         },
+        "hetero-feature-selection-local-only": {
+            "script": "pipeline-hetero-feature-selection-local-only.py"
+        },
         "hetero-feature-selection-pearson": {
             "script": "pipeline-hetero-feature-selection-pearson.py"
+        },
+        "hetero-feature-selection-multiclass": {
+            "script": "pipeline-hetero-feature-selection-multiclass.py"
         },
         "hetero-feature-selection-iv-selection": {
             "script": "pipeline-hetero-feature-selection-iv-selection.py"
@@ -86,6 +95,9 @@
         },
         "hetero-feature-selection-homo-sbt": {
             "script": "pipeline-hetero-feature-selection-homo-sbt.py"
+        },
+        "hetero-feature-selection-multiclass-all-case": {
+            "script": "pipeline-hetero-feature-selection-multiclass-all-case.py"
         }
     }
 }

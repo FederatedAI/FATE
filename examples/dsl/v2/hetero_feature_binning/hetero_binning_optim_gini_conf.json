@@ -12,22 +12,13 @@
             10000
         ]
     },
+    "job_parameters": {
+        "common": {
+            "job_type": "train"
+        }
+    },
     "component_parameters": {
         "role": {
-            "host": {
-                "0": {
-                    "reader_0": {
-                        "table": {
-                            "name": "breast_hetero_host",
-                            "namespace": "experiment"
-                        }
-                    },
-                    "dataio_0": {
-                        "with_label": false,
-                        "output_format": "dense"
-                    }
-                }
-            },
             "guest": {
                 "0": {
                     "reader_0": {
@@ -38,6 +29,20 @@
                     },
                     "dataio_0": {
                         "with_label": true,
+                        "output_format": "dense"
+                    }
+                }
+            },
+            "host": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "dataio_0": {
+                        "with_label": false,
                         "output_format": "dense"
                     }
                 }

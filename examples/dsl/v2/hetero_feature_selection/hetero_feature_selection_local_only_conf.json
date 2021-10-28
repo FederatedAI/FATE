@@ -12,32 +12,37 @@
             10000
         ]
     },
+    "job_parameters": {
+        "common": {
+            "job_type": "train"
+        }
+    },
     "component_parameters": {
         "role": {
-            "guest": {
-                "0": {
-                    "reader_0": {
-                        "table": {
-                            "name": "breast_hetero_guest",
-                            "namespace": "experiment"
-                        }
-                    },
-                    "dataio_0": {
-                        "with_label": true,
-                        "output_format": "dense"
-                    }
-                }
-            },
             "host": {
                 "0": {
+                    "dataio_0": {
+                        "with_label": false
+                    },
                     "reader_0": {
                         "table": {
                             "name": "breast_hetero_host",
                             "namespace": "experiment"
                         }
-                    },
+                    }
+                }
+            },
+            "guest": {
+                "0": {
                     "dataio_0": {
-                        "with_label": false
+                        "with_label": true,
+                        "output_format": "dense"
+                    },
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_guest",
+                            "namespace": "experiment"
+                        }
                     }
                 }
             }
@@ -59,16 +64,22 @@
                     "transform_names": null,
                     "transform_type": "bin_num"
                 },
-                "local_only": false
+                "local_only": true
             },
             "hetero_feature_selection_0": {
                 "select_col_indexes": -1,
                 "select_names": [],
                 "filter_methods": [
-                    "iv_value_thres"
+                    "iv_value_thres",
+                    "iv_filter"
                 ],
                 "iv_value_param": {
-                    "value_threshold": 0.1
+                    "value_threshold": 1,
+                    "local_only": true
+                },
+                "iv_param": {
+                    "filter_type": "threshold",
+                    "select_federated": false
                 }
             }
         }

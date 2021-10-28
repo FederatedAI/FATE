@@ -26,6 +26,35 @@
                 ]
             }
         },
+        "reader_1": {
+            "module": "Reader",
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
+        },
+        "dataio_1": {
+            "module": "DataIO",
+            "input": {
+                "data": {
+                    "data": [
+                        "reader_1.data"
+                    ]
+                },
+                "model": [
+                    "dataio_0.model"
+                ]
+            },
+            "output": {
+                "data": [
+                    "data"
+                ],
+                "model": [
+                    "model"
+                ]
+            }
+        },
         "intersection_0": {
             "module": "Intersection",
             "input": {
@@ -44,7 +73,25 @@
                 ]
             }
         },
-        "hetero_binning_0": {
+        "intersection_1": {
+            "module": "Intersection",
+            "input": {
+                "data": {
+                    "data": [
+                        "dataio_1.data"
+                    ]
+                }
+            },
+            "output": {
+                "data": [
+                    "data"
+                ],
+                "cache": [
+                    "cache"
+                ]
+            }
+        },
+        "hetero_feature_binning_0": {
             "module": "HeteroFeatureBinning",
             "input": {
                 "data": {
@@ -62,14 +109,17 @@
                 ]
             }
         },
-        "hetero_pearson_0": {
-            "module": "HeteroPearson",
+        "hetero_feature_binning_1": {
+            "module": "HeteroFeatureBinning",
             "input": {
                 "data": {
                     "data": [
-                        "intersection_0.data"
+                        "intersection_1.data"
                     ]
-                }
+                },
+                "model": [
+                    "hetero_feature_binning_0.model"
+                ]
             },
             "output": {
                 "data": [
@@ -85,12 +135,32 @@
             "input": {
                 "data": {
                     "data": [
-                        "intersection_0.data"
+                        "hetero_feature_binning_0.data"
                     ]
                 },
                 "isometric_model": [
-                    "hetero_pearson_0.model",
-                    "hetero_binning_0.model"
+                    "hetero_feature_binning_0.model"
+                ]
+            },
+            "output": {
+                "data": [
+                    "data"
+                ],
+                "model": [
+                    "model"
+                ]
+            }
+        },
+        "hetero_feature_selection_1": {
+            "module": "HeteroFeatureSelection",
+            "input": {
+                "data": {
+                    "data": [
+                        "hetero_feature_binning_1.data"
+                    ]
+                },
+                "model": [
+                    "hetero_feature_selection_0.model"
                 ]
             },
             "output": {
