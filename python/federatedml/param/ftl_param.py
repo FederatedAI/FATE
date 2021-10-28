@@ -42,42 +42,55 @@ class FTLParam(BaseParam):
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(mode="confusion_opt"),
                  predict_param=PredictParam(), mode='plain', communication_efficient=False,
                  local_round=5, callback_param=CallbackParam()):
-
         """
-        Args:
-            alpha: float, a loss coefficient defined in paper, it defines the importance of alignment loss
-            tol:  float, loss tolerance
-            n_iter_no_change: bool, check loss convergence or not
-            validation_freqs: None or positive integer or container object in python. Do validation in training process or Not.
-                if equals None, will not do validation in train process;
-                if equals positive integer, will validate data every validation_freqs epochs passes;
-                if container object in python, will validate data if epochs belong to this container.
-                e.g. validation_freqs = [10, 15], will validate data when epoch equals to 10 and 15.
-                Default: None
-                The default value is None, 1 is suggested. You can set it to a number larger than 1 in order to
-                speed up training by skipping validation rounds. When it is larger than 1, a number which is
-                divisible by "epochs" is recommended, otherwise, you will miss the validation scores
-                of last training epoch.
-            optimizer: optimizer method, accept following types:
-                1. a string, one of "Adadelta", "Adagrad", "Adam", "Adamax", "Nadam", "RMSprop", "SGD"
-                2. a dict, with a required key-value pair keyed by "optimizer",
-                    with optional key-value pairs such as learning rate.
-                defaults to "SGD"
-            nn_define:  dict, a dict represents the structure of neural network, it can be output by tf-keras
-            epochs: int, epochs num
-            intersect_param: define the intersect method
-            config_type: now only 'tf-keras' is supported
-            batch_size: batch size when computing transformed feature embedding, -1 use full data.
-            encrypte_param: encrypted param
-            encrypted_mode_calculator_param:
-            predict_param: predict param
-            mode:
-                plain: will not use any encrypt algorithms, data exchanged in plaintext
-                encrypted: use paillier to encrypt gradients
-            communication_efficient:
-                bool, will use communication efficient or not. when communication efficient is enabled, FTL model will
-                update gradients by several local rounds using intermediate data
-            local_round: local update round when using communication efficient
+        Parameters
+        ----------
+        alpha : float
+            a loss coefficient defined in paper, it defines the importance of alignment loss
+        tol : float
+            loss tolerance
+        n_iter_no_change : bool
+            check loss convergence or not
+        validation_freqs : None or positive integer or container object in python
+            Do validation in training process or Not.
+            if equals None, will not do validation in train process;
+            if equals positive integer, will validate data every validation_freqs epochs passes;
+            if container object in python, will validate data if epochs belong to this container.
+            e.g. validation_freqs = [10, 15], will validate data when epoch equals to 10 and 15.
+            The default value is None, 1 is suggested. You can set it to a number larger than 1 in order to
+            speed up training by skipping validation rounds. When it is larger than 1, a number which is
+            divisible by "epochs" is recommended, otherwise, you will miss the validation scores
+            of last training epoch.
+        optimizer : str or dict
+            optimizer method, accept following types:
+            1. a string, one of "Adadelta", "Adagrad", "Adam", "Adamax", "Nadam", "RMSprop", "SGD"
+            2. a dict, with a required key-value pair keyed by "optimizer",
+                with optional key-value pairs such as learning rate.
+            defaults to "SGD"
+        nn_define : dict
+            a dict represents the structure of neural network, it can be output by tf-keras
+        epochs : int
+            epochs num
+        intersect_param
+            define the intersect method
+        config_type : {'tf-keras'}
+            config type
+        batch_size : int
+            batch size when computing transformed feature embedding, -1 use full data.
+        encrypte_param
+            encrypted param
+        encrypted_mode_calculator_param
+            encrypted mode calculator param:
+        predict_param
+            predict param
+        mode: {"plain", "encrypted"}
+            plain: will not use any encrypt algorithms, data exchanged in plaintext
+            encrypted: use paillier to encrypt gradients
+        communication_efficient: bool
+            will use communication efficient or not. when communication efficient is enabled, FTL model will
+            update gradients by several local rounds using intermediate data
+        local_round: int
+            local update round when using communication efficient
         """
 
         super(FTLParam, self).__init__()

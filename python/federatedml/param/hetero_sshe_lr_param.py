@@ -30,7 +30,7 @@ class LogisticRegressionParam(BaseParam):
 
     Parameters
     ----------
-    penalty : str, 'L1', 'L2' or None. default: None
+    penalty : {None, 'L1', 'L2'}
         Penalty method used in LR. If it is not None, weights are required to be reconstruct every iter.
 
     tol : float, default: 1e-4
@@ -39,7 +39,7 @@ class LogisticRegressionParam(BaseParam):
     alpha : float, default: 1.0
         Regularization strength coefficient.
 
-    optimizer : str, 'sgd', 'rmsprop', 'adam', 'nesterov_momentum_sgd', 'sqn' or 'adagrad', default: 'rmsprop'
+    optimizer : {'rmsprop', 'sgd', 'adam', 'nesterov_momentum_sgd', 'sqn', 'adagrad'}
         Optimize method, if 'sqn' has been set, sqn_param will take effect. Currently, 'sqn' support hetero mode only.
 
     batch_size : int, default: -1
@@ -51,7 +51,7 @@ class LogisticRegressionParam(BaseParam):
     max_iter : int, default: 100
         The maximum iteration for training.
 
-    early_stop : str, 'diff', 'weight_diff' or 'abs', default: 'diff'
+    early_stop : {'diff', 'weight_diff', 'abs'}
         Method used to judge converge or not.
             a)	diff： Use difference of loss between two iterations to judge whether converge.
             b)  weight_diff: Use difference between weights of two consecutive iterations
@@ -64,19 +64,22 @@ class LogisticRegressionParam(BaseParam):
         lr = lr0/(1+decay*t) if decay_sqrt is False. If decay_sqrt is True, lr = lr0 / sqrt(1+decay*t)
         where t is the iter number.
 
-    decay_sqrt: Bool, default: True
+    decay_sqrt: bool, default: True
         lr = lr0/(1+decay*t) if decay_sqrt is False, otherwise, lr = lr0 / sqrt(1+decay*t)
 
-    encrypt_param: EncryptParam object, default: default EncryptParam object
+    encrypt_param
+        EncryptParam object, default: default EncryptParam object
 
-    predict_param: PredictParam object, default: default PredictParam object
+    predict_param
+        PredictParam object, default: default PredictParam object
 
-    cv_param: CrossValidationParam object, default: default CrossValidationParam object
+    cv_param
+        CrossValidationParam object, default: default CrossValidationParam object
 
-    multi_class: str, 'ovr', default: 'ovr'
+    multi_class: {'ovr'}
         If it is a multi_class task, indicate what strategy to use. Currently, support 'ovr' short for one_vs_rest only.
 
-    reveal_strategy: str, "respectively", "all_reveal_in_guest", default: "respectively"
+    reveal_strategy: {"respectively", "all_reveal_in_guest"}
         "respectively": Means guest and host can reveal their own part of weights only.
         "all_reveal_in_guest": All the weights will be revealed in guest only.
             This is use to protect the situation that, guest provided label only.
