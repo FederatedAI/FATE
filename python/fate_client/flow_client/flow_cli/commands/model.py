@@ -325,6 +325,12 @@ def get_predict_conf(ctx, **kwargs):
               help="User specifies a file path which records the component list.")
 @click.option("--dsl-path", type=click.Path(exists=True),
               help="User specified predict dsl file")
+@click.option("--cpn-step-index", type=click.STRING, multiple=True,
+              help="Specify a checkpoint to deploy. If no checkpoint is specified, the latest checkpoint will be used. "
+                   "Use : to separate component name and step index (E.g. --cpn-step-index cpn_a:123)")
+@click.option("--cpn-step-name", type=click.STRING, multiple=True,
+              help="Specify a checkpoint to deploy. If no checkpoint is specified, the latest checkpoint will be used. "
+                   "Use : to separate component name and step name (E.g. --cpn-step-name cpn_b:foobar)")
 @click.pass_context
 def deploy(ctx, **kwargs):
     """
@@ -337,14 +343,16 @@ def deploy(ctx, **kwargs):
         flow model deploy --model_id $MODEL_ID --model_version $MODEL_VERSION
 
     """
-    request_data = {}
-    request_data['model_id'] = kwargs.get('model_id')
-    request_data['model_version'] = kwargs.get('model_version')
+    request_data = {
+        'model_id': kwargs['model_id'],
+        'model_version': kwargs['model_version'],
+    }
+
     if kwargs.get("cpn_list") or kwargs.get("cpn_path"):
         if kwargs.get("cpn_list"):
-            cpn_str = kwargs.get("cpn_list")
+            cpn_str = kwargs["cpn_list"]
         elif kwargs.get("cpn_path"):
-            with open(kwargs.get("cpn_path"), "r") as fp:
+            with open(kwargs["cpn_path"], "r") as fp:
                 cpn_str = fp.read()
         else:
             cpn_str = ""
@@ -358,9 +366,23 @@ def deploy(ctx, **kwargs):
             cpn_list = cpn_str.split(",")
         request_data['cpn_list'] = cpn_list
     elif kwargs.get("dsl_path"):
-        with open(kwargs.get("dsl_path"), "r") as ft:
+        with open(kwargs["dsl_path"], "r") as ft:
             predict_dsl = ft.read()
         request_data['dsl'] = predict_dsl
+
+    request_data['components_checkpoint'] = {}
+    for i in ('cpn_step_index', 'cpn_step_name'):
+        for j in kwargs[i]:
+            component, checkpoint = j.rsplit(':', 1)
+
+            if i == 'cpn_step_index':
+                checkpoint = int(checkpoint)
+            if component in request_data['components_checkpoint']:
+                raise KeyError(f"Duplicated component name '{component}'.")
+
+            request_data['components_checkpoint'][component] = {
+                i[4:]: checkpoint,
+            }
 
     config_data, dsl_data = preprocess(**request_data)
     access_server('post', ctx, 'model/deploy', config_data)
