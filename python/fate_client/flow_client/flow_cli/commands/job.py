@@ -149,6 +149,16 @@ def stop(ctx, **kwargs):
     access_server('post', ctx, "job/stop", config_data)
 
 
+@job.command("rerun", short_help="Rerun Job Command")
+@cli_args.JOBID_REQUIRED
+@cli_args.FORCE
+@cli_args.COMPONENT_NAME
+@click.pass_context
+def rerun(ctx, **kwargs):
+    config_data, dsl_data = preprocess(**kwargs)
+    access_server('post', ctx, "job/rerun", config_data)
+
+
 @job.command("config", short_help="Config Job Command")
 @cli_args.JOBID_REQUIRED
 @cli_args.ROLE_REQUIRED
@@ -308,3 +318,12 @@ def dsl_generator(ctx, **kwargs):
         prettify(res)
     else:
         access_server('post', ctx, 'job/dsl/generate', config_data)
+
+
+@job.command("parameter-update", short_help="Update Job Components Parameters Command")
+@cli_args.JOBID_REQUIRED
+@cli_args.CONF_PATH
+@click.pass_context
+def update_parameter(ctx, **kwargs):
+    config_data, dsl_data = preprocess(**kwargs)
+    access_server('post', ctx, 'job/parameter/update', config_data)
