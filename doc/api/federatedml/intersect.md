@@ -4,8 +4,8 @@ This module provide some method of PSI(Private Set Intersection)
 
 ## RSA Intersection
 
-This mode implements algorithm based on \[[RSA
-Intersection](https://books.google.com.hk/books?id=zfvf37_YS8cC&pg=PA73&lpg=PA73&dq=rsa+commutative+encryption&source=bl&ots=LbOiyIlr3E&sig=IIWlTGeoU0C8dRiN10uH2OAwobQ&hl=zh-CN&sa=X&ved=0ahUKEwiLoozC1tbXAhVDnJQKHbP7DvAQ6AEIdTAJ#v=onepage&q&f=false.)\].
+This mode implements algorithm based on [RSA
+Intersection](https://books.google.com.hk/books?id=zfvf37_YS8cC&pg=PA73&lpg=PA73&dq=rsa+commutative+encryption&source=bl&ots=LbOiyIlr3E&sig=IIWlTGeoU0C8dRiN10uH2OAwobQ&hl=zh-CN&sa=X&ved=0ahUKEwiLoozC1tbXAhVDnJQKHbP7DvAQ6AEIdTAJ#v=onepage&q&f=false).
 This work is built on FATE, eggroll and federation API that construct
 the secure, distributed and parallel infrastructure.
 
@@ -52,7 +52,7 @@ the intersection ids to the sender.
 This mode implements secure intersection based on symmetric encryption
 with Pohlig–Hellman commutative cipher. DH Intersection is also used in
 [Secure Information Retrieval(SIR)
-module](../../secure_information_retrieval).
+module](./sir.md).
 
 ## Intersection With Cache
 
@@ -131,7 +131,7 @@ RSA, RAW, and DH intersection methods support:
 
 1.  Multi-host PSI task. The detailed configuration for multi-host task
     can be found
-    [here.](../../tutorial/dsl_conf/dsl_conf_v2_setting_guide.md#multi-host-configuration)
+    [here](../../tutorial/dsl_conf/dsl_conf_v2_setting_guide.md#multi-host-configuration).
 2.  Match ID intersection using ID expanding.
 3.  Configurable hashing methods, including sha256, md5, and sm3; hash
     operators of RSA intersection can be configured separately, please

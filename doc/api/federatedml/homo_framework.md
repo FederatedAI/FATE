@@ -12,7 +12,7 @@ FATE currently offers three prerequisite modules:
 2. random_padding_cipher: Implements the model's encryption process, including uuid synchronization, random seed generation based on dh key exchange and cipher generation.
 3. paillier_cipher: Used by Home-LR, mainly about paillier secret protocol.
 ##### aggregator
-<img src="../../images/aggregator.png" alt="aggregator" width="700" height="800" /><br/>
+![Figure 1 aggregator](../../images/aggregator.png")
 
 aggregator.py response for model aggregation:
 

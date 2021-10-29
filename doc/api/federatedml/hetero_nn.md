@@ -84,7 +84,7 @@ Forward Propagation Process consists of three parts.
 >     Heterogeneous Neural Network framework.
 > 
 > ![Figure 2 (Forward Propagation of Federated Heterogeneous Neural
-> Network)](images/hetero_nn_forward_propagation.png)
+> Network)](../../images/hetero_nn_forward_propagation.png)
 
 ## Backward Propagation of Federated Heterogeneous Neural Network
 
@@ -130,7 +130,7 @@ Backward Propagation Process also consists of three parts.
 >     Heterogeneous Neural Network framework.
 > 
 > ![Figure 3 (Backward Propagation of Federated Heterogeneous Neural
-> Network)](images/hetero_nn_backward_propagation.png)
+> Network)](../../images/hetero_nn_backward_propagation.png)
 
 ## Param
 

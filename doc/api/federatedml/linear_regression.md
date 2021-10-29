@@ -67,8 +67,7 @@ details on the secure model-building process, please refer to this
     >     Nesterov Momentum
     > 
     >   - stochastic quansi-newton  
-    >     The algorithm details can refer to [this
-    >     paper.](https://arxiv.org/abs/1912.00513v2)
+    >     The algorithm details can refer to [this paper](https://arxiv.org/abs/1912.00513v2).
 
 4.  Three converge criteria:
     
@@ -84,7 +83,7 @@ details on the secure model-building process, please refer to this
 
 5.  Support multi-host modeling task. For details on how to configure
     for multi-host modeling task, please refer to this
-    [guide](../../../../doc/dsl_conf_v2_setting_guide.md)
+    [guide](../../tutorial/dsl_conf/dsl_conf_v2_setting_guide.md)
 
 6.  Support validation for every arbitrary iterations
 
@@ -97,4 +96,4 @@ details on the secure model-building process, please refer to this
 9.  Support sparse format data as input.
 
 10. Support stepwise. For details on stepwise mode, please refer
-    [stepwise](../../model_selection/stepwise/README.md) .
+    [stepwise](./stepwise.md) .

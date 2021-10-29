@@ -1,8 +1,8 @@
 # Encrypt
 
 Encrypt module provides some encryption methods for data. It contains
-[\[Paillier\]](https://en.wikipedia.org/wiki/Paillier_cryptosystem),
-[\[RSA\]](https://en.wikipedia.org/wiki/RSA_\(cryptosystem\)), and Fake
+[Paillier](https://en.wikipedia.org/wiki/Paillier_cryptosystem),
+[RSA](https://en.wikipedia.org/wiki/RSA_\(cryptosystem\)), and Fake
 method.
 
 ## Paillier encryption
@@ -24,9 +24,8 @@ belongs to probabilistic asymmetric algorithm.
 > 1.  Encode: Paillier algorithm is applicable only to integer. Thus the
 >     input number will be encoded as a integer.
 > 2.  Encrypt: The principle of encryption can be referred to
->     [\[here\]](https://en.wikipedia.org/wiki/Paillier_cryptosystem) or
->     [\[this
->     paper\]](http://www.cs.tau.ac.il/~fiat/crypt07/papers/Pai99pai.pdf)
+>     [here](https://en.wikipedia.org/wiki/Paillier_cryptosystem) or
+>     [this paper](http://www.cs.tau.ac.il/~fiat/crypt07/papers/Pai99pai.pdf)
 > 3.  Apply Obfuscator: Apply an obfuscator so that every encrypted
 >     number is different even if the plaintext is the same.
 

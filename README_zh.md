@@ -49,7 +49,7 @@ FATE官方网站：<https://fate.fedai.org/>
 
 ### 贡献代码
 
-- [开发指南](./doc/community/develop_guide.md)
+- [开发指南](./doc/community/develop_guide.zh.md)
 - [FATE-Client开发指南](./doc/community/fate_client_develop_guide.md)
 
 ### API文档

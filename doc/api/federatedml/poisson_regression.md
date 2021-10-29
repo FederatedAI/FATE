@@ -82,7 +82,7 @@ converged, based on the stopping criteria set by Guest.
 9.  Support sparse format data as input.
 
 10. Support stepwise. For details on stepwise mode, please refer
-    [here](stepwise.md).
+    [here](./stepwise.md).
 
 <div class="note">
 

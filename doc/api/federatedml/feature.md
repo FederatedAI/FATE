@@ -7,7 +7,7 @@ information values and so on.
 Currently, we provide quantile binning and bucket binning methods. To
 achieve quantile binning approach, we have used a special data structure
 mentioned in this
-[\[paper\]](https://www.researchgate.net/profile/Michael_Greenwald/publication/2854033_Space-Efficient_Online_Computation_of_Quantile_Summaries/links/0f317533ee009cd3f3000000/Space-Efficient-Online-Computation-of-Quantile-Summaries.pdf).
+[paper](https://www.researchgate.net/profile/Michael_Greenwald/publication/2854033_Space-Efficient_Online_Computation_of_Quantile_Summaries/links/0f317533ee009cd3f3000000/Space-Efficient-Online-Computation-of-Quantile-Summaries.pdf).
 Feel free to check out the detail algorithm in the paper.
 
 As for calculating the federated iv and woe values, the following figure
@@ -193,8 +193,8 @@ federatedml.param.scale\_param
 # OneHot Encoder
 
 OneHot encoding is a process by which category variables are converted
-to binary values. The detailed info could be found in [\[OneHot
-wiki\]](https://en.wikipedia.org/wiki/One-hot)
+to binary values. The detailed info could be found in [OneHot
+wiki](https://en.wikipedia.org/wiki/One-hot)
 
 ## Param
 
@@ -207,8 +207,8 @@ federatedml.param.onehot\_encoder\_param
 # Homo OneHot Encoder
 
 OneHot Encoding is a process by which category variables are converted
-to binary values. The detailed info could be found in [\[OneHot
-wiki\]](https://en.wikipedia.org/wiki/One-hot)
+to binary values. The detailed info could be found in [OneHot
+wiki](https://en.wikipedia.org/wiki/One-hot)
 
 ## Param
 
@@ -236,8 +236,8 @@ federatedml.param.column\_expand\_param
 
 A feature engineering module that encodes sample using leaf indices
 predicted by Hetero SBT/Fast-SBT. Samples will be transformed into
-sparse 0-1 vectors after encoding. See [\[original
-paper\]](https://research.fb.com/wp-content/uploads/2016/11/practical-lessons-from-predicting-clicks-on-ads-at-facebook.pdf)
+sparse 0-1 vectors after encoding. See [original
+paper](https://research.fb.com/wp-content/uploads/2016/11/practical-lessons-from-predicting-clicks-on-ads-at-facebook.pdf)
 for its details.
 
 ![Figure 5: Encoding using leaf
