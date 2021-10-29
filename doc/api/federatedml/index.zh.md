@@ -10,7 +10,7 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
 4.  模型评估：提供对二分类，多分类，回归评估，聚类评估，联邦和单边对比评估
 5.  安全协议：提供了多种安全协议，以进行更安全的多方交互计算。
 
-![Figure 1： Federated Machine Learning Framework](../../doc/images/federatedml_structure.png)
+![Figure 1： Federated Machine Learning Framework](../../images/federatedml_structure.png)
 
 ## 算法清单
 
