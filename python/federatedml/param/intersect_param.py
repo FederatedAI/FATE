@@ -365,7 +365,7 @@ class IntersectParam(BaseParam):
     dh_params: DHParam, effective for dh method only
 
     join_method: str, choose 'inner_join' or 'left_join',
-            if 'left_join', participants will all include join id owner's (imputed) ids in output,
+            if 'left_join', participants will all include sample_id_generator's (imputed) ids in output,
             default 'inner_join'
 
     new_sample_id: bool, whether to generate new id for sample_id_generator's ids,

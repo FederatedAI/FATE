@@ -12,12 +12,6 @@
             9999
         ]
     },
-    "job_parameters": {
-        "common": {
-            "work_mode": 0,
-            "job_type": "train"
-        }
-    },
     "component_parameters": {
         "role": {
             "host": {

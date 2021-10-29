@@ -1,4 +1,4 @@
-apsw==3.9.2.post1
+apsw<3.10
 beautifultable==1.0.0
 cachetools==3.0.0
 cloudpickle==0.6.1
@@ -19,6 +19,7 @@ PyMySQL==0.9.3
 pyspark==3.1.2
 python-dotenv==0.13.0
 redis==3.5.3
+urllib3==1.25.11
 requests==2.24.0
 requests_toolbelt==0.9.1
 ruamel-yaml==0.16.10
@@ -36,9 +37,10 @@ cryptography==3.3.2
 libsm3py==0.0.1
 sortedcontainers==2.2.2
 pytorch-lightning>=1.2.1,<1.4.0
-filelock==3.0.12
+filelock==3.3.1
 pulsar-client==2.8.0
 fastavro==1.4.1
+lightgbm==3.3.1
 
 # python 3.6
 backports-datetime-fromisoformat==1.0.0
@@ -50,7 +52,8 @@ numba==0.50.0
 llvmlite==0.33.0
 phe>=1.4.0
 protobuf>=3.6.1
-pyarrow==0.17.1
+pyarrow==2.0.0
+mmh3==3.0.0
 
 # addtional requirements for fate-client
 click>=7.1.2,<8.0.0

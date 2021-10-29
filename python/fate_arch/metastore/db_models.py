@@ -29,7 +29,7 @@ from fate_arch.metastore.base_model import JSONField, SerializedField, BaseModel
 LOGGER = log.getLogger()
 
 DATABASE = get_base_config("database", {})
-is_standalone = conf_utils.get_base_config("default_engines", {}).get(EngineType.FEDERATION).upper() ==\
+is_standalone = conf_utils.get_base_config("default_engines", {}).get(EngineType.FEDERATION).upper() == \
                 FederationEngine.STANDALONE
 
 def singleton(cls, *args, **kw):

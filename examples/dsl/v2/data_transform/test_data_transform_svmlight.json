@@ -1,0 +1,50 @@
+{
+    "dsl_version": 2,
+    "initiator": {
+        "role": "guest",
+        "party_id": 10000
+    },
+    "role": {
+        "host": [
+            9999
+        ],
+        "guest": [
+            10000
+        ]
+    },
+    "component_parameters": {
+        "role": {
+            "guest": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "svmlight_guest",
+                            "namespace": "experiment_20211028193810"
+                        }
+                    },
+                    "data_transform_0": {
+                        "with_label": true
+                    }
+                }
+            },
+            "host": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "svmlight_host",
+                            "namespace": "experiment_20211028193810"
+                        }
+                    },
+                    "data_transform_0": {
+                        "with_label": false
+                    }
+                }
+            }
+        },
+        "common": {
+            "data_transform_0": {
+                "input_format": "sparse"
+            }
+        }
+    }
+}

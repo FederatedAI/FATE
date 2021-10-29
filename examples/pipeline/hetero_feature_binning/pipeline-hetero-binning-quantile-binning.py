@@ -26,14 +26,12 @@ sys.path.append(cur_path)
 
 from examples.pipeline.hetero_feature_binning import common_tools
 from pipeline.utils.tools import load_job_config
-from pipeline.runtime.entity import JobParameters
 
 
 def main(config="../../config.yaml", namespace=""):
     # obtain config
     if isinstance(config, str):
         config = load_job_config(config)
-    work_mode = config.work_mode
     param = {
         "name": "hetero_feature_binning_0",
         "method": "quantile",
@@ -54,8 +52,7 @@ def main(config="../../config.yaml", namespace=""):
         }
     }
     pipeline = common_tools.make_normal_dsl(config, namespace, param)
-    job_parameters = JobParameters(work_mode=work_mode)
-    pipeline.fit(job_parameters)
+    pipeline.fit()
     # common_tools.prettify(pipeline.get_component("hetero_feature_binning_0").get_summary())
     # summary = pipeline.get_component("hetero_feature_binning_0").get_summary()
     # ivs = {x[0]: x[1] for x in summary["iv"]}

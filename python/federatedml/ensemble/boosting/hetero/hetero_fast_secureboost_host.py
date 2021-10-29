@@ -190,7 +190,9 @@ class HeteroFastSecureBoostingTreeHost(HeteroSecureBoostingTreeHost):
             feature_importance_param.append(FeatureImportanceInfo(sitename=self.role,
                                                                   fid=fid,
                                                                   importance=importance.importance,
-                                                                  fullname=self.feature_name_fid_mapping[fid]))
+                                                                  fullname=self.feature_name_fid_mapping[fid],
+                                                                  main=importance.main_type
+                                                                  ))
         model_param.feature_importances.extend(feature_importance_param)
 
         return param_name, model_param

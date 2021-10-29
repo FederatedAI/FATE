@@ -16,7 +16,6 @@
 
 import argparse
 
-from pipeline.runtime.entity import JobParameters
 
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component import DataTransform
@@ -32,7 +31,6 @@ def main(config="../../config.yaml", namespace=""):
     parties = config.parties
     guest = parties.guest[0]
     host = parties.host[0]
-    work_mode = config.work_mode
 
     guest_train_data = {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"}
     host_train_data = {"name": "tag_value_1000_140", "namespace": f"experiment{namespace}"}
@@ -54,8 +52,7 @@ def main(config="../../config.yaml", namespace=""):
 
     pipeline.compile()
 
-    job_parameters = JobParameters(work_mode=work_mode)
-    pipeline.fit(job_parameters)
+    pipeline.fit()
 
 
 if __name__ == "__main__":

@@ -26,7 +26,6 @@ from pipeline.component import Reader
 from pipeline.interface import Data
 
 from pipeline.utils.tools import load_job_config
-from pipeline.runtime.entity import JobParameters
 
 
 def main(config="../../config.yaml", namespace=""):
@@ -37,7 +36,6 @@ def main(config="../../config.yaml", namespace=""):
     guest = parties.guest[0]
     host = parties.host[0]
     arbiter = parties.arbiter[0]
-    work_mode = config.work_mode
 
     guest_train_data = {"name": "vehicle_scale_hetero_guest", "namespace": f"experiment{namespace}"}
     host_train_data = {"name": "vehicle_scale_hetero_host", "namespace": f"experiment{namespace}"}
@@ -79,8 +77,7 @@ def main(config="../../config.yaml", namespace=""):
 
     pipeline.compile()
 
-    job_parameters = JobParameters(work_mode=work_mode)
-    pipeline.fit(job_parameters)
+    pipeline.fit()
 
     # predict
     pipeline.deploy_component([data_transform_0, intersection_0, hetero_lr_0, local_baseline_0])
@@ -90,7 +87,7 @@ def main(config="../../config.yaml", namespace=""):
     predict_pipeline.add_component(pipeline,
                                    data=Data(predict_input={pipeline.data_transform_0.input.data: reader_0.output.data}))
     predict_pipeline.add_component(evaluation_0, data=Data(data=[hetero_lr_0.output.data, local_baseline_0.output.data]))
-    predict_pipeline.predict(job_parameters)
+    predict_pipeline.predict()
 
 
 if __name__ == "__main__":

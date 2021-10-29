@@ -26,7 +26,6 @@ from pipeline.component.intersection import Intersection
 from pipeline.component.hetero_feature_binning import HeteroFeatureBinning
 
 from pipeline.utils.tools import load_job_config
-from pipeline.runtime.entity import JobParameters
 
 
 def main(config="../../config.yaml", namespace=""):
@@ -38,8 +37,6 @@ def main(config="../../config.yaml", namespace=""):
     parties = config.parties
     guest = parties.guest[0]
     host = parties.host
-
-    work_mode = config.work_mode
 
     guest_train_data = {"name": "vehicle_scale_hetero_guest", "namespace": f"experiment{namespace}"}
     guest_validate_data = {"name": "vehicle_scale_hetero_guest", "namespace": f"experiment{namespace}"}
@@ -113,8 +110,7 @@ def main(config="../../config.yaml", namespace=""):
                            model=Model(hetero_feature_binning_0.output.model))
 
     pipeline.compile()
-    job_parameters = JobParameters(work_mode=work_mode)
-    pipeline.fit(job_parameters)
+    pipeline.fit()
 
     # predict
     # deploy required components
@@ -128,7 +124,7 @@ def main(config="../../config.yaml", namespace=""):
     predict_pipeline.add_component(pipeline,
                                    data=Data(predict_input={pipeline.dataio_0.input.data: reader_1.output.data}))
     # run predict model
-    predict_pipeline.predict(job_parameters)
+    predict_pipeline.predict()
 
 
 if __name__ == "__main__":
