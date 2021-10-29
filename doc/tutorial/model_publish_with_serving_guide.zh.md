@@ -10,7 +10,7 @@
 
 # 2. 集群部署
 
-离线训练集群(FATE)，请参考：https://github.com/FederatedAI/FATE/tree/master/deploy/cluster-deploy/doc
+离线训练集群(FATE)，请参考：https://github.com/FederatedAI/FATE/tree/master/deploy/cluster-deploy
 
 在线推理集群(FATE-Serving)，请参考：https://github.com/FederatedAI/FATE-Serving/wiki
 
