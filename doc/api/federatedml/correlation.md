@@ -19,7 +19,7 @@ then,
 
 We use an MPC protocol called SPDZ for Heterogeneous Pearson Correlation
 Coefficient calculation. For more details, one can refer
-[\[here\].](secureprotol.md)
+[here](./secureprotol.md).
 
 ## Param
 
@@ -59,5 +59,5 @@ Coefficient calculation. For more details, one can refer
 > </div>
 
   - examples  
-    Please refer `[here] <../../../examples/pipeline/hetero_pearson>`
+    Please refer [here](../../../examples/pipeline/hetero_pearson)
     for examples.

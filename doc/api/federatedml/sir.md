@@ -14,7 +14,7 @@ This component can be used to retrieve specific feature value(s) or
 label value, with arbitrary security level.
 
 There is an
-[\[example\]](../../../examples/pipeline/secure_information_retrieval)
+[example](../../../examples/pipeline/secure_information_retrieval).
 
 ## Param
 

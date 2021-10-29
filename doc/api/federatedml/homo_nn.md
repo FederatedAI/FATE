@@ -29,9 +29,9 @@ a predefined max-iteration threshold.
 
 Please note that random numbers are carefully generated so that the
 random numbers of all parties add up an zero matrix and thus disappear
-automatically. For more detailed explanations, please refer to [\[Secure
+automatically. For more detailed explanations, please refer to [Secure
 Analytics: Federated Learning and Secure
-Aggregation\].](https://inst.eecs.berkeley.edu/~cs261/fa18/scribe/10_15.pdf)
+Aggregation](https://inst.eecs.berkeley.edu/~cs261/fa18/scribe/10_15.pdf).
 Since there is no model transferred in plaintext, except for the owner
 of the model, no other party can obtain the real information of the
 model.
@@ -93,8 +93,7 @@ model.
 >     [tf.keras.optimizers](https://www.tensorflow.org/versions/r1.15/api_docs/python/tf/keras/optimizers)
 > 
 >   - Adadelta  
->     [adadelta
->     link](https://www.tensorflow.org/versions/r1.15/api_docs/python/tf/keras/optimizers/Adadelta)
+>     [adadelta info](https://www.tensorflow.org/versions/r1.15/api_docs/python/tf/keras/optimizers/Adadelta)
 > 
 > > 
 > > 
@@ -107,103 +106,90 @@ model.
 > > }
 > > ```
 > 
-> >   - Adagrad  
-> >     [adagrad
-> >     link](https://www.tensorflow.org/versions/r1.15/api_docs/python/tf/keras/optimizers/Adagrad)
+>    - Adagrad  
+>      [adagrad info](https://www.tensorflow.org/versions/r1.15/api_docs/python/tf/keras/optimizers/Adagrad)
+>  
+> >  ``` sourceCode json
+> >  {
+> >        "optimizer": "Adagrad",
+> >        "learning_rate": 0.001,
+> >        "initial_accumulator_value": 0.1,
+> >        "epsilon": 1e-07
+> >  }
+> >  ```
+> 
+>   - Adam  
+>      [adam info](https://www.tensorflow.org/versions/r1.14/api_docs/python/tf/keras/optimizers/Adam)
+>  
+> >  ``` sourceCode json
+> >  {
+> >        "optimizer": "Adam",
+> >        "learning_rate": 0.001,
+> >        "beta_1": 0.9,
+> >        "beta_2": 0.999,
+> >        "amsgrad": false,
+> >        "epsilon": 1e-07
+> >  }
+> >  ```
+> 
+>    - Ftrl  
+>      [ftrl info](https://www.tensorflow.org/versions/r1.15/api_docs/python/tf/keras/optimizers/Ftrl)
+>  
+>  
+>  
+> >  ``` sourceCode json
+> >  {
+> >        "optimizer": "Ftrl",
+> >        "learning_rate": 0.001,
+> >        "learning_rate_power": -0.5,
+> >        "initial_accumulator_value": 0.1,
+> >        "l1_regularization_strength": 0.0,
+> >        "l2_regularization_strength": 0.0,
+> >        "l2_shrinkage_regularization_strength": 0.0
+> >  }
+> >  ```
+> 
+>    - Nadam  
+>      [nadam info](https://www.tensorflow.org/versions/r1.15/api_docs/python/tf/keras/optimizers/Nadam)
+>   
+> >  
+> >  ``` sourceCode json
+> >  {
+> >        "optimizer": "Nadam",
+> >        "learning_rate": 0.001,
+> >        "beta_1": 0.9,
+> >        "beta_2": 0.999,
+> >        "epsilon": 1e-07
+> >  }
+> >  ```
+> 
+>    - RMSprop  
+>     [rmsprop info](https://www.tensorflow.org/versions/r1.15/api_docs/python/tf/keras/optimizers/RMSprop)
+> 
+> >  
+> >  ``` sourceCode json
+> >  {
+> >        "optimizer": "RMSprop",
+> >        "learning_rate": 0.001,
+> >        "pho": 0.9,
+> >        "momentum": 0.0,
+> >        "epsilon": 1e-07,
+> >        "centered": false
+> >  }
+> >  ```
+> 
+>    - SGD  
+>      [sgd info](https://www.tensorflow.org/versions/r1.15/api_docs/python/tf/keras/optimizers/SGD)
+>  
 > > 
-> > > 
-> > > 
-> > > ``` sourceCode json
-> > > {
-> > >       "optimizer": "Adagrad",
-> > >       "learning_rate": 0.001,
-> > >       "initial_accumulator_value": 0.1,
-> > >       "epsilon": 1e-07
-> > > }
-> > > ```
-> > 
-> >   - Adam  
-> >     [adam
-> >     link](https://www.tensorflow.org/versions/r1.14/api_docs/python/tf/keras/optimizers/Adam)
-> > 
-> > > 
-> > > 
-> > > ``` sourceCode json
-> > > {
-> > >       "optimizer": "Adam",
-> > >       "learning_rate": 0.001,
-> > >       "beta_1": 0.9,
-> > >       "beta_2": 0.999,
-> > >       "amsgrad": false,
-> > >       "epsilon": 1e-07
-> > > }
-> > > ```
-> > 
-> >   - Ftrl  
-> >     [ftrl
-> >     link](https://www.tensorflow.org/versions/r1.15/api_docs/python/tf/keras/optimizers/Ftrl)
-> > 
-> > > 
-> > > 
-> > > ``` sourceCode json
-> > > {
-> > >       "optimizer": "Ftrl",
-> > >       "learning_rate": 0.001,
-> > >       "learning_rate_power": -0.5,
-> > >       "initial_accumulator_value": 0.1,
-> > >       "l1_regularization_strength": 0.0,
-> > >       "l2_regularization_strength": 0.0,
-> > >       "l2_shrinkage_regularization_strength": 0.0
-> > > }
-> > > ```
-> > 
-> >   - Nadam  
-> >     [nadam
-> >     link](https://www.tensorflow.org/versions/r1.15/api_docs/python/tf/keras/optimizers/Nadam)
-> > 
-> > > 
-> > > 
-> > > ``` sourceCode json
-> > > {
-> > >       "optimizer": "Nadam",
-> > >       "learning_rate": 0.001,
-> > >       "beta_1": 0.9,
-> > >       "beta_2": 0.999,
-> > >       "epsilon": 1e-07
-> > > }
-> > > ```
-> > 
-> >   - RMSprop  
-> >     [rmsprop
-> >     link](https://www.tensorflow.org/versions/r1.15/api_docs/python/tf/keras/optimizers/RMSprop)
-> > 
-> > > 
-> > > 
-> > > ``` sourceCode json
-> > > {
-> > >       "optimizer": "RMSprop",
-> > >       "learning_rate": 0.001,
-> > >       "pho": 0.9,
-> > >       "momentum": 0.0,
-> > >       "epsilon": 1e-07,
-> > >       "centered": false
-> > > }
-> > > ```
-> > 
-> >   - SGD  
-> >     [sgd
-> >     link](https://www.tensorflow.org/versions/r1.15/api_docs/python/tf/keras/optimizers/SGD)
-> > 
-> > > 
-> > > 
-> > > ``` sourceCode json
-> > > {
-> > >       "optimizer": "SGD",
-> > >       "learning_rate": 0.001,
-> > >       "momentum": 0.0,
-> > >       "nesterov": false
-> > > }
-> > > ```
+> >  ``` sourceCode json
+> >  {
+> >        "optimizer": "SGD",
+> >        "learning_rate": 0.001,
+> >        "momentum": 0.0,
+> >        "nesterov": false
+> >  }
+> >  ```
 > 
 >   - supported losses  
 >     all losses listed in
@@ -374,5 +360,5 @@ Some detailed examples can be found in the example directory
     2.  max\_iter: max aggregation number, a positive integer
     3.  early\_stop: diff or abs
     4.  metrics: a string name, refer to
-        [\[metricsdoc\],](https://www.tensorflow.org/versions/r1.15/api_docs/python/tf/keras/metrics)
+        [metrics doc](https://www.tensorflow.org/versions/r1.15/api_docs/python/tf/keras/metrics),
         such as Accuracy, AUC ...

@@ -30,7 +30,7 @@ from - 2 ^ 63 to 2 ^ 64. By default, the maximum precision is set to 6
 decimal places.
 
 There is an
-[\[example\]](../../../examples/pipeline/feldman_verifiable_sum)
+[example](../../../examples/pipeline/feldman_verifiable_sum)
 
 ## Param
 

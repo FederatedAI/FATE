@@ -15,9 +15,9 @@ The indicators for each column that can be statistic are list as follow.
 8.  missing\_count/missing\_ratio: Number and ratio of missing value in
     this column
 9.  skewness: The definition can be referred to
-    [\[here\]](https://en.wikipedia.org/wiki/Skewness)
+    [here](https://en.wikipedia.org/wiki/Skewness)
 10. kurtosis: The definition can be referred to
-    [\[here\]](https://en.wikipedia.org/wiki/Kurtosis)
+    [here](https://en.wikipedia.org/wiki/Kurtosis)
 11. percentile: The value of percentile. Accept 0% to 100% while the
     number before the "%" should be integer.
 

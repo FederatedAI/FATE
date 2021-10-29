@@ -74,11 +74,10 @@ If an id <span class="title-ref">42</span> exists in both
     <span class="title-ref">dataio\_1.data</span> to
     <span class="title-ref">42\_dataio\_1</span>.
 
-Here are more [\[Union job
-examples\]](../../../../examples/pipeline/union) with FATE-Pipeline.
+Here are more [Union job examples](../../../../examples/pipeline/union) with FATE-Pipeline.
 
-For more example job configuration and dsl setting files, please refer
-[\[here\]](../../../../examples/dsl/v2/union).
+For example job configuration and dsl setting files, please refer
+[here](../../../../examples/dsl/v2/union).
 
 ## Param
 

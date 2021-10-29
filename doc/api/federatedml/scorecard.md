@@ -52,4 +52,4 @@ range and parameter values.
     Indicate if this module needs to be run, default True
 
   - examples  
-    Here is an [\[example\]](../../../examples/pipeline/scorecard).
+    Here is an [example](../../../examples/pipeline/scorecard).

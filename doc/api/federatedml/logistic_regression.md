@@ -137,7 +137,7 @@ Principle)](../../images/hetero_lr_multi_host.png)
 > 3.  Support aggregate for every arbitrary iterations.
 > 
 > 4.  Support FedProx mechanism. For more details, please refer to
->     [\[this paper\]](https://arxiv.org/abs/1812.06127)
+>     [this paper](https://arxiv.org/abs/1812.06127)
 
   - Hetero-LR extra features
 
@@ -148,5 +148,4 @@ Principle)](../../images/hetero_lr_multi_host.png)
 > 4.  Support sparse format data
 > 5.  Support early-stopping mechanism
 > 6.  Support setting arbitrary metrics for validation during training
-> 7.  Support stepwise. For details on stepwise mode, please refer
->     \[[stepwise](stepwise.md)\].
+> 7.  Support stepwise. For details on stepwise mode, please refer [stepwise doc](stepwise.md).

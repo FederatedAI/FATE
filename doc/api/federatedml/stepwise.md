@@ -36,7 +36,7 @@ configuration file.
 For examples of using stepwise with linear models, please refer
 [here](../../../examples/dsl/v2/hetero_stepwise). For explanation on
 stepwise module parameters, please refer to
-[stepwise\_param](../../../python/federatedml/param/stepwise_param.py).
+[stepwise param](../../../python/federatedml/param/stepwise_param.py).
 
 Please note that on FATE Board, shown model information (max iters &
 coefficient/intercept values) are of the final result model.

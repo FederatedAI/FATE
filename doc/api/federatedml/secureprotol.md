@@ -143,8 +143,8 @@ assert key1 == key2
 
 # SecretShare MPC Protocol(SPDZ)
 
-SPDZ([\[Ivan Damg˚ard\]](https://eprint.iacr.org/2011/535.pdf),
-[\[Marcel Keller\]](https://eprint.iacr.org/2017/1230.pdf)) is a
+SPDZ([Ivan Damg˚ard](https://eprint.iacr.org/2011/535.pdf),
+[Marcel Keller](https://eprint.iacr.org/2017/1230.pdf)) is a
 multiparty computation scheme based on somewhat homomorphic encryption
 (SHE).
 
@@ -288,7 +288,7 @@ Hauck and Julian Loss. For more information, please refer
 # Feldman Verifiable secret sharing
 
 Feldman Verifiable secret sharing
-[\[VSS\]](https://www.cs.umd.edu/~gasarch/TOPICS/secretsharing/feldmanVSS.pdf)
+[VSS](https://www.cs.umd.edu/~gasarch/TOPICS/secretsharing/feldmanVSS.pdf)
 is an information-theoretic secure method to share secrets between
 multi-parties.
 
