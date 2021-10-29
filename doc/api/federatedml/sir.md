@@ -1,8 +1,6 @@
-Secure Information Retrieval
-============================
+# Secure Information Retrieval
 
-Introduction
-------------
+## Introduction
 
 Secure Information Retrieval(SIR) securely retrieves target value(s)
 from host. This module is based on [Pohlig
@@ -10,8 +8,7 @@ Hellman](https://ee.stanford.edu/~hellman/publications/28.pdf)
 commutative encryption and [Hauck Oblivious
 Transfer(OT)](https://eprint.iacr.org/2017/1011).
 
-How to Use
-----------
+## How to Use
 
 This component can be used to retrieve specific feature value(s) or
 label value, with arbitrary security level.
@@ -19,8 +16,7 @@ label value, with arbitrary security level.
 There is an
 [\[example\]](../../../examples/pipeline/secure_information_retrieval)
 
-Param
------
+## Param
 
 ::: federatedml.param.sir_param
     rendering:

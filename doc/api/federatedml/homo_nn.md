@@ -1,5 +1,4 @@
-Homogeneous Neural Networks
-===========================
+# Homogeneous Neural Networks
 
 Neural networks are probably the most popular machine learning
 algorithms in recent years. FATE provides a federated homogeneous neural
@@ -9,16 +8,14 @@ represents Host, which is almost the same with guest except that Host
 does not initiate task. Party C serves as a coordinator to aggregate
 models from guest/hosts and broadcast aggregated model.
 
-Basic Process
--------------
+## Basic Process
 
 As its name suggested, in Homogeneous Neural Networks, the feature
 spaces of guest and hosts are identical. An optional encryption mode for
 model is provided. By doing this, no party can get the private model of
 other parties.
 
-![Figure 1 (Federated Homo NN
-Principle)](../../doc/images/homo_nn.png){.align-center width="500px"}
+![Figure 1 (Federated Homo NN Principle)](../../doc/images/homo_nn.png)
 
 The Homo NN process is shown in Figure 1. Models of Party A and Party B
 have the same neural networks structure. In each iteration, each party
@@ -39,8 +36,7 @@ Since there is no model transferred in plaintext, except for the owner
 of the model, no other party can obtain the real information of the
 model.
 
-Param
------
+## Param
 
 ::: federatedml.param.homo_nn_param
     rendering:
@@ -50,23 +46,17 @@ Param
       show_root_toc_entry: false
       show_root_full_path: false
 
+## Features
 
-Features
---------
+  - tensorflow backend
 
-tensorflow backend
+  - supported layers
 
-:   
+  - Dense
 
-supported layers
-
-:   
-
-Dense
-
-:   
-
-> ``` {.sourceCode .json}
+> 
+> 
+> ``` sourceCode json
 > {
 >     "layer": "Dense",
 >     "units": ,
@@ -82,11 +72,11 @@ Dense
 >   }
 > ```
 
-> Droupout
->
-> :   
->
-> > ``` {.sourceCode .json}
+>   - Droupout
+> 
+> > 
+> > 
+> > ``` sourceCode json
 > > {
 > >     "rate": ,
 > >     "noise_shape": null,
@@ -97,18 +87,18 @@ Dense
 > other layers listed in
 > [tf.keras.layers](https://www.tensorflow.org/versions/r1.14/api_docs/python/tf/keras/layers)
 > will be supported in near feature.
->
-> supported optimizer
->
-> :   all optimizer listed in
+> 
+>   - supported optimizer  
+>     all optimizer listed in
 >     [tf.keras.optimizers](https://www.tensorflow.org/versions/r1.15/api_docs/python/tf/keras/optimizers)
->
-> Adadelta
->
-> :   [adadelta
+> 
+>   - Adadelta  
+>     [adadelta
 >     link](https://www.tensorflow.org/versions/r1.15/api_docs/python/tf/keras/optimizers/Adadelta)
->
-> > ``` {.sourceCode .json}
+> 
+> > 
+> > 
+> > ``` sourceCode json
 > > {
 > >       "optimizer": "Adadelta",
 > >       "learning_rate": 0.001,
@@ -116,13 +106,14 @@ Dense
 > >       "epsilon": 1e-07
 > > }
 > > ```
->
-> > Adagrad
-> >
-> > :   [adagrad
+> 
+> >   - Adagrad  
+> >     [adagrad
 > >     link](https://www.tensorflow.org/versions/r1.15/api_docs/python/tf/keras/optimizers/Adagrad)
-> >
-> > > ``` {.sourceCode .json}
+> > 
+> > > 
+> > > 
+> > > ``` sourceCode json
 > > > {
 > > >       "optimizer": "Adagrad",
 > > >       "learning_rate": 0.001,
@@ -130,13 +121,14 @@ Dense
 > > >       "epsilon": 1e-07
 > > > }
 > > > ```
-> >
-> > Adam
-> >
-> > :   [adam
+> > 
+> >   - Adam  
+> >     [adam
 > >     link](https://www.tensorflow.org/versions/r1.14/api_docs/python/tf/keras/optimizers/Adam)
-> >
-> > > ``` {.sourceCode .json}
+> > 
+> > > 
+> > > 
+> > > ``` sourceCode json
 > > > {
 > > >       "optimizer": "Adam",
 > > >       "learning_rate": 0.001,
@@ -146,13 +138,14 @@ Dense
 > > >       "epsilon": 1e-07
 > > > }
 > > > ```
-> >
-> > Ftrl
-> >
-> > :   [ftrl
+> > 
+> >   - Ftrl  
+> >     [ftrl
 > >     link](https://www.tensorflow.org/versions/r1.15/api_docs/python/tf/keras/optimizers/Ftrl)
-> >
-> > > ``` {.sourceCode .json}
+> > 
+> > > 
+> > > 
+> > > ``` sourceCode json
 > > > {
 > > >       "optimizer": "Ftrl",
 > > >       "learning_rate": 0.001,
@@ -163,13 +156,14 @@ Dense
 > > >       "l2_shrinkage_regularization_strength": 0.0
 > > > }
 > > > ```
-> >
-> > Nadam
-> >
-> > :   [nadam
+> > 
+> >   - Nadam  
+> >     [nadam
 > >     link](https://www.tensorflow.org/versions/r1.15/api_docs/python/tf/keras/optimizers/Nadam)
-> >
-> > > ``` {.sourceCode .json}
+> > 
+> > > 
+> > > 
+> > > ``` sourceCode json
 > > > {
 > > >       "optimizer": "Nadam",
 > > >       "learning_rate": 0.001,
@@ -178,13 +172,14 @@ Dense
 > > >       "epsilon": 1e-07
 > > > }
 > > > ```
-> >
-> > RMSprop
-> >
-> > :   [rmsprop
+> > 
+> >   - RMSprop  
+> >     [rmsprop
 > >     link](https://www.tensorflow.org/versions/r1.15/api_docs/python/tf/keras/optimizers/RMSprop)
-> >
-> > > ``` {.sourceCode .json}
+> > 
+> > > 
+> > > 
+> > > ``` sourceCode json
 > > > {
 > > >       "optimizer": "RMSprop",
 > > >       "learning_rate": 0.001,
@@ -194,13 +189,14 @@ Dense
 > > >       "centered": false
 > > > }
 > > > ```
-> >
-> > SGD
-> >
-> > :   [sgd
+> > 
+> >   - SGD  
+> >     [sgd
 > >     link](https://www.tensorflow.org/versions/r1.15/api_docs/python/tf/keras/optimizers/SGD)
-> >
-> > > ``` {.sourceCode .json}
+> > 
+> > > 
+> > > 
+> > > ``` sourceCode json
 > > > {
 > > >       "optimizer": "SGD",
 > > >       "learning_rate": 0.001,
@@ -208,53 +204,46 @@ Dense
 > > >       "nesterov": false
 > > > }
 > > > ```
->
-> supported losses
->
-> :   all losses listed in
+> 
+>   - supported losses  
+>     all losses listed in
 >     [tf.keras.losses](https://www.tensorflow.org/versions/r1.14/api_docs/python/tf/keras/losses)
->
-> > -   binary\_crossentropy
-> > -   categorical\_crossentropy
-> > -   categorical\_hinge
-> > -   cosine\_similarity
-> > -   hinge
-> > -   kullback\_leibler\_divergence
-> > -   logcosh
-> > -   mean\_absolute\_error
-> > -   mean\_absolute\_percentage\_error
-> > -   mean\_squared\_error
-> > -   mean\_squared\_logarithmic\_error
-> > -   poisson
-> > -   sparse\_categorical\_crossentropy
-> > -   squared\_hinge
->
-> support multi-host
->
-> :   In fact, for model security reasons, at least two host parties are
+> 
+> >   - binary\_crossentropy
+> >   - categorical\_crossentropy
+> >   - categorical\_hinge
+> >   - cosine\_similarity
+> >   - hinge
+> >   - kullback\_leibler\_divergence
+> >   - logcosh
+> >   - mean\_absolute\_error
+> >   - mean\_absolute\_percentage\_error
+> >   - mean\_squared\_error
+> >   - mean\_squared\_logarithmic\_error
+> >   - poisson
+> >   - sparse\_categorical\_crossentropy
+> >   - squared\_hinge
+> 
+>   - support multi-host  
+>     In fact, for model security reasons, at least two host parties are
 >     required.
->
-pytorch backend
 
-:   There are some difference in nn configuration build by pytorch
+  - pytorch backend  
+    There are some difference in nn configuration build by pytorch
     compared to tf or keras.
 
-config\_type
+  - config\_type  
+    pytorch, if use pytorch to build your model
 
-:   pytorch, if use pytorch to build your model
+  - nn\_define  
+    Each layer is represented as an object in json.
 
-nn\_define
+  - supported layers
 
-:   Each layer is represented as an object in json.
+  - Linear
 
-supported layers
-
-:   
-
-Linear
-
-:   
-
+> 
+> 
 >     {
 >     "layer": "Linear",
 >     "name": #string,
@@ -262,78 +251,79 @@ Linear
 >     "config": [input_num,output_num]
 >     }
 
-> other normal layers
->
-> :   
->
-> > -   BatchNorm2d
-> > -   dropout
+>   - other normal layers
+> 
+> >   - BatchNorm2d
+> >   - dropout
 
-> activate
->
-> :   
->
+>   - activate
+> 
+> > 
+> > 
 > >     {
 > >       "layer": "Relu",
 > >       "type": "activate",
 > >       "name": #string
 > >     }
-> >
-> > other activate layers
-> >
-> > :   
-> >
-> > > -   Selu
-> > > -   LeakyReLU
-> > > -   Tanh
-> > > -   Sigmoid
-> > > -   Relu
-> > > -   Tanh
->
-> optimizer
->
-> :   A json object is needed
->
+> > 
+> >   - other activate layers
+> > 
+> > >   - Selu
+> > >   - LeakyReLU
+> > >   - Tanh
+> > >   - Sigmoid
+> > >   - Relu
+> > >   - Tanh
+> 
+>   - optimizer  
+>     A json object is needed
+> 
+> > 
+> > 
 > >     "optimizer": {
 > >       "optimizer": "Adam",
 > >       "learning_rate": 0.05
 > >     }
-> >
-> > optimizer include \"Adam\",\"SGD\",\"RMSprop\",\"Adagrad\"
->
-> loss
->
-> :   A string is needed, supported losses include:
->
-> > -   \"CrossEntropyLoss\"
-> > -   \"MSELoss\"
-> > -   \"BCELoss\"
-> > -   \"BCEWithLogitsLoss\"
-> > -   \"NLLLoss\"
-> > -   \"L1Loss\"
-> > -   \"SmoothL1Loss\"
-> > -   \"HingeEmbeddingLoss\"
->
-> metrics
->
-> :   A string is needed, supported metrics include:
->
-> > -   auccuray
-> > -   precision
-> > -   recall
-> > -   auc
-> > -   f1
-> > -   fbeta
+> > 
+> > optimizer include "Adam","SGD","RMSprop","Adagrad"
+> 
+>   - loss  
+>     A string is needed, supported losses include:
+> 
+> >   - "CrossEntropyLoss"
+> >   - "MSELoss"
+> >   - "BCELoss"
+> >   - "BCEWithLogitsLoss"
+> >   - "NLLLoss"
+> >   - "L1Loss"
+> >   - "SmoothL1Loss"
+> >   - "HingeEmbeddingLoss"
+> 
+>   - metrics  
+>     A string is needed, supported metrics include:
+> 
+> >   - auccuray
+> >   - precision
+> >   - recall
+> >   - auc
+> >   - f1
+> >   - fbeta
 
-Use
----
+## Use
 
-:memo: NOTE
+<div class="note">
+
+<div class="admonition-title">
+
+Note
+
+</div>
 
 For more information on task configuration, please refer to the
 [\[doc\]](../../../../examples/dsl/v2/README.md) under example first.
 In this part we only talk about the parameter configuration.
-:::
+
+</div>
 
 Since all parties training Homogeneous Neural Networks have the same
 network structure, a common practice is to configure parameters under
@@ -354,31 +344,35 @@ structure is:
           "max_iter": 10
     }
 
-:memo: NOTE
+<div class="note">
+
+<div class="admonition-title">
+
+Note
+
+</div>
 
 Some detailed examples can be found in the example directory
-:::
 
-nn\_define
+</div>
 
-:   Each layer is represented as an object in json. Please refer to
+  - nn\_define  
+    Each layer is represented as an object in json. Please refer to
     supported layers in Features part.
 
-optimizer
-
-:   A json object is needed, please refer to supported optimizers in
+  - optimizer  
+    A json object is needed, please refer to supported optimizers in
     Features part.
 
-loss
-
-:   A string is needed, please refer to supported losses in Features
+  - loss  
+    A string is needed, please refer to supported losses in Features
     part.
 
-others
-
-:   1.  batch\_size: a positive integer or -1 for full batch
+  - others
+    
+    1.  batch\_size: a positive integer or -1 for full batch
     2.  max\_iter: max aggregation number, a positive integer
     3.  early\_stop: diff or abs
     4.  metrics: a string name, refer to
         [\[metricsdoc\],](https://www.tensorflow.org/versions/r1.15/api_docs/python/tf/keras/metrics)
-        such as Accuracy, AUC \...
+        such as Accuracy, AUC ...

@@ -1,13 +1,12 @@
-Stepwise
-========
+# Stepwise
 
 Stepwise is a simple, effective model selection technique. FATE provides
 stepwise wrapper for heterogeneous linear models. The compatible models
 are listed below:
 
--   [Heterogeneous Logistic Regression](logistic_regression.md)
--   [Heterogeneous Linear Regression](linear_regression.md)
--   [Heterogeneous Poisson Regression](poisson_regression.md)
+  - [Heterogeneous Logistic Regression](logistic_regression.md)
+  - [Heterogeneous Linear Regression](linear_regression.md)
+  - [Heterogeneous Poisson Regression](poisson_regression.md)
 
 Please note that due to lack of loss history, Stepwise does not support
 multi-host modeling.
@@ -16,11 +15,12 @@ Stepwise Module currently does not support validation strategy or early
 stopping. While validate data may be set in job configuration file, it
 will not be used in the stepwise process.
 
-To use stepwise, set \'need\_stepwise\' to [True]{.title-ref} and
-specify stepwise parameters as desired. Below is an example of stepwise
-parameter setting in job configuration file.
+To use stepwise, set 'need\_stepwise' to
+<span class="title-ref">True</span> and specify stepwise parameters as
+desired. Below is an example of stepwise parameter setting in job
+configuration file.
 
-``` {.sourceCode .json}
+``` sourceCode json
 {
     "stepwise_param": {
             "score_name": "AIC",
@@ -41,8 +41,7 @@ stepwise module parameters, please refer to
 Please note that on FATE Board, shown model information (max iters &
 coefficient/intercept values) are of the final result model.
 
-Param
------
+## Param
 
 ::: federatedml.param.stepwise_param
     rendering:

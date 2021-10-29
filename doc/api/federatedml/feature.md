@@ -1,5 +1,4 @@
-Hetero Feature Binning
-======================
+# Hetero Feature Binning
 
 Feature binning or data binning is a data pre-processing technique. It
 can be use to reduce the effects of minor observation errors, calculate
@@ -15,12 +14,11 @@ As for calculating the federated iv and woe values, the following figure
 can describe the principle properly.
 
 ![Figure 1 (Federated Feature Binning
-Principle)](../../images/binning_principle.png){.align-center
-width="850px"}
+Principle)](../../images/binning_principle.png)
 
 As the figure shows, B party which has the data labels encrypt its
 labels with Addiction homomorphic encryption and then send to A. A
-static each bin\'s label sum and send back. Then B can calculate woe and
+static each bin's label sum and send back. Then B can calculate woe and
 iv base on the given information.
 
 For multiple hosts, it is similar with one host case. Guest sends its
@@ -28,8 +26,7 @@ encrypted label information to all hosts, and each of the hosts
 calculates and sends back the static info.
 
 ![Figure 2： Multi-Host Binning
-Principle](../../images/multiple_host_binning.png){.align-center
-width="850px"}
+Principle](../../images/multiple_host_binning.png)
 
 For optimal binning, each party use quantile binning or bucket binning
 find initial split points. Then Guest will send encrypted labels to
@@ -37,8 +34,7 @@ Host. Host use them calculate histogram of each bin and send back to
 Guest. Then start optimal binning methods.
 
 ![Figure 3： Multi-Host Binning
-Principle](../../images/optimal_binning.png){.align-center
-width="850px"}
+Principle](../../images/optimal_binning.png)
 
 There exist two kinds of methods, merge-optimal binning and
 split-optimal binning. When choosing metrics as iv, gini or chi-square,
@@ -48,23 +44,18 @@ choosed, split type optimal binning will be used.
 Binning module supports multi-class data to calculate iv and woe too. To
 achieve it, one-vs-rest mechanism is used. Each label will be chosen
 iteratively as event case. All other cases will be treated as non-event
-cases. Therefore, we can obtain a set of iv&woe result for each label
+cases. Therefore, we can obtain a set of iv\&woe result for each label
 case.
 
-Param
------
+## Param
 
-::: federatedml.param.feature_binning_param
-    rendering:
-      heading_level: 3
-      show_source: true
-      show_root_heading: true
-      show_root_toc_entry: false
-      show_root_full_path: false
+<div class="automodule">
 
+federatedml.param.feature\_binning\_param
 
-Features
---------
+</div>
+
+## Features
 
 1.  Support Quantile Binning based on quantile summary algorithm.
 2.  Support Bucket Binning.
@@ -76,10 +67,9 @@ Features
 7.  Support multiple hosts binning.
 8.  Support 4 types of optimal binning.
 9.  Support asymmetric binning methods on Host & Guest sides.
-10. Support multi-class iv&woe calculation.
+10. Support multi-class iv\&woe calculation.
 
-Hetero Feature Selection
-========================
+# Hetero Feature Selection
 
 Feature selection is a process that selects a subset of features for
 model construction. Take good advantage of feature selection can improve
@@ -88,105 +78,100 @@ model performance.
 In this version, we provide several filter methods for feature
 selection.
 
-Param
------
+## Param
 
-::: federatedml.param.feature_selection_param
-    rendering:
-      heading_level: 3
-      show_source: true
-      show_root_heading: true
-      show_root_toc_entry: false
-      show_root_full_path: false
+<div class="automodule">
 
+federatedml.param.feature\_selection\_param
 
-Features
---------
+</div>
+
+## Features
 
 1.  unique\_value: filter the columns if all values in this feature is
     the same
-2.  
 
-    iv\_filter: Use iv as criterion to selection features. Support three mode: threshold value, top-k and top-percentile.
-
-    :   -   threshold value: Filter those columns whose iv is smaller
+2.    - iv\_filter: Use iv as criterion to selection features. Support
+        three mode: threshold value, top-k and top-percentile.
+        
+          - threshold value: Filter those columns whose iv is smaller
             than threshold. You can also set different threshold for
             each party.
-        -   top-k: Sort features from larger iv to smaller and take top
+          - top-k: Sort features from larger iv to smaller and take top
             k features in the sorted result.
-        -   top-percentile. Sort features from larger to smaller and
+          - top-percentile. Sort features from larger to smaller and
             take top percentile.
-
+        
         Besides, multi-class iv filter is available if multi-class iv
         has been calculated in upstream component. There are three
         mechanisms to select features. Please remind that there exist as
         many ivs calculated as the number of labels since we use
         one-vs-rest for multi-class cases.
-        -   \"min\": take the minimum iv among all results.
-        -   \"max\": take the maximum ones
-
-        \* \"average\": take the average among all results. After that,
-        we get unique one iv for each column so that we can use the
-        three mechanism mentioned above to select features.
+        
+          - "min": take the minimum iv among all results.
+          - "max": take the maximum ones
+        
+        \* "average": take the average among all results. After that, we
+        get unique one iv for each column so that we can use the three
+        mechanism mentioned above to select features.
 
 3.  statistic\_filter: Use statistic values calculate from DataStatistic
     component. Support coefficient of variance, missing value,
     percentile value etc. You can pick the columns with higher statistic
     values or smaller values as you need.
+
 4.  psi\_filter: Take PSI component as input isometric model. Then, use
     its psi value as criterion of selection.
+
 5.  hetero\_sbt\_filter/homo\_sbt\_filter/hetero\_fast\_sbt\_filter:
     Take secureboost component as input isometric model. And use feature
     importance as criterion of selection.
+
 6.  manually: Indicate features that need to be filtered.
+
 7.  percentage\_value: Filter the columns that have a value that exceeds
     a certain percentage.
 
 Besides, we support multi-host federated feature selection for iv
 filters. Hosts encode feature names and send the feature ids that are
-involved in feature selection. Guest use iv filters\' logic to judge
+involved in feature selection. Guest use iv filters' logic to judge
 whether a feature is left or not. Then guest sends result back to hosts.
 Hosts decode feature ids back to feature names and obtain selection
 results.
 
 ![Figure 4: Multi-Host Selection
-Principle\</div\>](../../images/multi_host_selection.png){.align-center
-width="850px"}
+Principle\</div\>](../../images/multi_host_selection.png)
 
 More feature selection methods will be provided. Please make suggestions
 by submitting an issue.
 
-Federated Sampling
-==================
+# Federated Sampling
 
 From Fate v0.2 supports sample method. Sample module supports two sample
 modes: random sample mode and stratified sample mode.
 
--   In random mode, \"downsample\" and \"upsample\" methods are
-    provided. Users can set the sample parameter \"fractions\", which is
-    the sample ratio within data.
+  - In random mode, "downsample" and "upsample" methods are provided.
+    Users can set the sample parameter "fractions", which is the sample
+    ratio within data.
 
-\- In stratified mode, \"downsample\" and \"upsample\" methods are also
-provided. Users can set the sample parameter \"fractions\" too, but it
+\- In stratified mode, "downsample" and "upsample" methods are also
+provided. Users can set the sample parameter "fractions" too, but it
 should be a list of tuples in the form (label\_i, ratio). Tuples in the
 list each specify the sample ratio of corresponding label. e.g.
 
+> 
+> 
 >     [(0, 1.5), (1, 2.5), (3, 3.5)]
 
-Param
------
+## Param
 
-::: federatedml.param.sample_param
-    rendering:
-      heading_level: 3
-      show_source: true
-      show_root_heading: true
-      show_root_toc_entry: false
-      show_root_full_path: false
+<div class="automodule">
 
+federatedml.param.sample\_param
 
-Feature Scale
-=============
+</div>
+
+# Feature Scale
 
 Feature scale is a process that scales each feature along column.
 Feature Scale module supports min-max scale and standard scale.
@@ -197,77 +182,57 @@ Feature Scale module supports min-max scale and standard scale.
 2.  standard scale: standardize features by removing the mean and
     scaling to unit variance
 
-Param
------
+## Param
 
-::: federatedml.param.scale_param
-    rendering:
-      heading_level: 3
-      show_source: true
-      show_root_heading: true
-      show_root_toc_entry: false
-      show_root_full_path: false
+<div class="automodule">
 
+federatedml.param.scale\_param
 
-OneHot Encoder
-==============
+</div>
+
+# OneHot Encoder
 
 OneHot encoding is a process by which category variables are converted
 to binary values. The detailed info could be found in [\[OneHot
 wiki\]](https://en.wikipedia.org/wiki/One-hot)
 
-Param
------
+## Param
 
-::: federatedml.param.onehot_encoder_param
-    rendering:
-      heading_level: 3
-      show_source: true
-      show_root_heading: true
-      show_root_toc_entry: false
-      show_root_full_path: false
+<div class="automodule">
 
+federatedml.param.onehot\_encoder\_param
 
-Homo OneHot Encoder
-===================
+</div>
+
+# Homo OneHot Encoder
 
 OneHot Encoding is a process by which category variables are converted
 to binary values. The detailed info could be found in [\[OneHot
 wiki\]](https://en.wikipedia.org/wiki/One-hot)
 
-Param
------
+## Param
 
-::: federatedml.param.homo_onehot_encoder_param
-    rendering:
-      heading_level: 3
-      show_source: true
-      show_root_heading: true
-      show_root_toc_entry: false
-      show_root_full_path: false
+<div class="automodule">
 
+federatedml.param.homo\_onehot\_encoder\_param
 
-Column Expand
-=============
+</div>
+
+# Column Expand
 
 Column Expand is used for adding arbitrary number of columns with
 user-provided values. This module is run directly on table object(raw
 data), before data entering Data Transform.
 
-Param
------
+## Param
 
-::: federatedml.param.column_expand_param
-    rendering:
-      heading_level: 3
-      show_source: true
-      show_root_heading: true
-      show_root_toc_entry: false
-      show_root_full_path: false
+<div class="automodule">
 
+federatedml.param.column\_expand\_param
 
-SBT Feature Transformer
-=======================
+</div>
+
+# SBT Feature Transformer
 
 A feature engineering module that encodes sample using leaf indices
 predicted by Hetero SBT/Fast-SBT. Samples will be transformed into
@@ -276,30 +241,24 @@ paper\]](https://research.fb.com/wp-content/uploads/2016/11/practical-lessons-fr
 for its details.
 
 ![Figure 5: Encoding using leaf
-indices\</div\>](../../images/gbdt_lr.png){.align-center width="500px"}
+indices\</div\>](../../images/gbdt_lr.png)
 
-Param
------
+## Param
 
-::: federatedml.param.sbt_feature_transformer_param
-    rendering:
-      heading_level: 3
-      show_source: true
-      show_root_heading: true
-      show_root_toc_entry: false
-      show_root_full_path: false
+<div class="automodule">
 
+federatedml.param.sbt\_feature\_transformer\_param
 
-Feature Imputation
-==================
+</div>
+
+# Feature Imputation
 
 Feature Imputation imputes missing features on dense instances using
 user-specified method(s) and value(s). Imputation can be done on select
 columns using arbitrary methods. Please refer
 [here](../../../examples/pipeline/feature_imputation) for examples.
 
-Param
------
+## Param
 
 ::: federatedml.param.feature_imputation_param
     rendering:

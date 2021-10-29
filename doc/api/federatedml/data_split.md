@@ -1,12 +1,10 @@
-Data Split
-==========
+# Data Split
 
 Data Split module splits data into desired train, test, and/or validate
 sets. The module is based on sklearn train\_test\_split method while its
 output can include an extra validate data set.
 
-Use
-===
+# Use
 
 Data Split supports homogeneous (both Guest & Host have y) and
 heterogeneous (only Guest has y) mode.
@@ -14,9 +12,9 @@ heterogeneous (only Guest has y) mode.
 The module takes one table input as specified in job config file. Table
 must be uploaded beforehand as with other federatedml models. Module
 parameters should be specified in job config file. Any parameter
-unspecified will take the default value detailed in [parameter
-definition
-\<../../../python/federatedml/param/data\_split\_param.py\>]{.title-ref}\_\_.
+unspecified will take the default value detailed in
+<span class="title-ref">parameter definition
+\<../../../python/federatedml/param/data\_split\_param.py\></span>\_\_.
 
 Data Split module always outputs three tables (train, test, and validate
 sets). Each table may be used as input of another module. Below are the

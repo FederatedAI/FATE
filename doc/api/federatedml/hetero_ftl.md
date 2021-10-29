@@ -1,12 +1,11 @@
-Introduction
-============
+# Introduction
 
 Now, hetero federated transfer learning is refactorized based on
 fate-1.5. And additional test datasets are offered.
 
 This folder contains code for implementing algorithm presented in
-[Secure Federated Transfer Learning
-\<https://arxiv.org/abs/1812.03337\>]{.title-ref}\_\_.
+<span class="title-ref">Secure Federated Transfer Learning
+\<https://arxiv.org/abs/1812.03337\></span>\_\_.
 
 Our FTL algorithm is trying to solve problem where two participants
 -host and guest - have only partial overlaps in the sample space and may
@@ -39,8 +38,8 @@ minimizing target loss and alignment loss.
 
 In current version, we get rid of the arbiter and still guarantee
 data/model privacy. For detail on how this can be achieved, please refer
-to [Secure Federated Transfer Learning
-\<https://arxiv.org/abs/1812.03337\>]{.title-ref}\_\_.
+to <span class="title-ref">Secure Federated Transfer Learning
+\<https://arxiv.org/abs/1812.03337\></span>\_\_.
 
 We support two mode for the FTL algorithms: plain mode and encrypted
 mode. In plain mode, data are computed and transferred in plaintext,
@@ -52,22 +51,19 @@ efficient mode. Once communication efficient mode is enabled, for every
 epoch, intermediate components are preserved and are used to conduct
 several local model weights updates, thus communication cost is reduced.
 
-Features
---------
+## Features
 
--   Support plain/encrypted mode
--   Support local layer define / optimizer define
--   Support communication-efficient mode. See
+  - Support plain/encrypted mode
+  - Support local layer define / optimizer define
+  - Support communication-efficient mode. See
     test\_ftl\_comm\_eff\_conf.json in
     [here](../../../examples/dsl/v2/hetero_ftl).
 
-Applications
-------------
+## Applications
 
 Now Hetero FTL only supports binary classification.
 
-Quick Start
-===========
+# Quick Start
 
 Now you can start hetero-ftl like other algorithms in FATE. Please refer
-to the \"examples\" folder.
+to the "examples" folder.

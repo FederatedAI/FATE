@@ -1,12 +1,10 @@
-Local Baseline
-==============
+# Local Baseline
 
 Local Baseline module builds a sklearn model with local data. The module
 is basically a wrapper for sklearn model such that it can be run as part
 of FATE job workflow and configured as other federatedml modules.
 
-Use
----
+## Use
 
 Local Baseline currently only supports sklearn Logistic Regression
 model.
@@ -29,8 +27,7 @@ homogeneous training.
 For examples of using Local Baseline module, please refer
 [here](../../../examples/pipeline/local_baseline).
 
-Param
------
+## Param
 
 ::: federatedml.param.local_baseline_param
     rendering:

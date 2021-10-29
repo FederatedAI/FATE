@@ -1,5 +1,4 @@
-Federated Kmeans
-================
+# Federated Kmeans
 
 Kmeans is a simple statistic model widely used for clustering. FATE
 provides Heterogeneous Kmeans(HeteroKmeans).
@@ -8,17 +7,15 @@ provides Heterogeneous Kmeans(HeteroKmeans).
 
 Here we simplify participants of the federation process into three
 parties. Party A represents Guest, party B represents Host. Party C,
-which is also known as "Arbiter," is a third party that works as a
+which is also known as “Arbiter,” is a third party that works as a
 coordinator. Party C is responsible for generating private and public
 keys.
 
-Heterogeneous Kmeans
---------------------
+## Heterogeneous Kmeans
 
 The process of HeteroKmeans training is shown below:
 
-![hetero-kmeans structure](../../images/heterokmeans.png){.align-center
-width="800px"}
+![hetero-kmeans structure](../../images/heterokmeans.png)
 
 Figure 1 (Federated HeteroKmeans Principle)
 
@@ -39,8 +36,7 @@ During the aggregate process, parties will use secure aggregate as all
 sent distances will be added with random numbers that can be combined to
 zero when aggregating at arbiter.
 
-Param
------
+## Param
 
 ::: federatedml.param.hetero_kmeans_param
     rendering:
@@ -50,8 +46,7 @@ Param
       show_root_toc_entry: false
       show_root_full_path: false
 
-Features
---------
+## Features
 
 1.  Tolerance & Max\_iter supported for convergence
 2.  Random\_stat specify supported

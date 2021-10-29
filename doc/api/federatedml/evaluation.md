@@ -1,5 +1,4 @@
-Evaluation
-==========
+# Evaluation
 
 This module provides evaluation methods for classification, regression
 and clustering. Available metrics include:
@@ -18,7 +17,7 @@ and clustering. Available metrics include:
     for regression tasks
 11. MEDIAN\_ABSOLUTE\_ERROR: Compute median absolute error for
     regression tasks
-12. R2\_SCORE: Compute R\^2 (coefficient of determination) score for
+12. R2\_SCORE: Compute R^2 (coefficient of determination) score for
     regression tasks
 13. ROOT\_MEAN\_SQUARED\_ERROR: Compute the root of mean square error
     for regression tasks
@@ -26,8 +25,8 @@ and clustering. Available metrics include:
     clustering tasks (labels are needed)
 15. ADJUSTED\_RAND\_SCORE：Compute adjusted rand score for clustering
     tasks (labels are needed)
-16. FOWLKES\_MALLOWS\_SCORE：Compute Fowlkes Mallows score for
-    clustering tasks (labels are needed)
+16. FOWLKES\_MALLOWS\_SCORE：Compute Fowlkes Mallows score for clustering
+    tasks (labels are needed)
 17. DAVIES\_BOULDIN\_INDEX：Compute Davies Bouldin index for clustering
     tasks
 18. DISTANCE\_MEASURE:Compute cluster information in clustering
@@ -35,8 +34,7 @@ and clustering. Available metrics include:
 19. CONTINGENCY\_MATRIX:Compute contingency matrix for clustering tasks
     (labels are needed)
 
-Param
------
+## Param
 
 ::: federatedml.param.evaluation_param
     rendering:
@@ -45,4 +43,3 @@ Param
       show_root_heading: true
       show_root_toc_entry: false
       show_root_full_path: false
-

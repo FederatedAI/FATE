@@ -1,10 +1,8 @@
-Intersection
-============
+# Intersection
 
 This module provide some method of PSI(Private Set Intersection)
 
-RSA Intersection
-----------------
+## RSA Intersection
 
 This mode implements algorithm based on \[[RSA
 Intersection](https://books.google.com.hk/books?id=zfvf37_YS8cC&pg=PA73&lpg=PA73&dq=rsa+commutative+encryption&source=bl&ots=LbOiyIlr3E&sig=IIWlTGeoU0C8dRiN10uH2OAwobQ&hl=zh-CN&sa=X&ved=0ahUKEwiLoozC1tbXAhVDnJQKHbP7DvAQ6AEIdTAJ#v=onepage&q&f=false.)\].
@@ -14,85 +12,82 @@ the secure, distributed and parallel infrastructure.
 Our Intersection module tries to solve Privacy-Preserving Entity Match
 problem. This module helps two and more parties to find common entry ids
 without leaking non-overlapping ids. The process is illustrated below in
-[figure 1]{.title-ref}.
+<span class="title-ref">figure 1</span>.
 
 ![Figure 1 (RSA Intersection between party A and party
-B)](../../images/rsa_intersection.png){.align-center width="500px"}
+B)](../../images/rsa_intersection.png)
 
-In [figure 1]{.title-ref} ,Party A has user id u1,u2,u3,u4, while Party
-B has u1,u2,u3,u5. After Intersection, party A and party B both learn
-their common user ids, which are u1,u2,u3, while neither party A nor B
-could decrypt each other\'s non-overlapping user ids. Transmission
-parties\' processed id to the other party, like $Y-A$ and $Z-B$, will
-not reveal raw ids. Processed $Z-B$ is safe due to the privacy key of
-party B. Each $Y-A$ includes different random value which binds to each
-value in $X-A$ and will be safe as well.
+In <span class="title-ref">figure 1</span> ,Party A has user id
+u1,u2,u3,u4, while Party B has u1,u2,u3,u5. After Intersection, party A
+and party B both learn their common user ids, which are u1,u2,u3, while
+neither party A nor B could decrypt each other's non-overlapping user
+ids. Transmission parties' processed id to the other party, like \(Y-A\)
+and \(Z-B\), will not reveal raw ids. Processed \(Z-B\) is safe due to
+the privacy key of party B. Each \(Y-A\) includes different random value
+which binds to each value in \(X-A\) and will be safe as well.
 
-Introduced in FATE version 1.6, [split\_calculation]{.title-ref} option
-is available for improved efficiency. Different from unified process
-described above, [split\_calculation]{.title-ref} process first splits
+Introduced in FATE version 1.6,
+<span class="title-ref">split\_calculation</span> option is available
+for improved efficiency. Different from unified process described above,
+<span class="title-ref">split\_calculation</span> process first splits
 hash-processed ids into even and odd groups; each group then runs
 through the RSA intersection process with either host or guest as the
-joining role. Note than with [split\_calculation]{.title-ref}, host(s)
-always know about their common even ids with guest since they are
-responsible for finding common even ids.
+joining role. Note than with
+<span class="title-ref">split\_calculation</span>, host(s) always know
+about their common even ids with guest since they are responsible for
+finding common even ids.
 
 With RSA intersection, participants can get their intersection ids
 securely and efficiently.
 
-RAW Intersection
-----------------
+## RAW Intersection
 
 This mode implements the simple intersection method in which a
 participant sends all its ids to another participant, and the other
 participant finds their common ids. Finally, the joining role will send
 the intersection ids to the sender.
 
-DH Intersection
----------------
+## DH Intersection
 
 This mode implements secure intersection based on symmetric encryption
-with Pohlig--Hellman commutative cipher. DH Intersection is also used in
+with Pohlig–Hellman commutative cipher. DH Intersection is also used in
 [Secure Information Retrieval(SIR)
 module](../../secure_information_retrieval).
 
-Intersection With Cache
------------------------
+## Intersection With Cache
 
 Intersection may be conducted as online/offline phases. Both RSA and DH
 Intersection support cache. For examples employing cache mechanism,
 please refer [here](../../../examples/pipeline/intersect).
 
-Multi-Host Intersection
------------------------
+## Multi-Host Intersection
 
 RSA, RAW, and DH intersection support multi-host scenario. It means a
 guest can perform intersection with more than one host simultaneously
 and get the common ids among all participants.
 
 ![Figure 2 (multi-hosts
-Intersection)](../../images/multi_host_intersect.png){.align-center
-width="500px"}
+Intersection)](../../images/multi_host_intersect.png)
 
-Refer to [figure 2]{.title-ref} for a demonstration of one guest running
-intersection with two hosts; the same process applies to cases with more
-than two hosts. First, guest will run intersection with each host and
-get respective overlapping ids. Then, guest will find common IDs from
-all intersection results. Optionally, guest will send common IDs to
-every host.
+Refer to <span class="title-ref">figure 2</span> for a demonstration of
+one guest running intersection with two hosts; the same process applies
+to cases with more than two hosts. First, guest will run intersection
+with each host and get respective overlapping ids. Then, guest will find
+common IDs from all intersection results. Optionally, guest will send
+common IDs to every host.
 
-Match ID(Repeated ID) intersection
-----------------------------------
+## Match ID(Repeated ID) intersection
 
 Starting at ver 1.7, it is recommended to assign random sid to uploaded
 data. Intersection module then automatically checks for and process data
 with instance ID.
 
 Note that parameters for original repeated ID process such as
-[repeated\_id\_process]{.title-ref} are deprecated in ver 1.7. Specify
-[join\_id\_owner]{.title-ref} to the role whose sid to be kept. For
-instances, when [join\_id\_owner]{.title-ref} is set to Guest(default),
-Guest\'s data is
+<span class="title-ref">repeated\_id\_process</span> are deprecated in
+ver 1.7. Specify <span class="title-ref">join\_id\_owner</span> to the
+role whose sid to be kept. For instances, when
+<span class="title-ref">join\_id\_owner</span> is set to Guest(default),
+Guest's data is
 
     sid, id, value
     123, alice, 2
@@ -120,8 +115,7 @@ And for Host:
     125, alice, 5
     130, bob, 4
 
-Param
------
+## Param
 
 ::: federatedml.param.intersect_param
     rendering:
@@ -131,9 +125,7 @@ Param
       show_root_toc_entry: false
       show_root_full_path: false
 
-
-Feature
--------
+## Feature
 
 RSA, RAW, and DH intersection methods support:
 
@@ -145,7 +137,7 @@ RSA, RAW, and DH intersection methods support:
     operators of RSA intersection can be configured separately, please
     refer [here](../../../python/federatedml/param/intersect_param.py)
     for more details.
-4.  Preprocessing step to pre-filter Host\'s data for faster PSI
+4.  Preprocessing step to pre-filter Host's data for faster PSI
 
 RAW and DH intersection methods also support:
 

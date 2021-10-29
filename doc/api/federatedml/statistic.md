@@ -1,5 +1,4 @@
-Data Statistic
-==============
+# Data Statistic
 
 This component will do some statistical work on the data, including
 statistical mean, maximum and minimum, median, etc.
@@ -20,6 +19,6 @@ The indicators for each column that can be statistic are list as follow.
 10. kurtosis: The definition can be referred to
     [\[here\]](https://en.wikipedia.org/wiki/Kurtosis)
 11. percentile: The value of percentile. Accept 0% to 100% while the
-    number before the \"%\" should be integer.
+    number before the "%" should be integer.
 
 These static values can be used in feature selection as a criterion.

@@ -1,8 +1,6 @@
-Population Stability Index (PSI)
-================================
+# Population Stability Index (PSI)
 
-Introduction
-------------
+## Introduction
 
 Population stability index (PSI) is a metric to measure how much a
 feature has shifted in distribution between two sample sets. Usually,
@@ -17,19 +15,18 @@ sample count)/(total sample number) \* compute PSI value: psi = sum(
 (actual\_percentage - expect\_percentage) \* ln(actual\_percentage /
 expect\_percentage) )
 
-For more details of psi, you can refer to this [PSI tutorial
-\<https://www.lexjansen.com/wuss/2017/47\_Final\_Paper\_PDF.pdf\>]{.title-ref}\_\_
+For more details of psi, you can refer to this
+<span class="title-ref">PSI tutorial
+\<https://www.lexjansen.com/wuss/2017/47\_Final\_Paper\_PDF.pdf\></span>\_\_
 
-Param
------
+## Param
 
--   max\_bin\_num: int, max bin number of quantile feature binning
--   need\_run: bool, need to run this module in DSL
--   dense\_missing\_val: int/ float/ string imputed missing value when
+  - max\_bin\_num: int, max bin number of quantile feature binning
+  - need\_run: bool, need to run this module in DSL
+  - dense\_missing\_val: int/ float/ string imputed missing value when
     input format is dense, default is set to np.nan. Default setting is
     suggested
 
-How to use
-----------
+## How to use
 
 An example is offered in examples/dsl/v2/psi folder.
