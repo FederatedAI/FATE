@@ -79,7 +79,7 @@ following instructions in the script.
 > 
 > For a list of available example data and general guide on table
 > naming, please refer to this
-> [guide](../data/README.md).
+> [guide](../../../examples/data/README.md).
 > 
 > ``` sourceCode bash
 > #  upload demo data to FATE data storage, optionally provide directory where deployed examples/data locates
