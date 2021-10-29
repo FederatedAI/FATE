@@ -12,9 +12,6 @@
             10000
         ]
     },
-    "job_parameters": {
-        "common": {}
-    },
     "component_parameters": {
         "common": {
             "union_0": {
