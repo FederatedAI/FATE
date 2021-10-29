@@ -15,7 +15,7 @@ spaces of guest and hosts are identical. An optional encryption mode for
 model is provided. By doing this, no party can get the private model of
 other parties.
 
-![Figure 1 (Federated Homo NN Principle)](../../doc/images/homo_nn.png)
+![Figure 1 (Federated Homo NN Principle)](../../images/homo_nn.png)
 
 The Homo NN process is shown in Figure 1. Models of Party A and Party B
 have the same neural networks structure. In each iteration, each party
@@ -306,7 +306,7 @@ Note
 </div>
 
 For more information on task configuration, please refer to the
-[\[doc\]](../../../../examples/dsl/v2/README.md) under example first.
+[Pipeline tutorial](../../tutorial/pipeline) and [DSL tutorial](../../tutorial/dsl_conf).
 In this part we only talk about the parameter configuration.
 
 </div>
