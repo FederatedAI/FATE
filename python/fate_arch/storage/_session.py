@@ -22,7 +22,7 @@ from fate_arch.common.data_utils import default_output_fs_path
 from fate_arch.common.log import getLogger
 from fate_arch.storage._table import StorageTableMeta
 from fate_arch.storage._types import StorageEngine, EggRollStoreType, StandaloneStoreType, HDFSStoreType, HiveStoreType, \
-    LinkisHiveStoreType, LocalFSStoreType
+    LinkisHiveStoreType, LocalFSStoreType, PathStoreType
 from fate_arch.relation_ship import Relationship
 from fate_arch.common.base_utils import current_timestamp
 
@@ -67,7 +67,7 @@ class StorageSessionBase(StorageSessionABC):
                    part_of_data=None, engine=None, engine_address=None,
                    store_type=None, token: typing.Dict = None) -> StorageTableMeta:
         if engine:
-            if engine not in Relationship.Computing.get(computing_table.engine, {}).get(EngineType.STORAGE, {}).get("support", []):
+            if engine != StorageEngine.PATH and engine not in Relationship.Computing.get(computing_table.engine, {}).get(EngineType.STORAGE, {}).get("support", []):
                 raise Exception(f"storage engine {engine} not supported with computing engine {computing_table.engine}")
         else:
             engine = Relationship.Computing.get(computing_table.engine, {}).get(EngineType.STORAGE, {}).get("default", None)
@@ -104,6 +104,9 @@ class StorageSessionBase(StorageSessionABC):
             if not address_dict.get("path"):
                 address_dict.update({"path": default_output_fs_path(name=name, namespace=namespace, storage_engine=StorageEngine.LOCALFS)})
             store_type = LocalFSStoreType.DISK if store_type is None else store_type
+
+        elif engine == StorageEngine.PATH:
+            store_type = PathStoreType.PICTURE if store_type is None else store_type
 
         else:
             raise RuntimeError(f"{engine} storage is not supported")

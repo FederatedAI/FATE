@@ -15,7 +15,22 @@
 #
 
 
-class LocalData(object):
-    def __init__(self, path):
+class LocalData():
+    def __init__(self, path, engine=None):
         self.path = path
         self.schema = {"header": [], "sid_name": "id"}
+        self._engine = engine
+
+    @property
+    def engine(self):
+        return self._engine
+
+    @property
+    def partitions(self):
+        return
+
+    def count(self, **kwargs):
+        return 0
+
+    def save(self, address, **kwargs):
+        pass
