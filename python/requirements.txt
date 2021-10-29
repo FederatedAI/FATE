@@ -40,6 +40,7 @@ pytorch-lightning>=1.2.1,<1.4.0
 filelock==3.3.1
 pulsar-client==2.8.0
 fastavro==1.4.1
+lightgbm==3.3.1
 
 # python 3.6
 backports-datetime-fromisoformat==1.0.0
