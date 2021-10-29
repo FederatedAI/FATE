@@ -89,7 +89,7 @@ def get_engines():
 
 
 def is_standalone():
-    return get_engines().get(EngineType.FEDERATION) == FederationEngine.STANDALONE
+    return get_engines().get(EngineType.FEDERATION).upper() == FederationEngine.STANDALONE
 
 
 def get_engines_config_from_conf(group_map=False):
