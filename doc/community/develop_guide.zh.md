@@ -32,7 +32,7 @@
 3.  重载 BaseParam 的参数检查接口，否则将会抛出未实现的错误。检查方法被用于验证参数变量是否可用。
 
 以 hetero lr 的参数对象为例，python文件为
-[federatedml/param/logistic\_regression\_param.py](../python/federatedml/param/logistic_regression_param.py)
+[federatedml/param/logistic\_regression\_param.py](../../python/federatedml/param/logistic_regression_param.py)
 
 首先，它继承自 BaseParam：
 
@@ -125,7 +125,7 @@ def check(self):
         | host | arbiter"</span> 可以作为定义角色密钥的另一种方法。
 
 也可以用 hetero-lr 来说明，您可以在
-[federatedml/conf/setting\_conf/HeteroLR.json](../python/federatedml/conf/setting_conf/HeteroLR.json)
+[federatedml/conf/setting\_conf/HeteroLR.json](../../python/federatedml/conf/setting_conf/HeteroLR.json)
 中找到它。
 
 ``` sourceCode json
@@ -170,7 +170,7 @@ Note
 </div>
 
 应将其放在
-[transfer\_class](../python/federatedml/transfer_variable/transfer_class)
+[transfer\_class](../../python/federatedml/transfer_variable/transfer_class)
 文件夹中。
 
 </div>
@@ -204,7 +204,7 @@ class HeteroBoostingTransferVariable(BaseTransferVariables):
     应为 "guest"，"host"，"arbiter" 的某些组合列表，用于定义将交互信息发送到何处。
 
 在 python 文件编写完成后，运行以下程序，可在
-[auth\_conf](../python/federatedml/transfer_variable/auth_conf)
+[auth\_conf](../../python/federatedml/transfer_variable/auth_conf)
 中生成对应的json配置文件。该配置文件将被fate\_flow识别并用于后续权限判断。
 
 ``` sourceCode bash
@@ -222,7 +222,7 @@ fate\_flow\_client 模块的运行规则是：
 5.  如果需要，调用 export\_model 方法。
 
 在本节中，我们讲解如何执行规则 3 至 5
-。需要被继承的model\_base类位于：[python/federatedml/model\_base.py](../python/federatedml/model_base.py)
+。需要被继承的model\_base类位于：[python/federatedml/model\_base.py](../../python/federatedml/model_base.py)
 .
 
   - 在需要时重载 fit 接口  
@@ -287,7 +287,7 @@ fate\_flow\_client 模块的运行规则是：
 
   - 定义模型保存所需的protobuf文件:  
     为了方便模型跨平台保存和读取模型，FATE使用protobuf文件定义每个模型所需的参数和模型内容。当您开发自己的模块时，需要定义本模块中需要保存的内容并创建相应的protobuf文件。protobuf文件所在的位置为
-    [这个目录](../python/federatedml/protobuf/proto) 。
+    [这个目录](../../python/federatedml/protobuf/proto) 。
 
 更多使用protobuf的细节，请参考
 [这个教程](https://developers.google.com/protocol-buffers/docs/pythontutorial)
@@ -295,7 +295,7 @@ fate\_flow\_client 模块的运行规则是：
 每个模型一般需要两个proto文件，其中后缀为meta的文件中保存某一次任务的配置，后缀为param的文件中保存某次任务的模型结果。
 
 在完成proto文件的定义后，可执行protobuf目录下的
-[generate\_py.sh文件](../python/fate_arch/protobuf/generate_py.sh)
+[generate\_py.sh文件](../../python/fate_arch/protobuf/generate_py.sh)
 生成对应的python文件。之后，您可在自己的项目中引用自己设计的proto类型，并进行保存：
 
 > 
@@ -322,9 +322,9 @@ fate\_flow\_client 模块的运行规则是：
 ### 第六步：开发Pipeline组件
 
 若希望后续用户可以通过python脚本形式启动建模任务，需要在
-[python/fate\_client/pipeline/component](../python/fate_client/pipeline/component)
+[python/fate\_client/pipeline/component](../../python/fate_client/pipeline/component)
 中添加自己的组件。详情请参考Pipeline的
-[README文件](../python/fate_client/pipeline/README.md)
+[文档](../../doc/api/pipeline.md)
 
 ## 开始建模任务
 

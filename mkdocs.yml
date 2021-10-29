@@ -19,6 +19,10 @@ nav:
       - ... | flat | api/params/*.md
   - FederatedML:
     - ... | flat | api/federatedml/*.md
+  - Community:
+      - Develop Guide:
+        - Develop Guide: community/develop_guide.md
+        - FATE Client Develop Guide: community/fate_client_develop_guide.md
   - Resources:
     - resources/index.md
 
