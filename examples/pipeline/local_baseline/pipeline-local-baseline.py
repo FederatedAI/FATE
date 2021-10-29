@@ -87,7 +87,7 @@ def main(config="../../config.yaml", namespace=""):
     predict_pipeline.add_component(pipeline,
                                    data=Data(predict_input={pipeline.data_transform_0.input.data: reader_0.output.data}))
     predict_pipeline.add_component(evaluation_0, data=Data(data=[hetero_lr_0.output.data, local_baseline_0.output.data]))
-    predict_pipeline.predict(job_parameters)
+    predict_pipeline.predict()
 
 
 if __name__ == "__main__":
