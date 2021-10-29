@@ -54,7 +54,6 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
 | [Feature Imputation](feature.md#feature-imputation)                           | 特征填充                    | 使用指定方法、数值填充特征缺失值                                                                                    | Table, 值为Instance             | Table, 值为填充后Instance                                                                              | Feature Imputation Model                | FeatureImputation Model    |
 | [Label Transform](util.md#label-transform)                                    | 标签转换                    | 转化输入数据与预测结果的标签值                                                                                     | Table, 值为Instance或预测结果        | Table, 值为标签转化后的Instance或预测结果                                                                      |                                         | LabelTransform Model       |
 
-算法清单
 
 ## 安全协议
 
@@ -72,7 +71,7 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
 
 > n
 
-## Params
+## 算法参数
 
 ::: federatedml.param
     rendering:

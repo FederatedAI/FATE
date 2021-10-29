@@ -62,7 +62,6 @@ provide:
 | [Feature Imputation](feature.md#feature-imputation)                           | Feature Imputation           | This component imputes missing features using arbitrary methods/values                                                                | Table, values are Instances                       | Table, values with missing features filled                                                            |                                                      | FeatureImputation Model                                                 |
 | [Label Transform](util.md#label-transform)                                    | Label Transform              | Replaces label values of input data instances and predict results                                                                     | Table, values are Instances or prediction results | Table, values with transformed label values                                                           |                                                      | LabelTransform Model                                                    |
 
-Algorithm
 
 ## Secure Protocol
 
