@@ -40,9 +40,6 @@ class HeteroLRGuest(HeteroLRBase):
         self.wx_self = None
         self.wx_remote = None
 
-    def _init_model(self, params):
-        super()._init_model(params)
-
     def _cal_z_in_share(self, w_self, w_remote, features, suffix):
         z1 = features.dot_local(w_self)
 

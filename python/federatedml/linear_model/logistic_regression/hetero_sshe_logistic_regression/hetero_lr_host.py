@@ -32,10 +32,6 @@ class HeteroLRHost(HeteroLRBase):
         self.data_batch_count = []
         self.wx_self = None
 
-    def _init_weights(self, model_shape):
-        self.init_param_obj.fit_intercept = False
-        return self.initializer.init_model(model_shape, init_params=self.init_param_obj)
-
     def _cal_z_in_share(self, w_self, w_remote, features, suffix):
         z1 = features.dot_local(w_self)
 

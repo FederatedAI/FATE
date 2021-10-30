@@ -103,6 +103,8 @@ class HeteroLRBase(BaseLinearModel, ABC):
                                               other_party=self.other_party)
 
     def _init_weights(self, model_shape):
+        if self.role == consts.HOST:
+            self.init_param_obj.fit_intercept = False
         return self.initializer.init_model(model_shape, init_params=self.init_param_obj)
 
     def _set_parties(self):
