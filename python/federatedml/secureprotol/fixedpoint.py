@@ -28,7 +28,7 @@ class FixedPointNumber(object):
     LOG2_BASE = math.log(BASE, 2)
     FLOAT_MANTISSA_BITS = sys.float_info.mant_dig
 
-    Q = 293973345475167247070445277780365744413
+    Q = 293973345475167247070445277780365744413 ** 2
 
     def __init__(self, encoding, exponent, n=None, max_int=None):
         if n is None:
@@ -287,32 +287,6 @@ class FixedPointNumber(object):
         z_encode = FixedPointNumber.encode(z, n=self.n, max_int=self.max_int)
         return z_encode
 
-    # def __mul_fixedpointnumber(self, other):
-    #     if self.n != other.n:
-    #         other = self.encode(other.decode(), n=self.n, max_int=self.max_int)
-    #
-    #     # n = self.n * self.n
-    #     # max_int = n // 3 - 1
-    #
-    #     n = self.n
-    #     max_int = self.max_int
-    #
-    #     encoding = (self.encoding * other.encoding) % self.n
-    #     exponent = self.exponent + other.exponent
-    #
-    #     # if exponent == 0:
-    #     #     raise ValueError(f"__mul_fixedpointnumber: {self.encoding},"
-    #     #                      f"{self.exponent}, {other.encoding}, {other.exponent},"
-    #     #                      f"{encoding}, {exponent}")
-    #
-    #     mul_fixedpoint = FixedPointNumber(encoding, exponent, n=n, max_int=max_int)
-    #     truncate_mul_fixedpoint = self.__truncate(mul_fixedpoint)
-    #     return truncate_mul_fixedpoint
-
-    # def __mul_scalar(self, scalar):
-    #     encoded = self.encode(scalar, n=self.n, max_int=self.max_int)
-    #     return self.__mul_fixedpointnumber(encoded)
-
     def __abs__(self):
         if self.encoding <= self.max_int:
             # Positive
@@ -375,13 +349,9 @@ class FixedPointEndec(object):
                                        precision=self.precision)
 
     def _decode(self, number):
-        # if isinstance(number, (int, np.int16, np.int32, np.int64)):
-        #     return number
         return number.decode()
 
     def _truncate(self, number):
-        # if not isinstance(a, FixedPointNumber):
-        #     return a
         scalar = number.decode()
         return FixedPointNumber.encode(scalar, n=self.n, max_int=self.max_int)
 

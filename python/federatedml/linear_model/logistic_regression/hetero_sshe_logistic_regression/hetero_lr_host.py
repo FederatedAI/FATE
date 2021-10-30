@@ -63,6 +63,11 @@ class HeteroLRHost(HeteroLRBase):
             z = features.dot_local(w)
 
         self.wx_self = z
+
+        # # DEBUG;
+        # de_wx_self = self.fixedpoint_encoder.decode(self.wx_self.value.reduce(operator.add))
+        # LOGGER.info(f"forward: de_wx_self: {de_wx_self}")
+
         self.secure_matrix_obj.share_encrypted_matrix(suffix=suffix,
                                                       is_remote=True,
                                                       cipher=self.cipher,
@@ -112,6 +117,7 @@ class HeteroLRHost(HeteroLRBase):
           Loss = - y * log(h(x)) - (1-y) * log(1 - h(x)) where h(x) = 1/(1+exp(-wx))
           Then loss' = - (1/N)*∑(log(1/2) - 1/2*wx + ywx - 1/8(wx)^2)
         """
+
         wx_self_square = (self.wx_self * self.wx_self).reduce(operator.add)
         LOGGER.debug(f"wx_self_square: {wx_self_square}")
 
@@ -130,15 +136,16 @@ class HeteroLRHost(HeteroLRBase):
 
         LOGGER.debug(f"share_loss: {share_loss}")
 
-        # todo: dylan, review & unreview loss_norm;
         if self.review_every_iter:
             loss_norm = self.optimizer.loss_norm(weights)
             if loss_norm:
                 share_loss += loss_norm
             LOGGER.debug(f"share_loss+loss_norm: {share_loss}")
-            share_loss.broadcast_reconstruct_share(tensor_name=f"share_loss_{suffix}")
+            tensor_name = ".".join(("loss",) + suffix)
+            share_loss.broadcast_reconstruct_share(tensor_name=tensor_name)
         else:
-            share_loss.broadcast_reconstruct_share(tensor_name=f"share_loss_{suffix}")
+            tensor_name = ".".join(("loss",) + suffix)
+            share_loss.broadcast_reconstruct_share(tensor_name=tensor_name)
             if self.optimizer.penalty == consts.L2_PENALTY:
                 w_self, w_remote = weights
 
@@ -163,12 +170,6 @@ class HeteroLRHost(HeteroLRBase):
 
                 loss_norm = w_tensor.dot(w_tensor_transpose, target_name=loss_norm_tensor_name)
                 loss_norm.broadcast_reconstruct_share()
-
-    def check_converge_by_weights(self, last_w, new_w, suffix):
-        if self.review_every_iter:
-            return self._review_every_iter_weights_check(last_w, new_w, suffix)
-        else:
-            return self._not_review_every_iter_weights_check(last_w, new_w, suffix)
 
     def _review_every_iter_weights_check(self, last_w, new_w, suffix):
         square_sum = np.sum((last_w - new_w) ** 2)

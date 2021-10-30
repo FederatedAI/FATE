@@ -86,7 +86,7 @@ class FixedPointTensor(TensorBase):
         else:
             base = kwargs['base'] if 'base' in kwargs else 10
             frac = kwargs['frac'] if 'frac' in kwargs else 4
-            encoder = FixedPointEndec(q_field, base, frac)
+            encoder = FixedPointEndec(field=q_field, base=base, precision_fractional=frac)
         if isinstance(source, np.ndarray):
             source = encoder.encode(source)
             _pre = urand_tensor(q_field, source)
@@ -330,7 +330,7 @@ class PaillierFixedPointTensor(TensorBase):
         else:
             base = kwargs['base'] if 'base' in kwargs else 10
             frac = kwargs['frac'] if 'frac' in kwargs else 4
-            encoder = FixedPointEndec(q_field, base, frac)
+            encoder = FixedPointEndec(field=q_field, base=base, precision_fractional=frac)
 
         if isinstance(source, np.ndarray):
             _pre = urand_tensor(q_field, source)

@@ -90,7 +90,7 @@ class HeteroLRGuest(HeteroLRBase):
 
         sigmoid_z = self._compute_sigmoid(z, remote_z)
 
-        self.encrypted_wx = sigmoid_z
+        self.encrypted_wx = self.wx_self + self.wx_remote
 
         self.encrypted_error = sigmoid_z - self.labels
 
@@ -141,6 +141,7 @@ class HeteroLRGuest(HeteroLRBase):
         """
         wx = (-0.5 * self.encrypted_wx).reduce(operator.add)
         ywx = (self.encrypted_wx * self.labels).reduce(operator.add)
+
         wx_square = (2 * self.wx_remote * self.wx_self).reduce(operator.add) + \
                     (self.wx_self * self.wx_self).reduce(operator.add)
 
@@ -155,7 +156,29 @@ class HeteroLRGuest(HeteroLRBase):
 
         wx_square = (wx_remote_square + wx_square) * -0.125
 
-        LOGGER.debug(f"wx_square: {wx_square}")
+        LOGGER.info(f"wx_square: {wx_square}")
+
+        # DEBUG
+        # de_wx = self.host_cipher.recursive_decrypt(wx.value)
+        # de_ywx = self.host_cipher.recursive_decrypt(ywx.value)
+        # de_wx_square = self.host_cipher.recursive_decrypt(wx_square.value)
+        # wx_square1 = (2 * self.wx_remote * self.wx_self).reduce(operator.add)
+        # de_wx_square1 = self.host_cipher.recursive_decrypt(wx_square1.value)
+        # wx_square2 = (self.wx_self * self.wx_self).reduce(operator.add)
+        # de_wx_square2 = self.fixedpoint_encoder.decode(wx_square2.value)
+        # de_wx_square3 = self.host_cipher.recursive_decrypt(wx_remote_square.value)
+        # de_wx_remote = self.host_cipher.recursive_decrypt(self.wx_remote.value.reduce(operator.add))
+        # de_wx_self = self.fixedpoint_encoder.decode(self.wx_self.value.reduce(operator.add))
+        # de_wx_sum = de_wx_remote + de_wx_self
+        # LOGGER.info(f"compute_loss: de_wx: {de_wx}")
+        # LOGGER.info(f"compute_loss: de_ywx: {de_ywx}")
+        # LOGGER.info(f"compute_loss: de_wx_square: {de_wx_square}")
+        # LOGGER.info(f"compute_loss: de_wx_square1: {de_wx_square1}")
+        # LOGGER.info(f"compute_loss: de_wx_square2: {de_wx_square2}")
+        # LOGGER.info(f"compute_loss: de_wx_square3: {de_wx_square3}")
+        # LOGGER.info(f"compute_loss: de_wx_remote: {de_wx_remote}")
+        # LOGGER.info(f"compute_loss: de_wx_self: {de_wx_self}")
+        # LOGGER.info(f"compute_loss: de_wx_sum: {de_wx_sum}")
 
         batch_num = self.batch_num[int(suffix[2])]
         loss = (wx + ywx + wx_square) * (-1 / batch_num) - np.log(0.5)
@@ -169,8 +192,10 @@ class HeteroLRGuest(HeteroLRBase):
                                               q_field=self.fixedpoint_encoder.n,
                                               encoder=self.fixedpoint_encoder)
 
-        loss = share_loss.get(tensor_name=f"share_loss_{suffix}",
+        tensor_name = ".".join(("loss",) + suffix)
+        loss = share_loss.get(tensor_name=tensor_name,
                               broadcast=False)[0]
+
         LOGGER.debug(f"share_loss.get: {loss}")
 
         if self.review_every_iter:
@@ -207,12 +232,6 @@ class HeteroLRGuest(HeteroLRBase):
                 loss = loss + loss_norm
 
         return loss
-
-    def check_converge_by_weights(self, last_w, new_w, suffix):
-        if self.review_every_iter:
-            return self._review_every_iter_weights_check(last_w, new_w, suffix)
-        else:
-            return self._not_review_every_iter_weights_check(last_w, new_w, suffix)
 
     def _review_every_iter_weights_check(self, last_w, new_w, suffix):
         square_sum = np.sum((last_w - new_w) ** 2)
