@@ -21,6 +21,8 @@ import numpy as np
 from federatedml.linear_model.logistic_regression.hetero_sshe_logistic_regression.hetero_lr_base import HeteroLRBase
 from federatedml.optim import activation
 from federatedml.protobuf.generated import lr_model_param_pb2
+from federatedml.secureprotol import PaillierEncrypt
+from federatedml.secureprotol.fate_paillier import PaillierPublicKey, PaillierPrivateKey
 from federatedml.secureprotol.spdz.secure_matrix.secure_matrix import SecureMatrix
 from federatedml.secureprotol.spdz.tensor import fixedpoint_numpy, fixedpoint_table
 from federatedml.util import LOGGER, consts
@@ -311,13 +313,18 @@ class HeteroLRGuest(HeteroLRBase):
     def get_single_model_param(self, model_weights=None, header=None):
         result = super().get_single_model_param(model_weights, header)
         if not self.is_respectively_reveal:
-            result["cipher"] = self.cipher
+            result["cipher"] = (self.cipher.public_key.n, self.cipher.privacy_key.p, self.cipher.privacy_key.q)
         return result
 
     def load_single_model(self, single_model_obj):
         super(HeteroLRGuest, self).load_single_model(single_model_obj)
         if not self.is_respectively_reveal:
-            self.cipher = single_model_obj.cipher
+            cipher_info = single_model_obj.cipher
+            self.cipher = PaillierEncrypt()
+            public_key = PaillierPublicKey(cipher_info[0])
+            privacy_key = PaillierPrivateKey(public_key, cipher_info[1], cipher_info[2])
+            self.cipher.set_public_key(public_key=public_key)
+            self.cipher.set_privacy_key(privacy_key=privacy_key)
 
     def get_model_summary(self):
         summary = super(HeteroLRGuest, self).get_model_summary()
