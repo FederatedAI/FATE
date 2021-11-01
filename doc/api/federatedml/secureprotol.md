@@ -1,4 +1,6 @@
-# Encrypt
+# Secure Protocol
+
+## Encrypt
 
 Encrypt module provides some encryption methods for data. It contains
 [Paillier](https://en.wikipedia.org/wiki/Paillier_cryptosystem),
